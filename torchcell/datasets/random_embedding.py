@@ -7,6 +7,7 @@
 
 import os
 from collections.abc import Callable
+from typing import Any
 
 import torch
 from torch_geometric.data import Data
@@ -35,8 +36,8 @@ class RandomEmbeddingDataset(BaseEmbeddingDataset):
         root: str,
         genome: SCerevisiaeGenome,
         model_name: str | None = "random_1000",
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
         batch_size: int = 100,
     ):
         """Set up the dataset, processing random embeddings if not yet cached.
@@ -60,7 +61,7 @@ class RandomEmbeddingDataset(BaseEmbeddingDataset):
         self.data, self.slices = torch.load(self.processed_paths[0])
 
     @staticmethod
-    def parse_genome(genome) -> ParsedGenome:
+    def parse_genome(genome: SCerevisiaeGenome) -> ParsedGenome:
         """Return a ParsedGenome holding the genome's gene set, or None."""
         if genome is None:
             return None
@@ -69,13 +70,13 @@ class RandomEmbeddingDataset(BaseEmbeddingDataset):
             data["gene_set"] = genome.gene_set
             return ParsedGenome(**data)
 
-    def initialize_model(self):
+    def initialize_model(self) -> Any:
         """Raise; random embeddings need no model initialization."""
         raise NotImplementedError(
             "initialize_model is not needed for RandomEmbeddingDataset"
         )
 
-    def process(self):
+    def process(self) -> None:
         """Generate random embeddings per gene and save them in batched chunks."""
         data_list = []
         (window_method, window_size, is_max_size) = self.MODEL_TO_WINDOW[

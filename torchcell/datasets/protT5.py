@@ -7,6 +7,7 @@
 
 import os
 from collections.abc import Callable
+from typing import Any
 
 import torch
 from torch_geometric.data import Data
@@ -36,9 +37,9 @@ class ProtT5Dataset(BaseEmbeddingDataset):
         root: str,
         genome: SCerevisiaeGenome,
         model_name: str | None = None,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+    ) -> None:
         """Set device and genome, then build or load cached ProtT5 embeddings."""
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.genome = genome
@@ -62,7 +63,7 @@ class ProtT5Dataset(BaseEmbeddingDataset):
             )
 
     @staticmethod
-    def parse_genome(genome) -> ParsedGenome:
+    def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome:
         """Return a ParsedGenome holding the genome's gene set, or None."""
         if genome is None:
             return None
@@ -75,7 +76,7 @@ class ProtT5Dataset(BaseEmbeddingDataset):
         """Return a ProtT5 model instance for the uniref50 checkpoint."""
         return ProtT5("prot_t5_xl_uniref50")
 
-    def process(self):
+    def process(self) -> None:
         """Compute ProtT5 embeddings for all genes and save the processed data."""
         # HACK
         self.transformer = self.initialize_model()

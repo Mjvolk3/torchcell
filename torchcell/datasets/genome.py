@@ -15,7 +15,7 @@ class GenomeDataset(InMemoryDataset, ABC):
 
     pass
 
-    def __add__():
+    def __add__(self, other: "GenomeDataset") -> "GenomeDataset":
         """Combine two genome datasets (not yet implemented)."""
         pass
 

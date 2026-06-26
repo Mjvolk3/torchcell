@@ -12,6 +12,7 @@ import pickle
 import random
 import time
 from collections.abc import Callable
+from typing import Any
 
 import lmdb
 import pandas as pd
@@ -39,7 +40,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
-def get_publication_info(pubmed_id):
+def get_publication_info(pubmed_id: str) -> dict[str, str | None] | None:
     """Fetch publication metadata (PubMed URL, DOI) for a PubMed ID via Entrez."""
     Entrez.email = "mvjolk3@illinois.edu"
     max_retries = 5
@@ -114,10 +115,10 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
         root: str = "data/torchcell/gene_essentiality_sgd",
         scerevisiae_graph: SCerevisiaeGraph = None,
         io_workers: int = 0,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-        **kwargs,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
         """Store the S. cerevisiae graph and initialize the experiment dataset."""
         self.scerevisiae_graph = scerevisiae_graph
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
@@ -137,20 +138,20 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
         """Return the raw file names (none, as data is fetched from SGD)."""
         return []  # Return an empty list if there are no raw files to download
 
-    def download(self):
+    def download(self) -> None:
         """Do nothing; this dataset has no raw files to download."""
         # If there's nothing to download, you can just pass
         pass
 
     def preprocess_raw(
-        self, df: pd.DataFrame, preprocess: dict | None = None
+        self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
     ) -> pd.DataFrame:
         """Return the DataFrame unchanged (no raw preprocessing needed)."""
         # If there's no preprocessing needed, you can return the DataFrame as is
         return df
 
     @post_process
-    def process(self):
+    def process(self) -> None:
         """Build essentiality experiments from SGD inviable phenotypes into LMDB."""
         log.info("Processing SGD Gene Essentiality Data...")
 
@@ -212,7 +213,13 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
     # since we have no way fo extracting it from the paper yet
     # It is a reasonable guess
     @staticmethod
-    def create_experiment(dataset_name, gene, phenotype_data):
+    def create_experiment(
+        dataset_name: str, gene: str, phenotype_data: dict[str, Any]
+    ) -> tuple[
+        GeneEssentialityExperiment,
+        GeneEssentialityExperimentReference,
+        Publication,
+    ]:
         """Build the experiment, reference, and publication for one gene phenotype."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
@@ -268,7 +275,7 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
         return experiment, reference, publication
 
 
-def main():
+def main() -> None:
     """Build and inspect the SGD gene essentiality dataset for ad-hoc runs."""
     import os
 

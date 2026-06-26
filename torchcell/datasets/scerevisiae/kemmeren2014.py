@@ -11,6 +11,7 @@ import pickle
 import re
 from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor
+from typing import Any
 
 import GEOparse
 import lmdb
@@ -91,10 +92,10 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         io_workers: int = 0,
         process_workers: int = 0,  # For parallel processing of experiments
         batch_size: int = 10,  # Batch size for parallel processing
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-        **kwargs,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
         """Set up parallelism options and the genome before processing.
 
         Args:
@@ -141,7 +142,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             f"{self.geo_accession_wt_matalpha_flask}_family.soft.gz",
         ]
 
-    def download(self):
+    def download(self) -> None:
         """Download supplementary Table S1 and expression data from GEO."""
         # First, download supplementary Table S1 with mating type information
         table_path = osp.join(self.raw_dir, "kemmeren2014_table_s1.xlsx")
@@ -225,7 +226,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                 raise RuntimeError(f"Failed to download {geo_accession} from GEO")
 
     @post_process
-    def process(self):
+    def process(self) -> None:
         """Parse GEO data into experiments and write them to the LMDB store."""
         # Initialize resolution statistics
         self.resolved_by_excel = 0
@@ -238,7 +239,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
         # Load both GEO objects and extract platform annotation
         all_gsms = {}
-        probe_to_gene_map = {}
+        probe_to_gene_map: dict[str, str] = {}
         responsive_gsm_names = set()  # Track which samples are responsive mutants
 
         for geo_accession in [
@@ -277,8 +278,10 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         # Parse samples and extract metadata
         samples_data = []
         wt_samples = []
-        deletion_samples_by_gene = {}  # Group samples by gene for dye-swap averaging
-        already_assigned = set()  # Track assigned systematic names
+        deletion_samples_by_gene: dict[str, list[Any]] = (
+            {}
+        )  # Group samples by gene (gene -> list of GEOparse GSM) for dye-swap averaging
+        already_assigned: set[str] = set()  # Track assigned systematic names
 
         for sample_idx, (gsm_name, gsm) in enumerate(all_gsms.items()):
             # Extract metadata from characteristics
@@ -530,8 +533,11 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         self._log_processing_summary(deletion_samples_by_gene, samples_data)
 
     def _process_sequential(
-        self, deletion_samples_by_gene, probe_to_gene_map, systematic_to_strain
-    ):
+        self,
+        deletion_samples_by_gene: dict[str, list[Any]],  # gene -> list of GEOparse GSM
+        probe_to_gene_map: dict[str, str],
+        systematic_to_strain: dict[str, str],
+    ) -> None:
         """Process gene deletions sequentially (original implementation)."""
         # Initialize LMDB environment
         env = lmdb.open(
@@ -624,8 +630,11 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             )
 
     def _process_parallel(
-        self, deletion_samples_by_gene, probe_to_gene_map, systematic_to_strain
-    ):
+        self,
+        deletion_samples_by_gene: dict[str, list[Any]],  # gene -> list of GEOparse GSM
+        probe_to_gene_map: dict[str, str],
+        systematic_to_strain: dict[str, str],
+    ) -> None:
         """Process gene deletions in parallel using ProcessPoolExecutor."""
         # Convert dictionary to list of tuples for batching
         gene_items = list(deletion_samples_by_gene.items())
@@ -667,7 +676,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         )
 
         written_count = 0
-        skipped_genes = []
+        skipped_genes: list[int] = []
         with env.begin(write=True) as txn:
             for idx, serialized_data in enumerate(all_results):
                 if serialized_data is not None:
@@ -689,15 +698,15 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
     @staticmethod
     def _process_batch(
-        batch_items,
-        probe_to_gene_map,
-        systematic_to_strain,
-        wt_cv_BY4741,
-        wt_cv_BY4742,
-        dataset_name,
-    ):
+        batch_items: list[tuple[str, list[Any]]],  # (gene, list of GEOparse GSM)
+        probe_to_gene_map: dict[str, str],
+        systematic_to_strain: dict[str, str],
+        wt_cv_BY4741: SortedDict,
+        wt_cv_BY4742: SortedDict,
+        dataset_name: str,
+    ) -> list[bytes]:
         """Process a batch of gene deletions. Static method for multiprocessing."""
-        results = []
+        results: list[bytes] = []
 
         for gene_name, gsm_list in batch_items:
             # Collect expression data from all dye-swap replicates (replicate-level, not averaged)
@@ -766,7 +775,8 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
     @staticmethod
     def _collect_replicate_expressions_static(
-        gsm_list, probe_to_gene_map=None
+        gsm_list: list[Any],  # list of GEOparse GSM
+        probe_to_gene_map: dict[str, str] | None = None,
     ) -> tuple[SortedDict, SortedDict]:
         """Static version of _collect_replicate_expressions for multiprocessing.
 
@@ -800,7 +810,10 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         return all_expressions, n_replicates
 
     @staticmethod
-    def _extract_expression_from_gsm_static(gsm, probe_to_gene_map=None) -> SortedDict:
+    def _extract_expression_from_gsm_static(
+        gsm: Any,  # GEOparse GSM
+        probe_to_gene_map: dict[str, str] | None = None,
+    ) -> SortedDict:
         """Static version of _extract_expression_from_gsm for multiprocessing.
 
         Handles dye-swap design:
@@ -864,10 +877,11 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
     @staticmethod
     def _extract_refpool_from_deletion_samples_static(
-        gsm_list, probe_to_gene_map
+        gsm_list: list[Any],  # list of GEOparse GSM
+        probe_to_gene_map: dict[str, str],
     ) -> SortedDict:
         """Static version of _extract_refpool_from_deletion_samples for multiprocessing."""
-        refpool_values = {}
+        refpool_values: dict[str, list[float]] = {}
 
         for gsm in gsm_list:
             if not hasattr(gsm, "table") or gsm.table is None:
@@ -918,7 +932,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         return averaged_refpool
 
     def _process_wt_references(
-        self, probe_to_gene_map
+        self, probe_to_gene_map: dict[str, str]
     ) -> tuple[SortedDict, SortedDict, SortedDict, SortedDict, SortedDict, SortedDict]:
         """Process wildtype reference datasets to extract refpool references and CV.
 
@@ -982,7 +996,9 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         )
 
     def _calculate_refpool_reference(
-        self, wt_gsm_list, probe_to_gene_map
+        self,
+        wt_gsm_list: list[Any],  # list of GEOparse GSM
+        probe_to_gene_map: dict[str, str],
     ) -> tuple[SortedDict, SortedDict, SortedDict]:
         """Extract refpool expression values from WT GSM objects and calculate CV.
 
@@ -1002,7 +1018,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         log.info(f"Extracting refpool from {len(wt_gsm_list)} wildtype samples")
 
         # Collect all refpool values per gene
-        all_refpool_values = {}
+        all_refpool_values: dict[str, list[float]] = {}
         sample_count = 0
 
         for gsm in wt_gsm_list:
@@ -1057,7 +1073,9 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         return refpool_mean_expression, refpool_cv, refpool_std_expression
 
     def _calculate_wt_reference_with_std(
-        self, wt_gsm_list, probe_to_gene_map
+        self,
+        wt_gsm_list: list[Any],  # list of GEOparse GSM
+        probe_to_gene_map: dict[str, str],
     ) -> tuple[SortedDict, SortedDict]:
         """Calculate average wildtype expression values and std from GSM objects.
 
@@ -1071,7 +1089,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         log.info(f"Calculating reference from {len(wt_gsm_list)} wildtype samples")
 
         # Collect all expression values per gene
-        all_expressions = {}
+        all_expressions: dict[str, list[float]] = {}
 
         for gsm in wt_gsm_list:
             expr_data = self._extract_expression_from_gsm(gsm, probe_to_gene_map)
@@ -1093,7 +1111,9 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         return wt_mean_expression, wt_std_expression
 
     def _calculate_wt_reference_from_gsm(
-        self, wt_gsm_list, probe_to_gene_map
+        self,
+        wt_gsm_list: list[Any],  # list of GEOparse GSM
+        probe_to_gene_map: dict[str, str],
     ) -> SortedDict:
         """Calculate average wildtype expression values from GSM objects.
 
@@ -1125,9 +1145,9 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
         return wt_reference
 
-    def _extract_probe_to_gene_mapping(self, gse) -> dict:
+    def _extract_probe_to_gene_mapping(self, gse: Any) -> dict[str, str]:
         """Extract probe ID to gene name mapping from GEO platform annotation."""
-        probe_to_gene = {}
+        probe_to_gene: dict[str, str] = {}
 
         # Check if platform data is available
         if not hasattr(gse, "gpls") or not gse.gpls:
@@ -1202,7 +1222,11 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
         return probe_to_gene
 
-    def _extract_expression_from_gsm(self, gsm, probe_to_gene_map=None) -> SortedDict:
+    def _extract_expression_from_gsm(
+        self,
+        gsm: Any,  # GEOparse GSM
+        probe_to_gene_map: dict[str, str] | None = None,
+    ) -> SortedDict:
         """Extract deletion mutant expression values from a GSM object.
 
         Handles dye-swap design:
@@ -1284,7 +1308,9 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         return expression_data
 
     def _extract_refpool_from_deletion_samples(
-        self, gsm_list, probe_to_gene_map
+        self,
+        gsm_list: list[Any],  # list of GEOparse GSM
+        probe_to_gene_map: dict[str, str],
     ) -> SortedDict:
         """Extract refpool values from deletion samples' Cy3 or Cy5 channel.
 
@@ -1295,7 +1321,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         Returns:
             SortedDict: Average refpool expression values at deletion experiment scale
         """
-        refpool_values = {}
+        refpool_values: dict[str, list[float]] = {}
 
         for gsm in gsm_list:
             if not hasattr(gsm, "table") or gsm.table is None:
@@ -1345,7 +1371,11 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
         return averaged_refpool
 
-    def _extract_refpool_from_wt_gsm(self, gsm, probe_to_gene_map=None) -> SortedDict:
+    def _extract_refpool_from_wt_gsm(
+        self,
+        gsm: Any,  # GEOparse GSM
+        probe_to_gene_map: dict[str, str] | None = None,
+    ) -> SortedDict:
         """Extract refpool expression values from a WT GSM object.
 
         In WT samples (GSE42215, GSE42217, GSE42240, GSE42241):
@@ -1431,7 +1461,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
         return expression_data
 
-    def _load_mating_type_map(self) -> tuple[dict, dict]:
+    def _load_mating_type_map(self) -> tuple[dict[str, str], dict[str, str]]:
         """Load mating type information from supplementary Table S1.
 
         Returns:
@@ -1605,9 +1635,9 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
     def resolve_gene_name_comprehensive(
         self,
         gene_name: str,
-        common_to_systematic: dict,
-        systematic_to_strain: dict,
-        already_assigned: set = None,
+        common_to_systematic: dict[str, str],
+        systematic_to_strain: dict[str, str],
+        already_assigned: set[str] = None,
     ) -> str:
         """Comprehensive gene name resolution with multiple fallback strategies.
 
@@ -1726,7 +1756,9 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         self.unresolved_genes += 1
         return None
 
-    def convert_gene_name(self, gene_name: str, common_to_systematic: dict) -> str:
+    def convert_gene_name(
+        self, gene_name: str, common_to_systematic: dict[str, str]
+    ) -> str:
         """Simple conversion for expression data - keep as-is if no mapping.
 
         Used for probe-to-gene mappings where we want to keep all genes.
@@ -1755,16 +1787,20 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         return gene_name
 
     def preprocess_raw(
-        self, df: pd.DataFrame, preprocess: dict | None = None
+        self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
     ) -> pd.DataFrame:
         """Preprocess raw data - for Kemmeren this is handled in process()."""
         return df
 
-    def create_experiment(self):
+    def create_experiment(self) -> None:
         """Required by base class but not used - see create_expression_experiment."""
         pass
 
-    def _log_processing_summary(self, deletion_samples_by_gene, samples_data):
+    def _log_processing_summary(
+        self,
+        deletion_samples_by_gene: dict[str, list[Any]],  # gene -> list of GEOparse GSM
+        samples_data: list[dict[str, Any]],  # heterogeneous per-sample metadata
+    ) -> None:
         """Log consistent summary statistics for both sequential and parallel processing."""
         log.info(
             f"Processed {len(deletion_samples_by_gene)} unique gene deletion experiments"
@@ -1791,8 +1827,11 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         log.info(f"Unique gene deletions: {len(deletion_samples_by_gene)}")
 
     def _validate_log2_ratios(
-        self, deletion_samples_by_gene, probe_to_gene_map, systematic_to_strain
-    ):
+        self,
+        deletion_samples_by_gene: dict[str, list[Any]],  # gene -> list of GEOparse GSM
+        probe_to_gene_map: dict[str, str],
+        systematic_to_strain: dict[str, str],
+    ) -> None:
         """Validate that our calculated log2 ratios match the original GEO data.
 
         IMPORTANT: The VALUE column in GEO follows standard microarray convention:
@@ -1925,7 +1964,9 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         log.info("===")
 
     def _collect_replicate_expressions(
-        self, gsm_list, probe_to_gene_map=None
+        self,
+        gsm_list: list[Any],  # list of GEOparse GSM
+        probe_to_gene_map: dict[str, str] | None = None,
     ) -> tuple[SortedDict, SortedDict]:
         """Collect expression values from technical replicates (dye-swaps).
 
@@ -1956,8 +1997,15 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
     @staticmethod
     def create_expression_experiment(
-        dataset_name, sample_info, replicate_expressions, refpool_expression
-    ):
+        dataset_name: str,
+        sample_info: dict[str, Any],  # heterogeneous: strain/gene name/replicate count
+        replicate_expressions: SortedDict,
+        refpool_expression: SortedDict,
+    ) -> tuple[
+        MicroarrayExpressionExperiment | None,
+        MicroarrayExpressionExperimentReference | None,
+        Publication | None,
+    ]:
         """Build an experiment and reference pair from sample expression data."""
         # Genome reference - strain MUST be specified (BY4741 or BY4742)
         if "strain" not in sample_info:

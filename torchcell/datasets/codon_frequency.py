@@ -5,6 +5,7 @@
 """Embedding dataset of per-gene CDS codon frequencies for S. cerevisiae."""
 
 from collections.abc import Callable
+from typing import Any
 
 import torch
 from torch_geometric.data import Data
@@ -26,9 +27,9 @@ class CodonFrequencyDataset(BaseEmbeddingDataset):
         self,
         root: str,
         genome: SCerevisiaeGenome,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+    ) -> None:
         """Set up the dataset for the given genome and parse the gene set."""
         self.genome = genome
 
@@ -39,7 +40,7 @@ class CodonFrequencyDataset(BaseEmbeddingDataset):
 
     # This is done to avoid pkl error when since genome uses sqlite
     @staticmethod
-    def parse_genome(genome) -> ParsedGenome:
+    def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome:
         """Extract the gene set into a picklable ParsedGenome (None if no genome)."""
         # BUG we have to do this black magic because when you merge datasets with +
         # the genome is None
@@ -50,11 +51,11 @@ class CodonFrequencyDataset(BaseEmbeddingDataset):
             data["gene_set"] = genome.gene_set
             return ParsedGenome(**data)
 
-    def initialize_model(self):
+    def initialize_model(self) -> None:
         """Return None; codon frequencies need no embedding model."""
         return None
 
-    def process(self):
+    def process(self) -> None:
         """Compute codon frequencies for each gene and save the collated dataset."""
         data_list = []
 

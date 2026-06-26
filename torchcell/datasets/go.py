@@ -5,6 +5,7 @@ import os
 import os.path as osp
 import pickle
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
@@ -23,11 +24,11 @@ class GoPlot(ABC):
     """Abstract base class for GO graph plots with figure-saving support."""
 
     @abstractmethod
-    def plot(self):
+    def plot(self) -> None:
         """Render the plot into the current matplotlib figure."""
         raise NotImplementedError("Subclasses must implement plot() method.")
 
-    def save(self, as_pdf=False, as_pickle=False):
+    def save(self, as_pdf: bool = False, as_pickle: bool = False) -> None:
         """Save the current figure under a timestamped image path.
 
         Args:
@@ -54,7 +55,7 @@ class GoPlot(ABC):
 class GOTermGraph:
     """Directed graph of GO terms and their ancestors built from a GO DAG."""
 
-    def __init__(self, gene_set, add_fantasy_root=False):
+    def __init__(self, gene_set: Iterable[str], add_fantasy_root: bool = False) -> None:
         """Download the GO DAG and build a term-to-ancestor directed graph.
 
         Args:
@@ -91,12 +92,12 @@ class GOTermGraph:
         else:
             self.root = None
 
-    def getAllParents(self, term):
+    def getAllParents(self, term: str) -> set[str]:
         """Return the set of all ancestor terms for the given GO term."""
         term_obj = self.godag[term]
         return term_obj.get_all_parents()
 
-    def removeTerm(self, term):
+    def removeTerm(self, term: str) -> None:
         """Remove the given term node from the graph if present."""
         if term in self.graph:
             self.graph.remove_node(term)
@@ -105,7 +106,7 @@ class GOTermGraph:
 class SimpleTreePlot(GoPlot):
     """Circular GO graph plot colored by GO namespace category."""
 
-    def __init__(self, go_graph):
+    def __init__(self, go_graph: GOTermGraph) -> None:
         """Store the GOTermGraph to be plotted.
 
         Args:
@@ -113,7 +114,7 @@ class SimpleTreePlot(GoPlot):
         """
         self.go_graph = go_graph
 
-    def plot(self):
+    def plot(self) -> None:
         """Draw the GO graph with category-colored nodes and a legend."""
         if self.go_graph.root == "FantasyRoot":
             circular_pos = nx.circular_layout(self.go_graph.graph)
@@ -152,12 +153,12 @@ class SimpleTreePlot(GoPlot):
         ]
         plt.legend(handles=legend_labels)
 
-    def show(self):
+    def show(self) -> None:
         """Display the current matplotlib figure."""
         plt.show()
 
 
-def main():
+def main() -> None:
     """Plot a GO graph for a random sample of S. cerevisiae GO genes."""
     import random
 

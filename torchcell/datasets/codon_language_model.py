@@ -7,6 +7,7 @@
 
 import os
 from collections.abc import Callable
+from typing import Any
 
 import torch
 from calm import CaLM
@@ -29,10 +30,10 @@ class CalmDataset(BaseEmbeddingDataset):
         root: str,
         genome: SCerevisiaeGenome,
         model_name: str | None = "calm",
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
         batch_size: int = 100,
-    ):
+    ) -> None:
         """Initialize the CaLM model, parse the genome, and process embeddings."""
         self.genome = genome
         self.model_name = model_name
@@ -52,7 +53,7 @@ class CalmDataset(BaseEmbeddingDataset):
         return CaLM()
 
     @staticmethod
-    def parse_genome(genome) -> ParsedGenome:
+    def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome:
         """Extract the gene set from a genome into a ParsedGenome (or None)."""
         if genome is None:
             return None
@@ -61,7 +62,7 @@ class CalmDataset(BaseEmbeddingDataset):
             data["gene_set"] = genome.gene_set
             return ParsedGenome(**data)
 
-    def process(self):
+    def process(self) -> None:
         """Embed each gene's CDS with CaLM and save the processed data list."""
         data_list = []
         (window_method, window_size, is_max_size) = self.MODEL_TO_WINDOW[

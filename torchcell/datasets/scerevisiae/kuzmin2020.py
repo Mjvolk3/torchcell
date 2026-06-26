@@ -10,6 +10,7 @@ import os.path as osp
 import pickle
 import zipfile
 from collections.abc import Callable
+from typing import Any
 
 import lmdb
 import pandas as pd
@@ -54,10 +55,10 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/smf_kuzmin2020",
         io_workers: int = 0,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-        **kwargs,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize the dataset at the given root, triggering download/process."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
@@ -81,7 +82,7 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
         """Return the processed output name (the LMDB directory)."""
         return "lmdb"
 
-    def download(self):
+    def download(self) -> None:
         """Download and extract the supplementary zip, then remove the archive."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
@@ -89,7 +90,7 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
         os.remove(path)
 
     @post_process
-    def process(self):
+    def process(self) -> None:
         """Read, preprocess, and serialize experiments into the LMDB store."""
         df = pd.read_excel(osp.join(self.raw_dir, self.raw_file_names), skiprows=1)
         df = self.preprocess_raw(df)
@@ -126,7 +127,9 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
         return df
 
     @staticmethod
-    def create_experiment(dataset_name, row):
+    def create_experiment(
+        dataset_name: str, row: pd.Series
+    ) -> tuple[FitnessExperiment, FitnessExperimentReference, Publication]:
         """Build the experiment, reference, and publication objects from one row."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
@@ -191,10 +194,10 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/dmf_kuzmin2020",
         io_workers: int = 0,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-        **kwargs,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize the dataset at the given root, triggering download/process."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
@@ -222,7 +225,7 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
         """Return the processed output name (the LMDB directory)."""
         return "lmdb"
 
-    def download(self):
+    def download(self) -> None:
         """Download and extract the supplementary zip, then remove the archive."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
@@ -230,7 +233,7 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
         os.remove(path)
 
     @post_process
-    def process(self):
+    def process(self) -> None:
         """Read, preprocess, and serialize experiments into the LMDB store."""
         df_s1 = pd.read_excel(
             osp.join(self.raw_dir, self.raw_file_names[0]), skiprows=1
@@ -360,7 +363,9 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
         return df
 
     @staticmethod
-    def create_experiment(dataset_name, row):
+    def create_experiment(
+        dataset_name: str, row: pd.Series
+    ) -> tuple[FitnessExperiment, FitnessExperimentReference, Publication]:
         """Build the experiment, reference, and publication objects from one row."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
@@ -461,10 +466,10 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
         root: str = "data/torchcell/tmf_kuzmin2020",
         subset_n: int = None,
         io_workers: int = 0,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-        **kwargs,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize the dataset, optionally subsetting to subset_n records."""
         self.subset_n = subset_n
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
@@ -489,7 +494,7 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
         """Return the processed output name (the LMDB directory)."""
         return "lmdb"
 
-    def download(self):
+    def download(self) -> None:
         """Download and extract the supplementary zip, then remove the archive."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
@@ -497,7 +502,7 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
         os.remove(path)
 
     @post_process
-    def process(self):
+    def process(self) -> None:
         """Read, preprocess, and serialize experiments into the LMDB store."""
         df_s1 = pd.read_excel(
             osp.join(self.raw_dir, self.raw_file_names[0]), skiprows=1
@@ -589,7 +594,9 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
         return df.reset_index(drop=True)
 
     @staticmethod
-    def create_experiment(dataset_name, row, phenotype_reference_std):
+    def create_experiment(
+        dataset_name: str, row: pd.Series, phenotype_reference_std: float
+    ) -> tuple[FitnessExperiment, FitnessExperimentReference, Publication]:
         """Build the experiment, reference, and publication objects from one row."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
@@ -709,10 +716,10 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
         root: str = "data/torchcell/dmi_kuzmin2020",
         subset_n: int = None,
         io_workers: int = 0,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-        **kwargs,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize the dataset, optionally subsetting to subset_n records."""
         self.subset_n = subset_n
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
@@ -737,7 +744,7 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
         """Return the processed output name (the LMDB directory)."""
         return "lmdb"
 
-    def download(self):
+    def download(self) -> None:
         """Download and extract the supplementary zip, then remove the archive."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
@@ -745,7 +752,7 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
         os.remove(path)
 
     @post_process
-    def process(self):
+    def process(self) -> None:
         """Read, preprocess, and serialize experiments into the LMDB store."""
         df_s1 = pd.read_excel(
             osp.join(self.raw_dir, self.raw_file_names[0]), skiprows=1
@@ -831,7 +838,11 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
         return df.reset_index(drop=True)
 
     @staticmethod
-    def create_experiment(dataset_name, row):
+    def create_experiment(
+        dataset_name: str, row: pd.Series
+    ) -> tuple[
+        GeneInteractionExperiment, GeneInteractionExperimentReference, Publication
+    ]:
         """Build the experiment, reference, and publication objects from one row."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
@@ -934,10 +945,10 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
         root: str = "data/torchcell/tmi_kuzmin2020",
         subset_n: int = None,
         io_workers: int = 0,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-        **kwargs,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize the dataset, optionally subsetting to subset_n records."""
         self.subset_n = subset_n
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
@@ -962,7 +973,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
         """Return the processed output name (the LMDB directory)."""
         return "lmdb"
 
-    def download(self):
+    def download(self) -> None:
         """Download and extract the supplementary zip, then remove the archive."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
@@ -970,7 +981,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
         os.remove(path)
 
     @post_process
-    def process(self):
+    def process(self) -> None:
         """Read, preprocess, and serialize experiments into the LMDB store."""
         df_s1 = pd.read_excel(
             osp.join(self.raw_dir, self.raw_file_names[0]), skiprows=1
@@ -1049,7 +1060,11 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
         return df.reset_index(drop=True)
 
     @staticmethod
-    def create_experiment(dataset_name, row):
+    def create_experiment(
+        dataset_name: str, row: pd.Series
+    ) -> tuple[
+        GeneInteractionExperiment, GeneInteractionExperimentReference, Publication
+    ]:
         """Build the experiment, reference, and publication objects from one row."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
@@ -1159,7 +1174,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
         return experiment, reference, publication
 
 
-def main():
+def main() -> None:
     """Build and print summaries of the Kuzmin 2020 datasets for testing."""
     # Test the datasets
     datasets = [

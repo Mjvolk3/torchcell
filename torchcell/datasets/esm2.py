@@ -6,6 +6,7 @@
 
 import os
 from collections.abc import Callable
+from typing import Any
 
 import torch
 from torch_geometric.data import Data
@@ -88,8 +89,8 @@ class Esm2Dataset(BaseEmbeddingDataset):
         root: str,
         genome: SCerevisiaeGenome,
         model_name: str | None = None,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
     ):
         """Configure the genome and model, then process embeddings if needed."""
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -109,7 +110,7 @@ class Esm2Dataset(BaseEmbeddingDataset):
             )
 
     @staticmethod
-    def parse_genome(genome) -> ParsedGenome:
+    def parse_genome(genome: SCerevisiaeGenome) -> ParsedGenome:
         """Return a ParsedGenome holding the genome's gene set, or None."""
         if genome is None:
             return None
@@ -122,7 +123,7 @@ class Esm2Dataset(BaseEmbeddingDataset):
         """Return the ESM2 model corresponding to the selected model name."""
         return Esm2(model_name=self.MODEL_TO_WINDOW[self.model_name][0])
 
-    def process(self):
+    def process(self) -> None:
         """Compute ESM2 embeddings for each gene and save the processed dataset."""
         self.transformer = self.initialize_model()
         if not self.model_name:

@@ -10,6 +10,7 @@ import os
 import os.path as osp
 import pickle
 from collections.abc import Callable
+from typing import Any
 
 import lmdb
 import networkx as nx
@@ -36,7 +37,7 @@ class ParsedGenome(ModelStrictArbitrary):
     gene_set: GeneSet
 
     @field_validator("gene_set")
-    def validate_gene_set(cls, v):
+    def validate_gene_set(cls, v: GeneSet) -> GeneSet:
         """Validate that the provided value is a GeneSet."""
         if not isinstance(v, GeneSet):
             raise ValueError(f"gene_set must be a GeneSet, got {type(v).__name__}")
@@ -56,10 +57,10 @@ class CellDataset(Dataset):
         embeddings: BaseEmbeddingDataset | None = None,
         experiments: list[InMemoryDataset] | InMemoryDataset = None,
         zero_pert: bool = False,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-        pre_filter: Callable | None = None,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        pre_filter: Callable[..., Any] | None = None,
+    ) -> None:
         """Parse the genome, build the composed cell graph, and prepare LMDB storage.
 
         Args:
@@ -124,7 +125,7 @@ class CellDataset(Dataset):
         return data
 
     @staticmethod
-    def parse_genome(genome) -> ParsedGenome:
+    def parse_genome(genome: Genome) -> ParsedGenome:
         """Extract the gene set from a genome into a picklable ParsedGenome."""
         data = {}
         data["gene_set"] = genome.gene_set
@@ -153,7 +154,7 @@ class CellDataset(Dataset):
     #     data = self._add_label(subset_data, wt)
     #     return data
     @property
-    def wt(self):
+    def wt(self) -> None:
         """Return the wild-type reference sample (currently None)."""
         return None
 
@@ -185,7 +186,7 @@ class CellDataset(Dataset):
     #     return data
     # IDEA this is really about composing node features with edge features... we will need something more sophisticated for multigraphs.
     @staticmethod
-    def safe_compose(graphs):
+    def safe_compose(graphs: list[nx.Graph]) -> nx.Graph:
         """Compose graphs, erroring on conflicting attrs and merging node attrs into x."""
         if any(isinstance(G, nx.DiGraph) for G in graphs):
             # Convert all graphs to DiGraph if at least one is directed
@@ -255,7 +256,9 @@ class CellDataset(Dataset):
         return composed_graph
 
     @staticmethod
-    def create_embedding_graph(genome, embeddings: BaseEmbeddingDataset) -> nx.Graph:
+    def create_embedding_graph(
+        genome: ParsedGenome, embeddings: BaseEmbeddingDataset
+    ) -> nx.Graph:
         """Build a node-only NetworkX graph with concatenated embeddings per gene."""
         # Create an empty NetworkX graph
         G = nx.Graph()
@@ -272,7 +275,7 @@ class CellDataset(Dataset):
 
         return G
 
-    def process(self):
+    def process(self) -> None:
         """Filter experiments to the gene set and write samples to the LMDB store."""
         combined_data = []
         self.gene_set = self.compute_gene_set()
@@ -304,7 +307,7 @@ class CellDataset(Dataset):
                 txn.put(f"{idx}".encode(), serialized_data)
 
     @property
-    def gene_set(self):
+    def gene_set(self) -> GeneSet:
         """Return the dataset gene set, loading it from the cached JSON file."""
         try:
             if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
@@ -320,7 +323,7 @@ class CellDataset(Dataset):
             raise ValueError("Invalid or empty JSON file found.")
 
     @gene_set.setter
-    def gene_set(self, value):
+    def gene_set(self, value: GeneSet) -> None:
         if not value:
             raise ValueError("Cannot set an empty or None value for gene_set")
         if not osp.exists(self.preprocess_dir):
@@ -329,7 +332,7 @@ class CellDataset(Dataset):
             json.dump(list(sorted(value)), f, indent=0)
         self._gene_set = value
 
-    def compute_gene_set(self):
+    def compute_gene_set(self) -> set[str]:
         """Return the intersection of the genome gene set and experiment gene set."""
         if not self._gene_set:
             if isinstance(self.experiments, Dataset):
@@ -415,7 +418,7 @@ class CellDataset(Dataset):
 
     # HACK
     @staticmethod
-    def extract_subgraph(node_idx, full_graph):
+    def extract_subgraph(node_idx: int, full_graph: Data) -> Data:
         """Return the 1-hop subgraph around ``node_idx`` from the full graph."""
         subset, edge_index, _, _ = k_hop_subgraph(
             node_idx=node_idx,
@@ -466,7 +469,7 @@ class CellDataset(Dataset):
 
     #         return subset_data
 
-    def get(self, idx):
+    def get(self, idx: int) -> Any:
         """Initialize LMDB if it hasn't been initialized yet."""
         if self.env is None:
             self._init_db()
@@ -483,7 +486,7 @@ class CellDataset(Dataset):
             subset_data = self._add_label(subset_data, data)
             return subset_data
 
-    def _init_db(self):
+    def _init_db(self) -> None:
         """Initialize the LMDB environment."""
         self.env = lmdb.open(
             osp.join(self.processed_dir, "data.lmdb"),
@@ -506,7 +509,7 @@ class CellDataset(Dataset):
 
         return length
 
-    def close_lmdb(self):
+    def close_lmdb(self) -> None:
         """Close the LMDB environment if it is open."""
         if self.env is not None:
             self.env.close()
@@ -519,7 +522,7 @@ class NeoCellDataset(Dataset):
     pass
 
 
-def main():
+def main() -> None:
     """Build a small CellDataset from embeddings and Costanzo data as a demo."""
     # genome
     import os.path as osp

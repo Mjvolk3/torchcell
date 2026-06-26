@@ -7,6 +7,7 @@
 import os
 import os.path as osp
 from collections.abc import Callable
+from typing import Any
 
 import torch
 from torch_geometric.data import Data
@@ -35,9 +36,9 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
         root: str,
         genome: SCerevisiaeGenome,
         model_name: str | None = None,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+    ) -> None:
         """Set up the dataset, computing or loading embeddings if a model is given.
 
         Args:
@@ -69,7 +70,7 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
         del genome
 
     @staticmethod
-    def parse_genome(genome) -> ParsedGenome:
+    def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome:
         """Build a ParsedGenome holding the gene set, or None if genome is None."""
         # BUG we have to do this black magic because when you merge datasets with +
         # the genome is None
@@ -80,13 +81,13 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
             data["gene_set"] = genome.gene_set
             return ParsedGenome(**data)
 
-    def initialize_model(self):
+    def initialize_model(self) -> NucleotideTransformer | None:
         """Instantiate the NucleotideTransformer model, or None if no model name."""
         if self.model_name:
             return NucleotideTransformer()
         return None
 
-    def process(self):
+    def process(self) -> None:
         """Embed each gene's windowed sequence and save the collated dataset."""
         if self.model_name is None:
             return
@@ -144,7 +145,7 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
         torch.save(self.collate(data_list), self.processed_paths[0])
 
 
-def main():
+def main() -> None:
     """Build embedding datasets for all configured window models."""
     import wandb
     from dotenv import load_dotenv

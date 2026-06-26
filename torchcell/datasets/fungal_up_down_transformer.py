@@ -6,6 +6,7 @@
 
 import os
 from collections.abc import Callable
+from typing import Any
 
 import torch
 from torch_geometric.data import Data
@@ -32,9 +33,9 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
         root: str,
         genome: SCerevisiaeGenome,
         model_name: str | None = None,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+    ) -> None:
         """Initialize the dataset, build the model, and load/process embeddings.
 
         Args:
@@ -65,7 +66,7 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
             )
 
     @staticmethod
-    def parse_genome(genome) -> ParsedGenome:
+    def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome:
         """Return a ParsedGenome holding the gene set, or None if genome is None."""
         # BUG we have to do this black magic because when you merge datasets with +
         # the genome is None
@@ -90,7 +91,7 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
             return FungalUpDownTransformer(model_name)
         return None
 
-    def process(self):
+    def process(self) -> None:
         """Embed each gene's sequence window and save the collated dataset."""
         if not self.model_name:
             return

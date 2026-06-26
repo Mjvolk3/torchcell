@@ -9,6 +9,7 @@ import json
 import logging
 import pickle
 from collections.abc import Callable
+from typing import Any
 
 import lmdb
 from tqdm import tqdm
@@ -29,11 +30,11 @@ class MergedExperiment(Dataset):
         self,
         root: str = "data/scerevisiae/merged_experiment",
         experiments: list[Dataset] = None,
-        preprocess: dict | None = None,
+        preprocess: dict[str, Any] | None = None,
         skip_process_file_exist_check: bool = False,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+    ) -> None:
         """Set up the merged dataset and validate the preprocess config.
 
         Args:
@@ -66,7 +67,7 @@ class MergedExperiment(Dataset):
         self.env = None
 
     @property
-    def skip_process_file_exist(self):
+    def skip_process_file_exist(self) -> bool:
         """Return whether the processed-file existence check is skipped."""
         return self._skip_process_file_exist
 
@@ -80,7 +81,7 @@ class MergedExperiment(Dataset):
         """Return the processed LMDB file name."""
         return "data.lmdb"
 
-    def _init_db(self):
+    def _init_db(self) -> None:
         """Initialize the LMDB environment."""
         self.env = lmdb.open(
             osp.join(self.processed_dir, "data.lmdb"),
@@ -90,36 +91,39 @@ class MergedExperiment(Dataset):
             meminit=False,
         )
 
-    def close_lmdb(self):
+    def close_lmdb(self) -> None:
         """Close the open LMDB environment if one exists."""
         if self.env is not None:
             self.env.close()
             self.env = None
 
     @property
-    def wt(self):
+    def wt(self) -> None:
         """Return the wild-type reference (not yet implemented)."""
         # TODO implement this, must be combination of all experiments
         pass
 
     # Merge Operations - This is HACK y
-    def get_genotype_key(self, data_item):
+    # data_item is a dynamic Data/dict experiment record
+    def get_genotype_key(self, data_item: Any) -> Any:
         """Return the genotype used as a merge key for a data item."""
         return data_item["genotype"]
 
-    def get_environment_key(self, data_item):
+    def get_environment_key(self, data_item: Any) -> Any:
         """Return the environment used as a merge key for a data item."""
         return data_item["phenotype"]["environment"]
 
-    def get_phenotype_key(self, data_item):
+    def get_phenotype_key(self, data_item: Any) -> Any:
         """Return the phenotype observation used as a merge key for a data item."""
         return data_item["phenotype"]["observation"]
 
-    def contains_key(self, key, data_list):
+    def contains_key(self, key: Any, data_list: list[Any]) -> bool:
         """Return whether any item in the list has the given genotype key."""
         return key in [self.get_genotype_key(data_item) for data_item in data_list]
 
-    def contains_environment_key(self, genotype_key, environment_key, data_list):
+    def contains_environment_key(
+        self, genotype_key: Any, environment_key: Any, data_list: list[Any]
+    ) -> bool:
         """Return whether the genotype already has the given environment key."""
         return environment_key in [
             self.get_environment_key(data_item)
@@ -128,7 +132,7 @@ class MergedExperiment(Dataset):
         ]
 
     @property
-    def experiment_indices(self):
+    def experiment_indices(self) -> dict[str, Any]:
         """Return cached per-source-dataset index ranges, or an empty dict."""
         indices_path = osp.join(self.processed_dir, "experiment_indices.json")
 
@@ -140,9 +144,9 @@ class MergedExperiment(Dataset):
         log.warning("No cached experiment indices found!")
         return {}
 
-    def process(self):
+    def process(self) -> None:
         """Merge, dedup, and write all experiment items to the processed LMDB."""
-        combined_data_list = []
+        combined_data_list: list[Any] = []
         source_dataset_list = []  # New list to track the source dataset of each item
 
         # Extract the desired temperature from the preprocess dictionary, if specified
@@ -220,7 +224,7 @@ class MergedExperiment(Dataset):
         with open(osp.join(self.processed_dir, "experiment_indices.json"), "w") as f:
             json.dump(experiment_indices, f, indent=4)
 
-    def get(self, idx):
+    def get(self, idx: int) -> Any:
         """Initialize LMDB if it hasn't been initialized yet."""
         if self.env is None:
             self._init_db()
@@ -235,7 +239,7 @@ class MergedExperiment(Dataset):
             return data
 
     # New method to save preprocess configuration to a JSON file
-    def save_preprocess_config(self, preprocess):
+    def save_preprocess_config(self, preprocess: dict[str, Any]) -> None:
         """Write the preprocess config to JSON in the preprocess directory."""
         if not osp.exists(self.preprocess_dir):
             os.makedirs(self.preprocess_dir)
@@ -243,7 +247,7 @@ class MergedExperiment(Dataset):
             json.dump(preprocess, f)
 
     # New method to load existing preprocess configuration
-    def load_preprocess_config(self):
+    def load_preprocess_config(self) -> Any:  # dynamic JSON config or None
         """Load the saved preprocess config from JSON, or return None if absent."""
         config_path = osp.join(self.preprocess_dir, "preprocess_config.json")
 
@@ -268,7 +272,7 @@ class MergedExperiment(Dataset):
         return length
 
     @staticmethod
-    def compute_gene_set(data_list):
+    def compute_gene_set(data_list: list[Any]) -> GeneSet:
         """Return the GeneSet of all genotype ids across the given data list."""
         computed_gene_set = GeneSet()
         for data in data_list:
@@ -278,7 +282,7 @@ class MergedExperiment(Dataset):
 
     # Reading from JSON and setting it to self._gene_set
     @property
-    def gene_set(self):
+    def gene_set(self) -> GeneSet:
         """Return the dataset's GeneSet, loading it from JSON when available."""
         try:
             if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
@@ -295,7 +299,7 @@ class MergedExperiment(Dataset):
             raise ValueError("Invalid or empty JSON file found.")
 
     @gene_set.setter
-    def gene_set(self, value):
+    def gene_set(self, value: GeneSet) -> None:
         if not value:
             raise ValueError("Cannot set an empty or None value for gene_set")
         os.makedirs(self.preprocess_dir, exist_ok=True)
@@ -303,7 +307,7 @@ class MergedExperiment(Dataset):
             json.dump(list(sorted(value)), f, indent=0)
         self._gene_set = value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a string with the class name and item count."""
         return f"{self.__class__.__name__}({len(self)})"
 

@@ -8,6 +8,7 @@
 # File needs to be down loaded from here http://sgd-archive.yeastgenome.org/expression/microarray/all_spell_datasets.tar.gz
 
 import os.path as osp
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,7 +25,7 @@ ASSET_IMAGES_DIR = osp.expanduser(
 DATA_ROOT = osp.expanduser(osp.join("~", "Documents", "projects", "torchcell"))
 
 
-def read_pcl_file(pcl_path):
+def read_pcl_file(pcl_path: str) -> tuple[pd.DataFrame, dict[str, Any]]:
     """Parse a PCL (Platform for Clustering and Linkage) file from SPELL database.
 
     PCL format:
@@ -64,8 +65,12 @@ def read_pcl_file(pcl_path):
 
 
 def plot_expression_histograms(
-    df, metadata, gene_list=None, title_prefix="SPELL", save_path=None
-):
+    df: pd.DataFrame,
+    metadata: dict[str, Any],
+    gene_list: list[str] | None = None,
+    title_prefix: str = "SPELL",
+    save_path: str | None = None,
+) -> None:
     """Plot histograms of log2 expression ratios for selected genes across all conditions.
 
     Args:
@@ -129,8 +134,11 @@ def plot_expression_histograms(
 
 
 def plot_global_expression_distribution(
-    df, metadata, title_prefix="SPELL", save_path=None
-):
+    df: pd.DataFrame,
+    metadata: dict[str, Any],
+    title_prefix: str = "SPELL",
+    save_path: str | None = None,
+) -> None:
     """Plot histogram of all log2 expression ratios across all genes and conditions.
 
     Args:
@@ -185,8 +193,10 @@ def plot_global_expression_distribution(
 
 
 def extract_and_load_all_spell_studies(
-    spell_root_dir, studies_to_load=None, max_studies=None
-):
+    spell_root_dir: str,
+    studies_to_load: list[str] | None = None,
+    max_studies: int | None = None,
+) -> dict[tuple[str, str], tuple[pd.DataFrame, dict[str, Any]]]:
     """Extract and load PCL files from multiple SPELL studies.
 
     Args:
@@ -200,7 +210,7 @@ def extract_and_load_all_spell_studies(
     import glob
     import zipfile
 
-    all_data = {}
+    all_data: dict[tuple[str, str], tuple[pd.DataFrame, dict[str, Any]]] = {}
     studies_loaded = 0
 
     # Find all zip files
@@ -259,7 +269,11 @@ def extract_and_load_all_spell_studies(
     return all_data
 
 
-def plot_genes_across_all_studies(all_data, gene_list, save_path=None):
+def plot_genes_across_all_studies(
+    all_data: dict[tuple[str, str], tuple[pd.DataFrame, dict[str, Any]]],
+    gene_list: list[str],
+    save_path: str | None = None,
+) -> None:
     """Plot expression histograms for given genes across all SPELL datasets.
 
     Plot histograms showing expression distributions for specific genes
@@ -272,8 +286,8 @@ def plot_genes_across_all_studies(all_data, gene_list, save_path=None):
         save_path: Path to save the figure
     """
     # Collect expression data for each gene across all studies and datasets
-    gene_data = {gene: [] for gene in gene_list}
-    gene_names = {}
+    gene_data: dict[str, list[float]] = {gene: [] for gene in gene_list}
+    gene_names: dict[str, Any] = {}  # df.loc[gene, "NAME"] value is dynamic
     total_conditions = 0
     total_datasets = len(all_data)
     total_studies = len(set(key[0] for key in all_data.keys()))
@@ -360,7 +374,7 @@ def plot_genes_across_all_studies(all_data, gene_list, save_path=None):
         plt.show()
 
 
-def extract_time_info(condition_name):
+def extract_time_info(condition_name: str) -> dict[str, Any]:
     """Extract time information from condition name."""
     import re
 
@@ -398,7 +412,7 @@ def extract_time_info(condition_name):
     return result
 
 
-def extract_temperature_info(condition_name):
+def extract_temperature_info(condition_name: str) -> dict[str, Any]:
     """Extract temperature information from condition name."""
     import re
 
@@ -420,7 +434,7 @@ def extract_temperature_info(condition_name):
     return result
 
 
-def extract_chemical_info(condition_name):
+def extract_chemical_info(condition_name: str) -> dict[str, Any]:
     """Extract chemical compound information from condition name."""
     import re
 
@@ -485,7 +499,7 @@ def extract_chemical_info(condition_name):
     return result
 
 
-def extract_nutrient_info(condition_name):
+def extract_nutrient_info(condition_name: str) -> dict[str, Any]:
     """Extract nutrient composition information."""
     result = {"carbon_source": None, "nitrogen_source": None, "limitation_type": None}
 
@@ -534,7 +548,7 @@ def extract_nutrient_info(condition_name):
     return result
 
 
-def extract_physical_params(condition_name):
+def extract_physical_params(condition_name: str) -> dict[str, Any]:
     """Extract physical parameters like pH, oxygen level."""
     import re
 
@@ -565,7 +579,7 @@ def extract_physical_params(condition_name):
     return result
 
 
-def extract_stress_info(condition_name):
+def extract_stress_info(condition_name: str) -> dict[str, Any]:
     """Extract stress type information."""
     result = {"stress_type": None}
 
@@ -591,7 +605,7 @@ def extract_stress_info(condition_name):
     return result
 
 
-def extract_cell_cycle_info(condition_name):
+def extract_cell_cycle_info(condition_name: str) -> dict[str, Any]:
     """Extract cell cycle information."""
     result = {"cell_cycle_phase": None, "synchronization_method": None}
 
@@ -623,7 +637,7 @@ def extract_cell_cycle_info(condition_name):
     return result
 
 
-def extract_replicate_info(condition_name):
+def extract_replicate_info(condition_name: str) -> dict[str, Any]:
     """Extract replicate information."""
     import re
 
@@ -655,7 +669,10 @@ def extract_replicate_info(condition_name):
     return result
 
 
-def export_condition_metadata(all_data, output_path=None):
+def export_condition_metadata(
+    all_data: dict[tuple[str, str], tuple[pd.DataFrame, dict[str, Any]]],
+    output_path: str | None = None,
+) -> pd.DataFrame:
     """Export detailed condition metadata for analysis and visualization.
 
     Creates an enhanced CSV with structured columns for environmental parameters:
@@ -686,7 +703,7 @@ def export_condition_metadata(all_data, output_path=None):
         )
 
     # Parse condition metadata
-    condition_records = []
+    condition_records: list[dict[str, Any]] = []
 
     # Define categories based on keywords
     categories = {
@@ -755,7 +772,7 @@ def export_condition_metadata(all_data, output_path=None):
 
             # Categorize condition
             condition_lower = condition.lower()
-            matched_categories = []
+            matched_categories: list[str] = []
 
             for category, keywords in categories.items():
                 if any(kw in condition_lower for kw in keywords):
@@ -956,7 +973,9 @@ def export_condition_metadata(all_data, output_path=None):
     return df_conditions
 
 
-def check_condition_metadata_quality(all_data):
+def check_condition_metadata_quality(
+    all_data: dict[tuple[str, str], tuple[pd.DataFrame, dict[str, Any]]],
+) -> dict[str, Any]:
     """Check if all expression data has proper condition labels.
 
     Returns:
@@ -1051,7 +1070,7 @@ def check_condition_metadata_quality(all_data):
     return stats
 
 
-def main():
+def main() -> None:
     """Load SPELL data and plot per-gene expression histograms.
 
     Load SPELL expression data from multiple studies and create histograms

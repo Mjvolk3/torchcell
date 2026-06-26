@@ -9,7 +9,8 @@ import logging
 import os
 import os.path as osp
 import pickle
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from typing import Any
 
 import lmdb
 import numpy as np
@@ -35,13 +36,13 @@ class BaseQuery:
     username: str = field(default="neo4j")
     password: str = field(default="neo4j")
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self) -> None:
         """Open the Neo4j driver using the configured URI and credentials."""
         self.driver = GraphDatabase.driver(
             self.uri, auth=(self.username, self.password)
         )
 
-    def get_data(self):
+    def get_data(self) -> Iterator[Any]:  # Neo4j Record objects are dynamically typed
         """Run the query in a session and yield each result record, then close."""
         with self.driver.session() as session:
             result = session.run(self.query)
@@ -62,11 +63,11 @@ class Cell(Dataset):
         self,
         root: str = "data/torchcell/dmf_costanzo2016",
         subset_n: int = None,
-        preprocess: dict | None = None,
+        preprocess: dict[str, Any] | None = None,
         skip_process_file_exist: bool = False,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+    ) -> None:
         """Set up preprocessing config, validate it against any existing config, and process.
 
         Args:
@@ -102,7 +103,7 @@ class Cell(Dataset):
         # self.env = None
 
     @property
-    def skip_process_file_exist(self):
+    def skip_process_file_exist(self) -> bool:
         """Return whether the processed-file existence check is skipped."""
         return self._skip_process_file_exist
 
@@ -116,12 +117,12 @@ class Cell(Dataset):
         """Return the processed LMDB file name."""
         return "data.lmdb"
 
-    def download(self):
+    def download(self) -> None:
         """Download raw data (placeholder; query-based download not implemented)."""
         # TODO Run query to download data
         pass
 
-    def _init_db(self):
+    def _init_db(self) -> None:
         """Initialize the LMDB environment."""
         self.env = lmdb.open(
             osp.join(self.processed_dir, "data.lmdb"),
@@ -131,20 +132,20 @@ class Cell(Dataset):
             meminit=False,
         )
 
-    def close_lmdb(self):
+    def close_lmdb(self) -> None:
         """Close the LMDB environment if it is open."""
         if self.env is not None:
             self.env.close()
             self.env = None
 
     @property
-    def df(self):
+    def df(self) -> pd.DataFrame:
         """Return the preprocessed dataframe, loading it from CSV if present."""
         if osp.exists(osp.join(self.preprocess_dir, "data.csv")):
             self._df = pd.read_csv(osp.join(self.preprocess_dir, "data.csv"))
         return self._df
 
-    def process(self):
+    def process(self) -> None:
         """Read raw files, preprocess, optionally subsample, and write experiments to LMDB."""
         os.makedirs(self.preprocess_dir, exist_ok=True)
         self._length = None
@@ -194,26 +195,28 @@ class Cell(Dataset):
         self.gene_set = self.compute_gene_set()
 
     @staticmethod
-    def create_experiment(row):
+    def create_experiment(row: Any) -> Any:  # row is a pandas Series; subclasses return (experiment, reference)
         """Build an (experiment, reference) pair from a dataframe row (override in subclass)."""
         # return experiment, reference
         pass
 
-    def preprocess_raw(self, df: pd.DataFrame, preprocess: dict | None = None):
+    def preprocess_raw(
+        self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
+    ) -> pd.DataFrame:
         """Apply dataset-specific filtering to the raw dataframe (override in subclass)."""
         print("Preprocess on raw data...")
         # return df
         pass
 
     # New method to save preprocess configuration to a JSON file
-    def save_preprocess_config(self, preprocess):
+    def save_preprocess_config(self, preprocess: dict[str, Any] | None) -> None:
         """Write the preprocessing configuration to a JSON file in the preprocess dir."""
         if not osp.exists(self.preprocess_dir):
             os.makedirs(self.preprocess_dir)
         with open(osp.join(self.preprocess_dir, "preprocess_config.json"), "w") as f:
             json.dump(preprocess, f)
 
-    def load_preprocess_config(self):
+    def load_preprocess_config(self) -> dict[str, Any] | None:
         """Load the saved preprocessing config from JSON, or None if absent."""
         config_path = osp.join(self.preprocess_dir, "preprocess_config.json")
 
@@ -237,7 +240,7 @@ class Cell(Dataset):
 
         return length
 
-    def get(self, idx):
+    def get(self, idx: int | list[int] | np.ndarray) -> Any:
         """Retrieve one item or a list of items for the given index, mask, or array."""
         if self.env is None:
             self._init_db()
@@ -258,7 +261,7 @@ class Cell(Dataset):
             # Single item retrieval
             return self.get_single_item(idx)
 
-    def get_single_item(self, idx):
+    def get_single_item(self, idx: int) -> Any:
         """Deserialize and return the stored record at the given index, or None."""
         with self.env.begin() as txn:
             serialized_data = txn.get(f"{idx}".encode())
@@ -269,9 +272,9 @@ class Cell(Dataset):
             return deserialized_data
 
     @staticmethod
-    def extract_systematic_gene_names(genotypes):
+    def extract_systematic_gene_names(genotypes: Any) -> list[str]:  # iterable of dynamic genotype objects
         """Return the systematic gene names from each genotype's perturbation."""
-        gene_names = []
+        gene_names: list[str] = []
         for genotype in genotypes:
             if hasattr(genotype, "perturbation") and hasattr(
                 genotype.perturbation, "systematic_gene_name"
@@ -280,7 +283,7 @@ class Cell(Dataset):
                 gene_names.append(gene_name)
         return gene_names
 
-    def compute_gene_set(self):
+    def compute_gene_set(self) -> GeneSet:
         """Scan all LMDB records and build the GeneSet of perturbed gene names."""
         gene_set = GeneSet()
         if self.env is None:
@@ -304,7 +307,7 @@ class Cell(Dataset):
 
     # Reading from JSON and setting it to self._gene_set
     @property
-    def gene_set(self):
+    def gene_set(self) -> GeneSet:
         """Return the GeneSet, loading from gene_set.json if it exists."""
         if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
             with open(osp.join(self.preprocess_dir, "gene_set.json")) as f:
@@ -317,7 +320,7 @@ class Cell(Dataset):
         return self._gene_set
 
     @gene_set.setter
-    def gene_set(self, value):
+    def gene_set(self, value: GeneSet) -> None:
         if not value:
             raise ValueError("Cannot set an empty or None value for gene_set")
         with open(osp.join(self.preprocess_dir, "gene_set.json"), "w") as f:
@@ -325,13 +328,13 @@ class Cell(Dataset):
         self._gene_set = value
 
     @property
-    def experiment_reference_index(self):
+    def experiment_reference_index(self) -> None:
         """Return the experiment-to-reference index (not yet implemented; returns None)."""
         # TODO implement
         self._experiment_reference_index = None
         return self._experiment_reference_index
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a string with the class name and number of items."""
         return f"{self.__class__.__name__}({len(self)})"
 

@@ -4,10 +4,14 @@
 # Test file: tests/torchcell/datasets/test_dataset_registry.py
 """Global registry mapping dataset class names to classes for lookup by name."""
 
-dataset_registry = {}
+from typing import TypeVar
+
+_T = TypeVar("_T", bound=type)
+
+dataset_registry: dict[str, type] = {}
 
 
-def register_dataset(cls):
+def register_dataset(cls: _T) -> _T:
     """Register a dataset class by its name and return it unchanged (decorator)."""
     dataset_registry[cls.__name__] = cls
     return cls

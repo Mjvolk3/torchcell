@@ -6,6 +6,7 @@
 
 import os
 from collections.abc import Callable
+from typing import Any
 
 import pandas as pd
 import torch
@@ -22,8 +23,8 @@ class Baryshnikovna2010Dataset(InMemoryDataset):
     def __init__(
         self,
         root: str = "data/scerevisiae/baryshnikovna2010",
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
     ):
         """Initialize the dataset at root and load the processed tensors."""
         super().__init__(root, transform, pre_transform)
@@ -39,12 +40,12 @@ class Baryshnikovna2010Dataset(InMemoryDataset):
         """Return the name of the processed file written to the processed directory."""
         return "data.pt"
 
-    def download(self):
+    def download(self) -> None:
         """Download the source spreadsheet and store it as ``data.xls``."""
         path = download_url(self.url, self.raw_dir)
         os.rename(path, os.path.join(self.raw_dir, "data.xls"))
 
-    def process(self):
+    def process(self) -> None:
         """Parse fitness rows into per-genotype Data objects and save the collated set."""
         xls_path = os.path.join(self.raw_dir, "data.xls")
         df = pd.read_excel(xls_path, names=["id", "fitness", "std"])

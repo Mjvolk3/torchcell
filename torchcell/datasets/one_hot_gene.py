@@ -7,6 +7,7 @@
 
 import os
 from collections.abc import Callable
+from typing import Any
 
 import torch
 from torch_geometric.data import Data
@@ -26,8 +27,8 @@ class OneHotGeneDataset(BaseEmbeddingDataset):
         self,
         root: str,
         genome: SCerevisiaeGenome,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
     ):
         """Build the gene-to-index map and process one-hot embeddings.
 
@@ -57,7 +58,7 @@ class OneHotGeneDataset(BaseEmbeddingDataset):
 
     # This is done to avoid pkl error when since genome uses sqlite
     @staticmethod
-    def parse_genome(genome) -> ParsedGenome:
+    def parse_genome(genome: SCerevisiaeGenome) -> ParsedGenome:
         """Return a ParsedGenome holding the gene set, or None if genome is None."""
         # BUG we have to do this black magic because when you merge datasets with +
         # the genome is None
@@ -68,7 +69,7 @@ class OneHotGeneDataset(BaseEmbeddingDataset):
             data["gene_set"] = genome.gene_set
             return ParsedGenome(**data)
 
-    def initialize_model(self):
+    def initialize_model(self) -> None:
         """Return None; one-hot encoding requires no backing model."""
         return None
 
@@ -78,7 +79,7 @@ class OneHotGeneDataset(BaseEmbeddingDataset):
         encoded[self.gene_to_index[gene]] = 1
         return encoded
 
-    def process(self):
+    def process(self) -> None:
         """Encode every gene as a one-hot Data object and save the collated dataset."""
         # HACK
         if not self.model_name:

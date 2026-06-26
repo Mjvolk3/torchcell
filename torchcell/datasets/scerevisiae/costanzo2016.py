@@ -13,6 +13,7 @@ import shutil
 import zipfile
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 import lmdb
 import pandas as pd
@@ -119,10 +120,10 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/smf_costanzo2016",
         io_workers: int = 0,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-        **kwargs,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize the SMF dataset under ``root`` via the base dataset."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
@@ -141,7 +142,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         """Return the single-mutant fitness raw spreadsheet name."""
         return "strain_ids_and_single_mutant_fitness.xlsx"
 
-    def download(self):
+    def download(self) -> None:
         """Download and unpack the Costanzo archive, keeping the SMF spreadsheet."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
@@ -163,7 +164,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
                 os.remove(osp.join(self.raw_dir, file_name))
 
     @post_process
-    def process(self):
+    def process(self) -> None:
         """Read the SMF spreadsheet and write experiment records into LMDB."""
         xlsx_path = osp.join(self.raw_dir, "strain_ids_and_single_mutant_fitness.xlsx")
         df = pd.read_excel(xlsx_path)
@@ -283,7 +284,8 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         return combined_df
 
     @staticmethod
-    def compute_phenotype_reference_std(df: pd.DataFrame):
+    def compute_phenotype_reference_std(df: pd.DataFrame) -> tuple[Any, Any]:
+        # reason: pandas Series scalar indexing yields dynamically-typed values
         """Return mean SMF stddev at 26C and 30C used as reference noise."""
         mean_stds = df.groupby("Temperature")["Single mutant fitness stddev"].mean()
         phenotype_reference_std_26 = mean_stds[26]
@@ -292,8 +294,11 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
 
     @staticmethod
     def create_experiment(
-        dataset_name, row, phenotype_reference_std_26, phenotype_reference_std_30
-    ):
+        dataset_name: str,
+        row: pd.Series,
+        phenotype_reference_std_26: Any,
+        phenotype_reference_std_30: Any,
+    ) -> tuple[FitnessExperiment, FitnessExperimentReference, Publication]:
         """Build SMF experiment, reference, and publication objects for a row."""
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
@@ -439,17 +444,17 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         subset_n: int = None,
         batch_size: int = int(1e4),
         io_workers: int = 1,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-        **kwargs,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize the dataset with optional subsetting and batched IO."""
         self.io_workers = io_workers
         self.subset_n = subset_n
         self.batch_size = batch_size
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
-    def download(self):
+    def download(self) -> None:
         """Download and unpack the Costanzo archive, keeping the SGA text files."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
@@ -482,12 +487,14 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         """Return the SGA interaction text files used as raw input."""
         return ["SGA_DAmP.txt", "SGA_ExE.txt", "SGA_ExN_NxE.txt", "SGA_NxN.txt"]
 
-    def preprocess_raw(self, df: pd.DataFrame, preprocess: dict | None = None):
+    def preprocess_raw(
+        self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
+    ) -> pd.DataFrame:
         """Concatenate and clean the SGA files into a double-mutant fitness table."""
         log.info("Preprocess on raw data...")
 
         # Function to extract gene name
-        def extract_systematic_name(x):
+        def extract_systematic_name(x: pd.Series) -> pd.Series:
             return x.apply(lambda y: y.split("_")[0])
 
         # Extract gene names
@@ -548,7 +555,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         return df
 
     @post_process
-    def process(self):
+    def process(self) -> None:
         """Preprocess the raw SGA files and write records into LMDB in batches."""
         os.makedirs(self.preprocess_dir, exist_ok=True)
 
@@ -597,7 +604,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
 
         env.close()
 
-    def _process_batch(self, batch_df, env):
+    def _process_batch(self, batch_df: pd.DataFrame, env: lmdb.Environment) -> None:
         with env.begin(write=True) as txn:
             for index, row in batch_df.iterrows():
                 experiment, reference, publication = self.create_experiment(
@@ -620,8 +627,11 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
 
     @staticmethod
     def create_experiment(
-        dataset_name, row, phenotype_reference_std_26, phenotype_reference_std_30
-    ):
+        dataset_name: str,
+        row: pd.Series,
+        phenotype_reference_std_26: Any,
+        phenotype_reference_std_30: Any,
+    ) -> tuple[FitnessExperiment, FitnessExperimentReference, Publication]:
         """Build DMF experiment, reference, and publication objects for a row."""
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
@@ -804,17 +814,17 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         subset_n: int = None,
         batch_size: int = int(1e4),
         io_workers: int = 1,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-        **kwargs,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize the dataset with optional subsetting and batched IO."""
         self.io_workers = io_workers
         self.subset_n = subset_n
         self.batch_size = batch_size
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
-    def download(self):
+    def download(self) -> None:
         """Download and unpack the Costanzo archive, keeping the SGA text files."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
@@ -847,12 +857,14 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         """Return the SGA interaction text files used as raw input."""
         return ["SGA_DAmP.txt", "SGA_ExE.txt", "SGA_ExN_NxE.txt", "SGA_NxN.txt"]
 
-    def preprocess_raw(self, df: pd.DataFrame, preprocess: dict | None = None):
+    def preprocess_raw(
+        self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
+    ) -> pd.DataFrame:
         """Concatenate and clean the SGA files into a genetic-interaction table."""
         log.info("Preprocess on raw data...")
 
         # Function to extract gene name
-        def extract_systematic_name(x):
+        def extract_systematic_name(x: pd.Series) -> pd.Series:
             return x.apply(lambda y: y.split("_")[0])
 
         # Extract gene names
@@ -906,7 +918,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         return df
 
     @post_process
-    def process(self):
+    def process(self) -> None:
         """Preprocess the raw SGA files and write records into LMDB in batches."""
         os.makedirs(self.preprocess_dir, exist_ok=True)
 
@@ -955,7 +967,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
 
         env.close()
 
-    def _process_batch(self, batch_df, env):
+    def _process_batch(self, batch_df: pd.DataFrame, env: lmdb.Environment) -> None:
         with env.begin(write=True) as txn:
             for index, row in batch_df.iterrows():
                 experiment, reference, publication = self.create_experiment(
@@ -974,7 +986,11 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
                 txn.put(f"{index}".encode(), serialized_data)
 
     @staticmethod
-    def create_experiment(dataset_name, row):
+    def create_experiment(
+        dataset_name: str, row: pd.Series
+    ) -> tuple[
+        GeneInteractionExperiment, GeneInteractionExperimentReference, Publication
+    ]:
         """Build DMI interaction experiment, reference, and publication objects."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
@@ -1107,7 +1123,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         return experiment, reference, publication
 
 
-def main():
+def main() -> None:
     """Build and inspect the Costanzo 2016 datasets as a manual run."""
     from dotenv import load_dotenv
 

@@ -10,6 +10,7 @@ import os
 import os.path as osp
 import pickle
 from collections.abc import Callable
+from typing import Any
 
 import lmdb
 import pandas as pd
@@ -61,10 +62,10 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/scmd_ohya2005",
         io_workers: int = 0,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-        **kwargs,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize the dataset rooted at ``root`` with optional transforms."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
@@ -83,7 +84,7 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         """Return the raw mutant and wildtype TSV filenames."""
         return ["mt4718data.tsv", "wt122data.tsv"]
 
-    def download(self):
+    def download(self) -> None:
         """Download mutant and wildtype data with fallback support."""
         # Download mutant data
         mutant_path = osp.join(self.raw_dir, "mt4718data.tsv")
@@ -160,7 +161,7 @@ class ScmdOhya2005Dataset(ExperimentDataset):
             return False
 
     @post_process
-    def process(self):
+    def process(self) -> None:
         """Load raw TSVs, build CalMorph experiments, and write the LMDB store."""
         # Load and preprocess data
         df_mutant = pd.read_csv(osp.join(self.raw_dir, "mt4718data.tsv"), sep="\t")
@@ -202,7 +203,7 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         env.close()
 
     def preprocess_raw(
-        self, df: pd.DataFrame, preprocess: dict | None = None
+        self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
     ) -> pd.DataFrame:
         """Preprocess raw data - for CalMorph this is handled in process()."""
         # For this dataset, preprocessing happens in process() with both dfs
@@ -233,7 +234,7 @@ class ScmdOhya2005Dataset(ExperimentDataset):
 
         return df_mutant
 
-    def _calculate_wt_reference(self, df_wt: pd.DataFrame) -> dict:
+    def _calculate_wt_reference(self, df_wt: pd.DataFrame) -> dict[str, Any]:
         """Calculate average wildtype morphology measurements."""
         # Wildtype data might have different column structure
         # Check for NAME or ORF column
@@ -254,12 +255,14 @@ class ScmdOhya2005Dataset(ExperimentDataset):
 
         return wt_means
 
-    def create_experiment(self):
+    def create_experiment(self) -> None:
         """Required by base class but not used - see create_calmorph_experiment."""
         pass
 
     @staticmethod
-    def create_calmorph_experiment(dataset_name, row, wt_reference_phenotype):
+    def create_calmorph_experiment(
+        dataset_name: str, row: pd.Series, wt_reference_phenotype: dict[str, Any]
+    ) -> tuple[CalMorphExperiment, CalMorphExperimentReference, Publication]:
         """Build a CalMorph experiment and reference pair from one data row."""
         # Genome reference - BY4741 (MATa his3Δ1 leu2Δ0 lys2Δ0 ura3Δ0)
         genome_reference = ReferenceGenome(

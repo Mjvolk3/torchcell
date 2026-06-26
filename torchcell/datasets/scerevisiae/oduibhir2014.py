@@ -4,7 +4,7 @@ import GEOparse
 import pandas as pd
 
 
-def main():
+def main() -> None:
     """Build a sample-by-gene expression table from the GEO SOFT file."""
     # Load the GEO dataset
     gse = GEOparse.get_GEO(filepath="/Users/michaelvolk/Downloads/GSE42527_family.soft")

@@ -9,6 +9,8 @@ import logging
 import os
 import os.path as osp
 import pickle
+from collections.abc import Callable
+from typing import Any
 
 import lmdb
 import pandas as pd
@@ -47,19 +49,19 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
         root: str = "data/torchcell/syn_leth_db_yeast",
         genome: SCerevisiaeGenome = None,
         io_workers: int = 0,
-        transform=None,
-        pre_transform=None,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+    ) -> None:
         """Build the gene-name mapping from the genome and initialize the dataset."""
         self.genome = genome
-        self.gene_name_to_systematic = {}
+        self.gene_name_to_systematic: dict[str, str] = {}
         self._build_gene_name_mapping()
         # delete to remove: cannot pickle 'sqlite3.Connection' object
         del genome
         del self.genome
         super().__init__(root, io_workers, transform, pre_transform)
 
-    def _build_gene_name_mapping(self):
+    def _build_gene_name_mapping(self) -> None:
         """Map gene names, systematic IDs, and aliases to systematic names."""
         print("Building gene name to systematic name mapping...")
         for feature in tqdm(self.genome.db.all_features()):
@@ -93,7 +95,7 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
         """Return the synthetic-lethality experiment-reference schema class."""
         return SyntheticLethalityExperimentReference
 
-    def download(self):
+    def download(self) -> None:
         """Download the synthetic-lethality CSV from Google Drive."""
         url = "https://drive.google.com/uc?export=download&id=1_56ebyBatapNml8S5HlJW7Dz1l0DZZIq"
         download_path = os.path.join(self.raw_dir, self.raw_file_names[0])
@@ -117,7 +119,7 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
         log.info("Download completed successfully.")
 
     def preprocess_raw(
-        self, df: pd.DataFrame, preprocess: dict | None = None
+        self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
     ) -> pd.DataFrame:
         """Add systematic-name columns for both interacting genes."""
         print("Converting gene names to systematic names...")
@@ -125,7 +127,7 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
         df["n2.systematic_name"] = df["n2.name"].apply(self.get_systematic_name)
         return df
 
-    def get_systematic_name(self, gene_name):
+    def get_systematic_name(self, gene_name: str) -> str:
         """Return the systematic name for a gene, falling back to the input name."""
         # Remove the prime character if present
         clean_gene_name = gene_name.rstrip("'")
@@ -139,7 +141,7 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
         return systematic_name
 
     @post_process
-    def process(self):
+    def process(self) -> None:
         """Read the raw CSV, build experiments, and write them to LMDB."""
         log.info("Processing Synthetic Lethality Yeast Data...")
 
@@ -169,7 +171,13 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
         env.close()
 
     @staticmethod
-    def create_experiment(dataset_name, row):
+    def create_experiment(
+        dataset_name: str, row: pd.Series
+    ) -> tuple[
+        SyntheticLethalityExperiment,
+        SyntheticLethalityExperimentReference,
+        Publication,
+    ]:
         """Build the experiment, reference, and publication objects for one row."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
@@ -235,19 +243,19 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
         root: str = "data/torchcell/syn_rescue_db_yeast",
         genome: SCerevisiaeGenome = None,
         io_workers: int = 0,
-        transform=None,
-        pre_transform=None,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+    ) -> None:
         """Build the gene-name mapping from the genome and initialize the dataset."""
         self.genome = genome
-        self.gene_name_to_systematic = {}
+        self.gene_name_to_systematic: dict[str, str] = {}
         self._build_gene_name_mapping()
         # delete to remove: cannot pickle 'sqlite3.Connection' object
         del genome
         del self.genome
         super().__init__(root, io_workers, transform, pre_transform)
 
-    def _build_gene_name_mapping(self):
+    def _build_gene_name_mapping(self) -> None:
         """Map gene names, systematic IDs, and aliases to systematic names."""
         print("Building gene name to systematic name mapping...")
         for feature in tqdm(self.genome.db.all_features()):
@@ -281,7 +289,7 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
         """Return the synthetic-rescue experiment-reference schema class."""
         return SyntheticRescueExperimentReference
 
-    def download(self):
+    def download(self) -> None:
         """Download the synthetic-rescue CSV from Google Drive."""
         url = "https://drive.google.com/uc?export=download&id=1lBaApm70E05JnkrE1Hwmn8gT1cV5Bzlt"
         download_path = os.path.join(self.raw_dir, self.raw_file_names[0])
@@ -305,7 +313,7 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
         log.info("Download completed successfully.")
 
     def preprocess_raw(
-        self, df: pd.DataFrame, preprocess: dict | None = None
+        self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
     ) -> pd.DataFrame:
         """Add systematic-name columns for both interacting genes."""
         print("Converting gene names to systematic names...")
@@ -314,7 +322,7 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
 
         return df
 
-    def get_systematic_name(self, gene_name):
+    def get_systematic_name(self, gene_name: str) -> str:
         """Return the systematic name for a gene, falling back to the input name."""
         # Remove the prime character if present
         clean_gene_name = gene_name.rstrip("'")
@@ -328,7 +336,7 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
         return systematic_name
 
     @post_process
-    def process(self):
+    def process(self) -> None:
         """Read the raw CSV, build experiments, and write them to LMDB."""
         log.info("Processing Synthetic Rescue Yeast Data...")
 
@@ -358,7 +366,11 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
         env.close()
 
     @staticmethod
-    def create_experiment(dataset_name, row):
+    def create_experiment(
+        dataset_name: str, row: pd.Series
+    ) -> tuple[
+        SyntheticRescueExperiment, SyntheticRescueExperimentReference, Publication
+    ]:
         """Build the experiment, reference, and publication objects for one row."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
@@ -419,7 +431,7 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
         return experiment, reference, publication
 
 
-def main():
+def main() -> None:
     """Build and inspect both SynLethDB datasets from a local genome."""
     import os
 

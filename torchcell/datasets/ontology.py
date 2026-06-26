@@ -4,7 +4,7 @@
 # Test file: torchcell/datasets/test_ontology.py
 """Owlready2 ontology of experiments and Neo4j/n10s ontology import helpers."""
 
-from neo4j import GraphDatabase
+from neo4j import Driver, GraphDatabase
 from owlready2 import ObjectProperty, Thing, get_ontology
 
 # Create a new ontology
@@ -187,7 +187,7 @@ class Temperature(Environment):
     range = [int]
 
 
-def create_unique_constraint_if_not_exists(driver):
+def create_unique_constraint_if_not_exists(driver: Driver) -> None:
     """Create the n10s unique-URI constraint on :Resource if it is missing.
 
     Args:
@@ -208,7 +208,7 @@ def create_unique_constraint_if_not_exists(driver):
             )
 
 
-def owl_import_ex():
+def owl_import_ex() -> None:
     """Import the torchcell RDF ontology into Neo4j via the n10s procedures."""
     # Connection details
     uri = "neo4j://localhost:7687"  # Adjust as needed
@@ -237,7 +237,7 @@ def owl_import_ex():
     driver.close()
 
 
-def main():
+def main() -> None:
     """Build YEPD media instances and save the ontology to torchcell.rdf."""
     # Create instances of YeastExtract, Peptone, and Dextrose
     yeast_extract = YeastExtract()

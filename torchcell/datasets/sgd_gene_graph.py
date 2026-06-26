@@ -6,6 +6,7 @@
 
 import os.path as osp
 from collections.abc import Callable
+from typing import Any
 
 import networkx as nx
 import torch
@@ -29,10 +30,10 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
         root: str,
         graph: nx.Graph,
         model_name: str | None = None,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-        categorical_features: dict | None = None,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        categorical_features: dict[str, Any] | None = None,
+    ) -> None:
         """Store the graph and load processed tensors and categorical metadata."""
         self.graph = graph
         self.categorical_features = categorical_features or {}
@@ -44,7 +45,7 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
 
         self.data, self.slices = torch.load(self.processed_paths[0])
 
-    def initialize_model(self):
+    def initialize_model(self) -> None:
         """Do nothing; features come from graph attributes, not a model."""
         pass  # No need to initialize a model for this dataset
 
@@ -53,16 +54,16 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
         """Return the processed tensor and categorical-feature filenames."""
         return [f"{self.model_name}.pt", "categorical_features.pt"]
 
-    def process(self):
+    def process(self) -> None:
         """Build node feature tensors and save them with categorical metadata."""
         data_list = []
         unique_chromosomes = set()
-        unique_pathways = set()
+        unique_pathways: set[Any] = set()
 
         normalize_data = self.MODEL_TO_WINDOW[self.model_name]
 
         # Collect feature values for each node
-        feature_values = {
+        feature_values: dict[str, list[Any]] = {
             "length": [],
             "molecular_weight": [],
             "pi": [],
@@ -173,7 +174,7 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
         torch.save(self.categorical_features, self.processed_paths[1])
 
 
-def main():
+def main() -> None:
     """Build the gene-graph embedding dataset for each configured model."""
     import os
     import os.path as osp

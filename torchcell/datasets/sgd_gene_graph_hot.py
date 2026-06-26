@@ -8,6 +8,7 @@
 import os
 import os.path as osp
 from collections.abc import Callable
+from typing import Any
 
 import networkx as nx
 import torch
@@ -31,9 +32,9 @@ class OneHotGraphEmbeddingDataset(BaseEmbeddingDataset):
         root: str,
         graph: nx.Graph,
         model_name: str,
-        transform: Callable = None,
-        pre_transform: Callable = None,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+    ) -> None:
         """Store the gene graph and process the requested feature-window model.
 
         Args:
@@ -48,7 +49,7 @@ class OneHotGraphEmbeddingDataset(BaseEmbeddingDataset):
         super().__init__(root, model_name, transform, pre_transform)
         self.process()
 
-    def initialize_model(self):
+    def initialize_model(self) -> None:
         """Return nothing; this dataset uses no learned model."""
         pass
 
@@ -63,16 +64,16 @@ class OneHotGraphEmbeddingDataset(BaseEmbeddingDataset):
         tensor[index] = 1.0
         return tensor
 
-    def process(self):
+    def process(self) -> None:
         """Build node feature vectors and save the collated embedding dataset."""
         data_list = []
-        unique_chromosomes = set()
-        unique_pathways = set()
+        unique_chromosomes: set[Any] = set()
+        unique_pathways: set[Any] = set()
 
         normalize_data, include_pathways = self.MODEL_TO_WINDOW[self.model_name]
 
         # Collect feature values for each node
-        feature_values = {
+        feature_values: dict[str, list[Any]] = {
             "length": [],
             "molecular_weight": [],
             "pi": [],
@@ -189,7 +190,7 @@ class OneHotGraphEmbeddingDataset(BaseEmbeddingDataset):
         torch.save(self.collate(data_list), self.processed_paths[0])
 
 
-def main():
+def main() -> None:
     """Build the one-hot graph embeddings and report pathway annotation coverage."""
     from torchcell.graph import SCerevisiaeGraph
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
@@ -224,7 +225,7 @@ def main():
     count_pathway = 0
     print("len dataset:", len(dataset))
 
-    pathway_counts = {}
+    pathway_counts: dict[float, int] = {}
 
     for i in range(len(dataset)):
         chromosome_sum = (

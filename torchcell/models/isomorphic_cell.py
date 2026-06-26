@@ -4,7 +4,7 @@
 # Test file: tests/torchcell/models/test_isomorphic_cell.py
 """Isomorphic cell model combining gene GNN and metabolism hypergraph branches."""
 
-from typing import Literal
+from typing import Any, Literal
 
 import torch
 import torch.nn as nn
@@ -111,13 +111,13 @@ class Combiner(nn.Module):
 class ProjectedGATConv(nn.Module):
     """GATv2 conv followed by a linear projection to a fixed output dim."""
 
-    def __init__(self, gat_conv, out_dim):
+    def __init__(self, gat_conv: GATv2Conv, out_dim: int) -> None:
         """Store the GAT conv and build the output projection."""
         super().__init__()
         self.gat = gat_conv
         self.project = nn.Linear(gat_conv.heads * gat_conv.out_channels, out_dim)
 
-    def forward(self, x, edge_index):
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
         """Run the GAT conv and project to the target output dimension."""
         x = self.gat(x, edge_index)  # Shape: (..., heads * out_channels)
         return self.project(x)  # Shape: (..., out_dim)
@@ -165,7 +165,8 @@ class HeteroGnn(nn.Module):
         num_layers: int,
         edge_types: list[EdgeType],
         conv_type: Literal["GCN", "GAT", "Transformer", "GIN"] = "GCN",
-        layer_config: dict | None = None,
+        # config is heterogeneous (bool/float/int/None) and unpacked as conv kwargs
+        layer_config: dict[str, Any] | None = None,
         activation: str = "relu",
         norm: str | None = None,
         head_num_layers: int = 2,
@@ -226,7 +227,9 @@ class HeteroGnn(nn.Module):
             norm=head_norm,
         )
 
-    def _get_layer_config(self, layer_config: dict | None) -> dict:
+    def _get_layer_config(
+        self, layer_config: dict[str, Any] | None
+    ) -> dict[str, Any]:
         default_configs = {
             "GCN": {
                 "bias": True,
@@ -268,7 +271,9 @@ class HeteroGnn(nn.Module):
             return default_configs[self.conv_type]
         return {**default_configs[self.conv_type], **layer_config}
 
-    def _calculate_dimensions(self, in_channels: int, hidden_channels: int) -> dict:
+    def _calculate_dimensions(
+        self, in_channels: int, hidden_channels: int
+    ) -> dict[str, int]:
         dims = {"in_channels": in_channels, "hidden_channels": hidden_channels}
 
         if self.conv_type in ["GAT", "Transformer"]:
@@ -335,8 +340,8 @@ class HeteroGnn(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def _create_conv_dict(self, in_dim: int) -> dict:
-        conv_dict = {}
+    def _create_conv_dict(self, in_dim: int) -> dict[EdgeType, nn.Module]:
+        conv_dict: dict[EdgeType, nn.Module] = {}
 
         for edge_type in self.edge_types:
             if self.conv_type == "GCN":
@@ -403,7 +408,7 @@ class HeteroGnn(nn.Module):
 
         return conv_dict
 
-    def _build_network(self):
+    def _build_network(self) -> None:
         for i in range(self.num_layers):
             in_dim = self.dims["in_channels"] if i == 0 else self.dims["actual_hidden"]
             conv_dict = self._create_conv_dict(in_dim)
@@ -489,7 +494,7 @@ class HeteroGnn(nn.Module):
             dims=dims,
         )
 
-    def forward(self, batch):
+    def forward(self, batch: HeteroData) -> torch.Tensor:
         """Run the hetero GNN over the batch and return node embeddings."""
         from torch_geometric.utils import add_self_loops
 
@@ -828,7 +833,7 @@ class MetabolismProcessor(nn.Module):
         self,
         metabolite_dim: int,
         hidden_dim: int,
-        num_layers: dict = {"metabolite": 2},
+        num_layers: dict[str, int] = {"metabolite": 2},
         dropout: float = 0.1,
         use_attention: bool = True,
         num_heads: int = 2,
@@ -875,7 +880,7 @@ class MetabolismProcessor(nn.Module):
             use_isab=False,
         )
 
-    def whole_forward(self, graph) -> torch.Tensor:
+    def whole_forward(self, graph: HeteroData) -> torch.Tensor:
         """Run the metabolism branch on a single whole-cell graph."""
         # 1. Gene -> Reaction context
         gpr_edge_index = graph["gene", "gpr", "reaction"].hyperedge_index
@@ -1008,7 +1013,7 @@ class MetabolismProcessor(nn.Module):
 
         return Z_mg
 
-    def forward(self, data) -> torch.Tensor:
+    def forward(self, data: HeteroData) -> torch.Tensor:
         """Dispatch to whole or batched metabolism forward based on input."""
         # Check if we're dealing with batched data
         is_batched = hasattr(data["gene"], "batch")
@@ -1034,12 +1039,13 @@ class IsomorphicCell(nn.Module):
             "combiner": 2,
         },
         dropout: float = 0.1,
-        gene_encoder_config: dict | None = None,
-        metabolism_config: dict | None = None,
-        set_transformer_config: dict | None = None,
-        preprocessor_config: dict | None = None,
-        combiner_config: dict | None = None,
-        prediction_head_config: dict | None = None,
+        # configs are heterogeneous (str/int/float/bool/list) and unpacked as kwargs
+        gene_encoder_config: dict[str, Any] | None = None,
+        metabolism_config: dict[str, Any] | None = None,
+        set_transformer_config: dict[str, Any] | None = None,
+        preprocessor_config: dict[str, Any] | None = None,
+        combiner_config: dict[str, Any] | None = None,
+        prediction_head_config: dict[str, Any] | None = None,
     ):
         """Build the preprocessor, gene encoder, metabolism, and combiner."""
         super().__init__()
@@ -1143,7 +1149,9 @@ class IsomorphicCell(nn.Module):
             hidden_channels, 1, self.prediction_head_config
         )
 
-    def _build_mlp(self, in_dim: int, out_dim: int, config: dict) -> nn.Sequential:
+    def _build_mlp(
+        self, in_dim: int, out_dim: int, config: dict[str, Any]
+    ) -> nn.Sequential:
         layers = []
         current_dim = in_dim
 
@@ -1152,11 +1160,11 @@ class IsomorphicCell(nn.Module):
             if config["residual"] and current_dim == hidden_dim:
 
                 class ResidualBlock(nn.Module):
-                    def __init__(self, linear):
+                    def __init__(self, linear: nn.Linear) -> None:
                         super().__init__()
                         self.linear = linear
 
-                    def forward(self, x):
+                    def forward(self, x: torch.Tensor) -> torch.Tensor:
                         return self.linear(x) + x
 
                 layers.append(ResidualBlock(nn.Linear(current_dim, hidden_dim)))
@@ -1175,7 +1183,7 @@ class IsomorphicCell(nn.Module):
         return nn.Sequential(*layers)
 
     # TODO check for other uses of batch["gene"].ids_pert
-    def _get_perturbed_indices(self, batch):
+    def _get_perturbed_indices(self, batch: HeteroData) -> list[list[int]]:
         """Return the list of perturbed gene indices for each batch item."""
         batch_size = batch["gene"].ptr.size(0) - 1
         pert_indices = []
@@ -1190,7 +1198,7 @@ class IsomorphicCell(nn.Module):
 
         return pert_indices
 
-    def forward_single(self, batch):
+    def forward_single(self, batch: HeteroData) -> torch.Tensor:
         """Encode one graph through the gene and metabolism paths and combine."""
         # Gene path - pass preprocessed features to gene_encoder
         z_g = self.gene_encoder(batch)
@@ -1202,7 +1210,7 @@ class IsomorphicCell(nn.Module):
         z = self.combiner(z_g, z_mg)
         return z
 
-    def forward(self, cell_graph, batch):
+    def forward(self, cell_graph: HeteroData, batch: HeteroData) -> torch.Tensor:
         """Predict outputs for the batch given the reference cell graph."""
         # z_w = self.forward_single(cell_graph)
         pert_indices = self._get_perturbed_indices(batch)
@@ -1244,7 +1252,11 @@ class IsomorphicCell(nn.Module):
         return z_i
 
 
-def initialize_model(dataset, device, config=None):
+def initialize_model(
+    dataset: Any,  # Neo4jCellDataset; typing it would couple this file to data layer
+    device: torch.device,
+    config: dict[str, Any] | None = None,
+) -> IsomorphicCell:
     """Build an IsomorphicCell from the dataset and move it to the device."""
     if config is None:
         config = {}
@@ -1340,7 +1352,8 @@ def initialize_model(dataset, device, config=None):
     return model
 
 
-def load_sample_data_batch():
+def load_sample_data_batch() -> tuple[Any, Any, int]:
+    # returns (Neo4jCellDataset, PyG batch, int); first two are external dynamic types
     """Load a sample cell-graph batch for exercising the model."""
     import os
     import os.path as osp
@@ -1429,7 +1442,9 @@ def load_sample_data_batch():
     return dataset, batch, max_num_nodes
 
 
-def plot_correlations(predictions, true_values, save_path):
+def plot_correlations(
+    predictions: torch.Tensor, true_values: torch.Tensor, save_path: str
+) -> None:
     """Plot predicted-vs-true correlation scatter plots and save them."""
     import matplotlib.pyplot as plt
     import numpy as np
@@ -1495,7 +1510,7 @@ def plot_correlations(predictions, true_values, save_path):
     plt.close()
 
 
-def main(device="gpu"):
+def main(device: str = "gpu") -> None:
     """Run a forward/training smoke test of the IsomorphicCell model."""
     import os
     import os.path as osp

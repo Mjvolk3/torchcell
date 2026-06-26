@@ -259,7 +259,7 @@ class HeteroConvAggregator(nn.Module):
         convs: dict[EdgeType, nn.Module],
         hidden_channels: int,
         aggregation_method: str = "cross_attention",
-        aggregation_config: dict | None = None,
+        aggregation_config: dict[str, Any] | None = None,
     ):
         """Store the per-edge-type convs and build the chosen aggregation module."""
         super().__init__()
@@ -321,7 +321,9 @@ class HeteroConvAggregator(nn.Module):
 
         # Store outputs by destination node type and graph name
         out_dict = {}
-        graph_outputs_by_dst = {}  # {dst_type: {graph_name: tensor}}
+        graph_outputs_by_dst: dict[str, dict[str, torch.Tensor]] = (
+            {}
+        )  # {dst_type: {graph_name: tensor}}
 
         # Apply convolutions for each edge type
         for edge_type_str, conv in self.convs.items():
@@ -349,7 +351,7 @@ class HeteroConvAggregator(nn.Module):
             graph_outputs_by_dst[dst][rel] = out
 
         # Aggregate for each destination node type
-        all_attention_weights = {}
+        all_attention_weights: dict[str, torch.Tensor | None] = {}
 
         for dst, graph_outputs in graph_outputs_by_dst.items():
             if not graph_outputs:
@@ -430,8 +432,13 @@ class DangoLikeHyperSAGNN(nn.Module):
     """
 
     def __init__(
-        self, hidden_dim, num_heads=4, num_layers=2, dropout=0.1, activation="relu"
-    ):
+        self,
+        hidden_dim: int,
+        num_heads: int = 4,
+        num_layers: int = 2,
+        dropout: float = 0.1,
+        activation: str = "relu",
+    ) -> None:
         """Build the stacked self-attention layers with ReZero connections."""
         super().__init__()
         self.hidden_dim = hidden_dim
@@ -476,7 +483,9 @@ class DangoLikeHyperSAGNN(nn.Module):
 
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, gene_embeddings, batch=None):
+    def forward(
+        self, gene_embeddings: torch.Tensor, batch: torch.Tensor | None = None
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute static and attention-refined dynamic gene embeddings.
 
         Args:
@@ -509,7 +518,9 @@ class DangoLikeHyperSAGNN(nn.Module):
 
         return static_embeddings, dynamic_embeddings
 
-    def _apply_attention_layer(self, x, layer, beta):
+    def _apply_attention_layer(
+        self, x: torch.Tensor, layer: nn.ModuleDict, beta: nn.Parameter
+    ) -> torch.Tensor:
         """Apply a single attention layer with multi-head attention."""
         batch_size = x.size(0)
 
@@ -563,7 +574,14 @@ class DangoLikeHyperSAGNN(nn.Module):
         # Apply ReZero connection
         return x + beta * out
 
-    def _apply_attention_layer_batched(self, x, batch, batch_sizes, layer, beta):
+    def _apply_attention_layer_batched(
+        self,
+        x: torch.Tensor,
+        batch: torch.Tensor,
+        batch_sizes: torch.Tensor,
+        layer: nn.ModuleDict,
+        beta: nn.Parameter,
+    ) -> torch.Tensor:
         """Apply attention layer across multiple batches using segment operations.
 
         No .unique(), no Python loops over batches.
@@ -615,8 +633,13 @@ class GeneInteractionPredictor(nn.Module):
     """Predict gene interaction scores from gene embeddings via a HyperSAGNN."""
 
     def __init__(
-        self, hidden_dim, num_heads=4, num_layers=2, dropout=0.1, activation="relu"
-    ):
+        self,
+        hidden_dim: int,
+        num_heads: int = 4,
+        num_layers: int = 2,
+        dropout: float = 0.1,
+        activation: str = "relu",
+    ) -> None:
         """Build the HyperSAGNN encoder and the linear scoring head."""
         super().__init__()
         # Use the new Dango-like HyperSAGNN with config-driven activation
@@ -631,7 +654,9 @@ class GeneInteractionPredictor(nn.Module):
         self.prediction_layer = nn.Linear(hidden_dim, 1)
         nn.init.xavier_uniform_(self.prediction_layer.weight)
 
-    def forward(self, gene_embeddings, batch=None):
+    def forward(
+        self, gene_embeddings: torch.Tensor, batch: torch.Tensor | None = None
+    ) -> torch.Tensor:
         """Score gene interactions from static/dynamic embedding differences.
 
         Args:
@@ -789,7 +814,13 @@ class AttentionConvWrapper(nn.Module):
         self.act = act_register[activation]
         self.dropout = nn.Dropout(dropout) if dropout > 0 else None
 
-    def forward(self, x, edge_index, edge_mask=None, **kwargs):
+    def forward(
+        self,
+        x: torch.Tensor,
+        edge_index: torch.Tensor,
+        edge_mask: torch.Tensor | None = None,
+        **kwargs: Any,
+    ) -> torch.Tensor:
         """Run the wrapped conv with optional edge masking, then norm/activation/dropout.
 
         Args:
@@ -943,7 +974,7 @@ class GeneInteractionDango(nn.Module):
         )
 
         # Store aggregation weights from all layers for visualization
-        self.layer_aggregation_weights = []
+        self.layer_aggregation_weights: list[torch.Tensor] = []
 
         # Graph convolution layers with interaction-based aggregation
         self.convs = nn.ModuleList()
@@ -1039,10 +1070,10 @@ class GeneInteractionDango(nn.Module):
         # Initialize all weights properly
         self._init_weights()
 
-    def _init_weights(self):
+    def _init_weights(self) -> None:
         """Initialize all weights in the model with appropriate initializations."""
 
-        def _init_module(module):
+        def _init_module(module: nn.Module) -> None:
             if isinstance(module, nn.Linear):
                 # Kaiming initialization for ReLU-based networks
                 nn.init.kaiming_normal_(
@@ -1428,7 +1459,7 @@ class GeneInteractionDango(nn.Module):
         return counts
 
 
-def calculate_weight_l2_norm(model):
+def calculate_weight_l2_norm(model: nn.Module) -> float:
     """Calculate L2 norm of all model weights."""
     total_norm = 0.0
     for param in model.parameters():
@@ -1438,7 +1469,9 @@ def calculate_weight_l2_norm(model):
     return total_norm**0.5
 
 
-def calculate_rolling_correlation(x, y, window=50):
+def calculate_rolling_correlation(
+    x: Any, y: Any, window: int = 50
+) -> list[float]:  # x/y are array-like series (lists or np.ndarray)
     """Calculate rolling correlation between two series."""
     if len(x) < window:
         return []
@@ -1730,26 +1763,26 @@ def main(cfg: DictConfig) -> None:
     os.makedirs(plot_dir, exist_ok=True)
 
     def save_intermediate_plot(
-        epoch,
-        losses,
-        correlations,
-        mses,
-        maes,
-        rmses,
-        learning_rates,
-        gate_weights_history,
-        model,
-        cell_graph,
-        batch,
-        y,
-        weight_l2_norms,
-        cfg,
-        loss_type="logcosh",
-        loss_components_history=None,
-        spearman_correlations=None,
-        embedding_norms_history=None,
-        lambda_values_history=None,
-    ):
+        epoch: int,
+        losses: list[float],
+        correlations: list[float],
+        mses: list[float],
+        maes: list[float],
+        rmses: list[float],
+        learning_rates: list[float],
+        gate_weights_history: list[np.ndarray],
+        model: nn.Module,
+        cell_graph: HeteroData,
+        batch: HeteroData,
+        y: torch.Tensor,
+        weight_l2_norms: list[float],
+        cfg: DictConfig,
+        loss_type: str = "logcosh",
+        loss_components_history: list[dict[str, Any]] | None = None,
+        spearman_correlations: list[float] | None = None,
+        embedding_norms_history: list[dict[str, Any]] | None = None,
+        lambda_values_history: list[dict[str, Any]] | None = None,
+    ) -> None:
         """Save intermediate training plot every print interval."""
         plt.figure(figsize=(25, 20))
 
@@ -2572,9 +2605,9 @@ def main(cfg: DictConfig) -> None:
     rmses = []  # New: RMSE tracking
     learning_rates = []
     gate_weights_history = []
-    loss_components_history = []
+    loss_components_history: list[dict[str, Any]] = []
     embedding_norms_history = []
-    lambda_values_history = []
+    lambda_values_history: list[dict[str, Any]] = []
     weight_l2_norms = []  # New: L2 norm tracking
     num_epochs = cfg.trainer.max_epochs
     plot_interval = cfg.regression_task.plot_every_n_epochs

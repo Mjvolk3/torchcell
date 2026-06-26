@@ -25,8 +25,8 @@ class GraphConvolution(nn.Module):
         skip_node: bool = False,
         skip_set: bool = False,
         skip_mp: bool = False,
-        **kwargs,
-    ):
+        **kwargs: object,
+    ) -> None:
         """Build the DeepSet node encoder, GCN layer stack, and set MLP layers."""
         super().__init__()
 
@@ -64,7 +64,9 @@ class GraphConvolution(nn.Module):
             ]
         )
 
-    def forward(self, x, batch, edge_index):
+    def forward(
+        self, x: torch.Tensor, batch: torch.Tensor, edge_index: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Encode nodes, run GCN message passing, and return node and set outputs."""
         # Node processing from DeepSet
         x_node = self.deepset.node_layers_forward(x)
@@ -89,7 +91,7 @@ class GraphConvolution(nn.Module):
         return x_node, x_set
 
 
-def main():
+def main() -> None:
     """Instantiate the model on a toy configuration as a smoke test."""
     # Model configuration
     input_dim = 10

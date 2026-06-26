@@ -13,6 +13,7 @@ Implements the architecture from weekly report 2025.45:
 
 import os
 import os.path as osp
+from typing import Any
 
 import hydra
 import numpy as np
@@ -35,7 +36,7 @@ class GraphRegularizedTransformerLayer(nn.Module):
         hidden_dim: int,
         num_heads: int,
         adjacency_matrices: dict[str, torch.Tensor] | None = None,
-        regularized_head_config: dict[str, dict] | None = None,
+        regularized_head_config: dict[str, dict[str, Any]] | None = None,
         dropout: float = 0.1,
     ):
         """Build multi-head attention projections and graph-regularized heads."""
@@ -420,8 +421,8 @@ class CellGraphTransformer(nn.Module):
         num_transformer_layers: int,
         num_attention_heads: int,
         cell_graph: HeteroData,
-        graph_regularization_config: dict | None = None,
-        perturbation_head_config: dict | None = None,
+        graph_regularization_config: dict[str, Any] | None = None,
+        perturbation_head_config: dict[str, Any] | None = None,
         dropout: float = 0.1,
         adaptive_loss_weighting: bool = False,
         graph_reg_scale: float = 0.001,  # Global scale factor for graph reg
@@ -826,24 +827,24 @@ def main(cfg: DictConfig) -> None:
     os.makedirs(plot_dir, exist_ok=True)
 
     def save_intermediate_plot(
-        epoch,
-        losses,
-        pred_losses,
-        graph_reg_losses,
-        correlations,
-        spearman_correlations,
-        mses,
-        maes,
-        rmses,
-        learning_rates,
-        weight_l2_norms,
-        smoothness_history,
-        cfg,
-        model,
-        cell_graph,
-        batch,
-        y,
-    ):
+        epoch: int,
+        losses: list[float],
+        pred_losses: list[float],
+        graph_reg_losses: list[float],
+        correlations: list[float],
+        spearman_correlations: list[float],
+        mses: list[float],
+        maes: list[float],
+        rmses: list[float],
+        learning_rates: list[float],
+        weight_l2_norms: list[float],
+        smoothness_history: list[float],
+        cfg: DictConfig,
+        model: CellGraphTransformer,
+        cell_graph: HeteroData,
+        batch: HeteroData,
+        y: torch.Tensor,
+    ) -> None:
         """Save intermediate training plot every print interval."""
         plt.figure(figsize=(20, 12))
 

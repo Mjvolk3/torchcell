@@ -66,8 +66,8 @@ class DCellOpt(nn.Module):
         self.term_to_genes = self._build_term_gene_mapping(hetero_data)
 
         # Pre-compute input/output dimensions
-        self.term_input_dims = {}
-        self.term_output_dims = {}
+        self.term_input_dims: dict[int, int] = {}
+        self.term_output_dims: dict[int, int] = {}
 
         # OPTIMIZATION: Use ModuleList instead of ModuleDict
         self.subsystems = nn.ModuleList([None] * self.num_go_terms)
@@ -127,7 +127,7 @@ class DCellOpt(nn.Module):
         # Initialize profiling mode (disabled by default)
         self._profile_mode = False
 
-    def enable_profiling(self, enable: bool = True):
+    def enable_profiling(self, enable: bool = True) -> None:
         """Enable or disable performance profiling during forward pass."""
         self._profile_mode = enable
         if enable:
@@ -135,7 +135,7 @@ class DCellOpt(nn.Module):
         else:
             print("DCellOpt profiling disabled")
 
-    def _build_tensorized_hierarchy(self):
+    def _build_tensorized_hierarchy(self) -> None:
         """Convert parent-child relationships to tensor representations."""
         # Find max children for any term
         max_children = 0
@@ -161,7 +161,7 @@ class DCellOpt(nn.Module):
                 )
                 self.num_children[parent] = num_children
 
-    def _build_stratum_masks(self):
+    def _build_stratum_masks(self) -> None:
         """Build binary masks for each stratum."""
         # Create stratum masks
         self.register_buffer(
@@ -207,7 +207,7 @@ class DCellOpt(nn.Module):
 
     def _build_hierarchy(self, hetero_data: HeteroData) -> dict[int, list[int]]:
         """Build child -> parents mapping from edge_index."""
-        child_to_parents = {}
+        child_to_parents: dict[int, list[int]] = {}
 
         if ("gene_ontology", "is_child_of", "gene_ontology") in hetero_data.edge_types:
             edge_index = hetero_data[
@@ -226,7 +226,7 @@ class DCellOpt(nn.Module):
 
     def _build_parent_to_children(self) -> dict[int, list[int]]:
         """Build parent -> children mapping from child_to_parents."""
-        parent_to_children = {}
+        parent_to_children: dict[int, list[int]] = {}
 
         for child, parents in self.child_to_parents.items():
             for parent in parents:
@@ -238,7 +238,7 @@ class DCellOpt(nn.Module):
 
     def _build_term_gene_mapping(self, hetero_data: HeteroData) -> dict[int, list[int]]:
         """Build term -> genes mapping from go_gene_strata_state."""
-        term_to_genes = {}
+        term_to_genes: dict[int, list[int]] = {}
 
         go_gene_state = hetero_data["gene_ontology"].go_gene_strata_state
         # Columns: [go_idx, gene_idx, stratum, state]
@@ -277,7 +277,7 @@ class DCellOpt(nn.Module):
         num_genes = self.term_gene_counts[term_idx].item()
         return max(self.min_subsystem_size, math.ceil(self.subsystem_ratio * num_genes))
 
-    def _build_term_module(self, term_idx: int):
+    def _build_term_module(self, term_idx: int) -> None:
         """Build subsystem and linear head for a specific GO term."""
         input_dim = self._calculate_input_dim(term_idx)
         output_dim = self._calculate_output_dim(term_idx)
@@ -296,7 +296,7 @@ class DCellOpt(nn.Module):
         # Mark as having subsystem
         self.has_subsystem[term_idx] = True
 
-    def _precompute_gene_indices(self, hetero_data: HeteroData):
+    def _precompute_gene_indices(self, hetero_data: HeteroData) -> None:
         """Pre-compute indices for efficient gene state extraction."""
         go_gene_state = hetero_data["gene_ontology"].go_gene_strata_state
 
@@ -448,7 +448,7 @@ class DCellOpt(nn.Module):
         Returns:
             List of tensors, each containing indices with same dimensions
         """
-        dim_groups = {}
+        dim_groups: dict[tuple[int, int], list[int]] = {}
 
         for term_idx in term_indices:
             term_idx_int = term_idx.item()
@@ -483,7 +483,7 @@ class DCellOpt(nn.Module):
         all_activations: torch.Tensor,
         activation_mask: torch.Tensor,
         linear_outputs_tensor: torch.Tensor,
-    ):
+    ) -> None:
         """Process all terms in a stratum in parallel.
 
         This method processes multiple GO terms simultaneously while respecting
@@ -774,7 +774,7 @@ class DCellSubsystem(nn.Module):
     config_path=osp.join(os.getcwd(), "experiments/006-kuzmin-tmi/conf"),
     config_name="dcell_kuzmin2018_tmi",
 )
-def main(cfg: DictConfig):
+def main(cfg: DictConfig) -> tuple[nn.Module, tuple[torch.Tensor, dict[str, Any]]]:
     """Train and evaluate the optimized DCell model on a sample batch."""
     import torch.optim as optim
     from tqdm import tqdm
@@ -801,15 +801,15 @@ def main(cfg: DictConfig):
     os.makedirs(plot_dir, exist_ok=True)
 
     def save_intermediate_plot(
-        epoch,
-        all_losses,
-        primary_losses,
-        auxiliary_losses,
-        weighted_auxiliary_losses,
-        learning_rates,
-        model,
-        batch,
-    ):
+        epoch: int,
+        all_losses: list[float],
+        primary_losses: list[float],
+        auxiliary_losses: list[float],
+        weighted_auxiliary_losses: list[float],
+        learning_rates: list[float],
+        model: nn.Module,
+        batch: HeteroData,
+    ) -> None:
         """Save intermediate training plot every print interval."""
         plt.figure(figsize=(12, 8))
 

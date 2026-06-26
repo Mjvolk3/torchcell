@@ -96,7 +96,7 @@ class DangoPreTrain(nn.Module):
         # Initialize weights
         self.reset_parameters()
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         """Initialize model parameters"""
         nn.init.normal_(self.gene_embedding.weight, mean=0, std=0.1)
 
@@ -194,7 +194,7 @@ class MetaEmbedding(nn.Module):
         )
         self._initialize_weights()
 
-    def _initialize_weights(self):
+    def _initialize_weights(self) -> None:
         """Initialize weights for better training stability"""
         for m in self.attention_mlp.modules():
             if isinstance(m, nn.Linear):
@@ -463,7 +463,7 @@ class Dango(nn.Module):
         # Initialize weights with better defaults
         self._initialize_weights()
 
-    def _initialize_weights(self):
+    def _initialize_weights(self) -> None:
         """Initialize model weights for better training stability"""
         # Initialize HyperSAGNN linear layers
         for name, module in self.hyper_sagnn.named_modules():
@@ -481,7 +481,7 @@ class Dango(nn.Module):
         nn.init.constant_(self.hyper_sagnn.beta2, 0.01)
 
     def forward(
-        self, cell_graph: HeteroData, batch
+        self, cell_graph: HeteroData, batch: HeteroData
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Forward pass for the DANGO model
@@ -550,7 +550,9 @@ class Dango(nn.Module):
     config_path=osp.join(os.getcwd(), "experiments/005-kuzmin2018-tmi/conf"),
     config_name="dango_kuzmin2018_tmi",
 )
-def main(cfg: DictConfig):
+def main(
+    cfg: DictConfig,
+) -> tuple["Dango", tuple[torch.Tensor, dict[str, torch.Tensor]]]:
     """Test the DANGO model by overfitting on a single batch."""
     import os
     from datetime import datetime

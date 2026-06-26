@@ -168,7 +168,7 @@ class FungalUpDownTransformer(NucleotideModel):
         r"""Embed the provided sequences using the loaded transformer model."""
         embeddings = []
 
-        def kmers_stride1(seq, k=6):
+        def kmers_stride1(seq: str, k: int = 6) -> list[str]:
             return [seq[i : i + k] for i in range(0, len(seq) - k + 1)]
 
         for sequence in sequences:

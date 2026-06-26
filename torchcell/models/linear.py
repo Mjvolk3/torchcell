@@ -26,7 +26,7 @@ class SimpleLinearModel(nn.Module):
         # The main linear layer for the aggregated data
         self.linear = nn.Linear(input_dim, output_dim)
 
-    def forward(self, x, batch):
+    def forward(self, x: torch.Tensor, batch: torch.Tensor) -> torch.Tensor:
         """Aggregate node features by batch and project to the output dimension."""
         # Aggregate the data
         if self.scatter == "add":
@@ -42,7 +42,7 @@ class SimpleLinearModel(nn.Module):
         return x_set
 
 
-def main():
+def main() -> None:
     """Run a small forward/backward pass to sanity-check the model."""
     torch.autograd.set_detect_anomaly(True)
 

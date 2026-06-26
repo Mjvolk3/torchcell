@@ -28,12 +28,12 @@ class ProtT5(PeptideModel):
         super().__init__(self.model_name)
 
     @property
-    def max_sequence_size(self):
+    def max_sequence_size(self) -> int:
         """Return the maximum supported input sequence length."""
         return 40000
 
     @staticmethod
-    def _check_and_download_model(model_name: str):
+    def _check_and_download_model(model_name: str) -> None:
         # Define the directory where you want the model to be saved
         script_dir = osp.dirname(osp.realpath(__file__))
         target_directory = osp.join(script_dir, "pretrained_LLM", "ProtT5")
@@ -62,7 +62,7 @@ class ProtT5(PeptideModel):
         # Introduce white-space between all amino acids
         return " ".join(list(re.sub(r"[UZOB]", "X", sequence)))
 
-    def load_model(self, model_name: str):
+    def load_model(self, model_name: str) -> None:
         """Download if needed, then load the tokenizer and encoder onto the device."""
         # Check and download the model if necessary
         self._check_and_download_model(model_name)

@@ -23,7 +23,9 @@ from torch_geometric.nn.aggr.attention import AttentionalAggregation
 class GeneInteractionAttention(nn.Module):
     """Self-attention for digenic and trigenic gene interaction prediction."""
 
-    def __init__(self, hidden_dim, num_heads=8, dropout=0.1):
+    def __init__(
+        self, hidden_dim: int, num_heads: int = 8, dropout: float = 0.1
+    ) -> None:
         """Build Q/K/V/out projections, the ReZero scalar, and dropout."""
         super().__init__()
         self.hidden_dim = hidden_dim
@@ -41,7 +43,9 @@ class GeneInteractionAttention(nn.Module):
 
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, gene_embeddings, batch=None):
+    def forward(
+        self, gene_embeddings: torch.Tensor, batch: torch.Tensor | None = None
+    ) -> torch.Tensor:
         """Apply masked self-attention per batch to produce dynamic embeddings.
 
         Args:
@@ -69,7 +73,7 @@ class GeneInteractionAttention(nn.Module):
             # Single batch processing
             return self._process_batch(gene_embeddings)
 
-    def _process_batch(self, embeddings):
+    def _process_batch(self, embeddings: torch.Tensor) -> torch.Tensor:
         """Run self-excluding attention with ReZero residual on one batch."""
         num_genes = embeddings.size(0)
         residual = embeddings
@@ -108,14 +112,16 @@ class GeneInteractionAttention(nn.Module):
 class GeneInteractionPredictor(nn.Module):
     """Predict interaction scores from squared static/dynamic embedding differences."""
 
-    def __init__(self, hidden_dim, dropout=0.1):
+    def __init__(self, hidden_dim: int, dropout: float = 0.1) -> None:
         """Build the interaction attention module and the scalar prediction layer."""
         super().__init__()
         self.attention = GeneInteractionAttention(hidden_dim, dropout=dropout)
         self.prediction_layer = nn.Linear(hidden_dim, 1)
         nn.init.xavier_uniform_(self.prediction_layer.weight)
 
-    def forward(self, gene_embeddings, batch=None):
+    def forward(
+        self, gene_embeddings: torch.Tensor, batch: torch.Tensor | None = None
+    ) -> torch.Tensor:
         """Return per-batch interaction scores from gene embeddings.
 
         Args:
@@ -263,8 +269,14 @@ class AttentionConvWrapper(nn.Module):
         self.act = nn.ReLU() if activation == "relu" else nn.SiLU()
         self.dropout = nn.Dropout(dropout) if dropout > 0 else None
 
-    def forward(self, x, edge_index, **kwargs):
-        """Run the conv, then project, normalize, activate, and drop out."""
+    def forward(
+        self, x: Any, edge_index: torch.Tensor, **kwargs: Any
+    ) -> torch.Tensor:
+        """Run the conv, then project, normalize, activate, and drop out.
+
+        x is Any: HeteroConv passes either a Tensor or a (src, dst) Tensor tuple
+        per edge type, depending on whether the wrapped conv is bipartite.
+        """
         out = self.conv(x, edge_index, **kwargs)
         out = self.proj(out)
         if self.norm is not None:

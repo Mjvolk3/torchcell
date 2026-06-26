@@ -4,7 +4,7 @@
 # Test file: tests/torchcell/models/test_hetero_gnn_pool.py
 """Heterogeneous GNN with graph pooling and a configurable prediction head."""
 
-from typing import Literal
+from typing import Any, Literal
 
 import torch
 import torch.nn as nn
@@ -32,13 +32,13 @@ from torchcell.models.act import act_register
 class ProjectedGATConv(nn.Module):
     """GATv2 convolution followed by a linear projection to a fixed output dim."""
 
-    def __init__(self, gat_conv, out_dim):
+    def __init__(self, gat_conv: GATv2Conv, out_dim: int) -> None:
         """Wrap a GAT conv and add a linear layer projecting heads to out_dim."""
         super().__init__()
         self.gat = gat_conv
         self.project = nn.Linear(gat_conv.heads * gat_conv.out_channels, out_dim)
 
-    def forward(self, x, edge_index):
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
         """Apply the GAT conv then project the multi-head output to out_dim."""
         x = self.gat(x, edge_index)  # Shape: (..., heads * out_channels)
         return self.project(x)  # Shape: (..., out_dim)
@@ -86,7 +86,7 @@ class HeteroGnnPool(nn.Module):
         num_layers: int,
         edge_types: list[EdgeType],
         conv_type: Literal["GCN", "GAT", "Transformer", "GIN"] = "GCN",
-        layer_config: dict | None = None,
+        layer_config: dict[str, Any] | None = None,
         pooling: Literal["sum", "mean", "max"] = "mean",
         activation: str = "relu",
         norm: str | None = None,
@@ -149,7 +149,9 @@ class HeteroGnnPool(nn.Module):
             norm=head_norm,
         )
 
-    def _get_layer_config(self, layer_config: dict | None) -> dict:
+    def _get_layer_config(
+        self, layer_config: dict[str, Any] | None
+    ) -> dict[str, Any]:
         default_configs = {
             "GCN": {
                 "bias": True,
@@ -191,7 +193,9 @@ class HeteroGnnPool(nn.Module):
             return default_configs[self.conv_type]
         return {**default_configs[self.conv_type], **layer_config}
 
-    def _calculate_dimensions(self, in_channels: int, hidden_channels: int) -> dict:
+    def _calculate_dimensions(
+        self, in_channels: int, hidden_channels: int
+    ) -> dict[str, int]:
         dims = {"in_channels": in_channels, "hidden_channels": hidden_channels}
 
         if self.conv_type in ["GAT", "Transformer"]:
@@ -258,8 +262,8 @@ class HeteroGnnPool(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def _create_conv_dict(self, in_dim: int) -> dict:
-        conv_dict = {}
+    def _create_conv_dict(self, in_dim: int) -> dict[EdgeType, nn.Module]:
+        conv_dict: dict[EdgeType, nn.Module] = {}
 
         for edge_type in self.edge_types:
             if self.conv_type == "GCN":
@@ -326,7 +330,7 @@ class HeteroGnnPool(nn.Module):
 
         return conv_dict
 
-    def _build_network(self):
+    def _build_network(self) -> None:
         for i in range(self.num_layers):
             in_dim = self.dims["in_channels"] if i == 0 else self.dims["actual_hidden"]
             conv_dict = self._create_conv_dict(in_dim)
@@ -428,7 +432,7 @@ class HeteroGnnPool(nn.Module):
         )
 
     # def forward(self, x_dict, edge_index_dict, batch_dict, edge_attr_dict=None):
-    def forward(self, batch):
+    def forward(self, batch: Any) -> tuple[torch.Tensor, torch.Tensor]:
         """Encode the batch through the GNN, pool per graph, and predict outputs."""
         from torch_geometric.utils import add_self_loops
 
@@ -539,7 +543,7 @@ class HeteroGnnPool(nn.Module):
         }
 
 
-def load_sample_data_batch():
+def load_sample_data_batch() -> tuple[Any, int]:
     """Load a sample batched graph for local model testing."""
     import os
     import os.path as osp
@@ -625,7 +629,7 @@ def load_sample_data_batch():
     return batch, max_num_nodes
 
 
-def main():
+def main() -> None:
     """Run a sample regression training loop for the pooling GNN."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
@@ -732,7 +736,7 @@ def main():
         print(f"Epoch {epoch + 1}, Loss: {loss.item():.4f}")
 
 
-def main_ordinal_reg():
+def main_ordinal_reg() -> None:
     """Run a sample ordinal-regression training loop for the pooling GNN."""
     from torchcell.losses.multi_dim_nan_tolerant import (
         CombinedRegressionLoss,

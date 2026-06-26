@@ -38,7 +38,7 @@ class Esm2(PeptideModel):
         super().__init__(self.model_name)
 
     @staticmethod
-    def _check_and_download_model(model_name: str):
+    def _check_and_download_model(model_name: str) -> None:
         script_dir = osp.dirname(osp.realpath(__file__))
         target_directory = osp.join(script_dir, "pretrained_LLM", "Esm2")
         if not osp.exists(target_directory):
@@ -53,11 +53,11 @@ class Esm2(PeptideModel):
             print("Download finished.")
 
     @property
-    def max_sequence_size(self):
+    def max_sequence_size(self) -> int:
         """Return the maximum supported residue sequence length."""
         return 1022
 
-    def load_model(self, model_name: str):
+    def load_model(self, model_name: str) -> None:
         """Download if needed, then load the tokenizer and model onto the device."""
         self._check_and_download_model(model_name)
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)

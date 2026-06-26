@@ -180,7 +180,7 @@ class ReactionGeneProcessor(nn.Module):
     def forward(
         self,
         gene_embeddings: torch.Tensor,
-        reaction_to_genes_indices: dict[int, list],
+        reaction_to_genes_indices: dict[int, list[Any]],
         batch: Any,
     ) -> torch.Tensor:
         """Process gene sets for each reaction.
@@ -223,7 +223,7 @@ class ReactionGeneProcessor(nn.Module):
             # Handle nested lists and flatten them
             flat_indices = []
 
-            def flatten_indices(indices):
+            def flatten_indices(indices: Any) -> None:
                 if isinstance(indices, (list, tuple)):
                     for item in indices:
                         flatten_indices(item)
@@ -266,13 +266,13 @@ class ReactionGeneProcessor(nn.Module):
 class ProjectedGATConv(nn.Module):
     """GATv2 convolution followed by a linear projection to a fixed dimension."""
 
-    def __init__(self, gat_conv, out_dim):
+    def __init__(self, gat_conv: GATv2Conv, out_dim: int) -> None:
         """Wrap a GAT conv and add a projection from heads*out to ``out_dim``."""
         super().__init__()
         self.gat = gat_conv
         self.project = nn.Linear(gat_conv.heads * gat_conv.out_channels, out_dim)
 
-    def forward(self, x, edge_index):
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
         """Apply the GAT convolution and project the concatenated head outputs."""
         x = self.gat(x, edge_index)  # Shape: (..., heads * out_channels)
         return self.project(x)  # Shape: (..., out_dim)
@@ -320,7 +320,7 @@ class HeteroGnn(nn.Module):
         num_layers: int,
         edge_types: list[EdgeType],
         conv_type: Literal["GCN", "GAT", "Transformer", "GIN"] = "GCN",
-        layer_config: dict | None = None,
+        layer_config: dict[str, Any] | None = None,
         activation: str = "relu",
         norm: str | None = None,
         head_num_layers: int = 2,
@@ -381,7 +381,9 @@ class HeteroGnn(nn.Module):
             norm=head_norm,
         )
 
-    def _get_layer_config(self, layer_config: dict | None) -> dict:
+    def _get_layer_config(
+        self, layer_config: dict[str, Any] | None
+    ) -> dict[str, Any]:
         default_configs = {
             "GCN": {
                 "bias": True,
@@ -423,7 +425,9 @@ class HeteroGnn(nn.Module):
             return default_configs[self.conv_type]
         return {**default_configs[self.conv_type], **layer_config}
 
-    def _calculate_dimensions(self, in_channels: int, hidden_channels: int) -> dict:
+    def _calculate_dimensions(
+        self, in_channels: int, hidden_channels: int
+    ) -> dict[str, int]:
         dims = {"in_channels": in_channels, "hidden_channels": hidden_channels}
 
         if self.conv_type in ["GAT", "Transformer"]:
@@ -490,8 +494,8 @@ class HeteroGnn(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def _create_conv_dict(self, in_dim: int) -> dict:
-        conv_dict = {}
+    def _create_conv_dict(self, in_dim: int) -> dict[EdgeType, nn.Module]:
+        conv_dict: dict[EdgeType, nn.Module] = {}
 
         for edge_type in self.edge_types:
             if self.conv_type == "GCN":
@@ -558,7 +562,7 @@ class HeteroGnn(nn.Module):
 
         return conv_dict
 
-    def _build_network(self):
+    def _build_network(self) -> None:
         for i in range(self.num_layers):
             in_dim = self.dims["in_channels"] if i == 0 else self.dims["actual_hidden"]
             conv_dict = self._create_conv_dict(in_dim)
@@ -650,7 +654,7 @@ class HeteroGnn(nn.Module):
             dims=dims,
         )
 
-    def forward(self, batch):
+    def forward(self, batch: Any) -> torch.Tensor:
         """Run heterogeneous message passing and return node embeddings."""
         from torch_geometric.utils import add_self_loops
 
@@ -917,7 +921,7 @@ class MetabolismProcessor(nn.Module):
             use_isab=False,
         )
 
-    def forward(self, batch) -> torch.Tensor:
+    def forward(self, batch: Any) -> torch.Tensor:
         """Run hypergraph convolutions and aggregate metabolite embeddings."""
         device = batch[
             "metabolite", "reaction_genes", "metabolite"
@@ -1057,7 +1061,7 @@ class CellLatentPerturbation(nn.Module):
         # Gene encoder params
         gene_encoder_num_layers: int = 3,
         gene_encoder_conv_type: Literal["GCN", "GAT", "Transformer", "GIN"] = "GCN",
-        gene_encoder_layer_config: dict | None = None,
+        gene_encoder_layer_config: dict[str, Any] | None = None,
         gene_encoder_head_num_layers: int = 2,
         # Metabolism processor params
         metabolism_num_layers: int = 2,
@@ -1192,7 +1196,7 @@ class CellLatentPerturbation(nn.Module):
             dropout=dropout,
         )
 
-    def forward(self, batch):
+    def forward(self, batch: Any) -> tuple[torch.Tensor, torch.Tensor]:
         """Encode whole and perturbed states and predict phenotype outputs."""
         # Initial gene preprocessing (shared)
         base_gene_embeddings = self.gene_preprocessor(batch["gene"].x)
@@ -1244,7 +1248,9 @@ class CellLatentPerturbation(nn.Module):
 
         return predictions, z_pert
 
-    def _split_embeddings(self, embeddings: torch.Tensor, batch) -> dict[str, tuple]:
+    def _split_embeddings(
+        self, embeddings: torch.Tensor, batch: Any
+    ) -> dict[str, tuple[torch.Tensor, torch.Tensor]]:
         """Split embeddings into whole, intact, and perturbed sets."""
         device = embeddings.device
         batch_size = len(batch["gene"].ptr) - 1
@@ -1390,7 +1396,7 @@ class CellLatentPerturbation(nn.Module):
         }
 
 
-def load_sample_data_batch():
+def load_sample_data_batch() -> tuple[Any, int]:
     """Load a sample batch and metadata for exercising the model."""
     import os
     import os.path as osp
@@ -1479,7 +1485,9 @@ def load_sample_data_batch():
     return batch, max_num_nodes
 
 
-def plot_correlations(predictions, true_values, save_path):
+def plot_correlations(
+    predictions: torch.Tensor, true_values: torch.Tensor, save_path: str
+) -> None:
     """Plot predicted vs. true fitness and interaction scores and save the figure."""
     import matplotlib.pyplot as plt
     import numpy as np
@@ -1545,7 +1553,7 @@ def plot_correlations(predictions, true_values, save_path):
     plt.close()
 
 
-def main(device="cpu"):
+def main(device: str = "cpu") -> None:
     """Run a forward pass and correlation plotting on sample data."""
     import os
     import os.path as osp

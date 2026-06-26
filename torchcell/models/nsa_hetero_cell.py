@@ -1,12 +1,19 @@
 """Heterogeneous Node-Set Attention model over gene/metabolite/reaction graphs."""
 
+from typing import TYPE_CHECKING
+
 import torch
 import torch.nn as nn
 from torch.nn.attention.flex_attention import create_block_mask, flex_attention
 from torch_geometric.data import HeteroData
 
+if TYPE_CHECKING:
+    from torchcell.data import Neo4jCellDataset
 
-def load_sample_data_batch():
+
+def load_sample_data_batch() -> (
+    "tuple[Neo4jCellDataset, HeteroData, int, int]"
+):
     """Load a small cell-graph batch from disk for smoke testing."""
     import os
     import os.path as osp
@@ -126,7 +133,11 @@ def load_sample_data_batch():
 class BlockContainer(nn.Module):
     """Wrap a single, tuple, or dict of attention modules for registration."""
 
-    def __init__(self, block_type, content):
+    def __init__(
+        self,
+        block_type: str,
+        content: nn.Module | tuple[nn.Module, ...] | dict[str, nn.Module],
+    ) -> None:
         """Store the block type and register ``content`` by its structure."""
         super().__init__()
         self.block_type = block_type
@@ -147,7 +158,7 @@ class BlockContainer(nn.Module):
             self.content = content
             self.type = "single"
 
-    def get_content(self):
+    def get_content(self) -> nn.ModuleDict | tuple[nn.Module, ...] | nn.Module:
         """Return the wrapped module(s) in their original structure."""
         if self.type == "dict":
             return self.content_dict
@@ -160,7 +171,7 @@ class BlockContainer(nn.Module):
 class AttentionBlock(nn.Module):
     """Base Attention Block with common components for both MAB and SAB."""
 
-    def __init__(self, hidden_dim, num_heads=8):
+    def __init__(self, hidden_dim: int, num_heads: int = 8) -> None:
         """Build the shared norms and post-attention MLP."""
         super().__init__()
         self.hidden_dim = hidden_dim
@@ -178,7 +189,9 @@ class AttentionBlock(nn.Module):
             nn.Linear(4 * hidden_dim, hidden_dim),
         )
 
-    def forward(self, x, adj_matrix=None):
+    def forward(
+        self, x: torch.Tensor, adj_matrix: torch.Tensor | None = None
+    ) -> torch.Tensor:
         """Raise; subclasses implement the attention computation."""
         raise NotImplementedError("Implemented in subclasses")
 
@@ -186,11 +199,11 @@ class AttentionBlock(nn.Module):
 class MAB(AttentionBlock):
     """Masked Attention Block - Uses graph structure to mask attention."""
 
-    def __init__(self, hidden_dim, num_heads=8):
+    def __init__(self, hidden_dim: int, num_heads: int = 8) -> None:
         """Initialize the masked attention block."""
         super().__init__(hidden_dim, num_heads)
 
-    def forward(self, x, adj_matrix):
+    def forward(self, x: torch.Tensor, adj_matrix: torch.Tensor) -> torch.Tensor:
         """Attend over nodes, masking pairs absent from ``adj_matrix``."""
         device = x.device
 
@@ -207,7 +220,12 @@ class MAB(AttentionBlock):
         # Choose implementation based on device
         if device.type == "cuda":
             # Use FlexAttention with GPU
-            def node_mask_mod(b, h, q_idx, kv_idx):
+            def node_mask_mod(
+                b: torch.Tensor,
+                h: torch.Tensor,
+                q_idx: torch.Tensor,
+                kv_idx: torch.Tensor,
+            ) -> torch.Tensor:
                 return adj_matrix[b, q_idx, kv_idx]
 
             block_mask = create_block_mask(
@@ -256,11 +274,13 @@ class MAB(AttentionBlock):
 class SAB(AttentionBlock):
     """Self Attention Block - Uses standard self-attention with no masking."""
 
-    def __init__(self, hidden_dim, num_heads=8):
+    def __init__(self, hidden_dim: int, num_heads: int = 8) -> None:
         """Initialize the self-attention block."""
         super().__init__(hidden_dim, num_heads)
 
-    def forward(self, x, adj_matrix=None):
+    def forward(
+        self, x: torch.Tensor, adj_matrix: torch.Tensor | None = None
+    ) -> torch.Tensor:
         """Apply unmasked self-attention; ``adj_matrix`` is ignored."""
         device = x.device
 
@@ -306,13 +326,18 @@ class SAB(AttentionBlock):
 class StoichiometricMAB(AttentionBlock):
     """Masked Attention Block with stoichiometry support for metabolite-reaction interactions."""
 
-    def __init__(self, hidden_dim, num_heads=8):
+    def __init__(self, hidden_dim: int, num_heads: int = 8) -> None:
         """Initialize the block and the stoichiometry gating MLP."""
         super().__init__(hidden_dim, num_heads)
         # Add a stoichiometry gate
         self.stoich_gate = nn.Sequential(nn.Linear(1, hidden_dim), nn.Sigmoid())
 
-    def forward(self, x, adj_matrix, stoichiometry=None):
+    def forward(
+        self,
+        x: torch.Tensor,
+        adj_matrix: torch.Tensor,
+        stoichiometry: torch.Tensor | None = None,
+    ) -> torch.Tensor:
         """Apply masked attention, optionally gated by stoichiometry weights."""
         device = x.device
 
@@ -486,7 +511,9 @@ class CellGraphHeteroNSA(nn.Module):
                     f"  Added layer {i}: Stoichiometric Masked Attention for metabolite-reaction hypergraph"
                 )
 
-    def forward(self, data: HeteroData, batch_size: int = 1):
+    def forward(
+        self, data: HeteroData, batch_size: int = 1
+    ) -> dict[str, torch.Tensor]:
         """Run the heterogeneous NSA stack and return updated node embeddings.
 
         Args:
@@ -501,7 +528,9 @@ class CellGraphHeteroNSA(nn.Module):
         # Initialize node embeddings for each type
         node_embeddings = {}
         node_masks = {}
-        node_ranges = {}  # Track the index ranges for each node type in each batch
+        node_ranges: dict[str, list[tuple[int, int]]] = (
+            {}
+        )  # Track the index ranges for each node type in each batch
 
         # Process each node type
         for node_type, embedding_layer in self.embeddings.items():
@@ -871,7 +900,7 @@ class CellGraphNSAModel(nn.Module):
             nn.Linear(hidden_dim, output_dim),
         )
 
-    def forward(self, data: HeteroData):
+    def forward(self, data: HeteroData) -> torch.Tensor:
         """Encode the cell graph and predict per-perturbation gene outputs."""
         # Get batch size
         batch_size = 1
@@ -932,7 +961,7 @@ class CellGraphNSAModel(nn.Module):
         return predictions
 
 
-def main():
+def main() -> None:
     """Run a forward/backward timing smoke test on sample data."""
     import time
 

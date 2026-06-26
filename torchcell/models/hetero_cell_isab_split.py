@@ -191,8 +191,14 @@ class AttentionConvWrapper(nn.Module):
         self.act = act_register[activation] if activation is not None else None
         self.dropout = nn.Dropout(dropout) if dropout > 0 else None
 
-    def forward(self, x, edge_index, **kwargs):
-        """Run the conv then apply projection, norm, activation, and dropout."""
+    def forward(
+        self, x: Any, edge_index: torch.Tensor, **kwargs: Any
+    ) -> torch.Tensor:
+        """Run the conv then apply projection, norm, activation, and dropout.
+
+        x is Any: HeteroConv passes either a Tensor or a (src, dst) Tensor tuple
+        per edge type, depending on whether the wrapped conv is bipartite.
+        """
         out = self.conv(x, edge_index, **kwargs)
         out = self.proj(out)
         if self.norm is not None:
@@ -531,8 +537,13 @@ class HeteroCell(nn.Module):
         }
 
 
-def load_sample_data_batch():
-    """Load a sample cell-graph batch for exercising the model."""
+def load_sample_data_batch() -> tuple[Any, Any, int, int]:
+    """Load a sample cell-graph batch for exercising the model.
+
+    Returns (dataset, batch, input_channels, max_num_nodes). dataset/batch are
+    Any: the dataset type is imported lazily inside the body and batch is a
+    PyG dataloader yield, both dynamic at this signature's scope.
+    """
     import os
     import os.path as osp
 
@@ -648,14 +659,14 @@ def load_sample_data_batch():
 
 
 def plot_correlations(
-    predictions,
-    true_values,
-    save_path,
-    lambda_info="",
-    weight_decay="",
-    fixed_axes=None,
-    epoch=None,
-):
+    predictions: torch.Tensor,
+    true_values: torch.Tensor,
+    save_path: str,
+    lambda_info: str = "",
+    weight_decay: str | float = "",
+    fixed_axes: dict[str, tuple[list[float], list[float]]] | None = None,
+    epoch: int | None = None,
+) -> dict[str, tuple[list[float], list[float]]]:
     """Plot predicted-vs-true correlation scatter plots and save them."""
     import matplotlib.pyplot as plt
     import numpy as np
@@ -769,14 +780,14 @@ def plot_correlations(
 
 
 def plot_embeddings(
-    z_w,
-    z_i,
-    z_p,
-    batch_size,
-    save_dir="./003-fit-int/hetero_cell_isab/embedding_plots",
-    epoch=None,
-    fixed_axes=None,
-):
+    z_w: torch.Tensor,
+    z_i: torch.Tensor,
+    z_p: torch.Tensor,
+    batch_size: int,
+    save_dir: str = "./003-fit-int/hetero_cell_isab/embedding_plots",
+    epoch: int | None = None,
+    fixed_axes: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Plot embeddings for visualization and debugging with fixed axes for consistent GIF creation.
 
     Args:

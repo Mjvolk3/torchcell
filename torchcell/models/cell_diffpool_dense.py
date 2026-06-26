@@ -1,6 +1,6 @@
 """Dense DiffPool models over cell graphs for hierarchical graph pooling."""
 
-from typing import Literal
+from typing import Any, Literal
 
 import torch
 import torch.nn as nn
@@ -116,7 +116,7 @@ class DenseDiffPool(nn.Module):
         # Final prediction layer
         self.lin = nn.Linear(embed_gat_hidden_channels, target_dim)
 
-    def get_norm_layer(self, norm, channels):
+    def get_norm_layer(self, norm: str | None, channels: int) -> nn.Module:
         """Return the normalization layer for the given norm name and width."""
         if norm is None:
             return nn.Identity()
@@ -129,7 +129,7 @@ class DenseDiffPool(nn.Module):
         else:
             raise ValueError(f"Unsupported normalization type: {norm}")
 
-    def bn(self, x, norm_layer):
+    def bn(self, x: torch.Tensor, norm_layer: nn.Module) -> torch.Tensor:
         """Apply normalization to the input tensor."""
         batch_size, num_nodes, num_channels = x.size()
 
@@ -146,7 +146,17 @@ class DenseDiffPool(nn.Module):
 
         return x
 
-    def forward(self, x, adj, mask=None):
+    def forward(
+        self, x: torch.Tensor, adj: torch.Tensor, mask: torch.Tensor | None = None
+    ) -> tuple[
+        torch.Tensor,
+        list[torch.Tensor],
+        list[torch.Tensor],
+        list[list[torch.Tensor]],
+        list[list[torch.Tensor]],
+        list[torch.Tensor],
+        list[torch.Tensor],
+    ]:
         """Forward pass with proper gradient flow through cluster heads."""
         pool_attention_weights = []
         embed_attention_weights = []
@@ -316,7 +326,21 @@ class DenseCellDiffPool(nn.Module):
                 f"Parameter registration mismatch! Expected {total_expected:,} but got {actual_total:,}"
             )
 
-    def forward(self, x, adj_dict: dict[str, torch.Tensor], mask=None):
+    def forward(
+        self,
+        x: torch.Tensor,
+        adj_dict: dict[str, torch.Tensor],
+        mask: torch.Tensor | None = None,
+    ) -> tuple[
+        torch.Tensor,
+        dict[str, list[torch.Tensor]],
+        dict[str, list[torch.Tensor]],
+        dict[str, list[list[torch.Tensor]]],
+        dict[str, list[list[torch.Tensor]]],
+        dict[str, list[torch.Tensor]],
+        dict[str, list[torch.Tensor]],
+        dict[str, torch.Tensor],
+    ]:
         """Forward pass through named graph models."""
         if set(adj_dict.keys()) != set(self.graph_names):
             raise ValueError(
@@ -371,7 +395,7 @@ class DenseCellDiffPool(nn.Module):
         )
 
     @property
-    def num_parameters(self):
+    def num_parameters(self) -> dict[str, int]:
         """Count parameters in all submodules."""
         model_params = sum(
             sum(p.numel() for p in model.parameters())
@@ -388,7 +412,7 @@ class DenseCellDiffPool(nn.Module):
         }
 
 
-def load_sample_data_batch():
+def load_sample_data_batch() -> tuple[Any, int]:
     """Load a sample dense data batch for testing the DiffPool models."""
     import os
     import os.path as osp
@@ -477,7 +501,7 @@ def load_sample_data_batch():
     return batch, max_num_nodes
 
 
-def main_single():
+def main_single() -> None:
     """Run a single-graph DiffPool training/inference smoke test."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
@@ -620,7 +644,7 @@ def main_single():
                 print(f"  Num clusters: {cluster_assign.size(2)}")
 
 
-def main():
+def main() -> None:
     """Run a multi-graph DiffPool training/inference smoke test."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 

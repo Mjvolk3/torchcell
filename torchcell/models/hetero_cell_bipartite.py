@@ -126,7 +126,9 @@ class AttentionConvWrapper(nn.Module):
         self.act = nn.ReLU() if activation == "relu" else nn.SiLU()
         self.dropout = nn.Dropout(dropout) if dropout > 0 else None
 
-    def forward(self, x, edge_index, **kwargs):
+    def forward(
+        self, x: torch.Tensor, edge_index: torch.Tensor, **kwargs: Any
+    ) -> torch.Tensor:
         """Run the conv, then project, normalize, activate, and drop out."""
         out = self.conv(x, edge_index, **kwargs)
         out = self.proj(out)

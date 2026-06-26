@@ -1,5 +1,7 @@
 """Self-attention graph pooling (SAGPool) models for cell graphs."""
 
+from typing import Any
+
 import torch
 import torch.nn as nn
 from torch_geometric.nn import (
@@ -131,7 +133,7 @@ class SingleSAGPool(nn.Module):
             )
             self.intermediate_predictors.append(nn.Linear(in_features, target_dim))
 
-    def get_norm_layer(self, norm, channels):
+    def get_norm_layer(self, norm: str | None, channels: int) -> nn.Module:
         """Return the normalization layer matching the given norm name."""
         if norm is None:
             return nn.Identity()
@@ -150,7 +152,16 @@ class SingleSAGPool(nn.Module):
         else:
             raise ValueError(f"Unsupported normalization type: {norm}")
 
-    def forward(self, x, edge_index, batch):
+    def forward(
+        self, x: torch.Tensor, edge_index: torch.Tensor, batch: torch.Tensor
+    ) -> tuple[
+        torch.Tensor,
+        list[tuple[torch.Tensor, torch.Tensor]],
+        list[torch.Tensor],
+        list[torch.Tensor],
+        list[torch.Tensor],
+        list[tuple[torch.Tensor, torch.Tensor]],
+    ]:
         """Run hierarchical pooling and return predictions and pooling diagnostics."""
         attention_weights = []
         pool_scores = []
@@ -273,7 +284,20 @@ class CellSAGPool(nn.Module):
             nn.Linear(target_dim * 2, target_dim),
         )
 
-    def forward(self, x, edge_indices: dict[str, torch.Tensor], batch):
+    def forward(
+        self,
+        x: torch.Tensor,
+        edge_indices: dict[str, torch.Tensor],
+        batch: torch.Tensor,
+    ) -> tuple[
+        torch.Tensor,
+        dict[str, torch.Tensor],
+        dict[str, list[tuple[torch.Tensor, torch.Tensor]]],
+        dict[str, list[torch.Tensor]],
+        dict[str, list[torch.Tensor]],
+        dict[str, list[torch.Tensor]],
+        dict[str, list[tuple[torch.Tensor, torch.Tensor]]],
+    ]:
         """Run each graph's SAGPool and combine their predictions."""
         if set(edge_indices.keys()) != set(self.graph_names):
             raise ValueError(
@@ -320,7 +344,7 @@ class CellSAGPool(nn.Module):
         )
 
     @property
-    def num_parameters(self) -> dict:
+    def num_parameters(self) -> dict[str, int]:
         """Count parameters in all submodules."""
         # First, get parameters from one of the models to calculate per_model
         sample_model = next(iter(self.graph_models.values()))
@@ -343,7 +367,8 @@ class CellSAGPool(nn.Module):
         }
 
 
-def load_sample_data_batch():
+def load_sample_data_batch() -> tuple[Any, int]:
+    # batch is a PyG batch from an untyped external dataloader -> Any
     """Load a sample batch of cell graph data for ad-hoc model testing."""
     import os
     import os.path as osp
@@ -430,7 +455,9 @@ def load_sample_data_batch():
     return batch, max_num_nodes
 
 
-def analyze_node_selections(node_selections, graph_name):
+def analyze_node_selections(
+    node_selections: list[tuple[torch.Tensor, torch.Tensor]], graph_name: str
+) -> None:
     """Analyze how nodes were selected through the pooling layers."""
     print(f"\nAnalyzing node selections for {graph_name}:")
 
@@ -447,7 +474,7 @@ def analyze_node_selections(node_selections, graph_name):
         print("Selected node indices:", selected_nodes.tolist())
 
 
-def main():
+def main() -> None:
     """Run a sample CellSAGPool forward pass and report diagnostics."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 

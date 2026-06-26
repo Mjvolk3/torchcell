@@ -7,6 +7,7 @@
 
 import os
 import os.path as osp
+from typing import Any
 
 import hydra
 import torch
@@ -42,7 +43,7 @@ class LinearDecoder(nn.Module):
         """
         return self.proj(z_c)
 
-    def sample(self, context: torch.Tensor, **kwargs) -> torch.Tensor:
+    def sample(self, context: torch.Tensor, **kwargs: Any) -> torch.Tensor:
         """Sample method for compatibility with diffusion decoder interface.
 
         For linear decoder, this is just a forward pass.
@@ -78,9 +79,9 @@ class GeneInteractionDiff(GeneInteractionDango):
         dropout: float = 0.2,
         norm: str = "batch",
         activation: str = "relu",
-        gene_encoder_config: dict | None = None,
-        local_predictor_config: dict | None = None,
-        diffusion_config: dict | None = None,
+        gene_encoder_config: dict[str, Any] | None = None,
+        local_predictor_config: dict[str, Any] | None = None,
+        diffusion_config: dict[str, Any] | None = None,
         decoder_type: str = "diffusion",  # Add decoder type parameter
     ):
         """Initialize GeneInteractionDiff model.
@@ -532,7 +533,12 @@ def main(cfg: DictConfig) -> None:
     os.makedirs(plot_dir, exist_ok=True)
 
     # Multi-sample evaluation function
-    def evaluate_with_uncertainty(model, cell_graph, batch, num_samples=10):
+    def evaluate_with_uncertainty(
+        model: nn.Module,
+        cell_graph: HeteroData,
+        batch: HeteroData,
+        num_samples: int = 10,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Evaluate model with multiple samples for uncertainty estimation."""
         model.eval()
         with torch.no_grad():
@@ -558,7 +564,13 @@ def main(cfg: DictConfig) -> None:
         return mean_pred, std_pred, samples
 
     # Uncertainty visualization function
-    def plot_predictions_with_uncertainty(targets, predictions, std, epoch, save_dir):
+    def plot_predictions_with_uncertainty(
+        targets: torch.Tensor,
+        predictions: torch.Tensor,
+        std: torch.Tensor,
+        epoch: int,
+        save_dir: str,
+    ) -> None:
         """Plot predictions with error bars showing uncertainty."""
         fig, ax = plt.subplots(1, 1, figsize=(8, 6))
 

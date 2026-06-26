@@ -25,8 +25,8 @@ class GraphAttention(nn.Module):
         skip_node: bool = False,
         skip_set: bool = False,
         skip_mp: bool = False,
-        **kwargs,
-    ):
+        **kwargs: object,
+    ) -> None:
         """Build the DeepSet encoder, GATv2 layers, and post-readout set layers."""
         super().__init__()
 
@@ -67,7 +67,9 @@ class GraphAttention(nn.Module):
             ]
         )
 
-    def forward(self, x, batch, edge_index):
+    def forward(
+        self, x: torch.Tensor, batch: torch.Tensor, edge_index: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Encode nodes, run GAT message passing, and return node and set features."""
         # Process node features
         x_node = self.deepset.node_layers_forward(x)
@@ -91,7 +93,7 @@ class GraphAttention(nn.Module):
         return x_node, x_set
 
 
-def main():
+def main() -> None:
     """Run a smoke test of GraphAttention on dummy data with a backward pass."""
     torch.autograd.set_detect_anomaly(True)
 

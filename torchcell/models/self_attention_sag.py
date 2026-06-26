@@ -23,7 +23,9 @@ class SelfAttention(nn.Module):
         self.dim_out = dim_out
         self.num_heads = num_heads
 
-    def forward(self, x, batch):
+    def forward(
+        self, x: torch.Tensor, batch: torch.Tensor
+    ) -> tuple[torch.Tensor, list[torch.Tensor]]:
         """Return attended features and per-graph attention weight blocks."""
         Q = self.query(x)
         K = self.key(x)
@@ -53,19 +55,19 @@ class SelfAttentionSAG(nn.Module):
 
     def __init__(
         self,
-        in_channels,
-        hidden_channels,
-        out_channels,
-        num_heads=1,
-        num_pooling_layers=1,
-        dropout_prob=0.2,
-        norm="batch",
-        activation="relu",
-        ratio=0.5,
-        min_score=None,
-        multiplier=1.0,
-        nonlinearity="tanh",
-    ):
+        in_channels: int,
+        hidden_channels: int,
+        out_channels: int,
+        num_heads: int = 1,
+        num_pooling_layers: int = 1,
+        dropout_prob: float = 0.2,
+        norm: str = "batch",
+        activation: str = "relu",
+        ratio: float = 0.5,
+        min_score: float | None = None,
+        multiplier: float = 1.0,
+        nonlinearity: str = "tanh",
+    ) -> None:
         """Build the attention encoder, GCN/pool/norm stacks, and prediction head."""
         super().__init__()
 
@@ -95,7 +97,7 @@ class SelfAttentionSAG(nn.Module):
         self.dropout = nn.Dropout(dropout_prob)
         self.activation = getattr(F, activation)
 
-    def forward(self, x, batch):
+    def forward(self, x: torch.Tensor, batch: torch.Tensor) -> torch.Tensor:
         """Encode, build edges from attention, pool, and predict a graph-level output."""
         x, graph_attn_weights = self.self_attn(x, batch)
         print(f"Self-attention output shape: {x.shape}")
@@ -141,7 +143,7 @@ class SelfAttentionSAG(nn.Module):
         return x
 
 
-def main():
+def main() -> None:
     """Instantiate the model on dummy two-graph data and print output shapes."""
     in_channels = 10
     hidden_channels = 32

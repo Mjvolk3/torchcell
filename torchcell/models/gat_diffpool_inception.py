@@ -5,6 +5,8 @@
 
 """GAT-with-DiffPool inception model over multiple graphs for graph-level prediction."""
 
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -226,10 +228,10 @@ class GatDiffPool(nn.Module):
         # initialize weights
         self.init_weights()
 
-    def init_weights(self):
+    def init_weights(self) -> None:
         """Initialize module weights according to the configured scheme."""
 
-        def init_func(module):
+        def init_func(module: nn.Module) -> None:
             if isinstance(module, nn.Linear):
                 if self.weight_init == "xavier_uniform":
                     nn.init.xavier_uniform_(module.weight)
@@ -284,7 +286,7 @@ class GatDiffPool(nn.Module):
         if self.weight_init != "default":
             self.apply(init_func)
 
-    def get_norm_layer(self, norm, channels):
+    def get_norm_layer(self, norm: str, channels: int) -> nn.Module:
         """Return the PyG normalization layer for the given type and channels."""
         if norm is None:
             return nn.Identity()
@@ -303,11 +305,22 @@ class GatDiffPool(nn.Module):
         else:
             raise ValueError(f"Unsupported normalization type: {norm}")
 
-    def forward(self, x, edge_indices: list[torch.Tensor], batch):
+    def forward(
+        self, x: torch.Tensor, edge_indices: list[torch.Tensor], batch: torch.Tensor
+    ) -> tuple[
+        torch.Tensor,
+        list[Any],  # mixed: (edge_index, att_weights) tuples and bare att_weights
+        list[torch.Tensor],
+        list[torch.Tensor],
+        list[torch.Tensor],
+        list[torch.Tensor],
+        torch.Tensor,
+    ]:
         """Encode the input graphs through GAT and DiffPool and return predictions."""
         graph_outputs = []
-        attention_weights = []
-        cluster_assignments = []
+        # mixed: (edge_index, att_weights) tuples and bare att_weights
+        attention_weights: list[Any] = []
+        cluster_assignments: list[torch.Tensor] = []
         link_pred_losses = []
         entropy_losses = []
         cluster_predictions = []
@@ -317,6 +330,9 @@ class GatDiffPool(nn.Module):
 
             # Initial GAT layers
             x_graph = x
+            gat_layer: nn.Module
+            x_out: torch.Tensor
+            att_weights: torch.Tensor
             for j, gat_layer in enumerate(self.initial_gat_layers[i]):
                 x_out, (edge_index, att_weights) = gat_layer(
                     x_graph, edge_index, return_attention_weights=True
@@ -342,6 +358,8 @@ class GatDiffPool(nn.Module):
 
             # DiffPool layers
             x_pool, adj_pool = x_dense, adj
+            diffpool_layer: nn.Module
+            s: torch.Tensor
             for k, diffpool_layer in enumerate(self.diffpool_layers[i]):
                 s = diffpool_layer(x_pool)
                 x_pool, adj_pool, link_loss, ent_loss = dense_diff_pool(
@@ -441,7 +459,7 @@ class GatDiffPool(nn.Module):
             final_linear_output,  # Track the feature contributions here
         )
 
-    def prune_edges_dense(self, adj, k):
+    def prune_edges_dense(self, adj: torch.Tensor, k: int) -> torch.Tensor:
         """
         Prune edges in a dense adjacency matrix to keep only the top k*n edges.
 
@@ -485,7 +503,7 @@ class GatDiffPool(nn.Module):
         return new_adj
 
 
-def load_sample_data_batch():
+def load_sample_data_batch() -> tuple[Any, int]:
     """Load and return a sample data batch for testing the model."""
     import os
     import os.path as osp
@@ -587,7 +605,7 @@ def load_sample_data_batch():
     return batch, max_num_nodes
 
 
-def main():
+def main() -> None:
     """Build the model on sample data and run a forward pass for testing."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 

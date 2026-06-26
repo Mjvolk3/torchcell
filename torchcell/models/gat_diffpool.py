@@ -5,6 +5,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/gat_diffpool
 # Test file: tests/torchcell/models/test_gat_diffpool.py
 
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -188,10 +190,10 @@ class GatDiffPool(nn.Module):
         # initialize weights
         self.init_weights()
 
-    def init_weights(self):
+    def init_weights(self) -> None:
         """Apply the configured weight initialization to all submodules."""
 
-        def init_func(module):
+        def init_func(module: nn.Module) -> None:
             if isinstance(module, nn.Linear):
                 if self.weight_init == "xavier_uniform":
                     nn.init.xavier_uniform_(module.weight)
@@ -246,7 +248,7 @@ class GatDiffPool(nn.Module):
         if self.weight_init != "default":
             self.apply(init_func)
 
-    def get_norm_layer(self, norm, channels):
+    def get_norm_layer(self, norm: str | None, channels: int) -> nn.Module:
         """Return the normalization layer matching ``norm`` for ``channels``."""
         if norm is None:
             return nn.Identity()
@@ -265,10 +267,19 @@ class GatDiffPool(nn.Module):
         else:
             raise ValueError(f"Unsupported normalization type: {norm}")
 
-    def forward(self, x, edge_indices: list[torch.Tensor], batch):
+    def forward(
+        self, x: torch.Tensor, edge_indices: list[torch.Tensor], batch: torch.Tensor
+    ) -> tuple[
+        torch.Tensor,
+        list[Any],
+        list[torch.Tensor],
+        list[torch.Tensor],
+        list[torch.Tensor],
+    ]:
         """Encode and pool each graph, returning outputs and DiffPool losses."""
+        # attention_weights mixes (edge_index, att) tuples and bare att objects -> Any
         graph_outputs = []
-        attention_weights = []
+        attention_weights: list[Any] = []
         cluster_assignments = []
         link_pred_losses = []
         entropy_losses = []
@@ -278,6 +289,7 @@ class GatDiffPool(nn.Module):
 
             # Initial GAT layers
             x_graph = x
+            gat_layer: GATv2Conv
             for j, gat_layer in enumerate(self.initial_gat_layers[i]):
                 x_out, (edge_index, att_weights) = gat_layer(
                     x_graph, edge_index, return_attention_weights=True
@@ -303,8 +315,9 @@ class GatDiffPool(nn.Module):
 
             # DiffPool layers
             x_pool, adj_pool = x_dense, adj
+            diffpool_layer: nn.Linear
             for k, diffpool_layer in enumerate(self.diffpool_layers[i]):
-                s = diffpool_layer(x_pool)
+                s: torch.Tensor = diffpool_layer(x_pool)
                 x_pool, adj_pool, link_loss, ent_loss = dense_diff_pool(
                     x_pool, adj_pool, s, mask
                 )
@@ -384,7 +397,7 @@ class GatDiffPool(nn.Module):
             entropy_losses,
         )
 
-    def prune_edges_dense(self, adj, k):
+    def prune_edges_dense(self, adj: torch.Tensor, k: int) -> torch.Tensor:
         """Prune a dense adjacency matrix to keep only the top k*n edges.
 
         Args:
@@ -427,7 +440,8 @@ class GatDiffPool(nn.Module):
         return new_adj
 
 
-def load_sample_data_batch():
+def load_sample_data_batch() -> tuple[Any, int]:
+    # batch is a PyG batch from an untyped external dataloader -> Any
     """Load a sample batch and max node count for manual model testing."""
     import os
     import os.path as osp
@@ -529,7 +543,7 @@ def load_sample_data_batch():
     return batch, max_num_nodes
 
 
-def main():
+def main() -> None:
     """Run GatDiffPool on a sample batch as a smoke test."""
     # Load the sample data batch
     batch, max_num_nodes = load_sample_data_batch()

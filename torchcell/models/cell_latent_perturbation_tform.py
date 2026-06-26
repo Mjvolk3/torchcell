@@ -1,9 +1,10 @@
 """Cell latent perturbation model with set-transformer and metabolism encoders."""
 
-from typing import Literal
+from typing import Any, Literal
 
 import torch
 import torch.nn as nn
+from torch_geometric.data import HeteroData
 from torch_geometric.nn import (
     BatchNorm,
     GATv2Conv,
@@ -26,13 +27,13 @@ from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 class ProjectedGATConv(nn.Module):
     """GATv2 conv whose multi-head output is projected to a fixed dimension."""
 
-    def __init__(self, gat_conv, out_dim):
+    def __init__(self, gat_conv: GATv2Conv, out_dim: int):
         """Wrap a GAT conv and add a linear projection to out_dim."""
         super().__init__()
         self.gat = gat_conv
         self.project = nn.Linear(gat_conv.heads * gat_conv.out_channels, out_dim)
 
-    def forward(self, x, edge_index):
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
         """Run the GAT conv and project its concatenated heads to out_dim."""
         x = self.gat(x, edge_index)  # Shape: (..., heads * out_channels)
         return self.project(x)  # Shape: (..., out_dim)
@@ -80,7 +81,7 @@ class HeteroGnnPool(nn.Module):
         num_layers: int,
         edge_types: list[EdgeType],
         conv_type: Literal["GCN", "GAT", "Transformer", "GIN"] = "GCN",
-        layer_config: dict | None = None,
+        layer_config: dict[str, Any] | None = None,
         activation: str = "relu",
         norm: str | None = None,
         head_num_layers: int = 2,
@@ -141,7 +142,9 @@ class HeteroGnnPool(nn.Module):
             norm=head_norm,
         )
 
-    def _get_layer_config(self, layer_config: dict | None) -> dict:
+    def _get_layer_config(
+        self, layer_config: dict[str, Any] | None
+    ) -> dict[str, Any]:
         default_configs = {
             "GCN": {
                 "bias": True,
@@ -183,7 +186,9 @@ class HeteroGnnPool(nn.Module):
             return default_configs[self.conv_type]
         return {**default_configs[self.conv_type], **layer_config}
 
-    def _calculate_dimensions(self, in_channels: int, hidden_channels: int) -> dict:
+    def _calculate_dimensions(
+        self, in_channels: int, hidden_channels: int
+    ) -> dict[str, int]:
         dims = {"in_channels": in_channels, "hidden_channels": hidden_channels}
 
         if self.conv_type in ["GAT", "Transformer"]:
@@ -250,8 +255,8 @@ class HeteroGnnPool(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def _create_conv_dict(self, in_dim: int) -> dict:
-        conv_dict = {}
+    def _create_conv_dict(self, in_dim: int) -> dict[EdgeType, nn.Module]:
+        conv_dict: dict[EdgeType, nn.Module] = {}
 
         for edge_type in self.edge_types:
             if self.conv_type == "GCN":
@@ -318,7 +323,7 @@ class HeteroGnnPool(nn.Module):
 
         return conv_dict
 
-    def _build_network(self):
+    def _build_network(self) -> None:
         for i in range(self.num_layers):
             in_dim = self.dims["in_channels"] if i == 0 else self.dims["actual_hidden"]
             conv_dict = self._create_conv_dict(in_dim)
@@ -410,7 +415,7 @@ class HeteroGnnPool(nn.Module):
             dims=dims,
         )
 
-    def forward(self, batch):
+    def forward(self, batch: HeteroData) -> torch.Tensor:
         """Encode the hetero batch through the conv stack and return gene embeddings."""
         from torch_geometric.utils import add_self_loops
 
@@ -736,7 +741,7 @@ class MetabolismProcessor(nn.Module):
             activation="tanh",
         )
 
-    def forward(self, batch) -> torch.Tensor:
+    def forward(self, batch: HeteroData) -> torch.Tensor:
         """Encode metabolite hypergraphs into a pooled metabolism embedding."""
         device = batch[
             "metabolite", "reaction_genes", "metabolite"
@@ -864,7 +869,7 @@ class CellLatentPerturbation(nn.Module):
         # Gene encoder params
         gene_encoder_num_layers: int = 3,
         gene_encoder_conv_type: Literal["GCN", "GAT", "Transformer", "GIN"] = "GCN",
-        gene_encoder_layer_config: dict | None = None,
+        gene_encoder_layer_config: dict[str, Any] | None = None,
         gene_encoder_head_num_layers: int = 2,
         # Metabolism processor params
         metabolism_num_layers: int = 2,
@@ -1016,7 +1021,9 @@ class CellLatentPerturbation(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def _split_embeddings(self, embeddings: torch.Tensor, batch) -> list[tuple]:
+    def _split_embeddings(
+        self, embeddings: torch.Tensor, batch: HeteroData
+    ) -> list[tuple[torch.Tensor, torch.Tensor, torch.Tensor]]:
         """Split embeddings into whole, intact, and perturbed sets using tensor operations.
 
         Args:
@@ -1093,7 +1100,7 @@ class CellLatentPerturbation(nn.Module):
         return embeddings_split
 
     def _process_batch_embeddings(
-        self, embeddings_split: list[tuple]
+        self, embeddings_split: list[tuple[torch.Tensor, torch.Tensor, torch.Tensor]]
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Process batch embeddings efficiently using batch operations where possible.
 
@@ -1136,7 +1143,9 @@ class CellLatentPerturbation(nn.Module):
 
         return z_whole, z_intact, z_pert
 
-    def forward(self, batch):
+    def forward(
+        self, batch: HeteroData
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Encode genes and metabolism, combine them, and return model outputs."""
         gene_embeddings = self.gene_encoder(batch)
         metabolism_embeddings = self.metabolism_processor(batch)
@@ -1204,7 +1213,7 @@ class CellLatentPerturbation(nn.Module):
         }
 
 
-def load_sample_data_batch():
+def load_sample_data_batch() -> tuple[HeteroData, int]:
     """Load a sample data batch for demonstrating and testing the model."""
     import os
     import os.path as osp
@@ -1292,7 +1301,9 @@ def load_sample_data_batch():
     return batch, max_num_nodes
 
 
-def plot_correlations(predictions, true_values, save_path):
+def plot_correlations(
+    predictions: torch.Tensor, true_values: torch.Tensor, save_path: str
+) -> None:
     """Plot predicted versus true values and save the figure to save_path."""
     import matplotlib.pyplot as plt
     import numpy as np
@@ -1358,7 +1369,7 @@ def plot_correlations(predictions, true_values, save_path):
     plt.close()
 
 
-def main(device="cuda"):
+def main(device: str = "cuda") -> None:
     """Build the model, run a forward pass, and report parameters and outputs."""
     import os
     import os.path as osp

@@ -13,7 +13,7 @@ MODEL_NAME = "InstaDeepAI/nucleotide-transformer-2.5b-multi-species"
 class NucleotideTransformer(NucleotideModel):
     """InstaDeepAI Nucleotide Transformer for DNA sequence embeddings."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Select the device and load the tokenizer and model."""
         self.tokenizer = None
         self.model = None
@@ -21,7 +21,7 @@ class NucleotideTransformer(NucleotideModel):
         self.load_model()
 
     @staticmethod
-    def _check_and_download_model():
+    def _check_and_download_model() -> None:
         """Download the pretrained model and tokenizer if not already cached."""
         # Define the directory where you want the model to be saved
         script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -47,12 +47,12 @@ class NucleotideTransformer(NucleotideModel):
             print("Download finished.")
 
     @property
-    def max_sequence_size(self):
+    def max_sequence_size(self) -> int:
         """Return the maximum supported input sequence length in bases."""
         # Found empirically... listed as 6kb in paper.
         return 5979
 
-    def load_model(self):
+    def load_model(self) -> None:
         """Load the tokenizer and model onto the selected device."""
         # Check and download the model if necessary
         self._check_and_download_model()
@@ -104,7 +104,7 @@ class NucleotideTransformer(NucleotideModel):
         return embeddings
 
 
-def main():
+def main() -> None:
     """Run a small embedding demonstration on dummy sequences."""
     # Initialize the NucleotideTransformer
     transformer = NucleotideTransformer()

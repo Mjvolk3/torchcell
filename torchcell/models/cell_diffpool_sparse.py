@@ -1,6 +1,6 @@
 """Sparse DiffPool cell model with GAT-based pooling over multiple graphs."""
 
-from typing import Literal
+from typing import Any, Literal
 
 import torch
 import torch.nn as nn
@@ -145,7 +145,7 @@ class SingleDiffPool(nn.Module):
         # Final prediction layer
         self.lin = nn.Linear(embed_gat_hidden_channels, target_dim)
 
-    def get_norm_layer(self, norm, channels):
+    def get_norm_layer(self, norm: str | None, channels: int) -> nn.Module:
         """Return the normalization layer matching the given norm name."""
         if norm is None:
             return nn.Identity()
@@ -164,7 +164,17 @@ class SingleDiffPool(nn.Module):
         else:
             raise ValueError(f"Unsupported normalization type: {norm}")
 
-    def forward(self, x, edge_index, batch):
+    def forward(
+        self, x: torch.Tensor, edge_index: torch.Tensor, batch: torch.Tensor
+    ) -> tuple[
+        torch.Tensor,
+        list[torch.Tensor],
+        list[torch.Tensor],
+        list[Any],
+        list[Any],
+        list[torch.Tensor],
+        list[torch.Tensor],
+    ]:
         """Embed and pool the graph, returning pooled features and DiffPool losses."""
         # Initialize variables to store outputs
         pool_attention_weights = []  # Store pooling GAT attention weights
@@ -181,6 +191,7 @@ class SingleDiffPool(nn.Module):
         ):
             # # Compute cluster assignment matrix (S) using GAT
             s = x
+            pool_layer: nn.Module
             for i, pool_layer in enumerate(pool_gnn):
                 pool_layer_attention = []
                 # GAT layer
@@ -209,6 +220,7 @@ class SingleDiffPool(nn.Module):
 
             # Compute node embeddings (Z) using GAT
             z = x
+            embed_layer: nn.Module
             for i, embed_layer in enumerate(embed_gnn):
                 embed_layer_attention = []
                 # GAT layer
@@ -347,7 +359,21 @@ class CellDiffPool(nn.Module):
                 f"Parameter registration mismatch! Expected {total_expected:,} but got {actual_total:,}"
             )
 
-    def forward(self, x, edge_indices: dict[str, torch.Tensor], batch):
+    def forward(
+        self,
+        x: torch.Tensor,
+        edge_indices: dict[str, torch.Tensor],
+        batch: torch.Tensor,
+    ) -> tuple[
+        torch.Tensor,
+        dict[str, list[torch.Tensor]],
+        dict[str, list[torch.Tensor]],
+        dict[str, list[Any]],
+        dict[str, list[Any]],
+        dict[str, list[torch.Tensor]],
+        dict[str, list[torch.Tensor]],
+        dict[str, torch.Tensor],
+    ]:
         """Forward pass through all graph models."""
         if set(edge_indices.keys()) != set(self.graph_names):
             raise ValueError(
@@ -406,7 +432,7 @@ class CellDiffPool(nn.Module):
         )
 
     @property
-    def num_parameters(self):
+    def num_parameters(self) -> dict[str, int]:
         """Count parameters in all submodules."""
         model_params = sum(
             sum(p.numel() for p in model.parameters())
@@ -423,7 +449,8 @@ class CellDiffPool(nn.Module):
         }
 
 
-def load_sample_data_batch():
+# batch return is a dynamically produced PyG HeteroData batch from the dataloader
+def load_sample_data_batch() -> tuple[Any, int]:
     """Load a sample batch for exercising the model during development."""
     import os
     import os.path as osp
@@ -510,7 +537,7 @@ def load_sample_data_batch():
     return batch, max_num_nodes
 
 
-def main_single():
+def main_single() -> None:
     """Run a SingleDiffPool smoke test on a sample batch."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
@@ -620,7 +647,7 @@ def main_single():
             print(f"Actual: {y[0].numpy()}")
 
 
-def main():
+def main() -> None:
     """Run a CellDiffPool smoke test on a sample batch."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 

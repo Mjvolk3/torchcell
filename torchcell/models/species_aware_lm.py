@@ -4,6 +4,8 @@
 # Test file: torchcell/models/test_species_aware_lm.py
 """Embed DNA sequences with the gagneurlab SpeciesLM masked language model."""
 
+from typing import Any
+
 import numpy as np
 import pandas as pd
 import torch
@@ -28,7 +30,7 @@ def embed_sequence(sequence: str) -> np.ndarray:
         A token-averaged hidden-state vector as a NumPy array.
     """
 
-    def kmers_stride1(seq, k=6):
+    def kmers_stride1(seq: str, k: int = 6) -> list[str]:
         return [seq[i : i + k] for i in range(0, len(seq) - k + 1)]
 
     # Tokenizing the sequence
@@ -69,7 +71,7 @@ model = AutoModelForMaskedLM.from_pretrained(
 model.eval()  # Set the model to evaluation mode
 
 
-def main():
+def main() -> None:
     """Embed three-prime windows of all genes and collect averaged embeddings."""
     genome = SCerevisiaeGenome()
 
@@ -80,11 +82,11 @@ def main():
         "gagneurlab/SpeciesLM", revision="downstream_species_lm"
     )
 
-    def kmers_stride1(seq, k=6):
+    def kmers_stride1(seq: str, k: int = 6) -> list[str]:
         # splits a sequence into overlapping k-mers
         return [seq[i : i + k] for i in range(0, len(seq) - k + 1)]
 
-    def tok_func_species(x, species_proxy, seq_col):
+    def tok_func_species(x: Any, species_proxy: str, seq_col: str) -> Any:
         res = tokenizer(species_proxy + " " + " ".join(kmers_stride1(x[seq_col])))
         return res
 
@@ -97,7 +99,7 @@ def main():
     target_layer = (8,)  # what hidden layers to use for embedding
 
     #
-    def tok_func(x):
+    def tok_func(x: Any) -> Any:
         return tok_func_species(x, proxy_species, seq_col)
 
     # I want a function that would all me to run embed(genome[gene].window_three_prime(300, include_stop_codon=True, allow_undersize=True).seq) and it would return the embedded vector
@@ -124,7 +126,7 @@ def main():
     # Running model
 
     # CHECK needed for running model?
-    def count_special_tokens(tokens, tokenizer, where="left"):
+    def count_special_tokens(tokens: Any, tokenizer: Any, where: str = "left") -> int:
         count = 0
         if where == "right":
             tokens = tokens[::-1]
@@ -137,12 +139,12 @@ def main():
         return count
 
     def embed_on_batch(
-        tokenized_data,
-        dataset,
-        seq_idx,
-        special_token_offset,
-        target_layer=target_layer,
-    ):
+        tokenized_data: Any,
+        dataset: pd.DataFrame,
+        seq_idx: int,
+        special_token_offset: int,
+        target_layer: tuple[int, ...] = target_layer,
+    ) -> "np.ndarray | torch.Tensor":
         label = dataset.iloc[seq_idx][seq_col]
         label_len = len(label)
         if label_len < 6:

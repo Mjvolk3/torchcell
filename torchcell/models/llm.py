@@ -33,16 +33,18 @@ class NucleotideModel(ABC):
 
     @staticmethod
     @abstractmethod
-    def _check_and_download_model():
+    def _check_and_download_model() -> None:
         pass
 
     @abstractmethod
-    def load_model(self, model_name: str):
+    def load_model(self, model_name: str) -> None:
         """Load the tokenizer and model weights for the given model name."""
         pass
 
     @abstractmethod
-    def embed(self, sequences: list, mean_embedding: bool = False) -> torch.Tensor:
+    def embed(
+        self, sequences: list[str], mean_embedding: bool = False
+    ) -> torch.Tensor:
         """Return embeddings for the given sequences."""
         pass
 
@@ -69,16 +71,18 @@ class PeptideModel(ABC):
 
     @staticmethod
     @abstractmethod
-    def _check_and_download_model(model_name: str):
+    def _check_and_download_model(model_name: str) -> None:
         pass
 
     @abstractmethod
-    def load_model(self, model_name: str):
+    def load_model(self, model_name: str) -> None:
         """Load the tokenizer and model weights for the given model name."""
         pass
 
     @abstractmethod
-    def embed(self, sequences: list, mean_embedding: bool = False) -> torch.Tensor:
+    def embed(
+        self, sequences: list[str], mean_embedding: bool = False
+    ) -> torch.Tensor:
         """Return embeddings for the given sequences."""
         pass
 

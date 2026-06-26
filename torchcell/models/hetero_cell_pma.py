@@ -6,7 +6,7 @@
 
 import os
 import os.path as osp
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import hydra
 import torch
@@ -28,6 +28,9 @@ from torch_geometric.utils import to_dense_batch
 
 from torchcell.models.act import act_register
 from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
+
+if TYPE_CHECKING:
+    from torchcell.data import Neo4jCellDataset
 
 
 def get_norm_layer(channels: int, norm: str) -> nn.Module:
@@ -223,7 +226,9 @@ class AttentionConvWrapper(nn.Module):
         self.act = act_register[activation] if activation is not None else None
         self.dropout = nn.Dropout(dropout) if dropout > 0 else None
 
-    def forward(self, x, edge_index, **kwargs):
+    def forward(
+        self, x: torch.Tensor, edge_index: torch.Tensor, **kwargs: Any
+    ) -> torch.Tensor:
         """Run the conv then projection, norm, activation, and dropout."""
         out = self.conv(x, edge_index, **kwargs)
         out = self.proj(out)
@@ -551,7 +556,9 @@ class HeteroCell(nn.Module):
         return counts
 
 
-def load_sample_data_batch():
+def load_sample_data_batch() -> (
+    "tuple[Neo4jCellDataset, HeteroData, int, int]"
+):
     """Load a sample dataset and batch for exercising the model."""
     import os
     import os.path as osp
@@ -668,14 +675,14 @@ def load_sample_data_batch():
 
 
 def plot_correlations(
-    predictions,
-    true_values,
-    save_path,
-    lambda_info="",
-    weight_decay="",
-    fixed_axes=None,
-    epoch=None,
-):
+    predictions: torch.Tensor,
+    true_values: torch.Tensor,
+    save_path: str,
+    lambda_info: str = "",
+    weight_decay: str = "",
+    fixed_axes: dict[str, Any] | None = None,
+    epoch: int | None = None,
+) -> dict[str, Any]:
     """Plot predicted vs. true fitness and gene interaction and save the figure."""
     import matplotlib.pyplot as plt
     import numpy as np
@@ -789,14 +796,14 @@ def plot_correlations(
 
 
 def plot_embeddings(
-    z_w,
-    z_i,
-    z_p,
-    batch_size,
-    save_dir="./003-fit-int/hetero_cell_isab/embedding_plots",
-    epoch=None,
-    fixed_axes=None,
-):
+    z_w: torch.Tensor,
+    z_i: torch.Tensor,
+    z_p: torch.Tensor,
+    batch_size: int,
+    save_dir: str = "./003-fit-int/hetero_cell_isab/embedding_plots",
+    epoch: int | None = None,
+    fixed_axes: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Plot embeddings for visualization and debugging with fixed axes for consistent GIF creation.
 
     Args:

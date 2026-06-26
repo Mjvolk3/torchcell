@@ -14,6 +14,7 @@ Implements the generalized virtual cell architecture:
 
 import os
 import os.path as osp
+from typing import Any
 
 import hydra
 import numpy as np
@@ -491,12 +492,12 @@ class CellGraphTransformer(nn.Module):
         num_transformer_layers: int,
         num_attention_heads: int,
         cell_graph: HeteroData,
-        graph_regularization_config: dict | None = None,
-        perturbation_head_config: dict | None = None,
+        graph_regularization_config: dict[str, Any] | None = None,
+        perturbation_head_config: dict[str, Any] | None = None,
         dropout: float = 0.1,
         graph_reg_lambda: float = 0.0,  # Loss lambda for graph regularization
-        node_embeddings: dict | None = None,  # Pre-computed embeddings
-        learnable_embedding_config: dict | None = None,  # Learnable config
+        node_embeddings: dict[str, Any] | None = None,  # Pre-computed embeddings
+        learnable_embedding_config: dict[str, Any] | None = None,  # Learnable config
     ):
         """Build embeddings, transformer encoder, and perturbation heads.
 
@@ -831,8 +832,12 @@ class CellGraphTransformer(nn.Module):
 
         # 3. Transformer encoder
         H = X
-        all_attention_weights = [] if return_attention else None
-        residual_update_ratios = [] if return_attention else None
+        all_attention_weights: list[torch.Tensor] | None = (
+            [] if return_attention else None
+        )
+        residual_update_ratios: list[float] | None = (
+            [] if return_attention else None
+        )
         total_graph_reg_loss = torch.tensor(0.0, device=device)
 
         for layer_idx, layer in enumerate(self.transformer_layers):
@@ -1106,24 +1111,24 @@ def main(cfg: DictConfig) -> None:
     os.makedirs(plot_dir, exist_ok=True)
 
     def save_intermediate_plot(
-        epoch,
-        losses,
-        pred_losses,
-        graph_reg_losses,
-        correlations,
-        spearman_correlations,
-        mses,
-        maes,
-        rmses,
-        learning_rates,
-        weight_l2_norms,
-        smoothness_history,
-        cfg,
-        model,
-        cell_graph,
-        batch,
-        y,
-    ):
+        epoch: int,
+        losses: list[float],
+        pred_losses: list[float],
+        graph_reg_losses: list[float],
+        correlations: list[float],
+        spearman_correlations: list[float],
+        mses: list[float],
+        maes: list[float],
+        rmses: list[float],
+        learning_rates: list[float],
+        weight_l2_norms: list[float],
+        smoothness_history: list[float],
+        cfg: DictConfig,
+        model: nn.Module,
+        cell_graph: HeteroData,
+        batch: HeteroData,
+        y: torch.Tensor,
+    ) -> None:
         """Save intermediate training plot every print interval."""
         plt.figure(figsize=(20, 12))
 

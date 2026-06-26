@@ -1,5 +1,7 @@
 """Inception-style multi-graph SAGPooling model for cell graph regression."""
 
+from typing import Any
+
 import torch
 import torch.nn as nn
 from torch_geometric.nn import (
@@ -51,7 +53,7 @@ class MLP(nn.Module):
 
         self.dropout = nn.Dropout(dropout)
 
-    def get_norm_layer(self, norm, channels):
+    def get_norm_layer(self, norm: str, channels: int) -> nn.Module:
         """Return the torch.nn normalization layer matching the ``norm`` name."""
         if norm == "batch":
             return nn.BatchNorm1d(channels)
@@ -62,7 +64,7 @@ class MLP(nn.Module):
         else:
             raise ValueError(f"Unsupported normalization type: {norm}")
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Apply each hidden layer with norm/activation/dropout, then the output layer."""
         for i, (layer, norm) in enumerate(zip(self.layers[:-1], self.norms)):
             x = layer(x)
@@ -215,7 +217,7 @@ class SingleSAGPool(nn.Module):
             dropout=dropout,
         )
 
-    def get_norm_layer(self, norm, channels):
+    def get_norm_layer(self, norm: str | None, channels: int) -> nn.Module:
         """Return the torch_geometric normalization layer matching the ``norm`` name."""
         if norm is None:
             return nn.Identity()
@@ -234,7 +236,16 @@ class SingleSAGPool(nn.Module):
         else:
             raise ValueError(f"Unsupported normalization type: {norm}")
 
-    def forward(self, x, edge_index, batch):
+    def forward(
+        self, x: torch.Tensor, edge_index: torch.Tensor, batch: torch.Tensor
+    ) -> tuple[
+        torch.Tensor,
+        list[Any],
+        list[torch.Tensor],
+        list[torch.Tensor],
+        list[torch.Tensor],
+        list[tuple[torch.Tensor, torch.Tensor]],
+    ]:
         """Run conv/pool layers, returning the prediction and pooling diagnostics."""
         attention_weights = []
         pool_scores = []
@@ -371,7 +382,7 @@ class CellSAGPool(nn.Module):
         )
 
     @property
-    def num_parameters(self) -> dict:
+    def num_parameters(self) -> dict[str, int]:
         """Count parameters in all submodules."""
         sample_model = next(iter(self.graph_models.values()))
         per_model = sum(p.numel() for p in sample_model.parameters())
@@ -390,7 +401,20 @@ class CellSAGPool(nn.Module):
             "total": model_params + combination_params,
         }
 
-    def forward(self, x, edge_indices: dict[str, torch.Tensor], batch):
+    def forward(
+        self,
+        x: torch.Tensor,
+        edge_indices: dict[str, torch.Tensor],
+        batch: torch.Tensor,
+    ) -> tuple[
+        torch.Tensor,
+        dict[str, torch.Tensor],
+        dict[str, list[Any]],
+        dict[str, list[torch.Tensor]],
+        dict[str, list[torch.Tensor]],
+        dict[str, list[torch.Tensor]],
+        dict[str, list[tuple[torch.Tensor, torch.Tensor]]],
+    ]:
         """Run each graph tower, concatenate outputs, and return the fused prediction."""
         if set(edge_indices.keys()) != set(self.graph_names):
             raise ValueError(
@@ -437,7 +461,8 @@ class CellSAGPool(nn.Module):
         )
 
 
-def load_sample_data_batch():
+# batch return is a dynamically produced PyG HeteroData batch from the dataloader
+def load_sample_data_batch() -> tuple[Any, int]:
     """Load one sample batch and the max node count from a Neo4j cell dataset."""
     import os
     import os.path as osp
@@ -524,7 +549,7 @@ def load_sample_data_batch():
     return batch, max_num_nodes
 
 
-def main_single():
+def main_single() -> None:
     """Smoke-test a SingleSAGPool model on one sample batch."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
@@ -624,7 +649,9 @@ def main_single():
             print(f"Layer {i + 1}: {pred[0].detach().numpy()}")
 
 
-def analyze_node_selections(node_selections, graph_name):
+def analyze_node_selections(
+    node_selections: list[tuple[torch.Tensor, torch.Tensor]], graph_name: str
+) -> None:
     """Analyze how nodes were selected through the pooling layers."""
     print(f"\nAnalyzing node selections for {graph_name}:")
 
@@ -641,7 +668,7 @@ def analyze_node_selections(node_selections, graph_name):
         print("Selected node indices:", selected_nodes.tolist())
 
 
-def main():
+def main() -> None:
     """Smoke-test the multi-graph CellSAGPool model on one sample batch."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 

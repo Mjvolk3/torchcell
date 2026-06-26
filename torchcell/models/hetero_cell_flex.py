@@ -20,7 +20,9 @@ from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 class GraphMaskedAttention(nn.Module):
     """Masked attention layer restricting attention to existing graph edges."""
 
-    def __init__(self, hidden_channels, num_heads=4, dropout=0.1):
+    def __init__(
+        self, hidden_channels: int, num_heads: int = 4, dropout: float = 0.1
+    ) -> None:
         """Set up the Q/K/V projections and per-head dimensions."""
         super().__init__()
         self.hidden_channels = hidden_channels
@@ -38,7 +40,7 @@ class GraphMaskedAttention(nn.Module):
 
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, x, edge_index):
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
         """
         Apply masked attention where nodes can only attend to their neighbors in the graph.
 
@@ -57,7 +59,12 @@ class GraphMaskedAttention(nn.Module):
         adj_matrix[edge_index[0], edge_index[1]] = True
 
         # Define mask_mod for FlexAttention
-        def adjacency_mask_mod(b, h, q_idx, kv_idx):
+        def adjacency_mask_mod(
+            b: torch.Tensor,
+            h: torch.Tensor,
+            q_idx: torch.Tensor,
+            kv_idx: torch.Tensor,
+        ) -> torch.Tensor:
             return adj_matrix[q_idx, kv_idx]
 
         # Create BlockMask for efficient computation
@@ -239,7 +246,9 @@ class AttentionConvWrapper(nn.Module):
             else nn.Linear(expected_dim, target_dim)
         )
 
-    def forward(self, x, edge_index, **kwargs):
+    def forward(
+        self, x: torch.Tensor, edge_index: torch.Tensor, **kwargs: Any
+    ) -> torch.Tensor:
         """Run the wrapped conv and project the result to the target dimension."""
         out = self.conv(x, edge_index, **kwargs)
         return self.proj(out)
@@ -296,12 +305,14 @@ class HeteroCell(nn.Module):
 
             # Create wrapper to make it compatible with HeteroConv
             class GraphAttentionWrapper(nn.Module):
-                def __init__(self, att_module):
+                def __init__(self, att_module: GraphMaskedAttention) -> None:
                     super().__init__()
                     self.att_module = att_module
                     self.out_channels = att_module.hidden_channels
 
-                def forward(self, x, edge_index, **kwargs):
+                def forward(
+                    self, x: torch.Tensor, edge_index: torch.Tensor, **kwargs: Any
+                ) -> torch.Tensor:
                     return self.att_module(x, edge_index)
 
             # Use the same attention layer for both physical and regulatory interactions
@@ -560,7 +571,9 @@ class HeteroCell(nn.Module):
         return counts
 
 
-def load_sample_data_batch():
+def load_sample_data_batch() -> tuple[Any, HeteroData, int, int]:
+    # `dataset` is a Neo4jCellDataset, imported lazily inside the function body,
+    # so it is annotated as Any to avoid a module-level import here.
     """Load a small sample batch and cell graph for smoke-testing the model."""
     import os
     import os.path as osp
@@ -676,8 +689,12 @@ def load_sample_data_batch():
 
 
 def plot_correlations(
-    predictions, true_values, save_path, lambda_info="", weight_decay=""
-):
+    predictions: torch.Tensor,
+    true_values: torch.Tensor,
+    save_path: str,
+    lambda_info: str = "",
+    weight_decay: str | float = "",
+) -> None:
     """Plot predicted vs. true values and save the correlation figure."""
     import matplotlib.pyplot as plt
     import numpy as np

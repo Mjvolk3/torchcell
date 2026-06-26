@@ -62,8 +62,8 @@ class DCell(nn.Module):
         self.term_to_genes = self._build_term_gene_mapping(hetero_data)
 
         # Pre-compute input/output dimensions and create modules
-        self.term_input_dims = {}
-        self.term_output_dims = {}
+        self.term_input_dims: dict[int, int] = {}
+        self.term_output_dims: dict[int, int] = {}
         self.subsystems = nn.ModuleDict()
         self.linear_heads = nn.ModuleDict()
 
@@ -103,7 +103,7 @@ class DCell(nn.Module):
 
     def _build_hierarchy(self, hetero_data: HeteroData) -> dict[int, list[int]]:
         """Build child -> parents mapping from edge_index."""
-        child_to_parents = {}
+        child_to_parents: dict[int, list[int]] = {}
 
         if ("gene_ontology", "is_child_of", "gene_ontology") in hetero_data.edge_types:
             edge_index = hetero_data[
@@ -122,7 +122,7 @@ class DCell(nn.Module):
 
     def _build_parent_to_children(self) -> dict[int, list[int]]:
         """Build parent -> children mapping from child_to_parents."""
-        parent_to_children = {}
+        parent_to_children: dict[int, list[int]] = {}
 
         for child, parents in self.child_to_parents.items():
             for parent in parents:
@@ -134,7 +134,7 @@ class DCell(nn.Module):
 
     def _build_term_gene_mapping(self, hetero_data: HeteroData) -> dict[int, list[int]]:
         """Build term -> genes mapping from go_gene_strata_state."""
-        term_to_genes = {}
+        term_to_genes: dict[int, list[int]] = {}
 
         go_gene_state = hetero_data["gene_ontology"].go_gene_strata_state
         # Columns: [go_idx, gene_idx, stratum, state]
@@ -176,7 +176,7 @@ class DCell(nn.Module):
         num_genes = self.term_gene_counts[term_idx].item()
         return max(self.min_subsystem_size, math.ceil(self.subsystem_ratio * num_genes))
 
-    def _build_term_module(self, term_idx: int):
+    def _build_term_module(self, term_idx: int) -> None:
         """Build subsystem and linear head for a specific GO term."""
         input_dim = self._calculate_input_dim(term_idx)
         output_dim = self._calculate_output_dim(term_idx)
@@ -192,7 +192,7 @@ class DCell(nn.Module):
         linear_head = nn.Linear(output_dim, self.output_size)
         self.linear_heads[str(term_idx)] = linear_head
 
-    def _precompute_gene_indices(self, hetero_data: HeteroData):
+    def _precompute_gene_indices(self, hetero_data: HeteroData) -> None:
         """Pre-compute indices for efficient gene state extraction.
 
         This runs once at model initialization and stores indices in RAM.
@@ -286,7 +286,7 @@ class DCell(nn.Module):
         # The trainer expects this signature for consistency across models
 
         # Store term activations and linear outputs
-        term_activations = {}
+        term_activations: dict[int, torch.Tensor] = {}
         linear_outputs = {}
 
         # Process each stratum in descending order (leaves to root: high strata → low strata)
@@ -415,7 +415,7 @@ class DCellSubsystem(nn.Module):
     config_path=osp.join(os.getcwd(), "experiments/005-kuzmin2018-tmi/conf"),
     config_name="dcell_kuzmin2018_tmi",
 )
-def main(cfg: DictConfig):
+def main(cfg: DictConfig) -> None:
     """Test the DCell model by overfitting it on a single batch."""
     import torch.optim as optim
 
@@ -441,15 +441,15 @@ def main(cfg: DictConfig):
     os.makedirs(plot_dir, exist_ok=True)
 
     def save_intermediate_plot(
-        epoch,
-        all_losses,
-        primary_losses,
-        auxiliary_losses,
-        weighted_auxiliary_losses,
-        learning_rates,
-        model,
-        batch,
-    ):
+        epoch: int,
+        all_losses: list[float],
+        primary_losses: list[float],
+        auxiliary_losses: list[float],
+        weighted_auxiliary_losses: list[float],
+        learning_rates: list[float],
+        model: DCell,
+        batch: HeteroData,
+    ) -> None:
         """Save intermediate training plot every print interval."""
         plt.figure(figsize=(12, 8))
 

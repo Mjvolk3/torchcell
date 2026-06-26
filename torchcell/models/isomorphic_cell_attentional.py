@@ -6,7 +6,7 @@
 
 import os
 import os.path as osp
-from typing import Literal
+from typing import Any, Literal
 
 import hydra
 import torch
@@ -35,7 +35,7 @@ from torchcell.nn.aggr.set_transformer import SetTransformerAggregation
 from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 
 
-def get_norm_layer(channels: int, norm: str):
+def get_norm_layer(channels: int, norm: str) -> nn.Module:
     """Return a layer or batch norm module for ``channels``."""
     if norm == "layer":
         return nn.LayerNorm(channels)
@@ -169,13 +169,13 @@ class Combiner(nn.Module):
 class ProjectedGATConv(nn.Module):
     """GATv2 conv followed by a linear projection to ``out_dim``."""
 
-    def __init__(self, gat_conv, out_dim):
+    def __init__(self, gat_conv: GATv2Conv, out_dim: int) -> None:
         """Wrap ``gat_conv`` and add the output projection layer."""
         super().__init__()
         self.gat = gat_conv
         self.project = nn.Linear(gat_conv.heads * gat_conv.out_channels, out_dim)
 
-    def forward(self, x, edge_index):
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
         """Apply the GAT conv and project the multi-head output."""
         x = self.gat(x, edge_index)  # Shape: (..., heads * out_channels)
         return self.project(x)  # Shape: (..., out_dim)
@@ -223,7 +223,7 @@ class HeteroGnn(nn.Module):
         num_layers: int,
         edge_types: list[EdgeType],
         conv_type: Literal["GCN", "GAT", "Transformer", "GIN"] = "GCN",
-        layer_config: dict | None = None,
+        layer_config: dict[str, Any] | None = None,
         activation: str = "gelu",
         norm: str | None = None,
         head_num_layers: int = 2,
@@ -284,7 +284,9 @@ class HeteroGnn(nn.Module):
             norm=head_norm,
         )
 
-    def _get_layer_config(self, layer_config: dict | None) -> dict:
+    def _get_layer_config(
+        self, layer_config: dict[str, Any] | None
+    ) -> dict[str, Any]:
         default_configs = {
             "GCN": {
                 "bias": True,
@@ -326,7 +328,9 @@ class HeteroGnn(nn.Module):
             return default_configs[self.conv_type]
         return {**default_configs[self.conv_type], **layer_config}
 
-    def _calculate_dimensions(self, in_channels: int, hidden_channels: int) -> dict:
+    def _calculate_dimensions(
+        self, in_channels: int, hidden_channels: int
+    ) -> dict[str, int]:
         dims = {"in_channels": in_channels, "hidden_channels": hidden_channels}
 
         if self.conv_type in ["GAT", "Transformer"]:
@@ -393,8 +397,8 @@ class HeteroGnn(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def _create_conv_dict(self, in_dim: int) -> dict:
-        conv_dict = {}
+    def _create_conv_dict(self, in_dim: int) -> dict[EdgeType, nn.Module]:
+        conv_dict: dict[EdgeType, nn.Module] = {}
 
         for edge_type in self.edge_types:
             if self.conv_type == "GCN":
@@ -461,7 +465,7 @@ class HeteroGnn(nn.Module):
 
         return conv_dict
 
-    def _build_network(self):
+    def _build_network(self) -> None:
         for i in range(self.num_layers):
             in_dim = self.dims["in_channels"] if i == 0 else self.dims["actual_hidden"]
             conv_dict = self._create_conv_dict(in_dim)
@@ -536,7 +540,9 @@ class HeteroGnn(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, batch, preprocessed_features=None):
+    def forward(
+        self, batch: HeteroData, preprocessed_features: torch.Tensor | None = None
+    ) -> torch.Tensor:
         """Run heterogeneous message passing and return gene embeddings."""
         from torch_geometric.utils import add_self_loops
 
@@ -1014,12 +1020,12 @@ class IsomorphicCell(nn.Module):
             "combiner": 2,
         },
         dropout: float = 0.1,
-        gene_encoder_config: dict | None = None,
-        metabolism_config: dict | None = None,
-        attention_config: dict | None = None,
-        preprocessor_config: dict | None = None,
-        combiner_config: dict | None = None,
-        prediction_head_config: dict | None = None,
+        gene_encoder_config: dict[str, Any] | None = None,
+        metabolism_config: dict[str, Any] | None = None,
+        attention_config: dict[str, Any] | None = None,
+        preprocessor_config: dict[str, Any] | None = None,
+        combiner_config: dict[str, Any] | None = None,
+        prediction_head_config: dict[str, Any] | None = None,
     ):
         """Build the preprocessor, encoders, combiner, and prediction head."""
         super().__init__()
@@ -1137,7 +1143,9 @@ class IsomorphicCell(nn.Module):
             hidden_channels, 1, self.prediction_head_config
         )
 
-    def _build_mlp(self, in_dim: int, out_dim: int, config: dict) -> nn.Sequential:
+    def _build_mlp(
+        self, in_dim: int, out_dim: int, config: dict[str, Any]
+    ) -> nn.Sequential:
         layers: list[nn.Module] = []
         current_dim = in_dim
 
@@ -1171,7 +1179,7 @@ class IsomorphicCell(nn.Module):
         layers.append(nn.Linear(current_dim, out_dim))
         return nn.Sequential(*layers)
 
-    def _get_perturbed_indices(self, batch):
+    def _get_perturbed_indices(self, batch: HeteroData) -> list[list[int]]:
         """Return the list of perturbed gene indices per batch item."""
         batch_size = batch["gene"].ptr.size(0) - 1
         pert_indices = []
@@ -1232,7 +1240,9 @@ class IsomorphicCell(nn.Module):
         z = self.combiner(z_g, z_mg)
         return z
 
-    def forward(self, cell_graph, batch):
+    def forward(
+        self, cell_graph: HeteroData, batch: HeteroData
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """Combine whole-graph and perturbed-batch encodings into predictions."""
         # Process whole graph first
         z_w = self.forward_single(cell_graph)
@@ -1322,7 +1332,7 @@ class IsomorphicCell(nn.Module):
         }
 
 
-def load_sample_data_batch():
+def load_sample_data_batch() -> tuple[Any, Any, int, int]:
     """Load a small cell-graph batch from disk for smoke testing."""
     import os
     import os.path as osp
@@ -1438,8 +1448,12 @@ def load_sample_data_batch():
 
 
 def plot_correlations(
-    predictions, true_values, save_path, lambda_info="", weight_decay=""
-):
+    predictions: torch.Tensor,
+    true_values: torch.Tensor,
+    save_path: str,
+    lambda_info: str = "",
+    weight_decay: str | float = "",
+) -> None:
     """Plot predicted vs. true fitness and interaction scores to ``save_path``."""
     import matplotlib.pyplot as plt
     import numpy as np

@@ -87,7 +87,7 @@ class GPUEdgeMaskGenerator(nn.Module):
                 num_edges = edge_index.size(1)
 
                 # Initialize empty lists for each gene
-                node_to_edges = [[] for _ in range(num_genes)]
+                node_to_edges: list[list[int]] = [[] for _ in range(num_genes)]
 
                 # Build incidence mapping: node -> [edge_positions]
                 for edge_pos in range(num_edges):
@@ -270,7 +270,7 @@ class GPUEdgeMaskGenerator(nn.Module):
         Returns:
             edge_mask_dict: {edge_type: concatenated_mask}
         """
-        batch_masks = {}
+        batch_masks: dict[tuple[str, str, str], torch.Tensor] = {}
 
         # Early return for empty batch
         if batch_size == 0:

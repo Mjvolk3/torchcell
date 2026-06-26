@@ -24,7 +24,9 @@ class SelfAttention(nn.Module):
         self.dim_out = dim_out
         self.num_heads = num_heads
 
-    def forward(self, x, batch):
+    def forward(
+        self, x: torch.Tensor, batch: torch.Tensor
+    ) -> tuple[torch.Tensor, list[torch.Tensor]]:
         """Attend over node features, returning outputs and per-graph weights."""
         Q = self.query(x)
         K = self.key(x)
@@ -76,7 +78,9 @@ class SelfAttentionDeepSet(nn.Module):
         self.skip_set = skip_set
         self.num_heads = num_heads
 
-        def create_block(in_dim, out_dim, norm, activation):
+        def create_block(
+            in_dim: int, out_dim: int, norm: str, activation: str
+        ) -> nn.Sequential:
             block = [nn.Linear(in_dim, out_dim)]
             if norm == "batch":
                 block.append(nn.BatchNorm1d(out_dim))
@@ -128,7 +132,9 @@ class SelfAttentionDeepSet(nn.Module):
             dim_in=hidden_channels, dim_out=hidden_channels, num_heads=num_heads
         )
 
-    def node_layers_forward(self, x, batch):
+    def node_layers_forward(
+        self, x: torch.Tensor, batch: torch.Tensor
+    ) -> tuple[torch.Tensor, list[list[torch.Tensor]]]:
         """Process node features through node layers."""
         x_node = x
         attn_weights_list = []  # List to store attention weights from each layer
@@ -142,7 +148,7 @@ class SelfAttentionDeepSet(nn.Module):
             x_node = out_node
         return x_node, attn_weights_list
 
-    def set_layers_forward(self, x_summed):
+    def set_layers_forward(self, x_summed: torch.Tensor) -> torch.Tensor:
         """Process aggregated features through set layers."""
         x_set = x_summed
         for i, layer in enumerate(self.set_layers):
@@ -156,7 +162,9 @@ class SelfAttentionDeepSet(nn.Module):
             x_set = out_set
         return x_set
 
-    def forward(self, x, batch):
+    def forward(
+        self, x: torch.Tensor, batch: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, list[list[torch.Tensor]]]:
         """Encode nodes, sum per graph, and return node, set, and attention."""
         x_node, attn_weights_list = self.node_layers_forward(x, batch)
         x_summed = scatter_add(x_node, batch, dim=0)
@@ -164,7 +172,7 @@ class SelfAttentionDeepSet(nn.Module):
         return x_node, x_set, attn_weights_list
 
 
-def main():
+def main() -> None:
     """Run a forward/backward smoke test on random data."""
     torch.autograd.set_detect_anomaly(True)
 

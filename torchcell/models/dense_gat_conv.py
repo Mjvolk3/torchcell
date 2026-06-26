@@ -49,7 +49,7 @@ class DenseGATConv(torch.nn.Module):
 
         self.reset_parameters()
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         """Re-initialize the linear, attention, and bias parameters."""
         self.lin.reset_parameters()
         glorot(self.att_src)
@@ -63,7 +63,7 @@ class DenseGATConv(torch.nn.Module):
         mask: Tensor | None = None,
         add_loop: bool = True,
         return_attention_weights: bool = False,
-    ):
+    ) -> Tensor | tuple[Tensor, Tensor]:
         r"""Apply dense graph attention over the batched adjacency tensor.
 
         Args:

@@ -49,8 +49,10 @@ class DeepSet(nn.Module):
         self.skip_set = skip_set
         self.aggregation = aggregation
 
-        def create_block(in_dim, out_dim, norm, activation):
-            block = [nn.Linear(in_dim, out_dim)]
+        def create_block(
+            in_dim: int, out_dim: int, norm: str, activation: str
+        ) -> nn.Sequential:
+            block: list[nn.Module] = [nn.Linear(in_dim, out_dim)]
             if norm == "batch":
                 block.append(nn.BatchNorm1d(out_dim))
             elif norm == "instance":
@@ -98,7 +100,7 @@ class DeepSet(nn.Module):
                 )
         self.set_layers = nn.ModuleList(set_modules)
 
-    def node_layers_forward(self, x):
+    def node_layers_forward(self, x: torch.Tensor) -> torch.Tensor:
         """Process node features through node layers."""
         x_node = x
         for i, layer in enumerate(self.node_layers):
@@ -108,7 +110,7 @@ class DeepSet(nn.Module):
             x_node = out_node
         return x_node
 
-    def set_layers_forward(self, x_aggregated):
+    def set_layers_forward(self, x_aggregated: torch.Tensor) -> torch.Tensor:
         """Process aggregated features through set layers."""
         x_set = x_aggregated
         for i, layer in enumerate(self.set_layers):
@@ -122,7 +124,9 @@ class DeepSet(nn.Module):
             x_set = out_set
         return x_set
 
-    def forward(self, x, batch):
+    def forward(
+        self, x: torch.Tensor, batch: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Apply node layers, aggregate per set, then apply set layers.
 
         Args:
@@ -146,7 +150,7 @@ class DeepSet(nn.Module):
         return x_node, x_set
 
 
-def main():
+def main() -> None:
     """Run a small DeepSet forward/backward pass on dummy data."""
     torch.autograd.set_detect_anomaly(True)
 

@@ -7,6 +7,7 @@
 
 import math
 import re
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 from sortedcontainers import SortedDict
@@ -34,7 +35,7 @@ class GenePerturbation(ModelStrict):
 
     @field_validator("systematic_gene_name", mode="after")
     @classmethod
-    def validate_sys_gene_name(cls, v):
+    def validate_sys_gene_name(cls, v: str) -> str:
         """Validate the systematic gene name matches an allowed feature pattern."""
         # Define named patterns for clarity based on genome feature types
         # protein-coding genes, pseudogenes, transposable_element_genes
@@ -52,7 +53,7 @@ class GenePerturbation(ModelStrict):
 
     @field_validator("perturbed_gene_name", mode="after")
     @classmethod
-    def validate_pert_gene_name(cls, v):
+    def validate_pert_gene_name(cls, v: str) -> str:
         """Normalize a trailing prime in the perturbed gene name to ``_prime``."""
         if v.endswith("'"):
             v = v[:-1] + "_prime"
@@ -235,7 +236,9 @@ class Genotype(ModelStrict):
 
     @field_validator("perturbations", mode="after")
     @classmethod
-    def sort_perturbations(cls, perturbations):
+    def sort_perturbations(
+        cls, perturbations: list[GenePerturbationType]
+    ) -> list[GenePerturbationType]:
         """Sort perturbations by gene name, type, and perturbed name for stable order."""
         return sorted(
             perturbations,
@@ -247,7 +250,7 @@ class Genotype(ModelStrict):
         )
 
     @property
-    def systematic_gene_names(self):
+    def systematic_gene_names(self) -> list[str]:
         """Return systematic gene names ordered by systematic gene name."""
         sorted_perturbations = sorted(
             self.perturbations, key=lambda p: p.systematic_gene_name
@@ -255,7 +258,7 @@ class Genotype(ModelStrict):
         return [p.systematic_gene_name for p in sorted_perturbations]
 
     @property
-    def perturbed_gene_names(self):
+    def perturbed_gene_names(self) -> list[str]:
         """Return perturbed gene names ordered by systematic gene name."""
         sorted_perturbations = sorted(
             self.perturbations, key=lambda p: p.systematic_gene_name
@@ -263,19 +266,19 @@ class Genotype(ModelStrict):
         return [p.perturbed_gene_name for p in sorted_perturbations]
 
     @property
-    def perturbation_types(self):
+    def perturbation_types(self) -> list[str]:
         """Return perturbation types ordered by systematic gene name."""
         sorted_perturbations = sorted(
             self.perturbations, key=lambda p: p.systematic_gene_name
         )
         return [p.perturbation_type for p in sorted_perturbations]
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the number of perturbations."""
         return len(self.perturbations)
 
     # we would use set, but need serialization to be a list
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """Return True if both genotypes contain the same set of perturbations."""
         if not isinstance(other, Genotype):
             return NotImplemented
@@ -292,7 +295,7 @@ class Media(ModelStrict):
 
     @field_validator("state", mode="after")
     @classmethod
-    def validate_state(cls, v):
+    def validate_state(cls, v: str) -> str:
         """Validate that state is one of solid, liquid, or gas."""
         if v not in ["solid", "liquid", "gas"]:
             raise ValueError('state must be one of "solid", "liquid", or "gas"')
@@ -307,7 +310,7 @@ class Temperature(BaseModel):
 
     @field_validator("value", mode="after")
     @classmethod
-    def check_temperature(cls, v):
+    def check_temperature(cls, v: float) -> float:
         """Validate that the temperature is not below absolute zero in Celsius."""
         if v < -273:
             raise ValueError("Temperature cannot be below -273 degrees Celsius")
@@ -335,7 +338,7 @@ class Phenotype(ModelStrict):
     )
 
     @model_validator(mode="after")
-    def validate_fields(self):
+    def validate_fields(self) -> "Phenotype":
         """Validate that graph_level is one of the supported graph levels."""
         valid_graph_levels = {
             "edge",
@@ -352,7 +355,7 @@ class Phenotype(ModelStrict):
             )
         return self
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Any:  # heterogeneous phenotype field values
         """Return the attribute value for the given field name."""
         return getattr(self, key)
 
@@ -382,7 +385,7 @@ class FitnessPhenotype(Phenotype, ModelStrict):
     )
 
     @field_validator("fitness")
-    def validate_fitness(cls, v):
+    def validate_fitness(cls, v: float) -> float:
         """Reject NaN fitness and clamp non-positive values to zero."""
         if math.isnan(v):
             raise ValueError("Fitness cannot be NaN")
@@ -391,14 +394,14 @@ class FitnessPhenotype(Phenotype, ModelStrict):
         return v
 
     @field_validator("n_samples")
-    def validate_n_samples(cls, v):
+    def validate_n_samples(cls, v: int | None) -> int | None:
         """Validate that n_samples is a positive integer or None."""
         if v is not None and (not isinstance(v, int) or v < 1):
             raise ValueError(f"n_samples must be a positive integer or None, got: {v}")
         return v
 
     @model_validator(mode="after")
-    def validate_label_fields(cls, values):
+    def validate_label_fields(cls, values: "FitnessPhenotype") -> "FitnessPhenotype":
         """Validate that label_name and label_statistic_name are class attributes."""
         if values.label_name not in cls.__annotations__:
             raise ValueError(
@@ -430,7 +433,9 @@ class GeneEssentialityPhenotype(Phenotype, ModelStrict):
     # This is going to be standard for all child classes of Phenotype
     # This could alternatively be moved to testing
     @model_validator(mode="after")
-    def validate_label_fields(cls, values):
+    def validate_label_fields(
+        cls, values: "GeneEssentialityPhenotype"
+    ) -> "GeneEssentialityPhenotype":
         """Validate that label_name and label_statistic_name are class attributes."""
         # Check if label_name is a class attribute
         if values.label_name not in cls.__annotations__:
@@ -472,7 +477,9 @@ class SyntheticLethalityPhenotype(Phenotype, ModelStrict):
     # This is going to be standard for all child classes of Phenotype
     # This could alternatively be moved to testing
     @model_validator(mode="after")
-    def validate_label_fields(cls, values):
+    def validate_label_fields(
+        cls, values: "SyntheticLethalityPhenotype"
+    ) -> "SyntheticLethalityPhenotype":
         """Validate that label_name and label_statistic_name are class attributes."""
         # Check if label_name is a class attribute
         if values.label_name not in cls.__annotations__:
@@ -514,7 +521,9 @@ class SyntheticRescuePhenotype(Phenotype, ModelStrict):
     # This is going to be standard for all child classes of Phenotype
     # This could alternatively be moved to testing
     @model_validator(mode="after")
-    def validate_label_fields(cls, values):
+    def validate_label_fields(
+        cls, values: "SyntheticRescuePhenotype"
+    ) -> "SyntheticRescuePhenotype":
         """Validate that label_name and label_statistic_name are class attributes."""
         # Check if label_name is a class attribute
         if values.label_name not in cls.__annotations__:
@@ -550,7 +559,7 @@ class GeneInteractionPhenotype(Phenotype, ModelStrict):
     )
 
     @field_validator("gene_interaction")
-    def validate_fitness(cls, v):
+    def validate_fitness(cls, v: float) -> float:
         """Reject NaN gene interaction values."""
         if math.isnan(v):
             raise ValueError("Gene interaction cannot be NaN")
@@ -560,7 +569,9 @@ class GeneInteractionPhenotype(Phenotype, ModelStrict):
     # This is going to be standard for all child classes of Phenotype
     # This could alternatively be moved to testing
     @model_validator(mode="after")
-    def validate_label_fields(cls, values):
+    def validate_label_fields(
+        cls, values: "GeneInteractionPhenotype"
+    ) -> "GeneInteractionPhenotype":
         """Validate that label_name and label_statistic_name are class attributes."""
         # Check if label_name is a class attribute
         if values.label_name not in cls.__annotations__:
@@ -600,7 +611,7 @@ class CalMorphPhenotype(Phenotype, ModelStrict):
     # CALMORPH_STATISTICS: 220 coefficient of variation parameters
 
     @field_validator("calmorph")
-    def validate_calmorph(cls, v):
+    def validate_calmorph(cls, v: dict[str, float]) -> dict[str, float]:
         """Validate CalMorph base parameters against CALMORPH_LABELS and reject NaN."""
         if not v:
             raise ValueError("calmorph measurements cannot be empty")
@@ -615,7 +626,7 @@ class CalMorphPhenotype(Phenotype, ModelStrict):
         return v
 
     @field_validator("calmorph_coefficient_of_variation")
-    def validate_cv(cls, v):
+    def validate_cv(cls, v: dict[str, float] | None) -> dict[str, float] | None:
         """Validate CV parameters against CALMORPH_STATISTICS and reject NaN."""
         if v is None:
             return v
@@ -630,7 +641,9 @@ class CalMorphPhenotype(Phenotype, ModelStrict):
         return v
 
     @model_validator(mode="after")
-    def validate_label_fields(cls, values):
+    def validate_label_fields(
+        cls, values: "CalMorphPhenotype"
+    ) -> "CalMorphPhenotype":
         """Validate that label_name and label_statistic_name are class attributes."""
         if values.label_name not in cls.__annotations__:
             raise ValueError(
@@ -658,7 +671,7 @@ class Publication(ModelStrict):
     doi_url: str | None = None
 
     @model_validator(mode="after")
-    def check_pub_info(self):
+    def check_pub_info(self) -> "Publication":
         """Require at least one of PubMed ID/DOI and at least one URL."""
         if self.pubmed_id is None and self.doi is None:
             raise ValueError("At least one of PubMed ID or DOI must be provided")
@@ -859,7 +872,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         repr=False,  # Hide in repr to avoid clutter
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Custom repr that shows summary statistics instead of full data."""
         expr_count = len(self.expression) if self.expression else 0
         log2_count = (
@@ -879,7 +892,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         )
 
     @field_validator("expression", mode="before")
-    def convert_and_validate_expression(cls, v):
+    def convert_and_validate_expression(cls, v: Any) -> Any:  # raw pre-validation input
         """Coerce expression to a SortedDict and reject empty or infinite values."""
         if v is None:
             raise ValueError("expression measurements cannot be None")
@@ -895,7 +908,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         return v
 
     @field_validator("expression_log2_ratio", mode="before")
-    def convert_and_validate_log2_ratio(cls, v):
+    def convert_and_validate_log2_ratio(cls, v: Any) -> Any:  # raw pre-validation input
         """Coerce log2 ratios to a SortedDict and reject empty input."""
         if v is None:
             raise ValueError("expression_log2_ratio cannot be None")
@@ -908,7 +921,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         return v
 
     @field_validator("expression_log2_ratio_se", mode="before")
-    def convert_and_validate_log2_se(cls, v):
+    def convert_and_validate_log2_se(cls, v: Any) -> Any:  # raw pre-validation input
         """Coerce log2 ratio SE to a SortedDict and reject negative finite values."""
         if v is None:
             return v
@@ -922,7 +935,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         return v
 
     @field_validator("expression_se", mode="before")
-    def convert_and_validate_expression_se(cls, v):
+    def convert_and_validate_expression_se(cls, v: Any) -> Any:  # raw pre-validation input
         """Coerce expression SE to a SortedDict and reject negative finite values."""
         if v is None:
             return v
@@ -936,7 +949,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         return v
 
     @field_validator("expression_log2_ratio_variance", mode="before")
-    def convert_and_validate_variance(cls, v):
+    def convert_and_validate_variance(cls, v: Any) -> Any:  # raw pre-validation input
         """Coerce variance to a SortedDict and reject negative non-NaN values."""
         if v is None:
             return v
@@ -950,7 +963,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         return v
 
     @field_validator("n_samples", mode="before")
-    def convert_and_validate_n_samples(cls, v):
+    def convert_and_validate_n_samples(cls, v: Any) -> Any:  # raw pre-validation input
         """Coerce n_samples to a SortedDict and require positive integer counts."""
         if v is None:
             raise ValueError(
@@ -970,7 +983,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         return v
 
     @model_validator(mode="after")
-    def validate_matching_keys(self):
+    def validate_matching_keys(self) -> "MicroarrayExpressionPhenotype":
         """Ensure all secondary fields have same keys as expression."""
         # n_samples must match expression keys
         if set(self.n_samples.keys()) != set(self.expression.keys()):

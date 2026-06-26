@@ -10,7 +10,7 @@ import os
 import os.path as osp
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import lmdb
 from tqdm import tqdm
@@ -37,10 +37,10 @@ class ConversionEntry(ModelStrict):
     """One input/output type pair plus its conversion functions."""
 
     experiment_input_type: type[ExperimentType]
-    experiment_conversion_function: Callable
+    experiment_conversion_function: Callable[..., ExperimentType | None]
     experiment_output_type: type[ExperimentType]
     experiment_reference_input_type: type[ExperimentReferenceType]
-    experiment_reference_conversion_function: Callable
+    experiment_reference_conversion_function: Callable[..., ExperimentReferenceType]
     experiment_reference_output_type: type[ExperimentReferenceType]
 
 
@@ -65,7 +65,7 @@ class Converter(ABC):
     def conversion_map(self) -> ConversionMap:
         """Return the ConversionMap defining type-to-type conversions."""
 
-    def _init_lmdb(self, readonly=True):
+    def _init_lmdb(self, readonly: bool = True) -> None:
         """Initialize the LMDB environment."""
         if self.env is not None:
             self.close_lmdb()
@@ -83,7 +83,7 @@ class Converter(ABC):
         else:
             self.env = None
 
-    def close_lmdb(self):
+    def close_lmdb(self) -> None:
         """Close the LMDB environment if it is open."""
         if self.env is not None:
             self.env.close()
@@ -91,7 +91,7 @@ class Converter(ABC):
 
     def convert(
         self, data: dict[str, ExperimentType | ExperimentReferenceType]
-    ) -> dict:
+    ) -> dict[str, ExperimentType | ExperimentReferenceType | None]:
         """Convert one experiment/reference pair using the conversion map."""
         if "experiment" not in data or "experiment_reference" not in data:
             raise ValueError(
@@ -99,7 +99,7 @@ class Converter(ABC):
                 "'experiment_reference' keys"
             )
 
-        converted_data = {}
+        converted_data: dict[str, ExperimentType | ExperimentReferenceType | None] = {}
 
         for key in ["experiment", "experiment_reference"]:
             for entry in self.conversion_map.entries:
@@ -138,7 +138,7 @@ class Converter(ABC):
         return converted_data
 
     @staticmethod
-    def _compute_hash(data: dict) -> str:
+    def _compute_hash(data: dict[str, Any]) -> str:
         """Compute a SHA256 hash of the input data."""
         return hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
 
@@ -217,7 +217,12 @@ class Converter(ABC):
         log.info(f"Number of instances converted: {converted_count}")
         log.info(f"Total number of instances processed: {total_count}")
 
-    def __getitem__(self, index: int | slice | list):
+    def __getitem__(
+        self, index: int | slice | list[int]
+    ) -> (
+        dict[str, ExperimentType | ExperimentReferenceType]
+        | list[dict[str, ExperimentType | ExperimentReferenceType]]
+    ):
         """Return converted record(s) by integer index, slice, or list of indices."""
         self._init_lmdb(readonly=True)  # Initialize LMDB for reading
         if isinstance(index, int):
@@ -229,7 +234,9 @@ class Converter(ABC):
         else:
             raise TypeError(f"Invalid index type: {type(index)}")
 
-    def _get_record_by_index(self, index: int):
+    def _get_record_by_index(
+        self, index: int
+    ) -> dict[str, ExperimentType | ExperimentReferenceType]:
         if self.env is None:
             raise ValueError("LMDB environment is not initialized.")
         data_key = f"data_{index}".encode()
@@ -255,7 +262,9 @@ class Converter(ABC):
             }
             return reconstructed_data
 
-    def _get_records_by_slice(self, slice_obj: slice):
+    def _get_records_by_slice(
+        self, slice_obj: slice
+    ) -> list[dict[str, ExperimentType | ExperimentReferenceType]]:
         if self.env is None:
             raise ValueError("LMDB environment is not initialized.")
         start, stop, step = slice_obj.indices(len(self))
@@ -281,7 +290,7 @@ class Converter(ABC):
                     results.append(reconstructed_data)
             return results
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the number of converted records stored in LMDB."""
         self._init_lmdb(readonly=True)
         if self.env is None:
@@ -289,11 +298,11 @@ class Converter(ABC):
         with self.env.begin() as txn:
             return txn.stat()["entries"]
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         """Return True if the LMDB directory exists."""
         return os.path.exists(self.lmdb_dir)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a string representation showing the root path."""
         return f"Converter(root={self.root})"
 

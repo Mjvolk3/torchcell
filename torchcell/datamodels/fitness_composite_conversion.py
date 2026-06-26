@@ -10,6 +10,7 @@ from torchcell.datamodels.conversion import ConversionMap, Converter
 from torchcell.datamodels.gene_essentiality_to_fitness_conversion import (
     GeneEssentialityToFitnessConverter,
 )
+from torchcell.datamodels.schema import ExperimentReferenceType, ExperimentType
 from torchcell.datamodels.synthetic_lethality_to_fitness_conversion import (
     SyntheticLethalityToFitnessConverter,
 )
@@ -40,7 +41,9 @@ class CompositeFitnessConverter(Converter):
         )
         return ConversionMap(entries=entries)
 
-    def convert(self, data: dict):
+    def convert(
+        self, data: dict[str, ExperimentType | ExperimentReferenceType]
+    ) -> dict[str, ExperimentType | ExperimentReferenceType | None]:
         """Convert data via gene essentiality, falling back to synthetic lethality."""
         # Try conversion with gene essentiality converter
         converted_data = self.gene_essentiality_converter.convert(data)

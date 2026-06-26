@@ -21,7 +21,7 @@ import pandas as pd
 import torch
 from pydantic import field_validator
 from sortedcontainers import SortedDict
-from torch_geometric.data import Dataset
+from torch_geometric.data import Dataset, HeteroData
 from tqdm import tqdm
 
 from torchcell.data.cell_data import to_cell_data
@@ -56,7 +56,7 @@ class ParsedGenome(ModelStrictArbitrary):
     gene_set: GeneSet
 
     @field_validator("gene_set")
-    def validate_gene_set(cls, v):
+    def validate_gene_set(cls, v: GeneSet) -> GeneSet:
         """Validate that the value is a GeneSet instance."""
         if not isinstance(v, GeneSet):
             raise ValueError(f"gene_set must be a GeneSet, got {type(v).__name__}")
@@ -137,7 +137,7 @@ def create_graph_from_gene_set(gene_set: GeneSet) -> GeneGraph:
     return GeneGraph(name="base", graph=G, max_gene_set=gene_set)
 
 
-def parse_genome(genome) -> ParsedGenome:
+def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome:
     """Return a ParsedGenome from a genome's gene set, or None if genome is None."""
     if genome is None:
         return None
@@ -204,10 +204,10 @@ class Neo4jCellDataset(Dataset):
         uri: str = "bolt://localhost:7687",
         username: str = "neo4j",
         password: str = "torchcell",
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-        pre_filter: Callable | None = None,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        pre_filter: Callable[..., Any] | None = None,
+    ) -> None:
         """Configure data sources, processing pipeline, and load or build the dataset."""
         self.env = None
         self.root = root
@@ -282,7 +282,7 @@ class Neo4jCellDataset(Dataset):
         self.dataset_name_index
         self.perturbation_count_index
 
-    def _determine_processing_steps(self):
+    def _determine_processing_steps(self) -> list[ProcessingStep]:
         """Determine which pipeline stages must be run given existing caches."""
         steps = [ProcessingStep.RAW]
         if self.converter is not None:
@@ -294,7 +294,7 @@ class Neo4jCellDataset(Dataset):
         steps.append(ProcessingStep.PROCESSED)
         return steps
 
-    def _get_lmdb_path(self, step: ProcessingStep):
+    def _get_lmdb_path(self, step: ProcessingStep) -> str:
         """Return the LMDB directory path for the given processing step."""
         if step == ProcessingStep.RAW:
             return os.path.join(self.root, "raw", "lmdb")
@@ -303,7 +303,7 @@ class Neo4jCellDataset(Dataset):
         else:
             return os.path.join(self.root, step.name.lower(), "lmdb")
 
-    def get_init_graphs(self, gene_set):
+    def get_init_graphs(self, gene_set: GeneSet) -> GeneGraph:
         """Build the initial cell and incidence graphs for the gene set."""
         cell_graph = create_graph_from_gene_set(gene_set)
         return cell_graph
@@ -314,7 +314,14 @@ class Neo4jCellDataset(Dataset):
         return "lmdb"
 
     @staticmethod
-    def load_raw(uri, username, password, root_dir, query, gene_set):
+    def load_raw(
+        uri: str,
+        username: str,
+        password: str,
+        root_dir: str,
+        query: str,
+        gene_set: GeneSet,
+    ) -> Neo4jQueryRaw:
         """Query Neo4j and load the raw experiment records for the gene set."""
         cypher_kwargs = {"gene_set": list(gene_set)}
         # cypher_kwargs = {"gene_set": ["YAL004W", "YAL010C", "YAL011W", "YAL017W"]}
@@ -363,7 +370,7 @@ class Neo4jCellDataset(Dataset):
                 "experiment_types.json not found. Please process the dataset first."
             )
 
-    def compute_phenotype_info(self):
+    def compute_phenotype_info(self) -> None:
         """Compute and cache the phenotype type information from the raw data."""
         self._init_lmdb_read()
         experiment_types = set()
@@ -383,7 +390,7 @@ class Neo4jCellDataset(Dataset):
 
         self.close_lmdb()
 
-    def process(self):
+    def process(self) -> None:
         """Run the conversion, deduplication, and processing pipeline into LMDB."""
         # IDEA consider dependency injection for processing steps
         # We don't inject becaue of unique query process.
@@ -427,7 +434,7 @@ class Neo4jCellDataset(Dataset):
         # clean up raw db
         raw_db.env = None
 
-    def _copy_lmdb(self, src_path: str, dst_path: str):
+    def _copy_lmdb(self, src_path: str, dst_path: str) -> None:
         """Copy an LMDB database from the source path to the destination path."""
         os.makedirs(os.path.dirname(dst_path), exist_ok=True)
         env_src = lmdb.open(src_path, readonly=True)
@@ -443,7 +450,7 @@ class Neo4jCellDataset(Dataset):
 
     # TODO change to query_gene_set
     @property
-    def gene_set(self):
+    def gene_set(self) -> GeneSet:
         """Return the dataset's gene set, reading it from disk if available."""
         gene_set_path = osp.join(self.processed_dir, "gene_set.json")
 
@@ -462,7 +469,7 @@ class Neo4jCellDataset(Dataset):
         return GeneSet(self._gene_set)
 
     @gene_set.setter
-    def gene_set(self, value):
+    def gene_set(self, value: GeneSet) -> None:
         """Validate and persist the dataset's gene set to disk."""
         if not value:
             raise ValueError("Cannot set an empty or None value for gene_set")
@@ -476,7 +483,7 @@ class Neo4jCellDataset(Dataset):
         self._gene_set = value
 
     @time_method
-    def _read_from_lmdb(self, idx):
+    def _read_from_lmdb(self, idx: int) -> bytes | None:
         """Read and deserialize the record at the given index from LMDB."""
         """Read serialized data from LMDB."""
         with self.env.begin() as txn:
@@ -484,13 +491,15 @@ class Neo4jCellDataset(Dataset):
             return serialized_data
 
     @time_method
-    def _deserialize_json(self, serialized_data):
+    def _deserialize_json(self, serialized_data: bytes) -> list[dict[str, Any]]:
         """Deserialize JSON-encoded bytes into Python objects."""
         """Deserialize JSON data."""
         return json.loads(serialized_data.decode("utf-8"))
 
     @time_method
-    def _reconstruct_experiments(self, data_list):
+    def _reconstruct_experiments(
+        self, data_list: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Reconstruct experiment and reference objects from serialized data."""
         """Reconstruct experiment objects from deserialized data."""
         data = []
@@ -511,7 +520,7 @@ class Neo4jCellDataset(Dataset):
         return data
 
     @time_method
-    def get(self, idx):
+    def get(self, idx: int) -> HeteroData | None:
         """Return the processed cell graph data object at the given index."""
         """Load and process a single sample."""
         if self.env is None:
@@ -535,7 +544,7 @@ class Neo4jCellDataset(Dataset):
 
         return processed_graph
 
-    def _init_lmdb_read(self):
+    def _init_lmdb_read(self) -> None:
         """Open the LMDB environment for read access."""
         """Initialize the LMDB environment."""
         self.env = lmdb.open(
@@ -558,7 +567,7 @@ class Neo4jCellDataset(Dataset):
         self.close_lmdb()
         return length
 
-    def close_lmdb(self):
+    def close_lmdb(self) -> None:
         """Close the LMDB environment if it is open."""
         if self.env is not None:
             self.env.close()
@@ -588,7 +597,10 @@ class Neo4jCellDataset(Dataset):
         ]
 
         # Initialize data dictionary with index and label columns
-        data_dict = {"index": [], **{label_name: [] for label_name in label_names}}
+        data_dict: dict[str, list[Any]] = {
+            "index": [],
+            **{label_name: [] for label_name in label_names},
+        }
 
         # Open LMDB for reading
         self._init_lmdb_read()
@@ -639,7 +651,8 @@ class Neo4jCellDataset(Dataset):
     def compute_phenotype_label_index(self) -> dict[str, list[int]]:
         """Compute a mapping from phenotype label to record indices."""
         print("Computing phenotype label index...")
-        phenotype_label_index = {}
+        # value type is dynamic: set[int] during build, converted to list[int] below
+        phenotype_label_index: dict[str, Any] = {}
 
         self._init_lmdb_read()
 
@@ -694,7 +707,8 @@ class Neo4jCellDataset(Dataset):
     def compute_dataset_name_index(self) -> dict[str, list[int]]:
         """Compute a mapping from dataset name to record indices."""
         print("Computing dataset name index...")
-        dataset_name_index = {}
+        # value type is dynamic: set[int] during build, converted to list[int] below
+        dataset_name_index: dict[str, Any] = {}
 
         self._init_lmdb_read()
 
@@ -749,7 +763,8 @@ class Neo4jCellDataset(Dataset):
     def compute_perturbation_count_index(self) -> dict[int, list[int]]:
         """Compute a mapping from perturbation count to record indices."""
         print("Computing perturbation count index...")
-        perturbation_count_index = {}
+        # value type is dynamic: set[int] during build, converted to list[int] below
+        perturbation_count_index: dict[int, Any] = {}
 
         self._init_lmdb_read()
 
@@ -814,7 +829,7 @@ class Neo4jCellDataset(Dataset):
     def compute_is_any_perturbed_gene_index(self) -> dict[str, list[int]]:
         """Compute a mapping from gene to indices where the gene is perturbed."""
         print("Computing is any perturbed gene index...")
-        is_any_perturbed_gene_index = {}
+        is_any_perturbed_gene_index: dict[str, set[int]] = {}
 
         self._init_lmdb_read()
 
@@ -875,19 +890,19 @@ class Neo4jCellDataset(Dataset):
         return result
 
     # HACK
-    def __getstate__(self) -> dict:
+    def __getstate__(self) -> dict[str, Any]:
         """Return picklable state, excluding the open LMDB environment."""
         state = self.__dict__.copy()
         # Remove the unpicklable lmdb environment.
         state["env"] = None
         return state
 
-    def __setstate__(self, state: dict) -> None:
+    def __setstate__(self, state: dict[str, Any]) -> None:
         """Restore state from a pickle, leaving the LMDB environment closed."""
         self.__dict__.update(state)
 
 
-def main():
+def main() -> None:
     """Build and inspect a Neo4jCellDataset for demonstration."""
     # genome
     import os.path as osp
@@ -1014,7 +1029,7 @@ def main():
     #     break
 
 
-def main_incidence():
+def main_incidence() -> None:
     """Build and inspect a dataset with incidence (hypergraph) graphs."""
     # genome
     import os.path as osp
@@ -1145,7 +1160,7 @@ def main_incidence():
         break
 
 
-def main_transform_standardization():
+def main_transform_standardization() -> None:
     """Test standardization of labels using LabelNormalizationTransform with metabolic network."""
     import os.path as osp
 
@@ -1318,8 +1333,8 @@ def main_transform_standardization():
         len(dataset), min(num_samples, len(dataset)), replace=False
     )
 
-    original_values = {label: [] for label in labels}
-    normalized_values = {label: [] for label in labels}
+    original_values: dict[str, list[float]] = {label: [] for label in labels}
+    normalized_values: dict[str, list[float]] = {label: [] for label in labels}
 
     for idx in tqdm(sample_indices):
         data = dataset[idx]
@@ -1382,7 +1397,7 @@ def main_transform_standardization():
     print("\nTest completed successfully.")
 
 
-def main_transform_categorical():
+def main_transform_categorical() -> None:
     # Used this in hetero gnn pool when converting categorical to regression
     """Test the label binning transforms on the dataset with proper initialization."""
     import os.path as osp
@@ -1541,7 +1556,7 @@ def main_transform_categorical():
 
     # Restore transform and get transformed data
     dataset.transform = transform
-    transformed_data = {
+    transformed_data: dict[str, dict[str, list[Any]]] = {
         label: {"normalized": [], "binned": []} for label in norm_configs.keys()
     }
 
@@ -1586,7 +1601,7 @@ def main_transform_categorical():
     dataset.close_lmdb()
 
 
-def main_transform_categorical_dense():
+def main_transform_categorical_dense() -> None:
     """Test label transforms and dense conversion with perturbation subset."""
     import os.path as osp
 

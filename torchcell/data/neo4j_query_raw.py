@@ -10,7 +10,9 @@ import logging
 import multiprocessing as mp
 import os
 import os.path as osp
+from collections.abc import Iterator, Sequence
 from concurrent.futures import ProcessPoolExecutor
+from typing import Any
 
 import lmdb
 from attrs import define, field
@@ -28,7 +30,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
-def parallel_hash_computation(data):
+def parallel_hash_computation(data: tuple[int, Any]) -> tuple[int, str]:
     """
     Function to compute the hash for a single dataset item.
     Returns a tuple of the original index in the dataset and the computed hash.
@@ -40,7 +42,7 @@ def parallel_hash_computation(data):
 
 
 def compute_experiment_reference_index_parallel(
-    dataset,
+    dataset: Sequence[Any],
 ) -> list[ExperimentReferenceIndex]:
     """Compute reference indices by hashing each reference across worker processes."""
     num_workers = mp.cpu_count()  # Or set manually to a preferred number
@@ -59,7 +61,7 @@ def compute_experiment_reference_index_parallel(
     reference_hashes = [result[1] for result in sorted_results]
 
     # Continue with the aggregation logic as before
-    unique_hashes_to_indices = {}
+    unique_hashes_to_indices: dict[str, list[int]] = {}
     for idx, hash_val in enumerate(reference_hashes):
         if hash_val not in unique_hashes_to_indices:
             unique_hashes_to_indices[hash_val] = []
@@ -80,7 +82,7 @@ def compute_experiment_reference_index_parallel(
 
 
 def compute_experiment_reference_index(
-    dataset, num_workers=None
+    dataset: Sequence[Any], num_workers: int | None = None
 ) -> list[ExperimentReferenceIndex]:
     """Group records by reference hash into boolean masks, sequentially or in parallel."""
     if num_workers is None or num_workers <= 0:
@@ -106,7 +108,7 @@ def compute_experiment_reference_index(
             reference_hashes = [result[1] for result in sorted_results]
 
     # Common aggregation logic for both versions
-    unique_hashes_to_indices = {}
+    unique_hashes_to_indices: dict[str, list[int]] = {}
     for idx, hash_val in enumerate(reference_hashes):
         if hash_val not in unique_hashes_to_indices:
             unique_hashes_to_indices[hash_val] = []
@@ -140,14 +142,16 @@ class Neo4jQueryRaw:
     _experiment_reference_index: ExperimentReferenceIndex = field(
         init=False, default=None, repr=False
     )
-    _phenotype_label_index: dict = field(init=False, default=None, repr=False)
+    _phenotype_label_index: dict[str, list[int]] = field(
+        init=False, default=None, repr=False
+    )
     lmdb_dir: str = field(init=False, default=None)
     raw_dir: str = field(init=False, default=None)
     env: str = field(init=False, default=None)
     _gene_set: str = field(init=False, default=None)
-    cypher_kwargs: dict[str, str | int | float | list] = field(factory=dict)
+    cypher_kwargs: dict[str, str | int | float | list[Any]] = field(factory=dict)
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self) -> None:
         """Set up raw/LMDB paths, run the query on first use, and open the LMDB env."""
         self.raw_dir = osp.join(self.root_dir, "raw")
         self.lmdb_dir = osp.join(self.raw_dir, "lmdb")
@@ -162,13 +166,13 @@ class Neo4jQueryRaw:
         # Initialize LMDB environment
         self.env = lmdb.open(self.lmdb_dir, map_size=int(1e12), readonly=True)
 
-    def close_lmdb(self):
+    def close_lmdb(self) -> None:
         """Close the LMDB environment if it is open."""
         if self.env is not None:
             self.env.close()
             self.env = None
 
-    def fetch_data(self):
+    def fetch_data(self) -> Iterator[Any]:
         """Open a Neo4j session, run the query, and yield each result record."""
         log.info("Connecting to Neo4j and executing query...")
         driver = GraphDatabase.driver(self.uri, auth=(self.username, self.password))
@@ -181,7 +185,7 @@ class Neo4jQueryRaw:
         log.info("All records processed.")
         driver.close()
 
-    def _init_lmdb(self, readonly=True):
+    def _init_lmdb(self, readonly: bool = True) -> None:
         """Initialize the LMDB environment."""
         if self.env is not None:
             self.close_lmdb()
@@ -194,12 +198,12 @@ class Neo4jQueryRaw:
             meminit=False,
         )
 
-    def write_to_lmdb(self, key: bytes, value: bytes):
+    def write_to_lmdb(self, key: bytes, value: bytes) -> None:
         """Write a single key/value pair to LMDB inside a write transaction."""
         with self.env.begin(write=True) as txn:
             txn.put(key, value)
 
-    def process(self):
+    def process(self) -> None:
         """Stream query results into LMDB and build the reference and gene-set indices."""
         log.info("Processing data...")
         i = -1
@@ -249,7 +253,7 @@ class Neo4jQueryRaw:
         self.experiment_reference_index
         self.gene_set = self.compute_gene_set()
 
-    def __getitem__(self, index: int | slice | list):
+    def __getitem__(self, index: int | slice | list[int]) -> Any:
         """Return the record(s) for an int, slice, or list of indices."""
         if isinstance(index, int):
             return self._get_record_by_index(index)
@@ -260,7 +264,7 @@ class Neo4jQueryRaw:
         else:
             raise TypeError(f"Invalid index type: {type(index)}")
 
-    def _get_record_by_index(self, index: int):
+    def _get_record_by_index(self, index: int) -> dict[str, Any]:
         self._init_lmdb()
         data_key = f"data_{index}".encode()
 
@@ -288,7 +292,7 @@ class Neo4jQueryRaw:
                 "experiment_reference": experiment_reference,
             }
 
-    def _get_record(self, key: bytes):
+    def _get_record(self, key: bytes) -> dict[str, Any]:
         with self.env.begin() as txn:
             data_json = txn.get(key)
             if data_json is None:
@@ -312,7 +316,7 @@ class Neo4jQueryRaw:
                 "experiment_reference": experiment_reference,
             }
 
-    def _get_records_by_slice(self, slice_obj: slice):
+    def _get_records_by_slice(self, slice_obj: slice) -> list[dict[str, Any]]:
         start, stop, step = slice_obj.indices(len(self))
         data_keys = [f"data_{i}".encode() for i in range(start, stop, step)]
 
@@ -323,7 +327,7 @@ class Neo4jQueryRaw:
 
         return records
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the number of cached records in the LMDB store."""
         if self.env is None:
             self._init_lmdb()
@@ -332,7 +336,7 @@ class Neo4jQueryRaw:
         self.close_lmdb()
 
     @staticmethod
-    def extract_systematic_gene_names(genotype):
+    def extract_systematic_gene_names(genotype: dict[str, Any]) -> list[str]:
         """Return the systematic gene names of all perturbations in a genotype."""
         gene_names = []
         for perturbation in genotype.get("perturbations"):
@@ -370,12 +374,13 @@ class Neo4jQueryRaw:
         """Return a mapping of phenotype label to the record indices having it."""
         print("Computing phenotype label index...")
         # Fetch all phenotype labels
-        phenotype_labels = [
-            (i, record["experiment"].phenotype.label) for i, record in enumerate(self)
-        ]
+        phenotype_labels: list[tuple[int, str]] = []
+        for i in range(len(self)):
+            record: dict[str, Any] = self[i]
+            phenotype_labels.append((i, record["experiment"].phenotype.label))
 
         # Initialize the phenotype label index dictionary
-        phenotype_label_index = {}
+        phenotype_label_index: dict[str, list[int]] = {}
 
         # Populate the index lists with indices
         for i, label in phenotype_labels:
@@ -399,7 +404,7 @@ class Neo4jQueryRaw:
                 json.dump(self._phenotype_label_index, file)
         return self._phenotype_label_index
 
-    def compute_gene_set(self):
+    def compute_gene_set(self) -> GeneSet:
         """Return the GeneSet of all perturbed genes found across cached records."""
         gene_set = GeneSet()
         if self.env is None:
@@ -426,7 +431,7 @@ class Neo4jQueryRaw:
 
     # Reading from JSON and setting it to self._gene_set
     @property
-    def gene_set(self):
+    def gene_set(self) -> GeneSet:
         """Return the GeneSet, loading from JSON if cached else computing it."""
         if osp.exists(osp.join(self.raw_dir, "gene_set.json")):
             with open(osp.join(self.raw_dir, "gene_set.json")) as f:
@@ -436,14 +441,14 @@ class Neo4jQueryRaw:
         return self._gene_set
 
     @gene_set.setter
-    def gene_set(self, value):
+    def gene_set(self, value: GeneSet) -> None:
         if not value:
             raise ValueError("Cannot set an empty or None value for gene_set")
         with open(osp.join(self.raw_dir, "gene_set.json"), "w") as f:
             json.dump(list(sorted(value)), f, indent=0)
         self._gene_set = value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a string with the query's URI, root directory, and Cypher text."""
         return f"Neo4jQueryRaw(uri={self.uri}, root_dir={self.root_dir}, query={self.query})"
 
@@ -485,7 +490,7 @@ if __name__ == "__main__":
     neo4j_db[0:2]
     # neo4j_db.phenotype_label_index.keys()
 
-    duplicate_check = {}
+    duplicate_check: dict[str, list[int]] = {}
     for i in tqdm(range(len(neo4j_db))):
         perturbations = neo4j_db[i]["experiment"].genotype.perturbations
         sorted_gene_names = sorted(

@@ -61,7 +61,7 @@ def custom_size_repr(key: Any, value: Any, indent: int = 0) -> str:
     return f"{pad}{key}={out}"
 
 
-def hetero_repr(self) -> str:
+def hetero_repr(self: HeteroData) -> str:
     """Return a compact repr of HeteroData global, node, and edge stores."""
     info1 = [custom_size_repr(k, v, 2) for k, v in self._global_store.items()]
     info2 = [custom_size_repr(k, v, 2) for k, v in self._node_store_dict.items()]

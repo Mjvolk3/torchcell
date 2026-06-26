@@ -5,6 +5,7 @@
 """Core data containers mapping experiments to their shared references."""
 
 import hashlib
+from collections.abc import Iterator
 
 from pydantic import field_validator
 
@@ -18,7 +19,7 @@ class ExperimentReferenceIndex(ModelStrict):
     index: list[bool]
 
     # Use for parallel computation of a Dataset ExperimentReferenceIndices
-    def combine(self, other: "ExperimentReferenceIndex"):
+    def combine(self, other: "ExperimentReferenceIndex") -> "ExperimentReferenceIndex":
         """Return a new index OR-ing two masks that share the same reference."""
         if self.reference != other.reference:
             raise ValueError(
@@ -27,7 +28,7 @@ class ExperimentReferenceIndex(ModelStrict):
         combined_index = [a or b for a, b in zip(self.index, other.index)]
         return ExperimentReferenceIndex(reference=self.reference, index=combined_index)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a string showing the reference and a truncated mask."""
         if len(self.index) > 5:
             return f"ExperimentReferenceIndex(reference={self.reference}, index={self.index[:5]}...)"
@@ -40,20 +41,22 @@ class ReferenceIndex(ModelStrict):
 
     data: list[ExperimentReferenceIndex]
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> ExperimentReferenceIndex:
         """Return the reference-index entry at ``index``."""
         return self.data[index]
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the number of reference-index entries."""
         return len(self.data)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[ExperimentReferenceIndex]:
         """Iterate over the reference-index entries."""
         return iter(self.data)
 
     @field_validator("data")
-    def validate_data(cls, v):
+    def validate_data(
+        cls, v: list[ExperimentReferenceIndex]
+    ) -> list[ExperimentReferenceIndex]:
         """Check that the masks partition every experiment exactly once."""
         summed_indices = sum(
             [

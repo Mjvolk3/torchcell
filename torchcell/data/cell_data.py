@@ -94,7 +94,11 @@ def to_cell_data(
     return hetero_data
 
 
-def _process_metabolism_hypergraph(hetero_data, hypergraph, node_idx_mapping):
+def _process_metabolism_hypergraph(
+    hetero_data: HeteroData,
+    hypergraph: hnx.Hypergraph,
+    node_idx_mapping: dict[str, int],
+) -> None:
     """Process hypergraph representation of metabolism."""
     # Get unique metabolites
     metabolites = sorted(
@@ -178,7 +182,7 @@ def _process_metabolism_hypergraph(hetero_data, hypergraph, node_idx_mapping):
         hetero_data[gpr_type].num_edges = len(torch.unique(gpr_edge_index[1]))
 
 
-def compute_strata(go_graph):
+def compute_strata(go_graph: nx.DiGraph) -> dict[str, int]:
     """Compute strata (topological levels) for GO graph from leaves to root.
 
     A stratum contains nodes that can be processed in parallel.
@@ -265,7 +269,11 @@ def compute_strata(go_graph):
     return strata
 
 
-def _process_gene_ontology(hetero_data, go_graph, node_idx_mapping):
+def _process_gene_ontology(
+    hetero_data: HeteroData,
+    go_graph: nx.DiGraph,
+    node_idx_mapping: dict[str, int],
+) -> None:
     """Process gene ontology graph for DCell model and compute strata for parallel processing."""
     # Extract GO terms as nodes, preserving the hierarchical structure
     go_nodes = list(sorted(go_graph.nodes()))
@@ -292,7 +300,7 @@ def _process_gene_ontology(hetero_data, go_graph, node_idx_mapping):
     term_gene_counts = torch.zeros(len(go_nodes), dtype=torch.int64)
 
     # Track which terms have which genes for more efficient lookups
-    term_to_gene_dict = {}  # Maps term_idx to list of gene_idx values
+    term_to_gene_dict: dict[int, list[int]] = {}  # Maps term_idx to gene_idx values
 
     # Process each GO term
     for term, data in go_graph.nodes(data=True):
@@ -431,7 +439,11 @@ def _process_gene_ontology(hetero_data, go_graph, node_idx_mapping):
         print(f"  ... and {len(stratum_to_terms) - 5} more strata")
 
 
-def _process_metabolism_bipartite(hetero_data, bipartite, node_idx_mapping):
+def _process_metabolism_bipartite(
+    hetero_data: HeteroData,
+    bipartite: nx.Graph,
+    node_idx_mapping: dict[str, int],
+) -> None:
     """Process bipartite representation of metabolism with signed stoichiometry values."""
     # Collect nodes by type efficiently
     node_data = {n: d for n, d in bipartite.nodes(data=True)}

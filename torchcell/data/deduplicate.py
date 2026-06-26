@@ -43,7 +43,7 @@ class Deduplicator(ABC):
         """Merge a group of duplicate experiments into a single representative entry."""
         pass
 
-    def _init_lmdb(self, readonly=True):
+    def _init_lmdb(self, readonly: bool = True) -> None:
         """Initialize the LMDB environment."""
         if self.env is not None:
             self.close_lmdb()
@@ -61,7 +61,7 @@ class Deduplicator(ABC):
         else:
             self.env = None
 
-    def close_lmdb(self):
+    def close_lmdb(self) -> None:
         """Close the LMDB environment if it is open."""
         if self.env is not None:
             self.env.close()
@@ -133,7 +133,9 @@ class Deduplicator(ABC):
             f"Total number of instances after deduplication: {len(deduplicated_data)}"
         )
 
-    def __getitem__(self, index: int | slice | list):
+    def __getitem__(
+        self, index: int | slice | list[int]
+    ) -> dict[str, Any] | list[dict[str, Any]]:
         """Return deduplicated record(s) for an int, slice, or list of indices."""
         self._init_lmdb(readonly=True)  # Initialize LMDB for reading
         if isinstance(index, int):
@@ -145,7 +147,7 @@ class Deduplicator(ABC):
         else:
             raise TypeError(f"Invalid index type: {type(index)}")
 
-    def _get_record_by_index(self, index: int):
+    def _get_record_by_index(self, index: int) -> dict[str, Any]:
         if self.env is None:
             raise ValueError("LMDB environment is not initialized.")
         data_key = f"{index}".encode()
@@ -167,7 +169,7 @@ class Deduplicator(ABC):
                 ),
             }
 
-    def _get_records_by_slice(self, slice_obj: slice):
+    def _get_records_by_slice(self, slice_obj: slice) -> list[dict[str, Any]]:
         if self.env is None:
             raise ValueError("LMDB environment is not initialized.")
         start, stop, step = slice_obj.indices(len(self))
@@ -193,7 +195,7 @@ class Deduplicator(ABC):
                     results.append(reconstructed_data)
             return results
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the number of deduplicated records, or 0 if the LMDB is absent."""
         self._init_lmdb(readonly=True)
         if self.env is None:
@@ -201,11 +203,11 @@ class Deduplicator(ABC):
         with self.env.begin() as txn:
             return txn.stat()["entries"]
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         """Return whether the deduplication LMDB directory exists."""
         return os.path.exists(self.lmdb_dir)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a string identifying the deduplicator and its root."""
         return f"Deduplicator(root={self.root})"
 

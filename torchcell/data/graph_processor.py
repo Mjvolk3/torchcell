@@ -466,13 +466,13 @@ class SubgraphRepresentation(GraphProcessor):
             self.device = torch.device("cpu")
 
         # Initialize storage for phenotype values and metadata
-        all_values = []
+        all_values: list[float] = []
         all_type_indices = []
         all_sample_indices = []  # Which sample each value belongs to
         phenotype_types = []
 
         # Initialize storage for statistic values
-        all_stat_values = []
+        all_stat_values: list[float] = []
         all_stat_type_indices = []
         all_stat_sample_indices = []  # Which sample each stat value belongs to
         stat_types = []
@@ -666,7 +666,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
                 num_edges = edge_index.size(1)
 
                 # Initialize empty lists for each gene
-                node_to_edges = [[] for _ in range(num_genes)]
+                node_to_edges: list[list[int]] = [[] for _ in range(num_genes)]
 
                 # Build incidence mapping: node -> [edge_positions]
                 for edge_pos in range(num_edges):
@@ -1131,13 +1131,13 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
             self.device = torch.device("cpu")
 
         # Initialize storage for phenotype values and metadata
-        all_values = []
+        all_values: list[float] = []
         all_type_indices = []
         all_sample_indices = []  # Which sample each value belongs to
         phenotype_types = []
 
         # Initialize storage for statistic values
-        all_stat_values = []
+        all_stat_values: list[float] = []
         all_stat_type_indices = []
         all_stat_sample_indices = []  # Which sample each stat value belongs to
         stat_types = []
@@ -1350,7 +1350,7 @@ class LazySubgraphRepresentation(GraphProcessor):
                 num_edges = edge_index.size(1)
 
                 # Initialize empty lists for each gene
-                node_to_edges = [[] for _ in range(num_genes)]
+                node_to_edges: list[list[int]] = [[] for _ in range(num_genes)]
 
                 # Build incidence mapping: node -> [edge_positions]
                 for edge_pos in range(num_edges):
@@ -1777,12 +1777,12 @@ class LazySubgraphRepresentation(GraphProcessor):
         if self.device is None:
             self.device = torch.device("cpu")
 
-        all_values = []
+        all_values: list[float] = []
         all_type_indices = []
         all_sample_indices = []
         phenotype_types = []
 
-        all_stat_values = []
+        all_stat_values: list[float] = []
         all_stat_type_indices = []
         all_stat_sample_indices = []
         stat_types = []
@@ -1890,7 +1890,7 @@ class Unperturbed(GraphProcessor):
         processed_graph["gene"].num_nodes = cell_graph["gene"].num_nodes
 
         # Store perturbation information
-        perturbed_genes = set()
+        perturbed_genes: set[str] = set()
         for item in data:
             if "experiment" not in item or "experiment_reference" not in item:
                 raise ValueError(
@@ -2057,13 +2057,13 @@ class Perturbation(GraphProcessor):
         # Initializing storage, processing phenotypes, etc.
 
         # Initialize storage for phenotype values and metadata
-        all_values = []
+        all_values: list[float] = []
         all_type_indices = []
         all_sample_indices = []
         phenotype_types = []
 
         # Initialize storage for statistic values
-        all_stat_values = []
+        all_stat_values: list[float] = []
         all_stat_type_indices = []
         all_stat_sample_indices = []
         stat_types = []
@@ -2257,7 +2257,7 @@ class DCellGraphProcessor(GraphProcessor):
         self,
         processed_graph: HeteroData,
         cell_graph: HeteroData,
-        perturbed_indices: list,
+        perturbed_indices: list[int],
     ) -> None:
         """Copy go_gene_strata_state from cell_graph and flip perturbation bits."""
         # Copy the base state tensor from cell_graph and keep on CPU
@@ -2295,13 +2295,13 @@ class DCellGraphProcessor(GraphProcessor):
             self.device = torch.device("cpu")
 
         # Initialize storage for phenotype values and metadata
-        all_values = []
+        all_values: list[float] = []
         all_type_indices = []
         all_sample_indices = []  # Which sample each value belongs to
         phenotype_types = []
 
         # Initialize storage for statistic values
-        all_stat_values = []
+        all_stat_values: list[float] = []
         all_stat_type_indices = []
         all_stat_sample_indices = []  # Which sample each stat value belongs to
         stat_types = []
@@ -2409,9 +2409,9 @@ class NeighborSubgraphRepresentation(GraphProcessor):
         """Store the number of hops used to extract neighbor subgraphs."""
         self.num_hops = num_hops
         self.device = torch.device("cpu")
-        self.masks = {}
+        self.masks: dict[str, dict[str, torch.Tensor]] = {}
 
-    def _initialize_masks(self, cell_graph: HeteroData):
+    def _initialize_masks(self, cell_graph: HeteroData) -> None:
         """Initialize boolean masks for all nodes and edges."""
         self.masks = {}
         num_genes = cell_graph["gene"].num_nodes
@@ -2420,7 +2420,9 @@ class NeighborSubgraphRepresentation(GraphProcessor):
             "kept": torch.zeros(num_genes, dtype=torch.bool, device=self.device),
         }
 
-    def _process_gene_info(self, cell_graph: HeteroData, data):
+    def _process_gene_info(
+        self, cell_graph: HeteroData, data: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Identify perturbed genes from experiment data."""
         perturbed_names = set()
         for item in data:
@@ -2439,7 +2441,9 @@ class NeighborSubgraphRepresentation(GraphProcessor):
             "perturbed_node_ids": [node_ids[i] for i in perturbed_indices],
         }
 
-    def _build_khop_subgraph(self, cell_graph: HeteroData, gene_info: dict) -> dict:
+    def _build_khop_subgraph(
+        self, cell_graph: HeteroData, gene_info: dict[str, Any]
+    ) -> dict[str, Any]:
         """Build k-hop induced subgraph around perturbed genes."""
         perturbed_indices = gene_info["perturbed_indices"]
         num_genes = cell_graph["gene"].num_nodes
@@ -2490,8 +2494,8 @@ class NeighborSubgraphRepresentation(GraphProcessor):
         self,
         integrated_subgraph: HeteroData,
         cell_graph: HeteroData,
-        subgraph_info: dict,
-    ):
+        subgraph_info: dict[str, Any],
+    ) -> None:
         """Add metabolism edges for genes in the k-hop subgraph."""
         if "reaction" not in cell_graph.node_types:
             return
@@ -2553,9 +2557,9 @@ class NeighborSubgraphRepresentation(GraphProcessor):
         self,
         integrated_subgraph: HeteroData,
         cell_graph: HeteroData,
-        gene_info: dict,
-        subgraph_info: dict,
-    ):
+        gene_info: dict[str, Any],
+        subgraph_info: dict[str, Any],
+    ) -> None:
         """Add gene node data to the subgraph."""
         subset_nodes = subgraph_info["subset_nodes"]
         integrated_subgraph["gene"].node_ids = subgraph_info["subset_node_ids"]
@@ -2570,21 +2574,20 @@ class NeighborSubgraphRepresentation(GraphProcessor):
         integrated_subgraph["gene"].x_pert[subgraph_info["perturbed_mask"]] = 0.0
 
     def _add_phenotype_data(
-        self, integrated_subgraph: HeteroData, phenotype_info: list, data: list
-    ):
+        self,
+        integrated_subgraph: HeteroData,
+        phenotype_info: list[Any],
+        data: list[dict[str, Any]],
+    ) -> None:
         """Add phenotype data in COO format."""
-        all_values, all_type_indices, all_sample_indices, phenotype_types = (
-            [],
-            [],
-            [],
-            [],
-        )
-        all_stat_values, all_stat_type_indices, all_stat_sample_indices, stat_types = (
-            [],
-            [],
-            [],
-            [],
-        )
+        all_values: list[float] = []
+        all_type_indices: list[int] = []
+        all_sample_indices: list[int] = []
+        phenotype_types: list[str] = []
+        all_stat_values: list[float] = []
+        all_stat_type_indices: list[int] = []
+        all_stat_sample_indices: list[int] = []
+        stat_types: list[str] = []
         for phenotype_class in phenotype_info:
             label_name = phenotype_class.model_fields["label_name"].default
             stat_name = phenotype_class.model_fields["label_statistic_name"].default

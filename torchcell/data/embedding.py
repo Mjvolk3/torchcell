@@ -6,6 +6,7 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from typing import Any
 
 import torch
 from torch_geometric.data import Data, InMemoryDataset
@@ -19,8 +20,8 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
         root: str,
         # genome: SCerevisiaeGenome,  # If we include this we get ddp error
         model_name: str | None = None,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
     ):
         """Validate the model name and load processed embeddings if one is given."""
         if model_name and model_name not in self.MODEL_TO_WINDOW:
@@ -42,7 +43,7 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
             self.data, self.slices = None, None
 
     @abstractmethod
-    def initialize_model(self):
+    def initialize_model(self) -> Any:  # model type varies by subclass
         """Build and return the embedding model used to populate the dataset."""
         pass
 
@@ -58,20 +59,20 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
         # return "dummy_data.pt"
         return f"{self.model_name}.pt"
 
-    def download(self):
+    def download(self) -> None:
         """Download raw data (no-op; embeddings are computed locally)."""
         pass
 
     @abstractmethod
-    def process(self):
+    def process(self) -> None:
         """Compute embeddings and write the processed dataset to disk."""
         pass
 
-    def get_data_list(self):
+    def get_data_list(self) -> list[Data]:
         """Return all data items in the dataset as a list."""
         return [data for data in self]
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int | str) -> Data:
         """Return a data item by integer index or by gene id string."""
         if isinstance(idx, str):
             # Use _data instead of data to suppress warning. might be dangerous.
@@ -93,7 +94,7 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
         else:
             return super().__getitem__(idx)
 
-    def __radd__(self, other):
+    def __radd__(self, other: Any) -> "BaseEmbeddingDataset":
         """Support sum() by treating a left operand of 0 as the identity."""
         # if 'other' is the default integer 0, return the current instance
         if isinstance(other, int) and other == 0:
@@ -101,7 +102,7 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
         # Otherwise, just fall back to the normal add operation
         return self.__add__(other)
 
-    def __add__(self, other):
+    def __add__(self, other: Any) -> "BaseEmbeddingDataset":
         """Merge another embedding dataset, raising on duplicate window/embedding keys."""
         if isinstance(other, int) and other == 0:
             return self
@@ -178,11 +179,11 @@ class CombinedEmbedding(BaseEmbeddingDataset):
     # to be the same as the parent class. However, if you need
     # any specialized initialization, you can define the method here.
 
-    def initialize_model(self):
+    def initialize_model(self) -> None:
         """Do nothing; a combined dataset has no model to initialize."""
         # Provide a proper implementation if needed or just pass.
 
-    def process(self):
+    def process(self) -> None:
         """Do nothing; a combined dataset is built in memory, not processed."""
         # Provide a proper implementation if needed or just pass.
 

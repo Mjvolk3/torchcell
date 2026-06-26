@@ -80,7 +80,7 @@ class Aggregator(ABC):
         self.close_lmdb()
         return list(phenotype_classes)
 
-    def _init_lmdb(self, readonly=True):
+    def _init_lmdb(self, readonly: bool = True) -> None:
         """Initialize the LMDB environment."""
         if self.env is not None:
             self.close_lmdb()
@@ -98,7 +98,7 @@ class Aggregator(ABC):
         else:
             self.env = None
 
-    def close_lmdb(self):
+    def close_lmdb(self) -> None:
         """Close the LMDB environment if open and reset the handle."""
         if self.env is not None:
             self.env.close()
@@ -111,7 +111,9 @@ class Aggregator(ABC):
 
         env_input = lmdb.open(input_path, readonly=True)
 
-        aggregated_data = {}
+        aggregated_data: dict[
+            str, list[dict[str, ExperimentType | ExperimentReferenceType]]
+        ] = {}
 
         with env_input.begin(write=False) as txn_input:
             cursor = txn_input.cursor()
@@ -163,7 +165,7 @@ class Aggregator(ABC):
         )
 
     def __getitem__(
-        self, index: int | slice | list
+        self, index: int | slice | list[int]
     ) -> list[dict[str, ExperimentType | ExperimentReferenceType]]:
         """Return aggregated group(s) by int index, slice, or list of indices."""
         self._init_lmdb(readonly=True)  # Initialize LMDB for reading
@@ -226,7 +228,7 @@ class Aggregator(ABC):
                     results.append(result)
         return results
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the number of aggregated groups in the store."""
         self._init_lmdb(readonly=True)
         if self.env is None:
@@ -234,10 +236,10 @@ class Aggregator(ABC):
         with self.env.begin() as txn:
             return txn.stat()["entries"]
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         """Return whether the aggregated LMDB directory exists."""
         return os.path.exists(self.lmdb_dir)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a string representation showing the root path."""
         return f"Aggregator(root={self.root})"

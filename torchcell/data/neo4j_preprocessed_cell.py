@@ -10,14 +10,17 @@ import os
 import os.path as osp
 import pickle
 from collections.abc import Callable
+from typing import Any
 
 import lmdb
+import pandas as pd
 import torch
-from torch_geometric.data import Dataset
+from torch_geometric.data import Dataset, HeteroData
 from tqdm import tqdm
 
 from torchcell.data.graph_processor import GraphProcessor
 from torchcell.data.neo4j_cell import Neo4jCellDataset
+from torchcell.datamodels import PhenotypeType
 from torchcell.utils.file_lock import FileLockHelper
 
 log = logging.getLogger(__name__)
@@ -52,10 +55,10 @@ class Neo4jPreprocessedCellDataset(Dataset):
         self,
         root: str,
         source_dataset: Neo4jCellDataset | None = None,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-        pre_filter: Callable | None = None,
-    ):
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        pre_filter: Callable[..., Any] | None = None,
+    ) -> None:
         """Initialize preprocessed dataset.
 
         Args:
@@ -81,12 +84,12 @@ class Neo4jPreprocessedCellDataset(Dataset):
             self._load_metadata()
 
     @property
-    def raw_file_names(self):
+    def raw_file_names(self) -> list[str]:
         """Return an empty list; this dataset has no raw files."""
         return []
 
     @property
-    def processed_file_names(self):
+    def processed_file_names(self) -> list[str]:
         """Return the processed artifact names (LMDB store and metadata)."""
         return ["lmdb", "metadata.json"]
 
@@ -96,14 +99,14 @@ class Neo4jPreprocessedCellDataset(Dataset):
         metadata_path = osp.join(self.processed_dir, "metadata.json")
         return osp.exists(lmdb_path) and osp.exists(metadata_path)
 
-    def _load_metadata(self):
+    def _load_metadata(self) -> None:
         """Load cached metadata from preprocessing."""
         metadata_path = osp.join(self.processed_dir, "metadata.json")
         metadata = FileLockHelper.read_json_with_lock(metadata_path)
         self._length = metadata["length"]
         log.info(f"Loaded metadata: {self._length} samples")
 
-    def _save_metadata(self, length: int):
+    def _save_metadata(self, length: int) -> None:
         """Save metadata after preprocessing."""
         metadata_path = osp.join(self.processed_dir, "metadata.json")
         metadata = {"length": length}
@@ -111,7 +114,7 @@ class Neo4jPreprocessedCellDataset(Dataset):
         log.info(f"Saved metadata: {length} samples")
 
     @property
-    def cell_graph(self):
+    def cell_graph(self) -> HeteroData:
         """Return cell_graph from source dataset."""
         if self._cell_graph is None:
             if self._source_dataset is None:
@@ -123,7 +126,7 @@ class Neo4jPreprocessedCellDataset(Dataset):
         return self._cell_graph
 
     @property
-    def phenotype_info(self):
+    def phenotype_info(self) -> list[PhenotypeType]:
         """Return phenotype_info from source dataset."""
         if self._phenotype_info is None:
             if self._source_dataset is None:
@@ -135,7 +138,7 @@ class Neo4jPreprocessedCellDataset(Dataset):
         return self._phenotype_info
 
     @property
-    def label_df(self):
+    def label_df(self) -> pd.DataFrame:
         """Return label_df from source dataset (needed for transforms)."""
         if self._source_dataset is None:
             raise RuntimeError(
@@ -143,7 +146,7 @@ class Neo4jPreprocessedCellDataset(Dataset):
             )
         return self._source_dataset.label_df
 
-    def _extract_mask_indices(self, processed_graph):
+    def _extract_mask_indices(self, processed_graph: HeteroData) -> dict[str, Any]:
         """Extract only the False indices from masks to save storage.
 
         Instead of storing full masks (millions of bools), store only indices where mask=False.
@@ -198,7 +201,9 @@ class Neo4jPreprocessedCellDataset(Dataset):
 
         return compact_data
 
-    def _reconstruct_from_mask_indices(self, compact_data):
+    def _reconstruct_from_mask_indices(
+        self, compact_data: dict[str, Any]
+    ) -> HeteroData:
         """Reconstruct full processed graph from compact mask indices.
 
         OPTIMIZED: Minimal reconstruction - only add what's needed.
@@ -293,7 +298,7 @@ class Neo4jPreprocessedCellDataset(Dataset):
         source_dataset: Neo4jCellDataset,
         graph_processor: GraphProcessor,
         num_workers: int = 0,
-    ):
+    ) -> None:
         """One-time preprocessing: apply graph processor to all samples and save to LMDB.
 
         OPTIMIZED: Stores only False mask indices instead of full processed graphs.
@@ -374,7 +379,7 @@ class Neo4jPreprocessedCellDataset(Dataset):
                 f"Average size per sample: {avg_size_kb:.2f} KB (vs ~43 MB for full graph!)"
             )
 
-    def _init_lmdb_read(self):
+    def _init_lmdb_read(self) -> None:
         """Initialize LMDB environment for reading."""
         if not self._is_preprocessed():
             raise RuntimeError(
@@ -392,7 +397,7 @@ class Neo4jPreprocessedCellDataset(Dataset):
             max_spare_txns=16,
         )
 
-    def get(self, idx: int):
+    def get(self, idx: int) -> HeteroData | None:
         """Load pre-processed sample from LMDB.
 
         OPTIMIZED: Reconstructs full graph from compact mask indices.
@@ -425,24 +430,24 @@ class Neo4jPreprocessedCellDataset(Dataset):
             self._load_metadata()
         return self._length
 
-    def close_lmdb(self):
+    def close_lmdb(self) -> None:
         """Close LMDB environment."""
         if self.env is not None:
             self.env.close()
             self.env = None
 
-    def __getstate__(self):
+    def __getstate__(self) -> dict[str, Any]:
         """Handle pickling for multiprocessing."""
         state = self.__dict__.copy()
         state["env"] = None
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict[str, Any]) -> None:
         """Handle unpickling for multiprocessing."""
         self.__dict__.update(state)
 
 
-def main_preprocess():
+def main_preprocess() -> None:
     """Example: Preprocess a dataset for faster training."""
     import os.path as osp
 

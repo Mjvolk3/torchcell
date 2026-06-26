@@ -32,7 +32,7 @@ class MeanExperimentDeduplicator(Deduplicator):
 
     def duplicate_check(self, data: list[dict[str, Any]]) -> dict[str, list[int]]:
         """Group data indices by hash of experiment type and perturbed genes."""
-        duplicate_check = {}
+        duplicate_check: dict[str, list[int]] = {}
         for idx, item in enumerate(data):
             experiment = item["experiment"]
             experiment_type = experiment.experiment_type

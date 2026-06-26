@@ -19,8 +19,10 @@ import logging
 import os
 import os.path as osp
 import pickle
+from typing import Any
 
 import lmdb
+import pandas as pd
 import torch
 from torch_geometric.data import Dataset
 
@@ -83,7 +85,7 @@ class Neo4jPreprocessedCellDatasetFullMasks(Dataset):
         return osp.join(self.root, "processed")
 
     @property
-    def label_df(self):
+    def label_df(self) -> pd.DataFrame:
         """Return label_df from source dataset (needed for transforms)."""
         if self._source_dataset is None:
             raise RuntimeError(
@@ -97,7 +99,7 @@ class Neo4jPreprocessedCellDatasetFullMasks(Dataset):
         metadata_path = osp.join(self.processed_dir, "metadata.json")
         return osp.exists(lmdb_path) and osp.exists(metadata_path)
 
-    def _load_metadata(self):
+    def _load_metadata(self) -> None:
         """Load metadata from JSON file."""
         metadata_path = osp.join(self.processed_dir, "metadata.json")
         with open(metadata_path) as f:
@@ -107,7 +109,7 @@ class Neo4jPreprocessedCellDatasetFullMasks(Dataset):
             if storage_type != "full_masks":
                 log.warning(f"Expected storage_type 'full_masks', got '{storage_type}'")
 
-    def _init_lmdb_read(self):
+    def _init_lmdb_read(self) -> None:
         """Initialize LMDB environment for reading."""
         if not self._is_preprocessed():
             raise RuntimeError(
@@ -125,7 +127,7 @@ class Neo4jPreprocessedCellDatasetFullMasks(Dataset):
             max_spare_txns=16,
         )
 
-    def get(self, idx: int):
+    def get(self, idx: int) -> HeteroData:
         """Load preprocessed sample with full masks from LMDB.
 
         This version loads complete masks without reconstruction overhead.
@@ -150,7 +152,7 @@ class Neo4jPreprocessedCellDatasetFullMasks(Dataset):
 
         return processed_graph
 
-    def _load_full_masks(self, full_data):
+    def _load_full_masks(self, full_data: dict[str, Any]) -> HeteroData:
         """Load full masks directly without reconstruction.
 
         This is the key optimization - we just assign pre-computed masks.
@@ -278,18 +280,18 @@ class Neo4jPreprocessedCellDatasetFullMasks(Dataset):
             self._load_metadata()
         return self._length
 
-    def close_lmdb(self):
+    def close_lmdb(self) -> None:
         """Close LMDB environment."""
         if self.env is not None:
             self.env.close()
             self.env = None
 
-    def __getstate__(self):
+    def __getstate__(self) -> dict[str, Any]:
         """Handle pickling for multiprocessing."""
         state = self.__dict__.copy()
         state["env"] = None
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict[str, Any]) -> None:
         """Handle unpickling for multiprocessing."""
         self.__dict__.update(state)

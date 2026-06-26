@@ -1,6 +1,7 @@
 """Scratch helpers to plot prediction-vs-truth correlations for overfit checks."""
 
 import os
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,14 +9,14 @@ from scipy import stats
 
 
 def plot_correlations(
-    predictions,
-    true_values,
-    save_path,
-    lambda_info="",
-    weight_decay="",
-    fixed_axes=None,
-    epoch=None,
-):
+    predictions: Any,  # reason: torch.Tensor not imported in this scratch module
+    true_values: Any,  # reason: torch.Tensor not imported in this scratch module
+    save_path: str,
+    lambda_info: str = "",
+    weight_decay: str = "",
+    fixed_axes: dict[str, Any] | None = None,  # reason: mixed py/numpy float values
+    epoch: int | None = None,
+) -> dict[str, Any]:
     """Plot predicted vs. true values and save the correlation figure to disk."""
     # Convert to numpy and handle NaN values
     predictions_np = predictions.detach().cpu().numpy()
@@ -147,14 +148,14 @@ def plot_correlations(
 
 
 def plot_embeddings(
-    z_w,
-    z_i,
-    z_p,
-    batch_size,
-    save_dir="./003-fit-int/hetero_cell/embedding_plots",
-    epoch=None,
-    fixed_axes=None,
-):
+    z_w: Any,  # reason: torch.Tensor not imported in this scratch module
+    z_i: Any,  # reason: torch.Tensor not imported in this scratch module
+    z_p: Any,  # reason: torch.Tensor not imported in this scratch module
+    batch_size: int,
+    save_dir: str = "./003-fit-int/hetero_cell/embedding_plots",
+    epoch: int | None = None,
+    fixed_axes: dict[str, Any] | None = None,  # reason: mixed py/numpy float values
+) -> dict[str, Any]:
     """
     Plot embeddings for visualization and debugging with fixed axes for consistent GIF creation.
 

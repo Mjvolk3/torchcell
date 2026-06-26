@@ -3,6 +3,6 @@
 import datetime
 
 
-def timestamp():
+def timestamp() -> str:
     """Return the current local time as a ``YYYY-MM-DD-HH-MM-SS`` string."""
     return datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")

@@ -6,7 +6,7 @@
 
 import os
 import os.path as osp
-from typing import Literal
+from typing import Any, Literal
 
 from dotenv import load_dotenv
 from torch_geometric.transforms import Compose
@@ -36,13 +36,13 @@ from torchcell.transforms.regression_to_classification import (
 
 
 def load_sample_data_batch(
-    batch_size=2,
-    num_workers=2,
+    batch_size: int = 2,
+    num_workers: int = 2,
     metabolism_graph: Literal[
         "metabolism_hypergraph", "metabolism_bipartite"
     ] = "metabolism_bipartite",
     is_dense: bool = False,
-):
+) -> tuple[Neo4jCellDataset, Any, int, int]:
     """Build the cell dataset and data module and return one sample batch.
 
     Args:

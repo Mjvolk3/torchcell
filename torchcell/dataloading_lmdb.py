@@ -12,7 +12,7 @@ from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
-def main():
+def main() -> None:
     """Build the cell dataset and iterate its DataLoader to exercise LMDB access."""
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")

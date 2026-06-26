@@ -7,7 +7,7 @@ from Bio import Entrez, SeqIO
 from intermine.webservice import Service
 
 
-def main1():
+def main1() -> None:
     """Query YeastMine for the gene/factor template of a single gene."""
     gene = "YOR202W"
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
@@ -20,7 +20,7 @@ def main1():
         pass
 
 
-def main2():
+def main2() -> None:
     """Fetch and cache all S. cerevisiae nucleotide gene records via Entrez."""
     filename = "yeast_genes.pkl"
     if not os.path.isfile(filename):

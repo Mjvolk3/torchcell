@@ -8,7 +8,7 @@
 import os
 import os.path as osp
 import random
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 import torch
@@ -43,13 +43,13 @@ from torchcell.transforms.regression_to_classification import (
 
 
 def load_sample_data_batch(
-    batch_size=2,
-    num_workers=2,
+    batch_size: int = 2,
+    num_workers: int = 2,
     config: Literal[
         "dango_string9_1", "hetero_cell_bipartite", "dcell", "dcell_2017-07-19"
     ] = "dango_string9_1",
     is_dense: bool = False,
-):
+) -> tuple[Neo4jCellDataset, Any, int, int]:
     """Load a sample data batch for Dango, HeteroCellBipartite, or DCell models.
 
     Args:

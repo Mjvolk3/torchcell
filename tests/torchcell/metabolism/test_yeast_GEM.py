@@ -98,7 +98,7 @@ def test_reaction_directions(yeast_gem):
     reaction_map = yeast_gem.reaction_map
 
     # Group edges by reaction_id and direction
-    reactions_directions = {}
+    reactions_directions: dict[str, set[str]] = {}
     for edge_id in reaction_map.edges:
         props = reaction_map.edges[edge_id].properties
         reaction_id = props["reaction_id"]
@@ -134,7 +134,7 @@ def test_gene_combination_consistency(yeast_gem):
     reaction_map = yeast_gem.reaction_map
 
     # Group edges by reaction_id, direction, and gene combination
-    edge_groups = {}
+    edge_groups: dict[tuple[str, frozenset[str]], set[str]] = {}
     for edge_id in reaction_map.edges:
         props = reaction_map.edges[edge_id].properties
         reaction_id = props["reaction_id"]

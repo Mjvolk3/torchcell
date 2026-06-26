@@ -28,7 +28,7 @@ class BenchmarkConfig:
     base_seed: int
     output_dir: Path
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate configuration after initialization."""
         if self.matrix_size <= 0:
             raise ValueError("Matrix size must be positive")
@@ -110,7 +110,7 @@ class IPMICollector:
 class SystemMonitor:
     """Monitors system metrics during benchmark runs."""
 
-    def __init__(self, config: BenchmarkConfig, data_queue: queue.Queue):
+    def __init__(self, config: BenchmarkConfig, data_queue: queue.Queue[float]):
         """Initialize metric buffers, the IPMI collector, and the stop event."""
         self.config = config
         self.data_queue = data_queue
@@ -546,7 +546,7 @@ class Benchmark:
         """Store the benchmark config and prepare monitor placeholders."""
         self.config = config
         self.monitor: SystemMonitor | None = None
-        self.monitor_queue: queue.Queue | None = None
+        self.monitor_queue: queue.Queue[float] | None = None
 
     def setup_monitoring(self) -> None:
         """Initialize system monitoring."""
@@ -617,7 +617,7 @@ class Benchmark:
             print(f"Failed to set worker CPU affinity: {e}")
 
 
-def matrix_multiply(size_seed: tuple) -> None:
+def matrix_multiply(size_seed: tuple[int, int]) -> None:
     """Matrix multiplication benchmark function."""
     size, seed = size_seed
     np.random.seed(seed)

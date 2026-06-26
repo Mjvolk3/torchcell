@@ -1,9 +1,11 @@
 """Example script uploading and fetching fake experiment data in Neo4j."""
 
-from neo4j import GraphDatabase
+from typing import Any
+
+from neo4j import GraphDatabase, Session
 
 
-def make_fake_data_1():
+def make_fake_data_1() -> dict[str, Any]:
     """Return a sample double-mutant data instance dictionary."""
     some_serialized_data = {"key1": "value1", "key2": 123}  # Example serialized data
     fake_data = {
@@ -23,7 +25,7 @@ def make_fake_data_1():
     return fake_data
 
 
-def make_fake_data_2():
+def make_fake_data_2() -> dict[str, Any]:
     """Return a second sample double-mutant data instance dictionary."""
     some_serialized_data = {"key1": "value1", "key2": 123}  # Example serialized data
     fake_data = {
@@ -43,7 +45,9 @@ def make_fake_data_2():
     return fake_data
 
 
-def upload_data_instance(session, data_instance_name, data_instance):
+def upload_data_instance(
+    session: Session, data_instance_name: str, data_instance: dict[str, Any]
+) -> None:
     """Create a DataInstance node and link its deletion genotypes to the ontology."""
     # Create the main data instance node with dynamic name
     session.run(f"CREATE (di:DataInstance {{name: '{data_instance_name}'}})")
@@ -134,7 +138,7 @@ def upload_data_instance(session, data_instance_name, data_instance):
 # )
 
 
-def add_data():
+def add_data() -> None:
     """Upload both fake data instances to the local Neo4j database."""
     data_0 = make_fake_data_1()
     data_1 = make_fake_data_2()
@@ -150,10 +154,10 @@ def add_data():
     driver.close()
 
 
-def fetch_data_instance(uri, username, password):
+def fetch_data_instance(uri: str, username: str, password: str) -> dict[str, Any]:
     """Query Neo4j and reconstruct a data instance from its linked nodes."""
     driver = GraphDatabase.driver(uri, auth=(username, password))
-    data_instance = {}
+    data_instance: dict[str, Any] = {}
 
     with driver.session() as session:
         result = session.run(

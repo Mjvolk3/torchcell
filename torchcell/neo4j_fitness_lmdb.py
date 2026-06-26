@@ -7,7 +7,7 @@ import lmdb
 from tqdm import tqdm
 
 
-def iterate_lmdb_database(lmdb_dir: str):
+def iterate_lmdb_database(lmdb_dir: str) -> None:
     """Iterates over all key-value pairs in an LMDB database and interprets the values as JSON.
 
     Parameters:

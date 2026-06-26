@@ -181,7 +181,7 @@ def test_stoichiometric_matrix_with_duplicate_detection():
     print("\nAnalyzing column patterns...")
 
     # Create a dictionary to store unique column patterns
-    unique_columns = {}
+    unique_columns: dict[str, list[int]] = {}
     duplicate_count = 0
 
     # Create a hash function for numpy arrays
@@ -303,7 +303,7 @@ def test_stoichiometric_matrix_exact_equivalence():
 
     # 3. Identify unique column patterns and eliminate reversible duplicates
     print("\nIdentifying unique column patterns...")
-    unique_columns = {}
+    unique_columns: dict[str, list[int]] = {}
     reversed_pairs = 0
 
     # Create a fingerprint for a column (for normal + reversed detection)

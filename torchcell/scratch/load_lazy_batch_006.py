@@ -10,7 +10,7 @@ Demonstrates zero-copy edge handling with boolean masks.
 import os
 import os.path as osp
 import random
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 import torch
@@ -34,12 +34,12 @@ from torchcell.transforms.regression_to_classification import (
 
 
 def load_sample_data_batch(
-    batch_size=2,
-    num_workers=2,
+    batch_size: int = 2,
+    num_workers: int = 2,
     config: Literal["hetero_cell_bipartite"] = "hetero_cell_bipartite",
     is_dense: bool = False,
     use_custom_collate: bool = True,
-):
+) -> tuple[Neo4jCellDataset, Any, int, int]:
     """Load a sample data batch with LazySubgraphRepresentation for masked message passing.
 
     Args:
@@ -210,7 +210,7 @@ def load_sample_data_batch(
     return dataset, batch, input_channels, max_num_nodes
 
 
-def inspect_data():
+def inspect_data() -> None:
     """Load a sample lazy batch and print its structure for manual inspection."""
     # Set all random seeds for reproducibility
     seed = 42

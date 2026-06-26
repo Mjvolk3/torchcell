@@ -7,6 +7,7 @@
 import os
 import os.path as osp
 import time
+from typing import Any
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -23,7 +24,7 @@ from torch_geometric.utils import (
 )
 
 
-def load_dataset():
+def load_dataset() -> Any:  # reason: Neo4jCellDataset imported only inside function
     """Load just the dataset with cell_graph."""
     from torchcell.data import (
         GenotypeAggregator,
@@ -87,7 +88,12 @@ def load_dataset():
     return dataset
 
 
-def calculate_graph_statistics(edge_index, num_nodes, is_directed=False, name=""):
+def calculate_graph_statistics(
+    edge_index: torch.Tensor,
+    num_nodes: int,
+    is_directed: bool = False,
+    name: str = "",
+) -> dict[str, Any]:  # reason: stats values mix int edge counts and float pct
     """Calculate graph statistics focusing on PyG representations."""
     print(f"Calculating statistics for {name} network...")
 
@@ -188,7 +194,12 @@ def calculate_graph_statistics(edge_index, num_nodes, is_directed=False, name=""
     return stats
 
 
-def plot_adjacency_matrix(adj_matrix, title, stats, filename=None):
+def plot_adjacency_matrix(
+    adj_matrix: np.ndarray,
+    title: str,
+    stats: dict[str, Any],
+    filename: str | None = None,
+) -> None:
     """Plot adjacency matrix with PyG-focused statistics."""
     fig = plt.figure(figsize=(14, 10))
     gs = fig.add_gridspec(1, 20)
@@ -274,8 +285,12 @@ def plot_adjacency_matrix(adj_matrix, title, stats, filename=None):
 
 
 def process_network(
-    edge_index, max_num_nodes, name, is_directed=False, output_dir=None
-):
+    edge_index: torch.Tensor,
+    max_num_nodes: int,
+    name: str,
+    is_directed: bool = False,
+    output_dir: str | None = None,
+) -> None:
     """Process a network: calculate stats and plot original and reordered matrices."""
     print(f"\n{'=' * 80}\nProcessing {name} network\n{'=' * 80}")
     process_start = time.time()

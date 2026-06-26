@@ -5,6 +5,7 @@ This is for experiment 006 with the new transformer architecture.
 
 import os
 import os.path as osp
+from typing import Any
 
 import torch
 from dotenv import load_dotenv
@@ -30,7 +31,7 @@ def load_perturbation_batch(
     num_workers: int = 4,
     subset_size: int = 10000,
     device: torch.device = torch.device("cuda"),
-):
+) -> tuple[Neo4jCellDataset, Any, Any, int]:
     """Load a batch of data using the Perturbation processor for CellGraphTransformer.
 
     Returns:

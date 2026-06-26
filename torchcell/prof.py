@@ -7,9 +7,10 @@
 import os
 import os.path as osp
 import time
+from typing import Any, Callable
 
 
-def prof_input(func):
+def prof_input(func: Callable[..., Any]) -> Callable[..., None]:
     """Decorate ``func`` to cProfile it, prompting for an experiment-name prefix."""
     import cProfile
     import datetime
@@ -17,7 +18,7 @@ def prof_input(func):
 
     exp_name = input("Enter name of experiment: ")
 
-    def inner(*args, **kwargs):
+    def inner(*args: Any, **kwargs: Any) -> None:
         dir = "profiles"
         if not osp.exists(dir):
             os.mkdir(dir)
@@ -32,13 +33,13 @@ def prof_input(func):
     return inner
 
 
-def prof(func):
+def prof(func: Callable[..., Any]) -> Callable[..., None]:
     """Decorate ``func`` to cProfile it and dump stats under a fixed name prefix."""
     import cProfile
     import datetime
     import pstats
 
-    def inner(*args, **kwargs):
+    def inner(*args: Any, **kwargs: Any) -> None:
         dir = "profiles"
         if not osp.exists(dir):
             os.mkdir(dir)
@@ -53,16 +54,16 @@ def prof(func):
     return inner
 
 
-def main():
+def main() -> None:
     """Demonstrate both profiling decorators on dummy sleep functions."""
 
     @prof
-    def test_func_dec():
+    def test_func_dec() -> None:
         print("test func decorator")
         time.sleep(5)
 
     @prof_input
-    def test_func_dec_in():
+    def test_func_dec_in() -> None:
         print("test func decorator")
         time.sleep(5)
 

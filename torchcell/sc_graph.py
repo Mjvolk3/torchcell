@@ -3,6 +3,7 @@
 import csv
 import json
 import os.path as osp
+from typing import Any
 
 # Saccharomyces cerevisiae Raw Data Extraction Functions
 import pandas as pd
@@ -24,7 +25,7 @@ import torch
 
 def read_raw_data(
     singles: bool = True, digenic: bool = True, trigenic: bool = True
-) -> dict:
+) -> dict[str, pd.DataFrame]:
     """Read raw fitness data from the data directory.
 
     Args:
@@ -98,7 +99,7 @@ def read_raw_data(
 
 def get_gene_list(
     singles: bool = False, digenic: bool = True, trigenic: bool = True
-) -> list:
+) -> list[str]:
     """Get the list of all gene names contained in the selected dataframes.
 
     Args:
@@ -152,7 +153,7 @@ def get_gene_list(
     return gene_list
 
 
-def get_gene_id_translation_table():
+def get_gene_id_translation_table() -> pd.DataFrame | None:
     """Load the gene ID translation table from preprocessed data, if it exists."""
     file_path = "data/preprocessed/gene_id_translation_table.csv"
     if osp.exists(file_path):
@@ -163,13 +164,15 @@ def get_gene_id_translation_table():
     return df
 
 
-def get_ignored_genes():
+def get_ignored_genes() -> list[str]:
     """Return the hardcoded list of gene IDs to exclude from analysis."""
     ignored_genes = ["YIL080W", "YAR037W", "YAR040C", "YFL057C", "YFL056C"]
     return ignored_genes
 
 
-def get_smf_bary(write_json=True, to_tensor=False) -> list:
+def get_smf_bary(
+    write_json: bool = True, to_tensor: bool = False
+) -> list[Any] | torch.Tensor:
     """Build per-gene single-mutant fitness labels from Baryshnikova data.
 
     Loads cached results if available; otherwise reconciles raw fitness values with
@@ -244,12 +247,12 @@ def get_smf_bary(write_json=True, to_tensor=False) -> list:
         return gene_singles
 
 
-def get_double_fitness():
+def get_double_fitness() -> None:
     """Compute digenic interaction fitness (not yet implemented)."""
     pass
 
 
-def get_triple_fitness():
+def get_triple_fitness() -> None:
     """Compute trigenic interaction fitness (not yet implemented)."""
     pass
 

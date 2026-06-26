@@ -1,8 +1,9 @@
+"""COO-format transforms to normalize, bin, and invert regression labels."""
+
 # torchcell/transforms/regression_to_classification_coo
 # [[torchcell.transforms.regression_to_classification_coo]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/transforms/regression_to_classification_coo
 # Test file: tests/torchcell/transforms/test_regression_to_classification_coo.py
-
 
 import copy
 from abc import ABC
@@ -18,7 +19,8 @@ class COOLabelNormalizationTransform(BaseTransform):
     """Transform for normalizing labels in COO format with different strategies."""
 
     def __init__(self, dataset: Any, label_configs: dict[str, dict], eps: float = 1e-8):
-        """
+        """Compute per-label statistics from the dataset for normalization.
+
         Args:
             dataset: Dataset instance containing COO format phenotype data
             label_configs: Dictionary mapping label names to their configurations
@@ -232,6 +234,8 @@ class COOLabelNormalizationTransform(BaseTransform):
 
 # Reuse the existing base binning strategy classes
 class BaseBinningStrategy(ABC):
+    """Base class for label binning strategies operating on value arrays."""
+
     def clamp_values(
         self, values: torch.Tensor, bin_edges: torch.Tensor
     ) -> torch.Tensor:
@@ -315,10 +319,12 @@ class BaseBinningStrategy(ABC):
 
 
 class EqualWidthStrategy(BaseBinningStrategy):
+    """Binning strategy with bins of equal width over the value range."""
+
     def compute_bins(
         self, values: np.ndarray, num_bins: int
     ) -> tuple[np.ndarray, dict]:
-        """Compute equal-width bins"""
+        """Compute equal-width bins and their metadata."""
         non_nan = values[~np.isnan(values)]
         bin_edges = np.linspace(non_nan.min(), non_nan.max(), num_bins + 1)
         metadata = {
@@ -334,10 +340,12 @@ class EqualWidthStrategy(BaseBinningStrategy):
 
 
 class EqualFrequencyStrategy(BaseBinningStrategy):
+    """Binning strategy with quantile bins holding roughly equal counts."""
+
     def compute_bins(
         self, values: np.ndarray, num_bins: int
     ) -> tuple[np.ndarray, dict]:
-        """Compute equal-frequency (quantile) bins"""
+        """Compute equal-frequency (quantile) bins and their metadata."""
         non_nan = values[~np.isnan(values)]
         bin_edges = np.percentile(non_nan, np.linspace(0, 100, num_bins + 1))
         metadata = {
@@ -353,10 +361,12 @@ class EqualFrequencyStrategy(BaseBinningStrategy):
 
 
 class AutoBinStrategy(BaseBinningStrategy):
+    """Binning strategy choosing bin count from the data standard deviation."""
+
     def compute_bins(
         self, values: np.ndarray, num_bins: int | None = None
     ) -> tuple[np.ndarray, dict]:
-        """Compute bins based on data std"""
+        """Compute equal-width bins with a count derived from data std."""
         non_nan = values[~np.isnan(values)]
         std = np.std(non_nan)
         range_width = np.max(non_nan) - np.min(non_nan)
@@ -373,7 +383,8 @@ class COOLabelBinningTransform(BaseTransform):
         label_configs: dict[str, dict],
         normalizer: COOLabelNormalizationTransform | None = None,
     ):
-        """
+        """Set up binning strategies and per-label bin configuration.
+
         Args:
             dataset: Dataset instance with phenotype data in COO format
             label_configs: Dict of configurations for each label
@@ -732,11 +743,10 @@ class COOLabelBinningTransform(BaseTransform):
 
 
 class COOInverseCompose(BaseTransform):
-    """A transform that applies the inverse of a sequence of transforms in reverse order
-    for data in COO format.
-    """
+    """Apply the inverse of a sequence of COO transforms in reverse order."""
 
     def __init__(self, transforms: Compose | list[BaseTransform]):
+        """Store the transform list and verify each implements ``inverse``."""
         super().__init__()
         if isinstance(transforms, Compose):
             self.transforms = transforms.transforms
@@ -762,5 +772,6 @@ class COOInverseCompose(BaseTransform):
         return data
 
     def __repr__(self) -> str:
+        """Return a multi-line repr listing the wrapped transforms."""
         args = [f"\n  {t}" for t in self.transforms]
         return f"{self.__class__.__name__}({''.join(args)}\n)"

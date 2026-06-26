@@ -1,3 +1,5 @@
+"""Dataset of Nucleotide Transformer embeddings for S. cerevisiae genes."""
+
 # torchcell/datasets/nucleotide_transformer.py
 # [[torchcell.datasets.nucleotide_transformer]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/nucleotide_transformer.py
@@ -17,6 +19,8 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 class NucleotideTransformerDataset(BaseEmbeddingDataset):
+    """Per-gene Nucleotide Transformer sequence embeddings keyed by window model."""
+
     MODEL_TO_WINDOW = {
         "nt_window_5979_max": ("window", 5979, True),
         "nt_window_5979": ("window", 5979, False),
@@ -34,6 +38,15 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
+        """Set up the dataset, computing or loading embeddings if a model is given.
+
+        Args:
+            root: Root directory for raw and processed data.
+            genome: Genome providing gene sequences and the gene set.
+            model_name: Key into ``MODEL_TO_WINDOW`` selecting the embedding model.
+            transform: Optional transform applied at access time.
+            pre_transform: Optional transform applied before saving.
+        """
         self.genome = genome
         super().__init__(root, transform, pre_transform)
         self.model_name = model_name
@@ -57,6 +70,7 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
 
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:
+        """Build a ParsedGenome holding the gene set, or None if genome is None."""
         # BUG we have to do this black magic because when you merge datasets with +
         # the genome is None
         if genome is None:
@@ -67,11 +81,13 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
             return ParsedGenome(**data)
 
     def initialize_model(self):
+        """Instantiate the NucleotideTransformer model, or None if no model name."""
         if self.model_name:
             return NucleotideTransformer()
         return None
 
     def process(self):
+        """Embed each gene's windowed sequence and save the collated dataset."""
         if self.model_name is None:
             return
 
@@ -129,7 +145,7 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
 
 
 def main():
-
+    """Build embedding datasets for all configured window models."""
     import wandb
     from dotenv import load_dotenv
 

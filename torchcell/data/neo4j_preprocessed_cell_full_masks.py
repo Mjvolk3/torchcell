@@ -2,8 +2,7 @@
 # [[torchcell.data.neo4j_preprocessed_cell_full_masks]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/data/neo4j_preprocessed_cell_full_masks
 
-"""
-Optimized Neo4jPreprocessedCellDataset that loads full masks from UINT8 storage.
+"""Optimized Neo4jPreprocessedCellDataset that loads full masks from UINT8 storage.
 
 This version trades storage for speed by loading complete boolean masks
 without reconstruction overhead. Masks are stored as uint8 for optimal
@@ -32,8 +31,7 @@ log = logging.getLogger(__name__)
 
 
 class Neo4jPreprocessedCellDatasetFullMasks(Dataset):
-    """
-    Optimized dataset that loads preprocessed full masks from LMDB (UINT8 format).
+    """Optimized dataset that loads preprocessed full masks from LMDB (UINT8 format).
 
     This version eliminates mask reconstruction overhead by storing and loading
     complete boolean masks. Masks are stored as uint8 for optimal memory bandwidth
@@ -47,8 +45,7 @@ class Neo4jPreprocessedCellDatasetFullMasks(Dataset):
     """
 
     def __init__(self, root: str, source_dataset: Neo4jCellDataset | None = None):
-        """
-        Initialize preprocessed dataset.
+        """Initialize preprocessed dataset.
 
         Args:
             root: Root directory for preprocessed LMDB data
@@ -129,8 +126,7 @@ class Neo4jPreprocessedCellDatasetFullMasks(Dataset):
         )
 
     def get(self, idx: int):
-        """
-        Load preprocessed sample with full masks from LMDB.
+        """Load preprocessed sample with full masks from LMDB.
 
         This version loads complete masks without reconstruction overhead.
 
@@ -155,8 +151,7 @@ class Neo4jPreprocessedCellDatasetFullMasks(Dataset):
         return processed_graph
 
     def _load_full_masks(self, full_data):
-        """
-        Load full masks directly without reconstruction.
+        """Load full masks directly without reconstruction.
 
         This is the key optimization - we just assign pre-computed masks.
 

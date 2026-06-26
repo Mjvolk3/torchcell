@@ -1,3 +1,5 @@
+"""General-purpose utility helpers for torchcell."""
+
 # torchcell/utils/__init__.py
 from .file_lock import FileLockHelper
 from .utils import format_scientific_notation

@@ -3,6 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/sgd_gene_graph_hot
 # Test file: tests/torchcell/datasets/test_sgd_gene_graph_hot.py
 
+"""One-hot graph embeddings of SGD gene features, chromosomes, and pathways."""
 
 import os
 import os.path as osp
@@ -16,6 +17,8 @@ from torchcell.data.embedding import BaseEmbeddingDataset
 
 
 class OneHotGraphEmbeddingDataset(BaseEmbeddingDataset):
+    """Embedding dataset of per-gene numeric, chromosome, and pathway one-hot features."""
+
     MODEL_TO_WINDOW = {
         "normalized_chrom_pathways": (True, True),
         "normalized_chrom": (True, False),
@@ -31,23 +34,37 @@ class OneHotGraphEmbeddingDataset(BaseEmbeddingDataset):
         transform: Callable = None,
         pre_transform: Callable = None,
     ):
+        """Store the gene graph and process the requested feature-window model.
+
+        Args:
+            root: Root directory for processed dataset files.
+            graph: NetworkX gene graph providing per-node feature attributes.
+            model_name: Key into ``MODEL_TO_WINDOW`` selecting normalization and
+                whether pathway one-hot features are included.
+            transform: Optional transform applied on access.
+            pre_transform: Optional transform applied before saving.
+        """
         self.graph = graph
         super().__init__(root, model_name, transform, pre_transform)
         self.process()
 
     def initialize_model(self):
+        """Return nothing; this dataset uses no learned model."""
         pass
 
     @property
     def processed_file_names(self) -> list[str]:
+        """Return the processed file name for the selected model."""
         return [f"{self.model_name}.pt"]
 
     def one_hot(self, index: int, length: int) -> torch.Tensor:
+        """Return a length-``length`` one-hot vector with ``index`` set to 1."""
         tensor = torch.zeros(length, dtype=torch.float)
         tensor[index] = 1.0
         return tensor
 
     def process(self):
+        """Build node feature vectors and save the collated embedding dataset."""
         data_list = []
         unique_chromosomes = set()
         unique_pathways = set()
@@ -173,6 +190,7 @@ class OneHotGraphEmbeddingDataset(BaseEmbeddingDataset):
 
 
 def main():
+    """Build the one-hot graph embeddings and report pathway annotation coverage."""
     from torchcell.graph import SCerevisiaeGraph
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 

@@ -4,6 +4,8 @@
 # Test file: tests/torchcell/losses/test_isomorphic_cell_loss.py
 
 
+"""Isomorphic cell losses combining MSE, distribution, and SupCR terms."""
+
 import torch
 import torch.nn as nn
 
@@ -15,13 +17,16 @@ from torchcell.losses.multi_dim_nan_tolerant import (
 
 
 class ICLoss(nn.Module):
+    """Weighted sum of MSE, distribution, and SupCR cell losses."""
+
     def __init__(
         self,
         lambda_dist: float,
         lambda_supcr: float,
         weights: torch.Tensor | None = None,
     ) -> None:
-        """
+        """Initialize the component losses and their lambda weights.
+
         Args:
             lambda_dist: Weight for the dist loss.
             lambda_supcr: Weight for the SupCR loss.
@@ -38,6 +43,7 @@ class ICLoss(nn.Module):
     def forward(
         self, predictions: torch.Tensor, targets: torch.Tensor, z_P: torch.Tensor
     ) -> tuple[torch.Tensor, dict]:
+        """Return the total weighted loss and a dict of component/normalized losses."""
         mse_loss, mse_dim_losses = self.mse_loss_fn(predictions, targets)
         dist_loss, dist_dim_losses = self.dist_loss_fn(predictions, targets)
 
@@ -97,6 +103,8 @@ class ICLoss(nn.Module):
 
 
 class ICLossStd(nn.Module):
+    """IC loss with learnable per-task standard deviations (heteroscedastic)."""
+
     def __init__(
         self,
         lambda_dist: float,
@@ -106,8 +114,7 @@ class ICLossStd(nn.Module):
         task_weights: torch.Tensor | None = None,
         eps: float = 1e-6,
     ) -> None:
-        """
-        Enhanced ICLoss with learnable per-task standard deviations.
+        """Enhanced ICLoss with learnable per-task standard deviations.
 
         Implements: L = ∑(w_t/(2σ_t²) * L_t + log σ_t) + λ∑σ_t⁻²
 
@@ -150,8 +157,7 @@ class ICLossStd(nn.Module):
         z_P: torch.Tensor,
         z_I: torch.Tensor,
     ) -> tuple[torch.Tensor, dict]:
-        """
-        Forward pass to compute the heteroscedastic IC loss.
+        """Forward pass to compute the heteroscedastic IC loss.
 
         Args:
             predictions: Model predictions [batch_size, 2]

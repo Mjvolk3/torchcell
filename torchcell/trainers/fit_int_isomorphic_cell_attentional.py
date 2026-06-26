@@ -1,3 +1,5 @@
+"""Lightning regression trainer for the isomorphic attentional cell model."""
+
 import logging
 
 import lightning as L
@@ -15,6 +17,8 @@ log = logging.getLogger(__name__)
 
 
 class RegressionTask(L.LightningModule):
+    """Lightning task for fitness and gene-interaction regression with metrics."""
+
     def __init__(
         self,
         model: nn.Module,
@@ -31,6 +35,7 @@ class RegressionTask(L.LightningModule):
         forward_transform: nn.Module | None = None,
         inverse_transform: nn.Module | None = None,
     ):
+        """Set up the model, loss, per-stage metric collections, and buffers."""
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
         self.model = model
@@ -63,6 +68,7 @@ class RegressionTask(L.LightningModule):
         self.automatic_optimization = False
 
     def forward(self, batch):
+        """Move the cell graph to the batch device and run the model."""
         batch_device = batch["gene"].x.device
         if (
             not hasattr(self, "_cell_graph_device")
@@ -131,6 +137,7 @@ class RegressionTask(L.LightningModule):
         return loss, predictions, targets
 
     def training_step(self, batch, batch_idx):
+        """Run a manual-optimization training step with optional grad accumulation."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
         if self.hparams.grad_accumulation_schedule is not None:
             loss = loss / self.current_accumulation_steps
@@ -155,10 +162,12 @@ class RegressionTask(L.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
+        """Run the shared step in the validation stage and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
         return loss
 
     def test_step(self, batch, batch_idx):
+        """Run the shared step in the test stage and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
@@ -180,6 +189,7 @@ class RegressionTask(L.LightningModule):
         return results
 
     def on_train_epoch_end(self):
+        """Log accumulated training metrics and reset them for the next epoch."""
         for metric_name, metric_dict in self.train_metrics.items():
             computed_metrics = self._compute_metrics_safely(metric_dict)
             for name, value in computed_metrics.items():
@@ -216,6 +226,7 @@ class RegressionTask(L.LightningModule):
         self.latents = {"z_p": [], "z_i": []}
 
     def on_validation_epoch_end(self):
+        """Log validation metrics, render regression plots, and reset buffers."""
         for metric_name, metric_dict in self.val_metrics.items():
             computed_metrics = self._compute_metrics_safely(metric_dict)
             for name, value in computed_metrics.items():
@@ -274,6 +285,7 @@ class RegressionTask(L.LightningModule):
         self.latents = {"z_p": [], "z_i": []}
 
     def on_test_epoch_end(self):
+        """Log test metrics, render regression plots, and reset buffers."""
         for metric_name, metric_dict in self.test_metrics.items():
             computed_metrics = self._compute_metrics_safely(metric_dict)
             for name, value in computed_metrics.items():
@@ -320,6 +332,7 @@ class RegressionTask(L.LightningModule):
         self.latents = {"z_p": [], "z_i": []}
 
     def configure_optimizers(self):
+        """Build the optimizer and optional LR scheduler from the configs."""
         optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])
         optimizer_params = {
             k: v for k, v in self.hparams.optimizer_config.items() if k != "type"

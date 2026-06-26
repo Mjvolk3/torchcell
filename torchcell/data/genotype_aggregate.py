@@ -1,3 +1,5 @@
+"""Aggregator that groups experiments by their genotype perturbation set."""
+
 import hashlib
 
 from torchcell.data import Aggregator
@@ -5,9 +7,12 @@ from torchcell.datamodels import ExperimentReferenceType, ExperimentType
 
 
 class GenotypeAggregator(Aggregator):
+    """Aggregator keyed by a hash of the experiment's perturbation set."""
+
     def aggregate_check(
         self, data: dict[str, ExperimentType | ExperimentReferenceType]
     ) -> str:
+        """Return a SHA-256 hash of the experiment's perturbation tuple."""
         genotype = data["experiment"].genotype
         perturbations = genotype.perturbations
 

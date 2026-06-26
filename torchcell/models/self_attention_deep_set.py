@@ -2,6 +2,7 @@
 # [[torchcell.models.self_attention_deep_set]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/self_attention_deep_set
 # Test file: tests/torchcell/models/test_self_attention_deep_set.py
+"""Self-attention Deep Sets model for permutation-invariant set encoding."""
 
 import torch
 import torch.nn as nn
@@ -12,7 +13,10 @@ from torchcell.models.act import act_register
 
 
 class SelfAttention(nn.Module):
+    """Multi-head self-attention returning outputs and per-graph weights."""
+
     def __init__(self, dim_in: int, dim_out: int, num_heads: int = 1):
+        """Create the query/key/value projections for ``num_heads`` heads."""
         super().__init__()
         self.query = nn.Linear(dim_in, dim_out * num_heads)
         self.key = nn.Linear(dim_in, dim_out * num_heads)
@@ -21,6 +25,7 @@ class SelfAttention(nn.Module):
         self.num_heads = num_heads
 
     def forward(self, x, batch):
+        """Attend over node features, returning outputs and per-graph weights."""
         Q = self.query(x)
         K = self.key(x)
         V = self.value(x)
@@ -45,6 +50,8 @@ class SelfAttention(nn.Module):
 
 
 class SelfAttentionDeepSet(nn.Module):
+    """Deep Sets encoder with self-attention between node and set layers."""
+
     def __init__(
         self,
         in_channels: int,
@@ -59,6 +66,7 @@ class SelfAttentionDeepSet(nn.Module):
         skip_node: bool = False,
         skip_set: bool = False,
     ):
+        """Build the node and set MLP stacks and the shared attention module."""
         super().__init__()
 
         assert norm in ["batch", "instance", "layer"], "Invalid norm type"
@@ -149,6 +157,7 @@ class SelfAttentionDeepSet(nn.Module):
         return x_set
 
     def forward(self, x, batch):
+        """Encode nodes, sum per graph, and return node, set, and attention."""
         x_node, attn_weights_list = self.node_layers_forward(x, batch)
         x_summed = scatter_add(x_node, batch, dim=0)
         x_set = self.set_layers_forward(x_summed)
@@ -156,6 +165,7 @@ class SelfAttentionDeepSet(nn.Module):
 
 
 def main():
+    """Run a forward/backward smoke test on random data."""
     torch.autograd.set_detect_anomaly(True)
 
     # Model configuration

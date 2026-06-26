@@ -1,8 +1,9 @@
+"""SynLethDB-derived yeast synthetic lethality and synthetic rescue datasets."""
+
 # torchcell/datasets/scerevisiae/syn_leth_db_yeast
 # [[torchcell.datasets.scerevisiae.syn_leth_db_yeast]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/syn_leth_db_yeast
 # Test file: tests/torchcell/datasets/scerevisiae/test_syn_leth_db_yeast.py
-
 
 import logging
 import os
@@ -39,6 +40,8 @@ log = logging.getLogger(__name__)
 
 @register_dataset
 class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
+    """Yeast synthetic lethality gene-pair experiments from SynLethDB."""
+
     def __init__(
         self,
         root: str = "data/torchcell/syn_leth_db_yeast",
@@ -47,6 +50,7 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
         transform=None,
         pre_transform=None,
     ):
+        """Build the gene-name mapping from the genome and initialize the dataset."""
         self.genome = genome
         self.gene_name_to_systematic = {}
         self._build_gene_name_mapping()
@@ -56,6 +60,7 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
         super().__init__(root, io_workers, transform, pre_transform)
 
     def _build_gene_name_mapping(self):
+        """Map gene names, systematic IDs, and aliases to systematic names."""
         print("Building gene name to systematic name mapping...")
         for feature in tqdm(self.genome.db.all_features()):
             if feature.featuretype == "gene":
@@ -70,21 +75,26 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the raw synthetic-lethality CSV filename."""
         return ["Yeast_SL.csv"]
 
     @property
     def processed_file_names(self) -> list[str]:
+        """Return the processed LMDB directory name."""
         return ["lmdb"]
 
     @property
     def experiment_class(self) -> SyntheticLethalityExperiment:
+        """Return the synthetic-lethality experiment schema class."""
         return SyntheticLethalityExperiment
 
     @property
     def reference_class(self) -> SyntheticLethalityExperimentReference:
+        """Return the synthetic-lethality experiment-reference schema class."""
         return SyntheticLethalityExperimentReference
 
     def download(self):
+        """Download the synthetic-lethality CSV from Google Drive."""
         url = "https://drive.google.com/uc?export=download&id=1_56ebyBatapNml8S5HlJW7Dz1l0DZZIq"
         download_path = os.path.join(self.raw_dir, self.raw_file_names[0])
 
@@ -109,12 +119,14 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict | None = None
     ) -> pd.DataFrame:
+        """Add systematic-name columns for both interacting genes."""
         print("Converting gene names to systematic names...")
         df["n1.systematic_name"] = df["n1.name"].apply(self.get_systematic_name)
         df["n2.systematic_name"] = df["n2.name"].apply(self.get_systematic_name)
         return df
 
     def get_systematic_name(self, gene_name):
+        """Return the systematic name for a gene, falling back to the input name."""
         # Remove the prime character if present
         clean_gene_name = gene_name.rstrip("'")
 
@@ -128,7 +140,7 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
 
     @post_process
     def process(self):
-
+        """Read the raw CSV, build experiments, and write them to LMDB."""
         log.info("Processing Synthetic Lethality Yeast Data...")
 
         raw_data_path = os.path.join(self.raw_dir, self.raw_file_names[0])
@@ -158,6 +170,7 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
 
     @staticmethod
     def create_experiment(dataset_name, row):
+        """Build the experiment, reference, and publication objects for one row."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
         )
@@ -215,6 +228,8 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
 
 @register_dataset
 class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
+    """Yeast synthetic rescue gene-pair experiments from SynLethDB."""
+
     def __init__(
         self,
         root: str = "data/torchcell/syn_rescue_db_yeast",
@@ -223,6 +238,7 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
         transform=None,
         pre_transform=None,
     ):
+        """Build the gene-name mapping from the genome and initialize the dataset."""
         self.genome = genome
         self.gene_name_to_systematic = {}
         self._build_gene_name_mapping()
@@ -232,6 +248,7 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
         super().__init__(root, io_workers, transform, pre_transform)
 
     def _build_gene_name_mapping(self):
+        """Map gene names, systematic IDs, and aliases to systematic names."""
         print("Building gene name to systematic name mapping...")
         for feature in tqdm(self.genome.db.all_features()):
             if feature.featuretype == "gene":
@@ -246,21 +263,26 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the raw synthetic-rescue CSV filename."""
         return ["Yeast_SR.csv"]
 
     @property
     def processed_file_names(self) -> list[str]:
+        """Return the processed LMDB directory name."""
         return ["lmdb"]
 
     @property
     def experiment_class(self) -> SyntheticRescueExperiment:
+        """Return the synthetic-rescue experiment schema class."""
         return SyntheticRescueExperiment
 
     @property
     def reference_class(self) -> SyntheticRescueExperimentReference:
+        """Return the synthetic-rescue experiment-reference schema class."""
         return SyntheticRescueExperimentReference
 
     def download(self):
+        """Download the synthetic-rescue CSV from Google Drive."""
         url = "https://drive.google.com/uc?export=download&id=1lBaApm70E05JnkrE1Hwmn8gT1cV5Bzlt"
         download_path = os.path.join(self.raw_dir, self.raw_file_names[0])
 
@@ -285,6 +307,7 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict | None = None
     ) -> pd.DataFrame:
+        """Add systematic-name columns for both interacting genes."""
         print("Converting gene names to systematic names...")
         df["n1.systematic_name"] = df["n1.name"].apply(self.get_systematic_name)
         df["n2.systematic_name"] = df["n2.name"].apply(self.get_systematic_name)
@@ -292,6 +315,7 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
         return df
 
     def get_systematic_name(self, gene_name):
+        """Return the systematic name for a gene, falling back to the input name."""
         # Remove the prime character if present
         clean_gene_name = gene_name.rstrip("'")
 
@@ -305,6 +329,7 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Read the raw CSV, build experiments, and write them to LMDB."""
         log.info("Processing Synthetic Rescue Yeast Data...")
 
         raw_data_path = os.path.join(self.raw_dir, self.raw_file_names[0])
@@ -334,6 +359,7 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
 
     @staticmethod
     def create_experiment(dataset_name, row):
+        """Build the experiment, reference, and publication objects for one row."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
         )
@@ -394,6 +420,7 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
 
 
 def main():
+    """Build and inspect both SynLethDB datasets from a local genome."""
     import os
 
     from dotenv import load_dotenv

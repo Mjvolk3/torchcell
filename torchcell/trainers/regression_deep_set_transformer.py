@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/regression_deep_set_transformer.py
 # Test file: torchcell/trainers/test_regression_deep_set_transformer.py
 
+"""Lightning trainer for deep-set-transformer fitness regression."""
+
 import os.path as osp
 
 import lightning as L
@@ -41,6 +43,7 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
         weight_decay: float = 1e-5,
         loss: str = "mse",
     ):
+        """Store models, wild-type data, loss, metrics, and training hyperparameters."""
         super().__init__()
 
         # Lightning settings, doing this for WT embedding
@@ -93,10 +96,12 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
         self.predictions = []
 
     def setup(self, stage=None):
+        """Lightning setup hook run before fitting or testing."""
         self.model_dst = self.model_dst.to(self.device)
         self.model_lin = self.model_lin.to(self.device)
 
     def forward(self, x, batch):
+        """Run the deep-set transformer model on the input batch."""
         inst_nodes_hat, inst_set_hat, _, attn_weights = self.model_dst(x, batch)
         # This case is only for sanity checking
         if self.wt_set_hat is None:
@@ -106,12 +111,14 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
         return y_hat, attn_weights
 
     def on_train_start(self):
+        """Initialize wild-type embeddings at the start of training."""
         # Calculate the model size (number of parameters)
         parameter_size = sum(p.numel() for p in self.parameters())
         # Log it using wandb
         self.log("model/parameters_size", parameter_size)
 
     def train_wt(self):
+        """Compute and cache the wild-type reference embeddings."""
         # CHECK on definition of global_step - refresh with epoch?
         if self.global_step == 0 and not self.is_wt_init:
             wt_batch = Batch.from_data_list([self.wt, self.wt]).to(self.device)
@@ -184,6 +191,7 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
             #     break
 
     def training_step(self, batch, batch_idx):
+        """Run one manual-optimization training step and log the loss."""
         # Train on wt reference
         self.train_wt()
         # Extract the batch vector
@@ -225,10 +233,12 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
         return loss
 
     def on_train_epoch_end(self):
+        """Compute and log aggregated training metrics at epoch end."""
         self.log_dict(self.train_metrics.compute(), sync_dist=True)
         self.train_metrics.reset()
 
     def validation_step(self, batch, batch_idx):
+        """Run one validation step and accumulate predictions and metrics."""
         # Extract the batch vector
         x, y, batch_vector = batch.x, batch.fitness, batch.batch
         y_hat, attn_weights = self(x, batch_vector)
@@ -253,6 +263,7 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
         self.predictions.append(y_hat.detach())
 
     def on_validation_epoch_end(self):
+        """Compute, log, and optionally plot validation metrics at epoch end."""
         self.log_dict(self.val_metrics.compute(), sync_dist=True)
         self.val_metrics.reset()
 
@@ -296,6 +307,7 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
         plt.close(fig)
 
     def test_step(self, batch, batch_idx):
+        """Run one test step and accumulate predictions and metrics."""
         # Extract the batch vector
         x, y, batch_vector = batch.x, batch.fitness, batch.batch
         y_hat, attn_weights = self(x, batch_vector)
@@ -318,10 +330,12 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
         )
 
     def on_test_epoch_end(self):
+        """Compute and log aggregated test metrics at epoch end."""
         self.log_dict(self.test_metrics.compute(), sync_dist=True)
         self.test_metrics.reset()
 
     def configure_optimizers(self):
+        """Return the optimizer used for training."""
         params = list(self.model_dst.parameters()) + list(self.model_lin.parameters())
         optimizer = torch.optim.Adam(
             params, lr=self.learning_rate, weight_decay=self.weight_decay

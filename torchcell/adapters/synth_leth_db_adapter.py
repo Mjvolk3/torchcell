@@ -2,6 +2,7 @@
 # [[torchcell.adapters.synth_leth_db]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/synth_leth_db
 # Test file: tests/torchcell/adapters/test_synth_leth_db.py
+"""BioCypher adapters for SynthLethDB synthetic lethality and rescue datasets."""
 
 import logging
 import os.path as osp
@@ -26,6 +27,8 @@ logger.setLevel(logging.ERROR)
 
 
 class SynthLethalityYeastSynthLethDbAdapter(CellAdapter):
+    """BioCypher adapter for the SynthLethDB synthetic lethality dataset."""
+
     def __init__(
         self,
         dataset: SynthLethalityYeastSynthLethDbDataset,
@@ -34,6 +37,7 @@ class SynthLethalityYeastSynthLethDbAdapter(CellAdapter):
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
+        """Load the adapter config and initialize the CellAdapter base."""
         current_dir = osp.dirname(osp.abspath(__file__))
 
         config_path = osp.join(
@@ -62,6 +66,8 @@ class SynthLethalityYeastSynthLethDbAdapter(CellAdapter):
 
 
 class SynthRescueYeastSynthLethDbAdapter(CellAdapter):
+    """BioCypher adapter for the SynthLethDB synthetic rescue dataset."""
+
     def __init__(
         self,
         dataset: SynthLethalityYeastSynthLethDbDataset,
@@ -70,6 +76,7 @@ class SynthRescueYeastSynthLethDbAdapter(CellAdapter):
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
+        """Load the adapter config and initialize the CellAdapter base."""
         current_dir = osp.dirname(osp.abspath(__file__))
 
         config_path = osp.join(

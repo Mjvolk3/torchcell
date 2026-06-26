@@ -1,3 +1,5 @@
+"""Create the Neo4j database directory tree and copy in config files."""
+
 import os
 import os.path as osp
 import shutil
@@ -11,6 +13,7 @@ WORKSPACE_DIR = os.getenv("WORKSPACE_DIR")
 
 
 def main() -> None:
+    """Build the database directory layout and copy conf, env, and biocypher files."""
     # Create directories
     directories = [
         osp.join(DATA_ROOT, "database"),

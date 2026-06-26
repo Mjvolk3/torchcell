@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/protT5.py
 # Test file: torchcell/datasets/test_protT5.py
 
+"""ProtT5 protein-embedding dataset for S. cerevisiae genes."""
+
 import os
 from collections.abc import Callable
 
@@ -17,6 +19,8 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 class ProtT5Dataset(BaseEmbeddingDataset):
+    """Embedding dataset of ProtT5 protein representations per gene."""
+
     MODEL_TO_WINDOW = {
         "prot_t5_xl_uniref50_all": None,
         "prot_t5_xl_uniref50_no_dubious_uncharacterized": [
@@ -35,6 +39,7 @@ class ProtT5Dataset(BaseEmbeddingDataset):
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
+        """Set device and genome, then build or load cached ProtT5 embeddings."""
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.genome = genome
         self.model_name = model_name
@@ -58,6 +63,7 @@ class ProtT5Dataset(BaseEmbeddingDataset):
 
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:
+        """Return a ParsedGenome holding the genome's gene set, or None."""
         if genome is None:
             return None
         else:
@@ -66,9 +72,11 @@ class ProtT5Dataset(BaseEmbeddingDataset):
             return ParsedGenome(**data)
 
     def initialize_model(self) -> ProtT5:
+        """Return a ProtT5 model instance for the uniref50 checkpoint."""
         return ProtT5("prot_t5_xl_uniref50")
 
     def process(self):
+        """Compute ProtT5 embeddings for all genes and save the processed data."""
         # HACK
         self.transformer = self.initialize_model()
         if not self.model_name:

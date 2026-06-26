@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/__init__.py
 # Test file: tests/torchcell/datasets/test___init__.py
 
+"""Dataset registry for embedding and S. cerevisiae organism datasets."""
+
 
 # TODO when we import this we get all sorts of import error
 # from .dcell import DCellDataset

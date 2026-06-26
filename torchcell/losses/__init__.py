@@ -1,3 +1,5 @@
+"""Loss functions package: standard and model-specific losses."""
+
 from .dcell import DCellLoss as DCellLoss
 from .list_mle import ListMLELoss as ListMLELoss
 

@@ -2,7 +2,7 @@
 # [[torchcell.losses.point_dist_graph_reg]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/point_dist_graph_reg
 # Test file: tests/torchcell/losses/test_point_dist_graph_reg.py
-
+"""Composite point + distribution + graph-regularization loss for the cell transformer."""
 
 from typing import Any
 
@@ -65,6 +65,12 @@ class PointDistGraphReg(nn.Module):
         use_ddp_gather: bool | None = None,
         gather_interval: int | None = None,
     ):
+        """Configure point, distribution, graph-reg, buffer, and DDP loss components.
+
+        Accepts either the nested-dict configuration (``point_estimator``,
+        ``distribution_loss``, ``graph_regularization``, ``buffer``, ``ddp``) or the
+        deprecated flat keyword arguments, which are kept for backward compatibility.
+        """
         super().__init__()
 
         # Parse configuration from nested dicts (new structure) or flat params (backward compat)

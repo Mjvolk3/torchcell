@@ -4,6 +4,8 @@
 # Test file: tests/torchcell/data/test_cell_data.py
 
 
+"""Helpers for building hetero cell graph data and GO strata."""
+
 from collections import defaultdict, deque
 
 import hypernetx as hnx
@@ -177,8 +179,8 @@ def _process_metabolism_hypergraph(hetero_data, hypergraph, node_idx_mapping):
 
 
 def compute_strata(go_graph):
-    """
-    Compute strata (topological levels) for GO graph from leaves to root.
+    """Compute strata (topological levels) for GO graph from leaves to root.
+
     A stratum contains nodes that can be processed in parallel.
 
     Args:

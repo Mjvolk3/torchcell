@@ -1,3 +1,5 @@
+"""Heterogeneous Node-Set Attention model over gene/metabolite/reaction graphs."""
+
 import torch
 import torch.nn as nn
 from torch.nn.attention.flex_attention import create_block_mask, flex_attention
@@ -5,6 +7,7 @@ from torch_geometric.data import HeteroData
 
 
 def load_sample_data_batch():
+    """Load a small cell-graph batch from disk for smoke testing."""
     import os
     import os.path as osp
 
@@ -121,7 +124,10 @@ def load_sample_data_batch():
 
 # Create a container class to properly register modules
 class BlockContainer(nn.Module):
+    """Wrap a single, tuple, or dict of attention modules for registration."""
+
     def __init__(self, block_type, content):
+        """Store the block type and register ``content`` by its structure."""
         super().__init__()
         self.block_type = block_type
 
@@ -142,6 +148,7 @@ class BlockContainer(nn.Module):
             self.type = "single"
 
     def get_content(self):
+        """Return the wrapped module(s) in their original structure."""
         if self.type == "dict":
             return self.content_dict
         elif self.type == "tuple":
@@ -151,9 +158,10 @@ class BlockContainer(nn.Module):
 
 
 class AttentionBlock(nn.Module):
-    """Base Attention Block with common components for both MAB and SAB"""
+    """Base Attention Block with common components for both MAB and SAB."""
 
     def __init__(self, hidden_dim, num_heads=8):
+        """Build the shared norms and post-attention MLP."""
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
@@ -171,16 +179,19 @@ class AttentionBlock(nn.Module):
         )
 
     def forward(self, x, adj_matrix=None):
+        """Raise; subclasses implement the attention computation."""
         raise NotImplementedError("Implemented in subclasses")
 
 
 class MAB(AttentionBlock):
-    """Masked Attention Block - Uses graph structure to mask attention"""
+    """Masked Attention Block - Uses graph structure to mask attention."""
 
     def __init__(self, hidden_dim, num_heads=8):
+        """Initialize the masked attention block."""
         super().__init__(hidden_dim, num_heads)
 
     def forward(self, x, adj_matrix):
+        """Attend over nodes, masking pairs absent from ``adj_matrix``."""
         device = x.device
 
         # First normalization layer
@@ -243,12 +254,14 @@ class MAB(AttentionBlock):
 
 
 class SAB(AttentionBlock):
-    """Self Attention Block - Uses standard self-attention with no masking"""
+    """Self Attention Block - Uses standard self-attention with no masking."""
 
     def __init__(self, hidden_dim, num_heads=8):
+        """Initialize the self-attention block."""
         super().__init__(hidden_dim, num_heads)
 
     def forward(self, x, adj_matrix=None):
+        """Apply unmasked self-attention; ``adj_matrix`` is ignored."""
         device = x.device
 
         # First normalization layer
@@ -291,14 +304,16 @@ class SAB(AttentionBlock):
 
 
 class StoichiometricMAB(AttentionBlock):
-    """Masked Attention Block with stoichiometry support for metabolite-reaction interactions"""
+    """Masked Attention Block with stoichiometry support for metabolite-reaction interactions."""
 
     def __init__(self, hidden_dim, num_heads=8):
+        """Initialize the block and the stoichiometry gating MLP."""
         super().__init__(hidden_dim, num_heads)
         # Add a stoichiometry gate
         self.stoich_gate = nn.Sequential(nn.Linear(1, hidden_dim), nn.Sigmoid())
 
     def forward(self, x, adj_matrix, stoichiometry=None):
+        """Apply masked attention, optionally gated by stoichiometry weights."""
         device = x.device
 
         # First normalization layer
@@ -353,7 +368,7 @@ class StoichiometricMAB(AttentionBlock):
 
 
 def group(xs: list[torch.Tensor], aggr: str | None) -> torch.Tensor | None:
-    """Aggregation function similar to the one in HeteroConv"""
+    """Aggregate a list of tensors like HeteroConv (sum/cat/stack/etc.)."""
     if len(xs) == 0:
         return None
     elif aggr is None:
@@ -370,8 +385,7 @@ def group(xs: list[torch.Tensor], aggr: str | None) -> torch.Tensor | None:
 
 
 class CellGraphHeteroNSA(nn.Module):
-    """
-    A specialized heterogeneous Node-Set Attention for cell graphs with gene, metabolite, and reaction nodes.
+    """Heterogeneous Node-Set Attention for gene/metabolite/reaction cell graphs.
 
     This module is designed to handle:
     - Gene multigraph with physical and regulatory interactions
@@ -397,6 +411,7 @@ class CellGraphHeteroNSA(nn.Module):
         num_heads: int = 8,
         aggr: str = "sum",
     ):
+        """Build node embeddings and the attention blocks from ``pattern``."""
         super().__init__()
 
         # Node counts for embedding layers
@@ -472,8 +487,7 @@ class CellGraphHeteroNSA(nn.Module):
                 )
 
     def forward(self, data: HeteroData, batch_size: int = 1):
-        """
-        Forward pass through the heterogeneous NSA model.
+        """Run the heterogeneous NSA stack and return updated node embeddings.
 
         Args:
             data: A HeteroData object containing node features and edge connections
@@ -821,8 +835,7 @@ class CellGraphHeteroNSA(nn.Module):
 
 
 class CellGraphNSAModel(nn.Module):
-    """
-    Full model for cell graph prediction using Node-Set Attention.
+    """Full cell-graph prediction model wrapping the NSA encoder with a readout.
 
     Args:
         node_counts: Dictionary with counts of each node type
@@ -840,6 +853,7 @@ class CellGraphNSAModel(nn.Module):
         num_heads: int = 8,
         output_dim: int = 1,
     ):
+        """Build the NSA encoder and the gene-readout head."""
         super().__init__()
 
         # Node-Set Attention encoder
@@ -858,6 +872,7 @@ class CellGraphNSAModel(nn.Module):
         )
 
     def forward(self, data: HeteroData):
+        """Encode the cell graph and predict per-perturbation gene outputs."""
         # Get batch size
         batch_size = 1
         if hasattr(data["gene"], "ptr"):
@@ -918,6 +933,7 @@ class CellGraphNSAModel(nn.Module):
 
 
 def main():
+    """Run a forward/backward timing smoke test on sample data."""
     import time
 
     import torch.optim as optim

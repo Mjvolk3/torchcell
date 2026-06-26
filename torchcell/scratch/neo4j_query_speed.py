@@ -1,3 +1,5 @@
+"""Scratch script measuring Neo4j connection and query round-trip latency."""
+
 import time
 
 from neo4j import GraphDatabase
@@ -11,6 +13,7 @@ database = "torchcell"  # Specify the database name
 
 # Function to measure connection time
 def measure_connection_time(uri, username, password):
+    """Return seconds taken to open and close a Neo4j driver."""
     start_time = time.time()
     driver = GraphDatabase.driver(uri, auth=(username, password))
     connection_time = time.time() - start_time
@@ -20,6 +23,7 @@ def measure_connection_time(uri, username, password):
 
 # Function to measure query response time
 def measure_query_time(uri, username, password, database):
+    """Return seconds taken to run a trivial ``RETURN 1`` query."""
     driver = GraphDatabase.driver(uri, auth=(username, password))
     session = driver.session(database=database)
     start_time = time.time()

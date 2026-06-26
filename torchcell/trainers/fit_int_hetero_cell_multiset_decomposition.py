@@ -1,3 +1,5 @@
+"""Lightning trainer for hetero-cell gene-interaction regression with multiset decomposition."""
+
 import logging
 
 import lightning as L
@@ -17,6 +19,8 @@ log = logging.getLogger(__name__)
 
 
 class RegressionTask(L.LightningModule):
+    """Lightning task training a hetero-cell model with multiset interaction decomposition."""
+
     def __init__(
         self,
         model: nn.Module,
@@ -35,6 +39,7 @@ class RegressionTask(L.LightningModule):
         inverse_transform: nn.Module | None = None,
         graph_processor=None,
     ):
+        """Store the model, optimizer/scheduler configs, transforms, and metrics."""
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
         self.model = model
@@ -110,6 +115,7 @@ class RegressionTask(L.LightningModule):
         self.automatic_optimization = False
 
     def forward(self, batch):
+        """Move the cell graph to the batch device and run the model."""
         batch_device = batch["gene"].x.device
         if (
             not hasattr(self, "_cell_graph_device")
@@ -287,6 +293,7 @@ class RegressionTask(L.LightningModule):
         return loss, predictions, orig_targets
 
     def training_step(self, batch, batch_idx):
+        """Run a manual-optimization training step with gradient accumulation."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
         if self.hparams.grad_accumulation_schedule is not None:
             loss = loss / self.current_accumulation_steps
@@ -311,10 +318,12 @@ class RegressionTask(L.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
+        """Run the shared step in validation mode and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
         return loss
 
     def test_step(self, batch, batch_idx):
+        """Accumulate true/predicted interaction scores into the results table."""
         if self.df is None:
             # Initialize table with specified columns as empty lists
             self.df = {
@@ -356,7 +365,7 @@ class RegressionTask(L.LightningModule):
         return None
 
     def test_multiset_breakout(self, batch, batch_idx):
-
+        """Evaluate predictions broken out by gene-set cardinality."""
         num_gene_interactions = [len(i) for i in batch["gene"]["ids_pert"]]
 
         predictions, representations = self(batch)
@@ -409,7 +418,8 @@ class RegressionTask(L.LightningModule):
     def compute_epsilon_from_fitness_pred(
         self, batch: dict, batch_idx: int, fitness_whole_graph: torch.Tensor
     ) -> torch.Tensor:
-        """
+        """Compute gene interaction scores from predicted subset fitness values.
+
         For each sample (gene set S given by batch["gene"]["ids_pert"]),
         compute the gene interaction using the non‐regressive formulas:
 
@@ -637,6 +647,7 @@ class RegressionTask(L.LightningModule):
                 plt.close(fig_gi)
 
     def on_train_epoch_end(self):
+        """Log aggregated training metrics and queued plots at epoch end."""
         # Log training metrics for individual labels
         for metric_name, metric_dict in self.train_metrics.items():
             computed_metrics = self._compute_metrics_safely(metric_dict)
@@ -678,6 +689,7 @@ class RegressionTask(L.LightningModule):
             }
 
     def on_train_epoch_start(self):
+        """Reset training sample buffers on epochs scheduled for plotting."""
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.train_samples = {
@@ -687,6 +699,7 @@ class RegressionTask(L.LightningModule):
             }
 
     def on_validation_epoch_start(self):
+        """Reset validation sample buffers on epochs scheduled for plotting."""
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.val_samples = {
@@ -696,6 +709,7 @@ class RegressionTask(L.LightningModule):
             }
 
     def on_validation_epoch_end(self):
+        """Log aggregated validation metrics and queued plots at epoch end."""
         # Log validation metrics for individual labels
         for metric_name, metric_dict in self.val_metrics.items():
             computed_metrics = self._compute_metrics_safely(metric_dict)
@@ -744,6 +758,7 @@ class RegressionTask(L.LightningModule):
     #             print(f"Unused parameter: {name}")
 
     def configure_optimizers(self):
+        """Build the optimizer and optional LR scheduler from hyperparameters."""
         optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])
         optimizer_params = {
             k: v for k, v in self.hparams.optimizer_config.items() if k != "type"

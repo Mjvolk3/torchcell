@@ -3,6 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/dango
 # Test file: tests/torchcell/losses/test_dango.py
 
+"""DANGO loss with epoch-scheduled weighting of reconstruction vs interaction loss."""
 
 from abc import ABC, abstractmethod
 
@@ -53,6 +54,7 @@ class PreThenPost(DangoLossSched):
     """
 
     def __init__(self, transition_epoch: int = 10):
+        """Store the epoch at which the loss switches from recon to interaction."""
         self.transition_epoch = transition_epoch
 
     def forward(
@@ -92,6 +94,7 @@ class LinearUntilUniform(DangoLossSched):
     """
 
     def __init__(self, transition_epoch: int = 20):
+        """Store the epoch at which weights reach uniform (0.5/0.5)."""
         self.transition_epoch = transition_epoch
 
     def forward(
@@ -133,6 +136,7 @@ class LinearUntilFlipped(DangoLossSched):
     """
 
     def __init__(self, transition_epoch: int = 20):
+        """Store the epoch at which the loss is fully flipped to interaction."""
         self.transition_epoch = transition_epoch
 
     def forward(
@@ -192,6 +196,7 @@ class DangoLoss(nn.Module):
         scheduler: DangoLossSched | None = None,
         reduction: str = "mean",
     ) -> None:
+        """Set up edge types, lambda weights, scheduler, and reduction mode."""
         super().__init__()
         if reduction not in ("none", "mean", "sum"):
             raise ValueError(f"Invalid reduction mode: {reduction}")

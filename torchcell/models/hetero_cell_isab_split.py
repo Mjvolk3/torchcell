@@ -2,7 +2,7 @@
 # [[torchcell.models.hetero_cell_isab_split]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/hetero_cell_isab_split
 # Test file: tests/torchcell/models/test_hetero_cell_isab_split.py
-
+"""Heterogeneous cell model with ISAB set-transformer aggregation splits."""
 
 import os
 import os.path as osp
@@ -30,6 +30,7 @@ from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 
 
 def get_norm_layer(channels: int, norm: str) -> nn.Module:
+    """Return the normalization module for the given norm name."""
     if norm == "layer":
         return nn.LayerNorm(channels)
     elif norm == "batch":
@@ -44,6 +45,8 @@ def get_norm_layer(channels: int, norm: str) -> nn.Module:
 
 
 class SortedSetTransformerAggregation(nn.Module):
+    """Set-transformer aggregation that sorts indices and projects output."""
+
     def __init__(
         self,
         in_channels: int,
@@ -57,6 +60,7 @@ class SortedSetTransformerAggregation(nn.Module):
         use_isab: bool = True,
         num_induced_points: int = 32,
     ):
+        """Build the set-transformer aggregator and output projection."""
         super().__init__()
         self.aggregator = SetTransformerAggregation(
             channels=in_channels,
@@ -84,6 +88,7 @@ class SortedSetTransformerAggregation(nn.Module):
     def forward(
         self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
+        """Sort by index, aggregate with the set transformer, then project."""
         # Ensure indices are sorted (required by SetTransformerAggregation)
         if not torch.all(index[:-1] <= index[1:]):
             perm = torch.argsort(index)
@@ -101,6 +106,8 @@ class SortedSetTransformerAggregation(nn.Module):
 # PreProcessor: an MLP to “preprocess” gene embeddings.
 ###############################################################################
 class PreProcessor(nn.Module):
+    """MLP that preprocesses gene embeddings before message passing."""
+
     def __init__(
         self,
         in_channels: int,
@@ -110,6 +117,7 @@ class PreProcessor(nn.Module):
         norm: str = "layer",
         activation: str = "relu",
     ):
+        """Build a stack of linear, norm, activation, and dropout layers."""
         super().__init__()
         act = act_register[activation]
         norm_layer = get_norm_layer(hidden_channels, norm)
@@ -126,6 +134,7 @@ class PreProcessor(nn.Module):
         self.mlp = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply the preprocessing MLP to the input features."""
         return self.mlp(x)
 
 
@@ -133,6 +142,8 @@ class PreProcessor(nn.Module):
 # New Model: HeteroCell
 ###############################################################################
 class AttentionConvWrapper(nn.Module):
+    """Wrap a conv layer with projection, normalization, activation, dropout."""
+
     def __init__(
         self,
         conv: nn.Module,
@@ -141,6 +152,7 @@ class AttentionConvWrapper(nn.Module):
         activation: str | None = None,
         dropout: float = 0.1,
     ) -> None:
+        """Set up projection, normalization, activation, and dropout layers."""
         super().__init__()
         self.conv = conv
         # For GATv2Conv-like layers:
@@ -180,6 +192,7 @@ class AttentionConvWrapper(nn.Module):
         self.dropout = nn.Dropout(dropout) if dropout > 0 else None
 
     def forward(self, x, edge_index, **kwargs):
+        """Run the conv then apply projection, norm, activation, and dropout."""
         out = self.conv(x, edge_index, **kwargs)
         out = self.proj(out)
         if self.norm is not None:
@@ -191,6 +204,8 @@ class AttentionConvWrapper(nn.Module):
 
 
 class HeteroCell(nn.Module):
+    """Heterogeneous GNN over gene/reaction/metabolite graphs with ISAB heads."""
+
     def __init__(
         self,
         gene_num: int,
@@ -207,6 +222,7 @@ class HeteroCell(nn.Module):
         prediction_head_config: dict[str, Any] | None = None,
         gpr_conv_config: dict[str, Any] | None = None,
     ):
+        """Build embeddings, hetero conv stack, and the prediction heads."""
         super().__init__()
         self.hidden_channels = hidden_channels
 
@@ -347,6 +363,7 @@ class HeteroCell(nn.Module):
         return nn.Sequential(*layers)
 
     def forward_single(self, data: HeteroData | Batch) -> torch.Tensor:
+        """Encode a single graph through the hetero conv stack."""
         device = self.gene_embedding.weight.device
 
         is_batch = isinstance(data, Batch) or hasattr(data["gene"], "batch")
@@ -419,9 +436,7 @@ class HeteroCell(nn.Module):
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """
-        Forward method with simplified approach: direct SAB over WT embeddings for gene interactions.
-        """
+        """Run direct SAB over WT embeddings to predict gene interactions."""
         device = self.gene_embedding.weight.device
 
         # Process reference graph with GNN and ISAB
@@ -517,6 +532,7 @@ class HeteroCell(nn.Module):
 
 
 def load_sample_data_batch():
+    """Load a sample cell-graph batch for exercising the model."""
     import os
     import os.path as osp
 
@@ -640,6 +656,7 @@ def plot_correlations(
     fixed_axes=None,
     epoch=None,
 ):
+    """Plot predicted-vs-true correlation scatter plots and save them."""
     import matplotlib.pyplot as plt
     import numpy as np
     from scipy import stats
@@ -760,8 +777,7 @@ def plot_embeddings(
     epoch=None,
     fixed_axes=None,
 ):
-    """
-    Plot embeddings for visualization and debugging with fixed axes for consistent GIF creation.
+    """Plot embeddings for visualization and debugging with fixed axes for consistent GIF creation.
 
     Args:
         z_w: Wildtype (reference) embedding tensor [1, hidden_dim]
@@ -952,6 +968,7 @@ def plot_embeddings(
     config_name="hetero_cell_isab_split",
 )
 def main(cfg: DictConfig) -> None:
+    """Run a training/inspection pass of the HeteroCell model from config."""
     import os
 
     import matplotlib.pyplot as plt

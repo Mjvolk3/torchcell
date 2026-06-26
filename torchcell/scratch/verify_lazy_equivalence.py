@@ -3,8 +3,7 @@
 # [[torchcell.scratch.verify_lazy_equivalence]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/scratch/verify_lazy_equivalence
 
-"""
-Verify LazySubgraphRepresentation equivalence with SubgraphRepresentation.
+"""Verify LazySubgraphRepresentation equivalence with SubgraphRepresentation.
 
 Tests that LazySubgraphRepresentation produces biologically equivalent results
 to SubgraphRepresentation when masks are applied, especially for samples with
@@ -268,6 +267,7 @@ def verify_sample_equivalence(subgraph_sample, lazy_sample, sample_idx):
 
 
 def main():
+    """Run the lazy-vs-subgraph equivalence checks and report results."""
     print("=" * 80)
     print("LazySubgraphRepresentation Equivalence Verification")
     print("=" * 80)

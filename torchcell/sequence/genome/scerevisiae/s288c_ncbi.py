@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/sequence/genome/scerevisiae/S288C_ncbi.py
 # Test file: torchcell/sequence/genome/scerevisiae/test_S288C_ncbi.py
 
+"""S. cerevisiae S288C genome and gene models built from NCBI GFF/FASTA data."""
+
 import glob
 import gzip
 import logging
@@ -60,6 +62,8 @@ CHROMOSOMES = [
 # TODO this is actually more like an ORF since we care most about seq between start and stop codons
 @define
 class SCerevisiaeGene(Gene):
+    """A single S. cerevisiae gene/ORF with sequence, coordinates, and feature."""
+
     id: str = field(repr=False)
     db: str = field(repr=False)
     fasta_dna: dict[str, SeqRecord] = field(repr=False)
@@ -74,6 +78,7 @@ class SCerevisiaeGene(Gene):
     feature: Feature = field(default=None, repr=False)
 
     def __attrs_post_init__(self) -> None:
+        """Derive coordinates, sequence, GO terms, and feature from the gene id."""
         # process the feature region and produce a feature
         feature_region = self.db.region(
             region=(
@@ -204,6 +209,13 @@ class SCerevisiaeGene(Gene):
             self.go = None
 
     def window(self, window_size: int, is_max_size: bool = True) -> DnaWindowResult:
+        """Return a strand-aware DNA window centered on the gene's coordinates.
+
+        Args:
+            window_size: Target window length in base pairs.
+            is_max_size: If True, clamp to the chromosome edge; otherwise use a
+                symmetric window about the gene.
+        """
         if is_max_size:
             start_window, end_window = calculate_window_bounds(
                 start=self.start - 1,
@@ -241,6 +253,13 @@ class SCerevisiaeGene(Gene):
     def window_five_prime(
         self, window_size: int, allow_undersize: bool = False
     ) -> DnaWindowResult:
+        """Return the DNA window upstream of the gene's 5' end.
+
+        Args:
+            window_size: Upstream window length in base pairs.
+            allow_undersize: If True, truncate at the chromosome edge instead of
+                raising when the window extends past it.
+        """
         chr_id = self.chr_to_nc[self.chromosome]
         if self.strand == "+":
             start_window = self.start - window_size
@@ -288,6 +307,13 @@ class SCerevisiaeGene(Gene):
     def window_three_prime(
         self, window_size: int, allow_undersize: bool = False
     ) -> DnaWindowResult:
+        """Return the DNA window downstream of the gene's 3' end.
+
+        Args:
+            window_size: Downstream window length in base pairs.
+            allow_undersize: If True, truncate at the chromosome edge instead of
+                raising when the window extends past it.
+        """
         chr_id = self.chr_to_nc[self.chromosome]
         if self.strand == "+":
             start_window = self.end
@@ -332,11 +358,14 @@ class SCerevisiaeGene(Gene):
         )
 
     def __repr__(self):
+        """Return a string with the gene's id, location, strand, and sequence."""
         return f"DnaSelectionResult(id={self.id}, chromosome={self.chromosome}, strand={self.strand}, start={self.start}, end={self.end},  seq={self.seq})"
 
 
 @define
 class SCerevisiaeGenome(Genome):
+    """S. cerevisiae S288C genome backed by NCBI FASTA, GFF, and GO data."""
+
     data_root: str = field(init=True, repr=False, default="data/sgd/genome")
     db: dict[str, SeqRecord] = field(init=False, repr=False)
     fasta_dna = field(init=False, default=None, repr=False)
@@ -349,6 +378,7 @@ class SCerevisiaeGenome(Genome):
     _gff_path: str = field(init=False, default=None, repr=False)
 
     def __attrs_post_init__(self) -> None:
+        """Download, extract, and load the genome FASTA, GFF, and GO database."""
         genome_reference = "S288C_genome_reference"
         self.genome_version = "R64-4-1_20230830"
         self.sgd_base_url = "http://sgd-archive.yeastgenome.org"
@@ -418,9 +448,7 @@ class SCerevisiaeGenome(Genome):
         self.remove_deprecated_go_terms()
 
     def download_and_extract_genome_files(self):
-        """
-        Download and extract genome files if they do not exist.
-        """
+        """Download and extract genome files if they do not exist."""
         zipped_version = f"{self.genome_version_full}.tgz"
         url = osp.join(
             self.sgd_base_url, self.sequence_S288C, "genome_releases", zipped_version
@@ -433,18 +461,14 @@ class SCerevisiaeGenome(Genome):
         self.gunzip_all_files_in_dir(save_dir)
 
     def untar_tgz_file(self, path_to_input_tgz: str, path_to_output_dir: str):
-        """
-        Extract a .tgz file
-        """
+        """Extract a .tgz file."""
         with tarfile.open(path_to_input_tgz, "r:gz") as tar_ref:
             tar_ref.extractall(path_to_output_dir)
         print(f"Extracted .tgz file to {path_to_output_dir}")
         os.remove(path_to_input_tgz)  # remove the original .tgz file after extraction
 
     def gunzip_all_files_in_dir(self, directory: str):
-        """
-        Unzip all .gz files in a directory.
-        """
+        """Unzip all .gz files in a directory."""
         gz_files = glob.glob(f"{directory}/**/*.gz", recursive=True)
         for gz_file in gz_files:
             with gzip.open(gz_file, "rb") as f_in:
@@ -456,6 +480,7 @@ class SCerevisiaeGenome(Genome):
             os.remove(gz_file)  # remove the original .gz file
 
     def remove_deprecated_go_terms(self):
+        """Drop obsolete or unknown GO terms from gene features in the database."""
         # Create a list to hold updated features
         updated_features = []
 
@@ -499,6 +524,7 @@ class SCerevisiaeGenome(Genome):
 
     @property
     def go(self) -> SortedSet[str]:
+        """Return the set of all GO terms across genes in the gene set."""
         all_go = SortedSet()
 
         # Iterate through all genes in self.gene_set
@@ -512,6 +538,7 @@ class SCerevisiaeGenome(Genome):
         return all_go
 
     def go_subset(self, gene_set: SortedSet[str]) -> SortedSet[str]:
+        """Return the set of GO terms across the given subset of genes."""
         go_subset = SortedSet()
 
         # Iterate through the provided subset of genes
@@ -526,6 +553,7 @@ class SCerevisiaeGenome(Genome):
 
     @property
     def go_genes(self) -> SortedDict[str, SortedSet[str]]:
+        """Return a mapping from each GO term to the genes annotated with it."""
         go_genes_dict = SortedDict()
 
         # Iterate through all genes in self.gene_set
@@ -544,6 +572,7 @@ class SCerevisiaeGenome(Genome):
     def go_subset_genes(
         self, gene_set: SortedSet[str]
     ) -> SortedDict[str, SortedSet[str]]:
+        """Return a GO-term-to-genes mapping restricted to the given gene subset."""
         go_subset_genes_dict = SortedDict()
 
         # Iterate through the provided subset of genes
@@ -562,6 +591,14 @@ class SCerevisiaeGenome(Genome):
     def get_seq(
         self, chr: int | str, start: int, end: int, strand: str
     ) -> DnaSelectionResult:
+        """Return the strand-aware DNA sequence for a chromosome region.
+
+        Args:
+            chr: Chromosome as an int index or NCBI accession string.
+            start: Start coordinate.
+            end: End coordinate.
+            strand: ``"+"`` or ``"-"``; the minus strand is reverse-complemented.
+        """
         chr_num = chr
         if isinstance(chr, int):
             chr = self.chr_to_nc[chr]
@@ -580,6 +617,7 @@ class SCerevisiaeGenome(Genome):
 
     @property
     def gene_attribute_table(self) -> pd.DataFrame:
+        """Return a DataFrame of single-valued GFF attributes for each gene."""
         data = []
         for gene_feature in self.db.features_of_type("gene"):
             gene_data = {}
@@ -597,9 +635,11 @@ class SCerevisiaeGenome(Genome):
 
     @property
     def feature_types(self) -> list[str]:
+        """Return the list of GFF feature types present in the database."""
         return list(self.db.featuretypes())
 
     def compute_gene_set(self) -> SortedSet[str]:
+        """Return the set of all gene ids in the database."""
         genes = [feat.id for feat in list(self.db.features_of_type("gene"))]
         assert len(genes) == len(set(genes)), (
             "Duplicate genes found... chekc handled by gff."
@@ -607,6 +647,7 @@ class SCerevisiaeGenome(Genome):
         return GeneSet(genes)
 
     def drop_chrmt(self) -> None:
+        """Delete all mitochondrial (chrmt) features from the database."""
         mitochondrial_features = [
             f for f in self.db.all_features() if f.seqid == "chrmt"
         ]
@@ -624,6 +665,7 @@ class SCerevisiaeGenome(Genome):
         self.db.conn.commit()
 
     def drop_empty_go(self) -> None:
+        """Delete genes with no GO annotations from the database."""
         # Initialize a list to hold genes to be removed
         genes_to_remove = []
 
@@ -648,6 +690,7 @@ class SCerevisiaeGenome(Genome):
         self.db.conn.commit()
 
     def __getitem__(self, item: str) -> SCerevisiaeGene | None:
+        """Return the gene for a systematic name, or None if not found."""
         # For now we only support the systematic names
         # ising region instead, since it give more options on dealing with gene processing in gene class
         try:
@@ -668,6 +711,7 @@ class SCerevisiaeGenome(Genome):
 
 
 def main() -> None:
+    """Demonstrate loading the genome and inspecting gene windows and GO terms."""
     import matplotlib.pyplot as plt
     from dotenv import load_dotenv
 

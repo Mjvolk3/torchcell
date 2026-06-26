@@ -1,3 +1,5 @@
+"""Mapping from S. cerevisiae dataset classes to their BioCypher adapters."""
+
 from torchcell.adapters import (
     DmfCostanzo2016Adapter,
     DmfKuzmin2018Adapter,

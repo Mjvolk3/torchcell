@@ -1,3 +1,5 @@
+"""Lightning regression tasks for heterogeneous-cell gene interaction models."""
+
 import logging
 
 import lightning as L
@@ -21,6 +23,8 @@ log = logging.getLogger(__name__)
 
 
 class RegressionTask(L.LightningModule):
+    """Lightning task training a model to predict gene interaction scores."""
+
     def __init__(
         self,
         model: nn.Module,
@@ -38,6 +42,24 @@ class RegressionTask(L.LightningModule):
         inverse_transform: nn.Module | None = None,
         execution_mode: str = "training",  # "training" or "dataloader_profiling"
     ):
+        """Store the model, cell graph, loss, and set up metrics and accumulators.
+
+        Args:
+            model: The regression model to train.
+            cell_graph: Reference cell graph (cloned for pin_memory safety).
+            optimizer_config: Optimizer configuration dict.
+            lr_scheduler_config: Learning-rate scheduler configuration dict.
+            batch_size: Batch size used for logging.
+            clip_grad_norm: Whether to clip gradient norms.
+            clip_grad_norm_max_norm: Max norm for gradient clipping.
+            plot_sample_ceiling: Max number of samples to accumulate for plots.
+            plot_every_n_epochs: Epoch interval for rendering plots.
+            loss_func: Loss module used during training.
+            grad_accumulation_schedule: Optional epoch-to-steps accumulation map.
+            device: Device string for the task.
+            inverse_transform: Optional module mapping predictions back to raw space.
+            execution_mode: "training" or "dataloader_profiling".
+        """
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
         self.model = model
@@ -99,6 +121,7 @@ class RegressionTask(L.LightningModule):
             return 1
 
     def forward(self, batch):
+        """Run the model on a batch and return predictions and any auxiliary outputs."""
         # Get device from batch - handle different batch structures
         if hasattr(batch["gene"], "x"):
             batch_device = batch["gene"].x.device
@@ -481,6 +504,7 @@ class RegressionTask(L.LightningModule):
         return loss, predictions, gene_interaction_orig
 
     def training_step(self, batch, batch_idx):
+        """Run a manual-optimization training step and log loss and metrics."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
 
         # Model profiling mode: Skip optimizer step to isolate model compute
@@ -537,6 +561,7 @@ class RegressionTask(L.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
+        """Run a validation step, accumulating predictions and logging metrics."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
 
         # Defragment GPU memory every 50 batches to prevent OOM from fragmentation
@@ -546,6 +571,7 @@ class RegressionTask(L.LightningModule):
         return loss
 
     def test_step(self, batch, batch_idx):
+        """Run a test step, accumulating predictions and logging metrics."""
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
@@ -635,6 +661,7 @@ class RegressionTask(L.LightningModule):
             plt.close(fig_gi)
 
     def on_train_epoch_end(self):
+        """Compute and log epoch-level training metrics and reset accumulators."""
         # Log training metrics
         computed_metrics = self._compute_metrics_safely(self.train_metrics)
         for name, value in computed_metrics.items():
@@ -672,6 +699,7 @@ class RegressionTask(L.LightningModule):
             torch.cuda.empty_cache()
 
     def on_train_epoch_start(self):
+        """Update gradient accumulation and reset training sample accumulators."""
         # Update gradient accumulation steps based on current epoch
         if self.hparams.grad_accumulation_schedule is not None:
             for epoch_threshold in sorted(
@@ -696,6 +724,7 @@ class RegressionTask(L.LightningModule):
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_validation_epoch_start(self):
+        """Reset validation sample accumulators at the start of the epoch."""
         # CRITICAL: Aggressively clear GPU memory before validation starts
         # This prevents OOM when transitioning from training to validation
         # Training state (optimizer, gradients, cached activations) can fragment memory
@@ -709,10 +738,12 @@ class RegressionTask(L.LightningModule):
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_test_epoch_start(self):
+        """Reset test sample accumulators at the start of the epoch."""
         # Always clear sample containers for test (test runs only once)
         self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_validation_epoch_end(self):
+        """Log validation metrics, render plots, and reset accumulators."""
         # Log validation metrics
         computed_metrics = self._compute_metrics_safely(self.val_metrics)
         for name, value in computed_metrics.items():
@@ -736,6 +767,7 @@ class RegressionTask(L.LightningModule):
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_test_epoch_end(self):
+        """Log test metrics, render plots, and reset accumulators."""
         # Log test metrics
         computed_metrics = self._compute_metrics_safely(self.test_metrics)
         for name, value in computed_metrics.items():
@@ -757,6 +789,7 @@ class RegressionTask(L.LightningModule):
             self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def configure_optimizers(self):
+        """Build the optimizer and learning-rate scheduler from config."""
         optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])
         optimizer_params = {
             k: v for k, v in self.hparams.optimizer_config.items() if k != "type"
@@ -843,6 +876,24 @@ class DiffusionRegressionTask(L.LightningModule):
         inverse_transform: nn.Module | None = None,
         execution_mode: str = "training",  # "training" or "dataloader_profiling"
     ):
+        """Set up the diffusion model, cell graph, loss, metrics, and accumulators.
+
+        Args:
+            model: The diffusion regression model to train.
+            cell_graph: Reference cell graph (cloned for pin_memory safety).
+            optimizer_config: Optimizer configuration dict.
+            lr_scheduler_config: Learning-rate scheduler configuration dict.
+            batch_size: Batch size used for logging.
+            clip_grad_norm: Whether to clip gradient norms.
+            clip_grad_norm_max_norm: Max norm for gradient clipping.
+            plot_sample_ceiling: Max number of samples to accumulate for plots.
+            plot_every_n_epochs: Epoch interval for rendering plots.
+            loss_func: Loss module used during training.
+            grad_accumulation_schedule: Optional epoch-to-steps accumulation map.
+            device: Device string for the task.
+            inverse_transform: Optional module mapping predictions back to raw space.
+            execution_mode: "training" or "dataloader_profiling".
+        """
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
         self.model = model
@@ -910,6 +961,7 @@ class DiffusionRegressionTask(L.LightningModule):
             return 1
 
     def forward(self, batch):
+        """Run the diffusion model on a batch and return predictions."""
         # Get device from batch - handle different batch structures
         if hasattr(batch["gene"], "x"):
             batch_device = batch["gene"].x.device
@@ -1226,6 +1278,7 @@ class DiffusionRegressionTask(L.LightningModule):
         return loss, predictions, gene_interaction_orig
 
     def training_step(self, batch, batch_idx):
+        """Run a diffusion training step and log the diffusion loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
 
         # Model profiling mode: Skip optimizer step to isolate model compute
@@ -1281,6 +1334,7 @@ class DiffusionRegressionTask(L.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
+        """Run a validation step with MSE evaluation and log metrics."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
 
         # Defragment GPU memory every 50 batches to prevent OOM from fragmentation
@@ -1290,6 +1344,7 @@ class DiffusionRegressionTask(L.LightningModule):
         return loss
 
     def test_step(self, batch, batch_idx):
+        """Run a test step with MSE evaluation and log metrics."""
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
@@ -1377,6 +1432,7 @@ class DiffusionRegressionTask(L.LightningModule):
             plt.close(fig_gi)
 
     def on_train_epoch_start(self):
+        """Update gradient accumulation and reset training sample accumulators."""
         # Update gradient accumulation steps based on current epoch
         if self.hparams.grad_accumulation_schedule is not None:
             for epoch_threshold in sorted(
@@ -1401,6 +1457,7 @@ class DiffusionRegressionTask(L.LightningModule):
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_validation_epoch_start(self):
+        """Reset validation sample accumulators at the start of the epoch."""
         # CRITICAL: Aggressively clear GPU memory before validation starts
         # This prevents OOM when transitioning from training to validation
         # Training state (optimizer, gradients, cached activations) can fragment memory
@@ -1414,10 +1471,12 @@ class DiffusionRegressionTask(L.LightningModule):
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_test_epoch_start(self):
+        """Reset test sample accumulators at the start of the epoch."""
         # Always clear sample containers for test (test runs only once)
         self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_train_epoch_end(self):
+        """Compute and log epoch-level training metrics and reset accumulators."""
         # Log training metrics
         computed_metrics = self._compute_metrics_safely(self.train_metrics)
         for name, value in computed_metrics.items():
@@ -1460,6 +1519,7 @@ class DiffusionRegressionTask(L.LightningModule):
             torch.cuda.empty_cache()
 
     def on_validation_epoch_end(self):
+        """Log validation metrics, render plots, and reset accumulators."""
         # Log validation metrics
         computed_metrics = self._compute_metrics_safely(self.val_metrics)
         for name, value in computed_metrics.items():
@@ -1489,6 +1549,7 @@ class DiffusionRegressionTask(L.LightningModule):
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_test_epoch_end(self):
+        """Log test metrics, render plots, and reset accumulators."""
         # Log test metrics
         computed_metrics = self._compute_metrics_safely(self.test_metrics)
         for name, value in computed_metrics.items():
@@ -1510,6 +1571,7 @@ class DiffusionRegressionTask(L.LightningModule):
             self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def configure_optimizers(self):
+        """Build the optimizer and learning-rate scheduler from config."""
         optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])
         optimizer_params = {
             k: v for k, v in self.hparams.optimizer_config.items() if k != "type"

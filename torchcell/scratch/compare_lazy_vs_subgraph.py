@@ -2,8 +2,7 @@
 # [[torchcell.scratch.compare_lazy_vs_subgraph]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/scratch/compare_lazy_vs_subgraph
 
-"""
-Compare LazySubgraphRepresentation vs SubgraphRepresentation.
+"""Compare LazySubgraphRepresentation vs SubgraphRepresentation.
 
 Verifies that:
 1. Node data is identical
@@ -93,6 +92,7 @@ def load_dataset_with_processor(graph_processor):
 
 
 def main():
+    """Load both representations and compare node/edge data and memory usage."""
     print("=" * 80)
     print("Comparing LazySubgraphRepresentation vs SubgraphRepresentation")
     print("=" * 80)

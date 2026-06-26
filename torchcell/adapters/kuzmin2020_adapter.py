@@ -1,7 +1,7 @@
 # torchcell/adapters/kuzmin2020_adapter
 # [[torchcell.adapters.kuzmin2020_adapter]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/kuzmin2020_adapter
-
+"""BioCypher adapters for the Kuzmin 2020 single, double, and triple mutant datasets."""
 
 import logging
 import os.path as osp
@@ -29,6 +29,8 @@ logger.setLevel(logging.ERROR)
 
 
 class SmfKuzmin2020Adapter(CellAdapter):
+    """Adapter exposing the Kuzmin 2020 single-mutant fitness dataset to BioCypher."""
+
     def __init__(
         self,
         dataset: SmfKuzmin2020Dataset,
@@ -37,6 +39,7 @@ class SmfKuzmin2020Adapter(CellAdapter):
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
+        """Load the adapter YAML config and initialize the CellAdapter for the dataset."""
         current_dir = osp.dirname(osp.abspath(__file__))
 
         config_path = osp.join(current_dir, "conf", "smf_kuzmin2020_adapter.yaml")
@@ -63,6 +66,8 @@ class SmfKuzmin2020Adapter(CellAdapter):
 
 
 class DmfKuzmin2020Adapter(CellAdapter):
+    """Adapter exposing the Kuzmin 2020 double-mutant fitness dataset to BioCypher."""
+
     def __init__(
         self,
         dataset: DmfKuzmin2020Dataset,
@@ -71,6 +76,7 @@ class DmfKuzmin2020Adapter(CellAdapter):
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
+        """Load the adapter YAML config and initialize the CellAdapter for the dataset."""
         current_dir = osp.dirname(osp.abspath(__file__))
 
         config_path = osp.join(current_dir, "conf", "dmf_kuzmin2020_adapter.yaml")
@@ -97,6 +103,8 @@ class DmfKuzmin2020Adapter(CellAdapter):
 
 
 class TmfKuzmin2020Adapter(CellAdapter):
+    """Adapter exposing the Kuzmin 2020 triple-mutant fitness dataset to BioCypher."""
+
     def __init__(
         self,
         dataset: TmfKuzmin2020Dataset,
@@ -105,6 +113,7 @@ class TmfKuzmin2020Adapter(CellAdapter):
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
+        """Load the adapter YAML config and initialize the CellAdapter for the dataset."""
         current_dir = osp.dirname(osp.abspath(__file__))
 
         config_path = osp.join(current_dir, "conf", "tmf_kuzmin2020_adapter.yaml")
@@ -131,6 +140,8 @@ class TmfKuzmin2020Adapter(CellAdapter):
 
 
 class DmiKuzmin2020Adapter(CellAdapter):
+    """Adapter exposing the Kuzmin 2020 double-mutant interaction dataset to BioCypher."""
+
     def __init__(
         self,
         dataset: DmiKuzmin2020Dataset,
@@ -139,6 +150,7 @@ class DmiKuzmin2020Adapter(CellAdapter):
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
+        """Load the adapter YAML config and initialize the CellAdapter for the dataset."""
         current_dir = osp.dirname(osp.abspath(__file__))
         config_path = osp.join(current_dir, "conf", "dmi_kuzmin2020_adapter.yaml")
 
@@ -162,6 +174,8 @@ class DmiKuzmin2020Adapter(CellAdapter):
 
 
 class TmiKuzmin2020Adapter(CellAdapter):
+    """Adapter exposing the Kuzmin 2020 triple-mutant interaction dataset to BioCypher."""
+
     def __init__(
         self,
         dataset: TmiKuzmin2020Dataset,
@@ -170,6 +184,7 @@ class TmiKuzmin2020Adapter(CellAdapter):
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
+        """Load the adapter YAML config and initialize the CellAdapter for the dataset."""
         current_dir = osp.dirname(osp.abspath(__file__))
         config_path = osp.join(current_dir, "conf", "tmi_kuzmin2020_adapter.yaml")
 

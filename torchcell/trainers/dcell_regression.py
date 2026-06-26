@@ -1,3 +1,5 @@
+"""Lightning training task for DCell graph-based fitness regression."""
+
 import os.path as osp
 import tracemalloc
 
@@ -39,6 +41,19 @@ class DCellRegressionTask(L.LightningModule):
         train_wt_diff: bool = True,
         **kwargs,
     ):
+        """Set up models, loss, optimizer config, and metric collections.
+
+        Args:
+            models: Mapping of submodel name to module (expects "dcell" and
+                "dcell_linear").
+            target: Target column name ("fitness" or "genetic_interaction_score").
+            boxplot_every_n_epochs: Epoch interval for logging box plots.
+            learning_rate: Adam learning rate.
+            weight_decay: Adam weight decay.
+            batch_size: Batch size used for logging.
+            train_wt_diff: Whether to train on wild-type differences.
+            **kwargs: Additional keyword arguments.
+        """
         super().__init__()
         # models
         self.models = models
@@ -87,12 +102,14 @@ class DCellRegressionTask(L.LightningModule):
         tracemalloc.start()
 
     def setup(self, stage=None):
+        """Move submodels to device and init prediction/true-value buffers."""
         for model in self.models.values():
             model.to(self.device)
         self.true_values = torch.tensor([], dtype=torch.float32, device=self.device)
         self.predictions = torch.tensor([], dtype=torch.float32, device=self.device)
 
     def forward(self, batch):
+        """Run the DCell subsystem and linear heads, returning per-node outputs."""
         # Implement the forward pass
         dcell_subsystem_output = self.dcell(batch)
         dcell_linear_output = self.dcell_linear(dcell_subsystem_output)
@@ -101,6 +118,7 @@ class DCellRegressionTask(L.LightningModule):
         return dcell_linear_output
 
     def on_train_start(self):
+        """Log the total parameter count at the start of training."""
         # Calculate the model size (number of parameters)
         parameter_size = sum(p.numel() for p in self.parameters())
         # Log it using wandb
@@ -109,6 +127,7 @@ class DCellRegressionTask(L.LightningModule):
         )
 
     def training_step(self, batch, batch_idx):
+        """Run a manual-optimization training step and log loss and metrics."""
         y_hat = self(batch)
         y = batch.fitness
         opt = self.optimizers()
@@ -156,10 +175,12 @@ class DCellRegressionTask(L.LightningModule):
         return loss
 
     def on_train_epoch_end(self):
+        """Log and reset accumulated training metrics."""
         self.log_dict(self.train_metrics.compute(), sync_dist=True)
         self.train_metrics.reset()
 
     def validation_step(self, batch, batch_idx):
+        """Run a validation step, logging loss/metrics and storing predictions."""
         # Extract the batch vector
         y_hat = self(batch)
         y = batch.fitness
@@ -204,6 +225,7 @@ class DCellRegressionTask(L.LightningModule):
         )
 
     def on_validation_epoch_end(self):
+        """Log val metrics, render box plots, and checkpoint best model to W&B."""
         self.log_dict(self.val_metrics.compute(), sync_dist=True)
         self.val_metrics.reset()
 
@@ -216,9 +238,7 @@ class DCellRegressionTask(L.LightningModule):
         if self.target == "fitness":
             fig = fitness.box_plot(self.true_values, self.predictions)
         elif self.target == "genetic_interaction_score":
-            fig = genetic_interaction_score.box_plot(
-                self.true_values, self.predictions
-            )
+            fig = genetic_interaction_score.box_plot(self.true_values, self.predictions)
         wandb.log({"binned_values_box_plot": wandb.Image(fig)})
         plt.close(fig)
         # Clear the stored values for the next epoch
@@ -253,6 +273,7 @@ class DCellRegressionTask(L.LightningModule):
             )
 
     def test_step(self, batch, batch_idx):
+        """Run a test step and log loss, regression metrics, and correlations."""
         y_hat = self(batch)
         y = batch.fitness
         loss = self.loss(y_hat, y, self.dcell.parameters())
@@ -292,10 +313,12 @@ class DCellRegressionTask(L.LightningModule):
         )
 
     def on_test_epoch_end(self):
+        """Log and reset accumulated test metrics."""
         self.log_dict(self.test_metrics.compute(), sync_dist=True)
         self.test_metrics.reset()
 
     def configure_optimizers(self):
+        """Build an Adam optimizer over the DCell and linear-head parameters."""
         params = list(self.models["dcell"].parameters()) + list(
             self.models["dcell_linear"].parameters()
         )

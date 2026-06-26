@@ -2,6 +2,7 @@
 # [[torchcell.datasets.fungal_up_down_transformer]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/fungal_up_down_transformer.py
 # Test file: torchcell/datasets/test_fungal_up_down_transformer.py
+"""Embedding dataset built from the fungal up/down-stream sequence transformer."""
 
 import os
 from collections.abc import Callable
@@ -19,6 +20,8 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
+    """Per-gene embeddings from the fungal up/down-stream sequence transformer."""
+
     MODEL_TO_WINDOW = {
         "species_downstream": ("window_three_prime", 300, True, True),
         "species_upstream": ("window_five_prime", 1003, True, True),
@@ -32,6 +35,15 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
+        """Initialize the dataset, build the model, and load/process embeddings.
+
+        Args:
+            root: Directory where processed embeddings are stored.
+            genome: Genome providing gene set and per-gene sequences.
+            model_name: Embedding variant key (e.g. ``"species_upstream"``).
+            transform: Optional runtime transform applied to each sample.
+            pre_transform: Optional transform applied once before saving.
+        """
         self.genome = genome
         self.model_name = model_name
         # BUG I just moved this here to recompute the data but we don't want to do this when training models
@@ -54,6 +66,7 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
 
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:
+        """Return a ParsedGenome holding the gene set, or None if genome is None."""
         # BUG we have to do this black magic because when you merge datasets with +
         # the genome is None
         if genome is None:
@@ -64,6 +77,7 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
             return ParsedGenome(**data)
 
     def initialize_model(self) -> FungalUpDownTransformer | None:
+        """Build the up/down-stream transformer for the configured model name."""
         if self.model_name:
             split_name = self.model_name.split("_")
             if "downstream" in split_name and "species" in split_name:
@@ -77,6 +91,7 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
         return None
 
     def process(self):
+        """Embed each gene's sequence window and save the collated dataset."""
         if not self.model_name:
             return
 

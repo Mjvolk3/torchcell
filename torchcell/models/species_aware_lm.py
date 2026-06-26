@@ -2,7 +2,7 @@
 # [[torchcell.models.species_aware_lm]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/species_aware_lm.py
 # Test file: torchcell/models/test_species_aware_lm.py
-
+"""Embed DNA sequences with the gagneurlab SpeciesLM masked language model."""
 
 import numpy as np
 import pandas as pd
@@ -19,6 +19,15 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 def embed_sequence(sequence: str) -> np.ndarray:
+    """Return the token-averaged SpeciesLM embedding for a DNA sequence.
+
+    Args:
+        sequence: Nucleotide sequence to embed.
+
+    Returns:
+        A token-averaged hidden-state vector as a NumPy array.
+    """
+
     def kmers_stride1(seq, k=6):
         return [seq[i : i + k] for i in range(0, len(seq) - k + 1)]
 
@@ -61,6 +70,7 @@ model.eval()  # Set the model to evaluation mode
 
 
 def main():
+    """Embed three-prime windows of all genes and collect averaged embeddings."""
     genome = SCerevisiaeGenome()
 
     tokenizer = AutoTokenizer.from_pretrained(

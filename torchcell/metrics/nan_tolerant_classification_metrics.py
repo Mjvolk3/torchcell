@@ -1,3 +1,5 @@
+"""NaN-tolerant TorchMetrics classification metrics for DDP training."""
+
 from typing import Literal
 
 import torch
@@ -6,7 +8,10 @@ from torchmetrics.metric import Metric
 
 
 class NaNTolerantMetricBase(Metric):
+    """Base metric that drops NaN targets and tracks the active device."""
+
     def __init__(self, **kwargs):
+        """Force DDP-safe settings and register a device-tracking buffer."""
         # Configure for DDP compatibility
         kwargs["compute_on_cpu"] = False
         kwargs["sync_on_compute"] = False
@@ -15,10 +20,12 @@ class NaNTolerantMetricBase(Metric):
         self.register_buffer("_device_buffer", torch.zeros(1))
 
     def _track_device(self, tensor: Tensor) -> None:
+        """Move the device buffer onto the tensor's device when they differ."""
         if tensor.device != self._device_buffer.device:
             self._device_buffer = self._device_buffer.to(tensor.device)
 
     def _create_tensor_on_device(self, value, *shape):
+        """Return a tensor filled with ``value`` on the metric's device."""
         return torch.full(shape, value, device=self._device_buffer.device)
 
     def _prepare_inputs(self, preds: Tensor, target: Tensor) -> tuple[Tensor, Tensor]:
@@ -52,17 +59,21 @@ class NaNTolerantMetricBase(Metric):
 
 
 class NaNTolerantAccuracy(NaNTolerantMetricBase):
+    """Classification accuracy that ignores samples with NaN targets."""
+
     is_differentiable = True
     higher_is_better = True
     full_state_update = False
 
     def __init__(self, task: Literal["binary", "multiclass"] = "binary", **kwargs):
+        """Register correct/total counters for the given task."""
         super().__init__(**kwargs)
         self.task = task
         self.add_state("correct", default=torch.tensor(0), dist_reduce_fx="sum")
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
 
     def update(self, preds: Tensor, target: Tensor) -> None:
+        """Accumulate per-class statistics from the NaN-filtered batch."""
         preds, target = self._prepare_inputs(preds, target)
         if preds.numel() > 0:
             if self.task == "binary":
@@ -75,17 +86,21 @@ class NaNTolerantAccuracy(NaNTolerantMetricBase):
             self.total += target.numel()
 
     def compute(self) -> Tensor:
+        """Return accuracy, or NaN if no valid samples were seen."""
         if self.total == 0:
             return self._create_tensor_on_device(float("nan"))
         return self.correct.float() / self.total
 
 
 class NaNTolerantF1Score(NaNTolerantMetricBase):
+    """F1 score that ignores samples with NaN targets."""
+
     is_differentiable = True
     higher_is_better = True
     full_state_update = False
 
     def __init__(self, task: Literal["binary", "multiclass"] = "binary", **kwargs):
+        """Register per-class tp/fp/fn counters for the given task."""
         super().__init__(**kwargs)
         self.task = task
         if task == "binary":
@@ -100,6 +115,7 @@ class NaNTolerantF1Score(NaNTolerantMetricBase):
         self.add_state("fn", default=torch.zeros(num_classes), dist_reduce_fx="sum")
 
     def update(self, preds: Tensor, target: Tensor) -> None:
+        """Accumulate per-class statistics from the NaN-filtered batch."""
         preds, target = self._prepare_inputs(preds, target)
         if preds.numel() > 0:
             if self.task == "binary":
@@ -115,6 +131,7 @@ class NaNTolerantF1Score(NaNTolerantMetricBase):
                 self.fn[i] += ((pred_classes != i) & (target == i)).sum()
 
     def compute(self) -> Tensor:
+        """Return binary positive-class or macro F1, or NaN if no positives."""
         if self.tp.sum() == 0:
             return self._create_tensor_on_device(float("nan"))
 
@@ -128,11 +145,14 @@ class NaNTolerantF1Score(NaNTolerantMetricBase):
 
 
 class NaNTolerantAUROC(NaNTolerantMetricBase):
+    """Binary AUROC (trapezoidal) that ignores samples with NaN targets."""
+
     is_differentiable = True
     higher_is_better = True
     full_state_update = False
 
     def __init__(self, task: Literal["binary"] = "binary", **kwargs):
+        """Register prediction/target buffers; only binary task is supported."""
         if task != "binary":
             raise ValueError("AUROC currently only supports binary classification")
         super().__init__(**kwargs)
@@ -141,6 +161,7 @@ class NaNTolerantAUROC(NaNTolerantMetricBase):
         self.add_state("targets", default=[], dist_reduce_fx="cat")
 
     def update(self, preds: Tensor, target: Tensor) -> None:
+        """Buffer positive-class probabilities and targets for AUROC."""
         preds, target = self._prepare_inputs(preds, target)
         if preds.numel() > 0:
             preds = torch.softmax(preds, dim=-1)[
@@ -150,6 +171,7 @@ class NaNTolerantAUROC(NaNTolerantMetricBase):
             self.targets.append(target)
 
     def compute(self) -> Tensor:
+        """Return AUROC via the trapezoidal rule, or NaN if a class is absent."""
         if len(self.preds) == 0 or len(self.targets) == 0:
             return self._create_tensor_on_device(float("nan"))
 
@@ -180,11 +202,14 @@ class NaNTolerantAUROC(NaNTolerantMetricBase):
 
 
 class NaNTolerantPrecision(NaNTolerantMetricBase):
+    """Precision that ignores samples with NaN targets."""
+
     is_differentiable = True
     higher_is_better = True
     full_state_update = False
 
     def __init__(self, task: Literal["binary", "multiclass"] = "binary", **kwargs):
+        """Register per-class tp/fp counters for the given task."""
         super().__init__(**kwargs)
         self.task = task
         if task == "binary":
@@ -198,6 +223,7 @@ class NaNTolerantPrecision(NaNTolerantMetricBase):
         self.add_state("fp", default=torch.zeros(num_classes), dist_reduce_fx="sum")
 
     def update(self, preds: Tensor, target: Tensor) -> None:
+        """Accumulate per-class statistics from the NaN-filtered batch."""
         preds, target = self._prepare_inputs(preds, target)
         if preds.numel() > 0:
             if self.task == "binary":
@@ -212,6 +238,7 @@ class NaNTolerantPrecision(NaNTolerantMetricBase):
                 self.fp[i] += ((pred_classes == i) & (target != i)).sum()
 
     def compute(self) -> Tensor:
+        """Return binary positive-class or macro precision, or NaN if no positives."""
         if self.tp.sum() == 0:
             return self._create_tensor_on_device(float("nan"))
 
@@ -223,11 +250,14 @@ class NaNTolerantPrecision(NaNTolerantMetricBase):
 
 
 class NaNTolerantRecall(NaNTolerantMetricBase):
+    """Recall that ignores samples with NaN targets."""
+
     is_differentiable = True
     higher_is_better = True
     full_state_update = False
 
     def __init__(self, task: Literal["binary", "multiclass"] = "binary", **kwargs):
+        """Register per-class tp/fn counters for the given task."""
         super().__init__(**kwargs)
         self.task = task
         if task == "binary":
@@ -241,6 +271,7 @@ class NaNTolerantRecall(NaNTolerantMetricBase):
         self.add_state("fn", default=torch.zeros(num_classes), dist_reduce_fx="sum")
 
     def update(self, preds: Tensor, target: Tensor) -> None:
+        """Accumulate per-class statistics from the NaN-filtered batch."""
         preds, target = self._prepare_inputs(preds, target)
         if preds.numel() > 0:
             if self.task == "binary":
@@ -255,6 +286,7 @@ class NaNTolerantRecall(NaNTolerantMetricBase):
                 self.fn[i] += ((pred_classes != i) & (target == i)).sum()
 
     def compute(self) -> Tensor:
+        """Return binary positive-class or macro recall, or NaN if no positives."""
         if self.tp.sum() == 0:
             return self._create_tensor_on_device(float("nan"))
 

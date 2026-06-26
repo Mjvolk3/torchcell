@@ -1,3 +1,5 @@
+"""Costanzo 2016 single/double mutant fitness and interaction datasets."""
+
 # torchcell/datasets/scerevisiae/costanzo2016
 # [[torchcell.datasets.scerevisiae.costanzo2016]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/costanzo2016
@@ -106,6 +108,8 @@ N_SAMPLES_TEMP_26C = 4  # For TS alleles at semipermissive temperature
 # Fitness
 @register_dataset
 class SmfCostanzo2016Dataset(ExperimentDataset):
+    """Single-mutant fitness dataset from Costanzo et al. 2016."""
+
     url = (
         "https://thecellmap.org/costanzo2016/data_files/"
         "Raw%20genetic%20interaction%20datasets:%20Pair-wise%20interaction%20format.zip"
@@ -119,21 +123,26 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Initialize the SMF dataset under ``root`` via the base dataset."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> Experiment:
+        """Return the FitnessExperiment type for SMF data."""
         return FitnessExperiment
 
     @property
     def reference_class(self) -> ExperimentReference:
+        """Return the FitnessExperimentReference type for SMF data."""
         return FitnessExperimentReference
 
     @property
     def raw_file_names(self) -> str:
+        """Return the single-mutant fitness raw spreadsheet name."""
         return "strain_ids_and_single_mutant_fitness.xlsx"
 
     def download(self):
+        """Download and unpack the Costanzo archive, keeping the SMF spreadsheet."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
             zip_ref.extractall(self.raw_dir)
@@ -155,6 +164,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Read the SMF spreadsheet and write experiment records into LMDB."""
         xlsx_path = osp.join(self.raw_dir, "strain_ids_and_single_mutant_fitness.xlsx")
         df = pd.read_excel(xlsx_path)
         df = self.preprocess_raw(df)
@@ -196,6 +206,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         env.close()
 
     def preprocess_raw(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Derive perturbation type from strain IDs and clean the SMF table."""
         df["Strain_ID_suffix"] = df["Strain ID"].str.split("_", expand=True)[1]
 
         # Determine perturbation type based on Strain_ID_suffix
@@ -273,6 +284,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
 
     @staticmethod
     def compute_phenotype_reference_std(df: pd.DataFrame):
+        """Return mean SMF stddev at 26C and 30C used as reference noise."""
         mean_stds = df.groupby("Temperature")["Single mutant fitness stddev"].mean()
         phenotype_reference_std_26 = mean_stds[26]
         phenotype_reference_std_30 = mean_stds[30]
@@ -282,6 +294,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
     def create_experiment(
         dataset_name, row, phenotype_reference_std_26, phenotype_reference_std_30
     ):
+        """Build SMF experiment, reference, and publication objects for a row."""
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
@@ -413,6 +426,8 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
 
 @register_dataset
 class DmfCostanzo2016Dataset(ExperimentDataset):
+    """Double-mutant fitness dataset from Costanzo et al. 2016."""
+
     url = (
         "https://thecellmap.org/costanzo2016/data_files/"
         "Raw%20genetic%20interaction%20datasets:%20Pair-wise%20interaction%20format.zip"
@@ -428,12 +443,14 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Initialize the dataset with optional subsetting and batched IO."""
         self.io_workers = io_workers
         self.subset_n = subset_n
         self.batch_size = batch_size
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     def download(self):
+        """Download and unpack the Costanzo archive, keeping the SGA text files."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
             zip_ref.extractall(self.raw_dir)
@@ -452,17 +469,21 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
 
     @property
     def experiment_class(self) -> Experiment:
+        """Return the FitnessExperiment type for DMF data."""
         return FitnessExperiment
 
     @property
     def reference_class(self) -> ExperimentReference:
+        """Return the FitnessExperimentReference type for DMF data."""
         return FitnessExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the SGA interaction text files used as raw input."""
         return ["SGA_DAmP.txt", "SGA_ExE.txt", "SGA_ExN_NxE.txt", "SGA_NxN.txt"]
 
     def preprocess_raw(self, df: pd.DataFrame, preprocess: dict | None = None):
+        """Concatenate and clean the SGA files into a double-mutant fitness table."""
         log.info("Preprocess on raw data...")
 
         # Function to extract gene name
@@ -528,6 +549,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Preprocess the raw SGA files and write records into LMDB in batches."""
         os.makedirs(self.preprocess_dir, exist_ok=True)
 
         # Initialize an empty DataFrame to hold all raw data
@@ -600,6 +622,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
     def create_experiment(
         dataset_name, row, phenotype_reference_std_26, phenotype_reference_std_30
     ):
+        """Build DMF experiment, reference, and publication objects for a row."""
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
@@ -768,6 +791,8 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
 # Interactions
 @register_dataset
 class DmiCostanzo2016Dataset(ExperimentDataset):
+    """Double-mutant genetic interaction dataset from Costanzo et al. 2016."""
+
     url = (
         "https://thecellmap.org/costanzo2016/data_files/"
         "Raw%20genetic%20interaction%20datasets:%20Pair-wise%20interaction%20format.zip"
@@ -783,12 +808,14 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Initialize the dataset with optional subsetting and batched IO."""
         self.io_workers = io_workers
         self.subset_n = subset_n
         self.batch_size = batch_size
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     def download(self):
+        """Download and unpack the Costanzo archive, keeping the SGA text files."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
             zip_ref.extractall(self.raw_dir)
@@ -807,17 +834,21 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
 
     @property
     def experiment_class(self) -> ExperimentReference:
+        """Return the GeneInteractionExperiment type for DMI data."""
         return GeneInteractionExperiment
 
     @property
     def reference_class(self) -> ExperimentReference:
+        """Return the GeneInteractionExperimentReference type for DMI data."""
         return GeneInteractionExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the SGA interaction text files used as raw input."""
         return ["SGA_DAmP.txt", "SGA_ExE.txt", "SGA_ExN_NxE.txt", "SGA_NxN.txt"]
 
     def preprocess_raw(self, df: pd.DataFrame, preprocess: dict | None = None):
+        """Concatenate and clean the SGA files into a genetic-interaction table."""
         log.info("Preprocess on raw data...")
 
         # Function to extract gene name
@@ -876,6 +907,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Preprocess the raw SGA files and write records into LMDB in batches."""
         os.makedirs(self.preprocess_dir, exist_ok=True)
 
         # Initialize an empty DataFrame to hold all raw data
@@ -943,6 +975,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
 
     @staticmethod
     def create_experiment(dataset_name, row):
+        """Build DMI interaction experiment, reference, and publication objects."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
         )
@@ -1075,6 +1108,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
 
 
 def main():
+    """Build and inspect the Costanzo 2016 datasets as a manual run."""
     from dotenv import load_dotenv
 
     load_dotenv()

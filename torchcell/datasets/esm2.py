@@ -2,6 +2,7 @@
 # [[torchcell.datasets.esm2]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/esm2
 # Test file: tests/torchcell/datasets/test_esm2.py
+"""Dataset of ESM2 protein embeddings for S. cerevisiae genes."""
 
 import os
 from collections.abc import Callable
@@ -17,6 +18,8 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 class Esm2Dataset(BaseEmbeddingDataset):
+    """Embedding dataset that computes ESM2 protein embeddings per gene."""
+
     MODEL_TO_WINDOW = {
         "esm2_t6_8M_UR50D_all": ("esm2_t6_8M_UR50D", None),
         "esm2_t6_8M_UR50D_no_dubious_uncharacterized": (
@@ -88,6 +91,7 @@ class Esm2Dataset(BaseEmbeddingDataset):
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
+        """Configure the genome and model, then process embeddings if needed."""
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.genome = genome
         self.model_name = model_name
@@ -106,6 +110,7 @@ class Esm2Dataset(BaseEmbeddingDataset):
 
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:
+        """Return a ParsedGenome holding the genome's gene set, or None."""
         if genome is None:
             return None
         else:
@@ -114,9 +119,11 @@ class Esm2Dataset(BaseEmbeddingDataset):
             return ParsedGenome(**data)
 
     def initialize_model(self) -> Esm2:
+        """Return the ESM2 model corresponding to the selected model name."""
         return Esm2(model_name=self.MODEL_TO_WINDOW[self.model_name][0])
 
     def process(self):
+        """Compute ESM2 embeddings for each gene and save the processed dataset."""
         self.transformer = self.initialize_model()
         if not self.model_name:
             return

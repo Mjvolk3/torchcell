@@ -2,6 +2,8 @@
 # [[tests.torchcell.transforms.test_regression_to_classification_coo]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/transforms/test_regression_to_classification_coo
 
+"""Tests for the COO regression-to-classification transforms."""
+
 import numpy as np
 import pytest
 import torch
@@ -16,6 +18,8 @@ from torchcell.transforms.regression_to_classification_coo import (
 
 
 class TestCOOLabelNormalizationTransform:
+    """Tests for COO label normalization strategies."""
+
     @pytest.fixture
     def mock_coo_dataset(self):
         """Create a mock dataset with COO format phenotype data."""
@@ -79,6 +83,7 @@ class TestCOOLabelNormalizationTransform:
 
     @pytest.fixture
     def norm_transform(self, mock_coo_dataset):
+        """Build a normalization transform with minmax and standard configs."""
         label_configs = {
             "fitness": {"strategy": "minmax"},
             "gene_interaction": {"strategy": "standard"},
@@ -86,6 +91,7 @@ class TestCOOLabelNormalizationTransform:
         return COOLabelNormalizationTransform(mock_coo_dataset, label_configs)
 
     def test_coo_minmax_normalization(self, norm_transform, mock_coo_dataset):
+        """Verify minmax normalization scales fitness values into [0, 1]."""
         # Get a sample with fitness values
         data = mock_coo_dataset[1]
 
@@ -114,6 +120,7 @@ class TestCOOLabelNormalizationTransform:
         )
 
     def test_coo_standard_normalization(self, norm_transform, mock_coo_dataset):
+        """Verify standard normalization and its inverse round-trip correctly."""
         # Get a sample with gene_interaction values
         data = mock_coo_dataset[0]
 
@@ -142,6 +149,7 @@ class TestCOOLabelNormalizationTransform:
         )
 
     def test_coo_mixed_phenotypes(self, norm_transform, mock_coo_dataset):
+        """Verify normalization handles samples with mixed phenotype types."""
         # Get a sample with mixed phenotype types
         data = mock_coo_dataset[2]
 
@@ -182,6 +190,8 @@ class TestCOOLabelNormalizationTransform:
 
 
 class TestCOOLabelNormalizationInverse:
+    """Tests for the inverse of COO label normalization."""
+
     @pytest.fixture
     def mock_coo_dataset(self):
         """Create a mock dataset with COO format phenotype data."""
@@ -216,6 +226,7 @@ class TestCOOLabelNormalizationInverse:
 
     @pytest.fixture
     def norm_transform(self, mock_coo_dataset):
+        """Build a normalization transform with minmax and standard configs."""
         label_configs = {
             "fitness": {"strategy": "minmax"},
             "gene_interaction": {"strategy": "standard"},
@@ -223,6 +234,7 @@ class TestCOOLabelNormalizationInverse:
         return COOLabelNormalizationTransform(mock_coo_dataset, label_configs)
 
     def test_coo_inverse_minmax(self, norm_transform):
+        """Verify inverse minmax normalization recovers original-scale values."""
         # Create test data in COO format
         data = HeteroData()
         data["gene"] = {}
@@ -245,6 +257,7 @@ class TestCOOLabelNormalizationInverse:
         )
 
     def test_coo_inverse_standard(self, norm_transform):
+        """Verify inverse standard normalization recovers original-scale values."""
         # Create test data in COO format
         data = HeteroData()
         data["gene"] = {}
@@ -275,6 +288,7 @@ class TestCOOLabelNormalizationInverse:
         )
 
     def test_coo_inverse_with_nans(self, norm_transform):
+        """Verify inverse normalization preserves NaN entries."""
         # Create test data in COO format with NaNs
         data = HeteroData()
         data["gene"] = {}
@@ -300,6 +314,8 @@ class TestCOOLabelNormalizationInverse:
 
 
 class TestCOOLabelNormalizationRoundTrip:
+    """Tests that COO normalization followed by its inverse is identity."""
+
     @pytest.fixture
     def mock_coo_dataset(self):
         """Create a mock dataset with COO format phenotype data."""
@@ -334,6 +350,7 @@ class TestCOOLabelNormalizationRoundTrip:
 
     @pytest.fixture
     def norm_transform(self, mock_coo_dataset):
+        """Build a normalization transform with minmax and standard configs."""
         label_configs = {
             "fitness": {"strategy": "minmax"},
             "gene_interaction": {"strategy": "standard"},
@@ -341,6 +358,7 @@ class TestCOOLabelNormalizationRoundTrip:
         return COOLabelNormalizationTransform(mock_coo_dataset, label_configs)
 
     def test_coo_round_trip_minmax(self, norm_transform, mock_coo_dataset):
+        """Verify minmax normalize then inverse recovers the original fitness."""
         # Extract test data
         data = mock_coo_dataset[0]
 
@@ -371,6 +389,7 @@ class TestCOOLabelNormalizationRoundTrip:
         )
 
     def test_coo_round_trip_standard(self, norm_transform, mock_coo_dataset):
+        """Verify standard normalize then inverse recovers the original values."""
         # Extract test data
         data = mock_coo_dataset[0]
 
@@ -402,6 +421,8 @@ class TestCOOLabelNormalizationRoundTrip:
 
 
 class TestCOOLabelBinningTransform:
+    """Tests for binning COO labels into categorical and soft targets."""
+
     @pytest.fixture
     def mock_coo_dataset(self):
         """Create a mock dataset with COO format phenotype data."""
@@ -447,6 +468,7 @@ class TestCOOLabelBinningTransform:
 
     @pytest.fixture
     def bin_transform(self, mock_coo_dataset):
+        """Build a binning transform with categorical and soft label configs."""
         label_configs = {
             "fitness": {
                 "strategy": "equal_width",
@@ -463,6 +485,7 @@ class TestCOOLabelBinningTransform:
         return COOLabelBinningTransform(mock_coo_dataset, label_configs)
 
     def test_coo_categorical_binning(self, bin_transform, mock_coo_dataset):
+        """Verify categorical binning produces one-hot bins and inverts back."""
         # Select a subset of fitness data for testing
         test_data = HeteroData()
         test_data["gene"] = {}
@@ -504,6 +527,7 @@ class TestCOOLabelBinningTransform:
             )
 
     def test_coo_soft_binning(self, bin_transform, mock_coo_dataset):
+        """Verify soft binning produces Gaussian-weighted bin distributions."""
         # Select a subset of gene_interaction data for testing
         test_data = HeteroData()
         test_data["gene"] = {}
@@ -535,6 +559,8 @@ class TestCOOLabelBinningTransform:
 
 
 class TestCOOOrdinalBinning:
+    """Tests for ordinal binning of COO labels and its inverse."""
+
     @pytest.fixture
     def mock_coo_dataset(self):
         """Create a mock dataset with COO format phenotype data."""
@@ -567,6 +593,7 @@ class TestCOOOrdinalBinning:
 
     @pytest.fixture
     def bin_transform(self, mock_coo_dataset):
+        """Build an ordinal binning transform with four equal-width bins."""
         label_configs = {
             "fitness": {
                 "strategy": "equal_width",
@@ -577,6 +604,7 @@ class TestCOOOrdinalBinning:
         return COOLabelBinningTransform(mock_coo_dataset, label_configs)
 
     def test_coo_ordinal_forward(self, bin_transform):
+        """Verify ordinal binning produces cumulative threshold encodings."""
         # Create test data
         test_data = HeteroData()
         test_data["gene"] = {}
@@ -629,6 +657,7 @@ class TestCOOOrdinalBinning:
                     )
 
     def test_coo_ordinal_inverse(self, bin_transform):
+        """Verify inverse ordinal binning recovers representative bin values."""
         # Create test data with ordinal labels in COO format
         num_samples = 4
         num_thresholds = 3
@@ -684,6 +713,7 @@ class TestCOOOrdinalBinning:
             )
 
     def test_coo_ordinal_with_nans(self, bin_transform):
+        """Verify ordinal binning preserves NaN entries through the transform."""
         # Create test data with NaNs
         test_data = HeteroData()
         test_data["gene"] = {}
@@ -720,6 +750,8 @@ class TestCOOOrdinalBinning:
 
 
 class TestCOOOrdinalNormBinning:
+    """Tests for combined normalization plus ordinal binning round trips."""
+
     @pytest.fixture
     def mock_coo_dataset(self):
         """Create a mock dataset with COO format phenotype data."""
@@ -754,6 +786,7 @@ class TestCOOOrdinalNormBinning:
 
     @pytest.fixture
     def transforms(self, mock_coo_dataset):
+        """Build a normalization then ordinal-binning transform pair."""
         norm_config = {"fitness": {"strategy": "minmax"}}
         norm_transform = COOLabelNormalizationTransform(mock_coo_dataset, norm_config)
 
@@ -802,6 +835,8 @@ class TestCOOOrdinalNormBinning:
 
 
 class TestCOOModelOutputSimulation:
+    """Tests inverting binning on simulated model logit outputs."""
+
     @pytest.fixture
     def mock_coo_dataset(self):
         """Create a mock dataset with COO format phenotype data."""
@@ -974,6 +1009,8 @@ class TestCOOModelOutputSimulation:
 
 
 class TestCOOInverseComposeWithGrads:
+    """Tests that COOInverseCompose preserves gradients through inversion."""
+
     @pytest.fixture
     def mock_coo_dataset(self):
         """Create a mock dataset with COO format phenotype data."""

@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/nn/masked_attention_block
 # Test file: tests/torchcell/nn/test_masked_attention_block.py
 
+"""Masked attention blocks using FlexAttention with adjacency and edge masks."""
+
 import math
 
 import torch
@@ -12,8 +14,7 @@ from torch import Tensor
 
 
 class MaskedAttentionBlock(nn.Module):
-    """
-    Memory-efficient Masked Attention Block that uses FlexAttention on GPU.
+    """Memory-efficient Masked Attention Block that uses FlexAttention on GPU.
 
     This module only handles adjacency masks. For edge attributes, use NodeSelfAttention.
 
@@ -35,6 +36,7 @@ class MaskedAttentionBlock(nn.Module):
         mode: str = "node",
         compile_block_mask: bool = True,  # FLAG
     ) -> None:
+        """Build the attention/feed-forward layers and store head configuration."""
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
@@ -69,8 +71,7 @@ class MaskedAttentionBlock(nn.Module):
         )
 
     def forward(self, x: Tensor, adj_mask: Tensor) -> Tensor:
-        """
-        Forward pass applying masked attention using adjacency mask.
+        """Forward pass applying masked attention using adjacency mask.
 
         Args:
             x: Input tensor with shape [batch_size, seq_len, hidden_dim]
@@ -186,8 +187,8 @@ class MaskedAttentionBlock(nn.Module):
 
 
 class NodeSelfAttention(nn.Module):
-    """
-    Masked attention block with learned edge attribute projections.
+    """Masked attention block with learned edge attribute projections.
+
     Uses FlexAttention on GPU for efficiency when available.
 
     This module supports:
@@ -212,6 +213,7 @@ class NodeSelfAttention(nn.Module):
         mode: str = "node",
         compile_block_mask: bool = False,
     ) -> None:
+        """Build attention layers and per-head edge-attribute projection MLPs."""
         super().__init__()
         assert hidden_dim % num_heads == 0, "hidden_dim must be divisible by num_heads"
 
@@ -258,8 +260,7 @@ class NodeSelfAttention(nn.Module):
         seq_len: int,
         device: torch.device,
     ) -> dict[tuple[int, int, int], float]:
-        """
-        Prepare edge projections for score modification.
+        """Prepare edge projections for score modification.
 
         Projects edge attributes through per-head MLPs and caches the results
         for efficient lookup during attention computation.
@@ -315,8 +316,7 @@ class NodeSelfAttention(nn.Module):
         edge_attr: Tensor | dict[tuple[int, int], float] | None = None,
         edge_index: Tensor | None = None,
     ) -> Tensor:
-        """
-        Forward pass with masked attention and edge attribute projections.
+        """Forward pass with masked attention and edge attribute projections.
 
         Args:
             x: Input tensor with shape [batch_size, seq_len, hidden_dim]

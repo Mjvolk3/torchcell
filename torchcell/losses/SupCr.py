@@ -1,3 +1,5 @@
+"""Supervised contrastive regression (SupCR) metric-learning loss."""
+
 import torch
 from pytorch_metric_learning.distances import CosineSimilarity
 from pytorch_metric_learning.losses import BaseMetricLossFunction
@@ -7,12 +9,16 @@ from pytorch_metric_learning.utils import loss_and_miner_utils as lmu
 
 
 class SupCRLoss(BaseMetricLossFunction):
+    """Supervised contrastive loss over a temperature-scaled similarity matrix."""
+
     def __init__(self, temperature=0.07, **kwargs):
+        """Initialize the loss with a softmax temperature for similarity scaling."""
         super().__init__(**kwargs)
         self.temperature = temperature
         self.add_to_recordable_attributes(list_of_names=["temperature"], is_stat=False)
 
     def compute_loss(self, embeddings, labels, indices_tuple):
+        """Compute per-element supervised contrastive losses for the batch."""
         mat = self.distance(embeddings)
         if not self.distance.is_inverted:
             mat = -mat
@@ -45,9 +51,11 @@ class SupCRLoss(BaseMetricLossFunction):
         return self.zero_losses()
 
     def get_default_reducer(self):
+        """Return the default reducer that averages over non-zero losses."""
         return AvgNonZeroReducer()
 
     def get_default_distance(self):
+        """Return the default cosine-similarity distance."""
         return CosineSimilarity()
 
 

@@ -1,3 +1,5 @@
+"""Benchmark CPU-bound matrix multiplication scaling across allocated cores."""
+
 import concurrent.futures
 import multiprocessing as mp
 import os

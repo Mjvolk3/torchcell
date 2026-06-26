@@ -1,3 +1,5 @@
+"""Base genome dataset abstractions for in-memory genome graphs."""
+
 # torchcell/datasets/genome.py
 # [[torchcell.datasets.genome]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/genome.py
@@ -9,13 +11,18 @@ from torch_geometric.data import InMemoryDataset
 
 
 class GenomeDataset(InMemoryDataset, ABC):
+    """Abstract base for in-memory genome datasets."""
+
     pass
 
     def __add__():
+        """Combine two genome datasets (not yet implemented)."""
         pass
 
 
 class SCerevisiaeS88C(GenomeDataset):
+    """Genome dataset for the S. cerevisiae S288C reference strain."""
+
     pass
 
 

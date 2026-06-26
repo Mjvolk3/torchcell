@@ -1,3 +1,5 @@
+"""Lightning task training a hetero GNN pool model for binary fitness classification."""
+
 import logging
 
 import lightning as L
@@ -29,6 +31,8 @@ log = logging.getLogger(__name__)
 
 
 class ClassificationTask(L.LightningModule):
+    """Lightning module training a hetero GNN pool model for binned classification."""
+
     def __init__(
         self,
         model: nn.Module,
@@ -46,6 +50,24 @@ class ClassificationTask(L.LightningModule):
         grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
     ):
+        """Store the model, transforms, and configs and set up classification metrics.
+
+        Args:
+            model: The hetero GNN pool model to train.
+            bins: Number of label bins (2 for binary classification).
+            inverse_transform: Transform mapping classes back to values.
+            forward_transform: Transform mapping values to binned labels.
+            label_type: Name of the label being classified.
+            optimizer_config: Optimizer hyperparameters.
+            lr_scheduler_config: Learning-rate scheduler hyperparameters.
+            batch_size: Batch size for logging.
+            clip_grad_norm: Whether to clip gradient norm.
+            clip_grad_norm_max_norm: Max gradient norm when clipping.
+            boxplot_every_n_epochs: Boxplot logging frequency in epochs.
+            loss_func: Loss module.
+            grad_accumulation_schedule: Optional epoch-to-steps accumulation map.
+            device: Device string.
+        """
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
 
@@ -198,6 +220,7 @@ class ClassificationTask(L.LightningModule):
     #         return self.model(x_dict, edge_index_dict, batch_dict)
 
     def forward(self, batch):
+        """Run the model on the batch and return its outputs."""
         return self.model(batch)
 
     def _shared_step(self, batch, batch_idx, stage="train"):
@@ -325,6 +348,7 @@ class ClassificationTask(L.LightningModule):
         return loss, logits, y
 
     def training_step(self, batch, batch_idx):
+        """Run a training step and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
 
         if self.hparams.grad_accumulation_schedule is not None:
@@ -354,14 +378,17 @@ class ClassificationTask(L.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
+        """Run a validation step over the batch."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
         return loss
 
     def test_step(self, batch, batch_idx):
+        """Run a test step over the batch."""
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
     def on_train_epoch_end(self):
+        """Aggregate and log training metrics at epoch end."""
         for metric_name, metric_dict in self.train_metrics.items():
             computed_metrics = metric_dict.compute()
             for name, value in computed_metrics.items():
@@ -369,6 +396,7 @@ class ClassificationTask(L.LightningModule):
             metric_dict.reset()
 
     def on_validation_epoch_end(self):
+        """Aggregate and log validation metrics and plots at epoch end."""
         # Log metrics
         for metric_name, metric_dict in self.val_metrics.items():
             computed_metrics = metric_dict.compute()
@@ -437,6 +465,7 @@ class ClassificationTask(L.LightningModule):
             self.last_logged_best_step = current_global_step
 
     def on_test_epoch_end(self):
+        """Aggregate and log test metrics and artifacts at epoch end."""
         # Log metrics
         for metric_name, metric_dict in self.test_metrics.items():
             computed_metrics = metric_dict.compute()
@@ -486,6 +515,7 @@ class ClassificationTask(L.LightningModule):
         self.predictions = []
 
     def configure_optimizers(self):
+        """Build and return the optimizer and learning-rate scheduler."""
         optimizer_class = getattr(optim, self.hparams.optimizer_config["type"])
         optimizer_params = {
             k: v for k, v in self.hparams.optimizer_config.items() if k != "type"

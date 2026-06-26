@@ -1,3 +1,5 @@
+"""Lightning training module for the transformer cell gene-interaction model."""
+
 import logging
 
 import lightning as L
@@ -21,6 +23,8 @@ log = logging.getLogger(__name__)
 
 
 class RegressionTask(L.LightningModule):
+    """Lightning module training the transformer cell model on gene interactions."""
+
     def __init__(
         self,
         model: nn.Module,
@@ -40,6 +44,7 @@ class RegressionTask(L.LightningModule):
         inverse_transform: nn.Module | None = None,
         execution_mode: str = "training",  # "training" or "dataloader_profiling"
     ):
+        """Set up the model, cloned cell graph, loss, metrics, and execution mode."""
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
         self.model = model
@@ -180,8 +185,7 @@ class RegressionTask(L.LightningModule):
             )
 
     def _accumulate_edge_recovery_metrics(self, attention_weights_list, batch_idx):
-        """
-        Compute edge recovery metrics from attention weights.
+        """Compute edge recovery metrics from attention weights.
 
         Args:
             attention_weights_list: List of attention tensors per layer [batch, heads, N, N]
@@ -325,8 +329,7 @@ class RegressionTask(L.LightningModule):
                     torch.cuda.empty_cache()
 
     def _accumulate_attention_diagnostics(self, attention_weights_list, batch_idx):
-        """
-        Compute attention diagnostics (entropy, effective rank, top-k concentration) from attention weights.
+        """Compute attention diagnostics (entropy, effective rank, top-k concentration) from attention weights.
 
         Args:
             attention_weights_list: List of attention tensors per layer [batch, heads, N, N]
@@ -401,8 +404,7 @@ class RegressionTask(L.LightningModule):
         self.gradient_norms = {}
 
     def _accumulate_residual_updates(self, x_in, x_out, layer_idx):
-        """
-        Track layer update magnitude relative to input (Tier 1 - very cheap).
+        """Track layer update magnitude relative to input (Tier 1 - very cheap).
 
         Args:
             x_in: [batch, N+1, d] input to layer
@@ -431,8 +433,7 @@ class RegressionTask(L.LightningModule):
     def _accumulate_degree_bias(
         self, attention_weights, graph_name, layer_idx, head_idx
     ):
-        """
-        Compute correlation between graph degree and attention received (Tier 2 - medium cost).
+        """Compute correlation between graph degree and attention received (Tier 2 - medium cost).
 
         Args:
             attention_weights: [batch, heads, N, N] gene-gene attention weights
@@ -531,6 +532,7 @@ class RegressionTask(L.LightningModule):
             )
 
     def forward(self, batch, return_attention=False):
+        """Run a forward pass, optionally returning attention diagnostics."""
         # Get device from batch - handle different batch structures
         if hasattr(batch["gene"], "x"):
             batch_device = batch["gene"].x.device
@@ -1121,6 +1123,7 @@ class RegressionTask(L.LightningModule):
         return loss, predictions, gene_interaction_orig
 
     def training_step(self, batch, batch_idx):
+        """Run a manual-optimization training step with gradient accumulation."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
 
         # Model profiling mode: Skip optimizer step to isolate model compute
@@ -1177,6 +1180,7 @@ class RegressionTask(L.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
+        """Run the validation shared step and periodically free CUDA cache."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
 
         # Defragment GPU memory every 50 batches to prevent OOM from fragmentation
@@ -1186,6 +1190,7 @@ class RegressionTask(L.LightningModule):
         return loss
 
     def test_step(self, batch, batch_idx):
+        """Run the shared step for the test stage and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
@@ -1279,6 +1284,7 @@ class RegressionTask(L.LightningModule):
             plt.close(fig_gi)
 
     def on_train_epoch_end(self):
+        """Log metrics, plot samples, step the scheduler, and clear CUDA cache."""
         # Log training metrics
         computed_metrics = self._compute_metrics_safely(self.train_metrics)
         for name, value in computed_metrics.items():
@@ -1316,6 +1322,7 @@ class RegressionTask(L.LightningModule):
             torch.cuda.empty_cache()
 
     def on_train_epoch_start(self):
+        """Update gradient accumulation steps and clear training sample buffers."""
         # Update gradient accumulation steps based on current epoch
         if self.hparams.grad_accumulation_schedule is not None:
             for epoch_threshold in sorted(
@@ -1340,6 +1347,7 @@ class RegressionTask(L.LightningModule):
         self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_validation_epoch_start(self):
+        """Free CUDA memory, reset diagnostics, and clear validation sample buffers."""
         # CRITICAL: Aggressively clear GPU memory before validation starts
         # This prevents OOM when transitioning from training to validation
         # Training state (optimizer, gradients, cached activations) can fragment memory
@@ -1357,10 +1365,12 @@ class RegressionTask(L.LightningModule):
         self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_test_epoch_start(self):
+        """Clear test sample buffers at the start of the test epoch."""
         # Always clear sample containers for test (test runs only once)
         self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_validation_epoch_end(self):
+        """Log and reset validation metrics and plot validation samples periodically."""
         # Log validation metrics
         computed_metrics = self._compute_metrics_safely(self.val_metrics)
         for name, value in computed_metrics.items():
@@ -1437,6 +1447,7 @@ class RegressionTask(L.LightningModule):
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_test_epoch_end(self):
+        """Log and reset test metrics and plot test samples."""
         # Log test metrics
         computed_metrics = self._compute_metrics_safely(self.test_metrics)
         for name, value in computed_metrics.items():
@@ -1458,6 +1469,7 @@ class RegressionTask(L.LightningModule):
             self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def configure_optimizers(self):
+        """Build the optimizer and learning-rate scheduler from hparams config."""
         optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])
         optimizer_params = {
             k: v for k, v in self.hparams.optimizer_config.items() if k != "type"

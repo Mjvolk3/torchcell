@@ -1,3 +1,5 @@
+"""Set Transformer aggregation (SAB/ISAB encoders + PMA pooling) for PyG."""
+
 import torch
 from torch import Tensor
 from torch_geometric.experimental import disable_dynamic_shapes
@@ -10,6 +12,8 @@ from torch_geometric.nn.aggr.utils import (
 
 
 class SetTransformerAggregation(Aggregation):
+    """Permutation-invariant set aggregation via Set Transformer encoders and PMA."""
+
     def __init__(
         self,
         channels: int,
@@ -23,6 +27,7 @@ class SetTransformerAggregation(Aggregation):
         num_induced_points: int = 32,
         use_isab: bool = True,
     ):
+        """Build the encoder blocks (SAB or ISAB), the PMA pooler, and decoders."""
         super().__init__()
         self.channels = channels
         self.num_seed_points = num_seed_points
@@ -57,6 +62,7 @@ class SetTransformerAggregation(Aggregation):
         )
 
     def reset_parameters(self):
+        """Reset parameters of all encoder, PMA, and decoder blocks."""
         for encoder in self.encoders:
             encoder.reset_parameters()
         self.pma.reset_parameters()
@@ -73,6 +79,7 @@ class SetTransformerAggregation(Aggregation):
         dim: int = -2,
         max_num_elements: int | None = None,
     ) -> Tensor:
+        """Aggregate grouped elements into per-set seed-point representations."""
         x, mask = self.to_dense_batch(
             x, index, ptr, dim_size, dim, max_num_elements=max_num_elements
         )
@@ -92,6 +99,7 @@ class SetTransformerAggregation(Aggregation):
 
 
 def main():
+    """Smoke-test the SAB and ISAB variants with a forward/backward pass."""
     import torch
     from torch.optim import Adam
 

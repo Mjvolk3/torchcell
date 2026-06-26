@@ -1,3 +1,5 @@
+"""LMDB-backed aggregation of experiment/reference pairs into grouped entries."""
+
 import json
 import os
 from abc import ABC, abstractmethod
@@ -16,12 +18,17 @@ from torchcell.datamodels import (
 
 
 class ExperimentInfo(ModelStrict):
+    """Type metadata for an experiment/reference pair."""
+
     experiment_type: str
     experiment_reference_type: str
 
 
 class Aggregator(ABC):
+    """Abstract base that groups experiment pairs into an aggregated LMDB store."""
+
     def __init__(self, root: str):
+        """Set up paths and lazy LMDB/phenotype state under the given root."""
         self.root = root
         self.lmdb_dir = os.path.join(self.root, "aggregation", "lmdb")
         self.env = None
@@ -31,9 +38,9 @@ class Aggregator(ABC):
     def aggregate_check(
         self, data: dict[str, ExperimentType | ExperimentReferenceType]
     ) -> str:
-        """
-        Check if the experiment should be aggregated based on specific criteria.
-        Returns a string key for grouping similar experiments.
+        """Return a grouping key for the experiment pair.
+
+        The key determines which experiments are aggregated together.
         """
         pass
 
@@ -43,11 +50,13 @@ class Aggregator(ABC):
             list[dict[str, ExperimentType | ExperimentReferenceType]]
         ],
     ) -> list[dict[str, ExperimentType | ExperimentReferenceType]]:
+        """Flatten nested lists of experiments into a single list."""
         return [exp for exp_list in experiments_to_aggregate for exp in exp_list]
 
     # TODO now that phenotype info is moved to [[torchcell.data.neo4j_cell]] we can probably remove this
     @property
     def phenotype_info(self) -> list[type[Phenotype]]:
+        """Return the phenotype classes present in the aggregated store (cached)."""
         if self._phenotype_info is None:
             self._phenotype_info = self._get_phenotype_info()
         return self._phenotype_info
@@ -90,11 +99,13 @@ class Aggregator(ABC):
             self.env = None
 
     def close_lmdb(self):
+        """Close the LMDB environment if open and reset the handle."""
         if self.env is not None:
             self.env.close()
             self.env = None
 
     def process(self, input_path: str, output_path: str) -> None:
+        """Read pairs from input LMDB, group by aggregate key, and write groups out."""
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         self._init_lmdb(readonly=False)  # Initialize LMDB for writing
 
@@ -154,6 +165,7 @@ class Aggregator(ABC):
     def __getitem__(
         self, index: int | slice | list
     ) -> list[dict[str, ExperimentType | ExperimentReferenceType]]:
+        """Return aggregated group(s) by int index, slice, or list of indices."""
         self._init_lmdb(readonly=True)  # Initialize LMDB for reading
         if isinstance(index, int):
             return self._get_record_by_index(index)
@@ -215,6 +227,7 @@ class Aggregator(ABC):
         return results
 
     def __len__(self):
+        """Return the number of aggregated groups in the store."""
         self._init_lmdb(readonly=True)
         if self.env is None:
             return 0  # Return 0 if the LMDB doesn't exist yet
@@ -222,7 +235,9 @@ class Aggregator(ABC):
             return txn.stat()["entries"]
 
     def __bool__(self):
+        """Return whether the aggregated LMDB directory exists."""
         return os.path.exists(self.lmdb_dir)
 
     def __repr__(self):
+        """Return a string representation showing the root path."""
         return f"Aggregator(root={self.root})"

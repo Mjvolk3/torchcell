@@ -1,3 +1,5 @@
+"""PyG transform converting heterogeneous sparse adjacencies to dense matrices."""
+
 import torch
 from torch import Tensor
 from torch_geometric.data import HeteroData
@@ -17,9 +19,11 @@ class HeteroToDense(BaseTransform):
     """
 
     def __init__(self, num_nodes_dict: dict[str, int] | None = None) -> None:
+        """Store the optional per-node-type target node counts for padding."""
         self.num_nodes_dict = num_nodes_dict or {}
 
     def forward(self, data: HeteroData) -> HeteroData:
+        """Densify edges, build incidence matrices, and pad node features per type."""
         # First determine number of nodes for each node type
         num_nodes_dict = {}
         for node_type in data.node_types:
@@ -166,6 +170,7 @@ class HeteroToDense(BaseTransform):
         return data
 
     def __repr__(self) -> str:
+        """Return the transform repr, including num_nodes_dict when set."""
         if not self.num_nodes_dict:
             return f"{self.__class__.__name__}()"
         return f"{self.__class__.__name__}(num_nodes_dict={self.num_nodes_dict})"

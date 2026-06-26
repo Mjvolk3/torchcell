@@ -1,8 +1,9 @@
+"""GAT-then-DiffPool model that pools each input graph into a graph embedding."""
+
 # torchcell/models/gat_diffpool
 # [[torchcell.models.gat_diffpool]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/gat_diffpool
 # Test file: tests/torchcell/models/test_gat_diffpool.py
-
 
 import torch
 import torch.nn as nn
@@ -23,6 +24,8 @@ from torchcell.models.act import act_register
 
 
 class GatDiffPool(nn.Module):
+    """Per-graph GATv2 encoder followed by differentiable pooling layers."""
+
     def __init__(
         self,
         in_channels: int,
@@ -44,6 +47,7 @@ class GatDiffPool(nn.Module):
         pruned_max_average_node_degree: int | None = None,  # New parameter
         weight_init: str = "default",
     ):
+        """Build the initial GAT, DiffPool, and post-pool GAT layer stacks."""
         super().__init__()
         self.weight_init = weight_init
         self.cluster_size_decay_factor = cluster_size_decay_factor
@@ -185,6 +189,8 @@ class GatDiffPool(nn.Module):
         self.init_weights()
 
     def init_weights(self):
+        """Apply the configured weight initialization to all submodules."""
+
         def init_func(module):
             if isinstance(module, nn.Linear):
                 if self.weight_init == "xavier_uniform":
@@ -241,6 +247,7 @@ class GatDiffPool(nn.Module):
             self.apply(init_func)
 
     def get_norm_layer(self, norm, channels):
+        """Return the normalization layer matching ``norm`` for ``channels``."""
         if norm is None:
             return nn.Identity()
         elif norm == "batch":
@@ -259,6 +266,7 @@ class GatDiffPool(nn.Module):
             raise ValueError(f"Unsupported normalization type: {norm}")
 
     def forward(self, x, edge_indices: list[torch.Tensor], batch):
+        """Encode and pool each graph, returning outputs and DiffPool losses."""
         graph_outputs = []
         attention_weights = []
         cluster_assignments = []
@@ -377,15 +385,14 @@ class GatDiffPool(nn.Module):
         )
 
     def prune_edges_dense(self, adj, k):
-        """
-        Prune edges in a dense adjacency matrix to keep only the top k*n edges.
+        """Prune a dense adjacency matrix to keep only the top k*n edges.
 
         Args:
-        adj (torch.Tensor): Dense adjacency matrix of shape (batch_size, num_nodes, num_nodes)
-        k (int): Maximum average number of edges to keep per node
+            adj: Dense adjacency matrix of shape (batch_size, num_nodes, num_nodes).
+            k: Maximum average number of edges to keep per node.
 
         Returns:
-        torch.Tensor: Pruned dense adjacency matrix
+            The pruned, symmetric dense adjacency matrix.
         """
         batch_size, num_nodes, _ = adj.shape
         max_edges_to_keep = k * num_nodes
@@ -421,6 +428,7 @@ class GatDiffPool(nn.Module):
 
 
 def load_sample_data_batch():
+    """Load a sample batch and max node count for manual model testing."""
     import os
     import os.path as osp
 
@@ -522,6 +530,7 @@ def load_sample_data_batch():
 
 
 def main():
+    """Run GatDiffPool on a sample batch as a smoke test."""
     # Load the sample data batch
     batch, max_num_nodes = load_sample_data_batch()
 

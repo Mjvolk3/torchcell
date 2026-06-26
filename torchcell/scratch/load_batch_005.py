@@ -1,8 +1,9 @@
+"""Scratch helper to load a sample batch (variant 005)."""
+
 # torchcell/scratch/load_batch_005
 # [[torchcell.scratch.load_batch_005]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/scratch/load_batch_005
 # Test file: tests/torchcell/scratch/test_load_batch_005.py
-
 
 import os
 import os.path as osp
@@ -49,8 +50,7 @@ def load_sample_data_batch(
     ] = "dango_string9_1",
     is_dense: bool = False,
 ):
-    """
-    Load a sample data batch for Dango, HeteroCellBipartite, or DCell models.
+    """Load a sample data batch for Dango, HeteroCellBipartite, or DCell models.
 
     Args:
         batch_size: Batch size for dataloader

@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/sameith2015
 # Test file: tests/torchcell/datasets/scerevisiae/test_sameith2015.py
 
+"""Sameith 2015 single- and double-mutant microarray expression datasets."""
+
 import logging
 import os
 import os.path as osp
@@ -72,6 +74,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Set up workers, batch size, and the genome before base initialization."""
         self.process_workers = process_workers
         self.batch_size = batch_size
 
@@ -86,14 +89,17 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
     @property
     def experiment_class(self) -> type[Experiment]:
+        """Return the experiment type stored by this dataset."""
         return MicroarrayExpressionExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
+        """Return the experiment-reference type stored by this dataset."""
         return MicroarrayExpressionExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the expected raw GEO file names."""
         return [f"{self.geo_accession}_family.soft.gz"]
 
     def download(self):
@@ -149,6 +155,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Parse GEO and supplementary data into single-mutant experiments."""
         # Initialize resolution statistics
         self.resolved_by_excel = 0
         self.resolved_by_gene_table = 0
@@ -667,6 +674,8 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         """Create experiment for single deletion mutant.
 
         Args:
+            dataset_name: Name of the dataset the experiment belongs to
+            sample_info: Metadata for the sample, including gene names
             mutant_data: Expression values for deletion mutant
             refpool_data: Expression values for reference pool
             log2_ratio_data: log2(mutant/refpool) ratios
@@ -754,6 +763,8 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
 @register_dataset
 class DmMicroarraySameith2015Dataset(ExperimentDataset):
+    """Sameith 2015 double-mutant microarray expression dataset (GSE42536)."""
+
     # GEO accession for double mutant microarray expression dataset
     geo_accession = "GSE42536"
 
@@ -767,6 +778,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Set up workers, batch size, and the genome before base initialization."""
         self.process_workers = process_workers
         self.batch_size = batch_size
 
@@ -781,14 +793,17 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
     @property
     def experiment_class(self) -> type[Experiment]:
+        """Return the experiment type stored by this dataset."""
         return MicroarrayExpressionExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
+        """Return the experiment-reference type stored by this dataset."""
         return MicroarrayExpressionExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the expected raw GEO file names."""
         return [f"{self.geo_accession}_family.soft.gz"]
 
     def download(self):
@@ -886,6 +901,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Parse GEO and supplementary data into double-mutant experiments."""
         # Initialize resolution statistics
         self.resolved_by_excel = 0
         self.resolved_by_gene_table = 0
@@ -1685,6 +1701,8 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         """Create experiment for double deletion mutant with PER-SAMPLE strain.
 
         Args:
+            dataset_name: Name of the dataset the experiment belongs to
+            sample_info: Metadata for the sample, including gene names
             mutant_data: Expression values for deletion mutant
             refpool_data: Expression values for reference pool
             log2_ratio_data: log2(mutant/refpool) ratios

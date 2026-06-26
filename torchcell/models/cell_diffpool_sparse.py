@@ -1,3 +1,5 @@
+"""Sparse DiffPool cell model with GAT-based pooling over multiple graphs."""
+
 from typing import Literal
 
 import torch
@@ -47,6 +49,8 @@ def from_dense_batch(dense_x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]
 
 
 class SingleDiffPool(nn.Module):
+    """A single DiffPool block: GAT embedding plus learned cluster assignment."""
+
     def __init__(
         self,
         max_num_nodes: int,
@@ -62,6 +66,7 @@ class SingleDiffPool(nn.Module):
         target_dim: int = 2,
         cluster_aggregation: Literal["mean", "sum"] = "mean",
     ):
+        """Build the pooling/embedding GAT stacks and the prediction head."""
         super().__init__()
 
         # Set parameters
@@ -141,6 +146,7 @@ class SingleDiffPool(nn.Module):
         self.lin = nn.Linear(embed_gat_hidden_channels, target_dim)
 
     def get_norm_layer(self, norm, channels):
+        """Return the normalization layer matching the given norm name."""
         if norm is None:
             return nn.Identity()
         elif norm == "batch":
@@ -159,6 +165,7 @@ class SingleDiffPool(nn.Module):
             raise ValueError(f"Unsupported normalization type: {norm}")
 
     def forward(self, x, edge_index, batch):
+        """Embed and pool the graph, returning pooled features and DiffPool losses."""
         # Initialize variables to store outputs
         pool_attention_weights = []  # Store pooling GAT attention weights
         embed_attention_weights = []  # Store embedding GAT attention weights
@@ -269,6 +276,8 @@ class SingleDiffPool(nn.Module):
 
 
 class CellDiffPool(nn.Module):
+    """DiffPool model running per-graph pooling stacks and fusing their readouts."""
+
     def __init__(
         self,
         graph_names: list[str],  # e.g. ["physical", "regulatory"]
@@ -285,6 +294,7 @@ class CellDiffPool(nn.Module):
         target_dim: int = 2,
         cluster_aggregation: Literal["mean", "sum"] = "mean",
     ):
+        """Build a per-graph SingleDiffPool stack and the fused prediction head."""
         super().__init__()
 
         self.graph_names = sorted(graph_names)  # Sort for consistent ordering
@@ -414,6 +424,7 @@ class CellDiffPool(nn.Module):
 
 
 def load_sample_data_batch():
+    """Load a sample batch for exercising the model during development."""
     import os
     import os.path as osp
 
@@ -500,7 +511,7 @@ def load_sample_data_batch():
 
 
 def main_single():
-
+    """Run a SingleDiffPool smoke test on a sample batch."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
     # Load the sample data batch
@@ -610,7 +621,7 @@ def main_single():
 
 
 def main():
-
+    """Run a CellDiffPool smoke test on a sample batch."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
     # Load the sample data batch

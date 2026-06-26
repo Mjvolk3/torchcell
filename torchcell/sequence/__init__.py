@@ -1,3 +1,5 @@
+"""Sequence package: genome, gene, and DNA window data structures and helpers."""
+
 # torchcell/sequence/__init__.py
 from .data import (
     DnaSelectionResult,

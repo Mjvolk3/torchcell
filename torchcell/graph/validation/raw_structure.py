@@ -1,3 +1,5 @@
+"""Infer and visualize the nested type structure of raw SGD JSON records."""
+
 import json
 import os
 from collections import defaultdict
@@ -9,6 +11,7 @@ from adjustText import adjust_text
 
 
 def analyze_structure(data, parent_key="") -> dict[str, Any]:
+    """Recursively map each dotted key path to the set of value type names found."""
     type_structure = defaultdict(set)
 
     if isinstance(data, dict):
@@ -28,6 +31,7 @@ def analyze_structure(data, parent_key="") -> dict[str, Any]:
 
 
 def build_graph(data, graph=None):
+    """Build a directed graph from dotted key paths and their leaf type values."""
     if graph is None:
         graph = nx.DiGraph()
 
@@ -67,6 +71,7 @@ def build_graph(data, graph=None):
 
 
 def calculate_depths(graph):
+    """Return each node's BFS depth from the minimal-in-degree root node."""
     if not graph.nodes:  # if the graph is empty
         return {}
 
@@ -86,6 +91,7 @@ def calculate_depths(graph):
 
 
 def draw_and_save_graph(graph, output_path, layout="spring"):
+    """Render the type graph with the chosen layout and save it as PNG and PDF."""
     plt.figure(figsize=(40, 30))  # Adjust as necessary
 
     if layout == "spring":
@@ -125,10 +131,12 @@ def draw_and_save_graph(graph, output_path, layout="spring"):
 
 
 def get_gene_name(file_path):
+    """Extract the gene name from a JSON file path's stem."""
     return file_path.split("/")[-1].split(".")[0]
 
 
 def process_src_to_image(path):
+    """Return the path components from ``src`` onward joined back into a path."""
     split_path = path.split("/")
     index_of_src = split_path.index("src")
     post_src_path = split_path[index_of_src:]  # taking all parts after 'src'
@@ -137,6 +145,13 @@ def process_src_to_image(path):
 
 
 def analyze_json(file_path, create_images=False, layout="spring"):
+    """Write per-key type-structure JSON and optionally type-graph images.
+
+    Args:
+        file_path: Path to the raw SGD JSON record.
+        create_images: When True, also render and save type-graph images.
+        layout: Graph layout passed to ``draw_and_save_graph``.
+    """
     with open(file_path) as f:
         data = json.load(f)
 
@@ -170,7 +185,7 @@ def analyze_json(file_path, create_images=False, layout="spring"):
 
 
 def main():
-
+    """Analyze a sample gene JSON record and render its type graph."""
     file_path = "data/sgd/genes/YPR201W.json"
     analyze_json(file_path, create_images=True, layout="tree")
 

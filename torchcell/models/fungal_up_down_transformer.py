@@ -2,6 +2,8 @@
 # [[torchcell.models.fungal_up_down_transformer]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/fungal_up_down_transformer.py
 # Test file: torchcell/models/test_fungal_up_down_transformer.py
+"""SpeciesLM-based transformer embedding fungal upstream/downstream DNA sequences."""
+
 import os
 import os.path as osp
 
@@ -12,7 +14,8 @@ from torchcell.models.llm import NucleotideModel
 
 
 class FungalUpDownTransformer(NucleotideModel):
-    r"""
+    r"""Embed DNA sequences upstream and downstream of the CDS via SpeciesLM.
+
     The FungalUpDownTransformer embeds DNA sequences
     upstream the CDS and downstream the CDS.
     It was trained on 1003 bp upstream sequences (including the start codon) and
@@ -32,15 +35,13 @@ class FungalUpDownTransformer(NucleotideModel):
     def __init__(
         self, model_name: str = None, target_layer: int | tuple[int, int] = (8,)
     ):
-        """
-        Initializes a new instance of the FungalUpDownTransformer.
+        """Initialize the transformer, load the model, and set the target layer.
 
         Args:
             model_name (str, optional): The name of the model to be loaded.
-            target_layer (int | tuple[int, int], optional):
-            The layer(s) of the model to be used for embeddings.
-            If tuple, embeddings are averaged over the range of layers.
-            Defaults to (8,).
+            target_layer (int | tuple[int, int], optional): The layer(s) of the
+                model to be used for embeddings. If a tuple, embeddings are
+                averaged over the range of layers. Defaults to (8,).
         """
         self.target_layer = target_layer
         self.tokenizer = None
@@ -50,9 +51,7 @@ class FungalUpDownTransformer(NucleotideModel):
         self.load_model()
 
     def _check_and_download_model(self) -> None:
-        r"""
-        Verifies whether the model is downloaded, if not, downloads the model.
-        """
+        r"""Verify the model is downloaded and download it from HuggingFace if not."""
         # Define the model name
         model_path = osp.join(self.hugging_model_dir, self.model_name)
 
@@ -88,9 +87,7 @@ class FungalUpDownTransformer(NucleotideModel):
             print("Download finished.")
 
     def load_model(self) -> None:
-        r"""
-        Loads the required model and tokenizer for embedding sequences.
-        """
+        r"""Load the model and tokenizer used for embedding sequences."""
         self._check_and_download_model()
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.hugging_model_dir, revision=self.model_name
@@ -102,8 +99,7 @@ class FungalUpDownTransformer(NucleotideModel):
 
     @property
     def max_sequence_size(self) -> int:
-        r"""
-        Returns the maximum permissible sequence size for the loaded model.
+        r"""Return the maximum permissible sequence size for the loaded model.
 
         Returns:
             int: The maximum permissible sequence size.
@@ -117,8 +113,7 @@ class FungalUpDownTransformer(NucleotideModel):
     def _pad_sequence(
         tokenized_data: dict[str, torch.tensor], mean_embedding: bool
     ) -> tuple[dict[str, torch.Tensor], int]:
-        r"""
-        Pads the tokenized sequence to meet the desired length.
+        r"""Pad the tokenized sequence to the desired length.
 
         Args:
             tokenized_data (dict[str, torch.tensor]): The tokenized sequence data.
@@ -170,9 +165,7 @@ class FungalUpDownTransformer(NucleotideModel):
         mean_embedding: bool = True,
         proxy_species: str = "candida_glabrata",
     ) -> torch.Tensor:
-        r"""
-        Embeds the provided sequences using the loaded transformer model
-        """
+        r"""Embed the provided sequences using the loaded transformer model."""
         embeddings = []
 
         def kmers_stride1(seq, k=6):

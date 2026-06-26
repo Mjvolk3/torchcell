@@ -1,3 +1,5 @@
+"""Graph node-set attention encoder using FlexAttention with adjacency masking."""
+
 import torch
 import torch.nn as nn
 from scipy.sparse import csr_matrix
@@ -8,11 +10,10 @@ from torch_geometric.utils import to_dense_adj
 
 
 class AttentionBlock(nn.Module):
-    """
-    Base Attention Block with common components for both MAB and SAB
-    """
+    """Base attention block with common components for both MAB and SAB."""
 
     def __init__(self, hidden_dim, num_heads=8):
+        """Set up shared layer norms and the post-attention MLP."""
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
@@ -30,21 +31,22 @@ class AttentionBlock(nn.Module):
         )
 
     def forward(self, x, adj_matrix=None):
+        """Raise NotImplementedError; subclasses implement the attention pass."""
         raise NotImplementedError("Implemented in subclasses")
 
 
 class MAB(AttentionBlock):
-    """
-    Masked Attention Block - Uses graph structure to mask attention
-    """
+    """Masked attention block that uses graph structure to mask attention."""
 
     def __init__(self, hidden_dim, num_heads=8):
+        """Initialize the masked attention block and log its dimensions."""
         super().__init__(hidden_dim, num_heads)
         print(
             f"Initializing MAB with dims: hidden={hidden_dim}, heads={num_heads}, head_dim={self.head_dim}"
         )
 
     def forward(self, x, adj_matrix):
+        """Apply adjacency-masked multi-head attention plus the residual MLP."""
         device = x.device
         print(
             f"MAB.forward - Input on device: {device}, x shape: {x.shape}, adj shape: {adj_matrix.shape}"
@@ -118,17 +120,17 @@ class MAB(AttentionBlock):
 
 
 class SAB(AttentionBlock):
-    """
-    Self Attention Block - Uses standard self-attention with no masking
-    """
+    """Self-attention block that uses standard self-attention with no masking."""
 
     def __init__(self, hidden_dim, num_heads=8):
+        """Initialize the self-attention block and log its dimensions."""
         super().__init__(hidden_dim, num_heads)
         print(
             f"Initializing SAB with dims: hidden={hidden_dim}, heads={num_heads}, head_dim={self.head_dim}"
         )
 
     def forward(self, x, adj_matrix=None):
+        """Apply unmasked multi-head self-attention plus the residual MLP."""
         device = x.device
         print(f"SAB.forward - Input on device: {device}, x shape: {x.shape}")
 
@@ -175,19 +177,18 @@ class SAB(AttentionBlock):
 
 
 class NSAEncoder(nn.Module):
-    """
-    Node-Set Attention Encoder with customizable pattern of MAB and SAB blocks
-    """
+    """Node-set attention encoder with a customizable pattern of MAB/SAB blocks."""
 
     def __init__(self, input_dim, hidden_dim, pattern=None, num_heads=8):
-        """
+        """Build the attention stack from a pattern of MAB/SAB blocks.
+
         Args:
             input_dim: Dimension of input node features
             hidden_dim: Hidden dimension for attention layers
             pattern: List of strings specifying the sequence of attention blocks.
-                     Each element should be either 'M' for MAB or 'S' for SAB.
-                     Example: ['M', 'S', 'M', 'S', 'S']
-                     If None, defaults to alternating MAB and SAB: ['M', 'S', 'M', 'S']
+                Each element should be either 'M' for MAB or 'S' for SAB.
+                Example: ['M', 'S', 'M', 'S', 'S']. If None, defaults to
+                alternating MAB and SAB: ['M', 'S', 'M', 'S']
             num_heads: Number of attention heads
         """
         super().__init__()
@@ -221,7 +222,8 @@ class NSAEncoder(nn.Module):
                 print(f"  Added layer {i}: Self Attention Block (SAB)")
 
     def forward(self, x, edge_index, batch=None):
-        """
+        """Encode batched graphs through the configured attention block stack.
+
         Args:
             x: Node features [num_nodes, input_dim]
             edge_index: Graph connectivity [2, num_edges]
@@ -281,6 +283,7 @@ class NSAEncoder(nn.Module):
 
 
 def test_nsa_implementation(data, reordered_adj):
+    """Build an NSAEncoder, run a forward pass on the data, and return output."""
     # Check if CUDA is available
     cuda_available = torch.cuda.is_available()
     device = torch.device("cuda" if cuda_available else "cpu")
@@ -331,6 +334,7 @@ def test_nsa_implementation(data, reordered_adj):
 
 
 def main():
+    """Generate an SBM graph, reorder it, and run the NSA test end to end."""
     print("=====================================")
     print("Starting Node-Set Attention Test with Custom MAB/SAB Pattern")
     print("=====================================")

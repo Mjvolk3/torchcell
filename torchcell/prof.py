@@ -2,6 +2,7 @@
 # [[torchcell.prof]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/prof.py
 # Test file: torchcell/test_prof.py
+"""cProfile decorators that dump per-call timing stats to a ``profiles/`` directory."""
 
 import os
 import os.path as osp
@@ -9,6 +10,7 @@ import time
 
 
 def prof_input(func):
+    """Decorate ``func`` to cProfile it, prompting for an experiment-name prefix."""
     import cProfile
     import datetime
     import pstats
@@ -31,6 +33,7 @@ def prof_input(func):
 
 
 def prof(func):
+    """Decorate ``func`` to cProfile it and dump stats under a fixed name prefix."""
     import cProfile
     import datetime
     import pstats
@@ -51,6 +54,8 @@ def prof(func):
 
 
 def main():
+    """Demonstrate both profiling decorators on dummy sleep functions."""
+
     @prof
     def test_func_dec():
         print("test func decorator")

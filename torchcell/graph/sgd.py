@@ -3,6 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/graph/sgd
 # Test file: tests/torchcell/graph/test_sgd.py
 
+"""Async fetching and caching of SGD locus data from yeastgenome.org."""
 
 import asyncio
 import json
@@ -36,6 +37,8 @@ log = logging.getLogger(__name__)
 
 @define
 class Gene:
+    """Fetch, cache, and expose SGD annotation details for a single locus."""
+
     locusID: str = "YAL001C"
     is_validated: bool = field(default=True, init=True, repr=False)
     sgd_url: str = "https://www.yeastgenome.org/backend/locus"
@@ -46,6 +49,7 @@ class Gene:
     _data_task: Task[Any] | None = field(default=None, init=False, repr=False)
 
     def __attrs_post_init__(self) -> None:
+        """Set the save path and load cached data if it already exists."""
         if not osp.exists(self.base_data_dir):
             os.makedirs(self.base_data_dir)
         self.save_path: str = osp.join(self.base_data_dir, f"{self.locusID}.json")
@@ -57,6 +61,7 @@ class Gene:
 
     @property
     def data(self) -> dict[str, dict[Any, Any] | list[Any]]:
+        """Return the fetched data, raising if it has not been fetched yet."""
         if self._data != {}:
             return self._data
         else:
@@ -65,6 +70,7 @@ class Gene:
             )
 
     async def fetch_data(self) -> None:
+        """Schedule or await the download and raise if it produced no data."""
         if self._data_task is None:
             # Schedule the download
             self._data_task = asyncio.create_task(self.download_data())
@@ -77,6 +83,7 @@ class Gene:
             raise ValueError("Data fetch failed.")
 
     async def download_data(self) -> None:
+        """Fetch every SGD detail endpoint for the locus and write to disk."""
         self._data["locus"] = await self.locus()
         self._data["sequence_details"] = await self.sequence_details()
         self._data["neighbor_sequence_details"] = await self.neighbor_sequence_details()
@@ -93,10 +100,12 @@ class Gene:
         self.write()
 
     def write(self) -> None:
+        """Write the cached data to the locus JSON file."""
         with open(self.save_path, "w") as f:
             json.dump(self._data, f, indent=4)
 
     def read(self) -> dict[str, dict[Any, Any] | list[Any]]:
+        """Read and return the cached locus data from disk."""
         if not osp.exists(self.save_path):
             raise ValueError(f"File {self.save_path} does not exist")
         with open(self.save_path) as f:
@@ -151,6 +160,7 @@ class Gene:
         return None
 
     async def locus(self) -> dict[Any, Any] | list[Any]:
+        """Fetch the base locus record, validating it when enabled."""
         url = osp.join(self.sgd_url, self.locusID)
         data = await self._get_data(url)
         if self.is_validated:
@@ -161,57 +171,68 @@ class Gene:
         return data  # breakpoint, printed out data
 
     async def sequence_details(self) -> dict[Any, Any] | list[Any]:
+        """Fetch the locus sequence_details endpoint."""
         url = osp.join(self.sgd_url, self.locusID, "sequence_details")
         data = await self._get_data(url)
         return data
 
     async def neighbor_sequence_details(self) -> dict[Any, Any] | list[Any]:
+        """Fetch the locus neighbor_sequence_details endpoint."""
         url = osp.join(self.sgd_url, self.locusID, "neighbor_sequence_details")
         data = await self._get_data(url)
         return data
 
     async def posttranslational_details(self) -> dict[Any, Any] | list[Any]:
+        """Fetch the locus posttranslational_details endpoint."""
         url = osp.join(self.sgd_url, self.locusID, "posttranslational_details")
         data = await self._get_data(url)
         return data
 
     async def protein_experiment_details(self) -> dict[Any, Any] | list[Any]:
+        """Fetch the locus protein_experiment_details endpoint."""
         url = osp.join(self.sgd_url, self.locusID, "protein_experiment_details")
         data = await self._get_data(url)
         return data
 
     async def protein_domain_details(self) -> dict[Any, Any] | list[Any]:
+        """Fetch the locus protein_domain_details endpoint."""
         url = osp.join(self.sgd_url, self.locusID, "protein_domain_details")
         data = await self._get_data(url)
         return data
 
     async def go_details(self) -> dict[Any, Any] | list[Any]:
+        """Fetch the locus go_details (Gene Ontology) endpoint."""
         url = osp.join(self.sgd_url, self.locusID, "go_details")
         data = await self._get_data(url)
         return data
 
     async def phenotype_details(self) -> dict[Any, Any] | list[Any]:
+        """Fetch the locus phenotype_details endpoint."""
         url = osp.join(self.sgd_url, self.locusID, "phenotype_details")
         data = await self._get_data(url)
         return data
 
     async def interaction_details(self) -> dict[Any, Any] | list[Any]:
+        """Fetch the locus interaction_details endpoint."""
         url = osp.join(self.sgd_url, self.locusID, "interaction_details")
         data = await self._get_data(url)
         return data
 
     async def regulation_details(self) -> dict[Any, Any] | list[Any]:
+        """Fetch the locus regulation_details endpoint."""
         url = osp.join(self.sgd_url, self.locusID, "regulation_details")
         data = await self._get_data(url)
         return data
 
     async def literature_details(self) -> dict[Any, Any] | list[Any]:
+        """Fetch the locus literature_details endpoint."""
         url = osp.join(self.sgd_url, self.locusID, "literature_details")
         data = await self._get_data(url)
         return data
 
 
 async def process_gene(gene: Gene, progress_bar: Any) -> dict[Any, Any] | list[Any]:
+    """Fetch a gene's data, advance the progress bar, and return the data."""
     await gene.fetch_data()
     data = gene.data
     progress_bar.update()
@@ -221,6 +242,7 @@ async def process_gene(gene: Gene, progress_bar: Any) -> dict[Any, Any] | list[A
 async def download_genes(
     locus_ids: list[str], gene_factory: Callable[[str], Gene], is_validated: bool
 ) -> None:
+    """Download data for all loci concurrently, skipping already-cached files."""
     with tqdm(total=len(locus_ids)) as progress_bar:
         tasks = []
         for id_ in locus_ids:
@@ -239,6 +261,7 @@ async def download_genes(
 
 
 def create_gene(locusID: str, is_validated: bool) -> Gene:
+    """Construct a Gene for the given locus id and validation flag."""
     return Gene(locusID=locusID, is_validated=is_validated)
 
 
@@ -255,6 +278,7 @@ async def download_gene_chunk(chunk, create_gene_fn, validate_flag):
 
 
 def main_get_all_genes():
+    """Download SGD data for every gene in the S288C genome in chunks."""
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     genome = SCerevisiaeGenome()

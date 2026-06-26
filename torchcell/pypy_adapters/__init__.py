@@ -1,3 +1,5 @@
+"""PyPy-compatible BioCypher adapters for Costanzo 2016 and Kuzmin 2018 datasets."""
+
 from .costanzo2016_pypy_adapter import DmfCostanzo2016Adapter as DmfCostanzo2016Adapter
 from .costanzo2016_pypy_adapter import SmfCostanzo2016Adapter as SmfCostanzo2016Adapter
 from .kuzmin2018_pypy_adapter import DmfKuzmin2018Adapter as DmfKuzmin2018Adapter

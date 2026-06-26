@@ -2,6 +2,7 @@
 # [[torchcell.datamodels.__init__]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/__init__.py
 
+"""Pydantic data models for torchcell experiments and phenotypes."""
 
 from .conversion import ConversionEntry, ConversionMap, Converter
 from .pydant import ModelStrict, ModelStrictArbitrary

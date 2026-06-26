@@ -1,3 +1,5 @@
+"""Scratch loader reading Mechanistic-Aware expression RDS files into pandas."""
+
 import pandas as pd
 import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
@@ -7,6 +9,7 @@ pandas2ri.activate()
 
 
 def read_rds_to_dataframe(rds_file_path: str) -> pd.DataFrame:
+    """Read an R ``.RDS`` file and return its contents as a pandas DataFrame."""
     # Load the RDS file
     readRDS = ro.r["readRDS"]
     rds_data = readRDS(rds_file_path)

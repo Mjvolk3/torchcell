@@ -1,4 +1,6 @@
 # torchcell/graph/__init__.py
+"""Gene graph construction and filtering utilities for S. cerevisiae."""
+
 from .graph import (
     GeneGraph,
     GeneMultiGraph,

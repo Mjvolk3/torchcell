@@ -1,3 +1,5 @@
+"""Tests for the multi-dimensional NaN-tolerant WeightedDistLoss."""
+
 import pytest
 import torch
 

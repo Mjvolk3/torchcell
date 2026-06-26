@@ -2,6 +2,8 @@
 # [[torchcell.scratch.load_batch]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/scratch/load_batch
 # Test file: tests/torchcell/scratch/test_load_batch.py
+"""Scratch helper to load a sample batch from a Neo4j cell dataset."""
+
 import os
 import os.path as osp
 from typing import Literal
@@ -41,7 +43,14 @@ def load_sample_data_batch(
     ] = "metabolism_bipartite",
     is_dense: bool = False,
 ):
+    """Build the cell dataset and data module and return one sample batch.
 
+    Args:
+        batch_size: Number of samples per batch.
+        num_workers: DataLoader worker processes.
+        metabolism_graph: Which metabolism graph representation to use.
+        is_dense: Whether to apply the dense hetero mask transform.
+    """
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
     print(f"DATA_ROOT: {DATA_ROOT}")

@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/protT5.py
 # Test file: torchcell/models/test_protT5.py
 
+"""ProtT5 protein language model wrapper for embedding amino-acid sequences."""
+
 import os
 import os.path as osp
 import re
@@ -14,9 +16,12 @@ from torchcell.models.llm import PeptideModel
 
 
 class ProtT5(PeptideModel):
+    """Rostlab ProtT5 encoder wrapper producing per-residue or mean embeddings."""
+
     VALID_MODEL_NAMES = ["prot_t5_xl_uniref50"]
 
     def __init__(self, model_name: str):
+        """Set device, prefix the model name with the Rostlab namespace, and load it."""
         self.tokenizer = None
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model_name = osp.join("Rostlab", model_name)
@@ -24,6 +29,7 @@ class ProtT5(PeptideModel):
 
     @property
     def max_sequence_size(self):
+        """Return the maximum supported input sequence length."""
         return 40000
 
     @staticmethod
@@ -57,6 +63,7 @@ class ProtT5(PeptideModel):
         return " ".join(list(re.sub(r"[UZOB]", "X", sequence)))
 
     def load_model(self, model_name: str):
+        """Download if needed, then load the tokenizer and encoder onto the device."""
         # Check and download the model if necessary
         self._check_and_download_model(model_name)
 
@@ -68,6 +75,7 @@ class ProtT5(PeptideModel):
         self.model.full() if self.device == "cpu" else self.model.half()
 
     def embed(self, sequences: list[str], mean_embedding: bool = False) -> torch.Tensor:
+        """Embed sequences, optionally mean-pooling each to a single vector."""
         # Pre-process sequences
         sequences = [self._prepare_sequence(seq) for seq in sequences]
 

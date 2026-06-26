@@ -2,7 +2,7 @@
 # [[torchcell.pypy_adapters.costanzo2016_pypy_adapter]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/pypy_adapters/costanzo2016_pypy_adapter
 # Test file: tests/torchcell/pypy_adapters/test_costanzo2016_pypy_adapter.py
-
+"""PyPy BioCypher adapters emitting nodes and edges for Costanzo 2016 SMF/DMF data."""
 
 import hashlib
 import json
@@ -19,10 +19,14 @@ logger.debug(f"Loading module {__name__}.")
 
 
 class SmfCostanzo2016Adapter:
+    """BioCypher adapter emitting nodes and edges for the SMF Costanzo 2016 dataset."""
+
     def __init__(self, dataset: LmdbDatasetReader):
+        """Store the LMDB dataset reader used as the data source."""
         self.dataset = dataset
 
     def get_nodes(self) -> None:
+        """Yield all BioCypher nodes for the SMF dataset."""
         logger.info("Getting nodes.")
         logger.info("Get experiment reference nodes.")
         yield from self._get_experiment_reference_nodes()
@@ -393,6 +397,7 @@ class SmfCostanzo2016Adapter:
         )
 
     def get_edges(self) -> None:
+        """Yield all BioCypher edges for the SMF dataset."""
         logger.info("Generating edges.")
         logger.info("Get dataset experiment reference edges.")
         yield from self._get_dataset_experiment_ref_edges()
@@ -664,10 +669,14 @@ class SmfCostanzo2016Adapter:
 
 
 class DmfCostanzo2016Adapter:
+    """BioCypher adapter emitting nodes and edges for the DMF Costanzo 2016 dataset."""
+
     def __init__(self, dataset: LmdbDatasetReader):
+        """Store the LMDB dataset reader used as the data source."""
         self.dataset = dataset
 
     def get_nodes(self) -> None:
+        """Yield all BioCypher nodes for the DMF dataset."""
         logger.info("Getting nodes.")
         logger.info("Get experiment reference nodes.")
         yield from self._get_experiment_reference_nodes()
@@ -1030,6 +1039,7 @@ class DmfCostanzo2016Adapter:
         )
 
     def get_edges(self) -> None:
+        """Yield all BioCypher edges for the DMF dataset."""
         logger.info("Generating edges.")
         logger.info("Get dataset experiment reference edges.")
         yield from self._get_dataset_experiment_ref_edges()

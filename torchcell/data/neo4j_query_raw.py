@@ -2,7 +2,7 @@
 # [[torchcell.data.neo4j_query_raw]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/data/neo4j_query_raw
 # Test file: tests/torchcell/data/test_neo4j_query_raw.py
-
+"""Run a Cypher query against Neo4j and cache the raw experiment records in LMDB."""
 
 import concurrent.futures
 import json
@@ -42,6 +42,7 @@ def parallel_hash_computation(data):
 def compute_experiment_reference_index_parallel(
     dataset,
 ) -> list[ExperimentReferenceIndex]:
+    """Compute reference indices by hashing each reference across worker processes."""
     num_workers = mp.cpu_count()  # Or set manually to a preferred number
 
     # Use ProcessPoolExecutor to compute hashes in parallel
@@ -81,6 +82,7 @@ def compute_experiment_reference_index_parallel(
 def compute_experiment_reference_index(
     dataset, num_workers=None
 ) -> list[ExperimentReferenceIndex]:
+    """Group records by reference hash into boolean masks, sequentially or in parallel."""
     if num_workers is None or num_workers <= 0:
         # Sequential version
         log.info("Computing experiment reference index sequentially")
@@ -126,6 +128,8 @@ def compute_experiment_reference_index(
 
 @define
 class Neo4jQueryRaw:
+    """LMDB-cached, indexable view over the results of a raw Neo4j Cypher query."""
+
     uri: str
     username: str
     password: str
@@ -144,6 +148,7 @@ class Neo4jQueryRaw:
     cypher_kwargs: dict[str, str | int | float | list] = field(factory=dict)
 
     def __attrs_post_init__(self):
+        """Set up raw/LMDB paths, run the query on first use, and open the LMDB env."""
         self.raw_dir = osp.join(self.root_dir, "raw")
         self.lmdb_dir = osp.join(self.raw_dir, "lmdb")
         os.makedirs(self.raw_dir, exist_ok=True)
@@ -158,11 +163,13 @@ class Neo4jQueryRaw:
         self.env = lmdb.open(self.lmdb_dir, map_size=int(1e12), readonly=True)
 
     def close_lmdb(self):
+        """Close the LMDB environment if it is open."""
         if self.env is not None:
             self.env.close()
             self.env = None
 
     def fetch_data(self):
+        """Open a Neo4j session, run the query, and yield each result record."""
         log.info("Connecting to Neo4j and executing query...")
         driver = GraphDatabase.driver(self.uri, auth=(self.username, self.password))
         # 1000 is default
@@ -188,10 +195,12 @@ class Neo4jQueryRaw:
         )
 
     def write_to_lmdb(self, key: bytes, value: bytes):
+        """Write a single key/value pair to LMDB inside a write transaction."""
         with self.env.begin(write=True) as txn:
             txn.put(key, value)
 
     def process(self):
+        """Stream query results into LMDB and build the reference and gene-set indices."""
         log.info("Processing data...")
         i = -1
         for i, record in tqdm(enumerate(self.fetch_data())):
@@ -241,6 +250,7 @@ class Neo4jQueryRaw:
         self.gene_set = self.compute_gene_set()
 
     def __getitem__(self, index: int | slice | list):
+        """Return the record(s) for an int, slice, or list of indices."""
         if isinstance(index, int):
             return self._get_record_by_index(index)
         elif isinstance(index, slice):
@@ -314,6 +324,7 @@ class Neo4jQueryRaw:
         return records
 
     def __len__(self):
+        """Return the number of cached records in the LMDB store."""
         if self.env is None:
             self._init_lmdb()
         with self.env.begin() as txn:
@@ -322,6 +333,7 @@ class Neo4jQueryRaw:
 
     @staticmethod
     def extract_systematic_gene_names(genotype):
+        """Return the systematic gene names of all perturbations in a genotype."""
         gene_names = []
         for perturbation in genotype.get("perturbations"):
             gene_name = perturbation.get("systematic_gene_name")
@@ -330,6 +342,7 @@ class Neo4jQueryRaw:
 
     @property
     def experiment_reference_index(self) -> list[ExperimentReferenceIndex]:
+        """Return the cached reference index, computing and persisting it if missing."""
         index_file_path = osp.join(self.raw_dir, "experiment_reference_index.json")
 
         if osp.exists(index_file_path):
@@ -354,6 +367,7 @@ class Neo4jQueryRaw:
         return self._experiment_reference_index
 
     def compute_phenotype_label_index(self) -> dict[str, list[int]]:
+        """Return a mapping of phenotype label to the record indices having it."""
         print("Computing phenotype label index...")
         # Fetch all phenotype labels
         phenotype_labels = [
@@ -373,6 +387,7 @@ class Neo4jQueryRaw:
 
     @property
     def phenotype_label_index(self) -> dict[str, list[bool]]:
+        """Return the cached phenotype-label index, computing and persisting if missing."""
         if osp.exists(osp.join(self.raw_dir, "phenotype_label_index.json")):
             with open(osp.join(self.raw_dir, "phenotype_label_index.json")) as file:
                 self._phenotype_label_index = json.load(file)
@@ -385,6 +400,7 @@ class Neo4jQueryRaw:
         return self._phenotype_label_index
 
     def compute_gene_set(self):
+        """Return the GeneSet of all perturbed genes found across cached records."""
         gene_set = GeneSet()
         if self.env is None:
             self._init_lmdb()
@@ -411,6 +427,7 @@ class Neo4jQueryRaw:
     # Reading from JSON and setting it to self._gene_set
     @property
     def gene_set(self):
+        """Return the GeneSet, loading from JSON if cached else computing it."""
         if osp.exists(osp.join(self.raw_dir, "gene_set.json")):
             with open(osp.join(self.raw_dir, "gene_set.json")) as f:
                 self._gene_set = GeneSet(json.load(f))
@@ -427,6 +444,7 @@ class Neo4jQueryRaw:
         self._gene_set = value
 
     def __repr__(self):
+        """Return a string with the query's URI, root directory, and Cypher text."""
         return f"Neo4jQueryRaw(uri={self.uri}, root_dir={self.root_dir}, query={self.query})"
 
 

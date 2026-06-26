@@ -1,3 +1,5 @@
+"""Scratch script dumping Baryshnikovna2010 gene sequences and fitness to JSON."""
+
 import json
 
 from tqdm import tqdm
@@ -47,6 +49,7 @@ with open("data/bary_data.json", "w") as f:
 
 
 def main():
+    """Run as a no-op entry point."""
     print()
 
 

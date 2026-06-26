@@ -1,3 +1,5 @@
+"""Scratch loader that builds a small Neo4j cell dataset batch for inspection."""
+
 # torchcell/scratch/load_batch
 # [[torchcell.scratch.load_batch]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/scratch/load_batch
@@ -40,7 +42,7 @@ def load_sample_data_batch(
     ] = "metabolism_bipartite",
     is_dense: bool = False,
 ):
-
+    """Load a sample batch from the Neo4j cell dataset with the given graph config."""
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
     print(f"DATA_ROOT: {DATA_ROOT}")

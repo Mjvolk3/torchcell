@@ -1,3 +1,5 @@
+"""Visualizations of genetic interaction score predictions versus truth."""
+
 # torchcell/viz/genetic_interaction_score.py
 # [[torchcell.viz.genetic_interaction_score]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/viz/genetic_interaction_score.py
@@ -10,6 +12,7 @@ from scipy import stats
 
 
 def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure:
+    """Build a binned box-plot figure comparing predictions to true scores."""
     # Convert input to numpy arrays (convert to float32 first to handle BFloat16 from mixed precision)
     if isinstance(true_values, torch.Tensor):
         true_values = true_values.cpu().float().numpy()
@@ -169,6 +172,7 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
 
 
 def generate_simulated_data(n_samples=10000):
+    """Generate synthetic true values and noisy predictions for plot testing."""
     # Generate true genetic interaction scores
     true_values = np.random.normal(loc=0, scale=0.2, size=n_samples)
 
@@ -197,6 +201,7 @@ def generate_simulated_data(n_samples=10000):
 
 
 def generate_simulated_data_with_nan(n_samples=10000):
+    """Generate synthetic data with injected NaN values for robustness testing."""
     # Generate true genetic interaction scores
     true_values = np.random.normal(loc=0, scale=0.2, size=n_samples)
     true_values = np.clip(true_values, -0.8, 0.8)  # Clip values to a reasonable range
@@ -249,6 +254,7 @@ def generate_simulated_data_with_nan(n_samples=10000):
 
 
 def main():
+    """Generate simulated data and render the box plot as a smoke test."""
     true_values, predictions = generate_simulated_data()
     _fig = box_plot(true_values, predictions)
     plt.show()

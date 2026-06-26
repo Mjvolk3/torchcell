@@ -1,3 +1,5 @@
+"""Plotting and analysis utilities for GO and gene-association graphs."""
+
 import logging
 import os
 import os.path as osp
@@ -26,6 +28,7 @@ plt.style.use(style_file_path)
 
 
 def plot_go_graph(G):
+    """Draw the GO graph with nodes colored by namespace using matplotlib."""
     # Define a color map for namespaces.
     namespace_colors = {
         "super_root": "#122A4B",
@@ -132,6 +135,8 @@ def plot_go_graph(G):
 
 
 def plot_annotation_dates_by_month(G_go: nx.DiGraph):
+    """Plot a histogram of GO annotation dates aggregated by month."""
+
     # Function to convert date strings to datetime objects
     def convert_to_datetime(date_str):
         return datetime.strptime(date_str, "%Y-%m-%d")
@@ -180,6 +185,7 @@ def plot_annotation_dates_by_month(G_go: nx.DiGraph):
 
 
 def plot_histogram_of_gene_counts(G_go: nx.DiGraph):
+    """Plot a histogram of the directly annotated gene-set size per GO term."""
     # Extracting the gene sets for each GO term
     gene_sets = [G_go.nodes[node].get("gene_set", []) for node in G_go.nodes()]
 
@@ -199,6 +205,8 @@ def plot_histogram_of_gene_counts(G_go: nx.DiGraph):
 def plot_histogram_of_contained_gene_counts(
     G_go: nx.DiGraph, gene_set: set = None, show_min_max: bool = False
 ):
+    """Plot a histogram of genes contained (with descendants) per GO term."""
+
     def compute_containment(go_term):
         """Function to compute containment of a given term with its subsequent terms."""
         # Reverse the graph to travel in the opposite direction
@@ -243,6 +251,7 @@ def plot_histogram_of_contained_gene_counts(
 
 
 def compare_go_terms(G_raw, G):
+    """Compare GO terms between a raw and processed graph and log the overlap."""
     matching_nodes = 0
     total_nodes = len(G_raw.nodes())
     total_new_terms = (
@@ -281,7 +290,7 @@ def compare_go_terms(G_raw, G):
 
 
 def go_gaf_investigation():
-
+    """Parse a GO GAF annotation file and inspect its records."""
     from Bio.UniProt.GOA import gafiterator
     from dotenv import load_dotenv
 
@@ -328,6 +337,7 @@ def go_gaf_investigation():
 
 
 def plotly_go_graph(G):
+    """Render an interactive Plotly view of the GO graph colored by namespace."""
     # Define color map for namespaces
     namespace_colors = {
         "super_root": "#122A4B",
@@ -414,6 +424,7 @@ def plotly_go_graph(G):
 
 
 def plot_go_node_types(G):
+    """Plot the distribution of GO node types grouped by namespace."""
     # Define a color map for namespaces
     namespace_colors = {
         "super_root": "#122A4B",
@@ -458,6 +469,7 @@ def plot_go_node_types(G):
 
 
 def plot_pathway_annotations(G_gene: nx.Graph):
+    """Plot the distribution of pathway-annotation counts per gene."""
     # Create a list to store the number of pathway annotations for each gene
     pathway_counts = []
     for node_name, node_data in G_gene.nodes(data=True):
@@ -504,7 +516,7 @@ def plot_pathway_annotations(G_gene: nx.Graph):
 
 
 def old_main() -> None:
-
+    """Run the legacy graph-analysis driver (kept for reference)."""
     from dotenv import load_dotenv
 
     load_dotenv()
@@ -609,6 +621,7 @@ def old_main() -> None:
 
 
 def main():
+    """Build the gene/GO graphs and run the analysis plots as a script."""
     from dotenv import load_dotenv
 
     load_dotenv()

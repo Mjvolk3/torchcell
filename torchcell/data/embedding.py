@@ -2,6 +2,7 @@
 # [[torchcell.datasets.embedding]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/embedding.py
 # Test file: torchcell/datasets/test_embedding.py
+"""Base in-memory dataset for storing and combining per-gene sequence embeddings."""
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
@@ -11,6 +12,8 @@ from torch_geometric.data import Data, InMemoryDataset
 
 
 class BaseEmbeddingDataset(InMemoryDataset, ABC):
+    """Abstract in-memory dataset holding per-gene DNA windows and embeddings."""
+
     def __init__(
         self,
         root: str,
@@ -19,6 +22,7 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
+        """Validate the model name and load processed embeddings if one is given."""
         if model_name and model_name not in self.MODEL_TO_WINDOW:
             valid_model_names = ", ".join(self.MODEL_TO_WINDOW.keys())
             raise ValueError(
@@ -39,29 +43,36 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
 
     @abstractmethod
     def initialize_model(self):
+        """Build and return the embedding model used to populate the dataset."""
         pass
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return raw file names required before processing (none for embeddings)."""
         return []
 
     @property
     def processed_file_names(self) -> str:
+        """Return the processed file name derived from the model name."""
         # if not self.model_name:
         # return "dummy_data.pt"
         return f"{self.model_name}.pt"
 
     def download(self):
+        """Download raw data (no-op; embeddings are computed locally)."""
         pass
 
     @abstractmethod
     def process(self):
+        """Compute embeddings and write the processed dataset to disk."""
         pass
 
     def get_data_list(self):
+        """Return all data items in the dataset as a list."""
         return [data for data in self]
 
     def __getitem__(self, idx):
+        """Return a data item by integer index or by gene id string."""
         if isinstance(idx, str):
             # Use _data instead of data to suppress warning. might be dangerous.
             if idx in self._data.id:
@@ -83,6 +94,7 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
             return super().__getitem__(idx)
 
     def __radd__(self, other):
+        """Support sum() by treating a left operand of 0 as the identity."""
         # if 'other' is the default integer 0, return the current instance
         if isinstance(other, int) and other == 0:
             return self
@@ -90,6 +102,7 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
         return self.__add__(other)
 
     def __add__(self, other):
+        """Merge another embedding dataset, raising on duplicate window/embedding keys."""
         if isinstance(other, int) and other == 0:
             return self
         # Ensure the other object is of the same type
@@ -159,25 +172,18 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
 # might not need ot inherit from BaseEmbeddingDataset since we have to implement
 # initialize_model and process with pass
 class CombinedEmbedding(BaseEmbeddingDataset):
-    """
-    This class represents the combined dataset which can
-    be the result of combining two other datasets.
-    """
+    """Embedding dataset produced by combining two other embedding datasets."""
 
     # No need to override the `__init__` method if it's going
     # to be the same as the parent class. However, if you need
     # any specialized initialization, you can define the method here.
 
     def initialize_model(self):
-        """
-        Implementation of abstract method.
-        """
+        """Do nothing; a combined dataset has no model to initialize."""
         # Provide a proper implementation if needed or just pass.
 
     def process(self):
-        """
-        Implementation of abstract method.
-        """
+        """Do nothing; a combined dataset is built in memory, not processed."""
         # Provide a proper implementation if needed or just pass.
 
 

@@ -3,6 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/sequence/db_connection
 # Test file: tests/torchcell/sequence/test_db_connection.py
 
+"""Thread/process-local database connection management for multiprocessing."""
 
 import os.path as osp
 import threading
@@ -50,8 +51,7 @@ class DatabaseProtocol(Protocol):
 
 
 class DatabaseConnectionManager[T: DatabaseProtocol]:
-    """
-    Manages database connections for multiprocessing scenarios.
+    """Manage per-process/thread database connections for multiprocessing.
 
     This class ensures that each process/thread gets its own database connection,
     avoiding SQLite's concurrent access issues while supporting pickling for
@@ -67,6 +67,7 @@ class DatabaseConnectionManager[T: DatabaseProtocol]:
     def __init__(
         self, db_path: str, db_class: type[T] = FeatureDB, *db_args, **db_kwargs
     ):
+        """Store the database path, class, and constructor args for lazy connecting."""
         self.db_path = db_path
         self.db_class = db_class
         self.db_args = db_args
@@ -74,8 +75,7 @@ class DatabaseConnectionManager[T: DatabaseProtocol]:
         self._local = threading.local()
 
     def get_connection(self) -> T:
-        """
-        Get thread/process-local database connection.
+        """Get the thread/process-local database connection, creating it if needed.
 
         Returns:
             Database connection instance
@@ -102,8 +102,7 @@ class DatabaseConnectionManager[T: DatabaseProtocol]:
             self._local.db = None
 
     def __reduce__(self):
-        """
-        Support pickling by only serializing the configuration.
+        """Support pickling by serializing only the configuration, not connections.
 
         When unpickled, a new manager is created with the same configuration,
         but no active connections (they'll be created lazily in the new process).

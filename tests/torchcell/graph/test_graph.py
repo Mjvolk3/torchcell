@@ -1,3 +1,5 @@
+"""Tests for the torchcell graph construction module."""
+
 # tests/torchcell/graph/test_graph.py
 # [[tests.torchcell.graph.test_graph]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/graph/test_graph.py

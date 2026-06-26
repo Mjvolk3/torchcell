@@ -2,6 +2,7 @@
 # [[torchcell.datasets.fungal_up_down_transformer]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/fungal_up_down_transformer.py
 # Test file: torchcell/datasets/test_fungal_up_down_transformer.py
+"""Embedding dataset of per-gene CDS codon frequencies for S. cerevisiae."""
 
 from collections.abc import Callable
 
@@ -15,6 +16,8 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 class CodonFrequencyDataset(BaseEmbeddingDataset):
+    """Embedding dataset of CDS codon-frequency vectors per gene."""
+
     # Could add frequency for other parts of sequence
     # but this doesn't make much sense
     MODEL_TO_WINDOW = {"cds_codon_frequency": None}
@@ -26,6 +29,7 @@ class CodonFrequencyDataset(BaseEmbeddingDataset):
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
+        """Set up the dataset for the given genome and parse the gene set."""
         self.genome = genome
 
         self.model_name = "cds_codon_frequency"
@@ -36,6 +40,7 @@ class CodonFrequencyDataset(BaseEmbeddingDataset):
     # This is done to avoid pkl error when since genome uses sqlite
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:
+        """Extract the gene set into a picklable ParsedGenome (None if no genome)."""
         # BUG we have to do this black magic because when you merge datasets with +
         # the genome is None
         if genome is None:
@@ -46,9 +51,11 @@ class CodonFrequencyDataset(BaseEmbeddingDataset):
             return ParsedGenome(**data)
 
     def initialize_model(self):
+        """Return None; codon frequencies need no embedding model."""
         return None
 
     def process(self):
+        """Compute codon frequencies for each gene and save the collated dataset."""
         data_list = []
 
         for gene_id in tqdm(self.genome.gene_set):

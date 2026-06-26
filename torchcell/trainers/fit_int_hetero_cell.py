@@ -1,3 +1,5 @@
+"""Lightning regression trainer for heterogeneous cell-graph interaction models."""
+
 import logging
 
 import lightning as L
@@ -17,6 +19,8 @@ log = logging.getLogger(__name__)
 
 
 class RegressionTask(L.LightningModule):
+    """Lightning task training a cell-graph model on fitness and interaction targets."""
+
     def __init__(
         self,
         model: nn.Module,
@@ -34,6 +38,7 @@ class RegressionTask(L.LightningModule):
         forward_transform: nn.Module | None = None,
         inverse_transform: nn.Module | None = None,
     ):
+        """Set up the model, loss, metrics, transforms, and training config."""
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
         self.model = model
@@ -107,6 +112,7 @@ class RegressionTask(L.LightningModule):
         self.automatic_optimization = False
 
     def forward(self, batch):
+        """Run the model on ``batch``, moving the cell graph to its device."""
         batch_device = batch["gene"].x.device
         if (
             not hasattr(self, "_cell_graph_device")
@@ -315,6 +321,7 @@ class RegressionTask(L.LightningModule):
         return loss, predictions, orig_targets
 
     def training_step(self, batch, batch_idx):
+        """Run a manual-optimization training step with grad accumulation."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
         if self.hparams.grad_accumulation_schedule is not None:
             loss = loss / self.current_accumulation_steps
@@ -339,10 +346,12 @@ class RegressionTask(L.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
+        """Run the shared validation step and return its loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
         return loss
 
     def test_step(self, batch, batch_idx):
+        """Run the shared test step and return its loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
@@ -409,6 +418,7 @@ class RegressionTask(L.LightningModule):
                 plt.close(fig_gi)
 
     def on_train_epoch_end(self):
+        """Log and reset training metrics, plotting samples periodically."""
         # Log training metrics for individual labels
         for metric_name, metric_dict in self.train_metrics.items():
             computed_metrics = self._compute_metrics_safely(metric_dict)
@@ -450,6 +460,7 @@ class RegressionTask(L.LightningModule):
             }
 
     def on_train_epoch_start(self):
+        """Reset training sample buffers on epochs scheduled for plotting."""
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.train_samples = {
@@ -459,6 +470,7 @@ class RegressionTask(L.LightningModule):
             }
 
     def on_validation_epoch_start(self):
+        """Reset validation sample buffers on epochs scheduled for plotting."""
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.val_samples = {
@@ -468,6 +480,7 @@ class RegressionTask(L.LightningModule):
             }
 
     def on_validation_epoch_end(self):
+        """Log and reset validation metrics, plotting samples periodically."""
         # Log validation metrics for individual labels
         for metric_name, metric_dict in self.val_metrics.items():
             computed_metrics = self._compute_metrics_safely(metric_dict)
@@ -516,6 +529,7 @@ class RegressionTask(L.LightningModule):
     #             print(f"Unused parameter: {name}")
 
     def configure_optimizers(self):
+        """Build the optimizer and optional ReduceLROnPlateau scheduler."""
         optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])
         optimizer_params = {
             k: v for k, v in self.hparams.optimizer_config.items() if k != "type"

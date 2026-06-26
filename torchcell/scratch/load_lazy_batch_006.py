@@ -2,8 +2,7 @@
 # [[torchcell.scratch.load_lazy_batch_006]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/scratch/load_lazy_batch_006
 
-"""
-Load data with LazySubgraphRepresentation for masked message passing.
+"""Load data with LazySubgraphRepresentation for masked message passing.
 
 Demonstrates zero-copy edge handling with boolean masks.
 """
@@ -41,8 +40,7 @@ def load_sample_data_batch(
     is_dense: bool = False,
     use_custom_collate: bool = True,
 ):
-    """
-    Load a sample data batch with LazySubgraphRepresentation for masked message passing.
+    """Load a sample data batch with LazySubgraphRepresentation for masked message passing.
 
     Args:
         batch_size: Batch size for dataloader
@@ -213,6 +211,7 @@ def load_sample_data_batch(
 
 
 def inspect_data():
+    """Load a sample lazy batch and print its structure for manual inspection."""
     # Set all random seeds for reproducibility
     seed = 42
     random.seed(seed)

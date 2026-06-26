@@ -4,6 +4,8 @@
 # Test file: tests/torchcell/models/test_hetero_cell_bipartite_dango.py
 
 
+"""Bipartite hetero GNN with DANGO-style gene interaction attention."""
+
 import os
 import os.path as osp
 from typing import Any
@@ -19,9 +21,10 @@ from torch_geometric.nn.aggr.attention import AttentionalAggregation
 
 
 class GeneInteractionAttention(nn.Module):
-    """Self-attention module for gene interaction prediction that works for both digenic and trigenic interactions"""
+    """Self-attention for digenic and trigenic gene interaction prediction."""
 
     def __init__(self, hidden_dim, num_heads=8, dropout=0.1):
+        """Build Q/K/V/out projections, the ReZero scalar, and dropout."""
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
@@ -39,12 +42,14 @@ class GeneInteractionAttention(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, gene_embeddings, batch=None):
-        """
+        """Apply masked self-attention per batch to produce dynamic embeddings.
+
         Args:
-            gene_embeddings: Tensor of shape [total_genes, hidden_dim]
-            batch: Optional tensor [total_genes] indicating batch assignment
+            gene_embeddings: Tensor of shape [total_genes, hidden_dim].
+            batch: Optional tensor [total_genes] indicating batch assignment.
+
         Returns:
-            dynamic_embeddings: Tensor of shape [total_genes, hidden_dim]
+            dynamic_embeddings: Tensor of shape [total_genes, hidden_dim].
         """
         # If batch is provided, we process each batch separately
         if batch is not None:
@@ -65,7 +70,7 @@ class GeneInteractionAttention(nn.Module):
             return self._process_batch(gene_embeddings)
 
     def _process_batch(self, embeddings):
-        """Process a single batch of embeddings"""
+        """Run self-excluding attention with ReZero residual on one batch."""
         num_genes = embeddings.size(0)
         residual = embeddings
 
@@ -101,19 +106,24 @@ class GeneInteractionAttention(nn.Module):
 
 
 class GeneInteractionPredictor(nn.Module):
+    """Predict interaction scores from squared static/dynamic embedding differences."""
+
     def __init__(self, hidden_dim, dropout=0.1):
+        """Build the interaction attention module and the scalar prediction layer."""
         super().__init__()
         self.attention = GeneInteractionAttention(hidden_dim, dropout=dropout)
         self.prediction_layer = nn.Linear(hidden_dim, 1)
         nn.init.xavier_uniform_(self.prediction_layer.weight)
 
     def forward(self, gene_embeddings, batch=None):
-        """
+        """Return per-batch interaction scores from gene embeddings.
+
         Args:
-            gene_embeddings: Tensor of shape [total_genes, hidden_dim]
-            batch: Optional tensor [total_genes] indicating batch assignment
+            gene_embeddings: Tensor of shape [total_genes, hidden_dim].
+            batch: Optional tensor [total_genes] indicating batch assignment.
+
         Returns:
-            interaction_scores: Tensor of shape [num_batches]
+            interaction_scores: Tensor of shape [num_batches].
         """
         # Get static embeddings
         static_embeddings = gene_embeddings
@@ -146,7 +156,10 @@ class GeneInteractionPredictor(nn.Module):
 
 
 class AttentionalGraphAggregation(nn.Module):
+    """Attentional pooling that gates and transforms node features before aggregation."""
+
     def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.1):
+        """Build the gating and transform networks and the attentional aggregator."""
         super().__init__()
         self.gate_nn = nn.Sequential(
             nn.Linear(in_channels, in_channels // 2),
@@ -164,10 +177,12 @@ class AttentionalGraphAggregation(nn.Module):
     def forward(
         self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
+        """Aggregate node features grouped by index into per-group vectors."""
         return self.aggregator(x, index=index, dim_size=dim_size)
 
 
 def get_norm_layer(channels: int, norm: str) -> nn.Module:
+    """Return a layer or batch normalization module for the given channel count."""
     if norm == "layer":
         return nn.LayerNorm(channels)
     elif norm == "batch":
@@ -177,6 +192,8 @@ def get_norm_layer(channels: int, norm: str) -> nn.Module:
 
 
 class PreProcessor(nn.Module):
+    """MLP that projects raw input features to the hidden dimension."""
+
     def __init__(
         self,
         in_channels: int,
@@ -186,6 +203,7 @@ class PreProcessor(nn.Module):
         norm: str = "layer",
         activation: str = "relu",
     ):
+        """Build the stacked linear/norm/activation/dropout MLP layers."""
         super().__init__()
         self.act = nn.ReLU() if activation == "relu" else nn.SiLU()
         norm_layer = get_norm_layer(hidden_channels, norm)
@@ -202,10 +220,13 @@ class PreProcessor(nn.Module):
         self.mlp = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply the preprocessing MLP to the input features."""
         return self.mlp(x)
 
 
 class AttentionConvWrapper(nn.Module):
+    """Wrap a graph conv with projection, normalization, activation, and dropout."""
+
     def __init__(
         self,
         conv: nn.Module,
@@ -214,6 +235,7 @@ class AttentionConvWrapper(nn.Module):
         activation: str | None = None,
         dropout: float = 0.1,
     ) -> None:
+        """Configure the wrapped conv plus output projection and post-processing."""
         super().__init__()
         self.conv = conv
         if hasattr(conv, "concat"):
@@ -242,6 +264,7 @@ class AttentionConvWrapper(nn.Module):
         self.dropout = nn.Dropout(dropout) if dropout > 0 else None
 
     def forward(self, x, edge_index, **kwargs):
+        """Run the conv, then project, normalize, activate, and drop out."""
         out = self.conv(x, edge_index, **kwargs)
         out = self.proj(out)
         if self.norm is not None:
@@ -253,6 +276,8 @@ class AttentionConvWrapper(nn.Module):
 
 
 class HeteroCellBipartite(nn.Module):
+    """Hetero GNN with DANGO interaction head over gene/reaction/metabolite graphs."""
+
     def __init__(
         self,
         gene_num: int,
@@ -269,6 +294,7 @@ class HeteroCellBipartite(nn.Module):
         prediction_head_config: dict[str, Any] | None = None,
         gpr_conv_config: dict[str, Any] | None = None,
     ):
+        """Build embeddings, hetero conv stack, aggregators, and prediction heads."""
         super().__init__()
         self.hidden_channels = hidden_channels
 
@@ -390,6 +416,7 @@ class HeteroCellBipartite(nn.Module):
         return nn.Sequential(*layers)
 
     def forward_single(self, data: HeteroData | Batch) -> torch.Tensor:
+        """Encode one hetero graph and return per-gene node embeddings."""
         device = self.gene_embedding.weight.device
 
         is_batch = isinstance(data, Batch) or hasattr(data["gene"], "batch")
@@ -478,6 +505,7 @@ class HeteroCellBipartite(nn.Module):
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+        """Encode reference and perturbed graphs and return predictions plus outputs."""
         # Process reference graph (wildtype)
         z_w = self.forward_single(cell_graph)
         z_w_global = self.global_aggregator(
@@ -623,6 +651,8 @@ class HeteroCellBipartite(nn.Module):
     # TODO update for gene interaction dango addition
     @property
     def num_parameters(self) -> dict[str, int]:
+        """Return trainable parameter counts per component of the model."""
+
         def count_params(module: nn.Module) -> int:
             return sum(p.numel() for p in module.parameters() if p.requires_grad)
 
@@ -646,6 +676,7 @@ class HeteroCellBipartite(nn.Module):
     config_name="hetero_cell_bipartite_dango",
 )
 def main(cfg: DictConfig) -> None:
+    """Instantiate the model from config and run a demonstration forward pass."""
     import os
 
     import matplotlib.pyplot as plt

@@ -1,3 +1,5 @@
+"""Inception-style multi-graph SAGPooling model for cell graph regression."""
+
 import torch
 import torch.nn as nn
 from torch_geometric.nn import (
@@ -17,6 +19,8 @@ from torchcell.models.act import act_register
 
 
 class MLP(nn.Module):
+    """Multi-layer perceptron with per-layer normalization, activation, and dropout."""
+
     def __init__(
         self,
         in_channels: int,
@@ -27,6 +31,7 @@ class MLP(nn.Module):
         norm: str = "layer",
         dropout: float = 0.0,
     ):
+        """Build the linear layers, normalization layers, activation, and dropout."""
         super().__init__()
         self.layers = nn.ModuleList()
         self.norms = nn.ModuleList()
@@ -47,6 +52,7 @@ class MLP(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def get_norm_layer(self, norm, channels):
+        """Return the torch.nn normalization layer matching the ``norm`` name."""
         if norm == "batch":
             return nn.BatchNorm1d(channels)
         elif norm == "layer":
@@ -57,6 +63,7 @@ class MLP(nn.Module):
             raise ValueError(f"Unsupported normalization type: {norm}")
 
     def forward(self, x):
+        """Apply each hidden layer with norm/activation/dropout, then the output layer."""
         for i, (layer, norm) in enumerate(zip(self.layers[:-1], self.norms)):
             x = layer(x)
             x = norm(x)
@@ -66,6 +73,8 @@ class MLP(nn.Module):
 
 
 class SingleSAGPool(nn.Module):
+    """Single-graph SAGPooling tower with per-layer attention and intermediate heads."""
+
     def __init__(
         self,
         in_channels: int,
@@ -84,6 +93,7 @@ class SingleSAGPool(nn.Module):
         intermediate_hidden_channels: int = 64,
         intermediate_norm: str = "layer",
     ):
+        """Build the conv, norm, pooling, and intermediate/final predictor stacks."""
         super().__init__()
 
         # Store initialization parameters as attributes
@@ -206,6 +216,7 @@ class SingleSAGPool(nn.Module):
         )
 
     def get_norm_layer(self, norm, channels):
+        """Return the torch_geometric normalization layer matching the ``norm`` name."""
         if norm is None:
             return nn.Identity()
         elif norm == "batch":
@@ -224,6 +235,7 @@ class SingleSAGPool(nn.Module):
             raise ValueError(f"Unsupported normalization type: {norm}")
 
     def forward(self, x, edge_index, batch):
+        """Run conv/pool layers, returning the prediction and pooling diagnostics."""
         attention_weights = []
         pool_scores = []
         intermediate_predictions = []
@@ -296,6 +308,8 @@ class SingleSAGPool(nn.Module):
 
 
 class CellSAGPool(nn.Module):
+    """Inception model running one SAGPool tower per graph and fusing their outputs."""
+
     def __init__(
         self,
         graph_names: list[str],
@@ -316,6 +330,7 @@ class CellSAGPool(nn.Module):
         final_num_layers: int = 2,
         final_norm: str = "layer",
     ):
+        """Build a per-graph SAGPool tower dict and the final combination MLP."""
         super().__init__()
 
         self.graph_names = sorted(graph_names)
@@ -376,6 +391,7 @@ class CellSAGPool(nn.Module):
         }
 
     def forward(self, x, edge_indices: dict[str, torch.Tensor], batch):
+        """Run each graph tower, concatenate outputs, and return the fused prediction."""
         if set(edge_indices.keys()) != set(self.graph_names):
             raise ValueError(
                 f"Expected edge indices for graphs {self.graph_names}, "
@@ -422,6 +438,7 @@ class CellSAGPool(nn.Module):
 
 
 def load_sample_data_batch():
+    """Load one sample batch and the max node count from a Neo4j cell dataset."""
     import os
     import os.path as osp
 
@@ -508,6 +525,7 @@ def load_sample_data_batch():
 
 
 def main_single():
+    """Smoke-test a SingleSAGPool model on one sample batch."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
     # Load and prepare data
@@ -624,6 +642,7 @@ def analyze_node_selections(node_selections, graph_name):
 
 
 def main():
+    """Smoke-test the multi-graph CellSAGPool model on one sample batch."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
     # Load and prepare data

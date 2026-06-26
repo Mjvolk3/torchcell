@@ -1,3 +1,5 @@
+"""DeepSet model with permutation-invariant set aggregation over node features."""
+
 import torch
 import torch.nn as nn
 from torch_scatter import scatter_add, scatter_mean
@@ -6,6 +8,8 @@ from torchcell.models.act import act_register
 
 
 class DeepSet(nn.Module):
+    """Permutation-invariant network applying per-node MLPs then set aggregation."""
+
     def __init__(
         self,
         in_channels: int,
@@ -20,6 +24,21 @@ class DeepSet(nn.Module):
         skip_set: bool = False,  # Parameter to add skip connections in set_layers
         aggregation: str = "sum",  # Aggregation method: "sum" or "mean"
     ):
+        """Build the node and set MLP stacks.
+
+        Args:
+            in_channels: Input feature dimension per node.
+            hidden_channels: Hidden feature dimension.
+            out_channels: Output feature dimension.
+            num_node_layers: Number of per-node MLP blocks.
+            num_set_layers: Number of post-aggregation set MLP blocks.
+            dropout_prob: Dropout probability in the final set block.
+            norm: Normalization type ("batch", "instance", or "layer").
+            activation: Activation key registered in ``act_register``.
+            skip_node: Whether to add residual connections in node layers.
+            skip_set: Whether to add residual connections in set layers.
+            aggregation: Set aggregation method ("sum" or "mean").
+        """
         super().__init__()
 
         assert norm in ["batch", "instance", "layer"], "Invalid norm type"
@@ -104,6 +123,15 @@ class DeepSet(nn.Module):
         return x_set
 
     def forward(self, x, batch):
+        """Apply node layers, aggregate per set, then apply set layers.
+
+        Args:
+            x: Node feature tensor of shape ``(num_nodes, in_channels)``.
+            batch: Set-assignment index for each node.
+
+        Returns:
+            A tuple of per-node features and per-set output features.
+        """
         if len(self.node_layers) > 0:
             x_node = self.node_layers_forward(x)
         else:
@@ -119,6 +147,7 @@ class DeepSet(nn.Module):
 
 
 def main():
+    """Run a small DeepSet forward/backward pass on dummy data."""
     torch.autograd.set_detect_anomaly(True)
 
     # Model configuration

@@ -2,8 +2,8 @@
 # [[torchcell.datamodels.calmorph_labels]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/calmorph_labels
 
-"""
-CalMorph parameter labels mapping.
+"""CalMorph parameter labels mapping.
+
 Extracted from Ohya et al. 2005 supplementary information (SI_1_parameters.xlsx).
 Total of 501 morphological parameters:
   - 281 base parameters (CALMORPH_LABELS)

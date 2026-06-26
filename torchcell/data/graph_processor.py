@@ -1,8 +1,9 @@
+"""Graph processors that build perturbed subgraphs from cell graphs and data."""
+
 # torchcell/data/graph_processor
 # [[torchcell.data.graph_processor]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/data/graph_processor
 # Test file: tests/torchcell/data/test_graph_processor.py
-
 
 from abc import ABC, abstractmethod
 from typing import Any
@@ -18,6 +19,8 @@ from torchcell.profiling.timing import time_method
 
 
 class GraphProcessor(ABC):
+    """Abstract base class for processors that build per-sample graphs."""
+
     @abstractmethod
     def process(
         self,
@@ -28,11 +31,15 @@ class GraphProcessor(ABC):
             | list[dict[str, ExperimentType | ExperimentReferenceType]]
         ),
     ) -> HeteroData:
+        """Build a processed graph from a cell graph, phenotype info, and data."""
         pass
 
 
 class SubgraphRepresentation(GraphProcessor):
+    """Processor that removes perturbed genes and returns the induced subgraph."""
+
     def __init__(self) -> None:
+        """Initialize the CPU device and the empty per-node-type mask store."""
         super().__init__()
         # Always use CPU for pin_memory compatibility
         self.device: torch.device = torch.device("cpu")
@@ -92,6 +99,7 @@ class SubgraphRepresentation(GraphProcessor):
         phenotype_info: list[Any],
         data: list[dict[str, Any]],
     ) -> HeteroData:
+        """Build the perturbed gene subgraph and attach phenotype labels."""
         # Always use CPU for pin_memory compatibility
         # The model will handle moving tensors to GPU after DataLoader
         self.device = torch.device("cpu")
@@ -449,8 +457,8 @@ class SubgraphRepresentation(GraphProcessor):
         phenotype_info: list[PhenotypeType],
         data: list[dict[str, ExperimentType | ExperimentReferenceType]],
     ) -> None:
-        """
-        Add phenotype data to the graph in COO format.
+        """Add phenotype data to the graph in COO format.
+
         Optimized version that ensures all tensors are on the same device.
         """
         # Always use CPU for pin_memory compatibility
@@ -552,8 +560,7 @@ class SubgraphRepresentation(GraphProcessor):
 
 
 class IncidenceSubgraphRepresentation(GraphProcessor):
-    """
-    Graph processor using precomputed node-to-edge incidence structures.
+    """Graph processor using precomputed node-to-edge incidence structures.
 
     Algorithm:
     - Precomputes which edges touch each node (incidence mapping) once at initialization
@@ -576,6 +583,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
     """
 
     def __init__(self) -> None:
+        """Initialize the CPU device and the empty per-node-type mask store."""
         super().__init__()
         # Always use CPU for pin_memory compatibility
         self.device: torch.device = torch.device("cpu")
@@ -584,8 +592,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
 
     @property
     def edge_incidence_cache(self) -> dict[Any, list[torch.Tensor]]:
-        """
-        Lazily build and return edge incidence cache.
+        """Lazily build and return edge incidence cache.
 
         Maps each node to tensor of edge positions where that node appears.
         Built once on first access, then cached for all subsequent calls.
@@ -597,8 +604,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         return self._edge_incidence_cache
 
     def build_cache(self, cell_graph: HeteroData) -> dict[str, Any]:
-        """
-        Explicitly build incidence cache and return timing information.
+        """Explicitly build incidence cache and return timing information.
 
         This should be called once during dataset initialization or before
         benchmarking to separate one-time cache build cost from per-sample
@@ -640,8 +646,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         }
 
     def _build_incidence_cache(self, cell_graph: HeteroData) -> None:
-        """
-        Build node-to-edge incidence mappings for gene-gene edge types.
+        """Build node-to-edge incidence mappings for gene-gene edge types.
 
         For each gene node, stores tensor of edge positions (indices) where
         that gene appears as either source or destination.
@@ -735,6 +740,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         phenotype_info: list[Any],
         data: list[dict[str, Any]],
     ) -> HeteroData:
+        """Build incidence-based subgraph representations and attach phenotypes."""
         # Always use CPU for pin_memory compatibility
         # The model will handle moving tensors to GPU after DataLoader
         self.device = torch.device("cpu")
@@ -831,8 +837,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         cell_graph: HeteroData,
         gene_info: dict[str, Any],
     ) -> None:
-        """
-        Process gene-gene edge types using incidence-based filtering.
+        """Process gene-gene edge types using incidence-based filtering.
 
         Algorithm:
         1. Build incidence cache on first call (lazy initialization)
@@ -1117,8 +1122,8 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         phenotype_info: list[PhenotypeType],
         data: list[dict[str, ExperimentType | ExperimentReferenceType]],
     ) -> None:
-        """
-        Add phenotype data to the graph in COO format.
+        """Add phenotype data to the graph in COO format.
+
         Optimized version that ensures all tensors are on the same device.
         """
         # Always use CPU for pin_memory compatibility
@@ -1220,8 +1225,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
 
 
 class LazySubgraphRepresentation(GraphProcessor):
-    """
-    Graph processor that returns full graph with masks instead of filtered subgraphs.
+    """Graph processor that returns full graph with masks instead of filtered subgraphs.
 
     Zero-copy approach for edges: References original edge_index tensors,
     only computes boolean masks. Uses incidence cache for O(k×d) edge mask
@@ -1263,6 +1267,7 @@ class LazySubgraphRepresentation(GraphProcessor):
     """
 
     def __init__(self) -> None:
+        """Initialize the CPU device and the empty per-node-type mask store."""
         super().__init__()
         # Always use CPU for pin_memory compatibility
         self.device: torch.device = torch.device("cpu")
@@ -1271,8 +1276,7 @@ class LazySubgraphRepresentation(GraphProcessor):
 
     @property
     def edge_incidence_cache(self) -> dict[Any, list[torch.Tensor]]:
-        """
-        Lazily build and return edge incidence cache.
+        """Lazily build and return edge incidence cache.
 
         Maps each node to tensor of edge positions where that node appears.
         Built once on first access, then cached for all subsequent calls.
@@ -1284,8 +1288,7 @@ class LazySubgraphRepresentation(GraphProcessor):
         return self._edge_incidence_cache
 
     def build_cache(self, cell_graph: HeteroData) -> dict[str, Any]:
-        """
-        Explicitly build incidence cache and return timing information.
+        """Explicitly build incidence cache and return timing information.
 
         This should be called once during dataset initialization or before
         benchmarking to separate one-time cache build cost from per-sample
@@ -1327,8 +1330,7 @@ class LazySubgraphRepresentation(GraphProcessor):
         }
 
     def _build_incidence_cache(self, cell_graph: HeteroData) -> None:
-        """
-        Build node-to-edge incidence mappings for gene-gene edge types.
+        """Build node-to-edge incidence mappings for gene-gene edge types.
 
         For each gene node, stores tensor of edge positions (indices) where
         that gene appears as either source or destination.
@@ -1421,6 +1423,7 @@ class LazySubgraphRepresentation(GraphProcessor):
         phenotype_info: list[Any],
         data: list[dict[str, Any]],
     ) -> HeteroData:
+        """Lazily build the perturbed subgraph and attach phenotype labels."""
         # Always use CPU for pin_memory compatibility
         self.device = torch.device("cpu")
         self._initialize_masks(cell_graph)
@@ -1528,8 +1531,7 @@ class LazySubgraphRepresentation(GraphProcessor):
         cell_graph: HeteroData,
         gene_info: dict[str, Any],
     ) -> None:
-        """
-        Process gene-gene edge types using zero-copy approach with masks.
+        """Process gene-gene edge types using zero-copy approach with masks.
 
         DIFFERENT from SubgraphRepresentation:
         - Returns FULL edge_index (reference to cell_graph)
@@ -1572,8 +1574,7 @@ class LazySubgraphRepresentation(GraphProcessor):
         gene_info: dict[str, Any],
         integrated_subgraph: HeteroData,
     ) -> dict[str, Any]:
-        """
-        Process reaction information using lazy approach.
+        """Process reaction information using lazy approach.
 
         Returns full reaction set with masks instead of filtered reactions.
         Computes reaction validity based on whether all required genes are present.
@@ -1700,8 +1701,7 @@ class LazySubgraphRepresentation(GraphProcessor):
         reaction_info: dict[str, Any],
         cell_graph: HeteroData,
     ) -> None:
-        """
-        Add reaction node data using lazy approach.
+        """Add reaction node data using lazy approach.
 
         Returns ALL reactions (no filtering), with w_growth attribute.
         """
@@ -1738,8 +1738,7 @@ class LazySubgraphRepresentation(GraphProcessor):
         cell_graph: HeteroData,
         reaction_info: dict[str, Any],
     ) -> None:
-        """
-        Process RMR (Reaction-Metabolite-Reaction) edges using lazy approach.
+        """Process RMR (Reaction-Metabolite-Reaction) edges using lazy approach.
 
         Returns full hyperedge_index and stoichiometry (zero-copy references)
         with edge masks based on reaction validity from Phase 4.1.
@@ -1858,9 +1857,9 @@ class LazySubgraphRepresentation(GraphProcessor):
 
 
 class Unperturbed(GraphProcessor):
-    """
-    Processes graph data by preserving the original graph structure and storing perturbation
-    and phenotype data alongside it for later processing.
+    """Preserve the original graph, storing perturbation and phenotype data alongside.
+
+    Keeps the base graph structure intact for later perturbation in the pipeline.
 
     This processor:
     1. Keeps the original graph structure intact
@@ -1879,6 +1878,7 @@ class Unperturbed(GraphProcessor):
         phenotype_info: list[PhenotypeType],
         data: list[dict[str, ExperimentType | ExperimentReferenceType]],
     ) -> HeteroData:
+        """Return the original graph with perturbation and phenotype data attached."""
         if not data:
             raise ValueError("Data list is empty")
 
@@ -1973,12 +1973,13 @@ class Unperturbed(GraphProcessor):
 
 
 class Perturbation(GraphProcessor):
-    """
-    Processes graph data by storing only perturbation-specific information without duplicating
-    the base graph structure, using COO format for phenotypes.
+    """Store only perturbation-specific information without duplicating the graph.
+
+    Uses COO format for phenotypes and does not copy the base graph structure.
     """
 
     def __init__(self) -> None:
+        """Initialize the CPU device used for tensor construction."""
         super().__init__()
         # Always use CPU for pin_memory compatibility
         self.device = torch.device("cpu")
@@ -1989,6 +1990,7 @@ class Perturbation(GraphProcessor):
         phenotype_info: list[PhenotypeType],
         data: list[dict[str, ExperimentType | ExperimentReferenceType]],
     ) -> HeteroData:
+        """Store perturbation and phenotype data in COO format without copying the graph."""
         if not data:
             raise ValueError("Data list is empty")
 
@@ -2148,13 +2150,14 @@ class Perturbation(GraphProcessor):
 
 
 class DCellGraphProcessor(GraphProcessor):
-    """
-    Graph processor for DCell model that applies perturbations directly to the gene ontology graph.
+    """Graph processor for DCell model that applies perturbations directly to the gene ontology graph.
+
     This processor updates the gene ontology node states based on perturbations rather than
     deleting nodes from the graph before conversion.
     """
 
     def __init__(self) -> None:
+        """Initialize the CPU device used for tensor construction."""
         super().__init__()
         # Always use CPU for pin_memory compatibility
         self.device = torch.device("cpu")
@@ -2165,6 +2168,7 @@ class DCellGraphProcessor(GraphProcessor):
         phenotype_info: list[PhenotypeType],
         data: list[dict[str, ExperimentType | ExperimentReferenceType]],
     ) -> HeteroData:
+        """Apply perturbations to the gene ontology graph and attach phenotypes."""
         if not data:
             raise ValueError("Data list is empty")
 
@@ -2255,9 +2259,7 @@ class DCellGraphProcessor(GraphProcessor):
         cell_graph: HeteroData,
         perturbed_indices: list,
     ) -> None:
-        """
-        Copy go_gene_strata_state from cell_graph and flip perturbation bits.
-        """
+        """Copy go_gene_strata_state from cell_graph and flip perturbation bits."""
         # Copy the base state tensor from cell_graph and keep on CPU
         # This ensures compatibility with pin_memory in DataLoader
         base_state = cell_graph["gene_ontology"].go_gene_strata_state.clone().cpu()
@@ -2284,8 +2286,8 @@ class DCellGraphProcessor(GraphProcessor):
         phenotype_info: list[PhenotypeType],
         data: list[dict[str, ExperimentType | ExperimentReferenceType]],
     ) -> None:
-        """
-        Add phenotype data to the graph in COO format.
+        """Add phenotype data to the graph in COO format.
+
         Optimized version that ensures all tensors are on the same device.
         """
         # Always use CPU for pin_memory compatibility
@@ -2387,8 +2389,7 @@ class DCellGraphProcessor(GraphProcessor):
 
 
 class NeighborSubgraphRepresentation(GraphProcessor):
-    """
-    GraphProcessor that creates k-hop induced subgraphs around perturbed genes.
+    """GraphProcessor that creates k-hop induced subgraphs around perturbed genes.
 
     Unlike SubgraphRepresentation (which filters out perturbed genes) or
     LazySubgraphRepresentation (which keeps full graph with masks), this processor
@@ -2405,6 +2406,7 @@ class NeighborSubgraphRepresentation(GraphProcessor):
     """
 
     def __init__(self, num_hops: int = 2):
+        """Store the number of hops used to extract neighbor subgraphs."""
         self.num_hops = num_hops
         self.device = torch.device("cpu")
         self.masks = {}

@@ -1,3 +1,5 @@
+"""Smoke-check script that builds the sequence-derived gene datasets."""
+
 import os
 import os.path as osp
 

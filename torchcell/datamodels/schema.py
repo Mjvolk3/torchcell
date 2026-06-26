@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/schema
 # Test file: tests/torchcell/datamodels/test_schema.py
 
+"""Pydantic data models for torchcell genotypes, environments, and phenotypes."""
+
 import math
 import re
 
@@ -18,17 +20,22 @@ from torchcell.datamodels.pydant import ModelStrict
 
 # Genotype
 class ReferenceGenome(ModelStrict):
+    """Reference genome identified by species and strain."""
+
     species: str
     strain: str
 
 
 class GenePerturbation(ModelStrict):
+    """Base perturbation of a single gene by systematic and common name."""
+
     systematic_gene_name: str
     perturbed_gene_name: str
 
     @field_validator("systematic_gene_name", mode="after")
     @classmethod
     def validate_sys_gene_name(cls, v):
+        """Validate the systematic gene name matches an allowed feature pattern."""
         # Define named patterns for clarity based on genome feature types
         # protein-coding genes, pseudogenes, transposable_element_genes
         coding_gene_pattern = r"Y[A-P][LR]\d{3}[WC](-[A-Z])?"
@@ -46,27 +53,36 @@ class GenePerturbation(ModelStrict):
     @field_validator("perturbed_gene_name", mode="after")
     @classmethod
     def validate_pert_gene_name(cls, v):
+        """Normalize a trailing prime in the perturbed gene name to ``_prime``."""
         if v.endswith("'"):
             v = v[:-1] + "_prime"
         return v
 
 
 class DeletionPerturbation(GenePerturbation, ModelStrict):
+    """Gene deletion via KanMX or NatMX gene replacement."""
+
     description: str = "Deletion via KanMX or NatMX gene replacement"
     perturbation_type: str = "deletion"
 
 
 class KanMxDeletionPerturbation(DeletionPerturbation, ModelStrict):
+    """Gene deletion via KanMX gene replacement."""
+
     deletion_description: str = "Deletion via KanMX gene replacement."
     deletion_type: str = "KanMX"
 
 
 class NatMxDeletionPerturbation(DeletionPerturbation, ModelStrict):
+    """Gene deletion via NatMX gene replacement."""
+
     deletion_description: str = "Deletion via NatMX gene replacement."
     deletion_type: str = "NatMX"
 
 
 class SgaKanMxDeletionPerturbation(KanMxDeletionPerturbation, ModelStrict):
+    """KanMX deletion perturbation specific to SGA experiments."""
+
     kan_mx_description: str = (
         "KanMX Deletion Perturbation information specific to SGA experiments."
     )
@@ -75,6 +91,8 @@ class SgaKanMxDeletionPerturbation(KanMxDeletionPerturbation, ModelStrict):
 
 
 class SgaNatMxDeletionPerturbation(NatMxDeletionPerturbation, ModelStrict):
+    """NatMX deletion perturbation specific to SGA experiments."""
+
     nat_mx_description: str = (
         "NatMX Deletion Perturbation information specific to SGA experiments."
     )
@@ -91,6 +109,8 @@ class SgaNatMxDeletionPerturbation(NatMxDeletionPerturbation, ModelStrict):
 
 
 class ExpressionRangeMultiplier(ModelStrict):
+    """Min/max multiplier bounds on a gene's expression level."""
+
     min: float = Field(
         ..., description="Minimum range multiplier of gene expression levels"
     )
@@ -100,6 +120,8 @@ class ExpressionRangeMultiplier(ModelStrict):
 
 
 class DampPerturbation(GenePerturbation, ModelStrict):
+    """Decreased-abundance-by-mRNA-perturbation (DAmP) allele perturbation."""
+
     description: str = "4-10 decreased expression via KANmx insertion at the "
     "the 3' UTR of the target gene."
     expression_range: ExpressionRangeMultiplier = Field(
@@ -110,12 +132,16 @@ class DampPerturbation(GenePerturbation, ModelStrict):
 
 
 class SgaDampPerturbation(DampPerturbation, ModelStrict):
+    """DAmP perturbation specific to SGA experiments."""
+
     damp_description: str = "Damp Perturbation information specific to SGA experiments."
     strain_id: str = Field(description="'Strain ID' in raw data.")
     damp_perturbation_type: str = "SGA"
 
 
 class TsAllelePerturbation(GenePerturbation, ModelStrict):
+    """Temperature-sensitive allele perturbation via amino acid substitution."""
+
     description: str = (
         "Temperature sensitive allele compromised by amino acid substitution."
     )
@@ -124,6 +150,8 @@ class TsAllelePerturbation(GenePerturbation, ModelStrict):
 
 
 class AllelePerturbation(GenePerturbation, ModelStrict):
+    """Generic allele perturbation via amino acid substitution."""
+
     description: str = (
         "Allele compromised by amino acid substitution without more generic "
         "phenotypic information specified."
@@ -133,6 +161,8 @@ class AllelePerturbation(GenePerturbation, ModelStrict):
 
 
 class SuppressorAllelePerturbation(GenePerturbation, ModelStrict):
+    """Suppressor allele that raises fitness in the presence of a perturbation."""
+
     description: str = (
         "suppressor allele that results in higher fitness in the presence"
         "of a perturbation, compared to the fitness of the perturbation alone."
@@ -141,6 +171,8 @@ class SuppressorAllelePerturbation(GenePerturbation, ModelStrict):
 
 
 class SgaSuppressorAllelePerturbation(SuppressorAllelePerturbation, ModelStrict):
+    """Suppressor allele perturbation specific to SGA experiments."""
+
     suppressor_description: str = (
         "Suppressor Allele Perturbation information specific to SGA experiments."
     )
@@ -149,6 +181,8 @@ class SgaSuppressorAllelePerturbation(SuppressorAllelePerturbation, ModelStrict)
 
 
 class SgaTsAllelePerturbation(TsAllelePerturbation, ModelStrict):
+    """Temperature-sensitive allele perturbation specific to SGA experiments."""
+
     ts_allele_description: str = (
         "Ts Allele Perturbation information specific to SGA experiments."
     )
@@ -157,6 +191,8 @@ class SgaTsAllelePerturbation(TsAllelePerturbation, ModelStrict):
 
 
 class SgaAllelePerturbation(AllelePerturbation, ModelStrict):
+    """Generic allele perturbation specific to SGA experiments."""
+
     allele_description: str = (
         "Ts Allele Perturbation information specific to SGA experiments."
     )
@@ -166,6 +202,8 @@ class SgaAllelePerturbation(AllelePerturbation, ModelStrict):
 
 # Change to AggregateDeletionPerturbation, or AggDeletionPerturbation
 class MeanDeletionPerturbation(DeletionPerturbation, ModelStrict):
+    """Deletion perturbation aggregating duplicate experiments by their mean."""
+
     description: str = "Mean deletion perturbation representing duplicate experiments"
     deletion_type: str = "mean"
     num_duplicates: int = Field(
@@ -191,11 +229,14 @@ GenePerturbationType = (
 
 
 class Genotype(ModelStrict):
+    """Collection of gene perturbations defining a strain's genotype."""
+
     perturbations: list[GenePerturbationType] = Field(description="Gene perturbation")
 
     @field_validator("perturbations", mode="after")
     @classmethod
     def sort_perturbations(cls, perturbations):
+        """Sort perturbations by gene name, type, and perturbed name for stable order."""
         return sorted(
             perturbations,
             key=lambda p: (
@@ -207,6 +248,7 @@ class Genotype(ModelStrict):
 
     @property
     def systematic_gene_names(self):
+        """Return systematic gene names ordered by systematic gene name."""
         sorted_perturbations = sorted(
             self.perturbations, key=lambda p: p.systematic_gene_name
         )
@@ -214,6 +256,7 @@ class Genotype(ModelStrict):
 
     @property
     def perturbed_gene_names(self):
+        """Return perturbed gene names ordered by systematic gene name."""
         sorted_perturbations = sorted(
             self.perturbations, key=lambda p: p.systematic_gene_name
         )
@@ -221,16 +264,19 @@ class Genotype(ModelStrict):
 
     @property
     def perturbation_types(self):
+        """Return perturbation types ordered by systematic gene name."""
         sorted_perturbations = sorted(
             self.perturbations, key=lambda p: p.systematic_gene_name
         )
         return [p.perturbation_type for p in sorted_perturbations]
 
     def __len__(self):
+        """Return the number of perturbations."""
         return len(self.perturbations)
 
     # we would use set, but need serialization to be a list
     def __eq__(self, other):
+        """Return True if both genotypes contain the same set of perturbations."""
         if not isinstance(other, Genotype):
             return NotImplemented
 
@@ -239,36 +285,46 @@ class Genotype(ModelStrict):
 
 # Environment
 class Media(ModelStrict):
+    """Growth medium identified by name and physical state."""
+
     name: str
     state: str
 
     @field_validator("state", mode="after")
     @classmethod
     def validate_state(cls, v):
+        """Validate that state is one of solid, liquid, or gas."""
         if v not in ["solid", "liquid", "gas"]:
             raise ValueError('state must be one of "solid", "liquid", or "gas"')
         return v
 
 
 class Temperature(BaseModel):
+    """Temperature value with unit (defaults to Celsius)."""
+
     value: float  # Renamed from scalar to value
     unit: str = "Celsius"  # Simplified unit string
 
     @field_validator("value", mode="after")
     @classmethod
     def check_temperature(cls, v):
+        """Validate that the temperature is not below absolute zero in Celsius."""
         if v < -273:
             raise ValueError("Temperature cannot be below -273 degrees Celsius")
         return v
 
 
 class Environment(ModelStrict):
+    """Experimental environment combining media and temperature."""
+
     media: Media
     temperature: Temperature
 
 
 # Phenotype
 class Phenotype(ModelStrict):
+    """Base phenotype describing an observed label and its graph level."""
+
     graph_level: str = Field(
         description="most natural level of graph at which phenotype is observed"
     )
@@ -280,6 +336,7 @@ class Phenotype(ModelStrict):
 
     @model_validator(mode="after")
     def validate_fields(self):
+        """Validate that graph_level is one of the supported graph levels."""
         valid_graph_levels = {
             "edge",
             "node",
@@ -296,10 +353,13 @@ class Phenotype(ModelStrict):
         return self
 
     def __getitem__(self, key):
+        """Return the attribute value for the given field name."""
         return getattr(self, key)
 
 
 class FitnessPhenotype(Phenotype, ModelStrict):
+    """Fitness phenotype with fitness value and uncertainty statistics."""
+
     graph_level: str = "global"
     label_name: str = "fitness"
     label_statistic_name: str = "fitness_se"
@@ -323,6 +383,7 @@ class FitnessPhenotype(Phenotype, ModelStrict):
 
     @field_validator("fitness")
     def validate_fitness(cls, v):
+        """Reject NaN fitness and clamp non-positive values to zero."""
         if math.isnan(v):
             raise ValueError("Fitness cannot be NaN")
         if v <= 0:
@@ -331,12 +392,14 @@ class FitnessPhenotype(Phenotype, ModelStrict):
 
     @field_validator("n_samples")
     def validate_n_samples(cls, v):
+        """Validate that n_samples is a positive integer or None."""
         if v is not None and (not isinstance(v, int) or v < 1):
             raise ValueError(f"n_samples must be a positive integer or None, got: {v}")
         return v
 
     @model_validator(mode="after")
     def validate_label_fields(cls, values):
+        """Validate that label_name and label_statistic_name are class attributes."""
         if values.label_name not in cls.__annotations__:
             raise ValueError(
                 f"label_name '{values.label_name}' must be a class attribute"
@@ -355,6 +418,8 @@ class FitnessPhenotype(Phenotype, ModelStrict):
 
 
 class GeneEssentialityPhenotype(Phenotype, ModelStrict):
+    """Phenotype indicating whether a gene knockout is lethal."""
+
     graph_level: str = "node"
     label_name: str = "is_essential"
     is_essential: bool = Field(
@@ -366,6 +431,7 @@ class GeneEssentialityPhenotype(Phenotype, ModelStrict):
     # This could alternatively be moved to testing
     @model_validator(mode="after")
     def validate_label_fields(cls, values):
+        """Validate that label_name and label_statistic_name are class attributes."""
         # Check if label_name is a class attribute
         if values.label_name not in cls.__annotations__:
             raise ValueError(
@@ -386,6 +452,8 @@ class GeneEssentialityPhenotype(Phenotype, ModelStrict):
 
 
 class SyntheticLethalityPhenotype(Phenotype, ModelStrict):
+    """Phenotype indicating synthetic lethality between perturbed genes."""
+
     graph_level: str = "hyperedge"
     label_name: str = "is_synthetic_lethal"
     label_statistic_name: str = "synthetic_lethality_statistic_score"
@@ -405,6 +473,7 @@ class SyntheticLethalityPhenotype(Phenotype, ModelStrict):
     # This could alternatively be moved to testing
     @model_validator(mode="after")
     def validate_label_fields(cls, values):
+        """Validate that label_name and label_statistic_name are class attributes."""
         # Check if label_name is a class attribute
         if values.label_name not in cls.__annotations__:
             raise ValueError(
@@ -425,6 +494,8 @@ class SyntheticLethalityPhenotype(Phenotype, ModelStrict):
 
 
 class SyntheticRescuePhenotype(Phenotype, ModelStrict):
+    """Phenotype indicating one perturbation rescues another's deleterious effect."""
+
     graph_level: str = "hyperedge"
     label_name: str = "is_synthetic_rescue"
     label_statistic_name: str = "synthetic_rescue_statistic_score"
@@ -444,6 +515,7 @@ class SyntheticRescuePhenotype(Phenotype, ModelStrict):
     # This could alternatively be moved to testing
     @model_validator(mode="after")
     def validate_label_fields(cls, values):
+        """Validate that label_name and label_statistic_name are class attributes."""
         # Check if label_name is a class attribute
         if values.label_name not in cls.__annotations__:
             raise ValueError(
@@ -464,6 +536,8 @@ class SyntheticRescuePhenotype(Phenotype, ModelStrict):
 
 
 class GeneInteractionPhenotype(Phenotype, ModelStrict):
+    """Phenotype holding a gene interaction score and its p-value."""
+
     graph_level: str = "hyperedge"
     label_name: str = "gene_interaction"
     label_statistic_name: str = "gene_interaction_p_value"
@@ -477,6 +551,7 @@ class GeneInteractionPhenotype(Phenotype, ModelStrict):
 
     @field_validator("gene_interaction")
     def validate_fitness(cls, v):
+        """Reject NaN gene interaction values."""
         if math.isnan(v):
             raise ValueError("Gene interaction cannot be NaN")
         return v
@@ -486,6 +561,7 @@ class GeneInteractionPhenotype(Phenotype, ModelStrict):
     # This could alternatively be moved to testing
     @model_validator(mode="after")
     def validate_label_fields(cls, values):
+        """Validate that label_name and label_statistic_name are class attributes."""
         # Check if label_name is a class attribute
         if values.label_name not in cls.__annotations__:
             raise ValueError(
@@ -506,6 +582,8 @@ class GeneInteractionPhenotype(Phenotype, ModelStrict):
 
 
 class CalMorphPhenotype(Phenotype, ModelStrict):
+    """Phenotype holding CalMorph morphological measurements and CV statistics."""
+
     graph_level: str = "global"
     label_name: str = "calmorph"
     label_statistic_name: str = "calmorph_coefficient_of_variation"
@@ -523,6 +601,7 @@ class CalMorphPhenotype(Phenotype, ModelStrict):
 
     @field_validator("calmorph")
     def validate_calmorph(cls, v):
+        """Validate CalMorph base parameters against CALMORPH_LABELS and reject NaN."""
         if not v:
             raise ValueError("calmorph measurements cannot be empty")
         for key, value in v.items():
@@ -537,6 +616,7 @@ class CalMorphPhenotype(Phenotype, ModelStrict):
 
     @field_validator("calmorph_coefficient_of_variation")
     def validate_cv(cls, v):
+        """Validate CV parameters against CALMORPH_STATISTICS and reject NaN."""
         if v is None:
             return v
         for key, value in v.items():
@@ -551,6 +631,7 @@ class CalMorphPhenotype(Phenotype, ModelStrict):
 
     @model_validator(mode="after")
     def validate_label_fields(cls, values):
+        """Validate that label_name and label_statistic_name are class attributes."""
         if values.label_name not in cls.__annotations__:
             raise ValueError(
                 f"label_name '{values.label_name}' must be a class attribute"
@@ -569,6 +650,8 @@ class CalMorphPhenotype(Phenotype, ModelStrict):
 
 
 class Publication(ModelStrict):
+    """Publication reference identified by PubMed ID and/or DOI."""
+
     pubmed_id: str | None = None
     pubmed_url: str | None = None
     doi: str | None = None
@@ -576,6 +659,7 @@ class Publication(ModelStrict):
 
     @model_validator(mode="after")
     def check_pub_info(self):
+        """Require at least one of PubMed ID/DOI and at least one URL."""
         if self.pubmed_id is None and self.doi is None:
             raise ValueError("At least one of PubMed ID or DOI must be provided")
         if self.pubmed_url is None and self.doi_url is None:
@@ -584,6 +668,8 @@ class Publication(ModelStrict):
 
 
 class ExperimentReference(ModelStrict):
+    """Reference (wildtype/control) context for an experiment."""
+
     experiment_reference_type: str = "base"
     dataset_name: str
     genome_reference: ReferenceGenome
@@ -592,6 +678,8 @@ class ExperimentReference(ModelStrict):
 
 
 class Experiment(ModelStrict):
+    """Base experiment pairing a genotype and environment with a phenotype."""
+
     experiment_type: str = "base"
     dataset_name: str
     genotype: Genotype
@@ -600,67 +688,91 @@ class Experiment(ModelStrict):
 
 
 class FitnessExperimentReference(ExperimentReference, ModelStrict):
+    """Reference context for a fitness experiment."""
+
     experiment_reference_type: str = "fitness"
     phenotype_reference: FitnessPhenotype
 
 
 class FitnessExperiment(Experiment, ModelStrict):
+    """Experiment measuring a fitness phenotype."""
+
     experiment_type: str = "fitness"
     genotype: Genotype | list[Genotype,]
     phenotype: FitnessPhenotype
 
 
 class GeneInteractionExperimentReference(ExperimentReference, ModelStrict):
+    """Reference context for a gene interaction experiment."""
+
     experiment_reference_type: str = "gene interaction"
     phenotype_reference: GeneInteractionPhenotype
 
 
 class GeneInteractionExperiment(Experiment, ModelStrict):
+    """Experiment measuring a gene interaction phenotype."""
+
     experiment_type: str = "gene interaction"
     genotype: Genotype | list[Genotype,]
     phenotype: GeneInteractionPhenotype
 
 
 class GeneEssentialityExperimentReference(ExperimentReference, ModelStrict):
+    """Reference context for a gene essentiality experiment."""
+
     experiment_reference_type: str = "gene essentiality"
     phenotype_reference: GeneEssentialityPhenotype
 
 
 # shouldn't it jut be one gene for genotype?
 class GeneEssentialityExperiment(Experiment, ModelStrict):
+    """Experiment measuring a gene essentiality phenotype."""
+
     experiment_type: str = "gene essentiality"
     genotype: Genotype | list[Genotype,]
     phenotype: GeneEssentialityPhenotype
 
 
 class SyntheticLethalityExperimentReference(ExperimentReference, ModelStrict):
+    """Reference context for a synthetic lethality experiment."""
+
     experiment_reference_type: str = "synthetic lethality"
     phenotype_reference: SyntheticLethalityPhenotype
 
 
 class SyntheticLethalityExperiment(Experiment, ModelStrict):
+    """Experiment measuring a synthetic lethality phenotype."""
+
     experiment_type: str = "synthetic lethality"
     genotype: Genotype | list[Genotype,]
     phenotype: SyntheticLethalityPhenotype
 
 
 class SyntheticRescueExperimentReference(ExperimentReference, ModelStrict):
+    """Reference context for a synthetic rescue experiment."""
+
     experiment_reference_type: str = "synthetic rescue"
     phenotype_reference: SyntheticRescuePhenotype
 
 
 class SyntheticRescueExperiment(Experiment, ModelStrict):
+    """Experiment measuring a synthetic rescue phenotype."""
+
     experiment_type: str = "synthetic rescue"
     genotype: Genotype | list[Genotype,]
     phenotype: SyntheticRescuePhenotype
 
 
 class CalMorphExperimentReference(ExperimentReference, ModelStrict):
+    """Reference context for a CalMorph experiment."""
+
     experiment_reference_type: str = "calmorph"
     phenotype_reference: CalMorphPhenotype
 
 
 class CalMorphExperiment(Experiment, ModelStrict):
+    """Experiment measuring a CalMorph phenotype."""
+
     experiment_type: str = "calmorph"
     genotype: Genotype | list[Genotype,]
     phenotype: CalMorphPhenotype
@@ -768,6 +880,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
 
     @field_validator("expression", mode="before")
     def convert_and_validate_expression(cls, v):
+        """Coerce expression to a SortedDict and reject empty or infinite values."""
         if v is None:
             raise ValueError("expression measurements cannot be None")
         # Convert to SortedDict for consistent ordering
@@ -783,6 +896,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
 
     @field_validator("expression_log2_ratio", mode="before")
     def convert_and_validate_log2_ratio(cls, v):
+        """Coerce log2 ratios to a SortedDict and reject empty input."""
         if v is None:
             raise ValueError("expression_log2_ratio cannot be None")
         # Convert to SortedDict for consistent ordering
@@ -795,6 +909,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
 
     @field_validator("expression_log2_ratio_se", mode="before")
     def convert_and_validate_log2_se(cls, v):
+        """Coerce log2 ratio SE to a SortedDict and reject negative finite values."""
         if v is None:
             return v
         # Convert to SortedDict for consistent ordering
@@ -808,6 +923,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
 
     @field_validator("expression_se", mode="before")
     def convert_and_validate_expression_se(cls, v):
+        """Coerce expression SE to a SortedDict and reject negative finite values."""
         if v is None:
             return v
         # Convert to SortedDict for consistent ordering
@@ -821,6 +937,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
 
     @field_validator("expression_log2_ratio_variance", mode="before")
     def convert_and_validate_variance(cls, v):
+        """Coerce variance to a SortedDict and reject negative non-NaN values."""
         if v is None:
             return v
         # Convert to SortedDict for consistent ordering
@@ -834,6 +951,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
 
     @field_validator("n_samples", mode="before")
     def convert_and_validate_n_samples(cls, v):
+        """Coerce n_samples to a SortedDict and require positive integer counts."""
         if v is None:
             raise ValueError(
                 "n_samples cannot be None - it is required for SE interpretation"
@@ -883,11 +1001,15 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
 
 
 class MicroarrayExpressionExperimentReference(ExperimentReference, ModelStrict):
+    """Reference context for a microarray expression experiment."""
+
     experiment_reference_type: str = "microarray_expression"
     phenotype_reference: MicroarrayExpressionPhenotype
 
 
 class MicroarrayExpressionExperiment(Experiment, ModelStrict):
+    """Experiment measuring a microarray expression phenotype."""
+
     experiment_type: str = "microarray_expression"
     genotype: Genotype | list[Genotype,]
     phenotype: MicroarrayExpressionPhenotype

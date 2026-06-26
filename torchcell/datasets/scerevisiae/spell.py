@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/spell
 # Test file: tests/torchcell/datasets/scerevisiae/test_spell.py
 
+"""S. cerevisiae SPELL microarray expression datasets and loaders."""
+
 # File needs to be down loaded from here http://sgd-archive.yeastgenome.org/expression/microarray/all_spell_datasets.tar.gz
 
 import os.path as osp
@@ -23,8 +25,7 @@ DATA_ROOT = osp.expanduser(osp.join("~", "Documents", "projects", "torchcell"))
 
 
 def read_pcl_file(pcl_path):
-    """
-    Parse a PCL (Platform for Clustering and Linkage) file from SPELL database.
+    """Parse a PCL (Platform for Clustering and Linkage) file from SPELL database.
 
     PCL format:
     - Tab-delimited text file
@@ -65,8 +66,7 @@ def read_pcl_file(pcl_path):
 def plot_expression_histograms(
     df, metadata, gene_list=None, title_prefix="SPELL", save_path=None
 ):
-    """
-    Plot histograms of log2 expression ratios for selected genes across all conditions.
+    """Plot histograms of log2 expression ratios for selected genes across all conditions.
 
     Args:
         df: DataFrame with expression data (from read_pcl_file)
@@ -131,8 +131,7 @@ def plot_expression_histograms(
 def plot_global_expression_distribution(
     df, metadata, title_prefix="SPELL", save_path=None
 ):
-    """
-    Plot histogram of all log2 expression ratios across all genes and conditions.
+    """Plot histogram of all log2 expression ratios across all genes and conditions.
 
     Args:
         df: DataFrame with expression data
@@ -188,8 +187,7 @@ def plot_global_expression_distribution(
 def extract_and_load_all_spell_studies(
     spell_root_dir, studies_to_load=None, max_studies=None
 ):
-    """
-    Extract and load PCL files from multiple SPELL studies.
+    """Extract and load PCL files from multiple SPELL studies.
 
     Args:
         spell_root_dir: Root directory containing .zip study files
@@ -262,7 +260,8 @@ def extract_and_load_all_spell_studies(
 
 
 def plot_genes_across_all_studies(all_data, gene_list, save_path=None):
-    """
+    """Plot expression histograms for given genes across all SPELL datasets.
+
     Plot histograms showing expression distributions for specific genes
     across ALL SPELL studies and datasets.
 
@@ -657,8 +656,7 @@ def extract_replicate_info(condition_name):
 
 
 def export_condition_metadata(all_data, output_path=None):
-    """
-    Export detailed condition metadata for analysis and visualization.
+    """Export detailed condition metadata for analysis and visualization.
 
     Creates an enhanced CSV with structured columns for environmental parameters:
     - study_name, dataset_name, condition_name
@@ -959,8 +957,7 @@ def export_condition_metadata(all_data, output_path=None):
 
 
 def check_condition_metadata_quality(all_data):
-    """
-    Check if all expression data has proper condition labels.
+    """Check if all expression data has proper condition labels.
 
     Returns:
         dict: Statistics about condition metadata quality
@@ -1055,7 +1052,8 @@ def check_condition_metadata_quality(all_data):
 
 
 def main():
-    """
+    """Load SPELL data and plot per-gene expression histograms.
+
     Load SPELL expression data from multiple studies and create histograms
     for specific genes across all datasets and conditions.
     """

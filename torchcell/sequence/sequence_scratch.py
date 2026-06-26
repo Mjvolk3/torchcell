@@ -1,3 +1,5 @@
+"""Scratch sketches for genome sequence interface classes."""
+
 # @define
 # class BaseGenome(ABC):
 #     @abstractmethod

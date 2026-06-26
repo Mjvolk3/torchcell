@@ -1,3 +1,5 @@
+"""Genome plotting helpers, including feature-type count bar charts."""
+
 import os
 import os.path as osp
 import pickle
@@ -17,13 +19,22 @@ plt.style.use(style_file_path)
 
 
 class GenomePlot(ABC):
+    """Abstract base for genome plots with shared figure-saving logic."""
+
     genome: Genome
 
     @abstractmethod
     def plot() -> None:
+        """Render the plot; must be implemented by subclasses."""
         raise NotImplementedError("Subclasses must implement plot() method.")
 
     def save(self, as_pdf: bool = False, as_pickle: bool = False) -> None:
+        """Save the current figure as PNG, optionally also PDF and pickle.
+
+        Args:
+            as_pdf: Also write a vector PDF copy.
+            as_pickle: Also pickle the matplotlib figure object.
+        """
         current_dir = osp.dirname(osp.abspath(__file__))
         # Get current date and time and format it as year-month-day-hour-minute-second.
         timestamp = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M.%S")
@@ -47,17 +58,21 @@ class GenomePlot(ABC):
 
 @define
 class PlotFeatureTypeCounts(GenomePlot):
+    """Horizontal bar chart of genome feature-type occurrence counts."""
+
     genome: Genome
     plt: plt = field(init=False)
 
     @property
     def feature_type_counts(self):
+        """Return a mapping of feature type to its occurrence count."""
         feature_types = [
             feat.featuretype for feat in list(self.genome.db.all_features())
         ]
         return dict(Counter(feature_types))
 
     def plot(self) -> None:
+        """Draw the feature-type count bar chart and store the pyplot handle."""
         feature_type_counts = self.feature_type_counts
         types = list(feature_type_counts.keys())
         counts = list(feature_type_counts.values())
@@ -87,13 +102,16 @@ class PlotFeatureTypeCounts(GenomePlot):
         self.plt = plt
 
     def show(self):
+        """Display the current figure."""
         plt.show()
 
     def close(self):
+        """Close the current figure."""
         plt.close()
 
 
 def main():
+    """Build and save the feature-type count plot for the S. cerevisiae genome."""
     genome = SCerevisiaeGenome()
     genome_plot = PlotFeatureTypeCounts(genome)
     genome_plot.plot()

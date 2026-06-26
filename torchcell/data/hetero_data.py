@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/data/hetero_data
 # Test file: tests/torchcell/data/test_hetero_data.py
 
+"""Custom compact __repr__ for PyG HeteroData that summarizes nested structures."""
+
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -13,6 +15,7 @@ from torch_geometric.typing import SparseTensor, TensorFrame
 
 
 def custom_size_repr(key: Any, value: Any, indent: int = 0) -> str:
+    """Return a size-oriented string for a key/value, abbreviating large dicts."""
     pad = " " * indent
 
     # Special handling for nested dictionaries - show their size instead of content
@@ -59,6 +62,7 @@ def custom_size_repr(key: Any, value: Any, indent: int = 0) -> str:
 
 
 def hetero_repr(self) -> str:
+    """Return a compact repr of HeteroData global, node, and edge stores."""
     info1 = [custom_size_repr(k, v, 2) for k, v in self._global_store.items()]
     info2 = [custom_size_repr(k, v, 2) for k, v in self._node_store_dict.items()]
     info3 = [custom_size_repr(k, v, 2) for k, v in self._edge_store_dict.items()]

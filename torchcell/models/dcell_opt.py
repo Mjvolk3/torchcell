@@ -3,8 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/dcell_opt
 # Test file: tests/torchcell/models/test_dcell_opt.py
 
-"""
-Optimized DCell model for torch.compile compatibility.
+"""Optimized DCell model for torch.compile compatibility.
+
 Reduces graph breaks by using ModuleList instead of ModuleDict and tensorized operations.
 """
 
@@ -37,6 +37,14 @@ class DCellOpt(nn.Module):
         subsystem_ratio: float = 0.3,
         output_size: int = 1,
     ):
+        """Build the tensorized subsystem hierarchy from the GO-annotated graph.
+
+        Args:
+            hetero_data: Graph carrying the GO ontology and gene annotations.
+            min_subsystem_size: Minimum number of genes for a subsystem.
+            subsystem_ratio: Fraction setting each subsystem's hidden width.
+            output_size: Dimension of the per-subsystem output.
+        """
         super().__init__()
 
         # Store parameters
@@ -739,6 +747,7 @@ class DCellSubsystem(nn.Module):
     """Individual subsystem module as described in DCell paper."""
 
     def __init__(self, input_dim: int, output_dim: int):
+        """Build a linear-batchnorm-tanh block with DCell weight initialization."""
         super().__init__()
         self.linear = nn.Linear(input_dim, output_dim)
         self.batch_norm = nn.BatchNorm1d(output_dim)
@@ -749,6 +758,7 @@ class DCellSubsystem(nn.Module):
         nn.init.uniform_(self.linear.bias, -0.001, 0.001)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply linear, batch norm, and tanh activation to the input."""
         x = self.linear(x)
         x = self.batch_norm(x)
         x = self.activation(x)
@@ -765,9 +775,7 @@ class DCellSubsystem(nn.Module):
     config_name="dcell_kuzmin2018_tmi",
 )
 def main(cfg: DictConfig):
-    """
-    Main function to test the optimized DCell model
-    """
+    """Train and evaluate the optimized DCell model on a sample batch."""
     import torch.optim as optim
     from tqdm import tqdm
 

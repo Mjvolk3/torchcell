@@ -1,3 +1,5 @@
+"""BioCypher adapters for the Kuzmin 2018 single/double/triple mutant datasets."""
+
 # torchcell/adapters/kuzmin2018_adapter.py
 # [[torchcell.adapters.kuzmin2018_adapter]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/kuzmin2018_adapter.py
@@ -29,6 +31,8 @@ logger.setLevel(logging.ERROR)
 
 
 class SmfKuzmin2018Adapter(CellAdapter):
+    """Adapter for the Kuzmin 2018 single-mutant fitness (SMF) dataset."""
+
     def __init__(
         self,
         dataset: SmfKuzmin2018Dataset,
@@ -37,6 +41,15 @@ class SmfKuzmin2018Adapter(CellAdapter):
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
+        """Load the adapter config YAML and initialize the CellAdapter.
+
+        Args:
+            dataset: The Kuzmin 2018 dataset to adapt.
+            process_workers: Number of worker processes for processing.
+            io_workers: Number of worker processes for I/O.
+            chunk_size: Number of records per processing chunk.
+            loader_batch_size: Batch size used when loading records.
+        """
         current_dir = osp.dirname(osp.abspath(__file__))
 
         config_path = osp.join(current_dir, "conf", "smf_kuzmin2018_adapter.yaml")
@@ -63,6 +76,8 @@ class SmfKuzmin2018Adapter(CellAdapter):
 
 
 class DmfKuzmin2018Adapter(CellAdapter):
+    """Adapter for the Kuzmin 2018 double-mutant fitness (DMF) dataset."""
+
     def __init__(
         self,
         dataset: DmfKuzmin2018Dataset,
@@ -71,6 +86,15 @@ class DmfKuzmin2018Adapter(CellAdapter):
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
+        """Load the adapter config YAML and initialize the CellAdapter.
+
+        Args:
+            dataset: The Kuzmin 2018 dataset to adapt.
+            process_workers: Number of worker processes for processing.
+            io_workers: Number of worker processes for I/O.
+            chunk_size: Number of records per processing chunk.
+            loader_batch_size: Batch size used when loading records.
+        """
         current_dir = osp.dirname(osp.abspath(__file__))
 
         config_path = osp.join(current_dir, "conf", "dmf_kuzmin2018_adapter.yaml")
@@ -97,6 +121,8 @@ class DmfKuzmin2018Adapter(CellAdapter):
 
 
 class TmfKuzmin2018Adapter(CellAdapter):
+    """Adapter for the Kuzmin 2018 triple-mutant fitness (TMF) dataset."""
+
     def __init__(
         self,
         dataset: TmfKuzmin2018Dataset,
@@ -105,6 +131,15 @@ class TmfKuzmin2018Adapter(CellAdapter):
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
+        """Load the adapter config YAML and initialize the CellAdapter.
+
+        Args:
+            dataset: The Kuzmin 2018 dataset to adapt.
+            process_workers: Number of worker processes for processing.
+            io_workers: Number of worker processes for I/O.
+            chunk_size: Number of records per processing chunk.
+            loader_batch_size: Batch size used when loading records.
+        """
         current_dir = osp.dirname(osp.abspath(__file__))
 
         config_path = osp.join(current_dir, "conf", "tmf_kuzmin2018_adapter.yaml")
@@ -131,6 +166,8 @@ class TmfKuzmin2018Adapter(CellAdapter):
 
 
 class DmiKuzmin2018Adapter(CellAdapter):
+    """Adapter for the Kuzmin 2018 double-mutant interaction (DMI) dataset."""
+
     def __init__(
         self,
         dataset: DmiKuzmin2018Dataset,
@@ -139,6 +176,15 @@ class DmiKuzmin2018Adapter(CellAdapter):
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
+        """Load the adapter config YAML and initialize the CellAdapter.
+
+        Args:
+            dataset: The Kuzmin 2018 dataset to adapt.
+            process_workers: Number of worker processes for processing.
+            io_workers: Number of worker processes for I/O.
+            chunk_size: Number of records per processing chunk.
+            loader_batch_size: Batch size used when loading records.
+        """
         current_dir = osp.dirname(osp.abspath(__file__))
         config_path = osp.join(current_dir, "conf", "dmi_kuzmin2018_adapter.yaml")
 
@@ -162,6 +208,8 @@ class DmiKuzmin2018Adapter(CellAdapter):
 
 
 class TmiKuzmin2018Adapter(CellAdapter):
+    """Adapter for the Kuzmin 2018 triple-mutant interaction (TMI) dataset."""
+
     def __init__(
         self,
         dataset: TmiKuzmin2018Dataset,
@@ -170,6 +218,15 @@ class TmiKuzmin2018Adapter(CellAdapter):
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
+        """Load the adapter config YAML and initialize the CellAdapter.
+
+        Args:
+            dataset: The Kuzmin 2018 dataset to adapt.
+            process_workers: Number of worker processes for processing.
+            io_workers: Number of worker processes for I/O.
+            chunk_size: Number of records per processing chunk.
+            loader_batch_size: Batch size used when loading records.
+        """
         current_dir = osp.dirname(osp.abspath(__file__))
         config_path = osp.join(current_dir, "conf", "tmi_kuzmin2018_adapter.yaml")
 

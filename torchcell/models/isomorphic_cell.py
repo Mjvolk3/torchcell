@@ -2,7 +2,7 @@
 # [[torchcell.models.isomorphic_cell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/isomorphic_cell
 # Test file: tests/torchcell/models/test_isomorphic_cell.py
-
+"""Isomorphic cell model combining gene GNN and metabolism hypergraph branches."""
 
 from typing import Literal
 
@@ -31,6 +31,8 @@ from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 
 
 class PreProcessor(nn.Module):
+    """MLP that preprocesses node features before the GNN branches."""
+
     def __init__(
         self,
         in_channels: int,
@@ -38,6 +40,7 @@ class PreProcessor(nn.Module):
         num_layers: int = 2,
         dropout: float = 0.1,
     ):
+        """Build the linear/norm/ReLU/dropout preprocessing stack."""
         super().__init__()
         layers = []
         layers.extend(
@@ -62,11 +65,15 @@ class PreProcessor(nn.Module):
         self.mlp = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply the preprocessing MLP to the input features."""
         return self.mlp(x)
 
 
 class Combiner(nn.Module):
+    """MLP that fuses gene and metabolism feature branches."""
+
     def __init__(self, hidden_channels: int, num_layers: int = 2, dropout: float = 0.1):
+        """Build the MLP that maps concatenated branch features to hidden dim."""
         super().__init__()
         layers = []
 
@@ -95,30 +102,39 @@ class Combiner(nn.Module):
     def forward(
         self, gene_features: torch.Tensor, metabolism_features: torch.Tensor
     ) -> torch.Tensor:
+        """Concatenate the two branch features and pass them through the MLP."""
         combined = torch.cat([gene_features, metabolism_features], dim=-1)
         return self.mlp(combined)
 
 
 # FLAG Hetero GNN - Start
 class ProjectedGATConv(nn.Module):
+    """GATv2 conv followed by a linear projection to a fixed output dim."""
+
     def __init__(self, gat_conv, out_dim):
+        """Store the GAT conv and build the output projection."""
         super().__init__()
         self.gat = gat_conv
         self.project = nn.Linear(gat_conv.heads * gat_conv.out_channels, out_dim)
 
     def forward(self, x, edge_index):
+        """Run the GAT conv and project to the target output dimension."""
         x = self.gat(x, edge_index)  # Shape: (..., heads * out_channels)
         return self.project(x)  # Shape: (..., out_dim)
 
 
 class PredictionHead(nn.Module):
+    """Sequential prediction head with optional residual connections."""
+
     def __init__(self, layers: nn.ModuleList, residual: bool, dims: list[int]):
+        """Store the layer list, residual flag, and per-layer dimensions."""
         super().__init__()
         self.layers = layers
         self.residual = residual
         self.dims = dims
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Run the layers, adding residuals where dimensions match."""
         input_x = x
         current_idx = 0
 
@@ -139,6 +155,8 @@ class PredictionHead(nn.Module):
 
 
 class HeteroGnn(nn.Module):
+    """Configurable heterogeneous GNN over the gene graph edge types."""
+
     def __init__(
         self,
         in_channels: int,
@@ -159,6 +177,7 @@ class HeteroGnn(nn.Module):
         learnable_embedding: bool = False,
         num_nodes: int | None = None,
     ):
+        """Build the hetero conv stack and the optional prediction head."""
         super().__init__()
         self.num_layers = num_layers
         self.edge_types = edge_types
@@ -471,6 +490,7 @@ class HeteroGnn(nn.Module):
         )
 
     def forward(self, batch):
+        """Run the hetero GNN over the batch and return node embeddings."""
         from torch_geometric.utils import add_self_loops
 
         if self.learnable_embedding:
@@ -561,6 +581,7 @@ class HeteroGnn(nn.Module):
 
     @property
     def num_parameters(self) -> dict[str, int]:
+        """Return a breakdown of parameter counts by submodule."""
         conv_params = sum(
             sum(p.numel() for p in conv.parameters()) for conv in self.convs
         )
@@ -580,6 +601,8 @@ class HeteroGnn(nn.Module):
 
 # FLAG Hetero GNN - End
 class GeneContextProcessor(nn.Module):
+    """Embed genes with an MLP and aggregate them per reaction via SAB."""
+
     def __init__(
         self,
         in_channels: int,
@@ -588,6 +611,7 @@ class GeneContextProcessor(nn.Module):
         dropout: float = 0.1,
         use_layer_norm: bool = True,
     ):
+        """Build the gene MLP and the set-transformer reaction aggregator."""
         super().__init__()
         self.hidden_channels = hidden_channels
 
@@ -617,6 +641,7 @@ class GeneContextProcessor(nn.Module):
     def forward(
         self, gene_features: torch.Tensor, reaction_to_genes: dict[int, list[int]]
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Return gene embeddings and per-reaction aggregated features."""
         # Transform gene features
         H_g = self.mlp(gene_features)
 
@@ -649,9 +674,9 @@ class GeneContextProcessor(nn.Module):
 
 
 class MetaboliteProcessor(nn.Module):
-    """
-    Repeatedly applies StoichHypergraphConv to metabolite embeddings
-    using reaction features as hyperedge_attr (when use_attention=True).
+    """Apply StoichHypergraphConv layers to metabolite embeddings.
+
+    Uses reaction features as hyperedge_attr when use_attention=True.
     """
 
     def __init__(
@@ -661,6 +686,7 @@ class MetaboliteProcessor(nn.Module):
         dropout: float = 0.1,
         use_attention: bool = True,
     ):
+        """Build the stoichiometric hypergraph conv layers and layer norms."""
         super().__init__()
         self.conv_layers = nn.ModuleList(
             [
@@ -686,7 +712,7 @@ class MetaboliteProcessor(nn.Module):
         stoichiometry: torch.Tensor,
         reaction_features: torch.Tensor,
     ) -> torch.Tensor:
-
+        """Apply residual stoichiometric hypergraph convolutions."""
         # Sort edge indices and convert perm to long tensor for indexing
         edge_index, perm = sort_edge_index(
             hyperedge_index, edge_attr=stoichiometry, sort_by_row=False
@@ -714,11 +740,10 @@ class MetaboliteProcessor(nn.Module):
 
 
 class ReactionMapper(nn.Module):
-    """
-    Aggregates metabolite features -> reaction embeddings via SetTransformer.
-    """
+    """Aggregate metabolite features into reaction embeddings via SetTransformer."""
 
     def __init__(self, hidden_channels: int, num_heads: int = 4, dropout: float = 0.1):
+        """Build the set-transformer aggregator over metabolites."""
         super().__init__()
         self.sab = SetTransformerAggregation(
             channels=hidden_channels,
@@ -732,8 +757,7 @@ class ReactionMapper(nn.Module):
     def forward(
         self, metabolite_features: torch.Tensor, hyperedge_index: torch.Tensor
     ) -> torch.Tensor:
-        """
-        Convert (metabolite -> reaction) indexing into a set-based aggregation.
+        """Convert (metabolite -> reaction) indexing into a set-based aggregation.
 
         hyperedge_index[0]: metabolite indices
         hyperedge_index[1]: reaction indices
@@ -749,11 +773,10 @@ class ReactionMapper(nn.Module):
 
 
 class GeneMapper(nn.Module):
-    """
-    Aggregates reaction features -> gene embeddings.
-    """
+    """Aggregate reaction features into per-gene embeddings."""
 
     def __init__(self, hidden_channels: int, num_heads: int = 4, dropout: float = 0.1):
+        """Build the set-transformer aggregator over reactions."""
         super().__init__()
         self.sab = SetTransformerAggregation(
             channels=hidden_channels,
@@ -770,9 +793,10 @@ class GeneMapper(nn.Module):
         reaction_to_genes: dict[int, list[int]],
         num_genes: int,
     ) -> torch.Tensor:
-        """
-        For each reaction -> set of genes, gather reaction_features and pool
-        them into per-gene embeddings. Then create an embedding for each gene.
+        """Pool reaction features into per-gene embeddings.
+
+        For each reaction's set of genes, gather reaction_features and pool them
+        into per-gene embeddings, creating an embedding for each gene.
         """
         feats_list = []
         gene_idx_list = []
@@ -798,6 +822,8 @@ class GeneMapper(nn.Module):
 
 
 class MetabolismProcessor(nn.Module):
+    """Process the metabolism branch: gene, reaction, and metabolite SABs."""
+
     def __init__(
         self,
         metabolite_dim: int,
@@ -807,6 +833,7 @@ class MetabolismProcessor(nn.Module):
         use_attention: bool = True,
         num_heads: int = 2,
     ):
+        """Build metabolite embeddings, hypergraph convs, and reaction SABs."""
         super().__init__()
 
         # Metabolite embeddings
@@ -849,7 +876,7 @@ class MetabolismProcessor(nn.Module):
         )
 
     def whole_forward(self, graph) -> torch.Tensor:
-        """Forward pass for single instance (whole cell graph)"""
+        """Run the metabolism branch on a single whole-cell graph."""
         # 1. Gene -> Reaction context
         gpr_edge_index = graph["gene", "gpr", "reaction"].hyperedge_index
         gpr_edge_index, _ = sort_edge_index(
@@ -916,6 +943,7 @@ class MetabolismProcessor(nn.Module):
         return Z_mg
 
     def intact_perturbed_forward(self, batch: HeteroData) -> torch.Tensor:
+        """Run the metabolism branch on intact and perturbed batched graphs."""
         # 1. Gene -> Reaction mapping
         gpr_edge_index = batch["gene", "gpr", "reaction"].hyperedge_index
         gpr_num_nodes = batch["gene"].num_nodes + batch["reaction"].num_nodes
@@ -981,6 +1009,7 @@ class MetabolismProcessor(nn.Module):
         return Z_mg
 
     def forward(self, data) -> torch.Tensor:
+        """Dispatch to whole or batched metabolism forward based on input."""
         # Check if we're dealing with batched data
         is_batched = hasattr(data["gene"], "batch")
 
@@ -991,6 +1020,8 @@ class MetabolismProcessor(nn.Module):
 
 
 class IsomorphicCell(nn.Module):
+    """Full cell model fusing gene GNN and metabolism branches for prediction."""
+
     def __init__(
         self,
         in_channels: int,
@@ -1010,6 +1041,7 @@ class IsomorphicCell(nn.Module):
         combiner_config: dict | None = None,
         prediction_head_config: dict | None = None,
     ):
+        """Build the preprocessor, gene encoder, metabolism, and combiner."""
         super().__init__()
 
         # Initialize configs
@@ -1144,7 +1176,7 @@ class IsomorphicCell(nn.Module):
 
     # TODO check for other uses of batch["gene"].ids_pert
     def _get_perturbed_indices(self, batch):
-        """Returns list of perturbed indices for each batch item"""
+        """Return the list of perturbed gene indices for each batch item."""
         batch_size = batch["gene"].ptr.size(0) - 1
         pert_indices = []
 
@@ -1159,6 +1191,7 @@ class IsomorphicCell(nn.Module):
         return pert_indices
 
     def forward_single(self, batch):
+        """Encode one graph through the gene and metabolism paths and combine."""
         # Gene path - pass preprocessed features to gene_encoder
         z_g = self.gene_encoder(batch)
 
@@ -1170,6 +1203,7 @@ class IsomorphicCell(nn.Module):
         return z
 
     def forward(self, cell_graph, batch):
+        """Predict outputs for the batch given the reference cell graph."""
         # z_w = self.forward_single(cell_graph)
         pert_indices = self._get_perturbed_indices(batch)
         batch_size = len(pert_indices)
@@ -1211,6 +1245,7 @@ class IsomorphicCell(nn.Module):
 
 
 def initialize_model(dataset, device, config=None):
+    """Build an IsomorphicCell from the dataset and move it to the device."""
     if config is None:
         config = {}
 
@@ -1306,6 +1341,7 @@ def initialize_model(dataset, device, config=None):
 
 
 def load_sample_data_batch():
+    """Load a sample cell-graph batch for exercising the model."""
     import os
     import os.path as osp
 
@@ -1394,6 +1430,7 @@ def load_sample_data_batch():
 
 
 def plot_correlations(predictions, true_values, save_path):
+    """Plot predicted-vs-true correlation scatter plots and save them."""
     import matplotlib.pyplot as plt
     import numpy as np
     from scipy import stats
@@ -1459,6 +1496,7 @@ def plot_correlations(predictions, true_values, save_path):
 
 
 def main(device="gpu"):
+    """Run a forward/training smoke test of the IsomorphicCell model."""
     import os
     import os.path as osp
 

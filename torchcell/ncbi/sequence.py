@@ -1,3 +1,5 @@
+"""Genome sequence access from NCBI GFF/FASTA files for S. cerevisiae."""
+
 from abc import ABC, abstractmethod
 
 import gffutils
@@ -8,8 +10,11 @@ from Bio import SeqIO
 
 @define
 class BaseGenome(ABC):
+    """Abstract interface for genome sequence and annotation access."""
+
     @abstractmethod
     def get_sequence(self, chr: int, start: int, end: int) -> str:
+        """Return the sequence on the given chromosome between start and end."""
         raise NotImplementedError
 
     # @abstractmethod
@@ -19,6 +24,7 @@ class BaseGenome(ABC):
 
     @abstractmethod
     def get_gene_sequence(self, gene: str) -> str:
+        """Return the nucleotide sequence for the named gene."""
         raise NotImplementedError
 
     # @abstractmethod
@@ -28,10 +34,12 @@ class BaseGenome(ABC):
     @property
     @abstractmethod
     def translation_table(self) -> pd.DataFrame:
+        """Return a table mapping locus tags to gene names."""
         raise NotImplementedError
 
 
 def mismatch_positions(seq1, seq2):
+    """Return indices where two equal-length sequences differ."""
     if len(seq1) != len(seq2):
         raise ValueError("Sequences must be the same length")
     mismatches = [i for i, (n1, n2) in enumerate(zip(seq1, seq2)) if n1 != n2]
@@ -39,6 +47,7 @@ def mismatch_positions(seq1, seq2):
 
 
 def get_chr_from_description(description: str) -> int:
+    """Parse a FASTA description into a chromosome number (0 for mitochondrion)."""
     desc_split = [part.rstrip(",") for part in description.split()]
     if "mitochondrion" in desc_split:
         return 0
@@ -48,6 +57,7 @@ def get_chr_from_description(description: str) -> int:
 
 
 def roman_to_int(s: str) -> int:
+    """Convert a Roman numeral string to its integer value."""
     roman_to_int_mapping = {
         "I": 1,
         "V": 5,
@@ -68,6 +78,8 @@ def roman_to_int(s: str) -> int:
 
 @define
 class SCerevisiaeGenome(BaseGenome):
+    """S. cerevisiae genome backed by NCBI GFF annotations and a FASTA file."""
+
     _gff_path: str = (
         "data/ncbi/s_cerevisiae/ncbi_dataset/data/GCF_000146045.2/genomic.gff"
     )
@@ -77,6 +89,7 @@ class SCerevisiaeGenome(BaseGenome):
     chr_to_nc = field(init=False, default=None, repr=False)
 
     def __attrs_post_init__(self) -> None:
+        """Build the gffutils database and load FASTA sequences and chr mapping."""
         # Create the database
         self.db = gffutils.create_db(
             self._gff_path,
@@ -95,12 +108,14 @@ class SCerevisiaeGenome(BaseGenome):
         }
 
     def get_sequence(self, chr: int, start: int, end: int) -> str:
+        """Return the sequence slice on the given chromosome between start and end."""
         # Get the identifier corresponding to the given chromosome number
         chr_id = self.chr_to_nc[chr]
         # Get the sequence for the chromosome with this identifier
         return str(self.fasta_sequences[chr_id].seq[start:end])
 
     def get_gene_sequence(self, gene_name: str) -> str:
+        """Return the genomic sequence for a gene matched by Name or locus_tag."""
         # Iterate through all genes in the gffutils database
         for gene_feature in self.db.features_of_type("gene"):
             # If the gene's Name attribute matches the provided gene_name
@@ -123,6 +138,7 @@ class SCerevisiaeGenome(BaseGenome):
 
     @property
     def translation_table(self) -> pd.DataFrame:
+        """Return a DataFrame mapping each gene's locus_tag to its name."""
         data = []
         for gene_feature in self.db.features_of_type("gene"):
             if (
@@ -138,6 +154,7 @@ class SCerevisiaeGenome(BaseGenome):
 
 
 def main() -> None:
+    """Run a small demonstration of genome sequence lookups."""
     genome = SCerevisiaeGenome()
     print(genome.get_sequence(1, 0, 10))  # Replace with valid parameters
     print(genome.get_gene_sequence("YFL039C"))  # Replace with valid gene

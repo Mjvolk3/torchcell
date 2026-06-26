@@ -1,8 +1,9 @@
+"""Embedding dataset of random per-gene feature vectors for baselines/tests."""
+
 # torchcell/datasets/random_embedding
 # [[torchcell.datasets.random_embedding]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/random_embedding
 # Test file: tests/torchcell/datasets/test_random_embedding.py
-
 
 import os
 from collections.abc import Callable
@@ -17,6 +18,8 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 class RandomEmbeddingDataset(BaseEmbeddingDataset):
+    """Embedding dataset assigning each gene a random feature vector."""
+
     # 1000 = random embedding size
     # We should remove this to make it more general
     MODEL_TO_WINDOW = {
@@ -36,6 +39,16 @@ class RandomEmbeddingDataset(BaseEmbeddingDataset):
         pre_transform: Callable | None = None,
         batch_size: int = 100,
     ):
+        """Set up the dataset, processing random embeddings if not yet cached.
+
+        Args:
+            root: Root directory for processed data.
+            genome: Genome supplying the gene set to embed.
+            model_name: Key into ``MODEL_TO_WINDOW`` selecting embedding size.
+            transform: Optional runtime transform applied to each item.
+            pre_transform: Optional transform applied before caching.
+            batch_size: Number of genes processed per save chunk.
+        """
         self.genome = genome
         self.model_name = model_name
         self.batch_size = batch_size
@@ -48,6 +61,7 @@ class RandomEmbeddingDataset(BaseEmbeddingDataset):
 
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:
+        """Return a ParsedGenome holding the genome's gene set, or None."""
         if genome is None:
             return None
         else:
@@ -56,11 +70,13 @@ class RandomEmbeddingDataset(BaseEmbeddingDataset):
             return ParsedGenome(**data)
 
     def initialize_model(self):
+        """Raise; random embeddings need no model initialization."""
         raise NotImplementedError(
             "initialize_model is not needed for RandomEmbeddingDataset"
         )
 
     def process(self):
+        """Generate random embeddings per gene and save them in batched chunks."""
         data_list = []
         (window_method, window_size, is_max_size) = self.MODEL_TO_WINDOW[
             self.model_name

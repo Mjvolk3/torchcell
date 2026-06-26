@@ -1,3 +1,5 @@
+"""Diffusion-based decoder conditioning on graph embeddings via cross-attention."""
+
 # torchcell/models/diffusion_decoder
 # [[torchcell.models.diffusion_decoder]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/diffusion_decoder
@@ -14,13 +16,16 @@ class SinusoidalTimeEmbedding(nn.Module):
     """Sinusoidal time embeddings for diffusion timesteps."""
 
     def __init__(self, dim: int):
+        """Set up the embedding with the target output dimension."""
         super().__init__()
         self.dim = dim
 
     def forward(self, timesteps: torch.Tensor) -> torch.Tensor:
-        """
+        """Embed diffusion timesteps as sinusoidal features.
+
         Args:
             timesteps: [batch_size] tensor of timesteps
+
         Returns:
             [batch_size, dim] tensor of time embeddings
         """
@@ -37,6 +42,7 @@ class CrossAttention(nn.Module):
     """Cross-attention module where diffusion state queries graph embeddings."""
 
     def __init__(self, dim: int, num_heads: int = 8, dropout: float = 0.1):
+        """Set up Q/K/V/output projections for multi-head cross-attention."""
         super().__init__()
         self.num_heads = num_heads
         self.head_dim = dim // num_heads
@@ -57,6 +63,7 @@ class CrossAttention(nn.Module):
         x: torch.Tensor,  # Diffusion state [batch, 1, dim]
         context: torch.Tensor,  # Graph embeddings [batch, 1, dim]
     ) -> torch.Tensor:
+        """Attend the diffusion state to the graph-embedding context."""
         batch_size = x.shape[0]
 
         # Debug shape issues
@@ -105,6 +112,7 @@ class DenoisingBlock(nn.Module):
         dropout: float = 0.1,
         norm: str = "layer",
     ):
+        """Set up normalization, cross-attention, MLP, and time-embedding layers."""
         super().__init__()
 
         # Normalization layers
@@ -142,6 +150,7 @@ class DenoisingBlock(nn.Module):
     def forward(
         self, x: torch.Tensor, context: torch.Tensor, time_emb: torch.Tensor
     ) -> torch.Tensor:
+        """Apply time embedding, cross-attention, and MLP with residual connections."""
         # Add time embedding
         time_emb = self.time_mlp(time_emb).unsqueeze(1)  # [batch, 1, dim]
         x = x + time_emb
@@ -184,6 +193,7 @@ class DiffusionDecoder(nn.Module):
         sampling_steps: int = 50,
         parameterization: str = "x0",
     ):
+        """Build the denoising network, context/time projections, and beta schedule."""
         super().__init__()
 
         # Safety guard for num_timesteps
@@ -252,14 +262,12 @@ class DiffusionDecoder(nn.Module):
     def _linear_beta_schedule(
         self, timesteps: int, beta_start: float = 0.0001, beta_end: float = 0.02
     ) -> torch.Tensor:
-        """
-        Linear beta schedule.
-        """
+        """Return a linear beta schedule from beta_start to beta_end."""
         return torch.linspace(beta_start, beta_end, timesteps)
 
     def _cosine_beta_schedule(self, timesteps: int, s: float = 0.008) -> torch.Tensor:
-        """
-        Cosine schedule as proposed in https://arxiv.org/abs/2102.09672
+        """Return a cosine beta schedule (https://arxiv.org/abs/2102.09672).
+
         Better for preserving signal especially at the beginning of the process.
         """
         steps = timesteps + 1

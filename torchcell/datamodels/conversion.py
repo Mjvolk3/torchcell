@@ -1,3 +1,5 @@
+"""Convert raw Neo4j experiment records into typed experiments stored in LMDB."""
+
 # torchcell/datamodels/conversion
 # [[torchcell.datamodels.conversion]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/conversion
@@ -32,6 +34,8 @@ log = logging.getLogger(__name__)
 
 
 class ConversionEntry(ModelStrict):
+    """One input/output type pair plus its conversion functions."""
+
     experiment_input_type: type[ExperimentType]
     experiment_conversion_function: Callable
     experiment_output_type: type[ExperimentType]
@@ -41,11 +45,16 @@ class ConversionEntry(ModelStrict):
 
 
 class ConversionMap(ModelStrict):
+    """Collection of conversion entries defining how to map experiment types."""
+
     entries: list[ConversionEntry]
 
 
 class Converter(ABC):
+    """Abstract base that converts queried records and caches them in LMDB."""
+
     def __init__(self, root: str, query: "Neo4jQueryRaw"):
+        """Store the root path and query, and set up the LMDB directory path."""
         self.root = root
         self.query = query
         self.lmdb_dir = os.path.join(self.root, "conversion", "lmdb")
@@ -54,7 +63,7 @@ class Converter(ABC):
     @property
     @abstractmethod
     def conversion_map(self) -> ConversionMap:
-        pass
+        """Return the ConversionMap defining type-to-type conversions."""
 
     def _init_lmdb(self, readonly=True):
         """Initialize the LMDB environment."""
@@ -75,6 +84,7 @@ class Converter(ABC):
             self.env = None
 
     def close_lmdb(self):
+        """Close the LMDB environment if it is open."""
         if self.env is not None:
             self.env.close()
             self.env = None
@@ -82,6 +92,7 @@ class Converter(ABC):
     def convert(
         self, data: dict[str, ExperimentType | ExperimentReferenceType]
     ) -> dict:
+        """Convert one experiment/reference pair using the conversion map."""
         if "experiment" not in data or "experiment_reference" not in data:
             raise ValueError(
                 "Input data must contain both 'experiment' and "
@@ -132,6 +143,7 @@ class Converter(ABC):
         return hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
 
     def process(self, input_path: str, output_path: str) -> None:
+        """Convert every record from the input LMDB and write results to output."""
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         self._init_lmdb(readonly=False)  # Initialize LMDB for writing
 
@@ -206,6 +218,7 @@ class Converter(ABC):
         log.info(f"Total number of instances processed: {total_count}")
 
     def __getitem__(self, index: int | slice | list):
+        """Return converted record(s) by integer index, slice, or list of indices."""
         self._init_lmdb(readonly=True)  # Initialize LMDB for reading
         if isinstance(index, int):
             return self._get_record_by_index(index)
@@ -269,6 +282,7 @@ class Converter(ABC):
             return results
 
     def __len__(self):
+        """Return the number of converted records stored in LMDB."""
         self._init_lmdb(readonly=True)
         if self.env is None:
             return 0  # Return 0 if the LMDB doesn't exist yet
@@ -276,9 +290,11 @@ class Converter(ABC):
             return txn.stat()["entries"]
 
     def __bool__(self):
+        """Return True if the LMDB directory exists."""
         return os.path.exists(self.lmdb_dir)
 
     def __repr__(self):
+        """Return a string representation showing the root path."""
         return f"Converter(root={self.root})"
 
 

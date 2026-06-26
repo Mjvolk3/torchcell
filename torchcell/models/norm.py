@@ -2,7 +2,7 @@
 # [[torchcell.models.norm]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/norm
 # Test file: tests/torchcell/models/test_norm.py
-
+"""Re-exports of PyTorch Geometric normalization layers used across torchcell models."""
 
 from torch_geometric.nn import (
     BatchNorm,

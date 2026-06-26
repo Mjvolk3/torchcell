@@ -1,3 +1,5 @@
+"""Dataset that merges multiple experiment datasets into a single LMDB store."""
+
 # torchcell/datasets/experiment.py
 # [[torchcell.datasets.experiment]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/experiment.py
@@ -21,6 +23,8 @@ log = logging.getLogger(__name__)
 # will need to adhere to the same schema
 # TODO unify Costanzo2016
 class MergedExperiment(Dataset):
+    """Combine several experiment datasets into one deduplicated LMDB-backed dataset."""
+
     def __init__(
         self,
         root: str = "data/scerevisiae/merged_experiment",
@@ -30,6 +34,16 @@ class MergedExperiment(Dataset):
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
+        """Set up the merged dataset and validate the preprocess config.
+
+        Args:
+            root: Root directory for raw, processed, and preprocess files.
+            experiments: Datasets to merge; each item must share a schema.
+            preprocess: Optional preprocessing config (e.g. temperature filter).
+            skip_process_file_exist_check: Skip the processed-file existence check.
+            transform: Optional transform applied to each item on access.
+            pre_transform: Optional transform applied before saving.
+        """
         self.experiments = experiments
         self.preprocess = preprocess
         self._skip_process_file_exist = skip_process_file_exist_check
@@ -53,14 +67,17 @@ class MergedExperiment(Dataset):
 
     @property
     def skip_process_file_exist(self):
+        """Return whether the processed-file existence check is skipped."""
         return self._skip_process_file_exist
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the expected raw input file names."""
         return ["strain_ids_and_single_mutant_fitness.xlsx"]
 
     @property
     def processed_file_names(self) -> list[str]:
+        """Return the processed LMDB file name."""
         return "data.lmdb"
 
     def _init_db(self):
@@ -74,29 +91,36 @@ class MergedExperiment(Dataset):
         )
 
     def close_lmdb(self):
+        """Close the open LMDB environment if one exists."""
         if self.env is not None:
             self.env.close()
             self.env = None
 
     @property
     def wt(self):
+        """Return the wild-type reference (not yet implemented)."""
         # TODO implement this, must be combination of all experiments
         pass
 
     # Merge Operations - This is HACK y
     def get_genotype_key(self, data_item):
+        """Return the genotype used as a merge key for a data item."""
         return data_item["genotype"]
 
     def get_environment_key(self, data_item):
+        """Return the environment used as a merge key for a data item."""
         return data_item["phenotype"]["environment"]
 
     def get_phenotype_key(self, data_item):
+        """Return the phenotype observation used as a merge key for a data item."""
         return data_item["phenotype"]["observation"]
 
     def contains_key(self, key, data_list):
+        """Return whether any item in the list has the given genotype key."""
         return key in [self.get_genotype_key(data_item) for data_item in data_list]
 
     def contains_environment_key(self, genotype_key, environment_key, data_list):
+        """Return whether the genotype already has the given environment key."""
         return environment_key in [
             self.get_environment_key(data_item)
             for data_item in data_list
@@ -105,6 +129,7 @@ class MergedExperiment(Dataset):
 
     @property
     def experiment_indices(self):
+        """Return cached per-source-dataset index ranges, or an empty dict."""
         indices_path = osp.join(self.processed_dir, "experiment_indices.json")
 
         if osp.exists(indices_path):
@@ -116,6 +141,7 @@ class MergedExperiment(Dataset):
         return {}
 
     def process(self):
+        """Merge, dedup, and write all experiment items to the processed LMDB."""
         combined_data_list = []
         source_dataset_list = []  # New list to track the source dataset of each item
 
@@ -210,6 +236,7 @@ class MergedExperiment(Dataset):
 
     # New method to save preprocess configuration to a JSON file
     def save_preprocess_config(self, preprocess):
+        """Write the preprocess config to JSON in the preprocess directory."""
         if not osp.exists(self.preprocess_dir):
             os.makedirs(self.preprocess_dir)
         with open(osp.join(self.preprocess_dir, "preprocess_config.json"), "w") as f:
@@ -217,6 +244,7 @@ class MergedExperiment(Dataset):
 
     # New method to load existing preprocess configuration
     def load_preprocess_config(self):
+        """Load the saved preprocess config from JSON, or return None if absent."""
         config_path = osp.join(self.preprocess_dir, "preprocess_config.json")
 
         if osp.exists(config_path):
@@ -227,6 +255,7 @@ class MergedExperiment(Dataset):
             return None
 
     def len(self) -> int:
+        """Return the number of entries in the processed LMDB store."""
         if self.env is None:
             self._init_db()
 
@@ -240,6 +269,7 @@ class MergedExperiment(Dataset):
 
     @staticmethod
     def compute_gene_set(data_list):
+        """Return the GeneSet of all genotype ids across the given data list."""
         computed_gene_set = GeneSet()
         for data in data_list:
             for genotype in data.genotype:
@@ -249,6 +279,7 @@ class MergedExperiment(Dataset):
     # Reading from JSON and setting it to self._gene_set
     @property
     def gene_set(self):
+        """Return the dataset's GeneSet, loading it from JSON when available."""
         try:
             if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
                 with open(osp.join(self.preprocess_dir, "gene_set.json")) as f:
@@ -273,6 +304,7 @@ class MergedExperiment(Dataset):
         self._gene_set = value
 
     def __repr__(self):
+        """Return a string with the class name and item count."""
         return f"{self.__class__.__name__}({len(self)})"
 
 

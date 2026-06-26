@@ -1,3 +1,5 @@
+"""Scratch helpers to plot prediction-vs-truth correlations for overfit checks."""
+
 import os
 
 import matplotlib.pyplot as plt
@@ -14,6 +16,7 @@ def plot_correlations(
     fixed_axes=None,
     epoch=None,
 ):
+    """Plot predicted vs. true values and save the correlation figure to disk."""
     # Convert to numpy and handle NaN values
     predictions_np = predictions.detach().cpu().numpy()
     true_values_np = true_values.detach().cpu().numpy()

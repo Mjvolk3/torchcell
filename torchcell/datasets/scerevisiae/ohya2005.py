@@ -1,8 +1,9 @@
+"""CalMorph morphology dataset for S. cerevisiae deletions (Ohya 2005, SCMD)."""
+
 # torchcell/datasets/scerevisiae/ohya2005
 # [[torchcell.datasets.scerevisiae.ohya2005]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/Ohya2005
 # Test file: tests/torchcell/datasets/scerevisiae/test_Ohya2005.py
-
 
 import logging
 import os
@@ -38,6 +39,8 @@ log = logging.getLogger(__name__)
 
 @register_dataset
 class ScmdOhya2005Dataset(ExperimentDataset):
+    """CalMorph morphology phenotypes for single-gene deletions from SCMD."""
+
     # Primary URL from SCMD
     primary_url_mutant = (
         "http://www.yeast.ib.k.u-tokyo.ac.jp/SCMD/download.php?path=mt4718data.tsv"
@@ -62,18 +65,22 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Initialize the dataset rooted at ``root`` with optional transforms."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> type[Experiment]:
+        """Return the experiment schema class for this dataset."""
         return CalMorphExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
+        """Return the experiment-reference schema class for this dataset."""
         return CalMorphExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the raw mutant and wildtype TSV filenames."""
         return ["mt4718data.tsv", "wt122data.tsv"]
 
     def download(self):
@@ -154,6 +161,7 @@ class ScmdOhya2005Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Load raw TSVs, build CalMorph experiments, and write the LMDB store."""
         # Load and preprocess data
         df_mutant = pd.read_csv(osp.join(self.raw_dir, "mt4718data.tsv"), sep="\t")
         df_wt = pd.read_csv(osp.join(self.raw_dir, "wt122data.tsv"), sep="\t")
@@ -252,6 +260,7 @@ class ScmdOhya2005Dataset(ExperimentDataset):
 
     @staticmethod
     def create_calmorph_experiment(dataset_name, row, wt_reference_phenotype):
+        """Build a CalMorph experiment and reference pair from one data row."""
         # Genome reference - BY4741 (MATa his3Δ1 leu2Δ0 lys2Δ0 ura3Δ0)
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="BY4741"

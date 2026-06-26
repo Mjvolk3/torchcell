@@ -2,7 +2,7 @@
 # [[torchcell.models.dcell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/dcell
 # Test file: tests/torchcell/models/test_dcell.py
-
+"""DCell model: a GO-ontology-structured neural network over gene perturbations."""
 
 import math
 import os
@@ -24,6 +24,8 @@ from torchcell.timestamp import timestamp
 
 
 class DCell(nn.Module):
+    """DCell network mirroring the GO ontology as a hierarchy of subsystems."""
+
     def __init__(
         self,
         hetero_data: HeteroData,
@@ -31,6 +33,14 @@ class DCell(nn.Module):
         subsystem_ratio: float = 0.3,
         output_size: int = 1,
     ):
+        """Build the subsystem hierarchy from the GO ontology in ``hetero_data``.
+
+        Args:
+            hetero_data: HeteroData carrying the gene/GO graph and strata.
+            min_subsystem_size: Minimum number of neurons per subsystem.
+            subsystem_ratio: Neurons per subsystem as a fraction of its gene count.
+            output_size: Dimension of each subsystem's output prediction.
+        """
         super().__init__()
 
         # Store parameters
@@ -382,6 +392,7 @@ class DCellSubsystem(nn.Module):
     """Individual subsystem module as described in DCell paper."""
 
     def __init__(self, input_dim: int, output_dim: int):
+        """Build a linear-batchnorm-tanh subsystem with DCell weight init."""
         super().__init__()
         self.linear = nn.Linear(input_dim, output_dim)
         self.batch_norm = nn.BatchNorm1d(output_dim)
@@ -392,6 +403,7 @@ class DCellSubsystem(nn.Module):
         nn.init.uniform_(self.linear.bias, -0.001, 0.001)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply linear, batch norm, and tanh to the input."""
         x = self.linear(x)
         x = self.batch_norm(x)
         x = self.activation(x)
@@ -404,9 +416,7 @@ class DCellSubsystem(nn.Module):
     config_name="dcell_kuzmin2018_tmi",
 )
 def main(cfg: DictConfig):
-    """
-    Main function to test the DCell model with overfitting on a batch
-    """
+    """Test the DCell model by overfitting it on a single batch."""
     import torch.optim as optim
 
     from torchcell.losses.dcell import DCellLoss

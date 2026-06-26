@@ -4,6 +4,8 @@
 # Test file: tests/torchcell/nn/test_self_attention_block.py
 
 # torchcell/nn/self_attention_block.py
+"""Device-adaptive self-attention block used across torchcell models."""
+
 import math
 
 import torch
@@ -12,8 +14,8 @@ import torch.nn.functional as F
 
 
 class SelfAttentionBlock(nn.Module):
-    """
-    Self-Attention Block (SAB) with device-adaptive implementation.
+    """Self-Attention Block (SAB) with device-adaptive implementation.
+
     Uses flex_attention on GPU and standard attention on CPU.
     """
 
@@ -24,8 +26,7 @@ class SelfAttentionBlock(nn.Module):
         dropout: float = 0.1,
         activation: nn.Module = nn.GELU(),
     ) -> None:
-        """
-        Initialize the Self-Attention Block.
+        """Initialize the Self-Attention Block.
 
         Args:
             hidden_dim: Dimension of input and output features
@@ -63,15 +64,14 @@ class SelfAttentionBlock(nn.Module):
         )
 
     def _reshape_for_attention(self, x: torch.Tensor) -> torch.Tensor:
-        """Reshape [batch_size, seq_len, hidden_dim] to [batch_size, num_heads, seq_len, head_dim]"""
+        """Reshape [batch, seq_len, hidden_dim] to [batch, num_heads, seq_len, head_dim]."""
         batch_size, seq_len, _ = x.shape
         return x.view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(
             1, 2
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Forward pass for the SAB.
+        """Forward pass for the SAB.
 
         Args:
             x: Input tensor of shape [batch_size, seq_len, hidden_dim]

@@ -1,0 +1,1 @@
+"""Cell-level module (placeholder)."""

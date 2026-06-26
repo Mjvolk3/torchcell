@@ -1,3 +1,5 @@
+"""Node self-attention encoder stacking masked and self-attention blocks."""
+
 # torchcell/nn/nsa_encoder
 # [[torchcell.nn.nsa_encoder]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/nn/nsa_encoder
@@ -18,9 +20,10 @@ from torchcell.nn.self_attention_block import SelfAttentionBlock
 
 
 class NSAEncoder(nn.Module):
-    """
-    NSA Encoder that applies an input projection followed by a sequence
-    of masked (MAB) and self-attention (SAB) blocks.
+    """NSA encoder applying an input projection then masked/self-attention blocks.
+
+    Applies an input projection followed by a sequence of masked (MAB) and
+    self-attention (SAB) blocks.
     """
 
     def __init__(
@@ -32,6 +35,7 @@ class NSAEncoder(nn.Module):
         dropout: float = 0.1,
         activation: nn.Module = nn.GELU(),
     ) -> None:
+        """Build the input projection and the MAB/SAB layer stack from ``pattern``."""
         super().__init__()
         if pattern is None:
             pattern = ["M", "S", "M", "S"]
@@ -66,6 +70,7 @@ class NSAEncoder(nn.Module):
         edge_attr: torch.Tensor | None = None,
         batch: torch.Tensor | None = None,
     ) -> torch.Tensor:
+        """Encode node features, padding per graph and unpadding the output."""
         if batch is None:
             batch = torch.zeros(x.size(0), dtype=torch.long, device=x.device)
         if isinstance(data_or_edge_index, torch.Tensor):

@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/data/mean_experiment_deduplicate
 # Test file: tests/torchcell/data/test_mean_experiment_deduplicate.py
 
+"""Deduplicator that merges duplicate experiments by averaging their values."""
+
 import hashlib
 import logging
 from typing import Any
@@ -26,7 +28,10 @@ log = logging.getLogger(__name__)
 
 
 class MeanExperimentDeduplicator(Deduplicator):
+    """Deduplicate experiments by averaging duplicates of the same genotype."""
+
     def duplicate_check(self, data: list[dict[str, Any]]) -> dict[str, list[int]]:
+        """Group data indices by hash of experiment type and perturbed genes."""
         duplicate_check = {}
         for idx, item in enumerate(data):
             experiment = item["experiment"]
@@ -48,6 +53,7 @@ class MeanExperimentDeduplicator(Deduplicator):
     def create_deduplicate_entry(
         self, duplicate_experiments: list[dict[str, Any]]
     ) -> dict[str, Any]:
+        """Return a single mean entry for a group of duplicate experiments."""
         experiment_type = duplicate_experiments[0]["experiment"].experiment_type
         if experiment_type == "fitness":
             return self._create_mean_fitness_entry(duplicate_experiments)

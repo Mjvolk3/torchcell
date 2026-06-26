@@ -2,6 +2,8 @@
 # [[torchcell.datasets.dcell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/dcell.py
 # Test file: torchcell/datasets/test_dcell.py
+"""Deprecated DCell dataset built from gene embeddings and the GO graph."""
+
 import json
 import logging
 import os
@@ -34,19 +36,20 @@ log = logging.getLogger(__name__)
 
 
 class ParsedGenome(ModelStrictArbitrary):
+    """Minimal genome holding only the gene set extracted from a Genome."""
+
     gene_set: GeneSet
 
     @field_validator("gene_set")
     def validate_gene_set(cls, value):
+        """Validate that the gene_set field is a GeneSet instance."""
         if not isinstance(value, GeneSet):
             raise ValueError(f"gene_set must be a GeneSet, got {type(value).__name__}")
         return value
 
 
 class DCellDataset(Dataset):
-    """
-    Represents a dataset for cellular data.
-    """
+    """Represents a dataset for cellular data."""
 
     # TODO type change experiments
     def __init__(
@@ -62,6 +65,7 @@ class DCellDataset(Dataset):
         pre_transform: Callable | None = None,
         pre_filter: Callable | None = None,
     ):
+        """Build the cell graph from embeddings and prepare the LMDB store."""
         self._gene_set = None
         self.graph = graph
         self.embeddings = embeddings
@@ -94,6 +98,7 @@ class DCellDataset(Dataset):
         self.env = None
 
     def to_cell_data(self, graphs: list[nx.Graph]) -> Data:
+        """Compose graphs and convert them to a PyG Data cell graph."""
         G = self.safe_compose(graphs)
         # drop nodes that don't belong to genome.gene_set
         data = from_networkx(G)
@@ -102,18 +107,21 @@ class DCellDataset(Dataset):
 
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:
+        """Return a ParsedGenome holding the genome's gene set."""
         data = {}
         data["gene_set"] = genome.gene_set
         return ParsedGenome(**data)
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the raw file names (none for this dataset)."""
         # TODO consider return the processed of the experiments, etc.
         # This might cause an issue because there is expected behavior for raw,# and this is not it.
         return None  # Specify raw files if needed
 
     @property
     def processed_file_names(self) -> list[str]:
+        """Return the processed file name (the LMDB database)."""
         return "data.lmdb"
 
     # HACK comment out for now
@@ -129,10 +137,12 @@ class DCellDataset(Dataset):
 
     @property
     def wt(self):
+        """Return the wild-type data (currently None)."""
         return None
 
     @staticmethod
     def safe_compose(graphs):
+        """Compose graphs, erroring on conflicting node or edge attributes."""
         if any(isinstance(G, nx.DiGraph) for G in graphs):
             # Convert all graphs to DiGraph if at least one is directed
             graphs = [
@@ -202,9 +212,7 @@ class DCellDataset(Dataset):
 
     @staticmethod
     def create_embedding_graph(genome, embeddings: BaseEmbeddingDataset) -> nx.Graph:
-        """
-        Create a NetworkX graph from embeddings.
-        """
+        """Create a NetworkX graph from embeddings."""
         # Create an empty NetworkX graph
         G = nx.Graph()
 
@@ -221,6 +229,7 @@ class DCellDataset(Dataset):
         return G
 
     def process(self):
+        """Filter experiments to the gene set and write them to LMDB."""
         combined_data = []
         self.gene_set = self.compute_gene_set()
 
@@ -252,6 +261,7 @@ class DCellDataset(Dataset):
 
     @property
     def gene_set(self):
+        """Return the gene set, loading it from the preprocess JSON if present."""
         try:
             if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
                 with open(osp.join(self.preprocess_dir, "gene_set.json")) as f:
@@ -267,6 +277,7 @@ class DCellDataset(Dataset):
 
     @gene_set.setter
     def gene_set(self, value):
+        """Persist the gene set to the preprocess JSON and cache it."""
         if not value:
             raise ValueError("Cannot set an empty or None value for gene_set")
         if not osp.exists(self.preprocess_dir):
@@ -276,6 +287,7 @@ class DCellDataset(Dataset):
         self._gene_set = value
 
     def compute_gene_set(self):
+        """Return the intersection of the genome and experiment gene sets."""
         if not self._gene_set:
             if isinstance(self.experiments, Dataset):
                 experiment_gene_set = self.experiments.gene_set
@@ -292,9 +304,7 @@ class DCellDataset(Dataset):
         return cell_gene_set
 
     def _subset_graph(self, data: Data) -> Data:
-        """
-        Subset the reference graph based on the genes in data.genotype.
-        """
+        """Subset the reference graph based on the genes in data.genotype."""
         # Nodes to remove based on the genes in data.genotype
         nodes_to_remove = torch.tensor(
             [
@@ -329,8 +339,10 @@ class DCellDataset(Dataset):
         return data
 
     def _add_label(self, data: Data, original_data: Data) -> Data:
-        """
-        Adds the dmf_fitness label to the data object if it exists in the original data's phenotype["observation"].
+        """Add fitness/interaction labels from the original data's observations.
+
+        Adds the dmf_fitness label to the data object if it exists in the
+        original data's phenotype["observation"].
 
         Args:
             data (Data): The Data object to which the label should be added.
@@ -397,6 +409,7 @@ class DCellDataset(Dataset):
         )
 
     def len(self) -> int:
+        """Return the number of entries in the LMDB store."""
         if self.env is None:
             self._init_db()
 
@@ -409,12 +422,14 @@ class DCellDataset(Dataset):
         return length
 
     def close_lmdb(self):
+        """Close the LMDB environment if it is open."""
         if self.env is not None:
             self.env.close()
             self.env = None
 
 
 def main():
+    """Build a DCellDataset example end to end and inspect its contents."""
     # genome
     import os.path as osp
 

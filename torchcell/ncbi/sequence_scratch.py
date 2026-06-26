@@ -1,3 +1,5 @@
+"""Scratch script for loading NCBI GFF sequence annotations into pandas."""
+
 ###
 
 ## Pandas view of data

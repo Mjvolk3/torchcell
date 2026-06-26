@@ -2,6 +2,7 @@
 # [[torchcell.models.hetero_cell_isab]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/hetero_cell_isab
 # Test file: tests/torchcell/models/test_hetero_cell_isab.py
+"""Heterogeneous cell graph model with PMA pooling for fitness/interaction."""
 
 import os
 import os.path as osp
@@ -30,6 +31,15 @@ from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 
 
 def get_norm_layer(channels: int, norm: str) -> nn.Module:
+    """Return a layer- or batch-norm module for the given channel count.
+
+    Args:
+        channels: Number of feature channels to normalize.
+        norm: Either "layer" or "batch".
+
+    Returns:
+        The constructed normalization module.
+    """
     if norm == "layer":
         return nn.LayerNorm(channels)
     elif norm == "batch":
@@ -42,8 +52,8 @@ def get_norm_layer(channels: int, norm: str) -> nn.Module:
 # Pool Nodes
 ###############################################################################
 class SimplePMA(nn.Module):
-    """
-    Pooling by Multihead Attention without index sorting.
+    """Pooling by Multihead Attention without index sorting.
+
     Uses a single seed vector (k=1) for aggregation.
     """
 
@@ -55,6 +65,15 @@ class SimplePMA(nn.Module):
         layer_norm: bool = True,
         dropout: float = 0.0,
     ):
+        """Build the PMA pooler with optional projection and norm.
+
+        Args:
+            in_channels: Input feature dimension.
+            out_channels: Output feature dimension after projection.
+            heads: Number of attention heads.
+            layer_norm: Whether to apply layer normalization.
+            dropout: Dropout probability inside attention.
+        """
         super().__init__()
 
         # Use the existing PMA implementation with k=1
@@ -79,6 +98,7 @@ class SimplePMA(nn.Module):
     def forward(
         self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
+        """Pool node features per batch element into a single vector each."""
         # Convert to dense batch
 
         x, mask = to_dense_batch(x, index)
@@ -101,6 +121,8 @@ class SimplePMA(nn.Module):
 # PreProcessor: an MLP to “preprocess” gene embeddings.
 ###############################################################################
 class PreProcessor(nn.Module):
+    """MLP that preprocesses node embeddings before message passing."""
+
     def __init__(
         self,
         in_channels: int,
@@ -110,6 +132,16 @@ class PreProcessor(nn.Module):
         norm: str = "layer",
         activation: str = "relu",
     ):
+        """Build a stack of linear/norm/activation/dropout blocks.
+
+        Args:
+            in_channels: Input feature dimension.
+            hidden_channels: Hidden and output feature dimension.
+            num_layers: Total number of linear layers.
+            dropout: Dropout probability per block.
+            norm: Normalization type passed to ``get_norm_layer``.
+            activation: Activation key registered in ``act_register``.
+        """
         super().__init__()
         act = act_register[activation]
         norm_layer = get_norm_layer(hidden_channels, norm)
@@ -126,6 +158,7 @@ class PreProcessor(nn.Module):
         self.mlp = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply the preprocessing MLP to the input features."""
         return self.mlp(x)
 
 
@@ -133,6 +166,8 @@ class PreProcessor(nn.Module):
 # New Model: HeteroCell
 ###############################################################################
 class AttentionConvWrapper(nn.Module):
+    """Wrap a graph conv with projection, normalization, activation, dropout."""
+
     def __init__(
         self,
         conv: nn.Module,
@@ -141,6 +176,15 @@ class AttentionConvWrapper(nn.Module):
         activation: str | None = None,
         dropout: float = 0.1,
     ) -> None:
+        """Configure the wrapped conv and post-processing layers.
+
+        Args:
+            conv: The underlying graph convolution module.
+            target_dim: Desired output dimension; a projection is added if needed.
+            norm: Optional normalization type.
+            activation: Optional activation key registered in ``act_register``.
+            dropout: Dropout probability applied after activation.
+        """
         super().__init__()
         self.conv = conv
         # For GATv2Conv-like layers:
@@ -180,6 +224,7 @@ class AttentionConvWrapper(nn.Module):
         self.dropout = nn.Dropout(dropout) if dropout > 0 else None
 
     def forward(self, x, edge_index, **kwargs):
+        """Run the conv then projection, norm, activation, and dropout."""
         out = self.conv(x, edge_index, **kwargs)
         out = self.proj(out)
         if self.norm is not None:
@@ -191,6 +236,12 @@ class AttentionConvWrapper(nn.Module):
 
 
 class HeteroCell(nn.Module):
+    """Hetero GNN over gene/reaction/metabolite graphs predicting two targets.
+
+    Encodes a reference and a perturbed cell graph, pools each globally, and
+    predicts fitness and gene interaction from their difference.
+    """
+
     def __init__(
         self,
         gene_num: int,
@@ -208,6 +259,24 @@ class HeteroCell(nn.Module):
         gpr_conv_config: dict[str, Any] | None = None,
         global_aggregator_config: dict[str, Any] | None = None,
     ):
+        """Build embeddings, preprocessors, hetero convs, pooler, and head.
+
+        Args:
+            gene_num: Number of gene nodes for the embedding table.
+            reaction_num: Number of reaction nodes for the embedding table.
+            metabolite_num: Number of metabolite nodes for the embedding table.
+            hidden_channels: Hidden feature dimension throughout the model.
+            out_channels: Output feature dimension of the encoder.
+            num_layers: Number of hetero message-passing layers.
+            dropout: Dropout probability used in submodules.
+            norm: Normalization type used in submodules.
+            activation: Activation key registered in ``act_register``.
+            gene_encoder_config: Optional config for the gene encoder convs.
+            metabolism_config: Optional config for the metabolism convs.
+            prediction_head_config: Optional config for the prediction head.
+            gpr_conv_config: Optional config for the GPR convolution.
+            global_aggregator_config: Optional config for the global pooler.
+        """
         super().__init__()
         self.hidden_channels = hidden_channels
 
@@ -337,6 +406,7 @@ class HeteroCell(nn.Module):
         return nn.Sequential(*layers)
 
     def forward_single(self, data: HeteroData | Batch) -> torch.Tensor:
+        """Encode a single hetero graph and return per-gene embeddings."""
         device = self.gene_embedding.weight.device
 
         is_batch = isinstance(data, Batch) or hasattr(data["gene"], "batch")
@@ -418,6 +488,15 @@ class HeteroCell(nn.Module):
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+        """Predict fitness and interaction from reference and perturbed graphs.
+
+        Args:
+            cell_graph: Reference (wildtype) hetero graph.
+            batch: Batched perturbed (intact) hetero graphs.
+
+        Returns:
+            A tuple of the prediction tensor and a dict of intermediate tensors.
+        """
         # Process the reference (wildtype) graph
         z_w = self.forward_single(cell_graph)
         z_w = self.global_aggregator(
@@ -452,6 +531,8 @@ class HeteroCell(nn.Module):
 
     @property
     def num_parameters(self) -> dict[str, int]:
+        """Return trainable parameter counts per submodule plus a total."""
+
         def count_params(module: nn.Module) -> int:
             return sum(p.numel() for p in module.parameters() if p.requires_grad)
 
@@ -471,6 +552,7 @@ class HeteroCell(nn.Module):
 
 
 def load_sample_data_batch():
+    """Load a sample dataset and batch for exercising the model."""
     import os
     import os.path as osp
 
@@ -594,6 +676,7 @@ def plot_correlations(
     fixed_axes=None,
     epoch=None,
 ):
+    """Plot predicted vs. true fitness and gene interaction and save the figure."""
     import matplotlib.pyplot as plt
     import numpy as np
     from scipy import stats
@@ -714,8 +797,7 @@ def plot_embeddings(
     epoch=None,
     fixed_axes=None,
 ):
-    """
-    Plot embeddings for visualization and debugging with fixed axes for consistent GIF creation.
+    """Plot embeddings for visualization and debugging with fixed axes for consistent GIF creation.
 
     Args:
         z_w: Wildtype (reference) embedding tensor [1, hidden_dim]
@@ -906,6 +988,7 @@ def plot_embeddings(
     config_name="hetero_cell_pma",
 )
 def main(cfg: DictConfig) -> None:
+    """Run a small training/inspection loop from the Hydra config."""
     import os
 
     import matplotlib.pyplot as plt

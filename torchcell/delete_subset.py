@@ -1,9 +1,12 @@
+"""CLI to delete a sharded subset of files in a directory across parallel tasks."""
+
 import argparse
 import os
 from concurrent.futures import ThreadPoolExecutor
 
 
 def delete_file(file_path):
+    """Delete a single file if it exists, otherwise report it as missing."""
     if os.path.exists(file_path):  # Check if file exists
         os.remove(file_path)
     else:
@@ -11,6 +14,7 @@ def delete_file(file_path):
 
 
 def delete_files(files):
+    """Delete the given files concurrently using a thread pool."""
     with ThreadPoolExecutor() as executor:
         list(
             executor.map(delete_file, files),

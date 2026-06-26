@@ -3,6 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_scerevisiae_kg
 # Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg.py
 
+"""Build a BioCypher knowledge graph from S. cerevisiae single-mutant fitness data."""
 
 import hashlib
 import json
@@ -46,6 +47,7 @@ def get_num_workers():
 
 @hydra.main(version_base=None, config_path="conf", config_name="kg")
 def main(cfg) -> str:
+    """Build and write the single-mutant-fitness BioCypher knowledge graph."""
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
     BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")

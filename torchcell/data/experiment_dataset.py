@@ -1,3 +1,5 @@
+"""Abstract LMDB-backed experiment dataset and reference-index utilities."""
+
 # torchcell/dataset/experiment_dataset
 # [[torchcell.dataset.experiment_dataset]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/dataset/experiment_dataset
@@ -33,6 +35,7 @@ log = logging.getLogger(__name__)
 
 
 def process_reference_batch(batch):
+    """Compute SHA-256 reference hashes for each item in a batch."""
     # This function will process a batch of data to compute reference hashes.
     # Adjust the implementation based on your data structure.
     reference_hashes = []
@@ -43,6 +46,7 @@ def process_reference_batch(batch):
 
 
 def _compute_reference_hash_parallel(data):
+    """Return the SHA-256 hash of a single item's reference."""
     # Parallel processing function for computing reference hash
     reference = data["reference"]
     return compute_sha256_hash(serialize_for_hashing(reference))
@@ -51,6 +55,7 @@ def _compute_reference_hash_parallel(data):
 # return reference_indices
 # TODO FitnessExperimentReference Will need to generalize away from fitness
 def serialize_for_hashing(obj):
+    """Return a deterministic JSON string for hashing a reference or object."""
     if isinstance(obj, ExperimentReferenceType):
         # Convert FitnessExperimentReference to a dictionary
         obj_dict = obj.model_dump()
@@ -64,6 +69,7 @@ def serialize_for_hashing(obj):
 def compute_experiment_reference_index_sequential(
     dataset: Dataset,
 ) -> list[ExperimentReferenceIndex]:
+    """Build reference indices by hashing every item sequentially."""
     # Hashes for each reference
     print("Computing experiment_reference_index hashes...")
     reference_hashes = [
@@ -96,6 +102,7 @@ def compute_experiment_reference_index_sequential(
 def compute_experiment_reference_index_parallel(
     dataset, batch_size=int(1e4), io_workers=1
 ) -> list[ExperimentReferenceIndex]:
+    """Build reference indices by hashing items via a multiprocessing loader."""
     print("Computing experiment_reference_index hashes in parallel...")
     data_loader = CpuExperimentLoaderMultiprocessing(
         dataset, batch_size=batch_size, num_workers=io_workers
@@ -134,6 +141,8 @@ def compute_experiment_reference_index_parallel(
 
 
 def post_process(func):
+    """Decorate ``process`` to rebuild the gene set/reference index and validate."""
+
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         # Execute the original process method
@@ -159,6 +168,8 @@ def post_process(func):
 
 
 class ExperimentDataset(Dataset, ABC):
+    """Abstract PyG dataset storing experiment items in an LMDB store."""
+
     def __init__(
         self,
         root: str,
@@ -167,6 +178,7 @@ class ExperimentDataset(Dataset, ABC):
         pre_transform: Callable | None = None,
         skip_process_file_exist: bool = False,
     ):
+        """Set up paths/state and trigger PyG download/process via super().__init__."""
         self.io_workers = io_workers
         self.preprocess_dir = osp.join(root, "preprocess")
         # TODO This is part of our custom Dataset to speed things up but should be removed when using pure pyg
@@ -184,27 +196,36 @@ class ExperimentDataset(Dataset, ABC):
 
     @property
     @abstractmethod
-    def experiment_class(self) -> type[Experiment]: ...
+    def experiment_class(self) -> type[Experiment]:
+        """Return the Experiment subclass produced by this dataset."""
+        ...
 
     @property
     @abstractmethod
-    def reference_class(self) -> type[ExperimentReference]: ...
+    def reference_class(self) -> type[ExperimentReference]:
+        """Return the ExperimentReference subclass produced by this dataset."""
+        ...
 
     @property
     @abstractmethod
-    def raw_file_names(self) -> list[str]: ...
+    def raw_file_names(self) -> list[str]:
+        """Return the raw file names expected under the raw directory."""
+        ...
 
     @property
     def processed_file_names(self) -> list[str]:
+        """Return the processed artifact name (the LMDB directory)."""
         return "lmdb"
 
     @post_process
     @abstractmethod
     def process(self):
+        """Build the processed LMDB store from raw data (implemented by subclasses)."""
         raise NotImplementedError
 
     @abstractmethod
     def download(self):
+        """Download raw data into the raw directory (implemented by subclasses)."""
         raise NotImplementedError
 
     def _init_db(self):
@@ -218,12 +239,14 @@ class ExperimentDataset(Dataset, ABC):
         )
 
     def close_lmdb(self):
+        """Close the LMDB environment if it is open."""
         if self.env is not None:
             self.env.close()
             self.env = None
 
     @property
     def df(self):
+        """Return the preprocessed data CSV as a DataFrame, if present."""
         if osp.exists(osp.join(self.preprocess_dir, "data.csv")):
             self._df = pd.read_csv(osp.join(self.preprocess_dir, "data.csv"))
         return self._df
@@ -231,12 +254,17 @@ class ExperimentDataset(Dataset, ABC):
     @abstractmethod
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict | None = None
-    ) -> pd.DataFrame: ...
+    ) -> pd.DataFrame:
+        """Clean/normalize the raw DataFrame (implemented by subclasses)."""
+        ...
 
     @abstractmethod
-    def create_experiment(self): ...
+    def create_experiment(self):
+        """Construct experiment records from preprocessed data (subclasses)."""
+        ...
 
     def len(self) -> int:
+        """Return the number of entries stored in the LMDB database."""
         if self.env is None:
             self._init_db()
 
@@ -249,6 +277,7 @@ class ExperimentDataset(Dataset, ABC):
         return length
 
     def get(self, idx):
+        """Return one item, or a list of items for list/array/boolean indices."""
         if self.env is None:
             self._init_db()
 
@@ -266,6 +295,7 @@ class ExperimentDataset(Dataset, ABC):
             return self.get_single_item(idx)
 
     def get_single_item(self, idx):
+        """Return the deserialized item at ``idx``, or None if absent."""
         with self.env.begin() as txn:
             serialized_data = txn.get(f"{idx}".encode())
             if serialized_data is None:
@@ -276,6 +306,7 @@ class ExperimentDataset(Dataset, ABC):
 
     @staticmethod
     def extract_systematic_gene_names(genotype):
+        """Return the systematic gene names of all perturbations in a genotype."""
         gene_names = []
         for perturbation in genotype.get("perturbations"):
             gene_name = perturbation.get("systematic_gene_name")
@@ -283,6 +314,7 @@ class ExperimentDataset(Dataset, ABC):
         return gene_names
 
     def compute_gene_set(self):
+        """Compute the dataset gene set sequentially or in parallel."""
         if self.io_workers > 0:
             log.info("Computing gene set in parallel...")
             return self.compute_gene_set_parallel(io_workers=self.io_workers)
@@ -291,6 +323,7 @@ class ExperimentDataset(Dataset, ABC):
             return self.compute_gene_set_sequential()
 
     def compute_gene_set_sequential(self):
+        """Compute the gene set by scanning every LMDB entry in order."""
         gene_set = GeneSet()
         if self.env is None:
             self._init_db()
@@ -314,6 +347,7 @@ class ExperimentDataset(Dataset, ABC):
     def compute_gene_set_parallel(
         self, batch_size: int = int(1e4), io_workers: int = 1
     ):
+        """Compute the gene set using a multiprocessing batch loader."""
         gene_set = GeneSet()
 
         log.info("Computing gene set in parallel...")
@@ -333,6 +367,7 @@ class ExperimentDataset(Dataset, ABC):
 
     @property
     def experiment_reference_index(self):
+        """Load or compute (and cache) the experiment reference index."""
         index_file_path = osp.join(
             self.preprocess_dir, "experiment_reference_index.json"
         )
@@ -369,6 +404,7 @@ class ExperimentDataset(Dataset, ABC):
 
     @property
     def gene_set(self):
+        """Return the gene set, loading the cached JSON or computing it."""
         if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
             with open(osp.join(self.preprocess_dir, "gene_set.json")) as f:
                 self._gene_set = GeneSet(json.load(f))
@@ -378,6 +414,7 @@ class ExperimentDataset(Dataset, ABC):
 
     @gene_set.setter
     def gene_set(self, value):
+        """Persist the sorted gene set to JSON and cache it in memory."""
         if not value:
             raise ValueError("Cannot set an empty or None value for gene_set")
         with open(osp.join(self.preprocess_dir, "gene_set.json"), "w") as f:
@@ -385,6 +422,7 @@ class ExperimentDataset(Dataset, ABC):
         self._gene_set = value
 
     def transform_item(self, item):
+        """Rebuild typed experiment/reference/publication objects from a raw item."""
         experiment_data = item["experiment"]
         reference_data = item["reference"]
         publication_data = item["publication"]
@@ -399,4 +437,5 @@ class ExperimentDataset(Dataset, ABC):
         }
 
     def __repr__(self):
+        """Return ``ClassName(<length>)``."""
         return f"{self.__class__.__name__}({len(self)})"

@@ -1,3 +1,5 @@
+"""Raw S. cerevisiae fitness/interaction data extraction and gene-list helpers."""
+
 import csv
 import json
 import os.path as osp
@@ -23,7 +25,7 @@ import torch
 def read_raw_data(
     singles: bool = True, digenic: bool = True, trigenic: bool = True
 ) -> dict:
-    """[read raw data from data directory]
+    """Read raw fitness data from the data directory.
 
     Args:
         singles (bool, optional): [Include data]. Defaults to True.
@@ -97,13 +99,15 @@ def read_raw_data(
 def get_gene_list(
     singles: bool = False, digenic: bool = True, trigenic: bool = True
 ) -> list:
-    """[Get list of all gene names contained in dataframes. Intended to be able to get list of genes from all or subset of dataframes]
+    """Get the list of all gene names contained in the selected dataframes.
 
     Args:
-        raw_data (dict): [Keys are names of dataframes. Items are data frames.]
+        singles (bool, optional): Include single-mutant genes. Defaults to False.
+        digenic (bool, optional): Include digenic interaction genes. Defaults to True.
+        trigenic (bool, optional): Include trigenic interaction genes. Defaults to True.
 
     Returns:
-        list: [Union of genes names from different dataframes]
+        list: Union of gene names from the selected dataframes.
     """
     gene_list_file = "data/preprocessed/gene_list.csv"
     if osp.exists(gene_list_file):
@@ -149,6 +153,7 @@ def get_gene_list(
 
 
 def get_gene_id_translation_table():
+    """Load the gene ID translation table from preprocessed data, if it exists."""
     file_path = "data/preprocessed/gene_id_translation_table.csv"
     if osp.exists(file_path):
         df = pd.read_csv(file_path)
@@ -159,12 +164,17 @@ def get_gene_id_translation_table():
 
 
 def get_ignored_genes():
+    """Return the hardcoded list of gene IDs to exclude from analysis."""
     ignored_genes = ["YIL080W", "YAR037W", "YAR040C", "YFL057C", "YFL056C"]
     return ignored_genes
 
 
 def get_smf_bary(write_json=True, to_tensor=False) -> list:
-    # TODO docstring
+    """Build per-gene single-mutant fitness labels from Baryshnikova data.
+
+    Loads cached results if available; otherwise reconciles raw fitness values with
+    essentiality calls, optionally writing JSON and/or returning a tensor.
+    """
     data_path = "data/preprocessed/gene_singles_fitness_bary.json"
     if osp.exists(data_path):
         with open(data_path) as f:
@@ -235,16 +245,18 @@ def get_smf_bary(write_json=True, to_tensor=False) -> list:
 
 
 def get_double_fitness():
+    """Compute digenic interaction fitness (not yet implemented)."""
     pass
 
 
 def get_triple_fitness():
+    """Compute trigenic interaction fitness (not yet implemented)."""
     pass
 
 
 # Hidden Functions
 def _ext_digenic_genes(df_digenic: pd.DataFrame) -> pd.Series:
-    """[Extract all digenic gene name instances from digenic interaction data]
+    """Extract all digenic gene name instances from digenic interaction data.
 
     Args:
         df_digenic (pd.DataFrame): [digenic interaction data from data/TheCellMap]
@@ -259,7 +271,7 @@ def _ext_digenic_genes(df_digenic: pd.DataFrame) -> pd.Series:
 
 
 def _ext_trigenic_genes(df_trigenic: pd.DataFrame) -> pd.Series:
-    """[Extract all trigenic gene name instances from trigenic interaction data]
+    """Extract all trigenic gene name instances from trigenic interaction data.
 
     Args:
         df_trigenic (pd.DataFrame): [trigenic interaction data from data/Kuzmin2018]

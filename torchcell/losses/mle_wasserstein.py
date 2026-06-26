@@ -4,6 +4,7 @@
 # Test file: tests/torchcell/losses/test_mle_wass_supcr.py
 # Note: File name kept as mle_wasserstein.py for compatibility, but class is MleWassSupCR
 
+"""Composite MSE + Wasserstein + SupCR loss with buffers and DDP gathering."""
 
 import math
 from typing import Any
@@ -20,6 +21,7 @@ class AdaptiveWeighting:
     """Manages adaptive weighting for buffer contributions during training."""
 
     def __init__(self, warmup_epochs: int = 100, stable_epoch: int = 500):
+        """Store the warmup and stabilization epoch thresholds."""
         self.warmup_epochs = warmup_epochs
         self.stable_epoch = stable_epoch
 
@@ -48,6 +50,7 @@ class TemperatureScheduler:
         final_temp: float = 0.1,
         schedule: str = "exponential",
     ):
+        """Store the initial and final temperatures and the schedule type."""
         self.init_temp = init_temp
         self.final_temp = final_temp
         self.schedule = schedule
@@ -76,8 +79,7 @@ class WeightedWassersteinLoss(nn.Module):
         scaling: float = 0.9,
         weights: torch.Tensor | None = None,
     ):
-        """
-        Initialize Weighted Wasserstein Loss.
+        """Initialize Weighted Wasserstein Loss.
 
         Args:
             blur: Smoothing parameter for entropic regularization
@@ -107,8 +109,7 @@ class WeightedWassersteinLoss(nn.Module):
     def forward(
         self, predictions: torch.Tensor, targets: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """
-        Compute weighted Wasserstein distance.
+        """Compute weighted Wasserstein distance.
 
         Args:
             predictions: Predicted values [batch_size, num_dims]
@@ -165,6 +166,7 @@ class BufferedWeightedWassersteinLoss(nn.Module):
         weights: torch.Tensor | None = None,
         min_samples: int = 64,
     ):
+        """Set up the base Wasserstein loss and circular prediction/target buffers."""
         super().__init__()
         self.buffer_size = buffer_size
         self.min_samples = min_samples
@@ -225,8 +227,7 @@ class BufferedWeightedWassersteinLoss(nn.Module):
         all_targets: torch.Tensor | None = None,
         buffer_weight: float = 1.0,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """
-        Compute Wasserstein loss with buffer support.
+        """Compute Wasserstein loss with buffer support.
 
         Args:
             predictions: Local batch predictions
@@ -298,6 +299,7 @@ class BufferedWeightedSupCRCell(nn.Module):
         weights: torch.Tensor | None = None,
         min_samples: int = 32,
     ):
+        """Set up the base SupCR loss and circular embedding/label buffers."""
         super().__init__()
         self.buffer_size = buffer_size
         self.embedding_dim = embedding_dim
@@ -360,8 +362,7 @@ class BufferedWeightedSupCRCell(nn.Module):
         buffer_weight: float = 1.0,
         temperature: float | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """
-        Compute SupCR loss with buffer support.
+        """Compute SupCR loss with buffer support.
 
         Args:
             embeddings: Local batch embeddings
@@ -411,9 +412,9 @@ class BufferedWeightedSupCRCell(nn.Module):
 
 
 class MleWassSupCR(nn.Module):
-    """
-    Composite loss combining MSE, Wasserstein distance, and SupCR with
-    circular buffers, DDP synchronization, and adaptive weighting.
+    """Composite MSE + Wasserstein + SupCR loss.
+
+    Combines circular buffers, DDP synchronization, and adaptive weighting.
     """
 
     def __init__(
@@ -450,6 +451,7 @@ class MleWassSupCR(nn.Module):
         weights: torch.Tensor | None = None,
         max_epochs: int = 1000,
     ):
+        """Configure loss components, buffers, adaptive weighting, and scheduling."""
         super().__init__()
 
         # Lambda weights
@@ -533,8 +535,7 @@ class MleWassSupCR(nn.Module):
         z_P: torch.Tensor,
         epoch: int | None = None,
     ) -> tuple[torch.Tensor, dict[str, Any]]:
-        """
-        Forward pass computing composite loss.
+        """Compute the composite loss and a dictionary of component breakdowns.
 
         Args:
             predictions: Model predictions [batch_size, num_dims]

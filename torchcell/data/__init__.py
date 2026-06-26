@@ -1,3 +1,5 @@
+"""Datasets, deduplicators, aggregators, and graph processors for torchcell data."""
+
 from .aggregate import Aggregator
 from .data import ExperimentReferenceIndex, ReferenceIndex, compute_sha256_hash
 from .deduplicate import Deduplicator

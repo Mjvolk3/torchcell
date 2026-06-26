@@ -1,3 +1,5 @@
+"""Utilities for iterating over Neo4j fitness records stored in an LMDB database."""
+
 import json
 import os.path as osp
 
@@ -6,8 +8,7 @@ from tqdm import tqdm
 
 
 def iterate_lmdb_database(lmdb_dir: str):
-    """
-    Iterates over all key-value pairs in an LMDB database and interprets the values as JSON.
+    """Iterates over all key-value pairs in an LMDB database and interprets the values as JSON.
 
     Parameters:
     lmdb_dir (str): The directory where the LMDB database is stored.

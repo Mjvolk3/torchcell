@@ -2,6 +2,7 @@
 # [[torchcell.dataset_readers.reader]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/dataset_readers/reader.py
 # Test file: tests/torchcell/dataset_readers/test_reader.py
+"""Read-only access to a processed dataset stored in an LMDB environment."""
 
 import json
 import os.path as osp
@@ -14,7 +15,10 @@ from torchcell.data.data import ExperimentReferenceIndex
 
 
 class LmdbDatasetReader:
+    """Read items and the experiment reference index from an LMDB dataset."""
+
     def __init__(self, dataset_dir):
+        """Open the LMDB environment and load the experiment reference index."""
         self.dataset_dir = dataset_dir
         self.env = None
         self._experiment_reference_index = None
@@ -39,6 +43,7 @@ class LmdbDatasetReader:
             )  # None refers to the default database
 
     def _load_experiment_reference_index(self):
+        """Load the experiment reference index from its JSON file if present."""
         index_file_path = osp.join(
             self.dataset_dir, "preprocess/experiment_reference_index.json"
         )
@@ -52,9 +57,11 @@ class LmdbDatasetReader:
 
     @property
     def experiment_reference_index(self):
+        """Return the loaded experiment reference index."""
         return self._experiment_reference_index
 
     def save_experiment_reference_index(self, index_data):
+        """Write the experiment reference index to its JSON file."""
         index_file_path = osp.join(
             self.dataset_dir, "preprocess/experiment_reference_index.json"
         )
@@ -62,11 +69,13 @@ class LmdbDatasetReader:
             json.dump(index_data, file, indent=4)
 
     def close_lmdb(self):
+        """Close the LMDB environment if it is open."""
         if self.env is not None:
             self.env.close()
             self.env = None
 
     def __getitem__(self, idx):
+        """Return one item, or a list of items for array/list indices."""
         if isinstance(idx, (list, np.ndarray)):
             if isinstance(idx, list):
                 idx = np.array(idx)
@@ -77,6 +86,7 @@ class LmdbDatasetReader:
             return self.get_single_item(idx)
 
     def get_single_item(self, idx):
+        """Return the unpickled item at the given integer index, or None."""
         with self.env.begin() as txn:
             serialized_data = txn.get(f"{idx}".encode())
             if serialized_data is None:
@@ -85,6 +95,7 @@ class LmdbDatasetReader:
             return deserialized_data
 
     def __len__(self):
+        """Return the number of entries in the LMDB database."""
         with self.env.begin() as txn:
             # Use the database handle
             length = txn.stat(db=self.db)["entries"]
@@ -96,4 +107,5 @@ class LmdbDatasetReader:
             yield self[idx]
 
     def __repr__(self):
+        """Return a concise representation showing the dataset length."""
         return f"{self.__class__.__name__}({len(self)})"

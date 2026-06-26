@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/config
 # Test file: tests/torchcell/test_config.py
 
+"""Read a wandb sweep YAML and expose its project name."""
+
 import argparse
 import logging
 
@@ -12,6 +14,7 @@ log = logging.getLogger(__name__)
 
 
 def main(sweep_file: str) -> str:
+    """Load the sweep YAML file and return its ``project`` value."""
     with open(sweep_file) as file:
         sweep_config = yaml.load(file, Loader=yaml.FullLoader)
     return sweep_config["project"]

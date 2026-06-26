@@ -2,6 +2,7 @@
 # [[torchcell.models.dcell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/dcell.py
 # Test file: torchcell/models/test_dcell.py
+"""Deprecated DCell GO-hierarchy model (kept for reference; do not use)."""
 
 import networkx as nx
 import torch
@@ -20,7 +21,10 @@ from torchcell.sequence import GeneSet
 
 
 class SubsystemModel(nn.Module):
+    """Per-GO-term MLP: linear, tanh, then batch norm."""
+
     def __init__(self, input_size, output_size):
+        """Build the linear, tanh, and batch-norm layers."""
         super().__init__()
         self.output_size = output_size  # Store the output size as an attribute
         self.linear = nn.Linear(input_size, output_size)
@@ -28,6 +32,7 @@ class SubsystemModel(nn.Module):
         self.batchnorm = nn.BatchNorm1d(output_size)
 
     def forward(self, x):
+        """Apply linear, tanh, and batch norm to ``x``."""
         x = self.linear(x)
         x = self.tanh(x)
         x = self.batchnorm(x)
@@ -35,12 +40,15 @@ class SubsystemModel(nn.Module):
 
 
 class DCell(nn.Module):
+    """Hierarchy of subsystem MLPs mirroring the GO DAG."""
+
     def __init__(
         self,
         go_graph,
         subsystem_output_min: int = 20,
         subsystem_output_max_mult: float = 0.3,
     ):
+        """Reverse the GO graph, attach boolean states, and build subsystems."""
         super().__init__()
         # HACK probably should reverse the edges in original graph
         go_graph = nx.reverse(go_graph, copy=True)
@@ -52,6 +60,7 @@ class DCell(nn.Module):
 
     @staticmethod
     def add_boolean_state(go_graph: nx.Graph) -> nx.Graph:
+        """Attach a per-node mutant-state vector (ones, empty at root)."""
         for node_id in go_graph.nodes:
             if node_id == "GO:ROOT":
                 go_graph.nodes[node_id]["mutant_state"] = torch.tensor(
@@ -65,6 +74,7 @@ class DCell(nn.Module):
         return go_graph
 
     def build_subsystems(self):
+        """Create a SubsystemModel for each GO node sized by its children."""
         nodes_sorted = list(nx.topological_sort(self.go_graph))
 
         current_nodes = []
@@ -113,6 +123,7 @@ class DCell(nn.Module):
             )
 
     def calculate_input_size(self, node_id):
+        """Return the input size: child outputs plus the node's gene count."""
         # Sum output sizes of child subsystems and the boolean state vector
         input_size_from_children = sum(
             self.subsystems[child].output_size
@@ -122,6 +133,7 @@ class DCell(nn.Module):
         return input_size_from_children + len(genes)
 
     def forward(self, batch: Batch):
+        """Run subsystems in reverse topological order, returning their outputs."""
         # HACK should probably move device to a more appropriate location
         subsystem_outputs = {}
         sorted_subsystems = reversed(list(nx.topological_sort(self.go_graph)))
@@ -164,7 +176,10 @@ class DCell(nn.Module):
 
 
 class DCellLinear(nn.Module):
+    """Per-subsystem linear heads mapping outputs to a shared output size."""
+
     def __init__(self, subsystems: nn.ModuleDict, output_size: int):
+        """Create a linear head per subsystem to ``output_size``."""
         super().__init__()
         self.output_size = output_size
         self.subsystem_linears = nn.ModuleDict()
@@ -177,6 +192,7 @@ class DCellLinear(nn.Module):
             )
 
     def forward(self, subsystem_outputs: dict):
+        """Apply each subsystem's linear head to its output."""
         # Initialize a dictionary to store the outputs for each subsystem
         linear_outputs = {}
 
@@ -191,6 +207,7 @@ class DCellLinear(nn.Module):
 
 
 def delete_genes(go_graph: nx.Graph, deletion_gene_set: GeneSet):
+    """Return a copy whose mutant states zero out the deleted genes."""
     G_mutant = go_graph.copy()
     for node in G_mutant.nodes:
         if node == "GO:ROOT":
@@ -206,6 +223,7 @@ def delete_genes(go_graph: nx.Graph, deletion_gene_set: GeneSet):
 
 
 def dcell_from_networkx(G_mutant):
+    """Pad mutant states and convert the graph to a PyG Data with a mask."""
     G_mutant_copy = G_mutant.copy()
 
     # Initialize maximum length to zero
@@ -244,6 +262,7 @@ def dcell_from_networkx(G_mutant):
 
 
 def main():
+    """Build, run, and backprop the deprecated DCell on a small example."""
     import os
     import os.path as osp
 

@@ -1,3 +1,5 @@
+"""Lightning training tasks for hetero cell gene-interaction regression models."""
+
 import logging
 
 import lightning as L
@@ -18,6 +20,8 @@ log = logging.getLogger(__name__)
 
 
 class RegressionTask(L.LightningModule):
+    """Lightning task training a model to regress gene-interaction scores."""
+
     def __init__(
         self,
         model: nn.Module,
@@ -34,6 +38,7 @@ class RegressionTask(L.LightningModule):
         device: str = "cuda",
         inverse_transform: nn.Module | None = None,
     ):
+        """Store the model and config and build per-stage metrics and accumulators."""
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
         self.model = model
@@ -77,6 +82,7 @@ class RegressionTask(L.LightningModule):
         self.automatic_optimization = False
 
     def forward(self, batch):
+        """Run the model on the cached cell graph and the input batch."""
         batch_device = batch["gene"].x.device
         if (
             not hasattr(self, "_cell_graph_device")
@@ -340,6 +346,7 @@ class RegressionTask(L.LightningModule):
         return loss, predictions, gene_interaction_orig
 
     def training_step(self, batch, batch_idx):
+        """Run a manual-optimization training step with gradient accumulation."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
         if self.hparams.grad_accumulation_schedule is not None:
             loss = loss / self.current_accumulation_steps
@@ -387,10 +394,12 @@ class RegressionTask(L.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
+        """Run the shared validation step and return its loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
         return loss
 
     def test_step(self, batch, batch_idx):
+        """Run the shared test step and return its loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
@@ -480,6 +489,7 @@ class RegressionTask(L.LightningModule):
             plt.close(fig_gi)
 
     def on_train_epoch_end(self):
+        """Log and reset train metrics, plot samples, and step the LR scheduler."""
         # Log training metrics
         computed_metrics = self._compute_metrics_safely(self.train_metrics)
         for name, value in computed_metrics.items():
@@ -512,6 +522,7 @@ class RegressionTask(L.LightningModule):
                 sch.step()
 
     def on_train_epoch_start(self):
+        """Update gradient accumulation steps and reset sample buffers for the epoch."""
         # Update gradient accumulation steps based on current epoch
         if self.hparams.grad_accumulation_schedule is not None:
             for epoch_threshold in sorted(
@@ -530,15 +541,18 @@ class RegressionTask(L.LightningModule):
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_validation_epoch_start(self):
+        """Reset validation sample buffers on epochs where samples are plotted."""
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_test_epoch_start(self):
+        """Reset the test sample buffers at the start of testing."""
         # Always clear sample containers for test (test runs only once)
         self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_validation_epoch_end(self):
+        """Log and reset validation metrics and plot validation samples."""
         # Log validation metrics
         computed_metrics = self._compute_metrics_safely(self.val_metrics)
         for name, value in computed_metrics.items():
@@ -562,6 +576,7 @@ class RegressionTask(L.LightningModule):
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_test_epoch_end(self):
+        """Log and reset test metrics and plot test samples."""
         # Log test metrics
         computed_metrics = self._compute_metrics_safely(self.test_metrics)
         for name, value in computed_metrics.items():
@@ -583,6 +598,7 @@ class RegressionTask(L.LightningModule):
             self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def configure_optimizers(self):
+        """Build the optimizer and LR scheduler from the configured hyperparameters."""
         optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])
         optimizer_params = {
             k: v for k, v in self.hparams.optimizer_config.items() if k != "type"
@@ -668,6 +684,7 @@ class DiffusionRegressionTask(L.LightningModule):
         device: str = "cuda",
         inverse_transform: nn.Module | None = None,
     ):
+        """Set up the diffusion model, metrics, sample buffers, and loss trackers."""
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
         self.model = model
@@ -717,6 +734,7 @@ class DiffusionRegressionTask(L.LightningModule):
         self.automatic_optimization = False
 
     def forward(self, batch):
+        """Run the model on the cached cell graph and the input batch."""
         batch_device = batch["gene"].x.device
         if (
             not hasattr(self, "_cell_graph_device")
@@ -955,6 +973,7 @@ class DiffusionRegressionTask(L.LightningModule):
         return loss, predictions, gene_interaction_orig
 
     def training_step(self, batch, batch_idx):
+        """Run a manual-optimization training step with gradient accumulation."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
         if self.hparams.grad_accumulation_schedule is not None:
             loss = loss / self.current_accumulation_steps
@@ -1001,10 +1020,12 @@ class DiffusionRegressionTask(L.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
+        """Run the shared validation step and return its loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
         return loss
 
     def test_step(self, batch, batch_idx):
+        """Run the shared test step and return its loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
@@ -1092,6 +1113,7 @@ class DiffusionRegressionTask(L.LightningModule):
             plt.close(fig_gi)
 
     def on_train_epoch_start(self):
+        """Update gradient accumulation steps and reset sample buffers for the epoch."""
         # Update gradient accumulation steps based on current epoch
         if self.hparams.grad_accumulation_schedule is not None:
             for epoch_threshold in sorted(
@@ -1110,15 +1132,18 @@ class DiffusionRegressionTask(L.LightningModule):
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_validation_epoch_start(self):
+        """Reset validation sample buffers on epochs where samples are plotted."""
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_test_epoch_start(self):
+        """Reset the test sample buffers at the start of testing."""
         # Always clear sample containers for test (test runs only once)
         self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_train_epoch_end(self):
+        """Log and reset train metrics, plot samples, and step the LR scheduler."""
         # Log training metrics
         computed_metrics = self._compute_metrics_safely(self.train_metrics)
         for name, value in computed_metrics.items():
@@ -1157,6 +1182,7 @@ class DiffusionRegressionTask(L.LightningModule):
                 sch.step()
 
     def on_validation_epoch_end(self):
+        """Log and reset validation metrics and plot validation samples."""
         # Log validation metrics
         computed_metrics = self._compute_metrics_safely(self.val_metrics)
         for name, value in computed_metrics.items():
@@ -1186,6 +1212,7 @@ class DiffusionRegressionTask(L.LightningModule):
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_test_epoch_end(self):
+        """Log and reset test metrics and plot test samples."""
         # Log test metrics
         computed_metrics = self._compute_metrics_safely(self.test_metrics)
         for name, value in computed_metrics.items():
@@ -1207,6 +1234,7 @@ class DiffusionRegressionTask(L.LightningModule):
             self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def configure_optimizers(self):
+        """Build the optimizer and LR scheduler from the configured hyperparameters."""
         optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])
         optimizer_params = {
             k: v for k, v in self.hparams.optimizer_config.items() if k != "type"

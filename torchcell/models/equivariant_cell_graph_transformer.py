@@ -3,8 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/equivariant_cell_graph_transformer
 # Test file: tests/torchcell/models/test_equivariant_cell_graph_transformer.py
 
-"""
-Equivariant Cell Graph Transformer with graph-regularized attention heads.
+"""Equivariant Cell Graph Transformer with graph-regularized attention heads.
 
 Implements the generalized virtual cell architecture:
 - CLS token for whole-cell representation
@@ -26,14 +25,20 @@ from torch_geometric.data import HeteroData
 
 
 class GraphRegularizedTransformerLayer(nn.Module):
-    """
-    Transformer layer with graph-regularized attention heads.
+    """Transformer layer with graph-regularized attention heads.
 
     Uses manual attention computation to get both output and attention weights
     for graph regularization loss.
     """
 
     def __init__(self, hidden_dim: int, num_heads: int, dropout: float = 0.1):
+        """Build Q/K/V/out projections, layer norms, and the feedforward block.
+
+        Args:
+            hidden_dim: Model hidden dimension (divisible by num_heads).
+            num_heads: Number of attention heads.
+            dropout: Dropout probability.
+        """
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
@@ -65,8 +70,7 @@ class GraphRegularizedTransformerLayer(nn.Module):
     def forward(
         self, x: torch.Tensor, return_attention: bool = False
     ) -> tuple[torch.Tensor, torch.Tensor | None]:
-        """
-        Forward pass with manual attention computation.
+        """Forward pass with manual attention computation.
 
         Args:
             x: [batch, N+1, d] where N+1 includes CLS token at position 0
@@ -128,14 +132,19 @@ class GraphRegularizedTransformerLayer(nn.Module):
 
 
 class HyperSAGNN(nn.Module):
-    """
-    Hypergraph Self-Attention Graph Neural Network for perturbation sets.
+    """Hypergraph Self-Attention Graph Neural Network for perturbation sets.
 
     Adapted from DANGO model to compute perturbation representations via
     masked self-attention within perturbation sets.
     """
 
     def __init__(self, hidden_channels: int, num_heads: int = 4):
+        """Set up multi-head attention dimensions and projections.
+
+        Args:
+            hidden_channels: Model hidden dimension (divisible by num_heads).
+            num_heads: Number of attention heads.
+        """
         super().__init__()
         self.hidden_channels = hidden_channels
         self.num_heads = num_heads
@@ -168,8 +177,7 @@ class HyperSAGNN(nn.Module):
     def forward(
         self, embeddings: torch.Tensor, batch_indices: torch.Tensor
     ) -> torch.Tensor:
-        """
-        Forward pass processing perturbed genes with masked attention.
+        """Forward pass processing perturbed genes with masked attention.
 
         Args:
             embeddings: Tensor of shape [total_pert_genes, hidden_channels]
@@ -239,14 +247,16 @@ class HyperSAGNN(nn.Module):
         O_proj: nn.Linear,
         beta: nn.Parameter,
     ) -> torch.Tensor:
-        """
-        Apply global masked multi-head attention.
+        """Apply global masked multi-head attention.
 
         Args:
             x: Input tensor with shape [total_nodes, hidden_dim]
             attention_mask: Binary mask with shape [total_nodes, total_nodes]
                            True where attention is allowed, False elsewhere
-            Q_proj, K_proj, V_proj, O_proj: Linear projections
+            Q_proj: Linear projection for queries.
+            K_proj: Linear projection for keys.
+            V_proj: Linear projection for values.
+            O_proj: Linear output projection.
             beta: ReZero parameter
 
         Returns:
@@ -296,8 +306,7 @@ class HyperSAGNN(nn.Module):
 
 
 class EquivariantPerturbationTransform(nn.Module):
-    """
-    Equivariant perturbation transformation that preserves per-gene structure.
+    """Equivariant perturbation transformation that preserves per-gene structure.
 
     Unlike the standard perturbation head which collapses to a summary vector,
     this module transforms ALL gene embeddings based on perturbation context,
@@ -307,6 +316,13 @@ class EquivariantPerturbationTransform(nn.Module):
     """
 
     def __init__(self, hidden_dim: int, num_heads: int = 8, dropout: float = 0.1):
+        """Build the cross-attention, feedforward, and normalization layers.
+
+        Args:
+            hidden_dim: Model hidden dimension.
+            num_heads: Number of cross-attention heads.
+            dropout: Dropout probability.
+        """
         super().__init__()
         self.hidden_dim = hidden_dim
 
@@ -333,8 +349,7 @@ class EquivariantPerturbationTransform(nn.Module):
         perturbation_indices: torch.Tensor,
         batch_assignment: torch.Tensor,
     ) -> torch.Tensor:
-        """
-        Apply equivariant perturbation transformation.
+        """Apply equivariant perturbation transformation.
 
         Args:
             H_genes: [N, d] - wildtype gene embeddings
@@ -385,8 +400,7 @@ class EquivariantPerturbationTransform(nn.Module):
 
 
 class PerturbationHead(nn.Module):
-    """
-    Perturbation readout head for gene interaction prediction.
+    """Perturbation readout head for gene interaction prediction.
 
     Operates on equivariant perturbed gene embeddings H_genes_pert [batch, N, d]
     and produces scalar gene interaction predictions per sample.
@@ -395,6 +409,12 @@ class PerturbationHead(nn.Module):
     """
 
     def __init__(self, hidden_dim: int, dropout: float = 0.1):
+        """Build the prediction MLP mapping [h_CLS || z_S] to a scalar.
+
+        Args:
+            hidden_dim: Model hidden dimension.
+            dropout: Dropout probability.
+        """
         super().__init__()
         self.hidden_dim = hidden_dim
 
@@ -413,8 +433,7 @@ class PerturbationHead(nn.Module):
         perturbation_indices: torch.Tensor,
         batch_assignment: torch.Tensor,
     ) -> torch.Tensor:
-        """
-        Forward pass of perturbation head.
+        """Forward pass of perturbation head.
 
         Args:
             h_CLS: [d] - whole-cell CLS representation
@@ -456,8 +475,7 @@ class PerturbationHead(nn.Module):
 
 
 class CellGraphTransformer(nn.Module):
-    """
-    Equivariant Cell Graph Transformer model.
+    """Equivariant Cell Graph Transformer model.
 
     Architecture:
     1. Gene embeddings + CLS token
@@ -480,6 +498,21 @@ class CellGraphTransformer(nn.Module):
         node_embeddings: dict | None = None,  # Pre-computed embeddings
         learnable_embedding_config: dict | None = None,  # Learnable config
     ):
+        """Build embeddings, transformer encoder, and perturbation heads.
+
+        Args:
+            gene_num: Number of genes (sequence length excluding CLS token).
+            hidden_channels: Model hidden dimension.
+            num_transformer_layers: Number of transformer encoder layers.
+            num_attention_heads: Number of attention heads per layer.
+            cell_graph: Reference HeteroData graph providing adjacency.
+            graph_regularization_config: Optional graph-regularization config.
+            perturbation_head_config: Optional perturbation-head config.
+            dropout: Dropout probability.
+            graph_reg_lambda: Loss weight for graph regularization.
+            node_embeddings: Optional pre-computed node embeddings.
+            learnable_embedding_config: Optional config for learnable embeddings.
+        """
         super().__init__()
         self.gene_num = gene_num
         self.hidden_channels = hidden_channels
@@ -609,8 +642,7 @@ class CellGraphTransformer(nn.Module):
     def _normalize_adjacency_matrices(
         self, cell_graph: HeteroData
     ) -> dict[str, torch.Tensor]:
-        """
-        Normalize adjacency matrices row-wise: A_tilde[i,:] = A[i,:] / (degree[i] + eps).
+        """Normalize adjacency matrices row-wise: A_tilde[i,:] = A[i,:] / (degree[i] + eps).
 
         Args:
             cell_graph: HeteroData with (gene, edge_type, gene) edges
@@ -648,8 +680,7 @@ class CellGraphTransformer(nn.Module):
     def compute_graph_regularization_loss(
         self, attention_weights: torch.Tensor, layer_idx: int
     ) -> torch.Tensor:
-        """
-        Compute graph regularization loss using KL divergence.
+        """Compute graph regularization loss using KL divergence.
 
         Args:
             attention_weights: [batch, heads, N, N] gene-gene attention weights
@@ -734,8 +765,7 @@ class CellGraphTransformer(nn.Module):
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData, return_attention: bool = False
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """
-        Forward pass of Equivariant Cell Graph Transformer.
+        """Forward pass of Equivariant Cell Graph Transformer.
 
         Args:
             cell_graph: Full wildtype graph structure (not used directly, genes indexed by order)
@@ -897,8 +927,7 @@ def calculate_weight_l2_norm(model: nn.Module) -> float:
 
 
 def compute_smoothness(X: torch.Tensor) -> float:
-    """
-    Compute smoothness of node features (oversmoothing diagnostic).
+    """Compute smoothness of node features (oversmoothing diagnostic).
 
     Lower values indicate oversmoothing (features collapsing toward mean).
     Higher values indicate feature diversity is preserved.

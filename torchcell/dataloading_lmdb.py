@@ -1,3 +1,5 @@
+"""Smoke-test script that iterates an LMDB-backed CellDataset DataLoader."""
+
 import os
 import os.path as osp
 
@@ -11,6 +13,7 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 def main():
+    """Build the cell dataset and iterate its DataLoader to exercise LMDB access."""
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 

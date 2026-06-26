@@ -2,8 +2,7 @@
 # [[torchcell.models.gpu_edge_mask_generator]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/gpu_edge_mask_generator
 
-"""
-GPU-based edge mask generator for zero-copy lazy subgraph representation.
+"""GPU-based edge mask generator for zero-copy lazy subgraph representation.
 
 Keeps incidence cache on GPU to generate edge masks from perturbation indices
 without CPU→GPU transfer of large mask tensors.
@@ -24,8 +23,7 @@ log = logging.getLogger(__name__)
 
 
 class GPUEdgeMaskGenerator(nn.Module):
-    """
-    Generates edge masks on GPU from perturbation indices.
+    """Generates edge masks on GPU from perturbation indices.
 
     Stores incidence cache and base masks on GPU to avoid CPU→GPU transfer
     of large mask tensors during training.
@@ -46,8 +44,7 @@ class GPUEdgeMaskGenerator(nn.Module):
     """
 
     def __init__(self, cell_graph: HeteroData, device: torch.device):
-        """
-        Initialize GPU mask generator.
+        """Initialize GPU mask generator.
 
         Args:
             cell_graph: Full cell graph with all edge types
@@ -72,8 +69,7 @@ class GPUEdgeMaskGenerator(nn.Module):
         )
 
     def _build_incidence_cache_gpu(self, cell_graph: HeteroData) -> None:
-        """
-        Build node-to-edge incidence mappings on GPU.
+        """Build node-to-edge incidence mappings on GPU.
 
         For each gene node, creates tensor of edge positions where that gene
         appears as either source or destination.
@@ -126,8 +122,7 @@ class GPUEdgeMaskGenerator(nn.Module):
         )
 
     def _build_vectorized_incidence_tensors(self) -> None:
-        """
-        Build padded incidence tensors for vectorized batch operations.
+        """Build padded incidence tensors for vectorized batch operations.
 
         Converts the list-based incidence cache to padded tensors that allow
         for vectorized lookups without Python loops or .item() calls.
@@ -176,8 +171,7 @@ class GPUEdgeMaskGenerator(nn.Module):
             )
 
     def _create_base_masks(self, cell_graph: HeteroData) -> None:
-        """
-        Create base edge masks (all True) as model buffers.
+        """Create base edge masks (all True) as model buffers.
 
         These are cloned and modified per-batch to create sample-specific masks.
         """
@@ -192,8 +186,7 @@ class GPUEdgeMaskGenerator(nn.Module):
     def generate_batch_masks(
         self, batch_perturbation_indices: list[torch.Tensor], batch_size: int
     ) -> dict[tuple[str, str, str], torch.Tensor]:
-        """
-        Generate edge masks for a batch of perturbations.
+        """Generate edge masks for a batch of perturbations.
 
         For batched graphs in PyG, we need to concatenate masks across samples
         with proper offsets matching the concatenated edge_index.
@@ -264,8 +257,7 @@ class GPUEdgeMaskGenerator(nn.Module):
     def generate_batch_masks_vectorized(
         self, batch_perturbation_indices: list[torch.Tensor], batch_size: int
     ) -> dict[tuple[str, str, str], torch.Tensor]:
-        """
-        VECTORIZED: Generate edge masks with zero Python loops and zero .item() calls.
+        """VECTORIZED: Generate edge masks with zero Python loops and zero .item() calls.
 
         This is the optimized version that eliminates GPU→CPU synchronizations.
         Expected speedup: 10-20x compared to the loop-based version.
@@ -398,8 +390,7 @@ class GPUEdgeMaskGenerator(nn.Module):
     def generate_single_mask(
         self, perturbation_indices: torch.Tensor
     ) -> dict[tuple[str, str, str], torch.Tensor]:
-        """
-        Generate edge masks for a single sample.
+        """Generate edge masks for a single sample.
 
         Useful for validation or single-sample inference.
 
@@ -435,8 +426,7 @@ class GPUEdgeMaskGenerator(nn.Module):
         return edge_mask_dict
 
     def get_memory_usage(self) -> dict[str, float]:
-        """
-        Get estimated GPU memory usage.
+        """Get estimated GPU memory usage.
 
         Returns:
             dict with memory usage in MB:

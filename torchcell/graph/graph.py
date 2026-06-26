@@ -2,6 +2,7 @@
 # [[torchcell.graph.graph]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/graph/graph.py
 # Test file: torchcell/graph/test_graph.py
+"""Gene graph constructors and SGD/STRING network builders for S. cerevisiae."""
 
 import json
 import logging
@@ -31,9 +32,7 @@ plt.style.use(style_file_path)
 
 
 class GeneGraph(ModelStrictArbitrary):
-    """
-    A graph representation with genes as nodes, wrapping an nx.Graph.
-    """
+    """Graph with genes as nodes, wrapping an nx.Graph."""
 
     name: str
     graph: nx.Graph
@@ -42,7 +41,7 @@ class GeneGraph(ModelStrictArbitrary):
     @field_validator("graph")
     @classmethod
     def validate_genes_in_graph(cls, graph, info):
-        """Validate that all nodes in the graph are in the max_gene_set"""
+        """Validate that all nodes in the graph are in the max_gene_set."""
         values = info.data
         if "max_gene_set" not in values:
             return graph
@@ -62,51 +61,49 @@ class GeneGraph(ModelStrictArbitrary):
         return graph
 
     def __getattr__(self, name):
-        """Forward attribute access to the underlying graph"""
+        """Forward attribute access to the underlying graph."""
         return getattr(self.graph, name)
 
     def __repr__(self):
-        """Informative representation showing graph name, nodes and edges"""
+        """Informative representation showing graph name, nodes and edges."""
         return f"GeneGraph(name='{self.name}', nodes={self.graph.number_of_nodes()}, edges={self.graph.number_of_edges()})"
 
 
 class GeneMultiGraph(ModelStrictArbitrary):
-    """
-    A collection of GeneGraph objects stored in a SortedDict.
-    """
+    """Collection of GeneGraph objects stored in a SortedDict."""
 
     graphs: SortedDict[str, GeneGraph]
 
     def __getitem__(self, key):
-        """Allow dictionary-like access to graphs by name"""
+        """Allow dictionary-like access to graphs by name."""
         return self.graphs[key]
 
     def __iter__(self):
-        """Iterate over the graph names"""
+        """Iterate over the graph names."""
         return iter(self.graphs)
 
     def __contains__(self, key):
-        """Check if a graph name exists"""
+        """Check if a graph name exists."""
         return key in self.graphs
 
     def __len__(self):
-        """Get number of graphs"""
+        """Get number of graphs."""
         return len(self.graphs)
 
     def items(self):
-        """Get the (name, graph) pairs"""
+        """Get the (name, graph) pairs."""
         return self.graphs.items()
 
     def keys(self):
-        """Get graph names"""
+        """Get graph names."""
         return self.graphs.keys()
 
     def values(self):
-        """Get graph objects"""
+        """Get graph objects."""
         return self.graphs.values()
 
     def __repr__(self):
-        """Informative representation showing all contained graphs"""
+        """Informative representation showing all contained graphs."""
         graph_reprs = []
         for name, graph in self.graphs.items():
             graph_reprs.append(
@@ -118,8 +115,8 @@ class GeneMultiGraph(ModelStrictArbitrary):
 
 
 def filter_by_contained_genes(G_go: nx.DiGraph, n: int, gene_set: set) -> nx.DiGraph:
-    """
-    Returns a new graph with nodes removed that contain fewer than n genes in the subtree.
+    """Return a new graph with nodes removed that contain fewer than n genes.
+
     The original graph is not modified.
 
     Args:
@@ -180,8 +177,8 @@ def filter_by_contained_genes(G_go: nx.DiGraph, n: int, gene_set: set) -> nx.DiG
 
 
 def filter_by_date(G_go: nx.DiGraph, cutoff_date: str) -> nx.DiGraph:
-    """
-    Returns a new graph with nodes having annotations after cutoff_date removed.
+    """Return a new graph with nodes having annotations after cutoff_date removed.
+
     The original graph is not modified.
 
     Args:
@@ -243,8 +240,8 @@ def filter_by_date(G_go: nx.DiGraph, cutoff_date: str) -> nx.DiGraph:
 
 
 def filter_redundant_terms(G_go: nx.DiGraph) -> nx.DiGraph:
-    """
-    Returns a new graph with redundant GO terms removed.
+    """Return a new graph with redundant GO terms removed.
+
     A GO term is considered redundant if it has exactly the same gene set as one of its parents.
     The original graph is not modified.
 
@@ -298,8 +295,8 @@ def filter_redundant_terms(G_go: nx.DiGraph) -> nx.DiGraph:
 
 
 def filter_go_IGI(G_go: nx.DiGraph) -> nx.DiGraph:
-    """
-    Returns a new graph with gene annotations derived from IGI experiments removed.
+    """Return a new graph with gene annotations derived from IGI experiments removed.
+
     IGI stands for "Inferred from Genetic Interaction", which could create circularity
     when used to predict genetic interactions.
     The original graph is not modified.
@@ -358,6 +355,8 @@ def filter_go_IGI(G_go: nx.DiGraph) -> nx.DiGraph:
 
 @define
 class SCerevisiaeGraph:
+    """Lazy builder of SGD, STRING, TFLink, and GO gene graphs for S. cerevisiae."""
+
     sgd_root: str = field(init=True, repr=False, default="data/sgd/genome")
     string_root: str = field(init=True, repr=False, default="data/string")
     tflink_root: str = field(init=True, repr=False, default="data/tflink")
@@ -403,6 +402,7 @@ class SCerevisiaeGraph:
     _go_to_genes = field(init=False, repr=False, default=None)
 
     def __attrs_post_init__(self) -> None:
+        """Set up per-gene JSON file names and create the graph cache directories."""
         self.json_files = [f"{gene}.json" for gene in self.genome.gene_set]
 
         # Create SGD graph directory
@@ -423,6 +423,7 @@ class SCerevisiaeGraph:
 
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:
+        """Return a ParsedGenome from the genome's gene set and alias mapping."""
         data = {}
         data["gene_set"] = genome.gene_set
         # Store the alias_to_systematic dictionary if it exists
@@ -434,6 +435,7 @@ class SCerevisiaeGraph:
     # Property definitions for lazy loading
     @property
     def G_raw(self) -> nx.Graph:
+        """Lazily load or build the raw SGD gene graph from per-gene JSON."""
         if self._G_raw is None:
             graph_dir = osp.join(self.sgd_root, "graph")
             raw_graph_path = osp.join(graph_dir, "G_raw.pkl")
@@ -448,6 +450,7 @@ class SCerevisiaeGraph:
 
     @property
     def G_gene(self) -> GeneGraph:
+        """Lazily load or build the gene graph with protein, loci, and pathway data."""
         if self._G_gene is None:
             gene_graph_path = osp.join(self.sgd_root, "graph", "G_gene.pkl")
             if osp.exists(gene_graph_path):
@@ -468,6 +471,7 @@ class SCerevisiaeGraph:
 
     @property
     def G_physical(self) -> GeneGraph:
+        """Lazily load or build the physical interaction gene graph."""
         if self._G_physical is None:
             physical_graph_path = osp.join(self.sgd_root, "graph", "G_physical.pkl")
             if osp.exists(physical_graph_path):
@@ -484,6 +488,7 @@ class SCerevisiaeGraph:
 
     @property
     def G_genetic(self) -> GeneGraph:
+        """Lazily load or build the genetic interaction gene graph."""
         if self._G_genetic is None:
             genetic_graph_path = osp.join(self.sgd_root, "graph", "G_genetic.pkl")
             if osp.exists(genetic_graph_path):
@@ -500,6 +505,7 @@ class SCerevisiaeGraph:
 
     @property
     def G_regulatory(self) -> GeneGraph:
+        """Lazily load or build the regulatory interaction gene graph."""
         if self._G_regulatory is None:
             regulatory_graph_path = osp.join(self.sgd_root, "graph", "G_regulatory.pkl")
             if osp.exists(regulatory_graph_path):
@@ -514,6 +520,7 @@ class SCerevisiaeGraph:
 
     @property
     def G_go(self) -> nx.DiGraph:
+        """Lazily load or build the GO ontology DiGraph annotated with genes."""
         if self._G_go is None:
             go_graph_path = osp.join(self.sgd_root, "graph", "G_go.pkl")
             if osp.exists(go_graph_path):
@@ -525,6 +532,7 @@ class SCerevisiaeGraph:
 
     @property
     def G_tflink(self) -> GeneGraph:
+        """Lazily load or build the TFLink transcription-factor gene graph."""
         if self._G_tflink is None:
             tf_graph_path = osp.join(self.tflink_root, "graph", "G_tflink.pkl")
             if osp.exists(tf_graph_path):
@@ -540,36 +548,42 @@ class SCerevisiaeGraph:
     # STRING v9.1 properties
     @property
     def G_string9_1_neighborhood(self) -> GeneGraph:
+        """Lazily load the STRING v9.1 neighborhood channel gene graph."""
         if self._G_string9_1_neighborhood is None:
             self._initialize_string_graph("neighborhood", "9.1")
         return self._G_string9_1_neighborhood
 
     @property
     def G_string9_1_fusion(self) -> GeneGraph:
+        """Lazily load the STRING v9.1 fusion channel gene graph."""
         if self._G_string9_1_fusion is None:
             self._initialize_string_graph("fusion", "9.1")
         return self._G_string9_1_fusion
 
     @property
     def G_string9_1_cooccurence(self) -> GeneGraph:
+        """Lazily load the STRING v9.1 co-occurrence channel gene graph."""
         if self._G_string9_1_cooccurence is None:
             self._initialize_string_graph("cooccurence", "9.1")
         return self._G_string9_1_cooccurence
 
     @property
     def G_string9_1_coexpression(self) -> GeneGraph:
+        """Lazily load the STRING v9.1 co-expression channel gene graph."""
         if self._G_string9_1_coexpression is None:
             self._initialize_string_graph("coexpression", "9.1")
         return self._G_string9_1_coexpression
 
     @property
     def G_string9_1_experimental(self) -> GeneGraph:
+        """Lazily load the STRING v9.1 experimental channel gene graph."""
         if self._G_string9_1_experimental is None:
             self._initialize_string_graph("experimental", "9.1")
         return self._G_string9_1_experimental
 
     @property
     def G_string9_1_database(self) -> GeneGraph:
+        """Lazily load the STRING v9.1 database channel gene graph."""
         if self._G_string9_1_database is None:
             self._initialize_string_graph("database", "9.1")
         return self._G_string9_1_database
@@ -577,36 +591,42 @@ class SCerevisiaeGraph:
     # STRING v11.0 properties
     @property
     def G_string11_0_neighborhood(self) -> GeneGraph:
+        """Lazily load the STRING v11.0 neighborhood channel gene graph."""
         if self._G_string11_0_neighborhood is None:
             self._initialize_string_graph("neighborhood", "11.0")
         return self._G_string11_0_neighborhood
 
     @property
     def G_string11_0_fusion(self) -> GeneGraph:
+        """Lazily load the STRING v11.0 fusion channel gene graph."""
         if self._G_string11_0_fusion is None:
             self._initialize_string_graph("fusion", "11.0")
         return self._G_string11_0_fusion
 
     @property
     def G_string11_0_cooccurence(self) -> GeneGraph:
+        """Lazily load the STRING v11.0 co-occurrence channel gene graph."""
         if self._G_string11_0_cooccurence is None:
             self._initialize_string_graph("cooccurence", "11.0")
         return self._G_string11_0_cooccurence
 
     @property
     def G_string11_0_coexpression(self) -> GeneGraph:
+        """Lazily load the STRING v11.0 co-expression channel gene graph."""
         if self._G_string11_0_coexpression is None:
             self._initialize_string_graph("coexpression", "11.0")
         return self._G_string11_0_coexpression
 
     @property
     def G_string11_0_experimental(self) -> GeneGraph:
+        """Lazily load the STRING v11.0 experimental channel gene graph."""
         if self._G_string11_0_experimental is None:
             self._initialize_string_graph("experimental", "11.0")
         return self._G_string11_0_experimental
 
     @property
     def G_string11_0_database(self) -> GeneGraph:
+        """Lazily load the STRING v11.0 database channel gene graph."""
         if self._G_string11_0_database is None:
             self._initialize_string_graph("database", "11.0")
         return self._G_string11_0_database
@@ -614,42 +634,48 @@ class SCerevisiaeGraph:
     # STRING v12.0 properties
     @property
     def G_string12_0_neighborhood(self) -> GeneGraph:
+        """Lazily load the STRING v12.0 neighborhood channel gene graph."""
         if self._G_string12_0_neighborhood is None:
             self._initialize_string_graph("neighborhood", "12.0")
         return self._G_string12_0_neighborhood
 
     @property
     def G_string12_0_fusion(self) -> GeneGraph:
+        """Lazily load the STRING v12.0 fusion channel gene graph."""
         if self._G_string12_0_fusion is None:
             self._initialize_string_graph("fusion", "12.0")
         return self._G_string12_0_fusion
 
     @property
     def G_string12_0_cooccurence(self) -> GeneGraph:
+        """Lazily load the STRING v12.0 co-occurrence channel gene graph."""
         if self._G_string12_0_cooccurence is None:
             self._initialize_string_graph("cooccurence", "12.0")
         return self._G_string12_0_cooccurence
 
     @property
     def G_string12_0_coexpression(self) -> GeneGraph:
+        """Lazily load the STRING v12.0 co-expression channel gene graph."""
         if self._G_string12_0_coexpression is None:
             self._initialize_string_graph("coexpression", "12.0")
         return self._G_string12_0_coexpression
 
     @property
     def G_string12_0_experimental(self) -> GeneGraph:
+        """Lazily load the STRING v12.0 experimental channel gene graph."""
         if self._G_string12_0_experimental is None:
             self._initialize_string_graph("experimental", "12.0")
         return self._G_string12_0_experimental
 
     @property
     def G_string12_0_database(self) -> GeneGraph:
+        """Lazily load the STRING v12.0 database channel gene graph."""
         if self._G_string12_0_database is None:
             self._initialize_string_graph("database", "12.0")
         return self._G_string12_0_database
 
     def _initialize_string_graph(self, network_type: str, version: str) -> None:
-        """Initialize a specific STRING graph if it's not already loaded"""
+        """Initialize a specific STRING graph if it's not already loaded."""
         version_str = version.replace(".", "_")
         attr_name = f"_G_string{version_str}_{network_type}"
 
@@ -679,8 +705,7 @@ class SCerevisiaeGraph:
             self.create_string_graphs(string_file, version)
 
     def download_tflink_data(self, output_path: str) -> None:
-        """
-        Download the TFLink interaction file for S. cerevisiae.
+        """Download the TFLink interaction file for S. cerevisiae.
 
         Args:
             output_path: Path to save the downloaded file
@@ -699,8 +724,7 @@ class SCerevisiaeGraph:
         log.info("TFLink download complete!")
 
     def download_string_data(self, output_path: str, version: str = "9.1") -> None:
-        """
-        Download the STRING protein interaction file for S. cerevisiae.
+        """Download the STRING protein interaction file for S. cerevisiae.
 
         Args:
             output_path: Path to save the downloaded file
@@ -729,8 +753,8 @@ class SCerevisiaeGraph:
         log.info(f"STRING v{version} download complete!")
 
     def create_string_graphs(self, file_path: str, version: str) -> None:
-        """
-        Create GeneGraph objects from STRING data and save them to attributes.
+        """Create GeneGraph objects from STRING data and save them to attributes.
+
         Strip the '4932.' prefix from protein IDs for consistency.
         Only include nodes that exist in genome.gene_set.
         """
@@ -790,14 +814,14 @@ class SCerevisiaeGraph:
             )
 
     def strip_string_prefix(self, protein_id: str) -> str:
-        """Strip the '4932.' prefix from STRING protein IDs"""
+        """Strip the '4932.' prefix from STRING protein IDs."""
         if protein_id.startswith("4932."):
             return protein_id[5:]
         return protein_id
 
     def create_G_tflink(self) -> nx.DiGraph:
-        """
-        Create a directed graph of transcription factor interactions from TFLink data.
+        """Create a directed graph of transcription factor interactions from TFLink.
+
         Only include interactions where both TF and target are in genome.gene_set.
         Convert alias gene names to systematic names if possible.
 
@@ -910,8 +934,7 @@ class SCerevisiaeGraph:
         return G_tflink
 
     def save_graph(self, graph, graph_name, root_type="sgd"):
-        """
-        Save graph to a pickle file. Handles both NetworkX graphs and GeneGraph objects.
+        """Save graph to a pickle file. Handles both NetworkX graphs and GeneGraph objects.
 
         Args:
             graph: NetworkX graph or GeneGraph to save
@@ -932,8 +955,7 @@ class SCerevisiaeGraph:
             pickle.dump(graph, f)
 
     def load_graph(self, graph_name, root_type="sgd"):
-        """
-        Load graph from a pickle file. Could be a NetworkX graph or a GeneGraph.
+        """Load graph from a pickle file. Could be a NetworkX graph or a GeneGraph.
 
         Args:
             graph_name: Name of the graph
@@ -961,6 +983,7 @@ class SCerevisiaeGraph:
 
     @staticmethod
     def add_json_data_to_graph(data_root: str, json_files: list[str]) -> nx.Graph:
+        """Build a graph whose nodes are genes loaded from per-gene JSON files."""
         G = nx.Graph()  # This is the node graph
 
         for i, json_file in tqdm(enumerate(json_files)):
@@ -998,6 +1021,7 @@ class SCerevisiaeGraph:
 
     @property
     def go_to_genes(self) -> SortedDict[str, GeneSet]:
+        """Map each non-obsolete GO term to the set of genes annotated to it."""
         if self._go_to_genes is None:
             go_to_genes_dict = SortedDict()
             go_dag = self.genome.go_dag
@@ -1019,6 +1043,7 @@ class SCerevisiaeGraph:
         return self._go_to_genes
 
     def create_go_subgraph(self, go_terms, go_dag):
+        """Build a DiGraph for the given GO terms with parent edges and gene data."""
         G = nx.DiGraph()  # Using a directed graph for GO hierarchy
 
         for go_id in go_terms:
@@ -1079,6 +1104,7 @@ class SCerevisiaeGraph:
 
     @staticmethod
     def combine_with_super_node(graphs: list[nx.Graph] = None) -> nx.Graph:
+        """Merge GO subgraphs under a single GO:ROOT super node."""
         G_combined = nx.DiGraph()
         super_node = "GO:ROOT"  # A fictitious super node
         G_combined.add_node(
@@ -1101,6 +1127,7 @@ class SCerevisiaeGraph:
         return G_combined
 
     def create_G_go(self) -> nx.DiGraph:
+        """Build the full GO DiGraph from BP, MF, and CC subgraphs under a root."""
         bp_terms = [
             go_id
             for go_id, term in self.genome.go_dag.items()
@@ -1129,6 +1156,7 @@ class SCerevisiaeGraph:
     # Edge Features methods
     @staticmethod
     def add_physical_edges(G_raw: nx.Graph, G_physical: nx.Graph) -> nx.Graph:
+        """Add physical interaction edges from the raw graph to G_physical."""
         for node_name, node_data in G_raw.nodes(data=True):
             if "interaction_details" in node_data and isinstance(
                 node_data["interaction_details"], list
@@ -1146,6 +1174,7 @@ class SCerevisiaeGraph:
 
     @staticmethod
     def add_genetic_edges(G_raw: nx.Graph, G_genetic: nx.Graph) -> nx.Graph:
+        """Add genetic interaction edges from the raw graph to G_genetic."""
         for node_name, node_data in G_raw.nodes(data=True):
             if "interaction_details" in node_data and isinstance(
                 node_data["interaction_details"], list
@@ -1162,9 +1191,7 @@ class SCerevisiaeGraph:
     def add_regulatory_edges(
         G_raw: nx.Graph, G_regulatory: nx.DiGraph = None
     ) -> nx.DiGraph:
-        """
-        Add regulatory edges from the raw graph to the regulatory graph.
-        """
+        """Add regulatory edges from the raw graph to the regulatory graph."""
         if G_regulatory is None:
             G_regulatory = nx.DiGraph()
 
@@ -1189,6 +1216,7 @@ class SCerevisiaeGraph:
     # Node Features methods
     @staticmethod
     def add_gene_protein_overview(G_raw: nx.Graph, G_gene: nx.Graph) -> nx.Graph:
+        """Add protein overview attributes (length, weight, pI, etc.) to gene nodes."""
         for node_name, node_data in G_raw.nodes(data=True):
             protein_overview_template = {
                 "length": None,
@@ -1221,6 +1249,7 @@ class SCerevisiaeGraph:
 
     @staticmethod
     def add_loci_information(G_raw: nx.Graph, G_gene: nx.Graph) -> nx.Graph:
+        """Add S288C start, end, and chromosome loci attributes to gene nodes."""
         loci_information_template = {"start": None, "end": None, "chromosome": None}
         for node_name, node_data in G_raw.nodes(data=True):
             loci_information = loci_information_template.copy()
@@ -1234,6 +1263,7 @@ class SCerevisiaeGraph:
 
     @staticmethod
     def add_pathway_annotation(G_raw: nx.Graph, G_gene: nx.Graph) -> nx.Graph:
+        """Add pathway display-name annotations to gene nodes."""
         pathway_annotation_template = {"pathways": None}
         for node_name, node_data in G_raw.nodes(data=True):
             pathway_annotation = pathway_annotation_template.copy()
@@ -1282,8 +1312,8 @@ SCEREVISIAE_GENE_GRAPH_VALID_NAMES = list(SCEREVISIAE_GENE_GRAPH_MAP.keys())
 def build_gene_multigraph(
     graph: "SCerevisiaeGraph", graph_names: list[str] | None = None
 ) -> GeneMultiGraph:
-    """
-    Build a GeneMultiGraph containing GeneGraph objects based on the provided graph names.
+    """Build a GeneMultiGraph from the requested graph names.
+
     Only loads the specific graphs requested, avoiding unnecessary computation.
 
     Args:
@@ -1327,8 +1357,8 @@ def build_gene_multigraph(
 
 
 def check_regulatory_nodes_have_edges() -> None:
-    """
-    Check if all nodes in the Regulatory graph have at least one edge that is not a self-edge.
+    """Check that every node in the regulatory graph has a non-self edge.
+
     Creates a new SCerevisiaeGraph instance using environment variables.
     """
     import os
@@ -1383,6 +1413,7 @@ def check_regulatory_nodes_have_edges() -> None:
 
 
 def main() -> None:
+    """Build and inspect the S. cerevisiae gene graphs as a smoke test."""
     import os
 
     from dotenv import load_dotenv

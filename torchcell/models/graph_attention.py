@@ -1,3 +1,5 @@
+"""Graph attention network combining a DeepSet encoder with GATv2 layers."""
+
 import torch
 import torch.nn as nn
 from torch_geometric.nn import GATConv
@@ -7,6 +9,8 @@ from torchcell.models import DeepSet
 
 
 class GraphAttention(nn.Module):
+    """DeepSet node encoder, stacked GATv2 message passing, then set readout."""
+
     def __init__(
         self,
         input_dim: int,
@@ -23,6 +27,7 @@ class GraphAttention(nn.Module):
         skip_mp: bool = False,
         **kwargs,
     ):
+        """Build the DeepSet encoder, GATv2 layers, and post-readout set layers."""
         super().__init__()
 
         self.deepset = DeepSet(
@@ -63,6 +68,7 @@ class GraphAttention(nn.Module):
         )
 
     def forward(self, x, batch, edge_index):
+        """Encode nodes, run GAT message passing, and return node and set features."""
         # Process node features
         x_node = self.deepset.node_layers_forward(x)
 
@@ -86,6 +92,7 @@ class GraphAttention(nn.Module):
 
 
 def main():
+    """Run a smoke test of GraphAttention on dummy data with a backward pass."""
     torch.autograd.set_detect_anomaly(True)
 
     # Model configuration

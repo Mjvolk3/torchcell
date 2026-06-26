@@ -1,3 +1,5 @@
+"""Prototype graph attention masked by a graph adjacency matrix on an SBM dataset."""
+
 import matplotlib.pyplot as plt
 import torch
 from scipy.sparse import csr_matrix
@@ -42,8 +44,7 @@ plt.show()
 
 # CPU-friendly implementation of graph attention with adjacency matrix masking
 def graph_attention(q, k, v, adj_matrix, scale=None):
-    """
-    Compute attention using the graph adjacency matrix as a mask.
+    """Compute attention using the graph adjacency matrix as a mask.
 
     Args:
         q: Queries tensor [batch_size, num_heads, seq_len, head_dim]

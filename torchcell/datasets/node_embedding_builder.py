@@ -180,8 +180,7 @@ class NodeEmbeddingBuilder:
         genome: Any,
         graph: Any | None = None,
     ) -> dict[str, Any]:
-        """
-        Build node embeddings based on configuration.
+        """Build node embeddings based on configuration.
 
         Args:
             embedding_names: List of embedding names to create

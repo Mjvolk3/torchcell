@@ -1,4 +1,6 @@
 # tests/torchcell/losses/test_mle_dist_supcr.py
+"""Tests for the MLE distance SupCR loss and its weighting components."""
+
 import torch
 
 from torchcell.losses.mle_dist_supcr import (

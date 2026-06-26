@@ -2,8 +2,7 @@
 # [[tests.torchcell.nn.test_masked_gin_performance]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/nn/test_masked_gin_performance
 
-"""
-Performance tests for MaskedGINConv to verify lazy speedup is maintained.
+"""Performance tests for MaskedGINConv to verify lazy speedup is maintained.
 
 CRITICAL: These tests ensure that masked message passing does NOT negate
 the 3.65x speedup from LazySubgraphRepresentation.
@@ -20,14 +19,13 @@ from torchcell.nn.masked_gin_conv import MaskedGINConv
 
 @pytest.fixture
 def device():
-    """Use GPU if available for realistic performance testing"""
+    """Use GPU if available for realistic performance testing."""
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 @pytest.fixture
 def synthetic_data(device):
-    """
-    Create synthetic graph data matching yeast genome scale.
+    """Create synthetic graph data matching yeast genome scale.
 
     Matches typical data from LazySubgraphRepresentation:
     - 6,604 genes
@@ -49,13 +47,12 @@ def synthetic_data(device):
 
 @pytest.fixture
 def gin_mlp(device):
-    """Create GIN MLP for testing"""
+    """Create GIN MLP for testing."""
     return nn.Sequential(nn.Linear(64, 64), nn.ReLU(), nn.Linear(64, 64)).to(device)
 
 
 def test_no_edge_filtering(synthetic_data, gin_mlp, device):
-    """
-    CRITICAL: Verify that edge_index is NEVER filtered or copied.
+    """CRITICAL: Verify that edge_index is NEVER filtered or copied.
 
     This is the core requirement for maintaining lazy speedup.
     """
@@ -80,8 +77,7 @@ def test_no_edge_filtering(synthetic_data, gin_mlp, device):
 
 
 def test_masked_vs_filtered_speed(synthetic_data, gin_mlp, device):
-    """
-    Benchmark: Masked message passing vs edge filtering.
+    """Benchmark: Masked message passing vs edge filtering.
 
     Masked approach should be FASTER than filtering because:
     - No tensor copying
@@ -136,8 +132,7 @@ def test_masked_vs_filtered_speed(synthetic_data, gin_mlp, device):
 
 
 def test_pyg_concatenated_batch(device):
-    """
-    Test with real PyG concatenated batch format from LazySubgraphRepresentation.
+    """Test with real PyG concatenated batch format from LazySubgraphRepresentation.
 
     This verifies the masked approach works correctly with actual batched data.
     Uses custom collate function to handle zero-copy batching.
@@ -196,8 +191,7 @@ def test_pyg_concatenated_batch(device):
 
 
 def test_equivalence_masked_vs_filtered(synthetic_data, gin_mlp, device):
-    """
-    Verify that masked MP produces same results as filtering (numerically).
+    """Verify that masked MP produces same results as filtering (numerically).
 
     This ensures correctness while maintaining speedup.
     """
@@ -230,8 +224,7 @@ def test_equivalence_masked_vs_filtered(synthetic_data, gin_mlp, device):
 
 
 def test_memory_efficiency(synthetic_data, gin_mlp, device):
-    """
-    Verify that masked approach uses less memory than filtering.
+    """Verify that masked approach uses less memory than filtering.
 
     This is expected because we don't allocate new filtered tensors.
     """

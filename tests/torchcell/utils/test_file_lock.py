@@ -1,6 +1,7 @@
 # tests/torchcell/utils/test_file_lock.py
 # [[tests.torchcell.utils.test_file_lock]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/utils/test_file_lock.py
+"""Tests for torchcell.utils.file_lock."""
 
 import multiprocessing as mp
 import tempfile

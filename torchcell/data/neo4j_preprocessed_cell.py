@@ -1,3 +1,5 @@
+"""Dataset that serves pre-processed cell graphs from LMDB for fast training."""
+
 # torchcell/data/neo4j_preprocessed_cell
 # [[torchcell.data.neo4j_preprocessed_cell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/data/neo4j_preprocessed_cell
@@ -22,8 +24,7 @@ log = logging.getLogger(__name__)
 
 
 class Neo4jPreprocessedCellDataset(Dataset):
-    """
-    Dataset that loads pre-processed graph data from LMDB, bypassing graph processor.
+    """Dataset that loads pre-processed graph data from LMDB, bypassing graph processor.
 
     Architecture:
         1. One-time preprocessing: Applies graph processor to all samples and saves to LMDB
@@ -55,8 +56,7 @@ class Neo4jPreprocessedCellDataset(Dataset):
         pre_transform: Callable | None = None,
         pre_filter: Callable | None = None,
     ):
-        """
-        Initialize preprocessed dataset.
+        """Initialize preprocessed dataset.
 
         Args:
             root: Directory for preprocessed LMDB
@@ -82,10 +82,12 @@ class Neo4jPreprocessedCellDataset(Dataset):
 
     @property
     def raw_file_names(self):
+        """Return an empty list; this dataset has no raw files."""
         return []
 
     @property
     def processed_file_names(self):
+        """Return the processed artifact names (LMDB store and metadata)."""
         return ["lmdb", "metadata.json"]
 
     def _is_preprocessed(self) -> bool:
@@ -142,8 +144,7 @@ class Neo4jPreprocessedCellDataset(Dataset):
         return self._source_dataset.label_df
 
     def _extract_mask_indices(self, processed_graph):
-        """
-        Extract only the False indices from masks to save storage.
+        """Extract only the False indices from masks to save storage.
 
         Instead of storing full masks (millions of bools), store only indices where mask=False.
         This reduces storage from ~43MB/sample to ~few KB/sample.
@@ -198,8 +199,7 @@ class Neo4jPreprocessedCellDataset(Dataset):
         return compact_data
 
     def _reconstruct_from_mask_indices(self, compact_data):
-        """
-        Reconstruct full processed graph from compact mask indices.
+        """Reconstruct full processed graph from compact mask indices.
 
         OPTIMIZED: Minimal reconstruction - only add what's needed.
         """
@@ -294,8 +294,7 @@ class Neo4jPreprocessedCellDataset(Dataset):
         graph_processor: GraphProcessor,
         num_workers: int = 0,
     ):
-        """
-        One-time preprocessing: apply graph processor to all samples and save to LMDB.
+        """One-time preprocessing: apply graph processor to all samples and save to LMDB.
 
         OPTIMIZED: Stores only False mask indices instead of full processed graphs.
         This reduces storage from ~43MB/sample to ~few KB/sample (1000x reduction!).
@@ -394,8 +393,7 @@ class Neo4jPreprocessedCellDataset(Dataset):
         )
 
     def get(self, idx: int):
-        """
-        Load pre-processed sample from LMDB.
+        """Load pre-processed sample from LMDB.
 
         OPTIMIZED: Reconstructs full graph from compact mask indices.
         Performance: ~0.1ms (still 100x faster than processing on-the-fly)

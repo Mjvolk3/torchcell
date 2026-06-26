@@ -3,6 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/int_dango
 # Test file: tests/torchcell/trainers/test_int_dango.py
 
+"""Lightning training task for the DANGO genetic-interaction regression model."""
 
 import logging
 
@@ -24,6 +25,8 @@ log = logging.getLogger(__name__)
 
 
 class RegressionTask(LightningModule):
+    """Lightning module training DANGO to regress genetic interaction scores."""
+
     def __init__(
         self,
         model: nn.Module,
@@ -42,6 +45,25 @@ class RegressionTask(LightningModule):
         inverse_transform: nn.Module | None = None,
         execution_mode: str = "training",  # "training" or "dataloader_profiling"
     ):
+        """Store the model, configs, transforms, and set up metrics.
+
+        Args:
+            model: The DANGO model to train.
+            cell_graph: Reference cell graph passed to the model.
+            optimizer_config: Optimizer hyperparameters.
+            lr_scheduler_config: Learning-rate scheduler hyperparameters.
+            batch_size: Batch size for logging.
+            clip_grad_norm: Whether to clip gradient norm.
+            clip_grad_norm_max_norm: Max gradient norm when clipping.
+            plot_sample_ceiling: Max samples used when plotting.
+            plot_every_n_epochs: Plotting frequency in epochs.
+            loss_func: Loss module; defaults to a DangoLoss if None.
+            grad_accumulation_schedule: Optional epoch-to-steps accumulation map.
+            device: Device string.
+            forward_transform: Optional target forward transform.
+            inverse_transform: Optional target inverse transform.
+            execution_mode: ``training`` or ``dataloader_profiling``.
+        """
         super().__init__()
         self.save_hyperparameters(ignore=["model", "loss_func"])
         self.model = model
@@ -391,6 +413,7 @@ class RegressionTask(LightningModule):
         return loss, predictions, gene_interaction_orig
 
     def training_step(self, batch, batch_idx):
+        """Run a training step and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
 
         # Model profiling mode: Skip optimizer step to isolate model compute
@@ -422,10 +445,12 @@ class RegressionTask(LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
+        """Run a validation step over the batch."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
         return loss
 
     def test_step(self, batch, batch_idx):
+        """Run a test step over the batch."""
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
@@ -518,6 +543,7 @@ class RegressionTask(LightningModule):
             plt.close(fig_gi)
 
     def on_train_epoch_end(self):
+        """Aggregate and log training metrics and plots at epoch end."""
         # Log training metrics
         computed_metrics = self._compute_metrics_safely(self.train_metrics)
         for name, value in computed_metrics.items():
@@ -545,6 +571,7 @@ class RegressionTask(LightningModule):
             }
 
     def on_train_epoch_start(self):
+        """Reset accumulators at the start of a training epoch."""
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.train_samples = {
@@ -554,6 +581,7 @@ class RegressionTask(LightningModule):
             }
 
     def on_validation_epoch_start(self):
+        """Reset accumulators at the start of a validation epoch."""
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.val_samples = {
@@ -563,6 +591,7 @@ class RegressionTask(LightningModule):
             }
 
     def on_validation_epoch_end(self):
+        """Aggregate and log validation metrics and plots at epoch end."""
         # Log validation metrics
         computed_metrics = self._compute_metrics_safely(self.val_metrics)
         for name, value in computed_metrics.items():
@@ -590,6 +619,7 @@ class RegressionTask(LightningModule):
             }
 
     def configure_optimizers(self):
+        """Build and return the optimizer and learning-rate scheduler."""
         optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])
         optimizer_params = {
             k: v for k, v in self.hparams.optimizer_config.items() if k != "type"

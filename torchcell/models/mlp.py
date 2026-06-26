@@ -2,7 +2,7 @@
 # [[torchcell.models.mlp]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/mlp.py
 # Test file: torchcell/models/test_mlp.py
-
+"""Configurable multilayer perceptron with optional normalization and activations."""
 
 import torch
 import torch.nn as nn
@@ -11,6 +11,8 @@ from torchcell.models import act_register
 
 
 class Mlp(nn.Module):
+    """Sequential MLP built from linear blocks with optional norm and activation."""
+
     def __init__(
         self,
         in_channels: int,
@@ -22,6 +24,18 @@ class Mlp(nn.Module):
         activation: str | None = None,
         output_activation: str | None = None,
     ):
+        """Build the layer stack from the channel sizes, norm, and activation choices.
+
+        Args:
+            in_channels: Number of input features.
+            hidden_channels: Width of hidden layers.
+            out_channels: Number of output features.
+            num_layers: Total number of linear blocks.
+            dropout_prob: Dropout probability applied before the final block.
+            norm: Optional normalization ("batch", "instance", or "layer").
+            activation: Optional activation name from ``act_register``.
+            output_activation: Optional activation applied to the final output.
+        """
         super().__init__()
         assert norm in [None, "batch", "instance", "layer"], "Invalid norm type"
         assert activation in [None] + list(act_register.keys()), (
@@ -67,6 +81,7 @@ class Mlp(nn.Module):
         self.model = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Run the input through the MLP and squeeze the trailing dimension."""
         return self.model(x).squeeze(-1)
 
 

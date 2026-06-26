@@ -1,3 +1,5 @@
+"""Lightning regression trainer for the SAGPool cell-graph interaction model."""
+
 import logging
 import os.path as osp
 import sys
@@ -36,6 +38,7 @@ def log_error_information(
     graph_pool_sizes,
     graph_node_selections,
 ):
+    """Log batch tensors and per-graph diagnostics when a NaN loss occurs."""
     log.error("NaN loss detected. Logging relevant information and terminating.")
     log.error(f"Batch index: {batch_idx}")
     log.error(f"y: {y}")
@@ -80,6 +83,8 @@ def log_error_information(
 
 
 class RegressionTask(L.LightningModule):
+    """Lightning task training a SAGPool model on fitness and interaction labels."""
+
     def __init__(
         self,
         model: nn.Module,
@@ -94,6 +99,7 @@ class RegressionTask(L.LightningModule):
         grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
     ):
+        """Store the model, loss, optimizer config, and per-stage metrics."""
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
 
@@ -136,9 +142,11 @@ class RegressionTask(L.LightningModule):
         self.automatic_optimization = False
 
     def forward(self, x, edge_indices, batch):
+        """Run the wrapped model on node features, edges, and batch index."""
         return self.model(x, edge_indices, batch)
 
     def _shared_step(self, batch, batch_idx, stage="train"):
+        """Run a forward pass, compute losses and metrics for one batch."""
         # Process input data for sparse format
         x = batch["gene"].x
         edge_indices = {
@@ -259,6 +267,7 @@ class RegressionTask(L.LightningModule):
         return loss, final_output, y
 
     def training_step(self, batch, batch_idx):
+        """Run a manual-optimization training step with gradient accumulation."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
 
         # Scale loss by accumulation steps
@@ -289,14 +298,17 @@ class RegressionTask(L.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
+        """Run the shared step for one validation batch and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
         return loss
 
     def test_step(self, batch, batch_idx):
+        """Run the shared step for one test batch and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
     def on_train_epoch_end(self):
+        """Compute, log, and reset the training metrics at epoch end."""
         # Compute and log metrics for each metric type
         for metric_name, metric_dict in self.train_metrics.items():
             computed_metrics = metric_dict.compute()
@@ -305,6 +317,7 @@ class RegressionTask(L.LightningModule):
             metric_dict.reset()  # Reset metrics after logging
 
     def on_validation_epoch_end(self):
+        """Log validation metrics and emit prediction plots at epoch end."""
         # Compute and log metrics for each metric type
         for metric_name, metric_dict in self.val_metrics.items():
             computed_metrics = metric_dict.compute()
@@ -358,6 +371,7 @@ class RegressionTask(L.LightningModule):
             )
 
     def compute_prediction_stats(self, true_values, predictions, stage="val"):
+        """Build and log box plots of predictions binned by true value."""
         # Define the bin edges for each dimension
         bin_edges = {
             "fitness": torch.tensor(
@@ -397,6 +411,7 @@ class RegressionTask(L.LightningModule):
             )
 
     def on_test_epoch_end(self):
+        """Log test metrics and emit prediction box plots at epoch end."""
         self.log_dict(self.test_metrics.compute(), sync_dist=True)
         self.test_metrics.reset()
 
@@ -421,6 +436,7 @@ class RegressionTask(L.LightningModule):
         self.predictions = []
 
     def configure_optimizers(self):
+        """Build the optimizer and LR scheduler from the hyperparameter config."""
         optimizer_class = getattr(optim, self.hparams.optimizer_config["type"])
         optimizer_params = {
             k: v for k, v in self.hparams.optimizer_config.items() if k != "type"

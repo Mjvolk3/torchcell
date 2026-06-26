@@ -1,3 +1,5 @@
+"""Heterogeneous cell model using Node-Set Attention blocks over gene/reaction/metabolite graphs."""
+
 import os
 import os.path as osp
 from typing import Any
@@ -27,6 +29,7 @@ class AttentionalGraphAggregation(nn.Module):
     """Attentional aggregation for graph-level representations."""
 
     def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.1):
+        """Build the gating and transform MLPs and the attentional aggregator."""
         super().__init__()
         self.gate_nn = nn.Sequential(
             nn.Linear(in_channels, in_channels // 2),
@@ -44,6 +47,7 @@ class AttentionalGraphAggregation(nn.Module):
     def forward(
         self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
+        """Aggregate node features into graph-level vectors using attention weights."""
         return self.aggregator(x, index=index, dim_size=dim_size)
 
 
@@ -59,6 +63,7 @@ class PreProcessor(nn.Module):
         norm: str = "layer",
         activation: str = "relu",
     ):
+        """Build a stack of linear, norm, activation, and dropout layers."""
         super().__init__()
         act = act_register[activation]
         norm_layer = get_norm_layer(hidden_channels, norm)
@@ -75,12 +80,12 @@ class PreProcessor(nn.Module):
         self.mlp = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Pass node features through the preprocessing MLP."""
         return self.mlp(x)
 
 
 class HeteroCellNSA(nn.Module):
-    """
-    Heterogeneous Cell Model using Node-Set Attention (NSA) blocks.
+    """Heterogeneous Cell Model using Node-Set Attention (NSA) blocks.
 
     This model processes heterogeneous biological cell graphs with gene, reaction,
     and metabolite nodes using attention-based message passing.
@@ -101,6 +106,7 @@ class HeteroCellNSA(nn.Module):
         prediction_head_config: dict[str, Any] | None = None,
         graph_names: list[str] | None = None,
     ):
+        """Build node embeddings, preprocessors, NSA blocks, aggregation, and prediction head."""
         super().__init__()
         self.hidden_channels = hidden_channels
         self.gene_num = gene_num
@@ -420,6 +426,7 @@ class HeteroCellNSA(nn.Module):
     config_name="hetero_cell_nsa_retry",
 )
 def main(cfg: DictConfig) -> None:
+    """Run a manual smoke test of the model from the Hydra config."""
     import matplotlib.pyplot as plt
     from dotenv import load_dotenv
 

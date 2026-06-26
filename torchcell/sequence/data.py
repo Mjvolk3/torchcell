@@ -2,6 +2,7 @@
 # [[torchcell.sequence.data]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/sequence/data.py
 # Test file: /torchcell/sequence/test_data.py
+"""Core sequence data models, genome/gene abstractions, and codon helpers."""
 
 import logging
 from abc import ABC, abstractmethod
@@ -21,6 +22,8 @@ log.setLevel(logging.INFO)
 
 
 class DnaSelectionResult(ModelStrict):
+    """A validated DNA region selection with coordinates, strand, and sequence."""
+
     id: str
     chromosome: int
     strand: str
@@ -29,14 +32,17 @@ class DnaSelectionResult(ModelStrict):
     seq: str
 
     def __len__(self) -> int:
+        """Return the length of the selected sequence."""
         return len(self.seq)
 
     def __ge__(self, other: str) -> bool:
+        """Compare by sequence length (greater-than-or-equal)."""
         if isinstance(other, DnaSelectionResult):
             return len(self.seq) >= len(other.seq)
         return NotImplemented
 
     def __le__(self, other: str) -> bool:
+        """Compare by sequence length (less-than-or-equal)."""
         if isinstance(other, DnaSelectionResult):
             return len(self.seq) <= len(other.seq)
         return NotImplemented
@@ -44,6 +50,7 @@ class DnaSelectionResult(ModelStrict):
     @model_validator(mode="before")
     @classmethod
     def end_leq_start(cls, values):
+        """Validate that start is not greater than end."""
         start, end = values.get("start"), values.get("end")
         if start > end:
             raise ValueError("Start must be less than end")
@@ -51,12 +58,14 @@ class DnaSelectionResult(ModelStrict):
 
     @field_validator("strand")
     def check_strand(cls, v):
+        """Validate that the strand is '+' or '-'."""
         if v not in ["+", "-"]:
             raise ValueError("Strand must be either '+' or '-'")
         return v
 
     @field_validator("chromosome", "start", "end")
     def check_positive(cls, v):
+        """Validate that the coordinate value is non-negative."""
         if v < 0:
             raise ValueError(f"{v} must be positive")
         return v
@@ -64,6 +73,7 @@ class DnaSelectionResult(ModelStrict):
     # TODO consider adding chromosome length
     @field_validator("seq")
     def check_seq_len(cls, v):
+        """Validate that the sequence length is non-negative."""
         sequence_length = len(v)
         if sequence_length < 0:
             raise ValueError(f"Sequence length ({sequence_length}) not geq 0")
@@ -71,22 +81,34 @@ class DnaSelectionResult(ModelStrict):
 
 
 class DnaWindowResult(DnaSelectionResult):
+    """A DNA selection extended with the surrounding window coordinates."""
+
     start_window: int
     end_window: int
 
     def __repr__(self) -> str:
+        """Return a detailed representation including window coordinates."""
         # Use f-string to create a formatted string
         return f"DnaWindowResult(id={self.id!r}, chromosome={self.chromosome!r}, strand={self.strand!r}, start_window={self.start_window!r}, end_window={self.end_window!r}, seq={self.seq!r})"
 
     @field_validator("start_window", "end_window")
     def check_window(cls, v):
+        """Validate that the window coordinate is non-negative."""
         if v < 0:
             raise ValueError(f"{v} must be positive")
         return v
 
 
 class GeneSet(SortedSet):
+    """A sorted set that requires all members to be strings."""
+
     def __init__(self, iterable=None, key=None):
+        """Build the sorted set and validate every item is a string.
+
+        Args:
+            iterable: Optional initial gene identifiers.
+            key: Optional sort key passed to ``SortedSet``.
+        """
         super().__init__(iterable, key)
         for item in self:
             if not isinstance(item, str):
@@ -95,6 +117,7 @@ class GeneSet(SortedSet):
                 )
 
     def __repr__(self):
+        """Return a summary representation showing size and first items."""
         n = len(self)
         limited_items = (self)[:3]
         if len(self) > 3:
@@ -110,26 +133,32 @@ class GeneSet(SortedSet):
 ##########
 # Class holding gene
 class Gene(ABC):
+    """Abstract gene exposing windowed-sequence extraction methods."""
+
     # model_config = ConfigDict(frozen=True, extra="forbid")
     seq: str
 
     @abstractmethod
     def window(self, window_size: int, is_max_size: bool = True) -> DnaWindowResult:
+        """Return a sequence window centered on the gene."""
         pass
 
     @abstractmethod
     def window_five_prime(
         self, window_size: int, allow_undersize: bool = False
     ) -> DnaWindowResult:
+        """Return a sequence window anchored at the 5' end."""
         pass
 
     @abstractmethod
     def window_three_prime(
         self, window_size: int, allow_undersize: bool = False
     ) -> DnaWindowResult:
+        """Return a sequence window anchored at the 3' end."""
         pass
 
     def __len__(self) -> int:
+        """Return the length of the gene sequence."""
         return len(self.seq)
 
     # name: str
@@ -143,12 +172,19 @@ class Gene(ABC):
 
 
 class Genome(ABC):
+    """Abstract genome providing lazy gene-set and sequence access."""
+
     # Used elsewhere [[torchcell/sgd/validation/valid_models.py]]
     # CHECK IF THIS IS NEEDED.. I think this is a pydantic thing
     # model_config = ConfigDict(frozen=True, extra="forbid")
     # TODO not sure if we need to specify all vars in the __init__
     # TODO do we need to set data_root like this?
     def __init__(self, data_root: str | None = None):
+        """Initialize empty caches and store the data root.
+
+        Args:
+            data_root: Optional path to the genome data directory.
+        """
         self.data_root: str = data_root
         self._db_connection_manager: DatabaseConnectionManager | None = None
         self.fasta_sequences: dict | None = None
@@ -161,8 +197,7 @@ class Genome(ABC):
 
     @property
     def db(self) -> FeatureDB | None:
-        """
-        Get database connection - lazy loaded per process/thread.
+        """Get database connection - lazy loaded per process/thread.
 
         Subclasses should set self._db_connection_manager to enable database access.
         """
@@ -172,48 +207,55 @@ class Genome(ABC):
 
     @property
     def gene_set(self) -> GeneSet:
+        """Return the gene set, computing and caching it on first access."""
         if self._gene_set is None:
             self._gene_set = self.compute_gene_set()
         return self._gene_set
 
     @gene_set.setter
     def gene_set(self, value: set[str]):
+        """Override the cached gene set."""
         self._gene_set = value
 
     @abstractmethod
     def compute_gene_set(self) -> set[str]:
+        """Compute and return the set of gene identifiers."""
         pass  # Abstract methods don't have a body
 
     @abstractmethod
     def get_seq(
         self, chr: int | str, start: int, end: int, strand: str
     ) -> DnaSelectionResult:
+        """Return the DNA selection for the given coordinates and strand."""
         pass
 
     @property
     @abstractmethod
     def gene_attribute_table(self) -> pd.DataFrame:
+        """Return a table of per-gene attributes."""
         pass
 
     @property
     @abstractmethod
     def feature_types(self) -> list[str]:
+        """Return the list of supported feature types."""
         pass
 
     @abstractmethod
     def __getitem__(self, item: str) -> Gene | None:
+        """Return the gene for the given identifier, or None if absent."""
         pass
 
     # Not sure if it makes more sense to have the number of genes be the length or the sum bp over all chromosomes.
     def __len__(self) -> int:
+        """Return the number of genes in the genome."""
         return len(self.gene_set)
 
 
 ############
 # Helper functions
 def mismatch_positions(seq1: str, seq2: str) -> list[int]:
-    """
-    Computes the positions at which two sequences differ.
+    """Computes the positions at which two sequences differ.
 
     This function takes two sequences, seq1 and seq2, represented as strings
     and returns a list of positions at which the two sequences have different
@@ -242,8 +284,7 @@ def mismatch_positions(seq1: str, seq2: str) -> list[int]:
 
 
 def get_chr_from_description(description: str) -> int:
-    """
-    Extracts the chromosome number from a given description string.
+    """Extracts the chromosome number from a given description string.
 
     Processes a description string containing either a chromosome
     in Roman numeral (e.g., "[chromosome=IX]").
@@ -282,8 +323,7 @@ def get_chr_from_description(description: str) -> int:
 
 
 def roman_to_int(s: str) -> int:
-    """
-    Converts a Roman numeral string to an integer.
+    """Converts a Roman numeral string to an integer.
 
     This function interprets the given string `s` as a Roman numeral and
     returns its value as an integer. It handles the standard Roman numeral
@@ -334,8 +374,7 @@ def roman_to_int(s: str) -> int:
 def calculate_window_undersized(
     start: int, end: int, strand: str, window_size: int
 ) -> tuple[int, int]:
-    """
-    Calculate the start and end points of a genomic window, respecting the given strand.
+    """Calculate the start and end points of a genomic window, respecting the given strand.
 
     For "+" strand, the window is created from the `start` point, and for "-" strand,
     the window is created from the `end` point. This method ensures that the resulting
@@ -379,8 +418,7 @@ def calculate_window_undersized(
 def calculate_window_bounds(
     start: int, end: int, strand: str, window_size: int, chromosome_length: int
 ) -> tuple[int, int]:
-    """
-    Calculate the window bounds for genomic sequences.
+    """Calculate the window bounds for genomic sequences.
 
     This function calculates window bounds for genomic sequences while considering
     strand direction. It ensures the window does not exceed the chromosome length.
@@ -464,8 +502,7 @@ def calculate_window_bounds(
 def calculate_window_undersized_symmetric(
     start: int, end: int, window_size: int
 ) -> tuple[int, int]:
-    """
-    Calculate symmetric window bounds for genomic sequences.
+    """Calculate symmetric window bounds for genomic sequences.
 
     This function calculates symmetric window bounds for genomic sequences and
     ensures that the window size is valid and the start and end are not equal.
@@ -512,8 +549,7 @@ def calculate_window_undersized_symmetric(
 def calculate_window_bounds_symmetric(
     start: int, end: int, window_size: int, chromosome_length: int
 ) -> tuple[int, int]:
-    r"""
-    Calculate symmetric window bounds considering chromosome limits.
+    r"""Calculate symmetric window bounds considering chromosome limits.
 
     This function calculates symmetric window bounds for genomic sequences, taking
     the chromosome length into account to avoid exceeding it, and also ensuring
@@ -592,7 +628,10 @@ def calculate_window_bounds_symmetric(
 
 
 class CodonFrequency(SortedDict):
+    """Sorted mapping of all 64 codons to their relative frequencies."""
+
     def __repr__(self):
+        """Return a representation validating 64 codons summing to one."""
         if len(self) != 64:
             return "Invalid CodonFrequency: Expected 64 codons"
 
@@ -619,6 +658,14 @@ class CodonFrequency(SortedDict):
 
 
 def compute_codon_frequency(cds_str: str) -> CodonFrequency:
+    """Compute relative codon frequencies for a coding sequence.
+
+    Args:
+        cds_str: Coding sequence whose length must be a multiple of three.
+
+    Returns:
+        A CodonFrequency mapping every codon to its relative frequency.
+    """
     nucleotides = ["A", "T", "G", "C"]
     all_codons = ["".join(codon) for codon in product(nucleotides, repeat=3)]
     if len(cds_str) % 3 != 0 or not set(cds_str).issubset(set(nucleotides)):
@@ -643,10 +690,13 @@ def compute_codon_frequency(cds_str: str) -> CodonFrequency:
 
 
 class ParsedGenome(ModelStrictArbitrary):
+    """Validated container holding a genome's GeneSet."""
+
     gene_set: GeneSet
 
     @field_validator("gene_set")
     def validate_gene_set(cls, value):
+        """Validate that the provided value is a GeneSet."""
         if not isinstance(value, GeneSet):
             raise ValueError(f"gene_set must be a GeneSet, got {type(value).__name__}")
         return value

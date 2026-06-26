@@ -2,7 +2,7 @@
 # [[torchcell.knowledge_graphs.create_scerevisiae_kg]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_scerevisiae_kg
 # Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg.py
-
+"""Build a small S. cerevisiae gene-interaction BioCypher knowledge graph."""
 
 import hashlib
 import json
@@ -52,6 +52,7 @@ def get_num_workers() -> int:
 
 @hydra.main(version_base=None, config_path="conf", config_name="kg")
 def main(cfg) -> str:
+    """Build the gene-interaction knowledge graph from the Hydra config."""
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
     BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")

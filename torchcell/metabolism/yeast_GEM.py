@@ -2,6 +2,7 @@
 # [[torchcell.metabolism.yeast_GEM]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/metabolism/yeast_GEM
 # Test file: tests/torchcell/metabolism/test_yeast_GEM.py
+"""Wrapper around the yeast-GEM metabolic model and its derived graphs."""
 
 import os
 import os.path as osp
@@ -21,6 +22,8 @@ from torchcell.sequence import GeneSet
 
 @define
 class YeastGEM:
+    """Download, load, and expose the yeast-GEM genome-scale model."""
+
     root: str = field(default="data/torchcell/yeast-GEM")
     version: str = field(default="9.0.2")
     induced_gene_set: GeneSet | None = field(default=None)
@@ -31,6 +34,7 @@ class YeastGEM:
     model_dir: str = field(init=False)
 
     def __attrs_post_init__(self):
+        """Resolve the model directory and download the model if missing."""
         self.model_dir = osp.join(self.root, f"yeast-GEM-{self.version}")
         self._download()
 
@@ -54,6 +58,7 @@ class YeastGEM:
 
     @property
     def model(self) -> cobra.Model:
+        """Return the lazily loaded cobra SBML model."""
         if self._model is None:
             model_path = osp.join(self.model_dir, "model", "yeast-GEM.xml")
             self._model = cobra.io.read_sbml_model(model_path)
@@ -615,6 +620,7 @@ def plot_random_network(
     output_path: str = "random_network.png",
     layout="spring",
 ):
+    """Plot a random subgraph of the metabolic network and save it."""
     import random
 
     from networkx.drawing.layout import (
@@ -664,8 +670,8 @@ def plot_bipartite_network(
     figsize=(20, 15),
     show_labels: bool = False,
 ):
-    """
-    Plot a bipartite network visualization of genes to metabolites.
+    """Plot a bipartite network visualization of genes to metabolites.
+
     If reaction_id is provided, only plot that specific reaction's network.
     """
     import networkx as nx
@@ -814,6 +820,7 @@ def plot_bipartite_network(
 
 
 def main():
+    """Build and visualize the yeast-GEM compound network."""
     from dotenv import load_dotenv
 
     load_dotenv()
@@ -861,6 +868,7 @@ def main():
 
 
 def main_with_gene_set():
+    """Build the compound network restricted to an induced gene set."""
     from dotenv import load_dotenv
 
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
@@ -884,6 +892,7 @@ def main_with_gene_set():
 
 
 def main_bipartite():
+    """Build and plot the full gene-to-metabolite bipartite network."""
     from dotenv import load_dotenv
 
     load_dotenv()
@@ -898,9 +907,10 @@ def main_bipartite():
 
 
 def sanity_check_metabolic_networks(yeast_gem: YeastGEM, num_reactions: int = 3):
-    """
-    Print detailed information about a few random reactions and their metabolites
-    as a sanity check for the reaction_map and bipartite_graph representations.
+    """Print details for a few random reactions as a sanity check.
+
+    Inspects the reaction_map and bipartite_graph representations for their
+    metabolites.
 
     Args:
         yeast_gem: The YeastGEM instance
@@ -1072,8 +1082,7 @@ def sanity_check_metabolic_networks(yeast_gem: YeastGEM, num_reactions: int = 3)
 
 
 def analyze_reactions_without_genes(yeast_gem: YeastGEM):
-    """
-    Analyze reactions without gene associations in the YeastGEM model.
+    """Analyze reactions without gene associations in the YeastGEM model.
 
     Args:
         yeast_gem: YeastGEM instance
@@ -1201,8 +1210,7 @@ def analyze_reactions_without_genes(yeast_gem: YeastGEM):
 
 
 def test_bipartite_attributes(yeast_gem: YeastGEM, num_reactions: int = 3):
-    """
-    Test and display the new attributes added to the bipartite graph.
+    """Test and display the new attributes added to the bipartite graph.
 
     Args:
         yeast_gem: YeastGEM instance
@@ -1266,6 +1274,7 @@ def test_bipartite_attributes(yeast_gem: YeastGEM, num_reactions: int = 3):
 
 
 def main_test_bipartite_attributes():
+    """Inspect bipartite graph node/edge attributes for sanity checking."""
     import random
 
     from dotenv import load_dotenv

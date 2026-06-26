@@ -1,3 +1,5 @@
+"""Self-attention graph pooling (SAGPool) models for cell graphs."""
+
 import torch
 import torch.nn as nn
 from torch_geometric.nn import (
@@ -17,6 +19,8 @@ from torchcell.models.act import act_register
 
 
 class SingleSAGPool(nn.Module):
+    """Hierarchical SAGPool network with per-layer intermediate predictions."""
+
     def __init__(
         self,
         in_channels: int,
@@ -32,6 +36,7 @@ class SingleSAGPool(nn.Module):
         dropout: float = 0.0,
         final_pred_agg: str = "mean",
     ):
+        """Build the GNN conv, pooling, norm, and predictor layers from config."""
         super().__init__()
 
         self.in_channels = in_channels
@@ -127,6 +132,7 @@ class SingleSAGPool(nn.Module):
             self.intermediate_predictors.append(nn.Linear(in_features, target_dim))
 
     def get_norm_layer(self, norm, channels):
+        """Return the normalization layer matching the given norm name."""
         if norm is None:
             return nn.Identity()
         elif norm == "batch":
@@ -145,6 +151,7 @@ class SingleSAGPool(nn.Module):
             raise ValueError(f"Unsupported normalization type: {norm}")
 
     def forward(self, x, edge_index, batch):
+        """Run hierarchical pooling and return predictions and pooling diagnostics."""
         attention_weights = []
         pool_scores = []
         intermediate_predictions = []
@@ -217,6 +224,8 @@ class SingleSAGPool(nn.Module):
 
 
 class CellSAGPool(nn.Module):
+    """Multi-graph SAGPool model that fuses per-graph predictions."""
+
     def __init__(
         self,
         graph_names: list[str],
@@ -231,6 +240,7 @@ class CellSAGPool(nn.Module):
         heads: int = 1,
         dropout: float = 0.0,
     ):
+        """Create a SingleSAGPool per graph and the final combination layers."""
         super().__init__()
 
         self.graph_names = sorted(graph_names)
@@ -264,6 +274,7 @@ class CellSAGPool(nn.Module):
         )
 
     def forward(self, x, edge_indices: dict[str, torch.Tensor], batch):
+        """Run each graph's SAGPool and combine their predictions."""
         if set(edge_indices.keys()) != set(self.graph_names):
             raise ValueError(
                 f"Expected edge indices for graphs {self.graph_names}, "
@@ -333,6 +344,7 @@ class CellSAGPool(nn.Module):
 
 
 def load_sample_data_batch():
+    """Load a sample batch of cell graph data for ad-hoc model testing."""
     import os
     import os.path as osp
 
@@ -436,6 +448,7 @@ def analyze_node_selections(node_selections, graph_name):
 
 
 def main():
+    """Run a sample CellSAGPool forward pass and report diagnostics."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
     # Load and prepare data as before...

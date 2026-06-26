@@ -1,3 +1,5 @@
+"""Minimal LightningModule scaffold for cell-data regression training."""
+
 import lightning as L
 import torch
 import torch.nn as nn
@@ -6,16 +8,21 @@ from torchcell.datamodules import CellDataModule
 
 
 class SimpleModel(L.LightningModule):
+    """Placeholder linear LightningModule scaffold for MSE regression."""
+
     def __init__(self):
+        """Initialize the linear layer placeholder."""
         super().__init__()
         self.linear = nn.Linear(
             in_features=..., out_features=...
         )  # Define your model's architecture here
 
     def forward(self, x):
+        """Return the linear projection of the input."""
         return self.linear(x)
 
     def training_step(self, batch, batch_idx):
+        """Compute and return the MSE training loss for one batch."""
         # Define the training loop
         x, y = batch
         y_pred = self(x)
@@ -23,12 +30,14 @@ class SimpleModel(L.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
+        """Compute and log the MSE validation loss for one batch."""
         x, y = batch
         y_pred = self(x)
         val_loss = nn.MSELoss()(y_pred, y)
         self.log("val_loss", val_loss)
 
     def configure_optimizers(self):
+        """Return an Adam optimizer over the module parameters."""
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         return optimizer
 

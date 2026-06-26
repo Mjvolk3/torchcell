@@ -2,6 +2,7 @@
 # [[torchcell.viz.graph_recovery]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/viz/graph_recovery
 # Test file: tests/torchcell/viz/test_graph_recovery.py
+"""Plotting utilities for graph regularization and edge-recovery metrics."""
 
 import io
 import os.path as osp
@@ -17,6 +18,7 @@ class GraphRecoveryVisualization:
     """Visualization class for graph regularization and edge recovery metrics."""
 
     def __init__(self, base_dir: str, mplstyle_path: str | None = None) -> None:
+        """Set the output directory and load the color palette from an mplstyle."""
         self.base_dir = base_dir
 
         # Load color palette from mplstyle
@@ -28,8 +30,7 @@ class GraphRecoveryVisualization:
         self.colors = self._load_colors_from_mplstyle(mplstyle_path)
 
     def _load_colors_from_mplstyle(self, mplstyle_path: str) -> list[str]:
-        """
-        Parse color palette from mplstyle file using matplotlib's rc_params_from_file.
+        """Parse color palette from mplstyle file using matplotlib's rc_params_from_file.
 
         Args:
             mplstyle_path: Path to .mplstyle file
@@ -77,8 +78,7 @@ class GraphRecoveryVisualization:
     def save_and_log_figure(
         self, fig: plt.Figure, name: str, timestamp_str: str | None = None
     ) -> None:
-        """
-        Log figure to wandb only (no disk save).
+        """Log figure to wandb only (no disk save).
 
         Args:
             fig: Matplotlib figure
@@ -104,8 +104,7 @@ class GraphRecoveryVisualization:
     def plot_graph_info_summary(
         self, graph_info: dict[str, dict[str, float]], save_path: str | None = None
     ) -> None:
-        """
-        Create a comprehensive summary visualization of graph statistics.
+        """Create a comprehensive summary visualization of graph statistics.
 
         Args:
             graph_info: Dict mapping graph_name -> {num_edges, num_nodes, avg_degree, reg_layer, reg_head}
@@ -261,8 +260,7 @@ class GraphRecoveryVisualization:
         timestamp_str: str | None = None,
         stage: str = "val",
     ) -> None:
-        """
-        Plot recall@degree for each graph as a bar chart.
+        """Plot recall@degree for each graph as a bar chart.
 
         Args:
             recall_metrics: Dict mapping metric_key (e.g., "physical_L0_H1") -> recall@degree value
@@ -370,8 +368,7 @@ class GraphRecoveryVisualization:
         timestamp_str: str | None = None,
         stage: str = "val",
     ) -> None:
-        """
-        Plot precision@k for each graph as line plots.
+        """Plot precision@k for each graph as line plots.
 
         Args:
             precision_metrics: Dict mapping metric_key (e.g., "physical_L0_H1") -> {k -> precision value}
@@ -539,8 +536,7 @@ class GraphRecoveryVisualization:
         timestamp_str: str | None = None,
         stage: str = "val",
     ) -> None:
-        """
-        Create individual edge recovery plots for each graph showing both recall and precision@k.
+        """Create individual edge recovery plots for each graph showing both recall and precision@k.
 
         Args:
             recall_metrics: Dict mapping graph_name -> recall@degree value
@@ -631,8 +627,7 @@ class GraphRecoveryVisualization:
         timestamp_str: str | None = None,
         stage: str = "val",
     ) -> None:
-        """
-        Plot edge-mass alignment for each graph as a bar chart.
+        """Plot edge-mass alignment for each graph as a bar chart.
 
         Edge-mass alignment = fraction of total attention mass on known graph edges.
 

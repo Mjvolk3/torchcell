@@ -2,6 +2,7 @@
 # [[torchcell.datasets.scerevisiae.kuzmin2020]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/kuzmin2020
 # Test file: tests/torchcell/datasets/scerevisiae/test_kuzmin2020.py
+"""Kuzmin 2020 S. cerevisiae fitness and gene-interaction experiment datasets."""
 
 import logging
 import os
@@ -43,6 +44,8 @@ log = logging.getLogger(__name__)
 
 @register_dataset
 class SmfKuzmin2020Dataset(ExperimentDataset):
+    """Single-mutant fitness experiments from Kuzmin et al. 2020."""
+
     # original that doesn't work. Think Science blocks.
     # url = https://www.science.org/doi/suppl/10.1126/science.aaz5667/suppl_file/aaz5667-tables_s1_to_s13.zip
     url = "https://uofi.box.com/shared/static/464ogx5kpafav7i3zv7gesb9lcn0dm94.zip"
@@ -55,25 +58,31 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Initialize the dataset at the given root, triggering download/process."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> Experiment:
+        """Return the experiment schema class for this dataset."""
         return FitnessExperiment
 
     @property
     def reference_class(self) -> ExperimentReference:
+        """Return the experiment-reference schema class for this dataset."""
         return FitnessExperimentReference
 
     @property
     def raw_file_names(self) -> str:
+        """Return the raw supplementary Excel file name."""
         return "aaz5667-Table-S5.xlsx"
 
     @property
     def processed_file_names(self) -> list[str]:
+        """Return the processed output name (the LMDB directory)."""
         return "lmdb"
 
     def download(self):
+        """Download and extract the supplementary zip, then remove the archive."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
             zip_ref.extractall(self.raw_dir)
@@ -81,6 +90,7 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Read, preprocess, and serialize experiments into the LMDB store."""
         df = pd.read_excel(osp.join(self.raw_dir, self.raw_file_names), skiprows=1)
         df = self.preprocess_raw(df)
         os.makedirs(self.preprocess_dir, exist_ok=True)
@@ -107,6 +117,7 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
         env.close()
 
     def preprocess_raw(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Filter to single mutants and clean allele names for processing."""
         df = df[df["Mutant type"] == "Single mutant"]
         df = df.replace("'", "_prime", regex=True)
         df = df.replace("Δ", "_delta", regex=True)
@@ -116,6 +127,7 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
 
     @staticmethod
     def create_experiment(dataset_name, row):
+        """Build the experiment, reference, and publication objects from one row."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
         )
@@ -171,6 +183,8 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
 
 @register_dataset
 class DmfKuzmin2020Dataset(ExperimentDataset):
+    """Double-mutant fitness experiments from Kuzmin et al. 2020."""
+
     url = "https://uofi.box.com/shared/static/464ogx5kpafav7i3zv7gesb9lcn0dm94.zip"
 
     def __init__(
@@ -181,18 +195,22 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Initialize the dataset at the given root, triggering download/process."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> Experiment:
+        """Return the experiment schema class for this dataset."""
         return FitnessExperiment
 
     @property
     def reference_class(self) -> ExperimentReference:
+        """Return the experiment-reference schema class for this dataset."""
         return FitnessExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the raw supplementary Excel file names."""
         return [
             "aaz5667-Table-S1.xlsx",
             "aaz5667-Table-S3.xlsx",
@@ -201,9 +219,11 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
 
     @property
     def processed_file_names(self) -> list[str]:
+        """Return the processed output name (the LMDB directory)."""
         return "lmdb"
 
     def download(self):
+        """Download and extract the supplementary zip, then remove the archive."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
             zip_ref.extractall(self.raw_dir)
@@ -211,6 +231,7 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Read, preprocess, and serialize experiments into the LMDB store."""
         df_s1 = pd.read_excel(
             osp.join(self.raw_dir, self.raw_file_names[0]), skiprows=1
         )
@@ -249,6 +270,7 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
     def preprocess_raw(
         self, df_s1: pd.DataFrame, df_s3: pd.DataFrame, df_s5: pd.DataFrame
     ) -> pd.DataFrame:
+        """Merge the supplementary tables and assemble double-mutant fitness rows."""
         # Combine S1 and S3, filtering for digenic interactions
         df_combined = pd.concat([df_s1, df_s3])
         df_combined = df_combined[df_combined["Combined mutant type"] == "digenic"]
@@ -339,6 +361,7 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
 
     @staticmethod
     def create_experiment(dataset_name, row):
+        """Build the experiment, reference, and publication objects from one row."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
         )
@@ -429,6 +452,8 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
 
 @register_dataset
 class TmfKuzmin2020Dataset(ExperimentDataset):
+    """Triple-mutant fitness experiments from Kuzmin et al. 2020."""
+
     url = "https://uofi.box.com/shared/static/464ogx5kpafav7i3zv7gesb9lcn0dm94.zip"
 
     def __init__(
@@ -440,26 +465,32 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Initialize the dataset, optionally subsetting to subset_n records."""
         self.subset_n = subset_n
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> Experiment:
+        """Return the experiment schema class for this dataset."""
         return FitnessExperiment
 
     @property
     def reference_class(self) -> ExperimentReference:
+        """Return the experiment-reference schema class for this dataset."""
         return FitnessExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the raw supplementary Excel file names."""
         return ["aaz5667-Table-S1.xlsx", "aaz5667-Table-S3.xlsx"]
 
     @property
     def processed_file_names(self) -> list[str]:
+        """Return the processed output name (the LMDB directory)."""
         return "lmdb"
 
     def download(self):
+        """Download and extract the supplementary zip, then remove the archive."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
             zip_ref.extractall(self.raw_dir)
@@ -467,6 +498,7 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Read, preprocess, and serialize experiments into the LMDB store."""
         df_s1 = pd.read_excel(
             osp.join(self.raw_dir, self.raw_file_names[0]), skiprows=1
         )
@@ -502,6 +534,7 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
         env.close()
 
     def preprocess_raw(self, df_s1: pd.DataFrame, df_s3: pd.DataFrame) -> pd.DataFrame:
+        """Merge the supplementary tables and assemble triple-mutant fitness rows."""
         # Combine S1 and S3, filtering for trigenic interactions
         df = pd.concat([df_s1, df_s3])
         df = df[df["Combined mutant type"] == "trigenic"].copy()
@@ -557,6 +590,7 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
 
     @staticmethod
     def create_experiment(dataset_name, row, phenotype_reference_std):
+        """Build the experiment, reference, and publication objects from one row."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
         )
@@ -666,6 +700,8 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
 
 @register_dataset
 class DmiKuzmin2020Dataset(ExperimentDataset):
+    """Digenic interaction experiments from Kuzmin et al. 2020."""
+
     url = "https://uofi.box.com/shared/static/464ogx5kpafav7i3zv7gesb9lcn0dm94.zip"
 
     def __init__(
@@ -677,26 +713,32 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Initialize the dataset, optionally subsetting to subset_n records."""
         self.subset_n = subset_n
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> ExperimentReference:
+        """Return the experiment schema class for this dataset."""
         return GeneInteractionExperiment
 
     @property
     def reference_class(self) -> ExperimentReference:
+        """Return the experiment-reference schema class for this dataset."""
         return GeneInteractionExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the raw supplementary Excel file names."""
         return ["aaz5667-Table-S1.xlsx", "aaz5667-Table-S3.xlsx"]
 
     @property
     def processed_file_names(self) -> list[str]:
+        """Return the processed output name (the LMDB directory)."""
         return "lmdb"
 
     def download(self):
+        """Download and extract the supplementary zip, then remove the archive."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
             zip_ref.extractall(self.raw_dir)
@@ -704,6 +746,7 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Read, preprocess, and serialize experiments into the LMDB store."""
         df_s1 = pd.read_excel(
             osp.join(self.raw_dir, self.raw_file_names[0]), skiprows=1
         )
@@ -739,6 +782,7 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
         env.close()
 
     def preprocess_raw(self, df_s1: pd.DataFrame, df_s3: pd.DataFrame) -> pd.DataFrame:
+        """Merge the supplementary tables and assemble interaction rows."""
         df = pd.concat([df_s1, df_s3])
         df = df[df["Combined mutant type"] == "digenic"].copy()
 
@@ -788,6 +832,7 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
 
     @staticmethod
     def create_experiment(dataset_name, row):
+        """Build the experiment, reference, and publication objects from one row."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
         )
@@ -880,6 +925,8 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
 
 @register_dataset
 class TmiKuzmin2020Dataset(ExperimentDataset):
+    """Trigenic interaction experiments from Kuzmin et al. 2020."""
+
     url = "https://uofi.box.com/shared/static/464ogx5kpafav7i3zv7gesb9lcn0dm94.zip"
 
     def __init__(
@@ -891,26 +938,32 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Initialize the dataset, optionally subsetting to subset_n records."""
         self.subset_n = subset_n
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> ExperimentReference:
+        """Return the experiment schema class for this dataset."""
         return GeneInteractionExperiment
 
     @property
     def reference_class(self) -> ExperimentReference:
+        """Return the experiment-reference schema class for this dataset."""
         return GeneInteractionExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the raw supplementary Excel file names."""
         return ["aaz5667-Table-S1.xlsx", "aaz5667-Table-S3.xlsx"]
 
     @property
     def processed_file_names(self) -> list[str]:
+        """Return the processed output name (the LMDB directory)."""
         return "lmdb"
 
     def download(self):
+        """Download and extract the supplementary zip, then remove the archive."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
             zip_ref.extractall(self.raw_dir)
@@ -918,6 +971,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Read, preprocess, and serialize experiments into the LMDB store."""
         df_s1 = pd.read_excel(
             osp.join(self.raw_dir, self.raw_file_names[0]), skiprows=1
         )
@@ -953,6 +1007,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
         env.close()
 
     def preprocess_raw(self, df_s1: pd.DataFrame, df_s3: pd.DataFrame) -> pd.DataFrame:
+        """Merge the supplementary tables and assemble interaction rows."""
         df = pd.concat([df_s1, df_s3])
         df = df[df["Combined mutant type"] == "trigenic"].copy()
 
@@ -995,6 +1050,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
 
     @staticmethod
     def create_experiment(dataset_name, row):
+        """Build the experiment, reference, and publication objects from one row."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
         )
@@ -1104,6 +1160,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
 
 
 def main():
+    """Build and print summaries of the Kuzmin 2020 datasets for testing."""
     # Test the datasets
     datasets = [
         # SmfKuzmin2020Dataset(),

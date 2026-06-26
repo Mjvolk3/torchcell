@@ -1,4 +1,6 @@
 # %%
+"""Build YeastMine gene graphs and encode their attributes into torch Data."""
+
 import json
 import os
 import os.path as osp
@@ -18,7 +20,10 @@ from tqdm import tqdm
 #
 ##############################--Encoders--####################################
 class CategoricalEncoder(torch.nn.Module):
+    """Sum learned embeddings across categorical feature columns."""
+
     def __init__(self, emb_dim, full_feature_dims):
+        """Create one Xavier-initialized embedding table per categorical feature."""
         super().__init__()
         self.embedding_list = torch.nn.ModuleList()
         for i, dim in enumerate(full_feature_dims):
@@ -27,6 +32,7 @@ class CategoricalEncoder(torch.nn.Module):
             self.embedding_list.append(emb)
 
     def forward(self, x):
+        """Return the summed per-column embeddings for index tensor ``x``."""
         x_embedding = 0
         for i in range(x.shape[1]):
             x_embedding += self.embedding_list[i](x[:, i])
@@ -37,6 +43,7 @@ class CategoricalEncoder(torch.nn.Module):
 ##############################--Encoders--####################################
 ##############################--Edge_dicts--####################################
 def regulators_edge_dict() -> nx.DiGraph:
+    """Build a graph of regulator->gene edges with regulation metadata attributes."""
     print("Writing regulators features to graph")
     gene_list = get_gene_list()
     G = nx.Graph()
@@ -92,6 +99,7 @@ def regulators_edge_dict() -> nx.DiGraph:
 
 
 def protein_interactions_edge_dict() -> nx.DiGraph:
+    """Build a graph of physical protein-interaction edges with experiment metadata."""
     print("Writing protein interactions features to graph")
     gene_list = get_gene_list()
     G = nx.Graph()
@@ -150,6 +158,7 @@ def protein_interactions_edge_dict() -> nx.DiGraph:
 
 
 def gene_interactions_edge_dict() -> nx.DiGraph:
+    """Build a graph of genetic-interaction edges with phenotype and score metadata."""
     print("Writing gene interactions features to graph")
     gene_list = get_gene_list()
     G = nx.Graph()
@@ -222,6 +231,7 @@ def gene_interactions_edge_dict() -> nx.DiGraph:
 ##############################--Miscellaneous--#################################
 # This comes from n53... this entire file of functions still needs to be added
 def agg_edge_data(G: nx.Graph) -> pd.DataFrame:
+    """Aggregate per-edge data dicts into a DataFrame keyed by source/target."""
     # loop over G and print target, source, key, and data
     sources = []
     targets = []
@@ -247,6 +257,7 @@ def agg_edge_data(G: nx.Graph) -> pd.DataFrame:
 
 # TODO This belongs in other label data file
 def get_synthetic_lethal() -> list:
+    """Return deduplicated inviable (synthetic-lethal) gene pairs from interactions."""
     print("Getting synthetic lethality from yeastmined features")
     gene_list = get_gene_list()
     G = nx.Graph()
@@ -291,6 +302,7 @@ def get_synthetic_lethal() -> list:
 ##############################--Miscellaneous--#################################
 ##############################--Node_attrs--####################################
 def protein_half_life_df(gene_list: list) -> tuple:
+    """Return cleaned protein half-life values (in hours) and a median fill frame."""
     print("protein half life features:")
     df_protein_half_life = pd.DataFrame()
     for gene in tqdm(gene_list):
@@ -341,6 +353,7 @@ def protein_half_life_df(gene_list: list) -> tuple:
 
 
 def median_protein_abundance_df(gene_list: list) -> tuple:
+    """Return cleaned median protein-abundance features and a median fill frame."""
     print("median protein abundance features:")
     df_median_protein_abundance = pd.DataFrame()
     for gene in tqdm(gene_list):
@@ -385,6 +398,7 @@ def median_protein_abundance_df(gene_list: list) -> tuple:
 
 
 def chromosomal_location_df(gene_list: list) -> tuple:
+    """Return chromosome/start/end/strand features merged onto the gene list."""
     print("chromosomal location features:")
     df_chromosomal_location = pd.DataFrame()
     for gene in tqdm(gene_list):
@@ -413,6 +427,7 @@ def chromosomal_location_df(gene_list: list) -> tuple:
 
 
 def gene_node_dict(write_graph: bool = True) -> nx.DiGraph:
+    """Load or build a gene graph with merged abundance, half-life, and location attrs."""
     file_name = "data/preprocessed/gene_reprs/yeastmine/node_reprs.gpickle"
     if osp.exists(file_name):
         print(f"reading graph from: {file_name}")
@@ -455,6 +470,7 @@ def gene_node_dict(write_graph: bool = True) -> nx.DiGraph:
 
 
 def add_name_rename(G: nx.Graph):
+    """Store each node's name as an attribute and relabel nodes to integer ids."""
     attrs = {}
     mapping = {}
     for i, name in enumerate(list(G.nodes())):
@@ -472,6 +488,14 @@ def node_reprs_to_data(
     attr_included_names: list = None,
     save: bool = True,
 ):
+    """Encode gene node attributes into a torch_geometric Data feature tensor.
+
+    Args:
+        enc: Categorical encoding strategy ("lookup", "ordinal", or "onehot").
+        emb_dim: Embedding dimension for the lookup encoder.
+        attr_included_names: Subset of attribute names to encode (defaults to all).
+        save: Whether to save the resulting Data to disk.
+    """
     # One hot encoding protein interactions
     # default behavior is to include the all one_hot features inside conditional
     # names of features that could be potentially used
@@ -585,6 +609,7 @@ def node_reprs_to_data(
 
 
 def unirep_to_data():
+    """Load per-gene UniRep embeddings into an edgeless torch_geometric Data."""
     gene_list = get_gene_list()
     base_path = "data/preprocessed/gene_reprs/unirep"
     file_names = os.listdir(base_path)
@@ -604,6 +629,7 @@ def unirep_to_data():
 
 
 def join_edge_node_reprs(data_edge: Data, data_node: Data):
+    """Combine node features and edge features into one Data when gene names match."""
     H = Data()
     if data_edge.gene_name == data_node.gene_name:
         print("joining data")
@@ -625,6 +651,14 @@ def join_edge_node_reprs(data_edge: Data, data_node: Data):
 def nx_regulators_to_torch(
     enc: str = "lookup", emb_dim: int = 2, attr_included_names: list = None, save=True
 ):
+    """Encode the regulators graph edge attributes into a torch_geometric Data.
+
+    Args:
+        enc: Categorical encoding strategy ("lookup", "ordinal", or "onehot").
+        emb_dim: Embedding dimension for the lookup encoder.
+        attr_included_names: Subset of edge attributes to encode (defaults to all).
+        save: Whether to save the resulting Data to disk.
+    """
     # enc: ["lookup", "ordinal","one_hot"]
     # One hot encoding regulators
     # default behavior is to include the all one_hot features inside conditional
@@ -688,6 +722,14 @@ def nx_regulators_to_torch(
 def nx_protein_interactions_to_torch(
     enc: str = "lookup", emb_dim: int = 2, attr_included_names: list = None, save=True
 ):
+    """Encode the protein-interactions graph edge attributes into a torch Data.
+
+    Args:
+        enc: Categorical encoding strategy ("lookup", "ordinal", or "onehot").
+        emb_dim: Embedding dimension for the lookup encoder.
+        attr_included_names: Subset of edge attributes to encode (defaults to all).
+        save: Whether to save the resulting Data to disk.
+    """
     # One hot encoding protein interactions
     # default behavior is to include the all one_hot features inside conditional
     # names of features that could be potentially used
@@ -747,6 +789,16 @@ def nx_protein_interactions_to_torch(
 def nx_gene_interactions_to_torch(
     enc: str = "lookup", emb_dim: int = 2, attr_included_names: list = None, save=True
 ):
+    """Encode the gene-interactions graph edge attributes into a torch Data.
+
+    Combines categorical encodings with numeric p-value and SGA score features.
+
+    Args:
+        enc: Categorical encoding strategy ("lookup", "ordinal", or "onehot").
+        emb_dim: Embedding dimension for the lookup encoder.
+        attr_included_names: Subset of edge attributes to encode (defaults to all).
+        save: Whether to save the resulting Data to disk.
+    """
     # One hot encoding protein interactions
     # default behavior is to include the all one_hot features inside conditional
     # names of features that could be potentially used
@@ -859,6 +911,16 @@ def nx_attr_to_torch(
     attr_included_names: list = None,
     save=True,
 ):
+    """Dispatch to the encoder for the named graph and return its torch Data.
+
+    Args:
+        graph: One of "regulators", "protein_interactions", "gene_interactions",
+            or "yeastmine_node".
+        enc: Categorical encoding strategy ("lookup", "ordinal", or "onehot").
+        emb_dim: Embedding dimension for the lookup encoder.
+        attr_included_names: Subset of attributes to encode (defaults to all).
+        save: Whether to save the resulting Data to disk.
+    """
     print(f"Converting {graph} to torch Data:")
     if graph == "regulators":
         data = nx_regulators_to_torch(
@@ -882,6 +944,7 @@ def nx_attr_to_torch(
 
 
 def main():
+    """Build the yeastmine node Data and load the saved node representations."""
     # synthetic_lethal = get_synthetic_lethal()
     # print(len(synthetic_lethal))
     # gene_node_dict()

@@ -2,7 +2,7 @@
 # [[torchcell.datasets.scerevisiae.nucleotide_transformer]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/nucleotide_transformer.py
 # Test file: tests/torchcell/datasets/scerevisiae/test_nucleotide_transformer.py
-
+"""Tutorial for joining fungal UTR and nucleotide-transformer embeddings."""
 
 from torchcell.datasets.fungal_utr_transformer import FungalUtrTransformerDataset
 from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset

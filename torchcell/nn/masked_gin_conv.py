@@ -2,8 +2,7 @@
 # [[torchcell.nn.masked_gin_conv]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/nn/masked_gin_conv
 
-"""
-Masked GIN convolution for lazy subgraph representation.
+"""Masked GIN convolution for lazy subgraph representation.
 
 Extends PyG's GINConv to support edge masking WITHOUT filtering edges.
 This preserves the speedup from LazySubgraphRepresentation by masking
@@ -19,8 +18,7 @@ from torch_geometric.typing import Adj, OptPairTensor, OptTensor, Size
 
 
 class MaskedGINConv(GINConv):
-    """
-    Graph Isomorphism Network with masked message passing.
+    """Graph Isomorphism Network with masked message passing.
 
     **Key Innovation**: Masks messages, NOT edges. This avoids expensive
     edge filtering (`edge_index[:, mask]`) that would negate the speedup
@@ -76,8 +74,7 @@ class MaskedGINConv(GINConv):
         edge_mask: Optional[Tensor] = None,
         size: Size = None,
     ) -> Tensor:
-        """
-        Forward pass with masked message passing.
+        """Forward pass with masked message passing.
 
         **IMPORTANT**: This does NOT filter edge_index. Instead, it masks
         messages in the message() method, preserving lazy speedup.
@@ -105,8 +102,7 @@ class MaskedGINConv(GINConv):
         return self.nn(out)
 
     def message(self, x_j: Tensor, edge_mask: OptTensor = None) -> Tensor:
-        """
-        Compute messages with optional masking.
+        """Compute messages with optional masking.
 
         **This is where masking happens** - messages are zeroed out for
         masked edges, but edge_index itself is never modified.
@@ -132,4 +128,5 @@ class MaskedGINConv(GINConv):
         return msg  # PyG aggregates these masked messages
 
     def __repr__(self) -> str:
+        """Return a string showing the class name and wrapped network."""
         return f"{self.__class__.__name__}(nn={self.nn})"

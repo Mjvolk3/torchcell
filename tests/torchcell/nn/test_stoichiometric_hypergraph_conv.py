@@ -1,4 +1,6 @@
 # Test file
+"""Tests for torchcell.nn.stoichiometric_hypergraph_conv."""
+
 import pytest
 import torch
 
@@ -138,7 +140,7 @@ def test_gradient_flow(basic_data):
 
 
 def test_basic_structure(basic_data):
-    """Tests Example 1: Basic Input Data Structure"""
+    """Tests Example 1: Basic Input Data Structure."""
     x = torch.tensor([[1.0, 0.5], [0.5, 1.0]])  # Node A  # Node B
     edge_index = torch.tensor([[0, 1], [0, 0]])
     stoich = torch.tensor([-1.0, 2.0])
@@ -151,7 +153,7 @@ def test_basic_structure(basic_data):
 
 
 def test_tanh_activation_comparison():
-    """Tests gated vs non-gated behavior with tanh activation"""
+    """Tests gated vs non-gated behavior with tanh activation."""
     torch.manual_seed(42)
 
     x = torch.tensor([[1.0, 0.5], [0.5, 1.0]])
@@ -203,7 +205,7 @@ def test_tanh_activation_comparison():
 
 
 def test_relu_activation_cases():
-    """Tests Example 4 & 5: ReLU activation with different stoichiometries"""
+    """Tests Example 4 & 5: ReLU activation with different stoichiometries."""
     x = torch.tensor([[1.0, 0.5], [0.5, 1.0]])
     edge_index = torch.tensor([[0, 1], [0, 0]])
 
@@ -237,7 +239,7 @@ def test_relu_activation_cases():
 
 
 def test_gelu_activation_cases():
-    """Tests Example 6 & 7: GELU activation with different stoichiometries"""
+    """Tests Example 6 & 7: GELU activation with different stoichiometries."""
     x = torch.tensor([[1.0, 0.5], [0.5, 1.0]])
     edge_index = torch.tensor([[0, 1], [0, 0]])
 

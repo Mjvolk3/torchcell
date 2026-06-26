@@ -1,3 +1,5 @@
+"""Heterogeneous cell model built from Node-Set Attention (NSA) blocks."""
+
 import os
 import os.path as osp
 from typing import Any
@@ -27,6 +29,13 @@ class AttentionalGraphAggregation(nn.Module):
     """Attentional aggregation for graph-level representations."""
 
     def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.1):
+        """Build the gate and transform MLPs for attentional aggregation.
+
+        Args:
+            in_channels: Input feature dimension.
+            out_channels: Output feature dimension after transformation.
+            dropout: Dropout probability used in both MLPs.
+        """
         super().__init__()
         self.gate_nn = nn.Sequential(
             nn.Linear(in_channels, in_channels // 2),
@@ -44,6 +53,7 @@ class AttentionalGraphAggregation(nn.Module):
     def forward(
         self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
+        """Aggregate node features into graph-level vectors via attention."""
         return self.aggregator(x, index=index, dim_size=dim_size)
 
 
@@ -59,6 +69,16 @@ class PreProcessor(nn.Module):
         norm: str = "layer",
         activation: str = "relu",
     ):
+        """Build a stacked linear/norm/activation/dropout MLP.
+
+        Args:
+            in_channels: Input feature dimension.
+            hidden_channels: Hidden and output feature dimension.
+            num_layers: Total number of linear layers.
+            dropout: Dropout probability per block.
+            norm: Normalization type ("layer" or "batch").
+            activation: Activation name resolved via ``act_register``.
+        """
         super().__init__()
         act = act_register[activation]
         norm_layer = get_norm_layer(hidden_channels, norm)
@@ -75,12 +95,12 @@ class PreProcessor(nn.Module):
         self.mlp = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply the preprocessing MLP to node features."""
         return self.mlp(x)
 
 
 class HeteroCellNSA(nn.Module):
-    """
-    Heterogeneous Cell Model using Node-Set Attention (NSA) blocks.
+    """Heterogeneous Cell Model using Node-Set Attention (NSA) blocks.
 
     This model processes heterogeneous biological cell graphs with gene, reaction,
     and metabolite nodes using attention-based message passing.
@@ -100,6 +120,21 @@ class HeteroCellNSA(nn.Module):
         activation: str = "relu",
         prediction_head_config: dict[str, Any] | None = None,
     ):
+        """Build node embeddings, NSA blocks, aggregation, and prediction head.
+
+        Args:
+            gene_num: Number of gene nodes.
+            reaction_num: Number of reaction nodes.
+            metabolite_num: Number of metabolite nodes.
+            hidden_channels: Hidden feature dimension (divisible by num_heads).
+            out_channels: Output prediction dimension.
+            attention_pattern: Sequence of NSA block types (e.g. "M", "S").
+            num_heads: Number of attention heads.
+            dropout: Dropout probability throughout the model.
+            norm: Normalization type for MLP layers.
+            activation: Activation name resolved via ``act_register``.
+            prediction_head_config: Optional config for the prediction head.
+        """
         super().__init__()
         self.hidden_channels = hidden_channels
         self.gene_num = gene_num
@@ -410,6 +445,7 @@ class HeteroCellNSA(nn.Module):
     config_name="hetero_cell_nsa",
 )
 def main(cfg: DictConfig) -> None:
+    """Run a small overfit/visualization sanity check on the NSA model."""
     import matplotlib.pyplot as plt
     from dotenv import load_dotenv
 

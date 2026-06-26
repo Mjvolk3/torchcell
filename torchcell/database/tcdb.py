@@ -1,3 +1,5 @@
+"""Cliff-based command-line entry point for the torchcell database."""
+
 # db_cli.py
 from cliff.app import App
 from cliff.commandmanager import CommandManager
@@ -6,7 +8,10 @@ from torchcell.database import BuildCommand  # Import the command
 
 
 class TCDB(App):
+    """Cliff application exposing the torchcell database build commands."""
+
     def __init__(self):
+        """Configure the CLI app and register the ``build`` command."""
         super().__init__(
             description="Database CLI",
             version="0.1",
@@ -17,6 +22,7 @@ class TCDB(App):
 
 
 def main(argv=None):
+    """Run the database CLI application and return its exit code."""
     myapp = TCDB()
     return myapp.run(argv)
 

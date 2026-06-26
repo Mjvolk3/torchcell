@@ -1,3 +1,5 @@
+"""BioCypher adapter that turns a cell dataset into graph nodes and edges."""
+
 # torchcell/adapters/cell_adapter
 # [[torchcell.adapters.cell_adapter]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/cell_adapter
@@ -24,6 +26,8 @@ log = logging.getLogger(__name__)
 
 
 class CellAdapter:
+    """Convert a cell experiment dataset into BioCypher nodes and edges for import."""
+
     def __init__(
         self,
         config: DictConfig,
@@ -33,6 +37,17 @@ class CellAdapter:
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
+        """Store config, dataset, and worker/chunk sizes for graph generation.
+
+        Args:
+            config: Hydra config holding the adapter's node and edge methods.
+            dataset: Dataset whose items are converted to nodes and edges.
+            process_workers: Number of processes for parallel chunk processing.
+            io_workers: Number of workers used by the experiment data loader.
+            chunk_size: Number of dataset items processed per chunk.
+            loader_batch_size: Batch size used within each chunk; must not
+                exceed ``chunk_size``.
+        """
         if loader_batch_size > chunk_size:
             raise ValueError(
                 "chunk_size must be greater than or equal to loader_batch_size."
@@ -158,6 +173,7 @@ class CellAdapter:
         ]
 
     def log_method_table(self):
+        """Log a wandb table summarizing the configured node and edge methods."""
         methods = []
         simulated_event_counter = 0
         for method in (
@@ -193,6 +209,7 @@ class CellAdapter:
     def get_data_by_type(
         self, chunk_processing_func: Callable, method_name: str, is_edge: bool = False
     ):
+        """Yield processed data by chunking the dataset and mapping over processes."""
         memory_reduction_factor = self.get_memory_reduction_factor(method_name, is_edge)
         chunk_size = int(self.chunk_size * memory_reduction_factor)
         data_chunks = [
@@ -208,6 +225,8 @@ class CellAdapter:
                 yield from future.result()
 
     def data_chunker(data_creation_logic):
+        """Wrap a chunk handler so it loads, transforms, and collects each item."""
+
         @wraps(data_creation_logic)
         def decorator(self, data_chunk: dict, method_name: str):
             memory_reduction_factor = self.get_memory_reduction_factor(method_name)
@@ -232,6 +251,7 @@ class CellAdapter:
     def get_memory_reduction_factor(
         self, method_name: str, is_edge: bool = False
     ) -> float:
+        """Return the configured memory reduction factor for a method (default 1.0)."""
         method_list = (
             self.config.cell_adapter.edge_methods
             if is_edge
@@ -243,6 +263,7 @@ class CellAdapter:
         return 1.0
 
     def get_nodes(self):
+        """Yield BioCypher nodes from every enabled node method in config order."""
         for method_name, method in self.node_methods:
             config_method_names = [
                 i["method_name"] for i in self.config.cell_adapter.node_methods
@@ -257,6 +278,7 @@ class CellAdapter:
                 wandb.log({"event": self.event, "method": method_name, "type": "node"})
 
     def get_edges(self):
+        """Yield BioCypher edges from every enabled edge method in config order."""
         for method_name, method in self.edge_methods:
             config_method_names = [
                 i["method_name"] for i in self.config.cell_adapter.edge_methods
@@ -272,10 +294,12 @@ class CellAdapter:
 
     @property
     def supported_node_methods(self) -> list[str]:
+        """Return the names of all registered node methods."""
         return [method_name for method_name, _ in self.node_methods]
 
     @property
     def supported_edge_methods(self) -> list[str]:
+        """Return the names of all registered edge methods."""
         return [method_name for method_name, _ in self.edge_methods]
 
     # nodes

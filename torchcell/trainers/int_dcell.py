@@ -3,6 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/int_dcell
 # Test file: tests/torchcell/trainers/test_int_dcell.py
 
+"""Lightning training module for DCell gene-interaction regression."""
 
 import logging
 
@@ -24,6 +25,8 @@ log = logging.getLogger(__name__)
 
 
 class RegressionTask(LightningModule):
+    """Lightning module training a DCell model to regress gene interactions."""
+
     def __init__(
         self,
         model: nn.Module,
@@ -41,6 +44,7 @@ class RegressionTask(LightningModule):
         forward_transform: nn.Module | None = None,
         inverse_transform: nn.Module | None = None,
     ):
+        """Set up the model, cloned cell graph, loss, and per-stage metrics."""
         super().__init__()
         self.save_hyperparameters(ignore=["model", "loss_func"])
         self.model = model
@@ -79,7 +83,7 @@ class RegressionTask(LightningModule):
         self.automatic_optimization = False
 
     def forward(self, batch):
-        """Forward pass through the model"""
+        """Run a forward pass through the model on the given batch."""
         # Get model device to ensure consistency
         model_device = next(self.model.parameters()).device
 
@@ -334,6 +338,7 @@ class RegressionTask(LightningModule):
         return loss, predictions, gene_interaction_orig
 
     def training_step(self, batch, batch_idx):
+        """Run a manual-optimization training step with gradient accumulation."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
         if self.hparams.grad_accumulation_schedule is not None:
             loss = loss / self.current_accumulation_steps
@@ -358,10 +363,12 @@ class RegressionTask(LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
+        """Run the shared step for the validation stage and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
         return loss
 
     def test_step(self, batch, batch_idx):
+        """Run the shared step for the test stage and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
@@ -451,6 +458,7 @@ class RegressionTask(LightningModule):
             plt.close(fig_gi)
 
     def on_train_epoch_end(self):
+        """Log and reset training metrics and plot training samples periodically."""
         # Log training metrics
         computed_metrics = self._compute_metrics_safely(self.train_metrics)
         for name, value in computed_metrics.items():
@@ -474,20 +482,24 @@ class RegressionTask(LightningModule):
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_train_epoch_start(self):
+        """Clear training sample buffers on epochs where samples are collected."""
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_validation_epoch_start(self):
+        """Clear validation sample buffers on epochs where samples are collected."""
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_test_epoch_start(self):
+        """Clear test sample buffers at the start of the test epoch."""
         # Always clear sample containers for test (test runs only once)
         self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_validation_epoch_end(self):
+        """Log and reset validation metrics and plot validation samples periodically."""
         # Log validation metrics
         computed_metrics = self._compute_metrics_safely(self.val_metrics)
         for name, value in computed_metrics.items():
@@ -511,6 +523,7 @@ class RegressionTask(LightningModule):
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_test_epoch_end(self):
+        """Log and reset test metrics and plot test samples."""
         # Log test metrics
         computed_metrics = self._compute_metrics_safely(self.test_metrics)
         for name, value in computed_metrics.items():
@@ -532,8 +545,7 @@ class RegressionTask(LightningModule):
             self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def configure_optimizers(self):
-        """
-        Set up optimizers for training.
+        """Set up optimizers for training.
 
         For DCellModel, we need to pre-register parameters by running a forward pass.
         """

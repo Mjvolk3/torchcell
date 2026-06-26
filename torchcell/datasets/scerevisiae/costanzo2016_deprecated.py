@@ -1,3 +1,5 @@
+"""Deprecated Costanzo 2016 single/double mutant fitness datasets (legacy)."""
+
 # torchcell/datasets/scerevisiae/costanzo2016.py
 # [[torchcell.datasets.scerevisiae.costanzo2016]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/costanzo2016.py
@@ -29,6 +31,8 @@ log = logging.getLogger(__name__)
 
 
 class SmfCostanzo2016Dataset(Dataset):
+    """Single-mutant fitness dataset from Costanzo 2016 (deprecated)."""
+
     url = (
         "https://thecellmap.org/costanzo2016/data_files/"
         "Raw%20genetic%20interaction%20datasets:%20Pair-wise%20interaction%20format.zip"
@@ -43,6 +47,7 @@ class SmfCostanzo2016Dataset(Dataset):
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
+        """Set up preprocessing config and paths, then initialize the dataset."""
         self.subset_n = subset_n
         self._skip_process_file_exist = skip_process_file_exist_check
         self.preprocess = preprocess
@@ -64,17 +69,21 @@ class SmfCostanzo2016Dataset(Dataset):
 
     @property
     def skip_process_file_exist(self):
+        """Return whether the processed-file existence check is skipped."""
         return self._skip_process_file_exist
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the raw single-mutant fitness Excel file name."""
         return ["strain_ids_and_single_mutant_fitness.xlsx"]
 
     @property
     def processed_file_names(self) -> list[str]:
+        """Return the processed LMDB file name."""
         return "data.lmdb"
 
     def download(self):
+        """Download and unzip the raw interaction data into the raw directory."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
             zip_ref.extractall(self.raw_dir)
@@ -100,6 +109,7 @@ class SmfCostanzo2016Dataset(Dataset):
         )
 
     def close_lmdb(self):
+        """Close the LMDB environment if it is open."""
         if self.env is not None:
             self.env.close()
             self.env = None
@@ -107,12 +117,14 @@ class SmfCostanzo2016Dataset(Dataset):
     # TODO implement
     @property
     def df(self):
+        """Return the preprocessed data as a DataFrame if the CSV exists."""
         if osp.exists(osp.join(self.preprocess_dir, "data.csv")):
             self._df = pd.read_csv(osp.join(self.preprocess_dir, "data.csv"))
         return self._df
 
     @property
     def wt(self):
+        """Return a wild-type reference Data object with fitness 1.0."""
         wt = {}
         wt["genotype"] = ({"id": None, "intervention": None, "id_full": None},)
         wt["phenotype"] = {
@@ -125,6 +137,7 @@ class SmfCostanzo2016Dataset(Dataset):
         return data
 
     def process(self):
+        """Read the Excel file, preprocess fitness rows, and write to LMDB."""
         os.makedirs(self.preprocess_dir, exist_ok=True)
         # Process the Excel file for mutant fitness
         excel_file_path = os.path.join(
@@ -231,6 +244,7 @@ class SmfCostanzo2016Dataset(Dataset):
         self.gene_set = self.compute_gene_set(data_list)
 
     def preprocess_raw(self, all_data_df: pd.DataFrame, preprocess: dict | None = None):
+        """Clean and deduplicate the raw single-mutant fitness DataFrame."""
         # We use the 'Systematic gene name' column as 'genotype' directly
         all_data_df["genotype"] = all_data_df["Systematic gene name"]
 
@@ -330,6 +344,7 @@ class SmfCostanzo2016Dataset(Dataset):
 
     # New method to save preprocess configuration to a JSON file
     def save_preprocess_config(self, preprocess):
+        """Write the preprocess configuration dict to JSON."""
         if not osp.exists(self.preprocess_dir):
             os.makedirs(self.preprocess_dir)
         with open(osp.join(self.preprocess_dir, "preprocess_config.json"), "w") as f:
@@ -337,6 +352,7 @@ class SmfCostanzo2016Dataset(Dataset):
 
     # New method to load existing preprocess configuration
     def load_preprocess_config(self):
+        """Load the saved preprocess configuration, or None if absent."""
         config_path = osp.join(self.preprocess_dir, "preprocess_config.json")
 
         if osp.exists(config_path):
@@ -347,6 +363,7 @@ class SmfCostanzo2016Dataset(Dataset):
             return None
 
     def len(self) -> int:
+        """Return the number of records stored in the LMDB."""
         if self.env is None:
             self._init_db()
 
@@ -374,6 +391,7 @@ class SmfCostanzo2016Dataset(Dataset):
 
     @staticmethod
     def compute_gene_set(data_list):
+        """Return the set of all gene ids appearing in the data list genotypes."""
         computed_gene_set = GeneSet()
         for data in data_list:
             for genotype in data.genotype:
@@ -383,6 +401,7 @@ class SmfCostanzo2016Dataset(Dataset):
     # Reading from JSON and setting it to self._gene_set
     @property
     def gene_set(self):
+        """Return the gene set, loading it from JSON if available."""
         try:
             if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
                 with open(osp.join(self.preprocess_dir, "gene_set.json")) as f:
@@ -406,24 +425,33 @@ class SmfCostanzo2016Dataset(Dataset):
         self._gene_set = value
 
     def __repr__(self):
+        """Return a string with the class name and record count."""
         return f"{self.__class__.__name__}({len(self)})"
 
 
 class DatasetConfig(ABC):
+    """Abstract base defining a dataset's duplicate-resolution order."""
+
     @abstractproperty
     def resolution_order(self) -> list[str]:
+        """Return the ordered list of duplicate-resolution strategies."""
         pass
 
 
 class DmfCostanzo2016Config(ModelStrict, DatasetConfig):
+    """Config for the double-mutant dataset selecting how duplicates resolve."""
+
     duplicate_resolution: Literal["low_dmf_std", "high_dmf", "low_dmf"] | None = None
 
     @property
     def resolution_order(self):
+        """Return the resolution order derived from the duplicate resolution setting."""
         return [str(self.duplicate_resolution)]
 
 
 class DmfCostanzo2016Dataset(Dataset):
+    """Double-mutant fitness dataset from Costanzo 2016 (deprecated)."""
+
     url = (
         "https://thecellmap.org/costanzo2016/data_files/"
         "Raw%20genetic%20interaction%20datasets:%20Pair-wise%20interaction%20format.zip"
@@ -438,6 +466,7 @@ class DmfCostanzo2016Dataset(Dataset):
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
+        """Set up preprocessing config and paths, then initialize the dataset."""
         self.subset_n = subset_n
         self._skip_process_file_exist = skip_process_file_exist
         # TODO consider moving to a well defined Dataset class
@@ -461,17 +490,21 @@ class DmfCostanzo2016Dataset(Dataset):
 
     @property
     def skip_process_file_exist(self):
+        """Return whether the processed-file existence check is skipped."""
         return self._skip_process_file_exist
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the raw SGA interaction text file names."""
         return ["SGA_DAmP.txt", "SGA_ExE.txt", "SGA_ExN_NxE.txt", "SGA_NxN.txt"]
 
     @property
     def processed_file_names(self) -> list[str]:
+        """Return the processed LMDB file name."""
         return "data.lmdb"
 
     def download(self):
+        """Download and unzip the raw interaction data into the raw directory."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
             zip_ref.extractall(self.raw_dir)
@@ -497,18 +530,21 @@ class DmfCostanzo2016Dataset(Dataset):
         )
 
     def close_lmdb(self):
+        """Close the LMDB environment if it is open."""
         if self.env is not None:
             self.env.close()
             self.env = None
 
     @property
     def df(self):
+        """Return the preprocessed data as a DataFrame if the CSV exists."""
         if osp.exists(osp.join(self.preprocess_dir, "data.csv")):
             self._df = pd.read_csv(osp.join(self.preprocess_dir, "data.csv"))
         return self._df
 
     @property
     def wt(self):
+        """Return a wild-type reference Data object with fitness 1.0 and zero GI."""
         wt = {}
         wt["genotype"] = ({"id": None, "intervention": None, "id_full": None},)
         wt["phenotype"] = {
@@ -521,6 +557,7 @@ class DmfCostanzo2016Dataset(Dataset):
         return data
 
     def process(self):
+        """Read all raw SGA files, preprocess, and write records to LMDB."""
         os.makedirs(self.preprocess_dir, exist_ok=True)
         self._length = None
         # Initialize an empty DataFrame to hold all raw data
@@ -617,6 +654,8 @@ class DmfCostanzo2016Dataset(Dataset):
         self.gene_set = self.compute_gene_set(data_list)
 
     def preprocess_raw(self, all_data_df: pd.DataFrame, preprocess: dict | None = None):
+        """Clean the raw DataFrame and resolve duplicate genotypes by strategy."""
+
         # Function to extract gene name
         def extract_gene_name(x):
             return x.apply(lambda y: y.split("_")[0])
@@ -674,6 +713,7 @@ class DmfCostanzo2016Dataset(Dataset):
 
     # New method to save preprocess configuration to a JSON file
     def save_preprocess_config(self, preprocess):
+        """Write the preprocess configuration dict to JSON."""
         if not osp.exists(self.preprocess_dir):
             os.makedirs(self.preprocess_dir)
         with open(osp.join(self.preprocess_dir, "preprocess_config.json"), "w") as f:
@@ -684,6 +724,7 @@ class DmfCostanzo2016Dataset(Dataset):
 
     # New method to load existing preprocess configuration
     def load_preprocess_config(self):
+        """Load the saved preprocess configuration, or None if absent."""
         config_path = osp.join(self.preprocess_dir, "preprocess_config.json")
 
         if osp.exists(config_path):
@@ -694,6 +735,7 @@ class DmfCostanzo2016Dataset(Dataset):
             return None
 
     def len(self) -> int:
+        """Return the number of records stored in the LMDB."""
         if self.env is None:
             self._init_db()
 
@@ -721,6 +763,7 @@ class DmfCostanzo2016Dataset(Dataset):
 
     @staticmethod
     def compute_gene_set(data_list):
+        """Return the set of all gene ids appearing in the data list genotypes."""
         computed_gene_set = GeneSet()
         for data in data_list:
             for genotype in data.genotype:
@@ -730,6 +773,7 @@ class DmfCostanzo2016Dataset(Dataset):
     # Reading from JSON and setting it to self._gene_set
     @property
     def gene_set(self):
+        """Return the gene set, loading it from JSON if available."""
         try:
             if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
                 with open(osp.join(self.preprocess_dir, "gene_set.json")) as f:
@@ -753,11 +797,13 @@ class DmfCostanzo2016Dataset(Dataset):
         self._gene_set = value
 
     def __repr__(self):
+        """Return a string with the class name and record count."""
         return f"{self.__class__.__name__}({len(self)})"
 
 
 # @prof_input
 def main():
+    """Run a small example building and inspecting the double-mutant dataset."""
     from dotenv import load_dotenv
 
     load_dotenv()

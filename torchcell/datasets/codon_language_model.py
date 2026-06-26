@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/codon_language_model
 # Test file: tests/torchcell/datasets/test_codon_language_model.py
 
+"""Dataset producing CaLM codon language-model embeddings for yeast genes."""
+
 import os
 from collections.abc import Callable
 
@@ -17,6 +19,8 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 class CalmDataset(BaseEmbeddingDataset):
+    """Embedding dataset that runs the CaLM model over gene CDS sequences."""
+
     # 3072 = 1024 * 3
     MODEL_TO_WINDOW = {"calm": ("window", 3072, False)}
 
@@ -29,6 +33,7 @@ class CalmDataset(BaseEmbeddingDataset):
         pre_transform: Callable | None = None,
         batch_size: int = 100,
     ):
+        """Initialize the CaLM model, parse the genome, and process embeddings."""
         self.genome = genome
         self.model_name = model_name
         self.model = self.initialize_model()
@@ -43,10 +48,12 @@ class CalmDataset(BaseEmbeddingDataset):
         self.data, self.slices = torch.load(self.processed_paths[0])
 
     def initialize_model(self) -> CaLM:
+        """Return a new CaLM model instance."""
         return CaLM()
 
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:
+        """Extract the gene set from a genome into a ParsedGenome (or None)."""
         if genome is None:
             return None
         else:
@@ -55,6 +62,7 @@ class CalmDataset(BaseEmbeddingDataset):
             return ParsedGenome(**data)
 
     def process(self):
+        """Embed each gene's CDS with CaLM and save the processed data list."""
         data_list = []
         (window_method, window_size, is_max_size) = self.MODEL_TO_WINDOW[
             self.model_name

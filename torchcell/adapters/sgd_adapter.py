@@ -2,6 +2,7 @@
 # [[torchcell.adapters.kuzmin2020_adapter]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/kuzmin2020_adapter
 
+"""BioCypher adapter exposing SGD gene-essentiality data as graph nodes and edges."""
 
 import logging
 import os.path as osp
@@ -23,6 +24,8 @@ logger.setLevel(logging.ERROR)
 
 
 class GeneEssentialitySgdAdapter(CellAdapter):
+    """CellAdapter that loads the SGD gene-essentiality dataset into BioCypher."""
+
     def __init__(
         self,
         dataset: GeneEssentialitySgdDataset,
@@ -31,6 +34,15 @@ class GeneEssentialitySgdAdapter(CellAdapter):
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
+        """Load the adapter YAML config and initialize the CellAdapter.
+
+        Args:
+            dataset: The SGD gene-essentiality dataset to adapt.
+            process_workers: Number of worker processes for node/edge processing.
+            io_workers: Number of worker processes for I/O.
+            chunk_size: Number of records processed per chunk.
+            loader_batch_size: Batch size used by the data loader.
+        """
         current_dir = osp.dirname(osp.abspath(__file__))
 
         config_path = osp.join(

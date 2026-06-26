@@ -2,6 +2,8 @@
 # [[torchcell.datasets.scerevisiae.kuzmin2018]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/kuzmin2018.py
 # Test file: tests/torchcell/datasets/scerevisiae/test_kuzmin2018.py
+"""Kuzmin 2018 fitness and genetic-interaction datasets (single/double/triple mutants)."""
+
 import logging
 import os
 import os.path as osp
@@ -44,6 +46,8 @@ log = logging.getLogger(__name__)
 # Fitness
 @register_dataset
 class SmfKuzmin2018Dataset(ExperimentDataset):
+    """Single-mutant fitness experiments from Kuzmin 2018."""
+
     url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/kuzmin2018/aao1729_data_s1.zip"
 
     def __init__(
@@ -54,25 +58,31 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Initialize the dataset at ``root`` and trigger download/processing."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> Experiment:
+        """Return the experiment model class for this dataset."""
         return FitnessExperiment
 
     @property
     def reference_class(self) -> ExperimentReference:
+        """Return the experiment-reference model class for this dataset."""
         return FitnessExperimentReference
 
     @property
     def raw_file_names(self) -> str:
+        """Return the name of the raw Kuzmin 2018 data file."""
         return "aao1729_data_s1.tsv"
 
     @property
     def processed_file_names(self) -> list[str]:
+        """Return the name of the processed LMDB directory."""
         return "lmdb"
 
     def download(self):
+        """Download the Kuzmin 2018 archive and extract it into the raw directory."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
             zip_ref.extractall(self.raw_dir)
@@ -80,6 +90,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Preprocess the raw table and write experiment records to the LMDB store."""
         df = pd.read_csv(osp.join(self.raw_dir, self.raw_file_names), sep="\t")
 
         df = self.preprocess_raw(df)
@@ -115,6 +126,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict | None = None
     ) -> pd.DataFrame:
+        """Clean and reshape the raw Kuzmin table into per-genotype rows."""
         df[["Query strain ID_1", "Query strain ID_2"]] = df[
             "Query strain ID"
         ].str.split("+", expand=True)
@@ -188,6 +200,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
 
     @staticmethod
     def create_experiment(dataset_name, row, phenotype_reference_std):
+        """Build the experiment, reference, and publication objects from a data row."""
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
@@ -298,6 +311,8 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
 
 @register_dataset
 class DmfKuzmin2018Dataset(ExperimentDataset):
+    """Double-mutant fitness experiments from Kuzmin 2018."""
+
     url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/kuzmin2018/aao1729_data_s1.zip"
 
     def __init__(
@@ -309,22 +324,27 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Initialize the dataset, optionally subsetting to ``subset_n`` rows."""
         self.subset_n = subset_n
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> Experiment:
+        """Return the experiment model class for this dataset."""
         return FitnessExperiment
 
     @property
     def reference_class(self) -> ExperimentReference:
+        """Return the experiment-reference model class for this dataset."""
         return FitnessExperimentReference
 
     @property
     def raw_file_names(self) -> str:
+        """Return the name of the raw Kuzmin 2018 data file."""
         return "aao1729_data_s1.tsv"
 
     def download(self):
+        """Download the Kuzmin 2018 archive and extract it into the raw directory."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
             zip_ref.extractall(self.raw_dir)
@@ -332,6 +352,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Preprocess the raw table and write experiment records to the LMDB store."""
         df = pd.read_csv(osp.join(self.raw_dir, self.raw_file_names), sep="\t")
 
         df = self.preprocess_raw(df)
@@ -369,6 +390,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict | None = None
     ) -> pd.DataFrame:
+        """Clean and reshape the raw Kuzmin table into per-genotype rows."""
         df[["Query strain ID_1", "Query strain ID_2"]] = df[
             "Query strain ID"
         ].str.split("+", expand=True)
@@ -427,6 +449,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
 
     @staticmethod
     def create_experiment(dataset_name, row, phenotype_reference_std):
+        """Build the experiment, reference, and publication objects from a data row."""
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
@@ -515,6 +538,8 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
 
 @register_dataset
 class TmfKuzmin2018Dataset(ExperimentDataset):
+    """Triple-mutant fitness experiments from Kuzmin 2018."""
+
     url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/kuzmin2018/aao1729_data_s1.zip"
 
     def __init__(
@@ -526,22 +551,27 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Initialize the dataset, optionally subsetting to ``subset_n`` rows."""
         self.subset_n = subset_n
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> Experiment:
+        """Return the experiment model class for this dataset."""
         return FitnessExperiment
 
     @property
     def reference_class(self) -> ExperimentReference:
+        """Return the experiment-reference model class for this dataset."""
         return FitnessExperimentReference
 
     @property
     def raw_file_names(self) -> str:
+        """Return the name of the raw Kuzmin 2018 data file."""
         return "aao1729_data_s1.tsv"
 
     def download(self):
+        """Download the Kuzmin 2018 archive and extract it into the raw directory."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
             zip_ref.extractall(self.raw_dir)
@@ -549,6 +579,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Preprocess the raw table and write experiment records to the LMDB store."""
         df = pd.read_csv(osp.join(self.raw_dir, self.raw_file_names), sep="\t")
 
         df = self.preprocess_raw(df)
@@ -586,6 +617,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict | None = None
     ) -> pd.DataFrame:
+        """Clean and reshape the raw Kuzmin table into per-genotype rows."""
         df[["Query strain ID_1", "Query strain ID_2"]] = df[
             "Query strain ID"
         ].str.split("+", expand=True)
@@ -644,6 +676,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
 
     @staticmethod
     def create_experiment(dataset_name, row, phenotype_reference_std):
+        """Build the experiment, reference, and publication objects from a data row."""
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
@@ -744,6 +777,8 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
 # Interactions
 @register_dataset
 class DmiKuzmin2018Dataset(ExperimentDataset):
+    """Double-mutant genetic-interaction experiments from Kuzmin 2018."""
+
     url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/kuzmin2018/aao1729_data_s1.zip"
 
     def __init__(
@@ -755,22 +790,27 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Initialize the dataset, optionally subsetting to ``subset_n`` rows."""
         self.subset_n = subset_n
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> ExperimentReference:
+        """Return the experiment model class for this dataset."""
         return GeneInteractionExperiment
 
     @property
     def reference_class(self) -> ExperimentReference:
+        """Return the experiment-reference model class for this dataset."""
         return GeneInteractionExperimentReference
 
     @property
     def raw_file_names(self) -> str:
+        """Return the name of the raw Kuzmin 2018 data file."""
         return "aao1729_data_s1.tsv"
 
     def download(self):
+        """Download the Kuzmin 2018 archive and extract it into the raw directory."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
             zip_ref.extractall(self.raw_dir)
@@ -778,6 +818,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Preprocess the raw table and write experiment records to the LMDB store."""
         df = pd.read_csv(osp.join(self.raw_dir, self.raw_file_names), sep="\t")
 
         df = self.preprocess_raw(df)
@@ -810,6 +851,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict | None = None
     ) -> pd.DataFrame:
+        """Clean and reshape the raw Kuzmin table into per-genotype rows."""
         df[["Query strain ID_1", "Query strain ID_2"]] = df[
             "Query strain ID"
         ].str.split("+", expand=True)
@@ -866,6 +908,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
 
     @staticmethod
     def create_experiment(dataset_name, row):
+        """Build the experiment, reference, and publication objects from a data row."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
         )
@@ -949,6 +992,8 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
 
 @register_dataset
 class TmiKuzmin2018Dataset(ExperimentDataset):
+    """Triple-mutant genetic-interaction experiments from Kuzmin 2018."""
+
     url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/kuzmin2018/aao1729_data_s1.zip"
 
     def __init__(
@@ -960,22 +1005,27 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Initialize the dataset, optionally subsetting to ``subset_n`` rows."""
         self.subset_n = subset_n
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> ExperimentReference:
+        """Return the experiment model class for this dataset."""
         return GeneInteractionExperiment
 
     @property
     def reference_class(self) -> ExperimentReference:
+        """Return the experiment-reference model class for this dataset."""
         return GeneInteractionExperimentReference
 
     @property
     def raw_file_names(self) -> str:
+        """Return the name of the raw Kuzmin 2018 data file."""
         return "aao1729_data_s1.tsv"
 
     def download(self):
+        """Download the Kuzmin 2018 archive and extract it into the raw directory."""
         path = download_url(self.url, self.raw_dir)
         with zipfile.ZipFile(path, "r") as zip_ref:
             zip_ref.extractall(self.raw_dir)
@@ -983,6 +1033,7 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Preprocess the raw table and write experiment records to the LMDB store."""
         df = pd.read_csv(osp.join(self.raw_dir, self.raw_file_names), sep="\t")
 
         df = self.preprocess_raw(df)
@@ -1015,6 +1066,7 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict | None = None
     ) -> pd.DataFrame:
+        """Clean and reshape the raw Kuzmin table into per-genotype rows."""
         df[["Query strain ID_1", "Query strain ID_2"]] = df[
             "Query strain ID"
         ].str.split("+", expand=True)
@@ -1071,6 +1123,7 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
 
     @staticmethod
     def create_experiment(dataset_name, row):
+        """Build the experiment, reference, and publication objects from a data row."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
         )

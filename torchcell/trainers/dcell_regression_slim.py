@@ -2,6 +2,7 @@
 # [[torchcell.trainers.dcell_regression_slim]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/dcell_regression_slim.py
 # Test file: torchcell/trainers/test_dcell_regression_slim.py
+"""Slim Lightning trainer for DCell regression with subsystem and root metrics."""
 
 import os.path as osp
 
@@ -44,6 +45,18 @@ class DCellRegressionSlimTask(L.LightningModule):
         alpha: float = 0.3,
         **kwargs,
     ):
+        """Register the DCell submodels, DCell loss, optimizer settings, and metrics.
+
+        Args:
+            models: Dict of named submodels (expects "dcell" and "dcell_linear").
+            target: Target name being regressed.
+            boxplot_every_n_epochs: Epoch interval for box plots.
+            learning_rate: Adam learning rate.
+            weight_decay: Adam weight decay.
+            batch_size: Batch size used for logging.
+            alpha: Regularization weight for the DCell loss.
+            **kwargs: Additional unused keyword arguments.
+        """
         super().__init__()
         # models
         self.models = models
@@ -101,10 +114,12 @@ class DCellRegressionSlimTask(L.LightningModule):
         self.last_logged_best_step = None
 
     def setup(self, stage=None):
+        """Move all submodels to the active device at the start of each stage."""
         for model in self.models.values():
             model.to(self.device)
 
     def forward(self, batch):
+        """Run the batch through the DCell subsystems and linear head."""
         # Implement the forward pass
         dcell_subsystem_output = self.dcell(batch)
         dcell_linear_output = self.dcell_linear(dcell_subsystem_output)
@@ -113,6 +128,7 @@ class DCellRegressionSlimTask(L.LightningModule):
         return dcell_linear_output
 
     def on_train_start(self):
+        """Log the total model parameter count when training starts."""
         # Calculate the model size (number of parameters)
         parameter_size = sum(p.numel() for p in self.parameters())
         # Log it using wandb
@@ -121,6 +137,7 @@ class DCellRegressionSlimTask(L.LightningModule):
         )
 
     def training_step(self, batch, batch_idx):
+        """Run a manual training step and log loss plus subsystem and root metrics."""
         y_hat = self(batch)
         y = batch.fitness
         opt = self.optimizers()
@@ -143,6 +160,7 @@ class DCellRegressionSlimTask(L.LightningModule):
         return loss
 
     def on_train_epoch_end(self):
+        """Log and reset the subsystem and root training metrics at epoch end."""
         self.log_dict(self.train_metrics.compute(), sync_dist=True)
         self.log_dict(self.train_metrics_root.compute(), sync_dist=True)
         self.train_metrics.reset()
@@ -150,6 +168,7 @@ class DCellRegressionSlimTask(L.LightningModule):
         pass
 
     def validation_step(self, batch, batch_idx):
+        """Run a validation step and update subsystem and root metrics."""
         # Extract the batch vector
         y_hat = self(batch)
         y = batch.fitness
@@ -165,6 +184,7 @@ class DCellRegressionSlimTask(L.LightningModule):
         self.val_metrics_root(y_hat_root, y)
 
     def on_validation_epoch_end(self):
+        """Log validation metrics and log the best model as a wandb artifact."""
         self.log_dict(self.val_metrics.compute(), sync_dist=True)
         self.log_dict(self.val_metrics_root.compute(), sync_dist=True)
         self.val_metrics.reset()
@@ -190,6 +210,7 @@ class DCellRegressionSlimTask(L.LightningModule):
             )
 
     def test_step(self, batch, batch_idx):
+        """Run a test step and update subsystem and root metrics."""
         y_hat = self(batch)
         y = batch.fitness
         loss = self.loss(y_hat, y, self.dcell.parameters())
@@ -204,10 +225,12 @@ class DCellRegressionSlimTask(L.LightningModule):
         self.test_metrics_root(y_hat_root, y)
 
     def on_test_epoch_end(self):
+        """Log and reset the test metrics at epoch end."""
         self.log_dict(self.test_metrics.compute(), sync_dist=True)
         self.test_metrics.reset()
 
     def configure_optimizers(self):
+        """Return an Adam optimizer over the DCell and linear-head parameters."""
         params = list(self.models["dcell"].parameters()) + list(
             self.models["dcell_linear"].parameters()
         )

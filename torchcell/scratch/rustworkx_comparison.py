@@ -1,3 +1,5 @@
+"""Benchmark rustworkx versus networkx for batched graph build/remove operations."""
+
 import timeit
 
 import networkx as nx
@@ -6,6 +8,7 @@ import rustworkx as rx
 
 # Function to create and remove nodes in rustworkx graphs
 def rustworkx_batch_operation():
+    """Build 32 rustworkx ring graphs and remove one node from each."""
     graphs = []
     for _ in range(32):
         graph = rx.PyGraph()
@@ -21,6 +24,7 @@ def rustworkx_batch_operation():
 
 # Function to create and remove nodes in networkx graphs
 def networkx_batch_operation():
+    """Build 32 networkx ring graphs and remove one node from each."""
     graphs = []
     for _ in range(32):
         graph = nx.Graph()
@@ -51,6 +55,7 @@ print(f"networkx batch operation time: {networkx_time:.6f} seconds")
 
 # The improved vectorized function for rustworkx, focusing on efficient graph operations
 def rustworkx_vectorized_optimized():
+    """Build 32 rustworkx ring graphs from shared node/edge lists, remove one node each."""
     graphs = []
     nodes = list(range(1000))
     edges = [(i, (i + 1) % 1000, 1.0) for i in range(1000)]
@@ -67,6 +72,7 @@ def rustworkx_vectorized_optimized():
 
 # The improved vectorized function for networkx, focusing on efficient graph operations
 def networkx_vectorized_optimized():
+    """Build 32 networkx ring graphs from shared node/edge lists, remove one node each."""
     graphs = []
     nodes = list(range(1000))
     edges = [(i, (i + 1) % 1000) for i in range(1000)]

@@ -1,4 +1,6 @@
 # %%
+"""YeastMine (InterMine) query helpers for fetching per-gene SGD annotations."""
+
 # Relies on env-intermine (python 3.5)
 import json
 import os
@@ -13,6 +15,7 @@ from torchcell.sc_graph import get_gene_list
 
 
 def get_regulators(gene: str = "YOR202W") -> int:
+    """Return regulators of ``gene`` from the GeneTarget_GeneFactor template."""
     # Gene Regulation
     # Retrieve genes that are regulators of a given target gene.
     # Gene(target) -> Gene(Regulators).
@@ -68,6 +71,7 @@ def get_regulators(gene: str = "YOR202W") -> int:
 
 
 def get_physical_interactions(gene: str = "YFL039C") -> dict:
+    """Return physical interactions for ``gene`` as a dict of records."""
     # act1  == YFL039C
     # Physical Interactions
     # Retrieve all physical interactions for a specific gene. Gene(target) -> Physical Interactions.
@@ -116,6 +120,7 @@ def get_physical_interactions(gene: str = "YFL039C") -> dict:
 
 
 def get_gene_interactions(gene: str = "YDR210W") -> dict:
+    """Return genetic interactions for ``gene`` as a dict of records."""
     # Gene Interactions
     # Retrieve all gene interactions for a specific gene. Gene(target) -> Gene Interactions.
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
@@ -179,6 +184,7 @@ def get_gene_interactions(gene: str = "YDR210W") -> dict:
 
 
 def get_protein_abundance(gene: str = "tfc3") -> dict:
+    """Return protein-abundance experiment records for ``gene``."""
     # Retrieve protein abundance for the protein(s) encoded by a gene
     # Gene(target) -> Protein Abundance Experiments.
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
@@ -231,6 +237,7 @@ def get_protein_abundance(gene: str = "tfc3") -> dict:
 
 
 def get_median_protein_abundance(gene: str = "YAL001C") -> dict:
+    """Return median protein-abundance records for ``gene``."""
     # Gene median protein abundance
     # Retrieve all protein median abundance for a specific gene. Gene(target) -> median protein abundance.
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
@@ -259,6 +266,7 @@ def get_median_protein_abundance(gene: str = "YAL001C") -> dict:
 
 
 def get_protein_sequence(gene: str = "rad54") -> dict:
+    """Return protein sequence records for ``gene``."""
     # Gene(target) -> Gene protein sequence
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
     template = service.get_template("Gene_ProteinSequence")
@@ -286,6 +294,7 @@ def get_protein_sequence(gene: str = "rad54") -> dict:
 
 
 def get_gene_sequence(gene: str = "rad54") -> dict:
+    """Return genomic DNA (introns included) records for ``gene``."""
     # Retrieve genomic DNA (DNA sequence with introns)
     # # Gene(target) -> Gene sequence
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
@@ -316,6 +325,7 @@ def get_gene_sequence(gene: str = "rad54") -> dict:
 
 
 def get_go(gene: str = "YAL018C") -> dict:
+    """Return GO annotation records for ``gene``."""
     # Gene(target) -> GO terms
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
     template = service.get_template("Gene_GO")
@@ -366,6 +376,7 @@ def get_go(gene: str = "YAL018C") -> dict:
 
 
 def get_protein_half_life(gene: str = "act1") -> dict:
+    """Return protein half-life records for ``gene``."""
     # Gene(target) -> protein half life
     # Retrieve Protein half-life for a given gene(s). This study had reported value
     # of >=100 hours for the most stable proteins. To facilitate sorting and
@@ -408,6 +419,7 @@ def get_protein_half_life(gene: str = "act1") -> dict:
 
 # Retrieve the chromosomal location for a gene
 def get_chromosomal_location(gene: str = "act1") -> dict:
+    """Return chromosome coordinates and strand for ``gene``."""
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
     template = service.get_template("Gene_ChromosomeLocation")
     rows = template.rows(A={"op": "LOOKUP", "value": gene, "extra_value": ""})
@@ -433,6 +445,7 @@ def get_chromosomal_location(gene: str = "act1") -> dict:
 
 
 def get_feature_type(gene: str = "YIL080W") -> dict:
+    """Return the SGD feature type for ``gene``."""
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
     # Get a new query on the class (table) you will be querying:
     query = service.new_query("Gene")
@@ -456,6 +469,7 @@ def get_feature_type(gene: str = "YIL080W") -> dict:
 
 
 def get_all_feature_types() -> dict:
+    """Return a mapping of every gene's secondary identifier to feature type."""
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
     # Get a new query on the class (table) you will be querying:
     query = service.new_query("Gene")
@@ -470,6 +484,7 @@ def get_all_feature_types() -> dict:
 
 
 def get_pathways(gene: str = "fas1") -> dict:
+    """Return pathway-association records for ``gene``."""
     # Gene associated pathways
     # Retrieve all associated pathways for a specific gene. Gene(target) -> Gene Phenotypes.
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
@@ -495,6 +510,7 @@ def get_pathways(gene: str = "fas1") -> dict:
 
 
 def get_phenotype(gene: str = "act1") -> dict:
+    """Return phenotype records for ``gene``."""
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
     template = service.get_template("Gene_Phenotype_New")
     rows = template.rows(
@@ -535,6 +551,7 @@ def get_phenotype(gene: str = "act1") -> dict:
 
 # Was originally used to get the "symbol" gene names (like act1) for genes with standard names. Used for the Mechanisitc-Aware comparison. Not yet written to ym_attrs.
 def get_gene_external_id(gene: str = "act1") -> dict:
+    """Return cross-reference (external) identifier records for ``gene``."""
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
     query = service.new_query("Gene")
     query.add_view(
@@ -568,6 +585,7 @@ def get_gene_external_id(gene: str = "act1") -> dict:
 
 
 def write_gene_id_translation_table() -> tuple[pd.DataFrame, list[str]]:
+    """Build and write a systematic-name to symbol table; return it and errors."""
     # This function takes 2.5 hours to run. Could probably pull from somewhere else... but this is convenient in that it is specific to the gene_list.
     gene_list = get_gene_list()
     list_of_dicts = []
@@ -586,6 +604,7 @@ def write_gene_id_translation_table() -> tuple[pd.DataFrame, list[str]]:
 
 
 def merge_dicts(dict_list: list[dict]) -> dict:
+    """Merge a list of dicts into one, later keys overriding earlier ones."""
     result = {}
     for d in dict_list:
         result.update(d)
@@ -593,6 +612,7 @@ def merge_dicts(dict_list: list[dict]) -> dict:
 
 
 def get_ym_attrs_list(gene: str) -> list[dict]:
+    """Return Dask-delayed YeastMine attribute queries for ``gene``."""
     regulators = delayed(get_regulators)(gene)
     physical_interaction = delayed(get_physical_interactions)(gene)
     gene_interaction = delayed(get_gene_interactions)(gene)
@@ -626,6 +646,7 @@ def get_ym_attrs_list(gene: str) -> list[dict]:
 
 
 def create_node_ym_attrs(gene_list: list) -> dict:
+    """Query and cache per-gene YeastMine attributes to JSON, resuming partials."""
     # Failures occur do to requests connections errors.
     file_names_list = []
     node_ym_attrs_dir = "data/preprocessed/node_ym_attrs"

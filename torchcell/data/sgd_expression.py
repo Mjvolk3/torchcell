@@ -1,3 +1,5 @@
+"""Utilities for combining README files and rendering them to PDF via mdpdf."""
+
 import re
 import subprocess
 from pathlib import Path

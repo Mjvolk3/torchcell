@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/hetero_cell_bipartite
 # Test file: tests/torchcell/models/test_hetero_cell_bipartite.py
 
+"""Bipartite hetero GNN over gene, reaction, and metabolite graphs."""
+
 import os
 import os.path as osp
 from typing import Any
@@ -17,7 +19,10 @@ from torch_geometric.nn.aggr.attention import AttentionalAggregation
 
 
 class AttentionalGraphAggregation(nn.Module):
+    """Attentional pooling that gates and transforms node features before aggregation."""
+
     def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.1):
+        """Build the gating and transform networks and the attentional aggregator."""
         super().__init__()
         self.gate_nn = nn.Sequential(
             nn.Linear(in_channels, in_channels // 2),
@@ -35,10 +40,12 @@ class AttentionalGraphAggregation(nn.Module):
     def forward(
         self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
+        """Aggregate node features grouped by index into per-group vectors."""
         return self.aggregator(x, index=index, dim_size=dim_size)
 
 
 def get_norm_layer(channels: int, norm: str) -> nn.Module:
+    """Return a layer or batch normalization module for the given channel count."""
     if norm == "layer":
         return nn.LayerNorm(channels)
     elif norm == "batch":
@@ -48,6 +55,8 @@ def get_norm_layer(channels: int, norm: str) -> nn.Module:
 
 
 class PreProcessor(nn.Module):
+    """MLP that projects raw input features to the hidden dimension."""
+
     def __init__(
         self,
         in_channels: int,
@@ -57,6 +66,7 @@ class PreProcessor(nn.Module):
         norm: str = "layer",
         activation: str = "relu",
     ):
+        """Build the stacked linear/norm/activation/dropout MLP layers."""
         super().__init__()
         self.act = nn.ReLU() if activation == "relu" else nn.SiLU()
         norm_layer = get_norm_layer(hidden_channels, norm)
@@ -73,10 +83,13 @@ class PreProcessor(nn.Module):
         self.mlp = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply the preprocessing MLP to the input features."""
         return self.mlp(x)
 
 
 class AttentionConvWrapper(nn.Module):
+    """Wrap a graph conv with projection, normalization, activation, and dropout."""
+
     def __init__(
         self,
         conv: nn.Module,
@@ -85,6 +98,7 @@ class AttentionConvWrapper(nn.Module):
         activation: str | None = None,
         dropout: float = 0.1,
     ) -> None:
+        """Configure the wrapped conv plus output projection and post-processing."""
         super().__init__()
         self.conv = conv
         if hasattr(conv, "concat"):
@@ -113,6 +127,7 @@ class AttentionConvWrapper(nn.Module):
         self.dropout = nn.Dropout(dropout) if dropout > 0 else None
 
     def forward(self, x, edge_index, **kwargs):
+        """Run the conv, then project, normalize, activate, and drop out."""
         out = self.conv(x, edge_index, **kwargs)
         out = self.proj(out)
         if self.norm is not None:
@@ -124,6 +139,8 @@ class AttentionConvWrapper(nn.Module):
 
 
 class HeteroCellBipartite(nn.Module):
+    """Hetero GNN encoding gene/reaction/metabolite graphs into a cell prediction."""
+
     def __init__(
         self,
         gene_num: int,
@@ -140,6 +157,7 @@ class HeteroCellBipartite(nn.Module):
         prediction_head_config: dict[str, Any] | None = None,
         gpr_conv_config: dict[str, Any] | None = None,
     ):
+        """Build embeddings, hetero conv stack, aggregators, and prediction head."""
         super().__init__()
         self.hidden_channels = hidden_channels
 
@@ -256,6 +274,7 @@ class HeteroCellBipartite(nn.Module):
         return nn.Sequential(*layers)
 
     def forward_single(self, data: HeteroData | Batch) -> torch.Tensor:
+        """Encode one hetero graph and return per-gene node embeddings."""
         device = self.gene_embedding.weight.device
 
         is_batch = isinstance(data, Batch) or hasattr(data["gene"], "batch")
@@ -344,6 +363,7 @@ class HeteroCellBipartite(nn.Module):
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+        """Encode reference and perturbed graphs and return predictions plus outputs."""
         # Process reference graph
         z_w = self.forward_single(cell_graph)
         z_w = self.global_aggregator(
@@ -376,6 +396,8 @@ class HeteroCellBipartite(nn.Module):
 
     @property
     def num_parameters(self) -> dict[str, int]:
+        """Return trainable parameter counts per component of the model."""
+
         def count_params(module: nn.Module) -> int:
             return sum(p.numel() for p in module.parameters() if p.requires_grad)
 
@@ -398,6 +420,7 @@ class HeteroCellBipartite(nn.Module):
     config_name="hetero_cell_bipartite",
 )
 def main(cfg: DictConfig) -> None:
+    """Instantiate the model from config and run a demonstration forward pass."""
     import os
 
     import matplotlib.pyplot as plt

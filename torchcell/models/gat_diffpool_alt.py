@@ -1,3 +1,5 @@
+"""Multi-graph GATv2 encoder with hierarchical DiffPool clustering."""
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -18,6 +20,8 @@ from torchcell.models.act import act_register
 
 
 class GatDiffPool(nn.Module):
+    """GATv2 message passing followed by differentiable pooling over graph types."""
+
     def __init__(
         self,
         in_channels: int,
@@ -41,6 +45,7 @@ class GatDiffPool(nn.Module):
         target_dim: int = 2,
         cluster_reduction: str = "mean",
     ):
+        """Build the GAT encoder stack, DiffPool layers, and output head."""
         super().__init__()
         self.pruned_max_average_node_degree = pruned_max_average_node_degree
         self.num_graphs = num_graphs
@@ -136,6 +141,7 @@ class GatDiffPool(nn.Module):
         self.init_weights()
 
     def get_norm_layer(self, norm, channels):
+        """Return the normalization module matching the given norm name."""
         if norm is None:
             return nn.Identity()
         elif norm == "batch":
@@ -154,6 +160,8 @@ class GatDiffPool(nn.Module):
             raise ValueError(f"Unsupported normalization type: {norm}")
 
     def init_weights(self):
+        """Apply the configured weight initialization to linear and GCN layers."""
+
         def init_func(module):
             if isinstance(module, nn.Linear):
                 if self.weight_init == "xavier_uniform":
@@ -186,6 +194,7 @@ class GatDiffPool(nn.Module):
                         nn.init.zeros_(module.bias)
 
     def forward(self, x, edge_indices: list[torch.Tensor], batch):
+        """Encode each graph type, pool hierarchically, and produce predictions."""
         graph_outputs = []
         attention_weights = []  # Store GAT attention weights
         cluster_assignments = []  # Store cluster assignments
@@ -331,8 +340,7 @@ class GatDiffPool(nn.Module):
         )
 
     def prune_edges_with_attention(self, edge_index, attention_weights, k):
-        """
-        Prune edges using attention weights, keeping only top k edges per node.
+        """Prune edges using attention weights, keeping only top k edges per node.
 
         Args:
             edge_index (torch.Tensor): Edge index tensor [2, num_edges]
@@ -365,6 +373,7 @@ class GatDiffPool(nn.Module):
 
 
 def load_sample_data_batch():
+    """Load a sample batch and max node count for exercising the model."""
     import os
     import os.path as osp
 
@@ -466,6 +475,7 @@ def load_sample_data_batch():
 
 
 def main():
+    """Run a forward/backward smoke test of GatDiffPool on a sample batch."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
     # Load the sample data batch

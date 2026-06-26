@@ -2,7 +2,7 @@
 # [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_scerevisiae_kg_small
 # Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg_small.py
-
+"""Build a small S. cerevisiae BioCypher knowledge graph from Costanzo/Kuzmin data."""
 
 import hashlib
 import json
@@ -59,6 +59,7 @@ def get_num_workers():
 
 @hydra.main(version_base=None, config_path="conf", config_name="kg_small")
 def main(cfg) -> str:
+    """Run the BioCypher build for the small S. cerevisiae knowledge graph."""
     print("printing path info")
     print(os.getcwd())
     load_dotenv("/.env")

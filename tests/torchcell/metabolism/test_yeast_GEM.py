@@ -1,3 +1,5 @@
+"""Tests for the YeastGEM metabolic model wrapper."""
+
 # Test file
 
 import hypernetx as hnx

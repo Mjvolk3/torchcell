@@ -1,3 +1,5 @@
+"""DeepSet node encoder followed by GCN message passing and set aggregation."""
+
 import torch
 from torch import nn
 from torch_geometric.nn import GCNConv as GCN
@@ -7,6 +9,8 @@ from torchcell.models import DeepSet
 
 
 class GraphConvolution(nn.Module):
+    """Combine DeepSet node layers, stacked GCN layers, and post-aggregation MLP."""
+
     def __init__(
         self,
         input_dim: int,
@@ -23,6 +27,7 @@ class GraphConvolution(nn.Module):
         skip_mp: bool = False,
         **kwargs,
     ):
+        """Build the DeepSet node encoder, GCN layer stack, and set MLP layers."""
         super().__init__()
 
         self.deepset = DeepSet(
@@ -60,6 +65,7 @@ class GraphConvolution(nn.Module):
         )
 
     def forward(self, x, batch, edge_index):
+        """Encode nodes, run GCN message passing, and return node and set outputs."""
         # Node processing from DeepSet
         x_node = self.deepset.node_layers_forward(x)
 
@@ -84,6 +90,7 @@ class GraphConvolution(nn.Module):
 
 
 def main():
+    """Instantiate the model on a toy configuration as a smoke test."""
     # Model configuration
     input_dim = 10
     node_layers = [16, 16]

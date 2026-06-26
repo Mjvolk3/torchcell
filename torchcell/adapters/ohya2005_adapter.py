@@ -2,6 +2,7 @@
 # [[torchcell.adapters.ohya2005_adapter]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/ohya2005_adapter.py
 # Test file: tests/torchcell/adapters/test_ohya2005_adapter.py
+"""BioCypher adapter exposing the Ohya 2005 SCMD morphology dataset as graph nodes."""
 
 import logging
 import os.path as osp
@@ -23,6 +24,8 @@ logger.setLevel(logging.ERROR)
 
 
 class ScmdOhya2005Adapter(CellAdapter):
+    """Cell adapter that serves the Ohya 2005 SCMD morphology dataset to BioCypher."""
+
     def __init__(
         self,
         dataset: ScmdOhya2005Dataset,
@@ -31,6 +34,15 @@ class ScmdOhya2005Adapter(CellAdapter):
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
+        """Load the adapter YAML config and initialize the base CellAdapter.
+
+        Args:
+            dataset: The Ohya 2005 SCMD dataset to expose.
+            process_workers: Number of worker processes for node/edge processing.
+            io_workers: Number of worker processes for I/O.
+            chunk_size: Number of records processed per chunk.
+            loader_batch_size: Batch size used by the data loader.
+        """
         current_dir = osp.dirname(osp.abspath(__file__))
 
         config_path = osp.join(current_dir, "conf", "scmd_ohya2005_adapter.yaml")
@@ -57,6 +69,7 @@ class ScmdOhya2005Adapter(CellAdapter):
 
 
 def main():
+    """Build and write the Ohya 2005 BioCypher graph as a standalone script run."""
     import math
     import multiprocessing as mp
     import os

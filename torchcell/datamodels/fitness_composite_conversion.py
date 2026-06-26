@@ -2,7 +2,7 @@
 # [[torchcell.datamodels.fitness_composite_conversion]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/fitness_composite_conversion
 # Test file: tests/torchcell/datamodels/test_fitness_composite_conversion.py
-
+"""Converter that maps gene essentiality and synthetic lethality data into fitness."""
 
 from typing import TYPE_CHECKING
 
@@ -19,7 +19,10 @@ if TYPE_CHECKING:
 
 
 class CompositeFitnessConverter(Converter):
+    """Converter combining gene essentiality and synthetic lethality to fitness."""
+
     def __init__(self, root: str, query: "Neo4jQueryRaw"):
+        """Set up the gene essentiality and synthetic lethality sub-converters."""
         super().__init__(root, query)
         self.gene_essentiality_converter = GeneEssentialityToFitnessConverter(
             root, query
@@ -30,6 +33,7 @@ class CompositeFitnessConverter(Converter):
 
     @property
     def conversion_map(self) -> ConversionMap:
+        """Return the merged conversion map of both sub-converters."""
         entries = (
             self.gene_essentiality_converter.conversion_map.entries
             + self.synthetic_lethality_converter.conversion_map.entries
@@ -37,6 +41,7 @@ class CompositeFitnessConverter(Converter):
         return ConversionMap(entries=entries)
 
     def convert(self, data: dict):
+        """Convert data via gene essentiality, falling back to synthetic lethality."""
         # Try conversion with gene essentiality converter
         converted_data = self.gene_essentiality_converter.convert(data)
 

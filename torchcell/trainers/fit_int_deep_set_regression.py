@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/fit_int_deep_set_regression
 # Test file: tests/torchcell/trainers/test_fit_int_deep_set_regression.py
 
+"""Lightning trainer and NaN-tolerant losses/metrics for deep-set GI regression."""
+
 import os.path as osp
 
 import lightning as L
@@ -27,11 +29,15 @@ plt.style.use(style_file_path)
 
 
 class NaNTolerantCorrelation(Metric):
+    """Wrap a correlation metric so NaN entries in preds/target are masked out."""
+
     def __init__(self, base_metric):
+        """Instantiate the wrapped base correlation metric."""
         super().__init__()
         self.base_metric = base_metric()
 
     def update(self, preds: torch.Tensor, target: torch.Tensor):
+        """Update the base metric using only non-NaN preds/target pairs."""
         # Create a mask for non-NaN values
         mask = ~torch.isnan(preds) & ~torch.isnan(target)
 
@@ -40,24 +46,35 @@ class NaNTolerantCorrelation(Metric):
             self.base_metric.update(preds[mask], target[mask])
 
     def compute(self):
+        """Return the wrapped metric's computed value."""
         return self.base_metric.compute()
 
 
 class NaNTolerantPearsonCorrCoef(NaNTolerantCorrelation):
+    """NaN-tolerant Pearson correlation coefficient."""
+
     def __init__(self):
+        """Initialize with a Pearson correlation base metric."""
         super().__init__(PearsonCorrCoef)
 
 
 class NaNTolerantSpearmanCorrCoef(NaNTolerantCorrelation):
+    """NaN-tolerant Spearman correlation coefficient."""
+
     def __init__(self):
+        """Initialize with a Spearman correlation base metric."""
         super().__init__(SpearmanCorrCoef)
 
 
 class MultiDimNaNTolerantMSELoss(nn.Module):
+    """Per-dimension MSE that ignores NaN targets in each output dimension."""
+
     def __init__(self):
+        """Initialize the module."""
         super().__init__()
 
     def forward(self, y_pred, y_true):
+        """Return the per-dimension MSE computed over non-NaN target entries."""
         # Ensure y_pred and y_true have the same shape
         assert y_pred.shape == y_true.shape, (
             "Predictions and targets must have the same shape"
@@ -87,12 +104,16 @@ class MultiDimNaNTolerantMSELoss(nn.Module):
 
 
 class CombinedMSELoss(nn.Module):
+    """Weighted sum of per-dimension NaN-tolerant MSE losses."""
+
     def __init__(self, weights=None):
+        """Set up the per-dimension MSE and the per-dimension weights."""
         super().__init__()
         self.multi_dim_mse = MultiDimNaNTolerantMSELoss()
         self.weights = weights if weights is not None else torch.ones(2)
 
     def forward(self, y_pred, y_true):
+        """Return the weighted total loss and the per-dimension losses."""
         dim_losses = self.multi_dim_mse(y_pred, y_true)
         weighted_loss = (dim_losses * self.weights).sum() / self.weights.sum()
         return weighted_loss, dim_losses
@@ -111,6 +132,7 @@ class RegressionTask(L.LightningModule):
         clip_grad_norm_max_norm: float = 0.1,
         boxplot_every_n_epochs: int = 1,
     ):
+        """Set up the model, loss, optimizer settings, and per-stage metrics."""
         super().__init__()
         self.boxplot_every_n_epochs = boxplot_every_n_epochs
         # target for training
@@ -170,20 +192,24 @@ class RegressionTask(L.LightningModule):
         self.last_logged_best_step = None
 
     def setup(self, stage=None):
+        """Move the model and loss weights onto the active device."""
         self.model = self.model.to(self.device)
         self.loss.weights = self.loss.weights.to(self.device)
 
     def forward(self, x, batch):
+        """Run the main and top sub-models to predict per-graph targets."""
         x_nodes, x_set = self.model["main"](x, batch)
         y_hat = self.model["top"](x_set)
         return y_hat
 
     def on_train_start(self):
+        """Log the total number of model parameters at training start."""
         parameter_size = sum(p.numel() for p in self.parameters())
         parameter_size_float = float(parameter_size)
         self.log("model/parameters_size", parameter_size_float, on_epoch=True)
 
     def training_step(self, batch, batch_idx):
+        """Run a manual optimization step and log training losses and metrics."""
         x, batch_vector = (batch["gene"].x, batch["gene"].batch)
         y = torch.stack([batch["gene"].fitness, batch["gene"].gene_interaction], dim=1)
 
@@ -222,6 +248,7 @@ class RegressionTask(L.LightningModule):
         return loss
 
     def on_train_epoch_end(self):
+        """Compute, log, and reset the training metrics at epoch end."""
         # Compute and log metrics for each metric type
         for metric_name, metric_dict in self.train_metrics.items():
             computed_metrics = metric_dict.compute()
@@ -230,6 +257,7 @@ class RegressionTask(L.LightningModule):
             metric_dict.reset()  # Reset metrics after logging
 
     def validation_step(self, batch, batch_idx):
+        """Compute validation losses, update metrics, and cache predictions."""
         x, batch_vector = (batch["gene"].x, batch["gene"].batch)
         y = torch.stack([batch["gene"].fitness, batch["gene"].gene_interaction], dim=1)
 
@@ -259,6 +287,7 @@ class RegressionTask(L.LightningModule):
         self.predictions.append(y_hat.detach())
 
     def compute_prediction_stats(self, true_values, predictions, stage="val"):
+        """Log per-bin prediction mean and std as wandb tables for each target."""
         # Define the bin edges for each dimension
         bin_edges = {
             "fitness": torch.tensor(
@@ -298,6 +327,7 @@ class RegressionTask(L.LightningModule):
             )
 
     def on_validation_epoch_end(self):
+        """Log validation metrics, box plots, and the best-model wandb artifact."""
         # Compute and log metrics for each metric type
         for metric_name, metric_dict in self.val_metrics.items():
             computed_metrics = metric_dict.compute()
@@ -351,6 +381,7 @@ class RegressionTask(L.LightningModule):
             )
 
     def test_step(self, batch, batch_idx):
+        """Compute test loss, update metrics, and cache predictions for plotting."""
         # Extract the batch vector
         print()
         x, y, batch_vector = (
@@ -370,6 +401,7 @@ class RegressionTask(L.LightningModule):
         self.predictions.append(y_hat.detach())
 
     def on_test_epoch_end(self):
+        """Log test metrics and box plots, then clear cached predictions."""
         self.log_dict(self.test_metrics.compute(), sync_dist=True)
         self.test_metrics.reset()
 
@@ -394,6 +426,7 @@ class RegressionTask(L.LightningModule):
         self.predictions = []
 
     def configure_optimizers(self):
+        """Return an Adam optimizer over the model parameters."""
         params = list(self.model.parameters())
         optimizer = torch.optim.Adam(
             params, lr=self.learning_rate, weight_decay=self.weight_decay

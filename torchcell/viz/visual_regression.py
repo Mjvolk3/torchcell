@@ -1,3 +1,5 @@
+"""Visualization helpers for logging regression diagnostics to Weights & Biases."""
+
 import io
 import os
 import os.path as osp
@@ -13,7 +15,10 @@ from scipy import stats
 
 
 class Visualization:
+    """Create and log regression diagnostic figures to W&B."""
+
     def __init__(self, base_dir: str, max_points: int = 1000) -> None:
+        """Set up the figure output directory and point-subsampling cap."""
         self.base_dir = base_dir
         self.artifact_dir = osp.join(base_dir, "figures")
         os.makedirs(self.artifact_dir, exist_ok=True)
@@ -23,6 +28,7 @@ class Visualization:
     def save_and_log_figure(
         self, fig: plt.Figure, name: str, timestamp_str: str | None
     ) -> None:
+        """Save the figure to a buffer and log it to W&B under the given name."""
         buf = io.BytesIO()
         fig.savefig(buf, format="png", bbox_inches="tight", dpi=300)
         buf.seek(0)
@@ -31,11 +37,13 @@ class Visualization:
         buf.close()
 
     def init_wandb_artifact(self, name: str, artifact_type: str = "figures") -> None:
+        """Create a W&B artifact for collecting figures."""
         self.artifact = wandb.Artifact(name, type=artifact_type)
 
     def get_base_title(
         self, name: str, num_epochs: int, title_type: str = "loss"
     ) -> str:
+        """Return a multi-line figure title for a loss or latent plot."""
         if title_type == "latent":
             return f"Training Results\nLatent: {name}\nEpochs: {num_epochs}"
         else:
@@ -51,6 +59,7 @@ class Visualization:
         timestamp_str: str | None,
         stage: str = "",
     ) -> None:
+        """Plot predicted vs. true values for one target and log the figure."""
         # Convert to float32 before numpy to handle BFloat16 from mixed precision training
         predictions_np = predictions.detach().cpu().float().numpy()
         true_values_np = true_values.detach().cpu().float().numpy()
@@ -106,6 +115,7 @@ class Visualization:
         timestamp_str: str | None,
         stage: str = "",
     ) -> None:
+        """Plot overlaid true and predicted value distributions and log them."""
         # Convert to float32 before numpy to handle BFloat16 from mixed precision training
         true_np = true_values.detach().cpu().float().numpy()
         pred_np = predictions.detach().cpu().float().numpy()
@@ -193,6 +203,7 @@ class Visualization:
         stage: str = "",
         title_type: str = "loss",
     ) -> None:
+        """Compute a 2D UMAP of features colored by labels and log the figure."""
         # Convert to float32 before numpy to handle BFloat16 from mixed precision training
         features_np = features.detach().cpu().float().numpy()
         labels_np = labels.detach().cpu().float().numpy()
@@ -238,6 +249,7 @@ class Visualization:
     def log_sample_metrics(
         self, predictions: torch.Tensor, true_values: torch.Tensor, stage: str = ""
     ) -> None:
+        """Compute per-target MSE and correlation metrics and log them to W&B."""
         # Convert to float32 before numpy to handle BFloat16 from mixed precision training
         predictions_np = predictions.detach().cpu().float().numpy()
         true_values_np = true_values.detach().cpu().float().numpy()
@@ -288,6 +300,7 @@ class Visualization:
         timestamp_str: str | None,
         stage: str = "",
     ) -> None:
+        """Generate the full set of correlation, distribution, and UMAP plots."""
         # Determine target dimensions to plot
         # For gene interactions model with one target, only use dim 0
         if true_values.shape[1] == 1:

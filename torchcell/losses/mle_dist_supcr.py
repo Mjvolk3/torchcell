@@ -3,6 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/mle_dist_supcr
 # Test file: tests/torchcell/losses/test_mle_dist_supcr.py
 
+"""Combined MLE, distribution, and supervised contrastive loss with buffering."""
 
 import math
 from typing import Any
@@ -22,6 +23,7 @@ class AdaptiveWeighting:
     """Manages adaptive weighting for buffer contributions during training."""
 
     def __init__(self, warmup_epochs: int = 100, stable_epoch: int = 500):
+        """Store the warmup and stabilization epoch thresholds."""
         self.warmup_epochs = warmup_epochs
         self.stable_epoch = stable_epoch
 
@@ -50,6 +52,7 @@ class TemperatureScheduler:
         final_temp: float = 0.1,
         schedule: str = "exponential",
     ):
+        """Store the initial/final temperatures and schedule type."""
         self.init_temp = init_temp
         self.final_temp = final_temp
         self.schedule = schedule
@@ -78,6 +81,7 @@ class BufferedWeightedDistLoss(nn.Module):
         weights: torch.Tensor | None = None,
         min_samples: int = 64,
     ):
+        """Initialize the base dist loss and the circular prediction/target buffers."""
         super().__init__()
         self.buffer_size = buffer_size
         self.min_samples = min_samples
@@ -138,8 +142,7 @@ class BufferedWeightedDistLoss(nn.Module):
         all_targets: torch.Tensor | None = None,
         buffer_weight: float = 1.0,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """
-        Compute distribution loss with buffer support.
+        """Compute distribution loss with buffer support.
 
         Args:
             predictions: Local batch predictions
@@ -216,6 +219,7 @@ class BufferedWeightedSupCRCell(nn.Module):
         weights: torch.Tensor | None = None,
         min_samples: int = 32,
     ):
+        """Initialize the SupCR loss and its circular embedding/label buffers."""
         super().__init__()
         self.buffer_size = buffer_size
         self.embedding_dim = embedding_dim
@@ -280,8 +284,7 @@ class BufferedWeightedSupCRCell(nn.Module):
         buffer_weight: float = 1.0,
         temperature: float | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """
-        Compute SupCR loss with buffer support.
+        """Compute SupCR loss with buffer support.
 
         Args:
             embeddings: Local batch embeddings
@@ -338,9 +341,9 @@ class BufferedWeightedSupCRCell(nn.Module):
 
 
 class MleDistSupCR(nn.Module):
-    """
-    Composite loss combining MSE, distribution matching, and SupCR with
-    circular buffers, DDP synchronization, and adaptive weighting.
+    """Composite loss combining MSE, distribution matching, and SupCR.
+
+    Adds circular buffers, DDP synchronization, and adaptive weighting.
     """
 
     def __init__(
@@ -374,6 +377,7 @@ class MleDistSupCR(nn.Module):
         weights: torch.Tensor | None = None,
         max_epochs: int = 1000,
     ):
+        """Set up component losses, lambda weights, and scheduling configuration."""
         super().__init__()
 
         # Lambda weights
@@ -451,8 +455,7 @@ class MleDistSupCR(nn.Module):
         z_P: torch.Tensor,
         epoch: int | None = None,
     ) -> tuple[torch.Tensor, dict[str, Any]]:
-        """
-        Forward pass computing composite loss.
+        """Forward pass computing composite loss.
 
         Args:
             predictions: Model predictions [batch_size, num_dims]

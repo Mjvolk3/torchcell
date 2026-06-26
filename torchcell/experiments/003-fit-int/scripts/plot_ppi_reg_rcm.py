@@ -2,6 +2,7 @@
 # [[torchcell.experiments.003-fit-int.scripts.plot_ppi_reg_rcm]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/experiments/003-fit-int/scripts/plot_ppi_reg_rcm
 # Test file: tests/torchcell/experiments/003-fit-int/scripts/test_plot_ppi_reg_rcm.py
+"""Plot PPI regulatory reaction-centric maps for the 003-fit-int experiment."""
 
 import os
 import os.path as osp

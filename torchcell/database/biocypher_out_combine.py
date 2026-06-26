@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/database/biocypher_out_combine
 # Test file: tests/torchcell/database/test_biocypher_out_combine.py
 
+"""Combine multiple BioCypher output directories into a single Neo4j import set."""
+
 import argparse
 import json
 import os
@@ -31,6 +33,7 @@ def merge_dicts(dict1, dict2):
 
 
 def check_yaml_compatibility(yaml_files):
+    """Merge all schema YAML files, raising on conflicting key values."""
     combined_data = {}
     for file in yaml_files:
         with open(file) as f:
@@ -79,6 +82,7 @@ def create_schema_info_csv(output_dir, schema_yaml):
 
 
 def combine_csv_files(input_dirs, output_dir):
+    """Copy non-schema CSV parts from input dirs into output with renumbered parts."""
     file_counters = {}
     for input_dir in input_dirs:
         for file in os.listdir(input_dir):
@@ -101,6 +105,7 @@ def combine_csv_files(input_dirs, output_dir):
 
 
 def load_neo4j_config(config_file):
+    """Load and validate the Neo4j config block, requiring all expected keys."""
     with open(config_file) as f:
         config = yaml.safe_load(f)
 
@@ -129,12 +134,14 @@ def load_neo4j_config(config_file):
 
 
 def load_schema_info(schema_file):
+    """Load and return the schema YAML mapping."""
     with open(schema_file) as f:
         schema = yaml.safe_load(f)
     return schema
 
 
 def generate_neo4j_import_script(output_dir, neo4j_config, schema):
+    """Write a neo4j-admin import shell script for Neo4j 4.x and 5+ from the schema."""
     output_dir_name = os.path.basename(output_dir)
     script_content = [
         "#!/bin/bash",
@@ -242,6 +249,7 @@ def generate_neo4j_import_script(output_dir, neo4j_config, schema):
 
 
 def main(input_dirs, output_base_dir, config_yaml):
+    """Combine BioCypher outputs, write schema CSVs, and generate the import script."""
     # Create output directory with timestamp
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     output_dir = os.path.join(output_base_dir, f"{timestamp}_combined")

@@ -1,5 +1,5 @@
-"""
-Generic method timing decorator for profiling any function/method.
+"""Generic method timing decorator for profiling any function/method.
+
 Toggle with TORCHCELL_DEBUG_TIMING=1 environment variable.
 Set via shell: TORCHCELL_DEBUG_TIMING=1 python script.py
 Or in SLURM: --env TORCHCELL_DEBUG_TIMING=1
@@ -16,8 +16,8 @@ _PROFILE_ENABLED = os.getenv("TORCHCELL_DEBUG_TIMING", "0") == "1"
 
 
 def time_method(func):
-    """
-    Decorator that times any function/method execution when profiling is enabled.
+    """Time a function/method execution when profiling is enabled.
+
     Works with functions, instance methods, class methods, and static methods.
     Zero overhead when disabled (single boolean check).
 
@@ -54,8 +54,7 @@ def time_method(func):
 def print_timing_summary(
     title: str = "Method Timing Profile", filter_class: str = None
 ):
-    """
-    Print formatted timing summary with standard deviations.
+    """Print formatted timing summary with standard deviations.
 
     Args:
         title: Custom title for the report
@@ -111,8 +110,7 @@ def get_timings() -> dict[str, list[float]]:
 
 
 def get_timing_summary() -> dict[str, dict[str, float]]:
-    """
-    Get timing summary statistics as a dictionary.
+    """Get timing summary statistics as a dictionary.
 
     Returns:
         Dict mapping method names to stats (total_ms, mean_ms, count, etc.)
@@ -137,8 +135,7 @@ def get_timing_summary() -> dict[str, dict[str, float]]:
 def print_comparison_table(
     baseline_class: str, optimized_class: str, title: str = "Graph Processor Comparison"
 ):
-    """
-    Print side-by-side comparison of two processor classes.
+    """Print side-by-side comparison of two processor classes.
 
     Args:
         baseline_class: Name of baseline class (e.g., "SubgraphRepresentation")

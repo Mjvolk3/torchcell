@@ -2,6 +2,7 @@
 # [[torchcell.sequence.genome.scerevisiae.s288c_gb]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/sequence/genome/scerevisiae/S288C_gb.py
 # Test file: torchcell/sequence/genome/scerevisiae/test_S288C_gb.py
+"""Download and parse the S. cerevisiae S288C GenBank (.gbff) genome from NCBI."""
 
 import os
 import os.path as osp
@@ -16,11 +17,14 @@ from sortedcontainers import SortedDict
 
 @define
 class SCerevisiaeGenome:
+    """S288C genome loaded from NCBI GenBank records keyed by sequence id."""
+
     data_root: str = field(init=True, repr=False, default="data/sgd/genome")
     # Additional field to store genomes
     genomes: SortedDict = field(init=False)
 
     def __attrs_post_init__(self) -> None:
+        """Download the .gbff file if missing, then parse it into genomes."""
         self.genomes = SortedDict()
 
         # Define the exact location of your .gbff file
@@ -37,6 +41,7 @@ class SCerevisiaeGenome:
         self.read_single_gbff_file()
 
     def read_single_gbff_file(self) -> None:
+        """Parse the genomic .gbff file and store each record by its id."""
         # Reusing the gbff_file_path
         gbff_file_path = os.path.join(
             self.data_root, "ncbi_dataset/data/GCF_000146045.2/genomic.gbff"
@@ -53,6 +58,7 @@ class SCerevisiaeGenome:
         print()
 
     def download_and_extract_genome_files(self) -> None:
+        """Download the S288C genome zip via NCBI datasets, unzip, and install it."""
         # Full path to the download location
         download_path = os.path.abspath("GCF_000146045.2.zip")
 
@@ -125,6 +131,7 @@ class SCerevisiaeGenome:
 
 
 def main():
+    """Load the S288C genome from DATA_ROOT as a smoke test."""
     from dotenv import load_dotenv
 
     load_dotenv()

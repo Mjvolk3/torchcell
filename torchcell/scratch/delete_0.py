@@ -1,3 +1,5 @@
+"""Scratch script computing nucleotide-transformer mean embeddings for sequences."""
+
 import json
 
 import torch

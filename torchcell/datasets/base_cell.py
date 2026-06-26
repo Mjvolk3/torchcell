@@ -2,6 +2,7 @@
 # [[torchcell.datasets.base_cell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/base_cell.py
 # Test file: tests/torchcell/datasets/test_base_cell.py
+"""Base cell dataset built from Neo4j queries and stored in LMDB."""
 
 import json
 import logging
@@ -27,17 +28,21 @@ logging.basicConfig(level=logging.INFO)
 
 @define
 class BaseQuery:
+    """Cypher query bound to a Neo4j connection, yielding records on demand."""
+
     query: str
     uri: str = field(default="neo4j://localhost:7687")
     username: str = field(default="neo4j")
     password: str = field(default="neo4j")
 
     def __attrs_post_init__(self):
+        """Open the Neo4j driver using the configured URI and credentials."""
         self.driver = GraphDatabase.driver(
             self.uri, auth=(self.username, self.password)
         )
 
     def get_data(self):
+        """Run the query in a session and yield each result record, then close."""
         with self.driver.session() as session:
             result = session.run(self.query)
             yield from result
@@ -45,10 +50,14 @@ class BaseQuery:
 
 
 class BaseCellDataset(Dataset):
+    """Marker base class for cell datasets."""
+
     pass
 
 
 class Cell(Dataset):
+    """Cell dataset that processes raw query output into an LMDB-backed store."""
+
     def __init__(
         self,
         root: str = "data/torchcell/dmf_costanzo2016",
@@ -58,6 +67,16 @@ class Cell(Dataset):
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
+        """Set up preprocessing config, validate it against any existing config, and process.
+
+        Args:
+            root: Dataset root directory.
+            subset_n: Optional number of rows to randomly subsample.
+            preprocess: Preprocessing configuration dict.
+            skip_process_file_exist: Whether to skip the processed-file existence check.
+            transform: Optional runtime transform.
+            pre_transform: Optional transform applied during processing.
+        """
         self.subset_n = subset_n
         self._skip_process_file_exist = skip_process_file_exist
         # TODO consider moving to a well defined Dataset class
@@ -84,17 +103,21 @@ class Cell(Dataset):
 
     @property
     def skip_process_file_exist(self):
+        """Return whether the processed-file existence check is skipped."""
         return self._skip_process_file_exist
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the expected raw file name."""
         return "dummy.txt"
 
     @property
     def processed_file_names(self) -> list[str]:
+        """Return the processed LMDB file name."""
         return "data.lmdb"
 
     def download(self):
+        """Download raw data (placeholder; query-based download not implemented)."""
         # TODO Run query to download data
         pass
 
@@ -109,17 +132,20 @@ class Cell(Dataset):
         )
 
     def close_lmdb(self):
+        """Close the LMDB environment if it is open."""
         if self.env is not None:
             self.env.close()
             self.env = None
 
     @property
     def df(self):
+        """Return the preprocessed dataframe, loading it from CSV if present."""
         if osp.exists(osp.join(self.preprocess_dir, "data.csv")):
             self._df = pd.read_csv(osp.join(self.preprocess_dir, "data.csv"))
         return self._df
 
     def process(self):
+        """Read raw files, preprocess, optionally subsample, and write experiments to LMDB."""
         os.makedirs(self.preprocess_dir, exist_ok=True)
         self._length = None
         # Initialize an empty DataFrame to hold all raw data
@@ -169,22 +195,26 @@ class Cell(Dataset):
 
     @staticmethod
     def create_experiment(row):
+        """Build an (experiment, reference) pair from a dataframe row (override in subclass)."""
         # return experiment, reference
         pass
 
     def preprocess_raw(self, df: pd.DataFrame, preprocess: dict | None = None):
+        """Apply dataset-specific filtering to the raw dataframe (override in subclass)."""
         print("Preprocess on raw data...")
         # return df
         pass
 
     # New method to save preprocess configuration to a JSON file
     def save_preprocess_config(self, preprocess):
+        """Write the preprocessing configuration to a JSON file in the preprocess dir."""
         if not osp.exists(self.preprocess_dir):
             os.makedirs(self.preprocess_dir)
         with open(osp.join(self.preprocess_dir, "preprocess_config.json"), "w") as f:
             json.dump(preprocess, f)
 
     def load_preprocess_config(self):
+        """Load the saved preprocessing config from JSON, or None if absent."""
         config_path = osp.join(self.preprocess_dir, "preprocess_config.json")
 
         if osp.exists(config_path):
@@ -195,6 +225,7 @@ class Cell(Dataset):
             return None
 
     def len(self) -> int:
+        """Return the number of entries stored in the LMDB database."""
         if self.env is None:
             self._init_db()
 
@@ -207,6 +238,7 @@ class Cell(Dataset):
         return length
 
     def get(self, idx):
+        """Retrieve one item or a list of items for the given index, mask, or array."""
         if self.env is None:
             self._init_db()
 
@@ -227,6 +259,7 @@ class Cell(Dataset):
             return self.get_single_item(idx)
 
     def get_single_item(self, idx):
+        """Deserialize and return the stored record at the given index, or None."""
         with self.env.begin() as txn:
             serialized_data = txn.get(f"{idx}".encode())
             if serialized_data is None:
@@ -237,6 +270,7 @@ class Cell(Dataset):
 
     @staticmethod
     def extract_systematic_gene_names(genotypes):
+        """Return the systematic gene names from each genotype's perturbation."""
         gene_names = []
         for genotype in genotypes:
             if hasattr(genotype, "perturbation") and hasattr(
@@ -247,6 +281,7 @@ class Cell(Dataset):
         return gene_names
 
     def compute_gene_set(self):
+        """Scan all LMDB records and build the GeneSet of perturbed gene names."""
         gene_set = GeneSet()
         if self.env is None:
             self._init_db()
@@ -270,6 +305,7 @@ class Cell(Dataset):
     # Reading from JSON and setting it to self._gene_set
     @property
     def gene_set(self):
+        """Return the GeneSet, loading from gene_set.json if it exists."""
         if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
             with open(osp.join(self.preprocess_dir, "gene_set.json")) as f:
                 self._gene_set = GeneSet(json.load(f))
@@ -290,11 +326,13 @@ class Cell(Dataset):
 
     @property
     def experiment_reference_index(self):
+        """Return the experiment-to-reference index (not yet implemented; returns None)."""
         # TODO implement
         self._experiment_reference_index = None
         return self._experiment_reference_index
 
     def __repr__(self):
+        """Return a string with the class name and number of items."""
         return f"{self.__class__.__name__}({len(self)})"
 
 

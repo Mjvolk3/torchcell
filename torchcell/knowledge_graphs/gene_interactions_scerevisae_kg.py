@@ -1,3 +1,5 @@
+"""Build the S. cerevisiae gene-interaction BioCypher knowledge graph."""
+
 import hashlib
 import json
 import logging
@@ -46,6 +48,7 @@ def get_num_workers() -> int:
 
 @hydra.main(version_base=None, config_path="conf", config_name="kg")
 def main(cfg) -> str:
+    """Run the gene-interaction adapters and write BioCypher graph output."""
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
     BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")

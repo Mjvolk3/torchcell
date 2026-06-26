@@ -1,3 +1,5 @@
+"""Tests for the S. cerevisiae S288C genome wrapper."""
+
 import os
 import os.path as osp
 

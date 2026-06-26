@@ -1,3 +1,5 @@
+"""Tests for MaskedAttentionBlock and NodeSelfAttention."""
+
 # tests/torchcell/nn/test_masked_attention_block.py
 
 import pytest
@@ -12,7 +14,7 @@ from torchcell.nn.masked_attention_block import MaskedAttentionBlock, NodeSelfAt
 
 @pytest.fixture
 def simple_graph():
-    """Fixture for a simple graph with community structure"""
+    """Fixture for a simple graph with community structure."""
     # Create a simple graph with 4 communities
     block_sizes = [25, 25, 25, 25]  # 4 blocks of 25 nodes each
     edge_probs = [
@@ -43,7 +45,7 @@ def simple_graph():
 
 @pytest.fixture
 def metabolic_graph():
-    """Fixture for a small metabolic network with stoichiometry"""
+    """Fixture for a small metabolic network with stoichiometry."""
     # Create a small metabolic network with 6 nodes (3 metabolites, 3 reactions)
     # Node features (one-hot encoding for node type)
     x = torch.zeros(6, 2)  # 2 node types: metabolite (0) and reaction (1)
@@ -78,7 +80,7 @@ def metabolic_graph():
 
 @pytest.fixture
 def batched_graphs(simple_graph):
-    """Fixture for batched graphs with different sizes"""
+    """Fixture for batched graphs with different sizes."""
     # Create a copy of simple_graph to avoid modifying the original
     graph1 = Data(
         x=simple_graph.x.clone(),
@@ -113,7 +115,7 @@ def batched_graphs(simple_graph):
 
 
 def test_masked_attention_block_initialization():
-    """Test initialization of MaskedAttentionBlock and NodeSetAttention"""
+    """Test initialization of MaskedAttentionBlock and NodeSetAttention."""
     hidden_dim = 64
     num_heads = 8
 
@@ -134,7 +136,7 @@ def test_masked_attention_block_initialization():
 
 
 def test_node_set_attention_forward():
-    """Test forward pass of NodeSetAttention with boolean masks"""
+    """Test forward pass of NodeSetAttention with boolean masks."""
     # Skip test if torch.compile not available (older PyTorch versions)
     try:
         import torch.compile
@@ -179,7 +181,7 @@ def test_node_set_attention_forward():
 
 
 def test_mab_simple():
-    """Simple test of MaskedAttentionBlock without FlexAttention complexity"""
+    """Simple test of MaskedAttentionBlock without FlexAttention complexity."""
     hidden_dim = 64
     seq_len = 16
     batch_size = 2
@@ -217,7 +219,7 @@ def test_mab_simple():
 
 
 def test_differentiability():
-    """Test that attention blocks are differentiable (simplified)"""
+    """Test that attention blocks are differentiable (simplified)."""
     # Use a simpler implementation to test gradient flow
     hidden_dim = 32
     batch_size = 2
@@ -246,7 +248,7 @@ def test_differentiability():
 
 
 def test_memory_usage():
-    """Test memory efficiency of boolean vs float masks"""
+    """Test memory efficiency of boolean vs float masks."""
     # Create boolean and float masks
     seq_len = 500
     batch_size = 2
@@ -274,7 +276,7 @@ def test_memory_usage():
 
 
 def test_node_set_attention_with_bool_mask_and_edge_attr():
-    """Test NodeSetAttention with boolean masks and sparse edge attributes"""
+    """Test NodeSetAttention with boolean masks and sparse edge attributes."""
     # Setup test parameters
     hidden_dim = 64
     batch_size = 2
@@ -338,7 +340,7 @@ def test_node_set_attention_with_bool_mask_and_edge_attr():
 
 
 def test_node_set_attention_with_metabolic_stoichiometry(metabolic_graph):
-    """Test NodeSetAttention with metabolic network stoichiometry"""
+    """Test NodeSetAttention with metabolic network stoichiometry."""
     # Setup
     hidden_dim = 32
 
@@ -399,7 +401,7 @@ def test_node_set_attention_with_metabolic_stoichiometry(metabolic_graph):
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_gpu_flex_attention_basic():
-    """Test that FlexAttention works correctly on GPU - basic functionality"""
+    """Test that FlexAttention works correctly on GPU - basic functionality."""
     hidden_dim = 64
     batch_size = 2
     seq_len = 32
@@ -435,7 +437,7 @@ def test_gpu_flex_attention_basic():
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_gpu_edge_attributes():
-    """Test edge attributes are properly handled with FlexAttention on GPU"""
+    """Test edge attributes are properly handled with FlexAttention on GPU."""
     hidden_dim = 64
     batch_size = 2
     seq_len = 32
@@ -489,7 +491,7 @@ def test_gpu_edge_attributes():
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_gpu_mask_memory_efficiency():
-    """Test memory efficiency of boolean masks on GPU"""
+    """Test memory efficiency of boolean masks on GPU."""
     seq_len = 1000  # Large enough to see memory differences
     batch_size = 2
 
@@ -514,7 +516,7 @@ def test_gpu_mask_memory_efficiency():
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_gpu_large_batch_processing():
-    """Test that FlexAttention can handle large batches on GPU"""
+    """Test that FlexAttention can handle large batches on GPU."""
     # Skip if GPU memory is insufficient
     if torch.cuda.get_device_properties(0).total_memory < 4 * 1024**3:  # < 4GB
         pytest.skip("GPU memory insufficient for large batch test")
@@ -561,7 +563,7 @@ def test_gpu_large_batch_processing():
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_flex_attention_fails_correctly(metabolic_graph):
-    """Test that FlexAttention raises appropriate errors instead of falling back"""
+    """Test that FlexAttention raises appropriate errors instead of falling back."""
     # Setup
     hidden_dim = 32
 

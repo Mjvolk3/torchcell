@@ -3,6 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/sgd
 # Test file: tests/torchcell/datasets/scerevisiae/test_sgd.py
 
+"""SGD-derived gene essentiality dataset for S. cerevisiae."""
 
 import logging
 import os
@@ -39,6 +40,7 @@ log = logging.getLogger(__name__)
 
 
 def get_publication_info(pubmed_id):
+    """Fetch publication metadata (PubMed URL, DOI) for a PubMed ID via Entrez."""
     Entrez.email = "mvjolk3@illinois.edu"
     max_retries = 5
     base_delay = 1  # seconds
@@ -105,6 +107,8 @@ def get_publication_info(pubmed_id):
 
 @register_dataset
 class GeneEssentialitySgdDataset(ExperimentDataset):
+    """Gene essentiality experiments built from SGD inviable null phenotypes."""
+
     def __init__(
         self,
         root: str = "data/torchcell/gene_essentiality_sgd",
@@ -114,33 +118,40 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Store the S. cerevisiae graph and initialize the experiment dataset."""
         self.scerevisiae_graph = scerevisiae_graph
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> GeneEssentialityExperiment:
+        """Return the experiment model class for this dataset."""
         return GeneEssentialityExperiment
 
     @property
     def reference_class(self) -> GeneEssentialityExperimentReference:
+        """Return the experiment reference model class for this dataset."""
         return GeneEssentialityExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the raw file names (none, as data is fetched from SGD)."""
         return []  # Return an empty list if there are no raw files to download
 
     def download(self):
+        """Do nothing; this dataset has no raw files to download."""
         # If there's nothing to download, you can just pass
         pass
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict | None = None
     ) -> pd.DataFrame:
+        """Return the DataFrame unchanged (no raw preprocessing needed)."""
         # If there's no preprocessing needed, you can return the DataFrame as is
         return df
 
     @post_process
     def process(self):
+        """Build essentiality experiments from SGD inviable phenotypes into LMDB."""
         log.info("Processing SGD Gene Essentiality Data...")
 
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -202,6 +213,7 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
     # It is a reasonable guess
     @staticmethod
     def create_experiment(dataset_name, gene, phenotype_data):
+        """Build the experiment, reference, and publication for one gene phenotype."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
         )
@@ -257,6 +269,7 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
 
 
 def main():
+    """Build and inspect the SGD gene essentiality dataset for ad-hoc runs."""
     import os
 
     from dotenv import load_dotenv

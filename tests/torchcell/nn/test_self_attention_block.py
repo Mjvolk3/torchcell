@@ -1,4 +1,5 @@
 # tests/torchcell/nn/test_self_attention_block.py
+"""Tests for SelfAttentionBlock."""
 
 import time
 
@@ -10,7 +11,7 @@ from torchcell.nn.self_attention_block import SelfAttentionBlock
 
 
 def test_self_attention_block_initialization():
-    """Test initialization of SelfAttentionBlock"""
+    """Test initialization of SelfAttentionBlock."""
     hidden_dim = 64
     num_heads = 8
 
@@ -34,7 +35,7 @@ def test_self_attention_block_initialization():
 
 
 def test_cpu_forward_pass():
-    """Test forward pass on CPU"""
+    """Test forward pass on CPU."""
     hidden_dim = 64
     batch_size = 2
     seq_len = 16
@@ -57,7 +58,7 @@ def test_cpu_forward_pass():
 
 
 def test_reshape_for_attention():
-    """Test reshaping function for attention"""
+    """Test reshaping function for attention."""
     hidden_dim = 64
     num_heads = 8
     head_dim = hidden_dim // num_heads
@@ -85,7 +86,7 @@ def test_reshape_for_attention():
 
 
 def test_differentiability():
-    """Test that the self-attention block is differentiable"""
+    """Test that the self-attention block is differentiable."""
     hidden_dim = 64
     batch_size = 2
     seq_len = 16
@@ -109,7 +110,7 @@ def test_differentiability():
 
 
 def test_forward_with_long_sequence():
-    """Test forward pass with longer sequence"""
+    """Test forward pass with longer sequence."""
     hidden_dim = 64
     batch_size = 2
     seq_len = 256  # Longer sequence
@@ -129,7 +130,7 @@ def test_forward_with_long_sequence():
 
 
 def test_forward_unbatched():
-    """Test forward pass with unbatched input (2D tensor)"""
+    """Test forward pass with unbatched input (2D tensor)."""
     hidden_dim = 64
     seq_len = 16
 
@@ -154,7 +155,7 @@ def test_forward_unbatched():
 
 
 def test_zero_length_sequence():
-    """Test forward pass with zero-length sequence"""
+    """Test forward pass with zero-length sequence."""
     hidden_dim = 64
     batch_size = 2
     seq_len = 0
@@ -179,7 +180,7 @@ def test_zero_length_sequence():
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_gpu_forward_pass():
-    """Test forward pass on GPU"""
+    """Test forward pass on GPU."""
     hidden_dim = 64
     batch_size = 2
     seq_len = 16
@@ -204,7 +205,7 @@ def test_gpu_forward_pass():
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_gpu_backward_pass():
-    """Test backward pass on GPU"""
+    """Test backward pass on GPU."""
     hidden_dim = 64
     batch_size = 2
     seq_len = 16
@@ -230,7 +231,7 @@ def test_gpu_backward_pass():
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_gpu_vs_cpu():
-    """Test that GPU and CPU implementations produce similar results"""
+    """Test that GPU and CPU implementations produce similar results."""
     hidden_dim = 64
     batch_size = 2
     seq_len = 16
@@ -291,7 +292,7 @@ def test_gpu_vs_cpu():
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_gpu_flex_attention_error_propagation():
-    """Test that errors in flex_attention propagate correctly"""
+    """Test that errors in flex_attention propagate correctly."""
     from unittest.mock import patch
 
     hidden_dim = 64
@@ -318,7 +319,7 @@ def test_gpu_flex_attention_error_propagation():
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_gpu_performance():
-    """Test performance on GPU vs CPU"""
+    """Test performance on GPU vs CPU."""
     hidden_dim = 64
     batch_size = 4
     seq_len = 128
@@ -367,7 +368,7 @@ def test_gpu_performance():
 
 
 def test_large_model():
-    """Test with larger hidden dimensions"""
+    """Test with larger hidden dimensions."""
     hidden_dim = 256  # Larger than the default
     batch_size = 2
     seq_len = 16
@@ -388,7 +389,7 @@ def test_large_model():
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_large_batch_gpu():
-    """Test with larger batch on GPU"""
+    """Test with larger batch on GPU."""
     hidden_dim = 64
     batch_size = 16  # Larger batch
     seq_len = 32
@@ -412,7 +413,7 @@ def test_large_batch_gpu():
 
 
 def test_integration_with_other_modules():
-    """Test integration with other PyTorch modules"""
+    """Test integration with other PyTorch modules."""
     hidden_dim = 64
     batch_size = 2
     seq_len = 16

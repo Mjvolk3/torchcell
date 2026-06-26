@@ -2,8 +2,7 @@
 # [[torchcell.datamodules.lazy_collate]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodules/lazy_collate
 
-"""
-Custom collate function for LazySubgraphRepresentation batching.
+"""Custom collate function for LazySubgraphRepresentation batching.
 
 Handles the zero-copy architecture where all samples share the same edge_index
 tensor by replicating and offsetting edge indices during batching.
@@ -23,8 +22,7 @@ from torch_geometric.loader.dataloader import Collater
 
 
 def lazy_collate_hetero(data_list: list[HeteroData]) -> HeteroData:
-    """
-    Custom collate function for batching HeteroData with LazySubgraphRepresentation.
+    """Custom collate function for batching HeteroData with LazySubgraphRepresentation.
 
     **The Problem**: LazySubgraphRepresentation returns the SAME edge_index tensor
     for all samples (zero-copy optimization). PyG's default batching requires
@@ -192,8 +190,7 @@ def lazy_collate_hetero(data_list: list[HeteroData]) -> HeteroData:
 
 
 def verify_batch_structure(batch: HeteroData, expected_graphs: int = 2) -> bool:
-    """
-    Verify that batched HeteroData has correct structure for masked message passing.
+    """Verify that batched HeteroData has correct structure for masked message passing.
 
     Checks:
     1. Edge indices are properly offset (no overlap between graphs)
@@ -265,8 +262,7 @@ def verify_batch_structure(batch: HeteroData, expected_graphs: int = 2) -> bool:
 
 
 class LazyCollater(Collater):
-    """
-    PyTorch Lightning-compatible collater for LazySubgraphRepresentation.
+    """PyTorch Lightning-compatible collater for LazySubgraphRepresentation.
 
     Extends PyG's Collater to use lazy_collate_hetero for HeteroData batching,
     which properly handles zero-copy edge_index references by replicating and
@@ -308,11 +304,11 @@ class LazyCollater(Collater):
         follow_batch: list[str] | None = None,
         exclude_keys: list[str] | None = None,
     ):
+        """Initialize the lazy collater wrapping the base Collater."""
         super().__init__(dataset, follow_batch, exclude_keys)
 
     def __call__(self, batch: list[Any]) -> Any:
-        """
-        Override collate to use lazy_collate_hetero for HeteroData.
+        """Override collate to use lazy_collate_hetero for HeteroData.
 
         For HeteroData objects (from LazySubgraphRepresentation), uses
         lazy_collate_hetero which properly handles zero-copy edge_index.

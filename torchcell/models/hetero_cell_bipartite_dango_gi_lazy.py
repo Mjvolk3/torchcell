@@ -4,7 +4,7 @@
 # Test file: tests/torchcell/models/test_hetero_cell_bipartite_dango_gi_lazy.py
 #
 # Lazy version adapted for LazySubgraphRepresentation's zero-copy architecture
-
+"""Lazy bipartite Dango gene-interaction model using masked, zero-copy message passing."""
 
 import os
 import os.path as osp
@@ -35,11 +35,12 @@ from torchcell.nn.masked_gin_conv import MaskedGINConv
 
 
 class SelfAttentionGraphAggregation(nn.Module):
-    """Self-attention mechanism for aggregating multiple graph representations of the same nodes"""
+    """Self-attention mechanism for aggregating multiple graph representations of the same nodes."""
 
     def __init__(
         self, hidden_dim: int, num_graphs: int, num_heads: int = 4, dropout: float = 0.0
     ):
+        """Build the multi-head attention layer and learnable per-graph positional encodings."""
         super().__init__()
         self.num_graphs = num_graphs
         self.hidden_dim = hidden_dim
@@ -56,7 +57,8 @@ class SelfAttentionGraphAggregation(nn.Module):
     def forward(
         self, graph_outputs: dict[str, torch.Tensor]
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """
+        """Attend across per-graph node features and mean-pool to one representation.
+
         Args:
             graph_outputs: Dict mapping graph names to node features [num_nodes, hidden_dim]
 
@@ -98,7 +100,7 @@ class SelfAttentionGraphAggregation(nn.Module):
 
 
 class PairwiseGraphAggregation(nn.Module):
-    """Pairwise interaction mechanism for aggregating multiple graph representations"""
+    """Pairwise interaction mechanism for aggregating multiple graph representations."""
 
     def __init__(
         self,
@@ -110,6 +112,7 @@ class PairwiseGraphAggregation(nn.Module):
         bottleneck_dim: int | None = None,
         norm: str | None = None,
     ):
+        """Build per-pair interaction MLPs, a scorer, and optional output normalization."""
         super().__init__()
         self.graph_names = sorted(graph_names)
         self.hidden_dim = hidden_dim
@@ -178,8 +181,8 @@ class PairwiseGraphAggregation(nn.Module):
     def forward(
         self, graph_outputs: dict[str, torch.Tensor]
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """
-        Compute pairwise graph interactions and aggregate them.
+        """Compute pairwise graph interactions and aggregate them.
+
         Includes identity option (mean of individual graphs) alongside pairwise combinations.
 
         Returns:
@@ -246,8 +249,8 @@ class PairwiseGraphAggregation(nn.Module):
 
 
 class HeteroConvAggregator(nn.Module):
-    """
-    HeteroConv wrapper with configurable aggregation strategies.
+    """HeteroConv wrapper with configurable aggregation strategies.
+
     Supports: sum, mean, cross_attention, pairwise_interaction
     """
 
@@ -258,6 +261,7 @@ class HeteroConvAggregator(nn.Module):
         aggregation_method: str = "cross_attention",
         aggregation_config: dict | None = None,
     ):
+        """Store the per-edge-type convs and build the chosen aggregation module."""
         super().__init__()
         self.convs = nn.ModuleDict({str(k): v for k, v in convs.items()})
         self.hidden_channels = hidden_channels
@@ -299,8 +303,7 @@ class HeteroConvAggregator(nn.Module):
         edge_index_dict: dict[EdgeType, torch.Tensor],
         edge_mask_dict: dict[EdgeType, torch.Tensor] | None = None,
     ) -> tuple[dict[str, torch.Tensor], torch.Tensor | None]:
-        """
-        Apply graph convolutions and aggregate using specified method.
+        """Apply graph convolutions and aggregate using specified method.
 
         LAZY VERSION: Accepts edge_mask_dict for masking edges during message passing.
 
@@ -381,6 +384,8 @@ class HeteroConvAggregator(nn.Module):
 
 
 class AttentionalGraphAggregation(nn.Module):
+    """Attentional aggregation pooling node features into graph-level vectors."""
+
     def __init__(
         self,
         in_channels: int,
@@ -388,6 +393,7 @@ class AttentionalGraphAggregation(nn.Module):
         dropout: float = 0.1,
         activation: str = "relu",
     ):
+        """Build the gating and transform MLPs and the attentional aggregator."""
         super().__init__()
         # Validate activation - NO FALLBACK
         if activation not in act_register:
@@ -413,18 +419,20 @@ class AttentionalGraphAggregation(nn.Module):
     def forward(
         self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
+        """Aggregate node features into graph-level vectors using attention weights."""
         return self.aggregator(x, index=index, dim_size=dim_size)
 
 
 class DangoLikeHyperSAGNN(nn.Module):
-    """
-    Dango-like HyperSAGNN for local gene interaction prediction.
+    """Dango-like HyperSAGNN for local gene interaction prediction.
+
     Implements multi-layer self-attention with multi-head attention and ReZero connections.
     """
 
     def __init__(
         self, hidden_dim, num_heads=4, num_layers=2, dropout=0.1, activation="relu"
     ):
+        """Build the stacked self-attention layers with ReZero connections."""
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
@@ -469,7 +477,8 @@ class DangoLikeHyperSAGNN(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, gene_embeddings, batch=None):
-        """
+        """Compute static and attention-refined dynamic gene embeddings.
+
         Args:
             gene_embeddings: Tensor of shape [total_genes, hidden_dim]
             batch: Optional tensor [total_genes] indicating batch assignment
@@ -501,7 +510,7 @@ class DangoLikeHyperSAGNN(nn.Module):
         return static_embeddings, dynamic_embeddings
 
     def _apply_attention_layer(self, x, layer, beta):
-        """Apply a single attention layer with multi-head attention"""
+        """Apply a single attention layer with multi-head attention."""
         batch_size = x.size(0)
 
         # Handle special case of single gene (no attention possible)
@@ -555,8 +564,8 @@ class DangoLikeHyperSAGNN(nn.Module):
         return x + beta * out
 
     def _apply_attention_layer_batched(self, x, batch, batch_sizes, layer, beta):
-        """
-        Apply attention layer across multiple batches using segment operations.
+        """Apply attention layer across multiple batches using segment operations.
+
         No .unique(), no Python loops over batches.
 
         Args:
@@ -603,9 +612,12 @@ class DangoLikeHyperSAGNN(nn.Module):
 
 
 class GeneInteractionPredictor(nn.Module):
+    """Predict gene interaction scores from gene embeddings via a HyperSAGNN."""
+
     def __init__(
         self, hidden_dim, num_heads=4, num_layers=2, dropout=0.1, activation="relu"
     ):
+        """Build the HyperSAGNN encoder and the linear scoring head."""
         super().__init__()
         # Use the new Dango-like HyperSAGNN with config-driven activation
         self.hyper_sagnn = DangoLikeHyperSAGNN(
@@ -620,7 +632,8 @@ class GeneInteractionPredictor(nn.Module):
         nn.init.xavier_uniform_(self.prediction_layer.weight)
 
     def forward(self, gene_embeddings, batch=None):
-        """
+        """Score gene interactions from static/dynamic embedding differences.
+
         Args:
             gene_embeddings: Tensor of shape [total_genes, hidden_dim]
             batch: Optional tensor [total_genes] indicating batch assignment
@@ -677,6 +690,8 @@ def get_norm_layer(channels: int, norm: str) -> nn.Module:
 
 
 class PreProcessor(nn.Module):
+    """MLP that preprocesses node features with linear, norm, activation, and dropout layers."""
+
     def __init__(
         self,
         in_channels: int,
@@ -686,6 +701,7 @@ class PreProcessor(nn.Module):
         norm: str = "layer",
         activation: str = "relu",
     ):
+        """Build the preprocessing MLP layer stack from the channel and norm settings."""
         super().__init__()
         # Get activation from register - NO FALLBACK
         if activation is None:
@@ -710,10 +726,13 @@ class PreProcessor(nn.Module):
         self.mlp = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Pass node features through the preprocessing MLP."""
         return self.mlp(x)
 
 
 class AttentionConvWrapper(nn.Module):
+    """Wrapper applying norm, activation, and dropout around a graph convolution."""
+
     def __init__(
         self,
         conv: nn.Module,
@@ -722,6 +741,7 @@ class AttentionConvWrapper(nn.Module):
         activation: str | None = None,
         dropout: float = 0.1,
     ) -> None:
+        """Wrap the conv and set up the norm, activation, and dropout layers."""
         super().__init__()
         self.conv = conv
 
@@ -770,8 +790,7 @@ class AttentionConvWrapper(nn.Module):
         self.dropout = nn.Dropout(dropout) if dropout > 0 else None
 
     def forward(self, x, edge_index, edge_mask=None, **kwargs):
-        """
-        Forward pass with optional edge masking support.
+        """Run the wrapped conv with optional edge masking, then norm/activation/dropout.
 
         Args:
             x: Node features
@@ -863,6 +882,8 @@ def create_conv_layer(
 
 
 class GeneInteractionDango(nn.Module):
+    """Lazy Dango-style model predicting gene interactions from a gene multigraph."""
+
     def __init__(
         self,
         gene_num: int,
@@ -875,6 +896,7 @@ class GeneInteractionDango(nn.Module):
         gene_encoder_config: dict[str, Any] | None = None,
         local_predictor_config: dict[str, Any] | None = None,
     ):
+        """Build gene embeddings, the masked graph encoder stack, and the interaction predictor."""
         super().__init__()
         self.hidden_channels = hidden_channels
         self.gene_multigraph = gene_multigraph
@@ -1018,7 +1040,7 @@ class GeneInteractionDango(nn.Module):
         self._init_weights()
 
     def _init_weights(self):
-        """Initialize all weights in the model with appropriate initializations"""
+        """Initialize all weights in the model with appropriate initializations."""
 
         def _init_module(module):
             if isinstance(module, nn.Linear):
@@ -1059,8 +1081,7 @@ class GeneInteractionDango(nn.Module):
         # ReZero parameters are already initialized in DangoLikeHyperSAGNN.__init__
 
     def forward_single(self, data: HeteroData | Batch) -> torch.Tensor:
-        """
-        LAZY VERSION: Process graph data with full node/edge tensors and masking.
+        """Process graph data with full node/edge tensors and masking (lazy version).
 
         Key differences from original:
         - No node filtering: x references FULL graph (all nodes including perturbed)
@@ -1153,8 +1174,7 @@ class GeneInteractionDango(nn.Module):
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """
-        LAZY VERSION: Forward pass with mask application before aggregation.
+        """Run the forward pass with mask application before aggregation (lazy version).
 
         Key differences from original:
         - z_w and z_i are full graph embeddings [total_nodes, hidden_dim]
@@ -1381,6 +1401,8 @@ class GeneInteractionDango(nn.Module):
 
     @property
     def num_parameters(self) -> dict[str, int]:
+        """Return a breakdown of trainable parameter counts per submodule."""
+
         def count_params(module: nn.Module) -> int:
             return sum(p.numel() for p in module.parameters() if p.requires_grad)
 
@@ -1439,6 +1461,7 @@ def calculate_rolling_correlation(x, y, window=50):
     config_name="hetero_cell_bipartite_dango_gi",
 )
 def main(cfg: DictConfig) -> None:
+    """Run a manual smoke test of the lazy model from the Hydra config."""
     import os
 
     import matplotlib.pyplot as plt

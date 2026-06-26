@@ -68,6 +68,7 @@ class RegisterRecordFunction:
     """
 
     def __init__(self, model: nn.Module) -> None:
+        """Store the model and prepare per-module record and handle maps."""
         self._model = model
         self._records: dict[str, record_function] = {}
         self._handles: dict[str, list[RemovableHandle]] = {}
@@ -88,6 +89,7 @@ class RegisterRecordFunction:
         return output
 
     def __enter__(self) -> None:
+        """Register forward hooks on every named module to record functions."""
         for module_name, module in self._model.named_modules():
             if module_name:
                 full_name = f"{type(module).__module__}.{type(module).__name__}"
@@ -102,6 +104,7 @@ class RegisterRecordFunction:
                 self._handles[module_name] = [pre_forward_handle, post_forward_handle]
 
     def __exit__(self, type: Any, value: Any, traceback: Any) -> None:
+        """Remove all registered forward hooks."""
         for handles in self._handles.values():
             for h in handles:
                 h.remove()
@@ -109,11 +112,10 @@ class RegisterRecordFunction:
 
 
 class ScheduleWrapper:
-    """This class is used to override the schedule logic from the profiler and perform recording for both
-    `training_step`, `validation_step`.
-    """
+    """Override profiler schedule logic to record both training and validation steps."""
 
     def __init__(self, schedule: Callable) -> None:
+        """Wrap a profiler schedule and reset per-stage step counters."""
         if not _KINETO_AVAILABLE:
             raise ModuleNotFoundError(
                 "You are trying to use `ScheduleWrapper` which require kineto install."
@@ -122,6 +124,7 @@ class ScheduleWrapper:
         self.reset()
 
     def reset(self) -> None:
+        """Reset all per-stage step counters and cached schedule state."""
         # handle properly `fast_dev_run`. PyTorch Profiler will fail otherwise.
         self._num_training_step = 0
         self._num_validation_step = 0
@@ -137,33 +140,40 @@ class ScheduleWrapper:
         self._start_action_name: str | None = None
 
     def setup(self, start_action_name: str) -> None:
+        """Record the action name that started the profiling run."""
         self._start_action_name = start_action_name
 
     def pre_step(self, current_action: str) -> None:
+        """Record the action name for the upcoming step."""
         self._current_action = current_action
 
     @property
     def is_training(self) -> bool:
+        """Return True if the current action is a training step."""
         assert self._current_action is not None
         return self._current_action.endswith("training_step")
 
     @property
     def is_validating(self) -> bool:
+        """Return True if the current action is a validation step."""
         assert self._current_action is not None
         return self._current_action.endswith("validation_step")
 
     @property
     def is_testing(self) -> bool:
+        """Return True if the current action is a test step."""
         assert self._current_action is not None
         return self._current_action.endswith("test_step")
 
     @property
     def is_predicting(self) -> bool:
+        """Return True if the current action is a predict step."""
         assert self._current_action is not None
         return self._current_action.endswith("predict_step")
 
     @property
     def num_step(self) -> int:
+        """Return the step count for the current stage."""
         if self.is_training:
             return self._num_training_step
         if self.is_validating:
@@ -191,6 +201,7 @@ class ScheduleWrapper:
 
     @property
     def has_finished(self) -> bool:
+        """Return True if the current stage has reached its recording end."""
         if self.is_training:
             return self._training_step_reached_end
         if self.is_validating:
@@ -202,6 +213,7 @@ class ScheduleWrapper:
         return False
 
     def __call__(self, num_step: int) -> "ProfilerAction":
+        """Advance the internal step and return the next profiler action."""
         # ignore the provided input. Keep internal state instead.
         if self._current_action is None or self.has_finished:
             return ProfilerAction.NONE
@@ -232,6 +244,8 @@ class ScheduleWrapper:
 
 
 class PyTorchProfiler(Profiler):
+    """Lightning profiler wrapping PyTorch's autograd/Kineto profiler."""
+
     STEP_FUNCTIONS = {"training_step", "validation_step", "test_step", "predict_step"}
     AVAILABLE_SORT_KEYS = {
         "cpu_time",
@@ -258,8 +272,7 @@ class PyTorchProfiler(Profiler):
         table_kwargs: dict[str, Any] | None = None,
         **profiler_kwargs: Any,
     ) -> None:
-        r"""This profiler uses PyTorch's Autograd Profiler and lets you inspect the cost of
-        different operators inside your model - both on the CPU and GPU.
+        r"""Inspect operator costs on CPU and GPU via PyTorch's Autograd Profiler.
 
         Args:
             dirpath: Directory path for the ``filename``. If ``dirpath`` is ``None`` but ``filename`` is present, the
@@ -297,7 +310,7 @@ class PyTorchProfiler(Profiler):
 
             table_kwargs: Dictionary with keyword arguments for the summary table.
 
-            \**profiler_kwargs: Keyword arguments for the PyTorch profiler. This depends on your PyTorch version
+            **profiler_kwargs: Keyword arguments for the PyTorch profiler. This depends on your PyTorch version
 
         Raises:
             MisconfigurationException:

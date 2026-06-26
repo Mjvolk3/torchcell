@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/data/neo4j_cell
 # Test file: tests/torchcell/data/test_neo4j_cell.py
 
+"""Neo4j-backed cell dataset with LMDB caching and graph processing."""
+
 import json
 import logging
 import os
@@ -49,10 +51,13 @@ log = logging.getLogger(__name__)
 
 
 class ParsedGenome(ModelStrictArbitrary):
+    """Validated container holding the genome's gene set."""
+
     gene_set: GeneSet
 
     @field_validator("gene_set")
     def validate_gene_set(cls, v):
+        """Validate that the value is a GeneSet instance."""
         if not isinstance(v, GeneSet):
             raise ValueError(f"gene_set must be a GeneSet, got {type(v).__name__}")
         return v
@@ -122,8 +127,8 @@ def create_embedding_graph(
 
 
 def create_graph_from_gene_set(gene_set: GeneSet) -> GeneGraph:
-    """
-    Create a GeneGraph where nodes are gene names from the GeneSet.
+    """Create a GeneGraph where nodes are gene names from the GeneSet.
+
     Initially, this graph will have no edges.
     """
     G = nx.Graph()
@@ -133,6 +138,7 @@ def create_graph_from_gene_set(gene_set: GeneSet) -> GeneGraph:
 
 
 def parse_genome(genome) -> ParsedGenome:
+    """Return a ParsedGenome from a genome's gene set, or None if genome is None."""
     if genome is None:
         return None
     else:
@@ -142,6 +148,8 @@ def parse_genome(genome) -> ParsedGenome:
 
 
 class ProcessingStep(Enum):
+    """Enumeration of dataset processing pipeline stages."""
+
     RAW = auto()
     CONVERSION = auto()
     DEDUPLICATION = auto()
@@ -151,6 +159,8 @@ class ProcessingStep(Enum):
 
 # TODO implement
 class Aggregator:
+    """Placeholder for the dataset aggregation step (not yet implemented)."""
+
     pass
 
 
@@ -198,6 +208,7 @@ class Neo4jCellDataset(Dataset):
         pre_transform: Callable | None = None,
         pre_filter: Callable | None = None,
     ):
+        """Configure data sources, processing pipeline, and load or build the dataset."""
         self.env = None
         self.root = root
         # get item processor
@@ -272,6 +283,7 @@ class Neo4jCellDataset(Dataset):
         self.perturbation_count_index
 
     def _determine_processing_steps(self):
+        """Determine which pipeline stages must be run given existing caches."""
         steps = [ProcessingStep.RAW]
         if self.converter is not None:
             steps.append(ProcessingStep.CONVERSION)
@@ -283,6 +295,7 @@ class Neo4jCellDataset(Dataset):
         return steps
 
     def _get_lmdb_path(self, step: ProcessingStep):
+        """Return the LMDB directory path for the given processing step."""
         if step == ProcessingStep.RAW:
             return os.path.join(self.root, "raw", "lmdb")
         elif step == ProcessingStep.PROCESSED:
@@ -291,16 +304,18 @@ class Neo4jCellDataset(Dataset):
             return os.path.join(self.root, step.name.lower(), "lmdb")
 
     def get_init_graphs(self, gene_set):
+        """Build the initial cell and incidence graphs for the gene set."""
         cell_graph = create_graph_from_gene_set(gene_set)
         return cell_graph
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the raw file names expected by the dataset."""
         return "lmdb"
 
     @staticmethod
     def load_raw(uri, username, password, root_dir, query, gene_set):
-
+        """Query Neo4j and load the raw experiment records for the gene set."""
         cypher_kwargs = {"gene_set": list(gene_set)}
         # cypher_kwargs = {"gene_set": ["YAL004W", "YAL010C", "YAL011W", "YAL017W"]}
         print("================")
@@ -320,15 +335,18 @@ class Neo4jCellDataset(Dataset):
 
     @property
     def processed_file_names(self) -> list[str]:
+        """Return the processed file names produced by the dataset."""
         return "lmdb"
 
     @property
     def phenotype_info(self) -> list[PhenotypeType]:
+        """Return the cached phenotype type information, loading it if needed."""
         if self._phenotype_info is None:
             self._phenotype_info = self._load_phenotype_info()
         return self._phenotype_info
 
     def _load_phenotype_info(self) -> list[PhenotypeType]:
+        """Load phenotype type information from the processed cache."""
         experiment_types_path = osp.join(self.processed_dir, "experiment_types.json")
         if osp.exists(experiment_types_path):
             experiment_types = self._read_json_with_lock(experiment_types_path)
@@ -346,6 +364,7 @@ class Neo4jCellDataset(Dataset):
             )
 
     def compute_phenotype_info(self):
+        """Compute and cache the phenotype type information from the raw data."""
         self._init_lmdb_read()
         experiment_types = set()
 
@@ -365,6 +384,7 @@ class Neo4jCellDataset(Dataset):
         self.close_lmdb()
 
     def process(self):
+        """Run the conversion, deduplication, and processing pipeline into LMDB."""
         # IDEA consider dependency injection for processing steps
         # We don't inject becaue of unique query process.
         raw_db = self.load_raw(
@@ -408,6 +428,7 @@ class Neo4jCellDataset(Dataset):
         raw_db.env = None
 
     def _copy_lmdb(self, src_path: str, dst_path: str):
+        """Copy an LMDB database from the source path to the destination path."""
         os.makedirs(os.path.dirname(dst_path), exist_ok=True)
         env_src = lmdb.open(src_path, readonly=True)
         env_dst = lmdb.open(dst_path, map_size=int(1e12))
@@ -423,6 +444,7 @@ class Neo4jCellDataset(Dataset):
     # TODO change to query_gene_set
     @property
     def gene_set(self):
+        """Return the dataset's gene set, reading it from disk if available."""
         gene_set_path = osp.join(self.processed_dir, "gene_set.json")
 
         # Check if file exists
@@ -441,6 +463,7 @@ class Neo4jCellDataset(Dataset):
 
     @gene_set.setter
     def gene_set(self, value):
+        """Validate and persist the dataset's gene set to disk."""
         if not value:
             raise ValueError("Cannot set an empty or None value for gene_set")
         if not osp.exists(self.processed_dir):
@@ -454,6 +477,7 @@ class Neo4jCellDataset(Dataset):
 
     @time_method
     def _read_from_lmdb(self, idx):
+        """Read and deserialize the record at the given index from LMDB."""
         """Read serialized data from LMDB."""
         with self.env.begin() as txn:
             serialized_data = txn.get(f"{idx}".encode())
@@ -461,11 +485,13 @@ class Neo4jCellDataset(Dataset):
 
     @time_method
     def _deserialize_json(self, serialized_data):
+        """Deserialize JSON-encoded bytes into Python objects."""
         """Deserialize JSON data."""
         return json.loads(serialized_data.decode("utf-8"))
 
     @time_method
     def _reconstruct_experiments(self, data_list):
+        """Reconstruct experiment and reference objects from serialized data."""
         """Reconstruct experiment objects from deserialized data."""
         data = []
         for item in data_list:
@@ -486,6 +512,7 @@ class Neo4jCellDataset(Dataset):
 
     @time_method
     def get(self, idx):
+        """Return the processed cell graph data object at the given index."""
         """Load and process a single sample."""
         if self.env is None:
             self._init_lmdb_read()
@@ -509,6 +536,7 @@ class Neo4jCellDataset(Dataset):
         return processed_graph
 
     def _init_lmdb_read(self):
+        """Open the LMDB environment for read access."""
         """Initialize the LMDB environment."""
         self.env = lmdb.open(
             osp.join(self.processed_dir, "lmdb"),
@@ -521,6 +549,7 @@ class Neo4jCellDataset(Dataset):
         )
 
     def len(self) -> int:
+        """Return the number of records in the dataset."""
         if self.env is None:
             self._init_lmdb_read()
 
@@ -530,12 +559,14 @@ class Neo4jCellDataset(Dataset):
         return length
 
     def close_lmdb(self):
+        """Close the LMDB environment if it is open."""
         if self.env is not None:
             self.env.close()
             self.env = None
 
     @property
     def label_df(self) -> pd.DataFrame:
+        """Return a DataFrame of phenotype labels across all records."""
         """Cache and return a DataFrame containing all labels and their indices."""
         label_cache_path = osp.join(self.processed_dir, "label_df.parquet")
 
@@ -606,6 +637,7 @@ class Neo4jCellDataset(Dataset):
         return self._label_df
 
     def compute_phenotype_label_index(self) -> dict[str, list[int]]:
+        """Compute a mapping from phenotype label to record indices."""
         print("Computing phenotype label index...")
         phenotype_label_index = {}
 
@@ -648,6 +680,7 @@ class Neo4jCellDataset(Dataset):
 
     @property
     def phenotype_label_index(self) -> dict[str, list[int]]:
+        """Return the cached phenotype-label-to-indices mapping."""
         filepath = osp.join(self.processed_dir, "phenotype_label_index.json")
 
         if osp.exists(filepath):
@@ -659,6 +692,7 @@ class Neo4jCellDataset(Dataset):
         return self._phenotype_label_index
 
     def compute_dataset_name_index(self) -> dict[str, list[int]]:
+        """Compute a mapping from dataset name to record indices."""
         print("Computing dataset name index...")
         dataset_name_index = {}
 
@@ -701,6 +735,7 @@ class Neo4jCellDataset(Dataset):
 
     @property
     def dataset_name_index(self) -> dict[str, list[int]]:
+        """Return the cached dataset-name-to-indices mapping."""
         filepath = osp.join(self.processed_dir, "dataset_name_index.json")
 
         if osp.exists(filepath):
@@ -712,6 +747,7 @@ class Neo4jCellDataset(Dataset):
         return self._dataset_name_index
 
     def compute_perturbation_count_index(self) -> dict[int, list[int]]:
+        """Compute a mapping from perturbation count to record indices."""
         print("Computing perturbation count index...")
         perturbation_count_index = {}
 
@@ -756,6 +792,7 @@ class Neo4jCellDataset(Dataset):
 
     @property
     def perturbation_count_index(self) -> dict[int, list[int]]:
+        """Return the cached perturbation-count-to-indices mapping."""
         filepath = osp.join(self.processed_dir, "perturbation_count_index.json")
 
         if osp.exists(filepath):
@@ -775,6 +812,7 @@ class Neo4jCellDataset(Dataset):
         return self._perturbation_count_index
 
     def compute_is_any_perturbed_gene_index(self) -> dict[str, list[int]]:
+        """Compute a mapping from gene to indices where the gene is perturbed."""
         print("Computing is any perturbed gene index...")
         is_any_perturbed_gene_index = {}
 
@@ -813,6 +851,7 @@ class Neo4jCellDataset(Dataset):
 
     @property
     def is_any_perturbed_gene_index(self) -> dict[str, list[int]]:
+        """Return the cached gene-to-perturbed-indices mapping."""
         # Memory cache
         if hasattr(self, "_is_any_perturbed_gene_index_cache"):
             return self._is_any_perturbed_gene_index_cache
@@ -837,16 +876,19 @@ class Neo4jCellDataset(Dataset):
 
     # HACK
     def __getstate__(self) -> dict:
+        """Return picklable state, excluding the open LMDB environment."""
         state = self.__dict__.copy()
         # Remove the unpicklable lmdb environment.
         state["env"] = None
         return state
 
     def __setstate__(self, state: dict) -> None:
+        """Restore state from a pickle, leaving the LMDB environment closed."""
         self.__dict__.update(state)
 
 
 def main():
+    """Build and inspect a Neo4jCellDataset for demonstration."""
     # genome
     import os.path as osp
 
@@ -973,6 +1015,7 @@ def main():
 
 
 def main_incidence():
+    """Build and inspect a dataset with incidence (hypergraph) graphs."""
     # genome
     import os.path as osp
 

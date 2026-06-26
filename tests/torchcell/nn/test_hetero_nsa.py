@@ -1,4 +1,6 @@
 # tests/torchcell/nn/test_hetero_nsa.py
+"""Tests for the heterogeneous NSA (neighborhood self-attention) module."""
+
 import os
 
 import pytest
@@ -483,7 +485,7 @@ def test_directed_vs_undirected_graphs(test_hetero_graph):
 
 @pytest.fixture
 def metabolic_graph():
-    """Fixture for a small metabolic network with stoichiometry"""
+    """Fixture for a small metabolic network with stoichiometry."""
     # Create a small metabolic network with 6 nodes (3 metabolites, 3 reactions)
     # Node features (one-hot encoding for node type)
     x = torch.zeros(6, 2)  # 2 node types: metabolite (0) and reaction (1)

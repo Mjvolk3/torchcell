@@ -1,3 +1,5 @@
+"""Flexible heterogeneous cell model over gene, reaction, and metabolite graphs."""
+
 import os
 import os.path as osp
 from typing import Any
@@ -16,11 +18,10 @@ from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 
 
 class GraphMaskedAttention(nn.Module):
-    """
-    Graph-based masked attention layer that restricts attention to existing edges in the graph.
-    """
+    """Masked attention layer restricting attention to existing graph edges."""
 
     def __init__(self, hidden_channels, num_heads=4, dropout=0.1):
+        """Set up the Q/K/V projections and per-head dimensions."""
         super().__init__()
         self.hidden_channels = hidden_channels
         self.num_heads = num_heads
@@ -104,6 +105,8 @@ class GraphMaskedAttention(nn.Module):
 # Combiner: MLP to combine two representations.
 ###############################################################################
 class Combiner(nn.Module):
+    """MLP that fuses two equally sized feature tensors into one."""
+
     def __init__(
         self,
         hidden_channels: int,
@@ -112,6 +115,7 @@ class Combiner(nn.Module):
         norm: str = "layer",
         activation: str = "relu",
     ):
+        """Build the stacked linear/norm/activation MLP used to combine inputs."""
         super().__init__()
         act = act_register[activation]
         layers = []
@@ -127,6 +131,7 @@ class Combiner(nn.Module):
         self.mlp = nn.Sequential(*layers)
 
     def forward(self, x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
+        """Concatenate the two inputs and pass them through the MLP."""
         return self.mlp(torch.cat([x1, x2], dim=-1))
 
 
@@ -136,6 +141,7 @@ class Combiner(nn.Module):
 
 
 def get_norm_layer(channels: int, norm: str) -> nn.Module:
+    """Return the normalization layer matching the given norm name."""
     if norm == "layer":
         return nn.LayerNorm(channels)
     elif norm == "batch":
@@ -148,7 +154,10 @@ def get_norm_layer(channels: int, norm: str) -> nn.Module:
 # Attentional Aggregation Wrapper
 ###############################################################################
 class AttentionalGraphAggregation(nn.Module):
+    """Attention-weighted pooling of node features into a graph-level vector."""
+
     def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.1):
+        """Build the gate and transform networks for attentional aggregation."""
         super().__init__()
         self.gate_nn = nn.Sequential(
             nn.Linear(in_channels, in_channels // 2),
@@ -166,6 +175,7 @@ class AttentionalGraphAggregation(nn.Module):
     def forward(
         self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
+        """Aggregate node features per graph using learned attention weights."""
         return self.aggregator(x, index=index, dim_size=dim_size)
 
 
@@ -173,6 +183,8 @@ class AttentionalGraphAggregation(nn.Module):
 # PreProcessor: an MLP to “preprocess” gene embeddings.
 ###############################################################################
 class PreProcessor(nn.Module):
+    """MLP that projects raw node features into the hidden dimension."""
+
     def __init__(
         self,
         in_channels: int,
@@ -182,6 +194,7 @@ class PreProcessor(nn.Module):
         norm: str = "layer",
         activation: str = "relu",
     ):
+        """Build the input-projection MLP with norm, activation, and dropout."""
         super().__init__()
         act = act_register[activation]
         norm_layer = get_norm_layer(hidden_channels, norm)
@@ -198,6 +211,7 @@ class PreProcessor(nn.Module):
         self.mlp = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Project input features through the MLP."""
         return self.mlp(x)
 
 
@@ -205,7 +219,10 @@ class PreProcessor(nn.Module):
 # New Model: HeteroCell
 ###############################################################################
 class AttentionConvWrapper(nn.Module):
+    """Wrap a conv layer and project its output to a fixed target dimension."""
+
     def __init__(self, conv: nn.Module, target_dim: int):
+        """Store the wrapped conv and build the output projection."""
         super().__init__()
         self.conv = conv
         # For GATv2Conv-like layers:
@@ -223,11 +240,14 @@ class AttentionConvWrapper(nn.Module):
         )
 
     def forward(self, x, edge_index, **kwargs):
+        """Run the wrapped conv and project the result to the target dimension."""
         out = self.conv(x, edge_index, **kwargs)
         return self.proj(out)
 
 
 class HeteroCell(nn.Module):
+    """Heterogeneous GNN encoding gene, reaction, and metabolite graphs."""
+
     def __init__(
         self,
         gene_num: int,
@@ -244,6 +264,7 @@ class HeteroCell(nn.Module):
         prediction_head_config: dict[str, Any] | None = None,
         gpr_conv_config: dict[str, Any] | None = None,
     ):
+        """Build embeddings, hetero conv layers, aggregation, and prediction head."""
         super().__init__()
         self.hidden_channels = hidden_channels
 
@@ -388,6 +409,7 @@ class HeteroCell(nn.Module):
         return nn.Sequential(*layers)
 
     def forward_single(self, data: HeteroData) -> torch.Tensor:
+        """Encode a single hetero graph into a graph-level representation."""
         # Use the model's device for consistency.
         device = self.gene_embedding.weight.device
 
@@ -489,6 +511,7 @@ class HeteroCell(nn.Module):
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+        """Encode the reference and batch graphs and predict from their difference."""
         # Process the reference (wildtype) graph.
         z_w = self.forward_single(cell_graph)
         z_w = self.global_aggregator(
@@ -518,6 +541,8 @@ class HeteroCell(nn.Module):
 
     @property
     def num_parameters(self) -> dict[str, int]:
+        """Return a breakdown of trainable parameter counts per submodule."""
+
         def count_params(module: nn.Module) -> int:
             return sum(p.numel() for p in module.parameters() if p.requires_grad)
 
@@ -536,6 +561,7 @@ class HeteroCell(nn.Module):
 
 
 def load_sample_data_batch():
+    """Load a small sample batch and cell graph for smoke-testing the model."""
     import os
     import os.path as osp
 
@@ -652,6 +678,7 @@ def load_sample_data_batch():
 def plot_correlations(
     predictions, true_values, save_path, lambda_info="", weight_decay=""
 ):
+    """Plot predicted vs. true values and save the correlation figure."""
     import matplotlib.pyplot as plt
     import numpy as np
     from scipy import stats
@@ -722,6 +749,7 @@ def plot_correlations(
     config_name="hetero_cell",
 )
 def main(cfg: DictConfig) -> None:
+    """Instantiate the model from config and run a sample forward pass."""
     import os
 
     import matplotlib.pyplot as plt

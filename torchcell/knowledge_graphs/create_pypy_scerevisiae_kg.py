@@ -3,6 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_pypy_scerevisiae_kg
 # Test file: tests/torchcell/knowledge_graphs/test_create_pypy_scerevisiae_kg.py
 
+"""Build the S. cerevisiae knowledge graph via PyPy BioCypher adapters."""
 
 import logging
 
@@ -22,6 +23,7 @@ logging.captureWarnings(True)
 
 
 def main():
+    """Run BioCypher with all dataset adapters to write the knowledge graph."""
     # logger.info(f"Started at {datetime.now()}") but use logging
     bc = BioCypher()
 

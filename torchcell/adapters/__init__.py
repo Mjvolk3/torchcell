@@ -1,3 +1,5 @@
+"""BioCypher adapters mapping torchcell datasets into knowledge-graph nodes and edges."""
+
 from .cell_adapter import CellAdapter as CellAdapter
 from .costanzo2016_adapter import DmfCostanzo2016Adapter as DmfCostanzo2016Adapter
 from .costanzo2016_adapter import DmiCostanzo2016Adapter as DmiCostanzo2016Adapter

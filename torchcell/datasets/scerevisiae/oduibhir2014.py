@@ -1,8 +1,11 @@
+"""Load and reshape the O Duibhir 2014 (GSE42527) GEO expression dataset."""
+
 import GEOparse
 import pandas as pd
 
 
 def main():
+    """Build a sample-by-gene expression table from the GEO SOFT file."""
     # Load the GEO dataset
     gse = GEOparse.get_GEO(filepath="/Users/michaelvolk/Downloads/GSE42527_family.soft")
 

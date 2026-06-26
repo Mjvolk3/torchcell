@@ -1,3 +1,5 @@
+"""Gene interaction model variant with a diffusion-based prediction head."""
+
 # torchcell/models/hetero_cell_bipartite_dango_diff_gi
 # [[torchcell.models.hetero_cell_bipartite_dango_diff_gi]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/hetero_cell_bipartite_dango_diff_gi
@@ -25,6 +27,7 @@ class LinearDecoder(nn.Module):
     """
 
     def __init__(self, input_dim: int, output_dim: int = 1):
+        """Create a linear projection from input_dim to output_dim."""
         super().__init__()
         self.proj = nn.Linear(input_dim, output_dim)
 
@@ -93,6 +96,7 @@ class GeneInteractionDiff(GeneInteractionDango):
             gene_encoder_config: Config for gene encoder
             local_predictor_config: Config for local predictor
             diffusion_config: Config for diffusion decoder
+            decoder_type: Which prediction head to use ("diffusion" or "linear")
         """
         # Initialize parent class to get all encoder components
         super().__init__(

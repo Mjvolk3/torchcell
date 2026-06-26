@@ -1,3 +1,5 @@
+"""Lightning trainer for binned categorical fitness/interaction regression."""
+
 import logging
 
 import lightning as L
@@ -26,6 +28,8 @@ log = logging.getLogger(__name__)
 
 
 class RegCategoricalEntropyTask(L.LightningModule):
+    """Lightning task for fitness/interaction regression via binned classification."""
+
     def __init__(
         self,
         model: nn.Module,
@@ -42,6 +46,7 @@ class RegCategoricalEntropyTask(L.LightningModule):
         grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
     ):
+        """Store the model, transforms, loss, metrics, and optimizer configuration."""
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
 
@@ -217,6 +222,7 @@ class RegCategoricalEntropyTask(L.LightningModule):
         return results
 
     def forward(self, batch):
+        """Run the wrapped model on the input batch."""
         return self.model(batch)
 
     def _shared_step(self, batch, batch_idx, stage="train"):
@@ -370,6 +376,7 @@ class RegCategoricalEntropyTask(L.LightningModule):
         return loss, logits, y
 
     def training_step(self, batch, batch_idx):
+        """Run the shared training step and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
 
         if self.hparams.grad_accumulation_schedule is not None:
@@ -399,14 +406,17 @@ class RegCategoricalEntropyTask(L.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
+        """Run the shared validation step."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
         return loss
 
     def test_step(self, batch, batch_idx):
+        """Run the shared test step."""
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
     def on_train_epoch_end(self):
+        """Compute and log aggregated training metrics at epoch end."""
         for metric_name, metric_dict in self.train_metrics.items():
             computed_metrics = self._compute_metrics_safely(metric_dict)
             for name, value in computed_metrics.items():
@@ -414,6 +424,7 @@ class RegCategoricalEntropyTask(L.LightningModule):
             metric_dict.reset()
 
     def on_validation_epoch_end(self):
+        """Compute, log, and optionally plot validation metrics at epoch end."""
         for metric_name, metric_dict in self.val_metrics.items():
             computed_metrics = self._compute_metrics_safely(metric_dict)
             for name, value in computed_metrics.items():
@@ -463,6 +474,7 @@ class RegCategoricalEntropyTask(L.LightningModule):
             self.last_logged_best_step = current_global_step
 
     def on_test_epoch_end(self):
+        """Compute and log aggregated test metrics at epoch end."""
         for metric_name, metric_dict in self.test_metrics.items():
             computed_metrics = self._compute_metrics_safely(metric_dict)
             for name, value in computed_metrics.items():
@@ -495,6 +507,7 @@ class RegCategoricalEntropyTask(L.LightningModule):
         self.predictions = []
 
     def configure_optimizers(self):
+        """Return the optimizer and learning-rate scheduler configuration."""
         optimizer_class = getattr(optim, self.hparams.optimizer_config["type"])
         optimizer_params = {
             k: v for k, v in self.hparams.optimizer_config.items() if k != "type"

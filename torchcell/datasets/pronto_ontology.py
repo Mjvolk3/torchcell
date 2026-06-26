@@ -2,7 +2,7 @@
 # [[torchcell.datasets.pronto_ontology]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/pronto_ontology.py
 # Test file: torchcell/datasets/test_pronto_ontology.py
-
+"""Scratch experiments building and plotting pronto ontologies as graphs."""
 
 import matplotlib.pyplot as plt
 import networkx as nx

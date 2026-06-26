@@ -2,6 +2,7 @@
 # [[torchcell.models.self_attention_sag]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/self_attention_sag
 # Test file: tests/torchcell/models/test_self_attention_sag.py
+"""Self-attention pooling model combining multi-head attention with SAGPooling GCNs."""
 
 import torch
 import torch.nn as nn
@@ -11,7 +12,10 @@ from torch_geometric.utils import add_self_loops
 
 
 class SelfAttention(nn.Module):
+    """Multi-head scaled dot-product self-attention over batched node features."""
+
     def __init__(self, dim_in: int, dim_out: int, num_heads: int = 1):
+        """Create query/key/value projections for ``num_heads`` attention heads."""
         super().__init__()
         self.query = nn.Linear(dim_in, dim_out * num_heads)
         self.key = nn.Linear(dim_in, dim_out * num_heads)
@@ -20,6 +24,7 @@ class SelfAttention(nn.Module):
         self.num_heads = num_heads
 
     def forward(self, x, batch):
+        """Return attended features and per-graph attention weight blocks."""
         Q = self.query(x)
         K = self.key(x)
         V = self.value(x)
@@ -44,6 +49,8 @@ class SelfAttention(nn.Module):
 
 
 class SelfAttentionSAG(nn.Module):
+    """Self-attention encoder feeding stacked GCN + SAGPooling layers for prediction."""
+
     def __init__(
         self,
         in_channels,
@@ -59,6 +66,7 @@ class SelfAttentionSAG(nn.Module):
         multiplier=1.0,
         nonlinearity="tanh",
     ):
+        """Build the attention encoder, GCN/pool/norm stacks, and prediction head."""
         super().__init__()
 
         self.self_attn = SelfAttention(in_channels, hidden_channels, num_heads)
@@ -88,6 +96,7 @@ class SelfAttentionSAG(nn.Module):
         self.activation = getattr(F, activation)
 
     def forward(self, x, batch):
+        """Encode, build edges from attention, pool, and predict a graph-level output."""
         x, graph_attn_weights = self.self_attn(x, batch)
         print(f"Self-attention output shape: {x.shape}")
         print(f"Number of graphs: {len(graph_attn_weights)}")
@@ -133,6 +142,7 @@ class SelfAttentionSAG(nn.Module):
 
 
 def main():
+    """Instantiate the model on dummy two-graph data and print output shapes."""
     in_channels = 10
     hidden_channels = 32
     out_channels = 1  # or 2 for binary classification

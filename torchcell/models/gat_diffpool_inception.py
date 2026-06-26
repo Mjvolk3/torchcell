@@ -3,6 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/gat_diffpool_inception
 # Test file: tests/torchcell/models/test_gat_diffpool_inception.py
 
+"""GAT-with-DiffPool inception model over multiple graphs for graph-level prediction."""
 
 import torch
 import torch.nn as nn
@@ -23,6 +24,8 @@ from torchcell.models.act import act_register
 
 
 class GatDiffPool(nn.Module):
+    """GATv2 encoder with hierarchical DiffPool layers over a set of input graphs."""
+
     def __init__(
         self,
         in_channels: int,
@@ -46,6 +49,30 @@ class GatDiffPool(nn.Module):
         target_dim: int = 2,
         cluster_reduction: str = "mean",
     ):
+        """Build the GAT embedding, DiffPool, post-pool, and prediction layers.
+
+        Args:
+            in_channels: Input node feature dimension.
+            initial_gat_hidden_channels: Hidden dimension of the initial GAT stack.
+            initial_gat_out_channels: Output dimension of the initial GAT stack.
+            diffpool_hidden_channels: Hidden dimension of the DiffPool GNNs.
+            diffpool_out_channels: Output dimension of the DiffPool embedding GNNs.
+            num_initial_gat_layers: Number of GAT layers before pooling.
+            num_diffpool_layers: Number of hierarchical DiffPool layers.
+            num_post_pool_gat_layers: Number of GAT layers after pooling.
+            num_graphs: Number of parallel input graphs (inception branches).
+            max_num_nodes: Maximum number of nodes per graph.
+            cluster_size_decay_factor: Factor reducing cluster count per pool layer.
+            gat_dropout_prob: Dropout probability inside GAT layers.
+            last_layer_dropout_prob: Dropout probability before the final head.
+            norm: Normalization type for conv layers.
+            activation: Activation key from ``act_register``.
+            gat_skip_connection: Whether GAT layers use skip connections.
+            pruned_max_average_node_degree: Optional cap on average node degree.
+            weight_init: Weight initialization scheme.
+            target_dim: Output prediction dimension.
+            cluster_reduction: Reduction used when collapsing clusters.
+        """
         super().__init__()
         self.weight_init = weight_init
         self.cluster_size_decay_factor = cluster_size_decay_factor
@@ -200,6 +227,8 @@ class GatDiffPool(nn.Module):
         self.init_weights()
 
     def init_weights(self):
+        """Initialize module weights according to the configured scheme."""
+
         def init_func(module):
             if isinstance(module, nn.Linear):
                 if self.weight_init == "xavier_uniform":
@@ -256,6 +285,7 @@ class GatDiffPool(nn.Module):
             self.apply(init_func)
 
     def get_norm_layer(self, norm, channels):
+        """Return the PyG normalization layer for the given type and channels."""
         if norm is None:
             return nn.Identity()
         elif norm == "batch":
@@ -274,6 +304,7 @@ class GatDiffPool(nn.Module):
             raise ValueError(f"Unsupported normalization type: {norm}")
 
     def forward(self, x, edge_indices: list[torch.Tensor], batch):
+        """Encode the input graphs through GAT and DiffPool and return predictions."""
         graph_outputs = []
         attention_weights = []
         cluster_assignments = []
@@ -455,6 +486,7 @@ class GatDiffPool(nn.Module):
 
 
 def load_sample_data_batch():
+    """Load and return a sample data batch for testing the model."""
     import os
     import os.path as osp
 
@@ -556,6 +588,7 @@ def load_sample_data_batch():
 
 
 def main():
+    """Build the model on sample data and run a forward pass for testing."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
     # Load the sample data batch

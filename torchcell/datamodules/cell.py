@@ -1,3 +1,5 @@
+"""Lightning data module and split-index models for cell datasets."""
+
 # torchcell/datamodules/cell.py
 # [[torchcell.datamodules.cell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodules/cell.py
@@ -22,12 +24,15 @@ log = logging.getLogger(__name__)
 
 
 class IndexSplit(ModelStrict):
+    """A sorted list of indices together with its element count."""
+
     indices: list[int] = Field(..., description="Must be sorted in ascending order")
     count: int
 
     @model_validator(mode="before")
     @classmethod
     def check_sorted_indices(cls, values):
+        """Validate that the indices list is sorted in ascending order."""
         indices = values.get("indices")
         if indices and not all(
             indices[i] <= indices[i + 1] for i in range(len(indices) - 1)
@@ -36,6 +41,7 @@ class IndexSplit(ModelStrict):
         return values
 
     def __repr__(self):
+        """Return a truncated representation showing the first few indices."""
         max_indices = 3
         indices_str = (
             f"[{', '.join(map(str, self.indices[:max_indices]))}"
@@ -45,18 +51,23 @@ class IndexSplit(ModelStrict):
 
 
 class DatasetSplit(BaseModel):
+    """Per-split index groupings keyed by phenotype, perturbation count, or dataset."""
+
     phenotype_label_index: dict[str, IndexSplit] | None = None
     perturbation_count_index: dict[int, IndexSplit] | None = None
     dataset_name_index: dict[str, IndexSplit] | None = None
 
 
 class DataModuleIndexDetails(ModelStrict):
+    """Detailed per-split index breakdown with summary reporting."""
+
     methods: list[str]
     train: DatasetSplit
     val: DatasetSplit
     test: DatasetSplit
 
     def df_summary(self):
+        """Return a DataFrame summarizing counts and ratios per split and index key."""
         data = defaultdict(lambda: defaultdict(int))
         totals = defaultdict(int)
 
@@ -107,6 +118,7 @@ class DataModuleIndexDetails(ModelStrict):
         return df
 
     def __str__(self):
+        """Return the summary DataFrame rendered as a string."""
         df = self.df_summary()
         if df.empty:
             return "DataModuleIndexDetails(empty)"
@@ -114,6 +126,8 @@ class DataModuleIndexDetails(ModelStrict):
 
 
 class DataModuleIndex(ModelStrict):
+    """Train/val/test index lists that are sorted and mutually non-overlapping."""
+
     train: list[int] = Field(..., description="Must be sorted in ascending order")
     val: list[int] = Field(..., description="Must be sorted in ascending order")
     test: list[int] = Field(..., description="Must be sorted in ascending order")
@@ -121,6 +135,7 @@ class DataModuleIndex(ModelStrict):
     @model_validator(mode="before")
     @classmethod
     def check_sorted_and_unique_indices(cls, values):
+        """Validate each split is sorted and the splits do not overlap."""
         for split in ["train", "val", "test"]:
             indices = values.get(split, [])
             if not all(indices[i] <= indices[i + 1] for i in range(len(indices) - 1)):
@@ -135,6 +150,7 @@ class DataModuleIndex(ModelStrict):
         return values
 
     def __repr__(self):
+        """Return a truncated representation of the train/val/test indices."""
         max_indices = 3
         train_str_index = f"[{', '.join(map(str, self.train[:max_indices]))}{', ...' if len(self.train) > max_indices else ''}]"
         val_str_index = f"[{', '.join(map(str, self.val[:max_indices]))}{', ...' if len(self.val) > max_indices else ''}]"
@@ -142,6 +158,7 @@ class DataModuleIndex(ModelStrict):
         return f"DataModuleIndex(train={train_str_index}, val={val_str_index}, test={test_str_index})"
 
     def __str__(self):
+        """Return a truncated representation with per-split index counts."""
         max_indices = 3
         train_str_index = f"[{', '.join(map(str, self.train[:max_indices]))}{', ...' if len(self.train) > max_indices else ''}]"
         val_str_index = f"[{', '.join(map(str, self.val[:max_indices]))}{', ...' if len(self.val) > max_indices else ''}]"
@@ -153,6 +170,8 @@ class DataModuleIndex(ModelStrict):
 
 
 class DatasetIndexSplit(ModelStrict):
+    """Per-dataset index lists grouped by train/val/test split."""
+
     train: dict[str | int, list[int]] = None
     val: dict[str | int, list[int]] = None
     test: dict[str | int, list[int]] = None
@@ -161,6 +180,7 @@ class DatasetIndexSplit(ModelStrict):
 def overlap_dataset_index_split(
     dataset_index: dict[str | int, list[int]], data_module_index: DataModuleIndex
 ) -> DatasetIndexSplit:
+    """Intersect each dataset's indices with the train/val/test split indices."""
     train_set = set(data_module_index.train)
     val_set = set(data_module_index.val)
     test_set = set(data_module_index.test)
@@ -189,6 +209,8 @@ def overlap_dataset_index_split(
 
 
 class CellDataModule(L.LightningDataModule):
+    """Lightning data module that splits a cell dataset and builds dataloaders."""
+
     def __init__(
         self,
         dataset,
@@ -206,6 +228,7 @@ class CellDataModule(L.LightningDataModule):
         collate_fn: object | None = None,
         val_batch_size: int | None = None,
     ):
+        """Store dataloader/split configuration and compute the split indices."""
         super().__init__()
         self.dataset = dataset
         self.cache_dir = cache_dir
@@ -243,12 +266,14 @@ class CellDataModule(L.LightningDataModule):
 
     @property
     def index(self) -> DataModuleIndex:
+        """Return the train/val/test split index, computing or loading it if needed."""
         if self._index is None or not self._cached_files_exist():
             self._load_or_compute_index()
         return self._index
 
     @property
     def index_details(self) -> DataModuleIndexDetails:
+        """Return the detailed split-index breakdown, computing or loading if needed."""
         if self._index_details is None or not self._cached_files_exist():
             self._load_or_compute_index()
         return self._index_details
@@ -393,6 +418,7 @@ class CellDataModule(L.LightningDataModule):
         return osp.exists(index_file) and osp.exists(details_file)
 
     def setup(self, stage=None):
+        """Build train/val/test Subset datasets from the computed split indices."""
         train_index = self.index.train
         val_index = self.index.val
         test_index = self.index.test
@@ -431,15 +457,19 @@ class CellDataModule(L.LightningDataModule):
         return loader
 
     def train_dataloader(self):
+        """Return a dataloader over the training subset."""
         return self._get_dataloader(self.train_dataset, shuffle=self.train_shuffle)
 
     def val_dataloader(self):
+        """Return a dataloader over the validation subset."""
         return self._get_dataloader(self.val_dataset, batch_size=self.val_batch_size)
 
     def test_dataloader(self):
+        """Return a dataloader over the test subset."""
         return self._get_dataloader(self.test_dataset)
 
     def all_dataloader(self):
+        """Return a dataloader over the entire dataset."""
         return self._get_dataloader(self.dataset)
 
 

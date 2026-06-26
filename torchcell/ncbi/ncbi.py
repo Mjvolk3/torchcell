@@ -1,3 +1,5 @@
+"""Download and extract the S. cerevisiae genome archive from the NCBI datasets API."""
+
 import os
 import zipfile
 

@@ -1,3 +1,5 @@
+"""Transform converting sparse hetero adjacencies to dense boolean masks."""
+
 import torch
 from torch import Tensor
 from torch_geometric.data import HeteroData
@@ -7,8 +9,10 @@ from torch_geometric.transforms import BaseTransform
 
 @functional_transform("hetero_to_dense_mask")
 class HeteroToDenseMask(BaseTransform):
-    r"""Converts sparse adjacency matrices in a heterogeneous graph to boolean dense masks
-    while preserving edge attributes in their original sparse format for memory efficiency.
+    r"""Convert sparse hetero adjacencies to boolean dense masks.
+
+    Edge attributes are preserved in their original sparse format for memory
+    efficiency while adjacency/incidence matrices become boolean dense masks.
 
     Args:
         num_nodes_dict (Dict[str, int], optional): Dictionary mapping node types to
@@ -17,9 +21,15 @@ class HeteroToDenseMask(BaseTransform):
     """
 
     def __init__(self, num_nodes_dict: dict[str, int] | None = None) -> None:
+        """Store the optional per-node-type target node counts.
+
+        Args:
+            num_nodes_dict: Optional mapping of node type to target node count.
+        """
         self.num_nodes_dict = num_nodes_dict or {}
 
     def forward(self, data: HeteroData) -> HeteroData:
+        """Add dense masks, pad node attributes, and return the transformed data."""
         # First determine number of nodes for each node type
         num_nodes_dict = {}
         for node_type in data.node_types:
@@ -133,6 +143,7 @@ class HeteroToDenseMask(BaseTransform):
         return data
 
     def __repr__(self) -> str:
+        """Return a string representation including the node-count overrides."""
         if not self.num_nodes_dict:
             return f"{self.__class__.__name__}()"
         return f"{self.__class__.__name__}(num_nodes_dict={self.num_nodes_dict})"

@@ -3,16 +3,22 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/dcell.py
 # Test file: torchcell/losses/test_dcell.py
 
+"""Deprecated DCell loss combining root and weighted non-root subsystem MSE."""
+
 import torch.nn as nn
 
 
 class DCellLoss(nn.Module):
+    """Deprecated DCell loss: root MSE plus alpha-weighted non-root subsystem MSE."""
+
     def __init__(self, alpha=0.3):
+        """Store the non-root weighting factor and create the MSE criterion."""
         super().__init__()
         self.alpha = alpha
         self.criterion = nn.MSELoss()
 
     def forward(self, outputs, target, weights):
+        """Return root MSE plus alpha-weighted sum of non-root subsystem MSE."""
         # Assuming 'GO:ROOT' is the root subsystem
         root_output = outputs["GO:ROOT"]
         root_loss = self.criterion(root_output.squeeze(-1), target)

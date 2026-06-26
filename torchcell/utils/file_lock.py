@@ -1,3 +1,5 @@
+"""Cross-platform file-locking helpers for safe JSON read/write/update."""
+
 # torchcell/utils/file_lock.py
 # [[torchcell.utils.file_lock]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/utils/file_lock.py
@@ -222,7 +224,7 @@ class FileLockHelper:
     def with_file_lock(
         cls, file_path: str | Path, timeout: float | None = None
     ) -> FileLock:
-        """Get a FileLock instance for manual lock management.
+        r"""Get a FileLock instance for manual lock management.
 
         This is useful when you need more control over the locking process
         or need to perform non-JSON operations.

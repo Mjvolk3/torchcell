@@ -1,3 +1,5 @@
+"""Tests for the regression-to-classification label transforms."""
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -13,8 +15,12 @@ from torchcell.transforms.regression_to_classification import (
 
 
 class TestLabelNormalizationTransform:
+    """Tests for the forward direction of LabelNormalizationTransform."""
+
     @pytest.fixture
     def mock_dataset(self):
+        """Return a dataset with fitness and gene-interaction label columns."""
+
         class MockDataset:
             def __init__(self):
                 self.label_df = pd.DataFrame(
@@ -28,6 +34,7 @@ class TestLabelNormalizationTransform:
 
     @pytest.fixture
     def norm_transform(self, mock_dataset):
+        """Return a transform using minmax for fitness and standard for interaction."""
         label_configs = {
             "fitness": {"strategy": "minmax"},
             "gene_interaction": {"strategy": "standard"},
@@ -35,6 +42,7 @@ class TestLabelNormalizationTransform:
         return LabelNormalizationTransform(mock_dataset, label_configs)
 
     def test_minmax_normalization(self, norm_transform):
+        """Verify minmax normalization and its inverse round-trip for fitness."""
         data = HeteroData()
         data["gene"]["fitness"] = torch.tensor([0.0, 0.5, 1.0, 2.0])
 
@@ -46,6 +54,7 @@ class TestLabelNormalizationTransform:
         assert torch.allclose(denormalized["gene"]["fitness"], data["gene"]["fitness"])
 
     def test_standard_normalization(self, norm_transform):
+        """Verify standard normalization matches the manual mean/std computation."""
         data = HeteroData()
         data["gene"]["gene_interaction"] = torch.tensor([-1.0, 0.0, 1.0])
 
@@ -58,8 +67,12 @@ class TestLabelNormalizationTransform:
 
 
 class TestLabelNormalizationInverse:
+    """Tests for the inverse of LabelNormalizationTransform."""
+
     @pytest.fixture
     def mock_dataset(self):
+        """Return a dataset with fitness and gene-interaction label columns."""
+
         class MockDataset:
             def __init__(self):
                 self.label_df = pd.DataFrame(
@@ -73,6 +86,7 @@ class TestLabelNormalizationInverse:
 
     @pytest.fixture
     def norm_transform(self, mock_dataset):
+        """Return a transform using minmax for fitness and standard for interaction."""
         label_configs = {
             "fitness": {"strategy": "minmax"},
             "gene_interaction": {"strategy": "standard"},
@@ -81,6 +95,7 @@ class TestLabelNormalizationInverse:
 
     # TestLabelNormalizationInverse::test_inverse_minmax
     def test_inverse_minmax(self, norm_transform):
+        """Verify the minmax inverse recovers the original fitness values."""
         # Test data
         original_values = torch.tensor([0.0, 0.5, 1.0, 2.0])
         normalized_values = torch.tensor([0.0, 0.25, 0.5, 1.0])
@@ -96,6 +111,7 @@ class TestLabelNormalizationInverse:
         )
 
     def test_inverse_standard(self, norm_transform):
+        """Verify the standard inverse recovers the original interaction values."""
         # Retrieve stats from the transform
         stats = norm_transform.stats["gene_interaction"]
         mean = stats["mean"]
@@ -116,6 +132,7 @@ class TestLabelNormalizationInverse:
         )
 
     def test_inverse_with_nans(self, norm_transform):
+        """Verify the inverse preserves NaN entries during denormalization."""
         # Test data with NaN
         original_values = torch.tensor([0.0, 0.5, 1.0, float("nan")])
         normalized_values = torch.tensor([0.0, 0.25, 0.5, float("nan")])
@@ -132,8 +149,12 @@ class TestLabelNormalizationInverse:
 
 
 class TestLabelNormalizationRoundTrip:
+    """Tests for normalize-then-inverse round trips."""
+
     @pytest.fixture
     def mock_dataset(self):
+        """Return a dataset with fitness and gene-interaction label columns."""
+
         class MockDataset:
             def __init__(self):
                 self.label_df = pd.DataFrame(
@@ -147,6 +168,7 @@ class TestLabelNormalizationRoundTrip:
 
     @pytest.fixture
     def norm_transform(self, mock_dataset):
+        """Return a transform using minmax for fitness and standard for interaction."""
         label_configs = {
             "fitness": {"strategy": "minmax"},
             "gene_interaction": {"strategy": "standard"},
@@ -155,6 +177,7 @@ class TestLabelNormalizationRoundTrip:
 
     # TestLabelNormalizationRoundTrip::test_round_trip_minmax
     def test_round_trip_minmax(self, norm_transform, mock_dataset):
+        """Verify a minmax normalize/inverse round trip recovers the input."""
         # Test data from mock_dataset
         original_df = mock_dataset.label_df
         original_values = torch.tensor(original_df["fitness"].values)
@@ -171,6 +194,7 @@ class TestLabelNormalizationRoundTrip:
         assert torch.allclose(recovered["gene"]["fitness"], original_values, atol=1e-6)
 
     def test_round_trip_standard(self, norm_transform, mock_dataset):
+        """Verify a standard normalize/inverse round trip recovers the input."""
         # Test data from mock_dataset
         original_df = mock_dataset.label_df
         original_values = torch.tensor(original_df["gene_interaction"].values)
@@ -190,8 +214,12 @@ class TestLabelNormalizationRoundTrip:
 
 
 class TestLabelBinningTransform:
+    """Tests for the forward and inverse of LabelBinningTransform."""
+
     @pytest.fixture
     def mock_dataset(self):
+        """Return a dataset with label columns used to fit bin edges."""
+
         class MockDataset:
             def __init__(self):
                 self.label_df = pd.DataFrame(
@@ -211,6 +239,7 @@ class TestLabelBinningTransform:
 
     @pytest.fixture
     def bin_transform(self, mock_dataset):
+        """Return a binning transform configured over the mock dataset."""
         label_configs = {
             "fitness": {
                 "strategy": "equal_width",
@@ -227,6 +256,7 @@ class TestLabelBinningTransform:
         return LabelBinningTransform(mock_dataset, label_configs)
 
     def test_soft_binning_forward(self, bin_transform):
+        """Verify soft binning produces a valid probability distribution."""
         data = HeteroData()
         data["gene"]["fitness"] = torch.tensor([0.0, 0.3, 0.7, 1.0])
 
@@ -235,6 +265,7 @@ class TestLabelBinningTransform:
         assert torch.allclose(binned["gene"]["fitness"].sum(dim=1), torch.ones(4))
 
     def test_categorical_binning_forward(self, bin_transform):
+        """Verify categorical binning produces class indices."""
         data = HeteroData()
         data["gene"]["gene_interaction"] = torch.tensor([-1.0, -0.3, 0.3, 1.0])
 
@@ -243,6 +274,7 @@ class TestLabelBinningTransform:
         assert torch.all(binned["gene"]["gene_interaction"].sum(dim=1) == 1)
 
     def test_inverse_soft_binning(self, bin_transform):
+        """Verify the inverse of soft binning reconstructs continuous values."""
         data = HeteroData()
         logits = torch.zeros(4, 10)
         logits[0, 0] = 10.0
@@ -267,6 +299,7 @@ class TestLabelBinningTransform:
             assert low <= val <= high
 
     def test_inverse_categorical_binning(self, bin_transform):
+        """Verify the inverse of categorical binning reconstructs values."""
         data = HeteroData()
         logits = torch.zeros(4, 10)
         # No single peak, but they should still be assigned to bin 0 by default
@@ -291,8 +324,12 @@ class TestLabelBinningTransform:
 
 
 class TestInverseCompose:
+    """Tests for chaining transforms and inverting the composition."""
+
     @pytest.fixture
     def mock_dataset(self):
+        """Return a dataset with label columns for the composed transforms."""
+
         class MockDataset:
             def __init__(self):
                 self.label_df = pd.DataFrame(
@@ -312,6 +349,7 @@ class TestInverseCompose:
 
     @pytest.fixture
     def transforms(self, mock_dataset):
+        """Return a composed normalization-then-binning transform."""
         norm_config = {"fitness": {"strategy": "minmax"}}
         bin_config = {
             "fitness": {
@@ -328,6 +366,7 @@ class TestInverseCompose:
 
     # TestInverseCompose::test_inverse_compose
     def test_inverse_compose(self, transforms):
+        """Verify inverting a composed transform recovers the original input."""
         data = HeteroData()
         data["gene"]["fitness"] = torch.tensor(
             [0.0, 0.1, 0.3, 0.7, 0.8, 0.8, 0.9, 1.0, 1.0, 1.1, 1.3, 1.5]
@@ -357,8 +396,12 @@ class TestInverseCompose:
 
 
 class TestOrdinalBinning:
+    """Tests for ordinal binning forward and inverse behavior."""
+
     @pytest.fixture
     def mock_dataset(self):
+        """Return a dataset with label columns used to fit ordinal bins."""
+
         class MockDataset:
             def __init__(self):
                 self.label_df = pd.DataFrame(
@@ -377,6 +420,7 @@ class TestOrdinalBinning:
 
     @pytest.fixture
     def bin_transform(self, mock_dataset):
+        """Return an ordinal binning transform over the mock dataset."""
         label_configs = {
             "fitness": {
                 "strategy": "equal_width",
@@ -387,6 +431,7 @@ class TestOrdinalBinning:
         return LabelBinningTransform(mock_dataset, label_configs)
 
     def test_ordinal_forward(self, bin_transform):
+        """Verify ordinal binning produces the expected cumulative encoding."""
         data = HeteroData()
         data["gene"]["fitness"] = torch.tensor([0.0, 0.25, 0.5, 0.75, 1.0])
 
@@ -407,6 +452,7 @@ class TestOrdinalBinning:
                     assert torch.all(ordinal_labels[i, :j] == 1)
 
     def test_ordinal_inverse(self, bin_transform):
+        """Verify the ordinal inverse reconstructs continuous values."""
         data = HeteroData()
         ordinal_labels = torch.tensor(
             [
@@ -445,6 +491,7 @@ class TestOrdinalBinning:
 
     # TestOrdinalBinning::test_ordinal_round_trip
     def test_ordinal_round_trip(self, bin_transform):
+        """Verify an ordinal forward/inverse round trip recovers the input."""
         # Original data
         data = HeteroData()
         original_values = torch.tensor([0.0, 0.25, 0.5, 0.75, 1.0])
@@ -478,6 +525,7 @@ class TestOrdinalBinning:
             )
 
     def test_ordinal_with_nans(self, bin_transform):
+        """Verify ordinal binning preserves NaN entries."""
         data = HeteroData()
         data["gene"]["fitness"] = torch.tensor(
             [0.0, float("nan"), 0.5, float("nan"), 1.0]
@@ -514,8 +562,12 @@ class TestOrdinalBinning:
 
 
 class TestOrdinalNormBinning:
+    """Tests for normalization composed with ordinal binning."""
+
     @pytest.fixture
     def mock_dataset(self):
+        """Return a dataset with label columns for the composed transforms."""
+
         class MockDataset:
             def __init__(self):
                 self.label_df = pd.DataFrame(
@@ -540,6 +592,7 @@ class TestOrdinalNormBinning:
 
     @pytest.fixture
     def transforms(self, mock_dataset):
+        """Return a composed normalization-then-ordinal-binning transform."""
         norm_config = {"fitness": {"strategy": "minmax"}}
         norm_transform = LabelNormalizationTransform(mock_dataset, norm_config)
 
@@ -684,8 +737,12 @@ class TestOrdinalNormBinning:
 
 
 class TestModelOutputSimulation:
+    """Tests that inverse transforms recover simulated model outputs."""
+
     @pytest.fixture
     def mock_dataset(self):
+        """Return a dataset with label columns for the simulation tests."""
+
         class MockDataset:
             def __init__(self):
                 self.label_df = pd.DataFrame(
@@ -857,8 +914,12 @@ class TestModelOutputSimulation:
 
 
 class TestInverseComposeWithGrads:
+    """Tests that inverse compositions preserve gradient flow."""
+
     @pytest.fixture
     def mock_dataset(self):
+        """Return a dataset with label columns for the gradient tests."""
+
         class MockDataset:
             def __init__(self):
                 self.label_df = pd.DataFrame({"fitness": np.linspace(0, 1, 100)})
@@ -867,6 +928,7 @@ class TestInverseComposeWithGrads:
 
     @pytest.fixture
     def transforms(self, mock_dataset):
+        """Return a composed transform used to check gradient propagation."""
         norm_config = {"fitness": {"strategy": "minmax"}}
         norm_transform = LabelNormalizationTransform(mock_dataset, norm_config)
         return [norm_transform]

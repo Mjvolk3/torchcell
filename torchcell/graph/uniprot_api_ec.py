@@ -2,7 +2,7 @@
 # [[torchcell.multidigraph.uniprot_api_ec]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/multidigraph/uniprot_api_ec.py
 # Test file: torchcell/multidigraph/test_uniprot_api_ec.py
-
+"""Fetch EC numbers for proteins from the UniProt REST API."""
 
 import requests
 
@@ -11,6 +11,7 @@ import requests
 
 
 def get_uniprot_ec(uniprot_id):
+    """Return the first EC number listed in the UniProt text record for a protein."""
     url = f"https://www.uniprot.org/uniprot/{uniprot_id}.txt"
     response = requests.get(url)
     for line in response.text.split("\n"):
@@ -26,6 +27,7 @@ print("EC Number:", ec_number)
 
 
 def main():
+    """Entry point placeholder for running this module as a script."""
     pass
 
 

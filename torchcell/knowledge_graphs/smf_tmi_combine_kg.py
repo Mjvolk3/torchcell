@@ -2,7 +2,7 @@
 # [[torchcell.knowledge_graphs.smf_tmi_combine_kg]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/smf_tmi_combine_kg
 # Test file: tests/torchcell/knowledge_graphs/test_smf_tmi_combine_kg.py
-
+"""Build a combined BioCypher knowledge graph from SMF Costanzo and TMI Kuzmin data."""
 
 import hashlib
 import json
@@ -46,6 +46,7 @@ def get_num_workers():
 
 @hydra.main(version_base=None, config_path="conf", config_name="kg")
 def main(cfg) -> str:
+    """Build and write the combined SMF/TMI knowledge graph, logging to wandb."""
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
     BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")

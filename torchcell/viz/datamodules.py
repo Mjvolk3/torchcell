@@ -1,3 +1,5 @@
+"""Visualization helpers for dataset index splits."""
+
 from collections import defaultdict
 
 import matplotlib.pyplot as plt
@@ -9,6 +11,10 @@ from torchcell.datamodules.cell import DatasetIndexSplit
 def plot_dataset_index_split(
     split_index: DatasetIndexSplit, title: str, save_path: str, threshold: float = 0.02
 ):
+    """Plot per-split label distributions as horizontal stacked bars and save to disk.
+
+    Labels below ``threshold`` of a split are collapsed into an "Other" category.
+    """
     # Reverse the order: train on top, val in the middle, and test at the bottom
     splits = ["train", "val", "test"][::-1]
 

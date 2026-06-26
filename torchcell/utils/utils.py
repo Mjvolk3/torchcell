@@ -1,3 +1,5 @@
+"""General-purpose numeric formatting helpers."""
+
 import math
 
 

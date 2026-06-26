@@ -1,3 +1,5 @@
+"""CPU matrix-multiplication benchmark with IPMI temperature/fan monitoring."""
+
 import argparse
 import concurrent.futures
 import multiprocessing as mp
@@ -17,7 +19,7 @@ import psutil
 
 @dataclass
 class BenchmarkConfig:
-    """Configuration for benchmark runs"""
+    """Configuration for benchmark runs."""
 
     title: str
     matrix_size: int
@@ -27,7 +29,7 @@ class BenchmarkConfig:
     output_dir: Path
 
     def __post_init__(self):
-        """Validate configuration after initialization"""
+        """Validate configuration after initialization."""
         if self.matrix_size <= 0:
             raise ValueError("Matrix size must be positive")
         if self.num_cpus <= 0:
@@ -40,14 +42,15 @@ class BenchmarkConfig:
 
 
 class IPMICollector:
-    """Handles IPMI data collection and parsing"""
+    """Handles IPMI data collection and parsing."""
 
     def __init__(self, timeout: int = 30, retry_count: int = 3):
+        """Set the per-command timeout and retry count for IPMI calls."""
         self.timeout = timeout
         self.retry_count = retry_count
 
     def collect_data(self) -> tuple[dict[str, float], dict[str, float]]:
-        """Collect IPMI data with retries"""
+        """Collect IPMI data with retries."""
         for attempt in range(self.retry_count):
             try:
                 result = subprocess.run(
@@ -78,7 +81,7 @@ class IPMICollector:
 
     @staticmethod
     def parse_output(output: str) -> tuple[dict[str, float], dict[str, float]]:
-        """Parse IPMI output into temperature and RPM data"""
+        """Parse IPMI output into temperature and RPM data."""
         temps = {}
         rpms = {}
 
@@ -105,9 +108,10 @@ class IPMICollector:
 
 
 class SystemMonitor:
-    """Monitors system metrics during benchmark runs"""
+    """Monitors system metrics during benchmark runs."""
 
     def __init__(self, config: BenchmarkConfig, data_queue: queue.Queue):
+        """Initialize metric buffers, the IPMI collector, and the stop event."""
         self.config = config
         self.data_queue = data_queue
         self.temperatures: list[dict[str, float]] = []
@@ -122,7 +126,7 @@ class SystemMonitor:
 
     @staticmethod
     def discover_sensors() -> tuple[list[str], list[str]]:
-        """Discover available temperature and fan sensors"""
+        """Discover available temperature and fan sensors."""
         try:
             result = subprocess.run(
                 "ipmitool sensor list | grep -E 'Temp\\.|RPM'",
@@ -174,7 +178,7 @@ class SystemMonitor:
             return [], []
 
     def _validate_data(self) -> bool:
-        """Validate collected data"""
+        """Validate collected data."""
         if not self.timestamps:
             return False
         if len(self.timestamps) != len(self.temperatures):
@@ -186,7 +190,7 @@ class SystemMonitor:
         return True
 
     def collect_data(self) -> None:
-        """Collect system metrics data"""
+        """Collect system metrics data."""
         while not self.stop_event.is_set():
             try:
                 # Check for benchmark completion signal
@@ -218,7 +222,7 @@ class SystemMonitor:
                 print(f"Error in data collection: {e}")
 
     def export_data(self) -> None:
-        """Export collected data to CSV"""
+        """Export collected data to CSV."""
         if not self._validate_data():
             print("Warning: Data validation failed, skipping export")
             return
@@ -245,7 +249,7 @@ class SystemMonitor:
         print(f"Data exported to: {output_path}")
 
     def plot_data(self) -> Path | None:
-        """Create visualization of collected data with continuous timeline"""
+        """Create visualization of collected data with continuous timeline."""
         if not self._validate_data():
             print("Warning: No valid monitoring data available for plotting")
             return None
@@ -482,7 +486,7 @@ class SystemMonitor:
         markers: list[str],
         legend_title: str,
     ) -> None:
-        """Helper method to plot data series with consistent styling"""
+        """Plot data series with consistent styling."""
         for run_num in range(1, self.current_run):
             run_mask = [r == run_num for r in self.run_numbers]
             run_indices = [i for i, mask in enumerate(run_mask) if mask]
@@ -522,7 +526,7 @@ class SystemMonitor:
         ax.legend(bbox_to_anchor=(1.15, 1), loc="upper left", title=legend_title)
 
     def _add_completion_marker(self, ax: plt.Axes, completion_time: float) -> None:
-        """Add completion marker to plot"""
+        """Add completion marker to plot."""
         ax.axvline(x=completion_time, color="r", linestyle="--", alpha=0.3)
         ax.text(
             completion_time,
@@ -536,15 +540,16 @@ class SystemMonitor:
 
 
 class Benchmark:
-    """Handles benchmark execution and monitoring"""
+    """Handles benchmark execution and monitoring."""
 
     def __init__(self, config: BenchmarkConfig):
+        """Store the benchmark config and prepare monitor placeholders."""
         self.config = config
         self.monitor: SystemMonitor | None = None
         self.monitor_queue: queue.Queue | None = None
 
     def setup_monitoring(self) -> None:
-        """Initialize system monitoring"""
+        """Initialize system monitoring."""
         self.monitor_queue = queue.Queue()
         self.monitor = SystemMonitor(self.config, self.monitor_queue)
 
@@ -556,7 +561,7 @@ class Benchmark:
 
     @staticmethod
     def _run_monitor_on_last_cpu(monitor: SystemMonitor) -> None:
-        """Run monitor on last CPU"""
+        """Run monitor on last CPU."""
         try:
             total_cpus = psutil.cpu_count()
             p = psutil.Process()
@@ -567,7 +572,7 @@ class Benchmark:
             monitor.collect_data()
 
     def run(self) -> list[float]:
-        """Run the complete benchmark suite"""
+        """Run the complete benchmark suite."""
         times = []
         seeds = [
             self.config.base_seed + i * self.config.num_cpus
@@ -585,7 +590,7 @@ class Benchmark:
         return times
 
     def _run_single_benchmark(self, seed: int) -> float:
-        """Run a single benchmark iteration"""
+        """Run a single benchmark iteration."""
         with concurrent.futures.ProcessPoolExecutor(
             max_workers=self.config.num_cpus, initializer=self._init_worker
         ) as executor:
@@ -603,7 +608,7 @@ class Benchmark:
 
     @staticmethod
     def _init_worker() -> None:
-        """Initialize worker process"""
+        """Initialize worker process."""
         try:
             total_cpus = psutil.cpu_count()
             p = psutil.Process()
@@ -613,7 +618,7 @@ class Benchmark:
 
 
 def matrix_multiply(size_seed: tuple) -> None:
-    """Matrix multiplication benchmark function"""
+    """Matrix multiplication benchmark function."""
     size, seed = size_seed
     np.random.seed(seed)
     A = np.random.rand(size, size)
@@ -622,7 +627,7 @@ def matrix_multiply(size_seed: tuple) -> None:
 
 
 def main() -> None:
-    """Main program entry point"""
+    """Main program entry point."""
     parser = argparse.ArgumentParser(description="CPU Benchmark with System Monitoring")
     parser.add_argument(
         "--title",

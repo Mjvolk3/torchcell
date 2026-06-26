@@ -4,8 +4,7 @@
 # Test file: tests/torchcell/ontology/test_mermaid_diagram.py
 
 
-"""
-Mermaid Diagram Generator for BioCypher Schema
+"""Mermaid diagram generator for BioCypher schema.
 
 Generates visual Mermaid diagrams from BioCypher schema YAML files.
 Supports both horizontal (RL) and vertical (BT) orientations.

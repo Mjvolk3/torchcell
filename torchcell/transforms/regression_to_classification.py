@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/transforms/regression_to_classification
 # Test file: tests/torchcell/transforms/test_regression_to_classification.py
 
+"""Transforms that bin regression labels into classification targets and invert them."""
+
 import copy
 from abc import ABC
 from typing import TYPE_CHECKING
@@ -136,6 +138,8 @@ class LabelNormalizationTransform(BaseTransform):
 
 
 class BaseBinningStrategy(ABC):
+    """Base strategy providing shared clamping and encoding for label binning."""
+
     def clamp_values(
         self, values: torch.Tensor, bin_edges: torch.Tensor
     ) -> torch.Tensor:
@@ -219,6 +223,8 @@ class BaseBinningStrategy(ABC):
 
 
 class EqualWidthStrategy(BaseBinningStrategy):
+    """Binning strategy with bins of equal width across the value range."""
+
     def compute_bins(
         self, values: np.ndarray, num_bins: int
     ) -> tuple[np.ndarray, dict]:
@@ -238,6 +244,8 @@ class EqualWidthStrategy(BaseBinningStrategy):
 
 
 class EqualFrequencyStrategy(BaseBinningStrategy):
+    """Binning strategy with quantile-based bins of roughly equal frequency."""
+
     def compute_bins(
         self, values: np.ndarray, num_bins: int
     ) -> tuple[np.ndarray, dict]:
@@ -257,6 +265,8 @@ class EqualFrequencyStrategy(BaseBinningStrategy):
 
 
 class AutoBinStrategy(BaseBinningStrategy):
+    """Binning strategy that infers the bin count from the data std and range."""
+
     def compute_bins(
         self, values: np.ndarray, num_bins: int | None = None
     ) -> tuple[np.ndarray, dict]:
@@ -269,6 +279,8 @@ class AutoBinStrategy(BaseBinningStrategy):
 
 
 class LabelBinningTransform(BaseTransform):
+    """Transform converting continuous labels into binned classification targets."""
+
     def __init__(
         self,
         dataset: "Neo4jCellDataset",
@@ -487,6 +499,7 @@ class InverseCompose(BaseTransform):
     """A transform that applies the inverse of a sequence of transforms in reverse order."""
 
     def __init__(self, transforms: Compose | list[BaseTransform]):
+        """Store the transforms and verify each implements an inverse method."""
         super().__init__()
         if isinstance(transforms, Compose):
             self.transforms = transforms.transforms
@@ -513,5 +526,6 @@ class InverseCompose(BaseTransform):
         return data
 
     def __repr__(self) -> str:
+        """Return a repr listing the wrapped transforms."""
         args = [f"\n  {t}" for t in self.transforms]
         return f"{self.__class__.__name__}({''.join(args)}\n)"

@@ -1,3 +1,5 @@
+"""Build a S. cerevisiae BioCypher knowledge graph from configured datasets."""
+
 import hashlib
 import inspect
 import json
@@ -45,6 +47,7 @@ def get_num_workers() -> int:
 
 @hydra.main(version_base=None, config_path="conf", config_name="gene_essentiality_sgd")
 def main(cfg) -> str:
+    """Run the Hydra-configured knowledge-graph build and log it to wandb."""
     # wandb configuration
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())

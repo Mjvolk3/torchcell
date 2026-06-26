@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/viz/fitness.py
 # Test file: torchcell/viz/test_fitness.py
 
+"""Box-plot visualization of predicted vs measured growth/fitness."""
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -10,6 +12,15 @@ from scipy import stats
 
 
 def box_plot(true_values, predictions) -> plt.Figure:
+    """Bin predictions into growth ranges and box-plot the measured values.
+
+    Args:
+        true_values: Measured growth values (tensor or array).
+        predictions: Predicted growth values (tensor or array).
+
+    Returns:
+        The matplotlib figure annotated with Pearson, Spearman, and R-squared.
+    """
     # Convert input to numpy arrays (convert to float32 first to handle BFloat16 from mixed precision)
     if isinstance(true_values, torch.Tensor):
         true_values = true_values.cpu().float().numpy()
@@ -170,6 +181,7 @@ def box_plot(true_values, predictions) -> plt.Figure:
 
 
 def generate_simulated_data(n_samples=10000):
+    """Generate correlated synthetic true/predicted growth values with WT samples."""
     # Generate true values
     true_values = np.random.normal(loc=0.8, scale=0.2, size=n_samples)
     true_values = np.clip(true_values, 0, 1.2)  # Clip values between 0 and 1.2
@@ -194,6 +206,7 @@ def generate_simulated_data(n_samples=10000):
 
 
 def generate_simulated_data_with_nan(n_samples=10000):
+    """Generate synthetic growth data seeded with NaN, inf, and identical-value bins."""
     # Generate true values
     true_values = np.random.normal(loc=0.8, scale=0.2, size=n_samples)
     true_values = np.clip(true_values, 0, 1.2)  # Clip values between 0 and 1.2
@@ -239,6 +252,7 @@ def generate_simulated_data_with_nan(n_samples=10000):
 
 
 def main():
+    """Build and show a box plot from NaN-seeded simulated data."""
     true_values, predictions = generate_simulated_data_with_nan()
     _fig = box_plot(true_values, predictions)
     plt.show()

@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/cell_latent_perturbation
 # Test file: tests/torchcell/models/test_cell_latent_perturbation.py
 
+"""Latent-perturbation cell model: hetero GNN pooling over gene and metabolism graphs."""
+
 from typing import Literal
 
 import torch
@@ -27,24 +29,43 @@ from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 
 
 class ProjectedGATConv(nn.Module):
+    """GATv2 conv whose multi-head output is linearly projected to a fixed dim."""
+
     def __init__(self, gat_conv, out_dim):
+        """Store the GAT conv and a linear projection to ``out_dim``.
+
+        Args:
+            gat_conv: The underlying multi-head GATv2 conv.
+            out_dim: Output dimension after projecting concatenated heads.
+        """
         super().__init__()
         self.gat = gat_conv
         self.project = nn.Linear(gat_conv.heads * gat_conv.out_channels, out_dim)
 
     def forward(self, x, edge_index):
+        """Apply the GAT conv then project the concatenated heads to ``out_dim``."""
         x = self.gat(x, edge_index)  # Shape: (..., heads * out_channels)
         return self.project(x)  # Shape: (..., out_dim)
 
 
 class PredictionHead(nn.Module):
+    """MLP head applying stacked layers with optional dimension-matched residuals."""
+
     def __init__(self, layers: nn.ModuleList, residual: bool, dims: list[int]):
+        """Store the layer list, residual flag, and per-layer dimensions.
+
+        Args:
+            layers: Ordered list of head layers.
+            residual: Whether to add residual connections between equal-dim layers.
+            dims: Dimension at each layer boundary, used to gate residuals.
+        """
         super().__init__()
         self.layers = layers
         self.residual = residual
         self.dims = dims
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Run the head layers, adding residuals where dimensions match."""
         input_x = x
         current_idx = 0
 
@@ -65,6 +86,8 @@ class PredictionHead(nn.Module):
 
 
 class HeteroGnnPool(nn.Module):
+    """Heterogeneous GNN encoder with a pooled prediction head over edge types."""
+
     def __init__(
         self,
         in_channels: int,
@@ -85,6 +108,27 @@ class HeteroGnnPool(nn.Module):
         learnable_embedding: bool = False,
         num_nodes: int | None = None,
     ):
+        """Build the hetero conv stack and prediction head.
+
+        Args:
+            in_channels: Input node feature dimension.
+            hidden_channels: Hidden dimension across conv layers.
+            out_channels: Output dimension before the prediction head.
+            num_layers: Number of heterogeneous conv layers.
+            edge_types: Edge types handled by the HeteroConv.
+            conv_type: Base convolution type per relation.
+            layer_config: Optional per-layer hyperparameters.
+            activation: Activation key from ``act_register``.
+            norm: Normalization type for conv layers.
+            head_num_layers: Number of prediction head layers.
+            head_hidden_channels: Hidden dimension of the head.
+            head_dropout: Dropout probability in the head.
+            head_activation: Activation key for the head.
+            head_residual: Whether the head uses residual connections.
+            head_norm: Normalization type for the head.
+            learnable_embedding: Whether to use a learnable node embedding.
+            num_nodes: Number of nodes when using a learnable embedding.
+        """
         super().__init__()
         self.num_layers = num_layers
         self.edge_types = edge_types
@@ -403,6 +447,7 @@ class HeteroGnnPool(nn.Module):
         )
 
     def forward(self, batch):
+        """Encode the hetero batch through the conv stack and pooled head."""
         from torch_geometric.utils import add_self_loops
 
         if self.learnable_embedding:
@@ -493,6 +538,7 @@ class HeteroGnnPool(nn.Module):
 
     @property
     def num_parameters(self) -> dict[str, int]:
+        """Return parameter counts for conv, norm, and head layers plus a total."""
         conv_params = sum(
             sum(p.numel() for p in conv.parameters()) for conv in self.convs
         )
@@ -521,6 +567,15 @@ class SetTransformer(nn.Module):
         num_layers: int = 2,
         dropout: float = 0.1,
     ):
+        """Build the input projection and stacked multi-head attention layers.
+
+        Args:
+            input_dim: Dimension of input set elements.
+            hidden_dim: Hidden and output dimension.
+            num_heads: Number of attention heads.
+            num_layers: Number of attention layers.
+            dropout: Dropout probability.
+        """
         super().__init__()
         self.layers = nn.ModuleList(
             [
@@ -573,6 +628,8 @@ class SetTransformer(nn.Module):
 
 
 class SetNet(nn.Module):
+    """DeepSets-style network: per-node MLP, pooling, then a set-level MLP."""
+
     def __init__(
         self,
         input_dim: int,
@@ -583,6 +640,17 @@ class SetNet(nn.Module):
         pooling: Literal["mean", "sum"] = "mean",
         activation: str = "relu",  # Added activation parameter
     ):
+        """Build the node MLP, pooling, and set MLP.
+
+        Args:
+            input_dim: Dimension of input node features.
+            hidden_dim: Hidden and output dimension.
+            num_node_layers: Number of per-node MLP layers.
+            num_set_layers: Number of set-level MLP layers.
+            dropout: Dropout probability.
+            pooling: Pooling reduction over set elements.
+            activation: Activation name (relu/elu/gelu/tanh).
+        """
         super().__init__()
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
@@ -663,6 +731,8 @@ class SetNet(nn.Module):
 
 
 class MetabolismProcessor(nn.Module):
+    """Stoichiometric hypergraph convs plus SetNets over reactions and genes."""
+
     def __init__(
         self,
         metabolite_dim: int,
@@ -673,6 +743,17 @@ class MetabolismProcessor(nn.Module):
         use_skip: bool = False,  # New parameter for skip connections
         dropout: float = 0.1,
     ):
+        """Build hypergraph conv layers, optional skip norms, and SetNets.
+
+        Args:
+            metabolite_dim: Input metabolite feature dimension.
+            hidden_dim: Hidden and output dimension.
+            hyperconv_num_layers: Number of stoichiometric hypergraph conv layers.
+            set_net_num_layers: Number of layers in each SetNet.
+            use_attention: Whether hypergraph convs use attention.
+            use_skip: Whether to add layer-normed skip connections.
+            dropout: Dropout probability.
+        """
         super().__init__()
         self.use_attention = use_attention
         self.use_skip = use_skip  # Store skip connection flag
@@ -721,6 +802,7 @@ class MetabolismProcessor(nn.Module):
         )
 
     def forward(self, batch) -> torch.Tensor:
+        """Process the metabolism hypergraph batch into a pooled embedding."""
         device = batch[
             "metabolite", "reaction_genes", "metabolite"
         ].hyperedge_index.device
@@ -836,6 +918,8 @@ class MetabolismProcessor(nn.Module):
 
 
 class CellLatentPerturbation(nn.Module):
+    """Combine gene encoder, metabolism processor, and set models for prediction."""
+
     def __init__(
         self,
         # Base dimensions
@@ -872,6 +956,36 @@ class CellLatentPerturbation(nn.Module):
         learnable_embedding: bool = False,
         num_nodes: int | None = None,
     ):
+        """Build the gene encoder, metabolism processor, set models, and heads.
+
+        Args:
+            in_channels: Input node feature dimension.
+            hidden_channels: Hidden dimension shared across submodules.
+            out_channels: Output prediction dimension.
+            gene_encoder_num_layers: Number of gene encoder conv layers.
+            gene_encoder_conv_type: Conv type used by the gene encoder.
+            gene_encoder_layer_config: Optional gene encoder layer config.
+            gene_encoder_head_num_layers: Number of gene encoder head layers.
+            metabolism_num_layers: Number of metabolism processor layers.
+            metabolism_attention: Whether metabolism convs use attention.
+            metabolism_hyperconv_layers: Number of hypergraph conv layers.
+            metabolism_setnet_layers: Number of SetNet layers in metabolism.
+            metabolism_use_skip: Whether metabolism uses skip connections.
+            set_transformer_heads: Number of set-transformer heads.
+            set_transformer_layers: Number of set-transformer layers.
+            set_net_node_layers: Number of per-node SetNet layers.
+            set_net_set_layers: Number of set-level SetNet layers.
+            combiner_num_layers: Number of combiner layers.
+            combiner_hidden_factor: Multiplier for combiner hidden dimension.
+            head_hidden_factor: Multiplier for head hidden dimension.
+            head_num_layers: Number of prediction head layers.
+            edge_types: Edge types handled by the gene encoder.
+            activation: Activation key from ``act_register``.
+            norm: Normalization type across submodules.
+            dropout: Dropout probability.
+            learnable_embedding: Whether to use a learnable node embedding.
+            num_nodes: Number of nodes for a learnable embedding.
+        """
         super().__init__()
         self.hidden_channels = hidden_channels
 
@@ -1109,6 +1223,7 @@ class CellLatentPerturbation(nn.Module):
         return z_whole, z_intact, z_pert
 
     def forward(self, batch):
+        """Encode genes and metabolism, fuse perturbations, and return predictions."""
         gene_embeddings = self.gene_encoder(batch)
         metabolism_embeddings = self.metabolism_processor(batch)
 
@@ -1176,6 +1291,7 @@ class CellLatentPerturbation(nn.Module):
 
 
 def load_sample_data_batch():
+    """Load and return a sample data batch for testing the model."""
     import os
     import os.path as osp
 
@@ -1263,6 +1379,7 @@ def load_sample_data_batch():
 
 
 def plot_correlations(predictions, true_values, save_path):
+    """Plot predicted vs true values and save the figure to ``save_path``."""
     import matplotlib.pyplot as plt
     import numpy as np
     from scipy import stats
@@ -1328,6 +1445,7 @@ def plot_correlations(predictions, true_values, save_path):
 
 
 def main(device="cuda"):
+    """Build the model on sample data and run a training/eval demo."""
     import os
     import os.path as osp
 

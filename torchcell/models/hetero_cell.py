@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/hetero_cell
 # Test file: tests/torchcell/models/test_hetero_cell.py
 
+"""Heterogeneous GNN over gene, reaction, and metabolite graphs for fitness."""
+
 import os
 import os.path as osp
 from typing import Any
@@ -29,6 +31,7 @@ from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 
 
 def get_norm_layer(channels: int, norm: str) -> nn.Module:
+    """Return a layer or batch normalization module for the given channels."""
     if norm == "layer":
         return nn.LayerNorm(channels)
     elif norm == "batch":
@@ -41,7 +44,16 @@ def get_norm_layer(channels: int, norm: str) -> nn.Module:
 # Attentional Aggregation Wrapper
 ###############################################################################
 class AttentionalGraphAggregation(nn.Module):
+    """Attentional pooling that gates and transforms node features per graph."""
+
     def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.1):
+        """Build the gating and transform networks for attentional aggregation.
+
+        Args:
+            in_channels: Input feature dimension.
+            out_channels: Output feature dimension after transform.
+            dropout: Dropout probability in the gate and transform networks.
+        """
         super().__init__()
         self.gate_nn = nn.Sequential(
             nn.Linear(in_channels, in_channels // 2),
@@ -59,6 +71,7 @@ class AttentionalGraphAggregation(nn.Module):
     def forward(
         self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
+        """Aggregate node features ``x`` into per-graph vectors via attention."""
         return self.aggregator(x, index=index, dim_size=dim_size)
 
 
@@ -66,6 +79,8 @@ class AttentionalGraphAggregation(nn.Module):
 # PreProcessor: an MLP to “preprocess” gene embeddings.
 ###############################################################################
 class PreProcessor(nn.Module):
+    """MLP that preprocesses gene embeddings before the heterogeneous convs."""
+
     def __init__(
         self,
         in_channels: int,
@@ -75,6 +90,16 @@ class PreProcessor(nn.Module):
         norm: str = "layer",
         activation: str = "relu",
     ):
+        """Build a stacked linear/norm/activation/dropout MLP.
+
+        Args:
+            in_channels: Input feature dimension.
+            hidden_channels: Hidden and output dimension.
+            num_layers: Number of linear layers.
+            dropout: Dropout probability.
+            norm: Normalization type passed to ``get_norm_layer``.
+            activation: Activation key from ``act_register``.
+        """
         super().__init__()
         act = act_register[activation]
         norm_layer = get_norm_layer(hidden_channels, norm)
@@ -91,6 +116,7 @@ class PreProcessor(nn.Module):
         self.mlp = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply the preprocessing MLP to ``x``."""
         return self.mlp(x)
 
 
@@ -98,6 +124,8 @@ class PreProcessor(nn.Module):
 # New Model: HeteroCell
 ###############################################################################
 class AttentionConvWrapper(nn.Module):
+    """Wrap a conv layer with optional projection, normalization, and activation."""
+
     def __init__(
         self,
         conv: nn.Module,
@@ -106,6 +134,16 @@ class AttentionConvWrapper(nn.Module):
         activation: str | None = None,
         dropout: float = 0.1,
     ) -> None:
+        """Configure the wrapped conv, output projection, norm, and activation.
+
+        Args:
+            conv: The graph convolution module to wrap.
+            target_dim: Output dimension the wrapper projects to.
+            norm: Normalization type (``batch``/``layer``/``graph``/``instance``/
+                ``pair``/``mean``) or None.
+            activation: Activation key from ``act_register`` or None.
+            dropout: Dropout probability applied after activation.
+        """
         super().__init__()
         self.conv = conv
         # For GATv2Conv-like layers:
@@ -145,6 +183,7 @@ class AttentionConvWrapper(nn.Module):
         self.dropout = nn.Dropout(dropout) if dropout > 0 else None
 
     def forward(self, x, edge_index, **kwargs):
+        """Run the conv, then project, normalize, activate, and drop out."""
         out = self.conv(x, edge_index, **kwargs)
         out = self.proj(out)
         if self.norm is not None:
@@ -156,6 +195,8 @@ class AttentionConvWrapper(nn.Module):
 
 
 class HeteroCell(nn.Module):
+    """Heterogeneous GNN encoding gene/reaction/metabolite graphs to predict fitness."""
+
     def __init__(
         self,
         gene_num: int,
@@ -172,6 +213,23 @@ class HeteroCell(nn.Module):
         prediction_head_config: dict[str, Any] | None = None,
         gpr_conv_config: dict[str, Any] | None = None,
     ):
+        """Build the embeddings, preprocessor, hetero conv stack, and heads.
+
+        Args:
+            gene_num: Number of genes.
+            reaction_num: Number of reactions.
+            metabolite_num: Number of metabolites.
+            hidden_channels: Hidden dimension throughout the model.
+            out_channels: Output dimension of the prediction head.
+            num_layers: Number of heterogeneous convolution layers.
+            dropout: Dropout probability.
+            norm: Normalization type used across submodules.
+            activation: Activation key from ``act_register``.
+            gene_encoder_config: Optional gene encoder hyperparameters.
+            metabolism_config: Optional metabolism conv hyperparameters.
+            prediction_head_config: Optional prediction head hyperparameters.
+            gpr_conv_config: Optional gene-protein-reaction conv hyperparameters.
+        """
         super().__init__()
         self.hidden_channels = hidden_channels
 
@@ -286,6 +344,7 @@ class HeteroCell(nn.Module):
         return nn.Sequential(*layers)
 
     def forward_single(self, data: HeteroData | Batch) -> torch.Tensor:
+        """Encode one hetero graph through the conv stack and return gene embeddings."""
         device = self.gene_embedding.weight.device
 
         is_batch = isinstance(data, Batch) or hasattr(data["gene"], "batch")
@@ -365,6 +424,15 @@ class HeteroCell(nn.Module):
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+        """Predict fitness and gene interaction from wildtype vs perturbed graphs.
+
+        Args:
+            cell_graph: The reference (wildtype) hetero graph.
+            batch: The batched perturbed hetero graphs.
+
+        Returns:
+            A tuple of the prediction tensor and a dict of intermediate embeddings.
+        """
         # Process the reference (wildtype) graph.
         z_w = self.forward_single(cell_graph)
         z_w = self.global_aggregator(
@@ -402,6 +470,8 @@ class HeteroCell(nn.Module):
 
     @property
     def num_parameters(self) -> dict[str, int]:
+        """Return trainable parameter counts per submodule plus a total."""
+
         def count_params(module: nn.Module) -> int:
             return sum(p.numel() for p in module.parameters() if p.requires_grad)
 
@@ -424,6 +494,7 @@ class HeteroCell(nn.Module):
     config_name="hetero_cell",
 )
 def main(cfg: DictConfig) -> None:
+    """Instantiate HeteroCell from config and run a sample forward pass."""
     import os
 
     import matplotlib.pyplot as plt

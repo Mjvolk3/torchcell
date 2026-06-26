@@ -1,3 +1,5 @@
+"""Cosine annealing learning-rate scheduler with warmup and cyclic restarts."""
+
 import math
 
 import torch
@@ -5,7 +7,8 @@ from torch.optim.lr_scheduler import _LRScheduler
 
 
 class CosineAnnealingWarmupRestarts(_LRScheduler):
-    """
+    """Cosine annealing scheduler with linear warmup and decaying cyclic restarts.
+
     optimizer (Optimizer): Wrapped optimizer.
     first_cycle_steps (int): First cycle step size.
     cycle_mult(float): Cycle steps magnification. Default: -1.
@@ -27,6 +30,7 @@ class CosineAnnealingWarmupRestarts(_LRScheduler):
         gamma: float = 1.0,
         last_epoch: int = -1,
     ):
+        """Initialize cycle/warmup parameters and set the starting learning rate."""
         assert warmup_steps < first_cycle_steps
 
         self.first_cycle_steps = first_cycle_steps  # first cycle step size
@@ -47,12 +51,14 @@ class CosineAnnealingWarmupRestarts(_LRScheduler):
         self.init_lr()
 
     def init_lr(self):
+        """Set every param group's learning rate to min_lr and record base LRs."""
         self.base_lrs = []
         for param_group in self.optimizer.param_groups:
             param_group["lr"] = self.min_lr
             self.base_lrs.append(self.min_lr)
 
     def get_lr(self):
+        """Compute the learning rates for the current step (warmup or cosine)."""
         if self.step_in_cycle == -1:
             return self.base_lrs
         elif self.step_in_cycle < self.warmup_steps:
@@ -78,6 +84,7 @@ class CosineAnnealingWarmupRestarts(_LRScheduler):
             ]
 
     def step(self, epoch=None):
+        """Advance the schedule and update each param group's learning rate."""
         if epoch is None:
             epoch = self.last_epoch + 1
             self.step_in_cycle = self.step_in_cycle + 1

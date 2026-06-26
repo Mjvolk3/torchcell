@@ -2,6 +2,8 @@
 # [[torchcell.datasets.cell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/cell.py
 # Test file: torchcell/datasets/test_cell.py
+"""Cell dataset composing genome, graph, and embeddings into perturbed graph samples."""
+
 import json
 import logging
 import os
@@ -29,19 +31,20 @@ log = logging.getLogger(__name__)
 
 
 class ParsedGenome(ModelStrictArbitrary):
+    """Picklable subset of a genome holding only its gene set."""
+
     gene_set: GeneSet
 
     @field_validator("gene_set")
     def validate_gene_set(cls, v):
+        """Validate that the provided value is a GeneSet."""
         if not isinstance(v, GeneSet):
             raise ValueError(f"gene_set must be a GeneSet, got {type(v).__name__}")
         return v
 
 
 class CellDataset(Dataset):
-    """
-    Represents a dataset for cellular data.
-    """
+    """PyG dataset of perturbed cell graphs built from genome, graph, and embeddings."""
 
     # TODO type change experiments
     def __init__(
@@ -57,6 +60,19 @@ class CellDataset(Dataset):
         pre_transform: Callable | None = None,
         pre_filter: Callable | None = None,
     ):
+        """Parse the genome, build the composed cell graph, and prepare LMDB storage.
+
+        Args:
+            root: Dataset root directory.
+            genome: Genome providing the gene set (discarded after parsing).
+            graph: Optional NetworkX graph supplying physical interaction edges.
+            embeddings: Optional embedding dataset used as node features.
+            experiments: Experiment dataset(s) providing genotype/phenotype samples.
+            zero_pert: Whether to zero out embeddings of perturbed nodes.
+            transform: Optional sample transform.
+            pre_transform: Optional pre-processing transform.
+            pre_filter: Optional pre-processing filter.
+        """
         self._gene_set = None
         # HACK start
         # Extract data from genome object, then remove for pickling with data loader
@@ -100,6 +116,7 @@ class CellDataset(Dataset):
         self.env = None
 
     def to_cell_data(self, graphs: list[nx.Graph]) -> Data:
+        """Compose the input graphs and convert them to a PyG Data object."""
         G = self.safe_compose(graphs)
         # drop nodes that don't belong to genome.gene_set
         data = from_networkx(G)
@@ -108,18 +125,21 @@ class CellDataset(Dataset):
 
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:
+        """Extract the gene set from a genome into a picklable ParsedGenome."""
         data = {}
         data["gene_set"] = genome.gene_set
         return ParsedGenome(**data)
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the raw file names required by the dataset (none here)."""
         # TODO consider return the processed of the experiments, etc.
         # This might cause an issue because there is expected behavior for raw,# and this is not it.
         return None  # Specify raw files if needed
 
     @property
     def processed_file_names(self) -> list[str]:
+        """Return the processed LMDB file name."""
         return "data.lmdb"
 
     # HACK comment out for now
@@ -134,6 +154,7 @@ class CellDataset(Dataset):
     #     return data
     @property
     def wt(self):
+        """Return the wild-type reference sample (currently None)."""
         return None
 
     # TODO remove
@@ -165,6 +186,7 @@ class CellDataset(Dataset):
     # IDEA this is really about composing node features with edge features... we will need something more sophisticated for multigraphs.
     @staticmethod
     def safe_compose(graphs):
+        """Compose graphs, erroring on conflicting attrs and merging node attrs into x."""
         if any(isinstance(G, nx.DiGraph) for G in graphs):
             # Convert all graphs to DiGraph if at least one is directed
             graphs = [
@@ -234,9 +256,7 @@ class CellDataset(Dataset):
 
     @staticmethod
     def create_embedding_graph(genome, embeddings: BaseEmbeddingDataset) -> nx.Graph:
-        """
-        Create a NetworkX graph from embeddings.
-        """
+        """Build a node-only NetworkX graph with concatenated embeddings per gene."""
         # Create an empty NetworkX graph
         G = nx.Graph()
 
@@ -253,6 +273,7 @@ class CellDataset(Dataset):
         return G
 
     def process(self):
+        """Filter experiments to the gene set and write samples to the LMDB store."""
         combined_data = []
         self.gene_set = self.compute_gene_set()
 
@@ -284,6 +305,7 @@ class CellDataset(Dataset):
 
     @property
     def gene_set(self):
+        """Return the dataset gene set, loading it from the cached JSON file."""
         try:
             if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
                 with open(osp.join(self.preprocess_dir, "gene_set.json")) as f:
@@ -308,6 +330,7 @@ class CellDataset(Dataset):
         self._gene_set = value
 
     def compute_gene_set(self):
+        """Return the intersection of the genome gene set and experiment gene set."""
         if not self._gene_set:
             if isinstance(self.experiments, Dataset):
                 experiment_gene_set = self.experiments.gene_set
@@ -324,9 +347,7 @@ class CellDataset(Dataset):
         return cell_gene_set
 
     def _subset_graph(self, data: Data) -> Data:
-        """
-        Subset the reference graph based on the genes in data.genotype.
-        """
+        """Subset the reference graph by removing the genes in ``data.genotype``."""
         # Nodes to remove based on the genes in data.genotype
         nodes_to_remove = torch.tensor(
             [
@@ -395,6 +416,7 @@ class CellDataset(Dataset):
     # HACK
     @staticmethod
     def extract_subgraph(node_idx, full_graph):
+        """Return the 1-hop subgraph around ``node_idx`` from the full graph."""
         subset, edge_index, _, _ = k_hop_subgraph(
             node_idx=node_idx,
             edge_index=full_graph.edge_index,
@@ -472,6 +494,7 @@ class CellDataset(Dataset):
         )
 
     def len(self) -> int:
+        """Return the number of samples stored in the LMDB database."""
         if self.env is None:
             self._init_db()
 
@@ -484,16 +507,20 @@ class CellDataset(Dataset):
         return length
 
     def close_lmdb(self):
+        """Close the LMDB environment if it is open."""
         if self.env is not None:
             self.env.close()
             self.env = None
 
 
 class NeoCellDataset(Dataset):
+    """Placeholder for a future Neo4j-backed cell dataset."""
+
     pass
 
 
 def main():
+    """Build a small CellDataset from embeddings and Costanzo data as a demo."""
     # genome
     import os.path as osp
 

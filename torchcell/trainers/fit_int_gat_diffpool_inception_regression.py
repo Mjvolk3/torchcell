@@ -2,7 +2,7 @@
 # [[torchcell.trainers.fit_int_gat_diffpool_regression]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/fit_int_gat_diffpool_regression
 # Test file: tests/torchcell/trainers/test_fit_int_gat_diffpool_regression.py
-
+"""Lightning regression trainer for the GAT/DiffPool inception interaction model."""
 
 import logging
 import os.path as osp
@@ -45,6 +45,7 @@ def log_error_information(
     attention_weights,
     cluster_assignments,
 ):
+    """Log batch tensors and pooling diagnostics when a NaN loss occurs."""
     log.error("NaN loss detected. Logging relevant information and terminating.")
     log.error(f"Batch index: {batch_idx}")
     log.error(f"y: {y}")
@@ -76,6 +77,8 @@ def log_error_information(
 
 
 class RegressionTask(L.LightningModule):
+    """Lightning task training a GAT/DiffPool model on fitness and interaction."""
+
     def __init__(
         self,
         model: nn.Module,
@@ -91,6 +94,7 @@ class RegressionTask(L.LightningModule):
         entropy_loss_weight: float = 1.0,
         grad_accumulation_schedule: dict[int, int] | None = None,
     ):
+        """Store the model, combined loss, and per-stage metric collections."""
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
 
@@ -135,10 +139,12 @@ class RegressionTask(L.LightningModule):
         self.automatic_optimization = False
 
     def setup(self, stage=None):
+        """Move the model and loss weights onto the active device."""
         self.model = self.model.to(self.device)
         self.combined_loss.weights = self.combined_loss.weights.to(self.device)
 
     def update_accumulation_steps(self, epoch):
+        """Set the gradient accumulation steps for the given epoch."""
         if self.hparams.grad_accumulation_schedule is not None:
             self.current_accumulation_steps = max(
                 [
@@ -150,9 +156,11 @@ class RegressionTask(L.LightningModule):
             )
 
     def forward(self, x, edge_indices, batch):
+        """Run the wrapped model on node features, edges, and batch index."""
         return self.model(x, edge_indices, batch)
 
     def on_train_start(self):
+        """Log the model parameter count and initialize accumulation steps."""
         parameter_size = sum(p.numel() for p in self.parameters())
         parameter_size_float = float(parameter_size)
         self.log("model/parameters_size", parameter_size_float, on_epoch=True)
@@ -160,6 +168,7 @@ class RegressionTask(L.LightningModule):
         self.update_accumulation_steps(self.current_epoch)
 
     def training_step(self, batch, batch_idx):
+        """Run a manual-optimization training step with gradient accumulation."""
         x = batch["gene"].x
         edge_indices = [
             batch["gene", "physical_interaction", "gene"].edge_index,
@@ -270,6 +279,7 @@ class RegressionTask(L.LightningModule):
         return loss
 
     def on_train_epoch_end(self):
+        """Compute, log, and reset the training metrics at epoch end."""
         # Compute and log metrics for each metric type
         for metric_name, metric_dict in self.train_metrics.items():
             computed_metrics = metric_dict.compute()
@@ -278,6 +288,7 @@ class RegressionTask(L.LightningModule):
             metric_dict.reset()  # Reset metrics after logging
 
     def validation_step(self, batch, batch_idx):
+        """Run a forward pass, compute losses and metrics for one val batch."""
         x = batch["gene"].x
         edge_indices = [
             batch["gene", "physical_interaction", "gene"].edge_index,
@@ -346,6 +357,7 @@ class RegressionTask(L.LightningModule):
         self.predictions.append(y_hat.detach())
 
     def compute_prediction_stats(self, true_values, predictions, stage="val"):
+        """Build and log box plots of predictions binned by true value."""
         # Define the bin edges for each dimension
         bin_edges = {
             "fitness": torch.tensor(
@@ -385,6 +397,7 @@ class RegressionTask(L.LightningModule):
             )
 
     def on_validation_epoch_end(self):
+        """Log validation metrics and emit prediction plots at epoch end."""
         # Compute and log metrics for each metric type
         for metric_name, metric_dict in self.val_metrics.items():
             computed_metrics = metric_dict.compute()
@@ -438,6 +451,7 @@ class RegressionTask(L.LightningModule):
             )
 
     def test_step(self, batch, batch_idx):
+        """Run a forward pass, compute losses and metrics for one test batch."""
         x = batch["gene"].x
         edge_indices = [
             batch["gene", "physical_interaction", "gene"].edge_index,
@@ -506,6 +520,7 @@ class RegressionTask(L.LightningModule):
         self.predictions.append(y_hat.detach())
 
     def on_test_epoch_end(self):
+        """Log test metrics and emit prediction box plots at epoch end."""
         self.log_dict(self.test_metrics.compute(), sync_dist=True)
         self.test_metrics.reset()
 
@@ -530,6 +545,7 @@ class RegressionTask(L.LightningModule):
         self.predictions = []
 
     def configure_optimizers(self):
+        """Build the optimizer and LR scheduler from the hyperparameter config."""
         optimizer_class = getattr(optim, self.hparams.optimizer_config["type"])
         optimizer_params = {
             k: v for k, v in self.hparams.optimizer_config.items() if k != "type"

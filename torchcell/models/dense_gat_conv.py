@@ -1,3 +1,5 @@
+"""Dense (adjacency-matrix) implementation of the graph attention layer."""
+
 import torch
 import torch.nn.functional as F
 from torch import Tensor
@@ -19,6 +21,7 @@ class DenseGATConv(torch.nn.Module):
         dropout: float = 0.0,
         bias: bool = True,
     ):
+        """Initialize the linear projection, attention params, and optional bias."""
         # TODO Add support for edge features.
         super().__init__()
 
@@ -47,6 +50,7 @@ class DenseGATConv(torch.nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self):
+        """Re-initialize the linear, attention, and bias parameters."""
         self.lin.reset_parameters()
         glorot(self.att_src)
         glorot(self.att_dst)
@@ -60,7 +64,8 @@ class DenseGATConv(torch.nn.Module):
         add_loop: bool = True,
         return_attention_weights: bool = False,
     ):
-        r"""
+        r"""Apply dense graph attention over the batched adjacency tensor.
+
         Args:
             x (torch.Tensor): Node feature tensor
                 :math:`\mathbf{X} \in \mathbb{R}^{B \times N \times F}`, with
@@ -76,6 +81,9 @@ class DenseGATConv(torch.nn.Module):
             add_loop (bool, optional): If set to :obj:`False`, the layer will
                 not automatically add self-loops to the adjacency matrices.
                 (default: :obj:`True`)
+            return_attention_weights (bool, optional): If set to :obj:`True`,
+                also return the pre-dropout attention coefficients.
+                (default: :obj:`False`)
         """
         x = x.unsqueeze(0) if x.dim() == 2 else x  # [B, N, F]
         adj = adj.unsqueeze(0) if adj.dim() == 2 else adj  # [B, N, N]
@@ -121,6 +129,7 @@ class DenseGATConv(torch.nn.Module):
             return out
 
     def __repr__(self) -> str:
+        """Return a string with the channel sizes and head count."""
         return (
             f"{self.__class__.__name__}({self.in_channels}, "
             f"{self.out_channels}, heads={self.heads})"

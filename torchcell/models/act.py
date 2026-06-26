@@ -1,3 +1,5 @@
+"""Registry mapping activation names to instantiated ``torch.nn`` modules."""
+
 # torchcell/models/act.py
 # [[torchcell.models.act]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/act.py

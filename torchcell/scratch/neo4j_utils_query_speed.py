@@ -1,12 +1,12 @@
+"""Scratch script measuring Neo4j connection and query latency."""
+
 import time
 
 import neo4j_utils as nu
 
 
 def measure_connection_time(connection_args: dict) -> float:
-    """
-    Measure the time taken to establish a connection to the database.
-    """
+    """Measure the time taken to establish a connection to the database."""
     start_time = time.time()
     driver = nu.Driver(
         db_uri=f"bolt://{connection_args['host']}:{connection_args['port']}",
@@ -20,9 +20,7 @@ def measure_connection_time(connection_args: dict) -> float:
 
 
 def measure_query_time(connection_args: dict) -> float:
-    """
-    Measure the time taken to execute a simple query.
-    """
+    """Measure the time taken to execute a simple query."""
     driver = nu.Driver(
         db_uri=f"bolt://{connection_args['host']}:{connection_args['port']}",
         user=connection_args["user"],

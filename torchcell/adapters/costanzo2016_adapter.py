@@ -1,3 +1,5 @@
+"""BioCypher adapters mapping Costanzo 2016 datasets into the knowledge graph."""
+
 # torchcell/adapters/costanzo2016_adapter.py
 # [[torchcell.adapters.costanzo2016_adapter]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/costanzo2016_adapter.py
@@ -27,6 +29,8 @@ logger.setLevel(logging.ERROR)
 
 
 class SmfCostanzo2016Adapter(CellAdapter):
+    """Adapter exposing the single-mutant fitness Costanzo 2016 dataset."""
+
     def __init__(
         self,
         dataset: SmfCostanzo2016Dataset,
@@ -35,6 +39,7 @@ class SmfCostanzo2016Adapter(CellAdapter):
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
+        """Load the SMF adapter YAML config and initialize the base CellAdapter."""
         current_dir = osp.dirname(osp.abspath(__file__))
 
         config_path = osp.join(current_dir, "conf", "smf_costanzo2016_adapter.yaml")
@@ -61,6 +66,8 @@ class SmfCostanzo2016Adapter(CellAdapter):
 
 
 class DmfCostanzo2016Adapter(CellAdapter):
+    """Adapter exposing the double-mutant fitness Costanzo 2016 dataset."""
+
     def __init__(
         self,
         dataset: DmfCostanzo2016Dataset,
@@ -69,6 +76,7 @@ class DmfCostanzo2016Adapter(CellAdapter):
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
+        """Load the DMF adapter YAML config and initialize the base CellAdapter."""
         current_dir = osp.dirname(osp.abspath(__file__))
 
         config_path = osp.join(current_dir, "conf", "dmf_costanzo2016_adapter.yaml")
@@ -95,6 +103,8 @@ class DmfCostanzo2016Adapter(CellAdapter):
 
 
 class DmiCostanzo2016Adapter(CellAdapter):
+    """Adapter exposing the double-mutant interaction Costanzo 2016 dataset."""
+
     def __init__(
         self,
         dataset: DmiCostanzo2016Dataset,
@@ -103,6 +113,7 @@ class DmiCostanzo2016Adapter(CellAdapter):
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
+        """Load the DMI adapter YAML config and initialize the base CellAdapter."""
         current_dir = osp.dirname(osp.abspath(__file__))
 
         config_path = osp.join(current_dir, "conf", "dmi_costanzo2016_adapter.yaml")
@@ -129,6 +140,7 @@ class DmiCostanzo2016Adapter(CellAdapter):
 
 
 def main():
+    """Build the Costanzo 2016 adapters and write their BioCypher output."""
     import os
     import os.path as osp
     from datetime import datetime

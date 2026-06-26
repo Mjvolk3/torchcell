@@ -2,7 +2,7 @@
 # [[torchcell.models.hetero_gnn_pool]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/hetero_gnn_pool
 # Test file: tests/torchcell/models/test_hetero_gnn_pool.py
-
+"""Heterogeneous GNN with graph pooling and a configurable prediction head."""
 
 from typing import Literal
 
@@ -30,24 +30,32 @@ from torchcell.models.act import act_register
 
 
 class ProjectedGATConv(nn.Module):
+    """GATv2 convolution followed by a linear projection to a fixed output dim."""
+
     def __init__(self, gat_conv, out_dim):
+        """Wrap a GAT conv and add a linear layer projecting heads to out_dim."""
         super().__init__()
         self.gat = gat_conv
         self.project = nn.Linear(gat_conv.heads * gat_conv.out_channels, out_dim)
 
     def forward(self, x, edge_index):
+        """Apply the GAT conv then project the multi-head output to out_dim."""
         x = self.gat(x, edge_index)  # Shape: (..., heads * out_channels)
         return self.project(x)  # Shape: (..., out_dim)
 
 
 class PredictionHead(nn.Module):
+    """MLP head applying optional residual connections between equal-dim layers."""
+
     def __init__(self, layers: nn.ModuleList, residual: bool, dims: list[int]):
+        """Store the layer stack, residual flag, and per-layer dimensions."""
         super().__init__()
         self.layers = layers
         self.residual = residual
         self.dims = dims
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Run the input through each layer, adding residuals where dims match."""
         input_x = x
         current_idx = 0
 
@@ -68,6 +76,8 @@ class PredictionHead(nn.Module):
 
 
 class HeteroGnnPool(nn.Module):
+    """Heterogeneous message-passing GNN with pooling and a prediction head."""
+
     def __init__(
         self,
         in_channels: int,
@@ -89,6 +99,7 @@ class HeteroGnnPool(nn.Module):
         learnable_embedding: bool = False,
         num_nodes: int | None = None,
     ):
+        """Configure the conv stack, pooling, and prediction head from hyperparams."""
         super().__init__()
         self.num_layers = num_layers
         self.edge_types = edge_types
@@ -418,6 +429,7 @@ class HeteroGnnPool(nn.Module):
 
     # def forward(self, x_dict, edge_index_dict, batch_dict, edge_attr_dict=None):
     def forward(self, batch):
+        """Encode the batch through the GNN, pool per graph, and predict outputs."""
         from torch_geometric.utils import add_self_loops
 
         if self.learnable_embedding:
@@ -509,6 +521,7 @@ class HeteroGnnPool(nn.Module):
 
     @property
     def num_parameters(self) -> dict[str, int]:
+        """Return parameter counts broken down by model component."""
         conv_params = sum(
             sum(p.numel() for p in conv.parameters()) for conv in self.convs
         )
@@ -527,6 +540,7 @@ class HeteroGnnPool(nn.Module):
 
 
 def load_sample_data_batch():
+    """Load a sample batched graph for local model testing."""
     import os
     import os.path as osp
 
@@ -612,6 +626,7 @@ def load_sample_data_batch():
 
 
 def main():
+    """Run a sample regression training loop for the pooling GNN."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
     # Load sample data
@@ -718,6 +733,7 @@ def main():
 
 
 def main_ordinal_reg():
+    """Run a sample ordinal-regression training loop for the pooling GNN."""
     from torchcell.losses.multi_dim_nan_tolerant import (
         CombinedRegressionLoss,
         OrdinalEntropyRegLoss,

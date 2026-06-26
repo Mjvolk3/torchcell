@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""
-Equivalence test suite for SubgraphRepresentation optimizations.
+"""Equivalence test suite for SubgraphRepresentation optimizations.
+
 Tests that optimized graph_processor produces identical outputs to baseline.
 """
 
@@ -39,9 +39,7 @@ def current_data():
 
 
 def compare_hetero_data(reference, current, name="data", rtol=1e-5, atol=1e-8):
-    """
-    Compare two HeteroData objects for structural and numerical equality.
-    """
+    """Compare two HeteroData objects for structural and numerical equality."""
     # Compare node types
     assert set(reference.node_types) == set(current.node_types), (
         f"{name}: Node types differ.\n  Reference: {reference.node_types}\n  Current: {current.node_types}"
@@ -326,8 +324,9 @@ def test_batch_equivalence(reference_data, current_data):
 
 
 def test_incidence_vs_subgraph_processors():
-    """
-    Test that IncidenceSubgraphRepresentation produces identical output
+    """Test IncidenceSubgraphRepresentation matches SubgraphRepresentation output.
+
+    IncidenceSubgraphRepresentation should produce identical output
     to SubgraphRepresentation on the same inputs.
 
     This test uses a small sample dataset to verify that the optimized

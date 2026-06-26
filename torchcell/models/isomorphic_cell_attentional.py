@@ -2,6 +2,7 @@
 # [[torchcell.models.isomorphic_cell_attentional]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/isomorphic_cell_attentional
 # Test file: tests/torchcell/models/test_isomorphic_cell_attentional.py
+"""Attentional isomorphic cell model over gene, reaction, and metabolite graphs."""
 
 import os
 import os.path as osp
@@ -35,6 +36,7 @@ from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 
 
 def get_norm_layer(channels: int, norm: str):
+    """Return a layer or batch norm module for ``channels``."""
     if norm == "layer":
         return nn.LayerNorm(channels)
     elif norm == "batch":
@@ -44,7 +46,10 @@ def get_norm_layer(channels: int, norm: str):
 
 
 class AttentionalGraphAggregation(nn.Module):
+    """Pool node features into set embeddings via attentional aggregation."""
+
     def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.1):
+        """Build the gate and transform networks for attentional pooling."""
         super().__init__()
 
         # Gate network to compute attention scores
@@ -67,10 +72,13 @@ class AttentionalGraphAggregation(nn.Module):
     def forward(
         self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
+        """Aggregate ``x`` per ``index`` into pooled embeddings."""
         return self.aggregator(x, index=index, dim_size=dim_size)
 
 
 class PreProcessor(nn.Module):
+    """Stacked Linear-Norm-activation-Dropout MLP for input features."""
+
     def __init__(
         self,
         in_channels: int,
@@ -80,6 +88,7 @@ class PreProcessor(nn.Module):
         norm: str = "layer",
         activation: str = "relu",
     ):
+        """Build the preprocessing MLP from the layer configuration."""
         super().__init__()
         act = act_register[activation]
         norm_layer = (
@@ -109,10 +118,13 @@ class PreProcessor(nn.Module):
         self.mlp = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply the preprocessing MLP to ``x``."""
         return self.mlp(x)
 
 
 class Combiner(nn.Module):
+    """MLP that fuses concatenated gene and metabolism embeddings."""
+
     def __init__(
         self,
         hidden_channels: int,
@@ -121,6 +133,7 @@ class Combiner(nn.Module):
         norm: str = "layer",
         activation: str = "relu",
     ):
+        """Build the combiner MLP from the layer configuration."""
         super().__init__()
         act = act_register[activation]
         layers = []
@@ -147,30 +160,39 @@ class Combiner(nn.Module):
     def forward(
         self, gene_features: torch.Tensor, metabolism_features: torch.Tensor
     ) -> torch.Tensor:
+        """Concatenate gene and metabolism features and apply the MLP."""
         combined = torch.cat([gene_features, metabolism_features], dim=-1)
         return self.mlp(combined)
 
 
 # FLAG Hetero GNN - Start
 class ProjectedGATConv(nn.Module):
+    """GATv2 conv followed by a linear projection to ``out_dim``."""
+
     def __init__(self, gat_conv, out_dim):
+        """Wrap ``gat_conv`` and add the output projection layer."""
         super().__init__()
         self.gat = gat_conv
         self.project = nn.Linear(gat_conv.heads * gat_conv.out_channels, out_dim)
 
     def forward(self, x, edge_index):
+        """Apply the GAT conv and project the multi-head output."""
         x = self.gat(x, edge_index)  # Shape: (..., heads * out_channels)
         return self.project(x)  # Shape: (..., out_dim)
 
 
 class PredictionHead(nn.Module):
+    """Sequential MLP head with optional residual connections."""
+
     def __init__(self, layers: nn.ModuleList, residual: bool, dims: list[int]):
+        """Store the layers, residual flag, and per-layer dimensions."""
         super().__init__()
         self.layers = layers
         self.residual = residual
         self.dims = dims
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Run the layers, adding residuals where dimensions match."""
         input_x = x
         current_idx = 0
 
@@ -191,6 +213,8 @@ class PredictionHead(nn.Module):
 
 
 class HeteroGnn(nn.Module):
+    """Configurable heterogeneous message-passing GNN over typed edges."""
+
     def __init__(
         self,
         in_channels: int,
@@ -211,6 +235,7 @@ class HeteroGnn(nn.Module):
         learnable_embedding: bool = False,
         num_nodes: int | None = None,
     ):
+        """Build the conv stack and prediction head from the configuration."""
         super().__init__()
         self.num_layers = num_layers
         self.edge_types = edge_types
@@ -512,6 +537,7 @@ class HeteroGnn(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, batch, preprocessed_features=None):
+        """Run heterogeneous message passing and return gene embeddings."""
         from torch_geometric.utils import add_self_loops
 
         if self.learnable_embedding:
@@ -607,6 +633,7 @@ class HeteroGnn(nn.Module):
 
     @property
     def num_parameters(self) -> dict[str, int]:
+        """Return a parameter count breakdown by component."""
         conv_params = sum(
             sum(p.numel() for p in conv.parameters()) for conv in self.convs
         )
@@ -626,6 +653,8 @@ class HeteroGnn(nn.Module):
 
 # FLAG Hetero GNN - End
 class GeneContextProcessor(nn.Module):
+    """MLP that encodes genes and maps them up to reaction embeddings."""
+
     def __init__(
         self,
         in_channels: int,
@@ -635,6 +664,7 @@ class GeneContextProcessor(nn.Module):
         norm: str = "layer",
         activation: str = "relu",
     ):
+        """Build the gene MLP and the reaction aggregator."""
         super().__init__()
         act = act_register[activation]
         self.hidden_channels = hidden_channels
@@ -664,6 +694,7 @@ class GeneContextProcessor(nn.Module):
     def forward(
         self, gene_features: torch.Tensor, reaction_to_genes: dict[int, list[int]]
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Encode genes and aggregate them into reaction embeddings."""
         H_g = self.mlp(gene_features)
         rxn_feats = []
         rxn_indices = []
@@ -687,11 +718,10 @@ class GeneContextProcessor(nn.Module):
 
 
 class ReactionMapper(nn.Module):
-    """
-    Aggregates metabolite features -> reaction embeddings via attention.
-    """
+    """Aggregate metabolite features into reaction embeddings via attention."""
 
     def __init__(self, hidden_channels: int, dropout: float = 0.1):
+        """Build the attentional aggregator over metabolites."""
         super().__init__()
         self.aggregator = AttentionalGraphAggregation(
             in_channels=hidden_channels, out_channels=hidden_channels, dropout=dropout
@@ -700,6 +730,7 @@ class ReactionMapper(nn.Module):
     def forward(
         self, metabolite_features: torch.Tensor, hyperedge_index: torch.Tensor
     ) -> torch.Tensor:
+        """Aggregate metabolite features per reaction hyperedge."""
         # Sort edges by reaction index
         rxn_indices = hyperedge_index[1]
         sorted_idx = torch.argsort(rxn_indices)
@@ -711,11 +742,10 @@ class ReactionMapper(nn.Module):
 
 
 class GeneMapper(nn.Module):
-    """
-    Aggregates reaction features -> gene embeddings.
-    """
+    """Aggregate reaction features into gene embeddings via attention."""
 
     def __init__(self, hidden_channels: int, dropout: float = 0.1):
+        """Build the attentional aggregator over reactions."""
         super().__init__()
         self.aggregator = AttentionalGraphAggregation(
             in_channels=hidden_channels, out_channels=hidden_channels, dropout=dropout
@@ -727,6 +757,7 @@ class GeneMapper(nn.Module):
         reaction_to_genes: dict[int, list[int]],
         num_genes: int,
     ) -> torch.Tensor:
+        """Aggregate reaction features back onto their member genes."""
         feats_list = []
         gene_idx_list = []
         for rxn_idx, g_indices in reaction_to_genes.items():
@@ -750,6 +781,8 @@ class GeneMapper(nn.Module):
 
 
 class MetabolismProcessor(nn.Module):
+    """Process the metabolite-reaction hypergraph into gene-level embeddings."""
+
     def __init__(
         self,
         max_metabolite_nodes: int,
@@ -759,6 +792,7 @@ class MetabolismProcessor(nn.Module):
         use_attention: bool = True,
         heads: int = 1,
     ):
+        """Build metabolite embeddings and the aggregation/conv modules."""
         super().__init__()
         self.max_metabolite_nodes = max_metabolite_nodes
         self.hidden_dim = hidden_dim
@@ -813,7 +847,7 @@ class MetabolismProcessor(nn.Module):
     def whole_forward(
         self, graph: HeteroData, preprocessed_features: torch.Tensor | None = None
     ) -> torch.Tensor:
-        """Process single instance (whole cell graph)"""
+        """Process a single (whole) cell graph instance."""
         # 1. Gene -> Reaction context
         gpr_edge_index = graph["gene", "gpr", "reaction"].hyperedge_index
         gene_x = (
@@ -881,7 +915,7 @@ class MetabolismProcessor(nn.Module):
     def intact_perturbed_forward(
         self, batch: HeteroData, preprocessed_features: torch.Tensor | None = None
     ) -> torch.Tensor:
-        """Process batched data"""
+        """Process batched (intact and perturbed) data."""
         # 1. Gene -> Reaction mapping
         gpr_edge_index = batch["gene", "gpr", "reaction"].hyperedge_index
         gene_x = (
@@ -957,7 +991,7 @@ class MetabolismProcessor(nn.Module):
     def forward(
         self, data: HeteroData, preprocessed_features: torch.Tensor | None = None
     ) -> torch.Tensor:
-        """Main forward pass"""
+        """Dispatch to batched or whole-graph processing as appropriate."""
         is_batched = hasattr(data["gene"], "batch")
         if is_batched:
             return self.intact_perturbed_forward(data, preprocessed_features)
@@ -966,6 +1000,8 @@ class MetabolismProcessor(nn.Module):
 
 
 class IsomorphicCell(nn.Module):
+    """End-to-end model fusing gene and metabolism context for predictions."""
+
     def __init__(
         self,
         in_channels: int,
@@ -985,6 +1021,7 @@ class IsomorphicCell(nn.Module):
         combiner_config: dict | None = None,
         prediction_head_config: dict | None = None,
     ):
+        """Build the preprocessor, encoders, combiner, and prediction head."""
         super().__init__()
 
         # Check if using learnable embeddings from config
@@ -1135,7 +1172,7 @@ class IsomorphicCell(nn.Module):
         return nn.Sequential(*layers)
 
     def _get_perturbed_indices(self, batch):
-        """Returns list of perturbed indices for each batch item"""
+        """Return the list of perturbed gene indices per batch item."""
         batch_size = batch["gene"].ptr.size(0) - 1
         pert_indices = []
 
@@ -1150,6 +1187,7 @@ class IsomorphicCell(nn.Module):
         return pert_indices
 
     def forward_single(self, data: HeteroData) -> torch.Tensor:
+        """Encode one cell graph through preprocessor, encoders, and combiner."""
         gene_data = data["gene"]
         if self.use_learned_embedding:
             # Check if we have a batched (perturbed) graph
@@ -1195,6 +1233,7 @@ class IsomorphicCell(nn.Module):
         return z
 
     def forward(self, cell_graph, batch):
+        """Combine whole-graph and perturbed-batch encodings into predictions."""
         # Process whole graph first
         z_w = self.forward_single(cell_graph)
         z_w = self.whole_intact_aggregator(
@@ -1253,6 +1292,7 @@ class IsomorphicCell(nn.Module):
 
     @property
     def num_parameters(self) -> dict[str, int]:
+        """Return a parameter count breakdown by component."""
         preprocessor_params = sum(p.numel() for p in self.preprocessor.parameters())
         gene_encoder_params = sum(p.numel() for p in self.gene_encoder.parameters())
         metabolism_params = sum(
@@ -1283,6 +1323,7 @@ class IsomorphicCell(nn.Module):
 
 
 def load_sample_data_batch():
+    """Load a small cell-graph batch from disk for smoke testing."""
     import os
     import os.path as osp
 
@@ -1399,6 +1440,7 @@ def load_sample_data_batch():
 def plot_correlations(
     predictions, true_values, save_path, lambda_info="", weight_decay=""
 ):
+    """Plot predicted vs. true fitness and interaction scores to ``save_path``."""
     import matplotlib.pyplot as plt
     import numpy as np
     from scipy import stats
@@ -1469,6 +1511,7 @@ def plot_correlations(
     config_name="isomorphic_cell_attentional",
 )
 def main(cfg: DictConfig) -> None:
+    """Build the model from config and run a short training/eval demo."""
     import os
 
     import matplotlib.pyplot as plt

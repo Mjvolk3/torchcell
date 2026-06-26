@@ -36,15 +36,22 @@ class TimingContext:
     """Context manager for timing code blocks."""
 
     def __init__(self, name):
+        """Store the timer label and initialize timing fields.
+
+        Args:
+            name: Label printed alongside the measured elapsed time.
+        """
         self.name = name
         self.start_time = None
         self.elapsed_ms = None
 
     def __enter__(self):
+        """Start the timer and return self."""
         self.start_time = time.time()
         return self
 
     def __exit__(self, *args):
+        """Record and print the elapsed time in milliseconds."""
         self.elapsed_ms = (time.time() - self.start_time) * 1000
         print(f"  {self.name}: {self.elapsed_ms:.2f}ms")
 
@@ -275,6 +282,7 @@ def profile_batch_loading(dataset, batch_size=32, num_samples=100):
 
 
 def main():
+    """Run the data-loading profiling stages and print the results."""
     print("=" * 80)
     print("DATA LOADING PIPELINE PROFILING")
     print("=" * 80)

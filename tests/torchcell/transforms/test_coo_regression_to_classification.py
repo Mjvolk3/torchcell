@@ -1,3 +1,5 @@
+"""Tests for COO regression-to-classification label transforms."""
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -13,8 +15,12 @@ from torchcell.transforms.coo_regression_to_classification import (
 
 
 class TestCOOLabelNormalizationTransform:
+    """Tests for forward normalization of COO-format phenotype labels."""
+
     @pytest.fixture
     def mock_dataset(self):
+        """Return a dataset with a label_df of fitness and gene_interaction."""
+
         class MockDataset:
             def __init__(self):
                 self.label_df = pd.DataFrame(
@@ -28,6 +34,7 @@ class TestCOOLabelNormalizationTransform:
 
     @pytest.fixture
     def norm_transform(self, mock_dataset):
+        """Return a normalization transform (minmax fitness, standard GI)."""
         label_configs = {
             "fitness": {"strategy": "minmax"},
             "gene_interaction": {"strategy": "standard"},
@@ -35,6 +42,7 @@ class TestCOOLabelNormalizationTransform:
         return COOLabelNormalizationTransform(mock_dataset, label_configs)
 
     def test_minmax_normalization_coo(self, norm_transform):
+        """Verify minmax scaling, original-value storage, and inverse recovery."""
         data = HeteroData()
         # COO format data
         data["gene"]["phenotype_values"] = torch.tensor([0.0, 0.5, 1.0, 2.0])
@@ -59,6 +67,7 @@ class TestCOOLabelNormalizationTransform:
         )
 
     def test_standard_normalization_coo(self, norm_transform):
+        """Verify standard (z-score) normalization of gene_interaction values."""
         data = HeteroData()
         # COO format data for gene_interaction
         data["gene"]["phenotype_values"] = torch.tensor([-1.0, 0.0, 1.0])
@@ -76,6 +85,7 @@ class TestCOOLabelNormalizationTransform:
         assert torch.allclose(normalized["gene"]["phenotype_values"], expected)
 
     def test_mixed_phenotypes_coo(self, norm_transform):
+        """Verify per-type normalization when phenotypes are interleaved in COO."""
         data = HeteroData()
         # Mixed phenotypes in COO format
         data["gene"]["phenotype_values"] = torch.tensor([0.0, -1.0, 1.0, 0.0, 2.0, 1.0])
@@ -110,8 +120,12 @@ class TestCOOLabelNormalizationTransform:
 
 
 class TestCOOLabelNormalizationInverse:
+    """Tests for inverse normalization of COO-format phenotype labels."""
+
     @pytest.fixture
     def mock_dataset(self):
+        """Return a dataset with a label_df of fitness and gene_interaction."""
+
         class MockDataset:
             def __init__(self):
                 self.label_df = pd.DataFrame(
@@ -125,6 +139,7 @@ class TestCOOLabelNormalizationInverse:
 
     @pytest.fixture
     def norm_transform(self, mock_dataset):
+        """Return a normalization transform (minmax fitness, standard GI)."""
         label_configs = {
             "fitness": {"strategy": "minmax"},
             "gene_interaction": {"strategy": "standard"},
@@ -132,6 +147,7 @@ class TestCOOLabelNormalizationInverse:
         return COOLabelNormalizationTransform(mock_dataset, label_configs)
 
     def test_inverse_minmax_coo(self, norm_transform):
+        """Verify inverse of minmax normalization recovers original values."""
         # Test data in COO format
         normalized_values = torch.tensor([0.0, 0.25, 0.5, 1.0])
 
@@ -149,6 +165,7 @@ class TestCOOLabelNormalizationInverse:
         )
 
     def test_inverse_with_nans_coo(self, norm_transform):
+        """Verify inverse normalization preserves NaN entries."""
         # Test data with NaN in COO format
         original_values = torch.tensor([0.0, 0.5, 1.0, float("nan")])
         normalized_values = torch.tensor([0.0, 0.25, 0.5, float("nan")])
@@ -167,8 +184,12 @@ class TestCOOLabelNormalizationInverse:
 
 
 class TestCOOLabelNormalizationRoundTrip:
+    """Tests that forward then inverse normalization is a round trip."""
+
     @pytest.fixture
     def mock_dataset(self):
+        """Return a dataset with a label_df of fitness and gene_interaction."""
+
         class MockDataset:
             def __init__(self):
                 self.label_df = pd.DataFrame(
@@ -182,6 +203,7 @@ class TestCOOLabelNormalizationRoundTrip:
 
     @pytest.fixture
     def norm_transform(self, mock_dataset):
+        """Return a normalization transform (minmax fitness, standard GI)."""
         label_configs = {
             "fitness": {"strategy": "minmax"},
             "gene_interaction": {"strategy": "standard"},
@@ -189,6 +211,7 @@ class TestCOOLabelNormalizationRoundTrip:
         return COOLabelNormalizationTransform(mock_dataset, label_configs)
 
     def test_round_trip_minmax_coo(self, norm_transform, mock_dataset):
+        """Verify minmax normalize-then-inverse recovers the fitness values."""
         # Test data from mock_dataset in COO format
         original_df = mock_dataset.label_df
         original_values = torch.tensor(original_df["fitness"].values)
@@ -214,6 +237,7 @@ class TestCOOLabelNormalizationRoundTrip:
         )
 
     def test_round_trip_mixed_phenotypes_coo(self, norm_transform, mock_dataset):
+        """Verify round trip for interleaved fitness and gene_interaction values."""
         # Create mixed phenotype data in COO format
         data = HeteroData()
         # Interleave fitness and gene_interaction values
@@ -257,8 +281,12 @@ class TestCOOLabelNormalizationRoundTrip:
 
 
 class TestCOOLabelBinningTransform:
+    """Tests for categorical and soft binning of COO-format labels."""
+
     @pytest.fixture
     def mock_dataset(self):
+        """Return a dataset with fitness and gene_interaction label columns."""
+
         class MockDataset:
             def __init__(self):
                 self.label_df = pd.DataFrame(
@@ -278,6 +306,7 @@ class TestCOOLabelBinningTransform:
 
     @pytest.fixture
     def bin_transform(self, mock_dataset):
+        """Return a 4-bin equal-width categorical binning transform for GI."""
         label_configs = {
             "gene_interaction": {
                 "strategy": "equal_width",
@@ -288,6 +317,7 @@ class TestCOOLabelBinningTransform:
         return COOLabelBinningTransform(mock_dataset, label_configs)
 
     def test_categorical_binning_forward_coo(self, bin_transform):
+        """Verify categorical binning yields one-hot bins per sample."""
         data = HeteroData()
         # COO format data
         data["gene"]["phenotype_values"] = torch.tensor([-1.0, -0.3, 0.3, 1.0])
@@ -308,6 +338,7 @@ class TestCOOLabelBinningTransform:
             assert torch.all((sample_values == 0) | (sample_values == 1))
 
     def test_soft_binning_forward_coo(self, mock_dataset):
+        """Verify soft binning produces per-sample bin weights summing to one."""
         label_configs = {
             "fitness": {
                 "strategy": "equal_width",
@@ -336,6 +367,7 @@ class TestCOOLabelBinningTransform:
             assert torch.allclose(torch.sum(sample_values), torch.tensor(1.0))
 
     def test_inverse_categorical_binning_coo(self, bin_transform):
+        """Verify inverse of categorical binning yields values in their bins."""
         data = HeteroData()
         # Create one-hot encoded bins in COO format
         # 4 samples, 4 bins each
@@ -395,8 +427,12 @@ class TestCOOLabelBinningTransform:
 
 
 class TestCOOInverseCompose:
+    """Tests for composing and inverting a chain of COO transforms."""
+
     @pytest.fixture
     def mock_dataset(self):
+        """Return a dataset with a single gene_interaction label column."""
+
         class MockDataset:
             def __init__(self):
                 self.label_df = pd.DataFrame(
@@ -407,6 +443,7 @@ class TestCOOInverseCompose:
 
     @pytest.fixture
     def transforms(self, mock_dataset):
+        """Return a normalization followed by a binning transform."""
         norm_config = {"gene_interaction": {"strategy": "minmax"}}
         bin_config = {
             "gene_interaction": {
@@ -423,6 +460,7 @@ class TestCOOInverseCompose:
         return [norm_transform, bin_transform]
 
     def test_inverse_compose_coo(self, transforms):
+        """Verify COOInverseCompose reverses a forward Compose back to values."""
         data = HeteroData()
         data["gene"]["phenotype_values"] = torch.tensor([-1.0, -0.3, 0.3, 1.0])
         data["gene"]["phenotype_type_indices"] = torch.tensor([0, 0, 0, 0])
@@ -445,8 +483,12 @@ class TestCOOInverseCompose:
 
 
 class TestOrdinalBinningCOO:
+    """Tests for ordinal (threshold) binning of COO-format labels."""
+
     @pytest.fixture
     def mock_dataset(self):
+        """Return a dataset with a single fitness label column."""
+
         class MockDataset:
             def __init__(self):
                 self.label_df = pd.DataFrame(
@@ -465,6 +507,7 @@ class TestOrdinalBinningCOO:
 
     @pytest.fixture
     def bin_transform(self, mock_dataset):
+        """Return a 4-bin equal-width ordinal binning transform for fitness."""
         label_configs = {
             "fitness": {
                 "strategy": "equal_width",
@@ -475,6 +518,7 @@ class TestOrdinalBinningCOO:
         return COOLabelBinningTransform(mock_dataset, label_configs)
 
     def test_ordinal_forward_coo(self, bin_transform):
+        """Verify ordinal binning yields monotone threshold indicators."""
         data = HeteroData()
         data["gene"]["phenotype_values"] = torch.tensor([0.0, 0.25, 0.5, 0.75, 1.0])
         data["gene"]["phenotype_type_indices"] = torch.tensor([0, 0, 0, 0, 0])
@@ -502,6 +546,7 @@ class TestOrdinalBinningCOO:
                     assert torch.all(sample_values[:i] == 1)
 
     def test_ordinal_with_nans_coo(self, bin_transform):
+        """Verify ordinal binning preserves NaN entries for affected samples."""
         data = HeteroData()
         data["gene"]["phenotype_values"] = torch.tensor(
             [0.0, float("nan"), 0.5, float("nan"), 1.0]
@@ -521,8 +566,12 @@ class TestOrdinalBinningCOO:
 
 
 class TestBatchProcessingCOO:
+    """Tests that COO transforms work on batched HeteroData."""
+
     @pytest.fixture
     def mock_dataset(self):
+        """Return a dataset with random gene_interaction labels."""
+
         class MockDataset:
             def __init__(self):
                 self.label_df = pd.DataFrame(
@@ -532,6 +581,7 @@ class TestBatchProcessingCOO:
         return MockDataset()
 
     def test_batch_normalization_coo(self, mock_dataset):
+        """Verify normalization applies across a multi-graph batch."""
         norm_config = {"gene_interaction": {"strategy": "standard"}}
         norm_transform = COOLabelNormalizationTransform(mock_dataset, norm_config)
 
@@ -561,8 +611,12 @@ class TestBatchProcessingCOO:
 
 
 class TestModelOutputSimulationCOO:
+    """Tests that inverse transforms work on simulated model outputs."""
+
     @pytest.fixture
     def mock_dataset(self):
+        """Return a dataset with a single gene_interaction label column."""
+
         class MockDataset:
             def __init__(self):
                 self.label_df = pd.DataFrame(

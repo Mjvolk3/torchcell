@@ -1,3 +1,5 @@
+"""Scratch examples for PyTorch FlexAttention with causal masking."""
+
 # --------------- WORKS -----------------
 # import torch
 # from torch.nn.attention.flex_attention import flex_attention
@@ -34,6 +36,7 @@ from torch.nn.attention.flex_attention import flex_attention
 
 
 def causal_mask_score_mod(score, b, h, q_idx, kv_idx):
+    """Return the score where the query may attend to the key, else -inf."""
     # Compute a boolean condition for causal masking.
     allowed = q_idx >= kv_idx
     # Use torch.as_tensor to create a tensor from the boolean value.

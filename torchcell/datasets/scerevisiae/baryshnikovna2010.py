@@ -2,6 +2,8 @@
 # [[torchcell.datasets.scerevisiae.baryshnikovna2010]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/baryshnikovna2010.py
 # Test file: torchcell/datasets/scerevisiae/test_baryshnikovna2010.py
+"""Baryshnikova 2010 S. cerevisiae single-mutant fitness dataset."""
+
 import os
 from collections.abc import Callable
 
@@ -13,6 +15,8 @@ os.makedirs("data/scerevisiae/baryshnikovna2010", exist_ok=True)
 
 
 class Baryshnikovna2010Dataset(InMemoryDataset):
+    """In-memory dataset of Baryshnikova 2010 single-gene deletion fitness values."""
+
     url = "https://static-content.springer.com/esm/art%3A10.1038%2Fnmeth.1534/MediaObjects/41592_2010_BFnmeth1534_MOESM168_ESM.xls"
 
     def __init__(
@@ -21,22 +25,27 @@ class Baryshnikovna2010Dataset(InMemoryDataset):
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
+        """Initialize the dataset at root and load the processed tensors."""
         super().__init__(root, transform, pre_transform)
         self.data, self.slices = torch.load(self.processed_paths[0])
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the names of the raw files expected in the raw directory."""
         return ["data.xls"]
 
     @property
     def processed_file_names(self) -> str:
+        """Return the name of the processed file written to the processed directory."""
         return "data.pt"
 
     def download(self):
+        """Download the source spreadsheet and store it as ``data.xls``."""
         path = download_url(self.url, self.raw_dir)
         os.rename(path, os.path.join(self.raw_dir, "data.xls"))
 
     def process(self):
+        """Parse fitness rows into per-genotype Data objects and save the collated set."""
         xls_path = os.path.join(self.raw_dir, "data.xls")
         df = pd.read_excel(xls_path, names=["id", "fitness", "std"])
 

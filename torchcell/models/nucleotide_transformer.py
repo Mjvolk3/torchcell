@@ -1,3 +1,5 @@
+"""Nucleotide Transformer wrapper for embedding DNA sequences."""
+
 import os
 
 import torch
@@ -9,7 +11,10 @@ MODEL_NAME = "InstaDeepAI/nucleotide-transformer-2.5b-multi-species"
 
 
 class NucleotideTransformer(NucleotideModel):
+    """InstaDeepAI Nucleotide Transformer for DNA sequence embeddings."""
+
     def __init__(self):
+        """Select the device and load the tokenizer and model."""
         self.tokenizer = None
         self.model = None
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -17,6 +22,7 @@ class NucleotideTransformer(NucleotideModel):
 
     @staticmethod
     def _check_and_download_model():
+        """Download the pretrained model and tokenizer if not already cached."""
         # Define the directory where you want the model to be saved
         script_dir = os.path.dirname(os.path.realpath(__file__))
         target_directory = os.path.join(
@@ -42,10 +48,12 @@ class NucleotideTransformer(NucleotideModel):
 
     @property
     def max_sequence_size(self):
+        """Return the maximum supported input sequence length in bases."""
         # Found empirically... listed as 6kb in paper.
         return 5979
 
     def load_model(self):
+        """Load the tokenizer and model onto the selected device."""
         # Check and download the model if necessary
         self._check_and_download_model()
 
@@ -59,6 +67,7 @@ class NucleotideTransformer(NucleotideModel):
     def embed(
         self, sequences: str | list[str], mean_embedding: bool = False
     ) -> torch.Tensor:
+        """Embed one or more DNA sequences, optionally returning mean embeddings."""
         if isinstance(sequences, str):
             sequences = [sequences]  # Convert single string to a list
 
@@ -96,6 +105,7 @@ class NucleotideTransformer(NucleotideModel):
 
 
 def main():
+    """Run a small embedding demonstration on dummy sequences."""
     # Initialize the NucleotideTransformer
     transformer = NucleotideTransformer()
 

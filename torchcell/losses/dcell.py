@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/dcell_new.py
 # Test file: torchcell/losses/test_dcell_new.py
 
+"""Loss for the DCell model: root MSE plus optional subsystem auxiliary losses."""
+
 from typing import Any
 
 import torch
@@ -24,6 +26,12 @@ class DCellLoss(nn.Module):
     """
 
     def __init__(self, alpha: float = 0.3, use_auxiliary_losses: bool = True):
+        """Set the auxiliary-loss weight, toggle, and MSE criterion.
+
+        Args:
+            alpha: Weight applied to the auxiliary subsystem losses.
+            use_auxiliary_losses: Whether to include non-root subsystem losses.
+        """
         super().__init__()
         self.alpha = alpha
         self.use_auxiliary_losses = use_auxiliary_losses

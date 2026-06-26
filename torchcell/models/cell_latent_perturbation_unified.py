@@ -1,3 +1,5 @@
+"""Unified cell latent perturbation model over gene, reaction, and metabolism graphs."""
+
 # torchcell/models/cell_latent_perturbation_unified
 # [[torchcell.models.cell_latent_perturbation_unified]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/cell_latent_perturbation_unified
@@ -29,6 +31,8 @@ from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 
 
 class WholeIntactProcessor(nn.Module):
+    """Aggregate whole-genome gene sets with an ISAB SetTransformer."""
+
     def __init__(
         self,
         channels: int,
@@ -38,6 +42,7 @@ class WholeIntactProcessor(nn.Module):
         num_induced_points: int = 32,
         dropout: float = 0.1,
     ):
+        """Build the ISAB-based SetTransformer aggregation module."""
         super().__init__()
         self.processor = SetTransformerAggregation(
             channels=channels,
@@ -52,6 +57,7 @@ class WholeIntactProcessor(nn.Module):
         )
 
     def forward(self, x: torch.Tensor, batch_idx: torch.Tensor) -> torch.Tensor:
+        """Sort nodes by batch index and aggregate them per set."""
         # Sort indices and reorder x accordingly
         sorted_idx = torch.argsort(batch_idx)
         x_sorted = x[sorted_idx]
@@ -63,6 +69,8 @@ class WholeIntactProcessor(nn.Module):
 
 
 class PerturbedProcessor(nn.Module):
+    """Aggregate small perturbed gene sets with a SAB SetTransformer."""
+
     def __init__(
         self,
         channels: int,
@@ -71,6 +79,7 @@ class PerturbedProcessor(nn.Module):
         heads: int = 4,
         dropout: float = 0.1,
     ):
+        """Build the SAB-based SetTransformer aggregation module."""
         super().__init__()
         self.processor = SetTransformerAggregation(
             channels=channels,
@@ -84,6 +93,7 @@ class PerturbedProcessor(nn.Module):
         )
 
     def forward(self, x: torch.Tensor, batch_idx: torch.Tensor) -> torch.Tensor:
+        """Sort nodes by batch index and aggregate them per set."""
         # Sort indices and reorder x accordingly
         sorted_idx = torch.argsort(batch_idx)
         x_sorted = x[sorted_idx]
@@ -105,6 +115,7 @@ class BaseGenePreprocessor(nn.Module):
         dropout: float = 0.1,
         activation: str = "relu",
     ):
+        """Build the stacked linear/LayerNorm/ReLU/dropout MLP."""
         super().__init__()
         layers = []
 
@@ -153,6 +164,7 @@ class ReactionGeneProcessor(nn.Module):
         heads: int = 4,
         dropout: float = 0.1,
     ):
+        """Build the SetTransformer that aggregates genes per reaction."""
         super().__init__()
         self.processor = SetTransformerAggregation(
             channels=channels,
@@ -252,24 +264,32 @@ class ReactionGeneProcessor(nn.Module):
 
 
 class ProjectedGATConv(nn.Module):
+    """GATv2 convolution followed by a linear projection to a fixed dimension."""
+
     def __init__(self, gat_conv, out_dim):
+        """Wrap a GAT conv and add a projection from heads*out to ``out_dim``."""
         super().__init__()
         self.gat = gat_conv
         self.project = nn.Linear(gat_conv.heads * gat_conv.out_channels, out_dim)
 
     def forward(self, x, edge_index):
+        """Apply the GAT convolution and project the concatenated head outputs."""
         x = self.gat(x, edge_index)  # Shape: (..., heads * out_channels)
         return self.project(x)  # Shape: (..., out_dim)
 
 
 class PredictionHead(nn.Module):
+    """MLP prediction head with optional residual connections between matched dims."""
+
     def __init__(self, layers: nn.ModuleList, residual: bool, dims: list[int]):
+        """Store the layer list, residual flag, and per-layer dimensions."""
         super().__init__()
         self.layers = layers
         self.residual = residual
         self.dims = dims
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply each layer, adding residuals where consecutive dims match."""
         input_x = x
         current_idx = 0
 
@@ -290,6 +310,8 @@ class PredictionHead(nn.Module):
 
 
 class HeteroGnn(nn.Module):
+    """Heterogeneous GNN over typed edges with a configurable prediction head."""
+
     def __init__(
         self,
         in_channels: int,
@@ -310,6 +332,7 @@ class HeteroGnn(nn.Module):
         learnable_embedding: bool = False,
         num_nodes: int | None = None,
     ):
+        """Build the heterogeneous conv stack, norms, and prediction head."""
         super().__init__()
         self.num_layers = num_layers
         self.edge_types = edge_types
@@ -628,6 +651,7 @@ class HeteroGnn(nn.Module):
         )
 
     def forward(self, batch):
+        """Run heterogeneous message passing and return node embeddings."""
         from torch_geometric.utils import add_self_loops
 
         if self.learnable_embedding:
@@ -718,6 +742,7 @@ class HeteroGnn(nn.Module):
 
     @property
     def num_parameters(self) -> dict[str, int]:
+        """Return parameter counts split by conv, head, and total."""
         conv_params = sum(
             sum(p.numel() for p in conv.parameters()) for conv in self.convs
         )
@@ -736,6 +761,8 @@ class HeteroGnn(nn.Module):
 
 
 class SetNet(nn.Module):
+    """Deep Sets network with per-node MLPs, pooling, and post-pool set MLPs."""
+
     def __init__(
         self,
         input_dim: int,
@@ -746,6 +773,7 @@ class SetNet(nn.Module):
         pooling: Literal["mean", "sum"] = "mean",
         activation: str = "relu",  # Added activation parameter
     ):
+        """Build the node-wise and set-wise MLP stacks with the chosen pooling."""
         super().__init__()
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
@@ -826,6 +854,8 @@ class SetNet(nn.Module):
 
 
 class MetabolismProcessor(nn.Module):
+    """Stoichiometric hypergraph convolutions followed by SetTransformer pooling."""
+
     def __init__(
         self,
         metabolite_dim: int,
@@ -836,6 +866,7 @@ class MetabolismProcessor(nn.Module):
         use_skip: bool = False,
         dropout: float = 0.1,
     ):
+        """Build the stacked hypergraph conv layers and the aggregation module."""
         super().__init__()
         self.use_attention = use_attention
         self.use_skip = use_skip
@@ -887,6 +918,7 @@ class MetabolismProcessor(nn.Module):
         )
 
     def forward(self, batch) -> torch.Tensor:
+        """Run hypergraph convolutions and aggregate metabolite embeddings."""
         device = batch[
             "metabolite", "reaction_genes", "metabolite"
         ].hyperedge_index.device
@@ -1011,6 +1043,8 @@ class MetabolismProcessor(nn.Module):
 
 
 class CellLatentPerturbation(nn.Module):
+    """End-to-end model encoding whole/perturbed cell states and predicting phenotypes."""
+
     def __init__(
         self,
         # Base dimensions
@@ -1053,6 +1087,7 @@ class CellLatentPerturbation(nn.Module):
         learnable_embedding: bool = False,
         num_nodes: int | None = None,
     ):
+        """Build the gene/reaction/metabolism encoders and prediction heads."""
         super().__init__()
         self.hidden_channels = hidden_channels
 
@@ -1158,6 +1193,7 @@ class CellLatentPerturbation(nn.Module):
         )
 
     def forward(self, batch):
+        """Encode whole and perturbed states and predict phenotype outputs."""
         # Initial gene preprocessing (shared)
         base_gene_embeddings = self.gene_preprocessor(batch["gene"].x)
 
@@ -1355,6 +1391,7 @@ class CellLatentPerturbation(nn.Module):
 
 
 def load_sample_data_batch():
+    """Load a sample batch and metadata for exercising the model."""
     import os
     import os.path as osp
 
@@ -1443,6 +1480,7 @@ def load_sample_data_batch():
 
 
 def plot_correlations(predictions, true_values, save_path):
+    """Plot predicted vs. true fitness and interaction scores and save the figure."""
     import matplotlib.pyplot as plt
     import numpy as np
     from scipy import stats
@@ -1508,6 +1546,7 @@ def plot_correlations(predictions, true_values, save_path):
 
 
 def main(device="cpu"):
+    """Run a forward pass and correlation plotting on sample data."""
     import os
     import os.path as osp
 

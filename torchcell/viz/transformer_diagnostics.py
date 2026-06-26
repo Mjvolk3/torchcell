@@ -1,3 +1,5 @@
+"""Visualization helpers for transformer-specific diagnostic metrics."""
+
 # torchcell/viz/transformer_diagnostics
 # [[torchcell.viz.transformer_diagnostics]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/viz/transformer_diagnostics
@@ -16,6 +18,13 @@ class TransformerDiagnostics:
     """Visualization class for transformer-specific diagnostic metrics."""
 
     def __init__(self, base_dir: str, mplstyle_path: str | None = None) -> None:
+        """Store the output directory and load the color palette from a style file.
+
+        Args:
+            base_dir: Directory where diagnostic figures are written.
+            mplstyle_path: Optional path to a ``.mplstyle`` file; defaults to the
+                packaged ``torchcell.mplstyle``.
+        """
         self.base_dir = base_dir
 
         # Load color palette from mplstyle
@@ -27,8 +36,7 @@ class TransformerDiagnostics:
         self.colors = self._load_colors_from_mplstyle(mplstyle_path)
 
     def _load_colors_from_mplstyle(self, mplstyle_path: str) -> list[str]:
-        """
-        Parse color palette from mplstyle file using matplotlib's rc_params_from_file.
+        """Parse color palette from mplstyle file using matplotlib's rc_params_from_file.
 
         Args:
             mplstyle_path: Path to .mplstyle file
@@ -76,8 +84,7 @@ class TransformerDiagnostics:
     def save_and_log_figure(
         self, fig: plt.Figure, name: str, timestamp_str: str | None = None
     ) -> None:
-        """
-        Log figure to wandb only (no disk save).
+        """Log figure to wandb only (no disk save).
 
         Args:
             fig: Matplotlib figure
@@ -101,8 +108,7 @@ class TransformerDiagnostics:
         num_epochs: int = 0,
         stage: str = "val",
     ) -> None:
-        """
-        Create aggregated diagnostic plot for transformer attention metrics.
+        """Create aggregated diagnostic plot for transformer attention metrics.
 
         Args:
             attention_stats: Dict mapping layer_idx -> {

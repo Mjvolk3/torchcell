@@ -2,6 +2,7 @@
 # [[torchcell.datasets.sgd_gene_graph]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/sgd_gene_graph
 # Test file: tests/torchcell/datasets/test_sgd_gene_graph.py
+"""Embedding dataset built from SGD gene-graph node attributes."""
 
 import os.path as osp
 from collections.abc import Callable
@@ -14,6 +15,13 @@ from torchcell.data.embedding import BaseEmbeddingDataset
 
 
 class GraphEmbeddingDataset(BaseEmbeddingDataset):
+    """Node-feature embeddings derived from an SGD gene graph.
+
+    Builds per-gene feature vectors (length, molecular weight, pI, expression,
+    coordinates) plus chromosome and pathway categorical indices, optionally
+    min-max normalized per the selected ``model_name``.
+    """
+
     MODEL_TO_WINDOW = {"normalized_chrom_pathways": (True), "chrom_pathways": (False)}
 
     def __init__(
@@ -25,6 +33,7 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
         pre_transform: Callable | None = None,
         categorical_features: dict | None = None,
     ):
+        """Store the graph and load processed tensors and categorical metadata."""
         self.graph = graph
         self.categorical_features = categorical_features or {}
         super().__init__(root, model_name, transform, pre_transform)
@@ -36,13 +45,16 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
         self.data, self.slices = torch.load(self.processed_paths[0])
 
     def initialize_model(self):
+        """Do nothing; features come from graph attributes, not a model."""
         pass  # No need to initialize a model for this dataset
 
     @property
     def processed_file_names(self) -> list[str]:
+        """Return the processed tensor and categorical-feature filenames."""
         return [f"{self.model_name}.pt", "categorical_features.pt"]
 
     def process(self):
+        """Build node feature tensors and save them with categorical metadata."""
         data_list = []
         unique_chromosomes = set()
         unique_pathways = set()
@@ -162,6 +174,7 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
 
 
 def main():
+    """Build the gene-graph embedding dataset for each configured model."""
     import os
     import os.path as osp
 

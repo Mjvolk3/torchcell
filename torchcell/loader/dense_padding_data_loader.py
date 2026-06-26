@@ -1,3 +1,5 @@
+"""Data loader and collater that pad batches to a dense, fixed node count."""
+
 from collections import defaultdict
 from collections.abc import Mapping
 
@@ -228,10 +230,11 @@ def dense_padded_collate(
     follow_batch: Optional[List[str]] = None,
     exclude_keys: Optional[List[str]] = None,
 ) -> Tuple[BaseData, Mapping]:
-    """Collates a list of `data` objects into a single dense object of type `cls`. `collate` can
-    handle both homogeneous and heterogeneous data objects by individually collating all their
-    stores. In addition, `collate` can handle nested data structures such as dictionaries and
-    lists.
+    """Collate a list of data objects into a single dense object of type cls.
+
+    `collate` can handle both homogeneous and heterogeneous data objects by
+    individually collating all their stores. In addition, `collate` can handle
+    nested data structures such as dictionaries and lists.
 
     Args:
         cls (type): The class into which to collate.
@@ -312,10 +315,13 @@ def dense_padded_from_data_list(
     follow_batch: Optional[List[str]] = None,
     exclude_keys: Optional[List[str]] = None,
 ):
-    r"""Constructs a dense `~torch_geometric.data.Batch` object from a Python list of
-    `~torch_geometric.data.Data` or `~torch_geometric.data.HeteroData` objects. The assignment
-    vector `batch` is created on the fly. In addition, creates assignment vectors for each key in
-    `follow_batch`. Will exclude any keys given in `exclude_keys`.
+    r"""Construct a dense Batch object from a Python list of data objects.
+
+    Builds a dense `~torch_geometric.data.Batch` from a list of
+    `~torch_geometric.data.Data` or `~torch_geometric.data.HeteroData` objects.
+    The assignment vector `batch` is created on the fly. In addition, creates
+    assignment vectors for each key in `follow_batch`. Will exclude any keys
+    given in `exclude_keys`.
 
     Args:
         data_list (list): A list of data objects.
@@ -338,12 +344,11 @@ def dense_padded_from_data_list(
 
 
 class DensePaddingCollater:
-    """Collates data objects from a `torch_geometric.data.Dataset` to a mini-batch using padding
-    along with a new dimension.
+    """Collate dataset objects into a mini-batch using dense padding.
 
-    Data objects can be
-    either of type `~torch_geometric.data.Data` or
-    `~torch_geometric.data.HeteroData`.
+    Pads data objects from a `torch_geometric.data.Dataset` to a mini-batch
+    along a new dimension. Data objects can be either of type
+    `~torch_geometric.data.Data` or `~torch_geometric.data.HeteroData`.
     """
 
     def __init__(
@@ -352,13 +357,16 @@ class DensePaddingCollater:
         follow_batch: Optional[List[str]] = None,
         exclude_keys: Optional[List[str]] = None,
     ):
+        """Store the dataset and the follow/exclude key configuration."""
         self.dataset = dataset
         self.follow_batch = follow_batch
         self.exclude_keys = exclude_keys
 
     def __call__(self, batch: List[Any]) -> Any:
-        """Collates a python list of data objects to the internal storage format of
-        `torch_geometric.data.DataLoader`.
+        """Collate a list of data objects into the DataLoader storage format.
+
+        Collates a python list of data objects to the internal storage format
+        of `torch_geometric.data.DataLoader`.
 
         Args:
             batch: A python list of data objects.
@@ -391,8 +399,10 @@ class DensePaddingCollater:
         raise TypeError(f"DataLoader found invalid type: '{type(elem)}'")
 
     def collate_fn(self, batch: List[Any]) -> Any:
-        """Collates a python list of data objects to the internal storage format of
-        `torch_geometric.data.DataLoader`.
+        """Collate a batch, fetching from disk first for OnDiskDataset.
+
+        Collates a python list of data objects to the internal storage format
+        of `torch_geometric.data.DataLoader`.
 
         Args:
             batch: A python list of data objects.
@@ -406,8 +416,10 @@ class DensePaddingCollater:
 
 
 class DensePaddingDataLoader(torch.utils.data.DataLoader):
-    r"""A data loader which merges data objects from a `torch_geometric.data.Dataset` to a mini-
-    batch using padding along with a new dimension. Data objects can be either of type
+    r"""Data loader that merges dataset objects into mini-batches via dense padding.
+
+    Merges data objects from a `torch_geometric.data.Dataset` into a mini-batch
+    using padding along a new dimension. Data objects can be either of type
     `~torch_geometric.data.Data` or `~torch_geometric.data.HeteroData`.
 
     Args:
@@ -433,6 +445,7 @@ class DensePaddingDataLoader(torch.utils.data.DataLoader):
         exclude_keys: Optional[List[str]] = None,
         **kwargs,
     ):
+        """Set up the dense-padding collater and base DataLoader."""
         # Remove for PyTorch Lightning:
         kwargs.pop("collate_fn", None)
 

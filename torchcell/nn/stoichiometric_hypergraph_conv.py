@@ -4,6 +4,8 @@
 # Test file: tests/torchcell/nn/test_stoichiometric_hypergraph_conv.py
 
 
+"""Stoichiometry-aware hypergraph convolution layer for metabolic networks."""
+
 from typing import Optional
 
 import torch
@@ -18,6 +20,8 @@ from torch_geometric.utils import scatter, softmax
 
 
 class StoichHypergraphConv(MessagePassing):
+    """Hypergraph convolution with optional stoichiometric gating and attention."""
+
     def __init__(
         self,
         in_channels: int,
@@ -32,6 +36,7 @@ class StoichHypergraphConv(MessagePassing):
         bias: bool = True,
         **kwargs,
     ):
+        """Build linear, gating, attention, and bias parameters for the layer."""
         kwargs.setdefault("aggr", "add")
         super().__init__(flow="source_to_target", node_dim=0, **kwargs)
 
@@ -76,6 +81,7 @@ class StoichHypergraphConv(MessagePassing):
         self.reset_parameters()
 
     def reset_parameters(self):
+        """Reinitialize the layer's linear, attention, and bias parameters."""
         self.lin.reset_parameters()
         if self.is_stoich_gated:
             self.gate_lin.reset_parameters()
@@ -93,6 +99,7 @@ class StoichHypergraphConv(MessagePassing):
         hyperedge_attr: Optional[Tensor] = None,
         num_edges: Optional[int] = None,
     ) -> Tensor:
+        """Run the stoichiometric hypergraph message-passing forward pass."""
         num_nodes = x.size(0)
         # HACK not sure we should be setting num edges - index issues.
         num_edges = int(edge_index[1].max()) + 1 if num_edges is None else num_edges
@@ -178,6 +185,7 @@ class StoichHypergraphConv(MessagePassing):
         stoich: Tensor,
         gate_values: Optional[Tensor],
     ) -> Tensor:
+        """Compute messages weighted by stoichiometry, attention, and gating."""
         # Split into magnitude and sign
         magnitude = torch.abs(stoich)
         sign = torch.sign(stoich)
@@ -221,6 +229,7 @@ class StoichHypergraphConv(MessagePassing):
 
 
 def main():
+    """Run a small StoichHypergraphConv example and print the output shape."""
     torch.manual_seed(42)
 
     # Create instances for comparison

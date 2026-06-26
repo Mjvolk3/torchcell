@@ -1,3 +1,5 @@
+"""Check whether a GO term is obsolete (deprecated) in the loaded GO ontology DAG."""
+
 from goatools.obo_parser import GODag
 
 # Initialize the GO ontology DAG (Directed Acyclic Graph)

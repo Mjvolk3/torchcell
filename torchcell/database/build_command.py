@@ -1,3 +1,5 @@
+"""Cliff command for building the torchcell database image via shell scripts."""
+
 import os
 import os.path as osp
 import subprocess
@@ -9,6 +11,7 @@ class BuildCommand(Command):
     """A simple command that builds something."""
 
     def get_parser(self, prog_name):
+        """Build the argument parser, adding the build mode option."""
         parser = super().get_parser(prog_name)
         parser.add_argument(
             "-m",
@@ -20,6 +23,7 @@ class BuildCommand(Command):
         return parser
 
     def take_action(self, parsed_args):
+        """Run the selected build script and stream its output."""
         script_path = osp.join(os.getcwd(), "database", "build")
         script = (
             "build_linux-arm.sh"

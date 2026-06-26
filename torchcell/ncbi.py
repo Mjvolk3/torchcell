@@ -79,10 +79,13 @@
 #         genes.append(str(gene_seq))  # Convert Seq to str
 #     print(genes)  # Prints the sequences of genes
 
+"""Download S. cerevisiae gene records from NCBI Entrez."""
+
 from Bio import Entrez
 
 
 def download_gene(gene_name, filename):
+    """Fetch the first matching nucleotide GenBank record for a gene to a file."""
     Entrez.email = "michaeljvolk7@gmail.com"  # Always tell NCBI who you are
     handle = Entrez.esearch(
         db="nucleotide", term=f"{gene_name} Saccharomyces cerevisiae[Orgn]", retmax=1
@@ -103,6 +106,7 @@ def download_gene(gene_name, filename):
 
 
 def main():
+    """Download the YOR202W gene record to ``gene.gb``."""
     gene_file = "gene.gb"
     download_gene("YOR202W", gene_file)
 

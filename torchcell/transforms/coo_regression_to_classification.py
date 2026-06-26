@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/transforms/coo_regression_to_classification
 # Test file: tests/torchcell/transforms/test_coo_regression_to_classification.py
 
+"""Transforms converting COO-format regression labels to classification targets."""
+
 from abc import ABC
 from typing import TYPE_CHECKING
 
@@ -24,7 +26,8 @@ class COOLabelNormalizationTransform(BaseTransform):
         label_configs: dict[str, dict],
         eps: float = 1e-8,
     ):
-        """
+        """Compute per-label normalization statistics from the dataset.
+
         Args:
             dataset: Neo4jCellDataset instance
             label_configs: Dictionary mapping label names to their configurations
@@ -212,6 +215,8 @@ class COOLabelNormalizationTransform(BaseTransform):
 
 
 class BaseBinningStrategy(ABC):
+    """Base class for strategies that bin continuous values into classes."""
+
     def clamp_values(
         self, values: torch.Tensor, bin_edges: torch.Tensor
     ) -> torch.Tensor:
@@ -295,10 +300,12 @@ class BaseBinningStrategy(ABC):
 
 
 class EqualWidthStrategy(BaseBinningStrategy):
+    """Binning strategy with bins of equal width across the value range."""
+
     def compute_bins(
         self, values: np.ndarray, num_bins: int
     ) -> tuple[np.ndarray, dict]:
-        """Compute equal-width bins"""
+        """Compute equal-width bins."""
         non_nan = values[~np.isnan(values)]
         bin_edges = np.linspace(non_nan.min(), non_nan.max(), num_bins + 1)
         metadata = {
@@ -314,10 +321,12 @@ class EqualWidthStrategy(BaseBinningStrategy):
 
 
 class EqualFrequencyStrategy(BaseBinningStrategy):
+    """Binning strategy with bins holding roughly equal sample counts."""
+
     def compute_bins(
         self, values: np.ndarray, num_bins: int
     ) -> tuple[np.ndarray, dict]:
-        """Compute equal-frequency (quantile) bins"""
+        """Compute equal-frequency (quantile) bins."""
         non_nan = values[~np.isnan(values)]
         bin_edges = np.percentile(non_nan, np.linspace(0, 100, num_bins + 1))
         metadata = {
@@ -333,10 +342,12 @@ class EqualFrequencyStrategy(BaseBinningStrategy):
 
 
 class AutoBinStrategy(BaseBinningStrategy):
+    """Binning strategy that picks the bin count from the data's spread."""
+
     def compute_bins(
         self, values: np.ndarray, num_bins: int | None = None
     ) -> tuple[np.ndarray, dict]:
-        """Compute bins based on data std"""
+        """Compute bins based on data std."""
         non_nan = values[~np.isnan(values)]
         std = np.std(non_nan)
         range_width = np.max(non_nan) - np.min(non_nan)
@@ -345,13 +356,16 @@ class AutoBinStrategy(BaseBinningStrategy):
 
 
 class COOLabelBinningTransform(BaseTransform):
+    """Transform binning COO-format continuous labels into class indices."""
+
     def __init__(
         self,
         dataset: "Neo4jCellDataset",
         label_configs: dict[str, dict],
         normalizer: COOLabelNormalizationTransform | None = None,
     ):
-        """
+        """Initialize binning strategies and per-label bin parameters.
+
         Args:
             dataset: Neo4jCellDataset instance
             label_configs: Dict of configurations
@@ -671,6 +685,7 @@ class COOInverseCompose(BaseTransform):
     """A transform that applies the inverse of a sequence of transforms in reverse order."""
 
     def __init__(self, transforms: Compose | list[BaseTransform]):
+        """Store the transforms and verify each implements an inverse method."""
         super().__init__()
         if isinstance(transforms, Compose):
             self.transforms = transforms.transforms
@@ -696,5 +711,6 @@ class COOInverseCompose(BaseTransform):
         return data
 
     def __repr__(self) -> str:
+        """Return a string listing the composed transforms."""
         args = [f"\n  {t}" for t in self.transforms]
         return f"{self.__class__.__name__}({''.join(args)}\n)"

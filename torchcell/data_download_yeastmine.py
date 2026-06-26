@@ -1,3 +1,5 @@
+"""Download S. cerevisiae gene records from YeastMine and NCBI Entrez."""
+
 import os
 import pickle
 
@@ -6,6 +8,7 @@ from intermine.webservice import Service
 
 
 def main1():
+    """Query YeastMine for the gene/factor template of a single gene."""
     gene = "YOR202W"
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
     template = service.get_template("GeneTarget_GeneFactor")
@@ -18,6 +21,7 @@ def main1():
 
 
 def main2():
+    """Fetch and cache all S. cerevisiae nucleotide gene records via Entrez."""
     filename = "yeast_genes.pkl"
     if not os.path.isfile(filename):
         # File doesn't exist, download the gene data

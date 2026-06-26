@@ -1,3 +1,5 @@
+"""Dense DiffPool cell model over multiple per-graph GAT stacks."""
+
 from typing import Literal
 
 import torch
@@ -10,6 +12,8 @@ from torchcell.transforms.hetero_to_dense import HeteroToDense
 
 
 class EarlyDenseCellDiffPool(nn.Module):
+    """Dense GAT + DiffPool model fusing multiple cell graphs for regression."""
+
     def __init__(
         self,
         graph_names: list[str],
@@ -28,6 +32,7 @@ class EarlyDenseCellDiffPool(nn.Module):
         cluster_aggregation: Literal["mean", "sum"] = "mean",
         dropout: float = 0.0,
     ):
+        """Build per-graph GAT stacks, DiffPool layers, and the output head."""
         super().__init__()
 
         self.graph_names = sorted(graph_names)
@@ -123,6 +128,7 @@ class EarlyDenseCellDiffPool(nn.Module):
         self.lin = nn.Linear(embed_hidden_channels, target_dim)
 
     def get_norm_layer(self, norm, channels):
+        """Return the normalization layer for the given norm name."""
         if norm is None:
             return nn.Identity()
         elif norm == "batch":
@@ -152,6 +158,7 @@ class EarlyDenseCellDiffPool(nn.Module):
         return x
 
     def forward(self, x, adj_dict: dict[str, torch.Tensor], mask=None):
+        """Embed and pool each graph, then fuse to predict the target."""
         # Process each graph through its GAT layers
         graph_embeddings = {}
         graph_attention_weights = {}
@@ -277,6 +284,7 @@ class EarlyDenseCellDiffPool(nn.Module):
 
 
 def load_sample_data_batch():
+    """Load a small batch of cell data for exercising the model."""
     import os
     import os.path as osp
 
@@ -365,6 +373,7 @@ def load_sample_data_batch():
 
 
 def main():
+    """Run a forward/backward smoke test of the DiffPool cell model."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
     # Load sample data batch

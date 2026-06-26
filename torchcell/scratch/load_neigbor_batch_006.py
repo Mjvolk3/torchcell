@@ -2,8 +2,7 @@
 # [[torchcell.scratch.load_neigbor_batch_006]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/scratch/load_neigbor_batch_006
 
-"""
-Load data with NeighborSubgraphRepresentation for k-hop induced subgraphs.
+"""Load data with NeighborSubgraphRepresentation for k-hop induced subgraphs.
 
 Creates small induced subgraphs around perturbed genes using k-hop sampling.
 """
@@ -37,8 +36,7 @@ from torchcell.transforms.regression_to_classification import (
 
 
 class NeighborSubgraphRepresentation(GraphProcessor):
-    """
-    GraphProcessor that creates k-hop induced subgraphs around perturbed genes.
+    """GraphProcessor that creates k-hop induced subgraphs around perturbed genes.
 
     Unlike SubgraphRepresentation (which filters out perturbed genes) or
     LazySubgraphRepresentation (which keeps full graph with masks), this processor
@@ -55,6 +53,7 @@ class NeighborSubgraphRepresentation(GraphProcessor):
     """
 
     def __init__(self, num_hops: int = 2):
+        """Initialize the transform with the neighborhood hop count."""
         self.num_hops = num_hops
         self.device = torch.device("cpu")  # For DataLoader pin_memory compatibility
         self.masks = {}
@@ -71,8 +70,7 @@ class NeighborSubgraphRepresentation(GraphProcessor):
         }
 
     def _process_gene_info(self, cell_graph: HeteroData, data):
-        """
-        Identify perturbed genes from experiment data.
+        """Identify perturbed genes from experiment data.
 
         Returns dict with:
             - perturbed_names: Set of perturbed gene IDs
@@ -105,8 +103,7 @@ class NeighborSubgraphRepresentation(GraphProcessor):
         }
 
     def _build_khop_subgraph(self, cell_graph: HeteroData, gene_info: dict) -> dict:
-        """
-        Build k-hop induced subgraph around perturbed genes.
+        """Build k-hop induced subgraph around perturbed genes.
 
         For each edge type:
         1. Use k_hop_subgraph to find k-hop neighbors of perturbed genes
@@ -194,8 +191,7 @@ class NeighborSubgraphRepresentation(GraphProcessor):
         cell_graph: HeteroData,
         subgraph_info: dict,
     ):
-        """
-        Add metabolism edges for genes in the k-hop subgraph.
+        """Add metabolism edges for genes in the k-hop subgraph.
 
         For genes in the subgraph:
         1. Include all GPR (gene-reaction) edges involving those genes
@@ -400,8 +396,7 @@ class NeighborSubgraphRepresentation(GraphProcessor):
     def process(
         self, cell_graph: HeteroData, phenotype_info: list, data: list
     ) -> HeteroData:
-        """
-        Main processing method.
+        """Main processing method.
 
         Creates k-hop induced subgraph around perturbed genes.
 
@@ -441,8 +436,7 @@ def load_sample_data_batch(
     num_hops=2,
     config: Literal["hetero_cell_bipartite"] = "hetero_cell_bipartite",
 ):
-    """
-    Load a sample data batch with NeighborSubgraphRepresentation.
+    """Load a sample data batch with NeighborSubgraphRepresentation.
 
     Args:
         batch_size: Batch size for dataloader

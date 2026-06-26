@@ -1,4 +1,5 @@
 # tests/torchcell/nn/test_nsa_encoder.py
+"""Tests for the NSAEncoder graph encoder module."""
 
 import pytest
 import torch
@@ -11,7 +12,7 @@ from torchcell.nn.nsa_encoder import NSAEncoder
 
 @pytest.fixture
 def simple_graph():
-    """Fixture for a simple graph with community structure"""
+    """Fixture for a simple graph with community structure."""
     # Create a simple graph with 4 communities
     block_sizes = [25, 25, 25, 25]  # 4 blocks of 25 nodes each
     edge_probs = [
@@ -42,7 +43,7 @@ def simple_graph():
 
 @pytest.fixture
 def metabolic_graph():
-    """Fixture for a small metabolic network with stoichiometry"""
+    """Fixture for a small metabolic network with stoichiometry."""
     # Create a small metabolic network with 6 nodes (3 metabolites, 3 reactions)
     # Node features (one-hot encoding for node type)
     x = torch.zeros(6, 2)  # 2 node types: metabolite (0) and reaction (1)
@@ -76,7 +77,7 @@ def metabolic_graph():
 
 
 def test_nsa_encoder_with_graph(simple_graph):
-    """Test NSAEncoder with a simple graph without using FlexAttention"""
+    """Test NSAEncoder on a simple graph without using FlexAttention."""
     # To avoid FlexAttention issues in testing
     import torch._dynamo
 
@@ -105,7 +106,7 @@ def test_nsa_encoder_with_graph(simple_graph):
 
 
 def test_nsa_encoder_with_metabolic_graph(metabolic_graph):
-    """Test NSAEncoder with metabolic network using manual calculations"""
+    """Test NSAEncoder on a metabolic network using manual calculations."""
     # To avoid FlexAttention issues in testing
     import torch._dynamo
 
@@ -134,7 +135,7 @@ def test_nsa_encoder_with_metabolic_graph(metabolic_graph):
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_nsa_encoder_with_cuda(simple_graph):
-    """Test NSAEncoder on CUDA device"""
+    """Test NSAEncoder on a CUDA device."""
     import torch._dynamo
 
     torch._dynamo.config.suppress_errors = True
@@ -164,7 +165,7 @@ def test_nsa_encoder_with_cuda(simple_graph):
 
 
 def test_nsa_encoder_with_batched_graphs(simple_graph):
-    """Test NSAEncoder with manually created batch instead of fixture"""
+    """Test NSAEncoder with a manually created batch instead of a fixture."""
     import torch._dynamo
 
     torch._dynamo.config.suppress_errors = True

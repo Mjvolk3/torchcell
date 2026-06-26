@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/dango
 # Test file: tests/torchcell/models/test_dango.py
 
+"""DANGO model: PPI-network pretraining, embedding integration, and HyperSAGNN."""
+
 import os
 import os.path as osp
 
@@ -29,6 +31,13 @@ class DangoPreTrain(nn.Module):
     """
 
     def __init__(self, gene_num: int, edge_types: list[str], hidden_channels: int = 64):
+        """Build the shared embedding and per-network GNN and reconstruction layers.
+
+        Args:
+            gene_num: Number of genes (embedding table size).
+            edge_types: PPI network edge types, one GNN stack per type.
+            hidden_channels: Embedding and hidden dimension.
+        """
         super().__init__()
 
         # Initialize model parameters
@@ -171,6 +180,11 @@ class MetaEmbedding(nn.Module):
     """
 
     def __init__(self, hidden_channels: int):
+        """Build the attention MLP used to weight per-network embeddings.
+
+        Args:
+            hidden_channels: Input embedding dimension.
+        """
         super().__init__()
         # MLP for attention weights (two fully-connected layers)
         self.attention_mlp = nn.Sequential(
@@ -236,6 +250,12 @@ class HyperSAGNN(nn.Module):
     """
 
     def __init__(self, hidden_channels: int, num_heads: int = 4):
+        """Build the static embedding and two multi-head self-attention layers.
+
+        Args:
+            hidden_channels: Embedding and hidden dimension.
+            num_heads: Number of attention heads.
+        """
         super().__init__()
         self.hidden_channels = hidden_channels
         self.num_heads = num_heads
@@ -347,7 +367,10 @@ class HyperSAGNN(nn.Module):
             x: Input tensor with shape [total_nodes, hidden_dim]
             attention_mask: Binary mask with shape [total_nodes, total_nodes]
                            True where attention is allowed, False elsewhere
-            Q_proj, K_proj, V_proj, O_proj: Linear projections
+            Q_proj: Query linear projection.
+            K_proj: Key linear projection.
+            V_proj: Value linear projection.
+            O_proj: Output linear projection.
             beta: ReZero parameter
 
         Returns:
@@ -413,6 +436,14 @@ class Dango(nn.Module):
         hidden_channels: int = 64,
         num_heads: int = 4,
     ):
+        """Assemble the pretraining, integration, and HyperSAGNN submodules.
+
+        Args:
+            gene_num: Number of genes.
+            edge_types: PPI network edge types.
+            hidden_channels: Embedding and hidden dimension.
+            num_heads: Number of attention heads in the HyperSAGNN.
+        """
         super().__init__()
         self.hidden_channels = hidden_channels
 
@@ -497,9 +528,7 @@ class Dango(nn.Module):
 
     @property
     def num_parameters(self) -> dict[str, int]:
-        """
-        Count the number of trainable parameters in the model
-        """
+        """Count the number of trainable parameters in the model."""
 
         def count_params(module: nn.Module) -> int:
             return sum(p.numel() for p in module.parameters() if p.requires_grad)
@@ -522,9 +551,7 @@ class Dango(nn.Module):
     config_name="dango_kuzmin2018_tmi",
 )
 def main(cfg: DictConfig):
-    """
-    Main function to test the DANGO model with overfitting on a batch
-    """
+    """Test the DANGO model by overfitting on a single batch."""
     import os
     from datetime import datetime
 

@@ -3,8 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/cell_graph_transformer
 # Test file: tests/torchcell/models/test_cell_graph_transformer.py
 
-"""
-Cell Graph Transformer with graph-regularized attention heads.
+"""Cell Graph Transformer with graph-regularized attention heads.
 
 Implements the architecture from weekly report 2025.45:
 - CLS token for whole-cell representation
@@ -25,8 +24,7 @@ from torch_geometric.data import HeteroData
 
 
 class GraphRegularizedTransformerLayer(nn.Module):
-    """
-    Transformer layer with graph-regularized attention heads.
+    """Transformer layer with graph-regularized attention heads.
 
     Uses manual attention computation to get both output and attention weights
     for graph regularization loss.
@@ -40,6 +38,7 @@ class GraphRegularizedTransformerLayer(nn.Module):
         regularized_head_config: dict[str, dict] | None = None,
         dropout: float = 0.1,
     ):
+        """Build multi-head attention projections and graph-regularized heads."""
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
@@ -75,8 +74,7 @@ class GraphRegularizedTransformerLayer(nn.Module):
     def forward(
         self, x: torch.Tensor, return_attention: bool = False
     ) -> tuple[torch.Tensor, torch.Tensor | None]:
-        """
-        Forward pass with manual attention computation.
+        """Forward pass with manual attention computation.
 
         Args:
             x: [batch, N+1, d] where N+1 includes CLS token at position 0
@@ -136,14 +134,14 @@ class GraphRegularizedTransformerLayer(nn.Module):
 
 
 class HyperSAGNN(nn.Module):
-    """
-    Hypergraph Self-Attention Graph Neural Network for perturbation sets.
+    """Hypergraph Self-Attention Graph Neural Network for perturbation sets.
 
     Adapted from DANGO model to compute perturbation representations via
     masked self-attention within perturbation sets.
     """
 
     def __init__(self, hidden_channels: int, num_heads: int = 4):
+        """Build the hyper self-attention projections for the given head config."""
         super().__init__()
         self.hidden_channels = hidden_channels
         self.num_heads = num_heads
@@ -176,8 +174,7 @@ class HyperSAGNN(nn.Module):
     def forward(
         self, embeddings: torch.Tensor, batch_indices: torch.Tensor
     ) -> torch.Tensor:
-        """
-        Forward pass processing perturbed genes with masked attention.
+        """Forward pass processing perturbed genes with masked attention.
 
         Args:
             embeddings: Tensor of shape [total_pert_genes, hidden_channels]
@@ -247,14 +244,16 @@ class HyperSAGNN(nn.Module):
         O_proj: nn.Linear,
         beta: nn.Parameter,
     ) -> torch.Tensor:
-        """
-        Apply global masked multi-head attention.
+        """Apply global masked multi-head attention.
 
         Args:
             x: Input tensor with shape [total_nodes, hidden_dim]
             attention_mask: Binary mask with shape [total_nodes, total_nodes]
                            True where attention is allowed, False elsewhere
-            Q_proj, K_proj, V_proj, O_proj: Linear projections
+            Q_proj: Linear projection producing queries.
+            K_proj: Linear projection producing keys.
+            V_proj: Linear projection producing values.
+            O_proj: Linear projection applied to the attention output.
             beta: ReZero parameter
 
         Returns:
@@ -304,8 +303,7 @@ class HyperSAGNN(nn.Module):
 
 
 class PerturbationHead(nn.Module):
-    """
-    Perturbation head with switchable attention mechanisms.
+    """Perturbation head with switchable attention mechanisms.
 
     Implements g_ψ(h_CLS, H_genes, M(S)) from weekly report using either:
     - Cross-attention (default): perturbation summary attends to all genes
@@ -319,6 +317,7 @@ class PerturbationHead(nn.Module):
         dropout: float = 0.1,
         use_cross_attention: bool = True,
     ):
+        """Build the perturbation head using cross-attention or HyperSAGNN."""
         super().__init__()
         self.hidden_dim = hidden_dim
         self.use_cross_attention = use_cross_attention
@@ -346,8 +345,7 @@ class PerturbationHead(nn.Module):
         perturbation_indices: torch.Tensor,
         batch_assignment: torch.Tensor,
     ) -> torch.Tensor:
-        """
-        Forward pass of perturbation head.
+        """Forward pass of perturbation head.
 
         Args:
             H: [N+1, d] transformer output (CLS at position 0, genes at 1:N+1)
@@ -407,8 +405,7 @@ class PerturbationHead(nn.Module):
 
 
 class CellGraphTransformer(nn.Module):
-    """
-    Cell Graph Transformer model.
+    """Cell Graph Transformer model.
 
     Architecture:
     1. Gene embeddings + CLS token
@@ -429,6 +426,7 @@ class CellGraphTransformer(nn.Module):
         adaptive_loss_weighting: bool = False,
         graph_reg_scale: float = 0.001,  # Global scale factor for graph reg
     ):
+        """Build the embedding, graph-regularized transformer stack, and head."""
         super().__init__()
         self.gene_num = gene_num
         self.hidden_channels = hidden_channels
@@ -491,8 +489,7 @@ class CellGraphTransformer(nn.Module):
     def _normalize_adjacency_matrices(
         self, cell_graph: HeteroData
     ) -> dict[str, torch.Tensor]:
-        """
-        Normalize adjacency matrices row-wise: A_tilde[i,:] = A[i,:] / (degree[i] + eps).
+        """Normalize adjacency matrices row-wise: A_tilde[i,:] = A[i,:] / (degree[i] + eps).
 
         Args:
             cell_graph: HeteroData with (gene, edge_type, gene) edges
@@ -530,8 +527,7 @@ class CellGraphTransformer(nn.Module):
     def compute_graph_regularization_loss(
         self, attention_weights: torch.Tensor, layer_idx: int
     ) -> torch.Tensor:
-        """
-        Compute graph regularization loss using KL divergence.
+        """Compute graph regularization loss using KL divergence.
 
         Args:
             attention_weights: [batch, heads, N, N] gene-gene attention weights
@@ -617,8 +613,7 @@ class CellGraphTransformer(nn.Module):
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """
-        Forward pass of Cell Graph Transformer.
+        """Forward pass of Cell Graph Transformer.
 
         Args:
             cell_graph: Full wildtype graph structure (not used directly, genes indexed by order)
@@ -698,8 +693,7 @@ def calculate_weight_l2_norm(model: nn.Module) -> float:
 
 
 def compute_smoothness(X: torch.Tensor) -> float:
-    """
-    Compute smoothness of node features (oversmoothing diagnostic).
+    """Compute smoothness of node features (oversmoothing diagnostic).
 
     Lower values indicate oversmoothing (features collapsing toward mean).
     Higher values indicate feature diversity is preserved.

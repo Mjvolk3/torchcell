@@ -3,6 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/diffusion_loss
 # Test file: tests/torchcell/losses/test_diffusion_loss.py
 
+"""Strict diffusion loss with optional explicit x0 supervision."""
 
 import torch
 import torch.nn as nn
@@ -10,8 +11,7 @@ import torch.nn.functional as F
 
 
 class DiffusionLoss(nn.Module):
-    """
-    Strict diffusion loss for conditional decoders.
+    """Strict diffusion loss for conditional decoders.
 
     What it does:
       • computes the model's diffusion loss
@@ -28,6 +28,7 @@ class DiffusionLoss(nn.Module):
         lambda_x0: float = 0.0,
         x0_loss: nn.Module | None = None,
     ) -> None:
+        """Configure loss weights and validate the model exposes diffusion hooks."""
         super().__init__()
         if lambda_diffusion <= 0.0 and lambda_x0 <= 0.0:
             raise ValueError("At least one of {lambda_diffusion, lambda_x0} > 0.")
@@ -60,6 +61,7 @@ class DiffusionLoss(nn.Module):
         epoch: int | None = None,  # kept for API comp.
         t_mode: str = "full",
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+        """Compute the weighted diffusion (and optional x0) loss and a breakdown."""
         if context is None:
             raise ValueError("context (conditioning) tensor is required.")
 

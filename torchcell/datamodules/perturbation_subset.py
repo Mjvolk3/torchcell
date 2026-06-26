@@ -2,6 +2,7 @@
 # [[torchcell.datamodules.perturbation_subset]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodules/perturbation_subset
 # Test file: tests/torchcell/datamodules/test_perturbation_subset.py
+"""Lightning datamodule for size-limited perturbation subsets of a cell dataset."""
 
 import json
 import os
@@ -26,6 +27,8 @@ from torchcell.utils import format_scientific_notation
 
 
 class PerturbationSubsetDataModule(L.LightningDataModule):
+    """Datamodule yielding a cached, seeded subset of perturbation samples."""
+
     def __init__(
         self,
         cell_data_module,
@@ -44,6 +47,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         collate_fn: object | None = None,
         val_batch_size: int | None = None,
     ):
+        """Configure subset size, loader options, and the cache directory."""
         super().__init__()
         self.cell_data_module = cell_data_module
         self.dataset = cell_data_module.dataset
@@ -110,12 +114,14 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
 
     @property
     def index(self) -> DataModuleIndex:
+        """Return the train/val/test split index, computing it if needed."""
         if self._index is None or not self._cached_files_exist():
             self._load_or_compute_index()
         return self._index
 
     @property
     def index_details(self) -> DataModuleIndexDetails:
+        """Return per-split index details, computing them if needed."""
         if self._index_details is None or not self._cached_files_exist():
             self._load_or_compute_index()
         return self._index_details
@@ -354,6 +360,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         return osp.exists(index_file) and osp.exists(details_file)
 
     def setup(self, stage: str | None = None):
+        """Build train/val/test subset datasets from the computed index."""
         print("Setting up PerturbationSubsetDataModule...")
         if (
             self._index is None
@@ -410,18 +417,23 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         return loader
 
     def train_dataloader(self):
+        """Return the training dataloader over the subset."""
         return self._get_dataloader(self.train_dataset, shuffle=self.train_shuffle)
 
     def val_dataloader(self):
+        """Return the validation dataloader over the subset."""
         return self._get_dataloader(self.val_dataset, batch_size=self.val_batch_size)
 
     def test_dataloader(self):
+        """Return the test dataloader over the subset."""
         return self._get_dataloader(self.test_dataset)
 
     def all_dataloader(self):
+        """Return a dataloader over the full underlying dataset."""
         return self._get_dataloader(self.dataset)
 
     def test_cell_module_dataloader(self):
+        """Return a dataloader over the parent cell module's test split."""
         return self._get_dataloader(
             Subset(self.dataset, self.cell_data_module.index.test)
         )

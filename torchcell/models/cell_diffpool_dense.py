@@ -1,3 +1,5 @@
+"""Dense DiffPool models over cell graphs for hierarchical graph pooling."""
+
 from typing import Literal
 
 import torch
@@ -10,6 +12,8 @@ from torchcell.transforms.hetero_to_dense import HeteroToDense
 
 
 class DenseDiffPool(nn.Module):
+    """One DiffPool block: GAT-based assignment and embedding then pooling."""
+
     def __init__(
         self,
         max_num_nodes: int,
@@ -28,6 +32,7 @@ class DenseDiffPool(nn.Module):
         concat: bool = False,
         dropout: float = 0.0,
     ):
+        """Build the pooling/embedding GAT stacks and final prediction layer."""
         super().__init__()
 
         # Store parameters
@@ -112,6 +117,7 @@ class DenseDiffPool(nn.Module):
         self.lin = nn.Linear(embed_gat_hidden_channels, target_dim)
 
     def get_norm_layer(self, norm, channels):
+        """Return the normalization layer for the given norm name and width."""
         if norm is None:
             return nn.Identity()
         elif norm == "batch":
@@ -232,6 +238,8 @@ class DenseDiffPool(nn.Module):
 
 
 class DenseCellDiffPool(nn.Module):
+    """Multi-graph DiffPool model that pools several cell graphs in parallel."""
+
     def __init__(
         self,
         graph_names: list[str],
@@ -251,6 +259,7 @@ class DenseCellDiffPool(nn.Module):
         concat: bool = False,
         dropout: float = 0.0,
     ):
+        """Build a per-graph DiffPool stack and the shared prediction head."""
         super().__init__()
 
         self.graph_names = sorted(graph_names)  # Sort for consistent ordering
@@ -380,6 +389,7 @@ class DenseCellDiffPool(nn.Module):
 
 
 def load_sample_data_batch():
+    """Load a sample dense data batch for testing the DiffPool models."""
     import os
     import os.path as osp
 
@@ -468,7 +478,7 @@ def load_sample_data_batch():
 
 
 def main_single():
-
+    """Run a single-graph DiffPool training/inference smoke test."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
     # Load the sample data batch
@@ -611,7 +621,7 @@ def main_single():
 
 
 def main():
-
+    """Run a multi-graph DiffPool training/inference smoke test."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
     # Load the sample data batch

@@ -2,6 +2,7 @@
 # [[torchcell.datamodels.synthetic_lethality_to_fitness_conversion]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/synthetic_lethality_to_fitness_conversion
 # Test file: tests/torchcell/datamodels/test_synthetic_lethality_to_fitness_conversion.py
+"""Convert synthetic-lethality experiments into equivalent fitness experiments."""
 
 from typing import TYPE_CHECKING
 
@@ -21,6 +22,7 @@ if TYPE_CHECKING:
 def synthetic_lethality_to_fitness_experiment(
     experiment: SyntheticLethalityExperiment,
 ) -> FitnessExperiment | None:
+    """Map a synthetic-lethal experiment to a fitness-0 experiment, else drop it."""
     if experiment.phenotype.is_synthetic_lethal:
         fitness_phenotype = FitnessPhenotype(fitness=0.0, fitness_std=None)
         return FitnessExperiment(
@@ -36,6 +38,7 @@ def synthetic_lethality_to_fitness_experiment(
 def synthetic_lethality_to_fitness_reference(
     reference: SyntheticLethalityExperimentReference,
 ) -> FitnessExperimentReference:
+    """Map a synthetic-lethality reference to a fitness-1 reference experiment."""
     fitness_phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=None)
     return FitnessExperimentReference(
         experiment_reference_type="fitness",
@@ -47,11 +50,15 @@ def synthetic_lethality_to_fitness_reference(
 
 
 class SyntheticLethalityToFitnessConverter(Converter):
+    """Converter turning synthetic-lethality records into fitness records."""
+
     def __init__(self, root: str, query: "Neo4jQueryRaw"):
+        """Initialize the converter with its cache root and source Neo4j query."""
         super().__init__(root, query)
 
     @property
     def conversion_map(self) -> ConversionMap:
+        """Return the experiment/reference conversion mapping for this converter."""
         entry = ConversionEntry(
             experiment_input_type=SyntheticLethalityExperiment,
             experiment_conversion_function=synthetic_lethality_to_fitness_experiment,

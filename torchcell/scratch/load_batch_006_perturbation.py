@@ -1,5 +1,5 @@
-"""
-Load batch for CellGraphTransformer using Perturbation processor.
+"""Load batch for CellGraphTransformer using Perturbation processor.
+
 This is for experiment 006 with the new transformer architecture.
 """
 
@@ -31,8 +31,7 @@ def load_perturbation_batch(
     subset_size: int = 10000,
     device: torch.device = torch.device("cuda"),
 ):
-    """
-    Load a batch of data using the Perturbation processor for CellGraphTransformer.
+    """Load a batch of data using the Perturbation processor for CellGraphTransformer.
 
     Returns:
         dataset: The dataset with Perturbation processor

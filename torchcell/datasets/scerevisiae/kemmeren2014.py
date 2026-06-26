@@ -2,6 +2,7 @@
 # [[torchcell.datasets.scerevisiae.kemmeren2014]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/kemmeren2014
 # Test file: tests/torchcell/datasets/scerevisiae/test_kemmeren2014.py
+"""Kemmeren 2014 S. cerevisiae microarray expression deletion dataset."""
 
 import logging
 import os
@@ -48,6 +49,8 @@ DATA_ROOT = os.getenv("DATA_ROOT")
 
 @register_dataset
 class MicroarrayKemmeren2014Dataset(ExperimentDataset):
+    """Microarray expression dataset of single-gene deletions (Kemmeren 2014)."""
+
     # GEO accessions for the dataset
     geo_accession_responsive = "GSE42527"  # Responsive mutants
     geo_accession_nonresponsive = "GSE42526"  # Non-responsive mutants
@@ -92,6 +95,17 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Set up parallelism options and the genome before processing.
+
+        Args:
+            root: Dataset root directory.
+            io_workers: Number of IO workers for the base dataset.
+            process_workers: Number of workers for parallel experiment processing.
+            batch_size: Batch size used during parallel processing.
+            transform: Optional runtime transform.
+            pre_transform: Optional pre-processing transform.
+            **kwargs: Additional arguments forwarded to the base dataset.
+        """
         self.process_workers = process_workers
         self.batch_size = batch_size
 
@@ -107,14 +121,17 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
     @property
     def experiment_class(self) -> type[Experiment]:
+        """Return the experiment class produced by this dataset."""
         return MicroarrayExpressionExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
+        """Return the experiment-reference class for this dataset."""
         return MicroarrayExpressionExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Return the expected raw GEO file names."""
         return [
             f"{self.geo_accession_responsive}_family.soft.gz",
             f"{self.geo_accession_nonresponsive}_family.soft.gz",
@@ -209,6 +226,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Parse GEO data into experiments and write them to the LMDB store."""
         # Initialize resolution statistics
         self.resolved_by_excel = 0
         self.resolved_by_gene_table = 0
@@ -1078,6 +1096,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         self, wt_gsm_list, probe_to_gene_map
     ) -> SortedDict:
         """Calculate average wildtype expression values from GSM objects.
+
         DEPRECATED: Use _calculate_wt_reference_with_std instead.
         """
         if len(wt_gsm_list) == 0:
@@ -1939,6 +1958,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
     def create_expression_experiment(
         dataset_name, sample_info, replicate_expressions, refpool_expression
     ):
+        """Build an experiment and reference pair from sample expression data."""
         # Genome reference - strain MUST be specified (BY4741 or BY4742)
         if "strain" not in sample_info:
             raise ValueError(

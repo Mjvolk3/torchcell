@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/cell_gin_diffpool_dense
 # Test file: tests/torchcell/models/test_cell_gin_diffpool_dense.py
 
+"""Dense GIN-based DiffPool cell model over dense adjacency matrices."""
+
 from typing import Literal
 
 import torch
@@ -15,6 +17,8 @@ from torchcell.transforms.hetero_to_dense import HeteroToDense
 
 
 class DenseDiffPool(nn.Module):
+    """A dense DiffPool block: GIN embedding plus learned cluster assignment."""
+
     def __init__(
         self,
         max_num_nodes: int,
@@ -33,6 +37,7 @@ class DenseDiffPool(nn.Module):
         train_eps: bool = True,
         eps: float = 0.0,
     ):
+        """Build the GIN embedding/pooling stacks and the prediction head."""
         super().__init__()
 
         self.max_num_nodes = max_num_nodes
@@ -160,6 +165,7 @@ class DenseDiffPool(nn.Module):
         return x
 
     def forward(self, x, adj, mask=None):
+        """Embed and pool the dense graph, returning features and DiffPool losses."""
         cluster_assignments_list = []
         link_losses = []
         entropy_losses = []
@@ -240,6 +246,8 @@ class DenseDiffPool(nn.Module):
 
 
 class DenseCellDiffPool(nn.Module):
+    """Dense DiffPool model running per-graph pooling stacks and fusing readouts."""
+
     def __init__(
         self,
         graph_names: list[str],
@@ -259,6 +267,7 @@ class DenseCellDiffPool(nn.Module):
         train_eps: bool = True,
         eps: float = 0.0,
     ):
+        """Build a per-graph DenseDiffPool stack and the fused prediction head."""
         super().__init__()
 
         self.graph_names = sorted(graph_names)  # Sort for consistent ordering
@@ -376,6 +385,7 @@ class DenseCellDiffPool(nn.Module):
 
 
 def load_sample_data_batch():
+    """Load a sample dense batch for exercising the model during development."""
     import os
     import os.path as osp
 
@@ -464,7 +474,7 @@ def load_sample_data_batch():
 
 
 def main_single():
-
+    """Run a DenseDiffPool smoke test on a sample batch."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
     # Load the sample data batch
@@ -587,7 +597,7 @@ def main_single():
 
 
 def main():
-
+    """Run a DenseCellDiffPool smoke test on a sample batch."""
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
     # Load the sample data batch

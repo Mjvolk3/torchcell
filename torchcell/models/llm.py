@@ -2,6 +2,7 @@
 # [[torchcell.models.llm]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/llm.py
 # Test file: torchcell/models/test_llm.py
+"""Abstract base classes for nucleotide and peptide language models."""
 
 from abc import ABC, abstractmethod
 
@@ -11,7 +12,14 @@ from transformers import AutoModelForMaskedLM, AutoTokenizer
 
 
 class NucleotideModel(ABC):
+    """Abstract interface for nucleotide-sequence language models."""
+
     def __init__(self, model_name: str):
+        """Initialize empty tokenizer/model and load the named model.
+
+        Args:
+            model_name: Identifier of the pretrained model to load.
+        """
         self.tokenizer = None
         self.model = None
         self.load_model(model_name)
@@ -30,15 +38,24 @@ class NucleotideModel(ABC):
 
     @abstractmethod
     def load_model(self, model_name: str):
+        """Load the tokenizer and model weights for the given model name."""
         pass
 
     @abstractmethod
     def embed(self, sequences: list, mean_embedding: bool = False) -> torch.Tensor:
+        """Return embeddings for the given sequences."""
         pass
 
 
 class PeptideModel(ABC):
+    """Abstract interface for peptide-sequence language models."""
+
     def __init__(self, model_name: str):
+        """Initialize empty tokenizer/model and load the named model.
+
+        Args:
+            model_name: Identifier of the pretrained model to load.
+        """
         self.tokenizer = None
         self.model = None
         self.load_model(model_name)
@@ -57,15 +74,19 @@ class PeptideModel(ABC):
 
     @abstractmethod
     def load_model(self, model_name: str):
+        """Load the tokenizer and model weights for the given model name."""
         pass
 
     @abstractmethod
     def embed(self, sequences: list, mean_embedding: bool = False) -> torch.Tensor:
+        """Return embeddings for the given sequences."""
         pass
 
 
 @define
 class pretrained_LLM:
+    """Container pairing a tokenizer with a pretrained masked-LM model."""
+
     tokenizer: AutoTokenizer
     model: AutoModelForMaskedLM
 

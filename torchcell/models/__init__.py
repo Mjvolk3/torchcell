@@ -1,3 +1,5 @@
+"""Model registry exposing sequence, embedding, graph, and benchmark models."""
+
 from .act import act_register as act_register
 from .constants import DNA_LLM_MAX_TOKEN_SIZE as DNA_LLM_MAX_TOKEN_SIZE
 from .dcell import DCell as DCell

@@ -1,3 +1,5 @@
+"""ListMLE listwise ranking loss for ordered prediction tasks."""
+
 # torchcell/losses/list_mle
 # [[torchcell.losses.list_mle]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/list_mle
@@ -8,12 +10,14 @@ import torch.nn as nn
 
 
 class ListMLELoss(nn.Module):
+    """Listwise Maximum Likelihood Estimation ranking loss."""
+
     def __init__(self):
+        """Initialize the ListMLE loss module."""
         super().__init__()
 
     def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
-        """
-        Compute the ListMLE loss given predictions and true values.
+        """Compute the ListMLE loss given predictions and true values.
 
         Parameters:
         - y_pred: A tensor of predictions from the model, shape (batch_size, list_size).
@@ -46,6 +50,7 @@ class ListMLELoss(nn.Module):
 
 
 def main():
+    """Run a small example computing ListMLE loss on toy tensors."""
     # Example usage
     y_pred = torch.tensor([0.2, 0.8, 0.1]).unsqueeze(0)
     y_true = torch.tensor([0.1, 0.7, 0.2]).unsqueeze(0)

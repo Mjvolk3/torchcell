@@ -1,3 +1,5 @@
+"""Deprecated Lightning datamodule for the DCell dataset (no longer used)."""
+
 # torchcell/datamodules/dcell.py
 # [[torchcell.datamodules.dcell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodules/dcell.py
@@ -9,6 +11,8 @@ from torch_geometric.loader import DataLoader
 
 
 class DCellDataModule(L.LightningDataModule):
+    """Deprecated datamodule splitting a DCell dataset into train/val/test loaders."""
+
     def __init__(
         self,
         dataset,
@@ -16,6 +20,7 @@ class DCellDataModule(L.LightningDataModule):
         num_workers: int = 0,
         pin_memory: bool = False,
     ):
+        """Store the dataset, loader options, and fixed train/val/test ratios."""
         super().__init__()
         self.dataset = dataset
         self.batch_size = batch_size
@@ -29,6 +34,7 @@ class DCellDataModule(L.LightningDataModule):
         )
 
     def setup(self, stage=None):
+        """Randomly split the dataset into train, val, and test subsets."""
         # Split the dataset into train, val, and test sets
         num_train = int(self.train_ratio * len(self.dataset))
         num_val = int(self.val_ratio * len(self.dataset))
@@ -39,6 +45,7 @@ class DCellDataModule(L.LightningDataModule):
         )
 
     def train_dataloader(self):
+        """Return the shuffled training DataLoader."""
         return DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
@@ -50,6 +57,7 @@ class DCellDataModule(L.LightningDataModule):
         )
 
     def val_dataloader(self):
+        """Return the validation DataLoader."""
         return DataLoader(
             self.val_dataset,
             batch_size=self.batch_size,
@@ -60,6 +68,7 @@ class DCellDataModule(L.LightningDataModule):
         )
 
     def test_dataloader(self):
+        """Return the test DataLoader."""
         return DataLoader(
             self.test_dataset,
             batch_size=self.batch_size,

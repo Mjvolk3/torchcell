@@ -2,6 +2,7 @@
 # [[torchcell.data.deduplicate]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/data/deduplicate
 # Test file: tests/torchcell/data/test_deduplicate.py
+"""Abstract LMDB-backed deduplicator that merges duplicate experiment records."""
 
 import json
 import logging
@@ -22,19 +23,24 @@ log = logging.getLogger(__name__)
 
 
 class Deduplicator(ABC):
+    """Base class that deduplicates experiment records into an output LMDB store."""
+
     def __init__(self, root: str):
+        """Set the data root and the deduplication LMDB path; defer opening the env."""
         self.root = root
         self.lmdb_dir = os.path.join(self.root, "deduplication", "lmdb")
         self.env = None
 
     @abstractmethod
     def duplicate_check(self, data: Any) -> dict[str, list[int]]:
+        """Return a mapping of hash key to the record indices sharing that key."""
         pass
 
     @abstractmethod
     def create_deduplicate_entry(
         self, duplicate_experiments: list[dict[str, Any]]
     ) -> dict[str, Any]:
+        """Merge a group of duplicate experiments into a single representative entry."""
         pass
 
     def _init_lmdb(self, readonly=True):
@@ -56,11 +62,13 @@ class Deduplicator(ABC):
             self.env = None
 
     def close_lmdb(self):
+        """Close the LMDB environment if it is open."""
         if self.env is not None:
             self.env.close()
             self.env = None
 
     def process(self, input_path: str, output_path: str) -> None:
+        """Read records from ``input_path``, deduplicate, and write to the output LMDB."""
         # Ensure the output directory exists
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         self._init_lmdb(readonly=False)  # Initialize LMDB for writing
@@ -126,6 +134,7 @@ class Deduplicator(ABC):
         )
 
     def __getitem__(self, index: int | slice | list):
+        """Return deduplicated record(s) for an int, slice, or list of indices."""
         self._init_lmdb(readonly=True)  # Initialize LMDB for reading
         if isinstance(index, int):
             return self._get_record_by_index(index)
@@ -185,6 +194,7 @@ class Deduplicator(ABC):
             return results
 
     def __len__(self):
+        """Return the number of deduplicated records, or 0 if the LMDB is absent."""
         self._init_lmdb(readonly=True)
         if self.env is None:
             return 0  # Return 0 if the LMDB doesn't exist yet
@@ -192,9 +202,11 @@ class Deduplicator(ABC):
             return txn.stat()["entries"]
 
     def __bool__(self):
+        """Return whether the deduplication LMDB directory exists."""
         return os.path.exists(self.lmdb_dir)
 
     def __repr__(self):
+        """Return a string identifying the deduplicator and its root."""
         return f"Deduplicator(root={self.root})"
 
 

@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/esm2.py
 # Test file: torchcell/models/test_esm2.py
 
+"""ESM-2 protein language model wrapper producing per-residue or mean embeddings."""
+
 import os
 import os.path as osp
 
@@ -13,6 +15,8 @@ from torchcell.models.llm import PeptideModel
 
 
 class Esm2(PeptideModel):
+    """Facebook ESM-2 masked-LM wrapper that embeds protein sequences."""
+
     VALID_MODEL_NAMES = [
         "esm2_t48_15B_UR50D",
         "esm2_t36_3B_UR50D",
@@ -23,6 +27,11 @@ class Esm2(PeptideModel):
     ]
 
     def __init__(self, model_name: str):
+        """Resolve the HuggingFace model id, pick a device, and load the model.
+
+        Args:
+            model_name: ESM-2 checkpoint name, prefixed with ``facebook/``.
+        """
         self.tokenizer = None
         self.model_name = osp.join("facebook", model_name)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -45,9 +54,11 @@ class Esm2(PeptideModel):
 
     @property
     def max_sequence_size(self):
+        """Return the maximum supported residue sequence length."""
         return 1022
 
     def load_model(self, model_name: str):
+        """Download if needed, then load the tokenizer and model onto the device."""
         self._check_and_download_model(model_name)
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.model = AutoModelForMaskedLM.from_pretrained(self.model_name)
@@ -56,6 +67,16 @@ class Esm2(PeptideModel):
     def embed(
         self, sequences: str | list[str], mean_embedding: bool = False
     ) -> torch.Tensor:
+        """Return last-hidden-state embeddings for one or more sequences.
+
+        Args:
+            sequences: A single sequence or list of sequences to embed.
+            mean_embedding: If True, return attention-masked mean-pooled embeddings
+                instead of per-residue hidden states.
+
+        Returns:
+            Tensor of embeddings on the model device.
+        """
         if isinstance(sequences, str):
             sequences = [sequences]  # Convert single string to a list
 

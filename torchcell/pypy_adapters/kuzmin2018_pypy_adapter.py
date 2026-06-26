@@ -2,6 +2,7 @@
 # [[torchcellpy_adapters.kuzmin2018_pypy_adapter]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/pypy_adapters/kuzmin2018_pypy_adapter.py
 # Test file: tests/torchcell/pypy_adapters/test_kuzmin2018_pypy_adapter.py
+"""PyPy BioCypher adapters that stream Kuzmin 2018 datasets as graph nodes and edges."""
 
 import hashlib
 import json
@@ -19,10 +20,14 @@ logger.debug(f"Loading module {__name__}.")
 
 
 class SmfKuzmin2018Adapter:
+    """BioCypher adapter for the Kuzmin 2018 single-mutant fitness dataset."""
+
     def __init__(self, dataset: LmdbDatasetReader):
+        """Store the LMDB dataset reader the adapter streams records from."""
         self.dataset = dataset
 
     def get_nodes(self) -> None:
+        """Yield all BioCypher nodes for the dataset (references, genomes, etc.)."""
         logger.info("Getting nodes.")
         logger.info("Get experiment reference nodes.")
         yield from self._get_experiment_reference_nodes()
@@ -391,6 +396,7 @@ class SmfKuzmin2018Adapter:
         )
 
     def get_edges(self) -> None:
+        """Yield all BioCypher edges linking experiments, references, and entities."""
         logger.info("Generating edges.")
         logger.info("Get dataset experiment reference edges.")
         yield from self._get_dataset_experiment_ref_edges()
@@ -653,10 +659,14 @@ class SmfKuzmin2018Adapter:
 
 
 class DmfKuzmin2018Adapter:
+    """BioCypher adapter for the Kuzmin 2018 double-mutant fitness dataset."""
+
     def __init__(self, dataset: LmdbDatasetReader):
+        """Store the LMDB dataset reader the adapter streams records from."""
         self.dataset = dataset
 
     def get_nodes(self) -> None:
+        """Yield all BioCypher nodes for the dataset (references, genomes, etc.)."""
         logger.info("Getting nodes.")
         logger.info("Get experiment reference nodes.")
         yield from self._get_experiment_reference_nodes()
@@ -1017,6 +1027,7 @@ class DmfKuzmin2018Adapter:
         )
 
     def get_edges(self) -> None:
+        """Yield all BioCypher edges linking experiments, references, and entities."""
         logger.info("Generating edges.")
         logger.info("Get dataset experiment reference edges.")
         yield from self._get_dataset_experiment_ref_edges()
@@ -1291,10 +1302,14 @@ class DmfKuzmin2018Adapter:
 
 
 class TmfKuzmin2018Adapter:
+    """BioCypher adapter for the Kuzmin 2018 triple-mutant fitness dataset."""
+
     def __init__(self, dataset: LmdbDatasetReader):
+        """Store the LMDB dataset reader the adapter streams records from."""
         self.dataset = dataset
 
     def get_nodes(self) -> None:
+        """Yield all BioCypher nodes for the dataset (references, genomes, etc.)."""
         logger.info("Getting nodes.")
         logger.info("Get experiment reference nodes.")
         yield from self._get_experiment_reference_nodes()
@@ -1655,6 +1670,7 @@ class TmfKuzmin2018Adapter:
         )
 
     def get_edges(self) -> None:
+        """Yield all BioCypher edges linking experiments, references, and entities."""
         logger.info("Generating edges.")
         logger.info("Get dataset experiment reference edges.")
         yield from self._get_dataset_experiment_ref_edges()

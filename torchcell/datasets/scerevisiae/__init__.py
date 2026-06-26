@@ -2,6 +2,7 @@
 # [[torchcell.datasets.scerevisiae.__init__]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/__init__.py
 # Test file: tests/torchcell/datasets/scerevisiae/test___init__.py
+"""S. cerevisiae fitness and morphology datasets (Costanzo, Kuzmin, Ohya, Sameith)."""
 
 from .costanzo2016 import DmfCostanzo2016Dataset as DmfCostanzo2016Dataset
 from .costanzo2016 import SmfCostanzo2016Dataset as SmfCostanzo2016Dataset

@@ -1,3 +1,5 @@
+"""Heterogeneous Node-Set Attention blocks and encoder over HeteroData graphs."""
+
 from typing import Literal
 
 import torch
@@ -11,11 +13,12 @@ from torchcell.nn.self_attention_block import SelfAttentionBlock
 
 
 class _HeteroNSA_Block(nn.Module):
-    """
-    Internal helper block for HeteroNSA.
-    If layer_type=='M', applies masked attention (MAB) using per–edge-type NodeSelfAttention
-    (with an optional aggregator if aggregation=='attention').
-    If layer_type=='S', applies self-attention (SAB) using per–node-type SelfAttentionBlock.
+    """Internal HeteroNSA block applying one masked or self-attention layer.
+
+    If layer_type=='M', applies masked attention (MAB) using per-edge-type
+    NodeSelfAttention (with an optional aggregator if aggregation=='attention').
+    If layer_type=='S', applies self-attention (SAB) using per-node-type
+    SelfAttentionBlock.
     """
 
     def __init__(
@@ -239,10 +242,10 @@ class _HeteroNSA_Block(nn.Module):
 
 
 class HeteroNSA(nn.Module):
-    """
-    Heterogeneous Node-Set Attention (HeteroNSA) module.
-    Instead of reusing a single set of modules for every block, this version builds a
-    stack of independent blocks—one per element in the provided pattern.
+    """Heterogeneous Node-Set Attention module stacking per-pattern blocks.
+
+    Instead of reusing a single set of modules for every block, this version
+    builds a stack of independent blocks, one per element in the provided pattern.
     """
 
     def __init__(
@@ -256,6 +259,7 @@ class HeteroNSA(nn.Module):
         activation: nn.Module = nn.GELU(),
         aggregation: Literal["sum", "mean", "attention"] = "sum",
     ):
+        """Validate the pattern/aggregation and build the per-pattern block stack."""
         super().__init__()
         if not pattern:
             raise ValueError("Pattern list cannot be empty")
@@ -298,6 +302,7 @@ class HeteroNSA(nn.Module):
         data: HeteroData,
         batch_idx: dict[str, Tensor] | None = None,
     ) -> dict[str, Tensor]:
+        """Apply each block in sequence to the cloned node embeddings."""
         x_dict = {k: v.clone() for k, v in node_embeddings.items()}
         for block in self.blocks:
             x_dict = block(x_dict, data, batch_idx)
@@ -305,10 +310,10 @@ class HeteroNSA(nn.Module):
 
 
 class HeteroNSAEncoder(nn.Module):
-    """
-    Full encoder using HeteroNSA with input projections and multiple layers.
-    The constructor accepts a 'pattern' (a list of 'M'/'S' strings) and a 'num_layers'
-    count; a separate HeteroNSA is built for each layer.
+    """Full HeteroNSA encoder with input projections and stacked layers.
+
+    The constructor accepts a 'pattern' (a list of 'M'/'S' strings) and a
+    'num_layers' count; a separate HeteroNSA is built for each layer.
     """
 
     def __init__(
@@ -324,6 +329,7 @@ class HeteroNSAEncoder(nn.Module):
         activation: nn.Module = nn.GELU(),
         aggregation: Literal["sum", "mean", "attention"] = "sum",
     ) -> None:
+        """Build input projections, per-layer HeteroNSA blocks, and output heads."""
         super().__init__()
         if aggregation not in ["sum", "mean", "attention"]:
             raise ValueError(
@@ -366,6 +372,7 @@ class HeteroNSAEncoder(nn.Module):
         self.final_projection = nn.Linear(hidden_dim * len(node_types), hidden_dim)
 
     def forward(self, data: HeteroData) -> tuple[dict[str, Tensor], Tensor]:
+        """Project, encode, and pool node embeddings into per-type and graph outputs."""
         x_dict = {}
         batch_idx = {}
         for nt in self.node_types:

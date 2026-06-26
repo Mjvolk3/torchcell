@@ -1,3 +1,5 @@
+"""Build a metabolism DiGraph from the yeast-GEM model spreadsheet."""
+
 # torchcell/multidigraph/metabolism.py
 # [[torchcell.multidigraph.metabolism]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/multidigraph/metabolism.py

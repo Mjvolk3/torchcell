@@ -92,6 +92,18 @@ skip-magic-trailing-comma = true
 # module `torchcell.cell`, so a recursive *.py glob feeds mypy the name twice and
 # aborts discovery. Passing the package dirs lets mypy resolve the tree.
 files = ["torchcell", "tests"]
+# Frozen dead modules (verified zero live importers): scratch one-offs, the dcell
+# DEPRECATED quad, and *_scratch / deprecated leftovers. Excluded from the strict
+# gate rather than hand-annotated -- WS2 scopes to LIVE source first; type-cleaning
+# dead code is wasted effort. Verbose (?x) regex, one alternative per line.
+exclude = '''(?x)(
+    torchcell/scratch/
+  | _DEPRECATED\.py$
+  | costanzo2016_deprecated\.py$
+  | _scratch\.py$
+  | torchcell/delete_subset\.py$
+  | torchcell/models/hetero_cell_nsa_retry\.py$
+)'''
 python_version = "3.13"
 # Full strict bundle on our own code. We do NOT set a global
 # ignore_missing_imports; untyped third-party libs are handled per-module below

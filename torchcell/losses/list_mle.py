@@ -12,7 +12,7 @@ import torch.nn as nn
 class ListMLELoss(nn.Module):
     """Listwise Maximum Likelihood Estimation ranking loss."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the ListMLE loss module."""
         super().__init__()
 
@@ -49,7 +49,7 @@ class ListMLELoss(nn.Module):
         return loss
 
 
-def main():
+def main() -> None:
     """Run a small example computing ListMLE loss on toy tensors."""
     # Example usage
     y_pred = torch.tensor([0.2, 0.8, 0.1]).unsqueeze(0)

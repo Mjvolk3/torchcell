@@ -38,15 +38,15 @@ class PointDistGraphReg(nn.Module):
     def __init__(
         self,
         # Point estimator configuration
-        point_estimator: dict | None = None,
+        point_estimator: dict[str, Any] | None = None,
         # Distribution loss configuration
-        distribution_loss: dict | None = None,
+        distribution_loss: dict[str, Any] | None = None,
         # Graph regularization configuration
-        graph_regularization: dict | None = None,
+        graph_regularization: dict[str, Any] | None = None,
         # Buffer configuration
-        buffer: dict | None = None,
+        buffer: dict[str, Any] | None = None,
         # DDP configuration
-        ddp: dict | None = None,
+        ddp: dict[str, Any] | None = None,
         # Other
         weights: torch.Tensor | None = None,
         # Backward compatibility - deprecated, use nested dicts

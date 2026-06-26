@@ -184,7 +184,9 @@ class BufferedWeightedWassersteinLoss(nn.Module):
         self.register_buffer("buffer_full", torch.zeros(1, dtype=torch.bool))
         self.register_buffer("total_samples", torch.zeros(1, dtype=torch.long))
 
-    def update_buffer(self, predictions: torch.Tensor, targets: torch.Tensor):
+    def update_buffer(
+        self, predictions: torch.Tensor, targets: torch.Tensor
+    ) -> None:
         """Update circular buffer with new samples."""
         batch_size = predictions.size(0)
         ptr = int(self.buffer_ptr)
@@ -318,7 +320,9 @@ class BufferedWeightedSupCRCell(nn.Module):
         self.register_buffer("buffer_full", torch.zeros(1, dtype=torch.bool))
         self.register_buffer("total_samples", torch.zeros(1, dtype=torch.long))
 
-    def update_buffer(self, embeddings: torch.Tensor, labels: torch.Tensor):
+    def update_buffer(
+        self, embeddings: torch.Tensor, labels: torch.Tensor
+    ) -> None:
         """Update circular buffer with new samples."""
         batch_size = embeddings.size(0)
         ptr = int(self.buffer_ptr)

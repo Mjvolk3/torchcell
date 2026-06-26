@@ -4,6 +4,8 @@
 # Test file: tests/torchcell/losses/test_multi_dim_nan_tolerant.py
 """NaN-tolerant multi-dimensional loss functions for cell-state regression."""
 
+from typing import Any
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -151,11 +153,13 @@ class WeightedSupCRCell(nn.Module):
 class NaNTolerantL1Loss(nn.Module):
     """Per-dimension L1 loss that ignores NaN targets."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the NaN-tolerant L1 loss."""
         super().__init__()
 
-    def forward(self, y_pred, y_true):
+    def forward(
+        self, y_pred: torch.Tensor, y_true: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute L1 loss while properly handling NaN values.
 
         Args:
@@ -195,7 +199,7 @@ class NaNTolerantL1Loss(nn.Module):
 class NaNTolerantHuberLoss(nn.Module):
     """Per-dimension Huber loss that ignores NaN targets."""
 
-    def __init__(self, delta=1.0):
+    def __init__(self, delta: float = 1.0) -> None:
         """Initialize Huber loss with NaN handling.
 
         Args:
@@ -205,7 +209,9 @@ class NaNTolerantHuberLoss(nn.Module):
         super().__init__()
         self.delta = delta
 
-    def forward(self, y_pred, y_true):
+    def forward(
+        self, y_pred: torch.Tensor, y_true: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute Huber loss while properly handling NaN values.
 
         Args:
@@ -263,11 +269,13 @@ class NaNTolerantHuberLoss(nn.Module):
 class NaNTolerantLogCoshLoss(nn.Module):
     """Per-dimension log-cosh loss that ignores NaN targets."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the NaN-tolerant log-cosh loss."""
         super().__init__()
 
-    def forward(self, y_pred, y_true):
+    def forward(
+        self, y_pred: torch.Tensor, y_true: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute log(cosh) loss while properly handling NaN values.
 
         The log(cosh) loss is defined as:
@@ -373,11 +381,13 @@ class WeightedMSELoss(nn.Module):
 class NaNTolerantMSELoss(nn.Module):
     """Per-dimension MSE loss that ignores NaN targets."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the NaN-tolerant MSE loss."""
         super().__init__()
 
-    def forward(self, y_pred, y_true):
+    def forward(
+        self, y_pred: torch.Tensor, y_true: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute MSE loss while properly handling NaN values."""
         device = y_pred.device
 
@@ -629,7 +639,9 @@ class NaNTolerantQuantileLoss(nn.Module):
 #         return weighted_loss, dim_losses
 
 
-def isotonic_l2_pav(y, weights=None):
+def isotonic_l2_pav(
+    y: torch.Tensor, weights: torch.Tensor | None = None
+) -> torch.Tensor:
     """Solve isotonic regression using the PAV (Pool Adjacent Violators) algorithm.
 
     Finds argmin_{v_1 >= v_2 >= ... >= v_n} 0.5 * ||v - y||^2_2
@@ -692,7 +704,9 @@ class FastSoftSort(torch.autograd.Function):
     """
 
     @staticmethod
-    def forward(ctx, values, regularization_strength=1.0):
+    def forward(
+        ctx: Any, values: torch.Tensor, regularization_strength: float = 1.0
+    ) -> torch.Tensor:
         """Soft sort using isotonic regression.
 
         Args:
@@ -726,7 +740,9 @@ class FastSoftSort(torch.autograd.Function):
         return soft_sorted
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(
+        ctx: Any, grad_output: torch.Tensor
+    ) -> tuple[torch.Tensor, None]:
         """Compute gradients using the Jacobian of isotonic regression."""
         values, permutation, v, w, sorted_values = ctx.saved_tensors
         n = len(values)
@@ -762,7 +778,9 @@ class FastSoftSort(torch.autograd.Function):
         return grad_values, None
 
 
-def fast_soft_sort(values, regularization_strength=1.0):
+def fast_soft_sort(
+    values: torch.Tensor, regularization_strength: float = 1.0
+) -> torch.Tensor:
     """Fast differentiable sorting that follows the original paper's implementation.
 
     Args:
@@ -991,8 +1009,12 @@ class CombinedRegressionLoss(nn.Module):
     """Dispatch to a NaN-tolerant regression loss and apply per-dimension weights."""
 
     def __init__(
-        self, loss_type="mse", weights=None, quantile_spacing=None, huber_delta=1.0
-    ):
+        self,
+        loss_type: str = "mse",
+        weights: torch.Tensor | None = None,
+        quantile_spacing: float | None = None,
+        huber_delta: float = 1.0,
+    ) -> None:
         """Select the regression loss variant and register per-dimension weights."""
         super().__init__()
         self.loss_type = loss_type
@@ -1018,7 +1040,9 @@ class CombinedRegressionLoss(nn.Module):
             weights = torch.ones(2)
         self.register_buffer("weights", weights / weights.sum())
 
-    def forward(self, y_pred, y_true):
+    def forward(
+        self, y_pred: torch.Tensor, y_true: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute weighted loss while handling NaN values."""
         device = y_pred.device
         y_true = y_true.to(device)
@@ -1201,12 +1225,14 @@ class CombinedCELoss(nn.Module):
 class MonotonicParameter(nn.Parameter):
     """Parameter that ensures values are monotonically increasing via cumulative softplus."""
 
-    def __new__(cls, data=None, requires_grad=True):
+    def __new__(
+        cls, data: torch.Tensor | None = None, requires_grad: bool = True
+    ) -> "MonotonicParameter":
         """Create the parameter with the given data and gradient flag."""
         return super().__new__(cls, data, requires_grad)
 
     @property
-    def data(self):
+    def data(self) -> torch.Tensor:
         """Return monotonic values via cumulative softplus of the raw data."""
         # Apply softplus to ensure positive deltas, then cumsum for monotonicity
         return torch.cumsum(F.softplus(super().data), dim=-1)
@@ -1226,7 +1252,7 @@ class MultiDimNaNTolerantOrdinalCELoss(nn.Module):
         self.raw_thresholds = nn.Parameter(raw_deltas)
 
     @property
-    def thresholds(self):
+    def thresholds(self) -> torch.Tensor:
         """Return monotonic ordinal thresholds via cumulative softplus."""
         # Transform raw parameters into monotonic thresholds
         return torch.cumsum(F.softplus(self.raw_thresholds), dim=-1)
@@ -1415,9 +1441,11 @@ class CategoricalEntropyRegLoss(nn.Module):
         # Average across dimensions
         return torch.stack(target_dists).mean(dim=0)
 
-    def compute_centers(self, features: torch.Tensor, targets: torch.Tensor) -> dict:
+    def compute_centers(
+        self, features: torch.Tensor, targets: torch.Tensor
+    ) -> dict[int, dict[int, torch.Tensor]]:
         """Compute weighted feature centers for each class in each dimension."""
-        centers = {}
+        centers: dict[int, dict[int, torch.Tensor]] = {}
         num_dims = targets.shape[1] // self.num_classes
 
         for dim in range(num_dims):

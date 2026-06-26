@@ -6,6 +6,8 @@
 
 """Isomorphic cell losses combining MSE, distribution, and SupCR terms."""
 
+from typing import Any
+
 import torch
 import torch.nn as nn
 
@@ -42,7 +44,7 @@ class ICLoss(nn.Module):
 
     def forward(
         self, predictions: torch.Tensor, targets: torch.Tensor, z_P: torch.Tensor
-    ) -> tuple[torch.Tensor, dict]:
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
         """Return the total weighted loss and a dict of component/normalized losses."""
         mse_loss, mse_dim_losses = self.mse_loss_fn(predictions, targets)
         dist_loss, dist_dim_losses = self.dist_loss_fn(predictions, targets)
@@ -156,7 +158,7 @@ class ICLossStd(nn.Module):
         targets: torch.Tensor,
         z_P: torch.Tensor,
         z_I: torch.Tensor,
-    ) -> tuple[torch.Tensor, dict]:
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
         """Forward pass to compute the heteroscedastic IC loss.
 
         Args:

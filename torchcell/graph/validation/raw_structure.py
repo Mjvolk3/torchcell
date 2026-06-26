@@ -10,9 +10,9 @@ import networkx as nx
 from adjustText import adjust_text
 
 
-def analyze_structure(data, parent_key="") -> dict[str, Any]:
+def analyze_structure(data: Any, parent_key: str = "") -> dict[str, set[str]]:
     """Recursively map each dotted key path to the set of value type names found."""
-    type_structure = defaultdict(set)
+    type_structure: defaultdict[str, set[str]] = defaultdict(set)
 
     if isinstance(data, dict):
         for key, value in data.items():
@@ -30,7 +30,7 @@ def analyze_structure(data, parent_key="") -> dict[str, Any]:
     return type_structure
 
 
-def build_graph(data, graph=None):
+def build_graph(data: dict[str, Any], graph: nx.DiGraph | None = None) -> nx.DiGraph:
     """Build a directed graph from dotted key paths and their leaf type values."""
     if graph is None:
         graph = nx.DiGraph()
@@ -70,7 +70,7 @@ def build_graph(data, graph=None):
     return graph
 
 
-def calculate_depths(graph):
+def calculate_depths(graph: nx.DiGraph) -> dict[Any, int]:
     """Return each node's BFS depth from the minimal-in-degree root node."""
     if not graph.nodes:  # if the graph is empty
         return {}
@@ -90,7 +90,9 @@ def calculate_depths(graph):
     return depths
 
 
-def draw_and_save_graph(graph, output_path, layout="spring"):
+def draw_and_save_graph(
+    graph: nx.DiGraph, output_path: str, layout: str = "spring"
+) -> None:
     """Render the type graph with the chosen layout and save it as PNG and PDF."""
     plt.figure(figsize=(40, 30))  # Adjust as necessary
 
@@ -130,12 +132,12 @@ def draw_and_save_graph(graph, output_path, layout="spring"):
     plt.close()
 
 
-def get_gene_name(file_path):
+def get_gene_name(file_path: str) -> str:
     """Extract the gene name from a JSON file path's stem."""
     return file_path.split("/")[-1].split(".")[0]
 
 
-def process_src_to_image(path):
+def process_src_to_image(path: str) -> str:
     """Return the path components from ``src`` onward joined back into a path."""
     split_path = path.split("/")
     index_of_src = split_path.index("src")
@@ -144,7 +146,9 @@ def process_src_to_image(path):
     return processed_path
 
 
-def analyze_json(file_path, create_images=False, layout="spring"):
+def analyze_json(
+    file_path: str, create_images: bool = False, layout: str = "spring"
+) -> None:
     """Write per-key type-structure JSON and optionally type-graph images.
 
     Args:
@@ -184,7 +188,7 @@ def analyze_json(file_path, create_images=False, layout="spring"):
             draw_and_save_graph(graph, output_path, layout)
 
 
-def main():
+def main() -> None:
     """Analyze a sample gene JSON record and render its type graph."""
     file_path = "data/sgd/genes/YPR201W.json"
     analyze_json(file_path, create_images=True, layout="tree")

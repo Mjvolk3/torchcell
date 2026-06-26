@@ -10,7 +10,7 @@ import requests
 # Parent=YBL105C_id001,YBL105C_id002;Name=YBL105C_CDS;orf_classification=Verified;protein_id=UniProtKB:P24583
 
 
-def get_uniprot_ec(uniprot_id):
+def get_uniprot_ec(uniprot_id: str) -> str | None:
     """Return the first EC number listed in the UniProt text record for a protein."""
     url = f"https://www.uniprot.org/uniprot/{uniprot_id}.txt"
     response = requests.get(url)
@@ -26,7 +26,7 @@ print("EC Number:", ec_number)
 # This information is contained in the gbff file also.
 
 
-def main():
+def main() -> None:
     """Entry point placeholder for running this module as a script."""
     pass
 

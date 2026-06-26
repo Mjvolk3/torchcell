@@ -9,14 +9,16 @@ import logging
 import os
 import os.path as osp
 import pickle
+from collections.abc import ItemsView, Iterator, KeysView, ValuesView
 from copy import deepcopy
+from typing import Any
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
 import requests
 from attrs import define, field
-from pydantic import field_validator
+from pydantic import ValidationInfo, field_validator
 from sortedcontainers import SortedDict, SortedSet
 from tqdm import tqdm
 
@@ -40,7 +42,7 @@ class GeneGraph(ModelStrictArbitrary):
 
     @field_validator("graph")
     @classmethod
-    def validate_genes_in_graph(cls, graph, info):
+    def validate_genes_in_graph(cls, graph: nx.Graph, info: ValidationInfo) -> nx.Graph:
         """Validate that all nodes in the graph are in the max_gene_set."""
         values = info.data
         if "max_gene_set" not in values:
@@ -60,11 +62,11 @@ class GeneGraph(ModelStrictArbitrary):
 
         return graph
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         """Forward attribute access to the underlying graph."""
         return getattr(self.graph, name)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Informative representation showing graph name, nodes and edges."""
         return f"GeneGraph(name='{self.name}', nodes={self.graph.number_of_nodes()}, edges={self.graph.number_of_edges()})"
 
@@ -74,35 +76,35 @@ class GeneMultiGraph(ModelStrictArbitrary):
 
     graphs: SortedDict[str, GeneGraph]
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> GeneGraph:
         """Allow dictionary-like access to graphs by name."""
         return self.graphs[key]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         """Iterate over the graph names."""
         return iter(self.graphs)
 
-    def __contains__(self, key):
+    def __contains__(self, key: object) -> bool:
         """Check if a graph name exists."""
         return key in self.graphs
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Get number of graphs."""
         return len(self.graphs)
 
-    def items(self):
+    def items(self) -> ItemsView[str, GeneGraph]:
         """Get the (name, graph) pairs."""
         return self.graphs.items()
 
-    def keys(self):
+    def keys(self) -> KeysView[str]:
         """Get graph names."""
         return self.graphs.keys()
 
-    def values(self):
+    def values(self) -> ValuesView[GeneGraph]:
         """Get graph objects."""
         return self.graphs.values()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Informative representation showing all contained graphs."""
         graph_reprs = []
         for name, graph in self.graphs.items():
@@ -114,7 +116,7 @@ class GeneMultiGraph(ModelStrictArbitrary):
         return f"GeneMultiGraph(\n{graphs_str}\n)"
 
 
-def filter_by_contained_genes(G_go: nx.DiGraph, n: int, gene_set: set) -> nx.DiGraph:
+def filter_by_contained_genes(G_go: nx.DiGraph, n: int, gene_set: set[str]) -> nx.DiGraph:
     """Return a new graph with nodes removed that contain fewer than n genes.
 
     The original graph is not modified.
@@ -130,7 +132,7 @@ def filter_by_contained_genes(G_go: nx.DiGraph, n: int, gene_set: set) -> nx.DiG
     # Create a deep copy of the original graph to ensure complete independence
     G = deepcopy(G_go)
 
-    def compute_containment(go_term) -> set[str]:
+    def compute_containment(go_term: Any) -> set[str]:
         """Function to compute containment of a given term with its subsequent terms."""
         # Reverse the graph to travel in the opposite direction
         G_reverse = G.reverse(copy=False)
@@ -422,7 +424,7 @@ class SCerevisiaeGraph:
         # self.genome = self.parse_genome(self.genome)
 
     @staticmethod
-    def parse_genome(genome) -> ParsedGenome:
+    def parse_genome(genome: Any) -> ParsedGenome:  # genome is a duck-typed genome object
         """Return a ParsedGenome from the genome's gene set and alias mapping."""
         data = {}
         data["gene_set"] = genome.gene_set
@@ -868,14 +870,14 @@ class SCerevisiaeGraph:
         if not has_alias_mapping:
             # Create a placeholder to map known systematic names
             # (this assumes TF names in dataset might already be systematic names in some cases)
-            def get_systematic_names(name):
+            def get_systematic_names(name: str) -> list[str]:
                 if name in self.genome.gene_set:
                     return [name]  # If it's already a systematic name in gene_set
                 return []  # Otherwise we can't map it
 
         else:
             # Use the full mapping
-            def get_systematic_names(name):
+            def get_systematic_names(name: str) -> list[str]:
                 return self.genome.alias_to_systematic.get(name, [])
 
         # Process each interaction
@@ -933,7 +935,12 @@ class SCerevisiaeGraph:
 
         return G_tflink
 
-    def save_graph(self, graph, graph_name, root_type="sgd"):
+    def save_graph(
+        self,
+        graph: GeneGraph | nx.Graph,
+        graph_name: str,
+        root_type: str = "sgd",
+    ) -> None:
         """Save graph to a pickle file. Handles both NetworkX graphs and GeneGraph objects.
 
         Args:
@@ -954,7 +961,9 @@ class SCerevisiaeGraph:
         with open(path, "wb") as f:
             pickle.dump(graph, f)
 
-    def load_graph(self, graph_name, root_type="sgd"):
+    def load_graph(
+        self, graph_name: str, root_type: str = "sgd"
+    ) -> GeneGraph | nx.Graph | None:
         """Load graph from a pickle file. Could be a NetworkX graph or a GeneGraph.
 
         Args:
@@ -1042,7 +1051,7 @@ class SCerevisiaeGraph:
             self._go_to_genes = go_to_genes_dict
         return self._go_to_genes
 
-    def create_go_subgraph(self, go_terms, go_dag):
+    def create_go_subgraph(self, go_terms: list[str], go_dag: Any) -> nx.DiGraph:
         """Build a DiGraph for the given GO terms with parent edges and gene data."""
         G = nx.DiGraph()  # Using a directed graph for GO hierarchy
 

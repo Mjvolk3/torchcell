@@ -12,7 +12,7 @@ import os
 import os.path as osp
 import tempfile
 from asyncio import Task
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from typing import Any
 
 import aiohttp
@@ -265,19 +265,21 @@ def create_gene(locusID: str, is_validated: bool) -> Gene:
     return Gene(locusID=locusID, is_validated=is_validated)
 
 
-def chunks(lst, n):
+def chunks(lst: list[Any], n: int) -> Iterator[list[Any]]:
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
         yield lst[i : i + n]
 
 
-async def download_gene_chunk(chunk, create_gene_fn, validate_flag):
+async def download_gene_chunk(
+    chunk: list[str], create_gene_fn: Callable[[str], Gene], validate_flag: bool
+) -> None:
     """Download a chunk of genes with a delay before starting."""
     await asyncio.sleep(1)  # Give a small break between chunks
     await download_genes(chunk, create_gene_fn, validate_flag)
 
 
-def main_get_all_genes():
+def main_get_all_genes() -> None:
     """Download SGD data for every gene in the S288C genome in chunks."""
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 

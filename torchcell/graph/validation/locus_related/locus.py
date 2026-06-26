@@ -5,6 +5,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/graph/validation/locus_related/locus.py
 # Test file: torchcell/graph/validation/locus_related/test_locus.py
 
+from typing import Any
+
 from pydantic import Field
 
 from torchcell.datamodels import ModelStrict
@@ -101,7 +103,7 @@ class GoTerm(ModelStrict):
 
     namespace: str
     qualifiers: list[str]
-    term: dict
+    term: dict[str, Any]
     evidence_codes: list[EvidenceCode]
 
 
@@ -324,7 +326,7 @@ class LocusData(ModelStrict):
 
 
 # Validation
-def validate_data(data: dict) -> LocusData:
+def validate_data(data: dict[str, Any]) -> LocusData:
     """Validate a raw locus dictionary against the LocusData schema."""
     return LocusData(**data)
 

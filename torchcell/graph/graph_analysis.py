@@ -5,6 +5,7 @@ import os
 import os.path as osp
 from collections import defaultdict
 from datetime import datetime
+from typing import Any
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -27,7 +28,7 @@ style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle"
 plt.style.use(style_file_path)
 
 
-def plot_go_graph(G):
+def plot_go_graph(G: nx.Graph) -> None:
     """Draw the GO graph with nodes colored by namespace using matplotlib."""
     # Define a color map for namespaces.
     namespace_colors = {
@@ -134,15 +135,15 @@ def plot_go_graph(G):
 # TODO add a function that will remove genes not in dmf costanzo and smf costanzo
 
 
-def plot_annotation_dates_by_month(G_go: nx.DiGraph):
+def plot_annotation_dates_by_month(G_go: nx.DiGraph) -> None:
     """Plot a histogram of GO annotation dates aggregated by month."""
 
     # Function to convert date strings to datetime objects
-    def convert_to_datetime(date_str):
+    def convert_to_datetime(date_str: str) -> datetime:
         return datetime.strptime(date_str, "%Y-%m-%d")
 
     # Collect all the annotation dates and group by month and year
-    dates = defaultdict(int)
+    dates: defaultdict[str, int] = defaultdict(int)
     for go_term in G_go.nodes():
         if "genes" in G_go.nodes[go_term]:
             for gene, details in G_go.nodes[go_term]["genes"].items():
@@ -184,7 +185,7 @@ def plot_annotation_dates_by_month(G_go: nx.DiGraph):
     plt.close()
 
 
-def plot_histogram_of_gene_counts(G_go: nx.DiGraph):
+def plot_histogram_of_gene_counts(G_go: nx.DiGraph) -> None:
     """Plot a histogram of the directly annotated gene-set size per GO term."""
     # Extracting the gene sets for each GO term
     gene_sets = [G_go.nodes[node].get("gene_set", []) for node in G_go.nodes()]
@@ -203,11 +204,11 @@ def plot_histogram_of_gene_counts(G_go: nx.DiGraph):
 
 
 def plot_histogram_of_contained_gene_counts(
-    G_go: nx.DiGraph, gene_set: set = None, show_min_max: bool = False
-):
+    G_go: nx.DiGraph, gene_set: set[str] | None = None, show_min_max: bool = False
+) -> None:
     """Plot a histogram of genes contained (with descendants) per GO term."""
 
-    def compute_containment(go_term):
+    def compute_containment(go_term: Any) -> set[str]:
         """Function to compute containment of a given term with its subsequent terms."""
         # Reverse the graph to travel in the opposite direction
         G_reverse = G_go.reverse(copy=False)
@@ -250,7 +251,7 @@ def plot_histogram_of_contained_gene_counts(
     plt.show()
 
 
-def compare_go_terms(G_raw, G):
+def compare_go_terms(G_raw: nx.Graph, G: nx.Graph) -> None:
     """Compare GO terms between a raw and processed graph and log the overlap."""
     matching_nodes = 0
     total_nodes = len(G_raw.nodes())
@@ -289,7 +290,7 @@ def compare_go_terms(G_raw, G):
     print(f"A total of {total_new_terms} new GO terms would be added to G_raw from G.")
 
 
-def go_gaf_investigation():
+def go_gaf_investigation() -> None:
     """Parse a GO GAF annotation file and inspect its records."""
     from Bio.UniProt.GOA import gafiterator
     from dotenv import load_dotenv
@@ -311,7 +312,7 @@ def go_gaf_investigation():
         G.add_node(gene_name, annotations=[])
 
     # Function to check if a record matches the given filters
-    def record_has(rec, filters):
+    def record_has(rec: dict[str, Any], filters: dict[str, Any]) -> bool:
         for field, values in filters.items():
             if field in rec and not set(rec[field]).isdisjoint(values):
                 return True
@@ -336,7 +337,7 @@ def go_gaf_investigation():
     compare_go_terms(graph.G_raw, G)
 
 
-def plotly_go_graph(G):
+def plotly_go_graph(G: nx.Graph) -> None:
     """Render an interactive Plotly view of the GO graph colored by namespace."""
     # Define color map for namespaces
     namespace_colors = {
@@ -423,7 +424,7 @@ def plotly_go_graph(G):
     fig.show()
 
 
-def plot_go_node_types(G):
+def plot_go_node_types(G: nx.Graph) -> None:
     """Plot the distribution of GO node types grouped by namespace."""
     # Define a color map for namespaces
     namespace_colors = {
@@ -468,7 +469,7 @@ def plot_go_node_types(G):
     fig.show()
 
 
-def plot_pathway_annotations(G_gene: nx.Graph):
+def plot_pathway_annotations(G_gene: nx.Graph) -> None:
     """Plot the distribution of pathway-annotation counts per gene."""
     # Create a list to store the number of pathway annotations for each gene
     pathway_counts = []
@@ -620,7 +621,7 @@ def old_main() -> None:
     plot_go_node_types(G)
 
 
-def main():
+def main() -> None:
     """Build the gene/GO graphs and run the analysis plots as a script."""
     from dotenv import load_dotenv
 

@@ -68,7 +68,7 @@ class ScmdOhya2005Adapter(CellAdapter):
         self.loader_batch_size = loader_batch_size
 
 
-def main():
+def main() -> None:
     """Build and write the Ohya 2005 BioCypher graph as a standalone script run."""
     import math
     import multiprocessing as mp

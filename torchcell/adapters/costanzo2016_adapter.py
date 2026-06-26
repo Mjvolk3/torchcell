@@ -139,7 +139,7 @@ class DmiCostanzo2016Adapter(CellAdapter):
         self.loader_batch_size = loader_batch_size
 
 
-def main():
+def main() -> None:
     """Build the Costanzo 2016 adapters and write their BioCypher output."""
     import os
     import os.path as osp

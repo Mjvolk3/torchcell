@@ -8,6 +8,7 @@ import os
 import os.path as osp
 import re
 import zipfile
+from typing import Any
 
 import cobra
 import hypernetx as hnx
@@ -33,7 +34,7 @@ class YeastGEM:
     _bipartite_graph: nx.Graph | None = field(default=None, init=False)
     model_dir: str = field(init=False)
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self) -> None:
         """Resolve the model directory and download the model if missing."""
         self.model_dir = osp.join(self.root, f"yeast-GEM-{self.version}")
         self._download()
@@ -352,8 +353,12 @@ class YeastGEM:
         return self._bipartite_graph
 
     def _add_metabolite_edges_unified(
-        self, graph, reaction, reaction_node_id, direction
-    ):
+        self,
+        graph: nx.DiGraph,
+        reaction: cobra.Reaction,
+        reaction_node_id: str,
+        direction: str,
+    ) -> None:
         """Helper function to add unified directed edges between reaction and metabolites."""
         # Add metabolite nodes if they don't exist
         for metabolite in reaction.metabolites:
@@ -431,7 +436,7 @@ class YeastGEM:
 
 def plot_reaction_map(
     yeast_gem: YeastGEM, reaction_id: str, output_path: str = "reaction_map.png"
-):
+) -> None:
     """Plot hypergraph for a specific reaction."""
     H = yeast_gem.reaction_map
 
@@ -455,7 +460,7 @@ def plot_reaction_map(
     ax = plt.gca()
 
     # Function to determine color based on direction
-    def get_color(e):
+    def get_color(e: Any) -> str:  # hypernetx edge ids are dynamically typed
         return (
             "orange"
             if H_sub.edges[e].properties["direction"] == "forward"
@@ -548,7 +553,9 @@ def plot_reaction_map(
     print(f"Reaction map visualization saved to {output_path}")
 
 
-def plot_full_network(yeast_gem: YeastGEM, output_path: str = "full_network.png"):
+def plot_full_network(
+    yeast_gem: YeastGEM, output_path: str = "full_network.png"
+) -> None:
     """Plot the entire metabolic network structure without labels."""
     H = yeast_gem.reaction_map
 
@@ -618,8 +625,8 @@ def plot_random_network(
     yeast_gem: YeastGEM,
     n_edges: int = 10,
     output_path: str = "random_network.png",
-    layout="spring",
-):
+    layout: str = "spring",
+) -> None:
     """Plot a random subgraph of the metabolic network and save it."""
     import random
 
@@ -667,9 +674,9 @@ def plot_bipartite_network(
     yeast_gem: YeastGEM,
     reaction_id: str = None,
     output_path: str = "bipartite_network.png",
-    figsize=(20, 15),
+    figsize: tuple[int, int] = (20, 15),
     show_labels: bool = False,
-):
+) -> None:
     """Plot a bipartite network visualization of genes to metabolites.
 
     If reaction_id is provided, only plot that specific reaction's network.
@@ -819,7 +826,7 @@ def plot_bipartite_network(
     print(f"Number of edges: {B.number_of_edges()}")
 
 
-def main():
+def main() -> None:
     """Build and visualize the yeast-GEM compound network."""
     from dotenv import load_dotenv
 
@@ -867,7 +874,7 @@ def main():
         )
 
 
-def main_with_gene_set():
+def main_with_gene_set() -> None:
     """Build the compound network restricted to an induced gene set."""
     from dotenv import load_dotenv
 
@@ -891,7 +898,7 @@ def main_with_gene_set():
     print(f"H num edges with gene_set edge drop: {len(H.edges)}")
 
 
-def main_bipartite():
+def main_bipartite() -> None:
     """Build and plot the full gene-to-metabolite bipartite network."""
     from dotenv import load_dotenv
 
@@ -906,7 +913,9 @@ def main_bipartite():
     )
 
 
-def sanity_check_metabolic_networks(yeast_gem: YeastGEM, num_reactions: int = 3):
+def sanity_check_metabolic_networks(
+    yeast_gem: YeastGEM, num_reactions: int = 3
+) -> None:
     """Print details for a few random reactions as a sanity check.
 
     Inspects the reaction_map and bipartite_graph representations for their
@@ -1081,7 +1090,7 @@ def sanity_check_metabolic_networks(yeast_gem: YeastGEM, num_reactions: int = 3)
         print("✓ No isolated nodes found")
 
 
-def analyze_reactions_without_genes(yeast_gem: YeastGEM):
+def analyze_reactions_without_genes(yeast_gem: YeastGEM) -> dict[str, Any]:
     """Analyze reactions without gene associations in the YeastGEM model.
 
     Args:
@@ -1116,8 +1125,8 @@ def analyze_reactions_without_genes(yeast_gem: YeastGEM):
     methods_consistent = no_gene_rule == no_genes_obj == empty_gene_comb
 
     # Get metabolite stats for reactions without genes
-    rxn_stats = {}
-    compartments = {}
+    rxn_stats: dict[int, int] = {}
+    compartments: dict[str, int] = {}
 
     for rxn_id in no_gene_rule:
         rxn = yeast_gem.model.reactions.get_by_id(rxn_id)
@@ -1186,7 +1195,7 @@ def analyze_reactions_without_genes(yeast_gem: YeastGEM):
         print(f"  - {comp}: {count} occurrences")
 
     # Print some examples of each type
-    def print_examples(rxn_list, category, n=3):
+    def print_examples(rxn_list: list[str], category: str, n: int = 3) -> None:
         print(
             f"\nExample {category} (showing {min(n, len(rxn_list))} of {len(rxn_list)}):"
         )
@@ -1209,7 +1218,7 @@ def analyze_reactions_without_genes(yeast_gem: YeastGEM):
     }
 
 
-def test_bipartite_attributes(yeast_gem: YeastGEM, num_reactions: int = 3):
+def test_bipartite_attributes(yeast_gem: YeastGEM, num_reactions: int = 3) -> None:
     """Test and display the new attributes added to the bipartite graph.
 
     Args:
@@ -1273,7 +1282,7 @@ def test_bipartite_attributes(yeast_gem: YeastGEM, num_reactions: int = 3):
                     print(f"\n    ... and {len(connected_mets) - 3} more metabolites")
 
 
-def main_test_bipartite_attributes():
+def main_test_bipartite_attributes() -> None:
     """Inspect bipartite graph node/edge attributes for sanity checking."""
     import random
 

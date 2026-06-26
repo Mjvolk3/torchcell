@@ -171,7 +171,7 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
     return fig
 
 
-def generate_simulated_data(n_samples=10000):
+def generate_simulated_data(n_samples: int = 10000) -> tuple[torch.Tensor, torch.Tensor]:
     """Generate synthetic true values and noisy predictions for plot testing."""
     # Generate true genetic interaction scores
     true_values = np.random.normal(loc=0, scale=0.2, size=n_samples)
@@ -200,7 +200,9 @@ def generate_simulated_data(n_samples=10000):
     return torch.tensor(true_values), torch.tensor(predictions)
 
 
-def generate_simulated_data_with_nan(n_samples=10000):
+def generate_simulated_data_with_nan(
+    n_samples: int = 10000,
+) -> tuple[torch.Tensor, torch.Tensor]:
     """Generate synthetic data with injected NaN values for robustness testing."""
     # Generate true genetic interaction scores
     true_values = np.random.normal(loc=0, scale=0.2, size=n_samples)
@@ -253,7 +255,7 @@ def generate_simulated_data_with_nan(n_samples=10000):
 #     plt.show()
 
 
-def main():
+def main() -> None:
     """Generate simulated data and render the box plot as a smoke test."""
     true_values, predictions = generate_simulated_data()
     _fig = box_plot(true_values, predictions)

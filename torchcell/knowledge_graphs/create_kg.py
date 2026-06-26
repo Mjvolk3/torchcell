@@ -16,7 +16,7 @@ import certifi
 import hydra
 import wandb
 from dotenv import load_dotenv
-from omegaconf import OmegaConf
+from omegaconf import DictConfig, OmegaConf
 
 from biocypher import BioCypher
 from torchcell.datasets import dataset_registry
@@ -46,7 +46,7 @@ def get_num_workers() -> int:
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="gene_essentiality_sgd")
-def main(cfg) -> str:
+def main(cfg: DictConfig) -> str:
     """Run the Hydra-configured knowledge-graph build and log it to wandb."""
     # wandb configuration
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)

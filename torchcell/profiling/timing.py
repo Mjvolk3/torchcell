@@ -9,13 +9,15 @@ import functools
 import os
 import time
 from collections import defaultdict
+from collections.abc import Callable
+from typing import Any
 
 # Global state
 _TIMINGS: dict[str, list[float]] = defaultdict(list)
 _PROFILE_ENABLED = os.getenv("TORCHCELL_DEBUG_TIMING", "0") == "1"
 
 
-def time_method(func):
+def time_method(func: Callable[..., Any]) -> Callable[..., Any]:
     """Time a function/method execution when profiling is enabled.
 
     Works with functions, instance methods, class methods, and static methods.
@@ -33,7 +35,7 @@ def time_method(func):
     """
 
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         if not _PROFILE_ENABLED:
             return func(*args, **kwargs)
 
@@ -53,7 +55,7 @@ def time_method(func):
 
 def print_timing_summary(
     title: str = "Method Timing Profile", filter_class: str = None
-):
+) -> None:
     """Print formatted timing summary with standard deviations.
 
     Args:
@@ -99,7 +101,7 @@ def print_timing_summary(
     print("=" * 80 + "\n")
 
 
-def reset_timings():
+def reset_timings() -> None:
     """Clear all timing data."""
     _TIMINGS.clear()
 
@@ -134,7 +136,7 @@ def get_timing_summary() -> dict[str, dict[str, float]]:
 
 def print_comparison_table(
     baseline_class: str, optimized_class: str, title: str = "Graph Processor Comparison"
-):
+) -> None:
     """Print side-by-side comparison of two processor classes.
 
     Args:

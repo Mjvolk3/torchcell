@@ -10,11 +10,12 @@ import json
 import os
 import shutil
 from datetime import datetime
+from typing import Any
 
 import yaml
 
 
-def merge_dicts(dict1, dict2):
+def merge_dicts(dict1: dict[Any, Any], dict2: dict[Any, Any]) -> dict[Any, Any]:
     """Merge two dictionaries, preferring values from dict2 for common keys."""
     result = dict1.copy()
     for key, value in dict2.items():
@@ -32,9 +33,9 @@ def merge_dicts(dict1, dict2):
     return result
 
 
-def check_yaml_compatibility(yaml_files):
+def check_yaml_compatibility(yaml_files: list[str]) -> dict[Any, Any]:
     """Merge all schema YAML files, raising on conflicting key values."""
-    combined_data = {}
+    combined_data: dict[Any, Any] = {}
     for file in yaml_files:
         with open(file) as f:
             data = yaml.safe_load(f)
@@ -45,7 +46,7 @@ def check_yaml_compatibility(yaml_files):
     return combined_data
 
 
-def remove_duplicates(data):
+def remove_duplicates(data: Any) -> Any:  # recursive over arbitrary YAML structure
     """Remove duplicate entries from the merged YAML data."""
     if isinstance(data, dict):
         return {k: remove_duplicates(v) for k, v in data.items()}
@@ -55,7 +56,7 @@ def remove_duplicates(data):
         return data
 
 
-def create_schema_info_csv(output_dir, schema_yaml):
+def create_schema_info_csv(output_dir: str, schema_yaml: dict[str, Any]) -> None:
     """Create a new Schema_info CSV file based on the combined schema YAML."""
     csv_header = ":ID\tschema_info\tid\tpreferred_id\t:LABEL"
 
@@ -81,9 +82,9 @@ def create_schema_info_csv(output_dir, schema_yaml):
     print(f"Created Schema_info CSV files in {output_dir}")
 
 
-def combine_csv_files(input_dirs, output_dir):
+def combine_csv_files(input_dirs: list[str], output_dir: str) -> None:
     """Copy non-schema CSV parts from input dirs into output with renumbered parts."""
-    file_counters = {}
+    file_counters: dict[str, int] = {}
     for input_dir in input_dirs:
         for file in os.listdir(input_dir):
             if file.endswith(".csv") and not file.startswith("Schema_info"):
@@ -104,7 +105,7 @@ def combine_csv_files(input_dirs, output_dir):
                     file_counters[base_name] = counter + 1
 
 
-def load_neo4j_config(config_file):
+def load_neo4j_config(config_file: str) -> dict[str, Any]:
     """Load and validate the Neo4j config block, requiring all expected keys."""
     with open(config_file) as f:
         config = yaml.safe_load(f)
@@ -133,14 +134,16 @@ def load_neo4j_config(config_file):
     return neo4j_config
 
 
-def load_schema_info(schema_file):
+def load_schema_info(schema_file: str) -> Any:  # yaml.safe_load returns Any
     """Load and return the schema YAML mapping."""
     with open(schema_file) as f:
         schema = yaml.safe_load(f)
     return schema
 
 
-def generate_neo4j_import_script(output_dir, neo4j_config, schema):
+def generate_neo4j_import_script(
+    output_dir: str, neo4j_config: dict[str, Any], schema: dict[str, Any]
+) -> None:
     """Write a neo4j-admin import shell script for Neo4j 4.x and 5+ from the schema."""
     output_dir_name = os.path.basename(output_dir)
     script_content = [
@@ -176,7 +179,7 @@ def generate_neo4j_import_script(output_dir, neo4j_config, schema):
         relationships.append("Mentions")
 
     # Function to find the correct case-sensitive file name
-    def find_file(base_name):
+    def find_file(base_name: str) -> str | None:
         return next(
             (f for f in file_names if f.lower() == f"{base_name.lower()}-header.csv"),
             None,
@@ -248,7 +251,7 @@ def generate_neo4j_import_script(output_dir, neo4j_config, schema):
         f.write("\n".join(script_content))
 
 
-def main(input_dirs, output_base_dir, config_yaml):
+def main(input_dirs: list[str], output_base_dir: str, config_yaml: str) -> None:
     """Combine BioCypher outputs, write schema CSVs, and generate the import script."""
     # Create output directory with timestamp
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")

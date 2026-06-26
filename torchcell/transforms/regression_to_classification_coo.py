@@ -18,7 +18,9 @@ from torch_geometric.transforms import BaseTransform, Compose
 class COOLabelNormalizationTransform(BaseTransform):
     """Transform for normalizing labels in COO format with different strategies."""
 
-    def __init__(self, dataset: Any, label_configs: dict[str, dict], eps: float = 1e-8):
+    def __init__(
+        self, dataset: Any, label_configs: dict[str, dict[str, Any]], eps: float = 1e-8
+    ):
         """Compute per-label statistics from the dataset for normalization.
 
         Args:
@@ -35,12 +37,12 @@ class COOLabelNormalizationTransform(BaseTransform):
         super().__init__()
         self.label_configs = label_configs
         self.eps = eps
-        self.stats = {}
+        self.stats: dict[str, dict[str, Any]] = {}
 
         # Calculate statistics for each label type
         self._calculate_stats_from_dataset(dataset)
 
-    def _calculate_stats_from_dataset(self, dataset):
+    def _calculate_stats_from_dataset(self, dataset: Any) -> None:
         """Extract phenotype statistics from the dataset in COO format."""
         # Store all values for each phenotype type across the dataset
         phenotype_values_by_type = {}
@@ -323,7 +325,7 @@ class EqualWidthStrategy(BaseBinningStrategy):
 
     def compute_bins(
         self, values: np.ndarray, num_bins: int
-    ) -> tuple[np.ndarray, dict]:
+    ) -> tuple[np.ndarray, dict[str, Any]]:
         """Compute equal-width bins and their metadata."""
         non_nan = values[~np.isnan(values)]
         bin_edges = np.linspace(non_nan.min(), non_nan.max(), num_bins + 1)
@@ -344,7 +346,7 @@ class EqualFrequencyStrategy(BaseBinningStrategy):
 
     def compute_bins(
         self, values: np.ndarray, num_bins: int
-    ) -> tuple[np.ndarray, dict]:
+    ) -> tuple[np.ndarray, dict[str, Any]]:
         """Compute equal-frequency (quantile) bins and their metadata."""
         non_nan = values[~np.isnan(values)]
         bin_edges = np.percentile(non_nan, np.linspace(0, 100, num_bins + 1))
@@ -365,7 +367,7 @@ class AutoBinStrategy(BaseBinningStrategy):
 
     def compute_bins(
         self, values: np.ndarray, num_bins: int | None = None
-    ) -> tuple[np.ndarray, dict]:
+    ) -> tuple[np.ndarray, dict[str, Any]]:
         """Compute equal-width bins with a count derived from data std."""
         non_nan = values[~np.isnan(values)]
         std = np.std(non_nan)
@@ -380,7 +382,7 @@ class COOLabelBinningTransform(BaseTransform):
     def __init__(
         self,
         dataset: Any,
-        label_configs: dict[str, dict],
+        label_configs: dict[str, dict[str, Any]],
         normalizer: COOLabelNormalizationTransform | None = None,
     ):
         """Set up binning strategies and per-label bin configuration.
@@ -400,12 +402,12 @@ class COOLabelBinningTransform(BaseTransform):
         }
 
         # Initialize binning parameters for each label
-        self.label_metadata = {}
+        self.label_metadata: dict[str, dict[str, Any]] = {}
 
         # Extract values for each phenotype type from the dataset
         self._compute_bins_from_dataset(dataset)
 
-    def _compute_bins_from_dataset(self, dataset):
+    def _compute_bins_from_dataset(self, dataset: Any) -> None:
         """Compute binning parameters from dataset with COO format phenotypes."""
         # Extract all values for each phenotype type
         phenotype_values_by_type = {}

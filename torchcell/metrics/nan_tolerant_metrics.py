@@ -264,7 +264,7 @@ def _nan_tolerant_pearson_update(
 class NaNTolerantMetricBase(Metric):
     """Base metric configured for DDP that tracks the input tensor device."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Configure DDP-related options and register a device-tracking buffer."""
         # Configure for DDP compatibility
         kwargs["compute_on_cpu"] = False  # Keep computation on GPU
@@ -279,7 +279,7 @@ class NaNTolerantMetricBase(Metric):
         if tensor.device != self._device_buffer.device:
             self._device_buffer = self._device_buffer.to(tensor.device)
 
-    def _create_tensor_on_device(self, value, *shape):
+    def _create_tensor_on_device(self, value: float, *shape: int) -> Tensor:
         """Create a new tensor on the tracked device."""
         return torch.full(shape, value, device=self._device_buffer.device)
 
@@ -427,7 +427,7 @@ class NaNTolerantSpearmanCorrCoef(Metric):
 class NaNTolerantMetricBase(Metric):
     """Base metric configured for DDP that tracks the input tensor device."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Configure DDP-related options and register a device-tracking buffer."""
         # Configure for DDP compatibility
         kwargs["compute_on_cpu"] = False  # Keep computation on GPU
@@ -442,7 +442,7 @@ class NaNTolerantMetricBase(Metric):
         if tensor.device != self._device_buffer.device:
             self._device_buffer = self._device_buffer.to(tensor.device)
 
-    def _create_tensor_on_device(self, value, *shape):
+    def _create_tensor_on_device(self, value: float, *shape: int) -> Tensor:
         """Create a new tensor on the tracked device."""
         return torch.full(shape, value, device=self._device_buffer.device)
 

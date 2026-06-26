@@ -13,6 +13,7 @@ Ensures deterministic output for clean git diffs.
 
 import re
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -36,7 +37,7 @@ class MermaidDiagramGenerator:
         self.biolink_classes = self._extract_biolink_classes()
         self.auto_mapped_nodes = self._get_auto_mapped_nodes()
 
-    def _extract_nodes(self) -> dict[str, dict]:
+    def _extract_nodes(self) -> dict[str, dict[str, Any]]:
         """Extract all nodes from schema.
 
         Returns:
@@ -48,7 +49,7 @@ class MermaidDiagramGenerator:
                 nodes[name] = config
         return nodes
 
-    def _extract_edges(self) -> dict[str, dict]:
+    def _extract_edges(self) -> dict[str, dict[str, Any]]:
         """Extract all edges from schema.
 
         Returns:
@@ -365,7 +366,7 @@ class MermaidDiagramGenerator:
         return True
 
 
-def main():
+def main() -> None:
     """Generate both horizontal and vertical diagrams."""
     # Determine project root (assuming script is in torchcell/ontology/)
     script_dir = Path(__file__).parent

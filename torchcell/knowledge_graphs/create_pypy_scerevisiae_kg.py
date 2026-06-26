@@ -22,7 +22,7 @@ logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
 logging.captureWarnings(True)
 
 
-def main():
+def main() -> None:
     """Run BioCypher with all dataset adapters to write the knowledge graph."""
     # logger.info(f"Started at {datetime.now()}") but use logging
     bc = BioCypher()

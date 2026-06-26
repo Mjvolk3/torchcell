@@ -7,7 +7,7 @@
 
 import copy
 from abc import ABC
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import torch
@@ -26,7 +26,7 @@ class LabelNormalizationTransform(BaseTransform):
     def __init__(
         self,
         dataset: "Neo4jCellDataset",
-        label_configs: dict[str, dict],
+        label_configs: dict[str, dict[str, Any]],
         eps: float = 1e-8,
     ):
         """
@@ -227,7 +227,7 @@ class EqualWidthStrategy(BaseBinningStrategy):
 
     def compute_bins(
         self, values: np.ndarray, num_bins: int
-    ) -> tuple[np.ndarray, dict]:
+    ) -> tuple[np.ndarray, dict[str, Any]]:
         """Compute equal-width bins"""
         non_nan = values[~np.isnan(values)]
         bin_edges = np.linspace(non_nan.min(), non_nan.max(), num_bins + 1)
@@ -248,7 +248,7 @@ class EqualFrequencyStrategy(BaseBinningStrategy):
 
     def compute_bins(
         self, values: np.ndarray, num_bins: int
-    ) -> tuple[np.ndarray, dict]:
+    ) -> tuple[np.ndarray, dict[str, Any]]:
         """Compute equal-frequency (quantile) bins"""
         non_nan = values[~np.isnan(values)]
         bin_edges = np.percentile(non_nan, np.linspace(0, 100, num_bins + 1))
@@ -269,7 +269,7 @@ class AutoBinStrategy(BaseBinningStrategy):
 
     def compute_bins(
         self, values: np.ndarray, num_bins: int | None = None
-    ) -> tuple[np.ndarray, dict]:
+    ) -> tuple[np.ndarray, dict[str, Any]]:
         """Compute bins based on data std"""
         non_nan = values[~np.isnan(values)]
         std = np.std(non_nan)
@@ -284,7 +284,7 @@ class LabelBinningTransform(BaseTransform):
     def __init__(
         self,
         dataset: "Neo4jCellDataset",
-        label_configs: dict[str, dict],
+        label_configs: dict[str, dict[str, Any]],
         normalizer: LabelNormalizationTransform | None = None,
     ):
         """
@@ -488,7 +488,7 @@ class LabelBinningTransform(BaseTransform):
 
         return data
 
-    def get_bin_info(self, label: str) -> dict:
+    def get_bin_info(self, label: str) -> dict[str, Any]:
         """Get binning information for a label."""
         if label not in self.label_metadata:
             raise ValueError(f"No binning metadata found for label {label}")

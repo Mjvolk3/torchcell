@@ -6,7 +6,7 @@
 """Transforms converting COO-format regression labels to classification targets."""
 
 from abc import ABC
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import torch
@@ -23,7 +23,7 @@ class COOLabelNormalizationTransform(BaseTransform):
     def __init__(
         self,
         dataset: "Neo4jCellDataset",
-        label_configs: dict[str, dict],
+        label_configs: dict[str, dict[str, Any]],
         eps: float = 1e-8,
     ):
         """Compute per-label normalization statistics from the dataset.
@@ -304,7 +304,7 @@ class EqualWidthStrategy(BaseBinningStrategy):
 
     def compute_bins(
         self, values: np.ndarray, num_bins: int
-    ) -> tuple[np.ndarray, dict]:
+    ) -> tuple[np.ndarray, dict[str, Any]]:
         """Compute equal-width bins."""
         non_nan = values[~np.isnan(values)]
         bin_edges = np.linspace(non_nan.min(), non_nan.max(), num_bins + 1)
@@ -325,7 +325,7 @@ class EqualFrequencyStrategy(BaseBinningStrategy):
 
     def compute_bins(
         self, values: np.ndarray, num_bins: int
-    ) -> tuple[np.ndarray, dict]:
+    ) -> tuple[np.ndarray, dict[str, Any]]:
         """Compute equal-frequency (quantile) bins."""
         non_nan = values[~np.isnan(values)]
         bin_edges = np.percentile(non_nan, np.linspace(0, 100, num_bins + 1))
@@ -346,7 +346,7 @@ class AutoBinStrategy(BaseBinningStrategy):
 
     def compute_bins(
         self, values: np.ndarray, num_bins: int | None = None
-    ) -> tuple[np.ndarray, dict]:
+    ) -> tuple[np.ndarray, dict[str, Any]]:
         """Compute bins based on data std."""
         non_nan = values[~np.isnan(values)]
         std = np.std(non_nan)
@@ -361,7 +361,7 @@ class COOLabelBinningTransform(BaseTransform):
     def __init__(
         self,
         dataset: "Neo4jCellDataset",
-        label_configs: dict[str, dict],
+        label_configs: dict[str, dict[str, Any]],
         normalizer: COOLabelNormalizationTransform | None = None,
     ):
         """Initialize binning strategies and per-label bin parameters.
@@ -555,7 +555,7 @@ class COOLabelBinningTransform(BaseTransform):
             phenotype_values = phenotype_values.unsqueeze(0)
 
         # Group by original phenotype (before binning)
-        phenotype_groups = {}
+        phenotype_groups: dict[str, list[int]] = {}
         for i, ptype in enumerate(phenotype_types):
             # Extract original phenotype name from binned name
             for label in self.label_configs:
@@ -569,7 +569,7 @@ class COOLabelBinningTransform(BaseTransform):
         new_values = []
         new_type_indices = []
         new_sample_indices = []
-        new_phenotype_types = []
+        new_phenotype_types: list[str] = []
 
         for label, config in self.label_configs.items():
             if label not in phenotype_groups:
@@ -674,7 +674,7 @@ class COOLabelBinningTransform(BaseTransform):
 
         return data
 
-    def get_bin_info(self, label: str) -> dict:
+    def get_bin_info(self, label: str) -> dict[str, Any]:
         """Get binning information for a label."""
         if label not in self.label_metadata:
             raise ValueError(f"No binning metadata found for label {label}")

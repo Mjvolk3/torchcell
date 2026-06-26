@@ -5,13 +5,15 @@
 
 """Box-plot visualization of predicted vs measured growth/fitness."""
 
+from typing import Any
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from scipy import stats
 
 
-def box_plot(true_values, predictions) -> plt.Figure:
+def box_plot(true_values: Any, predictions: Any) -> plt.Figure:  # Tensor or ndarray
     """Bin predictions into growth ranges and box-plot the measured values.
 
     Args:
@@ -180,7 +182,7 @@ def box_plot(true_values, predictions) -> plt.Figure:
     return fig
 
 
-def generate_simulated_data(n_samples=10000):
+def generate_simulated_data(n_samples: int = 10000) -> tuple[torch.Tensor, torch.Tensor]:
     """Generate correlated synthetic true/predicted growth values with WT samples."""
     # Generate true values
     true_values = np.random.normal(loc=0.8, scale=0.2, size=n_samples)
@@ -205,7 +207,9 @@ def generate_simulated_data(n_samples=10000):
     return torch.tensor(true_values), torch.tensor(predictions)
 
 
-def generate_simulated_data_with_nan(n_samples=10000):
+def generate_simulated_data_with_nan(
+    n_samples: int = 10000,
+) -> tuple[torch.Tensor, torch.Tensor]:
     """Generate synthetic growth data seeded with NaN, inf, and identical-value bins."""
     # Generate true values
     true_values = np.random.normal(loc=0.8, scale=0.2, size=n_samples)
@@ -251,7 +255,7 @@ def generate_simulated_data_with_nan(n_samples=10000):
 #     plt.show()
 
 
-def main():
+def main() -> None:
     """Build and show a box plot from NaN-seeded simulated data."""
     true_values, predictions = generate_simulated_data_with_nan()
     _fig = box_plot(true_values, predictions)

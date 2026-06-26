@@ -114,7 +114,7 @@ class RegisterRecordFunction:
 class ScheduleWrapper:
     """Override profiler schedule logic to record both training and validation steps."""
 
-    def __init__(self, schedule: Callable) -> None:
+    def __init__(self, schedule: Callable[[int], ProfilerAction]) -> None:
         """Wrap a profiler schedule and reset per-stage step counters."""
         if not _KINETO_AVAILABLE:
             raise ModuleNotFoundError(
@@ -338,7 +338,7 @@ class PyTorchProfiler(Profiler):
             None  # set by ProfilerConnector
         )
         self._register: RegisterRecordFunction | None = None
-        self._parent_profiler: AbstractContextManager | None = None
+        self._parent_profiler: AbstractContextManager[Any] | None = None
         self._recording_map: dict[str, record_function] = {}
         self._start_action_name: str | None = None
         self._schedule: ScheduleWrapper | None = None
@@ -435,7 +435,7 @@ class PyTorchProfiler(Profiler):
 
     @staticmethod
     @lru_cache(1)
-    def _default_schedule() -> Callable | None:
+    def _default_schedule() -> Callable[[int], ProfilerAction] | None:
         if _KINETO_AVAILABLE:
             # Those schedule defaults allow the profiling overhead to be negligible over training time.
             return torch.profiler.schedule(wait=1, warmup=1, active=3)
@@ -641,7 +641,7 @@ class PyTorchProfiler(Profiler):
         super().teardown(stage=stage)
 
 
-def _default_sort_by_key(profiler_kwargs: dict) -> str:
+def _default_sort_by_key(profiler_kwargs: dict[str, Any]) -> str:
     activities = profiler_kwargs.get("activities", [])
     is_cuda = (
         profiler_kwargs.get(

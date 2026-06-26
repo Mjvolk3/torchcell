@@ -22,8 +22,8 @@ NON_FLOAT_PADDING_VALUE = -1
 
 
 def _dense_pad_tensor(
-    key,
-    values,
+    key: str,
+    values: List[Any],
     float_padding_value: float = FLOAT_PADDING_VALUE,
     non_float_padding_value: int = NON_FLOAT_PADDING_VALUE,
 ) -> Tuple[Any, Any]:
@@ -225,11 +225,11 @@ def _dense_padded_collate(
 
 
 def dense_padded_collate(
-    cls,
+    cls: type[BaseData],
     data_list: List[BaseData],
     follow_batch: Optional[List[str]] = None,
     exclude_keys: Optional[List[str]] = None,
-) -> Tuple[BaseData, Mapping]:
+) -> Tuple[BaseData, Mapping[Any, Any]]:
     """Collate a list of data objects into a single dense object of type cls.
 
     `collate` can handle both homogeneous and heterogeneous data objects by
@@ -276,7 +276,7 @@ def dense_padded_collate(
     # We maintain an additional dictionary:
     # * `mask_dict` stores a mask representation of each attribute
     #    and is needed to re-construct individual elements from mini-batches.
-    mask_dict = defaultdict(dict)
+    mask_dict: defaultdict[Any, Any] = defaultdict(dict)
     for out_store in out.stores:
         key = out_store._key
         stores = key_to_stores[key]
@@ -314,7 +314,7 @@ def dense_padded_from_data_list(
     data_list: List[BaseData],
     follow_batch: Optional[List[str]] = None,
     exclude_keys: Optional[List[str]] = None,
-):
+) -> Batch:
     r"""Construct a dense Batch object from a Python list of data objects.
 
     Builds a dense `~torch_geometric.data.Batch` from a list of
@@ -415,7 +415,7 @@ class DensePaddingCollater:
         return self(batch)
 
 
-class DensePaddingDataLoader(torch.utils.data.DataLoader):
+class DensePaddingDataLoader(torch.utils.data.DataLoader[Any]):
     r"""Data loader that merges dataset objects into mini-batches via dense padding.
 
     Merges data objects from a `torch_geometric.data.Dataset` into a mini-batch
@@ -443,8 +443,8 @@ class DensePaddingDataLoader(torch.utils.data.DataLoader):
         shuffle: bool = False,
         follow_batch: Optional[List[str]] = None,
         exclude_keys: Optional[List[str]] = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         """Set up the dense-padding collater and base DataLoader."""
         # Remove for PyTorch Lightning:
         kwargs.pop("collate_fn", None)

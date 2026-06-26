@@ -20,7 +20,7 @@ import certifi
 import hydra
 import wandb
 from dotenv import load_dotenv
-from omegaconf import OmegaConf
+from omegaconf import DictConfig, OmegaConf
 
 import torchcell
 from biocypher import BioCypher
@@ -48,7 +48,7 @@ logging.captureWarnings(True)
 os.environ["SSL_CERT_FILE"] = certifi.where()
 
 
-def get_num_workers():
+def get_num_workers() -> int:
     """Get the number of CPUs allocated by SLURM."""
     # Try to get number of CPUs allocated by SLURM
     cpus_per_task = os.getenv("SLURM_CPUS_PER_TASK")
@@ -59,7 +59,7 @@ def get_num_workers():
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="kg")
-def main(cfg) -> str:
+def main(cfg: DictConfig) -> str:
     """Run the BioCypher build over the configured datasets and return its output."""
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")

@@ -1,6 +1,6 @@
 """NaN-tolerant TorchMetrics classification metrics for DDP training."""
 
-from typing import Literal
+from typing import Any, Literal
 
 import torch
 from torch import Tensor
@@ -10,7 +10,7 @@ from torchmetrics.metric import Metric
 class NaNTolerantMetricBase(Metric):
     """Base metric that drops NaN targets and tracks the active device."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """Force DDP-safe settings and register a device-tracking buffer."""
         # Configure for DDP compatibility
         kwargs["compute_on_cpu"] = False
@@ -24,7 +24,7 @@ class NaNTolerantMetricBase(Metric):
         if tensor.device != self._device_buffer.device:
             self._device_buffer = self._device_buffer.to(tensor.device)
 
-    def _create_tensor_on_device(self, value, *shape):
+    def _create_tensor_on_device(self, value: float, *shape: int) -> Tensor:
         """Return a tensor filled with ``value`` on the metric's device."""
         return torch.full(shape, value, device=self._device_buffer.device)
 
@@ -65,7 +65,9 @@ class NaNTolerantAccuracy(NaNTolerantMetricBase):
     higher_is_better = True
     full_state_update = False
 
-    def __init__(self, task: Literal["binary", "multiclass"] = "binary", **kwargs):
+    def __init__(
+        self, task: Literal["binary", "multiclass"] = "binary", **kwargs: Any
+    ) -> None:
         """Register correct/total counters for the given task."""
         super().__init__(**kwargs)
         self.task = task
@@ -99,7 +101,9 @@ class NaNTolerantF1Score(NaNTolerantMetricBase):
     higher_is_better = True
     full_state_update = False
 
-    def __init__(self, task: Literal["binary", "multiclass"] = "binary", **kwargs):
+    def __init__(
+        self, task: Literal["binary", "multiclass"] = "binary", **kwargs: Any
+    ) -> None:
         """Register per-class tp/fp/fn counters for the given task."""
         super().__init__(**kwargs)
         self.task = task
@@ -151,7 +155,7 @@ class NaNTolerantAUROC(NaNTolerantMetricBase):
     higher_is_better = True
     full_state_update = False
 
-    def __init__(self, task: Literal["binary"] = "binary", **kwargs):
+    def __init__(self, task: Literal["binary"] = "binary", **kwargs: Any) -> None:
         """Register prediction/target buffers; only binary task is supported."""
         if task != "binary":
             raise ValueError("AUROC currently only supports binary classification")
@@ -208,7 +212,9 @@ class NaNTolerantPrecision(NaNTolerantMetricBase):
     higher_is_better = True
     full_state_update = False
 
-    def __init__(self, task: Literal["binary", "multiclass"] = "binary", **kwargs):
+    def __init__(
+        self, task: Literal["binary", "multiclass"] = "binary", **kwargs: Any
+    ) -> None:
         """Register per-class tp/fp counters for the given task."""
         super().__init__(**kwargs)
         self.task = task
@@ -256,7 +262,9 @@ class NaNTolerantRecall(NaNTolerantMetricBase):
     higher_is_better = True
     full_state_update = False
 
-    def __init__(self, task: Literal["binary", "multiclass"] = "binary", **kwargs):
+    def __init__(
+        self, task: Literal["binary", "multiclass"] = "binary", **kwargs: Any
+    ) -> None:
         """Register per-class tp/fn counters for the given task."""
         super().__init__(**kwargs)
         self.task = task

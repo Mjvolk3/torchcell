@@ -1,5 +1,6 @@
 """Cliff command for building the torchcell database image via shell scripts."""
 
+import argparse
 import os
 import os.path as osp
 import subprocess
@@ -10,7 +11,7 @@ from cliff.command import Command
 class BuildCommand(Command):
     """A simple command that builds something."""
 
-    def get_parser(self, prog_name):
+    def get_parser(self, prog_name: str) -> argparse.ArgumentParser:
         """Build the argument parser, adding the build mode option."""
         parser = super().get_parser(prog_name)
         parser.add_argument(
@@ -22,7 +23,7 @@ class BuildCommand(Command):
         )
         return parser
 
-    def take_action(self, parsed_args):
+    def take_action(self, parsed_args: argparse.Namespace) -> int | None:
         """Run the selected build script and stream its output."""
         script_path = osp.join(os.getcwd(), "database", "build")
         script = (

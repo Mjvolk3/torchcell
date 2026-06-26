@@ -5,22 +5,25 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/loader/cpu_experiment_loader
 # Test file: tests/torchcell/loader/test_cpu_experiment_loader.py
 
-from collections.abc import Iterable
+from collections.abc import Iterator, Sequence
 from multiprocessing import Process
 from queue import Queue
 from threading import Thread
+from typing import Any
 
 
 class CpuExperimentLoader:
     """Thread-based loader that prefetches dataset batches into a queue."""
 
-    def __init__(self, dataset, batch_size: int, num_workers: int):
+    def __init__(
+        self, dataset: Sequence[Any], batch_size: int, num_workers: int
+    ) -> None:
         """Start worker threads and prime the queue with initial batch indices."""
         self.dataset = dataset
         self.batch_size = batch_size
-        self.load_queue = Queue()
-        self.data_queue = Queue(maxsize=num_workers)
-        self.workers = []
+        self.load_queue: Queue[int | None] = Queue()
+        self.data_queue: Queue[list[Any]] = Queue(maxsize=num_workers)
+        self.workers: list[Thread] = []
 
         # Calculate how many batches are needed
         self.total_batches = (len(dataset) + batch_size - 1) // batch_size
@@ -42,7 +45,12 @@ class CpuExperimentLoader:
             self.load_queue.put(i)  # Signal with unique batch index
 
     @staticmethod
-    def worker_function(load_queue: Queue, data_queue: Queue, dataset, batch_size: int):
+    def worker_function(
+        load_queue: "Queue[int | None]",
+        data_queue: "Queue[list[Any]]",
+        dataset: Sequence[Any],
+        batch_size: int,
+    ) -> None:
         """Pull batch indices, slice the dataset, and push batches until stopped."""
         while True:
             batch_index = load_queue.get()  # Get unique batch index
@@ -54,12 +62,12 @@ class CpuExperimentLoader:
             batch = [dataset[i] for i in range(start_idx, end_idx)]
             data_queue.put(batch)
 
-    def __iter__(self) -> Iterable:
+    def __iter__(self) -> Iterator[Any]:
         """Reset the batch counter and return self as the iterator."""
         self.batch_index = 0  # Reset batch index for new iteration
         return self
 
-    def __next__(self):
+    def __next__(self) -> list[Any]:
         """Return the next prefetched batch, scheduling another, or stop iteration."""
         if self.batch_index >= self.total_batches:
             self.close()  # Ensure cleanup when iteration is complete
@@ -74,7 +82,7 @@ class CpuExperimentLoader:
         self.batch_index += 1
         return batch
 
-    def close(self):
+    def close(self) -> None:
         """Signal workers to terminate and join them once (idempotent)."""
         if not self.is_closed:
             # Send termination signal to each worker
@@ -88,13 +96,15 @@ class CpuExperimentLoader:
 class CpuExperimentLoaderMultiprocessing:
     """Process-based loader that prefetches dataset batches into a queue."""
 
-    def __init__(self, dataset, batch_size: int, num_workers: int):
+    def __init__(
+        self, dataset: Sequence[Any], batch_size: int, num_workers: int
+    ) -> None:
         """Start worker processes and prime the queue with initial batch indices."""
         self.dataset = dataset
         self.batch_size = batch_size
-        self.load_queue = Queue()
-        self.data_queue = Queue(maxsize=num_workers)
-        self.workers = []
+        self.load_queue: Queue[int | None] = Queue()
+        self.data_queue: Queue[list[Any]] = Queue(maxsize=num_workers)
+        self.workers: list[Process] = []
 
         # Calculate how many batches are needed
         self.total_batches = (len(dataset) + batch_size - 1) // batch_size
@@ -116,7 +126,12 @@ class CpuExperimentLoaderMultiprocessing:
             self.load_queue.put(i)  # Signal with unique batch index
 
     @staticmethod
-    def worker_function(load_queue: Queue, data_queue: Queue, dataset, batch_size: int):
+    def worker_function(
+        load_queue: "Queue[int | None]",
+        data_queue: "Queue[list[Any]]",
+        dataset: Sequence[Any],
+        batch_size: int,
+    ) -> None:
         """Pull batch indices, slice the dataset, and push batches until stopped."""
         while True:
             batch_index = load_queue.get()  # Get unique batch index
@@ -128,12 +143,12 @@ class CpuExperimentLoaderMultiprocessing:
             batch = [dataset[i] for i in range(start_idx, end_idx)]
             data_queue.put(batch)
 
-    def __iter__(self) -> Iterable:
+    def __iter__(self) -> Iterator[Any]:
         """Reset the batch counter and return self as the iterator."""
         self.batch_index = 0  # Reset batch index for new iteration
         return self
 
-    def __next__(self):
+    def __next__(self) -> list[Any]:
         """Return the next prefetched batch, scheduling another, or stop iteration."""
         if self.batch_index >= self.total_batches:
             self.close()  # Ensure cleanup when iteration is complete
@@ -148,12 +163,12 @@ class CpuExperimentLoaderMultiprocessing:
         self.batch_index += 1
         return batch
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the number of batches the loader will yield."""
         # Calculate how many batches are needed
         return (len(self.dataset) + self.batch_size - 1) // self.batch_size
 
-    def close(self):
+    def close(self) -> None:
         """Signal workers to terminate and join them once (idempotent)."""
         if not self.is_closed:
             # Send termination signal to each worker

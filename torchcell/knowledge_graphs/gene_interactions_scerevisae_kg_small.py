@@ -19,7 +19,7 @@ import certifi
 import hydra
 import wandb
 from dotenv import load_dotenv
-from omegaconf import OmegaConf
+from omegaconf import DictConfig, OmegaConf
 
 import torchcell
 from biocypher import BioCypher
@@ -51,7 +51,7 @@ def get_num_workers() -> int:
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="kg")
-def main(cfg) -> str:
+def main(cfg: DictConfig) -> str:
     """Build the gene-interaction knowledge graph from the Hydra config."""
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")

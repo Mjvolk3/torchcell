@@ -101,7 +101,7 @@ def print_schema_mappings(
 
     # Group nodes and edges by their Biolink parent
     # Also detect auto-mappings (when entity name matches Biolink class name)
-    biolink_groups = {}
+    biolink_groups: dict[str, list[str]] = {}
     auto_mapped = []
     no_mapping = []
 
@@ -128,7 +128,7 @@ def print_schema_mappings(
             else:
                 no_mapping.append(node_name)
 
-    biolink_edge_groups = {}
+    biolink_edge_groups: dict[str, list[str]] = {}
     no_edge_mapping = []
     for edge_name, biolink_parent in edges.items():
         if biolink_parent:
@@ -276,7 +276,7 @@ def print_schema_mappings(
         print("=" * 80 + "\n")
 
 
-def main():
+def main() -> None:
     """CLI entry point for tc-onto command."""
     import argparse
 

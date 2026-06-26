@@ -6,6 +6,7 @@
 
 import io
 import os.path as osp
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -311,7 +312,7 @@ class GraphRecoveryVisualization:
         fig, ax = plt.subplots(figsize=(12, 6))
 
         # Assign colors based on graph name
-        unique_graphs = []
+        unique_graphs: list[str] = []
         graph_to_color_idx = {}
         for graph_name in graph_names:
             if graph_name not in graph_to_color_idx:
@@ -383,7 +384,7 @@ class GraphRecoveryVisualization:
 
         # Parse metric keys to extract graph names and layers
         # Format: "graph_name_L{layer}_H{head}"
-        parsed_metrics = {}
+        parsed_metrics: dict[str, list[tuple[str, int]]] = {}
         for metric_key in precision_metrics.keys():
             # Extract graph name (everything before _L)
             parts = metric_key.split("_L")
@@ -428,7 +429,7 @@ class GraphRecoveryVisualization:
         }
 
         # Plot lines grouped by graph name
-        data_lines = []  # For graph legend
+        data_lines: list[tuple[Any, str]] = []  # (Line2D, graph_name) for graph legend
         for graph_name in graph_names:
             entries = parsed_metrics[graph_name]
             metric_entries = sorted(entries, key=lambda x: x[1])  # Sort by layer
@@ -671,7 +672,7 @@ class GraphRecoveryVisualization:
         fig, ax = plt.subplots(figsize=(14, 6))
 
         # Assign colors based on graph name
-        unique_graphs = []
+        unique_graphs: list[str] = []
         graph_to_color_idx = {}
         for graph_name in graph_names:
             if graph_name not in graph_to_color_idx:

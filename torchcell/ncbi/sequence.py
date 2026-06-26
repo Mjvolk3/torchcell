@@ -38,7 +38,7 @@ class BaseGenome(ABC):
         raise NotImplementedError
 
 
-def mismatch_positions(seq1, seq2):
+def mismatch_positions(seq1: str, seq2: str) -> list[int]:
     """Return indices where two equal-length sequences differ."""
     if len(seq1) != len(seq2):
         raise ValueError("Sequences must be the same length")

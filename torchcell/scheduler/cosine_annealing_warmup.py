@@ -50,14 +50,14 @@ class CosineAnnealingWarmupRestarts(_LRScheduler):
         # set learning rate min_lr
         self.init_lr()
 
-    def init_lr(self):
+    def init_lr(self) -> None:
         """Set every param group's learning rate to min_lr and record base LRs."""
         self.base_lrs = []
         for param_group in self.optimizer.param_groups:
             param_group["lr"] = self.min_lr
             self.base_lrs.append(self.min_lr)
 
-    def get_lr(self):
+    def get_lr(self) -> list[float]:
         """Compute the learning rates for the current step (warmup or cosine)."""
         if self.step_in_cycle == -1:
             return self.base_lrs
@@ -83,7 +83,7 @@ class CosineAnnealingWarmupRestarts(_LRScheduler):
                 for base_lr in self.base_lrs
             ]
 
-    def step(self, epoch=None):
+    def step(self, epoch: int | None = None) -> None:
         """Advance the schedule and update each param group's learning rate."""
         if epoch is None:
             epoch = self.last_epoch + 1

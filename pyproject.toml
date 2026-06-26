@@ -76,6 +76,11 @@ convention = "google"
 
 [tool.ruff.lint.isort]
 known-first-party = ["docs", "tests", "torchcell", "train"]
+# A gitignored `wandb/` run-log dir lives at the repo root; ruff's isort scans
+# the filesystem and would auto-detect `wandb` as first-party in a working tree
+# that has run W&B, but not in a clean CI checkout -- flip-flopping import order.
+# Pin it third-party so local and CI lint results agree deterministically.
+known-third-party = ["wandb"]
 split-on-trailing-comma = false
 
 [tool.ruff.format]

@@ -64,7 +64,7 @@ class PlotFeatureTypeCounts(GenomePlot):
     plt: plt = field(init=False)
 
     @property
-    def feature_type_counts(self):
+    def feature_type_counts(self) -> dict[str, int]:
         """Return a mapping of feature type to its occurrence count."""
         feature_types = [
             feat.featuretype for feat in list(self.genome.db.all_features())
@@ -101,16 +101,16 @@ class PlotFeatureTypeCounts(GenomePlot):
 
         self.plt = plt
 
-    def show(self):
+    def show(self) -> None:
         """Display the current figure."""
         plt.show()
 
-    def close(self):
+    def close(self) -> None:
         """Close the current figure."""
         plt.close()
 
 
-def main():
+def main() -> None:
     """Build and save the feature-type count plot for the S. cerevisiae genome."""
     genome = SCerevisiaeGenome()
     genome_plot = PlotFeatureTypeCounts(genome)

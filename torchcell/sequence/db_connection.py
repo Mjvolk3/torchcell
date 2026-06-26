@@ -24,7 +24,9 @@ class DatabaseProtocol(Protocol):
         """Get features of a specific type."""
         ...
 
-    def region(self, region: tuple, completely_within: bool = False) -> Iterator[Any]:
+    def region(
+        self, region: tuple[str, int, int], completely_within: bool = False
+    ) -> Iterator[Any]:
         """Get features in a specific region."""
         ...
 
@@ -65,8 +67,12 @@ class DatabaseConnectionManager[T: DatabaseProtocol]:
     """
 
     def __init__(
-        self, db_path: str, db_class: type[T] = FeatureDB, *db_args, **db_kwargs
-    ):
+        self,
+        db_path: str,
+        db_class: type[T] = FeatureDB,
+        *db_args: Any,
+        **db_kwargs: Any,
+    ) -> None:
         """Store the database path, class, and constructor args for lazy connecting."""
         self.db_path = db_path
         self.db_class = db_class
@@ -94,14 +100,14 @@ class DatabaseConnectionManager[T: DatabaseProtocol]:
 
         return self._local.db
 
-    def close_connection(self):
+    def close_connection(self) -> None:
         """Close the current thread/process connection if it exists."""
         if hasattr(self._local, "db") and self._local.db is not None:
             # FeatureDB doesn't have a close method, but we can clear the reference
             # The underlying SQLite connection will be garbage collected
             self._local.db = None
 
-    def __reduce__(self):
+    def __reduce__(self) -> tuple[Any, ...]:
         """Support pickling by serializing only the configuration, not connections.
 
         When unpickled, a new manager is created with the same configuration,
@@ -113,14 +119,14 @@ class DatabaseConnectionManager[T: DatabaseProtocol]:
             self.db_kwargs,
         )
 
-    def __getstate__(self):
+    def __getstate__(self) -> dict[str, Any]:
         """Custom state for pickling - exclude the thread local storage."""
         state = self.__dict__.copy()
         # Remove thread-local storage which can't be pickled
         state.pop("_local", None)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict[str, Any]) -> None:
         """Restore state after unpicskling."""
         self.__dict__.update(state)
         # Recreate thread-local storage

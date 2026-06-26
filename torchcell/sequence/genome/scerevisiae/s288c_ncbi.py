@@ -357,7 +357,7 @@ class SCerevisiaeGene(Gene):
             end_window=end_window,
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a string with the gene's id, location, strand, and sequence."""
         return f"DnaSelectionResult(id={self.id}, chromosome={self.chromosome}, strand={self.strand}, start={self.start}, end={self.end},  seq={self.seq})"
 
@@ -447,7 +447,7 @@ class SCerevisiaeGenome(Genome):
         # Call the method to remove deprecated GO terms
         self.remove_deprecated_go_terms()
 
-    def download_and_extract_genome_files(self):
+    def download_and_extract_genome_files(self) -> None:
         """Download and extract genome files if they do not exist."""
         zipped_version = f"{self.genome_version_full}.tgz"
         url = osp.join(
@@ -460,14 +460,16 @@ class SCerevisiaeGenome(Genome):
         self.untar_tgz_file(downloaded_file_path, save_dir)
         self.gunzip_all_files_in_dir(save_dir)
 
-    def untar_tgz_file(self, path_to_input_tgz: str, path_to_output_dir: str):
+    def untar_tgz_file(
+        self, path_to_input_tgz: str, path_to_output_dir: str
+    ) -> None:
         """Extract a .tgz file."""
         with tarfile.open(path_to_input_tgz, "r:gz") as tar_ref:
             tar_ref.extractall(path_to_output_dir)
         print(f"Extracted .tgz file to {path_to_output_dir}")
         os.remove(path_to_input_tgz)  # remove the original .tgz file after extraction
 
-    def gunzip_all_files_in_dir(self, directory: str):
+    def gunzip_all_files_in_dir(self, directory: str) -> None:
         """Unzip all .gz files in a directory."""
         gz_files = glob.glob(f"{directory}/**/*.gz", recursive=True)
         for gz_file in gz_files:
@@ -479,13 +481,13 @@ class SCerevisiaeGenome(Genome):
             print(f"Unzipped {gz_file}")
             os.remove(gz_file)  # remove the original .gz file
 
-    def remove_deprecated_go_terms(self):
+    def remove_deprecated_go_terms(self) -> None:
         """Drop obsolete or unknown GO terms from gene features in the database."""
         # Create a list to hold updated features
         updated_features = []
 
         # Iterate over each feature in the database
-        invalid_go_terms = {"not_in_go_dag": [], "obsolete": []}
+        invalid_go_terms: dict[str, list[str]] = {"not_in_go_dag": [], "obsolete": []}
         for feature in self.db.features_of_type("gene"):
             # Check if the feature has the "Ontology_term" attribute
             if "Ontology_term" in feature.attributes:

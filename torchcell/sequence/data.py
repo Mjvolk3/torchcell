@@ -7,7 +7,9 @@
 import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from collections.abc import Callable, Iterable
 from itertools import product
+from typing import Any
 
 import pandas as pd
 from gffutils import FeatureDB
@@ -49,7 +51,7 @@ class DnaSelectionResult(ModelStrict):
 
     @model_validator(mode="before")
     @classmethod
-    def end_leq_start(cls, values):
+    def end_leq_start(cls, values: dict[str, Any]) -> dict[str, Any]:
         """Validate that start is not greater than end."""
         start, end = values.get("start"), values.get("end")
         if start > end:
@@ -57,14 +59,14 @@ class DnaSelectionResult(ModelStrict):
         return values
 
     @field_validator("strand")
-    def check_strand(cls, v):
+    def check_strand(cls, v: str) -> str:
         """Validate that the strand is '+' or '-'."""
         if v not in ["+", "-"]:
             raise ValueError("Strand must be either '+' or '-'")
         return v
 
     @field_validator("chromosome", "start", "end")
-    def check_positive(cls, v):
+    def check_positive(cls, v: int) -> int:
         """Validate that the coordinate value is non-negative."""
         if v < 0:
             raise ValueError(f"{v} must be positive")
@@ -72,7 +74,7 @@ class DnaSelectionResult(ModelStrict):
 
     # TODO consider adding chromosome length
     @field_validator("seq")
-    def check_seq_len(cls, v):
+    def check_seq_len(cls, v: str) -> str:
         """Validate that the sequence length is non-negative."""
         sequence_length = len(v)
         if sequence_length < 0:
@@ -92,7 +94,7 @@ class DnaWindowResult(DnaSelectionResult):
         return f"DnaWindowResult(id={self.id!r}, chromosome={self.chromosome!r}, strand={self.strand!r}, start_window={self.start_window!r}, end_window={self.end_window!r}, seq={self.seq!r})"
 
     @field_validator("start_window", "end_window")
-    def check_window(cls, v):
+    def check_window(cls, v: int) -> int:
         """Validate that the window coordinate is non-negative."""
         if v < 0:
             raise ValueError(f"{v} must be positive")
@@ -102,7 +104,11 @@ class DnaWindowResult(DnaSelectionResult):
 class GeneSet(SortedSet):
     """A sorted set that requires all members to be strings."""
 
-    def __init__(self, iterable=None, key=None):
+    def __init__(
+        self,
+        iterable: Iterable[str] | None = None,
+        key: Callable[[str], Any] | None = None,
+    ) -> None:
         """Build the sorted set and validate every item is a string.
 
         Args:
@@ -116,7 +122,7 @@ class GeneSet(SortedSet):
                     f"All items in gene_set must be str, got {type(item).__name__}"
                 )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a summary representation showing size and first items."""
         n = len(self)
         limited_items = (self)[:3]
@@ -186,11 +192,12 @@ class Genome(ABC):
             data_root: Optional path to the genome data directory.
         """
         self.data_root: str = data_root
-        self._db_connection_manager: DatabaseConnectionManager | None = None
-        self.fasta_sequences: dict | None = None
-        self.chr_to_nc: dict | None = None
-        self.nc_to_chr: dict | None = None
-        self.chr_to_len: dict | None = None
+        self._db_connection_manager: DatabaseConnectionManager[FeatureDB] | None = None
+        # FASTA records are dynamic BioPython SeqRecord objects keyed by id.
+        self.fasta_sequences: dict[str, Any] | None = None
+        self.chr_to_nc: dict[str, str] | None = None
+        self.nc_to_chr: dict[str, str] | None = None
+        self.chr_to_len: dict[str, int] | None = None
         self._gene_set: set[str] | None = None
         self._fasta_path: str | None = None
         self._gff_path: str | None = None
@@ -213,7 +220,7 @@ class Genome(ABC):
         return self._gene_set
 
     @gene_set.setter
-    def gene_set(self, value: set[str]):
+    def gene_set(self, value: set[str]) -> None:
         """Override the cached gene set."""
         self._gene_set = value
 
@@ -630,7 +637,7 @@ def calculate_window_bounds_symmetric(
 class CodonFrequency(SortedDict):
     """Sorted mapping of all 64 codons to their relative frequencies."""
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a representation validating 64 codons summing to one."""
         if len(self) != 64:
             return "Invalid CodonFrequency: Expected 64 codons"
@@ -695,7 +702,7 @@ class ParsedGenome(ModelStrictArbitrary):
     gene_set: GeneSet
 
     @field_validator("gene_set")
-    def validate_gene_set(cls, value):
+    def validate_gene_set(cls, value: GeneSet) -> GeneSet:
         """Validate that the provided value is a GeneSet."""
         if not isinstance(value, GeneSet):
             raise ValueError(f"gene_set must be a GeneSet, got {type(value).__name__}")

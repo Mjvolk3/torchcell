@@ -130,7 +130,7 @@ class SCerevisiaeGenome:
             print(f"An error occurred while cleaning up: {e}")
 
 
-def main():
+def main() -> None:
     """Load the S288C genome from DATA_ROOT as a smoke test."""
     from dotenv import load_dotenv
 

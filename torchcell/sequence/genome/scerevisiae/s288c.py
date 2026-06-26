@@ -13,6 +13,7 @@ import os.path as osp
 import shutil
 import tarfile
 from itertools import product
+from typing import Any
 
 import gffutils
 import pandas as pd
@@ -394,7 +395,7 @@ class SCerevisiaeGene(Gene):
             end_window=end_window,
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a string with the gene's ID, location, strand, and sequence."""
         return f"DnaSelectionResult(id={self.id}, chromosome={self.chromosome}, strand={self.strand}, start={self.start}, end={self.end},  seq={self.seq})"
 
@@ -515,7 +516,7 @@ class SCerevisiaeGenome(Genome):
                 raise FileNotFoundError(f"GO OBO file not found at {self._obo_path}")
         return self._go_dag
 
-    def __reduce_ex__(self, protocol):
+    def __reduce_ex__(self, protocol: int) -> tuple[Any, ...]:
         """Custom pickling that handles non-pickleable objects."""
         # Get the attrs-generated __getstate__ if it exists
         state = (
@@ -537,7 +538,7 @@ class SCerevisiaeGenome(Genome):
             iter([]),
         )
 
-    def download_and_extract_genome_files(self):
+    def download_and_extract_genome_files(self) -> None:
         """Download and extract genome files if they do not exist."""
         zipped_version = f"{self.genome_version_full}.tgz"
         url = osp.join(
@@ -550,14 +551,16 @@ class SCerevisiaeGenome(Genome):
         self.untar_tgz_file(downloaded_file_path, save_dir)
         self.gunzip_all_files_in_dir(save_dir)
 
-    def untar_tgz_file(self, path_to_input_tgz: str, path_to_output_dir: str):
+    def untar_tgz_file(
+        self, path_to_input_tgz: str, path_to_output_dir: str
+    ) -> None:
         """Extract a .tgz file into the output directory and delete the archive."""
         with tarfile.open(path_to_input_tgz, "r:gz") as tar_ref:
             tar_ref.extractall(path_to_output_dir)
         print(f"Extracted .tgz file to {path_to_output_dir}")
         os.remove(path_to_input_tgz)  # remove the original .tgz file after extraction
 
-    def gunzip_all_files_in_dir(self, directory: str):
+    def gunzip_all_files_in_dir(self, directory: str) -> None:
         """Unzip all .gz files in a directory."""
         gz_files = glob.glob(f"{directory}/**/*.gz", recursive=True)
         for gz_file in gz_files:
@@ -569,13 +572,13 @@ class SCerevisiaeGenome(Genome):
             print(f"Unzipped {gz_file}")
             os.remove(gz_file)  # remove the original .gz file
 
-    def remove_deprecated_go_terms(self):
+    def remove_deprecated_go_terms(self) -> None:
         """Drop GO terms absent from or obsolete in the GO DAG and update the DB."""
         # Create a list to hold updated features
         updated_features = []
 
         # Iterate over each feature in the database
-        invalid_go_terms = {"not_in_go_dag": [], "obsolete": []}
+        invalid_go_terms: dict[str, list[str]] = {"not_in_go_dag": [], "obsolete": []}
         for feature in self.db.features_of_type("gene"):
             # Check if the feature has the "Ontology_term" attribute
             if "Ontology_term" in feature.attributes:

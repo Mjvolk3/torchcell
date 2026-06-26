@@ -116,7 +116,9 @@ class _HeteroNSA_Block(nn.Module):
         batch_idx: dict[str, Tensor] | None = None,
     ) -> dict[str, Tensor]:
         if self.layer_type == "M":
-            relation_outputs = {nt: [] for nt in self.node_types}
+            relation_outputs: dict[str, list[Tensor]] = {
+                nt: [] for nt in self.node_types
+            }
             for src, rel, dst in self.edge_types:
                 key = f"{src}__{rel}__{dst}"
                 if key not in self.masked_blocks:

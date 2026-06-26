@@ -1,7 +1,10 @@
 """Demo of FlexAttention masked by an RCM-reordered SBM adjacency matrix."""
 
+from collections.abc import Callable
+
 import matplotlib.pyplot as plt
 import torch
+from torch import Tensor
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import reverse_cuthill_mckee
 from torch.nn.attention.flex_attention import create_block_mask, flex_attention
@@ -38,7 +41,14 @@ reordered_adj = dense_adj[perm][:, perm]
 
 
 # Now define the FlexAttention with the adjacency matrix
-def graph_adjacency_mask(score, b, h, q_idx, kv_idx, adj_matrix):
+def graph_adjacency_mask(
+    score: Tensor,
+    b: Tensor,
+    h: Tensor,
+    q_idx: Tensor,
+    kv_idx: Tensor,
+    adj_matrix: Tensor,
+) -> Tensor:
     """Keep the score where an edge exists, else mask to -inf."""
     # Check if there's an edge in the adjacency matrix
     # If no edge exists, mask out the attention
@@ -51,10 +61,14 @@ adj_matrix = reordered_adj
 
 
 # Create a score_mod that captures the adjacency matrix
-def create_adjacency_score_mod(adj_matrix):
+def create_adjacency_score_mod(
+    adj_matrix: Tensor,
+) -> Callable[[Tensor, Tensor, Tensor, Tensor, Tensor], Tensor]:
     """Return a FlexAttention ``score_mod`` masking non-edges to -inf."""
 
-    def score_mod(score, b, h, q_idx, kv_idx):
+    def score_mod(
+        score: Tensor, b: Tensor, h: Tensor, q_idx: Tensor, kv_idx: Tensor
+    ) -> Tensor:
         has_edge = adj_matrix[q_idx, kv_idx].to(dtype=torch.bool)
         return torch.where(
             has_edge,
@@ -66,7 +80,7 @@ def create_adjacency_score_mod(adj_matrix):
 
 
 # For better performance, we can also use the mask_mod approach
-def adjacency_mask_mod(b, h, q_idx, kv_idx):
+def adjacency_mask_mod(b: Tensor, h: Tensor, q_idx: Tensor, kv_idx: Tensor) -> Tensor:
     """Return True where the adjacency matrix has an edge for the block mask."""
     return adj_matrix[q_idx, kv_idx] > 0  # True where an edge exists
 

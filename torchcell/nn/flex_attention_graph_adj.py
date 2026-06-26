@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import torch
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import reverse_cuthill_mckee
+from torch import Tensor
 from torch_geometric.datasets import StochasticBlockModelDataset
 from torch_geometric.utils import to_dense_adj
 
@@ -43,7 +44,13 @@ plt.show()
 
 
 # CPU-friendly implementation of graph attention with adjacency matrix masking
-def graph_attention(q, k, v, adj_matrix, scale=None):
+def graph_attention(
+    q: Tensor,
+    k: Tensor,
+    v: Tensor,
+    adj_matrix: Tensor,
+    scale: float | None = None,
+) -> Tensor:
     """Compute attention using the graph adjacency matrix as a mask.
 
     Args:

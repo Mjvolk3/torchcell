@@ -106,7 +106,9 @@ class MaskedAttentionBlock(nn.Module):
 
                 # Create a direct score_mod function to modify based on adjacency mask
                 # Using torch.where instead of Python conditional to avoid dynamic control flow
-                def score_mod(score, b, h, q_idx, k_idx):
+                def score_mod(
+                    score: Tensor, b: Tensor, h: Tensor, q_idx: Tensor, k_idx: Tensor
+                ) -> Tensor:
                     mask_val = adj_mask[b, q_idx, k_idx]
                     return torch.where(
                         mask_val, score, torch.tensor(-1e9, device=score.device)
@@ -251,7 +253,7 @@ class NodeSelfAttention(nn.Module):
         self.in_simulated_error_test = False
 
         # Edge projections cache
-        self.edge_projections = {}
+        self.edge_projections: dict[tuple[int, int, int], float] = {}
 
     def _prepare_edge_projections(
         self,
@@ -388,7 +390,13 @@ class NodeSelfAttention(nn.Module):
                     )
 
                     # Edge-aware score modification that uses torch.where() instead of if/else
-                    def score_mod(score, batch, head, q_idx, k_idx):
+                    def score_mod(
+                        score: Tensor,
+                        batch: Tensor,
+                        head: Tensor,
+                        q_idx: Tensor,
+                        k_idx: Tensor,
+                    ) -> Tensor:
                         # Use the mask directly
                         mask_val = adj_mask[batch, q_idx, k_idx]
 
@@ -411,7 +419,13 @@ class NodeSelfAttention(nn.Module):
                     attn_output = flex_attention(q, k, v, score_mod=score_mod)
                 else:
                     # Simple score_mod with just masking using torch.where
-                    def score_mod(score, batch, head, q_idx, k_idx):
+                    def score_mod(
+                        score: Tensor,
+                        batch: Tensor,
+                        head: Tensor,
+                        q_idx: Tensor,
+                        k_idx: Tensor,
+                    ) -> Tensor:
                         mask_val = adj_mask[batch, q_idx, k_idx]
                         return torch.where(
                             mask_val, score, torch.tensor(-1e9, device=score.device)
@@ -454,7 +468,16 @@ class NodeSelfAttention(nn.Module):
 
         return x
 
-    def _cpu_attention(self, q, k, v, adj_mask, edge_attr, edge_index, seq_len):
+    def _cpu_attention(
+        self,
+        q: Tensor,
+        k: Tensor,
+        v: Tensor,
+        adj_mask: Tensor,
+        edge_attr: Tensor | dict[tuple[int, int], float] | None,
+        edge_index: Tensor | None,
+        seq_len: int,
+    ) -> Tensor:
         """Standard attention implementation for CPU."""
         # Ensure everything is on CPU
         device = q.device

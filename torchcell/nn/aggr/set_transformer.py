@@ -61,7 +61,7 @@ class SetTransformerAggregation(Aggregation):
             ]
         )
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         """Reset parameters of all encoder, PMA, and decoder blocks."""
         for encoder in self.encoders:
             encoder.reset_parameters()
@@ -98,7 +98,7 @@ class SetTransformerAggregation(Aggregation):
         return x.flatten(1, 2) if self.concat else x.mean(dim=1)
 
 
-def main():
+def main() -> None:
     """Smoke-test the SAB and ISAB variants with a forward/backward pass."""
     import torch
     from torch.optim import Adam

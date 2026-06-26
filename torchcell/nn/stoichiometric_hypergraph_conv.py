@@ -6,7 +6,7 @@
 
 """Stoichiometry-aware hypergraph convolution layer for metabolic networks."""
 
-from typing import Optional
+from typing import Any, Optional
 
 import torch
 import torch.nn.functional as F
@@ -34,8 +34,8 @@ class StoichHypergraphConv(MessagePassing):
         negative_slope: float = 0.2,
         dropout: float = 0,
         bias: bool = True,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         """Build linear, gating, attention, and bias parameters for the layer."""
         kwargs.setdefault("aggr", "add")
         super().__init__(flow="source_to_target", node_dim=0, **kwargs)
@@ -80,7 +80,7 @@ class StoichHypergraphConv(MessagePassing):
 
         self.reset_parameters()
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         """Reinitialize the layer's linear, attention, and bias parameters."""
         self.lin.reset_parameters()
         if self.is_stoich_gated:
@@ -228,7 +228,7 @@ class StoichHypergraphConv(MessagePassing):
 #     print("Output shape:", out.shape)
 
 
-def main():
+def main() -> None:
     """Run a small StoichHypergraphConv example and print the output shape."""
     torch.manual_seed(42)
 

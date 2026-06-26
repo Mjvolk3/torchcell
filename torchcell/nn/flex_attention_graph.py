@@ -32,10 +32,13 @@
 ###
 
 import torch
+from torch import Tensor
 from torch.nn.attention.flex_attention import flex_attention
 
 
-def causal_mask_score_mod(score, b, h, q_idx, kv_idx):
+def causal_mask_score_mod(
+    score: Tensor, b: Tensor, h: Tensor, q_idx: Tensor, kv_idx: Tensor
+) -> Tensor:
     """Return the score where the query may attend to the key, else -inf."""
     # Compute a boolean condition for causal masking.
     allowed = q_idx >= kv_idx

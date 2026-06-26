@@ -4,7 +4,9 @@ import torch
 import torch.nn as nn
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import reverse_cuthill_mckee
+from torch import Tensor
 from torch.nn.attention.flex_attention import create_block_mask, flex_attention
+from torch_geometric.data import Data
 from torch_geometric.datasets import StochasticBlockModelDataset
 from torch_geometric.utils import to_dense_adj
 
@@ -12,7 +14,7 @@ from torch_geometric.utils import to_dense_adj
 class AttentionBlock(nn.Module):
     """Base attention block with common components for both MAB and SAB."""
 
-    def __init__(self, hidden_dim, num_heads=8):
+    def __init__(self, hidden_dim: int, num_heads: int = 8) -> None:
         """Set up shared layer norms and the post-attention MLP."""
         super().__init__()
         self.hidden_dim = hidden_dim
@@ -30,7 +32,7 @@ class AttentionBlock(nn.Module):
             nn.Linear(4 * hidden_dim, hidden_dim),
         )
 
-    def forward(self, x, adj_matrix=None):
+    def forward(self, x: Tensor, adj_matrix: Tensor | None = None) -> Tensor:
         """Raise NotImplementedError; subclasses implement the attention pass."""
         raise NotImplementedError("Implemented in subclasses")
 
@@ -38,14 +40,14 @@ class AttentionBlock(nn.Module):
 class MAB(AttentionBlock):
     """Masked attention block that uses graph structure to mask attention."""
 
-    def __init__(self, hidden_dim, num_heads=8):
+    def __init__(self, hidden_dim: int, num_heads: int = 8) -> None:
         """Initialize the masked attention block and log its dimensions."""
         super().__init__(hidden_dim, num_heads)
         print(
             f"Initializing MAB with dims: hidden={hidden_dim}, heads={num_heads}, head_dim={self.head_dim}"
         )
 
-    def forward(self, x, adj_matrix):
+    def forward(self, x: Tensor, adj_matrix: Tensor) -> Tensor:
         """Apply adjacency-masked multi-head attention plus the residual MLP."""
         device = x.device
         print(
@@ -67,7 +69,9 @@ class MAB(AttentionBlock):
             print("  Using CUDA FlexAttention with graph masking")
 
             # Use FlexAttention with GPU
-            def node_mask_mod(b, h, q_idx, kv_idx):
+            def node_mask_mod(
+                b: Tensor, h: Tensor, q_idx: Tensor, kv_idx: Tensor
+            ) -> Tensor:
                 return adj_matrix[b, q_idx, kv_idx]
 
             block_mask = create_block_mask(
@@ -122,14 +126,14 @@ class MAB(AttentionBlock):
 class SAB(AttentionBlock):
     """Self-attention block that uses standard self-attention with no masking."""
 
-    def __init__(self, hidden_dim, num_heads=8):
+    def __init__(self, hidden_dim: int, num_heads: int = 8) -> None:
         """Initialize the self-attention block and log its dimensions."""
         super().__init__(hidden_dim, num_heads)
         print(
             f"Initializing SAB with dims: hidden={hidden_dim}, heads={num_heads}, head_dim={self.head_dim}"
         )
 
-    def forward(self, x, adj_matrix=None):
+    def forward(self, x: Tensor, adj_matrix: Tensor | None = None) -> Tensor:
         """Apply unmasked multi-head self-attention plus the residual MLP."""
         device = x.device
         print(f"SAB.forward - Input on device: {device}, x shape: {x.shape}")
@@ -179,7 +183,13 @@ class SAB(AttentionBlock):
 class NSAEncoder(nn.Module):
     """Node-set attention encoder with a customizable pattern of MAB/SAB blocks."""
 
-    def __init__(self, input_dim, hidden_dim, pattern=None, num_heads=8):
+    def __init__(
+        self,
+        input_dim: int,
+        hidden_dim: int,
+        pattern: list[str] | None = None,
+        num_heads: int = 8,
+    ) -> None:
         """Build the attention stack from a pattern of MAB/SAB blocks.
 
         Args:
@@ -221,7 +231,9 @@ class NSAEncoder(nn.Module):
                 self.layers.append(SAB(hidden_dim, num_heads))
                 print(f"  Added layer {i}: Self Attention Block (SAB)")
 
-    def forward(self, x, edge_index, batch=None):
+    def forward(
+        self, x: Tensor, edge_index: Tensor, batch: Tensor | None = None
+    ) -> Tensor:
         """Encode batched graphs through the configured attention block stack.
 
         Args:
@@ -282,7 +294,7 @@ class NSAEncoder(nn.Module):
         return h
 
 
-def test_nsa_implementation(data, reordered_adj):
+def test_nsa_implementation(data: Data, reordered_adj: Tensor) -> Tensor:
     """Build an NSAEncoder, run a forward pass on the data, and return output."""
     # Check if CUDA is available
     cuda_available = torch.cuda.is_available()
@@ -333,7 +345,7 @@ def test_nsa_implementation(data, reordered_adj):
     return output
 
 
-def main():
+def main() -> None:
     """Generate an SBM graph, reorder it, and run the NSA test end to end."""
     print("=====================================")
     print("Starting Node-Set Attention Test with Custom MAB/SAB Pattern")

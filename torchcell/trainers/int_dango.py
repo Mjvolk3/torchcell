@@ -6,6 +6,7 @@
 """Lightning training task for the DANGO genetic-interaction regression model."""
 
 import logging
+from typing import Any
 
 import matplotlib.pyplot as plt
 import torch
@@ -31,8 +32,8 @@ class RegressionTask(LightningModule):
         self,
         model: nn.Module,
         cell_graph: torch.Tensor,
-        optimizer_config: dict,
-        lr_scheduler_config: dict,
+        optimizer_config: dict[str, Any],
+        lr_scheduler_config: dict[str, Any],
         batch_size: int = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
@@ -106,7 +107,7 @@ class RegressionTask(LightningModule):
         }
         self.automatic_optimization = False
 
-    def forward(self, batch):
+    def forward(self, batch: Any) -> tuple[torch.Tensor, dict[str, Any]]:
         """
         Forward pass through the model
 
@@ -138,7 +139,7 @@ class RegressionTask(LightningModule):
             "integrated_embeddings": outputs_dict.get("integrated_embeddings", None)
         }
 
-    def _ensure_no_unused_params_loss(self):
+    def _ensure_no_unused_params_loss(self) -> torch.Tensor | int:
         """Add a dummy loss to ensure all parameters are used in backward pass."""
         dummy_loss = 0
         for param in self.model.parameters():
@@ -146,7 +147,9 @@ class RegressionTask(LightningModule):
                 dummy_loss = dummy_loss + 0.0 * param.sum()
         return dummy_loss
 
-    def _shared_step(self, batch, batch_idx, stage="train"):
+    def _shared_step(
+        self, batch: Any, batch_idx: int, stage: str = "train"
+    ) -> tuple[torch.Tensor, torch.Tensor | None, torch.Tensor | None]:
         # DataLoader profiling mode: Skip model forward, create dummy loss
         if self.execution_mode == "dataloader_profiling":
             # Execute all batch preparation (moving to device happens in forward())
@@ -412,7 +415,7 @@ class RegressionTask(LightningModule):
 
         return loss, predictions, gene_interaction_orig
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
         """Run a training step and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
 
@@ -444,18 +447,20 @@ class RegressionTask(LightningModule):
         print(f"Loss: {loss}")
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
         """Run a validation step over the batch."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
         return loss
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
         """Run a test step over the batch."""
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
-    def _compute_metrics_safely(self, metrics_dict):
-        results = {}
+    def _compute_metrics_safely(
+        self, metrics_dict: MetricCollection
+    ) -> dict[str, Any]:
+        results: dict[str, Any] = {}
         for metric_name, metric in metrics_dict.items():
             try:
                 results[metric_name] = metric.compute()
@@ -471,7 +476,7 @@ class RegressionTask(LightningModule):
                 raise e
         return results
 
-    def _plot_samples(self, samples, stage: str) -> None:
+    def _plot_samples(self, samples: dict[str, Any], stage: str) -> None:
         if not samples["true_values"]:
             return
 
@@ -511,7 +516,7 @@ class RegressionTask(LightningModule):
 
         # Skip UMAP visualization by passing empty latents dictionary
         # The original latents have shape mismatch: integrated_embeddings.shape = [33035, 64] vs true_values.shape = [batch_size, 1]
-        z_p_latents = {}  # Empty dictionary to skip UMAP visualization
+        z_p_latents: dict[str, torch.Tensor] = {}  # Empty dict to skip UMAP visualization
 
         # Use our updated visualize_model_outputs method which now properly handles single target case
         vis.visualize_model_outputs(
@@ -542,7 +547,7 @@ class RegressionTask(LightningModule):
             wandb.log({f"{stage}/gene_interaction_box_plot": wandb.Image(fig_gi)})
             plt.close(fig_gi)
 
-    def on_train_epoch_end(self):
+    def on_train_epoch_end(self) -> None:
         """Aggregate and log training metrics and plots at epoch end."""
         # Log training metrics
         computed_metrics = self._compute_metrics_safely(self.train_metrics)
@@ -570,7 +575,7 @@ class RegressionTask(LightningModule):
                 "latents": {"integrated_embeddings": []},
             }
 
-    def on_train_epoch_start(self):
+    def on_train_epoch_start(self) -> None:
         """Reset accumulators at the start of a training epoch."""
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
@@ -580,7 +585,7 @@ class RegressionTask(LightningModule):
                 "latents": {"integrated_embeddings": []},
             }
 
-    def on_validation_epoch_start(self):
+    def on_validation_epoch_start(self) -> None:
         """Reset accumulators at the start of a validation epoch."""
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
@@ -590,7 +595,7 @@ class RegressionTask(LightningModule):
                 "latents": {"integrated_embeddings": []},
             }
 
-    def on_validation_epoch_end(self):
+    def on_validation_epoch_end(self) -> None:
         """Aggregate and log validation metrics and plots at epoch end."""
         # Log validation metrics
         computed_metrics = self._compute_metrics_safely(self.val_metrics)
@@ -618,7 +623,7 @@ class RegressionTask(LightningModule):
                 "latents": {"integrated_embeddings": []},
             }
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> dict[str, Any]:
         """Build and return the optimizer and learning-rate scheduler."""
         optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])
         optimizer_params = {

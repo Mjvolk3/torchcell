@@ -3,6 +3,7 @@
 import logging
 import os.path as osp
 import sys
+from typing import Any
 
 import lightning as L
 import matplotlib.pyplot as plt
@@ -11,6 +12,7 @@ import torch.nn as nn
 import torch.optim as optim
 import wandb
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch_geometric.data import HeteroData
 from torchmetrics import MetricCollection
 
 import torchcell
@@ -24,20 +26,20 @@ plt.style.use(style_file_path)
 
 
 def log_error_information(
-    batch_idx,
-    y,
-    y_hat,
-    x,
-    edge_indices,
-    batch,
-    head_loss,
-    dim_losses,
-    graph_attention_weights,
-    graph_pool_scores,
-    graph_intermediate_predictions,
-    graph_pool_sizes,
-    graph_node_selections,
-):
+    batch_idx: int,
+    y: torch.Tensor,
+    y_hat: torch.Tensor,
+    x: torch.Tensor,
+    edge_indices: dict[str, torch.Tensor],
+    batch: torch.Tensor,
+    head_loss: torch.Tensor,
+    dim_losses: torch.Tensor,
+    graph_attention_weights: dict[str, Any],
+    graph_pool_scores: dict[str, Any],
+    graph_intermediate_predictions: dict[str, Any],
+    graph_pool_sizes: dict[str, Any],
+    graph_node_selections: dict[str, Any],
+) -> None:
     """Log batch tensors and per-graph diagnostics when a NaN loss occurs."""
     log.error("NaN loss detected. Logging relevant information and terminating.")
     log.error(f"Batch index: {batch_idx}")
@@ -88,17 +90,17 @@ class RegressionTask(L.LightningModule):
     def __init__(
         self,
         model: nn.Module,
-        optimizer_config: dict,
-        lr_scheduler_config: dict,
-        batch_size: int = None,
+        optimizer_config: dict[str, Any],
+        lr_scheduler_config: dict[str, Any],
+        batch_size: int | None = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
         boxplot_every_n_epochs: int = 1,
-        loss_func: nn.Module = None,
+        loss_func: nn.Module | None = None,
         intermediate_loss_weight: float = 0.1,
         grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
-    ):
+    ) -> None:
         """Store the model, loss, optimizer config, and per-stage metrics."""
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
@@ -136,16 +138,21 @@ class RegressionTask(L.LightningModule):
             }
         )
 
-        self.true_values = []
-        self.predictions = []
-        self.last_logged_best_step = None
+        self.true_values: list[torch.Tensor] = []
+        self.predictions: list[torch.Tensor] = []
+        self.last_logged_best_step: int | None = None
         self.automatic_optimization = False
 
-    def forward(self, x, edge_indices, batch):
+    # return: model output tuple, dynamic from nn.Module
+    def forward(
+        self, x: torch.Tensor, edge_indices: dict[str, torch.Tensor], batch: torch.Tensor
+    ) -> Any:
         """Run the wrapped model on node features, edges, and batch index."""
         return self.model(x, edge_indices, batch)
 
-    def _shared_step(self, batch, batch_idx, stage="train"):
+    def _shared_step(
+        self, batch: HeteroData, batch_idx: int, stage: str = "train"
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Run a forward pass, compute losses and metrics for one batch."""
         # Process input data for sparse format
         x = batch["gene"].x
@@ -266,7 +273,7 @@ class RegressionTask(L.LightningModule):
 
         return loss, final_output, y
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
         """Run a manual-optimization training step with gradient accumulation."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
 
@@ -297,17 +304,17 @@ class RegressionTask(L.LightningModule):
 
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
         """Run the shared step for one validation batch and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
         return loss
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
         """Run the shared step for one test batch and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
-    def on_train_epoch_end(self):
+    def on_train_epoch_end(self) -> None:
         """Compute, log, and reset the training metrics at epoch end."""
         # Compute and log metrics for each metric type
         for metric_name, metric_dict in self.train_metrics.items():
@@ -316,7 +323,7 @@ class RegressionTask(L.LightningModule):
                 self.log(f"train/{metric_name}/{name}", value, sync_dist=True)
             metric_dict.reset()  # Reset metrics after logging
 
-    def on_validation_epoch_end(self):
+    def on_validation_epoch_end(self) -> None:
         """Log validation metrics and emit prediction plots at epoch end."""
         # Compute and log metrics for each metric type
         for metric_name, metric_dict in self.val_metrics.items():
@@ -370,7 +377,9 @@ class RegressionTask(L.LightningModule):
                 current_global_step  # update the last logged step
             )
 
-    def compute_prediction_stats(self, true_values, predictions, stage="val"):
+    def compute_prediction_stats(
+        self, true_values: torch.Tensor, predictions: torch.Tensor, stage: str = "val"
+    ) -> None:
         """Build and log box plots of predictions binned by true value."""
         # Define the bin edges for each dimension
         bin_edges = {
@@ -410,7 +419,7 @@ class RegressionTask(L.LightningModule):
                 }
             )
 
-    def on_test_epoch_end(self):
+    def on_test_epoch_end(self) -> None:
         """Log test metrics and emit prediction box plots at epoch end."""
         self.log_dict(self.test_metrics.compute(), sync_dist=True)
         self.test_metrics.reset()
@@ -435,7 +444,7 @@ class RegressionTask(L.LightningModule):
         self.true_values = []
         self.predictions = []
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> dict[str, Any]:
         """Build the optimizer and LR scheduler from the hyperparameter config."""
         optimizer_class = getattr(optim, self.hparams.optimizer_config["type"])
         optimizer_params = {

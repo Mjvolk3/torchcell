@@ -39,8 +39,8 @@ class DCellRegressionTask(L.LightningModule):
         weight_decay: float = 1e-5,
         batch_size: int = None,
         train_wt_diff: bool = True,
-        **kwargs,
-    ):
+        **kwargs: object,
+    ) -> None:
         """Set up models, loss, optimizer config, and metric collections.
 
         Args:
@@ -101,14 +101,14 @@ class DCellRegressionTask(L.LightningModule):
         self.last_logged_best_step = None
         tracemalloc.start()
 
-    def setup(self, stage=None):
+    def setup(self, stage: str | None = None) -> None:
         """Move submodels to device and init prediction/true-value buffers."""
         for model in self.models.values():
             model.to(self.device)
         self.true_values = torch.tensor([], dtype=torch.float32, device=self.device)
         self.predictions = torch.tensor([], dtype=torch.float32, device=self.device)
 
-    def forward(self, batch):
+    def forward(self, batch: object) -> dict[str, torch.Tensor]:
         """Run the DCell subsystem and linear heads, returning per-node outputs."""
         # Implement the forward pass
         dcell_subsystem_output = self.dcell(batch)
@@ -117,7 +117,7 @@ class DCellRegressionTask(L.LightningModule):
         #     dcell_linear_output = dcell_linear_output.squeeze(-1)
         return dcell_linear_output
 
-    def on_train_start(self):
+    def on_train_start(self) -> None:
         """Log the total parameter count at the start of training."""
         # Calculate the model size (number of parameters)
         parameter_size = sum(p.numel() for p in self.parameters())
@@ -126,7 +126,7 @@ class DCellRegressionTask(L.LightningModule):
             "model/parameters_size", torch.tensor(parameter_size, dtype=torch.float32)
         )
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch: object, batch_idx: int) -> torch.Tensor:
         """Run a manual-optimization training step and log loss and metrics."""
         y_hat = self(batch)
         y = batch.fitness
@@ -174,12 +174,12 @@ class DCellRegressionTask(L.LightningModule):
         )
         return loss
 
-    def on_train_epoch_end(self):
+    def on_train_epoch_end(self) -> None:
         """Log and reset accumulated training metrics."""
         self.log_dict(self.train_metrics.compute(), sync_dist=True)
         self.train_metrics.reset()
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: object, batch_idx: int) -> None:
         """Run a validation step, logging loss/metrics and storing predictions."""
         # Extract the batch vector
         y_hat = self(batch)
@@ -224,7 +224,7 @@ class DCellRegressionTask(L.LightningModule):
             [self.predictions, y_hat_subsystems.detach()], dim=0
         )
 
-    def on_validation_epoch_end(self):
+    def on_validation_epoch_end(self) -> None:
         """Log val metrics, render box plots, and checkpoint best model to W&B."""
         self.log_dict(self.val_metrics.compute(), sync_dist=True)
         self.val_metrics.reset()
@@ -272,7 +272,7 @@ class DCellRegressionTask(L.LightningModule):
                 current_global_step  # update the last logged step
             )
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch: object, batch_idx: int) -> None:
         """Run a test step and log loss, regression metrics, and correlations."""
         y_hat = self(batch)
         y = batch.fitness
@@ -312,12 +312,12 @@ class DCellRegressionTask(L.LightningModule):
             sync_dist=True,
         )
 
-    def on_test_epoch_end(self):
+    def on_test_epoch_end(self) -> None:
         """Log and reset accumulated test metrics."""
         self.log_dict(self.test_metrics.compute(), sync_dist=True)
         self.test_metrics.reset()
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> torch.optim.Optimizer:
         """Build an Adam optimizer over the DCell and linear-head parameters."""
         params = list(self.models["dcell"].parameters()) + list(
             self.models["dcell_linear"].parameters()

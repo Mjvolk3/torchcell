@@ -5,6 +5,7 @@
 """Lightning regression trainer with MSE/ListMLE losses and correlation metrics."""
 
 import os.path as osp
+from typing import Any
 
 import lightning as L
 import matplotlib.pyplot as plt
@@ -34,20 +35,20 @@ plt.style.use(style_file_path)
 class ListMLEMetric(Metric):
     """TorchMetric tracking the running mean ListMLE loss over batches."""
 
-    def __init__(self, dist_sync_on_step=False):
+    def __init__(self, dist_sync_on_step: bool = False) -> None:
         """Initialize the ListMLE loss and the sum/count accumulator states."""
         super().__init__(dist_sync_on_step=dist_sync_on_step)
         self.list_mle_loss = ListMLELoss()  # Renamed for clarity
         self.add_state("sum_loss", default=torch.tensor(0.0), dist_reduce_fx="sum")
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
 
-    def update(self, preds: torch.Tensor, target: torch.Tensor):
+    def update(self, preds: torch.Tensor, target: torch.Tensor) -> None:
         """Accumulate the batch-weighted ListMLE loss and sample count."""
         loss = self.list_mle_loss(preds, target)  # Corrected method call
         self.sum_loss += loss.detach() * target.size(0)
         self.total += target.size(0)
 
-    def compute(self):
+    def compute(self) -> torch.Tensor:
         """Return the mean ListMLE loss across all accumulated samples."""
         return self.sum_loss / self.total
 
@@ -55,14 +56,14 @@ class ListMLEMetric(Metric):
 class MSEListMLELoss(nn.Module):
     """Loss combining MSE with an alpha-weighted ListMLE ranking term."""
 
-    def __init__(self, alpha=0.5):
+    def __init__(self, alpha: float = 0.5) -> None:
         """Initialize the MSE and ListMLE losses and the ListMLE weight alpha."""
         super().__init__()
         self.mse_loss = nn.MSELoss()
         self.list_mle_loss = ListMLELoss()
         self.alpha = alpha
 
-    def forward(self, y_pred, y_true):
+    def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
         """Return MSE plus alpha times the ListMLE loss."""
         mse = self.mse_loss(y_pred, y_true)
         list_mle = self.list_mle_loss(y_pred, y_true)
@@ -86,7 +87,7 @@ class RegressionTask(L.LightningModule):
         clip_grad_norm_max_norm: float = 0.1,
         boxplot_every_n_epochs: int = 1,
         alpha: float = 0.0,
-    ):
+    ) -> None:
         """Configure the model, loss, optimizer hyperparameters, and metric collections.
 
         Args:
@@ -153,29 +154,29 @@ class RegressionTask(L.LightningModule):
         self.spearman_corr = SpearmanCorrCoef()
 
         # TODO not sure if these are needed for corr ?
-        self.true_values = []
-        self.predictions = []
+        self.true_values: list[torch.Tensor] = []
+        self.predictions: list[torch.Tensor] = []
 
         # wandb model artifact logging
         self.last_logged_best_step = None
 
-    def setup(self, stage=None):
+    def setup(self, stage: str | None = None) -> None:
         """Move the model to the active device at the start of each stage."""
         self.model = self.model.to(self.device)
 
-    def forward(self, x, batch):
+    def forward(self, x: torch.Tensor, batch: torch.Tensor) -> torch.Tensor:
         """Run inputs through the main encoder and top head to produce predictions."""
         x_nodes, x_set = self.model["main"](x, batch)
         y_hat = self.model["top"](x_set)
         return y_hat
 
-    def on_train_start(self):
+    def on_train_start(self) -> None:
         """Log the total model parameter count when training starts."""
         parameter_size = sum(p.numel() for p in self.parameters())
         parameter_size_float = float(parameter_size)
         self.log("model/parameters_size", parameter_size_float, on_epoch=True)
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch: dict[str, Any], batch_idx: int) -> torch.Tensor:
         """Run a manual-optimization training step and log loss and correlations."""
         # Extract the batch vector
         print()
@@ -218,12 +219,12 @@ class RegressionTask(L.LightningModule):
         )
         return loss
 
-    def on_train_epoch_end(self):
+    def on_train_epoch_end(self) -> None:
         """Log and reset the accumulated training metrics at epoch end."""
         self.log_dict(self.train_metrics.compute(), sync_dist=True)
         self.train_metrics.reset()
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: dict[str, Any], batch_idx: int) -> None:
         """Run a validation step, log metrics, and store predictions for plotting."""
         # Extract the batch vector
         print()
@@ -253,7 +254,9 @@ class RegressionTask(L.LightningModule):
         self.true_values.append(y.detach())
         self.predictions.append(y_hat.detach())
 
-    def compute_prediction_stats(self, true_values, predictions, stage="val"):
+    def compute_prediction_stats(
+        self, true_values: torch.Tensor, predictions: torch.Tensor, stage: str = "val"
+    ) -> None:
         """Bin predictions and log per-bin mean and std as a wandb table."""
         # Define the bin edges
         bin_edges = torch.tensor(
@@ -281,7 +284,7 @@ class RegressionTask(L.LightningModule):
         # Log the table to wandb
         wandb.log({f"{stage}/Prediction_Stats_{self.current_epoch}": wandb_table})
 
-    def on_validation_epoch_end(self):
+    def on_validation_epoch_end(self) -> None:
         """Log validation metrics, draw box plots, and log the best model artifact."""
         self.log_dict(self.val_metrics.compute(), sync_dist=True)
         self.val_metrics.reset()
@@ -326,7 +329,7 @@ class RegressionTask(L.LightningModule):
                 current_global_step  # update the last logged step
             )
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch: dict[str, Any], batch_idx: int) -> None:
         """Run a test step, log metrics, and store predictions for plotting."""
         # Extract the batch vector
         print()
@@ -356,7 +359,7 @@ class RegressionTask(L.LightningModule):
         self.true_values.append(y.detach())
         self.predictions.append(y_hat.detach())
 
-    def on_test_epoch_end(self):
+    def on_test_epoch_end(self) -> None:
         """Log test metrics and draw the binned-prediction box plot."""
         self.log_dict(self.test_metrics.compute(), sync_dist=True)
         self.test_metrics.reset()
@@ -376,7 +379,7 @@ class RegressionTask(L.LightningModule):
         self.true_values = []
         self.predictions = []
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> torch.optim.Optimizer:
         """Return an Adam optimizer over the model parameters."""
         params = list(self.model.parameters())
         optimizer = torch.optim.Adam(

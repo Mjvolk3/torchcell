@@ -42,7 +42,7 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
         learning_rate: float = 1e-3,
         weight_decay: float = 1e-5,
         loss: str = "mse",
-    ):
+    ) -> None:
         """Store models, wild-type data, loss, metrics, and training hyperparameters."""
         super().__init__()
 
@@ -92,15 +92,17 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
 
         # Used in end for whisker plot
         self.boxplot_every_n_epochs = boxplot_every_n_epochs
-        self.true_values = []
-        self.predictions = []
+        self.true_values: list[torch.Tensor] = []
+        self.predictions: list[torch.Tensor] = []
 
-    def setup(self, stage=None):
+    def setup(self, stage: str | None = None) -> None:
         """Lightning setup hook run before fitting or testing."""
         self.model_dst = self.model_dst.to(self.device)
         self.model_lin = self.model_lin.to(self.device)
 
-    def forward(self, x, batch):
+    def forward(
+        self, x: torch.Tensor, batch: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Run the deep-set transformer model on the input batch."""
         inst_nodes_hat, inst_set_hat, _, attn_weights = self.model_dst(x, batch)
         # This case is only for sanity checking
@@ -110,14 +112,14 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
         y_hat = self.model_lin(y_set_hat)
         return y_hat, attn_weights
 
-    def on_train_start(self):
+    def on_train_start(self) -> None:
         """Initialize wild-type embeddings at the start of training."""
         # Calculate the model size (number of parameters)
         parameter_size = sum(p.numel() for p in self.parameters())
         # Log it using wandb
         self.log("model/parameters_size", parameter_size)
 
-    def train_wt(self):
+    def train_wt(self) -> None:
         """Compute and cache the wild-type reference embeddings."""
         # CHECK on definition of global_step - refresh with epoch?
         if self.global_step == 0 and not self.is_wt_init:
@@ -190,7 +192,7 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
             #     print(f"Broke WT overfit on: {i}")
             #     break
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch: Data, batch_idx: int) -> torch.Tensor:
         """Run one manual-optimization training step and log the loss."""
         # Train on wt reference
         self.train_wt()
@@ -232,12 +234,12 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
         )
         return loss
 
-    def on_train_epoch_end(self):
+    def on_train_epoch_end(self) -> None:
         """Compute and log aggregated training metrics at epoch end."""
         self.log_dict(self.train_metrics.compute(), sync_dist=True)
         self.train_metrics.reset()
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: Data, batch_idx: int) -> None:
         """Run one validation step and accumulate predictions and metrics."""
         # Extract the batch vector
         x, y, batch_vector = batch.x, batch.fitness, batch.batch
@@ -262,7 +264,7 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
         self.true_values.append(y.detach())
         self.predictions.append(y_hat.detach())
 
-    def on_validation_epoch_end(self):
+    def on_validation_epoch_end(self) -> None:
         """Compute, log, and optionally plot validation metrics at epoch end."""
         self.log_dict(self.val_metrics.compute(), sync_dist=True)
         self.val_metrics.reset()
@@ -306,7 +308,7 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
         # Close the matplotlib plot
         plt.close(fig)
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch: Data, batch_idx: int) -> None:
         """Run one test step and accumulate predictions and metrics."""
         # Extract the batch vector
         x, y, batch_vector = batch.x, batch.fitness, batch.batch
@@ -329,12 +331,12 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
             sync_dist=True,
         )
 
-    def on_test_epoch_end(self):
+    def on_test_epoch_end(self) -> None:
         """Compute and log aggregated test metrics at epoch end."""
         self.log_dict(self.test_metrics.compute(), sync_dist=True)
         self.test_metrics.reset()
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> torch.optim.Optimizer:
         """Return the optimizer used for training."""
         params = list(self.model_dst.parameters()) + list(self.model_lin.parameters())
         optimizer = torch.optim.Adam(

@@ -6,6 +6,7 @@
 
 import math
 import os.path as osp
+from typing import Any
 
 import lightning as L
 import matplotlib.pyplot as plt
@@ -44,16 +45,16 @@ class RegressionTask(L.LightningModule):
         learning_rate: float = 1e-3,
         weight_decay: float = 1e-5,
         loss: str = "mse",
-        batch_size: int = None,
+        batch_size: int | None = None,
         train_wt_node_loss: bool = False,
-        train_epoch_size: int = None,
+        train_epoch_size: int | None = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
         order_penalty: bool = False,
         lambda_order: float = 1.0,
         train_wt_diff: bool = True,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         """Configure the deep-set/MLP models, loss, metrics, and WT-training settings.
 
         Args:
@@ -153,18 +154,18 @@ class RegressionTask(L.LightningModule):
 
         # Used in end for whisker plot
         self.boxplot_every_n_epochs = boxplot_every_n_epochs
-        self.true_values = []
-        self.predictions = []
+        self.true_values: list[torch.Tensor] = []
+        self.predictions: list[torch.Tensor] = []
 
         # wandb model artifact logging
         self.last_logged_best_step = None
 
-    def setup(self, stage=None):
+    def setup(self, stage: str | None = None) -> None:
         """Move the deep-set and linear models onto the trainer device."""
         self.model_ds = self.model_ds.to(self.device)
         self.model_lin = self.model_lin.to(self.device)
 
-    def forward(self, x, batch):
+    def forward(self, x: torch.Tensor, batch: torch.Tensor) -> torch.Tensor:
         """Predict the target from node features, optionally as a WT difference."""
         inst_nodes_hat, inst_set_hat = self.model_ds(x, batch)
         # This case is only for sanity checking
@@ -177,14 +178,14 @@ class RegressionTask(L.LightningModule):
         y_hat = self.model_lin(y_set_hat)
         return y_hat
 
-    def on_train_start(self):
+    def on_train_start(self) -> None:
         """Log the total parameter count of the model to W&B."""
         # Calculate the model size (number of parameters)
         parameter_size = sum(p.numel() for p in self.parameters())
         # Log it using wandb
         self.log("model/parameters_size", parameter_size)
 
-    def train_wt(self):
+    def train_wt(self) -> None:
         """Periodically optimize the WT reference embedding toward fitness 1.0."""
         # CHECK on definition of global_step - refresh with epoch?
         if self.global_step == 0 and not self.is_wt_init:
@@ -260,7 +261,7 @@ class RegressionTask(L.LightningModule):
                     break
             progress_bar.close()
 
-    def ordering_penalty(self, y_hat, y):
+    def ordering_penalty(self, y_hat: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         """Return a penalty for predictions that violate the true target ordering."""
         # Step 1: Obtain the indices that would sort y
         _, sorted_indices = torch.sort(y, descending=False)
@@ -275,7 +276,7 @@ class RegressionTask(L.LightningModule):
 
         return penalty
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch: Batch, batch_idx: int) -> torch.Tensor:
         """Run one manual optimization step and log loss and correlation metrics."""
         # Train on wt reference
         if self.train_wt_diff:
@@ -326,12 +327,12 @@ class RegressionTask(L.LightningModule):
         )
         return loss
 
-    def on_train_epoch_end(self):
+    def on_train_epoch_end(self) -> None:
         """Log and reset the accumulated training metrics."""
         self.log_dict(self.train_metrics.compute(), sync_dist=True)
         self.train_metrics.reset()
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: Batch, batch_idx: int) -> None:
         """Compute validation loss/metrics and buffer predictions for plotting."""
         # Extract the batch vector
         x, y, batch_vector = (
@@ -360,7 +361,7 @@ class RegressionTask(L.LightningModule):
         self.true_values.append(y.detach())
         self.predictions.append(y_hat.detach())
 
-    def on_validation_epoch_end(self):
+    def on_validation_epoch_end(self) -> None:
         """Log validation metrics, log a boxplot, and checkpoint the best model to W&B."""
         self.log_dict(self.val_metrics.compute(), sync_dist=True)
         self.val_metrics.reset()
@@ -403,7 +404,7 @@ class RegressionTask(L.LightningModule):
                 current_global_step  # update the last logged step
             )
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch: Batch, batch_idx: int) -> None:
         """Compute test loss and log test metrics and correlation coefficients."""
         # Extract the batch vector
         x, y, batch_vector = (
@@ -430,12 +431,12 @@ class RegressionTask(L.LightningModule):
             sync_dist=True,
         )
 
-    def on_test_epoch_end(self):
+    def on_test_epoch_end(self) -> None:
         """Log and reset the accumulated test metrics."""
         self.log_dict(self.test_metrics.compute(), sync_dist=True)
         self.test_metrics.reset()
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> torch.optim.Optimizer:
         """Return an Adam optimizer over the deep-set and linear model parameters."""
         params = list(self.model_ds.parameters()) + list(self.model_lin.parameters())
         optimizer = torch.optim.Adam(

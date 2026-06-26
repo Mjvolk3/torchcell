@@ -1,6 +1,7 @@
 """Lightning task training a hetero GNN pool model for binary fitness classification."""
 
 import logging
+from typing import Any
 
 import lightning as L
 import matplotlib.pyplot as plt
@@ -40,8 +41,8 @@ class ClassificationTask(L.LightningModule):
         inverse_transform: BaseTransform,
         forward_transform: BaseTransform,
         label_type: str,
-        optimizer_config: dict,
-        lr_scheduler_config: dict,
+        optimizer_config: dict[str, Any],
+        lr_scheduler_config: dict[str, Any],
         batch_size: int = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
@@ -116,9 +117,9 @@ class ClassificationTask(L.LightningModule):
             )
             setattr(self, f"{stage}_metrics", metrics_dict)
 
-        self.true_reg_values = []
-        self.predictions = []
-        self.last_logged_best_step = None
+        self.true_reg_values: list[torch.Tensor] = []
+        self.predictions: list[torch.Tensor] = []
+        self.last_logged_best_step: int | None = None
         self.automatic_optimization = False
 
     def _log_prediction_table(
@@ -129,7 +130,7 @@ class ClassificationTask(L.LightningModule):
         logits: torch.Tensor,
         inverse_preds: torch.Tensor,
         dim_losses: torch.Tensor,
-    ):
+    ) -> None:
         """Log two tables (one per task) with regression values, bin information, and ranges."""
         num_bins = true_class_values.shape[1] // 2
         task_mapping = [("Fitness", "fitness"), ("GI", "gene_interaction")]
@@ -219,11 +220,13 @@ class ClassificationTask(L.LightningModule):
     #     else:
     #         return self.model(x_dict, edge_index_dict, batch_dict)
 
-    def forward(self, batch):
+    def forward(self, batch: Any) -> tuple[torch.Tensor, Any]:
         """Run the model on the batch and return its outputs."""
         return self.model(batch)
 
-    def _shared_step(self, batch, batch_idx, stage="train"):
+    def _shared_step(
+        self, batch: Any, batch_idx: int, stage: str = "train"
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         # Forward pass to get logits
         logits, _ = self(batch)
         batch_size = logits.size(0)
@@ -347,7 +350,7 @@ class ClassificationTask(L.LightningModule):
 
         return loss, logits, y
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
         """Run a training step and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
 
@@ -377,17 +380,17 @@ class ClassificationTask(L.LightningModule):
 
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
         """Run a validation step over the batch."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
         return loss
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
         """Run a test step over the batch."""
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
-    def on_train_epoch_end(self):
+    def on_train_epoch_end(self) -> None:
         """Aggregate and log training metrics at epoch end."""
         for metric_name, metric_dict in self.train_metrics.items():
             computed_metrics = metric_dict.compute()
@@ -395,7 +398,7 @@ class ClassificationTask(L.LightningModule):
                 self.log(name, value, sync_dist=True)
             metric_dict.reset()
 
-    def on_validation_epoch_end(self):
+    def on_validation_epoch_end(self) -> None:
         """Aggregate and log validation metrics and plots at epoch end."""
         # Log metrics
         for metric_name, metric_dict in self.val_metrics.items():
@@ -464,7 +467,7 @@ class ClassificationTask(L.LightningModule):
             wandb.log_artifact(artifact)
             self.last_logged_best_step = current_global_step
 
-    def on_test_epoch_end(self):
+    def on_test_epoch_end(self) -> None:
         """Aggregate and log test metrics and artifacts at epoch end."""
         # Log metrics
         for metric_name, metric_dict in self.test_metrics.items():
@@ -514,7 +517,7 @@ class ClassificationTask(L.LightningModule):
         self.true_reg_values = []
         self.predictions = []
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> dict[str, Any]:
         """Build and return the optimizer and learning-rate scheduler."""
         optimizer_class = getattr(optim, self.hparams.optimizer_config["type"])
         optimizer_params = {

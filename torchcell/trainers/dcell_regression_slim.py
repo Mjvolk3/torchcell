@@ -5,11 +5,13 @@
 """Slim Lightning trainer for DCell regression with subsystem and root metrics."""
 
 import os.path as osp
+from typing import Any
 
 import lightning as L
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
+from torch_geometric.data import HeteroData
 
 # from torchmetrics.regression import PearsonCorrCoef, SpearmanCorrCoef
 import wandb
@@ -41,10 +43,10 @@ class DCellRegressionSlimTask(L.LightningModule):
         boxplot_every_n_epochs: int = 10,
         learning_rate: float = 1e-3,
         weight_decay: float = 1e-5,
-        batch_size: int = None,
+        batch_size: int | None = None,
         alpha: float = 0.3,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         """Register the DCell submodels, DCell loss, optimizer settings, and metrics.
 
         Args:
@@ -113,12 +115,12 @@ class DCellRegressionSlimTask(L.LightningModule):
         # wandb model artifact logging
         self.last_logged_best_step = None
 
-    def setup(self, stage=None):
+    def setup(self, stage: str | None = None) -> None:
         """Move all submodels to the active device at the start of each stage."""
         for model in self.models.values():
             model.to(self.device)
 
-    def forward(self, batch):
+    def forward(self, batch: HeteroData) -> dict[str, torch.Tensor]:
         """Run the batch through the DCell subsystems and linear head."""
         # Implement the forward pass
         dcell_subsystem_output = self.dcell(batch)
@@ -127,7 +129,7 @@ class DCellRegressionSlimTask(L.LightningModule):
         #     dcell_linear_output = dcell_linear_output.squeeze(-1)
         return dcell_linear_output
 
-    def on_train_start(self):
+    def on_train_start(self) -> None:
         """Log the total model parameter count when training starts."""
         # Calculate the model size (number of parameters)
         parameter_size = sum(p.numel() for p in self.parameters())
@@ -136,7 +138,7 @@ class DCellRegressionSlimTask(L.LightningModule):
             "model/parameters_size", torch.tensor(parameter_size, dtype=torch.float32)
         )
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
         """Run a manual training step and log loss plus subsystem and root metrics."""
         y_hat = self(batch)
         y = batch.fitness
@@ -159,7 +161,7 @@ class DCellRegressionSlimTask(L.LightningModule):
         self.train_metrics_root(y_hat_root, y)
         return loss
 
-    def on_train_epoch_end(self):
+    def on_train_epoch_end(self) -> None:
         """Log and reset the subsystem and root training metrics at epoch end."""
         self.log_dict(self.train_metrics.compute(), sync_dist=True)
         self.log_dict(self.train_metrics_root.compute(), sync_dist=True)
@@ -167,7 +169,7 @@ class DCellRegressionSlimTask(L.LightningModule):
         self.train_metrics_root.reset()
         pass
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: HeteroData, batch_idx: int) -> None:
         """Run a validation step and update subsystem and root metrics."""
         # Extract the batch vector
         y_hat = self(batch)
@@ -183,7 +185,7 @@ class DCellRegressionSlimTask(L.LightningModule):
         self.val_metrics(y_hat_subsystems, y)
         self.val_metrics_root(y_hat_root, y)
 
-    def on_validation_epoch_end(self):
+    def on_validation_epoch_end(self) -> None:
         """Log validation metrics and log the best model as a wandb artifact."""
         self.log_dict(self.val_metrics.compute(), sync_dist=True)
         self.log_dict(self.val_metrics_root.compute(), sync_dist=True)
@@ -209,7 +211,7 @@ class DCellRegressionSlimTask(L.LightningModule):
                 current_global_step  # update the last logged step
             )
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch: HeteroData, batch_idx: int) -> None:
         """Run a test step and update subsystem and root metrics."""
         y_hat = self(batch)
         y = batch.fitness
@@ -224,12 +226,12 @@ class DCellRegressionSlimTask(L.LightningModule):
         self.test_metrics(y_hat_subsystems, y)
         self.test_metrics_root(y_hat_root, y)
 
-    def on_test_epoch_end(self):
+    def on_test_epoch_end(self) -> None:
         """Log and reset the test metrics at epoch end."""
         self.log_dict(self.test_metrics.compute(), sync_dist=True)
         self.test_metrics.reset()
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> torch.optim.Optimizer:
         """Return an Adam optimizer over the DCell and linear-head parameters."""
         params = list(self.models["dcell"].parameters()) + list(
             self.models["dcell_linear"].parameters()

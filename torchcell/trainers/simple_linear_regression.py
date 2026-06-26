@@ -5,6 +5,7 @@
 """Lightning task for simple linear regression on graph perturbation data."""
 
 import os.path as osp
+from typing import Any
 
 import lightning as L
 import matplotlib.pyplot as plt
@@ -40,12 +41,12 @@ class SimpleLinearRegressionTask(L.LightningModule):
         learning_rate: float = 1e-3,
         weight_decay: float = 1e-5,
         loss: str = "mse",
-        batch_size: int = None,
-        train_epoch_size: int = None,
+        batch_size: int | None = None,
+        train_epoch_size: int | None = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         """Set up the model, loss, optimizer config, and regression metrics."""
         super().__init__()
 
@@ -109,29 +110,30 @@ class SimpleLinearRegressionTask(L.LightningModule):
 
         # Used in end for whisker plot
         self.boxplot_every_n_epochs = boxplot_every_n_epochs
-        self.true_values = []
-        self.predictions = []
+        self.true_values: list[torch.Tensor] = []
+        self.predictions: list[torch.Tensor] = []
 
         # wandb model artifact logging
-        self.last_logged_best_step = None
+        self.last_logged_best_step: int | None = None
 
-    def setup(self, stage=None):
+    def setup(self, stage: str | None = None) -> None:
         """Move the model to the trainer's device."""
         self.model = self.model.to(self.device)
 
-    def forward(self, x, batch):
+    def forward(self, x: torch.Tensor, batch: torch.Tensor) -> torch.Tensor:
         """Run the model and return squeezed predictions."""
         y_hat = self.model(x, batch).squeeze()
         return y_hat
 
-    def on_train_start(self):
+    def on_train_start(self) -> None:
         """Log the total number of model parameters at training start."""
         # Calculate the model size (number of parameters)
         parameter_size = sum(p.numel() for p in self.parameters())
         # Log it using wandb
         self.log("model/parameters_size", parameter_size)
 
-    def training_step(self, batch, batch_idx):
+    # batch: dynamic PyG batch accessed via custom attrs (.x_pert, .x_pert_batch)
+    def training_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
         """Run a manual-optimization training step and log loss and metrics."""
         # Extract the batch vector
         x, y, batch_vector = (batch.x_pert, batch[self.target], batch.x_pert_batch)
@@ -168,12 +170,12 @@ class SimpleLinearRegressionTask(L.LightningModule):
         )
         return loss
 
-    def on_train_epoch_end(self):
+    def on_train_epoch_end(self) -> None:
         """Log and reset accumulated training metrics."""
         self.log_dict(self.train_metrics.compute(), sync_dist=True)
         self.train_metrics.reset()
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: Any, batch_idx: int) -> None:
         """Run a validation step, logging loss, metrics, and correlations."""
         # Extract the batch vector
         x, y, batch_vector = (batch.x_pert, batch[self.target], batch.x_pert_batch)
@@ -198,7 +200,7 @@ class SimpleLinearRegressionTask(L.LightningModule):
         self.true_values.append(y.detach())
         self.predictions.append(y_hat.detach())
 
-    def on_validation_epoch_end(self):
+    def on_validation_epoch_end(self) -> None:
         """Log metrics, render box plots, and log the best model artifact."""
         self.log_dict(self.val_metrics.compute(), sync_dist=True)
         self.val_metrics.reset()
@@ -242,7 +244,7 @@ class SimpleLinearRegressionTask(L.LightningModule):
                 current_global_step  # update the last logged step
             )
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch: Any, batch_idx: int) -> None:
         """Run a test step, logging loss, metrics, and correlations."""
         # Extract the batch vector
         x, y, batch_vector = (batch.x_pert, batch[self.target], batch.x_pert_batch)
@@ -265,12 +267,12 @@ class SimpleLinearRegressionTask(L.LightningModule):
             sync_dist=True,
         )
 
-    def on_test_epoch_end(self):
+    def on_test_epoch_end(self) -> None:
         """Log and reset accumulated test metrics."""
         self.log_dict(self.test_metrics.compute(), sync_dist=True)
         self.test_metrics.reset()
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> torch.optim.Optimizer:
         """Return an Adam optimizer over the model parameters."""
         params = list(self.model.parameters())
         optimizer = torch.optim.Adam(

@@ -22,13 +22,15 @@ class ModelIndex(BaseModel):
     __root__: dict[VarNameStr, Any]
 
     @validator("__root__", pre=True, each_item=True)
-    def check_keys(cls, v, field, values, **kwargs):
+    def check_keys(
+        cls, v: str, field: Any, values: dict[str, Any], **kwargs: Any
+    ) -> str:
         """Validate that each root value is a valid Python identifier."""
         if not v.isidentifier():
             raise ValueError(f"Invalid attribute name: {v}")
         return v
 
-    def __getattr__(self, item):
+    def __getattr__(self, item: str) -> Any:
         """Return the root entry stored under the given attribute name."""
         return self.__root__[item]
 

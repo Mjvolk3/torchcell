@@ -36,8 +36,8 @@ class RegCategoricalEntropyTask(L.LightningModule):
         bins: int,
         inverse_transform: BaseTransform,
         forward_transform: BaseTransform,
-        optimizer_config: dict,
-        lr_scheduler_config: dict,
+        optimizer_config: dict[str, object],
+        lr_scheduler_config: dict[str, object],
         batch_size: int = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
@@ -45,7 +45,7 @@ class RegCategoricalEntropyTask(L.LightningModule):
         loss_func: nn.Module = None,
         grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
-    ):
+    ) -> None:
         """Store the model, transforms, loss, metrics, and optimizer configuration."""
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
@@ -100,8 +100,8 @@ class RegCategoricalEntropyTask(L.LightningModule):
             )
             setattr(self, f"{stage}_metrics", metrics_dict)
 
-        self.true_reg_values = []
-        self.predictions = []
+        self.true_reg_values: list[torch.Tensor] = []
+        self.predictions: list[torch.Tensor] = []
         self.last_logged_best_step = None
         self.automatic_optimization = False
 
@@ -113,7 +113,7 @@ class RegCategoricalEntropyTask(L.LightningModule):
         logits: torch.Tensor,
         inverse_preds: torch.Tensor,
         dim_losses: torch.Tensor,
-    ):
+    ) -> None:
         """Log two tables (one per task) with essential regression and bin information."""
         num_bins = true_class_values.shape[1] // 2
         task_mapping = [("Fitness", "fitness"), ("GI", "gene_interaction")]
@@ -202,7 +202,9 @@ class RegCategoricalEntropyTask(L.LightningModule):
     #     else:
     #         return self.model(x_dict, edge_index_dict, batch_dict)
 
-    def _compute_metrics_safely(self, metrics_dict):
+    def _compute_metrics_safely(
+        self, metrics_dict: nn.ModuleDict
+    ) -> dict[str, torch.Tensor]:
         """Safely compute metrics with sufficient samples."""
         results = {}
         for metric_name, metric in metrics_dict.items():
@@ -221,11 +223,13 @@ class RegCategoricalEntropyTask(L.LightningModule):
                 raise e
         return results
 
-    def forward(self, batch):
+    def forward(self, batch: dict[str, object]) -> tuple[torch.Tensor, torch.Tensor]:
         """Run the wrapped model on the input batch."""
         return self.model(batch)
 
-    def _shared_step(self, batch, batch_idx, stage="train"):
+    def _shared_step(
+        self, batch: dict[str, object], batch_idx: int, stage: str = "train"
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         continuous_pred, pooled_features = self(batch)
         batch_size = continuous_pred.size(0)
 
@@ -375,7 +379,9 @@ class RegCategoricalEntropyTask(L.LightningModule):
 
         return loss, logits, y
 
-    def training_step(self, batch, batch_idx):
+    def training_step(
+        self, batch: dict[str, object], batch_idx: int
+    ) -> torch.Tensor:
         """Run the shared training step and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
 
@@ -405,17 +411,19 @@ class RegCategoricalEntropyTask(L.LightningModule):
 
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(
+        self, batch: dict[str, object], batch_idx: int
+    ) -> torch.Tensor:
         """Run the shared validation step."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
         return loss
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch: dict[str, object], batch_idx: int) -> torch.Tensor:
         """Run the shared test step."""
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
-    def on_train_epoch_end(self):
+    def on_train_epoch_end(self) -> None:
         """Compute and log aggregated training metrics at epoch end."""
         for metric_name, metric_dict in self.train_metrics.items():
             computed_metrics = self._compute_metrics_safely(metric_dict)
@@ -423,7 +431,7 @@ class RegCategoricalEntropyTask(L.LightningModule):
                 self.log(name, value, sync_dist=True)
             metric_dict.reset()
 
-    def on_validation_epoch_end(self):
+    def on_validation_epoch_end(self) -> None:
         """Compute, log, and optionally plot validation metrics at epoch end."""
         for metric_name, metric_dict in self.val_metrics.items():
             computed_metrics = self._compute_metrics_safely(metric_dict)
@@ -473,7 +481,7 @@ class RegCategoricalEntropyTask(L.LightningModule):
             wandb.log_artifact(artifact)
             self.last_logged_best_step = current_global_step
 
-    def on_test_epoch_end(self):
+    def on_test_epoch_end(self) -> None:
         """Compute and log aggregated test metrics at epoch end."""
         for metric_name, metric_dict in self.test_metrics.items():
             computed_metrics = self._compute_metrics_safely(metric_dict)
@@ -506,7 +514,7 @@ class RegCategoricalEntropyTask(L.LightningModule):
         self.true_reg_values = []
         self.predictions = []
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> dict[str, object]:
         """Return the optimizer and learning-rate scheduler configuration."""
         optimizer_class = getattr(optim, self.hparams.optimizer_config["type"])
         optimizer_params = {

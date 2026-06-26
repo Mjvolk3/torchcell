@@ -8,6 +8,7 @@
 import logging
 import os.path as osp
 import sys
+from collections.abc import Callable
 
 import lightning as L
 import matplotlib.pyplot as plt
@@ -37,13 +38,17 @@ plt.style.use(style_file_path)
 class NaNTolerantCorrelation(Metric):
     """Wrap a correlation metric, ignoring NaN entries in preds and targets."""
 
-    def __init__(self, base_metric, default_value=torch.nan):
+    def __init__(
+        self,
+        base_metric: Callable[[], Metric],
+        default_value: float = torch.nan,
+    ) -> None:
         """Instantiate the wrapped metric and store the empty-batch default."""
         super().__init__()
         self.base_metric = base_metric()
         self.default_value = default_value
 
-    def update(self, preds: torch.Tensor, target: torch.Tensor):
+    def update(self, preds: torch.Tensor, target: torch.Tensor) -> None:
         """Update the base metric using only the non-NaN paired values."""
         # Create a mask for non-NaN values
         mask = ~torch.isnan(preds) & ~torch.isnan(target)
@@ -52,7 +57,7 @@ class NaNTolerantCorrelation(Metric):
         if torch.any(mask):
             self.base_metric.update(preds[mask], target[mask])
 
-    def compute(self):
+    def compute(self) -> torch.Tensor:
         """Return the metric value, or the default when no valid samples exist."""
         try:
             # Compute the metric if there were valid samples
@@ -66,7 +71,7 @@ class NaNTolerantCorrelation(Metric):
 class NaNTolerantPearsonCorrCoef(NaNTolerantCorrelation):
     """NaN-tolerant Pearson correlation coefficient."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Wrap PearsonCorrCoef with NaN-tolerant updating."""
         super().__init__(PearsonCorrCoef)
 
@@ -74,7 +79,7 @@ class NaNTolerantPearsonCorrCoef(NaNTolerantCorrelation):
 class NaNTolerantSpearmanCorrCoef(NaNTolerantCorrelation):
     """NaN-tolerant Spearman correlation coefficient."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Wrap SpearmanCorrCoef with NaN-tolerant updating."""
         super().__init__(SpearmanCorrCoef)
 
@@ -82,11 +87,11 @@ class NaNTolerantSpearmanCorrCoef(NaNTolerantCorrelation):
 class MultiDimNaNTolerantL1Loss(nn.Module):
     """Per-dimension L1 loss that masks out NaN targets."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the loss module."""
         super().__init__()
 
-    def forward(self, y_pred, y_true):
+    def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
         """Return per-dimension mean absolute error over non-NaN targets."""
         assert y_pred.shape == y_true.shape, (
             "Predictions and targets must have the same shape"
@@ -105,11 +110,11 @@ class MultiDimNaNTolerantL1Loss(nn.Module):
 class MultiDimNaNTolerantMSELoss(nn.Module):
     """Per-dimension MSE loss that masks out NaN targets."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the loss module."""
         super().__init__()
 
-    def forward(self, y_pred, y_true):
+    def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
         """Return per-dimension mean squared error over non-NaN targets."""
         # Ensure y_pred and y_true have the same shape
         assert y_pred.shape == y_true.shape, (
@@ -142,7 +147,9 @@ class MultiDimNaNTolerantMSELoss(nn.Module):
 class CombinedRegressionLoss(nn.Module):
     """Weighted multi-dimensional regression loss (MSE or L1) over dimensions."""
 
-    def __init__(self, loss_type="mse", weights=None):
+    def __init__(
+        self, loss_type: str = "mse", weights: torch.Tensor | None = None
+    ) -> None:
         """Select the per-dimension loss function and store dimension weights."""
         super().__init__()
         self.loss_type = loss_type
@@ -154,7 +161,9 @@ class CombinedRegressionLoss(nn.Module):
             raise ValueError(f"Unsupported loss type: {loss_type}")
         self.weights = weights if weights is not None else torch.ones(2)
 
-    def forward(self, y_pred, y_true):
+    def forward(
+        self, y_pred: torch.Tensor, y_true: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Return the weighted total loss and the per-dimension losses."""
         dim_losses = self.loss_fn(y_pred, y_true)
         weighted_loss = (dim_losses * self.weights).sum() / self.weights.sum()
@@ -167,8 +176,8 @@ class RegressionTask(L.LightningModule):
     def __init__(
         self,
         model: nn.Module,
-        optimizer_config: dict,
-        lr_scheduler_config: dict,
+        optimizer_config: dict[str, object],
+        lr_scheduler_config: dict[str, object],
         batch_size: int = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
@@ -177,7 +186,7 @@ class RegressionTask(L.LightningModule):
         link_pred_loss_weight: float = 1.0,
         entropy_loss_weight: float = 1.0,
         grad_accumulation_schedule: dict[int, int] | None = None,
-    ):
+    ) -> None:
         """Configure the model, loss, metrics, and manual-optimization settings."""
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
@@ -217,17 +226,17 @@ class RegressionTask(L.LightningModule):
             }
         )
 
-        self.true_values = []
-        self.predictions = []
+        self.true_values: list[torch.Tensor] = []
+        self.predictions: list[torch.Tensor] = []
         self.last_logged_best_step = None
         self.automatic_optimization = False
 
-    def setup(self, stage=None):
+    def setup(self, stage: str | None = None) -> None:
         """Move the model and loss weights to the active device."""
         self.model = self.model.to(self.device)
         self.combined_loss.weights = self.combined_loss.weights.to(self.device)
 
-    def update_accumulation_steps(self, epoch):
+    def update_accumulation_steps(self, epoch: int) -> None:
         """Set the current gradient accumulation steps for the given epoch."""
         if self.hparams.grad_accumulation_schedule is not None:
             self.current_accumulation_steps = max(
@@ -239,7 +248,9 @@ class RegressionTask(L.LightningModule):
                 default=1,
             )
 
-    def forward(self, x, edge_indices, batch):
+    def forward(
+        self, x: torch.Tensor, edge_indices: list[torch.Tensor], batch: torch.Tensor
+    ) -> tuple[torch.Tensor, ...]:
         """Run the main model and top head, returning predictions and aux losses."""
         (
             out,
@@ -257,7 +268,7 @@ class RegressionTask(L.LightningModule):
             entropy_losses,
         )
 
-    def on_train_start(self):
+    def on_train_start(self) -> None:
         """Log the total model parameter count at the start of training."""
         parameter_size = sum(p.numel() for p in self.parameters())
         parameter_size_float = float(parameter_size)
@@ -265,7 +276,7 @@ class RegressionTask(L.LightningModule):
         # set grad accumulator
         self.update_accumulation_steps(self.current_epoch)
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch: dict[object, object], batch_idx: int) -> torch.Tensor:
         """Run a manual-optimization training step with gradient accumulation."""
         x = batch["gene"].x
         edge_indices = [
@@ -382,7 +393,7 @@ class RegressionTask(L.LightningModule):
 
         return loss
 
-    def on_train_epoch_end(self):
+    def on_train_epoch_end(self) -> None:
         """Compute and log the training metrics at the end of the epoch."""
         # Compute and log metrics for each metric type
         for metric_name, metric_dict in self.train_metrics.items():
@@ -391,7 +402,7 @@ class RegressionTask(L.LightningModule):
                 self.log(f"train/{metric_name}/{name}", value, sync_dist=True)
             metric_dict.reset()  # Reset metrics after logging
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: dict[object, object], batch_idx: int) -> None:
         """Run a validation step and accumulate predictions and metrics."""
         x = batch["gene"].x
         edge_indices = [
@@ -447,7 +458,12 @@ class RegressionTask(L.LightningModule):
         self.true_values.append(y.detach())
         self.predictions.append(y_hat.detach())
 
-    def compute_prediction_stats(self, true_values, predictions, stage="val"):
+    def compute_prediction_stats(
+        self,
+        true_values: torch.Tensor,
+        predictions: torch.Tensor,
+        stage: str = "val",
+    ) -> None:
         """Build and log box/scatter plots of predictions versus true values."""
         # Define the bin edges for each dimension
         bin_edges = {
@@ -487,7 +503,7 @@ class RegressionTask(L.LightningModule):
                 }
             )
 
-    def on_validation_epoch_end(self):
+    def on_validation_epoch_end(self) -> None:
         """Compute and log validation metrics and prediction plots each epoch."""
         # Compute and log metrics for each metric type
         for metric_name, metric_dict in self.val_metrics.items():
@@ -541,7 +557,7 @@ class RegressionTask(L.LightningModule):
                 current_global_step  # update the last logged step
             )
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch: dict[object, object], batch_idx: int) -> None:
         """Run a test step and update the test metrics."""
         x = batch["gene"].x
         edge_indices = [
@@ -597,7 +613,7 @@ class RegressionTask(L.LightningModule):
         self.true_values.append(y.detach())
         self.predictions.append(y_hat.detach())
 
-    def on_test_epoch_end(self):
+    def on_test_epoch_end(self) -> None:
         """Compute and log the aggregated test metrics."""
         self.log_dict(self.test_metrics.compute(), sync_dist=True)
         self.test_metrics.reset()
@@ -622,7 +638,7 @@ class RegressionTask(L.LightningModule):
         self.true_values = []
         self.predictions = []
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> dict[str, object]:
         """Build the optimizer and learning-rate scheduler from the configs."""
         optimizer_class = getattr(optim, self.hparams.optimizer_config["type"])
         optimizer_params = {

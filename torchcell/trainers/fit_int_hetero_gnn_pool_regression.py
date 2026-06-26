@@ -1,6 +1,7 @@
 """Lightning task for fitness and gene-interaction regression on hetero GNN pools."""
 
 import logging
+from typing import Any
 
 import lightning as L
 import matplotlib.pyplot as plt
@@ -21,8 +22,8 @@ class RegressionTask(L.LightningModule):
     def __init__(
         self,
         model: nn.Module,
-        optimizer_config: dict,
-        lr_scheduler_config: dict,
+        optimizer_config: dict[str, Any],
+        lr_scheduler_config: dict[str, Any],
         batch_size: int = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
@@ -64,9 +65,9 @@ class RegressionTask(L.LightningModule):
             )
             setattr(self, f"{stage}_metrics", metrics_dict)
 
-        self.true_values = []
-        self.predictions = []
-        self.last_logged_best_step = None
+        self.true_values: list[torch.Tensor] = []
+        self.predictions: list[torch.Tensor] = []
+        self.last_logged_best_step: int | None = None
         self.automatic_optimization = False
 
     def _log_prediction_table(
@@ -75,7 +76,7 @@ class RegressionTask(L.LightningModule):
         true_values: torch.Tensor,
         predictions: torch.Tensor,
         dim_losses: torch.Tensor,
-    ):
+    ) -> None:
         """Log prediction tables for both fitness and gene interaction."""
         task_mapping = [("Fitness", "fitness"), ("GI", "gene_interaction")]
 
@@ -98,9 +99,9 @@ class RegressionTask(L.LightningModule):
             table = wandb.Table(columns=columns, data=table_data)
             wandb.log({f"{stage}/{metadata_key}_predictions": table}, commit=False)
 
-    def _compute_metrics_safely(self, metrics_dict):
+    def _compute_metrics_safely(self, metrics_dict: nn.ModuleDict) -> dict[str, Any]:
         """Safely compute metrics with sufficient samples."""
-        results = {}
+        results: dict[str, Any] = {}
         for metric_name, metric in metrics_dict.items():
             try:
                 results[metric_name] = metric.compute()
@@ -117,11 +118,13 @@ class RegressionTask(L.LightningModule):
                 raise e
         return results
 
-    def forward(self, batch):
+    def forward(self, batch: Any) -> tuple[torch.Tensor, Any]:
         """Run the wrapped model on a batch."""
         return self.model(batch)
 
-    def _shared_step(self, batch, batch_idx, stage="train"):
+    def _shared_step(
+        self, batch: Any, batch_idx: int, stage: str = "train"
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         # Forward pass
         predictions, _ = self(batch)
         batch_size = predictions.size(0)
@@ -191,7 +194,7 @@ class RegressionTask(L.LightningModule):
 
         return loss, predictions, targets
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
         """Run a training step with manual optimization and gradient accumulation."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
 
@@ -221,17 +224,17 @@ class RegressionTask(L.LightningModule):
 
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
         """Run a validation step and return its loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
         return loss
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
         """Run a test step and return its loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
-    def on_train_epoch_end(self):
+    def on_train_epoch_end(self) -> None:
         """Compute, log, and reset the training metrics at epoch end."""
         for metric_name, metric_dict in self.train_metrics.items():
             computed_metrics = self._compute_metrics_safely(metric_dict)
@@ -239,7 +242,7 @@ class RegressionTask(L.LightningModule):
                 self.log(name, value, sync_dist=True)
             metric_dict.reset()
 
-    def on_validation_epoch_end(self):
+    def on_validation_epoch_end(self) -> None:
         """Log validation metrics, box plots, and the best-model artifact."""
         # Log metrics
         for metric_name, metric_dict in self.val_metrics.items():
@@ -294,7 +297,7 @@ class RegressionTask(L.LightningModule):
             wandb.log_artifact(artifact)
             self.last_logged_best_step = current_global_step
 
-    def on_test_epoch_end(self):
+    def on_test_epoch_end(self) -> None:
         """Log test metrics and box plots at epoch end."""
         # Log metrics
         for metric_name, metric_dict in self.test_metrics.items():
@@ -326,7 +329,7 @@ class RegressionTask(L.LightningModule):
         self.true_values = []
         self.predictions = []
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> dict[str, Any]:
         """Build the optimizer and LR scheduler from the hyperparameter config."""
         optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])
         optimizer_params = {

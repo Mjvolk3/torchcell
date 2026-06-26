@@ -6,6 +6,7 @@
 """Lightning training module for DCell gene-interaction regression."""
 
 import logging
+from typing import Any
 
 import matplotlib.pyplot as plt
 import torch
@@ -31,8 +32,8 @@ class RegressionTask(LightningModule):
         self,
         model: nn.Module,
         cell_graph: torch.Tensor,
-        optimizer_config: dict,
-        lr_scheduler_config: dict,
+        optimizer_config: dict[str, Any],
+        lr_scheduler_config: dict[str, Any],
         batch_size: int = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
@@ -77,12 +78,24 @@ class RegressionTask(LightningModule):
             setattr(self, f"{stage}_transformed_metrics", transformed_metrics)
 
         # Separate accumulators for train, validation, and test samples
-        self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
-        self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
-        self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
+        self.train_samples: dict[str, Any] = {
+            "true_values": [],
+            "predictions": [],
+            "latents": {},
+        }
+        self.val_samples: dict[str, Any] = {
+            "true_values": [],
+            "predictions": [],
+            "latents": {},
+        }
+        self.test_samples: dict[str, Any] = {
+            "true_values": [],
+            "predictions": [],
+            "latents": {},
+        }
         self.automatic_optimization = False
 
-    def forward(self, batch):
+    def forward(self, batch: HeteroData) -> tuple[torch.Tensor, dict[str, Any]]:
         """Run a forward pass through the model on the given batch."""
         # Get model device to ensure consistency
         model_device = next(self.model.parameters()).device
@@ -115,7 +128,7 @@ class RegressionTask(LightningModule):
         # Return the full outputs_dict to avoid redundant forward passes
         return predictions, outputs_dict
 
-    def _ensure_no_unused_params_loss(self):
+    def _ensure_no_unused_params_loss(self) -> torch.Tensor | int:
         """Add a dummy loss to ensure all parameters are used in backward pass."""
         dummy_loss = 0
         for param in self.model.parameters():
@@ -123,7 +136,9 @@ class RegressionTask(LightningModule):
                 dummy_loss = dummy_loss + 0.0 * param.sum()
         return dummy_loss
 
-    def _shared_step(self, batch, batch_idx, stage="train"):
+    def _shared_step(
+        self, batch: HeteroData, batch_idx: int, stage: str = "train"
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         # Get model outputs
         predictions, representations = self(batch)
 
@@ -337,7 +352,7 @@ class RegressionTask(LightningModule):
 
         return loss, predictions, gene_interaction_orig
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
         """Run a manual-optimization training step with gradient accumulation."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
         if self.hparams.grad_accumulation_schedule is not None:
@@ -362,17 +377,19 @@ class RegressionTask(LightningModule):
         )
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
         """Run the shared step for the validation stage and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
         return loss
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
         """Run the shared step for the test stage and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
-    def _compute_metrics_safely(self, metrics_dict):
+    def _compute_metrics_safely(
+        self, metrics_dict: MetricCollection
+    ) -> dict[str, torch.Tensor]:
         results = {}
         for metric_name, metric in metrics_dict.items():
             try:
@@ -389,7 +406,7 @@ class RegressionTask(LightningModule):
                 raise e
         return results
 
-    def _plot_samples(self, samples, stage: str) -> None:
+    def _plot_samples(self, samples: dict[str, Any], stage: str) -> None:
         if not samples["true_values"]:
             return
 
@@ -457,7 +474,7 @@ class RegressionTask(LightningModule):
             wandb.log({f"{stage}/gene_interaction_box_plot": wandb.Image(fig_gi)})
             plt.close(fig_gi)
 
-    def on_train_epoch_end(self):
+    def on_train_epoch_end(self) -> None:
         """Log and reset training metrics and plot training samples periodically."""
         # Log training metrics
         computed_metrics = self._compute_metrics_safely(self.train_metrics)
@@ -481,24 +498,24 @@ class RegressionTask(LightningModule):
             # Reset the sample containers
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
-    def on_train_epoch_start(self):
+    def on_train_epoch_start(self) -> None:
         """Clear training sample buffers on epochs where samples are collected."""
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
-    def on_validation_epoch_start(self):
+    def on_validation_epoch_start(self) -> None:
         """Clear validation sample buffers on epochs where samples are collected."""
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
 
-    def on_test_epoch_start(self):
+    def on_test_epoch_start(self) -> None:
         """Clear test sample buffers at the start of the test epoch."""
         # Always clear sample containers for test (test runs only once)
         self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
 
-    def on_validation_epoch_end(self):
+    def on_validation_epoch_end(self) -> None:
         """Log and reset validation metrics and plot validation samples periodically."""
         # Log validation metrics
         computed_metrics = self._compute_metrics_safely(self.val_metrics)
@@ -522,7 +539,7 @@ class RegressionTask(LightningModule):
             # Reset the sample containers
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
 
-    def on_test_epoch_end(self):
+    def on_test_epoch_end(self) -> None:
         """Log and reset test metrics and plot test samples."""
         # Log test metrics
         computed_metrics = self._compute_metrics_safely(self.test_metrics)
@@ -544,7 +561,7 @@ class RegressionTask(LightningModule):
             # Reset the sample containers
             self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> Any:  # Lightning accepts optimizer or config dict
         """Set up optimizers for training.
 
         For DCellModel, we need to pre-register parameters by running a forward pass.

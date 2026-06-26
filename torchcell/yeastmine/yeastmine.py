@@ -5,6 +5,7 @@
 import json
 import os
 import os.path as osp
+from typing import Any
 
 import pandas as pd
 from dask import compute, delayed
@@ -70,7 +71,7 @@ def get_regulators(gene: str = "YOR202W") -> int:
     return reg_dict
 
 
-def get_physical_interactions(gene: str = "YFL039C") -> dict:
+def get_physical_interactions(gene: str = "YFL039C") -> dict[str, Any]:
     """Return physical interactions for ``gene`` as a dict of records."""
     # act1  == YFL039C
     # Physical Interactions
@@ -119,7 +120,7 @@ def get_physical_interactions(gene: str = "YFL039C") -> dict:
     return physical_int_dict
 
 
-def get_gene_interactions(gene: str = "YDR210W") -> dict:
+def get_gene_interactions(gene: str = "YDR210W") -> dict[str, Any]:
     """Return genetic interactions for ``gene`` as a dict of records."""
     # Gene Interactions
     # Retrieve all gene interactions for a specific gene. Gene(target) -> Gene Interactions.
@@ -183,7 +184,7 @@ def get_gene_interactions(gene: str = "YDR210W") -> dict:
     return gene_int_dict
 
 
-def get_protein_abundance(gene: str = "tfc3") -> dict:
+def get_protein_abundance(gene: str = "tfc3") -> dict[str, Any]:
     """Return protein-abundance experiment records for ``gene``."""
     # Retrieve protein abundance for the protein(s) encoded by a gene
     # Gene(target) -> Protein Abundance Experiments.
@@ -236,7 +237,7 @@ def get_protein_abundance(gene: str = "tfc3") -> dict:
     return protein_abundance_dict
 
 
-def get_median_protein_abundance(gene: str = "YAL001C") -> dict:
+def get_median_protein_abundance(gene: str = "YAL001C") -> dict[str, Any]:
     """Return median protein-abundance records for ``gene``."""
     # Gene median protein abundance
     # Retrieve all protein median abundance for a specific gene. Gene(target) -> median protein abundance.
@@ -265,7 +266,7 @@ def get_median_protein_abundance(gene: str = "YAL001C") -> dict:
     return median_protein_abundance_dict
 
 
-def get_protein_sequence(gene: str = "rad54") -> dict:
+def get_protein_sequence(gene: str = "rad54") -> dict[str, Any]:
     """Return protein sequence records for ``gene``."""
     # Gene(target) -> Gene protein sequence
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
@@ -293,7 +294,7 @@ def get_protein_sequence(gene: str = "rad54") -> dict:
     return protein_sequence_dict
 
 
-def get_gene_sequence(gene: str = "rad54") -> dict:
+def get_gene_sequence(gene: str = "rad54") -> dict[str, Any]:
     """Return genomic DNA (introns included) records for ``gene``."""
     # Retrieve genomic DNA (DNA sequence with introns)
     # # Gene(target) -> Gene sequence
@@ -324,7 +325,7 @@ def get_gene_sequence(gene: str = "rad54") -> dict:
     return gene_sequence_dict
 
 
-def get_go(gene: str = "YAL018C") -> dict:
+def get_go(gene: str = "YAL018C") -> dict[str, Any]:
     """Return GO annotation records for ``gene``."""
     # Gene(target) -> GO terms
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
@@ -375,7 +376,7 @@ def get_go(gene: str = "YAL018C") -> dict:
     return go_dict
 
 
-def get_protein_half_life(gene: str = "act1") -> dict:
+def get_protein_half_life(gene: str = "act1") -> dict[str, Any]:
     """Return protein half-life records for ``gene``."""
     # Gene(target) -> protein half life
     # Retrieve Protein half-life for a given gene(s). This study had reported value
@@ -418,7 +419,7 @@ def get_protein_half_life(gene: str = "act1") -> dict:
 
 
 # Retrieve the chromosomal location for a gene
-def get_chromosomal_location(gene: str = "act1") -> dict:
+def get_chromosomal_location(gene: str = "act1") -> dict[str, Any]:
     """Return chromosome coordinates and strand for ``gene``."""
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
     template = service.get_template("Gene_ChromosomeLocation")
@@ -444,7 +445,7 @@ def get_chromosomal_location(gene: str = "act1") -> dict:
     return chromosomal_location_dict
 
 
-def get_feature_type(gene: str = "YIL080W") -> dict:
+def get_feature_type(gene: str = "YIL080W") -> dict[str, Any]:
     """Return the SGD feature type for ``gene``."""
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
     # Get a new query on the class (table) you will be querying:
@@ -468,7 +469,7 @@ def get_feature_type(gene: str = "YIL080W") -> dict:
     return description_dict
 
 
-def get_all_feature_types() -> dict:
+def get_all_feature_types() -> dict[str, Any]:
     """Return a mapping of every gene's secondary identifier to feature type."""
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
     # Get a new query on the class (table) you will be querying:
@@ -483,7 +484,7 @@ def get_all_feature_types() -> dict:
     return data_dict
 
 
-def get_pathways(gene: str = "fas1") -> dict:
+def get_pathways(gene: str = "fas1") -> dict[str, Any]:
     """Return pathway-association records for ``gene``."""
     # Gene associated pathways
     # Retrieve all associated pathways for a specific gene. Gene(target) -> Gene Phenotypes.
@@ -509,7 +510,7 @@ def get_pathways(gene: str = "fas1") -> dict:
     return pathways_dict
 
 
-def get_phenotype(gene: str = "act1") -> dict:
+def get_phenotype(gene: str = "act1") -> dict[str, Any]:
     """Return phenotype records for ``gene``."""
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
     template = service.get_template("Gene_Phenotype_New")
@@ -550,7 +551,7 @@ def get_phenotype(gene: str = "act1") -> dict:
 
 
 # Was originally used to get the "symbol" gene names (like act1) for genes with standard names. Used for the Mechanisitc-Aware comparison. Not yet written to ym_attrs.
-def get_gene_external_id(gene: str = "act1") -> dict:
+def get_gene_external_id(gene: str = "act1") -> dict[str, Any]:
     """Return cross-reference (external) identifier records for ``gene``."""
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
     query = service.new_query("Gene")
@@ -603,7 +604,7 @@ def write_gene_id_translation_table() -> tuple[pd.DataFrame, list[str]]:
     return df, errors
 
 
-def merge_dicts(dict_list: list[dict]) -> dict:
+def merge_dicts(dict_list: list[dict[str, Any]]) -> dict[str, Any]:
     """Merge a list of dicts into one, later keys overriding earlier ones."""
     result = {}
     for d in dict_list:
@@ -611,7 +612,7 @@ def merge_dicts(dict_list: list[dict]) -> dict:
     return result
 
 
-def get_ym_attrs_list(gene: str) -> list[dict]:
+def get_ym_attrs_list(gene: str) -> list[dict[str, Any]]:
     """Return Dask-delayed YeastMine attribute queries for ``gene``."""
     regulators = delayed(get_regulators)(gene)
     physical_interaction = delayed(get_physical_interactions)(gene)
@@ -645,7 +646,7 @@ def get_ym_attrs_list(gene: str) -> list[dict]:
     return ym_attrs_list
 
 
-def create_node_ym_attrs(gene_list: list) -> dict:
+def create_node_ym_attrs(gene_list: list[str]) -> dict[str, Any]:
     """Query and cache per-gene YeastMine attributes to JSON, resuming partials."""
     # Failures occur do to requests connections errors.
     file_names_list = []

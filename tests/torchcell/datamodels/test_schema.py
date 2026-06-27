@@ -32,13 +32,16 @@ def fitness_experiment():
     environment = Environment(media=media, temperature=temperature)
     phenotype = FitnessPhenotype(
         graph_level="global",
-        label="fitness",
-        label_statistic="fitness_std",
+        label_name="fitness",
+        label_statistic_name="fitness_std",
         fitness=0.85,
         fitness_std=0.05,
     )
     return FitnessExperiment(
-        genotype=genotype, environment=environment, phenotype=phenotype
+        dataset_name="test_fitness_dataset",
+        genotype=genotype,
+        environment=environment,
+        phenotype=phenotype,
     )
 
 
@@ -56,13 +59,16 @@ def gene_interaction_experiment():
     environment = Environment(media=media, temperature=temperature)
     phenotype = GeneInteractionPhenotype(
         graph_level="edge",
-        label="genetic_interaction",
-        label_statistic="interaction_std",
-        interaction=-0.2,
-        p_value=0.01,
+        label_name="gene_interaction",
+        label_statistic_name="gene_interaction_p_value",
+        gene_interaction=-0.2,
+        gene_interaction_p_value=0.01,
     )
     return GeneInteractionExperiment(
-        genotype=genotype, environment=environment, phenotype=phenotype
+        dataset_name="test_gene_interaction_dataset",
+        genotype=genotype,
+        environment=environment,
+        phenotype=phenotype,
     )
 
 

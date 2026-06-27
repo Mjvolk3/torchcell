@@ -155,7 +155,7 @@ def test_pyg_concatenated_batch(device):
     )
 
     # Extract physical edge type
-    edge_type = ("gene", "physical", "gene")
+    edge_type = ("gene", "physical_interaction", "gene")
     edge_index = batch[edge_type].edge_index
     edge_mask = batch[edge_type].mask
 
@@ -190,10 +190,18 @@ def test_pyg_concatenated_batch(device):
     print("  ✓ Edge index not copied during forward pass")
 
 
+@pytest.mark.gpu
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_equivalence_masked_vs_filtered(synthetic_data, gin_mlp, device):
     """Verify that masked MP produces same results as filtering (numerically).
 
     This ensures correctness while maintaining speedup.
+
+    Note: GPU-gated. This is a yeast-genome-scale equivalence benchmark that
+    runs on ``cuda:0``; under CPU-only CI (``-m "not gpu"``) it is deselected.
+    See the test note for the shared-``gin_mlp``-fixture aliasing caveat
+    (``MaskedGINConv.__init__`` re-inits the wrapped MLP, so two convs built
+    from the same module instance must reload weights *after* both are built).
     """
     x, edge_index, edge_mask = synthetic_data
 
@@ -223,10 +231,16 @@ def test_equivalence_masked_vs_filtered(synthetic_data, gin_mlp, device):
     print(f"  Max difference: {(out1 - out2).abs().max().item():.2e}")
 
 
+@pytest.mark.gpu
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_memory_efficiency(synthetic_data, gin_mlp, device):
     """Verify that masked approach uses less memory than filtering.
 
     This is expected because we don't allocate new filtered tensors.
+
+    Note: GPU-gated. Peak-memory profiling is CUDA-only and environment
+    sensitive (caching-allocator behavior), so under CPU-only CI
+    (``-m "not gpu"``) it is deselected.
     """
     if device.type != "cuda":
         pytest.skip("Memory profiling requires CUDA")

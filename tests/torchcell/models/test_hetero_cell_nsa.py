@@ -282,8 +282,11 @@ class TestEdgeProcessing:
         max_metabolites = 50
         hidden_dim = 64
 
-        # Get edge index and attributes
-        edge_index = dataset.cell_graph[edge_type].edge_index
+        # Get edge index and attributes. The reaction-metabolite relation is a
+        # bipartite/hyperedge structure stored under ``hyperedge_index`` (a 2xN
+        # [reaction_idx, metabolite_idx] tensor), matching how to_cell_data and
+        # the test_cell_data stoichiometric tests access it.
+        edge_index = dataset.cell_graph[edge_type].hyperedge_index
 
         # Find reactions and metabolites that appear in the first few edges
         unique_reactions = edge_index[0, :1000].unique()
@@ -343,4 +346,4 @@ class TestEdgeProcessing:
         # Test that the updated MaskedAttentionBlock can handle edge attributes properly
         assert hasattr(nsa, "forward") and callable(nsa.forward)
         signature = inspect.signature(nsa.forward)
-        assert "edge_attr_matrix" in signature.parameters
+        assert "edge_attr" in signature.parameters

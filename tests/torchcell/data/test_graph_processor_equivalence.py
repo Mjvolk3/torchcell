@@ -4,17 +4,38 @@
 Tests that optimized graph_processor produces identical outputs to baseline.
 """
 
+import os
 import os.path as osp
 import pickle
 
 import pytest
 import torch
+from dotenv import load_dotenv
 from torch_geometric.utils import sort_edge_index
 
 from torchcell.scratch.load_batch_005 import load_sample_data_batch
 
 REFERENCE_DIR = (
     "/scratch/projects/torchcell/data/tests/torchcell/scratch/load_batch_005"
+)
+
+# The current_data fixture and test_incidence_vs_subgraph_processors call
+# load_sample_data_batch, which builds the 005-kuzmin2018-tmi/001-small-build
+# Neo4jCellDataset from DATA_ROOT. That dataset is not present in CI, so skip the
+# whole module when it is absent (it runs locally where the data exists).
+load_dotenv()
+DATA_ROOT = os.getenv("DATA_ROOT")
+_DATASET_DIR = (
+    osp.join(DATA_ROOT, "data/torchcell/experiments/005-kuzmin2018-tmi/001-small-build")
+    if DATA_ROOT
+    else None
+)
+pytestmark = pytest.mark.skipif(
+    not (_DATASET_DIR and osp.exists(_DATASET_DIR)),
+    reason=(
+        "requires 005-kuzmin2018-tmi/001-small-build Neo4jCellDataset under "
+        "$DATA_ROOT (absent in CI)"
+    ),
 )
 
 

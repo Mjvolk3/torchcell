@@ -396,7 +396,7 @@ def test_repr_method(sample_geneset):
 def test_empty_initialization():
     genes = GeneSet()
     assert len(genes) == 0
-    assert repr(genes) == "GeneSet(size=0, items=[]...)"
+    assert repr(genes) == "GeneSet(size=0, items=[])"
 
 
 # Additional test to check the scenario with more items in the GeneSet

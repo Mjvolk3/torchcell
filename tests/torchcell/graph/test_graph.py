@@ -20,16 +20,30 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 
+# These tests build a real SCerevisiaeGenome / SCerevisiaeGraph from the SGD
+# genome data under DATA_ROOT, which is not present in CI. Skip the whole module
+# when that dataset directory is absent (it runs locally where the data exists).
+_GENOME_DIR = os.path.join(DATA_ROOT, "data/sgd/genome") if DATA_ROOT else None
+pytestmark = pytest.mark.skipif(
+    not (_GENOME_DIR and os.path.exists(_GENOME_DIR)),
+    reason="requires SGD genome dataset at $DATA_ROOT/data/sgd/genome (absent in CI)",
+)
+
 
 @pytest.fixture
 def get_sample_graph() -> nx.DiGraph:
     # TODO should I be setting up test/data
     """Fixture to generate a sample graph for testing."""
     genome = SCerevisiaeGenome(
-        data_root=os.path.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
+        genome_root=os.path.join(DATA_ROOT, "data/sgd/genome"),
+        go_root=os.path.join(DATA_ROOT, "data/go"),
+        overwrite=True,
     )
     graph = SCerevisiaeGraph(
-        data_root=os.path.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+        sgd_root=os.path.join(DATA_ROOT, "data/sgd/genome"),
+        string_root=os.path.join(DATA_ROOT, "data/string"),
+        tflink_root=os.path.join(DATA_ROOT, "data/tflink"),
+        genome=genome,
     )
     return graph.G_go
 

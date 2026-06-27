@@ -15,7 +15,10 @@ DATA_ROOT = os.getenv("DATA_ROOT")
 
 @pytest.fixture
 def genome():
-    genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        go_root=osp.join(DATA_ROOT, "data/go"),
+    )
     return genome
 
 

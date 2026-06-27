@@ -106,6 +106,20 @@ class BufferedWeightedDistLoss(nn.Module):
         batch_size = predictions.size(0)
         ptr = int(self.buffer_ptr)
 
+        # The buffer width is guessed from `weights` at init (1 when weights is
+        # None), but the true number of phenotype dims is only known once data
+        # arrives. While the buffer is still empty, (re)allocate it to match the
+        # incoming width so multi-dim predictions with weights=None work.
+        num_dims = predictions.size(1)
+        if self.pred_buffer.size(1) != num_dims and int(self.total_samples) == 0:
+            device = self.pred_buffer.device
+            self.pred_buffer = torch.zeros(
+                self.buffer_size, num_dims, device=device
+            )
+            self.target_buffer = torch.zeros(
+                self.buffer_size, num_dims, device=device
+            )
+
         # Handle wrap-around
         if ptr + batch_size <= self.buffer_size:
             self.pred_buffer[ptr : ptr + batch_size] = predictions.detach()
@@ -248,6 +262,16 @@ class BufferedWeightedSupCRCell(nn.Module):
         """Update circular buffer with new samples."""
         batch_size = embeddings.size(0)
         ptr = int(self.buffer_ptr)
+
+        # The label-buffer width is guessed from `weights` at init (1 when
+        # weights is None), but the true number of label dims is only known once
+        # data arrives. While the buffer is still empty, (re)allocate it to match
+        # the incoming width so multi-dim labels with weights=None work.
+        num_dims = labels.size(1)
+        if self.label_buffer.size(1) != num_dims and int(self.total_samples) == 0:
+            self.label_buffer = torch.zeros(
+                self.buffer_size, num_dims, device=self.label_buffer.device
+            )
 
         # Handle wrap-around
         if ptr + batch_size <= self.buffer_size:

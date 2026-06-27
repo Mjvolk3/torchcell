@@ -161,10 +161,13 @@ class _HeteroNSA_Block(nn.Module):
                     edge_index = None
                     if rel == "rmr" and hasattr(edge_store, "stoichiometry"):
                         edge_attr = edge_store.stoichiometry
-                        edge_index = (
-                            getattr(edge_store, "hyperedge_index", None)
-                            or edge_store.edge_index
-                        )
+                        # Prefer hyperedge_index when present, else edge_index.
+                        # Use an explicit None check: `a or b` raises
+                        # "Boolean value of Tensor ... is ambiguous" on a
+                        # multi-element tensor.
+                        edge_index = getattr(edge_store, "hyperedge_index", None)
+                        if edge_index is None:
+                            edge_index = edge_store.edge_index
                     out_src = self._process_with_mask(
                         block, src_emb, inc_mask, edge_attr, edge_index
                     )

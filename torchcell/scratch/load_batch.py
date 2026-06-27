@@ -26,7 +26,7 @@ from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModu
 #     FungalUpDownTransformerDataset,
 # )
 from torchcell.datasets import CodonFrequencyDataset
-from torchcell.graph import SCerevisiaeGraph
+from torchcell.graph import SCerevisiaeGraph, build_gene_multigraph
 from torchcell.metabolism.yeast_GEM import YeastGEM
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.transforms.hetero_to_dense_mask import HeteroToDenseMask
@@ -68,6 +68,9 @@ def load_sample_data_batch(
         tflink_root=osp.join(DATA_ROOT, "data/tflink"),
         genome=genome,
     )
+    gene_multigraph = build_gene_multigraph(
+        graph=graph, graph_names=["physical", "regulatory"]
+    )
     # selected_node_embeddings = ["codon_frequency"]
     selected_node_embeddings = ["empty"]
     node_embeddings = {}
@@ -106,7 +109,7 @@ def load_sample_data_batch(
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs=gene_multigraph,
         incidence_graphs=incidence_graphs,
         node_embeddings=node_embeddings,
         converter=CompositeFitnessConverter,

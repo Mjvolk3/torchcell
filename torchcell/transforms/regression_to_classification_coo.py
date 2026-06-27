@@ -15,6 +15,20 @@ from torch_geometric.data import Batch, HeteroData
 from torch_geometric.transforms import BaseTransform, Compose
 
 
+def _isolate_gene_store(data: HeteroData) -> None:
+    """Detach the ``gene`` store from the original after a shallow ``copy.copy``.
+
+    ``copy.copy(HeteroData)`` isolates a real ``NodeStorage`` store, but when the
+    store was assigned as a plain ``dict`` (``data["gene"] = {}``) the shallow copy
+    shares the same dict, so reassigning a key would mutate the caller's input.
+    Replacing it with a fresh dict that keeps the same tensor objects isolates key
+    reassignment while preserving tensor identity (and autograd history).
+    """
+    store = data["gene"]
+    if isinstance(store, dict):
+        data["gene"] = {key: store[key] for key in store}
+
+
 class COOLabelNormalizationTransform(BaseTransform):
     """Transform for normalizing labels in COO format with different strategies."""
 
@@ -150,6 +164,7 @@ class COOLabelNormalizationTransform(BaseTransform):
     def forward(self, data: HeteroData) -> HeteroData:
         """Transform the data by normalizing phenotype values in COO format."""
         data = copy.copy(data)
+        _isolate_gene_store(data)
 
         if "phenotype_values" not in data["gene"]:
             return data
@@ -191,6 +206,7 @@ class COOLabelNormalizationTransform(BaseTransform):
     def inverse(self, data: HeteroData) -> HeteroData:
         """Inverse transform to recover original scale."""
         data = copy.copy(data)
+        _isolate_gene_store(data)
 
         if "phenotype_values" not in data["gene"]:
             return data
@@ -487,6 +503,7 @@ class COOLabelBinningTransform(BaseTransform):
     def forward(self, data: HeteroData) -> HeteroData:
         """Transform the data by binning phenotype values in COO format."""
         data = copy.copy(data)
+        _isolate_gene_store(data)
 
         if "phenotype_values" not in data["gene"]:
             return data
@@ -497,8 +514,11 @@ class COOLabelBinningTransform(BaseTransform):
         sample_indices = data["gene"]["phenotype_sample_indices"]
         phenotype_types = data["gene"]["phenotype_types"]
 
-        # Store original values
+        # Store original values and their COO index arrays so the inverse
+        # fast-path can restore a consistent (values, types, samples) triple.
         data["gene"]["phenotype_values_continuous"] = values.clone()
+        data["gene"]["phenotype_type_indices_continuous"] = type_indices.clone()
+        data["gene"]["phenotype_sample_indices_continuous"] = sample_indices.clone()
 
         # Lists to store the new COO format data
         new_values = []
@@ -606,12 +626,23 @@ class COOLabelBinningTransform(BaseTransform):
         """Inverse transform to recover continuous values from binned data."""
         torch.manual_seed(seed)
         data = copy.copy(data)
+        _isolate_gene_store(data)
 
-        # If we have stored continuous values, use them
+        # If we have stored continuous values, use them. Restore the matching
+        # COO index arrays too, so the recovered triple stays consistent (the
+        # binned forward had expanded them to one row per bin/threshold).
         if "phenotype_values_continuous" in data["gene"]:
             data["gene"]["phenotype_values"] = data["gene"][
                 "phenotype_values_continuous"
             ].clone()
+            if "phenotype_type_indices_continuous" in data["gene"]:
+                data["gene"]["phenotype_type_indices"] = data["gene"][
+                    "phenotype_type_indices_continuous"
+                ].clone()
+            if "phenotype_sample_indices_continuous" in data["gene"]:
+                data["gene"]["phenotype_sample_indices"] = data["gene"][
+                    "phenotype_sample_indices_continuous"
+                ].clone()
             data["gene"].pop("phenotype_binned", None)
             return data
 
@@ -658,24 +689,57 @@ class COOLabelBinningTransform(BaseTransform):
 
                 # Process each label in this phenotype type
                 for label in type_labels:
-                    if label not in self.label_configs or label not in bin_info:
+                    if label not in self.label_configs:
                         continue
 
-                    # Get bin information
-                    label_info = bin_info[label]
-                    bin_edges = torch.tensor(
-                        label_info["bin_edges"], device=binned_values.device
-                    )
-                    label_type = label_info["label_type"]
+                    # Get bin information: prefer bin_info carried on the data,
+                    # otherwise fall back to the transform's own fitted metadata.
+                    if label in bin_info:
+                        label_info = bin_info[label]
+                        bin_edges = torch.tensor(
+                            label_info["bin_edges"], device=binned_values.device
+                        )
+                        label_type = label_info["label_type"]
+                    elif label in self.label_metadata:
+                        bin_edges = torch.tensor(
+                            self.label_metadata[label]["bin_edges"],
+                            device=binned_values.device,
+                        )
+                        label_type = self.label_configs[label].get(
+                            "label_type", "categorical"
+                        )
+                    else:
+                        continue
 
-                    # Get values for this specific base type
+                    # Get values for this specific base type. All of
+                    # sample_values / sample_type_indices / base_type_indices are
+                    # already restricted to the current sample, so mask within
+                    # that subset only.
                     base_mask = base_type_indices == base_type_idx
-                    type_mask = sample_mask & base_mask
-                    label_values = sample_values[type_mask]
-                    label_bin_indices = binned_type_indices[type_mask] % 1000
+                    label_values = sample_values[base_mask]
+                    label_bin_indices = sample_type_indices[base_mask] % 1000
 
                     # Skip if no values found
                     if len(label_values) == 0:
+                        continue
+
+                    # Preserve NaN: a fully-NaN encoding means the original
+                    # value was NaN, so the recovered value must stay NaN.
+                    if torch.all(torch.isnan(label_values)):
+                        cont_values.append(
+                            torch.full(
+                                (1,),
+                                float("nan"),
+                                device=binned_values.device,
+                                dtype=binned_values.dtype,
+                            )
+                        )
+                        cont_type_indices.append(
+                            torch.tensor([base_type_idx], device=binned_values.device)
+                        )
+                        cont_sample_indices.append(
+                            torch.tensor([sample_idx], device=binned_values.device)
+                        )
                         continue
 
                     # Process based on label type (categorical, soft, ordinal)

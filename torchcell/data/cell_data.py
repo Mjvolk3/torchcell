@@ -16,6 +16,16 @@ from torch_geometric.utils import add_remaining_self_loops
 from torchcell.data.hetero_data import HeteroData
 from torchcell.graph import GeneMultiGraph
 
+# Map a GeneMultiGraph graph name to the relation name used in the HeteroData
+# edge type ("gene", <relation>, "gene"). The physical/regulatory networks carry
+# the "_interaction" suffix that all downstream models and graph processors
+# (e.g. SubgraphRepresentation, Unperturbed) index by. Graph names not listed
+# here fall back to using the name itself as the relation.
+GENE_GRAPH_EDGE_RELATION = {
+    "physical": "physical_interaction",
+    "regulatory": "regulatory_interaction",
+}
+
 
 def to_cell_data(
     multigraph: GeneMultiGraph,
@@ -55,9 +65,12 @@ def to_cell_data(
                 dtype=torch.long,
             ).t()
 
-            # Add edges with simplified type names (without "_interaction" suffix)
+            # Map the canonical gene-interaction graphs to their full edge-type
+            # relation names (the suffixed names the models and graph processors
+            # expect). Other gene graphs keep their given name.
             if graph_type != "base":
-                edge_type = ("gene", f"{graph_type}", "gene")
+                relation = GENE_GRAPH_EDGE_RELATION.get(graph_type, graph_type)
+                edge_type = ("gene", relation, "gene")
                 if add_remaining_gene_self_loops:
                     edge_index, _ = add_remaining_self_loops(
                         edge_index, num_nodes=num_nodes

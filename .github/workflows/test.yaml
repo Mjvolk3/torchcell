@@ -48,17 +48,15 @@ jobs:
       run: |
         pip install -e .
 
-    # Advisory: the suite has a pre-existing failure backlog (~35 tests fail/error
-    # from code/test drift that the previously-broken test.yaml never ran). Like
-    # the ruff/mypy jobs, this runs and reports but does not block the build while
-    # the backlog is cleaned up separately. Skips GPU tests (no CUDA on the runner)
-    # and the DATA_ROOT / /scratch-dependent files. continue-on-error keeps it green.
+    # Advisory for now: the WS3 test backlog is cleared, but like the ruff/mypy
+    # jobs this stays continue-on-error until the quality gates are flipped to
+    # blocking (WS4). GPU tests are deselected (no CUDA on the runner); the
+    # DATA_ROOT / /scratch-dependent files self-skip via in-test guards when their
+    # data is absent, so they no longer need --ignore.
     - name: Run pytest with coverage (advisory)
       continue-on-error: true
       run: |
-        coverage run -m pytest tests/torchcell -m "not gpu" \
-          --ignore=tests/torchcell/graph/test_graph.py \
-          --ignore=tests/torchcell/data/test_graph_processor_equivalence.py
+        coverage run -m pytest tests/torchcell -m "not gpu"
         coverage report
         coverage xml
 

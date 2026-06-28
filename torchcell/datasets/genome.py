@@ -10,12 +10,14 @@ from abc import ABC
 from torch_geometric.data import InMemoryDataset
 
 
-class GenomeDataset(InMemoryDataset, ABC):
+class GenomeDataset(InMemoryDataset, ABC):  # type: ignore[misc]  # PyG InMemoryDataset is untyped (Any) base
     """Abstract base for in-memory genome datasets."""
 
     pass
 
-    def __add__(self, other: "GenomeDataset") -> "GenomeDataset":
+    def __add__(  # type: ignore[empty-body]  # stub, body intentionally empty
+        self, other: "GenomeDataset"
+    ) -> "GenomeDataset":
         """Combine two genome datasets (not yet implemented)."""
         pass
 

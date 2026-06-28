@@ -6,7 +6,7 @@
 
 import os
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import torch
 from torch_geometric.data import Data
@@ -15,7 +15,10 @@ from tqdm import tqdm
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.models.esm2 import Esm2
 from torchcell.sequence import ParsedGenome
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import (
+    SCerevisiaeGene,
+    SCerevisiaeGenome,
+)
 
 
 class Esm2Dataset(BaseEmbeddingDataset):
@@ -94,9 +97,11 @@ class Esm2Dataset(BaseEmbeddingDataset):
     ):
         """Configure the genome and model, then process embeddings if needed."""
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.genome = genome
+        self.genome: SCerevisiaeGenome | ParsedGenome | None = genome
         self.model_name = model_name
-        self.exclude_classifications = self.MODEL_TO_WINDOW[self.model_name][1]
+        self.exclude_classifications = self.MODEL_TO_WINDOW[
+            cast(str, self.model_name)
+        ][1]
         super().__init__(root, self.model_name, transform, pre_transform)
         self.genome = self.parse_genome(genome)
         del genome
@@ -110,7 +115,7 @@ class Esm2Dataset(BaseEmbeddingDataset):
             )
 
     @staticmethod
-    def parse_genome(genome: SCerevisiaeGenome) -> ParsedGenome:
+    def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome | None:
         """Return a ParsedGenome holding the genome's gene set, or None."""
         if genome is None:
             return None
@@ -121,7 +126,7 @@ class Esm2Dataset(BaseEmbeddingDataset):
 
     def initialize_model(self) -> Esm2:
         """Return the ESM2 model corresponding to the selected model name."""
-        return Esm2(model_name=self.MODEL_TO_WINDOW[self.model_name][0])
+        return Esm2(model_name=self.MODEL_TO_WINDOW[cast(str, self.model_name)][0])
 
     def process(self) -> None:
         """Compute ESM2 embeddings for each gene and save the processed dataset."""
@@ -131,9 +136,12 @@ class Esm2Dataset(BaseEmbeddingDataset):
 
         data_list = []
 
-        for gene_id in tqdm(self.genome.gene_set):
-            orf_classification = self.genome[gene_id].orf_classification[0]
-            protein_sequence = str(self.genome[gene_id].protein.seq)
+        genome = cast(SCerevisiaeGenome, self.genome)
+        for gene_id in tqdm(genome.gene_set):
+            orf_classification = cast(
+                SCerevisiaeGene, genome[gene_id]
+            ).orf_classification[0]
+            protein_sequence = str(cast(Any, genome[gene_id]).protein.seq)
 
             if (
                 self.exclude_classifications
@@ -142,7 +150,8 @@ class Esm2Dataset(BaseEmbeddingDataset):
                 print(f"zeros for {gene_id}")
                 embeddings = (
                     torch.zeros(
-                        self.transformer.model.config.hidden_size, dtype=torch.float32
+                        cast(Any, self.transformer.model).config.hidden_size,
+                        dtype=torch.float32,
                     )
                     .unsqueeze(0)
                     .to(self.device)
@@ -177,14 +186,16 @@ if __name__ == "__main__":
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     genome = SCerevisiaeGenome(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
-    )
+        data_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"), overwrite=True
+    )  # type: ignore[call-arg]  # data_root is a valid Genome param; attrs hides it from mypy
 
     model_names = [key for key in Esm2Dataset.MODEL_TO_WINDOW.keys()]
 
     for model_name in model_names:
         dataset = Esm2Dataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/esm2_embedding_test"),
+            root=osp.join(
+                cast(str, DATA_ROOT), "data/scerevisiae/esm2_embedding_test"
+            ),
             genome=genome,
             model_name=model_name,
         )

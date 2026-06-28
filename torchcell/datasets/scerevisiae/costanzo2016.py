@@ -13,7 +13,7 @@ import shutil
 import zipfile
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any
+from typing import Any, cast
 
 import lmdb
 import pandas as pd
@@ -42,6 +42,7 @@ from torchcell.datamodels import (
     SgaTsAllelePerturbation,
     Temperature,
 )
+from torchcell.datamodels.schema import GenePerturbationType
 from torchcell.datasets.dataset_registry import register_dataset
 
 logging.basicConfig(level=logging.INFO)
@@ -128,17 +129,17 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
-    def experiment_class(self) -> Experiment:
+    def experiment_class(self) -> type[FitnessExperiment]:
         """Return the FitnessExperiment type for SMF data."""
         return FitnessExperiment
 
     @property
-    def reference_class(self) -> ExperimentReference:
+    def reference_class(self) -> type[FitnessExperimentReference]:
         """Return the FitnessExperimentReference type for SMF data."""
         return FitnessExperimentReference
 
     @property
-    def raw_file_names(self) -> str:
+    def raw_file_names(self) -> str:  # type: ignore[override]  # single raw file as str, base is list[str]
         """Return the single-mutant fitness raw spreadsheet name."""
         return "strain_ids_and_single_mutant_fitness.xlsx"
 
@@ -206,7 +207,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
 
         env.close()
 
-    def preprocess_raw(self, df: pd.DataFrame) -> pd.DataFrame:
+    def preprocess_raw(self, df: pd.DataFrame) -> pd.DataFrame:  # type: ignore[override]  # dataset-specific signature
         """Derive perturbation type from strain IDs and clean the SMF table."""
         df["Strain_ID_suffix"] = df["Strain ID"].str.split("_", expand=True)[1]
 
@@ -293,7 +294,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         return phenotype_reference_std_26, phenotype_reference_std_30
 
     @staticmethod
-    def create_experiment(
+    def create_experiment(  # type: ignore[override]  # dataset-specific signature
         dataset_name: str,
         row: pd.Series,
         phenotype_reference_std_26: Any,
@@ -441,7 +442,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/smf_costanzo2016",
-        subset_n: int = None,
+        subset_n: int | None = None,
         batch_size: int = int(1e4),
         io_workers: int = 1,
         transform: Callable[..., Any] | None = None,
@@ -473,12 +474,12 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         os.remove(osp.join(self.raw_dir, "strain_ids_and_single_mutant_fitness.xlsx"))
 
     @property
-    def experiment_class(self) -> Experiment:
+    def experiment_class(self) -> type[FitnessExperiment]:
         """Return the FitnessExperiment type for DMF data."""
         return FitnessExperiment
 
     @property
-    def reference_class(self) -> ExperimentReference:
+    def reference_class(self) -> type[FitnessExperimentReference]:
         """Return the FitnessExperimentReference type for DMF data."""
         return FitnessExperimentReference
 
@@ -495,7 +496,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
 
         # Function to extract gene name
         def extract_systematic_name(x: pd.Series) -> pd.Series:
-            return x.apply(lambda y: y.split("_")[0])
+            return cast("pd.Series", x.apply(lambda y: y.split("_")[0]))
 
         # Extract gene names
         df["Query Systematic Name"] = extract_systematic_name(df["Query Strain ID"])
@@ -626,7 +627,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
                 txn.put(f"{index}".encode(), serialized_data)
 
     @staticmethod
-    def create_experiment(
+    def create_experiment(  # type: ignore[override]  # dataset-specific signature
         dataset_name: str,
         row: pd.Series,
         phenotype_reference_std_26: Any,
@@ -638,7 +639,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
             species="Saccharomyces cerevisiae", strain="S288C"
         )
         # genotype
-        perturbations = []
+        perturbations: list[GenePerturbationType] = []
         # Query
         if "temperature_sensitive" in row["query_perturbation_type"]:
             perturbations.append(
@@ -811,7 +812,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/dmi_costanzo2016",
-        subset_n: int = None,
+        subset_n: int | None = None,
         batch_size: int = int(1e4),
         io_workers: int = 1,
         transform: Callable[..., Any] | None = None,
@@ -843,12 +844,12 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         os.remove(osp.join(self.raw_dir, "strain_ids_and_single_mutant_fitness.xlsx"))
 
     @property
-    def experiment_class(self) -> ExperimentReference:
+    def experiment_class(self) -> type[GeneInteractionExperiment]:
         """Return the GeneInteractionExperiment type for DMI data."""
         return GeneInteractionExperiment
 
     @property
-    def reference_class(self) -> ExperimentReference:
+    def reference_class(self) -> type[GeneInteractionExperimentReference]:
         """Return the GeneInteractionExperimentReference type for DMI data."""
         return GeneInteractionExperimentReference
 
@@ -865,7 +866,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
 
         # Function to extract gene name
         def extract_systematic_name(x: pd.Series) -> pd.Series:
-            return x.apply(lambda y: y.split("_")[0])
+            return cast("pd.Series", x.apply(lambda y: y.split("_")[0]))
 
         # Extract gene names
         df["Query Systematic Name"] = extract_systematic_name(df["Query Strain ID"])
@@ -986,7 +987,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
                 txn.put(f"{index}".encode(), serialized_data)
 
     @staticmethod
-    def create_experiment(
+    def create_experiment(  # type: ignore[override]  # dataset-specific signature
         dataset_name: str, row: pd.Series
     ) -> tuple[
         GeneInteractionExperiment, GeneInteractionExperimentReference, Publication
@@ -996,7 +997,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
             species="Saccharomyces cerevisiae", strain="S288C"
         )
 
-        perturbations = []
+        perturbations: list[GenePerturbationType] = []
         # Query
         if "temperature_sensitive" in row["query_perturbation_type"]:
             perturbations.append(
@@ -1129,6 +1130,7 @@ def main() -> None:
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
+    assert DATA_ROOT is not None, "DATA_ROOT must be set"
 
     # Single mutant fitness
     dataset = SmfCostanzo2016Dataset(

@@ -8,7 +8,7 @@
 # File needs to be down loaded from here http://sgd-archive.yeastgenome.org/expression/microarray/all_spell_datasets.tar.gz
 
 import os.path as osp
-from typing import Any
+from typing import Any, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -378,7 +378,7 @@ def extract_time_info(condition_name: str) -> dict[str, Any]:
     """Extract time information from condition name."""
     import re
 
-    result = {"time_min": None, "is_timeseries": False}
+    result: dict[str, Any] = {"time_min": None, "is_timeseries": False}
 
     # Match patterns like "30 min", "2 hours", "120min", "1.5 hr"
     time_patterns = [
@@ -416,7 +416,7 @@ def extract_temperature_info(condition_name: str) -> dict[str, Any]:
     """Extract temperature information from condition name."""
     import re
 
-    result = {"temperature_c": None}
+    result: dict[str, Any] = {"temperature_c": None}
 
     # Match patterns like "37°C", "37C", "37 degrees", "30 deg"
     temp_patterns = [
@@ -438,7 +438,11 @@ def extract_chemical_info(condition_name: str) -> dict[str, Any]:
     """Extract chemical compound information from condition name."""
     import re
 
-    result = {"chemical_name": None, "concentration": None, "concentration_unit": None}
+    result: dict[str, Any] = {
+        "chemical_name": None,
+        "concentration": None,
+        "concentration_unit": None,
+    }
 
     # Common chemicals in yeast experiments
     chemicals = [
@@ -501,7 +505,11 @@ def extract_chemical_info(condition_name: str) -> dict[str, Any]:
 
 def extract_nutrient_info(condition_name: str) -> dict[str, Any]:
     """Extract nutrient composition information."""
-    result = {"carbon_source": None, "nitrogen_source": None, "limitation_type": None}
+    result: dict[str, Any] = {
+        "carbon_source": None,
+        "nitrogen_source": None,
+        "limitation_type": None,
+    }
 
     # Carbon sources
     carbon_sources = {
@@ -552,7 +560,7 @@ def extract_physical_params(condition_name: str) -> dict[str, Any]:
     """Extract physical parameters like pH, oxygen level."""
     import re
 
-    result = {"ph": None, "oxygen_level": None}
+    result: dict[str, Any] = {"ph": None, "oxygen_level": None}
 
     # pH patterns: "pH 5", "pH=5.5", "(pH 3)"
     ph_patterns = [r"pH\s*[=:]?\s*(\d+\.?\d*)", r"\(pH\s+(\d+\.?\d*)\)"]
@@ -581,7 +589,7 @@ def extract_physical_params(condition_name: str) -> dict[str, Any]:
 
 def extract_stress_info(condition_name: str) -> dict[str, Any]:
     """Extract stress type information."""
-    result = {"stress_type": None}
+    result: dict[str, Any] = {"stress_type": None}
 
     stress_types = {
         "heat_shock": [
@@ -607,7 +615,7 @@ def extract_stress_info(condition_name: str) -> dict[str, Any]:
 
 def extract_cell_cycle_info(condition_name: str) -> dict[str, Any]:
     """Extract cell cycle information."""
-    result = {"cell_cycle_phase": None, "synchronization_method": None}
+    result: dict[str, Any] = {"cell_cycle_phase": None, "synchronization_method": None}
 
     # Cell cycle phases
     phases = {
@@ -641,7 +649,7 @@ def extract_replicate_info(condition_name: str) -> dict[str, Any]:
     """Extract replicate information."""
     import re
 
-    result = {"replicate_number": None, "replicate_type": None}
+    result: dict[str, Any] = {"replicate_number": None, "replicate_type": None}
 
     # Match patterns like "#1", "rep 1", "replicate 2", "bio rep 1", "tech rep 2"
     rep_patterns = [
@@ -907,7 +915,8 @@ def export_condition_metadata(
     # Category breakdown
     print("\nCondition Category Breakdown:")
     category_counts = df_conditions["primary_category"].value_counts()
-    for category, count in category_counts.items():
+    for category_key, count in category_counts.items():
+        category = cast(str, category_key)
         pct = 100 * count / len(df_conditions)
         print(f"  {category:25s}: {count:6,} ({pct:5.1f}%)")
 
@@ -981,7 +990,7 @@ def check_condition_metadata_quality(
     Returns:
         dict: Statistics about condition metadata quality
     """
-    stats = {
+    stats: dict[str, Any] = {
         "total_conditions": 0,
         "empty_conditions": 0,
         "generic_conditions": 0,

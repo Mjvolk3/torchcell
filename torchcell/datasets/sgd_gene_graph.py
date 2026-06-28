@@ -6,7 +6,7 @@
 
 import os.path as osp
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import networkx as nx
 import torch
@@ -50,7 +50,9 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
         pass  # No need to initialize a model for this dataset
 
     @property
-    def processed_file_names(self) -> list[str]:
+    def processed_file_names(  # type: ignore[override]  # intentionally widens base return; behavior unchanged
+        self,
+    ) -> list[str]:
         """Return the processed tensor and categorical-feature filenames."""
         return [f"{self.model_name}.pt", "categorical_features.pt"]
 
@@ -60,7 +62,7 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
         unique_chromosomes = set()
         unique_pathways: set[Any] = set()
 
-        normalize_data = self.MODEL_TO_WINDOW[self.model_name]
+        normalize_data = self.MODEL_TO_WINDOW[cast(str, self.model_name)]
 
         # Collect feature values for each node
         feature_values: dict[str, list[Any]] = {
@@ -185,17 +187,17 @@ def main() -> None:
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     genome = SCerevisiaeGenome(
-        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
-        go_root=osp.join(DATA_ROOT, "data/go"),
+        genome_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"),
+        go_root=osp.join(cast(str, DATA_ROOT), "data/go"),
         overwrite=False,
     )
     genome.drop_chrmt()
     genome.drop_empty_go()
 
     graph = SCerevisiaeGraph(
-        sgd_root=osp.join(DATA_ROOT, "data/sgd/genome"),
-        string_root=osp.join(DATA_ROOT, "data/string"),
-        tflink_root=osp.join(DATA_ROOT, "data/tflink"),
+        sgd_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"),
+        string_root=osp.join(cast(str, DATA_ROOT), "data/string"),
+        tflink_root=osp.join(cast(str, DATA_ROOT), "data/tflink"),
         genome=genome,
     )
 
@@ -204,7 +206,7 @@ def main() -> None:
     for model_name in model_names:
         print(f"Processing model: {model_name}")
         dataset = GraphEmbeddingDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/sgd_gene_graph"),
+            root=osp.join(cast(str, DATA_ROOT), "data/scerevisiae/sgd_gene_graph"),
             graph=graph.G_gene,
             model_name=model_name,
             categorical_features={"chromosome": {}, "pathways": {}},

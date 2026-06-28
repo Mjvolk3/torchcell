@@ -84,7 +84,7 @@ class GOTermGraph:
                 print(f"Warning: {term} not found in GO DAG.")
 
         if add_fantasy_root:
-            self.root = "FantasyRoot"
+            self.root: str | None = "FantasyRoot"
             self.graph.add_node(self.root, category="root")
             for node in self.graph.nodes:
                 if self.graph.out_degree(node) == 0 and node != self.root:
@@ -95,7 +95,8 @@ class GOTermGraph:
     def getAllParents(self, term: str) -> set[str]:
         """Return the set of all ancestor terms for the given GO term."""
         term_obj = self.godag[term]
-        return term_obj.get_all_parents()
+        parents: set[str] = term_obj.get_all_parents()
+        return parents
 
     def removeTerm(self, term: str) -> None:
         """Remove the given term node from the graph if present."""

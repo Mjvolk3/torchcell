@@ -1,5 +1,7 @@
 """Scratch loader reading Mechanistic-Aware expression RDS files into pandas."""
 
+from typing import cast
+
 import pandas as pd
 import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
@@ -17,7 +19,7 @@ def read_rds_to_dataframe(rds_file_path: str) -> pd.DataFrame:
     # Convert the R object to a pandas DataFrame
     df = pandas2ri.rpy2py_dataframe(rds_data)
 
-    return df
+    return cast(pd.DataFrame, df)
 
 
 # Path to your RDS file

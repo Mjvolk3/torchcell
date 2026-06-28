@@ -29,6 +29,7 @@ from torchcell.datamodels.schema import (
     GeneInteractionExperiment,
     GeneInteractionExperimentReference,
     GeneInteractionPhenotype,
+    GenePerturbationType,
     Genotype,
     Media,
     Publication,
@@ -63,24 +64,24 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
-    def experiment_class(self) -> Experiment:
+    def experiment_class(self) -> type[Experiment]:
         """Return the experiment model class for this dataset."""
         return FitnessExperiment
 
     @property
-    def reference_class(self) -> ExperimentReference:
+    def reference_class(self) -> type[ExperimentReference]:
         """Return the experiment-reference model class for this dataset."""
         return FitnessExperimentReference
 
     @property
-    def raw_file_names(self) -> str:
+    def raw_file_names(self) -> str:  # type: ignore[override]  # single raw file as str, base is list[str]
         """Return the name of the raw Kuzmin 2018 data file."""
         return "aao1729_data_s1.tsv"
 
     @property
     def processed_file_names(self) -> list[str]:
         """Return the name of the processed LMDB directory."""
-        return "lmdb"
+        return "lmdb"  # type: ignore[return-value]  # single processed dir as str, base/PyG accept str
 
     def download(self) -> None:
         """Download the Kuzmin 2018 archive and extract it into the raw directory."""
@@ -200,7 +201,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         return df
 
     @staticmethod
-    def create_experiment(
+    def create_experiment(  # type: ignore[override]  # dataset-specific signature
         dataset_name: str, row: pd.Series, phenotype_reference_std: float
     ) -> tuple[FitnessExperiment, FitnessExperimentReference, Publication]:
         """Build the experiment, reference, and publication objects from a data row."""
@@ -321,7 +322,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/dmf_kuzmin2018",
-        subset_n: int = None,
+        subset_n: int | None = None,
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
@@ -332,17 +333,17 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
-    def experiment_class(self) -> Experiment:
+    def experiment_class(self) -> type[Experiment]:
         """Return the experiment model class for this dataset."""
         return FitnessExperiment
 
     @property
-    def reference_class(self) -> ExperimentReference:
+    def reference_class(self) -> type[ExperimentReference]:
         """Return the experiment-reference model class for this dataset."""
         return FitnessExperimentReference
 
     @property
-    def raw_file_names(self) -> str:
+    def raw_file_names(self) -> str:  # type: ignore[override]  # single raw file as str, base is list[str]
         """Return the name of the raw Kuzmin 2018 data file."""
         return "aao1729_data_s1.tsv"
 
@@ -451,7 +452,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         return df
 
     @staticmethod
-    def create_experiment(
+    def create_experiment(  # type: ignore[override]  # dataset-specific signature
         dataset_name: str, row: pd.Series, phenotype_reference_std: float
     ) -> tuple[FitnessExperiment, FitnessExperimentReference, Publication]:
         """Build the experiment, reference, and publication objects from a data row."""
@@ -460,7 +461,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
             species="Saccharomyces cerevisiae", strain="S288C"
         )
         # genotype
-        perturbations = []
+        perturbations: list[GenePerturbationType] = []
         # Query...
         if "KanMX_deletion" in row["query_perturbation_type_no_ho"]:
             perturbations.append(
@@ -550,7 +551,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/tmf_kuzmin2018",
-        subset_n: int = None,
+        subset_n: int | None = None,
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
@@ -561,17 +562,17 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
-    def experiment_class(self) -> Experiment:
+    def experiment_class(self) -> type[Experiment]:
         """Return the experiment model class for this dataset."""
         return FitnessExperiment
 
     @property
-    def reference_class(self) -> ExperimentReference:
+    def reference_class(self) -> type[ExperimentReference]:
         """Return the experiment-reference model class for this dataset."""
         return FitnessExperimentReference
 
     @property
-    def raw_file_names(self) -> str:
+    def raw_file_names(self) -> str:  # type: ignore[override]  # single raw file as str, base is list[str]
         """Return the name of the raw Kuzmin 2018 data file."""
         return "aao1729_data_s1.tsv"
 
@@ -680,7 +681,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         return df
 
     @staticmethod
-    def create_experiment(
+    def create_experiment(  # type: ignore[override]  # dataset-specific signature
         dataset_name: str, row: pd.Series, phenotype_reference_std: float
     ) -> tuple[FitnessExperiment, FitnessExperimentReference, Publication]:
         """Build the experiment, reference, and publication objects from a data row."""
@@ -689,7 +690,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
             species="Saccharomyces cerevisiae", strain="S288C"
         )
         # genotype
-        perturbations = []
+        perturbations: list[GenePerturbationType] = []
         # Query
         # Query 1
         if "KanMX_deletion" in row["query_perturbation_type_1"]:
@@ -791,7 +792,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/dmi_kuzmin2018",
-        subset_n: int = None,
+        subset_n: int | None = None,
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
@@ -802,17 +803,17 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
-    def experiment_class(self) -> ExperimentReference:
+    def experiment_class(self) -> type[GeneInteractionExperiment]:
         """Return the experiment model class for this dataset."""
         return GeneInteractionExperiment
 
     @property
-    def reference_class(self) -> ExperimentReference:
+    def reference_class(self) -> type[ExperimentReference]:
         """Return the experiment-reference model class for this dataset."""
         return GeneInteractionExperimentReference
 
     @property
-    def raw_file_names(self) -> str:
+    def raw_file_names(self) -> str:  # type: ignore[override]  # single raw file as str, base is list[str]
         """Return the name of the raw Kuzmin 2018 data file."""
         return "aao1729_data_s1.tsv"
 
@@ -914,7 +915,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
         return df
 
     @staticmethod
-    def create_experiment(
+    def create_experiment(  # type: ignore[override]  # dataset-specific signature
         dataset_name: str, row: pd.Series
     ) -> tuple[
         GeneInteractionExperiment, GeneInteractionExperimentReference, Publication
@@ -924,7 +925,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
             species="Saccharomyces cerevisiae", strain="S288C"
         )
 
-        perturbations = []
+        perturbations: list[GenePerturbationType] = []
         # Query...
         if "KanMX_deletion" in row["query_perturbation_type_no_ho"]:
             perturbations.append(
@@ -1010,7 +1011,7 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/tmi_kuzmin2018",
-        subset_n: int = None,
+        subset_n: int | None = None,
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
@@ -1021,17 +1022,17 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
-    def experiment_class(self) -> ExperimentReference:
+    def experiment_class(self) -> type[GeneInteractionExperiment]:
         """Return the experiment model class for this dataset."""
         return GeneInteractionExperiment
 
     @property
-    def reference_class(self) -> ExperimentReference:
+    def reference_class(self) -> type[ExperimentReference]:
         """Return the experiment-reference model class for this dataset."""
         return GeneInteractionExperimentReference
 
     @property
-    def raw_file_names(self) -> str:
+    def raw_file_names(self) -> str:  # type: ignore[override]  # single raw file as str, base is list[str]
         """Return the name of the raw Kuzmin 2018 data file."""
         return "aao1729_data_s1.tsv"
 
@@ -1133,7 +1134,7 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
         return df
 
     @staticmethod
-    def create_experiment(
+    def create_experiment(  # type: ignore[override]  # dataset-specific signature
         dataset_name: str, row: pd.Series
     ) -> tuple[
         GeneInteractionExperiment, GeneInteractionExperimentReference, Publication
@@ -1143,7 +1144,7 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
             species="Saccharomyces cerevisiae", strain="S288C"
         )
 
-        perturbations = []
+        perturbations: list[GenePerturbationType] = []
         # Query 1
         if "KanMX_deletion" in row["query_perturbation_type_1"]:
             perturbations.append(

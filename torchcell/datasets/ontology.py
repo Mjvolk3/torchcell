@@ -15,7 +15,7 @@ onto = get_ontology(
 
 
 # Define the top-level Experiment class
-class Experiment(Thing):
+class Experiment(Thing):  # type: ignore[misc]  # owlready2 base is untyped (Any)
     """Top-level ontology class representing an experiment."""
 
     namespace = onto
@@ -140,7 +140,7 @@ class Media(Environment):
     namespace = onto
 
 
-class Chemical(Thing):
+class Chemical(Thing):  # type: ignore[misc]  # owlready2 base is untyped (Any)
     """Chemical that media can be composed of."""
 
     namespace = onto
@@ -164,7 +164,7 @@ class Dextrose(Chemical):
     namespace = onto
 
 
-class ComposedOf(ObjectProperty):
+class ComposedOf(ObjectProperty):  # type: ignore[misc]  # owlready2 base is untyped (Any)
     """Object property relating media to their constituent chemicals."""
 
     namespace = onto
@@ -246,7 +246,7 @@ def main() -> None:
 
     # Create an instance of YEPD and link its components
     yepd = YEPD()
-    yepd.composed_of = [yeast_extract, peptone, dextrose]
+    yepd.composed_of = [yeast_extract, peptone, dextrose]  # type: ignore[assignment]  # owlready2 relation assignment
 
     onto.save(file="torchcell.rdf", format="rdfxml")
 

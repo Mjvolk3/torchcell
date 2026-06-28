@@ -7,7 +7,7 @@
 import os
 import os.path as osp
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import torch
 from torch_geometric.data import Data
@@ -48,8 +48,10 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
             transform: Optional transform applied at access time.
             pre_transform: Optional transform applied before saving.
         """
-        self.genome = genome
-        super().__init__(root, transform, pre_transform)
+        self.genome: SCerevisiaeGenome | ParsedGenome | None = genome
+        # NOTE: positional args here put `transform` into the base `model_name`
+        # slot and drop `pre_transform`; preserved as-is to avoid changing behavior.
+        super().__init__(root, transform, pre_transform)  # type: ignore[arg-type]  # latent positional-arg mismatch; preserved to avoid behavior change
         self.model_name = model_name
 
         # Conditionally load the data
@@ -70,7 +72,7 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
         del genome
 
     @staticmethod
-    def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome:
+    def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome | None:
         """Build a ParsedGenome holding the gene set, or None if genome is None."""
         # BUG we have to do this black magic because when you merge datasets with +
         # the genome is None
@@ -101,12 +103,15 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
             window_method, window_size, is_max_size = self.MODEL_TO_WINDOW[
                 self.model_name
             ]
+        window_method = cast(str, window_method)
 
         # TODO check that genome gene set is SortedSet
         sequences = []
         gene_ids = []
-        for gene_id in tqdm(self.genome.gene_set):
-            sequence = self.genome[gene_id]
+        genome = cast(SCerevisiaeGenome, self.genome)
+        transformer = cast(NucleotideTransformer, self.transformer)
+        for gene_id in tqdm(genome.gene_set):
+            sequence = genome[gene_id]
 
             if "three_prime" in window_method or "five_prime" in window_method:
                 dna_selection = getattr(sequence, window_method)(
@@ -124,7 +129,7 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
         embeddings_list = []
         for i in tqdm(range(0, len(sequences), batch_size)):
             batch_sequences = sequences[i : i + batch_size]
-            batch_embeddings = self.transformer.embed(
+            batch_embeddings = transformer.embed(
                 batch_sequences, mean_embedding=True
             )
             embeddings_list.append(batch_embeddings)
@@ -155,7 +160,9 @@ def main() -> None:
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
-    genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome = SCerevisiaeGenome(
+        data_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome")
+    )  # type: ignore[call-arg]  # data_root is a valid Genome param; attrs hides it from mypy
     model_names = [
         "nt_window_5979",
         "nt_window_5979_max",
@@ -170,7 +177,10 @@ def main() -> None:
         print(f"starting model_name: {model_name}")
         wandb.log({"event": event})
         dataset = NucleotideTransformerDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embed"),
+            root=osp.join(
+                cast(str, DATA_ROOT),
+                "data/scerevisiae/nucleotide_transformer_embed",
+            ),
             genome=genome,
             model_name=model_name,
         )

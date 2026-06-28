@@ -15,7 +15,7 @@ from torch_geometric.data import Data, InMemoryDataset, download_url
 os.makedirs("data/scerevisiae/baryshnikovna2010", exist_ok=True)
 
 
-class Baryshnikovna2010Dataset(InMemoryDataset):
+class Baryshnikovna2010Dataset(InMemoryDataset):  # type: ignore[misc]  # PyG InMemoryDataset is untyped
     """In-memory dataset of Baryshnikova 2010 single-gene deletion fitness values."""
 
     url = "https://static-content.springer.com/esm/art%3A10.1038%2Fnmeth.1534/MediaObjects/41592_2010_BFnmeth1534_MOESM168_ESM.xls"

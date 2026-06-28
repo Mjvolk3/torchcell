@@ -14,7 +14,7 @@ import networkx as nx
 # plt.show()
 import pronto
 from nxontology.imports import pronto_to_multidigraph
-from pronto import Definition
+from pronto import Definition  # type: ignore[attr-defined]  # pronto does not re-export, but symbol exists at runtime
 
 # # https://obofoundry.org/ontology/mco.html
 # url = "https://raw.githubusercontent.com/microbial-conditions-ontology/microbial-conditions-ontology/master/mco.owl"
@@ -57,7 +57,7 @@ from pronto import Definition
 
 if __name__ == "__main__":
     # Create a new ontology
-    ontology = pronto.Ontology()
+    ontology = pronto.Ontology()  # type: ignore[attr-defined]  # pronto does not re-export, but symbol exists at runtime
 
     # Add terms to the ontology
     term1 = ontology.create_term("GO:0000001")

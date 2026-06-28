@@ -10,7 +10,7 @@ import os
 import os.path as osp
 import pickle
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import lmdb
 import pandas as pd
@@ -47,7 +47,7 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/syn_leth_db_yeast",
-        genome: SCerevisiaeGenome = None,
+        genome: SCerevisiaeGenome | None = None,
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
@@ -64,7 +64,8 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
     def _build_gene_name_mapping(self) -> None:
         """Map gene names, systematic IDs, and aliases to systematic names."""
         print("Building gene name to systematic name mapping...")
-        for feature in tqdm(self.genome.db.all_features()):
+        genome = cast(SCerevisiaeGenome, self.genome)
+        for feature in tqdm(genome.db.all_features()):
             if feature.featuretype == "gene":
                 systematic_name = feature.id
                 self.gene_name_to_systematic[systematic_name] = systematic_name
@@ -86,12 +87,12 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
         return ["lmdb"]
 
     @property
-    def experiment_class(self) -> SyntheticLethalityExperiment:
+    def experiment_class(self) -> type[SyntheticLethalityExperiment]:
         """Return the synthetic-lethality experiment schema class."""
         return SyntheticLethalityExperiment
 
     @property
-    def reference_class(self) -> SyntheticLethalityExperimentReference:
+    def reference_class(self) -> type[SyntheticLethalityExperimentReference]:
         """Return the synthetic-lethality experiment-reference schema class."""
         return SyntheticLethalityExperimentReference
 
@@ -171,7 +172,7 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
         env.close()
 
     @staticmethod
-    def create_experiment(
+    def create_experiment(  # type: ignore[override]  # dataset-specific signature
         dataset_name: str, row: pd.Series
     ) -> tuple[
         SyntheticLethalityExperiment,
@@ -241,7 +242,7 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/syn_rescue_db_yeast",
-        genome: SCerevisiaeGenome = None,
+        genome: SCerevisiaeGenome | None = None,
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
@@ -258,7 +259,8 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
     def _build_gene_name_mapping(self) -> None:
         """Map gene names, systematic IDs, and aliases to systematic names."""
         print("Building gene name to systematic name mapping...")
-        for feature in tqdm(self.genome.db.all_features()):
+        genome = cast(SCerevisiaeGenome, self.genome)
+        for feature in tqdm(genome.db.all_features()):
             if feature.featuretype == "gene":
                 systematic_name = feature.id
                 self.gene_name_to_systematic[systematic_name] = systematic_name
@@ -280,12 +282,12 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
         return ["lmdb"]
 
     @property
-    def experiment_class(self) -> SyntheticRescueExperiment:
+    def experiment_class(self) -> type[SyntheticRescueExperiment]:
         """Return the synthetic-rescue experiment schema class."""
         return SyntheticRescueExperiment
 
     @property
-    def reference_class(self) -> SyntheticRescueExperimentReference:
+    def reference_class(self) -> type[SyntheticRescueExperimentReference]:
         """Return the synthetic-rescue experiment-reference schema class."""
         return SyntheticRescueExperimentReference
 
@@ -366,7 +368,7 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
         env.close()
 
     @staticmethod
-    def create_experiment(
+    def create_experiment(  # type: ignore[override]  # dataset-specific signature
         dataset_name: str, row: pd.Series
     ) -> tuple[
         SyntheticRescueExperiment, SyntheticRescueExperimentReference, Publication
@@ -440,8 +442,8 @@ def main() -> None:
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
-    genome = SCerevisiaeGenome(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
+    genome = SCerevisiaeGenome(  # type: ignore[call-arg]  # data_root kwarg not in SCerevisiaeGenome signature — FLAG
+        data_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"), overwrite=True
     )
 
     lethality_dataset = SynthLethalityYeastSynthLethDbDataset(genome=genome)

@@ -10,7 +10,7 @@ import os
 import os.path as osp
 import pickle
 from collections.abc import Callable, Iterator
-from typing import Any
+from typing import Any, cast
 
 import lmdb
 import numpy as np
@@ -20,7 +20,7 @@ from attrs import define, field
 from neo4j import GraphDatabase
 from tqdm import tqdm
 
-from torchcell.data import Dataset
+from torchcell.data import Dataset  # type: ignore[attr-defined]  # dead module: torchcell.data has no Dataset; not edited per scope
 from torchcell.sequence import GeneSet
 
 log = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ class BaseQuery:
 
     def __attrs_post_init__(self) -> None:
         """Open the Neo4j driver using the configured URI and credentials."""
-        self.driver = GraphDatabase.driver(
+        self.driver = GraphDatabase.driver(  # type: ignore[misc]  # attrs @define slots; driver set in post_init, not a declared field
             self.uri, auth=(self.username, self.password)
         )
 
@@ -50,19 +50,19 @@ class BaseQuery:
         self.driver.close()
 
 
-class BaseCellDataset(Dataset):
+class BaseCellDataset(Dataset):  # type: ignore[misc]  # Dataset resolves to Any (dead import)
     """Marker base class for cell datasets."""
 
     pass
 
 
-class Cell(Dataset):
+class Cell(Dataset):  # type: ignore[misc]  # Dataset resolves to Any (dead import)
     """Cell dataset that processes raw query output into an LMDB-backed store."""
 
     def __init__(
         self,
         root: str = "data/torchcell/dmf_costanzo2016",
-        subset_n: int = None,
+        subset_n: int | None = None,
         preprocess: dict[str, Any] | None = None,
         skip_process_file_exist: bool = False,
         transform: Callable[..., Any] | None = None,
@@ -84,9 +84,9 @@ class Cell(Dataset):
         self.preprocess = preprocess
         # TODO consider moving to Dataset
         self.preprocess_dir = osp.join(root, "preprocess")
-        self._length = None
-        self._gene_set = None
-        self._df = None
+        self._length: int | None = None
+        self._gene_set: GeneSet | None = None
+        self._df: pd.DataFrame | None = None
         # Check for existing preprocess config
         existing_config = self.load_preprocess_config()
         if existing_config is not None:
@@ -96,8 +96,8 @@ class Cell(Dataset):
                     "Delete the processed and process dir for a new Dataset."
                     "Or define a new root."
                 )
-        self.env = None
-        self._experiment_reference_index = None
+        self.env: lmdb.Environment = None
+        self._experiment_reference_index: list[Any] | None = None
         super().__init__(root, transform, pre_transform)
         # This was here before - not sure if it has something to do with gpu
         # self.env = None
@@ -108,12 +108,12 @@ class Cell(Dataset):
         return self._skip_process_file_exist
 
     @property
-    def raw_file_names(self) -> list[str]:
+    def raw_file_names(self) -> str:
         """Return the expected raw file name."""
         return "dummy.txt"
 
     @property
-    def processed_file_names(self) -> list[str]:
+    def processed_file_names(self) -> str:
         """Return the processed LMDB file name."""
         return "data.lmdb"
 
@@ -139,7 +139,7 @@ class Cell(Dataset):
             self.env = None
 
     @property
-    def df(self) -> pd.DataFrame:
+    def df(self) -> pd.DataFrame | None:
         """Return the preprocessed dataframe, loading it from CSV if present."""
         if osp.exists(osp.join(self.preprocess_dir, "data.csv")):
             self._df = pd.read_csv(osp.join(self.preprocess_dir, "data.csv"))
@@ -200,7 +200,7 @@ class Cell(Dataset):
         # return experiment, reference
         pass
 
-    def preprocess_raw(
+    def preprocess_raw(  # type: ignore[return]  # stub overridden by subclasses; body intentionally returns None
         self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
     ) -> pd.DataFrame:
         """Apply dataset-specific filtering to the raw dataframe (override in subclass)."""
@@ -222,7 +222,7 @@ class Cell(Dataset):
 
         if osp.exists(config_path):
             with open(config_path) as f:
-                config = json.load(f)
+                config: dict[str, Any] = json.load(f)
             return config
         else:
             return None
@@ -233,7 +233,7 @@ class Cell(Dataset):
             self._init_db()
 
         with self.env.begin() as txn:
-            length = txn.stat()["entries"]
+            length: int = txn.stat()["entries"]
 
         # Must be closed for dataloader num_workers > 0
         self.close_lmdb()
@@ -256,7 +256,7 @@ class Cell(Dataset):
 
         if isinstance(idx, (np.ndarray, list, torch.Tensor)):
             # If idx is a list/array/tensor of indices, return a list of data objects
-            return [self.get_single_item(i.item()) for i in idx]
+            return [self.get_single_item(cast(Any, i).item()) for i in idx]
         else:
             # Single item retrieval
             return self.get_single_item(idx)

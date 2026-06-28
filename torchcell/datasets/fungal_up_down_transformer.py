@@ -6,7 +6,7 @@
 
 import os
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import torch
 from torch_geometric.data import Data
@@ -17,7 +17,10 @@ from torchcell.models.fungal_up_down_transformer import (  # adjusted import
     FungalUpDownTransformer,
 )
 from torchcell.sequence import ParsedGenome
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import (
+    SCerevisiaeGene,
+    SCerevisiaeGenome,
+)
 
 
 class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
@@ -45,7 +48,7 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
             transform: Optional runtime transform applied to each sample.
             pre_transform: Optional transform applied once before saving.
         """
-        self.genome = genome
+        self.genome: SCerevisiaeGenome | ParsedGenome | None = genome
         self.model_name = model_name
         # BUG I just moved this here to recompute the data but we don't want to do this when training models
         self.transformer = self.initialize_model()
@@ -66,7 +69,7 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
             )
 
     @staticmethod
-    def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome:
+    def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome | None:
         """Return a ParsedGenome holding the gene set, or None if genome is None."""
         # BUG we have to do this black magic because when you merge datasets with +
         # the genome is None
@@ -100,14 +103,14 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
         (window_method, window_size, include_cds_codon, allow_undersize) = (
             self.MODEL_TO_WINDOW[self.model_name]
         )
-        for gene_id in tqdm(self.genome.gene_set):
-            sequence = self.genome[gene_id]
+        genome = cast(SCerevisiaeGenome, self.genome)
+        transformer = cast(FungalUpDownTransformer, self.transformer)
+        for gene_id in tqdm(genome.gene_set):
+            sequence = cast(SCerevisiaeGene, genome[gene_id])
             dna_selection = getattr(sequence, window_method)(
                 window_size, include_cds_codon, allow_undersize=allow_undersize
             )
-            embeddings = self.transformer.embed(
-                [dna_selection.seq], mean_embedding=True
-            )
+            embeddings = transformer.embed([dna_selection.seq], mean_embedding=True)
 
             dna_window_dict = {self.model_name: dna_selection}
 

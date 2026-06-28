@@ -10,7 +10,7 @@ import os
 import os.path as osp
 import pickle
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import lmdb
 import networkx as nx
@@ -44,7 +44,7 @@ class ParsedGenome(ModelStrictArbitrary):
         return v
 
 
-class CellDataset(Dataset):
+class CellDataset(Dataset):  # type: ignore[misc]  # PyG Dataset is untyped (Any) base
     """PyG dataset of perturbed cell graphs built from genome, graph, and embeddings."""
 
     # TODO type change experiments
@@ -52,7 +52,7 @@ class CellDataset(Dataset):
         self,
         root: str = "data/scerevisiae/cell",
         # genome: Genome = None,
-        genome: Genome = None,
+        genome: Genome | None = None,
         graph: nx.Graph = None,
         embeddings: BaseEmbeddingDataset | None = None,
         experiments: list[InMemoryDataset] | InMemoryDataset = None,
@@ -74,10 +74,10 @@ class CellDataset(Dataset):
             pre_transform: Optional pre-processing transform.
             pre_filter: Optional pre-processing filter.
         """
-        self._gene_set = None
+        self._gene_set: GeneSet | set[str] | None = None
         # HACK start
         # Extract data from genome object, then remove for pickling with data loader
-        self.genome = self.parse_genome(genome)
+        self.genome = self.parse_genome(cast(Genome, genome))
         del genome
         # self.genome = None
         # HACK end
@@ -114,7 +114,7 @@ class CellDataset(Dataset):
         # Self loops fixes the batching problem for no edges.
         self.cell_graph.edge_index = add_self_loops(self.cell_graph.edge_index)[0]
         # LMDB env
-        self.env = None
+        self.env: lmdb.Environment = None
 
     def to_cell_data(self, graphs: list[nx.Graph]) -> Data:
         """Compose the input graphs and convert them to a PyG Data object."""
@@ -132,14 +132,14 @@ class CellDataset(Dataset):
         return ParsedGenome(**data)
 
     @property
-    def raw_file_names(self) -> list[str]:
+    def raw_file_names(self) -> list[str] | None:
         """Return the raw file names required by the dataset (none here)."""
         # TODO consider return the processed of the experiments, etc.
         # This might cause an issue because there is expected behavior for raw,# and this is not it.
         return None  # Specify raw files if needed
 
     @property
-    def processed_file_names(self) -> list[str]:
+    def processed_file_names(self) -> str:
         """Return the processed LMDB file name."""
         return "data.lmdb"
 
@@ -323,7 +323,7 @@ class CellDataset(Dataset):
             raise ValueError("Invalid or empty JSON file found.")
 
     @gene_set.setter
-    def gene_set(self, value: GeneSet) -> None:
+    def gene_set(self, value: GeneSet | set[str]) -> None:
         if not value:
             raise ValueError("Cannot set an empty or None value for gene_set")
         if not osp.exists(self.preprocess_dir):
@@ -387,7 +387,7 @@ class CellDataset(Dataset):
                 edge_indices.append(extracted_subgraph.edge_index)
                 pert_indices.append(idx)
             # Concatenate all edge indices and get unique nodes
-            unique_k_hop_nodes = torch.cat(edge_indices, dim=1).unique()
+            unique_k_hop_nodes = torch.cat(edge_indices, dim=1).unique()  # type: ignore[no-untyped-call]  # torch Tensor.unique untyped in stubs
 
             # Get the induced subgraph based on these unique node indices
             combined_subgraph = self.cell_graph.subgraph(unique_k_hop_nodes)
@@ -502,7 +502,7 @@ class CellDataset(Dataset):
             self._init_db()
 
         with self.env.begin() as txn:
-            length = txn.stat()["entries"]
+            length: int = txn.stat()["entries"]
 
         # Must be closed for dataloader num_workers > 0
         self.close_lmdb()
@@ -516,7 +516,7 @@ class CellDataset(Dataset):
             self.env = None
 
 
-class NeoCellDataset(Dataset):
+class NeoCellDataset(Dataset):  # type: ignore[misc]  # PyG Dataset is untyped (Any) base
     """Placeholder for a future Neo4j-backed cell dataset."""
 
     pass
@@ -532,7 +532,7 @@ def main() -> None:
     from torchcell.graph import SCerevisiaeGraph
 
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
     # genome.drop_chrmt()
     # genome.drop_empty_go()
@@ -570,7 +570,7 @@ def main() -> None:
 
     # TODO doesn't work right now since we changed graph
     # BUG These is an issue in getting the
-    graph = SCerevisiaeGraph(
+    graph = SCerevisiaeGraph(  # type: ignore[call-arg]  # data_root is a valid param; attrs hides it from mypy
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
 

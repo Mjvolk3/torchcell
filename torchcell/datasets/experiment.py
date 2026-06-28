@@ -9,12 +9,12 @@ import json
 import logging
 import pickle
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import lmdb
 from tqdm import tqdm
 
-from torchcell.data import Dataset
+from torchcell.data import Dataset  # type: ignore[attr-defined]  # dead module: torchcell.data has no Dataset; not edited per scope
 from torchcell.sequence import GeneSet
 
 log = logging.getLogger(__name__)
@@ -23,13 +23,13 @@ log = logging.getLogger(__name__)
 # IDEA right now experiments: list[Dataset] but the Dataset[0]: Data
 # will need to adhere to the same schema
 # TODO unify Costanzo2016
-class MergedExperiment(Dataset):
+class MergedExperiment(Dataset):  # type: ignore[misc]  # Dataset resolves to Any (dead import)
     """Combine several experiment datasets into one deduplicated LMDB-backed dataset."""
 
     def __init__(
         self,
         root: str = "data/scerevisiae/merged_experiment",
-        experiments: list[Dataset] = None,
+        experiments: list[Dataset] | None = None,
         preprocess: dict[str, Any] | None = None,
         skip_process_file_exist_check: bool = False,
         transform: Callable[..., Any] | None = None,
@@ -50,9 +50,9 @@ class MergedExperiment(Dataset):
         self._skip_process_file_exist = skip_process_file_exist_check
         self.preprocess = preprocess
         self.preprocess_dir = osp.join(root, "preprocess")
-        self._length = None
-        self._gene_set = None
-        self._df = None
+        self._length: int | None = None
+        self._gene_set: GeneSet | None = None
+        self._df: Any = None
         # Check for existing preprocess config
         existing_config = self.load_preprocess_config()
         if existing_config is not None:
@@ -64,7 +64,7 @@ class MergedExperiment(Dataset):
                 )
         # Check for existing preprocess config
         super().__init__(root, transform, pre_transform)
-        self.env = None
+        self.env: lmdb.Environment = None
 
     @property
     def skip_process_file_exist(self) -> bool:
@@ -77,7 +77,7 @@ class MergedExperiment(Dataset):
         return ["strain_ids_and_single_mutant_fitness.xlsx"]
 
     @property
-    def processed_file_names(self) -> list[str]:
+    def processed_file_names(self) -> str:
         """Return the processed LMDB file name."""
         return "data.lmdb"
 
@@ -138,7 +138,8 @@ class MergedExperiment(Dataset):
 
         if osp.exists(indices_path):
             with open(indices_path) as f:
-                return json.load(f)
+                indices: dict[str, Any] = json.load(f)
+                return indices
 
         # If no cached indices found, log a warning and return an empty dict
         log.warning("No cached experiment indices found!")
@@ -154,7 +155,7 @@ class MergedExperiment(Dataset):
         if self.preprocess and "temperature" in self.preprocess:
             desired_temperature = self.preprocess["temperature"]
 
-        for dataset in self.experiments:
+        for dataset in cast(list[Any], self.experiments):
             for data_item in dataset:
                 # If a temperature preprocessing condition exists,
                 # skip items not matching it
@@ -212,9 +213,9 @@ class MergedExperiment(Dataset):
         self.gene_set = self.compute_gene_set(combined_data_list)
 
         # Now compute the experiment indices using source_dataset_list
-        experiment_indices = {
+        experiment_indices: dict[str, dict[str, Any]] = {
             dataset.__class__.__name__: {"size": 0, "indices": []}
-            for dataset in self.experiments
+            for dataset in cast(list[Any], self.experiments)
         }
         for idx, dataset_name in enumerate(source_dataset_list):
             experiment_indices[dataset_name]["indices"].append(idx)
@@ -264,7 +265,7 @@ class MergedExperiment(Dataset):
             self._init_db()
 
         with self.env.begin() as txn:
-            length = txn.stat()["entries"]
+            length: int = txn.stat()["entries"]
 
         # Must be closed for dataloader num_workers > 0
         self.close_lmdb()
@@ -324,7 +325,7 @@ if __name__ == "__main__":
     )
 
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
 
     dmf_dataset = DmfCostanzo2016Dataset(
         root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e2"),

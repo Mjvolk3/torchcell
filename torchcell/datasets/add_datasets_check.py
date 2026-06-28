@@ -2,6 +2,7 @@
 
 import os
 import os.path as osp
+from typing import cast
 
 from torchcell.datasets import (
     CodonFrequencyDataset,
@@ -17,16 +18,18 @@ if __name__ == "__main__":
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
-    genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome = SCerevisiaeGenome(  # type: ignore[call-arg]  # data_root is a valid Genome param; attrs hides it from mypy
+        data_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome")
+    )
 
     fud_downstream = FungalUpDownTransformerDataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_up_down_embed"),
+        root=osp.join(cast(str, DATA_ROOT), "data/scerevisiae/fungal_up_down_embed"),
         genome=genome,
         model_name="species_downstream",
     )
 
     fud_upstream = FungalUpDownTransformerDataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_up_down_embed"),
+        root=osp.join(cast(str, DATA_ROOT), "data/scerevisiae/fungal_up_down_embed"),
         genome=genome,
         model_name="species_upstream",
     )
@@ -39,12 +42,12 @@ if __name__ == "__main__":
         root="data/scerevisiae/gene_one_hot", genome=genome
     )
     prot_T5_dataset_no_dubious = ProtT5Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embed"),
+        root=osp.join(cast(str, DATA_ROOT), "data/scerevisiae/protT5_embed"),
         genome=genome,
         model_name="prot_t5_xl_uniref50_no_dubious",
     )
     prot_T5_dataset_all = ProtT5Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embed"),
+        root=osp.join(cast(str, DATA_ROOT), "data/scerevisiae/protT5_embed"),
         genome=genome,
         model_name="prot_t5_xl_uniref50_all",
     )

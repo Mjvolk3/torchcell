@@ -7,7 +7,7 @@
 
 import os
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import torch
 from torch_geometric.data import Data
@@ -39,9 +39,9 @@ class OneHotGeneDataset(BaseEmbeddingDataset):
             pre_transform: Optional transform applied before saving.
         """
         # Create a mapping from gene to its index
-        self.genome = genome
+        self.genome: SCerevisiaeGenome | ParsedGenome | None = genome
         self.gene_to_index = {
-            gene: idx for idx, gene in enumerate(self.genome.gene_set)
+            gene: idx for idx, gene in enumerate(genome.gene_set)
         }
 
         self.model_name = "one_hot_gene"
@@ -58,7 +58,7 @@ class OneHotGeneDataset(BaseEmbeddingDataset):
 
     # This is done to avoid pkl error when since genome uses sqlite
     @staticmethod
-    def parse_genome(genome: SCerevisiaeGenome) -> ParsedGenome:
+    def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome | None:
         """Return a ParsedGenome holding the gene set, or None if genome is None."""
         # BUG we have to do this black magic because when you merge datasets with +
         # the genome is None
@@ -87,7 +87,8 @@ class OneHotGeneDataset(BaseEmbeddingDataset):
 
         data_list = []
 
-        for gene_id in tqdm(self.genome.gene_set):
+        genome = cast(SCerevisiaeGenome, self.genome)
+        for gene_id in tqdm(genome.gene_set):
             encoded_gene = self.one_hot_encode_gene(gene_id)
 
             # Create a Data object
@@ -110,7 +111,9 @@ if __name__ == "__main__":
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
-    genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome = SCerevisiaeGenome(
+        data_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome")
+    )  # type: ignore[call-arg]  # data_root is a valid Genome param; attrs hides it from mypy
 
     genome = SCerevisiaeGenome()
     dataset = OneHotGeneDataset(

@@ -8,7 +8,7 @@
 import os
 import os.path as osp
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import networkx as nx
 import torch
@@ -54,7 +54,9 @@ class OneHotGraphEmbeddingDataset(BaseEmbeddingDataset):
         pass
 
     @property
-    def processed_file_names(self) -> list[str]:
+    def processed_file_names(  # type: ignore[override]  # intentionally widens base return; behavior unchanged
+        self,
+    ) -> list[str]:
         """Return the processed file name for the selected model."""
         return [f"{self.model_name}.pt"]
 
@@ -70,7 +72,9 @@ class OneHotGraphEmbeddingDataset(BaseEmbeddingDataset):
         unique_chromosomes: set[Any] = set()
         unique_pathways: set[Any] = set()
 
-        normalize_data, include_pathways = self.MODEL_TO_WINDOW[self.model_name]
+        normalize_data, include_pathways = self.MODEL_TO_WINDOW[
+            cast(str, self.model_name)
+        ]
 
         # Collect feature values for each node
         feature_values: dict[str, list[Any]] = {
@@ -196,18 +200,22 @@ def main() -> None:
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     DATA_ROOT = os.getenv("DATA_ROOT")
-    genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome = SCerevisiaeGenome(  # type: ignore[call-arg]  # data_root is a valid param; attrs/class hides it from mypy
+        data_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome")
+    )
     genome.drop_chrmt()
     genome.drop_empty_go()
 
-    graph = SCerevisiaeGraph(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+    graph = SCerevisiaeGraph(  # type: ignore[call-arg]  # data_root is a valid param; attrs/class hides it from mypy
+        data_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"), genome=genome
     )
 
     for model_name in OneHotGraphEmbeddingDataset.MODEL_TO_WINDOW.keys():
         print(f"Processing model: {model_name}")
         dataset = OneHotGraphEmbeddingDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/sgd_gene_graph_hot"),
+            root=osp.join(
+                cast(str, DATA_ROOT), "data/scerevisiae/sgd_gene_graph_hot"
+            ),
             graph=graph.G_gene,
             model_name=model_name,
         )
@@ -217,7 +225,7 @@ def main() -> None:
         print(f"Completed processing for model: {model_name}")
 
     dataset = OneHotGraphEmbeddingDataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/sgd_gene_graph_hot"),
+        root=osp.join(cast(str, DATA_ROOT), "data/scerevisiae/sgd_gene_graph_hot"),
         graph=graph.G_gene,
         model_name="normalized_chrom_pathways",
     )

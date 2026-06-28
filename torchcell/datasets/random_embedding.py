@@ -7,7 +7,7 @@
 
 import os
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import torch
 from torch_geometric.data import Data
@@ -15,7 +15,10 @@ from tqdm import tqdm
 
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.sequence import ParsedGenome
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import (
+    SCerevisiaeGene,
+    SCerevisiaeGenome,
+)
 
 
 class RandomEmbeddingDataset(BaseEmbeddingDataset):
@@ -50,7 +53,7 @@ class RandomEmbeddingDataset(BaseEmbeddingDataset):
             pre_transform: Optional transform applied before caching.
             batch_size: Number of genes processed per save chunk.
         """
-        self.genome = genome
+        self.genome: SCerevisiaeGenome | ParsedGenome | None = genome
         self.model_name = model_name
         self.batch_size = batch_size
         super().__init__(root, self.model_name, transform, pre_transform)
@@ -61,7 +64,7 @@ class RandomEmbeddingDataset(BaseEmbeddingDataset):
         self.data, self.slices = torch.load(self.processed_paths[0])
 
     @staticmethod
-    def parse_genome(genome: SCerevisiaeGenome) -> ParsedGenome:
+    def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome | None:
         """Return a ParsedGenome holding the genome's gene set, or None."""
         if genome is None:
             return None
@@ -80,13 +83,14 @@ class RandomEmbeddingDataset(BaseEmbeddingDataset):
         """Generate random embeddings per gene and save them in batched chunks."""
         data_list = []
         (window_method, window_size, is_max_size) = self.MODEL_TO_WINDOW[
-            self.model_name
+            cast(str, self.model_name)
         ]
 
         torch.manual_seed(42)  # Set a fixed seed for reproducibility
 
-        for i, gene_id in tqdm(enumerate(self.genome.gene_set)):
-            sequence = self.genome[gene_id]
+        genome = cast(SCerevisiaeGenome, self.genome)
+        for i, gene_id in tqdm(enumerate(genome.gene_set)):
+            sequence = cast(SCerevisiaeGene, genome[gene_id])
             if len(sequence) <= window_size:
                 cds_sequence = sequence.cds.seq
                 embeddings = torch.rand(1, window_size)  # Random values between 0 and 1
@@ -107,13 +111,13 @@ class RandomEmbeddingDataset(BaseEmbeddingDataset):
 
             data_list.append(data)
 
-            if (i + 1) % self.batch_size == 0 or (i + 1) == len(self.genome.gene_set):
+            if (i + 1) % self.batch_size == 0 or (i + 1) == len(genome.gene_set):
                 # Load existing data from the file if it exists
                 if os.path.exists(self.processed_paths[0]):
                     existing_data = torch.load(self.processed_paths[0])
                     existing_data_list = existing_data.get("data_list", [])
                     data_list = existing_data_list + data_list
-                if (i + 1) == len(self.genome.gene_set):
+                if (i + 1) == len(genome.gene_set):
                     torch.save(self.collate(data_list), self.processed_paths[0])
                 else:
                     # Save the updated data back to the file

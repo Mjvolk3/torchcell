@@ -28,6 +28,7 @@ from torchcell.datamodels.schema import (
     GeneInteractionExperiment,
     GeneInteractionExperimentReference,
     GeneInteractionPhenotype,
+    GenePerturbationType,
     Genotype,
     Media,
     Publication,
@@ -63,22 +64,22 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
-    def experiment_class(self) -> Experiment:
+    def experiment_class(self) -> type[Experiment]:
         """Return the experiment schema class for this dataset."""
         return FitnessExperiment
 
     @property
-    def reference_class(self) -> ExperimentReference:
+    def reference_class(self) -> type[ExperimentReference]:
         """Return the experiment-reference schema class for this dataset."""
         return FitnessExperimentReference
 
     @property
-    def raw_file_names(self) -> str:
+    def raw_file_names(self) -> str:  # type: ignore[override]  # single raw file as str, base is list[str]
         """Return the raw supplementary Excel file name."""
         return "aaz5667-Table-S5.xlsx"
 
     @property
-    def processed_file_names(self) -> list[str]:
+    def processed_file_names(self) -> str:
         """Return the processed output name (the LMDB directory)."""
         return "lmdb"
 
@@ -117,7 +118,7 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
                 txn.put(f"{index}".encode(), serialized_data)
         env.close()
 
-    def preprocess_raw(self, df: pd.DataFrame) -> pd.DataFrame:
+    def preprocess_raw(self, df: pd.DataFrame) -> pd.DataFrame:  # type: ignore[override]  # dataset-specific signature
         """Filter to single mutants and clean allele names for processing."""
         df = df[df["Mutant type"] == "Single mutant"]
         df = df.replace("'", "_prime", regex=True)
@@ -127,7 +128,7 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
         return df
 
     @staticmethod
-    def create_experiment(
+    def create_experiment(  # type: ignore[override]  # dataset-specific signature
         dataset_name: str, row: pd.Series
     ) -> tuple[FitnessExperiment, FitnessExperimentReference, Publication]:
         """Build the experiment, reference, and publication objects from one row."""
@@ -135,6 +136,7 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
             species="Saccharomyces cerevisiae", strain="S288C"
         )
 
+        perturbation: GenePerturbationType
         if "delta" in row["Allele1"]:
             perturbation = SgaKanMxDeletionPerturbation(
                 systematic_gene_name=row["ORF1"],
@@ -202,12 +204,12 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
-    def experiment_class(self) -> Experiment:
+    def experiment_class(self) -> type[Experiment]:
         """Return the experiment schema class for this dataset."""
         return FitnessExperiment
 
     @property
-    def reference_class(self) -> ExperimentReference:
+    def reference_class(self) -> type[ExperimentReference]:
         """Return the experiment-reference schema class for this dataset."""
         return FitnessExperimentReference
 
@@ -221,7 +223,7 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
         ]
 
     @property
-    def processed_file_names(self) -> list[str]:
+    def processed_file_names(self) -> str:
         """Return the processed output name (the LMDB directory)."""
         return "lmdb"
 
@@ -270,7 +272,7 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
 
         env.close()
 
-    def preprocess_raw(
+    def preprocess_raw(  # type: ignore[override]  # dataset-specific signature
         self, df_s1: pd.DataFrame, df_s3: pd.DataFrame, df_s5: pd.DataFrame
     ) -> pd.DataFrame:
         """Merge the supplementary tables and assemble double-mutant fitness rows."""
@@ -363,7 +365,7 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
         return df
 
     @staticmethod
-    def create_experiment(
+    def create_experiment(  # type: ignore[override]  # dataset-specific signature
         dataset_name: str, row: pd.Series
     ) -> tuple[FitnessExperiment, FitnessExperimentReference, Publication]:
         """Build the experiment, reference, and publication objects from one row."""
@@ -371,13 +373,14 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
             species="Saccharomyces cerevisiae", strain="S288C"
         )
 
-        perturbations = []
+        perturbations: list[GenePerturbationType] = []
 
         # Process query perturbation (excluding ho)
         query_systematic_name = row["Query systematic name no ho"]
         query_allele_name = row["Query allele name no ho"]
         query_perturbation_type = row["query_perturbation_type_no_ho"]
 
+        perturbation: GenePerturbationType
         if query_perturbation_type == "KanMX_deletion":
             perturbation = SgaKanMxDeletionPerturbation(
                 systematic_gene_name=query_systematic_name,
@@ -464,7 +467,7 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/tmf_kuzmin2020",
-        subset_n: int = None,
+        subset_n: int | None = None,
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
@@ -475,12 +478,12 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
-    def experiment_class(self) -> Experiment:
+    def experiment_class(self) -> type[Experiment]:
         """Return the experiment schema class for this dataset."""
         return FitnessExperiment
 
     @property
-    def reference_class(self) -> ExperimentReference:
+    def reference_class(self) -> type[ExperimentReference]:
         """Return the experiment-reference schema class for this dataset."""
         return FitnessExperimentReference
 
@@ -490,7 +493,7 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
         return ["aaz5667-Table-S1.xlsx", "aaz5667-Table-S3.xlsx"]
 
     @property
-    def processed_file_names(self) -> list[str]:
+    def processed_file_names(self) -> str:
         """Return the processed output name (the LMDB directory)."""
         return "lmdb"
 
@@ -538,7 +541,9 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
 
         env.close()
 
-    def preprocess_raw(self, df_s1: pd.DataFrame, df_s3: pd.DataFrame) -> pd.DataFrame:
+    def preprocess_raw(  # type: ignore[override]  # dataset-specific signature
+        self, df_s1: pd.DataFrame, df_s3: pd.DataFrame
+    ) -> pd.DataFrame:
         """Merge the supplementary tables and assemble triple-mutant fitness rows."""
         # Combine S1 and S3, filtering for trigenic interactions
         df = pd.concat([df_s1, df_s3])
@@ -594,7 +599,7 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
         return df.reset_index(drop=True)
 
     @staticmethod
-    def create_experiment(
+    def create_experiment(  # type: ignore[override]  # dataset-specific signature
         dataset_name: str, row: pd.Series, phenotype_reference_std: float
     ) -> tuple[FitnessExperiment, FitnessExperimentReference, Publication]:
         """Build the experiment, reference, and publication objects from one row."""
@@ -602,7 +607,7 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
             species="Saccharomyces cerevisiae", strain="S288C"
         )
 
-        perturbations = []
+        perturbations: list[GenePerturbationType] = []
         # Query 1
         if row["query_perturbation_type_1"] == "KanMX_deletion":
             perturbations.append(
@@ -714,7 +719,7 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/dmi_kuzmin2020",
-        subset_n: int = None,
+        subset_n: int | None = None,
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
@@ -725,12 +730,12 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
-    def experiment_class(self) -> ExperimentReference:
+    def experiment_class(self) -> type[Experiment]:
         """Return the experiment schema class for this dataset."""
         return GeneInteractionExperiment
 
     @property
-    def reference_class(self) -> ExperimentReference:
+    def reference_class(self) -> type[ExperimentReference]:
         """Return the experiment-reference schema class for this dataset."""
         return GeneInteractionExperimentReference
 
@@ -740,7 +745,7 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
         return ["aaz5667-Table-S1.xlsx", "aaz5667-Table-S3.xlsx"]
 
     @property
-    def processed_file_names(self) -> list[str]:
+    def processed_file_names(self) -> str:
         """Return the processed output name (the LMDB directory)."""
         return "lmdb"
 
@@ -788,7 +793,9 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
 
         env.close()
 
-    def preprocess_raw(self, df_s1: pd.DataFrame, df_s3: pd.DataFrame) -> pd.DataFrame:
+    def preprocess_raw(  # type: ignore[override]  # dataset-specific signature
+        self, df_s1: pd.DataFrame, df_s3: pd.DataFrame
+    ) -> pd.DataFrame:
         """Merge the supplementary tables and assemble interaction rows."""
         df = pd.concat([df_s1, df_s3])
         df = df[df["Combined mutant type"] == "digenic"].copy()
@@ -838,7 +845,7 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
         return df.reset_index(drop=True)
 
     @staticmethod
-    def create_experiment(
+    def create_experiment(  # type: ignore[override]  # dataset-specific signature
         dataset_name: str, row: pd.Series
     ) -> tuple[
         GeneInteractionExperiment, GeneInteractionExperimentReference, Publication
@@ -848,7 +855,7 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
             species="Saccharomyces cerevisiae", strain="S288C"
         )
 
-        perturbations = []
+        perturbations: list[GenePerturbationType] = []
         # Query
         if row["query_perturbation_type_no_ho"] == "KanMX_deletion":
             perturbations.append(
@@ -943,7 +950,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/tmi_kuzmin2020",
-        subset_n: int = None,
+        subset_n: int | None = None,
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
@@ -954,12 +961,12 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
-    def experiment_class(self) -> ExperimentReference:
+    def experiment_class(self) -> type[Experiment]:
         """Return the experiment schema class for this dataset."""
         return GeneInteractionExperiment
 
     @property
-    def reference_class(self) -> ExperimentReference:
+    def reference_class(self) -> type[ExperimentReference]:
         """Return the experiment-reference schema class for this dataset."""
         return GeneInteractionExperimentReference
 
@@ -969,7 +976,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
         return ["aaz5667-Table-S1.xlsx", "aaz5667-Table-S3.xlsx"]
 
     @property
-    def processed_file_names(self) -> list[str]:
+    def processed_file_names(self) -> str:
         """Return the processed output name (the LMDB directory)."""
         return "lmdb"
 
@@ -1017,7 +1024,9 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
 
         env.close()
 
-    def preprocess_raw(self, df_s1: pd.DataFrame, df_s3: pd.DataFrame) -> pd.DataFrame:
+    def preprocess_raw(  # type: ignore[override]  # dataset-specific signature
+        self, df_s1: pd.DataFrame, df_s3: pd.DataFrame
+    ) -> pd.DataFrame:
         """Merge the supplementary tables and assemble interaction rows."""
         df = pd.concat([df_s1, df_s3])
         df = df[df["Combined mutant type"] == "trigenic"].copy()
@@ -1060,7 +1069,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
         return df.reset_index(drop=True)
 
     @staticmethod
-    def create_experiment(
+    def create_experiment(  # type: ignore[override]  # dataset-specific signature
         dataset_name: str, row: pd.Series
     ) -> tuple[
         GeneInteractionExperiment, GeneInteractionExperimentReference, Publication
@@ -1070,7 +1079,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
             species="Saccharomyces cerevisiae", strain="S288C"
         )
 
-        perturbations = []
+        perturbations: list[GenePerturbationType] = []
         # Query 1
         if row["query_perturbation_type_1"] == "KanMX_deletion":
             perturbations.append(

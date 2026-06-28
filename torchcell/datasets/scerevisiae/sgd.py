@@ -12,7 +12,7 @@ import pickle
 import random
 import time
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import lmdb
 import pandas as pd
@@ -42,21 +42,21 @@ log = logging.getLogger(__name__)
 
 def get_publication_info(pubmed_id: str) -> dict[str, str | None] | None:
     """Fetch publication metadata (PubMed URL, DOI) for a PubMed ID via Entrez."""
-    Entrez.email = "mvjolk3@illinois.edu"
+    Entrez.email = "mvjolk3@illinois.edu"  # type: ignore[assignment]  # Bio.Entrez.email stub typed as None
     max_retries = 5
     base_delay = 1  # seconds
 
     for attempt in range(max_retries):
         try:
-            handle = Entrez.efetch(
+            handle = Entrez.efetch(  # type: ignore[no-untyped-call]  # Bio.Entrez has no stubs
                 db="pubmed", id=pubmed_id, rettype="xml", retmode="text"
             )
-            records = Entrez.read(handle)
+            records = Entrez.read(handle)  # type: ignore[no-untyped-call]  # Bio.Entrez has no stubs
             handle.close()
 
             article = records["PubmedArticle"][0]["MedlineCitation"]["Article"]
 
-            info = {
+            info: dict[str, str | None] = {
                 "pubmed_id": pubmed_id,
                 "pubmed_url": f"https://pubmed.ncbi.nlm.nih.gov/{pubmed_id}/",
                 "doi": None,
@@ -105,6 +105,8 @@ def get_publication_info(pubmed_id: str) -> dict[str, str | None] | None:
                 print(f"Error fetching info for PubMed ID {pubmed_id}: {str(e)}")
                 return None
 
+    return None
+
 
 @register_dataset
 class GeneEssentialitySgdDataset(ExperimentDataset):
@@ -113,7 +115,7 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/gene_essentiality_sgd",
-        scerevisiae_graph: SCerevisiaeGraph = None,
+        scerevisiae_graph: SCerevisiaeGraph | None = None,
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
@@ -124,12 +126,12 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
-    def experiment_class(self) -> GeneEssentialityExperiment:
+    def experiment_class(self) -> type[GeneEssentialityExperiment]:
         """Return the experiment model class for this dataset."""
         return GeneEssentialityExperiment
 
     @property
-    def reference_class(self) -> GeneEssentialityExperimentReference:
+    def reference_class(self) -> type[GeneEssentialityExperimentReference]:
         """Return the experiment reference model class for this dataset."""
         return GeneEssentialityExperimentReference
 
@@ -180,8 +182,9 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
 
         with env.begin(write=True) as txn:
             index = 0
-            for gene in tqdm(self.scerevisiae_graph.G_raw.nodes()):
-                node_data = self.scerevisiae_graph.G_raw.nodes[gene]
+            scerevisiae_graph = cast(SCerevisiaeGraph, self.scerevisiae_graph)
+            for gene in tqdm(scerevisiae_graph.G_raw.nodes()):
+                node_data = scerevisiae_graph.G_raw.nodes[gene]
                 inviable_phenotypes = [
                     i
                     for i in node_data.get("phenotype_details", [])
@@ -213,7 +216,7 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
     # since we have no way fo extracting it from the paper yet
     # It is a reasonable guess
     @staticmethod
-    def create_experiment(
+    def create_experiment(  # type: ignore[override]  # dataset-specific signature
         dataset_name: str, gene: str, phenotype_data: dict[str, Any]
     ) -> tuple[
         GeneEssentialityExperiment,
@@ -288,14 +291,14 @@ def main() -> None:
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     genome = SCerevisiaeGenome(
-        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
-        go_root=osp.join(DATA_ROOT, "data/go"),
+        genome_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"),
+        go_root=osp.join(cast(str, DATA_ROOT), "data/go"),
         overwrite=True,
     )
     graph = SCerevisiaeGraph(
-        sgd_root=osp.join(DATA_ROOT, "data/sgd/genome"),
-        string_root=osp.join(DATA_ROOT, "data/string"),
-        tflink_root=osp.join(DATA_ROOT, "data/tflink"),
+        sgd_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"),
+        string_root=osp.join(cast(str, DATA_ROOT), "data/string"),
+        tflink_root=osp.join(cast(str, DATA_ROOT), "data/tflink"),
         genome=genome,
     )
 

@@ -22,9 +22,9 @@ class LmdbDatasetReader:
     def __init__(self, dataset_dir: str) -> None:
         """Open the LMDB environment and load the experiment reference index."""
         self.dataset_dir = dataset_dir
-        self.env = None
-        self._experiment_reference_index = None
-        self.db = None  # Add a db attribute
+        self.env: lmdb.Environment = None
+        self._experiment_reference_index: list[ExperimentReferenceIndex] | None = None
+        self.db: object = None  # Add a db attribute
         self._init_db()
         self._load_experiment_reference_index()
 
@@ -100,7 +100,7 @@ class LmdbDatasetReader:
         """Return the number of entries in the LMDB database."""
         with self.env.begin() as txn:
             # Use the database handle
-            length = txn.stat(db=self.db)["entries"]
+            length: int = txn.stat(db=self.db)["entries"]
         return length
 
     def __iter__(self) -> Iterator[Any]:

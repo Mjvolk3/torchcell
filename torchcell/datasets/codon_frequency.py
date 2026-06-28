@@ -5,7 +5,7 @@
 """Embedding dataset of per-gene CDS codon frequencies for S. cerevisiae."""
 
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import torch
 from torch_geometric.data import Data
@@ -13,7 +13,10 @@ from tqdm import tqdm
 
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.sequence import ParsedGenome, compute_codon_frequency
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import (
+    SCerevisiaeGene,
+    SCerevisiaeGenome,
+)
 
 
 class CodonFrequencyDataset(BaseEmbeddingDataset):
@@ -31,7 +34,7 @@ class CodonFrequencyDataset(BaseEmbeddingDataset):
         pre_transform: Callable[..., Any] | None = None,
     ) -> None:
         """Set up the dataset for the given genome and parse the gene set."""
-        self.genome = genome
+        self.genome: SCerevisiaeGenome | ParsedGenome | None = genome
 
         self.model_name = "cds_codon_frequency"
         super().__init__(root, self.model_name, transform, pre_transform)
@@ -40,7 +43,7 @@ class CodonFrequencyDataset(BaseEmbeddingDataset):
 
     # This is done to avoid pkl error when since genome uses sqlite
     @staticmethod
-    def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome:
+    def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome | None:
         """Extract the gene set into a picklable ParsedGenome (None if no genome)."""
         # BUG we have to do this black magic because when you merge datasets with +
         # the genome is None
@@ -59,8 +62,9 @@ class CodonFrequencyDataset(BaseEmbeddingDataset):
         """Compute codon frequencies for each gene and save the collated dataset."""
         data_list = []
 
-        for gene_id in tqdm(self.genome.gene_set):
-            sequence = str(self.genome[gene_id].cds.seq)
+        genome = cast(SCerevisiaeGenome, self.genome)
+        for gene_id in tqdm(genome.gene_set):
+            sequence = str(cast(SCerevisiaeGene, genome[gene_id]).cds.seq)
 
             # Check if the sequence is valid for codon frequency computation
             try:

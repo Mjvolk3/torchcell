@@ -2,7 +2,7 @@
 """Node embedding builder utility for creating embedding datasets based on configuration."""
 
 import os.path as osp
-from typing import Any
+from typing import Any, cast
 
 from torchcell.datasets.codon_frequency import CodonFrequencyDataset
 from torchcell.datasets.codon_language_model import CalmDataset
@@ -208,8 +208,8 @@ class NodeEmbeddingBuilder:
                 )
 
             config = cls.EMBEDDING_CONFIGS[embedding_name]
-            dataset_class = config["class"]
-            root_path = osp.join(data_root, config["root_path"])
+            dataset_class = cast(Any, config["class"])
+            root_path = osp.join(data_root, cast(str, config["root_path"]))
 
             # Check dependencies
             if config.get("requires_graph") and graph is None:
@@ -218,13 +218,13 @@ class NodeEmbeddingBuilder:
                 )
 
             # Build kwargs for dataset initialization
-            kwargs = {"root": root_path}
+            kwargs: dict[str, Any] = {"root": root_path}
 
             if config.get("requires_genome"):
                 kwargs["genome"] = genome
 
             if config.get("requires_graph"):
-                kwargs["graph"] = graph.G_gene
+                kwargs["graph"] = cast(Any, graph).G_gene
 
             if config.get("model_name"):
                 kwargs["model_name"] = config["model_name"]

@@ -7,7 +7,7 @@
 
 import os
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import torch
 from torch_geometric.data import Data
@@ -16,7 +16,10 @@ from tqdm import tqdm
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.models.protT5 import ProtT5
 from torchcell.sequence import ParsedGenome
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import (
+    SCerevisiaeGene,
+    SCerevisiaeGenome,
+)
 
 
 class ProtT5Dataset(BaseEmbeddingDataset):
@@ -42,7 +45,7 @@ class ProtT5Dataset(BaseEmbeddingDataset):
     ) -> None:
         """Set device and genome, then build or load cached ProtT5 embeddings."""
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.genome = genome
+        self.genome: SCerevisiaeGenome | ParsedGenome | None = genome
         self.model_name = model_name
         super().__init__(root, self.model_name, transform, pre_transform)
         self.genome = self.parse_genome(genome)
@@ -63,7 +66,7 @@ class ProtT5Dataset(BaseEmbeddingDataset):
             )
 
     @staticmethod
-    def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome:
+    def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome | None:
         """Return a ParsedGenome holding the genome's gene set, or None."""
         if genome is None:
             return None
@@ -86,10 +89,13 @@ class ProtT5Dataset(BaseEmbeddingDataset):
         data_list = []
 
         exclude_classifications = self.MODEL_TO_WINDOW.get(self.model_name, None)
-        for gene_id in tqdm(self.genome.gene_set):
-            orf_classification = self.genome[gene_id].orf_classification[0]
+        genome = cast(SCerevisiaeGenome, self.genome)
+        for gene_id in tqdm(genome.gene_set):
+            orf_classification = cast(
+                SCerevisiaeGene, genome[gene_id]
+            ).orf_classification[0]
 
-            protein_sequence = str(self.genome[gene_id].protein.seq)
+            protein_sequence = str(cast(Any, genome[gene_id]).protein.seq)
 
             if (
                 exclude_classifications
@@ -125,8 +131,8 @@ if __name__ == "__main__":
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     genome = SCerevisiaeGenome(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
-    )
+        data_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"), overwrite=True
+    )  # type: ignore[call-arg]  # data_root is a valid Genome param; attrs hides it from mypy
 
     # dataset = ProtT5Dataset(
     #     root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embedding"),
@@ -135,7 +141,7 @@ if __name__ == "__main__":
     # )
 
     dataset = ProtT5Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embedding"),
+        root=osp.join(cast(str, DATA_ROOT), "data/scerevisiae/protT5_embedding"),
         genome=genome,
         model_name="prot_t5_xl_uniref50_no_dubious",
     )

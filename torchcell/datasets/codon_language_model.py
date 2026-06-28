@@ -7,7 +7,7 @@
 
 import os
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import torch
 from calm import CaLM
@@ -16,7 +16,10 @@ from tqdm import tqdm
 
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.sequence import ParsedGenome
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import (
+    SCerevisiaeGene,
+    SCerevisiaeGenome,
+)
 
 
 class CalmDataset(BaseEmbeddingDataset):
@@ -35,7 +38,7 @@ class CalmDataset(BaseEmbeddingDataset):
         batch_size: int = 100,
     ) -> None:
         """Initialize the CaLM model, parse the genome, and process embeddings."""
-        self.genome = genome
+        self.genome: SCerevisiaeGenome | ParsedGenome | None = genome
         self.model_name = model_name
         self.model = self.initialize_model()
         self.batch_size = batch_size
@@ -53,7 +56,7 @@ class CalmDataset(BaseEmbeddingDataset):
         return CaLM()
 
     @staticmethod
-    def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome:
+    def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome | None:
         """Extract the gene set from a genome into a ParsedGenome (or None)."""
         if genome is None:
             return None
@@ -66,11 +69,12 @@ class CalmDataset(BaseEmbeddingDataset):
         """Embed each gene's CDS with CaLM and save the processed data list."""
         data_list = []
         (window_method, window_size, is_max_size) = self.MODEL_TO_WINDOW[
-            self.model_name
+            cast(str, self.model_name)
         ]
 
-        for i, gene_id in tqdm(enumerate(self.genome.gene_set)):
-            sequence = self.genome[gene_id]
+        genome = cast(SCerevisiaeGenome, self.genome)
+        for i, gene_id in tqdm(enumerate(genome.gene_set)):
+            sequence = cast(SCerevisiaeGene, genome[gene_id])
             if len(sequence) <= window_size:
                 assert len(str(sequence.cds.seq)) % 3 == 0
                 cds_sequence = sequence.cds.seq
@@ -93,13 +97,13 @@ class CalmDataset(BaseEmbeddingDataset):
 
             data_list.append(data)
 
-            if (i + 1) % self.batch_size == 0 or (i + 1) == len(self.genome.gene_set):
+            if (i + 1) % self.batch_size == 0 or (i + 1) == len(genome.gene_set):
                 # Load existing data from the file if it exists
                 if os.path.exists(self.processed_paths[0]):
                     existing_data = torch.load(self.processed_paths[0])
                     existing_data_list = existing_data.get("data_list", [])
                     data_list = existing_data_list + data_list
-                if (i + 1) == len(self.genome.gene_set):
+                if (i + 1) == len(genome.gene_set):
                     torch.save(self.collate(data_list), self.processed_paths[0])
 
                 else:

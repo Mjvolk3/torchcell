@@ -103,6 +103,7 @@ exclude = '''(?x)(
   | _scratch\.py$
   | torchcell/delete_subset\.py$
   | torchcell/models/hetero_cell_nsa_retry\.py$
+  | torchcell/pypy_adapters/
 )'''
 python_version = "3.13"
 # Full strict bundle on our own code. We do NOT set a global
@@ -113,6 +114,14 @@ show_error_codes = true
 # Namespace layout (no src/ root); lets discovery complete on the package tree.
 explicit_package_bases = true
 namespace_packages = true
+
+[[tool.mypy.overrides]]
+# Dead/legacy modules reached via imports, so the discovery `exclude` above does
+# not stop mypy following into them. ignore_errors drops them from the strict
+# gate entirely: scratch one-offs, and the PyPy-only adapter path (imported by
+# knowledge_graphs/create_pypy_scerevisiae_kg.py).
+module = ["torchcell.scratch.*", "torchcell.pypy_adapters.*"]
+ignore_errors = true
 
 [[tool.mypy.overrides]]
 # Tests exercise behavior, not type contracts: relax the untyped-def family.

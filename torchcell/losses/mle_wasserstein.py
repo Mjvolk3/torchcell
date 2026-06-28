@@ -7,7 +7,7 @@
 """Composite MSE + Wasserstein + SupCR loss with buffers and DDP gathering."""
 
 import math
-from typing import Any
+from typing import Any, cast
 
 import torch
 import torch.distributed as dist
@@ -58,8 +58,9 @@ class TemperatureScheduler:
     def get_temperature(self, epoch: int, max_epochs: int = 1000) -> float:
         """Get temperature based on training epoch."""
         if self.schedule == "exponential":
-            return self.init_temp * (self.final_temp / self.init_temp) ** (
-                epoch / max_epochs
+            return float(
+                self.init_temp
+                * (self.final_temp / self.init_temp) ** (epoch / max_epochs)
             )
         elif self.schedule == "cosine":
             return self.final_temp + 0.5 * (self.init_temp - self.final_temp) * (
@@ -71,6 +72,9 @@ class TemperatureScheduler:
 
 class WeightedWassersteinLoss(nn.Module):
     """Weighted Wasserstein distance loss for multi-dimensional outputs."""
+
+    # Optional dimension weights; registered as a buffer when provided, else None.
+    weights: torch.Tensor | None
 
     def __init__(
         self,
@@ -157,6 +161,13 @@ class WeightedWassersteinLoss(nn.Module):
 class BufferedWeightedWassersteinLoss(nn.Module):
     """Enhanced Wasserstein loss with circular buffer for small batch training."""
 
+    # Registered buffers (declared for type checking; created via register_buffer).
+    pred_buffer: torch.Tensor
+    target_buffer: torch.Tensor
+    buffer_ptr: torch.Tensor
+    buffer_full: torch.Tensor
+    total_samples: torch.Tensor
+
     def __init__(
         self,
         buffer_size: int = 256,
@@ -207,8 +218,9 @@ class BufferedWeightedWassersteinLoss(nn.Module):
 
         # Update pointer and status
         self.buffer_ptr[0] = (ptr + batch_size) % self.buffer_size
-        self.total_samples[0] = min(
-            self.total_samples[0] + batch_size, self.buffer_size
+        self.total_samples[0] = cast(
+            "torch.Tensor | int",
+            min(self.total_samples[0] + batch_size, self.buffer_size),
         )
         if self.total_samples[0] >= self.buffer_size:
             self.buffer_full[0] = True
@@ -293,6 +305,13 @@ class BufferedWeightedWassersteinLoss(nn.Module):
 class BufferedWeightedSupCRCell(nn.Module):
     """Enhanced SupCR loss with circular buffer for small batch training."""
 
+    # Registered buffers (declared for type checking; created via register_buffer).
+    embedding_buffer: torch.Tensor
+    label_buffer: torch.Tensor
+    buffer_ptr: torch.Tensor
+    buffer_full: torch.Tensor
+    total_samples: torch.Tensor
+
     def __init__(
         self,
         buffer_size: int = 256,
@@ -343,8 +362,9 @@ class BufferedWeightedSupCRCell(nn.Module):
 
         # Update pointer and status
         self.buffer_ptr[0] = (ptr + batch_size) % self.buffer_size
-        self.total_samples[0] = min(
-            self.total_samples[0] + batch_size, self.buffer_size
+        self.total_samples[0] = cast(
+            "torch.Tensor | int",
+            min(self.total_samples[0] + batch_size, self.buffer_size),
         )
         if self.total_samples[0] >= self.buffer_size:
             self.buffer_full[0] = True
@@ -420,6 +440,14 @@ class MleWassSupCR(nn.Module):
 
     Combines circular buffers, DDP synchronization, and adaptive weighting.
     """
+
+    # Component losses differ depending on ``use_buffer`` (declared as unions so
+    # both the buffered and unbuffered assignments type-check).
+    wasserstein_loss: "BufferedWeightedWassersteinLoss | WeightedWassersteinLoss"
+    supcr_loss: "BufferedWeightedSupCRCell | WeightedSupCRCell"
+    # Registered buffers (declared for type checking; created via register_buffer).
+    forward_count: torch.Tensor
+    current_epoch: torch.Tensor
 
     def __init__(
         self,
@@ -558,13 +586,13 @@ class MleWassSupCR(nn.Module):
 
         # Initialize loss components
         total_loss = torch.tensor(0.0, device=device)
-        loss_dict = {}
+        loss_dict: dict[str, Any] = {}
 
         # Get adaptive weights
         buffer_weight = 1.0
         if self.use_adaptive_weighting and self.use_buffer:
             buffer_weight = self.adaptive_weighting.get_buffer_weight(
-                self.current_epoch.item()
+                int(self.current_epoch.item())
             )
             loss_dict["buffer_weight"] = buffer_weight
 
@@ -572,7 +600,7 @@ class MleWassSupCR(nn.Module):
         temperature = None
         if self.use_temp_scheduling:
             temperature = self.temp_scheduler.get_temperature(
-                self.current_epoch.item(), self.max_epochs
+                int(self.current_epoch.item()), self.max_epochs
             )
             loss_dict["temperature"] = temperature
 

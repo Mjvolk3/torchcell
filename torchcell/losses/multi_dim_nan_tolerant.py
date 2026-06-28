@@ -4,7 +4,7 @@
 # Test file: tests/torchcell/losses/test_multi_dim_nan_tolerant.py
 """NaN-tolerant multi-dimensional loss functions for cell-state regression."""
 
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import torch
@@ -82,7 +82,7 @@ class SupCR(nn.Module):
 
             valid_j_mask = eye_mask[i]
             accum_loss += row_loss[valid_j_mask].sum()
-            accum_count += valid_j_mask.sum().item()
+            accum_count += int(valid_j_mask.sum().item())
 
         return accum_loss / max(accum_count, 1)
 
@@ -105,6 +105,9 @@ class SupCR(nn.Module):
 
 class WeightedSupCRCell(nn.Module):
     """SupCR loss with per-dimension weights for cell-state embeddings."""
+
+    # Registered buffer (declared for type checking; created via register_buffer).
+    weights: torch.Tensor
 
     def __init__(
         self,
@@ -426,6 +429,9 @@ class NaNTolerantQuantileLoss(nn.Module):
     L = q * (y - y_pred) if y > y_pred
     L = (1-q) * (y_pred - y) if y <= y_pred
     """
+
+    # Registered buffer (declared for type checking; created via register_buffer).
+    quantiles: torch.Tensor
 
     def __init__(self, quantiles: list[float]):
         """Register the target quantiles to predict.
@@ -790,11 +796,19 @@ def fast_soft_sort(
     Returns:
         Soft-sorted tensor
     """
-    return FastSoftSort.apply(values, regularization_strength)
+    sorted_values = FastSoftSort.apply(  # type: ignore[no-untyped-call]  # autograd Function.apply is untyped in typeshed
+        values, regularization_strength
+    )
+    return cast("torch.Tensor", sorted_values)
 
 
 class WeightedDistLoss(nn.Module):
     """Distribution-matching (DistLoss) loss using KDE and differentiable sorting."""
+
+    # Registered buffer (declared for type checking; created via register_buffer).
+    weights: torch.Tensor
+    # Reduction module differs by ``loss_fn`` ("L1" vs "L2").
+    loss_fn: "nn.L1Loss | nn.MSELoss"
 
     def __init__(
         self,
@@ -1008,6 +1022,15 @@ class WeightedDistLoss(nn.Module):
 class CombinedRegressionLoss(nn.Module):
     """Dispatch to a NaN-tolerant regression loss and apply per-dimension weights."""
 
+    # Underlying loss varies by ``loss_type``; declared as a union so each branch
+    # assignment type-checks.
+    loss_fn: (
+        "NaNTolerantMSELoss | NaNTolerantL1Loss | NaNTolerantLogCoshLoss | "
+        "NaNTolerantHuberLoss | NaNTolerantQuantileLoss"
+    )
+    # Registered buffer (declared for type checking; created via register_buffer).
+    weights: torch.Tensor
+
     def __init__(
         self,
         loss_type: str = "mse",
@@ -1089,12 +1112,12 @@ class CombinedRegressionLoss(nn.Module):
             dim_losses.append(dim_loss)
 
         # Stack dimension losses - now all tensors should have shape [1]
-        dim_losses = torch.stack(dim_losses)
+        stacked_losses = torch.stack(dim_losses)
 
         # Compute weighted average loss
-        weighted_loss = (dim_losses * weights).sum() / weight_sum
+        weighted_loss = (stacked_losses * weights).sum() / weight_sum
 
-        return weighted_loss, dim_losses.squeeze()
+        return weighted_loss, stacked_losses.squeeze()
 
 
 #############
@@ -1232,7 +1255,7 @@ class MonotonicParameter(nn.Parameter):
         return super().__new__(cls, data, requires_grad)
 
     @property
-    def data(self) -> torch.Tensor:
+    def data(self) -> torch.Tensor:  # type: ignore[override]  # intentional read-only override of nn.Parameter.data
         """Return monotonic values via cumulative softplus of the raw data."""
         # Apply softplus to ensure positive deltas, then cumsum for monotonicity
         return torch.cumsum(F.softplus(super().data), dim=-1)
@@ -1924,4 +1947,4 @@ if __name__ == "__main__":
 
     print("\n=== Gradient Check ===")
     print(f"Gradients exist: {predictions.grad is not None}")
-    print(f"Gradient shape: {predictions.grad.shape}")
+    print(f"Gradient shape: {cast('torch.Tensor', predictions.grad).shape}")

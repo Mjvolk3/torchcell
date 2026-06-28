@@ -5,9 +5,40 @@
 
 """Strict diffusion loss with optional explicit x0 supervision."""
 
+from typing import TYPE_CHECKING, Protocol, cast
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+if TYPE_CHECKING:
+
+    class _DiffusionDecoder(Protocol):
+        """Structural interface for the model's diffusion decoder."""
+
+        num_timesteps: int
+
+        def forward_diffusion(
+            self, targets: torch.Tensor, t: torch.Tensor, noise: torch.Tensor
+        ) -> tuple[torch.Tensor, torch.Tensor]: ...
+
+        def denoise(
+            self,
+            x_t: torch.Tensor,
+            context: torch.Tensor,
+            t: torch.Tensor,
+            *,
+            predict_x0: bool,
+        ) -> torch.Tensor: ...
+
+    class _DiffusionModel(Protocol):
+        """Structural interface required of the wrapped diffusion model."""
+
+        diffusion_decoder: "_DiffusionDecoder"
+
+        def compute_diffusion_loss(
+            self, targets: torch.Tensor, context: torch.Tensor, *, t_mode: str
+        ) -> torch.Tensor: ...
 
 
 class DiffusionLoss(nn.Module):
@@ -19,6 +50,10 @@ class DiffusionLoss(nn.Module):
 
     No auxiliary terms, no silent fallbacks.
     """
+
+    # Typed view of the wrapped model (still an ``nn.Module`` submodule at
+    # runtime; the structural type only documents the hooks used below).
+    model: "_DiffusionModel"
 
     def __init__(
         self,
@@ -32,7 +67,9 @@ class DiffusionLoss(nn.Module):
         super().__init__()
         if lambda_diffusion <= 0.0 and lambda_x0 <= 0.0:
             raise ValueError("At least one of {lambda_diffusion, lambda_x0} > 0.")
-        self.model = model
+        # cast is a no-op at runtime; the assignment still registers ``model`` as
+        # an nn.Module submodule. The structural type enables the hook calls below.
+        self.model = cast("_DiffusionModel", model)
         self.lambda_diffusion = float(lambda_diffusion)
         self.lambda_x0 = float(lambda_x0)
         self.x0_loss = x0_loss  # defaults to MSE if None
@@ -43,8 +80,8 @@ class DiffusionLoss(nn.Module):
         if not hasattr(model, "diffusion_decoder"):
             raise AttributeError("model must have diffusion_decoder")
 
-    def _sample_t(self, B: int, device: torch.device, t_mode: str) -> torch.LongTensor:
-        T = int(self.model.diffusion_decoder.num_timesteps)  # type: ignore[attr-defined]
+    def _sample_t(self, B: int, device: torch.device, t_mode: str) -> torch.Tensor:
+        T = int(self.model.diffusion_decoder.num_timesteps)
         if t_mode == "zero":
             return torch.zeros(B, dtype=torch.long, device=device)
         if t_mode == "partial":
@@ -77,10 +114,10 @@ class DiffusionLoss(nn.Module):
             B = targets.shape[0]
             t = self._sample_t(B, targets.device, t_mode)
             noise = torch.randn_like(targets)
-            x_t, _ = self.model.diffusion_decoder.forward_diffusion(  # type: ignore[attr-defined]
+            x_t, _ = self.model.diffusion_decoder.forward_diffusion(
                 targets, t, noise
             )
-            x0_hat = self.model.diffusion_decoder.denoise(  # type: ignore[attr-defined]
+            x0_hat = self.model.diffusion_decoder.denoise(
                 x_t, context, t, predict_x0=True
             )
             x0_term = (

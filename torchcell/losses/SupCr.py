@@ -1,6 +1,6 @@
 """Supervised contrastive regression (SupCR) metric-learning loss."""
 
-from typing import Any
+from typing import Any, cast
 
 import torch
 from torch import Tensor
@@ -11,7 +11,7 @@ from pytorch_metric_learning.utils import common_functions as c_f
 from pytorch_metric_learning.utils import loss_and_miner_utils as lmu
 
 
-class SupCRLoss(BaseMetricLossFunction):
+class SupCRLoss(BaseMetricLossFunction):  # type: ignore[misc]  # untyped third-party base (Any)
     """Supervised contrastive loss over a temperature-scaled similarity matrix."""
 
     def __init__(self, temperature: float = 0.07, **kwargs: Any) -> None:
@@ -53,7 +53,7 @@ class SupCRLoss(BaseMetricLossFunction):
                     "reduction_type": "element",
                 }
             }
-        return self.zero_losses()
+        return cast("dict[str, Any]", self.zero_losses())
 
     def get_default_reducer(self) -> AvgNonZeroReducer:
         """Return the default reducer that averages over non-zero losses."""

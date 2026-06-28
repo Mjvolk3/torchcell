@@ -258,7 +258,8 @@ class DangoLoss(nn.Module):
         Returns:
             Total reconstruction loss
         """
-        total_loss = 0.0
+        # Starts as a float; becomes a Tensor once any per-network loss is added.
+        total_loss: torch.Tensor | float = 0.0
         num_networks = 0
 
         for edge_type in self.edge_types:
@@ -276,7 +277,11 @@ class DangoLoss(nn.Module):
         if num_networks > 0:
             total_loss /= num_networks
 
-        return total_loss
+        # The declared return contract is Tensor; all real call sites supply
+        # matching edge types so the loop runs and total_loss becomes a Tensor.
+        # Forcing a Tensor initializer would change the empty-loop dtype, so the
+        # runtime value is left untouched and the float-only path is suppressed.
+        return total_loss  # type: ignore[return-value]  # float only in unused empty-loop case
 
     def compute_interaction_loss(
         self, predictions: torch.Tensor, targets: torch.Tensor

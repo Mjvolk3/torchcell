@@ -4,7 +4,7 @@
 # Test file: tests/torchcell/losses/test_point_dist_graph_reg.py
 """Composite point + distribution + graph-regularization loss for the cell transformer."""
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import torch
 import torch.distributed as dist
@@ -12,6 +12,9 @@ import torch.nn as nn
 
 from torchcell.losses.logcosh import LogCoshLoss
 from torchcell.losses.multi_dim_nan_tolerant import WeightedDistLoss, WeightedMSELoss
+
+if TYPE_CHECKING:
+    from torchcell.losses.mle_dist_supcr import BufferedWeightedDistLoss
 
 # Import Wasserstein loss components from mle_wasserstein
 try:
@@ -34,6 +37,17 @@ class PointDistGraphReg(nn.Module):
 
     Designed for single-phenotype predictions with graph-regularized attention.
     """
+
+    # Point/distribution components vary with configuration; declared as unions so
+    # every conditional assignment in __init__ type-checks.
+    point_loss: "LogCoshLoss | WeightedMSELoss"
+    dist_loss: (
+        "BufferedWeightedDistLoss | WeightedDistLoss | "
+        "BufferedWeightedWassersteinLoss | WeightedWassersteinLoss | None"
+    )
+    # Registered buffers (declared for type checking; created via register_buffer).
+    forward_count: torch.Tensor
+    _zero: torch.Tensor
 
     def __init__(
         self,
@@ -244,7 +258,7 @@ class PointDistGraphReg(nn.Module):
         # Use pre-allocated zero buffer to avoid dynamic tensor creation
         # This prevents torch.compile graph breaks
         total_loss = self._zero.clone()
-        loss_dict = {}
+        loss_dict: dict[str, Any] = {}
 
         # 1. Point estimator loss (required)
         if self.point_loss_type == "logcosh":

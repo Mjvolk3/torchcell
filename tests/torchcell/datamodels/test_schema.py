@@ -1,7 +1,7 @@
 """Tests for the torchcell datamodels schema."""
 
 import pytest
-from pydantic import TypeAdapter
+from pydantic import TypeAdapter, ValidationError
 
 from torchcell.datamodels.schema import (
     Environment,
@@ -12,6 +12,7 @@ from torchcell.datamodels.schema import (
     GeneInteractionPhenotype,
     Genotype,
     Media,
+    MicroarrayExpressionPhenotype,
     SgaDampPerturbation,
     SgaKanMxDeletionPerturbation,
     Temperature,
@@ -135,3 +136,71 @@ def test_experiment_type_discrimination(
     # Assert correct experiment_types
     assert loaded_fitness_experiment.experiment_type == "fitness"
     assert loaded_gene_interaction_experiment.experiment_type == "gene interaction"
+
+
+def _microarray_kwargs(**overrides):
+    """Build valid MicroarrayExpressionPhenotype kwargs (two genes); override to break."""
+    genes = ["YAL001C", "YAL002W"]
+    kwargs = dict(
+        graph_level="node",
+        label_name="expression_log2_ratio",
+        label_statistic_name="expression_log2_ratio_se",
+        expression={g: 100.0 for g in genes},
+        expression_log2_ratio={g: 0.5 for g in genes},
+        expression_log2_ratio_se={g: 0.1 for g in genes},
+        n_replicates={g: 3 for g in genes},
+    )
+    kwargs.update(overrides)
+    return kwargs
+
+
+def test_microarray_valid_construction():
+    phenotype = MicroarrayExpressionPhenotype(**_microarray_kwargs())
+    assert set(phenotype.n_replicates) == set(phenotype.expression)
+    assert phenotype.n_replicates["YAL001C"] == 3
+    assert phenotype.expression_log2_ratio_se["YAL001C"] == 0.1
+
+
+def test_microarray_se_is_optional():
+    kwargs = _microarray_kwargs()
+    del kwargs["expression_log2_ratio_se"]
+    phenotype = MicroarrayExpressionPhenotype(**kwargs)
+    assert phenotype.expression_log2_ratio_se is None
+
+
+def test_microarray_n_replicates_required():
+    kwargs = _microarray_kwargs()
+    del kwargs["n_replicates"]
+    with pytest.raises(ValidationError):
+        MicroarrayExpressionPhenotype(**kwargs)
+
+
+def test_microarray_n_replicates_must_be_positive_int():
+    with pytest.raises(ValidationError):
+        MicroarrayExpressionPhenotype(
+            **_microarray_kwargs(n_replicates={"YAL001C": 0, "YAL002W": 3})
+        )
+
+
+def test_microarray_n_replicates_keys_must_match_expression():
+    with pytest.raises(ValidationError):
+        MicroarrayExpressionPhenotype(**_microarray_kwargs(n_replicates={"YAL001C": 3}))
+
+
+@pytest.mark.parametrize(
+    "legacy_field",
+    [
+        "n_samples",
+        "expression_se",
+        "expression_technical_std",
+        "expression_log2_ratio_std",
+    ],
+)
+def test_microarray_rejects_legacy_drift_fields(legacy_field):
+    """Guards #14: ModelStrict must reject the pre-refactor field names whose use in
+    sameith2015 raised a Pydantic ValidationError before the n_replicates migration.
+    """
+    with pytest.raises(ValidationError):
+        MicroarrayExpressionPhenotype(
+            **_microarray_kwargs(**{legacy_field: {"YAL001C": 0.1, "YAL002W": 0.1}})
+        )

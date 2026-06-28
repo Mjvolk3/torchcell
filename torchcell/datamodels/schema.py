@@ -641,9 +641,7 @@ class CalMorphPhenotype(Phenotype, ModelStrict):
         return v
 
     @model_validator(mode="after")
-    def validate_label_fields(
-        cls, values: "CalMorphPhenotype"
-    ) -> "CalMorphPhenotype":
+    def validate_label_fields(cls, values: "CalMorphPhenotype") -> "CalMorphPhenotype":
         """Validate that label_name and label_statistic_name are class attributes."""
         if values.label_name not in cls.__annotations__:
             raise ValueError(
@@ -854,8 +852,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
     expression_log2_ratio_variance: dict[str, float] | None = Field(
         default=None,
         description=(
-            "SortedDict of variance for log2 ratios. "
-            "Variance = SE^2 * n_replicates."
+            "SortedDict of variance for log2 ratios. Variance = SE^2 * n_replicates."
         ),
         repr=False,  # Hide in repr to avoid clutter
     )
@@ -943,7 +940,9 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
     @field_validator("n_replicates", mode="before")
     def convert_and_validate_n_replicates(cls, v):
         if v is None:
-            raise ValueError("n_replicates cannot be None - it is required for SE interpretation")
+            raise ValueError(
+                "n_replicates cannot be None - it is required for SE interpretation"
+            )
         # Convert to SortedDict for consistent ordering
         if isinstance(v, dict) and not isinstance(v, SortedDict):
             v = SortedDict(v)
@@ -952,7 +951,9 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         # Validate that all n_replicates are positive integers
         for key, value in v.items():
             if not isinstance(value, int) or value < 1:
-                raise ValueError(f"n_replicates for {key} must be a positive integer, got: {value}")
+                raise ValueError(
+                    f"n_replicates for {key} must be a positive integer, got: {value}"
+                )
         return v
 
     @model_validator(mode="after")
@@ -960,9 +961,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         """Ensure all secondary fields have same keys as expression."""
         # n_replicates must match expression keys
         if set(self.n_replicates.keys()) != set(self.expression.keys()):
-            raise ValueError(
-                "n_replicates must have the same keys as expression"
-            )
+            raise ValueError("n_replicates must have the same keys as expression")
 
         # Optional fields should match if present
         if self.expression_log2_ratio_se is not None:

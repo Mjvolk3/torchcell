@@ -3,36 +3,38 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/kemmeren2014
 # Test file: tests/torchcell/datasets/scerevisiae/test_kemmeren2014.py
 
-import GEOparse
 import logging
 import os
 import os.path as osp
 import pickle
 import re
-import requests
 from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor
+
+import GEOparse
 import lmdb
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
+import requests
 from dotenv import load_dotenv
 from sortedcontainers import SortedDict
+from tqdm import tqdm
+
+from torchcell.data import ExperimentDataset, post_process
 from torchcell.datamodels.schema import (
     Environment,
+    Experiment,
+    ExperimentReference,
     Genotype,
+    KanMxDeletionPerturbation,
+    Media,
     MicroarrayExpressionExperiment,
     MicroarrayExpressionExperimentReference,
     MicroarrayExpressionPhenotype,
-    Media,
-    ReferenceGenome,
-    KanMxDeletionPerturbation,
-    Temperature,
-    Experiment,
-    ExperimentReference,
     Publication,
+    ReferenceGenome,
+    Temperature,
 )
-from torchcell.data import ExperimentDataset, post_process
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
@@ -432,7 +434,9 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             replicate_counts[count] += 1
 
         log.info("\n=== Replicates per Gene Analysis ===")
-        log.info(f"Average samples per gene: {2633/len(deletion_samples_by_gene):.2f}")
+        log.info(
+            f"Average samples per gene: {2633 / len(deletion_samples_by_gene):.2f}"
+        )
         for count in sorted(replicate_counts.keys()):
             log.info(f"Genes with {count} samples: {replicate_counts[count]}")
             # Print out genes with 4 samples to investigate YCR087C-A
@@ -471,7 +475,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         extra_in_geo = resolved_orf_names - excel_orf_names
 
         if missing_in_geo:
-            log.warning(f"\n=== Missing ORFs Analysis ===")
+            log.warning("\n=== Missing ORFs Analysis ===")
             log.warning(
                 f"Found {len(missing_in_geo)} ORFs in Excel but not in GEO: {missing_in_geo}"
             )
@@ -1109,7 +1113,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             high_cv_genes = [gene for gene, cv in refpool_cv.items() if cv > 0.5]
             if high_cv_genes:
                 log.info(
-                    f"Found {len(high_cv_genes)} genes with CV > 0.5 ({100*len(high_cv_genes)/len(refpool_cv):.1f}%)"
+                    f"Found {len(high_cv_genes)} genes with CV > 0.5 ({100 * len(high_cv_genes) / len(refpool_cv):.1f}%)"
                 )
                 log.debug(f"Example high CV genes: {high_cv_genes[:5]}")
 
@@ -1426,7 +1430,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
         # Check for expected columns
         if "ID_REF" not in table.columns:
-            log.warning(f"ID_REF column not found")
+            log.warning("ID_REF column not found")
             return expression_data
 
         # We need both Cy5 and Cy3 to extract refpool
@@ -1581,14 +1585,14 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                         if systematic_name == "TLC1":
                             systematic_name = "YNCB0010W"  # Telomerase RNA component
                             log.info(
-                                f"Converted TLC1 -> YNCB0010W in Excel orf name column"
+                                "Converted TLC1 -> YNCB0010W in Excel orf name column"
                             )
                         elif systematic_name == "CMS1":
                             systematic_name = (
                                 "YLR003C"  # Current SGD gene as of 2025.09.11
                             )
                             log.info(
-                                f"Converted CMS1 -> YLR003C in Excel orf name column"
+                                "Converted CMS1 -> YLR003C in Excel orf name column"
                             )
                         excel_genes_original.append(systematic_name)
                         excel_genes_converted.append(systematic_name)
@@ -1959,7 +1963,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
                                     original_ratios.append(original)
                                     calculated_ratios.append(calculated)
-                            except (ValueError, TypeError) as e:
+                            except (ValueError, TypeError):
                                 continue
 
         if len(original_ratios) > 10:
@@ -2188,7 +2192,7 @@ if __name__ == "__main__":
         data = dataset[0]
 
         # The data is returned as a dictionary with deserialized content
-        print(f"\nFirst dataset item (index 0):")
+        print("\nFirst dataset item (index 0):")
         print(f"  Data type: {type(data)}")
         print(f"  Keys: {data.keys()}")
 
@@ -2197,7 +2201,7 @@ if __name__ == "__main__":
         reference = data["reference"]
         publication = data["publication"]
 
-        print(f"\n=== Experiment Details ===")
+        print("\n=== Experiment Details ===")
         print(f"  Dataset: {experiment['dataset_name']}")
         perturbed_gene = experiment["genotype"]["perturbations"][0][
             "systematic_gene_name"
@@ -2209,11 +2213,11 @@ if __name__ == "__main__":
         print(f"  Expression measurements: {len(exp_expression)} genes")
 
         # Show first 5 expression values
-        print(f"  First 5 expression values:")
+        print("  First 5 expression values:")
         for i, (gene, value) in enumerate(list(exp_expression.items())[:5]):
             print(f"    {gene}: {value:.4f}")
 
-        print(f"\n=== Reference Details ===")
+        print("\n=== Reference Details ===")
         print(f"  Dataset: {reference['dataset_name']}")
         print(f"  Genome: {reference['genome_reference']}")
         print(f"  Environment: {reference['environment_reference']}")
@@ -2223,18 +2227,12 @@ if __name__ == "__main__":
         print(f"  Reference expression: {len(ref_expression)} genes")
 
         # Show first 5 reference expression values
-        print(f"  First 5 reference expression values (wildtype):")
+        print("  First 5 reference expression values (wildtype):")
         for i, (gene, value) in enumerate(list(ref_expression.items())[:5]):
             print(f"    {gene}: {value:.4f}")
 
-        # Check if reference has technical std
-        if "expression_technical_std" in reference["phenotype_reference"]:
-            ref_std = reference["phenotype_reference"]["expression_technical_std"]
-            if ref_std:
-                print(f"  Reference has technical std for {len(ref_std)} genes")
-
         # Compare specific gene between experiment and reference
-        print(f"\n=== Gene Comparison (exp vs ref) ===")
+        print("\n=== Gene Comparison (exp vs ref) ===")
         # Pick first 3 genes for comparison
         sample_genes = list(exp_expression.keys())[:3]
         for gene in sample_genes:
@@ -2248,11 +2246,11 @@ if __name__ == "__main__":
                 print(f"    Log2 ratio: {log2_ratio:.4f}")
 
         # Check perturbed gene presence
-        print(f"\n=== Perturbed Gene Status ===")
+        print("\n=== Perturbed Gene Status ===")
         print(f"  Gene: {perturbed_gene}")
         print(f"  In deletion mutant expression: {perturbed_gene in exp_expression}")
         print(f"  In wildtype reference expression: {perturbed_gene in ref_expression}")
 
-        print(f"\n=== Publication ===")
+        print("\n=== Publication ===")
         print(f"  PubMed ID: {publication['pubmed_id']}")
         print(f"  DOI: {publication['doi']}")

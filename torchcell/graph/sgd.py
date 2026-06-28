@@ -13,7 +13,7 @@ import os.path as osp
 import tempfile
 from asyncio import Task
 from collections.abc import Callable, Iterator
-from typing import Any
+from typing import Any, cast
 
 import aiohttp
 from aiohttp import ClientError, ContentTypeError
@@ -22,11 +22,12 @@ from dotenv import load_dotenv
 from tqdm import tqdm
 
 load_dotenv()
-DATA_ROOT = os.getenv("DATA_ROOT")
-if not DATA_ROOT:
+_DATA_ROOT_ENV = os.getenv("DATA_ROOT")
+if not _DATA_ROOT_ENV:
     raise ValueError(
         "DATA_ROOT environment variable is not set. Please set it in your .env file."
     )
+DATA_ROOT: str = _DATA_ROOT_ENV
 
 from torchcell.graph.validation.locus_related.locus import (  # noqa: E402  (import follows load_dotenv/DATA_ROOT check)
     validate_data,
@@ -125,7 +126,7 @@ class Gene:
                         content_type = response.headers.get("Content-Type")
 
                         # Check if the content type indicates a JSON response
-                        if "application/json" in content_type:
+                        if "application/json" in content_type:  # type: ignore[operator]  # header value may be None at runtime; behavior preserved
                             data = await response.json()
                             if not isinstance(data, (dict, list)):
                                 raise ValueError(f"Data is not a dict or list: {data}")
@@ -145,7 +146,7 @@ class Gene:
                                 f"Unexpected content type: {content_type}. URL: {url}"
                             )
                             logging.error(error_message)
-                            raise ContentTypeError(error_message)
+                            raise ContentTypeError(error_message)  # type: ignore[call-arg, arg-type]  # legacy call shape; fixing args would change runtime behavior
 
             except (ClientError, ContentTypeError) as e:
                 if retry == max_retries - 1:  # If it's the last retry and still fails
@@ -164,71 +165,71 @@ class Gene:
         url = osp.join(self.sgd_url, self.locusID)
         data = await self._get_data(url)
         if self.is_validated:
-            data = validate_data(data)
+            validated = validate_data(cast("dict[str, Any]", data))
             with open("locus_schema.json", "w") as f:
-                json.dump(data.model_json_schema(), f, indent=4)
-            data = data.model_dump()
-        return data  # breakpoint, printed out data
+                json.dump(validated.model_json_schema(), f, indent=4)
+            data = validated.model_dump()
+        return cast("dict[Any, Any] | list[Any]", data)  # breakpoint, printed out data
 
     async def sequence_details(self) -> dict[Any, Any] | list[Any]:
         """Fetch the locus sequence_details endpoint."""
         url = osp.join(self.sgd_url, self.locusID, "sequence_details")
         data = await self._get_data(url)
-        return data
+        return cast("dict[Any, Any] | list[Any]", data)
 
     async def neighbor_sequence_details(self) -> dict[Any, Any] | list[Any]:
         """Fetch the locus neighbor_sequence_details endpoint."""
         url = osp.join(self.sgd_url, self.locusID, "neighbor_sequence_details")
         data = await self._get_data(url)
-        return data
+        return cast("dict[Any, Any] | list[Any]", data)
 
     async def posttranslational_details(self) -> dict[Any, Any] | list[Any]:
         """Fetch the locus posttranslational_details endpoint."""
         url = osp.join(self.sgd_url, self.locusID, "posttranslational_details")
         data = await self._get_data(url)
-        return data
+        return cast("dict[Any, Any] | list[Any]", data)
 
     async def protein_experiment_details(self) -> dict[Any, Any] | list[Any]:
         """Fetch the locus protein_experiment_details endpoint."""
         url = osp.join(self.sgd_url, self.locusID, "protein_experiment_details")
         data = await self._get_data(url)
-        return data
+        return cast("dict[Any, Any] | list[Any]", data)
 
     async def protein_domain_details(self) -> dict[Any, Any] | list[Any]:
         """Fetch the locus protein_domain_details endpoint."""
         url = osp.join(self.sgd_url, self.locusID, "protein_domain_details")
         data = await self._get_data(url)
-        return data
+        return cast("dict[Any, Any] | list[Any]", data)
 
     async def go_details(self) -> dict[Any, Any] | list[Any]:
         """Fetch the locus go_details (Gene Ontology) endpoint."""
         url = osp.join(self.sgd_url, self.locusID, "go_details")
         data = await self._get_data(url)
-        return data
+        return cast("dict[Any, Any] | list[Any]", data)
 
     async def phenotype_details(self) -> dict[Any, Any] | list[Any]:
         """Fetch the locus phenotype_details endpoint."""
         url = osp.join(self.sgd_url, self.locusID, "phenotype_details")
         data = await self._get_data(url)
-        return data
+        return cast("dict[Any, Any] | list[Any]", data)
 
     async def interaction_details(self) -> dict[Any, Any] | list[Any]:
         """Fetch the locus interaction_details endpoint."""
         url = osp.join(self.sgd_url, self.locusID, "interaction_details")
         data = await self._get_data(url)
-        return data
+        return cast("dict[Any, Any] | list[Any]", data)
 
     async def regulation_details(self) -> dict[Any, Any] | list[Any]:
         """Fetch the locus regulation_details endpoint."""
         url = osp.join(self.sgd_url, self.locusID, "regulation_details")
         data = await self._get_data(url)
-        return data
+        return cast("dict[Any, Any] | list[Any]", data)
 
     async def literature_details(self) -> dict[Any, Any] | list[Any]:
         """Fetch the locus literature_details endpoint."""
         url = osp.join(self.sgd_url, self.locusID, "literature_details")
         data = await self._get_data(url)
-        return data
+        return cast("dict[Any, Any] | list[Any]", data)
 
 
 async def process_gene(gene: Gene, progress_bar: Any) -> dict[Any, Any] | list[Any]:
@@ -240,7 +241,9 @@ async def process_gene(gene: Gene, progress_bar: Any) -> dict[Any, Any] | list[A
 
 
 async def download_genes(
-    locus_ids: list[str], gene_factory: Callable[[str], Gene], is_validated: bool
+    locus_ids: list[str],
+    gene_factory: Callable[[str, bool], Gene],
+    is_validated: bool,
 ) -> None:
     """Download data for all loci concurrently, skipping already-cached files."""
     with tqdm(total=len(locus_ids)) as progress_bar:
@@ -272,7 +275,9 @@ def chunks(lst: list[Any], n: int) -> Iterator[list[Any]]:
 
 
 async def download_gene_chunk(
-    chunk: list[str], create_gene_fn: Callable[[str], Gene], validate_flag: bool
+    chunk: list[str],
+    create_gene_fn: Callable[[str, bool], Gene],
+    validate_flag: bool,
 ) -> None:
     """Download a chunk of genes with a delay before starting."""
     await asyncio.sleep(1)  # Give a small break between chunks

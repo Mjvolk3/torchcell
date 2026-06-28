@@ -11,7 +11,7 @@ import os.path as osp
 import pickle
 from collections.abc import ItemsView, Iterator, KeysView, ValuesView
 from copy import deepcopy
-from typing import Any
+from typing import Any, cast, overload
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -78,9 +78,9 @@ class GeneMultiGraph(ModelStrictArbitrary):
 
     def __getitem__(self, key: str) -> GeneGraph:
         """Allow dictionary-like access to graphs by name."""
-        return self.graphs[key]
+        return cast("GeneGraph", self.graphs[key])
 
-    def __iter__(self) -> Iterator[str]:
+    def __iter__(self) -> Iterator[str]:  # type: ignore[override]  # intentionally iterates names, not pydantic (key, value) pairs
         """Iterate over the graph names."""
         return iter(self.graphs)
 
@@ -94,15 +94,15 @@ class GeneMultiGraph(ModelStrictArbitrary):
 
     def items(self) -> ItemsView[str, GeneGraph]:
         """Get the (name, graph) pairs."""
-        return self.graphs.items()
+        return cast("ItemsView[str, GeneGraph]", self.graphs.items())
 
     def keys(self) -> KeysView[str]:
         """Get graph names."""
-        return self.graphs.keys()
+        return cast("KeysView[str]", self.graphs.keys())
 
     def values(self) -> ValuesView[GeneGraph]:
         """Get graph objects."""
-        return self.graphs.values()
+        return cast("ValuesView[GeneGraph]", self.graphs.values())
 
     def __repr__(self) -> str:
         """Informative representation showing all contained graphs."""
@@ -362,7 +362,7 @@ class SCerevisiaeGraph:
     sgd_root: str = field(init=True, repr=False, default="data/sgd/genome")
     string_root: str = field(init=True, repr=False, default="data/string")
     tflink_root: str = field(init=True, repr=False, default="data/tflink")
-    genome: GeneSet = field(init=True, repr=False, default=None)
+    genome: SCerevisiaeGenome = field(init=True, repr=False, default=None)
     json_files: list[str] = field(init=False, repr=False, default=None)
 
     # Using private attributes for storage
@@ -1112,7 +1112,7 @@ class SCerevisiaeGraph:
         return G
 
     @staticmethod
-    def combine_with_super_node(graphs: list[nx.Graph] = None) -> nx.Graph:
+    def combine_with_super_node(graphs: list[nx.Graph] | None = None) -> nx.Graph:
         """Merge GO subgraphs under a single GO:ROOT super node."""
         G_combined = nx.DiGraph()
         super_node = "GO:ROOT"  # A fictitious super node
@@ -1120,7 +1120,7 @@ class SCerevisiaeGraph:
             super_node, name="GO Super Node", namespace="super_root", level=-1
         )
 
-        for G in graphs:
+        for G in cast("list[nx.Graph]", graphs):
             # Merge nodes and edges from G into G_combined
             G_combined = nx.compose(G_combined, G)
 
@@ -1273,14 +1273,14 @@ class SCerevisiaeGraph:
     @staticmethod
     def add_pathway_annotation(G_raw: nx.Graph, G_gene: nx.Graph) -> nx.Graph:
         """Add pathway display-name annotations to gene nodes."""
-        pathway_annotation_template = {"pathways": None}
+        pathway_annotation_template: dict[str, list[str] | None] = {"pathways": None}
         for node_name, node_data in G_raw.nodes(data=True):
             pathway_annotation = pathway_annotation_template.copy()
             pathways = node_data["locus"].get("pathways")
             if pathways != []:
                 pathway_annotation["pathways"] = []
                 for pathway in pathways:
-                    pathway_annotation["pathways"].append(
+                    cast("list[str]", pathway_annotation["pathways"]).append(
                         pathway["pathway"]["display_name"]
                     )
                 G_gene.add_node(node_name, **pathway_annotation)
@@ -1318,9 +1318,21 @@ SCEREVISIAE_GENE_GRAPH_MAP = {
 SCEREVISIAE_GENE_GRAPH_VALID_NAMES = list(SCEREVISIAE_GENE_GRAPH_MAP.keys())
 
 
+@overload
+def build_gene_multigraph(
+    graph: "SCerevisiaeGraph", graph_names: list[str]
+) -> GeneMultiGraph: ...
+
+
+@overload
+def build_gene_multigraph(
+    graph: "SCerevisiaeGraph", graph_names: None = ...
+) -> None: ...
+
+
 def build_gene_multigraph(
     graph: "SCerevisiaeGraph", graph_names: list[str] | None = None
-) -> GeneMultiGraph:
+) -> GeneMultiGraph | None:
     """Build a GeneMultiGraph from the requested graph names.
 
     Only loads the specific graphs requested, avoiding unnecessary computation.
@@ -1379,7 +1391,7 @@ def check_regulatory_nodes_have_edges() -> None:
 
     # Load environment variables
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = cast("str", os.getenv("DATA_ROOT"))
 
     # Create genome and graph
     genome = SCerevisiaeGenome(
@@ -1428,7 +1440,7 @@ def main() -> None:
     from dotenv import load_dotenv
 
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = cast("str", os.getenv("DATA_ROOT"))
 
     genome = SCerevisiaeGenome(
         genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),

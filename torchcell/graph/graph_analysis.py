@@ -5,7 +5,7 @@ import os
 import os.path as osp
 from collections import defaultdict
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -296,9 +296,9 @@ def go_gaf_investigation() -> None:
     from dotenv import load_dotenv
 
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = cast("str", os.getenv("DATA_ROOT"))
 
-    genome = SCerevisiaeGenome(
+    genome = SCerevisiaeGenome(  # type: ignore[call-arg]  # legacy: data_root is not a valid kwarg; fixing would change runtime behavior
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
     )
     genome.drop_chrmt()
@@ -321,7 +321,7 @@ def go_gaf_investigation() -> None:
     # Read the GAF file and apply filters
     gaf_path = osp.join(DATA_ROOT, "data/sgd.gaf")
     with open(gaf_path) as handle:
-        for record in gafiterator(handle):
+        for record in gafiterator(handle):  # type: ignore[no-untyped-call]  # Bio.UniProt.GOA ships no type stubs
             # Apply filters
             for synonym in record.get("Synonym", []):
                 if synonym in genome.gene_set:
@@ -329,7 +329,7 @@ def go_gaf_investigation() -> None:
                     break  # Once matched, no need to check other synonyms
 
     # use this len(G.nodes[[node for node in G.nodes][100]]["annotations"])
-    graph = SCerevisiaeGraph(
+    graph = SCerevisiaeGraph(  # type: ignore[call-arg]  # legacy: data_root is not a valid kwarg; fixing would change runtime behavior
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
     graph.G_go
@@ -521,7 +521,7 @@ def old_main() -> None:
     from dotenv import load_dotenv
 
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = cast("str", os.getenv("DATA_ROOT"))
 
     genome = SCerevisiaeGenome(
         genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
@@ -555,7 +555,7 @@ def old_main() -> None:
         f"G_string9_1_database: {set(graph.G_string9_1_database.nodes()) - genome.gene_set}"
     )
     print(
-        f"G_string9_1_combined: {set(graph.G_string9_1_combined.nodes()) - genome.gene_set}"
+        f"G_string9_1_combined: {set(graph.G_string9_1_combined.nodes()) - genome.gene_set}"  # type: ignore[attr-defined]  # legacy: no such attribute on SCerevisiaeGraph; fixing would change runtime behavior
     )
     print("-----------")
     print(
@@ -577,7 +577,7 @@ def old_main() -> None:
         f"G_string12_0_database: {set(graph.G_string12_0_database.nodes()) - genome.gene_set}"
     )
     print(
-        f"G_string12_0_combined: {set(graph.G_string12_0_combined.nodes()) - genome.gene_set}"
+        f"G_string12_0_combined: {set(graph.G_string12_0_combined.nodes()) - genome.gene_set}"  # type: ignore[attr-defined]  # legacy: no such attribute on SCerevisiaeGraph; fixing would change runtime behavior
     )
     print("-----------")
 
@@ -626,12 +626,12 @@ def main() -> None:
     from dotenv import load_dotenv
 
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = cast("str", os.getenv("DATA_ROOT"))
 
-    genome = SCerevisiaeGenome(
+    genome = SCerevisiaeGenome(  # type: ignore[call-arg]  # legacy: data_root is not a valid kwarg; fixing would change runtime behavior
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
     )
-    graph = SCerevisiaeGraph(
+    graph = SCerevisiaeGraph(  # type: ignore[call-arg]  # legacy: data_root is not a valid kwarg; fixing would change runtime behavior
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
     print()

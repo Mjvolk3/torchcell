@@ -17,6 +17,7 @@ def get_uniprot_ec(uniprot_id: str) -> str | None:
     for line in response.text.split("\n"):
         if "EC=" in line:
             return line.split("EC=")[1].split(";")[0].strip()
+    return None
 
 
 ec_number = get_uniprot_ec("P24583")

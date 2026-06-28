@@ -107,7 +107,10 @@ def draw_and_save_graph(
 
     max_depth = max(depths.values()) if depths else 1  # Avoid division by zero
     node_list = list(graph.nodes())
-    node_colors = [plt.cm.Greys(1.0 - depths[node] / max_depth) for node in node_list]
+    node_colors = [
+        plt.cm.Greys(1.0 - depths[node] / max_depth)  # type: ignore[attr-defined]  # named colormap not in matplotlib stubs
+        for node in node_list
+    ]
 
     # Overwrite leaf node colors with red
     leaf_nodes = [node for node, degree in graph.out_degree() if degree == 0]

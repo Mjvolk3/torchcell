@@ -2,6 +2,7 @@
 # [[torchcell.datasets.scerevisiae.kemmeren2014]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/kemmeren2014
 # Test file: tests/torchcell/datasets/scerevisiae/test_kemmeren2014.py
+"""Kemmeren 2014 deletion-mutant microarray expression dataset."""
 
 import logging
 import os
@@ -89,6 +90,17 @@ N_EXPECTED_REFPOOL_REPLICATES_BY4742 = None  # Computed from MATα WT sample cou
 
 @register_dataset
 class MicroarrayKemmeren2014Dataset(ExperimentDataset):
+    """Deletion-mutant microarray expression profiling from Kemmeren et al. 2014.
+
+    Microarray gene expression data for single-gene deletion mutants profiled
+    against a common wildtype reference pool in a dye-swap design. Combines the
+    responsive and non-responsive mutant GEO series with the BY4741 (MATa) and
+    BY4742 (MATalpha) wildtype reference series.
+
+    Data source: GEO accessions GSE42527, GSE42526, and wildtype references.
+    Paper: Kemmeren et al. (2014) Cell.
+    """
+
     # GEO accessions for the dataset
     geo_accession_responsive = "GSE42527"  # Responsive mutants
     geo_accession_nonresponsive = "GSE42526"  # Non-responsive mutants
@@ -134,6 +146,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Initialize the dataset, optionally injecting a genome for gene mapping."""
         self.process_workers = process_workers
         self.batch_size = batch_size
 
@@ -145,14 +158,17 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
     @property
     def experiment_class(self) -> type[Experiment]:
+        """Experiment model produced by this dataset."""
         return MicroarrayExpressionExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference model produced by this dataset."""
         return MicroarrayExpressionExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Raw GEO SOFT family files required before processing."""
         return [
             f"{self.geo_accession_responsive}_family.soft.gz",
             f"{self.geo_accession_nonresponsive}_family.soft.gz",
@@ -247,6 +263,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Parse GEO expression data into experiments and write the LMDB store."""
         # Initialize resolution statistics
         self.resolved_by_excel = 0
         self.resolved_by_gene_table = 0
@@ -2033,6 +2050,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         refpool_expression,
         refpool_n_replicates,
     ):
+        """Build an experiment, reference, and publication from sample expression data."""
         # Genome reference - strain MUST be specified (BY4741 or BY4742)
         if "strain" not in sample_info:
             raise ValueError(

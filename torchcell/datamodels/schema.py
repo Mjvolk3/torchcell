@@ -939,6 +939,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
 
     @field_validator("n_replicates", mode="before")
     def convert_and_validate_n_replicates(cls, v):
+        """Coerce n_replicates to a SortedDict and require positive-integer counts."""
         if v is None:
             raise ValueError(
                 "n_replicates cannot be None - it is required for SE interpretation"

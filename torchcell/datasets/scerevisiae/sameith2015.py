@@ -2,6 +2,7 @@
 # [[torchcell.datasets.scerevisiae.sameith2015]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/sameith2015
 # Test file: tests/torchcell/datasets/scerevisiae/test_sameith2015.py
+"""Sameith 2015 GSTF single/double deletion-mutant microarray expression datasets."""
 
 import logging
 import os
@@ -112,6 +113,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Initialize the dataset, optionally injecting a genome for gene mapping."""
         self.process_workers = process_workers
         self.batch_size = batch_size
 
@@ -123,14 +125,17 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
     @property
     def experiment_class(self) -> type[Experiment]:
+        """Experiment model produced by this dataset."""
         return MicroarrayExpressionExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference model produced by this dataset."""
         return MicroarrayExpressionExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Raw GEO SOFT family file required before processing."""
         return [f"{self.geo_accession}_family.soft.gz"]
 
     def download(self):
@@ -186,6 +191,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Parse GEO expression data into single-mutant experiments and write LMDB."""
         # Initialize resolution statistics
         self.resolved_by_excel = 0
         self.resolved_by_gene_table = 0
@@ -278,7 +284,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         samples_df = pd.DataFrame(samples_data)
         samples_df = samples_df.drop("gsm_object", axis=1)
         # Filter to only include single mutant samples
-        single_mutant_df = samples_df[samples_df["is_single_mutant"] == True]
+        single_mutant_df = samples_df[samples_df["is_single_mutant"]]
         single_mutant_df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
         log.info(
             f"Saved {len(single_mutant_df)} single mutant samples to preprocess data.csv"
@@ -817,6 +823,18 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
 @register_dataset
 class DmMicroarraySameith2015Dataset(ExperimentDataset):
+    """Double mutant GSTF expression profiling from Sameith et al. 2015.
+
+    Microarray gene expression data for double-deletion yeast strains pairing
+    general stress transcription factors (GSTFs), profiled against a common
+    wildtype reference pool. Authoritative GSTF pairs and per-sample strain are
+    read from the paper's supplementary table.
+
+    Data source: GEO accession GSE42536
+    Paper: Sameith et al. (2015) BMC Biology
+    DOI: 10.1186/s12915-015-0222-5
+    """
+
     # GEO accession for double mutant microarray expression dataset
     geo_accession = "GSE42536"
 
@@ -831,6 +849,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        """Initialize the dataset, optionally injecting a genome for gene mapping."""
         self.process_workers = process_workers
         self.batch_size = batch_size
 
@@ -842,14 +861,17 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
     @property
     def experiment_class(self) -> type[Experiment]:
+        """Experiment model produced by this dataset."""
         return MicroarrayExpressionExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference model produced by this dataset."""
         return MicroarrayExpressionExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
+        """Raw GEO SOFT family file required before processing."""
         return [f"{self.geo_accession}_family.soft.gz"]
 
     def download(self):
@@ -947,6 +969,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        """Parse GEO expression data into double-mutant experiments and write LMDB."""
         # Initialize resolution statistics
         self.resolved_by_excel = 0
         self.resolved_by_gene_table = 0
@@ -1055,7 +1078,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         samples_df = pd.DataFrame(samples_data)
         samples_df = samples_df.drop("gsm_object", axis=1)
         # Filter to only include double mutant samples
-        double_mutant_df = samples_df[samples_df["is_double_mutant"] == True]
+        double_mutant_df = samples_df[samples_df["is_double_mutant"]]
         double_mutant_df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
         log.info(
             f"Saved {len(double_mutant_df)} double mutant samples to preprocess data.csv"

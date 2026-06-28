@@ -11,6 +11,7 @@ import os.path as osp
 import time
 import uuid
 from datetime import datetime
+from typing import Any, cast
 
 import certifi
 import hydra
@@ -18,7 +19,7 @@ import wandb
 from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
 
-from biocypher import BioCypher
+from biocypher import BioCypher  # type: ignore[attr-defined]  # untyped re-export
 from torchcell.datasets import dataset_registry
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.knowledge_graphs import dataset_adapter_map
@@ -31,10 +32,12 @@ logging.captureWarnings(True)
 os.environ["SSL_CERT_FILE"] = certifi.where()
 
 load_dotenv()
-DATA_ROOT = os.getenv("DATA_ROOT")
-BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
-SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
-BIOCYPHER_OUT_PATH = os.getenv("BIOCYPHER_OUT_PATH")
+# These env vars are required entry-point preconditions for the build scripts;
+# cast documents the non-None contract without altering runtime behavior.
+DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
+BIOCYPHER_CONFIG_PATH = cast(str, os.getenv("BIOCYPHER_CONFIG_PATH"))
+SCHEMA_CONFIG_PATH = cast(str, os.getenv("SCHEMA_CONFIG_PATH"))
+BIOCYPHER_OUT_PATH = cast(str, os.getenv("BIOCYPHER_OUT_PATH"))
 
 
 def get_num_workers() -> int:
@@ -46,10 +49,13 @@ def get_num_workers() -> int:
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="gene_essentiality_sgd")
-def main(cfg: DictConfig) -> str:
+def main(cfg: DictConfig) -> None:
     """Run the Hydra-configured knowledge-graph build and log it to wandb."""
     # wandb configuration
-    wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
+    wandb_cfg = cast(
+        "dict[str, Any]",
+        OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True),
+    )
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
@@ -89,10 +95,11 @@ def main(cfg: DictConfig) -> str:
     )
 
     # Define dataset configurations
-    dataset_configs = []
+    dataset_configs: list[dict[str, Any]] = []
     for dataset in wandb.config.datasets:
         # We need workers according to system but other kwargs
         # come from yaml, like subsetting, etc.
+        kwargs: dict[str, Any]
         if wandb.config.datasets[dataset]["kwargs"] is not None:
             kwargs = {
                 **wandb.config.datasets[dataset]["kwargs"],
@@ -106,7 +113,10 @@ def main(cfg: DictConfig) -> str:
         # Start special cases
         # Handle special cases...
         # Concerned about this as it makes things much less general.
-        if "scerevisiae_graph" in inspect.signature(dataset_class.__init__).parameters:
+        if (
+            "scerevisiae_graph"
+            in inspect.signature(dataset_class.__init__).parameters  # type: ignore[misc]  # inspecting a class object's __init__
+        ):
             genome = SCerevisiaeGenome(
                 genome_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
             )
@@ -117,7 +127,10 @@ def main(cfg: DictConfig) -> str:
                 genome=genome,
             )
             kwargs["scerevisiae_graph"] = graph
-        if "genome" in inspect.signature(dataset_class.__init__).parameters:
+        if (
+            "genome"
+            in inspect.signature(dataset_class.__init__).parameters  # type: ignore[misc]  # inspecting a class object's __init__
+        ):
             genome = SCerevisiaeGenome(
                 genome_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
             )
@@ -150,7 +163,7 @@ def main(cfg: DictConfig) -> str:
 
     # Instantiate adapters based on the dataset-adapter mapping
     adapters = [
-        dataset_adapter_map[type(dataset)](
+        dataset_adapter_map[cast(Any, type(dataset))](
             dataset=dataset,
             process_workers=process_workers,
             io_workers=io_workers,

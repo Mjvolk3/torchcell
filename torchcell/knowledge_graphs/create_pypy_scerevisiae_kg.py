@@ -6,8 +6,9 @@
 """Build the S. cerevisiae knowledge graph via PyPy BioCypher adapters."""
 
 import logging
+from typing import Any
 
-from biocypher import BioCypher
+from biocypher import BioCypher  # type: ignore[attr-defined]  # untyped re-export
 from torchcell.dataset_readers import LmdbDatasetReader
 from torchcell.pypy_adapters import (
     DmfCostanzo2016Adapter,
@@ -28,7 +29,7 @@ def main() -> None:
     bc = BioCypher()
 
     # Ordered adapters from smallest to largest
-    adapters = [
+    adapters: list[Any] = [
         DmfCostanzo2016Adapter(
             dataset=LmdbDatasetReader("data/torchcell/dmf_costanzo2016")
         ),

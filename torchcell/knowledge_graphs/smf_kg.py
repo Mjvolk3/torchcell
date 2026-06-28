@@ -15,6 +15,7 @@ import os.path as osp
 import time
 import uuid
 from datetime import datetime
+from typing import Any, cast
 
 import certifi
 import hydra
@@ -23,7 +24,7 @@ from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
 
 import torchcell
-from biocypher import BioCypher
+from biocypher import BioCypher  # type: ignore[attr-defined]  # untyped re-export
 from torchcell.adapters import SmfCostanzo2016Adapter, SmfKuzmin2018Adapter
 from torchcell.datasets.scerevisiae.costanzo2016 import SmfCostanzo2016Dataset
 from torchcell.datasets.scerevisiae.kuzmin2018 import SmfKuzmin2018Dataset
@@ -46,16 +47,21 @@ def get_num_workers() -> int:
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="kg")
-def main(cfg: DictConfig) -> str:
+def main(cfg: DictConfig) -> None:
     """Build and write the single-mutant-fitness BioCypher knowledge graph."""
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
-    BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
-    SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
-    BIOCYPHER_OUT_PATH = os.getenv("BIOCYPHER_OUT_PATH")
+    # These env vars are required entry-point preconditions for the build script;
+    # cast documents the non-None contract without altering runtime behavior.
+    DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
+    BIOCYPHER_CONFIG_PATH = cast(str, os.getenv("BIOCYPHER_CONFIG_PATH"))
+    SCHEMA_CONFIG_PATH = cast(str, os.getenv("SCHEMA_CONFIG_PATH"))
+    BIOCYPHER_OUT_PATH = cast(str, os.getenv("BIOCYPHER_OUT_PATH"))
 
     # wandb configuration
-    wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
+    wandb_cfg = cast(
+        "dict[str, Any]",
+        OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True),
+    )
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
@@ -67,7 +73,7 @@ def main(cfg: DictConfig) -> str:
         group=group,
         save_code=True,
     )
-    wandb.run.log_code(
+    cast(Any, wandb.run).log_code(
         "/".join(osp.join(torchcell.__path__[0], __file__).split("/")[:-1])
     )
     wandb.log({"slurm_job_id": str(slurm_job_id)})
@@ -98,7 +104,7 @@ def main(cfg: DictConfig) -> str:
     )
 
     # Define dataset configurations
-    dataset_configs = [
+    dataset_configs: list[dict[str, Any]] = [
         {
             "class": SmfCostanzo2016Dataset,
             "path": osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"),
@@ -135,7 +141,7 @@ def main(cfg: DictConfig) -> str:
 
     # Instantiate adapters based on the dataset-adapter mapping
     adapters = [
-        dataset_adapter_map[type(dataset)](
+        dataset_adapter_map[cast(Any, type(dataset))](
             dataset=dataset,
             process_workers=process_workers,
             io_workers=io_workers,

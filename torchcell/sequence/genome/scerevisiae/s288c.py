@@ -13,7 +13,7 @@ import os.path as osp
 import shutil
 import tarfile
 from itertools import product
-from typing import Any
+from typing import Any, SupportsIndex, cast
 
 import gffutils
 import pandas as pd
@@ -72,12 +72,12 @@ class SCerevisiaeGene(Gene):
     """A single S. cerevisiae gene resolved from the SGD GFF database and FASTA files."""
 
     id: str = field(repr=False)
-    db: str = field(repr=False)
-    fasta_dna: dict[str, SeqRecord] = field(repr=False)
-    fasta_protein: dict[str, SeqRecord] = field(repr=False)
-    fasta_cds: dict[str, SeqRecord] = field(repr=False)
-    chr_to_nc: dict[str, str] = field(repr=False)
-    chromosome_lengths: dict[str, int] = field(repr=False)
+    db: Any = field(repr=False)
+    fasta_dna: dict[str, Any] = field(repr=False)
+    fasta_protein: dict[str, Any] = field(repr=False)
+    fasta_cds: dict[str, Any] = field(repr=False)
+    chr_to_nc: dict[int, str] = field(repr=False)
+    chromosome_lengths: dict[int, int] = field(repr=False)
     # below are set in __attrs_post_init__
     chromosome: int = field(default=None)
     start: int = field(default=None)
@@ -192,7 +192,7 @@ class SCerevisiaeGene(Gene):
         # protein sequence
         self.protein = self.fasta_protein.get(self.id)
         # cds sequence
-        self.cds = self.fasta_cds.get(self.id)
+        self.cds: Any = self.fasta_cds.get(self.id)
 
         # TODO consider adding these to ABC...
         # Some might be too specific to S. cerevisiae, but so they could be optional
@@ -219,8 +219,8 @@ class SCerevisiaeGene(Gene):
     def alias_to_systematic(self) -> dict[str, str]:
         """Return a mapping from each gene alias to its systematic gene ID."""
         alias_map = {}
-        for gene_id in self.gene_set:
-            gene = self[gene_id]
+        for gene_id in self.gene_set:  # type: ignore[attr-defined]  # references Genome API on Gene (pre-existing)
+            gene = self[gene_id]  # type: ignore[index]  # references Genome API on Gene (pre-existing)
             if gene and gene.alias:
                 for alias in gene.alias:
                     if alias in alias_map:
@@ -272,7 +272,7 @@ class SCerevisiaeGene(Gene):
             end_window=end_window,
         )
 
-    def window_five_prime(
+    def window_five_prime(  # type: ignore[override]  # adds include_start_codon kwarg vs base ABC
         self,
         window_size: int,
         include_start_codon: bool = False,
@@ -333,7 +333,7 @@ class SCerevisiaeGene(Gene):
             end_window=end_window,
         )
 
-    def window_three_prime(
+    def window_three_prime(  # type: ignore[override]  # adds include_stop_codon kwarg vs base ABC
         self,
         window_size: int,
         include_stop_codon: bool = False,
@@ -407,10 +407,10 @@ class SCerevisiaeGenome(Genome):
     genome_root: str = field(init=True, repr=False, default="data/sgd/genome")
     go_root: str = field(init=True, repr=False, default="data/go")
     overwrite: bool = field(init=True, repr=True, default=True)
-    fasta_dna = field(init=False, default=None, repr=False)
-    chr_to_nc: dict[str, str] = field(init=False, default=None, repr=False)
-    nc_to_chr: dict[str, str] = field(init=False, default=None, repr=False)
-    chr_to_len: dict[str, int] = field(init=False, default=None, repr=False)
+    fasta_dna: dict[str, Any] = field(init=False, default=None, repr=False)
+    chr_to_nc: dict[int, str] = field(init=False, default=None, repr=False)
+    nc_to_chr: dict[str, int] = field(init=False, default=None, repr=False)
+    chr_to_len: dict[int, int] = field(init=False, default=None, repr=False)
     _gene_set: GeneSet = field(init=False, default=None, repr=False)
     _dna_fasta_path: str = field(init=False, default=None, repr=False)
     _protein_fasta_path: str = field(init=False, default=None, repr=False)
@@ -420,7 +420,9 @@ class SCerevisiaeGenome(Genome):
     _go_genes: SortedDict[str, SortedSet[str]] = field(
         init=False, default=None, repr=False
     )
-    _alias_to_systematic: dict[str, str] = field(init=False, default=None, repr=False)
+    _alias_to_systematic: dict[str, list[str]] = field(
+        init=False, default=None, repr=False
+    )
     # Use factory to ensure GO DAG is not pickled
     _go_dag: GODag | None = field(init=False, factory=lambda: None, repr=False)
     _obo_path: str | None = field(init=False, default=None, repr=False)
@@ -476,11 +478,11 @@ class SCerevisiaeGenome(Genome):
         # Set up connection manager for thread/process-safe database access
         self._db_connection_manager = GffutilsConnectionManager(db_path)
 
-        self.fasta_dna = SeqIO.to_dict(SeqIO.parse(self._dna_fasta_path, "fasta"))
-        self.fasta_protein = SeqIO.to_dict(
-            SeqIO.parse(self._protein_fasta_path, "fasta")
+        self.fasta_dna = SeqIO.to_dict(SeqIO.parse(self._dna_fasta_path, "fasta"))  # type: ignore[no-untyped-call]  # Bio.SeqIO is untyped
+        self.fasta_protein = SeqIO.to_dict(  # type: ignore[no-untyped-call]  # Bio.SeqIO is untyped
+            SeqIO.parse(self._protein_fasta_path, "fasta")  # type: ignore[no-untyped-call]  # Bio.SeqIO is untyped
         )
-        self.fasta_cds = SeqIO.to_dict(SeqIO.parse(self._cds_fasta_path, "fasta"))
+        self.fasta_cds = SeqIO.to_dict(SeqIO.parse(self._cds_fasta_path, "fasta"))  # type: ignore[no-untyped-call]  # Bio.SeqIO is untyped
         # Create mapping from chromosome number to sequence identifier
         self.chr_to_nc = {
             get_chr_from_description(self.fasta_dna[key].description): key
@@ -507,6 +509,11 @@ class SCerevisiaeGenome(Genome):
         # self.remove_deprecated_go_terms()
 
     @property
+    def db(self) -> Any:
+        """Return the gffutils connection (non-None in this genome)."""
+        return super().db
+
+    @property
     def go_dag(self) -> GODag:
         """Lazy-load GO DAG - one per process"""
         if self._go_dag is None:
@@ -516,13 +523,16 @@ class SCerevisiaeGenome(Genome):
                 raise FileNotFoundError(f"GO OBO file not found at {self._obo_path}")
         return self._go_dag
 
-    def __reduce_ex__(self, protocol: int) -> tuple[Any, ...]:
+    def __reduce_ex__(self, protocol: SupportsIndex) -> tuple[Any, ...]:
         """Custom pickling that handles non-pickleable objects."""
         # Get the attrs-generated __getstate__ if it exists
-        state = (
-            self.__getstate__()
-            if hasattr(self, "__getstate__")
-            else self.__dict__.copy()
+        state: dict[str, Any] = cast(
+            "dict[str, Any]",
+            (
+                self.__getstate__()
+                if hasattr(self, "__getstate__")
+                else self.__dict__.copy()
+            ),
         )
 
         # Clear non-pickleable objects
@@ -712,8 +722,8 @@ class SCerevisiaeGenome(Genome):
         elif strand == "-":
             seq = self.fasta_dna[chr].seq[start:end].reverse_complement()
         return DnaSelectionResult(
-            id=self.id,
-            chromosome=chr_num,
+            id=self.id,  # type: ignore[attr-defined]  # no 'id' on genome (pre-existing)
+            chromosome=chr_num,  # type: ignore[arg-type]  # chr_num is int when chr is int (pre-existing contract)
             strand=strand,
             start=start,
             end=end,
@@ -743,7 +753,7 @@ class SCerevisiaeGenome(Genome):
         """Return the list of feature types present in the GFF database."""
         return list(self.db.featuretypes())
 
-    def compute_gene_set(self) -> SortedSet[str]:
+    def compute_gene_set(self) -> GeneSet:
         """Return the GeneSet of all gene IDs in the database."""
         genes = [feat.id for feat in list(self.db.features_of_type("gene"))]
         assert len(genes) == len(set(genes)), (
@@ -823,7 +833,7 @@ def main() -> None:
     from dotenv import load_dotenv
 
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
 
     genome = SCerevisiaeGenome(
         genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),

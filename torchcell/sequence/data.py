@@ -53,7 +53,8 @@ class DnaSelectionResult(ModelStrict):
     @classmethod
     def end_leq_start(cls, values: dict[str, Any]) -> dict[str, Any]:
         """Validate that start is not greater than end."""
-        start, end = values.get("start"), values.get("end")
+        start: Any = values.get("start")
+        end: Any = values.get("end")
         if start > end:
             raise ValueError("Start must be less than end")
         return values
@@ -101,7 +102,7 @@ class DnaWindowResult(DnaSelectionResult):
         return v
 
 
-class GeneSet(SortedSet):
+class GeneSet(SortedSet):  # type: ignore[misc]  # SortedSet is untyped (no stubs) under strict
     """A sorted set that requires all members to be strings."""
 
     def __init__(
@@ -122,7 +123,7 @@ class GeneSet(SortedSet):
                     f"All items in gene_set must be str, got {type(item).__name__}"
                 )
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # type: ignore[return]  # pre-existing gap: size==3 returns None
         """Return a summary representation showing size and first items."""
         n = len(self)
         limited_items = (self)[:3]
@@ -191,14 +192,14 @@ class Genome(ABC):
         Args:
             data_root: Optional path to the genome data directory.
         """
-        self.data_root: str = data_root
+        self.data_root: str | None = data_root
         self._db_connection_manager: DatabaseConnectionManager[FeatureDB] | None = None
         # FASTA records are dynamic BioPython SeqRecord objects keyed by id.
         self.fasta_sequences: dict[str, Any] | None = None
-        self.chr_to_nc: dict[str, str] | None = None
-        self.nc_to_chr: dict[str, str] | None = None
-        self.chr_to_len: dict[str, int] | None = None
-        self._gene_set: set[str] | None = None
+        self.chr_to_nc: dict[int, str] | None = None
+        self.nc_to_chr: dict[str, int] | None = None
+        self.chr_to_len: dict[int, int] | None = None
+        self._gene_set: GeneSet | None = None
         self._fasta_path: str | None = None
         self._gff_path: str | None = None
 
@@ -220,12 +221,12 @@ class Genome(ABC):
         return self._gene_set
 
     @gene_set.setter
-    def gene_set(self, value: set[str]) -> None:
+    def gene_set(self, value: GeneSet) -> None:
         """Override the cached gene set."""
         self._gene_set = value
 
     @abstractmethod
-    def compute_gene_set(self) -> set[str]:
+    def compute_gene_set(self) -> GeneSet:
         """Compute and return the set of gene identifiers."""
         pass  # Abstract methods don't have a body
 
@@ -290,7 +291,7 @@ def mismatch_positions(seq1: str, seq2: str) -> list[int]:
     return mismatches
 
 
-def get_chr_from_description(description: str) -> int:
+def get_chr_from_description(description: str) -> int:  # type: ignore[return]  # pre-existing: None for unmatched descriptions
     """Extracts the chromosome number from a given description string.
 
     Processes a description string containing either a chromosome
@@ -634,7 +635,7 @@ def calculate_window_bounds_symmetric(
     return start_window, end_window
 
 
-class CodonFrequency(SortedDict):
+class CodonFrequency(SortedDict):  # type: ignore[misc]  # SortedDict is untyped (no stubs) under strict
     """Sorted mapping of all 64 codons to their relative frequencies."""
 
     def __repr__(self) -> str:

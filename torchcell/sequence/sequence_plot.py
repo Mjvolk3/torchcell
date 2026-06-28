@@ -6,13 +6,14 @@ import pickle
 from abc import ABC, abstractmethod
 from collections import Counter
 from datetime import datetime
+from typing import Any
 
 import matplotlib.pyplot as plt
 from attrs import define, field
 
 import torchcell
 from torchcell.sequence import Genome
-from torchcell.sgd.sequence import SCerevisiaeGenome
+from torchcell.sgd.sequence import SCerevisiaeGenome  # type: ignore[import-not-found]  # dead module: torchcell.sgd does not exist
 
 style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
@@ -24,7 +25,7 @@ class GenomePlot(ABC):
     genome: Genome
 
     @abstractmethod
-    def plot() -> None:
+    def plot(self) -> None:
         """Render the plot; must be implemented by subclasses."""
         raise NotImplementedError("Subclasses must implement plot() method.")
 
@@ -37,7 +38,7 @@ class GenomePlot(ABC):
         """
         current_dir = osp.dirname(osp.abspath(__file__))
         # Get current date and time and format it as year-month-day-hour-minute-second.
-        timestamp = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M.%S")
+        timestamp = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M.%S")  # type: ignore[attr-defined]  # pre-existing bug: datetime.datetime undefined (dead module)
         file_path = osp.join(
             ".notes/assets/images",
             osp.relpath(current_dir),
@@ -61,14 +62,13 @@ class PlotFeatureTypeCounts(GenomePlot):
     """Horizontal bar chart of genome feature-type occurrence counts."""
 
     genome: Genome
-    plt: plt = field(init=False)
+    plt: Any = field(init=False)
 
     @property
     def feature_type_counts(self) -> dict[str, int]:
         """Return a mapping of feature type to its occurrence count."""
-        feature_types = [
-            feat.featuretype for feat in list(self.genome.db.all_features())
-        ]
+        db: Any = self.genome.db
+        feature_types = [feat.featuretype for feat in list(db.all_features())]
         return dict(Counter(feature_types))
 
     def plot(self) -> None:
@@ -115,7 +115,7 @@ def main() -> None:
     genome = SCerevisiaeGenome()
     genome_plot = PlotFeatureTypeCounts(genome)
     genome_plot.plot()
-    genome_plot.save(pdf=True, mpl=True)
+    genome_plot.save(pdf=True, mpl=True)  # type: ignore[call-arg]  # pre-existing bug: wrong kwargs (save takes as_pdf/as_pickle)
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@
 import os.path as osp
 import threading
 from collections.abc import Iterator
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from gffutils import FeatureDB
 
@@ -94,11 +94,11 @@ class DatabaseConnectionManager[T: DatabaseProtocol]:
                 raise FileNotFoundError(f"Database not found at {self.db_path}")
 
             # Create new connection for this thread/process
-            self._local.db = self.db_class(
+            self._local.db = cast(Any, self.db_class)(
                 self.db_path, *self.db_args, **self.db_kwargs
             )
 
-        return self._local.db
+        return cast(T, self._local.db)
 
     def close_connection(self) -> None:
         """Close the current thread/process connection if it exists."""

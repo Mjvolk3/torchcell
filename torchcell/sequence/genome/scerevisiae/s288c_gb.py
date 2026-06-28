@@ -9,6 +9,7 @@ import os.path as osp
 import shutil
 import subprocess
 import zipfile
+from typing import cast
 
 from attrs import define, field
 from Bio import SeqIO
@@ -53,7 +54,7 @@ class SCerevisiaeGenome:
             return
 
         # Parse the .gbff file and store the result
-        for record in SeqIO.parse(gbff_file_path, "genbank"):
+        for record in SeqIO.parse(gbff_file_path, "genbank"):  # type: ignore[no-untyped-call]  # Bio.SeqIO is untyped
             self.genomes[record.id] = record
         print()
 
@@ -135,7 +136,7 @@ def main() -> None:
     from dotenv import load_dotenv
 
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
 
     _genome = SCerevisiaeGenome(
         data_root=osp.join(DATA_ROOT, "data/scerevisiae/genome/S288C")

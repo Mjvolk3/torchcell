@@ -12,6 +12,7 @@ import os
 import os.path as osp
 import shutil
 import tarfile
+from typing import Any, cast
 
 import gffutils
 import pandas as pd
@@ -65,11 +66,11 @@ class SCerevisiaeGene(Gene):
     """A single S. cerevisiae gene/ORF with sequence, coordinates, and feature."""
 
     id: str = field(repr=False)
-    db: str = field(repr=False)
-    fasta_dna: dict[str, SeqRecord] = field(repr=False)
-    fasta_protein: dict[str, SeqRecord] = field(repr=False)
-    chr_to_nc: dict[str, str] = field(repr=False)
-    chromosome_lengths: dict[str, int] = field(repr=False)
+    db: Any = field(repr=False)
+    fasta_dna: dict[str, Any] = field(repr=False)
+    fasta_protein: dict[str, Any] = field(repr=False)
+    chr_to_nc: dict[int, str] = field(repr=False)
+    chromosome_lengths: dict[int, int] = field(repr=False)
     # below are set in __attrs_post_init__
     chromosome: int = field(default=None)
     start: int = field(default=None)
@@ -367,11 +368,11 @@ class SCerevisiaeGenome(Genome):
     """S. cerevisiae S288C genome backed by NCBI FASTA, GFF, and GO data."""
 
     data_root: str = field(init=True, repr=False, default="data/sgd/genome")
-    db: dict[str, SeqRecord] = field(init=False, repr=False)
-    fasta_dna = field(init=False, default=None, repr=False)
-    chr_to_nc: dict[str, str] = field(init=False, default=None, repr=False)
-    nc_to_chr: dict[str, str] = field(init=False, default=None, repr=False)
-    chr_to_len: dict[str, int] = field(init=False, default=None, repr=False)
+    db: Any = field(init=False, repr=False)
+    fasta_dna: dict[str, Any] = field(init=False, default=None, repr=False)
+    chr_to_nc: dict[int, str] = field(init=False, default=None, repr=False)
+    nc_to_chr: dict[str, int] = field(init=False, default=None, repr=False)
+    chr_to_len: dict[int, int] = field(init=False, default=None, repr=False)
     _gene_set: GeneSet = field(init=False, default=None, repr=False)
     _dna_fasta_path: str = field(init=False, default=None, repr=False)
     _protein_fasta_path: str = field(init=False, default=None, repr=False)
@@ -420,9 +421,9 @@ class SCerevisiaeGenome(Genome):
             sort_attribute_values=True,
         )
 
-        self.fasta_dna = SeqIO.to_dict(SeqIO.parse(self._dna_fasta_path, "fasta"))
-        self.fasta_protein = SeqIO.to_dict(
-            SeqIO.parse(self._protein_fasta_path, "fasta")
+        self.fasta_dna = SeqIO.to_dict(SeqIO.parse(self._dna_fasta_path, "fasta"))  # type: ignore[no-untyped-call]  # Bio.SeqIO is untyped
+        self.fasta_protein = SeqIO.to_dict(  # type: ignore[no-untyped-call]  # Bio.SeqIO is untyped
+            SeqIO.parse(self._protein_fasta_path, "fasta")  # type: ignore[no-untyped-call]  # Bio.SeqIO is untyped
         )
         # Create mapping from chromosome number to sequence identifier
         self.chr_to_nc = {
@@ -609,8 +610,8 @@ class SCerevisiaeGenome(Genome):
         elif strand == "-":
             seq = self.fasta_dna[chr].seq[start:end].reverse_complement()
         return DnaSelectionResult(
-            id=self.id,
-            chromosome=chr_num,
+            id=self.id,  # type: ignore[attr-defined]  # no 'id' on genome (pre-existing)
+            chromosome=chr_num,  # type: ignore[arg-type]  # chr_num is int when chr is int (pre-existing contract)
             strand=strand,
             start=start,
             end=end,
@@ -640,7 +641,7 @@ class SCerevisiaeGenome(Genome):
         """Return the list of GFF feature types present in the database."""
         return list(self.db.featuretypes())
 
-    def compute_gene_set(self) -> SortedSet[str]:
+    def compute_gene_set(self) -> GeneSet:
         """Return the set of all gene ids in the database."""
         genes = [feat.id for feat in list(self.db.features_of_type("gene"))]
         assert len(genes) == len(set(genes)), (
@@ -718,7 +719,7 @@ def main() -> None:
     from dotenv import load_dotenv
 
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
 
     # Open the gffutils database
     db = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome")).db

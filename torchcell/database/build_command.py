@@ -4,14 +4,18 @@ import argparse
 import os
 import os.path as osp
 import subprocess
+from typing import IO, TYPE_CHECKING, cast
 
 from cliff.command import Command
+
+if TYPE_CHECKING:
+    from cliff._argparse import ArgumentParser as CliffArgumentParser
 
 
 class BuildCommand(Command):
     """A simple command that builds something."""
 
-    def get_parser(self, prog_name: str) -> argparse.ArgumentParser:
+    def get_parser(self, prog_name: str) -> "CliffArgumentParser":
         """Build the argument parser, adding the build mode option."""
         parser = super().get_parser(prog_name)
         parser.add_argument(
@@ -50,8 +54,9 @@ class BuildCommand(Command):
         )
 
         # Stream the output
+        stdout = cast(IO[str], process.stdout)
         while True:
-            output = process.stdout.readline()
+            output = stdout.readline()
             if output == "" and process.poll() is not None:
                 break
             if output:

@@ -1,6 +1,8 @@
 """Cliff-based command-line entry point for the torchcell database."""
 
 # db_cli.py
+from typing import cast
+
 from cliff.app import App
 from cliff.commandmanager import CommandManager
 
@@ -24,7 +26,7 @@ class TCDB(App):
 def main(argv: list[str] | None = None) -> int:
     """Run the database CLI application and return its exit code."""
     myapp = TCDB()
-    return myapp.run(argv)
+    return myapp.run(cast("list[str]", argv))
 
 
 if __name__ == "__main__":

@@ -3,13 +3,14 @@
 import os
 import os.path as osp
 import shutil
+from typing import cast
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
-DATA_ROOT = os.getenv("DATA_ROOT")
-WORKSPACE_DIR = os.getenv("WORKSPACE_DIR")
+DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
+WORKSPACE_DIR = cast(str, os.getenv("WORKSPACE_DIR"))
 
 
 def main() -> None:

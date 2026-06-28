@@ -12,7 +12,7 @@ from collections.abc import Callable, Iterator
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 from functools import wraps
-from typing import Any
+from typing import Any, cast
 
 import wandb
 from biocypher._create import BioCypherEdge, BioCypherNode
@@ -228,14 +228,14 @@ class CellAdapter:
             for future in futures:
                 yield from future.result()
 
-    def data_chunker(
+    def data_chunker(  # type: ignore[misc]  # in-class decorator factory; first arg is the wrapped method, not self
         data_creation_logic: Callable[..., Any],
     ) -> Callable[..., list[Any]]:
         """Wrap a chunk handler so it loads, transforms, and collects each item."""
 
         @wraps(data_creation_logic)
         def decorator(
-            self: "CellAdapter", data_chunk: dict[Any, Any], method_name: str
+            self: "CellAdapter", data_chunk: Any, method_name: str
         ) -> list[Any]:
             memory_reduction_factor = self.get_memory_reduction_factor(method_name)
             loader_batch_size = int(self.loader_batch_size * memory_reduction_factor)
@@ -267,7 +267,7 @@ class CellAdapter:
         )
         for method in method_list:
             if method["method_name"] == method_name:
-                return method.get("memory_reduction_factor", 1.0)
+                return cast(float, method.get("memory_reduction_factor", 1.0))
         return 1.0
 
     def get_nodes(self) -> Iterator[BioCypherNode]:
@@ -990,7 +990,7 @@ class CellAdapter:
             target_id=self.dataset.name,
             relationship_label="experiment member of",
         )
-        return edge
+        return edge  # type: ignore[no-any-return]  # BioCypherEdge is Any (biocypher untyped)
 
     @data_chunker
     def _experiment_reference_to_experiment_edge(

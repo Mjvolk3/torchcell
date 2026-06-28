@@ -10,7 +10,7 @@ import json
 import os
 import shutil
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 import yaml
 
@@ -131,7 +131,7 @@ def load_neo4j_config(config_file: str) -> dict[str, Any]:
         if key not in neo4j_config:
             raise ValueError(f"Missing required Neo4j configuration key: {key}")
 
-    return neo4j_config
+    return cast(dict[str, Any], neo4j_config)
 
 
 def load_schema_info(schema_file: str) -> Any:  # yaml.safe_load returns Any
@@ -187,18 +187,18 @@ def generate_neo4j_import_script(
 
     # Add nodes
     for base_name in nodes:
-        file_name = find_file(base_name)
-        if file_name:
-            base_name = file_name[:-11]  # Remove "-header.csv"
+        found_file = find_file(base_name)
+        if found_file:
+            base_name = found_file[:-11]  # Remove "-header.csv"
             script_content.append(
                 f'    --nodes="{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-header.csv,{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-part.*" \\'
             )
 
     # Add relationships
     for base_name in relationships:
-        file_name = find_file(base_name)
-        if file_name:
-            base_name = file_name[:-11]  # Remove "-header.csv"
+        found_file = find_file(base_name)
+        if found_file:
+            base_name = found_file[:-11]  # Remove "-header.csv"
             script_content.append(
                 f'    --relationships="{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-header.csv,{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-part.*" \\'
             )
@@ -223,18 +223,18 @@ def generate_neo4j_import_script(
 
     # Add nodes for Neo4j 4.x
     for base_name in nodes:
-        file_name = find_file(base_name)
-        if file_name:
-            base_name = file_name[:-11]  # Remove "-header.csv"
+        found_file = find_file(base_name)
+        if found_file:
+            base_name = found_file[:-11]  # Remove "-header.csv"
             script_content.append(
                 f'    --nodes="{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-header.csv,{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-part.*" \\'
             )
 
     # Add relationships for Neo4j 4.x
     for base_name in relationships:
-        file_name = find_file(base_name)
-        if file_name:
-            base_name = file_name[:-11]  # Remove "-header.csv"
+        found_file = find_file(base_name)
+        if found_file:
+            base_name = found_file[:-11]  # Remove "-header.csv"
             script_content.append(
                 f'    --relationships="{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-header.csv,{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-part.*" \\'
             )

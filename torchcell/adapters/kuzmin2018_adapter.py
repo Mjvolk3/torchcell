@@ -12,7 +12,7 @@ import yaml
 from biocypher._logger import get_logger
 from omegaconf import OmegaConf
 
-from biocypher import BioCypher
+from biocypher import BioCypher  # type: ignore[attr-defined]  # biocypher untyped
 from torchcell.adapters.cell_adapter import CellAdapter
 from torchcell.datasets.scerevisiae.kuzmin2018 import (
     DmfKuzmin2018Dataset,
@@ -255,12 +255,13 @@ if __name__ == "__main__":
     import os
     import os.path as osp
     from datetime import datetime
+    from typing import cast
 
     from dotenv import load_dotenv
 
     load_dotenv()
     time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
     BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
     SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
     num_workers = mp.cpu_count()

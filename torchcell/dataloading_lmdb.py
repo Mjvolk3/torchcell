@@ -1,3 +1,9 @@
+# mypy: ignore-errors
+# DEAD SCRIPT: legacy smoke-test referencing removed APIs (CellDataset no longer
+# exists in torchcell.datasets; SCerevisiaeGenome/NucleotideTransformerDataset no
+# longer accept data_root/transformer_model_name). Unimportable at runtime and
+# referenced nowhere. Left as-is per mypy-pass policy; suppress file-level so it
+# does not block the strict gate. Remove the file or rewrite against current APIs.
 """Smoke-test script that iterates an LMDB-backed CellDataset DataLoader."""
 
 import os

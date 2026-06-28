@@ -107,7 +107,7 @@ def plot_dataset_index_split(
         )
         if final_labels:
             # Sort the labels, sizes, and percentages together
-            int_labels = sorted(
+            int_label_rows = sorted(
                 [
                     (label, size, pct)
                     for label, size, pct in zip(
@@ -117,7 +117,7 @@ def plot_dataset_index_split(
                 ],
                 key=lambda x: x[0],
             )
-            str_labels = sorted(
+            str_label_rows = sorted(
                 [
                     (label, size, pct)
                     for label, size, pct in zip(
@@ -127,14 +127,14 @@ def plot_dataset_index_split(
                 ],
                 key=lambda x: x[0],
             )
-            sorted_data = int_labels + str_labels
-            final_labels, final_sizes, final_percentages = zip(*sorted_data)
+            sorted_data = int_label_rows + str_label_rows
+            sorted_labels, sorted_sizes, sorted_percentages = zip(*sorted_data)
 
-            total = sum(final_sizes)
-            cumulative = 0
+            total = sum(sorted_sizes)
+            cumulative: float = 0
 
             # Stacked bars
-            for label, percent in zip(final_labels, final_percentages):
+            for label, percent in zip(sorted_labels, sorted_percentages):
                 ax.barh(
                     split,  # The current split position (train, val, test)
                     percent,  # Width of the bar (percentage)

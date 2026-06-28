@@ -10,10 +10,11 @@ from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from matplotlib.figure import Figure
 from scipy import stats
 
 
-def box_plot(true_values: Any, predictions: Any) -> plt.Figure:  # Tensor or ndarray
+def box_plot(true_values: Any, predictions: Any) -> Figure:  # Tensor or ndarray
     """Bin predictions into growth ranges and box-plot the measured values.
 
     Args:

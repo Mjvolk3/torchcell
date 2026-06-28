@@ -146,13 +146,13 @@ def _dense_padded_collate(
             # Write directly into shared memory to avoid an extra copy:
             numel = sum(value.numel() for value in values)
             if torch_geometric.typing.WITH_PT20:
-                storage = elem.untyped_storage()._new_shared(
+                storage = elem.untyped_storage()._new_shared(  # type: ignore[no-untyped-call]  # torch storage internals untyped
                     numel * elem.element_size(), device=elem.device
                 )
             elif torch_geometric.typing.WITH_PT112:
-                storage = elem.storage()._new_shared(numel, device=elem.device)
+                storage = elem.storage()._new_shared(numel, device=elem.device)  # type: ignore[no-untyped-call]  # torch storage internals untyped
             else:
-                storage = elem.storage()._new_shared(numel)
+                storage = elem.storage()._new_shared(numel)  # type: ignore[no-untyped-call]  # torch storage internals untyped
             shape = [len(data_list)] + list(
                 values[np.argmax([value.numel() for value in values])].shape[1:]
             )
@@ -260,8 +260,8 @@ def dense_padded_collate(
     # Create empty stores:
     out.stores_as(data_list[0])
 
-    follow_batch = set(follow_batch or [])
-    exclude_keys = set(exclude_keys or [])
+    follow_batch_set: set[str] = set(follow_batch or [])
+    exclude_keys_set: set[str] = set(exclude_keys or [])
 
     # Group all storage objects of every data object in the `data_list` by key,
     # i.e. `key_to_store_list = { key: [store_1, store_2, ...], ... }`:
@@ -281,7 +281,7 @@ def dense_padded_collate(
         key = out_store._key
         stores = key_to_stores[key]
         for attr in stores[0].keys():
-            if attr in exclude_keys:  # Do not include top-level attribute.
+            if attr in exclude_keys_set:  # Do not include top-level attribute.
                 continue
 
             values = [store[attr] for store in stores]
@@ -392,9 +392,9 @@ class DensePaddingCollater:
         elif isinstance(elem, Mapping):
             return {key: self([data[key] for data in batch]) for key in elem}
         elif isinstance(elem, tuple) and hasattr(elem, "_fields"):
-            return type(elem)(*(self(s) for s in zip(*batch)))
+            return type(elem)(*(self(list(s)) for s in zip(*batch)))
         elif isinstance(elem, Sequence) and not isinstance(elem, str):
-            return [self(s) for s in zip(*batch)]
+            return [self(list(s)) for s in zip(*batch)]
 
         raise TypeError(f"DataLoader found invalid type: '{type(elem)}'")
 
@@ -459,5 +459,9 @@ class DensePaddingDataLoader(torch.utils.data.DataLoader[Any]):
             dataset = range(len(dataset))
 
         super().__init__(
-            dataset, batch_size, shuffle, collate_fn=self.collator.collate_fn, **kwargs
+            dataset,  # type: ignore[arg-type]  # map-style range/Sequence is a valid Dataset at runtime (mirrors PyG DataLoader)
+            batch_size,
+            shuffle,
+            collate_fn=self.collator.collate_fn,
+            **kwargs,
         )

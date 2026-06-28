@@ -5,13 +5,16 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/viz/genetic_interaction_score.py
 # Test file: torchcell/viz/test_genetic_interaction_score.py
 
+from typing import Any
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from matplotlib.figure import Figure
 from scipy import stats
 
 
-def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure:
+def box_plot(true_values: Any, predictions: Any) -> Figure:  # Tensor or ndarray
     """Build a binned box-plot figure comparing predictions to true scores."""
     # Convert input to numpy arrays (convert to float32 first to handle BFloat16 from mixed precision)
     if isinstance(true_values, torch.Tensor):

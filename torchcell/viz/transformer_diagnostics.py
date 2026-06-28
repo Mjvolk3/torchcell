@@ -11,6 +11,7 @@ import os.path as osp
 import matplotlib.pyplot as plt
 import wandb
 from matplotlib import rc_params_from_file
+from matplotlib.figure import Figure
 from PIL import Image
 
 
@@ -82,7 +83,7 @@ class TransformerDiagnostics:
         ]
 
     def save_and_log_figure(
-        self, fig: plt.Figure, name: str, timestamp_str: str | None = None
+        self, fig: Figure, name: str, timestamp_str: str | None = None
     ) -> None:
         """Log figure to wandb only (no disk save).
 

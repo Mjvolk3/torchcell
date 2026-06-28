@@ -25,8 +25,7 @@ def prof_input(func: Callable[..., Any]) -> Callable[..., None]:
         with cProfile.Profile() as pr:
             func(*args, **kwargs)
         stats = pstats.Stats(pr)
-        now = datetime.datetime.now()
-        now = now.strftime("%Y.%m.%d-%H.%M.%S")
+        now = datetime.datetime.now().strftime("%Y.%m.%d-%H.%M.%S")
         file_name = f"{exp_name}-{func.__name__}-{now}.prof"
         stats.dump_stats(filename=osp.join(dir, file_name))
 
@@ -46,8 +45,7 @@ def prof(func: Callable[..., Any]) -> Callable[..., None]:
         with cProfile.Profile() as pr:
             func(*args, **kwargs)
         stats = pstats.Stats(pr)
-        now = datetime.datetime.now()
-        now = now.strftime("%Y.%m.%d-%H.%M.%S")
+        now = datetime.datetime.now().strftime("%Y.%m.%d-%H.%M.%S")
         file_name = f"experiment_name-{func.__name__}-{now}.prof"
         stats.dump_stats(filename=osp.join(dir, file_name))
 

@@ -181,11 +181,11 @@ def get_smf_bary(
     data_path = "data/preprocessed/gene_singles_fitness_bary.json"
     if osp.exists(data_path):
         with open(data_path) as f:
-            gene_singles = json.load(f)
+            gene_singles_cached: list[Any] = json.load(f)
         if to_tensor:
-            gene_singles = [val[0] for _, val in gene_singles]
-            gene_singles = torch.tensor(list(gene_singles), dtype=torch.float)
-        return gene_singles
+            gene_singles_cached = [val[0] for _, val in gene_singles_cached]
+            return torch.tensor(list(gene_singles_cached), dtype=torch.float)
+        return gene_singles_cached
     else:
         df = read_raw_data(True, False, False)["df_singles"]
         # only take full knockout alleles
@@ -195,39 +195,38 @@ def get_smf_bary(
         df_reg_allele = df[reg_allele_filter]
         names = df_reg_allele["gene"].str.split("_", expand=True)[0].to_list()
         labels = df_reg_allele["fitness_mean"].to_list()
-        label_data = [list(i) for i in zip(names, labels)]
-        label_data = {i[0]: i[1] for i in label_data}
+        label_pairs = [list(i) for i in zip(names, labels)]
+        label_data = {i[0]: i[1] for i in label_pairs}
         # read gene_essentiality_raw.json to list of lists -> raw null mutant
         # TODO call lethality.whatever
         with open("data/preprocessed/gene_essentiality_raw.json") as f:
             essential_genes = json.load(f)
-        gene_singles = get_gene_list()
-        gene_singles = {i: None for i in gene_singles}
+        gene_singles_map: dict[str, Any] = {i: None for i in get_gene_list()}
         gene_list = get_gene_list()
         problem_label = {}
         for gene in gene_list:
             if essential_genes[gene] == "viable":
                 try:
-                    gene_singles[gene] = label_data[gene]
+                    gene_singles_map[gene] = label_data[gene]
                 except KeyError:
                     print("Warning! viable without fitness label")
                     problem_label[gene] = "viable"
                     # Cannot assign any value
-                    gene_singles[gene] = -1
+                    gene_singles_map[gene] = -1
             elif essential_genes[gene] == "inviable":
                 try:
-                    gene_singles[gene] = label_data[gene]
+                    gene_singles_map[gene] = label_data[gene]
                     problem_label[gene] = "inviable with fitness label"
                 except KeyError:
-                    gene_singles[gene] = 0
+                    gene_singles_map[gene] = 0
             elif essential_genes[gene] == "unknown":
                 try:
-                    gene_singles[gene] = label_data[gene]
+                    gene_singles_map[gene] = label_data[gene]
                 except KeyError:
                     print("Warning! unknown without fitness label")
                     problem_label[gene] = "unknown without fitness label"
                     # Cannot assign any value
-                    gene_singles[gene] = -1
+                    gene_singles_map[gene] = -1
         # handling inviables
         problem_inviables = {
             k: v for k, v in problem_label.items() if v == "inviable with fitness label"
@@ -236,15 +235,17 @@ def get_smf_bary(
             gene: label_data[gene] for gene in problem_inviables.keys()
         }
         print(f"Fitness of null mutant for SGD 'inviable':\n {inviables_fitness}")
-        gene_singles = [[[k], [v]] for k, v in gene_singles.items()]
+        gene_singles_out: list[Any] = [
+            [[k], [v]] for k, v in gene_singles_map.items()
+        ]
         if write_json:
             # write gene_singles to json file in data/preprocessed
             with open(data_path, "w") as f:
-                json.dump(gene_singles, f, indent=4)
+                json.dump(gene_singles_out, f, indent=4)
         if to_tensor:
-            gene_singles = [val[0] for _, val in gene_singles]
-            gene_singles = torch.tensor(list(gene_singles), dtype=torch.float)
-        return gene_singles
+            gene_singles_out = [val[0] for _, val in gene_singles_out]
+            return torch.tensor(list(gene_singles_out), dtype=torch.float)
+        return gene_singles_out
 
 
 def get_double_fitness() -> None:
@@ -269,7 +270,7 @@ def _ext_digenic_genes(df_digenic: pd.DataFrame) -> pd.Series:
     """
     qry = df_digenic["Query Strain ID"].str.split("_", expand=True)[0]
     arr = df_digenic["Array Strain ID"].str.split("_", expand=True)[0]
-    names = pd.concat([qry, arr])
+    names: pd.Series = pd.concat([qry, arr])
     return names
 
 
@@ -289,7 +290,7 @@ def _ext_trigenic_genes(df_trigenic: pd.DataFrame) -> pd.Series:
     )
     qry = pd.concat([qry_split[0], qry_split[1]])
     arr = df_trigenic["Array strain ID"].str.split("_", expand=True)[0]
-    names = pd.concat([qry, arr])
+    names: pd.Series = pd.concat([qry, arr])
     return names
 
 

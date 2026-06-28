@@ -25,13 +25,15 @@ def main2() -> None:
     filename = "yeast_genes.pkl"
     if not os.path.isfile(filename):
         # File doesn't exist, download the gene data
-        Entrez.email = "michaeljvolk7@gmail.com"  # Always tell NCBI who you are
-        handle = Entrez.esearch(
+        # Biopython ships py.typed but types Entrez.email as None and leaves
+        # esearch/efetch/read/SeqIO.read untyped; suppress the resulting noise.
+        Entrez.email = "michaeljvolk7@gmail.com"  # type: ignore[assignment]  # Biopython stub types email as None
+        handle = Entrez.esearch(  # type: ignore[no-untyped-call]  # Biopython untyped
             db="nucleotide",
             term="S. cerevisiae[Orgn] AND gene[All Fields]",
             retmax=10000,
         )
-        record = Entrez.read(handle)
+        record = Entrez.read(handle)  # type: ignore[no-untyped-call]  # Biopython untyped
         handle.close()
 
         # ID list of genes
@@ -40,10 +42,10 @@ def main2() -> None:
         # Fetch details for each gene and save to a file
         gene_data = []
         for gene_id in idlist:
-            handle = Entrez.efetch(
+            handle = Entrez.efetch(  # type: ignore[no-untyped-call]  # Biopython untyped
                 db="nucleotide", id=gene_id, rettype="gb", retmode="text"
             )
-            record = SeqIO.read(handle, "genbank")
+            record = SeqIO.read(handle, "genbank")  # type: ignore[no-untyped-call]  # Biopython untyped
             gene_data.append(record)
             handle.close()
 

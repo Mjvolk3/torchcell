@@ -17,7 +17,8 @@ def main(sweep_file: str) -> str:
     """Load the sweep YAML file and return its ``project`` value."""
     with open(sweep_file) as file:
         sweep_config = yaml.load(file, Loader=yaml.FullLoader)
-    return sweep_config["project"]
+    project: str = sweep_config["project"]
+    return project
 
 
 if __name__ == "__main__":

@@ -26,8 +26,13 @@ import torch
 from lightning.fabric.accelerators.cuda import is_cuda_available
 from lightning.fabric.utilities.imports import _TORCH_GREATER_EQUAL_2_4
 from lightning.pytorch.profilers.profiler import Profiler
-from lightning.pytorch.utilities.exceptions import MisconfigurationException
-from lightning.pytorch.utilities.rank_zero import WarningCache, rank_zero_warn
+from lightning.pytorch.utilities.exceptions import (  # type: ignore[attr-defined]  # lightning re-export not in __all__
+    MisconfigurationException,
+)
+from lightning.pytorch.utilities.rank_zero import (  # type: ignore[attr-defined]  # lightning re-exports not in __all__
+    WarningCache,
+    rank_zero_warn,
+)
 from torch import Tensor, nn
 from torch.autograd.profiler import EventList, record_function
 from torch.profiler import ProfilerAction, ProfilerActivity, tensorboard_trace_handler
@@ -78,7 +83,7 @@ class RegisterRecordFunction:
     ) -> Tensor:
         # Add [pl][module] in name for pytorch profiler to recognize
         record = record_function("[pl][module]" + record_name)
-        record.__enter__()
+        record.__enter__()  # type: ignore[no-untyped-call]  # torch record_function untyped
         self._records[record_name] = record
         return input
 
@@ -462,15 +467,17 @@ class PyTorchProfiler(Profiler):
         if self.profiler is None:
             # close profiler if it is already opened. might happen if 2 profilers
             # are created and the first one did not call `describe`
-            if torch.autograd._profiler_enabled():
-                torch.autograd._disable_profiler()
+            if torch.autograd._profiler_enabled():  # type: ignore[attr-defined]  # torch private profiler API
+                torch.autograd._disable_profiler()  # type: ignore[attr-defined]  # torch private profiler API
 
             if self._schedule is not None:
                 self._schedule.setup(action_name)
 
             self._create_profilers()
 
-            profiler = self.profiler.__enter__()
+            # `_create_profilers()` populates `self.profiler`; mypy cannot track the
+            # cross-method mutation so it still narrows it to None here.
+            profiler = self.profiler.__enter__()  # type: ignore[attr-defined]  # set by _create_profilers; mypy can't track mutation
             if profiler is not None:
                 self.profiler = profiler
 
@@ -488,7 +495,7 @@ class PyTorchProfiler(Profiler):
         if self.profiler is not None and action_name not in self._recording_map:
             # Add [pl][profile] in name for pytorch profiler to recognize
             recording = record_function("[pl][profile]" + action_name)
-            recording.__enter__()
+            recording.__enter__()  # type: ignore[no-untyped-call]  # torch record_function untyped
             self._recording_map[action_name] = recording
 
     @override
@@ -567,9 +574,9 @@ class PyTorchProfiler(Profiler):
                 if self.dirpath is None
                 else os.path.join(self.dirpath, filename)
             )
-            self.function_events.export_chrome_trace(path_to_trace)
+            self.function_events.export_chrome_trace(path_to_trace)  # type: ignore[no-untyped-call]  # torch EventList untyped
 
-        data = self.function_events.key_averages(
+        data = self.function_events.key_averages(  # type: ignore[no-untyped-call]  # torch EventList untyped
             group_by_input_shapes=self._group_by_input_shapes
         )
         table = data.table(
@@ -608,14 +615,14 @@ class PyTorchProfiler(Profiler):
 
         if _KINETO_AVAILABLE:
             assert isinstance(self.profiler, torch.profiler.profile)
-            self.function_events = self.profiler.events()
+            self.function_events = self.profiler.events()  # type: ignore[no-untyped-call]  # torch profiler.events untyped
         else:
             assert isinstance(self.profiler, torch.autograd.profiler.profile)
             self.function_events = self.profiler.function_events
 
     def _delete_profilers(self) -> None:
         if self.profiler is not None:
-            self.profiler.__exit__(None, None, None)
+            self.profiler.__exit__(None, None, None)  # type: ignore[no-untyped-call]  # torch profiler __exit__ untyped
             self._cache_functions_events()
             self.profiler = None
 

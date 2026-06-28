@@ -19,7 +19,8 @@ class VisGraphDegen:
         N = X.shape[0]
         mean_features = X.mean(dim=0)
         diff = X - mean_features.expand(N, -1)
-        return torch.norm(diff, p="fro")
+        result: torch.Tensor = torch.norm(diff, p="fro")
+        return result
 
     @staticmethod
     def local_bottleneck_score(

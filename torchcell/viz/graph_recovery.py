@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import wandb
 from matplotlib import rc_params_from_file
+from matplotlib.figure import Figure
 from PIL import Image
 
 
@@ -77,7 +78,7 @@ class GraphRecoveryVisualization:
         ]
 
     def save_and_log_figure(
-        self, fig: plt.Figure, name: str, timestamp_str: str | None = None
+        self, fig: Figure, name: str, timestamp_str: str | None = None
     ) -> None:
         """Log figure to wandb only (no disk save).
 
@@ -187,7 +188,7 @@ class GraphRecoveryVisualization:
 
             # Handle reg_layer: can be int, list[int], or missing
             if "reg_layer" in info:
-                reg_layer_val = info.get("reg_layer")
+                reg_layer_val = info["reg_layer"]
                 if isinstance(reg_layer_val, list):
                     reg_layer_str = str(reg_layer_val)
                 else:
@@ -197,7 +198,7 @@ class GraphRecoveryVisualization:
 
             # Handle reg_head: can be int or missing
             if "reg_head" in info:
-                reg_head_str = str(int(info.get("reg_head")))
+                reg_head_str = str(int(info["reg_head"]))
             else:
                 reg_head_str = "N/A"
 
@@ -224,7 +225,7 @@ class GraphRecoveryVisualization:
             ],
             cellLoc="center",
             loc="center",
-            bbox=[0, 0, 1, 1],
+            bbox=[0, 0, 1, 1],  # type: ignore[arg-type]  # mpl accepts [x,y,w,h] list; stub types bbox as Bbox|None
         )
         table.auto_set_font_size(False)
         table.set_fontsize(10)

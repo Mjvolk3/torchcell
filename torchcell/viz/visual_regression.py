@@ -10,6 +10,7 @@ import seaborn as sns
 import torch
 import umap
 import wandb
+from matplotlib.figure import Figure
 from PIL import Image
 from scipy import stats
 
@@ -22,11 +23,11 @@ class Visualization:
         self.base_dir = base_dir
         self.artifact_dir = osp.join(base_dir, "figures")
         os.makedirs(self.artifact_dir, exist_ok=True)
-        self.artifact = None
+        self.artifact: wandb.Artifact | None = None
         self.max_points = max_points
 
     def save_and_log_figure(
-        self, fig: plt.Figure, name: str, timestamp_str: str | None
+        self, fig: Figure, name: str, timestamp_str: str | None
     ) -> None:
         """Save the figure to a buffer and log it to W&B under the given name."""
         buf = io.BytesIO()

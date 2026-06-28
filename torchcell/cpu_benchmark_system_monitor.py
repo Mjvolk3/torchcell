@@ -15,6 +15,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import psutil
+from matplotlib.axes import Axes
+from matplotlib.ticker import MultipleLocator
 
 
 @dataclass
@@ -386,7 +388,7 @@ class SystemMonitor:
                 rpm_labels.append(f"{group_name}: {fan}")
 
         # Add completion markers
-        cumulative_time = 0
+        cumulative_time: float = 0
         for i, completion_time in enumerate(self.benchmark_times, 1):
             cumulative_time += completion_time
             for ax in [ax1, ax2]:
@@ -448,8 +450,8 @@ class SystemMonitor:
                 major_tick = 5
                 minor_tick = 1
 
-            ax1.yaxis.set_major_locator(plt.MultipleLocator(major_tick))
-            ax1.yaxis.set_minor_locator(plt.MultipleLocator(minor_tick))
+            ax1.yaxis.set_major_locator(MultipleLocator(major_tick))
+            ax1.yaxis.set_minor_locator(MultipleLocator(minor_tick))
             ax1.grid(True, which="major", alpha=0.5)
             ax1.grid(True, which="minor", alpha=0.2)
 
@@ -457,8 +459,8 @@ class SystemMonitor:
 
         # Adjust fan speed axis for better readability
         if len(rpm_handles) > 0:
-            ax2.yaxis.set_major_locator(plt.MultipleLocator(100))
-            ax2.yaxis.set_minor_locator(plt.MultipleLocator(50))
+            ax2.yaxis.set_major_locator(MultipleLocator(100))
+            ax2.yaxis.set_minor_locator(MultipleLocator(50))
             ax2.grid(True, which="major", alpha=0.5)
             ax2.grid(True, which="minor", alpha=0.2)
 
@@ -479,7 +481,7 @@ class SystemMonitor:
 
     def _plot_data_series(
         self,
-        ax: plt.Axes,
+        ax: Axes,
         df: pd.DataFrame,
         groups: dict[str, list[str]],
         colors: dict[str, str],
@@ -525,7 +527,7 @@ class SystemMonitor:
 
         ax.legend(bbox_to_anchor=(1.15, 1), loc="upper left", title=legend_title)
 
-    def _add_completion_marker(self, ax: plt.Axes, completion_time: float) -> None:
+    def _add_completion_marker(self, ax: Axes, completion_time: float) -> None:
         """Add completion marker to plot."""
         ax.axvline(x=completion_time, color="r", linestyle="--", alpha=0.3)
         ax.text(

@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
     genome = SCerevisiaeGenome(
         data_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome")
-    )  # type: ignore[call-arg]  # data_root is a valid Genome param; attrs hides it from mypy
+    )  # type: ignore[call-arg]  # latent bug: data_root is not a valid kwarg (genome_root/sgd_root); see #12
 
     genome = SCerevisiaeGenome()
     dataset = OneHotGeneDataset(

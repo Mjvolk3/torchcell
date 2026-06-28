@@ -640,7 +640,7 @@ class CalMorphPhenotype(Phenotype, ModelStrict):
                 raise ValueError(f"CV measurement {key} cannot be NaN")
         return v
 
-    @model_validator(mode="after")
+    @model_validator(mode="after")  # type: ignore[arg-type]  # legacy pydantic (cls, values) after-validator; runtime-supported, plugin types as modern form
     def validate_label_fields(cls, values: "CalMorphPhenotype") -> "CalMorphPhenotype":
         """Validate that label_name and label_statistic_name are class attributes."""
         if values.label_name not in cls.__annotations__:
@@ -938,7 +938,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         return v
 
     @field_validator("n_replicates", mode="before")
-    def convert_and_validate_n_replicates(cls, v):
+    def convert_and_validate_n_replicates(cls, v: Any) -> Any:  # raw pre-validation input
         """Coerce n_replicates to a SortedDict and require positive-integer counts."""
         if v is None:
             raise ValueError(

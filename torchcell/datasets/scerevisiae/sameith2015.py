@@ -12,6 +12,7 @@ import re
 import urllib.request
 from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor
+from typing import Any, cast
 
 import GEOparse
 import lmdb
@@ -26,6 +27,7 @@ from torchcell.datamodels.schema import (
     Environment,
     Experiment,
     ExperimentReference,
+    GenePerturbationType,
     Genotype,
     Media,
     MicroarrayExpressionExperiment,
@@ -109,9 +111,9 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         process_workers: int = 0,
         batch_size: int = 10,
         genome: SCerevisiaeGenome | None = None,  # Optional dependency injection
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-        **kwargs,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
     ):
         """Initialize the dataset, optionally injecting a genome for gene mapping."""
         self.process_workers = process_workers
@@ -138,7 +140,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         """Raw GEO SOFT family file required before processing."""
         return [f"{self.geo_accession}_family.soft.gz"]
 
-    def download(self):
+    def download(self) -> None:
         """Download single mutant microarray expression data from GEO."""
         log.info(f"Downloading GEO dataset {self.geo_accession}...")
 
@@ -170,7 +172,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
             log.error(f"Failed to download supplementary file: {e}")
             raise RuntimeError("Failed to download supplementary data")
 
-    def _load_authoritative_single_mutants(self):
+    def _load_authoritative_single_mutants(self) -> dict[str, dict[str, Any]]:
         """Load authoritative single mutants from supplementary Excel file."""
         suppl_path = osp.join(self.raw_dir, "12915_2015_222_MOESM1_ESM.xlsx")
         df = pd.read_excel(suppl_path, sheet_name="Single mutants - info")
@@ -178,7 +180,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
         log.info(f"Loaded {len(valid_df)} single mutants from supplementary file")
 
-        single_mutants = {}
+        single_mutants: dict[str, dict[str, Any]] = {}
         for _, row in valid_df.iterrows():
             systematic_name = row["systematic name"].strip().upper()
             single_mutants[systematic_name] = {
@@ -190,7 +192,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         return single_mutants
 
     @post_process
-    def process(self):
+    def process(self) -> None:
         """Parse GEO expression data into single-mutant experiments and write LMDB."""
         # Initialize resolution statistics
         self.resolved_by_excel = 0
@@ -220,7 +222,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
         # Parse samples and extract metadata
         samples_data = []
-        single_mutant_samples = {}  # Group by gene name
+        single_mutant_samples: dict[str, list[Any]] = {}  # Group by gene name
         wt_samples = []
 
         for gsm_name, gsm in gse.gsms.items():
@@ -292,7 +294,9 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
         log.info(f"Processed {len(single_mutant_groups)} single mutant experiments")
 
-    def _group_single_mutant_replicates(self, single_mutant_samples):
+    def _group_single_mutant_replicates(
+        self, single_mutant_samples: dict[str, list[Any]]
+    ) -> list[Any]:
         """Group technical replicates by gene using authoritative single mutant list.
 
         Args:
@@ -319,7 +323,9 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
         return groups
 
-    def _process_sequential(self, single_mutant_groups, probe_to_gene_map):
+    def _process_sequential(
+        self, single_mutant_groups: list[Any], probe_to_gene_map: dict[str, str]
+    ) -> None:
         """Process single mutant replicate groups sequentially."""
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(5e12))
 
@@ -394,7 +400,9 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         env.close()
         log.info(f"Wrote {idx} single mutant experiments to LMDB")
 
-    def _calculate_replicate_statistics(self, data_list):
+    def _calculate_replicate_statistics(
+        self, data_list: list[Any]
+    ) -> tuple[SortedDict, SortedDict, SortedDict, SortedDict]:
         """Calculate statistics across biological/technical replicates.
 
         Args:
@@ -411,7 +419,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
             return SortedDict(), SortedDict(), SortedDict(), SortedDict()
 
         # Collect all values per gene across replicates
-        all_values = {}
+        all_values: dict[str, list[float]] = {}
         for data_dict in data_list:
             for gene, value in data_dict.items():
                 if gene not in all_values:
@@ -492,31 +500,33 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         if re.match(r"Y[A-P][LR]\d{3}[WC](-[A-Z])?", gene_upper):
             return gene_upper
 
+        genome = cast(SCerevisiaeGenome, self.genome)
+
         # Try genome's gene_attribute_table
-        if hasattr(self.genome, "gene_attribute_table"):
-            df = self.genome.gene_attribute_table
+        if hasattr(genome, "gene_attribute_table"):
+            df = genome.gene_attribute_table
 
             # Check gene column
             matches = df[df["gene"] == gene_upper]
             if not matches.empty:
-                return matches.iloc[0]["ID"]
+                return cast(str, matches.iloc[0]["ID"])
 
             # Check Alias column
             matches = df[df["Alias"] == gene_upper]
             if not matches.empty:
-                return matches.iloc[0]["ID"]
+                return cast(str, matches.iloc[0]["ID"])
 
         # Try alias_to_systematic
-        if hasattr(self.genome, "alias_to_systematic"):
-            candidates = self.genome.alias_to_systematic.get(gene_upper, [])
+        if hasattr(genome, "alias_to_systematic"):
+            candidates = genome.alias_to_systematic.get(gene_upper, [])
             if candidates:
                 return candidates[0]  # Return first match
 
         return None
 
-    def _extract_probe_to_gene_mapping(self, gse) -> dict:
+    def _extract_probe_to_gene_mapping(self, gse: Any) -> dict[str, str]:
         """Extract probe ID to gene name mapping from GEO platform annotation."""
-        probe_to_gene = {}
+        probe_to_gene: dict[str, str] = {}
 
         if not hasattr(gse, "gpls") or not gse.gpls:
             log.warning("No platform annotation found in GEO dataset")
@@ -582,7 +592,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         return probe_to_gene
 
     def _extract_expression_from_gsm(
-        self, gsm, probe_to_gene_map=None
+        self, gsm: Any, probe_to_gene_map: dict[str, str] | None = None
     ) -> tuple[SortedDict, SortedDict, SortedDict]:
         """Extract expression values and log2 ratios from a GSM object.
 
@@ -670,7 +680,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         return mutant_data, refpool_data, log2_ratio_data
 
     def _calculate_wt_reference_with_std(
-        self, wt_gsm_list, probe_to_gene_map
+        self, wt_gsm_list: list[Any], probe_to_gene_map: dict[str, str]
     ) -> tuple[SortedDict, SortedDict]:
         """Calculate average wildtype expression values and std from GSM objects."""
         if len(wt_gsm_list) == 0:
@@ -680,7 +690,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         log.info(f"Calculating reference from {len(wt_gsm_list)} wildtype samples")
 
         # Collect all expression values per gene
-        all_expressions = {}
+        all_expressions: dict[str, list[float]] = {}
 
         for gsm in wt_gsm_list:
             mutant_data, refpool_data, log2_ratio_data = (
@@ -705,26 +715,26 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         return wt_mean_expression, wt_std_expression
 
     def preprocess_raw(
-        self, df: pd.DataFrame, preprocess: dict | None = None
+        self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
     ) -> pd.DataFrame:
         """Preprocess raw data - for Sameith this is handled in process()."""
         return df
 
-    def create_experiment(self):
+    def create_experiment(self) -> None:
         """Required by base class but not used."""
         pass
 
     @staticmethod
     def create_single_mutant_expression_experiment(
-        dataset_name,
-        sample_info,
-        mutant_data,
-        refpool_data,
-        log2_ratio_data,
-        log2_ratio_se=None,
-        log2_ratio_variance=None,
-        n_replicates=None,
-    ):
+        dataset_name: str,
+        sample_info: dict[str, Any],
+        mutant_data: SortedDict,
+        refpool_data: SortedDict,
+        log2_ratio_data: SortedDict,
+        log2_ratio_se: SortedDict | None = None,
+        log2_ratio_variance: SortedDict | None = None,
+        n_replicates: SortedDict | None = None,
+    ) -> tuple[Any, Any, Any]:
         """Create experiment for single deletion mutant.
 
         Args:
@@ -745,7 +755,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
         # Create genotype for single deletion mutant
         gene_names = sample_info["gene_names"]
-        perturbations = []
+        perturbations: list[GenePerturbationType] = []
 
         # Single deletion (KanMX marker from deletion library)
         if len(gene_names) > 0:
@@ -774,7 +784,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
             expression_log2_ratio=log2_ratios,
             expression_log2_ratio_se=log2_ratio_se,
             expression_log2_ratio_variance=log2_ratio_variance,
-            n_replicates=n_replicates,
+            n_replicates=cast("dict[str, int]", n_replicates),
         )
 
         # Create reference phenotype from reference pool
@@ -845,9 +855,9 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         process_workers: int = 0,
         batch_size: int = 10,
         genome: SCerevisiaeGenome | None = None,  # Optional dependency injection
-        transform: Callable | None = None,
-        pre_transform: Callable | None = None,
-        **kwargs,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
     ):
         """Initialize the dataset, optionally injecting a genome for gene mapping."""
         self.process_workers = process_workers
@@ -874,7 +884,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         """Raw GEO SOFT family file required before processing."""
         return [f"{self.geo_accession}_family.soft.gz"]
 
-    def download(self):
+    def download(self) -> None:
         """Download double mutant microarray expression data from GEO and supplementary data."""
         log.info(f"Downloading GEO dataset {self.geo_accession}...")
 
@@ -908,7 +918,9 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
             log.error(f"Failed to download supplementary file: {e}")
             raise RuntimeError("Failed to download supplementary data")
 
-    def _load_authoritative_gstf_pairs(self):
+    def _load_authoritative_gstf_pairs(
+        self,
+    ) -> dict[tuple[str, str], dict[str, Any]]:
         """Load authoritative GSTF pairs WITH PER-SAMPLE STRAIN from supplementary Excel file.
 
         Returns:
@@ -927,7 +939,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         )
 
         # Create a dictionary of genotype pairs
-        gstf_pairs = {}
+        gstf_pairs: dict[tuple[str, str], dict[str, Any]] = {}
         strain_counts = {"BY4742": 0, "BY4741": 0}
 
         for _, row in passed_df.iterrows():
@@ -968,7 +980,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         return gstf_pairs
 
     @post_process
-    def process(self):
+    def process(self) -> None:
         """Parse GEO expression data into double-mutant experiments and write LMDB."""
         # Initialize resolution statistics
         self.resolved_by_excel = 0
@@ -998,8 +1010,8 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
         # Parse samples and extract metadata
         samples_data = []
-        single_mutant_samples = {}  # Group by gene name
-        double_mutant_samples = []  # List of double mutant sample infos
+        single_mutant_samples: dict[str, list[Any]] = {}  # Group by gene name
+        double_mutant_samples: list[Any] = []  # List of double mutant sample infos
         wt_samples = []
 
         for gsm_name, gsm in gse.gsms.items():
@@ -1086,13 +1098,15 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
         log.info(f"Processed {len(double_mutant_samples)} double mutant experiments")
 
-    def _group_technical_replicates(self, double_mutant_samples):
+    def _group_technical_replicates(
+        self, double_mutant_samples: list[Any]
+    ) -> list[Any]:
         """Group technical replicates by genotype using authoritative GSTF pairs.
 
         Matches GEO samples to authoritative GSTF pairs from supplementary file.
         Samples with the same pair of deleted genes are technical replicates.
         """
-        groups = {}
+        groups: dict[Any, list[Any]] = {}
         matched_count = 0
         unmatched_count = 0
 
@@ -1130,7 +1144,9 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
         return list(groups.values())
 
-    def _process_sequential(self, double_mutant_groups, probe_to_gene_map):
+    def _process_sequential(
+        self, double_mutant_groups: list[Any], probe_to_gene_map: dict[str, str]
+    ) -> None:
         """Process double mutant replicate groups sequentially."""
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(5e12))
 
@@ -1213,7 +1229,9 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         env.close()
         log.info(f"Wrote {idx} double mutant experiments to LMDB")
 
-    def _calculate_replicate_statistics(self, data_list):
+    def _calculate_replicate_statistics(
+        self, data_list: list[Any]
+    ) -> tuple[SortedDict, SortedDict, SortedDict, SortedDict]:
         """Calculate statistics across biological/technical replicates.
 
         Args:
@@ -1230,7 +1248,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
             return SortedDict(), SortedDict(), SortedDict(), SortedDict()
 
         # Collect all values per gene across replicates
-        all_values = {}
+        all_values: dict[str, list[float]] = {}
         for data_dict in data_list:
             for gene, value in data_dict.items():
                 if gene not in all_values:
@@ -1258,7 +1276,9 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
         return mean_dict, se_dict, variance_dict, n_replicates_dict
 
-    def _process_parallel(self, double_mutant_groups, probe_to_gene_map):
+    def _process_parallel(
+        self, double_mutant_groups: list[Any], probe_to_gene_map: dict[str, str]
+    ) -> None:
         """Process double mutant replicate groups in parallel."""
         # Create batches
         batches = []
@@ -1302,11 +1322,11 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
     @staticmethod
     def _process_batch(
-        batch_items,
-        probe_to_gene_map,
-        dataset_name,
-        gstf_pairs,  # NEW: Pass gstf_pairs for strain extraction
-    ):
+        batch_items: list[Any],
+        probe_to_gene_map: dict[str, str],
+        dataset_name: str,
+        gstf_pairs: dict[tuple[str, str], dict[str, Any]],  # NEW: strain extraction
+    ) -> list[bytes]:
         """Process a batch of replicate groups. Static method for multiprocessing."""
         results = []
 
@@ -1391,13 +1411,15 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         return results
 
     @staticmethod
-    def _calculate_replicate_statistics_static(data_list):
+    def _calculate_replicate_statistics_static(
+        data_list: list[Any],
+    ) -> tuple[SortedDict, SortedDict, SortedDict, SortedDict]:
         """Static version of _calculate_replicate_statistics for multiprocessing."""
         if not data_list:
             return SortedDict(), SortedDict(), SortedDict(), SortedDict()
 
         # Collect all values per gene across replicates
-        all_values = {}
+        all_values: dict[str, list[float]] = {}
         for data_dict in data_list:
             for gene, value in data_dict.items():
                 if gene not in all_values:
@@ -1487,31 +1509,33 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         if re.match(r"Y[A-P][LR]\d{3}[WC](-[A-Z])?", gene_upper):
             return gene_upper
 
+        genome = cast(SCerevisiaeGenome, self.genome)
+
         # Try genome's gene_attribute_table
-        if hasattr(self.genome, "gene_attribute_table"):
-            df = self.genome.gene_attribute_table
+        if hasattr(genome, "gene_attribute_table"):
+            df = genome.gene_attribute_table
 
             # Check gene column
             matches = df[df["gene"] == gene_upper]
             if not matches.empty:
-                return matches.iloc[0]["ID"]
+                return cast(str, matches.iloc[0]["ID"])
 
             # Check Alias column
             matches = df[df["Alias"] == gene_upper]
             if not matches.empty:
-                return matches.iloc[0]["ID"]
+                return cast(str, matches.iloc[0]["ID"])
 
         # Try alias_to_systematic
-        if hasattr(self.genome, "alias_to_systematic"):
-            candidates = self.genome.alias_to_systematic.get(gene_upper, [])
+        if hasattr(genome, "alias_to_systematic"):
+            candidates = genome.alias_to_systematic.get(gene_upper, [])
             if candidates:
                 return candidates[0]  # Return first match
 
         return None
 
-    def _extract_probe_to_gene_mapping(self, gse) -> dict:
+    def _extract_probe_to_gene_mapping(self, gse: Any) -> dict[str, str]:
         """Extract probe ID to gene name mapping from GEO platform annotation."""
-        probe_to_gene = {}
+        probe_to_gene: dict[str, str] = {}
 
         if not hasattr(gse, "gpls") or not gse.gpls:
             log.warning("No platform annotation found in GEO dataset")
@@ -1577,7 +1601,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         return probe_to_gene
 
     def _extract_expression_from_gsm(
-        self, gsm, probe_to_gene_map=None
+        self, gsm: Any, probe_to_gene_map: dict[str, str] | None = None
     ) -> tuple[SortedDict, SortedDict, SortedDict]:
         """Extract expression values and log2 ratios from a GSM object.
 
@@ -1666,7 +1690,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
     @staticmethod
     def _extract_expression_from_gsm_static(
-        gsm, probe_to_gene_map=None
+        gsm: Any, probe_to_gene_map: dict[str, str] | None = None
     ) -> tuple[SortedDict, SortedDict, SortedDict]:
         """Static version of _extract_expression_from_gsm for multiprocessing.
 
@@ -1736,7 +1760,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         return mutant_data, refpool_data, log2_ratio_data
 
     def _calculate_wt_reference_with_std(
-        self, wt_gsm_list, probe_to_gene_map
+        self, wt_gsm_list: list[Any], probe_to_gene_map: dict[str, str]
     ) -> tuple[SortedDict, SortedDict]:
         """Calculate average wildtype expression values and std from GSM objects."""
         if len(wt_gsm_list) == 0:
@@ -1746,7 +1770,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         log.info(f"Calculating reference from {len(wt_gsm_list)} wildtype samples")
 
         # Collect all expression values per gene
-        all_expressions = {}
+        all_expressions: dict[str, list[float]] = {}
 
         for gsm in wt_gsm_list:
             mutant_data, refpool_data, log2_ratio_data = (
@@ -1771,27 +1795,27 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         return wt_mean_expression, wt_std_expression
 
     def preprocess_raw(
-        self, df: pd.DataFrame, preprocess: dict | None = None
+        self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
     ) -> pd.DataFrame:
         """Preprocess raw data - for Sameith this is handled in process()."""
         return df
 
-    def create_experiment(self):
+    def create_experiment(self) -> None:
         """Required by base class but not used."""
         pass
 
     @staticmethod
     def create_double_mutant_expression_experiment(
-        dataset_name,
-        sample_info,
-        mutant_data,
-        refpool_data,
-        log2_ratio_data,
-        log2_ratio_se=None,
-        log2_ratio_variance=None,
-        n_replicates=None,
-        strain="BY4742",  # NEW: Accept per-sample strain parameter
-    ):
+        dataset_name: str,
+        sample_info: dict[str, Any],
+        mutant_data: SortedDict,
+        refpool_data: SortedDict,
+        log2_ratio_data: SortedDict,
+        log2_ratio_se: SortedDict | None = None,
+        log2_ratio_variance: SortedDict | None = None,
+        n_replicates: SortedDict | None = None,
+        strain: str = "BY4742",  # NEW: Accept per-sample strain parameter
+    ) -> tuple[Any, Any, Any]:
         """Create experiment for double deletion mutant with PER-SAMPLE strain.
 
         Args:
@@ -1813,7 +1837,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
         # Create genotype for double deletion mutant
         gene_names = sample_info["gene_names"]
-        perturbations = []
+        perturbations: list[GenePerturbationType] = []
 
         # First deletion (KanMX marker)
         if len(gene_names) > 0:
@@ -1852,7 +1876,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
             expression_log2_ratio=log2_ratios,
             expression_log2_ratio_se=log2_ratio_se,
             expression_log2_ratio_variance=log2_ratio_variance,
-            n_replicates=n_replicates,
+            n_replicates=cast("dict[str, int]", n_replicates),
         )
 
         # Create reference phenotype from reference pool
@@ -1899,15 +1923,15 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         return experiment, reference, publication
 
 
-def main():
+def main() -> None:
     """Demonstrate both Sameith2015 datasets (single and double mutants)."""
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     # Initialize genome for gene name mapping
     genome = SCerevisiaeGenome(
-        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
-        go_root=osp.join(DATA_ROOT, "data/go"),
+        genome_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"),
+        go_root=osp.join(cast(str, DATA_ROOT), "data/go"),
         overwrite=True,
     )
 
@@ -1921,7 +1945,7 @@ def main():
     print("=" * 80)
 
     dm_dataset = DmMicroarraySameith2015Dataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/dm_microarray_sameith2015"),
+        root=osp.join(cast(str, DATA_ROOT), "data/torchcell/dm_microarray_sameith2015"),
         genome=genome,
         io_workers=10,
         process_workers=0,  # Use sequential for demo
@@ -1960,7 +1984,7 @@ def main():
     print("=" * 80)
 
     sm_dataset = SmMicroarraySameith2015Dataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/sm_microarray_sameith2015"),
+        root=osp.join(cast(str, DATA_ROOT), "data/torchcell/sm_microarray_sameith2015"),
         genome=genome,
         io_workers=10,
         process_workers=0,  # Use sequential for demo

@@ -200,13 +200,13 @@ def main() -> None:
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     DATA_ROOT = os.getenv("DATA_ROOT")
-    genome = SCerevisiaeGenome(  # type: ignore[call-arg]  # data_root is a valid param; attrs/class hides it from mypy
+    genome = SCerevisiaeGenome(  # type: ignore[call-arg]  # latent bug: data_root is not a valid kwarg (genome_root/sgd_root); see #12
         data_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome")
     )
     genome.drop_chrmt()
     genome.drop_empty_go()
 
-    graph = SCerevisiaeGraph(  # type: ignore[call-arg]  # data_root is a valid param; attrs/class hides it from mypy
+    graph = SCerevisiaeGraph(  # type: ignore[call-arg]  # latent bug: data_root is not a valid kwarg (genome_root/sgd_root); see #12
         data_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"), genome=genome
     )
 

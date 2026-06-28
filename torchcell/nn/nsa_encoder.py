@@ -30,7 +30,7 @@ class NSAEncoder(nn.Module):
         self,
         input_dim: int,
         hidden_dim: int,
-        pattern: list[Literal["M"] | Literal["S"]] = None,
+        pattern: list[Literal["M", "S"]] | None = None,
         num_heads: int = 8,
         dropout: float = 0.1,
         activation: nn.Module = nn.GELU(),
@@ -107,16 +107,17 @@ class NSAEncoder(nn.Module):
         edge_attr_dict = None
         if edge_attr is not None:
             edge_attr_dict = {}
+            edge_index_opt: torch.Tensor | None
             if isinstance(data_or_edge_index, torch.Tensor):
-                edge_index = data_or_edge_index
+                edge_index_opt = data_or_edge_index
             elif hasattr(data_or_edge_index, "edge_index"):
-                edge_index = data_or_edge_index.edge_index
+                edge_index_opt = data_or_edge_index.edge_index
             else:
-                edge_index = None
-            if edge_index is not None:
-                for i in range(edge_index.size(1)):
-                    src = edge_index[0, i].item()
-                    dst = edge_index[1, i].item()
+                edge_index_opt = None
+            if edge_index_opt is not None:
+                for i in range(edge_index_opt.size(1)):
+                    src = edge_index_opt[0, i].item()
+                    dst = edge_index_opt[1, i].item()
                     attr_val = (
                         edge_attr[i].item()
                         if edge_attr.dim() == 1

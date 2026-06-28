@@ -7,10 +7,12 @@
 """Device-adaptive self-attention block used across torchcell models."""
 
 import math
+from typing import cast
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch import Tensor
 
 
 class SelfAttentionBlock(nn.Module):
@@ -105,7 +107,7 @@ class SelfAttentionBlock(nn.Module):
             from torch.nn.attention.flex_attention import flex_attention
 
             # Use FlexAttention on GPU
-            attn_output = flex_attention(q, k, v)
+            attn_output = cast(Tensor, flex_attention(q, k, v))
         else:
             # Standard attention implementation for CPU
             # Compute attention scores
@@ -146,4 +148,4 @@ class SelfAttentionBlock(nn.Module):
         # Second residual connection
         output = residual + mlp_output
 
-        return output
+        return cast(Tensor, output)

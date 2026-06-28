@@ -1,5 +1,7 @@
 """Graph node-set attention encoder using FlexAttention with adjacency masking."""
 
+from typing import cast
+
 import torch
 import torch.nn as nn
 from scipy.sparse import csr_matrix
@@ -47,8 +49,11 @@ class MAB(AttentionBlock):
             f"Initializing MAB with dims: hidden={hidden_dim}, heads={num_heads}, head_dim={self.head_dim}"
         )
 
-    def forward(self, x: Tensor, adj_matrix: Tensor) -> Tensor:
+    def forward(self, x: Tensor, adj_matrix: Tensor | None = None) -> Tensor:
         """Apply adjacency-masked multi-head attention plus the residual MLP."""
+        # MAB always receives a real adjacency matrix at runtime; the optional
+        # default exists only to match the base AttentionBlock.forward signature.
+        adj_matrix = cast(Tensor, adj_matrix)
         device = x.device
         print(
             f"MAB.forward - Input on device: {device}, x shape: {x.shape}, adj shape: {adj_matrix.shape}"
@@ -83,7 +88,7 @@ class MAB(AttentionBlock):
                 device=device,
             )
 
-            attn_output = flex_attention(q, k, v, block_mask=block_mask)
+            attn_output = cast(Tensor, flex_attention(q, k, v, block_mask=block_mask))
         else:
             print("  Using CPU manual masked attention")
             # Manual implementation for CPU
@@ -120,7 +125,7 @@ class MAB(AttentionBlock):
         output = x + mlp_output
 
         print(f"  MAB output shape: {output.shape}")
-        return output
+        return cast(Tensor, output)
 
 
 class SAB(AttentionBlock):
@@ -152,7 +157,7 @@ class SAB(AttentionBlock):
         if device.type == "cuda":
             print("  Using CUDA FlexAttention with no masking")
             # Just use regular attention with no masking
-            attn_output = flex_attention(q, k, v)
+            attn_output = cast(Tensor, flex_attention(q, k, v))
         else:
             print("  Using CPU manual self-attention (no masking)")
             # Manual implementation for CPU
@@ -177,7 +182,7 @@ class SAB(AttentionBlock):
         output = x + mlp_output
 
         print(f"  SAB output shape: {output.shape}")
-        return output
+        return cast(Tensor, output)
 
 
 class NSAEncoder(nn.Module):
@@ -291,7 +296,7 @@ class NSAEncoder(nn.Module):
 
         # Return the node embeddings
         print(f"\nFinal output shape: {h.shape}")
-        return h
+        return cast(Tensor, h)
 
 
 def test_nsa_implementation(data: Data, reordered_adj: Tensor) -> Tensor:
@@ -342,7 +347,7 @@ def test_nsa_implementation(data: Data, reordered_adj: Tensor) -> Tensor:
     print(f"Input shape: {data.x.shape}")
     print(f"Output shape: {output.shape}")
 
-    return output
+    return cast(Tensor, output)
 
 
 def main() -> None:

@@ -31,6 +31,8 @@
 
 ###
 
+from typing import cast
+
 import torch
 from torch import Tensor
 from torch.nn.attention.flex_attention import flex_attention
@@ -64,5 +66,5 @@ K = torch.randn(batch_size, num_heads, seq_len, head_dim)
 V = torch.randn(batch_size, num_heads, seq_len, head_dim)
 
 # Compute attention using FlexAttention with causal masking.
-output = flex_attention(Q, K, V, score_mod=causal_mask_score_mod)
+output = cast(Tensor, flex_attention(Q, K, V, score_mod=causal_mask_score_mod))
 print("Masked output shape:", output.shape)

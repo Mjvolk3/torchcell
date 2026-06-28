@@ -17,7 +17,7 @@ from torch_geometric.nn.conv import GINConv
 from torch_geometric.typing import Adj, OptPairTensor, OptTensor, Size
 
 
-class MaskedGINConv(GINConv):
+class MaskedGINConv(GINConv):  # type: ignore[misc]  # GINConv is untyped (Any) in PyG stubs
     """Graph Isomorphism Network with masked message passing.
 
     **Key Innovation**: Masks messages, NOT edges. This avoids expensive
@@ -99,7 +99,7 @@ class MaskedGINConv(GINConv):
         if x_r is not None:
             out = out + (1 + self.eps) * x_r
 
-        return self.nn(out)
+        return self.nn(out)  # type: ignore[no-any-return]  # PyG nn module is untyped (Any)
 
     def message(self, x_j: Tensor, edge_mask: OptTensor = None) -> Tensor:
         """Compute messages with optional masking.

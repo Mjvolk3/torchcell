@@ -6,7 +6,7 @@
 
 """Stoichiometry-aware hypergraph convolution layer for metabolic networks."""
 
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 import torch
 import torch.nn.functional as F
@@ -19,7 +19,7 @@ from torch_geometric.nn.inits import glorot, zeros
 from torch_geometric.utils import scatter, softmax
 
 
-class StoichHypergraphConv(MessagePassing):
+class StoichHypergraphConv(MessagePassing):  # type: ignore[misc]  # MessagePassing is untyped (Any) in PyG stubs
     """Hypergraph convolution with optional stoichiometric gating and attention."""
 
     def __init__(
@@ -90,7 +90,7 @@ class StoichHypergraphConv(MessagePassing):
         if self.bias is not None:
             zeros(self.bias)
 
-    @disable_dynamic_shapes(required_args=["num_edges"])
+    @disable_dynamic_shapes(required_args=["num_edges"])  # type: ignore[untyped-decorator]  # PyG decorator is untyped (Any)
     def forward(
         self,
         x: Tensor,
@@ -175,7 +175,7 @@ class StoichHypergraphConv(MessagePassing):
         if self.bias is not None:
             out = out + self.bias
 
-        return out
+        return cast(Tensor, out)
 
     def message(
         self,

@@ -6,6 +6,7 @@
 """Masked attention blocks using FlexAttention with adjacency and edge masks."""
 
 import math
+from typing import cast
 
 import torch
 import torch.nn as nn
@@ -115,7 +116,7 @@ class MaskedAttentionBlock(nn.Module):
                     )
 
                 # Use flex_attention with score_mod only
-                attn_output = flex_attention(q, k, v, score_mod=score_mod)
+                attn_output = cast(Tensor, flex_attention(q, k, v, score_mod=score_mod))
             except Exception:
                 if (
                     hasattr(self, "in_simulated_error_test")
@@ -185,7 +186,7 @@ class MaskedAttentionBlock(nn.Module):
         mlp_output = self.mlp(normed_x)
         output = residual + mlp_output
 
-        return output
+        return cast(Tensor, output)
 
 
 class NodeSelfAttention(nn.Module):
@@ -294,8 +295,10 @@ class NodeSelfAttention(nn.Module):
                         edge_projections[(h, src, dst)] = proj_val
         else:
             # Handle tensor input
+            edge_index = cast(Tensor, edge_index)
             for i in range(min(edge_index.size(1), edge_attr.numel())):
-                src, dst = edge_index[0, i].item(), edge_index[1, i].item()
+                src = int(edge_index[0, i].item())
+                dst = int(edge_index[1, i].item())
                 if src < seq_len and dst < seq_len:
                     for h in range(self.num_heads):
                         attr_val = (
@@ -401,9 +404,9 @@ class NodeSelfAttention(nn.Module):
                         mask_val = adj_mask[batch, q_idx, k_idx]
 
                         # Look up edge projection if exists
-                        h = head.item()
-                        q = q_idx.item()
-                        k = k_idx.item()
+                        h = int(head.item())
+                        q = int(q_idx.item())
+                        k = int(k_idx.item())
 
                         # Get edge projection value (0.0 if not found)
                         edge_val = self.edge_projections.get((h, q, k), 0.0)
@@ -416,7 +419,9 @@ class NodeSelfAttention(nn.Module):
                         )
 
                     # Use flex_attention with score_mod
-                    attn_output = flex_attention(q, k, v, score_mod=score_mod)
+                    attn_output = cast(
+                        Tensor, flex_attention(q, k, v, score_mod=score_mod)
+                    )
                 else:
                     # Simple score_mod with just masking using torch.where
                     def score_mod(
@@ -432,7 +437,9 @@ class NodeSelfAttention(nn.Module):
                         )
 
                     # Use flex_attention with just masking
-                    attn_output = flex_attention(q, k, v, score_mod=score_mod)
+                    attn_output = cast(
+                        Tensor, flex_attention(q, k, v, score_mod=score_mod)
+                    )
             except Exception:
                 # Fall back to CPU attention
                 attn_output = self._cpu_attention(
@@ -511,23 +518,24 @@ class NodeSelfAttention(nn.Module):
                                     edge_attr_bias[b, h, src, dst] = proj_val
             else:
                 for i in range(min(edge_index.size(1), edge_attr.numel())):
-                    src, dst = edge_index[0, i], edge_index[1, i]
+                    src = int(edge_index[0, i].item())
+                    dst = int(edge_index[1, i].item())
                     if src < seq_len and dst < seq_len:
                         # Get attribute value
                         if edge_attr.dim() == 1:
-                            attr_val = edge_attr[i].view(1, 1)
+                            attr_t = edge_attr[i].view(1, 1)
                         else:
-                            attr_val = edge_attr[i].mean().view(1, 1)
+                            attr_t = edge_attr[i].mean().view(1, 1)
 
                         # Ensure it's on the right device
-                        attr_val = attr_val.to(device)
+                        attr_t = attr_t.to(device)
 
                         # Project for each head
                         for h in range(self.num_heads):
                             # Ensure projection is on the same device
                             proj_module = self.edge_attr_proj[h].to(device)
                             with torch.no_grad():
-                                proj_val = proj_module(attr_val).item()
+                                proj_val = proj_module(attr_t).item()
 
                             for b in range(scores.size(0)):
                                 if b < adj_mask.size(0) and adj_mask[b, src, dst]:

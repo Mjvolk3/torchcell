@@ -11,7 +11,7 @@ from torch_geometric.nn.aggr.utils import (
 )
 
 
-class SetTransformerAggregation(Aggregation):
+class SetTransformerAggregation(Aggregation):  # type: ignore[misc]  # Aggregation is untyped (Any) in PyG stubs
     """Permutation-invariant set aggregation via Set Transformer encoders and PMA."""
 
     def __init__(
@@ -64,12 +64,12 @@ class SetTransformerAggregation(Aggregation):
     def reset_parameters(self) -> None:
         """Reset parameters of all encoder, PMA, and decoder blocks."""
         for encoder in self.encoders:
-            encoder.reset_parameters()
+            encoder.reset_parameters()  # type: ignore[operator]  # ModuleList yields untyped Module; block has reset_parameters
         self.pma.reset_parameters()
         for decoder in self.decoders:
-            decoder.reset_parameters()
+            decoder.reset_parameters()  # type: ignore[operator]  # ModuleList yields untyped Module; block has reset_parameters
 
-    @disable_dynamic_shapes(required_args=["dim_size", "max_num_elements"])
+    @disable_dynamic_shapes(required_args=["dim_size", "max_num_elements"])  # type: ignore[untyped-decorator]  # PyG decorator is untyped (Any)
     def forward(
         self,
         x: Tensor,
@@ -130,7 +130,7 @@ def main() -> None:
             layer_norm=True,
             dropout=0.1,
             use_isab=use_isab,
-            num_induced_points=4 if use_isab else None,
+            num_induced_points=4 if use_isab else 32,
         )
 
         optimizer = Adam(model.parameters(), lr=0.01)

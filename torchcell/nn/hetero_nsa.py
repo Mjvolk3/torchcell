@@ -1,6 +1,6 @@
 """Heterogeneous Node-Set Attention blocks and encoder over HeteroData graphs."""
 
-from typing import Literal
+from typing import Literal, cast
 
 import torch
 import torch.nn as nn
@@ -107,7 +107,7 @@ class _HeteroNSA_Block(nn.Module):
             out = block(embeddings)
         if original_dim == 2 and out.dim() == 3:
             out = out.squeeze(0)
-        return out
+        return cast(Tensor, out)
 
     def forward(
         self,
@@ -202,18 +202,20 @@ class _HeteroNSA_Block(nn.Module):
                         )
                         relation_outputs[src].append(out_src)
                         relation_outputs[dst].append(out_dst)
-            new_x = {}
+            new_x: dict[str, Tensor] = {}
             for nt, outs in relation_outputs.items():
                 if not outs:
-                    new_x[nt] = x_dict.get(nt, None)
+                    # Preserve original fallback semantics (may be None at
+                    # runtime if nt is absent); cast keeps the value unchanged.
+                    new_x[nt] = cast(Tensor, x_dict.get(nt, None))
                     continue
                 if len(outs) == 1:
                     new_x[nt] = outs[0]
                 else:
                     if self.aggregation == "sum":
-                        new_x[nt] = sum(outs)
+                        new_x[nt] = cast(Tensor, sum(outs))
                     elif self.aggregation == "mean":
-                        new_x[nt] = sum(outs) / len(outs)
+                        new_x[nt] = cast(Tensor, sum(outs) / len(outs))
                     elif self.aggregation == "attention" and hasattr(
                         self, "node_aggregators"
                     ):
@@ -226,15 +228,15 @@ class _HeteroNSA_Block(nn.Module):
                                 flat_embs, index=node_indices
                             )
                         else:
-                            new_x[nt] = sum(outs) / len(outs)
+                            new_x[nt] = cast(Tensor, sum(outs) / len(outs))
                     else:
-                        new_x[nt] = sum(outs) / len(outs)
+                        new_x[nt] = cast(Tensor, sum(outs) / len(outs))
             return new_x
         else:
-            new_x = {}
+            new_x_s: dict[str, Tensor] = {}
             for nt, emb in x_dict.items():
                 if nt not in self.self_blocks:
-                    new_x[nt] = emb
+                    new_x_s[nt] = emb
                     continue
                 block = self.self_blocks[nt]
                 if emb.dim() == 2:
@@ -242,8 +244,8 @@ class _HeteroNSA_Block(nn.Module):
                     out = block(emb).squeeze(0)
                 else:
                     out = block(emb)
-                new_x[nt] = out
-            return new_x
+                new_x_s[nt] = out
+            return new_x_s
 
 
 class HeteroNSA(nn.Module):
@@ -286,7 +288,7 @@ class HeteroNSA(nn.Module):
         self.blocks = nn.ModuleList(
             [
                 _HeteroNSA_Block(
-                    layer_type=layer_type,
+                    layer_type=cast(Literal["M", "S"], layer_type),
                     hidden_dim=hidden_dim,
                     node_types=node_types,
                     edge_types=edge_types,
@@ -401,7 +403,8 @@ class HeteroNSAEncoder(nn.Module):
                             residual = residual.unsqueeze(0)
                         elif residual.dim() == 3 and new_x[nt].dim() == 2:
                             residual = residual.squeeze(0)
-                    new_x[nt] = self.layer_norms[nt][i](new_x[nt] + residual)
+                    layer_norm_list = cast(nn.ModuleList, self.layer_norms[nt])
+                    new_x[nt] = layer_norm_list[i](new_x[nt] + residual)
             x_dict = new_x
             final_embeddings.update(x_dict)
         graph_embeddings = {}

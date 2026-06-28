@@ -1,6 +1,7 @@
 """Demo of FlexAttention masked by an RCM-reordered SBM adjacency matrix."""
 
 from collections.abc import Callable
+from typing import cast
 
 import matplotlib.pyplot as plt
 import torch
@@ -82,7 +83,7 @@ def create_adjacency_score_mod(
 # For better performance, we can also use the mask_mod approach
 def adjacency_mask_mod(b: Tensor, h: Tensor, q_idx: Tensor, kv_idx: Tensor) -> Tensor:
     """Return True where the adjacency matrix has an edge for the block mask."""
-    return adj_matrix[q_idx, kv_idx] > 0  # True where an edge exists
+    return cast(Tensor, adj_matrix[q_idx, kv_idx] > 0)  # True where an edge exists
 
 
 # Create a BlockMask for more efficient computation
@@ -107,11 +108,11 @@ V = torch.randn(batch_size, num_heads, seq_len, head_dim)
 
 # Approach 1: Using score_mod
 adj_score_mod = create_adjacency_score_mod(adj_matrix)
-output1 = flex_attention(Q, K, V, score_mod=adj_score_mod)
+output1 = cast(Tensor, flex_attention(Q, K, V, score_mod=adj_score_mod))
 print("Output shape (score_mod):", output1.shape)
 
 # Approach 2: Using block_mask (more efficient)
-output2 = flex_attention(Q, K, V, block_mask=block_mask)
+output2 = cast(Tensor, flex_attention(Q, K, V, block_mask=block_mask))
 print("Output shape (block_mask):", output2.shape)
 
 # Optional: Plot the adjacency matrix

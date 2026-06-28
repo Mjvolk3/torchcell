@@ -49,7 +49,7 @@ class ReferenceIndex(ModelStrict):
         """Return the number of reference-index entries."""
         return len(self.data)
 
-    def __iter__(self) -> Iterator[ExperimentReferenceIndex]:
+    def __iter__(self) -> Iterator[ExperimentReferenceIndex]:  # type: ignore[override]  # intentionally iterates entries, not pydantic BaseModel's (field, value) tuples
         """Iterate over the reference-index entries."""
         return iter(self.data)
 

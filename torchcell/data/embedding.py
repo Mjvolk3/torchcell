@@ -12,7 +12,7 @@ import torch
 from torch_geometric.data import Data, InMemoryDataset
 
 
-class BaseEmbeddingDataset(InMemoryDataset, ABC):
+class BaseEmbeddingDataset(InMemoryDataset, ABC):  # type: ignore[misc]  # InMemoryDataset is untyped (Any) in torch_geometric
     """Abstract in-memory dataset holding per-gene DNA windows and embeddings."""
 
     def __init__(

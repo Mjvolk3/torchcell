@@ -13,6 +13,8 @@ from torch import Tensor
 from torch_geometric.data import HeteroData
 from torch_geometric.typing import SparseTensor, TensorFrame
 
+__all__ = ["HeteroData", "custom_size_repr", "hetero_repr"]
+
 
 def custom_size_repr(key: Any, value: Any, indent: int = 0) -> str:
     """Return a size-oriented string for a key/value, abbreviating large dicts."""
@@ -26,6 +28,7 @@ def custom_size_repr(key: Any, value: Any, indent: int = 0) -> str:
             return f"{pad}{key}=dict(len={len(value)})"
 
     # For all other cases, use the original size_repr logic
+    out: Any
     if isinstance(value, Tensor) and value.dim() == 0:
         out = value.item()
     elif isinstance(value, Tensor) and getattr(value, "is_nested", False):

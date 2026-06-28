@@ -19,7 +19,7 @@ import logging
 import os
 import os.path as osp
 import pickle
-from typing import Any
+from typing import Any, cast
 
 import lmdb
 import pandas as pd
@@ -28,11 +28,12 @@ from torch_geometric.data import Dataset
 
 from torchcell.data.hetero_data import HeteroData
 from torchcell.data.neo4j_cell import Neo4jCellDataset
+from torchcell.datamodels import PhenotypeType
 
 log = logging.getLogger(__name__)
 
 
-class Neo4jPreprocessedCellDatasetFullMasks(Dataset):
+class Neo4jPreprocessedCellDatasetFullMasks(Dataset):  # type: ignore[misc]  # Dataset is untyped (Any) in torch_geometric
     """Optimized dataset that loads preprocessed full masks from LMDB (UINT8 format).
 
     This version eliminates mask reconstruction overhead by storing and loading
@@ -55,12 +56,13 @@ class Neo4jPreprocessedCellDatasetFullMasks(Dataset):
         """
         self.root = root
         self._source_dataset = source_dataset
-        self._length = None
-        self.env = None
+        self._length: int | None = None
+        self.env: Any = None
         self._indices = None  # Required by PyTorch Geometric Dataset
         self.transform = None  # No transform by default
 
         # Cache these from source dataset if available
+        self.phenotype_info: list[PhenotypeType] | None
         if source_dataset:
             self.cell_graph = source_dataset.cell_graph
             self.phenotype_info = source_dataset.phenotype_info
@@ -278,7 +280,7 @@ class Neo4jPreprocessedCellDatasetFullMasks(Dataset):
                     "Dataset not preprocessed. Run preprocessing script first."
                 )
             self._load_metadata()
-        return self._length
+        return cast(int, self._length)
 
     def close_lmdb(self) -> None:
         """Close LMDB environment."""

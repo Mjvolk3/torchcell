@@ -11,7 +11,7 @@ import os
 import os.path as osp
 from collections.abc import Callable
 from enum import Enum, auto
-from typing import Any
+from typing import Any, cast
 
 import hypernetx as hnx
 import lmdb
@@ -24,6 +24,7 @@ from sortedcontainers import SortedDict
 from torch_geometric.data import Dataset, HeteroData
 from tqdm import tqdm
 
+from torchcell.data.aggregate import Aggregator
 from torchcell.data.cell_data import to_cell_data
 from torchcell.data.deduplicate import Deduplicator
 from torchcell.data.embedding import BaseEmbeddingDataset
@@ -137,7 +138,7 @@ def create_graph_from_gene_set(gene_set: GeneSet) -> GeneGraph:
     return GeneGraph(name="base", graph=G, max_gene_set=gene_set)
 
 
-def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome:
+def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome | None:
     """Return a ParsedGenome from a genome's gene set, or None if genome is None."""
     if genome is None:
         return None
@@ -157,15 +158,12 @@ class ProcessingStep(Enum):
     PROCESSED = auto()
 
 
-# TODO implement
-class Aggregator:
-    """Placeholder for the dataset aggregation step (not yet implemented)."""
-
-    pass
-
-
-class Neo4jCellDataset(Dataset):
+class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (Any) in torch_geometric
     """Dataset for loading cell data from Neo4j with file locking for DDP support."""
+
+    # Bare annotation only (no value): lazily set on first access, so hasattr()
+    # checks elsewhere still behave as before. Declares the type for mypy.
+    _is_any_perturbed_gene_index_cache: dict[str, list[int]]
 
     @staticmethod
     def _read_json_with_lock(filepath: str, max_retries: int = 10) -> Any:
@@ -190,16 +188,16 @@ class Neo4jCellDataset(Dataset):
     def __init__(
         self,
         root: str,
-        query: str = None,
-        gene_set: GeneSet = None,
-        graphs: GeneMultiGraph = None,
-        incidence_graphs: dict[str, nx.Graph | hnx.Hypergraph] = None,
-        node_embeddings: dict[str, BaseEmbeddingDataset] = None,
-        graph_processor: GraphProcessor = None,
+        query: str | None = None,
+        gene_set: GeneSet | None = None,
+        graphs: GeneMultiGraph | None = None,
+        incidence_graphs: dict[str, nx.Graph | hnx.Hypergraph] | None = None,
+        node_embeddings: dict[str, BaseEmbeddingDataset] | None = None,
+        graph_processor: GraphProcessor | None = None,
         add_remaining_gene_self_loops: bool = True,
         converter: type[Converter] | None = None,
-        deduplicator: type[Deduplicator] = None,
-        aggregator: type[Aggregator] = None,
+        deduplicator: type[Deduplicator] | None = None,
+        aggregator: type[Aggregator] | None = None,
         overwrite_intermediates: bool = False,
         uri: str = "bolt://localhost:7687",
         username: str = "neo4j",
@@ -209,7 +207,7 @@ class Neo4jCellDataset(Dataset):
         pre_filter: Callable[..., Any] | None = None,
     ) -> None:
         """Configure data sources, processing pipeline, and load or build the dataset."""
-        self.env = None
+        self.env: Any = None
         self.root = root
         # get item processor
         self.process_graph = graph_processor
@@ -218,24 +216,26 @@ class Neo4jCellDataset(Dataset):
         self.add_remaining_gene_self_loops = add_remaining_gene_self_loops
 
         # Needed in get item
-        self._phenotype_info = None
+        self._phenotype_info: list[PhenotypeType] | None = None
 
         # Cached indices
-        self._phenotype_label_index = None
-        self._dataset_name_index = None
-        self._perturbation_count_index = None
-        self._is_any_perturbed_gene_index = None
+        self._phenotype_label_index: dict[str, list[int]] | None = None
+        self._dataset_name_index: dict[str, list[int]] | None = None
+        self._perturbation_count_index: dict[int, list[int]] | None = None
+        self._is_any_perturbed_gene_index: dict[str, list[int]] | None = None
 
         # Cached label df for converting regression to classification
-        self._label_df = None
+        self._label_df: pd.DataFrame | None = None
 
-        self.gene_set = gene_set
+        self._gene_set: GeneSet | set[str] | None = None
+        self.gene_set = cast(GeneSet, gene_set)
 
         # raw db processing
+        # These hold a class before process() and an instance afterward.
         self.overwrite_intermediates = overwrite_intermediates
-        self.converter = converter
-        self.deduplicator = deduplicator
-        self.aggregator = aggregator
+        self.converter: type[Converter] | Converter | None = converter
+        self.deduplicator: type[Deduplicator] | Deduplicator | None = deduplicator
+        self.aggregator: type[Aggregator] | Aggregator | None = aggregator
 
         # raw db deps
         self.uri = uri
@@ -309,7 +309,7 @@ class Neo4jCellDataset(Dataset):
         return cell_graph
 
     @property
-    def raw_file_names(self) -> list[str]:
+    def raw_file_names(self) -> str | list[str]:
         """Return the raw file names expected by the dataset."""
         return "lmdb"
 
@@ -323,7 +323,9 @@ class Neo4jCellDataset(Dataset):
         gene_set: GeneSet,
     ) -> Neo4jQueryRaw:
         """Query Neo4j and load the raw experiment records for the gene set."""
-        cypher_kwargs = {"gene_set": list(gene_set)}
+        cypher_kwargs: dict[str, str | int | float | list[Any]] = {
+            "gene_set": list(gene_set)
+        }
         # cypher_kwargs = {"gene_set": ["YAL004W", "YAL010C", "YAL011W", "YAL017W"]}
         print("================")
         print(f"raw root_dir: {root_dir}")
@@ -341,7 +343,7 @@ class Neo4jCellDataset(Dataset):
         return raw_db  # break point here
 
     @property
-    def processed_file_names(self) -> list[str]:
+    def processed_file_names(self) -> str | list[str]:
         """Return the processed file names produced by the dataset."""
         return "lmdb"
 
@@ -395,16 +397,30 @@ class Neo4jCellDataset(Dataset):
         # IDEA consider dependency injection for processing steps
         # We don't inject becaue of unique query process.
         raw_db = self.load_raw(
-            self.uri, self.username, self.password, self.root, self.query, self.gene_set
+            self.uri,
+            self.username,
+            self.password,
+            self.root,
+            cast(str, self.query),
+            self.gene_set,
         )
 
+        # Before this point each holds a class; here it is replaced by an instance.
         self.converter = (
-            self.converter(root=self.root, query=raw_db) if self.converter else None
+            cast("type[Converter]", self.converter)(root=self.root, query=raw_db)
+            if self.converter
+            else None
         )
         self.deduplicator = (
-            self.deduplicator(root=self.root) if self.deduplicator else None
+            cast("type[Deduplicator]", self.deduplicator)(root=self.root)
+            if self.deduplicator
+            else None
         )
-        self.aggregator = self.aggregator(root=self.root) if self.aggregator else None
+        self.aggregator = (
+            cast("type[Aggregator]", self.aggregator)(root=self.root)
+            if self.aggregator
+            else None
+        )
 
         self.processing_steps = self._determine_processing_steps()
 
@@ -414,11 +430,11 @@ class Neo4jCellDataset(Dataset):
             output_path = self._get_lmdb_path(next_step)
 
             if next_step == ProcessingStep.CONVERSION:
-                self.converter.process(input_path, output_path)
+                cast(Converter, self.converter).process(input_path, output_path)
             elif next_step == ProcessingStep.DEDUPLICATION:
-                self.deduplicator.process(input_path, output_path)
+                cast(Deduplicator, self.deduplicator).process(input_path, output_path)
             elif next_step == ProcessingStep.AGGREGATION:
-                self.aggregator.process(input_path, output_path)
+                cast(Aggregator, self.aggregator).process(input_path, output_path)
             elif next_step == ProcessingStep.PROCESSED:
                 self._copy_lmdb(input_path, output_path)
 
@@ -488,13 +504,13 @@ class Neo4jCellDataset(Dataset):
         """Read serialized data from LMDB."""
         with self.env.begin() as txn:
             serialized_data = txn.get(f"{idx}".encode())
-            return serialized_data
+            return cast("bytes | None", serialized_data)
 
     @time_method
     def _deserialize_json(self, serialized_data: bytes) -> list[dict[str, Any]]:
         """Deserialize JSON-encoded bytes into Python objects."""
         """Deserialize JSON data."""
-        return json.loads(serialized_data.decode("utf-8"))
+        return cast("list[dict[str, Any]]", json.loads(serialized_data.decode("utf-8")))
 
     @time_method
     def _reconstruct_experiments(
@@ -538,7 +554,7 @@ class Neo4jCellDataset(Dataset):
         data = self._reconstruct_experiments(data_list)
 
         # Process graph (graph processor is already timed with @time_method)
-        processed_graph = self.process_graph.process(
+        processed_graph = cast(GraphProcessor, self.process_graph).process(
             self.cell_graph, self.phenotype_info, data
         )
 
@@ -565,7 +581,7 @@ class Neo4jCellDataset(Dataset):
         with self.env.begin(write=False) as txn:
             length = txn.stat()["entries"]
         self.close_lmdb()
-        return length
+        return cast(int, length)
 
     def close_lmdb(self) -> None:
         """Close the LMDB environment if it is open."""
@@ -613,7 +629,7 @@ class Neo4jCellDataset(Dataset):
                 data_list = json.loads(value.decode())
 
                 # Initialize row with index and NaN for all labels
-                row_data = {"index": idx}
+                row_data: dict[str, Any] = {"index": idx}
                 for label_name in label_names:
                     row_data[label_name] = np.nan
 
@@ -921,7 +937,7 @@ def main() -> None:
     from torchcell.graph import SCerevisiaeGraph
 
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
 
     with open("experiments/003-fit-int/queries/001-small-build.cql") as f:
         query = f.read()
@@ -961,7 +977,10 @@ def main() -> None:
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs=cast(
+            GeneMultiGraph,
+            {"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        ),
         node_embeddings={
             "fudt_3prime": fudt_3prime_dataset,
             "fudt_5prime": fudt_5prime_dataset,
@@ -1050,7 +1069,7 @@ def main_incidence() -> None:
     from torchcell.metabolism.yeast_GEM import YeastGEM
 
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
 
     with open("experiments/003-fit-int/queries/001-small-build.cql") as f:
         query = f.read()
@@ -1095,7 +1114,10 @@ def main_incidence() -> None:
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs=cast(
+            GeneMultiGraph,
+            {"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        ),
         incidence_graphs={"metabolism": YeastGEM().reaction_map},
         node_embeddings={
             "codon_frequency": codon_frequency,
@@ -1197,7 +1219,7 @@ def main_transform_standardization() -> None:
 
     # Load environment variables
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
 
     # Load query
     with open("experiments/003-fit-int/queries/001-small-build.cql") as f:
@@ -1247,7 +1269,10 @@ def main_transform_standardization() -> None:
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs=cast(
+            GeneMultiGraph,
+            {"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        ),
         # incidence_graphs={"metabolism_hypergraph": YeastGEM().reaction_map},
         incidence_graphs={"metabolism_bipartite": YeastGEM().bipartite_graph},
         node_embeddings={
@@ -1268,7 +1293,7 @@ def main_transform_standardization() -> None:
 
     # Print statistics of original data using dataset.label_df
     for label in labels:
-        values = dataset.label_df[label].dropna().values
+        values = cast(np.ndarray, dataset.label_df[label].dropna().values)
         print(f"\n{label} statistics (original):")
         print(f"  Count: {len(values)}")
         print(f"  Min: {values.min():.4f}")
@@ -1410,7 +1435,10 @@ def main_transform_categorical() -> None:
     from torch_geometric.transforms import Compose
 
     from torchcell.data import GenotypeAggregator, MeanExperimentDeduplicator
-    from torchcell.data.neo4j_cell import Neo4jCellDataset, SubgraphRepresentation
+    from torchcell.data.neo4j_cell import (  # type: ignore[attr-defined]  # __main__-only; SubgraphRepresentation actually lives in graph_processor (pre-existing wrong import path)
+        Neo4jCellDataset,
+        SubgraphRepresentation,
+    )
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
@@ -1426,7 +1454,7 @@ def main_transform_categorical() -> None:
 
     # Dataset setup code unchanged...
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
 
     with open("experiments/003-fit-int/queries/001-small-build.cql") as f:
         query = f.read()
@@ -1457,7 +1485,9 @@ def main_transform_categorical() -> None:
         model_name="species_downstream",
     )
 
-    graphs = {"physical": graph.G_physical, "regulatory": graph.G_regulatory}
+    graphs = cast(
+        GeneMultiGraph, {"physical": graph.G_physical, "regulatory": graph.G_regulatory}
+    )
     node_embeddings = {
         "fudt_3prime": fudt_3prime_dataset,
         "fudt_5prime": fudt_5prime_dataset,
@@ -1612,7 +1642,10 @@ def main_transform_categorical_dense() -> None:
     from torch_geometric.transforms import Compose
 
     from torchcell.data import GenotypeAggregator, MeanExperimentDeduplicator
-    from torchcell.data.neo4j_cell import Neo4jCellDataset, SubgraphRepresentation
+    from torchcell.data.neo4j_cell import (  # type: ignore[attr-defined]  # __main__-only; SubgraphRepresentation actually lives in graph_processor (pre-existing wrong import path)
+        Neo4jCellDataset,
+        SubgraphRepresentation,
+    )
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
@@ -1631,7 +1664,7 @@ def main_transform_categorical_dense() -> None:
 
     # Setup dataset (unchanged)
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
 
     with open("experiments/003-fit-int/queries/001-small-build.cql") as f:
         query = f.read()
@@ -1663,7 +1696,9 @@ def main_transform_categorical_dense() -> None:
         model_name="species_downstream",
     )
 
-    graphs = {"physical": graph.G_physical, "regulatory": graph.G_regulatory}
+    graphs = cast(
+        GeneMultiGraph, {"physical": graph.G_physical, "regulatory": graph.G_regulatory}
+    )
     node_embeddings = {
         "fudt_3prime": fudt_3prime_dataset,
         "fudt_5prime": fudt_5prime_dataset,

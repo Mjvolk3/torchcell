@@ -29,7 +29,7 @@ GENE_GRAPH_EDGE_RELATION = {
 
 def to_cell_data(
     multigraph: GeneMultiGraph,
-    incidence_graphs: dict[str, nx.Graph | hnx.Hypergraph] = None,
+    incidence_graphs: dict[str, nx.Graph | hnx.Hypergraph] | None = None,
     add_remaining_gene_self_loops: bool = True,
 ) -> HeteroData:
     """Convert GeneMultiGraph and incidence graphs to HeteroData format."""
@@ -162,13 +162,13 @@ def _process_metabolism_hypergraph(
             torch.tensor(edge_indices, dtype=torch.long),
         ]
     ).cpu()
-    stoich_coeffs = torch.tensor(stoich_coeffs, dtype=torch.float).cpu()
+    stoich_coeffs_tensor = torch.tensor(stoich_coeffs, dtype=torch.float).cpu()
 
     # Store metabolic reaction data
     edge_type = ("metabolite", "reaction", "metabolite")
     hetero_data[edge_type].hyperedge_index = hyperedge_index
-    hetero_data[edge_type].stoichiometry = stoich_coeffs
-    hetero_data[edge_type].num_edges = len(hyperedge_index[1].unique()) + 1
+    hetero_data[edge_type].stoichiometry = stoich_coeffs_tensor
+    hetero_data[edge_type].num_edges = len(hyperedge_index[1].unique()) + 1  # type: ignore[no-untyped-call]  # torch Tensor.unique is untyped in stubs
     hetero_data[edge_type].reaction_to_genes = reaction_to_genes
     hetero_data[edge_type].reaction_to_genes_indices = reaction_to_genes_indices
 
@@ -414,9 +414,9 @@ def _process_gene_ontology(
     # Also store mapping from stratum -> terms for efficient lookup
     stratum_to_terms = defaultdict(list)
     for term, stratum in strata_dict.items():
-        term_idx = go_mapping.get(term)
-        if term_idx is not None:
-            stratum_to_terms[stratum].append(term_idx)
+        term_idx_opt = go_mapping.get(term)
+        if term_idx_opt is not None:
+            stratum_to_terms[stratum].append(term_idx_opt)
 
     hetero_data["gene_ontology"].stratum_to_terms = {
         stratum: torch.tensor(terms, dtype=torch.long).cpu()

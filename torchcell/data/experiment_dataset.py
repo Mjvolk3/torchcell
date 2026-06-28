@@ -12,7 +12,7 @@ import pickle
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from functools import wraps
-from typing import Any
+from typing import Any, cast
 
 import lmdb
 import numpy as np
@@ -168,7 +168,7 @@ def post_process(func: Callable[..., Any]) -> Callable[..., Any]:
     return wrapper
 
 
-class ExperimentDataset(Dataset, ABC):
+class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyped (Any) in torch_geometric
     """Abstract PyG dataset storing experiment items in an LMDB store."""
 
     def __init__(
@@ -184,11 +184,11 @@ class ExperimentDataset(Dataset, ABC):
         self.preprocess_dir = osp.join(root, "preprocess")
         # TODO This is part of our custom Dataset to speed things up but should be removed when using pure pyg
         self.skip_process_file_exist = skip_process_file_exist
-        self.env = None
-        self._length = None
-        self._gene_set = None
-        self._df = None
-        self._experiment_reference_index = None
+        self.env: Any = None
+        self._length: int | None = None
+        self._gene_set: GeneSet | None = None
+        self._df: pd.DataFrame | None = None
+        self._experiment_reference_index: list[ExperimentReferenceIndex] | None = None
 
         # Automatically set the name based on the class name
         self.name = self.__class__.__name__
@@ -214,7 +214,7 @@ class ExperimentDataset(Dataset, ABC):
         ...
 
     @property
-    def processed_file_names(self) -> list[str]:
+    def processed_file_names(self) -> str | list[str]:
         """Return the processed artifact name (the LMDB directory)."""
         return "lmdb"
 
@@ -275,7 +275,7 @@ class ExperimentDataset(Dataset, ABC):
         # Must be closed for dataloader io_workers > 0
         self.close_lmdb()
 
-        return length
+        return cast(int, length)
 
     def get(self, idx: int | list[int] | np.ndarray) -> Any:
         """Return one item, or a list of items for list/array/boolean indices."""
@@ -308,9 +308,9 @@ class ExperimentDataset(Dataset, ABC):
     @staticmethod
     def extract_systematic_gene_names(genotype: dict[str, Any]) -> list[str]:
         """Return the systematic gene names of all perturbations in a genotype."""
-        gene_names = []
-        for perturbation in genotype.get("perturbations"):
-            gene_name = perturbation.get("systematic_gene_name")
+        gene_names: list[str] = []
+        for perturbation in cast(list[dict[str, Any]], genotype.get("perturbations")):
+            gene_name = cast(str, perturbation.get("systematic_gene_name"))
             gene_names.append(gene_name)
         return gene_names
 

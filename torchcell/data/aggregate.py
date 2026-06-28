@@ -3,6 +3,7 @@
 import json
 import os
 from abc import ABC, abstractmethod
+from typing import Any, cast
 
 import lmdb
 from tqdm import tqdm
@@ -31,8 +32,8 @@ class Aggregator(ABC):
         """Set up paths and lazy LMDB/phenotype state under the given root."""
         self.root = root
         self.lmdb_dir = os.path.join(self.root, "aggregation", "lmdb")
-        self.env = None
-        self._phenotype_info = None
+        self.env: Any = None
+        self._phenotype_info: list[type[Phenotype]] | None = None
 
     @abstractmethod
     def aggregate_check(
@@ -166,7 +167,10 @@ class Aggregator(ABC):
 
     def __getitem__(
         self, index: int | slice | list[int]
-    ) -> list[dict[str, ExperimentType | ExperimentReferenceType]]:
+    ) -> (
+        list[dict[str, ExperimentType | ExperimentReferenceType]]
+        | list[list[dict[str, ExperimentType | ExperimentReferenceType]]]
+    ):
         """Return aggregated group(s) by int index, slice, or list of indices."""
         self._init_lmdb(readonly=True)  # Initialize LMDB for reading
         if isinstance(index, int):
@@ -234,7 +238,7 @@ class Aggregator(ABC):
         if self.env is None:
             return 0  # Return 0 if the LMDB doesn't exist yet
         with self.env.begin() as txn:
-            return txn.stat()["entries"]
+            return cast(int, txn.stat()["entries"])
 
     def __bool__(self) -> bool:
         """Return whether the aggregated LMDB directory exists."""

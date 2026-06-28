@@ -10,7 +10,7 @@ import os
 import os.path as osp
 import pickle
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import lmdb
 import pandas as pd
@@ -26,7 +26,7 @@ from torchcell.utils.file_lock import FileLockHelper
 log = logging.getLogger(__name__)
 
 
-class Neo4jPreprocessedCellDataset(Dataset):
+class Neo4jPreprocessedCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (Any) in torch_geometric
     """Dataset that loads pre-processed graph data from LMDB, bypassing graph processor.
 
     Architecture:
@@ -70,12 +70,12 @@ class Neo4jPreprocessedCellDataset(Dataset):
         """
         self.root = root
         self._source_dataset = source_dataset
-        self.env = None
+        self.env: Any = None
 
         # Cache properties from source dataset
-        self._cell_graph = None
-        self._phenotype_info = None
-        self._length = None
+        self._cell_graph: HeteroData | None = None
+        self._phenotype_info: list[PhenotypeType] | None = None
+        self._length: int | None = None
 
         super().__init__(root, transform, pre_transform, pre_filter)
 
@@ -428,7 +428,7 @@ class Neo4jPreprocessedCellDataset(Dataset):
                     "Dataset not preprocessed. Call preprocess_from_source() first."
                 )
             self._load_metadata()
-        return self._length
+        return cast(int, self._length)
 
     def close_lmdb(self) -> None:
         """Close LMDB environment."""
@@ -456,13 +456,13 @@ def main_preprocess() -> None:
     from torchcell.data import GenotypeAggregator, MeanExperimentDeduplicator
     from torchcell.data.graph_processor import LazySubgraphRepresentation
     from torchcell.data.neo4j_cell import Neo4jCellDataset
-    from torchcell.graph import SCerevisiaeGraph
+    from torchcell.graph import GeneMultiGraph, SCerevisiaeGraph
     from torchcell.metabolism.yeast_GEM import YeastGEM
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
-    EXPERIMENT_ROOT = os.getenv("EXPERIMENT_ROOT")
+    DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
+    EXPERIMENT_ROOT = cast(str, os.getenv("EXPERIMENT_ROOT"))
 
     # Load query
     with open(
@@ -494,7 +494,10 @@ def main_preprocess() -> None:
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs=cast(
+            GeneMultiGraph,
+            {"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        ),
         incidence_graphs={"metabolism_bipartite": YeastGEM().bipartite_graph},
         node_embeddings=None,
         converter=None,

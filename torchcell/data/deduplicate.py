@@ -9,7 +9,7 @@ import logging
 import os
 import os.path as osp
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, cast
 
 import lmdb
 from tqdm import tqdm
@@ -29,7 +29,7 @@ class Deduplicator(ABC):
         """Set the data root and the deduplication LMDB path; defer opening the env."""
         self.root = root
         self.lmdb_dir = os.path.join(self.root, "deduplication", "lmdb")
-        self.env = None
+        self.env: Any = None
 
     @abstractmethod
     def duplicate_check(self, data: Any) -> dict[str, list[int]]:
@@ -201,7 +201,7 @@ class Deduplicator(ABC):
         if self.env is None:
             return 0  # Return 0 if the LMDB doesn't exist yet
         with self.env.begin() as txn:
-            return txn.stat()["entries"]
+            return cast(int, txn.stat()["entries"])
 
     def __bool__(self) -> bool:
         """Return whether the deduplication LMDB directory exists."""

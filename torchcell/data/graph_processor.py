@@ -6,7 +6,7 @@
 # Test file: tests/torchcell/data/test_graph_processor.py
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, cast
 
 import torch
 from torch_geometric.utils import k_hop_subgraph
@@ -14,7 +14,12 @@ from torch_geometric.utils._subgraph import subgraph
 from torch_scatter import scatter
 
 from torchcell.data.hetero_data import HeteroData
-from torchcell.datamodels import ExperimentReferenceType, ExperimentType, PhenotypeType
+from torchcell.datamodels import (
+    Experiment,
+    ExperimentReferenceType,
+    ExperimentType,
+    PhenotypeType,
+)
 from torchcell.profiling.timing import time_method
 
 
@@ -156,7 +161,7 @@ class SubgraphRepresentation(GraphProcessor):
         perturbed_names = {
             p.systematic_gene_name
             for item in data
-            for p in item["experiment"].genotype.perturbations
+            for p in cast(Experiment, item["experiment"]).genotype.perturbations
         }
         node_ids = cell_graph["gene"].node_ids
         keep_idx = [i for i, name in enumerate(node_ids) if name not in perturbed_names]
@@ -489,7 +494,7 @@ class SubgraphRepresentation(GraphProcessor):
         # Process each experimental data point
         for item_idx, item in enumerate(data):
             # Get phenotype object from experiment
-            phenotype = item["experiment"].phenotype
+            phenotype = cast(ExperimentType, item["experiment"]).phenotype
 
             # Process each phenotype type
             for type_idx, field_name in enumerate(phenotype_types):
@@ -797,7 +802,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         perturbed_names = {
             p.systematic_gene_name
             for item in data
-            for p in item["experiment"].genotype.perturbations
+            for p in cast(Experiment, item["experiment"]).genotype.perturbations
         }
         node_ids = cell_graph["gene"].node_ids
         keep_idx = [i for i, name in enumerate(node_ids) if name not in perturbed_names]
@@ -889,7 +894,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
                     edges_to_remove = torch.cat(
                         [t for t in edges_to_remove_list if len(t) > 0]
                     )
-                    edges_to_remove = edges_to_remove.unique()
+                    edges_to_remove = edges_to_remove.unique()  # type: ignore[no-untyped-call]  # torch Tensor.unique is untyped in stubs
                     edge_mask[edges_to_remove] = False
 
                 # Filter and relabel using precomputed mapping
@@ -1154,7 +1159,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         # Process each experimental data point
         for item_idx, item in enumerate(data):
             # Get phenotype object from experiment
-            phenotype = item["experiment"].phenotype
+            phenotype = cast(ExperimentType, item["experiment"]).phenotype
 
             # Process each phenotype type
             for type_idx, field_name in enumerate(phenotype_types):
@@ -1487,7 +1492,7 @@ class LazySubgraphRepresentation(GraphProcessor):
         perturbed_names = {
             p.systematic_gene_name
             for item in data
-            for p in item["experiment"].genotype.perturbations
+            for p in cast(Experiment, item["experiment"]).genotype.perturbations
         }
         node_ids = cell_graph["gene"].node_ids
         keep_idx = [i for i, name in enumerate(node_ids) if name not in perturbed_names]
@@ -1796,7 +1801,7 @@ class LazySubgraphRepresentation(GraphProcessor):
                 stat_types.append(stat_name)
 
         for item_idx, item in enumerate(data):
-            phenotype = item["experiment"].phenotype
+            phenotype = cast(ExperimentType, item["experiment"]).phenotype
 
             for type_idx, field_name in enumerate(phenotype_types):
                 value = getattr(phenotype, field_name, None)
@@ -1876,7 +1881,9 @@ class Unperturbed(GraphProcessor):
         self,
         cell_graph: HeteroData,
         phenotype_info: list[PhenotypeType],
-        data: list[dict[str, ExperimentType | ExperimentReferenceType]],
+        data: list[  # type: ignore[override]  # narrows base process()'s dict|list to list-only; processors only receive the list form
+            dict[str, ExperimentType | ExperimentReferenceType]
+        ],
     ) -> HeteroData:
         """Return the original graph with perturbation and phenotype data attached."""
         if not data:
@@ -1899,7 +1906,7 @@ class Unperturbed(GraphProcessor):
                 )
             perturbed_genes.update(
                 pert.systematic_gene_name
-                for pert in item["experiment"].genotype.perturbations
+                for pert in cast(Experiment, item["experiment"]).genotype.perturbations
             )
 
         processed_graph["gene"].perturbed_genes = list(perturbed_genes)
@@ -1920,7 +1927,7 @@ class Unperturbed(GraphProcessor):
         for field in phenotype_fields:
             field_values = []
             for item in data:
-                value = getattr(item["experiment"].phenotype, field, None)
+                value = getattr(cast(ExperimentType, item["experiment"]).phenotype, field, None)
                 if value is not None:
                     field_values.append(value)
             if field_values:
@@ -1988,7 +1995,9 @@ class Perturbation(GraphProcessor):
         self,
         cell_graph: HeteroData,
         phenotype_info: list[PhenotypeType],
-        data: list[dict[str, ExperimentType | ExperimentReferenceType]],
+        data: list[  # type: ignore[override]  # narrows base process()'s dict|list to list-only; processors only receive the list form
+            dict[str, ExperimentType | ExperimentReferenceType]
+        ],
     ) -> HeteroData:
         """Store perturbation and phenotype data in COO format without copying the graph."""
         if not data:
@@ -2008,7 +2017,7 @@ class Perturbation(GraphProcessor):
         perturbed_names = {
             p.systematic_gene_name
             for item in data
-            for p in item["experiment"].genotype.perturbations
+            for p in cast(Experiment, item["experiment"]).genotype.perturbations
         }
         node_ids = cell_graph["gene"].node_ids
         perturbed_indices = [
@@ -2080,7 +2089,7 @@ class Perturbation(GraphProcessor):
         # Process each experimental data point
         for item_idx, item in enumerate(data):
             # Get phenotype object from experiment
-            phenotype = item["experiment"].phenotype
+            phenotype = cast(ExperimentType, item["experiment"]).phenotype
 
             # Process each phenotype type
             for type_idx, field_name in enumerate(phenotype_types):
@@ -2166,7 +2175,9 @@ class DCellGraphProcessor(GraphProcessor):
         self,
         cell_graph: HeteroData,
         phenotype_info: list[PhenotypeType],
-        data: list[dict[str, ExperimentType | ExperimentReferenceType]],
+        data: list[  # type: ignore[override]  # narrows base process()'s dict|list to list-only; processors only receive the list form
+            dict[str, ExperimentType | ExperimentReferenceType]
+        ],
     ) -> HeteroData:
         """Apply perturbations to the gene ontology graph and attach phenotypes."""
         if not data:
@@ -2190,7 +2201,7 @@ class DCellGraphProcessor(GraphProcessor):
         perturbed_names = {
             p.systematic_gene_name
             for item in data
-            for p in item["experiment"].genotype.perturbations
+            for p in cast(Experiment, item["experiment"]).genotype.perturbations
         }
         node_ids = cell_graph["gene"].node_ids
         perturbed_indices = [
@@ -2217,7 +2228,7 @@ class DCellGraphProcessor(GraphProcessor):
         for i, item in enumerate(data):
             perturbed_genes = [
                 p.systematic_gene_name
-                for p in item["experiment"].genotype.perturbations
+                for p in cast(Experiment, item["experiment"]).genotype.perturbations
             ]
             gene_indices = [
                 node_ids.index(gene) for gene in perturbed_genes if gene in node_ids
@@ -2318,7 +2329,7 @@ class DCellGraphProcessor(GraphProcessor):
         # Process each experimental data point
         for item_idx, item in enumerate(data):
             # Get phenotype object from experiment
-            phenotype = item["experiment"].phenotype
+            phenotype = cast(ExperimentType, item["experiment"]).phenotype
 
             # Process each phenotype type
             for type_idx, field_name in enumerate(phenotype_types):
@@ -2426,15 +2437,15 @@ class NeighborSubgraphRepresentation(GraphProcessor):
         """Identify perturbed genes from experiment data."""
         perturbed_names = set()
         for item in data:
-            for p in item["experiment"].genotype.perturbations:
+            for p in cast(Experiment, item["experiment"]).genotype.perturbations:
                 perturbed_names.add(p.systematic_gene_name)
         node_ids = cell_graph["gene"].node_ids
         perturbed_indices = []
         for i, name in enumerate(node_ids):
             if name in perturbed_names:
                 perturbed_indices.append(i)
-        perturbed_indices = torch.tensor(perturbed_indices, dtype=torch.long)
-        self.masks["gene"]["perturbed"][perturbed_indices] = True
+        perturbed_indices_tensor = torch.tensor(perturbed_indices, dtype=torch.long)
+        self.masks["gene"]["perturbed"][perturbed_indices_tensor] = True
         return {
             "perturbed_names": perturbed_names,
             "perturbed_indices": perturbed_indices,
@@ -2595,7 +2606,7 @@ class NeighborSubgraphRepresentation(GraphProcessor):
             if stat_name:
                 stat_types.append(stat_name)
         for item_idx, item in enumerate(data):
-            phenotype = item["experiment"].phenotype
+            phenotype = cast(ExperimentType, item["experiment"]).phenotype
             for type_idx, field_name in enumerate(phenotype_types):
                 value = getattr(phenotype, field_name, None)
                 if value is not None:
@@ -2641,7 +2652,9 @@ class NeighborSubgraphRepresentation(GraphProcessor):
         self,
         cell_graph: HeteroData,
         phenotype_info: list[PhenotypeType],
-        data: list[dict[str, ExperimentType | ExperimentReferenceType]],
+        data: list[  # type: ignore[override]  # narrows base process()'s dict|list to list-only; processors only receive the list form
+            dict[str, ExperimentType | ExperimentReferenceType]
+        ],
     ) -> HeteroData:
         """Main processing method. Creates k-hop induced subgraph around perturbed genes."""
         self._initialize_masks(cell_graph)

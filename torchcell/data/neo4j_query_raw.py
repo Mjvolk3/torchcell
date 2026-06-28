@@ -12,7 +12,7 @@ import os
 import os.path as osp
 from collections.abc import Iterator, Sequence
 from concurrent.futures import ProcessPoolExecutor
-from typing import Any
+from typing import Any, cast
 
 import lmdb
 from attrs import define, field
@@ -137,18 +137,18 @@ class Neo4jQueryRaw:
     password: str
     root_dir: str
     query: str
-    io_workers: int = None
-    num_workers: int = None
-    _experiment_reference_index: ExperimentReferenceIndex = field(
+    io_workers: int | None = None
+    num_workers: int | None = None
+    _experiment_reference_index: list[ExperimentReferenceIndex] | None = field(
         init=False, default=None, repr=False
     )
-    _phenotype_label_index: dict[str, list[int]] = field(
+    _phenotype_label_index: dict[str, list[int]] | None = field(
         init=False, default=None, repr=False
     )
     lmdb_dir: str = field(init=False, default=None)
     raw_dir: str = field(init=False, default=None)
-    env: str = field(init=False, default=None)
-    _gene_set: str = field(init=False, default=None)
+    env: Any = field(init=False, default=None)
+    _gene_set: GeneSet | None = field(init=False, default=None)
     cypher_kwargs: dict[str, str | int | float | list[Any]] = field(factory=dict)
 
     def __attrs_post_init__(self) -> None:
@@ -332,15 +332,15 @@ class Neo4jQueryRaw:
         if self.env is None:
             self._init_lmdb()
         with self.env.begin() as txn:
-            return txn.stat()["entries"]
+            return cast(int, txn.stat()["entries"])
         self.close_lmdb()
 
     @staticmethod
     def extract_systematic_gene_names(genotype: dict[str, Any]) -> list[str]:
         """Return the systematic gene names of all perturbations in a genotype."""
-        gene_names = []
-        for perturbation in genotype.get("perturbations"):
-            gene_name = perturbation.get("systematic_gene_name")
+        gene_names: list[str] = []
+        for perturbation in cast(list[dict[str, Any]], genotype.get("perturbations")):
+            gene_name = cast(str, perturbation.get("systematic_gene_name"))
             gene_names.append(gene_name)
         return gene_names
 
@@ -391,7 +391,7 @@ class Neo4jQueryRaw:
         return phenotype_label_index
 
     @property
-    def phenotype_label_index(self) -> dict[str, list[bool]]:
+    def phenotype_label_index(self) -> dict[str, list[int]]:
         """Return the cached phenotype-label index, computing and persisting if missing."""
         if osp.exists(osp.join(self.raw_dir, "phenotype_label_index.json")):
             with open(osp.join(self.raw_dir, "phenotype_label_index.json")) as file:
@@ -464,7 +464,7 @@ if __name__ == "__main__":
     from torchcell.sequence import GeneSet
 
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))

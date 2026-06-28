@@ -7,7 +7,7 @@
 
 import hashlib
 import logging
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 from scipy.stats import t
@@ -23,6 +23,7 @@ from torchcell.datamodels import (
     Genotype,
     MeanDeletionPerturbation,
 )
+from torchcell.datamodels.schema import GenePerturbationType
 
 log = logging.getLogger(__name__)
 
@@ -82,7 +83,7 @@ class MeanExperimentDeduplicator(Deduplicator):
         )
 
         mean_phenotype = FitnessPhenotype(
-            fitness=mean_fitness, fitness_std=mean_fitness_std
+            fitness=cast(float, mean_fitness), fitness_std=mean_fitness_std
         )
 
         mean_genotype = self._create_mean_genotype(duplicate_experiments)
@@ -122,7 +123,7 @@ class MeanExperimentDeduplicator(Deduplicator):
         )
 
         mean_phenotype = GeneInteractionPhenotype(
-            gene_interaction=mean_interaction,
+            gene_interaction=cast(float, mean_interaction),
             gene_interaction_p_value=aggregated_p_value,
         )
 
@@ -148,7 +149,7 @@ class MeanExperimentDeduplicator(Deduplicator):
     def _create_mean_genotype(
         self, duplicate_experiments: list[dict[str, Any]]
     ) -> Genotype:
-        mean_perturbations = []
+        mean_perturbations: list[GenePerturbationType] = []
         for pert in duplicate_experiments[0]["experiment"].genotype.perturbations:
             mean_pert = MeanDeletionPerturbation(
                 systematic_gene_name=pert.systematic_gene_name,
@@ -180,7 +181,7 @@ class MeanExperimentDeduplicator(Deduplicator):
         )
 
         mean_phenotype_reference = FitnessPhenotype(
-            fitness=mean_fitness_ref, fitness_std=mean_fitness_ref_std
+            fitness=cast(float, mean_fitness_ref), fitness_std=mean_fitness_ref_std
         )
 
         dataset_name = ("+").join(
@@ -215,7 +216,8 @@ class MeanExperimentDeduplicator(Deduplicator):
         )
 
         mean_phenotype_reference = GeneInteractionPhenotype(
-            gene_interaction=mean_interaction_ref, gene_interaction_p_value=None
+            gene_interaction=cast(float, mean_interaction_ref),
+            gene_interaction_p_value=None,
         )
 
         dataset_name = ("+").join(
@@ -250,7 +252,7 @@ class MeanExperimentDeduplicator(Deduplicator):
         t_stat = mean_x / sem
         p_value_for_mean = t.sf(np.abs(t_stat), df=n - 1) * 2
 
-        return p_value_for_mean
+        return cast(float, p_value_for_mean)
 
 
 if __name__ == "__main__":

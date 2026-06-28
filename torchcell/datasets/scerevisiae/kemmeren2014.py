@@ -612,10 +612,8 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
                 # Select appropriate WT reference and n_replicates based on strain
                 if strain == "BY4741":
-                    refpool_cv = self.wt_cv_BY4741
                     refpool_n_replicates = self.wt_n_replicates_BY4741
                 elif strain == "BY4742":
-                    refpool_cv = self.wt_cv_BY4742
                     refpool_n_replicates = self.wt_n_replicates_BY4742
                 else:
                     log.error(f"Unknown strain {strain} for {gene_name}")
@@ -773,10 +771,8 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
             # Select appropriate WT reference and n_replicates based on strain
             if strain == "BY4741":
-                refpool_cv = wt_cv_BY4741
                 refpool_n_replicates = wt_n_replicates_BY4741
             elif strain == "BY4742":
-                refpool_cv = wt_cv_BY4742
                 refpool_n_replicates = wt_n_replicates_BY4742
             else:
                 continue
@@ -1913,13 +1909,10 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             if not gsm_list:
                 continue
 
-            # Get strain to select appropriate refpool reference
+            # Skip genes whose strain has no WT reference (the refpool comes from the
+            # array's Cy5/Cy3 channels directly, validated below).
             strain = systematic_to_strain.get(gene_name)
-            if strain == "BY4741":
-                refpool_ref = self.wt_expression_BY4741
-            elif strain == "BY4742":
-                refpool_ref = self.wt_expression_BY4742
-            else:
+            if strain not in ("BY4741", "BY4742"):
                 continue
 
             # Get first GSM for this gene

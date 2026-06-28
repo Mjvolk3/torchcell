@@ -261,7 +261,7 @@ def verify_batch_structure(batch: HeteroData, expected_graphs: int = 2) -> bool:
         return False
 
 
-class LazyCollater(Collater):
+class LazyCollater(Collater):  # type: ignore[misc]  # PyG Collater is untyped (Any) so mypy cannot verify the subclass
     """PyTorch Lightning-compatible collater for LazySubgraphRepresentation.
 
     Extends PyG's Collater to use lazy_collate_hetero for HeteroData batching,

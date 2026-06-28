@@ -400,7 +400,7 @@ class FitnessPhenotype(Phenotype, ModelStrict):
             raise ValueError(f"n_samples must be a positive integer or None, got: {v}")
         return v
 
-    @model_validator(mode="after")
+    @model_validator(mode="after")  # type: ignore[arg-type]  # legacy pydantic (cls, values) after-validator; runtime-supported, plugin types as modern form
     def validate_label_fields(cls, values: "FitnessPhenotype") -> "FitnessPhenotype":
         """Validate that label_name and label_statistic_name are class attributes."""
         if values.label_name not in cls.__annotations__:
@@ -432,7 +432,7 @@ class GeneEssentialityPhenotype(Phenotype, ModelStrict):
     # IDEA
     # This is going to be standard for all child classes of Phenotype
     # This could alternatively be moved to testing
-    @model_validator(mode="after")
+    @model_validator(mode="after")  # type: ignore[arg-type]  # legacy pydantic (cls, values) after-validator; runtime-supported, plugin types as modern form
     def validate_label_fields(
         cls, values: "GeneEssentialityPhenotype"
     ) -> "GeneEssentialityPhenotype":
@@ -476,7 +476,7 @@ class SyntheticLethalityPhenotype(Phenotype, ModelStrict):
     # IDEA
     # This is going to be standard for all child classes of Phenotype
     # This could alternatively be moved to testing
-    @model_validator(mode="after")
+    @model_validator(mode="after")  # type: ignore[arg-type]  # legacy pydantic (cls, values) after-validator; runtime-supported, plugin types as modern form
     def validate_label_fields(
         cls, values: "SyntheticLethalityPhenotype"
     ) -> "SyntheticLethalityPhenotype":
@@ -520,7 +520,7 @@ class SyntheticRescuePhenotype(Phenotype, ModelStrict):
     # IDEA
     # This is going to be standard for all child classes of Phenotype
     # This could alternatively be moved to testing
-    @model_validator(mode="after")
+    @model_validator(mode="after")  # type: ignore[arg-type]  # legacy pydantic (cls, values) after-validator; runtime-supported, plugin types as modern form
     def validate_label_fields(
         cls, values: "SyntheticRescuePhenotype"
     ) -> "SyntheticRescuePhenotype":
@@ -568,7 +568,7 @@ class GeneInteractionPhenotype(Phenotype, ModelStrict):
     # IDEA
     # This is going to be standard for all child classes of Phenotype
     # This could alternatively be moved to testing
-    @model_validator(mode="after")
+    @model_validator(mode="after")  # type: ignore[arg-type]  # legacy pydantic (cls, values) after-validator; runtime-supported, plugin types as modern form
     def validate_label_fields(
         cls, values: "GeneInteractionPhenotype"
     ) -> "GeneInteractionPhenotype":
@@ -709,7 +709,7 @@ class FitnessExperiment(Experiment, ModelStrict):
     """Experiment measuring a fitness phenotype."""
 
     experiment_type: str = "fitness"
-    genotype: Genotype | list[Genotype,]
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: FitnessPhenotype
 
 
@@ -724,7 +724,7 @@ class GeneInteractionExperiment(Experiment, ModelStrict):
     """Experiment measuring a gene interaction phenotype."""
 
     experiment_type: str = "gene interaction"
-    genotype: Genotype | list[Genotype,]
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: GeneInteractionPhenotype
 
 
@@ -740,7 +740,7 @@ class GeneEssentialityExperiment(Experiment, ModelStrict):
     """Experiment measuring a gene essentiality phenotype."""
 
     experiment_type: str = "gene essentiality"
-    genotype: Genotype | list[Genotype,]
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: GeneEssentialityPhenotype
 
 
@@ -755,7 +755,7 @@ class SyntheticLethalityExperiment(Experiment, ModelStrict):
     """Experiment measuring a synthetic lethality phenotype."""
 
     experiment_type: str = "synthetic lethality"
-    genotype: Genotype | list[Genotype,]
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: SyntheticLethalityPhenotype
 
 
@@ -770,7 +770,7 @@ class SyntheticRescueExperiment(Experiment, ModelStrict):
     """Experiment measuring a synthetic rescue phenotype."""
 
     experiment_type: str = "synthetic rescue"
-    genotype: Genotype | list[Genotype,]
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: SyntheticRescuePhenotype
 
 
@@ -785,7 +785,7 @@ class CalMorphExperiment(Experiment, ModelStrict):
     """Experiment measuring a CalMorph phenotype."""
 
     experiment_type: str = "calmorph"
-    genotype: Genotype | list[Genotype,]
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: CalMorphPhenotype
 
 
@@ -995,7 +995,7 @@ class MicroarrayExpressionExperiment(Experiment, ModelStrict):
     """Experiment measuring a microarray expression phenotype."""
 
     experiment_type: str = "microarray_expression"
-    genotype: Genotype | list[Genotype,]
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: MicroarrayExpressionPhenotype
 
 

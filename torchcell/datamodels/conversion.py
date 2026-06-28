@@ -10,7 +10,7 @@ import os
 import os.path as osp
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import lmdb
 from tqdm import tqdm
@@ -58,7 +58,7 @@ class Converter(ABC):
         self.root = root
         self.query = query
         self.lmdb_dir = os.path.join(self.root, "conversion", "lmdb")
-        self.env = None
+        self.env: "lmdb.Environment | None" = None
 
     @property
     @abstractmethod
@@ -151,7 +151,9 @@ class Converter(ABC):
         converted_count = 0
         total_count = 0
 
-        with env_input.begin() as txn_input, self.env.begin(write=True) as txn_output:
+        with env_input.begin() as txn_input, self.env.begin(  # type: ignore[union-attr]  # _init_lmdb(readonly=False) above always opens self.env
+            write=True
+        ) as txn_output:
             cursor = txn_input.cursor()
             for idx, (key, value) in enumerate(
                 tqdm(cursor, desc="Converting and writing to LMDB")
@@ -177,12 +179,14 @@ class Converter(ABC):
                     original_hash = self._compute_hash(data_dict)
 
                     converted_data = self.convert(data)
+                    # convert() never yields None values; the Optional in its
+                    # return type is conservative, so model_dump() is safe here.
                     converted_hash = self._compute_hash(
                         {
-                            "experiment": converted_data["experiment"].model_dump(),
+                            "experiment": converted_data["experiment"].model_dump(),  # type: ignore[union-attr]
                             "experiment_reference": converted_data[
                                 "experiment_reference"
-                            ].model_dump(),
+                            ].model_dump(),  # type: ignore[union-attr]
                         }
                     )
 
@@ -193,10 +197,12 @@ class Converter(ABC):
                         key,
                         json.dumps(
                             {
-                                "experiment": converted_data["experiment"].model_dump(),
+                                "experiment": converted_data[
+                                    "experiment"
+                                ].model_dump(),  # type: ignore[union-attr]
                                 "experiment_reference": converted_data[
                                     "experiment_reference"
-                                ].model_dump(),
+                                ].model_dump(),  # type: ignore[union-attr]
                             }
                         ).encode(),
                     )
@@ -296,7 +302,7 @@ class Converter(ABC):
         if self.env is None:
             return 0  # Return 0 if the LMDB doesn't exist yet
         with self.env.begin() as txn:
-            return txn.stat()["entries"]
+            return cast(int, txn.stat()["entries"])
 
     def __bool__(self) -> bool:
         """Return True if the LMDB directory exists."""

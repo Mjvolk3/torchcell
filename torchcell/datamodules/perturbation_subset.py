@@ -55,6 +55,8 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         self.train_shuffle = train_shuffle
 
         # Use the first key–value pair from the gene_subsets dict (if provided)
+        self.subset_tag: str | None
+        self.gene_subset: GeneSet | None
         if gene_subsets is not None and len(gene_subsets) > 0:
             self.subset_tag, self.gene_subset = list(gene_subsets.items())[0]
         else:
@@ -91,8 +93,8 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
             )
         os.makedirs(self.subset_dir, exist_ok=True)
         random.seed(self.seed)
-        self._index = None
-        self._index_details = None
+        self._index: DataModuleIndex | None = None
+        self._index_details: DataModuleIndexDetails | None = None
 
     def _set_size(self, size: int) -> None:
         # Determine maximum possible subset size.
@@ -118,14 +120,14 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         """Return the train/val/test split index, computing it if needed."""
         if self._index is None or not self._cached_files_exist():
             self._load_or_compute_index()
-        return self._index
+        return self._index  # type: ignore[return-value]  # _load_or_compute_index() always populates _index
 
     @property
     def index_details(self) -> DataModuleIndexDetails:
         """Return per-split index details, computing them if needed."""
         if self._index_details is None or not self._cached_files_exist():
             self._load_or_compute_index()
-        return self._index_details
+        return self._index_details  # type: ignore[return-value]  # _load_or_compute_index() always populates _index_details
 
     def _load_or_compute_index(self) -> None:
         index_file = osp.join(
@@ -309,13 +311,19 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         self._index_details = DataModuleIndexDetails(
             methods=methods,
             train=self._create_dataset_split(
-                self._index.train, cell_index_details.train, methods
+                self._index.train,  # type: ignore[union-attr]  # _create_index_details() runs only after _index is set in _create_subset()
+                cell_index_details.train,
+                methods,
             ),
             val=self._create_dataset_split(
-                self._index.val, cell_index_details.val, methods
+                self._index.val,  # type: ignore[union-attr]  # _create_index_details() runs only after _index is set in _create_subset()
+                cell_index_details.val,
+                methods,
             ),
             test=self._create_dataset_split(
-                self._index.test, cell_index_details.test, methods
+                self._index.test,  # type: ignore[union-attr]  # _create_index_details() runs only after _index is set in _create_subset()
+                cell_index_details.test,
+                methods,
             ),
         )
 
@@ -347,9 +355,10 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
             f"index_details_{format_scientific_notation(self.size)}_seed_{self.seed}.json",
         )
         with open(index_path, "w") as f:
-            json.dump(self._index.model_dump(), f, indent=2)
+            # _save_index() runs only after _create_subset() populates _index.
+            json.dump(self._index.model_dump(), f, indent=2)  # type: ignore[union-attr]
         with open(details_path, "w") as f:
-            json.dump(self._index_details.model_dump(), f, indent=2)
+            json.dump(self._index_details.model_dump(), f, indent=2)  # type: ignore[union-attr]
 
     def _cached_files_exist(self) -> bool:
         index_file = osp.join(

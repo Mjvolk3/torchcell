@@ -10,7 +10,7 @@ import os
 import os.path as osp
 import random
 from collections import defaultdict
-from typing import Any
+from typing import Any, cast
 
 import lightning as L
 import pandas as pd
@@ -81,7 +81,7 @@ class DataModuleIndexDetails(ModelStrict):
                     for key, index_split in index_data.items():
                         # Handle both IndexSplit objects and dictionaries
                         if isinstance(index_split, dict):
-                            count = index_split.get("count")
+                            count = cast(int, index_split.get("count"))
                         else:
                             count = index_split.count
 
@@ -177,9 +177,9 @@ class DataModuleIndex(ModelStrict):
 class DatasetIndexSplit(ModelStrict):
     """Per-dataset index lists grouped by train/val/test split."""
 
-    train: dict[str | int, list[int]] = None
-    val: dict[str | int, list[int]] = None
-    test: dict[str | int, list[int]] = None
+    train: dict[str | int, list[int]] = None  # type: ignore[assignment]  # pydantic field: keep declared type + None default (changing either alters validation/runtime)
+    val: dict[str | int, list[int]] = None  # type: ignore[assignment]  # pydantic field: keep declared type + None default (changing either alters validation/runtime)
+    test: dict[str | int, list[int]] = None  # type: ignore[assignment]  # pydantic field: keep declared type + None default (changing either alters validation/runtime)
 
 
 def overlap_dataset_index_split(
@@ -207,9 +207,9 @@ def overlap_dataset_index_split(
             test_dict[dataset_name] = test_indices
 
     return DatasetIndexSplit(
-        train=train_dict if train_dict else None,
-        val=val_dict if val_dict else None,
-        test=test_dict if test_dict else None,
+        train=train_dict if train_dict else None,  # type: ignore[arg-type]  # field accepts None default (see DatasetIndexSplit); type kept as-is
+        val=val_dict if val_dict else None,  # type: ignore[arg-type]  # field accepts None default (see DatasetIndexSplit); type kept as-is
+        test=test_dict if test_dict else None,  # type: ignore[arg-type]  # field accepts None default (see DatasetIndexSplit); type kept as-is
     )
 
 
@@ -257,8 +257,8 @@ class CellDataModule(L.LightningDataModule):
             if split_indices
             else []
         )
-        self._index = None
-        self._index_details = None
+        self._index: DataModuleIndex | None = None
+        self._index_details: DataModuleIndexDetails | None = None
         if follow_batch is None:
             self.follow_batch = ["x", "x_pert"]
         else:
@@ -274,14 +274,14 @@ class CellDataModule(L.LightningDataModule):
         """Return the train/val/test split index, computing or loading it if needed."""
         if self._index is None or not self._cached_files_exist():
             self._load_or_compute_index()
-        return self._index
+        return self._index  # type: ignore[return-value]  # _load_or_compute_index() always populates _index
 
     @property
     def index_details(self) -> DataModuleIndexDetails:
         """Return the detailed split-index breakdown, computing or loading if needed."""
         if self._index_details is None or not self._cached_files_exist():
             self._load_or_compute_index()
-        return self._index_details
+        return self._index_details  # type: ignore[return-value]  # _load_or_compute_index() always populates _index_details
 
     def _load_or_compute_index(self) -> None:
         os.makedirs(self.cache_dir, exist_ok=True)
@@ -394,13 +394,15 @@ class CellDataModule(L.LightningDataModule):
         for split in ["train", "val", "test"]:
             for index_name in self.split_indices:
                 original_index = getattr(self.dataset, index_name)
-                split_data = {}
+                split_index_data: dict[str | int, IndexSplit] = {}
                 for key, indices in original_index.items():
                     intersect = sorted(list(set(indices) & final_splits[split]))
-                    split_data[key] = IndexSplit(
+                    split_index_data[key] = IndexSplit(
                         indices=intersect, count=len(intersect)
                     )
-                setattr(getattr(self._index_details, split), index_name, split_data)
+                setattr(
+                    getattr(self._index_details, split), index_name, split_index_data
+                )
 
         # Create DataModuleIndex object
         self._index = DataModuleIndex(

@@ -86,11 +86,11 @@ model:
     # NOTE: layer can be a single int or list of ints: [4, 5, 6]
     # Each graph MUST have unique head to avoid conflicts
     regularized_heads:
-      physical:
+      physical_interaction:
         layer: ${model.graph_regularization.graph_reg_layer}  # Can also be [4] or [4, 5, 6]
         head: 0
         lambda: ${model.graph_regularization.graph_reg_lambda}
-      regulatory:
+      regulatory_interaction:
         layer: ${model.graph_regularization.graph_reg_layer}
         head: 1
         lambda: ${model.graph_regularization.graph_reg_lambda}

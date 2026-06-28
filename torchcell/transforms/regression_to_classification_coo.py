@@ -7,7 +7,7 @@
 
 import copy
 from abc import ABC
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import torch
@@ -29,7 +29,7 @@ def _isolate_gene_store(data: HeteroData) -> None:
         data["gene"] = {key: store[key] for key in store}
 
 
-class COOLabelNormalizationTransform(BaseTransform):
+class COOLabelNormalizationTransform(BaseTransform):  # type: ignore[misc]  # BaseTransform is Any (torch_geometric untyped)
     """Transform for normalizing labels in COO format with different strategies."""
 
     def __init__(
@@ -133,12 +133,17 @@ class COOLabelNormalizationTransform(BaseTransform):
         strategy = stats["strategy"]
 
         if strategy == "standard":
-            return (values - stats["mean"]) / (stats["std"] + self.eps)
+            return cast(
+                torch.Tensor, (values - stats["mean"]) / (stats["std"] + self.eps)
+            )
         elif strategy == "minmax":
-            return (values - stats["min"]) / (stats["max"] - stats["min"] + self.eps)
+            return cast(
+                torch.Tensor,
+                (values - stats["min"]) / (stats["max"] - stats["min"] + self.eps),
+            )
         elif strategy == "robust":
             iqr = stats["q75"] - stats["q25"]
-            return (values - stats["q25"]) / (iqr + self.eps)
+            return cast(torch.Tensor, (values - stats["q25"]) / (iqr + self.eps))
         else:
             raise ValueError(f"Unknown normalization strategy: {strategy}")
 
@@ -151,13 +156,13 @@ class COOLabelNormalizationTransform(BaseTransform):
         strategy = stats["strategy"]
 
         if strategy == "standard":
-            return values * stats["std"] + stats["mean"]
+            return cast(torch.Tensor, values * stats["std"] + stats["mean"])
         elif strategy == "minmax":
             range_val = stats["max"] - stats["min"]
-            return values * range_val + stats["min"]
+            return cast(torch.Tensor, values * range_val + stats["min"])
         elif strategy == "robust":
             iqr = stats["q75"] - stats["q25"]
-            return values * iqr + stats["q25"]
+            return cast(torch.Tensor, values * iqr + stats["q25"])
         else:
             raise ValueError(f"Unknown normalization strategy: {strategy}")
 
@@ -253,6 +258,14 @@ class COOLabelNormalizationTransform(BaseTransform):
 # Reuse the existing base binning strategy classes
 class BaseBinningStrategy(ABC):
     """Base class for label binning strategies operating on value arrays."""
+
+    if TYPE_CHECKING:
+        # Declared for typing only: every concrete strategy implements
+        # ``compute_bins`` with its own signature. The ``*args``/``**kwargs``
+        # form is a compatible supertype so subclass overrides do not conflict.
+        def compute_bins(
+            self, *args: Any, **kwargs: Any
+        ) -> tuple[np.ndarray, dict[str, Any]]: ...
 
     def clamp_values(
         self, values: torch.Tensor, bin_edges: torch.Tensor
@@ -392,7 +405,7 @@ class AutoBinStrategy(BaseBinningStrategy):
         return EqualWidthStrategy().compute_bins(values, num_bins)
 
 
-class COOLabelBinningTransform(BaseTransform):
+class COOLabelBinningTransform(BaseTransform):  # type: ignore[misc]  # BaseTransform is Any (torch_geometric untyped)
     """Transform for binning labels in COO format."""
 
     def __init__(
@@ -774,8 +787,9 @@ class COOLabelBinningTransform(BaseTransform):
                                 full_bins[idx_val] = label_values[i]
 
                         if label_type == "categorical":
-                            # Find max bin
-                            max_bin = torch.argmax(full_bins).item()
+                            # Find max bin. cast for typing only: argmax yields an
+                            # integer index, so .item() is an int (no runtime change).
+                            max_bin = cast(int, torch.argmax(full_bins).item())
                             low, high = bin_edges[max_bin], bin_edges[max_bin + 1]
                             cont_value = (
                                 torch.rand(1, device=binned_values.device)
@@ -808,7 +822,7 @@ class COOLabelBinningTransform(BaseTransform):
         return data
 
 
-class COOInverseCompose(BaseTransform):
+class COOInverseCompose(BaseTransform):  # type: ignore[misc]  # BaseTransform is Any (torch_geometric untyped)
     """Apply the inverse of a sequence of COO transforms in reverse order."""
 
     def __init__(self, transforms: Compose | list[BaseTransform]):

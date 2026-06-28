@@ -6,7 +6,7 @@
 """Transforms converting COO-format regression labels to classification targets."""
 
 from abc import ABC
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import torch
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from torchcell.data.neo4j_cell import Neo4jCellDataset
 
 
-class COOLabelNormalizationTransform(BaseTransform):
+class COOLabelNormalizationTransform(BaseTransform):  # type: ignore[misc]  # BaseTransform is Any (torch_geometric untyped)
     """Transform for normalizing labels in COO format with different strategies."""
 
     def __init__(
@@ -50,7 +50,7 @@ class COOLabelNormalizationTransform(BaseTransform):
             if label not in df.columns:
                 raise ValueError(f"Label {label} not found in dataset")
 
-            values = df[label].dropna().values
+            values = cast(np.ndarray, df[label].dropna().values)
             stats = {
                 "mean": float(np.mean(values)),
                 "std": float(np.std(values)),
@@ -71,12 +71,17 @@ class COOLabelNormalizationTransform(BaseTransform):
         strategy = stats["strategy"]
 
         if strategy == "standard":
-            return (values - stats["mean"]) / (stats["std"] + self.eps)
+            return cast(
+                torch.Tensor, (values - stats["mean"]) / (stats["std"] + self.eps)
+            )
         elif strategy == "minmax":
-            return (values - stats["min"]) / (stats["max"] - stats["min"] + self.eps)
+            return cast(
+                torch.Tensor,
+                (values - stats["min"]) / (stats["max"] - stats["min"] + self.eps),
+            )
         elif strategy == "robust":
             iqr = stats["q75"] - stats["q25"]
-            return (values - stats["q25"]) / (iqr + self.eps)
+            return cast(torch.Tensor, (values - stats["q25"]) / (iqr + self.eps))
         else:
             raise ValueError(f"Unknown normalization strategy: {strategy}")
 
@@ -89,12 +94,14 @@ class COOLabelNormalizationTransform(BaseTransform):
         strategy = stats["strategy"]
 
         if strategy == "standard":
-            return values * stats["std"] + stats["mean"]
+            return cast(torch.Tensor, values * stats["std"] + stats["mean"])
         elif strategy == "minmax":
-            return values * (stats["max"] - stats["min"]) + stats["min"]
+            return cast(
+                torch.Tensor, values * (stats["max"] - stats["min"]) + stats["min"]
+            )
         elif strategy == "robust":
             iqr = stats["q75"] - stats["q25"]
-            return values * iqr + stats["q25"]
+            return cast(torch.Tensor, values * iqr + stats["q25"])
         else:
             raise ValueError(f"Unknown normalization strategy: {strategy}")
 
@@ -216,6 +223,14 @@ class COOLabelNormalizationTransform(BaseTransform):
 
 class BaseBinningStrategy(ABC):
     """Base class for strategies that bin continuous values into classes."""
+
+    if TYPE_CHECKING:
+        # Declared for typing only: every concrete strategy implements
+        # ``compute_bins`` with its own signature. The ``*args``/``**kwargs``
+        # form is a compatible supertype so subclass overrides do not conflict.
+        def compute_bins(
+            self, *args: Any, **kwargs: Any
+        ) -> tuple[np.ndarray, dict[str, Any]]: ...
 
     def clamp_values(
         self, values: torch.Tensor, bin_edges: torch.Tensor
@@ -355,7 +370,7 @@ class AutoBinStrategy(BaseBinningStrategy):
         return EqualWidthStrategy().compute_bins(values, num_bins)
 
 
-class COOLabelBinningTransform(BaseTransform):
+class COOLabelBinningTransform(BaseTransform):  # type: ignore[misc]  # BaseTransform is Any (torch_geometric untyped)
     """Transform binning COO-format continuous labels into class indices."""
 
     def __init__(
@@ -492,8 +507,14 @@ class COOLabelBinningTransform(BaseTransform):
                 binned_values = strategy.compute_onehot_labels(values, bin_edges)
             elif label_type == "soft":
                 sigma = config.get("sigma", 3)
+                # NOTE: passes the strategy object where the signature wants a
+                # str; the param is unused in the body, so this is a no-op at
+                # runtime. Preserving behavior, so silence the type only.
                 binned_values = strategy.compute_soft_labels(
-                    values, bin_edges, strategy, sigma
+                    values,
+                    bin_edges,
+                    strategy,  # type: ignore[arg-type]  # unused str param; object passed, runtime no-op
+                    sigma,
                 )
             elif label_type == "ordinal":
                 binned_values = strategy.compute_ordinal_labels(values, bin_edges)
@@ -607,29 +628,35 @@ class COOLabelBinningTransform(BaseTransform):
                 if not bin_values:
                     continue
 
-                bin_values = torch.stack(bin_values)
+                # Use a distinct name for the stacked tensor so the variable type
+                # stays a list above and a Tensor here (no runtime change).
+                bin_values_tensor = torch.stack(bin_values)
 
                 # Check for NaN
-                if torch.isnan(bin_values).any():
+                continuous_value: float
+                if torch.isnan(bin_values_tensor).any():
                     continuous_value = float("nan")
                 else:
                     # Reconstruct continuous value based on label type
                     if label_type == "ordinal":
                         # Count number of 1s to determine bin
-                        crossings = torch.sum(bin_values > 0.5)
-                        bin_idx = crossings.item()
-                        low, high = bin_edges[bin_idx], bin_edges[bin_idx + 1]
-                        continuous_value = (
+                        crossings = torch.sum(bin_values_tensor > 0.5)
+                        # cast for typing only: a summed bool count is an int.
+                        bin_pos = cast(int, crossings.item())
+                        low, high = bin_edges[bin_pos], bin_edges[bin_pos + 1]
+                        rand_val = (
                             torch.rand(1, device=bin_edges.device) * (high - low) + low
                         )
-                        continuous_value = continuous_value.item()
+                        continuous_value = rand_val.item()
 
                     elif label_type == "soft":
                         # Use weighted average based on soft labels
                         window_size = 2
-                        probs = torch.softmax(bin_values, dim=-1)
+                        probs = torch.softmax(bin_values_tensor, dim=-1)
                         bin_centers = (bin_edges[1:] + bin_edges[:-1]) / 2
-                        max_prob_bin = torch.argmax(probs)
+                        # cast for typing only: a 0-d index tensor behaves like an
+                        # int for the slicing/arithmetic below (no runtime change).
+                        max_prob_bin = cast(int, torch.argmax(probs))
 
                         start_idx = max(0, max_prob_bin - window_size)
                         end_idx = min(len(bin_centers), max_prob_bin + window_size + 1)
@@ -646,13 +673,14 @@ class COOLabelBinningTransform(BaseTransform):
 
                     elif label_type == "categorical":
                         # Use argmax to find bin
-                        probs = torch.softmax(bin_values, dim=-1)
-                        bin_idx = torch.argmax(probs)
-                        low, high = bin_edges[bin_idx], bin_edges[bin_idx + 1]
-                        continuous_value = (
+                        probs = torch.softmax(bin_values_tensor, dim=-1)
+                        # cast for typing only: a 0-d argmax tensor indexes like an int.
+                        argmax_bin = cast(int, torch.argmax(probs))
+                        low, high = bin_edges[argmax_bin], bin_edges[argmax_bin + 1]
+                        rand_val = (
                             torch.rand(1, device=bin_edges.device) * (high - low) + low
                         )
-                        continuous_value = continuous_value.item()
+                        continuous_value = rand_val.item()
 
                 new_values.append(continuous_value)
                 new_type_indices.append(len(new_phenotype_types))
@@ -681,7 +709,7 @@ class COOLabelBinningTransform(BaseTransform):
         return self.label_metadata[label]
 
 
-class COOInverseCompose(BaseTransform):
+class COOInverseCompose(BaseTransform):  # type: ignore[misc]  # BaseTransform is Any (torch_geometric untyped)
     """A transform that applies the inverse of a sequence of transforms in reverse order."""
 
     def __init__(self, transforms: Compose | list[BaseTransform]):

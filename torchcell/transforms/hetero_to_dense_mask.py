@@ -8,7 +8,7 @@ from torch_geometric.transforms import BaseTransform
 
 
 @functional_transform("hetero_to_dense_mask")
-class HeteroToDenseMask(BaseTransform):
+class HeteroToDenseMask(BaseTransform):  # type: ignore[misc]  # BaseTransform is Any (torch_geometric untyped)
     r"""Convert sparse hetero adjacencies to boolean dense masks.
 
     Edge attributes are preserved in their original sparse format for memory

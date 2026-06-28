@@ -8,7 +8,7 @@ from torch_geometric.transforms import BaseTransform
 
 
 @functional_transform("hetero_to_dense")
-class HeteroToDense(BaseTransform):
+class HeteroToDense(BaseTransform):  # type: ignore[misc]  # BaseTransform is Any (torch_geometric untyped)
     r"""Converts sparse adjacency matrices in a heterogeneous graph to dense format
     with shape :obj:`[num_nodes, num_nodes, *]` for each edge type.
 
@@ -52,10 +52,10 @@ class HeteroToDense(BaseTransform):
                     edge_attr = torch.ones(store.edge_index.size(1), dtype=torch.float)
 
                 # Create dense adjacency matrix
-                size = torch.Size(
+                adj_size = torch.Size(
                     [src_num_nodes, dst_num_nodes] + list(edge_attr.size())[1:]
                 )
-                adj = torch.sparse_coo_tensor(store.edge_index, edge_attr, size)
+                adj = torch.sparse_coo_tensor(store.edge_index, edge_attr, adj_size)
                 store.adj = adj.to_dense()
 
                 # Safely delete attributes

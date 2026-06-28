@@ -7,7 +7,7 @@
 
 import copy
 from abc import ABC
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import torch
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 ### Normalize
 
 
-class LabelNormalizationTransform(BaseTransform):
+class LabelNormalizationTransform(BaseTransform):  # type: ignore[misc]  # BaseTransform is Any (torch_geometric untyped)
     """Transform for normalizing labels with different strategies."""
 
     def __init__(
@@ -52,7 +52,7 @@ class LabelNormalizationTransform(BaseTransform):
             if label not in df.columns:
                 raise ValueError(f"Label {label} not found in dataset")
 
-            values = df[label].dropna().values
+            values = cast(np.ndarray, df[label].dropna().values)
             stats = {
                 "mean": float(np.mean(values)),
                 "std": float(np.std(values)),
@@ -73,12 +73,17 @@ class LabelNormalizationTransform(BaseTransform):
         strategy = stats["strategy"]
 
         if strategy == "standard":
-            return (values - stats["mean"]) / (stats["std"] + self.eps)
+            return cast(
+                torch.Tensor, (values - stats["mean"]) / (stats["std"] + self.eps)
+            )
         elif strategy == "minmax":
-            return (values - stats["min"]) / (stats["max"] - stats["min"] + self.eps)
+            return cast(
+                torch.Tensor,
+                (values - stats["min"]) / (stats["max"] - stats["min"] + self.eps),
+            )
         elif strategy == "robust":
             iqr = stats["q75"] - stats["q25"]
-            return (values - stats["q25"]) / (iqr + self.eps)
+            return cast(torch.Tensor, (values - stats["q25"]) / (iqr + self.eps))
         else:
             raise ValueError(f"Unknown normalization strategy: {strategy}")
 
@@ -91,12 +96,14 @@ class LabelNormalizationTransform(BaseTransform):
         strategy = stats["strategy"]
 
         if strategy == "standard":
-            return values * stats["std"] + stats["mean"]
+            return cast(torch.Tensor, values * stats["std"] + stats["mean"])
         elif strategy == "minmax":
-            return values * (stats["max"] - stats["min"]) + stats["min"]
+            return cast(
+                torch.Tensor, values * (stats["max"] - stats["min"]) + stats["min"]
+            )
         elif strategy == "robust":
             iqr = stats["q75"] - stats["q25"]
-            return values * iqr + stats["q25"]
+            return cast(torch.Tensor, values * iqr + stats["q25"])
         else:
             raise ValueError(f"Unknown normalization strategy: {strategy}")
 
@@ -139,6 +146,14 @@ class LabelNormalizationTransform(BaseTransform):
 
 class BaseBinningStrategy(ABC):
     """Base strategy providing shared clamping and encoding for label binning."""
+
+    if TYPE_CHECKING:
+        # Declared for typing only: every concrete strategy implements
+        # ``compute_bins`` with its own signature. The ``*args``/``**kwargs``
+        # form is a compatible supertype so subclass overrides do not conflict.
+        def compute_bins(
+            self, *args: Any, **kwargs: Any
+        ) -> tuple[np.ndarray, dict[str, Any]]: ...
 
     def clamp_values(
         self, values: torch.Tensor, bin_edges: torch.Tensor
@@ -278,7 +293,7 @@ class AutoBinStrategy(BaseBinningStrategy):
         return EqualWidthStrategy().compute_bins(values, num_bins)
 
 
-class LabelBinningTransform(BaseTransform):
+class LabelBinningTransform(BaseTransform):  # type: ignore[misc]  # BaseTransform is Any (torch_geometric untyped)
     """Transform converting continuous labels into binned classification targets."""
 
     def __init__(
@@ -370,8 +385,14 @@ class LabelBinningTransform(BaseTransform):
                     data["gene"][label] = onehot_labels
                 elif label_type == "soft":
                     sigma = config.get("sigma", 3)
+                    # NOTE: passes the strategy object where the signature wants a
+                    # str; the param is unused in the body, so this is a no-op at
+                    # runtime. Preserving behavior, so silence the type only.
                     soft_labels = strategy.compute_soft_labels(
-                        values, bin_edges, strategy, sigma
+                        values,
+                        bin_edges,
+                        strategy,  # type: ignore[arg-type]  # unused str param; object passed, runtime no-op
+                        sigma,
                     )
                     data["gene"][label] = soft_labels
                 elif label_type == "ordinal":
@@ -428,8 +449,12 @@ class LabelBinningTransform(BaseTransform):
                             if mask.any():
                                 low, high = bin_edges[i], bin_edges[i + 1]
                                 size = mask.sum()
+                                # size is a 0-d count tensor; torch.rand accepts it
+                                # at runtime, but its overloads only list int sizes.
                                 temp_values[mask] = (
-                                    torch.rand(size, device=device) * (high - low) + low
+                                    torch.rand(size, device=device)  # type: ignore[call-overload]  # 0-d size tensor accepted at runtime
+                                    * (high - low)
+                                    + low
                                 )
 
                         continuous_values[non_nan_mask] = temp_values
@@ -449,7 +474,9 @@ class LabelBinningTransform(BaseTransform):
                         )
 
                         for i in range(len(valid_values)):
-                            peak_bin = max_prob_bins[i]
+                            # cast for typing only: a 0-d index tensor behaves like
+                            # an int for the slicing/arithmetic below (no runtime change).
+                            peak_bin = cast(int, max_prob_bins[i])
                             start_idx = max(0, peak_bin - window_size)
                             end_idx = min(len(bin_centers), peak_bin + window_size + 1)
 
@@ -478,8 +505,12 @@ class LabelBinningTransform(BaseTransform):
                             if mask.any():
                                 low, high = bin_edges[i], bin_edges[i + 1]
                                 size = mask.sum()
+                                # size is a 0-d count tensor; torch.rand accepts it
+                                # at runtime, but its overloads only list int sizes.
                                 temp_values[mask] = (
-                                    torch.rand(size, device=device) * (high - low) + low
+                                    torch.rand(size, device=device)  # type: ignore[call-overload]  # 0-d size tensor accepted at runtime
+                                    * (high - low)
+                                    + low
                                 )
 
                         continuous_values[non_nan_mask] = temp_values
@@ -495,7 +526,7 @@ class LabelBinningTransform(BaseTransform):
         return self.label_metadata[label]
 
 
-class InverseCompose(BaseTransform):
+class InverseCompose(BaseTransform):  # type: ignore[misc]  # BaseTransform is Any (torch_geometric untyped)
     """A transform that applies the inverse of a sequence of transforms in reverse order."""
 
     def __init__(self, transforms: Compose | list[BaseTransform]):

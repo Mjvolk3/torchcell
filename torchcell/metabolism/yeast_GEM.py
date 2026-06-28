@@ -8,7 +8,7 @@ import os
 import os.path as osp
 import re
 import zipfile
-from typing import Any
+from typing import Any, Optional, cast
 
 import cobra
 import hypernetx as hnx
@@ -672,7 +672,7 @@ def plot_random_network(
 
 def plot_bipartite_network(
     yeast_gem: YeastGEM,
-    reaction_id: str = None,
+    reaction_id: Optional[str] = None,
     output_path: str = "bipartite_network.png",
     figsize: tuple[int, int] = (20, 15),
     show_labels: bool = False,
@@ -832,7 +832,7 @@ def main() -> None:
 
     load_dotenv()
 
-    ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+    ASSET_IMAGES_DIR = cast(str, os.getenv("ASSET_IMAGES_DIR"))
     yeast_gem = YeastGEM()
 
     # # PLOTTING
@@ -882,7 +882,7 @@ def main_with_gene_set() -> None:
 
     # Setup dataset (unchanged)
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
 
     # Without edge drop
     yeast_gem = YeastGEM()
@@ -893,7 +893,7 @@ def main_with_gene_set() -> None:
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
     genome.drop_chrmt()
 
-    yeast_gem = YeastGEM(gene_set=genome.gene_set)
+    yeast_gem = YeastGEM(gene_set=genome.gene_set)  # type: ignore[call-arg]  # demo helper passes nonexistent kwarg (field is `induced_gene_set`); pre-existing runtime bug, left as-is to preserve behavior
     H = yeast_gem.reaction_map
     print(f"H num edges with gene_set edge drop: {len(H.edges)}")
 
@@ -904,7 +904,7 @@ def main_bipartite() -> None:
 
     load_dotenv()
 
-    ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+    ASSET_IMAGES_DIR = cast(str, os.getenv("ASSET_IMAGES_DIR"))
     yeast_gem = YeastGEM()
 
     # Plot full bipartite network

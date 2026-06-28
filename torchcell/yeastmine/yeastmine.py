@@ -15,7 +15,7 @@ from tqdm import tqdm
 from torchcell.sc_graph import get_gene_list
 
 
-def get_regulators(gene: str = "YOR202W") -> int:
+def get_regulators(gene: str = "YOR202W") -> dict[str, Any]:
     """Return regulators of ``gene`` from the GeneTarget_GeneFactor template."""
     # Gene Regulation
     # Retrieve genes that are regulators of a given target gene.
@@ -27,7 +27,7 @@ def get_regulators(gene: str = "YOR202W") -> int:
         A={"op": "LOOKUP", "value": gene, "extra_value": "S. cerevisiae"}
     )
     data_dict_list = []
-    reg_dict = {}
+    reg_dict: dict[str, Any] = {}
     for row in rows:
         data_dict = {}
         data_dict["regulatoryRegions.regulator.symbol"] = row[
@@ -81,7 +81,7 @@ def get_physical_interactions(gene: str = "YFL039C") -> dict[str, Any]:
     rows = template.rows(A={"op": "LOOKUP", "value": gene, "extra_value": ""})
 
     data_dict_list = []
-    physical_int_dict = {}
+    physical_int_dict: dict[str, Any] = {}
     for row in rows:
         data_dict = {}
         data_dict["primaryIdentifier"] = row["primaryIdentifier"]
@@ -129,7 +129,7 @@ def get_gene_interactions(gene: str = "YDR210W") -> dict[str, Any]:
     rows = template.rows(A={"op": "LOOKUP", "value": gene, "extra_value": ""})
 
     data_dict_list = []
-    gene_int_dict = {}
+    gene_int_dict: dict[str, Any] = {}
     for i, row in enumerate(rows):
         data_dict = {}
         data_dict["primaryIdentifier"] = row["primaryIdentifier"]
@@ -192,7 +192,7 @@ def get_protein_abundance(gene: str = "tfc3") -> dict[str, Any]:
     template = service.get_template("Gene_ProteinAbundance")
     rows = template.rows(A={"op": "LOOKUP", "value": gene, "extra_value": ""})
     data_dict_list = []
-    protein_abundance_dict = {}
+    protein_abundance_dict: dict[str, Any] = {}
     for row in rows:
         data_dict = {}
         data_dict["primaryIdentifier"] = row["primaryIdentifier"]
@@ -245,7 +245,7 @@ def get_median_protein_abundance(gene: str = "YAL001C") -> dict[str, Any]:
     template = service.get_template("Protein_Median_Abundance")
     rows = template.rows(A={"op": "LOOKUP", "value": gene, "extra_value": ""})
     data_dict_list = []
-    median_protein_abundance_dict = {}
+    median_protein_abundance_dict: dict[str, Any] = {}
     for row in rows:
         data_dict = {}
         data_dict["primaryIdentifier"] = row["primaryIdentifier"]
@@ -275,7 +275,7 @@ def get_protein_sequence(gene: str = "rad54") -> dict[str, Any]:
         B={"op": "LOOKUP", "value": gene, "extra_value": "S. cerevisiae"}
     )
     data_dict_list = []
-    protein_sequence_dict = {}
+    protein_sequence_dict: dict[str, Any] = {}
     for row in rows:
         data_dict = {}
         data_dict["secondaryIdentifier"] = row["secondaryIdentifier"]
@@ -304,7 +304,7 @@ def get_gene_sequence(gene: str = "rad54") -> dict[str, Any]:
         E={"op": "LOOKUP", "value": gene, "extra_value": "S. cerevisiae"}
     )
     data_dict_list = []
-    gene_sequence_dict = {}
+    gene_sequence_dict: dict[str, Any] = {}
     for row in rows:
         data_dict = {}
         data_dict["primaryIdentifier"] = row["primaryIdentifier"]
@@ -331,7 +331,7 @@ def get_go(gene: str = "YAL018C") -> dict[str, Any]:
     service = Service("https://yeastmine.yeastgenome.org/yeastmine/service")
     template = service.get_template("Gene_GO")
     data_dict_list = []
-    go_dict = {}
+    go_dict: dict[str, Any] = {}
     rows = template.rows(A={"op": "LOOKUP", "value": gene, "extra_value": ""})
     for row in rows:
         data_dict = {}
@@ -389,7 +389,7 @@ def get_protein_half_life(gene: str = "act1") -> dict[str, Any]:
         A={"op": "LOOKUP", "value": gene, "extra_value": "S. cerevisiae"}
     )
     data_dict_list = []
-    protein_half_life_dict = {}
+    protein_half_life_dict: dict[str, Any] = {}
     for row in rows:
         data_dict = {}
         data_dict["primaryIdentifier"] = row["primaryIdentifier"]
@@ -425,7 +425,7 @@ def get_chromosomal_location(gene: str = "act1") -> dict[str, Any]:
     template = service.get_template("Gene_ChromosomeLocation")
     rows = template.rows(A={"op": "LOOKUP", "value": gene, "extra_value": ""})
     data_dict_list = []
-    chromosomal_location_dict = {}
+    chromosomal_location_dict: dict[str, Any] = {}
     for row in rows:
         data_dict = {}
         data_dict["primaryIdentifier"] = row["primaryIdentifier"]
@@ -457,7 +457,7 @@ def get_feature_type(gene: str = "YIL080W") -> dict[str, Any]:
     query.add_constraint("organism.shortName", "=", "S. cerevisiae", code="F")
     query.add_constraint("Gene", "LOOKUP", gene, code="A")
     data_dict_list = []
-    description_dict = {}
+    description_dict: dict[str, Any] = {}
     for row in query.rows():
         data_dict = {}
         data_dict["featureType"] = row["featureType"]
@@ -492,7 +492,7 @@ def get_pathways(gene: str = "fas1") -> dict[str, Any]:
     template = service.get_template("Gene_Pathways")
     rows = template.rows(A={"op": "LOOKUP", "value": gene, "extra_value": ""})
     data_dict_list = []
-    pathways_dict = {}
+    pathways_dict: dict[str, Any] = {}
     for row in rows:
         data_dict = {}
         data_dict["primaryIdentifier"] = row["primaryIdentifier"]
@@ -518,7 +518,7 @@ def get_phenotype(gene: str = "act1") -> dict[str, Any]:
         A={"op": "LOOKUP", "value": gene, "extra_value": "S. cerevisiae"}
     )
     data_dict_list = []
-    phenotype_dict = {}
+    phenotype_dict: dict[str, Any] = {}
     for row in rows:
         data_dict = {}
         data_dict["primaryIdentifier"] = row["primaryIdentifier"]
@@ -567,7 +567,7 @@ def get_gene_external_id(gene: str = "act1") -> dict[str, Any]:
     query.add_constraint("organism.shortName", "=", "S. cerevisiae", code="B")
     query.add_constraint("Gene", "LOOKUP", gene, code="A")
     data_dict_list = []
-    external_id_dict = {}
+    external_id_dict: dict[str, Any] = {}
     for row in query.rows():
         data_dict = {}
         data_dict["primaryIdentifier"] = row["primaryIdentifier"]

@@ -4,13 +4,13 @@
 import json
 import os
 import os.path as osp
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 import networkx as nx
 import numpy as np
 import pandas as pd
 import torch
-from gene_graph.sc_graph import get_gene_list
+from gene_graph.sc_graph import get_gene_list  # type: ignore[import-not-found]  # untyped/unavailable gene_graph package
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
 from torch_geometric.data import Data
 from torch_geometric.utils import from_networkx
@@ -34,7 +34,7 @@ class CategoricalEncoder(torch.nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Return the summed per-column embeddings for index tensor ``x``."""
-        x_embedding = 0
+        x_embedding: torch.Tensor = cast(torch.Tensor, 0)
         for i in range(x.shape[1]):
             x_embedding += self.embedding_list[i](x[:, i])
 
@@ -344,9 +344,10 @@ def protein_half_life_df(gene_list: list[str]) -> tuple[pd.DataFrame, pd.DataFra
     df_fill = pd.DataFrame(
         {
             "secondaryIdentifier": fill_genes,
-            "proteins.proteinHalfLife.value": df_fill_small.loc[
-                "proteins.proteinHalfLife.value"
-            ].to_list()
+            "proteins.proteinHalfLife.value": cast(
+                "pd.Series[Any]",
+                df_fill_small.loc["proteins.proteinHalfLife.value"],
+            ).to_list()
             * len(fill_genes),
         }
     )
@@ -390,11 +391,18 @@ def median_protein_abundance_df(
     df_fill = pd.DataFrame(
         {
             "secondaryIdentifier": fill_genes,
-            "proteins.median": df_fill_small.loc["proteins.median"].to_list()
+            "proteins.median": cast(
+                "pd.Series[Any]", df_fill_small.loc["proteins.median"]
+            ).to_list()
             * len(fill_genes),
-            "proteins.MAD": df_fill_small.loc["proteins.MAD"].to_list()
+            "proteins.MAD": cast(
+                "pd.Series[Any]", df_fill_small.loc["proteins.MAD"]
+            ).to_list()
             * len(fill_genes),
-            "qualifier": df_fill_small.loc["qualifier"].to_list() * len(fill_genes),
+            "qualifier": cast(
+                "pd.Series[Any]", df_fill_small.loc["qualifier"]
+            ).to_list()
+            * len(fill_genes),
         }
     )
     return df_clean, df_fill
@@ -529,8 +537,8 @@ def node_reprs_to_data(
             data.append(Gt[name].numpy())
         else:
             data.append(Gt[name])
-    data = np.array(data).T
-    df = pd.DataFrame(data)
+    data_arr = np.array(data).T
+    df = pd.DataFrame(data_arr)
     # "None" string used previous for plotting... this graph shouldn't have any nan values
     df.replace("None", np.nan, inplace=True)
     # replacements have already been done prior to this function.
@@ -554,7 +562,7 @@ def node_reprs_to_data(
     # treat numeric features
     numeric_names_input = list(set(numeric_names).intersection(set(attr_data_names)))
     attr_numeric = df[numeric_names_input].to_numpy()
-    attr_numeric = torch.tensor(attr_numeric)
+    attr_numeric_tensor = torch.tensor(attr_numeric)
     # treat one hot features
     categorical_names = [
         "qualifier",
@@ -591,15 +599,17 @@ def node_reprs_to_data(
             df[categorical_names_input].replace(np.nan, "None").to_numpy()
         )
         # Not sparse to so can be converted to torch tensor
-        enc = OneHotEncoder(sparse=False)
-        enc.fit(edge_attr_categorical)
+        encoder = OneHotEncoder(sparse=False)
+        encoder.fit(edge_attr_categorical)
         edge_attr_categorical_tensor = torch.tensor(
-            enc.transform(edge_attr_categorical)
+            encoder.transform(edge_attr_categorical)
         )
     ###
 
     # combine one_hot and numeric
-    attr_tensor = torch.concat((edge_attr_categorical_tensor, attr_numeric), dim=1)
+    attr_tensor = torch.concat(
+        (edge_attr_categorical_tensor, attr_numeric_tensor), dim=1
+    )
     # concatenate tensors
     Gt.x = attr_tensor
     edge_attr_drop_names = attr_data_names
@@ -683,8 +693,8 @@ def nx_regulators_to_torch(
     data = []
     for name in attr_included_names:
         data.append(Gt[name])
-    data = np.array(data).T
-    df = pd.DataFrame(data)
+    data_arr = np.array(data).T
+    df = pd.DataFrame(data_arr)
     if (enc == "ordinal") or (enc == "lookup"):
         edge_attr = df.to_numpy()
         enc_ordinal = OrdinalEncoder()
@@ -707,9 +717,9 @@ def nx_regulators_to_torch(
         df.replace("None", np.nan, inplace=True)
         edge_attr = df.to_numpy()
         # Not sparse to so can be converted to torch tensor
-        enc = OneHotEncoder(sparse=False)
-        enc.fit(edge_attr)
-        edge_attr_tensor = torch.tensor(enc.transform(edge_attr))
+        encoder = OneHotEncoder(sparse=False)
+        encoder.fit(edge_attr)
+        edge_attr_tensor = torch.tensor(encoder.transform(edge_attr))
     Gt.edge_attr = edge_attr_tensor
     edge_attr_drop_names = [
         "strain_background",
@@ -752,8 +762,8 @@ def nx_protein_interactions_to_torch(
     data = []
     for name in attr_included_names:
         data.append(Gt[name])
-    data = np.array(data).T
-    df = pd.DataFrame(data)
+    data_arr = np.array(data).T
+    df = pd.DataFrame(data_arr)
     ###
     if (enc == "ordinal") or (enc == "lookup"):
         edge_attr = df.to_numpy()
@@ -777,9 +787,9 @@ def nx_protein_interactions_to_torch(
         df.replace("None", np.nan, inplace=True)
         edge_attr = df.to_numpy()
         # Not sparse to so can be converted to torch tensor
-        enc = OneHotEncoder(sparse=False)
-        enc.fit(edge_attr)
-        edge_attr_tensor = torch.tensor(enc.transform(edge_attr))
+        encoder = OneHotEncoder(sparse=False)
+        encoder.fit(edge_attr)
+        edge_attr_tensor = torch.tensor(encoder.transform(edge_attr))
     Gt.edge_attr = edge_attr_tensor
     ###
     edge_attr_drop_names = [
@@ -831,8 +841,8 @@ def nx_gene_interactions_to_torch(
     data = []
     for name in attr_included_names:
         data.append(Gt[name])
-    data = np.array(data).T
-    df = pd.DataFrame(data)
+    data_arr = np.array(data).T
+    df = pd.DataFrame(data_arr)
     # # "None" string used previous for plotting... this graph shouldn't have any nan values
     df.replace("None", np.nan, inplace=True)
     ## only different part compared to other graph functions.
@@ -847,7 +857,7 @@ def nx_gene_interactions_to_torch(
         set(numeric_names).intersection(set(edge_attr_data_names))
     )
     edge_attr_numeric = df[numeric_names_input].to_numpy()
-    edge_attr_numeric = torch.tensor(edge_attr_numeric)
+    edge_attr_numeric_tensor = torch.tensor(edge_attr_numeric)
     categorical_names = [
         "interaction_details_annotation_type",
         "interactions_detection_methods_identifier",
@@ -883,10 +893,10 @@ def nx_gene_interactions_to_torch(
             df[categorical_names_input].replace(np.nan, "None").to_numpy()
         )
         # Not sparse to so can be converted to torch tensor
-        enc = OneHotEncoder(sparse=False)
-        enc.fit(edge_attr_categorical)
+        encoder = OneHotEncoder(sparse=False)
+        encoder.fit(edge_attr_categorical)
         edge_attr_categorical_tensor = torch.tensor(
-            enc.transform(edge_attr_categorical)
+            encoder.transform(edge_attr_categorical)
         )
 
     # # Not sparse to so can be converted to torch tensor
@@ -896,7 +906,7 @@ def nx_gene_interactions_to_torch(
     ###
     # combine one_hot and numeric
     edge_attr_tensor = torch.concat(
-        (edge_attr_categorical_tensor, edge_attr_numeric), dim=1
+        (edge_attr_categorical_tensor, edge_attr_numeric_tensor), dim=1
     )
     # concatenate tensors
     Gt.edge_attr = edge_attr_tensor
@@ -917,7 +927,7 @@ def nx_gene_interactions_to_torch(
 
 
 def nx_attr_to_torch(
-    graph: str = None,
+    graph: Optional[str] = None,
     enc: str = "lookup",
     emb_dim: int = 2,
     attr_included_names: Optional[list[str]] = None,

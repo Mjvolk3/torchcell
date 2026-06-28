@@ -1,6 +1,6 @@
 """NaN-tolerant TorchMetrics for regression and correlation under missing labels."""
 
-from typing import Any
+from typing import Any, cast
 
 import torch
 from torch import Tensor
@@ -17,7 +17,7 @@ def _handle_nan_mask(preds: Tensor, target: Tensor) -> tuple[Tensor, Tensor, Ten
 
 def _nan_tolerant_mse_update(
     preds: Tensor, target: Tensor, num_outputs: int = 1
-) -> tuple[Tensor, int]:
+) -> tuple[Tensor, Tensor]:
     """Update state with predictions and targets, handling NaN values."""
     valid_mask, valid_preds, valid_target = _handle_nan_mask(preds, target)
 
@@ -39,7 +39,7 @@ def _nan_tolerant_mse_update(
 
 def _nan_tolerant_mae_update(
     preds: Tensor, target: Tensor, num_outputs: int = 1
-) -> tuple[Tensor, int]:
+) -> tuple[Tensor, Tensor]:
     """Update state with predictions and targets, handling NaN values."""
     valid_mask, valid_preds, valid_target = _handle_nan_mask(preds, target)
 
@@ -102,6 +102,9 @@ class NaNTolerantRMSE(Metric):
     higher_is_better = False
     full_state_update = False
 
+    sum_squared_error: Tensor
+    total: Tensor
+
     def __init__(self, num_outputs: int = 1, **kwargs: Any):
         """Register running squared-error and count states."""
         super().__init__(**kwargs)
@@ -134,6 +137,9 @@ class NaNTolerantMAE(Metric):
     is_differentiable = True
     higher_is_better = False
     full_state_update = False
+
+    sum_abs_error: Tensor
+    total: Tensor
 
     def __init__(self, num_outputs: int = 1, **kwargs: Any):
         """Register running absolute-error and count states."""
@@ -264,6 +270,8 @@ def _nan_tolerant_pearson_update(
 class NaNTolerantMetricBase(Metric):
     """Base metric configured for DDP that tracks the input tensor device."""
 
+    _device_buffer: Tensor
+
     def __init__(self, **kwargs: Any) -> None:
         """Configure DDP-related options and register a device-tracking buffer."""
         # Configure for DDP compatibility
@@ -292,6 +300,13 @@ class NaNTolerantPearsonCorrCoef(NaNTolerantMetricBase):
     full_state_update = True
     plot_lower_bound = -1.0
     plot_upper_bound = 1.0
+
+    sum_x: Tensor
+    sum_y: Tensor
+    sum_xy: Tensor
+    sum_x2: Tensor
+    sum_y2: Tensor
+    n_samples: Tensor
 
     def __init__(self, num_outputs: int = 1, **kwargs: Any):
         """Register running sums used to compute the correlation."""
@@ -364,6 +379,10 @@ class NaNTolerantSpearmanCorrCoef(Metric):
     plot_lower_bound = -1.0
     plot_upper_bound = 1.0
 
+    preds: list[Tensor]
+    target: list[Tensor]
+    num_samples: Tensor
+
     def __init__(self, num_outputs: int = 1, **kwargs: Any):
         """Register list buffers for predictions/targets and a sample counter."""
         super().__init__(**kwargs)
@@ -418,33 +437,10 @@ class NaNTolerantSpearmanCorrCoef(Metric):
         # Compute correlation on ranks
         pearson = NaNTolerantPearsonCorrCoef(num_outputs=self.num_outputs)
         pearson = pearson.to(preds.device)  # Move to same device as data
-        return pearson(preds_rank, target_rank)
+        return cast(Tensor, pearson(preds_rank, target_rank))
 
 
 #######
-
-
-class NaNTolerantMetricBase(Metric):
-    """Base metric configured for DDP that tracks the input tensor device."""
-
-    def __init__(self, **kwargs: Any) -> None:
-        """Configure DDP-related options and register a device-tracking buffer."""
-        # Configure for DDP compatibility
-        kwargs["compute_on_cpu"] = False  # Keep computation on GPU
-        kwargs["sync_on_compute"] = False  # Let Lightning handle sync
-        kwargs["dist_sync_on_step"] = True  # Sync after each step
-        super().__init__(**kwargs)
-        # Register device tracking buffer
-        self.register_buffer("_device_buffer", torch.zeros(1))
-
-    def _track_device(self, tensor: Tensor) -> None:
-        """Track the device of input tensors."""
-        if tensor.device != self._device_buffer.device:
-            self._device_buffer = self._device_buffer.to(tensor.device)
-
-    def _create_tensor_on_device(self, value: float, *shape: int) -> Tensor:
-        """Create a new tensor on the tracked device."""
-        return torch.full(shape, value, device=self._device_buffer.device)
 
 
 class NaNTolerantMSE(NaNTolerantMetricBase):
@@ -453,6 +449,9 @@ class NaNTolerantMSE(NaNTolerantMetricBase):
     is_differentiable = True
     higher_is_better = False
     full_state_update = False
+
+    sum_squared_error: Tensor
+    total: Tensor
 
     def __init__(self, squared: bool = True, num_outputs: int = 1, **kwargs: Any):
         """Register squared-error and count states; squared toggles MSE vs RMSE."""
@@ -500,6 +499,10 @@ class NaNTolerantR2Score(NaNTolerantMetricBase):
     is_differentiable = True
     higher_is_better = True
     full_state_update = False
+
+    sum_squared_error: Tensor
+    sum_squared_deviation: Tensor
+    total: Tensor
 
     def __init__(self, num_outputs: int = 1, **kwargs: Any):
         """Register squared-error and squared-deviation states for R-squared."""

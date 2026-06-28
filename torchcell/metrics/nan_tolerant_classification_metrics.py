@@ -10,6 +10,8 @@ from torchmetrics.metric import Metric
 class NaNTolerantMetricBase(Metric):
     """Base metric that drops NaN targets and tracks the active device."""
 
+    _device_buffer: Tensor
+
     def __init__(self, **kwargs: Any) -> None:
         """Force DDP-safe settings and register a device-tracking buffer."""
         # Configure for DDP compatibility
@@ -65,6 +67,9 @@ class NaNTolerantAccuracy(NaNTolerantMetricBase):
     higher_is_better = True
     full_state_update = False
 
+    correct: Tensor
+    total: Tensor
+
     def __init__(
         self, task: Literal["binary", "multiclass"] = "binary", **kwargs: Any
     ) -> None:
@@ -100,6 +105,10 @@ class NaNTolerantF1Score(NaNTolerantMetricBase):
     is_differentiable = True
     higher_is_better = True
     full_state_update = False
+
+    tp: Tensor
+    fp: Tensor
+    fn: Tensor
 
     def __init__(
         self, task: Literal["binary", "multiclass"] = "binary", **kwargs: Any
@@ -154,6 +163,9 @@ class NaNTolerantAUROC(NaNTolerantMetricBase):
     is_differentiable = True
     higher_is_better = True
     full_state_update = False
+
+    preds: list[Tensor]
+    targets: list[Tensor]
 
     def __init__(self, task: Literal["binary"] = "binary", **kwargs: Any) -> None:
         """Register prediction/target buffers; only binary task is supported."""
@@ -212,6 +224,9 @@ class NaNTolerantPrecision(NaNTolerantMetricBase):
     higher_is_better = True
     full_state_update = False
 
+    tp: Tensor
+    fp: Tensor
+
     def __init__(
         self, task: Literal["binary", "multiclass"] = "binary", **kwargs: Any
     ) -> None:
@@ -261,6 +276,9 @@ class NaNTolerantRecall(NaNTolerantMetricBase):
     is_differentiable = True
     higher_is_better = True
     full_state_update = False
+
+    tp: Tensor
+    fn: Tensor
 
     def __init__(
         self, task: Literal["binary", "multiclass"] = "binary", **kwargs: Any

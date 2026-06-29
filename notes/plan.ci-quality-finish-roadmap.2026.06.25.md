@@ -305,3 +305,55 @@ semantic-release.
   clean `exclude` entries.
 - **Merge**: branch is `main` + clean FF stack; merging to main is a separate step
   (mind the semantic-release bump dance, [[semantic-release-pushes-bump-commit]]).
+
+## 2026.06.29 - WS4 in progress: ruff gate DONE (landed), mypy/pytest remaining
+
+WS4 turned out to be a multi-front CI-engineering task, not a flag-flip. Two
+discoveries reframed it: the 3 quality workflows were **`disabled_manually`** at the
+repo level (so they never ran, advisory or not — `gh workflow list --all`), and they
+had **never passed in CI**, which had masked real env/version issues.
+
+**Decision (made after the failures surfaced):** whole-tree blocking **ruff** +
+**diff-scoped** blocking **mypy** + fix the **pytest** install. Whole-tree mypy was
+abandoned: its CI findings are *environment-driven* (CI's installed packages differ
+from the dev conda env; mypy results depend on them), so reproducing local `0` would
+require a full dependency lock.
+
+### DONE — banked on main (`b4a01898`)
+
+- **ruff gate**: newest ruff **0.15.20**, 28 findings fixed, pinned 0.15.20 across
+  local + CI (`env/requirements_style.txt`) + pre-commit. The ruff gate passed green
+  in CI on PR #15. Landed to main **decoupled** from the gate-flip so a future
+  diff-scoped mypy run stays clean (a 46-file sweep in the PR diff is what broke it).
+
+### REMAINING — WS4 branch `plan/ci-ws4-blocking-gates` (PR #15; workflows RE-DISABLED)
+
+1. **mypy gate** (diff-scoped + `--follow-imports=silent`; edits already on the
+   branch): with the ruff sweep now on main, **rebase the branch** → its diff becomes
+   config-only → diff-scoped mypy sees "no changed torchcell files" → passes. Two real
+   fixes still worth doing: (a) 8 genuine `self.env: lmdb.Environment = None` bugs
+   (`datasets/base_cell.py` 99/139, `dataset_readers/reader.py` 25/79,
+   `datasets/experiment.py` 67/98) → `lmdb.Environment | None`; (b) filter
+   `torchcell/experiments/` OUT of the diff-scoped `$FILES` — **explicit `mypy $FILES`
+   bypasses the pyproject `exclude` regex** (exclude only filters *discovery*).
+2. **pytest gate**: torch-scatter build fixed with `--no-build-isolation` (edit on the
+   branch). Remaining = **4 collection-import errors** (`test_cell_data`,
+   `test_graph_processor_equivalence`, `test_hetero_cell_nsa`, `test_hetero_nsa`) —
+   debug why those modules fail to import in CI.
+3. **Re-enable** the 3 workflows (`gh workflow enable 66135990 66135988 66433423`)
+   only once all 3 pass on the PR, then merge via rebase+ff and close PR #15.
+
+### Orthogonal (its own issue, NOT WS4)
+
+- **Build and Deploy Docs** (active) fails on every main push: `docs/` has no
+  `conf.py` (`sphinx-build` config error). Pre-existing; deserves its own issue.
+
+### Gotchas logged (so resume is fast)
+
+- `disabled_manually` workflows ignore their triggers — check `gh workflow list --all`
+  before debugging `on:` syntax.
+- Explicit-file `mypy $FILES` bypasses the `exclude` regex (only discovery is filtered).
+- ruff `I001` reflow detaches `# type: ignore` from its import line → silently breaks
+  mypy; re-run mypy as an acceptance test after any ruff autofix.
+- CI mypy env-divergence (redundant-cast etc.) is unwinnable without a dependency lock
+  → the reason mypy is diff-scoped, not whole-tree.

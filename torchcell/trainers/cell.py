@@ -1,5 +1,7 @@
 """Minimal LightningModule scaffold for cell-data regression training."""
 
+from typing import cast
+
 import lightning as L
 import torch
 import torch.nn as nn
@@ -13,13 +15,15 @@ class SimpleModel(L.LightningModule):
     def __init__(self) -> None:
         """Initialize the linear layer placeholder."""
         super().__init__()
+        # Placeholder dimensions: callers fill in the real architecture here.
         self.linear = nn.Linear(
-            in_features=..., out_features=...
-        )  # Define your model's architecture here
+            in_features=...,  # type: ignore[arg-type]  # intentional scaffold placeholder
+            out_features=...,  # type: ignore[arg-type]  # intentional scaffold placeholder
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Return the linear projection of the input."""
-        return self.linear(x)
+        return cast(torch.Tensor, self.linear(x))
 
     def training_step(
         self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
@@ -29,7 +33,7 @@ class SimpleModel(L.LightningModule):
         x, y = batch
         y_pred = self(x)
         loss = nn.MSELoss()(y_pred, y)  # Example loss for regression task
-        return loss
+        return cast(torch.Tensor, loss)
 
     def validation_step(
         self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int
@@ -47,8 +51,13 @@ class SimpleModel(L.LightningModule):
 
 
 if __name__ == "__main__":
-    data_module = CellDataModule(batch_size=64)
+    # Scaffold demo only: `dataset` is required and `gpus=` was removed from the
+    # Lightning Trainer API; these calls are illustrative, not runnable as-is.
+    data_module = CellDataModule(batch_size=64)  # type: ignore[call-arg]  # demo: missing required dataset
     model = SimpleModel()
 
-    trainer = L.Trainer(max_epochs=10, gpus=1 if torch.cuda.is_available() else 0)
+    trainer = L.Trainer(
+        max_epochs=10,
+        gpus=1 if torch.cuda.is_available() else 0,  # type: ignore[call-arg]  # demo: removed Trainer kwarg
+    )
     trainer.fit(model, datamodule=data_module)

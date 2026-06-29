@@ -1,14 +1,16 @@
 """Lightning training tasks for hetero cell gene-interaction regression models."""
 
 import logging
-from typing import Any
+from typing import Any, Protocol, cast
 
 import lightning as L
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import wandb
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+from lightning.pytorch.core.optimizer import LightningOptimizer
+from lightning.pytorch.utilities.types import OptimizerLRScheduler
+from torch.optim.lr_scheduler import LRScheduler, ReduceLROnPlateau
 from torch_geometric.data import HeteroData
 from torchmetrics import MeanSquaredError, MetricCollection, PearsonCorrCoef
 
@@ -20,8 +22,33 @@ from torchcell.viz.visual_regression import Visualization
 log = logging.getLogger(__name__)
 
 
+class _HParams(Protocol):
+    """Typed view of the hyperparameters saved by ``save_hyperparameters``."""
+
+    optimizer_config: dict[str, Any]
+    lr_scheduler_config: dict[str, Any] | None
+    clip_grad_norm: bool
+    clip_grad_norm_max_norm: float
+    plot_sample_ceiling: int
+    plot_every_n_epochs: int
+    grad_accumulation_schedule: dict[int, int] | None
+
+
 class RegressionTask(L.LightningModule):
     """Lightning task training a model to regress gene-interaction scores."""
+
+    train_metrics: MetricCollection
+    val_metrics: MetricCollection
+    test_metrics: MetricCollection
+    train_transformed_metrics: MetricCollection
+    val_transformed_metrics: MetricCollection
+    test_transformed_metrics: MetricCollection
+    _cell_graph_device: torch.device
+
+    @property
+    def hp(self) -> _HParams:
+        """Return ``self.hparams`` as a precisely typed view (runtime no-op cast)."""
+        return cast(_HParams, self.hparams)
 
     def __init__(
         self,
@@ -29,12 +56,12 @@ class RegressionTask(L.LightningModule):
         cell_graph: torch.Tensor,
         optimizer_config: dict[str, Any],
         lr_scheduler_config: dict[str, Any],
-        batch_size: int = None,
+        batch_size: int | None = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
         plot_sample_ceiling: int = 1000,
         plot_every_n_epochs: int = 10,
-        loss_func: nn.Module = None,
+        loss_func: nn.Module | None = None,
         grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
         inverse_transform: nn.Module | None = None,
@@ -51,10 +78,10 @@ class RegressionTask(L.LightningModule):
 
         # Initialize gradient accumulation
         self.current_accumulation_steps = 1
-        if self.hparams.grad_accumulation_schedule is not None:
+        if self.hp.grad_accumulation_schedule is not None:
             # Get the accumulation steps for epoch 0
-            self.current_accumulation_steps = (
-                self.hparams.grad_accumulation_schedule.get(0, 1)
+            self.current_accumulation_steps = self.hp.grad_accumulation_schedule.get(
+                0, 1
             )
 
         reg_metrics = MetricCollection(
@@ -105,11 +132,11 @@ class RegressionTask(L.LightningModule):
             self._cell_graph_device = batch_device
 
         # Return all outputs from the model
-        return self.model(self.cell_graph, batch)
+        return cast("tuple[torch.Tensor, Any]", self.model(self.cell_graph, batch))
 
     def _ensure_no_unused_params_loss(self) -> torch.Tensor | int:
         """Add a dummy loss to ensure all parameters are used in backward pass."""
-        dummy_loss = 0
+        dummy_loss: torch.Tensor | int = 0
         for param in self.model.parameters():
             if param.requires_grad and param.grad is None:
                 dummy_loss = dummy_loss + 0.0 * param.sum()
@@ -304,11 +331,11 @@ class RegressionTask(L.LightningModule):
         # Collect samples for visualization
         if (
             stage == "train"
-            and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
+            and (self.current_epoch + 1) % self.hp.plot_every_n_epochs == 0
         ):
             current_count = sum(t.size(0) for t in self.train_samples["true_values"])
-            if current_count < self.hparams.plot_sample_ceiling:
-                remaining = self.hparams.plot_sample_ceiling - current_count
+            if current_count < self.hp.plot_sample_ceiling:
+                remaining = self.hp.plot_sample_ceiling - current_count
                 if batch_size > remaining:
                     idx = torch.randperm(batch_size)[:remaining]
                     self.train_samples["true_values"].append(
@@ -336,7 +363,7 @@ class RegressionTask(L.LightningModule):
                         self.train_samples["latents"]["z_p"].append(z_p.detach())
         elif (
             stage == "val"
-            and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
+            and (self.current_epoch + 1) % self.hp.plot_every_n_epochs == 0
         ):
             # Only collect validation samples on epochs we'll plot
             self.val_samples["true_values"].append(gene_interaction_orig.detach())
@@ -363,28 +390,28 @@ class RegressionTask(L.LightningModule):
     def training_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
         """Run a manual-optimization training step with gradient accumulation."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
-        if self.hparams.grad_accumulation_schedule is not None:
+        if self.hp.grad_accumulation_schedule is not None:
             loss = loss / self.current_accumulation_steps
-        opt = self.optimizers()
+        opt = cast(LightningOptimizer, self.optimizers())
         self.manual_backward(loss)
         if (
-            self.hparams.grad_accumulation_schedule is None
+            self.hp.grad_accumulation_schedule is None
             or (batch_idx + 1) % self.current_accumulation_steps == 0
         ):
-            if self.hparams.clip_grad_norm:
+            if self.hp.clip_grad_norm:
                 nn.utils.clip_grad_norm_(
-                    self.parameters(), max_norm=self.hparams.clip_grad_norm_max_norm
+                    self.parameters(), max_norm=self.hp.clip_grad_norm_max_norm
                 )
             opt.step()
             opt.zero_grad()
         self.log(
             "learning_rate",
-            self.optimizers().param_groups[0]["lr"],
+            opt.param_groups[0]["lr"],
             batch_size=batch["gene"].x.size(0),
             sync_dist=True,
         )
         # Log effective batch size when using gradient accumulation
-        if self.hparams.grad_accumulation_schedule is not None:
+        if self.hp.grad_accumulation_schedule is not None:
             # Get world size for DDP
             world_size = 1
             if hasattr(self.trainer, "strategy") and hasattr(
@@ -418,9 +445,7 @@ class RegressionTask(L.LightningModule):
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
-    def _compute_metrics_safely(
-        self, metrics_dict: MetricCollection
-    ) -> dict[str, Any]:
+    def _compute_metrics_safely(self, metrics_dict: MetricCollection) -> dict[str, Any]:
         results: dict[str, Any] = {}
         for metric_name, metric in metrics_dict.items():
             try:
@@ -451,7 +476,7 @@ class RegressionTask(L.LightningModule):
                 if v:  # Check if the list is not empty
                     latents[k] = torch.cat(v, dim=0)
 
-        max_samples = self.hparams.plot_sample_ceiling
+        max_samples = self.hp.plot_sample_ceiling
         if true_values.size(0) > max_samples:
             idx = torch.randperm(true_values.size(0))[:max_samples]
             true_values = true_values[idx]
@@ -524,7 +549,7 @@ class RegressionTask(L.LightningModule):
         # Plot training samples
         if (
             self.current_epoch + 1
-        ) % self.hparams.plot_every_n_epochs == 0 and self.train_samples["true_values"]:
+        ) % self.hp.plot_every_n_epochs == 0 and self.train_samples["true_values"]:
             self._plot_samples(self.train_samples, "train_sample")
             # Reset the sample containers
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
@@ -534,33 +559,34 @@ class RegressionTask(L.LightningModule):
         if sch is not None:
             # Lightning returns a list of schedulers even if there's only one
             if isinstance(sch, list) and len(sch) > 0:
-                sch[0].step()
+                scheduler_to_step: LRScheduler | ReduceLROnPlateau = sch[0]
             else:
-                sch.step()
+                scheduler_to_step = cast("LRScheduler | ReduceLROnPlateau", sch)
+            # ReduceLROnPlateau.step requires a metric, but in this manual-optim
+            # path schedulers are always step-based; call the no-arg form.
+            scheduler_to_step.step()  # type: ignore[call-arg]  # plateau-free path
 
     def on_train_epoch_start(self) -> None:
         """Update gradient accumulation steps and reset sample buffers for the epoch."""
         # Update gradient accumulation steps based on current epoch
-        if self.hparams.grad_accumulation_schedule is not None:
-            for epoch_threshold in sorted(
-                self.hparams.grad_accumulation_schedule.keys()
-            ):
+        if self.hp.grad_accumulation_schedule is not None:
+            for epoch_threshold in sorted(self.hp.grad_accumulation_schedule.keys()):
                 if self.current_epoch >= epoch_threshold:
                     self.current_accumulation_steps = (
-                        self.hparams.grad_accumulation_schedule[epoch_threshold]
+                        self.hp.grad_accumulation_schedule[epoch_threshold]
                     )
             print(
                 f"Epoch {self.current_epoch}: Using gradient accumulation steps = {self.current_accumulation_steps}"
             )
 
         # Clear sample containers at the start of epochs where we'll collect samples
-        if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
+        if (self.current_epoch + 1) % self.hp.plot_every_n_epochs == 0:
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_validation_epoch_start(self) -> None:
         """Reset validation sample buffers on epochs where samples are plotted."""
         # Clear sample containers at the start of epochs where we'll collect samples
-        if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
+        if (self.current_epoch + 1) % self.hp.plot_every_n_epochs == 0:
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_test_epoch_start(self) -> None:
@@ -585,7 +611,7 @@ class RegressionTask(L.LightningModule):
         # Plot validation samples
         if (
             not self.trainer.sanity_checking
-            and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
+            and (self.current_epoch + 1) % self.hp.plot_every_n_epochs == 0
             and self.val_samples["true_values"]
         ):
             self._plot_samples(self.val_samples, "val_sample")
@@ -614,28 +640,29 @@ class RegressionTask(L.LightningModule):
             # Reset the sample containers
             self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
 
-    def configure_optimizers(self) -> dict[str, Any] | torch.optim.Optimizer:
+    def configure_optimizers(self) -> OptimizerLRScheduler:
         """Build the optimizer and LR scheduler from the configured hyperparameters."""
-        optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])
+        optimizer_class = getattr(torch.optim, self.hp.optimizer_config["type"])
         optimizer_params = {
-            k: v for k, v in self.hparams.optimizer_config.items() if k != "type"
+            k: v for k, v in self.hp.optimizer_config.items() if k != "type"
         }
         if "learning_rate" in optimizer_params:
             optimizer_params["lr"] = optimizer_params.pop("learning_rate")
-        optimizer = optimizer_class(self.parameters(), **optimizer_params)
+        optimizer: torch.optim.Optimizer = optimizer_class(
+            self.parameters(), **optimizer_params
+        )
 
         # If no lr_scheduler_config is provided, return just the optimizer
-        if self.hparams.lr_scheduler_config is None:
+        if self.hp.lr_scheduler_config is None:
             return optimizer
 
         # Handle different scheduler types
-        scheduler_type = self.hparams.lr_scheduler_config.get(
-            "type", "ReduceLROnPlateau"
-        )
+        scheduler_type = self.hp.lr_scheduler_config.get("type", "ReduceLROnPlateau")
         scheduler_params = {
-            k: v for k, v in self.hparams.lr_scheduler_config.items() if k != "type"
+            k: v for k, v in self.hp.lr_scheduler_config.items() if k != "type"
         }
 
+        scheduler: LRScheduler | ReduceLROnPlateau
         if scheduler_type == "CosineAnnealingWarmupRestarts":
             # Import the custom scheduler
             from torchcell.scheduler.cosine_annealing_warmup import (
@@ -685,18 +712,31 @@ class DiffusionRegressionTask(L.LightningModule):
     All visualization and metric tracking functionality is preserved from RegressionTask.
     """
 
+    train_metrics: MetricCollection
+    val_metrics: MetricCollection
+    test_metrics: MetricCollection
+    train_transformed_metrics: MetricCollection
+    val_transformed_metrics: MetricCollection
+    test_transformed_metrics: MetricCollection
+    _cell_graph_device: torch.device
+
+    @property
+    def hp(self) -> _HParams:
+        """Return ``self.hparams`` as a precisely typed view (runtime no-op cast)."""
+        return cast(_HParams, self.hparams)
+
     def __init__(
         self,
         model: nn.Module,
         cell_graph: torch.Tensor,
         optimizer_config: dict[str, Any],
         lr_scheduler_config: dict[str, Any],
-        batch_size: int = None,
+        batch_size: int | None = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
         plot_sample_ceiling: int = 1000,
         plot_every_n_epochs: int = 10,
-        loss_func: nn.Module = None,
+        loss_func: nn.Module | None = None,
         grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
         inverse_transform: nn.Module | None = None,
@@ -713,9 +753,9 @@ class DiffusionRegressionTask(L.LightningModule):
 
         # Initialize gradient accumulation
         self.current_accumulation_steps = 1
-        if self.hparams.grad_accumulation_schedule is not None:
-            self.current_accumulation_steps = (
-                self.hparams.grad_accumulation_schedule.get(0, 1)
+        if self.hp.grad_accumulation_schedule is not None:
+            self.current_accumulation_steps = self.hp.grad_accumulation_schedule.get(
+                0, 1
             )
 
         # Setup metrics
@@ -773,11 +813,11 @@ class DiffusionRegressionTask(L.LightningModule):
             self._cell_graph_device = batch_device
 
         # Return all outputs from the model
-        return self.model(self.cell_graph, batch)
+        return cast("tuple[torch.Tensor, Any]", self.model(self.cell_graph, batch))
 
     def _ensure_no_unused_params_loss(self) -> torch.Tensor | int:
         """Add a dummy loss to ensure all parameters are used in backward pass."""
-        dummy_loss = 0
+        dummy_loss: torch.Tensor | int = 0
         for param in self.model.parameters():
             if param.requires_grad and param.grad is None:
                 dummy_loss = dummy_loss + 0.0 * param.sum()
@@ -824,6 +864,7 @@ class DiffusionRegressionTask(L.LightningModule):
         # Compute loss based on training/evaluation stage
         if stage == "train":
             # During training, use diffusion loss (noise prediction)
+            assert self.loss_func is not None
             loss_output = self.loss_func(predictions, gene_interaction_vals, z_p)
 
             # Handle tuple return from DiffusionLoss
@@ -947,11 +988,11 @@ class DiffusionRegressionTask(L.LightningModule):
         # Collect samples for visualization
         if (
             stage == "train"
-            and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
+            and (self.current_epoch + 1) % self.hp.plot_every_n_epochs == 0
         ):
             current_count = sum(t.size(0) for t in self.train_samples["true_values"])
-            if current_count < self.hparams.plot_sample_ceiling:
-                remaining = self.hparams.plot_sample_ceiling - current_count
+            if current_count < self.hp.plot_sample_ceiling:
+                remaining = self.hp.plot_sample_ceiling - current_count
                 if batch_size > remaining:
                     idx = torch.randperm(batch_size)[:remaining]
                     self.train_samples["true_values"].append(
@@ -979,7 +1020,7 @@ class DiffusionRegressionTask(L.LightningModule):
                         self.train_samples["latents"]["z_p"].append(z_p.detach())
         elif (
             stage == "val"
-            and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
+            and (self.current_epoch + 1) % self.hp.plot_every_n_epochs == 0
         ):
             # Only collect validation samples on epochs we'll plot
             self.val_samples["true_values"].append(gene_interaction_orig.detach())
@@ -1006,28 +1047,28 @@ class DiffusionRegressionTask(L.LightningModule):
     def training_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
         """Run a manual-optimization training step with gradient accumulation."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
-        if self.hparams.grad_accumulation_schedule is not None:
+        if self.hp.grad_accumulation_schedule is not None:
             loss = loss / self.current_accumulation_steps
-        opt = self.optimizers()
+        opt = cast(LightningOptimizer, self.optimizers())
         self.manual_backward(loss)
         if (
-            self.hparams.grad_accumulation_schedule is None
+            self.hp.grad_accumulation_schedule is None
             or (batch_idx + 1) % self.current_accumulation_steps == 0
         ):
-            if self.hparams.clip_grad_norm:
+            if self.hp.clip_grad_norm:
                 nn.utils.clip_grad_norm_(
-                    self.parameters(), max_norm=self.hparams.clip_grad_norm_max_norm
+                    self.parameters(), max_norm=self.hp.clip_grad_norm_max_norm
                 )
             opt.step()
             opt.zero_grad()
         self.log(
             "learning_rate",
-            self.optimizers().param_groups[0]["lr"],
+            opt.param_groups[0]["lr"],
             batch_size=batch["gene"].x.size(0),
             sync_dist=True,
         )
         # Log effective batch size when using gradient accumulation
-        if self.hparams.grad_accumulation_schedule is not None:
+        if self.hp.grad_accumulation_schedule is not None:
             # Get world size for DDP
             world_size = 1
             if hasattr(self.trainer, "strategy") and hasattr(
@@ -1060,9 +1101,7 @@ class DiffusionRegressionTask(L.LightningModule):
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
-    def _compute_metrics_safely(
-        self, metrics_dict: MetricCollection
-    ) -> dict[str, Any]:
+    def _compute_metrics_safely(self, metrics_dict: MetricCollection) -> dict[str, Any]:
         results: dict[str, Any] = {}
         for metric_name, metric in metrics_dict.items():
             try:
@@ -1093,7 +1132,7 @@ class DiffusionRegressionTask(L.LightningModule):
                 if v:  # Check if the list is not empty
                     latents[k] = torch.cat(v, dim=0)
 
-        max_samples = self.hparams.plot_sample_ceiling
+        max_samples = self.hp.plot_sample_ceiling
         if true_values.size(0) > max_samples:
             idx = torch.randperm(true_values.size(0))[:max_samples]
             true_values = true_values[idx]
@@ -1148,26 +1187,24 @@ class DiffusionRegressionTask(L.LightningModule):
     def on_train_epoch_start(self) -> None:
         """Update gradient accumulation steps and reset sample buffers for the epoch."""
         # Update gradient accumulation steps based on current epoch
-        if self.hparams.grad_accumulation_schedule is not None:
-            for epoch_threshold in sorted(
-                self.hparams.grad_accumulation_schedule.keys()
-            ):
+        if self.hp.grad_accumulation_schedule is not None:
+            for epoch_threshold in sorted(self.hp.grad_accumulation_schedule.keys()):
                 if self.current_epoch >= epoch_threshold:
                     self.current_accumulation_steps = (
-                        self.hparams.grad_accumulation_schedule[epoch_threshold]
+                        self.hp.grad_accumulation_schedule[epoch_threshold]
                     )
             print(
                 f"Epoch {self.current_epoch}: Using gradient accumulation steps = {self.current_accumulation_steps}"
             )
 
         # Clear sample containers at the start of epochs where we'll collect samples
-        if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
+        if (self.current_epoch + 1) % self.hp.plot_every_n_epochs == 0:
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_validation_epoch_start(self) -> None:
         """Reset validation sample buffers on epochs where samples are plotted."""
         # Clear sample containers at the start of epochs where we'll collect samples
-        if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
+        if (self.current_epoch + 1) % self.hp.plot_every_n_epochs == 0:
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_test_epoch_start(self) -> None:
@@ -1200,7 +1237,7 @@ class DiffusionRegressionTask(L.LightningModule):
         # Plot training samples
         if (
             self.current_epoch + 1
-        ) % self.hparams.plot_every_n_epochs == 0 and self.train_samples["true_values"]:
+        ) % self.hp.plot_every_n_epochs == 0 and self.train_samples["true_values"]:
             self._plot_samples(self.train_samples, "train_sample")
             # Reset the sample containers
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
@@ -1210,9 +1247,12 @@ class DiffusionRegressionTask(L.LightningModule):
         if sch is not None:
             # Lightning returns a list of schedulers even if there's only one
             if isinstance(sch, list) and len(sch) > 0:
-                sch[0].step()
+                scheduler_to_step: LRScheduler | ReduceLROnPlateau = sch[0]
             else:
-                sch.step()
+                scheduler_to_step = cast("LRScheduler | ReduceLROnPlateau", sch)
+            # ReduceLROnPlateau.step requires a metric, but in this manual-optim
+            # path schedulers are always step-based; call the no-arg form.
+            scheduler_to_step.step()  # type: ignore[call-arg]  # plateau-free path
 
     def on_validation_epoch_end(self) -> None:
         """Log and reset validation metrics and plot validation samples."""
@@ -1237,7 +1277,7 @@ class DiffusionRegressionTask(L.LightningModule):
         # Plot validation samples
         if (
             not self.trainer.sanity_checking
-            and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
+            and (self.current_epoch + 1) % self.hp.plot_every_n_epochs == 0
             and self.val_samples["true_values"]
         ):
             self._plot_samples(self.val_samples, "val_sample")
@@ -1266,28 +1306,29 @@ class DiffusionRegressionTask(L.LightningModule):
             # Reset the sample containers
             self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
 
-    def configure_optimizers(self) -> dict[str, Any] | torch.optim.Optimizer:
+    def configure_optimizers(self) -> OptimizerLRScheduler:
         """Build the optimizer and LR scheduler from the configured hyperparameters."""
-        optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])
+        optimizer_class = getattr(torch.optim, self.hp.optimizer_config["type"])
         optimizer_params = {
-            k: v for k, v in self.hparams.optimizer_config.items() if k != "type"
+            k: v for k, v in self.hp.optimizer_config.items() if k != "type"
         }
         if "learning_rate" in optimizer_params:
             optimizer_params["lr"] = optimizer_params.pop("learning_rate")
-        optimizer = optimizer_class(self.parameters(), **optimizer_params)
+        optimizer: torch.optim.Optimizer = optimizer_class(
+            self.parameters(), **optimizer_params
+        )
 
         # If no lr_scheduler_config is provided, return just the optimizer
-        if self.hparams.lr_scheduler_config is None:
+        if self.hp.lr_scheduler_config is None:
             return optimizer
 
         # Handle different scheduler types
-        scheduler_type = self.hparams.lr_scheduler_config.get(
-            "type", "ReduceLROnPlateau"
-        )
+        scheduler_type = self.hp.lr_scheduler_config.get("type", "ReduceLROnPlateau")
         scheduler_params = {
-            k: v for k, v in self.hparams.lr_scheduler_config.items() if k != "type"
+            k: v for k, v in self.hp.lr_scheduler_config.items() if k != "type"
         }
 
+        scheduler: LRScheduler | ReduceLROnPlateau
         if scheduler_type == "CosineAnnealingWarmupRestarts":
             # Import the custom scheduler
             from torchcell.scheduler.cosine_annealing_warmup import (

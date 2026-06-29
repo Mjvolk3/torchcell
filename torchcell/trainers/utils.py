@@ -1,11 +1,19 @@
-"""Pydantic helpers for indexing models by valid Python identifier names."""
+"""Pydantic helpers for indexing models by valid Python identifier names.
+
+NOTE: This module targets the pydantic v1 API (``ConstrainedStr``, ``validator``,
+``__root__``), which was removed in pydantic v2. It has no importers in the
+codebase and raises ``PydanticImportError`` on import under the installed
+pydantic v2, so it is effectively dead. The ``# type: ignore`` markers below
+silence the v1-API strict-mypy errors without altering runtime behavior; a
+proper fix is migration to pydantic v2 or removal (out of type-only scope).
+"""
 
 from typing import Any
 
 from pydantic import BaseModel, ConstrainedStr, validator
 
 
-class VarNameStr(ConstrainedStr):
+class VarNameStr(ConstrainedStr):  # type: ignore[misc,valid-type]  # pydantic v1 base, removed in v2
     """Constrained string that must be a valid Python identifier."""
 
     @classmethod
@@ -21,7 +29,7 @@ class ModelIndex(BaseModel):
 
     __root__: dict[VarNameStr, Any]
 
-    @validator("__root__", pre=True, each_item=True)
+    @validator("__root__", pre=True, each_item=True)  # type: ignore[type-var]  # pydantic v1 validator API, removed in v2
     def check_keys(
         cls, v: str, field: Any, values: dict[str, Any], **kwargs: Any
     ) -> str:
@@ -32,16 +40,17 @@ class ModelIndex(BaseModel):
 
     def __getattr__(self, item: str) -> Any:
         """Return the root entry stored under the given attribute name."""
-        return self.__root__[item]
+        return self.__root__[item]  # type: ignore[index]  # VarNameStr is a str subtype (pydantic v1)
 
 
 # Example usage
 try:
     model_index = ModelIndex(
+        # VarNameStr is a str subtype (pydantic v1 __root__ pattern, removed in v2).
         __root__={
-            "dcell": "some_value",  # Replace with your actual object
-            "dcell_linear": "another_value",
-            "1invalid": "this_will_fail",
+            "dcell": "some_value",  # type: ignore[dict-item]
+            "dcell_linear": "another_value",  # type: ignore[dict-item]
+            "1invalid": "this_will_fail",  # type: ignore[dict-item]
         }
     )
 except ValueError as e:

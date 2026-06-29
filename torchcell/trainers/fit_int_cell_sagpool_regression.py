@@ -3,7 +3,7 @@
 import logging
 import os.path as osp
 import sys
-from typing import Any
+from typing import Any, cast
 
 import lightning as L
 import matplotlib.pyplot as plt
@@ -11,6 +11,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import wandb
+from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.core.optimizer import LightningOptimizer
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch_geometric.data import HeteroData
 from torchmetrics import MetricCollection
@@ -87,6 +89,10 @@ def log_error_information(
 class RegressionTask(L.LightningModule):
     """Lightning task training a SAGPool model on fitness and interaction labels."""
 
+    train_metrics: nn.ModuleDict
+    val_metrics: nn.ModuleDict
+    test_metrics: nn.ModuleDict
+
     def __init__(
         self,
         model: nn.Module,
@@ -145,7 +151,10 @@ class RegressionTask(L.LightningModule):
 
     # return: model output tuple, dynamic from nn.Module
     def forward(
-        self, x: torch.Tensor, edge_indices: dict[str, torch.Tensor], batch: torch.Tensor
+        self,
+        x: torch.Tensor,
+        edge_indices: dict[str, torch.Tensor],
+        batch: torch.Tensor,
     ) -> Any:
         """Run the wrapped model on node features, edges, and batch index."""
         return self.model(x, edge_indices, batch)
@@ -180,7 +189,8 @@ class RegressionTask(L.LightningModule):
             graph_node_selections,
         ) = self(x, edge_indices, batch_index)
 
-        # Compute main loss
+        # Compute main loss (loss_func is set before training begins)
+        assert self.combined_loss is not None
         head_loss, dim_losses = self.combined_loss(final_output, y)
 
         # Compute individual graph losses
@@ -198,8 +208,8 @@ class RegressionTask(L.LightningModule):
         # Total loss with weights
         loss = (
             head_loss
-            + self.hparams.intermediate_loss_weight * graph_losses
-            + self.hparams.intermediate_loss_weight * intermediate_losses
+            + self.hparams["intermediate_loss_weight"] * graph_losses
+            + self.hparams["intermediate_loss_weight"] * intermediate_losses
         )
 
         if torch.isnan(loss):
@@ -278,26 +288,26 @@ class RegressionTask(L.LightningModule):
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
 
         # Scale loss by accumulation steps
-        if self.hparams.grad_accumulation_schedule is not None:
+        if self.hparams["grad_accumulation_schedule"] is not None:
             loss = loss / self.current_accumulation_steps
 
-        opt = self.optimizers()
+        opt = cast(LightningOptimizer, self.optimizers())
         self.manual_backward(loss)
 
         if (
-            self.hparams.grad_accumulation_schedule is None
+            self.hparams["grad_accumulation_schedule"] is None
             or (batch_idx + 1) % self.current_accumulation_steps == 0
         ):
-            if self.hparams.clip_grad_norm:
+            if self.hparams["clip_grad_norm"]:
                 nn.utils.clip_grad_norm_(
-                    self.parameters(), max_norm=self.hparams.clip_grad_norm_max_norm
+                    self.parameters(), max_norm=self.hparams["clip_grad_norm_max_norm"]
                 )
             opt.step()
             opt.zero_grad()
 
         self.log(
             "learning_rate",
-            self.optimizers().param_groups[0]["lr"],
+            cast(LightningOptimizer, self.optimizers()).param_groups[0]["lr"],
             batch_size=batch["gene"].x.size(0),
             sync_dist=True,
         )
@@ -317,7 +327,8 @@ class RegressionTask(L.LightningModule):
     def on_train_epoch_end(self) -> None:
         """Compute, log, and reset the training metrics at epoch end."""
         # Compute and log metrics for each metric type
-        for metric_name, metric_dict in self.train_metrics.items():
+        for metric_name, metric_module in self.train_metrics.items():
+            metric_dict = cast(MetricCollection, metric_module)
             computed_metrics = metric_dict.compute()
             for name, value in computed_metrics.items():
                 self.log(f"train/{metric_name}/{name}", value, sync_dist=True)
@@ -326,7 +337,8 @@ class RegressionTask(L.LightningModule):
     def on_validation_epoch_end(self) -> None:
         """Log validation metrics and emit prediction plots at epoch end."""
         # Compute and log metrics for each metric type
-        for metric_name, metric_dict in self.val_metrics.items():
+        for metric_name, metric_module in self.val_metrics.items():
+            metric_dict = cast(MetricCollection, metric_module)
             computed_metrics = metric_dict.compute()
             for name, value in computed_metrics.items():
                 self.log(f"val/{metric_name}/{name}", value, sync_dist=True)
@@ -334,7 +346,7 @@ class RegressionTask(L.LightningModule):
 
         # Skip plotting during sanity check
         if self.trainer.sanity_checking or (
-            self.current_epoch % self.hparams.boxplot_every_n_epochs != 0
+            self.current_epoch % self.hparams["boxplot_every_n_epochs"] != 0
         ):
             return
 
@@ -360,10 +372,9 @@ class RegressionTask(L.LightningModule):
 
         # Logging model artifact
         current_global_step = self.global_step
-        if (
-            self.trainer.checkpoint_callback.best_model_path
-            and current_global_step != self.last_logged_best_step
-        ):
+        ckpt = cast(ModelCheckpoint, self.trainer.checkpoint_callback)
+        best_model_path = ckpt.best_model_path
+        if best_model_path and current_global_step != self.last_logged_best_step:
             # Save model as a W&B artifact
             artifact = wandb.Artifact(
                 name=f"model-global_step-{current_global_step}",
@@ -371,7 +382,7 @@ class RegressionTask(L.LightningModule):
                 description=f"Model on validation epoch end step - {current_global_step}",
                 metadata=dict(self.hparams),
             )
-            artifact.add_file(self.trainer.checkpoint_callback.best_model_path)
+            artifact.add_file(best_model_path)
             wandb.log_artifact(artifact)
             self.last_logged_best_step = (
                 current_global_step  # update the last logged step
@@ -421,8 +432,9 @@ class RegressionTask(L.LightningModule):
 
     def on_test_epoch_end(self) -> None:
         """Log test metrics and emit prediction box plots at epoch end."""
-        self.log_dict(self.test_metrics.compute(), sync_dist=True)
-        self.test_metrics.reset()
+        # ModuleDict.compute/reset shadowed by Tensor.compute in torch stubs
+        self.log_dict(self.test_metrics.compute(), sync_dist=True)  # type: ignore[operator]
+        self.test_metrics.reset()  # type: ignore[operator]
 
         # Convert lists to tensors
         true_values = torch.cat(self.true_values, dim=0)
@@ -444,11 +456,11 @@ class RegressionTask(L.LightningModule):
         self.true_values = []
         self.predictions = []
 
-    def configure_optimizers(self) -> dict[str, Any]:
+    def configure_optimizers(self) -> Any:  # Lightning accepts optimizer or config dict
         """Build the optimizer and LR scheduler from the hyperparameter config."""
-        optimizer_class = getattr(optim, self.hparams.optimizer_config["type"])
+        optimizer_class = getattr(optim, self.hparams["optimizer_config"]["type"])
         optimizer_params = {
-            k: v for k, v in self.hparams.optimizer_config.items() if k != "type"
+            k: v for k, v in self.hparams["optimizer_config"].items() if k != "type"
         }
 
         # Replace 'learning_rate' with 'lr' if present
@@ -459,7 +471,7 @@ class RegressionTask(L.LightningModule):
 
         # Remove 'type' from lr_scheduler_config before passing to ReduceLROnPlateau
         scheduler_params = {
-            k: v for k, v in self.hparams.lr_scheduler_config.items() if k != "type"
+            k: v for k, v in self.hparams["lr_scheduler_config"].items() if k != "type"
         }
         scheduler = ReduceLROnPlateau(optimizer, **scheduler_params)
 

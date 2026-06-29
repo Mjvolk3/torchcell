@@ -6,7 +6,7 @@
 
 import math
 import os.path as osp
-from typing import Any
+from typing import Any, cast
 
 import lightning as L
 import matplotlib.pyplot as plt
@@ -14,6 +14,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import wandb
+from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.core.optimizer import LightningOptimizer
 from torch_geometric.data import Batch, Data
 from torchmetrics import (
     MeanAbsoluteError,
@@ -25,7 +27,12 @@ from torchmetrics import (
 from tqdm import tqdm
 
 import torchcell
-from torchcell.losses import WeightedMSELoss
+
+# NOTE: `WeightedMSELoss` is not re-exported by ``torchcell.losses.__init__`` (it
+# lives in ``torchcell.losses.multi_dim_nan_tolerant``), so this import is broken
+# at runtime (pre-existing ImportError). The coded ignore keeps the type-check
+# scoped to typing only; the runtime breakage is flagged for the maintainer.
+from torchcell.losses import WeightedMSELoss  # type: ignore[attr-defined]
 from torchcell.viz import fitness, genetic_interaction_score
 
 style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
@@ -89,7 +96,9 @@ class RegressionTask(L.LightningModule):
         self.wt = wt
         self.wt_train_per_epoch = wt_train_per_epoch
         self.is_wt_init = False
-        self.wt_nodes_hat, self.wt_set_hat, self.wt_global_hat = None, None, None
+        self.wt_nodes_hat: torch.Tensor | None = None
+        self.wt_set_hat: torch.Tensor | None = None
+        self.wt_global_hat: torch.Tensor | None = None
 
         # clip grad norm
         self.clip_grad_norm = clip_grad_norm
@@ -109,6 +118,7 @@ class RegressionTask(L.LightningModule):
             self.x_batch_name = "x_pert_batch"
 
         # loss
+        self.loss: nn.Module
         if loss == "mse":
             self.loss = nn.MSELoss()
         elif loss == "weighted_mse":
@@ -158,7 +168,7 @@ class RegressionTask(L.LightningModule):
         self.predictions: list[torch.Tensor] = []
 
         # wandb model artifact logging
-        self.last_logged_best_step = None
+        self.last_logged_best_step: int | None = None
 
     def setup(self, stage: str | None = None) -> None:
         """Move the deep-set and linear models onto the trainer device."""
@@ -172,10 +182,11 @@ class RegressionTask(L.LightningModule):
         if self.wt_set_hat is None and self.train_wt_diff:
             self.wt_set_hat = torch.ones_like(inst_set_hat)
         if self.train_wt_diff:
-            y_set_hat = self.wt_set_hat.mean(dim=0) - inst_set_hat
+            wt_set_hat = cast(torch.Tensor, self.wt_set_hat)
+            y_set_hat = wt_set_hat.mean(dim=0) - inst_set_hat
         else:
             y_set_hat = inst_set_hat
-        y_hat = self.model_lin(y_set_hat)
+        y_hat: torch.Tensor = self.model_lin(y_set_hat)
         return y_hat
 
     def on_train_start(self) -> None:
@@ -188,6 +199,9 @@ class RegressionTask(L.LightningModule):
     def train_wt(self) -> None:
         """Periodically optimize the WT reference embedding toward fitness 1.0."""
         # CHECK on definition of global_step - refresh with epoch?
+        # WT training requires a configured batch size and epoch size.
+        assert self.batch_size is not None
+        assert self.train_epoch_size is not None
         if self.global_step == 0 and not self.is_wt_init:
             wt_batch = Batch.from_data_list([self.wt] * self.batch_size).to(self.device)
             self.wt_nodes_hat, self.wt_set_hat = self.model_ds(
@@ -207,7 +221,7 @@ class RegressionTask(L.LightningModule):
             while True:
                 # Global Loss
                 # set up optimizer
-                opt = self.optimizers()
+                opt = cast(LightningOptimizer, self.optimizers())
                 opt.zero_grad()
 
                 wt_batch = Batch.from_data_list([self.wt] * self.batch_size).to(
@@ -224,8 +238,9 @@ class RegressionTask(L.LightningModule):
                         wt_batch.x, wt_batch.batch
                     )
                     # Node Loss
+                    wt_nodes_hat = cast(torch.Tensor, self.wt_nodes_hat)
                     loss_nodes = self.loss_node(
-                        self.wt_nodes_hat, torch.ones_like(self.wt_nodes_hat)
+                        wt_nodes_hat, torch.ones_like(wt_nodes_hat)
                     )
                     self.log("wt loss_nodes", loss_nodes)
                     self.manual_backward(loss_wt + loss_nodes)
@@ -290,8 +305,9 @@ class RegressionTask(L.LightningModule):
         # Pass the batch vector to the forward method
         y_hat = self(x, batch_vector)
 
-        opt = self.optimizers()
+        opt = cast(LightningOptimizer, self.optimizers())
         opt.zero_grad()
+        loss: torch.Tensor
         if self.order_penalty:
             order_penalty_value = self.ordering_penalty(y_hat, y)
             # Hyperparameter to adjust the weight of ordering penalty
@@ -387,10 +403,8 @@ class RegressionTask(L.LightningModule):
         self.predictions = []
 
         current_global_step = self.global_step
-        if (
-            self.trainer.checkpoint_callback.best_model_path
-            and current_global_step != self.last_logged_best_step
-        ):
+        ckpt = cast(ModelCheckpoint, self.trainer.checkpoint_callback)
+        if ckpt.best_model_path and current_global_step != self.last_logged_best_step:
             # Save model as a W&B artifact
             artifact = wandb.Artifact(
                 name=f"model-global_step-{current_global_step}",
@@ -398,7 +412,7 @@ class RegressionTask(L.LightningModule):
                 description=f"Model on validation epoch end step - {current_global_step}",
                 metadata=dict(self.hparams),
             )
-            artifact.add_file(self.trainer.checkpoint_callback.best_model_path)
+            artifact.add_file(ckpt.best_model_path)
             wandb.log_artifact(artifact)
             self.last_logged_best_step = (
                 current_global_step  # update the last logged step

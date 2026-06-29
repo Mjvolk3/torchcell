@@ -1,7 +1,7 @@
 """Lightning task training a hetero GNN pool model for binary fitness classification."""
 
 import logging
-from typing import Any
+from typing import Any, Literal, cast
 
 import lightning as L
 import matplotlib.pyplot as plt
@@ -9,6 +9,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import wandb
+from lightning.pytorch.core.optimizer import LightningOptimizer
+from lightning.pytorch.utilities.parsing import AttributeDict
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch_geometric.data import HeteroData
 from torch_geometric.transforms import BaseTransform
@@ -34,6 +36,10 @@ log = logging.getLogger(__name__)
 class ClassificationTask(L.LightningModule):
     """Lightning module training a hetero GNN pool model for binned classification."""
 
+    train_metrics: nn.ModuleDict
+    val_metrics: nn.ModuleDict
+    test_metrics: nn.ModuleDict
+
     def __init__(
         self,
         model: nn.Module,
@@ -43,11 +49,11 @@ class ClassificationTask(L.LightningModule):
         label_type: str,
         optimizer_config: dict[str, Any],
         lr_scheduler_config: dict[str, Any],
-        batch_size: int = None,
+        batch_size: int | None = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
         boxplot_every_n_epochs: int = 1,
-        loss_func: nn.Module = None,
+        loss_func: nn.Module | None = None,
         grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
     ):
@@ -77,6 +83,7 @@ class ClassificationTask(L.LightningModule):
         self.loss_func = loss_func
         self.current_accumulation_steps = 1
 
+        task: Literal["binary", "multiclass"]
         if bins == 2:
             task = "binary"
         else:
@@ -122,6 +129,11 @@ class ClassificationTask(L.LightningModule):
         self.last_logged_best_step: int | None = None
         self.automatic_optimization = False
 
+    @property
+    def _hp(self) -> AttributeDict:
+        """Typed view of ``self.hparams`` (always an ``AttributeDict`` at runtime)."""
+        return cast(AttributeDict, self.hparams)
+
     def _log_prediction_table(
         self,
         stage: str,
@@ -136,7 +148,7 @@ class ClassificationTask(L.LightningModule):
         task_mapping = [("Fitness", "fitness"), ("GI", "gene_interaction")]
 
         # Get the binning transform from the forward transform composition
-        forward_transform = self.hparams.forward_transform
+        forward_transform = self._hp.forward_transform
         binning_transform = next(
             t
             for t in forward_transform.transforms
@@ -157,7 +169,7 @@ class ClassificationTask(L.LightningModule):
             bin_edges_denorm = torch.tensor(bin_edges_denorm, dtype=torch.float32)
 
             # Determine true and predicted bins based on label type
-            if self.hparams.label_type == "ordinal":
+            if self._hp.label_type == "ordinal":
                 # For ordinal, count number of 1s for true bins
                 true_bins = torch.sum(
                     true_class_values[:, start_idx:end_idx] > 0.5, dim=1
@@ -188,12 +200,16 @@ class ClassificationTask(L.LightningModule):
                 pred_bin = pred_bins[i].item()
 
                 # Get bin ranges for true bin (clamp to valid indices)
-                true_bin_clamped = max(0, min(true_bin, len(bin_edges_denorm) - 2))
+                true_bin_clamped = cast(
+                    int, max(0, min(true_bin, len(bin_edges_denorm) - 2))
+                )
                 true_bin_start = bin_edges_denorm[true_bin_clamped].item()
                 true_bin_end = bin_edges_denorm[true_bin_clamped + 1].item()
 
                 # Get bin ranges for predicted bin (clamp to valid indices)
-                pred_bin_clamped = max(0, min(pred_bin, len(bin_edges_denorm) - 2))
+                pred_bin_clamped = cast(
+                    int, max(0, min(pred_bin, len(bin_edges_denorm) - 2))
+                )
                 pred_bin_start = bin_edges_denorm[pred_bin_clamped].item()
                 pred_bin_end = bin_edges_denorm[pred_bin_clamped + 1].item()
 
@@ -222,7 +238,8 @@ class ClassificationTask(L.LightningModule):
 
     def forward(self, batch: Any) -> tuple[torch.Tensor, Any]:
         """Run the model on the batch and return its outputs."""
-        return self.model(batch)
+        result: tuple[torch.Tensor, Any] = self.model(batch)
+        return result
 
     def _shared_step(
         self, batch: Any, batch_idx: int, stage: str = "train"
@@ -237,7 +254,7 @@ class ClassificationTask(L.LightningModule):
         y = torch.cat([fitness, gene_interaction], dim=1)
 
         # Calculate loss
-        loss, dim_losses = self.loss_func(logits, y)
+        loss, dim_losses = cast(nn.Module, self.loss_func)(logits, y)
 
         # Logging
         self.log(f"{stage}/loss", loss, batch_size=batch_size, sync_dist=True)
@@ -255,12 +272,12 @@ class ClassificationTask(L.LightningModule):
         )
 
         # Split logits for each task
-        num_classes = self.hparams.bins
+        num_classes = self._hp.bins
         fitness_logits = logits[:, :num_classes]
         gene_int_logits = logits[:, num_classes:]
 
         # Convert targets to class indices based on label type
-        if self.hparams.label_type == "ordinal":
+        if self._hp.label_type == "ordinal":
             # For ordinal labels, count number of 1s to determine class
             # Handle NaN values
             fitness_nan_mask = torch.isnan(fitness).any(dim=1)
@@ -281,7 +298,7 @@ class ClassificationTask(L.LightningModule):
         metrics["gene_interaction"](gene_int_logits, gene_int_targets)
 
         pred_data = HeteroData()
-        if self.hparams.label_type == "ordinal":
+        if self._hp.label_type == "ordinal":
             # For ordinal, convert logits to binary thresholds
             pred_data["gene"] = {
                 "fitness": (fitness_logits > 0)
@@ -354,26 +371,26 @@ class ClassificationTask(L.LightningModule):
         """Run a training step and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
 
-        if self.hparams.grad_accumulation_schedule is not None:
+        if self._hp.grad_accumulation_schedule is not None:
             loss = loss / self.current_accumulation_steps
 
-        opt = self.optimizers()
+        opt = cast(LightningOptimizer, self.optimizers())
         self.manual_backward(loss)
 
         if (
-            self.hparams.grad_accumulation_schedule is None
+            self._hp.grad_accumulation_schedule is None
             or (batch_idx + 1) % self.current_accumulation_steps == 0
         ):
-            if self.hparams.clip_grad_norm:
+            if self._hp.clip_grad_norm:
                 nn.utils.clip_grad_norm_(
-                    self.parameters(), max_norm=self.hparams.clip_grad_norm_max_norm
+                    self.parameters(), max_norm=self._hp.clip_grad_norm_max_norm
                 )
             opt.step()
             opt.zero_grad()
 
         self.log(
             "learning_rate",
-            self.optimizers().param_groups[0]["lr"],
+            cast(LightningOptimizer, self.optimizers()).param_groups[0]["lr"],
             batch_size=batch["gene"].x.size(0),
             sync_dist=True,
         )
@@ -393,22 +410,22 @@ class ClassificationTask(L.LightningModule):
     def on_train_epoch_end(self) -> None:
         """Aggregate and log training metrics at epoch end."""
         for metric_name, metric_dict in self.train_metrics.items():
-            computed_metrics = metric_dict.compute()
+            computed_metrics = cast(Any, metric_dict).compute()
             for name, value in computed_metrics.items():
                 self.log(name, value, sync_dist=True)
-            metric_dict.reset()
+            cast(Any, metric_dict).reset()
 
     def on_validation_epoch_end(self) -> None:
         """Aggregate and log validation metrics and plots at epoch end."""
         # Log metrics
         for metric_name, metric_dict in self.val_metrics.items():
-            computed_metrics = metric_dict.compute()
+            computed_metrics = cast(Any, metric_dict).compute()
             for name, value in computed_metrics.items():
                 self.log(name, value, sync_dist=True)
-            metric_dict.reset()
+            cast(Any, metric_dict).reset()
 
         if self.trainer.sanity_checking or (
-            self.current_epoch % self.hparams.boxplot_every_n_epochs != 0
+            self.current_epoch % self._hp.boxplot_every_n_epochs != 0
         ):
             return
 
@@ -418,7 +435,7 @@ class ClassificationTask(L.LightningModule):
         # Create HeteroData object for predictions
         pred_data = HeteroData()
         num_bins = self.model.out_channels
-        if self.hparams.label_type == "ordinal":
+        if self._hp.label_type == "ordinal":
             # For ordinal, convert predictions to binary thresholds
             pred_data["gene"] = {
                 "fitness": (predictions[:, :num_bins] > 0).float(),
@@ -454,7 +471,7 @@ class ClassificationTask(L.LightningModule):
 
         current_global_step = self.global_step
         if (
-            self.trainer.checkpoint_callback.best_model_path
+            cast(Any, self.trainer.checkpoint_callback).best_model_path
             and current_global_step != self.last_logged_best_step
         ):
             artifact = wandb.Artifact(
@@ -463,7 +480,9 @@ class ClassificationTask(L.LightningModule):
                 description=f"Model checkpoint at step {current_global_step}",
                 metadata=dict(self.hparams),
             )
-            artifact.add_file(self.trainer.checkpoint_callback.best_model_path)
+            artifact.add_file(
+                cast(Any, self.trainer.checkpoint_callback).best_model_path
+            )
             wandb.log_artifact(artifact)
             self.last_logged_best_step = current_global_step
 
@@ -471,10 +490,10 @@ class ClassificationTask(L.LightningModule):
         """Aggregate and log test metrics and artifacts at epoch end."""
         # Log metrics
         for metric_name, metric_dict in self.test_metrics.items():
-            computed_metrics = metric_dict.compute()
+            computed_metrics = cast(Any, metric_dict).compute()
             for name, value in computed_metrics.items():
                 self.log(name, value, sync_dist=True)
-            metric_dict.reset()
+            cast(Any, metric_dict).reset()
 
         if self.trainer.sanity_checking:
             return
@@ -485,7 +504,7 @@ class ClassificationTask(L.LightningModule):
         # Create HeteroData object for predictions
         pred_data = HeteroData()
         num_bins = self.model.out_channels
-        if self.hparams.label_type == "ordinal":
+        if self._hp.label_type == "ordinal":
             # For ordinal, convert predictions to binary thresholds
             pred_data["gene"] = {
                 "fitness": (predictions[:, :num_bins] > 0).float(),
@@ -517,11 +536,11 @@ class ClassificationTask(L.LightningModule):
         self.true_reg_values = []
         self.predictions = []
 
-    def configure_optimizers(self) -> dict[str, Any]:
+    def configure_optimizers(self) -> Any:
         """Build and return the optimizer and learning-rate scheduler."""
-        optimizer_class = getattr(optim, self.hparams.optimizer_config["type"])
+        optimizer_class = getattr(optim, self._hp.optimizer_config["type"])
         optimizer_params = {
-            k: v for k, v in self.hparams.optimizer_config.items() if k != "type"
+            k: v for k, v in self._hp.optimizer_config.items() if k != "type"
         }
 
         if "learning_rate" in optimizer_params:
@@ -530,7 +549,7 @@ class ClassificationTask(L.LightningModule):
         optimizer = optimizer_class(self.parameters(), **optimizer_params)
 
         scheduler_params = {
-            k: v for k, v in self.hparams.lr_scheduler_config.items() if k != "type"
+            k: v for k, v in self._hp.lr_scheduler_config.items() if k != "type"
         }
         scheduler = ReduceLROnPlateau(optimizer, **scheduler_params)
 

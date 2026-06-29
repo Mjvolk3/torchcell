@@ -6,13 +6,15 @@
 """Lightning trainer and NaN-tolerant losses/metrics for deep-set GI regression."""
 
 import os.path as osp
-from typing import Any
+from typing import Any, cast
 
 import lightning as L
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import wandb
+from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.core.optimizer import LightningOptimizer
 from torchmetrics import (
     MeanAbsoluteError,
     MeanSquaredError,
@@ -48,7 +50,7 @@ class NaNTolerantCorrelation(Metric):
 
     def compute(self) -> torch.Tensor:
         """Return the wrapped metric's computed value."""
-        return self.base_metric.compute()
+        return cast(torch.Tensor, self.base_metric.compute())
 
 
 class NaNTolerantPearsonCorrCoef(NaNTolerantCorrelation):
@@ -125,12 +127,16 @@ class CombinedMSELoss(nn.Module):
 class RegressionTask(L.LightningModule):
     """LightningModule for training models on graph-based regression datasets."""
 
+    train_metrics: nn.ModuleDict
+    val_metrics: nn.ModuleDict
+    test_metrics: nn.ModuleDict
+
     def __init__(
         self,
         model: nn.Module,
         learning_rate: float = 1e-3,
         weight_decay: float = 1e-5,
-        batch_size: int = None,
+        batch_size: int | None = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
         boxplot_every_n_epochs: int = 1,
@@ -201,9 +207,10 @@ class RegressionTask(L.LightningModule):
 
     def forward(self, x: torch.Tensor, batch: torch.Tensor) -> torch.Tensor:
         """Run the main and top sub-models to predict per-graph targets."""
-        x_nodes, x_set = self.model["main"](x, batch)
-        y_hat = self.model["top"](x_set)
-        return y_hat
+        model = cast(nn.ModuleDict, self.model)
+        x_nodes, x_set = model["main"](x, batch)
+        y_hat = model["top"](x_set)
+        return cast(torch.Tensor, y_hat)
 
     def on_train_start(self) -> None:
         """Log the total number of model parameters at training start."""
@@ -218,7 +225,7 @@ class RegressionTask(L.LightningModule):
 
         y_hat = self(x, batch_vector)
 
-        opt = self.optimizers()
+        opt = cast(LightningOptimizer, self.optimizers())
         opt.zero_grad()
 
         loss, dim_losses = self.loss(y_hat, y)
@@ -248,12 +255,13 @@ class RegressionTask(L.LightningModule):
         self.train_metrics["fitness"](y_hat[:, 0], y[:, 0])
         self.train_metrics["gene_interaction"](y_hat[:, 1], y[:, 1])
 
-        return loss
+        return cast(torch.Tensor, loss)
 
     def on_train_epoch_end(self) -> None:
         """Compute, log, and reset the training metrics at epoch end."""
         # Compute and log metrics for each metric type
-        for metric_name, metric_dict in self.train_metrics.items():
+        for metric_name, metric_module in self.train_metrics.items():
+            metric_dict = cast(MetricCollection, metric_module)
             computed_metrics = metric_dict.compute()
             for name, value in computed_metrics.items():
                 self.log(f"train/{metric_name}/{name}", value, sync_dist=True)
@@ -334,7 +342,8 @@ class RegressionTask(L.LightningModule):
     def on_validation_epoch_end(self) -> None:
         """Log validation metrics, box plots, and the best-model wandb artifact."""
         # Compute and log metrics for each metric type
-        for metric_name, metric_dict in self.val_metrics.items():
+        for metric_name, metric_module in self.val_metrics.items():
+            metric_dict = cast(MetricCollection, metric_module)
             computed_metrics = metric_dict.compute()
             for name, value in computed_metrics.items():
                 self.log(f"val/{metric_name}/{name}", value, sync_dist=True)
@@ -368,10 +377,10 @@ class RegressionTask(L.LightningModule):
 
         # Logging model artifact
         current_global_step = self.global_step
-        if (
-            self.trainer.checkpoint_callback.best_model_path
-            and current_global_step != self.last_logged_best_step
-        ):
+        ckpt = cast(ModelCheckpoint, self.trainer.checkpoint_callback)
+        assert ckpt is not None
+        best_model_path = ckpt.best_model_path
+        if best_model_path and current_global_step != self.last_logged_best_step:
             # Save model as a W&B artifact
             artifact = wandb.Artifact(
                 name=f"model-global_step-{current_global_step}",
@@ -379,7 +388,7 @@ class RegressionTask(L.LightningModule):
                 description=f"Model on validation epoch end step - {current_global_step}",
                 metadata=dict(self.hparams),
             )
-            artifact.add_file(self.trainer.checkpoint_callback.best_model_path)
+            artifact.add_file(best_model_path)
             wandb.log_artifact(artifact)
             self.last_logged_best_step = (
                 current_global_step  # update the last logged step
@@ -407,8 +416,9 @@ class RegressionTask(L.LightningModule):
 
     def on_test_epoch_end(self) -> None:
         """Log test metrics and box plots, then clear cached predictions."""
-        self.log_dict(self.test_metrics.compute(), sync_dist=True)
-        self.test_metrics.reset()
+        test_metrics = cast(MetricCollection, self.test_metrics)
+        self.log_dict(test_metrics.compute(), sync_dist=True)
+        test_metrics.reset()
 
         # Convert lists to tensors
         true_values = torch.cat(self.true_values, dim=0)

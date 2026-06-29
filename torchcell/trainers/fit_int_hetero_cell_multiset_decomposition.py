@@ -1,12 +1,15 @@
 """Lightning trainer for hetero-cell gene-interaction regression with multiset decomposition."""
 
 import logging
+from typing import Any, cast
 
 import lightning as L
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import wandb
+from lightning.pytorch.core.optimizer import LightningOptimizer
+from lightning.pytorch.utilities.parsing import AttributeDict
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch_geometric.data import Batch, HeteroData
 from torchmetrics import MeanSquaredError, MetricCollection, PearsonCorrCoef
@@ -21,23 +24,40 @@ log = logging.getLogger(__name__)
 class RegressionTask(L.LightningModule):
     """Lightning task training a hetero-cell model with multiset interaction decomposition."""
 
+    _cell_graph_device: torch.device
+    df: dict[str, list[Any]] | None
+    train_samples: dict[str, Any]
+    val_samples: dict[str, Any]
+    train_metrics: nn.ModuleDict
+    val_metrics: nn.ModuleDict
+    test_metrics: nn.ModuleDict
+    train_transformed_metrics: nn.ModuleDict
+    val_transformed_metrics: nn.ModuleDict
+    test_transformed_metrics: nn.ModuleDict
+    train_combined_metrics: MetricCollection
+    val_combined_metrics: MetricCollection
+    test_combined_metrics: MetricCollection
+    train_transformed_combined: MetricCollection
+    val_transformed_combined: MetricCollection
+    test_transformed_combined: MetricCollection
+
     def __init__(
         self,
         model: nn.Module,
         cell_graph: torch.Tensor,
         optimizer_config: dict[str, object],
         lr_scheduler_config: dict[str, object],
-        batch_size: int = None,
+        batch_size: int | None = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
         plot_sample_ceiling: int = 1000,
         plot_every_n_epochs: int = 10,  # New parameter for plotting frequency
-        loss_func: nn.Module = None,
+        loss_func: nn.Module | None = None,
         grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
         forward_transform: nn.Module | None = None,
         inverse_transform: nn.Module | None = None,
-        graph_processor: object = None,
+        graph_processor: object | None = None,
     ) -> None:
         """Store the model, optimizer/scheduler configs, transforms, and metrics."""
         super().__init__()
@@ -114,9 +134,12 @@ class RegressionTask(L.LightningModule):
         }
         self.automatic_optimization = False
 
-    def forward(
-        self, batch: dict[str, object]
-    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+    @property
+    def _hp(self) -> AttributeDict:
+        """Typed view of ``self.hparams`` (always an ``AttributeDict`` at runtime)."""
+        return cast(AttributeDict, self.hparams)
+
+    def forward(self, batch: HeteroData) -> Any:
         """Move the cell graph to the batch device and run the model."""
         batch_device = batch["gene"].x.device
         if (
@@ -127,15 +150,15 @@ class RegressionTask(L.LightningModule):
             self._cell_graph_device = batch_device
         return self.model(self.cell_graph, batch)
 
-    def _ensure_no_unused_params_loss(self) -> torch.Tensor:
-        dummy_loss = 0
+    def _ensure_no_unused_params_loss(self) -> torch.Tensor | int:
+        dummy_loss: torch.Tensor | int = 0
         for param in self.model.parameters():
             if param.requires_grad and param.grad is None:
                 dummy_loss = dummy_loss + 0.0 * param.sum()
         return dummy_loss
 
     def _shared_step(
-        self, batch: dict[str, object], batch_idx: int, stage: str = "train"
+        self, batch: HeteroData, batch_idx: int, stage: str = "train"
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         predictions, representations = self(batch)
         batch_size = predictions.size(0)
@@ -158,7 +181,9 @@ class RegressionTask(L.LightningModule):
         )
         orig_targets = torch.cat([fitness_orig, gene_interaction_orig], dim=1)
 
-        loss, loss_dict = self.loss_func(predictions, targets, representations["z_p"])
+        loss, loss_dict = cast(nn.Module, self.loss_func)(
+            predictions, targets, representations["z_p"]
+        )
 
         # HACK - start
         dummy_loss = self._ensure_no_unused_params_loss()
@@ -260,11 +285,11 @@ class RegressionTask(L.LightningModule):
 
         if (
             stage == "train"
-            and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
+            and (self.current_epoch + 1) % self._hp.plot_every_n_epochs == 0
         ):
             current_count = sum(t.size(0) for t in self.train_samples["true_values"])
-            if current_count < self.hparams.plot_sample_ceiling:
-                remaining = self.hparams.plot_sample_ceiling - current_count
+            if current_count < self._hp.plot_sample_ceiling:
+                remaining = self._hp.plot_sample_ceiling - current_count
                 if batch_size > remaining:
                     idx = torch.randperm(batch_size)[:remaining]
                     self.train_samples["true_values"].append(orig_targets[idx].detach())
@@ -284,7 +309,7 @@ class RegressionTask(L.LightningModule):
                         )
         elif (
             stage == "val"
-            and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
+            and (self.current_epoch + 1) % self._hp.plot_every_n_epochs == 0
         ):
             # Only collect validation samples on epochs we'll plot
             self.val_samples["true_values"].append(orig_targets.detach())
@@ -296,37 +321,37 @@ class RegressionTask(L.LightningModule):
 
         return loss, predictions, orig_targets
 
-    def training_step(self, batch: dict[str, object], batch_idx: int) -> torch.Tensor:
+    def training_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
         """Run a manual-optimization training step with gradient accumulation."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
-        if self.hparams.grad_accumulation_schedule is not None:
+        if self._hp.grad_accumulation_schedule is not None:
             loss = loss / self.current_accumulation_steps
-        opt = self.optimizers()
+        opt = cast(LightningOptimizer, self.optimizers())
         self.manual_backward(loss)
         if (
-            self.hparams.grad_accumulation_schedule is None
+            self._hp.grad_accumulation_schedule is None
             or (batch_idx + 1) % self.current_accumulation_steps == 0
         ):
-            if self.hparams.clip_grad_norm:
+            if self._hp.clip_grad_norm:
                 nn.utils.clip_grad_norm_(
-                    self.parameters(), max_norm=self.hparams.clip_grad_norm_max_norm
+                    self.parameters(), max_norm=self._hp.clip_grad_norm_max_norm
                 )
             opt.step()
             opt.zero_grad()
         self.log(
             "learning_rate",
-            self.optimizers().param_groups[0]["lr"],
+            cast(LightningOptimizer, self.optimizers()).param_groups[0]["lr"],
             batch_size=batch["gene"].x.size(0),
             sync_dist=True,
         )
         return loss
 
-    def validation_step(self, batch: dict[str, object], batch_idx: int) -> torch.Tensor:
+    def validation_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
         """Run the shared step in validation mode and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
         return loss
 
-    def test_step(self, batch: dict[str, object], batch_idx: int) -> None:
+    def test_step(self, batch: HeteroData, batch_idx: int) -> None:
         """Accumulate true/predicted interaction scores into the results table."""
         if self.df is None:
             # Initialize table with specified columns as empty lists
@@ -369,7 +394,7 @@ class RegressionTask(L.LightningModule):
         return None
 
     def test_multiset_breakout(
-        self, batch: dict[str, object], batch_idx: int
+        self, batch: HeteroData, batch_idx: int
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, list[int]]:
         """Evaluate predictions broken out by gene-set cardinality."""
         num_gene_interactions = [len(i) for i in batch["gene"]["ids_pert"]]
@@ -387,7 +412,9 @@ class RegressionTask(L.LightningModule):
             if "gene_interaction_original" in batch["gene"]
             else gene_interaction_vals
         )
-        loss, loss_dict = self.loss_func(predictions, targets, representations["z_p"])
+        loss, loss_dict = cast(nn.Module, self.loss_func)(
+            predictions, targets, representations["z_p"]
+        )
 
         epsilon_true = gene_interaction_orig
 
@@ -422,7 +449,7 @@ class RegressionTask(L.LightningModule):
         )
 
     def compute_epsilon_from_fitness_pred(
-        self, batch: dict[str, object], batch_idx: int, fitness_whole_graph: torch.Tensor
+        self, batch: HeteroData, batch_idx: int, fitness_whole_graph: torch.Tensor
     ) -> torch.Tensor:
         """Compute gene interaction scores from predicted subset fitness values.
 
@@ -530,7 +557,7 @@ class RegressionTask(L.LightningModule):
             processed_list = []
             for subset in subsets:
                 dummy_data = _create_dummy_data_for_subset(subset)
-                processed_data = self.graph_processor.process(
+                processed_data = cast(Any, self.graph_processor).process(
                     cell_graph=self.cell_graph,
                     phenotype_info=[FitnessPhenotype],
                     data=[dummy_data],
@@ -590,9 +617,7 @@ class RegressionTask(L.LightningModule):
 
         return torch.stack(epsilons)
 
-    def _compute_metrics_safely(
-        self, metrics_dict: nn.ModuleDict
-    ) -> dict[str, torch.Tensor]:
+    def _compute_metrics_safely(self, metrics_dict: Any) -> dict[str, torch.Tensor]:
         results = {}
         for metric_name, metric in metrics_dict.items():
             try:
@@ -609,11 +634,11 @@ class RegressionTask(L.LightningModule):
                 raise e
         return results
 
-    def _plot_samples(self, samples: dict[str, object], stage: str) -> None:
+    def _plot_samples(self, samples: dict[str, Any], stage: str) -> None:
         true_values = torch.cat(samples["true_values"], dim=0)
         predictions = torch.cat(samples["predictions"], dim=0)
         latents = {k: torch.cat(v, dim=0) for k, v in samples["latents"].items()}
-        max_samples = self.hparams.plot_sample_ceiling
+        max_samples = self._hp.plot_sample_ceiling
         if true_values.size(0) > max_samples:
             idx = torch.randperm(true_values.size(0))[:max_samples]
             true_values = true_values[idx]
@@ -624,8 +649,8 @@ class RegressionTask(L.LightningModule):
             base_dir=self.trainer.default_root_dir, max_points=max_samples
         )
         loss_name = (
-            self.hparams.loss_func.__class__.__name__
-            if self.hparams.loss_func is not None
+            self._hp.loss_func.__class__.__name__
+            if self._hp.loss_func is not None
             else "Loss"
         )
         vis.visualize_model_outputs(
@@ -661,7 +686,7 @@ class RegressionTask(L.LightningModule):
             computed_metrics = self._compute_metrics_safely(metric_dict)
             for name, value in computed_metrics.items():
                 self.log(name, value, sync_dist=True)
-            metric_dict.reset()
+            cast(Any, metric_dict).reset()
 
         # Compute and log combined metrics
         combined_metrics = self._compute_metrics_safely(self.train_combined_metrics)
@@ -674,7 +699,7 @@ class RegressionTask(L.LightningModule):
             computed_metrics = self._compute_metrics_safely(metric_dict)
             for name, value in computed_metrics.items():
                 self.log(name, value, sync_dist=True)
-            metric_dict.reset()
+            cast(Any, metric_dict).reset()
 
         # Compute and log transformed combined metrics
         transformed_combined_metrics = self._compute_metrics_safely(
@@ -687,7 +712,7 @@ class RegressionTask(L.LightningModule):
         # Plot training samples only on the final epoch
         if (
             self.current_epoch + 1
-        ) % self.hparams.plot_every_n_epochs == 0 and self.train_samples["true_values"]:
+        ) % self._hp.plot_every_n_epochs == 0 and self.train_samples["true_values"]:
             self._plot_samples(self.train_samples, "train_sample")
             # Reset the sample containers
             self.train_samples = {
@@ -699,7 +724,7 @@ class RegressionTask(L.LightningModule):
     def on_train_epoch_start(self) -> None:
         """Reset training sample buffers on epochs scheduled for plotting."""
         # Clear sample containers at the start of epochs where we'll collect samples
-        if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
+        if (self.current_epoch + 1) % self._hp.plot_every_n_epochs == 0:
             self.train_samples = {
                 "true_values": [],
                 "predictions": [],
@@ -709,7 +734,7 @@ class RegressionTask(L.LightningModule):
     def on_validation_epoch_start(self) -> None:
         """Reset validation sample buffers on epochs scheduled for plotting."""
         # Clear sample containers at the start of epochs where we'll collect samples
-        if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
+        if (self.current_epoch + 1) % self._hp.plot_every_n_epochs == 0:
             self.val_samples = {
                 "true_values": [],
                 "predictions": [],
@@ -723,7 +748,7 @@ class RegressionTask(L.LightningModule):
             computed_metrics = self._compute_metrics_safely(metric_dict)
             for name, value in computed_metrics.items():
                 self.log(name, value, sync_dist=True)
-            metric_dict.reset()
+            cast(Any, metric_dict).reset()
 
         # Compute and log combined metrics
         combined_metrics = self._compute_metrics_safely(self.val_combined_metrics)
@@ -736,7 +761,7 @@ class RegressionTask(L.LightningModule):
             computed_metrics = self._compute_metrics_safely(metric_dict)
             for name, value in computed_metrics.items():
                 self.log(name, value, sync_dist=True)
-            metric_dict.reset()
+            cast(Any, metric_dict).reset()
 
         # Compute and log transformed combined metrics
         transformed_combined_metrics = self._compute_metrics_safely(
@@ -749,7 +774,7 @@ class RegressionTask(L.LightningModule):
         # Plot validation samples
         if (
             not self.trainer.sanity_checking
-            and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
+            and (self.current_epoch + 1) % self._hp.plot_every_n_epochs == 0
             and self.val_samples["true_values"]
         ):
             self._plot_samples(self.val_samples, "val_sample")
@@ -765,17 +790,17 @@ class RegressionTask(L.LightningModule):
     #         if param.grad is None:
     #             print(f"Unused parameter: {name}")
 
-    def configure_optimizers(self) -> dict[str, object]:
+    def configure_optimizers(self) -> Any:
         """Build the optimizer and optional LR scheduler from hyperparameters."""
-        optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])
+        optimizer_class = getattr(torch.optim, self._hp.optimizer_config["type"])
         optimizer_params = {
-            k: v for k, v in self.hparams.optimizer_config.items() if k != "type"
+            k: v for k, v in self._hp.optimizer_config.items() if k != "type"
         }
         if "learning_rate" in optimizer_params:
             optimizer_params["lr"] = optimizer_params.pop("learning_rate")
         optimizer = optimizer_class(self.parameters(), **optimizer_params)
         scheduler_params = {
-            k: v for k, v in self.hparams.lr_scheduler_config.items() if k != "type"
+            k: v for k, v in self._hp.lr_scheduler_config.items() if k != "type"
         }
         scheduler = ReduceLROnPlateau(optimizer, **scheduler_params)
         return {

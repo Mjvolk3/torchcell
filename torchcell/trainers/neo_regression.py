@@ -5,13 +5,15 @@
 """Lightning regression trainer with MSE/ListMLE losses and correlation metrics."""
 
 import os.path as osp
-from typing import Any
+from typing import Any, cast
 
 import lightning as L
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import wandb
+from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.core.optimizer import LightningOptimizer
 from torchmetrics import (
     MeanAbsoluteError,
     MeanSquaredError,
@@ -34,6 +36,11 @@ plt.style.use(style_file_path)
 
 class ListMLEMetric(Metric):
     """TorchMetric tracking the running mean ListMLE loss over batches."""
+
+    # ``add_state`` registers these as tensors at runtime; declare their type so
+    # ``nn.Module.__getattr__`` does not widen them to ``Tensor | Module``.
+    sum_loss: torch.Tensor
+    total: torch.Tensor
 
     def __init__(self, dist_sync_on_step: bool = False) -> None:
         """Initialize the ListMLE loss and the sum/count accumulator states."""
@@ -67,7 +74,7 @@ class MSEListMLELoss(nn.Module):
         """Return MSE plus alpha times the ListMLE loss."""
         mse = self.mse_loss(y_pred, y_true)
         list_mle = self.list_mle_loss(y_pred, y_true)
-        combined_loss = mse + (self.alpha * list_mle)
+        combined_loss: torch.Tensor = mse + (self.alpha * list_mle)
         return combined_loss
 
 
@@ -81,8 +88,8 @@ class RegressionTask(L.LightningModule):
         learning_rate: float = 1e-3,
         weight_decay: float = 1e-5,
         loss: str = "mse",
-        batch_size: int = None,
-        train_epoch_size: int = None,
+        batch_size: int | None = None,
+        train_epoch_size: int | None = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
         boxplot_every_n_epochs: int = 1,
@@ -118,6 +125,7 @@ class RegressionTask(L.LightningModule):
         self.clip_grad_norm_max_norm = clip_grad_norm_max_norm
 
         # loss
+        self.loss: nn.Module
         if loss == "mse":
             self.loss = nn.MSELoss()
         elif loss == "list_mle":
@@ -158,7 +166,7 @@ class RegressionTask(L.LightningModule):
         self.predictions: list[torch.Tensor] = []
 
         # wandb model artifact logging
-        self.last_logged_best_step = None
+        self.last_logged_best_step: int | None = None
 
     def setup(self, stage: str | None = None) -> None:
         """Move the model to the active device at the start of each stage."""
@@ -166,8 +174,9 @@ class RegressionTask(L.LightningModule):
 
     def forward(self, x: torch.Tensor, batch: torch.Tensor) -> torch.Tensor:
         """Run inputs through the main encoder and top head to produce predictions."""
-        x_nodes, x_set = self.model["main"](x, batch)
-        y_hat = self.model["top"](x_set)
+        model = cast(nn.ModuleDict, self.model)
+        x_nodes, x_set = model["main"](x, batch)
+        y_hat: torch.Tensor = model["top"](x_set)
         return y_hat
 
     def on_train_start(self) -> None:
@@ -188,10 +197,10 @@ class RegressionTask(L.LightningModule):
         # Pass the batch vector to the forward method
         y_hat = self(x, batch_vector)
 
-        opt = self.optimizers()
+        opt = cast(LightningOptimizer, self.optimizers())
         opt.zero_grad()
 
-        loss = self.loss(y_hat, y)
+        loss: torch.Tensor = self.loss(y_hat, y)
 
         self.manual_backward(loss)  # error on this line
         if self.clip_grad_norm:
@@ -312,10 +321,8 @@ class RegressionTask(L.LightningModule):
 
         # Logging model artifact
         current_global_step = self.global_step
-        if (
-            self.trainer.checkpoint_callback.best_model_path
-            and current_global_step != self.last_logged_best_step
-        ):
+        ckpt = cast(ModelCheckpoint, self.trainer.checkpoint_callback)
+        if ckpt.best_model_path and current_global_step != self.last_logged_best_step:
             # Save model as a W&B artifact
             artifact = wandb.Artifact(
                 name=f"model-global_step-{current_global_step}",
@@ -323,7 +330,7 @@ class RegressionTask(L.LightningModule):
                 description=f"Model on validation epoch end step - {current_global_step}",
                 metadata=dict(self.hparams),
             )
-            artifact.add_file(self.trainer.checkpoint_callback.best_model_path)
+            artifact.add_file(ckpt.best_model_path)
             wandb.log_artifact(artifact)
             self.last_logged_best_step = (
                 current_global_step  # update the last logged step

@@ -5,13 +5,15 @@
 """Lightning task for simple linear regression on graph perturbation data."""
 
 import os.path as osp
-from typing import Any
+from typing import Any, cast
 
 import lightning as L
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import wandb
+from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.core.optimizer import LightningOptimizer
 from torchmetrics import (
     MeanAbsoluteError,
     MeanSquaredError,
@@ -65,6 +67,7 @@ class SimpleLinearRegressionTask(L.LightningModule):
         self.clip_grad_norm_max_norm = clip_grad_norm_max_norm
 
         # loss
+        self.loss: nn.Module
         if loss == "mse":
             self.loss = nn.MSELoss()
         elif loss == "weighted_mse":
@@ -123,7 +126,7 @@ class SimpleLinearRegressionTask(L.LightningModule):
     def forward(self, x: torch.Tensor, batch: torch.Tensor) -> torch.Tensor:
         """Run the model and return squeezed predictions."""
         y_hat = self.model(x, batch).squeeze()
-        return y_hat
+        return cast(torch.Tensor, y_hat)
 
     def on_train_start(self) -> None:
         """Log the total number of model parameters at training start."""
@@ -140,7 +143,7 @@ class SimpleLinearRegressionTask(L.LightningModule):
         # Pass the batch vector to the forward method
         y_hat = self(x, batch_vector)
 
-        opt = self.optimizers()
+        opt = cast(LightningOptimizer, self.optimizers())
         opt.zero_grad()
         loss = self.loss(y_hat, y)
 
@@ -168,7 +171,7 @@ class SimpleLinearRegressionTask(L.LightningModule):
             batch_size=batch_size,
             sync_dist=True,
         )
-        return loss
+        return cast(torch.Tensor, loss)
 
     def on_train_epoch_end(self) -> None:
         """Log and reset accumulated training metrics."""
@@ -227,10 +230,8 @@ class SimpleLinearRegressionTask(L.LightningModule):
         self.predictions = []
 
         current_global_step = self.global_step
-        if (
-            self.trainer.checkpoint_callback.best_model_path
-            and current_global_step != self.last_logged_best_step
-        ):
+        ckpt = cast(ModelCheckpoint, self.trainer.checkpoint_callback)
+        if ckpt.best_model_path and current_global_step != self.last_logged_best_step:
             # Save model as a W&B artifact
             artifact = wandb.Artifact(
                 name=f"model-global_step-{current_global_step}",
@@ -238,7 +239,7 @@ class SimpleLinearRegressionTask(L.LightningModule):
                 description=f"Model on validation epoch end step - {current_global_step}",
                 metadata=dict(self.hparams),
             )
-            artifact.add_file(self.trainer.checkpoint_callback.best_model_path)
+            artifact.add_file(ckpt.best_model_path)
             wandb.log_artifact(artifact)
             self.last_logged_best_step = (
                 current_global_step  # update the last logged step

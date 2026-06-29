@@ -9,6 +9,7 @@ import logging
 import os.path as osp
 import sys
 from collections.abc import Callable
+from typing import Any, cast
 
 import lightning as L
 import matplotlib.pyplot as plt
@@ -16,7 +17,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import wandb
+from lightning.pytorch.core.optimizer import LightningOptimizer
+from lightning.pytorch.utilities.parsing import AttributeDict
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch_geometric.data import HeteroData
 from torchmetrics import (
     MeanAbsoluteError,
     MeanSquaredError,
@@ -39,9 +43,7 @@ class NaNTolerantCorrelation(Metric):
     """Wrap a correlation metric, ignoring NaN entries in preds and targets."""
 
     def __init__(
-        self,
-        base_metric: Callable[[], Metric],
-        default_value: float = torch.nan,
+        self, base_metric: Callable[[], Metric], default_value: float = torch.nan
     ) -> None:
         """Instantiate the wrapped metric and store the empty-batch default."""
         super().__init__()
@@ -57,8 +59,9 @@ class NaNTolerantCorrelation(Metric):
         if torch.any(mask):
             self.base_metric.update(preds[mask], target[mask])
 
-    def compute(self) -> torch.Tensor:
+    def compute(self) -> torch.Tensor | float:
         """Return the metric value, or the default when no valid samples exist."""
+        result: torch.Tensor | float
         try:
             # Compute the metric if there were valid samples
             result = self.base_metric.compute()
@@ -153,6 +156,7 @@ class CombinedRegressionLoss(nn.Module):
         """Select the per-dimension loss function and store dimension weights."""
         super().__init__()
         self.loss_type = loss_type
+        self.loss_fn: nn.Module
         if loss_type == "mse":
             self.loss_fn = MultiDimNaNTolerantMSELoss()
         elif loss_type == "l1":
@@ -178,7 +182,7 @@ class RegressionTask(L.LightningModule):
         model: nn.Module,
         optimizer_config: dict[str, object],
         lr_scheduler_config: dict[str, object],
-        batch_size: int = None,
+        batch_size: int | None = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
         boxplot_every_n_epochs: int = 1,
@@ -228,8 +232,13 @@ class RegressionTask(L.LightningModule):
 
         self.true_values: list[torch.Tensor] = []
         self.predictions: list[torch.Tensor] = []
-        self.last_logged_best_step = None
+        self.last_logged_best_step: int | None = None
         self.automatic_optimization = False
+
+    @property
+    def _hp(self) -> AttributeDict:
+        """Typed view of ``self.hparams`` (always an ``AttributeDict`` at runtime)."""
+        return cast(AttributeDict, self.hparams)
 
     def setup(self, stage: str | None = None) -> None:
         """Move the model and loss weights to the active device."""
@@ -238,11 +247,11 @@ class RegressionTask(L.LightningModule):
 
     def update_accumulation_steps(self, epoch: int) -> None:
         """Set the current gradient accumulation steps for the given epoch."""
-        if self.hparams.grad_accumulation_schedule is not None:
+        if self._hp.grad_accumulation_schedule is not None:
             self.current_accumulation_steps = max(
                 [
                     steps
-                    for e, steps in self.hparams.grad_accumulation_schedule.items()
+                    for e, steps in self._hp.grad_accumulation_schedule.items()
                     if int(e) <= epoch
                 ],
                 default=1,
@@ -258,8 +267,8 @@ class RegressionTask(L.LightningModule):
             cluster_assignments,
             link_pred_losses,
             entropy_losses,
-        ) = self.model["main"](x, edge_indices, batch)
-        y_hat = self.model["top"](out)
+        ) = cast(Any, self.model)["main"](x, edge_indices, batch)
+        y_hat = cast(Any, self.model)["top"](out)
         return (
             y_hat,
             attention_weights,
@@ -276,7 +285,7 @@ class RegressionTask(L.LightningModule):
         # set grad accumulator
         self.update_accumulation_steps(self.current_epoch)
 
-    def training_step(self, batch: dict[object, object], batch_idx: int) -> torch.Tensor:
+    def training_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
         """Run a manual-optimization training step with gradient accumulation."""
         x = batch["gene"].x
         edge_indices = [
@@ -298,11 +307,11 @@ class RegressionTask(L.LightningModule):
         mse_loss, dim_losses = self.combined_loss(y_hat, y)
 
         # Weighted link prediction and entropy losses
-        link_pred_loss = sum(link_pred_losses) * self.hparams.link_pred_loss_weight
-        entropy_loss = sum(entropy_losses) * self.hparams.entropy_loss_weight
+        link_pred_loss = sum(link_pred_losses) * self._hp.link_pred_loss_weight
+        entropy_loss = sum(entropy_losses) * self._hp.entropy_loss_weight
 
         # Total loss
-        loss = mse_loss + link_pred_loss + entropy_loss
+        loss: torch.Tensor = mse_loss + link_pred_loss + entropy_loss
 
         if torch.isnan(loss):
             log.error(
@@ -340,19 +349,19 @@ class RegressionTask(L.LightningModule):
             sys.exit(1)
 
         # Scale loss by accumulation steps
-        if self.hparams.grad_accumulation_schedule is not None:
+        if self._hp.grad_accumulation_schedule is not None:
             loss = loss / self.current_accumulation_steps
 
-        opt = self.optimizers()
+        opt = cast(LightningOptimizer, self.optimizers())
         self.manual_backward(loss)
 
         if (
-            self.hparams.grad_accumulation_schedule is None
+            self._hp.grad_accumulation_schedule is None
             or (batch_idx + 1) % self.current_accumulation_steps == 0
         ):
-            if self.hparams.clip_grad_norm:
+            if self._hp.clip_grad_norm:
                 nn.utils.clip_grad_norm_(
-                    self.parameters(), max_norm=self.hparams.clip_grad_norm_max_norm
+                    self.parameters(), max_norm=self._hp.clip_grad_norm_max_norm
                 )
             opt.step()
             opt.zero_grad()
@@ -362,7 +371,7 @@ class RegressionTask(L.LightningModule):
         batch_size = batch_vector[-1].item() + 1
         self.log(
             "learning_rate",
-            self.optimizers().param_groups[0]["lr"],
+            cast(LightningOptimizer, self.optimizers()).param_groups[0]["lr"],
             batch_size=batch_size,
             sync_dist=True,
         )
@@ -388,8 +397,8 @@ class RegressionTask(L.LightningModule):
         )
 
         # Update metrics
-        self.train_metrics["fitness"](y_hat[:, 0], y[:, 0])
-        self.train_metrics["gene_interaction"](y_hat[:, 1], y[:, 1])
+        cast(Any, self.train_metrics["fitness"])(y_hat[:, 0], y[:, 0])
+        cast(Any, self.train_metrics["gene_interaction"])(y_hat[:, 1], y[:, 1])
 
         return loss
 
@@ -397,12 +406,12 @@ class RegressionTask(L.LightningModule):
         """Compute and log the training metrics at the end of the epoch."""
         # Compute and log metrics for each metric type
         for metric_name, metric_dict in self.train_metrics.items():
-            computed_metrics = metric_dict.compute()
+            computed_metrics = cast(Any, metric_dict).compute()
             for name, value in computed_metrics.items():
                 self.log(f"train/{metric_name}/{name}", value, sync_dist=True)
-            metric_dict.reset()  # Reset metrics after logging
+            cast(Any, metric_dict).reset()  # Reset metrics after logging
 
-    def validation_step(self, batch: dict[object, object], batch_idx: int) -> None:
+    def validation_step(self, batch: HeteroData, batch_idx: int) -> None:
         """Run a validation step and accumulate predictions and metrics."""
         x = batch["gene"].x
         edge_indices = [
@@ -424,11 +433,11 @@ class RegressionTask(L.LightningModule):
         mse_loss, dim_losses = self.combined_loss(y_hat, y)
 
         # Weighted link prediction and entropy losses
-        link_pred_loss = sum(link_pred_losses) * self.hparams.link_pred_loss_weight
-        entropy_loss = sum(entropy_losses) * self.hparams.entropy_loss_weight
+        link_pred_loss = sum(link_pred_losses) * self._hp.link_pred_loss_weight
+        entropy_loss = sum(entropy_losses) * self._hp.entropy_loss_weight
 
         # Total loss
-        loss = mse_loss + link_pred_loss + entropy_loss
+        loss: torch.Tensor = mse_loss + link_pred_loss + entropy_loss
 
         batch_size = batch_vector[-1].item() + 1
 
@@ -452,17 +461,14 @@ class RegressionTask(L.LightningModule):
         )
 
         # Update metrics
-        self.val_metrics["fitness"](y_hat[:, 0], y[:, 0])
-        self.val_metrics["gene_interaction"](y_hat[:, 1], y[:, 1])
+        cast(Any, self.val_metrics["fitness"])(y_hat[:, 0], y[:, 0])
+        cast(Any, self.val_metrics["gene_interaction"])(y_hat[:, 1], y[:, 1])
 
         self.true_values.append(y.detach())
         self.predictions.append(y_hat.detach())
 
     def compute_prediction_stats(
-        self,
-        true_values: torch.Tensor,
-        predictions: torch.Tensor,
-        stage: str = "val",
+        self, true_values: torch.Tensor, predictions: torch.Tensor, stage: str = "val"
     ) -> None:
         """Build and log box/scatter plots of predictions versus true values."""
         # Define the bin edges for each dimension
@@ -507,14 +513,14 @@ class RegressionTask(L.LightningModule):
         """Compute and log validation metrics and prediction plots each epoch."""
         # Compute and log metrics for each metric type
         for metric_name, metric_dict in self.val_metrics.items():
-            computed_metrics = metric_dict.compute()
+            computed_metrics = cast(Any, metric_dict).compute()
             for name, value in computed_metrics.items():
                 self.log(f"val/{metric_name}/{name}", value, sync_dist=True)
-            metric_dict.reset()  # Reset metrics after logging
+            cast(Any, metric_dict).reset()  # Reset metrics after logging
 
         # Skip plotting during sanity check
         if self.trainer.sanity_checking or (
-            self.current_epoch % self.hparams.boxplot_every_n_epochs != 0
+            self.current_epoch % self._hp.boxplot_every_n_epochs != 0
         ):
             return
 
@@ -541,7 +547,7 @@ class RegressionTask(L.LightningModule):
         # Logging model artifact
         current_global_step = self.global_step
         if (
-            self.trainer.checkpoint_callback.best_model_path
+            cast(Any, self.trainer.checkpoint_callback).best_model_path
             and current_global_step != self.last_logged_best_step
         ):
             # Save model as a W&B artifact
@@ -551,13 +557,15 @@ class RegressionTask(L.LightningModule):
                 description=f"Model on validation epoch end step - {current_global_step}",
                 metadata=dict(self.hparams),
             )
-            artifact.add_file(self.trainer.checkpoint_callback.best_model_path)
+            artifact.add_file(
+                cast(Any, self.trainer.checkpoint_callback).best_model_path
+            )
             wandb.log_artifact(artifact)
             self.last_logged_best_step = (
                 current_global_step  # update the last logged step
             )
 
-    def test_step(self, batch: dict[object, object], batch_idx: int) -> None:
+    def test_step(self, batch: HeteroData, batch_idx: int) -> None:
         """Run a test step and update the test metrics."""
         x = batch["gene"].x
         edge_indices = [
@@ -579,11 +587,11 @@ class RegressionTask(L.LightningModule):
         mse_loss, dim_losses = self.combined_loss(y_hat, y)
 
         # Weighted link prediction and entropy losses
-        link_pred_loss = sum(link_pred_losses) * self.hparams.link_pred_loss_weight
-        entropy_loss = sum(entropy_losses) * self.hparams.entropy_loss_weight
+        link_pred_loss = sum(link_pred_losses) * self._hp.link_pred_loss_weight
+        entropy_loss = sum(entropy_losses) * self._hp.entropy_loss_weight
 
         # Total loss
-        loss = mse_loss + link_pred_loss + entropy_loss
+        loss: torch.Tensor = mse_loss + link_pred_loss + entropy_loss
 
         batch_size = batch_vector[-1].item() + 1
 
@@ -607,16 +615,16 @@ class RegressionTask(L.LightningModule):
         )
 
         # Update metrics
-        self.test_metrics["fitness"](y_hat[:, 0], y[:, 0])
-        self.test_metrics["gene_interaction"](y_hat[:, 1], y[:, 1])
+        cast(Any, self.test_metrics["fitness"])(y_hat[:, 0], y[:, 0])
+        cast(Any, self.test_metrics["gene_interaction"])(y_hat[:, 1], y[:, 1])
 
         self.true_values.append(y.detach())
         self.predictions.append(y_hat.detach())
 
     def on_test_epoch_end(self) -> None:
         """Compute and log the aggregated test metrics."""
-        self.log_dict(self.test_metrics.compute(), sync_dist=True)
-        self.test_metrics.reset()
+        self.log_dict(cast(Any, self.test_metrics).compute(), sync_dist=True)
+        cast(Any, self.test_metrics).reset()
 
         # Convert lists to tensors
         true_values = torch.cat(self.true_values, dim=0)
@@ -638,11 +646,11 @@ class RegressionTask(L.LightningModule):
         self.true_values = []
         self.predictions = []
 
-    def configure_optimizers(self) -> dict[str, object]:
+    def configure_optimizers(self) -> Any:
         """Build the optimizer and learning-rate scheduler from the configs."""
-        optimizer_class = getattr(optim, self.hparams.optimizer_config["type"])
+        optimizer_class = getattr(optim, self._hp.optimizer_config["type"])
         optimizer_params = {
-            k: v for k, v in self.hparams.optimizer_config.items() if k != "type"
+            k: v for k, v in self._hp.optimizer_config.items() if k != "type"
         }
 
         # Replace 'learning_rate' with 'lr' if present
@@ -653,7 +661,7 @@ class RegressionTask(L.LightningModule):
 
         # Remove 'type' from lr_scheduler_config before passing to ReduceLROnPlateau
         scheduler_params = {
-            k: v for k, v in self.hparams.lr_scheduler_config.items() if k != "type"
+            k: v for k, v in self._hp.lr_scheduler_config.items() if k != "type"
         }
         scheduler = ReduceLROnPlateau(optimizer, **scheduler_params)
 

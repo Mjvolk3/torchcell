@@ -2,12 +2,16 @@
 
 import os.path as osp
 import tracemalloc
+from typing import cast
 
 import lightning as L
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import wandb
+from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.core.optimizer import LightningOptimizer
+from torch_geometric.data import HeteroData
 from torchmetrics import (
     MeanAbsoluteError,
     MeanSquaredError,
@@ -37,7 +41,7 @@ class DCellRegressionTask(L.LightningModule):
         boxplot_every_n_epochs: int = 10,
         learning_rate: float = 1e-3,
         weight_decay: float = 1e-5,
-        batch_size: int = None,
+        batch_size: int | None = None,
         train_wt_diff: bool = True,
         **kwargs: object,
     ) -> None:
@@ -98,8 +102,17 @@ class DCellRegressionTask(L.LightningModule):
         self.boxplot_every_n_epochs = boxplot_every_n_epochs
 
         # wandb model artifact logging
-        self.last_logged_best_step = None
+        self.last_logged_best_step: int | None = None
         tracemalloc.start()
+
+    def _submodel(self, name: str) -> nn.Module:
+        """Return a submodel registered via ``setattr`` in ``__init__``.
+
+        Submodels are registered dynamically, so ``nn.Module.__getattr__``
+        types them as ``Tensor | Module``; the invariant that these attributes
+        are always ``nn.Module`` holds.
+        """
+        return cast(nn.Module, getattr(self, name))
 
     def setup(self, stage: str | None = None) -> None:
         """Move submodels to device and init prediction/true-value buffers."""
@@ -108,14 +121,14 @@ class DCellRegressionTask(L.LightningModule):
         self.true_values = torch.tensor([], dtype=torch.float32, device=self.device)
         self.predictions = torch.tensor([], dtype=torch.float32, device=self.device)
 
-    def forward(self, batch: object) -> dict[str, torch.Tensor]:
+    def forward(self, batch: HeteroData) -> dict[str, torch.Tensor]:
         """Run the DCell subsystem and linear heads, returning per-node outputs."""
         # Implement the forward pass
-        dcell_subsystem_output = self.dcell(batch)
-        dcell_linear_output = self.dcell_linear(dcell_subsystem_output)
+        dcell_subsystem_output = self._submodel("dcell")(batch)
+        dcell_linear_output = self._submodel("dcell_linear")(dcell_subsystem_output)
         # if dcell_linear_output.size()[-1] == 1:
         #     dcell_linear_output = dcell_linear_output.squeeze(-1)
-        return dcell_linear_output
+        return cast(dict[str, torch.Tensor], dcell_linear_output)
 
     def on_train_start(self) -> None:
         """Log the total parameter count at the start of training."""
@@ -126,13 +139,13 @@ class DCellRegressionTask(L.LightningModule):
             "model/parameters_size", torch.tensor(parameter_size, dtype=torch.float32)
         )
 
-    def training_step(self, batch: object, batch_idx: int) -> torch.Tensor:
+    def training_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
         """Run a manual-optimization training step and log loss and metrics."""
         y_hat = self(batch)
         y = batch.fitness
-        opt = self.optimizers()
+        opt = cast(LightningOptimizer, self.optimizers())
         opt.zero_grad()
-        loss = self.loss(y_hat, y, self.dcell.parameters())
+        loss: torch.Tensor = self.loss(y_hat, y, self._submodel("dcell").parameters())
 
         self.manual_backward(loss)  # error on this line
         opt.step()
@@ -179,12 +192,12 @@ class DCellRegressionTask(L.LightningModule):
         self.log_dict(self.train_metrics.compute(), sync_dist=True)
         self.train_metrics.reset()
 
-    def validation_step(self, batch: object, batch_idx: int) -> None:
+    def validation_step(self, batch: HeteroData, batch_idx: int) -> None:
         """Run a validation step, logging loss/metrics and storing predictions."""
         # Extract the batch vector
         y_hat = self(batch)
         y = batch.fitness
-        loss = self.loss(y_hat, y, self.dcell.parameters())
+        loss = self.loss(y_hat, y, self._submodel("dcell").parameters())
         batch_size = batch.batch[-1].item() + 1
         self.log("val_loss", loss, batch_size=batch_size, sync_dist=True)
         # Flatten
@@ -255,10 +268,8 @@ class DCellRegressionTask(L.LightningModule):
 
         # Stop tracing memory allocations
         tracemalloc.stop()
-        if (
-            self.trainer.checkpoint_callback.best_model_path
-            and current_global_step != self.last_logged_best_step
-        ):
+        ckpt = cast(ModelCheckpoint, self.trainer.checkpoint_callback)
+        if ckpt.best_model_path and current_global_step != self.last_logged_best_step:
             # Save model as a W&B artifact
             artifact = wandb.Artifact(
                 name=f"model-global_step-{current_global_step}",
@@ -266,17 +277,17 @@ class DCellRegressionTask(L.LightningModule):
                 description=f"Model on validation epoch end step - {current_global_step}",
                 metadata=dict(self.hparams),
             )
-            artifact.add_file(self.trainer.checkpoint_callback.best_model_path)
+            artifact.add_file(ckpt.best_model_path)
             wandb.log_artifact(artifact)
             self.last_logged_best_step = (
                 current_global_step  # update the last logged step
             )
 
-    def test_step(self, batch: object, batch_idx: int) -> None:
+    def test_step(self, batch: HeteroData, batch_idx: int) -> None:
         """Run a test step and log loss, regression metrics, and correlations."""
         y_hat = self(batch)
         y = batch.fitness
-        loss = self.loss(y_hat, y, self.dcell.parameters())
+        loss = self.loss(y_hat, y, self._submodel("dcell").parameters())
         batch_size = batch.batch[-1].item() + 1
         # Flatten
         y_hat_root = y_hat["GO:ROOT"].squeeze(1)

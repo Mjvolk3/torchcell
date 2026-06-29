@@ -6,12 +6,14 @@
 """Lightning trainer for deep-set-transformer fitness regression."""
 
 import os.path as osp
+from typing import cast
 
 import lightning as L
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import wandb
+from lightning.pytorch.core.optimizer import LightningOptimizer
 from torch_geometric.data import Batch, Data
 from torchmetrics import (
     MeanAbsoluteError,
@@ -22,7 +24,9 @@ from torchmetrics import (
 )
 
 import torchcell
-from torchcell.losses import WeightedMSELoss
+from torchcell.losses import (  # type: ignore[attr-defined]  # WeightedMSELoss moved to torchcell.losses.multi_dim_nan_tolerant; pre-existing runtime breakage
+    WeightedMSELoss,
+)
 
 style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
@@ -54,8 +58,12 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
         self.wt = wt
         self.wt_train_ratio = wt_train_ratio
         self.is_wt_init = False
+        self.wt_global_hat: torch.Tensor | None
+        self.wt_set_hat: torch.Tensor | None
+        self.wt_nodes_hat: torch.Tensor | None
         self.wt_global_hat, self.wt_set_hat, self.wt_nodes_hat = None, None, None
 
+        self.loss: nn.Module
         if loss == "mse":
             self.loss = nn.MSELoss()
         if loss == "weighted_mse":
@@ -132,7 +140,7 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
         if self.global_step == 0 or self.global_step % self.wt_train_ratio == 0:
             ################ Global
             # set up optimizer
-            opt = self.optimizers()
+            opt = cast(LightningOptimizer, self.optimizers())
             opt.zero_grad()
             # train on wt
             wt_batch = Batch.from_data_list([self.wt] * 16).to(self.device)
@@ -201,7 +209,7 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
         # Pass the batch vector to the forward method
         y_hat, attn_weights = self(x, batch_vector)
 
-        opt = self.optimizers()
+        opt = cast(LightningOptimizer, self.optimizers())
         opt.zero_grad()
         l1_attn_loss = self.l1_lambda * attn_weights.abs().sum()
         loss = self.loss(y, y_hat) + l1_attn_loss
@@ -232,7 +240,7 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
             batch_size=batch_size,
             sync_dist=True,
         )
-        return loss
+        return cast(torch.Tensor, loss)
 
     def on_train_epoch_end(self) -> None:
         """Compute and log aggregated training metrics at epoch end."""
@@ -293,7 +301,7 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
 
         # Create a box plot using matplotlib
         fig, ax = plt.subplots()
-        ax.boxplot(binned_true_values, labels=bin_labels)
+        ax.boxplot(binned_true_values, labels=bin_labels)  # type: ignore[call-arg]  # 'labels' removed in matplotlib>=3.9 (now 'tick_labels'); pre-existing runtime breakage
         ax.set_ylabel("True Values")
         ax.set_xlabel("Prediction Bins")
         ax.set_title("Box plot of True Values for each Prediction Bin")

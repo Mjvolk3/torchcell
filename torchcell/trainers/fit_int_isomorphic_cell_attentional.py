@@ -1,13 +1,16 @@
 """Lightning regression trainer for the isomorphic attentional cell model."""
 
 import logging
+from typing import Any, cast
 
 import lightning as L
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import wandb
+from lightning.pytorch.core.optimizer import LightningOptimizer
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch_geometric.data import HeteroData
 from torchmetrics import MeanSquaredError, MetricCollection, PearsonCorrCoef
 
 from torchcell.timestamp import timestamp
@@ -19,17 +22,22 @@ log = logging.getLogger(__name__)
 class RegressionTask(L.LightningModule):
     """Lightning task for fitness and gene-interaction regression with metrics."""
 
+    train_metrics: nn.ModuleDict
+    val_metrics: nn.ModuleDict
+    test_metrics: nn.ModuleDict
+    _cell_graph_device: torch.device
+
     def __init__(
         self,
         model: nn.Module,
         cell_graph: torch.Tensor,
         optimizer_config: dict[str, object],
         lr_scheduler_config: dict[str, object],
-        batch_size: int = None,
+        batch_size: int | None = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
         plot_sample_ceiling: int = 1000,
-        loss_func: nn.Module = None,
+        loss_func: nn.Module | None = None,
         grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
         forward_transform: nn.Module | None = None,
@@ -68,7 +76,7 @@ class RegressionTask(L.LightningModule):
         self.automatic_optimization = False
 
     def forward(
-        self, batch: dict[str, object]
+        self, batch: HeteroData
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """Move the cell graph to the batch device and run the model."""
         batch_device = batch["gene"].x.device
@@ -78,16 +86,20 @@ class RegressionTask(L.LightningModule):
         ):
             self.cell_graph = self.cell_graph.to(batch_device)
             self._cell_graph_device = batch_device
-        return self.model(self.cell_graph, batch)
+        return cast(
+            tuple[torch.Tensor, dict[str, torch.Tensor]],
+            self.model(self.cell_graph, batch),
+        )
 
     def _shared_step(
-        self, batch: dict[str, object], batch_idx: int, stage: str = "train"
+        self, batch: HeteroData, batch_idx: int, stage: str = "train"
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         predictions, representations = self(batch)
         batch_size = predictions.size(0)
         fitness_vals = batch["gene"].fitness.view(-1, 1)
         gene_interaction_vals = batch["gene"].gene_interaction.view(-1, 1)
         targets = torch.cat([fitness_vals, gene_interaction_vals], dim=1)
+        assert self.loss_func is not None  # loss_func required for training/eval steps
         loss, loss_dict = self.loss_func(
             predictions,
             targets,
@@ -140,47 +152,45 @@ class RegressionTask(L.LightningModule):
                 self.latents["z_i"].append(representations["z_i"].detach())
         return loss, predictions, targets
 
-    def training_step(self, batch: dict[str, object], batch_idx: int) -> torch.Tensor:
+    def training_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
         """Run a manual-optimization training step with optional grad accumulation."""
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
-        if self.hparams.grad_accumulation_schedule is not None:
+        if self.hparams["grad_accumulation_schedule"] is not None:
             loss = loss / self.current_accumulation_steps
-        opt = self.optimizers()
+        opt = cast(LightningOptimizer, self.optimizers())
         self.manual_backward(loss)
         if (
-            self.hparams.grad_accumulation_schedule is None
+            self.hparams["grad_accumulation_schedule"] is None
             or (batch_idx + 1) % self.current_accumulation_steps == 0
         ):
-            if self.hparams.clip_grad_norm:
+            if self.hparams["clip_grad_norm"]:
                 nn.utils.clip_grad_norm_(
-                    self.parameters(), max_norm=self.hparams.clip_grad_norm_max_norm
+                    self.parameters(), max_norm=self.hparams["clip_grad_norm_max_norm"]
                 )
             opt.step()
             opt.zero_grad()
         self.log(
             "learning_rate",
-            self.optimizers().param_groups[0]["lr"],
+            cast(LightningOptimizer, self.optimizers()).param_groups[0]["lr"],
             batch_size=batch["gene"].x.size(0),
             sync_dist=True,
         )
         return loss
 
-    def validation_step(
-        self, batch: dict[str, object], batch_idx: int
-    ) -> torch.Tensor:
+    def validation_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
         """Run the shared step in the validation stage and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
         return loss
 
-    def test_step(self, batch: dict[str, object], batch_idx: int) -> torch.Tensor:
+    def test_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
         """Run the shared step in the test stage and return the loss."""
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
     def _compute_metrics_safely(
-        self, metrics_dict: nn.ModuleDict
+        self, metrics_dict: MetricCollection
     ) -> dict[str, torch.Tensor]:
-        results = {}
+        results: dict[str, torch.Tensor] = {}
         for metric_name, metric in metrics_dict.items():
             try:
                 results[metric_name] = metric.compute()
@@ -198,12 +208,14 @@ class RegressionTask(L.LightningModule):
 
     def on_train_epoch_end(self) -> None:
         """Log accumulated training metrics and reset them for the next epoch."""
-        for metric_name, metric_dict in self.train_metrics.items():
+        for metric_name, metric_module in self.train_metrics.items():
+            metric_dict = cast(MetricCollection, metric_module)
             computed_metrics = self._compute_metrics_safely(metric_dict)
             for name, value in computed_metrics.items():
                 self.log(name, value, sync_dist=True)
             metric_dict.reset()
         # Save visual artifacts only on the final training epoch.
+        assert self.trainer.max_epochs is not None  # max_epochs set by Trainer
         if self.current_epoch == self.trainer.max_epochs - 1:
             if self.true_values and self.predictions:
                 true_values = torch.cat(self.true_values, dim=0)
@@ -214,8 +226,8 @@ class RegressionTask(L.LightningModule):
                     max_points=self.hparams.get("plot_sample_ceiling", 1000),
                 )
                 loss_name = (
-                    self.hparams.loss_func.__class__.__name__
-                    if self.hparams.loss_func is not None
+                    self.hparams["loss_func"].__class__.__name__
+                    if self.hparams["loss_func"] is not None
                     else "Loss"
                 )
                 ts = timestamp()
@@ -235,11 +247,13 @@ class RegressionTask(L.LightningModule):
 
     def on_validation_epoch_end(self) -> None:
         """Log validation metrics, render regression plots, and reset buffers."""
-        for metric_name, metric_dict in self.val_metrics.items():
+        for metric_name, metric_module in self.val_metrics.items():
+            metric_dict = cast(MetricCollection, metric_module)
             computed_metrics = self._compute_metrics_safely(metric_dict)
             for name, value in computed_metrics.items():
                 self.log(name, value, sync_dist=True)
             metric_dict.reset()
+        assert self.trainer.max_epochs is not None  # max_epochs set by Trainer
         if (
             not self.trainer.sanity_checking
             and self.current_epoch == self.trainer.max_epochs - 1
@@ -253,8 +267,8 @@ class RegressionTask(L.LightningModule):
                     max_points=self.hparams.get("plot_sample_ceiling", 1000),
                 )
                 loss_name = (
-                    self.hparams.loss_func.__class__.__name__
-                    if self.hparams.loss_func is not None
+                    self.hparams["loss_func"].__class__.__name__
+                    if self.hparams["loss_func"] is not None
                     else "Loss"
                 )
                 ts = timestamp()
@@ -269,22 +283,24 @@ class RegressionTask(L.LightningModule):
                 )
                 vis.log_sample_metrics(predictions, true_values, stage="val")
             # Also log fitness and gene interaction box plots.
-            true_values = (
+            box_true_values: torch.Tensor | None = (
                 torch.cat(self.true_values, dim=0) if self.true_values else None
             )
-            predictions = (
+            box_predictions: torch.Tensor | None = (
                 torch.cat(self.predictions, dim=0) if self.predictions else None
             )
-            if true_values is not None and predictions is not None:
+            if box_true_values is not None and box_predictions is not None:
                 from torchcell.viz import fitness, genetic_interaction_score
 
-                if torch.any(~torch.isnan(true_values[:, 0])):
-                    fig_fitness = fitness.box_plot(true_values[:, 0], predictions[:, 0])
+                if torch.any(~torch.isnan(box_true_values[:, 0])):
+                    fig_fitness = fitness.box_plot(
+                        box_true_values[:, 0], box_predictions[:, 0]
+                    )
                     wandb.log({"val/fitness_box_plot": wandb.Image(fig_fitness)})
                     plt.close(fig_fitness)
-                if torch.any(~torch.isnan(true_values[:, 1])):
+                if torch.any(~torch.isnan(box_true_values[:, 1])):
                     fig_gi = genetic_interaction_score.box_plot(
-                        true_values[:, 1], predictions[:, 1]
+                        box_true_values[:, 1], box_predictions[:, 1]
                     )
                     wandb.log({"val/gene_interaction_box_plot": wandb.Image(fig_gi)})
                     plt.close(fig_gi)
@@ -294,7 +310,8 @@ class RegressionTask(L.LightningModule):
 
     def on_test_epoch_end(self) -> None:
         """Log test metrics, render regression plots, and reset buffers."""
-        for metric_name, metric_dict in self.test_metrics.items():
+        for metric_name, metric_module in self.test_metrics.items():
+            metric_dict = cast(MetricCollection, metric_module)
             computed_metrics = self._compute_metrics_safely(metric_dict)
             for name, value in computed_metrics.items():
                 self.log(name, value, sync_dist=True)
@@ -308,8 +325,8 @@ class RegressionTask(L.LightningModule):
                 max_points=self.hparams.get("plot_sample_ceiling", 1000),
             )
             loss_name = (
-                self.hparams.loss_func.__class__.__name__
-                if self.hparams.loss_func is not None
+                self.hparams["loss_func"].__class__.__name__
+                if self.hparams["loss_func"] is not None
                 else "Loss"
             )
             ts = timestamp()
@@ -339,17 +356,17 @@ class RegressionTask(L.LightningModule):
         self.predictions = []
         self.latents = {"z_p": [], "z_i": []}
 
-    def configure_optimizers(self) -> dict[str, object]:
+    def configure_optimizers(self) -> Any:  # Lightning accepts optimizer or config dict
         """Build the optimizer and optional LR scheduler from the configs."""
-        optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])
+        optimizer_class = getattr(torch.optim, self.hparams["optimizer_config"]["type"])
         optimizer_params = {
-            k: v for k, v in self.hparams.optimizer_config.items() if k != "type"
+            k: v for k, v in self.hparams["optimizer_config"].items() if k != "type"
         }
         if "learning_rate" in optimizer_params:
             optimizer_params["lr"] = optimizer_params.pop("learning_rate")
         optimizer = optimizer_class(self.parameters(), **optimizer_params)
         scheduler_params = {
-            k: v for k, v in self.hparams.lr_scheduler_config.items() if k != "type"
+            k: v for k, v in self.hparams["lr_scheduler_config"].items() if k != "type"
         }
         scheduler = ReduceLROnPlateau(optimizer, **scheduler_params)
         return {

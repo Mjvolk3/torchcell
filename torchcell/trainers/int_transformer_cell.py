@@ -1,14 +1,15 @@
 """Lightning training module for the transformer cell gene-interaction model."""
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 import lightning as L
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import wandb
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+from lightning.pytorch.core.optimizer import LightningOptimizer
+from torch.optim.lr_scheduler import LRScheduler, ReduceLROnPlateau
 from torch_geometric.data import HeteroData
 from torchmetrics import MeanSquaredError, MetricCollection, PearsonCorrCoef
 
@@ -26,20 +27,30 @@ log = logging.getLogger(__name__)
 class RegressionTask(L.LightningModule):
     """Lightning module training the transformer cell model on gene interactions."""
 
+    # Metric collections are populated via setattr in __init__; declare their
+    # types here so attribute access (reset/items/indexing) type-checks.
+    train_metrics: MetricCollection
+    val_metrics: MetricCollection
+    test_metrics: MetricCollection
+    train_transformed_metrics: MetricCollection
+    val_transformed_metrics: MetricCollection
+    test_transformed_metrics: MetricCollection
+    _cell_graph_device: torch.device
+
     def __init__(
         self,
         model: nn.Module,
         cell_graph: torch.Tensor,
         optimizer_config: dict[str, Any],
         lr_scheduler_config: dict[str, Any],
-        batch_size: int = None,
+        batch_size: int | None = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
         plot_sample_ceiling: int = 1000,
         plot_every_n_epochs: int = 10,
         plot_transformer_diagnostics_every_n_epochs: int = 10,
         plot_edge_recovery_every_n_epochs: int = 10,
-        loss_func: nn.Module = None,
+        loss_func: nn.Module | None = None,
         grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
         inverse_transform: nn.Module | None = None,
@@ -58,11 +69,11 @@ class RegressionTask(L.LightningModule):
 
         # Initialize gradient accumulation
         self.current_accumulation_steps = 1
-        if self.hparams.grad_accumulation_schedule is not None:
+        if self.hparams["grad_accumulation_schedule"] is not None:
             # Get the accumulation steps for epoch 0
-            self.current_accumulation_steps = (
-                self.hparams.grad_accumulation_schedule.get(0, 1)
-            )
+            self.current_accumulation_steps = self.hparams[
+                "grad_accumulation_schedule"
+            ].get(0, 1)
 
         reg_metrics = MetricCollection(
             {
@@ -106,25 +117,29 @@ class RegressionTask(L.LightningModule):
         self.reset_edge_recovery_accumulators()
 
         # Attention diagnostic accumulators (for validation)
-        self.attention_stats_accumulators: dict[int, dict[str, float | int]] = {}  # {layer_idx: {"entropy_sum": float, "effective_rank_sum": float, "top5_sum": float, "top10_sum": float, "top50_sum": float, "count": int}}
+        self.attention_stats_accumulators: dict[
+            int, dict[str, float | int]
+        ] = {}  # {layer_idx: {"entropy_sum": float, "effective_rank_sum": float, "top5_sum": float, "top10_sum": float, "top50_sum": float, "count": int}}
         self.gradient_norms: dict[int, float] = {}  # {layer_idx: norm_value}
 
         # Residual update accumulators (Tier 1 - very cheap)
-        self.residual_update_accumulators: dict[int, dict[str, float | int]] = {}  # {layer_idx: {"sum_ratio": float, "count": int}}
+        self.residual_update_accumulators: dict[
+            int, dict[str, float | int]
+        ] = {}  # {layer_idx: {"sum_ratio": float, "count": int}}
 
     def _get_batch_size(self, batch: HeteroData) -> int:
         """Get batch size from batch, handling different batch structures."""
         if hasattr(batch["gene"], "x"):
-            return batch["gene"].x.size(0)
+            return int(batch["gene"].x.size(0))
         elif hasattr(batch["gene"], "perturbation_indices"):
             # For Perturbation processor, count unique batch indices
             if hasattr(batch["gene"], "perturbation_indices_batch"):
-                return batch["gene"].perturbation_indices_batch.max().item() + 1
+                return int(batch["gene"].perturbation_indices_batch.max().item() + 1)
             else:
                 # Fallback: assume batch size from perturbation_indices
-                return batch["gene"].perturbation_indices.size(0)
+                return int(batch["gene"].perturbation_indices.size(0))
         elif hasattr(batch["gene"], "phenotype_values"):
-            return batch["gene"].phenotype_values.size(0)
+            return int(batch["gene"].phenotype_values.size(0))
         else:
             # Last resort fallback
             return 1
@@ -229,7 +244,13 @@ class RegressionTask(L.LightningModule):
             return
 
         # For each regularized graph, expand multi-layer configs
-        for graph_name, config in self.model.regularized_head_config.items():
+        regularized_head_config = cast(
+            dict[str, Any], self.model.regularized_head_config
+        )
+        adjacency_matrices = cast(
+            dict[str, torch.Tensor], self.model.adjacency_matrices
+        )
+        for graph_name, config in regularized_head_config.items():
             # Handle both single layer (int) and multiple layers (list)
             layer_config = config["layer"]
             layers = [layer_config] if isinstance(layer_config, int) else layer_config
@@ -246,9 +267,9 @@ class RegressionTask(L.LightningModule):
                 attn_for_head = attn[:, head_idx, :, :]  # [batch, N, N]
 
                 # Get true adjacency for this graph from dict
-                if graph_name not in self.model.adjacency_matrices:
+                if graph_name not in adjacency_matrices:
                     continue
-                adj_true = self.model.adjacency_matrices[graph_name].to(
+                adj_true = adjacency_matrices[graph_name].to(
                     attn_for_head.device
                 )  # [N, N]
 
@@ -465,15 +486,16 @@ class RegressionTask(L.LightningModule):
             head_idx: Attention head index
         """
         # Only for graph-regularized layers
-        if graph_name not in self.model.regularized_head_config:
+        if graph_name not in cast(dict[str, Any], self.model.regularized_head_config):
             return
 
         # Get adjacency matrix from dict
-        if graph_name not in self.model.adjacency_matrices:
+        adjacency_matrices = cast(
+            dict[str, torch.Tensor], self.model.adjacency_matrices
+        )
+        if graph_name not in adjacency_matrices:
             return
-        adj_true = self.model.adjacency_matrices[graph_name].to(
-            attention_weights.device
-        )  # [N, N]
+        adj_true = adjacency_matrices[graph_name].to(attention_weights.device)  # [N, N]
         degrees = adj_true.sum(dim=-1).detach().cpu().numpy()  # [N]
 
         # Average attention across batch
@@ -579,7 +601,7 @@ class RegressionTask(L.LightningModule):
 
     def _ensure_no_unused_params_loss(self) -> torch.Tensor | int:
         """Add a dummy loss to ensure all parameters are used in backward pass."""
-        dummy_loss = 0
+        dummy_loss: torch.Tensor | int = 0
         for param in self.model.parameters():
             if param.requires_grad and param.grad is None:
                 dummy_loss = dummy_loss + 0.0 * param.sum()
@@ -712,10 +734,9 @@ class RegressionTask(L.LightningModule):
                     hasattr(self.model, "regularized_head_config")
                     and self.model.regularized_head_config
                 ):
-                    for (
-                        graph_name,
-                        config,
-                    ) in self.model.regularized_head_config.items():
+                    for graph_name, config in cast(
+                        dict[str, Any], self.model.regularized_head_config
+                    ).items():
                         layer_spec = config["layer"]
                         head_idx = config["head"]
 
@@ -1003,11 +1024,11 @@ class RegressionTask(L.LightningModule):
         # Collect samples for visualization
         if (
             stage == "train"
-            and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
+            and (self.current_epoch + 1) % self.hparams["plot_every_n_epochs"] == 0
         ):
             current_count = sum(t.size(0) for t in self.train_samples["true_values"])
-            if current_count < self.hparams.plot_sample_ceiling:
-                remaining = self.hparams.plot_sample_ceiling - current_count
+            if current_count < self.hparams["plot_sample_ceiling"]:
+                remaining = self.hparams["plot_sample_ceiling"] - current_count
                 if batch_size > remaining:
                     idx = torch.randperm(batch_size)[:remaining]
                     self.train_samples["true_values"].append(
@@ -1063,12 +1084,12 @@ class RegressionTask(L.LightningModule):
                         )
         elif (
             stage == "val"
-            and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
+            and (self.current_epoch + 1) % self.hparams["plot_every_n_epochs"] == 0
         ):
             # Only collect validation samples on epochs we'll plot, respecting ceiling
             current_count = sum(t.size(0) for t in self.val_samples["true_values"])
-            if current_count < self.hparams.plot_sample_ceiling:
-                remaining = self.hparams.plot_sample_ceiling - current_count
+            if current_count < self.hparams["plot_sample_ceiling"]:
+                remaining = self.hparams["plot_sample_ceiling"] - current_count
                 if batch_size > remaining:
                     idx = torch.randperm(batch_size)[:remaining]
                     self.val_samples["true_values"].append(
@@ -1159,28 +1180,28 @@ class RegressionTask(L.LightningModule):
         batch_size = self._get_batch_size(batch)
 
         # Normal training: Run optimizer
-        if self.hparams.grad_accumulation_schedule is not None:
+        if self.hparams["grad_accumulation_schedule"] is not None:
             loss = loss / self.current_accumulation_steps
-        opt = self.optimizers()
+        opt = cast(LightningOptimizer, self.optimizers())
         self.manual_backward(loss)
         if (
-            self.hparams.grad_accumulation_schedule is None
+            self.hparams["grad_accumulation_schedule"] is None
             or (batch_idx + 1) % self.current_accumulation_steps == 0
         ):
-            if self.hparams.clip_grad_norm:
+            if self.hparams["clip_grad_norm"]:
                 nn.utils.clip_grad_norm_(
-                    self.parameters(), max_norm=self.hparams.clip_grad_norm_max_norm
+                    self.parameters(), max_norm=self.hparams["clip_grad_norm_max_norm"]
                 )
             opt.step()
             opt.zero_grad()
         self.log(
             "learning_rate",
-            self.optimizers().param_groups[0]["lr"],
+            cast(LightningOptimizer, self.optimizers()).param_groups[0]["lr"],
             batch_size=batch_size,
             sync_dist=True,
         )
         # Log effective batch size when using gradient accumulation
-        if self.hparams.grad_accumulation_schedule is not None:
+        if self.hparams["grad_accumulation_schedule"] is not None:
             # Get world size for DDP
             world_size = 1
             if hasattr(self.trainer, "strategy") and hasattr(
@@ -1254,7 +1275,7 @@ class RegressionTask(L.LightningModule):
                     tensors_2d = [t.unsqueeze(0) if t.ndim == 1 else t for t in v]
                     latents[k] = torch.cat(tensors_2d, dim=0)
 
-        max_samples = self.hparams.plot_sample_ceiling
+        max_samples = self.hparams["plot_sample_ceiling"]
         if true_values.size(0) > max_samples:
             idx = torch.randperm(true_values.size(0))[:max_samples]
             true_values = true_values[idx]
@@ -1327,9 +1348,9 @@ class RegressionTask(L.LightningModule):
         self.train_transformed_metrics.reset()
 
         # Plot training samples
-        if (
-            self.current_epoch + 1
-        ) % self.hparams.plot_every_n_epochs == 0 and self.train_samples["true_values"]:
+        if (self.current_epoch + 1) % self.hparams[
+            "plot_every_n_epochs"
+        ] == 0 and self.train_samples["true_values"]:
             self._plot_samples(self.train_samples, "train_sample")
             # Reset the sample containers
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
@@ -1338,10 +1359,16 @@ class RegressionTask(L.LightningModule):
         sch = self.lr_schedulers()
         if sch is not None:
             # Lightning returns a list of schedulers even if there's only one
+            active_sch: LRScheduler | ReduceLROnPlateau
             if isinstance(sch, list) and len(sch) > 0:
-                sch[0].step()
+                active_sch = sch[0]
             else:
-                sch.step()
+                active_sch = cast("LRScheduler | ReduceLROnPlateau", sch)
+            # Manual-optimization schedulers stepped here are epoch-interval
+            # LRSchedulers, never ReduceLROnPlateau (which Lightning drives via
+            # its monitor); narrow so step() needs no metric argument.
+            assert not isinstance(active_sch, ReduceLROnPlateau)
+            active_sch.step()
 
         # CRITICAL: Clear GPU memory at end of training epoch
         # This ensures validation starts with maximum available memory
@@ -1351,9 +1378,9 @@ class RegressionTask(L.LightningModule):
     def on_train_epoch_start(self) -> None:
         """Update gradient accumulation steps and clear training sample buffers."""
         # Update gradient accumulation steps based on current epoch
-        if self.hparams.grad_accumulation_schedule is not None:
+        if self.hparams["grad_accumulation_schedule"] is not None:
             for epoch_threshold in sorted(
-                self.hparams.grad_accumulation_schedule.keys()
+                self.hparams["grad_accumulation_schedule"].keys()
             ):
                 # Convert epoch_threshold to int if it's a string
                 epoch_threshold_int = (
@@ -1362,9 +1389,9 @@ class RegressionTask(L.LightningModule):
                     else epoch_threshold
                 )
                 if self.current_epoch >= epoch_threshold_int:
-                    self.current_accumulation_steps = (
-                        self.hparams.grad_accumulation_schedule[epoch_threshold]
-                    )
+                    self.current_accumulation_steps = self.hparams[
+                        "grad_accumulation_schedule"
+                    ][epoch_threshold]
             print(
                 f"Epoch {self.current_epoch}: Using gradient accumulation steps = {self.current_accumulation_steps}"
             )
@@ -1446,10 +1473,10 @@ class RegressionTask(L.LightningModule):
         if (
             not self.trainer.sanity_checking
             and hasattr(self.hparams, "plot_edge_recovery_every_n_epochs")
-            and self.hparams.plot_edge_recovery_every_n_epochs is not None
-            and self.hparams.plot_edge_recovery_every_n_epochs > 0
+            and self.hparams["plot_edge_recovery_every_n_epochs"] is not None
+            and self.hparams["plot_edge_recovery_every_n_epochs"] > 0
             and (self.current_epoch + 1)
-            % self.hparams.plot_edge_recovery_every_n_epochs
+            % self.hparams["plot_edge_recovery_every_n_epochs"]
             == 0
         ):
             if self.edge_recovery_accumulators:
@@ -1466,7 +1493,7 @@ class RegressionTask(L.LightningModule):
         # Plot validation samples
         if (
             not self.trainer.sanity_checking
-            and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
+            and (self.current_epoch + 1) % self.hparams["plot_every_n_epochs"] == 0
             and self.val_samples["true_values"]
         ):
             self._plot_samples(self.val_samples, "val_sample")
@@ -1497,26 +1524,23 @@ class RegressionTask(L.LightningModule):
 
     def configure_optimizers(self) -> Any:  # Lightning accepts optimizer or config dict
         """Build the optimizer and learning-rate scheduler from hparams config."""
-        optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])
-        optimizer_params = {
-            k: v for k, v in self.hparams.optimizer_config.items() if k != "type"
-        }
+        optimizer_config = self.hparams["optimizer_config"]
+        optimizer_class = getattr(torch.optim, optimizer_config["type"])
+        optimizer_params = {k: v for k, v in optimizer_config.items() if k != "type"}
         if "learning_rate" in optimizer_params:
             optimizer_params["lr"] = optimizer_params.pop("learning_rate")
         optimizer = optimizer_class(self.parameters(), **optimizer_params)
 
         # If no lr_scheduler_config is provided, return just the optimizer
-        if self.hparams.lr_scheduler_config is None:
+        lr_scheduler_config = self.hparams["lr_scheduler_config"]
+        if lr_scheduler_config is None:
             return optimizer
 
         # Handle different scheduler types
-        scheduler_type = self.hparams.lr_scheduler_config.get(
-            "type", "ReduceLROnPlateau"
-        )
-        scheduler_params = {
-            k: v for k, v in self.hparams.lr_scheduler_config.items() if k != "type"
-        }
+        scheduler_type = lr_scheduler_config.get("type", "ReduceLROnPlateau")
+        scheduler_params = {k: v for k, v in lr_scheduler_config.items() if k != "type"}
 
+        scheduler: LRScheduler | ReduceLROnPlateau
         if scheduler_type == "CosineAnnealingWarmupRestarts":
             # Import the custom scheduler
             from torchcell.scheduler.cosine_annealing_warmup import (

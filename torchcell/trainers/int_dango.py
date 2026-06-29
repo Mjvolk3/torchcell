@@ -6,13 +6,15 @@
 """Lightning training task for the DANGO genetic-interaction regression model."""
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import wandb
 from lightning import LightningModule
+from lightning.pytorch.core.optimizer import LightningOptimizer
+from lightning.pytorch.utilities.types import OptimizerLRSchedulerConfig
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch_geometric.data import HeteroData
 from torchmetrics import MeanSquaredError, MetricCollection, PearsonCorrCoef
@@ -31,15 +33,15 @@ class RegressionTask(LightningModule):
     def __init__(
         self,
         model: nn.Module,
-        cell_graph: torch.Tensor,
+        cell_graph: HeteroData,
         optimizer_config: dict[str, Any],
         lr_scheduler_config: dict[str, Any],
-        batch_size: int = None,
+        batch_size: int | None = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
         plot_sample_ceiling: int = 1000,
         plot_every_n_epochs: int = 10,
-        loss_func: nn.Module = None,
+        loss_func: nn.Module | None = None,
         grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
         forward_transform: nn.Module | None = None,
@@ -74,6 +76,8 @@ class RegressionTask(LightningModule):
         self.forward_transform = forward_transform
         self.current_accumulation_steps = 1
         self.loss_func = loss_func
+        # Device cache populated lazily in forward()/_shared_step().
+        self._cell_graph_device: torch.device | None = None
 
         reg_metrics = MetricCollection(
             {
@@ -95,17 +99,36 @@ class RegressionTask(LightningModule):
             setattr(self, f"{stage}_transformed_metrics", transformed_metrics)
 
         # Separate accumulators for train and validation samples
-        self.train_samples = {
+        self.train_samples: dict[str, Any] = {
             "true_values": [],
             "predictions": [],
             "latents": {"integrated_embeddings": []},
         }
-        self.val_samples = {
+        self.val_samples: dict[str, Any] = {
             "true_values": [],
             "predictions": [],
             "latents": {"integrated_embeddings": []},
         }
         self.automatic_optimization = False
+
+    @property
+    def _hp(self) -> Any:
+        """Attribute-access view of ``self.hparams`` (a Lightning AttributeDict).
+
+        ``LightningModule.hparams`` is statically typed as a plain
+        ``MutableMapping`` even though the runtime object supports attribute
+        access, so this cast preserves runtime behavior while satisfying mypy.
+        """
+        return cast(Any, self.hparams)
+
+    def _metrics(self, name: str) -> MetricCollection:
+        """Return a dynamically registered ``MetricCollection`` attribute.
+
+        Metric collections are registered via ``setattr`` in ``__init__``, so
+        ``nn.Module.__getattr__`` types them as ``Tensor | Module``; the
+        invariant that these attributes are always ``MetricCollection`` holds.
+        """
+        return cast(MetricCollection, getattr(self, name))
 
     def forward(self, batch: Any) -> tuple[torch.Tensor, dict[str, Any]]:
         """
@@ -141,7 +164,7 @@ class RegressionTask(LightningModule):
 
     def _ensure_no_unused_params_loss(self) -> torch.Tensor | int:
         """Add a dummy loss to ensure all parameters are used in backward pass."""
-        dummy_loss = 0
+        dummy_loss: torch.Tensor | int = 0
         for param in self.model.parameters():
             if param.requires_grad and param.grad is None:
                 dummy_loss = dummy_loss + 0.0 * param.sum()
@@ -327,7 +350,7 @@ class RegressionTask(LightningModule):
         # Update transformed metrics
         mask = ~torch.isnan(gene_interaction_vals)
         if mask.sum() > 0:
-            transformed_metrics = getattr(self, f"{stage}_transformed_metrics")
+            transformed_metrics = self._metrics(f"{stage}_transformed_metrics")
             transformed_metrics.update(
                 predictions[mask].view(-1), gene_interaction_vals[mask].view(-1)
             )
@@ -357,7 +380,7 @@ class RegressionTask(LightningModule):
         # Update metrics with original scale values
         mask = ~torch.isnan(gene_interaction_orig)
         if mask.sum() > 0:
-            metrics = getattr(self, f"{stage}_metrics")
+            metrics = self._metrics(f"{stage}_metrics")
             metrics.update(
                 inv_predictions[mask].view(-1), gene_interaction_orig[mask].view(-1)
             )
@@ -365,11 +388,11 @@ class RegressionTask(LightningModule):
         # Collect samples for visualization
         if (
             stage == "train"
-            and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
+            and (self.current_epoch + 1) % self._hp.plot_every_n_epochs == 0
         ):
             current_count = sum(t.size(0) for t in self.train_samples["true_values"])
-            if current_count < self.hparams.plot_sample_ceiling:
-                remaining = self.hparams.plot_sample_ceiling - current_count
+            if current_count < self._hp.plot_sample_ceiling:
+                remaining = self._hp.plot_sample_ceiling - current_count
                 if batch_size > remaining:
                     idx = torch.randperm(batch_size)[:remaining]
                     self.train_samples["true_values"].append(
@@ -401,7 +424,7 @@ class RegressionTask(LightningModule):
                         )
         elif (
             stage == "val"
-            and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
+            and (self.current_epoch + 1) % self._hp.plot_every_n_epochs == 0
         ):
             # Only collect validation samples on epochs we'll plot
             self.val_samples["true_values"].append(gene_interaction_orig.detach())
@@ -424,23 +447,23 @@ class RegressionTask(LightningModule):
             return loss
 
         # Normal training: Run optimizer
-        if self.hparams.grad_accumulation_schedule is not None:
+        if self._hp.grad_accumulation_schedule is not None:
             loss = loss / self.current_accumulation_steps
-        opt = self.optimizers()
+        opt = cast(LightningOptimizer, self.optimizers())
         self.manual_backward(loss)
         if (
-            self.hparams.grad_accumulation_schedule is None
+            self._hp.grad_accumulation_schedule is None
             or (batch_idx + 1) % self.current_accumulation_steps == 0
         ):
-            if self.hparams.clip_grad_norm:
+            if self._hp.clip_grad_norm:
                 nn.utils.clip_grad_norm_(
-                    self.parameters(), max_norm=self.hparams.clip_grad_norm_max_norm
+                    self.parameters(), max_norm=self._hp.clip_grad_norm_max_norm
                 )
             opt.step()
             opt.zero_grad()
         self.log(
             "learning_rate",
-            self.optimizers().param_groups[0]["lr"],
+            opt.param_groups[0]["lr"],
             batch_size=batch["gene"].phenotype_values.size(0),
             sync_dist=True,
         )
@@ -457,9 +480,7 @@ class RegressionTask(LightningModule):
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
-    def _compute_metrics_safely(
-        self, metrics_dict: MetricCollection
-    ) -> dict[str, Any]:
+    def _compute_metrics_safely(self, metrics_dict: MetricCollection) -> dict[str, Any]:
         results: dict[str, Any] = {}
         for metric_name, metric in metrics_dict.items():
             try:
@@ -490,7 +511,7 @@ class RegressionTask(LightningModule):
                 if v:  # Check if the list is not empty
                     latents[k] = torch.cat(v, dim=0)
 
-        max_samples = self.hparams.plot_sample_ceiling
+        max_samples = self._hp.plot_sample_ceiling
         if true_values.size(0) > max_samples:
             idx = torch.randperm(true_values.size(0))[:max_samples]
             true_values = true_values[idx]
@@ -516,7 +537,9 @@ class RegressionTask(LightningModule):
 
         # Skip UMAP visualization by passing empty latents dictionary
         # The original latents have shape mismatch: integrated_embeddings.shape = [33035, 64] vs true_values.shape = [batch_size, 1]
-        z_p_latents: dict[str, torch.Tensor] = {}  # Empty dict to skip UMAP visualization
+        z_p_latents: dict[
+            str, torch.Tensor
+        ] = {}  # Empty dict to skip UMAP visualization
 
         # Use our updated visualize_model_outputs method which now properly handles single target case
         vis.visualize_model_outputs(
@@ -550,23 +573,23 @@ class RegressionTask(LightningModule):
     def on_train_epoch_end(self) -> None:
         """Aggregate and log training metrics and plots at epoch end."""
         # Log training metrics
-        computed_metrics = self._compute_metrics_safely(self.train_metrics)
+        computed_metrics = self._compute_metrics_safely(self._metrics("train_metrics"))
         for name, value in computed_metrics.items():
             self.log(name, value, sync_dist=True)
-        self.train_metrics.reset()
+        self._metrics("train_metrics").reset()
 
         # Compute and log transformed metrics
         transformed_metrics = self._compute_metrics_safely(
-            self.train_transformed_metrics
+            self._metrics("train_transformed_metrics")
         )
         for name, value in transformed_metrics.items():
             self.log(name, value, sync_dist=True)
-        self.train_transformed_metrics.reset()
+        self._metrics("train_transformed_metrics").reset()
 
         # Plot training samples
         if (
             self.current_epoch + 1
-        ) % self.hparams.plot_every_n_epochs == 0 and self.train_samples["true_values"]:
+        ) % self._hp.plot_every_n_epochs == 0 and self.train_samples["true_values"]:
             self._plot_samples(self.train_samples, "train_sample")
             # Reset the sample containers
             self.train_samples = {
@@ -578,7 +601,7 @@ class RegressionTask(LightningModule):
     def on_train_epoch_start(self) -> None:
         """Reset accumulators at the start of a training epoch."""
         # Clear sample containers at the start of epochs where we'll collect samples
-        if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
+        if (self.current_epoch + 1) % self._hp.plot_every_n_epochs == 0:
             self.train_samples = {
                 "true_values": [],
                 "predictions": [],
@@ -588,7 +611,7 @@ class RegressionTask(LightningModule):
     def on_validation_epoch_start(self) -> None:
         """Reset accumulators at the start of a validation epoch."""
         # Clear sample containers at the start of epochs where we'll collect samples
-        if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
+        if (self.current_epoch + 1) % self._hp.plot_every_n_epochs == 0:
             self.val_samples = {
                 "true_values": [],
                 "predictions": [],
@@ -598,21 +621,23 @@ class RegressionTask(LightningModule):
     def on_validation_epoch_end(self) -> None:
         """Aggregate and log validation metrics and plots at epoch end."""
         # Log validation metrics
-        computed_metrics = self._compute_metrics_safely(self.val_metrics)
+        computed_metrics = self._compute_metrics_safely(self._metrics("val_metrics"))
         for name, value in computed_metrics.items():
             self.log(name, value, sync_dist=True)
-        self.val_metrics.reset()
+        self._metrics("val_metrics").reset()
 
         # Compute and log transformed metrics
-        transformed_metrics = self._compute_metrics_safely(self.val_transformed_metrics)
+        transformed_metrics = self._compute_metrics_safely(
+            self._metrics("val_transformed_metrics")
+        )
         for name, value in transformed_metrics.items():
             self.log(name, value, sync_dist=True)
-        self.val_transformed_metrics.reset()
+        self._metrics("val_transformed_metrics").reset()
 
         # Plot validation samples
         if (
             not self.trainer.sanity_checking
-            and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
+            and (self.current_epoch + 1) % self._hp.plot_every_n_epochs == 0
             and self.val_samples["true_values"]
         ):
             self._plot_samples(self.val_samples, "val_sample")
@@ -623,25 +648,28 @@ class RegressionTask(LightningModule):
                 "latents": {"integrated_embeddings": []},
             }
 
-    def configure_optimizers(self) -> dict[str, Any]:
+    def configure_optimizers(self) -> OptimizerLRSchedulerConfig:
         """Build and return the optimizer and learning-rate scheduler."""
-        optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])
+        optimizer_class = getattr(torch.optim, self._hp.optimizer_config["type"])
         optimizer_params = {
-            k: v for k, v in self.hparams.optimizer_config.items() if k != "type"
+            k: v for k, v in self._hp.optimizer_config.items() if k != "type"
         }
         if "learning_rate" in optimizer_params:
             optimizer_params["lr"] = optimizer_params.pop("learning_rate")
         optimizer = optimizer_class(self.parameters(), **optimizer_params)
         scheduler_params = {
-            k: v for k, v in self.hparams.lr_scheduler_config.items() if k != "type"
+            k: v for k, v in self._hp.lr_scheduler_config.items() if k != "type"
         }
         scheduler = ReduceLROnPlateau(optimizer, **scheduler_params)
-        return {
-            "optimizer": optimizer,
-            "lr_scheduler": {
-                "scheduler": scheduler,
-                "monitor": "val/gene_interaction/MSE",
-                "interval": "epoch",
-                "frequency": 1,
+        return cast(
+            OptimizerLRSchedulerConfig,
+            {
+                "optimizer": optimizer,
+                "lr_scheduler": {
+                    "scheduler": scheduler,
+                    "monitor": "val/gene_interaction/MSE",
+                    "interval": "epoch",
+                    "frequency": 1,
+                },
             },
-        }
+        )

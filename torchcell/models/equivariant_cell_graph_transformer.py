@@ -14,7 +14,8 @@ Implements the generalized virtual cell architecture:
 
 import os
 import os.path as osp
-from typing import Any
+from collections.abc import Sequence
+from typing import Any, cast
 
 import hydra
 import numpy as np
@@ -236,7 +237,7 @@ class HyperSAGNN(nn.Module):
             squared_diff, batch_indices, dim=0, dim_size=num_batches
         )
 
-        return set_representations  # [num_batches, hidden_channels]
+        return cast(torch.Tensor, set_representations)  # [num_batches, hidden_channels]
 
     def _global_attention_layer(
         self,
@@ -303,7 +304,7 @@ class HyperSAGNN(nn.Module):
         out = O_proj(out)
 
         # Apply ReZero connection
-        return beta * out + x
+        return cast(torch.Tensor, beta * out + x)
 
 
 class EquivariantPerturbationTransform(nn.Module):
@@ -472,7 +473,7 @@ class PerturbationHead(nn.Module):
         # Predict gene interaction
         predictions = self.mlp(combined)  # [batch_size, 1]
 
-        return predictions
+        return cast(torch.Tensor, predictions)
 
 
 class CellGraphTransformer(nn.Module):
@@ -547,6 +548,7 @@ class CellGraphTransformer(nn.Module):
                 learnable_enabled = True
 
         # Create learnable embedding if enabled
+        self.gene_embedding: nn.Embedding | None
         if learnable_enabled:
             self.gene_embedding = nn.Embedding(gene_num, learnable_size)
             nn.init.normal_(self.gene_embedding.weight, mean=0.0, std=0.02)
@@ -557,6 +559,7 @@ class CellGraphTransformer(nn.Module):
         total_input_dim = (learnable_size if learnable_enabled else 0) + precomputed_dim
 
         # Create preprocessor if input_dim != hidden_channels
+        self.embedding_preprocessor: nn.Sequential | None
         if total_input_dim > 0 and total_input_dim != hidden_channels:
             preprocessor_config = (
                 learnable_embedding_config.get("preprocessor", {})
@@ -567,7 +570,7 @@ class CellGraphTransformer(nn.Module):
             dropout_rate = preprocessor_config.get("dropout", dropout)
 
             # Build MLP with LayerNorm and GELU activation
-            layers = []
+            layers: list[nn.Module] = []
             current_dim = total_input_dim
 
             for i in range(num_layers):
@@ -601,6 +604,7 @@ class CellGraphTransformer(nn.Module):
 
         # Process graph regularization config
         # Graph regularization is enabled when graph_reg_lambda > 0
+        self.adjacency_matrices: dict[str, torch.Tensor] | None
         if self.graph_reg_lambda > 0.0 and graph_regularization_config is not None:
             # Normalize adjacency matrices from cell_graph
             self.adjacency_matrices = self._normalize_adjacency_matrices(cell_graph)
@@ -693,6 +697,9 @@ class CellGraphTransformer(nn.Module):
         # Early return if graph regularization is disabled (lambda is 0)
         if self.graph_reg_lambda == 0.0:
             return torch.tensor(0.0, device=attention_weights.device)
+
+        # When lambda > 0, adjacency_matrices is populated in __init__
+        assert self.adjacency_matrices is not None
 
         total_loss = torch.tensor(0.0, device=attention_weights.device)
         batch_size, num_heads, N, _ = attention_weights.shape
@@ -835,9 +842,7 @@ class CellGraphTransformer(nn.Module):
         all_attention_weights: list[torch.Tensor] | None = (
             [] if return_attention else None
         )
-        residual_update_ratios: list[float] | None = (
-            [] if return_attention else None
-        )
+        residual_update_ratios: list[float] | None = [] if return_attention else None
         total_graph_reg_loss = torch.tensor(0.0, device=device)
 
         for layer_idx, layer in enumerate(self.transformer_layers):
@@ -861,6 +866,7 @@ class CellGraphTransformer(nn.Module):
 
                 # Only store attention weights if requested for diagnostics (memory intensive)
                 if return_attention:
+                    assert all_attention_weights is not None
                     all_attention_weights.append(attention_weights)
                 else:
                     # CRITICAL: Delete if not storing to prevent memory accumulation
@@ -868,6 +874,7 @@ class CellGraphTransformer(nn.Module):
 
             # Compute residual update ratio: ||H - H_prev|| / ||H_prev||
             if return_attention:
+                assert residual_update_ratios is not None
                 with torch.no_grad():
                     residual_norm = torch.norm(H - H_prev, p=2).item()
                     input_norm = torch.norm(H_prev, p=2).item()
@@ -912,7 +919,7 @@ class CellGraphTransformer(nn.Module):
             return sum(p.numel() for p in module.parameters() if p.requires_grad)
 
         counts = {
-            "gene_embedding": count_params(self.gene_embedding),
+            "gene_embedding": count_params(cast(nn.Module, self.gene_embedding)),
             "cls_token": self.cls_token.numel(),
             "transformer_layers": count_params(self.transformer_layers),
             "perturbation_transform": count_params(self.perturbation_transform),
@@ -928,7 +935,7 @@ def calculate_weight_l2_norm(model: nn.Module) -> float:
     for param in model.parameters():
         if param.requires_grad:
             l2_norm += torch.sum(param**2).item()
-    return np.sqrt(l2_norm)
+    return cast(float, np.sqrt(l2_norm))
 
 
 def compute_smoothness(X: torch.Tensor) -> float:
@@ -946,7 +953,7 @@ def compute_smoothness(X: torch.Tensor) -> float:
     N = X.shape[0]
     mean_features = X.mean(dim=0)
     diff = X - mean_features.expand(N, -1)
-    return torch.norm(diff, p="fro").item()
+    return cast(float, torch.norm(diff, p="fro").item())
 
 
 @hydra.main(
@@ -1002,7 +1009,7 @@ def main(cfg: DictConfig) -> None:
         if src == "gene" and dst == "gene":
             print(f"  {edge_type}: {cell_graph[edge_type].num_edges} edges")
 
-    model = CellGraphTransformer(
+    model = CellGraphTransformer(  # type: ignore[call-arg]  # pre-existing latent kwarg mismatch in demo main(); behavior unchanged
         gene_num=cfg.model.gene_num,
         hidden_channels=cfg.model.hidden_channels,
         num_transformer_layers=cfg.model.num_transformer_layers,
@@ -1106,7 +1113,7 @@ def main(cfg: DictConfig) -> None:
 
     # Setup directory for plots
     plot_dir = osp.join(
-        ASSET_IMAGES_DIR, f"equivariant_cell_graph_transformer_{timestamp()}"
+        cast(str, ASSET_IMAGES_DIR), f"equivariant_cell_graph_transformer_{timestamp()}"
     )
     os.makedirs(plot_dir, exist_ok=True)
 
@@ -1255,10 +1262,13 @@ def main(cfg: DictConfig) -> None:
 
         # Distribution comparison with KDE
         plt.subplot(3, 4, 7)
-        bins = np.linspace(
-            min(true_np[valid_mask].min(), pred_np[valid_mask].min()),
-            max(true_np[valid_mask].max(), pred_np[valid_mask].max()),
-            30,
+        bins = cast(
+            Sequence[float],
+            np.linspace(
+                min(true_np[valid_mask].min(), pred_np[valid_mask].min()),
+                max(true_np[valid_mask].max(), pred_np[valid_mask].max()),
+                30,
+            ),
         )
         plt.hist(
             true_np[valid_mask],
@@ -1312,7 +1322,7 @@ def main(cfg: DictConfig) -> None:
         # ROW 3: Model Configuration
         plt.subplot(3, 4, 9)
         plt.title("Model Configuration", pad=20)
-        param_counts = model.num_parameters
+        param_counts = cast("dict[str, int]", model.num_parameters)
         total_params = param_counts["total"]
 
         y_pos = 0.92

@@ -203,3 +203,105 @@ remove `weighted_mse` if dead. Needs the user's intent on the new weighting sema
 Commit on the branch with `--no-verify` until WS2 clears the mypy backlog (the live mypy hook
 blocks otherwise). Per-workstream commits; verify the test subset never regresses below 16/23
 until WS3 fixes it.
+
+## 2026.06.28 - Status Refresh (mid-WS2; parallel WS2-Wave3 + WS3 launch)
+
+**Branch topology changed since this roadmap was written.** The original
+`plan/ci-foundation-ruff-mypy-pytest` branch/worktree is gone (a leftover orphan
+directory remains on disk but is no longer a git worktree). WS1's foundation work —
+ruff config, full docstring coverage, circular-import fixes, the repaired CI
+workflows — all landed in `main` (verified: foundation commit `736f69b8` is an
+ancestor of `main`, and `main` HEAD `2d1aece6` is "fully ruff-green"). Active work
+moved to a fresh branch **`plan/ci-ws2-mypy-semantic`** (worktree of the same name),
+rebased cleanly onto current `main`: it is `main` + 15 WS2 commits with an empty
+`ws2..main`, so it fast-forward-merges when done — modulo the semantic-release
+bump-commit dance (fetch + rebase `main` before the next merge; see
+[[semantic-release-pushes-bump-commit]]).
+
+### Revised status
+
+| WS | Was (2026.06.25) | Now (2026.06.28) |
+|----|------------------|------------------|
+| WS1 (`#6`) land foundation + ruff | 6 commits, not merged | **DONE** — foundation is in `main`; `main` is ruff-green |
+| WS2 (`#7`) mypy strict 7,666 → 0 | 7,666 / 256 files | **2,131 / 84 files (~72% cleared).** 13 subpackages typed to 0; dead/legacy modules excluded from the gate (`c322abb0`; mypy now `checked 295 source files`) |
+| WS3 (`#5`) test backlog | ~16 failed / 23 errors | **DONE** — subset re-measured green (215 passed / 0 failed / 0 errors); the 2 `/scratch`-dependent tests already carry `skipif` data-guards. Final close-out = post-WS2 full `not gpu` run |
+| WS4–WS7 | — | unchanged (gated on WS2 + WS3) |
+
+### What WS2 has left (= "Wave 3")
+
+The entire remaining 2,131 mypy errors live in the deliberately-deferred,
+behavior-critical layer: `models/` (~1,076 / 43 files) + `trainers/` (~971 / 25
+files). Every other subpackage (graph, sequence, data, datasets, nn, losses,
+metrics, transforms, adapters, datamodels, yeastmine, metabolism, top-level) is at
+0. Dominant trainer failure: `self.hparams.<field>` → `"MutableMapping" has no
+attribute` (Lightning types `hparams` as a plain mapping); fix via typed local /
+`cast`, behavior-preserving — never by changing how config is consumed at runtime.
+
+### In flight this session (2026.06.28)
+
+Parallel fan-out, **Opus 4.8** agents, shared `ci-ws2-mypy-semantic` worktree, under
+the proven protocol — every agent is git-forbidden and owns a disjoint file set; the
+orchestrator does all commits and runs the final whole-project mypy/pytest gate (see
+[[shared-worktree-concurrent-agent-git-hazard]]):
+
+- **WS2 Wave 3** — 4 trainer agents (T1–T4) launched first; then 6 model agents (M1–M6).
+- **`models/equivariant_cell_graph_transformer.py`** (the 010/011 model, frozen at
+  tag `v1.1.2`; see [[cell-data-edge-name-convention]]) is carved into its OWN agent
+  and its diff is **held for user review** before commit.
+- **WS3** needs NO fan-out — re-measured green (the note's 39-failure baseline was
+  stale; the n_replicates refactor on `main` + WS2 typing cleared it), and the 2
+  `/scratch` tests already self-skip via `skipif`. `weighted_mse` in
+  `simple_linear_regression.py` stays as-is (WS7 `#10`, not WS3).
+
+Commit gate (orchestrator, per workstream): whole-project
+`~/miniconda3/envs/torchcell/bin/python -m mypy` == 0 on changed scope, and the
+`not gpu` test subset at-or-better than the 16/23 baseline.
+
+## 2026.06.29 - WS2 mypy backlog CLEARED to 0; WS3 GREEN (WS4 unblocked)
+
+WS2 Wave 3 + residual cleanup landed. **Whole-project `mypy` = 0**
+(`Success: no issues found in 294 source files`); WS2 backlog **7,666 -> 0**.
+WS3: full `not gpu` suite green (**218 passed / 3 skipped / 0 failed**), run
+*without* `--ignore` (the 2 `/scratch` tests self-skip/run via their `skipif`
+guards).
+
+### How
+
+- **11 Opus 4.8 agents** typed the deferred behavior-critical layer: 4 trainer
+  bins (~971 err), 6 model bins (~1076 err), and the 010/011
+  `equivariant_cell_graph_transformer` carved out + hand-reviewed (19 err). All
+  type-only / behavior-preserving; shared-worktree protocol (every agent
+  git-forbidden + disjoint files, orchestrator commits) per
+  [[shared-worktree-concurrent-agent-git-hazard]].
+- **2 Opus cleanup agents** cleared the 45 the full gate surfaced beyond the
+  models+trainers partition (a scoping gap I'd mis-counted as fuzz, NOT a
+  regression): 27 test + 7 source errors. `torchcell/experiments/` excluded from
+  the gate per Decision 5.
+- **112 coded `# type: ignore[...]`** total, all reasoned (zero bare). Bulk are
+  pre-existing demo-block API drift in `if __name__=="__main__"` smoke-blocks and
+  untyped third-party calls (transformers/Bio) -- preserved, not silently "fixed."
+
+### Real bug strict mypy caught (argues for keeping tests strict)
+
+`tests/torchcell/sequence/test_data.py` had 3 `assert start, end == (...)` lines --
+the comma made Python treat the tuple comparison as the assert *message*, so the
+window values were **never compared** (vacuous pass under 218 green tests). mypy's
+`comparison-overlap` surfaced it; fixed to `assert (start, end) == (...)`, expected
+tuples verified against `sequence/data.py`.
+
+### Commits (branch `plan/ci-ws2-mypy-semantic`)
+
+`1efdb8be` trainers · `4b06384c` models · `6d04679f` equivariant · + source/config
+cleanup · + tests · + this note. All `STY:`/`test:` -> non-releasing under
+semantic-release.
+
+### Now unblocked / remaining
+
+- **WS4** (flip CI gates advisory -> blocking) is unblocked: mypy=0 + tests green.
+- **Optional polish** (NOT done; await greenlight): (A) sweep dormant demo-block API
+  drift; (C) standardize the trainer hparams idiom on T1's `Protocol` pattern (the 4
+  trainer agents each invented a different variant); (D) demote 3 dead modules
+  (`graph_attention`, `graph_convolution`, `trainers/utils`) from coded-ignores to
+  clean `exclude` entries.
+- **Merge**: branch is `main` + clean FF stack; merging to main is a separate step
+  (mind the semantic-release bump dance, [[semantic-release-pushes-bump-commit]]).

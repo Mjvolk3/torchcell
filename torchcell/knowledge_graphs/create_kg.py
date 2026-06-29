@@ -114,8 +114,7 @@ def main(cfg: DictConfig) -> None:
         # Handle special cases...
         # Concerned about this as it makes things much less general.
         if (
-            "scerevisiae_graph"
-            in inspect.signature(dataset_class.__init__).parameters  # type: ignore[misc]  # inspecting a class object's __init__
+            "scerevisiae_graph" in inspect.signature(dataset_class.__init__).parameters  # type: ignore[misc]  # inspecting a class object's __init__
         ):
             genome = SCerevisiaeGenome(
                 genome_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
@@ -128,8 +127,7 @@ def main(cfg: DictConfig) -> None:
             )
             kwargs["scerevisiae_graph"] = graph
         if (
-            "genome"
-            in inspect.signature(dataset_class.__init__).parameters  # type: ignore[misc]  # inspecting a class object's __init__
+            "genome" in inspect.signature(dataset_class.__init__).parameters  # type: ignore[misc]  # inspecting a class object's __init__
         ):
             genome = SCerevisiaeGenome(
                 genome_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True

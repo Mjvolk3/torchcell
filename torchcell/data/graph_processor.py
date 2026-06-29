@@ -1927,7 +1927,9 @@ class Unperturbed(GraphProcessor):
         for field in phenotype_fields:
             field_values = []
             for item in data:
-                value = getattr(cast(ExperimentType, item["experiment"]).phenotype, field, None)
+                value = getattr(
+                    cast(ExperimentType, item["experiment"]).phenotype, field, None
+                )
                 if value is not None:
                     field_values.append(value)
             if field_values:

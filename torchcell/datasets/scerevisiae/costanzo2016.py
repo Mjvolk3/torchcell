@@ -23,8 +23,6 @@ from tqdm import tqdm
 from torchcell.data import ExperimentDataset, post_process
 from torchcell.datamodels import (
     Environment,
-    Experiment,
-    ExperimentReference,
     FitnessExperiment,
     FitnessExperimentReference,
     FitnessPhenotype,

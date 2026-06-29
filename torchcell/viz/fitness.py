@@ -183,7 +183,9 @@ def box_plot(true_values: Any, predictions: Any) -> Figure:  # Tensor or ndarray
     return fig
 
 
-def generate_simulated_data(n_samples: int = 10000) -> tuple[torch.Tensor, torch.Tensor]:
+def generate_simulated_data(
+    n_samples: int = 10000,
+) -> tuple[torch.Tensor, torch.Tensor]:
     """Generate correlated synthetic true/predicted growth values with WT samples."""
     # Generate true values
     true_values = np.random.normal(loc=0.8, scale=0.2, size=n_samples)

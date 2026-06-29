@@ -45,11 +45,7 @@ plt.show()
 
 # CPU-friendly implementation of graph attention with adjacency matrix masking
 def graph_attention(
-    q: Tensor,
-    k: Tensor,
-    v: Tensor,
-    adj_matrix: Tensor,
-    scale: float | None = None,
+    q: Tensor, k: Tensor, v: Tensor, adj_matrix: Tensor, scale: float | None = None
 ) -> Tensor:
     """Compute attention using the graph adjacency matrix as a mask.
 

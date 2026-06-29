@@ -13,7 +13,7 @@ from attrs import define, field
 
 import torchcell
 from torchcell.sequence import Genome
-from torchcell.sgd.sequence import SCerevisiaeGenome  # type: ignore[import-not-found]  # dead module: torchcell.sgd does not exist
+from torchcell.sgd.sequence import SCerevisiaeGenome  # type: ignore[import-not-found]
 
 style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)

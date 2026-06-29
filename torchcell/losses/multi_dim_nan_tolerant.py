@@ -746,9 +746,7 @@ class FastSoftSort(torch.autograd.Function):
         return soft_sorted
 
     @staticmethod
-    def backward(
-        ctx: Any, grad_output: torch.Tensor
-    ) -> tuple[torch.Tensor, None]:
+    def backward(ctx: Any, grad_output: torch.Tensor) -> tuple[torch.Tensor, None]:
         """Compute gradients using the Jacobian of isotonic regression."""
         values, permutation, v, w, sorted_values = ctx.saved_tensors
         n = len(values)

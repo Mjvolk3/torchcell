@@ -99,9 +99,9 @@ class Esm2Dataset(BaseEmbeddingDataset):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.genome: SCerevisiaeGenome | ParsedGenome | None = genome
         self.model_name = model_name
-        self.exclude_classifications = self.MODEL_TO_WINDOW[
-            cast(str, self.model_name)
-        ][1]
+        self.exclude_classifications = self.MODEL_TO_WINDOW[cast(str, self.model_name)][
+            1
+        ]
         super().__init__(root, self.model_name, transform, pre_transform)
         self.genome = self.parse_genome(genome)
         del genome
@@ -193,9 +193,7 @@ if __name__ == "__main__":
 
     for model_name in model_names:
         dataset = Esm2Dataset(
-            root=osp.join(
-                cast(str, DATA_ROOT), "data/scerevisiae/esm2_embedding_test"
-            ),
+            root=osp.join(cast(str, DATA_ROOT), "data/scerevisiae/esm2_embedding_test"),
             genome=genome,
             model_name=model_name,
         )

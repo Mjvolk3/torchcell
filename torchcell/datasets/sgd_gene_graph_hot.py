@@ -213,9 +213,7 @@ def main() -> None:
     for model_name in OneHotGraphEmbeddingDataset.MODEL_TO_WINDOW.keys():
         print(f"Processing model: {model_name}")
         dataset = OneHotGraphEmbeddingDataset(
-            root=osp.join(
-                cast(str, DATA_ROOT), "data/scerevisiae/sgd_gene_graph_hot"
-            ),
+            root=osp.join(cast(str, DATA_ROOT), "data/scerevisiae/sgd_gene_graph_hot"),
             graph=graph.G_gene,
             model_name=model_name,
         )

@@ -3,12 +3,12 @@
 from typing import Any, cast
 
 import torch
-from torch import Tensor
 from pytorch_metric_learning.distances import CosineSimilarity
 from pytorch_metric_learning.losses import BaseMetricLossFunction
 from pytorch_metric_learning.reducers import AvgNonZeroReducer
 from pytorch_metric_learning.utils import common_functions as c_f
 from pytorch_metric_learning.utils import loss_and_miner_utils as lmu
+from torch import Tensor
 
 
 class SupCRLoss(BaseMetricLossFunction):  # type: ignore[misc]  # untyped third-party base (Any)

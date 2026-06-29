@@ -235,9 +235,7 @@ def get_smf_bary(
             gene: label_data[gene] for gene in problem_inviables.keys()
         }
         print(f"Fitness of null mutant for SGD 'inviable':\n {inviables_fitness}")
-        gene_singles_out: list[Any] = [
-            [[k], [v]] for k, v in gene_singles_map.items()
-        ]
+        gene_singles_out: list[Any] = [[[k], [v]] for k, v in gene_singles_map.items()]
         if write_json:
             # write gene_singles to json file in data/preprocessed
             with open(data_path, "w") as f:

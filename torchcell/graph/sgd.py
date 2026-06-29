@@ -241,9 +241,7 @@ async def process_gene(gene: Gene, progress_bar: Any) -> dict[Any, Any] | list[A
 
 
 async def download_genes(
-    locus_ids: list[str],
-    gene_factory: Callable[[str, bool], Gene],
-    is_validated: bool,
+    locus_ids: list[str], gene_factory: Callable[[str, bool], Gene], is_validated: bool
 ) -> None:
     """Download data for all loci concurrently, skipping already-cached files."""
     with tqdm(total=len(locus_ids)) as progress_bar:
@@ -275,9 +273,7 @@ def chunks(lst: list[Any], n: int) -> Iterator[list[Any]]:
 
 
 async def download_gene_chunk(
-    chunk: list[str],
-    create_gene_fn: Callable[[str, bool], Gene],
-    validate_flag: bool,
+    chunk: list[str], create_gene_fn: Callable[[str, bool], Gene], validate_flag: bool
 ) -> None:
     """Download a chunk of genes with a delay before starting."""
     await asyncio.sleep(1)  # Give a small break between chunks

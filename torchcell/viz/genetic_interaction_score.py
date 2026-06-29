@@ -174,7 +174,9 @@ def box_plot(true_values: Any, predictions: Any) -> Figure:  # Tensor or ndarray
     return fig
 
 
-def generate_simulated_data(n_samples: int = 10000) -> tuple[torch.Tensor, torch.Tensor]:
+def generate_simulated_data(
+    n_samples: int = 10000,
+) -> tuple[torch.Tensor, torch.Tensor]:
     """Generate synthetic true values and noisy predictions for plot testing."""
     # Generate true genetic interaction scores
     true_values = np.random.normal(loc=0, scale=0.2, size=n_samples)

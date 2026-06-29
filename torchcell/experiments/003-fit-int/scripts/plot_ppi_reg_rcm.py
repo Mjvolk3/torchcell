@@ -89,10 +89,7 @@ def load_dataset() -> Any:  # reason: Neo4jCellDataset imported only inside func
 
 
 def calculate_graph_statistics(
-    edge_index: torch.Tensor,
-    num_nodes: int,
-    is_directed: bool = False,
-    name: str = "",
+    edge_index: torch.Tensor, num_nodes: int, is_directed: bool = False, name: str = ""
 ) -> dict[str, Any]:  # reason: stats values mix int edge counts and float pct
     """Calculate graph statistics focusing on PyG representations."""
     print(f"Calculating statistics for {name} network...")

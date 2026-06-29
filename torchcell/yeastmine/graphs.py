@@ -4,13 +4,13 @@
 import json
 import os
 import os.path as osp
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 import networkx as nx
 import numpy as np
 import pandas as pd
 import torch
-from gene_graph.sc_graph import get_gene_list  # type: ignore[import-not-found]  # untyped/unavailable gene_graph package
+from gene_graph.sc_graph import get_gene_list  # type: ignore[import-not-found]
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
 from torch_geometric.data import Data
 from torch_geometric.utils import from_networkx
@@ -345,8 +345,7 @@ def protein_half_life_df(gene_list: list[str]) -> tuple[pd.DataFrame, pd.DataFra
         {
             "secondaryIdentifier": fill_genes,
             "proteins.proteinHalfLife.value": cast(
-                "pd.Series[Any]",
-                df_fill_small.loc["proteins.proteinHalfLife.value"],
+                "pd.Series[Any]", df_fill_small.loc["proteins.proteinHalfLife.value"]
             ).to_list()
             * len(fill_genes),
         }
@@ -496,7 +495,7 @@ def add_name_rename(G: nx.Graph) -> nx.Graph:
 def node_reprs_to_data(
     enc: str = "lookup",
     emb_dim: int = 2,
-    attr_included_names: Optional[list[str]] = None,
+    attr_included_names: list[str] | None = None,
     save: bool = True,
 ) -> Data:
     """Encode gene node attributes into a torch_geometric Data feature tensor.
@@ -641,7 +640,7 @@ def unirep_to_data() -> Data:
     return data
 
 
-def join_edge_node_reprs(data_edge: Data, data_node: Data) -> Optional[Data]:
+def join_edge_node_reprs(data_edge: Data, data_node: Data) -> Data | None:
     """Combine node features and edge features into one Data when gene names match."""
     H = Data()
     if data_edge.gene_name == data_node.gene_name:
@@ -664,7 +663,7 @@ def join_edge_node_reprs(data_edge: Data, data_node: Data) -> Optional[Data]:
 def nx_regulators_to_torch(
     enc: str = "lookup",
     emb_dim: int = 2,
-    attr_included_names: Optional[list[str]] = None,
+    attr_included_names: list[str] | None = None,
     save: bool = True,
 ) -> Data:
     """Encode the regulators graph edge attributes into a torch_geometric Data.
@@ -738,7 +737,7 @@ def nx_regulators_to_torch(
 def nx_protein_interactions_to_torch(
     enc: str = "lookup",
     emb_dim: int = 2,
-    attr_included_names: Optional[list[str]] = None,
+    attr_included_names: list[str] | None = None,
     save: bool = True,
 ) -> Data:
     """Encode the protein-interactions graph edge attributes into a torch Data.
@@ -808,7 +807,7 @@ def nx_protein_interactions_to_torch(
 def nx_gene_interactions_to_torch(
     enc: str = "lookup",
     emb_dim: int = 2,
-    attr_included_names: Optional[list[str]] = None,
+    attr_included_names: list[str] | None = None,
     save: bool = True,
 ) -> Data:
     """Encode the gene-interactions graph edge attributes into a torch Data.
@@ -927,10 +926,10 @@ def nx_gene_interactions_to_torch(
 
 
 def nx_attr_to_torch(
-    graph: Optional[str] = None,
+    graph: str | None = None,
     enc: str = "lookup",
     emb_dim: int = 2,
-    attr_included_names: Optional[list[str]] = None,
+    attr_included_names: list[str] | None = None,
     save: bool = True,
 ) -> Data:
     """Dispatch to the encoder for the named graph and return its torch Data.

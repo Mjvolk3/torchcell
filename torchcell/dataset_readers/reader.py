@@ -62,7 +62,9 @@ class LmdbDatasetReader:
         """Return the loaded experiment reference index."""
         return self._experiment_reference_index
 
-    def save_experiment_reference_index(self, index_data: Any) -> None:  # JSON-serializable
+    def save_experiment_reference_index(
+        self, index_data: Any
+    ) -> None:  # JSON-serializable
         """Write the experiment reference index to its JSON file."""
         index_file_path = osp.join(
             self.dataset_dir, "preprocess/experiment_reference_index.json"

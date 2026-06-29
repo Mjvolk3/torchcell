@@ -19,7 +19,6 @@ import gffutils
 import pandas as pd
 from attrs import define, field
 from Bio import SeqIO
-from Bio.SeqRecord import SeqRecord
 from gffutils.feature import Feature
 from goatools.obo_parser import GODag
 from sortedcontainers import SortedDict, SortedSet
@@ -561,9 +560,7 @@ class SCerevisiaeGenome(Genome):
         self.untar_tgz_file(downloaded_file_path, save_dir)
         self.gunzip_all_files_in_dir(save_dir)
 
-    def untar_tgz_file(
-        self, path_to_input_tgz: str, path_to_output_dir: str
-    ) -> None:
+    def untar_tgz_file(self, path_to_input_tgz: str, path_to_output_dir: str) -> None:
         """Extract a .tgz file into the output directory and delete the archive."""
         with tarfile.open(path_to_input_tgz, "r:gz") as tar_ref:
             tar_ref.extractall(path_to_output_dir)

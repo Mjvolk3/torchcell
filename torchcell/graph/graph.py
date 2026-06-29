@@ -116,7 +116,9 @@ class GeneMultiGraph(ModelStrictArbitrary):
         return f"GeneMultiGraph(\n{graphs_str}\n)"
 
 
-def filter_by_contained_genes(G_go: nx.DiGraph, n: int, gene_set: set[str]) -> nx.DiGraph:
+def filter_by_contained_genes(
+    G_go: nx.DiGraph, n: int, gene_set: set[str]
+) -> nx.DiGraph:
     """Return a new graph with nodes removed that contain fewer than n genes.
 
     The original graph is not modified.
@@ -424,7 +426,9 @@ class SCerevisiaeGraph:
         # self.genome = self.parse_genome(self.genome)
 
     @staticmethod
-    def parse_genome(genome: Any) -> ParsedGenome:  # genome is a duck-typed genome object
+    def parse_genome(
+        genome: Any,
+    ) -> ParsedGenome:  # genome is a duck-typed genome object
         """Return a ParsedGenome from the genome's gene set and alias mapping."""
         data = {}
         data["gene_set"] = genome.gene_set
@@ -936,10 +940,7 @@ class SCerevisiaeGraph:
         return G_tflink
 
     def save_graph(
-        self,
-        graph: GeneGraph | nx.Graph,
-        graph_name: str,
-        root_type: str = "sgd",
+        self, graph: GeneGraph | nx.Graph, graph_name: str, root_type: str = "sgd"
     ) -> None:
         """Save graph to a pickle file. Handles both NetworkX graphs and GeneGraph objects.
 

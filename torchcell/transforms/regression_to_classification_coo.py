@@ -265,7 +265,14 @@ class BaseBinningStrategy(ABC):
         # form is a compatible supertype so subclass overrides do not conflict.
         def compute_bins(
             self, *args: Any, **kwargs: Any
-        ) -> tuple[np.ndarray, dict[str, Any]]: ...
+        ) -> tuple[np.ndarray, dict[str, Any]]:
+            """Compute bin edges and metadata for the binning strategy.
+
+            Returns:
+                A tuple of the computed bin edges and a metadata dict.
+                Implemented by each concrete strategy subclass.
+            """
+            ...
 
     def clamp_values(
         self, values: torch.Tensor, bin_edges: torch.Tensor

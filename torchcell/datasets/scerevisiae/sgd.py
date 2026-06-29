@@ -219,9 +219,7 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
     def create_experiment(  # type: ignore[override]  # dataset-specific signature
         dataset_name: str, gene: str, phenotype_data: dict[str, Any]
     ) -> tuple[
-        GeneEssentialityExperiment,
-        GeneEssentialityExperimentReference,
-        Publication,
+        GeneEssentialityExperiment, GeneEssentialityExperimentReference, Publication
     ]:
         """Build the experiment, reference, and publication for one gene phenotype."""
         genome_reference = ReferenceGenome(

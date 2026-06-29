@@ -114,9 +114,7 @@ class DiffusionLoss(nn.Module):
             B = targets.shape[0]
             t = self._sample_t(B, targets.device, t_mode)
             noise = torch.randn_like(targets)
-            x_t, _ = self.model.diffusion_decoder.forward_diffusion(
-                targets, t, noise
-            )
+            x_t, _ = self.model.diffusion_decoder.forward_diffusion(targets, t, noise)
             x0_hat = self.model.diffusion_decoder.denoise(
                 x_t, context, t, predict_x0=True
             )

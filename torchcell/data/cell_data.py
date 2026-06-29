@@ -283,9 +283,7 @@ def compute_strata(go_graph: nx.DiGraph) -> dict[str, int]:
 
 
 def _process_gene_ontology(
-    hetero_data: HeteroData,
-    go_graph: nx.DiGraph,
-    node_idx_mapping: dict[str, int],
+    hetero_data: HeteroData, go_graph: nx.DiGraph, node_idx_mapping: dict[str, int]
 ) -> None:
     """Process gene ontology graph for DCell model and compute strata for parallel processing."""
     # Extract GO terms as nodes, preserving the hierarchical structure
@@ -453,9 +451,7 @@ def _process_gene_ontology(
 
 
 def _process_metabolism_bipartite(
-    hetero_data: HeteroData,
-    bipartite: nx.Graph,
-    node_idx_mapping: dict[str, int],
+    hetero_data: HeteroData, bipartite: nx.Graph, node_idx_mapping: dict[str, int]
 ) -> None:
     """Process bipartite representation of metabolism with signed stoichiometry values."""
     # Collect nodes by type efficiently

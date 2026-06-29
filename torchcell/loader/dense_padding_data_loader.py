@@ -260,7 +260,6 @@ def dense_padded_collate(
     # Create empty stores:
     out.stores_as(data_list[0])
 
-    follow_batch_set: set[str] = set(follow_batch or [])
     exclude_keys_set: set[str] = set(exclude_keys or [])
 
     # Group all storage objects of every data object in the `data_list` by key,

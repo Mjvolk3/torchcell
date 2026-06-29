@@ -129,9 +129,7 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
         embeddings_list = []
         for i in tqdm(range(0, len(sequences), batch_size)):
             batch_sequences = sequences[i : i + batch_size]
-            batch_embeddings = transformer.embed(
-                batch_sequences, mean_embedding=True
-            )
+            batch_embeddings = transformer.embed(batch_sequences, mean_embedding=True)
             embeddings_list.append(batch_embeddings)
 
         embeddings = torch.cat(embeddings_list, dim=0)
@@ -178,8 +176,7 @@ def main() -> None:
         wandb.log({"event": event})
         dataset = NucleotideTransformerDataset(
             root=osp.join(
-                cast(str, DATA_ROOT),
-                "data/scerevisiae/nucleotide_transformer_embed",
+                cast(str, DATA_ROOT), "data/scerevisiae/nucleotide_transformer_embed"
             ),
             genome=genome,
             model_name=model_name,

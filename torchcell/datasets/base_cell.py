@@ -20,7 +20,7 @@ from attrs import define, field
 from neo4j import GraphDatabase
 from tqdm import tqdm
 
-from torchcell.data import Dataset  # type: ignore[attr-defined]  # dead module: torchcell.data has no Dataset; not edited per scope
+from torchcell.data import Dataset  # type: ignore[attr-defined]
 from torchcell.sequence import GeneSet
 
 log = logging.getLogger(__name__)
@@ -195,7 +195,9 @@ class Cell(Dataset):  # type: ignore[misc]  # Dataset resolves to Any (dead impo
         self.gene_set = self.compute_gene_set()
 
     @staticmethod
-    def create_experiment(row: Any) -> Any:  # row is a pandas Series; subclasses return (experiment, reference)
+    def create_experiment(
+        row: Any,
+    ) -> Any:  # row is a pandas Series; subclasses return (experiment, reference)
         """Build an (experiment, reference) pair from a dataframe row (override in subclass)."""
         # return experiment, reference
         pass
@@ -272,7 +274,9 @@ class Cell(Dataset):  # type: ignore[misc]  # Dataset resolves to Any (dead impo
             return deserialized_data
 
     @staticmethod
-    def extract_systematic_gene_names(genotypes: Any) -> list[str]:  # iterable of dynamic genotype objects
+    def extract_systematic_gene_names(
+        genotypes: Any,
+    ) -> list[str]:  # iterable of dynamic genotype objects
         """Return the systematic gene names from each genotype's perturbation."""
         gene_names: list[str] = []
         for genotype in genotypes:

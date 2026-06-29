@@ -918,9 +918,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
             log.error(f"Failed to download supplementary file: {e}")
             raise RuntimeError("Failed to download supplementary data")
 
-    def _load_authoritative_gstf_pairs(
-        self,
-    ) -> dict[tuple[str, str], dict[str, Any]]:
+    def _load_authoritative_gstf_pairs(self) -> dict[tuple[str, str], dict[str, Any]]:
         """Load authoritative GSTF pairs WITH PER-SAMPLE STRAIN from supplementary Excel file.
 
         Returns:

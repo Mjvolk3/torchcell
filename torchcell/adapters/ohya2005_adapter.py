@@ -75,7 +75,6 @@ def main() -> None:
     import os
     import os.path as osp
     from datetime import datetime
-
     from typing import cast
 
     import wandb

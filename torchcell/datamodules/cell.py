@@ -137,9 +137,7 @@ class DataModuleIndex(ModelStrict):
 
     @model_validator(mode="before")
     @classmethod
-    def check_sorted_and_unique_indices(
-        cls, values: dict[str, Any]
-    ) -> dict[str, Any]:
+    def check_sorted_and_unique_indices(cls, values: dict[str, Any]) -> dict[str, Any]:
         """Validate each split is sorted and the splits do not overlap."""
         for split in ["train", "val", "test"]:
             indices = values.get(split, [])

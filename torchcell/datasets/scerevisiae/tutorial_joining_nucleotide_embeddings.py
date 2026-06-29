@@ -4,7 +4,9 @@
 # Test file: tests/torchcell/datasets/scerevisiae/test_nucleotide_transformer.py
 """Tutorial for joining fungal UTR and nucleotide-transformer embeddings."""
 
-from torchcell.datasets.fungal_utr_transformer import FungalUtrTransformerDataset  # type: ignore[import-not-found]  # fungal_utr_transformer module removed/optional
+from torchcell.datasets.fungal_utr_transformer import (  # type: ignore[import-not-found]  # fungal_utr_transformer module removed/optional
+    FungalUtrTransformerDataset,
+)
 from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 

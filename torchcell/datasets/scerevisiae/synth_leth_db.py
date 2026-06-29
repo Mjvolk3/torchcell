@@ -175,9 +175,7 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
     def create_experiment(  # type: ignore[override]  # dataset-specific signature
         dataset_name: str, row: pd.Series
     ) -> tuple[
-        SyntheticLethalityExperiment,
-        SyntheticLethalityExperimentReference,
-        Publication,
+        SyntheticLethalityExperiment, SyntheticLethalityExperimentReference, Publication
     ]:
         """Build the experiment, reference, and publication objects for one row."""
         genome_reference = ReferenceGenome(

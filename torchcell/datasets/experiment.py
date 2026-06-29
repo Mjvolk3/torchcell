@@ -14,7 +14,7 @@ from typing import Any, cast
 import lmdb
 from tqdm import tqdm
 
-from torchcell.data import Dataset  # type: ignore[attr-defined]  # dead module: torchcell.data has no Dataset; not edited per scope
+from torchcell.data import Dataset  # type: ignore[attr-defined]
 from torchcell.sequence import GeneSet
 
 log = logging.getLogger(__name__)

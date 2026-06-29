@@ -381,7 +381,9 @@ class CellAdapter:
         )
 
     @data_chunker
-    def _perturbation_node(self, data: dict[str, Any], method_name: str) -> list[BioCypherNode]:
+    def _perturbation_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> list[BioCypherNode]:
         perturbations = data["experiment"].genotype.perturbations
         nodes = []
         for perturbation in perturbations:
@@ -405,7 +407,9 @@ class CellAdapter:
         return nodes
 
     @data_chunker
-    def _environment_node(self, data: dict[str, Any], method_name: str) -> BioCypherNode:
+    def _environment_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
         environment_id = hashlib.sha256(
             json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
         ).hexdigest()
@@ -503,7 +507,9 @@ class CellAdapter:
         return nodes
 
     @data_chunker
-    def _temperature_node(self, data: dict[str, Any], method_name: str) -> BioCypherNode:
+    def _temperature_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
         temperature_id = hashlib.sha256(
             json.dumps(data["experiment"].environment.temperature.model_dump()).encode(
                 "utf-8"
@@ -549,7 +555,9 @@ class CellAdapter:
         return nodes
 
     @data_chunker
-    def _fitness_phenotype_node(self, data: dict[str, Any], method_name: str) -> BioCypherNode:
+    def _fitness_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
         phenotype = data["experiment"].phenotype
         phenotype_id = hashlib.sha256(
             json.dumps(data["experiment"].phenotype.model_dump()).encode("utf-8")
@@ -862,7 +870,9 @@ class CellAdapter:
         return nodes
 
     @data_chunker
-    def _calmorph_phenotype_node(self, data: dict[str, Any], method_name: str) -> BioCypherNode:
+    def _calmorph_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
         phenotype = data["experiment"].phenotype
         phenotype_id = hashlib.sha256(
             json.dumps(phenotype.model_dump()).encode("utf-8")
@@ -944,7 +954,9 @@ class CellAdapter:
         return nodes
 
     @data_chunker
-    def _publication_node(self, data: dict[str, Any], method_name: str) -> BioCypherNode:
+    def _publication_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
         publication = data["publication"]
         publication_id = hashlib.sha256(
             json.dumps(publication.model_dump()).encode("utf-8")
@@ -1108,7 +1120,9 @@ class CellAdapter:
         return edge
 
     @data_chunker
-    def _media_to_environment_edge(self, data: dict[str, Any], method_name: str) -> BioCypherEdge:
+    def _media_to_environment_edge(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherEdge:
         environment_id = hashlib.sha256(
             json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
         ).hexdigest()

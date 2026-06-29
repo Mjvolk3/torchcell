@@ -315,9 +315,9 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         # Parse samples and extract metadata
         samples_data = []
         wt_samples = []
-        deletion_samples_by_gene: dict[str, list[Any]] = (
-            {}
-        )  # Group samples by gene for dye-swap averaging
+        deletion_samples_by_gene: dict[
+            str, list[Any]
+        ] = {}  # Group samples by gene for dye-swap averaging
         already_assigned: set[str] = set()  # Track assigned systematic names
 
         for sample_idx, (gsm_name, gsm) in enumerate(all_gsms.items()):

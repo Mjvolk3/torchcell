@@ -5,9 +5,9 @@ from typing import cast
 
 import matplotlib.pyplot as plt
 import torch
-from torch import Tensor
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import reverse_cuthill_mckee
+from torch import Tensor
 from torch.nn.attention.flex_attention import create_block_mask, flex_attention
 from torch_geometric.datasets import StochasticBlockModelDataset
 from torch_geometric.utils import to_dense_adj

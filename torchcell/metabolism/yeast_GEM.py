@@ -8,7 +8,7 @@ import os
 import os.path as osp
 import re
 import zipfile
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 import cobra
 import hypernetx as hnx
@@ -672,7 +672,7 @@ def plot_random_network(
 
 def plot_bipartite_network(
     yeast_gem: YeastGEM,
-    reaction_id: Optional[str] = None,
+    reaction_id: str | None = None,
     output_path: str = "bipartite_network.png",
     figsize: tuple[int, int] = (20, 15),
     show_labels: bool = False,

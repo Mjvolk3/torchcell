@@ -40,9 +40,7 @@ class OneHotGeneDataset(BaseEmbeddingDataset):
         """
         # Create a mapping from gene to its index
         self.genome: SCerevisiaeGenome | ParsedGenome | None = genome
-        self.gene_to_index = {
-            gene: idx for idx, gene in enumerate(genome.gene_set)
-        }
+        self.gene_to_index = {gene: idx for idx, gene in enumerate(genome.gene_set)}
 
         self.model_name = "one_hot_gene"
         super().__init__(root, self.model_name, transform, pre_transform)

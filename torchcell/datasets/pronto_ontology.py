@@ -14,7 +14,7 @@ import networkx as nx
 # plt.show()
 import pronto
 from nxontology.imports import pronto_to_multidigraph
-from pronto import Definition  # type: ignore[attr-defined]  # pronto does not re-export, but symbol exists at runtime
+from pronto import Definition  # type: ignore[attr-defined]
 
 # # https://obofoundry.org/ontology/mco.html
 # url = "https://raw.githubusercontent.com/microbial-conditions-ontology/microbial-conditions-ontology/master/mco.owl"

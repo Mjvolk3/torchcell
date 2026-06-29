@@ -58,7 +58,7 @@ class Converter(ABC):
         self.root = root
         self.query = query
         self.lmdb_dir = os.path.join(self.root, "conversion", "lmdb")
-        self.env: "lmdb.Environment | None" = None
+        self.env: lmdb.Environment | None = None
 
     @property
     @abstractmethod
@@ -151,9 +151,12 @@ class Converter(ABC):
         converted_count = 0
         total_count = 0
 
-        with env_input.begin() as txn_input, self.env.begin(  # type: ignore[union-attr]  # _init_lmdb(readonly=False) above always opens self.env
-            write=True
-        ) as txn_output:
+        with (
+            env_input.begin() as txn_input,
+            self.env.begin(  # type: ignore[union-attr]  # _init_lmdb(readonly=False) above always opens self.env
+                write=True
+            ) as txn_output,
+        ):
             cursor = txn_input.cursor()
             for idx, (key, value) in enumerate(
                 tqdm(cursor, desc="Converting and writing to LMDB")
@@ -197,9 +200,7 @@ class Converter(ABC):
                         key,
                         json.dumps(
                             {
-                                "experiment": converted_data[
-                                    "experiment"
-                                ].model_dump(),  # type: ignore[union-attr]
+                                "experiment": converted_data["experiment"].model_dump(),  # type: ignore[union-attr]
                                 "experiment_reference": converted_data[
                                     "experiment_reference"
                                 ].model_dump(),  # type: ignore[union-attr]

@@ -7,7 +7,8 @@
 import os
 import os.path as osp
 import time
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 
 def prof_input(func: Callable[..., Any]) -> Callable[..., None]:

@@ -33,7 +33,7 @@ config never implemented them; this branch makes them real. See
 | `d55d8ce4` | Non-D residual cleanup 363->0 (F401 via `__all__`, F841/E722/E741/F811; 13-agent fan-out)                                                                                                                    |
 | `928e2a25` | Full docstring coverage: **2,774 docstrings, full iBF D parity** (20-agent fan-out)                                                                                                                          |
 
-**State now:** `ruff check torchcell tests` = "All checks passed" (0 findings) + format-clean
+**State now (2026.06.25 baseline — SUPERSEDED by the 2026.06.29 section: mypy=0 / tests green / landed on main `170890c3`):** `ruff check torchcell tests` = "All checks passed" (0 findings) + format-clean
 across 329 files. Verification baseline (held throughout): test subset
 `pytest tests/torchcell -m "not gpu" --ignore=tests/torchcell/graph/test_graph.py
 --ignore=tests/torchcell/data/test_graph_processor_equivalence.py` = **16 failed / 165 passed /
@@ -67,7 +67,7 @@ modules). mypy backlog (measured) = **7,666 errors / 256 files**.
 
 ---
 
-## WS1. Land the foundation + ruff branch on main (`#6`)
+## WS1. Land the foundation + ruff branch on main (`#6`) — ✅ DONE (in main)
 
 **Goal/Scope.** Review the 6 commits above and merge `plan/ci-foundation-ruff-mypy-pytest` to
 main via `/merge-worktree`. This banks the ruff-green foundation so mypy/test work stacks on a
@@ -84,7 +84,7 @@ the user accepted.)
 - Test subset still 16/23 baseline after rebase onto main.
 - PR/merge green; semantic-release bump as expected.
 
-## WS2. mypy strict cleanup (7,666 -> 0) (`#7`)
+## WS2. mypy strict cleanup (7,666 -> 0) (`#7`) — ✅ DONE (landed `170890c3`; mypy 0 / 294 files)
 
 **Goal/Scope.** Drive the strict-mypy backlog to zero so the mypy gate can go blocking.
 **Scope to LIVE source first** (skip dead/scratch/`*_DEPRECATED`/unimportable modules -- many of
@@ -106,7 +106,7 @@ need extending as new untyped imports surface), `tests/`.
 - Per-subpackage commits; mypy fixes never add bare `# type: ignore` (always a code or a
   coded-ignore with reason).
 
-## WS3. Test-suite failure backlog (= `#5`)
+## WS3. Test-suite failure backlog (= `#5`) — ✅ DONE (suite green 218/3/0)
 
 **Goal/Scope.** Fix the ~39 pre-existing failures the repaired CI surfaced (16 failed + 23
 errors in the subset). Known causes: API drift (`SCerevisiaeGenome(data_root=...)` kwarg
@@ -126,7 +126,7 @@ self-skip in CI instead of being `--ignore`d.
   data/GPU tests self-skip cleanly.
 - No test silenced by deletion/xfail without a written reason.
 
-## WS4. Flip CI gates advisory -> blocking (`#8`)
+## WS4. Flip CI gates advisory -> blocking (`#8`) — ▶ NEXT
 
 **Goal/Scope.** Once WS2 (mypy) + WS3 (tests) are green, remove `continue-on-error` from the
 ruff/mypy/pytest CI jobs so they BLOCK; decide diff-scoped vs whole-tree (whole-tree once the
@@ -157,7 +157,7 @@ allowlist vs per-experiment opt-in). Legacy refactors only behind preserved git 
 
 - New-experiment opt-in mechanism documented + enforced; old experiments untouched.
 
-## WS6. Library currency (torch / torch_geometric upgrade) (`#9`)
+## WS6. Library currency (torch / torch_geometric upgrade) (`#9`) — UNBLOCKED (green tests landed)
 
 **Goal/Scope.** Upgrade torch 2.9.0 -> 2.12.1 and torch_geometric 2.7.0 -> 2.8.0 (and aligned
 `torch-scatter`/`torch-sparse`, CUDA `cu12x` wheels). SEPARATE, deliberate task done AFTER the

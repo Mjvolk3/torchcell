@@ -134,27 +134,27 @@ def test_concurrent_writes():
 def test_cleanup_lock_files():
     """Test lock file cleanup functionality."""
     with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = Path(tmpdir)
+        tmp_path = Path(tmpdir)
 
         # Create some files and write to them (creates lock files)
         for i in range(3):
-            file_path = tmpdir / f"file_{i}.json"
+            file_path = tmp_path / f"file_{i}.json"
             FileLockHelper.write_json_with_lock(file_path, {"id": i})
 
         # Check that lock files exist
-        lock_files = list(tmpdir.glob("*.lock"))
+        lock_files = list(tmp_path.glob("*.lock"))
         assert len(lock_files) == 3
 
         # Clean up lock files
-        removed_count = FileLockHelper.cleanup_lock_files(tmpdir)
+        removed_count = FileLockHelper.cleanup_lock_files(tmp_path)
         assert removed_count == 3
 
         # Verify lock files are gone
-        lock_files = list(tmpdir.glob("*.lock"))
+        lock_files = list(tmp_path.glob("*.lock"))
         assert len(lock_files) == 0
 
         # Verify data files still exist
-        data_files = list(tmpdir.glob("*.json"))
+        data_files = list(tmp_path.glob("*.json"))
         assert len(data_files) == 3
 
 

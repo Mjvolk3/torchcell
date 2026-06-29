@@ -34,6 +34,9 @@ pytestmark = pytest.mark.skipif(
 def get_sample_graph() -> nx.DiGraph:
     # TODO should I be setting up test/data
     """Fixture to generate a sample graph for testing."""
+    # The skipif above guarantees this only runs with DATA_ROOT set; narrow it to
+    # str so the os.path.join calls below type-check under strict mypy.
+    assert DATA_ROOT is not None
     genome = SCerevisiaeGenome(
         genome_root=os.path.join(DATA_ROOT, "data/sgd/genome"),
         go_root=os.path.join(DATA_ROOT, "data/go"),

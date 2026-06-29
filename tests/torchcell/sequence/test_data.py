@@ -1,6 +1,7 @@
 """Tests for torchcell.sequence.data."""
 
 import logging
+from typing import cast
 
 import pytest
 from sortedcontainers import SortedDict
@@ -191,7 +192,7 @@ def test_calculate_window_undersized_strand():
         start=10, end=50, strand="+", window_size=20
     )
 
-    assert actual_start_window, actual_end_window == (10, 30)
+    assert (actual_start_window, actual_end_window) == (10, 30)
 
     # For a negative strand, the start window should be end - window_size,
     # and the end window should be equal to end
@@ -199,7 +200,7 @@ def test_calculate_window_undersized_strand():
         start=10, end=50, strand="-", window_size=20
     )
 
-    assert actual_start_window, actual_end_window == (30, 50)
+    assert (actual_start_window, actual_end_window) == (30, 50)
 
 
 def test_calculate_window_bounds_errors() -> None:
@@ -367,7 +368,7 @@ def test_calculate_window_bounds_symmetric():
         start=10, end=20, window_size=5, chromosome_length=100
     )
 
-    assert actual_start_window, actual_end_window == (13, 17)
+    assert (actual_start_window, actual_end_window) == (13, 17)
 
 
 @pytest.fixture
@@ -385,7 +386,9 @@ def test_initialization_with_strings(sample_geneset):
 
 def test_initialization_with_non_string():
     with pytest.raises(ValueError, match="All items in gene_set must be str"):
-        GeneSet([1, 2, 3])
+        # Deliberately pass non-str items to exercise the validation; cast keeps
+        # the wrong runtime values while satisfying the Iterable[str] parameter.
+        GeneSet(cast(list[str], [1, 2, 3]))
 
 
 def test_repr_method(sample_geneset):

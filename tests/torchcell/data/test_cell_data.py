@@ -23,6 +23,7 @@ def test_stoichiometric_matrix_equivalence():
     # Get the YeastGEM model
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
+    assert DATA_ROOT is not None, "DATA_ROOT must be set to run the cell-data tests"
     yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
 
     # 1. Get the COBRApy S matrix
@@ -152,6 +153,7 @@ def test_stoichiometric_matrix_with_duplicate_detection():
     # Get the YeastGEM model
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
+    assert DATA_ROOT is not None, "DATA_ROOT must be set to run the cell-data tests"
     yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
 
     # 1. Get the COBRApy S matrix
@@ -218,15 +220,17 @@ def test_stoichiometric_matrix_with_duplicate_detection():
     )
 
     print("\nMost duplicated column patterns:")
-    for i, (col_hash, indices) in enumerate(most_duplicated[:5]):
-        if len(indices) > 1:
-            col_idx = indices[0]
-            col = our_S[:, col_idx]
+    for i, (col_hash, dup_indices) in enumerate(most_duplicated[:5]):
+        if len(dup_indices) > 1:
+            dup_col_idx = dup_indices[0]
+            col = our_S[:, dup_col_idx]
             nnz = np.count_nonzero(col)
-            print(f"Pattern {i + 1}: {len(indices)} occurrences, {nnz} non-zeros")
+            print(f"Pattern {i + 1}: {len(dup_indices)} occurrences, {nnz} non-zeros")
 
             # Get reaction node ids for these duplicates (limited to first 3)
-            reaction_ids = [cell_graph["reaction"].node_ids[idx] for idx in indices[:3]]
+            reaction_ids = [
+                cell_graph["reaction"].node_ids[idx] for idx in dup_indices[:3]
+            ]
             print(f"Sample reaction IDs: {reaction_ids}")
 
     # 4. Compare with COBRApy matrix
@@ -276,6 +280,7 @@ def test_stoichiometric_matrix_exact_equivalence():
     # Get the YeastGEM model
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
+    assert DATA_ROOT is not None, "DATA_ROOT must be set to run the cell-data tests"
     yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
 
     # 1. Get the COBRApy S matrix

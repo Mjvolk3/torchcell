@@ -158,6 +158,7 @@ def test_microarray_valid_construction():
     phenotype = MicroarrayExpressionPhenotype(**_microarray_kwargs())
     assert set(phenotype.n_replicates) == set(phenotype.expression)
     assert phenotype.n_replicates["YAL001C"] == 3
+    assert phenotype.expression_log2_ratio_se is not None
     assert phenotype.expression_log2_ratio_se["YAL001C"] == 0.1
 
 

@@ -16,9 +16,7 @@ from torchcell.scratch.load_batch import load_sample_data_batch
 @pytest.fixture
 def sample_data():
     """Load a sample batch with metabolism bipartite representation."""
-    os.environ["DATA_ROOT"] = (
-        "/tmp" if not os.environ.get("DATA_ROOT") else os.environ.get("DATA_ROOT")
-    )
+    os.environ["DATA_ROOT"] = os.environ.get("DATA_ROOT") or "/tmp"
     try:
         dataset, batch, input_channels, max_num_nodes = load_sample_data_batch(
             batch_size=2,

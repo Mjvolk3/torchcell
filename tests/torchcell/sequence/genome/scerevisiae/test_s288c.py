@@ -15,6 +15,10 @@ DATA_ROOT = os.getenv("DATA_ROOT")
 
 @pytest.fixture
 def genome():
+    # This fixture builds a real SCerevisiaeGenome from the SGD genome data under
+    # DATA_ROOT, so it only runs where that dataset is present. Narrow the env
+    # lookup to str so the osp.join calls below type-check under strict mypy.
+    assert DATA_ROOT is not None, "DATA_ROOT must be set to run the S288C genome tests"
     genome = SCerevisiaeGenome(
         genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
         go_root=osp.join(DATA_ROOT, "data/go"),

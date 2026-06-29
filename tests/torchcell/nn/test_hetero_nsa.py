@@ -2,15 +2,18 @@
 """Tests for the heterogeneous NSA (neighborhood self-attention) module."""
 
 import os
+from typing import cast
 
 import pytest
 import torch
+import torch.nn as nn
 from torch_geometric.data import Data, HeteroData
 from torch_geometric.transforms import ToUndirected
 from torch_geometric.utils import to_dense_adj
 
 from torchcell.nn.hetero_nsa import HeteroNSA, HeteroNSAEncoder
 from torchcell.nn.nsa_encoder import NSAEncoder
+from torchcell.nn.self_attention_block import SelfAttentionBlock
 from torchcell.scratch.load_batch import load_sample_data_batch
 
 
@@ -136,7 +139,8 @@ def test_hetero_nsa_initialization(standard_encoder_config):
     # Check if the model has the right number of layer norms
     for node_type in config["node_types"]:
         assert node_type in model.layer_norms, f"Missing layer norms for {node_type}"
-        assert len(model.layer_norms[node_type]) == config["num_layers"], (
+        node_layer_norms = cast(nn.ModuleList, model.layer_norms[node_type])
+        assert len(node_layer_norms) == config["num_layers"], (
             f"Incorrect number of layer norms for {node_type}"
         )
 
@@ -794,14 +798,16 @@ def test_gpu_flex_attention_error_propagation():
     ).cuda()
 
     # Save the original _process_with_mask method from the first block
-    original_process = model.blocks[0]._process_with_mask
+    first_block = cast(SelfAttentionBlock, model.blocks[0])
+    original_process = first_block._process_with_mask
 
     # Replace with a method that raises an error
     def mock_process(*args, **kwargs):
         raise RuntimeError("Simulated attention error")
 
-    # Monkey-patch the first block's method
-    model.blocks[0]._process_with_mask = mock_process
+    # Monkey-patch the first block's method (setattr keeps the dynamic patch
+    # without tripping nn.Module's typed-attribute assignment under strict mypy).
+    setattr(first_block, "_process_with_mask", mock_process)
 
     # Create input embeddings (on GPU)
     x_dict = {"gene": data["gene"].x.clone(), "reaction": data["reaction"].x.clone()}
@@ -814,4 +820,4 @@ def test_gpu_flex_attention_error_propagation():
     assert "Simulated attention error" in str(excinfo.value)
 
     # Restore the original method
-    model.blocks[0]._process_with_mask = original_process
+    first_block._process_with_mask = original_process

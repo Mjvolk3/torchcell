@@ -7,6 +7,7 @@
 
 import json
 import logging
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -155,7 +156,7 @@ class FileLockHelper:
     def update_json_with_lock(
         cls,
         file_path: str | Path,
-        update_func: callable,
+        update_func: Callable[[Any], Any],
         timeout: float | None = None,
         retry_delay: float | None = None,
         create_if_missing: bool = True,

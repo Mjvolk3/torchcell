@@ -95,7 +95,9 @@ files = ["torchcell", "tests"]
 # Frozen dead modules (verified zero live importers): scratch one-offs, the dcell
 # DEPRECATED quad, and *_scratch / deprecated leftovers. Excluded from the strict
 # gate rather than hand-annotated -- WS2 scopes to LIVE source first; type-cleaning
-# dead code is wasted effort. Verbose (?x) regex, one alternative per line.
+# dead code is wasted effort. torchcell/experiments/ is excluded per Decision 5
+# (experiments out of the gate; new experiments enter CI under WS5). Verbose (?x)
+# regex, one alternative per line.
 exclude = '''(?x)(
     torchcell/scratch/
   | _DEPRECATED\.py$
@@ -104,6 +106,7 @@ exclude = '''(?x)(
   | torchcell/delete_subset\.py$
   | torchcell/models/hetero_cell_nsa_retry\.py$
   | torchcell/pypy_adapters/
+  | torchcell/experiments/
 )'''
 python_version = "3.13"
 # Full strict bundle on our own code. We do NOT set a global

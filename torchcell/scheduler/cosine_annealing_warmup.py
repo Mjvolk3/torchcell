@@ -41,9 +41,9 @@ class CosineAnnealingWarmupRestarts(_LRScheduler):
         self.warmup_steps = warmup_steps  # warmup step size
         self.gamma = gamma  # decrease rate of max learning rate by cycle
 
-        self.cur_cycle_steps = first_cycle_steps  # first cycle step size
+        self.cur_cycle_steps: float = first_cycle_steps  # first cycle step size
         self.cycle = 0  # cycle count
-        self.step_in_cycle = last_epoch  # step size of the current cycle
+        self.step_in_cycle: float = last_epoch  # step size of the current cycle
 
         super().__init__(optimizer, last_epoch)
 

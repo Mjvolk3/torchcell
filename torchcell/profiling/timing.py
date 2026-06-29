@@ -54,7 +54,7 @@ def time_method(func: Callable[..., Any]) -> Callable[..., Any]:
 
 
 def print_timing_summary(
-    title: str = "Method Timing Profile", filter_class: str = None
+    title: str = "Method Timing Profile", filter_class: str | None = None
 ) -> None:
     """Print formatted timing summary with standard deviations.
 

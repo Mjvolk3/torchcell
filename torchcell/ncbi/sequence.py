@@ -100,7 +100,9 @@ class SCerevisiaeGenome(BaseGenome):
             sort_attribute_values=True,
         )
         # Read the fasta file
-        self.fasta_sequences = SeqIO.to_dict(SeqIO.parse(self._fasta_path, "fasta"))
+        self.fasta_sequences = SeqIO.to_dict(  # type: ignore[no-untyped-call]  # Bio.SeqIO untyped
+            SeqIO.parse(self._fasta_path, "fasta")  # type: ignore[no-untyped-call]  # Bio.SeqIO untyped
+        )
         # Create mapping from chromosome number to sequence identifier
         self.chr_to_nc = {
             get_chr_from_description(self.fasta_sequences[key].description): key

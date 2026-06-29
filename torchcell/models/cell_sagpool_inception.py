@@ -1,6 +1,6 @@
 """Inception-style multi-graph SAGPooling model for cell graph regression."""
 
-from typing import Any
+from typing import Any, cast
 
 import torch
 import torch.nn as nn
@@ -71,7 +71,7 @@ class MLP(nn.Module):
             x = norm(x)
             x = self.activation(x)
             x = self.dropout(x)
-        return self.layers[-1](x)
+        return cast(torch.Tensor, self.layers[-1](x))
 
 
 class SingleSAGPool(nn.Module):
@@ -84,7 +84,7 @@ class SingleSAGPool(nn.Module):
         num_layers: int,
         pooling_ratio: float = 0.5,
         activation: str = "relu",
-        norm: str = None,
+        norm: str | None = None,
         target_dim: int = 2,
         min_score: float | None = None,
         gnn_type: str = "GATv2Conv",
@@ -222,17 +222,17 @@ class SingleSAGPool(nn.Module):
         if norm is None:
             return nn.Identity()
         elif norm == "batch":
-            return BatchNorm(channels)
+            return cast(nn.Module, BatchNorm(channels))
         elif norm == "instance":
-            return InstanceNorm(channels)
+            return cast(nn.Module, InstanceNorm(channels))
         elif norm == "layer":
-            return LayerNorm(channels)
+            return cast(nn.Module, LayerNorm(channels))
         elif norm == "graph":
-            return GraphNorm(channels)
+            return cast(nn.Module, GraphNorm(channels))
         elif norm == "pair":
-            return PairNorm()
+            return cast(nn.Module, PairNorm())
         elif norm == "mean_subtraction":
-            return MeanSubtractionNorm()
+            return cast(nn.Module, MeanSubtractionNorm())
         else:
             raise ValueError(f"Unsupported normalization type: {norm}")
 
@@ -329,7 +329,7 @@ class CellSAGPool(nn.Module):
         num_layers: int,
         pooling_ratio: float = 0.5,
         activation: str = "relu",
-        norm: str = None,
+        norm: str | None = None,
         target_dim: int = 2,
         min_score: float | None = None,
         heads: int = 1,
@@ -475,7 +475,9 @@ def load_sample_data_batch() -> tuple[Any, int]:
         MeanExperimentDeduplicator,
         Neo4jCellDataset,
     )
-    from torchcell.data.neo4j_cell import SubgraphRepresentation
+    from torchcell.data.neo4j_cell import (  # type: ignore[attr-defined]  # dev-only helper; symbol lives in graph_processor
+        SubgraphRepresentation,
+    )
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
@@ -487,12 +489,16 @@ def load_sample_data_batch() -> tuple[Any, int]:
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
+    assert DATA_ROOT is not None
 
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
     genome.drop_chrmt()
     genome.drop_empty_go()
     graph = SCerevisiaeGraph(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+        data_root=osp.join(  # type: ignore[call-arg]  # dev-only helper; SCerevisiaeGraph uses sgd_root
+            DATA_ROOT, "data/sgd/genome"
+        ),
+        genome=genome,
     )
     codon_frequency = CodonFrequencyDataset(
         root=osp.join(DATA_ROOT, "data/scerevisiae/codon_frequency_embedding"),
@@ -508,7 +514,10 @@ def load_sample_data_batch() -> tuple[Any, int]:
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs={  # type: ignore[arg-type]  # dev-only helper; runtime accepts dict of graphs
+            "physical": graph.G_physical,
+            "regulatory": graph.G_regulatory,
+        },
         node_embeddings={"codon_frequency": codon_frequency},
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,

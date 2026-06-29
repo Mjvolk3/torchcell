@@ -7,7 +7,7 @@
 
 import os
 import os.path as osp
-from typing import Any
+from typing import Any, cast
 
 import hydra
 import torch
@@ -72,7 +72,7 @@ class AttentionalGraphAggregation(nn.Module):
         self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
         """Aggregate node features ``x`` into per-graph vectors via attention."""
-        return self.aggregator(x, index=index, dim_size=dim_size)
+        return cast(torch.Tensor, self.aggregator(x, index=index, dim_size=dim_size))
 
 
 ###############################################################################
@@ -103,7 +103,7 @@ class PreProcessor(nn.Module):
         super().__init__()
         act = act_register[activation]
         norm_layer = get_norm_layer(hidden_channels, norm)
-        layers = []
+        layers: list[nn.Module] = []
         layers.append(nn.Linear(in_channels, hidden_channels))
         layers.append(norm_layer)
         layers.append(act)
@@ -117,7 +117,7 @@ class PreProcessor(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Apply the preprocessing MLP to ``x``."""
-        return self.mlp(x)
+        return cast(torch.Tensor, self.mlp(x))
 
 
 ###############################################################################
@@ -149,10 +149,12 @@ class AttentionConvWrapper(nn.Module):
         # For GATv2Conv-like layers:
         if hasattr(conv, "concat"):
             expected_dim = (
-                conv.heads * conv.out_channels if conv.concat else conv.out_channels
+                cast(int, conv.heads) * cast(int, conv.out_channels)
+                if conv.concat
+                else cast(int, conv.out_channels)
             )
         else:
-            expected_dim = conv.out_channels
+            expected_dim = cast(int, conv.out_channels)
         self.proj = (
             nn.Identity()
             if expected_dim == target_dim
@@ -190,10 +192,11 @@ class AttentionConvWrapper(nn.Module):
         out = self.proj(out)
         if self.norm is not None:
             out = self.norm(out)
+        assert self.act is not None
         out = self.act(out)
         if self.dropout is not None:
             out = self.dropout(out)
-        return out
+        return cast(torch.Tensor, out)
 
 
 class HeteroCell(nn.Module):
@@ -234,6 +237,9 @@ class HeteroCell(nn.Module):
         """
         super().__init__()
         self.hidden_channels = hidden_channels
+
+        gene_encoder_config = gene_encoder_config or {}
+        metabolism_config = metabolism_config or {}
 
         # Learnable embeddings
         self.gene_embedding = nn.Embedding(gene_num, hidden_channels)
@@ -334,7 +340,7 @@ class HeteroCell(nn.Module):
         if num_layers == 0:
             return nn.Identity()
         act = act_register[activation]
-        layers = []
+        layers: list[nn.Module] = []
         dims = [in_channels] + [hidden_channels] * (num_layers - 1) + [out_channels]
         for i in range(num_layers):
             layers.append(nn.Linear(dims[i], dims[i + 1]))
@@ -421,7 +427,7 @@ class HeteroCell(nn.Module):
         for conv in self.convs:
             x_dict = conv(x_dict, edge_index_dict, **extra_kwargs)
 
-        return x_dict["gene"]
+        return cast(torch.Tensor, x_dict["gene"])
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
@@ -513,6 +519,7 @@ def main(cfg: DictConfig) -> None:
 
     load_dotenv()
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+    assert ASSET_IMAGES_DIR is not None
     device = torch.device(
         "cuda"
         if torch.cuda.is_available() and cfg.trainer.accelerator.lower() == "gpu"

@@ -4,7 +4,7 @@
 # Test file: tests/torchcell/models/test_isomorphic_cell.py
 """Isomorphic cell model combining gene GNN and metabolism hypergraph branches."""
 
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import torch
 import torch.nn as nn
@@ -66,7 +66,7 @@ class PreProcessor(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Apply the preprocessing MLP to the input features."""
-        return self.mlp(x)
+        return cast(torch.Tensor, self.mlp(x))
 
 
 class Combiner(nn.Module):
@@ -104,7 +104,7 @@ class Combiner(nn.Module):
     ) -> torch.Tensor:
         """Concatenate the two branch features and pass them through the MLP."""
         combined = torch.cat([gene_features, metabolism_features], dim=-1)
-        return self.mlp(combined)
+        return cast(torch.Tensor, self.mlp(combined))
 
 
 # FLAG Hetero GNN - Start
@@ -120,7 +120,7 @@ class ProjectedGATConv(nn.Module):
     def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
         """Run the GAT conv and project to the target output dimension."""
         x = self.gat(x, edge_index)  # Shape: (..., heads * out_channels)
-        return self.project(x)  # Shape: (..., out_dim)
+        return cast(torch.Tensor, self.project(x))  # Shape: (..., out_dim)
 
 
 class PredictionHead(nn.Module):
@@ -197,7 +197,9 @@ class HeteroGnn(nn.Module):
         self.dims = self._calculate_dimensions(in_channels, hidden_channels)
 
         # Initialize  embedding if specified
+        self.node_embedding: nn.Embedding | None
         if learnable_embedding:
+            assert num_nodes is not None
             self.node_embedding = nn.Embedding(
                 num_embeddings=num_nodes,
                 embedding_dim=in_channels,
@@ -227,10 +229,8 @@ class HeteroGnn(nn.Module):
             norm=head_norm,
         )
 
-    def _get_layer_config(
-        self, layer_config: dict[str, Any] | None
-    ) -> dict[str, Any]:
-        default_configs = {
+    def _get_layer_config(self, layer_config: dict[str, Any] | None) -> dict[str, Any]:
+        default_configs: dict[str, dict[str, Any]] = {
             "GCN": {
                 "bias": True,
                 "dropout": 0.0,
@@ -304,7 +304,7 @@ class HeteroGnn(nn.Module):
         num_layers = self.layer_config.get("num_mlp_layers", 2)
         is_mlp_skip = self.layer_config.get("is_mlp_skip_connection", True)
 
-        layers = []
+        layers: list[Any] = []
         # First layer
         layers.extend(
             [
@@ -437,8 +437,8 @@ class HeteroGnn(nn.Module):
 
         norm_layer = norm_layers[self.norm]
         if norm_layer in [GraphNorm, PairNorm, MeanSubtractionNorm]:
-            return norm_layer()
-        return norm_layer(channels)
+            return cast(nn.Module, norm_layer())
+        return cast(nn.Module, norm_layer(channels))
 
     def _get_head_norm(self, channels: int, norm_type: str | None) -> nn.Module | None:
         """Get standard PyTorch normalization layer for prediction head."""
@@ -470,7 +470,7 @@ class HeteroGnn(nn.Module):
 
         activation_fn = act_register[activation]  # instance
         activation_class = type(activation_fn)
-        layers = []
+        layers: list[nn.Module] = []
         dims = []
         if num_layers == 1:
             dims = [in_channels, out_channels]
@@ -499,6 +499,7 @@ class HeteroGnn(nn.Module):
         from torch_geometric.utils import add_self_loops
 
         if self.learnable_embedding:
+            assert self.node_embedding is not None
             device = batch["gene"].batch.device
             batch_size = len(batch["gene"].x_ptr) - 1
             nodes_per_graph = self.node_embedding.num_embeddings
@@ -510,7 +511,7 @@ class HeteroGnn(nn.Module):
             all_embeddings = self.node_embedding(all_indices)
 
             # Calculate adjusted perturbation indices for the full batch
-            adjusted_pert_indices = []
+            pert_idx_list: list[torch.Tensor] = []
             for i in range(batch_size):
                 start_idx = batch["gene"].x_pert_ptr[i]
                 end_idx = batch["gene"].x_pert_ptr[i + 1]
@@ -519,9 +520,9 @@ class HeteroGnn(nn.Module):
                     start_idx:end_idx
                 ]
                 # Adjust indices by batch position
-                adjusted_pert_indices.append(graph_pert_indices + (i * nodes_per_graph))
+                pert_idx_list.append(graph_pert_indices + (i * nodes_per_graph))
 
-            adjusted_pert_indices = torch.cat(adjusted_pert_indices)
+            adjusted_pert_indices = torch.cat(pert_idx_list)
 
             # Create mask and remove perturbed rows
             mask = torch.ones(len(all_embeddings), dtype=torch.bool, device=device)
@@ -580,7 +581,7 @@ class HeteroGnn(nn.Module):
                     for key, x in x_dict.items()
                 }
 
-        x = x_dict["gene"]
+        x = cast(torch.Tensor, x_dict["gene"])
 
         return x
 
@@ -651,16 +652,16 @@ class GeneContextProcessor(nn.Module):
         H_g = self.mlp(gene_features)
 
         # Build a set of gene features per reaction
-        rxn_feats = []
-        rxn_indices = []
+        rxn_feats_list: list[torch.Tensor] = []
+        rxn_indices_list: list[int] = []
         for rxn_idx, gene_list in reaction_to_genes.items():
             for gidx in gene_list:
-                rxn_feats.append(H_g[gidx])
-                rxn_indices.append(rxn_idx)
+                rxn_feats_list.append(H_g[gidx])
+                rxn_indices_list.append(rxn_idx)
 
-        if rxn_feats:
-            rxn_feats = torch.stack(rxn_feats, dim=0)
-            rxn_indices = torch.tensor(rxn_indices, device=gene_features.device)
+        if rxn_feats_list:
+            rxn_feats = torch.stack(rxn_feats_list, dim=0)
+            rxn_indices = torch.tensor(rxn_indices_list, device=gene_features.device)
             # Sort by reaction index to feed into SAB
             sorted_idx = torch.argsort(rxn_indices)
             rxn_feats = rxn_feats[sorted_idx]
@@ -774,7 +775,7 @@ class ReactionMapper(nn.Module):
         rxn_indices = rxn_indices[sorted_idx]
 
         Z_r = self.sab(feats, rxn_indices)
-        return Z_r
+        return cast(torch.Tensor, Z_r)
 
 
 class GeneMapper(nn.Module):
@@ -817,7 +818,7 @@ class GeneMapper(nn.Module):
             sorted_idx = torch.argsort(gene_idx)
             feats = feats[sorted_idx]
             gene_idx = gene_idx[sorted_idx]
-            Z_mg = self.sab(feats, gene_idx)
+            Z_mg = cast(torch.Tensor, self.sab(feats, gene_idx))
         else:
             # If no genes are connected, return zeros
             Z_mg = torch.zeros(
@@ -941,8 +942,11 @@ class MetabolismProcessor(nn.Module):
         gene_indices = gene_indices[sorted_indices]
         reaction_indices = reaction_indices[sorted_indices]
 
-        Z_mg = self.gene_reaction_transformer(
-            Z_r[reaction_indices], gene_indices, dim_size=graph["gene"].num_nodes
+        Z_mg = cast(
+            torch.Tensor,
+            self.gene_reaction_transformer(
+                Z_r[reaction_indices], gene_indices, dim_size=graph["gene"].num_nodes
+            ),
         )
 
         return Z_mg
@@ -1007,8 +1011,13 @@ class MetabolismProcessor(nn.Module):
         gene_indices = gpr_edge_index[0]
         reaction_indices = gpr_edge_index[1]
 
-        Z_mg = self.gene_reaction_transformer(
-            Z_r[reaction_indices], index=gene_indices, dim_size=batch["gene"].num_nodes
+        Z_mg = cast(
+            torch.Tensor,
+            self.gene_reaction_transformer(
+                Z_r[reaction_indices],
+                index=gene_indices,
+                dim_size=batch["gene"].num_nodes,
+            ),
         )
 
         return Z_mg
@@ -1055,7 +1064,7 @@ class IsomorphicCell(nn.Module):
         if preprocessor_config:
             self.preprocessor_config.update(preprocessor_config)
 
-        self.metabolism_config = {
+        self.metabolism_config: dict[str, Any] = {
             "use_attention": True,
             "set_transformer_heads": 4,
             "use_skip": True,
@@ -1064,7 +1073,7 @@ class IsomorphicCell(nn.Module):
         if metabolism_config:
             self.metabolism_config.update(metabolism_config)
 
-        self.set_transformer_config = {
+        self.set_transformer_config: dict[str, Any] = {
             "num_encoder_blocks": 2,
             "num_decoder_blocks": 1,
             "heads": 4,
@@ -1108,7 +1117,7 @@ class IsomorphicCell(nn.Module):
         )
 
         self.metabolism_processor = MetabolismProcessor(
-            metabolite_dim=metabolism_config.get(
+            metabolite_dim=(metabolism_config or {}).get(
                 "metabolite_dim", 2534
             ),  # Changed from gene_dim
             hidden_dim=hidden_channels,
@@ -1152,7 +1161,7 @@ class IsomorphicCell(nn.Module):
     def _build_mlp(
         self, in_dim: int, out_dim: int, config: dict[str, Any]
     ) -> nn.Sequential:
-        layers = []
+        layers: list[nn.Module] = []
         current_dim = in_dim
 
         for hidden_dim in config["hidden_layers"]:
@@ -1165,7 +1174,7 @@ class IsomorphicCell(nn.Module):
                         self.linear = linear
 
                     def forward(self, x: torch.Tensor) -> torch.Tensor:
-                        return self.linear(x) + x
+                        return cast(torch.Tensor, self.linear(x) + x)
 
                 layers.append(ResidualBlock(nn.Linear(current_dim, hidden_dim)))
             else:
@@ -1207,7 +1216,7 @@ class IsomorphicCell(nn.Module):
         z_mg = self.metabolism_processor(batch)
 
         # Combine paths
-        z = self.combiner(z_g, z_mg)
+        z = cast(torch.Tensor, self.combiner(z_g, z_mg))
         return z
 
     def forward(self, cell_graph: HeteroData, batch: HeteroData) -> torch.Tensor:
@@ -1227,7 +1236,7 @@ class IsomorphicCell(nn.Module):
 
         # Process intact graph
         z_i = self.forward_single(batch)
-        z_i = self.isab(z_i, batch_size=batch_size)
+        z_i = cast(torch.Tensor, self.isab(z_i, batch_size=batch_size))
 
         # Process perturbed embeddings
         # z_p = torch.cat(z_p_list, dim=0)  # [total_num_perts, hidden_dim]
@@ -1261,7 +1270,7 @@ def initialize_model(
     if config is None:
         config = {}
 
-    default_config = {
+    default_config: dict[str, Any] = {
         # Model dimensions
         "in_channels": 64,
         "hidden_channels": 64,
@@ -1366,7 +1375,9 @@ def load_sample_data_batch() -> tuple[Any, Any, int]:
         MeanExperimentDeduplicator,
         Neo4jCellDataset,
     )
-    from torchcell.data.neo4j_cell import SubgraphRepresentation
+    from torchcell.data.neo4j_cell import (  # type: ignore[attr-defined]  # demo helper: symbol relocated in data layer
+        SubgraphRepresentation,
+    )
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
@@ -1378,14 +1389,15 @@ def load_sample_data_batch() -> tuple[Any, Any, int]:
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
 
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
     # IDEA we are trying to use all gene reprs
     # genome.drop_chrmt()
     genome.drop_empty_go()
     graph = SCerevisiaeGraph(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"),  # type: ignore[call-arg]  # demo helper: SCerevisiaeGraph signature changed
+        genome=genome,
     )
     codon_frequency = CodonFrequencyDataset(
         root=osp.join(DATA_ROOT, "data/scerevisiae/codon_frequency_embedding"),
@@ -1401,7 +1413,10 @@ def load_sample_data_batch() -> tuple[Any, Any, int]:
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs={  # type: ignore[arg-type]  # demo helper: Neo4jCellDataset now expects GeneMultiGraph
+            "physical": graph.G_physical,
+            "regulatory": graph.G_regulatory,
+        },
         incidence_graphs={"metabolism": YeastGEM().reaction_map},
         node_embeddings={"codon_frequency": codon_frequency},
         converter=CompositeFitnessConverter,
@@ -1527,23 +1542,23 @@ def main(device: str = "gpu") -> None:
         print("CUDA is not available. Falling back to CPU.")
         device = "cpu"
 
-    device = torch.device(device)
-    print(f"\nUsing device: {device}")
+    torch_device = torch.device(device)
+    print(f"\nUsing device: {torch_device}")
 
     load_dotenv()
-    ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
-    MPLSTYLE_PATH = os.getenv("MPLSTYLE_PATH")
+    ASSET_IMAGES_DIR = cast(str, os.getenv("ASSET_IMAGES_DIR"))
+    MPLSTYLE_PATH = cast(str, os.getenv("MPLSTYLE_PATH"))
     plt.style.use(MPLSTYLE_PATH)
 
     # Load sample data including metabolism
     dataset, batch, max_num_nodes = load_sample_data_batch()
 
     # Move data to device
-    cell_graph = dataset.cell_graph.to(device)  # Base graph for whole
-    batch = batch.to(device)
+    cell_graph = dataset.cell_graph.to(torch_device)  # Base graph for whole
+    batch = batch.to(torch_device)
 
     # Model configuration
-    model = initialize_model(dataset, device)
+    model = initialize_model(dataset, torch_device)
 
     print("\nModel architecture:")
     print(model)
@@ -1551,7 +1566,7 @@ def main(device: str = "gpu") -> None:
     # Training setup
     loss_type = "mse"
     criterion = CombinedRegressionLoss(
-        loss_type=loss_type, weights=torch.ones(2, device=device)
+        loss_type=loss_type, weights=torch.ones(2, device=torch_device)
     )
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
@@ -1580,12 +1595,12 @@ def main(device: str = "gpu") -> None:
                 print("Targets shape:", y.shape)
                 print("Loss components:", loss_components)
 
-                if device.type == "cuda":
+                if torch_device.type == "cuda":
                     print(
-                        f"GPU memory allocated: {torch.cuda.memory_allocated(device) / 1024**2:.2f} MB"
+                        f"GPU memory allocated: {torch.cuda.memory_allocated(torch_device) / 1024**2:.2f} MB"
                     )
                     print(
-                        f"GPU memory cached: {torch.cuda.memory_reserved(device) / 1024**2:.2f} MB"
+                        f"GPU memory cached: {torch.cuda.memory_reserved(torch_device) / 1024**2:.2f} MB"
                     )
 
             losses.append(loss.item())
@@ -1594,7 +1609,7 @@ def main(device: str = "gpu") -> None:
 
     except RuntimeError as e:
         print(f"\nError during training: {e}")
-        if device.type == "cuda":
+        if torch_device.type == "cuda":
             print("\nThis might be a GPU memory issue. Try:")
             print("1. Reducing batch size")
             print("2. Reducing model size")
@@ -1639,13 +1654,17 @@ def main(device: str = "gpu") -> None:
         print(f"Final loss: {final_loss.item():.4f}")
         print("Loss components:", final_components)
 
-        if device.type == "cuda":
+        if torch_device.type == "cuda":
             print("\nFinal GPU memory usage:")
-            print(f"Allocated: {torch.cuda.memory_allocated(device) / 1024**2:.2f} MB")
-            print(f"Cached: {torch.cuda.memory_reserved(device) / 1024**2:.2f} MB")
+            print(
+                f"Allocated: {torch.cuda.memory_allocated(torch_device) / 1024**2:.2f} MB"
+            )
+            print(
+                f"Cached: {torch.cuda.memory_reserved(torch_device) / 1024**2:.2f} MB"
+            )
 
     # Optional: Clear CUDA cache if using GPU
-    if device.type == "cuda":
+    if torch_device.type == "cuda":
         torch.cuda.empty_cache()
 
 

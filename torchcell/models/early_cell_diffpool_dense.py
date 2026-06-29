@@ -1,6 +1,6 @@
 """Dense DiffPool cell model over multiple per-graph GAT stacks."""
 
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import torch
 import torch.nn as nn
@@ -182,9 +182,10 @@ class EarlyDenseCellDiffPool(nn.Module):
             h = x
             attention_weights = []
 
-            for i in range(0, len(self.gat_networks[graph_name]), 2):
-                gat_layer = self.gat_networks[graph_name][i]
-                norm_layer = self.gat_networks[graph_name][i + 1]
+            gat_seq = cast(nn.ModuleList, self.gat_networks[graph_name])
+            for i in range(0, len(gat_seq), 2):
+                gat_layer = gat_seq[i]
+                norm_layer = gat_seq[i + 1]
 
                 h, attention = gat_layer(
                     h,
@@ -221,6 +222,8 @@ class EarlyDenseCellDiffPool(nn.Module):
         for layer_idx, (pool_network, embed_network) in enumerate(
             zip(self.pool_networks, self.embed_networks)
         ):
+            pool_network = cast(nn.ModuleList, pool_network)
+            embed_network = cast(nn.ModuleList, embed_network)
             # Compute cluster assignment matrix
             s = current_x
             layer_pool_attention = []
@@ -312,7 +315,9 @@ def load_sample_data_batch() -> tuple[Any, int]:
         MeanExperimentDeduplicator,
         Neo4jCellDataset,
     )
-    from torchcell.data.neo4j_cell import SubgraphRepresentation
+    from torchcell.data.neo4j_cell import (  # type: ignore[attr-defined]  # dev-only helper; symbol lives in graph_processor
+        SubgraphRepresentation,
+    )
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
@@ -324,12 +329,14 @@ def load_sample_data_batch() -> tuple[Any, int]:
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
+    assert DATA_ROOT is not None
 
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
     genome.drop_chrmt()
     genome.drop_empty_go()
     graph = SCerevisiaeGraph(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"),  # type: ignore[call-arg]  # dev-only helper; SCerevisiaeGraph uses sgd_root
+        genome=genome,
     )
     codon_frequency = CodonFrequencyDataset(
         root=osp.join(DATA_ROOT, "data/scerevisiae/codon_frequency_embedding"),
@@ -345,7 +352,10 @@ def load_sample_data_batch() -> tuple[Any, int]:
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs={  # type: ignore[arg-type]  # dev-only helper; runtime accepts dict of graphs
+            "physical": graph.G_physical,
+            "regulatory": graph.G_regulatory,
+        },
         node_embeddings={"codon_frequency": codon_frequency},
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,

@@ -1,6 +1,6 @@
 """Heterogeneous Node-Set Attention model over gene/metabolite/reaction graphs."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import torch
 import torch.nn as nn
@@ -11,9 +11,7 @@ if TYPE_CHECKING:
     from torchcell.data import Neo4jCellDataset
 
 
-def load_sample_data_batch() -> (
-    "tuple[Neo4jCellDataset, HeteroData, int, int]"
-):
+def load_sample_data_batch() -> "tuple[Neo4jCellDataset, HeteroData, int, int]":
     """Load a small cell-graph batch from disk for smoke testing."""
     import os
     import os.path as osp
@@ -26,7 +24,9 @@ def load_sample_data_batch() -> (
         MeanExperimentDeduplicator,
         Neo4jCellDataset,
     )
-    from torchcell.data.neo4j_cell import SubgraphRepresentation
+    from torchcell.data.neo4j_cell import (  # type: ignore[attr-defined]  # __main__-only; SubgraphRepresentation actually lives in graph_processor (pre-existing wrong import path)
+        SubgraphRepresentation,
+    )
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
@@ -37,12 +37,13 @@ def load_sample_data_batch() -> (
     #     FungalUpDownTransformerDataset,
     # )
     from torchcell.datasets import CodonFrequencyDataset
-    from torchcell.graph import SCerevisiaeGraph
+    from torchcell.graph import GeneMultiGraph, SCerevisiaeGraph
     from torchcell.metabolism.yeast_GEM import YeastGEM
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
+    assert DATA_ROOT is not None
     print(f"DATA_ROOT: {DATA_ROOT}")
 
     genome = SCerevisiaeGenome(
@@ -52,7 +53,7 @@ def load_sample_data_batch() -> (
     # IDEA we are trying to use all gene reprs
     # genome.drop_chrmt()
     genome.drop_empty_go()
-    graph = SCerevisiaeGraph(
+    graph = SCerevisiaeGraph(  # type: ignore[call-arg]  # __main__-only; stale SCerevisiaeGraph kwarg (pre-existing)
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
     # selected_node_embeddings = ["codon_frequency"]
@@ -89,7 +90,10 @@ def load_sample_data_batch() -> (
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs=cast(
+            GeneMultiGraph,
+            {"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        ),
         incidence_graphs={"metabolism": reaction_map},
         node_embeddings=node_embeddings,
         converter=CompositeFitnessConverter,
@@ -146,23 +150,23 @@ class BlockContainer(nn.Module):
         if isinstance(content, dict):
             # For SAB case with dict of node_type -> module
             self.content_dict = nn.ModuleDict(content)
-            self.type = "dict"
+            self.type = "dict"  # type: ignore[method-assign,assignment]  # shadows nn.Module.type intentionally (existing API)
         elif isinstance(content, tuple) and all(
             isinstance(m, nn.Module) for m in content
         ):
             # For M_GPR and M_MRM with tuple of modules
             self.content_list = nn.ModuleList(content)
-            self.type = "tuple"
+            self.type = "tuple"  # type: ignore[method-assign,assignment]  # shadows nn.Module.type intentionally (existing API)
         else:
             # For M_GENE with single module
             self.content = content
-            self.type = "single"
+            self.type = "single"  # type: ignore[method-assign,assignment]  # shadows nn.Module.type intentionally (existing API)
 
     def get_content(self) -> nn.ModuleDict | tuple[nn.Module, ...] | nn.Module:
         """Return the wrapped module(s) in their original structure."""
-        if self.type == "dict":
+        if self.type == "dict":  # type: ignore[comparison-overlap]  # self.type shadowed to str (existing API)
             return self.content_dict
-        elif self.type == "tuple":
+        elif self.type == "tuple":  # type: ignore[comparison-overlap]  # self.type shadowed to str (existing API)
             return tuple(self.content_list)
         else:
             return self.content
@@ -203,8 +207,11 @@ class MAB(AttentionBlock):
         """Initialize the masked attention block."""
         super().__init__(hidden_dim, num_heads)
 
-    def forward(self, x: torch.Tensor, adj_matrix: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, x: torch.Tensor, adj_matrix: torch.Tensor | None = None
+    ) -> torch.Tensor:
         """Attend over nodes, masking pairs absent from ``adj_matrix``."""
+        assert adj_matrix is not None
         device = x.device
 
         # First normalization layer
@@ -237,7 +244,9 @@ class MAB(AttentionBlock):
                 device=device,
             )
 
-            attn_output = flex_attention(q, k, v, block_mask=block_mask)
+            attn_output = cast(
+                torch.Tensor, flex_attention(q, k, v, block_mask=block_mask)
+            )
         else:
             # Manual implementation for CPU
             scores = torch.matmul(q, k.transpose(-2, -1)) / (q.size(-1) ** 0.5)
@@ -263,7 +272,7 @@ class MAB(AttentionBlock):
 
         # Second normalization and MLP
         normed_x = self.norm2(x)
-        mlp_output = self.mlp(normed_x)
+        mlp_output = cast(torch.Tensor, self.mlp(normed_x))
 
         # Second residual connection
         output = x + mlp_output
@@ -297,7 +306,7 @@ class SAB(AttentionBlock):
         # Choose implementation based on device
         if device.type == "cuda":
             # Just use regular attention with no masking
-            attn_output = flex_attention(q, k, v)
+            attn_output = cast(torch.Tensor, flex_attention(q, k, v))
         else:
             # Manual implementation for CPU
             scores = torch.matmul(q, k.transpose(-2, -1)) / (q.size(-1) ** 0.5)
@@ -315,7 +324,7 @@ class SAB(AttentionBlock):
 
         # Second normalization and MLP
         normed_x = self.norm2(x)
-        mlp_output = self.mlp(normed_x)
+        mlp_output = cast(torch.Tensor, self.mlp(normed_x))
 
         # Second residual connection
         output = x + mlp_output
@@ -335,10 +344,11 @@ class StoichiometricMAB(AttentionBlock):
     def forward(
         self,
         x: torch.Tensor,
-        adj_matrix: torch.Tensor,
+        adj_matrix: torch.Tensor | None = None,
         stoichiometry: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Apply masked attention, optionally gated by stoichiometry weights."""
+        assert adj_matrix is not None
         device = x.device
 
         # First normalization layer
@@ -384,7 +394,7 @@ class StoichiometricMAB(AttentionBlock):
 
         # Second normalization and MLP
         normed_x = self.norm2(x)
-        mlp_output = self.mlp(normed_x)
+        mlp_output = cast(torch.Tensor, self.mlp(normed_x))
 
         # Second residual connection
         output = x + mlp_output
@@ -406,7 +416,7 @@ def group(xs: list[torch.Tensor], aggr: str | None) -> torch.Tensor | None:
         out = torch.stack(xs, dim=0)
         out = getattr(torch, aggr)(out, dim=0)
         out = out[0] if isinstance(out, tuple) else out
-        return out
+        return cast(torch.Tensor, out)
 
 
 class CellGraphHeteroNSA(nn.Module):
@@ -511,9 +521,7 @@ class CellGraphHeteroNSA(nn.Module):
                     f"  Added layer {i}: Stoichiometric Masked Attention for metabolite-reaction hypergraph"
                 )
 
-    def forward(
-        self, data: HeteroData, batch_size: int = 1
-    ) -> dict[str, torch.Tensor]:
+    def forward(self, data: HeteroData, batch_size: int = 1) -> dict[str, torch.Tensor]:
         """Run the heterogeneous NSA stack and return updated node embeddings.
 
         Args:
@@ -528,9 +536,9 @@ class CellGraphHeteroNSA(nn.Module):
         # Initialize node embeddings for each type
         node_embeddings = {}
         node_masks = {}
-        node_ranges: dict[str, list[tuple[int, int]]] = (
-            {}
-        )  # Track the index ranges for each node type in each batch
+        node_ranges: dict[
+            str, list[tuple[int, int]]
+        ] = {}  # Track the index ranges for each node type in each batch
 
         # Process each node type
         for node_type, embedding_layer in self.embeddings.items():
@@ -760,6 +768,7 @@ class CellGraphHeteroNSA(nn.Module):
 
                     # Fill stoichiometry matrix if available
                     if batch_stoich is not None:
+                        assert stoich_matrix is not None
                         stoich_matrix[b, batch_edges[0], batch_edges[1]] = batch_stoich
             else:
                 # Single graph case
@@ -772,6 +781,7 @@ class CellGraphHeteroNSA(nn.Module):
 
                 # Fill stoichiometry matrix if available
                 if stoichiometry is not None:
+                    assert stoich_matrix is not None
                     stoich_matrix[0, hyperedge_index[0], hyperedge_index[1]] = (
                         stoichiometry
                     )
@@ -784,20 +794,22 @@ class CellGraphHeteroNSA(nn.Module):
 
         # In the forward method of CellGraphHeteroNSA
         for block_idx, block in enumerate(self.blocks):
+            block = cast(BlockContainer, block)
             print(f"Processing block {block_idx}: {block.block_type}")
             block_type = block.block_type
             content = block.get_content()
 
             if block_type == "SAB":
                 # Self-attention for each node type
-                for node_type, sab in content.items():
+                sab_dict = cast(nn.ModuleDict, content)
+                for node_type, sab in sab_dict.items():
                     if node_type in node_embeddings:
                         # Apply self-attention
                         node_embeddings[node_type] = sab(node_embeddings[node_type])
 
             elif block_type == "M_GENE":
                 # Masked attention for gene multigraph
-                mab = content
+                mab = cast(nn.Module, content)
                 if "gene" in node_embeddings and "gene_multigraph" in edge_adjacencies:
                     node_embeddings["gene"] = mab(
                         node_embeddings["gene"], edge_adjacencies["gene_multigraph"]
@@ -805,7 +817,9 @@ class CellGraphHeteroNSA(nn.Module):
 
             elif block_type == "M_GPR":
                 # Masked attention for gene-reaction bipartite
-                gene_to_reaction_mab, reaction_to_gene_mab = content
+                gene_to_reaction_mab, reaction_to_gene_mab = cast(
+                    tuple[nn.Module, nn.Module], content
+                )
 
                 if (
                     "gene" in node_embeddings
@@ -826,7 +840,9 @@ class CellGraphHeteroNSA(nn.Module):
 
             elif block_type == "M_MRM":
                 # Masked attention for metabolite-reaction-metabolite hypergraph
-                metab_to_reaction_mab, reaction_to_metab_mab = content
+                metab_to_reaction_mab, reaction_to_metab_mab = cast(
+                    tuple[nn.Module, nn.Module], content
+                )
 
                 if (
                     "metabolite" in node_embeddings
@@ -950,7 +966,7 @@ class CellGraphNSAModel(nn.Module):
                 # Fallback if no perturbations
                 predictions = torch.zeros(
                     0,
-                    self.gene_readout[-1].out_features,
+                    cast(int, self.gene_readout[-1].out_features),
                     device=next(self.parameters()).device,
                 )
         else:

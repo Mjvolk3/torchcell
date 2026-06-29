@@ -2,7 +2,7 @@
 
 import os
 import os.path as osp
-from typing import Any
+from typing import Any, cast
 
 import hydra
 import torch
@@ -54,7 +54,7 @@ class AttentionalGraphAggregation(nn.Module):
         self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
         """Aggregate node features into graph-level vectors via attention."""
-        return self.aggregator(x, index=index, dim_size=dim_size)
+        return cast(torch.Tensor, self.aggregator(x, index=index, dim_size=dim_size))
 
 
 class PreProcessor(nn.Module):
@@ -82,7 +82,7 @@ class PreProcessor(nn.Module):
         super().__init__()
         act = act_register[activation]
         norm_layer = get_norm_layer(hidden_channels, norm)
-        layers = []
+        layers: list[nn.Module] = []
         layers.append(nn.Linear(in_channels, hidden_channels))
         layers.append(norm_layer)
         layers.append(act)
@@ -96,7 +96,7 @@ class PreProcessor(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Apply the preprocessing MLP to node features."""
-        return self.mlp(x)
+        return cast(torch.Tensor, self.mlp(x))
 
 
 class HeteroCellNSA(nn.Module):
@@ -229,7 +229,7 @@ class HeteroCellNSA(nn.Module):
             return nn.Identity()
 
         act = act_register[activation]
-        layers = []
+        layers: list[nn.Module] = []
         dims = [in_channels] + [hidden_channels] * (num_layers - 1) + [out_channels]
 
         for i in range(num_layers):
@@ -345,7 +345,7 @@ class HeteroCellNSA(nn.Module):
                         new_x[node_type] + x_dict[node_type]
                     )
 
-            return new_x["gene"]
+            return cast(torch.Tensor, new_x["gene"])
         except Exception as e:
             print(f"Error in NSA layer: {e}")
             import traceback
@@ -460,6 +460,7 @@ def main(cfg: DictConfig) -> None:
 
     load_dotenv()
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+    assert ASSET_IMAGES_DIR is not None
     device = torch.device(
         "cuda"
         if torch.cuda.is_available() and cfg.trainer.accelerator.lower() == "gpu"

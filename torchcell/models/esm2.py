@@ -48,7 +48,7 @@ class Esm2(PeptideModel):
             print(f"{model_name} model already downloaded.")
         else:
             print(f"Downloading {model_name} model to {model_directory}...")
-            AutoTokenizer.from_pretrained(model_name, cache_dir=target_directory)
+            AutoTokenizer.from_pretrained(model_name, cache_dir=target_directory)  # type: ignore[no-untyped-call]  # transformers from_pretrained is untyped
             AutoModelForMaskedLM.from_pretrained(model_name, cache_dir=target_directory)
             print("Download finished.")
 
@@ -60,7 +60,7 @@ class Esm2(PeptideModel):
     def load_model(self, model_name: str) -> None:
         """Download if needed, then load the tokenizer and model onto the device."""
         self._check_and_download_model(model_name)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)  # type: ignore[no-untyped-call]  # transformers from_pretrained is untyped
         self.model = AutoModelForMaskedLM.from_pretrained(self.model_name)
         self.model.to(self.device)
 
@@ -96,7 +96,7 @@ class Esm2(PeptideModel):
         torch_outs = self.model(
             tokens_ids, attention_mask=attention_mask, output_hidden_states=True
         )
-        embeddings = torch_outs["hidden_states"][-1].detach()
+        embeddings: torch.Tensor = torch_outs["hidden_states"][-1].detach()
 
         if mean_embedding:
             embeddings = (attention_mask.unsqueeze(-1) * embeddings).sum(

@@ -4,7 +4,7 @@
 # Test file: tests/torchcell/models/test_hetero_gnn_pool.py
 """Heterogeneous GNN with graph pooling and a configurable prediction head."""
 
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import torch
 import torch.nn as nn
@@ -41,7 +41,7 @@ class ProjectedGATConv(nn.Module):
     def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
         """Apply the GAT conv then project the multi-head output to out_dim."""
         x = self.gat(x, edge_index)  # Shape: (..., heads * out_channels)
-        return self.project(x)  # Shape: (..., out_dim)
+        return cast(torch.Tensor, self.project(x))  # Shape: (..., out_dim)
 
 
 class PredictionHead(nn.Module):
@@ -119,7 +119,9 @@ class HeteroGnnPool(nn.Module):
         self.dims = self._calculate_dimensions(in_channels, hidden_channels)
 
         # Initialize learnable embedding if specified
+        self.node_embedding: nn.Embedding | None
         if learnable_embedding:
+            assert num_nodes is not None
             self.node_embedding = nn.Embedding(
                 num_embeddings=num_nodes,
                 embedding_dim=in_channels,
@@ -149,10 +151,8 @@ class HeteroGnnPool(nn.Module):
             norm=head_norm,
         )
 
-    def _get_layer_config(
-        self, layer_config: dict[str, Any] | None
-    ) -> dict[str, Any]:
-        default_configs = {
+    def _get_layer_config(self, layer_config: dict[str, Any] | None) -> dict[str, Any]:
+        default_configs: dict[str, dict[str, Any]] = {
             "GCN": {
                 "bias": True,
                 "dropout": 0.0,
@@ -226,7 +226,8 @@ class HeteroGnnPool(nn.Module):
         num_layers = self.layer_config.get("num_mlp_layers", 2)
         is_mlp_skip = self.layer_config.get("is_mlp_skip_connection", True)
 
-        layers = []
+        # reason: heterogeneous — holds nn.Module layers and a skip-connection lambda
+        layers: list[Any] = []
         # First layer
         layers.extend(
             [
@@ -359,16 +360,16 @@ class HeteroGnnPool(nn.Module):
 
         norm_layer = norm_layers[self.norm]
         if norm_layer in [GraphNorm, PairNorm, MeanSubtractionNorm]:
-            return norm_layer()
-        return norm_layer(channels)
+            return cast(nn.Module, norm_layer())
+        return cast(nn.Module, norm_layer(channels))
 
     def _global_pool(self, x: torch.Tensor, batch: torch.Tensor) -> torch.Tensor:
         if self.pooling == "sum":
-            return global_add_pool(x, batch)
+            return cast(torch.Tensor, global_add_pool(x, batch))
         elif self.pooling == "mean":
-            return global_mean_pool(x, batch)
+            return cast(torch.Tensor, global_mean_pool(x, batch))
         elif self.pooling == "max":
-            return global_max_pool(x, batch)
+            return cast(torch.Tensor, global_max_pool(x, batch))
         raise ValueError(f"Invalid pooling type: {self.pooling}")
 
     def _get_head_norm(self, channels: int, norm_type: str | None) -> nn.Module | None:
@@ -399,8 +400,8 @@ class HeteroGnnPool(nn.Module):
 
         activation_fn = act_register[activation]  # This gives us an instance
         activation_class = type(activation_fn)  # Get the class from the instance
-        layers = []
-        dims = []
+        layers: list[nn.Module] = []
+        dims: list[int] = []
 
         # Calculate dimensions for each layer
         if num_layers == 1:
@@ -437,6 +438,7 @@ class HeteroGnnPool(nn.Module):
         from torch_geometric.utils import add_self_loops
 
         if self.learnable_embedding:
+            assert self.node_embedding is not None
             device = batch["gene"].batch.device
             batch_size = len(batch["gene"].x_ptr) - 1
             nodes_per_graph = self.node_embedding.num_embeddings
@@ -459,11 +461,11 @@ class HeteroGnnPool(nn.Module):
                 # Adjust indices by batch position
                 adjusted_pert_indices.append(graph_pert_indices + (i * nodes_per_graph))
 
-            adjusted_pert_indices = torch.cat(adjusted_pert_indices)
+            adjusted_pert_indices_t = torch.cat(adjusted_pert_indices)
 
             # Create mask and remove perturbed rows
             mask = torch.ones(len(all_embeddings), dtype=torch.bool, device=device)
-            mask[adjusted_pert_indices] = False
+            mask[adjusted_pert_indices_t] = False
             x_dict = {"gene": all_embeddings[mask]}
 
             assert x_dict["gene"].shape[0] == batch["gene"].x.shape[0]
@@ -556,7 +558,9 @@ def load_sample_data_batch() -> tuple[Any, int]:
         MeanExperimentDeduplicator,
         Neo4jCellDataset,
     )
-    from torchcell.data.neo4j_cell import SubgraphRepresentation
+    from torchcell.data.neo4j_cell import (  # type: ignore[attr-defined]  # dev-only helper; symbol lives in graph_processor
+        SubgraphRepresentation,
+    )
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
@@ -568,12 +572,14 @@ def load_sample_data_batch() -> tuple[Any, int]:
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
+    assert DATA_ROOT is not None
 
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
     genome.drop_chrmt()
     genome.drop_empty_go()
     graph = SCerevisiaeGraph(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"),  # type: ignore[call-arg]  # dev-only helper; SCerevisiaeGraph uses sgd_root
+        genome=genome,
     )
     codon_frequency = CodonFrequencyDataset(
         root=osp.join(DATA_ROOT, "data/scerevisiae/codon_frequency_embedding"),
@@ -589,7 +595,10 @@ def load_sample_data_batch() -> tuple[Any, int]:
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs={  # type: ignore[arg-type]  # dev-only helper; runtime accepts dict of graphs
+            "physical": graph.G_physical,
+            "regulatory": graph.G_regulatory,
+        },
         node_embeddings={"codon_frequency": codon_frequency},
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,
@@ -646,7 +655,7 @@ def main() -> None:
     ]
 
     # Example configurations for different conv types
-    configs = {
+    configs: dict[str, dict[str, Any]] = {
         "GCN": {
             "bias": True,
             "dropout": 0.1,
@@ -738,7 +747,7 @@ def main() -> None:
 
 def main_ordinal_reg() -> None:
     """Run a sample ordinal-regression training loop for the pooling GNN."""
-    from torchcell.losses.multi_dim_nan_tolerant import (
+    from torchcell.losses.multi_dim_nan_tolerant import (  # type: ignore[attr-defined]  # dev-only helper; OrdinalEntropyRegLoss not in module
         CombinedRegressionLoss,
         OrdinalEntropyRegLoss,
     )

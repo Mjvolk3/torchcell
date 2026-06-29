@@ -5,7 +5,7 @@
 
 """GAT-with-DiffPool inception model over multiple graphs for graph-level prediction."""
 
-from typing import Any
+from typing import Any, cast
 
 import torch
 import torch.nn as nn
@@ -291,17 +291,17 @@ class GatDiffPool(nn.Module):
         if norm is None:
             return nn.Identity()
         elif norm == "batch":
-            return BatchNorm(channels)
+            return cast(nn.Module, BatchNorm(channels))
         elif norm == "instance":
-            return InstanceNorm(channels)
+            return cast(nn.Module, InstanceNorm(channels))
         elif norm == "layer":
-            return LayerNorm(channels)
+            return cast(nn.Module, LayerNorm(channels))
         elif norm == "graph":
-            return GraphNorm(channels)
+            return cast(nn.Module, GraphNorm(channels))
         elif norm == "pair":
-            return PairNorm()
+            return cast(nn.Module, PairNorm())
         elif norm == "mean_subtraction":
-            return MeanSubtractionNorm()
+            return cast(nn.Module, MeanSubtractionNorm())
         else:
             raise ValueError(f"Unsupported normalization type: {norm}")
 
@@ -333,12 +333,13 @@ class GatDiffPool(nn.Module):
             gat_layer: nn.Module
             x_out: torch.Tensor
             att_weights: torch.Tensor
-            for j, gat_layer in enumerate(self.initial_gat_layers[i]):
+            initial_gat_seq = cast(nn.ModuleList, self.initial_gat_layers[i])
+            for j, gat_layer in enumerate(initial_gat_seq):
                 x_out, (edge_index, att_weights) = gat_layer(
                     x_graph, edge_index, return_attention_weights=True
                 )
                 if self.initial_gat_norm_layers is not None:
-                    norm_layer = self.initial_gat_norm_layers[i][j]
+                    norm_layer = cast(nn.ModuleList, self.initial_gat_norm_layers[i])[j]
                     if isinstance(
                         norm_layer, (GraphNorm, PairNorm, MeanSubtractionNorm)
                     ):
@@ -360,7 +361,8 @@ class GatDiffPool(nn.Module):
             x_pool, adj_pool = x_dense, adj
             diffpool_layer: nn.Module
             s: torch.Tensor
-            for k, diffpool_layer in enumerate(self.diffpool_layers[i]):
+            diffpool_seq = cast(nn.ModuleList, self.diffpool_layers[i])
+            for k, diffpool_layer in enumerate(diffpool_seq):
                 s = diffpool_layer(x_pool)
                 x_pool, adj_pool, link_loss, ent_loss = dense_diff_pool(
                     x_pool, adj_pool, s, mask
@@ -371,7 +373,7 @@ class GatDiffPool(nn.Module):
 
                 # Make predictions for each cluster
                 cluster_pred = self.cluster_prediction_layers[k](x_pool)
-                if k < len(self.diffpool_layers[i]) - 1:  # Not the last layer
+                if k < len(diffpool_seq) - 1:  # Not the last layer
                     if self.cluster_reduction == "mean":
                         cluster_pred = cluster_pred.mean(dim=1)
                     elif self.cluster_reduction == "sum":
@@ -398,10 +400,12 @@ class GatDiffPool(nn.Module):
                     )
 
                 # Post-pooling GAT layers (for all but the last DiffPool layer)
-                if k < len(self.diffpool_layers[i]) - 1:
-                    for layer_idx, gat_layer in enumerate(
-                        self.post_pool_gat_layers[i][k]
-                    ):
+                if k < len(diffpool_seq) - 1:
+                    post_pool_gat_seq = cast(
+                        nn.ModuleList,
+                        cast(nn.ModuleList, self.post_pool_gat_layers[i])[k],
+                    )
+                    for layer_idx, gat_layer in enumerate(post_pool_gat_seq):
                         x_pool_flat = x_pool.view(-1, x_pool.size(-1))
                         adj_pool_flat = adj_pool.view(-1, adj_pool.size(-1))
                         edge_index_pool = adj_pool_flat.nonzero().t()
@@ -409,7 +413,12 @@ class GatDiffPool(nn.Module):
                             x_pool_flat, edge_index_pool, return_attention_weights=True
                         )
                         if self.post_pool_gat_norm_layers is not None:
-                            norm_layer = self.post_pool_gat_norm_layers[i][k][layer_idx]
+                            norm_layer = cast(
+                                nn.ModuleList,
+                                cast(nn.ModuleList, self.post_pool_gat_norm_layers[i])[
+                                    k
+                                ],
+                            )[layer_idx]
                             if isinstance(
                                 norm_layer, (GraphNorm, PairNorm, MeanSubtractionNorm)
                             ):
@@ -516,7 +525,9 @@ def load_sample_data_batch() -> tuple[Any, int]:
         MeanExperimentDeduplicator,
         Neo4jCellDataset,
     )
-    from torchcell.data.neo4j_cell import SubgraphRepresentation
+    from torchcell.data.neo4j_cell import (  # type: ignore[attr-defined]  # dev-only helper; symbol lives in graph_processor
+        SubgraphRepresentation,
+    )
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
@@ -528,12 +539,16 @@ def load_sample_data_batch() -> tuple[Any, int]:
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
+    assert DATA_ROOT is not None
 
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
     genome.drop_chrmt()
     genome.drop_empty_go()
     graph = SCerevisiaeGraph(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+        data_root=osp.join(  # type: ignore[call-arg]  # dev-only helper; SCerevisiaeGraph uses sgd_root
+            DATA_ROOT, "data/sgd/genome"
+        ),
+        genome=genome,
     )
 
     # fudt_3prime_dataset = FungalUpDownTransformerDataset(
@@ -564,7 +579,10 @@ def load_sample_data_batch() -> tuple[Any, int]:
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs={  # type: ignore[arg-type]  # dev-only helper; runtime accepts dict of graphs
+            "physical": graph.G_physical,
+            "regulatory": graph.G_regulatory,
+        },
         node_embeddings={"codon_frequency": codon_frequency},
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,

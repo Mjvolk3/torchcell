@@ -13,7 +13,8 @@ Implements the architecture from weekly report 2025.45:
 
 import os
 import os.path as osp
-from typing import Any
+from collections.abc import Sequence
+from typing import Any, cast
 
 import hydra
 import numpy as np
@@ -229,7 +230,7 @@ class HyperSAGNN(nn.Module):
         # Aggregate per-set representations using scatter_mean
         from torch_scatter import scatter_mean
 
-        set_representations = scatter_mean(
+        set_representations: torch.Tensor = scatter_mean(
             squared_diff, batch_indices, dim=0, dim_size=num_batches
         )
 
@@ -297,10 +298,10 @@ class HyperSAGNN(nn.Module):
         out = out.permute(1, 0, 2).contiguous().view(total_nodes, self.hidden_channels)
 
         # Apply output projection
-        out = O_proj(out)
+        out_proj: torch.Tensor = O_proj(out)
 
         # Apply ReZero connection
-        return beta * out + x
+        return beta * out_proj + x
 
 
 class PerturbationHead(nn.Module):
@@ -400,7 +401,7 @@ class PerturbationHead(nn.Module):
         combined = torch.cat([h_CLS_expanded, z_S], dim=-1)  # [batch_size, 2*d]
 
         # Predict gene interaction
-        predictions = self.mlp(combined)  # [batch_size, 1]
+        predictions: torch.Tensor = self.mlp(combined)  # [batch_size, 1]
 
         return predictions
 
@@ -445,6 +446,7 @@ class CellGraphTransformer(nn.Module):
 
         # Process graph regularization config
         # Graph regularization is enabled when graph_reg_scale > 0
+        self.adjacency_matrices: dict[str, torch.Tensor] | None
         if self.graph_reg_scale > 0.0 and graph_regularization_config is not None:
             # Normalize adjacency matrices from cell_graph
             self.adjacency_matrices = self._normalize_adjacency_matrices(cell_graph)
@@ -541,6 +543,9 @@ class CellGraphTransformer(nn.Module):
         if self.graph_reg_scale == 0.0:
             return torch.tensor(0.0, device=attention_weights.device)
 
+        # When graph reg is enabled (scale > 0), adjacency matrices are populated.
+        assert self.adjacency_matrices is not None
+
         total_loss = torch.tensor(0.0, device=attention_weights.device)
         batch_size, num_heads, N, _ = attention_weights.shape
 
@@ -613,7 +618,7 @@ class CellGraphTransformer(nn.Module):
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
-    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
         """Forward pass of Cell Graph Transformer.
 
         Args:
@@ -690,7 +695,7 @@ def calculate_weight_l2_norm(model: nn.Module) -> float:
     for param in model.parameters():
         if param.requires_grad:
             l2_norm += torch.sum(param**2).item()
-    return np.sqrt(l2_norm)
+    return float(np.sqrt(l2_norm))
 
 
 def compute_smoothness(X: torch.Tensor) -> float:
@@ -708,7 +713,7 @@ def compute_smoothness(X: torch.Tensor) -> float:
     N = X.shape[0]
     mean_features = X.mean(dim=0)
     diff = X - mean_features.expand(N, -1)
-    return torch.norm(diff, p="fro").item()
+    return float(torch.norm(diff, p="fro").item())
 
 
 @hydra.main(
@@ -729,6 +734,7 @@ def main(cfg: DictConfig) -> None:
 
     load_dotenv()
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+    assert ASSET_IMAGES_DIR is not None, "ASSET_IMAGES_DIR must be set"
 
     device = torch.device(
         "cuda"
@@ -978,7 +984,7 @@ def main(cfg: DictConfig) -> None:
         )
         plt.hist(
             true_np[valid_mask],
-            bins=bins,
+            bins=cast(Sequence[float], bins),
             alpha=0.5,
             label="True",
             color="blue",
@@ -986,7 +992,7 @@ def main(cfg: DictConfig) -> None:
         )
         plt.hist(
             pred_np[valid_mask],
-            bins=bins,
+            bins=cast(Sequence[float], bins),
             alpha=0.5,
             label="Predicted",
             color="red",

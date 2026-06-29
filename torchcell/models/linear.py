@@ -37,7 +37,7 @@ class SimpleLinearModel(nn.Module):
             x = scatter_max(x, batch, dim=0)
 
         # Process aggregated data through the linear layer
-        x_set = self.linear(x)
+        x_set: torch.Tensor = self.linear(x)
 
         return x_set
 

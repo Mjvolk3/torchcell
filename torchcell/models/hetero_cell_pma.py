@@ -6,7 +6,7 @@
 
 import os
 import os.path as osp
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import hydra
 import torch
@@ -117,7 +117,7 @@ class SimplePMA(nn.Module):
         out = self.proj(out)
         out = self.norm(out)
 
-        return out
+        return cast(torch.Tensor, out)
 
 
 ###############################################################################
@@ -148,7 +148,7 @@ class PreProcessor(nn.Module):
         super().__init__()
         act = act_register[activation]
         norm_layer = get_norm_layer(hidden_channels, norm)
-        layers = []
+        layers: list[nn.Module] = []
         layers.append(nn.Linear(in_channels, hidden_channels))
         layers.append(norm_layer)
         layers.append(act)
@@ -162,7 +162,7 @@ class PreProcessor(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Apply the preprocessing MLP to the input features."""
-        return self.mlp(x)
+        return cast(torch.Tensor, self.mlp(x))
 
 
 ###############################################################################
@@ -193,10 +193,12 @@ class AttentionConvWrapper(nn.Module):
         # For GATv2Conv-like layers:
         if hasattr(conv, "concat"):
             expected_dim = (
-                conv.heads * conv.out_channels if conv.concat else conv.out_channels
+                cast(int, conv.heads) * cast(int, conv.out_channels)
+                if conv.concat
+                else cast(int, conv.out_channels)
             )
         else:
-            expected_dim = conv.out_channels
+            expected_dim = cast(int, conv.out_channels)
         self.proj = (
             nn.Identity()
             if expected_dim == target_dim
@@ -234,10 +236,11 @@ class AttentionConvWrapper(nn.Module):
         out = self.proj(out)
         if self.norm is not None:
             out = self.norm(out)
+        assert self.act is not None
         out = self.act(out)
         if self.dropout is not None:
             out = self.dropout(out)
-        return out
+        return cast(torch.Tensor, out)
 
 
 class HeteroCell(nn.Module):
@@ -284,6 +287,8 @@ class HeteroCell(nn.Module):
         """
         super().__init__()
         self.hidden_channels = hidden_channels
+        gene_encoder_config = gene_encoder_config or {}
+        metabolism_config = metabolism_config or {}
 
         # Learnable embeddings
         self.gene_embedding = nn.Embedding(gene_num, hidden_channels)
@@ -399,7 +404,7 @@ class HeteroCell(nn.Module):
         if num_layers == 0:
             return nn.Identity()
         act = act_register[activation]
-        layers = []
+        layers: list[nn.Module] = []
         dims = [in_channels] + [hidden_channels] * (num_layers - 1) + [out_channels]
         for i in range(num_layers):
             layers.append(nn.Linear(dims[i], dims[i + 1]))
@@ -488,7 +493,7 @@ class HeteroCell(nn.Module):
         for conv in self.convs:
             x_dict = conv(x_dict, edge_index_dict, **extra_kwargs)
 
-        return x_dict["gene"]
+        return cast(torch.Tensor, x_dict["gene"])
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
@@ -556,9 +561,7 @@ class HeteroCell(nn.Module):
         return counts
 
 
-def load_sample_data_batch() -> (
-    "tuple[Neo4jCellDataset, HeteroData, int, int]"
-):
+def load_sample_data_batch() -> "tuple[Neo4jCellDataset, HeteroData, int, int]":
     """Load a sample dataset and batch for exercising the model."""
     import os
     import os.path as osp
@@ -571,7 +574,9 @@ def load_sample_data_batch() -> (
         MeanExperimentDeduplicator,
         Neo4jCellDataset,
     )
-    from torchcell.data.neo4j_cell import SubgraphRepresentation
+    from torchcell.data.neo4j_cell import (  # type: ignore[attr-defined]  # __main__-only; SubgraphRepresentation actually lives in graph_processor (pre-existing wrong import path)
+        SubgraphRepresentation,
+    )
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
@@ -582,12 +587,13 @@ def load_sample_data_batch() -> (
     #     FungalUpDownTransformerDataset,
     # )
     from torchcell.datasets import CodonFrequencyDataset
-    from torchcell.graph import SCerevisiaeGraph
+    from torchcell.graph import GeneMultiGraph, SCerevisiaeGraph
     from torchcell.metabolism.yeast_GEM import YeastGEM
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
+    assert DATA_ROOT is not None
     print(f"DATA_ROOT: {DATA_ROOT}")
 
     genome = SCerevisiaeGenome(
@@ -597,7 +603,7 @@ def load_sample_data_batch() -> (
     # IDEA we are trying to use all gene reprs
     # genome.drop_chrmt()
     genome.drop_empty_go()
-    graph = SCerevisiaeGraph(
+    graph = SCerevisiaeGraph(  # type: ignore[call-arg]  # __main__-only; stale SCerevisiaeGraph kwarg (pre-existing)
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
     # selected_node_embeddings = ["codon_frequency"]
@@ -634,7 +640,10 @@ def load_sample_data_batch() -> (
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs=cast(
+            GeneMultiGraph,
+            {"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        ),
         incidence_graphs={"metabolism": reaction_map},
         node_embeddings=node_embeddings,
         converter=CompositeFitnessConverter,
@@ -788,7 +797,7 @@ def plot_correlations(
     max_val = max(ax2.get_xlim()[1], ax2.get_ylim()[1])
     ax2.plot([min_val, max_val], [min_val, max_val], "k--", alpha=0.5)
 
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.tight_layout(rect=(0, 0, 1, 0.95))
     plt.savefig(save_path)
     plt.close()
 
@@ -1007,6 +1016,7 @@ def main(cfg: DictConfig) -> None:
 
     load_dotenv()
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+    assert ASSET_IMAGES_DIR is not None
     device = torch.device(
         "cuda"
         if torch.cuda.is_available() and cfg.trainer.accelerator.lower() == "gpu"

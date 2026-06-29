@@ -5,7 +5,7 @@
 
 """Latent-perturbation cell model: hetero GNN pooling over gene and metabolism graphs."""
 
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import torch
 import torch.nn as nn
@@ -46,7 +46,7 @@ class ProjectedGATConv(nn.Module):
     def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
         """Apply the GAT conv then project the concatenated heads to ``out_dim``."""
         x = self.gat(x, edge_index)  # Shape: (..., heads * out_channels)
-        return self.project(x)  # Shape: (..., out_dim)
+        return cast(torch.Tensor, self.project(x))  # Shape: (..., out_dim)
 
 
 class PredictionHead(nn.Module):
@@ -148,9 +148,11 @@ class HeteroGnnPool(nn.Module):
         self.dims = self._calculate_dimensions(in_channels, hidden_channels)
 
         # Initialize  embedding if specified
+        self.node_embedding: nn.Embedding | None
         if learnable_embedding:
+            # num_nodes is guaranteed non-None here (validated above).
             self.node_embedding = nn.Embedding(
-                num_embeddings=num_nodes,
+                num_embeddings=cast(int, num_nodes),
                 embedding_dim=in_channels,
                 max_norm=1.0,  # Hardcoded max_norm=1.0
             )
@@ -178,10 +180,8 @@ class HeteroGnnPool(nn.Module):
             norm=head_norm,
         )
 
-    def _get_layer_config(
-        self, layer_config: dict[str, Any] | None
-    ) -> dict[str, Any]:
-        default_configs = {
+    def _get_layer_config(self, layer_config: dict[str, Any] | None) -> dict[str, Any]:
+        default_configs: dict[str, dict[str, Any]] = {
             "GCN": {
                 "bias": True,
                 "dropout": 0.0,
@@ -255,7 +255,8 @@ class HeteroGnnPool(nn.Module):
         num_layers = self.layer_config.get("num_mlp_layers", 2)
         is_mlp_skip = self.layer_config.get("is_mlp_skip_connection", True)
 
-        layers = []
+        # Holds Modules and (for skip connections) lambda wrappers.
+        layers: list[Any] = []
         # First layer
         layers.extend(
             [
@@ -388,8 +389,8 @@ class HeteroGnnPool(nn.Module):
 
         norm_layer = norm_layers[self.norm]
         if norm_layer in [GraphNorm, PairNorm, MeanSubtractionNorm]:
-            return norm_layer()
-        return norm_layer(channels)
+            return cast(nn.Module, norm_layer())
+        return cast(nn.Module, norm_layer(channels))
 
     def _get_head_norm(self, channels: int, norm_type: str | None) -> nn.Module | None:
         """Get standard PyTorch normalization layer for prediction head."""
@@ -419,7 +420,7 @@ class HeteroGnnPool(nn.Module):
 
         activation_fn = act_register[activation]  # This gives us an instance
         activation_class = type(activation_fn)  # Get the class from the instance
-        layers = []
+        layers: list[nn.Module] = []
         dims = []
 
         # Calculate dimensions for each layer
@@ -456,6 +457,7 @@ class HeteroGnnPool(nn.Module):
         from torch_geometric.utils import add_self_loops
 
         if self.learnable_embedding:
+            assert self.node_embedding is not None
             device = batch["gene"].batch.device
             batch_size = len(batch["gene"].x_ptr) - 1
             nodes_per_graph = self.node_embedding.num_embeddings
@@ -467,7 +469,7 @@ class HeteroGnnPool(nn.Module):
             all_embeddings = self.node_embedding(all_indices)
 
             # Calculate adjusted perturbation indices for the full batch
-            adjusted_pert_indices = []
+            adjusted_pert_indices_list = []
             for i in range(batch_size):
                 start_idx = batch["gene"].x_pert_ptr[i]
                 end_idx = batch["gene"].x_pert_ptr[i + 1]
@@ -476,9 +478,11 @@ class HeteroGnnPool(nn.Module):
                     start_idx:end_idx
                 ]
                 # Adjust indices by batch position
-                adjusted_pert_indices.append(graph_pert_indices + (i * nodes_per_graph))
+                adjusted_pert_indices_list.append(
+                    graph_pert_indices + (i * nodes_per_graph)
+                )
 
-            adjusted_pert_indices = torch.cat(adjusted_pert_indices)
+            adjusted_pert_indices = torch.cat(adjusted_pert_indices_list)
 
             # Create mask and remove perturbed rows
             mask = torch.ones(len(all_embeddings), dtype=torch.bool, device=device)
@@ -539,7 +543,7 @@ class HeteroGnnPool(nn.Module):
 
         x = x_dict["gene"]
 
-        return x
+        return cast(torch.Tensor, x)
 
     @property
     def num_parameters(self) -> dict[str, int]:
@@ -709,7 +713,7 @@ class SetNet(nn.Module):
         Returns:
             Tensor of shape (num_nodes, hidden_dim)
         """
-        return self.node_mlp(x)
+        return cast(torch.Tensor, self.node_mlp(x))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Process input with pooling for whole/intact/perturbed sets.
@@ -823,7 +827,7 @@ class MetabolismProcessor(nn.Module):
 
         # Initialize metabolite features
         metabolite_embeddings = torch.randn(
-            num_metabolites, self.hyper_convs[0].in_channels, device=device
+            num_metabolites, cast(int, self.hyper_convs[0].in_channels), device=device
         )
 
         if self.use_attention:
@@ -954,7 +958,7 @@ class CellLatentPerturbation(nn.Module):
         head_hidden_factor: float = 1.0,  # Multiplier for head hidden dim
         head_num_layers: int = 2,
         # Global params
-        edge_types: list[EdgeType] = None,
+        edge_types: list[EdgeType] | None = None,
         activation: str = "relu",
         norm: str | None = None,
         dropout: float = 0.1,
@@ -994,6 +998,9 @@ class CellLatentPerturbation(nn.Module):
         super().__init__()
         self.hidden_channels = hidden_channels
 
+        # edge_types is required by the encoder; callers always supply it.
+        assert edge_types is not None, "edge_types must be provided"
+
         # Gene encoder network
         self.gene_encoder = HeteroGnnPool(
             in_channels=in_channels,
@@ -1023,7 +1030,7 @@ class CellLatentPerturbation(nn.Module):
 
         # Combiner with configurable depth
         combiner_hidden = int(hidden_channels * combiner_hidden_factor)
-        combiner_layers = []
+        combiner_layers: list[nn.Module] = []
         combiner_layers.append(nn.Linear(hidden_channels * 2, combiner_hidden))
         combiner_layers.append(nn.LayerNorm(combiner_hidden))
         combiner_layers.append(nn.ReLU())
@@ -1310,7 +1317,9 @@ def load_sample_data_batch() -> tuple[HeteroData, int]:
         MeanExperimentDeduplicator,
         Neo4jCellDataset,
     )
-    from torchcell.data.neo4j_cell import Unperturbed
+    from torchcell.data.neo4j_cell import (  # type: ignore[attr-defined]  # stale demo symbol
+        Unperturbed,
+    )
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
@@ -1323,12 +1332,14 @@ def load_sample_data_batch() -> tuple[HeteroData, int]:
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
+    assert DATA_ROOT is not None
 
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
     genome.drop_chrmt()
     genome.drop_empty_go()
     graph = SCerevisiaeGraph(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"),  # type: ignore[call-arg]  # stale demo kwarg
+        genome=genome,
     )
     codon_frequency = CodonFrequencyDataset(
         root=osp.join(DATA_ROOT, "data/scerevisiae/codon_frequency_embedding"),
@@ -1344,7 +1355,10 @@ def load_sample_data_batch() -> tuple[HeteroData, int]:
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs={  # type: ignore[arg-type]  # stale demo graphs shape
+            "physical": graph.G_physical,
+            "regulatory": graph.G_regulatory,
+        },
         incidence_graphs={"metabolism": YeastGEM().reaction_map},
         node_embeddings={"codon_frequency": codon_frequency},
         converter=CompositeFitnessConverter,
@@ -1470,19 +1484,21 @@ def main(device: str = "cuda") -> None:
         print("CUDA is not available. Falling back to CPU.")
         device = "cpu"
 
-    device = torch.device(device)
-    print(f"\nUsing device: {device}")
+    device_t: torch.device = torch.device(device)
+    print(f"\nUsing device: {device_t}")
 
     load_dotenv()
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
     MPLSTYLE_PATH = os.getenv("MPLSTYLE_PATH")
+    assert ASSET_IMAGES_DIR is not None
+    assert MPLSTYLE_PATH is not None
     plt.style.use(MPLSTYLE_PATH)
 
     # Load sample data including metabolism
     batch, max_num_nodes = load_sample_data_batch()
 
     # Move batch to device
-    batch = batch.to(device)
+    batch = batch.to(device_t)
 
     # Define edge types
     edge_types = [
@@ -1534,7 +1550,7 @@ def main(device: str = "cuda") -> None:
         norm="layer",
         dropout=0.1,
         num_nodes=max_num_nodes,
-    ).to(device)  # Move model to device
+    ).to(device_t)  # Move model to device
 
     print("\nModel architecture:")
     print(model)
@@ -1545,7 +1561,7 @@ def main(device: str = "cuda") -> None:
     # Training setup
     loss_type = "logcosh"
     criterion = CombinedRegressionLoss(
-        loss_type=loss_type, weights=torch.ones(2, device=device)
+        loss_type=loss_type, weights=torch.ones(2, device=device_t)
     )
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
@@ -1575,12 +1591,12 @@ def main(device: str = "cuda") -> None:
                 print("Loss components:", loss_components)
 
                 # Print memory usage if using CUDA
-                if device.type == "cuda":
+                if device_t.type == "cuda":
                     print(
-                        f"GPU memory allocated: {torch.cuda.memory_allocated(device) / 1024**2:.2f} MB"
+                        f"GPU memory allocated: {torch.cuda.memory_allocated(device_t) / 1024**2:.2f} MB"
                     )
                     print(
-                        f"GPU memory cached: {torch.cuda.memory_reserved(device) / 1024**2:.2f} MB"
+                        f"GPU memory cached: {torch.cuda.memory_reserved(device_t) / 1024**2:.2f} MB"
                     )
 
             # Store loss value
@@ -1592,7 +1608,7 @@ def main(device: str = "cuda") -> None:
 
     except RuntimeError as e:
         print(f"\nError during training: {e}")
-        if device.type == "cuda":
+        if device_t.type == "cuda":
             print("\nThis might be a GPU memory issue. Try:")
             print("1. Reducing batch size")
             print("2. Reducing model size")
@@ -1637,13 +1653,15 @@ def main(device: str = "cuda") -> None:
         print(f"Final loss: {final_loss.item():.4f}")
         print("Loss components:", final_components)
 
-        if device.type == "cuda":
+        if device_t.type == "cuda":
             print("\nFinal GPU memory usage:")
-            print(f"Allocated: {torch.cuda.memory_allocated(device) / 1024**2:.2f} MB")
-            print(f"Cached: {torch.cuda.memory_reserved(device) / 1024**2:.2f} MB")
+            print(
+                f"Allocated: {torch.cuda.memory_allocated(device_t) / 1024**2:.2f} MB"
+            )
+            print(f"Cached: {torch.cuda.memory_reserved(device_t) / 1024**2:.2f} MB")
 
     # Optional: Clear CUDA cache if using GPU
-    if device.type == "cuda":
+    if device_t.type == "cuda":
         torch.cuda.empty_cache()
 
 

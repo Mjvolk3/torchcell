@@ -81,7 +81,7 @@ class SelfAttentionDeepSet(nn.Module):
         def create_block(
             in_dim: int, out_dim: int, norm: str, activation: str
         ) -> nn.Sequential:
-            block = [nn.Linear(in_dim, out_dim)]
+            block: list[nn.Module] = [nn.Linear(in_dim, out_dim)]
             if norm == "batch":
                 block.append(nn.BatchNorm1d(out_dim))
             elif norm == "instance":
@@ -111,7 +111,7 @@ class SelfAttentionDeepSet(nn.Module):
                 )
         self.node_layers = nn.ModuleList(node_modules)
 
-        set_modules = []
+        set_modules: list[nn.Module] = []
         for i in range(num_set_layers):
             if i == 0:
                 set_modules.append(

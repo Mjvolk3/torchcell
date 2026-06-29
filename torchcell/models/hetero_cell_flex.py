@@ -2,7 +2,7 @@
 
 import os
 import os.path as osp
-from typing import Any
+from typing import Any, cast
 
 import hydra
 import torch
@@ -60,10 +60,7 @@ class GraphMaskedAttention(nn.Module):
 
         # Define mask_mod for FlexAttention
         def adjacency_mask_mod(
-            b: torch.Tensor,
-            h: torch.Tensor,
-            q_idx: torch.Tensor,
-            kv_idx: torch.Tensor,
+            b: torch.Tensor, h: torch.Tensor, q_idx: torch.Tensor, kv_idx: torch.Tensor
         ) -> torch.Tensor:
             return adj_matrix[q_idx, kv_idx]
 
@@ -94,7 +91,7 @@ class GraphMaskedAttention(nn.Module):
         )
 
         # Apply FlexAttention with the adjacency mask
-        output = flex_attention(q, k, v, block_mask=block_mask)
+        output = cast(torch.Tensor, flex_attention(q, k, v, block_mask=block_mask))
 
         # Reshape and project the output
         output = (
@@ -102,7 +99,7 @@ class GraphMaskedAttention(nn.Module):
             .contiguous()
             .view(batch_size, seq_len, self.hidden_channels)
         )
-        output = self.output_proj(output)
+        output = cast(torch.Tensor, self.output_proj(output))
 
         # Since batch_size is 1, we can squeeze it out
         return output.squeeze(0)
@@ -125,7 +122,7 @@ class Combiner(nn.Module):
         """Build the stacked linear/norm/activation MLP used to combine inputs."""
         super().__init__()
         act = act_register[activation]
-        layers = []
+        layers: list[nn.Module] = []
         layers.append(nn.Linear(hidden_channels * 2, hidden_channels))
         layers.append(get_norm_layer(hidden_channels, norm))
         layers.append(act)
@@ -139,7 +136,7 @@ class Combiner(nn.Module):
 
     def forward(self, x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
         """Concatenate the two inputs and pass them through the MLP."""
-        return self.mlp(torch.cat([x1, x2], dim=-1))
+        return cast(torch.Tensor, self.mlp(torch.cat([x1, x2], dim=-1)))
 
 
 ###############################################################################
@@ -183,7 +180,7 @@ class AttentionalGraphAggregation(nn.Module):
         self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
         """Aggregate node features per graph using learned attention weights."""
-        return self.aggregator(x, index=index, dim_size=dim_size)
+        return cast(torch.Tensor, self.aggregator(x, index=index, dim_size=dim_size))
 
 
 ###############################################################################
@@ -205,7 +202,7 @@ class PreProcessor(nn.Module):
         super().__init__()
         act = act_register[activation]
         norm_layer = get_norm_layer(hidden_channels, norm)
-        layers = []
+        layers: list[nn.Module] = []
         layers.append(nn.Linear(in_channels, hidden_channels))
         layers.append(norm_layer)
         layers.append(act)
@@ -219,7 +216,7 @@ class PreProcessor(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Project input features through the MLP."""
-        return self.mlp(x)
+        return cast(torch.Tensor, self.mlp(x))
 
 
 ###############################################################################
@@ -235,11 +232,13 @@ class AttentionConvWrapper(nn.Module):
         # For GATv2Conv-like layers:
         if hasattr(conv, "concat"):
             expected_dim = (
-                conv.heads * conv.out_channels if conv.concat else conv.out_channels
+                cast(int, conv.heads) * cast(int, conv.out_channels)
+                if conv.concat
+                else cast(int, conv.out_channels)
             )
         else:
             # For other layers, assume out_channels is the output dimension.
-            expected_dim = conv.out_channels
+            expected_dim = cast(int, conv.out_channels)
         self.proj = (
             nn.Identity()
             if expected_dim == target_dim
@@ -251,7 +250,7 @@ class AttentionConvWrapper(nn.Module):
     ) -> torch.Tensor:
         """Run the wrapped conv and project the result to the target dimension."""
         out = self.conv(x, edge_index, **kwargs)
-        return self.proj(out)
+        return cast(torch.Tensor, self.proj(out))
 
 
 class HeteroCell(nn.Module):
@@ -276,6 +275,9 @@ class HeteroCell(nn.Module):
         """Build embeddings, hetero conv layers, aggregation, and prediction head."""
         super().__init__()
         self.hidden_channels = hidden_channels
+
+        gene_encoder_config = gene_encoder_config or {}
+        metabolism_config = metabolism_config or {}
 
         # Learnable embeddings.
         self.gene_embedding = nn.Embedding(gene_num, hidden_channels)
@@ -313,7 +315,7 @@ class HeteroCell(nn.Module):
                 def forward(
                     self, x: torch.Tensor, edge_index: torch.Tensor, **kwargs: Any
                 ) -> torch.Tensor:
-                    return self.att_module(x, edge_index)
+                    return cast(torch.Tensor, self.att_module(x, edge_index))
 
             # Use the same attention layer for both physical and regulatory interactions
             wrapped_gene_att = GraphAttentionWrapper(gene_att)
@@ -408,7 +410,7 @@ class HeteroCell(nn.Module):
         if num_layers == 0:
             return nn.Identity()
         act_fn = type(act_register[activation])
-        layers = []
+        layers: list[nn.Module] = []
         dims = [in_channels] + [hidden_channels] * (num_layers - 1) + [out_channels]
         for i in range(num_layers):
             layers.append(nn.Linear(dims[i], dims[i + 1]))
@@ -469,7 +471,7 @@ class HeteroCell(nn.Module):
             extra_kwargs["num_edges_dict"] = {met_edge: data[met_edge].num_edges}
         for conv in self.convs:
             x_dict = conv(x_dict, edge_index_dict, **extra_kwargs)
-        return x_dict["gene"]
+        return cast(torch.Tensor, x_dict["gene"])
 
     # BUG All mean or random prediction.
     # def forward(
@@ -586,7 +588,9 @@ def load_sample_data_batch() -> tuple[Any, HeteroData, int, int]:
         MeanExperimentDeduplicator,
         Neo4jCellDataset,
     )
-    from torchcell.data.neo4j_cell import SubgraphRepresentation
+    from torchcell.data.neo4j_cell import (  # type: ignore[attr-defined]  # __main__-only; SubgraphRepresentation actually lives in graph_processor (pre-existing wrong import path)
+        SubgraphRepresentation,
+    )
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
@@ -597,12 +601,13 @@ def load_sample_data_batch() -> tuple[Any, HeteroData, int, int]:
     #     FungalUpDownTransformerDataset,
     # )
     from torchcell.datasets import CodonFrequencyDataset
-    from torchcell.graph import SCerevisiaeGraph
+    from torchcell.graph import GeneMultiGraph, SCerevisiaeGraph
     from torchcell.metabolism.yeast_GEM import YeastGEM
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
+    assert DATA_ROOT is not None
     print(f"DATA_ROOT: {DATA_ROOT}")
 
     genome = SCerevisiaeGenome(
@@ -612,7 +617,7 @@ def load_sample_data_batch() -> tuple[Any, HeteroData, int, int]:
     # IDEA we are trying to use all gene reprs
     # genome.drop_chrmt()
     genome.drop_empty_go()
-    graph = SCerevisiaeGraph(
+    graph = SCerevisiaeGraph(  # type: ignore[call-arg]  # __main__-only; stale SCerevisiaeGraph kwarg (pre-existing)
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
     selected_node_embeddings = ["codon_frequency"]
@@ -648,7 +653,10 @@ def load_sample_data_batch() -> tuple[Any, HeteroData, int, int]:
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs=cast(
+            GeneMultiGraph,
+            {"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        ),
         incidence_graphs={"metabolism": reaction_map},
         node_embeddings=node_embeddings,
         converter=CompositeFitnessConverter,
@@ -755,7 +763,7 @@ def plot_correlations(
     max_val = max(ax2.get_xlim()[1], ax2.get_ylim()[1])
     ax2.plot([min_val, max_val], [min_val, max_val], "k--", alpha=0.5)
 
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.tight_layout(rect=(0, 0, 1, 0.95))
     plt.savefig(save_path)
     plt.close()
 
@@ -777,6 +785,7 @@ def main(cfg: DictConfig) -> None:
 
     load_dotenv()
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+    assert ASSET_IMAGES_DIR is not None
     device = torch.device(
         "cuda"
         if torch.cuda.is_available() and cfg.trainer.accelerator.lower() == "gpu"

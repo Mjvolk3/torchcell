@@ -45,7 +45,7 @@ class Mlp(nn.Module):
         def create_block(
             in_dim: int, out_dim: int, norm: str | None, activation: str | None
         ) -> nn.Sequential:
-            block = [nn.Linear(in_dim, out_dim)]
+            block: list[nn.Module] = [nn.Linear(in_dim, out_dim)]
             if norm:
                 if norm == "batch":
                     block.append(nn.BatchNorm1d(out_dim))
@@ -57,7 +57,7 @@ class Mlp(nn.Module):
                 block.append(act_register[activation])
             return nn.Sequential(*block)
 
-        layers = []
+        layers: list[nn.Module] = []
         for i in range(num_layers):
             if num_layers == 1:
                 # Directly map from in_channels to out_channels for a single-layer model
@@ -82,7 +82,8 @@ class Mlp(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Run the input through the MLP and squeeze the trailing dimension."""
-        return self.model(x).squeeze(-1)
+        out: torch.Tensor = self.model(x)
+        return out.squeeze(-1)
 
 
 if __name__ == "__main__":

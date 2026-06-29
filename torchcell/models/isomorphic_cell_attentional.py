@@ -6,7 +6,7 @@
 
 import os
 import os.path as osp
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import hydra
 import torch
@@ -73,7 +73,7 @@ class AttentionalGraphAggregation(nn.Module):
         self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
         """Aggregate ``x`` per ``index`` into pooled embeddings."""
-        return self.aggregator(x, index=index, dim_size=dim_size)
+        return cast(torch.Tensor, self.aggregator(x, index=index, dim_size=dim_size))
 
 
 class PreProcessor(nn.Module):
@@ -119,7 +119,7 @@ class PreProcessor(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Apply the preprocessing MLP to ``x``."""
-        return self.mlp(x)
+        return cast(torch.Tensor, self.mlp(x))
 
 
 class Combiner(nn.Module):
@@ -162,7 +162,7 @@ class Combiner(nn.Module):
     ) -> torch.Tensor:
         """Concatenate gene and metabolism features and apply the MLP."""
         combined = torch.cat([gene_features, metabolism_features], dim=-1)
-        return self.mlp(combined)
+        return cast(torch.Tensor, self.mlp(combined))
 
 
 # FLAG Hetero GNN - Start
@@ -178,7 +178,7 @@ class ProjectedGATConv(nn.Module):
     def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
         """Apply the GAT conv and project the multi-head output."""
         x = self.gat(x, edge_index)  # Shape: (..., heads * out_channels)
-        return self.project(x)  # Shape: (..., out_dim)
+        return cast(torch.Tensor, self.project(x))  # Shape: (..., out_dim)
 
 
 class PredictionHead(nn.Module):
@@ -254,9 +254,11 @@ class HeteroGnn(nn.Module):
         self.dims = self._calculate_dimensions(in_channels, hidden_channels)
 
         # Initialize  embedding if specified
+        self.node_embedding: nn.Embedding | None
         if learnable_embedding:
+            # num_nodes is guaranteed non-None here (validated above).
             self.node_embedding = nn.Embedding(
-                num_embeddings=num_nodes,
+                num_embeddings=cast(int, num_nodes),
                 embedding_dim=in_channels,
                 max_norm=1.0,  # Hardcoded max_norm=1.0
             )
@@ -284,10 +286,8 @@ class HeteroGnn(nn.Module):
             norm=head_norm,
         )
 
-    def _get_layer_config(
-        self, layer_config: dict[str, Any] | None
-    ) -> dict[str, Any]:
-        default_configs = {
+    def _get_layer_config(self, layer_config: dict[str, Any] | None) -> dict[str, Any]:
+        default_configs: dict[str, dict[str, Any]] = {
             "GCN": {
                 "bias": True,
                 "dropout": 0.0,
@@ -361,7 +361,8 @@ class HeteroGnn(nn.Module):
         num_layers = self.layer_config.get("num_mlp_layers", 2)
         is_mlp_skip = self.layer_config.get("is_mlp_skip_connection", True)
 
-        layers = []
+        # Holds Modules and (for skip connections) lambda wrappers.
+        layers: list[Any] = []
         # First layer
         layers.extend(
             [
@@ -494,8 +495,8 @@ class HeteroGnn(nn.Module):
 
         norm_layer = norm_layers[self.norm]
         if norm_layer in [GraphNorm, PairNorm, MeanSubtractionNorm]:
-            return norm_layer()
-        return norm_layer(channels)
+            return cast(nn.Module, norm_layer())
+        return cast(nn.Module, norm_layer(channels))
 
     def _get_head_norm(self, channels: int, norm_type: str | None) -> nn.Module | None:
         """Get standard PyTorch normalization layer for prediction head."""
@@ -523,7 +524,7 @@ class HeteroGnn(nn.Module):
         if num_layers == 0:
             return nn.Identity()
 
-        layers = []
+        layers: list[nn.Module] = []
         dims = [in_channels] + [hidden_channels] * (num_layers - 1) + [out_channels]
 
         # Get the activation class from the register - notice we don't call it
@@ -547,6 +548,7 @@ class HeteroGnn(nn.Module):
         from torch_geometric.utils import add_self_loops
 
         if self.learnable_embedding:
+            assert self.node_embedding is not None
             device = batch["gene"].batch.device
             batch_size = len(batch["gene"].x_ptr) - 1
             nodes_per_graph = self.node_embedding.num_embeddings
@@ -558,7 +560,7 @@ class HeteroGnn(nn.Module):
             all_embeddings = self.node_embedding(all_indices)
 
             # Calculate adjusted perturbation indices for the full batch
-            adjusted_pert_indices = []
+            adjusted_pert_indices_list = []
             for i in range(batch_size):
                 start_idx = batch["gene"].x_pert_ptr[i]
                 end_idx = batch["gene"].x_pert_ptr[i + 1]
@@ -567,9 +569,11 @@ class HeteroGnn(nn.Module):
                     start_idx:end_idx
                 ]
                 # Adjust indices by batch position
-                adjusted_pert_indices.append(graph_pert_indices + (i * nodes_per_graph))
+                adjusted_pert_indices_list.append(
+                    graph_pert_indices + (i * nodes_per_graph)
+                )
 
-            adjusted_pert_indices = torch.cat(adjusted_pert_indices)
+            adjusted_pert_indices = torch.cat(adjusted_pert_indices_list)
 
             # Create mask and remove perturbed rows
             mask = torch.ones(len(all_embeddings), dtype=torch.bool, device=device)
@@ -635,7 +639,7 @@ class HeteroGnn(nn.Module):
                 }
 
         x = x_dict["gene"]
-        return x
+        return cast(torch.Tensor, x)
 
     @property
     def num_parameters(self) -> dict[str, int]:
@@ -702,15 +706,15 @@ class GeneContextProcessor(nn.Module):
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Encode genes and aggregate them into reaction embeddings."""
         H_g = self.mlp(gene_features)
-        rxn_feats = []
-        rxn_indices = []
+        rxn_feats_list = []
+        rxn_indices_list = []
         for rxn_idx, gene_list in reaction_to_genes.items():
             for gidx in gene_list:
-                rxn_feats.append(H_g[gidx])
-                rxn_indices.append(rxn_idx)
-        if rxn_feats:
-            rxn_feats = torch.stack(rxn_feats, dim=0)
-            rxn_indices = torch.tensor(rxn_indices, device=gene_features.device)
+                rxn_feats_list.append(H_g[gidx])
+                rxn_indices_list.append(rxn_idx)
+        if rxn_feats_list:
+            rxn_feats = torch.stack(rxn_feats_list, dim=0)
+            rxn_indices = torch.tensor(rxn_indices_list, device=gene_features.device)
             sorted_idx = torch.argsort(rxn_indices)
             rxn_feats = rxn_feats[sorted_idx]
             rxn_indices = rxn_indices[sorted_idx]
@@ -744,7 +748,7 @@ class ReactionMapper(nn.Module):
         rxn_indices = rxn_indices[sorted_idx]
 
         Z_r = self.aggregator(feats, index=rxn_indices)
-        return Z_r
+        return cast(torch.Tensor, Z_r)
 
 
 class GeneMapper(nn.Module):
@@ -783,7 +787,7 @@ class GeneMapper(nn.Module):
             Z_mg = torch.zeros(
                 (num_genes, reaction_features.size(1)), device=reaction_features.device
             )
-        return Z_mg
+        return cast(torch.Tensor, Z_mg)
 
 
 class MetabolismProcessor(nn.Module):
@@ -916,7 +920,7 @@ class MetabolismProcessor(nn.Module):
             dim_size=graph["gene"].num_nodes,
         )
 
-        return Z_mg
+        return cast(torch.Tensor, Z_mg)
 
     def intact_perturbed_forward(
         self, batch: HeteroData, preprocessed_features: torch.Tensor | None = None
@@ -992,7 +996,7 @@ class MetabolismProcessor(nn.Module):
             dim_size=batch["gene"].num_nodes,
         )
 
-        return Z_mg
+        return cast(torch.Tensor, Z_mg)
 
     def forward(
         self, data: HeteroData, preprocessed_features: torch.Tensor | None = None
@@ -1029,6 +1033,8 @@ class IsomorphicCell(nn.Module):
     ):
         """Build the preprocessor, encoders, combiner, and prediction head."""
         super().__init__()
+
+        self.node_embedding: nn.Embedding | None
 
         # Check if using learnable embeddings from config
         if gene_encoder_config is not None:
@@ -1110,14 +1116,14 @@ class IsomorphicCell(nn.Module):
 
         # Metabolism processor uses the same preprocessed gene features
         self.metabolism_processor = MetabolismProcessor(
-            max_metabolite_nodes=self.metabolism_config.get(
-                "max_metabolite_nodes", 2534
+            max_metabolite_nodes=cast(
+                int, self.metabolism_config.get("max_metabolite_nodes", 2534)
             ),
             hidden_dim=hidden_channels,
             num_layers={"metabolite": num_layers["metabolism"]},
             dropout=self.metabolism_config["dropout"],
-            use_attention=self.metabolism_config["use_attention"],
-            heads=self.metabolism_config["heads"],
+            use_attention=cast(bool, self.metabolism_config["use_attention"]),
+            heads=cast(int, self.metabolism_config["heads"]),
         )
 
         # Combiner to merge gene and metabolism paths
@@ -1160,7 +1166,7 @@ class IsomorphicCell(nn.Module):
                         self.dropout = nn.Dropout(dropout)
 
                     def forward(self, x: torch.Tensor) -> torch.Tensor:
-                        return self.dropout(self.linear(x)) + x
+                        return cast(torch.Tensor, self.dropout(self.linear(x)) + x)
 
                 layers.append(
                     ResidualBlock(nn.Linear(current_dim, hidden_dim), config["dropout"])
@@ -1198,6 +1204,7 @@ class IsomorphicCell(nn.Module):
         """Encode one cell graph through preprocessor, encoders, and combiner."""
         gene_data = data["gene"]
         if self.use_learned_embedding:
+            assert self.node_embedding is not None
             # Check if we have a batched (perturbed) graph
             if hasattr(gene_data, "ptr"):
                 # Batched perturbed graphs: ptr exists.
@@ -1238,7 +1245,7 @@ class IsomorphicCell(nn.Module):
         z_g = self.gene_encoder(data, preprocessed_features=x)
         z_mg = self.metabolism_processor(data, preprocessed_features=x)
         z = self.combiner(z_g, z_mg)
-        return z
+        return cast(torch.Tensor, z)
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
@@ -1345,7 +1352,9 @@ def load_sample_data_batch() -> tuple[Any, Any, int, int]:
         MeanExperimentDeduplicator,
         Neo4jCellDataset,
     )
-    from torchcell.data.neo4j_cell import SubgraphRepresentation
+    from torchcell.data.neo4j_cell import (  # type: ignore[attr-defined]  # stale demo symbol
+        SubgraphRepresentation,
+    )
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
@@ -1362,6 +1371,7 @@ def load_sample_data_batch() -> tuple[Any, Any, int, int]:
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
+    assert DATA_ROOT is not None
     print(f"DATA_ROOT: {DATA_ROOT}")
 
     genome = SCerevisiaeGenome(
@@ -1372,7 +1382,8 @@ def load_sample_data_batch() -> tuple[Any, Any, int, int]:
     # genome.drop_chrmt()
     genome.drop_empty_go()
     graph = SCerevisiaeGraph(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"),  # type: ignore[call-arg]  # stale demo kwarg
+        genome=genome,
     )
     selected_node_embeddings = ["codon_frequency"]
     node_embeddings = {}
@@ -1407,7 +1418,10 @@ def load_sample_data_batch() -> tuple[Any, Any, int, int]:
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs={  # type: ignore[arg-type]  # stale demo graphs shape
+            "physical": graph.G_physical,
+            "regulatory": graph.G_regulatory,
+        },
         incidence_graphs={"metabolism": reaction_map},
         node_embeddings=node_embeddings,
         converter=CompositeFitnessConverter,
@@ -1514,7 +1528,7 @@ def plot_correlations(
     max_val = max(ax2.get_xlim()[1], ax2.get_ylim()[1])
     ax2.plot([min_val, max_val], [min_val, max_val], "k--", alpha=0.5)
 
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.tight_layout(rect=(0, 0, 1, 0.95))
     plt.savefig(save_path)
     plt.close()
 
@@ -1536,6 +1550,7 @@ def main(cfg: DictConfig) -> None:
 
     load_dotenv()
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+    assert ASSET_IMAGES_DIR is not None
     if cfg.trainer.accelerator.lower() == "gpu":
         device = "cuda"
     else:
@@ -1543,15 +1558,15 @@ def main(cfg: DictConfig) -> None:
     if device == "cuda" and not torch.cuda.is_available():
         print("CUDA is not available. Falling back to CPU.")
         device = "cpu"
-    device = torch.device(device)
-    print(f"\nUsing device: {device}")
+    device_t: torch.device = torch.device(device)
+    print(f"\nUsing device: {device_t}")
 
     # Load sample data including metabolism
     dataset, batch, input_channels, max_num_nodes = load_sample_data_batch()
 
     # Move data to device
-    cell_graph = dataset.cell_graph.to(device)
-    batch = batch.to(device)
+    cell_graph = dataset.cell_graph.to(device_t)
+    batch = batch.to(device_t)
 
     gene_encoder_config = dict(cfg.model.gene_encoder_config)  # Convert to dict
     # Add learnable embedding params if specified
@@ -1597,13 +1612,13 @@ def main(cfg: DictConfig) -> None:
     minus_gi_count = 1 - (~batch["gene"].gene_interaction.isnan()).sum()
     weights = torch.tensor(
         [minus_fit_count / total_non_nan, minus_gi_count / total_non_nan]
-    ).to(device)
+    ).to(device_t)
 
     # Training setup using ICLoss.
     criterion = ICLoss(
         lambda_dist=lambda_dist,
         lambda_supcr=lambda_supcr,
-        lambda_cell=lambda_cell,
+        lambda_cell=lambda_cell,  # type: ignore[call-arg]  # stale demo kwarg
         weights=weights,
     )
 
@@ -1644,12 +1659,12 @@ def main(cfg: DictConfig) -> None:
                     "SupCR dimension losses:", loss_components.get("supcr_dim_losses")
                 )
                 print("Cell dimension losses:", loss_components.get("cell_dim_losses"))
-                if device.type == "cuda":
+                if device_t.type == "cuda":
                     print(
-                        f"GPU memory allocated: {torch.cuda.memory_allocated(device) / 1024**2:.2f} MB"
+                        f"GPU memory allocated: {torch.cuda.memory_allocated(device_t) / 1024**2:.2f} MB"
                     )
                     print(
-                        f"GPU memory cached: {torch.cuda.memory_reserved(device) / 1024**2:.2f} MB"
+                        f"GPU memory cached: {torch.cuda.memory_reserved(device_t) / 1024**2:.2f} MB"
                     )
 
             losses.append(loss.item())
@@ -1658,7 +1673,7 @@ def main(cfg: DictConfig) -> None:
 
     except RuntimeError as e:
         print(f"\nError during training: {e}")
-        if device.type == "cuda":
+        if device_t.type == "cuda":
             print("\nThis might be a GPU memory issue. Try:")
             print("1. Reducing batch size")
             print("2. Reducing model size")
@@ -1720,12 +1735,14 @@ def main(cfg: DictConfig) -> None:
         print("Final Dist dimension losses:", final_components.get("dist_dim_losses"))
         print("Final SupCR dimension losses:", final_components.get("supcr_dim_losses"))
         print("Final Cell dimension losses:", final_components.get("cell_dim_losses"))
-        if device.type == "cuda":
+        if device_t.type == "cuda":
             print("\nFinal GPU memory usage:")
-            print(f"Allocated: {torch.cuda.memory_allocated(device) / 1024**2:.2f} MB")
-            print(f"Cached: {torch.cuda.memory_reserved(device) / 1024**2:.2f} MB")
+            print(
+                f"Allocated: {torch.cuda.memory_allocated(device_t) / 1024**2:.2f} MB"
+            )
+            print(f"Cached: {torch.cuda.memory_reserved(device_t) / 1024**2:.2f} MB")
 
-    if device.type == "cuda":
+    if device_t.type == "cuda":
         torch.cuda.empty_cache()
 
 

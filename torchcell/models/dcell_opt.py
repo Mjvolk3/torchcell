@@ -12,7 +12,7 @@ import math
 import os
 import os.path as osp
 import time
-from typing import Any
+from typing import Any, cast
 
 import hydra
 import matplotlib.pyplot as plt
@@ -29,6 +29,15 @@ from torchcell.timestamp import timestamp
 
 class DCellOpt(nn.Module):
     """Optimized DCell with tensorized operations for torch.compile."""
+
+    # Registered buffers (declared so mypy sees them as Tensor, not Tensor | Module)
+    has_subsystem: torch.Tensor
+    children_indices: torch.Tensor
+    num_children: torch.Tensor
+    stratum_masks: torch.Tensor
+    term_output_dims_tensor: torch.Tensor
+    term_row_indices_tensor: torch.Tensor
+    term_num_genes_tensor: torch.Tensor
 
     def __init__(
         self,
@@ -70,8 +79,14 @@ class DCellOpt(nn.Module):
         self.term_output_dims: dict[int, int] = {}
 
         # OPTIMIZATION: Use ModuleList instead of ModuleDict
-        self.subsystems = nn.ModuleList([None] * self.num_go_terms)
-        self.linear_heads = nn.ModuleList([None] * self.num_go_terms)
+        # None placeholders are filled in later via _build_term_module; cast so
+        # mypy accepts the placeholder list while runtime behavior is unchanged.
+        self.subsystems = nn.ModuleList(
+            cast(list[nn.Module], [None] * self.num_go_terms)
+        )
+        self.linear_heads = nn.ModuleList(
+            cast(list[nn.Module], [None] * self.num_go_terms)
+        )
 
         # Track which indices have modules
         self.register_buffer(
@@ -265,7 +280,7 @@ class DCellOpt(nn.Module):
         # Add dimension for gene perturbation states
         go_gene_state = self.hetero_data["gene_ontology"].go_gene_strata_state
         term_mask = go_gene_state[:, 0] == term_idx
-        num_genes_for_term = term_mask.sum().item()
+        num_genes_for_term = int(term_mask.sum().item())
 
         gene_dim = max(num_genes_for_term, 1)
         input_dim += gene_dim
@@ -274,7 +289,7 @@ class DCellOpt(nn.Module):
 
     def _calculate_output_dim(self, term_idx: int) -> int:
         """Calculate output dimension for a GO term based on DCell paper formula."""
-        num_genes = self.term_gene_counts[term_idx].item()
+        num_genes = int(self.term_gene_counts[term_idx].item())
         return max(self.min_subsystem_size, math.ceil(self.subsystem_ratio * num_genes))
 
     def _build_term_module(self, term_idx: int) -> None:
@@ -408,7 +423,9 @@ class DCellOpt(nn.Module):
         # Get number of genes for each term
         num_genes_per_term = self.term_num_genes_tensor[term_indices]
         max_genes = (
-            num_genes_per_term.max().item() if num_genes_per_term.numel() > 0 else 1
+            int(num_genes_per_term.max().item())
+            if num_genes_per_term.numel() > 0
+            else 1
         )
 
         # Pre-allocate output tensor
@@ -535,7 +552,10 @@ class DCellOpt(nn.Module):
         if device.type == "cuda" and torch.cuda.is_available():
             # Create streams for parallel processing
             num_streams = min(4, len(valid_terms))  # Use up to 4 CUDA streams
-            streams = [torch.cuda.Stream() for _ in range(num_streams)]
+            streams = [
+                torch.cuda.Stream()  # type: ignore[no-untyped-call]  # torch.cuda.Stream is untyped
+                for _ in range(num_streams)
+            ]
 
             # Distribute terms across streams
             for idx, term_idx in enumerate(valid_terms):
@@ -958,7 +978,10 @@ def main(cfg: DictConfig) -> tuple[nn.Module, tuple[torch.Tensor, dict[str, Any]
     if compile_mode is not None:
         print(f"\nAttempting torch.compile with mode='{compile_mode}'...")
         try:
-            model = torch.compile(model, mode=compile_mode, dynamic=True)
+            # torch.compile returns an OptimizedModule callable, not DCellOpt.
+            model = torch.compile(  # type: ignore[assignment]  # compiled module replaces DCellOpt
+                model, mode=compile_mode, dynamic=True
+            )
             print("✓ Successfully compiled model")
         except Exception as e:
             print(f"⚠️ torch.compile failed: {e}")
@@ -971,6 +994,7 @@ def main(cfg: DictConfig) -> tuple[nn.Module, tuple[torch.Tensor, dict[str, Any]
     )
 
     # Create optimizer
+    optimizer: optim.Optimizer
     if cfg.regression_task.optimizer.type == "AdamW":
         optimizer = optim.AdamW(
             model.parameters(),

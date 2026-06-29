@@ -72,7 +72,7 @@ class ProtT5(PeptideModel):
         self.model = T5EncoderModel.from_pretrained(model_name).to(self.device)
 
         # Set to half-precision if on GPU, full-precision if on CPU
-        self.model.full() if self.device == "cpu" else self.model.half()
+        self.model.full() if self.device == "cpu" else self.model.half()  # type: ignore[comparison-overlap]  # torch.device supports str equality at runtime
 
     def embed(self, sequences: list[str], mean_embedding: bool = False) -> torch.Tensor:
         """Embed sequences, optionally mean-pooling each to a single vector."""
@@ -92,7 +92,7 @@ class ProtT5(PeptideModel):
                 input_ids=input_ids, attention_mask=attention_mask
             )
 
-        embeddings = embedding_repr.last_hidden_state
+        embeddings: torch.Tensor = embedding_repr.last_hidden_state
 
         if mean_embedding:
             # Compute mean embeddings per sequence

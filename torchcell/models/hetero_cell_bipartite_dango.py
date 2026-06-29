@@ -8,7 +8,7 @@
 
 import os
 import os.path as osp
-from typing import Any
+from typing import Any, cast
 
 import hydra
 import torch
@@ -58,7 +58,7 @@ class GeneInteractionAttention(nn.Module):
         # If batch is provided, we process each batch separately
         if batch is not None:
             # Get unique batch indices
-            unique_batches = batch.unique()
+            unique_batches = batch.unique()  # type: ignore[no-untyped-call]  # torch stub for Tensor.unique is untyped
             output_embeddings = torch.zeros_like(gene_embeddings)
 
             # Process each batch
@@ -106,7 +106,7 @@ class GeneInteractionAttention(nn.Module):
         dynamic_embeddings = self.dropout(dynamic_embeddings)
 
         # Apply ReZero
-        return residual + self.beta * dynamic_embeddings
+        return cast(torch.Tensor, residual + self.beta * dynamic_embeddings)
 
 
 class GeneInteractionPredictor(nn.Module):
@@ -146,7 +146,7 @@ class GeneInteractionPredictor(nn.Module):
 
         # If we have batch information, average scores per batch
         if batch is not None:
-            num_batches = batch.max().item() + 1
+            num_batches = int(batch.max().item()) + 1
             batch_scores = torch.zeros(num_batches, 1, device=gene_embeddings.device)
 
             # For each batch, average the gene scores
@@ -158,7 +158,7 @@ class GeneInteractionPredictor(nn.Module):
             return batch_scores
         else:
             # Single batch case
-            return gene_scores.mean().unsqueeze(0)
+            return cast(torch.Tensor, gene_scores.mean().unsqueeze(0))
 
 
 class AttentionalGraphAggregation(nn.Module):
@@ -184,7 +184,7 @@ class AttentionalGraphAggregation(nn.Module):
         self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
         """Aggregate node features grouped by index into per-group vectors."""
-        return self.aggregator(x, index=index, dim_size=dim_size)
+        return cast(torch.Tensor, self.aggregator(x, index=index, dim_size=dim_size))
 
 
 def get_norm_layer(channels: int, norm: str) -> nn.Module:
@@ -213,7 +213,7 @@ class PreProcessor(nn.Module):
         super().__init__()
         self.act = nn.ReLU() if activation == "relu" else nn.SiLU()
         norm_layer = get_norm_layer(hidden_channels, norm)
-        layers = []
+        layers: list[nn.Module] = []
         layers.append(nn.Linear(in_channels, hidden_channels))
         layers.append(norm_layer)
         layers.append(self.act)
@@ -227,7 +227,7 @@ class PreProcessor(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Apply the preprocessing MLP to the input features."""
-        return self.mlp(x)
+        return cast(torch.Tensor, self.mlp(x))
 
 
 class AttentionConvWrapper(nn.Module):
@@ -246,10 +246,12 @@ class AttentionConvWrapper(nn.Module):
         self.conv = conv
         if hasattr(conv, "concat"):
             expected_dim = (
-                conv.heads * conv.out_channels if conv.concat else conv.out_channels
+                cast(int, conv.heads) * cast(int, conv.out_channels)
+                if conv.concat
+                else cast(int, conv.out_channels)
             )
         else:
-            expected_dim = conv.out_channels
+            expected_dim = cast(int, conv.out_channels)
         self.proj = (
             nn.Identity()
             if expected_dim == target_dim
@@ -269,9 +271,7 @@ class AttentionConvWrapper(nn.Module):
         self.act = nn.ReLU() if activation == "relu" else nn.SiLU()
         self.dropout = nn.Dropout(dropout) if dropout > 0 else None
 
-    def forward(
-        self, x: Any, edge_index: torch.Tensor, **kwargs: Any
-    ) -> torch.Tensor:
+    def forward(self, x: Any, edge_index: torch.Tensor, **kwargs: Any) -> torch.Tensor:
         """Run the conv, then project, normalize, activate, and drop out.
 
         x is Any: HeteroConv passes either a Tensor or a (src, dst) Tensor tuple
@@ -284,7 +284,7 @@ class AttentionConvWrapper(nn.Module):
         out = self.act(out)
         if self.dropout is not None:
             out = self.dropout(out)
-        return out
+        return cast(torch.Tensor, out)
 
 
 class HeteroCellBipartite(nn.Module):
@@ -416,7 +416,7 @@ class HeteroCellBipartite(nn.Module):
         if num_layers == 0:
             return nn.Identity()
         act = nn.ReLU() if activation == "relu" else nn.SiLU()
-        layers = []
+        layers: list[nn.Module] = []
         dims = [in_channels] + [hidden_channels] * (num_layers - 1) + [out_channels]
         for i in range(num_layers):
             layers.append(nn.Linear(dims[i], dims[i + 1]))
@@ -512,7 +512,7 @@ class HeteroCellBipartite(nn.Module):
         for conv in self.convs:
             x_dict = conv(x_dict, edge_index_dict, edge_attr_dict=edge_attr_dict)
 
-        return x_dict["gene"]
+        return cast(torch.Tensor, x_dict["gene"])
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
@@ -544,6 +544,7 @@ class HeteroCellBipartite(nn.Module):
         pert_gene_embs = z_w[pert_indices]
 
         # 2. Determine batch assignment for perturbed genes
+        batch_assign: torch.Tensor | None
         if hasattr(batch["gene"], "x_pert_ptr"):
             # Create batch assignment using x_pert_ptr
             ptr = batch["gene"].x_pert_ptr
@@ -704,7 +705,7 @@ def main(cfg: DictConfig) -> None:
     from torchcell.timestamp import timestamp
 
     load_dotenv()
-    ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+    ASSET_IMAGES_DIR = cast(str, os.getenv("ASSET_IMAGES_DIR"))
     device = torch.device(
         "cuda"
         if torch.cuda.is_available() and cfg.trainer.accelerator.lower() == "gpu"

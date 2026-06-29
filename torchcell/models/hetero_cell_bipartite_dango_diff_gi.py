@@ -7,7 +7,7 @@
 
 import os
 import os.path as osp
-from typing import Any
+from typing import Any, cast
 
 import hydra
 import torch
@@ -41,7 +41,7 @@ class LinearDecoder(nn.Module):
         Returns:
             Predictions [batch_size, output_dim]
         """
-        return self.proj(z_c)
+        return cast(torch.Tensor, self.proj(z_c))
 
     def sample(self, context: torch.Tensor, **kwargs: Any) -> torch.Tensor:
         """Sample method for compatibility with diffusion decoder interface.
@@ -119,6 +119,7 @@ class GeneInteractionDiff(GeneInteractionDango):
         self.decoder_type = decoder_type
 
         # Create decoder based on type
+        self.decoder: LinearDecoder | DiffusionDecoder
         if decoder_type == "linear":
             # Simple linear decoder for baseline testing
             self.decoder = LinearDecoder(
@@ -149,7 +150,7 @@ class GeneInteractionDiff(GeneInteractionDango):
                 parameterization=diffusion_config.get("parameterization", "x0"),
             )
             # Keep alias for backward compatibility
-            self.diffusion_decoder = self.decoder
+            self.diffusion_decoder: DiffusionDecoder = self.decoder
         else:
             raise ValueError(f"Unknown decoder_type: {decoder_type}")
 
@@ -189,6 +190,7 @@ class GeneInteractionDiff(GeneInteractionDango):
         pert_gene_embs_wt = z_w[pert_indices]
 
         # Determine batch assignment for perturbed genes
+        batch_assign: torch.Tensor | None
         if hasattr(batch["gene"], "perturbation_indices_ptr"):
             ptr = batch["gene"].perturbation_indices_ptr
             batch_assign = torch.zeros(
@@ -294,7 +296,8 @@ class GeneInteractionDiff(GeneInteractionDango):
             return F.mse_loss(predictions, y_true)
         elif self.decoder_type == "diffusion":
             # For diffusion decoder, use diffusion loss
-            return self.decoder.loss(y_true, z_c, t_mode=t_mode)
+            decoder = cast(DiffusionDecoder, self.decoder)
+            return decoder.loss(y_true, z_c, t_mode=t_mode)
         else:
             raise ValueError(f"Unknown decoder type: {self.decoder_type}")
 
@@ -323,10 +326,11 @@ class GeneInteractionDiff(GeneInteractionDango):
         # Sample from decoder
         if self.decoder_type == "linear":
             # Linear decoder doesn't sample, just returns prediction
-            return self.decoder(z_c)
+            return cast(torch.Tensor, self.decoder(z_c))
         else:
             # Diffusion decoder samples
-            return self.decoder.sample(z_c, num_samples)
+            decoder = cast(DiffusionDecoder, self.decoder)
+            return decoder.sample(z_c, num_samples)
 
     @property
     def num_parameters(self) -> dict[str, int]:
@@ -386,9 +390,14 @@ def main(cfg: DictConfig) -> None:
     DATA_ROOT = os.getenv("DATA_ROOT")
     EXPERIMENT_ROOT = os.getenv("EXPERIMENT_ROOT")
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+    assert DATA_ROOT is not None
+    assert EXPERIMENT_ROOT is not None
+    assert ASSET_IMAGES_DIR is not None
 
     print("Testing GeneInteractionDiff model with overfitting...")
-    wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
+    wandb_cfg = cast(
+        dict[str, Any], OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
+    )
 
     # Setup device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -504,6 +513,7 @@ def main(cfg: DictConfig) -> None:
         print(f"  {key}: {value:,}")
 
     # Setup loss based on config
+    loss_func: nn.Module
     if wandb_cfg["regression_task"]["loss"] == "diffusion":
         loss_func = DiffusionLoss(
             model=model,
@@ -517,6 +527,7 @@ def main(cfg: DictConfig) -> None:
 
     # Setup optimizer from config
     optimizer_config = wandb_cfg["regression_task"]["optimizer"]
+    optimizer: torch.optim.Optimizer
     if optimizer_config["type"] == "AdamW":
         optimizer = torch.optim.AdamW(
             model.parameters(),
@@ -534,7 +545,7 @@ def main(cfg: DictConfig) -> None:
 
     # Multi-sample evaluation function
     def evaluate_with_uncertainty(
-        model: nn.Module,
+        model: GeneInteractionDiff,
         cell_graph: HeteroData,
         batch: HeteroData,
         num_samples: int = 10,
@@ -544,17 +555,17 @@ def main(cfg: DictConfig) -> None:
         with torch.no_grad():
             # Get embeddings once
             predictions, representations = model(cell_graph, batch)
-            z_c = representations.get("z_c")
+            z_c = representations["z_c"]
 
             # Sample multiple times
-            samples = []
+            sample_list = []
             for _ in range(num_samples):
                 pred = model.diffusion_decoder.sample(
                     context=z_c, num_samples=z_c.shape[0]
                 )
-                samples.append(pred)
+                sample_list.append(pred)
 
-            samples = torch.stack(samples, dim=0)  # [num_samples, batch, 1]
+            samples = torch.stack(sample_list, dim=0)  # [num_samples, batch, 1]
 
             # Compute statistics
             mean_pred = samples.mean(dim=0)
@@ -945,8 +956,11 @@ def main(cfg: DictConfig) -> None:
 
                         # Track conditioning effect over time
                         if not hasattr(model, "_cond_deltas"):
-                            model._cond_deltas = []
-                        model._cond_deltas.append(delta)
+                            # nn.Module.__setattr__ stub only accepts Tensor/Module;
+                            # this debug-tracking list is a plain Python attribute.
+                            model._cond_deltas = []  # type: ignore[assignment]
+                        cond_deltas = cast(list[float], model._cond_deltas)
+                        cond_deltas.append(delta)
 
                         print(
                             f"\n  [Cond-Check] |preds_on - preds_off| = {delta:.6f} (std: {delta_std:.6f})"
@@ -984,13 +998,16 @@ def main(cfg: DictConfig) -> None:
                     model.train()
 
                     # Plot conditioning effect over epochs
-                    if hasattr(model, "_cond_deltas") and len(model._cond_deltas) > 0:
+                    cond_deltas_plot = cast(
+                        list[float], getattr(model, "_cond_deltas", [])
+                    )
+                    if len(cond_deltas_plot) > 0:
                         cond_epochs = range(
-                            max(0, epoch - len(model._cond_deltas) + 1), epoch + 1
+                            max(0, epoch - len(cond_deltas_plot) + 1), epoch + 1
                         )
                         axes[2, 0].plot(
                             list(cond_epochs),
-                            model._cond_deltas,
+                            cond_deltas_plot,
                             "g-",
                             linewidth=2,
                             label="Conditioning Effect",
@@ -1010,7 +1027,7 @@ def main(cfg: DictConfig) -> None:
                         axes[2, 0].legend()
 
                         # Color background based on conditioning strength
-                        current_delta = model._cond_deltas[-1]
+                        current_delta = cond_deltas_plot[-1]
                         if current_delta < 1e-4:
                             axes[2, 0].set_facecolor("#ffeeee")  # Light red if ignored
                         elif current_delta < 0.01:

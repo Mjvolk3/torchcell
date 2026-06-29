@@ -5,7 +5,8 @@
 
 """Dense GIN-based DiffPool cell model over dense adjacency matrices."""
 
-from typing import Any, Literal
+from collections.abc import Iterable
+from typing import Any, Literal, cast
 
 import torch
 import torch.nn as nn
@@ -189,7 +190,7 @@ class DenseDiffPool(nn.Module):
             # Pool network forward pass
             s = current_x
             layer: nn.Module
-            for i, layer in enumerate(pool_gnn):
+            for i, layer in enumerate(cast(Iterable[nn.Module], pool_gnn)):
                 if isinstance(layer, DenseGINConv):
                     s = layer(
                         s, current_adj, mask=current_mask, add_loop=self.gin_self_loop
@@ -209,7 +210,7 @@ class DenseDiffPool(nn.Module):
 
             # Embed network forward pass
             z = current_x
-            for i, layer in enumerate(embed_gnn):
+            for i, layer in enumerate(cast(Iterable[nn.Module], embed_gnn)):
                 if isinstance(layer, DenseGINConv):
                     z = layer(
                         z, current_adj, mask=current_mask, add_loop=self.gin_self_loop
@@ -419,7 +420,9 @@ def load_sample_data_batch() -> tuple[Any, int]:
         MeanExperimentDeduplicator,
         Neo4jCellDataset,
     )
-    from torchcell.data.neo4j_cell import SubgraphRepresentation
+    from torchcell.data.neo4j_cell import (  # type: ignore[attr-defined]  # dev-only helper; symbol lives in graph_processor
+        SubgraphRepresentation,
+    )
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
@@ -431,12 +434,14 @@ def load_sample_data_batch() -> tuple[Any, int]:
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
+    assert DATA_ROOT is not None
 
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
     genome.drop_chrmt()
     genome.drop_empty_go()
     graph = SCerevisiaeGraph(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"),  # type: ignore[call-arg]  # dev-only helper; SCerevisiaeGraph uses sgd_root
+        genome=genome,
     )
     codon_frequency = CodonFrequencyDataset(
         root=osp.join(DATA_ROOT, "data/scerevisiae/codon_frequency_embedding"),
@@ -452,7 +457,10 @@ def load_sample_data_batch() -> tuple[Any, int]:
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs={  # type: ignore[arg-type]  # dev-only helper; runtime accepts dict of graphs
+            "physical": graph.G_physical,
+            "regulatory": graph.G_regulatory,
+        },
         node_embeddings={"codon_frequency": codon_frequency},
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,
@@ -708,9 +716,11 @@ def main() -> None:
         }
 
         # Combine all losses with weights
-        total_link_loss = sum(sum(losses) for losses in graph_link_losses.values())
-        total_entropy_loss = sum(
-            sum(losses) for losses in graph_entropy_losses.values()
+        total_link_loss = cast(
+            torch.Tensor, sum(sum(losses) for losses in graph_link_losses.values())
+        )
+        total_entropy_loss = cast(
+            torch.Tensor, sum(sum(losses) for losses in graph_entropy_losses.values())
         )
         total_cluster_loss = sum(sum(losses) for losses in cluster_losses.values())
 

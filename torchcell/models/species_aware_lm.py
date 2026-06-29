@@ -4,7 +4,7 @@
 # Test file: torchcell/models/test_species_aware_lm.py
 """Embed DNA sequences with the gagneurlab SpeciesLM masked language model."""
 
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -17,7 +17,10 @@ from transformers import (
     DataCollatorForLanguageModeling,
 )
 
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import (
+    SCerevisiaeGene,
+    SCerevisiaeGenome,
+)
 
 
 def embed_sequence(sequence: str) -> np.ndarray:
@@ -56,13 +59,13 @@ def embed_sequence(sequence: str) -> np.ndarray:
         )
 
     # Averaging over tokens to get a single vector and converting it to a NumPy array
-    averaged_embedding = embedding.mean(dim=1).cpu().numpy()
+    averaged_embedding: np.ndarray = embedding.mean(dim=1).cpu().numpy()
 
     return averaged_embedding
 
 
 # Initialize tokenizer and model outside the function
-tokenizer = AutoTokenizer.from_pretrained(
+tokenizer = AutoTokenizer.from_pretrained(  # type: ignore[no-untyped-call]  # transformers from_pretrained is untyped
     "gagneurlab/SpeciesLM", revision="downstream_species_lm"
 )
 model = AutoModelForMaskedLM.from_pretrained(
@@ -75,7 +78,7 @@ def main() -> None:
     """Embed three-prime windows of all genes and collect averaged embeddings."""
     genome = SCerevisiaeGenome()
 
-    tokenizer = AutoTokenizer.from_pretrained(
+    tokenizer = AutoTokenizer.from_pretrained(  # type: ignore[no-untyped-call]  # transformers from_pretrained is untyped
         "gagneurlab/SpeciesLM", revision="downstream_species_lm"
     )
     model = AutoModelForMaskedLM.from_pretrained(
@@ -107,7 +110,7 @@ def main() -> None:
     genes_three_prime = []
     for gene in genome.gene_set:
         genes_three_prime.append(
-            genome[gene]
+            cast(SCerevisiaeGene, genome[gene])
             .window_three_prime(300, include_stop_codon=True, allow_undersize=True)
             .seq
         )
@@ -160,13 +163,11 @@ def main() -> None:
         if isinstance(target_layer, int):
             embedding = embedding[target_layer]
         elif len(target_layer) == 1:
-            embedding = torch.stack(embedding[target_layer[0] :], axis=0)
-            embedding = torch.mean(embedding, axis=0)
+            embedding = torch.stack(embedding[target_layer[0] :], dim=0)
+            embedding = torch.mean(embedding, dim=0)
         else:
-            embedding = torch.stack(
-                embedding[target_layer[0] : target_layer[1]], axis=0
-            )
-            embedding = torch.mean(embedding, axis=0)
+            embedding = torch.stack(embedding[target_layer[0] : target_layer[1]], dim=0)
+            embedding = torch.mean(embedding, dim=0)
         embedding = embedding.detach().cpu().numpy()
         return embedding
 
@@ -185,11 +186,14 @@ def main() -> None:
         # )
         assert label_len > 11, "Cannot embed sequences < 11"
 
-        hidden_states = embed_on_batch(
-            tokenized_data,
-            dataset,
-            no_of_index,
-            special_token_offset=left_special_tokens,
+        hidden_states = cast(
+            np.ndarray,
+            embed_on_batch(
+                tokenized_data,
+                dataset,
+                no_of_index,
+                special_token_offset=left_special_tokens,
+            ),
         )
         avg = hidden_states.mean(
             axis=(0, 1)
@@ -213,14 +217,14 @@ if __name__ == "__main__":
     lens = []
     for gene in genome.gene_set:
         try:
-            genome[gene].window_five_prime(
+            cast(SCerevisiaeGene, genome[gene]).window_five_prime(
                 1003, include_start_codon=True, allow_undersize=False
             )
         except ValueError:
             count += 1
             lens.append(
                 len(
-                    genome[gene]
+                    cast(SCerevisiaeGene, genome[gene])
                     .window_five_prime(
                         1003, include_start_codon=True, allow_undersize=True
                     )
@@ -229,7 +233,7 @@ if __name__ == "__main__":
             )
 
     genome_sequence = (
-        genome["YDR210W"]
+        cast(SCerevisiaeGene, genome["YDR210W"])
         .window_three_prime(300, include_stop_codon=True, allow_undersize=True)
         .seq
     )

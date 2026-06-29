@@ -30,7 +30,7 @@ class GraphAttention(nn.Module):
         """Build the DeepSet encoder, GATv2 layers, and post-readout set layers."""
         super().__init__()
 
-        self.deepset = DeepSet(
+        self.deepset = DeepSet(  # type: ignore[call-arg]  # dead code: legacy DeepSet kwargs (node_layers/set_layers) predate current signature
             in_channels=input_dim,
             node_layers=node_layers,
             set_layers=[],

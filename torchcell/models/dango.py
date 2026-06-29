@@ -7,6 +7,8 @@
 
 import os
 import os.path as osp
+from collections.abc import Callable
+from typing import cast
 
 import hydra
 import torch
@@ -101,10 +103,11 @@ class DangoPreTrain(nn.Module):
         nn.init.normal_(self.gene_embedding.weight, mean=0, std=0.1)
 
         for edge_type in self.edge_types:
-            self.layer1_convs[edge_type].reset_parameters()
-            self.layer2_convs[edge_type].reset_parameters()
-            nn.init.normal_(self.recon_layers[edge_type].weight, mean=0, std=0.1)
-            nn.init.zeros_(self.recon_layers[edge_type].bias)
+            cast(SAGEConv, self.layer1_convs[edge_type]).reset_parameters()
+            cast(SAGEConv, self.layer2_convs[edge_type]).reset_parameters()
+            recon = cast(nn.Linear, self.recon_layers[edge_type])
+            nn.init.normal_(recon.weight, mean=0, std=0.1)
+            nn.init.zeros_(recon.bias)
 
     def forward(
         self, cell_graph: HeteroData
@@ -348,7 +351,7 @@ class HyperSAGNN(nn.Module):
             node_scores, batch_indices, dim=0, dim_size=num_batches
         )
 
-        return interaction_scores
+        return cast(torch.Tensor, interaction_scores)
 
     def _global_attention_layer(
         self,
@@ -416,7 +419,7 @@ class HyperSAGNN(nn.Module):
         out = O_proj(out)
 
         # Apply ReZero connection
-        return beta * out + x
+        return cast(torch.Tensor, beta * out + x)
 
 
 class Dango(nn.Module):
@@ -638,13 +641,15 @@ def main(
 
     # Get scheduler class from scheduler map
     scheduler_type = cfg.regression_task.loss_scheduler.type
-    from torchcell.losses.dango import SCHEDULER_MAP
+    from torchcell.losses.dango import SCHEDULER_MAP, DangoLossSched
 
     if scheduler_type not in SCHEDULER_MAP:
         raise ValueError(f"Unknown scheduler type: {scheduler_type}")
 
     # Create the scheduler instance with transition_epoch
-    scheduler_class = SCHEDULER_MAP[scheduler_type]
+    # SCHEDULER_MAP values are concrete subclasses; the inferred value type is the
+    # abstract base DangoLossSched, so view the class as a concrete factory.
+    scheduler_class = cast(Callable[..., DangoLossSched], SCHEDULER_MAP[scheduler_type])
     scheduler_kwargs = {"transition_epoch": transition_epoch}
 
     # No additional parameters needed for LinearUntilFlipped

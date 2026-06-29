@@ -1,6 +1,6 @@
 """Multi-graph GATv2 encoder with hierarchical DiffPool clustering."""
 
-from typing import Any
+from typing import Any, cast
 
 import torch
 import torch.nn as nn
@@ -147,17 +147,17 @@ class GatDiffPool(nn.Module):
         if norm is None:
             return nn.Identity()
         elif norm == "batch":
-            return BatchNorm(channels)
+            return cast(nn.Module, BatchNorm(channels))
         elif norm == "instance":
-            return InstanceNorm(channels)
+            return cast(nn.Module, InstanceNorm(channels))
         elif norm == "layer":
-            return LayerNorm(channels)
+            return cast(nn.Module, LayerNorm(channels))
         elif norm == "graph":
-            return GraphNorm(channels)
+            return cast(nn.Module, GraphNorm(channels))
         elif norm == "pair":
-            return PairNorm()
+            return cast(nn.Module, PairNorm())
         elif norm == "mean_subtraction":
-            return MeanSubtractionNorm()
+            return cast(nn.Module, MeanSubtractionNorm())
         else:
             raise ValueError(f"Unsupported normalization type: {norm}")
 
@@ -220,7 +220,10 @@ class GatDiffPool(nn.Module):
 
             # Initial embedding using GCN
             x_current = x
-            for gcn, norm in zip(self.gnn_embed_layers[i], self.norm_embed_layers[i]):
+            for gcn, norm in zip(
+                cast(nn.ModuleList, self.gnn_embed_layers[i]),
+                cast(nn.ModuleList, self.norm_embed_layers[i]),
+            ):
                 x_current = gcn(x_current, edge_index)
                 if isinstance(norm, (GraphNorm, PairNorm, MeanSubtractionNorm)):
                     x_current = norm(x_current, batch)
@@ -242,8 +245,14 @@ class GatDiffPool(nn.Module):
             for layer_idx, cluster_size in enumerate(self.cluster_sizes):
                 # Compute cluster assignments using GAT
                 s = x_current  # Use current node features
-                gat_layers = self.gnn_pool_layers[i][layer_idx]
-                gat_norms = self.norm_pool_layers[i][layer_idx]
+                gat_layers = cast(
+                    nn.ModuleList,
+                    cast(nn.ModuleList, self.gnn_pool_layers[i])[layer_idx],
+                )
+                gat_norms = cast(
+                    nn.ModuleList,
+                    cast(nn.ModuleList, self.norm_pool_layers[i])[layer_idx],
+                )
 
                 # Apply GAT layers for assignment
                 for j, (gat, norm) in enumerate(zip(gat_layers[:-1], gat_norms)):
@@ -366,7 +375,7 @@ class GatDiffPool(nn.Module):
         # Group edges by source node
         edge_dict: dict[int, list[tuple[int, float]]] = {}
         for i in range(edge_index.size(1)):
-            src = edge_index[0, i].item()
+            src = int(edge_index[0, i].item())
             if src not in edge_dict:
                 edge_dict[src] = []
             edge_dict[src].append((i, attention_weights[i].item()))
@@ -379,9 +388,9 @@ class GatDiffPool(nn.Module):
             kept_edge_indices.extend([e[0] for e in kept_edges])
 
         # Create new edge_index and attention weights
-        kept_edge_indices = torch.tensor(kept_edge_indices, device=device)
-        new_edge_index = edge_index[:, kept_edge_indices]
-        new_attention_weights = attention_weights[kept_edge_indices]
+        kept_edge_indices_t = torch.tensor(kept_edge_indices, device=device)
+        new_edge_index = edge_index[:, kept_edge_indices_t]
+        new_attention_weights = attention_weights[kept_edge_indices_t]
 
         return new_edge_index, new_attention_weights
 
@@ -399,7 +408,9 @@ def load_sample_data_batch() -> tuple[Any, int]:
         MeanExperimentDeduplicator,
         Neo4jCellDataset,
     )
-    from torchcell.data.neo4j_cell import SubgraphRepresentation
+    from torchcell.data.neo4j_cell import (  # type: ignore[attr-defined]  # dev-only helper; symbol lives in graph_processor
+        SubgraphRepresentation,
+    )
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
@@ -411,12 +422,16 @@ def load_sample_data_batch() -> tuple[Any, int]:
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
+    assert DATA_ROOT is not None
 
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
     genome.drop_chrmt()
     genome.drop_empty_go()
     graph = SCerevisiaeGraph(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+        data_root=osp.join(  # type: ignore[call-arg]  # dev-only helper; SCerevisiaeGraph uses sgd_root
+            DATA_ROOT, "data/sgd/genome"
+        ),
+        genome=genome,
     )
 
     # fudt_3prime_dataset = FungalUpDownTransformerDataset(
@@ -447,7 +462,10 @@ def load_sample_data_batch() -> tuple[Any, int]:
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs={  # type: ignore[arg-type]  # dev-only helper; runtime accepts dict of graphs
+            "physical": graph.G_physical,
+            "regulatory": graph.G_regulatory,
+        },
         node_embeddings={"codon_frequency": codon_frequency},
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,

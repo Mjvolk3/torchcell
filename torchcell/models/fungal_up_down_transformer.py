@@ -33,13 +33,13 @@ class FungalUpDownTransformer(NucleotideModel):
     VALID_MODEL_NAMES = ["downstream_species_lm", "upstream_species_lm"]
 
     def __init__(
-        self, model_name: str = None, target_layer: int | tuple[int, int] = (8,)
+        self, model_name: str = "", target_layer: int | tuple[int, ...] = (8,)
     ):
         """Initialize the transformer, load the model, and set the target layer.
 
         Args:
             model_name (str, optional): The name of the model to be loaded.
-            target_layer (int | tuple[int, int], optional): The layer(s) of the
+            target_layer (int | tuple[int, ...], optional): The layer(s) of the
                 model to be used for embeddings. If a tuple, embeddings are
                 averaged over the range of layers. Defaults to (8,).
         """
@@ -50,7 +50,7 @@ class FungalUpDownTransformer(NucleotideModel):
         self.hugging_model_dir = "gagneurlab/SpeciesLM"
         self.load_model()
 
-    def _check_and_download_model(self) -> None:
+    def _check_and_download_model(self) -> None:  # type: ignore[override]  # base declares staticmethod; this variant needs self.model_name
         r"""Verify the model is downloaded and download it from HuggingFace if not."""
         # Define the model name
         model_path = osp.join(self.hugging_model_dir, self.model_name)
@@ -73,7 +73,7 @@ class FungalUpDownTransformer(NucleotideModel):
         else:
             print(f"Downloading {self.model_name} model to {model_directory}...")
             # tokenizer
-            AutoTokenizer.from_pretrained(
+            AutoTokenizer.from_pretrained(  # type: ignore[no-untyped-call]  # transformers from_pretrained is untyped
                 self.hugging_model_dir,
                 revision=self.model_name,
                 cache_dir=target_directory,
@@ -86,10 +86,10 @@ class FungalUpDownTransformer(NucleotideModel):
             )
             print("Download finished.")
 
-    def load_model(self) -> None:
+    def load_model(self, model_name: str = "") -> None:
         r"""Load the model and tokenizer used for embedding sequences."""
         self._check_and_download_model()
-        self.tokenizer = AutoTokenizer.from_pretrained(
+        self.tokenizer = AutoTokenizer.from_pretrained(  # type: ignore[no-untyped-call]  # transformers from_pretrained is untyped
             self.hugging_model_dir, revision=self.model_name
         )
         self.model = AutoModelForMaskedLM.from_pretrained(
@@ -108,20 +108,21 @@ class FungalUpDownTransformer(NucleotideModel):
             return 1003
         elif self.model_name.split("_")[0] == "downstream":
             return 300
+        raise ValueError(f"Unknown model_name: {self.model_name}")
 
     @staticmethod
     def _pad_sequence(
-        tokenized_data: dict[str, torch.tensor], mean_embedding: bool
-    ) -> tuple[dict[str, torch.Tensor], int]:
+        tokenized_data: dict[str, torch.Tensor], mean_embedding: bool
+    ) -> tuple[dict[str, torch.Tensor], int, int]:
         r"""Pad the tokenized sequence to the desired length.
 
         Args:
-            tokenized_data (dict[str, torch.tensor]): The tokenized sequence data.
+            tokenized_data (dict[str, torch.Tensor]): The tokenized sequence data.
             mean_embedding (bool): Specifies whether to compute the mean embedding.
 
         Returns:
-            tuple[dict[str, torch.Tensor], int]: The padded tokenized data and
-             the pad length.
+            tuple[dict[str, torch.Tensor], int, int]: The padded tokenized data and
+             the pad start and end indices.
 
         Raises:
             AssertionError: If not using mean embedding and sequence length is

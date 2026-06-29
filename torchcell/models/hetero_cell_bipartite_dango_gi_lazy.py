@@ -9,7 +9,7 @@
 import os
 import os.path as osp
 import time
-from typing import Any
+from typing import Any, cast
 
 import hydra
 import numpy as np
@@ -56,7 +56,7 @@ class SelfAttentionGraphAggregation(nn.Module):
 
     def forward(
         self, graph_outputs: dict[str, torch.Tensor]
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor | None, torch.Tensor | None]:
         """Attend across per-graph node features and mean-pool to one representation.
 
         Args:
@@ -173,6 +173,7 @@ class PairwiseGraphAggregation(nn.Module):
         )
 
         # Normalization after aggregation
+        self.norm: nn.Module | None
         if norm is not None:
             self.norm = get_norm_layer(hidden_dim, norm)
         else:
@@ -180,7 +181,7 @@ class PairwiseGraphAggregation(nn.Module):
 
     def forward(
         self, graph_outputs: dict[str, torch.Tensor]
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor | None, torch.Tensor | None]:
         """Compute pairwise graph interactions and aggregate them.
 
         Includes identity option (mean of individual graphs) alongside pairwise combinations.
@@ -275,6 +276,7 @@ class HeteroConvAggregator(nn.Module):
         # Initialize aggregation module based on method
         config = aggregation_config or {}
 
+        self.aggregator: SelfAttentionGraphAggregation | PairwiseGraphAggregation | None
         if aggregation_method == "cross_attention":
             self.aggregator = SelfAttentionGraphAggregation(
                 hidden_dim=hidden_channels,
@@ -302,7 +304,7 @@ class HeteroConvAggregator(nn.Module):
         x_dict: dict[str, torch.Tensor],
         edge_index_dict: dict[EdgeType, torch.Tensor],
         edge_mask_dict: dict[EdgeType, torch.Tensor] | None = None,
-    ) -> tuple[dict[str, torch.Tensor], torch.Tensor | None]:
+    ) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor | None] | None]:
         """Apply graph convolutions and aggregate using specified method.
 
         LAZY VERSION: Accepts edge_mask_dict for masking edges during message passing.
@@ -320,10 +322,10 @@ class HeteroConvAggregator(nn.Module):
         edge_mask_dict = edge_mask_dict or {}
 
         # Store outputs by destination node type and graph name
-        out_dict = {}
-        graph_outputs_by_dst: dict[str, dict[str, torch.Tensor]] = (
-            {}
-        )  # {dst_type: {graph_name: tensor}}
+        out_dict: dict[str, torch.Tensor] = {}
+        graph_outputs_by_dst: dict[
+            str, dict[str, torch.Tensor]
+        ] = {}  # {dst_type: {graph_name: tensor}}
 
         # Apply convolutions for each edge type
         for edge_type_str, conv in self.convs.items():
@@ -359,7 +361,7 @@ class HeteroConvAggregator(nn.Module):
 
             if self.aggregation_method == "sum":
                 # Simple sum aggregation
-                out_dict[dst] = sum(graph_outputs.values())
+                out_dict[dst] = cast(torch.Tensor, sum(graph_outputs.values()))
                 all_attention_weights[dst] = None
 
             elif self.aggregation_method == "mean":
@@ -370,11 +372,12 @@ class HeteroConvAggregator(nn.Module):
 
             elif self.aggregator is not None:
                 # Use learned aggregation (cross_attention or pairwise_interaction)
-                out_dict[dst], attn_weights = self.aggregator(graph_outputs)
+                agg_out, attn_weights = self.aggregator(graph_outputs)
+                out_dict[dst] = cast(torch.Tensor, agg_out)
                 all_attention_weights[dst] = attn_weights
             else:
                 # Fallback to sum
-                out_dict[dst] = sum(graph_outputs.values())
+                out_dict[dst] = cast(torch.Tensor, sum(graph_outputs.values()))
                 all_attention_weights[dst] = None
 
         # Return aggregated features and attention weights
@@ -422,7 +425,7 @@ class AttentionalGraphAggregation(nn.Module):
         self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
         """Aggregate node features into graph-level vectors using attention weights."""
-        return self.aggregator(x, index=index, dim_size=dim_size)
+        return cast(torch.Tensor, self.aggregator(x, index=index, dim_size=dim_size))
 
 
 class DangoLikeHyperSAGNN(nn.Module):
@@ -503,6 +506,7 @@ class DangoLikeHyperSAGNN(nn.Module):
 
         # Apply attention layers
         for i, layer in enumerate(self.attention_layers):
+            layer = cast(nn.ModuleDict, layer)
             if batch is not None:
                 # VECTORIZED: No .unique(), no Python loop over batches
                 # Pre-compute batch sizes and offsets (no GPU sync)
@@ -572,7 +576,7 @@ class DangoLikeHyperSAGNN(nn.Module):
         out = self.dropout(out)
 
         # Apply ReZero connection
-        return x + beta * out
+        return cast(torch.Tensor, x + beta * out)
 
     def _apply_attention_layer_batched(
         self,
@@ -684,12 +688,16 @@ class GeneInteractionPredictor(nn.Module):
                 gene_scores,
                 batch,
                 dim=0,
-                dim_size=num_batches.item(),  # Sync here
+                dim_size=int(num_batches.item()),  # Sync here
             )
-            return interaction_scores.unsqueeze(-1)  # [num_batches, 1]
+            return cast(
+                torch.Tensor, interaction_scores.unsqueeze(-1)
+            )  # [num_batches, 1]
         else:
             # Single batch case
-            return gene_scores.mean().unsqueeze(0).unsqueeze(-1)  # [1, 1]
+            return cast(
+                torch.Tensor, gene_scores.mean().unsqueeze(0).unsqueeze(-1)
+            )  # [1, 1]
 
 
 def get_norm_layer(channels: int, norm: str) -> nn.Module:
@@ -711,7 +719,7 @@ def get_norm_layer(channels: int, norm: str) -> nn.Module:
             f"Available: {list(norm_register.keys())}"
         )
     # PyG norm classes take in_channels as first parameter
-    return norm_register[norm](channels)
+    return cast(nn.Module, norm_register[norm](channels))
 
 
 class PreProcessor(nn.Module):
@@ -738,7 +746,7 @@ class PreProcessor(nn.Module):
             )
         self.act = act_register[activation]
         norm_layer = get_norm_layer(hidden_channels, norm)
-        layers = []
+        layers: list[nn.Module] = []
         layers.append(nn.Linear(in_channels, hidden_channels))
         layers.append(norm_layer)
         layers.append(self.act)
@@ -752,7 +760,7 @@ class PreProcessor(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Pass node features through the preprocessing MLP."""
-        return self.mlp(x)
+        return cast(torch.Tensor, self.mlp(x))
 
 
 class AttentionConvWrapper(nn.Module):
@@ -771,6 +779,7 @@ class AttentionConvWrapper(nn.Module):
         self.conv = conv
 
         # Determine expected output dimension based on conv type
+        expected_dim: int
         if isinstance(conv, (GINConv, MaskedGINConv)):
             # For GINConv/MaskedGINConv, get output dim from the last layer of the MLP
             mlp = conv.nn
@@ -785,11 +794,13 @@ class AttentionConvWrapper(nn.Module):
         elif hasattr(conv, "concat"):
             # For GATv2Conv
             expected_dim = (
-                conv.heads * conv.out_channels if conv.concat else conv.out_channels
+                cast(int, conv.heads) * cast(int, conv.out_channels)
+                if conv.concat
+                else cast(int, conv.out_channels)
             )
         else:
             # For other conv types that have out_channels
-            expected_dim = conv.out_channels
+            expected_dim = cast(int, conv.out_channels)
 
         self.proj = (
             nn.Identity()
@@ -798,6 +809,7 @@ class AttentionConvWrapper(nn.Module):
         )
 
         # Use norm_register - NO FALLBACK
+        self.norm: nn.Module | None
         if norm is not None:
             self.norm = get_norm_layer(target_dim, norm)
         else:
@@ -842,7 +854,7 @@ class AttentionConvWrapper(nn.Module):
         out = self.act(out)
         if self.dropout is not None:
             out = self.dropout(out)
-        return out
+        return cast(torch.Tensor, out)
 
 
 def create_conv_layer(
@@ -979,7 +991,7 @@ class GeneInteractionDango(nn.Module):
         # Graph convolution layers with interaction-based aggregation
         self.convs = nn.ModuleList()
         for layer_idx in range(num_layers):
-            conv_dict = {}
+            conv_dict: dict[EdgeType, nn.Module] = {}
 
             # Create a conv layer for each graph in the multigraph
             for graph_name in self.graph_names:
@@ -1023,6 +1035,7 @@ class GeneInteractionDango(nn.Module):
 
         # Gene interaction predictor for perturbed genes with Dango-like architecture
         # (optional - only create if enabled)
+        self.gene_interaction_predictor: GeneInteractionPredictor | None
         if self.use_local_predictor:
             self.gene_interaction_predictor = GeneInteractionPredictor(
                 hidden_dim=hidden_channels,
@@ -1051,6 +1064,7 @@ class GeneInteractionDango(nn.Module):
         )
 
         # MLP for gating weights (only if using gating combination method AND local predictor enabled)
+        self.gate_mlp: nn.Sequential | None
         if self.combination_method == "gating" and self.use_local_predictor:
             self.gate_mlp = nn.Sequential(
                 nn.Linear(2, hidden_channels),
@@ -1200,7 +1214,7 @@ class GeneInteractionDango(nn.Module):
         self.layer_aggregation_weights = layer_attention_weights
 
         # Return full graph embeddings [total_nodes, hidden_dim]
-        return x_dict["gene"]
+        return cast(torch.Tensor, x_dict["gene"])
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
@@ -1290,6 +1304,7 @@ class GeneInteractionDango(nn.Module):
             raise RuntimeError("NaN detected in perturbation difference (z_p_global)")
 
         # Determine batch assignment for perturbed genes
+        batch_assign: torch.Tensor | None
         if hasattr(batch["gene"], "perturbation_indices_ptr"):
             # VECTORIZED: Create batch assignment using repeat_interleave (no loop!)
             ptr = batch["gene"].perturbation_indices_ptr
@@ -1307,6 +1322,7 @@ class GeneInteractionDango(nn.Module):
 
         # Get gene interaction predictions using the local predictor (if enabled)
         if self.use_local_predictor:
+            assert self.gene_interaction_predictor is not None
             local_interaction = self.gene_interaction_predictor(
                 pert_gene_embs, batch_assign
             )
@@ -1361,6 +1377,7 @@ class GeneInteractionDango(nn.Module):
 
             # Combine local and global predictions
             if self.combination_method == "gating":
+                assert self.gate_mlp is not None
                 # Stack the predictions
                 pred_stack = torch.cat([global_interaction, local_interaction], dim=1)
 
@@ -1466,7 +1483,7 @@ def calculate_weight_l2_norm(model: nn.Module) -> float:
         if param.requires_grad:
             param_norm = param.data.norm(2)
             total_norm += param_norm.item() ** 2
-    return total_norm**0.5
+    return float(total_norm**0.5)
 
 
 def calculate_rolling_correlation(
@@ -1514,8 +1531,8 @@ def main(cfg: DictConfig) -> None:
     from torchcell.timestamp import timestamp
 
     load_dotenv()
-    ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    ASSET_IMAGES_DIR = cast(str, os.getenv("ASSET_IMAGES_DIR"))
+    DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
     device = torch.device(
         "cuda"
         if torch.cuda.is_available() and cfg.trainer.accelerator.lower() == "gpu"
@@ -1560,10 +1577,13 @@ def main(cfg: DictConfig) -> None:
 
     # LAZY VERSION: Initialize model - GIN ONLY (no GATv2)
     # Ensure configs are properly converted
-    gene_encoder_config_dict = (
-        OmegaConf.to_container(cfg.model.gene_encoder_config, resolve=True)
-        if cfg.model.gene_encoder_config
-        else {}
+    gene_encoder_config_dict = cast(
+        "dict[str, Any]",
+        (
+            OmegaConf.to_container(cfg.model.gene_encoder_config, resolve=True)
+            if cfg.model.gene_encoder_config
+            else {}
+        ),
     )
 
     # CRITICAL: Enforce GIN encoder for lazy version
@@ -1573,11 +1593,14 @@ def main(cfg: DictConfig) -> None:
         )
     gene_encoder_config_dict["encoder_type"] = "gin"
 
-    local_predictor_config_dict = (
-        OmegaConf.to_container(cfg.model.local_predictor_config, resolve=True)
-        if hasattr(cfg.model, "local_predictor_config")
-        and cfg.model.local_predictor_config
-        else {}
+    local_predictor_config_dict = cast(
+        "dict[str, Any]",
+        (
+            OmegaConf.to_container(cfg.model.local_predictor_config, resolve=True)
+            if hasattr(cfg.model, "local_predictor_config")
+            and cfg.model.local_predictor_config
+            else {}
+        ),
     )
 
     model = GeneInteractionDango(
@@ -1598,6 +1621,7 @@ def main(cfg: DictConfig) -> None:
 
     # Configure loss function based on config
     loss_type = cfg.regression_task.get("loss", "logcosh")
+    criterion: nn.Module
     if loss_type == "logcosh":
         criterion = LogCoshLoss(reduction="mean")
         print("Using LogCosh loss")
@@ -1910,7 +1934,7 @@ def main(cfg: DictConfig) -> None:
         # Plot histograms
         n_true, _, _ = plt.hist(
             true_np[valid_mask],
-            bins=bins,
+            bins=bins,  # type: ignore[arg-type]  # matplotlib stub narrows bins; ndarray accepted at runtime
             alpha=0.5,
             label="True",
             color="blue",
@@ -1919,7 +1943,7 @@ def main(cfg: DictConfig) -> None:
         )
         n_pred, _, _ = plt.hist(
             pred_np[valid_mask],
-            bins=bins,
+            bins=bins,  # type: ignore[arg-type]  # matplotlib stub narrows bins; ndarray accepted at runtime
             alpha=0.5,
             label="Predicted",
             color="red",
@@ -1957,7 +1981,7 @@ def main(cfg: DictConfig) -> None:
         plt.title("Model Configuration", pad=20)
 
         # Get model parameters
-        param_counts = model.num_parameters
+        param_counts = cast("dict[str, int]", model.num_parameters)
         total_params = param_counts["total"]
 
         # Display parameters with better spacing
@@ -2353,10 +2377,10 @@ def main(cfg: DictConfig) -> None:
                         # Fix xticks to prevent overlap
                         ax = plt.gca()
                         ax.xaxis.set_major_locator(
-                            plt.MaxNLocator(nbins=5, prune="both")
+                            plt.MaxNLocator(nbins=5, prune="both")  # type: ignore[attr-defined]  # re-exported by pyplot at runtime, absent from stub
                         )
                         ax.yaxis.set_major_locator(
-                            plt.MaxNLocator(nbins=5, prune="both")
+                            plt.MaxNLocator(nbins=5, prune="both")  # type: ignore[attr-defined]  # re-exported by pyplot at runtime, absent from stub
                         )
                 except Exception as e:
                     # Fallback to PCA if MDS fails
@@ -2381,10 +2405,10 @@ def main(cfg: DictConfig) -> None:
                         # Fix xticks to prevent overlap
                         ax = plt.gca()
                         ax.xaxis.set_major_locator(
-                            plt.MaxNLocator(nbins=5, prune="both")
+                            plt.MaxNLocator(nbins=5, prune="both")  # type: ignore[attr-defined]  # re-exported by pyplot at runtime, absent from stub
                         )
                         ax.yaxis.set_major_locator(
-                            plt.MaxNLocator(nbins=5, prune="both")
+                            plt.MaxNLocator(nbins=5, prune="both")  # type: ignore[attr-defined]  # re-exported by pyplot at runtime, absent from stub
                         )
                     except Exception:
                         plt.text(

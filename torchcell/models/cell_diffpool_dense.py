@@ -1,6 +1,6 @@
 """Dense DiffPool models over cell graphs for hierarchical graph pooling."""
 
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import torch
 import torch.nn as nn
@@ -25,7 +25,7 @@ class DenseDiffPool(nn.Module):
         num_pooling_layers: int,
         cluster_size_decay_factor: float = 10.0,
         activation: str = "relu",
-        norm: str = None,
+        norm: str | None = None,
         target_dim: int = 2,
         cluster_aggregation: Literal["mean", "sum"] = "mean",
         heads: int = 1,
@@ -63,7 +63,7 @@ class DenseDiffPool(nn.Module):
         for layer in range(num_pooling_layers):
             curr_in_channels = in_channels if layer == 0 else embed_gat_hidden_channels
 
-            layers = []
+            layers: list[nn.Module] = []
             for i in range(num_pool_gat_layers):
                 is_last = i == num_pool_gat_layers - 1
                 out_channels = (
@@ -172,6 +172,8 @@ class DenseDiffPool(nn.Module):
         for layer, (pool_gnn, embed_gnn) in enumerate(
             zip(self.pool_networks, self.embed_networks)
         ):
+            pool_gnn = cast(nn.ModuleList, pool_gnn)
+            embed_gnn = cast(nn.ModuleList, embed_gnn)
             # Compute cluster assignment matrix
             s = current_x
             pool_layer_attention = []
@@ -262,7 +264,7 @@ class DenseCellDiffPool(nn.Module):
         num_pooling_layers: int,
         cluster_size_decay_factor: float = 10.0,
         activation: str = "relu",
-        norm: str = None,
+        norm: str | None = None,
         target_dim: int = 2,
         cluster_aggregation: Literal["mean", "sum"] = "mean",
         heads: int = 1,
@@ -425,7 +427,9 @@ def load_sample_data_batch() -> tuple[Any, int]:
         MeanExperimentDeduplicator,
         Neo4jCellDataset,
     )
-    from torchcell.data.neo4j_cell import SubgraphRepresentation
+    from torchcell.data.neo4j_cell import (  # type: ignore[attr-defined]  # dev-only helper; symbol lives in graph_processor
+        SubgraphRepresentation,
+    )
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
@@ -437,12 +441,14 @@ def load_sample_data_batch() -> tuple[Any, int]:
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
+    assert DATA_ROOT is not None
 
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
     genome.drop_chrmt()
     genome.drop_empty_go()
     graph = SCerevisiaeGraph(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"),  # type: ignore[call-arg]  # dev-only helper; SCerevisiaeGraph uses sgd_root
+        genome=genome,
     )
     codon_frequency = CodonFrequencyDataset(
         root=osp.join(DATA_ROOT, "data/scerevisiae/codon_frequency_embedding"),
@@ -458,7 +464,10 @@ def load_sample_data_batch() -> tuple[Any, int]:
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs={  # type: ignore[arg-type]  # dev-only helper; runtime accepts dict of graphs
+            "physical": graph.G_physical,
+            "regulatory": graph.G_regulatory,
+        },
         node_embeddings={"codon_frequency": codon_frequency},
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,
@@ -735,9 +744,11 @@ def main() -> None:
         }
 
         # Combine all losses
-        total_link_loss = sum(sum(losses) for losses in graph_link_losses.values())
-        total_entropy_loss = sum(
-            sum(losses) for losses in graph_entropy_losses.values()
+        total_link_loss = cast(
+            torch.Tensor, sum(sum(losses) for losses in graph_link_losses.values())
+        )
+        total_entropy_loss = cast(
+            torch.Tensor, sum(sum(losses) for losses in graph_entropy_losses.values())
         )
         total_cluster_loss = sum(sum(losses) for losses in cluster_losses.values())
 

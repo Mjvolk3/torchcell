@@ -31,9 +31,9 @@ class SinusoidalTimeEmbedding(nn.Module):
         """
         device = timesteps.device
         half_dim = self.dim // 2
-        embeddings = math.log(10000) / (half_dim - 1)
-        embeddings = torch.exp(torch.arange(half_dim, device=device) * -embeddings)
-        embeddings = timesteps[:, None] * embeddings[None, :]
+        log_scale = math.log(10000) / (half_dim - 1)
+        freqs = torch.exp(torch.arange(half_dim, device=device) * -log_scale)
+        embeddings = timesteps[:, None] * freqs[None, :]
         embeddings = torch.cat([embeddings.sin(), embeddings.cos()], dim=-1)
         return embeddings
 
@@ -96,9 +96,9 @@ class CrossAttention(nn.Module):
         # Apply attention to values
         out = torch.matmul(attn, v)
         out = out.transpose(1, 2).contiguous().view(batch_size, 1, -1)
-        out = self.out_proj(out)
+        out_proj: torch.Tensor = self.out_proj(out)
 
-        return out
+        return out_proj
 
 
 class DenoisingBlock(nn.Module):
@@ -116,6 +116,9 @@ class DenoisingBlock(nn.Module):
         super().__init__()
 
         # Normalization layers
+        self.norm1: nn.Module
+        self.norm2: nn.Module
+        self.norm3: nn.Module
         if norm == "layer":
             self.norm1 = nn.LayerNorm(dim)
             self.norm2 = nn.LayerNorm(dim)
@@ -174,6 +177,13 @@ class DenoisingBlock(nn.Module):
 
 class DiffusionDecoder(nn.Module):
     """Diffusion decoder with cross-attention conditioning on graph embeddings."""
+
+    # Registered buffers (declared for the type checker; created via register_buffer).
+    betas: torch.Tensor
+    alphas: torch.Tensor
+    alphas_cumprod: torch.Tensor
+    sqrt_alphas_cumprod: torch.Tensor
+    sqrt_one_minus_alphas_cumprod: torch.Tensor
 
     def __init__(
         self,
@@ -350,7 +360,7 @@ class DiffusionDecoder(nn.Module):
             x = block(x, context, time_emb)
 
         # Output projection
-        pred = self.output_proj(x).squeeze(1)  # [batch, output_dim]
+        pred: torch.Tensor = self.output_proj(x).squeeze(1)  # [batch, output_dim]
 
         # Return prediction based on parameterization
         # Currently only x0 is implemented, eps would need conversion

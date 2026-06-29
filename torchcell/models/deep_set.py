@@ -78,7 +78,7 @@ class DeepSet(nn.Module):
                 )
         self.node_layers = nn.ModuleList(node_modules)
 
-        set_modules = []
+        set_modules: list[nn.Module] = []
         for i in range(num_set_layers):
             if i == 0:
                 if num_node_layers > 0:

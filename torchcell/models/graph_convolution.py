@@ -30,7 +30,7 @@ class GraphConvolution(nn.Module):
         """Build the DeepSet node encoder, GCN layer stack, and set MLP layers."""
         super().__init__()
 
-        self.deepset = DeepSet(
+        self.deepset = DeepSet(  # type: ignore[call-arg]  # dead code: legacy DeepSet kwargs (input_dim/node_layers/set_layers) predate current signature
             input_dim=input_dim,
             node_layers=node_layers,
             set_layers=[],  # Empty since we handle this separately after GCN

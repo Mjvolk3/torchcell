@@ -162,7 +162,7 @@ class DCell(nn.Module):
         # Count genes associated with this GO term from template go_gene_strata_state
         go_gene_state = self.hetero_data["gene_ontology"].go_gene_strata_state
         term_mask = go_gene_state[:, 0] == term_idx
-        num_genes_for_term = term_mask.sum().item()
+        num_genes_for_term = int(term_mask.sum().item())
 
         # _extract_gene_states_for_term always returns at least dimension 1 (even for terms with no genes)
         # So we must match this behavior during initialization
@@ -173,7 +173,7 @@ class DCell(nn.Module):
 
     def _calculate_output_dim(self, term_idx: int) -> int:
         """Calculate output dimension for a GO term based on DCell paper formula."""
-        num_genes = self.term_gene_counts[term_idx].item()
+        num_genes = int(self.term_gene_counts[term_idx].item())
         return max(self.min_subsystem_size, math.ceil(self.subsystem_ratio * num_genes))
 
     def _build_term_module(self, term_idx: int) -> None:
@@ -415,7 +415,7 @@ class DCellSubsystem(nn.Module):
     config_path=osp.join(os.getcwd(), "experiments/005-kuzmin2018-tmi/conf"),
     config_name="dcell_kuzmin2018_tmi",
 )
-def main(cfg: DictConfig) -> None:
+def main(cfg: DictConfig) -> tuple[nn.Module, tuple[torch.Tensor, dict[str, Any]]]:
     """Test the DCell model by overfitting it on a single batch."""
     import torch.optim as optim
 
@@ -597,6 +597,7 @@ def main(cfg: DictConfig) -> None:
     )
 
     # Create optimizer
+    optimizer: optim.Optimizer
     if cfg.regression_task.optimizer.type == "AdamW":
         optimizer = optim.AdamW(
             model.parameters(),

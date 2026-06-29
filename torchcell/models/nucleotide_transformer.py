@@ -41,7 +41,7 @@ class NucleotideTransformer(NucleotideModel):
         else:
             print(f"Downloading {MODEL_NAME} model to {model_directory}...")
             # tokenizer
-            AutoTokenizer.from_pretrained(MODEL_NAME, cache_dir=target_directory)
+            AutoTokenizer.from_pretrained(MODEL_NAME, cache_dir=target_directory)  # type: ignore[no-untyped-call]  # transformers from_pretrained is untyped
             # model
             AutoModelForMaskedLM.from_pretrained(MODEL_NAME, cache_dir=target_directory)
             print("Download finished.")
@@ -52,13 +52,13 @@ class NucleotideTransformer(NucleotideModel):
         # Found empirically... listed as 6kb in paper.
         return 5979
 
-    def load_model(self) -> None:
+    def load_model(self, model_name: str = MODEL_NAME) -> None:
         """Load the tokenizer and model onto the selected device."""
         # Check and download the model if necessary
         self._check_and_download_model()
 
         # Load the tokenizer and the model
-        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)  # type: ignore[no-untyped-call]  # transformers from_pretrained is untyped
         self.model = AutoModelForMaskedLM.from_pretrained(MODEL_NAME)
 
         # Move the model to the selected device
@@ -90,14 +90,14 @@ class NucleotideTransformer(NucleotideModel):
             output_hidden_states=True,
         )
 
-        embeddings = torch_outs["hidden_states"][-1].detach()
+        embeddings: torch.Tensor = torch_outs["hidden_states"][-1].detach()
 
         if mean_embedding:
             # Add embed dimension axis
             attention_mask = torch.unsqueeze(attention_mask, dim=-1)
             # Compute mean embeddings per sequence
-            embeddings = torch.sum(attention_mask * embeddings, axis=-2) / torch.sum(
-                attention_mask, axis=-2
+            embeddings = torch.sum(attention_mask * embeddings, dim=-2) / torch.sum(
+                attention_mask, dim=-2
             )
             embeddings = embeddings.unsqueeze(0)
 

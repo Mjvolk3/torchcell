@@ -357,3 +357,36 @@ require a full dependency lock.
   mypy; re-run mypy as an acceptance test after any ruff autofix.
 - CI mypy env-divergence (redundant-cast etc.) is unwinnable without a dependency lock
   → the reason mypy is diff-scoped, not whole-tree.
+
+## 2026.06.29 - WS4 LANDED (decouple): ruff+mypy blocking on main; pytest → #16
+
+WS4 shipped as a **decouple** (user decision): the two gates that are genuinely green
+now BLOCK; pytest stays advisory pending a focused hardening follow-up. Landed on
+`main` via rebase + ff-only — commits `3d68e57b` (ci) / `ce1f8613` (fix) / `135fd609`
+(test); PR #15 auto-closed. **No release**: the repo uses the **scipy** commit parser
+(releasing tags `API`/`DEP`/`DEV`/`ENH`/`REV`/`FEAT`/`BLD`/`BUG`/`MAINT`), so the
+`ci:`/`fix:`/`test:` prefixes are inert — latest release stayed `v1.1.4`.
+
+- **ruff** — BLOCKING, whole-tree (`ruff check` + `format --check` on torchcell+tests).
+  Green in CI.
+- **mypy** — BLOCKING, diff-scoped + `--follow-imports=silent` on changed `torchcell`
+  files; `torchcell/experiments/` filtered out of the `$FILES` list (explicit
+  `mypy FILES` BYPASSES the pyproject `exclude`). Green in CI. Whole-tree mypy stays
+  abandoned (CI packages ≠ dev conda env, e.g. `lmdb` typed in CI but `Any` locally).
+- **pytest** — ADVISORY (`continue-on-error` in test.yaml). First-ever full CI run
+  surfaced **167 passed / 22 skipped / 3 failed / 9 errors** (WS3's green was only ever
+  validated locally). Fixed in this PR: the optional `calm` import made
+  `torchcell.datasets` unimportable (deferred to TYPE_CHECKING + a runtime import in
+  `initialize_model`); and 4 modules raised on ambient `DATA_ROOT` at collection
+  (module-level `pytest.skip(allow_module_level=True)` guards). Remaining CI-fragile
+  tests → **follow-up issue #16**: `test_s288c` DATA_ROOT guard, a flaky wall-clock
+  micro-benchmark (`test_masked_vs_filtered_speed`), a filelock-version-fragile test
+  (`test_cleanup_lock_files`). Removing `continue-on-error` is #16's final step.
+
+**Not enforced yet:** `main` has NO branch protection, so red ruff/mypy checks are
+*visible* but don't *prevent* a merge. True enforcement needs a required-status-checks
+rule — but semantic-release pushes the version-bump commit directly to `main`, so a
+naive rule with "include administrators" would jam the release flow. Decide before
+enabling.
+
+**WS4 (`#8`):** ruff+mypy blocking = done; pytest-blocking tracked in **`#16`**.

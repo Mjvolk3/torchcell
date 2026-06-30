@@ -7,10 +7,9 @@
 
 import os
 from collections.abc import Callable
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import torch
-from calm import CaLM
 from torch_geometric.data import Data
 from tqdm import tqdm
 
@@ -20,6 +19,12 @@ from torchcell.sequence.genome.scerevisiae.s288c import (
     SCerevisiaeGene,
     SCerevisiaeGenome,
 )
+
+if TYPE_CHECKING:
+    # CaLM (oxpig/CaLM) is an OPTIONAL git-only dependency, intentionally absent from
+    # CI and the default env. Import it only for type-checking; the runtime import is
+    # deferred to initialize_model() so importing torchcell.datasets never requires it.
+    from calm import CaLM
 
 
 class CalmDataset(BaseEmbeddingDataset):
@@ -51,8 +56,10 @@ class CalmDataset(BaseEmbeddingDataset):
             self.process()
         self.data, self.slices = torch.load(self.processed_paths[0])
 
-    def initialize_model(self) -> CaLM:
+    def initialize_model(self) -> "CaLM":
         """Return a new CaLM model instance."""
+        from calm import CaLM
+
         return CaLM()
 
     @staticmethod

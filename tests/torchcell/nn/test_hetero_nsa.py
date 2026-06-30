@@ -7,14 +7,21 @@ from typing import cast
 import pytest
 import torch
 import torch.nn as nn
+from dotenv import load_dotenv
 from torch_geometric.data import Data, HeteroData
 from torch_geometric.transforms import ToUndirected
 from torch_geometric.utils import to_dense_adj
 
-from torchcell.nn.hetero_nsa import HeteroNSA, HeteroNSAEncoder
-from torchcell.nn.nsa_encoder import NSAEncoder
-from torchcell.nn.self_attention_block import SelfAttentionBlock
-from torchcell.scratch.load_batch import load_sample_data_batch
+# load_sample_data_batch (below) transitively imports torchcell.graph.sgd, which
+# reads DATA_ROOT at import and raises if unset -- skip the module first when absent.
+load_dotenv()
+if os.getenv("DATA_ROOT") is None:
+    pytest.skip("requires DATA_ROOT data (absent in CI)", allow_module_level=True)
+
+from torchcell.nn.hetero_nsa import HeteroNSA, HeteroNSAEncoder  # noqa: E402
+from torchcell.nn.nsa_encoder import NSAEncoder  # noqa: E402
+from torchcell.nn.self_attention_block import SelfAttentionBlock  # noqa: E402
+from torchcell.scratch.load_batch import load_sample_data_batch  # noqa: E402
 
 
 @pytest.fixture

@@ -5,11 +5,18 @@ import os.path as osp
 
 import cobra
 import numpy as np
+import pytest
 import torch
 from dotenv import load_dotenv
 
-from torchcell.metabolism.yeast_GEM import YeastGEM
-from torchcell.scratch.load_batch import load_sample_data_batch
+# load_sample_data_batch (below) transitively imports torchcell.graph.sgd, which
+# reads DATA_ROOT at import and raises if unset -- skip the module first when absent.
+load_dotenv()
+if os.getenv("DATA_ROOT") is None:
+    pytest.skip("requires DATA_ROOT data (absent in CI)", allow_module_level=True)
+
+from torchcell.metabolism.yeast_GEM import YeastGEM  # noqa: E402
+from torchcell.scratch.load_batch import load_sample_data_batch  # noqa: E402
 
 
 def test_stoichiometric_matrix_equivalence():

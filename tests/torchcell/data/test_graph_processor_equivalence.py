@@ -13,7 +13,13 @@ import torch
 from dotenv import load_dotenv
 from torch_geometric.utils import sort_edge_index
 
-from torchcell.scratch.load_batch_005 import load_sample_data_batch
+# load_sample_data_batch (below) transitively imports torchcell.graph.sgd, which
+# reads DATA_ROOT at import and raises if unset -- skip the module first when absent.
+load_dotenv()
+if os.getenv("DATA_ROOT") is None:
+    pytest.skip("requires DATA_ROOT data (absent in CI)", allow_module_level=True)
+
+from torchcell.scratch.load_batch_005 import load_sample_data_batch  # noqa: E402
 
 REFERENCE_DIR = (
     "/scratch/projects/torchcell/data/tests/torchcell/scratch/load_batch_005"
@@ -23,7 +29,6 @@ REFERENCE_DIR = (
 # load_sample_data_batch, which builds the 005-kuzmin2018-tmi/001-small-build
 # Neo4jCellDataset from DATA_ROOT. That dataset is not present in CI, so skip the
 # whole module when it is absent (it runs locally where the data exists).
-load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 _DATASET_DIR = (
     osp.join(DATA_ROOT, "data/torchcell/experiments/005-kuzmin2018-tmi/001-small-build")

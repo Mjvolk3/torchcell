@@ -17,8 +17,11 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        # PAT (admin-owned) so the version-bump push bypasses branch protection;
+        # GITHUB_TOKEN / github-actions[bot] cannot bypass required status checks.
+        token: ${{ secrets.TORCHCELL_SEMANTIC_RELEASE_TOKEN }}
 
     - name: Python Semantic Release
       uses: python-semantic-release/python-semantic-release@master
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ secrets.TORCHCELL_SEMANTIC_RELEASE_TOKEN }}

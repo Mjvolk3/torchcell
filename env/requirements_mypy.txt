@@ -1,4 +1,4 @@
-mypy
+mypy==2.1.0
 pandas-stubs
 types-tqdm
 types-requests

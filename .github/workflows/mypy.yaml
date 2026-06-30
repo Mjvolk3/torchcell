@@ -37,17 +37,23 @@ jobs:
       run: |
         pip install -e .
 
-    # Advisory + diff-scoped: strict mypy runs on changed source so new code is
-    # held to it, while the 7,601-error backlog is cleaned up separately.
-    # continue-on-error keeps the build green during the transition.
-    - name: Mypy strict (changed torchcell files; advisory)
-      continue-on-error: true
+    # Blocking + diff-scoped (WS4): strict mypy on the CHANGED torchcell files only,
+    # with --follow-imports=silent so findings are scoped to those files. Whole-tree
+    # mypy is not reproducible in CI without pinning the full dependency env (CI's
+    # installed packages differ from the dev conda env, and mypy's findings depend on
+    # them); diff-scoping keeps the gate robust and meaningful (new code is held to
+    # strict, authors verify locally) without that lock. See WS4 notes.
+    - name: Mypy strict (changed torchcell files; blocking)
       run: |
         git fetch origin main --depth=1 || true
-        FILES=$(git diff --name-only origin/main...HEAD -- 'torchcell/**/*.py')
+        # Exclude torchcell/experiments/: passing explicit files to mypy BYPASSES the
+        # pyproject [tool.mypy] exclude regex (exclude only filters path-discovery, not
+        # an explicit file list), so experiments must be filtered out here, in the
+        # file-selection step, to honor Decision 5 (experiments out of the gate).
+        FILES=$(git diff --name-only origin/main...HEAD -- 'torchcell/**/*.py' ':(exclude)torchcell/experiments/**')
         if [ -n "$FILES" ]; then
           echo "Changed torchcell files:"; echo "$FILES"
-          mypy $FILES --config-file=pyproject.toml
+          mypy $FILES --config-file=pyproject.toml --follow-imports=silent
         else
           echo "No changed torchcell Python files vs origin/main."
         fi

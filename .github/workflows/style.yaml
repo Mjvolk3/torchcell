@@ -28,18 +28,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r env/requirements_style.txt
 
-      # Advisory + diff-scoped: enforcement lands on changed source while the
-      # repo-wide ruff backlog (the deferred --fix/format sweep) is paid down
-      # separately. continue-on-error keeps the build green during the transition.
-      - name: Ruff check + format-check (changed files; advisory)
-        continue-on-error: true
+      # Blocking + whole-tree (WS4): the repo-wide ruff backlog is zero (WS1), so
+      # the gate enforces ruff lint + format on the entire torchcell/ + tests/ tree.
+      - name: Ruff check + format-check (whole tree; blocking)
         run: |
-          git fetch origin main --depth=1 || true
-          FILES=$(git diff --name-only origin/main...HEAD -- 'torchcell/**/*.py' 'tests/torchcell/**/*.py')
-          if [ -n "$FILES" ]; then
-            echo "Changed Python files:"; echo "$FILES"
-            ruff check $FILES
-            ruff format --check $FILES
-          else
-            echo "No changed torchcell/tests Python files vs origin/main."
-          fi
+          ruff check torchcell tests
+          ruff format --check torchcell tests

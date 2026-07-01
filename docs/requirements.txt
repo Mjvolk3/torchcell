@@ -1,5 +1,5 @@
-# First, install torch_scatter
-git+https://github.com/rusty1s/pytorch_scatter
+# torch-scatter is installed as a prebuilt CPU wheel in .github/workflows/docs.yaml
+# (before this file), avoiding a slow/fragile source build against torch.
 torchcell
 # Then, install other dependencies
 sphinx

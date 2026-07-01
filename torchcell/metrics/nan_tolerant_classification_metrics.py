@@ -204,7 +204,7 @@ class NaNTolerantAUROC(NaNTolerantMetricBase):
 
         # Compute TPR and FPR
         tps = torch.cumsum(sorted_targets, 0)
-        fps = torch.cumsum(~sorted_targets.bool().float(), 0)
+        fps = torch.cumsum((~sorted_targets.bool()).float(), 0)
 
         tpr = tps / (tps[-1] + 1e-10)
         fpr = fps / (fps[-1] + 1e-10)

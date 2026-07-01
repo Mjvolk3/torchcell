@@ -49,10 +49,8 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
             pre_transform: Optional transform applied before saving.
         """
         self.genome: SCerevisiaeGenome | ParsedGenome | None = genome
-        # NOTE: positional args here put `transform` into the base `model_name`
-        # slot and drop `pre_transform`; preserved as-is to avoid changing behavior.
-        super().__init__(root, transform, pre_transform)  # type: ignore[arg-type]  # latent positional-arg mismatch; preserved to avoid behavior change
         self.model_name = model_name
+        super().__init__(root, self.model_name, transform, pre_transform)
 
         # Conditionally load the data
         if self.model_name:

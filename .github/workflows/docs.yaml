@@ -14,21 +14,25 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.11.7
+          python-version: "3.13"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          # CPU-only torch + prebuilt torch-scatter wheel (no GPU on the runner, no
+          # source build) so torchcell and its model modules import for autodoc.
+          pip install "torch==2.11.0" --index-url https://download.pytorch.org/whl/cpu
+          pip install torch-scatter -f https://data.pyg.org/whl/torch-2.11.0+cpu.html
           pip install -r docs/requirements.txt
 
       - name: Build the documentation
         run: |
-          sphinx-build -b html docs build/docs
+          sphinx-build -b html docs/source build/docs
 
       - name: Deploy to GitHub Pages
         if: github.ref == 'refs/heads/main'

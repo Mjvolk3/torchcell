@@ -29,6 +29,9 @@ jobs:
           pip install "torch==2.11.0" --index-url https://download.pytorch.org/whl/cpu
           pip install torch-scatter -f https://data.pyg.org/whl/torch-2.11.0+cpu.html
           pip install -r docs/requirements.txt
+          # Install the LOCAL torchcell (this checkout) so autodoc documents THIS repo,
+          # not the ancient PyPI 0.2.6 release.
+          pip install -e .
 
       - name: Build the documentation
         run: |

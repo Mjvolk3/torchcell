@@ -190,7 +190,7 @@ This note was deprecated and we changed to weekly tasks notes to reduce lag of r
 ## 2024.04.22
 
 - [x] Commit `fudt` and `ProtT5` images
-- [x] Outline of Figure 2. → ![](./assets/drawio/Fig2-Traditional-ML-Outline.drawio.png)
+- [x] Outline of Figure 2. → ![](./assets/drawio/SI-Fig2-Traditional-ML-Outline.drawio.png)
 - [x] Check on `Delta` Deep Set sweep. There is better fault tolerance now, I think this is taken care of by `wandb.finish()`, but we still get some broken pipes 💦 .  `nt_window_5979` and `nt_window_five_prime_1003` were configs with broken pipe. Check with offline mode.
 - [x] Run offline `Delta` sweep. → This seemed to work fine, no pipe errors. → Try large experiment.
 - [x] Traditional machine learning `402` and `404` failed, these are `normalized_chrom_pathways` and `one_hot_gene` → These failed again. → changed to run in offline mode... → Having a lot of issue on `Delta`. Running just one run now.

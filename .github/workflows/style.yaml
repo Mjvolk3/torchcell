@@ -34,3 +34,25 @@ jobs:
         run: |
           ruff check torchcell tests
           ruff format --check torchcell tests
+
+      # WS5: NEW experiments (numbered >= 016) are held to ruff + format; everything
+      # <= 015, DEPRECATED_*, and non-numbered utility dirs stay frozen for
+      # reproducibility (Decision 5). The numeric threshold auto-includes future
+      # experiments by their id; empty today (latest is 015) so this step is a no-op.
+      # Strict mypy / pytest on an experiment remains opt-in per experiment.
+      - name: Ruff on gated experiments (numbered >= 016; blocking)
+        run: |
+          GATED=""
+          for d in experiments/*/; do
+            name=$(basename "$d")
+            num=${name%%-*}
+            case "$num" in ""|*[!0-9]*) continue;; esac
+            [ "$((10#$num))" -ge 16 ] && GATED="$GATED $d"
+          done
+          if [ -n "$GATED" ]; then
+            echo "Gated experiments (>=016):$GATED"
+            ruff check $GATED
+            ruff format --check $GATED
+          else
+            echo "No gated (>=016) experiments yet -- nothing to lint."
+          fi

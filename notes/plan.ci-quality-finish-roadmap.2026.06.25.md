@@ -390,3 +390,31 @@ naive rule with "include administrators" would jam the release flow. Decide befo
 enabling.
 
 **WS4 (`#8`):** ruff+mypy blocking = done; pytest-blocking tracked in **`#16`**.
+
+## 2026.06.30 - WS5 DONE: experiments CI scope = numbered threshold ≥016
+
+**Decision (user):** NEW experiments (numbered **≥ 016**) are held to **ruff + format**;
+everything **≤ 015**, all `DEPRECATED_*`, and non-numbered utility dirs (`database`,
+`embeddings`, `figures`, `smf-dmf-tmf-001`, `tcdb-001`, `W006-*`, …) stay **frozen** for
+reproducibility. Allowlist (drift risk) and per-experiment opt-in markers (machinery)
+were rejected in favor of the numeric threshold — it matches the existing 002–015
+convention and auto-includes new work by its id, zero bookkeeping.
+
+**Enforcement** (`.github/workflows/style.yaml`, a step in the *blocking* ruff job):
+numerically selects `experiments/NNN-*` with `NNN ≥ 16` (base-10, leading zeros handled
+via `10#`) and runs `ruff check` + `ruff format --check` on them. Empty today (latest is
+015) → verified no-op; the first `016-*` auto-enters the gate. The
+`[tool.ruff.lint.per-file-ignores]` `experiments/**` relaxations (D100/D103/E402) still
+apply, so experiment scripts get a pragmatic lint bar, not the full docstring regime.
+
+**mypy + pytest: opt-in, not forced.** Strict mypy on research scripts is too heavy to
+force; experiments stay out of the mypy gate (`files=[torchcell,tests]` + `exclude
+…torchcell/experiments/`). To type-check a specific experiment, add its path to a mypy
+invocation. pytest is moot unless an experiment ships tests (none do); if one does, add
+its test path to the pytest gate.
+
+**Legacy freeze** unchanged (Decision 5/6): old experiments are refactored only behind
+preserved git tags.
+
+Remaining roadmap: **WS6** (torch/PyG upgrade, `#9`), **WS7** (`weighted_mse` migration,
+`#10`, needs user intent), plus **#16** (finish pytest → blocking).

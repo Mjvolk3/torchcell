@@ -435,3 +435,50 @@ supports `mse`/`mae` and `ValueError`s otherwise. ruff + mypy clean; `#10` close
 **#16** (finish pytest → blocking). WS6 is a large, breaking dependency upgrade best done
 as its own planned effort (green tests as the safety net); #16 was deliberately deferred
 by the WS4 decouple.
+
+## 2026.06.30 - WS6 KICKOFF / PREFLIGHT (torch 2.9→2.12.1, PyG 2.7→2.8, `#9`)
+
+Everything WS6 needs is on `main` (~`af07c437`): WS1–WS5 + WS7 + two latent bug fixes
+(`#11` AUROC `~`-on-float crash, `#13` NucleotideTransformer arg misroute). All gates
+green; `main` releasable, still at `v1.1.4` (nothing published since — all commits used
+non-releasing prefixes).
+
+### State WS6 inherits
+- **Gates on `main`:** ruff BLOCKING whole-tree (+ a `≥016` experiments step, no-op
+  today); mypy BLOCKING diff-scoped `--follow-imports=silent` on changed `torchcell`
+  files (`torchcell/experiments/` filtered out of `$FILES`); pytest ADVISORY
+  (`continue-on-error`).
+- **Enforcement:** `main` branch protection requires the `ruff` + `mypy-check` checks,
+  `enforce_admins=false`. A WS6 **PR must be ruff+mypy green to merge** (admin can
+  override). Land via worktree → PR → gates → merge.
+- **Release:** semantic-release runs on push to main via admin PAT
+  `TORCHCELL_SEMANTIC_RELEASE_TOKEN` (bypasses protection; validated no-op, not yet a
+  real release). scipy parser — releasing tags `API/DEP/DEV/ENH/REV/FEAT/BLD/BUG/MAINT`;
+  a dep bump is naturally `DEP:` (minor). Non-scipy prefixes (`ci:`/`fix:`/`test:`/
+  `refactor:`) DON'T release.
+- **Safety net = LOCAL tests.** `not gpu` suite is locally green (~218/3/0, WS3) but
+  pytest is CI-advisory + CI-fragile (`#16`). Verify WS6 with the **local** suite +
+  import smoke, not the CI gate. Env: `~/miniconda3/envs/torchcell` (py3.13, currently
+  torch 2.9.0+cu128, PyG 2.7.0).
+
+### Scope + known landmines
+- Bump torch 2.9.0→2.12.1, torch_geometric 2.7.0→2.8.0, aligned `torch-scatter` /
+  `torch-sparse`, CUDA `cu12x` wheels. Files: `env/requirements*.txt`, `pyproject.toml`
+  (`requires-python>=3.13` already set).
+- `torch-scatter`/`torch-sparse` compile C++ exts that import torch at BUILD time →
+  install with `--no-build-isolation`. Wheel/CUDA (cu12x) alignment is the usual pain.
+- **PyG MessagePassing PEP-604 issue is NOT fixed by the upgrade** (PyG #10138,
+  not-planned): keep the `UP007/UP045` per-file-ignores on
+  `nn/stoichiometric_hypergraph_conv.py` + `nn/masked_gin_conv.py`. See
+  [[ruff-up-breaks-pyg-messagepassing]].
+- Expect PyG 2.8 API drift + torch 2.12 deprecations across models/nn/trainers, and
+  possible disturbance to the local CUDA/GPU setup — worktree-isolate; be ready to
+  reinstall the env.
+
+### Recommended approach
+1. `setup-worktree`; optionally scope the breaks with `/plan-4.8` first.
+2. Bump requirements + pyproject; reinstall env (`--no-build-isolation` for
+   scatter/sparse).
+3. `import torchcell` + subpackage smoke; fix breakage iteratively.
+4. Run the LOCAL `not gpu` suite as the safety net — keep it at-or-better than 218/3/0.
+5. Land via PR (ruff+mypy verify); merge; decide release (`DEP:` minor vs hold).

@@ -1,10 +1,11 @@
 # torch-scatter is installed as a prebuilt CPU wheel in .github/workflows/docs.yaml
-# (before this file), avoiding a slow/fragile source build against torch.
-torchcell
-# Then, install other dependencies
-sphinx
-sphinx_rtd_theme
+# (before this file); torchcell itself is installed from the LOCAL checkout via
+# `pip install -e .` in the workflow (documents this repo, not the ancient PyPI 0.2.6).
+# Modern py3.13-compatible docs stack (sphinx 8.x): sphinx 5.1.1 imported the stdlib
+# `imghdr` removed in py3.13. The torchcell_sphinx_theme fork (git, below) was updated
+# to require sphinx>=7; myst-parser needs sphinx>=8.
+sphinx>=8,<9
+sphinx_rtd_theme>=3.0
 myst_parser
-pytorch_sphinx_theme
 nbsphinx
 git+https://github.com/Mjvolk3/torchcell_sphinx_theme

@@ -132,30 +132,34 @@ def test_concurrent_writes():
 
 
 def test_cleanup_lock_files():
-    """Test lock file cleanup functionality."""
+    """cleanup_lock_files removes orphaned .lock files and leaves data files intact.
+
+    The precondition (orphan ``.lock`` sidecars) is constructed explicitly rather
+    than relying on ``write_json_with_lock`` leaving lock files behind: filelock
+    >= 3.21.0 (2026-02-12, py-filelock changelog "delete lock file on release")
+    removes the lock file on release on Unix, so that assumption is version- and
+    OS-dependent. This asserts what ``cleanup_lock_files`` actually promises --
+    removing orphaned ``*.lock`` files while leaving ``*.json`` data untouched.
+    """
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
 
-        # Create some files and write to them (creates lock files)
+        # Data files plus explicit orphan lock sidecars. The ".json.lock" naming
+        # matches FileLockHelper._get_lock_path ("<name>.json" -> "<name>.json.lock").
         for i in range(3):
-            file_path = tmp_path / f"file_{i}.json"
-            FileLockHelper.write_json_with_lock(file_path, {"id": i})
+            FileLockHelper.write_json_with_lock(tmp_path / f"file_{i}.json", {"id": i})
+            (tmp_path / f"file_{i}.json.lock").touch()
 
-        # Check that lock files exist
-        lock_files = list(tmp_path.glob("*.lock"))
-        assert len(lock_files) == 3
+        # Precondition: three orphan lock files exist regardless of filelock version.
+        assert len(list(tmp_path.glob("*.lock"))) == 3
 
-        # Clean up lock files
+        # Clean up lock files.
         removed_count = FileLockHelper.cleanup_lock_files(tmp_path)
         assert removed_count == 3
 
-        # Verify lock files are gone
-        lock_files = list(tmp_path.glob("*.lock"))
-        assert len(lock_files) == 0
-
-        # Verify data files still exist
-        data_files = list(tmp_path.glob("*.json"))
-        assert len(data_files) == 3
+        # Lock files removed; data files untouched.
+        assert len(list(tmp_path.glob("*.lock"))) == 0
+        assert len(list(tmp_path.glob("*.json"))) == 3
 
 
 def test_nested_directories():

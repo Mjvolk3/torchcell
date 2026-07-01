@@ -8,6 +8,7 @@ CRITICAL: These tests ensure that masked message passing does NOT negate
 the 3.65x speedup from LazySubgraphRepresentation.
 """
 
+import os
 import time
 
 import pytest
@@ -76,6 +77,7 @@ def test_no_edge_filtering(synthetic_data, gin_mlp, device):
     assert out.shape == (x.size(0), 64)
 
 
+@pytest.mark.gpu
 def test_masked_vs_filtered_speed(synthetic_data, gin_mlp, device):
     """Benchmark: Masked message passing vs edge filtering.
 
@@ -131,6 +133,9 @@ def test_masked_vs_filtered_speed(synthetic_data, gin_mlp, device):
     )
 
 
+@pytest.mark.skipif(
+    os.getenv("DATA_ROOT") is None, reason="requires DATA_ROOT data (absent in CI)"
+)
 def test_pyg_concatenated_batch(device):
     """Test with real PyG concatenated batch format from LazySubgraphRepresentation.
 

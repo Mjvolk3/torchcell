@@ -13,12 +13,12 @@ concurrency:
 jobs:
   pytest-coverage:
     runs-on: ubuntu-latest
-    # Advisory (WS4 decouple): the full suite is not yet CI-hardened -- several tests
-    # assume ambient DATA_ROOT / /scratch data, a wall-clock micro-benchmark, and
-    # filelock-version-specific behavior. Keep pytest RUNNING for visibility but
-    # NON-BLOCKING until a focused follow-up makes those CI-portable; ruff + mypy are
-    # blocking. Remove continue-on-error to flip pytest blocking once the suite is green.
-    continue-on-error: true
+    # Blocking (#16): the CI-fragile tests are hardened -- test_s288c has a module-level
+    # DATA_ROOT skip, the wall-clock benchmark is gpu-marked (deselected), the PyG-batch
+    # test is DATA_ROOT-guarded, and test_cleanup_lock_files is filelock-version-robust --
+    # and the torch/torch-scatter install is CPU-only + prebuilt-wheel (no source build).
+    # `pytest tests/torchcell -m "not gpu"` gates PRs. See
+    # notes/plan.pytest-ci-blocking.2026.07.01.md.
 
     steps:
     - uses: actions/checkout@v4
@@ -33,23 +33,23 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('env/requirements.txt') }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('env/requirements.txt', 'env/requirements_dependent.txt', 'env/requirements_test.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
 
     - name: Install base dependencies
       run: |
         python -m pip install --upgrade pip
+        # CPU-only torch on the runner (no GPU): avoids ~2GB of unused CUDA libraries
+        # and CUDA-init noise, and matches the prebuilt +cpu torch-scatter wheel below.
+        pip install "torch==2.11.0" --index-url https://download.pytorch.org/whl/cpu
         pip install -r env/requirements.txt
 
-    - name: Install base-dependent dependencies
+    - name: Install base-dependent dependencies (torch-scatter, prebuilt CPU wheel)
       run: |
-        # torch-scatter compiles a C++ extension and imports torch at BUILD time;
-        # pip's build isolation hides the torch installed above, so the build fails
-        # with "No module named 'torch'". Install the build backend and build
-        # against the already-installed torch with --no-build-isolation.
-        pip install setuptools wheel ninja
-        pip install --no-build-isolation -r env/requirements_dependent.txt
+        # Prebuilt CPU torch-scatter wheel matched to the CPU torch above -- no source
+        # compile, no --no-build-isolation (which turned red under torch 2.11 on CPU CI).
+        pip install -r env/requirements_dependent.txt -f https://data.pyg.org/whl/torch-2.11.0+cpu.html
 
     - name: Install test dependencies
       run: |
@@ -70,5 +70,8 @@ jobs:
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v4
+      # Keep coverage upload best-effort now that the job blocks -- a Codecov outage or
+      # missing token must not fail the (now-required) pytest gate.
+      continue-on-error: true
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

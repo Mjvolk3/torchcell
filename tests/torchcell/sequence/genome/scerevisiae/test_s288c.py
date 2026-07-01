@@ -12,6 +12,13 @@ load_dotenv()
 
 DATA_ROOT = os.getenv("DATA_ROOT")
 
+# Skip the whole module where DATA_ROOT is unset (CI): these tests build a real
+# SCerevisiaeGenome from the SGD genome data under DATA_ROOT. Without a module-level
+# guard, the genome fixture's assert would surface as an ERROR (not a skip) for every
+# test. Mirrors the guard idiom in tests/torchcell/data/test_cell_data.py.
+if DATA_ROOT is None:
+    pytest.skip("requires DATA_ROOT data (absent in CI)", allow_module_level=True)
+
 
 @pytest.fixture
 def genome():

@@ -80,7 +80,7 @@
 
     # database stack
     lmdb>=1.4.1
-    filelock>=3.13.0
+    filelock>=3.20.1
 
 
     # web stack

@@ -1,4 +1,7 @@
 # env/requirements_dependent.txt
-# Must me installed after requirements.txt
+# Must be installed AFTER requirements.txt (needs torch already present).
+# torch-scatter ships prebuilt wheels matched to the exact torch build; install from
+# the PyG wheel index rather than PyPI, e.g. for torch 2.11.0 + CUDA 12.8:
+#   pip install torch-scatter -f https://data.pyg.org/whl/torch-2.11.0+cu128.html
 # torch stack
 torch-scatter>=2.1.2

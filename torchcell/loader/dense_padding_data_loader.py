@@ -14,8 +14,7 @@ from torch_geometric.data.datapipes import DatasetAdapter
 from torch_geometric.data.on_disk_dataset import OnDiskDataset
 from torch_geometric.data.storage import BaseStorage
 from torch_geometric.typing import SparseTensor, TensorFrame, torch_frame
-from torch_geometric.utils import is_sparse, is_torch_sparse_tensor
-from torch_geometric.utils.sparse import cat
+from torch_geometric.utils import is_sparse
 
 FLOAT_PADDING_VALUE = 1e-5
 NON_FLOAT_PADDING_VALUE = -1
@@ -178,16 +177,6 @@ def _dense_padded_collate(
         raise NotImplementedError(
             "Dense padding collation for SparseTensors is not supported (tested) yet."
         )
-        import torch_sparse
-
-        values, mask = _dense_pad_tensor(
-            key, values, non_float_padding_value=non_float_padding_value
-        )
-        if is_torch_sparse_tensor(elem):
-            value = cat(values, dim=cat_dim)
-        else:
-            value = torch_sparse.cat(values, dim=cat_dim)
-        return value, mask
 
     elif isinstance(elem, (int, float)):
         # Convert a list of numerical values to a `torch.Tensor`.

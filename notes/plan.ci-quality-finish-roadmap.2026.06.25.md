@@ -444,6 +444,7 @@ green; `main` releasable, still at `v1.1.4` (nothing published since — all com
 non-releasing prefixes).
 
 ### State WS6 inherits
+
 - **Gates on `main`:** ruff BLOCKING whole-tree (+ a `≥016` experiments step, no-op
   today); mypy BLOCKING diff-scoped `--follow-imports=silent` on changed `torchcell`
   files (`torchcell/experiments/` filtered out of `$FILES`); pytest ADVISORY
@@ -462,6 +463,7 @@ non-releasing prefixes).
   torch 2.9.0+cu128, PyG 2.7.0).
 
 ### Scope + known landmines
+
 - Bump torch 2.9.0→2.12.1, torch_geometric 2.7.0→2.8.0, aligned `torch-scatter` /
   `torch-sparse`, CUDA `cu12x` wheels. Files: `env/requirements*.txt`, `pyproject.toml`
   (`requires-python>=3.13` already set).
@@ -476,9 +478,76 @@ non-releasing prefixes).
   reinstall the env.
 
 ### Recommended approach
+
 1. `setup-worktree`; optionally scope the breaks with `/plan-4.8` first.
 2. Bump requirements + pyproject; reinstall env (`--no-build-isolation` for
    scatter/sparse).
 3. `import torchcell` + subpackage smoke; fix breakage iteratively.
 4. Run the LOCAL `not gpu` suite as the safety net — keep it at-or-better than 218/3/0.
 5. Land via PR (ruff+mypy verify); merge; decide release (`DEP:` minor vs hold).
+
+## 2026.07.01 - WS6 EXECUTION (DONE: torch 2.11.0, PyG 2.8.0)
+
+Landed in worktree `deps/torch-pyg-upgrade`. Preflight recon changed two of its
+assumptions, both de-risking the bump:
+
+- **Target is torch 2.11.0, NOT 2.12.1.** On our CUDA (`cu128`) the PyTorch wheel
+  index caps at 2.11.0; torch 2.12.x ships only `cu126/cu130/cu132` — reaching it
+  would force a CUDA-toolkit migration (the "disturb GPU setup" landmine). We chose
+  2.11.0 to stay on cu128. PyG 2.8.0 is the real latest.
+- **No C++ compile needed.** `torch-scatter` has a **prebuilt** cp313 wheel
+  (`scatter-2.1.2+pt211cu128`) on the PyG wheel index → plain wheel install, the
+  `--no-build-isolation`/nvcc path is avoided. `torch_sparse` was **dead code**
+  (unreachable `import` after a `raise` in `loader/dense_padding_data_loader.py`) and
+  isn't in any requirements file — dropped it + trimmed the orphaned
+  `cat`/`is_torch_sparse_tensor` imports.
+- **Env: in-place reinstall of the shared `~/miniconda3/envs/torchcell`** (a worktree
+  isolates code, not the conda env). Stack was lean (no torchvision/torchaudio), so
+  only 3 packages moved.
+
+### Files changed (3)
+
+- `env/requirements.txt`: `torch>=2.11.0`, `torch_geometric>=2.8.0` (floors).
+- `env/requirements_dependent.txt`: documented the PyG-wheel-index install for
+  `torch-scatter` (still `>=2.1.2`).
+- `torchcell/loader/dense_padding_data_loader.py`: removed the dead `torch_sparse`
+  branch body + its two now-unused imports.
+
+### Install method (reproducible)
+
+```bash
+pip install --upgrade "torch==2.11.0+cu128" --index-url https://download.pytorch.org/whl/cu128
+pip install --upgrade "torch_geometric==2.8.0"
+pip install --force-reinstall --no-deps torch_scatter -f https://data.pyg.org/whl/torch-2.11.0+cu128.html
+```
+
+`--force-reinstall` on scatter is required: pip treats bare `2.1.2` as satisfied and
+won't swap the `pt29`→`pt211` build otherwise.
+
+### Verification (all green)
+
+- Import smoke: torch 2.11.0+cu128, PyG 2.8.0, scatter 2.1.2+pt211cu128, `cuda.is_available()=True`
+  (GPU intact); the two PEP-604 MessagePassing convs still import under PyG 2.8 — the
+  `UP007/UP045` ignores stay correct (see [[ruff-up-breaks-pyg-messagepassing]]).
+- Ruff whole-tree: pass. Mypy (changed file, `--follow-imports=silent`): pass.
+- LOCAL `not gpu` suite: **218 passed, 3 skipped, 2 deselected** — identical to the
+  218/3/0 baseline, now on the new stack.
+
+### Deferred (out of WS6 scope; backlog)
+
+- `env/igb_delta_match_req.txt` left frozen (exact cluster-match snapshot; separate
+  Delta-sync task, not the dev floors).
+- Deprecations surfaced by the suite, none first-party-blocking: PyG-internal
+  `inspector.py` `typing._eval_type` (disallowed Py3.15, PyG upstream);
+  `torch.jit.script` deprecated (torch-wide); Pydantic-2.12 `@model_validator`
+  after-on-classmethod in `datamodels/schema.py:643` (pre-existing, Pydantic not torch).
+- CI's **advisory** pytest job may go red: it source-builds `torch-scatter` against
+  torch 2.11 (`--no-build-isolation`, no prebuilt CPU wheel fetched). Non-blocking
+  (only ruff+mypy gate the PR). Optional follow-up: point that step at the `+cpu`
+  prebuilt wheel (`-f https://data.pyg.org/whl/torch-2.11.0+cpu.html`).
+
+### Release
+
+Committed `DEP:` (semantic-release minor). Release fires at merge-to-main via the
+admin PAT — this merge doubles as the first real release since `v1.1.4` (validates
+the PAT flow) and clears all accumulated unreleased commits.

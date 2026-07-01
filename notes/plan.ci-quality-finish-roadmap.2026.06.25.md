@@ -418,3 +418,20 @@ preserved git tags.
 
 Remaining roadmap: **WS6** (torch/PyG upgrade, `#9`), **WS7** (`weighted_mse` migration,
 `#10`, needs user intent), plus **#16** (finish pytest → blocking).
+
+## 2026.06.30 - WS7 DONE: removed dead weighted_mse stub
+
+`SimpleLinearRegressionTask`'s `weighted_mse` branch was a `raise NotImplementedError`
+stub reachable **only** from the frozen `DEPRECATED_costanzo_smf_dmf_supervised`
+experiment (its config sets `loss: weighted_mse`; the trainer is instantiated nowhere
+else live). The new `WeightedMSELoss(weights=)` (multi_dim_nan_tolerant.py:327) is a
+per-dimension, NaN-tolerant, **tuple-returning** loss — incompatible with the trainer's
+single-tensor `self.loss(y_hat, y)` flow and semantically unrelated to the old scalar
+`mean_value=/penalty=`. Migrating would mean *inventing* weighting semantics for dead
+code, so **removed** the branch + the stale commented import (user decision). `loss` now
+supports `mse`/`mae` and `ValueError`s otherwise. ruff + mypy clean; `#10` closed.
+
+**Roadmap status: WS1–WS5 + WS7 done.** Remaining: **WS6** (torch/PyG upgrade, `#9`) +
+**#16** (finish pytest → blocking). WS6 is a large, breaking dependency upgrade best done
+as its own planned effort (green tests as the safety net); #16 was deliberately deferred
+by the WS4 decouple.

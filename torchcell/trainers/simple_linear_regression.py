@@ -23,9 +23,6 @@ from torchmetrics import (
 )
 
 import torchcell
-
-# TODO renamed
-# from torchcell.losses import WeightedMSELoss
 from torchcell.viz import fitness, genetic_interaction_score
 
 style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
@@ -70,13 +67,6 @@ class SimpleLinearRegressionTask(L.LightningModule):
         self.loss: nn.Module
         if loss == "mse":
             self.loss = nn.MSELoss()
-        elif loss == "weighted_mse":
-            # WeightedMSELoss moved to torchcell.losses.multi_dim_nan_tolerant with a
-            # new per-dimension `weights=` API (was mean_value=/penalty=); this branch
-            # needs deliberate migration to that signature before use.
-            raise NotImplementedError(
-                "weighted_mse loss needs migration to WeightedMSELoss(weights=...)"
-            )
         elif loss == "mae":
             self.loss = nn.L1Loss()
         else:

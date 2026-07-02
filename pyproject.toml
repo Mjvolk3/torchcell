@@ -105,6 +105,7 @@ exclude = '''(?x)(
   | _scratch\.py$
   | torchcell/delete_subset\.py$
   | torchcell/models/hetero_cell_nsa_retry\.py$
+  | torchcell/trainers/utils\.py$
   | torchcell/pypy_adapters/
   | torchcell/experiments/
 )'''
@@ -121,9 +122,16 @@ namespace_packages = true
 [[tool.mypy.overrides]]
 # Dead/legacy modules reached via imports, so the discovery `exclude` above does
 # not stop mypy following into them. ignore_errors drops them from the strict
-# gate entirely: scratch one-offs, and the PyPy-only adapter path (imported by
-# knowledge_graphs/create_pypy_scerevisiae_kg.py).
-module = ["torchcell.scratch.*", "torchcell.pypy_adapters.*"]
+# gate entirely: scratch one-offs, the PyPy-only adapter path (imported by
+# knowledge_graphs/create_pypy_scerevisiae_kg.py), and two frozen legacy models
+# (graph_attention/graph_convolution) re-exported by torchcell.models.__init__ but
+# used only by the DEPRECATED_costanzo_smf_dmf_supervised experiment.
+module = [
+    "torchcell.scratch.*",
+    "torchcell.pypy_adapters.*",
+    "torchcell.models.graph_attention",
+    "torchcell.models.graph_convolution",
+]
 ignore_errors = true
 
 [[tool.mypy.overrides]]

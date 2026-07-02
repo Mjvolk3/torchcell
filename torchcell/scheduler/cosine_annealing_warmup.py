@@ -57,7 +57,7 @@ class CosineAnnealingWarmupRestarts(_LRScheduler):
             param_group["lr"] = self.min_lr
             self.base_lrs.append(self.min_lr)
 
-    def get_lr(self) -> list[float]:
+    def get_lr(self) -> list[float | torch.Tensor]:
         """Compute the learning rates for the current step (warmup or cosine)."""
         if self.step_in_cycle == -1:
             return self.base_lrs

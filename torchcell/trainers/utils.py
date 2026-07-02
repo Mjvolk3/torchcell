@@ -3,9 +3,9 @@
 NOTE: This module targets the pydantic v1 API (``ConstrainedStr``, ``validator``,
 ``__root__``), which was removed in pydantic v2. It has no importers in the
 codebase and raises ``PydanticImportError`` on import under the installed
-pydantic v2, so it is effectively dead (zero importers). It is excluded from the
-strict mypy gate via ``[tool.mypy] exclude`` in pyproject.toml; a proper fix is
-migration to pydantic v2 or removal (out of type-only scope).
+pydantic v2, so it is effectively dead (zero importers). It is dropped from the
+strict mypy gate via a ``[tool.mypy] ignore_errors`` override in pyproject.toml; a
+proper fix is migration to pydantic v2 or removal (out of type-only scope).
 """
 
 from typing import Any

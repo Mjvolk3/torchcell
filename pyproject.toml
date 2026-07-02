@@ -105,7 +105,6 @@ exclude = '''(?x)(
   | _scratch\.py$
   | torchcell/delete_subset\.py$
   | torchcell/models/hetero_cell_nsa_retry\.py$
-  | torchcell/trainers/utils\.py$
   | torchcell/pypy_adapters/
   | torchcell/experiments/
 )'''
@@ -120,17 +119,21 @@ explicit_package_bases = true
 namespace_packages = true
 
 [[tool.mypy.overrides]]
-# Dead/legacy modules reached via imports, so the discovery `exclude` above does
-# not stop mypy following into them. ignore_errors drops them from the strict
-# gate entirely: scratch one-offs, the PyPy-only adapter path (imported by
-# knowledge_graphs/create_pypy_scerevisiae_kg.py), and two frozen legacy models
-# (graph_attention/graph_convolution) re-exported by torchcell.models.__init__ but
-# used only by the DEPRECATED_costanzo_smf_dmf_supervised experiment.
+# Dead/legacy modules that mypy still PROCESSES (so the discovery `exclude` above
+# cannot drop them): reached via imports, or passed explicitly by the diff-scoped CI
+# mypy (which bypasses `exclude`). ignore_errors is module-scoped and honored in both
+# cases, so it is the robust mechanism for changed-but-dead files. Covers: scratch
+# one-offs; the PyPy-only adapter path (imported by
+# knowledge_graphs/create_pypy_scerevisiae_kg.py); two frozen legacy models
+# (graph_attention/graph_convolution, re-exported by torchcell.models.__init__, used
+# only by the DEPRECATED_costanzo_smf_dmf_supervised experiment); and trainers/utils
+# (pydantic-v1, raises on import, zero importers).
 module = [
     "torchcell.scratch.*",
     "torchcell.pypy_adapters.*",
     "torchcell.models.graph_attention",
     "torchcell.models.graph_convolution",
+    "torchcell.trainers.utils",
 ]
 ignore_errors = true
 

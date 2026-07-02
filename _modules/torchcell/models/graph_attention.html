@@ -109,7 +109,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Build the DeepSet encoder, GATv2 layers, and post-readout set layers.&quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">deepset</span> <span class="o">=</span> <span class="n">DeepSet</span><span class="p">(</span>  <span class="c1"># type: ignore[call-arg]  # dead code: legacy DeepSet kwargs (node_layers/set_layers) predate current signature</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deepset</span> <span class="o">=</span> <span class="n">DeepSet</span><span class="p">(</span>  <span class="c1"># legacy dead-code (module under mypy ignore_errors): kwargs predate current DeepSet signature</span>
             <span class="n">in_channels</span><span class="o">=</span><span class="n">input_dim</span><span class="p">,</span>
             <span class="n">node_layers</span><span class="o">=</span><span class="n">node_layers</span><span class="p">,</span>
             <span class="n">set_layers</span><span class="o">=</span><span class="p">[],</span>

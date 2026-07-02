@@ -13,6 +13,14 @@ Below: (A) what already landed this session, (B) THE task, (C) repo/env state + 
 Related: [[plan.ci-quality-finish-roadmap.2026.06.25]], [[plan.pytest-ci-blocking.2026.07.01]],
 [[ruff-up-breaks-pyg-messagepassing]], [[semantic-release-pushes-bump-commit]].
 
+> **STATUS 2026.07.01 - COMPLETED IN-SESSION (not handed off).** Section B was executed
+> and landed on `main`: Sphinx 8 / py3.13, the `torchcell_sphinx_theme` fork's
+> `sphinx==5.1.1` pin relaxed to `>=7`, local `pip install -e .`, the `sequence`
+> `data_classes`/`helper_functions` doc-lists restored, and the gh-pages deploy fixed via
+> the admin PAT. **Docs build + deploy are green and published to GitHub Pages.** `#16`
+> (pytest blocking) is also merged and enforced as a required check. The sections below
+> are kept as the execution record.
+
 ## A. Already done this session (context — do NOT redo)
 
 ### WS6 -- torch/PyG upgrade (`#9`): DONE + RELEASED `v1.2.0`

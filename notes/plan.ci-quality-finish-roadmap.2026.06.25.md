@@ -562,7 +562,7 @@ the PAT flow) and clears all accumulated unreleased commits.
 > issues `#9` (WS6) and `#16` (pytest-blocking) closed as done. The optional polish
 > parked in the 2026.06.29 section is now executed (branch `plan/ci-mypy-polish`).
 
-### Post-roadmap mypy polish (branch `plan/ci-mypy-polish`, 4 `STY:` commits)
+### Post-roadmap mypy polish (branch `plan/ci-mypy-polish`, 5 `STY:` commits)
 
 Ran a **local whole-tree** `mypy` (CI only runs it diff-scoped) and found it was
 **not** clean: **4 errors** in `scheduler/cosine_annealing_warmup.py` — a regression
@@ -574,10 +574,12 @@ added**; ruff clean; `not gpu` suite unaffected (no test imports any changed mod
 
 - **(E)** widened the `get_lr` override annotation to match the torch-2.11 supertype
   (pure type change, no runtime effect).
-- **(D)** demoted 3 dead modules from inline ignores to pyproject: `trainers/utils.py`
-  (pydantic-v1, raises on import, 0 importers) → `exclude`; `graph_attention` /
-  `graph_convolution` (re-exported but used only by `DEPRECATED_costanzo`) →
-  `ignore_errors` override (import-reached, so `exclude` alone would not drop them).
+- **(D)** demoted 3 dead modules from inline ignores to a pyproject `ignore_errors`
+  override: `graph_attention` / `graph_convolution` (re-exported but used only by
+  `DEPRECATED_costanzo`) and `trainers/utils.py` (pydantic-v1, raises on import, 0
+  importers). Chose `ignore_errors` over `exclude` because the diff-scoped CI passes
+  changed files to mypy explicitly, which **bypasses `exclude`** (discovery-only);
+  `ignore_errors` is module-scoped and honored either way.
 - **(C)** unified the last divergent trainer (`fit_int_hetero_cell`,
   `cast(AttributeDict, ...)`) onto the `_HParams(Protocol)` + `hp` idiom used by
   `int_hetero_cell` / `int_hetero_cell_nsa` (18 sites; type-only).

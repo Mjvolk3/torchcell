@@ -41,7 +41,9 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Admin PAT (same one semantic-release uses): the default GITHUB_TOKEN is
+          # read-only, so the gh-pages push 403s ("denied to github-actions[bot]").
+          personal_token: ${{ secrets.TORCHCELL_SEMANTIC_RELEASE_TOKEN }}
           publish_dir: ./build/docs
 
   readthedocs:

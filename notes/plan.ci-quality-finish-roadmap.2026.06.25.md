@@ -551,3 +551,44 @@ won't swap the `pt29`→`pt211` build otherwise.
 Committed `DEP:` (semantic-release minor). Release fires at merge-to-main via the
 admin PAT — this merge doubles as the first real release since `v1.1.4` (validates
 the PAT flow) and clears all accumulated unreleased commits.
+
+## 2026.07.01 - ROADMAP COMPLETE + post-roadmap mypy polish
+
+> **STATUS: WS1-WS7 all DONE and enforced on `main`.** ruff + mypy + pytest are all
+> BLOCKING and are the three required status checks
+> (`ruff` / `mypy-check` / `pytest-coverage`); the latest `main` CI run is green on all
+> five jobs. The WS3 5-source-bug fixes are on `main` (commit `65558323`, sitting
+> between v1.1.2 and v1.1.3 in first-parent history); WS6 shipped `v1.2.0`. Stale
+> issues `#9` (WS6) and `#16` (pytest-blocking) closed as done. The optional polish
+> parked in the 2026.06.29 section is now executed (branch `plan/ci-mypy-polish`).
+
+### Post-roadmap mypy polish (branch `plan/ci-mypy-polish`, 4 `STY:` commits)
+
+Ran a **local whole-tree** `mypy` (CI only runs it diff-scoped) and found it was
+**not** clean: **4 errors** in `scheduler/cosine_annealing_warmup.py` — a regression
+the **WS6 torch 2.11 upgrade** introduced (its `LRScheduler.get_lr()` stub widened to
+`list[float | Tensor]`; `list` is invariant so our `-> list[float]` override clashed),
+**masked by diff-scoped CI** (unchanged file, never re-checked). Restored whole-tree
+`mypy = 0` (293 files) and did the three parked items. Net **-17 `# type: ignore`, 0
+added**; ruff clean; `not gpu` suite unaffected (no test imports any changed module).
+
+- **(E)** widened the `get_lr` override annotation to match the torch-2.11 supertype
+  (pure type change, no runtime effect).
+- **(D)** demoted 3 dead modules from inline ignores to pyproject: `trainers/utils.py`
+  (pydantic-v1, raises on import, 0 importers) → `exclude`; `graph_attention` /
+  `graph_convolution` (re-exported but used only by `DEPRECATED_costanzo`) →
+  `ignore_errors` override (import-reached, so `exclude` alone would not drop them).
+- **(C)** unified the last divergent trainer (`fit_int_hetero_cell`,
+  `cast(AttributeDict, ...)`) onto the `_HParams(Protocol)` + `hp` idiom used by
+  `int_hetero_cell` / `int_hetero_cell_nsa` (18 sites; type-only).
+- **(A)** fixed **9 real latent bugs** in `__main__` demo blocks: attrs classes were
+  called with the wrong kwarg (`data_root` → `genome_root` / `sgd_root`;
+  `transformer_model_name` → `model_name`) — would `TypeError` if run. Verified against
+  the `@define` fields + the file's own correct usage (`s288c.py:836`); mypy
+  re-verifies each. Left as-is: `cell.py`'s documented-illustrative `__main__`, the
+  third-party pronto/biocypher ignores, and the removed `fungal_utr_transformer` branch.
+
+**Finding worth keeping:** CI mypy is diff-scoped by design (env-divergence makes
+whole-tree unwinnable in CI), so **whole-tree type regressions from dependency
+upgrades can land invisibly**. A periodic local `python -m mypy` (or a scheduled
+whole-tree job) is the only thing that catches them.

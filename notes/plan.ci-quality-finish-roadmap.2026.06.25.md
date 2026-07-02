@@ -126,7 +126,7 @@ self-skip in CI instead of being `--ignore`d.
   data/GPU tests self-skip cleanly.
 - No test silenced by deletion/xfail without a written reason.
 
-## WS4. Flip CI gates advisory -> blocking (`#8`) — ▶ NEXT
+## WS4. Flip CI gates advisory -> blocking (`#8`) — ✅ DONE (ruff+mypy blocking & required; pytest -> #16, now blocking)
 
 **Goal/Scope.** Once WS2 (mypy) + WS3 (tests) are green, remove `continue-on-error` from the
 ruff/mypy/pytest CI jobs so they BLOCK; decide diff-scoped vs whole-tree (whole-tree once the
@@ -143,7 +143,7 @@ PRs) and `ci.yml` consolidation.
 - CI red on an intentionally-introduced ruff/mypy/test violation (gates actually block).
 - Green on a clean PR; no `continue-on-error` left on the quality jobs.
 
-## WS5. Experiments CI scope (= `#4`)
+## WS5. Experiments CI scope (= `#4`) — ✅ DONE (numbered threshold >=016)
 
 **Goal/Scope.** Decide + implement the mechanism to bring NEW experiments under ruff/mypy/pytest
 while keeping OLD experiments excluded and frozen for reproducibility (numbered-threshold vs
@@ -157,7 +157,7 @@ allowlist vs per-experiment opt-in). Legacy refactors only behind preserved git 
 
 - New-experiment opt-in mechanism documented + enforced; old experiments untouched.
 
-## WS6. Library currency (torch / torch_geometric upgrade) (`#9`) — UNBLOCKED (green tests landed)
+## WS6. Library currency (torch / torch_geometric upgrade) (`#9`) — ✅ DONE (torch 2.11.0 / PyG 2.8.0; released v1.2.0)
 
 **Goal/Scope.** Upgrade torch 2.9.0 -> 2.12.1 and torch_geometric 2.7.0 -> 2.8.0 (and aligned
 `torch-scatter`/`torch-sparse`, CUDA `cu12x` wheels). SEPARATE, deliberate task done AFTER the
@@ -173,7 +173,7 @@ PEP-604 issue (PyG won't fix it).
 - Env installs cleanly; `import torchcell` + subpackage smoke unchanged or better.
 - Full test suite green post-upgrade; any PyG/torch API breakage fixed.
 
-## WS7. Migrate the `weighted_mse` loss (small) (`#10`)
+## WS7. Migrate the `weighted_mse` loss (small) (`#10`) — ✅ DONE (dead stub removed)
 
 **Goal/Scope.** `SimpleLinearRegressionTask` (`trainers/simple_linear_regression.py`) has a
 `weighted_mse` branch currently stubbed `raise NotImplementedError` -- the old

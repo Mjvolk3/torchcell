@@ -1,0 +1,10 @@
+﻿torchcell.models.SimpleLinearModel
+==================================
+
+.. currentmodule:: torchcell.models
+
+.. autoclass:: SimpleLinearModel
+   :show-inheritance:
+   :members:
+   :inherited-members:
+   :special-members: __cat_dim__, __inc__

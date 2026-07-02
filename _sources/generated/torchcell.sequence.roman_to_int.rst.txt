@@ -1,0 +1,6 @@
+﻿torchcell.sequence.roman\_to\_int
+=================================
+
+.. currentmodule:: torchcell.sequence
+
+.. autofunction:: roman_to_int

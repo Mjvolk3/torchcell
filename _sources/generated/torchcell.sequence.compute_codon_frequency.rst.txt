@@ -1,0 +1,6 @@
+﻿torchcell.sequence.compute\_codon\_frequency
+============================================
+
+.. currentmodule:: torchcell.sequence
+
+.. autofunction:: compute_codon_frequency

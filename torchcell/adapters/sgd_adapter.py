@@ -99,12 +99,10 @@ if __name__ == "__main__":
         schema_config_path=SCHEMA_CONFIG_PATH,
     )
     genome = SCerevisiaeGenome(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"),  # type: ignore[call-arg]  # latent bug: SCerevisiaeGenome init field is genome_root, not data_root
-        overwrite=True,
+        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
     )
     graph = SCerevisiaeGraph(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"),  # type: ignore[call-arg]  # latent bug: SCerevisiaeGraph init field is sgd_root, not data_root
-        genome=genome,
+        sgd_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
 
     dataset = GeneEssentialitySgdDataset(

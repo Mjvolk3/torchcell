@@ -186,8 +186,8 @@ if __name__ == "__main__":
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     genome = SCerevisiaeGenome(
-        data_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"), overwrite=True
-    )  # type: ignore[call-arg]  # data_root is a valid Genome param; attrs hides it from mypy
+        genome_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"), overwrite=True
+    )
 
     model_names = [key for key in Esm2Dataset.MODEL_TO_WINDOW.keys()]
 

@@ -18,7 +18,7 @@ if __name__ == "__main__":
     nt_dataset = NucleotideTransformerDataset(
         root="data/scerevisiae/nucleotide_transformer_embed",
         genome=genome,
-        transformer_model_name=nucleotide_transformer_name,  # type: ignore[call-arg]  # transformer_model_name not in NucleotideTransformerDataset signature — FLAG
+        model_name=nucleotide_transformer_name,
     )
     # fungal utr transformer
     fungal_utr_transformer_name = "fut_window_3utr_300_undersize"

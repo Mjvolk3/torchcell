@@ -5,7 +5,7 @@ from collections.abc import Callable
 
 import pytest
 
-from torchcell.literature.manifest import sha256_file
+from torchcell.literature.manifest import Manifest, sha256_file
 from torchcell.literature.provenance import (
     ArtifactRecord,
     ProcessingRecord,
@@ -47,8 +47,8 @@ def test_no_manual_browser_method():
 # --------------------------------------------------------------------------- #
 # Records round-trip (pydantic-first).
 # --------------------------------------------------------------------------- #
-def test_records_round_trip():
-    art = ArtifactRecord(
+def _artifact_with_provenance() -> ArtifactRecord:
+    return ArtifactRecord(
         path="software/sga.zip",
         role="software",
         bytes=190975,
@@ -62,8 +62,27 @@ def test_records_round_trip():
             input_sha256=[PAYLOAD_SHA],
         ),
     )
+
+
+def test_records_round_trip():
+    art = _artifact_with_provenance()
     assert art == ArtifactRecord(**art.model_dump())
     assert art.retrieval is not None and art.retrieval.retriever.endswith("fake")
+
+
+def test_manifest_preserves_provenance_on_round_trip():
+    """Regression: Manifest.files must serialize/reload ArtifactRecord in full.
+
+    A ``list[FileRecord]`` field would drop retrieval/processing by declared-type
+    serialization; ``list[ArtifactRecord]`` keeps them across model_dump_json().
+    """
+    art = _artifact_with_provenance()
+    manifest = Manifest(citation_key="baryshnikova2010", files=[art])
+    reloaded = Manifest.model_validate_json(manifest.model_dump_json())
+    (got,) = reloaded.files
+    assert got.retrieval is not None and got.retrieval.sha256 == PAYLOAD_SHA
+    assert got.processing is not None and got.processing.tool == "mineru"
+    assert got == art
 
 
 # --------------------------------------------------------------------------- #

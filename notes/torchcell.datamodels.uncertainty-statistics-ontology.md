@@ -96,14 +96,36 @@ reported value + declared kind.
 - All fields are stored `model_fields` -> Neo4j-queryable (roadmap decision 7):
   audit "which values have `kind = unknown`?" across the KG.
 
-### Open decisions (owner sign-off before implementing)
+## 2026.07.02 - Decisions after owner discussion
 
-1. **Field set:** Full (`reported` + `kind` + `n` + `unit` + derived `se`) vs Lean
-   (keep `fitness_std` as reported, add `kind` + `n`, derive `se`) vs Minimal (fix
-   the derivation in loaders only, no new ontology fields). Recommend **Full**.
-2. **Replicate naming:** unify scalar `n_samples` -> `n_replicates` (+ unit)
-   matching main's dict `n_replicates`, vs keep `n_samples:int` for scalar fitness.
-3. **Scope of first cut:** fitness only (Costanzo/Kuzmin) vs all phenotypes at once.
+Refinements agreed in discussion (pending final "go"):
+
+- **Field set: FULL.** Semantics must be explicit/queryable/enforceable, since the
+  bug arose from implicit semantics.
+- **Count name: `n_samples` (general) + `sample_unit` enum**, NOT `n_replicates`.
+  Rationale: the count is a statistical sample size; "replicate" over-claims a
+  designed repeat, but Costanzo SMF averages over control *screens* that are a
+  reference distribution, not designed replicates. `sample_unit` carries the
+  specificity: `biological_replicate | technical_replicate | screen | colony |
+  pooled | ...` -- "replicate" is one unit family, not the default. **Rename main's
+  expression `n_replicates` (dict) -> `n_samples` (dict)** for one concept schema-wide.
+- **NO `unknown` kind (strict labelling).** Invariant: `reported is not None`
+  IFF `kind` is set. "Not reported" is a legitimate `None`; "reported but kind
+  unsure" is forbidden -- do not ingest it. So `UncertaintyKind` drops `unknown`.
+- **Scope: current phenotypes only.** `FitnessPhenotype` +
+  `MicroarrayExpressionPhenotype` get the full treatment now.
+  `CalMorphPhenotype` (coefficient_of_variation -- a different, already-normalized
+  representation) and `GeneInteractionPhenotype` (p-value -- a test result, not a
+  precision-of-mean statistic) are NOT restructured; CV may join as a kind later.
+  Essentiality/lethality/rescue untouched. Yeast9/small-molecule = later (the
+  metabolite phenotype is not on main yet).
+- **Acceptance test:** reproduce Costanzo's published gene-interaction p-values.
+  The interaction p-value is downstream of the component fitness SEs
+  (Var(eps) propagated from f_i, f_j, f_ij SEs); once each SE is derived correctly
+  per kind, the p-values should replicate. This L2/L4 check is the definition of done.
+
+Revised `UncertaintyKind` (no `unknown`): `sample_sd | standard_error |
+bootstrap_se | variance | ci95`.
 
 ### Files touched when implemented
 

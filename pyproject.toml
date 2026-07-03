@@ -163,6 +163,7 @@ module = [
     "hypernetx", "hypernetx.*",
     "intermine", "intermine.*",
     "lmdb", "lmdb.*",
+    "mineru", "mineru.*",
     "neo4j", "neo4j.*",
     "neo4j_utils", "neo4j_utils.*",
     "networkx", "networkx.*",

@@ -172,3 +172,44 @@ Consequences (corrections to the 2026.01 analysis above):
   n_samples = N_ij (4-8, varies, NOT in our data), unit `colony` -- BUT this
   underestimates; the ML-honest uncertainty is `sigma_ij_expected` which we lack.
   SMF -> type `standard_error` (bootstrap SEM ~ SD/sqrt(n_screens)).
+
+## 2026.07.03 - EXACT p-value formula from the Matlab source (Supplementary Software 1)
+
+Retrieved Supplementary Software 1 (Matlab) -- manually downloaded by user
+(nature.com auth-gated), stored at
+`$DATA_ROOT/torchcell-library/baryshnikovaQuantitativeAnalysisFitness2010/software/41592_2010_BFnmeth1534_MOESM171_ESM.zip`
+sha256 `c667d4f5b56f23e1ee59aabaeb1712bc6d2ae8a92ed8458ef3b866d89b1e496e`.
+
+Exact p-value (`IO/output_interaction_data.m:15`), verbatim:
+
+```matlab
+pvals = sqrt( normcdf(-abs(escores./escores_std)) .* ...
+              normcdf(-abs(log((background_mean + escores)./background_mean) ./ log(background_std))) );
+```
+
+Decode (variables from compute_sgascore.m):
+
+- `escores` = eps (interaction score I_ij); `escores_std` = sigma_Iij (LOCAL s.d.,
+  Eq 14) = our published "Double mutant fitness standard deviation" column.
+- `background_mean` = exp(amat_mean) = expected DMF; `background_mean + escores` =
+  actual DMF. So the ratio = actual/expected.
+- `background_std` = exp(sqrt(amat + qmat)) = sigma_ij_expected (Eq 16); amat =
+  array-strain variance, qmat = query-strain variance, both from WT control screens.
+  So log(background_std) = sqrt(amat + qmat).
+
+Therefore:
+
+```
+p = sqrt( Phi(-|eps / sigma_local|) * Phi(-|log(actual/expected) / sqrt(amat+qmat)|) )
+```
+
+= geometric mean of two one-sided normal tail probabilities: (A) eps vs its local
+colony s.d. (linear), (B) log-fold actual-vs-expected DMF vs the pooled expected
+s.d. (geometric/log).
+
+CONCLUSION: `background_std` (pooled expected s.d.) is NOT written to the output
+file (output columns: escore, escore_std, pval, smfit i/j +std, dm_expected,
+dm_actual, dm_actual_std). It is an internal quantity requiring the raw colony data
++ control screens. **Costanzo's exact p-value is therefore NOT reproducible from
+the released summary data** -- only the raw SGA pipeline reproduces it. This closes
+the p-value chase definitively.

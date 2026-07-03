@@ -128,3 +128,47 @@ n_replicates: int | None = Field(
 - SI Line 74: Double mutant screening (4 colonies per screen)
 - SI Line 88: Single mutant fitness bootstrap (17 or 350 screens)
 - SI Lines 572-575: Data file descriptions
+
+## 2026.07.03 - EXACT method sourced from Baryshnikova 2010 SI (corrects earlier assumptions)
+
+Sourced the actual scoring method (Costanzo 2016 uses the Baryshnikova 2010
+pipeline). Provenance:
+
+- citation_key: `baryshnikovaQuantitativeAnalysisFitness2010` (DOI 10.1038/nmeth.1534)
+- SI PDF retrieved via scriptable Springer ESM URL:
+  `https://static-content.springer.com/esm/art%3A10.1038%2Fnmeth.1534/MediaObjects/41592_2010_BFnmeth1534_MOESM167_ESM.pdf`
+- sha256: `b7ec4d0603aed5346fdd5043738358fdc5cc09084854391dc62ed6a35354f3ad`
+- Method in Supplementary Note 1 (pp. 28-30). Exact p-value test statistic is in
+  "Supplementary Software 1" (Matlab), NOT yet retrieved (in Zotero).
+
+Exact equations (verbatim):
+
+- Eq. 1 / model: `f_ij = f_i*f_j + eps_ij`  (eps = observed - expected DMF, multiplicative).
+- Eq. 13 interaction estimate: `eps_ij = I_ij = (1/N_ij) * sum_k R_ijk`, averaged
+  over `N_ij` replicate colonies = **4-8** ("typically four per screen with up to
+  two screens") and VARIES per interaction.
+- Eq. 14 LOCAL s.d. (= our "Double mutant fitness standard deviation" column):
+  `sigma_Iij = sqrt( sum_k (R_ijk - I_ij)^2 / (N_ij - 1) )`.
+  Authors EXPLICITLY warn this "can dramatically underestimate the true variance"
+  because adjacent replicate colonies are NOT independent.
+- Eq. 16 EXPECTED (pooled) variance used for confidence:
+  `C_ij ~ alpha*f_i*f_j*e^X`, `X ~ N(0, sigma_i^2 + sigma_j^2)`;
+  `sigma_ij_expected = exp( sqrt(sigma_i^2 + sigma_j^2) )`, where sigma_i^2 =
+  array-strain variance from WT control screens, sigma_j^2 = query-strain variance
+  pooled within-array.
+- SMF variance (Eq. 11 area): "bootstrap sampling of the median" (n=800) -> a
+  bootstrapped SEM. Our SMF file's `stddev` column is the SD, NOT this SEM.
+
+Consequences (corrections to the 2026.01 analysis above):
+
+- The interaction p-value is NOT computed from the local DMF colony s.d.
+  (`sigma_Iij`); it uses the POOLED expected variance `sigma_i^2 + sigma_j^2`
+  estimated from control screens. That value is NOT in our summary data files, so
+  the exact p-value CANNOT be reproduced from our columns alone (empirical
+  best-fit with the local s.d. plateaus at corr 0.95, no clean scalar).
+- `68/1400` (17x4, 350x4) is doubly wrong: (1) the p-value doesn't use colony
+  counts that way, and (2) SMF error is a bootstrapped SEM, small, not the file SD.
+- Ontology mapping: DMF `fitness_uncertainty` = `sigma_Iij` -> type `sample_sd`,
+  n_samples = N_ij (4-8, varies, NOT in our data), unit `colony` -- BUT this
+  underestimates; the ML-honest uncertainty is `sigma_ij_expected` which we lack.
+  SMF -> type `standard_error` (bootstrap SEM ~ SD/sqrt(n_screens)).

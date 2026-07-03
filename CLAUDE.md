@@ -7,6 +7,46 @@
 ## Programming Guide
 
 - Do NOT ever use fallback mechanisms unless we clearly tell you to. This means minimize try except blocks, unnecessary conditionals, etc.
+- **Pydantic-first.** torchcell models structured data with pydantic: schemas,
+  configs, provenance/manifest records, and any typed record. Prefer pydantic
+  `BaseModel` (validation + serialization + typed access) over dataclasses/dicts
+  for structured data. New structured objects should be pydantic unless there is a
+  clear reason not to.
+
+## Provenance & Reproducibility
+
+Core principle: for ANY artifact (paper PDF, supplementary file, OCR markdown,
+extracted data, AND dataset raw files), we must be able to answer coherently
+"**where did this come from and how was it done?**" from OUR own documentation.
+The documentation is authoritative -- the buck stops there; we never re-chase
+authors or trust a live URL. Model these records with pydantic.
+
+- **The stored artifact + its `sha256` is canonical, NOT the URL.** URLs are
+  historical *retrieval metadata*, not live dependencies. On rebuild we run the
+  recorded retrieval command, then verify sha256. If upstream content changed
+  (sha256 mismatch) or the URL rotted (command fails), we DETECT it and fall back
+  to our mirror / Zotero -- we never silently follow drift. Upstream changes create
+  a NEW versioned provenance record; they never overwrite the version we used.
+  (A future "watcher" service re-fetches periodically to flag upstream changes.)
+- **Every retrieved file records:** `source_url`, `retrieval_method` (enum, e.g.
+  `springer_esm | zotero_attachment | pmc_oa_api | direct_url | manual_browser`),
+  `retrieval_command` (the exact code, or a manual recipe for un-scriptable
+  sources), `sha256`, `retrieved_at`, plus processing provenance (e.g.
+  `mineru_version` + args + DPI) so OCR/extraction is deterministic.
+- **Mirrors (each backed up):** Zotero = canonical **PDFs only** (we read from PDF;
+  reproducibility backstop; large non-PDF supplements/software/data do NOT go in
+  Zotero). `$DATA_ROOT/torchcell-library/<citation_key>/` = local PDF mirror + OCR
+  artifacts + `manifest.json` + non-PDF supplements under `software/`, `si/`, etc.
+  Dataset RAW files get the same treatment: a raw-data mirror with a per-file
+  provenance record (source_url + retrieval_command + sha256) that dataset loaders
+  reference, so every built LMDB traces to an exact, hash-pinned raw version.
+- **Rebuild guarantee:** retrieval code + OCR/extraction recipes + backed-up mirrors
+  (Zotero PDFs, raw-data mirror) + manual recipes for un-scriptable files =
+  full rebuild-from-scratch, with sha256 verifying every rebuilt file matches.
+- Retrieval-method reality (verified): Springer ESM (`static-content.springer.com`)
+  and the PMC OA API are scriptable; PMC file downloads (JS proof-of-work) and
+  `nature.com` (auth redirect) are not -- those become manual-once -> deposit ->
+  reproducible via the mirror.
 
 ## Paper / Manuscript Workflow
 

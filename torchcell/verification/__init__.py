@@ -1,0 +1,44 @@
+# torchcell/verification/__init__
+# [[torchcell.verification.__init__]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/verification/__init__
+"""Record-level L0-L4 verification framework (roadmap WS3)."""
+
+from torchcell.verification.levels import (
+    l0_structural,
+    l1_completeness,
+    l1_count,
+    l2_cross_method,
+    l2_value_fidelity,
+    l3_convention,
+    l4_cross_source,
+)
+from torchcell.verification.report import (
+    Level,
+    LevelResult,
+    Provenance,
+    VerificationReport,
+    sha256_file,
+)
+from torchcell.verification.sourced import (
+    SourcedValue,
+    audit_sourced_value,
+    library_available,
+)
+
+__all__ = [
+    "Level",
+    "LevelResult",
+    "Provenance",
+    "VerificationReport",
+    "sha256_file",
+    "SourcedValue",
+    "audit_sourced_value",
+    "library_available",
+    "l0_structural",
+    "l1_completeness",
+    "l1_count",
+    "l2_cross_method",
+    "l2_value_fidelity",
+    "l3_convention",
+    "l4_cross_source",
+]

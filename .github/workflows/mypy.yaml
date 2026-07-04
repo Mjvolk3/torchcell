@@ -45,7 +45,11 @@ jobs:
     # strict, authors verify locally) without that lock. See WS4 notes.
     - name: Mypy strict (changed torchcell files; blocking)
       run: |
-        git fetch origin main --depth=1 || true
+        # Full fetch (NOT --depth=1): a shallow re-fetch truncates origin/main so the
+        # `origin/main...HEAD` three-dot diff below loses its merge base and scopes to
+        # the wrong (often empty or whole-tree) file set. checkout already did
+        # fetch-depth: 0; this just refreshes main in case it advanced during the PR.
+        git fetch origin main || true
         # Exclude torchcell/experiments/: passing explicit files to mypy BYPASSES the
         # pyproject [tool.mypy] exclude regex (exclude only filters path-discovery, not
         # an explicit file list), so experiments must be filtered out here, in the

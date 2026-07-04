@@ -16,6 +16,10 @@ from torchcell.verification.levels import (
     l3_convention,
     l4_cross_source,
 )
+from torchcell.verification.morphology import (
+    perturbed_gene_set,
+    verify_morphology_dataset,
+)
 from torchcell.verification.report import (
     DerivationMethod,
     Level,
@@ -51,4 +55,6 @@ __all__ = [
     "l4_cross_source",
     "measured_gene_universe",
     "verify_expression_dataset",
+    "perturbed_gene_set",
+    "verify_morphology_dataset",
 ]

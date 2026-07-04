@@ -25,7 +25,7 @@ CI-finish WS series).
 |----|-------|--------|-------------|
 | WS1 | Schema hardening + freeze | 🔨 | #21 merged (SE/uncertainty ontology); #24 open (DRY validators + invariant tests); **remaining:** no-structure-without-data field audit |
 | WS2 | n_samples/fitness_se (Kuzmin) | ✅ | #22 (Costanzo SE fix), #23 (Kuzmin, n=4 back-solve) — open, ready |
-| WS3 | Provenance + L0–L4 framework | 🔨 | #25 |
+| WS3 | Provenance + L0–L4 framework | 🔨 | #25; framework already built (`torchcell/verification/`); `StatDerivation` added #26; **remaining:** per-dataset post-process wiring |
 | WS4 | New phenotypes (metabolite/protein/visual) | ⬜ | — (blocked on OQ #2/#3) |
 | WS5 | Verify Sameith2015 + Kemmeren2014 | ⬜ | — |
 | WS6 | Verify Ohya2005 CalMorph | ⬜ | — |
@@ -201,9 +201,12 @@ the same `n_samples`/`fitness_se` convention so all fitness data is consistent.
 
 ## WS3. Provenance + L0-L4 verification framework
 
-**Status:** 🔨 in progress — issue #25. (Home for the `StatDerivation` record
-deferred from WS2, emitted as a post-process artifact per the
-`experiment_reference_index.json` pattern.)
+**Status:** 🔨 in progress — issue #25. The framework already exists
+(`torchcell/verification/{report,levels,sourced}.py` + tests: `Provenance`,
+`Level`, `LevelResult`, `VerificationReport`, and l0–l4 checks). `StatDerivation`
+(the record deferred from WS2) added in PR #26. **Remaining:** wire each dataset's
+`process()`/post-process to emit a `VerificationReport` + `StatDerivation` artifact
+(sibling of `experiment_reference_index.json`) — done alongside WS5/WS6.
 
 **Goal/Scope.** Build the reusable verification framework once: a
 `VerificationReport` carrying provenance (sha256 via `literature/manifest.py`,

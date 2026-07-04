@@ -49,10 +49,11 @@ log = logging.getLogger(__name__)
 # Sample size for double/triple mutant fitness measurements. The reported fitness
 # "St.dev." / "Double/triple mutant fitness standard deviation" is a SAMPLE SD
 # over colony replicates (Boone-lab SGA pipeline; Baryshnikova 2010 ref, Eq. 14
-# per-screen colony s.d.) -> sample_sd over colonies, SE = SD/sqrt(n) auto-derived.
-# n = per-screen replicate count (4), consistent with Costanzo 2016 DMF and
-# Kuzmin 2018; the true colony count is not in the per-record data.
-N_SAMPLES_COMBINED_MUTANT = 4
+# colony s.d.) -> sample_sd over colonies, SE = SD/sqrt(n) auto-derived.
+# n = 8: interaction screens run in duplicate (2 independent replicates) x ~4
+# colonies/screen (Baryshnikova), matching Kuzmin 2018. N_ij varies 4-8 and is
+# not in the per-record data; 8 is the full-replication representative.
+N_SAMPLES_COMBINED_MUTANT = 8
 
 
 def _combined_mutant_uncertainty(std_val: Any) -> dict[str, Any]:

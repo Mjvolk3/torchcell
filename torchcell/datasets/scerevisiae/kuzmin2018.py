@@ -50,13 +50,18 @@ log = logging.getLogger(__name__)
 # Sample size for combined (double/triple) mutant fitness measurements.
 # The reported "Combined mutant fitness standard deviation" (Additional Data S1
 # col. 12) is a SAMPLE SD over colony replicates. Kuzmin's SI (si1.md line 59)
-# does not state its type and defers to Baryshnikova 2010 (ref 8), whose Eq. 14
-# defines it as the per-screen colony s.d. sigma_Iij over N_ij colonies -> we
-# record it as sample_sd over colonies (SE = SD/sqrt(n), auto-derived). n is the
-# per-screen replicate count (4, 1536-colony format), for consistency with
-# Costanzo 2016 DMF; the true N_ij varies 4-8 (Baryshnikova) / 12-24 total across
-# triplicate screens (Kuzmin si1.md line 59) and is NOT in the per-record data.
-N_SAMPLES_COMBINED_MUTANT = 4
+# does not restate its type and defers to Baryshnikova 2010 (ref 8), whose Eq. 14
+# defines it as the colony s.d. sigma_Iij over N_ij colonies -> we record it as
+# sample_sd over colonies (SE = SD/sqrt(n), auto-derived).
+# n = 8: the interaction screens were run in DUPLICATE (si1.md line 75 "two
+# independent replicates"; line 171 "every screen in duplicate"; line 175 "all
+# trigenic interaction screens were performed twice") x ~4 colonies/screen
+# (Baryshnikova "typically four per screen with up to two screens"). N_ij varies
+# 4-8 per record and is NOT a column in Data S1, so 8 is the full-replication
+# representative. (Distinct from Costanzo 2016 DMF n=4, which was single-screen.)
+# NB: the "12-24 colony measurements" in si1.md line 59 is the QUERY fitness
+# (col 9, bootstrap), a different column whose std the loader does not store.
+N_SAMPLES_COMBINED_MUTANT = 8
 
 
 def _combined_mutant_uncertainty(std_val: Any) -> dict[str, Any]:

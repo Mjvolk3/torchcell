@@ -2,7 +2,7 @@
 id: xpywhp9bf8glrka52mejdgp
 title: Schematization + Ingestion Roadmap (2026.06.23)
 desc: ''
-updated: 1782265720149
+updated: 1783142739701
 created: 1782265720149
 ---
 
@@ -14,6 +14,26 @@ Revised 2026.06.24 after user review: two-phase ordering (datasets+schema first,
 graph second), three new datasets (Ozaydin beta-carotene, Cachera CRi-SPA
 betaxanthin, Zelezniak metabolite/protein), pan-transcriptome promoted into scope,
 `n_samples` confirmed canonical, Radiant clarified as the OpenStack DB host.
+
+## Progress (updated 2026.07.04)
+
+Legend: ✅ done · 🔨 in progress · ⬜ not started. Issues are cut as each WS is
+started ("Schematization Roadmap — WS<n>" titles, distinct from the closed
+CI-finish WS series).
+
+| WS | Title | Status | Issue / PRs |
+|----|-------|--------|-------------|
+| WS1 | Schema hardening + freeze | 🔨 | #21 merged (SE/uncertainty ontology); #24 open (DRY validators + invariant tests); **remaining:** no-structure-without-data field audit |
+| WS2 | n_samples/fitness_se (Kuzmin) | ✅ | #22 (Costanzo SE fix), #23 (Kuzmin, n=4 back-solve) — open, ready |
+| WS3 | Provenance + L0–L4 framework | 🔨 | #25 |
+| WS4 | New phenotypes (metabolite/protein/visual) | ⬜ | — (blocked on OQ #2/#3) |
+| WS5 | Verify Sameith2015 + Kemmeren2014 | ⬜ | — |
+| WS6 | Verify Ohya2005 CalMorph | ⬜ | — |
+| WS7 | Ozaydin2013 beta-carotene | ⬜ | — (blocked on OQ #2/#3) |
+| WS8 | Cachera2023 betaxanthin | ⬜ | — (blocked on OQ #2) |
+| WS9 | Zelezniak2018 metabolite + protein | ⬜ | — |
+| WS10 | Pan-transcriptome | ⬜ | — (blocked on OQ #1) |
+| WS11–14 | Phase B (graph/adapters/build/deploy) | ⬜ | — (cut when Phase A done) |
 
 ## Context
 
@@ -130,6 +150,10 @@ L0-L4.
 
 ## WS1. Schema hardening + freeze (land on main)
 
+**Status:** 🔨 in progress. SE/uncertainty ontology landed (#21, merged). DRY of the
+6 `validate_label_fields` + invariant test suite in PR #24 (open). Remaining: the
+no-structure-without-data field audit.
+
 **Goal/Scope.** Land pure-pydantic structural invariants + the validator dedup on
 main, and execute decision (2): make `n_samples` the canonical replicate field
 across phenotypes, keep SE as the stored/derived ML statistic. No new structure
@@ -156,6 +180,10 @@ audit (every field maps to a populating dataset).
 
 ## WS2. Finish n_samples/fitness_se refactor (Kuzmin)
 
+**Status:** ✅ done (open PRs, ready to merge). Costanzo SE corrected + regex cleanup
+(#22); Kuzmin 2018/2020 mapped to the ontology with `n_samples=4` resolved by
+p-value back-solve + a data-gated tripwire test (#23). All ruff + mypy-strict green.
+
 **Goal/Scope.** Costanzo2016 already carries `n_samples` + `fitness_se`; Kuzmin2018
 and Kuzmin2020 still use `fitness_std` only. Bring both Kuzmin fitness datasets to
 the same `n_samples`/`fitness_se` convention so all fitness data is consistent.
@@ -172,6 +200,10 @@ the same `n_samples`/`fitness_se` convention so all fitness data is consistent.
 - Cross-dataset consistency: fitness datasets share an identical phenotype field set.
 
 ## WS3. Provenance + L0-L4 verification framework
+
+**Status:** 🔨 in progress — issue #25. (Home for the `StatDerivation` record
+deferred from WS2, emitted as a post-process artifact per the
+`experiment_reference_index.json` pattern.)
 
 **Goal/Scope.** Build the reusable verification framework once: a
 `VerificationReport` carrying provenance (sha256 via `literature/manifest.py`,
@@ -197,7 +229,7 @@ module under `torchcell/`, `schema.py` (L0 target).
 (Dict[gene/protein_id -> float]), and a generic ordinal `VisualScorePhenotype`
 (integer color/intensity score from visual inspection -- for Ozaydin, reusable by
 Cachera). Plus an `ExpressionPhenotype` family decision (microarray vs NGS) carried
-into WS10. Add only these; no speculative fields.
+into WS10. Add only these; no speculative fields. 
 
 **Key files.** `torchcell/datamodels/schema.py`, `pydant.py`,
 `torchcell/metabolism/yeast_GEM.py` (REFERENCE for metabolite IDs),

@@ -1,91 +1,142 @@
 %% ===== Results (~1,700-2,000 words; ONE main figure per subsection) =====
-\section{Results\cb{target ~1,900 words}}\label{sec:results}
+\section{Results\cb{target ~1,900 words}\wc{results}}\label{sec:results}
 
-\bmhead{A shared ontology and knowledge graph unify metabolic-engineering data\cb{~380 words}}
-\textit{[FILLER -- R1.]} TorchCell annotates literature and public datasets with a
-shared experiment ontology and ingests them into a Neo4j knowledge graph;
-dataloaders emit deep-learning-ready datasets in which each strain is a
-perturbation operator over a shared wildtype reference cell
-(Fig.~\ref{fig:torchcell}; data scale in Suppl.\ Fig.\ S2; ontology/KG spec in
-Suppl.\ Fig.\ S4).
+\bmhead{A shared ontology and knowledge graph unify metabolic-engineering data\cb{~380 words}\wc{r1}}
+TorchCell confronts the data-fragmentation barrier by unifying heterogeneous phenotype
+data under a single schema and exposing it as deep-learning-ready datasets. Each
+experimental record is typed by an experiment ontology grounded in the Biolink Model and
+validated at ingestion---for acyclicity, subtype substitutability, Biolink conformance,
+and referential integrity---so that records from unrelated studies share one
+machine-checkable structure (Fig.~\ref{fig:torchcell}a; ontology data model in
+Supplementary Fig.~\ref{fig:data-model}). Validated records are emitted as typed
+subgraphs into a Neo4j knowledge graph hosted at NCSA, and datasets are recovered as
+queries over this shared structure: a data-specific query returns one instance with its
+typed neighborhood, while a cross-experiment query joins studies through shared entities
+such as a common environment or genotype. This turns modular literature and public
+databases into interoperable, queryable datasets
+\textit{[placeholder: TorchCell currently spans ${\sim}N$ studies and ${\sim}M$ labelled
+instances across fitness, gene interaction, expression, and morphology; dataset scale in
+Supplementary Fig.~\ref{fig:data-scale}]}.
+
+Rather than store a genome per strain, TorchCell factorizes data as a shared reference
+cell acted on by a perturbation (Fig.~\ref{fig:torchcell}b). Each experiment is a tuple of
+a cell graph, an environment, a perturbation, and a phenotype; the minimal reference is a
+genome, over which optional gene, regulatory, protein-interaction, and metabolic networks
+add structure. The yeast knockout library, for instance, is a single reference with
+${\sim}10^{4\text{--}6}$ deletion strains, each represented as a perturbation over that
+reference rather than as an independently rebuilt graph. A mechanistic join-and-aggregation
+step then merges compatible records---recasting lethality to fitness, or pooling
+equivalent genotypes measured under different assays---enlarging datasets while shrinking
+the label vocabulary the model must decode (Supplementary
+Fig.~\ref{fig:conversion-dedup-agg}).
+
+This organization exposes a favorable information budget (Fig.~\ref{fig:torchcell}c). The
+cell's molecular parts---DNA, RNA, protein, and small molecules---enter as \emph{encoded
+entities} carrying self-supervised representations, an abundant prior on the order of
+${\sim}10^{10}$ bits, whereas measured phenotypes contribute only ${\sim}10^{8}$ bits of
+supervision. We therefore cut the model at the shared representation, so that abundant
+entity data trains the encoder while scarce labels fit only the perturbation operator and
+the decoders. Consistent with this budget, classical baselines predict knockout fitness
+from almost any representation yet fail on gene interactions (Supplementary
+Fig.~\ref{fig:classical-ml})---so fitness alone does not justify a deep model, but the
+harder, structured labels do, motivating the architecture that follows.
 
 %% --- Figure 1 (R1): TorchCell database + software overview ---
 \begin{figure*}[t]
-\tcfig{figures/Fig1-torchcell-overview.pdf}{TorchCell: a database and software framework for
-building deep-learning-ready metabolic-engineering datasets. (a) Literature and public
-databases are annotated with TorchCell's experiment ontology and ingested into a Neo4j
-knowledge graph (hosted at NCSA), queryable across datasets. (b) Genomic representation:
-reference data (genome, gene networks, metabolism, GO) and experiment data (phenotype,
-genotype, environment); experiments are compressed into perturbation operators over a shared
-reference state. (c) The Cell Graph Transformer (CGT) maps multimodal cell input to a cell
-embedding via a perturbation operator, decoded into multitask outputs. (d) Model embeddings
-bridge strains and organisms. (e) Perturbation operator, attention graph regularization, and
-decoder. (f) The multimodal cell representation feeds a Learn--Design--Build--Test loop with
-the NSF iBioFoundry.}{fig:torchcell}
+\tcfig{figures/Fig1-torchcell-overview.pdf}{TorchCell and the Cell Graph Transformer (CGT).
+\textbf{Top row --- data.}
+(a) Literature and public databases are annotated with TorchCell's Biolink-grounded
+experiment ontology and ingested into a Neo4j knowledge graph (hosted at NCSA), queryable
+across datasets.
+(b) Each experiment is a shared reference cell (genome, gene networks, metabolism, Gene
+Ontology) acted on by an experiment-specific perturbation (genotype, environment) with a
+measured phenotype; many strains reuse one reference.
+(c) Information accounting: molecular parts enter as encoded entities carrying an abundant
+self-supervised prior (${\sim}10^{10}$ bits) and are mapped by encode ($F_\theta$),
+perturb ($\mathcal{T}_\psi$), and decode ($\mathcal{R}_\phi$) into labelled instances
+(${\sim}10^{8}$ bits); the model is cut at the shared representation $H$.
+\textbf{Bottom row --- model.}
+(d) CGT overview: multimodal cell input $\to$ cell encoder (ENC) $\to$ perturbation
+operator (PERT) $\to$ multitask decoder (DEC) $\to$ per-task outputs and loss.
+(e) Cell-encoder self-attention block: scaled dot-product attention $\alpha^{(\ell,a)}$
+with pre-norm, feed-forward, and residual connections.
+(f) Perturbation operator: a soft cross-attention $\beta_{i,t}$ over perturbation tokens
+displaces each gene embedding, $h_i^{\mathrm{pert}}=h_i+\Delta h_i$; the same operator
+extends from gene deletions to drug and environment perturbations.
+(g) Functional equivalence: applying the operator to the reference representation
+approximates re-encoding the perturbed graph with a graph network,
+$\Phi(G_p)\approx\mathcal{R}_\phi(\mathcal{T}_\psi(H,p))$, so a strain is obtained without
+rebuilding or re-encoding its graph (proof in Methods and Supplementary
+Note~1).
+(h) Graph-regularized attention: each biological adjacency $A^{(k)}$ is row-normalised to
+$\tilde{A}^{(k)}=(D^{(k)})^{-1}A^{(k)}$ and matched to an attention head by a
+KL prior $\Omega_k$, a soft constraint rather than a hard mask (Methods).}{fig:torchcell}
 \end{figure*}
 
-\bmhead{The Cell Graph Transformer predicts trigenic gene-gene interactions at state of the art\cb{~380 words}}
+\bmhead{The Cell Graph Transformer predicts trigenic gene-gene interactions at state of the art\cb{~380 words}\wc{r2}}
 \textit{[FILLER -- R2.]} The Cell Graph Transformer (CGT; architecture in
 Fig.~\ref{fig:torchcell}c and Methods) constrains attention with biological interaction
 graphs and maps the reference cell through an equivariant perturbation operator. On
-trigenic gene-gene interactions (GGI), where classical ML fails (Suppl.\ Fig.\ S1), CGT
+trigenic gene-gene interactions (GGI), where classical ML fails (Supplementary Fig.~\ref{fig:classical-ml}), CGT
 reaches Pearson $r = 0.454$ (Spearman $0.421$), outperforming Yeast9 FBA, DCell, and DANGO
 (Fig.~\ref{fig:ggi}).
 
 %% --- Figure 2 (R2): Trigenic gene-gene interactions (plan: "Trigenic GI -- can split in two") ---
+% Fig 2 is composed in draw.io (source: notes/assets/drawio/Fig2-gene-interactions.drawio)
+% and placed true-size with \tcfig. Panel plan, for reference as it is built out:
+%   (a) predicted vs actual trigenic interaction; (b) nested cell representation + iBioFoundry
+%   DBTL loop; (c) state of the art vs Yeast9 FBA / DCell / DANGO; (d) accuracy vs |tau|;
+%   (e) data & model scaling; (f) graph-regularization ablation. Split into two figures if
+%   it gets crowded. Update the caption panel-by-panel as each is finalized.
 \begin{figure*}[t]
-\centering
-% draw.io / matplotlib export: figures/fig2_ggi.pdf
-\figph{60mm}{\textbf{[Fig.~2 placeholder -- compose in draw.io]}\\[3pt]
-Trigenic gene-gene interactions. (a) concept --- why trigenic interactions are hard to
-predict; (b) predicted (CGT) vs.\ actual (experimental) interaction score;
-(c) state of the art vs.\ Yeast9 FBA / DCell / DANGO; (d) accuracy stratified by
-interaction magnitude $|\tau|$; (e) data and model scaling ($r$ vs.\ \#interactions and
-model size); (f) attention-graph-regularization ablation (does graph-constrained attention
-add value?).\\[4pt]
-\textit{Per plan: can split into two figures if crowded.}}
-\caption{State-of-the-art trigenic gene-gene interaction prediction. (a)--(f).}
-\label{fig:ggi}
+\tcfig{figures/Fig2-gene-interactions.pdf}{TorchCell for gene--gene interaction prediction
+and strain design. (a) Higher-order genetic interactions are defined by subtracting
+lower-order effects: to isolate a $k$-way interaction you must peel off all interactions
+from subcollections of the same genes. For a trigenic interaction, the observed
+triple-mutant fitness is compared against the fitness expected from the single- and
+double-mutant terms,
+$\tau_{ijk}=f_{ijk}-f_if_jf_k-\varepsilon_{ij}f_k-\varepsilon_{ik}f_j-\varepsilon_{jk}f_i$,
+with digenic interactions $\varepsilon_{ij}=f_{ij}-f_if_j$.
+(b) The nested cell representation---genome, gene networks, metabolism, and
+environment---feeds TorchCell and a Learn--Design--Build--Test loop with the NSF
+iBioFoundry.
+(c) Predicted versus measured trigenic gene--gene interaction.
+(d) State of the art on trigenic interactions: Pearson $r$ for Yeast9 FBA ($0.0006$),
+DCell ($0.157$), DANGO ($0.367$), and TorchCell ($0.454$).}{fig:ggi}
 \end{figure*}
 
-\bmhead{One embedding, many phenotypes: expression, morphology, and fitness\cb{~380 words}}
+\bmhead{One embedding, many phenotypes: expression, morphology, and fitness\cb{~380 words}\wc{r3}}
 \textit{[FILLER -- R3.]} The same embedding predicts knockout expression ($r = 0.543$),
 single-knockout morphology ($r = 0.619$), and fitness (Fig.~\ref{fig:multitask};
-expression diagnostics in Suppl.\ Fig.\ S5).
+expression diagnostics in Supplementary Fig.~\ref{fig:expr-diag}).
 
 %% --- Figure 3 (R3): expression, morphology, fitness ---
+% Fig 3 composed in draw.io (source:
+% notes/assets/drawio/Fig3-systems-biology-fitness-expression-morphology.drawio) and placed
+% true-size with \tcfig. Update the caption panel-by-panel as each is finalized.
 \begin{figure*}[t]
-\centering
-% draw.io / matplotlib export: figures/fig3_phenotypes.pdf
-\figph{60mm}{\textbf{[Fig.~3 placeholder -- compose in draw.io]}\\[3pt]
-Expression, morphology, and fitness. (a) expression predicted vs.\ actual (top genes);
-(b) morphology predicted vs.\ actual; (c) fitness predicted vs.\ actual;
-(d) cross-phenotype summary / shared embedding; (e) trends across phenotype classes.}
-\caption{One latent cell embedding generalizes across expression, morphology, and fitness. (a)--(e).}
-\label{fig:multitask}
+\tcfig{figures/Fig3-systems-biology-fitness-expression-morphology.pdf}{One latent cell
+embedding generalizes across systems-biology phenotypes---expression, morphology, and
+fitness. (a)--(e).}{fig:multitask}
 \end{figure*}
 
-\bmhead{Natural genetic variation versus model-designed perturbations\cb{~380 words}}
+\bmhead{Natural genetic variation versus model-designed perturbations\cb{~380 words}\wc{r4}}
 \textit{[FILLER -- R4.]} We compare phenotypes from natural strain genetic variation against
 deep-learning-designed gene perturbations across genome and environment
 (Fig.~\ref{fig:variation}).
 
-%% --- Figure 4 (R4): natural variation vs DL design (from handwritten plan -- confirm panels) ---
+%% --- Figure 4 (R4): natural variation vs DL design ---
+% Fig 4 composed in draw.io (source: notes/assets/drawio/Fig4-natural-variation.drawio) and
+% placed true-size with \tcfig. Update the caption panel-by-panel as each is finalized.
 \begin{figure*}[t]
-\centering
-% draw.io: figures/fig4_variation.pdf
-\figph{60mm}{\textbf{[Fig.~4 placeholder -- compose in draw.io; from handwritten plan, confirm panels]}\\[3pt]
-Natural variation vs.\ DL design. (a) natural strain genome variation and phenotype;
-(b) DL-predicted phenotype across the genome $\times$ environment landscape;
-(c) model-designed knockouts compared with natural variants.}
-\caption{Natural genetic variation versus model-designed perturbations. (a)--(c).}
-\label{fig:variation}
+\tcfig{figures/Fig4-natural-variation.pdf}{Natural genetic variation versus model-designed
+perturbations. (a)--(c).}{fig:variation}
 \end{figure*}
 
-\bmhead{Extending to metabolism and strain design\cb{~380 words}}
+\bmhead{Extending to metabolism and strain design\cb{~380 words}\wc{r5}}
 \textit{[FILLER -- R5.]} Grounding the cell representation in metabolism, CGT recommends gene
 targets for production phenotypes and pairs with the UIUC iBioFoundry for iterative design
-(Fig.~\ref{fig:metabolism}; inference at scale in Suppl.\ Fig.\ S6).
+(Fig.~\ref{fig:metabolism}; inference at scale in Supplementary Fig.~\ref{fig:inference-scale}).
 
 %% --- Figure 5 (R5): metabolism (from handwritten plan -- confirm panels) ---
 \begin{figure*}[t]

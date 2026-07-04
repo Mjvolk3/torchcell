@@ -15,15 +15,36 @@ TECTONIC ?= $(shell command -v tectonic 2>/dev/null || echo /tmp/tectonic)
 
 # draw.io headless export (Electron under Xvfb). Point DRAWIO at the drawio-desktop
 # AppImage/binary (must be executable). APPIMAGE_EXTRACT_AND_RUN avoids needing FUSE.
-DRAWIO     ?= /tmp/drawio.AppImage
 DRAWIO_SRC := ../../notes/assets/drawio
-DRAWIO_EXPORT = APPIMAGE_EXTRACT_AND_RUN=1 xvfb-run -a $(DRAWIO) --no-sandbox --disable-gpu -x -f pdf --crop -o
+# Platform-aware draw.io headless export. On macOS use the installed draw.io.app CLI
+# directly (no Xvfb/FUSE); on Linux fall back to the drawio-desktop AppImage under Xvfb.
+# APPIMAGE_EXTRACT_AND_RUN avoids needing FUSE. Override DRAWIO to point elsewhere.
+ifeq ($(shell uname -s),Darwin)
+  DRAWIO        ?= /Applications/draw.io.app/Contents/MacOS/draw.io
+  DRAWIO_EXPORT  = "$(DRAWIO)" -x -f pdf --crop -o
+else
+  DRAWIO        ?= /tmp/drawio.AppImage
+  DRAWIO_EXPORT  = APPIMAGE_EXTRACT_AND_RUN=1 xvfb-run -a $(DRAWIO) --no-sandbox --disable-gpu -x -f pdf --crop -o
+endif
 
 SHARED := content.tex preamble.tex references.bib sn-jnl.cls sn-nature.bst $(wildcard sections/*.tex)
 VIEWS  := submission editing twocolumn
 
-.PHONY: paper all submission editing twocolumn figproto figlimits figures fig checkfigs flat clean
+# Figure PDFs the manuscript references THAT have a .drawio.png source. The gate depends on
+# these so `make paper` re-exports any figure whose source is newer BEFORE measuring it --
+# closing the "edited draw.io but the gate still reads the stale PDF" trap. Figures with no
+# source yet (fig2..5 placeholders) are omitted here so they never break the build; the
+# size gate simply ignores PDFs that do not exist.
+DRAWIO_FIGS := $(shell for f in $$(grep -rhoE 'figures/[A-Za-z0-9._-]+\.pdf' $(SHARED) 2>/dev/null | grep -vE '^[[:space:]]*%' | sort -u); do \
+                 n=$$(basename $$f .pdf); \
+                 [ -f "$(DRAWIO_SRC)/$$n.drawio.png" ] && echo "figures/$$n.pdf"; \
+               done)
+
+.PHONY: paper all submission editing twocolumn figproto figlimits figures fig checkfigs wordcount flat clean
+# `make paper` builds the three views, then prints the word-count report (non-fatal: the
+# leading '-' means a bad/absent report never fails the build).
 paper: $(addsuffix .pdf,$(VIEWS))
+	-@$(PYTHON) wordcount.py
 all: paper figproto figlimits
 
 submission: submission.pdf
@@ -32,12 +53,27 @@ twocolumn: twocolumn.pdf
 figproto: figure-proto.pdf
 figlimits: figure-limits.pdf
 
+# Per-section word-count report vs the \cb{...words} budgets (body prose only; figure and
+# table environments and \cb tags stripped, then texcount counts the rest). Informational,
+# never gates. Override the interpreter with PYTHON=... if needed (stdlib + texcount only).
+PYTHON ?= python3
+wordcount:
+	@$(PYTHON) wordcount.py
+
+# The EDITING view embeds a per-section word-budget table on a final page. wordcount.tex is
+# regenerated from the sources whenever they (or the script) change, and editing.pdf depends
+# on it so the embedded counts always match the compiled draft. submission/twocolumn define
+# \cb as a no-op and do NOT include it, so only the editing view carries the report.
+editing.pdf: wordcount.tex
+wordcount.tex: wordcount.py $(wildcard sections/*.tex)
+	@$(PYTHON) wordcount.py --tex $@
+
 # Each view wrapper \input's the shared body, so rebuild when either changes.
 # HARD GATE: every manuscript view depends on checkfigs, so ALL builds (submission,
 # editing, twocolumn -- and `make paper`, which includes them) refuse to compile while
 # any figure is out of spec, keeping figure sizing consistent across every view.
 # checkfigs is .PHONY, so it runs on every build and aborts before Tectonic if a figure
-# is over 180x170 mm or scaled. Read the `make checkfigs` report to see which figure is
+# is over 180x240 mm or scaled. Read the `make checkfigs` report to see which figure is
 # over and by how much (figproto is a sizing tool, not a view, so it stays ungated).
 submission.pdf editing.pdf twocolumn.pdf: %.pdf: %.tex $(SHARED) checkfigs
 	$(TECTONIC) -X compile $<
@@ -52,6 +88,26 @@ figure-proto.pdf: figure-proto.tex preamble.tex
 figure-limits.pdf: $(DRAWIO_SRC)/figure-limits.drawio
 	$(DRAWIO_EXPORT) $@ $<
 
+# Post-export crop-to-ink for figures whose draw.io PDF has phantom whitespace.
+# When a MathJax ($$...$$) label renders wider than its cell box, draw.io's --crop
+# extends the page to the formula's *invisible* bounding box, padding the figure with
+# blank margin (Fig 1's panel g/h equations do this: ink ends at 178.8 mm but the crop
+# ran to 185.6 mm). pdfcrop trims the page to the true ink box -- NO scaling, fonts
+# unchanged, only dead margin removed -- so the figure lands at ~179 mm and is placed
+# true-size with \tcfig (passes both the size gate and the no-\tcfigfit scale gate).
+# Listed by figure NAME; a figure not listed is exported verbatim. This is preferred
+# over an export -s down-scale, which would shrink the fonts too.
+PDFCROP    ?= pdfcrop
+CROP_FIGS  := Fig1-torchcell-overview
+# crop-to-ink in place if NAME ($1) is in CROP_FIGS; safe no-op otherwise.
+define crop_if_needed
+	@if printf ' %s ' '$(CROP_FIGS)' | grep -q ' $(1) '; then \
+	  echo "  crop-to-ink  figures/$(1).pdf  (chop phantom MathJax margin)"; \
+	  $(PDFCROP) --margins 0 "figures/$(1).pdf" "figures/$(1).pdf.crop" >/dev/null && \
+	  mv "figures/$(1).pdf.crop" "figures/$(1).pdf"; \
+	fi
+endef
+
 # Export figures from draw.io sources to vector PDFs (headless via Xvfb).
 # CONVENTION: the exported PDF keeps the draw.io source's name --
 #   figures/NAME.pdf  <-  $(DRAWIO_SRC)/NAME.drawio.png
@@ -62,10 +118,29 @@ figures: figures/TorchCell-Supervised-Learning-and-Teacher-Forcing-Generic-Pheno
          figures/neo4j_cell-conversion-deduplication-aggregation.pdf \
          figures/s288c_selecting_gene_sequence.pdf \
          figures/fungal_up_down_transformer_upstream_1003bp_pad_for_undersized.pdf \
-         figures/uncharacterized-genes-profile-enricment.pdf
+         figures/uncharacterized-genes-profile-enricment.pdf \
+         figures/Fig2-gene-interactions.pdf \
+         figures/Fig3-systems-biology-fitness-expression-morphology.pdf \
+         figures/Fig4-natural-variation.pdf
 	-@bash check-figures.sh   # non-fatal: report sizes/scaling after every export
 
 figures/%.pdf: $(DRAWIO_SRC)/%.drawio.png
+	$(DRAWIO_EXPORT) $@ $<
+	$(call crop_if_needed,$*)
+
+# Fig 2 concept diagram (nested cell representation + iBioFoundry loop) has a PLAIN
+# .drawio source (not .drawio.png), so this explicit rule -- which wins over the pattern
+# rule above -- exports it. math=0, no MathJax overflow, so no crop-to-ink needed.
+figures/Fig2-gene-interactions.pdf: $(DRAWIO_SRC)/Fig2-gene-interactions.drawio
+	$(DRAWIO_EXPORT) $@ $<
+
+# Fig 3 (systems biology: fitness / expression / morphology) is likewise a PLAIN
+# .drawio source, so it needs its own explicit rule (the pattern rule expects .drawio.png).
+figures/Fig3-systems-biology-fitness-expression-morphology.pdf: $(DRAWIO_SRC)/Fig3-systems-biology-fitness-expression-morphology.drawio
+	$(DRAWIO_EXPORT) $@ $<
+
+# Fig 4 (natural variation vs model-designed perturbation) -- PLAIN .drawio, explicit rule.
+figures/Fig4-natural-variation.pdf: $(DRAWIO_SRC)/Fig4-natural-variation.drawio
 	$(DRAWIO_EXPORT) $@ $<
 
 # `make fig` -- FORCE-(re)render every figure the manuscript references, ignoring
@@ -87,16 +162,25 @@ fig:
 	  if [ -f "$$src" ]; then \
 	    echo "  render  figures/$$n.pdf  <-  $$src"; \
 	    $(DRAWIO_EXPORT) figures/$$n.pdf "$$src"; \
+	    if printf ' %s ' '$(CROP_FIGS)' | grep -q " $$n "; then \
+	      echo "  crop-to-ink  figures/$$n.pdf  (chop phantom MathJax margin)"; \
+	      $(PDFCROP) --margins 0 "figures/$$n.pdf" "figures/$$n.pdf.crop" >/dev/null && \
+	      mv "figures/$$n.pdf.crop" "figures/$$n.pdf"; \
+	    fi; \
 	  else \
 	    echo "  SKIP    figures/$$n.pdf  (no draw.io source: $$src)"; \
 	  fi; \
 	done; \
 	echo; bash check-figures.sh || true
 
-# WYSIWYG figure contract (codifies steps 2-3): each figure PDF must fit the 180x170 mm
+# WYSIWYG figure contract (codifies steps 2-3): each figure PDF must fit the 180x240 mm
 # print box, and all figures must be placed true-size (\tcfig, never \tcfigfit). Strict --
 # exits non-zero on any violation, so it can gate a build or CI:  make checkfigs
-checkfigs:
+# DEPENDS on $(DRAWIO_FIGS): any figure whose .drawio.png source is newer than its PDF is
+# re-exported (via the figures/%.pdf rule) BEFORE the check runs, so `make paper` measures
+# what you just drew -- not a stale export. This is the fix for the "edited draw.io, saved,
+# but make paper still reports the old size" trap.
+checkfigs: $(DRAWIO_FIGS)
 	@bash check-figures.sh
 
 # Flatten to a single .tex for Springer Nature submission (no \input; .bbl inlined
@@ -105,4 +189,4 @@ flat: submission.tex $(SHARED)
 	python3 flatten_tex.py submission.tex submission-flat.tex
 
 clean:
-	rm -f submission.pdf editing.pdf twocolumn.pdf figure-proto.pdf figure-limits.pdf submission-flat.tex
+	rm -f submission.pdf editing.pdf twocolumn.pdf figure-proto.pdf figure-limits.pdf submission-flat.tex wordcount.tex

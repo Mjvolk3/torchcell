@@ -3,12 +3,12 @@
 #
 # Codifies the WYSIWYG figure contract (steps 2-3 of the figure workflow):
 #   2. SIZE  -- each exported figures/*.pdf must fit Nature's print box
-#               (<= 180 x 170 mm, with a small grace for draw.io stroke/rounding),
+#               (<= 180 x 240 mm, with a small grace for draw.io stroke/rounding),
 #               so the draw.io mm/pt sizing maps 1:1 into the document.
 #   3. SCALE -- figures must be placed true-size with \tcfig (NO scaling). Any use
 #               of \tcfigfit re-scales the PDF and breaks the WYSIWYG font promise.
 #
-# Step 1 (drawing content inside the 180x170 mm box) is manual and on the author;
+# Step 1 (drawing content inside the 180x240 mm box) is manual and on the author;
 # this script verifies that what came out of draw.io can be placed verbatim.
 #
 # Usage:        bash check-figures.sh
@@ -19,7 +19,7 @@ set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FIGDIR="$DIR/figures"
 MAXW=180        # Nature full-width, mm
-MAXH=170        # Nature max figure height, mm
+MAXH=240        # max figure height, mm (relaxed from 170; tall multi-panel figures)
 TOL=2           # grace (mm) for the guide-box stroke width / export rounding
 
 # Colour only when writing to a real terminal (keeps CI/piped logs clean).
@@ -66,7 +66,7 @@ fi
 
 echo
 if [ "$fail" -ne 0 ]; then
-  echo "  ${R}${B}✗ FIGURE CHECK FAILED${Z} -- fix in draw.io (pull content inside the 180x170 mm box) or restore \\tcfig."
+  echo "  ${R}${B}✗ FIGURE CHECK FAILED${Z} -- fix in draw.io (pull content inside the 180x240 mm box) or restore \\tcfig."
   exit 1
 fi
 echo "  ${G}${B}✓ FIGURE CHECK PASSED${Z} -- all figures within the print box and placed true-size (WYSIWYG)."

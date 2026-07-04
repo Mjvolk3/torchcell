@@ -1,6 +1,8 @@
 %% Front matter: title, authors, affiliations, abstract, keywords.
 %% ===== Title (aim <= ~15 words) =====
-\title[TorchCell CGT for multimodal phenotype prediction]{Accelerating metabolic engineering through multimodal phenotype prediction with TorchCell and the Cell Graph Transformer}
+%% Word-count tag (editing-only via \cb): counted words / max. Update the count when the
+%% title changes. Current title is 14 words (max 15). \cb is a no-op in submission/twocolumn.
+\title[TorchCell CGT for multimodal phenotype prediction]{Accelerating metabolic engineering through multimodal phenotype prediction with TorchCell and the Cell Graph Transformer\cb{14/15 words}}
 
 %% ===== Authors / affiliations =====
 %% Volk & Sharma marked equal-contribution; Zhao corresponding (Volk also retained as
@@ -22,8 +24,10 @@
 %% ===== Abstract (<= 150 words; shortened from SIMB 2026) =====
 %% Point estimates only (no +/-) to sidestep the unresolved error-bar provenance
 %% (see outline Gaps); restore uncertainties once reconciled.
-%% Put the word-budget tag directly on the "Abstract" heading (editing-only via \cb).
-\renewcommand{\abstractname}{Abstract\cb{$\leq$150 words}}
+%% Put the word-budget tag directly on the "Abstract" heading (editing-only via \cb),
+%% plus the actual/budget ratio inline via \wc{abstract} (same as the section headings;
+%% wordcount.py emits the wc@abstract macro). Both are no-ops in submission/twocolumn.
+\renewcommand{\abstractname}{Abstract\cb{$\leq$150 words}\wc{abstract}}
 \abstract{Deep learning has advanced protein structure prediction, yet metabolic
 engineering lags because phenotype data are scattered across heterogeneous studies
 lacking a shared ontology. We present

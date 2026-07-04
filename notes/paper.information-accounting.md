@@ -10,8 +10,10 @@ Companion math note for the Nature Biotechnology CGT paper
 ([[paper.nature-biotech-cgt-outline]]). Justifies the model-construction strategy
 — **why we look up / pretrain entity representations and fit phenotype labels only
 on a thin perturbation operator** — with a simple information accounting. The
-figure that renders this argument is described in **Figure d/e** below; final
-exports live in [[paper.nature-biotech.figures]].
+**canonical bit estimates used in Fig 1c** (entities ${\sim}10^{10}$ vs labels
+${\sim}10^{8}$) are in the latest dated section at the bottom; the material above is the
+fuller derivation (per-genome budgets, corollaries). Final figure exports live in
+[[paper.nature-biotech.figures]].
 
 ## 2026.06.23 - Information accounting: why the model cuts between entities and instances
 
@@ -279,54 +281,6 @@ things/instances boundary.
 The argument's **shape** does not depend on these; they sharpen the headline ratios
 $B/A$ and $B/C$ from "2–4 OOM" to specific numbers for the Methods/Discussion.
 
-### Figure d/e: things on top, the contingent on the bottom
-
-**Chosen direction (current draw.io).** The *universe of things* — DNA, RNA,
-protein, small molecules — sits on top and fans down, composing per cell into a
-**set of entity tokens** $\{\,\square\square\square\,\}$. A cell/instance is thus a
-**set of entities drawn from $\mathcal U$**, $c=\{e_1,\dots,e_k\}$, and the
-per-modality **pretrained encoders** $\mathrm{Embed}$ (inside $F_\theta$) map each
-cell to its representation — $c_u\!\to\!h_u$, $c_v\!\to\!h_v$ (whole-cell vectors
-$h_u:=h_{\mathrm{CLS}}^{(u)}$). This draws Corollary 3 (instances built from *sets of
-things* via other pretrained models) with no platonic vocabulary.
-
-**What it's missing: the contingent.** As drawn it stops at $h_u,h_v$ — pure
-representation. The **labels never appear**, yet labels are the whole reason the
-instances side exists; they come from the *contingent* (the experiments actually
-measured). The panel shows $\mathcal U\!\to\!H$ but not $H\!\to\!\mathcal Y$, so the
-cut the math is about is invisible.
-
-**The fix — mirror it: the contingent on the bottom, rising to form the label
-vector** $y$, symmetric to the things fanning down:
-
-```
-        UNIVERSE OF THINGS         dense · pretrained · ~10^7+ bits
-      DNA     RNA     protein     small molecules
-         \     \       /       /            fan DOWN
-              {  ▭ ▭ ▭ ▭ ▭  }     set of entity tokens / cell
-                     │  Embed / F_θ   (pretrained encoders)
-           c_u ─▶ h_u        c_v ─▶ h_v          representation H
-  ═══════ cut: H meets y   (operator T_ψ(·,S) + decoder R_φ) ═══════
-           c_u ◀─ y_u        c_v ◀─ y_v          label vectors
-                     │  measured phenotypes
-           [ fitness · interaction · expression · morphology ]
-         /     /       \       \            fan UP
-        THE CONTINGENT             sparse · measured · ~10^6 bits
-```
-
-Each cell $c$ lives on **both** sides — encoded from things ($h$, top) and measured
-in the contingent ($y$, bottom). The operator $\mathcal T_\psi$ (then readout
-$\mathcal R_\phi$) predicts $\hat y$ from $H$ (+ perturbation $S$); the loss pins it
-to the measured $y$. **That middle line is
-the $\mathcal U\,\vert\,\mathcal I$ cut — the whole note in one picture.** Draw the
-top band wide/dense and the bottom band thin/sparse so the bit-budget asymmetry
-($\sim$10⁷ things-bits vs $\sim$10⁶ label-bits) reads without a caption.
-
-**Verdict on the d/e split: correct and forced.** d = things$\,\to H$ (the encoder
-$F_\theta$); e = $H\to\hat y$ via the operator $\mathcal T_\psi$ + readout $\mathcal
-R_\phi$, supervised by the contingent —
-the two panels are the two sides of the core inequality.
-
 ### Caveats / where this is a heuristic, not a theorem
 
 - **"1 param ≈ 1 bit" and "labels ≳ params"** are the MDL/effective-dimension
@@ -352,3 +306,53 @@ the two panels are the two sides of the core inequality.
   [[experiments.002-dmi-tmi]] — the lookup $\ge$ sequence-embedding evidence.
 - External: Huh et al., *The Platonic Representation Hypothesis*, ICML 2024;
   Ahlmann-Eltze et al., *Nat Methods* 2025 (perturbation transformers vs linear).
+
+## 2026.07.03 - Canonical bit estimates for Fig 1c (and how to tighten them)
+
+This is the accounting actually rendered in **Fig 1c** and the Methods "Encoded entities"
+paragraph (`sections/methods.tex`). It is the *universe-scale upper-bound* version and
+supersedes the per-genome $10^6$-$10^7$ numbers above (those are *per-genome effective* bits).
+Everything is order-of-magnitude; the ~100x gap dwarfs the slop.
+
+**Entity universe (universe of things) ~ $10^{10}$ bits (upper bound).**
+
+- One yeast/fungal genome: $L\approx1.2\times10^7$ bp; DNA at 2 bits/bp $\Rightarrow 2L\approx2.4\times10^7$ bits/genome.
+- Upper bound on the yeast-relevant entity space = a large fungal-genome collection. Use the
+  fungal genomes from Chao et al. 2025 (`chaoPredictingDynamicExpression2025`, the *Shorkie*
+  fungal DNA language model).
+  - **VERIFY THE COUNT.** The abstract states **165** fungal genomes were used for *pretraining*;
+    the **1,342** figure (used in the paper text now) is presumably a larger candidate/collection
+    set - confirm against the paper body and switch the manuscript number if needed.
+  - Either way it is $\sim10^{10}$: $1342\times2.4\times10^7\approx3\times10^{10}$;
+    $165\times2.4\times10^7\approx4\times10^9$.
+- $\Rightarrow$ entity universe $\approx 10^{10}$ bits.
+
+**Label space (space of instances) ~ $10^{8}$ bits (upper bound).**
+Count measurements across the integrated datasets (rough, per the data tables):
+
+- fitness: one scalar per strain (SGA single/double/triple; $\sim10^6$-$10^7$ values);
+- expression: one scalar per gene per strain (knockout transcriptomes; $\sim10^3$ strains $\times$ 6,607 genes $\approx10^7$);
+- protein abundance: one scalar per gene per condition ($\lesssim10^6$);
+- morphology: a fixed trait set per strain ($\sim10^3$ strains $\times\sim10^2$-$10^3$ traits $\approx10^6$).
+
+Total $\sim10^7$ measurements $\times\sim10$ bits/measurement $\Rightarrow \sim10^8$ bits.
+
+**The gap.** $10^{10}$ entity bits vs $10^{8}$ label bits $=\sim100\times$ (~2 OOM). The labels
+cannot pay for the entity representation, so cut the model at $H$ (encode on the abundant side,
+spend labels only on operator + decoder). This is the one-line justification for ENC/PERT/DEC.
+
+**How to make this rigorous (leave as SI / future work).**
+
+1. *Entity bits - effective, not raw.* Replace $2L$/genome (which double-counts shared ancestry
+   across the fungal genomes) with the entropy/MDL of the genome *collection*: per-column entropy
+   over MSAs of the 6,607 proteins (functional content), or a kmer/compression estimate of the
+   pangenome; and count *segregating* sites $\times$ mean per-site allelic entropy for in-panel
+   variation. Expect this to lower the entity number but keep it $\gg$ labels.
+2. *Label bits - effective, noise- and redundancy-aware.* Per assay, $b=\tfrac12\log_2(1+\mathrm{SNR})$
+   from replicate CV (not a flat 10 bits); then subtract redundancy - interaction matrices are
+   low-rank, so independent supervision $\approx r\cdot(\#\text{genes})\cdot b$ with $r$ from the
+   SVD (tens-hundreds), not $N\times b$.
+3. *Identifiability statement.* Frame as $B_{\text{eff}}\gtrsim C_{\text{fit}}$; end-to-end forces
+   $C_{\text{fit}}\sim P_{\text{seq-encoder}}\sim10^8$-$10^{10}$ (violated by 2-4 OOM); the factored
+   cut sets $C_{\text{fit}}=|\psi|+|\phi|\ll B$. Full version = the "core inequality" + the
+   "Placeholders to pin" table above.

@@ -1,60 +1,350 @@
-% TorchCell CGT Nature Biotech manuscript references.
-% Seeded from the genesis-proposal bibliography + outline. Fill DOIs/fields.
-% Keep <= 50 references (Nature Biotechnology Article guideline).
-
-@article{ahlmanneltze2025,
-  title   = {Deep-learning-based gene perturbation effect prediction does not yet outperform simple linear baselines},
-  author  = {Ahlmann-Eltze, Constantin and Huber, Wolfgang and Anders, Simon},
+@article{ahlmann-eltzeDeeplearningbasedGenePerturbation2025,
+  title = {Deep-Learning-Based Gene Perturbation Effect Prediction Does Not yet Outperform Simple Linear Baselines},
+  author = {{Ahlmann-Eltze}, Constantin and Huber, Wolfgang and Anders, Simon},
+  year = 2025,
+  month = aug,
   journal = {Nature Methods},
-  volume  = {22},
-  number  = {8},
-  pages   = {1657--1661},
-  year    = {2025}
+  volume = {22},
+  number = {8},
+  pages = {1657--1661},
+  publisher = {Nature Publishing Group},
+  issn = {1548-7105},
+  doi = {10.1038/s41592-025-02772-6},
+  urldate = {2026-01-21},
+  abstract = {Recent research in deep-learning-based foundation models promises to learn representations of single-cell data that enable prediction of the effects of genetic perturbations. Here we compared five foundation models and two other deep learning models against deliberately simple baselines for predicting transcriptome changes after single or double perturbations. None outperformed the baselines, which highlights the importance of critical benchmarking in directing and evaluating method development.},
+  copyright = {2025 The Author(s)},
+  langid = {english},
+  keywords = {,Machine learning,Software,Transcriptomics},
+  annotation = {ahlmann-eltzeDeeplearningbasedGenePerturbation2025}
 }
 
-@article{ma2018dcell,
-  title   = {Using deep learning to model the hierarchical structure and function of a cell},
-  author  = {Ma, Jianzhu and Yu, Michael Ku and Fong, Samson and Ono, Keiichiro and Sage, Eric and Demchak, Barry and Sharan, Roded and Ideker, Trey},
+@article{bordbarConstraintbasedModelsPredict2014,
+  title = {Constraint-Based Models Predict Metabolic and Associated Cellular Functions},
+  author = {Bordbar, Aarash and Monk, Jonathan M. and King, Zachary A. and Palsson, Bernhard O.},
+  year = 2014,
+  month = feb,
+  journal = {Nature Reviews Genetics},
+  volume = {15},
+  number = {2},
+  pages = {107--120},
+  issn = {1471-0056, 1471-0064},
+  doi = {10.1038/nrg3643},
+  urldate = {2022-02-08},
+  abstract = {The prediction of cellular function from a genotype is a fundamental goal in biology. For metabolism, constraint-based modelling methods systematize biochemical, genetic and genomic knowledge into a mathematical framework that enables a mechanistic description of metabolic physiology. The use of constraint-based approaches has evolved over \textasciitilde 30 years, and an increasing number of studies have recently combined models with high-throughput data sets for prospective experimentation. These studies have led to validation of increasingly important and relevant biological predictions. As reviewed here, these recent successes have tangible implications in the fields of microbial evolution, interaction networks, genetic engineering and drug discovery.},
+  langid = {english},
+  keywords = {,gene-graph},
+  annotation = {bordbarConstraintbasedModelsPredict2014\\
+676 citations (Semantic Scholar/DOI) [2022-11-26]\\
+561 citations (Crossref) [2022-04-15]}
+}
+
+@misc{chaoPredictingDynamicExpression2025,
+  title = {Predicting Dynamic Expression Patterns in Budding Yeast with a Fungal {{DNA}} Language Model},
+  author = {Chao, Kuan-Hao and Magzoub, Majed Mohamed and Stoops, Emily and Hackett, Sean and Linder, Johannes and Kelley, David R.},
+  year = 2025,
+  month = sep,
+  primaryclass = {New Results},
+  pages = {2025.09.19.677475},
+  publisher = {bioRxiv},
+  issn = {2692-8205},
+  doi = {10.1101/2025.09.19.677475},
+  urldate = {2025-12-18},
+  abstract = {Predicting gene expression from DNA sequence remains challenging due to complex regulatory codes. We introduce a masked DNA language model pretrained on 165 fungal genomes closely related to budding yeast that captures conserved regulatory grammar. Fine-tuning the LM on yeast RNA-seq data---including high-resolution transcriptional regulator induction time courses generated in this study---yielded Shorkie, a model that substantially improves gene expression prediction compared to baselines trained without self-supervision. Shorkie identified canonical transcription factor (TF) binding motifs and tracked their usage across induction experiments. Furthermore, Shorkie accurately predicted variant effects, outperforming leading sequence-to-expression models in cis-eQTL classification and achieving high concordance with massively parallel reporter assays. Interpretability analyses revealed Shorkie's ability to resolve promoter dynamics, splicing signals, and temporal changes in regulatory motif usage. This framework demonstrates that evolutionary-scale pretraining combined with transfer learning substantially improves our ability to decode gene regulation from sequence, providing insights into noncoding variants and regulatory networks.},
+  archiveprefix = {bioRxiv},
+  chapter = {New Results},
+  copyright = {\copyright{} 2025, Posted by Cold Spring Harbor Laboratory. This pre-print is available under a Creative Commons License (Attribution-NonCommercial-NoDerivs 4.0 International), CC BY-NC-ND 4.0, as described at http://creativecommons.org/licenses/by-nc-nd/4.0/},
+  langid = {english},
+  annotation = {chaoPredictingDynamicExpression2025}
+}
+
+@article{costanzoGlobalGeneticInteraction2016a,
+  title = {A Global Genetic Interaction Network Maps a Wiring Diagram of Cellular Function},
+  author = {Costanzo, M. and VanderSluis, B. and Koch, E. N. and Baryshnikova, A. and Pons, C. and Tan, G. and Wang, W. and Usaj, M. and Hanchard, J. and Lee, S. D. and Pelechano, V. and Styles, E. B. and Billmann, M. and {van Leeuwen}, J. and {van Dyk}, N. and Lin, Z.-Y. and Kuzmin, E. and Nelson, J. and Piotrowski, J. S. and Srikumar, T. and Bahr, S. and Chen, Y. and Deshpande, R. and Kurat, C. F. and Li, S. C. and Li, Z. and Usaj, M. M. and Okada, H. and Pascoe, N. and San Luis, B.-J. and Sharifpoor, S. and Shuteriqi, E. and Simpkins, S. W. and Snider, J. and Suresh, H. G. and Tan, Y. and Zhu, H. and {Malod-Dognin}, N. and Janjic, V. and Przulj, N. and Troyanskaya, O. G. and Stagljar, I. and Xia, T. and Ohya, Y. and Gingras, A.-C. and Raught, B. and Boutros, M. and Steinmetz, L. M. and Moore, C. L. and Rosebrock, A. P. and Caudy, A. A. and Myers, C. L. and Andrews, B. and Boone, C.},
+  year = 2016,
+  month = sep,
+  journal = {Science},
+  volume = {353},
+  number = {6306},
+  pages = {aaf1420-aaf1420},
+  issn = {0036-8075, 1095-9203},
+  doi = {10.1126/science.aaf1420},
+  urldate = {2022-02-08},
+  langid = {english},
+  annotation = {costanzoGlobalGeneticInteraction2016\\
+844 citations (Semantic Scholar/DOI) [2022-11-26]\\
+683 citations (Crossref) [2022-04-15]}
+}
+
+@article{cuiScGPTBuildingFoundation2024,
+  title = {{{scGPT}}: Toward Building a Foundation Model for Single-Cell Multi-Omics Using Generative {{AI}}},
+  shorttitle = {{{scGPT}}},
+  author = {Cui, Haotian and Wang, Chloe and Maan, Hassaan and Pang, Kuan and Luo, Fengning and Duan, Nan and Wang, Bo},
+  year = 2024,
+  month = aug,
   journal = {Nature Methods},
-  volume  = {15},
-  number  = {4},
-  pages   = {290--298},
-  year    = {2018}
+  volume = {21},
+  number = {8},
+  pages = {1470--1480},
+  publisher = {Nature Publishing Group},
+  issn = {1548-7105},
+  doi = {10.1038/s41592-024-02201-0},
+  urldate = {2025-02-18},
+  abstract = {Generative pretrained models have achieved remarkable success in various domains such as language and computer vision. Specifically, the combination of large-scale diverse datasets and pretrained transformers has emerged as a promising approach for developing foundation models. Drawing parallels between language and cellular biology (in which texts comprise words; similarly, cells are defined by genes), our study probes the applicability of foundation models to advance cellular biology and genetic research. Using burgeoning single-cell sequencing data, we have constructed a foundation model for single-cell biology, scGPT, based on a generative pretrained transformer across a repository of over 33 million cells. Our findings illustrate that scGPT effectively distills critical biological insights concerning genes and cells. Through further adaptation of transfer learning, scGPT can be optimized to achieve superior performance across diverse downstream applications. This includes tasks such as cell type annotation, multi-batch integration, multi-omic integration, perturbation response prediction and gene network inference.},
+  copyright = {2024 The Author(s), under exclusive licence to Springer Nature America, Inc.},
+  langid = {english},
+  keywords = {,Computational models,Machine learning,Software,Transcriptomics},
+  annotation = {cuiScGPTBuildingFoundation2024\\
+cuiScGPTBuildingFoundation2024\\
+cuiScGPTBuildingFoundation2024a\\
+205 citations (Semantic Scholar/DOI) [2025-02-17]}
 }
 
-@article{zhang2020dango,
-  title   = {DANGO: Predicting higher-order genetic interactions},
-  author  = {Zhang, Ruochi and Ma, Jianzhu and Ma, Jian},
-  journal = {bioRxiv},
-  year    = {2020},
-  doi     = {10.1101/2020.11.26.400739}
+@article{culleyMechanismawareMultiomicMachinelearning2020,
+  title = {A Mechanism-Aware and Multiomic Machine-Learning Pipeline Characterizes Yeast Cell Growth},
+  author = {Culley, Christopher and Vijayakumar, Supreeta and Zampieri, Guido and Angione, Claudio},
+  year = 2020,
+  month = aug,
+  journal = {Proceedings of the National Academy of Sciences},
+  volume = {117},
+  number = {31},
+  pages = {18869--18879},
+  issn = {0027-8424, 1091-6490},
+  doi = {10.1073/pnas.2002959117},
+  urldate = {2022-02-08},
+  abstract = {Metabolic modeling and machine learning are key components in the emerging next generation of systems and synthetic biology tools, targeting the genotype--phenotype--environment relationship. Rather than being used in isolation, it is becoming clear that their value is maximized when they are combined. However, the potential of integrating these two frameworks for omic data augmentation and integration is largely unexplored. We propose, rigorously assess, and compare machine-learning--based data integration techniques, combining gene expression profiles with computationally generated metabolic flux data to predict yeast cell growth. To this end, we create strain-specific metabolic models for 1,143               Saccharomyces cerevisiae               mutants and we test 27 machine-learning methods, incorporating state-of-the-art feature selection and multiview learning approaches. We propose a multiview neural network using fluxomic and transcriptomic data, showing that the former increases the predictive accuracy of the latter and reveals functional patterns that are not directly deducible from gene expression alone. We test the proposed neural network on a further 86 strains generated in a different experiment, therefore verifying its robustness to an additional independent dataset. Finally, we show that introducing mechanistic flux features improves the predictions also for knockout strains whose genes were not modeled in the metabolic reconstruction. Our results thus demonstrate that fusing experimental cues with in silico models, based on known biochemistry, can contribute with disjoint information toward biologically informed and interpretable machine learning. Overall, this study provides tools for understanding and manipulating complex phenotypes, increasing both the prediction accuracy and the extent of discernible mechanistic biological insights.},
+  langid = {english},
+  keywords = {,machine-learning,multiomics},
+  annotation = {culleyMechanismawareMultiomicMachinelearning2020\\
+30 citations (Semantic Scholar/DOI) [2022-11-26]\\
+14 citations (Crossref) [2022-04-15]}
 }
 
-@article{merzbacher2025fluxcone,
-  title   = {Accurate prediction of gene deletion phenotypes with Flux Cone Learning},
-  author  = {Merzbacher, Charlotte and Mac Aodha, Oisin and Oyarz{\'u}n, Diego A.},
+@article{kalfonScPRINTPretraining50MCells2025,
+  title = {{{scPRINT}}: Pre-Training on 50 Million Cells Allows Robust Gene Network Predictions},
+  shorttitle = {{{scPRINT}}},
+  author = {Kalfon, J{\'e}r{\'e}mie and Samaran, Jules and Peyr{\'e}, Gabriel and Cantini, Laura},
+  year = 2025,
+  month = apr,
   journal = {Nature Communications},
-  volume  = {16},
-  pages   = {8492},
-  year    = {2025}
+  volume = {16},
+  number = {1},
+  pages = {3607},
+  publisher = {Nature Publishing Group},
+  issn = {2041-1723},
+  doi = {10.1038/s41467-025-58699-1},
+  urldate = {2025-06-10},
+  abstract = {A cell is governed by the interaction of myriads of macromolecules. Inferring such a network of interactions has remained an elusive milestone in cellular biology. Building on recent advances in large foundation models and their ability to learn without supervision, we present scPRINT, a large cell model for the inference of gene networks pre-trained on more than 50\,million cells from the cellxgene database. Using innovative pretraining tasks and model architecture, scPRINT pushes large transformer models towards more interpretability and usability when uncovering the complex biology of the cell. Based on our atlas-level benchmarks, scPRINT demonstrates superior performance in gene network inference to the state of the art, as well as competitive zero-shot abilities in denoising, batch effect correction, and cell label prediction. On an atlas of benign prostatic hyperplasia, scPRINT highlights the profound connections between ion exchange, senescence, and chronic inflammation.},
+  copyright = {2025 The Author(s)},
+  langid = {english},
+  keywords = {,Computational biology and bioinformatics,Data integration,Gene regulatory networks,Machine learning},
+  annotation = {kalfonScPRINTPretraining50MCells2025}
 }
 
-@article{bunne2024virtualcell,
-  title   = {How to build the virtual cell with artificial intelligence: Priorities and opportunities},
-  author  = {Bunne, Charlotte and others},
-  journal = {Cell},
-  volume  = {187},
-  number  = {25},
-  pages   = {7045--7063},
-  year    = {2024}
+@article{kuzminSystematicAnalysisComplex2018a,
+  title = {Systematic Analysis of Complex Genetic Interactions},
+  author = {Kuzmin, Elena and VanderSluis, Benjamin and Wang, Wen and Tan, Guihong and Deshpande, Raamesh and Chen, Yiqun and Usaj, Matej and Balint, Attila and Mattiazzi Usaj, Mojca and {van Leeuwen}, Jolanda and Koch, Elizabeth N. and Pons, Carles and Dagilis, Andrius J. and Pryszlak, Michael and Wang, Jason Zi Yang and Hanchard, Julia and Riggi, Margot and Xu, Kaicong and Heydari, Hamed and San Luis, Bryan-Joseph and Shuteriqi, Ermira and Zhu, Hongwei and Van Dyk, Nydia and Sharifpoor, Sara and Costanzo, Michael and Loewith, Robbie and Caudy, Amy and Bolnick, Daniel and Brown, Grant W. and Andrews, Brenda J. and Boone, Charles and Myers, Chad L.},
+  year = 2018,
+  month = apr,
+  journal = {Science},
+  volume = {360},
+  number = {6386},
+  pages = {eaao1729},
+  issn = {0036-8075, 1095-9203},
+  doi = {10.1126/science.aao1729},
+  urldate = {2022-02-08},
+  abstract = {Trigenic interactions in yeast link bioprocesses                            To dissect the genotype-phenotype landscape of a cell, it is necessary to understand interactions between genes. Building on the digenic protein-protein interaction network, Kuzmin               et al.               created a trigenic landscape of yeast by using a synthetic genetic array (see the Perspective by Walhout). Triple-mutant analyses indicated that the majority of genes with trigenic associations functioned within the same biological processes. These converged on networks identified in the digenic interaction landscape. Although the overall effects were weaker for trigenic than for digenic interactions, trigenic interactions were more likely to bridge biological processes in the cell.                                         Science               , this issue p.               eaao1729               ; see also p.               269                        ,              Trigenic interactions in yeast link bioprocesses are explored.           ,                             INTRODUCTION               Genetic interactions occur when mutations in different genes combine to result in a phenotype that is different from expectation based on those of the individual mutations. Negative genetic interactions occur when a combination of mutations leads to a fitness defect that is more exacerbated than expected. For example, synthetic lethality occurs when two mutations, neither of which is lethal on its own, generate an inviable double mutant. Alternatively, positive genetic interactions occur when genetic perturbations combine to generate a double mutant with a greater fitness than expected. Global digenic interaction studies have been useful for understanding the functional wiring diagram of the cell and may also provide insight into the genotype-to-phenotype relationship, which is important for tracking the missing heritability of human health and disease. Here we describe a network of higher-order trigenic interactions and explore its implications.                                         RATIONALE               Variation in phenotypic outcomes in different individuals is caused by genetic determinants that act as modifiers. Modifier loci are prevalent in human populations, but knowledge regarding how variants interact to modulate phenotype in different individuals is lacking. Similarly, in yeast, traits including conditional essentiality---in which certain genes are essential in one genetic background but nonessential in another---often result from an interplay of multiple modifier loci. Because complex modifiers may underlie the genetic basis of physiological states found in natural populations, it is critical to understand the landscape of higher-order genetic interactions.                                         RESULTS               To survey trigenic interactions, we designed query strains that sampled key features of the global digenic interaction network: (i) digenic interaction strength, (ii) average number of digenic interactions, and (iii) digenic interaction profile similarity. In total, we tested \textasciitilde 400,000 double and \textasciitilde 200,000 triple mutants for fitness defects and identified \textasciitilde 9500 digenic and \textasciitilde 3200 trigenic negative interactions. Although trigenic interactions tend to be weaker than digenic interactions, they were both enriched for functional relationships. About one-third of trigenic interactions identified ``novel'' connections that were not observed in our digenic control network, whereas the remaining approximately two-thirds of trigenic interactions ``modified'' a digenic interaction, suggesting that the global digenic interaction network is important for understanding the trigenic interaction network. Despite their functional enrichment, trigenic interactions also bridged distant bioprocesses. We estimate that the global trigenic interaction network is \textasciitilde 100 times as large as the global digenic network, highlighting the potential for complex genetic interactions to affect the biology of inheritance.                                         CONCLUSION               The extensive network of trigenic interactions and their ability to generate functionally diverse phenotypes suggest that higher-order genetic interactions may play a key role in the genotype-to-phenotype relationship, genome size, and speciation.                                                   Systematic analysis of trigenic interactions.                                        We surveyed                                          for trigenic interactions and found that they are \textasciitilde 100 times as prevalent as digenic interactions, often modify a digenic interaction, and connect functionally related genes as well as genes in more diverse bioprocesses (multicolored nodes). PPI, protein-protein interaction.                                                                                            ,              To systematically explore complex genetic interactions, we constructed \textasciitilde 200,000 yeast triple mutants and scored negative trigenic interactions. We selected double-mutant query genes across a broad spectrum of biological processes, spanning a range of quantitative features of the global digenic interaction network and tested for a genetic interaction with a third mutation. Trigenic interactions often occurred among functionally related genes, and essential genes were hubs on the trigenic network. Despite their functional enrichment, trigenic interactions tended to link genes in distant bioprocesses and displayed a weaker magnitude than digenic interactions. We estimate that the global trigenic interaction network is \textasciitilde 100 times as large as the global digenic network, highlighting the potential for complex genetic interactions to affect the biology of inheritance, including the genotype-to-phenotype relationship.},
+  langid = {english},
+  annotation = {kuzminSystematicAnalysisComplex2018\\
+171 citations (Semantic Scholar/DOI) [2022-11-26]\\
+139 citations (Crossref) [2022-04-15]}
 }
 
-@article{volk2023meteng,
-  title   = {Metabolic Engineering: Methodologies and Applications},
-  author  = {Volk, Michael J. and Tran, Vinh G. and Tan, Shih-I and others and Zhao, Huimin},
+@article{merzbacherAccuratePredictionGene2025,
+  title = {Accurate Prediction of Gene Deletion Phenotypes with {{Flux Cone Learning}}},
+  author = {Merzbacher, Charlotte and Mac Aodha, Oisin and Oyarz{\'u}n, Diego A.},
+  year = 2025,
+  month = sep,
+  journal = {Nature Communications},
+  volume = {16},
+  number = {1},
+  pages = {8492},
+  publisher = {Nature Publishing Group},
+  issn = {2041-1723},
+  doi = {10.1038/s41467-025-63436-9},
+  urldate = {2026-01-22},
+  abstract = {Understanding the impact of gene deletions is crucial for biological discovery, biomedicine, and biotechnology. Due to the complexity of genome-wide deletion screens, there is growing interest in computational methods that leverage existing screening data for predictive modeling. Here, we present Flux Cone Learning, a general framework designed to predict the effects of metabolic gene deletions on cellular phenotypes. Using Monte Carlo sampling and supervised learning, our approach identifies correlations between the geometry of the metabolic space and experimental fitness scores from deletion screens. Flux Cone Learning delivers best-in-class accuracy for prediction of metabolic gene essentiality in organisms of varied complexity (Escherichia coli, Saccharomyces cerevisiae, Chinese Hamster Ovary cells), outperforming the gold standard predictions of Flux Balance Analysis. We demonstrate the versatility of our approach by training a predictor of small molecule production~using data from a large~deletion screen. Flux Cone Learning can be applied to many organisms and phenotypes, without the need to encode cellular objectives as an optimization task. Our work offers a broadly applicable tool for phenotypic prediction and lays the groundwork for building metabolic foundation models across the kingdom of life.},
+  copyright = {2025 The Author(s)},
+  langid = {english},
+  keywords = {,Machine learning,Metabolic engineering,Metabolic pathways,Synthetic biology},
+  annotation = {merzbacherAccuratePredictionGene2025}
+}
+
+@article{presnellSystemsMetabolicEngineering2019,
+  title = {Systems {{Metabolic Engineering Meets Machine Learning}}: {{A New Era}} for {{Data}}-{{Driven Metabolic Engineering}}},
+  shorttitle = {Systems {{Metabolic Engineering Meets Machine Learning}}},
+  author = {Presnell, Kristin V. and Alper, Hal S.},
+  year = 2019,
+  month = sep,
+  journal = {Biotechnology Journal},
+  volume = {14},
+  number = {9},
+  pages = {1800416},
+  issn = {1860-6768, 1860-7314},
+  doi = {10.1002/biot.201800416},
+  urldate = {2022-02-08},
+  abstract = {The recent increase in high-throughput capacity of `omics datasets combined with advances and interest in machine learning (ML) have created great opportunities for systems metabolic engineering. In this regard, data-driven modeling methods have become increasingly valuable to metabolic strain design. In this review, the nature of `omics is discussed and a broad introduction to the ML algorithms combining these datasets into predictive models of metabolism and metabolic rewiring is provided. Next, this review highlights recent work in the literature that utilizes such data-driven methods to inform various metabolic engineering efforts for different classes of application including product maximization, understanding and profiling phenotypes, de novo metabolic pathway design, and creation of robust system-scale models for biotechnology. Overall, this review aims to highlight the potential and promise of using ML algorithms with metabolic engineering and systems biology related datasets},
+  langid = {english},
+  annotation = {presnellSystemsMetabolicEngineering2019\\
+36 citations (Semantic Scholar/DOI) [2022-11-26]\\
+25 citations (Crossref) [2022-04-15]}
+}
+
+@article{sapovalCurrentProgressOpen2022,
+  title = {Current Progress and Open Challenges for Applying Deep Learning across the Biosciences},
+  author = {Sapoval, Nicolae and Aghazadeh, Amirali and Nute, Michael G. and Antunes, Dinler A. and Balaji, Advait and Baraniuk, Richard and Barberan, C. J. and Dannenfelser, Ruth and Dun, Chen and Edrisi, Mohammadamin and Elworth, R. A. Leo and Kille, Bryce and Kyrillidis, Anastasios and Nakhleh, Luay and Wolfe, Cameron R. and Yan, Zhi and Yao, Vicky and Treangen, Todd J.},
+  year = 2022,
+  month = apr,
+  journal = {Nature Communications},
+  volume = {13},
+  number = {1},
+  pages = {1728},
+  publisher = {Nature Publishing Group},
+  issn = {2041-1723},
+  doi = {10.1038/s41467-022-29268-7},
+  urldate = {2022-05-10},
+  abstract = {Deep Learning (DL) has recently enabled unprecedented advances in one of the grand challenges in computational biology: the half-century-old problem of protein structure prediction. In this paper we discuss recent advances, limitations, and future perspectives of DL on five~broad areas: protein structure prediction, protein function prediction, genome engineering, systems biology and data integration, and phylogenetic inference. We discuss each application area and cover the main bottlenecks of DL approaches, such as training data, problem scope, and the ability to leverage existing DL architectures in new contexts. To conclude, we provide a summary of the subject-specific and general challenges for DL across the biosciences.},
+  copyright = {2022 The Author(s)},
+  langid = {english},
+  keywords = {,computational-biology-bioinformatics,computer-science,gene-graph,gene-graph-troubleshoot,machine-learning},
+  annotation = {sapovalCurrentProgressOpen2022\\
+11 citations (Semantic Scholar/DOI) [2022-11-26]}
+}
+
+@book{stephanopoulosMetabolicEngineeringPrinciples1998,
+  title = {Metabolic Engineering: Principles and Methodologies},
+  shorttitle = {Metabolic Engineering},
+  author = {Stephanopoulos, Gregory and Aristidou, Aristos A. and Nielsen, Jens},
+  year = 1998,
+  publisher = {Elsevier},
+  annotation = {stephanopoulosMetabolicEngineeringPrinciples1998}
+}
+
+@article{stewartTorchGeoDeepLearning2022a,
+  title = {{{TorchGeo}}: Deep Learning with Geospatial Data},
+  shorttitle = {{{TorchGeo}}},
+  author = {Stewart, Adam J. and Robinson, Caleb and Corley, Isaac A. and Ortiz, Anthony and Ferres, Juan M. Lavista and Banerjee, Arindam},
+  year = 2022,
+  month = nov,
+  journal = {Proceedings of the 30th International Conference on Advances in Geographic Information Systems},
+  series = {{{SIGSPATIAL}} '22},
+  pages = {1--12},
+  publisher = {Association for Computing Machinery},
+  address = {New York, NY, USA},
+  doi = {10.1145/3557915.3560953},
+  urldate = {2023-08-18},
+  abstract = {Remotely sensed geospatial data are critical for applications including precision agriculture, urban planning, disaster monitoring and response, and climate change research, among others. Deep learning methods are particularly promising for modeling many remote sensing tasks given the success of deep neural networks in similar computer vision tasks and the sheer volume of remotely sensed imagery available. However, the variance in data collection methods and handling of geospatial metadata make the application of deep learning methodology to remotely sensed data nontrivial. For example, satellite imagery often includes additional spectral bands beyond red, green, and blue and must be joined to other geospatial data sources that can have differing coordinate systems, bounds, and resolutions. To help realize the potential of deep learning for remote sensing applications, we introduce TorchGeo, a Python library for integrating geospatial data into the PyTorch deep learning ecosystem. TorchGeo provides data loaders for a variety of benchmark datasets, composable datasets for generic geospatial data sources, samplers for geospatial data, and transforms that work with multispectral imagery. TorchGeo is also the first library to provide pre-trained models for multispectral satellite imagery (e.g., models that use all bands from the Sentinel-2 satellites), allowing for advances in transfer learning on downstream remote sensing tasks with limited labeled data. We use TorchGeo to create reproducible benchmark results on existing datasets and benchmark our proposed method for preprocessing geospatial imagery on the fly. TorchGeo is open source and available on GitHub: https://github.com/microsoft/torchgeo.},
+  keywords = {,datasets,deep-learning,earth-observation,geospatial,models,remote-sensing,samplers,transforms},
+  annotation = {stewartTorchGeoDeepLearning2022a\\
+0 citations (Semantic Scholar/DOI) [2023-08-18]}
+}
+
+@article{volkMetabolicEngineeringMethodologies2022,
+  title = {Metabolic {{Engineering}}: {{Methodologies}} and {{Applications}}},
+  shorttitle = {Metabolic {{Engineering}}},
+  author = {Volk, Michael J. and Tran, Vinh G. and Tan, Shih-I and Mishra, Shekhar and Fatma, Zia and Boob, Aashutosh and Li, Hongxiang and Xue, Pu and Martin, Teresa A. and Zhao, Huimin},
+  year = 2022,
+  month = dec,
   journal = {Chemical Reviews},
-  volume  = {123},
-  number  = {9},
-  pages   = {5521--5570},
-  year    = {2023}
+  pages = {acs.chemrev.2c00403},
+  issn = {0009-2665, 1520-6890},
+  doi = {10.1021/acs.chemrev.2c00403},
+  urldate = {2023-01-02},
+  abstract = {Metabolic engineering aims to improve the production of economically valuable molecules through the genetic manipulation of microbial metabolism. While the discipline is a little over 30 years old, advancements in metabolic engineering have given way to industrial-level molecule production benefitting multiple industries such as chemical, agriculture, food, pharmaceutical, and energy industries. This review describes the design, build, test, and learn steps necessary for leading a successful metabolic engineering campaign. Moreover, we highlight major applications of metabolic engineering, including synthesizing chemicals and fuels, broadening substrate utilization, and improving host robustness with a focus on specific case studies. Finally, we conclude with a discussion on perspectives and future challenges related to metabolic engineering.},
+  copyright = {All rights reserved},
+  langid = {english},
+  annotation = {volkMetabolicEngineeringMethodologies2022}
+}
+
+%% ==== Added manually for the SI perturbation-operator functional-equivalence note ====
+%% (Fig 1g / Methods). NOT yet in the shared Zotero group library -- reconcile via
+%% zotero_reconcile_bib.py so a future export does not drop them.
+
+@inproceedings{joglWeisfeilerLemanReturn2022,
+  keywords = {zotero-pending},
+  note = {[ZOTERO-PENDING -- manual entry, reconcile before submission]},
+  title = {Weisfeiler and {{Leman}} Return with Graph Transformations},
+  author = {Jogl, Fabian and Thiessen, Maximilian and G{\"a}rtner, Thomas},
+  year = 2022,
+  booktitle = {18th International Workshop on Mining and Learning with Graphs (MLG), ECML-PKDD},
+  abstract = {Shows that a structural graph transformation applied at preprocessing followed by standard message passing is at least as expressive as the corresponding improved message-passing algorithm (CW networks, ESAN, delta-k-WL).}
+}
+
+@inproceedings{pappDropGNN2021,
+  keywords = {zotero-pending},
+  note = {[ZOTERO-PENDING -- manual entry, reconcile before submission]},
+  title = {{{DropGNN}}: Random Dropouts Increase the Expressiveness of Graph Neural Networks},
+  author = {Papp, P{\'a}l Andr{\'a}s and Martinkus, Karolis and Faber, Lukas and Wattenhofer, Roger},
+  year = 2021,
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  volume = 34,
+  abstract = {Running a GNN on multiple independently node-dropped copies of a graph strictly exceeds 1-WL expressiveness.}
+}
+
+@inproceedings{bevilacquaEquivariantSubgraph2022,
+  keywords = {zotero-pending},
+  note = {[ZOTERO-PENDING -- manual entry, reconcile before submission]},
+  title = {Equivariant Subgraph Aggregation Networks},
+  author = {Bevilacqua, Beatrice and Frasca, Fabrizio and Lim, Derek and Srinivasan, Balasubramaniam and Cai, Chen and Balamurugan, Gopinath and Bronstein, Michael M. and Maron, Haggai},
+  year = 2022,
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  abstract = {Represents a graph as a bag of policy-drawn subgraphs processed by an equivariant architecture; provably exceeds standard message-passing expressiveness.}
+}
+
+@inproceedings{xuHowPowerfulAre2019,
+  title = {How Powerful Are Graph Neural Networks?},
+  author = {Xu, Keyulu and Hu, Weihua and Leskovec, Jure and Jegelka, Stefanie},
+  year = 2019,
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  abstract = {Characterizes the expressive power of message-passing GNNs by the 1-Weisfeiler-Leman test.}
+}
+
+@article{roohaniPredictingTranscriptional2024,
+  keywords = {zotero-pending},
+  note = {[ZOTERO-PENDING -- manual entry, reconcile before submission]},
+  title = {Predicting Transcriptional Outcomes of Novel Multigene Perturbations with {{GEARS}}},
+  author = {Roohani, Yusuf and Huang, Kexin and Leskovec, Jure},
+  year = 2024,
+  journal = {Nature Biotechnology},
+  volume = 42,
+  number = 6,
+  pages = {927--935},
+  doi = {10.1038/s41587-023-01905-6},
+  abstract = {A graph neural network over a gene-gene knowledge graph that predicts transcriptional responses to unseen single- and multi-gene perturbations by materialising perturbations on the graph.}
+}
+
+@inproceedings{zaheerDeepSets2018,
+  title = {Deep Sets},
+  author = {Zaheer, Manzil and Kottur, Satwik and Ravanbakhsh, Siamak and P{\'o}czos, Barnab{\'a}s and Salakhutdinov, Ruslan and Smola, Alexander J.},
+  year = 2017,
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  volume = 30,
+  abstract = {Characterises and universally approximates permutation-invariant functions on sets.}
+}
+
+@inproceedings{yunAreTransformersUniversal2020,
+  title = {Are Transformers Universal Approximators of Sequence-to-Sequence Functions?},
+  author = {Yun, Chulhee and Bhojanapalli, Srinadh and Rawat, Ankit Singh and Reddi, Sashank J. and Kumar, Sanjiv},
+  year = 2020,
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  abstract = {Proves that self-attention networks are universal approximators of permutation-equivariant sequence-to-sequence functions on a compact domain.}
+}
+
+@inproceedings{haHyperNetworks2017,
+  keywords = {zotero-pending},
+  note = {[ZOTERO-PENDING -- manual entry, reconcile before submission]},
+  title = {{{HyperNetworks}}},
+  author = {Ha, David and Dai, Andrew M. and Le, Quoc V.},
+  year = 2017,
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  abstract = {A network that generates the weights of another network conditioned on an input; the amortisation template for conditioning on a modification instead of re-fitting.}
 }

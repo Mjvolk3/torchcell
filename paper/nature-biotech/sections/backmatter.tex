@@ -12,14 +12,39 @@
 %% figures -- that interleaving was the figure/reference clash. ----
 \clearpage
 \bmhead{Supplementary information}
-% Supplementary Figures S1-S6 (see outline). S1 = classical-ML baselines.
 
-% Supplementary figures use S-numbering. The TorchCell overview schematic is parked
-% here for now (was Fig 1 in the main text); offset the counter so it renders as
-% Suppl. Fig. S7 and the planned S1-S6 keep their numbers. Renumber when the SI is
-% built out. Same true-to-size, left-justified, caption-matched-to-width layout.
-\setcounter{figure}{6}
+% Supplementary figures use S-numbering and are referenced from the text with
+% \ref{fig:...} (never a hard-coded "S2"), so they renumber automatically as the SI is
+% built out and every "Supplementary Fig." reference stays correct. Reset the counter to
+% 0 so the first SI float is S1 and they run in document (first-mention) order. Placeholder
+% floats (\figph) reserve a number + label for figures not yet drawn; swap each for a real
+% \tcfig{...} export once composed. Same true-to-size, left-justified layout as the main
+% figures; keep every SI figure inside the 180x170 mm print box.
+\setcounter{figure}{0}
 \renewcommand{\thefigure}{S\arabic{figure}}
+
+% --- S1: classical-ML baselines (backs the information-accounting argument; report Fig 2) ---
+\begin{figure*}[t]
+\centering
+\figph{55mm}{\textbf{[Suppl. Fig. -- classical-ML baselines; compose from report Fig.~2]}\\[3pt]
+Classical models (random forest, SVR, linear) across entity representations (one-hot,
+lookup, language-model embeddings): knockout fitness is predicted well from almost any
+representation given enough data, whereas trigenic gene--gene interactions are not
+(empirical backing for the information-accounting cut).}
+\caption{Classical machine-learning baselines: fitness is saturable, interactions are not.}
+\label{fig:classical-ml}
+\end{figure*}
+
+% --- S2: dataset scale / composition table ---
+\begin{figure*}[t]
+\centering
+\figph{55mm}{\textbf{[Suppl. Fig./Table -- dataset scale; compose from report Fig.~1 table]}\\[3pt]
+Composition of the TorchCell knowledge graph: studies, labelled instances, environments,
+and label types (whole-cell scalar, gene-level, gene-set) mapped to the corresponding
+readout heads. \textit{[placeholder: fill counts once finalized.]}}
+\caption{Dataset scale and composition of the TorchCell knowledge graph.}
+\label{fig:data-scale}
+\end{figure*}
 
 % Figures are placed true-to-size with \tcfig (NO LaTeX scaling): each draw.io source is
 % drawn inside the 180x170 mm print-box boundary template, so the --crop export equals the
@@ -58,6 +83,32 @@ encoded as [CLS], species proxy, 6-mer sequence, [SEP]; undersized sequences are
 with [PAD] to a fixed length before vectorization.}{fig:dna-tokenization}
 \end{figure*}
 
+% --- expression / multitask diagnostics ---
+\begin{figure*}[t]
+\centering
+\figph{50mm}{\textbf{[Suppl. Fig. -- expression \& multitask diagnostics]}\\[3pt]
+Knockout-transcriptome prediction diagnostics (per-gene calibration, top-gene
+predicted vs.\ actual) and cross-phenotype transfer from the shared latent embedding.}
+\caption{Expression and multitask prediction diagnostics.}
+\label{fig:expr-diag}
+\end{figure*}
+
+% --- perturbation-operator functional-equivalence proof: now a Supplementary Note
+%     (Suppl. Note, typeset text + amsthm proposition) placed after the SI figures,
+%     just before the references. Main text cites it as "Supplementary Note 1"
+%     (a standard Nature SI element); the proposition/corollary inside are bold
+%     run-in prose, not separate numbered floats. ---
+
+% --- inference at scale ---
+\begin{figure*}[t]
+\centering
+\figph{50mm}{\textbf{[Suppl. Fig. -- inference at scale]}\\[3pt]
+Large-scale inference pipeline over ${\sim}10^{6}$ candidate perturbations
+(metabolic/kinase gene panels), with resource usage and the ranked strain-design output.}
+\caption{Inference at scale for strain design.}
+\label{fig:inference-scale}
+\end{figure*}
+
 \begin{figure*}[t]
 % TODO (draw.io source uncharacterized-genes-profile-enricment.drawio.png):
 %   add (f) total quantification of triple interactions across the remaining
@@ -71,6 +122,141 @@ resulting network transfers annotations ($\mathrm{GO}_{g_i}=\mathrm{GO}_{g_j}$).
 (f) Total quantification of triple interactions across the remaining yeast genome
 (coverage of uncharacterized genes). (g) The resulting new annotations transferred to
 previously uncharacterized genes.}{fig:profile-enrichment}
+\end{figure*}
+
+%% ---- Supplementary Note: functional equivalence of the perturbation operator ----
+%% Ported from notes/scratch.perturbation-operator-general.md (2026.07.01 section).
+%% Paper notation (Table~\ref{tab:notation}); the rebuild map is \kappa here because
+%% \rho already denotes the gene--reaction association (GPR) in the notation table.
+\clearpage
+\bmhead{Supplementary Note~1: functional equivalence of the perturbation operator}
+
+Figure~\ref{fig:torchcell}g and the Methods state that applying the perturbation operator
+to the fixed reference representation approximates re-encoding the rebuilt perturbed graph,
+$\Phi(G_p)\approx\mathcal{R}_\phi(\mathcal{T}_\psi(H,p))$. This note makes the statement
+precise: the reparameterisation is an \emph{exact} identity, whereas the trained
+approximation is a \emph{learned} correspondence with explicit realisability conditions.
+Notation follows Table~\ref{tab:notation}; two symbols are local to this note---the
+\emph{perturbed graph} $G_p$ and the deterministic \emph{rebuild map}
+$\kappa:(G,p)\mapsto G_p$ that materialises it (we write $\kappa$, not $\rho$, because
+$\rho$ already denotes the gene--reaction association). $\Phi,\Psi$ denote arbitrary
+measurable target maps, $D$ the data distribution over $(G,p)$, and $\sigma(\cdot)$ the
+generated $\sigma$-algebra.
+
+\paragraph{Two ways to predict a phenotype under a perturbation $p$.}
+\emph{Perturb the data (graph network).} Materialise $G_p=\kappa(G,p)$ by deleting or
+rewiring vertices and edges, then encode, $\hat y=\Phi(G_p)$; the graph is a hard
+constraint and $\kappa$ runs once per strain. \emph{Perturb the representation (CGT).}
+Encode once and operate,
+$\hat y=\mathcal{R}_\phi\!\big(\mathcal{T}_\psi(F_\theta(G),p),\varepsilon\big)$; the graph
+enters only through $F_\theta$, which runs once, and $H$ is reused across all $p$.
+
+\paragraph{Proposition (reparameterisation).}
+Let $\mathcal{H}_{\mathrm{data}}=\{\Phi\circ\kappa\}$ be the maps expressible by perturbing
+the data and
+$\mathcal{H}_{\mathrm{rep}}=\{\Psi:\mathcal{G}\times\mathcal{P}\to\mathcal{Y}\}$ those
+expressible as a function of $(G,p)$ directly (the amortised CGT family). Then
+\[
+\mathcal{H}_{\mathrm{data}}\subseteq\mathcal{H}_{\mathrm{rep}},
+\]
+with equality iff $\kappa$ is injective on $\operatorname{supp}D$. The two learning problems
+therefore target the same function class, and the amortised family is strictly larger
+exactly when the rebuild destroys information.
+
+\paragraph{Proof.}
+\emph{Containment.} $\kappa$ is deterministic, so $(G,p)$ fixes $G_p$. For any target
+$\Phi^\star$, $\Phi^\star(G_p)=(\Phi^\star\circ\kappa)(G,p)=:\Psi^\star(G,p)$---an equality,
+giving $\mathcal{H}_{\mathrm{data}}\subseteq\mathcal{H}_{\mathrm{rep}}$. \emph{Strictness.}
+The converse requires $\sigma(G_p)=\sigma(G,p)$. Rebuilding is information-destroying: $p$ is
+generally not recoverable from $G_p$, so $\sigma(G_p)\subsetneq\sigma(G,p)$ when $\kappa$ is
+non-injective, and some $\Psi\in\mathcal{H}_{\mathrm{rep}}\setminus\mathcal{H}_{\mathrm{data}}$
+exists.\hfill$\square$
+
+\paragraph{Concrete example.} Three genes with base graph $G$ the path $A\!-\!B\!-\!C$.
+\emph{Injective case.} Deleting $B$, $p=\{(g_B,\mathrm{del})\}$, drops $B$ and its edges, so
+$G_p=\{A,C\}$ (both isolated); the target $\Phi(G_p)=\#\mathrm{edges}=0$ is reproduced
+without any rebuild by
+$\Psi(G,p)=\#\mathrm{edges}(G)-\#\{\text{edges incident to }B\}=2-2=0$.
+\emph{Non-injective case.} Overexpressing $B$ at two doses,
+$p_1=\{(g_B,\mathrm{OE},1)\}$ vs $p_2=\{(g_B,\mathrm{OE},3)\}$, changes no topology, so
+$\kappa(G,p_1)=\kappa(G,p_2)=G$; any $\Phi(G_p)$ returns one value for both, yet
+dose-response phenotypes differ. The pair $(G,p)$ still carries the magnitude $m\in\{1,3\}$
+and separates them---continuous dose, and likewise the perturbation type $\tau$, lives in
+$p$, not in a bare rebuilt topology. This is
+$\mathcal{H}_{\mathrm{rep}}\setminus\mathcal{H}_{\mathrm{data}}$ made concrete.
+
+\paragraph{Corollary (origin of the $\approx$).}
+The ideal amortiser is $\Psi^\star=\Phi^\star\circ\kappa$. CGT realises it not by that
+literal composition but by the learned $\mathcal{R}_\phi\circ\mathcal{T}_\psi$ acting on
+$H=F_\theta(G)$. If (i)~$F_\theta$ is injective on $\operatorname{supp}D$, so $(H,p)$ carries
+the same information as $(G,p)$---free for a fixed gene set, since $H$ keeps one identifiable
+row per gene---and (ii)~cross-attention over the perturbation set followed by an MLP readout
+is a universal approximator of set-conditioned permutation-equivariant maps, then for every
+$\epsilon>0$ there exist $\psi,\phi$ with
+\[
+\sup_{(G,p)}\big\|\mathcal{R}_\phi\!\big(\mathcal{T}_\psi(F_\theta(G),p),\varepsilon\big)-\Psi^\star(G,p)\big\|<\epsilon,
+\]
+and, with the Proposition above,
+$\mathcal{R}_\phi\!\big(\mathcal{T}_\psi(F_\theta(G),p),\varepsilon\big)\approx\Phi(\kappa(G,p))=\Phi(G_p)$.
+
+\paragraph{Precision.} The two claims are distinct. The reparameterisation
+(the Proposition above) is exact---a set-theoretic identity,
+since $\kappa$ is deterministic. The trained
+$\Phi(G_p)\approx\mathcal{R}_\phi(\mathcal{T}_\psi(H,p))$ is a learned correspondence, not a
+mathematical identity: it holds to the extent $F_\theta$ is lossless and
+$\mathcal{T}_\psi,\mathcal{R}_\phi$ can fit $\Phi^\star\circ\kappa$. The realisability
+conditions are standard---permutation-invariant set functions are universally approximable by
+the Deep Sets construction~\cite{zaheerDeepSets2018}, self-attention is a universal
+approximator of permutation-equivariant sequence maps~\cite{yunAreTransformersUniversal2020},
+and conditioning on a perturbation rather than re-fitting on modified data is amortisation in
+the sense of hypernetworks~\cite{haHyperNetworks2017}.
+
+\paragraph{Relation to prior work.} The closest precedent is the expressivity result that a
+structural graph transformation applied at preprocessing, followed by standard message
+passing, is at least as expressive as the corresponding improved message-passing
+algorithm~\cite{joglWeisfeilerLemanReturn2022}; that result is topological and
+isomorphism-flavoured, whereas the Proposition above is a
+function-class containment for feature/parametric perturbations $p$ (dose $m$, type $\tau$)
+that a bare rebuilt topology cannot carry. Running a network on perturbed copies of a graph
+is known to exceed 1-WL expressiveness---by random node dropout~\cite{pappDropGNN2021} or by
+aggregating a policy-drawn bag of subgraphs~\cite{bevilacquaEquivariantSubgraph2022}---with
+1-WL the reference power for message passing~\cite{xuHowPowerfulAre2019}. GEARS instantiates the
+data-graph side biologically, materialising perturbations as edges on a gene--gene
+graph~\cite{roohaniPredictingTranscriptional2024}; CGT is its amortised counterpart, keeping
+the graph fixed and learning the perturbation in representation space.
+
+\paragraph{Empirical validation.} A minimal, idealised experiment on single-gene knockout
+fitness tests the equivalence directly (Supplementary
+Fig.~\ref{fig:pert-equivalence-empirical}). Two capacity-matched small models are trained on
+the same knockouts, gene features, and splits, differing only along the perturb-data
+vs.\ perturb-representation axis: a \emph{data-perturbing} GNN that rebuilds the perturbed
+graph $G_p=\kappa(G,p)$---deleting the knocked-out gene and its edges---and re-encodes,
+$\hat y=\Phi(G_p)$; and a \emph{representation-perturbing} CGT that encodes the wildtype once,
+$H=F_\theta(G)$, and applies the operator, $\hat y=\mathcal{R}_\phi(\mathcal{T}_\psi(H,p))$. A
+single deletion gives an injective $\kappa$, so the Proposition predicts equal attainable
+accuracy: the amortised model should match the data-perturbing one on held-out fitness while
+encoding once rather than rebuilding and re-encoding per strain.
+
+% --- SI: empirical validation of the perturbation-operator equivalence (supports Suppl. Note 1).
+%     PLACEHOLDER -- compose once the experiment (single-gene KO fitness, CGT-style vs GNN-style
+%     small models) is run. Keep the figure inside the 180x240 mm print box. ---
+\begin{figure*}[t]
+\centering
+\figph{55mm}{\textbf{[Suppl. Fig. -- empirical equivalence: CGT-style vs.\ GNN-style on single-gene KO fitness]}\\[3pt]
+Idealised test of Supplementary Note~1 on single-gene knockout fitness. Two capacity-matched
+small models trained on identical data, features, and splits: a data-perturbing GNN that
+rebuilds $G_p$ and re-encodes ($\hat y=\Phi(G_p)$) vs.\ a representation-perturbing CGT that
+encodes the wildtype once and applies the operator
+($\hat y=\mathcal{R}_\phi(\mathcal{T}_\psi(H,p))$).
+(a) predicted vs.\ actual fitness for both models;
+(b) held-out accuracy (Pearson $r$ / MSE), expected near-equal;
+(c) agreement of the two models' predictions ($\hat y_{\mathrm{GNN}}$ vs.\ $\hat y_{\mathrm{CGT}}$,
+near the identity line);
+(d) compute cost: per-strain rebuild$+$encode (GNN) vs.\ encode-once$+$operator (CGT).
+\textit{[placeholder: run the experiment, then compose.]}}
+\caption{Empirical functional equivalence of the perturbation operator on single-gene
+knockout fitness (support for Supplementary Note~1).}
+\label{fig:pert-equivalence-empirical}
 \end{figure*}
 
 %% ---- References: placed AFTER the SI part. \clearpage first so every SI figure float is

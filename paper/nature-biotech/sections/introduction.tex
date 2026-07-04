@@ -1,15 +1,42 @@
 %% ===== Introduction (~500-650 words) =====
-\section{Introduction\cb{target ~570 words}}\label{sec:intro}
+\section{Introduction\cb{target ~570 words}\wc{intro}}\label{sec:intro}
 % NOTE: the TorchCell overview schematic (fig:overview) is parked in the
 % Supplementary information for now (see sections/backmatter.tex); the Intro and
 % Results R1 reference it as a supplementary figure.
-\textit{[FILLER -- replace with Intro prose.]} Deep learning transformed protein
-structure and function prediction, yet systems biology and metabolic engineering
-lag because phenotype data are scattered across small, heterogeneous studies with
-no shared schema~\cite{volk2023meteng}. Prior approaches fall short: mechanistic
-flux balance analysis misses epistasis, and recent perturbation transformers do
-not consistently beat linear baselines~\cite{ahlmanneltze2025}. Our own classical
-baselines predict knockout fitness but fail on gene interactions (Suppl.\ Fig.\
-S1), motivating a deep, biologically grounded model. Here we present TorchCell and
-the Cell Graph Transformer (CGT), whose data model and architecture we outline in
-Suppl.\ Fig.~\ref{fig:overview}.
+Mapping genotype to phenotype is a central goal of biology and the rate-limiting step of
+metabolic engineering, where the targets of interest---titre, rate, and yield---are
+polygenic phenotypes that emerge from many genes acting across transcription, translation,
+and metabolism~\cite{stephanopoulosMetabolicEngineeringPrinciples1998,bordbarConstraintbasedModelsPredict2014}. Unlike monogenic disorders, such
+phenotypes cannot be read from a single gene: their causal structure is obscured by
+epistasis and by the cellular layers that separate genotype from
+measurement~\cite{costanzoGlobalGeneticInteraction2016a,kuzminSystematicAnalysisComplex2018a}. Growth is the most tractable of
+them---assays are cheap and scalable, gene--gene interactions are directly quantifiable, and
+the same readout spans applications from suppressing proliferation in disease to maximising
+growth-coupled production.
+
+Deep learning has transformed protein structure and function prediction, yet systems biology
+and metabolic engineering lag~\cite{sapovalCurrentProgressOpen2022}. Two obstacles recur. First, phenotype
+data are scattered across small, heterogeneous studies with no shared schema, and broad
+genome-wide screens rarely interoperate with the deep, pathway-focused campaigns of metabolic
+engineering~\cite{volkMetabolicEngineeringMethodologies2022,presnellSystemsMetabolicEngineering2019}. Second, although multimodal measurements
+improve prediction, combining more than a few modalities is difficult and rarely
+scales~\cite{culleyMechanismawareMultiomicMachinelearning2020}. Recent foundation cell models pretrain on single-cell
+gene-expression matrices and fine-tune for phenotype~\cite{cuiScGPTBuildingFoundation2024,kalfonScPRINTPretraining50MCells2025},
+but industrial microbes lack such data; what they do have is diverse perturbation data and
+curated interaction graphs, including metabolism.
+
+Existing approaches leave this gap open: constraint-based flux analysis captures metabolism
+but misses epistasis~\cite{bordbarConstraintbasedModelsPredict2014,merzbacherAccuratePredictionGene2025}, and recent perturbation
+transformers do not consistently beat linear baselines~\cite{ahlmann-eltzeDeeplearningbasedGenePerturbation2025}. Our own
+classical baselines make the point sharply---with enough data they predict knockout fitness
+from almost any gene representation, yet fail on gene interactions (Supplementary Fig.~\ref{fig:classical-ml})---so
+fitness alone does not justify a deep model, but the harder, structured labels do.
+
+Here we present TorchCell, a schema-grounded knowledge graph that curates heterogeneous
+\textit{S.\ cerevisiae} phenotype data into queryable multimodal datasets, in the
+data-standardisation spirit of TorchGeo~\cite{stewartTorchGeoDeepLearning2022a}, together with the Cell
+Graph Transformer (CGT): a model that encodes a cell once, applies perturbations as a learned
+operator in embedding space, and folds biological networks into the training objective as a
+soft prior rather than a hard graph. It predicts fitness, gene interactions, gene expression,
+and morphology jointly, and needs only a genome---not an interaction graph---to run. We
+outline the data model and architecture in Supplementary Fig.~\ref{fig:overview}.

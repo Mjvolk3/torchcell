@@ -21,8 +21,6 @@ import pandas as pd
 import pytest
 from scipy.stats import norm
 
-from torchcell.datasets.scerevisiae.kuzmin2018 import N_SAMPLES_COMBINED_MUTANT
-
 # Candidate raw locations (any Kuzmin-2018 dataset root holds the same Data S1 TSV).
 _RAW_CANDIDATES = [
     "data/torchcell/dmf_kuzmin2018/raw/aao1729_data_s1.tsv",
@@ -44,6 +42,11 @@ def test_combined_mutant_n_matches_reported_pvalue() -> None:
     path = _raw_path()
     if path is None:
         pytest.skip("Kuzmin raw Data S1 TSV not present (not shipped to CI)")
+
+    # Imported here, after the skip gate: importing the dataset module pulls in
+    # DATA_ROOT-dependent code, which is unset in CI (where the raw data is also
+    # absent, so we skip above before reaching this).
+    from torchcell.datasets.scerevisiae.kuzmin2018 import N_SAMPLES_COMBINED_MUTANT
 
     df = pd.read_csv(path, sep="\t")
     d = df[df["Combined mutant type"] == "digenic"]

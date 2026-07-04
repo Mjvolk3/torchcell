@@ -8,9 +8,11 @@
 import hashlib
 import logging
 from datetime import UTC, datetime
+from enum import StrEnum
 from pathlib import Path
+from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -53,6 +55,78 @@ class FileRecord(BaseModel):
     )
 
 
+class RetrievalMethod(StrEnum):
+    """How an artifact is fetched. ``radiant_endpoint`` is a future slot (issue
+    #20) for un-scriptable sources served from the Radiant VM; there is no
+    ``manual_browser`` -- manual-once artifacts are deposited then served.
+    """
+
+    springer_esm = "springer_esm"
+    zotero_attachment = "zotero_attachment"
+    pmc_oa_api = "pmc_oa_api"
+    direct_url = "direct_url"
+    radiant_endpoint = "radiant_endpoint"
+
+
+class SourceCheck(BaseModel):
+    """Result of re-running the retriever to test the source still yields our bytes."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    checked_at: str = Field(description="ISO timestamp of the check (caller-supplied).")
+    produced_sha256: str = Field(description="sha256 the retriever produced this run.")
+    matches: bool = Field(description="Did produced_sha256 equal the record's sha256?")
+
+
+class RetrievalRecord(BaseModel):
+    """How an artifact was obtained, referencing a versioned retriever function."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    method: RetrievalMethod
+    source_url: str | None = Field(
+        default=None, description="Canonical URL (historical retrieval metadata)."
+    )
+    retriever: str = Field(
+        description="Registry key into torchcell.literature.retrieve (the source code)."
+    )
+    params: dict[str, Any] = Field(
+        default_factory=dict, description="kwargs passed to the retriever function."
+    )
+    sha256: str = Field(description="sha256 of the retrieved bytes (canonical anchor).")
+    retrieved_at: str = Field(description="ISO date the artifact was retrieved.")
+    last_check: SourceCheck | None = Field(
+        default=None, description="Last time the retriever was re-run + verified."
+    )
+
+
+class ProcessingRecord(BaseModel):
+    """How a derived artifact (OCR markdown, extracted data) was produced."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    processor: str = Field(description="Dotted path to the processing function.")
+    tool: str = Field(description="mineru | pdftotext | llm-extract | ...")
+    version: str = Field(description="Tool/library version used.")
+    params: dict[str, Any] = Field(default_factory=dict)
+    input_sha256: list[str] = Field(
+        default_factory=list, description="sha256 of the inputs this was derived from."
+    )
+
+
+class ArtifactRecord(FileRecord):
+    """A ``FileRecord`` plus how it was retrieved and/or processed.
+
+    This is the general per-file record: it serves papers, supplements, software,
+    and dataset raw files. ``Manifest.files`` is typed as ``list[ArtifactRecord]``
+    so ``retrieval``/``processing`` survive serialize/reload (a bare ``FileRecord``
+    field would silently drop them by declared-type serialization).
+    """
+
+    retrieval: RetrievalRecord | None = None
+    processing: ProcessingRecord | None = None
+
+
 class Manifest(BaseModel):
     """Provenance + integrity record for one paper's captured artifact.
 
@@ -71,7 +145,7 @@ class Manifest(BaseModel):
     library_id: str | None = None
     zotero_item_key: str | None = None
     collections: list[str] = Field(default_factory=list)
-    files: list[FileRecord] = Field(default_factory=list)
+    files: list[ArtifactRecord] = Field(default_factory=list)
     si_data_sources: list[str] = Field(
         default_factory=list,
         description="External URLs the SI data files were fetched from.",
@@ -140,7 +214,7 @@ def build_manifest(
     """
     sources = sources or {}
     zotero_md5 = zotero_md5 or {}
-    files: list[FileRecord] = []
+    files: list[ArtifactRecord] = []
     for path in sorted(artifact_dir.rglob("*")):
         if not path.is_file() or path.name == MANIFEST_FILENAME:
             continue
@@ -149,7 +223,7 @@ def build_manifest(
         # OCR markdown has no external source; tag it as produced by MinerU.
         default_source = "mineru-ocr" if role in (ROLE_PAPER_OCR, ROLE_SI_OCR) else None
         files.append(
-            FileRecord(
+            ArtifactRecord(
                 path=rel,
                 role=role,
                 bytes=path.stat().st_size,

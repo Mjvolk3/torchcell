@@ -7,6 +7,7 @@
 
 import math
 import re
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -360,8 +361,78 @@ class Phenotype(ModelStrict):
         return getattr(self, key)
 
 
+class UncertaintyType(StrEnum):
+    """What a reported uncertainty number IS, so it converts to an SE correctly.
+
+    Rigor comes from naming the statistic: a bootstrap SD of an estimator is
+    already an SE (never divide it by sqrt(n) again), whereas a sample SD of
+    observations must be divided. There is deliberately NO ``unknown`` -- strict
+    labelling: if the kind is unknown we do not ingest the value.
+    """
+
+    sample_sd = "sample_sd"  # SD of observations -> SE = sd / sqrt(n)
+    standard_error = "standard_error"  # already SE of the mean -> use as-is
+    bootstrap_se = "bootstrap_se"  # bootstrap SD of the estimator ~ SE -> as-is
+    variance = "variance"  # sample variance -> SE = sqrt(var / n)
+    ci95 = "ci95"  # 95% CI half-width -> SE = hw / 1.96
+
+
+class SampleUnit(StrEnum):
+    """What one sample in ``n_samples`` physically is. Add values as datasets need
+    them (do not pre-populate). ``screen`` vs ``colony`` matters: Costanzo colonies
+    are pseudoreplicates; the independent unit is the screen.
+    """
+
+    colony = "colony"
+    screen = "screen"
+    biological_replicate = "biological_replicate"
+    technical_replicate = "technical_replicate"
+    pooled = "pooled"
+
+
+_Z95 = 1.959963984540054  # standard-normal two-sided 95% quantile
+
+
+def derive_se(
+    uncertainty: float | None,
+    uncertainty_type: UncertaintyType | None,
+    n_samples: int | None,
+) -> float | None:
+    """Derive the standard error of the mean from a reported uncertainty + its kind.
+
+    ``standard_error``/``bootstrap_se`` -> as-is (already an SE); ``sample_sd`` ->
+    sd/sqrt(n); ``variance`` -> sqrt(var/n); ``ci95`` -> half-width/1.96. n_samples
+    is required for the kinds that divide. Returns None when nothing is reported.
+    """
+    if uncertainty is None or uncertainty_type is None:
+        return None
+    if uncertainty_type in (
+        UncertaintyType.standard_error,
+        UncertaintyType.bootstrap_se,
+    ):
+        return uncertainty
+    if uncertainty_type is UncertaintyType.ci95:
+        return uncertainty / _Z95
+    if n_samples is None or n_samples < 1:
+        raise ValueError(
+            f"n_samples (>=1) required to derive SE from {uncertainty_type}"
+        )
+    if uncertainty_type is UncertaintyType.sample_sd:
+        return uncertainty / math.sqrt(n_samples)
+    if uncertainty_type is UncertaintyType.variance:
+        return math.sqrt(uncertainty / n_samples)
+    raise ValueError(f"unhandled uncertainty_type: {uncertainty_type}")
+
+
 class FitnessPhenotype(Phenotype, ModelStrict):
-    """Fitness phenotype with fitness value and uncertainty statistics."""
+    """Fitness phenotype with fitness value and uncertainty statistics.
+
+    Uncertainty ontology: the source-reported number lives in ``fitness_uncertainty``
+    with its ``fitness_uncertainty_type``; ``n_samples`` + ``sample_unit`` give the
+    replicate design; ``fitness_se`` is the DERIVED, ML-facing standard error
+    (auto-computed via ``derive_se`` when not supplied). ``fitness_std`` is
+    DEPRECATED (superseded by uncertainty/type; retained until loaders migrate).
+    """
 
     graph_level: str = "global"
     label_name: str = "fitness"
@@ -383,6 +454,18 @@ class FitnessPhenotype(Phenotype, ModelStrict):
         Note: numerator and denominator may have different sample sizes;
         this tracks the complete ratio measurement.""",
     )
+    fitness_uncertainty: float | None = Field(
+        default=None,
+        description="Source-reported uncertainty number, verbatim (its meaning is "
+        "given by fitness_uncertainty_type).",
+    )
+    fitness_uncertainty_type: UncertaintyType | None = Field(
+        default=None, description="What fitness_uncertainty IS (sample_sd, ...)."
+    )
+    sample_unit: SampleUnit | None = Field(
+        default=None,
+        description="What one sample in n_samples is (colony, screen, ...).",
+    )
 
     @field_validator("fitness")
     def validate_fitness(cls, v: float) -> float:
@@ -399,6 +482,45 @@ class FitnessPhenotype(Phenotype, ModelStrict):
         if v is not None and (not isinstance(v, int) or v < 1):
             raise ValueError(f"n_samples must be a positive integer or None, got: {v}")
         return v
+
+    @model_validator(mode="before")
+    @classmethod
+    def _fill_fitness_se(cls, data: Any) -> Any:
+        """Derive the ML-facing fitness_se from the reported uncertainty.
+
+        ModelStrict is frozen, so we fill fitness_se BEFORE construction rather than
+        assign after. Skips when not safely derivable (e.g. sample_sd without n);
+        ``_check_uncertainty`` then raises the precise error.
+        """
+        if not isinstance(data, dict):
+            return data
+        unc = data.get("fitness_uncertainty")
+        typ = data.get("fitness_uncertainty_type")
+        if unc is None or typ is None or data.get("fitness_se") is not None:
+            return data
+        typ = UncertaintyType(typ)
+        n = data.get("n_samples")
+        if typ in (UncertaintyType.sample_sd, UncertaintyType.variance) and n is None:
+            return data
+        data["fitness_se"] = derive_se(unc, typ, n)
+        return data
+
+    @model_validator(mode="after")
+    def _check_uncertainty(self) -> "FitnessPhenotype":
+        """Strict invariant: no unlabelled uncertainty (reported<->type both-or-
+        neither); n_samples + sample_unit required for kinds that divide.
+        """
+        unc, typ = self.fitness_uncertainty, self.fitness_uncertainty_type
+        if (unc is None) != (typ is None):
+            raise ValueError(
+                "fitness_uncertainty and fitness_uncertainty_type must both be set "
+                "or both be None (no unlabelled uncertainty)"
+            )
+        if typ in (UncertaintyType.sample_sd, UncertaintyType.variance) and (
+            self.n_samples is None or self.sample_unit is None
+        ):
+            raise ValueError(f"n_samples and sample_unit are required for {typ}")
+        return self
 
     @model_validator(mode="after")  # type: ignore[arg-type]  # legacy pydantic (cls, values) after-validator; runtime-supported, plugin types as modern form
     def validate_label_fields(cls, values: "FitnessPhenotype") -> "FitnessPhenotype":

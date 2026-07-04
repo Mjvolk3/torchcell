@@ -500,7 +500,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         # Extract gene names
         df["Query Systematic Name"] = extract_systematic_name(df["Query Strain ID"])
         df["Array Systematic Name"] = extract_systematic_name(df["Array Strain ID"])
-        Temperature = df["Arraytype/Temp"].str.extract("(\d+)").astype(int)
+        Temperature = df["Arraytype/Temp"].str.extract(r"(\d+)").astype(int)
         df["Temperature"] = Temperature
         df["query_perturbation_type"] = df["Query Strain ID"].apply(
             lambda x: (
@@ -870,7 +870,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         # Extract gene names
         df["Query Systematic Name"] = extract_systematic_name(df["Query Strain ID"])
         df["Array Systematic Name"] = extract_systematic_name(df["Array Strain ID"])
-        Temperature = df["Arraytype/Temp"].str.extract("(\d+)").astype(int)
+        Temperature = df["Arraytype/Temp"].str.extract(r"(\d+)").astype(int)
         df["Temperature"] = Temperature
         df["query_perturbation_type"] = df["Query Strain ID"].apply(
             lambda x: (

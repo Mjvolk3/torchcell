@@ -1,0 +1,15 @@
+# torchcell cron jobs (source of truth; entries are machine-specific paths).
+#
+# This file documents the durable cron entries torchcell relies on. It is NOT a
+# complete install list for this machine -- other projects (Swanki, dotfiles)
+# own their own entries in the live crontab. Add the block below by hand:
+#
+#   crontab -l | { cat; cat scripts/crontab.txt; } | crontab -
+#
+# ...or paste the merge-queue line into `crontab -e`. Verify with `crontab -l`.
+
+# merge-queue drainer: sweep free notes to main + land queued worktree branches
+# (deterministic, no model; also triggered on-demand by /enqueue-merge).
+# Self-flocks so it never races an on-demand drain. `bash -lc` sources the login
+# shell so conda/PATH and (optionally) SLACK_CLAUDE_WEBHOOK are present.
+*/2 * * * * bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && /home/michaelvolk/miniconda3/envs/torchcell/bin/python scripts/drain_merge_queue.py >> /tmp/torchcell-drain-merge-queue.log 2>&1'

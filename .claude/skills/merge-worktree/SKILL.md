@@ -20,14 +20,33 @@ To make that impossible, **every git command targets its repo explicitly with `g
 ```bash
 MAIN="$HOME/Documents/projects/torchcell"
 WT="$HOME/Documents/projects/torchcell.worktrees/<branch>"
+PY="$HOME/miniconda3/envs/torchcell/bin/python"
+MQ="$PY $MAIN/scripts/merge_queue.py"
+LOCK="$($MQ lock-path)"   # shared landing flock (see Step 3-5)
 ```
 
 - Main-repo operations use `git -C "$MAIN" ...`; the one worktree op (rebase) uses `git -C "$WT" ...`.
 - **Run rebase and ff-merge as separate commands. Never chain `cd "$WT"` with a main-repo git command in the same `&&` line.**
 
-## Serialize -- never run concurrently
+## Prefer the merge queue -- this is the manual fallback
 
-Do NOT start while another `/merge-worktree` (or any landing that stashes on shared main) is in flight. All worktrees share one `.git` stash list; parallel runs corrupt each other. Check `git -C "$MAIN" stash list` is quiet first; if a landing is active, wait.
+The durable way to serialize landings is the **single-writer merge queue**:
+sessions `/enqueue-merge` a finished branch and the drainer lands them one at a
+time (`scripts/merge_queue.py`, `scripts/drain_merge_queue.py`). That is what
+stops concurrent worktree landings from blocking each other or racing the shared
+`.git`. Check whether the drain path is live before landing by hand:
+
+```bash
+$MQ loop-status   # exit 0 = live (cron/heartbeat fresh), 1 = stopped
+```
+
+- **If it is live**, do NOT land inline -- run `/enqueue-merge <branch>` instead
+  and stop. The queue is the lander; a manual landing alongside it is exactly the
+  concurrency this system exists to avoid.
+- **If it is stopped**, you may land by hand here. The rebase->push critical
+  section in Step 3-5 is wrapped in the same `flock` the drainer uses, so even a
+  drainer that starts mid-landing cannot interleave. Still land **one at a
+  time** -- if another manual landing or push is in flight, wait.
 
 ## Step 1: Validate
 
@@ -49,27 +68,42 @@ git -C "$MAIN" rev-parse stash@{0}   # record as PARKED_STASH_SHA
 
 Capture the SHA so Step 6 pops *this exact* stash (positional `stash@{0}` is unsafe). If the tree is clean (or only untracked scratch), skip.
 
-## Step 3: Rebase onto main
+## Step 3-5: Land under flock (rebase -> ff -> push)
+
+Hold the shared landing `flock` for the **entire** rebase -> fast-forward -> push
+so no other landing (manual or the drainer) can interleave on the shared `.git`.
+Run it as ONE invocation -- the lock releases when the block exits. The branch is
+rebased onto `origin/main` (not the possibly-stale local `main`) before the local
+ff-merge advances `main`:
 
 ```bash
-git -C "$WT" rebase main
+flock "$LOCK" bash -s "<branch>" "$WT" "$MAIN" <<'SH'
+set -e
+BRANCH="$1"; WT="$2"; MAIN="$3"
+git -C "$WT" fetch origin
+git -C "$WT" rebase origin/main || { git -C "$WT" rebase --abort; exit 3; }   # rebase conflict
+git -C "$MAIN" merge "$BRANCH" --ff-only || exit 4                            # not fast-forward
+git -C "$MAIN" push origin main || exit 5                                     # push failed
+SH
+RC=$?
 ```
 
-If conflicts, inform the user and stop. Do NOT force anything.
+The ff-merge runs against `$MAIN` (never the worktree) -- that `-C "$MAIN"` is
+what prevents the silent `Already up to date` no-op that leaves `main`
+un-advanced. Interpret `RC`:
 
-## Step 4: Fast-forward main
-
-```bash
-git -C "$MAIN" merge <branch> --ff-only
-```
-
-A correct ff-merge prints `Updating <old>..<new>` + `Fast-forward`. If it prints `Already up to date` right after a rebase that produced new commits, you ran it against the wrong repo -- re-run with `-C "$MAIN"` and confirm `git -C "$MAIN" rev-parse main` equals the branch tip. If `--ff-only` fails (non-fast-forward), the rebase didn't land on current main -- re-fetch and re-rebase; do not force.
-
-## Step 5: Push main
-
-```bash
-git -C "$MAIN" push origin main
-```
+- **0** -- landed. `git -C "$MAIN" rev-parse main` now equals the branch tip.
+  Proceed to Step 6.
+- **3** -- rebase conflict (already aborted). Inform the user and stop. Do NOT
+  force anything.
+- **4** -- not fast-forward: local `main` carries commits not on the rebased
+  branch (a diverged local `main`). Do NOT force. Reconcile local `main` with
+  `origin/main` first, or `/enqueue-merge` the branch and let the drainer land it
+  worktree->origin (which ignores local `main` entirely).
+- **5** -- push rejected/failed (often a race: CI pushed the semantic-release
+  bump commit to `main` between the fetch and the push). Re-run the block
+  **once** (it re-fetches + re-rebases); if it persists, stop and report. Never
+  `--no-verify`, never force-push.
 
 ## Step 6: Close any PR, then clean up
 

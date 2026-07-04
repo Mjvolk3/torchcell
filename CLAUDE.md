@@ -73,6 +73,18 @@ quote + `sha256` + section/line, and never guessed.
 - **When a value genuinely varies per-record and isn't a released column, say so**
   in code + PR, pick a documented representative, and flag it for review -- do not
   present a guess as sourced. Record the finding in the dataset's dendron note.
+- **Resolving a range with no per-record value (never assume the optimistic end).**
+  When the SI gives only a range (e.g. "4-8 colonies") and no per-record column,
+  resolve it in this order: (1) **back-solve** from another provided statistic --
+  e.g. reconstruct the reported p-value/SE from the stored SD across all records
+  and find the `n` whose central tendency matches (this is empirical, not an
+  assumption); (2) if back-solve is precluded (unpublished term, no companion
+  statistic), take the **conservative lower-end** of the replicate count (larger
+  SE -- never overstate precision); (3) the **median** of the range only if a
+  central estimate is explicitly wanted over conservatism. Document which rule was
+  used and the evidence. Worked example: Kuzmin combined-mutant `n_samples`
+  (back-solve + conservative both -> 4) in
+  `[[torchcell.datasets.scerevisiae.costanzo2016.noise-computation]]`.
 
 ## Paper / Manuscript Workflow
 

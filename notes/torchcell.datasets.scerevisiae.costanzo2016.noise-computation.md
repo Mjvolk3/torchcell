@@ -279,17 +279,24 @@ Kuzmin uses the same Boone-lab pipeline. Sourced from the Kuzmin 2018 MinerU SI
   col. 12) = the double/triple mutant measured in the interaction screen. Kuzmin's
   SI does NOT restate its type and defers to Baryshnikova 2010 (ref 8) -> it is a
   colony **sample_sd** (Eq. 14), `sample_unit = colony`.
-- **n_samples = 8.** Interaction screens were run in DUPLICATE -- si1.md L75 "two
-  independent replicates", L171 "every screen in duplicate", L175 "all trigenic
-  interaction screens were performed twice" -- x ~4 colonies/screen (Baryshnikova
-  "typically four per screen with up to two screens") = 8. N_ij varies 4-8 per
-  record and is NOT a column in Data S1, so 8 is the full-replication
-  representative. **Distinct from Costanzo DMF n=4 (single screen).**
+- **n_samples = 4** (revised from an initial 8). The exact per-record colony count
+  is NOT in Data S1 (12 columns, no count/SE column -- verified by inspecting the
+  raw TSV), so it is fixed by three converging lines:
+  1. **Empirical back-solve against the reported P-value** (the "other provided
+     statistic"): the single-term normal model `2*Phi(-|eps|/(sd/sqrt(n)))` over
+     ~410k digenic records matches the reported P-value **median (0.358) best at
+     n=4 (0.377)**; n=8 overshoots badly (0.211), n=6 (0.279). Spearman(p_pred,
+     p_reported) = **0.985** confirms the col-12 SD drives the p-value ranking.
+     Exact recovery is precluded by the unpublished pooled-background term in the
+     Baryshnikova p-value (frac(p<0.05) can't be matched by any single-term n), so
+     this fixes the central estimate, not an exact per-record n.
+  2. **Conservative lower-end** of the Baryshnikova 4-8 range (typically 4/screen).
+  3. **Consistency with Costanzo DMF (n=4).**
 - The "12-24 colony measurements" in si1.md L59 is the QUERY fitness (col 9,
   bootstrap-derived), a DIFFERENT column whose std the loader does not store -- do
   not confuse it with the stored col-12 combined-mutant SD.
 - SMF (single mutant): no reported std -> no uncertainty.
 
-Open: n=8 is the modal/full-replication value; the true per-record N_ij (4-8) is
-unrecoverable from the released data. If a per-record colony count surfaces, switch
-to it. See [[torchcell.datasets.scerevisiae.kuzmin2018]].
+Policy precedent (unexplained range -> value): back-solve from another provided
+statistic first; if precluded, take the conservative lower-end. Here both agree on
+4. See [[torchcell.datasets.scerevisiae.kuzmin2018]].

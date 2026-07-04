@@ -34,15 +34,56 @@ from torchcell.datamodels.schema import (
     Media,
     Publication,
     ReferenceGenome,
+    SampleUnit,
     SgaAllelePerturbation,
     SgaKanMxDeletionPerturbation,
     SgaTsAllelePerturbation,
     Temperature,
+    UncertaintyType,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+
+
+# Sample size for combined (double/triple) mutant fitness measurements.
+# The reported "Combined mutant fitness standard deviation" (Additional Data S1
+# col. 12) is a SAMPLE SD over colony replicates. Kuzmin's SI (si1.md line 59)
+# does not restate its type and defers to Baryshnikova 2010 (ref 8), whose Eq. 14
+# defines it as the colony s.d. sigma_Iij over N_ij colonies -> we record it as
+# sample_sd over colonies (SE = SD/sqrt(n), auto-derived).
+#
+# n = 4. The exact per-record colony count is NOT in the released data (12 cols,
+# no count/SE column), so it is fixed by three converging lines:
+#  (1) Empirical back-solve against the reported P-value (the "other provided
+#      statistic"): the single-term normal model 2*Phi(-|eps|/(sd/sqrt(n))) over
+#      410k digenic records matches the reported P-value median (0.358) best at
+#      n=4 (0.377); n=8 overshoots badly (0.211). Spearman(p_pred,p_reported)=0.985
+#      confirms this SD column drives the p-value ranking. Exact recovery is
+#      precluded by the unpublished pooled-background term in the Baryshnikova
+#      p-value, so this fixes the central estimate, not an exact per-record n.
+#  (2) Conservative lower-end of the Baryshnikova range (typically 4/screen, 4-8).
+#  (3) Consistency with Costanzo 2016 DMF (also n=4).
+# NB: the "12-24 colony measurements" in si1.md line 59 is the QUERY fitness
+# (col 9, bootstrap), a DIFFERENT column whose std the loader does not store.
+N_SAMPLES_COMBINED_MUTANT = 4
+
+
+def _combined_mutant_uncertainty(std_val: Any) -> dict[str, Any]:
+    """Ontology fields for a combined-mutant-fitness sample SD over colonies.
+
+    Returns empty uncertainty when the SD is unreported (None/NaN); otherwise
+    fitness_se is auto-derived by FitnessPhenotype as SD/sqrt(n_samples).
+    """
+    if pd.isna(std_val):
+        return {"fitness_uncertainty": None, "fitness_uncertainty_type": None}
+    return {
+        "fitness_uncertainty": std_val,
+        "fitness_uncertainty_type": UncertaintyType.sample_sd,
+        "n_samples": N_SAMPLES_COMBINED_MUTANT,
+        "sample_unit": SampleUnit.colony,
+    }
 
 
 # Fitness
@@ -281,13 +322,15 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         elif row["smf_type"] == "array_smf":
             smf_key = "Array single mutant fitness"
 
-        # We have no reported std for single mutants
-        # Could use mean of all stds, would be a conservative estimate
-        # Using nan for now
+        # No reported std for single mutants (SMF value comes from Costanzo/query
+        # estimates); leave uncertainty unset.
         phenotype = FitnessPhenotype(fitness=row[smf_key], fitness_std=None)
 
+        # Reference noise = mean combined-mutant SD -> sample_sd over colonies.
         phenotype_reference = FitnessPhenotype(
-            fitness=1.0, fitness_std=phenotype_reference_std
+            fitness=1.0,
+            fitness_std=phenotype_reference_std,
+            **_combined_mutant_uncertainty(phenotype_reference_std),
         )
 
         reference = FitnessExperimentReference(
@@ -513,10 +556,16 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
             dmf_key = "Query single/double mutant fitness"
             # std of these fitnesses not reported
             fitness_std = np.nan
-        phenotype = FitnessPhenotype(fitness=row[dmf_key], fitness_std=fitness_std)
+        phenotype = FitnessPhenotype(
+            fitness=row[dmf_key],
+            fitness_std=fitness_std,
+            **_combined_mutant_uncertainty(fitness_std),
+        )
 
         phenotype_reference = FitnessPhenotype(
-            fitness=1.0, fitness_std=phenotype_reference_std
+            fitness=1.0,
+            fitness_std=phenotype_reference_std,
+            **_combined_mutant_uncertainty(phenotype_reference_std),
         )
 
         reference = FitnessExperimentReference(
@@ -753,10 +802,17 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         # Phenotype based on temperature
         tmf_key = "Combined mutant fitness"
         tmf_std_key = "Combined mutant fitness standard deviation"
-        phenotype = FitnessPhenotype(fitness=row[tmf_key], fitness_std=row[tmf_std_key])
+        tmf_std = row[tmf_std_key]
+        phenotype = FitnessPhenotype(
+            fitness=row[tmf_key],
+            fitness_std=tmf_std,
+            **_combined_mutant_uncertainty(tmf_std),
+        )
 
         phenotype_reference = FitnessPhenotype(
-            fitness=1.0, fitness_std=phenotype_reference_std
+            fitness=1.0,
+            fitness_std=phenotype_reference_std,
+            **_combined_mutant_uncertainty(phenotype_reference_std),
         )
 
         reference = FitnessExperimentReference(

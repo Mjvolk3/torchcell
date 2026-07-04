@@ -33,15 +33,44 @@ from torchcell.datamodels.schema import (
     Media,
     Publication,
     ReferenceGenome,
+    SampleUnit,
     SgaAllelePerturbation,
     SgaKanMxDeletionPerturbation,
     SgaTsAllelePerturbation,
     Temperature,
+    UncertaintyType,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+
+
+# Sample size for double/triple mutant fitness measurements. The reported fitness
+# "St.dev." / "Double/triple mutant fitness standard deviation" is a SAMPLE SD
+# over colony replicates (Boone-lab SGA pipeline; Baryshnikova 2010 ref, Eq. 14
+# colony s.d.) -> sample_sd over colonies, SE = SD/sqrt(n) auto-derived.
+# n = 4, matching Kuzmin 2018: the per-record colony count is not in the data;
+# 4 is the conservative Baryshnikova per-screen base and the empirical central
+# estimate (Kuzmin-2018 p-value back-solve favours n=4; see kuzmin2018.py), and
+# is consistent with Costanzo 2016 DMF.
+N_SAMPLES_COMBINED_MUTANT = 4
+
+
+def _combined_mutant_uncertainty(std_val: Any) -> dict[str, Any]:
+    """Ontology fields for a double/triple-mutant-fitness sample SD over colonies.
+
+    Returns empty uncertainty when the SD is unreported (None/NaN); otherwise
+    fitness_se is auto-derived by FitnessPhenotype as SD/sqrt(n_samples).
+    """
+    if pd.isna(std_val):
+        return {"fitness_uncertainty": None, "fitness_uncertainty_type": None}
+    return {
+        "fitness_uncertainty": std_val,
+        "fitness_uncertainty_type": UncertaintyType.sample_sd,
+        "n_samples": N_SAMPLES_COMBINED_MUTANT,
+        "sample_unit": SampleUnit.colony,
+    }
 
 
 @register_dataset
@@ -158,7 +187,11 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
         )
         environment_reference = environment.model_copy()
 
-        phenotype = FitnessPhenotype(fitness=row["Fitness"], fitness_std=row["St.dev."])
+        phenotype = FitnessPhenotype(
+            fitness=row["Fitness"],
+            fitness_std=row["St.dev."],
+            **_combined_mutant_uncertainty(row["St.dev."]),
+        )
 
         phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=None)
 
@@ -429,7 +462,9 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
         environment_reference = environment.model_copy()
 
         phenotype = FitnessPhenotype(
-            fitness=row["fitness"], fitness_std=row["fitness_std"]
+            fitness=row["fitness"],
+            fitness_std=row["fitness_std"],
+            **_combined_mutant_uncertainty(row["fitness_std"]),
         )
 
         phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=None)

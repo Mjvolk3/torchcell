@@ -3,6 +3,10 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/verification/__init__
 """Record-level L0-L4 verification framework (roadmap WS3)."""
 
+from torchcell.verification.expression import (
+    measured_gene_universe,
+    verify_expression_dataset,
+)
 from torchcell.verification.levels import (
     l0_structural,
     l1_completeness,
@@ -45,4 +49,6 @@ __all__ = [
     "l2_value_fidelity",
     "l3_convention",
     "l4_cross_source",
+    "measured_gene_universe",
+    "verify_expression_dataset",
 ]

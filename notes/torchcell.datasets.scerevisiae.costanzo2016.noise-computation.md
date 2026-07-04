@@ -210,6 +210,62 @@ s.d. (geometric/log).
 CONCLUSION: `background_std` (pooled expected s.d.) is NOT written to the output
 file (output columns: escore, escore_std, pval, smfit i/j +std, dm_expected,
 dm_actual, dm_actual_std). It is an internal quantity requiring the raw colony data
-+ control screens. **Costanzo's exact p-value is therefore NOT reproducible from
+- control screens. **Costanzo's exact p-value is therefore NOT reproducible from
 the released summary data** -- only the raw SGA pipeline reproduces it. This closes
 the p-value chase definitively.
+
+## 2026.07.04 - SMF stddev IS a bootstrap SE (not a sample SD) -- resolves loader
+
+**Question:** the fitness-uncertainty ontology needs to know what the Costanzo
+"Single mutant fitness stddev" column IS statistically -- a sample SD (divide by
+sqrt(n)) or an already-a-SE quantity (use as-is)? Pulled directly from the SOM.
+
+**Provenance.** Source = Costanzo 2016 *Science* SOM, `SOM.pdf`
+sha256 `79f38885e88495a83beee4e755237a8ce0d9eb29fc00c92134754a0640348c32`
+(born-digital Word->PDF; read via `pdftotext -layout`, NOT MinerU -- there is no
+Costanzo MinerU capture and pdftotext is the correct first-line tool for a
+born-digital text layer). Section "Single mutant fitness standard [deviation]".
+Reproducibly retrievable from the Boone lab mirror (Science.org 403s) --
+see [[costanzo2016-som-retrieval-provenance]].
+
+**Verbatim (SOM, SMF methods):**
+> "Colony size measurements of SGA deletion and TS **array** mutant strains were
+> based on an average of **350 replicate control screens** performed at 26degC or
+> 30degC. Colony size measurements of SGA deletion and TS **query** mutant strains
+> were based on an average of **17 replicate control screens** ... single mutant
+> fitness [was estimated] as described previously (5) with the exception that
+> **bootstrapped means, instead of medians, across replicates were used in
+> variance estimation and final fitness values**."
+
+**Answer: `bootstrap_se`.** The SMF stddev is the SD of the *bootstrapped mean*
+fitness estimate -> it is already a standard error of the estimate. Per the
+ontology `derive_se`: `bootstrap_se` is used AS-IS; you must NOT divide it by
+sqrt(anything).
+
+**The current loader is wrong on two counts** (`costanzo2016.py:370-373`):
+
+```python
+n_samples = N_SAMPLES_QUERY_SMF_TOTAL          # = 68 (17 screens x 4 colonies)
+fitness_se_val = fitness_std_val / math.sqrt(n_samples)   # WRONG
+```
+
+1. It divides a bootstrap SE by sqrt(n) -- double-shrinking an already-SE quantity.
+2. n=68 conflates 17 *screens* (the bootstrap resampling unit) with 4 colonies;
+   colonies are pseudoreplicates. The resampling unit is the **screen** (17 query,
+   350 array), `sample_unit = screen`.
+
+**Loader fix (WS2 / propagation step 1):**
+
+- **SMF:** `fitness_uncertainty = <stddev col>`, `fitness_uncertainty_type =
+  bootstrap_se`, `fitness_se = fitness_uncertainty` (as-is). Record for provenance
+  `n_samples = 17` (query) / `350` (array), `sample_unit = screen` -- these do NOT
+  enter the SE for `bootstrap_se`.
+- **DMF** is a DIFFERENT statistic: "Double mutant fitness standard deviation"
+  (Data File S1) is a sample SD over the ~4 array colony replicates ->
+  `uncertainty_type = sample_sd`, `sample_unit = colony`, `n_samples = <colony n>`,
+  SE = SD/sqrt(n). This is why the ontology's per-record `uncertainty_type` is
+  essential: SMF and DMF stddevs are not the same kind of number.
+
+Note: Data File S1's 11 columns list SMF + Array SMF + DMF + "Double mutant fitness
+standard deviation" -- there is NO SMF-stddev column in S1; the SMF stddev lives in
+the strain-level SMF file, and it is the bootstrap SE described above.

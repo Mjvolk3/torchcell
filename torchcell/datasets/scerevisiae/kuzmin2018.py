@@ -53,15 +53,21 @@ log = logging.getLogger(__name__)
 # does not restate its type and defers to Baryshnikova 2010 (ref 8), whose Eq. 14
 # defines it as the colony s.d. sigma_Iij over N_ij colonies -> we record it as
 # sample_sd over colonies (SE = SD/sqrt(n), auto-derived).
-# n = 8: the interaction screens were run in DUPLICATE (si1.md line 75 "two
-# independent replicates"; line 171 "every screen in duplicate"; line 175 "all
-# trigenic interaction screens were performed twice") x ~4 colonies/screen
-# (Baryshnikova "typically four per screen with up to two screens"). N_ij varies
-# 4-8 per record and is NOT a column in Data S1, so 8 is the full-replication
-# representative. (Distinct from Costanzo 2016 DMF n=4, which was single-screen.)
+#
+# n = 4. The exact per-record colony count is NOT in the released data (12 cols,
+# no count/SE column), so it is fixed by three converging lines:
+#  (1) Empirical back-solve against the reported P-value (the "other provided
+#      statistic"): the single-term normal model 2*Phi(-|eps|/(sd/sqrt(n))) over
+#      410k digenic records matches the reported P-value median (0.358) best at
+#      n=4 (0.377); n=8 overshoots badly (0.211). Spearman(p_pred,p_reported)=0.985
+#      confirms this SD column drives the p-value ranking. Exact recovery is
+#      precluded by the unpublished pooled-background term in the Baryshnikova
+#      p-value, so this fixes the central estimate, not an exact per-record n.
+#  (2) Conservative lower-end of the Baryshnikova range (typically 4/screen, 4-8).
+#  (3) Consistency with Costanzo 2016 DMF (also n=4).
 # NB: the "12-24 colony measurements" in si1.md line 59 is the QUERY fitness
-# (col 9, bootstrap), a different column whose std the loader does not store.
-N_SAMPLES_COMBINED_MUTANT = 8
+# (col 9, bootstrap), a DIFFERENT column whose std the loader does not store.
+N_SAMPLES_COMBINED_MUTANT = 4
 
 
 def _combined_mutant_uncertainty(std_val: Any) -> dict[str, Any]:

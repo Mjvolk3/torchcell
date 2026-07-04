@@ -50,10 +50,11 @@ log = logging.getLogger(__name__)
 # "St.dev." / "Double/triple mutant fitness standard deviation" is a SAMPLE SD
 # over colony replicates (Boone-lab SGA pipeline; Baryshnikova 2010 ref, Eq. 14
 # colony s.d.) -> sample_sd over colonies, SE = SD/sqrt(n) auto-derived.
-# n = 8: interaction screens run in duplicate (2 independent replicates) x ~4
-# colonies/screen (Baryshnikova), matching Kuzmin 2018. N_ij varies 4-8 and is
-# not in the per-record data; 8 is the full-replication representative.
-N_SAMPLES_COMBINED_MUTANT = 8
+# n = 4, matching Kuzmin 2018: the per-record colony count is not in the data;
+# 4 is the conservative Baryshnikova per-screen base and the empirical central
+# estimate (Kuzmin-2018 p-value back-solve favours n=4; see kuzmin2018.py), and
+# is consistent with Costanzo 2016 DMF.
+N_SAMPLES_COMBINED_MUTANT = 4
 
 
 def _combined_mutant_uncertainty(std_val: Any) -> dict[str, Any]:

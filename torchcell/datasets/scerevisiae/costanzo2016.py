@@ -5,7 +5,6 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/costanzo2016
 # Test file: tests/torchcell/datasets/scerevisiae/test_costanzo2016.py
 import logging
-import math
 import os
 import os.path as osp
 import pickle
@@ -40,7 +39,11 @@ from torchcell.datamodels import (
     SgaTsAllelePerturbation,
     Temperature,
 )
-from torchcell.datamodels.schema import GenePerturbationType
+from torchcell.datamodels.schema import (
+    GenePerturbationType,
+    SampleUnit,
+    UncertaintyType,
+)
 from torchcell.datasets.dataset_registry import register_dataset
 
 logging.basicConfig(level=logging.INFO)
@@ -67,9 +70,9 @@ N_SAMPLES_DOUBLE_MUTANT = 4
 # Verified: SI-costanzoGlobalGeneticInteraction2016.pdf, Page 5,
 #           Section "Single mutant fitness standard"
 # Date extracted: 2026-01-20
-# Note: Each of 17 screens has 4 colonies, so total measurements = 17 × 4 = 68
+# Note: colonies within a screen are averaged BEFORE bootstrap resampling, so the
+# SMF resampling unit (and n_samples) is the screen, not the 68 colonies.
 N_SAMPLES_QUERY_SMF_SCREENS = 17
-N_SAMPLES_QUERY_SMF_TOTAL = 68  # 17 screens × 4 colonies
 
 # Sample size for array strain single mutant fitness (control screens)
 # Quote: "Colony size measurements of SGA deletion and TS array mutant strains
@@ -79,16 +82,9 @@ N_SAMPLES_QUERY_SMF_TOTAL = 68  # 17 screens × 4 colonies
 # Verified: SI-costanzoGlobalGeneticInteraction2016.pdf, Page 5,
 #           Section "Single mutant fitness standard"
 # Date extracted: 2026-01-20
-# Note: Each of 350 screens has 4 colonies, so total measurements = 350 × 4 = 1400
+# Array-strain SMF uses 350 control screens (kept for provenance; the simplified
+# loader records the query-strain screen count for SMF).
 N_SAMPLES_ARRAY_SMF_SCREENS = 350
-N_SAMPLES_ARRAY_SMF_TOTAL = 1400  # 350 screens × 4 colonies
-
-# Wild-type reference measurements
-# For WT reference phenotypes, use the same n_samples as the corresponding
-# strain type (query or array) being measured
-# Reference fitness = 1.0 is derived from the same control screen measurements
-N_SAMPLES_WT_QUERY = N_SAMPLES_QUERY_SMF_TOTAL  # 68
-N_SAMPLES_WT_ARRAY = N_SAMPLES_ARRAY_SMF_TOTAL  # 1400
 
 # Temperature-specific measurements (all use 4 technical replicates per screen)
 # Quote: "Double mutant selection plates involving a nonessential deletion
@@ -365,20 +361,26 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         smf_key = "Single mutant fitness"
         smf_std_key = "Single mutant fitness stddev"
 
-        # Single mutant fitness uses query strain control measurements
-        # Query strains measured with 17 control screens × 4 colonies = 68 measurements
-        n_samples = N_SAMPLES_QUERY_SMF_TOTAL
+        # SMF stddev is a BOOTSTRAP standard error of the bootstrapped-mean fitness
+        # estimate (SOM: "bootstrapped means ... used in variance estimation and
+        # final fitness values"), so it is already an SE -> used AS-IS, never
+        # divided by sqrt(n). The bootstrap resampling unit is the control screen
+        # (17 for query strains); the 4 colonies per screen are averaged before
+        # resampling, so n is screens, not the 68 colony measurements. fitness_se
+        # is auto-derived from (uncertainty, type). See
+        # [[torchcell.datasets.scerevisiae.costanzo2016.noise-computation]].
         fitness_std_val = row[smf_std_key]
-        if fitness_std_val is not None and n_samples is not None and n_samples > 0:
-            fitness_se_val = fitness_std_val / math.sqrt(n_samples)
-        else:
-            fitness_se_val = None
+        smf_unc_type = (
+            UncertaintyType.bootstrap_se if fitness_std_val is not None else None
+        )
 
         phenotype = FitnessPhenotype(
             fitness=row[smf_key],
             fitness_std=fitness_std_val,
-            fitness_se=fitness_se_val,
-            n_samples=n_samples,
+            fitness_uncertainty=fitness_std_val,
+            fitness_uncertainty_type=smf_unc_type,
+            n_samples=N_SAMPLES_QUERY_SMF_SCREENS,
+            sample_unit=SampleUnit.screen,
         )
 
         if row["Temperature"] == 26:
@@ -386,22 +388,21 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         elif row["Temperature"] == 30:
             phenotype_reference_std = phenotype_reference_std_30
 
-        # Reference phenotype uses same n_samples as query strain
-        n_samples_ref = N_SAMPLES_WT_QUERY
-        if (
-            phenotype_reference_std is not None
-            and n_samples_ref is not None
-            and n_samples_ref > 0
-        ):
-            phenotype_reference_se = phenotype_reference_std / math.sqrt(n_samples_ref)
-        else:
-            phenotype_reference_se = None
+        # WT reference noise is the mean SMF stddev (an average of bootstrap SEs),
+        # so it is likewise a bootstrap SE -> used as-is (no sqrt(n) division).
+        ref_unc_type = (
+            UncertaintyType.bootstrap_se
+            if phenotype_reference_std is not None
+            else None
+        )
 
         phenotype_reference = FitnessPhenotype(
             fitness=1.0,
             fitness_std=phenotype_reference_std,
-            fitness_se=phenotype_reference_se,
-            n_samples=n_samples_ref,
+            fitness_uncertainty=phenotype_reference_std,
+            fitness_uncertainty_type=ref_unc_type,
+            n_samples=N_SAMPLES_QUERY_SMF_SCREENS,
+            sample_unit=SampleUnit.screen,
         )
 
         reference = FitnessExperimentReference(
@@ -499,7 +500,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         # Extract gene names
         df["Query Systematic Name"] = extract_systematic_name(df["Query Strain ID"])
         df["Array Systematic Name"] = extract_systematic_name(df["Array Strain ID"])
-        Temperature = df["Arraytype/Temp"].str.extract("(\d+)").astype(int)
+        Temperature = df["Arraytype/Temp"].str.extract(r"(\d+)").astype(int)
         df["Temperature"] = Temperature
         df["query_perturbation_type"] = df["Query Strain ID"].apply(
             lambda x: (
@@ -735,19 +736,21 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         dmf_key = "Double mutant fitness"
         dmf_std_key = "Double mutant fitness standard deviation"
 
-        # Double mutant fitness uses standard 4 technical replicates
-        n_samples = N_SAMPLES_DOUBLE_MUTANT
+        # DMF stddev is a SAMPLE SD over the 4 colony replicates of one screen
+        # (SOM Data File S1 "Double mutant fitness standard deviation"), NOT a
+        # bootstrap SE -> SE = SD/sqrt(4), auto-derived from (uncertainty, type).
         fitness_std_val = row[dmf_std_key]
-        if fitness_std_val is not None and n_samples is not None and n_samples > 0:
-            fitness_se_val = fitness_std_val / math.sqrt(n_samples)
-        else:
-            fitness_se_val = None
+        dmf_unc_type = (
+            UncertaintyType.sample_sd if fitness_std_val is not None else None
+        )
 
         phenotype = FitnessPhenotype(
             fitness=row[dmf_key],
             fitness_std=fitness_std_val,
-            fitness_se=fitness_se_val,
-            n_samples=n_samples,
+            fitness_uncertainty=fitness_std_val,
+            fitness_uncertainty_type=dmf_unc_type,
+            n_samples=N_SAMPLES_DOUBLE_MUTANT,
+            sample_unit=SampleUnit.colony,
         )
 
         if row["Temperature"] == 26:
@@ -755,22 +758,20 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         elif row["Temperature"] == 30:
             phenotype_reference_std = phenotype_reference_std_30
 
-        # Reference phenotype (WT/WT) uses WT control measurements
-        n_samples_ref = N_SAMPLES_WT_QUERY
-        if (
-            phenotype_reference_std is not None
-            and n_samples_ref is not None
-            and n_samples_ref > 0
-        ):
-            phenotype_reference_se = phenotype_reference_std / math.sqrt(n_samples_ref)
-        else:
-            phenotype_reference_se = None
+        # WT/WT reference noise is the mean DMF stddev (an average of colony sample
+        # SDs) -> sample_sd over the 4 colonies -> SE = SD/sqrt(4). (Was wrongly
+        # divided by sqrt(68), conflating screens with colonies.)
+        ref_unc_type = (
+            UncertaintyType.sample_sd if phenotype_reference_std is not None else None
+        )
 
         phenotype_reference = FitnessPhenotype(
             fitness=1.0,
             fitness_std=phenotype_reference_std,
-            fitness_se=phenotype_reference_se,
-            n_samples=n_samples_ref,
+            fitness_uncertainty=phenotype_reference_std,
+            fitness_uncertainty_type=ref_unc_type,
+            n_samples=N_SAMPLES_DOUBLE_MUTANT,
+            sample_unit=SampleUnit.colony,
         )
 
         reference = FitnessExperimentReference(
@@ -869,7 +870,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         # Extract gene names
         df["Query Systematic Name"] = extract_systematic_name(df["Query Strain ID"])
         df["Array Systematic Name"] = extract_systematic_name(df["Array Strain ID"])
-        Temperature = df["Arraytype/Temp"].str.extract("(\d+)").astype(int)
+        Temperature = df["Arraytype/Temp"].str.extract(r"(\d+)").astype(int)
         df["Temperature"] = Temperature
         df["query_perturbation_type"] = df["Query Strain ID"].apply(
             lambda x: (

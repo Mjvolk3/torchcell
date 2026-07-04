@@ -13,9 +13,11 @@ from torchcell.verification.levels import (
     l4_cross_source,
 )
 from torchcell.verification.report import (
+    DerivationMethod,
     Level,
     LevelResult,
     Provenance,
+    StatDerivation,
     VerificationReport,
     sha256_file,
 )
@@ -26,9 +28,11 @@ from torchcell.verification.sourced import (
 )
 
 __all__ = [
+    "DerivationMethod",
     "Level",
     "LevelResult",
     "Provenance",
+    "StatDerivation",
     "VerificationReport",
     "sha256_file",
     "SourcedValue",

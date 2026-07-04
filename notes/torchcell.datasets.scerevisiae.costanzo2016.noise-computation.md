@@ -269,3 +269,27 @@ fitness_se_val = fitness_std_val / math.sqrt(n_samples)   # WRONG
 Note: Data File S1's 11 columns list SMF + Array SMF + DMF + "Double mutant fitness
 standard deviation" -- there is NO SMF-stddev column in S1; the SMF stddev lives in
 the strain-level SMF file, and it is the bootstrap SE described above.
+
+## 2026.07.04 - Kuzmin 2018/2020 n_samples (same SGA pipeline)
+
+Kuzmin uses the same Boone-lab pipeline. Sourced from the Kuzmin 2018 MinerU SI
+`kuzminSystematicAnalysisComplex2018/si/si1.md` (WS2 Kuzmin migration, PR #23):
+
+- The loader stores the **"Combined mutant fitness standard deviation"** (Data S1
+  col. 12) = the double/triple mutant measured in the interaction screen. Kuzmin's
+  SI does NOT restate its type and defers to Baryshnikova 2010 (ref 8) -> it is a
+  colony **sample_sd** (Eq. 14), `sample_unit = colony`.
+- **n_samples = 8.** Interaction screens were run in DUPLICATE -- si1.md L75 "two
+  independent replicates", L171 "every screen in duplicate", L175 "all trigenic
+  interaction screens were performed twice" -- x ~4 colonies/screen (Baryshnikova
+  "typically four per screen with up to two screens") = 8. N_ij varies 4-8 per
+  record and is NOT a column in Data S1, so 8 is the full-replication
+  representative. **Distinct from Costanzo DMF n=4 (single screen).**
+- The "12-24 colony measurements" in si1.md L59 is the QUERY fitness (col 9,
+  bootstrap-derived), a DIFFERENT column whose std the loader does not store -- do
+  not confuse it with the stored col-12 combined-mutant SD.
+- SMF (single mutant): no reported std -> no uncertainty.
+
+Open: n=8 is the modal/full-replication value; the true per-record N_ij (4-8) is
+unrecoverable from the released data. If a per-record colony count surfaces, switch
+to it. See [[torchcell.datasets.scerevisiae.kuzmin2018]].

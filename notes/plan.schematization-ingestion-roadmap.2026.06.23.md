@@ -25,9 +25,9 @@ CI-finish WS series).
 |----|-------|--------|-------------|
 | WS1 | Schema hardening + freeze | 🔨 | #21 + #24 **merged** (ontology + DRY validators + invariant tests); **remaining:** no-structure-without-data field audit |
 | WS2 | n_samples/fitness_se (Kuzmin) | 🔨→✅ | #22 **merged** (Costanzo SE fix); #23 (Kuzmin n=4 back-solve) merging on CI |
-| WS3 | Provenance + L0–L4 framework | 🔨 | #25; framework already built (`torchcell/verification/`); `StatDerivation` #26 merging on CI; **remaining:** per-dataset post-process wiring |
+| WS3 | Provenance + L0–L4 framework | 🔨→✅ | #25; framework built (`torchcell/verification/`); `StatDerivation` **merged (#26)**; expression verifier + report artifacts landed via WS5; **remaining:** wire the artifact emission into each dataset's own `post_process` |
 | WS4 | New phenotypes (metabolite/protein/visual) | ⬜ | — (blocked on OQ #2/#3) |
-| WS5 | Verify Sameith2015 + Kemmeren2014 | 🔨 | #27 — **next** (LMDBs cached; abstract r=0.543) |
+| WS5 | Verify Sameith2015 + Kemmeren2014 | 🔨→✅ | Rebuilt DM(72)+SM(82)+Kemmeren(1450) with SE+n_replicates; L0–L4 all PASS; SM Sameith built for the first time. See [[torchcell.verification.expression]]. PR pending |
 | WS6 | Verify Ohya2005 CalMorph | ⬜ | — |
 | WS7 | Ozaydin2013 beta-carotene | ⬜ | — (blocked on OQ #2/#3) |
 | WS8 | Cachera2023 betaxanthin | ⬜ | — (blocked on OQ #2) |
@@ -232,7 +232,7 @@ module under `torchcell/`, `schema.py` (L0 target).
 (Dict[gene/protein_id -> float]), and a generic ordinal `VisualScorePhenotype`
 (integer color/intensity score from visual inspection -- for Ozaydin, reusable by
 Cachera). Plus an `ExpressionPhenotype` family decision (microarray vs NGS) carried
-into WS10. Add only these; no speculative fields. 
+into WS10. Add only these; no speculative fields.
 
 **Key files.** `torchcell/datamodels/schema.py`, `pydant.py`,
 `torchcell/metabolism/yeast_GEM.py` (REFERENCE for metabolite IDs),
@@ -248,6 +248,16 @@ into WS10. Add only these; no speculative fields.
 - Each new field traces to a named dataset (Zelezniak / Ozaydin / Cachera).
 
 ## WS5. Verify Sameith2015 + Kemmeren2014 (records)
+
+**Status:** 🔨→✅ done (PR pending). Rebuilt all three LMDBs against the current schema
+so records carry `expression_log2_ratio_se` + `n_replicates` (the cached Dec-2025
+LMDBs predated the SE code); SM Sameith was **never built before** and now exists (82
+records). L0-L4 all PASS on DM(72)/SM(82)/Kemmeren(1450); `verification_report.json`
+written next to each `experiment_reference_index.json`. Verifier +
+harness + synthetic tests landed (`torchcell/verification/expression.py`,
+`scripts/verify_expression_datasets.py`). **Gotcha found:** Sameith rebuild REQUIRES an
+injected `SCerevisiaeGenome` (its GEO titles use common names) or it silently
+collapses 72→2 records. Full writeup: [[torchcell.verification.expression]].
 
 **Goal/Scope.** Both datasets EXIST (`kemmeren2014.py` ~91KB, validated notes);
 verify their LMDB records against the frozen expression schema at L0-L4. No adapter

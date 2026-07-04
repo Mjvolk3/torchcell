@@ -356,6 +356,30 @@ class Phenotype(ModelStrict):
             )
         return self
 
+    @model_validator(mode="after")
+    def validate_label_fields(self) -> "Phenotype":
+        """label_name / label_statistic_name must name fields on the concrete class.
+
+        Inherited by every Phenotype subclass (replaces the formerly identical
+        per-subclass copies). ``type(self).__annotations__`` is the concrete
+        subclass's own field set, so each subclass is checked against its own
+        declared fields.
+        """
+        own_fields = type(self).__annotations__
+        if self.label_name not in own_fields:
+            raise ValueError(
+                f"label_name '{self.label_name}' must be a class attribute"
+            )
+        if (
+            self.label_statistic_name is not None
+            and self.label_statistic_name not in own_fields
+        ):
+            raise ValueError(
+                f"label_statistic_name '{self.label_statistic_name}' "
+                "must be a class attribute"
+            )
+        return self
+
     def __getitem__(self, key: str) -> Any:  # heterogeneous phenotype field values
         """Return the attribute value for the given field name."""
         return getattr(self, key)
@@ -522,25 +546,6 @@ class FitnessPhenotype(Phenotype, ModelStrict):
             raise ValueError(f"n_samples and sample_unit are required for {typ}")
         return self
 
-    @model_validator(mode="after")  # type: ignore[arg-type]  # legacy pydantic (cls, values) after-validator; runtime-supported, plugin types as modern form
-    def validate_label_fields(cls, values: "FitnessPhenotype") -> "FitnessPhenotype":
-        """Validate that label_name and label_statistic_name are class attributes."""
-        if values.label_name not in cls.__annotations__:
-            raise ValueError(
-                f"label_name '{values.label_name}' must be a class attribute"
-            )
-
-        if (
-            values.label_statistic_name is not None
-            and values.label_statistic_name not in cls.__annotations__
-        ):
-            raise ValueError(
-                f"""label_statistic_name '{values.label_statistic_name}'
-                must be a class attribute"""
-            )
-
-        return values
-
 
 class GeneEssentialityPhenotype(Phenotype, ModelStrict):
     """Phenotype indicating whether a gene knockout is lethal."""
@@ -550,32 +555,6 @@ class GeneEssentialityPhenotype(Phenotype, ModelStrict):
     is_essential: bool = Field(
         default=True, description="gene knockout leading cell death."
     )
-
-    # IDEA
-    # This is going to be standard for all child classes of Phenotype
-    # This could alternatively be moved to testing
-    @model_validator(mode="after")  # type: ignore[arg-type]  # legacy pydantic (cls, values) after-validator; runtime-supported, plugin types as modern form
-    def validate_label_fields(
-        cls, values: "GeneEssentialityPhenotype"
-    ) -> "GeneEssentialityPhenotype":
-        """Validate that label_name and label_statistic_name are class attributes."""
-        # Check if label_name is a class attribute
-        if values.label_name not in cls.__annotations__:
-            raise ValueError(
-                f"label_name '{values.label_name}' must be a class attribute"
-            )
-
-        # Check if label_statistic_name is a class attribute (if it's not None)
-        if (
-            values.label_statistic_name is not None
-            and values.label_statistic_name not in cls.__annotations__
-        ):
-            raise ValueError(
-                f"""label_statistic_name '{values.label_statistic_name}'
-                must be a class attribute"""
-            )
-
-        return values
 
 
 class SyntheticLethalityPhenotype(Phenotype, ModelStrict):
@@ -595,32 +574,6 @@ class SyntheticLethalityPhenotype(Phenotype, ModelStrict):
         description="statistical score computed in [SynLethDB](https://synlethdb.sist.shanghaitech.edu.cn/#/",
     )
 
-    # IDEA
-    # This is going to be standard for all child classes of Phenotype
-    # This could alternatively be moved to testing
-    @model_validator(mode="after")  # type: ignore[arg-type]  # legacy pydantic (cls, values) after-validator; runtime-supported, plugin types as modern form
-    def validate_label_fields(
-        cls, values: "SyntheticLethalityPhenotype"
-    ) -> "SyntheticLethalityPhenotype":
-        """Validate that label_name and label_statistic_name are class attributes."""
-        # Check if label_name is a class attribute
-        if values.label_name not in cls.__annotations__:
-            raise ValueError(
-                f"label_name '{values.label_name}' must be a class attribute"
-            )
-
-        # Check if label_statistic_name is a class attribute (if it's not None)
-        if (
-            values.label_statistic_name is not None
-            and values.label_statistic_name not in cls.__annotations__
-        ):
-            raise ValueError(
-                f"""label_statistic_name '{values.label_statistic_name}'
-                must be a class attribute"""
-            )
-
-        return values
-
 
 class SyntheticRescuePhenotype(Phenotype, ModelStrict):
     """Phenotype indicating one perturbation rescues another's deleterious effect."""
@@ -638,32 +591,6 @@ class SyntheticRescuePhenotype(Phenotype, ModelStrict):
         default=None,
         description="statistical score computed in [SynLethDB](https://synlethdb.sist.shanghaitech.edu.cn/#/",
     )
-
-    # IDEA
-    # This is going to be standard for all child classes of Phenotype
-    # This could alternatively be moved to testing
-    @model_validator(mode="after")  # type: ignore[arg-type]  # legacy pydantic (cls, values) after-validator; runtime-supported, plugin types as modern form
-    def validate_label_fields(
-        cls, values: "SyntheticRescuePhenotype"
-    ) -> "SyntheticRescuePhenotype":
-        """Validate that label_name and label_statistic_name are class attributes."""
-        # Check if label_name is a class attribute
-        if values.label_name not in cls.__annotations__:
-            raise ValueError(
-                f"label_name '{values.label_name}' must be a class attribute"
-            )
-
-        # Check if label_statistic_name is a class attribute (if it's not None)
-        if (
-            values.label_statistic_name is not None
-            and values.label_statistic_name not in cls.__annotations__
-        ):
-            raise ValueError(
-                f"""label_statistic_name '{values.label_statistic_name}'
-                must be a class attribute"""
-            )
-
-        return values
 
 
 class GeneInteractionPhenotype(Phenotype, ModelStrict):
@@ -686,32 +613,6 @@ class GeneInteractionPhenotype(Phenotype, ModelStrict):
         if math.isnan(v):
             raise ValueError("Gene interaction cannot be NaN")
         return v
-
-    # IDEA
-    # This is going to be standard for all child classes of Phenotype
-    # This could alternatively be moved to testing
-    @model_validator(mode="after")  # type: ignore[arg-type]  # legacy pydantic (cls, values) after-validator; runtime-supported, plugin types as modern form
-    def validate_label_fields(
-        cls, values: "GeneInteractionPhenotype"
-    ) -> "GeneInteractionPhenotype":
-        """Validate that label_name and label_statistic_name are class attributes."""
-        # Check if label_name is a class attribute
-        if values.label_name not in cls.__annotations__:
-            raise ValueError(
-                f"label_name '{values.label_name}' must be a class attribute"
-            )
-
-        # Check if label_statistic_name is a class attribute (if it's not None)
-        if (
-            values.label_statistic_name is not None
-            and values.label_statistic_name not in cls.__annotations__
-        ):
-            raise ValueError(
-                f"""label_statistic_name '{values.label_statistic_name}'
-                must be a class attribute"""
-            )
-
-        return values
 
 
 class CalMorphPhenotype(Phenotype, ModelStrict):
@@ -761,25 +662,6 @@ class CalMorphPhenotype(Phenotype, ModelStrict):
             if math.isnan(value):
                 raise ValueError(f"CV measurement {key} cannot be NaN")
         return v
-
-    @model_validator(mode="after")  # type: ignore[arg-type]  # legacy pydantic (cls, values) after-validator; runtime-supported, plugin types as modern form
-    def validate_label_fields(cls, values: "CalMorphPhenotype") -> "CalMorphPhenotype":
-        """Validate that label_name and label_statistic_name are class attributes."""
-        if values.label_name not in cls.__annotations__:
-            raise ValueError(
-                f"label_name '{values.label_name}' must be a class attribute"
-            )
-
-        if (
-            values.label_statistic_name is not None
-            and values.label_statistic_name not in cls.__annotations__
-        ):
-            raise ValueError(
-                f"""label_statistic_name '{values.label_statistic_name}'
-                must be a class attribute"""
-            )
-
-        return values
 
 
 class Publication(ModelStrict):

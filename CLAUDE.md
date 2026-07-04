@@ -48,6 +48,32 @@ authors or trust a live URL. Model these records with pydantic.
   `nature.com` (auth redirect) are not -- those become manual-once -> deposit ->
   reproducible via the mirror.
 
+## Adding Datasets (Modular) -- Sourcing Values from the SI
+
+When adding a dataset in the modular fashion (a new `torchcell/datasets/.../*.py`
+loader), any statistical/metadata value the schema needs -- `n_samples`,
+replicate/colony/screen counts, the uncertainty TYPE (sample SD vs bootstrap SE),
+units, thresholds -- MUST be sourced from the paper/SI, recorded with a verbatim
+quote + `sha256` + section/line, and never guessed.
+
+- **Do not conclude "not in the SI" on a first pass.** If a value isn't obvious,
+  RETRY and comb through thoroughly: read the full Methods/SI (not a summary),
+  check the data-file COLUMN DESCRIPTIONS, and search for every synonym
+  (`replicate`, `colony`, `screen`, `bootstrap`, `standard deviation`, `n =`,
+  `measurements`). A wrong "not found" leads to a guessed value that silently
+  corrupts training weights.
+- **Follow deferrals.** SIs routinely defer method detail to a cited earlier paper
+  (e.g. Kuzmin -> Baryshnikova 2010; Costanzo -> Baryshnikova 2010). The value is
+  then sourced from THAT mirrored paper; the provenance chain (this SI -> ref N ->
+  formula) is the answer, and is itself the citation.
+- **Identify the exact column the loader consumes.** Different columns can have
+  different replicate structures (e.g. Kuzmin query fitness = 12-24 colonies,
+  bootstrap; combined-mutant SD = 4-8 colonies, sample SD). Map the statistic of
+  the column you actually store, not a neighbouring one.
+- **When a value genuinely varies per-record and isn't a released column, say so**
+  in code + PR, pick a documented representative, and flag it for review -- do not
+  present a guess as sourced. Record the finding in the dataset's dendron note.
+
 ## Paper / Manuscript Workflow
 
 The Nature Biotechnology manuscript lives in `paper/nature-biotech/`. It uses the

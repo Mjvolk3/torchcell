@@ -10,6 +10,7 @@ from .kuzmin2018 import DmfKuzmin2018Dataset as DmfKuzmin2018Dataset
 from .kuzmin2018 import SmfKuzmin2018Dataset as SmfKuzmin2018Dataset
 from .kuzmin2018 import TmfKuzmin2018Dataset as TmfKuzmin2018Dataset
 from .ohya2005 import ScmdOhya2005Dataset as ScmdOhya2005Dataset
+from .ozaydin2013 import CarotenoidOzaydin2013Dataset as CarotenoidOzaydin2013Dataset
 from .sameith2015 import (
     DmMicroarraySameith2015Dataset as DmMicroarraySameith2015Dataset,
 )
@@ -31,4 +32,12 @@ ohya_datasets = ["ScmdOhya2005Dataset"]
 
 sameith_datasets = ["SmMicroarraySameith2015Dataset", "DmMicroarraySameith2015Dataset"]
 
-__all__ = costanzo_datasets + kuzmin_datasets + ohya_datasets + sameith_datasets
+ozaydin_datasets = ["CarotenoidOzaydin2013Dataset"]
+
+__all__ = (
+    costanzo_datasets
+    + kuzmin_datasets
+    + ohya_datasets
+    + sameith_datasets
+    + ozaydin_datasets
+)

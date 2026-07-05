@@ -34,6 +34,10 @@ from torchcell.verification.sourced import (
     audit_sourced_value,
     library_available,
 )
+from torchcell.verification.visual_score import (
+    verify_visual_score_dataset,
+    visual_score_gene_set,
+)
 
 __all__ = [
     "DerivationMethod",
@@ -57,4 +61,6 @@ __all__ = [
     "verify_expression_dataset",
     "perturbed_gene_set",
     "verify_morphology_dataset",
+    "verify_visual_score_dataset",
+    "visual_score_gene_set",
 ]

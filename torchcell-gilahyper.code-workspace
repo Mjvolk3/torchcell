@@ -64,6 +64,9 @@
         ],
         "python.testing.unittestEnabled": false,
         "python.testing.pytestEnabled": true,
+        // gilahyper-specific interpreter so ${command:python.interpreterPath} in
+        // .vscode/launch.json resolves without a manual "Select Interpreter" step.
+        "python.defaultInterpreterPath": "/home/michaelvolk/miniconda3/envs/torchcell/bin/python",
         "python-envs.pythonProjects": [
             {
                 "path": "",

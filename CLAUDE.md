@@ -4,6 +4,38 @@
 
 - Includes how to run local python
 
+## Git Worktrees
+
+We develop on branches via git worktrees at
+`~/Documents/projects/torchcell.worktrees/<branch>/`. **Everything goes through a
+worktree by default -- code AND notes (roadmap/plan/weekly/dendron/`.claude/*`).**
+
+- **The primary checkout stays on `main` and is NEVER used to `git checkout` another
+  branch.** Flipping its HEAD drifts local `main` behind origin and makes files vanish
+  from the tree (and from the editor pointed at it). The user opens worktrees in
+  separate VS Code windows.
+- **Setup is mandatory.** Run `/setup-worktree <branch>` (wraps
+  `scripts/setup-worktree.sh`) before any work, then `cd` into the worktree and make
+  ALL edits there. Scratch stays untracked; do not leave the primary tree dirty.
+- **Why notes too:** a commit made directly on the primary checkout's `main` (even a
+  notes edit) advances local `main` independently, so a worktree branch that was
+  rebased onto the *old* `main` can no longer fast-forward -- the normal
+  `rebase wt onto main -> ff-merge` flow breaks. Keeping the primary tree clean on
+  `main` is what keeps ff-landings unblocked.
+- **Land via `git rebase` + ff-only, NEVER `gh pr merge` / the GitHub "Merge pull
+  request" button.** A merge commit diverges `main` from the rebased branch and blocks
+  the next worktree's ff-land; it also buries the individual commits. Use
+  `/merge-worktree` (rebase the branch onto `main`, then `git merge --ff-only` + push)
+  or `/enqueue-merge` (the single-writer merge queue). If a PR is open, close it with a
+  comment that the branch landed via rebase+ff. Result: linear history, every commit
+  lands verbatim.
+- **Shared `.git` hazard.** All worktrees share one object store + stash list, and
+  pre-commit stashes/rolls back -- so parallel landings corrupt each other. Land one at
+  a time (the merge queue serializes this). `MEMORY.md` is shared via symlink; keep
+  writes additive.
+- **On a blocked land, fix the state in the worktree and re-land.** NEVER `--no-verify`,
+  force-push, or blind-discard to "unblock."
+
 ## Programming Guide
 
 - Do NOT ever use fallback mechanisms unless we clearly tell you to. This means minimize try except blocks, unnecessary conditionals, etc.

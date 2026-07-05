@@ -257,5 +257,27 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
         return experiment, reference, publication
 
 
+def main() -> None:
+    """Build/load the dataset for interactive debugging.
+
+    A genome is REQUIRED (the source uses common gene names). Loads the existing LMDB
+    if already built; to step through ``process()``/``create_experiment`` under a
+    debugger, delete ``<root>/processed`` first so the build re-runs.
+    """
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    data_root = os.environ["DATA_ROOT"]
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(data_root, "data/sgd/genome"),
+        go_root=osp.join(data_root, "data/go"),
+        overwrite=False,
+    )
+    root = osp.join(data_root, "data/torchcell/betaxanthin_cachera2023")
+    dataset = BetaxanthinCachera2023Dataset(root=root, genome=genome)
+    print(f"len = {len(dataset)}")
+    print(dataset[0])
+
+
 if __name__ == "__main__":
-    pass
+    main()

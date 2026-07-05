@@ -338,5 +338,21 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
         return experiment, reference, publication
 
 
+def main() -> None:
+    """Build/load the dataset for interactive debugging.
+
+    Loads the existing LMDB if already built. To step through
+    ``process()``/``create_experiment`` under a debugger, delete ``<root>/processed``
+    first so the build re-runs.
+    """
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    root = osp.join(os.environ["DATA_ROOT"], "data/torchcell/carotenoid_ozaydin2013")
+    dataset = CarotenoidOzaydin2013Dataset(root=root)
+    print(f"len = {len(dataset)}")
+    print(dataset[0])
+
+
 if __name__ == "__main__":
-    pass
+    main()

@@ -1101,6 +1101,80 @@ class VisualScoreExperiment(Experiment, ModelStrict):
     phenotype: VisualScorePhenotype
 
 
+class MetabolitePhenotype(Phenotype, ModelStrict):
+    """Quantitative metabolite/product level(s), keyed by metabolite id.
+
+    For assays that QUANTIFY one or more metabolite levels per strain -- e.g. Cachera
+    2023 CRI-SPA (corrected colony fluorescence intensity as a proxy for the metabolite
+    betaxanthin), or (later) mass-spec metabolite abundances (Zelezniak). Levels are
+    keyed by metabolite id: a Yeast9 ``s_NNNN`` id where the metabolite is native, or a
+    plain product name for heterologous products (carotenoids, betalains) not in Yeast9.
+
+    ``measurement_type`` records WHAT the number is (e.g. a normalized fluorescence
+    score, which can be negative, vs an absolute abundance), so heterogeneous assays
+    stay interpretable and are never silently compared. ``target_metabolite_ids`` maps
+    the keys to Yeast9 ``s_NNNN`` ids for constraint-based-model linkage where known
+    (``None`` until the mapping is decided -- capture the data, defer the modeling).
+    """
+
+    graph_level: str = "metabolism"
+    label_name: str = "metabolite_level"
+    label_statistic_name: str | None = "metabolite_level_se"
+
+    metabolite_level: dict[str, float] = Field(
+        description="metabolite_id -> measured level (Yeast9 s_NNNN id, or product name)"
+    )
+    metabolite_level_se: dict[str, float] | None = Field(
+        default=None, description="metabolite_id -> standard error of the level"
+    )
+    n_replicates: dict[str, int] = Field(
+        description="metabolite_id -> number of independent replicates"
+    )
+    measurement_type: str = Field(
+        description=(
+            "what the level number is, e.g. "
+            "'cri_spa_corrected_fluorescence_intensity' or 'ms_abundance'"
+        )
+    )
+    target_metabolite_ids: dict[str, str] | None = Field(
+        default=None,
+        description="metabolite key -> Yeast9 s_NNNN id for CBM linkage; None until decided",
+    )
+
+    @model_validator(mode="after")
+    def validate_metabolite_level(self) -> "MetabolitePhenotype":
+        """Require non-empty levels and consistent per-metabolite replicate keys."""
+        if not self.metabolite_level:
+            raise ValueError("metabolite_level cannot be empty")
+        if set(self.n_replicates) != set(self.metabolite_level):
+            raise ValueError("n_replicates keys must match metabolite_level keys")
+        for key, n in self.n_replicates.items():
+            if n < 1:
+                raise ValueError(f"n_replicates for {key} must be >= 1")
+        if self.metabolite_level_se is not None:
+            for key, se in self.metabolite_level_se.items():
+                if key not in self.metabolite_level:
+                    raise ValueError(f"SE key {key} not in metabolite_level")
+                if not math.isnan(se) and se < 0:
+                    raise ValueError(f"SE for {key} must be non-negative")
+        return self
+
+
+class MetaboliteExperimentReference(ExperimentReference, ModelStrict):
+    """Reference (control) context for a metabolite experiment."""
+
+    experiment_reference_type: str = "metabolite"
+    phenotype_reference: MetabolitePhenotype
+
+
+class MetaboliteExperiment(Experiment, ModelStrict):
+    """Experiment measuring a metabolite phenotype."""
+
+    experiment_type: str = "metabolite"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: MetabolitePhenotype
+
+
 PhenotypeType = (
     Phenotype
     | FitnessPhenotype
@@ -1111,6 +1185,7 @@ PhenotypeType = (
     | CalMorphPhenotype
     | MicroarrayExpressionPhenotype
     | VisualScorePhenotype
+    | MetabolitePhenotype
 )
 
 ExperimentType = (
@@ -1123,6 +1198,7 @@ ExperimentType = (
     | CalMorphExperiment
     | MicroarrayExpressionExperiment
     | VisualScoreExperiment
+    | MetaboliteExperiment
 )
 
 ExperimentReferenceType = (
@@ -1135,6 +1211,7 @@ ExperimentReferenceType = (
     | CalMorphExperimentReference
     | MicroarrayExpressionExperimentReference
     | VisualScoreExperimentReference
+    | MetaboliteExperimentReference
 )
 
 
@@ -1147,6 +1224,7 @@ EXPERIMENT_TYPE_MAP = {
     "calmorph": CalMorphExperiment,
     "microarray_expression": MicroarrayExpressionExperiment,
     "visual_score": VisualScoreExperiment,
+    "metabolite": MetaboliteExperiment,
 }
 
 EXPERIMENT_REFERENCE_TYPE_MAP = {
@@ -1158,6 +1236,7 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "calmorph": CalMorphExperimentReference,
     "microarray_expression": MicroarrayExpressionExperimentReference,
     "visual_score": VisualScoreExperimentReference,
+    "metabolite": MetaboliteExperimentReference,
 }
 
 

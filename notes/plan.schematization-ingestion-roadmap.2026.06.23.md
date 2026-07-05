@@ -26,10 +26,10 @@ CI-finish WS series).
 | WS1 | Schema hardening + freeze | 🔨 | #21 + #24 **merged** (ontology + DRY validators + invariant tests); **remaining:** no-structure-without-data field audit |
 | WS2 | n_samples/fitness_se (Kuzmin) | 🔨→✅ | #22 **merged** (Costanzo SE fix); #23 (Kuzmin n=4 back-solve) merging on CI |
 | WS3 | Provenance + L0–L4 framework | 🔨→✅ | #25; framework built (`torchcell/verification/`); `StatDerivation` **merged (#26)**; expression verifier + report artifacts landed via WS5; **remaining:** wire the artifact emission into each dataset's own `post_process` |
-| WS4 | New phenotypes (metabolite/protein/visual) | ⬜ | — (blocked on OQ #2/#3) |
+| WS4 | New phenotypes (metabolite/protein/visual) | 🔨 | `VisualScorePhenotype` **added** (ordinal score + scale + target product + optional Yeast9 id; Ozaydin data in hand). Metabolite/protein phenotypes deferred to Cachera/Zelezniak when their data shapes are known |
 | WS5 | Verify Sameith2015 + Kemmeren2014 | 🔨→✅ | Rebuilt DM(72)+SM(82)+Kemmeren(1450) with SE+n_replicates; L0–L4 all PASS; SM Sameith built for the first time. See [[torchcell.verification.expression]]. PR pending |
 | WS6 | Verify Ohya2005 CalMorph | 🔨→✅ | Ohya (4718) already L0-clean vs current schema (no rebuild); L0–L4 morphology verifier PASSES. See [[torchcell.verification.morphology]]. PR pending |
-| WS7 | Ozaydin2013 beta-carotene | ⬜ | — (blocked on OQ #2/#3) |
+| WS7 | Ozaydin2013 beta-carotene | 🔨→✅ | `CarotenoidOzaydin2013Dataset` built (4474 records, VisualScorePhenotype); SI+PDF+OCR in library mirror w/ manifest; L0–L4 PASS. See [[torchcell.datasets.scerevisiae.ozaydin2013]]. PR pending |
 | WS8 | Cachera2023 betaxanthin | ⬜ | — (blocked on OQ #2) |
 | WS9 | Zelezniak2018 metabolite + protein | ⬜ | — |
 | WS10 | Pan-transcriptome | ⬜ | — (blocked on OQ #1) |

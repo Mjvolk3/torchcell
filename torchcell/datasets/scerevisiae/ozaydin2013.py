@@ -217,7 +217,7 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
                     "visual_score_min": min(scores) if len(scores) > 1 else None,
                     "n_replicates": len(scores),
                     "score_text": ";".join(sorted(rec["texts"])) or None,
-                    "qc_flags": rec["flags"],
+                    "comment_annotations": rec["flags"],
                     "in_top200": orf in top200_orfs,
                     **meta,
                 }
@@ -246,7 +246,7 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
         )
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
-        usable.drop(columns=["qc_flags"]).to_csv(
+        usable.drop(columns=["comment_annotations"]).to_csv(
             osp.join(self.preprocess_dir, "data.csv"), index=False
         )
 
@@ -308,7 +308,7 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
             target_product=TARGET_PRODUCT,
             target_metabolite_id=None,
             score_text=row["score_text"] if pd.notna(row["score_text"]) else None,
-            qc_flags=row["qc_flags"],
+            comment_annotations=row["comment_annotations"],
         )
         # Reference = WT carrying YB/I/BTS1, scored 0 by construction.
         phenotype_reference = VisualScorePhenotype(
@@ -332,6 +332,8 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
             phenotype_reference=phenotype_reference,
         )
         publication = Publication(
+            pubmed_id="22918085",
+            pubmed_url="https://pubmed.ncbi.nlm.nih.gov/22918085/",
             doi="10.1016/j.ymben.2012.07.010",
             doi_url="https://doi.org/10.1016/j.ymben.2012.07.010",
         )

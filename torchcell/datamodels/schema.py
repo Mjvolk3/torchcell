@@ -1062,9 +1062,15 @@ class VisualScorePhenotype(Phenotype, ModelStrict):
         default=None,
         description="non-numeric score annotations from the source (e.g. 'pet', 'tiny')",
     )
-    qc_flags: dict[str, bool] | None = Field(
+    comment_annotations: dict[str, bool] | None = Field(
         default=None,
-        description="QC/phenotype flags parsed from source comments (e.g. petite, tiny)",
+        description=(
+            "boolean annotations parsed from the source Comment column; a MIX, NOT all "
+            "QC -- true QC (flag_qc_failure, flag_het_diploid), secondary growth/"
+            "physiology phenotypes (flag_petite, flag_tiny, flag_slow_growth), and "
+            "interpretation caveats (flag_sterile, flag_unusual_color). Do not filter "
+            "records on these as if they were all quality failures."
+        ),
     )
 
     @model_validator(mode="after")

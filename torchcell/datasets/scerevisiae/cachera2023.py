@@ -252,7 +252,10 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
             phenotype_reference=phenotype_reference,
         )
         publication = Publication(
-            doi="10.1093/nar/gkad656", doi_url="https://doi.org/10.1093/nar/gkad656"
+            pubmed_id="37572348",
+            pubmed_url="https://pubmed.ncbi.nlm.nih.gov/37572348/",
+            doi="10.1093/nar/gkad656",
+            doi_url="https://doi.org/10.1093/nar/gkad656",
         )
         return experiment, reference, publication
 

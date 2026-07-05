@@ -123,3 +123,21 @@ Open sub-decision (native extras): BTS1 extra copy (Ozaydin) and ARO4^K229L /
 ARO7^G141S (Cachera) are NATIVE genes -- model with the same addition type flagged
 `is_heterologous=False`, or reuse the existing `AllelePerturbation`? Deferred to the
 shape decision.
+
+### 2026.07.05 - Plasmid availability (answer: NO downloadable assembled plasmid)
+
+Verified by web research (do they provide the plasmid so it can be downloaded?):
+
+- **Verwaal et al. 2007 deposited NO plasmid sequences and NO accession numbers**
+  (open-access PMC1932764). It only points to NCBI for the individual carotenogenic
+  genes; no GenBank for the YEplac195-YB/I / YB/I/BTS1 / YB/I/E constructs.
+- **Screen plasmid YB/I/BTS1 is PHYSICAL-only at EUROSCARF = accession P30796**
+  (siblings: YB/I = P30795, YB/I/E = P30797). Euroscarf distributes the physical
+  plasmid; no full-construct GenBank download.
+- **To get a raw plasmid sequence for the collapse path, two options:**
+  (a) reconstruct in silico from parts -- YEplac195 backbone (NCBI, gi:415332, has a
+  GenBank) + crtYB/crtI accessions (*X. dendrorhous*) + BTS1/YPL069C (S288C) +
+  TDH3p/CYC1t (S288C); or (b) order P30796 from Euroscarf and sequence it.
+- Net: Ozaydin's "plasmid-as-raw" is a MANUAL reconstruction/deposit job (no direct
+  download), unlike Cachera where a GenBank map exists. Both still end at our mirror
+  with sha256 provenance; only the retrieval recipe differs (reconstruct vs download).

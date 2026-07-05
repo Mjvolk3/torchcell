@@ -89,3 +89,26 @@ Same schema gap + three-option decision as documented in
 feedback-resistant alleles (ARO4^K229L / ARO7^G141S) are the concrete case for the
 "native extras" sub-decision (new addition type flagged native vs reuse
 `AllelePerturbation`).
+
+### 2026.07.05 - Plasmid availability (answer: YES, GenBank maps provided)
+
+Verified by web research (do they provide the plasmid so it can be downloaded?):
+
+- **Data Availability (paper, verbatim):** "All plasmid maps are available for
+  download as GenBank files." So pBTX1 / pBTX2 (+ the CRI-SPA vectors) DO exist as
+  downloadable GenBank maps -- the raw artifact the "plasmid-seq + feature
+  annotation -> collapse to GeneAddition" path needs.
+- **Location:** NOT in the GitHub repo `github.com/pc2912/CRI-SPA_repo` (that has
+  only data CSVs + analysis notebooks, no `.gb/.fasta/.dna`). The maps are in the
+  **OUP supplementary archive**:
+  `https://oup.silverchair-cdn.com/oup/backfile/Content_public/Journal/nar/51/17/10.1093_nar_gkad656/1/gkad656_supplemental_files.zip`
+  (contains Suppl. Tables S1 strains / S2 plasmids / S3 primers + figures/methods).
+- **Retrieval method = manual_browser (un-scriptable).** The silverchair CDN URL is
+  a CloudFront SIGNED url: bare `curl` returns HTTP 403 `MissingKey` (needs a
+  Key-Pair-Id token from an academic.oup.com browser session). So this is the
+  nature.com-class case in our provenance notes: manual-once download -> deposit to
+  `torchcell-library/cacheraCRISPAHighthroughputMethod2023/si/` + sha256 -> then
+  reproducible via our mirror. No Addgene ID / GenBank accession is given for pBTX1/2.
+- Upstream heterologous parts ARE on Addgene (e.g. `pL0-BvCYP76AD1` #162529, a MoClo
+  L0 part; DOD from the DeLoache 2015 betaxanthin biosensor lineage), useful as
+  cross-checks but they are PARTS, not the assembled pBTX1/pBTX2.

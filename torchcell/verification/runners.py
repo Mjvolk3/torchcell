@@ -41,6 +41,10 @@ from torchcell.verification.report import (
     Provenance,
     VerificationReport,
 )
+from torchcell.verification.visual_score import (
+    verify_visual_score_dataset,
+    visual_score_gene_set,
+)
 
 # --------------------------------------------------------------------------- #
 # Expression datasets (WS5)
@@ -219,11 +223,58 @@ def run_morphology(data_root: str) -> bool:
     return report.passed
 
 
+# --------------------------------------------------------------------------- #
+# Visual-score datasets (WS7)
+# --------------------------------------------------------------------------- #
+VISUAL_SCORE_DATASETS: dict[str, dict[str, Any]] = {
+    "carotenoid_ozaydin2013": {
+        "root": "data/torchcell/carotenoid_ozaydin2013",
+        "provenance": Provenance(
+            source_uri="https://ars.els-cdn.com/content/image/1-s2.0-S109671761200081X-mmc1.xlsx",
+            citation_key="ozaydinCarotenoidbasedPhenotypicScreen2013a",
+            method="Elsevier ESM xlsx; colony-color visual carotenoid screen (-5..+5)",
+            page="SI Sheet 1 'Color scores of all deletions'",
+        ),
+    }
+}
+
+
+def run_visual_score(data_root: str) -> bool:
+    """Verify visual-score datasets (L0-L4) and write reports. True if all pass."""
+    ohya_abs = osp.join(data_root, OHYA_SOURCE_ROOT)
+    ohya_genes: set[str] = set()
+    if osp.exists(osp.join(ohya_abs, "processed", "lmdb")):
+        ohya_genes = perturbed_gene_set(load_records(ohya_abs))
+
+    all_passed = True
+    for name, spec in VISUAL_SCORE_DATASETS.items():
+        abs_root = osp.join(data_root, spec["root"])
+        records = load_records(abs_root)
+        report = verify_visual_score_dataset(
+            records,
+            dataset_name=name,
+            provenance=spec["provenance"],
+            expected_count=len(records),
+        )
+        if ohya_genes:
+            report.add(
+                _l4_gene_containment(
+                    ohya_genes, "scmd_ohya2005", visual_score_gene_set(records)
+                )
+            )
+        out = _write_report(report, osp.join(abs_root, "preprocess"))
+        print(report.summary())
+        print(f"  -> wrote {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
 def run_all(data_root: str) -> bool:
     """Run every dataset-family verification. True only if all pass."""
     expression_ok = run_expression(data_root)
     morphology_ok = run_morphology(data_root)
-    return expression_ok and morphology_ok
+    visual_ok = run_visual_score(data_root)
+    return expression_ok and morphology_ok and visual_ok
 
 
 def main() -> int:

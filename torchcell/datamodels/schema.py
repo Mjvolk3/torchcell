@@ -950,8 +950,15 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
             raise ValueError(
                 "n_replicates cannot be None - it is required for SE interpretation"
             )
+        # Must be a per-gene mapping. Raise a clean ValueError (not crash on .items())
+        # so union resolution can skip this member when a scalar-n_replicates phenotype
+        # (e.g. VisualScorePhenotype) is the real match.
+        if not isinstance(v, dict):
+            raise ValueError(
+                f"n_replicates must be a per-gene dict for this phenotype, got {type(v).__name__}"
+            )
         # Convert to SortedDict for consistent ordering
-        if isinstance(v, dict) and not isinstance(v, SortedDict):
+        if not isinstance(v, SortedDict):
             v = SortedDict(v)
         if not v:
             raise ValueError("n_replicates cannot be empty")
@@ -1005,6 +1012,95 @@ class MicroarrayExpressionExperiment(Experiment, ModelStrict):
     phenotype: MicroarrayExpressionPhenotype
 
 
+class VisualScorePhenotype(Phenotype, ModelStrict):
+    """Ordinal visual-inspection score as a proxy for a metabolite/product level.
+
+    For screens where a metabolite is read out by a qualitative visual signal rather
+    than a quantitative assay. Ozaydin 2005/2013: colony COLOR on a -5..+5 scale is a
+    visual proxy for carotenoid (beta-carotene) accumulation -- more orange/red colony
+    = more product. The score is a SUBJECTIVE ORDINAL, not a quantitative abundance;
+    downstream models must treat it ordinally.
+
+    Metabolite linkage (Yeast9): ``target_product`` names the metabolite the score is a
+    proxy for (e.g. "beta-carotene"). Heterologous products (carotenoids, betalains)
+    are NOT native to Yeast9, so ``target_metabolite_id`` -- an optional Yeast9
+    ``s_NNNN`` metabolite id for constraint-based-model linkage -- is left ``None``
+    until the metabolic-model mapping is decided; the fields here capture the data a
+    CBM would need, without committing to that mapping.
+    """
+
+    graph_level: str = "global"
+    label_name: str = "visual_score"
+    label_statistic_name: str | None = None
+
+    visual_score: float = Field(
+        description="aggregated ordinal visual score (e.g. colony color intensity)"
+    )
+    visual_score_min: float | None = Field(
+        default=None,
+        description="min score across replicates (reproducibility; None if 1 replicate)",
+    )
+    n_replicates: int = Field(
+        description="number of independent visually-scored replicates for this strain"
+    )
+    score_scale_min: int = Field(description="lower bound of the ordinal scale")
+    score_scale_max: int = Field(description="upper bound of the ordinal scale")
+    score_semantics: str = Field(
+        description=(
+            "what higher vs lower means, e.g. "
+            "'higher = more orange colony = more carotenoid/beta-carotene'"
+        )
+    )
+    target_product: str = Field(
+        description="metabolite/product the score is a visual proxy for, e.g. 'beta-carotene'"
+    )
+    target_metabolite_id: str | None = Field(
+        default=None,
+        description="optional Yeast9 s_NNNN metabolite id for CBM linkage; None until modeling decided",
+    )
+    score_text: str | None = Field(
+        default=None,
+        description="non-numeric score annotations from the source (e.g. 'pet', 'tiny')",
+    )
+    qc_flags: dict[str, bool] | None = Field(
+        default=None,
+        description="QC/phenotype flags parsed from source comments (e.g. petite, tiny)",
+    )
+
+    @model_validator(mode="after")
+    def validate_visual_score(self) -> "VisualScorePhenotype":
+        """Enforce a coherent ordinal scale and score/replicate bounds."""
+        if self.score_scale_min >= self.score_scale_max:
+            raise ValueError("score_scale_min must be < score_scale_max")
+        if not (self.score_scale_min <= self.visual_score <= self.score_scale_max):
+            raise ValueError(
+                f"visual_score {self.visual_score} outside scale "
+                f"[{self.score_scale_min}, {self.score_scale_max}]"
+            )
+        if self.visual_score_min is not None and not (
+            self.score_scale_min <= self.visual_score_min <= self.score_scale_max
+        ):
+            raise ValueError("visual_score_min outside the declared scale")
+        if self.n_replicates < 1:
+            raise ValueError("n_replicates must be >= 1")
+        return self
+
+
+class VisualScoreExperimentReference(ExperimentReference, ModelStrict):
+    """Reference (control colony) context for a visual-score experiment."""
+
+    experiment_reference_type: str = "visual_score"
+    phenotype_reference: VisualScorePhenotype
+
+
+class VisualScoreExperiment(Experiment, ModelStrict):
+    """Experiment measuring a visual-score phenotype."""
+
+    experiment_type: str = "visual_score"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: VisualScorePhenotype
+
+
 PhenotypeType = (
     Phenotype
     | FitnessPhenotype
@@ -1014,6 +1110,7 @@ PhenotypeType = (
     | SyntheticRescuePhenotype
     | CalMorphPhenotype
     | MicroarrayExpressionPhenotype
+    | VisualScorePhenotype
 )
 
 ExperimentType = (
@@ -1025,6 +1122,7 @@ ExperimentType = (
     | SyntheticRescueExperiment
     | CalMorphExperiment
     | MicroarrayExpressionExperiment
+    | VisualScoreExperiment
 )
 
 ExperimentReferenceType = (
@@ -1036,6 +1134,7 @@ ExperimentReferenceType = (
     | SyntheticRescueExperimentReference
     | CalMorphExperimentReference
     | MicroarrayExpressionExperimentReference
+    | VisualScoreExperimentReference
 )
 
 
@@ -1047,6 +1146,7 @@ EXPERIMENT_TYPE_MAP = {
     "synthetic rescue": SyntheticRescueExperiment,
     "calmorph": CalMorphExperiment,
     "microarray_expression": MicroarrayExpressionExperiment,
+    "visual_score": VisualScoreExperiment,
 }
 
 EXPERIMENT_REFERENCE_TYPE_MAP = {
@@ -1057,6 +1157,7 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "synthetic rescue": SyntheticRescueExperimentReference,
     "calmorph": CalMorphExperimentReference,
     "microarray_expression": MicroarrayExpressionExperimentReference,
+    "visual_score": VisualScoreExperimentReference,
 }
 
 

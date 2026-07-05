@@ -47,3 +47,45 @@ product name for heterologous betaxanthin), `metabolite_level_se`, `n_replicates
 (per metabolite), `measurement_type` (what the number IS -- here
 `cri_spa_corrected_fluorescence_intensity_24h`, so assays are never silently mixed),
 optional `target_metabolite_ids` for Yeast9/CBM linkage (None -- deferred).
+
+## 2026.07.05 - Follow-up Fixes + Cassette Provenance + Perturbation Design
+
+### Done + committed (branch `fix/ws8-ozaydin-cachera-followups`)
+
+- **PubMed ID.** `Publication` now carries `pubmed_id="37572348"` + `pubmed_url`.
+  PMID<->DOI (`10.1093/nar/gkad656`) confirmed via NCBI E-utilities (title "CRI-SPA:
+  a high-throughput method...", Nucleic Acids Research 2023). Not guessed.
+- Cachera has no `qc_flags` field (that was Ozaydin's `VisualScorePhenotype`); no
+  change to `MetabolitePhenotype` here. The canonical LMDB still has the OLD
+  `pubmed_id=None` publication and should be rebuilt in place when this lands (needs
+  the injected `SCerevisiaeGenome` to map common gene names).
+
+### Btx-cassette definition -- sourced from OUR mirror (provenance-first)
+
+From `torchcell-library/cacheraCRISPAHighthroughputMethod2023/paper.md` (MinerU OCR):
+
+- **Btx-cassette** (paper calls it a "five-gene" cassette; the abstract's "four
+  genes that enable betaxanthin production" = the 4 non-marker genes):
+  - Heterologous plant genes: **CYP76AD1** (cytochrome P450) + **DOD** (DOPA
+    4,5-dioxygenase) -- the two genes strictly required for betaxanthin (ref 25).
+  - Native yeast genes, feedback-resistant mutant alleles: **ARO4^K229L**
+    (DAHP synthase, YBR249C) + **ARO7^G141S** (chorismate mutase, YPR060C) -- relieve
+    shikimate-pathway negative feedback.
+  - Selectable marker: **natMX** (not a betaxanthin gene).
+- **Localization = chromosomal_integration** at expression site **XII-5** (BY-Btx
+  made by NotI-excised insert of **pBTX2** into BY4741; CD-Btx from pBTX1 targets
+  XII-5). Contrast Ozaydin's episomal 2micron plasmid.
+- **Full sequence (#4, external):** plasmids **pBTX1 / pBTX2** in Supplementary
+  Table S2 and the CRI-SPA repo **github.com/pc2912/CRI-SPA_repo** (also the source
+  of the ingested `GA1_2_4_6.csv`). Our mirror has the composition + locus; the
+  plasmid sequences are the remaining external dig.
+
+### Heterologous-cassette perturbation -- DESIGN SIGN-OFF PENDING
+
+Same schema gap + three-option decision as documented in
+`[[torchcell.datasets.scerevisiae.ozaydin2013]]` (recommendation = per-gene
+`GeneAdditionPerturbation` with a `localization` field). Cachera exercises the
+`chromosomal_integration` localization + a `locus="XII-5"` value, and the native
+feedback-resistant alleles (ARO4^K229L / ARO7^G141S) are the concrete case for the
+"native extras" sub-decision (new addition type flagged native vs reuse
+`AllelePerturbation`).

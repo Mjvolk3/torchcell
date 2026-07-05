@@ -16,6 +16,10 @@ from torchcell.verification.levels import (
     l3_convention,
     l4_cross_source,
 )
+from torchcell.verification.metabolite import (
+    metabolite_gene_set,
+    verify_metabolite_dataset,
+)
 from torchcell.verification.morphology import (
     perturbed_gene_set,
     verify_morphology_dataset,
@@ -63,4 +67,6 @@ __all__ = [
     "verify_morphology_dataset",
     "verify_visual_score_dataset",
     "visual_score_gene_set",
+    "metabolite_gene_set",
+    "verify_metabolite_dataset",
 ]

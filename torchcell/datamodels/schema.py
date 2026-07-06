@@ -213,6 +213,64 @@ class MeanDeletionPerturbation(DeletionPerturbation, ModelStrict):
     )
 
 
+class GeneAdditionPerturbation(GenePerturbation, ModelStrict):
+    """Gain-of-function: a gene ADDED to the strain (heterologous expression or an
+    extra native copy), carried on a plasmid or integrated at a chromosomal locus.
+
+    Unlike the loss-of-function perturbations, an added gene may be HETEROLOGOUS
+    (crtYB/crtI from *Xanthophyllomyces dendrorhous*; CYP76AD1/DOD from plants) and so
+    has NO S. cerevisiae systematic name -- ``systematic_gene_name`` then carries the
+    heterologous gene symbol and the native-name validator is relaxed for this class.
+    For an extra NATIVE copy (Ozaydin BTS1) ``systematic_gene_name`` is the real
+    systematic name and ``is_heterologous`` is False. ``localization`` distinguishes
+    the plasmid vs chromosome context; ``plasmid_contig_id``/``locus_tag`` point at the
+    raw sequence in the (future) plasmid-sequence store -- ``None`` until it lands, and
+    embeddings are constructed downstream from the raw sequence, never baked here.
+    Design: ``[[torchcell.datamodels.gene-addition-perturbation-design]]``.
+    """
+
+    description: str = "Gene addition (heterologous expression or extra native copy)"
+    perturbation_type: str = "gene_addition"
+    source_organism: str = Field(
+        description="organism the added gene is from, e.g. 'Xanthophyllomyces dendrorhous'"
+    )
+    is_heterologous: bool = Field(
+        description="True if the gene is non-native to S. cerevisiae"
+    )
+    localization: str = Field(
+        description="engineered location, e.g. 'episomal_2micron' | 'chromosomal_integration'"
+    )
+    construct_name: str | None = Field(
+        default=None,
+        description="plasmid/cassette name, e.g. 'YB/I/BTS1', 'Btx-cassette'",
+    )
+    integration_locus: str | None = Field(
+        default=None,
+        description="chromosomal integration site (integration only), e.g. 'XII-5'",
+    )
+    plasmid_contig_id: str | None = Field(
+        default=None,
+        description="pointer into the plasmid-sequence store; None until that store lands",
+    )
+    locus_tag: str | None = Field(
+        default=None, description="feature id of the added gene on the plasmid contig"
+    )
+    variant: str | None = Field(
+        default=None,
+        description="expressed variant, e.g. 'K229L' for a feedback-resistant allele",
+    )
+
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
+    def validate_sys_gene_name(cls, v: str) -> str:
+        """Relax the native-name validator: an added gene may be heterologous (no yeast
+        systematic name), so accept any non-empty identifier.
+        """
+        if not v:
+            raise ValueError("systematic_gene_name must be non-empty")
+        return v
+
+
 SgaPerturbationType = (
     SgaKanMxDeletionPerturbation
     | SgaNatMxDeletionPerturbation
@@ -227,6 +285,7 @@ GenePerturbationType = (
     | MeanDeletionPerturbation
     | KanMxDeletionPerturbation
     | NatMxDeletionPerturbation
+    | GeneAdditionPerturbation
 )
 
 

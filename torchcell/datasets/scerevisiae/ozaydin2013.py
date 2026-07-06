@@ -41,6 +41,7 @@ from torchcell.datamodels.schema import (
     Environment,
     Experiment,
     ExperimentReference,
+    GeneAdditionPerturbation,
     Genotype,
     KanMxDeletionPerturbation,
     Media,
@@ -64,6 +65,43 @@ SCORE_SEMANTICS = (
     "higher = more orange/red colony = more carotenoid (beta-carotene) accumulation"
 )
 TARGET_PRODUCT = "beta-carotene"
+
+
+# The constant engineered background: every screened strain carries the carotenogenic
+# 2-micron plasmid YB/I/BTS1 (YEplac195; Ozaydin Table 2 / Verwaal et al. 2007). Two
+# heterologous genes from X. dendrorhous + one extra native copy of BTS1 (YPL069C).
+# plasmid_contig_id/locus_tag stay None until the plasmid-sequence store lands; the
+# raw sequence is Euroscarf P30796 (physical-only) -> reconstruct-from-parts. See
+# [[torchcell.datamodels.gene-addition-perturbation-design]].
+def _carotenogenic_cassette() -> list[GeneAdditionPerturbation]:
+    """Fresh YB/I/BTS1 cassette perturbations (new objects per record)."""
+    return [
+        GeneAdditionPerturbation(
+            systematic_gene_name="crtYB",
+            perturbed_gene_name="crtYB",
+            source_organism="Xanthophyllomyces dendrorhous",
+            is_heterologous=True,
+            localization="episomal_2micron",
+            construct_name="YB/I/BTS1",
+        ),
+        GeneAdditionPerturbation(
+            systematic_gene_name="crtI",
+            perturbed_gene_name="crtI",
+            source_organism="Xanthophyllomyces dendrorhous",
+            is_heterologous=True,
+            localization="episomal_2micron",
+            construct_name="YB/I/BTS1",
+        ),
+        GeneAdditionPerturbation(
+            systematic_gene_name="YPL069C",
+            perturbed_gene_name="BTS1",
+            source_organism="Saccharomyces cerevisiae",
+            is_heterologous=False,
+            localization="episomal_2micron",
+            construct_name="YB/I/BTS1",
+        ),
+    ]
+
 
 # Valid S. cerevisiae systematic ORF name (optional trailing -A/-B for sub-features).
 _SYSTEMATIC_RE = re.compile(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$")
@@ -289,7 +327,8 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
             perturbations=[
                 KanMxDeletionPerturbation(
                     systematic_gene_name=row["orf"], perturbed_gene_name=row["orf"]
-                )
+                ),
+                *_carotenogenic_cassette(),
             ]
         )
         # Screen scored on SC-URA agar (URA-selective plasmid), 30 C.

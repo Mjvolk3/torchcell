@@ -39,6 +39,7 @@ from torchcell.verification.morphology import (
     perturbed_gene_set,
     verify_morphology_dataset,
 )
+from torchcell.verification.protein import protein_gene_set, verify_protein_dataset
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -331,13 +332,60 @@ def run_metabolite(data_root: str) -> bool:
     return all_passed
 
 
+PROTEIN_DATASETS: dict[str, dict[str, Any]] = {
+    "proteome_zelezniak2018": {
+        "root": "data/torchcell/proteome_zelezniak2018",
+        "expected_count": 97,
+        "provenance": Provenance(
+            source_uri="https://zenodo.org/records/1320289/files/proteins_dataset.data_prep.tsv",
+            citation_key="zelezniakMachineLearningPredicts2018",
+            method="SWATH-MS label-free protein signal, SVA batch-corrected; per-strain mean over replicates",
+            page="Zenodo 10.5281/zenodo.1320288 proteins_dataset.data_prep.tsv",
+        ),
+    }
+}
+
+
+def run_protein(data_root: str) -> bool:
+    """Verify protein-abundance datasets (L0-L4) and write reports. True if all pass."""
+    ohya_abs = osp.join(data_root, OHYA_SOURCE_ROOT)
+    ohya_genes: set[str] = set()
+    if osp.exists(osp.join(ohya_abs, "processed", "lmdb")):
+        ohya_genes = perturbed_gene_set(load_records(ohya_abs))
+
+    all_passed = True
+    for name, spec in PROTEIN_DATASETS.items():
+        abs_root = osp.join(data_root, spec["root"])
+        records = load_records(abs_root)
+        report = verify_protein_dataset(
+            records,
+            dataset_name=name,
+            provenance=spec["provenance"],
+            expected_count=spec.get("expected_count", len(records)),
+        )
+        if ohya_genes:
+            report.add(
+                _l4_gene_containment(
+                    ohya_genes, "scmd_ohya2005", protein_gene_set(records)
+                )
+            )
+        out = _write_report(report, osp.join(abs_root, "preprocess"))
+        print(report.summary())
+        print(f"  -> wrote {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
 def run_all(data_root: str) -> bool:
     """Run every dataset-family verification. True only if all pass."""
     expression_ok = run_expression(data_root)
     morphology_ok = run_morphology(data_root)
     visual_ok = run_visual_score(data_root)
     metabolite_ok = run_metabolite(data_root)
-    return expression_ok and morphology_ok and visual_ok and metabolite_ok
+    protein_ok = run_protein(data_root)
+    return (
+        expression_ok and morphology_ok and visual_ok and metabolite_ok and protein_ok
+    )
 
 
 def main() -> int:

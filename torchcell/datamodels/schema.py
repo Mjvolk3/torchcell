@@ -1175,6 +1175,68 @@ class MetaboliteExperiment(Experiment, ModelStrict):
     phenotype: MetabolitePhenotype
 
 
+class ProteinAbundancePhenotype(Phenotype, ModelStrict):
+    """Quantitative protein-abundance profile keyed by protein (systematic ORF).
+
+    For bottom-up proteomics that quantify per-protein abundance per strain -- e.g.
+    Zelezniak 2018 SWATH-MS of kinase-knockout strains (batch-corrected, SVA-adjusted
+    label-free signal). ``protein_abundance`` maps each measured protein's systematic
+    ORF id to its abundance (absolute per-strain quantity on a log signal scale, NOT a
+    ratio -- the WT/parent strain supplies the reference). ``measurement_type`` records
+    WHAT the number is so heterogeneous proteomics assays are never silently mixed.
+    """
+
+    graph_level: str = "node"
+    label_name: str = "protein_abundance"
+    label_statistic_name: str | None = "protein_abundance_se"
+
+    protein_abundance: dict[str, float] = Field(
+        description="protein systematic ORF -> abundance (batch-corrected label-free signal)"
+    )
+    protein_abundance_se: dict[str, float] | None = Field(
+        default=None, description="protein ORF -> standard error across replicates"
+    )
+    n_replicates: dict[str, int] = Field(
+        description="protein ORF -> number of independent samples/replicates"
+    )
+    measurement_type: str = Field(
+        description="what the level is, e.g. 'swath_ms_label_free_log_signal_sva'"
+    )
+
+    @model_validator(mode="after")
+    def validate_protein_abundance(self) -> "ProteinAbundancePhenotype":
+        """Require non-empty abundances and consistent per-protein replicate keys."""
+        if not self.protein_abundance:
+            raise ValueError("protein_abundance cannot be empty")
+        if set(self.n_replicates) != set(self.protein_abundance):
+            raise ValueError("n_replicates keys must match protein_abundance keys")
+        for key, n in self.n_replicates.items():
+            if n < 1:
+                raise ValueError(f"n_replicates for {key} must be >= 1")
+        if self.protein_abundance_se is not None:
+            for key, se in self.protein_abundance_se.items():
+                if key not in self.protein_abundance:
+                    raise ValueError(f"SE key {key} not in protein_abundance")
+                if not math.isnan(se) and se < 0:
+                    raise ValueError(f"SE for {key} must be non-negative")
+        return self
+
+
+class ProteinAbundanceExperimentReference(ExperimentReference, ModelStrict):
+    """Reference (control) context for a protein-abundance experiment."""
+
+    experiment_reference_type: str = "protein_abundance"
+    phenotype_reference: ProteinAbundancePhenotype
+
+
+class ProteinAbundanceExperiment(Experiment, ModelStrict):
+    """Experiment measuring a protein-abundance phenotype."""
+
+    experiment_type: str = "protein_abundance"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: ProteinAbundancePhenotype
+
+
 PhenotypeType = (
     Phenotype
     | FitnessPhenotype
@@ -1186,6 +1248,7 @@ PhenotypeType = (
     | MicroarrayExpressionPhenotype
     | VisualScorePhenotype
     | MetabolitePhenotype
+    | ProteinAbundancePhenotype
 )
 
 ExperimentType = (
@@ -1199,6 +1262,7 @@ ExperimentType = (
     | MicroarrayExpressionExperiment
     | VisualScoreExperiment
     | MetaboliteExperiment
+    | ProteinAbundanceExperiment
 )
 
 ExperimentReferenceType = (
@@ -1212,6 +1276,7 @@ ExperimentReferenceType = (
     | MicroarrayExpressionExperimentReference
     | VisualScoreExperimentReference
     | MetaboliteExperimentReference
+    | ProteinAbundanceExperimentReference
 )
 
 
@@ -1225,6 +1290,7 @@ EXPERIMENT_TYPE_MAP = {
     "microarray_expression": MicroarrayExpressionExperiment,
     "visual_score": VisualScoreExperiment,
     "metabolite": MetaboliteExperiment,
+    "protein_abundance": ProteinAbundanceExperiment,
 }
 
 EXPERIMENT_REFERENCE_TYPE_MAP = {
@@ -1237,6 +1303,7 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "microarray_expression": MicroarrayExpressionExperimentReference,
     "visual_score": VisualScoreExperimentReference,
     "metabolite": MetaboliteExperimentReference,
+    "protein_abundance": ProteinAbundanceExperimentReference,
 }
 
 

@@ -19,6 +19,7 @@ from .sameith2015 import (
 from .sameith2015 import (
     SmMicroarraySameith2015Dataset as SmMicroarraySameith2015Dataset,
 )
+from .zelezniak2018 import ProteomeZelezniak2018Dataset as ProteomeZelezniak2018Dataset
 
 # from .baryshnikovna2010 import Baryshnikovna2010Dataset
 
@@ -40,6 +41,8 @@ cachera_datasets = ["BetaxanthinCachera2023Dataset"]
 
 mulleder_datasets = ["AminoAcidMulleder2016Dataset"]
 
+zelezniak_datasets = ["ProteomeZelezniak2018Dataset"]
+
 __all__ = (
     costanzo_datasets
     + kuzmin_datasets
@@ -48,4 +51,5 @@ __all__ = (
     + ozaydin_datasets
     + cachera_datasets
     + mulleder_datasets
+    + zelezniak_datasets
 )

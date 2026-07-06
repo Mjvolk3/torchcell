@@ -74,3 +74,38 @@ only, NOT as per-record error. RESOLVE via OCR before finalizing.
    register in datasets `__init__`.
 6. [ ] Add to `torchcell.verification` metabolite runner; build LMDB; verify L0-L4.
 7. [ ] Land via rebase + ff (own worktree `feat/ws9-mulleder-metabolome`).
+
+## 2026.07.06 - Built + Verified (L0-L4 PASS)
+
+Loader `torchcell/datasets/scerevisiae/mulleder2016.py`
+(`AminoAcidMulleder2016Dataset`) built and verified. Decisions resolved:
+
+- **n_replicates = 1, metabolite_level_se = None** -- sourced from Methods: the
+  genome-wide screen is a SINGLE culture per strain ("Yeast" section); the 237x QC
+  sample is for analytical performance only ("Quantification of Amino Acids in High
+  Throughput"), NOT per-strain averaging. The paper's "n=3" is targeted validation.
+- **Reference = population robust mean per amino acid** (MCD estimate,
+  `robust_summary_statistics` sheet) -- a WT-equivalent baseline, since the released
+  per-strain data covers deletions only. This is ABSOLUTE mM, not centered, so the
+  metabolite verifier gained `reference_centered=False` -> a `reference_finite` L3
+  check (finite + key-matched) instead of the Cachera `reference_zero` (==0) check.
+- **19 amino acids** (20 proteinogenic minus cysteine); all 4678 strains have all 19,
+  no NaN, all ORFs valid systematic ids (no genome needed).
+- **target_metabolite_ids = None (DEFERRED)** -- amino acids ARE native Yeast9
+  metabolites so this is populatable (first real CBM linkage); deferred to a follow-up
+  sourcing the `s_NNNN` ids from YeastGEM (not guessed).
+
+Verification (`run_metabolite`): L0 4678 validated; L1 count 4678==4678 + 4678 unique
+ORFs; L2 88882 values finite; L3 reference_finite + measurement_type_consistent; L4
+gene_containment 0.950 of deletion genes in Ohya. ALL PASS. Cachera still PASS
+(centered reference_zero path unaffected). Registered in `scerevisiae/__init__` +
+`verification.runners.METABOLITE_DATASETS`.
+
+REVIEW FLAGS: (1) reference = population mean (WT-proxy, sourced) vs a measured WT row
+-- confirm modeling choice; (2) prototrophic background (pHLUM-like episomal marker
+restoration) not yet modeled as a GeneAddition -- ReferenceGenome strain="BY4741";
+(3) target_metabolite_ids CBM mapping deferred.
+
+- [x] loader + build + L0-L4 verify + registration
+- [ ] target_metabolite_ids (amino acid -> Yeast9 s_NNNN) follow-up
+- [ ] prototrophy-restoring marker as GeneAddition (ties to plasmid-sequence store)

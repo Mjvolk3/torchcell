@@ -85,6 +85,39 @@ def _l3_reference_zero(records: Sequence[Record]) -> LevelResult:
     )
 
 
+def _l3_reference_finite(records: Sequence[Record]) -> LevelResult:
+    """L3: the reference level is finite and defined for every measured metabolite.
+
+    For ABSOLUTE-quantity datasets (e.g. Mulleder amino-acid concentrations) the
+    reference is a WT-equivalent baseline, not a centered 0 -- so we check the reference
+    is well-defined (finite, same metabolite keys as the experiment) rather than == 0.
+    """
+    n = 0
+    bad = 0
+    for rec in records:
+        exp_keys = set(rec["experiment"]["phenotype"]["metabolite_level"])
+        levels = rec["reference"]["phenotype_reference"]["metabolite_level"]
+        if set(levels) != exp_keys:
+            bad += 1
+            continue
+        for v in levels.values():
+            n += 1
+            if not math.isfinite(float(v)):
+                bad += 1
+    holds = bad == 0
+    return LevelResult(
+        level=Level.L3,
+        name="reference_finite",
+        passed=holds,
+        message=(
+            f"reference level finite + key-matched for all {n} values"
+            if holds
+            else f"{bad} reference levels non-finite or key-mismatched"
+        ),
+        details={"n_values": n, "n_bad": bad},
+    )
+
+
 def _l3_measurement_type_consistent(records: Sequence[Record]) -> LevelResult:
     """L3: all records share a single measurement_type (no silent cross-assay mixing)."""
     types = {rec["experiment"]["phenotype"]["measurement_type"] for rec in records}
@@ -107,8 +140,14 @@ def verify_metabolite_dataset(
     dataset_name: str,
     provenance: Provenance,
     expected_count: int,
+    reference_centered: bool = True,
 ) -> VerificationReport:
     """Run the L0-L3 record-level gate for a metabolite dataset.
+
+    ``reference_centered`` (default True): assert the reference level is identically 0,
+    for population-CENTERED scores (Cachera CRI-SPA). Set False for ABSOLUTE-quantity
+    datasets (Mulleder amino-acid concentrations), where the reference is a WT-equivalent
+    baseline and is instead checked for finiteness + key-consistency.
 
     L4 (cross-source gene overlap with the deletion collection) is asserted by the
     caller across datasets.
@@ -151,7 +190,10 @@ def verify_metabolite_dataset(
         )
     )
 
-    report.add(_l3_reference_zero(records))
+    if reference_centered:
+        report.add(_l3_reference_zero(records))
+    else:
+        report.add(_l3_reference_finite(records))
     report.add(_l3_measurement_type_consistent(records))
     return report
 

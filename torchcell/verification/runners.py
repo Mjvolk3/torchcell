@@ -285,7 +285,18 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
             method="CRI-SPA corrected colony fluorescence intensity (24h) as betaxanthin proxy",
             page="CRI-SPA GitHub GA1_2_4_6.csv (replicates 1/2/4/6)",
         ),
-    }
+    },
+    "amino_acid_mulleder2016": {
+        "root": "data/torchcell/amino_acid_mulleder2016",
+        "expected_count": 4678,
+        "reference_centered": False,  # absolute mM concentrations, not centered scores
+        "provenance": Provenance(
+            source_uri="https://data.mendeley.com/datasets/bnzdhd6ck8/1",
+            citation_key="mullederFunctionalMetabolomicsDescribes2016",
+            method="LC-SRM intracellular amino-acid concentration (mM), batch-normalised",
+            page="Mendeley 10.17632/bnzdhd6ck8.1 Table_S3 intracellular_concentration_mM",
+        ),
+    },
 }
 
 
@@ -304,7 +315,8 @@ def run_metabolite(data_root: str) -> bool:
             records,
             dataset_name=name,
             provenance=spec["provenance"],
-            expected_count=len(records),
+            expected_count=spec.get("expected_count", len(records)),
+            reference_centered=spec.get("reference_centered", True),
         )
         if ohya_genes:
             report.add(

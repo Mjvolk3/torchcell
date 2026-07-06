@@ -147,3 +147,21 @@ def test_mixed_measurement_type_fails():
 
 def test_metabolite_gene_set():
     assert metabolite_gene_set(_good_records()) == set(GENES)
+
+
+def test_absolute_reference_passes_when_not_centered():
+    """Absolute-quantity datasets (reference != 0, e.g. Mulleder mM) pass with
+    reference_centered=False via the reference_finite check, not reference_zero.
+    """
+    records = [_record(g, lv, ref_level=5.0) for g, lv in zip(GENES, [7.5, 5.2, 6.1])]
+    report = verify_metabolite_dataset(
+        records,
+        dataset_name="abs",
+        provenance=PROV,
+        expected_count=3,
+        reference_centered=False,
+    )
+    assert report.passed, report.summary()
+    rf = [r for r in report.results if r.name == "reference_finite"]
+    assert rf and rf[0].passed
+    assert not any(r.name == "reference_zero" for r in report.results)

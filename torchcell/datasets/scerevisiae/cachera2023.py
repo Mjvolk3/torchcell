@@ -41,6 +41,7 @@ from torchcell.datamodels.schema import (
     Environment,
     Experiment,
     ExperimentReference,
+    GeneAdditionPerturbation,
     Genotype,
     KanMxDeletionPerturbation,
     Media,
@@ -60,6 +61,60 @@ log = logging.getLogger(__name__)
 MEASUREMENT_TYPE = "cri_spa_corrected_fluorescence_intensity_24h"
 TARGET_METABOLITE = "betaxanthin"
 _SYSTEMATIC_RE = re.compile(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$")
+
+
+# The constant engineered background transferred by CRI-SPA into every YKO strain: the
+# Btx-cassette, chromosomally integrated at site XII-5 (paper Methods; pBTX1/pBTX2). Two
+# heterologous plant genes (CYP76AD1, DOD) + two feedback-resistant mutant alleles of
+# NATIVE yeast genes (ARO4^K229L / YBR249C, ARO7^G141S / YPR060C) integrated ectopically
+# (hence GeneAddition with a variant, NOT AllelePerturbation at the native locus). The
+# natMX marker is not a betaxanthin gene and is omitted. source_organism for DOD needs
+# confirmation against DeLoache 2015 (ref 25) at review. plasmid_contig_id stays None
+# until the plasmid-sequence store lands (Cachera GenBank maps in the OUP SI zip). See
+# [[torchcell.datamodels.gene-addition-perturbation-design]].
+def _betaxanthin_cassette() -> list[GeneAdditionPerturbation]:
+    """Fresh Btx-cassette perturbations (new objects per record)."""
+    return [
+        GeneAdditionPerturbation(
+            systematic_gene_name="CYP76AD1",
+            perturbed_gene_name="CYP76AD1",
+            source_organism="Beta vulgaris",
+            is_heterologous=True,
+            localization="chromosomal_integration",
+            integration_locus="XII-5",
+            construct_name="Btx-cassette",
+        ),
+        GeneAdditionPerturbation(
+            systematic_gene_name="DOD",
+            perturbed_gene_name="DOD",
+            source_organism="Mirabilis jalapa",
+            is_heterologous=True,
+            localization="chromosomal_integration",
+            integration_locus="XII-5",
+            construct_name="Btx-cassette",
+        ),
+        GeneAdditionPerturbation(
+            systematic_gene_name="YBR249C",
+            perturbed_gene_name="ARO4",
+            source_organism="Saccharomyces cerevisiae",
+            is_heterologous=False,
+            localization="chromosomal_integration",
+            integration_locus="XII-5",
+            construct_name="Btx-cassette",
+            variant="K229L",
+        ),
+        GeneAdditionPerturbation(
+            systematic_gene_name="YPR060C",
+            perturbed_gene_name="ARO7",
+            source_organism="Saccharomyces cerevisiae",
+            is_heterologous=False,
+            localization="chromosomal_integration",
+            integration_locus="XII-5",
+            construct_name="Btx-cassette",
+            variant="G141S",
+        ),
+    ]
+
 
 # Gene-level corrected+filtered dataset (replicates 1/2/4/6) from the CRI-SPA repo.
 DATA_URL = "https://raw.githubusercontent.com/pc2912/CRI-SPA_repo/main/GA1_2_4_6.csv"
@@ -218,7 +273,8 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
             perturbations=[
                 KanMxDeletionPerturbation(
                     systematic_gene_name=row["orf"], perturbed_gene_name=row["orf"]
-                )
+                ),
+                *_betaxanthin_cassette(),
             ]
         )
         environment = Environment(

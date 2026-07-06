@@ -34,11 +34,17 @@ Record = dict[str, Any]
 
 
 def _deleted_genes(experiment: dict[str, Any]) -> list[str]:
-    """Systematic names deleted in this experiment's genotype."""
+    """Systematic names deleted in this experiment's genotype.
+
+    Excludes ``gene_addition`` perturbations: the engineered cassette background is
+    constant across every strain (and heterologous names are not real ORFs), so it is
+    not a screened deletion and must not enter the L1/L4 deleted-ORF key.
+    """
     return [
         p["systematic_gene_name"]
         for p in experiment["genotype"]["perturbations"]
         if p.get("systematic_gene_name") is not None
+        and p.get("perturbation_type") != "gene_addition"
     ]
 
 

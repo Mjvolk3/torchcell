@@ -60,7 +60,8 @@ exists.
   "Saccharomyces cerevisiae").
 - `is_heterologous: bool`.
 - `localization: Literal["episomal_2micron", "chromosomal_integration", ...]`.
-- `construct: str | None` -- plasmid/cassette name ("YB/I/BTS1", "Btx-cassette").
+- `construct_name: str | None` -- plasmid/cassette name ("YB/I/BTS1", "Btx-cassette").
+  (Named `construct_name`, not `construct`, which shadows a pydantic BaseModel method.)
 - `integration_locus: str | None` -- e.g. "XII-5" (chromosomal_integration only).
 - Sequence pointer: `plasmid_contig_id: str | None` + `locus_tag: str | None`
   (or coords) into the plasmid-sequence store. `None` until the raw plasmid is

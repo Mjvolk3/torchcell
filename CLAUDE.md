@@ -1,3 +1,32 @@
+## Vision -- The Virtual Cell (North Star)
+
+The field's consensus goal (Qian et al. 2026, *Nature* Perspective "Towards the
+construction of a virtual yeast" -- authored by much of the yeast-systems establishment:
+Costanzo, Boone, Andrews, Ralser, Steinmetz, Zampieri, Cai, ...) is the **AI-driven
+virtual cell**, with *S. cerevisiae* first. We share that goal. Note the paper ALSO calls
+itself biology-first, so our differentiation is **layer, rigor, and operationalization**,
+not philosophy: torchcell builds the **provenance-first, L0-L4-VERIFIED experimental-data
+ontology / substrate** their predictive+generative modeling stack must stand on -- NOT the
+AI agent itself. Distinctives to hold to (and clarify in the manuscript):
+
+- **Provenance-first + rebuildable + verified** (absent from their roadmap): every value
+  traces to a sha256-pinned artifact + verbatim source quote, with L0-L4 verification.
+- **Ontologize the EXPERIMENT** (typed `genotype × environment -> phenotype` record with
+  perturbations + provenance), not a top-down functional decomposition of the cell; let
+  structure grow naturally from what real papers report, captured to the bit/byte, being
+  MORE rigorous than the source (beyond published standards when necessary).
+- **Sequence-level genotype fidelity**: perturbation as an edit to the total genomic
+  content in the cell (deletions, integrations, alleles, present plasmids, heterologous
+  cassettes) -- the enabler of inverse strain design.
+- **Generalization axis** = single-cell bioproduction hosts (yeast first + manuscript
+  target), not yeast -> other eukaryotes.
+
+Sequence/annotation standards stance: own the pydantic object as a SUPERSET; ingest
+GenBank first, then GFF3+FASTA; emit GenBank/GFF3/SBOL for interoperability;
+Sequence-Ontology-aligned; grow toward SBOL-level design capture as plasmid/strain design
+becomes first-class. Full analysis + differentiation for the paper:
+`[[paper.north-star]]` (background: memory `virtual-cell-consensus-goal`).
+
 ## For Local Configs
 
 `/Users/michaelvolk/Documents/projects/torchcell/CLAUDE.local.md`

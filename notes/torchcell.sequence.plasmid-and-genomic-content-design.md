@@ -67,3 +67,34 @@ Mirror: `$DATA_ROOT/torchcell-library/cacheraCRISPAHighthroughputMethod2023/si/p
 - **Ozaydin 2-micron reconstruction** (YEplac195 backbone + crtYB/crtI/BTS1 + TDH3p/CYC1t)
   so its present plasmid can be stored.
 - Persisted store format (LMDB/JSON) + ingest CLI over the mirror; currently parse-on-demand.
+
+## 2026.07.06 - SBOL-aligned Component model
+
+Signed off: SBOL-level design is the target (plasmid design is foundational). Evolved
+`torchcell/sequence/plasmid.py` from a flat feature list to an **SBOL + Sequence-Ontology
+aligned** model, owning a superset we can emit as GenBank/GFF3/SBOL later:
+
+- `Component` = SBOL DNA Component (a plasmid, cassette, or part): `identity`, SO `roles`,
+  `topology`, `sequence`, located `features`, `provenance`.
+- `Feature` = SBOL SequenceFeature/SubComponent: `name`, SO `roles`, `Location`, and
+  `sub_features` for hierarchical composition (part -> cassette -> plasmid).
+- `Location` = SBOL Range: half-open `[start,end)` + `orientation`
+  (`inline`|`reverse_complement`).
+- `SORole` = a Sequence Ontology term; GenBank feature types map to SO
+  (gene SO:0000704, CDS SO:0000316, promoter SO:0000167, terminator SO:0000141,
+  rep_origin SO:0000296, primer_binding_site SO:0005850, engineered_region SO:0000804...).
+
+Design operations: `feature_sequence(name, flank)` (coding-strand ± context, circular
+wrap); `features_by_role(so_id)`; **`subcomponent(start, end, identity)`** carves a region
+into its own reusable linear Component with features rebased -- the SBOL composition op
+that yields the chromosomal-integration INSERT a `GeneAddition` applies to the chromosome.
+
+Validated on the mirrored `pBTX002.gb`: parses to a `plasmid_vector` Component;
+`features_by_role` finds the 4 cassette genes (ARO7-G141S, ARO4-K229L, CYP76AD1, DOD) + 4
+promoters (TEF1/PGK1/TPI1/CCW12); `subcomponent(XII-5\UP.end, XII-5\Down.start)` carves
+the **8104 bp integration insert** (26 features), and all four genes still extract on the
+coding strand (ATG start) from the rebased insert. 9 unit tests; ruff + mypy clean.
+
+Still future: GenBank/GFF3/SBOL WRITERS; the apply-to-sequence function (materialise a
+strain's in-cell sequence from its Genotype); persisted store; combinatorial/variant
+designs; wiring `GeneAddition` -> a Component/insert reference once ws8 lands.

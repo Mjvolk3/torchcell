@@ -35,9 +35,9 @@ CI-finish WS series).
 | WS6 | Verify Ohya2005 CalMorph | 🔨→✅ | Ohya (4718) already L0-clean vs current schema (no rebuild); L0–L4 morphology verifier PASSES. See [[torchcell.verification.morphology]]. **✅ landed (main)** |
 | WS7 | Ozaydin2013 beta-carotene | 🔨→✅ | `CarotenoidOzaydin2013Dataset` built (4474 records, VisualScorePhenotype); SI+PDF+OCR in library mirror w/ manifest; L0–L4 PASS. See [[torchcell.datasets.scerevisiae.ozaydin2013]]. **✅ landed (main)** |
 | WS8 | Cachera2023 betaxanthin | 🔨→✅ | `BetaxanthinCachera2023Dataset` built (4735 records, MetabolitePhenotype from CRI-SPA GitHub data); PDF+OCR+CSV in library mirror w/ manifest; L0–L4 PASS. See [[torchcell.datasets.scerevisiae.cachera2023]]. **✅ landed (main)** |
-| WS9 | Zelezniak2018 metabolite + protein | 🔨 | **protein ✅ landed** (`ProteomeZelezniak2018Dataset`, PR #35; 97 kinase KOs × 726 proteins; L0–L4 PASS); metabolite (~46 LC-SRM) 🔨 **in progress** (2026.07.07b) → Yeast9 `s_NNNN` keyed |
+| WS9 | Zelezniak2018 metabolite + protein | ✅ | **protein ✅ landed** (PR #35); **metabolite ✅ landed** (`MetaboliteZelezniak2018Dataset`, PR #41 `7632333d`; 95 strains × 50 metabolites; first populated `target_metabolite_ids` → Yeast9 `s_NNNN`; L0–L4 PASS). WS9 complete |
 | WS9b | Mülleder2016 amino-acid metabolome | ✅ | **landed** (`AminoAcidMulleder2016Dataset`, PR #34; 4678 strains × 19 AAs; L0–L4 PASS) |
-| WS10 | Pan-transcriptome (Caudal 2024) | 🔨 | **source RESOLVED** = `caudalPantranscriptomeRevealsLarge2024`; **in progress** (2026.07.07b): MinerU OCR → assess genome+transcriptome availability → off-graph seq/genome infra (see 2026.07.07 note) |
+| WS10 | Pan-transcriptome (Caudal 2024) | ✅ | **landed** (`CaudalPanTranscriptome2024Dataset`, PR #42 `a7408e7f`; 943 natural isolates = Caudal ∩ Peter2018 genomes). Natural isolate = perturbations off S288C: new `SequenceVariantPerturbation` (~5047/iso) + `CopyNumberVariantPerturbation` (accessory-present/core-absent) + `RNASeqExpressionPhenotype` (absolute TPM+count). Caudal+Peter OCR'd+mirrored; L0–L4 PASS. See [[torchcell.datasets.scerevisiae.caudal2024]]. **Remaining:** off-graph sequence STORE + apply-to-sequence dereferencer (perturbations carry pointers) |
 | WS11–14 | Phase B (graph/adapters/build/deploy) | ⬜ | — (cut when Phase A done) |
 
 ## Context
@@ -623,6 +623,28 @@ already exists, so the metabolite build is expected to be loader-only):
 
 Branch-vs-WS numbering divergence (branch `ws8/ws9/ws10` ≠ roadmap `WS8/9/10`) — reconcile
 once the pan-transcriptome infra name is settled.
+
+## 2026.07.07c - WS9 + WS10 landed; Phase A data layer complete
+
+Overnight push landed the two remaining Phase-A datasets:
+
+- **WS9 Zelezniak metabolite** (PR #41 `7632333d`) — `MetaboliteZelezniak2018Dataset`, 95
+  kinase-KO strains × 50 metabolites; first populated `target_metabolite_ids` (Yeast9
+  `s_NNNN` via `build_metabolite_s_id_map`, KEGG-cytosol + BiGG fallback). WS9 complete.
+- **WS10 Caudal pan-transcriptome** (PR #42 `a7408e7f`) — `CaudalPanTranscriptome2024Dataset`,
+  943 natural isolates (Caudal 969 ∩ Peter-2018 genomes). **Natural isolate modeled as a
+  perturbation set off S288C** (decision w/ user): new `SequenceVariantPerturbation`
+  (~5047/isolate, off-graph pointer) + `CopyNumberVariantPerturbation` (accessory-present /
+  core-absent; PAV = CNV extreme) + `RNASeqExpressionPhenotype` (absolute TPM+count).
+  Caudal + Peter 2018 OCR'd (MinerU) + all raw data mirrored/sha256-pinned. L0–L4 PASS.
+  See `[[torchcell.datasets.scerevisiae.caudal2024]]`.
+
+**Phase A (schema + datasets, WS1–WS10 incl. WS9b) is now essentially complete at the data
+layer.** Remaining threads: the WS10 off-graph sequence STORE + apply-to-sequence
+dereferencer (perturbations currently carry pointers; the store/loader is unbuilt), and the
+enhancement backlog (Zelezniak/Mülleder pHLUM-as-GeneAddition, Ozaydin 2μ plasmid). Next
+major phase: **Phase B (WS11–14) — BioCypher/Biolink annotation, adapters, KG rebuild, NCSA
+deploy** — the abstract's finish line.
 
 ## Verification
 

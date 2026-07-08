@@ -5,6 +5,9 @@
 """S. cerevisiae fitness and morphology datasets (Costanzo, Kuzmin, Ohya, Sameith)."""
 
 from .cachera2023 import BetaxanthinCachera2023Dataset as BetaxanthinCachera2023Dataset
+from .caudal2024 import (
+    CaudalPanTranscriptome2024Dataset as CaudalPanTranscriptome2024Dataset,
+)
 from .costanzo2016 import DmfCostanzo2016Dataset as DmfCostanzo2016Dataset
 from .costanzo2016 import SmfCostanzo2016Dataset as SmfCostanzo2016Dataset
 from .kuzmin2018 import DmfKuzmin2018Dataset as DmfKuzmin2018Dataset

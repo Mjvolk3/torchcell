@@ -46,6 +46,7 @@ from torchcell.verification.report import (
     Provenance,
     VerificationReport,
 )
+from torchcell.verification.rnaseq import rnaseq_gene_set, verify_rnaseq_dataset
 from torchcell.verification.visual_score import (
     verify_visual_score_dataset,
     visual_score_gene_set,
@@ -387,6 +388,89 @@ def run_protein(data_root: str) -> bool:
     return all_passed
 
 
+# --------------------------------------------------------------------------- #
+# RNA-seq pan-transcriptome datasets (WS10)
+# --------------------------------------------------------------------------- #
+RNASEQ_DATASETS: dict[str, dict[str, Any]] = {
+    "caudal_pantranscriptome2024": {
+        "root": "data/torchcell/caudal_pantranscriptome2024",
+        "expected_count": 943,
+        "provenance": Provenance(
+            source_uri="http://1002genomes.u-strasbg.fr/files/",
+            citation_key="caudalPantranscriptomeRevealsLarge2024",
+            method=(
+                "Caudal 2024 pan-transcriptome (final_data_annotated_merged); per-isolate "
+                "absolute TPM + raw counts, genotype vs S288C from Peter 2018 genomes"
+            ),
+            page="Nat. Genet. 56:1278; final_data_annotated_merged_04052022.tab",
+        ),
+    }
+}
+
+# S288C reference gene universe (ORF + RNA-coding systematic names) for L4 containment.
+SGD_GENE_FASTAS = [
+    "data/sgd/genome/S288C_reference_genome_R64-4-1_20230830/"
+    "orf_coding_all_R64-4-1_20230830.fasta",
+    "data/sgd/genome/S288C_reference_genome_R64-4-1_20230830/"
+    "rna_coding_R64-4-1_20230830.fasta",
+]
+# Empirically the Caudal measured-gene union is 0.943 contained in the SGD gene set (the
+# remainder are accessory/novel ORFs legitimately absent from S288C); 0.90 leaves headroom.
+MIN_RNASEQ_GENE_CONTAINMENT = 0.90
+
+
+def _sgd_gene_set(data_root: str) -> set[str]:
+    """Build the S288C systematic-name universe from the SGD ORF + RNA FASTA headers."""
+    genes: set[str] = set()
+    for rel in SGD_GENE_FASTAS:
+        with open(osp.join(data_root, rel)) as handle:
+            for line in handle:
+                if line.startswith(">"):
+                    genes.add(line[1:].split()[0])
+    return genes
+
+
+def _l4_rnaseq_gene_containment(sgd_genes: set[str], measured: set[str]) -> LevelResult:
+    """L4: the measured expression gene universe is contained in the SGD gene set."""
+    overlap = len(measured & sgd_genes) / len(measured) if measured else 0.0
+    return LevelResult(
+        level=Level.L4,
+        name="gene_containment_sgd",
+        passed=overlap >= MIN_RNASEQ_GENE_CONTAINMENT,
+        message=(
+            f"{overlap:.3f} of {len(measured)} measured genes are S288C reference genes "
+            f"(>= {MIN_RNASEQ_GENE_CONTAINMENT})"
+        ),
+        details={
+            "n_measured": len(measured),
+            "n_in_sgd": len(measured & sgd_genes),
+            "overlap": overlap,
+            "missing_examples": sorted(measured - sgd_genes)[:20],
+        },
+    )
+
+
+def run_rnaseq(data_root: str) -> bool:
+    """Verify RNA-seq pan-transcriptome datasets (L0-L4) and write reports. True if pass."""
+    sgd_genes = _sgd_gene_set(data_root)
+    all_passed = True
+    for name, spec in RNASEQ_DATASETS.items():
+        abs_root = osp.join(data_root, spec["root"])
+        records = load_records(abs_root)
+        report = verify_rnaseq_dataset(
+            records,
+            dataset_name=name,
+            provenance=spec["provenance"],
+            expected_count=spec.get("expected_count", len(records)),
+        )
+        report.add(_l4_rnaseq_gene_containment(sgd_genes, rnaseq_gene_set(records)))
+        out = _write_report(report, osp.join(abs_root, "preprocess"))
+        print(report.summary())
+        print(f"  -> wrote {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
 def run_all(data_root: str) -> bool:
     """Run every dataset-family verification. True only if all pass."""
     expression_ok = run_expression(data_root)
@@ -394,8 +478,14 @@ def run_all(data_root: str) -> bool:
     visual_ok = run_visual_score(data_root)
     metabolite_ok = run_metabolite(data_root)
     protein_ok = run_protein(data_root)
+    rnaseq_ok = run_rnaseq(data_root)
     return (
-        expression_ok and morphology_ok and visual_ok and metabolite_ok and protein_ok
+        expression_ok
+        and morphology_ok
+        and visual_ok
+        and metabolite_ok
+        and protein_ok
+        and rnaseq_ok
     )
 
 

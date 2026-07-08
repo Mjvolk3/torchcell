@@ -152,3 +152,87 @@ new sequence-store files; the Zelezniak-metabolite branch (landed) touched only 
 `MetabolitePhenotype` family -- disjoint. See
 `[[torchcell.sequence.plasmid-and-genomic-content-design]]` and
 `[[plan.schematization-ingestion-roadmap.2026.06.23]]` (WS10).
+
+## 2026.07.07 - Built `CaudalPanTranscriptome2024Dataset` (943 isolates, L0-L4 PASS)
+
+`torchcell/datasets/scerevisiae/caudal2024.py` -- built + verified. Each natural isolate
+is modeled as a PERTURBATION SET off the S288C reference, with the whole-transcriptome
+expression as its phenotype.
+
+### Records + per-isolate genotype composition
+
+- **943 records** = the intersection of Caudal `Strain` codes (969) with Peter's genome
+  panel (1011 isolates via `genesMatrix_PresenceAbsence.tab.gz` index). The 26 Caudal-only
+  strains have **no Peter genome and are EXCLUDED**: 25 `XTRA_*` (DCN, DCO, DCP, DCT, DCU,
+  DCV, DCW, DCZ, DDA, DDB, DGH, DGR, DGT, DGU, DGW, DGX, DGY, DHB, DHD, DHE, DHJ, DHK, DHO,
+  DHQ, DXL) + `FY4-6`.
+- **Per-isolate genotype means** (over the 943): `sequence_variant` = **5047.3**,
+  `copy_number_variant` accessory-present = **519.2**, `copy_number_variant` core-loss =
+  **1.59**. Total ~5568 perturbations/isolate; 4,759,608 sequence variants diffed overall.
+- Example (`dataset[0]`): 4557 sequence variants + 457 CNVs; phenotype 6000 genes; genome
+  reference `{Saccharomyces cerevisiae, S288C}`.
+
+### Reference-slice method (sequence variants, VALIDATED)
+
+For each of Peter's **6015** gene-keyed FASTAs (`allReferenceGenesWithSNPsAndIndels
+Inferred.tar.gz`, sha256 `b5400b89...`), the coordinate in the FIRST record header
+(`chromosomeN:start-end +/-`) slices the SGD R64 chromosome (`[start-1:end]`, reverse-
+complemented on the minus strand). That slice IS the S288C reference allele in Peter's
+exact representation (6-165 of the 1011 isolates match it verbatim per gene). An isolate
+has a `SequenceVariantPerturbation` at that gene iff its uppercased sequence != the slice.
+The isolate id is recovered by splitting the header token on `_<SYS>_` (matched isolates
+are the 3-letter Caudal codes). `sequence_uri = "<SYS>.fasta#<header_token>"`,
+`sequence_sha256 = b5400b89...`. All 6015 gene names are valid S288C systematic names, so
+`SequenceVariantPerturbation`'s (non-relaxed) name validator never rejects.
+
+### CNV method (pangenome presence/absence)
+
+Peter's presence matrix (1011 x 7796 ORFs) classifies each pangenome ORF **core** (present
+in >= 99% of isolates -> 5491) vs **accessory** (2305). Matrix columns are R-`make.names`-
+mangled (`X1834.YAL063C`); demangling (drop leading `X`, first `.`->`-`) recovers the raw
+ORF id (`1834-YAL063C`), whose `<number>-<name>` suffix is an S288C systematic name for
+reference ORFs (5276 of 7796 map to S288C; 1:1, no collisions) and an assembly id
+otherwise.
+
+- **Accessory PRESENT** -> `CopyNumberVariantPerturbation` (`copy_number` from the copy-
+  number matrix, default 1.0 if 0/NaN; `reference_copy_number = 0.0`;
+  `systematic_gene_name = pangenome_orf_id`).
+- **Core ABSENT** -> `CopyNumberVariantPerturbation` (`copy_number = 0.0`,
+  `reference_copy_number = 1.0`, `systematic_gene_name =` the S288C name) **only when the
+  ORF maps to an S288C name** (4807 of 5491 core ORFs do); core-loss of an unmappable ORF
+  is skipped (hence the low 1.59 mean -- most isolates lose 0-2 core ORFs mappable to
+  S288C).
+
+### Phenotype + population-mean reference decision
+
+`RNASeqExpressionPhenotype`: per-isolate `expression_tpm` + `expression_count` (raw reads,
+`int(round(sum))`) for the genes that isolate carries in Caudal
+`final_data_annotated_merged_04052022.tab` (comma-delimited, latin-1; sha256 `8b55ccd7...`).
+A gene absent from an isolate is KEY-ABSENT (never 0). The merged file already has one row
+per (Strain, gene) (defensive sum-aggregation is a no-op). `measurement_type = "rnaseq_tpm"`,
+`n_mapped_reads = None`. **`phenotype_reference` = the POPULATION MEAN over the 943 built
+isolates** (mean TPM / rounded mean count per gene; one shared object reused across all
+records) -- an absolute WT-equivalent baseline, so verification uses `reference_centered =
+False` (checks finiteness, not a centered 0). `genome_reference = {S. cerevisiae, S288C}`;
+environment `SC` liquid, 30 C (Caudal Methods: mid-log OD ~0.3). Publication PMID 38862621
+/ DOI 10.1038/s41588-024-01769-9.
+
+### L0-L4 verification (`torchcell/verification/rnaseq.py` + `run_rnaseq`) -- PASS
+
+```text
+caudal_pantranscriptome2024: PASS
+  [ok] L0 structural: 943 records validated
+  [ok] L1 count: observed 943, expected 943
+  [ok] L1 strain_uniqueness: 943 unique isolates, one record each
+  [ok] L2 tpm_value_fidelity: 5685741 values checked
+  [ok] L2 count_value_fidelity: 5685741 counts are non-negative integers
+  [ok] L3 measurement_type_consistent: single measurement_type: 'rnaseq_tpm'
+  [ok] L3 reference_finite: reference TPM finite for all 6086122 values
+  [ok] L4 gene_containment_sgd: 0.943 of 6454 measured genes are S288C reference genes (>= 0.9)
+```
+
+The 5.7% of measured genes outside the SGD ORF+RNA set are accessory/novel pangenome ORFs
+(`EC1118_*`, `maker.*`, `snap_masked.*`) legitimately absent from S288C. The heavy step is
+the 6015-gene x 1011-isolate sequence diff (~a few min; cached to
+`preprocess/sequence_variants.parquet` for resumable re-assembly). Verification re-validates
+all ~5.7M perturbations through the schema union, so `run_rnaseq` itself takes ~20 min.

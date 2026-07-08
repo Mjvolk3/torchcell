@@ -94,16 +94,20 @@ def _l3_reference_zero(records: Sequence[Record]) -> LevelResult:
 def _l3_reference_finite(records: Sequence[Record]) -> LevelResult:
     """L3: the reference level is finite and defined for every measured metabolite.
 
-    For ABSOLUTE-quantity datasets (e.g. Mulleder amino-acid concentrations) the
-    reference is a WT-equivalent baseline, not a centered 0 -- so we check the reference
-    is well-defined (finite, same metabolite keys as the experiment) rather than == 0.
+    For ABSOLUTE-quantity datasets the reference is a WT-equivalent baseline, not a
+    centered 0, so we check the reference is well-defined: non-empty, every value finite,
+    and its metabolite keys are a SUBSET of the experiment's measured metabolites. Dense
+    screens (e.g. Mulleder amino acids) key-match exactly (subset + equal cardinality);
+    sparse targeted metabolomics (e.g. Zelezniak) reference each strain against the WT
+    baseline only for the metabolites the WT measured, so the reference is a proper subset
+    (a strain may measure metabolites the WT lacks, which then have no WT baseline).
     """
     n = 0
     bad = 0
     for rec in records:
         exp_keys = set(rec["experiment"]["phenotype"]["metabolite_level"])
         levels = rec["reference"]["phenotype_reference"]["metabolite_level"]
-        if set(levels) != exp_keys:
+        if not levels or not set(levels) <= exp_keys:
             bad += 1
             continue
         for v in levels.values():
@@ -116,9 +120,9 @@ def _l3_reference_finite(records: Sequence[Record]) -> LevelResult:
         name="reference_finite",
         passed=holds,
         message=(
-            f"reference level finite + key-matched for all {n} values"
+            f"reference level finite + key-subset for all {n} values"
             if holds
-            else f"{bad} reference levels non-finite or key-mismatched"
+            else f"{bad} reference levels non-finite, empty, or not a key-subset"
         ),
         details={"n_values": n, "n_bad": bad},
     )

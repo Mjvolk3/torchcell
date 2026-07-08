@@ -298,6 +298,17 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
             page="Mendeley 10.17632/bnzdhd6ck8.1 Table_S3 intracellular_concentration_mM",
         ),
     },
+    "metabolite_zelezniak2018": {
+        "root": "data/torchcell/metabolite_zelezniak2018",
+        "expected_count": 95,
+        "reference_centered": False,  # arbitrary batch-corrected SRM signal, not centered
+        "provenance": Provenance(
+            source_uri="https://zenodo.org/api/records/1320289/files/metabolites_dataset.data_prep.tsv/content",
+            citation_key="zelezniakMachineLearningPredicts2018",
+            method="SRM-MS/MS targeted metabolomics, batch-corrected signal; per-strain mean over pooled replicates",
+            page="Zenodo 10.5281/zenodo.1320288 metabolites_dataset.data_prep.tsv",
+        ),
+    },
 }
 
 

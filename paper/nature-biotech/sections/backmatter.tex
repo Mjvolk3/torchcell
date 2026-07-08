@@ -7,19 +7,398 @@
 % Funding; competing interests; author contributions.
 % (Data availability + Code availability live at the END of Methods, per Nature style.)
 
-%% ---- Supplementary information: SI figures grouped here, references placed AFTER them.
-%% \clearpage flushes pending floats so the short bibliography can't interleave with the SI
-%% figures -- that interleaving was the figure/reference clash. ----
+%% ==================================================================================
+%% Supplementary information. HOUSE ORDER (set 2026.07.05): the SI WRITING -- the
+%% Supplementary Notes and their proofs -- comes FIRST; ALL Supplementary Figures come
+%% AFTER the notes; the references come last. Heading hierarchy mirrors the main text:
+%%   \section*{Supplementary Information}      -- SI title (largest)
+%%   \subsection*{Supplementary Note N: ...}   -- each Note (own line, starts a new page)
+%%   \notesec{...}                             -- run-in subsections inside a Note (smallest)
+%% (sn-jnl's \bmhead is only a 10bp bold level-5 head, too small to separate the Notes,
+%% so Notes use \subsection*.) Each Note starts on a new page. The Contents block below is
+%% maintained BY HAND -- update it when a Note or figure block is added. Proofs use the
+%% house format in preamble.tex (proposition/proof envs, \pfstep, no bullets).
+%% ==================================================================================
 \clearpage
-\bmhead{Supplementary information}
+\section*{Supplementary Information}
 
-% Supplementary figures use S-numbering and are referenced from the text with
-% \ref{fig:...} (never a hard-coded "S2"), so they renumber automatically as the SI is
-% built out and every "Supplementary Fig." reference stays correct. Reset the counter to
-% 0 so the first SI float is S1 and they run in document (first-mention) order. Placeholder
-% floats (\figph) reserve a number + label for figures not yet drawn; swap each for a real
-% \tcfig{...} export once composed. Same true-to-size, left-justified layout as the main
-% figures; keep every SI figure inside the 180x170 mm print box.
+\noindent\textbf{Contents}\par\smallskip
+\noindent\begin{tabular}{@{}p{3.6cm}l@{}}
+Supplementary Note 1  & Functional equivalence of the perturbation operator\\
+Supplementary Note 2  & Graph-regularized attention contains graph attention\\
+Supplementary Note 3  & The static-graph assumption and learning the perturbation\\[4pt]
+Supplementary Figs.\  & S1--S12 (placed after the Notes)\\
+\end{tabular}
+
+%% ---- Supplementary Note 1: functional equivalence of the perturbation operator ----
+%% Ported from notes/paper.nature-biotech.fig1.perturbation-operator.md (2026.07.01 section).
+%% Notation from Table~\ref{tab:notation}; rebuild map is \kappa (\rho is the GPR).
+\clearpage
+\subsection*{Supplementary Note~1: functional equivalence of the perturbation operator}
+
+Encoding the wildtype cell once and applying a perturbation-conditioned operator is at least as
+expressive as rebuilding and re-encoding a separate graph for every strain. The operator can
+represent any predictor the rebuild-and-re-encode route can, and strictly more whenever the
+rebuilt graph would discard information the perturbation carries. Figure~\ref{fig:torchcell}g and
+the Methods assert the approximation $\Phi(G_p)\approx\mathcal{R}_\phi(\mathcal{T}_\psi(H,p))$;
+this note separates it into two claims that are easy to conflate. The first is an exact
+reparameterization, a statement about which functions are expressible that does not depend on
+training. The second is a learned approximation: the trained operator matches the rebuild route
+only to the extent that the encoder loses no information and the operator has the capacity to fit
+the target.
+
+\notesec{Setting} There are two ways to predict a phenotype under a perturbation $p$. Perturbing
+the \emph{data} materializes a rebuilt graph $G_p=\kappa(G,p)$, deleting or rewiring vertices and
+edges, and encodes it, $\hat y=\Phi(G_p)$; the deterministic rebuild map $\kappa:(G,p)\mapsto G_p$
+runs once per strain (written $\kappa$, not $\rho$, because $\rho$ already denotes the
+gene--reaction association). Perturbing the \emph{representation} encodes the reference once and
+operates on it, $\hat y=\mathcal{R}_\phi(\mathcal{T}_\psi(F_\theta(G),p),\varepsilon)$, so the
+graph enters only through $F_\theta$ and the representation $H=F_\theta(G)$ is reused across all
+$p$. Collect the predictors each route can express into two function classes:
+$\mathcal{H}_{\mathrm{data}}=\{\Phi\circ\kappa\}$, the maps built by perturbing the data, and
+$\mathcal{H}_{\mathrm{rep}}=\{\Psi:\mathcal{G}\times\mathcal{P}\to\mathcal{Y}\}$, the maps
+expressible as a direct function of the pair $(G,p)$, which is the amortized family CGT targets.
+Here $\Phi,\Psi$ are arbitrary measurable target maps and $D$ is the data distribution over
+$(G,p)$; remaining notation follows Table~\ref{tab:notation}.
+
+\begin{proposition}[Reparameterization; amortization containment]
+\label{prop:reparam}
+With the function classes $\mathcal{H}_{\mathrm{data}}$ and $\mathcal{H}_{\mathrm{rep}}$ defined
+above, $\mathcal{H}_{\mathrm{data}}\subseteq\mathcal{H}_{\mathrm{rep}}$, with equality if and only
+if the rebuild map $\kappa$ is injective on $\operatorname{supp}D$.
+\end{proposition}
+
+In words: the two routes target the same set of predictors, and the amortized route is strictly
+larger exactly when the rebuild destroys information. This is the
+amortization-containment property: the encode-once-and-operate family contains the
+data-rebuilding family, and strictly extends it whenever a feature or parametric perturbation
+such as dose or type survives in $(G,p)$ but is erased by the rebuilt topology $G_p$.
+
+\begin{proof}
+\pfstep{Containment} The map $\kappa$ is deterministic, so $(G,p)$ fixes $G_p$. For any target
+$\Phi^\star$ we have $\Phi^\star(G_p)=(\Phi^\star\circ\kappa)(G,p)=:\Psi^\star(G,p)$, an equality
+of functions, which gives $\mathcal{H}_{\mathrm{data}}\subseteq\mathcal{H}_{\mathrm{rep}}$.
+\pfstep{Strictness} The reverse inclusion would require the pair $(G,p)$ to be recoverable from
+the rebuilt graph alone, that is $\sigma(G_p)=\sigma(G,p)$ as generated $\sigma$-algebras. But the
+rebuild discards information: $p$ is generally not recoverable from $G_p$, so
+$\sigma(G_p)\subsetneq\sigma(G,p)$ whenever $\kappa$ is non-injective, and a map
+$\Psi\in\mathcal{H}_{\mathrm{rep}}\setminus\mathcal{H}_{\mathrm{data}}$ then exists.
+\end{proof}
+
+\notesec{Concrete example} A three-gene example makes both the equality and its failure concrete.
+Take base graph $G$ the path $A\!-\!B\!-\!C$. In the injective case, deleting $B$ with $p=\{(g_B,\mathrm{del})\}$ drops $B$ and its edges, so
+$G_p=\{A,C\}$ with both nodes isolated, and the target $\Phi(G_p)=\#\mathrm{edges}=0$ is
+reproduced with no rebuild by
+$\Psi(G,p)=\#\mathrm{edges}(G)-\#\{\text{edges incident to }B\}=2-2=0$. In the non-injective
+case, overexpressing $B$ at two doses, $p_1=\{(g_B,\mathrm{OE},1)\}$ against
+$p_2=\{(g_B,\mathrm{OE},3)\}$, changes no topology, so $\kappa(G,p_1)=\kappa(G,p_2)=G$ and any
+$\Phi(G_p)$ returns one value for both, yet the dose-response phenotypes differ. The pair
+$(G,p)$ still carries the magnitude $m\in\{1,3\}$ and separates the two cases; continuous dose,
+and likewise the perturbation type $\tau$, lives in $p$ and not in a bare rebuilt topology. This
+realizes $\mathcal{H}_{\mathrm{rep}}\setminus\mathcal{H}_{\mathrm{data}}$.
+
+\notesec{Origin of the approximation} Proposition~\ref{prop:reparam} is about expressibility; it
+does not by itself say the trained CGT attains the match, and that is where the approximation sign
+originates. The ideal amortizer is $\Psi^\star=\Phi^\star\circ
+\kappa$. CGT realizes it not by that literal composition but by the learned
+$\mathcal{R}_\phi\circ\mathcal{T}_\psi$ acting on $H=F_\theta(G)$. Suppose $F_\theta$ is
+injective on $\operatorname{supp}D$, so that $(H,p)$ carries the same information as $(G,p)$,
+which is free for a fixed gene set because $H$ keeps one identifiable row per gene; and suppose
+cross-attention over the perturbation set followed by an MLP readout is a universal approximator
+of set-conditioned permutation-equivariant maps. Then for every $\epsilon>0$ there exist
+$\psi,\phi$ with
+\begin{equation}
+\sup_{(G,p)}\big\|\mathcal{R}_\phi\!\big(\mathcal{T}_\psi(F_\theta(G),p),\varepsilon\big)-\Psi^\star(G,p)\big\|<\epsilon,
+\label{eq:amortizer-approx}
+\end{equation}
+and, with Proposition~\ref{prop:reparam},
+$\mathcal{R}_\phi(\mathcal{T}_\psi(F_\theta(G),p),\varepsilon)\approx\Phi(\kappa(G,p))=\Phi(G_p)$.
+
+\notesec{Precision} The two claims are distinct. The reparameterization of
+Proposition~\ref{prop:reparam} is exact, a set-theoretic identity, because $\kappa$ is
+deterministic. The trained $\Phi(G_p)\approx\mathcal{R}_\phi(\mathcal{T}_\psi(H,p))$ is a learned
+correspondence, not a mathematical identity: it holds to the extent that $F_\theta$ is lossless
+and $\mathcal{T}_\psi,\mathcal{R}_\phi$ can fit $\Phi^\star\circ\kappa$. The realizability
+conditions are standard: permutation-invariant set functions are universally approximable by the
+Deep Sets construction, self-attention is a universal approximator of permutation-equivariant
+sequence maps, and conditioning on a perturbation rather than re-fitting on modified data is
+amortization in the sense of hypernetworks.
+\textbf{[refs to add: Zaheer et al., \textit{Deep Sets}, NeurIPS 2017; Yun et al.,
+\textit{Are Transformers Universal Approximators of Seq-to-Seq Functions?}, ICLR 2020;
+Ha, Dai \& Le, \textit{HyperNetworks}, ICLR 2017.]}
+
+\notesec{Relation to prior work} The closest precedent is the expressivity result that a
+structural graph transformation applied at preprocessing, followed by standard message passing,
+is at least as expressive as the corresponding improved message-passing algorithm; that result
+is topological and isomorphism-flavored, whereas Proposition~\ref{prop:reparam} is a
+function-class containment for feature and parametric perturbations $p$ (dose $m$, type $\tau$)
+that a bare rebuilt topology cannot carry. Running a network on perturbed copies of a graph is
+known to exceed 1-WL expressiveness, by random node dropout or by aggregating a policy-drawn bag
+of subgraphs, with 1-WL the reference power for message passing. GEARS instantiates the
+data-graph side biologically, materializing perturbations as edges on a gene--gene
+graph~\cite{roohaniPredictingTranscriptional2024}; CGT is its amortized counterpart, keeping the
+graph fixed and learning the perturbation in representation space.
+\textbf{[refs to add / search: Jogl, Thiessen \& G\"artner, \textit{Weisfeiler and Leman Return
+with Graph Transformations}, MLG 2022 (preprocessing transform $\ge$ improved MP); Papp et al.,
+\textit{DropGNN}, NeurIPS 2021 (node-dropout $>$ 1-WL); Bevilacqua et al., \textit{Equivariant
+Subgraph Aggregation Networks} (ESAN), ICLR 2022 (bag-of-subgraphs $>$ 1-WL); Xu et al.,
+\textit{How Powerful Are GNNs?} (GIN), ICLR 2019 (1-WL bound).]}
+
+\notesec{Empirical validation} A minimal, idealized experiment on single-gene knockout
+fitness tests the equivalence directly (Supplementary
+Fig.~\ref{fig:pert-equivalence-empirical}). Two capacity-matched small models are trained on the
+same knockouts, gene features, and splits, differing only along the perturb-data versus
+perturb-representation axis: a data-perturbing GNN that rebuilds the perturbed graph
+$G_p=\kappa(G,p)$, deleting the knocked-out gene and its edges, and re-encodes, $\hat
+y=\Phi(G_p)$; and a representation-perturbing CGT that encodes the wildtype once, $H=F_\theta(G)$,
+and applies the operator, $\hat y=\mathcal{R}_\phi(\mathcal{T}_\psi(H,p))$. A single deletion
+gives an injective $\kappa$, so Proposition~\ref{prop:reparam} predicts equal attainable
+accuracy: the amortized model should match the data-perturbing one on held-out fitness while
+encoding once rather than rebuilding and re-encoding per strain. The compute gap this avoids is
+quantified in Supplementary Note~3.
+
+%% ---- Supplementary Note 2: GAT <-> CGT limit equivalence (Fig 1 panel h) ----
+%% Companion to Note 1. Panel (h)'s claim -- the soft KL graph prior recovers a hard
+%% graph-attention mask as lambda->infty and strictly extends it at finite lambda -- was
+%% ASSERTED in Methods (Graph-regularized attention) but not proved; this note proves it
+%% (Gibbs uniqueness + KL-direction asymmetry). Full ideation:
+%% notes/paper.nature-biotech.fig1.gat-cgt-equivalence.md.
+\clearpage
+\subsection*{Supplementary Note~2: graph-regularized attention contains graph attention}
+
+A graph-attention network hard-wires each gene to attend only to its catalogued neighbors. CGT
+instead lets every gene attend to all genes and adds a soft penalty that pulls each attention row
+toward the graph. This note shows the two coincide in a precise sense: as the penalty weight
+$\lambda$ grows, the soft head reproduces the hard-masked one exactly, and at any finite $\lambda$
+the soft head can do strictly more, either keeping attention on a pair the graph omits, which
+surfaces a candidate interaction, or pulling attention off a listed edge the data contradict,
+neither of which a hard mask permits.
+
+Figure~\ref{fig:torchcell}h and the Methods, in the graph-regularized attention subsection,
+state that penalizing the divergence of an attention head from a row-normalized adjacency is the
+soft relaxation of masked graph attention, and that $\lambda\!\to\!\infty$ makes the two coincide
+(Eqs.~\ref{eq:rownorm}--\ref{eq:loss}). This note makes that precise: hard-masked graph attention
+is the infinite-penalty limit of the KL-regularized head, and at finite $\lambda$ the regularized
+head is strictly more expressive. Notation follows Table~\ref{tab:notation}.
+
+\notesec{Setting} A graph-attention head confines gene $i$ to its neighbors
+$\mathcal{N}(i)=\{j:A^{(k)}_{ij}=1\}$ through an additive mask,
+$\alpha^{\mathrm{GAT}}_{i,:}=\operatorname{softmax}_j(s_{ij}+M_{ij})$ with $M_{ij}=0$ on edges and
+$-\infty$ on non-edges, so $\operatorname{supp}\alpha^{\mathrm{GAT}}_{i,:}=\mathcal{N}(i)$. The
+CGT head is unmasked,
+$\alpha^{\mathrm{CGT}}_{i,:}=\operatorname{softmax}_j\!\big(q_i\!\cdot\!k_j/\sqrt{d_k}\big)$, and
+the graph enters only through the prior $\Omega_k$ (Eq.~\ref{eq:graphreg}).
+
+\begin{proposition}[Graph attention as the $\lambda\!\to\!\infty$ limit]
+\label{prop:gat-limit}
+Fix a graph $k$ and, for the head $(\ell_k,a_k)$ aligned to it, write $\lambda=\lambda_k$,
+$\tilde A=\tilde A^{(k)}$, and $\alpha_{i,:}$ for its attention row. Let
+$\mathcal{H}_{\mathrm{mask}}$ be the family of hard-masked graph-attention rows with support fixed
+to $\mathcal{N}(i)$, and $\mathcal{H}_{\mathrm{soft}}(\lambda)$ the family of KL-regularized rows
+under objective~\eqref{eq:loss}. Then
+$\mathcal{H}_{\mathrm{mask}}\subseteq\mathcal{H}_{\mathrm{soft}}(\lambda)$ for every $\lambda$,
+hard-masked graph attention is the $\lambda\!\to\!\infty$ limit of the regularized head, and at
+every finite $\lambda$ the inclusion is strict.
+\end{proposition}
+
+\begin{proof}
+\pfstep{The limit} The supervised loss $\mathcal{L}_y$ is bounded in $\alpha_{i,:}$, being an
+average of bounded per-task losses, whereas the prior term
+$\lambda\,D_{\mathrm{KL}}(\tilde A_{i,:}\,\|\,\alpha_{i,:})$ scales with $\lambda$. As
+$\lambda\!\to\!\infty$ any minimizer of the full objective therefore drives $\alpha_{i,:}$ to the
+minimizer of $D_{\mathrm{KL}}(\tilde A_{i,:}\,\|\,\cdot)$. The forward KL is non-negative and, by
+Gibbs' inequality, equals $0$ if and only if $\alpha_{i,:}=\tilde A_{i,:}$, and it is strictly
+convex in $\alpha_{i,:}$, so this minimizer is unique. Hence $\alpha_{i,:}\to\tilde A_{i,:}$,
+whose support is the graph neighborhood,
+$\operatorname{supp}\tilde A_{i,:}=\{j:A^{(k)}_{ij}=1\}=\mathcal{N}(i)
+=\operatorname{supp}\alpha^{\mathrm{GAT}}_{i,:}$. The regularized head collapses onto the same
+neighbor-restricted attention that a hard $-\infty$ mask produces, so $\mathcal{H}_{\mathrm{mask}}$
+is recovered in the limit and is contained in $\mathcal{H}_{\mathrm{soft}}(\lambda)$ for every
+$\lambda$.
+\pfstep{Strictness at finite $\lambda$} Split the per-row penalty over the two kinds of column,
+\begin{equation}
+D_{\mathrm{KL}}(\tilde A_{i,:}\,\|\,\alpha_{i,:})
+=\underbrace{\sum_{j:\,A^{(k)}_{ij}=1}\tilde A_{ij}\log\frac{\tilde A_{ij}}{\alpha_{ij}}}_{\text{edges}}
+\;+\;\underbrace{\sum_{j:\,A^{(k)}_{ij}=0}\tilde A_{ij}\log\frac{\tilde A_{ij}}{\alpha_{ij}}}_{\text{non-edges}} .
+\label{eq:kl-split}
+\end{equation}
+On every non-edge $\tilde A_{ij}=0$ and $0\log(0/\alpha_{ij})=0$, so the prior places no penalty
+on attention mass assigned off the graph, and this asymmetry is exactly what a hard mask lacks. A
+head may hold $\alpha_{ij}$ large where $A^{(k)}_{ij}=0$ at zero cost to the prior, the only force
+on that mass being the supervised loss; reading the trained attention map and finding persistent
+off-graph mass, which is the signal that the model keeps populating an entry absent from the base
+graph, therefore flags a gene pair the model finds predictive that the catalogued networks have
+not recorded, a candidate missing interaction. On a true edge $\tilde A_{ij}>0$, by contrast,
+driving $\alpha_{ij}\!\to\!0$ sends its edge term to $+\infty$, so the prior resists dropping a
+catalogued edge, yet at finite $\lambda$ a strong supervised gradient can still pull attention off
+an edge the labels contradict, trading a finite prior penalty for a better fit. A hard mask permits
+neither move: it sets the off-graph logit to $-\infty$ so that $\alpha_{ij}\equiv0$ and the
+candidate edge is unrepresentable, and it makes the neighborhood structural and unoverridable. Any
+attention row with nonzero off-graph mass therefore lies in
+$\mathcal{H}_{\mathrm{soft}}(\lambda)\setminus\mathcal{H}_{\mathrm{mask}}$, giving
+$\mathcal{H}_{\mathrm{mask}}\subsetneq\mathcal{H}_{\mathrm{soft}}(\lambda)$ at every finite
+$\lambda$.
+\end{proof}
+
+\notesec{Precision} Two caveats keep the caption honest. First, the equivalence is at the level
+of attention support, which genes attend to which, not of the within-neighborhood weights: the
+prior's target $\tilde A_{i,:}$ is uniform over $\mathcal{N}(i)$, whereas a graph-attention layer
+learns non-uniform neighbor weights, and at finite $\lambda$ CGT's own $\alpha_{i,:}$ is data-shaped
+inside the softly enforced neighborhood. The defensible shared claim is same neighbors, learned
+weights, not identical weights. Second, as in Supplementary Note~1 the correspondence is learned,
+not a set-theoretic identity: it holds to the extent that the aligned head is trained toward
+$\tilde A$ and the supervised loss allows. The discovery-and-overrule asymmetry is a direct
+consequence of the KL direction $D_{\mathrm{KL}}(\tilde A\,\|\,\alpha)$, with the prior as reference
+and the attention as model; reversing the arguments would penalize off-graph mass and destroy
+discovery.
+
+Proposition~\ref{prop:gat-limit} is the companion of Proposition~\ref{prop:reparam}. Note~1 is the
+equivalence along the perturbation axis, operating on $H$ rather than rebuilding $G_p$; this note is
+the equivalence along the graph-structure axis, regularizing attention rather than masking it.
+Together they justify the two architectural choices the bottom row of Fig.~\ref{fig:torchcell}
+depicts.
+
+\notesec{Empirical validation} A small, idealized experiment tests the proposition directly
+(Supplementary Fig.~\ref{fig:graphreg-empirical}). A single cell-encoder head is aligned to one
+gene--gene graph and trained on held-out fitness while the prior weight $\lambda$ is swept from $0$,
+which is free attention, to large, which is the hard-mask limit. The proposition predicts three
+signatures. First, as $\lambda$ grows the head's attention row $\alpha_{i,:}$ should converge to the
+row-normalized adjacency $\tilde A_{i,:}$, its support contracting onto the neighborhood
+$\mathcal{N}(i)$ and reproducing masked graph attention. Second, held-out accuracy should peak at an
+intermediate $\lambda$, above both the unconstrained head at $\lambda=0$ and the hard-mask limit,
+locating the value in the soft regime. Third, at that intermediate $\lambda$ the off-graph attention
+mass, meaning entries with $A^{(k)}_{ij}=0$ yet $\alpha_{ij}$ large, should be enriched for gene
+pairs held out of the training graph but present in an independent interaction set, exhibiting the
+discovery channel, while catalogued edges the head down-weights should be enriched for pairs the
+labels contradict, exhibiting overruling. A hard-masked control produces neither signal by
+construction, which is the empirical face of the strict inclusion.
+
+%% ---- Supplementary Note 3: static-graph assumption + general-data-object + compute ----
+%% The "longer discussion" of WHY we learn the perturbation. (a) biological hypothesis that
+%% catalogued graphs are perturbation-invariant + limits; (b) the general data object / loader
+%% vision (unify GNN / constraint-based-FBA / kinetic-ODE); (c) the compute/complexity growth
+%% argument with big-O table + the "deeper operator re-incurs fan-out" caveat + the empirical
+%% "even best-case deletion cannot close the gap" numbers. Numbers:
+%% notes/experiments.006.2025.10.22.subgraph-optimization-plan.md (44.38 vs 0.42 ms/sample,
+%% 104.5x; loader opt 3.65x graph-proc, -93.7% mem, but overall only 1.21x, graph proc -> 8%),
+%% notes/paper.nature-biotech.fig1.perturbation-operator.md and methods.tex (O(BL|E|) -> O(BL)).
+\clearpage
+\subsection*{Supplementary Note~3: the static-graph assumption and the case for learning the perturbation}
+
+This note sets out the reasons for representing a strain as a perturbation of a fixed reference
+rather than as a rebuilt graph. They are of three kinds: a biological assumption together with its
+limits, a practical goal of one reusable data object, and a computational argument that the
+rebuild alternative does not scale.
+
+\notesec{The static-graph assumption} TorchCell treats the biological networks as catalogued objects that
+annotate a fixed reference (Fig.~\ref{fig:torchcell}c, top): a genome is the minimal reference, and
+gene, regulatory, protein-interaction, and metabolic graphs are optional structure laid over it. A
+strain is then a perturbation applied to that shared reference rather than an independently rebuilt
+graph. This carries a biological hypothesis, that the catalogued wiring is perturbation-invariant:
+deleting or dosing a gene does not rewire the reference network, so the identified structures are
+essentially static across the strain library. The hypothesis is defensible for much of the graph,
+because a physical protein--protein interaction reflects a binding capability that a distant genetic
+perturbation usually leaves intact.
+
+\notesec{Limitations of the assumption} The assumption is a modeling choice, not a fact, and it has a clear
+failure mode. An edge that exists in the catalogue can effectively cease to exist in a particular
+strain: if perturbing an upstream regulator drives a partner's expression so low that the protein is
+essentially absent, the physical interaction cannot occur in that cell even though the reference
+graph still lists it. More generally, condition- and genotype-specific rewiring is not represented by
+a single static adjacency. Two features soften, though do not eliminate, this cost. First, the graph
+is a soft prior, not a hard substrate (Supplementary Note~2): the supervised loss can pull attention
+off an edge the labels contradict, and persistent off-graph attention can flag a context-specific
+interaction the catalogue omits. Second, the reference is the wildtype, so the assumption is only ever
+used to displace from a well-characterized baseline rather than to assert absolute structure. A
+genuinely dynamic, expression-gated edge is still only approximately handled, and we flag this as a
+limitation and a target for condition-conditioned graph priors.
+
+\notesec{A single general data object} Beyond expressivity (Supplementary
+Note~1), the design was chosen for a practical reason: keeping the reference fixed lets a data loader
+emit one general, read-ready object on request, which can then be consumed by different modeling
+paradigms without re-deriving the data. The same reference-plus-perturbation object is intended to
+serve, from one representation, machine learning on graphs, attention or transformer models, and
+constraint-based metabolic modeling; a stoichiometric or flux-balance formulation reads the metabolic
+subgraph, and a coupled-ODE kinetic model reads the same entities as state variables. Getting the
+data-transformation layer right once decouples the choice of modeling method from the data pipeline
+and makes multimodal method exploration a matter of consuming the same object differently. This was the
+original motivation, programmatic generality, and it is orthogonal to but reinforced by the
+expressivity and cost arguments below.
+
+\notesec{Compute and complexity} The alternative to learning the perturbation is to materialize and
+re-encode a perturbed graph per strain, which is expensive in a way that is easy to underestimate. Let
+$N$ be the number of genes, $\lvert E\rvert$ the edges, $d$ the hidden width, $L$ the encoder depth,
+$\lvert p\rvert$ the perturbed genes per strain (with $\lvert p\rvert\ll N$), $B$ the strains in a
+batch, and $L_{\mathrm{op}}$ the depth of the perturbation operator. Table~\ref{tab:compute} tracks the
+growth of each route.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+& Perturb data (rebuild) & Perturb representation (operator) \\
+\midrule
+Encode reference & folded into per-strain & $\mathcal{O}(L\lvert E\rvert d)$, once \\
+Per strain & $\mathcal{O}(L\lvert E\rvert d)$ & $\mathcal{O}(\lvert p\rvert N d)$ \\
+Batch of $B$ strains & $\mathcal{O}(B\,L\lvert E\rvert d)$ & $\mathcal{O}(L\lvert E\rvert d+B\lvert p\rvert N d)$ \\
+Deeper operator, $L_{\mathrm{op}}$ layers over $N$ genes & --- & $\mathcal{O}(L\lvert E\rvert d+B\,L_{\mathrm{op}}N^2 d)$ \\
+\bottomrule
+\end{tabular}
+\caption{Growth of per-batch compute for the two routes. The operator route wins by amortizing the
+encode across the batch and keeping the per-strain operator thin; a deep operator over all genes gives
+that advantage back.}
+\label{tab:compute}
+\end{table}
+
+The advantage has two sources, and both are necessary. The first is amortization: the encode
+$\mathcal{O}(L\lvert E\rvert d)$ is paid once and shared across the batch, so its per-strain share is
+$\mathcal{O}(L\lvert E\rvert d/B)$ and vanishes as $B$ grows, whereas the rebuild route repeats the full
+encode for every strain and grows as $\mathcal{O}(B\,L\lvert E\rvert d)$. The second is thinness: the
+per-strain operator is a single cross-attention with $\lvert p\rvert\ll N$, costing $\mathcal{O}(\lvert
+p\rvert N d)$, far below the rebuild's $\mathcal{O}(L\lvert E\rvert d)$. If the operator is deepened to
+$L_{\mathrm{op}}$ self-attention layers over all $N$ genes, the per-strain cost climbs to
+$\mathcal{O}(L_{\mathrm{op}}N^2 d)$ and the batch term returns to $\mathcal{O}(B\,L_{\mathrm{op}}N^2 d)$,
+which is again processing a batch of $B$ dense $N$-token graphs, the same fan-out the operator was meant
+to avoid. The design therefore keeps the operator shallow and adds capacity to fit the perturbation in
+the thin operator and the readout, not by re-encoding.
+
+\notesec{Empirical cost analysis} We tested this directly, and even
+in the simplest case, a single-gene deletion, optimizing the data step cannot close the gap. Building a
+strain by subgraphing the reference measured about $44\,\mathrm{ms}$ per sample against about
+$0.4\,\mathrm{ms}$ for a thin perturbation-index representation, a gap that ranged from about $86$ to
+$123\times$ across configurations. An engineered zero-copy loader, which stores the full
+\texttt{edge\_index} once, precomputes an $N\times K$ node-to-incident-edge index, and applies a
+per-strain boolean mask that zeros the edges touching perturbed genes in $\mathcal{O}(\lvert p\rvert\,d)$
+rather than rebuilding in $\mathcal{O}(\lvert E\rvert)$, cut graph-processing time by $3.65\times$ and
+edge-tensor memory by $93.7\%$, yet total per-sample time fell only $1.21\times$ (from about $54$ to
+$45\,\mathrm{ms}$). Even precomputing a mask for every possible single deletion, the most favorable case
+available, reached only about $1.6\times$ and never closed the residual $70$-to-$875\times$ gap to the
+thin route. The reason is that the cost is not in loading, which profiled at essentially zero, but in the
+model: each strain in a batch carries a different mask, so message passing must be run separately on all
+$B$ masked copies of the graph, inflating a $6{,}607$-node forward pass to about $192{,}000$ nodes and
+$2.4$ million edge operations to about $67$ million per batch. Masking rather than rebuilding only
+simulates the subgraph inside the same $\mathcal{O}(B\,L\lvert E\rvert)$ fan-out; it does not remove it
+\textit{[numbers from the SubgraphRepresentation versus Perturbation and lazy-mask benchmarks;
+notes/experiments.006 subgraph-optimization and weekly 2025.44--45 reports]}. This is the empirical face
+of Table~\ref{tab:compute}: the encode cannot be avoided per strain on the rebuild route, no matter how
+fast the loader, which is exactly what the operator route amortizes.
+
+\notesec{Trade-offs between the two routes} The rebuild route is not strictly dominated. Because it encodes
+each strain directly, it never needs the wildtype embedding as an explicit object, whereas the operator
+route embeds the reference once and derives every strain from it, so every perturbation is referenced to
+the wildtype. In practice the operator route's single shared encode is the advantage, since the
+perturbations do originate from the wildtype and reuse dominates, but the trade-off is real, and these
+arguments, biological, computational, and pipeline-level, are early and warrant further work.
+
+%% ==================================================================================
+%% Supplementary Figures. Placed AFTER all Supplementary Notes (house order). Reset the
+%% counter to 0 so the first SI float is S1; figures run in first-mention order and
+%% renumber automatically. Placeholder floats (\figph) reserve a number + label for
+%% figures not yet drawn; swap each for a \tcfig{...} export once composed. Keep every SI
+%% figure inside the 180x170 mm print box. Figures placed true-to-size with \tcfig
+%% (no LaTeX scaling); fix width in draw.io, not with \scalebox.
+%% ==================================================================================
+\clearpage
 \setcounter{figure}{0}
 \renewcommand{\thefigure}{S\arabic{figure}}
 
@@ -39,17 +418,13 @@ representation given enough data, whereas trigenic gene--gene interactions are n
 \begin{figure*}[t]
 \centering
 \figph{55mm}{\textbf{[Suppl. Fig./Table -- dataset scale; compose from report Fig.~1 table]}\\[3pt]
-Composition of the TorchCell knowledge graph: studies, labelled instances, environments,
+Composition of the TorchCell knowledge graph: studies, labeled instances, environments,
 and label types (whole-cell scalar, gene-level, gene-set) mapped to the corresponding
 readout heads. \textit{[placeholder: fill counts once finalized.]}}
 \caption{Dataset scale and composition of the TorchCell knowledge graph.}
 \label{fig:data-scale}
 \end{figure*}
 
-% Figures are placed true-to-size with \tcfig (NO LaTeX scaling): each draw.io source is
-% drawn inside the 180x170 mm print-box boundary template, so the --crop export equals the
-% Nature print box and renders 1:1. If a figure exports wider than 180 mm, fix it in draw.io
-% (pull content inside the box) -- do not scale. Order/numbering is provisional.
 \begin{figure}[htbp]
 \tcfig{figures/TorchCell-Supervised-Learning-and-Teacher-Forcing-Generic-Phenotypes.pdf}{TorchCell: ontology-unified knowledge graph and the
 perturbation-operator cell representation. Panels (a)--(d).}{fig:overview}
@@ -93,12 +468,6 @@ predicted vs.\ actual) and cross-phenotype transfer from the shared latent embed
 \label{fig:expr-diag}
 \end{figure*}
 
-% --- perturbation-operator functional-equivalence proof: now a Supplementary Note
-%     (Suppl. Note, typeset text + amsthm proposition) placed after the SI figures,
-%     just before the references. Main text cites it as "Supplementary Note 1"
-%     (a standard Nature SI element); the proposition/corollary inside are bold
-%     run-in prose, not separate numbered floats. ---
-
 % --- inference at scale ---
 \begin{figure*}[t]
 \centering
@@ -124,126 +493,13 @@ resulting network transfers annotations ($\mathrm{GO}_{g_i}=\mathrm{GO}_{g_j}$).
 previously uncharacterized genes.}{fig:profile-enrichment}
 \end{figure*}
 
-%% ---- Supplementary Note: functional equivalence of the perturbation operator ----
-%% Ported from notes/scratch.perturbation-operator-general.md (2026.07.01 section).
-%% Paper notation (Table~\ref{tab:notation}); the rebuild map is \kappa here because
-%% \rho already denotes the gene--reaction association (GPR) in the notation table.
-\clearpage
-\bmhead{Supplementary Note~1: functional equivalence of the perturbation operator}
-
-Figure~\ref{fig:torchcell}g and the Methods state that applying the perturbation operator
-to the fixed reference representation approximates re-encoding the rebuilt perturbed graph,
-$\Phi(G_p)\approx\mathcal{R}_\phi(\mathcal{T}_\psi(H,p))$. This note makes the statement
-precise: the reparameterisation is an \emph{exact} identity, whereas the trained
-approximation is a \emph{learned} correspondence with explicit realisability conditions.
-Notation follows Table~\ref{tab:notation}; two symbols are local to this note---the
-\emph{perturbed graph} $G_p$ and the deterministic \emph{rebuild map}
-$\kappa:(G,p)\mapsto G_p$ that materialises it (we write $\kappa$, not $\rho$, because
-$\rho$ already denotes the gene--reaction association). $\Phi,\Psi$ denote arbitrary
-measurable target maps, $D$ the data distribution over $(G,p)$, and $\sigma(\cdot)$ the
-generated $\sigma$-algebra.
-
-\paragraph{Two ways to predict a phenotype under a perturbation $p$.}
-\emph{Perturb the data (graph network).} Materialise $G_p=\kappa(G,p)$ by deleting or
-rewiring vertices and edges, then encode, $\hat y=\Phi(G_p)$; the graph is a hard
-constraint and $\kappa$ runs once per strain. \emph{Perturb the representation (CGT).}
-Encode once and operate,
-$\hat y=\mathcal{R}_\phi\!\big(\mathcal{T}_\psi(F_\theta(G),p),\varepsilon\big)$; the graph
-enters only through $F_\theta$, which runs once, and $H$ is reused across all $p$.
-
-\paragraph{Proposition (reparameterisation).}
-Let $\mathcal{H}_{\mathrm{data}}=\{\Phi\circ\kappa\}$ be the maps expressible by perturbing
-the data and
-$\mathcal{H}_{\mathrm{rep}}=\{\Psi:\mathcal{G}\times\mathcal{P}\to\mathcal{Y}\}$ those
-expressible as a function of $(G,p)$ directly (the amortised CGT family). Then
-\[
-\mathcal{H}_{\mathrm{data}}\subseteq\mathcal{H}_{\mathrm{rep}},
-\]
-with equality iff $\kappa$ is injective on $\operatorname{supp}D$. The two learning problems
-therefore target the same function class, and the amortised family is strictly larger
-exactly when the rebuild destroys information.
-
-\paragraph{Proof.}
-\emph{Containment.} $\kappa$ is deterministic, so $(G,p)$ fixes $G_p$. For any target
-$\Phi^\star$, $\Phi^\star(G_p)=(\Phi^\star\circ\kappa)(G,p)=:\Psi^\star(G,p)$---an equality,
-giving $\mathcal{H}_{\mathrm{data}}\subseteq\mathcal{H}_{\mathrm{rep}}$. \emph{Strictness.}
-The converse requires $\sigma(G_p)=\sigma(G,p)$. Rebuilding is information-destroying: $p$ is
-generally not recoverable from $G_p$, so $\sigma(G_p)\subsetneq\sigma(G,p)$ when $\kappa$ is
-non-injective, and some $\Psi\in\mathcal{H}_{\mathrm{rep}}\setminus\mathcal{H}_{\mathrm{data}}$
-exists.\hfill$\square$
-
-\paragraph{Concrete example.} Three genes with base graph $G$ the path $A\!-\!B\!-\!C$.
-\emph{Injective case.} Deleting $B$, $p=\{(g_B,\mathrm{del})\}$, drops $B$ and its edges, so
-$G_p=\{A,C\}$ (both isolated); the target $\Phi(G_p)=\#\mathrm{edges}=0$ is reproduced
-without any rebuild by
-$\Psi(G,p)=\#\mathrm{edges}(G)-\#\{\text{edges incident to }B\}=2-2=0$.
-\emph{Non-injective case.} Overexpressing $B$ at two doses,
-$p_1=\{(g_B,\mathrm{OE},1)\}$ vs $p_2=\{(g_B,\mathrm{OE},3)\}$, changes no topology, so
-$\kappa(G,p_1)=\kappa(G,p_2)=G$; any $\Phi(G_p)$ returns one value for both, yet
-dose-response phenotypes differ. The pair $(G,p)$ still carries the magnitude $m\in\{1,3\}$
-and separates them---continuous dose, and likewise the perturbation type $\tau$, lives in
-$p$, not in a bare rebuilt topology. This is
-$\mathcal{H}_{\mathrm{rep}}\setminus\mathcal{H}_{\mathrm{data}}$ made concrete.
-
-\paragraph{Corollary (origin of the $\approx$).}
-The ideal amortiser is $\Psi^\star=\Phi^\star\circ\kappa$. CGT realises it not by that
-literal composition but by the learned $\mathcal{R}_\phi\circ\mathcal{T}_\psi$ acting on
-$H=F_\theta(G)$. If (i)~$F_\theta$ is injective on $\operatorname{supp}D$, so $(H,p)$ carries
-the same information as $(G,p)$---free for a fixed gene set, since $H$ keeps one identifiable
-row per gene---and (ii)~cross-attention over the perturbation set followed by an MLP readout
-is a universal approximator of set-conditioned permutation-equivariant maps, then for every
-$\epsilon>0$ there exist $\psi,\phi$ with
-\[
-\sup_{(G,p)}\big\|\mathcal{R}_\phi\!\big(\mathcal{T}_\psi(F_\theta(G),p),\varepsilon\big)-\Psi^\star(G,p)\big\|<\epsilon,
-\]
-and, with the Proposition above,
-$\mathcal{R}_\phi\!\big(\mathcal{T}_\psi(F_\theta(G),p),\varepsilon\big)\approx\Phi(\kappa(G,p))=\Phi(G_p)$.
-
-\paragraph{Precision.} The two claims are distinct. The reparameterisation
-(the Proposition above) is exact---a set-theoretic identity,
-since $\kappa$ is deterministic. The trained
-$\Phi(G_p)\approx\mathcal{R}_\phi(\mathcal{T}_\psi(H,p))$ is a learned correspondence, not a
-mathematical identity: it holds to the extent $F_\theta$ is lossless and
-$\mathcal{T}_\psi,\mathcal{R}_\phi$ can fit $\Phi^\star\circ\kappa$. The realisability
-conditions are standard---permutation-invariant set functions are universally approximable by
-the Deep Sets construction~\cite{zaheerDeepSets2018}, self-attention is a universal
-approximator of permutation-equivariant sequence maps~\cite{yunAreTransformersUniversal2020},
-and conditioning on a perturbation rather than re-fitting on modified data is amortisation in
-the sense of hypernetworks~\cite{haHyperNetworks2017}.
-
-\paragraph{Relation to prior work.} The closest precedent is the expressivity result that a
-structural graph transformation applied at preprocessing, followed by standard message
-passing, is at least as expressive as the corresponding improved message-passing
-algorithm~\cite{joglWeisfeilerLemanReturn2022}; that result is topological and
-isomorphism-flavoured, whereas the Proposition above is a
-function-class containment for feature/parametric perturbations $p$ (dose $m$, type $\tau$)
-that a bare rebuilt topology cannot carry. Running a network on perturbed copies of a graph
-is known to exceed 1-WL expressiveness---by random node dropout~\cite{pappDropGNN2021} or by
-aggregating a policy-drawn bag of subgraphs~\cite{bevilacquaEquivariantSubgraph2022}---with
-1-WL the reference power for message passing~\cite{xuHowPowerfulAre2019}. GEARS instantiates the
-data-graph side biologically, materialising perturbations as edges on a gene--gene
-graph~\cite{roohaniPredictingTranscriptional2024}; CGT is its amortised counterpart, keeping
-the graph fixed and learning the perturbation in representation space.
-
-\paragraph{Empirical validation.} A minimal, idealised experiment on single-gene knockout
-fitness tests the equivalence directly (Supplementary
-Fig.~\ref{fig:pert-equivalence-empirical}). Two capacity-matched small models are trained on
-the same knockouts, gene features, and splits, differing only along the perturb-data
-vs.\ perturb-representation axis: a \emph{data-perturbing} GNN that rebuilds the perturbed
-graph $G_p=\kappa(G,p)$---deleting the knocked-out gene and its edges---and re-encodes,
-$\hat y=\Phi(G_p)$; and a \emph{representation-perturbing} CGT that encodes the wildtype once,
-$H=F_\theta(G)$, and applies the operator, $\hat y=\mathcal{R}_\phi(\mathcal{T}_\psi(H,p))$. A
-single deletion gives an injective $\kappa$, so the Proposition predicts equal attainable
-accuracy: the amortised model should match the data-perturbing one on held-out fitness while
-encoding once rather than rebuilding and re-encoding per strain.
-
-% --- SI: empirical validation of the perturbation-operator equivalence (supports Suppl. Note 1).
+% --- empirical validation of the perturbation-operator equivalence (supports Suppl. Note 1) ---
 %     PLACEHOLDER -- compose once the experiment (single-gene KO fitness, CGT-style vs GNN-style
-%     small models) is run. Keep the figure inside the 180x240 mm print box. ---
+%     small models) is run. Keep the figure inside the 180x240 mm print box.
 \begin{figure*}[t]
 \centering
 \figph{55mm}{\textbf{[Suppl. Fig. -- empirical equivalence: CGT-style vs.\ GNN-style on single-gene KO fitness]}\\[3pt]
-Idealised test of Supplementary Note~1 on single-gene knockout fitness. Two capacity-matched
+Idealized test of Supplementary Note~1 on single-gene knockout fitness. Two capacity-matched
 small models trained on identical data, features, and splits: a data-perturbing GNN that
 rebuilds $G_p$ and re-encodes ($\hat y=\Phi(G_p)$) vs.\ a representation-perturbing CGT that
 encodes the wildtype once and applies the operator
@@ -252,15 +508,41 @@ encodes the wildtype once and applies the operator
 (b) held-out accuracy (Pearson $r$ / MSE), expected near-equal;
 (c) agreement of the two models' predictions ($\hat y_{\mathrm{GNN}}$ vs.\ $\hat y_{\mathrm{CGT}}$,
 near the identity line);
-(d) compute cost: per-strain rebuild$+$encode (GNN) vs.\ encode-once$+$operator (CGT).
+(d) compute cost: per-strain rebuild$+$encode (GNN) vs.\ encode-once$+$operator (CGT),
+with the growth of Supplementary Note~3, Table~\ref{tab:compute}.
 \textit{[placeholder: run the experiment, then compose.]}}
 \caption{Empirical functional equivalence of the perturbation operator on single-gene
 knockout fitness (support for Supplementary Note~1).}
 \label{fig:pert-equivalence-empirical}
 \end{figure*}
 
-%% ---- References: placed AFTER the SI part. \clearpage first so every SI figure float is
-%% output before the bibliography begins (prevents the float/reference clash). NOTE: for
+% --- empirical relevance of graph-regularized attention (supports Suppl. Note 2) ---
+%     PLACEHOLDER -- compose once the lambda-sweep experiment is run. Structure mirrors
+%     the Note 1 empirical figure. Keep the figure inside the 180x240 mm print box.
+\begin{figure*}[t]
+\centering
+\figph{55mm}{\textbf{[Suppl. Fig. -- empirical relevance of graph-regularized attention: the $\lambda$ sweep]}\\[3pt]
+Idealized test of Supplementary Note~2. One cell-encoder head aligned to a single gene--gene
+graph, trained on held-out fitness with the graph-prior weight $\lambda$ swept from $0$ (free
+attention) to the hard-mask limit.
+(a) attention-to-adjacency divergence $D_{\mathrm{KL}}(\tilde A_{i,:}\,\|\,\alpha_{i,:})$ and
+support overlap with $\mathcal{N}(i)$ vs.\ $\lambda$, decreasing to $0$ as $\lambda\!\to\!\infty$
+(the masked graph-attention limit of Prop.~\ref{prop:gat-limit});
+(b) held-out accuracy (Pearson $r$) vs.\ $\lambda$, peaked at intermediate $\lambda$, above both
+the free head ($\lambda=0$) and the hard mask;
+(c) discovery: precision--recall of recovering held-out interactions from the top off-graph
+attention entries, against a hard-masked control that cannot place off-graph mass;
+(d) overruling: catalogued edges the head down-weights, enriched for label-contradicted pairs
+relative to a null.
+\textit{[placeholder: run the $\lambda$ sweep, then compose.]}}
+\caption{Empirical relevance of graph-regularized attention: the finite-$\lambda$ soft prior
+recovers graph attention in the limit, wins at intermediate $\lambda$, and enables edge discovery
+and overruling (support for Supplementary Note~2).}
+\label{fig:graphreg-empirical}
+\end{figure*}
+
+%% ---- References: placed AFTER the SI notes and figures. \clearpage first so every SI figure
+%% float is output before the bibliography begins (prevents the float/reference clash). NOTE: for
 %% Springer Nature submission, paste the .bbl here instead of \bibliography{} (see `make flat`). ----
 \clearpage
 \nocite{*}% FILLER: force all seeded refs to render in the preview; remove for submission

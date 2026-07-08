@@ -30,14 +30,22 @@ endif
 SHARED := content.tex preamble.tex references.bib sn-jnl.cls sn-nature.bst $(wildcard sections/*.tex)
 VIEWS  := submission editing twocolumn
 
-# Figure PDFs the manuscript references THAT have a .drawio.png source. The gate depends on
-# these so `make paper` re-exports any figure whose source is newer BEFORE measuring it --
-# closing the "edited draw.io but the gate still reads the stale PDF" trap. Figures with no
-# source yet (fig2..5 placeholders) are omitted here so they never break the build; the
-# size gate simply ignores PDFs that do not exist.
-DRAWIO_FIGS := $(shell for f in $$(grep -rhoE 'figures/[A-Za-z0-9._-]+\.pdf' $(SHARED) 2>/dev/null | grep -vE '^[[:space:]]*%' | sort -u); do \
+# Figure PDFs the manuscript references that have a draw.io source in any form -- .drawio.svg
+# (preferred, embedded-XML SVG), .drawio.png (embedded-XML PNG), or plain .drawio. The gate
+# depends on these so `make paper` re-exports
+# any figure whose source is newer BEFORE measuring it -- closing the "edited draw.io but the
+# gate still reads the stale PDF" trap. A figure still shown only through a \figph placeholder
+# (no figures/NAME.pdf include yet), or with no source on disk, is omitted here so it never
+# breaks the build; the size gate simply ignores PDFs that do not exist.
+# NB: filter comment lines BEFORE extracting the token -- a bare `figures/x.pdf` from `grep -o`
+# no longer starts with `%`, so the comment filter has to run on the full line first.
+DRAWIO_FIGS := $(shell for f in $$(grep -rhE 'figures/[A-Za-z0-9._-]+\.pdf' $(SHARED) 2>/dev/null \
+                 | grep -vE '^[[:space:]]*%' \
+                 | grep -oE 'figures/[A-Za-z0-9._-]+\.pdf' | sort -u); do \
                  n=$$(basename $$f .pdf); \
-                 [ -f "$(DRAWIO_SRC)/$$n.drawio.png" ] && echo "figures/$$n.pdf"; \
+                 if [ -f "$(DRAWIO_SRC)/$$n.drawio.svg" ] || [ -f "$(DRAWIO_SRC)/$$n.drawio.png" ] || [ -f "$(DRAWIO_SRC)/$$n.drawio" ]; then \
+                   echo "figures/$$n.pdf"; \
+                 fi; \
                done)
 
 .PHONY: paper all submission editing twocolumn figproto figlimits figures fig checkfigs wordcount flat clean
@@ -108,40 +116,35 @@ define crop_if_needed
 	fi
 endef
 
-# Export figures from draw.io sources to vector PDFs (headless via Xvfb).
-# CONVENTION: the exported PDF keeps the draw.io source's name --
-#   figures/NAME.pdf  <-  $(DRAWIO_SRC)/NAME.drawio.png
-# so source and export are trivially matched (find, edit, keep in sync). One pattern
-# rule covers every figure; to add one, just append its NAME.pdf to the list below.
-figures: figures/TorchCell-Supervised-Learning-and-Teacher-Forcing-Generic-Phenotypes.pdf \
-         figures/ontology_pydantic_hourglass_data_model.pdf \
-         figures/neo4j_cell-conversion-deduplication-aggregation.pdf \
-         figures/s288c_selecting_gene_sequence.pdf \
-         figures/fungal_up_down_transformer_upstream_1003bp_pad_for_undersized.pdf \
-         figures/uncharacterized-genes-profile-enricment.pdf \
-         figures/Fig2-gene-interactions.pdf \
-         figures/Fig3-systems-biology-fitness-expression-morphology.pdf \
-         figures/Fig4-natural-variation.pdf
+# Export figures from draw.io sources to vector PDFs (headless).
+# CONVENTION: the exported PDF keeps the draw.io source's basename --
+#   figures/NAME.pdf  <-  $(DRAWIO_SRC)/NAME.drawio.svg  (or .drawio.png, or .drawio)
+# so source and export are trivially matched (find, edit, keep in sync). Three pattern rules
+# cover every figure -- one per source form -- so a figure needs only ONE source form and no
+# per-figure rule. Both .drawio.svg and .drawio.png embed the editable diagram XML, so draw.io
+# re-renders full vector PDFs from either.
+# `make figures` -- (re)export every figure the manuscript references whose draw.io source is
+# newer than its PDF. Self-maintaining: the prerequisite list is $(DRAWIO_FIGS), derived from
+# the .tex plus the sources on disk, so a newly added figure is picked up with no edit here.
+figures: $(DRAWIO_FIGS)
 	-@bash check-figures.sh   # non-fatal: report sizes/scaling after every export
+
+# PREFERRED source form (2026-07-04): editable SVG. draw.io reads the embedded mxfile XML and
+# exports a full vector PDF, same as from .drawio.png. GNU make tries these three pattern rules
+# in order and uses the first whose source exists, so .drawio.svg wins when several forms
+# coexist; a figure with only a .drawio.png or plain .drawio still builds via the fallbacks.
+figures/%.pdf: $(DRAWIO_SRC)/%.drawio.svg
+	$(DRAWIO_EXPORT) $@ $<
+	$(call crop_if_needed,$*)
 
 figures/%.pdf: $(DRAWIO_SRC)/%.drawio.png
 	$(DRAWIO_EXPORT) $@ $<
 	$(call crop_if_needed,$*)
 
-# Fig 2 concept diagram (nested cell representation + iBioFoundry loop) has a PLAIN
-# .drawio source (not .drawio.png), so this explicit rule -- which wins over the pattern
-# rule above -- exports it. math=0, no MathJax overflow, so no crop-to-ink needed.
-figures/Fig2-gene-interactions.pdf: $(DRAWIO_SRC)/Fig2-gene-interactions.drawio
+# Plain .drawio (no embedded raster), e.g. Fig4 until it is re-exported to SVG.
+figures/%.pdf: $(DRAWIO_SRC)/%.drawio
 	$(DRAWIO_EXPORT) $@ $<
-
-# Fig 3 (systems biology: fitness / expression / morphology) is likewise a PLAIN
-# .drawio source, so it needs its own explicit rule (the pattern rule expects .drawio.png).
-figures/Fig3-systems-biology-fitness-expression-morphology.pdf: $(DRAWIO_SRC)/Fig3-systems-biology-fitness-expression-morphology.drawio
-	$(DRAWIO_EXPORT) $@ $<
-
-# Fig 4 (natural variation vs model-designed perturbation) -- PLAIN .drawio, explicit rule.
-figures/Fig4-natural-variation.pdf: $(DRAWIO_SRC)/Fig4-natural-variation.drawio
-	$(DRAWIO_EXPORT) $@ $<
+	$(call crop_if_needed,$*)
 
 # `make fig` -- FORCE-(re)render every figure the manuscript references, ignoring
 # timestamps (unlike `figures`, which only rebuilds when a source is newer and otherwise
@@ -158,7 +161,9 @@ fig:
 	         | sed -E 's#figures/(.*)\.pdf#\1#' | sort -u); \
 	[ -n "$$names" ] || { echo "no figures/NAME.pdf references found in the manuscript"; exit 0; }; \
 	for n in $$names; do \
-	  src="$(DRAWIO_SRC)/$$n.drawio.png"; \
+	  src="$(DRAWIO_SRC)/$$n.drawio.svg"; \
+	  [ -f "$$src" ] || src="$(DRAWIO_SRC)/$$n.drawio.png"; \
+	  [ -f "$$src" ] || src="$(DRAWIO_SRC)/$$n.drawio"; \
 	  if [ -f "$$src" ]; then \
 	    echo "  render  figures/$$n.pdf  <-  $$src"; \
 	    $(DRAWIO_EXPORT) figures/$$n.pdf "$$src"; \

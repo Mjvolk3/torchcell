@@ -14,7 +14,7 @@ queries over this shared structure: a data-specific query returns one instance w
 typed neighborhood, while a cross-experiment query joins studies through shared entities
 such as a common environment or genotype. This turns modular literature and public
 databases into interoperable, queryable datasets
-\textit{[placeholder: TorchCell currently spans ${\sim}N$ studies and ${\sim}M$ labelled
+\textit{[placeholder: TorchCell currently spans ${\sim}N$ studies and ${\sim}M$ labeled
 instances across fitness, gene interaction, expression, and morphology; dataset scale in
 Supplementary Fig.~\ref{fig:data-scale}]}.
 
@@ -53,7 +53,7 @@ Ontology) acted on by an experiment-specific perturbation (genotype, environment
 measured phenotype; many strains reuse one reference.
 (c) Information accounting: molecular parts enter as encoded entities carrying an abundant
 self-supervised prior (${\sim}10^{10}$ bits) and are mapped by encode ($F_\theta$),
-perturb ($\mathcal{T}_\psi$), and decode ($\mathcal{R}_\phi$) into labelled instances
+perturb ($\mathcal{T}_\psi$), and decode ($\mathcal{R}_\phi$) into labeled instances
 (${\sim}10^{8}$ bits); the model is cut at the shared representation $H$.
 \textbf{Bottom row --- model.}
 (d) CGT overview: multimodal cell input $\to$ cell encoder (ENC) $\to$ perturbation
@@ -68,7 +68,7 @@ approximates re-encoding the perturbed graph with a graph network,
 $\Phi(G_p)\approx\mathcal{R}_\phi(\mathcal{T}_\psi(H,p))$, so a strain is obtained without
 rebuilding or re-encoding its graph (proof in Methods and Supplementary
 Note~1).
-(h) Graph-regularized attention: each biological adjacency $A^{(k)}$ is row-normalised to
+(h) Graph-regularized attention: each biological adjacency $A^{(k)}$ is row-normalized to
 $\tilde{A}^{(k)}=(D^{(k)})^{-1}A^{(k)}$ and matched to an attention head by a
 KL prior $\Omega_k$, a soft constraint rather than a hard mask (Methods).}{fig:torchcell}
 \end{figure*}
@@ -133,19 +133,31 @@ deep-learning-designed gene perturbations across genome and environment
 perturbations. (a)--(c).}{fig:variation}
 \end{figure*}
 
+\bmhead{Drug exposure and robustness of the learned cell representation\cb{~380 words}\wc{r-robust}}
+\textit{[FILLER -- R-robust.]} The perturbation operator extends from gene deletions to drug and
+environment exposure, and the learned cell representation is robust: predictions stay stable
+across dataset splits, tolerate embedding and interaction-graph ablations, and degrade
+gracefully as supervision is reduced (Fig.~\ref{fig:robustness}).
+
+%% --- Figure 5 (R-robust): drug exposure + robustness ---
+% Fig 5 composed in draw.io (source:
+% notes/assets/drawio/Fig5-drug-exposure-and-robustness.drawio.svg) and placed true-size with
+% \tcfig. Update the caption panel-by-panel as each is finalized.
+\begin{figure*}[t]
+\tcfig{figures/Fig5-drug-exposure-and-robustness.pdf}{Drug exposure and robustness of the
+learned cell representation. (a)--(f).}{fig:robustness}
+\end{figure*}
+
 \bmhead{Extending to metabolism and strain design\cb{~380 words}\wc{r5}}
 \textit{[FILLER -- R5.]} Grounding the cell representation in metabolism, CGT recommends gene
 targets for production phenotypes and pairs with the UIUC iBioFoundry for iterative design
 (Fig.~\ref{fig:metabolism}; inference at scale in Supplementary Fig.~\ref{fig:inference-scale}).
 
-%% --- Figure 5 (R5): metabolism (from handwritten plan -- confirm panels) ---
+%% --- Figure 6 (R5): metabolism and metabolic engineering ---
+% Fig 6 composed in draw.io (source:
+% notes/assets/drawio/Fig6-metabolism-and-metabolic-engineering.drawio.svg) and placed
+% true-size with \tcfig. Update the caption panel-by-panel as each is finalized.
 \begin{figure*}[t]
-\centering
-% draw.io: figures/fig5_metabolism.pdf
-\figph{60mm}{\textbf{[Fig.~5 placeholder -- compose in draw.io; from handwritten plan, confirm panels]}\\[3pt]
-Metabolism. (a) metabolic-network grounding / additional models; (b) benchmark;
-(c) kinase-knockout collection; (d) isobutanol; (e) tryptophan-pathway precursors;
-(f) beta-carotene / betaxanthin production with the iBioFoundry DBTL loop.}
-\caption{Extending TorchCell to metabolism and metabolic-engineering strain design. (a)--(f).}
-\label{fig:metabolism}
+\tcfig{figures/Fig6-metabolism-and-metabolic-engineering.pdf}{Extending TorchCell to metabolism
+and metabolic-engineering strain design. (a)--(f).}{fig:metabolism}
 \end{figure*}

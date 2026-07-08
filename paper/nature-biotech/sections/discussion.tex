@@ -3,3 +3,15 @@
 \textit{[FILLER -- Discussion.]} A strain-aware, biologically grounded
 representation is the differentiator; limitations include single-organism scope,
 morphology-data maturity, and error-bar provenance.
+
+A central modeling assumption deserves explicit statement. TorchCell treats the catalogued
+biological networks (Fig.~\ref{fig:torchcell}c) as annotations of a fixed reference and assumes
+the wiring is perturbation-invariant, so a strain is a thin operator applied to the reference
+rather than a rebuilt graph. This is a hypothesis, not a fact: an edge can effectively vanish
+when, for example, perturbing an upstream regulator drives a partner's expression so low that
+the interaction no longer occurs in the cell, and such condition-specific rewiring is not
+captured by a static adjacency. We adopt the assumption deliberately---it makes the
+perturbation a learnable displacement in representation space, keeps the biological graphs as a
+soft prior the data can overrule rather than a hard substrate, and yields a single general data
+object that different modeling paradigms can consume---and we treat its biological limits,
+computational advantages, and pipeline generality at length in Supplementary Note~3.

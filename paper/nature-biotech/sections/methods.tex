@@ -9,7 +9,7 @@
 We cast multimodal phenotype prediction as supervised learning of a single map from a cell
 to its phenotype. A model $\hat f_\theta$ reads a cell graph $G$, an environment
 $\varepsilon$, and a perturbation $p$ and predicts a phenotype
-$\hat y=\hat f_\theta(G,\varepsilon,p)$, which we fit by minimising the expected loss over
+$\hat y=\hat f_\theta(G,\varepsilon,p)$, which we fit by minimizing the expected loss over
 the data distribution $D$,
 \begin{equation}
 \hat\Theta=\arg\min_{\Theta}\ \mathbb{E}_{(G,\varepsilon,p,y)\sim D}
@@ -28,7 +28,7 @@ $\mathcal{R}_\phi$. The notation, the data, and each factor are specified below.
 
 \subsection*{Notation}
 We fix one notation, chosen to stay compatible with three literatures---machine learning
-on graphs, transformers, and constraint-based metabolic modelling---and to avoid the
+on graphs, transformers, and constraint-based metabolic modeling---and to avoid the
 symbol collisions between them. Calligraphic letters denote spaces and learned operators. We cast the model as a
 three-stage framework---encode (ENC), perturb (PERT), decode (DEC), the stage names in
 Fig.~\ref{fig:torchcell}c---instantiated for CGT by the encoder $F_\theta$, perturbation
@@ -45,7 +45,7 @@ implementation. Table~\ref{tab:notation} is the full glossary.
 Symbol & Meaning \\
 \midrule
 \multicolumn{2}{@{}l}{\emph{Sets and indices}}\\
-$\mathcal{U},\ \mathcal{I}$ & encoded entities; labelled instances, $\mathcal{I}=\operatorname{supp}D$ \\
+$\mathcal{U},\ \mathcal{I}$ & encoded entities; labeled instances, $\mathcal{I}=\operatorname{supp}D$ \\
 $\mathcal{Y}$ & phenotype space; $y$ observed, $\hat{y}$ predicted \\
 $\mathcal{P}$ & perturbation space, $p\in\mathcal{P}$ \\
 $N$ & number of nodes (genes); $N=6607$, indexed $g_1,\dots,g_N$ \\
@@ -53,7 +53,7 @@ $k,\ \ell,\ a,\ B$ & relation type, layer, head, batch size \\
 \addlinespace
 \multicolumn{2}{@{}l}{\emph{Graphs}}\\
 $G=(N,E)$ & cell graph on $N$ nodes with edge set $E$; relation-$k$ adjacency $A^{(k)}\in\{0,1\}^{N\times N}$ \\
-$\tilde{A}^{(k)}$ & row-normalised adjacency \\
+$\tilde{A}^{(k)}$ & row-normalized adjacency \\
 \addlinespace
 \multicolumn{2}{@{}l}{\emph{Transformer}}\\
 $H$ & cell representation $(h_{\mathrm{CLS}},h_1,\dots,h_N)$, $h_i\in\mathbb{R}^{d}$ \\
@@ -97,7 +97,7 @@ into a Neo4j knowledge graph $\mathcal{K}$. Datasets are then queries over a sha
 structure: a \emph{data-specific} query returns one instance with its nearest typed
 edges, while a \emph{cross-experiment} query returns all instances sharing a structural
 entity (e.g.\ a common environment), joining studies through shared schema entities
-(Fig.~\ref{fig:torchcell}a). This homogenises modular literature and public data into
+(Fig.~\ref{fig:torchcell}a). This homogenizes modular literature and public data into
 queryable datasets, addressing the data-fragmentation barrier to deep learning in
 metabolic engineering (Supplementary Figs.~\ref{fig:data-model}, \ref{fig:conversion-dedup-agg}).
 
@@ -107,7 +107,7 @@ Each experiment is a tuple $(G,\varepsilon,p,y)$ (Fig.~\ref{fig:torchcell}b). Th
 features; this alone is a valid record. Optional annotations add structure over that
 genome---gene, regulatory, and protein-interaction networks $\{A^{(k)}\}$, metabolism
 (the bipartite graph from $(S,\rho)$), and Gene Ontology---and are optional precisely
-because they presuppose the genome. Data factorise as \emph{few references, many
+because they presuppose the genome. Data factorize as \emph{few references, many
 perturbations}: rather than store a genome per strain (the yeast knockout library is one
 reference and ${\sim}10^{4\text{--}6}$ deletion strains), we store a shared reference $G$
 and a perturbation $p$ over it, while natural isolates or divergent genomes become new
@@ -126,7 +126,7 @@ The cell's molecular parts---DNA, RNA, protein, and small molecules such as meta
 drugs---form the universe $\mathcal{U}$ of \emph{encoded entities}: each entity arrives with
 a representation $\operatorname{Embed}:\mathcal{U}\to\mathbb{R}^{d}$, supplied by a
 self-supervised model (a DNA, RNA, or protein language model, or a small-molecule encoder),
-a learnable lookup $\mathbf{E}\in\mathbb{R}^{N\times d}$, or a fixed featurisation.
+a learnable lookup $\mathbf{E}\in\mathbb{R}^{N\times d}$, or a fixed featurization.
 Membership asks only that an entity \emph{can be encoded}, not that it be pretrained. These
 encoders represent any candidate molecule rather than only those native to the organism, and
 they place similar entities near one another in $\mathbb{R}^{d}$, so the geometry is a usable
@@ -134,20 +134,20 @@ prior: entities with similar representations are expected to act similarly on th
 
 The framing is deliberately \emph{reductionist}---a cell is described by its parts---while an
 instance is \emph{holistic}, a specific cell being a collection of entities assembled under a
-perturbation and an environment whose phenotype is a property of the whole. We hypothesise
+perturbation and an environment whose phenotype is a property of the whole. We hypothesize
 that the phenotype of a combination of entities can be estimated from supervised data, and
 that it takes far less phenotype data to do so because the entities arrive with knowledge
 already baked in: the self-supervised models supply statistical regularities of sequence and
 structure, and the genome annotation that defines each entity supplies curated structural
 knowledge. The encoder therefore begins from informative representations rather than from
 scratch, moving work off the scarce phenotype labels and onto data that is abundant. This
-factorisation is a response to the limited-data regime; were phenotype data abundant, the
+factorization is a response to the limited-data regime; were phenotype data abundant, the
 simpler and more general choice would be to learn the cell-to-phenotype map end to end.
 Abundant entity data and scarce labels meet at the representation $H$, where we cut the model
 so that the labels fit only the operator and the decoder.
 
 A rough information accounting motivates this cut (Fig.~\ref{fig:torchcell}c). On the entity
-side, the modelled molecular parts are drawn from a bounded universe of sequenced fungal
+side, the modeled molecular parts are drawn from a bounded universe of sequenced fungal
 genomes: taking the ${\sim}1{,}342$ fungal genomes compiled by Chao et
 al.~\cite{chaoPredictingDynamicExpression2025} as an upper bound on the yeast-relevant entity
 space, and a genome of $L\approx1.2\times10^{7}$ base pairs encoded at $2$ bits per base
@@ -205,7 +205,7 @@ residual connections,
 H^{(\ell)}=\hat H^{(\ell)}+\operatorname{FFN}^{(\ell)}\!\big(\operatorname{LN}(\hat H^{(\ell)})\big),
 \label{eq:layer}
 \end{equation}
-with layer normalisation applied before each sublayer. During training, selected heads are
+with layer normalization applied before each sublayer. During training, selected heads are
 aligned to biological graphs (Eq.~\ref{eq:graphreg}), and this is the only place the
 networks $\{A^{(k)}\}$ act on the model. Because the wildtype cell graph $G$ is shared
 across the many strains built on it, the encoder runs once per reference,
@@ -213,12 +213,12 @@ across the many strains built on it, the encoder runs once per reference,
 H=F_\theta(G)=(h_{\mathrm{CLS}},h_1,\dots,h_N),
 \label{eq:encode}
 \end{equation}
-and every perturbation reuses this $H$. The reparametrisation replaces a per-strain
+and every perturbation reuses this $H$. The reparametrization replaces a per-strain
 re-encoding of perturbed graphs, of cost $\mathcal{O}(B\,L\,\lvert E\rvert)$, with one
 wildtype encode of cost $\mathcal{O}(B\,L)$ followed by the cheap operator below.
 
 \subsection*{Perturbation operator}
-A strain is the reference acted on by a perturbation, and we realise this as a
+A strain is the reference acted on by a perturbation, and we realize this as a
 transformation within embedding space rather than a re-encoding. The operator
 $\mathcal{T}_\psi$ applies the perturbation set $p=\{(e_t,\tau_t,m_t)\}_{t=1}^{M}$ by
 cross-attention, in which every cell token is a query and the perturbation tokens are the
@@ -259,7 +259,7 @@ permuting genes permutes $H_{\mathrm{pert}}$ in step. The same operator therefor
 from gene deletions to drug, inhibitor, and environment perturbations by widening $p$,
 with no change to the architecture (Fig.~\ref{fig:torchcell}f).
 
-Two advantages follow from realising a strain as an operator rather than a graph. First,
+Two advantages follow from realizing a strain as an operator rather than a graph. First,
 no graph is constructed per strain: the wildtype is encoded once (Eq.~\ref{eq:encode}) and
 each of the ${\sim}10^{4\text{--}6}$ strains is obtained by applying $\mathcal{T}_\psi$ to
 the shared $H$, so the data pipeline never builds or re-encodes a perturbed graph, and the
@@ -302,25 +302,25 @@ traits of a cellular structure,
 \label{eq:morph}
 \end{equation}
 The environment $\varepsilon$ conditions every head, and together the encoder, operator,
-and heads realise the predictor $\hat y$ of Eq.~\eqref{eq:objective}. Adding a phenotype is
+and heads realize the predictor $\hat y$ of Eq.~\eqref{eq:objective}. Adding a phenotype is
 adding a head, not changing the backbone.
 
 \subsection*{Data splits and preprocessing}
 \textit{[FILLER.]} Train/validation/test partitioning (and any gene- or
 interaction-disjoint splits); label normalization; handling of missing labels.
 
-\subsection*{Graph-regularised attention and the training objective}
+\subsection*{Graph-regularized attention and the training objective}
 A biological graph and an attention map are objects of the same shape
 (Fig.~\ref{fig:torchcell}h). The adjacency
 $A^{(k)}\in\{0,1\}^{N\times N}$ over genes matches the gene--gene block of an attention map
 $\alpha^{(\ell,a)}\in[0,1]^{N\times N}$, so the two can be compared row by row. We
-row-normalise each adjacency into a distribution over neighbours,
+row-normalize each adjacency into a distribution over neighbors,
 \begin{equation}
 \tilde{A}^{(k)}=(D^{(k)})^{-1}A^{(k)},\qquad
 D^{(k)}=\operatorname{diag}\!\big(A^{(k)}\mathbf{1}\big),
 \label{eq:rownorm}
 \end{equation}
-and align a chosen head to graph $k$ by penalising the divergence of each row,
+and align a chosen head to graph $k$ by penalizing the divergence of each row,
 \begin{equation}
 \Omega_k=\sum_{i\in\mathcal{I}_k}D_{\mathrm{KL}}\!\big(\tilde{A}^{(k)}_{i,:}\,\big\|\,\alpha^{(\ell_k,a_k)}_{i,:}\big),
 \label{eq:graphreg}
@@ -346,17 +346,17 @@ $A^{(k)}_{ij}=0$ usually means the pair has not been tested rather than that no 
 exists. A hard operator would commit to those uncertain zeros, whereas the KL prior only
 pulls attention toward the known edges and lets the data overrule it where the labels
 demand. Formally, this soft prior is the relaxation of masked graph-attention: a
-graph-attention layer confines each gene to its neighbours through an additive $-\infty$
-mask on non-edges, and $\lambda\!\to\!\infty$ drives the regularised self-attention onto that
-same neighbourhood, so the encoder is functionally equivalent to a graph-attention network
-while its forward pass stays mask-free. Regularising rather than masking is the right choice
+graph-attention layer confines each gene to its neighbors through an additive $-\infty$
+mask on non-edges, and $\lambda\!\to\!\infty$ drives the regularized self-attention onto that
+same neighborhood, so the encoder is functionally equivalent to a graph-attention network
+while its forward pass stays mask-free.  rather than masking is the right choice
 here because the graph is invariant across perturbations: a per-example mask re-imposes the
 same static adjacency on every forward pass and forces a rebuilt graph for each perturbed
 strain, whereas a constraint constant across examples is more naturally imposed once, in the
 objective, with the perturbation carried by the operator. Two further benefits follow. The same graphs can later be promoted from priors to
 prediction targets, and a head that keeps strong weight on a non-edge, where
 $A^{(k)}_{ij}=0$ yet $\alpha_{ij}$ stays large, flags a candidate interaction that the
-networks have not yet recorded. Only gene--gene graphs are regularised. In the trigenic
+networks have not yet recorded. Only gene--gene graphs are regularized. In the trigenic
 experiment these are the $K=9$ physical, regulatory, and TFLink networks together with six
 STRING channels, one graph per head. Metabolism is bipartite and has no $N\times N$
 adjacency, so it enters as a representation annotation and is never used as an attention

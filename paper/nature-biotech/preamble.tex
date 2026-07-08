@@ -25,6 +25,34 @@
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{amsthm}
 \usepackage{mathrsfs}
+
+%% ---- House proof format for the Supplementary mathematical notes -------------------
+%% One consistent, readable style to build every SI proof on. Rules:
+%%   1. State each result in a `proposition` (or `lemma`) environment: BOLD head, ROMAN
+%%      body (no italic statement), auto-numbered "Proposition 1, 2, ...".
+%%   2. Prove in the amsthm `proof` environment: italic "Proof." head, roman body, QED box.
+%%   3. Structure a multi-part proof with run-in bold \pfstep{...} headers -- NEVER an
+%%      itemize/bullet list, and NEVER scattered \emph. Keep parentheticals to a minimum.
+%%   4. Display every nontrivial equation (numbered). One idea per paragraph.
+\newtheoremstyle{tcplain}% name
+  {\topsep}% space above
+  {\topsep}% space below
+  {}% body font: roman (empty = upright, not italic)
+  {}% first-line indent
+  {\bfseries}% head font: bold
+  {.}% punctuation after head
+  {.5em}% space after head
+  {}% head spec (default "Name Number")
+\theoremstyle{tcplain}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+% Run-in step header for structured proofs (replaces bullets and \emph run-ins).
+\newcommand{\pfstep}[1]{\par\smallskip\noindent\textbf{#1.}\enspace}
+% Run-in subsection header for Supplementary Notes: BOLD UPRIGHT (not bold-italic).
+% Nature Portfolio uses bold upright for these run-in subheads; sn-jnl's \paragraph is
+% \bfseries\itshape, so use \notesec instead of \paragraph inside the notes.
+\newcommand{\notesec}[1]{\par\smallskip\noindent\textbf{#1.}\enspace}
+%% -----------------------------------------------------------------------------------
 \usepackage[title]{appendix}
 \usepackage{xcolor}
 \usepackage{textcomp}

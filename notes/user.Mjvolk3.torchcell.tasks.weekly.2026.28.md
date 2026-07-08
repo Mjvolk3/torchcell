@@ -8,6 +8,7 @@ created: 1783476309116
 
 ## 2026.07.07
 
+- [x] Promoted the three scratch CGT Fig 1 working notes into permanent paper notes, correcting the readout description (mean-pool + MLP, not PMA) and re-rendering the mermaid figure assets [[paper.nature-biotech.fig1.block-diagrams]] [[paper.nature-biotech.fig1.perturbation-operator]] [[paper.nature-biotech.fig1.gat-cgt-equivalence]]
 - [x] Built a reusable paper-table generator that renders one registry to markdown + LaTeX and computes a gzip "signal" (Kolmogorov proxy) straight from each built LMDB, filling every dataset row including the 20.7M-record Costanzo tables [[torchcell.paper.tables]] [[paper.nature-biotech.scripts.generate_datasets_table]]
 
 ## 2026.07.08

@@ -175,6 +175,18 @@ body (`content.tex`) compiled by thin wrappers, and builds via Tectonic.
   into `paper/nature-biotech/figures/`, then sync. Collaborators may add their own
   images in Overleaf; the sync pulls first and never deletes their files. The
   figure-prep guide and the figure-sizing canvas are synced so collaborators see them.
+- **Proofs and formal claims: follow the proof-writing standard.** Before authoring or
+  editing any proposition, proof, or Supplementary Note, read
+  `notes/paper.proof-writing-standard.md` ([[paper.proof-writing-standard]]) and follow it.
+  In short: skeleton is Setup -> Claim -> Proof -> Consequence -> Interpretation; use the
+  LaTeX house format in `paper/nature-biotech/preamble.tex` (`proposition`/`lemma` +
+  `proof` environments, `\pfstep{...}` bold run-in step headers -- NEVER `itemize`/bullets
+  inside a proof, minimal `\emph`); prefer **Proposition** for main claims and
+  **Corollary/Remark** for consequences; do NOT use **Theorem** (the paper is empirical).
+  SI house order: Supplementary Notes (text + proofs) first, then all figures, then refs.
+- **SI structure invariant:** in `sections/backmatter.tex`, all Supplementary *notes/text*
+  come first under `\bmhead{Supplementary information}`; ALL supplementary *figures* go at
+  the end (after the notes, before the bibliography). Do not interleave figures with notes.
 
 ## Mermaid Diagrams with Math (KaTeX)
 
@@ -219,6 +231,16 @@ notes/torchcell.models.dcell.md
 Dendron encode from `torchcell/torchcell.models.dcell` to `notes/torchcell.models.dcell.md`
 
 When I tell you to write some output to a file that is in `notes/` then typially you just need to append or modify, we don't want you messing up dendron frontmatter.
+
+### Scratch Notes Are Not Committed
+
+`notes/scratch.*.md` (and any PDFs they render to, `notes/assets/pdf-output/scratch.*`)
+are **working / throwaway notes** and must **not be staged or committed**. When scratch
+content matures into something worth keeping, **move it into a properly named Dendron note**
+(e.g. a `paper.*`, `torchcell.*`, or `experiments.*` note created with `dendron-cli`), fix
+its cross-references and any rendered-PDF names to match, then delete the scratch original.
+Do not `git add` a `scratch.*` note; if one is already tracked, flag it rather than
+committing it.
 
 ### Creating New Dendron Notes
 

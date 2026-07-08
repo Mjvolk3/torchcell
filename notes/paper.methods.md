@@ -16,7 +16,7 @@ subsection per panel. A detailed Supplementary section per panel will follow.
 
 Standardizes and **supersedes** the tilde/bar notation in
 [[scratch.2025.07.07.183123-torchcell-basic-supervised-formulation]]; consistent with
-[[paper.information-accounting]], [[scratch.perturbation-operator-general]], and the model
+[[paper.information-accounting]], [[paper.nature-biotech.fig1.perturbation-operator]], and the model
 note [[torchcell.models.equivariant_cell_graph_transformer]].
 
 ---
@@ -227,7 +227,7 @@ the perturbation tokens and accepts any cardinality, and because each $\Delta h_
 what **generalizes the operator from gene deletions to any perturbation** — drugs,
 inhibitors, environment shifts — by widening the token set $p$ with no architectural
 change. Full derivation, properties, and the genotype/environment cartoon:
-[[scratch.perturbation-operator-general]].
+[[paper.nature-biotech.fig1.perturbation-operator]].
 
 ---
 

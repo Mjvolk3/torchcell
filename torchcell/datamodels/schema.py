@@ -1071,6 +1071,123 @@ class MicroarrayExpressionExperiment(Experiment, ModelStrict):
     phenotype: MicroarrayExpressionPhenotype
 
 
+class RNASeqExpressionPhenotype(Phenotype, ModelStrict):
+    """NGS (RNA-seq) expression phenotype: ABSOLUTE per-gene expression, not a ratio.
+
+    Distinct from ``MicroarrayExpressionPhenotype``. That family is a
+    perturbation-vs-reference screen and stores ``log2(sample/reference)``. This family is a
+    population/whole-transcriptome survey (Caudal 2024 pan-transcriptome of natural isolates)
+    where each isolate's transcriptome is measured on its OWN genome -- there is no common
+    reference to ratio against, so the stored value is the isolate's ABSOLUTE expression:
+    ``expression_tpm`` (transcripts per million) with the raw ``expression_count``.
+    Downstream abundance/dispersion metrics (e.g. mean log2 TPM) are DERIVED, never stored.
+
+    Core/accessory handling: a gene ABSENT from an isolate's genome is encoded by KEY
+    ABSENCE (it is simply not a key), NEVER a 0 TPM -- honest to the source, which excludes
+    isolates that do not carry a given accessory gene from that gene's statistics.
+
+    Provenance: Caudal et al. 2024, Nat. Genet. 56:1278; normalization "mean log2 of the
+    normalized read counts (transcripts per million (TPM))". See
+    ``[[torchcell.datasets.scerevisiae.caudal2024]]``.
+    """
+
+    graph_level: str = "node"
+    label_name: str = "expression_tpm"
+    label_statistic_name: str | None = None
+
+    expression_tpm: dict[str, float] = Field(
+        description=(
+            "SortedDict of per-gene absolute expression in transcripts per million (TPM). "
+            "Non-negative. A gene absent from the isolate's genome is omitted (no key), "
+            "never stored as 0."
+        ),
+        repr=False,
+    )
+    expression_count: dict[str, int] = Field(
+        description=(
+            "SortedDict of per-gene raw mapped-read counts; same keys as expression_tpm."
+        ),
+        repr=False,
+    )
+    measurement_type: str = Field(
+        default="rnaseq_tpm",
+        description="assay/normalization tag, e.g. 'rnaseq_tpm' (batch-normalized TPM)",
+    )
+    n_mapped_reads: int | None = Field(
+        default=None,
+        description=(
+            "Total clean mapped reads for the isolate (per-sample QC; Caudal kept isolates "
+            "with >= 1e6 mapped reads). Per-isolate scalar, not per-gene."
+        ),
+    )
+
+    def __repr__(self) -> str:
+        """Summary repr instead of dumping the per-gene dicts."""
+        return (
+            f"RNASeqExpressionPhenotype("
+            f"tpm_genes={len(self.expression_tpm) if self.expression_tpm else 0}, "
+            f"count_genes={len(self.expression_count) if self.expression_count else 0})"
+        )
+
+    @field_validator("expression_tpm", mode="before")
+    def convert_and_validate_tpm(cls, v: Any) -> Any:  # raw pre-validation input
+        """Coerce TPM to a SortedDict; reject empty, infinite, or negative values."""
+        if v is None:
+            raise ValueError("expression_tpm cannot be None")
+        if isinstance(v, dict) and not isinstance(v, SortedDict):
+            v = SortedDict(v)
+        if not v:
+            raise ValueError("expression_tpm cannot be empty")
+        for key, value in v.items():
+            if math.isinf(value) or math.isnan(value) or value < 0:
+                raise ValueError(f"Invalid TPM for gene {key}: {value}")
+        return v
+
+    @field_validator("expression_count", mode="before")
+    def convert_and_validate_count(cls, v: Any) -> Any:  # raw pre-validation input
+        """Coerce counts to a SortedDict; require non-negative integers."""
+        if v is None:
+            raise ValueError("expression_count cannot be None")
+        if not isinstance(v, dict):
+            raise ValueError(
+                f"expression_count must be a per-gene dict, got {type(v).__name__}"
+            )
+        if not isinstance(v, SortedDict):
+            v = SortedDict(v)
+        if not v:
+            raise ValueError("expression_count cannot be empty")
+        for key, value in v.items():
+            if not isinstance(value, int) or value < 0:
+                raise ValueError(
+                    f"expression_count for {key} must be a non-negative integer, got: {value}"
+                )
+        return v
+
+    @model_validator(mode="after")
+    def validate_matching_keys(self) -> "RNASeqExpressionPhenotype":
+        """expression_count must cover exactly the same genes as expression_tpm."""
+        if set(self.expression_count.keys()) != set(self.expression_tpm.keys()):
+            raise ValueError(
+                "expression_count must have the same keys as expression_tpm"
+            )
+        return self
+
+
+class RNASeqExpressionExperimentReference(ExperimentReference, ModelStrict):
+    """Reference context for an RNA-seq expression experiment."""
+
+    experiment_reference_type: str = "rnaseq_expression"
+    phenotype_reference: RNASeqExpressionPhenotype
+
+
+class RNASeqExpressionExperiment(Experiment, ModelStrict):
+    """Experiment measuring an RNA-seq (absolute TPM) expression phenotype."""
+
+    experiment_type: str = "rnaseq_expression"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: RNASeqExpressionPhenotype
+
+
 class VisualScorePhenotype(Phenotype, ModelStrict):
     """Ordinal visual-inspection score as a proxy for a metabolite/product level.
 
@@ -1311,6 +1428,7 @@ PhenotypeType = (
     | SyntheticRescuePhenotype
     | CalMorphPhenotype
     | MicroarrayExpressionPhenotype
+    | RNASeqExpressionPhenotype
     | VisualScorePhenotype
     | MetabolitePhenotype
     | ProteinAbundancePhenotype
@@ -1325,6 +1443,7 @@ ExperimentType = (
     | SyntheticRescueExperiment
     | CalMorphExperiment
     | MicroarrayExpressionExperiment
+    | RNASeqExpressionExperiment
     | VisualScoreExperiment
     | MetaboliteExperiment
     | ProteinAbundanceExperiment
@@ -1339,6 +1458,7 @@ ExperimentReferenceType = (
     | SyntheticRescueExperimentReference
     | CalMorphExperimentReference
     | MicroarrayExpressionExperimentReference
+    | RNASeqExpressionExperimentReference
     | VisualScoreExperimentReference
     | MetaboliteExperimentReference
     | ProteinAbundanceExperimentReference
@@ -1353,6 +1473,7 @@ EXPERIMENT_TYPE_MAP = {
     "synthetic rescue": SyntheticRescueExperiment,
     "calmorph": CalMorphExperiment,
     "microarray_expression": MicroarrayExpressionExperiment,
+    "rnaseq_expression": RNASeqExpressionExperiment,
     "visual_score": VisualScoreExperiment,
     "metabolite": MetaboliteExperiment,
     "protein_abundance": ProteinAbundanceExperiment,
@@ -1366,6 +1487,7 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "synthetic rescue": SyntheticRescueExperimentReference,
     "calmorph": CalMorphExperimentReference,
     "microarray_expression": MicroarrayExpressionExperimentReference,
+    "rnaseq_expression": RNASeqExpressionExperimentReference,
     "visual_score": VisualScoreExperimentReference,
     "metabolite": MetaboliteExperimentReference,
     "protein_abundance": ProteinAbundanceExperimentReference,

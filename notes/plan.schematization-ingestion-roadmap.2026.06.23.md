@@ -35,9 +35,9 @@ CI-finish WS series).
 | WS6 | Verify Ohya2005 CalMorph | 🔨→✅ | Ohya (4718) already L0-clean vs current schema (no rebuild); L0–L4 morphology verifier PASSES. See [[torchcell.verification.morphology]]. **✅ landed (main)** |
 | WS7 | Ozaydin2013 beta-carotene | 🔨→✅ | `CarotenoidOzaydin2013Dataset` built (4474 records, VisualScorePhenotype); SI+PDF+OCR in library mirror w/ manifest; L0–L4 PASS. See [[torchcell.datasets.scerevisiae.ozaydin2013]]. **✅ landed (main)** |
 | WS8 | Cachera2023 betaxanthin | 🔨→✅ | `BetaxanthinCachera2023Dataset` built (4735 records, MetabolitePhenotype from CRI-SPA GitHub data); PDF+OCR+CSV in library mirror w/ manifest; L0–L4 PASS. See [[torchcell.datasets.scerevisiae.cachera2023]]. **✅ landed (main)** |
-| WS9 | Zelezniak2018 metabolite + protein | 🔨 | **protein ✅ landed** (`ProteomeZelezniak2018Dataset`, PR #35; 97 kinase KOs × 726 proteins; L0–L4 PASS); metabolite (~46 LC-SRM) ⬜ not ingested |
+| WS9 | Zelezniak2018 metabolite + protein | 🔨 | **protein ✅ landed** (`ProteomeZelezniak2018Dataset`, PR #35; 97 kinase KOs × 726 proteins; L0–L4 PASS); metabolite (~46 LC-SRM) 🔨 **in progress** (2026.07.07b) → Yeast9 `s_NNNN` keyed |
 | WS9b | Mülleder2016 amino-acid metabolome | ✅ | **landed** (`AminoAcidMulleder2016Dataset`, PR #34; 4678 strains × 19 AAs; L0–L4 PASS) |
-| WS10 | Pan-transcriptome (Caudal 2024) | ⬜ | **source RESOLVED** = `caudalPantranscriptomeRevealsLarge2024`; off-graph seq/genome infra (see 2026.07.07 note) |
+| WS10 | Pan-transcriptome (Caudal 2024) | 🔨 | **source RESOLVED** = `caudalPantranscriptomeRevealsLarge2024`; **in progress** (2026.07.07b): MinerU OCR → assess genome+transcriptome availability → off-graph seq/genome infra (see 2026.07.07 note) |
 | WS11–14 | Phase B (graph/adapters/build/deploy) | ⬜ | — (cut when Phase A done) |
 
 ## Context
@@ -540,7 +540,8 @@ metabolite + the pan-transcriptome.
 ### Emergent workstreams NOT in the 06.23 plan
 
 - **Sequence / strain-design track (new).** `GeneAddition` perturbation for heterologous
-  cassettes (branch `fix/ws8-ozaydin-cachera-followups`, awaiting review) +
+  cassettes (branch `fix/ws8-ozaydin-cachera-followups`, **✅ landed** `745acc6a`;
+  Ozaydin+Cachera canonical LMDBs rebuilt under the new schema, L0–L4 PASS) +
   `ProteinAbundancePhenotype` + the SBOL-aligned **plasmid sequence store** (`ws10`
   branch, LANDED) + the "total genomic content in the cell" model. This is a distinct
   axis from the roadmap's WS10 pan-transcriptome genome store. See
@@ -580,11 +581,48 @@ never payloads"):
 
 ### Proposed two tracks (decide next priority)
 
-- **Track A -- finish the abstract:** Zelezniak metabolite -> land `ws8` (GeneAddition)
-  -> **Phase B (WS11-14): KG rebuild + NCSA deploy**. The original deliverable; in reach.
+- **Track A -- finish the abstract:** ~~land `ws8` (GeneAddition)~~ **✅ done** ->
+  Zelezniak metabolite + WS10 pan-transcriptome (in progress, see 2026.07.07b note) ->
+  **Phase B (WS11-14): KG rebuild + NCSA deploy**. The original deliverable; in reach.
 - **Track B -- virtual-cell substrate:** dataset backlog from
   `[[paper.north-star.dataset-triage]]` (SIMB metabolic-engineering priority) + the
   sequence/strain-design track (apply-to-sequence, GeneAddition landing, plasmid design).
+
+## 2026.07.07b - ws8 GeneAddition landed; Zelezniak-metabolite + WS10 kickoff
+
+**Chose Track A** (finish the abstract). Sequence of remaining Phase-A data work:
+
+### ✅ Landed: ws8 GeneAddition + Ozaydin/Cachera migration (`745acc6a`, PR #39)
+
+`GeneAdditionPerturbation` (heterologous cassette / extra native copy; relaxes the
+systematic-name validator for non-yeast symbols) wired into both Ozaydin (carotenogenic
+`YB/I/BTS1`) and Cachera (`Btx-cassette` at XII-5) as the constant engineered background;
+PubMed IDs added; `qc_flags -> comment_annotations` rename. **Both canonical LMDBs rebuilt
+under the new schema** (Ozaydin 4474, Cachera 4735) and L0–L4 PASS — the `_deleted_genes`
+verifier guard excludes `gene_addition` so the cassette never enters the deleted-ORF key
+(`L1 orf_uniqueness` still one record per unique deletion). Design:
+`[[torchcell.datamodels.gene-addition-perturbation-design]]`.
+
+### ⬜ In progress (this session, overnight): two remaining Phase-A datasets
+
+Running as two coordinated worktrees, coordinating on any schema change (MetabolitePhenotype
+already exists, so the metabolite build is expected to be loader-only):
+
+1. **Zelezniak metabolite (finishes WS9).** Add the ~46 LC-SRM targeted-metabolite sheet as
+   a sibling of the landed `ProteomeZelezniak2018Dataset`, mapping metabolite names to
+   Yeast9 / Yeast-GEM `s_NNNN` species ids via `torchcell/metabolism/yeast_GEM.py` (reuse the
+   Mülleder amino-acid → `s_NNNN` mapping pattern). Reuses `MetabolitePhenotype` (WS4);
+   provenance (n_replicates, uncertainty type, units) sourced from the paper/SI.
+2. **WS10 pan-transcriptome (Caudal 2024).** First OCR the mirrored paper through the MinerU
+   pipeline (already added to the library), then determine whether per-strain **genomes**
+   (FASTA/GFF) **and transcriptomes** (expression matrices) are both obtainable. If so, build
+   the off-graph seq/genome infra (extend the owned sequence store; Neo4j pointer nodes; NGS
+   expression → the expression family) per the WS10 note above.
+
+### Bookkeeping still open
+
+Branch-vs-WS numbering divergence (branch `ws8/ws9/ws10` ≠ roadmap `WS8/9/10`) — reconcile
+once the pan-transcriptome infra name is settled.
 
 ## Verification
 

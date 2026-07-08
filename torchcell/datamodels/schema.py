@@ -271,28 +271,30 @@ class GeneAdditionPerturbation(GenePerturbation, ModelStrict):
         return v
 
 
-class AlleleSequencePerturbation(GenePerturbation, ModelStrict):
-    """A native gene whose allele in this strain differs from the S288C reference by
-    SNPs/indels, captured at SEQUENCE level via an off-graph pointer.
+class SequenceVariantPerturbation(GenePerturbation, ModelStrict):
+    """SNP/indel-level allelic variation: a native gene whose sequence in this strain
+    differs from the S288C reference, captured via an off-graph pointer.
 
-    Distinct from ``AllelePerturbation`` (a prose amino-acid-substitution description):
-    this carries the strain's ACTUAL variant allele by REFERENCE. The base
+    NATURAL-variation type (contrast the ENGINEERED perturbations, which carry a marker /
+    construct / donor organism). Distinct from ``AllelePerturbation`` (a prose amino-acid-
+    substitution description): this points at the strain's ACTUAL variant allele. The base
     systematic-name validator applies -- these are real S. cerevisiae reference genes
-    (``YAL001C`` ...). The sequence itself is NEVER inlined: ``sequence_source`` +
-    ``strain_id`` identify the record in the off-graph gene-keyed store (dereferenced at
+    (``YAL001C`` ...). The sequence is NEVER inlined: ``sequence_source`` + ``strain_id`` +
+    ``sequence_uri`` identify the record in the off-graph gene-keyed store (dereferenced at
     load, ``sequence_sha256``-verified), mirroring the ``GeneAddition`` pointer pattern.
 
-    This is what lets a NATURAL ISOLATE be modeled as a perturbation set off S288C at
-    scale (Caudal 2024 pan-transcriptome; Peter 2018 per-isolate gene store): one such
-    perturbation per core gene that differs from the reference (~4,500 per isolate).
-    Design: ``[[torchcell.datasets.scerevisiae.caudal2024]]``.
+    Naming follows population-genomics usage (sequence variant = SNP + indel), NOT the
+    phylogenetic "gene gain/loss" vocabulary (which asserts a lineage polarity a pairwise
+    reference comparison cannot). Together with ``CopyNumberVariantPerturbation`` this lets
+    a NATURAL ISOLATE be modeled as a perturbation set off S288C (~4,500 sequence variants
+    per isolate). Design: ``[[torchcell.datasets.scerevisiae.caudal2024]]``.
     """
 
     description: str = (
-        "Native-gene allele differing from the S288C reference (SNPs/indels); "
+        "Sequence variant (SNP/indel) of a native gene vs the S288C reference; "
         "sequence by off-graph pointer"
     )
-    perturbation_type: str = "allele_sequence"
+    perturbation_type: str = "sequence_variant"
     strain_id: str = Field(
         description="isolate id whose allele this is, e.g. 'AAB' | 'SACE_YAU'"
     )
@@ -316,6 +318,69 @@ class AlleleSequencePerturbation(GenePerturbation, ModelStrict):
     )
 
 
+class CopyNumberVariantPerturbation(GenePerturbation, ModelStrict):
+    """Copy-number variation (CNV) of a pangenome ORF relative to the S288C reference.
+
+    NATURAL-variation type. Standard pangenomics framing: presence/absence variation (PAV)
+    is an EXTREME form of CNV (a gene at 0 copies), so ONE type spans every gene-CONTENT
+    difference of a natural isolate vs S288C:
+      - a REFERENCE (core) ORF ABSENT   -> ``copy_number`` 0 (PAV);
+      - a NON-REFERENCE (accessory) ORF PRESENT -> ``copy_number`` >= 1 with
+        ``reference_copy_number`` 0 (PAV, the "gain" side -- but polarity-neutral);
+      - AMPLIFICATION -> ``copy_number`` > ``reference_copy_number``.
+    Contrast the ENGINEERED ``GeneAddition`` / ``KanMx`` deletions (an engineering act with
+    a construct/marker); this records NATURAL genome content. ``origin`` annotates an
+    accessory ORF's provenance with the field's mechanism vocabulary
+    (``ancestral | introgression | hgt``). For a non-reference ORF the sequence is an
+    off-graph pointer, never inlined.
+
+    ``systematic_gene_name`` carries the S288C systematic name for a reference ORF, else the
+    pangenome ORF id -- so the native-name validator is relaxed (like ``GeneAddition``).
+    Design: ``[[torchcell.datasets.scerevisiae.caudal2024]]``.
+    """
+
+    description: str = (
+        "Copy-number variation (incl. presence/absence) of a pangenome ORF vs S288C"
+    )
+    perturbation_type: str = "copy_number_variant"
+    copy_number: float = Field(
+        description="ORF copy number in this isolate (haploid basis; non-integer allowed; 0 = absent)"
+    )
+    reference_copy_number: float = Field(
+        default=1.0,
+        description="copy number in S288C R64 (1 for a core ORF; 0 for a non-reference/accessory ORF)",
+    )
+    strain_id: str = Field(description="isolate id, e.g. 'AAB'")
+    pangenome_orf_id: str | None = Field(
+        default=None,
+        description="pangenome ORF id for a non-reference ORF, e.g. 'EC1118_1F14_0012g'",
+    )
+    origin: str | None = Field(
+        default=None,
+        description="accessory-ORF provenance: 'ancestral' | 'introgression' | 'hgt' (None if core/unknown)",
+    )
+    sequence_source: str | None = Field(
+        default=None, description="off-graph store key / citation for the ORF sequence"
+    )
+    sequence_uri: str | None = Field(
+        default=None, description="pointer into the pangenome ORF sequence store"
+    )
+    sequence_sha256: str | None = Field(
+        default=None,
+        description="sha256 of the source file the ORF sequence comes from",
+    )
+
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
+    def validate_sys_gene_name(cls, v: str) -> str:
+        """Relax: a non-reference accessory ORF has a pangenome id, not a yeast
+        systematic name, so accept any non-empty identifier.
+        """
+        if not v:
+            raise ValueError("systematic_gene_name must be non-empty")
+        return v
+
+
 SgaPerturbationType = (
     SgaKanMxDeletionPerturbation
     | SgaNatMxDeletionPerturbation
@@ -331,7 +396,8 @@ GenePerturbationType = (
     | KanMxDeletionPerturbation
     | NatMxDeletionPerturbation
     | GeneAdditionPerturbation
-    | AlleleSequencePerturbation
+    | SequenceVariantPerturbation
+    | CopyNumberVariantPerturbation
 )
 
 

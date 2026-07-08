@@ -2,7 +2,7 @@
 id: gyeiwy7g4xt6udclcoe3v78
 title: Abstract
 desc: ''
-updated: 1782095968089
+updated: 1783459761376
 created: 1778445248212
 ---
 ## Title
@@ -15,7 +15,7 @@ While deep learning has driven major advances in predicting protein structure an
 To bridge this gap, we developed TorchCell, an open-source framework that aggregates heterogeneous metabolic-engineering data and predicts multimodal cellular phenotypes using deep learning.
 Literature and public datasets are annotated using TorchCell's shared experimental ontology and ingested into a Neo4j knowledge graph hosted at NCSA, unifying genotype, phenotype, and environmental records.
 From this knowledge graph, dataloaders construct deep-learning-ready datasets in which each engineered strain is encoded as a perturbation operator over a shared wildtype reference cell that combines genome sequence, gene networks, metabolism, and environment, enabling millions of strains to be represented at scale.
-On these datasets we developed the Cell Graph Transformer (CGT), a virtual cell architecture in which biological interaction graphs constrain multi-head attention through a loss that aligns attention weights to known network priors, and an equivariant perturbation operator transforms the cell embedding into the perturbed strain state before multitask heads decode phenotype predictions.
+On these datasets we developed the Cell Graph Transformer (]CGT), a virtual cell architecture in which biological interaction graphs constrain multi-head attention through a loss that aligns attention weights to known network priors, and an equivariant perturbation operator transforms the cell embedding into the perturbed strain state before multitask heads decode phenotype predictions.
 In Saccharomyces cerevisiae, CGT predicts trigenic gene-gene interactions with Pearson r = 0.454 ± 0.006 and Spearman ρ = 0.421 ± 0.004, outperforming the deep-learning epistatic interaction models DANGO (r = 0.367 ± 0.0004) and DCell (r = 0.157 ± 0.009), and the mechanistic Yeast9 flux balance analysis, which recovers no epistatic signal (r = 0.0006).
 The same architecture also predicts expression under single and double knockouts (Pearson r = 0.543 ± 0.023) and cell morphology under single knockouts (Pearson r = 0.619 ± 0.037), demonstrating that the same latent cell embedding generalizes across qualitatively different phenotype classes relevant to industrial strain design.
 We have applied CGT to recommend gene deletions for improved production of β-carotene and betaxanthin in S. cerevisiae.

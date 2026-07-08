@@ -1,0 +1,338 @@
+# torchcell/paper/tables.py
+# [[torchcell.paper.tables]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/paper/tables.py
+# Test file: tests/torchcell/paper/test_tables.py
+"""Reusable primitives for generating paper tables in BOTH markdown and LaTeX
+from a single in-code source of truth, plus data-derived columns such as a
+streaming-gzip "signal" (a Kolmogorov-complexity proxy) computed directly from a
+built LMDB.
+
+Why this exists: paper tables were being hand-transcribed from markdown into
+LaTeX, which drifts and hides errors. The reliable pattern is: define columns +
+rows once (pydantic), compute any data-derived cells from the source of truth
+(the LMDB), then render markdown and LaTeX from the same object. This module is
+table-agnostic so multiple paper tables can reuse it.
+
+Building blocks:
+  - ``human_bytes`` / ``tex_escape``            -- formatting helpers
+  - ``stream_gzip_signal``                      -- bounded-memory gzip size over an LMDB
+  - ``SignalCache``                             -- memoize signals, keyed by LMDB fingerprint
+  - ``Column`` / ``Row`` / ``PaperTable``       -- render the same table to md + LaTeX
+"""
+
+from __future__ import annotations
+
+import json
+import pickle
+import time
+import zlib
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any, Literal
+
+import lmdb
+from pydantic import BaseModel, Field
+
+# --- formatting -----------------------------------------------------------
+
+
+def human_bytes(nbytes: int) -> str:
+    """Format a byte count the way a paper table reads: 0.6 KB, 101 KB, 1.9 MB.
+
+    Uses SI (1000) units to match the gzip-size convention already in the note.
+    """
+    kb = nbytes / 1000
+    if kb < 1:
+        return f"{nbytes} B"
+    if kb < 10:
+        return f"{kb:.1f}".rstrip("0").rstrip(".") + " KB"
+    if kb < 1000:
+        return f"{kb:.0f} KB"
+    mb = kb / 1000
+    return f"{mb:.1f}".rstrip("0").rstrip(".") + " MB"
+
+
+_TEX_REPLACEMENTS = {
+    "&": r"\&",
+    "%": r"\%",
+    "_": r"\_",
+    "#": r"\#",
+    "$": r"\$",
+    "×": r"$\times$",
+    "~": r"\textasciitilde{}",
+    "β": r"$\beta$",
+    "±": r"$\pm$",
+    "≈": r"$\approx$",
+}
+
+
+def tex_escape(s: str) -> str:
+    """Escape the LaTeX specials that show up in dataset table cells.
+
+    Note ``$`` is escaped too, so pass already-formed math (e.g. ``n×1``) using
+    the unicode source characters (``×``) and let this build the math, rather
+    than embedding raw ``$...$`` yourself.
+    """
+    for k, v in _TEX_REPLACEMENTS.items():
+        s = s.replace(k, v)
+    return s
+
+
+# --- gzip signal over an LMDB (streaming, bounded memory) -----------------
+
+
+def default_phenotype_bytes(record: dict[str, Any]) -> bytes:
+    """Extract the serialized phenotype from a torchcell LMDB record.
+
+    Records are ``{"experiment": {..., "phenotype": {...}}, ...}``. Sorting
+    keys makes the signal deterministic across builds.
+    """
+    ph = record["experiment"]["phenotype"]
+    return json.dumps(ph, sort_keys=True, default=str).encode()
+
+
+def stream_gzip_signal(
+    lmdb_dir: str | Path,
+    *,
+    extract: Callable[[dict[str, Any]], bytes] = default_phenotype_bytes,
+    level: int = 6,
+    log_every: int = 1_000_000,
+    label: str = "",
+    log: Callable[[str], None] = print,
+) -> tuple[int, int]:
+    """Return ``(n_records, gzip_bytes)`` for an LMDB in a single streaming pass.
+
+    Byte-equivalent to gzip-compressing the concatenation of ``extract(record)``
+    over every record, but via ``zlib.compressobj`` so memory stays bounded --
+    this is what lets 20M+ record LMDBs (tens of GB) get a real value instead of
+    "pending". ``extract`` is pluggable so the same machinery can measure other
+    per-record payloads for future tables.
+    """
+    lmdb_dir = str(lmdb_dir)
+    env = lmdb.open(lmdb_dir, readonly=True, lock=False, max_readers=2048)
+    comp = zlib.compressobj(level, zlib.DEFLATED, 16 + zlib.MAX_WBITS)
+    total = 0
+    n = 0
+    t0 = time.time()
+    try:
+        with env.begin() as txn:
+            for _, v in txn.cursor():
+                total += len(comp.compress(extract(pickle.loads(v))))
+                n += 1
+                if log_every and n % log_every == 0:
+                    rate = n / max(time.time() - t0, 1e-9)
+                    log(
+                        f"    [{label}] {n:,} records ({rate:,.0f}/s, {time.time() - t0:.0f}s)"
+                    )
+        total += len(comp.flush())
+    finally:
+        env.close()
+    return n, total
+
+
+def lmdb_fingerprint(lmdb_dir: str | Path) -> str:
+    """Fingerprint an LMDB's ``data.mdb`` (mtime+size) so a rebuild invalidates
+    any cached signal. Raises if the file is absent (caller checks existence).
+    """
+    st = (Path(lmdb_dir) / "data.mdb").stat()
+    return f"{int(st.st_mtime)}:{st.st_size}"
+
+
+class _CacheEntry(BaseModel):
+    key: str
+    n: int
+    bytes: int
+
+
+class SignalCache(BaseModel):
+    """JSON-backed memo of ``(n, bytes)`` per id, keyed by LMDB fingerprint.
+
+    Reuse across runs so only rebuilt datasets recompute. ``entries`` maps a
+    stable id (e.g. a dataset subpath) to its last computed signal + the LMDB
+    fingerprint it was computed from.
+    """
+
+    path: Path
+    entries: dict[str, _CacheEntry] = Field(default_factory=dict)
+
+    @classmethod
+    def load(cls, path: str | Path) -> SignalCache:
+        """Load an existing cache JSON, or return an empty cache for a new path."""
+        path = Path(path)
+        if path.exists():
+            raw = json.loads(path.read_text())
+            entries = {k: _CacheEntry(**v) for k, v in raw.items()}
+            return cls(path=path, entries=entries)
+        return cls(path=path)
+
+    def save(self) -> None:
+        """Persist the cache to its JSON path (sorted for a stable diff)."""
+        payload = {k: v.model_dump() for k, v in sorted(self.entries.items())}
+        self.path.write_text(json.dumps(payload, indent=2, sort_keys=True))
+
+    def get_or_compute(
+        self,
+        cache_id: str,
+        lmdb_dir: str | Path,
+        *,
+        extract: Callable[[dict[str, Any]], bytes] = default_phenotype_bytes,
+        label: str = "",
+        log: Callable[[str], None] = print,
+    ) -> tuple[int, int, bool]:
+        """Return ``(n, bytes, from_cache)``, computing + persisting on a miss."""
+        fp = lmdb_fingerprint(lmdb_dir)
+        hit = self.entries.get(cache_id)
+        if hit is not None and hit.key == fp:
+            return hit.n, hit.bytes, True
+        n, nbytes = stream_gzip_signal(lmdb_dir, extract=extract, label=label, log=log)
+        self.entries[cache_id] = _CacheEntry(key=fp, n=n, bytes=nbytes)
+        self.save()
+        return n, nbytes, False
+
+
+# --- generic table (one source of truth -> markdown + LaTeX) --------------
+
+Align = Literal["l", "c", "r"]
+_MD_ALIGN = {"l": ":--", "c": ":-:", "r": "--:"}
+
+
+class Column(BaseModel):
+    """A table column. ``header`` is also the key used to look up a row's cell."""
+
+    header: str
+    align: Align = "l"
+
+
+class Row(BaseModel):
+    r"""One table row. ``cells`` maps column header -> display string. ``section``
+    optionally groups rows (a subheading in md, a ``\multicolumn`` rule in LaTeX).
+    """
+
+    cells: dict[str, str]
+    section: str | None = None
+
+
+class PaperTable(BaseModel):
+    r"""Columns + rows rendered identically to markdown and LaTeX.
+
+    Rows may carry a ``section``; sections render as H3 headings (markdown) or
+    bold ``\multicolumn`` group rows (LaTeX), preserving first-seen order.
+    """
+
+    columns: list[Column]
+    rows: list[Row]
+
+    def _cell(self, row: Row, col: Column) -> str:
+        return row.cells.get(col.header, "")
+
+    def _sections(self) -> list[str | None]:
+        seen: list[str | None] = []
+        for r in self.rows:
+            if r.section not in seen:
+                seen.append(r.section)
+        return seen
+
+    # -- markdown --
+    def to_markdown(self, *, sectioned: bool = True, heading_level: int = 3) -> str:
+        """Render as GitHub-flavored markdown; sections become H3 headings."""
+        headers = [c.header for c in self.columns]
+        aligns = [_MD_ALIGN[c.align] for c in self.columns]
+        hbar = "| " + " | ".join(headers) + " |"
+        abar = "| " + " | ".join(aligns) + " |"
+
+        def body(rows: list[Row]) -> list[str]:
+            return [
+                "| " + " | ".join(self._cell(r, c) for c in self.columns) + " |"
+                for r in rows
+            ]
+
+        if not sectioned or self._sections() == [None]:
+            return "\n".join([hbar, abar, *body(self.rows)])
+
+        out: list[str] = []
+        hashes = "#" * heading_level
+        for sec in self._sections():
+            srows = [r for r in self.rows if r.section == sec]
+            if sec is not None:
+                out.append(f"{hashes} {sec}")
+                out.append("")
+            out.extend([hbar, abar, *body(srows), ""])
+        return "\n".join(out).rstrip("\n")
+
+    # -- latex --
+    def to_latex(
+        self,
+        *,
+        caption: str,
+        label: str,
+        sectioned: bool = True,
+        table_env: str = "table*",
+        position: str = "t",
+        size: str = "footnotesize",
+        colsep_pt: int = 4,
+        footnote: str | None = None,
+        header_comment: str | None = None,
+    ) -> str:
+        """Render as a booktabs LaTeX table; sections become bold multicolumn rows."""
+        colspec = "@{}" + " ".join(c.align for c in self.columns) + "@{}"
+        ncol = len(self.columns)
+        out: list[str] = []
+        if header_comment:
+            out.extend(f"% {ln}" for ln in header_comment.splitlines())
+        out.append(rf"\begin{{{table_env}}}[{position}]")
+        out.append(r"\centering")
+        out.append(rf"\{size}")
+        out.append(rf"\setlength{{\tabcolsep}}{{{colsep_pt}pt}}")
+        out.append(rf"\caption{{{caption}}}")
+        out.append(rf"\label{{{label}}}")
+        out.append(rf"\begin{{tabular}}{{{colspec}}}")
+        out.append(r"\toprule")
+        out.append(" & ".join(tex_escape(c.header) for c in self.columns) + r" \\")
+        out.append(r"\midrule")
+
+        def emit(rows: list[Row]) -> None:
+            for r in rows:
+                out.append(
+                    " & ".join(tex_escape(self._cell(r, c)) for c in self.columns)
+                    + r" \\"
+                )
+
+        if not sectioned or self._sections() == [None]:
+            emit(self.rows)
+        else:
+            first = True
+            for sec in self._sections():
+                srows = [r for r in self.rows if r.section == sec]
+                if sec is not None:
+                    if not first:
+                        out.append(r"\addlinespace")
+                    out.append(
+                        rf"\multicolumn{{{ncol}}}{{@{{}}l}}{{\textbf{{{tex_escape(sec)}}}}} \\"
+                    )
+                emit(srows)
+                first = False
+
+        out.append(r"\bottomrule")
+        out.append(r"\end{tabular}")
+        if footnote:
+            out.append(rf"\\[2pt]{{\footnotesize {footnote}}}")
+        out.append(rf"\end{{{table_env}}}")
+        out.append("")
+        return "\n".join(out)
+
+
+# --- dendron note frontmatter ---------------------------------------------
+
+
+def read_frontmatter(path: str | Path, *, default_title: str = "Untitled") -> str:
+    """Return the leading dendron ``---...---`` block of a note (verbatim), or a
+    minimal one if absent -- so a regenerated note keeps its dendron identity.
+    """
+    path = Path(path)
+    if path.exists():
+        text = path.read_text()
+        if text.startswith("---"):
+            end = text.find("\n---", 3)
+            if end != -1:
+                return text[: end + 4]
+    return f"---\ntitle: {default_title}\ndesc: ''\n---"

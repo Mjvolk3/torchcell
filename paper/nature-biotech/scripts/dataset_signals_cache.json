@@ -1,0 +1,127 @@
+{
+  "data/torchcell/amino_acid_mulleder2016": {
+    "bytes": 913971,
+    "key": "1783349427:19369984",
+    "n": 4678
+  },
+  "data/torchcell/betaxanthin_cachera2023": {
+    "bytes": 117694,
+    "key": "1783471021:17772544",
+    "n": 4735
+  },
+  "data/torchcell/carotenoid_ozaydin2013": {
+    "bytes": 21891,
+    "key": "1783471006:16793600",
+    "n": 4474
+  },
+  "data/torchcell/dm_microarray_sameith2015": {
+    "bytes": 20893941,
+    "key": "1783148604:45723648",
+    "n": 72
+  },
+  "data/torchcell/dmf_costanzo2016": {
+    "bytes": 127797526,
+    "key": "1727832113:46075527168",
+    "n": 20705612
+  },
+  "data/torchcell/dmf_kuzmin2018": {
+    "bytes": 2575128,
+    "key": "1727830294:861732864",
+    "n": 410399
+  },
+  "data/torchcell/dmf_kuzmin2020": {
+    "bytes": 4013153,
+    "key": "1727829871:1327988736",
+    "n": 632797
+  },
+  "data/torchcell/dmi_costanzo2016": {
+    "bytes": 154618483,
+    "key": "1727839989:47265529856",
+    "n": 20705612
+  },
+  "data/torchcell/dmi_kuzmin2018": {
+    "bytes": 3561096,
+    "key": "1744097223:1141411840",
+    "n": 410399
+  },
+  "data/torchcell/dmi_kuzmin2020": {
+    "bytes": 5414654,
+    "key": "1727830112:1327497216",
+    "n": 632797
+  },
+  "data/torchcell/gene_essentiality_sgd": {
+    "bytes": 584,
+    "key": "1727829740:2572288",
+    "n": 1329
+  },
+  "data/torchcell/metabolite_zelezniak2018": {
+    "bytes": 35544,
+    "key": "1783474335:430080",
+    "n": 95
+  },
+  "data/torchcell/microarray_kemmeren2014": {
+    "bytes": 386121018,
+    "key": "1783146029:926547968",
+    "n": 1450
+  },
+  "data/torchcell/proteome_zelezniak2018": {
+    "bytes": 2024641,
+    "key": "1783350339:5521408",
+    "n": 97
+  },
+  "data/torchcell/sm_microarray_sameith2015": {
+    "bytes": 22548096,
+    "key": "1783148762:52072448",
+    "n": 82
+  },
+  "data/torchcell/smf_costanzo2016": {
+    "bytes": 103398,
+    "key": "1727830431:39501824",
+    "n": 20484
+  },
+  "data/torchcell/smf_kuzmin2018": {
+    "bytes": 5099,
+    "key": "1727830259:3014656",
+    "n": 1539
+  },
+  "data/torchcell/smf_kuzmin2020": {
+    "bytes": 2618,
+    "key": "1727829766:966656",
+    "n": 472
+  },
+  "data/torchcell/synth_lethality_yeast_synth_leth_db": {
+    "bytes": 15684,
+    "key": "1727875398:26509312",
+    "n": 14000
+  },
+  "data/torchcell/synth_rescue_yeast_synth_leth_db": {
+    "bytes": 5654,
+    "key": "1727875410:13164544",
+    "n": 6948
+  },
+  "data/torchcell/tmf_kuzmin2018": {
+    "bytes": 572199,
+    "key": "1727830330:201293824",
+    "n": 91111
+  },
+  "data/torchcell/tmf_kuzmin2020": {
+    "bytes": 1889794,
+    "key": "1727829990:635650048",
+    "n": 301798
+  },
+  "data/torchcell/tmi_kuzmin2018": {
+    "bytes": 741452,
+    "key": "1727830408:204685312",
+    "n": 91111
+  },
+  "data/torchcell/tmi_kuzmin2020": {
+    "bytes": 2635834,
+    "key": "1727830230:652902400",
+    "n": 301798
+  },
+  "database/data/torchcell/scmd_ohya2005": {
+    "bytes": 18784045,
+    "key": "1757172024:116158464",
+    "n": 4718
+  }
+}

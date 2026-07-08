@@ -271,6 +271,51 @@ class GeneAdditionPerturbation(GenePerturbation, ModelStrict):
         return v
 
 
+class AlleleSequencePerturbation(GenePerturbation, ModelStrict):
+    """A native gene whose allele in this strain differs from the S288C reference by
+    SNPs/indels, captured at SEQUENCE level via an off-graph pointer.
+
+    Distinct from ``AllelePerturbation`` (a prose amino-acid-substitution description):
+    this carries the strain's ACTUAL variant allele by REFERENCE. The base
+    systematic-name validator applies -- these are real S. cerevisiae reference genes
+    (``YAL001C`` ...). The sequence itself is NEVER inlined: ``sequence_source`` +
+    ``strain_id`` identify the record in the off-graph gene-keyed store (dereferenced at
+    load, ``sequence_sha256``-verified), mirroring the ``GeneAddition`` pointer pattern.
+
+    This is what lets a NATURAL ISOLATE be modeled as a perturbation set off S288C at
+    scale (Caudal 2024 pan-transcriptome; Peter 2018 per-isolate gene store): one such
+    perturbation per core gene that differs from the reference (~4,500 per isolate).
+    Design: ``[[torchcell.datasets.scerevisiae.caudal2024]]``.
+    """
+
+    description: str = (
+        "Native-gene allele differing from the S288C reference (SNPs/indels); "
+        "sequence by off-graph pointer"
+    )
+    perturbation_type: str = "allele_sequence"
+    strain_id: str = Field(
+        description="isolate id whose allele this is, e.g. 'AAB' | 'SACE_YAU'"
+    )
+    sequence_source: str | None = Field(
+        default=None,
+        description=(
+            "off-graph gene-keyed store key / citation, e.g. "
+            "'peterGenomeEvolution10112018'; None until the store lands"
+        ),
+    )
+    sequence_uri: str | None = Field(
+        default=None,
+        description=(
+            "pointer into the gene-keyed sequence store (e.g. "
+            "'<gene>.fasta#<strain_header>'); None until that store lands"
+        ),
+    )
+    sequence_sha256: str | None = Field(
+        default=None,
+        description="sha256 of the source file the variant sequence is dereferenced from",
+    )
+
+
 SgaPerturbationType = (
     SgaKanMxDeletionPerturbation
     | SgaNatMxDeletionPerturbation
@@ -286,6 +331,7 @@ GenePerturbationType = (
     | KanMxDeletionPerturbation
     | NatMxDeletionPerturbation
     | GeneAdditionPerturbation
+    | AlleleSequencePerturbation
 )
 
 

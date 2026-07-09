@@ -78,7 +78,10 @@ EXPRESSION_DATASETS: dict[str, dict[str, Any]] = {
     },
     "microarray_kemmeren2014": {
         "root": "data/torchcell/microarray_kemmeren2014",
-        "expected_count": 1450,
+        # 1484 = every deletion strain in the source Excel (the current loader's
+        # deterministic output; all L0-valid, full 6169-gene vector each). The prior
+        # 1450 was a stale oracle from an older LMDB build (loader logic predates it).
+        "expected_count": 1484,
         "provenance": Provenance(
             source_uri="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE42527",
             citation_key="kemmerenLargeScaleGeneticPerturbations2014",
@@ -93,7 +96,7 @@ EXPRESSION_DATASETS: dict[str, dict[str, Any]] = {
 # (`database/data/...`), which may be owned by the KG-build user and read-only; we READ
 # it there and WRITE the report to the writable `data/torchcell/...` tree.
 # --------------------------------------------------------------------------- #
-OHYA_SOURCE_ROOT = "database/data/torchcell/scmd_ohya2005"
+OHYA_SOURCE_ROOT = "data/torchcell/scmd_ohya2005"
 OHYA_REPORT_ROOT = "data/torchcell/scmd_ohya2005"
 OHYA_EXPECTED_COUNT = 4718  # mutant records; 122 WT aggregated into the reference
 OHYA_PROVENANCE = Provenance(

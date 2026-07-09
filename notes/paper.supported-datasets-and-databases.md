@@ -2,7 +2,7 @@
 id: y7lp8tw60a3vezhlczyrzf4
 title: Supported Datasets and Databases
 desc: ''
-updated: 1783460208823
+updated: 1783529244914
 created: 1783460208823
 ---
 
@@ -28,63 +28,63 @@ Costanzo LMDBs get a real value) and refreshes whenever a dataset is (re)built.
 
 ### Fitness + genetic interaction
 
-| Dataset | Genotypes | Env | Phenotype | Label | Shape | Signal (gzip) |
-| :-- | --: | --: | :-- | :-- | :-- | --: |
-| Costanzo 2016 smf | 20,484 | 2 | single-mutant fitness | scalar | n×1 | 103 KB |
-| Costanzo 2016 dmf | 20.7M | 2 | double-mutant fitness | scalar | n×1 | 127.8 MB |
-| Costanzo 2016 dmi | 20.7M | 2 | digenic interaction | edge | n×1 | 154.6 MB |
-| Kuzmin 2018 smf | 1,539 | 1 | single-mutant fitness | scalar | n×1 | 5.1 KB |
-| Kuzmin 2018 dmf | 410,399 | 1 | double-mutant fitness | scalar | n×1 | 2.6 MB |
-| Kuzmin 2018 tmf | 91,111 | 1 | triple-mutant fitness | scalar | n×1 | 572 KB |
-| Kuzmin 2018 dmi | 410,399 | 1 | digenic interaction | edge | n×1 | 3.6 MB |
-| Kuzmin 2018 tmi | 91,111 | 1 | trigenic interaction | hyperedge | n×1 | 741 KB |
-| Kuzmin 2020 smf | 480 | 1 | single-mutant fitness | scalar | n×1 | 2.6 KB |
-| Kuzmin 2020 dmf | 256,862 | 1 | double-mutant fitness | scalar | n×1 | 4 MB |
-| Kuzmin 2020 tmf | 537,911 | 1 | triple-mutant fitness | scalar | n×1 | 1.9 MB |
-| Kuzmin 2020 dmi | 256,862 | 1 | digenic interaction | edge | n×1 | 5.4 MB |
-| Kuzmin 2020 tmi | 537,911 | 1 | trigenic interaction | hyperedge | n×1 | 2.6 MB |
+| Dataset           | Genotypes | Env | Phenotype             | Label     | Shape | Signal (gzip) |
+|:------------------|----------:|----:|:----------------------|:----------|:------|--------------:|
+| Costanzo 2016 smf |    20,484 |   2 | single-mutant fitness | scalar    | n×1   |        103 KB |
+| Costanzo 2016 dmf |     20.7M |   2 | double-mutant fitness | scalar    | n×1   |      127.8 MB |
+| Costanzo 2016 dmi |     20.7M |   2 | digenic interaction   | edge      | n×1   |      154.6 MB |
+| Kuzmin 2018 smf   |     1,539 |   1 | single-mutant fitness | scalar    | n×1   |        5.1 KB |
+| Kuzmin 2018 dmf   |   410,399 |   1 | double-mutant fitness | scalar    | n×1   |        2.6 MB |
+| Kuzmin 2018 tmf   |    91,111 |   1 | triple-mutant fitness | scalar    | n×1   |        572 KB |
+| Kuzmin 2018 dmi   |   410,399 |   1 | digenic interaction   | edge      | n×1   |        3.6 MB |
+| Kuzmin 2018 tmi   |    91,111 |   1 | trigenic interaction  | hyperedge | n×1   |        741 KB |
+| Kuzmin 2020 smf   |       480 |   1 | single-mutant fitness | scalar    | n×1   |        2.6 KB |
+| Kuzmin 2020 dmf   |   256,862 |   1 | double-mutant fitness | scalar    | n×1   |          4 MB |
+| Kuzmin 2020 tmf   |   537,911 |   1 | triple-mutant fitness | scalar    | n×1   |        1.9 MB |
+| Kuzmin 2020 dmi   |   256,862 |   1 | digenic interaction   | edge      | n×1   |        5.4 MB |
+| Kuzmin 2020 tmi   |   537,911 |   1 | trigenic interaction  | hyperedge | n×1   |        2.6 MB |
 
 ### Viability
 
-| Dataset | Genotypes | Env | Phenotype | Label | Shape | Signal (gzip) |
-| :-- | --: | --: | :-- | :-- | :-- | --: |
-| SGD essentiality | 1,329 | 1 | gene essentiality | bool | n×1 | 584 B |
-| SynLethDB (lethal) | 14,000 | 1 | synthetic lethality | bool | n×1 | 16 KB |
-| SynLethDB (rescue) | 6,948 | 1 | synthetic rescue | bool | n×1 | 5.7 KB |
+| Dataset            | Genotypes | Env | Phenotype           | Label | Shape | Signal (gzip) |
+|:-------------------|----------:|----:|:--------------------|:------|:------|--------------:|
+| SGD essentiality   |     1,329 |   1 | gene essentiality   | bool  | n×1   |         584 B |
+| SynLethDB (lethal) |    14,000 |   1 | synthetic lethality | bool  | n×1   |         16 KB |
+| SynLethDB (rescue) |     6,948 |   1 | synthetic rescue    | bool  | n×1   |        5.7 KB |
 
 ### Morphology
 
-| Dataset | Genotypes | Env | Phenotype | Label | Shape | Signal (gzip) |
-| :-- | --: | --: | :-- | :-- | :-- | --: |
-| Ohya 2005 (SCMD CalMorph) | 4,718 | 1 | cell morphology | k-vector | n×k | 18.8 MB |
+| Dataset                   | Genotypes | Env | Phenotype       | Label    | Shape | Signal (gzip) |
+|:--------------------------|----------:|----:|:----------------|:---------|:------|--------------:|
+| Ohya 2005 (SCMD CalMorph) |     4,718 |   1 | cell morphology | k-vector | n×k   |       18.8 MB |
 
 ### Expression (microarray)
 
-| Dataset | Genotypes | Env | Phenotype | Label | Shape | Signal (gzip) |
-| :-- | --: | --: | :-- | :-- | :-- | --: |
-| Kemmeren 2014 | 1,450 | 1 | mRNA log2(mut/wt) | ~6,000-gene vector | n×~6000 | 386.1 MB |
-| Sameith 2015 sm | 82 | 1 | mRNA log2(mut/ref) | 6,169-gene vector | 82×6169 | 22.5 MB |
-| Sameith 2015 dm | 72 | 1 | mRNA log2(mut/ref) | 6,169-gene vector | 72×6169 | 20.9 MB |
+| Dataset         | Genotypes | Env | Phenotype          | Label              | Shape   | Signal (gzip) |
+|:----------------|----------:|----:|:-------------------|:-------------------|:--------|--------------:|
+| Kemmeren 2014   |     1,450 |   1 | mRNA log2(mut/wt)  | ~6,000-gene vector | n×~6000 |      386.1 MB |
+| Sameith 2015 sm |        82 |   1 | mRNA log2(mut/ref) | 6,169-gene vector  | 82×6169 |       22.5 MB |
+| Sameith 2015 dm |        72 |   1 | mRNA log2(mut/ref) | 6,169-gene vector  | 72×6169 |       20.9 MB |
 
 ### Metabolite
 
-| Dataset | Genotypes | Env | Phenotype | Label | Shape | Signal (gzip) |
-| :-- | --: | --: | :-- | :-- | :-- | --: |
-| Cachera 2023 (CRI-SPA betaxanthin) | 4,735 | 1 | betaxanthin (product proxy) | scalar | n×1 | 118 KB |
-| Mülleder 2016 (amino-acid metabolome) | 4,678 | 1 | 19 amino-acid concentrations | 19-vector | 4678×19 | 914 KB |
-| Zelezniak 2018 (metabolome) | 97 | 1 | ~46 metabolite levels | ~46-vector | 97×~46 | 36 KB |
+| Dataset                               | Genotypes | Env | Phenotype                    | Label      | Shape   | Signal (gzip) |
+|:--------------------------------------|----------:|----:|:-----------------------------|:-----------|:--------|--------------:|
+| Cachera 2023 (CRI-SPA betaxanthin)    |     4,735 |   1 | betaxanthin (product proxy)  | scalar     | n×1     |        118 KB |
+| Mülleder 2016 (amino-acid metabolome) |     4,678 |   1 | 19 amino-acid concentrations | 19-vector  | 4678×19 |        914 KB |
+| Zelezniak 2018 (metabolome)           |        97 |   1 | ~46 metabolite levels        | ~46-vector | 97×~46  |         36 KB |
 
 ### Protein abundance
 
-| Dataset | Genotypes | Env | Phenotype | Label | Shape | Signal (gzip) |
-| :-- | --: | --: | :-- | :-- | :-- | --: |
-| Zelezniak 2018 (SWATH proteome) | 97 | 1 | protein abundance | 726-protein vector | 97×726 | 2 MB |
+| Dataset                         | Genotypes | Env | Phenotype         | Label              | Shape  | Signal (gzip) |
+|:--------------------------------|----------:|----:|:------------------|:-------------------|:-------|--------------:|
+| Zelezniak 2018 (SWATH proteome) |        97 |   1 | protein abundance | 726-protein vector | 97×726 |          2 MB |
 
 ### Visual / product-proxy score
 
-| Dataset | Genotypes | Env | Phenotype | Label | Shape | Signal (gzip) |
-| :-- | --: | --: | :-- | :-- | :-- | --: |
-| Ozaydin 2013 (β-carotene screen) | 4,474 | 1 | colony-color visual score | ordinal scalar | n×1 | 22 KB |
+| Dataset                          | Genotypes | Env | Phenotype                 | Label          | Shape | Signal (gzip) |
+|:---------------------------------|----------:|----:|:--------------------------|:---------------|:------|--------------:|
+| Ozaydin 2013 (β-carotene screen) |     4,474 |   1 | colony-color visual score | ordinal scalar | n×1   |         22 KB |
 
 ### In progress (not yet built/verified)
 
@@ -95,17 +95,17 @@ Baryshnikova 2010 (smf; class dormant) · Ohnuki 2018 / 2022 (morphology) · O'D
 Curated resources torchcell reads from or cross-references (identity, annotation,
 metabolic-model scaffold). Not per-strain perturbation datasets.
 
-| Database | Type | What it provides | URL |
-| :-- | :-- | :-- | :-- |
-| SGD | genome / knowledgebase | reference genome, annotation, phenotype + literature curation | yeastgenome.org |
-| **SPELL** | expression compendium (SGD) | search engine over 752 datasets / 15,475 arrays / 576 studies of yeast expression microarrays | spell.yeastgenome.org |
-| YMDB 2.0 | metabolite database | curated yeast metabolite structures, concentrations, pathways | ymdb.ca |
-| YeastNet v3 | functional gene network | probabilistic integrated gene-interaction network | inetbio.org/yeastnet |
-| CYCLoPs / LoQAtE | localization + abundance | GFP-collection protein localization/abundance atlases | thecellvision / weizmann |
-| TheCellMap.org | genetic-interaction portal | query/download for the Costanzo/Boone global GI network | thecellmap.org |
-| Yeast9 GEM | genome-scale metabolic model | consensus stoichiometric reconstruction (metabolite-node IDs) | github SysBioChalmers/yeast-GEM |
-| ScRAPdb | pan-omics assembly panel | 142-strain telomere-to-telomere reference panel omics | evomicslab.org/db/ScRAPdb |
-| Yeast PeptideAtlas | proteome-observation DB | reprocessed MS peptide/protein observation confidence | peptideatlas.org/builds/yeast |
+| Database           | Type                         | What it provides                                                                              | URL                             |
+|:-------------------|:-----------------------------|:----------------------------------------------------------------------------------------------|:--------------------------------|
+| SGD                | genome / knowledgebase       | reference genome, annotation, phenotype + literature curation                                 | yeastgenome.org                 |
+| **SPELL**          | expression compendium (SGD)  | search engine over 752 datasets / 15,475 arrays / 576 studies of yeast expression microarrays | spell.yeastgenome.org           |
+| YMDB 2.0           | metabolite database          | curated yeast metabolite structures, concentrations, pathways                                 | ymdb.ca                         |
+| YeastNet v3        | functional gene network      | probabilistic integrated gene-interaction network                                             | inetbio.org/yeastnet            |
+| CYCLoPs / LoQAtE   | localization + abundance     | GFP-collection protein localization/abundance atlases                                         | thecellvision / weizmann        |
+| TheCellMap.org     | genetic-interaction portal   | query/download for the Costanzo/Boone global GI network                                       | thecellmap.org                  |
+| Yeast9 GEM         | genome-scale metabolic model | consensus stoichiometric reconstruction (metabolite-node IDs)                                 | github SysBioChalmers/yeast-GEM |
+| ScRAPdb            | pan-omics assembly panel     | 142-strain telomere-to-telomere reference panel omics                                         | evomicslab.org/db/ScRAPdb       |
+| Yeast PeptideAtlas | proteome-observation DB      | reprocessed MS peptide/protein observation confidence                                         | peptideatlas.org/builds/yeast   |
 
 ## Maintenance + provenance
 

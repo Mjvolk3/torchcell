@@ -17,14 +17,16 @@ GENOTYPE (three natural-variation perturbation families, all off-graph pointers)
     (``chromosomeN:start-end +/-``) slices the SGD R64 chromosome (reverse-complemented on
     the minus strand); an isolate has a variant iff its sequence != that slice. Source =
     Peter et al. 2018 ``allReferenceGenesWithSNPsAndIndelsInferred`` (gene-keyed store).
-  - ``CopyNumberVariantPerturbation`` for an ACCESSORY (non-reference) pangenome ORF that
-    is PRESENT in the isolate (``copy_number`` from the copy-number matrix, default 1.0;
-    ``reference_copy_number`` 0.0).
-  - ``CopyNumberVariantPerturbation`` for a CORE (reference) ORF that is ABSENT in the
-    isolate (``copy_number`` 0.0, ``reference_copy_number`` 1.0) -- only when the pangenome
-    ORF maps to an S288C systematic name (else skipped, documented).
-Core vs accessory is Peter's presence/absence matrix over the 1011 isolates: an ORF present
-in >= 99% of isolates is core.
+  - ``NaturalGenePresencePerturbation`` for an ACCESSORY (non-reference) pangenome ORF that
+    is PRESENT in the isolate (AXIS-1 state=present, natural insertion; ``copy_number`` from
+    the copy-number matrix, default 1.0).
+  - ``NaturalGeneAbsencePerturbation`` for a CORE (reference) ORF that is ABSENT in the
+    isolate (AXIS-1 state=absent, natural deletion). EVERY absence is recorded -- an ORF
+    with no S288C systematic name is kept by its pangenome id, never dropped (a dropped
+    absence would wrongly reconstruct the gene as present).
+These are NATURAL genome-content edits off S288C, distinct from engineered CNV (true dosage
+of a PRESENT gene stays on the copy-number axis). Core vs accessory is Peter's
+presence/absence matrix over the 1011 isolates: an ORF present in >= 99% of isolates is core.
 
 PHENOTYPE (``RNASeqExpressionPhenotype``): per-isolate ``expression_tpm`` +
 ``expression_count`` for the genes that isolate carries (a gene absent from an isolate is
@@ -65,12 +67,13 @@ from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
 from torchcell.datamodels.schema import (
-    CopyNumberVariantPerturbation,
     Environment,
     Experiment,
     ExperimentReference,
     Genotype,
     Media,
+    NaturalGeneAbsencePerturbation,
+    NaturalGenePresencePerturbation,
     Publication,
     ReferenceGenome,
     RNASeqExpressionExperiment,
@@ -334,7 +337,7 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
         with env.begin(write=True) as txn:
             for strain in tqdm(strains, desc="assembling isolates"):
                 row = strain_row[strain]
-                cnv_acc, cnv_core = self._cnv_perturbations(
+                presence_perts, absence_perts = self._content_perturbations(
                     strain,
                     presence_vals[row],
                     copynumber_vals[row],
@@ -347,12 +350,12 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
                     strain, variants_by_strain.get(strain, [])
                 )
                 n_seq_total += len(seq_perts)
-                n_cnv_acc_total += len(cnv_acc)
-                n_cnv_core_total += len(cnv_core)
+                n_cnv_acc_total += len(presence_perts)
+                n_cnv_core_total += len(absence_perts)
                 experiment, reference, publication = self.create_experiment(
                     {
                         "strain": strain,
-                        "perturbations": seq_perts + cnv_acc + cnv_core,
+                        "perturbations": seq_perts + presence_perts + absence_perts,
                         "expression_tpm": per_strain[strain]["tpm"],
                         "expression_count": per_strain[strain]["count"],
                     }
@@ -372,7 +375,7 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
         n = max(idx, 1)
         log.info(
             "Wrote %d isolates. Per-isolate means: sequence_variants=%.1f, "
-            "accessory-present CNVs=%.1f, core-loss CNVs=%.2f",
+            "accessory-present=%.1f, core-absent=%.2f",
             idx,
             n_seq_total / n,
             n_cnv_acc_total / n,
@@ -522,7 +525,7 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
         return perts
 
     @staticmethod
-    def _cnv_perturbations(
+    def _content_perturbations(
         strain: str,
         presence_row: np.ndarray,
         copynumber_row: np.ndarray,
@@ -531,42 +534,47 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
         orf_ids: list[str],
         s288c_names: list[str | None],
     ) -> tuple[
-        list[CopyNumberVariantPerturbation], list[CopyNumberVariantPerturbation]
+        list[NaturalGenePresencePerturbation], list[NaturalGeneAbsencePerturbation]
     ]:
-        """Build accessory-present + core-loss CNVs for one isolate from Peter's matrices."""
-        accessory: list[CopyNumberVariantPerturbation] = []
+        """AXIS-1 presence/absence edits for one isolate from Peter's matrices.
+
+        Accessory ORF present -> a natural PRESENCE (with observed copy number); core ORF
+        absent -> a natural ABSENCE. These are NATURAL genome-content edits off S288C, NOT
+        engineered CNV (copy_number != 0 for present genes is a separate dosage axis). Every
+        absence is recorded -- an unmapped core ORF (no S288C systematic name) is kept by its
+        pangenome id, never dropped (a dropped absence would wrongly reconstruct as present).
+        """
+        presence: list[NaturalGenePresencePerturbation] = []
         for j in np.nonzero((~core_mask) & (presence_row == 1))[0]:
             cn = copynumber_row[j]
             copy_number = float(cn) if np.isfinite(cn) and cn > 0 else 1.0
             orf_id = orf_ids[j]
-            accessory.append(
-                CopyNumberVariantPerturbation(
+            presence.append(
+                NaturalGenePresencePerturbation(
                     systematic_gene_name=orf_id,
                     perturbed_gene_name=orf_id,
                     copy_number=copy_number,
-                    reference_copy_number=0.0,
                     strain_id=strain,
                     pangenome_orf_id=orf_id,
                     origin=None,
                     sequence_source=SEQUENCE_SOURCE,
                 )
             )
-        core_loss: list[CopyNumberVariantPerturbation] = []
-        for j in np.nonzero(core_mask & (presence_row == 0) & s288c_mask)[0]:
-            sys_name = s288c_names[j]
-            assert sys_name is not None  # guaranteed by s288c_mask
-            core_loss.append(
-                CopyNumberVariantPerturbation(
-                    systematic_gene_name=sys_name,
-                    perturbed_gene_name=sys_name,
-                    copy_number=0.0,
-                    reference_copy_number=1.0,
+        absence: list[NaturalGeneAbsencePerturbation] = []
+        for j in np.nonzero(core_mask & (presence_row == 0))[0]:
+            # Prefer the S288C systematic name; fall back to the pangenome id so no
+            # absence is ever dropped (the natural-absence validator accepts either).
+            name = s288c_names[j] or orf_ids[j]
+            absence.append(
+                NaturalGeneAbsencePerturbation(
+                    systematic_gene_name=name,
+                    perturbed_gene_name=name,
                     strain_id=strain,
                     pangenome_orf_id=orf_ids[j],
                     sequence_source=SEQUENCE_SOURCE,
                 )
             )
-        return accessory, core_loss
+        return presence, absence
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None

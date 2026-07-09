@@ -8,7 +8,7 @@
 import math
 import re
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 from sortedcontainers import SortedDict
@@ -28,11 +28,50 @@ class ReferenceGenome(ModelStrict):
     strain: str
 
 
+# --------------------------------------------------------------------------- #
+# Sequence Ontology (SO) mechanism annotation.
+#
+# Every perturbation names the SO term for the MECHANISM by which the strain's
+# genome differs from the S288C reference (deletion, insertion, SNV, ...). The id
+# is a plain ``SO:NNNNNNN`` string; ``SOTerm`` is the reusable id+name record.
+# We define a minimal ``SOTerm`` locally rather than import the richer one from
+# ``torchcell.sequence.plasmid`` so this schema stays free of the biopython dep.
+# --------------------------------------------------------------------------- #
+SO_ID_PATTERN = r"^SO:\d{7}$"
+
+
+def _validate_so_id(value: str) -> str:
+    """Return ``value`` if it is a well-formed SO id (``SO:NNNNNNN``), else raise."""
+    if not re.match(SO_ID_PATTERN, value):
+        raise ValueError(f"Invalid SO id {value!r}; expected 'SO:NNNNNNN'")
+    return value
+
+
+class SOTerm(ModelStrict):
+    """A Sequence Ontology term: a ``SO:NNNNNNN`` id paired with its name."""
+
+    so_id: str
+    name: str
+
+    @field_validator("so_id", mode="after")
+    @classmethod
+    def validate_so_id(cls, v: str) -> str:
+        """Enforce the ``SO:NNNNNNN`` id shape."""
+        return _validate_so_id(v)
+
+
 class GenePerturbation(ModelStrict):
-    """Base perturbation of a single gene by systematic and common name."""
+    """Base perturbation of a single gene by systematic and common name.
+
+    ``provenance`` records whether the difference from the S288C reference was
+    ENGINEERED in the lab or arose NATURALLY in an isolate. It defaults to
+    ``"engineered"`` so the many engineered perturbation types need not repeat it;
+    natural types set ``provenance="natural"`` as a class default.
+    """
 
     systematic_gene_name: str
     perturbed_gene_name: str
+    provenance: str = "engineered"
 
     @field_validator("systematic_gene_name", mode="after")
     @classmethod
@@ -60,17 +99,94 @@ class GenePerturbation(ModelStrict):
             v = v[:-1] + "_prime"
         return v
 
+    @field_validator("provenance", mode="after")
+    @classmethod
+    def validate_provenance(cls, v: str) -> str:
+        """Provenance is one of the two allowed origins."""
+        if v not in {"engineered", "natural"}:
+            raise ValueError(f"provenance must be 'engineered' or 'natural', got {v!r}")
+        return v
 
-class DeletionPerturbation(GenePerturbation, ModelStrict):
-    """Gene deletion via KanMX or NatMX gene replacement."""
+
+# --------------------------------------------------------------------------- #
+# The three orthogonal AXES of a genotype difference from S288C. Each is an
+# abstract base (never instantiated directly); concrete leaves below set the
+# class-default ``state`` / ``mechanism_*`` / ``provenance`` for their kind.
+# --------------------------------------------------------------------------- #
+class PresenceAbsencePerturbation(GenePerturbation, ModelStrict):
+    """AXIS 1 -- a gene is PRESENT or ABSENT relative to the reference.
+
+    ``state`` is the neutral biological fact ("absent" spans an engineered KO and a
+    natural core-loss alike); ``mechanism_so_id``/``mechanism_so_name`` name the SO
+    mechanism. This ABC sets NO default for either -- every concrete child declares
+    its own (deletion=absent/SO:0000159, insertion=present/SO:0000667).
+    """
+
+    state: str
+    mechanism_so_id: str
+    mechanism_so_name: str
+
+    @field_validator("state", mode="after")
+    @classmethod
+    def validate_state(cls, v: str) -> str:
+        """State is either present or absent."""
+        if v not in {"present", "absent"}:
+            raise ValueError(f"state must be 'present' or 'absent', got {v!r}")
+        return v
+
+    @field_validator("mechanism_so_id", mode="after")
+    @classmethod
+    def validate_mechanism_so_id(cls, v: str) -> str:
+        """Mechanism SO id is well-formed."""
+        return _validate_so_id(v)
+
+
+class SequencePerturbation(GenePerturbation, ModelStrict):
+    """AXIS 3 -- a sequence-level allelic change (SNP/indel/substitution allele).
+
+    Defaults to the generic ``sequence_variant`` (SO:0001060); concrete children may
+    override to a more specific term (e.g. SNV SO:0001483).
+    """
+
+    mechanism_so_id: str = "SO:0001060"
+    mechanism_so_name: str = "sequence_variant"
+
+    @field_validator("mechanism_so_id", mode="after")
+    @classmethod
+    def validate_mechanism_so_id(cls, v: str) -> str:
+        """Mechanism SO id is well-formed."""
+        return _validate_so_id(v)
+
+
+class ExpressionRangeMultiplier(ModelStrict):
+    """Min/max multiplier bounds on a gene's expression level."""
+
+    min: float = Field(
+        ..., description="Minimum range multiplier of gene expression levels"
+    )
+    max: float = Field(
+        ..., description="Maximum range multiplier of gene expression levels"
+    )
+
+
+# --------------------------------------------------------------------------- #
+# AXIS 1 -- presence/absence leaves.
+# --------------------------------------------------------------------------- #
+class DeletionPerturbation(PresenceAbsencePerturbation, ModelStrict):
+    """Gene deletion via KanMX or NatMX gene replacement (engineered absence)."""
 
     description: str = "Deletion via KanMX or NatMX gene replacement"
-    perturbation_type: str = "deletion"
+    perturbation_type: Literal["deletion"] = "deletion"
+    state: str = "absent"
+    mechanism_so_id: str = "SO:0000159"
+    mechanism_so_name: str = "deletion"
+    provenance: str = "engineered"
 
 
 class KanMxDeletionPerturbation(DeletionPerturbation, ModelStrict):
     """Gene deletion via KanMX gene replacement."""
 
+    perturbation_type: Literal["kanmx_deletion"] = "kanmx_deletion"  # type: ignore[assignment]
     deletion_description: str = "Deletion via KanMX gene replacement."
     deletion_type: str = "KanMX"
 
@@ -78,6 +194,7 @@ class KanMxDeletionPerturbation(DeletionPerturbation, ModelStrict):
 class NatMxDeletionPerturbation(DeletionPerturbation, ModelStrict):
     """Gene deletion via NatMX gene replacement."""
 
+    perturbation_type: Literal["natmx_deletion"] = "natmx_deletion"  # type: ignore[assignment]
     deletion_description: str = "Deletion via NatMX gene replacement."
     deletion_type: str = "NatMX"
 
@@ -85,6 +202,7 @@ class NatMxDeletionPerturbation(DeletionPerturbation, ModelStrict):
 class SgaKanMxDeletionPerturbation(KanMxDeletionPerturbation, ModelStrict):
     """KanMX deletion perturbation specific to SGA experiments."""
 
+    perturbation_type: Literal["sga_kanmx_deletion"] = "sga_kanmx_deletion"  # type: ignore[assignment]
     kan_mx_description: str = (
         "KanMX Deletion Perturbation information specific to SGA experiments."
     )
@@ -95,6 +213,7 @@ class SgaKanMxDeletionPerturbation(KanMxDeletionPerturbation, ModelStrict):
 class SgaNatMxDeletionPerturbation(NatMxDeletionPerturbation, ModelStrict):
     """NatMX deletion perturbation specific to SGA experiments."""
 
+    perturbation_type: Literal["sga_natmx_deletion"] = "sga_natmx_deletion"  # type: ignore[assignment]
     nat_mx_description: str = (
         "NatMX Deletion Perturbation information specific to SGA experiments."
     )
@@ -110,18 +229,7 @@ class SgaNatMxDeletionPerturbation(NatMxDeletionPerturbation, ModelStrict):
     #     return perturbation_data
 
 
-class ExpressionRangeMultiplier(ModelStrict):
-    """Min/max multiplier bounds on a gene's expression level."""
-
-    min: float = Field(
-        ..., description="Minimum range multiplier of gene expression levels"
-    )
-    max: float = Field(
-        ..., description="Maximum range multiplier of gene expression levels"
-    )
-
-
-class DampPerturbation(GenePerturbation, ModelStrict):
+class DampPerturbation(SequencePerturbation, ModelStrict):
     """Decreased-abundance-by-mRNA-perturbation (DAmP) allele perturbation."""
 
     description: str = "4-10 decreased expression via KANmx insertion at the "
@@ -130,7 +238,7 @@ class DampPerturbation(GenePerturbation, ModelStrict):
         default=ExpressionRangeMultiplier(min=1 / 10.0, max=1 / 4.0),
         description="Gene expression is decreased by 4-10 fold",
     )
-    perturbation_type: str = "damp"
+    perturbation_type: Literal["damp"] = "damp"
 
 
 class SgaDampPerturbation(DampPerturbation, ModelStrict):
@@ -141,17 +249,19 @@ class SgaDampPerturbation(DampPerturbation, ModelStrict):
     damp_perturbation_type: str = "SGA"
 
 
-class TsAllelePerturbation(GenePerturbation, ModelStrict):
+class TsAllelePerturbation(SequencePerturbation, ModelStrict):
     """Temperature-sensitive allele perturbation via amino acid substitution."""
 
     description: str = (
         "Temperature sensitive allele compromised by amino acid substitution."
     )
     # seq: str = "NOT IMPLEMENTED"
-    perturbation_type: str = "temperature_sensitive_allele"
+    perturbation_type: Literal["temperature_sensitive_allele"] = (
+        "temperature_sensitive_allele"
+    )
 
 
-class AllelePerturbation(GenePerturbation, ModelStrict):
+class AllelePerturbation(SequencePerturbation, ModelStrict):
     """Generic allele perturbation via amino acid substitution."""
 
     description: str = (
@@ -159,17 +269,17 @@ class AllelePerturbation(GenePerturbation, ModelStrict):
         "phenotypic information specified."
     )
     # seq: str = "NOT IMPLEMENTED"
-    perturbation_type: str = "allele"
+    perturbation_type: Literal["allele"] = "allele"
 
 
-class SuppressorAllelePerturbation(GenePerturbation, ModelStrict):
+class SuppressorAllelePerturbation(SequencePerturbation, ModelStrict):
     """Suppressor allele that raises fitness in the presence of a perturbation."""
 
     description: str = (
         "suppressor allele that results in higher fitness in the presence"
         "of a perturbation, compared to the fitness of the perturbation alone."
     )
-    perturbation_type: str = "suppressor_allele"
+    perturbation_type: Literal["suppressor_allele"] = "suppressor_allele"
 
 
 class SgaSuppressorAllelePerturbation(SuppressorAllelePerturbation, ModelStrict):
@@ -207,13 +317,14 @@ class MeanDeletionPerturbation(DeletionPerturbation, ModelStrict):
     """Deletion perturbation aggregating duplicate experiments by their mean."""
 
     description: str = "Mean deletion perturbation representing duplicate experiments"
+    perturbation_type: Literal["mean_deletion"] = "mean_deletion"  # type: ignore[assignment]
     deletion_type: str = "mean"
     num_duplicates: int = Field(
         description="Number of duplicate experiments used to compute the mean and std."
     )
 
 
-class GeneAdditionPerturbation(GenePerturbation, ModelStrict):
+class GeneAdditionPerturbation(PresenceAbsencePerturbation, ModelStrict):
     """Gain-of-function: a gene ADDED to the strain (heterologous expression or an
     extra native copy), carried on a plasmid or integrated at a chromosomal locus.
 
@@ -230,7 +341,11 @@ class GeneAdditionPerturbation(GenePerturbation, ModelStrict):
     """
 
     description: str = "Gene addition (heterologous expression or extra native copy)"
-    perturbation_type: str = "gene_addition"
+    perturbation_type: Literal["gene_addition"] = "gene_addition"
+    state: str = "present"
+    mechanism_so_id: str = "SO:0000667"
+    mechanism_so_name: str = "insertion"
+    provenance: str = "engineered"
     source_organism: str = Field(
         description="organism the added gene is from, e.g. 'Xanthophyllomyces dendrorhous'"
     )
@@ -271,7 +386,98 @@ class GeneAdditionPerturbation(GenePerturbation, ModelStrict):
         return v
 
 
-class SequenceVariantPerturbation(GenePerturbation, ModelStrict):
+class NaturalGeneAbsencePerturbation(PresenceAbsencePerturbation, ModelStrict):
+    """A reference (core) gene ABSENT in a natural isolate (Caudal core-loss).
+
+    The NATURAL counterpart of an engineered deletion: same AXIS-1 ``state="absent"``
+    and SO ``deletion`` mechanism, but ``provenance="natural"``. Replaces the former
+    mis-use of ``CopyNumberVariantPerturbation`` (copy_number 0) for absence -- CNV is
+    now reserved for dosage of a PRESENT gene. The gene id may be a pangenome/accessory
+    id, so the native-name validator is relaxed (as for ``GeneAddition``). Sequence, when
+    known, is an off-graph pointer (``sequence_uri`` + ``sequence_sha256``), never inlined.
+    """
+
+    description: str = "Natural absence of a reference gene in an isolate vs S288C"
+    perturbation_type: Literal["natural_gene_absence"] = "natural_gene_absence"
+    state: str = "absent"
+    mechanism_so_id: str = "SO:0000159"
+    mechanism_so_name: str = "deletion"
+    provenance: str = "natural"
+    strain_id: str = Field(description="isolate id whose genome lacks this gene")
+    pangenome_orf_id: str | None = Field(
+        default=None, description="pangenome ORF id, when the absence is tracked there"
+    )
+    sequence_source: str | None = Field(
+        default=None,
+        description="off-graph store key / citation for the reference gene",
+    )
+    sequence_uri: str | None = Field(
+        default=None, description="pointer into the gene-keyed sequence store"
+    )
+    sequence_sha256: str | None = Field(
+        default=None, description="sha256 of the source file the sequence comes from"
+    )
+
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
+    def validate_sys_gene_name(cls, v: str) -> str:
+        """Relax: an accessory/pangenome ORF has no yeast systematic name."""
+        if not v:
+            raise ValueError("systematic_gene_name must be non-empty")
+        return v
+
+
+class NaturalGenePresencePerturbation(PresenceAbsencePerturbation, ModelStrict):
+    """A non-reference (accessory) gene PRESENT in a natural isolate (Caudal accessory).
+
+    The NATURAL counterpart of an engineered gene addition: AXIS-1 ``state="present"``
+    with SO ``insertion`` mechanism and ``provenance="natural"``. Replaces the former
+    mis-use of ``CopyNumberVariantPerturbation`` for accessory-presence -- CNV is now
+    reserved for dosage of a PRESENT gene. ``copy_number`` records how many copies are
+    present (default 1.0); ``origin`` annotates the accessory ORF's provenance with the
+    field's vocabulary (``ancestral | introgression | hgt``). The native-name validator
+    is relaxed; sequence is an off-graph pointer, never inlined.
+    """
+
+    description: str = "Natural presence of an accessory gene in an isolate vs S288C"
+    perturbation_type: Literal["natural_gene_presence"] = "natural_gene_presence"
+    state: str = "present"
+    mechanism_so_id: str = "SO:0000667"
+    mechanism_so_name: str = "insertion"
+    provenance: str = "natural"
+    strain_id: str = Field(description="isolate id whose genome carries this gene")
+    copy_number: float = Field(
+        default=1.0, description="copies of the accessory gene present (haploid basis)"
+    )
+    pangenome_orf_id: str | None = Field(
+        default=None,
+        description="pangenome ORF id for the accessory ORF, e.g. 'EC1118_1F14_0012g'",
+    )
+    origin: str | None = Field(
+        default=None,
+        description="accessory-ORF provenance: 'ancestral' | 'introgression' | 'hgt'",
+    )
+    sequence_source: str | None = Field(
+        default=None, description="off-graph store key / citation for the ORF sequence"
+    )
+    sequence_uri: str | None = Field(
+        default=None, description="pointer into the pangenome ORF sequence store"
+    )
+    sequence_sha256: str | None = Field(
+        default=None,
+        description="sha256 of the source file the ORF sequence comes from",
+    )
+
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
+    def validate_sys_gene_name(cls, v: str) -> str:
+        """Relax: an accessory/pangenome ORF has no yeast systematic name."""
+        if not v:
+            raise ValueError("systematic_gene_name must be non-empty")
+        return v
+
+
+class SequenceVariantPerturbation(SequencePerturbation, ModelStrict):
     """SNP/indel-level allelic variation: a native gene whose sequence in this strain
     differs from the S288C reference, captured via an off-graph pointer.
 
@@ -294,7 +500,10 @@ class SequenceVariantPerturbation(GenePerturbation, ModelStrict):
         "Sequence variant (SNP/indel) of a native gene vs the S288C reference; "
         "sequence by off-graph pointer"
     )
-    perturbation_type: str = "sequence_variant"
+    perturbation_type: Literal["sequence_variant"] = "sequence_variant"
+    provenance: str = "natural"
+    mechanism_so_id: str = "SO:0001483"
+    mechanism_so_name: str = "SNV"
     strain_id: str = Field(
         description="isolate id whose allele this is, e.g. 'AAB' | 'SACE_YAU'"
     )
@@ -342,7 +551,10 @@ class CopyNumberVariantPerturbation(GenePerturbation, ModelStrict):
     description: str = (
         "Copy-number variation (incl. presence/absence) of a pangenome ORF vs S288C"
     )
-    perturbation_type: str = "copy_number_variant"
+    perturbation_type: Literal["copy_number_variant"] = "copy_number_variant"
+    provenance: str = "natural"
+    mechanism_so_id: str = "SO:0001019"
+    mechanism_so_name: str = "copy_number_variation"
     copy_number: float = Field(
         description="ORF copy number in this isolate (haploid basis; non-integer allowed; 0 = absent)"
     )
@@ -380,6 +592,12 @@ class CopyNumberVariantPerturbation(GenePerturbation, ModelStrict):
             raise ValueError("systematic_gene_name must be non-empty")
         return v
 
+    @field_validator("mechanism_so_id", mode="after")
+    @classmethod
+    def validate_mechanism_so_id(cls, v: str) -> str:
+        """Mechanism SO id is well-formed."""
+        return _validate_so_id(v)
+
 
 SgaPerturbationType = (
     SgaKanMxDeletionPerturbation
@@ -396,6 +614,8 @@ GenePerturbationType = (
     | KanMxDeletionPerturbation
     | NatMxDeletionPerturbation
     | GeneAdditionPerturbation
+    | NaturalGeneAbsencePerturbation
+    | NaturalGenePresencePerturbation
     | SequenceVariantPerturbation
     | CopyNumberVariantPerturbation
 )

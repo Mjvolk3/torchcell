@@ -22,10 +22,20 @@ from torchcell.datamodels.pydant import ModelStrict
 
 # Genotype
 class ReferenceGenome(ModelStrict):
-    """Reference genome identified by species and strain."""
+    """Reference genome identified by species and strain.
+
+    ``ploidy`` is the genome-wide baseline copy number of the unperturbed strain
+    (``"haploid"`` = 1 autosomal copy, ``"diploid"`` = 2). It lives here -- not on a
+    perturbation -- because it applies to the WHOLE genome (WT and every unperturbed
+    gene alike); a per-locus ``EngineeredCopyNumberPerturbation.copy_number`` records
+    the deviation from this baseline (e.g. a HIP heterozygous deletion drops one
+    autosomal gene from 2 -> 1 copies in a diploid). Defaults to ``"haploid"`` so all
+    existing haploid datasets stay valid.
+    """
 
     species: str
     strain: str
+    ploidy: Literal["haploid", "diploid"] = "haploid"
 
 
 # --------------------------------------------------------------------------- #
@@ -616,6 +626,50 @@ class CopyNumberVariantPerturbation(GenePerturbation, ModelStrict):
         return _validate_so_id(v)
 
 
+class EngineeredCopyNumberPerturbation(GenePerturbation, ModelStrict):
+    """An ENGINEERED copy-number/dosage change of a PRESENT native gene.
+
+    The engineered counterpart of the natural ``CopyNumberVariantPerturbation``: same
+    dosage axis and SO ``copy_number_variation`` mechanism, but ``provenance="engineered"``
+    and referring to a REAL S288C reference gene (the base systematic-name validator
+    applies -- NOT relaxed, these are not pangenome ORFs). It hangs directly off
+    ``GenePerturbation`` in parallel with the natural CNV leaf (the dosage axis has no
+    intermediate ABC; mirroring the existing pattern keeps the hierarchy symmetric and
+    reparents nothing).
+
+    Motivating case -- HIP/HOP chemogenomics (Hoepfner/FitDb/Lee) in a DIPLOID: a HIP
+    HETEROZYGOUS deletion drops one autosomal gene from 2 -> 1 copies, i.e.
+    ``EngineeredCopyNumberPerturbation(copy_number=1, reference_copy_number=2, marker="KanMX")``.
+    (A HOP HOMOZYGOUS deletion is total absence and stays a ``DeletionPerturbation``.)
+    ``reference_copy_number`` is the copies in the reference (= ``ReferenceGenome.ploidy``
+    for an autosomal gene); ``marker`` is the optional selection cassette on the affected
+    allele. The gene remains PRESENT, so ``state="present"``.
+    """
+
+    description: str = "Engineered copy-number/dosage change of a present native gene"
+    perturbation_type: Literal["engineered_copy_number"] = "engineered_copy_number"
+    provenance: str = "engineered"
+    state: str = "present"
+    mechanism_so_id: str = "SO:0001019"
+    mechanism_so_name: str = "copy_number_variation"
+    copy_number: float = Field(
+        description="engineered target copies of the gene, e.g. 1 for a heterozygous deletion"
+    )
+    reference_copy_number: float = Field(
+        description="copies in the reference (= ploidy for an autosomal gene, e.g. 2 in a diploid)"
+    )
+    marker: str | None = Field(
+        default=None,
+        description="selection marker on the affected allele, e.g. 'KanMX' (None if unmarked)",
+    )
+
+    @field_validator("mechanism_so_id", mode="after")
+    @classmethod
+    def validate_mechanism_so_id(cls, v: str) -> str:
+        """Mechanism SO id is well-formed."""
+        return _validate_so_id(v)
+
+
 SgaPerturbationType = (
     SgaKanMxDeletionPerturbation
     | SgaNatMxDeletionPerturbation
@@ -636,6 +690,7 @@ GenePerturbationType = (
     | NaturalGenePresencePerturbation
     | SequenceVariantPerturbation
     | CopyNumberVariantPerturbation
+    | EngineeredCopyNumberPerturbation
 )
 
 

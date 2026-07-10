@@ -30,6 +30,7 @@ from torchcell.datamodels.schema import (
     CopyNumberVariantPerturbation,
     DampPerturbation,
     DeletionPerturbation,
+    EngineeredCopyNumberPerturbation,
     GeneAdditionPerturbation,
     GenePerturbation,
     GenePerturbationType,
@@ -160,6 +161,12 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         strain_id="AAB",
         **_URI,
     ),
+    EngineeredCopyNumberPerturbation: {
+        **_SYS,
+        "copy_number": 1.0,
+        "reference_copy_number": 2.0,
+        "marker": "KanMX",
+    },
 }
 
 _ADAPTER: TypeAdapter[GenePerturbation] = TypeAdapter(GenePerturbationType)
@@ -352,3 +359,101 @@ def test_soterm_accepts_valid_id() -> None:
 def test_soterm_rejects_malformed_id() -> None:
     with pytest.raises(ValueError):
         schema.SOTerm(so_id="SO:159", name="deletion")
+
+
+# --------------------------------------------------------------------------- #
+# EngineeredCopyNumberPerturbation + ploidy: HIP/HOP chemogenomics support.
+# --------------------------------------------------------------------------- #
+def test_engineered_cnv_discriminator_and_defaults() -> None:
+    """The engineered CNV leaf carries its own unique tag + engineered provenance."""
+    pert = EngineeredCopyNumberPerturbation(
+        systematic_gene_name="YAL001C",
+        perturbed_gene_name="TFC3",
+        copy_number=1.0,
+        reference_copy_number=2.0,
+        marker="KanMX",
+    )
+    assert pert.perturbation_type == "engineered_copy_number"
+    assert pert.provenance == "engineered"
+    assert pert.state == "present"
+    assert pert.mechanism_so_id == "SO:0001019"
+    assert pert.mechanism_so_name == "copy_number_variation"
+
+
+def test_engineered_cnv_uses_real_systematic_validator() -> None:
+    """These are reference genes, not pangenome ORFs -- the strict validator applies."""
+    with pytest.raises(ValueError):
+        EngineeredCopyNumberPerturbation(
+            systematic_gene_name="pangenome1011:orf1",
+            perturbed_gene_name="orf1",
+            copy_number=1.0,
+            reference_copy_number=2.0,
+        )
+
+
+def test_engineered_cnv_marker_is_optional() -> None:
+    """``marker`` defaults to None (an unmarked dosage change)."""
+    pert = EngineeredCopyNumberPerturbation(
+        systematic_gene_name="YAL001C",
+        perturbed_gene_name="TFC3",
+        copy_number=3.0,
+        reference_copy_number=1.0,
+    )
+    assert pert.marker is None
+
+
+def test_reference_genome_ploidy_default_and_values() -> None:
+    """Ploidy defaults to haploid (backward-compatible) and accepts diploid."""
+    assert schema.ReferenceGenome(species="s", strain="w").ploidy == "haploid"
+    assert (
+        schema.ReferenceGenome(species="s", strain="w", ploidy="diploid").ploidy
+        == "diploid"
+    )
+    with pytest.raises(ValueError):
+        schema.ReferenceGenome(species="s", strain="w", ploidy="triploid")  # type: ignore[arg-type]
+
+
+def test_hip_style_record_round_trips() -> None:
+    """HIP: diploid ReferenceGenome + heterozygous deletion as copy 1 of 2."""
+    ref = schema.ReferenceGenome(
+        species="Saccharomyces cerevisiae", strain="BY4743", ploidy="diploid"
+    )
+    geno = schema.Genotype(
+        perturbations=[
+            EngineeredCopyNumberPerturbation(
+                systematic_gene_name="YAL001C",
+                perturbed_gene_name="TFC3",
+                copy_number=1.0,
+                reference_copy_number=2.0,
+                marker="KanMX",
+            )
+        ]
+    )
+    assert ref.ploidy == "diploid"
+    back = schema.Genotype.model_validate(geno.model_dump())
+    assert isinstance(back.perturbations[0], EngineeredCopyNumberPerturbation)
+    assert back.perturbations[0].copy_number == 1.0
+    assert back.perturbations[0].reference_copy_number == 2.0
+
+
+def test_hop_style_record_round_trips() -> None:
+    """HOP: diploid ReferenceGenome + homozygous deletion stays absence (Deletion).
+
+    Uses the concrete KanMX deletion leaf (the abstract ``DeletionPerturbation`` base is
+    not a union member); it remains an AXIS-1 absence, NOT an engineered CNV.
+    """
+    ref = schema.ReferenceGenome(
+        species="Saccharomyces cerevisiae", strain="BY4743", ploidy="diploid"
+    )
+    geno = schema.Genotype(
+        perturbations=[
+            KanMxDeletionPerturbation(
+                systematic_gene_name="YAL001C", perturbed_gene_name="TFC3"
+            )
+        ]
+    )
+    assert ref.ploidy == "diploid"
+    back = schema.Genotype.model_validate(geno.model_dump())
+    assert isinstance(back.perturbations[0], KanMxDeletionPerturbation)
+    assert back.perturbations[0].state == "absent"
+    assert not isinstance(back.perturbations[0], EngineeredCopyNumberPerturbation)

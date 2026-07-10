@@ -295,3 +295,55 @@ mypy-strict + ruff clean on all changed files.
 (1) released z-score is a point value with no released SE; (2) compound human names not in the
 structured artifact (CID/SID/SMILES only); (3) the multi-library z-averaging is a documented
 deterministic reconstruction, not a byte-verbatim released cell value.
+
+## 2026.07.10 - Schema extension: EngineeredCopyNumberPerturbation + ReferenceGenome.ploidy (HIP/HOP support)
+
+Schema-only step (no dataset build) to unblock the HIP/HOP chemogenomic datasets
+(Hoepfner / FitDb / Lee), which use **heterozygous** deletions in a **diploid**.
+
+### New leaf: `EngineeredCopyNumberPerturbation` (`torchcell/datamodels/schema.py`)
+
+The ENGINEERED counterpart of the natural `CopyNumberVariantPerturbation` — an engineered
+copy-number/dosage change of a **present** native gene.
+
+- **Parent = `GenePerturbation` directly** (NOT a new intermediate). Justification: the
+  dosage axis currently has no ABC — the natural CNV leaf also hangs directly off
+  `GenePerturbation` (only AXIS-1 presence/absence and AXIS-3 sequence have ABCs). Mirroring
+  that pattern is the minimal, ontology-consistent choice: it reparents nothing (natural CNV
+  leaf + Caudal untouched), keeps the DAG single-rooted + acyclic, and preserves discriminator
+  uniqueness. Introducing a shared `CopyNumberPerturbation` intermediate would not make any
+  invariant cleaner and would add structure against the "minimal new structure" rule.
+- **Fields:** `copy_number: float` (engineered target copies), `reference_copy_number: float`
+  (copies in the reference = ploidy for an autosomal gene), `marker: str | None = None`
+  (optional selection cassette, e.g. `"KanMX"`), `state="present"`,
+  `mechanism_so_id="SO:0001019"`, `mechanism_so_name="copy_number_variation"`,
+  `provenance="engineered"`, `perturbation_type: Literal["engineered_copy_number"]`.
+- Uses the **real S288C systematic-name validator** (inherited from `GenePerturbation`, NOT
+  relaxed — these are reference genes, not pangenome ORFs). Does NOT carry
+  `strain_id`/`pangenome_orf_id` (those are natural-isolate fields).
+- **Semantics:** HIP heterozygous deletion = `EngineeredCopyNumberPerturbation(copy_number=1,
+  reference_copy_number=2, marker="KanMX")`. HOP homozygous deletion stays the existing
+  absence leaf (`KanMxDeletionPerturbation`, `state="absent"`).
+- Wired into `GenePerturbationType` (the discriminated union IS the perturbation registry;
+  there is no separate perturbation `*_TYPE_MAP` — the experiment TYPE_MAPs are unrelated).
+
+### Ploidy: `ReferenceGenome.ploidy` (`torchcell/datamodels/schema.py`)
+
+Added `ploidy: Literal["haploid","diploid"] = "haploid"` to `ReferenceGenome` (the genome-wide
+baseline belongs on the genome, not a perturbation). Default `"haploid"` keeps every existing
+dataset valid/backward-compatible. Per-locus `copy_number` is the deviation from this baseline
+(diploid autosomal gene 2 → 1 for a HIP heterozygous deletion).
+
+### Tests (`tests/torchcell/datamodels/test_ontology_invariants.py`)
+
+The generic parametrized invariants auto-cover the new leaf once it is added to `FACTORY`
+(discriminator uniqueness, DAGness/single-root, Liskov, union↔leaf, round-trip serialize/JSON,
+SO well-formedness, provenance ∈ {engineered,natural}, identity, factory↔leaves lockstep).
+Added focused unit tests: engineered-CNV defaults + discriminator, real-validator rejection of a
+pangenome id, optional marker, ploidy default/values/rejection, and HIP-style (diploid +
+copy 1/2) + HOP-style (diploid + KanMX deletion) round-trips.
+
+**Results:** `tests/torchcell/datamodels/ + tests/torchcell/verification/` → **292 passed**
+(includes all 8 ontology-integrity invariants). mypy-strict + ruff clean on both changed files.
+Existing built datasets (Vanacloig/Mota/Wildenhain and all other `ReferenceGenome(species=…,
+strain=…)` callsites) still instantiate unchanged via the `ploidy="haploid"` default.

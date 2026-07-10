@@ -503,7 +503,37 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
             ),
             page="FEMS Yeast Res 2022 foac036; GEO GSE186866 raw counts (Table S1 SI unscriptable)",
         ),
-    }
+    },
+    "env_chemgen_mota2024": {
+        "root": "data/torchcell/env_chemgen_mota2024",
+        # acetic 373 + butyric 416 + octanoic 484 = 1273 records: susceptible-mutant
+        # rows from Tables S1/S2/S3, deduplicated per (ORF, acid) keeping the more
+        # severe score (RNR4 source duplicate) minus 6 unresolvable gene tokens.
+        "expected_count": 1273,
+        # BY4741 Euroscarf single-deletion collection: no constant background genes.
+        "background_genes": frozenset(),
+        "provenance": Provenance(
+            source_uri=(
+                "https://static-content.springer.com/esm/"
+                "art%3A10.1186%2Fs12934-024-02309-0/MediaObjects/"
+                "12934_2024_2309_MOESM{1,2,3}_ESM.xlsx"
+            ),
+            citation_key="motaSharedMoreSpecific2024",
+            method=(
+                "BMC open-access supplementary spreadsheets (Additional files 1-3 = "
+                "Tables S1/S2/S3); categorical spot-assay susceptibility calls "
+                "(+ minor/moderate, ++ total growth inhibition) for 75 mM acetic / "
+                "14 mM butyric / 0.30 mM octanoic acid, YPD pH 4.5, 30 C, 48 h; "
+                "gene names -> SGD R64 ORFs via genome alias table"
+            ),
+            page=(
+                "Microb Cell Fact 2024 s12934-024-02309-0 (PMC10903034); "
+                "MOESM1 sha256=b23ad28141e70b307048fc69475aedd4e3cf880118ae9d0d806b6d9f91205e42, "
+                "MOESM2 sha256=a7a1aaee1c76e52d8fe435326790c89170ab43ec96b92ef272903d8e78a1e81f, "
+                "MOESM3 sha256=27f1508641ad5e7cc29ab8611739d4940da355c1dffbe9c9a908c267cdf5d455"
+            ),
+        ),
+    },
 }
 
 

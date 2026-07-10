@@ -13,6 +13,7 @@ from .costanzo2016 import SmfCostanzo2016Dataset as SmfCostanzo2016Dataset
 from .kuzmin2018 import DmfKuzmin2018Dataset as DmfKuzmin2018Dataset
 from .kuzmin2018 import SmfKuzmin2018Dataset as SmfKuzmin2018Dataset
 from .kuzmin2018 import TmfKuzmin2018Dataset as TmfKuzmin2018Dataset
+from .mota2024 import EnvChemgenMota2024Dataset as EnvChemgenMota2024Dataset
 from .mulleder2016 import AminoAcidMulleder2016Dataset as AminoAcidMulleder2016Dataset
 from .ohya2005 import ScmdOhya2005Dataset as ScmdOhya2005Dataset
 from .ozaydin2013 import CarotenoidOzaydin2013Dataset as CarotenoidOzaydin2013Dataset
@@ -54,6 +55,8 @@ zelezniak_datasets = ["ProteomeZelezniak2018Dataset", "MetaboliteZelezniak2018Da
 
 vanacloig_datasets = ["EnvChemgenVanacloig2022Dataset"]
 
+mota_datasets = ["EnvChemgenMota2024Dataset"]
+
 __all__ = (
     costanzo_datasets
     + kuzmin_datasets
@@ -64,4 +67,5 @@ __all__ = (
     + mulleder_datasets
     + zelezniak_datasets
     + vanacloig_datasets
+    + mota_datasets
 )

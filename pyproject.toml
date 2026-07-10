@@ -167,6 +167,7 @@ module = [
     "neo4j", "neo4j.*",
     "neo4j_utils", "neo4j_utils.*",
     "networkx", "networkx.*",
+    "openpyxl", "openpyxl.*",
     "owlready2", "owlready2.*",
     "plotly", "plotly.*",
     "psutil", "psutil.*",

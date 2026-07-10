@@ -138,3 +138,78 @@ EnvironmentPerturbation schema (which is frozen and complete) and does not block
    wanted, Table S1 must be manually deposited into the library mirror.
 4. **Compound-count reconciliations** for later builds: lee = 3250 (not 3356);
    wildenhain = 4915 @ 20 µM; note in each loader.
+
+## 2026.07.10 — Dataset #4: Mota2024 acetic/butyric/octanoic acid chemogenomic (L0–L4 PASS)
+
+Built `torchcell/datasets/scerevisiae/mota2024.py` (`EnvChemgenMota2024Dataset`,
+`env_chemgen_mota2024`) on the FROZEN EnvironmentPerturbation schema — no schema change
+needed; the categorical readout mapped cleanly (`measurement_type=categorical`, `category`).
+
+**Records: 1273** — acetic 373, butyric 416, octanoic 484. One categorical record per
+`(single KanMX deletion in BY4741) × SmallMoleculePerturbation(acid) →
+EnvironmentResponsePhenotype(category)`. 3 unique references (one per acid).
+
+**Source (all scriptable + sha256-pinned):** BMC open-access supplementary spreadsheets,
+`static-content.springer.com/esm/art%3A10.1186%2Fs12934-024-02309-0/MediaObjects/12934_2024_2309_MOESM{1,2,3}_ESM.xlsx`
+(Additional files 1/2/3 = Tables S1/S2/S3 = acetic/butyric/octanoic). sha256:
+MOESM1 `b23ad281…205e42`, MOESM2 `a7a1aaee…a1e81f`, MOESM3 `27f15086…f5d455`. Downloaded +
+verified in the loader `download()`. Parsed susceptible-row counts match the paper's
+headline totals EXACTLY: acetic 377 (46 ++, 331 +), butyric 422 (51 ++, 371 +), octanoic
+490 (53 ++, 437 +).
+
+**Sourced provenance (verbatim quotes, `paper.md`):**
+
+- **Background (confirmed haploid, NOT HIP/HOP):** *"The haploid parental strain S.
+  cerevisiae BY4741 (MATa, his3∆1, leu2∆0, met15∆0, ura3∆0) and the collection of derived
+  single deletion mutants, obtained from Euroscarf … were used for the chemogenomic
+  analysis."* (Methods, "Strains and growth conditions", line 197). BY4741 auxotrophies are
+  the standard collection background → captured by `ReferenceGenome(strain="BY4741")`, NOT
+  modeled as perturbations (matches Costanzo/Kuzmin convention); genotype = one
+  `KanMxDeletionPerturbation`. No constant-background genes (unlike Vanacloig 3ΔAlpha).
+- **Conditions / concentrations + pH:** *"Equivalent mild growth inhibitory concentrations
+  … by the supplementation of YPD solid medium at pH 4.5 with 75 mM (4.58 g/L) of acetic
+  acid, or 14 mM (1.23 g/L) of butyric acid, or 0.3 mM (0.04 g/L) of octanoic acid … These
+  acid concentrations were used for the planned genome-wide analysis."* (Results, line 39);
+  30 °C, YPD solid, pH 4.5 (Methods "Genome-wide search…", line 227). Modeled as
+  `SmallMoleculePerturbation(compound_name, Concentration(value, unit="mM"),
+  stress_category="acid")`, `Media(name="YPD, pH 4.5", state="solid")`, 30 °C, aerobic,
+  48 h. (Media schema has no pH field → pH encoded in the media name.)
+- **Readout (categorical):** *"the susceptibility phenotype of each single deletion mutant
+  was scored, after 48 h as (+) if the mutant strain showed, compared with the parental
+  strain, a slight to moderate growth inhibition, and (++) if no growth was observed"*
+  (Table S1/S2/S3 captions + Methods line 229); *"'0' corresponds to an absence of a
+  detectable susceptibility phenotype"* (Fig. S2, line 271). Category strings:
+  `+`→`minor_to_moderate_growth_inhibition`, `++`→`total_growth_inhibition`, reference
+  (parental)→`no_detectable_susceptibility`.
+- **n_samples — NOT SOURCEABLE → `None` (flagged, not guessed):** the genome-wide spot
+  screen Methods give NO replicate count (*"Photographs were taken after 24 h of incubation
+  for control plates (YPD medium) or 36–48 h in the presence of the acids"*, line 227). The
+  *"at least three independent experiments"* statements apply ONLY to the CFU-viability
+  (line 209) and intracellular-pH (line 221) PHYSIOLOGICAL assays, NOT the disruptome
+  screen. So `n_samples=None`, `sample_unit=None`, no uncertainty/SE (categorical readout
+  carries no SE anyway). Documented in loader + this note.
+
+**Source quirks handled deterministically (no guessing):**
+
+- **RNR4 (YGR180C) listed twice** in every table (a source duplicate the paper's totals
+  count) — acetic/butyric both `+`, octanoic conflicting `+`/`++`. Deduped per (resolved
+  ORF, acid) keeping the MORE SEVERE score → RNR4 = one record/acid (octanoic → `++`).
+- **6 gene tokens unresolvable to an SGD R64 systematic ORF** (genome alias table) →
+  DROPPED, never guessed (13 records total): REF1, RLM2, SBR2 (all 3 acids), ILM2
+  (butyric), VPS236 (butyric+octanoic), SIW15 (octanoic). Logged per-acid in `process()`.
+  Likely SI typos (VPS236→VPS36? SIW15→SIW14? ILM2→ILM1? RLM2→RLM1? REF1/SBR2 unclear) —
+  **flagged follow-up**; resolving them would recover ≤13 records. This is why final counts
+  are acetic 373 / butyric 416 / octanoic 484 (raw 377/422/490 − 1 RNR4 dup − unresolvable).
+
+**L0–L4: PASS** (report `…/env_chemgen_mota2024/preprocess/verification_report.json`, sibling
+of `experiment_reference_index.json`): L0 1273 validated; L1 count=1273 + 1273 unique
+(ORF, compound) pairs; L2 value/SE fidelity (0 numeric values — categorical); L3 single
+measurement_type=categorical + reference_zero (n=0, categorical refs) + all 1273 env-perturbed;
+L4 0.993 of 601 measured genes are S288C reference genes (≥0.90). Runner entry added to
+`ENVIRONMENT_RESPONSE_DATASETS` (`background_genes=frozenset()`, `expected_count=1273`).
+Tests: 278 passed (datamodels + verification, incl. 8 ontology-integrity invariants).
+mypy-strict + ruff clean on all changed files (added `openpyxl` to pyproject untyped-module
+mypy override).
+
+**No blockers for Mota** — self-contained, fully scriptable/sourced. The only flagged item
+is the 6 unresolvable gene tokens (≤13 records), left for a supervised typo-resolution pass.

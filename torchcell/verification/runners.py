@@ -534,6 +534,36 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
             ),
         ),
     },
+    "env_chemgen_wildenhain2015": {
+        "root": "data/torchcell/env_chemgen_wildenhain2015",
+        # 428573 = 242 screened ORFs x compounds, one cell per (ORF, CID-else-SID);
+        # 484830 systematic-ORF datapoints collapsed (46195 multi-library-repeat cells
+        # averaged), 7296 NA/NULL non-strain control rows dropped.
+        "expected_count": 428573,
+        # Plain haploid single-deletion collection (isogenic to BY4741): no constant
+        # background genes.
+        "background_genes": frozenset(),
+        "provenance": Provenance(
+            source_uri=(
+                "https://ftp.ncbi.nlm.nih.gov/pubchem/Bioassay/CSV/Data/"
+                "1159001_1160000.zip (member 1159001_1160000/1159580.csv.gz)"
+            ),
+            citation_key="wildenhainPredictionSynergismChemicalGenetic2015",
+            sha256="c461c679b63ac56045cef0f03ed9bcbb8e7f9c12146f1fc7cc8ac0c113188d64",
+            method=(
+                "PubChem BioAssay AID 1159580 datapoint export; normalized-OD600 growth-"
+                "inhibition Z-score per (deletion strain x compound) at 20 uM in DMSO, "
+                "SC + 2% glucose, 30 C, ~18 h; duplicate replicate screens (read 1/2) => "
+                "n_samples=2 per screen; multi-library-repeat cells averaged (paper's "
+                "'Z scores averaged for the replicate screens'); compounds -> PubChem CID"
+            ),
+            page=(
+                "Cell Systems 2015 (doi:10.1016/j.cels.2015.12.003); ACCESSION NUMBERS "
+                "PubChem BioAssay AID 1159580; inner 1159580.csv.gz sha256=c461c679... "
+                "(bit-identical to PUG-REST /assay/aid/1159580/CSV, 492126 datapoints)"
+            ),
+        ),
+    },
 }
 
 

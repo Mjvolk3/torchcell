@@ -213,3 +213,85 @@ mypy override).
 
 **No blockers for Mota** — self-contained, fully scriptable/sourced. The only flagged item
 is the 6 unresolvable gene tokens (≤13 records), left for a supervised typo-resolution pass.
+
+## 2026.07.10 — Dataset #5: Wildenhain2015 chemical-genetic matrix (CGM) (L0–L4 PASS)
+
+Built `torchcell/datasets/scerevisiae/wildenhain2015.py`
+(`EnvChemgenWildenhain2015Dataset`, `env_chemgen_wildenhain2015`) on the FROZEN
+EnvironmentPerturbation schema — **no schema change needed**; the numeric z-score readout
+mapped cleanly (`measurement_type=z_score`). Scope: ONLY the chemical-genetic matrix
+(strain × compound → z-score); the 128×128 cryptagen chemical-chemical synergy layer is out
+of scope as instructed.
+
+**Records: 428,573** — one cell per `(haploid single KanMX deletion in BY4741) ×
+SmallMoleculePerturbation(compound @ 20 µM in DMSO) → EnvironmentResponsePhenotype(z_score)`.
+Covers **242 distinct systematic ORFs** (the released data spans more strains than the
+195-strain "sentinel panel" headline — extra strains screened across the 4 libraries; all
+242 are valid SGD R64 genes, L4 containment = 1.000). Reference = parent BY4741 in the same
+compound environment, control z-score = 0.
+
+**Data source (structured, scriptable, sha256-pinned, byte-stable):** PubChem BioAssay
+**AID 1159580** (the paper's ACCESSION NUMBER). chemgrid.org/cgm is an interactive PHP portal
+with NO bulk-downloadable processed matrix, so the PubChem datapoint export is the canonical
+scriptable full-data artifact. Pulled from the byte-stable NCBI FTP range archive
+`ftp.ncbi.nlm.nih.gov/pubchem/Bioassay/CSV/Data/1159001_1160000.zip`, member
+`1159001_1160000/1159580.csv.gz` (fixed 2022-12-16 mtime), **sha256
+`c461c679b63ac56045cef0f03ed9bcbb8e7f9c12146f1fc7cc8ac0c113188d64`** (verified on extract).
+Confirmed **bit-identical** to the PUG-REST `/assay/aid/1159580/CSV` export (492,126
+datapoints). Each row carries `PUBCHEM_CID` + `PUBCHEM_EXT_DATASOURCE_SMILES` →
+**compound→CID mapping 99.9%** (428,206 of 428,573 records carry a `CID:` CURIE; 367 lack a
+CID and fall back to the PubChem SID). SMILES stored per record.
+
+**Sourced provenance (verbatim quotes):**
+
+- **195 strains, 4,915 compounds, 20 µM, z-score averaged over the duplicate screens
+  (n_samples=2):** *"we screened a total of 4,915 unique compounds derived from four
+  different chemical libraries against a panel of 195 non-essential deletion strains"* and
+  *"We carried out over 600 growth-based screens in duplicate at a compound concentration of
+  20 µM … Z scores were calculated and averaged for the replicate screens."* (`paper.md`
+  RESULTS "Generation of a Chemical-Genetic Matrix", lines 68 + 70).
+- **Background (confirmed haploid, isogenic BY4741, Euroscarf — NOT HIP/HOP):** *"S.
+  cerevisiae deletion strains were obtained from the Euroscarf deletion set and are isogenic
+  to BY4741"* (`paper.md` EXPERIMENTAL PROCEDURES, line 217). A sentinel = an ordinary
+  single-gene deletion strain ⇒ one `KanMxDeletionPerturbation` in the `ReferenceGenome`
+  (BY4741) background; the standard KanMX Euroscarf MATa collection (Mota precedent). No
+  constant-background genes.
+- **Medium / temperature / duration / solvent / duplicate (PubChem AID 1159580 protocol):**
+  *"All strains were grown and screened in synthetic complete (SC) medium with 2% glucose."*;
+  *"final concentration of 20 M. Screens were conducted in technical duplicate … DMSO solvent
+  only controls … incubated at 30 C without shaking for approximately 18 h … reading OD600"*;
+  BioAssay column defs *"Raw OD read 1 = first replicate"*, *"Raw OD read 2 = second
+  replicate"*, *"Z_score = … per screen"*. Modeled: `Media("synthetic complete (SC), 2%
+  glucose", state="liquid")`, 30 °C, aerobic, 18 h, `Solvent("DMSO")`,
+  `Concentration(value=20, unit="uM")`. **`n_samples=2` (the two duplicate replicate screens
+  read1/read2), `sample_unit=technical_replicate`.**
+
+**n_samples nuance (documented, more-rigorous-than-source):** read1/read2 ARE the two
+duplicate replicate screens underlying each released z (PubChem "first/second replicate" +
+paper "600 screens in duplicate … averaged for the replicate screens"). A given
+(strain, compound) can additionally recur across the four libraries: **46,195 cells (11%)
+had 2–3 released screen rows** with distinct z-scores. These are collapsed to one matrix cell
+by **averaging** the per-screen z-scores — exactly the paper's stated matrix construction
+("Z scores … averaged for the replicate screens") and the Vanacloig recompute-from-canonical
+precedent — with `n_samples = 2 × (number of screen rows)` to count all contributing
+duplicate-screen reads (2 for the 89% single-screen cells, 4/6 for the repeats). No per-record
+SE is released for the z (so `environment_response_se=None`; L2 se_nonnegative trivially
+passes). 7,296 `NA`/`NULL` non-strain control rows dropped; only systematic-ORF strains enter
+the matrix. Compound identity = CID when present else SID; `compound_name` carries this
+identifier because the structured artifact provides **no human compound name** (chemgrid
+regid→CID join not available in the pinned export).
+
+**L0–L4: PASS** (report at
+`…/env_chemgen_wildenhain2015/preprocess/verification_report.json`, sibling of
+`experiment_reference_index.json`): L0 428,573 validated; L1 count=428,573 + 428,573 unique
+(ORF, compound) pairs; L2 value-fidelity (428,573 finite signed z's) + se_nonnegative (0
+values); L3 single measurement_type=z_score + reference_zero (all references z=0) + all
+428,573 env-perturbed; L4 1.000 of 242 measured genes are S288C reference genes (≥0.90).
+Runner entry added to `ENVIRONMENT_RESPONSE_DATASETS` (`background_genes=frozenset()`,
+`expected_count=428573`). Tests: 215 passed (datamodels + ontology-integrity invariants).
+mypy-strict + ruff clean on all changed files.
+
+**No blockers for Wildenhain** — fully scriptable + sha256-pinned. Flagged (non-blocking):
+(1) released z-score is a point value with no released SE; (2) compound human names not in the
+structured artifact (CID/SID/SMILES only); (3) the multi-library z-averaging is a documented
+deterministic reconstruction, not a byte-verbatim released cell value.

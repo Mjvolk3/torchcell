@@ -26,6 +26,9 @@ from .sameith2015 import (
 from .vanacloig2022 import (
     EnvChemgenVanacloig2022Dataset as EnvChemgenVanacloig2022Dataset,
 )
+from .wildenhain2015 import (
+    EnvChemgenWildenhain2015Dataset as EnvChemgenWildenhain2015Dataset,
+)
 from .zelezniak2018 import (
     MetaboliteZelezniak2018Dataset as MetaboliteZelezniak2018Dataset,
 )
@@ -57,6 +60,8 @@ vanacloig_datasets = ["EnvChemgenVanacloig2022Dataset"]
 
 mota_datasets = ["EnvChemgenMota2024Dataset"]
 
+wildenhain_datasets = ["EnvChemgenWildenhain2015Dataset"]
+
 __all__ = (
     costanzo_datasets
     + kuzmin_datasets
@@ -68,4 +73,5 @@ __all__ = (
     + zelezniak_datasets
     + vanacloig_datasets
     + mota_datasets
+    + wildenhain_datasets
 )

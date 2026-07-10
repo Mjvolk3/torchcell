@@ -24,13 +24,14 @@ tolerance in this study (only sensitivity was scored), so there is no "resistant
 
 This maps onto the WS15 environment-perturbation ontology. ``EnvironmentResponseExperiment``
 = single-deletion ``Genotype`` (a ``KanMxDeletionPerturbation`` in the BY4742 reference
-background) x aerobic ``Environment`` carrying either:
-- a ``SmallMoleculePerturbation`` for the three alcohols (compound_name, percent v/v
-  concentration, ``stress_category="alcohol"``), or
-- a ``PhysicalStressPerturbation`` for the three physical/physiological stresses:
-  heat -> ``stress_type="temperature"``, magnitude 37 Celsius (the Environment temperature
-  is itself raised to 37 C); NaCl -> ``stress_type="osmotic"``, agent "NaCl", magnitude 1 M;
-  H2O2 -> ``stress_type="oxidative"``, agent "H2O2", magnitude 5 mM.
+background) x aerobic ``Environment`` carrying the EDIT (never its consequence, M1):
+- the three alcohols AND NaCl AND H2O2 are all ``SmallMoleculePerturbation``s -- an added
+  chemical species dosed at a ``Concentration`` (ethanol 10% v/v, methanol 16% v/v,
+  1-propanol 7% v/v, sodium chloride 1 M, hydrogen peroxide 5 mM). NaCl / H2O2 are named
+  compounds, not abstract "physical stresses"; their osmotic / oxidative framing is a
+  CONSEQUENCE and lives on the phenotype / the compound's ChEBI role, not the edit.
+- heat carries NO perturbation object: its edit is the raised ``Environment.temperature``
+  (37 C vs the 30 C base), the single canonical home for temperature (M2).
 The readout is ``EnvironmentResponsePhenotype(measurement_type=categorical,
 category="sensitive")``; the reference phenotype is ``category="tolerant"``.
 
@@ -103,19 +104,20 @@ from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
 from torchcell.datamodels.schema import (
+    Compound,
     Concentration,
+    ConcentrationUnit,
     Environment,
+    EnvironmentPhysicalPerturbation,
     EnvironmentResponseExperiment,
     EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
-    EnvironmentStressType,
     Experiment,
     ExperimentReference,
     Genotype,
     KanMxDeletionPerturbation,
     MeasurementType,
     Media,
-    PhysicalStressPerturbation,
     Publication,
     ReferenceGenome,
     SampleUnit,
@@ -162,14 +164,19 @@ _EXPECTED_LISTED: dict[str, int] = {
     "H2O2": 30,
 }
 
-# Per-stress environment spec. ``kind`` selects the perturbation leaf.
+# Per-stress environment spec. ``kind`` selects how the edit is modeled:
+#   - "small_molecule": an added chemical SPECIES (the 3 alcohols + NaCl + H2O2 are all
+#     small molecules -- NaCl/H2O2 are named compounds, NOT abstract "physical stresses").
+#   - "temperature": NO perturbation object; the edit is the raised
+#     ``Environment.temperature`` (37 C) alone -- temperature has ONE canonical home (M2).
+# The physiological framing (osmotic / oxidative / alcohol) is a CONSEQUENCE, not an
+# edit, so it is deliberately absent from the perturbation (M1).
 _STRESS_SPECS: list[dict[str, Any]] = [
     {
         "stress": "ethanol",
         "kind": "small_molecule",
         "compound_name": "ethanol",
         "concentration": (10.0, "percent_v/v"),
-        "stress_category": "alcohol",
         "temperature": 30.0,
     },
     {
@@ -177,7 +184,6 @@ _STRESS_SPECS: list[dict[str, Any]] = [
         "kind": "small_molecule",
         "compound_name": "methanol",
         "concentration": (16.0, "percent_v/v"),
-        "stress_category": "alcohol",
         "temperature": 30.0,
     },
     {
@@ -185,31 +191,21 @@ _STRESS_SPECS: list[dict[str, Any]] = [
         "kind": "small_molecule",
         "compound_name": "1-propanol",
         "concentration": (7.0, "percent_v/v"),
-        "stress_category": "alcohol",
         "temperature": 30.0,
     },
-    {
-        "stress": "heat",
-        "kind": "physical_stress",
-        "stress_type": EnvironmentStressType.temperature,
-        "agent": None,
-        "magnitude": (37.0, "Celsius"),
-        "temperature": 37.0,
-    },
+    {"stress": "heat", "kind": "temperature", "temperature": 37.0},
     {
         "stress": "NaCl",
-        "kind": "physical_stress",
-        "stress_type": EnvironmentStressType.osmotic,
-        "agent": "NaCl",
-        "magnitude": (1.0, "M"),
+        "kind": "small_molecule",
+        "compound_name": "sodium chloride",
+        "concentration": (1.0, "M"),
         "temperature": 30.0,
     },
     {
         "stress": "H2O2",
-        "kind": "physical_stress",
-        "stress_type": EnvironmentStressType.oxidative,
-        "agent": "H2O2",
-        "magnitude": (5.0, "mM"),
+        "kind": "small_molecule",
+        "compound_name": "hydrogen peroxide",
+        "concentration": (5.0, "mM"),
         "temperature": 30.0,
     },
 ]
@@ -399,27 +395,28 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
         return resolved
 
     def _environment(self, spec: dict[str, Any]) -> Environment:
-        """Aerobic YPD plate carrying the stress (small molecule or physical stress)."""
+        """Aerobic YPD plate carrying the edit (an added small molecule, or raised heat).
+
+        The 5 chemical stresses are ``SmallMoleculePerturbation``s; heat carries NO
+        perturbation -- its edit is the raised ``Environment.temperature`` alone (M2).
+        """
+        perturbations: list[
+            SmallMoleculePerturbation | EnvironmentPhysicalPerturbation
+        ] = []
         if spec["kind"] == "small_molecule":
             value, unit = spec["concentration"]
-            perturbation: SmallMoleculePerturbation | PhysicalStressPerturbation = (
+            perturbations.append(
                 SmallMoleculePerturbation(
-                    compound_name=spec["compound_name"],
-                    concentration=Concentration(value=value, unit=unit),
-                    stress_category=spec["stress_category"],
+                    compound=Compound(name=spec["compound_name"]),
+                    concentration=Concentration(
+                        value=value, unit=ConcentrationUnit(unit)
+                    ),
                 )
-            )
-        else:
-            value, unit = spec["magnitude"]
-            perturbation = PhysicalStressPerturbation(
-                stress_type=spec["stress_type"],
-                magnitude=Concentration(value=value, unit=unit),
-                agent=spec["agent"],
             )
         return Environment(
             media=Media(name="YPD", state="solid"),
             temperature=Temperature(value=spec["temperature"]),
-            perturbations=[perturbation],
+            perturbations=perturbations,
             aerobicity="aerobic",
             duration_hours=72.0,
         )

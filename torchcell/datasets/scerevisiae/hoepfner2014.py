@@ -100,7 +100,10 @@ from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
 from torchcell.datamodels.schema import (
+    Compound,
     Concentration,
+    ConcentrationUnit,
+    DoseBasis,
     EngineeredCopyNumberPerturbation,
     Environment,
     EnvironmentResponseExperiment,
@@ -443,10 +446,11 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                 temperature=Temperature(value=30.0),
                 perturbations=[
                     SmallMoleculePerturbation(
-                        compound_name=compound_name,
-                        smiles=smiles,
+                        compound=Compound(name=compound_name, smiles=smiles),
                         concentration=Concentration(
-                            value=conc, unit="uM", basis="IC30"
+                            value=conc,
+                            unit=ConcentrationUnit.micromolar,
+                            basis=DoseBasis.IC30,
                         ),
                         solvent=Solvent(name="DMSO", percent=2.0),
                     )

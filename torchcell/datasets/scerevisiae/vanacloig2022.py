@@ -52,7 +52,9 @@ from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
 from torchcell.datamodels.schema import (
+    Compound,
     Concentration,
+    DoseBasis,
     Environment,
     EnvironmentResponseExperiment,
     EnvironmentResponseExperimentReference,
@@ -297,7 +299,8 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
             temperature=Temperature(value=30.0),
             perturbations=[
                 SmallMoleculePerturbation(
-                    compound_name=compound, concentration=Concentration(basis="IC30")
+                    compound=Compound(name=compound),
+                    concentration=Concentration(basis=DoseBasis.IC30),
                 )
             ],
             aerobicity="anaerobic",

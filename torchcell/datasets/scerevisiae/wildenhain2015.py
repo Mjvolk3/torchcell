@@ -67,10 +67,11 @@ BUILD / SOURCE QUIRKS handled deterministically (no fabrication):
   reconstruction of the paper's DEFINED quantity from the canonical artifact (the Vanacloig
   precedent), NOT a value copied verbatim.
 - Compound identity is the PubChem CID when present (the paper's unique-compound axis), else
-  the PubChem SID (367 records lack a CID). ``compound_name`` carries this identifier
-  (``"CID <cid>"`` / ``"SID <sid>"``) because the released structured artifact provides NO
-  human compound name; ``compound_id`` carries the ``CID:<cid>`` CURIE and ``smiles`` the
-  released SMILES. Final matrix: 242 strains x compounds = 428,573 records.
+  the PubChem SID (367 records lack a CID). The typed ``Compound`` carries this identifier as
+  its ``name`` (``"CID <cid>"`` / ``"SID <sid>"``) because the released structured artifact
+  provides NO human compound name; ``Compound.pubchem_cid`` carries the integer CID and
+  ``Compound.smiles`` the released SMILES. Final matrix: 242 strains x compounds = 428,573
+  records.
 """
 
 import csv
@@ -93,7 +94,9 @@ from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
 from torchcell.datamodels.schema import (
+    Compound,
     Concentration,
+    ConcentrationUnit,
     Environment,
     EnvironmentResponseExperiment,
     EnvironmentResponseExperimentReference,
@@ -228,7 +231,7 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
                         "orf": orf,
                         "sym": sym or orf,
                         "compound_name": identity,
-                        "compound_id": f"CID:{cid}" if cid else None,
+                        "pubchem_cid": int(cid) if cid else None,
                         "smiles": smiles or None,
                         "z_values": [float(z_raw)],
                     }
@@ -251,11 +254,13 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
             temperature=Temperature(value=30.0),
             perturbations=[
                 SmallMoleculePerturbation(
-                    compound_name=cell["compound_name"],
-                    compound_id=cell["compound_id"],
-                    smiles=cell["smiles"],
+                    compound=Compound(
+                        name=cell["compound_name"],
+                        pubchem_cid=cell["pubchem_cid"],
+                        smiles=cell["smiles"],
+                    ),
                     concentration=Concentration(
-                        value=SCREEN_CONCENTRATION_UM, unit="uM"
+                        value=SCREEN_CONCENTRATION_UM, unit=ConcentrationUnit.micromolar
                     ),
                     solvent=Solvent(name="DMSO"),
                 )

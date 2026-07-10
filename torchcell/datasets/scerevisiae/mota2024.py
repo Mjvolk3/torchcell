@@ -23,8 +23,8 @@ paper reports none), so there is no "resistant" category.
 
 This maps onto the WS15 environment-perturbation ontology: ``EnvironmentResponseExperiment``
 = single-deletion ``Genotype`` (a ``KanMxDeletionPerturbation`` in the BY4741 reference
-background) x aerobic ``Environment`` carrying a ``SmallMoleculePerturbation`` (the acid at
-its fixed inhibitory molar concentration, ``stress_category="acid"``) ->
+background) x aerobic ``Environment`` carrying a ``SmallMoleculePerturbation`` (the acid, a
+typed ``Compound``, at its fixed inhibitory molar concentration) ->
 ``EnvironmentResponsePhenotype`` (``measurement_type=categorical``, ``category`` the
 susceptibility call). The parental BY4741 baseline (no susceptibility) is the reference.
 
@@ -71,7 +71,9 @@ from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
 from torchcell.datamodels.schema import (
+    Compound,
     Concentration,
+    ConcentrationUnit,
     Environment,
     EnvironmentResponseExperiment,
     EnvironmentResponseExperimentReference,
@@ -279,11 +281,11 @@ class EnvChemgenMota2024Dataset(ExperimentDataset):
             temperature=Temperature(value=30.0),
             perturbations=[
                 SmallMoleculePerturbation(
-                    compound_name=spec["compound_name"],
+                    compound=Compound(name=spec["compound_name"]),
                     concentration=Concentration(
-                        value=spec["concentration_mM"], unit="mM"
+                        value=spec["concentration_mM"],
+                        unit=ConcentrationUnit.millimolar,
                     ),
-                    stress_category="acid",
                 )
             ],
             aerobicity="aerobic",

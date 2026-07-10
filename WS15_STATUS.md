@@ -449,3 +449,122 @@ __init__.py`, `verification/runners.py`).
 **No blockers for Auesukaree** — fully deterministic + sha256-pinned born-digital source.
 Flagged (non-blocking): (1) methanol Table=55 vs abstract headline 54 (Table authoritative);
 (2) `pdftotext`/poppler is a build-time dependency for the born-digital extraction.
+
+## 2026.07.10 — Dataset #8: Nadal-Ribelles2025 single-cell Perturb-seq — **DEFERRED (STOP + FLAG)**
+
+**Verdict: NOT BUILT.** No LMDB was built and nothing huge was downloaded. Per the WS15
+single-cell guardrails ("if the raw single-cell data is very large or per-cell
+genotype/condition demultiplexing is non-trivial, and no author-provided aggregate exists
+that fits the target phenotype → STOP and flag for supervised work; a clean deferral with
+the data layout is a fully acceptable outcome"), this dataset is deferred. A build is
+**possible** but requires either (a) an R + Seurat toolchain to load a 5.9–42.9 GB S4
+object into tens of GB of RAM, or (b) a supervised schema decision — neither is an
+autonomous build. Below is the complete data layout, the exact roster, all sourced
+provenance, and the recommended supervised path.
+
+### Why deferred (the schema/tooling mismatch, precisely)
+
+The task specifies `phenotype = RNASeqExpressionPhenotype`. That frozen schema stores
+**absolute, non-negative** per-gene `expression_tpm` (validator rejects negative/NaN/inf)
+plus **non-negative integer** `expression_count` (same keys). An honest pseudobulk for it =
+per `(genotype × condition)` **summed raw counts** (→ non-negative ints) then CPM/TPM-normalize
+(→ non-negative). That REQUIRES the per-cell count matrix + per-cell `(genotype, condition)`
+metadata. Three routes to that matrix, all blocked for an autonomous, non-heavy build:
+
+1. **Zenodo per-cell Seurat objects** (`doi:10.5281/zenodo.14062629`): `seus_split.RData`
+   **5.9 GB** (control + NaCl Seurat objects) and `seu.RData` **42.9 GB** (merged). These are
+   R **S4** Seurat objects. **No `R`/`Rscript` is installed on this host**, and `pyreadr`
+   0.5.3 CANNOT read R lists or S4 objects — empirically confirmed: reading the tiny
+   `ptb_summary.Rdata` (an R `list`) returns **0 keys**. So the count matrix is not
+   extractable in Python. Loading a 710,952-cell Seurat + demultiplexing by genotype needs
+   R + Seurat + tens of GB RAM = exactly the runaway-build risk the guardrails forbid.
+2. **ArrayExpress E-MTAB-14004** (`sdrf.txt` sha256
+   `6e08a5a7f52f6a3dd759c47376b0f198766f23327727068c952a05119943f000`): **raw FASTQ only**
+   (348 `*.fastq.gz`, ~3.58 Tb; `Source Name`s are per-RUN pools like `PF_10C_RNA`, NOT
+   per-genotype). Genotype demultiplexing requires running the authors' CeleScope v1.14
+   barcode pipeline on 3.58 Tb — infeasible here. `Factor Value[stimulus]` ∈ {control, NaCl}
+   confirms the two conditions.
+3. **Author-provided lightweight aggregate** `FC_genotype.Rdata` (**426 MB**): the object
+   `fcs`, a list keyed `DEG_<condition>_bc_<genotype>.csv`, each element = a scanpy
+   `rank_genes_groups` DEG table (cols 1:2 = gene name + `logfoldchanges`), i.e. a **signed
+   log2 fold-change vs wild type** per `(genotype × condition)`. This is a DIFFERENTIAL
+   pseudobulk, NOT absolute expression → **cannot** populate the non-negative
+   `RNASeqExpressionPhenotype`, and it is an R `list` (again unreadable by `pyreadr`). Storing
+   it would require either a supervised decision to use a signed log2-ratio phenotype
+   (`MicroarrayExpressionPhenotype` already stores `log2(sample/reference)`, or WS15's own
+   `EnvironmentResponsePhenotype(measurement_type=log2_ratio)`), NOT the RNASeq absolute
+   phenotype the task named — a schema/design call, not an autonomous build.
+
+So: **no Python-readable, schema-compatible author aggregate exists.** The only aggregate
+that fits `RNASeqExpressionPhenotype` (absolute counts) has to be computed from the R/S4
+Seurat per-cell matrix (heavy) or from 3.58 Tb of FASTQ (heavier).
+
+### Data layout (for the supervised build)
+
+- **Accession(s):** raw = ArrayExpress **E-MTAB-14004** (FASTQ, ~3.58 Tb). Processed =
+  **Zenodo `doi:10.5281/zenodo.14062629`**. Paper = Nat Commun 2025, DOI
+  `10.1038/s41467-025-57600-4`; mirror `torchcell-library/nadal-ribellesSinglecellResolvedGenotypephenotype2025/`
+  (`paper.pdf` sha256 `8692dd3d300bec60ccdc15b85c1e9621cf138658a9558227ec36cbc248dff059`,
+  `paper.md` sha256 `ef30265da68390e5cc8baec8c80b6cdd5b2b0eb1f3b3ad4c22ceebff76294d5a`).
+- **Zenodo files (sizes verified via API):** `seu.RData` 42.9 GB · `seus_split.RData` 5.9 GB
+  · `FC_genotype.Rdata` 426 MB (per-genotype×condition log2FC) · `ptb_summary.Rdata` 0.3 MB
+  (per-genotype×condition `cell_number` + leverage stats; R list, sha256
+  `01c2d54ac838179be29694ed300cb17edac47dd4db23a4018407546e0651b165`) · `DEG.Rdata` 42 KB
+  (per-genotype×condition up/down DEG counts; readable data.frame, sha256
+  `146018578e0a4eb3dda86b8619a3b2c667de931d0cce0600a794a23bc574e535`) · plus `Figures_Rev.R`,
+  `summary.genotypes_Rev.R`, `DEGs_summary.R` (the aggregation code), and reference tables.
+- **Exact `(genotype × condition)` roster** (from `DEG.Rdata`, the one Python-readable
+  data.frame): **6188 records** = **Control 3091 + NaCl 3097**, over **3150 unique
+  genotypes** (systematic ORF ids, e.g. `YAL012W`). This is the record count a completed
+  pseudobulk build would produce (one record per genotype per condition, ≈6188).
+
+### Sourced provenance (verbatim quotes, `paper.md`) — ready for the build
+
+- **Conditions (2):** *"the whole collection of mutants was grown independently (96-well
+  plates) and pooled before being subjected to stress (osmostress; 0.4 M NaCl, 15 min) or
+  control conditions"* (line 25). → control = `Environment(media=YPD)`; stress =
+  `PhysicalStressPerturbation(stress_type="osmotic", agent="NaCl",
+  magnitude=Concentration(0.4,"M"))`, `duration` of stress = 15 min.
+- **Growth medium/phase/temperature:** *"5 µl of cultures were refreshed into another 96
+  well plate containing 200 µl of YPD. Cells were allowed to grow for 6h until they reached
+  mid exponential phase average OD660 0.6-0.8 … pooled together into large flasks"* (line
+  172); recovery *"on URA- media at 25 °C for 48 h"* (line 172); transformation/incubation
+  steps at 30 °C. → `Media("YPD")`, mid-exponential, aerobic; document growth 25→30 °C,
+  osmostress spike 0.4 M NaCl 15 min.
+- **n_cells (sourced):** total **1,061,865 cells profiled**; after QC + genotype assignment
+  **710,952 cells** (Fig. 1 legend, line 35); per-genotype means **93 (control) / 108 (NaCl)
+  cells/genotype**, medians **77 / 87** (line 25). **Per-genotype×condition exact
+  `cell_number` is in `ptb_summary.Rdata`** (R list → needs R to read); it is the value to
+  store as the pseudobulk `n_samples` / a covariate. `sample_unit` = `cell`.
+- **Genotype / deletion marker (IMPORTANT — NOT KanMX):** the authors **replaced the KanMX4
+  marker with URA3**: *"we generated a PCR cassette to replace the KAN resistance marker with
+  URA3 … adds a clone barcode (5 random nucleotides) downstream of the URA3 STOP codon"*
+  (lines 23–24, Methods 124). So each KO is a **URA3-marked ORF deletion**, not KanMX. Model
+  the genotype as `MarkerDeletionPerturbation(systematic_gene_name=<ORF>, marker="URA3")`
+  (the leaf added in WS15 Phase 1 for exactly this honest case), NOT `KanMxDeletionPerturbation`.
+  Background = derived from the YKOC (BY4741/BY4742-class, `his3Δ leu2Δ … ura3Δ0`); the
+  ura3Δ0 auxotrophy is complemented by the URA3 cassette. Reference = the 7 barcoded WT
+  strains profiled in the same run (line 138) → WT pseudobulk per condition.
+
+### Recommended supervised path (one of)
+
+- **(A) Absolute pseudobulk → `RNASeqExpressionPhenotype` (matches the task).** Install R +
+  Seurat; load `seus_split.RData` (5.9 GB, the split objects — avoid the 42.9 GB merged one);
+  for each condition, `AggregateExpression`/`rowsum` of the **raw counts assay** grouped by
+  `assignment_consensus2` (genotype) → per-`(genotype,condition)` summed integer counts;
+  CPM/TPM-normalize for `expression_tpm`; carry `ptb_summary` `cell_number` as `n_samples`
+  (`sample_unit="cell"`). Export a genotype×gene counts matrix to a Python-readable format
+  (feather/parquet/mtx) so the torchcell loader stays R-free and sha256-pins that exported
+  matrix. ≈6188 records. **Memory-bounded** because you aggregate one condition at a time and
+  never hold the merged 42.9 GB object.
+- **(B) Differential pseudobulk (lighter, but a schema decision).** Use `FC_genotype.Rdata`
+  (426 MB) directly = per-`(genotype,condition)` log2FC-vs-WT vector, stored as a signed
+  log2-ratio expression phenotype (`EnvironmentResponsePhenotype(measurement_type=log2_ratio)`
+  or `MicroarrayExpressionPhenotype`-style `log2(sample/ref)`) — NOT `RNASeqExpressionPhenotype`.
+  Still needs R (or `rpy2`) to read the R `list`. This diverges from the task's named
+  phenotype, so it needs sign-off.
+
+**Blocker to clear before build:** provide an `R`/`Rscript` (+ Seurat) toolchain, or accept
+option (B)'s phenotype substitution. No schema change is needed for option (A) —
+`RNASeqExpressionPhenotype` + `MarkerDeletionPerturbation` + `PhysicalStressPerturbation`
+(osmotic/NaCl) already cover it.

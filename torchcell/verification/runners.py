@@ -642,11 +642,11 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
                 "Article Tables 1-6 extracted from the born-digital PDF text layer "
                 "(pdftotext -layout; per-class parenthetical counts as self-checksums); "
                 "categorical spot-assay sensitivity ('sensitive' vs parental BY4742, "
-                "tolerant) for 10% ethanol / 16% methanol / 7% 1-propanol (v/v) -> "
-                "SmallMoleculePerturbation, and 37 C heat / 1 M NaCl / 5 mM H2O2 -> "
-                "PhysicalStressPerturbation (temperature/osmotic/oxidative); YPD solid, "
-                "30 C (37 C heat), 3 days, aerobic; n_samples=3 (triplicate); gene names "
-                "-> SGD R64 ORFs via genome alias table"
+                "tolerant) for 10% ethanol / 16% methanol / 7% 1-propanol (v/v) and "
+                "1 M NaCl / 5 mM H2O2 -> SmallMoleculePerturbation (typed Compound); "
+                "37 C heat -> raised Environment.temperature (no perturbation, M2); "
+                "YPD solid, 30 C (37 C heat), 3 days, aerobic; n_samples=3 (triplicate); "
+                "gene names -> SGD R64 ORFs via genome alias table"
             ),
             page=(
                 "J Appl Genet 2009 50(3):301-310 (doi:10.1007/BF03195688; PMC2747848); "

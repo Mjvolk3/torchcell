@@ -15,7 +15,8 @@ this verifier adds:
 4. L2 ``se_nonnegative`` -- reported SEs are non-negative.
 5. L3 ``measurement_type_consistent`` -- one measurement_type across the dataset.
 6. L3 ``reference_zero`` -- the reference (parent-strain) response is 0.
-7. L3 ``environment_perturbed`` -- every experiment carries >= 1 environment perturbation.
+7. L3 ``environment_perturbed`` -- every experiment carries a genuine environmental edit
+   (>= 1 perturbation, or a temperature shift off the dataset baseline, e.g. heat).
 8. L4 ``gene_containment`` (caller) -- screened deletions overlap the deletion collection.
 """
 
@@ -53,13 +54,28 @@ def _screened_genes(
 
 
 def _compound_name(experiment: dict[str, Any]) -> str | None:
-    """The first environment perturbation's compound/agent name, if any."""
-    perts = experiment["environment"].get("perturbations") or []
+    """A stable label for the environmental edit, keying L1 (ORF, condition) pairs.
+
+    Post-refactor schema: a ``SmallMoleculePerturbation`` carries a typed ``compound``
+    (use its ``name``); an ``EnvironmentPhysicalPerturbation`` carries an ``agent``
+    compound and/or a neutral ``factor``. A record with NO perturbation is a pure
+    temperature condition (heat lives on ``Environment.temperature``, not a
+    perturbation) -- label it by that temperature so heat records stay distinctly keyed.
+    """
+    env = experiment["environment"]
+    perts = env.get("perturbations") or []
     if not perts:
-        return None
+        temp = (env.get("temperature") or {}).get("value")
+        return None if temp is None else f"temperature:{temp}"
     p = perts[0]
-    name = p.get("compound_name") or p.get("agent") or p.get("stress_type")
-    return None if name is None else str(name)
+    compound = p.get("compound")
+    if isinstance(compound, dict) and compound.get("name"):
+        return str(compound["name"])
+    agent = p.get("agent")
+    if isinstance(agent, dict) and agent.get("name"):
+        return str(agent["name"])
+    factor = p.get("factor")
+    return None if factor is None else str(factor)
 
 
 def _l1_pair_uniqueness(
@@ -127,23 +143,55 @@ def _l3_reference_zero(records: Sequence[Record]) -> LevelResult:
     )
 
 
-def _l3_environment_perturbed(records: Sequence[Record]) -> LevelResult:
-    """L3: every experiment carries at least one environment perturbation."""
-    n_missing = sum(
-        1
+def _modal_temperature(records: Sequence[Record]) -> float | None:
+    """The dataset's baseline (most common) growth temperature, if any."""
+    from collections import Counter
+
+    temps = Counter(
+        rec["experiment"]["environment"]["temperature"]["value"]
         for rec in records
-        if not (rec["experiment"]["environment"].get("perturbations") or [])
+        if (rec["experiment"]["environment"].get("temperature") or {}).get("value")
+        is not None
     )
+    return temps.most_common(1)[0][0] if temps else None
+
+
+def _l3_environment_perturbed(records: Sequence[Record]) -> LevelResult:
+    """L3: every experiment carries a genuine environmental edit.
+
+    The edit is EITHER >= 1 environment perturbation (an added small molecule / physical
+    factor) OR a temperature that differs from the dataset's baseline (modal) temperature
+    -- a temperature shift (e.g. heat stress) lives canonically on
+    ``Environment.temperature`` with NO perturbation object (M2), and is a valid edit.
+    A record is flagged only when it has NO perturbation AND sits at the baseline
+    temperature (a genuinely unperturbed record -- a data bug).
+    """
+    baseline_temp = _modal_temperature(records)
+    n_missing = 0
+    for rec in records:
+        env = rec["experiment"]["environment"]
+        if env.get("perturbations"):
+            continue
+        temp = (env.get("temperature") or {}).get("value")
+        if temp is not None and temp != baseline_temp:
+            continue  # temperature-only edit (e.g. heat) -- genuine environmental edit
+        n_missing += 1
     return LevelResult(
         level=Level.L3,
         name="environment_perturbed",
         passed=n_missing == 0,
         message=(
-            f"all {len(records)} experiments carry >= 1 environment perturbation"
+            f"all {len(records)} experiments carry an environmental edit "
+            f"(perturbation or non-baseline temperature; baseline={baseline_temp})"
             if n_missing == 0
-            else f"{n_missing} experiments have no environment perturbation"
+            else f"{n_missing} experiments have no environmental edit "
+            f"(no perturbation and baseline temperature {baseline_temp})"
         ),
-        details={"n_records": len(records), "n_missing": n_missing},
+        details={
+            "n_records": len(records),
+            "n_missing": n_missing,
+            "baseline_temperature": baseline_temp,
+        },
     )
 
 

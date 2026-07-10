@@ -71,7 +71,7 @@ def _fitness_record():
                     "systematic_gene_name": "YAL001C",
                     "perturbed_gene_name": "TFC3",
                     "strain_id": "D1",
-                    "perturbation_type": "deletion",
+                    "perturbation_type": "sga_kanmx_deletion",
                     "deletion_type": "KanMX",
                 }
             ]

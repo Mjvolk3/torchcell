@@ -22,6 +22,9 @@ from .sameith2015 import (
 from .sameith2015 import (
     SmMicroarraySameith2015Dataset as SmMicroarraySameith2015Dataset,
 )
+from .vanacloig2022 import (
+    EnvChemgenVanacloig2022Dataset as EnvChemgenVanacloig2022Dataset,
+)
 from .zelezniak2018 import (
     MetaboliteZelezniak2018Dataset as MetaboliteZelezniak2018Dataset,
 )
@@ -49,6 +52,8 @@ mulleder_datasets = ["AminoAcidMulleder2016Dataset"]
 
 zelezniak_datasets = ["ProteomeZelezniak2018Dataset", "MetaboliteZelezniak2018Dataset"]
 
+vanacloig_datasets = ["EnvChemgenVanacloig2022Dataset"]
+
 __all__ = (
     costanzo_datasets
     + kuzmin_datasets
@@ -58,4 +63,5 @@ __all__ = (
     + cachera_datasets
     + mulleder_datasets
     + zelezniak_datasets
+    + vanacloig_datasets
 )

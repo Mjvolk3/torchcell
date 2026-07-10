@@ -324,6 +324,23 @@ class MeanDeletionPerturbation(DeletionPerturbation, ModelStrict):
     )
 
 
+class MarkerDeletionPerturbation(DeletionPerturbation, ModelStrict):
+    """Gene deletion via a selectable/auxotrophic marker other than KanMX or NatMX.
+
+    Some drug-sensitized backgrounds delete a gene with a heterologous auxotrophic
+    cassette -- e.g. the Vanacloig 3DeltaAlpha background carries ``pdr3::KlURA3`` and
+    ``snq2::KlLEU2`` (Kluyveromyces lactis URA3 / LEU2 markers). Same AXIS-1
+    ``state="absent"`` and SO ``deletion`` mechanism as the marker-specific leaves;
+    ``marker`` names the exact cassette so the deletion is not mislabelled KanMX/NatMX.
+    """
+
+    perturbation_type: Literal["marker_deletion"] = "marker_deletion"  # type: ignore[assignment]
+    marker: str = Field(
+        description="selectable marker, e.g. 'KlURA3' | 'KlLEU2' | 'HIS3'"
+    )
+    deletion_type: str = "marker"
+
+
 class GeneAdditionPerturbation(PresenceAbsencePerturbation, ModelStrict):
     """Gain-of-function: a gene ADDED to the strain (heterologous expression or an
     extra native copy), carried on a plasmid or integrated at a chromosomal locus.
@@ -611,6 +628,7 @@ SgaPerturbationType = (
 GenePerturbationType = (
     SgaPerturbationType
     | MeanDeletionPerturbation
+    | MarkerDeletionPerturbation
     | KanMxDeletionPerturbation
     | NatMxDeletionPerturbation
     | GeneAdditionPerturbation
@@ -709,11 +727,179 @@ class Temperature(BaseModel):
         return v
 
 
+# --------------------------------------------------------------------------- #
+# Environmental-perturbation ontology (parallel to the gene-perturbation
+# ontology). A GenePerturbation is an edit to the genome vs S288C; an
+# EnvironmentPerturbation is an edit to the growth environment vs the base
+# medium: an added small molecule (drug / solvent / acid / alcohol / salt /
+# oxidant) or a physical/physiological stress (temperature / osmotic / oxidative
+# / pH / carbon-source). ``perturbation_type`` is the discriminator; concrete
+# leaves set it. Design: ``[[torchcell.datamodels.environment-perturbation]]``.
+# --------------------------------------------------------------------------- #
+class Concentration(ModelStrict):
+    """A dose of an environmental agent: a numeric value+unit and/or a target-basis.
+
+    Used for both a small-molecule ``concentration`` and a physical-stress
+    ``magnitude`` (a generic value+unit record). Either a numeric ``value`` (with a
+    ``unit``) or a ``basis`` (how the dose was set, e.g. an ``IC30`` target) must be
+    present -- screens routinely fix a compound at its IC30 without releasing the
+    per-compound molar value, so ``value`` may be ``None`` while ``basis="IC30"``.
+    """
+
+    value: float | None = Field(
+        default=None,
+        description="numeric dose; None when only a target-inhibition basis is known",
+    )
+    unit: str | None = Field(
+        default=None,
+        description="'mM' | 'uM' | 'M' | 'percent_v/v' | 'percent_w/v' | 'ug/mL' | "
+        "'g/L' | 'Celsius'; required when value is set",
+    )
+    basis: str | None = Field(
+        default=None,
+        description="how the dose was set, e.g. 'IC30' | 'IC50' | 'fixed' | 'MIC'",
+    )
+
+    @model_validator(mode="after")
+    def _check(self) -> "Concentration":
+        """Require a numeric value+unit or a basis; value must be non-negative."""
+        if self.value is None and self.basis is None:
+            raise ValueError("Concentration needs at least a numeric value or a basis")
+        if self.value is not None:
+            if self.unit is None:
+                raise ValueError("a numeric concentration value requires a unit")
+            if self.value < 0:
+                raise ValueError("concentration value must be non-negative")
+        return self
+
+
+class Solvent(ModelStrict):
+    """The vehicle a compound was dissolved in and its final fraction in the medium."""
+
+    name: str = Field(description="solvent name, e.g. 'DMSO' | 'water' | 'ethanol'")
+    percent: float | None = Field(
+        default=None,
+        description="final solvent fraction in the medium, percent v/v (e.g. 1.0 = 1%)",
+    )
+
+
+class EnvironmentStressType(StrEnum):
+    """The kind of a non-compound-framed physical/physiological stress."""
+
+    temperature = "temperature"
+    osmotic = "osmotic"
+    oxidative = "oxidative"
+    pH = "pH"
+    carbon_source = "carbon_source"
+    alcohol = "alcohol"
+
+
+class EnvironmentPerturbation(ModelStrict):
+    """Base: a defined change to the growth environment vs the base medium."""
+
+    perturbation_type: str
+    description: str
+
+
+class SmallMoleculePerturbation(EnvironmentPerturbation, ModelStrict):
+    """An added chemical compound (drug, solvent, acid, alcohol, salt, oxidant, ...).
+
+    Covers any medium-borne small molecule dosed at a concentration or a target basis
+    (e.g. IC30). ``stress_category`` optionally annotates the physiological stress the
+    compound imposes (e.g. NaCl -> 'osmotic', H2O2 -> 'oxidative', ethanol ->
+    'alcohol'), so a compound-level record still carries its stress semantics.
+    """
+
+    perturbation_type: Literal["small_molecule"] = "small_molecule"
+    description: str = "Small-molecule compound added to the base medium"
+    compound_name: str = Field(
+        description="human-readable compound name, e.g. 'isobutanol'"
+    )
+    compound_id: str | None = Field(
+        default=None,
+        description="PubChem CID / ChEBI CURIE, e.g. 'CID:6560' | 'CHEBI:16236'; "
+        "None if unmapped",
+    )
+    smiles: str | None = Field(
+        default=None, description="canonical SMILES; None if unknown"
+    )
+    concentration: Concentration = Field(
+        description="dose (numeric value+unit and/or basis such as IC30)"
+    )
+    solvent: Solvent | None = Field(
+        default=None,
+        description="vehicle the compound was delivered in; None if dissolved directly",
+    )
+    stress_category: str | None = Field(
+        default=None,
+        description="physiological stress class the compound imposes: 'alcohol' | "
+        "'acid' | 'osmotic' | 'oxidative' | 'cationic' | 'chelator' | 'other'; "
+        "None if unclassified",
+    )
+
+
+class PhysicalStressPerturbation(EnvironmentPerturbation, ModelStrict):
+    """A non-compound-framed physical/physiological stress (temperature, osmotic, ...).
+
+    Use when the stress is framed by its TYPE + magnitude rather than a specific added
+    compound -- e.g. heat at 37 C (``stress_type='temperature'``, magnitude value=37,
+    unit='Celsius'). When a specific compound imposes the stress (NaCl, H2O2, ethanol),
+    prefer ``SmallMoleculePerturbation`` with ``stress_category`` set.
+    """
+
+    perturbation_type: Literal["physical_stress"] = "physical_stress"
+    description: str = "Physical/physiological environmental stress"
+    stress_type: EnvironmentStressType = Field(
+        description="the kind of physical stress"
+    )
+    magnitude: Concentration | None = Field(
+        default=None,
+        description="stress magnitude (e.g. 37 'Celsius' temperature, 1 'M' NaCl "
+        "osmotic); None for a purely qualitative stress",
+    )
+    agent: str | None = Field(
+        default=None,
+        description="agent inducing the stress if any, e.g. 'NaCl' | 'sorbitol' | 'heat'",
+    )
+
+
+EnvironmentPerturbationType = SmallMoleculePerturbation | PhysicalStressPerturbation
+
+
 class Environment(ModelStrict):
-    """Experimental environment combining media and temperature."""
+    """Experimental environment: base medium + temperature + optional perturbations.
+
+    ``perturbations`` mirror ``Genotype.perturbations`` on the environment axis: the
+    added compounds / physical stresses applied on top of the base ``media``. It
+    defaults to an empty list, so an unperturbed environment (every dataset predating
+    the environment-perturbation ontology) is unchanged. ``aerobicity`` records the
+    oxygen regime (anaerobic fermentation is standard for biofuel screens);
+    ``duration_hours`` is the optional treatment time.
+    """
 
     media: Media
     temperature: Temperature
+    perturbations: list[EnvironmentPerturbationType] = Field(
+        default_factory=list,
+        description="environmental perturbations (added compounds / physical stresses) "
+        "on top of the base medium; empty for an unperturbed base environment",
+    )
+    aerobicity: str = Field(
+        default="aerobic", description="'aerobic' | 'anaerobic' | 'microaerobic'"
+    )
+    duration_hours: float | None = Field(
+        default=None, description="treatment/growth duration in hours; None if unstated"
+    )
+
+    @field_validator("aerobicity", mode="after")
+    @classmethod
+    def validate_aerobicity(cls, v: str) -> str:
+        """Aerobicity is one of the three supported oxygen regimes."""
+        if v not in {"aerobic", "anaerobic", "microaerobic"}:
+            raise ValueError(
+                f"aerobicity must be aerobic/anaerobic/microaerobic, got {v!r}"
+            )
+        return v
 
 
 # Phenotype
@@ -1751,6 +1937,161 @@ class ProteinAbundanceExperiment(Experiment, ModelStrict):
     phenotype: ProteinAbundancePhenotype
 
 
+class MeasurementType(StrEnum):
+    """What an environment-response readout number IS, so heterogeneous chemogenomic
+    scores are never silently compared.
+
+    - ``log2_ratio``: log2(treatment/control) barcode abundance / fitness ratio
+      (Vanacloig).
+    - ``z_score``: standardized fitness/growth deviation (Wildenhain; Hoepfner z-score
+      columns).
+    - ``sensitivity_score``: HIP/HOP sensitivity / fitness-defect score (Hoepfner MADL,
+      Hillenmeyer, Lee).
+    - ``categorical``: qualitative call (Auesukaree sensitive/tolerant; Mota 0/+/++).
+    - ``growth_rate``: absolute or normalized growth rate / doubling time.
+    """
+
+    log2_ratio = "log2_ratio"
+    z_score = "z_score"
+    sensitivity_score = "sensitivity_score"
+    categorical = "categorical"
+    growth_rate = "growth_rate"
+
+
+class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
+    """A strain's fitness/growth RESPONSE to an environmental perturbation.
+
+    For chemical-genomic / stress screens where a (usually deletion) strain's fitness
+    in a perturbed environment is scored relative to a control. Distinct from
+    ``FitnessPhenotype`` -- a strictly positive ko/wt growth-rate RATIO that clamps
+    non-positive values to 0 -- because this readout is a SIGNED score (log2 ratio,
+    z-score, sensitivity score) that is routinely NEGATIVE, or a qualitative
+    ``category``. ``measurement_type`` records WHAT the number is; ``units`` gives its
+    human-readable definition. The uncertainty ontology mirrors ``FitnessPhenotype``:
+    ``environment_response_se`` is the DERIVED, ML-facing SE (auto-filled from the
+    source-reported uncertainty + its type via ``derive_se``).
+    """
+
+    graph_level: str = "global"
+    label_name: str = "environment_response"
+    label_statistic_name: str | None = "environment_response_se"
+
+    measurement_type: MeasurementType = Field(
+        description="what the response number is (log2_ratio, z_score, ...)"
+    )
+    environment_response: float | None = Field(
+        default=None,
+        description="signed numeric score (log2 ratio, z-score, sensitivity score, "
+        "growth rate); None only for a purely categorical readout",
+    )
+    category: str | None = Field(
+        default=None,
+        description="qualitative call for categorical readouts, e.g. 'sensitive' | "
+        "'tolerant' | 'no_effect'; None for numeric readouts",
+    )
+    environment_response_se: float | None = Field(
+        default=None,
+        description="standard error of the response (primary uncertainty statistic)",
+    )
+    environment_response_uncertainty: float | None = Field(
+        default=None,
+        description="source-reported uncertainty number, verbatim (meaning given by "
+        "environment_response_uncertainty_type)",
+    )
+    environment_response_uncertainty_type: UncertaintyType | None = Field(
+        default=None,
+        description="what environment_response_uncertainty IS (sample_sd, ...)",
+    )
+    n_samples: int | None = Field(
+        default=None,
+        description="number of independent replicate measurements of the response",
+    )
+    sample_unit: SampleUnit | None = Field(
+        default=None,
+        description="what one sample in n_samples is (biological_replicate, ...)",
+    )
+    units: str | None = Field(
+        default=None,
+        description="human-readable definition/units of the score, e.g. "
+        "'log2(inhibitor/control)'",
+    )
+
+    @field_validator("environment_response")
+    def validate_response(cls, v: float | None) -> float | None:
+        """Reject NaN numeric responses (None is allowed for categorical readouts)."""
+        if v is not None and math.isnan(v):
+            raise ValueError("environment_response cannot be NaN")
+        return v
+
+    @field_validator("n_samples")
+    def validate_n_samples(cls, v: int | None) -> int | None:
+        """n_samples is a positive integer or None."""
+        if v is not None and (not isinstance(v, int) or v < 1):
+            raise ValueError(f"n_samples must be a positive integer or None, got: {v}")
+        return v
+
+    @model_validator(mode="before")
+    @classmethod
+    def _fill_response_se(cls, data: Any) -> Any:
+        """Derive the ML-facing SE from the reported uncertainty (frozen -> fill first)."""
+        if not isinstance(data, dict):
+            return data
+        unc = data.get("environment_response_uncertainty")
+        typ = data.get("environment_response_uncertainty_type")
+        if (
+            unc is None
+            or typ is None
+            or data.get("environment_response_se") is not None
+        ):
+            return data
+        typ = UncertaintyType(typ)
+        n = data.get("n_samples")
+        if typ in (UncertaintyType.sample_sd, UncertaintyType.variance) and n is None:
+            return data
+        data["environment_response_se"] = derive_se(unc, typ, n)
+        return data
+
+    @model_validator(mode="after")
+    def _check(self) -> "EnvironmentResponsePhenotype":
+        """Enforce numeric-vs-categorical coherence + the uncertainty invariant."""
+        if self.measurement_type is MeasurementType.categorical:
+            if self.category is None:
+                raise ValueError("categorical measurement_type requires `category`")
+        elif self.environment_response is None:
+            raise ValueError(
+                f"{self.measurement_type} requires a numeric environment_response"
+            )
+        unc, typ = (
+            self.environment_response_uncertainty,
+            self.environment_response_uncertainty_type,
+        )
+        if (unc is None) != (typ is None):
+            raise ValueError(
+                "environment_response_uncertainty and its type must both be set or "
+                "both be None (no unlabelled uncertainty)"
+            )
+        if typ in (UncertaintyType.sample_sd, UncertaintyType.variance) and (
+            self.n_samples is None or self.sample_unit is None
+        ):
+            raise ValueError(f"n_samples and sample_unit are required for {typ}")
+        return self
+
+
+class EnvironmentResponseExperimentReference(ExperimentReference, ModelStrict):
+    """Reference (control) context for an environment-response experiment."""
+
+    experiment_reference_type: str = "environment_response"
+    phenotype_reference: EnvironmentResponsePhenotype
+
+
+class EnvironmentResponseExperiment(Experiment, ModelStrict):
+    """Experiment measuring a strain's response to an environmental perturbation."""
+
+    experiment_type: str = "environment_response"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: EnvironmentResponsePhenotype
+
+
 PhenotypeType = (
     Phenotype
     | FitnessPhenotype
@@ -1764,6 +2105,7 @@ PhenotypeType = (
     | VisualScorePhenotype
     | MetabolitePhenotype
     | ProteinAbundancePhenotype
+    | EnvironmentResponsePhenotype
 )
 
 ExperimentType = (
@@ -1779,6 +2121,7 @@ ExperimentType = (
     | VisualScoreExperiment
     | MetaboliteExperiment
     | ProteinAbundanceExperiment
+    | EnvironmentResponseExperiment
 )
 
 ExperimentReferenceType = (
@@ -1794,6 +2137,7 @@ ExperimentReferenceType = (
     | VisualScoreExperimentReference
     | MetaboliteExperimentReference
     | ProteinAbundanceExperimentReference
+    | EnvironmentResponseExperimentReference
 )
 
 
@@ -1809,6 +2153,7 @@ EXPERIMENT_TYPE_MAP = {
     "visual_score": VisualScoreExperiment,
     "metabolite": MetaboliteExperiment,
     "protein_abundance": ProteinAbundanceExperiment,
+    "environment_response": EnvironmentResponseExperiment,
 }
 
 EXPERIMENT_REFERENCE_TYPE_MAP = {
@@ -1823,6 +2168,7 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "visual_score": VisualScoreExperimentReference,
     "metabolite": MetaboliteExperimentReference,
     "protein_abundance": ProteinAbundanceExperimentReference,
+    "environment_response": EnvironmentResponseExperimentReference,
 }
 
 

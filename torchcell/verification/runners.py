@@ -26,6 +26,10 @@ from typing import Any
 
 import lmdb
 
+from torchcell.verification.environment_response import (
+    environment_response_gene_set,
+    verify_environment_response_dataset,
+)
 from torchcell.verification.expression import (
     measured_gene_universe,
     verify_expression_dataset,
@@ -474,6 +478,62 @@ def run_rnaseq(data_root: str) -> bool:
     return all_passed
 
 
+# --------------------------------------------------------------------------- #
+# Environment-response chemogenomic datasets (WS15)
+# --------------------------------------------------------------------------- #
+ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
+    "env_chemgen_vanacloig2022": {
+        "root": "data/torchcell/env_chemgen_vanacloig2022",
+        # 3647 screened ORFs (3651 barcodes - 2 all-NaN QC rows - 2 background-gene rows)
+        # x 45 compound columns.
+        "expected_count": 164115,
+        # 3DeltaAlpha background PDR1/PDR3/SNQ2 -- excluded from the screened-ORF key.
+        "background_genes": frozenset({"YGL013C", "YBL005W", "YDR011W"}),
+        "provenance": Provenance(
+            source_uri=(
+                "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE186nnn/GSE186866/suppl/"
+                "GSE186866_ChemGenomics_Raw_Counts_matrix.txt.gz"
+            ),
+            citation_key="vanacloig-pedrosComparativeChemicalGenomic2022",
+            sha256="e29eb02769ce2180d632020dc612a7f3e14a124fc7f1e0e33f9d41b6f4e4a85a",
+            method=(
+                "GEO GSE186866 raw barcode counts; per-sample CPM, per-gene "
+                "log2((CPM_compound_rep+1)/(CPM_pooled_control_mean+1)) mean of 3 biol. "
+                "reps (SE = SD/sqrt(3)); recomputed readout, NOT the paper's edgeR logFC"
+            ),
+            page="FEMS Yeast Res 2022 foac036; GEO GSE186866 raw counts (Table S1 SI unscriptable)",
+        ),
+    }
+}
+
+
+def run_environment_response(data_root: str) -> bool:
+    """Verify environment-response datasets (L0-L4) and write reports. True if all pass."""
+    sgd_genes = _sgd_gene_set(data_root)
+    all_passed = True
+    for name, spec in ENVIRONMENT_RESPONSE_DATASETS.items():
+        abs_root = osp.join(data_root, spec["root"])
+        records = load_records(abs_root)
+        background = spec.get("background_genes", frozenset())
+        report = verify_environment_response_dataset(
+            records,
+            dataset_name=name,
+            provenance=spec["provenance"],
+            expected_count=spec.get("expected_count", len(records)),
+            background_genes=background,
+        )
+        report.add(
+            _l4_rnaseq_gene_containment(
+                sgd_genes, environment_response_gene_set(records, background)
+            ).model_copy(update={"name": "gene_containment_sgd"})
+        )
+        out = _write_report(report, osp.join(abs_root, "preprocess"))
+        print(report.summary())
+        print(f"  -> wrote {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
 def run_all(data_root: str) -> bool:
     """Run every dataset-family verification. True only if all pass."""
     expression_ok = run_expression(data_root)
@@ -482,6 +542,7 @@ def run_all(data_root: str) -> bool:
     metabolite_ok = run_metabolite(data_root)
     protein_ok = run_protein(data_root)
     rnaseq_ok = run_rnaseq(data_root)
+    environment_ok = run_environment_response(data_root)
     return (
         expression_ok
         and morphology_ok
@@ -489,6 +550,7 @@ def run_all(data_root: str) -> bool:
         and metabolite_ok
         and protein_ok
         and rnaseq_ok
+        and environment_ok
     )
 
 

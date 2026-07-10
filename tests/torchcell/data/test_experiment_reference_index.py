@@ -84,6 +84,22 @@ def test_reference_index_partition_accepts_exact_cover() -> None:
     assert len(ri) == 2
 
 
+def test_from_stored_reads_new_format() -> None:
+    item = ExperimentReferenceIndex(
+        reference=_reference("d"), member_indices=[1, 3]
+    ).model_dump()
+    back = ExperimentReferenceIndex.from_stored(item)
+    assert back.member_indices == [1, 3]
+
+
+def test_from_stored_converts_legacy_dense_mask() -> None:
+    """A pre-WS15 entry with a dense ``index`` mask loads without a rebuild."""
+    ref_dump = _reference("d").model_dump()
+    legacy = {"reference": ref_dump, "index": [False, True, False, True, True]}
+    back = ExperimentReferenceIndex.from_stored(legacy)
+    assert back.member_indices == [1, 3, 4]  # positions of True
+
+
 def test_reference_index_partition_rejects_gap_or_overlap() -> None:
     # overlap: record 1 covered twice, record 2 never
     with pytest.raises(ValueError):

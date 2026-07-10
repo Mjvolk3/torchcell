@@ -348,7 +348,7 @@ class Neo4jQueryRaw:
                 data = json.load(file)
             # Deserialize each dict in the list to an ExperimentReferenceIndex object
             self._experiment_reference_index = [
-                ExperimentReferenceIndex(**item) for item in data
+                ExperimentReferenceIndex.from_stored(item) for item in data
             ]
         elif self._experiment_reference_index is None:
             log.info("Computing experiment reference index...")

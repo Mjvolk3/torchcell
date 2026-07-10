@@ -54,7 +54,7 @@ class LmdbDatasetReader:
                 index_data = json.load(file)
                 # Convert dictionaries to ExperimentReferenceIndex objects
                 self._experiment_reference_index = [
-                    ExperimentReferenceIndex(**item) for item in index_data
+                    ExperimentReferenceIndex.from_stored(item) for item in index_data
                 ]
 
     @property

@@ -6,6 +6,7 @@
 
 import hashlib
 from collections.abc import Iterator
+from typing import Any
 
 from pydantic import field_validator
 
@@ -39,6 +40,25 @@ class ExperimentReferenceIndex(ModelStrict):
         if len(v) != len(set(v)):
             raise ValueError("member_indices must be unique")
         return sorted(v)
+
+    @classmethod
+    def from_stored(cls, item: dict[str, Any]) -> "ExperimentReferenceIndex":
+        """Build from a stored JSON entry, accepting BOTH the new and legacy formats.
+
+        New entries carry ``member_indices``; legacy entries (written before the WS15
+        sparse redesign) carry a dense ``index: list[bool]`` mask. Converting on read
+        keeps every already-built dataset's ``experiment_reference_index.json`` loadable
+        without a forced rebuild; the next rebuild writes the new sparse format.
+        """
+        if "member_indices" in item:
+            return cls.model_validate(item)
+        if "index" in item:
+            mask = item["index"]
+            member_indices = [i for i, present in enumerate(mask) if present]
+            return cls(reference=item["reference"], member_indices=member_indices)
+        raise ValueError(
+            "stored ExperimentReferenceIndex entry has neither 'member_indices' nor 'index'"
+        )
 
     def mask(self, n: int) -> list[bool]:
         """Reconstruct the dense length-``n`` boolean membership mask (opt-in, small sets)."""

@@ -353,7 +353,7 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
             with open(index_file_path) as file:
                 data = json.load(file)
                 self._experiment_reference_index = [
-                    ExperimentReferenceIndex(**item) for item in data
+                    ExperimentReferenceIndex.from_stored(item) for item in data
                 ]
         elif self._experiment_reference_index is None:
             if self.io_workers > 1:

@@ -474,12 +474,27 @@ class NaturalGenePresencePerturbation(PresenceAbsencePerturbation, ModelStrict):
     provenance: str = "natural"
     strain_id: str = Field(description="isolate id whose genome carries this gene")
     copy_number: float = Field(
-        default=1.0, description="copies of the accessory gene present (haploid basis)"
+        default=1.0,
+        description="copies of the accessory gene present (haploid basis; > 0)",
     )
     pangenome_orf_id: str | None = Field(
         default=None,
         description="pangenome ORF id for the accessory ORF, e.g. 'EC1118_1F14_0012g'",
     )
+
+    @field_validator("copy_number", mode="after")
+    @classmethod
+    def validate_copy_number_positive(cls, v: float) -> float:
+        """M2: this leaf means the gene IS present, so ``copy_number > 0`` (absence is
+        ``NaturalGeneAbsencePerturbation``, never copy_number=0).
+        """
+        if v <= 0:
+            raise ValueError(
+                "copy_number must be > 0 for a PRESENT accessory gene "
+                "(absence is NaturalGeneAbsencePerturbation)"
+            )
+        return v
+
     origin: str | None = Field(
         default=None,
         description="accessory-ORF provenance: 'ancestral' | 'introgression' | 'hgt'",
@@ -555,20 +570,20 @@ class SequenceVariantPerturbation(SequencePerturbation, ModelStrict):
 
 
 class CopyNumberVariantPerturbation(GenePerturbation, ModelStrict):
-    """Copy-number variation (CNV) of a pangenome ORF relative to the S288C reference.
+    """Copy-number variation (CNV) of a PRESENT pangenome ORF relative to S288C.
 
-    NATURAL-variation type. Standard pangenomics framing: presence/absence variation (PAV)
-    is an EXTREME form of CNV (a gene at 0 copies), so ONE type spans every gene-CONTENT
-    difference of a natural isolate vs S288C:
-      - a REFERENCE (core) ORF ABSENT   -> ``copy_number`` 0 (PAV);
-      - a NON-REFERENCE (accessory) ORF PRESENT -> ``copy_number`` >= 1 with
-        ``reference_copy_number`` 0 (PAV, the "gain" side -- but polarity-neutral);
-      - AMPLIFICATION -> ``copy_number`` > ``reference_copy_number``.
-    Contrast the ENGINEERED ``GeneAddition`` / ``KanMx`` deletions (an engineering act with
-    a construct/marker); this records NATURAL genome content. ``origin`` annotates an
-    accessory ORF's provenance with the field's mechanism vocabulary
-    (``ancestral | introgression | hgt``). For a non-reference ORF the sequence is an
-    off-graph pointer, never inlined.
+    NATURAL-variation, DOSAGE axis: records the copy number of a gene that IS present
+    (amplification / reduction), NOT its absence. ``copy_number`` is strictly ``> 0``
+    (M2 canonical form -- absence has exactly ONE encoding, the presence/absence
+    ``NaturalGeneAbsencePerturbation`` leaf; "you don't copy from zero"). Presence of an
+    accessory ORF is likewise the presence/absence ``NaturalGenePresencePerturbation``
+    leaf, not a CNV. This leaf is for a genuine dosage difference:
+      - AMPLIFICATION -> ``copy_number`` > ``reference_copy_number``;
+      - REDUCTION (still present) -> ``reference_copy_number`` > ``copy_number`` > 0.
+    Contrast the ENGINEERED ``EngineeredCopyNumberPerturbation`` (same dosage axis, lab
+    origin). ``origin`` annotates an accessory ORF's provenance with the field's
+    mechanism vocabulary (``ancestral | introgression | hgt``). For a non-reference ORF
+    the sequence is an off-graph pointer, never inlined.
 
     ``systematic_gene_name`` carries the S288C systematic name for a reference ORF, else the
     pangenome ORF id -- so the native-name validator is relaxed (like ``GeneAddition``).
@@ -583,12 +598,28 @@ class CopyNumberVariantPerturbation(GenePerturbation, ModelStrict):
     mechanism_so_id: str = "SO:0001019"
     mechanism_so_name: str = "copy_number_variation"
     copy_number: float = Field(
-        description="ORF copy number in this isolate (haploid basis; non-integer allowed; 0 = absent)"
+        description="ORF copy number in this isolate (haploid basis; non-integer allowed; strictly > 0)"
     )
     reference_copy_number: float = Field(
         default=1.0,
         description="copy number in S288C R64 (1 for a core ORF; 0 for a non-reference/accessory ORF)",
     )
+
+    @field_validator("copy_number", mode="after")
+    @classmethod
+    def validate_copy_number_positive(cls, v: float) -> float:
+        """M2: CNV encodes DOSAGE of a present gene, never absence -- ``copy_number > 0``.
+
+        Absence has one canonical encoding (``NaturalGeneAbsencePerturbation``); a CNV at
+        0 copies would be a second, forbidden encoding of the same state.
+        """
+        if v <= 0:
+            raise ValueError(
+                "copy_number must be > 0 (CNV is dosage of a PRESENT gene; absence is "
+                "NaturalGeneAbsencePerturbation, not copy_number=0)"
+            )
+        return v
+
     strain_id: str = Field(description="isolate id, e.g. 'AAB'")
     pangenome_orf_id: str | None = Field(
         default=None,
@@ -668,6 +699,19 @@ class EngineeredCopyNumberPerturbation(GenePerturbation, ModelStrict):
     def validate_mechanism_so_id(cls, v: str) -> str:
         """Mechanism SO id is well-formed."""
         return _validate_so_id(v)
+
+    @field_validator("copy_number", mode="after")
+    @classmethod
+    def validate_copy_number_positive(cls, v: float) -> float:
+        """M2: dosage of a PRESENT gene -- ``copy_number > 0`` (0 copies is a total
+        knockout, i.e. a ``DeletionPerturbation`` absence, not a CNV).
+        """
+        if v <= 0:
+            raise ValueError(
+                "copy_number must be > 0 (0 copies is total absence = "
+                "DeletionPerturbation, not an engineered CNV)"
+            )
+        return v
 
 
 SgaPerturbationType = (
@@ -767,52 +811,177 @@ class Media(ModelStrict):
         return v
 
 
+class TemperatureUnit(StrEnum):
+    """UO-aligned temperature units (typed, not a free string) -- G2 unit typing."""
+
+    celsius = "Celsius"
+    kelvin = "Kelvin"
+    fahrenheit = "Fahrenheit"
+
+
 class Temperature(BaseModel):
-    """Temperature value with unit (defaults to Celsius)."""
+    """Temperature value with a typed unit (defaults to Celsius)."""
 
     value: float  # Renamed from scalar to value
-    unit: str = "Celsius"  # Simplified unit string
+    unit: TemperatureUnit = TemperatureUnit.celsius
 
-    @field_validator("value", mode="after")
-    @classmethod
-    def check_temperature(cls, v: float) -> float:
-        """Validate that the temperature is not below absolute zero in Celsius."""
-        if v < -273:
+    @model_validator(mode="after")
+    def check_temperature(self) -> "Temperature":
+        """Validate that a Celsius temperature is not below absolute zero."""
+        if self.unit is TemperatureUnit.celsius and self.value < -273:
             raise ValueError("Temperature cannot be below -273 degrees Celsius")
-        return v
+        return self
 
 
 # --------------------------------------------------------------------------- #
 # Environmental-perturbation ontology (parallel to the gene-perturbation
 # ontology). A GenePerturbation is an edit to the genome vs S288C; an
 # EnvironmentPerturbation is an edit to the growth environment vs the base
-# medium: an added small molecule (drug / solvent / acid / alcohol / salt /
-# oxidant) or a physical/physiological stress (temperature / osmotic / oxidative
-# / pH / carbon-source). ``perturbation_type`` is the discriminator; concrete
-# leaves set it. Design: ``[[torchcell.datamodels.environment-perturbation]]``.
+# medium along TWO axes:
+#   - SmallMoleculePerturbation -- an added chemical SPECIES (drug / acid /
+#     alcohol / salt / oxidant), identified by a typed ``Compound`` and dosed at a
+#     ``Concentration``.
+#   - EnvironmentPhysicalPerturbation -- a neutral, scalar physical FACTOR (pH /
+#     osmolarity / carbon source), NOT a compound and NOT a consequence.
+# Temperature is NOT a perturbation leaf: it is carried on
+# ``Environment.temperature`` (one canonical encoding, M2). A perturbation names
+# the EDIT, never its phenotypic consequence (M1); "is it stress?" /
+# sensitive-vs-tolerant is an ``EnvironmentResponsePhenotype`` property, and a
+# compound's mode of action is a ChEBI ROLE on its ``Compound``.
+# ``perturbation_type`` is the discriminator; concrete leaves set it.
+# Design: ``[[torchcell.datamodels.environment-perturbation]]``.
 # --------------------------------------------------------------------------- #
+INCHIKEY_PATTERN = r"^[A-Z]{14}-[A-Z]{10}-[A-Z]$"
+CHEBI_ID_PATTERN = r"^CHEBI:\d+$"
+
+
+class ConcentrationUnit(StrEnum):
+    """UO-aligned units for a dose / physical-factor magnitude (G2 unit typing).
+
+    A typed enum (never a free string) so 'uM' / 'µM' / 'micromolar' can never
+    silently coexist across datasets. Temperature units live on ``TemperatureUnit``.
+    """
+
+    molar = "M"
+    millimolar = "mM"
+    micromolar = "uM"
+    nanomolar = "nM"
+    percent_v_v = "percent_v/v"
+    percent_w_v = "percent_w/v"
+    ug_per_ml = "ug/mL"
+    g_per_l = "g/L"
+
+
+class DoseBasis(StrEnum):
+    """How a dose was SET when the molar value is not released (dose PROVENANCE, not a
+    phenotypic consequence): a target-inhibition endpoint or an explicit fixed dose.
+    """
+
+    IC30 = "IC30"
+    IC50 = "IC50"
+    MIC = "MIC"
+    fixed = "fixed"
+
+
+class PhysicalFactor(StrEnum):
+    """A neutral, scalar physical/physiological environment variable.
+
+    NOT a compound, NOT a consequence word. Temperature is deliberately ABSENT --
+    it is carried on ``Environment.temperature`` (single canonical encoding, M2),
+    never duplicated as a perturbation.
+    """
+
+    ph = "pH"
+    osmolarity = "osmolarity"
+    carbon_source = "carbon_source"
+    nitrogen_source = "nitrogen_source"
+    ionic_strength = "ionic_strength"
+
+
+class Compound(ModelStrict):
+    """Chemical identity of a small molecule, keyed by a canonical InChIKey.
+
+    Identity is carried by stable, resolvable identifiers -- not the human name alone.
+    ``inchikey`` (the canonical hash of the standard InChI) is the primary key;
+    ``pubchem_cid`` / ``chebi_id`` are redundant cross-references; ``smiles`` / ``inchi``
+    are auxiliary structure strings. ``roles`` holds ChEBI ROLE terms (the compound's
+    mode of action / chemical role, e.g. 'oxidising agent') -- the ontology home for a
+    compound's biological role, REPLACING the deleted ``stress_category`` consequence
+    field (M1). Only ``name`` is required; identifiers are filled as SOURCED, never
+    guessed (provenance discipline).
+    """
+
+    name: str = Field(description="human-readable compound name, e.g. 'isobutanol'")
+    inchikey: str | None = Field(
+        default=None,
+        description="canonical InChIKey (14-10-1 blocks), the primary identity key",
+    )
+    inchi: str | None = Field(
+        default=None, description="standard InChI string; None if unknown"
+    )
+    smiles: str | None = Field(
+        default=None,
+        description="canonical SMILES (auxiliary structure); None if unknown",
+    )
+    pubchem_cid: int | None = Field(
+        default=None,
+        description="PubChem CID as an integer, e.g. 6560; None if unmapped",
+    )
+    chebi_id: str | None = Field(
+        default=None, description="ChEBI CURIE, e.g. 'CHEBI:16236'; None if unmapped"
+    )
+    roles: list[str] = Field(
+        default_factory=list,
+        description="ChEBI role terms (mode of action / chemical role); empty if unknown",
+    )
+
+    @field_validator("inchikey", mode="after")
+    @classmethod
+    def _validate_inchikey(cls, v: str | None) -> str | None:
+        """InChIKey, when present, has the canonical 14-10-1 block form."""
+        if v is not None and not re.match(INCHIKEY_PATTERN, v):
+            raise ValueError(
+                f"invalid InChIKey {v!r}; expected 'XXXXXXXXXXXXXX-XXXXXXXXXX-X'"
+            )
+        return v
+
+    @field_validator("chebi_id", mode="after")
+    @classmethod
+    def _validate_chebi_id(cls, v: str | None) -> str | None:
+        """ChEBI id, when present, is a well-formed ``CHEBI:NNNN`` CURIE."""
+        if v is not None and not re.match(CHEBI_ID_PATTERN, v):
+            raise ValueError(f"invalid ChEBI id {v!r}; expected 'CHEBI:NNNN'")
+        return v
+
+    @field_validator("pubchem_cid", mode="after")
+    @classmethod
+    def _validate_pubchem_cid(cls, v: int | None) -> int | None:
+        """PubChem CID, when present, is a positive integer."""
+        if v is not None and v < 1:
+            raise ValueError(f"pubchem_cid must be a positive integer, got {v}")
+        return v
+
+
 class Concentration(ModelStrict):
     """A dose of an environmental agent: a numeric value+unit and/or a target-basis.
 
-    Used for both a small-molecule ``concentration`` and a physical-stress
+    Used for both a small-molecule ``concentration`` and a physical-factor
     ``magnitude`` (a generic value+unit record). Either a numeric ``value`` (with a
-    ``unit``) or a ``basis`` (how the dose was set, e.g. an ``IC30`` target) must be
-    present -- screens routinely fix a compound at its IC30 without releasing the
-    per-compound molar value, so ``value`` may be ``None`` while ``basis="IC30"``.
+    typed ``unit``) or a ``basis`` (how the dose was set, e.g. an ``IC30`` target) must
+    be present -- screens routinely fix a compound at its IC30 without releasing the
+    per-compound molar value, so ``value`` may be ``None`` while ``basis=IC30``.
     """
 
     value: float | None = Field(
         default=None,
         description="numeric dose; None when only a target-inhibition basis is known",
     )
-    unit: str | None = Field(
-        default=None,
-        description="'mM' | 'uM' | 'M' | 'percent_v/v' | 'percent_w/v' | 'ug/mL' | "
-        "'g/L' | 'Celsius'; required when value is set",
+    unit: ConcentrationUnit | None = Field(
+        default=None, description="typed UO-aligned unit; required when value is set"
     )
-    basis: str | None = Field(
+    basis: DoseBasis | None = Field(
         default=None,
-        description="how the dose was set, e.g. 'IC30' | 'IC50' | 'fixed' | 'MIC'",
+        description="how the dose was set (dose provenance), e.g. IC30 | IC50 | fixed",
     )
 
     @model_validator(mode="after")
@@ -829,24 +998,21 @@ class Concentration(ModelStrict):
 
 
 class Solvent(ModelStrict):
-    """The vehicle a compound was dissolved in and its final fraction in the medium."""
+    """The vehicle a compound was dissolved in and its final fraction in the medium.
+
+    ``compound`` optionally carries the vehicle's typed chemical identity (a reused
+    ``Compound``); ``name`` remains the plain label for the common case.
+    """
 
     name: str = Field(description="solvent name, e.g. 'DMSO' | 'water' | 'ethanol'")
     percent: float | None = Field(
         default=None,
         description="final solvent fraction in the medium, percent v/v (e.g. 1.0 = 1%)",
     )
-
-
-class EnvironmentStressType(StrEnum):
-    """The kind of a non-compound-framed physical/physiological stress."""
-
-    temperature = "temperature"
-    osmotic = "osmotic"
-    oxidative = "oxidative"
-    pH = "pH"
-    carbon_source = "carbon_source"
-    alcohol = "alcohol"
+    compound: Compound | None = Field(
+        default=None,
+        description="typed chemical identity of the vehicle; None if plain",
+    )
 
 
 class EnvironmentPerturbation(ModelStrict):
@@ -857,26 +1023,20 @@ class EnvironmentPerturbation(ModelStrict):
 
 
 class SmallMoleculePerturbation(EnvironmentPerturbation, ModelStrict):
-    """An added chemical compound (drug, solvent, acid, alcohol, salt, oxidant, ...).
+    """An added chemical SPECIES (drug, acid, alcohol, salt, oxidant, ...).
 
-    Covers any medium-borne small molecule dosed at a concentration or a target basis
-    (e.g. IC30). ``stress_category`` optionally annotates the physiological stress the
-    compound imposes (e.g. NaCl -> 'osmotic', H2O2 -> 'oxidative', ethanol ->
-    'alcohol'), so a compound-level record still carries its stress semantics.
+    Covers any medium-borne small molecule dosed at a ``Concentration`` or a target
+    basis (e.g. IC30). Chemical identity is a typed ``Compound`` (keyed by InChIKey);
+    the compound's mode of action / physiological role is a ChEBI ROLE on
+    ``compound.roles`` -- there is deliberately NO consequence field (the former
+    ``stress_category`` was a category error, M1). Whether the strain is sensitive or
+    tolerant is an ``EnvironmentResponsePhenotype`` property, not part of the edit.
     """
 
     perturbation_type: Literal["small_molecule"] = "small_molecule"
     description: str = "Small-molecule compound added to the base medium"
-    compound_name: str = Field(
-        description="human-readable compound name, e.g. 'isobutanol'"
-    )
-    compound_id: str | None = Field(
-        default=None,
-        description="PubChem CID / ChEBI CURIE, e.g. 'CID:6560' | 'CHEBI:16236'; "
-        "None if unmapped",
-    )
-    smiles: str | None = Field(
-        default=None, description="canonical SMILES; None if unknown"
+    compound: Compound = Field(
+        description="typed chemical identity of the added species"
     )
     concentration: Concentration = Field(
         description="dose (numeric value+unit and/or basis such as IC30)"
@@ -885,40 +1045,37 @@ class SmallMoleculePerturbation(EnvironmentPerturbation, ModelStrict):
         default=None,
         description="vehicle the compound was delivered in; None if dissolved directly",
     )
-    stress_category: str | None = Field(
-        default=None,
-        description="physiological stress class the compound imposes: 'alcohol' | "
-        "'acid' | 'osmotic' | 'oxidative' | 'cationic' | 'chelator' | 'other'; "
-        "None if unclassified",
-    )
 
 
-class PhysicalStressPerturbation(EnvironmentPerturbation, ModelStrict):
-    """A non-compound-framed physical/physiological stress (temperature, osmotic, ...).
+class EnvironmentPhysicalPerturbation(EnvironmentPerturbation, ModelStrict):
+    """A neutral, scalar physical/physiological environment FACTOR (pH, osmolarity, ...).
 
-    Use when the stress is framed by its TYPE + magnitude rather than a specific added
-    compound -- e.g. heat at 37 C (``stress_type='temperature'``, magnitude value=37,
-    unit='Celsius'). When a specific compound imposes the stress (NaCl, H2O2, ethanol),
-    prefer ``SmallMoleculePerturbation`` with ``stress_category`` set.
+    Use when the edit is a physical variable rather than a specific added compound --
+    e.g. a shift in medium pH or osmolarity, or a change of carbon source. ``factor``
+    names the neutral variable (never a consequence word); ``magnitude`` gives its
+    typed value+unit when quantitative; ``agent`` optionally names the chemical species
+    that realizes the factor (e.g. the salt used to set osmolarity) as a reused
+    ``Compound``. Temperature is NOT here -- it lives on ``Environment.temperature``.
+    When a single named compound IS the edit (NaCl, H2O2, ethanol), prefer
+    ``SmallMoleculePerturbation``.
     """
 
-    perturbation_type: Literal["physical_stress"] = "physical_stress"
-    description: str = "Physical/physiological environmental stress"
-    stress_type: EnvironmentStressType = Field(
-        description="the kind of physical stress"
-    )
+    perturbation_type: Literal["environment_physical"] = "environment_physical"
+    description: str = "Scalar physical/physiological environment factor"
+    factor: PhysicalFactor = Field(description="the neutral physical variable changed")
     magnitude: Concentration | None = Field(
         default=None,
-        description="stress magnitude (e.g. 37 'Celsius' temperature, 1 'M' NaCl "
-        "osmotic); None for a purely qualitative stress",
+        description="typed value+unit of the factor; None for a purely qualitative change",
     )
-    agent: str | None = Field(
+    agent: Compound | None = Field(
         default=None,
-        description="agent inducing the stress if any, e.g. 'NaCl' | 'sorbitol' | 'heat'",
+        description="chemical species realizing the factor (e.g. the salt for osmolarity)",
     )
 
 
-EnvironmentPerturbationType = SmallMoleculePerturbation | PhysicalStressPerturbation
+EnvironmentPerturbationType = (
+    SmallMoleculePerturbation | EnvironmentPhysicalPerturbation
+)
 
 
 class Environment(ModelStrict):

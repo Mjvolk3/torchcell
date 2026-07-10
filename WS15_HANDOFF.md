@@ -4,6 +4,38 @@
 `notes/paper.database.ontological-enforcement.md`. Memory:
 `environmental-chemogenomic-ingestion-plan` + `paper-r5-chemogenomic-and-inference-thesis`.
 
+## 2026.07.10 — Tier-1 items 1–3 DONE (landing); item 4 IN PROGRESS next
+
+Implemented + committed on `ws15-env-chemogenomic` (5 commits `0b5d542f`→`6576027f`):
+
+1. **Schema refactor** (`0b5d542f`): `SmallMoleculePerturbation` carries a typed
+   `Compound` (InChIKey-keyed, ChEBI roles) + `EnvironmentPhysicalPerturbation` (neutral
+   scalar factor); `EnvironmentStressType`/`stress_type`/`stress_category` DELETED (M1);
+   typed `ConcentrationUnit`/`DoseBasis`/`TemperatureUnit` enums (G2); `copy_number > 0`
+   validators on all 3 dosage leaves (M2 — absence = `NaturalGeneAbsence` only).
+2. **Invariant tests** (`90971766`): `tests/torchcell/datamodels/test_ontology_all_trees.py`
+   — S3–S7 across env/phenotype/experiment/reference trees + M1–M4 + G1–G3. Deferred
+   gene-tree M1 (suppressor/ts) and phenotype measurement-typing are `strict=True` xfails
+   that Tier 2 flips green. All datamodels tests pass; changed source files mypy-clean.
+3. **Loaders + rebuilds** (`09e7e74a`, `db862707`): 5 env loaders migrated; all 4 built
+   env datasets REBUILT on the new schema and **L0–L4 PASS**: Vanacloig 164,115 · Mota
+   1,273 · Wildenhain 428,573 · Auesukaree 525. Auesukaree heat is now a raised
+   `Environment.temperature` (no perturbation, M2); the L3 `environment_perturbed` check
+   accepts a non-baseline temperature as a valid edit.
+
+**NEXT — item 4 (this session, after landing 1–3):** streaming `post_process` +
+Hoepfner/FitDb/Lee. Blocker is concrete: `ExperimentReferenceIndex.index` is a dense
+`list[bool]` of length N stored PER unique reference — Wildenhain (428k) already took
+~15 min in that loop; Hoepfner (~30M, 70×) would be tens of GB + hours and can't build
+as-is. Plan: compact/sparse reference-index redesign FIRST (touches every
+`ExperimentReferenceIndex` consumer), then Dryad downloads + multi-hour builds; FitDb/Lee
+loaders don't exist yet. **Tier 2** (Sga collapse, gene-side suppressor/ts, CopyNumber
+axis ABC, phenotype measurement-typing backfill) still starts after the env studies merge.
+
+---
+
+**(Original gate note, superseded by the above:)**
+
 ## Where we came from (the arc)
 
 1. Goal: back the Nature-Biotech paper's **Result R5 = "Drug exposure and representation

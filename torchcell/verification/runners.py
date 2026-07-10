@@ -29,6 +29,7 @@ import lmdb
 from torchcell.verification.environment_response import (
     environment_response_gene_set,
     verify_environment_response_dataset,
+    verify_environment_response_dataset_streaming,
 )
 from torchcell.verification.expression import (
     measured_gene_universe,
@@ -130,6 +131,22 @@ def load_records(abs_root: str) -> list[dict[str, Any]]:
             records.append(pickle.loads(value))
     env.close()
     return records
+
+
+def stream_records(abs_root: str) -> Any:
+    """Yield every LMDB entry under ``<abs_root>/processed/lmdb`` one at a time.
+
+    Memory-bounded alternative to :func:`load_records` for very large datasets (e.g.
+    the 30M-record Hoepfner HIP-HOP atlas) whose full materialization would exceed RAM.
+    """
+    env = lmdb.open(osp.join(abs_root, "processed", "lmdb"), readonly=True, lock=False)
+    try:
+        with env.begin() as txn:
+            cursor = txn.cursor()
+            for _, value in cursor:
+                yield pickle.loads(value)
+    finally:
+        env.close()
 
 
 def _write_report(report: VerificationReport, report_dir: str) -> str:
@@ -534,6 +551,46 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
             ),
         ),
     },
+    "env_chemgen_hoepfner2014": {
+        "root": "data/torchcell/env_chemgen_hoepfner2014",
+        # HIP 16,939,418 (5807 R64 ORFs x 2956 het-CNV experiments) + HOP 13,056,820
+        # (4912 R64 ORFs x 2923 deletion experiments) = 29,996,238 records. 62 HIP + 58
+        # HOP old/merged ORF names not in SGD R64 dropped (343,356 records). One record
+        # per (ORF, sensitivity column); compound_name embeds the unique experiment tag.
+        "expected_count": 29996238,
+        # 30M records -> verify via a single-pass streaming gate (materializing would
+        # need ~450 GB RAM).
+        "stream": True,
+        # HIP het-CNV + HOP homozygous-deletion diploid collections (BY4743): no constant
+        # background genes.
+        "background_genes": frozenset(),
+        "provenance": Provenance(
+            source_uri=(
+                "https://datadryad.org/downloads/file_stream/4834608 (HIP_scores.txt); "
+                "https://datadryad.org/downloads/file_stream/4834609 (HOP_scores.txt); "
+                "Dryad doi:10.5061/dryad.v5m8v"
+            ),
+            citation_key="hoepfnerHighresolutionChemicalDissection2014",
+            method=(
+                "Novartis HIP-HOP chemogenomic atlas; deposited (adjusted) MADL "
+                "sensitivity score = (r_L - med(r_L))/MAD(r_L) per (deletion strain x "
+                "compound/concentration) at IC30 in YPD, 30 C, ~16 h, 2% DMSO; HIP = "
+                "heterozygous (EngineeredCopyNumberPerturbation copy 1/2, KanMX) diploid "
+                "incl. essential genes, HOP = homozygous KanMx deletion diploid; n_samples "
+                "= 2 (Ad. columns) / 1 (MADL columns), technical duplicate; ORFs resolved "
+                "to SGD R64 (non-R64 names dropped)"
+            ),
+            page=(
+                "Microbiol Res 2014 (doi:10.1016/j.micres.2013.11.004); Dryad "
+                "doi:10.5061/dryad.v5m8v HIP_scores.txt "
+                "sha256=dbc5041defea9c046da0890d5e569f97d5f7afbf50ea0885f539ea8e5980cd24, "
+                "HOP_scores.txt "
+                "sha256=99b386a84384eae847657ed41bf222c9550a87ef961f0ab191833c918771ffd7, "
+                "Table_S1.xls "
+                "sha256=115bb31cc5e696588d1ecb4ffa262475e05025e22347f7e004f77fd635898209"
+            ),
+        ),
+    },
     "env_chemgen_wildenhain2015": {
         "root": "data/torchcell/env_chemgen_wildenhain2015",
         # 428573 = 242 screened ORFs x compounds, one cell per (ORF, CID-else-SID);
@@ -573,20 +630,32 @@ def run_environment_response(data_root: str) -> bool:
     all_passed = True
     for name, spec in ENVIRONMENT_RESPONSE_DATASETS.items():
         abs_root = osp.join(data_root, spec["root"])
-        records = load_records(abs_root)
         background = spec.get("background_genes", frozenset())
-        report = verify_environment_response_dataset(
-            records,
-            dataset_name=name,
-            provenance=spec["provenance"],
-            expected_count=spec.get("expected_count", len(records)),
-            background_genes=background,
-        )
-        report.add(
-            _l4_rnaseq_gene_containment(
-                sgd_genes, environment_response_gene_set(records, background)
-            ).model_copy(update={"name": "gene_containment_sgd"})
-        )
+        if spec.get("stream"):
+            # Large dataset: single-pass, memory-bounded verification (never materialized).
+            report = verify_environment_response_dataset_streaming(
+                stream_records(abs_root),
+                dataset_name=name,
+                provenance=spec["provenance"],
+                expected_count=spec["expected_count"],
+                sgd_genes=sgd_genes,
+                background_genes=background,
+                min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
+            )
+        else:
+            records = load_records(abs_root)
+            report = verify_environment_response_dataset(
+                records,
+                dataset_name=name,
+                provenance=spec["provenance"],
+                expected_count=spec.get("expected_count", len(records)),
+                background_genes=background,
+            )
+            report.add(
+                _l4_rnaseq_gene_containment(
+                    sgd_genes, environment_response_gene_set(records, background)
+                ).model_copy(update={"name": "gene_containment_sgd"})
+            )
         out = _write_report(report, osp.join(abs_root, "preprocess"))
         print(report.summary())
         print(f"  -> wrote {out}\n")

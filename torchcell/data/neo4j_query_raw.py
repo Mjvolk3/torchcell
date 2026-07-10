@@ -69,12 +69,9 @@ def compute_experiment_reference_index_parallel(
 
     reference_indices_list = []
     for hash_val, indices in unique_hashes_to_indices.items():
-        index_list = [False] * len(dataset)
-        for idx in indices:
-            index_list[idx] = True
         reference_obj = dataset[indices[0]]["reference"].model_dump()
         exp_ref_index = ExperimentReferenceIndex(
-            reference=reference_obj, index=index_list
+            reference=reference_obj, member_indices=indices
         )
         reference_indices_list.append(exp_ref_index)
 
@@ -116,12 +113,9 @@ def compute_experiment_reference_index(
 
     reference_indices_list = []
     for hash_val, indices in unique_hashes_to_indices.items():
-        index_list = [False] * len(dataset)
-        for idx in indices:
-            index_list[idx] = True
         reference_obj = dataset[indices[0]]["experiment_reference"].model_dump()
         exp_ref_index = ExperimentReferenceIndex(
-            reference=reference_obj, index=index_list
+            reference=reference_obj, member_indices=indices
         )
         reference_indices_list.append(exp_ref_index)
 

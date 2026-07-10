@@ -449,7 +449,7 @@ class SmfKuzmin2018Adapter:
     def _get_experiment_ref_experiment_edges(self) -> Generator[BioCypherEdge]:
         # instance level
         for data in tqdm(self.dataset.experiment_reference_index):
-            dataset_subset = self.dataset[data.index]
+            dataset_subset = self.dataset[data.member_indices]
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
@@ -1081,7 +1081,7 @@ class DmfKuzmin2018Adapter:
         # instance level
         print()
         for data in tqdm(self.dataset.experiment_reference_index):
-            dataset_subset = self.dataset[data.index]
+            dataset_subset = self.dataset[data.member_indices]
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
@@ -1724,7 +1724,7 @@ class TmfKuzmin2018Adapter:
         # instance level
         print()
         for data in tqdm(self.dataset.experiment_reference_index):
-            dataset_subset = self.dataset[data.index]
+            dataset_subset = self.dataset[data.member_indices]
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()

@@ -70,75 +70,49 @@ def serialize_for_hashing(obj: Any) -> str:
 def compute_experiment_reference_index_sequential(
     dataset: Dataset,
 ) -> list[ExperimentReferenceIndex]:
-    """Build reference indices by hashing every item sequentially."""
-    # Hashes for each reference
-    print("Computing experiment_reference_index hashes...")
-    reference_hashes = [
-        compute_sha256_hash(serialize_for_hashing(data["reference"]))
-        for data in tqdm(dataset)
+    """Build the reference index in ONE streaming grouping pass (memory-bounded).
+
+    Streams every record in TRUE dataset-index order, hashes its reference, and appends
+    the record's index to that reference's bucket -- keeping each unique reference object
+    exactly once (first sighting). Time is O(N); memory is O(unique references) + the O(N)
+    output (member indices sum to N), never the former O(references x N) dense masks. This
+    is what makes genome-scale datasets (Hoepfner ~30M records) buildable. First-sighting
+    order is preserved so the output is deterministic.
+    """
+    print("Computing experiment_reference_index (streaming)...")
+    buckets: dict[str, list[int]] = {}
+    references: dict[str, Any] = {}
+    order: list[str] = []
+    for i in tqdm(range(len(dataset))):
+        reference = dataset[i]["reference"]
+        ref_hash = compute_sha256_hash(serialize_for_hashing(reference))
+        if ref_hash not in buckets:
+            buckets[ref_hash] = []
+            references[ref_hash] = reference
+            order.append(ref_hash)
+        buckets[ref_hash].append(i)
+
+    return [
+        ExperimentReferenceIndex(
+            reference=references[ref_hash], member_indices=buckets[ref_hash]
+        )
+        for ref_hash in order
     ]
-
-    # Identify unique hashes
-    unique_hashes = set(reference_hashes)
-
-    # Initialize ExperimentReferenceIndex list
-    reference_indices = []
-
-    print("Finding unique references...")
-    for unique_hash in tqdm(unique_hashes):
-        # Create a boolean list where True indicates the presence of the unique reference
-        index_list = [ref_hash == unique_hash for ref_hash in reference_hashes]
-
-        # Find the corresponding reference object for the unique hash
-        ref_index = reference_hashes.index(unique_hash)
-        unique_ref = dataset[ref_index]["reference"]
-
-        # Create ExperimentReferenceIndex object
-        exp_ref_index = ExperimentReferenceIndex(reference=unique_ref, index=index_list)
-        reference_indices.append(exp_ref_index)
-
-    return reference_indices
 
 
 def compute_experiment_reference_index_parallel(
     dataset: Dataset, batch_size: int = int(1e4), io_workers: int = 1
 ) -> list[ExperimentReferenceIndex]:
-    """Build reference indices by hashing items via a multiprocessing loader."""
-    print("Computing experiment_reference_index hashes in parallel...")
-    data_loader = CpuExperimentLoaderMultiprocessing(
-        dataset, batch_size=batch_size, num_workers=io_workers
-    )
+    """Build the reference index (streaming member-index grouping).
 
-    reference_hashes = []
-    reference_data = []  # Add this line to store full reference data
-    for batch in tqdm(data_loader, total=len(data_loader)):
-        for data in batch:
-            reference_hash = compute_sha256_hash(
-                serialize_for_hashing(data["reference"])
-            )
-            reference_hashes.append(reference_hash)
-            reference_data.append(data["reference"])  # Store full reference data
-
-    # Identify unique hashes
-    unique_hashes = set(reference_hashes)
-
-    # Initialize ExperimentReferenceIndex list
-    reference_indices = []
-
-    print("Finding unique references...")
-    for unique_hash in tqdm(unique_hashes):
-        # Create a boolean list where True indicates the presence of the unique reference
-        index_list = [ref_hash == unique_hash for ref_hash in reference_hashes]
-
-        # Find the corresponding reference object for the unique hash
-        ref_index = reference_hashes.index(unique_hash)
-        unique_ref = reference_data[ref_index]  # Use stored reference data
-
-        # Create ExperimentReferenceIndex object
-        exp_ref_index = ExperimentReferenceIndex(reference=unique_ref, index=index_list)
-        reference_indices.append(exp_ref_index)
-
-    return reference_indices
+    Delegates to the sequential streaming build: the sparse member-index representation
+    requires each record's TRUE dataset index, but the multiprocessing loader's workers
+    return batches out of order, so consumption-order positions cannot be trusted. The
+    former hash-parallelism gave marginal benefit (the build is LMDB-I/O-bound, not
+    hash-CPU-bound) and silently depended on in-order delivery; a single streaming pass is
+    both correct and sufficient. Signature kept for API compatibility.
+    """
+    return compute_experiment_reference_index_sequential(dataset)
 
 
 def post_process(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -153,14 +127,16 @@ def post_process(func: Callable[..., Any]) -> Callable[..., Any]:
         self.gene_set = self.compute_gene_set()
         self.experiment_reference_index
 
-        # Additional validation step
-        total_index_coverage = torch.zeros(len(self), dtype=torch.bool)
+        # Coverage check: mark each reference's member indices into ONE length-N bool
+        # array (O(N) total, one pass), NOT a dense mask per reference (which would
+        # reintroduce the O(references x N) blowup the sparse representation removes).
+        n = len(self)
+        covered = torch.zeros(n, dtype=torch.bool)
         for eri in self.experiment_reference_index:
-            index_tensor = torch.tensor(eri.index, dtype=torch.bool)
-            total_index_coverage |= index_tensor
+            covered[eri.member_indices] = True
 
-        assert torch.all(total_index_coverage).item() is True, (
-            "Each item in the dataset must be covered exactly once."
+        assert torch.all(covered).item() is True, (
+            "Each item in the dataset must be covered by exactly one reference."
         )
 
         return result

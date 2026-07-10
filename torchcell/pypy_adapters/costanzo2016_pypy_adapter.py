@@ -450,7 +450,7 @@ class SmfCostanzo2016Adapter:
     def _get_experiment_ref_experiment_edges(self) -> Generator[BioCypherEdge]:
         # instance level
         for data in self.dataset.experiment_reference_index:
-            dataset_subset = self.dataset[data.index]
+            dataset_subset = self.dataset[data.member_indices]
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
@@ -1093,7 +1093,7 @@ class DmfCostanzo2016Adapter:
         # instance level
         print()
         for data in tqdm(self.dataset.experiment_reference_index):
-            dataset_subset = self.dataset[data.index]
+            dataset_subset = self.dataset[data.member_indices]
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()

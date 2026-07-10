@@ -621,6 +621,39 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
             ),
         ),
     },
+    "env_chemgen_auesukaree2009": {
+        "root": "data/torchcell/env_chemgen_auesukaree2009",
+        # ethanol 95 + methanol 55 + 1-propanol 125 + heat 178 + NaCl 42 + H2O2 30 = 525
+        # sensitive-mutant records, one categorical call per (deletion, stress). Methanol
+        # Table 2 lists 55 (abstract headline says 54 -- Table authoritative); all 525
+        # listed gene tokens resolve to unique R64 ORFs (YGR272c -> current YGR271C-A).
+        "expected_count": 525,
+        # BY4742 nonessential haploid single-deletion collection: no constant background.
+        "background_genes": frozenset(),
+        "provenance": Provenance(
+            source_uri=(
+                "$DATA_ROOT/torchcell-library/"
+                "auesukareeGenomewideIdentificationGenes2009/paper.pdf (library mirror; "
+                "PMC2747848; publisher PMC download is JS-proof-of-work, not scriptable)"
+            ),
+            citation_key="auesukareeGenomewideIdentificationGenes2009",
+            sha256="01b945443c0ce41642c76fd737e12b4c31cacb5f384049a5c0a7e4bf9e1eb5a1",
+            method=(
+                "Article Tables 1-6 extracted from the born-digital PDF text layer "
+                "(pdftotext -layout; per-class parenthetical counts as self-checksums); "
+                "categorical spot-assay sensitivity ('sensitive' vs parental BY4742, "
+                "tolerant) for 10% ethanol / 16% methanol / 7% 1-propanol (v/v) -> "
+                "SmallMoleculePerturbation, and 37 C heat / 1 M NaCl / 5 mM H2O2 -> "
+                "PhysicalStressPerturbation (temperature/osmotic/oxidative); YPD solid, "
+                "30 C (37 C heat), 3 days, aerobic; n_samples=3 (triplicate); gene names "
+                "-> SGD R64 ORFs via genome alias table"
+            ),
+            page=(
+                "J Appl Genet 2009 50(3):301-310 (doi:10.1007/BF03195688; PMC2747848); "
+                "paper.pdf sha256=01b945443c0ce41642c76fd737e12b4c31cacb5f384049a5c0a7e4bf9e1eb5a1"
+            ),
+        ),
+    },
 }
 
 

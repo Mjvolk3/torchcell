@@ -4,6 +4,9 @@
 # Test file: tests/torchcell/datasets/scerevisiae/test___init__.py
 """S. cerevisiae fitness and morphology datasets (Costanzo, Kuzmin, Ohya, Sameith)."""
 
+from .auesukaree2009 import (
+    EnvChemgenAuesukaree2009Dataset as EnvChemgenAuesukaree2009Dataset,
+)
 from .cachera2023 import BetaxanthinCachera2023Dataset as BetaxanthinCachera2023Dataset
 from .caudal2024 import (
     CaudalPanTranscriptome2024Dataset as CaudalPanTranscriptome2024Dataset,
@@ -65,6 +68,8 @@ wildenhain_datasets = ["EnvChemgenWildenhain2015Dataset"]
 
 hoepfner_datasets = ["EnvChemgenHoepfner2014Dataset"]
 
+auesukaree_datasets = ["EnvChemgenAuesukaree2009Dataset"]
+
 __all__ = (
     costanzo_datasets
     + kuzmin_datasets
@@ -78,4 +83,5 @@ __all__ = (
     + mota_datasets
     + wildenhain_datasets
     + hoepfner_datasets
+    + auesukaree_datasets
 )

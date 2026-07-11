@@ -2161,6 +2161,12 @@ class MeasurementType(StrEnum):
       Hillenmeyer, Lee).
     - ``categorical``: qualitative call (Auesukaree sensitive/tolerant; Mota 0/+/++).
     - ``growth_rate``: absolute or normalized growth rate / doubling time.
+    - ``differential_fitness``: SIGNED difference of normalized colony-size fitness in a
+      test condition minus the matched reference condition (Costanzo 2021 condition-SGA:
+      "the difference in colony size measured in a particular test condition versus the
+      matched reference condition for each mutant"); negative = condition-hypersensitive,
+      0 = fitness unchanged vs reference. Distinct from ``growth_rate`` (a rate, which is
+      non-negative) -- a differential is routinely negative.
     """
 
     log2_ratio = "log2_ratio"
@@ -2168,6 +2174,7 @@ class MeasurementType(StrEnum):
     sensitivity_score = "sensitivity_score"
     categorical = "categorical"
     growth_rate = "growth_rate"
+    differential_fitness = "differential_fitness"
 
 
 class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
@@ -2226,6 +2233,15 @@ class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
         default=None,
         description="human-readable definition/units of the score, e.g. "
         "'log2(inhibitor/control)'",
+    )
+    source_experiment_id: str | None = Field(
+        default=None,
+        description="stable per-strain / per-array identifier from the source (e.g. a "
+        "Costanzo TS-allele Strain ID or a scanned-array id). Disambiguates the SCREENED "
+        "UNIT when one systematic gene has multiple screened strains (an allelic series -- "
+        "18 ACT1 ts alleles) or one (gene, condition) has replicate arrays: the L1 "
+        "uniqueness unit is then the strain/array, not the (gene, condition) pair. None for "
+        "one-strain-per-gene collections (deletion arrays), leaving their L1 key unchanged.",
     )
 
     @field_validator("environment_response")

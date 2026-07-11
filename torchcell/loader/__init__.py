@@ -1,9 +1,5 @@
 """Data loaders for torchcell experiments."""
 
-from .cpu_experiment_loader import (
-    CpuExperimentLoader,
-    CpuExperimentLoaderMultiprocessing,
-    # CpuDataModule
-)
+from .cpu_experiment_loader import CpuExperimentLoaderMultiprocessing
 
-__all__ = ["CpuExperimentLoader", "CpuExperimentLoaderMultiprocessing"]
+__all__ = ["CpuExperimentLoaderMultiprocessing"]

@@ -44,6 +44,19 @@ Costanzo LMDBs get a real value) and refreshes whenever a dataset is (re)built.
 | Kuzmin 2020 dmi | 256,862 | 1 | digenic interaction | edge | n×1 | 5.4 MB |
 | Kuzmin 2020 tmi | 537,911 | 1 | trigenic interaction | hyperedge | n×1 | 2.6 MB |
 
+### Environmental / chemogenomic
+
+| Dataset | Genotypes | Env | Phenotype | Label | Shape | Signal (gzip) |
+| :-- | --: | --: | :-- | :-- | :-- | --: |
+| Vanacloig-Pedros 2022 | 3,647 | 45 | chemogenomic fitness (log2-ratio) | scalar | n×1 | 6.1 MB |
+| Auesukaree 2009 (stress screen) | 333 | 6 | stress sensitivity (categorical) | categorical | n×1 | 1.7 KB |
+| Mota 2024 (weak-acid screen) | 601 | 3 | weak-acid susceptibility (categorical) | categorical | n×1 | 4 KB |
+| Wildenhain 2015 (drug tolerance) | 256 | 5,178 | growth-inhibition z-score | scalar | n×1 | 3.5 MB |
+| Costanzo 2021 (condition-SGA) | 4,399 | 14 | differential mutant fitness | scalar | n×1 | 426 KB |
+| Hoepfner 2014 (HIP/HOP atlas) | 10,719 | 5,879 | HIP/HOP sensitivity score | scalar | n×1 | 435 MB |
+| Hillenmeyer 2008 het (FitDb HIP) | 5,814 | 514 | HIP fitness-defect log2-ratio | scalar | n×1 | 44.3 MB |
+| Hillenmeyer 2008 hom (FitDb HOP) | 4,667 | 279 | HOP fitness-defect z-score | scalar | n×1 | 19.9 MB |
+
 ### Viability
 
 | Dataset | Genotypes | Env | Phenotype | Label | Shape | Signal (gzip) |
@@ -94,7 +107,7 @@ Costanzo LMDBs get a real value) and refreshes whenever a dataset is (re)built.
 
 ### In progress (not yet built/verified)
 
-Baryshnikova 2010 (smf; class dormant) · Ohnuki 2018 / 2022 (morphology) · O'Duibhir 2014 (expression / fitness) · Wildenhain 2015 (drug tolerance, 195 × 4,915 conditions) · Lian 2017 (AID furfural tolerance) · FitDb (fitness across 1,144 conditions). See `[[paper.north-star.dataset-triage]]` for the full ~75-candidate backlog.
+Baryshnikova 2010 (smf; class dormant) · Ohnuki 2018 / 2022 (morphology) · O'Duibhir 2014 (expression / fitness) · Lian 2017 (AID furfural tolerance) · Lee 2014 (chemogenomic fitness signatures; awaiting author matrices) · Nadal-Ribelles 2025 (single-cell Perturb-seq atlas). See `[[paper.north-star.dataset-triage]]` for the full ~75-candidate backlog.
 
 ## Reference databases
 

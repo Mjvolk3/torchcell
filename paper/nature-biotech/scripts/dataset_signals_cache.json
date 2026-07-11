@@ -1,17 +1,17 @@
 {
   "data/torchcell/amino_acid_mulleder2016": {
     "bytes": 913971,
-    "key": "1783349427:19369984",
+    "key": "1783565970:19369984",
     "n": 4678
   },
   "data/torchcell/betaxanthin_cachera2023": {
     "bytes": 117694,
-    "key": "1783471021:17772544",
+    "key": "1783565963:17772544",
     "n": 4735
   },
   "data/torchcell/carotenoid_ozaydin2013": {
     "bytes": 21891,
-    "key": "1783471006:16793600",
+    "key": "1783565955:18526208",
     "n": 4474
   },
   "data/torchcell/caudal_pantranscriptome2024": {
@@ -21,7 +21,7 @@
   },
   "data/torchcell/dm_microarray_sameith2015": {
     "bytes": 20893941,
-    "key": "1783148604:45723648",
+    "key": "1783566140:45723648",
     "n": 72
   },
   "data/torchcell/dmf_costanzo2016": {
@@ -54,6 +54,46 @@
     "key": "1727830112:1327497216",
     "n": 632797
   },
+  "data/torchcell/env_chemgen_auesukaree2009": {
+    "bytes": 1709,
+    "key": "1783705085:1978368",
+    "n": 525
+  },
+  "data/torchcell/env_chemgen_costanzo2021": {
+    "bytes": 426331,
+    "key": "1783793525:253886464",
+    "n": 61318
+  },
+  "data/torchcell/env_chemgen_hillenmeyer2008_het": {
+    "bytes": 44294486,
+    "key": "1783803398:12032385024",
+    "n": 2921078
+  },
+  "data/torchcell/env_chemgen_hillenmeyer2008_hom": {
+    "bytes": 19883160,
+    "key": "1783803739:4622110720",
+    "n": 1179520
+  },
+  "data/torchcell/env_chemgen_hoepfner2014": {
+    "bytes": 435045213,
+    "key": "1783737366:124369117184",
+    "n": 29996238
+  },
+  "data/torchcell/env_chemgen_mota2024": {
+    "bytes": 4038,
+    "key": "1783736377:4780032",
+    "n": 1273
+  },
+  "data/torchcell/env_chemgen_vanacloig2022": {
+    "bytes": 6083115,
+    "key": "1783704431:679714816",
+    "n": 164115
+  },
+  "data/torchcell/env_chemgen_wildenhain2015": {
+    "bytes": 3508134,
+    "key": "1783705128:1775452160",
+    "n": 428573
+  },
   "data/torchcell/gene_essentiality_sgd": {
     "bytes": 584,
     "key": "1727829740:2572288",
@@ -61,7 +101,7 @@
   },
   "data/torchcell/metabolite_zelezniak2018": {
     "bytes": 35544,
-    "key": "1783474335:430080",
+    "key": "1783565986:454656",
     "n": 95
   },
   "data/torchcell/microarray_kemmeren2014": {
@@ -71,7 +111,7 @@
   },
   "data/torchcell/proteome_zelezniak2018": {
     "bytes": 2024641,
-    "key": "1783350339:5521408",
+    "key": "1783565977:5521408",
     "n": 97
   },
   "data/torchcell/scmd_ohya2005": {
@@ -81,7 +121,7 @@
   },
   "data/torchcell/sm_microarray_sameith2015": {
     "bytes": 22548096,
-    "key": "1783148762:52072448",
+    "key": "1783618560:52072448",
     "n": 82
   },
   "data/torchcell/smf_costanzo2016": {

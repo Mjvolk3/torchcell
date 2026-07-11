@@ -59,6 +59,7 @@ COLUMNS = [
 
 SECTIONS = [
     "Fitness + genetic interaction",
+    "Environmental / chemogenomic",
     "Viability",
     "Morphology",
     "Expression (microarray)",
@@ -112,15 +113,23 @@ DATASET_ROWS: list[DatasetRow] = [
     DatasetRow(section="Metabolite", name="Zelezniak 2018 (metabolome)", genotypes="97", env="1", phenotype="~46 metabolite levels", label="~46-vector", shape="97×~46", data_subpath="data/torchcell/metabolite_zelezniak2018"),
     DatasetRow(section="Protein abundance", name="Zelezniak 2018 (SWATH proteome)", genotypes="97", env="1", phenotype="protein abundance", label="726-protein vector", shape="97×726", data_subpath="data/torchcell/proteome_zelezniak2018"),
     DatasetRow(section="Visual / product-proxy score", name="Ozaydin 2013 (β-carotene screen)", genotypes="4,474", env="1", phenotype="colony-color visual score", label="ordinal scalar", shape="n×1", data_subpath="data/torchcell/carotenoid_ozaydin2013"),
+    DatasetRow(section="Environmental / chemogenomic", name="Vanacloig-Pedros 2022", genotypes="3,647", env="45", phenotype="chemogenomic fitness (log2-ratio)", label="scalar", shape="n×1", data_subpath="data/torchcell/env_chemgen_vanacloig2022"),
+    DatasetRow(section="Environmental / chemogenomic", name="Auesukaree 2009 (stress screen)", genotypes="333", env="6", phenotype="stress sensitivity (categorical)", label="categorical", shape="n×1", data_subpath="data/torchcell/env_chemgen_auesukaree2009"),
+    DatasetRow(section="Environmental / chemogenomic", name="Mota 2024 (weak-acid screen)", genotypes="601", env="3", phenotype="weak-acid susceptibility (categorical)", label="categorical", shape="n×1", data_subpath="data/torchcell/env_chemgen_mota2024"),
+    DatasetRow(section="Environmental / chemogenomic", name="Wildenhain 2015 (drug tolerance)", genotypes="256", env="5,178", phenotype="growth-inhibition z-score", label="scalar", shape="n×1", data_subpath="data/torchcell/env_chemgen_wildenhain2015"),
+    DatasetRow(section="Environmental / chemogenomic", name="Costanzo 2021 (condition-SGA)", genotypes="4,399", env="14", phenotype="differential mutant fitness", label="scalar", shape="n×1", data_subpath="data/torchcell/env_chemgen_costanzo2021"),
+    DatasetRow(section="Environmental / chemogenomic", name="Hoepfner 2014 (HIP/HOP atlas)", genotypes="10,719", env="5,879", phenotype="HIP/HOP sensitivity score", label="scalar", shape="n×1", data_subpath="data/torchcell/env_chemgen_hoepfner2014"),
+    DatasetRow(section="Environmental / chemogenomic", name="Hillenmeyer 2008 het (FitDb HIP)", genotypes="5,814", env="514", phenotype="HIP fitness-defect log2-ratio", label="scalar", shape="n×1", data_subpath="data/torchcell/env_chemgen_hillenmeyer2008_het"),
+    DatasetRow(section="Environmental / chemogenomic", name="Hillenmeyer 2008 hom (FitDb HOP)", genotypes="4,667", env="279", phenotype="HOP fitness-defect z-score", label="scalar", shape="n×1", data_subpath="data/torchcell/env_chemgen_hillenmeyer2008_hom"),
 ]
 
 NOT_BUILT = [
     "Baryshnikova 2010 (smf; class dormant)",
     "Ohnuki 2018 / 2022 (morphology)",
     "O'Duibhir 2014 (expression / fitness)",
-    "Wildenhain 2015 (drug tolerance, 195 × 4,915 conditions)",
     "Lian 2017 (AID furfural tolerance)",
-    "FitDb (fitness across 1,144 conditions)",
+    "Lee 2014 (chemogenomic fitness signatures; awaiting author matrices)",
+    "Nadal-Ribelles 2025 (single-cell Perturb-seq atlas)",
 ]
 
 MD_INTRO = """\

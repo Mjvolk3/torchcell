@@ -654,6 +654,46 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
             ),
         ),
     },
+    "env_chemgen_costanzo2021": {
+        "root": "data/torchcell/env_chemgen_costanzo2021",
+        # 4406 R64-resolved strains (3624 dma KanMX deletions + 782 tsa TS alleles after
+        # dropping 23 old/merged non-R64 ORF names) x 14 conditions minus 366 empty cells
+        # = 61,318 records. Essential genes are screened as allelic series (one ORF, up to
+        # 18 ts alleles); the L1 uniqueness unit is the strain (source_experiment_id).
+        "expected_count": 61318,
+        # SGA deletion/TS array (BY4741-derived): no constant drug-sensitized background.
+        "background_genes": frozenset(),
+        "provenance": Provenance(
+            source_uri=(
+                "https://www.science.org/doi/10.1126/science.abf8424 Data File S1 "
+                "(Science SI bot-blocked/403, deposited manually to the raw mirror); "
+                "Methods sourced from https://pmc.ncbi.nlm.nih.gov/articles/PMC9132594/"
+            ),
+            citation_key="costanzoEnvironmentalRobustnessGlobal2021",
+            sha256="f6c313de416ce8cc6ae87e2020b4389bd4adeb07cdb6a438aecaf1e45e6228ad",
+            method=(
+                "condition-SGA single-mutant fitness: DIFFERENTIAL mutant fitness = "
+                "normalized colony-size fitness in a test condition minus the matched "
+                "reference condition ('the difference in colony size measured in a "
+                "particular test condition versus the matched reference condition for each "
+                "mutant', PMC9132594 Methods); measurement_type=differential_fitness, "
+                "n_samples=3 sample_unit=screen ('an average of 3 replicate control screens "
+                "conducted per each of 14 test conditions as well as the reference condition "
+                "at 26 C'); 3624 KanMX deletions (SgaKanMxDeletion) + 782 TS alleles "
+                "(SgaTsAllele, essential-gene allelic series) x 14 conditions; galactose -> "
+                "EnvironmentPhysicalPerturbation(carbon_source), sorbitol/12 drugs -> "
+                "SmallMoleculePerturbation; 26 C on Environment.temperature (M2); ORFs "
+                "validated vs SGD R64 (23 old/merged names dropped)"
+            ),
+            page=(
+                "Science 2021 372(6542):eabf8424 (doi:10.1126/science.abf8424; PMID "
+                "33958448; PMC9132594); Data File S1 sheet 'Diff. Mutant fitness_Conditions'; "
+                "S1 sha256=f6c313de416ce8cc6ae87e2020b4389bd4adeb07cdb6a438aecaf1e45e6228ad. "
+                "Several deposited concentrations recorded verbatim + flagged as SI unit "
+                "anomalies (bortezomib 1300 mM; actinomycin D 20 mM; geldanamycin 10 mM)"
+            ),
+        ),
+    },
 }
 
 

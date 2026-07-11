@@ -81,13 +81,21 @@ def _compound_name(experiment: dict[str, Any]) -> str | None:
 def _l1_pair_uniqueness(
     records: Sequence[Record], background: frozenset[str]
 ) -> LevelResult:
-    """L1: exactly one record per (screened deletion ORF, compound) pair."""
-    seen: dict[tuple[str, str | None], int] = {}
+    """L1: exactly one record per (screened ORF, compound, source_experiment_id) triple.
+
+    ``source_experiment_id`` (a per-strain / per-array id, e.g. a Costanzo TS-allele Strain
+    ID) makes the screened UNIT the strain/array rather than the (gene, compound) pair, so an
+    allelic series (18 ACT1 ts alleles) or replicate arrays are distinct records, not L1
+    duplicates. It is ``None`` for one-strain-per-gene collections, leaving their key at the
+    original (gene, compound) form.
+    """
+    seen: dict[tuple[str, str | None, str | None], int] = {}
     for rec in records:
         exp = rec["experiment"]
         comp = _compound_name(exp)
+        sid = exp["phenotype"].get("source_experiment_id")
         for g in _screened_genes(exp, background):
-            key = (g, comp)
+            key = (g, comp, sid)
             seen[key] = seen.get(key, 0) + 1
     dups = {k: n for k, n in seen.items() if n > 1}
     return LevelResult(
@@ -288,7 +296,7 @@ def verify_environment_response_dataset_streaming(
 
     n_records = 0
     l0_failures: list[dict[str, Any]] = []
-    pair_seen: set[tuple[str, str | None]] = set()
+    pair_seen: set[tuple[str, str | None, str | None]] = set()
     n_pairs = 0
     n_pair_dups = 0
     n_responses = 0
@@ -311,10 +319,12 @@ def verify_environment_response_dataset_streaming(
 
         comp = _compound_name(exp)
         comp_key = None if comp is None else sys.intern(comp)
+        sid = exp["phenotype"].get("source_experiment_id")
+        sid_key = None if sid is None else sys.intern(sid)
         for gene in _screened_genes(exp, background_genes):
             gene = sys.intern(gene)
             screened.add(gene)
-            key = (gene, comp_key)
+            key = (gene, comp_key, sid_key)
             if key in pair_seen:
                 n_pair_dups += 1
             else:

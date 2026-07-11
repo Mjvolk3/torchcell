@@ -870,6 +870,7 @@ class ConcentrationUnit(StrEnum):
     percent_w_v = "percent_w/v"
     ug_per_ml = "ug/mL"
     g_per_l = "g/L"
+    ph = "pH"  # dimensionless -log10[H+]; magnitude unit for a PhysicalFactor.ph edit
 
 
 class DoseBasis(StrEnum):
@@ -889,6 +890,13 @@ class PhysicalFactor(StrEnum):
     NOT a compound, NOT a consequence word. Temperature is deliberately ABSENT --
     it is carried on ``Environment.temperature`` (single canonical encoding, M2),
     never duplicated as a perturbation.
+
+    - ``nutrient_dropout``: a normally-present medium nutrient is REMOVED (amino-acid or
+      vitamin drop-out). The removed nutrient is named on the perturbation's ``agent``
+      ``Compound`` (e.g. L-lysine), so a dropout joins on the SAME compound entity a
+      dataset that ADDS that nutrient would use.
+    - ``radiation``: ionizing/UV irradiation dose (``magnitude`` in the dose unit when
+      released; qualitative when only 'irradiated' is reported).
     """
 
     ph = "pH"
@@ -896,6 +904,8 @@ class PhysicalFactor(StrEnum):
     carbon_source = "carbon_source"
     nitrogen_source = "nitrogen_source"
     ionic_strength = "ionic_strength"
+    nutrient_dropout = "nutrient_dropout"
+    radiation = "radiation"
 
 
 class Compound(ModelStrict):
@@ -1101,6 +1111,13 @@ class Environment(ModelStrict):
     )
     duration_hours: float | None = Field(
         default=None, description="treatment/growth duration in hours; None if unstated"
+    )
+    duration_generations: float | None = Field(
+        default=None,
+        description="treatment/exposure duration in GENERATIONS of growth (competitive-"
+        "growth screens dose exposure in doublings, not hours, e.g. Hillenmeyer 5/15/20 "
+        "generations); None if not applicable. Distinct exposure durations are distinct "
+        "environments, so this is part of the environment identity.",
     )
 
     @field_validator("aerobicity", mode="after")

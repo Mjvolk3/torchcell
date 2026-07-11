@@ -694,6 +694,73 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
             ),
         ),
     },
+    "env_chemgen_hillenmeyer2008_het": {
+        "root": "data/torchcell/env_chemgen_hillenmeyer2008_het",
+        # HIP (heterozygous) fitness-defect log2_ratio. 726 arrays -> 514 unique
+        # environments (replicates aggregated) x 5984 R64 strains minus NA-only cells.
+        "expected_count": 2921078,
+        "background_genes": frozenset(),
+        "stream": True,
+        "provenance": Provenance(
+            source_uri=(
+                "Internet Archive (Wayback) mirror of the Stanford supplement "
+                "chemogenomics.stanford.edu/supplements/global/download/data/"
+                "het.ratio_result_nm.pub; live FitDb portals are DNS-dead, Science SI 403s"
+            ),
+            citation_key="hillenmeyerChemicalGenomicPortrait2008",
+            sha256="c0ddefaeb44c9760481dc443d1c2e82570bad4eb1a5458acd74b169bec47cb44",
+            method=(
+                "genome-scale HIP fitness-defect log2_ratio = log2(mean control intensity / "
+                "treatment intensity), up+down tag mean; positive = fitness defect. "
+                "Per-array atlas AGGREGATED to one record per (strain, environment): arrays "
+                "with identical compound/concentration/generations are replicates -> mean, "
+                "n_samples=n_arrays, sample SD -> derived SE. HET = "
+                "EngineeredCopyNumberPerturbation (copy 1 of 2, diploid) incl. essential "
+                "genes. Conditions classified per SOM Table S1: temperature "
+                "(Environment.temperature, baseline 30 C), pH, amino-acid/vitamin "
+                "nutrient_dropout (agent=Compound), radiation, media swap "
+                "(Environment.media), carbon source (YP glycerol), else small molecule; "
+                "combination = 2 small molecules. ORFs -> SGD R64 (non-R64 dropped)"
+            ),
+            page=(
+                "Science 2008 320(5874):362-365 (doi:10.1126/science.1150021); "
+                "het.ratio_result_nm.pub "
+                "sha256=c0ddefaeb44c9760481dc443d1c2e82570bad4eb1a5458acd74b169bec47cb44"
+            ),
+        ),
+    },
+    "env_chemgen_hillenmeyer2008_hom": {
+        "root": "data/torchcell/env_chemgen_hillenmeyer2008_hom",
+        # HOP (homozygous) fitness-defect z_score. 418 arrays -> 284 unique environments
+        # (replicates aggregated) x 4769 R64 strains minus NA-only cells.
+        "expected_count": 1179520,
+        "background_genes": frozenset(),
+        "stream": True,
+        "provenance": Provenance(
+            source_uri=(
+                "Internet Archive (Wayback) mirror of the Stanford supplement "
+                "chemogenomics.stanford.edu/supplements/global/download/data/"
+                "hom.z_result_nm.pub; live FitDb portals are DNS-dead, Science SI 403s"
+            ),
+            citation_key="hillenmeyerChemicalGenomicPortrait2008",
+            sha256="0b7d5e4dad0e5b4336b1dac97fb32ef14d7d0bf9f5d1b0d5ddb382c393362b71",
+            method=(
+                "genome-scale HOP fitness-defect z_score = (mean control - treatment)/SD "
+                "control; positive = fitness defect. Per-array atlas AGGREGATED to one "
+                "record per (strain, environment): arrays with identical "
+                "compound/concentration/generations are replicates -> mean, "
+                "n_samples=n_arrays, sample SD -> derived SE. HOM = KanMx deletion diploid. "
+                "Conditions classified per SOM Table S1 (temperature, pH, nutrient_dropout, "
+                "radiation, media swap, carbon source, else small molecule). ORFs -> SGD "
+                "R64 (non-R64 dropped)"
+            ),
+            page=(
+                "Science 2008 320(5874):362-365 (doi:10.1126/science.1150021); "
+                "hom.z_result_nm.pub "
+                "sha256=0b7d5e4dad0e5b4336b1dac97fb32ef14d7d0bf9f5d1b0d5ddb382c393362b71"
+            ),
+        ),
+    },
 }
 
 

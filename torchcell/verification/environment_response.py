@@ -54,29 +54,46 @@ def _screened_genes(
     ]
 
 
-def _compound_name(experiment: dict[str, Any]) -> str | None:
-    """A stable label for the environmental edit, keying L1 (ORF, condition) pairs.
+def _condition_signature(experiment: dict[str, Any]) -> tuple[Any, ...]:
+    """Canonical ENVIRONMENT (condition) identity -- the join key on the environment axis.
 
-    Post-refactor schema: a ``SmallMoleculePerturbation`` carries a typed ``compound``
-    (use its ``name``); an ``EnvironmentPhysicalPerturbation`` carries an ``agent``
-    compound and/or a neutral ``factor``. A record with NO perturbation is a pure
-    temperature condition (heat lives on ``Environment.temperature``, not a
-    perturbation) -- label it by that temperature so heat records stay distinctly keyed.
+    A record's condition is its full environment, not just the compound NAME: the same
+    compound at two concentrations, or two exposure durations, are DIFFERENT conditions.
+    The signature is the sorted set of perturbations -- each keyed by
+    ``(perturbation_type, compound/agent name, factor, concentration value, unit, basis)``
+    -- plus the scalar environment fields (temperature, media, duration in hours and in
+    generations). Temperature-only records (heat on ``Environment.temperature``, no
+    perturbation) are distinguished by the temperature scalar.
+
+    Mirrors :func:`_genotype_signature` on the environment axis: identity is derived from
+    the environment's own content, so nothing has to be smuggled into a name. Elements are
+    stringified for a total order (mixed None/str/float never breaks the sort).
     """
     env = experiment["environment"]
-    perts = env.get("perturbations") or []
-    if not perts:
-        temp = (env.get("temperature") or {}).get("value")
-        return None if temp is None else f"temperature:{temp}"
-    p = perts[0]
-    compound = p.get("compound")
-    if isinstance(compound, dict) and compound.get("name"):
-        return str(compound["name"])
-    agent = p.get("agent")
-    if isinstance(agent, dict) and agent.get("name"):
-        return str(agent["name"])
-    factor = p.get("factor")
-    return None if factor is None else str(factor)
+    perts: list[tuple[str, ...]] = []
+    for p in env.get("perturbations") or []:
+        compound = p.get("compound") if isinstance(p.get("compound"), dict) else {}
+        agent = p.get("agent") if isinstance(p.get("agent"), dict) else {}
+        dose = p.get("concentration") or p.get("magnitude") or {}
+        dose = dose if isinstance(dose, dict) else {}
+        fields = (
+            p.get("perturbation_type"),
+            compound.get("name") or agent.get("name"),
+            p.get("factor"),
+            dose.get("value"),
+            dose.get("unit"),
+            dose.get("basis"),
+        )
+        perts.append(tuple("" if v is None else str(v) for v in fields))
+    temp = (env.get("temperature") or {}).get("value")
+    media = (env.get("media") or {}).get("name")
+    return (
+        tuple(sorted(perts)),
+        temp,
+        media,
+        env.get("duration_hours"),
+        env.get("duration_generations"),
+    )
 
 
 def _genotype_signature(
@@ -117,12 +134,10 @@ def _l1_pair_uniqueness(
     identical (strain, condition) must aggregate them into one record (n_samples); a repeated
     (strain, condition) here is a real duplicate.
     """
-    seen: dict[
-        tuple[tuple[tuple[str | None, str | None, str | None], ...], str | None], int
-    ] = {}
+    seen: dict[tuple[Any, ...], int] = {}
     for rec in records:
         exp = rec["experiment"]
-        key = (_genotype_signature(exp, background), _compound_name(exp))
+        key = (_genotype_signature(exp, background), _condition_signature(exp))
         seen[key] = seen.get(key, 0) + 1
     dups = {k: n for k, n in seen.items() if n > 1}
     return LevelResult(
@@ -178,30 +193,36 @@ def _l3_reference_zero(records: Sequence[Record]) -> LevelResult:
     )
 
 
-def _modal_temperature(records: Sequence[Record]) -> float | None:
-    """The dataset's baseline (most common) growth temperature, if any."""
+def _modal_scalar(
+    records: Sequence[Record], getter: Callable[[dict[str, Any]], Any]
+) -> Any:
+    """The dataset's baseline (most common) value of an environment scalar, if any."""
     from collections import Counter
 
-    temps = Counter(
-        rec["experiment"]["environment"]["temperature"]["value"]
+    values = Counter(
+        v
         for rec in records
-        if (rec["experiment"]["environment"].get("temperature") or {}).get("value")
-        is not None
+        if (v := getter(rec["experiment"]["environment"])) is not None
     )
-    return temps.most_common(1)[0][0] if temps else None
+    return values.most_common(1)[0][0] if values else None
 
 
 def _l3_environment_perturbed(records: Sequence[Record]) -> LevelResult:
     """L3: every experiment carries a genuine environmental edit.
 
-    The edit is EITHER >= 1 environment perturbation (an added small molecule / physical
-    factor) OR a temperature that differs from the dataset's baseline (modal) temperature
-    -- a temperature shift (e.g. heat stress) lives canonically on
-    ``Environment.temperature`` with NO perturbation object (M2), and is a valid edit.
-    A record is flagged only when it has NO perturbation AND sits at the baseline
-    temperature (a genuinely unperturbed record -- a data bug).
+    The edit is >= 1 environment perturbation (an added small molecule / physical factor)
+    OR a base-environment scalar that differs from the dataset's baseline (modal) value --
+    a temperature shift (heat) or a base-medium swap lives canonically on
+    ``Environment.temperature`` / ``Environment.media`` with NO perturbation object (M2),
+    and is a valid edit. A record is flagged only when it has NO perturbation AND sits at
+    the baseline temperature AND the baseline media (a genuinely unperturbed record).
     """
-    baseline_temp = _modal_temperature(records)
+    baseline_temp = _modal_scalar(
+        records, lambda e: (e.get("temperature") or {}).get("value")
+    )
+    baseline_media = _modal_scalar(
+        records, lambda e: (e.get("media") or {}).get("name")
+    )
     n_missing = 0
     for rec in records:
         env = rec["experiment"]["environment"]
@@ -210,6 +231,9 @@ def _l3_environment_perturbed(records: Sequence[Record]) -> LevelResult:
         temp = (env.get("temperature") or {}).get("value")
         if temp is not None and temp != baseline_temp:
             continue  # temperature-only edit (e.g. heat) -- genuine environmental edit
+        media = (env.get("media") or {}).get("name")
+        if media is not None and media != baseline_media:
+            continue  # base-medium swap (minimal / synthetic complete) -- genuine edit
         n_missing += 1
     return LevelResult(
         level=Level.L3,
@@ -217,15 +241,17 @@ def _l3_environment_perturbed(records: Sequence[Record]) -> LevelResult:
         passed=n_missing == 0,
         message=(
             f"all {len(records)} experiments carry an environmental edit "
-            f"(perturbation or non-baseline temperature; baseline={baseline_temp})"
+            f"(perturbation, non-baseline temperature, or non-baseline media; "
+            f"baseline temp={baseline_temp}, media={baseline_media!r})"
             if n_missing == 0
             else f"{n_missing} experiments have no environmental edit "
-            f"(no perturbation and baseline temperature {baseline_temp})"
+            f"(no perturbation, baseline temperature {baseline_temp}, baseline media)"
         ),
         details={
             "n_records": len(records),
             "n_missing": n_missing,
             "baseline_temperature": baseline_temp,
+            "baseline_media": baseline_media,
         },
     )
 
@@ -315,6 +341,8 @@ def verify_environment_response_dataset_streaming(
     accumulator is the (ORF, compound) pair set; interning keeps it a few GB, not the
     ~450 GB a full materialization would cost.
     """
+    from collections import Counter
+
     from pydantic import TypeAdapter
 
     from torchcell.datamodels.schema import ExperimentType
@@ -323,9 +351,7 @@ def verify_environment_response_dataset_streaming(
 
     n_records = 0
     l0_failures: list[dict[str, Any]] = []
-    pair_seen: set[
-        tuple[tuple[tuple[str | None, str | None, str | None], ...], str | None]
-    ] = set()
+    pair_seen: set[tuple[Any, ...]] = set()
     n_pairs = 0
     n_pair_dups = 0
     n_responses = 0
@@ -335,7 +361,13 @@ def verify_environment_response_dataset_streaming(
     measurement_types: set[str] = set()
     ref_worst = 0.0
     n_ref = 0
-    n_env_missing = 0
+    # Environment-edit accounting: a record with no perturbation is a valid edit iff its
+    # temperature or media differs from the dataset baseline (modal). Baselines need all
+    # records, so accumulate scalar counts + the (temp, media) of no-perturbation records
+    # and resolve after the pass (the no-perturbation set is small).
+    temp_counts: Counter[Any] = Counter()
+    media_counts: Counter[Any] = Counter()
+    no_pert_env: list[tuple[Any, Any]] = []
     screened: set[str] = set()
 
     for i, rec in enumerate(records):
@@ -346,11 +378,10 @@ def verify_environment_response_dataset_streaming(
         except (ValueError, TypeError) as err:
             l0_failures.append({"index": i, "error": str(err)[:500]})
 
-        comp = _compound_name(exp)
-        comp_key = None if comp is None else sys.intern(comp)
-        # L1 uniqueness keys on the STRAIN (genotype signature) x condition; L4
-        # gene-containment accumulates the bare screened systematic names.
-        pkey = (_genotype_signature(exp, background_genes), comp_key)
+        # L1 uniqueness keys on the STRAIN (genotype signature) x the full CONDITION
+        # signature (environment identity); L4 gene-containment accumulates the bare
+        # screened systematic names.
+        pkey = (_genotype_signature(exp, background_genes), _condition_signature(exp))
         if pkey in pair_seen:
             n_pair_dups += 1
         else:
@@ -375,8 +406,14 @@ def verify_environment_response_dataset_streaming(
         if ref_val is not None:
             n_ref += 1
             ref_worst = max(ref_worst, abs(float(ref_val)))
+        temp = (exp["environment"].get("temperature") or {}).get("value")
+        media = (exp["environment"].get("media") or {}).get("name")
+        if temp is not None:
+            temp_counts[temp] += 1
+        if media is not None:
+            media_counts[media] += 1
         if not (exp["environment"].get("perturbations") or []):
-            n_env_missing += 1
+            no_pert_env.append((temp, media))
 
     report = VerificationReport(dataset_name=dataset_name, provenance=provenance)
     report.add(
@@ -475,17 +512,33 @@ def verify_environment_response_dataset_streaming(
             details={"n_values": n_ref, "worst_abs": ref_worst},
         )
     )
+    baseline_temp = temp_counts.most_common(1)[0][0] if temp_counts else None
+    baseline_media = media_counts.most_common(1)[0][0] if media_counts else None
+    n_env_missing = sum(
+        1
+        for temp, media in no_pert_env
+        if not (temp is not None and temp != baseline_temp)
+        and not (media is not None and media != baseline_media)
+    )
     report.add(
         LevelResult(
             level=Level.L3,
             name="environment_perturbed",
             passed=n_env_missing == 0,
             message=(
-                f"all {n_records} experiments carry >= 1 environment perturbation"
+                f"all {n_records} experiments carry an environmental edit (perturbation, "
+                f"non-baseline temperature, or non-baseline media; baseline temp="
+                f"{baseline_temp}, media={baseline_media!r})"
                 if n_env_missing == 0
-                else f"{n_env_missing} experiments have no environment perturbation"
+                else f"{n_env_missing} experiments have no environmental edit "
+                f"(no perturbation, baseline temperature {baseline_temp}, baseline media)"
             ),
-            details={"n_records": n_records, "n_missing": n_env_missing},
+            details={
+                "n_records": n_records,
+                "n_missing": n_env_missing,
+                "baseline_temperature": baseline_temp,
+                "baseline_media": baseline_media,
+            },
         )
     )
     overlap = len(screened & sgd_genes) / len(screened) if screened else 0.0

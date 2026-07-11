@@ -2234,15 +2234,6 @@ class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
         description="human-readable definition/units of the score, e.g. "
         "'log2(inhibitor/control)'",
     )
-    source_experiment_id: str | None = Field(
-        default=None,
-        description="stable per-strain / per-array identifier from the source (e.g. a "
-        "Costanzo TS-allele Strain ID or a scanned-array id). Disambiguates the SCREENED "
-        "UNIT when one systematic gene has multiple screened strains (an allelic series -- "
-        "18 ACT1 ts alleles) or one (gene, condition) has replicate arrays: the L1 "
-        "uniqueness unit is then the strain/array, not the (gene, condition) pair. None for "
-        "one-strain-per-gene collections (deletion arrays), leaving their L1 key unchanged.",
-    )
 
     @field_validator("environment_response")
     def validate_response(cls, v: float | None) -> float | None:

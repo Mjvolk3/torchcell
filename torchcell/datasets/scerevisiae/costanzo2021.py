@@ -36,10 +36,10 @@ Costanzo 2021 is condition-SGA, so both use the SGA perturbation leaves (which c
 - Essential genes: temperature-sensitive allele (``tsa*``, allele in the "Allele (Essential
   genes only)" column, e.g. ``act1-101``) -> ``SgaTsAllelePerturbation``. Essential genes are
   screened as ALLELIC SERIES: one systematic ORF (e.g. ACT1/YFL039C) carries up to 18
-  distinct ts alleles, each a separate strain. These are distinct perturbations, kept as
-  distinct records and disambiguated in the L1 uniqueness key by
-  ``phenotype.source_experiment_id`` = the ``Strain ID`` (the screened UNIT is the strain,
-  not the gene).
+  distinct ts alleles, each a separate strain. These are distinct genotypes (distinct
+  ``perturbed_gene_name`` alleles), so the L1 uniqueness check -- which keys on the STRAIN
+  (the genotype signature), not the bare gene -- treats them as distinct records, not
+  duplicates. The SGA ``strain_id`` is retained on the perturbation as source provenance.
 
 ENVIRONMENT -- 14 conditions from the "Conditions" sheet. 12 are small molecules
 (``SmallMoleculePerturbation``); Galactose is a CARBON-SOURCE change
@@ -397,7 +397,6 @@ class EnvChemgenCostanzo2021Dataset(ExperimentDataset):
                             n_samples=3,
                             sample_unit=SampleUnit.screen,
                             units=spec["units"],
-                            source_experiment_id=strain_id,
                         ),
                     )
                     txn.put(

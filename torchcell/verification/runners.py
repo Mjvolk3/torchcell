@@ -659,7 +659,7 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
         # 4406 R64-resolved strains (3624 dma KanMX deletions + 782 tsa TS alleles after
         # dropping 23 old/merged non-R64 ORF names) x 14 conditions minus 366 empty cells
         # = 61,318 records. Essential genes are screened as allelic series (one ORF, up to
-        # 18 ts alleles); the L1 uniqueness unit is the strain (source_experiment_id).
+        # 18 ts alleles); the L1 uniqueness unit is the STRAIN (genotype signature).
         "expected_count": 61318,
         # SGA deletion/TS array (BY4741-derived): no constant drug-sensitized background.
         "background_genes": frozenset(),

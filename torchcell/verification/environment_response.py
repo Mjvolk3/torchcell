@@ -10,7 +10,8 @@ enforces numeric-vs-categorical coherence and the uncertainty invariant (subsume
 this verifier adds:
 
 1. L1 ``count`` -- exact record-count oracle.
-2. L1 ``pair_uniqueness`` -- one record per (screened deletion x compound) pair.
+2. L1 ``pair_uniqueness`` -- one record per (screened STRAIN x condition) pair, where the
+   strain is the full genotype signature (so an allelic series is distinct, not duplicate).
 3. L2 ``response_finiteness`` -- numeric responses are finite (SIGNED; negatives allowed).
 4. L2 ``se_nonnegative`` -- reported SEs are non-negative.
 5. L3 ``measurement_type_consistent`` -- one measurement_type across the dataset.
@@ -78,34 +79,60 @@ def _compound_name(experiment: dict[str, Any]) -> str | None:
     return None if factor is None else str(factor)
 
 
+def _genotype_signature(
+    experiment: dict[str, Any], background: frozenset[str]
+) -> tuple[tuple[str | None, str | None, str | None], ...]:
+    """Canonical STRAIN identity: the sorted set of screened perturbations, each keyed by
+    ``(systematic_gene_name, perturbation_type, perturbed_gene_name)``, excluding the constant
+    drug-sensitized background.
+
+    This is the entity a record measures and the join key across datasets. A deletion
+    collection has one strain per gene, so the signature reduces to the gene. A TS-allele
+    collection has MANY strains per essential gene: ``act1-101`` and ``act1-3`` differ in
+    ``perturbed_gene_name`` and so get distinct signatures -- an allelic series is not a set
+    of duplicates. L4 gene-containment still keys on the bare systematic name (a gene-level
+    question); L1 uniqueness keys on this strain identity.
+    """
+    return tuple(
+        sorted(
+            (
+                p.get("systematic_gene_name"),
+                p.get("perturbation_type"),
+                p.get("perturbed_gene_name"),
+            )
+            for p in experiment["genotype"]["perturbations"]
+            if p.get("systematic_gene_name") not in background
+        )
+    )
+
+
 def _l1_pair_uniqueness(
     records: Sequence[Record], background: frozenset[str]
 ) -> LevelResult:
-    """L1: exactly one record per (screened ORF, compound, source_experiment_id) triple.
+    """L1: exactly one record per (screened STRAIN, condition) pair.
 
-    ``source_experiment_id`` (a per-strain / per-array id, e.g. a Costanzo TS-allele Strain
-    ID) makes the screened UNIT the strain/array rather than the (gene, compound) pair, so an
-    allelic series (18 ACT1 ts alleles) or replicate arrays are distinct records, not L1
-    duplicates. It is ``None`` for one-strain-per-gene collections, leaving their key at the
-    original (gene, compound) form.
+    The screened unit is the STRAIN (the full genotype signature), not the bare gene: an
+    essential gene screened as an allelic series (18 ACT1 ts alleles) contributes 18 distinct
+    strains, not 18 duplicate ACT1 records. Datasets with genuine replicate measurements of an
+    identical (strain, condition) must aggregate them into one record (n_samples); a repeated
+    (strain, condition) here is a real duplicate.
     """
-    seen: dict[tuple[str, str | None, str | None], int] = {}
+    seen: dict[
+        tuple[tuple[tuple[str | None, str | None, str | None], ...], str | None], int
+    ] = {}
     for rec in records:
         exp = rec["experiment"]
-        comp = _compound_name(exp)
-        sid = exp["phenotype"].get("source_experiment_id")
-        for g in _screened_genes(exp, background):
-            key = (g, comp, sid)
-            seen[key] = seen.get(key, 0) + 1
+        key = (_genotype_signature(exp, background), _compound_name(exp))
+        seen[key] = seen.get(key, 0) + 1
     dups = {k: n for k, n in seen.items() if n > 1}
     return LevelResult(
         level=Level.L1,
         name="pair_uniqueness",
         passed=not dups,
         message=(
-            f"{len(seen)} unique (ORF, compound) pairs, one record each"
+            f"{len(seen)} unique (strain, condition) records, one each"
             if not dups
-            else f"{len(dups)} (ORF, compound) pairs appear in multiple records"
+            else f"{len(dups)} (strain, condition) pairs appear in multiple records"
         ),
         details={"n_pairs": len(seen), "n_duplicated": len(dups)},
     )
@@ -296,7 +323,9 @@ def verify_environment_response_dataset_streaming(
 
     n_records = 0
     l0_failures: list[dict[str, Any]] = []
-    pair_seen: set[tuple[str, str | None, str | None]] = set()
+    pair_seen: set[
+        tuple[tuple[tuple[str | None, str | None, str | None], ...], str | None]
+    ] = set()
     n_pairs = 0
     n_pair_dups = 0
     n_responses = 0
@@ -319,17 +348,16 @@ def verify_environment_response_dataset_streaming(
 
         comp = _compound_name(exp)
         comp_key = None if comp is None else sys.intern(comp)
-        sid = exp["phenotype"].get("source_experiment_id")
-        sid_key = None if sid is None else sys.intern(sid)
+        # L1 uniqueness keys on the STRAIN (genotype signature) x condition; L4
+        # gene-containment accumulates the bare screened systematic names.
+        pkey = (_genotype_signature(exp, background_genes), comp_key)
+        if pkey in pair_seen:
+            n_pair_dups += 1
+        else:
+            pair_seen.add(pkey)
+            n_pairs += 1
         for gene in _screened_genes(exp, background_genes):
-            gene = sys.intern(gene)
-            screened.add(gene)
-            key = (gene, comp_key, sid_key)
-            if key in pair_seen:
-                n_pair_dups += 1
-            else:
-                pair_seen.add(key)
-                n_pairs += 1
+            screened.add(sys.intern(gene))
 
         response = exp["phenotype"]["environment_response"]
         if response is not None:
@@ -383,9 +411,9 @@ def verify_environment_response_dataset_streaming(
             name="pair_uniqueness",
             passed=n_pair_dups == 0,
             message=(
-                f"{n_pairs} unique (ORF, compound) pairs, one record each"
+                f"{n_pairs} unique (strain, condition) records, one each"
                 if n_pair_dups == 0
-                else f"{n_pair_dups} (ORF, compound) records duplicate an existing pair"
+                else f"{n_pair_dups} (strain, condition) records duplicate an existing pair"
             ),
             details={"n_pairs": n_pairs, "n_duplicated": n_pair_dups},
         )

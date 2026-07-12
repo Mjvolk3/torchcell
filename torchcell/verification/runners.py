@@ -120,6 +120,37 @@ DELETION_GENE_SOURCES = {
 # legitimately profiled for expression but absent from the morphology screen.
 MIN_GENE_OVERLAP = 0.90
 
+# --------------------------------------------------------------------------- #
+# Ohnuki 2018 morphology dataset (essential-gene heterozygous diploid CalMorph).
+# Same CalMorph verifier as Ohya, but the perturbations are 50%-dosage HIP het
+# deletions (EngineeredCopyNumberPerturbation), NOT full KOs, and the gene set is
+# essential genes -- so the L4 cross-source check is SGD R64 containment (essential
+# ORFs are a subset of the reference gene universe), not the nonessential-deletion
+# expression-dataset containment used for Ohya.
+# --------------------------------------------------------------------------- #
+OHNUKI_SOURCE_ROOT = "data/torchcell/scmd_ohnuki2018"
+OHNUKI_REPORT_ROOT = "data/torchcell/scmd_ohnuki2018"
+OHNUKI_EXPECTED_COUNT = 1112  # essential-gene het diploids; 114 WT aggregated into ref
+OHNUKI_PROVENANCE = Provenance(
+    source_uri=(
+        "http://www.yeast.ib.k.u-tokyo.ac.jp/SCMD/ "
+        "(ess1112data.tsv, wt114data.tsv; SCMD2 portal per Data Availability)"
+    ),
+    citation_key="ohnukiHighdimensionalSinglecellPhenotyping2018",
+    method=(
+        "SCMD2 CalMorph TSV (ess1112 essential-gene heterozygous BY4743 diploids + "
+        "wt114 WT replicate averages); optimal arm only (liquid YPD, 25 C); genotype = "
+        "EngineeredCopyNumberPerturbation(copy 1 of 2, KanMX); ORFs validated vs SGD R64"
+    ),
+    page=(
+        "Ohnuki & Ohya 2018 PLoS Biol 16(5):e2005130 (PMID 29768403); "
+        "ess1112data.tsv "
+        "sha256=2d168bd1c436c7edae0ab3eb07e99e4c41f3b12f69607a7f3a00092eed7c4b03, "
+        "wt114data.tsv "
+        "sha256=f48d42da2c727854b83b70e8768cfb42ada0e5118f6074765698d3045862804e"
+    ),
+)
+
 
 def load_records(abs_root: str) -> list[dict[str, Any]]:
     """Read every LMDB entry under ``<abs_root>/processed/lmdb``."""
@@ -249,6 +280,35 @@ def run_morphology(data_root: str) -> bool:
     out = _write_report(report, osp.join(data_root, OHYA_REPORT_ROOT, "preprocess"))
     print(report.summary())
     print(f"  -> verified LMDB: {osp.join(ohya_abs, 'processed', 'lmdb')}")
+    print(f"  -> wrote report:  {out}\n")
+    return report.passed
+
+
+def run_morphology_ohnuki(data_root: str) -> bool:
+    """Verify the Ohnuki 2018 morphology dataset (L0-L4) and write its report.
+
+    Same CalMorph L0-L3 gate as Ohya; L4 is SGD R64 containment (the essential-gene
+    heterozygote ORFs are a subset of the S288C reference gene universe).
+    """
+    ohnuki_abs = osp.join(data_root, OHNUKI_SOURCE_ROOT)
+    ohnuki_records = load_records(ohnuki_abs)
+    report = verify_morphology_dataset(
+        ohnuki_records,
+        dataset_name="scmd_ohnuki2018",
+        provenance=OHNUKI_PROVENANCE,
+        expected_count=OHNUKI_EXPECTED_COUNT,
+    )
+
+    sgd_genes = _sgd_gene_set(data_root)
+    report.add(
+        _l4_rnaseq_gene_containment(
+            sgd_genes, perturbed_gene_set(ohnuki_records)
+        ).model_copy(update={"name": "gene_containment_sgd"})
+    )
+
+    out = _write_report(report, osp.join(data_root, OHNUKI_REPORT_ROOT, "preprocess"))
+    print(report.summary())
+    print(f"  -> verified LMDB: {osp.join(ohnuki_abs, 'processed', 'lmdb')}")
     print(f"  -> wrote report:  {out}\n")
     return report.passed
 
@@ -888,6 +948,7 @@ def run_all(data_root: str) -> bool:
     """Run every dataset-family verification. True only if all pass."""
     expression_ok = run_expression(data_root)
     morphology_ok = run_morphology(data_root)
+    morphology_ohnuki_ok = run_morphology_ohnuki(data_root)
     visual_ok = run_visual_score(data_root)
     metabolite_ok = run_metabolite(data_root)
     protein_ok = run_protein(data_root)
@@ -896,6 +957,7 @@ def run_all(data_root: str) -> bool:
     return (
         expression_ok
         and morphology_ok
+        and morphology_ohnuki_ok
         and visual_ok
         and metabolite_ok
         and protein_ok

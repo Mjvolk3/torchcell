@@ -20,6 +20,7 @@ from .hoepfner2014 import EnvChemgenHoepfner2014Dataset as EnvChemgenHoepfner201
 from .kuzmin2018 import DmfKuzmin2018Dataset as DmfKuzmin2018Dataset
 from .kuzmin2018 import SmfKuzmin2018Dataset as SmfKuzmin2018Dataset
 from .kuzmin2018 import TmfKuzmin2018Dataset as TmfKuzmin2018Dataset
+from .messner2023 import ProteomeMessner2023Dataset as ProteomeMessner2023Dataset
 from .mota2024 import EnvChemgenMota2024Dataset as EnvChemgenMota2024Dataset
 from .mulleder2016 import AminoAcidMulleder2016Dataset as AminoAcidMulleder2016Dataset
 from .ohya2005 import ScmdOhya2005Dataset as ScmdOhya2005Dataset
@@ -63,6 +64,8 @@ mulleder_datasets = ["AminoAcidMulleder2016Dataset"]
 
 zelezniak_datasets = ["ProteomeZelezniak2018Dataset", "MetaboliteZelezniak2018Dataset"]
 
+messner_datasets = ["ProteomeMessner2023Dataset"]
+
 vanacloig_datasets = ["EnvChemgenVanacloig2022Dataset"]
 
 mota_datasets = ["EnvChemgenMota2024Dataset"]
@@ -86,6 +89,7 @@ __all__ = (
     + cachera_datasets
     + mulleder_datasets
     + zelezniak_datasets
+    + messner_datasets
     + vanacloig_datasets
     + mota_datasets
     + wildenhain_datasets

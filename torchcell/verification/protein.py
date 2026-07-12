@@ -43,22 +43,34 @@ def _deleted_genes(experiment: dict[str, Any]) -> list[str]:
     ]
 
 
-def _l1_orf_uniqueness(records: Sequence[Record]) -> LevelResult:
-    """L1: exactly one record per knocked-out ORF."""
+def _l1_orf_uniqueness(
+    records: Sequence[Record], allow_duplicate_orfs: bool = False
+) -> LevelResult:
+    """L1: one record per knocked-out ORF.
+
+    Some datasets intentionally hold multiple deletion strains for the same ORF (e.g.
+    Messner 2023 has 145 ORFs with 2-3 strains "of different origins", each analysed
+    independently). For those, ``allow_duplicate_orfs=True`` turns this into an
+    informational check (duplicates reported, not failed) -- the per-instance
+    uniqueness is guaranteed by the record count (L1 ``expected_count``).
+    """
     seen: dict[str, int] = {}
     for rec in records:
         for g in _deleted_genes(rec["experiment"]):
             seen[g] = seen.get(g, 0) + 1
     dups = {g: n for g, n in seen.items() if n > 1}
+    passed = allow_duplicate_orfs or not dups
+    if not dups:
+        message = f"{len(seen)} unique knocked-out ORFs, one record each"
+    elif allow_duplicate_orfs:
+        message = f"{len(seen)} ORFs, {len(dups)} with multiple strains (expected)"
+    else:
+        message = f"{len(dups)} ORFs appear in multiple records"
     return LevelResult(
         level=Level.L1,
         name="orf_uniqueness",
-        passed=not dups,
-        message=(
-            f"{len(seen)} unique knocked-out ORFs, one record each"
-            if not dups
-            else f"{len(dups)} ORFs appear in multiple records"
-        ),
+        passed=passed,
+        message=message,
         details={"n_orfs": len(seen), "n_duplicated": len(dups)},
     )
 
@@ -113,11 +125,13 @@ def verify_protein_dataset(
     dataset_name: str,
     provenance: Provenance,
     expected_count: int,
+    allow_duplicate_orfs: bool = False,
 ) -> VerificationReport:
     """Run the L0-L3 record-level gate for a protein-abundance dataset.
 
     L4 (cross-source gene overlap with the deletion collection) is asserted by the
-    caller across datasets.
+    caller across datasets. ``allow_duplicate_orfs`` relaxes L1 uniqueness for
+    datasets that intentionally hold multiple strains per ORF (e.g. Messner 2023).
     """
     from pydantic import TypeAdapter
 
@@ -128,7 +142,7 @@ def verify_protein_dataset(
     report = VerificationReport(dataset_name=dataset_name, provenance=provenance)
     report.add(l0_structural((rec["experiment"] for rec in records), validate))
     report.add(l1_count(len(records), expected_count))
-    report.add(_l1_orf_uniqueness(records))
+    report.add(_l1_orf_uniqueness(records, allow_duplicate_orfs=allow_duplicate_orfs))
 
     levels = [
         float(v)

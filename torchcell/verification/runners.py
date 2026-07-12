@@ -378,7 +378,22 @@ PROTEIN_DATASETS: dict[str, dict[str, Any]] = {
             method="SWATH-MS label-free protein signal, SVA batch-corrected; per-strain mean over replicates",
             page="Zenodo 10.5281/zenodo.1320288 proteins_dataset.data_prep.tsv",
         ),
-    }
+    },
+    "proteome_messner2023": {
+        "root": "data/torchcell/proteome_messner2023",
+        "expected_count": 4699,
+        "allow_duplicate_orfs": True,
+        "provenance": Provenance(
+            source_uri="https://data.mendeley.com/datasets/w8jtmnszd9/1",
+            citation_key="messnerProteomicLandscapeGenomewide2023",
+            method=(
+                "microflow-SWATH-MS (DIA-NN MaxLFQ), plate-median batch-corrected, "
+                "no imputation; single-replicate KOs vs a 388-replicate HIS3 WT "
+                "reference; UniProt->ORF via SGD GFF"
+            ),
+            page="Cell 186:2018; Mendeley 10.17632/w8jtmnszd9.1 yeast5k_noimpute_wide.csv",
+        ),
+    },
 }
 
 
@@ -398,6 +413,7 @@ def run_protein(data_root: str) -> bool:
             dataset_name=name,
             provenance=spec["provenance"],
             expected_count=spec.get("expected_count", len(records)),
+            allow_duplicate_orfs=spec.get("allow_duplicate_orfs", False),
         )
         if ohya_genes:
             report.add(

@@ -110,6 +110,30 @@ OHYA_PROVENANCE = Provenance(
     method="SCMD CalMorph TSV (mt4718 mutants + wt122 wildtype)",
     page="Ohya et al. 2005 PNAS; PMID 16365294",
 )
+# Ohnuki 2022 high-throughput CalMorph morphology (drug-hypersensitive 3Delta quadruple
+# deletions). 1982 mutant rows minus 1 all-NaN row (YGL141W) minus 2 background-gene
+# collision rows (PDR1=YGL013C, SNQ2=YDR011W already deleted in the 3Delta background).
+OHNUKI2022_SOURCE_ROOT = "data/torchcell/scmd_ohnuki2022"
+OHNUKI2022_REPORT_ROOT = "data/torchcell/scmd_ohnuki2022"
+OHNUKI2022_EXPECTED_COUNT = 1979
+OHNUKI2022_PROVENANCE = Provenance(
+    source_uri=(
+        "http://www.yeast.ib.k.u-tokyo.ac.jp/SCMD/ "
+        "(quad1982data.tsv, wt749data.tsv; pj=quadruple)"
+    ),
+    citation_key="ohnukiHighthroughputPlatformYeast2022",
+    method=(
+        "SCMD2 CalMorph quadruple-set TSV (quad1982 mutants + wt749 3Delta reference); "
+        "raw per-strain CalMorph averages; target KanMX deletion in the fixed 3Delta "
+        "pdr1Delta::NATMX pdr3Delta::KlURA3 snq2Delta::KlLEU2 background (strain Y13206); "
+        "liquid YPD, 25 C. quad1982data.tsv "
+        "sha256=5a1d45005c1249a77b0608ee7e6678c045c14464cf67bfc149b24fcaeb4854c0, "
+        "wt749data.tsv "
+        "sha256=4603aadf6ae5a3187e447c5d0df1f6bfb30a2292ddb687beb9a871b14769094d"
+    ),
+    page="npj Syst Biol Appl 2022 8:3 (doi:10.1038/s41540-022-00212-1); PMID 35087094",
+)
+
 # Expression deletion datasets whose genes should be CONTAINED in Ohya's set.
 DELETION_GENE_SOURCES = {
     "microarray_kemmeren2014": "data/torchcell/microarray_kemmeren2014",
@@ -298,15 +322,44 @@ def run_morphology_ohnuki(data_root: str) -> bool:
         provenance=OHNUKI_PROVENANCE,
         expected_count=OHNUKI_EXPECTED_COUNT,
     )
-
     sgd_genes = _sgd_gene_set(data_root)
     report.add(
         _l4_rnaseq_gene_containment(
             sgd_genes, perturbed_gene_set(ohnuki_records)
         ).model_copy(update={"name": "gene_containment_sgd"})
     )
-
     out = _write_report(report, osp.join(data_root, OHNUKI_REPORT_ROOT, "preprocess"))
+    print(report.summary())
+    print(f"  -> verified LMDB: {osp.join(ohnuki_abs, 'processed', 'lmdb')}")
+    print(f"  -> wrote report:  {out}\n")
+    return report.passed
+
+
+def run_ohnuki_morphology(data_root: str) -> bool:
+    """Verify the Ohnuki 2022 morphology dataset (L0-L4); write its report. True if pass.
+
+    L4 = the screened Ohnuki genes (a diagnostic subset selected from the same 4718
+    non-essential morphology genes) are CONTAINED in Ohya 2005's deletion set.
+    """
+    ohnuki_abs = osp.join(data_root, OHNUKI2022_SOURCE_ROOT)
+    ohnuki_records = load_records(ohnuki_abs)
+    report = verify_morphology_dataset(
+        ohnuki_records,
+        dataset_name="scmd_ohnuki2022",
+        provenance=OHNUKI2022_PROVENANCE,
+        expected_count=OHNUKI2022_EXPECTED_COUNT,
+    )
+    ohya_abs = osp.join(data_root, OHYA_SOURCE_ROOT)
+    if osp.exists(osp.join(ohya_abs, "processed", "lmdb")):
+        ohya_genes = perturbed_gene_set(load_records(ohya_abs))
+        report.add(
+            _l4_gene_containment(
+                ohya_genes, "scmd_ohnuki2022", perturbed_gene_set(ohnuki_records)
+            )
+        )
+    out = _write_report(
+        report, osp.join(data_root, OHNUKI2022_REPORT_ROOT, "preprocess")
+    )
     print(report.summary())
     print(f"  -> verified LMDB: {osp.join(ohnuki_abs, 'processed', 'lmdb')}")
     print(f"  -> wrote report:  {out}\n")
@@ -949,6 +1002,7 @@ def run_all(data_root: str) -> bool:
     expression_ok = run_expression(data_root)
     morphology_ok = run_morphology(data_root)
     morphology_ohnuki_ok = run_morphology_ohnuki(data_root)
+    ohnuki_ok = run_ohnuki_morphology(data_root)
     visual_ok = run_visual_score(data_root)
     metabolite_ok = run_metabolite(data_root)
     protein_ok = run_protein(data_root)
@@ -958,6 +1012,7 @@ def run_all(data_root: str) -> bool:
         expression_ok
         and morphology_ok
         and morphology_ohnuki_ok
+        and ohnuki_ok
         and visual_ok
         and metabolite_ok
         and protein_ok

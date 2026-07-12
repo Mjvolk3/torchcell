@@ -14,6 +14,9 @@ from .caudal2024 import (
 from .costanzo2016 import DmfCostanzo2016Dataset as DmfCostanzo2016Dataset
 from .costanzo2016 import SmfCostanzo2016Dataset as SmfCostanzo2016Dataset
 from .costanzo2021 import EnvChemgenCostanzo2021Dataset as EnvChemgenCostanzo2021Dataset
+from .dasilveira2014 import (
+    MetaboliteDaSilveira2014Dataset as MetaboliteDaSilveira2014Dataset,
+)
 from .hillenmeyer2008 import HetHillenmeyer2008Dataset as HetHillenmeyer2008Dataset
 from .hillenmeyer2008 import HomHillenmeyer2008Dataset as HomHillenmeyer2008Dataset
 from .hoepfner2014 import EnvChemgenHoepfner2014Dataset as EnvChemgenHoepfner2014Dataset
@@ -83,6 +86,8 @@ costanzo2021_datasets = ["EnvChemgenCostanzo2021Dataset"]
 
 hillenmeyer_datasets = ["HetHillenmeyer2008Dataset", "HomHillenmeyer2008Dataset"]
 
+dasilveira_datasets = ["MetaboliteDaSilveira2014Dataset"]
+
 __all__ = (
     costanzo_datasets
     + kuzmin_datasets
@@ -101,4 +106,5 @@ __all__ = (
     + auesukaree_datasets
     + costanzo2021_datasets
     + hillenmeyer_datasets
+    + dasilveira_datasets
 )

@@ -334,6 +334,17 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
             page="Zenodo 10.5281/zenodo.1320288 metabolites_dataset.data_prep.tsv",
         ),
     },
+    "metabolite_dasilveira2014": {
+        "root": "data/torchcell/metabolite_dasilveira2014",
+        "expected_count": 127,  # 130 Quant rows - 3 WT controls (measured reference)
+        "reference_centered": False,  # relative abundance (a.u.) vs measured WT baseline
+        "provenance": Provenance(
+            source_uri="https://doi.org/10.1091/mbc.E14-03-0851",
+            citation_key="daSystematicLipidomicAnalysis2014",
+            method="MS lipidomics relative abundance (a.u.), Table S4 Quant sheet; measured WT baseline from 3 WT control rows",
+            page="library mirror daSystematicLipidomicAnalysis2014 TableS4 Quant sheet",
+        ),
+    },
 }
 
 

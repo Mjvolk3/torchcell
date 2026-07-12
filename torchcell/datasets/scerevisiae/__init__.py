@@ -26,6 +26,7 @@ from .kuzmin2018 import TmfKuzmin2018Dataset as TmfKuzmin2018Dataset
 from .messner2023 import ProteomeMessner2023Dataset as ProteomeMessner2023Dataset
 from .mota2024 import EnvChemgenMota2024Dataset as EnvChemgenMota2024Dataset
 from .mulleder2016 import AminoAcidMulleder2016Dataset as AminoAcidMulleder2016Dataset
+from .oduibhir2014 import SmfODuibhir2014Dataset as SmfODuibhir2014Dataset
 from .ohnuki2018 import ScmdOhnuki2018Dataset as ScmdOhnuki2018Dataset
 from .ohnuki2022 import ScmdOhnuki2022Dataset as ScmdOhnuki2022Dataset
 from .ohya2005 import ScmdOhya2005Dataset as ScmdOhya2005Dataset
@@ -95,6 +96,8 @@ dasilveira_datasets = ["MetaboliteDaSilveira2014Dataset"]
 
 yoshida_datasets = ["OrganicAcidYoshida2012Dataset"]
 
+oduibhir_datasets = ["SmfODuibhir2014Dataset"]
+
 __all__ = (
     costanzo_datasets
     + kuzmin_datasets
@@ -116,4 +119,5 @@ __all__ = (
     + hillenmeyer_datasets
     + dasilveira_datasets
     + yoshida_datasets
+    + oduibhir_datasets
 )

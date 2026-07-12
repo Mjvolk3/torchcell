@@ -35,6 +35,7 @@ from torchcell.verification.expression import (
     measured_gene_universe,
     verify_expression_dataset,
 )
+from torchcell.verification.fitness import fitness_gene_set, verify_fitness_dataset
 from torchcell.verification.levels import l4_cross_source
 from torchcell.verification.metabolite import (
     metabolite_gene_set,
@@ -997,6 +998,54 @@ def run_environment_response(data_root: str) -> bool:
     return all_passed
 
 
+# --------------------------------------------------------------------------- #
+# Single-mutant fitness datasets
+# --------------------------------------------------------------------------- #
+FITNESS_DATASETS: dict[str, dict[str, Any]] = {
+    "smf_oduibhir2014": {
+        "root": "data/torchcell/smf_oduibhir2014",
+        "expected_count": 1312,
+        "provenance": Provenance(
+            source_uri="https://doi.org/10.15252/msb.20145172",
+            citation_key="oduibhirCellCyclePopulation2014",
+            method=(
+                "per-deletion relative growth: fitness = 2^(-log2relT) where log2relT = "
+                "log2(doubling_mut/doubling_wt) (Supplementary Dataset S2); WT == 1.0, "
+                "sick < 1 (matches stored Costanzo SMF convention); n_samples=2 biological "
+                "replicate cultures, no released per-strain SE"
+            ),
+            page="Mol Syst Biol 10:732; Supplementary Dataset S2 'data set 2.txt'",
+            sha256=("37ef19ee249c64c0557c84870e59b2fd7a8bbaf14371fd355775e650f2a39f1c"),
+        ),
+    }
+}
+
+
+def run_fitness(data_root: str) -> bool:
+    """Verify single-mutant fitness datasets (L0-L4) and write reports. True if all pass."""
+    sgd_genes = _sgd_gene_set(data_root)
+    all_passed = True
+    for name, spec in FITNESS_DATASETS.items():
+        abs_root = osp.join(data_root, spec["root"])
+        records = load_records(abs_root)
+        report = verify_fitness_dataset(
+            records,
+            dataset_name=name,
+            provenance=spec["provenance"],
+            expected_count=spec.get("expected_count", len(records)),
+        )
+        report.add(
+            _l4_rnaseq_gene_containment(
+                sgd_genes, fitness_gene_set(records)
+            ).model_copy(update={"name": "gene_containment_sgd"})
+        )
+        out = _write_report(report, osp.join(abs_root, "preprocess"))
+        print(report.summary())
+        print(f"  -> wrote {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
 def run_all(data_root: str) -> bool:
     """Run every dataset-family verification. True only if all pass."""
     expression_ok = run_expression(data_root)
@@ -1008,6 +1057,7 @@ def run_all(data_root: str) -> bool:
     protein_ok = run_protein(data_root)
     rnaseq_ok = run_rnaseq(data_root)
     environment_ok = run_environment_response(data_root)
+    fitness_ok = run_fitness(data_root)
     return (
         expression_ok
         and morphology_ok
@@ -1018,6 +1068,7 @@ def run_all(data_root: str) -> bool:
         and protein_ok
         and rnaseq_ok
         and environment_ok
+        and fitness_ok
     )
 
 

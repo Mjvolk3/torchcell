@@ -7,6 +7,7 @@ from torchcell.verification.expression import (
     measured_gene_universe,
     verify_expression_dataset,
 )
+from torchcell.verification.fitness import fitness_gene_set, verify_fitness_dataset
 from torchcell.verification.levels import (
     l0_structural,
     l1_completeness,
@@ -69,4 +70,6 @@ __all__ = [
     "visual_score_gene_set",
     "metabolite_gene_set",
     "verify_metabolite_dataset",
+    "fitness_gene_set",
+    "verify_fitness_dataset",
 ]

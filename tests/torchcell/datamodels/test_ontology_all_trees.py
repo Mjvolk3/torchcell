@@ -428,6 +428,7 @@ SO_ALLOWED: dict[str, str] = {
     "SO:0001060": "sequence_variant",
     "SO:0001483": "SNV",
     "SO:0001019": "copy_number_variation",
+    "SO:0001998": "sgRNA",
 }
 
 

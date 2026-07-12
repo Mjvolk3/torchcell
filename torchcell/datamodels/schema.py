@@ -179,6 +179,65 @@ class ExpressionRangeMultiplier(ModelStrict):
     )
 
 
+class CrisprConstruct(ModelStrict):
+    """The engineered CRISPR machinery introduced to perturb a gene -- a first-class
+    MATERIAL ENTITY (the guide RNA + Cas effector we actually put in the cell).
+
+    Composed (field ``crispr``) onto every CRISPR perturbation leaf so the guide payload is
+    defined ONCE and shared across two axes: an ACTIVE-Cas cut that deletes a gene
+    (``CrisprDeletionPerturbation`` on the presence/absence axis) and a DEAD-Cas
+    guide-directed effector that modulates expression (``CrisprActivationPerturbation`` /
+    ``CrisprInterferencePerturbation`` on the expression axis). The CRISPR *tool* is thus
+    orthogonal to the *outcome axis* -- same guide-directed machinery, different consequence
+    set by the effector.
+
+    ``effector`` is the Cas fusion (sourced, never guessed; e.g. ``SaCas9``,
+    ``dSpCas9-RD1152``, ``dLbCas12a-VP``, ``dCas9-Mxi1``). ``guide_sequence`` is the short
+    spacer INLINED as the perturbation identity; it is nullable so a screen that identifies
+    only target genes (Mormino: spacers live upstream in the source library) can
+    scaffold-and-defer. ``effector_plasmid_uri``/``_sha256`` are off-graph pointers left
+    ``None`` today ("field now, plasmid later") so upgrading to full-plasmid / SBOL capture
+    is a NON-breaking extension -- the record shape does not change when fidelity is upgraded.
+    Design: ``[[plan.torchcell-crispr-expression-perturbation.2026.07.12]]``.
+    """
+
+    effector: str = Field(
+        description="Cas effector fusion, e.g. 'SaCas9' | 'dSpCas9-RD1152' | 'dLbCas12a-VP' "
+        "| 'dCas9-Mxi1' (sourced from the paper, never guessed)"
+    )
+    guide_sequence: str | None = Field(
+        default=None,
+        description="guide RNA spacer (~20 nt), inlined as identity; None if the screen "
+        "released only target genes (defer to the upstream library)",
+    )
+    n_guides: int | None = Field(
+        default=None,
+        description="number of guides targeting this gene (e.g. Mormino '1-16 gRNAs/gene')",
+    )
+    effector_plasmid_uri: str | None = Field(
+        default=None,
+        description="off-graph pointer into a plasmid/SBOL store for the full effector+guide "
+        "cassette (future full-plasmid capture; None today)",
+    )
+    effector_plasmid_sha256: str | None = Field(
+        default=None,
+        description="sha256 of the source file the effector plasmid sequence comes from",
+    )
+
+    @model_validator(mode="after")
+    def validate_plasmid_pointer(self) -> "CrisprConstruct":
+        """A plasmid URI must carry its sha256 (mirror the ORF sequence-pointer invariant)."""
+        if (
+            self.effector_plasmid_uri is not None
+            and self.effector_plasmid_sha256 is None
+        ):
+            raise ValueError(
+                "effector_plasmid_uri requires effector_plasmid_sha256 (a pointer must be "
+                "content-addressed)"
+            )
+        return self
+
+
 # --------------------------------------------------------------------------- #
 # AXIS 1 -- presence/absence leaves.
 # --------------------------------------------------------------------------- #
@@ -349,6 +408,37 @@ class MarkerDeletionPerturbation(DeletionPerturbation, ModelStrict):
         description="selectable marker, e.g. 'KlURA3' | 'KlLEU2' | 'HIS3'"
     )
     deletion_type: str = "marker"
+
+
+class CrisprDeletionPerturbation(DeletionPerturbation, ModelStrict):
+    """Gene deletion via an ACTIVE Cas nuclease cut repaired from a homology donor.
+
+    Model-by-state: the OUTCOME is an absent gene, so this is a THIRD deletion MECHANISM
+    beside ``KanMxDeletion``/``NatMxDeletion`` (which differ from each other on exactly this
+    mechanism axis), NOT a new kind of perturbation. It inherits the AXIS-1 ``state="absent"``
+    and SO ``deletion`` mechanism, so ``issubclass(_, DeletionPerturbation)`` still catches
+    every knockout; it additionally CARRIES the guide (the known material we introduced) via
+    the shared ``crispr`` construct -- unlike a plain deletion, which would discard it.
+
+    Motivating case -- Lian 2019 MAGIC CRISPRd (``SaCas9``): the released ``Sequence`` column
+    is the guide spacer + HR donor concatenated; a loader splits it into ``crispr.guide_sequence``
+    and ``donor_sequence``. NOTE on epistemics: a pooled-library screen DESIGNS the deletion
+    but does not per-strain verify it -- that designed<->realized uncertainty is orthogonal to
+    this leaf and handled downstream (conversion / a future certainty axis), not asserted here.
+    """
+
+    description: str = (
+        "Gene deletion via an active Cas nuclease cut + homology-donor repair"
+    )
+    perturbation_type: Literal["crispr_deletion"] = "crispr_deletion"  # type: ignore[assignment]
+    deletion_type: str = "crispr"
+    crispr: CrisprConstruct = Field(
+        description="the guide + active-Cas effector introduced to cut the gene"
+    )
+    donor_sequence: str | None = Field(
+        default=None,
+        description="homology-donor sequence used for scarless repair (None if not released)",
+    )
 
 
 class GeneAdditionPerturbation(PresenceAbsencePerturbation, ModelStrict):
@@ -714,6 +804,73 @@ class EngineeredCopyNumberPerturbation(GenePerturbation, ModelStrict):
         return v
 
 
+# --------------------------------------------------------------------------- #
+# AXIS 4 -- expression modulation. Engineered modulation of a gene's EXPRESSION
+# level while it stays PRESENT, sequence-unedited, and copy-number-unchanged --
+# effected in TRANS by a dead-Cas guide-directed effector (CRISPRi/CRISPRa). It
+# fits none of axes 1-3 (not presence/absence, not DNA dosage, not a sequence
+# allele), so it is its own axis. The leaf is indexed by the TARGET gene; the
+# guide + effector material lives in the shared ``crispr`` construct.
+# --------------------------------------------------------------------------- #
+class ExpressionModulationPerturbation(GenePerturbation, ModelStrict):
+    """AXIS 4 (ABC) -- engineered expression modulation of a present gene.
+
+    The gene remains PRESENT (``state="present"``), its DNA copy number is unchanged, and its
+    sequence is unedited; only expression OUTPUT changes, driven in trans by an inserted
+    dead-Cas guide-directed effector. Mechanism is the guide itself (SO:0001998 ``sgRNA``).
+    Concrete children set ``expression_direction`` (increased=activation, decreased=
+    interference). This ABC is never instantiated directly. Design:
+    ``[[plan.torchcell-crispr-expression-perturbation.2026.07.12]]``.
+    """
+
+    state: str = "present"
+    provenance: str = "engineered"
+    mechanism_so_id: str = "SO:0001998"
+    mechanism_so_name: str = "sgRNA"
+    expression_direction: str
+    crispr: CrisprConstruct = Field(
+        description="the guide + dead-Cas effector introduced to modulate expression"
+    )
+
+    @field_validator("mechanism_so_id", mode="after")
+    @classmethod
+    def validate_mechanism_so_id(cls, v: str) -> str:
+        """Mechanism SO id is well-formed."""
+        return _validate_so_id(v)
+
+    @field_validator("expression_direction", mode="after")
+    @classmethod
+    def validate_expression_direction(cls, v: str) -> str:
+        """Direction is increased (activation) or decreased (interference)."""
+        if v not in {"increased", "decreased"}:
+            raise ValueError(
+                f"expression_direction must be 'increased' or 'decreased', got {v!r}"
+            )
+        return v
+
+
+class CrisprActivationPerturbation(ExpressionModulationPerturbation, ModelStrict):
+    """CRISPRa -- guide-directed dead-Cas activator INCREASES a present gene's expression.
+
+    Lian 2019 MAGIC uses ``dLbCas12a-VP`` (dead Cas12a fused to an activation domain).
+    """
+
+    description: str = "CRISPR activation (increased expression of a present gene)"
+    perturbation_type: Literal["crispr_activation"] = "crispr_activation"
+    expression_direction: str = "increased"
+
+
+class CrisprInterferencePerturbation(ExpressionModulationPerturbation, ModelStrict):
+    """CRISPRi -- guide-directed dead-Cas repressor DECREASES a present gene's expression.
+
+    Lian 2019 MAGIC uses ``dSpCas9-RD1152``; Mormino 2022 uses ``dCas9-Mxi1``.
+    """
+
+    description: str = "CRISPR interference (decreased expression of a present gene)"
+    perturbation_type: Literal["crispr_interference"] = "crispr_interference"
+    expression_direction: str = "decreased"
+
+
 SgaPerturbationType = (
     SgaKanMxDeletionPerturbation
     | SgaNatMxDeletionPerturbation
@@ -729,12 +886,15 @@ GenePerturbationType = (
     | MarkerDeletionPerturbation
     | KanMxDeletionPerturbation
     | NatMxDeletionPerturbation
+    | CrisprDeletionPerturbation
     | GeneAdditionPerturbation
     | NaturalGeneAbsencePerturbation
     | NaturalGenePresencePerturbation
     | SequenceVariantPerturbation
     | CopyNumberVariantPerturbation
     | EngineeredCopyNumberPerturbation
+    | CrisprActivationPerturbation
+    | CrisprInterferencePerturbation
 )
 
 

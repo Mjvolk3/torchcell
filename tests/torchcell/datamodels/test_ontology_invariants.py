@@ -28,9 +28,14 @@ from torchcell.datamodels import schema
 from torchcell.datamodels.schema import (
     AllelePerturbation,
     CopyNumberVariantPerturbation,
+    CrisprActivationPerturbation,
+    CrisprConstruct,
+    CrisprDeletionPerturbation,
+    CrisprInterferencePerturbation,
     DampPerturbation,
     DeletionPerturbation,
     EngineeredCopyNumberPerturbation,
+    ExpressionModulationPerturbation,
     GeneAdditionPerturbation,
     GenePerturbation,
     GenePerturbationType,
@@ -89,6 +94,7 @@ ABSTRACT: frozenset[type[GenePerturbation]] = frozenset(
         GenePerturbation,
         PresenceAbsencePerturbation,
         SequencePerturbation,
+        ExpressionModulationPerturbation,
         DeletionPerturbation,
         DampPerturbation,
         TsAllelePerturbation,
@@ -166,6 +172,24 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         "copy_number": 1.0,
         "reference_copy_number": 2.0,
         "marker": "KanMX",
+    },
+    CrisprDeletionPerturbation: {
+        **_SYS,
+        "crispr": CrisprConstruct(
+            effector="SaCas9", guide_sequence="TGGGATGAACACCATCAAGT"
+        ),
+    },
+    CrisprActivationPerturbation: {
+        **_SYS,
+        "crispr": CrisprConstruct(
+            effector="dLbCas12a-VP", guide_sequence="CCACGGCATGTCAACAGGTGAGT"
+        ),
+    },
+    CrisprInterferencePerturbation: {
+        **_SYS,
+        "crispr": CrisprConstruct(
+            effector="dSpCas9-RD1152", guide_sequence="CGTACTACCAGATAACCTAA"
+        ),
     },
 }
 
@@ -457,3 +481,122 @@ def test_hop_style_record_round_trips() -> None:
     assert isinstance(back.perturbations[0], KanMxDeletionPerturbation)
     assert back.perturbations[0].state == "absent"
     assert not isinstance(back.perturbations[0], EngineeredCopyNumberPerturbation)
+
+
+# --------------------------------------------------------------------------- #
+# CRISPR perturbations: expression-modulation axis + CRISPR-deletion mechanism.
+# --------------------------------------------------------------------------- #
+def test_crispr_deletion_is_a_deletion() -> None:
+    """CRISPRd is a THIRD deletion MECHANISM: it IS-A DeletionPerturbation (so any
+    "all absences" filter catches it) yet carries the guide the paper released.
+    """
+    inst = CrisprDeletionPerturbation(
+        systematic_gene_name="YAL001C",
+        perturbed_gene_name="TFC3",
+        crispr=CrisprConstruct(
+            effector="SaCas9", guide_sequence="TGGGATGAACACCATCAAGT"
+        ),
+    )
+    assert isinstance(inst, DeletionPerturbation)
+    assert isinstance(inst, PresenceAbsencePerturbation)
+    assert inst.state == "absent"
+    assert inst.mechanism_so_id == "SO:0000159"
+    assert inst.provenance == "engineered"
+    assert inst.crispr.effector == "SaCas9"
+    # Not an expression modulation -- different axis, same tool.
+    assert not isinstance(inst, ExpressionModulationPerturbation)
+
+
+@pytest.mark.parametrize(
+    "cls,direction",
+    [
+        (CrisprActivationPerturbation, "increased"),
+        (CrisprInterferencePerturbation, "decreased"),
+    ],
+)
+def test_expression_modulation_direction_defaults(
+    cls: type[ExpressionModulationPerturbation], direction: str
+) -> None:
+    """Activation increases, interference decreases; the gene stays present, mechanism sgRNA."""
+    inst = cls(**FACTORY[cls])
+    assert isinstance(inst, ExpressionModulationPerturbation)
+    assert inst.expression_direction == direction
+    assert inst.state == "present"
+    assert inst.mechanism_so_id == "SO:0001998"
+    assert inst.provenance == "engineered"
+
+
+def test_expression_direction_validator_rejects_bad_value() -> None:
+    """expression_direction is constrained to increased | decreased."""
+    with pytest.raises(ValueError):
+        CrisprInterferencePerturbation(
+            systematic_gene_name="YAL001C",
+            perturbed_gene_name="TFC3",
+            expression_direction="sideways",
+            crispr=CrisprConstruct(effector="dCas9-Mxi1"),
+        )
+
+
+def test_crispr_construct_effector_is_required() -> None:
+    """The effector must be sourced -- no default (provenance discipline)."""
+    with pytest.raises(ValueError):
+        CrisprConstruct()  # type: ignore[call-arg]
+
+
+def test_crispr_construct_guide_is_optional_for_defer() -> None:
+    """A screen that released only target genes (Mormino) scaffolds with guide_sequence=None."""
+    c = CrisprConstruct(effector="dCas9-Mxi1", n_guides=3)
+    assert c.guide_sequence is None
+    assert c.n_guides == 3
+
+
+def test_crispr_construct_plasmid_uri_implies_sha256() -> None:
+    """A plasmid pointer must be content-addressed (mirror the ORF sequence-pointer rule)."""
+    with pytest.raises(ValueError):
+        CrisprConstruct(
+            effector="dSpCas9-RD1152", effector_plasmid_uri="plasmid.gb#pMAGIC"
+        )
+    ok = CrisprConstruct(
+        effector="dSpCas9-RD1152",
+        effector_plasmid_uri="plasmid.gb#pMAGIC",
+        effector_plasmid_sha256="a" * 64,
+    )
+    assert ok.effector_plasmid_sha256 == "a" * 64
+
+
+def test_crispr_leaves_round_trip_through_genotype() -> None:
+    """All three CRISPR leaves survive a Genotype round-trip preserving their class + guide."""
+    geno = schema.Genotype(
+        perturbations=[
+            CrisprActivationPerturbation(
+                systematic_gene_name="YAL001C",
+                perturbed_gene_name="TFC3",
+                crispr=CrisprConstruct(
+                    effector="dLbCas12a-VP", guide_sequence="CCACGGCATGTCAACAGGTGAGT"
+                ),
+            ),
+            CrisprInterferencePerturbation(
+                systematic_gene_name="YAL002W",
+                perturbed_gene_name="VPS8",
+                crispr=CrisprConstruct(
+                    effector="dSpCas9-RD1152", guide_sequence="CGTACTACCAGATAACCTAA"
+                ),
+            ),
+            CrisprDeletionPerturbation(
+                systematic_gene_name="YAL003W",
+                perturbed_gene_name="EFB1",
+                crispr=CrisprConstruct(
+                    effector="SaCas9", guide_sequence="TGGGATGAACACCATCAAGT"
+                ),
+            ),
+        ]
+    )
+    back = schema.Genotype.model_validate(geno.model_dump())
+    by_type = {p.perturbation_type: p for p in back.perturbations}
+    act = by_type["crispr_activation"]
+    ci = by_type["crispr_interference"]
+    cd = by_type["crispr_deletion"]
+    assert isinstance(act, CrisprActivationPerturbation)
+    assert isinstance(ci, CrisprInterferencePerturbation)
+    assert isinstance(cd, CrisprDeletionPerturbation)
+    assert ci.crispr.guide_sequence == "CGTACTACCAGATAACCTAA"

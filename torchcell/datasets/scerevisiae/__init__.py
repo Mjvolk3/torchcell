@@ -31,6 +31,7 @@ from .sameith2015 import (
 from .sameith2015 import (
     SmMicroarraySameith2015Dataset as SmMicroarraySameith2015Dataset,
 )
+from .smith2006 import FattyAcidSmith2006Dataset as FattyAcidSmith2006Dataset
 from .vanacloig2022 import (
     EnvChemgenVanacloig2022Dataset as EnvChemgenVanacloig2022Dataset,
 )
@@ -55,6 +56,8 @@ kuzmin_datasets = [
 ohya_datasets = ["ScmdOhya2005Dataset"]
 
 sameith_datasets = ["SmMicroarraySameith2015Dataset", "DmMicroarraySameith2015Dataset"]
+
+smith_datasets = ["FattyAcidSmith2006Dataset"]
 
 ozaydin_datasets = ["CarotenoidOzaydin2013Dataset"]
 
@@ -85,6 +88,7 @@ __all__ = (
     + kuzmin_datasets
     + ohya_datasets
     + sameith_datasets
+    + smith_datasets
     + ozaydin_datasets
     + cachera_datasets
     + mulleder_datasets

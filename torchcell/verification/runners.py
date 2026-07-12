@@ -670,6 +670,49 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
             ),
         ),
     },
+    "env_chemgen_smith2006": {
+        "root": "data/torchcell/env_chemgen_smith2006",
+        # 4721 unique-ORF strains x 3 conditions (oleate/myristate clear-zone + acetate
+        # growth) = 14163 ordinal-categorical records, one per (strain, condition). Every
+        # screened row carries all three scores (no blank condition cells). Of 4770 screened
+        # strains, 49 are dropped: 26 non-current/dubious systematic names + 23 alias-
+        # resolutions that would collide with a directly-present R64 ORF (e.g. YOR240W ->
+        # YOR239W, present as ABP140). Records store the ordinal (1-4) on
+        # environment_response with a semantic category; measurement_type=categorical.
+        "expected_count": 14163,
+        # matalpha haploid single-deletion set (BY4742): no constant background.
+        "background_genes": frozenset(),
+        "provenance": Provenance(
+            source_uri=(
+                "$DATA_ROOT/torchcell-library/smithExpressionFunctionalProfiling2006/"
+                "data/msb4100051-s1.xls (library mirror; Supplementary Table 1, fetched "
+                "once from the Europe PMC supplementary bundle for PMC1681483)"
+            ),
+            citation_key="smithExpressionFunctionalProfiling2006",
+            sha256="7048663ffa4890478724e6e371f434baccc7160e6d8250df9a777a26c6b283a4",
+            method=(
+                "Supplementary Table 1 (.xls, header row 23) per-strain ordinal scores for "
+                "the fatty-acid clear-zone screen; one record per (deletion strain x "
+                "condition). Clear-zone size on oleate (YPBO, 0.1% oleic acid w/v) and "
+                "myristate (YPBM, 0.125% myristic acid w/v) scored 4=larger/3=wild type/"
+                "2=less/1=small-or-absent; growth on acetate (YPBA, 2% acetate w/v) scored "
+                "3=wild-type/2=moderate/1=little-no (undocumented 2.5=intermediate kept). "
+                "Ordinal stored on environment_response with semantic category; "
+                "measurement_type=categorical (no ordinal enum member). Each condition = "
+                "SmallMoleculePerturbation (added carbon/fatty-acid species, percent w/v) on "
+                "a solid-agar Environment; 30 C, 3-4 days (duration_hours=84.0), aerobic; "
+                "n_samples=3 (triplicate replicate plates; quadruplicate pinning is within-"
+                "plate technical); reference = parental BY4742 (category wild_type, no "
+                "numeric baseline). Systematic names -> current SGD R64 ORFs (collision-"
+                "aware alias resolution; 49/4770 strains dropped)"
+            ),
+            page=(
+                "Mol Syst Biol 2006 2:2006.0009 (doi:10.1038/msb4100051; PMID 16738555; "
+                "PMC1681483); msb4100051-s1.xls "
+                "sha256=7048663ffa4890478724e6e371f434baccc7160e6d8250df9a777a26c6b283a4"
+            ),
+        ),
+    },
     "env_chemgen_costanzo2021": {
         "root": "data/torchcell/env_chemgen_costanzo2021",
         # 4406 R64-resolved strains (3624 dma KanMX deletions + 782 tsa TS alleles after

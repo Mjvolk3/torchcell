@@ -23,6 +23,7 @@ Building blocks:
 from __future__ import annotations
 
 import json
+import math
 import pickle
 import time
 import zlib
@@ -78,6 +79,40 @@ def tex_escape(s: str) -> str:
     return s
 
 
+class Cell(BaseModel):
+    r"""A table cell that renders differently in markdown vs LaTeX.
+
+    Use when a value needs markup that differs between the two targets -- e.g.
+    scientific notation, where markdown wants unicode superscripts (``1.3×10⁵``)
+    and LaTeX wants math mode (``$1.3\times10^{5}$``). ``tex`` is emitted RAW
+    (not escaped); plain ``str`` cells are tex-escaped as usual.
+    """
+
+    md: str
+    tex: str
+
+
+_SUPERSCRIPT = str.maketrans("0123456789-", "⁰¹²³⁴⁵⁶⁷⁸⁹⁻")
+
+
+def scientific(value: float) -> Cell:
+    """Format a number in scientific notation (unit-free) for a table cell.
+
+    Renders identically-shaped magnitudes so a column is scannable and aligns:
+    ``584 -> 5.8×10²``, ``103398 -> 1.0×10⁵``, ``127797526 -> 1.3×10⁸``. Mantissa
+    is 2 significant figures. The UNIT belongs in the column header (e.g. bytes),
+    not the cell -- keeping cells numeric is what lets them right-align cleanly.
+    """
+    if value <= 0:
+        return Cell(md="0", tex="0")
+    e = math.floor(math.log10(value))
+    mant = f"{value / 10**e:.1f}"
+    return Cell(
+        md=f"{mant}×10{str(e).translate(_SUPERSCRIPT)}",
+        tex=rf"${mant}\times10^{{{e}}}$",
+    )
+
+
 # --- gzip signal over an LMDB (streaming, bounded memory) -----------------
 
 
@@ -128,6 +163,63 @@ def stream_gzip_signal(
     finally:
         env.close()
     return n, total
+
+
+class DatasetSignalRecord(BaseModel):
+    """One dataset's computed row -- the raw-data artifact the DB report emits.
+
+    This is the source-of-truth output: a ``build`` step scans each LMDB and
+    writes a list of these to JSON; ``render`` (table) and ``plot`` (scatter)
+    steps consume ONLY the JSON, never re-reading an LMDB. ``instances`` is the
+    dataset length (record count); ``signal_bytes`` is the gzip proxy.
+    """
+
+    section: str
+    name: str
+    genotypes: str
+    env: str
+    phenotype: str
+    instances: int
+    shape: str
+    graph_role: str
+    signal_bytes: int
+    built: bool
+
+
+def read_first_record(lmdb_dir: str | Path) -> dict[str, Any]:
+    """Return the first record of an LMDB (for schema-derived table columns)."""
+    env = lmdb.open(str(lmdb_dir), readonly=True, lock=False)
+    try:
+        with env.begin() as txn:
+            _, v = next(iter(txn.cursor()))
+            record: dict[str, Any] = pickle.loads(v)
+            return record
+    finally:
+        env.close()
+
+
+# The schema stores a ``graph_level`` per phenotype; display it precisely --
+# ``metabolism`` measurements live on the bipartite gene<->metabolite layer.
+GRAPH_ROLE_MAP = {"metabolism": "bipartite node"}
+
+
+def phenotype_descriptor(record: dict[str, Any]) -> tuple[str, str]:
+    """Derive ``(shape, graph_role)`` for one record from its phenotype.
+
+    ``shape`` is the shape of a SINGLE phenotype instance: ``scalar`` or
+    ``vector (D)`` (a length-1 vector is a scalar). ``graph_role`` is the
+    schema's ``graph_level`` mapped for display (``metabolism`` ->
+    ``bipartite node``). Both are read from the record, never hand-authored.
+    """
+    ph = record["experiment"]["phenotype"]
+    graph_level = ph.get("graph_level")
+    role = GRAPH_ROLE_MAP.get(graph_level, graph_level or "—")
+    label = ph.get(ph.get("label_name"))
+    if isinstance(label, (dict, list)) and len(label) > 1:
+        shape = f"vector ({len(label)})"
+    else:
+        shape = "scalar"
+    return shape, role
 
 
 def lmdb_fingerprint(lmdb_dir: str | Path) -> str:
@@ -208,7 +300,7 @@ class Row(BaseModel):
     optionally groups rows (a subheading in md, a ``\multicolumn`` rule in LaTeX).
     """
 
-    cells: dict[str, str]
+    cells: dict[str, str | Cell]
     section: str | None = None
 
 
@@ -222,8 +314,13 @@ class PaperTable(BaseModel):
     columns: list[Column]
     rows: list[Row]
 
-    def _cell(self, row: Row, col: Column) -> str:
-        return row.cells.get(col.header, "")
+    def _cell_md(self, row: Row, col: Column) -> str:
+        v = row.cells.get(col.header, "")
+        return v.md if isinstance(v, Cell) else v
+
+    def _cell_tex(self, row: Row, col: Column) -> str:
+        v = row.cells.get(col.header, "")
+        return v.tex if isinstance(v, Cell) else tex_escape(v)
 
     def _sections(self) -> list[str | None]:
         seen: list[str | None] = []
@@ -242,7 +339,7 @@ class PaperTable(BaseModel):
 
         def body(rows: list[Row]) -> list[str]:
             return [
-                "| " + " | ".join(self._cell(r, c) for c in self.columns) + " |"
+                "| " + " | ".join(self._cell_md(r, c) for c in self.columns) + " |"
                 for r in rows
             ]
 
@@ -293,8 +390,7 @@ class PaperTable(BaseModel):
         def emit(rows: list[Row]) -> None:
             for r in rows:
                 out.append(
-                    " & ".join(tex_escape(self._cell(r, c)) for c in self.columns)
-                    + r" \\"
+                    " & ".join(self._cell_tex(r, c) for c in self.columns) + r" \\"
                 )
 
         if not sectioned or self._sections() == [None]:

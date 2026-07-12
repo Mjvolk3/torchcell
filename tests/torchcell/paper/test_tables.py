@@ -17,7 +17,9 @@ from torchcell.paper.tables import (
     SignalCache,
     default_phenotype_bytes,
     human_bytes,
+    phenotype_descriptor,
     read_frontmatter,
+    scientific,
     stream_gzip_signal,
     tex_escape,
 )
@@ -124,6 +126,56 @@ def test_paper_table_latex_sectioned() -> None:
     assert r"\multicolumn{2}{@{}l}{\textbf{Fitness}} \\" in tex
     assert r"Costanzo 2016 dmf & 5 MB \\" in tex
     assert r"\label{tab:x}" in tex
+
+
+def test_scientific_bytes() -> None:
+    c = scientific(103_398)
+    assert c.md == "1.0×10⁵"
+    assert c.tex == r"$1.0\times10^{5}$"
+    assert scientific(584).md == "5.8×10²"  # smallest -> still a positive exponent
+    assert scientific(127_797_526).md == "1.3×10⁸"  # Costanzo dmf
+
+
+def _record(graph_level: str, label_name: str, value: Any) -> dict[str, Any]:
+    return {
+        "experiment": {
+            "phenotype": {
+                "graph_level": graph_level,
+                "label_name": label_name,
+                label_name: value,
+            }
+        }
+    }
+
+
+def test_phenotype_descriptor() -> None:
+    # scalar label -> scalar; global stays global
+    assert phenotype_descriptor(_record("global", "fitness", 0.9)) == (
+        "scalar",
+        "global",
+    )
+    # length-1 vector is still a scalar
+    assert phenotype_descriptor(
+        _record("metabolism", "metabolite_level", {"betaxanthin": 1.2})
+    ) == ("scalar", "bipartite node")
+    # multi-element vector reports its dimensionality
+    assert phenotype_descriptor(
+        _record("node", "expression_log2_ratio", [0.0] * 6169)
+    ) == ("vector (6169)", "node")
+    # metabolism graph_level maps to bipartite node
+    assert phenotype_descriptor(
+        _record("metabolism", "metabolite_level", {"a": 1, "b": 2})
+    ) == ("vector (2)", "bipartite node")
+
+
+def test_paper_table_cell_md_tex_divergence() -> None:
+    cols = [Column(header="Dataset", align="l"), Column(header="Signal", align="r")]
+    rows = [Row(cells={"Dataset": "X", "Signal": scientific(103_398)})]
+    t = PaperTable(columns=cols, rows=rows)
+    assert "1.0×10⁵" in t.to_markdown(sectioned=False)  # unicode in md
+    assert r"$1.0\times10^{5}$" in t.to_latex(
+        caption="c", label="tab:x"
+    )  # math in latex
 
 
 def test_read_frontmatter(tmp_path: Path) -> None:

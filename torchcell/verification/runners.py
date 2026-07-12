@@ -345,6 +345,17 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
             page="library mirror daSystematicLipidomicAnalysis2014 TableS4 Quant sheet",
         ),
     },
+    "organic_acid_yoshida2012": {
+        "root": "data/torchcell/organic_acid_yoshida2012",
+        "expected_count": 17,
+        "reference_centered": False,  # absolute HPLC titers (mM) vs measured WT baseline
+        "provenance": Provenance(
+            source_uri="https://doi.org/10.1016/j.jbiosc.2011.12.017",
+            citation_key="yoshidaIdentificationCharacterizationGenes2012",
+            method="HPLC organic-acid titers (mM), static YPD 25C 72h; per-strain mean+/-SD (n=3) vs measured WT (BY4742)",
+            page="J Biosci Bioeng 113:556 Table 3 (born-digital pdftotext -layout)",
+        ),
+    },
 }
 
 

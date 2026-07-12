@@ -41,6 +41,7 @@ from .vanacloig2022 import (
 from .wildenhain2015 import (
     EnvChemgenWildenhain2015Dataset as EnvChemgenWildenhain2015Dataset,
 )
+from .yoshida2012 import OrganicAcidYoshida2012Dataset as OrganicAcidYoshida2012Dataset
 from .zelezniak2018 import (
     MetaboliteZelezniak2018Dataset as MetaboliteZelezniak2018Dataset,
 )
@@ -88,6 +89,8 @@ hillenmeyer_datasets = ["HetHillenmeyer2008Dataset", "HomHillenmeyer2008Dataset"
 
 dasilveira_datasets = ["MetaboliteDaSilveira2014Dataset"]
 
+yoshida_datasets = ["OrganicAcidYoshida2012Dataset"]
+
 __all__ = (
     costanzo_datasets
     + kuzmin_datasets
@@ -107,4 +110,5 @@ __all__ = (
     + costanzo2021_datasets
     + hillenmeyer_datasets
     + dasilveira_datasets
+    + yoshida_datasets
 )

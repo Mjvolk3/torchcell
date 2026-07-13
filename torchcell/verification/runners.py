@@ -900,6 +900,39 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
             ),
         ),
     },
+    "crispri_mormino2022": {
+        "root": "data/torchcell/crispri_mormino2022",
+        # 12 individually-isolated CRISPRi strains (Table 1) each -> one categorical
+        # acetic-acid-sensitivity call from the Haa1 biosensor RFP (+ -> sensitive, = ->
+        # no_effect). Genome-wide enrichment is figure-only (not ingested); guides live
+        # upstream in Smith 2017 (guide_sequence=None). One record per strain.
+        "expected_count": 12,
+        "background_genes": frozenset(),
+        "provenance": Provenance(
+            source_uri=(
+                "$DATA_ROOT/torchcell-library/morminoIdentificationAceticAcid2022/paper.pdf "
+                "(library mirror; Table 1 embedded as a literal — no SI data file released)"
+            ),
+            citation_key="morminoIdentificationAceticAcid2022",
+            sha256="388f8e922b0b94fba3a41965035eeee0f6180a110869073a426df96b5e63746a",
+            method=(
+                "Table 1 'Properties of isolated strains' (12 rows) from the sha256-pinned "
+                "mirror PDF. Each strain = one CrisprInterferencePerturbation (target gene, "
+                "effector dCas9-Mxi1, guide_sequence=None; library from Smith 2017, BY4742) "
+                "in an acetic-acid environment (50 mM, pH 3.5, 30 C, aerobic). Phenotype = "
+                "EnvironmentResponsePhenotype measurement_type=categorical: RFP '+' (enhanced "
+                "Haa1-biosensor signal -> more acetic-acid sensitive) -> category 'sensitive', "
+                "'=' (as control) -> 'no_effect'; reference = CC23 control (no_effect). Growth "
+                "column and figure-only FI/sfpHluorin/growth values are NOT ingested; "
+                "n_samples None (qualitative summary call). 12 targets resolve to R64 ORFs"
+            ),
+            page=(
+                "Microb Cell Fact 2022 21:214 (doi:10.1186/s12934-022-01938-7; PMID 36284296; "
+                "PMC9571444), Table 1; paper.pdf "
+                "sha256=388f8e922b0b94fba3a41965035eeee0f6180a110869073a426df96b5e63746a"
+            ),
+        ),
+    },
     "env_chemgen_costanzo2021": {
         "root": "data/torchcell/env_chemgen_costanzo2021",
         # 4406 R64-resolved strains (3624 dma KanMX deletions + 782 tsa TS alleles after

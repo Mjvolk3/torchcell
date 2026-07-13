@@ -1,5 +1,4 @@
-# Generated view artifacts (regenerable from the JSON via render/plot scripts).
-**/_preview.*
-**/*.aux
-**/*.log
-**/*.pdf
+# Everything here is generated (regenerable via build/render/plot). Not tracked;
+# the dated pre-build JSON is reproducible from the committed cache + registry.
+*
+!.gitignore

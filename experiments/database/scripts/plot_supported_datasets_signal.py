@@ -6,7 +6,7 @@
 category. Reads only the JSON produced by build_supported_datasets_table.py.
 
 Follows the project plot guidelines: torchcell.mplstyle color palette, output to
-$ASSET_IMAGES_DIR with a timestamp. Point labels use Liberation Sans size 6 (the
+$ASSET_IMAGES_DIR (stable filename). Point labels use Liberation Sans size 6 (the
 metric-compatible Arial substitute available on Linux).
 
 Run from the repo root (defaults to the newest pre-build snapshot):
@@ -29,7 +29,6 @@ from adjustText import adjust_text  # noqa: E402
 from dotenv import load_dotenv  # noqa: E402
 
 from torchcell.paper.tables import DatasetSignalRecord  # noqa: E402
-from torchcell.timestamp import timestamp  # noqa: E402
 
 SCRIPT = Path(__file__).resolve()
 REPO = SCRIPT.parents[3]
@@ -90,7 +89,7 @@ def main() -> None:
 
     out_dir = osp.join(os.environ["ASSET_IMAGES_DIR"], "database")
     os.makedirs(out_dir, exist_ok=True)
-    out = osp.join(out_dir, f"supported-datasets-instances-vs-signal_{timestamp()}.png")
+    out = osp.join(out_dir, "supported-datasets-instances-vs-signal.png")
     fig.savefig(out, dpi=300, bbox_inches="tight")
     plt.close(fig)
     print(f"Wrote {out}  ({len(records)} datasets)")

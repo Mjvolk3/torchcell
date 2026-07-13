@@ -147,6 +147,17 @@ signal += len(comp.flush())                                     # the "remainder
 # signal = Signal (gzip, bytes); n = Instances
 ```
 
+### Signal vs scale (the payoff)
+
+![Instances vs Signal for the supported datasets](assets/images/database/supported-datasets-instances-vs-signal.png)
+
+Each point is a dataset; x = Instances (dataset length), y = Signal (gzip bytes),
+both log. Points ride a rough diagonal (more records -> more bytes), but the
+residuals are the story: scalar-phenotype fitness/interaction/chemogenomic sets
+sit where their **combinatorial genotype** dominates, while high-dimensional
+omics (expression, morphology, proteome) float above the diagonal on
+**phenotype-vector** information -- two distinct modes of dataset richness.
+
 ### What is NOT counted
 
 The raw `.mdb` storage overhead; the `reference`/`publication` sub-records (only

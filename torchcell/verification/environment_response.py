@@ -98,7 +98,7 @@ def _condition_signature(experiment: dict[str, Any]) -> tuple[Any, ...]:
 
 def _genotype_signature(
     experiment: dict[str, Any], background: frozenset[str]
-) -> tuple[tuple[str | None, str | None, str | None], ...]:
+) -> tuple[tuple[str | None, ...], ...]:
     """Canonical STRAIN identity: the sorted set of screened perturbations, each keyed by
     ``(systematic_gene_name, perturbation_type, perturbed_gene_name)``, excluding the constant
     drug-sensitized background.
@@ -107,16 +107,28 @@ def _genotype_signature(
     collection has one strain per gene, so the signature reduces to the gene. A TS-allele
     collection has MANY strains per essential gene: ``act1-101`` and ``act1-3`` differ in
     ``perturbed_gene_name`` and so get distinct signatures -- an allelic series is not a set
-    of duplicates. L4 gene-containment still keys on the bare systematic name (a gene-level
-    question); L1 uniqueness keys on this strain identity.
+    of duplicates. A CRISPR guide library likewise has MANY strains per (gene, mode): six
+    guides targeting the same gene under the same effector are distinct strains, so the
+    guide spacer (``crispr.guide_sequence``) joins the key when present (None for a
+    background/unspecified guide leaves the key unchanged). L4 gene-containment still keys on
+    the bare systematic name (a gene-level question); L1 uniqueness keys on this strain
+    identity.
     """
+
+    def _identity(p: dict[str, Any]) -> tuple[str | None, ...]:
+        ident: tuple[str | None, ...] = (
+            p.get("systematic_gene_name"),
+            p.get("perturbation_type"),
+            p.get("perturbed_gene_name"),
+        )
+        crispr = p.get("crispr")
+        if isinstance(crispr, dict) and crispr.get("guide_sequence") is not None:
+            ident = ident + (crispr["guide_sequence"],)
+        return ident
+
     return tuple(
         sorted(
-            (
-                p.get("systematic_gene_name"),
-                p.get("perturbation_type"),
-                p.get("perturbed_gene_name"),
-            )
+            _identity(p)
             for p in experiment["genotype"]["perturbations"]
             if p.get("systematic_gene_name") not in background
         )

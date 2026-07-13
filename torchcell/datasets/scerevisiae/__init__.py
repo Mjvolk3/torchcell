@@ -23,6 +23,7 @@ from .hoepfner2014 import EnvChemgenHoepfner2014Dataset as EnvChemgenHoepfner201
 from .kuzmin2018 import DmfKuzmin2018Dataset as DmfKuzmin2018Dataset
 from .kuzmin2018 import SmfKuzmin2018Dataset as SmfKuzmin2018Dataset
 from .kuzmin2018 import TmfKuzmin2018Dataset as TmfKuzmin2018Dataset
+from .lian2019 import CrisprMagicLian2019Dataset as CrisprMagicLian2019Dataset
 from .messner2023 import ProteomeMessner2023Dataset as ProteomeMessner2023Dataset
 from .mota2024 import EnvChemgenMota2024Dataset as EnvChemgenMota2024Dataset
 from .mulleder2016 import AminoAcidMulleder2016Dataset as AminoAcidMulleder2016Dataset
@@ -67,6 +68,8 @@ ohnuki_datasets = ["ScmdOhnuki2018Dataset", "ScmdOhnuki2022Dataset"]
 sameith_datasets = ["SmMicroarraySameith2015Dataset", "DmMicroarraySameith2015Dataset"]
 
 smith_datasets = ["FattyAcidSmith2006Dataset"]
+
+lian_datasets = ["CrisprMagicLian2019Dataset"]
 
 ozaydin_datasets = ["CarotenoidOzaydin2013Dataset"]
 
@@ -120,4 +123,5 @@ __all__ = (
     + dasilveira_datasets
     + yoshida_datasets
     + oduibhir_datasets
+    + lian_datasets
 )

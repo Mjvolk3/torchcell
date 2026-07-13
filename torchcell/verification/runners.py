@@ -849,6 +849,57 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
             ),
         ),
     },
+    "crispr_magic_lian2019": {
+        "root": "data/torchcell/crispr_magic_lian2019",
+        # Genome-scale MAGIC CRISPRa/i/d furfural screen, per-GUIDE enrichment reprocessed
+        # from raw NGS (SRA PRJNA504483). 100,493 designed guides; drop 300 random controls
+        # + 16 source-corrupted-gene guides + 2,633 unresolved-gene guides (165 ncRNA/rDNA
+        # genes absent from the ORF genome); of the rest, each (guide x round) with a defined
+        # enrichment is a record (26,169 guide-rounds undetected; 48 guides skipped in the
+        # round where they target their own integrated background) = 266,415 records. Rounds
+        # are iterative in accumulating backgrounds (R1 bAID / R2 +SIZ1i / R3 +SIZ1i+NAT1a),
+        # so a record's genotype is a 1-/2-/3-perturbation mixed-modality CRISPR combo; the
+        # background is NOT constant across the dataset, so it is part of the genotype
+        # signature (background_genes empty). L1 strain identity keys on (gene, mode, guide
+        # spacer): sibling guides of one gene are distinct strains, like a TS-allele series.
+        "expected_count": 266415,
+        "background_genes": frozenset(),
+        "provenance": Provenance(
+            source_uri=(
+                "NCBI SRA PRJNA504483 (raw NGS, 21 runs) + Supplementary Data 4 reference "
+                "(41467_2019_13621_MOESM6_ESM.xlsx, 100,493 guides, sha256 4e3f225a...); "
+                "derived enrichment table + reprocessing scripts in the library mirror "
+                "$DATA_ROOT/torchcell-library/lianMultifunctionalGenomewideCRISPR2019/data/"
+                " (guide_enrichment_final.tsv + PROVENANCE.md)"
+            ),
+            citation_key="lianMultifunctionalGenomewideCRISPR2019",
+            sha256="f9af849f97a2d460c3a6d628308491ec3966c6cc2a7f6cad130848d2bad32647",
+            method=(
+                "The furfural per-guide enrichment is NOT a released supplement; it is "
+                "reprocessed from raw reads (SRA PRJNA504483): barcode = read[27:70] (43bp "
+                "activation) | read[27:71] (44bp interference/deletion), forward, exact-match "
+                "to the 100,493-guide reference; CPM(+1)/library; per round per replicate "
+                "log2(furfural-after / untreated-before); mean +- SD over 3 biological "
+                "triplicates. Validated vs the paper's hits (PDR1i round-3 rank 1, SLX5i "
+                "round-1 rank 1, SAP30d round-1 rank 2). One EnvironmentResponseExperiment per "
+                "(guide x round): genotype = the library member as a Crispr"
+                "Activation/Interference/Deletion perturbation (target gene + guide spacer + "
+                "orthogonal effector dLbCas12a-VP/dSpCas9-RD1152/SaCas9) PLUS the round's "
+                "integrated background (SIZ1 interference for r2/r3, NAT1 activation for r3, "
+                "guide unspecified); environment = furfural (5/10/15 mM by round) as a "
+                "SmallMoleculePerturbation on SED/G418 liquid, 30 C, aerobic; phenotype = "
+                "EnvironmentResponsePhenotype measurement_type=log2_ratio, environment_response"
+                "=mean log2FC, uncertainty=SD (sample_sd, n=3 -> SE=SD/sqrt(3)); reference = "
+                "no-enrichment baseline (log2FC 0) in the bAID host. Common gene names -> "
+                "current R64 ORFs via the genome (5,060/5,226 resolved)"
+            ),
+            page=(
+                "Nat Commun 2019 10:5794 (doi:10.1038/s41467-019-13621-4; PMID 31857575); "
+                "guide_enrichment_final.tsv "
+                "sha256=f9af849f97a2d460c3a6d628308491ec3966c6cc2a7f6cad130848d2bad32647"
+            ),
+        ),
+    },
     "env_chemgen_costanzo2021": {
         "root": "data/torchcell/env_chemgen_costanzo2021",
         # 4406 R64-resolved strains (3624 dma KanMX deletions + 782 tsa TS alleles after

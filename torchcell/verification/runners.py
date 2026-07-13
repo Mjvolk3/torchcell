@@ -524,6 +524,36 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
             ),
         ),
     },
+    "ffa_xue2025": {
+        "root": "data/torchcell/ffa_xue2025",
+        # In-house Xue 2025 combinatorial TF-deletion FFA titers. 177 genotype rows -> 176
+        # experiment records + 1 measured WT reference (wt BY4741). Each strain = the
+        # POX1-FAA1-FAA4 FFA-overproduction baseline + 0-3 TF deletions (letters decoded via
+        # the Abbreviations sheet; N delta = 3 + #TF letters). Combinatorial -> L1 keys on the
+        # genotype signature (deletion set), not per-ORF.
+        "expected_count": 176,
+        "reference_centered": False,  # absolute FFA titers (mg/L) vs measured WT baseline
+        "provenance": Provenance(
+            source_uri=(
+                "$DATA_ROOT/torchcell-library/xue2025/data/Supplementary Data 1_Raw titers.xlsx "
+                "(in-house/unpublished; sha256 023de80e...). No DOI -> Publication anchors to "
+                "the faa1D faa4D pox1D FFA-chassis paper Runguphan & Keasling 2014 (PMID 23899824)"
+            ),
+            citation_key="xue2025",
+            method=(
+                "Combinatorial TF-deletion strains on the POX1-FAA1-FAA4 FFA-overproduction "
+                "chassis; 5 free-fatty-acid species (C14:0/C16:0/C18:0/C16:1/C18:1) titered in "
+                "mg/L, mean +- sample SD over up to 3 replicates (per-FFA replicate count varies; "
+                "n=1 -> SE NaN). MetabolitePhenotype measurement_type=titer_mg_per_l; genotype = "
+                "KanMxDeletionPerturbation per gene (markers unknown/mixed for in-house combos -> "
+                "KanMX representative); env SC/30C aerobic (in-house-assumed); ref = measured WT"
+            ),
+            page=(
+                "In-house Xue 2025 Supplementary Data 1_Raw titers.xlsx "
+                "sha256=023de80ec51a4d0d1ccd6fc3506e42a44fcea6d3c3101ee7a83a005e49bbc779"
+            ),
+        ),
+    },
 }
 
 

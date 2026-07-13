@@ -52,6 +52,7 @@ from .vanacloig2022 import (
 from .wildenhain2015 import (
     EnvChemgenWildenhain2015Dataset as EnvChemgenWildenhain2015Dataset,
 )
+from .xue2025 import FattyAcidXue2025Dataset as FattyAcidXue2025Dataset
 from .yoshida2012 import OrganicAcidYoshida2012Dataset as OrganicAcidYoshida2012Dataset
 from .zelezniak2018 import (
     MetaboliteZelezniak2018Dataset as MetaboliteZelezniak2018Dataset,
@@ -115,6 +116,8 @@ lopez_datasets = [
     "IsobutanolValidatedLopez2024Dataset",
 ]
 
+xue_datasets = ["FattyAcidXue2025Dataset"]
+
 __all__ = (
     costanzo_datasets
     + kuzmin_datasets
@@ -140,4 +143,5 @@ __all__ = (
     + lian_datasets
     + mormino_datasets
     + lopez_datasets
+    + xue_datasets
 )

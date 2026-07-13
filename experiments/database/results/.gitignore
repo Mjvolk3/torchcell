@@ -1,0 +1,5 @@
+# Generated view artifacts (regenerable from the JSON via render/plot scripts).
+**/_preview.*
+**/*.aux
+**/*.log
+**/*.pdf

@@ -126,6 +126,20 @@ def default_phenotype_bytes(record: dict[str, Any]) -> bytes:
     return json.dumps(ph, sort_keys=True, default=str).encode()
 
 
+def instance_bytes(record: dict[str, Any]) -> bytes:
+    """Serialize the full stored INSTANCE (perturbation + environment + phenotype).
+
+    This counts the stored PERTURBATION -- the edit that defines the genotype,
+    whether a single gene deletion or thousands of natural gene-presence entries
+    that amount to an entirely new genome (referenced by ``sequence_uri`` +
+    ``sequence_sha256``) -- alongside the environment and the measured phenotype.
+    It never includes the shared reference genome (that lives external, as a
+    pointer, and is not stored per-instance); only each instance's delta from it.
+    Constant record metadata (experiment_type, dataset_name) compresses away.
+    """
+    return json.dumps(record["experiment"], sort_keys=True, default=str).encode()
+
+
 def stream_gzip_signal(
     lmdb_dir: str | Path,
     *,
@@ -198,22 +212,32 @@ def read_first_record(lmdb_dir: str | Path) -> dict[str, Any]:
         env.close()
 
 
-# The schema stores a ``graph_level`` per phenotype; display it precisely --
-# ``metabolism`` measurements live on the bipartite gene<->metabolite layer.
+# The schema stores a ``graph_level`` per phenotype; display it against the Cell
+# Graph Transformer's structure -- the gene multigraph + the bipartite metabolic
+# network. ``metabolism`` -> ``bipartite node`` (a metabolite in the bipartite
+# layer). Interactions are refined edge-vs-hyperedge by gene count below.
 GRAPH_ROLE_MAP = {"metabolism": "bipartite node"}
+_INTERACTION_LEVELS = {"edge", "hyperedge"}
 
 
 def phenotype_descriptor(record: dict[str, Any]) -> tuple[str, str]:
-    """Derive ``(shape, graph_role)`` for one record from its phenotype.
+    """Derive ``(shape, graph_role)`` for one record from its stored instance.
 
     ``shape`` is the shape of a SINGLE phenotype instance: ``scalar`` or
-    ``vector (D)`` (a length-1 vector is a scalar). ``graph_role`` is the
-    schema's ``graph_level`` mapped for display (``metabolism`` ->
-    ``bipartite node``). Both are read from the record, never hand-authored.
+    ``vector (D)`` (a length-1 vector is a scalar). ``graph_role`` is where the
+    label sits in the cell graph: ``global`` / ``node`` / ``bipartite node``
+    (from ``graph_level``), or -- for a gene interaction -- ``edge`` when it
+    relates two gene nodes and ``hyperedge`` when it relates three or more,
+    derived from the number of perturbations (so a digenic interaction reads
+    ``edge`` and a trigenic one ``hyperedge``, regardless of the stored
+    ``graph_level``). Everything is read from the record, never hand-authored.
     """
     ph = record["experiment"]["phenotype"]
     graph_level = ph.get("graph_level")
     role = GRAPH_ROLE_MAP.get(graph_level, graph_level or "—")
+    if graph_level in _INTERACTION_LEVELS:
+        n_genes = len(record["experiment"]["genotype"]["perturbations"])
+        role = "edge" if n_genes == 2 else "hyperedge"
     label = ph.get(ph.get("label_name"))
     if isinstance(label, (dict, list)) and len(label) > 1:
         shape = f"vector ({len(label)})"
@@ -298,10 +322,12 @@ class Column(BaseModel):
 class Row(BaseModel):
     r"""One table row. ``cells`` maps column header -> display string. ``section``
     optionally groups rows (a subheading in md, a ``\multicolumn`` rule in LaTeX).
+    ``bold`` emphasizes the whole row (e.g. a totals footer).
     """
 
     cells: dict[str, str | Cell]
     section: str | None = None
+    bold: bool = False
 
 
 class PaperTable(BaseModel):
@@ -313,14 +339,17 @@ class PaperTable(BaseModel):
 
     columns: list[Column]
     rows: list[Row]
+    footer: Row | None = None
 
     def _cell_md(self, row: Row, col: Column) -> str:
         v = row.cells.get(col.header, "")
-        return v.md if isinstance(v, Cell) else v
+        s = v.md if isinstance(v, Cell) else v
+        return f"**{s}**" if row.bold and s else s
 
     def _cell_tex(self, row: Row, col: Column) -> str:
         v = row.cells.get(col.header, "")
-        return v.tex if isinstance(v, Cell) else tex_escape(v)
+        s = v.tex if isinstance(v, Cell) else tex_escape(v)
+        return rf"\textbf{{{s}}}" if row.bold and s else s
 
     def _sections(self) -> list[str | None]:
         seen: list[str | None] = []
@@ -354,6 +383,8 @@ class PaperTable(BaseModel):
                 out.append(f"{hashes} {sec}")
                 out.append("")
             out.extend([hbar, abar, *body(srows), ""])
+        if self.footer is not None:
+            out.extend([f"{hashes} Total", "", hbar, abar, *body([self.footer]), ""])
         return "\n".join(out).rstrip("\n")
 
     # -- latex --
@@ -408,6 +439,9 @@ class PaperTable(BaseModel):
                 emit(srows)
                 first = False
 
+        if self.footer is not None:
+            out.append(r"\midrule")
+            emit([self.footer])
         out.append(r"\bottomrule")
         out.append(r"\end{tabular}")
         if footnote:

@@ -26,15 +26,22 @@ import os
 from datetime import date
 from pathlib import Path
 
+import lmdb
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
 from torchcell.paper.tables import (
     DatasetSignalRecord,
     SignalCache,
+    instance_bytes,
     phenotype_descriptor,
     read_first_record,
 )
+
+# Signal = gzip of the full stored instance (perturbation + environment +
+# phenotype). Namespaced in the cache so it never reuses an older phenotype-only
+# value; bump this tag if the extractor definition changes again.
+SIGNAL_VARIANT = "instance"
 
 SCRIPT = Path(__file__).resolve()
 REPO = SCRIPT.parents[3]
@@ -55,13 +62,13 @@ class CuratedRow(BaseModel):
 
 SECTIONS = [
     "Fitness + genetic interaction",
+    "Environmental / chemogenomic",
     "Viability",
     "Morphology",
     "Expression (microarray)",
     "Expression (RNA-seq)",
     "Metabolite",
     "Protein abundance",
-    "Visual / product-proxy score",
 ]
 
 CURATED: list[CuratedRow] = [
@@ -78,6 +85,14 @@ CURATED: list[CuratedRow] = [
     CuratedRow(section="Fitness + genetic interaction", name="Kuzmin 2020 tmf", genotypes="301,798", env="1", phenotype="triple-mutant fitness", data_subpath="data/torchcell/tmf_kuzmin2020"),
     CuratedRow(section="Fitness + genetic interaction", name="Kuzmin 2020 dmi", genotypes="632,797", env="1", phenotype="digenic interaction", data_subpath="data/torchcell/dmi_kuzmin2020"),
     CuratedRow(section="Fitness + genetic interaction", name="Kuzmin 2020 tmi", genotypes="301,798", env="1", phenotype="trigenic interaction", data_subpath="data/torchcell/tmi_kuzmin2020"),
+    CuratedRow(section="Environmental / chemogenomic", name="Auesukaree 2009 (stress screen)", genotypes="333", env="6", phenotype="stress sensitivity (categorical)", data_subpath="data/torchcell/env_chemgen_auesukaree2009"),
+    CuratedRow(section="Environmental / chemogenomic", name="Mota 2024 (weak-acid screen)", genotypes="601", env="3", phenotype="weak-acid susceptibility (categorical)", data_subpath="data/torchcell/env_chemgen_mota2024"),
+    CuratedRow(section="Environmental / chemogenomic", name="Vanacloig-Pedros 2022", genotypes="3,647", env="45", phenotype="chemogenomic fitness (log2-ratio)", data_subpath="data/torchcell/env_chemgen_vanacloig2022"),
+    CuratedRow(section="Environmental / chemogenomic", name="Costanzo 2021 (condition-SGA)", genotypes="4,399", env="14", phenotype="differential mutant fitness", data_subpath="data/torchcell/env_chemgen_costanzo2021"),
+    CuratedRow(section="Environmental / chemogenomic", name="Hillenmeyer 2008 het (FitDb HIP)", genotypes="5,814", env="514", phenotype="HIP fitness-defect log2-ratio", data_subpath="data/torchcell/env_chemgen_hillenmeyer2008_het"),
+    CuratedRow(section="Environmental / chemogenomic", name="Hillenmeyer 2008 hom (FitDb HOP)", genotypes="4,667", env="279", phenotype="HOP fitness-defect z-score", data_subpath="data/torchcell/env_chemgen_hillenmeyer2008_hom"),
+    CuratedRow(section="Environmental / chemogenomic", name="Wildenhain 2015 (drug tolerance)", genotypes="256", env="5,178", phenotype="growth-inhibition z-score", data_subpath="data/torchcell/env_chemgen_wildenhain2015"),
+    CuratedRow(section="Environmental / chemogenomic", name="Hoepfner 2014 (HIP/HOP atlas)", genotypes="10,719", env="5,879", phenotype="HIP/HOP sensitivity score", data_subpath="data/torchcell/env_chemgen_hoepfner2014"),
     CuratedRow(section="Viability", name="SGD essentiality", genotypes="1,329", env="1", phenotype="gene essentiality", data_subpath="data/torchcell/gene_essentiality_sgd"),
     CuratedRow(section="Viability", name="SynLethDB (lethal)", genotypes="14,000", env="1", phenotype="synthetic lethality", data_subpath="data/torchcell/synth_lethality_yeast_synth_leth_db"),
     CuratedRow(section="Viability", name="SynLethDB (rescue)", genotypes="6,948", env="1", phenotype="synthetic rescue", data_subpath="data/torchcell/synth_rescue_yeast_synth_leth_db"),
@@ -90,7 +105,7 @@ CURATED: list[CuratedRow] = [
     CuratedRow(section="Metabolite", name="Mülleder 2016 (amino-acid metabolome)", genotypes="4,678", env="1", phenotype="amino-acid concentrations", data_subpath="data/torchcell/amino_acid_mulleder2016"),
     CuratedRow(section="Metabolite", name="Zelezniak 2018 (metabolome)", genotypes="95", env="1", phenotype="metabolite levels", data_subpath="data/torchcell/metabolite_zelezniak2018"),
     CuratedRow(section="Protein abundance", name="Zelezniak 2018 (SWATH proteome)", genotypes="97", env="1", phenotype="protein abundance", data_subpath="data/torchcell/proteome_zelezniak2018"),
-    CuratedRow(section="Visual / product-proxy score", name="Ozaydin 2013 (β-carotene screen)", genotypes="4,474", env="1", phenotype="colony-color visual score", data_subpath="data/torchcell/carotenoid_ozaydin2013"),
+    CuratedRow(section="Metabolite", name="Ozaydin 2013 (β-carotene screen)", genotypes="4,474", env="1", phenotype="β-carotene (colony-color visual score)", data_subpath="data/torchcell/carotenoid_ozaydin2013"),
 ]
 
 # Datasets in scope but not yet built (no LMDB) -> no signal.
@@ -98,9 +113,7 @@ NOT_BUILT = [
     "Baryshnikova 2010 (smf; liquid-growth assay -- MinerU the paper first)",
     "Ohnuki 2018 / 2022 (morphology)",
     "O'Duibhir 2014 (expression)",
-    "Wildenhain 2015 (drug tolerance, 195 × 4,915 conditions)",
     "Lian 2017 (AID furfural tolerance)",
-    "FitDb (fitness across 1,144 conditions)",
 ]
 
 
@@ -110,6 +123,15 @@ def lmdb_dir(row: CuratedRow, data_root: str) -> Path | None:
         return None
     d = Path(data_root) / row.data_subpath / "processed" / "lmdb"
     return d if (d / "data.mdb").exists() else None
+
+
+def entry_count(lmdb_dir: Path) -> int:
+    """Record count from the LMDB stat -- O(1), no scan (used for Instances)."""
+    env = lmdb.open(str(lmdb_dir), readonly=True, lock=False)
+    try:
+        return int(env.stat()["entries"])
+    finally:
+        env.close()
 
 
 def main() -> None:
@@ -134,14 +156,15 @@ def main() -> None:
                                                shape="—", graph_role="—", signal_bytes=0, built=False))
             continue
         shape, role = phenotype_descriptor(read_first_record(d))
+        instances = entry_count(d)  # always cheap (LMDB stat), even if signal deferred
+        cache_id = f"{r.data_subpath}#{SIGNAL_VARIANT}"
         size_gb = (d / "data.mdb").stat().st_size / 1e9
         if args.max_gb is not None and size_gb > args.max_gb:
-            cached = cache.entries.get(r.data_subpath or "")
-            n, nbytes = (cached.n, cached.bytes) if cached else (0, 0)
-            print(f"  ~ {r.name}: signal skipped ({size_gb:.1f} GB); instances={n:,}")
+            cached = cache.entries.get(cache_id)
+            n, nbytes = instances, (cached.bytes if cached else 0)  # signal 0 => pending
+            print(f"  ~ {r.name}: signal deferred ({size_gb:.1f} GB); instances={n:,}")
         else:
-            assert r.data_subpath is not None
-            n, nbytes, _ = cache.get_or_compute(r.data_subpath, d, label=r.name)
+            n, nbytes, _ = cache.get_or_compute(cache_id, d, extract=instance_bytes, label=r.name)
             print(f"  * {r.name}: n={n:,} shape={shape} role={role} signal={nbytes:,}B")
         records.append(DatasetSignalRecord(section=r.section, name=r.name, genotypes=r.genotypes,
                                            env=r.env, phenotype=r.phenotype, instances=n,

@@ -55,7 +55,8 @@ def main() -> None:
 
     data_path = args.data or newest_json()
     payload = json.loads(data_path.read_text())
-    records = [DatasetSignalRecord(**d) for d in payload["datasets"] if d["built"]]
+    records = [DatasetSignalRecord(**d) for d in payload["datasets"]
+               if d["built"] and d["signal_bytes"] > 0]
 
     plt.style.use(str(MPLSTYLE))
     palette = plt.rcParams["axes.prop_cycle"].by_key()["color"]

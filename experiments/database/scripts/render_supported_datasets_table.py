@@ -64,10 +64,15 @@ training signal; the full backlog is `[[paper.north-star.dataset-triage]]`.
 **Columns.** *Genotypes* = distinct perturbed strains/isolates (curated). *Env* = number
 of environments. *Instances* = dataset length (total genotype×environment records).
 *Shape* = shape of a single phenotype instance (`scalar` / `vector (D)`). *Graph role* =
-where the label sits in the cell graph (`global` / `node` / `hyperedge` / `bipartite
-node`). *Signal (gzip, bytes)* = scientific-notation gzip size of the concatenated
-serialized phenotypes -- a Kolmogorov-complexity proxy. Instances, Shape, Graph role, and
-Signal are **derived from the built LMDB**, not hand-typed.
+where the label sits in the cell graph (`global` / `node` / `edge` / `hyperedge` /
+`bipartite node`; a digenic interaction is an `edge`, a trigenic one a `hyperedge`).
+*Signal (gzip, bytes)* = scientific-notation gzip size of the concatenated stored
+instances (the **perturbation** + environment + phenotype of every record) -- a
+Kolmogorov-complexity proxy. The perturbation counts each instance's edit off the S288C
+reference: a single deletion (a few bytes) or a natural isolate's thousands of gene-presence
+entries that amount to a new genome (sequence stays external, referenced by uri+sha256). The
+shared reference genome is never counted. Instances, Shape, Graph role, and Signal are
+**derived from the built LMDB**, not hand-typed.
 """
 
 MD_TAIL = """\
@@ -113,10 +118,31 @@ def newest_json() -> Path:
 
 
 def signal_cell(rec: DatasetSignalRecord) -> str | Cell:
-    """Signal as a scientific-notation cell, or a marker for not-built."""
+    """Signal as a scientific-notation cell, or a marker for not-built/deferred."""
     if not rec.built:
         return "not built"
+    if rec.signal_bytes <= 0:
+        return "pending"  # built, but signal deferred (e.g. a very large LMDB)
     return scientific(rec.signal_bytes)
+
+
+def totals_footer(records: list[DatasetSignalRecord]) -> Row:
+    """A bold totals row summing ONLY the additive columns.
+
+    Instances (total dataset length) and Signal (total gzip bytes) sum cleanly.
+    Genotypes/Env are left blank -- summing strain/condition counts across
+    datasets double-counts the same genes/conditions -- and Shape/Graph role/
+    Phenotype are categorical, so they get no total either.
+    """
+    built = [r for r in records if r.built]
+    n_built = len(built)
+    total_instances = sum(r.instances for r in built)
+    total_signal = sum(r.signal_bytes for r in built if r.signal_bytes > 0)
+    return Row(bold=True, cells={
+        "Dataset": f"Total ({n_built} datasets)",
+        "Instances": f"{total_instances:,}",
+        SIGNAL_HEADER: scientific(total_signal),
+    })
 
 
 def build_table(records: list[DatasetSignalRecord], sections: list[str]) -> PaperTable:
@@ -134,7 +160,7 @@ def build_table(records: list[DatasetSignalRecord], sections: list[str]) -> Pape
                 "Graph role": rec.graph_role,
                 SIGNAL_HEADER: signal_cell(rec),
             }))
-    return PaperTable(columns=COLUMNS, rows=rows)
+    return PaperTable(columns=COLUMNS, rows=rows, footer=totals_footer(records))
 
 
 def main() -> None:
@@ -158,7 +184,9 @@ def main() -> None:
                 "genotype$\\times$environment records); \\emph{Shape} the shape of one phenotype "
                 "instance; \\emph{Graph role} where the label sits in the cell graph; \\emph{Signal "
                 "(gzip, bytes)} a Kolmogorov-complexity proxy -- the gzip size in bytes of the "
-                "concatenated per-record serialized phenotypes."
+                "concatenated per-record stored instances (perturbation + environment + phenotype), "
+                "so a natural isolate's genome-defining perturbation set counts alongside its "
+                "phenotype; the shared reference genome is never counted."
             ),
             label="tab:supported-datasets",
             footnote=footnote,

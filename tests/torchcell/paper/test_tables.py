@@ -178,6 +178,21 @@ def test_paper_table_cell_md_tex_divergence() -> None:
     )  # math in latex
 
 
+def test_paper_table_footer_totals() -> None:
+    cols = [Column(header="Dataset", align="l"), Column(header="Instances", align="r")]
+    rows = [Row(section="A", cells={"Dataset": "d1", "Instances": "10"})]
+    footer = Row(bold=True, cells={"Dataset": "Total (1 datasets)", "Instances": "10"})
+    t = PaperTable(columns=cols, rows=rows, footer=footer)
+    tex = t.to_latex(caption="c", label="tab:x")
+    # footer is preceded by a rule and bolded
+    assert r"\midrule" in tex.rsplit("d1", 1)[1]  # a midrule after the body
+    assert r"\textbf{Total (1 datasets)}" in tex
+    assert r"\textbf{10}" in tex
+    md = t.to_markdown(sectioned=True)
+    assert "### Total" in md
+    assert "| **Total (1 datasets)** | **10** |" in md
+
+
 def test_read_frontmatter(tmp_path: Path) -> None:
     note = tmp_path / "n.md"
     note.write_text("---\nid: abc\ntitle: T\n---\n\nbody\n")

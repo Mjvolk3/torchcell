@@ -1,23 +1,21 @@
 {
   "status": "pre-build",
-  "date": "2026-07-09",
+  "date": "2026-07-13",
   "sections": [
     "Fitness + genetic interaction",
+    "Environmental / chemogenomic",
     "Viability",
     "Morphology",
     "Expression (microarray)",
     "Expression (RNA-seq)",
     "Metabolite",
-    "Protein abundance",
-    "Visual / product-proxy score"
+    "Protein abundance"
   ],
   "not_built": [
     "Baryshnikova 2010 (smf; liquid-growth assay -- MinerU the paper first)",
     "Ohnuki 2018 / 2022 (morphology)",
     "O'Duibhir 2014 (expression)",
-    "Wildenhain 2015 (drug tolerance, 195 \u00d7 4,915 conditions)",
-    "Lian 2017 (AID furfural tolerance)",
-    "FitDb (fitness across 1,144 conditions)"
+    "Lian 2017 (AID furfural tolerance)"
   ],
   "datasets": [
     {
@@ -29,7 +27,7 @@
       "instances": 20484,
       "shape": "scalar",
       "graph_role": "global",
-      "signal_bytes": 103398,
+      "signal_bytes": 492250,
       "built": true
     },
     {
@@ -41,7 +39,7 @@
       "instances": 20705612,
       "shape": "scalar",
       "graph_role": "global",
-      "signal_bytes": 127797526,
+      "signal_bytes": 645084253,
       "built": true
     },
     {
@@ -52,8 +50,8 @@
       "phenotype": "digenic interaction",
       "instances": 20705612,
       "shape": "scalar",
-      "graph_role": "hyperedge",
-      "signal_bytes": 154618483,
+      "graph_role": "edge",
+      "signal_bytes": 668363904,
       "built": true
     },
     {
@@ -65,7 +63,7 @@
       "instances": 1539,
       "shape": "scalar",
       "graph_role": "global",
-      "signal_bytes": 5099,
+      "signal_bytes": 38966,
       "built": true
     },
     {
@@ -77,7 +75,7 @@
       "instances": 410399,
       "shape": "scalar",
       "graph_role": "global",
-      "signal_bytes": 2575128,
+      "signal_bytes": 13163966,
       "built": true
     },
     {
@@ -89,7 +87,7 @@
       "instances": 91111,
       "shape": "scalar",
       "graph_role": "global",
-      "signal_bytes": 572199,
+      "signal_bytes": 3402358,
       "built": true
     },
     {
@@ -100,8 +98,8 @@
       "phenotype": "digenic interaction",
       "instances": 410399,
       "shape": "scalar",
-      "graph_role": "hyperedge",
-      "signal_bytes": 3561096,
+      "graph_role": "edge",
+      "signal_bytes": 14257770,
       "built": true
     },
     {
@@ -113,7 +111,7 @@
       "instances": 91111,
       "shape": "scalar",
       "graph_role": "hyperedge",
-      "signal_bytes": 741452,
+      "signal_bytes": 3634763,
       "built": true
     },
     {
@@ -125,7 +123,7 @@
       "instances": 472,
       "shape": "scalar",
       "graph_role": "global",
-      "signal_bytes": 2618,
+      "signal_bytes": 9244,
       "built": true
     },
     {
@@ -137,7 +135,7 @@
       "instances": 632797,
       "shape": "scalar",
       "graph_role": "global",
-      "signal_bytes": 4013153,
+      "signal_bytes": 20376993,
       "built": true
     },
     {
@@ -149,7 +147,7 @@
       "instances": 301798,
       "shape": "scalar",
       "graph_role": "global",
-      "signal_bytes": 1889794,
+      "signal_bytes": 11188939,
       "built": true
     },
     {
@@ -160,8 +158,8 @@
       "phenotype": "digenic interaction",
       "instances": 632797,
       "shape": "scalar",
-      "graph_role": "hyperedge",
-      "signal_bytes": 5414654,
+      "graph_role": "edge",
+      "signal_bytes": 21948048,
       "built": true
     },
     {
@@ -173,7 +171,103 @@
       "instances": 301798,
       "shape": "scalar",
       "graph_role": "hyperedge",
-      "signal_bytes": 2635834,
+      "signal_bytes": 12021654,
+      "built": true
+    },
+    {
+      "section": "Environmental / chemogenomic",
+      "name": "Auesukaree 2009 (stress screen)",
+      "genotypes": "333",
+      "env": "6",
+      "phenotype": "stress sensitivity (categorical)",
+      "instances": 525,
+      "shape": "scalar",
+      "graph_role": "global",
+      "signal_bytes": 10674,
+      "built": true
+    },
+    {
+      "section": "Environmental / chemogenomic",
+      "name": "Mota 2024 (weak-acid screen)",
+      "genotypes": "601",
+      "env": "3",
+      "phenotype": "weak-acid susceptibility (categorical)",
+      "instances": 1273,
+      "shape": "scalar",
+      "graph_role": "global",
+      "signal_bytes": 24032,
+      "built": true
+    },
+    {
+      "section": "Environmental / chemogenomic",
+      "name": "Vanacloig-Pedros 2022",
+      "genotypes": "3,647",
+      "env": "45",
+      "phenotype": "chemogenomic fitness (log2-ratio)",
+      "instances": 164115,
+      "shape": "scalar",
+      "graph_role": "global",
+      "signal_bytes": 10133857,
+      "built": true
+    },
+    {
+      "section": "Environmental / chemogenomic",
+      "name": "Costanzo 2021 (condition-SGA)",
+      "genotypes": "4,399",
+      "env": "14",
+      "phenotype": "differential mutant fitness",
+      "instances": 61318,
+      "shape": "scalar",
+      "graph_role": "global",
+      "signal_bytes": 1127329,
+      "built": true
+    },
+    {
+      "section": "Environmental / chemogenomic",
+      "name": "Hillenmeyer 2008 het (FitDb HIP)",
+      "genotypes": "5,814",
+      "env": "514",
+      "phenotype": "HIP fitness-defect log2-ratio",
+      "instances": 2921078,
+      "shape": "scalar",
+      "graph_role": "global",
+      "signal_bytes": 101666290,
+      "built": true
+    },
+    {
+      "section": "Environmental / chemogenomic",
+      "name": "Hillenmeyer 2008 hom (FitDb HOP)",
+      "genotypes": "4,667",
+      "env": "279",
+      "phenotype": "HOP fitness-defect z-score",
+      "instances": 1179520,
+      "shape": "scalar",
+      "graph_role": "global",
+      "signal_bytes": 43005098,
+      "built": true
+    },
+    {
+      "section": "Environmental / chemogenomic",
+      "name": "Wildenhain 2015 (drug tolerance)",
+      "genotypes": "256",
+      "env": "5,178",
+      "phenotype": "growth-inhibition z-score",
+      "instances": 428573,
+      "shape": "scalar",
+      "graph_role": "global",
+      "signal_bytes": 19162194,
+      "built": true
+    },
+    {
+      "section": "Environmental / chemogenomic",
+      "name": "Hoepfner 2014 (HIP/HOP atlas)",
+      "genotypes": "10,719",
+      "env": "5,879",
+      "phenotype": "HIP/HOP sensitivity score",
+      "instances": 29996238,
+      "shape": "scalar",
+      "graph_role": "global",
+      "signal_bytes": 1058694252,
       "built": true
     },
     {
@@ -185,7 +279,7 @@
       "instances": 1329,
       "shape": "scalar",
       "graph_role": "node",
-      "signal_bytes": 584,
+      "signal_bytes": 15066,
       "built": true
     },
     {
@@ -196,8 +290,8 @@
       "phenotype": "synthetic lethality",
       "instances": 14000,
       "shape": "scalar",
-      "graph_role": "hyperedge",
-      "signal_bytes": 15684,
+      "graph_role": "edge",
+      "signal_bytes": 272294,
       "built": true
     },
     {
@@ -208,8 +302,8 @@
       "phenotype": "synthetic rescue",
       "instances": 6948,
       "shape": "scalar",
-      "graph_role": "hyperedge",
-      "signal_bytes": 5654,
+      "graph_role": "edge",
+      "signal_bytes": 135914,
       "built": true
     },
     {
@@ -221,7 +315,7 @@
       "instances": 4718,
       "shape": "vector (281)",
       "graph_role": "global",
-      "signal_bytes": 18784045,
+      "signal_bytes": 18908352,
       "built": true
     },
     {
@@ -233,7 +327,7 @@
       "instances": 1484,
       "shape": "vector (6169)",
       "graph_role": "node",
-      "signal_bytes": 395803262,
+      "signal_bytes": 396384090,
       "built": true
     },
     {
@@ -245,7 +339,7 @@
       "instances": 82,
       "shape": "vector (6169)",
       "graph_role": "node",
-      "signal_bytes": 22548096,
+      "signal_bytes": 22595217,
       "built": true
     },
     {
@@ -257,7 +351,7 @@
       "instances": 72,
       "shape": "vector (6169)",
       "graph_role": "node",
-      "signal_bytes": 20893941,
+      "signal_bytes": 20920714,
       "built": true
     },
     {
@@ -269,7 +363,7 @@
       "instances": 943,
       "shape": "vector (6000)",
       "graph_role": "node",
-      "signal_bytes": 94054411,
+      "signal_bytes": 190189854,
       "built": true
     },
     {
@@ -281,7 +375,7 @@
       "instances": 4735,
       "shape": "scalar",
       "graph_role": "bipartite node",
-      "signal_bytes": 117694,
+      "signal_bytes": 267503,
       "built": true
     },
     {
@@ -293,7 +387,7 @@
       "instances": 4678,
       "shape": "vector (19)",
       "graph_role": "bipartite node",
-      "signal_bytes": 913971,
+      "signal_bytes": 994065,
       "built": true
     },
     {
@@ -305,7 +399,7 @@
       "instances": 95,
       "shape": "vector (25)",
       "graph_role": "bipartite node",
-      "signal_bytes": 35544,
+      "signal_bytes": 37921,
       "built": true
     },
     {
@@ -317,19 +411,19 @@
       "instances": 97,
       "shape": "vector (726)",
       "graph_role": "node",
-      "signal_bytes": 2024641,
+      "signal_bytes": 2061165,
       "built": true
     },
     {
-      "section": "Visual / product-proxy score",
+      "section": "Metabolite",
       "name": "Ozaydin 2013 (\u03b2-carotene screen)",
       "genotypes": "4,474",
       "env": "1",
-      "phenotype": "colony-color visual score",
+      "phenotype": "\u03b2-carotene (colony-color visual score)",
       "instances": 4474,
       "shape": "scalar",
       "graph_role": "global",
-      "signal_bytes": 21891,
+      "signal_bytes": 123060,
       "built": true
     }
   ]

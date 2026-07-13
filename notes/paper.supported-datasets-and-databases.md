@@ -19,36 +19,54 @@ training signal; the full backlog is `[[paper.north-star.dataset-triage]]`.
 **Columns.** *Genotypes* = distinct perturbed strains/isolates (curated). *Env* = number
 of environments. *Instances* = dataset length (total genotype×environment records).
 *Shape* = shape of a single phenotype instance (`scalar` / `vector (D)`). *Graph role* =
-where the label sits in the cell graph (`global` / `node` / `hyperedge` / `bipartite
-node`). *Signal (gzip, bytes)* = scientific-notation gzip size of the concatenated
-serialized phenotypes -- a Kolmogorov-complexity proxy. Instances, Shape, Graph role, and
-Signal are **derived from the built LMDB**, not hand-typed.
+where the label sits in the cell graph (`global` / `node` / `edge` / `hyperedge` /
+`bipartite node`; a digenic interaction is an `edge`, a trigenic one a `hyperedge`).
+*Signal (gzip, bytes)* = scientific-notation gzip size of the concatenated stored
+instances (the **perturbation** + environment + phenotype of every record) -- a
+Kolmogorov-complexity proxy. The perturbation counts each instance's edit off the S288C
+reference: a single deletion (a few bytes) or a natural isolate's thousands of gene-presence
+entries that amount to a new genome (sequence stays external, referenced by uri+sha256). The
+shared reference genome is never counted. Instances, Shape, Graph role, and Signal are
+**derived from the built LMDB**, not hand-typed.
 
 ### Fitness + genetic interaction
 
 | Dataset | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bytes) |
 | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| Costanzo 2016 smf | 20,484 | 2 | 20,484 | single-mutant fitness | scalar | global | 1.0×10⁵ |
-| Costanzo 2016 dmf | 20.7M | 2 | 20,705,612 | double-mutant fitness | scalar | global | 1.3×10⁸ |
-| Costanzo 2016 dmi | 20.7M | 2 | 20,705,612 | digenic interaction | scalar | hyperedge | 1.5×10⁸ |
-| Kuzmin 2018 smf | 1,539 | 1 | 1,539 | single-mutant fitness | scalar | global | 5.1×10³ |
-| Kuzmin 2018 dmf | 410,399 | 1 | 410,399 | double-mutant fitness | scalar | global | 2.6×10⁶ |
-| Kuzmin 2018 tmf | 91,111 | 1 | 91,111 | triple-mutant fitness | scalar | global | 5.7×10⁵ |
-| Kuzmin 2018 dmi | 410,399 | 1 | 410,399 | digenic interaction | scalar | hyperedge | 3.6×10⁶ |
-| Kuzmin 2018 tmi | 91,111 | 1 | 91,111 | trigenic interaction | scalar | hyperedge | 7.4×10⁵ |
-| Kuzmin 2020 smf | 472 | 1 | 472 | single-mutant fitness | scalar | global | 2.6×10³ |
-| Kuzmin 2020 dmf | 632,797 | 1 | 632,797 | double-mutant fitness | scalar | global | 4.0×10⁶ |
-| Kuzmin 2020 tmf | 301,798 | 1 | 301,798 | triple-mutant fitness | scalar | global | 1.9×10⁶ |
-| Kuzmin 2020 dmi | 632,797 | 1 | 632,797 | digenic interaction | scalar | hyperedge | 5.4×10⁶ |
-| Kuzmin 2020 tmi | 301,798 | 1 | 301,798 | trigenic interaction | scalar | hyperedge | 2.6×10⁶ |
+| Costanzo 2016 smf | 20,484 | 2 | 20,484 | single-mutant fitness | scalar | global | 4.9×10⁵ |
+| Costanzo 2016 dmf | 20.7M | 2 | 20,705,612 | double-mutant fitness | scalar | global | 6.5×10⁸ |
+| Costanzo 2016 dmi | 20.7M | 2 | 20,705,612 | digenic interaction | scalar | edge | 6.7×10⁸ |
+| Kuzmin 2018 smf | 1,539 | 1 | 1,539 | single-mutant fitness | scalar | global | 3.9×10⁴ |
+| Kuzmin 2018 dmf | 410,399 | 1 | 410,399 | double-mutant fitness | scalar | global | 1.3×10⁷ |
+| Kuzmin 2018 tmf | 91,111 | 1 | 91,111 | triple-mutant fitness | scalar | global | 3.4×10⁶ |
+| Kuzmin 2018 dmi | 410,399 | 1 | 410,399 | digenic interaction | scalar | edge | 1.4×10⁷ |
+| Kuzmin 2018 tmi | 91,111 | 1 | 91,111 | trigenic interaction | scalar | hyperedge | 3.6×10⁶ |
+| Kuzmin 2020 smf | 472 | 1 | 472 | single-mutant fitness | scalar | global | 9.2×10³ |
+| Kuzmin 2020 dmf | 632,797 | 1 | 632,797 | double-mutant fitness | scalar | global | 2.0×10⁷ |
+| Kuzmin 2020 tmf | 301,798 | 1 | 301,798 | triple-mutant fitness | scalar | global | 1.1×10⁷ |
+| Kuzmin 2020 dmi | 632,797 | 1 | 632,797 | digenic interaction | scalar | edge | 2.2×10⁷ |
+| Kuzmin 2020 tmi | 301,798 | 1 | 301,798 | trigenic interaction | scalar | hyperedge | 1.2×10⁷ |
+
+### Environmental / chemogenomic
+
+| Dataset | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bytes) |
+| :-- | --: | --: | --: | :-- | :-- | :-- | --: |
+| Auesukaree 2009 (stress screen) | 333 | 6 | 525 | stress sensitivity (categorical) | scalar | global | 1.1×10⁴ |
+| Mota 2024 (weak-acid screen) | 601 | 3 | 1,273 | weak-acid susceptibility (categorical) | scalar | global | 2.4×10⁴ |
+| Vanacloig-Pedros 2022 | 3,647 | 45 | 164,115 | chemogenomic fitness (log2-ratio) | scalar | global | 1.0×10⁷ |
+| Costanzo 2021 (condition-SGA) | 4,399 | 14 | 61,318 | differential mutant fitness | scalar | global | 1.1×10⁶ |
+| Hillenmeyer 2008 het (FitDb HIP) | 5,814 | 514 | 2,921,078 | HIP fitness-defect log2-ratio | scalar | global | 1.0×10⁸ |
+| Hillenmeyer 2008 hom (FitDb HOP) | 4,667 | 279 | 1,179,520 | HOP fitness-defect z-score | scalar | global | 4.3×10⁷ |
+| Wildenhain 2015 (drug tolerance) | 256 | 5,178 | 428,573 | growth-inhibition z-score | scalar | global | 1.9×10⁷ |
+| Hoepfner 2014 (HIP/HOP atlas) | 10,719 | 5,879 | 29,996,238 | HIP/HOP sensitivity score | scalar | global | 1.1×10⁹ |
 
 ### Viability
 
 | Dataset | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bytes) |
 | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| SGD essentiality | 1,329 | 1 | 1,329 | gene essentiality | scalar | node | 5.8×10² |
-| SynLethDB (lethal) | 14,000 | 1 | 14,000 | synthetic lethality | scalar | hyperedge | 1.6×10⁴ |
-| SynLethDB (rescue) | 6,948 | 1 | 6,948 | synthetic rescue | scalar | hyperedge | 5.7×10³ |
+| SGD essentiality | 1,329 | 1 | 1,329 | gene essentiality | scalar | node | 1.5×10⁴ |
+| SynLethDB (lethal) | 14,000 | 1 | 14,000 | synthetic lethality | scalar | edge | 2.7×10⁵ |
+| SynLethDB (rescue) | 6,948 | 1 | 6,948 | synthetic rescue | scalar | edge | 1.4×10⁵ |
 
 ### Morphology
 
@@ -68,31 +86,32 @@ Signal are **derived from the built LMDB**, not hand-typed.
 
 | Dataset | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bytes) |
 | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| Caudal 2024 (pan-transcriptome) | 943 | 1 | 943 | mRNA abundance (RNA-seq) | vector (6000) | node | 9.4×10⁷ |
+| Caudal 2024 (pan-transcriptome) | 943 | 1 | 943 | mRNA abundance (RNA-seq) | vector (6000) | node | 1.9×10⁸ |
 
 ### Metabolite
 
 | Dataset | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bytes) |
 | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| Cachera 2023 (CRI-SPA betaxanthin) | 4,735 | 1 | 4,735 | betaxanthin (product proxy) | scalar | bipartite node | 1.2×10⁵ |
-| Mülleder 2016 (amino-acid metabolome) | 4,678 | 1 | 4,678 | amino-acid concentrations | vector (19) | bipartite node | 9.1×10⁵ |
-| Zelezniak 2018 (metabolome) | 95 | 1 | 95 | metabolite levels | vector (25) | bipartite node | 3.6×10⁴ |
+| Cachera 2023 (CRI-SPA betaxanthin) | 4,735 | 1 | 4,735 | betaxanthin (product proxy) | scalar | bipartite node | 2.7×10⁵ |
+| Mülleder 2016 (amino-acid metabolome) | 4,678 | 1 | 4,678 | amino-acid concentrations | vector (19) | bipartite node | 9.9×10⁵ |
+| Zelezniak 2018 (metabolome) | 95 | 1 | 95 | metabolite levels | vector (25) | bipartite node | 3.8×10⁴ |
+| Ozaydin 2013 (β-carotene screen) | 4,474 | 1 | 4,474 | β-carotene (colony-color visual score) | scalar | global | 1.2×10⁵ |
 
 ### Protein abundance
 
 | Dataset | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bytes) |
 | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| Zelezniak 2018 (SWATH proteome) | 97 | 1 | 97 | protein abundance | vector (726) | node | 2.0×10⁶ |
+| Zelezniak 2018 (SWATH proteome) | 97 | 1 | 97 | protein abundance | vector (726) | node | 2.1×10⁶ |
 
-### Visual / product-proxy score
+### Total
 
 | Dataset | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bytes) |
 | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| Ozaydin 2013 (β-carotene screen) | 4,474 | 1 | 4,474 | colony-color visual score | scalar | global | 2.2×10⁴ |
+| **Total (34 datasets)** |  |  | **79,102,224** |  |  |  | **3.3×10⁹** |
 
 ### In progress (not yet built/verified)
 
-Baryshnikova 2010 (smf; liquid-growth assay -- MinerU the paper first) · Ohnuki 2018 / 2022 (morphology) · O'Duibhir 2014 (expression) · Wildenhain 2015 (drug tolerance, 195 × 4,915 conditions) · Lian 2017 (AID furfural tolerance) · FitDb (fitness across 1,144 conditions). See `[[paper.north-star.dataset-triage]]` for the full ~75-candidate backlog.
+Baryshnikova 2010 (smf; liquid-growth assay -- MinerU the paper first) · Ohnuki 2018 / 2022 (morphology) · O'Duibhir 2014 (expression) · Lian 2017 (AID furfural tolerance). See `[[paper.north-star.dataset-triage]]` for the full ~75-candidate backlog.
 
 ## Reference databases
 

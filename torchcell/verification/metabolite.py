@@ -7,7 +7,8 @@ For `MetabolitePhenotype` datasets (e.g. the Cachera CRI-SPA betaxanthin screen)
 schema validator already enforces non-empty levels, matching level/replicate keys, and
 non-negative SE, so L0 subsumes those. This verifier adds:
 
-1. L1 `orf_uniqueness` -- one record per deleted ORF.
+1. L1 `genotype_uniqueness` -- one record per strain (deletion-set signature; a single-
+   deletion collection reduces to one gene per record, a combinatorial one keys on the set).
 2. L2 `level_finiteness` -- measured levels are finite (guards inf/NaN).
 3. L3 `reference_zero` -- the control level is 0 (population-centered baseline).
 4. L3 `measurement_type_consistent` -- every record shares one measurement_type (levels
@@ -48,23 +49,47 @@ def _deleted_genes(experiment: dict[str, Any]) -> list[str]:
     ]
 
 
+def _genotype_signature(
+    experiment: dict[str, Any],
+) -> tuple[tuple[str | None, ...], ...]:
+    """Canonical STRAIN identity: the sorted set of deleted perturbations, each keyed by
+    (systematic_gene_name, perturbation_type, perturbed_gene_name), excluding gene additions.
+
+    A single-deletion collection reduces to one gene per record (so this equals per-ORF
+    uniqueness); a COMBINATORIAL collection (e.g. Xue FFA: a POX1-FAA1-FAA4 baseline plus a
+    set of TF deletions) has one record per unique deletion SET -- an individual ORF legitimately
+    recurs across many strains, so uniqueness must key on the whole set, not the single ORF.
+    """
+    return tuple(
+        sorted(
+            (
+                p.get("systematic_gene_name"),
+                p.get("perturbation_type"),
+                p.get("perturbed_gene_name"),
+            )
+            for p in experiment["genotype"]["perturbations"]
+            if p.get("perturbation_type") != "gene_addition"
+        )
+    )
+
+
 def _l1_orf_uniqueness(records: Sequence[Record]) -> LevelResult:
-    """L1: exactly one record per deleted ORF."""
-    seen: dict[str, int] = {}
+    """L1: exactly one record per STRAIN (genotype signature of deleted ORFs)."""
+    seen: dict[tuple[tuple[str | None, ...], ...], int] = {}
     for rec in records:
-        for g in _deleted_genes(rec["experiment"]):
-            seen[g] = seen.get(g, 0) + 1
-    dups = {g: n for g, n in seen.items() if n > 1}
+        sig = _genotype_signature(rec["experiment"])
+        seen[sig] = seen.get(sig, 0) + 1
+    dups = {s: n for s, n in seen.items() if n > 1}
     return LevelResult(
         level=Level.L1,
-        name="orf_uniqueness",
+        name="genotype_uniqueness",
         passed=not dups,
         message=(
-            f"{len(seen)} unique deleted ORFs, one record each"
+            f"{len(seen)} unique strains (deletion sets), one record each"
             if not dups
-            else f"{len(dups)} ORFs appear in multiple records"
+            else f"{len(dups)} deletion sets appear in multiple records"
         ),
-        details={"n_orfs": len(seen), "n_duplicated": len(dups)},
+        details={"n_strains": len(seen), "n_duplicated": len(dups)},
     )
 
 

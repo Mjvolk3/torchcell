@@ -1427,7 +1427,7 @@ class FitnessPhenotype(Phenotype, ModelStrict):
     graph_level: str = "global"
     label_name: str = "fitness"
     label_statistic_name: str = "fitness_se"
-    fitness: float = Field(description="wt_growth_rate/ko_growth_rate")
+    fitness: float = Field(description="ko_growth_rate/wt_growth_rate")
     fitness_se: float | None = Field(
         default=None,
         description="fitness standard error (primary uncertainty statistic)",

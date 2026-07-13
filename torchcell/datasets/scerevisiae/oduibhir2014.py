@@ -30,9 +30,9 @@ FITNESS DIRECTION (verified against the codebase convention, NOT guessed):
   stored as 0.1137). O'Duibhir is matched to that: fitness = 2^(-log2relT), so a slow grower
   (log2relT > 0, up to +1.97 -> ~3.9x slower) lands at fitness < 1 (min ~0.255) and a faster
   grower (log2relT < 0, down to -0.24) at fitness > 1 (max ~1.18). The FitnessPhenotype
-  field description literally reads "wt_growth_rate/ko_growth_rate", but the stored Costanzo
-  values show the ACTUAL convention is ko/wt relative growth (WT=1, sick<1); this loader
-  matches the stored convention.
+  field description reads "ko_growth_rate/wt_growth_rate" (corrected 2026-07-13 from the
+  earlier inverted "wt_growth_rate/ko_growth_rate"); the stored Costanzo convention is ko/wt
+  relative growth (WT=1, sick<1) and this loader matches it.
 
 REPLICATE STRUCTURE / n_samples (Methods, "Growth rate calculations", verbatim):
   "The doubling times of the deletion strains were calculated from the slope of the

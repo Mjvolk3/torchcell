@@ -24,6 +24,12 @@ from .kuzmin2018 import DmfKuzmin2018Dataset as DmfKuzmin2018Dataset
 from .kuzmin2018 import SmfKuzmin2018Dataset as SmfKuzmin2018Dataset
 from .kuzmin2018 import TmfKuzmin2018Dataset as TmfKuzmin2018Dataset
 from .lian2019 import CrisprMagicLian2019Dataset as CrisprMagicLian2019Dataset
+from .lopez2024 import (
+    IsobutanolScreenLopez2024Dataset as IsobutanolScreenLopez2024Dataset,
+)
+from .lopez2024 import (
+    IsobutanolValidatedLopez2024Dataset as IsobutanolValidatedLopez2024Dataset,
+)
 from .messner2023 import ProteomeMessner2023Dataset as ProteomeMessner2023Dataset
 from .mormino2022 import CrispriMormino2022Dataset as CrispriMormino2022Dataset
 from .mota2024 import EnvChemgenMota2024Dataset as EnvChemgenMota2024Dataset
@@ -104,6 +110,11 @@ yoshida_datasets = ["OrganicAcidYoshida2012Dataset"]
 
 oduibhir_datasets = ["SmfODuibhir2014Dataset"]
 
+lopez_datasets = [
+    "IsobutanolScreenLopez2024Dataset",
+    "IsobutanolValidatedLopez2024Dataset",
+]
+
 __all__ = (
     costanzo_datasets
     + kuzmin_datasets
@@ -128,4 +139,5 @@ __all__ = (
     + oduibhir_datasets
     + lian_datasets
     + mormino_datasets
+    + lopez_datasets
 )

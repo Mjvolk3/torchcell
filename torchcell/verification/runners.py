@@ -470,6 +470,60 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
             page="J Biosci Bioeng 113:556 Table 3 (born-digital pdftotext -layout)",
         ),
     },
+    "isobutanol_screen_lopez2024": {
+        "root": "data/torchcell/isobutanol_screen_lopez2024",
+        # First genome-wide biosensor screen (Table S2): median GFP fluorescence per YKO
+        # strain; FC = median fluor(deletion) / median fluor(WT same plate). Aggregated to
+        # ONE record per current-R64 ORF (mean FC; n_replicates=row count; SE=SD/sqrt-n when
+        # >=2 rows). 4805 rows - 57 unresolved = 4748 resolved -> 4554 unique ORFs.
+        "expected_count": 4554,
+        "reference_centered": False,  # FC ratio vs WT control (reference metabolite_level=1.0)
+        "provenance": Provenance(
+            source_uri=(
+                "https://dataspace.princeton.edu/handle/88435/dsp019s161956t (Montano Lopez "
+                "2024 Princeton dissertation; data = supplementary_tables.xlsx sha256 f97cf13c "
+                "in the library mirror). DOI-less dissertation -> Publication cites the same-lab "
+                "biosensor methods paper (Montano-Lopez et al. Nat Commun 2022, PMID 35022416)"
+            ),
+            citation_key="lopezSystemsMetabolicEngineering2024",
+            method=(
+                "GFP alpha-ketoisovalerate/isobutanol-pathway biosensor (Leu1 promoter) "
+                "integrated in each BY4741 (ura3D0) YKO strain; median GFP by flow cytometry "
+                "in SC liquid at exponential phase, measured once (n=1). Table S2 fold change = "
+                "deletion / same-plate WT. MetabolitePhenotype biosensor_gfp_fluorescence_fold_"
+                "change, metabolite_level={isobutanol: FC}; genes resolved to current R64"
+            ),
+            page=(
+                "Systems Metabolic Engineering of Isobutanol Production (Princeton 2024) Ch 3.3, "
+                "Supplementary Table S2; xlsx sha256 f97cf13c..., thesis.pdf sha256 525e03b4..."
+            ),
+        ),
+    },
+    "isobutanol_validated_lopez2024": {
+        "root": "data/torchcell/isobutanol_validated_lopez2024",
+        # Validated re-screen (Table S3): FC>=2 (66) + FC<=0.5 (161) strains re-measured in
+        # TRIPLICATE (n=3); FC average + STD (SE=STD/sqrt3). 227 block rows - 2 YBL071W-A
+        # (contradictory 3.469 up / 0.0757 down, dropped) - 1 unresolved YIR043C = 224.
+        "expected_count": 224,
+        "reference_centered": False,
+        "provenance": Provenance(
+            source_uri=(
+                "https://dataspace.princeton.edu/handle/88435/dsp019s161956t (Montano Lopez "
+                "2024 Princeton dissertation; data = supplementary_tables.xlsx sha256 f97cf13c). "
+                "DOI-less dissertation -> Publication cites Montano-Lopez et al. Nat Commun 2022"
+            ),
+            citation_key="lopezSystemsMetabolicEngineering2024",
+            method=(
+                "Table S3 = first-screen hits (FC>=2 or FC<=0.5) re-screened in triplicate "
+                "(n=3); FC average + sample STD -> SE=STD/sqrt(3). Same biosensor/FC definition "
+                "as the first screen. MetabolitePhenotype biosensor_gfp_fluorescence_fold_change"
+            ),
+            page=(
+                "Systems Metabolic Engineering of Isobutanol Production (Princeton 2024) Ch 3.3, "
+                "Supplementary Table S3; xlsx sha256 f97cf13c..., thesis.pdf sha256 525e03b4..."
+            ),
+        ),
+    },
 }
 
 

@@ -1,6 +1,6 @@
 {
   "gvcf": {
-    "path": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/1e8e0f6b-d3c7-4271-818b-3bfbd5e31d27/scratchpad/peter_extra/1011Matrix.gvcf.gz",
+    "path": "/scratch/projects/torchcell-scratch/data/peter2018/1011Matrix.gvcf.gz",
     "md5": "42478e3e9dff4bd46993d82d8eab40d4",
     "sha256": "037773254154e74c36f9cd19d4fee0e413cd371f699b80b234cca59690f3a37e"
   },

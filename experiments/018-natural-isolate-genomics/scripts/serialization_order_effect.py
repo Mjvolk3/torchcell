@@ -2,30 +2,37 @@
 # [[experiments.018-natural-isolate-genomics.scripts.serialization_order_effect]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/018-natural-isolate-genomics/scripts/serialization_order_effect
 
-"""L_C is order-dependent, and by a lot. A caveat the paper's Signal column needs.
+"""L_C is order-dependent -- ON DNA. It does NOT transfer to the Signal column.
 
-``torchcell.paper.tables.stream_gzip_signal`` reports ``Signal (gzip)`` as a computable
-upper bound on Kolmogorov complexity. It is a legitimate upper bound -- but DEFLATE's
-back-reference window is only 32 KB, so the bound it attains depends on how the records
-happen to be ordered in the LMDB. Redundancy that sits further apart than 32 KB is
-invisible to the compressor and is paid for again, in full.
+SCOPE WARNING, because the first version of this note over-reached. The 24.5x measured
+here is a property of the **DNA sequence corpus**, NOT of the ``Signal (gzip)`` column.
+See ``verify_signal_composition.py``, which measures the order effect on the ACTUAL LMDB
+expression records and finds **1.00x** -- no effect at all.
 
-That is not hypothetical here. The 1,011-isolate reference-ORF sequences can be
-serialized two ways:
+Why the two differ, and it is the whole point:
 
-  gene-major     -- all 1,011 isolate alleles of gene 1, then all of gene 2, ...
-                    (near-identical sequences land adjacent, well inside the window)
-  isolate-major  -- all 6,015 genes of isolate A, then all of isolate B, ...
-                    (an isolate's allele of a gene is ~9 Mb from the next isolate's)
+  DNA        two isolates' allele of the SAME gene are ~99.3%-identical STRINGS. Put them
+             adjacent and DEFLATE emits one long back-reference; put them 9 Mb apart and
+             the 32 KB window cannot see the match, so the redundancy is paid for again.
+  Expression two strains' value for a gene are similar NUMBERS, but their float32 byte
+             patterns share essentially no substring. There is nothing to back-reference,
+             so reordering changes nothing.
 
-Identical content. The LMDB is isolate-major -- one record per strain -- which is the
-WORST ordering for cross-record redundancy, and it is the ordering every Signal number in
-the supported-datasets table is computed in.
+**Compressibility does not transfer across data types.** That is the lesson; do not
+extrapolate a compression ratio measured on one modality to another.
 
-Consequence for the manuscript: Signal (gzip) is a valid RELATIVE proxy across datasets
-serialized the same way, but it is not within an order of magnitude of K(D), and the gap
-is a property of the serialization, not of the biology. Report it as a codelength under a
-stated encoding, never as "the information content of the dataset".
+What this script still legitimately shows: the 1,011-isolate reference-ORF sequences,
+serialized two ways --
+
+  gene-major     all 1,011 isolate alleles of gene 1, then all of gene 2, ...
+  isolate-major  all 6,015 genes of isolate A, then all of isolate B, ...
+
+-- give 103.9 MB vs 2,548.4 MB from identical content (24.5x). That matters if we ever
+store raw isolate sequence, and it is a real caveat about gzip codelengths in general. It
+is NOT a claim about the datasets table.
+
+For what IS true about the Signal column's window slack (1.4x-2.1x at the instance level,
+~5x on Caudal's perturbation block), see ``verify_signal_composition.py``.
 """
 
 import glob

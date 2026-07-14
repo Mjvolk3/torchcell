@@ -1,0 +1,61 @@
+{
+  "kemmeren2014": {
+    "n_records": 1484,
+    "signal_instance_as_stored": 396384090,
+    "phenotype_as_stored": 395803262,
+    "composition_of_phenotype": {
+      "json_keys_frac": 0.34815677188633176,
+      "extra_value_fields_frac": 0.4367137883770144,
+      "float_text_vs_binary_frac": 0.12899929308819086,
+      "primary_values_frac": 0.08613014664846294,
+      "extra_fields": [
+        "expression_log2_ratio_se",
+        "expression",
+        "expression_log2_ratio_variance",
+        "n_replicates"
+      ]
+    },
+    "order_effect": {
+      "strain_major_as_stored": 34090593,
+      "gene_major": 34072448,
+      "records_shuffled": 34092822,
+      "major_axis_effect_x": 1.0005325417181647,
+      "shuffle_effect_x": 1.0000653846062462
+    },
+    "window_slack_gzip_over_xz": {
+      "instance": 1.3895920524035494,
+      "phenotype": 1.3875406648078121,
+      "genotype": 1.5870403994552882,
+      "genotype_gzip_bytes": 13985,
+      "genotype_xz_bytes": 8812
+    }
+  },
+  "caudal2024": {
+    "n_records": 943,
+    "signal_instance_as_stored": 190189854,
+    "phenotype_as_stored": 94054411,
+    "composition_of_phenotype": {
+      "json_keys_frac": 0.3731992750451651,
+      "extra_value_fields_frac": 0.12373203846866895,
+      "float_text_vs_binary_frac": 0.28553208418901266,
+      "primary_values_frac": 0.2175366022971533,
+      "extra_fields": [
+        "expression_count"
+      ]
+    },
+    "order_effect": {
+      "strain_major_as_stored": 20454366,
+      "gene_major": 20283915,
+      "records_shuffled": 20454581,
+      "major_axis_effect_x": 1.0084032594299472,
+      "shuffle_effect_x": 1.0000105112033295
+    },
+    "window_slack_gzip_over_xz": {
+      "instance": 2.122178456744482,
+      "phenotype": 1.4378922219381396,
+      "genotype": 4.964903864288858,
+      "genotype_gzip_bytes": 94768099,
+      "genotype_xz_bytes": 19087600
+    }
+  }
+}

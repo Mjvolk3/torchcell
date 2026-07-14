@@ -1124,6 +1124,58 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
             ),
         ),
     },
+    "crispri_chemgen_smith2016": {
+        "root": "data/torchcell/crispri_chemgen_smith2016",
+        # Per-guide dCas9-Mxi1 CRISPRi chemical-genetic screen: 14,463 rows of Additional
+        # file 10 = one record per (pool x guide x drug-condition), 0 dropped (all 20 target
+        # ORFs are current R64; A/var(A) complete; every guide resolves to a spacer). 977
+        # guides x 26 (drug, concentration) conditions across 5 pools. L1 strain identity
+        # keys on (gene, crispr_interference, guide spacer, library_pool): sibling guides of
+        # a gene are distinct strains, AND the SAME 20 bp spacer screened in both broad_tiling
+        # and gene_tiling_20bp (272 such pairs) is two independent pooled measurements, kept
+        # distinct by library_pool (pool-relative fitness differs up to ~8 log2 units).
+        "expected_count": 14463,
+        # Single-guide CRISPRi strains: no constant background.
+        "background_genes": frozenset(),
+        "provenance": Provenance(
+            source_uri=(
+                "$DATA_ROOT/torchcell-library/smithQuantitativeCRISPRInterference2016/"
+                "si/si_data/13059_2016_900_MOESM10_ESM.xlsx (Additional file 10, sheet "
+                "'Fitness and Effect Data') + 13059_2016_900_MOESM4_ESM.xlsx (Additional "
+                "file 4, sheet 'gRNAs', guide->spacer); Springer ESM mirror"
+            ),
+            citation_key="smithQuantitativeCRISPRInterference2016",
+            sha256="02962e51e492b0505e8595fc1c80fab5fca8a8c8f05e05969dbff18ddff71cd0",
+            method=(
+                "Additional file 10 (14,463 rows x 24 cols, sha256 02962e51...): one "
+                "EnvironmentResponseExperiment per (pool, guide, drug, concentration) row. "
+                "measurement_type=log2_ratio, environment_response = column 'A' = the "
+                "ATc-induced fold change (Methods 'ATc-induced fold change': A_ijk = f_ijk+ - "
+                "f_ijk-, the difference of log2 median-centred guide read-count fitness "
+                "between induced +ATc, i.e. dCas9-Mxi1 CRISPRi ON, and uninduced -ATc "
+                "cultures in that drug; negative = repression is a growth defect). Uncertainty "
+                "= column 'var(A)' stored VERBATIM as UncertaintyType.variance with "
+                "n_samples=1 (var(A) is the variance of the single released A estimate -- a "
+                "Gamma read-count-resampling posterior variance s2_+ + s2_-, already inverse-"
+                "variance-combined across the 8/3 replicate experiments for the 1% DMSO / "
+                "20 uM fluconazole conditions), so derive_se -> SE = sqrt(var(A)). Genotype = "
+                "CrisprInterferencePerturbation(target ORF, effector dCas9-Mxi1, "
+                "guide_sequence = the 18/20 nt Specificity_sequence spacer joined by guide "
+                "name from Additional file 4 (sha256 e5eb4e3c...), library_pool = #Pool). "
+                "Environment = row Drug + Concentration as one SmallMoleculePerturbation "
+                "(uM/nM; the 1% DMSO vehicle control -> 1.0 percent_v/v) on SCM-Ura liquid, "
+                "30 C, aerobic; ATc dose not released so not asserted. Reference = uninduced "
+                "-ATc baseline (A=0) in BY4741. 20 target ORFs all current R64 (0 dropped)"
+            ),
+            page=(
+                "Genome Biol 2016 17:45 (doi:10.1186/s13059-016-0900-9); Additional file 10 "
+                "'Fitness and Effect Data' "
+                "sha256=02962e51e492b0505e8595fc1c80fab5fca8a8c8f05e05969dbff18ddff71cd0; "
+                "Additional file 4 'gRNAs' "
+                "sha256=e5eb4e3c7856782e36edff5ef55e680cb43fa8e9944bf8e40d7cb7b4f376c1e5"
+            ),
+        ),
+    },
 }
 
 

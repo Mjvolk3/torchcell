@@ -4,19 +4,34 @@
 
 """Figures for issue #66 -- natural-isolate genomic diversity vs KO-expression variability.
 
-Colour is assigned by ENTITY and held fixed across every panel, never by rank:
+Follows the repo-wide **Figure & Plotting Standards** in CLAUDE.md:
 
-    engineered KO (Kemmeren / Sameith)  -> blue  #2a78d6
-    natural isolate (Caudal / Peter)    -> red   #e34948
+* Colour comes from the single ordered source of truth, ``torchcell.utils.PLOT_PALETTE``,
+  assigned IN ORDER. This is a 2-series comparison, so it takes the first two slots --
+  the warm primaries orange ``#D79B00`` and red ``#B85450``. Blue/gray are deliberately
+  NOT used (the rule: they are not reached until the four primaries are used up), which
+  is why an earlier draft of these figures -- blue-first, off-palette -- was wrong.
+* Colour is assigned by ENTITY and held fixed across every panel, never by rank::
 
-That pair was validated with the data-viz palette validator (light surface #fcfcfb):
-lightness band PASS, chroma floor PASS, contrast >= 3:1 PASS, worst adjacent CVD
-separation DeltaE 74.6 (protan) -- far above the >= 12 target. The same two hues do
-double duty in the region panel as coding (blue) vs non-coding (red), which is a real
-identity distinction rather than decoration. Every bar carries a direct value label, so
-identity never rests on colour alone.
+      engineered KO (Kemmeren / Sameith)   -> PLOT_PALETTE[0]  orange
+      natural isolate (Caudal / Peter)     -> PLOT_PALETTE[1]  red
 
-Single-series panels get one colour and no legend (the title names the series).
+  The same two do double duty in the region panel as coding vs non-coding, which is a
+  real identity distinction rather than decoration.
+* Panel width is STRICT (``PANEL_WIDTHS_MM``), height loose and <= ``MAX_HEIGHT_MM``.
+* Boxed axes (all four spines), Arial 6 pt, black bar edges at full opacity.
+* Exported as a true-size SVG (``savefig_true_size_svg``) for draw.io/paper, plus a
+  high-DPI PNG for the dendron note.
+
+Validator check on the pair actually used (light surface): lightness band PASS, chroma
+floor PASS, CVD separation DeltaE 47.9 (deutan) -- far above the >= 12 target. Orange sits
+at 2.38:1 contrast on white, below 3:1, so the **relief rule** applies: every bar carries
+a direct value label and identity never rests on colour alone.
+
+DELIBERATE DEVIATION (stated, per the standard): these are multi-panel analytic figures
+read on screen from a Dendron note, not final print panels. They are authored at the
+``full`` (179 mm) width with 6 pt type as the standard requires, but the PNG is rendered
+at 300 dpi so the 6 pt text is legible on screen.
 """
 
 import json
@@ -30,43 +45,56 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
+from matplotlib.colors import to_rgba
 
 from torchcell.timestamp import timestamp
+from torchcell.utils import (
+    MAX_HEIGHT_MM,
+    PANEL_WIDTHS_MM,
+    PLOT_PALETTE,
+    PLOT_PALETTE_FILL,
+    mm_to_in,
+    savefig_true_size_svg,
+)
 
 load_dotenv()
 
 DATA_ROOT = os.environ["DATA_ROOT"]
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 ASSET_IMAGES_DIR = os.environ["ASSET_IMAGES_DIR"]
-MPLSTYLE_PATH = os.environ.get("MPLSTYLE_PATH")
 
 EXP_DIR = osp.join(EXPERIMENT_ROOT, "018-natural-isolate-genomics")
 RESULTS_DIR = osp.join(EXP_DIR, "results")
 IMG_DIR = osp.join(ASSET_IMAGES_DIR, "018-natural-isolate-genomics")
 
-if MPLSTYLE_PATH and osp.exists(MPLSTYLE_PATH):
-    plt.style.use(MPLSTYLE_PATH)
-
-# The project style is tuned for a single 12x7.4 panel (titlesize 18-20), which collides
-# badly in a 1x2 layout. Scale type down for these multi-panel figures.
+# Repo standard: Arial 6 pt everywhere; real (not path) text in the SVG.
 plt.rcParams.update(
     {
-        "figure.titlesize": 15,
-        "axes.titlesize": 12.5,
-        "axes.labelsize": 11.5,
-        "xtick.labelsize": 10.5,
-        "ytick.labelsize": 10.5,
-        "legend.fontsize": 10,
-        "font.size": 10.5,
+        "font.family": "sans-serif",
+        "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
+        "font.size": 6,
+        "axes.titlesize": 6,
+        "axes.labelsize": 6,
+        "xtick.labelsize": 6,
+        "ytick.labelsize": 6,
+        "legend.fontsize": 6,
+        "figure.titlesize": 7,
+        "svg.fonttype": "none",
+        "axes.linewidth": 0.5,
+        "lines.linewidth": 1.0,
+        "patch.linewidth": 0.5,
     }
 )
 
-# Entity colours -- fixed across all panels (see module docstring).
-KO = "#2a78d6"  # engineered knockout / coding
-NAT = "#e34948"  # natural isolate / non-coding
-INK = "#0b0b0b"
-INK2 = "#52514e"
-MUTED = "#b8b7b2"
+# Entity colours -- PLOT_PALETTE assigned IN ORDER (see module docstring).
+KO = PLOT_PALETTE[0]  # orange -- engineered knockout / coding
+NAT_FILL = PLOT_PALETTE_FILL[1]  # light red -- the lighter member of a 2-level bar
+NAT = PLOT_PALETTE[1]  # red    -- natural isolate / non-coding
+INK = "#000000"
+INK2 = "#4A4A4A"
+
+FULL_IN = mm_to_in(PANEL_WIDTHS_MM["full"])  # 179 mm -> 7.05 in
+MAX_H_IN = mm_to_in(MAX_HEIGHT_MM)  # 170 mm cap
 
 # Figures have converged, so filenames are STABLE (no timestamp) -- regenerating
 # overwrites in place and the note's image references never go stale. Set
@@ -74,25 +102,39 @@ MUTED = "#b8b7b2"
 TS = timestamp() if os.environ.get("TIMESTAMP_FIGURES") else None
 
 
+CAPTIONS: dict[str, str] = {}
+
+
 def _save(fig, name: str, caption: str | None = None) -> str:
+    """Write the panel; the caption goes to the NOTE, never baked into the canvas.
+
+    The standard forbids ``bbox_inches="tight"`` on a fixed-width panel (it recrops and
+    defeats the width template), so a ``fig.text`` caption hung below the axes simply
+    falls off the canvas. Captions belong in the note/paper anyway -- we collect them
+    here and emit them as a manifest the note quotes.
+    """
     os.makedirs(IMG_DIR, exist_ok=True)
     if caption:
-        fig.text(0.005, -0.015, caption, ha="left", va="top", color=INK2, fontsize=9.5)
+        CAPTIONS[name] = " ".join(caption.split())
     stem = f"{name}_{TS}" if TS else name
-    p = osp.join(IMG_DIR, f"{stem}.png")
-    fig.savefig(p, dpi=200, bbox_inches="tight", facecolor="white")
+    png = osp.join(IMG_DIR, f"{stem}.png")
+    svg = osp.join(IMG_DIR, f"{stem}.svg")
+    # PNG for the note (300 dpi keeps 6 pt legible on screen); true-size SVG for draw.io.
+    fig.savefig(png, dpi=300, facecolor="white")
+    savefig_true_size_svg(fig, svg, facecolor="white")
     plt.close(fig)
-    print(f"      -> {p}", flush=True)
-    return p
+    print(f"      -> {png}", flush=True)
+    return png
 
 
 def _despine(ax):
-    for s in ("top", "right"):
-        ax.spines[s].set_visible(False)
-    for s in ("left", "bottom"):
-        ax.spines[s].set_color(MUTED)
-    ax.tick_params(colors=INK2)
-    ax.grid(True, alpha=0.18, linewidth=0.7)
+    """Repo standard: BOX the plot -- all four spines, 0.5 pt black."""
+    for s in ("top", "right", "left", "bottom"):
+        ax.spines[s].set_visible(True)
+        ax.spines[s].set_color(INK)
+        ax.spines[s].set_linewidth(0.5)
+    ax.tick_params(colors=INK, width=0.5, length=2)
+    ax.grid(True, alpha=0.15, linewidth=0.4, color=INK2)
     ax.set_axisbelow(True)
 
 
@@ -110,11 +152,16 @@ def fig_genome_divergence():
     pg = pd.read_parquet(osp.join(RESULTS_DIR, "per_gene_divergence_summary.parquet"))
     ps = pd.read_parquet(osp.join(RESULTS_DIR, "per_strain_divergence_summary.parquet"))
 
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4.6), constrained_layout=True)
+    fig, axes = plt.subplots(
+        1,
+        2,
+        figsize=(FULL_IN, min(FULL_IN * 0.3833, MAX_H_IN)),
+        constrained_layout=True,
+    )
 
     ax = axes[0]
     v = pg["total_divergence_mean"].dropna() * 100
-    ax.hist(v, bins=80, color=NAT, edgecolor="white", linewidth=0.4)
+    ax.hist(v, bins=80, color=NAT, edgecolor=INK, linewidth=0.25)
     _headroom(ax)
     med = float(v.median())
     ax.axvline(med, color=INK, linestyle="--", linewidth=1.6)
@@ -124,7 +171,7 @@ def fig_genome_divergence():
         xytext=(8, 0),
         textcoords="offset points",
         color=INK,
-        fontsize=11,
+        fontsize=5.5,
     )
     ax.set_xlabel("mean divergence from S288C across isolates (%)")
     ax.set_ylabel("reference ORFs")
@@ -134,7 +181,7 @@ def fig_genome_divergence():
 
     ax = axes[1]
     w = ps["genome_wide_divergence"].dropna() * 100
-    ax.hist(w, bins=60, color=NAT, edgecolor="white", linewidth=0.4)
+    ax.hist(w, bins=60, color=NAT, edgecolor=INK, linewidth=0.25)
     _headroom(ax)
     med = float(w.median())
     ax.axvline(med, color=INK, linestyle="--", linewidth=1.6)
@@ -144,7 +191,7 @@ def fig_genome_divergence():
         xytext=(8, 0),
         textcoords="offset points",
         color=INK,
-        fontsize=11,
+        fontsize=5.5,
     )
     ax.set_xlabel("genome-wide SNP divergence from S288C (%)")
     ax.set_ylabel("isolates")
@@ -170,15 +217,20 @@ def fig_pangenome():
     po = pd.read_parquet(osp.join(RESULTS_DIR, "pangenome_orf_presence.parquet"))
     bd = pd.read_parquet(osp.join(RESULTS_DIR, "natural_ko_burden.parquet"))
 
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4.6), constrained_layout=True)
+    fig, axes = plt.subplots(
+        1,
+        2,
+        figsize=(FULL_IN, min(FULL_IN * 0.3833, MAX_H_IN)),
+        constrained_layout=True,
+    )
 
     ax = axes[0]
     ax.hist(
         po["frac_isolates_present"] * 100,
         bins=50,
         color=NAT,
-        edgecolor="white",
-        linewidth=0.4,
+        edgecolor=INK,
+        linewidth=0.25,
     )
     ax.set_yscale("log")
     _headroom(ax, 0.55)
@@ -192,10 +244,10 @@ def fig_pangenome():
         ha="right",
         va="bottom",
         color=INK,
-        fontsize=11,
+        fontsize=5.5,
     )
     ax.annotate(
-        f"variable: {n_var:,} ORFs", xy=(50, 30), color=INK2, fontsize=11, ha="center"
+        f"variable: {n_var:,} ORFs", xy=(50, 30), color=INK2, fontsize=5.5, ha="center"
     )
     ax.set_xlabel("% of the 1,011 isolates carrying the ORF")
     ax.set_ylabel("pangenome ORFs (log)")
@@ -211,17 +263,16 @@ def fig_pangenome():
         bd["n_absent"],
         bins=50,
         color=NAT,
-        edgecolor="white",
-        linewidth=0.4,
+        edgecolor=INK,
+        linewidth=0.25,
         label="gene ABSENT (a genuine null)",
     )
     ax.hist(
         bd["n_frameshift"] + bd["n_premature_stop"],
         bins=50,
-        color=NAT,
-        alpha=0.35,
-        edgecolor="white",
-        linewidth=0.4,
+        color=NAT_FILL,
+        edgecolor=INK,
+        linewidth=0.25,
         label="frameshift / premature stop (PREDICTED LoF, unverified)",
     )
     ax.axvline(
@@ -236,12 +287,12 @@ def fig_pangenome():
         xytext=(10, 0),
         textcoords="offset points",
         color=INK,
-        fontsize=11,
+        fontsize=5.5,
     )
     ax.set_xlabel("reference ORFs per isolate")
     ax.set_ylabel("isolates")
     ax.set_title("Natural gene loss vs one engineered KO", loc="left", color=INK)
-    ax.legend(frameon=False, loc="upper right", fontsize=8.5)
+    ax.legend(frameon=False, loc="upper right", fontsize=5)
     _despine(ax)
 
     fig.suptitle(
@@ -279,13 +330,15 @@ def fig_regional_diversity():
     # coding vs non-coding is a real identity split, not decoration
     colors = [KO] + [NAT] * 3
 
-    fig, ax = plt.subplots(figsize=(9, 4.8), constrained_layout=True)
+    fig, ax = plt.subplots(
+        figsize=(FULL_IN, min(FULL_IN * 0.5333, MAX_H_IN)), constrained_layout=True
+    )
     bars = ax.bar(
         [pretty[r] for r in df.region],
         df.pi_percent,
         color=colors,
-        edgecolor="white",
-        linewidth=2,
+        edgecolor=INK,
+        linewidth=0.5,
         width=0.66,
     )
     ax.set_ylim(0, float(df.pi_percent.max()) * 1.32)
@@ -298,14 +351,14 @@ def fig_regional_diversity():
             textcoords="offset points",
             ha="center",
             color=INK,
-            fontsize=12,
+            fontsize=6,
         )
     ax.set_ylabel("nucleotide diversity  π  (%)")
     ax.set_title(
         "Regulatory sequence is ~2× more polymorphic than coding sequence",
         loc="left",
         color=INK,
-        fontsize=14,
+        fontsize=6.5,
     )
     handles = [
         plt.Rectangle((0, 0), 1, 1, color=KO),
@@ -336,26 +389,29 @@ def fig_de_comparison():
     kem = de[de.dataset == "kemmeren2014_single_ko"]["n_de_paper_exact"].dropna()
     cau = de[de.dataset == "caudal2024_natural_isolate"]["n_de_paper_exact"].dropna()
 
-    fig, axes = plt.subplots(1, 2, figsize=(12.5, 4.8), constrained_layout=True)
+    fig, axes = plt.subplots(
+        1,
+        2,
+        figsize=(FULL_IN, min(FULL_IN * 0.3840, MAX_H_IN)),
+        constrained_layout=True,
+    )
 
     ax = axes[0]
     bins = np.logspace(0, np.log10(max(kem.max(), cau.max()) + 1), 45)
     ax.hist(
         np.clip(kem, 1, None),
         bins=bins,
-        color=KO,
-        alpha=0.85,
-        edgecolor="white",
-        linewidth=0.5,
+        color=to_rgba(KO, 0.85),  # face only; edge stays solid black (see standard)
+        edgecolor=INK,
+        linewidth=0.25,
         label="Kemmeren single KO (n=1,484)",
     )
     ax.hist(
         np.clip(cau, 1, None),
         bins=bins,
-        color=NAT,
-        alpha=0.72,
-        edgecolor="white",
-        linewidth=0.5,
+        color=to_rgba(NAT, 0.72),  # face only; edge stays solid black
+        edgecolor=INK,
+        linewidth=0.25,
         label="Caudal natural isolate (n=943)",
     )
     ax.set_xscale("log")
@@ -371,7 +427,7 @@ def fig_de_comparison():
         textcoords="offset points",
         ha="right",
         color=KO,
-        fontsize=11.5,
+        fontsize=5.5,
     )
     ax.annotate(
         f"median {cm:.0f}",
@@ -379,7 +435,7 @@ def fig_de_comparison():
         xytext=(8, 0),
         textcoords="offset points",
         color=NAT,
-        fontsize=11.5,
+        fontsize=5.5,
     )
     ax.set_xlabel("differentially expressed genes per strain  (log)")
     ax.set_ylabel("strains")
@@ -399,22 +455,20 @@ def fig_de_comparison():
         cf,
         bins=bins,
         density=True,
-        color=NAT,
-        alpha=0.55,
+        color=to_rgba(NAT, 0.55),
         histtype="stepfilled",
         edgecolor=NAT,
-        linewidth=1.4,
+        linewidth=0.6,
         label="Caudal natural isolate",
     )
     ax.hist(
         kf,
         bins=bins,
         density=True,
-        color=KO,
-        alpha=0.72,
+        color=to_rgba(KO, 0.72),
         histtype="stepfilled",
         edgecolor=KO,
-        linewidth=1.4,
+        linewidth=0.6,
         label="Kemmeren single KO",
     )
     t = float(np.log2(1.7))
@@ -428,7 +482,7 @@ def fig_de_comparison():
         xytext=(6, 0),
         textcoords="offset points",
         color=INK2,
-        fontsize=10.5,
+        fontsize=5,
     )
     ax.set_xlabel("log2 expression ratio vs reference")
     ax.set_ylabel("density (log)")
@@ -499,7 +553,12 @@ def fig_bit_ledger():
         )
     r = pd.DataFrame(rows)
 
-    fig, axes = plt.subplots(1, 2, figsize=(12.5, 4.8), constrained_layout=True)
+    fig, axes = plt.subplots(
+        1,
+        2,
+        figsize=(FULL_IN, min(FULL_IN * 0.3840, MAX_H_IN)),
+        constrained_layout=True,
+    )
 
     ax = axes[0]
     x = np.arange(len(r))
@@ -509,8 +568,8 @@ def fig_bit_ledger():
         r.genotype_bits,
         w,
         color=KO,
-        edgecolor="white",
-        linewidth=2,
+        edgecolor=INK,
+        linewidth=0.5,
         label="genotype (minimal encoding)",
     )
     b2 = ax.bar(
@@ -518,8 +577,8 @@ def fig_bit_ledger():
         r.phenotype_bits,
         w,
         color=NAT,
-        edgecolor="white",
-        linewidth=2,
+        edgecolor=INK,
+        linewidth=0.5,
         label="phenotype (values only)",
     )
     ax.set_yscale("log")
@@ -535,7 +594,7 @@ def fig_bit_ledger():
                     textcoords="offset points",
                     ha="center",
                     color=INK,
-                    fontsize=10.5,
+                    fontsize=5,
                 )
     ax.set_xticks(x)
     ax.set_xticklabels(r.label)
@@ -547,7 +606,7 @@ def fig_bit_ledger():
     ax = axes[1]
     ratio = r.phenotype_bits / r.genotype_bits
     bars = ax.bar(
-        r.label, ratio, color=list(r.color), edgecolor="white", linewidth=2, width=0.6
+        r.label, ratio, color=list(r.color), edgecolor=INK, linewidth=0.5, width=0.6
     )
     ax.set_yscale("log")
     _headroom(ax, 0.55)
@@ -559,7 +618,7 @@ def fig_bit_ledger():
             textcoords="offset points",
             ha="center",
             color=INK,
-            fontsize=12,
+            fontsize=6,
         )
     ax.axhline(1, color=INK2, linewidth=1.2, linestyle=":")
     ax.annotate(
@@ -570,7 +629,7 @@ def fig_bit_ledger():
         textcoords="offset points",
         ha="right",
         color=INK2,
-        fontsize=10,
+        fontsize=5,
     )
     ax.set_ylabel("phenotype bits ÷ genotype bits  (log)")
     ax.set_title("Ratio of the two codelengths", loc="left", color=INK)
@@ -609,7 +668,12 @@ def fig_coupling():
     j = cau.merge(ps, on="strain", how="inner").merge(bd, on="strain", how="inner")
     j = j[np.isfinite(j["n_de_paper_exact"]) & np.isfinite(j["genome_wide_divergence"])]
 
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4.6), constrained_layout=True)
+    fig, axes = plt.subplots(
+        1,
+        2,
+        figsize=(FULL_IN, min(FULL_IN * 0.3833, MAX_H_IN)),
+        constrained_layout=True,
+    )
 
     y = j["n_de_paper_exact"]
     panels = [
@@ -640,7 +704,7 @@ def fig_coupling():
             xycoords="axes fraction",
             va="top",
             color=INK,
-            fontsize=11.5,
+            fontsize=5.5,
         )
         ax.set_xlabel(xlab)
         ax.set_ylabel("differentially expressed genes")
@@ -677,7 +741,9 @@ def fig_codon_usage():
     names = [f"{bases[i // 16]}{bases[(i // 4) % 4]}{bases[i % 4]}" for i in range(64)]
     order = np.argsort(-np.abs(delta).mean(axis=0))[:20]
 
-    fig, ax = plt.subplots(figsize=(11.5, 4.6), constrained_layout=True)
+    fig, ax = plt.subplots(
+        figsize=(FULL_IN, min(FULL_IN * 0.4000, MAX_H_IN)), constrained_layout=True
+    )
     data = [delta[:, i] for i in order]
     bp = ax.boxplot(
         data,
@@ -689,8 +755,8 @@ def fig_codon_usage():
     for patch in bp["boxes"]:
         patch.set_facecolor(NAT)
         patch.set_alpha(0.75)
-        patch.set_edgecolor("white")
-        patch.set_linewidth(1.4)
+        patch.set_edgecolor(INK)
+        patch.set_linewidth(0.5)
     ax.axhline(0, color=INK, linewidth=1.4)
     ax.set_xticks(range(1, len(order) + 1))
     ax.set_xticklabels([names[i] for i in order], rotation=45, ha="right")
@@ -727,9 +793,15 @@ def main() -> None:
         p = f()
         if p:
             made.append(p)
-    print(f"\n{len(made)} figures -> {IMG_DIR}")
+    # Captions live in the note, not on the canvas -- emit them so the note can quote
+    # them verbatim and they never drift from the figure that produced them.
+    with open(osp.join(RESULTS_DIR, "figure_captions.json"), "w") as fh:
+        json.dump(CAPTIONS, fh, indent=2)
+
+    print(f"\n{len(made)} figures (png + true-size svg) -> {IMG_DIR}")
     for p in made:
         print(f"  {osp.basename(p)}")
+    print(f"captions -> {RESULTS_DIR}/figure_captions.json")
 
 
 if __name__ == "__main__":

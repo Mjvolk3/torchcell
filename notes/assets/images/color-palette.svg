@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="714" height="200" viewBox="0 0 714 200" font-family="Arial, DejaVu Sans, sans-serif">
+<rect x="0" y="0" width="714" height="200" fill="white"/>
+<text x="20" y="26" font-size="15" font-weight="bold" fill="#222">TorchCell plot palette — ordered, green-free (single source of truth)</text>
+<text x="20" y="42" font-size="10" fill="#666">draw.io (line, fill) pairs, matching Fig 1. Assign in order: primaries (1–4), then blue/gray (5–6), then darker variants (7–). Swatch = fill with line stroke; labels are LINE / fill.</text>
+<line x1="20" y1="60" x2="174" y2="60" stroke="#999" stroke-width="0.8"/>
+<text x="97" y="56" font-size="9.5" text-anchor="middle" fill="#444">primary</text>
+<line x1="180" y1="60" x2="254" y2="60" stroke="#999" stroke-width="0.8"/>
+<text x="217" y="56" font-size="9.5" text-anchor="middle" fill="#444">secondary</text>
+<line x1="260" y1="60" x2="694" y2="60" stroke="#999" stroke-width="0.8"/>
+<text x="477" y="56" font-size="9.5" text-anchor="middle" fill="#444">extended</text>
+<text x="37" y="74" font-size="8.5" text-anchor="middle" fill="#333">1</text>
+<rect x="20" y="78" width="34" height="44" rx="3" fill="#FFE6CC" stroke="#D79B00" stroke-width="3"/>
+<text x="37" y="134" font-size="7.6" text-anchor="middle" font-weight="bold" fill="#D79B00">D79B00</text>
+<text x="37" y="143" font-size="7.6" text-anchor="middle" fill="#888">FFE6CC</text>
+<text x="77" y="74" font-size="8.5" text-anchor="middle" fill="#333">2</text>
+<rect x="60" y="78" width="34" height="44" rx="3" fill="#F8CECC" stroke="#B85450" stroke-width="3"/>
+<text x="77" y="134" font-size="7.6" text-anchor="middle" font-weight="bold" fill="#B85450">B85450</text>
+<text x="77" y="143" font-size="7.6" text-anchor="middle" fill="#888">F8CECC</text>
+<text x="117" y="74" font-size="8.5" text-anchor="middle" fill="#333">3</text>
+<rect x="100" y="78" width="34" height="44" rx="3" fill="#E1D5E7" stroke="#9673A6" stroke-width="3"/>
+<text x="117" y="134" font-size="7.6" text-anchor="middle" font-weight="bold" fill="#9673A6">9673A6</text>
+<text x="117" y="143" font-size="7.6" text-anchor="middle" fill="#888">E1D5E7</text>
+<text x="157" y="74" font-size="8.5" text-anchor="middle" fill="#333">4</text>
+<rect x="140" y="78" width="34" height="44" rx="3" fill="#FFF2CC" stroke="#D6B656" stroke-width="3"/>
+<text x="157" y="134" font-size="7.6" text-anchor="middle" font-weight="bold" fill="#D6B656">D6B656</text>
+<text x="157" y="143" font-size="7.6" text-anchor="middle" fill="#888">FFF2CC</text>
+<text x="197" y="74" font-size="8.5" text-anchor="middle" fill="#333">5</text>
+<rect x="180" y="78" width="34" height="44" rx="3" fill="#DAE8FC" stroke="#6C8EBF" stroke-width="3"/>
+<text x="197" y="134" font-size="7.6" text-anchor="middle" font-weight="bold" fill="#6C8EBF">6C8EBF</text>
+<text x="197" y="143" font-size="7.6" text-anchor="middle" fill="#888">DAE8FC</text>
+<text x="237" y="74" font-size="8.5" text-anchor="middle" fill="#333">6</text>
+<rect x="220" y="78" width="34" height="44" rx="3" fill="#F5F5F5" stroke="#666666" stroke-width="3"/>
+<text x="237" y="134" font-size="7.6" text-anchor="middle" font-weight="bold" fill="#666666">666666</text>
+<text x="237" y="143" font-size="7.6" text-anchor="middle" fill="#888">F5F5F5</text>
+<text x="277" y="74" font-size="8.5" text-anchor="middle" fill="#333">7</text>
+<rect x="260" y="78" width="34" height="44" rx="3" fill="#F3D08F" stroke="#9D7100" stroke-width="3"/>
+<text x="277" y="134" font-size="7.6" text-anchor="middle" font-weight="bold" fill="#9D7100">9D7100</text>
+<text x="277" y="143" font-size="7.6" text-anchor="middle" fill="#888">F3D08F</text>
+<text x="317" y="74" font-size="8.5" text-anchor="middle" fill="#333">8</text>
+<rect x="300" y="78" width="34" height="44" rx="3" fill="#E5A9A7" stroke="#863D3A" stroke-width="3"/>
+<text x="317" y="134" font-size="7.6" text-anchor="middle" font-weight="bold" fill="#863D3A">863D3A</text>
+<text x="317" y="143" font-size="7.6" text-anchor="middle" fill="#888">E5A9A7</text>
+<text x="357" y="74" font-size="8.5" text-anchor="middle" fill="#333">9</text>
+<rect x="340" y="78" width="34" height="44" rx="3" fill="#CAB8D4" stroke="#6E5479" stroke-width="3"/>
+<text x="357" y="134" font-size="7.6" text-anchor="middle" font-weight="bold" fill="#6E5479">6E5479</text>
+<text x="357" y="143" font-size="7.6" text-anchor="middle" fill="#888">CAB8D4</text>
+<text x="397" y="74" font-size="8.5" text-anchor="middle" fill="#333">10</text>
+<rect x="380" y="78" width="34" height="44" rx="3" fill="#F3E0A9" stroke="#9C853F" stroke-width="3"/>
+<text x="397" y="134" font-size="7.6" text-anchor="middle" font-weight="bold" fill="#9C853F">9C853F</text>
+<text x="397" y="143" font-size="7.6" text-anchor="middle" fill="#888">F3E0A9</text>
+<text x="437" y="74" font-size="8.5" text-anchor="middle" fill="#333">11</text>
+<rect x="420" y="78" width="34" height="44" rx="3" fill="#B9CDEA" stroke="#4F688B" stroke-width="3"/>
+<text x="437" y="134" font-size="7.6" text-anchor="middle" font-weight="bold" fill="#4F688B">4F688B</text>
+<text x="437" y="143" font-size="7.6" text-anchor="middle" fill="#888">B9CDEA</text>
+<text x="477" y="74" font-size="8.5" text-anchor="middle" fill="#333">12</text>
+<rect x="460" y="78" width="34" height="44" rx="3" fill="#CACACA" stroke="#4A4A4A" stroke-width="3"/>
+<text x="477" y="134" font-size="7.6" text-anchor="middle" font-weight="bold" fill="#4A4A4A">4A4A4A</text>
+<text x="477" y="143" font-size="7.6" text-anchor="middle" fill="#888">CACACA</text>
+<text x="517" y="74" font-size="8.5" text-anchor="middle" fill="#333">13</text>
+<rect x="500" y="78" width="34" height="44" rx="3" fill="#ECDAC5" stroke="#C08552" stroke-width="3"/>
+<text x="517" y="134" font-size="7.6" text-anchor="middle" font-weight="bold" fill="#C08552">C08552</text>
+<text x="517" y="143" font-size="7.6" text-anchor="middle" fill="#888">ECDAC5</text>
+<text x="557" y="74" font-size="8.5" text-anchor="middle" fill="#333">14</text>
+<rect x="540" y="78" width="34" height="44" rx="3" fill="#E5CDD7" stroke="#A85878" stroke-width="3"/>
+<text x="557" y="134" font-size="7.6" text-anchor="middle" font-weight="bold" fill="#A85878">A85878</text>
+<text x="557" y="143" font-size="7.6" text-anchor="middle" fill="#888">E5CDD7</text>
+<text x="597" y="74" font-size="8.5" text-anchor="middle" fill="#333">15</text>
+<rect x="580" y="78" width="34" height="44" rx="3" fill="#E1D4E3" stroke="#9C6EA0" stroke-width="3"/>
+<text x="597" y="134" font-size="7.6" text-anchor="middle" font-weight="bold" fill="#9C6EA0">9C6EA0</text>
+<text x="597" y="143" font-size="7.6" text-anchor="middle" fill="#888">E1D4E3</text>
+<text x="637" y="74" font-size="8.5" text-anchor="middle" fill="#333">16</text>
+<rect x="620" y="78" width="34" height="44" rx="3" fill="#D4DFEA" stroke="#6E93B8" stroke-width="3"/>
+<text x="637" y="134" font-size="7.6" text-anchor="middle" font-weight="bold" fill="#6E93B8">6E93B8</text>
+<text x="637" y="143" font-size="7.6" text-anchor="middle" fill="#888">D4DFEA</text>
+<text x="677" y="74" font-size="8.5" text-anchor="middle" fill="#333">17</text>
+<rect x="660" y="78" width="34" height="44" rx="3" fill="#E9DFC5" stroke="#B5943F" stroke-width="3"/>
+<text x="677" y="134" font-size="7.6" text-anchor="middle" font-weight="bold" fill="#B5943F">B5943F</text>
+<text x="677" y="143" font-size="7.6" text-anchor="middle" fill="#888">E9DFC5</text>
+<text x="20" y="177" font-size="10.5" font-weight="bold" fill="#444">Background</text>
+<rect x="120" y="162" width="34" height="24" rx="3" fill="#F5EEDD" stroke="#E0D6BE" stroke-width="2"/>
+<text x="162" y="173" font-size="8.5" fill="#333">F5EEDD fill / E0D6BE stroke</text>
+</svg>

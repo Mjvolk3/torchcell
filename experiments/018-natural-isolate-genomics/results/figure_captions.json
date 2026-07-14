@@ -1,0 +1,9 @@
+{
+  "genome_divergence": "SNP divergence is het-weighted per Peter 2018's published convention; length-changing indel alleles are scored by exact edit distance.",
+  "pangenome_and_ko_burden": "Core = present in all 1,011 isolates (Peter 2018's own definition; we recover 4,942 vs their published 4,940). NOT comparable to a KO one-for-one: a KanMX deletion is a verified complete null in an isogenic background; a natural variant allele is unverified, selected-upon and compensated.",
+  "regional_nucleotide_diversity": "The species-aware transformer's input (CDS + 1,000 bp upstream + 297 bp downstream) covers 94.7% of the genome and captures 93.3% of all nucleotide diversity. \u03c0 from Peter 2018's 1011Matrix.gvcf (1,753,947 variants); regions assigned by precedence CDS > upstream > downstream > intergenic.",
+  "de_comparison_ko_vs_natural": "Identical rule on both arms: |log2 FC| > log2(1.7) AND BH-adjusted p < 0.05 (Kemmeren 2014's own criterion). Caudal has no published p-values, so its noise model is estimated from its 29 replicate cultures and applied the same way \u2014 without that control its count would be 1,011, not 160.",
+  "genotype_phenotype_coupling": "Each point is one of the 943 natural isolates. If genome bits translated directly into transcriptome bits, these would be tight lines.",
+  "codon_usage_deviation": "Per-isolate codon frequencies over intronless reference ORFs, minus S288C's. A 1\u2030 shift is one codon in a thousand.",
+  "bit_ledger": "L_C = gzip codelength (zlib level 6, streamed) \u2014 a computable UPPER BOUND on Kolmogorov complexity, not an entropy, and a loose one (gzip leaves 1.4\u20135\u00d7 vs a large-window compressor). The right-hand ratio is arithmetic on those two codelengths; any reading of it as 'what a model must infer' is interpretation, not measurement."
+}

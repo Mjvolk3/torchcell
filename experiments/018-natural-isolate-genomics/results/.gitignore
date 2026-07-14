@@ -3,7 +3,11 @@
 # from, and dropping them means re-running the whole pipeline just to redraw a plot (which
 # is exactly what happened after the first landing).
 per_gene_isolate_divergence.parquet
-*.npy
+# large matrices only -- the tiny reference_codon_counts.npy IS tracked
+log2_matrix_*.npy
+caudal_log2_matrix.npy
+kemmeren_M_matrix.npy
+kemmeren_P_matrix.npy
 log2_axes_*.json
 kemmeren_axes.json
 caudal_log2_axes.json

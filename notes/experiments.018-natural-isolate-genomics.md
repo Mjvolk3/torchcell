@@ -103,6 +103,8 @@ published `md5.txt`.
 
 ![](assets/images/018-natural-isolate-genomics/genome_divergence.png)
 
+*SNP divergence is het-weighted per Peter 2018's published convention; length-changing indel alleles are scored by exact edit distance.*
+
 6,077,121 (gene x isolate) pairs over 6,011 reference ORFs. **9.6% carry a
 length-changing indel**, which Hamming cannot score; leaving them NaN would have biased the
 headline down, so they are resolved by exact global edit distance. Indel-bearing alleles
@@ -111,6 +113,8 @@ above SNP-only (**0.420%**). Median indel is **3 bp** -- in-frame, the signature
 selection against frameshifts.
 
 ![](assets/images/018-natural-isolate-genomics/pangenome_and_ko_burden.png)
+
+*Core = present in all 1,011 isolates (Peter 2018's own definition; we recover 4,942 vs their published 4,940). NOT comparable to a KO one-for-one: a KanMX deletion is a verified complete null in an isogenic background; a natural variant allele is unverified, selected-upon and compensated.*
 
 The presence spectrum is sharply **bimodal** -- ORFs are either in everything or in almost
 nothing. Of 6,059 reference ORFs in the pangenome, **81.4%** are core.
@@ -128,6 +132,8 @@ are unspliced genomic spans.)
 ### 4-5. Coding vs regulatory -- the species-aware transformer window
 
 ![](assets/images/018-natural-isolate-genomics/regional_nucleotide_diversity.png)
+
+*The species-aware transformer's input (CDS + 1,000 bp upstream + 297 bp downstream) covers 94.7% of the genome and captures 93.3% of all nucleotide diversity. π from Peter 2018's 1011Matrix.gvcf (1,753,947 variants); regions assigned by precedence CDS > upstream > downstream > intergenic.*
 
 From 1,753,947 population variants in `1011Matrix.gvcf`. The window is the one the
 **species-aware transformer** (`FungalUpDownTransformer` → `gagneurlab/SpeciesLM`) actually
@@ -147,6 +153,8 @@ include_stop_codon=True)` = **stop + 297 bp downstream**.
 ### 6. Single KO vs natural isolate -- the expression comparison
 
 ![](assets/images/018-natural-isolate-genomics/de_comparison_ko_vs_natural.png)
+
+*Identical rule on both arms: |log2 FC| > log2(1.7) AND BH-adjusted p < 0.05 (Kemmeren 2014's own criterion). Caudal has no published p-values, so its noise model is estimated from its 29 replicate cultures and applied the same way — without that control its count would be 1,011, not 160.*
 
 Both arms get the **identical rule**. Kemmeren's is noise-controlled by limma's p-value;
 Caudal ships one culture per isolate and no p-values, so an effect-only count for Caudal
@@ -177,6 +185,8 @@ skips this will over-state natural variation by ~6x.
 
 ![](assets/images/018-natural-isolate-genomics/genotype_phenotype_coupling.png)
 
+*Each point is one of the 943 natural isolates. If genome bits translated directly into transcriptome bits, these would be tight lines.*
+
 This is the most surprising result. Across the 865 isolates with both measurements:
 
 - `r(genome-wide divergence, n_DE)` = **0.038**
@@ -202,6 +212,8 @@ they were.
 ### 8. The bit ledger
 
 ![](assets/images/018-natural-isolate-genomics/bit_ledger.png)
+
+*L_C = gzip codelength (zlib level 6, streamed) — a computable UPPER BOUND on Kolmogorov complexity, not an entropy, and a loose one (gzip leaves 1.4–5× vs a large-window compressor). The right-hand ratio is arithmetic on those two codelengths; any reading of it as 'what a model must infer' is interpretation, not measurement.*
 
 `L_C` = gzip codelength (zlib level 6, streamed) -- a *computable upper bound* on Kolmogorov
 complexity, **not** an entropy. Same compressor as the paper's `Signal (gzip)` column.

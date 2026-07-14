@@ -620,8 +620,9 @@ def fig_coupling():
         ),
         (
             j["n_broken_union"],
-            "reference ORFs broken\n(absent | frameshift | premature stop)",
-            "Natural-KO burden vs DE",
+            "reference ORFs absent or predicted-LoF\n"
+            "(absent | frameshift | premature stop)",
+            "Natural gene loss vs DE",
         ),
     ]
     rs = []

@@ -13,19 +13,27 @@ natural-isolate genomic diversity vs KO-driven expression variability, as a bit
 accounting for the inputs the Cell Graph Transformer consumes. Feeds **Fig. 1c /
 Supplementary Note 5**.
 
+> **Read the [Corrections](#20260713---corrections-what-the-first-pass-got-wrong)
+> section at the bottom before citing anything here.** The first pass of this experiment
+> overclaimed in three places; the body below has been corrected, and the retractions are
+> documented rather than quietly edited away.
+
 ### The one-paragraph answer
 
-The two modalities sit in **opposite information regimes, and the phenotype side is
-identical in both.** A Kemmeren single-KO genotype is one gene index out of 6,607 --
-**14.7 bits** -- and produces a ~6,000-gene expression vector worth **183,777 bits**: the
-model must *invent* **12,533 phenotype bits per genotype bit**. A Caudal natural isolate's
-genotype carries **3,321,788 bits** of sequence divergence and produces a phenotype of
-**176,751 bits** -- **0.05x**, below parity: the model can largely *read* the answer off the
-sequence. Same phenotype dimensionality; the phenotype/genotype ratio swings **250,000x**.
-And the transcriptional consequence is wildly sublinear in the genotype: an isolate has a
-median of **277 reference ORFs already broken** (vs the KO's 1) yet differentially
-expresses only **~15x** more genes, and per-isolate genomic divergence is **uncorrelated**
-with the number of DE genes (**r = 0.04**).
+The two modalities sit at **opposite ends of a genotype-codelength range, while their
+phenotype codelength is essentially identical.** A Kemmeren single-KO genotype is one gene
+index out of 6,607 -- **14.7 bits** -- against a ~6,000-gene expression vector of
+**183,777 bits**. A Caudal natural isolate's genotype carries **3,321,788 bits** of
+sequence divergence against a phenotype of **176,751 bits**. Phenotype codelength is
+~180 kbit in *all three* datasets; the genotype spans **five orders of magnitude**. That
+is the finding. (The ratio of the two -- 12,533x vs 0.05x -- is arithmetic on two gzip
+codelengths; reading it as "how much a model must infer" is *interpretation*, not
+measurement, and earlier drafts of this note stated that gloss as if it were a result.)
+
+The transcriptional consequence is strongly sublinear in the genotype: an isolate is
+missing a median of **123 reference ORFs outright** (vs the KO's 1 engineered deletion)
+yet differentially expresses only **~15x** more genes, and per-isolate genomic divergence
+is **uncorrelated** with the number of DE genes (**r = 0.04**).
 
 ### Headline numbers
 
@@ -38,7 +46,7 @@ with the number of DE genes (**r = 0.04**).
 | Codon usage drift across isolates | largest deviation **< 1‰** -- essentially invariant |
 | DE genes per **single KO** (Kemmeren, paper-exact) | mean **36.1**, **median 4**, 5% change nothing |
 | DE genes per **natural isolate** (same rule) | mean **160.3**, **median 59** |
-| Natural KO burden per isolate | **median 277** ORFs broken (123 absent + 134 frameshift + 32 nonsense) |
+| Natural gene loss per isolate | **median 123** reference ORFs ABSENT (a genuine null); + 134 frameshift / 32 nonsense as *predicted*, unverified LoF |
 | Genotype bits: KO vs isolate | **14.7** vs **3,321,788** |
 | Phenotype bits (values only) | **183,777** vs **176,751** -- essentially the same |
 
@@ -93,7 +101,7 @@ published `md5.txt`.
 
 ### 1-2. Genome divergence, core vs accessory
 
-![](assets/images/018-natural-isolate-genomics/genome_divergence_2026-07-13-19-30-25.png)
+![](assets/images/018-natural-isolate-genomics/genome_divergence.png)
 
 6,077,121 (gene x isolate) pairs over 6,011 reference ORFs. **9.6% carry a
 length-changing indel**, which Hamming cannot score; leaving them NaN would have biased the
@@ -102,14 +110,14 @@ average **36.7 bp** of edit distance, which is why total divergence (**0.693%**)
 above SNP-only (**0.420%**). Median indel is **3 bp** -- in-frame, the signature of
 selection against frameshifts.
 
-![](assets/images/018-natural-isolate-genomics/pangenome_and_ko_burden_2026-07-13-19-30-25.png)
+![](assets/images/018-natural-isolate-genomics/pangenome_and_ko_burden.png)
 
 The presence spectrum is sharply **bimodal** -- ORFs are either in everything or in almost
 nothing. Of 6,059 reference ORFs in the pangenome, **81.4%** are core.
 
 ### 3. Codon usage
 
-![](assets/images/018-natural-isolate-genomics/codon_usage_deviation_2026-07-13-19-30-25.png)
+![](assets/images/018-natural-isolate-genomics/codon_usage_deviation.png)
 
 **Codon usage is essentially invariant across the 1,011 isolates** -- the largest
 single-isolate deviation from S288C is well under 1 codon per 1,000. Whatever the isolates
@@ -119,7 +127,7 @@ are unspliced genomic spans.)
 
 ### 4-5. Coding vs regulatory -- the species-aware transformer window
 
-![](assets/images/018-natural-isolate-genomics/regional_nucleotide_diversity_2026-07-13-19-30-25.png)
+![](assets/images/018-natural-isolate-genomics/regional_nucleotide_diversity.png)
 
 From 1,753,947 population variants in `1011Matrix.gvcf`. The window is the one the
 **species-aware transformer** (`FungalUpDownTransformer` → `gagneurlab/SpeciesLM`) actually
@@ -138,7 +146,7 @@ include_stop_codon=True)` = **stop + 297 bp downstream**.
 
 ### 6. Single KO vs natural isolate -- the expression comparison
 
-![](assets/images/018-natural-isolate-genomics/de_comparison_ko_vs_natural_2026-07-13-19-30-25.png)
+![](assets/images/018-natural-isolate-genomics/de_comparison_ko_vs_natural.png)
 
 Both arms get the **identical rule**. Kemmeren's is noise-controlled by limma's p-value;
 Caudal ships one culture per isolate and no p-values, so an effect-only count for Caudal
@@ -167,7 +175,7 @@ skips this will over-state natural variation by ~6x.
 
 ### 7. Genotype magnitude does not predict transcriptome response
 
-![](assets/images/018-natural-isolate-genomics/genotype_phenotype_coupling_2026-07-13-19-30-25.png)
+![](assets/images/018-natural-isolate-genomics/genotype_phenotype_coupling.png)
 
 This is the most surprising result. Across the 865 isolates with both measurements:
 
@@ -180,14 +188,20 @@ the genotype axis is measured fine. It simply **does not predict how much the tr
 moves**. An isolate with twice the sequence divergence does not differentially express twice
 as many genes.
 
-Combined with the burden numbers, the sublinearity is stark: **277x more broken genes → only
-~15x more DE genes → and no dose-response at all within the isolates.** Natural gene loss is
-overwhelmingly concentrated in dispensable, accessory, already-redundant genes and is heavily
-buffered. **A natural isolate is not "277 random knockouts."**
+The defensible reading is the *decoupling*, not a fold-change: within the natural isolates,
+**how much genome you have lost tells you almost nothing about how much your transcriptome
+moves** (r = 0.04 for divergence, r = 0.09 for gene loss). Natural gene loss is concentrated
+in dispensable, accessory, already-redundant genes and is buffered.
+
+Do **not** turn this into "N× more broken genes → only 15× more DE genes." An engineered
+KanMX deletion is a *verified complete null in an isogenic background*; a natural isolate's
+missing or truncated allele is unverified, selected-upon and compensated. The two are not
+commensurable one-for-one, and an earlier draft of this note wrongly treated them as if
+they were.
 
 ### 8. The bit ledger
 
-![](assets/images/018-natural-isolate-genomics/bit_ledger_2026-07-13-19-30-25.png)
+![](assets/images/018-natural-isolate-genomics/bit_ledger.png)
 
 `L_C` = gzip codelength (zlib level 6, streamed) -- a *computable upper bound* on Kolmogorov
 complexity, **not** an entropy. Same compressor as the paper's `Signal (gzip)` column.
@@ -217,58 +231,71 @@ while appearing to measure it.
 
 ---
 
-### Methodological findings the manuscript needs
+### What `Signal (gzip)` actually measures
 
-Two problems with `Signal (gzip)` as currently reported, both quantified here:
+Verified against the live table: our Kemmeren instance = **396.4 MB** (table: 4.0e8) and
+Caudal = **190.2 MB** (table: 1.9e8). ✓ These are the same bytes the table counts.
+Script: `verify_signal_composition.py`.
 
-1. **Schema overhead dominates.** Kemmeren's phenotype is **395.8 MB as stored** but only
-   **34.1 MB as values** -- **91% of the reported Signal is JSON keys, SE, and
-   `n_replicates`**, not measurement. Caudal: 94.05 → 20.8 MB (**78%** overhead). The column
-   is mostly measuring our serializer.
+**1. A large share is serialization, but it is not "metadata".** Holding representation
+fixed at each step (as-stored JSON → keys stripped → primary field only → binary):
 
-2. **`L_C` is order-dependent, by 24.5x.** DEFLATE's back-reference window is 32 KB. The same
-   8.75 Gnt of isolate sequence compresses to **103.9 MB gene-major** (all 1,011 alleles of a
-   gene adjacent, 84.2x) but **2,548.4 MB isolate-major** (3.4x) -- identical content,
-   **24.5x** apart. The LMDB is one-record-per-strain, i.e. **isolate-major: the worst
-   ordering for cross-record redundancy**, and that is the ordering every Signal number in
-   the supported-datasets table is computed in.
+| phenotype | JSON keys | extra value **fields** | float-as-text | primary values |
+|---|---:|---:|---:|---:|
+| Kemmeren (395.8 MB) | 34.8% | **43.7%** (se, variance, n_replicates, linear expr) | 12.9% | **8.6%** |
+| Caudal (94.1 MB) | 37.3% | 12.4% (counts) | 28.6% | **21.8%** |
 
-   → Report Signal as *a codelength under a stated encoding and ordering*, never as "the
-   information content of the dataset". It is a valid **relative** proxy across
-   identically-serialized datasets, but it is not within an order of magnitude of `K(D)`.
+So **~48-66% is true serialization overhead** -- the gene-name key repeated in every
+record, plus floats stored as ASCII. The rest is *real companion data*, not metadata.
+This is why Kemmeren sits so far above the trend in
+`assets/images/database/supported-datasets-instances-vs-signal.png`: a vector(6169)
+phenotype with four companion dicts.
+
+**2. Record ORDER does not matter here.** Measured on the actual LMDB records:
+strain-major (as stored) vs gene-major vs shuffled = **1.00x**. No effect.
+
+**3. gzip's 32 KB window does leave real slack, worst on perturbation-heavy rows**
+(gzip-6 vs a large-window compressor, on the exact bytes the table counts):
+
+| | gzip-6 | xz | gzip leaves |
+|---|---:|---:|---:|
+| Kemmeren instance | 396.4 MB | 285.3 MB | 1.4x |
+| Caudal instance | 190.2 MB | 89.6 MB | **2.1x** |
+| Caudal **genotype block alone** | 94.8 MB | 19.1 MB | **5.0x** |
+
+→ Report Signal as **a codelength under a stated encoding** -- a valid *relative* proxy
+across identically-serialized datasets, and a **loose** upper bound on `K(D)` (1.4-2.1x at
+the instance level, ~5x on perturbation-heavy blocks). The current caption's
+"Kolmogorov-complexity proxy" is defensible; "the information content of the dataset"
+would not be.
 
 ### Implications for the CGT
 
-- **KO data forces the model to be generative.** A 13-bit genotype cannot contain a
-  6,000-gene answer; ~12,500x of the phenotype must come from the learned prior / graph.
-  This is the hard regime, and it is where Costanzo/Kuzmin/Kemmeren live.
-- **Natural-isolate data is the opposite** -- the genotype over-determines the phenotype
-  (0.05x). It is a *sequence-reading* task, and it is the only modality that can teach the
-  model what sequence variation *does*.
+- The phenotype codelength is ~180 kbit in **all three** datasets. The genotype spans
+  14.7 bits (single KO) to 3.3 Mbit (natural isolate) -- five orders of magnitude. Whatever
+  a model learns from a KO strain, it cannot be reading it out of the genotype.
+- **Natural-isolate data is the only modality that carries sequence variation at all**, and
+  it is the only one that can teach what such variation *does*. That is the argument for
+  wanting it.
 - **But the coupling is weak (r = 0.04)**, so natural isolates will not, on their own, teach
-  a dose-response. They teach *which* variation is silent -- which is most of it.
-- **The species-aware transformer's window is already near-complete** (93.3% of π). Effort is
-  better spent on what the model does with those bits than on widening the window.
+  a dose-response. They mostly teach *which* variation is silent -- which is most of it.
+- **The species-aware transformer's window is already near-complete** (93.3% of π; 94.7% of
+  the genome). Widening it buys almost nothing -- worth remembering before anyone spends
+  effort there.
 
 ### Caveats, stated not buried
 
-- **Sameith 2015 has a sign bug** and is excluded from the DE comparison. A deleted gene's own
-  probe must go down: that oracle holds in **97%** of Kemmeren records but only **84%**
-  (single) / **72%** (double) of Sameith's. Its loader trusts the GEO `VALUE` column, whose
-  orientation is inconsistent *within* GSE42536, instead of recomputing from `Signal Norm_Cy5`/
-  `Cy3` as Kemmeren's loader does. → filed as a follow-up; Sameith DE counts would be a lower
-  bound.
-- **Caudal's noise model rests on 29 replicate pairs** and a normal approximation for `sigma_g`.
-  It is the best available and it is the isolates' own data, but it is thin.
-- **`_NumOfGenes_N` pangenome clusters**: 804 matrix columns collapse N paralogous copies into
-  one ORF. `caudal2024._orf_to_s288c` returns `None` for all of them, silently dropping real
-  reference ORFs (YAL005C among them). We strip the suffix and map the cluster, which is right
-  for a gene-presence question but **conflates paralogs**; 793 reference ORFs are recovered this
-  way.
-- **`caudal2024.py` may drop ~93 isolates' sequence variants.** 93 of the 1,011 gene-FASTA
-  headers use the `SACE_<CODE>_...` form rather than `<CODE>_...`; all 1,011 are distinct
-  strains, but the loader's `iso not in matched` filter looks like it discards the prefixed
-  ones. → follow-up.
+- **Sameith 2015 is excluded from the DE comparison** -- confirmed per-array dye-orientation
+  defect, see Corrections below. Its DE counts would be a lower bound.
+- **Caudal's noise model rests on 29 replicate pairs** and a normal approximation for
+  `sigma_g`. It is the best available and it is the isolates' own data, but it is thin.
+- **"Absent" vs "broken".** Only *gene absent* (median 123/isolate) is a genuine null.
+  Frameshift (134) and premature stop (32) are **predicted** loss-of-function in a
+  co-evolved, compensated background -- never verified as nulls. And a KanMX deletion is a
+  *verified complete null in an isogenic background*, so "N natural losses vs 1 engineered
+  KO" is not a one-for-one comparison. Earlier drafts called the union "broken ORFs" and
+  drew a "277x more broken genes" conclusion from it; that was an overclaim and is
+  withdrawn.
 - **The 1,011 vs 943 gap**: divergence/pangenome analyses use all 1,011 Peter isolates;
   expression analyses use the 943 with Caudal transcriptomes. Joins are on the 865 with both.
 
@@ -295,3 +322,100 @@ python experiments/018-natural-isolate-genomics/scripts/make_figures.py
 
 Results land in `experiments/018-natural-isolate-genomics/results/`; figures in
 `notes/assets/images/018-natural-isolate-genomics/`.
+
+## 2026.07.13 - Corrections (what the first pass got wrong)
+
+Three claims in the first landing did not survive checking. They are retracted here rather
+than quietly edited out, and each retraction now has a script that reproduces the correct
+number.
+
+### RETRACTED 1 -- "91% of Kemmeren's Signal is JSON keys/metadata"
+
+That compared as-stored JSON against a float32 binary array of **one** field, silently
+conflating four different costs: keys, *additional value fields*, float-as-text, and
+float precision. Decomposed properly (`verify_signal_composition.py`), the 395.8 MB is
+**34.8% keys / 43.7% extra value fields / 12.9% float-text / 8.6% primary values**. The
+extra fields (SE, variance, `n_replicates`, linear expression) are **real data**, not
+metadata. Corrected statement: **~48-66% is serialization overhead.**
+
+### RETRACTED 2 -- "L_C swings 24.5x on record order, so the gzip column is off by an order of magnitude"
+
+The 24.5x is real but it is a property of the **DNA corpus**, where two isolates' allele of
+the same gene are ~99.3%-identical *strings* and adjacency lets DEFLATE emit one long
+back-reference. I extrapolated it to the Signal column without measuring. On the **actual
+LMDB expression records** the order effect is **1.00x** -- strain-major, gene-major and
+shuffled are all identical, because float32 patterns of similar numbers share no substring.
+
+**Lesson: compressibility does not transfer across data types.** What *is* true: gzip's
+32 KB window leaves **1.4x** (Kemmeren instance), **2.1x** (Caudal instance) and **5.0x**
+(Caudal genotype block) versus a large-window compressor. Loose -- not off by 10x.
+
+### RETRACTED 3 -- "caudal2024 drops ~93 isolates' sequence variants"
+
+False. All 943 built isolates have sequence variants (4,759,608 rows, 943 unique strains).
+The 93 `SACE_`-prefixed isolates simply are not among the 943. **The parse is still a
+landmine** and is filed as an issue -- see below -- but it loses nothing today.
+
+### CONFIRMED 1 -- Sameith 2015: per-array dye-orientation defect (NOT a global sign error)
+
+The earlier "Sameith has a sign bug" framing was too strong and the **global sign is
+correct**: the Kemmeren↔Sameith profile correlation over the 82 overlapping single
+deletions is **+0.42 mean / +0.59 median as stored**, and is exactly negated by a global
+flip. Do **not** flip it.
+
+What is real, read straight from the GEO source (`audit_sameith_geo_orientation.py`):
+GSE42536 is a **dye-swap** design (the `-a`/`-b` title suffix *is* the swap), and GEO
+declares **both ratio directions within the same series**:
+
+| `#VALUE` definition in GEO | arrays |
+|---|---:|
+| `normalized log2 ratio (Cy5/Cy3)` | 132 |
+| `normalized log2 ratio (Cy3/Cy5)` | **127** |
+| `dye bias corrected … (Cy5/Cy3)` | 8 |
+| `dye bias corrected … (Cy3/Cy5)` | 7 |
+| `-INV_VALUE: … Cy3/Cy5 test/ref)` | 7 |
+| `normalized log2 ratio Cy3/Cy5 test/ref` | 6 |
+
+Recomputing each array's true orientation from `Signal Norm_Cy5`/`Cy3` (|corr| with VALUE
+= 1.000, unambiguous): **217 arrays are log2(Cy5/Cy3), 70 are log2(Cy3/Cy5)**.
+`sameith2015.py:645-653` hard-codes one convention and derives the sign from
+`source_name_ch1` alone → **217/287 correct, 70 (24%) signed BACKWARDS.**
+
+Because replicates are averaged, mixed-sign replicates **attenuate |M| and inflate SE** --
+which is exactly why Sameith's deleted-gene median is **-0.71** against Kemmeren's
+**-2.48**, and why 16% of Sameith deletions show their own gene going *up* (Kemmeren: 3%).
+**No global flip fixes this.** The fix is the one Kemmeren's loader already uses: ignore
+`VALUE`, recompute the ratio from the signal columns + the dye assignment.
+
+### CONFIRMED 2 -- caudal2024 omits ~133 gene-absence edits per isolate
+
+This is the serious one, and it is a genome-fidelity bug.
+`_content_perturbations` takes `s288c_mask` as a parameter and **never uses it**. Both
+loops guard on `core_mask` (`presence.mean(axis=0) >= 0.99`):
+
+```python
+presence : (~core_mask) & (presence_row == 1)   # non-core ORF PRESENT
+absence  :   core_mask  & (presence_row == 0)   # core ORF ABSENT
+```
+
+An S288C **reference ORF that is variable (not core) and ABSENT from the isolate matches
+NEITHER loop → no perturbation record is emitted at all**, and the isolate reconstructs as
+if it still carries the gene. The guard is on the wrong axis: presence/absence relative to
+S288C is a question about **reference membership**, not **population frequency**.
+
+Measured over the panel (`audit_caudal_missing_absences.py`):
+
+| gene-absence records, per isolate | |
+|---|---:|
+| loader **emits** | mean 1.9, **median 0** |
+| **should** emit | mean 134.9, **median 126** |
+| **silently missing** | **mean 133** |
+
+**134,428 missing gene-absence edits across the 1,011-isolate panel.** The function's own
+docstring promises *"Every absence is recorded … never dropped (a dropped absence would
+wrongly reconstruct as present)"* -- which is precisely what is happening.
+
+`s288c_mask` -- the mask that *should* gate the absence loop -- is **also incomplete**: it
+is built from `_orf_to_s288c`, which returns `None` for all **804 `_NumOfGenes_N` paralog
+clusters**, of which **793 are real reference ORFs** (YAL005C/SSA1, YAL038W/CDC19 …). Any
+fix must strip that suffix before mapping. **Fixing this requires a Caudal LMDB rebuild.**

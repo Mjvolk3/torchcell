@@ -68,14 +68,18 @@ INK = "#0b0b0b"
 INK2 = "#52514e"
 MUTED = "#b8b7b2"
 
-TS = timestamp()
+# Figures have converged, so filenames are STABLE (no timestamp) -- regenerating
+# overwrites in place and the note's image references never go stale. Set
+# TIMESTAMP_FIGURES=1 to go back to timestamped output while iterating.
+TS = timestamp() if os.environ.get("TIMESTAMP_FIGURES") else None
 
 
 def _save(fig, name: str, caption: str | None = None) -> str:
     os.makedirs(IMG_DIR, exist_ok=True)
     if caption:
         fig.text(0.005, -0.015, caption, ha="left", va="top", color=INK2, fontsize=9.5)
-    p = osp.join(IMG_DIR, f"{name}_{TS}.png")
+    stem = f"{name}_{TS}" if TS else name
+    p = osp.join(IMG_DIR, f"{stem}.png")
     fig.savefig(p, dpi=200, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     print(f"      -> {p}", flush=True)
@@ -198,35 +202,50 @@ def fig_pangenome():
     ax.set_title("Pangenome presence spectrum", loc="left", color=INK)
     _despine(ax)
 
+    # Only gene ABSENCE is a genuine null. Frameshift / premature stop are PREDICTED
+    # loss-of-function in a co-evolved background -- never verified as nulls -- so they
+    # are shown as a separate, clearly-labelled series rather than folded into one
+    # "broken" count. (The earlier "broken ORFs" framing was an overclaim.)
     ax = axes[1]
     ax.hist(
-        bd["n_broken_union"],
-        bins=60,
+        bd["n_absent"],
+        bins=50,
         color=NAT,
         edgecolor="white",
         linewidth=0.4,
-        label="natural isolate",
+        label="gene ABSENT (a genuine null)",
     )
-    ax.axvline(1, color=KO, linewidth=2.6, label="Kemmeren engineered KO = 1")
-    _headroom(ax, 0.34)
-    med = float(bd["n_broken_union"].median())
+    ax.hist(
+        bd["n_frameshift"] + bd["n_premature_stop"],
+        bins=50,
+        color=NAT,
+        alpha=0.35,
+        edgecolor="white",
+        linewidth=0.4,
+        label="frameshift / premature stop (PREDICTED LoF, unverified)",
+    )
+    ax.axvline(
+        1, color=KO, linewidth=2.6, label="Kemmeren engineered KO = 1 (verified null)"
+    )
+    _headroom(ax, 0.40)
+    med = float(bd["n_absent"].median())
     ax.axvline(med, color=INK, linestyle="--", linewidth=1.6)
     ax.annotate(
-        f"median {med:.0f}\nalready broken",
-        xy=(med, ax.get_ylim()[1] * 0.60),
+        f"median {med:.0f}\nabsent",
+        xy=(med, ax.get_ylim()[1] * 0.55),
         xytext=(10, 0),
         textcoords="offset points",
         color=INK,
         fontsize=11,
     )
-    ax.set_xlabel("reference ORFs broken\n(absent | frameshift | premature stop)")
+    ax.set_xlabel("reference ORFs per isolate")
     ax.set_ylabel("isolates")
-    ax.set_title("Natural KO burden vs one engineered KO", loc="left", color=INK)
-    ax.legend(frameon=False, loc="upper right")
+    ax.set_title("Natural gene loss vs one engineered KO", loc="left", color=INK)
+    ax.legend(frameon=False, loc="upper right", fontsize=8.5)
     _despine(ax)
 
     fig.suptitle(
-        "A natural isolate arrives with hundreds of genes already broken",
+        "A natural isolate is missing a median of 123 reference ORFs outright",
         x=0.005,
         ha="left",
         color=INK,
@@ -235,7 +254,9 @@ def fig_pangenome():
         fig,
         "pangenome_and_ko_burden",
         "Core = present in all 1,011 isolates (Peter 2018's own definition; we recover "
-        "4,942 vs their published 4,940).",
+        "4,942 vs their published 4,940).\nNOT comparable to a KO one-for-one: a KanMX "
+        "deletion is a verified complete null in an isogenic background; a natural "
+        "variant allele is unverified, selected-upon and compensated.",
     )
 
 
@@ -367,7 +388,9 @@ def fig_de_comparison():
     _despine(ax)
 
     ax = axes[1]
-    kl = np.load(osp.join(RESULTS_DIR, "log2_matrix_kemmeren2014_single_ko.npy"))
+    # Use the matrices differential_expression_comparison.py writes -- the deleteome M
+    # values it actually calls DE on. (kemmeren_M_matrix is genes x mutants.)
+    kl = np.load(osp.join(RESULTS_DIR, "kemmeren_M_matrix.npy"))
     cl = np.load(osp.join(RESULTS_DIR, "caudal_log2_matrix.npy"))
     kf = kl[np.isfinite(kl)]
     cf = cl[np.isfinite(cl)]
@@ -517,7 +540,7 @@ def fig_bit_ledger():
     ax.set_xticks(x)
     ax.set_xticklabels(r.label)
     ax.set_ylabel("bits per strain  (log)")
-    ax.set_title("Genotype vs phenotype information per strain", loc="left", color=INK)
+    ax.set_title("Genotype vs phenotype codelength per strain", loc="left", color=INK)
     ax.legend(frameon=False, loc="upper left")
     _despine(ax)
 
@@ -549,13 +572,13 @@ def fig_bit_ledger():
         color=INK2,
         fontsize=10,
     )
-    ax.set_ylabel("phenotype bits per genotype bit  (log)")
-    ax.set_title("How much must the model invent?", loc="left", color=INK)
+    ax.set_ylabel("phenotype bits ÷ genotype bits  (log)")
+    ax.set_title("Ratio of the two codelengths", loc="left", color=INK)
     _despine(ax)
 
     fig.suptitle(
-        "A KO genotype is ~13 bits yet yields a 6,000-gene response; "
-        "an isolate's genotype carries orders of magnitude more",
+        "Phenotype codelength is ~180 kbit in all three; the genotype spans 14.7 bits "
+        "to 3.3 Mbit",
         x=0.005,
         ha="left",
         color=INK,
@@ -563,9 +586,11 @@ def fig_bit_ledger():
     return _save(
         fig,
         "bit_ledger",
-        "L_C = gzip codelength (zlib level 6, streamed) — a computable upper bound on "
-        "Kolmogorov complexity, not an entropy. Same compressor as the paper's "
-        "Signal (gzip) column.",
+        "L_C = gzip codelength (zlib level 6, streamed) — a computable UPPER BOUND on "
+        "Kolmogorov complexity, not an entropy, and a loose one (gzip leaves 1.4–5× vs "
+        "a large-window compressor).\nThe right-hand ratio is arithmetic on those two "
+        "codelengths; any reading of it as 'what a model must infer' is interpretation, "
+        "not measurement.",
     )
 
 

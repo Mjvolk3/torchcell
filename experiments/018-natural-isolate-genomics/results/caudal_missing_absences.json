@@ -1,0 +1,20 @@
+{
+  "core_presence_threshold": 0.99,
+  "n_pangenome_orfs": 7796,
+  "n_core_mask": 5491,
+  "n_s288c_mask_computed_but_unused": 5276,
+  "n_true_reference_orfs": 6069,
+  "n_reference_orfs_missed_by_s288c_mask": 793,
+  "per_isolate": {
+    "emitted_mean": 1.9179030662710188,
+    "emitted_median": 0.0,
+    "should_mean": 134.86745796241345,
+    "should_median": 126.0,
+    "missing_mean": 132.96538081107815,
+    "missing_median": 126.0,
+    "missing_max": 388
+  },
+  "total_missing_absence_edits": 134428,
+  "root_cause": "_content_perturbations guards both loops on core_mask (population frequency) instead of s288c_mask (reference membership); s288c_mask is passed in but never referenced, and is itself incomplete because _orf_to_s288c returns None for all 804 _NumOfGenes_N paralog clusters",
+  "fix_requires_lmdb_rebuild": true
+}

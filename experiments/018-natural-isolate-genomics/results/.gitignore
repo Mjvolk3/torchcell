@@ -1,8 +1,9 @@
-# Regenerable intermediates -- rebuilt by ../scripts/ (see the Reproduce section of
-# [[experiments.018-natural-isolate-genomics]]). Only the small summaries that the note
-# and the paper cite are tracked.
+# Only the LARGE regenerable matrices are ignored. The small per-gene / per-strain /
+# per-ORF summary parquets ARE tracked -- they are what the figures and the note are drawn
+# from, and dropping them means re-running the whole pipeline just to redraw a plot (which
+# is exactly what happened after the first landing).
+per_gene_isolate_divergence.parquet
 *.npy
-*.parquet
 log2_axes_*.json
 kemmeren_axes.json
 caudal_log2_axes.json

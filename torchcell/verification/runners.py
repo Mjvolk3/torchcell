@@ -1185,7 +1185,25 @@ FITNESS_DATASETS: dict[str, dict[str, Any]] = {
             page="Mol Syst Biol 10:732; Supplementary Dataset S2 'data set 2.txt'",
             sha256=("37ef19ee249c64c0557c84870e59b2fd7a8bbaf14371fd355775e650f2a39f1c"),
         ),
-    }
+    },
+    "smf_baryshnikova2010": {
+        "root": "data/torchcell/smf_baryshnikova2010",
+        # 6023 raw alleles minus 30 unresolvable in current R64 (dubious/merged/removed ORFs).
+        "expected_count": 5993,
+        "provenance": Provenance(
+            source_uri="https://doi.org/10.1038/nmeth.1534",
+            citation_key="baryshnikovaQuantitativeAnalysisFitness2010",
+            method=(
+                "genome-scale SGA single-mutant fitness (Supplementary Data 1, "
+                "S1_SMF_standard): WT-normalized so the fitness distribution mode == 1.0; "
+                "uncertainty = bootstrap SE of the median (SI Note 1); n_samples=80 control "
+                "screens; 6023 alleles = 4635 KanMx deletions + 1082 DAmP + 306 TS, with the "
+                "raw allele id on strain_id so the TS allelic series stays distinct"
+            ),
+            page="Nat Methods 7:1017; Supplementary Data 1 'S1_SMF_standard_100209.txt'",
+            sha256=("c8114f88c96f3b605dc5837c8958de30c34e0077558fd78f26440465a19f6b5b"),
+        ),
+    },
 }
 
 

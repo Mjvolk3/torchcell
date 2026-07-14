@@ -35,9 +35,15 @@ Record = dict[str, Any]
 
 def _genotype_signature(
     experiment: dict[str, Any],
-) -> tuple[tuple[str | None, str | None, str | None], ...]:
+) -> tuple[tuple[str | None, str | None, str | None, str | None], ...]:
     """Canonical STRAIN identity: the sorted set of perturbations, each keyed by
-    ``(systematic_gene_name, perturbation_type, perturbed_gene_name)``.
+    ``(systematic_gene_name, perturbation_type, perturbed_gene_name, strain_id)``.
+
+    ``strain_id`` (present on SGA perturbation variants, else None) distinguishes an allelic
+    SERIES that shares gene + type -- e.g. Baryshnikova 2010 has 58 genes with more than one
+    temperature-sensitive allele (YAL041W x4); without it they collide as duplicates. It is
+    None for non-SGA perturbations, so adding it only ever REFINES the key -- pre-existing
+    fitness datasets keep their (already-unique) signatures.
     """
     return tuple(
         sorted(
@@ -45,6 +51,7 @@ def _genotype_signature(
                 p.get("systematic_gene_name"),
                 p.get("perturbation_type"),
                 p.get("perturbed_gene_name"),
+                p.get("strain_id"),
             )
             for p in experiment["genotype"]["perturbations"]
         )

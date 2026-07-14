@@ -1,0 +1,8 @@
+# Regenerable intermediates -- rebuilt by ../scripts/ (see the Reproduce section of
+# [[experiments.018-natural-isolate-genomics]]). Only the small summaries that the note
+# and the paper cite are tracked.
+*.npy
+*.parquet
+log2_axes_*.json
+kemmeren_axes.json
+caudal_log2_axes.json

@@ -1,0 +1,23 @@
+{
+  "kemmeren2014_single_ko": {
+    "phenotype_bits_values_only": 272724744.0,
+    "genotype_bits_as_stored": 111880.0,
+    "genotype_bits_minimal": 21760.0,
+    "phenotype_per_genotype_minimal": 12533.30625,
+    "genotype_schema_overhead_frac": 0.8055058991776904
+  },
+  "sameith2015_double_ko": {
+    "phenotype_bits_values_only": 13248128.0,
+    "genotype_bits_as_stored": 18392.0,
+    "genotype_bits_minimal": 2448.0,
+    "phenotype_per_genotype_minimal": 5411.816993464052,
+    "genotype_schema_overhead_frac": 0.8668986515876468
+  },
+  "caudal2024_natural_isolate": {
+    "phenotype_bits_values_only": 166676440.0,
+    "genotype_bits_as_stored": 758144792.0,
+    "genotype_bits_minimal": 3358327208.0,
+    "phenotype_per_genotype_minimal": 0.04963079225959688,
+    "genotype_schema_overhead_frac": -3.429664680727636
+  }
+}

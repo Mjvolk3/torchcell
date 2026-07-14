@@ -1,0 +1,52 @@
+{
+  "gvcf": {
+    "path": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/1e8e0f6b-d3c7-4271-818b-3bfbd5e31d27/scratchpad/peter_extra/1011Matrix.gvcf.gz",
+    "md5": "42478e3e9dff4bd46993d82d8eab40d4",
+    "sha256": "037773254154e74c36f9cd19d4fee0e413cd371f699b80b234cca59690f3a37e"
+  },
+  "min_an": 100,
+  "n_variants_kept": 1753947,
+  "n_variants_dropped": 919,
+  "an_median": 2022.0,
+  "region_map": {
+    "n_genes_mapped": 6579,
+    "chromosome_lengths": {
+      "1": 230218,
+      "2": 813184,
+      "3": 316620,
+      "4": 1531933,
+      "5": 576874,
+      "6": 270161,
+      "7": 1090940,
+      "8": 562643,
+      "9": 439888,
+      "10": 745751,
+      "11": 666816,
+      "12": 1078177,
+      "13": 924431,
+      "14": 784333,
+      "15": 1091291,
+      "16": 948066
+    },
+    "genome_bp": 12071326,
+    "region_bp": {
+      "cds": 8639057,
+      "upstream_1000": 2384587,
+      "downstream_297": 409531,
+      "intergenic_other": 638151
+    },
+    "upstream_bp_lost_to_overlap": 4185492,
+    "downstream_bp_lost_to_overlap": 1544269,
+    "note": "precedence CDS > upstream > downstream > intergenic; overlap counts are bases claimed by an earlier label"
+  },
+  "species_aware_transformer_window": {
+    "upstream_bp": 1000,
+    "downstream_bp": 297,
+    "source": "torchcell/datasets/fungal_up_down_transformer.py:29-32",
+    "model": "gagneurlab/SpeciesLM (FungalUpDownTransformer)",
+    "bp_covered": 11433175,
+    "frac_of_genome_covered": 0.9471349709220015,
+    "frac_of_all_variation_captured": 0.9518725480302427,
+    "frac_of_pi_captured": 0.9328722807022275
+  }
+}

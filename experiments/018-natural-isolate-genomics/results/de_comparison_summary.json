@@ -1,0 +1,83 @@
+{
+  "threshold": {
+    "fold_change": 1.7,
+    "log2_fold_change": 0.765534746362977,
+    "p_cut": 0.05,
+    "responsive_min_genes": 4,
+    "source": "Kemmeren 2014 Cell 157:740-752, Extended Experimental Procedures, 'Statistical Analysis of Expression Profiles': 'Genes were considered significantly changed when the fold-change (FC) was > 1.7 and the p value < 0.05.'",
+    "source_pdf_sha256": "531037bd77c9cadafc45a931fd954d859359d349f152237e51dff83b54fcc833"
+  },
+  "deleteome_file": {
+    "url": "https://deleteome.holstegelab.nl/data/downloads/deleteome_all_mutants_ex_wt_var_controls.txt",
+    "sha256": "7f93af3567f943c8e428bb18e09633cd996aafd756bfdddd24b04312fdc61580",
+    "n_experiments": 1487,
+    "n_deletion_mutants": 1484,
+    "n_probes": 6123,
+    "note": "the _ex_wt_var_ variant already excludes the 58 WT-variable transcripts the paper excludes"
+  },
+  "validation_gate": {
+    "published_responsive_mutants": 699,
+    "derived_responsive_mutants": 769,
+    "intersection": 699,
+    "published_missed_by_us": 0,
+    "extra_in_ours": 70,
+    "containment_pass": true,
+    "n_transcripts_changed_all_mutants": 4473,
+    "paper_reports_transcripts": 3966,
+    "note": "our derived responsive set strictly CONTAINS the published one (zero missed), so the criterion is implemented as specified; the ~7% excess in the transcript union reflects the deleteome file being a later revision of the 2014 matrices"
+  },
+  "kemmeren_single_ko": {
+    "n_strains": 1484,
+    "de_paper_exact": {
+      "mean": 36.05795148247979,
+      "median": 4.0,
+      "p90": 103.0,
+      "max": 1014,
+      "frac_zero": 0.04716981132075472
+    },
+    "de_effect_only": {
+      "mean": 36.08760107816712,
+      "median": 4.0
+    },
+    "n_responsive": 699,
+    "frac_responsive": 0.47102425876010784
+  },
+  "caudal_natural_isolate": {
+    "n_strains": 943,
+    "n_genes": 6084,
+    "de_noise_controlled": {
+      "mean": 160.25132555673383,
+      "median": 59.0,
+      "p10": 17.0,
+      "p90": 417.0,
+      "max": 2765,
+      "frac_zero": 0.0021208907741251328
+    },
+    "de_effect_only": {
+      "mean": 1011.1749734888654,
+      "median": 895.0
+    },
+    "noise_model": {
+      "n_replicate_pairs": 29,
+      "n_genes_with_own_sigma": 6083,
+      "n_genes_using_median_sigma": 1,
+      "median_single_measurement_noise_sd": 0.38963827767448644,
+      "mean_pair_sd": 0.6635047471035282,
+      "note": "sigma_g = SD of pure-noise log2 ratios across replicate culture pairs, divided by sqrt(2) to convert a pair difference to a single measurement",
+      "observed_sd": 0.6776565909385681,
+      "noise_sd": 0.3896483339092245,
+      "biological_sd": 0.5544300056131949
+    }
+  },
+  "headline": {
+    "criterion": "|log2 FC| > log2(1.7) AND BH-adjusted p < 0.05, applied to BOTH arms",
+    "kemmeren_single_ko_mean_de": 36.05795148247979,
+    "kemmeren_single_ko_median_de": 4.0,
+    "caudal_natural_isolate_mean_de": 160.25132555673383,
+    "caudal_natural_isolate_median_de": 59.0,
+    "fold_more_genes_mean": 4.444271484324294,
+    "fold_more_genes_median": 14.75,
+    "kemmeren_genotype_bits": 12.689779629377275,
+    "caudal_genotype_edits_median": null
+  }
+}

@@ -1,0 +1,17 @@
+modality,encoding,n_records,L_C_bytes,L_C_bits,n_strains,n_genes,bits_per_strain,bits_per_strain_gene,note
+kemmeren2014_single_ko,phenotype_as_stored,1484,395803262,3166426096,1484,6169,2133710.307277628,345.87620477834787,LMDB phenotype JSON = the paper's Signal column
+kemmeren2014_single_ko,phenotype_values_only,1484,34090593,272724744,1484,6169,183776.78167115903,29.790368239772903,"float32 log2 ratios, fixed gene order, no keys"
+kemmeren2014_single_ko,genotype_as_stored,1484,13985,111880,1484,6169,75.39083557951483,0.0122209167741149,LMDB genotype JSON (perturbation records)
+kemmeren2014_single_ko,genotype_minimal,1484,2720,21760,1484,6169,14.663072776280323,0.0023768962192057584,perturbed gene indices as uint16
+kemmeren2014_single_ko,genotype_combinatorial_floor,1484,2354,18832,1484,6169,12.690026954177897,0.0020570638602979245,"log2(C(6607,1)) = 12.7 bits/strain"
+sameith2015_double_ko,phenotype_as_stored,72,20893941,167151528,72,6169,2321549.0,376.325012157562,LMDB phenotype JSON = the paper's Signal column
+sameith2015_double_ko,phenotype_values_only,72,1656016,13248128,72,6169,184001.77777777778,29.82684029466328,"float32 log2 ratios, fixed gene order, no keys"
+sameith2015_double_ko,genotype_as_stored,72,2299,18392,72,6169,255.44444444444446,0.04140775562399813,LMDB genotype JSON (perturbation records)
+sameith2015_double_ko,genotype_minimal,72,306,2448,72,6169,34.0,0.005511428108283352,perturbed gene indices as uint16
+sameith2015_double_ko,genotype_combinatorial_floor,72,220,1760,72,6169,24.444444444444443,0.003962464653014175,"log2(C(6607,2)) = 24.4 bits/strain"
+caudal2024_natural_isolate,phenotype_as_stored,943,94054411,752435288,943,6454,797916.5302226936,123.63131859663675,LMDB phenotype JSON = the paper's Signal column (94 MB)
+caudal2024_natural_isolate,phenotype_values_only,943,20834555,166676440,943,6454,176751.2619300106,27.38631266346616,"float32 TPM, fixed gene order, no keys"
+caudal2024_natural_isolate,genotype_as_stored,943,94768099,758144792,943,6454,803971.1474019088,124.56943715554831,LMDB genotype JSON = the ~95 MB perturbation figure from issue #66
+caudal2024_natural_isolate,sequence_raw_nt,1011,2548443206,20387545648,1011,6015,20165722.698318496,3352.5723521726513,concatenated reference-ORF nucleotides per isolate (~9 Mb ACGT each)
+caudal2024_natural_isolate,sequence_diff_vs_S288C,1011,419790901,3358327208,1011,6015,3321787.5450049457,552.2506309235155,isolate encoded as a variant list against S288C (conditional complexity)
+caudal2024_natural_isolate,sequence_2bit_floor,1011,2186227851,17489822808,1011,6015,17299528.0,2876.064505403159,"8,649,764 nt/isolate at 2 bits/base, uncompressed"

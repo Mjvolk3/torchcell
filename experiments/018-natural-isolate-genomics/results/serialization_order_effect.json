@@ -1,0 +1,14 @@
+{
+  "content_nt": 8745849394,
+  "n_genes": 6015,
+  "n_isolates": 1011,
+  "gzip_level": 6,
+  "deflate_window_bytes": 32768,
+  "gene_major_bytes": 103864022,
+  "isolate_major_bytes": 2548443206,
+  "gene_major_ratio": 84.20480187066124,
+  "isolate_major_ratio": 3.4318400242975633,
+  "order_effect_x": 24.53634239197862,
+  "lmdb_ordering": "isolate-major (one record per strain)",
+  "implication": "Signal (gzip) is a codelength under a stated encoding+ordering, not an estimate of K(D). The LMDB's one-record-per-strain layout is the worst ordering for cross-record redundancy, so every Signal number in the supported-datasets table is an upper bound that ordering alone can move by more than an order of magnitude."
+}

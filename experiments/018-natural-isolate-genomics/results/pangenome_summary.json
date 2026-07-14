@@ -1,0 +1,69 @@
+{
+  "source_checksums_md5": {
+    "genesMatrix_PresenceAbsence.tab.gz": "b3b96719de226eaa277589d8d01f9202",
+    "genesMatrix_Frameshift.tab.gz": "6f8ec446283817be303e20f5661550b0",
+    "1011LossOfFunction.xls.gz": "f3c4f2db7a5b2a9bf28039dbdd82e2b1",
+    "gene_dNdS.tab.gz": "c5dbef9fc5cc0a0e5f3a6b5c3d3689cf"
+  },
+  "core_definition": {
+    "rule": "present in all 1,011 isolates",
+    "source_quote": "The mapping was also used as a confirmation step for the presence of the ORFs in each strain, leading to the identification of 4,940 ORFs present in the 1,011 strains of the collection, representing the core genome plus 2,856 ORFs present in different subsets of the population.",
+    "source": "Peter 2018, mirrored paper.md sha256 21c49934d546f162b43025c85254bcd1cedcb80ab9a691935301b5962a6a12da, line 220"
+  },
+  "pangenome": {
+    "n_isolates": 1011,
+    "n_orfs": 7796,
+    "core_peter": 4942,
+    "core_peter_paper": 4940,
+    "variable_peter": 2854,
+    "variable_peter_paper": 2856,
+    "core_at_99pct_sensitivity": 5491,
+    "n_reference_orfs_in_pangenome": 6059,
+    "n_reference_orfs_core": 4933
+  },
+  "natural_ko_burden": {
+    "n_absent": {
+      "mean": 132.46290801186944,
+      "median": 123.0,
+      "max": 450
+    },
+    "n_frameshift": {
+      "mean": 136.39663699307616,
+      "median": 134.0,
+      "max": 375
+    },
+    "n_premature_stop": {
+      "mean": 32.160237388724035,
+      "median": 32.0,
+      "max": 67
+    },
+    "n_broken_union": {
+      "mean": 289.54896142433233,
+      "median": 277.0,
+      "max": 615,
+      "min": 91
+    },
+    "comparator": "Kemmeren engineers exactly 1 KO; Sameith 2. A natural isolate arrives with this many reference ORFs already broken."
+  },
+  "cross_checks": {
+    "lof_shape": [
+      6031,
+      1018
+    ],
+    "lof_columns": [
+      "CODE",
+      "NAME",
+      "Gene",
+      "SGDorder",
+      "CH",
+      "START",
+      "STOP",
+      "BFC"
+    ],
+    "pn_ps_vs_peter_dnds": {
+      "n_genes": 5681,
+      "pearson_r_log1p": 0.5785294453047057,
+      "note": "our per-gene pN/pS (computed from the isolate CDS alleles) vs Peter's published PAML dN/dS -- an independent check on the codon logic"
+    }
+  }
+}

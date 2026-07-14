@@ -1,0 +1,222 @@
+{
+  "de_threshold": {
+    "fold_change": 1.7,
+    "log2": 0.765534746362977,
+    "sweep": [
+      0.5,
+      0.765534746362977,
+      1.0,
+      1.5,
+      2.0
+    ]
+  },
+  "caudal_pseudocount": 1.0,
+  "caudal_min_ref_tpm": 1.0,
+  "shared_reference_orfs": 5808,
+  "modalities": {
+    "kemmeren2014_single_ko": {
+      "n_strains": 1484,
+      "n_genes": 5808,
+      "n_values": 8619072,
+      "mean": 0.035813573747873306,
+      "sd": 0.21260769665241241,
+      "mad": 0.08361750096082687,
+      "iqr": 0.16808787733316422,
+      "quantiles": {
+        "p1": -0.4524928745627403,
+        "p5": -0.21717965975403786,
+        "p25": -0.05648810230195522,
+        "p50": 0.02212089952081442,
+        "p75": 0.11159977503120899,
+        "p95": 0.3279851824045179,
+        "p99": 0.6737754553556434
+      },
+      "de_by_threshold": {
+        "0.500": {
+          "mean_de_genes_per_strain": 160.70754716981133,
+          "median_de_genes_per_strain": 68.0,
+          "frac_of_all_values_de": 0.027670032226207182
+        },
+        "0.766": {
+          "mean_de_genes_per_strain": 59.20215633423181,
+          "median_de_genes_per_strain": 22.0,
+          "frac_of_all_values_de": 0.010193208735232748
+        },
+        "1.000": {
+          "mean_de_genes_per_strain": 31.198787061994608,
+          "median_de_genes_per_strain": 11.0,
+          "frac_of_all_values_de": 0.005371691987258025
+        },
+        "1.500": {
+          "mean_de_genes_per_strain": 11.69743935309973,
+          "median_de_genes_per_strain": 5.0,
+          "frac_of_all_values_de": 0.0020140219271865926
+        },
+        "2.000": {
+          "mean_de_genes_per_strain": 5.293800539083558,
+          "median_de_genes_per_strain": 2.0,
+          "frac_of_all_values_de": 0.0009114670349661773
+        }
+      },
+      "deleted_gene_oracle": {
+        "n": 1462,
+        "median_log2_of_deleted_gene": -2.4958397150039673,
+        "frac_negative": 0.9740082079343365
+      },
+      "basis": "shared_reference_orfs"
+    },
+    "sameith2015_single_ko": {
+      "n_strains": 82,
+      "n_genes": 5808,
+      "n_values": 476256,
+      "mean": 0.004128743428736925,
+      "sd": 0.12398593872785568,
+      "mad": 0.049651578068733215,
+      "iqr": 0.09930245205760002,
+      "quantiles": {
+        "p1": -0.3067627936601639,
+        "p5": -0.1614220216870308,
+        "p25": -0.047724924981594086,
+        "p50": 0.0014856798807159066,
+        "p75": 0.051577527076005936,
+        "p95": 0.17692223191261292,
+        "p99": 0.3574712827801709
+      },
+      "de_by_threshold": {
+        "0.500": {
+          "mean_de_genes_per_strain": 39.96341463414634,
+          "median_de_genes_per_strain": 26.5,
+          "frac_of_all_values_de": 0.00688075320835853
+        },
+        "0.766": {
+          "mean_de_genes_per_strain": 12.817073170731707,
+          "median_de_genes_per_strain": 8.0,
+          "frac_of_all_values_de": 0.0022067963448229523
+        },
+        "1.000": {
+          "mean_de_genes_per_strain": 6.2926829268292686,
+          "median_de_genes_per_strain": 5.0,
+          "frac_of_all_values_de": 0.0010834509171537996
+        },
+        "1.500": {
+          "mean_de_genes_per_strain": 1.8780487804878048,
+          "median_de_genes_per_strain": 1.0,
+          "frac_of_all_values_de": 0.00032335550628233555
+        },
+        "2.000": {
+          "mean_de_genes_per_strain": 0.6829268292682927,
+          "median_de_genes_per_strain": 0.0,
+          "frac_of_all_values_de": 0.00011758382046630384
+        }
+      },
+      "deleted_gene_oracle": {
+        "n": 76,
+        "median_log2_of_deleted_gene": -0.7698224782943726,
+        "frac_negative": 0.8421052631578947
+      },
+      "basis": "shared_reference_orfs"
+    },
+    "sameith2015_double_ko": {
+      "n_strains": 72,
+      "n_genes": 5808,
+      "n_values": 418176,
+      "mean": 0.010297299362719059,
+      "sd": 0.20427542924880981,
+      "mad": 0.05925662815570831,
+      "iqr": 0.11849002726376057,
+      "quantiles": {
+        "p1": -0.47605224698781967,
+        "p5": -0.2311837486922741,
+        "p25": -0.056420739740133286,
+        "p50": 0.0025248245801776648,
+        "p75": 0.06206928752362728,
+        "p95": 0.25956637412309647,
+        "p99": 0.6661375015974045
+      },
+      "de_by_threshold": {
+        "0.500": {
+          "mean_de_genes_per_strain": 147.18055555555554,
+          "median_de_genes_per_strain": 53.5,
+          "frac_of_all_values_de": 0.025341004744413836
+        },
+        "0.766": {
+          "mean_de_genes_per_strain": 60.375,
+          "median_de_genes_per_strain": 13.0,
+          "frac_of_all_values_de": 0.010395144628099174
+        },
+        "1.000": {
+          "mean_de_genes_per_strain": 34.97222222222222,
+          "median_de_genes_per_strain": 6.0,
+          "frac_of_all_values_de": 0.006021388123660851
+        },
+        "1.500": {
+          "mean_de_genes_per_strain": 14.0,
+          "median_de_genes_per_strain": 3.0,
+          "frac_of_all_values_de": 0.0024104683195592287
+        },
+        "2.000": {
+          "mean_de_genes_per_strain": 6.138888888888889,
+          "median_de_genes_per_strain": 1.0,
+          "frac_of_all_values_de": 0.001056971227425773
+        }
+      },
+      "deleted_gene_oracle": {
+        "n": 134,
+        "median_log2_of_deleted_gene": -0.7184674739837646,
+        "frac_negative": 0.7313432835820896
+      },
+      "basis": "shared_reference_orfs"
+    },
+    "caudal2024_natural_isolate": {
+      "n_strains": 943,
+      "n_genes": 5808,
+      "n_values": 5406246,
+      "mean": -0.13781112432479858,
+      "sd": 0.6471317410469055,
+      "mad": 0.30142372846603394,
+      "iqr": 0.6061252392828465,
+      "quantiles": {
+        "p1": -2.3037337779998777,
+        "p5": -1.2038612067699432,
+        "p25": -0.4040335565805435,
+        "p50": -0.08312748000025749,
+        "p75": 0.20209168270230293,
+        "p95": 0.7347851693630219,
+        "p99": 1.364506834745407
+      },
+      "de_by_threshold": {
+        "0.500": {
+          "mean_de_genes_per_strain": 1728.8324496288442,
+          "median_de_genes_per_strain": 1628.0,
+          "frac_of_all_values_de": 0.301556569937809
+        },
+        "0.766": {
+          "mean_de_genes_per_strain": 912.0222693531283,
+          "median_de_genes_per_strain": 802.0,
+          "frac_of_all_values_de": 0.1590821061416739
+        },
+        "1.000": {
+          "mean_de_genes_per_strain": 549.9289501590669,
+          "median_de_genes_per_strain": 466.0,
+          "frac_of_all_values_de": 0.0959229380239079
+        },
+        "1.500": {
+          "mean_de_genes_per_strain": 221.609756097561,
+          "median_de_genes_per_strain": 191.0,
+          "frac_of_all_values_de": 0.03865491877358152
+        },
+        "2.000": {
+          "mean_de_genes_per_strain": 102.67656415694591,
+          "median_de_genes_per_strain": 91.0,
+          "frac_of_all_values_de": 0.01790965486957123
+        }
+      },
+      "deleted_gene_oracle": {
+        "n": 763,
+        "median_log2_of_deleted_gene": -0.08497153967618942,
+        "frac_negative": 0.5596330275229358
+      },
+      "basis": "shared_reference_orfs"
+    }
+  }
+}

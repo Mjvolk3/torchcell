@@ -1,0 +1,21 @@
+{
+  "source_tarball": "allReferenceGenesWithSNPsAndIndelsInferred.tar.gz",
+  "source_tarball_sha256": "b5400b89499fe84b1feada51abd7742c29838ae1f28c0cbd208b6622ca533f25",
+  "source_url": "http://1002genomes.u-strasbg.fr/files/allReferenceGenesWithSNPsAndIndelsInferred.tar.gz",
+  "reference": "S288C R64-4-1_20230830 (SCerevisiaeGenome genomic span, strand-corrected)",
+  "reference_orf_set_size": 6607,
+  "peter_gene_fastas": 6015,
+  "genes_scored": 6011,
+  "genes_reference_only_not_in_peter": 596,
+  "genes_peter_only_not_in_reference": 4,
+  "intron_containing_excluded_from_codon_stats": 241,
+  "n_isolates": 1011,
+  "n_gene_isolate_pairs": 6077121,
+  "n_indel_pairs_excluded_from_hamming": 582408,
+  "het_weighting": "w = 1 - [ref in alleles(code)] / |alleles(code)|; reduces to Peter 2018's published half-weighting of heterozygous differences",
+  "het_weighting_source": "Peter 2018 filesDescription.txt: 'for each pair of strains, the value is the percentage, based on SNPs, of non-identical bases. Heterozygous differences were half-weighted compared to the homozygous differences.'",
+  "no_call_codes_excluded": [
+    "N",
+    "-"
+  ]
+}

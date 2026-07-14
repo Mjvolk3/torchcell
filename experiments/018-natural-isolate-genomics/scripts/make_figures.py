@@ -1,0 +1,710 @@
+# experiments/018-natural-isolate-genomics/scripts/make_figures.py
+# [[experiments.018-natural-isolate-genomics.scripts.make_figures]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/018-natural-isolate-genomics/scripts/make_figures
+
+"""Figures for issue #66 -- natural-isolate genomic diversity vs KO-expression variability.
+
+Colour is assigned by ENTITY and held fixed across every panel, never by rank:
+
+    engineered KO (Kemmeren / Sameith)  -> blue  #2a78d6
+    natural isolate (Caudal / Peter)    -> red   #e34948
+
+That pair was validated with the data-viz palette validator (light surface #fcfcfb):
+lightness band PASS, chroma floor PASS, contrast >= 3:1 PASS, worst adjacent CVD
+separation DeltaE 74.6 (protan) -- far above the >= 12 target. The same two hues do
+double duty in the region panel as coding (blue) vs non-coding (red), which is a real
+identity distinction rather than decoration. Every bar carries a direct value label, so
+identity never rests on colour alone.
+
+Single-series panels get one colour and no legend (the title names the series).
+"""
+
+import json
+import os
+import os.path as osp
+
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from dotenv import load_dotenv
+
+from torchcell.timestamp import timestamp
+
+load_dotenv()
+
+DATA_ROOT = os.environ["DATA_ROOT"]
+EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
+ASSET_IMAGES_DIR = os.environ["ASSET_IMAGES_DIR"]
+MPLSTYLE_PATH = os.environ.get("MPLSTYLE_PATH")
+
+EXP_DIR = osp.join(EXPERIMENT_ROOT, "018-natural-isolate-genomics")
+RESULTS_DIR = osp.join(EXP_DIR, "results")
+IMG_DIR = osp.join(ASSET_IMAGES_DIR, "018-natural-isolate-genomics")
+
+if MPLSTYLE_PATH and osp.exists(MPLSTYLE_PATH):
+    plt.style.use(MPLSTYLE_PATH)
+
+# The project style is tuned for a single 12x7.4 panel (titlesize 18-20), which collides
+# badly in a 1x2 layout. Scale type down for these multi-panel figures.
+plt.rcParams.update(
+    {
+        "figure.titlesize": 15,
+        "axes.titlesize": 12.5,
+        "axes.labelsize": 11.5,
+        "xtick.labelsize": 10.5,
+        "ytick.labelsize": 10.5,
+        "legend.fontsize": 10,
+        "font.size": 10.5,
+    }
+)
+
+# Entity colours -- fixed across all panels (see module docstring).
+KO = "#2a78d6"  # engineered knockout / coding
+NAT = "#e34948"  # natural isolate / non-coding
+INK = "#0b0b0b"
+INK2 = "#52514e"
+MUTED = "#b8b7b2"
+
+TS = timestamp()
+
+
+def _save(fig, name: str, caption: str | None = None) -> str:
+    os.makedirs(IMG_DIR, exist_ok=True)
+    if caption:
+        fig.text(0.005, -0.015, caption, ha="left", va="top", color=INK2, fontsize=9.5)
+    p = osp.join(IMG_DIR, f"{name}_{TS}.png")
+    fig.savefig(p, dpi=200, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    print(f"      -> {p}", flush=True)
+    return p
+
+
+def _despine(ax):
+    for s in ("top", "right"):
+        ax.spines[s].set_visible(False)
+    for s in ("left", "bottom"):
+        ax.spines[s].set_color(MUTED)
+    ax.tick_params(colors=INK2)
+    ax.grid(True, alpha=0.18, linewidth=0.7)
+    ax.set_axisbelow(True)
+
+
+def _headroom(ax, frac: float = 0.30) -> None:
+    """Extend the top of the y-axis so value labels and legends never overlap marks."""
+    lo, hi = ax.get_ylim()
+    if ax.get_yscale() == "log":
+        ax.set_ylim(lo, hi * (10**frac))
+    else:
+        ax.set_ylim(lo, hi + (hi - lo) * frac)
+
+
+def fig_genome_divergence():
+    print("[fig] genome divergence", flush=True)
+    pg = pd.read_parquet(osp.join(RESULTS_DIR, "per_gene_divergence_summary.parquet"))
+    ps = pd.read_parquet(osp.join(RESULTS_DIR, "per_strain_divergence_summary.parquet"))
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.6), constrained_layout=True)
+
+    ax = axes[0]
+    v = pg["total_divergence_mean"].dropna() * 100
+    ax.hist(v, bins=80, color=NAT, edgecolor="white", linewidth=0.4)
+    _headroom(ax)
+    med = float(v.median())
+    ax.axvline(med, color=INK, linestyle="--", linewidth=1.6)
+    ax.annotate(
+        f"median {med:.2f}%",
+        xy=(med, ax.get_ylim()[1] * 0.88),
+        xytext=(8, 0),
+        textcoords="offset points",
+        color=INK,
+        fontsize=11,
+    )
+    ax.set_xlabel("mean divergence from S288C across isolates (%)")
+    ax.set_ylabel("reference ORFs")
+    ax.set_title("Per-ORF divergence (6,011 ORFs)", loc="left", color=INK)
+    ax.set_xlim(0, min(float(v.quantile(0.995)), 5))
+    _despine(ax)
+
+    ax = axes[1]
+    w = ps["genome_wide_divergence"].dropna() * 100
+    ax.hist(w, bins=60, color=NAT, edgecolor="white", linewidth=0.4)
+    _headroom(ax)
+    med = float(w.median())
+    ax.axvline(med, color=INK, linestyle="--", linewidth=1.6)
+    ax.annotate(
+        f"median {med:.2f}%",
+        xy=(med, ax.get_ylim()[1] * 0.88),
+        xytext=(8, 0),
+        textcoords="offset points",
+        color=INK,
+        fontsize=11,
+    )
+    ax.set_xlabel("genome-wide SNP divergence from S288C (%)")
+    ax.set_ylabel("isolates")
+    ax.set_title("Per-isolate divergence (1,011 isolates)", loc="left", color=INK)
+    _despine(ax)
+
+    fig.suptitle(
+        "Natural isolates differ from S288C by well under 1% of coding bases",
+        x=0.005,
+        ha="left",
+        color=INK,
+    )
+    return _save(
+        fig,
+        "genome_divergence",
+        "SNP divergence is het-weighted per Peter 2018's published convention; "
+        "length-changing indel alleles are scored by exact edit distance.",
+    )
+
+
+def fig_pangenome():
+    print("[fig] pangenome + natural KO burden", flush=True)
+    po = pd.read_parquet(osp.join(RESULTS_DIR, "pangenome_orf_presence.parquet"))
+    bd = pd.read_parquet(osp.join(RESULTS_DIR, "natural_ko_burden.parquet"))
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.6), constrained_layout=True)
+
+    ax = axes[0]
+    ax.hist(
+        po["frac_isolates_present"] * 100,
+        bins=50,
+        color=NAT,
+        edgecolor="white",
+        linewidth=0.4,
+    )
+    ax.set_yscale("log")
+    _headroom(ax, 0.55)
+    n_core = int(po["is_core_peter"].sum())
+    n_var = int((~po["is_core_peter"]).sum())
+    ax.annotate(
+        f"core\n{n_core:,} ORFs",
+        xy=(99, n_core),
+        xytext=(-8, 12),
+        textcoords="offset points",
+        ha="right",
+        va="bottom",
+        color=INK,
+        fontsize=11,
+    )
+    ax.annotate(
+        f"variable: {n_var:,} ORFs", xy=(50, 30), color=INK2, fontsize=11, ha="center"
+    )
+    ax.set_xlabel("% of the 1,011 isolates carrying the ORF")
+    ax.set_ylabel("pangenome ORFs (log)")
+    ax.set_title("Pangenome presence spectrum", loc="left", color=INK)
+    _despine(ax)
+
+    ax = axes[1]
+    ax.hist(
+        bd["n_broken_union"],
+        bins=60,
+        color=NAT,
+        edgecolor="white",
+        linewidth=0.4,
+        label="natural isolate",
+    )
+    ax.axvline(1, color=KO, linewidth=2.6, label="Kemmeren engineered KO = 1")
+    _headroom(ax, 0.34)
+    med = float(bd["n_broken_union"].median())
+    ax.axvline(med, color=INK, linestyle="--", linewidth=1.6)
+    ax.annotate(
+        f"median {med:.0f}\nalready broken",
+        xy=(med, ax.get_ylim()[1] * 0.60),
+        xytext=(10, 0),
+        textcoords="offset points",
+        color=INK,
+        fontsize=11,
+    )
+    ax.set_xlabel("reference ORFs broken\n(absent | frameshift | premature stop)")
+    ax.set_ylabel("isolates")
+    ax.set_title("Natural KO burden vs one engineered KO", loc="left", color=INK)
+    ax.legend(frameon=False, loc="upper right")
+    _despine(ax)
+
+    fig.suptitle(
+        "A natural isolate arrives with hundreds of genes already broken",
+        x=0.005,
+        ha="left",
+        color=INK,
+    )
+    return _save(
+        fig,
+        "pangenome_and_ko_burden",
+        "Core = present in all 1,011 isolates (Peter 2018's own definition; we recover "
+        "4,942 vs their published 4,940).",
+    )
+
+
+def fig_regional_diversity():
+    print("[fig] regional nucleotide diversity", flush=True)
+    df = pd.read_parquet(
+        osp.join(RESULTS_DIR, "regulatory_divergence_by_region.parquet")
+    )
+    with open(osp.join(RESULTS_DIR, "regulatory_divergence_summary.json")) as fh:
+        s = json.load(fh)
+
+    order = ["cds", "upstream_1000", "downstream_297", "intergenic_other"]
+    pretty = {
+        "cds": "CDS\n(coding)",
+        "upstream_1000": "1,000 bp\nupstream",
+        "downstream_297": "297 bp\ndownstream",
+        "intergenic_other": "other\nintergenic",
+    }
+    df = df.set_index("region").loc[order].reset_index()
+    # coding vs non-coding is a real identity split, not decoration
+    colors = [KO] + [NAT] * 3
+
+    fig, ax = plt.subplots(figsize=(9, 4.8), constrained_layout=True)
+    bars = ax.bar(
+        [pretty[r] for r in df.region],
+        df.pi_percent,
+        color=colors,
+        edgecolor="white",
+        linewidth=2,
+        width=0.66,
+    )
+    ax.set_ylim(0, float(df.pi_percent.max()) * 1.32)
+    # direct value labels on every bar (relief rule: identity never colour-alone)
+    for b, v in zip(bars, df.pi_percent):
+        ax.annotate(
+            f"{v:.3f}%",
+            xy=(b.get_x() + b.get_width() / 2, v),
+            xytext=(0, 5),
+            textcoords="offset points",
+            ha="center",
+            color=INK,
+            fontsize=12,
+        )
+    ax.set_ylabel("nucleotide diversity  π  (%)")
+    ax.set_title(
+        "Regulatory sequence is ~2× more polymorphic than coding sequence",
+        loc="left",
+        color=INK,
+        fontsize=14,
+    )
+    handles = [
+        plt.Rectangle((0, 0), 1, 1, color=KO),
+        plt.Rectangle((0, 0), 1, 1, color=NAT),
+    ]
+    ax.legend(
+        handles, ["coding", "non-coding"], frameon=False, loc="upper left", ncols=2
+    )
+    _despine(ax)
+    saw = s["species_aware_transformer_window"]
+    return _save(
+        fig,
+        "regional_nucleotide_diversity",
+        f"The species-aware transformer's input (CDS + 1,000 bp upstream + 297 bp "
+        f"downstream) covers {100 * saw['frac_of_genome_covered']:.1f}% of the genome "
+        f"and captures {100 * saw['frac_of_pi_captured']:.1f}% of all nucleotide "
+        f"diversity.\nπ from Peter 2018's 1011Matrix.gvcf (1,753,947 variants); regions "
+        f"assigned by precedence CDS > upstream > downstream > intergenic.",
+    )
+
+
+def fig_de_comparison():
+    print("[fig] DE comparison (headline)", flush=True)
+    de = pd.read_parquet(osp.join(RESULTS_DIR, "de_counts_per_strain.parquet"))
+    with open(osp.join(RESULTS_DIR, "de_comparison_summary.json")) as fh:
+        s = json.load(fh)
+
+    kem = de[de.dataset == "kemmeren2014_single_ko"]["n_de_paper_exact"].dropna()
+    cau = de[de.dataset == "caudal2024_natural_isolate"]["n_de_paper_exact"].dropna()
+
+    fig, axes = plt.subplots(1, 2, figsize=(12.5, 4.8), constrained_layout=True)
+
+    ax = axes[0]
+    bins = np.logspace(0, np.log10(max(kem.max(), cau.max()) + 1), 45)
+    ax.hist(
+        np.clip(kem, 1, None),
+        bins=bins,
+        color=KO,
+        alpha=0.85,
+        edgecolor="white",
+        linewidth=0.5,
+        label="Kemmeren single KO (n=1,484)",
+    )
+    ax.hist(
+        np.clip(cau, 1, None),
+        bins=bins,
+        color=NAT,
+        alpha=0.72,
+        edgecolor="white",
+        linewidth=0.5,
+        label="Caudal natural isolate (n=943)",
+    )
+    ax.set_xscale("log")
+    _headroom(ax, 0.34)
+    km, cm = float(kem.median()), float(cau.median())
+    ax.axvline(km, color=KO, linestyle="--", linewidth=2)
+    ax.axvline(cm, color=NAT, linestyle="--", linewidth=2)
+    # medians sit at 55% height, clear of the legend box in the upper right
+    ax.annotate(
+        f"median {km:.0f}",
+        xy=(km, ax.get_ylim()[1] * 0.55),
+        xytext=(-6, 0),
+        textcoords="offset points",
+        ha="right",
+        color=KO,
+        fontsize=11.5,
+    )
+    ax.annotate(
+        f"median {cm:.0f}",
+        xy=(cm, ax.get_ylim()[1] * 0.55),
+        xytext=(8, 0),
+        textcoords="offset points",
+        color=NAT,
+        fontsize=11.5,
+    )
+    ax.set_xlabel("differentially expressed genes per strain  (log)")
+    ax.set_ylabel("strains")
+    ax.set_title("DE genes per strain", loc="left", color=INK)
+    ax.legend(frameon=False, loc="upper right")
+    _despine(ax)
+
+    ax = axes[1]
+    kl = np.load(osp.join(RESULTS_DIR, "log2_matrix_kemmeren2014_single_ko.npy"))
+    cl = np.load(osp.join(RESULTS_DIR, "caudal_log2_matrix.npy"))
+    kf = kl[np.isfinite(kl)]
+    cf = cl[np.isfinite(cl)]
+    bins = np.linspace(-3, 3, 160)
+    ax.hist(
+        cf,
+        bins=bins,
+        density=True,
+        color=NAT,
+        alpha=0.55,
+        histtype="stepfilled",
+        edgecolor=NAT,
+        linewidth=1.4,
+        label="Caudal natural isolate",
+    )
+    ax.hist(
+        kf,
+        bins=bins,
+        density=True,
+        color=KO,
+        alpha=0.72,
+        histtype="stepfilled",
+        edgecolor=KO,
+        linewidth=1.4,
+        label="Kemmeren single KO",
+    )
+    t = float(np.log2(1.7))
+    for x in (-t, t):
+        ax.axvline(x, color=INK, linestyle=":", linewidth=1.3)
+    ax.set_yscale("log")
+    _headroom(ax, 0.55)
+    ax.annotate(
+        "FC = 1.7",
+        xy=(t, ax.get_ylim()[0] * 3.2),
+        xytext=(6, 0),
+        textcoords="offset points",
+        color=INK2,
+        fontsize=10.5,
+    )
+    ax.set_xlabel("log2 expression ratio vs reference")
+    ax.set_ylabel("density (log)")
+    ax.set_title(
+        f"Spread of the response:  SD {kf.std():.2f} (KO)  vs  {cf.std():.2f} (isolate)",
+        loc="left",
+        color=INK,
+    )
+    ax.legend(frameon=False, loc="upper right")
+    _despine(ax)
+
+    h = s["headline"]
+    fig.suptitle(
+        f"A natural isolate differentially expresses "
+        f"{h['fold_more_genes_median']:.0f}× more genes than a single knockout "
+        f"(median {h['caudal_natural_isolate_median_de']:.0f} vs "
+        f"{h['kemmeren_single_ko_median_de']:.0f})",
+        x=0.005,
+        ha="left",
+        color=INK,
+    )
+    return _save(
+        fig,
+        "de_comparison_ko_vs_natural",
+        "Identical rule on both arms: |log2 FC| > log2(1.7) AND BH-adjusted p < 0.05 "
+        "(Kemmeren 2014's own criterion). Caudal has no published p-values, so its "
+        "noise model is estimated from its 29 replicate cultures\nand applied the same "
+        "way — without that control its count would be 1,011, not 160.",
+    )
+
+
+def fig_bit_ledger():
+    p = osp.join(RESULTS_DIR, "bit_ledger.parquet")
+    if not osp.exists(p):
+        print(
+            "[fig] bit ledger -- SKIPPED (bit_accounting.py has not finished)",
+            flush=True,
+        )
+        return None
+    print("[fig] bit ledger", flush=True)
+    df = pd.read_parquet(p)
+
+    mods = [
+        ("kemmeren2014_single_ko", "Kemmeren\nsingle KO", KO),
+        ("sameith2015_double_ko", "Sameith\ndouble KO", KO),
+        ("caudal2024_natural_isolate", "Caudal\nnatural isolate", NAT),
+    ]
+    rows = []
+    for m, label, c in mods:
+        d = df[df.modality == m]
+
+        def get(enc):
+            r = d[d.encoding == enc]
+            return float(r["bits_per_strain"].iloc[0]) if len(r) else np.nan
+
+        gt = get("genotype_minimal")
+        if not np.isfinite(gt):
+            gt = get("sequence_diff_vs_S288C")
+        rows.append(
+            {
+                "label": label,
+                "color": c,
+                "genotype_bits": gt,
+                "genotype_as_stored": get("genotype_as_stored"),
+                "phenotype_bits": get("phenotype_values_only"),
+                "phenotype_as_stored": get("phenotype_as_stored"),
+            }
+        )
+    r = pd.DataFrame(rows)
+
+    fig, axes = plt.subplots(1, 2, figsize=(12.5, 4.8), constrained_layout=True)
+
+    ax = axes[0]
+    x = np.arange(len(r))
+    w = 0.36
+    b1 = ax.bar(
+        x - w / 2,
+        r.genotype_bits,
+        w,
+        color=KO,
+        edgecolor="white",
+        linewidth=2,
+        label="genotype (minimal encoding)",
+    )
+    b2 = ax.bar(
+        x + w / 2,
+        r.phenotype_bits,
+        w,
+        color=NAT,
+        edgecolor="white",
+        linewidth=2,
+        label="phenotype (values only)",
+    )
+    ax.set_yscale("log")
+    _headroom(ax, 0.9)
+    for bars in (b1, b2):
+        for b in bars:
+            v = b.get_height()
+            if np.isfinite(v) and v > 0:
+                ax.annotate(
+                    f"{v:,.0f}" if v >= 1000 else f"{v:.1f}",
+                    xy=(b.get_x() + b.get_width() / 2, v),
+                    xytext=(0, 4),
+                    textcoords="offset points",
+                    ha="center",
+                    color=INK,
+                    fontsize=10.5,
+                )
+    ax.set_xticks(x)
+    ax.set_xticklabels(r.label)
+    ax.set_ylabel("bits per strain  (log)")
+    ax.set_title("Genotype vs phenotype information per strain", loc="left", color=INK)
+    ax.legend(frameon=False, loc="upper left")
+    _despine(ax)
+
+    ax = axes[1]
+    ratio = r.phenotype_bits / r.genotype_bits
+    bars = ax.bar(
+        r.label, ratio, color=list(r.color), edgecolor="white", linewidth=2, width=0.6
+    )
+    ax.set_yscale("log")
+    _headroom(ax, 0.55)
+    for b, v in zip(bars, ratio):
+        ax.annotate(
+            f"{v:,.0f}×" if v >= 10 else f"{v:.2f}×",
+            xy=(b.get_x() + b.get_width() / 2, v),
+            xytext=(0, 4),
+            textcoords="offset points",
+            ha="center",
+            color=INK,
+            fontsize=12,
+        )
+    ax.axhline(1, color=INK2, linewidth=1.2, linestyle=":")
+    ax.annotate(
+        "parity",
+        xy=(0.98, 1),
+        xycoords=("axes fraction", "data"),
+        xytext=(0, 4),
+        textcoords="offset points",
+        ha="right",
+        color=INK2,
+        fontsize=10,
+    )
+    ax.set_ylabel("phenotype bits per genotype bit  (log)")
+    ax.set_title("How much must the model invent?", loc="left", color=INK)
+    _despine(ax)
+
+    fig.suptitle(
+        "A KO genotype is ~13 bits yet yields a 6,000-gene response; "
+        "an isolate's genotype carries orders of magnitude more",
+        x=0.005,
+        ha="left",
+        color=INK,
+    )
+    return _save(
+        fig,
+        "bit_ledger",
+        "L_C = gzip codelength (zlib level 6, streamed) — a computable upper bound on "
+        "Kolmogorov complexity, not an entropy. Same compressor as the paper's "
+        "Signal (gzip) column.",
+    )
+
+
+def fig_coupling():
+    print("[fig] genome -> expression coupling", flush=True)
+    ps = pd.read_parquet(osp.join(RESULTS_DIR, "per_strain_divergence_summary.parquet"))
+    de = pd.read_parquet(osp.join(RESULTS_DIR, "de_counts_per_strain.parquet"))
+    bd = pd.read_parquet(osp.join(RESULTS_DIR, "natural_ko_burden.parquet"))
+
+    cau = de[de.dataset == "caudal2024_natural_isolate"][
+        ["strain", "n_de_paper_exact"]
+    ].copy()
+    ps["strain"] = ps["strain"].astype(str)
+    cau["strain"] = cau["strain"].astype(str)
+    bd["strain"] = bd["strain"].astype(str)
+    j = cau.merge(ps, on="strain", how="inner").merge(bd, on="strain", how="inner")
+    j = j[np.isfinite(j["n_de_paper_exact"]) & np.isfinite(j["genome_wide_divergence"])]
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.6), constrained_layout=True)
+
+    y = j["n_de_paper_exact"]
+    panels = [
+        (
+            j["genome_wide_divergence"] * 100,
+            "genome-wide SNP divergence from S288C (%)",
+            "Sequence divergence vs DE",
+        ),
+        (
+            j["n_broken_union"],
+            "reference ORFs broken\n(absent | frameshift | premature stop)",
+            "Natural-KO burden vs DE",
+        ),
+    ]
+    rs = []
+    for ax, (x, xlab, title) in zip(axes, panels):
+        ax.scatter(x, y, s=13, color=NAT, alpha=0.5, edgecolor="none")
+        r = float(np.corrcoef(x, y)[0, 1])
+        rs.append(r)
+        m, b = np.polyfit(x, y, 1)
+        xs = np.linspace(float(x.min()), float(x.max()), 50)
+        ax.plot(xs, m * xs + b, color=INK, linewidth=2)
+        _headroom(ax, 0.18)
+        ax.annotate(
+            f"Pearson r = {r:.2f}   (n = {len(j)})",
+            xy=(0.03, 0.94),
+            xycoords="axes fraction",
+            va="top",
+            color=INK,
+            fontsize=11.5,
+        )
+        ax.set_xlabel(xlab)
+        ax.set_ylabel("differentially expressed genes")
+        ax.set_title(title, loc="left", color=INK)
+        _despine(ax)
+
+    fig.suptitle(
+        f"Genotype magnitude is a weak predictor of transcriptome response "
+        f"(r = {rs[0]:.2f}, {rs[1]:.2f})",
+        x=0.005,
+        ha="left",
+        color=INK,
+    )
+    return _save(
+        fig,
+        "genotype_phenotype_coupling",
+        "Each point is one of the 943 natural isolates. If genome bits translated "
+        "directly into transcriptome bits, these would be tight lines.",
+    )
+
+
+def fig_codon_usage():
+    print("[fig] codon usage", flush=True)
+    cc = pd.read_parquet(osp.join(RESULTS_DIR, "codon_counts_per_strain.parquet"))
+    ref = np.load(osp.join(RESULTS_DIR, "reference_codon_counts.npy"))
+
+    cols = [f"codon_{i}" for i in range(64)]
+    M = cc[cols].to_numpy(dtype=float)
+    freq = M / M.sum(axis=1, keepdims=True)
+    rf = ref / ref.sum()
+    delta = (freq - rf[None, :]) * 1000  # per-mille deviation from S288C
+
+    bases = "ACGT"
+    names = [f"{bases[i // 16]}{bases[(i // 4) % 4]}{bases[i % 4]}" for i in range(64)]
+    order = np.argsort(-np.abs(delta).mean(axis=0))[:20]
+
+    fig, ax = plt.subplots(figsize=(11.5, 4.6), constrained_layout=True)
+    data = [delta[:, i] for i in order]
+    bp = ax.boxplot(
+        data,
+        patch_artist=True,
+        widths=0.6,
+        showfliers=False,
+        medianprops=dict(color=INK, linewidth=1.8),
+    )
+    for patch in bp["boxes"]:
+        patch.set_facecolor(NAT)
+        patch.set_alpha(0.75)
+        patch.set_edgecolor("white")
+        patch.set_linewidth(1.4)
+    ax.axhline(0, color=INK, linewidth=1.4)
+    ax.set_xticks(range(1, len(order) + 1))
+    ax.set_xticklabels([names[i] for i in order], rotation=45, ha="right")
+    ax.set_xlabel("codon (20 most variable)")
+    ax.set_ylabel("deviation from S288C usage  (‰)")
+    mx = float(np.abs(delta).max())
+    ax.set_title(
+        f"Codon usage is essentially invariant across 1,011 isolates "
+        f"(largest single-isolate deviation {mx:.2f}‰)",
+        loc="left",
+        color=INK,
+    )
+    _despine(ax)
+    return _save(
+        fig,
+        "codon_usage_deviation",
+        "Per-isolate codon frequencies over intronless reference ORFs, minus S288C's. "
+        "A 1‰ shift is one codon in a thousand.",
+    )
+
+
+def main() -> None:
+    os.makedirs(IMG_DIR, exist_ok=True)
+    made = []
+    for f in (
+        fig_genome_divergence,
+        fig_pangenome,
+        fig_regional_diversity,
+        fig_de_comparison,
+        fig_coupling,
+        fig_codon_usage,
+        fig_bit_ledger,
+    ):
+        p = f()
+        if p:
+            made.append(p)
+    print(f"\n{len(made)} figures -> {IMG_DIR}")
+    for p in made:
+        print(f"  {osp.basename(p)}")
+
+
+if __name__ == "__main__":
+    main()

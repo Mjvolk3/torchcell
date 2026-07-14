@@ -110,9 +110,13 @@ def _genotype_signature(
     of duplicates. A CRISPR guide library likewise has MANY strains per (gene, mode): six
     guides targeting the same gene under the same effector are distinct strains, so the
     guide spacer (``crispr.guide_sequence``) joins the key when present (None for a
-    background/unspecified guide leaves the key unchanged). L4 gene-containment still keys on
-    the bare systematic name (a gene-level question); L1 uniqueness keys on this strain
-    identity.
+    background/unspecified guide leaves the key unchanged). When a study screens several
+    guide LIBRARY POOLS, the SAME spacer measured in two pools is two independent pooled
+    measurements (Smith 2016: pool-relative median-centred fitness differs by up to ~8 log2
+    units between pools), so the pool (``crispr.library_pool``) also joins the key when
+    present (None leaves the key unchanged -> single-pool studies keep their signatures). L4
+    gene-containment still keys on the bare systematic name (a gene-level question); L1
+    uniqueness keys on this strain identity.
     """
 
     def _identity(p: dict[str, Any]) -> tuple[str | None, ...]:
@@ -122,8 +126,11 @@ def _genotype_signature(
             p.get("perturbed_gene_name"),
         )
         crispr = p.get("crispr")
-        if isinstance(crispr, dict) and crispr.get("guide_sequence") is not None:
-            ident = ident + (crispr["guide_sequence"],)
+        if isinstance(crispr, dict):
+            if crispr.get("guide_sequence") is not None:
+                ident = ident + (crispr["guide_sequence"],)
+            if crispr.get("library_pool") is not None:
+                ident = ident + (crispr["library_pool"],)
         return ident
 
     return tuple(

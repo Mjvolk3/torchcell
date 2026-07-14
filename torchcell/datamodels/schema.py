@@ -214,6 +214,15 @@ class CrisprConstruct(ModelStrict):
         default=None,
         description="number of guides targeting this gene (e.g. Mormino '1-16 gRNAs/gene')",
     )
+    library_pool: str | None = Field(
+        default=None,
+        description="the guide library sub-pool this construct was screened in, when a "
+        "study runs several pools (e.g. Smith 2016 'gene_tiling_20bp' vs 'broad_tiling'). "
+        "Guide-library provenance AND a strain discriminator: an identical spacer screened "
+        "in two pools is two independent pooled measurements (pool-relative median-centred "
+        "fitness), not one, so the pool joins the strain identity. None when a study has a "
+        "single library (Lian, Mormino) -- a NON-breaking default.",
+    )
     effector_plasmid_uri: str | None = Field(
         default=None,
         description="off-graph pointer into a plasmid/SBOL store for the full effector+guide "

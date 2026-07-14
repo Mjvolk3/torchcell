@@ -20,21 +20,46 @@
 %% house format in preamble.tex (proposition/proof envs, \pfstep, no bullets).
 %% ==================================================================================
 \clearpage
-\section*{Supplementary Information}
+\section*{Supplementary Information\secstatus{todo}}
 
 \noindent\textbf{Contents}\par\smallskip
-\noindent\begin{tabular}{@{}p{3.6cm}l@{}}
-Supplementary Note 1  & Functional equivalence of the perturbation operator\\
-Supplementary Note 2  & Graph-regularized attention contains graph attention\\
-Supplementary Note 3  & The static-graph assumption and learning the perturbation\\[4pt]
-Supplementary Figs.\  & S1--S12 (placed after the Notes)\\
+%% Second column is a wrapping p{} (an `l' column cannot break, so the long Tables line ran
+%% ~278pt off the page); \dimexpr keeps it correct in both the wide editing view and the
+%% narrower submission \textwidth.
+%% Every entry below is a live cross-reference: insert a Note, figure or table anywhere and this
+%% block renumbers itself. It previously hard-coded "S1", "S3--S5" etc. and had to be re-typed by
+%% hand on every insertion -- which is exactly how it drifted out of sync.
+\noindent\begin{tabular}{@{}p{3.6cm}p{\dimexpr\linewidth-3.6cm-2\tabcolsep\relax}@{}}
+Supplementary Note~\ref{note:equivalence}     & Functional equivalence of the perturbation operator (with \suppfig{fig:pert-equivalence-empirical})\\
+Supplementary Note~\ref{note:graph-attention} & Graph-regularized attention contains graph attention (with \suppfig{fig:graphreg-empirical})\\
+Supplementary Note~\ref{note:static-graph}    & The static-graph assumption and learning the perturbation (with \supptab{tab:compute})\\
+Supplementary Note~\ref{note:gi-from-fitness} & Gene interactions as a learned function of fitness (with \suppfig{fig:fit-gi-emergent})\\
+Supplementary Note~\ref{note:info-accounting} & Persistent entities and contingent observations (with \supptab{tab:entity-corpora})\\
+Supplementary Note~\ref{note:classical-ml}    & Classical-ML case study on gene representation and pooling (with \suppfig{fig:classical-ml} and \supptab{tab:classical-ml-results}--\ref{tab:classical-ml-pearson})\\[4pt]
+Supplementary Figs.\  & A figure supporting a Note sits with that Note; the remainder follow all the Notes\\
+Supplementary Tables & \supptab{tab:compute} (per-batch compute), \supptab{tab:entity-corpora} (persistent-entity corpora), \supptab{tab:classical-ml-results}--\ref{tab:classical-ml-pearson} (classical-ML benchmark: Spearman, MSE, Pearson), \supptab{tab:datasets} (phenotype datasets), \supptab{tab:databases} (integrated graphs)\\
 \end{tabular}
 
-%% ---- Supplementary Note 1: functional equivalence of the perturbation operator ----
+%% SUPPLEMENTARY NUMBERING -- Nature Portfolio style. VERIFIED 2026.07 against the Nature Portfolio
+%% formatting guide, which lists the accepted and rejected citation forms explicitly:
+%%     Correct:   "Supplementary Fig. 1"  "Supplementary Table 1"
+%%     INCORRECT: "Fig. S1"  "Supplemental Table 1"  "See Supplementary Information"
+%% So SI floats are numbered FROM 1 with NO "S" prefix -- the word "Supplementary" is what
+%% disambiguates them from the main Figs 1--6 / Table 1, which keep their own numbering. Renaming
+%% the float makes the CAPTIONS read "Supplementary Figure 1 | ..." and "Supplementary Table 1 ...",
+%% while \ref still yields the bare number, so \suppfig / \supptab / \suppnoteref (preamble.tex)
+%% compose to exactly the accepted forms. Never write "Fig.~\ref{...}" for an SI float.
+\setcounter{figure}{0}
+\renewcommand{\thefigure}{\arabic{figure}}
+\renewcommand{\figurename}{Supplementary Figure}
+\setcounter{table}{0}
+\renewcommand{\thetable}{\arabic{table}}
+\renewcommand{\tablename}{Supplementary Table}
+
+%% ---- Supplementary Note [note:equivalence]: functional equivalence of the perturbation operator ----
 %% Ported from notes/paper.nature-biotech.fig1.perturbation-operator.md (2026.07.01 section).
 %% Notation from Table~\ref{tab:notation}; rebuild map is \kappa (\rho is the GPR).
-\clearpage
-\subsection*{Supplementary Note~1: functional equivalence of the perturbation operator}
+\suppnote{note:equivalence}{functional equivalence of the perturbation operator\secstatus{tent}}
 
 Encoding the wildtype cell once and applying a perturbation-conditioned operator is at least as
 expressive as rebuilding and re-encoding a separate graph for every strain. The operator can
@@ -49,11 +74,18 @@ the target.
 
 \notesec{Setting} There are two ways to predict a phenotype under a perturbation $p$. Perturbing
 the \emph{data} materializes a rebuilt graph $G_p=\kappa(G,p)$, deleting or rewiring vertices and
-edges, and encodes it, $\hat y=\Phi(G_p)$; the deterministic rebuild map $\kappa:(G,p)\mapsto G_p$
+edges, and encodes it,
+\[
+\hat y=\Phi(G_p).
+\]
+The deterministic rebuild map $\kappa:(G,p)\mapsto G_p$
 runs once per strain (written $\kappa$, not $\rho$, because $\rho$ already denotes the
 gene--reaction association). Perturbing the \emph{representation} encodes the reference once and
-operates on it, $\hat y=\mathcal{R}_\phi(\mathcal{T}_\psi(F_\theta(G),p),\varepsilon)$, so the
-graph enters only through $F_\theta$ and the representation $H=F_\theta(G)$ is reused across all
+operates on it,
+\[
+\hat y=\mathcal{R}_\phi\!\big(\mathcal{T}_\psi(F_\theta(G),p),\varepsilon\big),
+\]
+so the graph enters only through $F_\theta$ and the representation $H=F_\theta(G)$ is reused across all
 $p$. Collect the predictors each route can express into two function classes:
 $\mathcal{H}_{\mathrm{data}}=\{\Phi\circ\kappa\}$, the maps built by perturbing the data, and
 $\mathcal{H}_{\mathrm{rep}}=\{\Psi:\mathcal{G}\times\mathcal{P}\to\mathcal{Y}\}$, the maps
@@ -75,6 +107,7 @@ data-rebuilding family, and strictly extends it whenever a feature or parametric
 such as dose or type survives in $(G,p)$ but is erased by the rebuilt topology $G_p$.
 
 \begin{proof}
+We establish the two inclusions in turn.
 \pfstep{Containment} The map $\kappa$ is deterministic, so $(G,p)$ fixes $G_p$. For any target
 $\Phi^\star$ we have $\Phi^\star(G_p)=(\Phi^\star\circ\kappa)(G,p)=:\Psi^\star(G,p)$, an equality
 of functions, which gives $\mathcal{H}_{\mathrm{data}}\subseteq\mathcal{H}_{\mathrm{rep}}$.
@@ -145,8 +178,7 @@ Subgraph Aggregation Networks} (ESAN), ICLR 2022 (bag-of-subgraphs $>$ 1-WL); Xu
 \textit{How Powerful Are GNNs?} (GIN), ICLR 2019 (1-WL bound).]}
 
 \notesec{Empirical validation} A minimal, idealized experiment on single-gene knockout
-fitness tests the equivalence directly (Supplementary
-Fig.~\ref{fig:pert-equivalence-empirical}). Two capacity-matched small models are trained on the
+fitness tests the equivalence directly (\suppfig{fig:pert-equivalence-empirical}). Two capacity-matched small models are trained on the
 same knockouts, gene features, and splits, differing only along the perturb-data versus
 perturb-representation axis: a data-perturbing GNN that rebuilds the perturbed graph
 $G_p=\kappa(G,p)$, deleting the knocked-out gene and its edges, and re-encodes, $\hat
@@ -155,16 +187,38 @@ and applies the operator, $\hat y=\mathcal{R}_\phi(\mathcal{T}_\psi(H,p))$. A si
 gives an injective $\kappa$, so Proposition~\ref{prop:reparam} predicts equal attainable
 accuracy: the amortized model should match the data-perturbing one on held-out fitness while
 encoding once rather than rebuilding and re-encoding per strain. The compute gap this avoids is
-quantified in Supplementary Note~3.
+quantified in \suppnoteref{note:static-graph}.
 
-%% ---- Supplementary Note 2: GAT <-> CGT limit equivalence (Fig 1 panel h) ----
+% --- Empirical validation of the perturbation-operator equivalence (sits with [note:equivalence]) ---
+%     PLACEHOLDER -- compose once the experiment (single-gene KO fitness, CGT-style vs GNN-style
+%     small models) is run. Placed here so the figure sits with its Note.
+\begin{figure*}[t]
+\centering
+\figph{55mm}{\textbf{[Suppl. Fig. -- empirical equivalence: CGT-style vs.\ GNN-style on single-gene KO fitness]}\\[3pt]
+Idealized test of \suppnoteref{note:equivalence} on single-gene knockout fitness. Two capacity-matched
+small models trained on identical data, features, and splits: a data-perturbing GNN that
+rebuilds $G_p$ and re-encodes ($\hat y=\Phi(G_p)$) vs.\ a representation-perturbing CGT that
+encodes the wildtype once and applies the operator
+($\hat y=\mathcal{R}_\phi(\mathcal{T}_\psi(H,p))$).
+(a) predicted vs.\ actual fitness for both models;
+(b) held-out accuracy (Pearson $r$ / MSE), expected near-equal;
+(c) agreement of the two models' predictions ($\hat y_{\mathrm{GNN}}$ vs.\ $\hat y_{\mathrm{CGT}}$,
+near the identity line);
+(d) compute cost: per-strain rebuild$+$encode (GNN) vs.\ encode-once$+$operator (CGT),
+with the growth of \suppnoteref{note:static-graph}, \supptab{tab:compute}.
+\textit{[placeholder: run the experiment, then compose.]}}
+\caption{Empirical functional equivalence of the perturbation operator on single-gene
+knockout fitness (support for \suppnoteref{note:equivalence}).}
+\label{fig:pert-equivalence-empirical}
+\end{figure*}
+
+%% ---- Supplementary Note [note:graph-attention]: GAT <-> CGT limit equivalence (Fig 1 panel h) ----
 %% Companion to Note 1. Panel (h)'s claim -- the soft KL graph prior recovers a hard
 %% graph-attention mask as lambda->infty and strictly extends it at finite lambda -- was
 %% ASSERTED in Methods (Graph-regularized attention) but not proved; this note proves it
 %% (Gibbs uniqueness + KL-direction asymmetry). Full ideation:
 %% notes/paper.nature-biotech.fig1.gat-cgt-equivalence.md.
-\clearpage
-\subsection*{Supplementary Note~2: graph-regularized attention contains graph attention}
+\suppnote{note:graph-attention}{graph-regularized attention contains graph attention\secstatus{tent}}
 
 A graph-attention network hard-wires each gene to attend only to its catalogued neighbors. CGT
 instead lets every gene attend to all genes and adds a soft penalty that pulls each attention row
@@ -183,11 +237,15 @@ head is strictly more expressive. Notation follows Table~\ref{tab:notation}.
 
 \notesec{Setting} A graph-attention head confines gene $i$ to its neighbors
 $\mathcal{N}(i)=\{j:A^{(k)}_{ij}=1\}$ through an additive mask,
-$\alpha^{\mathrm{GAT}}_{i,:}=\operatorname{softmax}_j(s_{ij}+M_{ij})$ with $M_{ij}=0$ on edges and
-$-\infty$ on non-edges, so $\operatorname{supp}\alpha^{\mathrm{GAT}}_{i,:}=\mathcal{N}(i)$. The
-CGT head is unmasked,
-$\alpha^{\mathrm{CGT}}_{i,:}=\operatorname{softmax}_j\!\big(q_i\!\cdot\!k_j/\sqrt{d_k}\big)$, and
-the graph enters only through the prior $\Omega_k$ (Eq.~\ref{eq:graphreg}).
+\[
+\alpha^{\mathrm{GAT}}_{i,:}=\operatorname{softmax}_j\!\big(s_{ij}+M_{ij}\big),
+\qquad M_{ij}=0 \text{ on edges},\ \ M_{ij}=-\infty \text{ on non-edges},
+\]
+so $\operatorname{supp}\alpha^{\mathrm{GAT}}_{i,:}=\mathcal{N}(i)$. The CGT head is unmasked,
+\[
+\alpha^{\mathrm{CGT}}_{i,:}=\operatorname{softmax}_j\!\big(q_i\!\cdot\!k_j/\sqrt{d_k}\big),
+\]
+and the graph enters only through the prior $\Omega_k$ (Eq.~\ref{eq:graphreg}).
 
 \begin{proposition}[Graph attention as the $\lambda\!\to\!\infty$ limit]
 \label{prop:gat-limit}
@@ -202,6 +260,7 @@ every finite $\lambda$ the inclusion is strict.
 \end{proposition}
 
 \begin{proof}
+The two parts match the two clauses of the proposition.
 \pfstep{The limit} The supervised loss $\mathcal{L}_y$ is bounded in $\alpha_{i,:}$, being an
 average of bounded per-task losses, whereas the prior term
 $\lambda\,D_{\mathrm{KL}}(\tilde A_{i,:}\,\|\,\alpha_{i,:})$ scales with $\lambda$. As
@@ -245,7 +304,7 @@ of attention support, which genes attend to which, not of the within-neighborhoo
 prior's target $\tilde A_{i,:}$ is uniform over $\mathcal{N}(i)$, whereas a graph-attention layer
 learns non-uniform neighbor weights, and at finite $\lambda$ CGT's own $\alpha_{i,:}$ is data-shaped
 inside the softly enforced neighborhood. The defensible shared claim is same neighbors, learned
-weights, not identical weights. Second, as in Supplementary Note~1 the correspondence is learned,
+weights, not identical weights. Second, as in \suppnoteref{note:equivalence} the correspondence is learned,
 not a set-theoretic identity: it holds to the extent that the aligned head is trained toward
 $\tilde A$ and the supervised loss allows. The discovery-and-overrule asymmetry is a direct
 consequence of the KL direction $D_{\mathrm{KL}}(\tilde A\,\|\,\alpha)$, with the prior as reference
@@ -259,7 +318,7 @@ Together they justify the two architectural choices the bottom row of Fig.~\ref{
 depicts.
 
 \notesec{Empirical validation} A small, idealized experiment tests the proposition directly
-(Supplementary Fig.~\ref{fig:graphreg-empirical}). A single cell-encoder head is aligned to one
+(\suppfig{fig:graphreg-empirical}). A single cell-encoder head is aligned to one
 gene--gene graph and trained on held-out fitness while the prior weight $\lambda$ is swept from $0$,
 which is free attention, to large, which is the hard-mask limit. The proposition predicts three
 signatures. First, as $\lambda$ grows the head's attention row $\alpha_{i,:}$ should converge to the
@@ -273,7 +332,32 @@ discovery channel, while catalogued edges the head down-weights should be enrich
 labels contradict, exhibiting overruling. A hard-masked control produces neither signal by
 construction, which is the empirical face of the strict inclusion.
 
-%% ---- Supplementary Note 3: static-graph assumption + general-data-object + compute ----
+% --- Empirical relevance of graph-regularized attention (sits with [note:graph-attention]) ---
+%     PLACEHOLDER -- compose once the lambda-sweep experiment is run. Placed here so the
+%     figure sits with its Note.
+\begin{figure*}[t]
+\centering
+\figph{55mm}{\textbf{[Suppl. Fig. -- empirical relevance of graph-regularized attention: the $\lambda$ sweep]}\\[3pt]
+Idealized test of \suppnoteref{note:graph-attention}. One cell-encoder head aligned to a single gene--gene
+graph, trained on held-out fitness with the graph-prior weight $\lambda$ swept from $0$ (free
+attention) to the hard-mask limit.
+(a) attention-to-adjacency divergence $D_{\mathrm{KL}}(\tilde A_{i,:}\,\|\,\alpha_{i,:})$ and
+support overlap with $\mathcal{N}(i)$ vs.\ $\lambda$, decreasing to $0$ as $\lambda\!\to\!\infty$
+(the masked graph-attention limit of Prop.~\ref{prop:gat-limit});
+(b) held-out accuracy (Pearson $r$) vs.\ $\lambda$, peaked at intermediate $\lambda$, above both
+the free head ($\lambda=0$) and the hard mask;
+(c) discovery: precision--recall of recovering held-out interactions from the top off-graph
+attention entries, against a hard-masked control that cannot place off-graph mass;
+(d) overruling: catalogued edges the head down-weights, enriched for label-contradicted pairs
+relative to a null.
+\textit{[placeholder: run the $\lambda$ sweep, then compose.]}}
+\caption{Empirical relevance of graph-regularized attention: the finite-$\lambda$ soft prior
+recovers graph attention in the limit, wins at intermediate $\lambda$, and enables edge discovery
+and overruling (support for \suppnoteref{note:graph-attention}).}
+\label{fig:graphreg-empirical}
+\end{figure*}
+
+%% ---- Supplementary Note [note:static-graph]: static-graph assumption + general-data-object + compute ----
 %% The "longer discussion" of WHY we learn the perturbation. (a) biological hypothesis that
 %% catalogued graphs are perturbation-invariant + limits; (b) the general data object / loader
 %% vision (unify GNN / constraint-based-FBA / kinetic-ODE); (c) the compute/complexity growth
@@ -282,8 +366,7 @@ construction, which is the empirical face of the strict inclusion.
 %% notes/experiments.006.2025.10.22.subgraph-optimization-plan.md (44.38 vs 0.42 ms/sample,
 %% 104.5x; loader opt 3.65x graph-proc, -93.7% mem, but overall only 1.21x, graph proc -> 8%),
 %% notes/paper.nature-biotech.fig1.perturbation-operator.md and methods.tex (O(BL|E|) -> O(BL)).
-\clearpage
-\subsection*{Supplementary Note~3: the static-graph assumption and the case for learning the perturbation}
+\suppnote{note:static-graph}{the static-graph assumption and the case for learning the perturbation\secstatus{tent}}
 
 This note sets out the reasons for representing a strain as a perturbation of a fixed reference
 rather than as a rebuilt graph. They are of three kinds: a biological assumption together with its
@@ -306,15 +389,14 @@ strain: if perturbing an upstream regulator drives a partner's expression so low
 essentially absent, the physical interaction cannot occur in that cell even though the reference
 graph still lists it. More generally, condition- and genotype-specific rewiring is not represented by
 a single static adjacency. Two features soften, though do not eliminate, this cost. First, the graph
-is a soft prior, not a hard substrate (Supplementary Note~2): the supervised loss can pull attention
+is a soft prior, not a hard substrate (\suppnoteref{note:graph-attention}): the supervised loss can pull attention
 off an edge the labels contradict, and persistent off-graph attention can flag a context-specific
 interaction the catalogue omits. Second, the reference is the wildtype, so the assumption is only ever
 used to displace from a well-characterized baseline rather than to assert absolute structure. A
 genuinely dynamic, expression-gated edge is still only approximately handled, and we flag this as a
 limitation and a target for condition-conditioned graph priors.
 
-\notesec{A single general data object} Beyond expressivity (Supplementary
-Note~1), the design was chosen for a practical reason: keeping the reference fixed lets a data loader
+\notesec{A single general data object} Beyond expressivity (\suppnoteref{note:equivalence}), the design was chosen for a practical reason: keeping the reference fixed lets a data loader
 emit one general, read-ready object on request, which can then be consumed by different modeling
 paradigms without re-deriving the data. The same reference-plus-perturbation object is intended to
 serve, from one representation, machine learning on graphs, attention or transformer models, and
@@ -329,9 +411,12 @@ expressivity and cost arguments below.
 re-encode a perturbed graph per strain, which is expensive in a way that is easy to underestimate. Let
 $N$ be the number of genes, $\lvert E\rvert$ the edges, $d$ the hidden width, $L$ the encoder depth,
 $\lvert p\rvert$ the perturbed genes per strain (with $\lvert p\rvert\ll N$), $B$ the strains in a
-batch, and $L_{\mathrm{op}}$ the depth of the perturbation operator. Table~\ref{tab:compute} tracks the
+batch, and $L_{\mathrm{op}}$ the depth of the perturbation operator. \supptab{tab:compute} tracks the
 growth of each route.
 
+%% SOURCE: hand-authored -- analytical, not measured. Every cell is a Big-O derived from the cost
+%% model stated in the paragraph above (no data, hence no generating script). If a cell looks wrong,
+%% re-derive it from the symbol definitions above rather than hunting for a script.
 \begin{table}[h]
 \centering
 \begin{tabular}{@{}lll@{}}
@@ -380,7 +465,7 @@ $2.4$ million edge operations to about $67$ million per batch. Masking rather th
 simulates the subgraph inside the same $\mathcal{O}(B\,L\lvert E\rvert)$ fan-out; it does not remove it
 \textit{[numbers from the SubgraphRepresentation versus Perturbation and lazy-mask benchmarks;
 notes/experiments.006 subgraph-optimization and weekly 2025.44--45 reports]}. This is the empirical face
-of Table~\ref{tab:compute}: the encode cannot be avoided per strain on the rebuild route, no matter how
+of \supptab{tab:compute}: the encode cannot be avoided per strain on the rebuild route, no matter how
 fast the loader, which is exactly what the operator route amortizes.
 
 \notesec{Trade-offs between the two routes} The rebuild route is not strictly dominated. Because it encodes
@@ -390,19 +475,365 @@ the wildtype. In practice the operator route's single shared encode is the advan
 perturbations do originate from the wildtype and reuse dominates, but the trade-off is real, and these
 arguments, biological, computational, and pipeline-level, are early and warrant further work.
 
-%% ==================================================================================
-%% Supplementary Figures. Placed AFTER all Supplementary Notes (house order). Reset the
-%% counter to 0 so the first SI float is S1; figures run in first-mention order and
-%% renumber automatically. Placeholder floats (\figph) reserve a number + label for
-%% figures not yet drawn; swap each for a \tcfig{...} export once composed. Keep every SI
-%% figure inside the 180x170 mm print box. Figures placed true-to-size with \tcfig
-%% (no LaTeX scaling); fix width in draw.io, not with \scalebox.
-%% ==================================================================================
-\clearpage
-\setcounter{figure}{0}
-\renewcommand{\thefigure}{S\arabic{figure}}
+%% ---- Supplementary Note [note:gi-from-fitness]: gene interactions as a learned function of fitness ----
+%% Research direction (user 2026.07): jointly predict fitness + gene interactions and test
+%% whether interactions are recapitulated from fitness WITHOUT the interaction definition g
+%% in the objective. Formalization: universal approx is too broad; the provable kernels are
+%% (Prop) sufficiency -- interactions need no extra capacity -- and (Prop) conditioning --
+%% the accuracy bar. The central "emergent recovery" claim is empirical (placeholder figure).
+%% Speculative metabolism extension flagged with the identifiability caveat.
+\suppnote{note:gi-from-fitness}{gene interactions as a learned function of fitness\secstatus{tent}}
 
-% --- S1: classical-ML baselines (backs the information-accounting argument; report Fig 2) ---
+We train one model to predict fitness and gene interactions together, and ask whether the
+interactions can be recovered from the fitness predictions alone, without the algebraic
+definition of an interaction ever entering the objective. If they can, it is evidence that a
+correctly trained model learns a complex nonlinear relationship from data rather than from a
+hand-written loss term. How far that generalizes is unclear, but the same logic would suggest
+that, with the right data, a model could come to respect the constraints of metabolism without
+an explicit physics- or flux-balance-informed regularizer. This note states the hypothesis,
+asks how much of it can be made a theorem, and marks the experiment as a placeholder.
+
+\notesec{Setting} For genes $i,j,k$ let $f_S$ denote the fitness of the mutant carrying the
+perturbations in $S\subseteq\{i,j,k\}$, normalized so the wildtype has fitness $1$; a triple has
+seven such values, the singles $f_i,f_j,f_k$, the doubles $f_{ij},f_{ik},f_{jk}$, and the triple
+$f_{ijk}$. The trigenic interaction is a fixed multilinear map $g:\mathbb{R}^{7}\to\mathbb{R}$ of
+these fitnesses,
+\[
+\tau_{ijk}=g(f)=f_{ijk}-f_i f_j f_k-\varepsilon_{ij}f_k-\varepsilon_{ik}f_j-\varepsilon_{jk}f_i,
+\qquad \varepsilon_{ab}=f_{ab}-f_a f_b,
+\]
+that is, what remains of the triple-mutant fitness after removing the multiplicative expectation
+and the pairwise interactions (Fig.~\ref{fig:ggi}a). Two ways to train follow. The \emph{direct}
+route supervises $\tau_{ijk}$ as a label. The \emph{factored} route supervises the fitnesses
+$f_S$ and reads interactions off them, either by applying $g$ to the predicted fitnesses or by a
+separate interaction head trained jointly; the test is whether the two agree even though $g$ was
+never in the loss.
+
+\notesec{Toward a formal statement} Universal approximation is the wrong tool here: it guarantees
+that a large enough network can represent $g$ composed with a fitness predictor, but it says
+nothing about whether training on fitness recovers $\tau$, nor how accurately, so it is far too
+broad to be the claim. Two narrower statements are provable and sharpen the intuition.
+
+\begin{proposition}[Sufficiency: interactions need no extra capacity]
+\label{prop:sufficiency}
+If a representation $H$ is sufficient for the sub-genotype fitnesses, meaning $f_S=\phi_S(H)$ for
+each $S$, then $\tau_{ijk}=g(\phi(H))$ is also a function of $H$. Any representation sufficient
+for fitness is therefore sufficient for interactions.
+\end{proposition}
+
+\begin{proof}
+The claim is immediate. The composition of the measurable maps $\phi_S$ with the polynomial $g$
+is measurable, so $\tau_{ijk}$ is a deterministic function of $H$; predicting it requires no
+capacity, target, or objective term beyond those already needed to predict fitness.
+\end{proof}
+
+Proposition~\ref{prop:sufficiency} is what makes the idea reasonable: the interaction is a fixed
+readout of quantities the model already predicts, so the definition $g$ never has to appear in
+the loss. It does not, however, say the readout is easy to recover, because $\tau$ is a small
+residual of large terms.
+
+\begin{proposition}[Conditioning: the accuracy bar]
+\label{prop:conditioning}
+The map $g$ is locally Lipschitz, and near the typical regime $f\approx\mathbf{1}$ its gradient
+is bounded by a constant $C=\mathcal{O}(1)$. A fitness estimate with
+$\lVert\hat f-f\rVert_\infty\le\delta$ then gives $\lvert g(\hat f)-\tau_{ijk}\rvert\le C\delta$.
+Since $\tau_{ijk}$ is a higher-order residual with $\lvert\tau_{ijk}\rvert\ll 1$, the relative
+error is $\approx C\delta/\lvert\tau_{ijk}\rvert$, which exceeds one unless
+$\delta\lesssim\lvert\tau_{ijk}\rvert/C$.
+\end{proposition}
+
+\begin{proof}
+Each partial derivative of $g$ is a sum of products of at most two fitnesses, bounded near
+$f\approx\mathbf{1}$; a first-order expansion gives the absolute bound, and dividing by
+$\lvert\tau_{ijk}\rvert$ gives the relative one.
+\end{proof}
+
+Together the two say the factored route is expressible for free but conditioning-limited:
+recovering interactions from fitness demands fitness accuracy finer than the interaction
+magnitude to resolve its sign and scale.
+
+\notesec{What would be surprising, and is only empirical} The claim we actually want to test is
+neither proposition. It is that joint training on the denser fitness signal makes an interaction
+head align with $g(\hat f)$ \emph{without} $g$ in the loss, and generalizes better than direct
+$\tau$ supervision. This is a statement about inductive bias and data efficiency, not a theorem:
+whether optimization discovers the readout depends on the architecture, the data, and the
+training set-up. The favorable case is clear from Proposition~\ref{prop:sufficiency}, since a
+representation pinned down by abundant fitness labels is already sufficient for $\tau$, but that
+it happens is for the experiment to show (\suppfig{fig:fit-gi-emergent}).
+
+\notesec{Implication for metabolism} If a measured phenotype is a fixed function of a latent
+cellular state the model predicts, the same reasoning suggests the model could come to satisfy
+the governing constraints without a physics-informed or genome-scale-metabolic regularizer in
+the loss: the constraint would be a readout, not an objective term. The caveat is
+identifiability. The trigenic case is clean because $\tau$ is a function of \emph{observed}
+fitnesses, whereas metabolic constraints $Sv=0$ involve fluxes $v$ that are largely unobserved,
+so the constraint is not a function of measured phenotypes alone. Gene interactions are the
+fully observed instance where the idea can be tested before it is extrapolated to metabolism.
+
+\notesec{The atomic unit of data} The factored route trades per-instance flexibility, treating
+each strain as its own cell graph, for information density, since fitness labels are more
+abundant and lower-variance than interaction residuals, and it requires non-standard queries
+that assemble all sub-genotypes of a triple rather than one instance at a time. We pursue it
+because it may be the route that scales: rather than encode the interaction algebra, or the
+constraints of metabolism, in the objective, let the model learn them from data keyed to the
+atomic unit of the problem, the identity of the cell, its genome and strain. This is the
+bitter-lesson stance applied to phenotype prediction, and the reason the direction is worth the
+loss of flexibility.
+
+% --- Emergent recovery of interactions from fitness (sits with [note:gi-from-fitness]) ---
+%     PLACEHOLDER -- compose once the multitask fitness+GI experiment is run. Placed here so
+%     the figure sits with its Note.
+\begin{figure*}[t]
+\centering
+\figph{58mm}{\textbf{[Suppl. Fig. -- do gene interactions emerge from fitness?]}\\[3pt]
+Idealized test of \suppnoteref{note:gi-from-fitness}. One model predicts sub-genotype fitness $f_S$ and the
+trigenic interaction $\tau_{ijk}$ jointly.
+(a) predicted vs.\ measured $\tau_{ijk}$ for three routes: direct $\tau$ supervision, the
+algebraic readout $g(\hat f)$ from the fitness heads, and a separate $\tau$-head trained jointly
+but with $g$ absent from the loss;
+(b) agreement between the $\tau$-head and $g(\hat f)$ over training, testing whether consistency
+emerges on its own (Prop.~\ref{prop:sufficiency});
+(c) data efficiency: $\tau$ accuracy vs.\ number of interaction labels, factored vs.\ direct;
+(d) error propagation: $\tau$ error vs.\ fitness error $\delta$, against the bound $C\delta$ of
+Prop.~\ref{prop:conditioning}, showing the accuracy bar.
+\textit{[placeholder: run the multitask fitness$+$GI experiment, then compose.]}}
+\caption{Emergent recovery of gene interactions from fitness: whether a jointly trained model
+reproduces the interaction algebra without it appearing in the objective (support for
+\suppnoteref{note:gi-from-fitness}).}
+\label{fig:fit-gi-emergent}
+\end{figure*}
+
+%% ==================================================================================
+%% Remaining Supplementary Figures (S5 onward). The Note figures (S1--S4) sit with their
+%% Notes above (Notes 1, 2, 4, 5); these general figures follow the Notes. S-numbering was set at the
+%% start of the SI (counter reset there), so do NOT reset it again here. Placeholder floats
+%% (\figph) reserve a number + label for figures not yet drawn; swap each for a \tcfig{...}
+%% export once composed. Keep every SI figure inside the 180x170 mm print box; \tcfig places
+%% true-to-size (no LaTeX scaling) -- fix width in draw.io, not with \scalebox.
+%% ==================================================================================
+%% ---- Supplementary Note [note:info-accounting]: information accounting behind Fig 1c (theory of the cut) ----
+%% This Note is the theory; Note 6 (classical-ML) is its empirical counterpart -- keep them adjacent.
+%% EVERY number below is produced by
+%%   experiments/016-information-accounting/scripts/persistent_entity_corpus_sizes.py --write-table
+%% which queries the public archives (HTTP Content-Length / BLAST metadata / wwPDB index) and writes
+%% sections/tab-entity-corpora.tex. That table is AUTO-GENERATED: rerun the script, never hand-edit.
+%% TODO (the ONE provenance gap in this Note): the contingent-corpus figure -- ~1.4e9 compressed bytes
+%% over the 34 phenotype studies -- is currently computed on gilahyper and is the only number here not
+%% produced by a committed script. Two things follow, and they must be done together:
+%%   (1) move that gilahyper script into experiments/016-information-accounting/scripts/ so the number
+%%       is regenerable, per the repo rule that every paper artifact comes from a committed script;
+%%   (2) regenerate the phenotype-dataset table (\supptab{tab:datasets}) from it, WITH a compressed-size column. It
+%%       table currently lists 27 studies (~4.4e7 genotypes); the gilahyper table lists 34 (~7.9e7
+%%       instances). Until they agree, this Note deliberately says "~1e7-1e8 instances" rather than
+%%       quoting 34 / 7.9e7 against a table that shows 27 / 4.4e7.
+%% The order of magnitude (~1e10 bits) is unaffected either way; only the exact count is pending.
+\suppnote{note:info-accounting}{persistent entities and contingent observations\secstatus{todo}}
+
+The molecular parts a cell is assembled from and the measurements made on cells are not two halves
+of one dataset. They differ in scale, by about three orders of magnitude, and they differ in kind. A
+protein sequence is the same object in a glucose assay and in an oxidative-stress assay; the measured
+phenotype is not. This note makes both statements precise, says exactly what the bit counts in
+Fig.~\ref{fig:torchcell}c do and do not mean, and draws the consequence that determines the
+architecture: the model is cut at the shared representation $H$, entity encoders are taken already
+trained, and the phenotype corpus is spent only on the perturbation operator and the decoder.
+
+\notesec{Setting} Write $\mathcal{U}$ for the \emph{persistent entities}---DNA, RNA and protein
+sequences, small molecules, and experimentally determined structures---and $\mathcal{I}$ for the
+\emph{contingent observations}, the phenotype records of \supptab{tab:datasets}. An entity
+$x\in\mathcal{U}$ is an identity, the same object in every experiment in which it occurs. An
+observation is a value measured on a cell in a context,
+\begin{equation}
+y \;=\; f\!\left(\{x_i\}_{i \in p},\; p,\; \varepsilon,\; a\right) \;+\; \eta,
+\label{eq:contingent}
+\end{equation}
+with $p$ the perturbation, $\varepsilon$ the environment, $a$ the assay, strain background and
+protocol, and $\eta$ measurement noise. The entities in \eqref{eq:contingent} recur in every
+observation that contains them. The observation itself is pinned to a single point of the context
+space and, being noisy, is not exactly reproducible even there. This asymmetry, rather than the raw
+size of the two corpora, is what forces the factorization.
+
+\notesec{The measure} Fig.~\ref{fig:torchcell}c reports each corpus in bits. The quantity is the
+\emph{compressed length}: for a corpus $D$, a fixed serialization $s$, and a fixed lossless
+compressor $C$,
+\begin{equation}
+L_C(D) \;=\; 8\,\bigl\lvert C\!\left(s(D)\right) \bigr\rvert \quad \text{bits}.
+\label{eq:codelength}
+\end{equation}
+This is a deliberately modest quantity. Because \emph{information content} is used loosely and means
+two different things, Proposition~\ref{prop:codelength} states which of them $L_C$ is, and which it is
+not.
+
+\begin{proposition}[Compressed length is a bound, not an entropy]
+\label{prop:codelength}
+Let $C$ be a lossless compressor with decompressor $C^{-1}$ and self-delimiting output. For every
+corpus $D$,
+\begin{equation}
+K(D) \;\le\; L_C(D) \;+\; K\!\left(C^{-1}\right) \;+\; O(1),
+\label{eq:kbound}
+\end{equation}
+where $K$ denotes Kolmogorov complexity; and there is a sub-probability distribution $q_C$ for which
+$L_C(D) = -\log_2 q_C\!\left(s(D)\right)$. Thus $L_C$ is at once a computable upper bound on the
+Kolmogorov complexity of $D$ and an exact Shannon codelength under the model $q_C$ that $C$
+implicitly assumes. It is not an estimate of the entropy of the source that generated $D$, and it
+depends on the choice of $s$ and $C$.
+\end{proposition}
+
+\begin{proof}
+Both halves follow from the definitions.
+\pfstep{Kolmogorov bound} The compressed file together with the decompressor is a program that
+outputs $D$: run $C^{-1}$ on $C(s(D))$ and deserialize. Its length is
+$L_C(D)+K(C^{-1})+O(1)$, and $K(D)$ is by definition the length of the shortest program with that
+output, which gives \eqref{eq:kbound}. The bound is one-sided, and can be loose by any amount, because
+$C$ removes only the redundancy it was designed to see.
+\pfstep{Shannon codelength} $C$ is injective with self-delimiting output, so its codewords satisfy
+the Kraft inequality, $\sum_{D} 2^{-L_C(D)} \le 1$, and $q_C(\cdot) := 2^{-L_C(\cdot)}$ is a
+sub-probability. Hence $L_C(D) = -\log_2 q_C(s(D))$ is the self-information of $D$ under $q_C$.
+Nothing constrains $q_C$ to resemble the true source, and the excess of $L_C$ over the source entropy
+is exactly the Kullback--Leibler divergence between them.
+\end{proof}
+
+Two consequences govern how Fig.~\ref{fig:torchcell}c should be read. Because $L_C$ is an upper bound
+on each corpus and not an entropy, no single number in the figure is an information content. Because
+both corpora are measured with the \emph{same} $s$ and $C$, however, the comparison between them is
+like for like, and it is the ratio---to order of magnitude---that the figure claims.
+
+\notesec{The persistent-entity corpora} \supptab{tab:entity-corpora} evaluates \eqref{eq:codelength}
+for the public archives in the representation in which each is actually distributed. No payload is
+downloaded: the sizes come from HTTP \texttt{Content-Length}, from NCBI BLAST metadata, and from the
+wwPDB directory index, so every entry is re-derivable by a reader with a network connection. Nucleotide
+sequence dominates, and the total is
+\begin{equation}
+L_C(\mathcal{U}) \;\approx\; 9.6\times10^{12} \;\approx\; 10^{13}\ \text{bits},
+\label{eq:entity-total}
+\end{equation}
+falling only to $9.0\times10^{12}$ if RefSeq transcripts are dropped as already contained in
+\texttt{nt}. An independent count corroborates the compressor. NCBI \texttt{nt} holds
+$4.06\times10^{12}$ nucleotides, which a four-letter alphabet cannot write in fewer than
+$8.1\times10^{12}$ bits, and the archive is distributed in $7.1\times10^{12}$: the compressed size
+recovers $87\%$ of a counting bound derived without reference to any compressor. The two routes agree,
+so \eqref{eq:entity-total} measures sequence content rather than an artifact of file formatting.
+
+% Persistent-entity corpora table -- AUTO-GENERATED. Regenerate, do not hand-edit:
+%   python experiments/016-information-accounting/scripts/persistent_entity_corpus_sizes.py --write-table
+\input{sections/tab-entity-corpora}
+
+\notesec{The contingent-observation corpus} The phenotype corpus integrated here
+(\supptab{tab:datasets}) holds ${\sim}10^{7}$--$10^{8}$ labeled instances across the studies it
+unifies. Serialized as the per-study label tables and compressed with the same instrument, it
+occupies ${\sim}1.4\times10^{9}$ bytes, so
+\begin{equation}
+L_C(\mathcal{I}) \;\approx\; 1.1\times10^{10} \;\approx\; 10^{10}\ \text{bits},
+\label{eq:instance-total}
+\end{equation}
+about three orders of magnitude below \eqref{eq:entity-total}. The corpus aggregates the large-scale
+yeast genotype--phenotype studies available to us under a single ontology, which is the point: the
+separation in Fig.~\ref{fig:torchcell}c is not an artifact of having assembled a small phenotype
+corpus, and it would survive the addition of any comparable study.
+
+\notesec{Two asymmetries} The first is scale, and it is the weaker of the two:
+$L_C(\mathcal{U})/L_C(\mathcal{I}) \approx 10^{3}$. The second is persistence, and it is the reason
+the first matters. An entity representation is a function of the entity alone, so one sequence informs
+the encoder for \emph{every} instance in which that entity appears, across assays, environments and
+laboratories. A phenotype record, by \eqref{eq:contingent}, constrains $f$ at one point of the context
+space and nowhere else, and must be re-measured when the context changes. Scale alone would be an
+argument about sample size; persistence is an argument about what a bit buys.
+
+\notesec{Consequence for the model} An entity encoder is therefore fit where its data is, and the
+contingent corpus is spent only on what nothing else can pay for. This is the cut at $H$ of
+Fig.~\ref{fig:torchcell}c: $F_\theta$ maps persistent entities into the shared representation, and the
+phenotype labels fit only $\mathcal{T}_\psi$ and $\mathcal{R}_\phi$. The capacity arithmetic is
+one-sided. A sequence encoder carries $10^{8}$--$10^{10}$ parameters, whereas the operator and decoder
+together carry ${\sim}5\times10^{4}$; and the \emph{usable} supervision in the phenotype corpus is far
+below its compressed size, because the measurements are noisy and strongly redundant---interaction
+matrices are approximately low rank---which places the effective supervision nearer $10^{6}$--$10^{7}$
+bits than $10^{10}$. Fitting an entity encoder from phenotype labels is thus underdetermined by orders
+of magnitude, while fitting the operator and decoder is not. \suppnoteref{note:classical-ml} is the empirical
+counterpart: across ${\sim}17$ gene encodings, no pretrained biological embedding beats a one-hot code
+on fitness, which is what one expects when the labels cannot pay for a representation.
+
+\notesec{An objection, and what persistence answers} It may be objected that only the \emph{yeast}
+entities are needed, and that the yeast proteome---some $3\times10^{6}$ residues, on the order of
+$10^{7}$ bits---is smaller than the phenotype corpus, so the accounting would favour the labels. The
+objection is correct about the arithmetic and inverts the argument. An entity encoder is not fit on
+the yeast slice; it is fit on the whole archive and \emph{applied} to the yeast slice, because a
+protein sequence means the same thing in every organism. Fungal DNA language models are built in
+exactly this way, pretrained across many fungal genomes and then read out on
+one~\cite{chaoPredictingDynamicExpression2025}. That transfer is precisely what persistence buys,
+and it is why the relevant comparison is the full archive against the phenotype corpus rather than
+one organism's parts list against it.
+
+\notesec{Precision} Four things are not claimed. First, no number here is an information content:
+by Proposition~\ref{prop:codelength}, $L_C$ bounds Kolmogorov complexity from above and is a codelength
+under \texttt{gzip}'s model, so only the ratio, and only to order of magnitude, is asserted. Second,
+compressed storage is not usable supervision; both sides are upper bounds on their effective content,
+the phenotype side discounted by noise and low rank, the entity side by homology redundancy. The
+latter is worth stating plainly, because it is the mechanism the architecture exploits: a protein
+language model compresses TrEMBL far better than \texttt{gzip} does, and the gap between the two is
+exactly the evolutionary structure a pretrained encoder supplies and \texttt{gzip} cannot see. Third,
+the archives overlap---RefSeq transcripts also occur in \texttt{nt}---so \supptab{tab:entity-corpora}
+reports a conservative total that omits the duplication. Fourth, corpora of \emph{predicted} structures
+are excluded, being model outputs rather than observations; including them would widen the separation
+while weakening its interpretation.
+
+%% ---- Supplementary Note [note:classical-ml]: classical-ML case study (empirical counterpart of the information-accounting Note) ----
+%% Draft ported from notes/paper.nature-biotech.si.traditional-ml-baselines.md. Table
+%% generated by experiments/smf-dmf-tmf-001/traditional_ml-summary_table.py (--latex). The
+%% figure (fig:classical-ml) below is Note 6's figure; author composes it from the bar charts.
+\suppnote{note:classical-ml}{a classical-machine-learning case study on gene representation and pooling\secstatus{todo}}
+
+Before introducing the Cell Graph Transformer we ask what simple models already achieve, and
+where they stall---because the answer dictates two architectural choices. Trained on
+$10^3$--$10^5$ instances over ${\sim}17$ gene encodings, classical models
+(\supptab{tab:classical-ml-results}, \suppfig{fig:classical-ml}) show a sharp split:
+\emph{knockout fitness is essentially saturated by gene identity alone}---one-hot encoding
+reaches Pearson ${\approx}\,0.87$--$0.90$ at $10^5$ and no pretrained biological embedding
+beats it---whereas \emph{gene interactions are not learnable from any encoding}, plateauing at
+Pearson ${\approx}\,0.4$ (Spearman ${\approx}\,0.47$) regardless of representation or dataset
+size. The first result says a deep model is unnecessary for fitness; the second says the
+barrier to interactions lies not in the features but in how genes are combined.
+
+\notesec{Setup} Each strain is featurized as $\phi = Mx$, where $x\in\{0,1\}^{N}$ ($N=6607$)
+indicates the perturbed genes and the columns of $M$ are per-gene vectors: one-hot ($M=I$),
+random (i.i.d., dimension $1$--$1000$), or pretrained biological embeddings (ESM2, ProtT5,
+CaLM, nucleotide-transformer windows, fungal up/down-stream), aggregated over the gene set by
+sum or mean. Fitness data are single/double/triple deletion strains ($smf/dmf/tmf$, quality
+filter $\sigma_f<0.15$); interaction data are an equal ($\approx$50/50) mixture of digenic and
+trigenic Kuzmin~2018 measurements. Random forest and support-vector regression are tuned per
+encoding by validation Spearman; reported values are held-out test scores.
+
+\notesec{Representation is about identity, not biology} On fitness a purely random code matches
+or exceeds every biological embedding once its dimension is large enough, and one-hot is best
+of all. The feature $\phi=Mx$ with $\le 3$ perturbed genes is a $k$-sparse recovery problem, so
+a random projection of dimension $d\gtrsim k\log N$---a few hundred---already preserves gene
+identity (Johnson--Lindenstrauss; compressed sensing [cite: Johnson--Lindenstrauss 1984;
+Cand\`es--Tao 2005]). Extra dimensions add no identity information, so accuracy rises with $d$
+and saturates at the exactly-orthogonal one-hot limit; a wider random vector cannot surpass it,
+and trails only for axis-aligned tree models, because a random projection is a rotation that
+removes the gene-aligned coordinates trees split on [cite: Grinsztajn et al.\ 2022]. Design
+consequence: preserve gene identity with a learnable token rather than hard-coding a biological
+prior at the reference cell.
+
+\notesec{The barrier is pooling, not features} Interactions are epistasis---defined by
+subtracting lower-order effects---so they live in the \emph{combination} of perturbed genes.
+Additive sum/mean pooling of $Mx$ is permutation-invariant and keeps only the bag of perturbed
+genes; the combination structure is discarded before the model sees it, and no choice of $M$
+can restore it. Hence the flat ${\approx}\,0.47$ ceiling across encodings and sizes. That
+ceiling is further blurred by the digenic/trigenic mixture: the experimental reproducibility
+limit is higher for digenic (${\approx}\,0.8$ [cite: Costanzo et al.\ 2016]) than for trigenic
+interactions, so the achievable metric is a range, not a point. Together these results motivate
+the two design choices of the Cell Graph Transformer---identity-preserving gene tokens (this
+note) and attention over the gene set in place of additive pooling (\suppnoteref{note:gi-from-fitness})---so
+that higher-order structure survives to the readout.
+
+% Spearman (bold=best) + MSE + Pearson (the metric quoted in
+% this Note's prose); generated by
+% experiments/smf-dmf-tmf-001/traditional_ml-summary_table.py --write-tables
+% Order of these \input lines fixes the S-numbering; keep it in sync with write_paper_tables().
+\input{sections/tab-classical-ml-spearman}
+\input{sections/tab-classical-ml-mse}
+\input{sections/tab-classical-ml-pearson}
+
+% --- Classical-ML baselines (sits with [note:classical-ml]); author composes from the bar charts ---
 \begin{figure*}[t]
 \centering
 \figph{55mm}{\textbf{[Suppl. Fig. -- classical-ML baselines; compose from report Fig.~2]}\\[3pt]
@@ -414,16 +845,101 @@ representation given enough data, whereas trigenic gene--gene interactions are n
 \label{fig:classical-ml}
 \end{figure*}
 
-% --- S2: dataset scale / composition table ---
-\begin{figure*}[t]
+% --- Tables: dataset scale + integrated graphs; fills the old fig:data-scale slot ---
+%% SOURCE: *** NO GENERATING SCRIPT *** -- transcribed from
+%%   notes/torchcell.datasets.cell.supported_data_table.md
+%% This violates the repo rule that every paper artifact comes from a committed script in the
+%% experiment folder that produced the data. It is the SAME gap as the contingent-corpus figure in
+%% the information-accounting Note: the script that enumerates the phenotype datasets (and gzips
+%% each one) currently lives on gilahyper. When it lands in
+%%   experiments/016-information-accounting/scripts/
+%% have it emit this table too, WITH a compressed-size column -- that closes both gaps at once.
+%% Until then, treat these counts as transcription, not measurement: a few self-contradictory cells
+%% in the source note were resolved by hand to match each dataset's suffix (dmf/dmi/tmi phenotype,
+%% label type, description).
+\begin{table*}[t]
 \centering
-\figph{55mm}{\textbf{[Suppl. Fig./Table -- dataset scale; compose from report Fig.~1 table]}\\[3pt]
-Composition of the TorchCell knowledge graph: studies, labeled instances, environments,
-and label types (whole-cell scalar, gene-level, gene-set) mapped to the corresponding
-readout heads. \textit{[placeholder: fill counts once finalized.]}}
-\caption{Dataset scale and composition of the TorchCell knowledge graph.}
-\label{fig:data-scale}
-\end{figure*}
+\footnotesize
+\caption{Phenotype datasets integrated into the TorchCell knowledge graph. Genotypes are labeled
+instances; Envs.\ is the number of distinct media/condition contexts; Label type is the graph
+object that carries the label (\emph{global} whole-cell scalar, \emph{node} gene-level, \emph{edge}
+digenic, \emph{hyperedge} trigenic). smf/dmf/tmf: single/double/triple-mutant fitness; dmi/tmi:
+di-/trigenic interaction.}
+\label{tab:datasets}
+\begin{tabular}{@{}l r r l l l c@{}}
+\toprule
+\textbf{Dataset} & \textbf{Genotypes} & \textbf{Envs.} & \textbf{Phenotype} & \textbf{Label type} & \textbf{Description} & \textbf{Status}\\
+\midrule
+Baryshnikova\_2010 & 6,022 & 1 & smf & global & growth rate & \checkmark\\
+Costanzo\_2016\_smf & 21,718 & 2 & smf & global & growth rate & \checkmark\\
+Costanzo\_2016\_dmf & 20,705,612 & 2 & dmf & global & growth rate & \checkmark\\
+Costanzo\_2016\_dmi & 20,705,612 & 2 & dmi & edge & gene interaction & \checkmark\\
+Kuzmin\_2018\_smf & 1,539 & 1 & smf & global & growth rate & \checkmark\\
+Kuzmin\_2018\_dmf & 410,399 & 1 & dmf & global & growth rate & \checkmark\\
+Kuzmin\_2018\_tmf & 91,111 & 1 & tmf & global & growth rate & \checkmark\\
+Kuzmin\_2018\_dmi & 410,399 & 1 & dmi & edge & gene interaction & \checkmark\\
+Kuzmin\_2018\_tmi & 91,111 & 1 & tmi & hyperedge & gene interaction & \checkmark\\
+Kuzmin\_2020\_smf & 480 & 1 & smf & global & growth rate & \checkmark\\
+Kuzmin\_2020\_dmf & 256,862 & 1 & dmf & global & growth rate & \checkmark\\
+Kuzmin\_2020\_tmf & 537,911 & 1 & tmf & global & growth rate & \checkmark\\
+Kuzmin\_2020\_dmi & 256,862 & 1 & dmi & edge & gene interaction & \checkmark\\
+Kuzmin\_2020\_tmi & 537,911 & 1 & tmi & hyperedge & gene interaction & \checkmark\\
+SGD\_essential & 1,101 & 1 & viable & global & viability & \checkmark\\
+SynthLethalYeast & 1,400 & -- & viable & global & viability & \checkmark\\
+SynthRescueYeast & 6,948 & -- & viable & global & viability & \checkmark\\
+scmd2\_2005 & 4,718 & 1 & morphology & global & cell morphology & \checkmark\\
+scmd2\_2018 & 1,112 & 1 & morphology & global & cell morphology & \checkmark\\
+scmd2\_2022 & 1,982 & 1 & morphology & global & cell morphology & \checkmark\\
+ODuibhir\_2014 & 1,312 & 1 & expr & global, node & sm microarray expression & \checkmark\\
+Kemmeren\_2014 & 1,484 & 1 & expr & global, node & sm microarray expression & \checkmark\\
+Sameith\_2015 & 72 & 1 & expr & global, node & dm microarray expression & \checkmark\\
+Zelezniak\_2018 & 97 & 1 & prot., met. & global, node & sm kinase deletion mutants & \checkmark\\
+Wildenhain\_2015 & 195 & 4,915 & smf & global & drug tolerance & in prog.\\
+Lian\_2017 & 18,000 & 1 & AID & global & furfural tolerance & in prog.\\
+FitDb & $\sim$6,000 & 1,144 & smf & global & growth rate & in prog.\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+%% SOURCE: *** NO GENERATING SCRIPT *** -- node/edge counts transcribed from
+%%   notes/scratch.2025.05.16.142344-network-sums.md
+%% That is a scratch note. Per CLAUDE.md scratch notes are working/throwaway and must NOT be
+%% committed -- this one is tracked only by accident, so the provenance of every number below is one
+%% `git rm` away from vanishing. To fix: promote the note's computation into a committed script
+%% under the experiment folder that builds the graphs, have it emit this table, and delete the
+%% scratch original. Do not hand-edit cells here in the meantime.
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Interaction and regulatory graphs (databases) integrated into the TorchCell knowledge
+graph, with node and edge counts over the shared gene vocabulary. \textbf{Physical} and
+\textbf{Regulatory} are the curated graphs taken directly from SGD; the remaining rows add
+TFLink and the nine STRING~v12 channels. Relative to the SGD-native baseline
+(Physical\,$+$\,Regulatory), aggregating these additional sources increases connectivity by
+$4.16\times$ in nodes and $16.24\times$ in edges---the justification for aggregating across
+sources rather than relying on a single database. (STRING~v11, used in earlier experiments,
+is reported separately to avoid mixing graph versions.)}
+\label{tab:databases}
+\begin{tabular}{@{}l r r@{}}
+\toprule
+\textbf{Graph} & \textbf{Nodes} & \textbf{Edges}\\
+\midrule
+Regulatory & 3,632 & 9,753\\
+Physical & 5,721 & 139,463\\
+TFLink & 5,092 & 201,898\\
+STRING12 Neighborhood & 2,204 & 147,874\\
+STRING12 Fusion & 3,095 & 11,810\\
+STRING12 Cooccurrence & 2,615 & 11,115\\
+STRING12 Coexpression & 6,503 & 1,002,538\\
+STRING12 Experimental & 6,036 & 825,101\\
+STRING12 Database & 4,044 & 73,818\\
+\midrule
+Sum (all graphs) & 38,942 & 2,423,370\\
+Sum (Physical, Regulatory) & 9,353 & 149,216\\
+Factor increase & 4.16$\times$ & 16.24$\times$\\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{figure}[htbp]
 \tcfig{figures/TorchCell-Supervised-Learning-and-Teacher-Forcing-Generic-Phenotypes.pdf}{TorchCell: ontology-unified knowledge graph and the
@@ -493,53 +1009,7 @@ resulting network transfers annotations ($\mathrm{GO}_{g_i}=\mathrm{GO}_{g_j}$).
 previously uncharacterized genes.}{fig:profile-enrichment}
 \end{figure*}
 
-% --- empirical validation of the perturbation-operator equivalence (supports Suppl. Note 1) ---
-%     PLACEHOLDER -- compose once the experiment (single-gene KO fitness, CGT-style vs GNN-style
-%     small models) is run. Keep the figure inside the 180x240 mm print box.
-\begin{figure*}[t]
-\centering
-\figph{55mm}{\textbf{[Suppl. Fig. -- empirical equivalence: CGT-style vs.\ GNN-style on single-gene KO fitness]}\\[3pt]
-Idealized test of Supplementary Note~1 on single-gene knockout fitness. Two capacity-matched
-small models trained on identical data, features, and splits: a data-perturbing GNN that
-rebuilds $G_p$ and re-encodes ($\hat y=\Phi(G_p)$) vs.\ a representation-perturbing CGT that
-encodes the wildtype once and applies the operator
-($\hat y=\mathcal{R}_\phi(\mathcal{T}_\psi(H,p))$).
-(a) predicted vs.\ actual fitness for both models;
-(b) held-out accuracy (Pearson $r$ / MSE), expected near-equal;
-(c) agreement of the two models' predictions ($\hat y_{\mathrm{GNN}}$ vs.\ $\hat y_{\mathrm{CGT}}$,
-near the identity line);
-(d) compute cost: per-strain rebuild$+$encode (GNN) vs.\ encode-once$+$operator (CGT),
-with the growth of Supplementary Note~3, Table~\ref{tab:compute}.
-\textit{[placeholder: run the experiment, then compose.]}}
-\caption{Empirical functional equivalence of the perturbation operator on single-gene
-knockout fitness (support for Supplementary Note~1).}
-\label{fig:pert-equivalence-empirical}
-\end{figure*}
-
-% --- empirical relevance of graph-regularized attention (supports Suppl. Note 2) ---
-%     PLACEHOLDER -- compose once the lambda-sweep experiment is run. Structure mirrors
-%     the Note 1 empirical figure. Keep the figure inside the 180x240 mm print box.
-\begin{figure*}[t]
-\centering
-\figph{55mm}{\textbf{[Suppl. Fig. -- empirical relevance of graph-regularized attention: the $\lambda$ sweep]}\\[3pt]
-Idealized test of Supplementary Note~2. One cell-encoder head aligned to a single gene--gene
-graph, trained on held-out fitness with the graph-prior weight $\lambda$ swept from $0$ (free
-attention) to the hard-mask limit.
-(a) attention-to-adjacency divergence $D_{\mathrm{KL}}(\tilde A_{i,:}\,\|\,\alpha_{i,:})$ and
-support overlap with $\mathcal{N}(i)$ vs.\ $\lambda$, decreasing to $0$ as $\lambda\!\to\!\infty$
-(the masked graph-attention limit of Prop.~\ref{prop:gat-limit});
-(b) held-out accuracy (Pearson $r$) vs.\ $\lambda$, peaked at intermediate $\lambda$, above both
-the free head ($\lambda=0$) and the hard mask;
-(c) discovery: precision--recall of recovering held-out interactions from the top off-graph
-attention entries, against a hard-masked control that cannot place off-graph mass;
-(d) overruling: catalogued edges the head down-weights, enriched for label-contradicted pairs
-relative to a null.
-\textit{[placeholder: run the $\lambda$ sweep, then compose.]}}
-\caption{Empirical relevance of graph-regularized attention: the finite-$\lambda$ soft prior
-recovers graph attention in the limit, wins at intermediate $\lambda$, and enables edge discovery
-and overruling (support for Supplementary Note~2).}
-\label{fig:graphreg-empirical}
-\end{figure*}
+% (The two proof figures, Fig.\ S1 and Fig.\ S2, now sit with their Notes above.)
 
 %% ---- References: placed AFTER the SI notes and figures. \clearpage first so every SI figure
 %% float is output before the bibliography begins (prevents the float/reference clash). NOTE: for

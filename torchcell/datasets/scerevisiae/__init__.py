@@ -34,6 +34,9 @@ from .messner2023 import ProteomeMessner2023Dataset as ProteomeMessner2023Datase
 from .mormino2022 import CrispriMormino2022Dataset as CrispriMormino2022Dataset
 from .mota2024 import EnvChemgenMota2024Dataset as EnvChemgenMota2024Dataset
 from .mulleder2016 import AminoAcidMulleder2016Dataset as AminoAcidMulleder2016Dataset
+from .nadal_ribelles2025 import (
+    NadalRibellesPerturbSeq2025Dataset as NadalRibellesPerturbSeq2025Dataset,
+)
 from .oduibhir2014 import SmfODuibhir2014Dataset as SmfODuibhir2014Dataset
 from .ohnuki2018 import ScmdOhnuki2018Dataset as ScmdOhnuki2018Dataset
 from .ohnuki2022 import ScmdOhnuki2022Dataset as ScmdOhnuki2022Dataset
@@ -118,6 +121,8 @@ lopez_datasets = [
 
 xue_datasets = ["FattyAcidXue2025Dataset"]
 
+nadal_ribelles_datasets = ["NadalRibellesPerturbSeq2025Dataset"]
+
 __all__ = (
     costanzo_datasets
     + kuzmin_datasets
@@ -144,4 +149,5 @@ __all__ = (
     + mormino_datasets
     + lopez_datasets
     + xue_datasets
+    + nadal_ribelles_datasets
 )

@@ -14,6 +14,9 @@
     xlrd>= 2.0.1
     # pyreader use with RDS
     pyreadr>=0.4.9
+    # pure-python .Rdata reader (pyreadr fails on some serialized R objects,
+    # e.g. the Nadal-Ribelles 2025 fcs/ptbs lists); needs no R install
+    rdata>=1.1.0
     scipy>=1.11.4
     networkx>=3.2.1
     #dask

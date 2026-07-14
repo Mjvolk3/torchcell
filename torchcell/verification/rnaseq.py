@@ -22,6 +22,7 @@ The verifier operates purely on the pydantic/LMDB records -- no graph (Phase A).
 
 from __future__ import annotations
 
+import json
 import math
 from collections.abc import Callable, Sequence
 from typing import Any
@@ -37,8 +38,25 @@ from torchcell.verification.report import (
 Record = dict[str, Any]
 
 
+def _expr_map(phenotype: dict[str, Any]) -> tuple[dict[str, Any], str]:
+    """Return (per-gene expression dict, family kind) for either expression phenotype.
+
+    ``RNASeqExpressionPhenotype`` (Caudal) stores absolute ``expression_tpm``;
+    ``PseudobulkExpressionPhenotype`` (Nadal-Ribelles) stores per-gene log2 fold-change vs
+    WT in ``expression_log2_ratio``. One verifier serves both families.
+    """
+    if "expression_log2_ratio" in phenotype:
+        return phenotype["expression_log2_ratio"], "log2_ratio"
+    return phenotype["expression_tpm"], "tpm"
+
+
+def _env_identity(environment: dict[str, Any]) -> str:
+    """Stable condition identity of an environment (media/temp/perturbations/duration)."""
+    return json.dumps(environment, sort_keys=True, default=str)
+
+
 def _record_strain(experiment: dict[str, Any]) -> str | None:
-    """Return the isolate id of a record (the shared ``strain_id`` of its perturbations)."""
+    """Return the strain id of a record (the shared ``strain_id`` of its perturbations)."""
     for pert in experiment["genotype"]["perturbations"]:
         strain = pert.get("strain_id")
         if strain is not None:
@@ -47,28 +65,38 @@ def _record_strain(experiment: dict[str, Any]) -> str | None:
 
 
 def _l1_strain_uniqueness(records: Sequence[Record]) -> LevelResult:
-    """L1: exactly one record per isolate (strain_id) and every record has a strain."""
-    seen: dict[str, int] = {}
+    """L1: one record per (strain, environment) and every record carries a strain id.
+
+    Keyed on (strain_id, environment) so a strain profiled in two conditions (Nadal-Ribelles
+    control vs NaCl) is two legitimate records, while a genome-scale single-condition survey
+    (Caudal, one environment) still reduces to one record per strain.
+    """
+    seen: dict[tuple[str, str], int] = {}
     n_missing = 0
     for rec in records:
-        strain = _record_strain(rec["experiment"])
+        exp = rec["experiment"]
+        strain = _record_strain(exp)
         if strain is None:
             n_missing += 1
             continue
-        seen[strain] = seen.get(strain, 0) + 1
-    dups = {s: n for s, n in seen.items() if n > 1}
+        key = (strain, _env_identity(exp["environment"]))
+        seen[key] = seen.get(key, 0) + 1
+    dups = {k: n for k, n in seen.items() if n > 1}
+    n_strains = len({k[0] for k in seen})
     passed = not dups and n_missing == 0
     return LevelResult(
         level=Level.L1,
         name="strain_uniqueness",
         passed=passed,
         message=(
-            f"{len(seen)} unique isolates, one record each"
+            f"{len(seen)} unique (strain, condition) records over {n_strains} strains"
             if passed
-            else f"{len(dups)} isolates duplicated, {n_missing} records without a strain"
+            else f"{len(dups)} (strain, condition) duplicated, "
+            f"{n_missing} records without a strain"
         ),
         details={
-            "n_strains": len(seen),
+            "n_records": len(seen),
+            "n_strains": n_strains,
             "n_duplicated": len(dups),
             "n_missing": n_missing,
         },
@@ -92,11 +120,11 @@ def _l3_measurement_type_consistent(records: Sequence[Record]) -> LevelResult:
 
 
 def _l3_reference_finite(records: Sequence[Record]) -> LevelResult:
-    """L3: every reference TPM is finite (the population-mean baseline is well-defined)."""
+    """L3: every reference expression value is finite (baseline is well-defined)."""
     n = 0
     bad = 0
     for rec in records:
-        levels = rec["reference"]["phenotype_reference"]["expression_tpm"]
+        levels, _ = _expr_map(rec["reference"]["phenotype_reference"])
         for v in levels.values():
             n += 1
             if not math.isfinite(float(v)):
@@ -107,9 +135,9 @@ def _l3_reference_finite(records: Sequence[Record]) -> LevelResult:
         name="reference_finite",
         passed=holds,
         message=(
-            f"reference TPM finite for all {n} values"
+            f"reference expression finite for all {n} values"
             if holds
-            else f"{bad}/{n} reference TPM values non-finite"
+            else f"{bad}/{n} reference expression values non-finite"
         ),
         details={"n_values": n, "n_bad": bad},
     )
@@ -137,42 +165,52 @@ def verify_rnaseq_dataset(
     report.add(l1_count(len(records), expected_count))
     report.add(_l1_strain_uniqueness(records))
 
-    tpm_values = [
+    kind = _expr_map(records[0]["experiment"]["phenotype"])[1] if records else "tpm"
+    expr_values = [
         float(v)
         for rec in records
-        for v in rec["experiment"]["phenotype"]["expression_tpm"].values()
+        for v in _expr_map(rec["experiment"]["phenotype"])[0].values()
     ]
-    tpm_result = l2_value_fidelity(tpm_values, allow_nan=False, minimum=0.0)
+    if kind == "tpm":
+        # Absolute TPM: finite and non-negative.
+        fidelity = l2_value_fidelity(expr_values, allow_nan=False, minimum=0.0)
+        fidelity_name = "tpm_value_fidelity"
+    else:
+        # Pseudobulk log2 fold-change vs WT: finite, negatives allowed (down-regulation).
+        fidelity = l2_value_fidelity(expr_values, allow_nan=False)
+        fidelity_name = "log2_ratio_value_fidelity"
     report.add(
         LevelResult(
             level=Level.L2,
-            name="tpm_value_fidelity",
-            passed=tpm_result.passed,
-            message=tpm_result.message,
-            details=tpm_result.details,
+            name=fidelity_name,
+            passed=fidelity.passed,
+            message=fidelity.message,
+            details=fidelity.details,
         )
     )
 
-    count_bad = 0
-    count_n = 0
-    for rec in records:
-        for v in rec["experiment"]["phenotype"]["expression_count"].values():
-            count_n += 1
-            if not isinstance(v, int) or isinstance(v, bool) or v < 0:
-                count_bad += 1
-    report.add(
-        LevelResult(
-            level=Level.L2,
-            name="count_value_fidelity",
-            passed=count_bad == 0,
-            message=(
-                f"{count_n} counts are non-negative integers"
-                if count_bad == 0
-                else f"{count_bad}/{count_n} counts are not non-negative integers"
-            ),
-            details={"n_values": count_n, "n_bad": count_bad},
+    # Raw integer counts exist only for the absolute-TPM family.
+    if kind == "tpm":
+        count_bad = 0
+        count_n = 0
+        for rec in records:
+            for v in rec["experiment"]["phenotype"]["expression_count"].values():
+                count_n += 1
+                if not isinstance(v, int) or isinstance(v, bool) or v < 0:
+                    count_bad += 1
+        report.add(
+            LevelResult(
+                level=Level.L2,
+                name="count_value_fidelity",
+                passed=count_bad == 0,
+                message=(
+                    f"{count_n} counts are non-negative integers"
+                    if count_bad == 0
+                    else f"{count_bad}/{count_n} counts are not non-negative integers"
+                ),
+                details={"n_values": count_n, "n_bad": count_bad},
+            )
         )
-    )
 
     report.add(_l3_measurement_type_consistent(records))
     report.add(_l3_reference_finite(records))
@@ -183,7 +221,8 @@ def rnaseq_gene_set(records: Sequence[Record]) -> set[str]:
     """Union of measured expression genes across records (the L4 containment key)."""
     genes: set[str] = set()
     for rec in records:
-        genes.update(rec["experiment"]["phenotype"]["expression_tpm"].keys())
+        expr, _ = _expr_map(rec["experiment"]["phenotype"])
+        genes.update(expr.keys())
     return genes
 
 

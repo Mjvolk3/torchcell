@@ -417,6 +417,16 @@ class MarkerDeletionPerturbation(DeletionPerturbation, ModelStrict):
         description="selectable marker, e.g. 'KlURA3' | 'KlLEU2' | 'HIS3'"
     )
     deletion_type: str = "marker"
+    strain_id: str | None = Field(
+        default=None,
+        description="source strain label of an RNA-barcoded / per-strain-tracked deletion, "
+        "when the study tracks individual strains (e.g. Nadal-Ribelles 2025 genotype "
+        "barcode 'bc_YAL012W'; replacement strains 'bc_YBR020W-1'/'-2' share a deleted ORF "
+        "but are distinct strains). A strain discriminator: two records that delete the same "
+        "ORF in the same environment are distinct measurements when their strain_id differs. "
+        "None for backgrounds with a single strain per deletion (Vanacloig, Ohnuki) -- a "
+        "NON-breaking default.",
+    )
 
 
 class CrisprDeletionPerturbation(DeletionPerturbation, ModelStrict):
@@ -2104,6 +2114,128 @@ class RNASeqExpressionExperiment(Experiment, ModelStrict):
     phenotype: RNASeqExpressionPhenotype
 
 
+class PseudobulkExpressionPhenotype(Phenotype, ModelStrict):
+    """Pseudobulk single-cell RNA-seq expression: per-gene log2 fold-change vs WT, plus
+    the per-genotype single-cell summary scalars that a bulk assay cannot provide.
+
+    Distinct from both other expression families. ``RNASeqExpressionPhenotype`` is ABSOLUTE
+    TPM on an isolate's own genome (a survey, no reference to ratio against);
+    ``MicroarrayExpressionPhenotype`` is a microarray log2 ratio with a per-gene
+    ``expression`` linear channel + per-gene ``n_replicates``. This family is a genome-scale
+    single-cell Perturb-seq collapsed to PSEUDOBULK per genotype: each non-essential-gene
+    deletion's transcriptome is compared to the WILD TYPE profiled in the SAME condition,
+    yielding a per-gene log2 fold-change (Nadal-Ribelles 2025; scanpy ``logfoldchanges``,
+    Wilcoxon rank-sum DE on SCTransform log-normalized counts). The WT reference is log2
+    fold-change 0 for every gene (``reference_centered = True``).
+
+    The single-cell origin is preserved by two per-genotype scalars -- the WHOLE POINT of a
+    pseudobulk+dispersion (rather than per-cell) representation:
+      - ``dispersion``: the genotype's transcriptional HETEROGENEITY, the standard deviation
+        of the scaled SVD leverage score across the genotype's cells
+        (``sd_lvscore_scaledFU2``; the leverage score is z-scored against WT cells, so WT
+        dispersion ~= 1). Higher = more deviated/heterogeneous expression vs WT.
+      - ``n_cells``: the number of assigned single cells the pseudobulk logFC was estimated
+        from (``cell_number``); a per-genotype confidence weight.
+
+    Ragged gene sets: each mutant-vs-WT comparison first drops genes with 0 counts, so the
+    tested gene set differs per genotype. A gene not tested for a genotype is KEY-ABSENT
+    (no key), NEVER stored as 0 -- honest to the source, exactly as the RNA-seq family
+    handles genes absent from an isolate's genome.
+
+    Provenance: Nadal-Ribelles et al. 2025, Nat. Commun. See
+    ``[[torchcell.datasets.scerevisiae.nadal_ribelles2025]]``.
+    """
+
+    graph_level: str = "node"
+    label_name: str = "expression_log2_ratio"
+    label_statistic_name: str | None = "dispersion"
+
+    expression_log2_ratio: dict[str, float] = Field(
+        description=(
+            "SortedDict of per-gene pseudobulk log2 fold-change vs the WT profiled in the "
+            "SAME condition (log2(genotype/WT); positive = up-, negative = down-regulated). "
+            "Finite. A gene not tested for this genotype (0 counts, dropped pre-DE) is "
+            "omitted (no key), never stored as 0."
+        ),
+        repr=False,
+    )
+    dispersion: float | None = Field(
+        default=None,
+        description=(
+            "per-genotype transcriptional heterogeneity: the standard deviation of the "
+            "scaled (WT-z-scored) SVD leverage score across the genotype's cells "
+            "(source column ``sd_lvscore_scaledFU2``; WT ~= 1). None if unavailable."
+        ),
+    )
+    n_cells: int | None = Field(
+        default=None,
+        description=(
+            "number of assigned single cells the pseudobulk logFC was estimated from "
+            "(source column ``cell_number``); a per-genotype confidence weight. None if "
+            "unavailable."
+        ),
+    )
+    measurement_type: str = Field(
+        default="pseudobulk_scrnaseq_log2fc",
+        description=(
+            "assay/normalization tag: single-cell RNA-seq collapsed to pseudobulk, log2 "
+            "fold-change vs same-condition WT (Wilcoxon DE on SCTransform log-normalized "
+            "counts)."
+        ),
+    )
+
+    def __repr__(self) -> str:
+        """Summary repr instead of dumping the per-gene dict."""
+        return (
+            f"PseudobulkExpressionPhenotype(log2_ratio_genes="
+            f"{len(self.expression_log2_ratio) if self.expression_log2_ratio else 0}, "
+            f"dispersion={self.dispersion}, n_cells={self.n_cells})"
+        )
+
+    @field_validator("expression_log2_ratio", mode="before")
+    def convert_and_validate_log2_ratio(cls, v: Any) -> Any:  # raw pre-validation input
+        """Coerce log2 ratios to a SortedDict; reject empty, infinite, or NaN values."""
+        if v is None:
+            raise ValueError("expression_log2_ratio cannot be None")
+        if isinstance(v, dict) and not isinstance(v, SortedDict):
+            v = SortedDict(v)
+        if not v:
+            raise ValueError("expression_log2_ratio cannot be empty")
+        for key, value in v.items():
+            if math.isinf(value) or math.isnan(value):
+                raise ValueError(f"Invalid log2 ratio for gene {key}: {value}")
+        return v
+
+    @field_validator("dispersion", mode="after")
+    def validate_dispersion(cls, v: float | None) -> float | None:
+        """Dispersion, when present, is a non-negative finite float."""
+        if v is not None and (math.isinf(v) or math.isnan(v) or v < 0):
+            raise ValueError(f"dispersion must be a non-negative finite float, got {v}")
+        return v
+
+    @field_validator("n_cells", mode="after")
+    def validate_n_cells(cls, v: int | None) -> int | None:
+        """n_cells, when present, is a positive integer."""
+        if v is not None and v < 1:
+            raise ValueError(f"n_cells must be a positive integer, got {v}")
+        return v
+
+
+class PseudobulkExpressionExperimentReference(ExperimentReference, ModelStrict):
+    """Reference context for a pseudobulk single-cell expression experiment."""
+
+    experiment_reference_type: str = "pseudobulk_expression"
+    phenotype_reference: PseudobulkExpressionPhenotype
+
+
+class PseudobulkExpressionExperiment(Experiment, ModelStrict):
+    """Experiment measuring a pseudobulk single-cell (Perturb-seq) expression phenotype."""
+
+    experiment_type: str = "pseudobulk_expression"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: PseudobulkExpressionPhenotype
+
+
 class VisualScorePhenotype(Phenotype, ModelStrict):
     """Ordinal visual-inspection score as a proxy for a metabolite/product level.
 
@@ -2507,6 +2639,7 @@ PhenotypeType = (
     | CalMorphPhenotype
     | MicroarrayExpressionPhenotype
     | RNASeqExpressionPhenotype
+    | PseudobulkExpressionPhenotype
     | VisualScorePhenotype
     | MetabolitePhenotype
     | ProteinAbundancePhenotype
@@ -2523,6 +2656,7 @@ ExperimentType = (
     | CalMorphExperiment
     | MicroarrayExpressionExperiment
     | RNASeqExpressionExperiment
+    | PseudobulkExpressionExperiment
     | VisualScoreExperiment
     | MetaboliteExperiment
     | ProteinAbundanceExperiment
@@ -2539,6 +2673,7 @@ ExperimentReferenceType = (
     | CalMorphExperimentReference
     | MicroarrayExpressionExperimentReference
     | RNASeqExpressionExperimentReference
+    | PseudobulkExpressionExperimentReference
     | VisualScoreExperimentReference
     | MetaboliteExperimentReference
     | ProteinAbundanceExperimentReference
@@ -2555,6 +2690,7 @@ EXPERIMENT_TYPE_MAP = {
     "calmorph": CalMorphExperiment,
     "microarray_expression": MicroarrayExpressionExperiment,
     "rnaseq_expression": RNASeqExpressionExperiment,
+    "pseudobulk_expression": PseudobulkExpressionExperiment,
     "visual_score": VisualScoreExperiment,
     "metabolite": MetaboliteExperiment,
     "protein_abundance": ProteinAbundanceExperiment,
@@ -2570,6 +2706,7 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "calmorph": CalMorphExperimentReference,
     "microarray_expression": MicroarrayExpressionExperimentReference,
     "rnaseq_expression": RNASeqExpressionExperimentReference,
+    "pseudobulk_expression": PseudobulkExpressionExperimentReference,
     "visual_score": VisualScoreExperimentReference,
     "metabolite": MetaboliteExperimentReference,
     "protein_abundance": ProteinAbundanceExperimentReference,

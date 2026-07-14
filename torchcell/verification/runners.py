@@ -664,7 +664,24 @@ RNASEQ_DATASETS: dict[str, dict[str, Any]] = {
             ),
             page="Nat. Genet. 56:1278; final_data_annotated_merged_04052022.tab",
         ),
-    }
+    },
+    "nadal_ribelles_perturbseq2025": {
+        "root": "data/torchcell/nadal_ribelles_perturbseq2025",
+        "expected_count": 6188,
+        "provenance": Provenance(
+            source_uri="https://doi.org/10.5281/zenodo.14062629",
+            citation_key="nadal-ribellesSinglecellResolvedGenotypephenotype2025",
+            sha256=("c210fe541b0b91bc6eead28aa2265065afceec763ade1abd682c58896299a240"),
+            method=(
+                "Nadal-Ribelles 2025 genome-scale single-cell Perturb-seq collapsed to "
+                "pseudobulk: per (deletion genotype, condition) log2 fold-change vs "
+                "same-condition WT (scanpy logfoldchanges; Wilcoxon DE) + per-genotype "
+                "dispersion (sd_lvscore_scaledFU2) + n_cells (cell_number); FC_genotype.Rdata "
+                "+ ptb_summary.Rdata read with the pure-Python rdata reader"
+            ),
+            page="Nat. Commun. 16 (2025), doi:10.1038/s41467-025-57600-4; FC_genotype.Rdata",
+        ),
+    },
 }
 
 # S288C reference gene universe (ORF + RNA-coding systematic names) for L4 containment.

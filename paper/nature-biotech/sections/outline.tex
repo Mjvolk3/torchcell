@@ -1,0 +1,130 @@
+%% Editing-only manuscript outline & status board (KEEP TO <=2 PAGES).
+%% Input ONLY via \paperoutline (editing.tex); no-op in submission.tex/twocolumn.tex.
+%% Status markers (shared with paper-edit skill + CLAUDE.md):
+%%   \status{final} green check  = publication-ready
+%%   \status{tent}  amber square = author-reviewed, keep stable (discuss before agent edits)
+%%   \status{todo}  red X        = not done (agents may edit freely)
+%% Six Results sections <-> six main figures. Under each: its figure, then a paragraph plan
+%% (P1 = high-level overview first; P2-P4 = a few words each on where the paragraph goes).
+\begingroup
+\footnotesize
+% Suppress the default itemize bullets -- the \status{...} symbol is the marker instead.
+\renewcommand{\labelitemi}{}\renewcommand{\labelitemii}{}\renewcommand{\labelitemiii}{}
+\setlength{\leftmargini}{1.1em}\setlength{\leftmarginii}{1.1em}\setlength{\leftmarginiii}{1.1em}
+\setlength{\parskip}{1pt}
+{\normalsize\bfseries Manuscript outline \& status}\quad
+{\scriptsize(editing view only)\quad \status{final}\,done \enspace \status{tent}\,tentative---keep stable \enspace \status{todo}\,not done, agents may edit freely}\par\vspace{1pt}
+{\scriptsize\textbf{Convention:} each Results section = 3--4 paragraphs, high-level paragraph (P1) first; one main figure per section.}\par\vspace{1pt}
+
+\textbf{Main text}
+\begin{itemize}\setlength{\itemsep}{0.3pt}\setlength{\topsep}{0.5pt}
+  \item \status{tent}\ \textbf{Introduction}
+  \item \status{todo}\ \textbf{Results} \emph{(six sections, one per figure)}
+  \begin{itemize}\setlength{\itemsep}{0.8pt}\setlength{\topsep}{0.5pt}
+
+    \item \status{todo}\ \textbf{R1 --- Shared ontology and knowledge graph unify data}
+      \begin{itemize}\setlength{\itemsep}{0pt}
+        \item \status{tent}\ Fig~1 --- TorchCell + CGT overview (data a--c; model d--h)
+        \item \status{todo}\ P1 \emph{(high level):} data fragmentation $\to$ one shared schema
+        \item \status{todo}\ P2: Biolink ontology, ingest-time validation, Neo4j KG, datasets-as-queries
+        \item \status{todo}\ P3: reference-cell $+$ perturbation factorization; join/aggregation shrinks labels
+        \item \status{todo}\ P4: information budget ($10^{10}$ vs $10^{8}$ bits); cut at $H$; baselines saturate fitness
+      \end{itemize}
+
+    \item \status{todo}\ \textbf{R2 --- CGT predicts trigenic gene--gene interactions (state of the art)}
+      \begin{itemize}\setlength{\itemsep}{0pt}
+        \item \status{todo}\ Fig~2 --- gene--gene interactions + iBioFoundry design loop
+        \item \status{todo}\ P1 \emph{(high level):} interactions are the hard structured label; CGT in one line
+        \item \status{todo}\ P2: trigenic interaction defined (peel off lower-order effects)
+        \item \status{todo}\ P3: results --- SOTA vs Yeast9 FBA / DCell / DANGO ($r{=}0.454$)
+        \item \status{todo}\ P4: data/model scaling, graph-reg ablation, accuracy vs $|\tau|$
+      \end{itemize}
+
+    \item \status{todo}\ \textbf{R3 --- One embedding, many phenotypes}
+      \begin{itemize}\setlength{\itemsep}{0pt}
+        \item \status{todo}\ Fig~3 --- expression, morphology, fitness
+        \item \status{todo}\ P1 \emph{(high level):} one latent embedding generalizes across phenotypes
+        \item \status{todo}\ P2: expression prediction ($r{\approx}0.54$) + diagnostics
+        \item \status{todo}\ P3: single-knockout morphology ($r{\approx}0.62$)
+        \item \status{todo}\ P4: fitness + multitask sharing; why one embedding helps
+      \end{itemize}
+
+    \item \status{todo}\ \textbf{R4 --- Natural genetic variation vs.\ model-designed perturbations}
+      \begin{itemize}\setlength{\itemsep}{0pt}
+        \item \status{todo}\ Fig~4 --- natural genetic variation
+        \item \status{todo}\ P1 \emph{(high level):} natural variation vs designed perturbations
+        \item \status{todo}\ P2: natural strain variation across genome + environment
+        \item \status{todo}\ P3: model-designed (in-silico) gene perturbations
+        \item \status{todo}\ P4: comparison; what design adds beyond the natural range
+      \end{itemize}
+
+    \item \status{todo}\ \textbf{R5 --- Drug exposure and representation robustness}
+      \begin{itemize}\setlength{\itemsep}{0pt}
+        \item \status{todo}\ Fig~5 --- drug exposure + robustness \emph{(paper tag \texttt{r-robust})}
+        \item \status{todo}\ P1 \emph{(high level):} operator extends to drug/env; representation is robust
+        \item \status{todo}\ P2: drug-exposure prediction
+        \item \status{todo}\ P3: robustness --- stable across splits; embedding + graph ablations
+        \item \status{todo}\ P4: graceful degradation as supervision shrinks
+      \end{itemize}
+
+    \item \status{todo}\ \textbf{R6 --- Metabolism and strain design}
+      \begin{itemize}\setlength{\itemsep}{0pt}
+        \item \status{todo}\ Fig~6 --- metabolism + metabolic engineering \emph{(paper tag \texttt{r5})}
+        \item \status{todo}\ P1 \emph{(high level):} ground the representation in metabolism; recommend targets
+        \item \status{todo}\ P2: metabolism integration (Yeast9 / gene--reaction)
+        \item \status{todo}\ P3: strain-design recommendations + iBioFoundry DBTL loop
+        \item \status{todo}\ P4: inference at scale
+      \end{itemize}
+
+  \end{itemize}
+  \item \status{todo}\ \textbf{Discussion}
+  \item \status{todo}\ \textbf{Methods} \emph{(subsection status inline in \texttt{methods.tex})}
+\end{itemize}
+
+\textbf{Supplementary Information}
+\begin{itemize}\setlength{\itemsep}{1pt}\setlength{\topsep}{0.5pt}
+
+%% Numbers below are LIVE cross-references (\suppfig/\supptab/\ref), never hand-typed: the board
+%% cannot drift out of sync with the SI again. Nature style -- "Supplementary Fig. 1", no "S" prefix.
+  \item \status{tent}\ \textbf{Note~\ref{note:equivalence} --- Functional equivalence of the perturbation operator}
+    \begin{itemize}\setlength{\itemsep}{0pt}
+      \item \status{todo}\ \suppfig{fig:pert-equivalence-empirical} --- empirical equivalence (CGT- vs GNN-style, KO fitness)
+      \item \status{tent}\ Setting · Concrete example · Origin of approximation · Precision · Relation to prior work · Empirical validation
+    \end{itemize}
+  \item \status{tent}\ \textbf{Note~\ref{note:graph-attention} --- Graph-regularized attention contains graph attention}
+    \begin{itemize}\setlength{\itemsep}{0pt}
+      \item \status{todo}\ \suppfig{fig:graphreg-empirical} --- graph-reg relevance ($\lambda$ sweep)
+      \item \status{tent}\ Setting · Precision · Empirical validation
+    \end{itemize}
+  \item \status{tent}\ \textbf{Note~\ref{note:static-graph} --- Static-graph assumption and learning the perturbation}
+    \begin{itemize}\setlength{\itemsep}{0pt}
+      \item \status{tent}\ \supptab{tab:compute} --- per-batch compute (two routes)
+      \item \status{tent}\ Static-graph assumption · Limitations · Single general data object · Compute \& complexity · Empirical cost · Trade-offs
+    \end{itemize}
+  \item \status{tent}\ \textbf{Note~\ref{note:gi-from-fitness} --- Gene interactions as a learned function of fitness}
+    \begin{itemize}\setlength{\itemsep}{0pt}
+      \item \status{todo}\ \suppfig{fig:fit-gi-emergent} --- do interactions emerge from fitness?
+      \item \status{tent}\ Setting · Toward a formal statement · What would be surprising · Implication for metabolism · The atomic unit of data
+    \end{itemize}
+  \item \status{todo}\ \textbf{Note~\ref{note:info-accounting} --- Persistent entities and contingent observations} \emph{(theory of the cut; Fig.~1c)}
+    \begin{itemize}\setlength{\itemsep}{0pt}
+      \item \status{todo}\ \supptab{tab:entity-corpora} --- persistent-entity corpora, measured from the public archives by \texttt{experiments/016-information-accounting}
+      \item \status{todo}\ Setting · The measure (Prop.: compressed length bounds, not entropy) · The two corpora · Two asymmetries · Consequence · Objection · Precision
+      \item \status{todo}\ \emph{Open:} contingent-corpus gzip figure still computed on gilahyper --- commit that script and regenerate \supptab{tab:datasets} with a compressed-size column
+    \end{itemize}
+  \item \status{todo}\ \textbf{Note~\ref{note:classical-ml} --- Classical-ML case study: representation \& pooling} \emph{(empirical counterpart of Note~\ref{note:info-accounting})}
+    \begin{itemize}\setlength{\itemsep}{0pt}
+      \item \status{todo}\ \suppfig{fig:classical-ml} --- classical-ML baselines (compose from \texttt{*\_spearman\_spearman\_*\_palette} bars + \texttt{node\_embedding\_performance\_*\_palette}) · \supptab{tab:classical-ml-results}--\ref{tab:classical-ml-pearson} (Spearman, MSE, Pearson)
+      \item \status{tent}\ Setup · Representation is identity · The barrier is pooling
+    \end{itemize}
+
+  \item \status{tent}\ \textbf{General SI figures} (follow the Notes)
+    \begin{itemize}\setlength{\itemsep}{0pt}
+      \item \status{tent}\ \suppfig{fig:overview} --- TorchCell overview schematic \quad \status{tent}\ \suppfig{fig:data-model} --- ontology data model (hourglass)
+      \item \status{tent}\ \suppfig{fig:conversion-dedup-agg} --- KG normalization (convert/dedup/aggregate) \quad \status{tent}\ \suppfig{fig:dna-selection} --- DNA sequence selection
+      \item \status{tent}\ \suppfig{fig:dna-tokenization} --- DNA tokenization \quad \status{todo}\ \suppfig{fig:expr-diag} --- expression \& multitask diagnostics
+      \item \status{todo}\ \suppfig{fig:inference-scale} --- inference at scale \quad \status{tent}\ \suppfig{fig:profile-enrichment} --- guilt-by-association annotation
+    \end{itemize}
+  \item \status{tent}\ \textbf{SI tables}: \status{tent}\,\supptab{tab:compute} compute \quad \status{todo}\,\supptab{tab:entity-corpora} entity corpora \quad \status{todo}\,\supptab{tab:classical-ml-results}--\ref{tab:classical-ml-pearson} classical-ML \quad \status{tent}\,\supptab{tab:datasets} datasets \quad \status{tent}\,\supptab{tab:databases} graphs
+\end{itemize}
+\endgroup

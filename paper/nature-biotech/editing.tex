@@ -34,6 +34,23 @@
 % and expand to a colored "words/budget"; \ifcsname guards a missing/stale file.
 % submission.tex / twocolumn.tex define \wc as a no-op, so the shared headings still compile.
 \newcommand{\wc}[1]{\ifcsname wc@#1\endcsname\,{\normalfont\footnotesize[\csname wc@#1\endcsname]}\fi}
+% --- Editing-only stoplight status + outline (no-ops in submission.tex / twocolumn.tex) ----
+% \status{todo|tent|final} -> a colored status chip; \secstatus{...} -> chip after a heading;
+% \paperoutline -> the outline / status-board page (inserted after the front matter).
+% States (shared notation with the paper-edit skill + CLAUDE.md editing policy):
+%   todo  = red    -- not done; coding agents may edit freely.
+%   tent  = yellow -- author-reviewed, keep stable; discuss before agent edits.
+%   final = green  -- publication-ready.
+% Symbol markers (no text): green check = final, red X = todo, amber square = tentative.
+\definecolor{stgrn}{HTML}{43A047}
+\definecolor{styel}{HTML}{E0A020}
+\definecolor{stred}{HTML}{E53935}
+\newcommand{\tcstfinal}{{\normalfont\footnotesize\textcolor{stgrn}{\ding{51}}}}% green check = publication-ready
+\newcommand{\tcsttent}{{\normalfont\footnotesize\textcolor{styel}{\ding{110}}}}% amber square = tentative / keep stable
+\newcommand{\tcsttodo}{{\normalfont\footnotesize\textcolor{stred}{\ding{55}}}}% red X = not done
+\newcommand{\status}[1]{\csname tcst#1\endcsname}
+\newcommand{\secstatus}[1]{\ \status{#1}}% inline on the heading line (place INSIDE the heading braces)
+\newcommand{\paperoutline}{\clearpage\input{sections/outline}\clearpage}
 % Drafting view only: block paragraphs -- no first-line indent, vertical gap between paras.
 % submission.tex / twocolumn.tex keep the class's indented Nature default.
 \setlength{\parindent}{0pt}

@@ -34,10 +34,46 @@ typed blocks, each answering one question:
   choice; the only requirement is that it be clear, succinct, and match the paper's style
   (verified 2026.07: nature.com/nature/for-authors/formatting-guide and /supp-info; SR guidelines).
 - **"Supplementary Note" / "Supplementary Fig." / "Supplementary Table" are the standard
-  Nature designations.** Use them (not "Appendix", "SI Section", etc.). Supplementary Figures
-  and Tables are numbered S1, S2, ... (we do this). Note: some Nature journals say Supplementary
-  Notes need not be numbered and titles are optional; we keep "Supplementary Note 1/2/3" because
-  the main text cross-references them by number.
+  Nature designations.** Use them (not "Appendix", "SI Section", etc.). Note: some Nature journals
+  say Supplementary Notes need not be numbered and titles are optional; we keep "Supplementary
+  Note 1/2/3" because the main text cross-references them by number.
+
+- **NO "S" PREFIX. `Fig. S1` is explicitly WRONG** — corrected 2026.07.13; an earlier version of
+  this standard said "numbered S1, S2, ... (we do this)", and the whole manuscript did. The Nature
+  Portfolio formatting guide lists the accepted and rejected forms outright:
+
+|               |                                                                                  |
+| ------------- | -------------------------------------------------------------------------------- |
+| **Correct**   | `Supplementary Fig. 1` · `Supplementary Table 1` · `Supplementary Equation (1)`  |
+| **Incorrect** | ~~`Fig. S1`~~ · ~~`Supplemental Table 1`~~ · ~~`See Supplementary Information`~~ |
+
+  So SI floats are **numbered from 1 with no prefix**; the *word* "Supplementary" is what
+  distinguishes them from the main Figs 1--6 / Table 1. Every SI item must be cited at least once
+  in the main text or Methods, in sequence, with the word "Supplementary" each time — and general
+  citations ("see Supplementary Information") are forbidden.
+
+- **Cite SI items ONLY through the macros** (`preamble.tex`); never hand-type a number and never
+  write a bare `Fig.~\ref{}` / `Table~\ref{}` for an SI float (it renders as if it were a *main*
+  float):
+
+  ```latex
+  \suppfig{fig:classical-ml}      % -> "Supplementary Fig. 4"
+  \supptab{tab:entity-corpora}    % -> "Supplementary Table 2"
+  \suppnoteref{note:info-accounting}  % -> "Supplementary Note 5"
+  ```
+
+  Supplementary Notes are unnumbered `\subsection*`, so they carry their own counter via
+  `\suppnote{label}{title}`, which auto-numbers **and** `\label`s them. Declare a Note with
+  `\suppnote{note:foo}{title\secstatus{todo}}` — never `\subsection*{Supplementary Note~5: ...}`.
+  Inserting a Note then renumbers every citation to every other Note automatically. (This is not
+  hypothetical: inserting the information-accounting Note in the middle silently invalidated
+  ~23 hand-typed "Supplementary Note~N" references and the whole Contents block.)
+
+  The SI numbering block in `backmatter.tex` also does
+  `\renewcommand{\figurename}{Supplementary Figure}` / `{\tablename}{Supplementary Table}` so the
+  float **captions** read "Supplementary Figure 4 | ..." while `\ref` still yields the bare number,
+  letting the macros above compose to exactly the accepted forms. Cross-references are **not
+  bolded** — Nature sets them as running text.
 - **Subsection titles must be professional noun phrases**, not informal sentences. Good:
   "Compute and complexity", "Empirical cost analysis", "Limitations of the assumption". Avoid:
   "Where it can break", "The bottleneck is redundant message passing, not loading".
@@ -54,7 +90,11 @@ typed blocks, each answering one question:
   Nature, but standard and cleaner.
 - **Contents block** at the top of the SI (a bullet-free `tabular`), listing the Notes and
   the figure range. Maintained by hand -- update when a Note or figure block is added.
-- **Order:** Notes (text + proofs) first, then ALL figures, then references.
+- **Figure placement:** a figure that supports a specific Note (an empirical-validation figure
+  for a proof) sits WITH that Note, right after the paragraph that references it; general
+  figures that support the main text follow after all the Notes. Set S-numbering once at the
+  start of the SI so interleaved (S1, S2 with the Notes) and trailing (S3+) figures number in
+  order. Keep main Figs 1--6 before Methods with `\FloatBarrier` (placeins).
 
 ### Skeleton (order within a Supplementary Note)
 
@@ -77,16 +117,16 @@ Not every note needs all nine; keep the ones that carry weight, in this order.
 
 ### Environment hierarchy (which type to use)
 
-| Type          | Use for                                                              |
-|---------------|---------------------------------------------------------------------|
-| `definition`  | Introduce objects: graph, perturbation, encoder, function class      |
-| assumption    | State conditions needed for the result (plain `\paragraph{Assumptions.}`) |
-| `lemma`       | Small technical fact used later                                      |
-| `proposition` | Main formal claim in a supplement or theory section                 |
+| Type          | Use for                                                                             |
+| ------------- | ----------------------------------------------------------------------------------- |
+| `definition`  | Introduce objects: graph, perturbation, encoder, function class                     |
+| assumption    | State conditions needed for the result (plain `\paragraph{Assumptions.}`)           |
+| `lemma`       | Small technical fact used later                                                     |
+| `proposition` | Main formal claim in a supplement or theory section                                 |
 | theorem       | Major result — **only** if central and broad; avoid unless the paper is theoretical |
-| `corollary`   | Immediate consequence of a proposition/theorem                      |
-| `remark`      | Interpretation, caveat, limitation                                  |
-| example       | Concrete toy case showing why the claim matters (`\paragraph{Concrete example.}`) |
+| `corollary`   | Immediate consequence of a proposition/theorem                                      |
+| `remark`      | Interpretation, caveat, limitation                                                  |
+| example       | Concrete toy case showing why the claim matters (`\paragraph{Concrete example.}`)   |
 
 For this manuscript prefer **Proposition** for main claims and **Corollary/Remark** for
 consequences. **Do not call things Theorems** — the paper is empirical, not a theory paper.
@@ -114,6 +154,14 @@ proof's relevance where possible (see `fig:pert-equivalence-empirical` and
 `fig:graphreg-empirical` in `backmatter.tex`).
 
 Rules baked into the format:
+
+- **The `proposition`/`lemma` head sits on its OWN line** (the `tcplain` style uses a
+  `\newline` head-spec and ~11pt space above), so a stated result is a visually separate
+  block, never a run-in continuation of the preceding paragraph.
+- **Start every proof with a one-clause lead sentence** (e.g. "We establish the two
+  inclusions in turn.") BEFORE the first `\pfstep`. Without it, `amsthm` swallows the first
+  `\par` after the "Proof." label and the first bold step runs inline while later steps break
+  -- the lead makes every `\pfstep` bold header start on its own new line, consistently.
 
 - **No bullet lists (`itemize`) inside proofs.** Structure multi-part proofs with `\pfstep{...}`
   run-in headers (bold). This replaces the classic `\emph{Containment.}` italic run-in; we use

@@ -1,5 +1,5 @@
 %% ===== Introduction (~500-650 words) =====
-\section{Introduction\cb{target ~570 words}\wc{intro}}\label{sec:intro}
+\section{Introduction\cb{target ~570 words}\wc{intro}\secstatus{tent}}\label{sec:intro}
 % NOTE: the TorchCell overview schematic (fig:overview) is parked in the
 % Supplementary information for now (see sections/backmatter.tex); the Intro and
 % Results R1 reference it as a supplementary figure.
@@ -29,7 +29,7 @@ Existing approaches leave this gap open: constraint-based flux analysis captures
 but misses epistasis~\cite{bordbarConstraintbasedModelsPredict2014,merzbacherAccuratePredictionGene2025}, and recent perturbation
 transformers do not consistently beat linear baselines~\cite{ahlmann-eltzeDeeplearningbasedGenePerturbation2025}. Our own
 classical baselines make the point sharply---with enough data they predict knockout fitness
-from almost any gene representation, yet fail on gene interactions (Supplementary Fig.~\ref{fig:classical-ml})---so
+from almost any gene representation, yet fail on gene interactions (\suppfig{fig:classical-ml})---so
 fitness alone does not justify a deep model, but the harder, structured labels do.
 
 Here we present TorchCell, a schema-grounded knowledge graph that curates heterogeneous
@@ -39,4 +39,4 @@ Graph Transformer (CGT): a model that encodes a cell once, applies perturbations
 operator in embedding space, and folds biological networks into the training objective as a
 soft prior rather than a hard graph. It predicts fitness, gene interactions, gene expression,
 and morphology jointly, and needs only a genome---not an interaction graph---to run. We
-outline the data model and architecture in Supplementary Fig.~\ref{fig:overview}.
+outline the data model and architecture in \suppfig{fig:overview}.

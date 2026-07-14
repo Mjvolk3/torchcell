@@ -9,11 +9,20 @@ created: 1782239925374
 Companion math note for the Nature Biotechnology CGT paper
 ([[paper.nature-biotech-cgt-outline]]). Justifies the model-construction strategy
 — **why we look up / pretrain entity representations and fit phenotype labels only
-on a thin perturbation operator** — with a simple information accounting. The
-**canonical bit estimates used in Fig 1c** (entities ${\sim}10^{10}$ vs labels
-${\sim}10^{8}$) are in the latest dated section at the bottom; the material above is the
-fuller derivation (per-genome budgets, corollaries). Final figure exports live in
-[[paper.nature-biotech.figures]].
+on a thin perturbation operator** — with a simple information accounting.
+
+> **Canonical bit estimates for Fig 1c are the `2026.07.12` section at the bottom**:
+> **persistent entities ${\sim}10^{13}$ vs contingent observations ${\sim}10^{10}$ compressed
+> bits**, *measured* from the public archives by
+> [[experiments.016-information-accounting.scripts.persistent_entity_corpus_sizes]].
+> This **supersedes** the `2026.07.03` section's ${\sim}10^{10}$ vs ${\sim}10^{8}$, which was a
+> hand-derived bound (fungal genomes × 2 bits/bp; measurements × ~10 bits) and is kept below only
+> for history. The material in `2026.06.23` (per-genome budgets, the core inequality, corollaries)
+> is still the fuller *identifiability* derivation and is **not** superseded — but note that it
+> reasons about **effective supervision bits** ($10^6$–$10^7$), which is a *different quantity*
+> from the compressed corpus size, and the two must not be conflated.
+
+Final figure exports live in [[paper.nature-biotech.figures]].
 
 ## 2026.06.23 - Information accounting: why the model cuts between entities and instances
 
@@ -40,7 +49,7 @@ for the row-normalized adjacency $\tilde A$ (model note). Calligraphic = space,
 plain = element.
 
 | symbol | meaning |
-|---|---|
+| --- | --- |
 | $G$ | wildtype **cell graph** — genome sequence + gene/regulatory/PPI networks + metabolism, one multi-graph with vertex/edge features |
 | $V(G),\,g_i,\,N$ | genes = vertices; gene $g_i$; $N=\lvert V(G)\rvert=6607$ |
 | $\varepsilon$ | **environment / context** vector |
@@ -271,7 +280,7 @@ things/instances boundary.
 ### Placeholders to pin (computation plan)
 
 | Symbol | Meaning | How to fill | Source |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | $V,\ \bar h$ | segregating sites + per-site entropy across our strain panel | VCF/alignment of the related *cerevisiae* genomes → count variable sites, compute allele-frequency entropy | the genome papers we hold `[PIN: list them]` |
 | A2 bits | functional sequence content per genome | per-column entropy over MSAs of the 6,607 proteins (or a conservation proxy) | proteome + an MSA/conservation tool |
 | $b$ | effective bits per phenotype measurement | $\log_2(\sigma_{\text{signal}}/\sigma_{\text{noise}})$ from replicate CV, per assay | Costanzo/Kuzmin replicate stats; expression/morphology noise |
@@ -356,3 +365,111 @@ spend labels only on operator + decoder). This is the one-line justification for
    $C_{\text{fit}}\sim P_{\text{seq-encoder}}\sim10^8$-$10^{10}$ (violated by 2-4 OOM); the factored
    cut sets $C_{\text{fit}}=|\psi|+|\phi|\ll B$. Full version = the "core inequality" + the
    "Placeholders to pin" table above.
+
+## 2026.07.12 - Measured accounting: persistent entities vs contingent observations (supersedes the estimates above)
+
+**What changed.** The Fig 1c bit counts are no longer hand-derived. They are now *measured* from the
+public archives by a committed script
+([[experiments.016-information-accounting.scripts.persistent_entity_corpus_sizes]]) and rendered as
+**Table S2** (`paper/nature-biotech/sections/tab-entity-corpora.tex`, auto-generated). The argument is
+written up as **Supplementary Note 5: persistent entities and contingent observations**
+(`sections/backmatter.tex`); the classical-ML note moved 5 → 6 to sit directly after it as its
+empirical counterpart.
+
+**Naming (final).** The two worlds are **persistent entities** ($\mathcal U$) and **contingent
+observations** ($\mathcal I$). This replaces "universe of things / universe of instances" and
+"encoded entities / labeled instances" in figure and paper text. The word doing the work is
+*persistence*: a protein sequence is the same object in a glucose assay and an oxidative-stress
+assay; the phenotype is not. (Rejected: "purity" — it implies sequence databases are error-free,
+which they are not.)
+
+### The measure, and the Kolmogorov-vs-Shannon question
+
+$$L_C(D) = 8\,|C(s(D))| \quad\text{bits}$$
+
+for corpus $D$, fixed serialization $s$, fixed lossless compressor $C$. **It is not an information
+content.** It is *both*:
+
+- a computable **upper bound on Kolmogorov complexity**: $K(D)\le L_C(D)+K(C^{-1})+O(1)$, because
+  (compressed file + decompressor) is a program that outputs $D$; and
+- an exact **Shannon codelength**: $C$ is injective with self-delimiting output, so by Kraft
+  $q_C(\cdot):=2^{-L_C(\cdot)}$ is a sub-probability and $L_C(D)=-\log_2 q_C(s(D))$ — the
+  self-information of $D$ under *gzip's* implicit model $q_C$, not under the true source. The excess
+  over the source entropy is exactly $D_{\mathrm{KL}}(\text{source}\,\|\,q_C)$.
+
+So the user's intuition ($-\log p$ ↔ compressibility) is right; the missing qualifier is *under which
+model $p$*. Both worlds are measured with the **same** $(s,C)$, so the **ratio** is the claim, to
+order of magnitude, and no single number is asserted as an information content. This is
+Proposition 5 in the SI, with a two-step proof.
+
+Terminology: say **compressed length / compressed size**, not "gzip codelength" (*codelength* reads
+as source code outside information theory) and not "storage footprint" (throws away the
+information-theoretic content entirely).
+
+### Measured (2026.07.12)
+
+| Modality | Corpus | GB | bits |
+| --- | --- | --- | --- |
+| Protein | UniProtKB/TrEMBL | 40.5 | 3.2 × 10¹¹ |
+| Protein | UniProtKB/Swiss-Prot | 0.1 | 7.5 × 10⁸ |
+| DNA / nucleotide | NCBI `nt` | 884.1 | **7.1 × 10¹²** |
+| RNA | NCBI RefSeq RNA | 67.4 | 5.4 × 10¹¹ |
+| Small molecule | PubChem Compound | 115.8 | 9.3 × 10¹¹ |
+| Structure | wwPDB mmCIF | 89.2 | 7.1 × 10¹¹ |
+| **Persistent entities, total** | | **1,197.1** | **9.6 × 10¹² ≈ 10¹³** |
+| Contingent observations (34 studies) | | 1.4 | ~1.1 × 10¹⁰ ≈ 10¹⁰ |
+
+**Ratio ≈ 10³ (three orders of magnitude).** Sources, routes and traps:
+[[experiments.016-information-accounting.scripts.persistent_entity_corpus_sizes]].
+
+**Corroboration.** `nt` holds 4.06 × 10¹² nucleotides → a four-letter alphabet needs ≥ 8.1 × 10¹²
+bits; the archive ships in 7.1 × 10¹². The compressed size recovers 87% of a counting bound that
+never mentions a compressor. Two unrelated routes agree, so the measure tracks sequence content, not
+file formatting.
+
+### The trap this created — and how the SI avoids it
+
+The old accounting said labels ≈ $10^8$ bits and encoder capacity ≈ $10^8$–$10^{10}$ params, so
+"labels cannot pay for the encoder" was a 2–4 OOM gap. The **new** number is $10^{10}$ *compressed
+bits* on the label side — which, taken naively, looks like the labels have *caught up* with encoder
+capacity and the factorization is no longer forced. **It has not**, and the SI is careful:
+
+- $L_C(\mathcal I) \approx 10^{10}$ is **compressed storage**.
+- $B_{\text{eff}} \approx 10^6$–$10^7$ is **usable supervision** (noise-discounted, low-rank-discounted;
+  the `2026.06.23` B1/B2 analysis above).
+
+These are *different quantities* and must never be swapped. The SI therefore makes **two separate
+claims**: (1) a *measured* corpus-scale ratio, $10^{13}$ vs $10^{10}$, assumption-free — this is what
+Fig 1c shows; and (2) the *identifiability* argument, which uses $B_{\text{eff}}$ and is an explicit
+MDL heuristic. Methods and Note 5 both state the discount out loud.
+
+### The second asymmetry (the one that actually matters)
+
+Scale is the weaker half. **Persistence** is the argument: an entity representation is a function of
+the entity alone, so one sequence informs the encoder for *every* instance in which that entity
+appears; a phenotype record $y=f(\{x_i\}_{i\in p},p,\varepsilon,a)+\eta$ constrains $f$ at **one**
+point of the context space and nowhere else. *Scale is an argument about sample size; persistence is
+an argument about what a bit buys.*
+
+### The objection to pre-empt
+
+*"You only need the yeast entities, and the yeast proteome is ~3 × 10⁶ residues ≈ 10⁷ bits — smaller
+than the phenotype corpus."* Correct arithmetic, inverted conclusion: an entity encoder is **not fit
+on the yeast slice**, it is fit on the whole archive and *applied* to it, because a protein sequence
+means the same thing in every organism (fungal DNA-LMs, e.g. `chaoPredictingDynamicExpression2025`,
+are built exactly this way). That transfer **is** what persistence buys, and it is why the full
+archive is the right comparand. This objection is answered explicitly in Note 5.
+
+### Open
+
+- **The one provenance gap.** The contingent side (~1.4 × 10⁹ compressed bytes) is still computed on
+  gilahyper. Move that script into `experiments/016-information-accounting/scripts/` and regenerate
+  **Table S5** (`tab:datasets`) from it *with a compressed-size column*. Table S5 currently lists 27
+  studies (~4.4 × 10⁷ genotypes); the gilahyper table lists 34 (~7.9 × 10⁷ instances). Until they
+  agree, Note 5 deliberately says "~10⁷–10⁸ instances" rather than quoting 34 against a 27-row table.
+- **Fig 1c label.** The panel's top already reads ≳10¹³; its **bottom still reads ~10⁸ and must become
+  ~10¹⁰**. The draw.io XML is embedded in
+  `notes/assets/drawio/Fig1-torchcell-overview.drawio.svg` (open the `.svg` directly in draw.io).
+- **Optional.** Panel c draws DNA / RNA / Protein / Small Molecules but no **Structures** box, while
+  Table S2 has a wwPDB row (7.1 × 10¹¹ bits, ~7% of the total). Adding it would align figure and
+  table; the ≳10¹³ headline holds either way.

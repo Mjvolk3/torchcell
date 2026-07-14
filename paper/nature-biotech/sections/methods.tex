@@ -3,7 +3,9 @@
 %% online with the paper), NOT in the Supplementary Information. Methods references
 %% continue the numbering after the main reference list. Subsections are unnumbered
 %% (\subsection*) per Nature style. Data/Code availability + Reporting summary live here.
-\section{Methods\cb{no limit}\wc{methods}}\label{sec:methods}
+%% \FloatBarrier flushes all pending main figures (Figs 1-6) so none drift into Methods.
+\FloatBarrier
+\section{Methods\cb{no limit}\wc{methods}\secstatus{todo}}\label{sec:methods}
 
 \subsection*{Problem setup}
 We cast multimodal phenotype prediction as supervised learning of a single map from a cell
@@ -36,6 +38,10 @@ operator $\mathcal{T}_\psi$, and decoder $\mathcal{R}_\phi$ (Table~\ref{tab:nota
 ENC/PERT/DEC name the concept, $F_\theta/\mathcal{T}_\psi/\mathcal{R}_\phi$ the CGT
 implementation. Table~\ref{tab:notation} is the full glossary.
 
+%% SOURCE: hand-authored -- no generating script, and there should not be one: this table IS the
+%% paper's notation contract, not a derived artifact. It is the definition every other symbol in the
+%% manuscript and the Supplementary Notes must match. Keep it in sync with
+%% notes/paper.information-accounting.md and notes/torchcell.models.equivariant_cell_graph_transformer.md.
 \begin{table}[t]
 \centering\small
 \caption{Notation. The ENC/PERT/DEC stages (Fig.~\ref{fig:torchcell}c) are implemented for CGT as $F_\theta/\mathcal{T}_\psi/\mathcal{R}_\phi$.}
@@ -119,7 +125,7 @@ traits or metabolite concentrations, and the formulation is agnostic to its tens
 explainable join/aggregation step merges instances across compatible conditions (e.g.\
 across environments, or recasting lethality to fitness), enlarging datasets and shrinking
 the decoder's output domain $\mathcal{Y}$ to fewer symbol types
-(Supplementary Fig.~\ref{fig:conversion-dedup-agg}).
+(\suppfig{fig:conversion-dedup-agg}).
 
 \subsection*{Encoded entities}
 The cell's molecular parts---DNA, RNA, protein, and small molecules such as metabolites and
@@ -146,21 +152,30 @@ simpler and more general choice would be to learn the cell-to-phenotype map end 
 Abundant entity data and scarce labels meet at the representation $H$, where we cut the model
 so that the labels fit only the operator and the decoder.
 
-A rough information accounting motivates this cut (Fig.~\ref{fig:torchcell}c). On the entity
-side, the modeled molecular parts are drawn from a bounded universe of sequenced fungal
-genomes: taking the ${\sim}1{,}342$ fungal genomes compiled by Chao et
-al.~\cite{chaoPredictingDynamicExpression2025} as an upper bound on the yeast-relevant entity
-space, and a genome of $L\approx1.2\times10^{7}$ base pairs encoded at $2$ bits per base
-($2L\approx2.4\times10^{7}$ bits per genome), the entity universe carries on the order of
-$10^{10}$ bits. On the label side, the measured phenotypes are far fewer: across the fitness,
-gene-interaction, expression, and morphology datasets we integrate there are on the order of
-$10^{7}$ individual measurements---one scalar per strain for fitness, one scalar per gene for
-expression and protein abundance, and a fixed trait set per strain for morphology---so at
-${\sim}10$ bits per noisy measurement the label space is on the order of $10^{8}$ bits. The
-resulting ${\sim}100\times$ asymmetry means the phenotype labels cannot pay for the entity
-representation; abundant sequence data must, which is exactly the encode/operate/decode cut.
-These are order-of-magnitude upper bounds that ignore redundancy from shared ancestry and
-correlated measurements; a tighter, redundancy-aware estimate is left to future work.
+A measured information accounting motivates this cut (Fig.~\ref{fig:torchcell}c; \suppnoteref{note:info-accounting}). Both sides are measured with one instrument, the compressed length
+$L_C(D)=8\lvert C(s(D))\rvert$ of a corpus $D$ under a fixed serialization $s$ and lossless
+compressor $C$. On the entity side we take the public archives in the representation in which
+each is actually distributed---nucleotide (NCBI \texttt{nt}), protein (UniProtKB/TrEMBL),
+small molecule (PubChem), and structure (wwPDB)---whose sizes are read from HTTP
+\texttt{Content-Length}, BLAST metadata, and the wwPDB index without downloading any payload
+(\supptab{tab:entity-corpora}); they total ${\sim}10^{13}$ bits. A counting bound
+corroborates the compressor: \texttt{nt} holds $4.06\times10^{12}$ nucleotides, which a
+four-letter alphabet cannot write in under $8.1\times10^{12}$ bits, and the archive is
+distributed in $7.1\times10^{12}$. On the label side, the phenotype corpus we integrate
+(\supptab{tab:datasets}) occupies ${\sim}1.4\times10^{9}$ compressed bytes, or
+${\sim}10^{10}$ bits---an asymmetry of ${\sim}10^{3}$.
+
+Scale is only half the argument, and the weaker half. An entity representation is a function
+of the entity alone, so one sequence informs the encoder for every instance in which that
+entity appears; a phenotype record is pinned to a single genotype, environment, and assay, and
+constrains the map nowhere else. Nor are these compressed sizes usable supervision: both are
+upper bounds on description length (\suppnoteref{note:info-accounting}, Proposition~\ref{prop:codelength}),
+and the labels in particular are noisy and strongly redundant---interaction matrices are
+approximately low rank---which places the effective supervision nearer $10^{6}$--$10^{7}$ bits
+than $10^{10}$. That discount only sharpens the conclusion. A sequence encoder carries
+$10^{8}$--$10^{10}$ parameters and the phenotype labels cannot pay for it, whereas the operator
+and decoder together carry ${\sim}5\times10^{4}$ and they can. This is exactly the
+encode/operate/decode cut.
 
 \subsection*{Multimodal cell representation}
 A cell is represented across nested biological scales (Fig.~\ref{fig:torchcell}d). The
@@ -266,7 +281,7 @@ the shared $H$, so the data pipeline never builds or re-encodes a perturbed grap
 operator is a learned, functionally equivalent substitute for re-encoding---applying it to
 the reference representation approximates re-encoding the perturbed graph with a graph
 network, $\Phi(G_p)\approx\mathcal{R}_\phi(\mathcal{T}_\psi(H,p))$
-(Fig.~\ref{fig:torchcell}g; proved in Supplementary Note~1)---at
+(Fig.~\ref{fig:torchcell}g; proved in \suppnoteref{note:equivalence})---at
 $\mathcal{O}(BL)$ rather than $\mathcal{O}(BL\lvert E\rvert)$ cost. Second, the model does
 not require a graph at all: genes enter as a token set and interact through learned
 attention, with the networks $\{A^{(k)}\}$ acting only as an optional soft prior
@@ -368,7 +383,7 @@ hardware (GPUs, distributed/DDP), wall-clock; software versions; random seeds.
 
 \subsection*{Baselines}
 \textit{[FILLER.]} DANGO, DCell, and Yeast9 flux balance analysis; classical-ML baselines
-(Supplementary Fig.~\ref{fig:classical-ml}); matched training data and evaluation protocol.
+(\suppfig{fig:classical-ml}); matched training data and evaluation protocol.
 
 \subsection*{Evaluation metrics}
 \textit{[FILLER.]} Pearson correlation ($r$) and any secondary metrics; aggregation
@@ -395,7 +410,7 @@ design--build--test--learn loop; cultivation and fermentation conditions.
 and titer quantification.
 
 \subsection*{Inference at scale}
-\textit{[FILLER.]} Large-scale inference pipeline and resources (Supplementary Fig.~\ref{fig:inference-scale}).
+\textit{[FILLER.]} Large-scale inference pipeline and resources (\suppfig{fig:inference-scale}).
 
 \subsection*{Statistics}
 \textit{[FILLER.]} Statistical tests used and whether one- or two-sided; sample sizes

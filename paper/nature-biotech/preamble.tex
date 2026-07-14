@@ -35,13 +35,13 @@
 %%      itemize/bullet list, and NEVER scattered \emph. Keep parentheticals to a minimum.
 %%   4. Display every nontrivial equation (numbered). One idea per paragraph.
 \newtheoremstyle{tcplain}% name
-  {\topsep}% space above
-  {\topsep}% space below
+  {11pt plus 3pt minus 2pt}% space above -- clear gap so a Proposition separates from prose
+  {11pt plus 3pt minus 2pt}% space below
   {}% body font: roman (empty = upright, not italic)
   {}% first-line indent
   {\bfseries}% head font: bold
   {.}% punctuation after head
-  {.5em}% space after head
+  {\newline}% head followed by a line break -> the statement starts on its own line
   {}% head spec (default "Name Number")
 \theoremstyle{tcplain}
 \newtheorem{proposition}{Proposition}
@@ -53,11 +53,38 @@
 % \bfseries\itshape, so use \notesec instead of \paragraph inside the notes.
 \newcommand{\notesec}[1]{\par\smallskip\noindent\textbf{#1.}\enspace}
 %% -----------------------------------------------------------------------------------
+%% SUPPLEMENTARY CROSS-REFERENCES -- Nature Portfolio style. VERIFIED 2026.07 against the
+%% Nature Portfolio formatting guide (nature.com/documents/ncomms-formatting-instructions.pdf),
+%% which lists the accepted and rejected forms explicitly:
+%%     Correct:   "Supplementary Fig. 1"   "Supplementary Table 1"   "Supplementary Equation (1)"
+%%     INCORRECT: "Fig. S1"   "Supplemental Table 1"   "See Supplementary Information"
+%% So the word "Supplementary" does the disambiguating -- NOT an "S" glued to the number, and the
+%% SI floats are numbered from 1 (see the numbering block at the top of the SI in backmatter.tex,
+%% which also renames the float via \figurename/\tablename so CAPTIONS read
+%% "Supplementary Figure 1 | ...", while \ref still yields the bare number).
+%% Cite every SI item through these macros: they make the correct form the only convenient one.
+\newcommand{\suppfig}[1]{Supplementary Fig.~\ref{#1}}
+\newcommand{\supptab}[1]{Supplementary Table~\ref{#1}}
+\newcommand{\suppnoteref}[1]{Supplementary Note~\ref{#1}}
+%% Supplementary Notes are unnumbered \subsection*, so they need their own counter to become
+%% \label/\ref-able. Hand-typed "Supplementary Note~5" had to be renumbered by hand every time a
+%% Note was inserted; \suppnote removes that failure mode -- insert a Note anywhere and every
+%% citation to every other Note renumbers itself.
+\newcounter{suppnote}
+\newcommand{\suppnote}[2]{%  #1 = label, #2 = title (may carry \secstatus)
+  \clearpage
+  \refstepcounter{suppnote}%
+  \subsection*{Supplementary Note~\thesuppnote: #2}%
+  \label{#1}%
+}
+%% -----------------------------------------------------------------------------------
 \usepackage[title]{appendix}
 \usepackage{xcolor}
+\usepackage{pifont}% zapf dingbats for the editing-only status markers (\ding{51}/{55}/{110})
 \usepackage{textcomp}
 \usepackage{manyfoot}
 \usepackage{booktabs}
+\usepackage{placeins}% \FloatBarrier: keep figures inside their section (main figs before Methods)
 \usepackage{algorithm}
 \usepackage{algorithmicx}
 \usepackage{algpseudocode}

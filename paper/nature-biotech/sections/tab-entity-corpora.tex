@@ -1,0 +1,40 @@
+%% SOURCE: experiments/016-information-accounting/scripts/persistent_entity_corpus_sizes.py
+%% AUTO-GENERATED -- do not hand-edit; edits are lost on the next run.
+%% Regenerate: python experiments/016-information-accounting/scripts/persistent_entity_corpus_sizes.py --write-table
+%% Measured 2026-07-13T04:02:43+00:00. The immutable snapshot behind every cell below -- each URL queried, each
+%% archive release id, and every per-file size summed for the PubChem and wwPDB rows -- is
+%%   experiments/016-information-accounting/results/snapshots/persistent_entity_corpus_sizes_2026-07-12-23-02-43.{csv,json}
+%%   experiments/016-information-accounting/results/snapshots/persistent_entity_corpus_sizes_2026-07-12-23-02-43.audit.csv.gz
+%% Cite that snapshot if these numbers are questioned; the archives are live and will have grown.
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{\textbf{Persistent-entity corpora.} Compressed size of each public archive in the
+representation it is actually distributed in, obtained without downloading any payload
+(HTTP \texttt{Content-Length}, NCBI BLAST metadata, or the wwPDB directory index). Compressed
+size $L_C(D)=8\lvert C(s(D))\rvert$ is a computable upper bound on Kolmogorov complexity and a
+codelength under \texttt{gzip}'s implicit model, not an intrinsic information content; it is
+applied identically to both worlds of Fig.~\ref{fig:torchcell}c, so the \emph{ratio} is what is
+claimed. RefSeq transcripts also occur in \texttt{nt}, so the conservative total omits them.
+Sizes are decimal GB ($10^9$\,bytes); PubChem and the PDB are rolling archives, so their
+\emph{Release} is the fetch date. Measured 2026-07-13 (04:02:43~UTC) by the script named
+above and archived as a dated snapshot; no number here is hand-entered. These archives grow
+monotonically, so re-running the script returns a \emph{larger} entity total and a larger ratio---the
+separation reported here is conservative.}
+\label{tab:entity-corpora}
+\begin{tabular}{@{}l l l l r r@{}}
+\toprule
+\textbf{Modality} & \textbf{Corpus} & \textbf{Release} & \textbf{Contents} & \textbf{GB} & \textbf{Bits}\\
+\midrule
+Protein & UniProtKB/TrEMBL & 2026\_02 & 149,234,636 sequences & 40.5 & $3.2\times10^{11}$\\
+Protein & UniProtKB/Swiss-Prot & 2026\_02 & 575,503 sequences & 0.1 & $7.5\times10^{8}$\\
+DNA / nucleotide & NCBI nt & 2026-07-08 & 128,624,482 sequences ($4.1\times10^{12}$ nt) & 884.1 & $7.1\times10^{12}$\\
+RNA (transcripts) & NCBI RefSeq RNA & 2026-06-26 & 81,647,541 sequences ($2.4\times10^{11}$ nt) & 67.4 & $5.4\times10^{11}$\\
+Small molecule & PubChem Compound & 2026-07-13 & 357 SDF blocks, CID 1--178,500,000 & 115.8 & $9.3\times10^{11}$\\
+Structure & wwPDB mmCIF & 2026-07-13 & 255,710 structures & 89.2 & $7.1\times10^{11}$\\
+\midrule
+\multicolumn{4}{@{}l}{\textbf{Total} (all rows)} & 1,197.1 & $9.6\times10^{12}$\\
+\multicolumn{4}{@{}l}{\textbf{Total} (non-overlapping: \texttt{nt} $+$ TrEMBL $+$ PubChem $+$ PDB)} & 1,129.6 & $9.0\times10^{12}$\\
+\bottomrule
+\end{tabular}
+\end{table*}

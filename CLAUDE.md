@@ -68,6 +68,14 @@ worktree by default -- code AND notes (roadmap/plan/weekly/dendron/`.claude/*`).
 ## Programming Guide
 
 - Do NOT ever use fallback mechanisms unless we clearly tell you to. This means minimize try except blocks, unnecessary conditionals, etc.
+- **STRICT RULE — artifacts come from scripts in the experiment folder.** Any artifact used
+  in the paper or in `notes/` (figures, tables, derived CSVs, numbers) MUST be produced by a
+  committed script that lives in the `experiments/<id>/` folder where that data is generated
+  (e.g. `experiments/smf-dmf-tmf-001/traditional_ml-plot_paper.py`), reading the real result
+  files. Never hand-author a figure/table/number into the paper or a note without a
+  regenerating script. When you create such an artifact, also point to its generating script.
+  (This is the paper-artifact half of the provenance principle below; the dataset half is
+  "Provenance & Reproducibility".)
 - **Pydantic-first.** torchcell models structured data with pydantic: schemas,
   configs, provenance/manifest records, and any typed record. Prefer pydantic
   `BaseModel` (validation + serialization + typed access) over dataclasses/dicts
@@ -184,9 +192,27 @@ body (`content.tex`) compiled by thin wrappers, and builds via Tectonic.
   inside a proof, minimal `\emph`); prefer **Proposition** for main claims and
   **Corollary/Remark** for consequences; do NOT use **Theorem** (the paper is empirical).
   SI house order: Supplementary Notes (text + proofs) first, then all figures, then refs.
-- **SI structure invariant:** in `sections/backmatter.tex`, all Supplementary *notes/text*
-  come first under `\bmhead{Supplementary information}`; ALL supplementary *figures* go at
-  the end (after the notes, before the bibliography). Do not interleave figures with notes.
+- **SI structure invariant:** in `sections/backmatter.tex`, `\section*{Supplementary
+  Information}` + a Contents block, then the Supplementary *Notes* (`\subsection*`, each on a
+  new page). A figure that supports a specific Note (e.g. an empirical-validation figure)
+  sits WITH that Note; general figures that support the main text follow after all the Notes.
+  S-numbering (`\setcounter{figure}{0}` + `\renewcommand{\thefigure}{S\arabic{figure}}`) is
+  set ONCE at the start of the SI so both interleaved and trailing figures number in order.
+  Keep main Figs 1--6 before Methods with `\FloatBarrier` (placeins) after each Results figure
+  and before `\section{Methods}`.
+- **Section status stoplight + agent-editing policy.** Every heading carries an editing-only
+  status chip `\secstatus{todo|tent|final}` (defined in `editing.tex`; no-op in
+  `submission.tex`/`twocolumn.tex`), and the manuscript opens with an editing-only outline/
+  status board (`sections/outline.tex`, inserted by `\paperoutline`). Notation:
+  **`todo` = red ✗** (not done), **`tent` = amber ■** (author-reviewed, keep stable),
+  **`final` = green ✓** (publication-ready). The board (`sections/outline.tex`) also holds a
+  per-Results-section paragraph plan (P1 high-level first) under each section's figure. **Editing rule for coding agents:** a `todo`
+  section is fair game to edit freely; a `tent` or `final` section has been read and
+  approved by the author, so **do NOT edit it without first surfacing the intended change
+  and getting an explicit go-ahead** (the author may override per-request). When you finish
+  a `todo` section, leave it `todo` for the author to promote -- do not self-promote to
+  `tent`/`final`. Keep the outline board flags in sync when a section's state changes. Use
+  the `paper-edit` skill for the edit-then-rebuild loop.
 
 ## Mermaid Diagrams with Math (KaTeX)
 

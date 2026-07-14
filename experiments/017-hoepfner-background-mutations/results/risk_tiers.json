@@ -1,0 +1,342 @@
+{
+  "denominators": {
+    "total_records": 29996238,
+    "hip_records": 16939418,
+    "hop_records": 13056820,
+    "hip_strains": 5807,
+    "hop_strains": 4912,
+    "hip_pct_records": 56.47180823141888,
+    "hop_pct_records": 43.52819176858112
+  },
+  "baselines": {
+    "hip_neg_rate_4": 0.008823738808499796,
+    "hop_neg_rate_4": 0.017103475425103508
+  },
+  "detector": {
+    "primary_thresh": -4.0,
+    "roll_window": 7,
+    "enr_flag": 4.0,
+    "whi2_corr_min": 0.5
+  },
+  "tiers": {
+    "whi2_cluster": {
+      "n_strains": 43,
+      "n_records": 127090,
+      "pct_all": 0.4236864636158707,
+      "pct_hip": 0.7502619039213744
+    },
+    "empirical_runs_sweep": {
+      "enr_3x": {
+        "n_strains": 137,
+        "n_records": 402281,
+        "pct_all": 1.3411048412137547,
+        "pct_hip": 2.3748218504319336
+      },
+      "enr_4x": {
+        "n_strains": 107,
+        "n_records": 314544,
+        "pct_all": 1.0486114958815835,
+        "pct_hip": 1.8568760744908708
+      },
+      "enr_5x": {
+        "n_strains": 85,
+        "n_records": 249512,
+        "pct_all": 0.8318109757630273,
+        "pct_hip": 1.4729667807949482
+      }
+    },
+    "paper_characterized_157": {
+      "n_strains": 157,
+      "n_records_estimate": 457979,
+      "pct_all_estimate": 1.5267907512196943,
+      "note": "record count ESTIMATED via mean HIP coverage; exact identities need Table S5"
+    },
+    "conservative_hip_envelope": {
+      "n_strains": 5807,
+      "n_records": 16939418,
+      "pct_all": 56.47180823141888
+    },
+    "hop_not_implicated": {
+      "n_records": 13056820,
+      "pct_all": 43.52819176858112
+    }
+  },
+  "suspect_runs": [
+    {
+      "chrom": "II",
+      "pos_start": 760596,
+      "pos_end": 809238,
+      "n_strains": 24,
+      "whi2_frac": 0.0,
+      "genes": [
+        "DPB3",
+        "PAF1",
+        "SAF1",
+        "DUG2",
+        "MRPL27",
+        "SSH1",
+        "YBR284W",
+        "YBR285W",
+        "APE3",
+        "YBR287W",
+        "APM3",
+        "SNF5",
+        "BSD2",
+        "CTP1",
+        "YBR292C",
+        "VBA2",
+        "SUL1",
+        "PCA1",
+        "PHO89",
+        "MAL33",
+        "MAL31",
+        "MAL32",
+        "YBR300C",
+        "PAU24"
+      ],
+      "orfs": [
+        "YBR278W",
+        "YBR279W",
+        "YBR280C",
+        "YBR281C",
+        "YBR282W",
+        "YBR283C",
+        "YBR284W",
+        "YBR285W",
+        "YBR286W",
+        "YBR287W",
+        "YBR288C",
+        "YBR289W",
+        "YBR290W",
+        "YBR291C",
+        "YBR292C",
+        "YBR293W",
+        "YBR294W",
+        "YBR295W",
+        "YBR296C",
+        "YBR297W",
+        "YBR298C",
+        "YBR299W",
+        "YBR300C",
+        "YBR301W"
+      ]
+    },
+    {
+      "chrom": "III",
+      "pos_start": 188329,
+      "pos_end": 214405,
+      "n_strains": 14,
+      "whi2_frac": 0.0,
+      "genes": [
+        "SNT1",
+        "ELO2",
+        "RRP43",
+        "RBK1",
+        "PHO87",
+        "YCR043C",
+        "PER1",
+        "RRT12",
+        "IMG1",
+        "BUD23",
+        "YCR049C",
+        "ARE1",
+        "YCR050C",
+        "YCR051W"
+      ],
+      "orfs": [
+        "YCR033W",
+        "YCR034W",
+        "YCR035C",
+        "YCR036W",
+        "YCR037C",
+        "YCR043C",
+        "YCR044C",
+        "YCR045C",
+        "YCR046C",
+        "YCR047C",
+        "YCR049C",
+        "YCR048W",
+        "YCR050C",
+        "YCR051W"
+      ]
+    },
+    {
+      "chrom": "XII",
+      "pos_start": 704726,
+      "pos_end": 721100,
+      "n_strains": 14,
+      "whi2_frac": 0.7857142857142857,
+      "genes": [
+        "RSO55",
+        "YLR282C",
+        "PUT7",
+        "ECI1",
+        "NNT1",
+        "CTS1",
+        "YLR287C",
+        "RPS30A",
+        "MEC3",
+        "GUF1",
+        "COQ11",
+        "GCD7",
+        "SEC72",
+        "GSP1"
+      ],
+      "orfs": [
+        "YLR281C",
+        "YLR282C",
+        "YLR283W",
+        "YLR284C",
+        "YLR285W",
+        "YLR286C",
+        "YLR287C",
+        "YLR287C-A",
+        "YLR288C",
+        "YLR289W",
+        "YLR290C",
+        "YLR291C",
+        "YLR292C",
+        "YLR293C"
+      ]
+    },
+    {
+      "chrom": "III",
+      "pos_start": 247436,
+      "pos_end": 264236,
+      "n_strains": 13,
+      "whi2_frac": 0.0,
+      "genes": [
+        "SOL2",
+        "ERS1",
+        "FUB1",
+        "PAT1",
+        "PTC6",
+        "SRB8",
+        "AHC2",
+        "TRX3",
+        "TUP1",
+        "YCR085W",
+        "CSM1",
+        "YCR087W",
+        "YCR087C-A"
+      ],
+      "orfs": [
+        "YCR073W-A",
+        "YCR075C",
+        "YCR076C",
+        "YCR077C",
+        "YCR079W",
+        "YCR081W",
+        "YCR082W",
+        "YCR083W",
+        "YCR084C",
+        "YCR085W",
+        "YCR086W",
+        "YCR087W",
+        "YCR087C-A"
+      ]
+    },
+    {
+      "chrom": "IX",
+      "pos_start": 146518,
+      "pos_end": 164519,
+      "n_strains": 9,
+      "whi2_frac": 0.1111111111111111,
+      "genes": [
+        "NUP159",
+        "POR2",
+        "SDP1",
+        "HOS4",
+        "COX5B",
+        "HPM1",
+        "SEC24",
+        "YIL108W",
+        "PFK26"
+      ],
+      "orfs": [
+        "YIL115C",
+        "YIL114C",
+        "YIL113W",
+        "YIL112W",
+        "YIL111W",
+        "YIL110W",
+        "YIL109C",
+        "YIL108W",
+        "YIL107C"
+      ]
+    },
+    {
+      "chrom": "III",
+      "pos_start": 159455,
+      "pos_end": 173032,
+      "n_strains": 8,
+      "whi2_frac": 0.0,
+      "genes": [
+        "YCR023C",
+        "SLM5",
+        "PMP1",
+        "YCR025C",
+        "NPP1",
+        "RHB1",
+        "FEN2",
+        "RIM1"
+      ],
+      "orfs": [
+        "YCR023C",
+        "YCR024C",
+        "YCR024C-A",
+        "YCR025C",
+        "YCR026C",
+        "YCR027C",
+        "YCR028C",
+        "YCR028C-A"
+      ]
+    },
+    {
+      "chrom": "III",
+      "pos_start": 228300,
+      "pos_end": 237995,
+      "n_strains": 6,
+      "whi2_frac": 0.0,
+      "genes": [
+        "YCR064C",
+        "BUD31",
+        "HCM1",
+        "RAD18",
+        "SED4",
+        "ATG15"
+      ],
+      "orfs": [
+        "YCR064C",
+        "YCR063W",
+        "YCR065W",
+        "YCR066W",
+        "YCR067C",
+        "YCR068W"
+      ]
+    },
+    {
+      "chrom": "XII",
+      "pos_start": 750401,
+      "pos_end": 761546,
+      "n_strains": 6,
+      "whi2_frac": 0.8333333333333334,
+      "genes": [
+        "IMH1",
+        "CDC25",
+        "YLR311C",
+        "ATG39",
+        "MRPL15",
+        "SPH1"
+      ],
+      "orfs": [
+        "YLR309C",
+        "YLR310C",
+        "YLR311C",
+        "YLR312C",
+        "YLR312W-A",
+        "YLR313C"
+      ]
+    }
+  ]
+}

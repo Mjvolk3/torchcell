@@ -173,5 +173,6 @@ torchcell.egg-info/*
 
 # results
 experiments/007-kuzmin-tm/results/cobra-fba-growth/*
+experiments/017-hoepfner-background-mutations/results/score_samples.npz
 torchcell-scratch
 

@@ -18,3 +18,7 @@ A random forest failing on gene interactions could be blamed on the model. This 
 Example panel (1e4, spearman selection criterion):
 
 ![](./assets/images/002-dmi-tmi_SVR_1e04_spearman_spearman_no_cv_palette.svg)
+
+### Ordered draw.io palette, line-face bars, tenth gridlines
+
+Colors now come from the single ordered `PLOT_PALETTE` / `PLOT_PALETTE_FILL` in [[torchcell.utils.utils]] (green-free, primaries-first, draw.io `(line, fill)` pairs matching Fig 1) instead of a local hex list, so every plot shares one palette. Bars are drawn with the line/border color on the face and the light fill as the lighter test member of the validation/test pair; hatch and edges are solid black -- the previous `alpha=` on the whole patch grayed them, so alpha now applies only to a face color when a lighter bar is needed. Correlation axes gain tenth (0.1) gridlines labelled every 0.2. See CLAUDE.md "Figure & Plotting Standards".

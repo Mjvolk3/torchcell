@@ -16,3 +16,7 @@ The classical-ML supplementary figure argues that bag-of-genes baselines plateau
 - Standard conformance: width `PANEL_WIDTHS_MM["half"]` (88 mm), Arial 6 pt, all four spines boxed at 0.5 pt, base-primary gold / red / purple (`#BD8800` / `#A24A46` / `#846592`) for single / double / triple. In-bar percent labels are drawn only when a segment is at least 3%.
 
 ![](./assets/images/traditional-ml_dataset-composition_palette.svg)
+
+### Palette moved to ordered PLOT_PALETTE; boxed, black labels
+
+The single/double/triple colors now come from `PLOT_PALETTE[:3]` in [[torchcell.utils.utils]] (the draw.io line colors orange/red/purple matching Fig 1) rather than hardcoded hexes; the panel is fully boxed and the in-bar percent labels are black so they read on the mid-tone bars. See CLAUDE.md "Figure & Plotting Standards".

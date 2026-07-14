@@ -13,7 +13,7 @@ plt.rcParams.update({
 import numpy as np
 import os
 from dotenv import load_dotenv
-from torchcell.utils import savefig_true_size_svg
+from torchcell.utils import savefig_true_size_svg, PLOT_PALETTE
 
 load_dotenv()
 
@@ -23,25 +23,7 @@ ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
 MAX_SIZES = [1000, 10000, 100000]
 
 # Define color list (reversed order)
-color_list = [
-    "#BD8800",
-    "#5F7DA8",
-    "#A24A46",
-    "#846592",
-    "#C7A24C",
-    "#46557E",
-    "#9E4C86",
-    "#6E5479",
-    "#C08552",
-    "#6E93B8",
-    "#8A3B3B",
-    "#9C6EA0",
-    "#B5943F",
-    "#4F688B",
-    "#A85878",
-    "#5A5A5A",
-    "#7C5A86",
-]
+color_list = PLOT_PALETTE
 
 # Define the desired order of node embeddings
 node_embedding_order = [

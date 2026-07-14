@@ -17,3 +17,7 @@ The obvious objection to a failing classical baseline is "you just needed more d
 - Gridlines only at the 3 measured sizes (`minorticks_off()`): each line has just 3 points, so the connecting segment is a trend guide, not interpolation over intermediate dataset sizes.
 
 ![](./assets/images/002-dmi-tmi_node_embedding_performance_test_pearson_shared_0_1_palette.svg)
+
+### Ordered draw.io palette (single source of truth)
+
+Line colors now come from `PLOT_PALETTE` in [[torchcell.utils.utils]] (green-free, primaries-first, draw.io line colors matching Fig 1) instead of a local list, so the progression lines, the bar panels, and the standalone encoding legend all share one palette. See CLAUDE.md "Figure & Plotting Standards".

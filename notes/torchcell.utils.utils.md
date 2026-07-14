@@ -46,3 +46,7 @@ Consumers: the `_palette` plot scripts in
 [[experiments.smf-dmf-tmf-001.traditional_ml-plot_svr_palette]],
 [[experiments.smf-dmf-tmf-001.traditional_ml-plot_random_forest_palette]] and their
 `002-dmi-tmi` twins, which author panels at `third` (57.8 mm) so three stack across a row.
+
+### Figure/plotting standards moved into utils
+
+Added the repo-wide plotting infrastructure so every plot pulls from one source: `savefig_true_size_svg` (rescales matplotlib's 72-dpi points so draw.io imports at true mm), `PANEL_WIDTHS_MM` / `MAX_HEIGHT_MM` / `mm_to_in` (Nature panel-width templates -- strict width, loose height), and `PLOT_PALETTE` / `PLOT_PALETTE_FILL` (one ordered green-free draw.io `(line, fill)` palette matching Fig 1). Rationale and usage rules live in CLAUDE.md "Figure & Plotting Standards".

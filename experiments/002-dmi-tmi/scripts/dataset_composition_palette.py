@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 import torchcell
-from torchcell.utils import savefig_true_size_svg, mm_to_in, PANEL_WIDTHS_MM
+from torchcell.utils import savefig_true_size_svg, mm_to_in, PANEL_WIDTHS_MM, PLOT_PALETTE
 
 load_dotenv()
 plt.style.use(osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle"))
@@ -48,9 +48,9 @@ EXPERIMENTS = [
     ("Fitness (001)", "data/torchcell/experiments/smf-dmf-tmf-traditional-ml/one_hot_gene"),
     ("Interactions (002)", "data/torchcell/experiments/002-dmi-tmi/traditional-ml/one_hot_gene"),
 ]
-# Base primary palette (see notes/assets/images/color-palette.svg): gold / red /
-# purple for single / double / triple.
-ORDER_COLORS = {1: "#BD8800", 2: "#A24A46", 3: "#846592"}
+# First three of the ordered plot palette (orange / red / purple) for
+# single / double / triple.
+ORDER_COLORS = {1: PLOT_PALETTE[0], 2: PLOT_PALETTE[1], 3: PLOT_PALETTE[2]}
 ORDER_LABELS = {1: "Single (1)", 2: "Double (2)", 3: "Triple (3)"}
 
 
@@ -87,7 +87,7 @@ def main():
                 left=left,
                 height=0.6,
                 color=ORDER_COLORS[order],
-                edgecolor="white",
+                edgecolor="black",
                 linewidth=0.4,
             )
             if pct >= 3:
@@ -97,7 +97,7 @@ def main():
                     f"{pct:.0f}%",
                     ha="center",
                     va="center",
-                    color="white",
+                    color="black",
                     fontsize=6,
                 )
             left += pct

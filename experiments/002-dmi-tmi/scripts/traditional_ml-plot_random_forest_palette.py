@@ -6,11 +6,17 @@ import numpy as np
 import pandas as pd
 import wandb
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
 import os.path as osp
 import logging
 import torchcell
 import os
-from torchcell.utils import format_scientific_notation, savefig_true_size_svg
+from torchcell.utils import (
+    format_scientific_notation,
+    savefig_true_size_svg,
+    PLOT_PALETTE,
+    PLOT_PALETTE_FILL,
+)
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -65,25 +71,7 @@ def create_plots(
     metrics = ["spearman", "pearson", "mse"]
 
     size_str = format_scientific_notation(size)
-    color_list = [
-        "#BD8800",
-        "#5F7DA8",
-        "#A24A46",
-        "#846592",
-        "#C7A24C",
-        "#46557E",
-        "#9E4C86",
-        "#6E5479",
-        "#C08552",
-        "#6E93B8",
-        "#8A3B3B",
-        "#9C6EA0",
-        "#B5943F",
-        "#4F688B",
-        "#A85878",
-        "#5A5A5A",
-        "#7C5A86",
-    ]
+    color_list = PLOT_PALETTE
 
     FEATURE_ORDER = [
         "['random_1']",
@@ -110,10 +98,12 @@ def create_plots(
     # Add any features not in FEATURE_ORDER at the end
     features += [f for f in all_features if f not in FEATURE_ORDER]
 
-    # Create color dictionary with original order
-    color_dict = {
-        feature: color
-        for feature, color in zip(FEATURE_ORDER, color_list[: len(FEATURE_ORDER)])
+    # draw.io (line, fill) pairs: fill the bar faces, outline + hatch in the line color.
+    line_dict = {
+        f: c for f, c in zip(FEATURE_ORDER, PLOT_PALETTE[: len(FEATURE_ORDER)])
+    }
+    fill_dict = {
+        f: c for f, c in zip(FEATURE_ORDER, PLOT_PALETTE_FILL[: len(FEATURE_ORDER)])
     }
 
     # Reverse the features list for plotting
@@ -179,7 +169,8 @@ def create_plots(
                     "intact_sum": "+++",
                     "intact_mean": "xxx",
                 }[rep_type]
-                color = color_dict.get(str(feature), default_color)
+                line = line_dict.get(str(feature), default_color)
+                fill = fill_dict.get(str(feature), "#DDDDDD")
 
                 max_bar_value = max(max_bar_value, val_value, test_value)
 
@@ -188,8 +179,9 @@ def create_plots(
                     val_value,
                     height=bar_height,
                     align="edge",
-                    color=color,
-                    alpha=1.0,
+                    facecolor=line,
+                    edgecolor="black",
+                    linewidth=0.4,
                     hatch=hatch,
                 )
                 ax.barh(
@@ -197,8 +189,9 @@ def create_plots(
                     test_value,
                     height=bar_height,
                     align="edge",
-                    color=color,
-                    alpha=alpha_light_bar,
+                    facecolor=fill,
+                    edgecolor="black",
+                    linewidth=0.4,
                     hatch=hatch,
                 )
 
@@ -333,7 +326,13 @@ def create_plots(
         ax.set_ylim(-bar_height, y + bar_height * (25 if add_cv else 20))
         ax.set_xlabel(metric, fontname="Arial", fontsize=6)
         ax.set_xlim(0, ax_limit)
-        ax.grid(color="#838383", linestyle="-", linewidth=0.8, alpha=0.2)
+        if metric in ["r2", "pearson", "spearman"]:
+            # Tenth (0.1) gridlines, labelled only every 0.2 to avoid crowding.
+            ax.xaxis.set_major_locator(MultipleLocator(0.2))
+            ax.xaxis.set_minor_locator(MultipleLocator(0.1))
+        ax.grid(True, which="major", color="#838383", linestyle="-", linewidth=0.8, alpha=0.2)
+        ax.grid(True, which="minor", color="#838383", linestyle="-", linewidth=0.6, alpha=0.12)
+        ax.tick_params(axis="x", which="minor", length=0)  # gridline only, no tick mark
 
         plot_name = f"002-dmi-tmi_Random_Forest_{size_str}_{criterion}_{metric}_{'add_cv' if add_cv else 'no_cv'}_palette.svg"
 

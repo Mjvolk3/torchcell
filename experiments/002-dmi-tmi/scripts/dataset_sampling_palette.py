@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 import torchcell
-from torchcell.utils import savefig_true_size_svg, mm_to_in, PANEL_WIDTHS_MM
+from torchcell.utils import savefig_true_size_svg, mm_to_in, PANEL_WIDTHS_MM, PLOT_PALETTE
 
 load_dotenv()
 plt.style.use(osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle"))
@@ -47,8 +47,13 @@ ONE_HOT = "data/torchcell/experiments/002-dmi-tmi/traditional-ml/one_hot_gene"
 SIZES = ["1e03", "1e04", "1e05"]
 SIZE_LABELS = {"1e03": "$10^3$", "1e04": "$10^4$", "1e05": "$10^5$"}
 SPLITS = ["train", "val", "test"]
-# Primary palette (see notes/assets/images/color-palette.svg): blue / gold / red.
-SPLIT_COLORS = {"train": "#5F7DA8", "val": "#BD8800", "test": "#A24A46"}
+# First three of the ordered plot palette (orange / red / purple); blue/gray are
+# only used after the four primaries, so a 3-way split takes the first three.
+SPLIT_COLORS = {
+    "train": PLOT_PALETTE[0],
+    "val": PLOT_PALETTE[1],
+    "test": PLOT_PALETTE[2],
+}
 
 
 def split_count(size, split):
@@ -68,7 +73,7 @@ def main():
             width,
             color=SPLIT_COLORS[split],
             label=split.capitalize(),
-            edgecolor="white",
+            edgecolor="black",
             linewidth=0.3,
         )
         for rect, c in zip(bars, counts):

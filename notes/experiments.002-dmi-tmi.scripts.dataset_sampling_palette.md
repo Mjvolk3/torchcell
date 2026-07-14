@@ -16,3 +16,7 @@ A reader who sees classical baselines fail from 1e3 up to 1e5 samples will immed
 - Standard conformance: width `PANEL_WIDTHS_MM["half"]` (88 mm), Arial 6 pt, all four spines boxed at 0.5 pt, primary blue / gold / red (`#5F7DA8` / `#BD8800` / `#A24A46`) for train / val / test.
 
 ![](./assets/images/traditional-ml_dataset-sampling_palette.svg)
+
+### Palette moved to ordered PLOT_PALETTE; primaries-first, boxed
+
+Train/val/test now take `PLOT_PALETTE[:3]` (orange/red/purple) from [[torchcell.utils.utils]] -- blue is no longer used, since it comes only after the four primaries -- with a full black box border. See CLAUDE.md "Figure & Plotting Standards".

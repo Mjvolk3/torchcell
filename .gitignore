@@ -47,17 +47,11 @@ env/pypy/*
 biochatter.env
 
 # slurm
-
+# Never track SLURM logs. General rules cover the repo-root slurm/ dir and every
+# experiments/<id>/slurm/ dir (current and future) so new experiments need no edits.
+slurm/output
 slurm/error
-experiments/smf-dmf-tmf-001/slurm/*
-experiments/002-dmi-tmi/slurm/*
-experiments/003-fit-int/slurm/*
-experiments/004-dmi-tmi/slurm/*
-experiments/005-kuzmin2018-tmi/slurm/*
-experiments/006-kuzmin-tmi/slurm/*
-experiments/007-kuzmin-tm/slurm/*
-experiments/009-kuzmin-tmi/slurm/*
-experiments/010-kuzmin-tmi/slurm/*
+experiments/*/slurm/
 # docx
 CHBE-symposium.docx
 CHBE-symposium-2023.docx

@@ -22,6 +22,14 @@ sequence-encoding motivation): [[experiments.018-natural-isolate-genomics.expres
 > section at the bottom before citing anything here.** The first pass of this experiment
 > overclaimed in three places; the body below has been corrected, and the retractions are
 > documented rather than quietly edited away.
+>
+> **2026.07.15 — the Caudal genotype was fixed (#71).** The loader had silently dropped
+> ~126,839 gene-absence edits across the panel (median 0 vs 126 per isolate). It now emits
+> them. Effect on the numbers below: **negligible** — the genotype codelength is dominated
+> by the ~4.76M sequence-variant records, so `genotype_as_stored` moved only 94.8 → 93.7 MB
+> and the sequence-diff headline (3.3 Mbit) is unchanged. The fix matters for **genotype
+> fidelity** (the dataset a model would train on is now correct), not for this bit
+> accounting. See [[experiments.018-natural-isolate-genomics.expression-modeling-setup]].
 
 ### The one-paragraph answer
 
@@ -29,10 +37,12 @@ The two modalities sit at **opposite ends of a genotype-codelength range, while 
 phenotype codelength is essentially identical.** A Kemmeren single-KO genotype is one gene
 index out of 6,607 -- **14.7 bits** -- against a ~6,000-gene expression vector of
 **183,777 bits**. A Caudal natural isolate's genotype carries **3,321,788 bits** of
-sequence divergence against a phenotype of **176,751 bits**. Phenotype codelength is
-~180 kbit in *all three* datasets; the genotype spans **five orders of magnitude**. That
-is the finding. (The ratio of the two -- 12,533x vs 0.05x -- is arithmetic on two gzip
-codelengths; reading it as "how much a model must infer" is *interpretation*, not
+sequence divergence against a phenotype of **176,751 bits**. **Codelength here is PER
+STRAIN** -- each strain's ~6,000-gene expression vector compresses to ~180 kbit regardless
+of dataset, which is why the phenotype side is ~equal across all three even though Sameith
+has only 72 strains and Caudal 943; the genotype side spans **five orders of magnitude**.
+That is the finding. (The ratio of the two -- 12,533x vs 0.05x -- is arithmetic on two
+gzip codelengths; reading it as "how much a model must infer" is *interpretation*, not
 measurement, and earlier drafts of this note stated that gloss as if it were a result.)
 
 The transcriptional consequence is strongly sublinear in the genotype: an isolate is
@@ -45,7 +55,7 @@ is **uncorrelated** with the number of DE genes (**r = 0.04**).
 | Question | Answer |
 |---|---|
 | Per-ORF divergence vs S288C R64 | mean **0.42%** (SNP-only), **0.69%** incl. indels |
-| Core vs accessory (Peter's own rule: present in all 1,011) | **4,942** core / **2,854** variable (paper: 4,940 / 2,856) |
+| Core vs accessory (Peter's own rule: present in all 1,011) | **4,942** core / **2,854** variable -- *reproduces* Peter's 4,940 / 2,856 (we recompute their count and land within 2) |
 | π: coding vs regulatory | CDS **0.412%**, upstream-1000 **0.788%**, downstream-297 **0.843%** |
 | Species-aware transformer input coverage | **94.7%** of genome, **93.3%** of all π |
 | Codon usage drift across isolates | largest deviation **< 1‰** -- essentially invariant |
@@ -110,7 +120,7 @@ published `md5.txt`.
 
 *SNP divergence is het-weighted per Peter 2018's published convention; length-changing indel alleles are scored by exact edit distance.*
 
-6,077,121 (gene x isolate) pairs over 6,011 reference ORFs. **9.6% carry a
+6,077,121 (gene x isolate) pairs over 6,011 reference ORFs (8,639,057 coding bases total; "0.42% divergence" means 0.42% OF those coding bases differ). **9.6% carry a
 length-changing indel**, which Hamming cannot score; leaving them NaN would have biased the
 headline down, so they are resolved by exact global edit distance. Indel-bearing alleles
 average **36.7 bp** of edit distance, which is why total divergence (**0.693%**) is 65%
@@ -119,7 +129,7 @@ selection against frameshifts.
 
 ![](assets/images/018-natural-isolate-genomics/pangenome_and_ko_burden.png)
 
-*Core = present in all 1,011 isolates (Peter 2018's own definition; we recover 4,942 vs their published 4,940). NOT comparable to a KO one-for-one: a KanMX deletion is a verified complete null in an isogenic background; a natural variant allele is unverified, selected-upon and compensated.*
+*Core = present in all 1,011 isolates (Peter 2018's own definition; we recompute their count and reproduce it -- 4,942 vs their published 4,940, within 2). NOT comparable to a KO one-for-one: a KanMX deletion is a verified complete null in an isogenic background; a natural variant allele is unverified, selected-upon and compensated.*
 
 The presence spectrum is sharply **bimodal** -- ORFs are either in everything or in almost
 nothing. Of 6,059 reference ORFs in the pangenome, **81.4%** are core.
@@ -221,7 +231,17 @@ they were.
 *L_C = gzip codelength (zlib level 6, streamed) — a computable UPPER BOUND on Kolmogorov complexity, not an entropy, and a loose one (gzip leaves 1.4–5× vs a large-window compressor). The right-hand ratio is arithmetic on those two codelengths; any reading of it as 'what a model must infer' is interpretation, not measurement.*
 
 `L_C` = gzip codelength (zlib level 6, streamed) -- a *computable upper bound* on Kolmogorov
-complexity, **not** an entropy. Same compressor as the paper's `Signal (gzip)` column.
+complexity, **not** an entropy. Same compressor as the paper's `Signal (gzip)` column. All
+figures are **bits PER STRAIN** (per record), not dataset totals.
+
+**How to read the two-panel figure.** Left panel: two bars per dataset -- genotype
+codelength and phenotype codelength, per strain. Right panel: their **ratio**,
+phenotype-bits ÷ genotype-bits (nothing is added). The dotted line is **parity** (ratio =
+1, where a strain's genotype and phenotype carry equal bits). Kemmeren's ratio is
+**12,533x** (phenotype hugely outweighs its 14.7-bit genotype -- far above parity); Caudal's
+is **0.05x** (its multi-megabit genotype outweighs the phenotype -- far below parity). The
+phenotype bars are ~equal across all three because every strain is a ~6,000-gene vector; the
+genotype bars are what move.
 
 | modality | encoding | L_C | bits/strain |
 |---|---|---:|---:|

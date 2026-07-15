@@ -7,6 +7,9 @@ from .utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
     PLOT_PALETTE_FILL,
+    PLOT_PALETTE_NAMES,
+    REPRESENTATION_DISPLAY_NAMES,
+    display_label,
     format_scientific_notation,
     mm_to_in,
     savefig_true_size_svg,
@@ -20,5 +23,8 @@ __all__ = [
     "PANEL_WIDTHS_MM",
     "MAX_HEIGHT_MM",
     "PLOT_PALETTE",
+    "PLOT_PALETTE_NAMES",
     "PLOT_PALETTE_FILL",
+    "REPRESENTATION_DISPLAY_NAMES",
+    "display_label",
 ]

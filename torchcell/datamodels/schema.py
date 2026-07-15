@@ -1687,7 +1687,7 @@ class GeneEssentialityPhenotype(Phenotype, ModelStrict):
 class SyntheticLethalityPhenotype(Phenotype, ModelStrict):
     """Phenotype indicating synthetic lethality between perturbed genes."""
 
-    graph_level: str = "hyperedge"
+    graph_level: str = "edge"
     label_name: str = "is_synthetic_lethal"
     label_statistic_name: str = "synthetic_lethality_statistic_score"
     is_synthetic_lethal: bool = Field(
@@ -1705,7 +1705,7 @@ class SyntheticLethalityPhenotype(Phenotype, ModelStrict):
 class SyntheticRescuePhenotype(Phenotype, ModelStrict):
     """Phenotype indicating one perturbation rescues another's deleterious effect."""
 
-    graph_level: str = "hyperedge"
+    graph_level: str = "edge"
     label_name: str = "is_synthetic_rescue"
     label_statistic_name: str = "synthetic_rescue_statistic_score"
     is_synthetic_rescue: bool = Field(

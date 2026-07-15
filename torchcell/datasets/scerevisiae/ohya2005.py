@@ -1,20 +1,75 @@
-"""CalMorph morphology dataset for S. cerevisiae deletions (Ohya 2005, SCMD)."""
+"""CalMorph morphology dataset for S. cerevisiae haploid deletions (Ohya 2005, SCMD).
+
+Ohya et al. 2005, "High-dimensional and large-scale phenotyping of yeast mutants",
+Proc Natl Acad Sci USA 102:19015-19020 (doi:10.1073/pnas.0509436102; PMID 16365294).
+CalMorph high-dimensional single-cell morphology of the haploid ``BY4741`` non-essential
+single-gene deletion collection (kanMX4 marker). This is the haploid full-knockout screen;
+its diploid essential-gene dosage counterpart is
+:class:`~torchcell.datasets.scerevisiae.ohnuki2018.ScmdOhnuki2018Dataset` and its
+drug-hypersensitive quadruple-deletion counterpart is
+:class:`~torchcell.datasets.scerevisiae.ohnuki2022.ScmdOhnuki2022Dataset`.
+
+Values are RAW per-strain CalMorph population averages, one 501-length vector per strain:
+281 base parameters (``CALMORPH_LABELS``: 220 mean + 61 ratio) + 220 coefficient-of-
+variation / noise parameters (``CALMORPH_STATISTICS``, prefixed CCV/ACV/DCV/TCV). The
+122-row wildtype matrix (122 independent ``his3`` WT replicate averages) is aggregated
+per-feature into a single mean-WT reference phenotype.
+
+DATA PROVENANCE -- the 501-trait CalMorph matrices are Ohya 2005's OWN published data,
+distributed via the SCMD (Saccharomyces cerevisiae Morphological Database) portal. The
+later Suzuki et al. 2018 "Global study of holistic morphological effectors" (BMC Genomics
+19:149; PMID 29458326; doi 10.1186/s12864-018-4526-z) merely REUSED this same dataset (its
+reference [21]); it did not generate the values. Hence the publication recorded per record
+is Ohya 2005.
+
+SOURCING / SHA256 PINS (loader reads the library-mirror ``data/`` files and verifies both
+hashes, never the live URL):
+- ``mt4718data.tsv`` (mutant matrix, 4718 strains x 501 features; ID column ``ORF``)
+  sha256 ``c4ba1e84b4ea6273f0162ef9230e15634933c8c0c4910dd7546a21c6293e0fc0``.
+- ``wt122data.tsv`` (122 WT ``his3`` replicate averages; ID column ``NAME``; feature
+  columns byte-compatible with the mutant file) sha256
+  ``ab2c31b5150b2a33c15b5d22f1bef8687719975223559a740ea233c1f67b27c3``.
+- Historical retrieval URLs (SCMD portal): ``http://www.yeast.ib.k.u-tokyo.ac.jp/SCMD/
+  download.php?path=mt4718data.tsv`` and ``...=wt122data.tsv`` (Box mirror fallbacks in
+  the manifest). See ``$DATA_ROOT/torchcell-library/
+  ohyaHighdimensionalLargescalePhenotyping2005a/manifest.json``.
+
+ENVIRONMENT -- Ohya 2005 Methods, verbatim: "Each strain was grown in yeast extract/
+peptone/dextrose medium, and logarithmic-phase cells were fixed." So media = YPD, state =
+liquid (logarithmic-phase liquid culture, then fixed for imaging). Temperature is NOT
+stated in Ohya 2005; it is resolved via the Ohya-lab CalMorph standard (25 C), corroborated
+by Suzuki 2018 (which reuses this data, "grown at 25 C") and by the same-lab Ohnuki
+2018/2022 CalMorph loaders (both 25 C, sourced verbatim from their Methods). Recording
+25 C here follows the deferral convention (defer method detail to the cited/related mirrored
+paper); FLAG: pin the verbatim Ohya-2005 temperature once that paper is mirrored.
+
+ORFs are 2005-annotation SGD systematic names, reconciled to the current R64-4-1 universe:
+(1) four legacy names that SGD renamed/merged with NO measured twin are remapped to their
+current systematic name (``_LEGACY_ORF_RENAMES``, sourced from the R64 GFF ``Alias`` field);
+(2) all remaining names are validated against the S288C R64 gene universe, and any that do
+not resolve are logged + dropped -- 17 ORFs retired from SGD since 2005 plus 6 legacy names
+whose R64 target is an already-measured gene (an SGD merge; dropping the legacy strain avoids
+duplicating that gene's morphology). Rows with any missing CalMorph value are dropped whole
+-- values are NEVER imputed. Net built records: 4718 raw -> 4695 (4 renamed in place, 23
+dropped).
+"""
 
 # torchcell/datasets/scerevisiae/ohya2005
 # [[torchcell.datasets.scerevisiae.ohya2005]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/Ohya2005
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/ohya2005
 # Test file: tests/torchcell/datasets/scerevisiae/test_Ohya2005.py
 
+import hashlib
 import logging
 import os
 import os.path as osp
 import pickle
+import shutil
 from collections.abc import Callable
 from typing import Any
 
 import lmdb
 import pandas as pd
-import requests
 from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
@@ -37,26 +92,68 @@ from torchcell.datasets.dataset_registry import register_dataset
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
+# CV parameters are prefixed CCV/ACV/DCV/TCV; everything else is a base parameter.
+_CV_PREFIXES = ("CCV", "ACV", "DCV", "TCV")
+
+# sha256-pinned raw matrices in the library mirror ``data/`` directory.
+_RAW_FILES: dict[str, dict[str, str]] = {
+    "mt4718data.tsv": {
+        "sha256": "c4ba1e84b4ea6273f0162ef9230e15634933c8c0c4910dd7546a21c6293e0fc0",
+        "id_column": "ORF",
+    },
+    "wt122data.tsv": {
+        "sha256": "ab2c31b5150b2a33c15b5d22f1bef8687719975223559a740ea233c1f67b27c3",
+        "id_column": "NAME",
+    },
+}
+
+# Library mirror holding the sha256-pinned raw matrices (relative to DATA_ROOT).
+_MIRROR_DIR = "torchcell-library/ohyaHighdimensionalLargescalePhenotyping2005a/data"
+
+# Legacy 2005-annotation ORFs that SGD has since renamed/merged, mapped to their current
+# R64-4-1 systematic name. Sourced from the R64-4-1 GFF, where each legacy name is listed
+# as an ``Alias`` of the target feature. ONLY the four whose target is NOT itself measured
+# elsewhere in this screen are remapped here (a clean 1:1 rename that recovers a real
+# strain). The other six aliases (YDL038C->YDL039C, YDL134C-A->YDL133C-A, YER108C->YER109C,
+# YIL168W->YIL167W, YIR044C->YIR043C, YML033W->YML034W) COLLIDE with a gene that already has
+# its own strain record -- an SGD merge of two 2005 ORFs -- so remapping them would duplicate
+# that gene's morphology; those legacy strains are instead dropped (the canonical target
+# strain is retained). See module docstring.
+_LEGACY_ORF_RENAMES: dict[str, str] = {
+    "YGR272C": "YGR271C-A",  # EFG1
+    "YIL015C-A": "YIL014C-A",
+    "YLR391W": "YLR390W-A",  # CCW14
+    "YMR158C-B": "YMR158C-A",
+}
+
+# S288C R64 gene universe (systematic ORF + RNA-coding names) for R64 validation.
+_SGD_GENE_FASTAS = (
+    "data/sgd/genome/S288C_reference_genome_R64-4-1_20230830/"
+    "orf_coding_all_R64-4-1_20230830.fasta",
+    "data/sgd/genome/S288C_reference_genome_R64-4-1_20230830/"
+    "rna_coding_R64-4-1_20230830.fasta",
+)
+
+
+def _load_sgd_genes(data_root: str) -> set[str]:
+    """S288C R64 systematic-name universe from the ORF + RNA-coding FASTA headers."""
+    genes: set[str] = set()
+    for rel in _SGD_GENE_FASTAS:
+        with open(osp.join(data_root, rel)) as handle:
+            for line in handle:
+                if line.startswith(">"):
+                    genes.add(line[1:].split()[0])
+    return genes
+
 
 @register_dataset
 class ScmdOhya2005Dataset(ExperimentDataset):
-    """CalMorph morphology phenotypes for single-gene deletions from SCMD."""
+    """CalMorph morphology for haploid non-essential single-gene deletions (Ohya 2005).
 
-    # Primary URL from SCMD
-    primary_url_mutant = (
-        "http://www.yeast.ib.k.u-tokyo.ac.jp/SCMD/download.php?path=mt4718data.tsv"
-    )
-    primary_url_wt = (
-        "http://www.yeast.ib.k.u-tokyo.ac.jp/SCMD/download.php?path=wt122data.tsv"
-    )
-
-    # Fallback URLs from Box
-    fallback_url_mutant = (
-        "https://uofi.box.com/shared/static/da9uevinx6euzp5lhkw88mvtzv9pq9sd.tsv"
-    )
-    fallback_url_wt = (
-        "https://uofi.box.com/shared/static/ji5wzym3lc3vd0kbv0frfk9xmruqp7d2.tsv"
-    )
+    Haploid ``BY4741`` full-deletion CalMorph screen; the haploid full-knockout base of the
+    SCMD CalMorph family (Ohnuki 2018 = diploid essential-gene heterozygotes; Ohnuki 2022 =
+    drug-hypersensitive quadruple deletions).
+    """
 
     def __init__(
         self,
@@ -82,107 +179,50 @@ class ScmdOhya2005Dataset(ExperimentDataset):
     @property
     def raw_file_names(self) -> list[str]:
         """Return the raw mutant and wildtype TSV filenames."""
-        return ["mt4718data.tsv", "wt122data.tsv"]
+        return list(_RAW_FILES)
 
     def download(self) -> None:
-        """Download mutant and wildtype data with fallback support."""
-        # Download mutant data
-        mutant_path = osp.join(self.raw_dir, "mt4718data.tsv")
-        if not osp.exists(mutant_path):
-            success = self._download_with_safari_headers(
-                self.primary_url_mutant, mutant_path
-            )
-            if not success:
-                log.warning("Failed to download mutant data from primary source")
-                log.info("Trying fallback URL for mutant data...")
-                success = self._download_with_safari_headers(
-                    self.fallback_url_mutant, mutant_path
-                )
-                if not success:
+        """Copy both matrices from the sha256-pinned library mirror and verify hashes."""
+        data_root = os.environ["DATA_ROOT"]
+        mirror = osp.join(data_root, _MIRROR_DIR)
+        os.makedirs(self.raw_dir, exist_ok=True)
+        for filename, spec in _RAW_FILES.items():
+            dest = osp.join(self.raw_dir, filename)
+            if not osp.exists(dest):
+                src = osp.join(mirror, filename)
+                if not osp.exists(src):
                     raise RuntimeError(
-                        "Failed to download mutant data from all sources"
+                        f"{filename} not found in the library mirror {mirror}. The SCMD "
+                        "portal is the historical source; recover the file and deposit it, "
+                        "then rebuild (sha256 verified)."
                     )
-
-        # Download wildtype data
-        wt_path = osp.join(self.raw_dir, "wt122data.tsv")
-        if not osp.exists(wt_path):
-            success = self._download_with_safari_headers(self.primary_url_wt, wt_path)
-            if not success:
-                log.warning("Failed to download wildtype data from primary source")
-                log.info("Trying fallback URL for wildtype data...")
-                success = self._download_with_safari_headers(
-                    self.fallback_url_wt, wt_path
+                shutil.copyfile(src, dest)
+            digest = hashlib.sha256(open(dest, "rb").read()).hexdigest()
+            if digest != spec["sha256"]:
+                raise RuntimeError(
+                    f"{filename} sha256 mismatch: got {digest}, "
+                    f"expected {spec['sha256']}"
                 )
-                if not success:
-                    raise RuntimeError(
-                        "Failed to download wildtype data from all sources"
-                    )
-
-    def _download_with_safari_headers(self, url: str, output_path: str) -> bool:
-        """Download with Safari user-agent headers to bypass restrictions."""
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 "
-            "(KHTML, like Gecko) Version/16.0 Safari/605.1.15",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Connection": "keep-alive",
-        }
-
-        try:
-            log.info(f"Downloading from {url}...")
-            session = requests.Session()
-
-            # Try to access the main page first to get cookies
-            main_url = "http://www.yeast.ib.k.u-tokyo.ac.jp/SCMD/download.php"
-            session.get(main_url, headers=headers, timeout=60)
-
-            # Now download the file
-            response = session.get(url, headers=headers, stream=True, timeout=60)
-            response.raise_for_status()
-
-            # Save the file
-            os.makedirs(osp.dirname(output_path), exist_ok=True)
-
-            with open(output_path, "wb") as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
-
-            file_size = osp.getsize(output_path)
-            if file_size > 0:
-                log.info(f"Downloaded {output_path} ({file_size / 1024 / 1024:.2f} MB)")
-                return True
-            else:
-                log.error("Downloaded file is empty")
-                os.remove(output_path)
-                return False
-
-        except Exception as e:
-            log.error(f"Error downloading: {e}")
-            return False
 
     @post_process
     def process(self) -> None:
         """Load raw TSVs, build CalMorph experiments, and write the LMDB store."""
-        # Load and preprocess data
         df_mutant = pd.read_csv(osp.join(self.raw_dir, "mt4718data.tsv"), sep="\t")
         df_wt = pd.read_csv(osp.join(self.raw_dir, "wt122data.tsv"), sep="\t")
 
-        df = self.preprocess_calmorph_data(df_mutant, df_wt)
+        df = self.preprocess_calmorph_data(df_mutant)
 
         # Save preprocessed data
         os.makedirs(self.preprocess_dir, exist_ok=True)
         df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
-        # Calculate average wildtype reference phenotype
+        # Aggregate the 122 WT replicate averages into a single mean-WT reference.
         self.wt_reference_phenotype = self._calculate_wt_reference(df_wt)
 
-        log.info("Processing CalMorph morphology data...")
+        log.info("Processing Ohya 2005 CalMorph morphology data...")
 
         # Initialize LMDB environment
-        env = lmdb.open(
-            osp.join(self.processed_dir, "lmdb"),
-            map_size=int(1e12),  # Adjust map_size as needed
-        )
+        env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
 
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
@@ -206,53 +246,84 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
     ) -> pd.DataFrame:
         """Preprocess raw data - for CalMorph this is handled in process()."""
-        # For this dataset, preprocessing happens in process() with both dfs
+        # For this dataset, preprocessing happens in process()
         # This method is required by base class but not used in our flow
         return df
 
-    def preprocess_calmorph_data(
-        self, df_mutant: pd.DataFrame, df_wt: pd.DataFrame
-    ) -> pd.DataFrame:
-        """Preprocess raw CalMorph data with mutant and wildtype dataframes."""
-        # The mutant data has "ORF" column, wildtype has "NAME" column
-        # Process mutant data
-        df_mutant["strain_type"] = "mutant"
-
-        # Clean gene names - the ORF column contains the systematic gene name
-        # Convert to uppercase for consistency with standard yeast nomenclature
+    def preprocess_calmorph_data(self, df_mutant: pd.DataFrame) -> pd.DataFrame:
+        """Clean the mutant matrix, drop incomplete rows, and validate ORFs vs R64."""
+        df_mutant = df_mutant.copy()
+        # The ORF column carries the systematic gene name; there is no common-name column.
         df_mutant["systematic_gene_name"] = df_mutant["ORF"].str.strip().str.upper()
-        # For perturbed_gene_name, we'll use the same as systematic name
-        # since there's no separate gene column
+
+        # Reconcile legacy 2005-annotation ORF names to their current R64 systematic name
+        # (SGD alias-based renames; see _LEGACY_ORF_RENAMES). Renaming happens BEFORE R64
+        # validation so the recovered strains survive; collisions/retired names do not.
+        renamed = df_mutant["systematic_gene_name"].isin(_LEGACY_ORF_RENAMES)
+        if renamed.any():
+            log.info(
+                "Ohya 2005: remapping %d legacy ORF name(s) to R64: %s",
+                int(renamed.sum()),
+                {
+                    o: _LEGACY_ORF_RENAMES[o]
+                    for o in df_mutant.loc[renamed, "systematic_gene_name"].unique()
+                },
+            )
+            df_mutant["systematic_gene_name"] = df_mutant[
+                "systematic_gene_name"
+            ].replace(_LEGACY_ORF_RENAMES)
         df_mutant["perturbed_gene_name"] = df_mutant["systematic_gene_name"]
 
-        # Remove rows with invalid gene names
         df_mutant = df_mutant[df_mutant["systematic_gene_name"].notna()]
         df_mutant = df_mutant[df_mutant["systematic_gene_name"] != ""]
 
-        # Reset index
-        df_mutant = df_mutant.reset_index(drop=True)
+        # Drop any strain with a missing CalMorph value -- CalMorph completeness requires
+        # the full 501-trait vocabulary per record; values are NEVER imputed (drop whole).
+        feature_cols = [
+            c
+            for c in df_mutant.columns
+            if c not in ("ORF", "systematic_gene_name", "perturbed_gene_name")
+        ]
+        has_all = df_mutant[feature_cols].notna().all(axis=1)
+        n_nan = int((~has_all).sum())
+        if n_nan:
+            log.warning(
+                "Ohya 2005: dropping %d mutant row(s) with missing CalMorph values: %s",
+                n_nan,
+                df_mutant.loc[~has_all, "systematic_gene_name"].tolist()[:20],
+            )
+        df_mutant = df_mutant[has_all]
 
-        return df_mutant
+        # Validate against the SGD R64 universe; log + drop any non-resolving ORF.
+        data_root = os.environ["DATA_ROOT"]
+        r64_genes = _load_sgd_genes(data_root)
+        in_r64 = df_mutant["systematic_gene_name"].isin(r64_genes)
+        dropped = df_mutant.loc[~in_r64, "systematic_gene_name"].tolist()
+        if dropped:
+            log.warning(
+                "Ohya 2005: dropping %d ORF(s) not resolving to SGD R64 after rename "
+                "reconciliation (retired 2005 ORFs + legacy names that collide with an "
+                "already-measured gene): %s",
+                len(dropped),
+                sorted(dropped)[:25],
+            )
+        df_mutant = df_mutant[in_r64]
+
+        log.info(
+            "Ohya 2005: %d non-essential deletion strains after completeness + R64 "
+            "validation",
+            len(df_mutant),
+        )
+        return df_mutant.reset_index(drop=True)
 
     def _calculate_wt_reference(self, df_wt: pd.DataFrame) -> dict[str, Any]:
-        """Calculate average wildtype morphology measurements."""
-        # Wildtype data might have different column structure
-        # Check for NAME or ORF column
-        info_columns = []
-        if "NAME" in df_wt.columns:
-            info_columns.append("NAME")
-        if "ORF" in df_wt.columns:
-            info_columns.append("ORF")
-
-        morphology_columns = [col for col in df_wt.columns if col not in info_columns]
-
-        # Calculate mean across all wildtype replicates
-        wt_means = {}
+        """Aggregate the WT replicate averages into a per-feature mean reference."""
+        info_columns = [c for c in ("NAME", "ORF") if c in df_wt.columns]
+        morphology_columns = [c for c in df_wt.columns if c not in info_columns]
+        wt_means: dict[str, Any] = {}
         for col in morphology_columns:
-            # Convert to numeric, handling any non-numeric values
             numeric_values = pd.to_numeric(df_wt[col], errors="coerce")
             wt_means[col] = numeric_values.mean()
-
         return wt_means
 
     def create_experiment(self) -> None:
@@ -264,12 +335,12 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         dataset_name: str, row: pd.Series, wt_reference_phenotype: dict[str, Any]
     ) -> tuple[CalMorphExperiment, CalMorphExperimentReference, Publication]:
         """Build a CalMorph experiment and reference pair from one data row."""
-        # Genome reference - BY4741 (MATa his3Δ1 leu2Δ0 lys2Δ0 ura3Δ0)
+        # Genome reference - haploid BY4741 (MATa his3D1 leu2D0 lys2D0 ura3D0).
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="BY4741"
         )
 
-        # Create genotype for deletion mutant
+        # Create genotype for the non-essential single-gene deletion mutant (kanMX4).
         genotype = Genotype(
             perturbations=[
                 KanMxDeletionPerturbation(
@@ -279,37 +350,27 @@ class ScmdOhya2005Dataset(ExperimentDataset):
             ]
         )
 
-        # Environment
+        # Environment -- Ohya 2005 Methods: YPD, logarithmic-phase (liquid) culture.
+        # Temperature 25 C from the Ohya-lab CalMorph standard (see module docstring).
         environment = Environment(
-            media=Media(name="YEPD", state="solid", is_synthetic=False),
-            temperature=Temperature(value=30),
+            media=Media(name="YPD", state="liquid", is_synthetic=False),
+            temperature=Temperature(value=25),
         )
         environment_reference = environment.model_copy()
 
-        # Extract morphology measurements and separate base from CV parameters
-        info_columns = [
-            "ORF",
-            "systematic_gene_name",
-            "perturbed_gene_name",
-            "strain_type",
-        ]
-        base_measurements = {}
-        cv_measurements = {}
-
+        # Extract morphology measurements and separate base from CV parameters. Rows are
+        # guaranteed complete + finite (incomplete rows dropped in preprocessing).
+        info_columns = {"ORF", "systematic_gene_name", "perturbed_gene_name"}
+        base_measurements: dict[str, float] = {}
+        cv_measurements: dict[str, float] = {}
         for col in row.index:
-            if col not in info_columns:
-                # Convert to float, handling NaN values
-                value = row[col]
-                if pd.notna(value):
-                    float_value = float(value)
-                else:
-                    float_value = 0.0  # Or handle missing values appropriately
-
-                # Separate base parameters from CV parameters
-                if col.startswith(("CCV", "ACV", "DCV", "TCV")):
-                    cv_measurements[col] = float_value
-                else:
-                    base_measurements[col] = float_value
+            if col in info_columns:
+                continue
+            float_value = float(row[col])
+            if col.startswith(_CV_PREFIXES):
+                cv_measurements[col] = float_value
+            else:
+                base_measurements[col] = float_value
 
         # Create phenotype with separated base and CV measurements
         phenotype = CalMorphPhenotype(
@@ -319,19 +380,17 @@ class ScmdOhya2005Dataset(ExperimentDataset):
             ),
         )
 
-        # Create reference phenotype from wildtype average
-        # Also need to separate wildtype measurements
+        # Reference phenotype from the aggregated WT, split the same way.
         wt_base = {
             k: v
             for k, v in wt_reference_phenotype.items()
-            if not k.startswith(("CCV", "ACV", "DCV", "TCV"))
+            if not k.startswith(_CV_PREFIXES)
         }
         wt_cv = {
             k: v
             for k, v in wt_reference_phenotype.items()
-            if k.startswith(("CCV", "ACV", "DCV", "TCV"))
+            if k.startswith(_CV_PREFIXES)
         }
-
         phenotype_reference = CalMorphPhenotype(
             calmorph=wt_base, calmorph_coefficient_of_variation=wt_cv if wt_cv else None
         )
@@ -352,7 +411,7 @@ class ScmdOhya2005Dataset(ExperimentDataset):
             phenotype=phenotype,
         )
 
-        # Publication
+        # Publication -- Ohya 2005 PNAS (the data producer; see module docstring).
         publication = Publication(
             pubmed_id="16365294",
             pubmed_url="https://pubmed.ncbi.nlm.nih.gov/16365294/",
@@ -364,8 +423,13 @@ class ScmdOhya2005Dataset(ExperimentDataset):
 
 
 if __name__ == "__main__":
-    # dataset = ScmdOhya2005Dataset()
-    # print(f"Dataset size: {len(dataset)}")
-    # if len(dataset) > 0:
-    #     print(dataset[0])
-    pass
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    data_root = os.environ["DATA_ROOT"]
+    dataset = ScmdOhya2005Dataset(
+        root=osp.join(data_root, "data/torchcell/scmd_ohya2005")
+    )
+    print(f"Dataset size: {len(dataset)}")
+    if len(dataset) > 0:
+        print(dataset[0])

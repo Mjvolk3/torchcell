@@ -806,13 +806,15 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "env_chemgen_hoepfner2014": {
         "root": "data/torchcell/env_chemgen_hoepfner2014",
-        # HIP 16,939,418 (5807 R64 ORFs x 2956 het-CNV experiments) + HOP 13,056,820
-        # (4912 R64 ORFs x 2923 deletion experiments) = 29,996,238 records. 62 HIP + 58
-        # HOP old/merged ORF names not in SGD R64 dropped (343,356 records). One record
-        # per (ORF, sensitivity column); compound_name embeds the unique experiment tag.
-        "expected_count": 29996238,
-        # 30M records -> verify via a single-pass streaming gate (materializing would
-        # need ~450 GB RAM).
+        # ENCODABLE-COMPOUNDS-ONLY build (only compounds with a released SMILES in Table S1;
+        # ~92% proprietary black-box CMBxxx dropped, incl. the named-but-structureless CMB222):
+        # HIP 1,753,367 (306 encodable het-CNV experiments) + HOP 1,359,513 (304 encodable
+        # deletion experiments) = 3,112,880 records over 610 of 5879 sensitivity columns
+        # (150 encodable compounds of 1852 deposited). One record per (ORF, sensitivity column);
+        # compound_name embeds the unique experiment tag. See the loader docstring +
+        # experiments/017-hoepfner-background-mutations/compound_encodability.json.
+        "expected_count": 3112880,
+        # ~3M records -> single-pass streaming gate (retained from the 30M full-atlas build).
         "stream": True,
         # HIP het-CNV + HOP homozygous-deletion diploid collections (BY4743): no constant
         # background genes.

@@ -440,10 +440,12 @@ def main() -> None:
     from dotenv import load_dotenv
 
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = os.environ["DATA_ROOT"]
 
-    genome = SCerevisiaeGenome(  # type: ignore[call-arg]  # data_root kwarg not in SCerevisiaeGenome signature — FLAG
-        data_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"), overwrite=True
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        go_root=osp.join(DATA_ROOT, "data/go"),
+        overwrite=False,
     )
 
     lethality_dataset = SynthLethalityYeastSynthLethDbDataset(genome=genome)

@@ -3,288 +3,302 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/012-sameith-kemmeren/scripts/single_mutant_expression_distributions
 # Test file: experiments/012-sameith-kemmeren/scripts/test_single_mutant_expression_distributions.py
 
+"""Per-knockout genome-wide expression distributions (Option A, Nature-sized).
+
+For every single-gene deletion we look at the distribution of log2 fold-changes
+across the whole transcriptome (~6.1K measured genes). Two panels, each a
+full-width strip (179 mm x 35.7 mm -- the canonical wide-strip cell of
+``notes/assets/drawio/figure-sizing-template.drawio.svg``), strains ranked by how
+much their transcriptome moves (IQR, quiet -> disruptive):
+
+- **Kemmeren 2014** (1,484 deletions) -- a *sorted spread band*. 1,484 boxes do
+  not survive a 179 mm panel (0.12 mm/box), so we plot per-strain quantiles vs
+  rank: the IQR band (Q1-Q3) inside a 5-95% band, with the median line. Same
+  message as a box-per-strain plot at a width that actually prints.
+- **Sameith 2015** (82 GSTF deletions) -- box-per-strain survives at 82 (~2.2
+  mm/box), so it keeps the box plot, sorted by IQR, 5-95% whiskers.
+
+Repo figure standards (CLAUDE.md "Figure & Plotting Standards" +
+[[paper.nature-biotech.figures]]): palette red (``PLOT_PALETTE[1]``) as the 012
+lead color, Arial 6 pt, boxed axes, ``full`` panel width, true-size SVG for
+draw.io + a 300-dpi PNG. Titles/panel letters are added at draw.io composition,
+so the panels stay title-free; the threshold breakdown lives in the note caption
+and the results CSV.
 """
-Single Mutant Expression Distribution Visualization
 
-Creates single wide box plot visualizations showing log2 expression changes across all
-measured genes for single deletion mutants in:
-- Kemmeren 2014: ~1,484 single gene deletions
-- Sameith 2015: 82 GSTF deletions
-
-Matches the style of deprecated smf_ge_box_plot.py with:
-- 100×20 inch figure size
-- No individual gene labels (shows distribution only)
-- Bold styling (10pt spines, #E84A26 whiskers)
-- Large fonts (80-100pt)
-- Percentage statistics for values outside ranges
-"""
-
+import logging
 import os
 import os.path as osp
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 from dotenv import load_dotenv
 from tqdm import tqdm
-import logging
 
-# Removed timestamp import - using stable filenames instead
 from torchcell.datasets.scerevisiae.kemmeren2014 import MicroarrayKemmeren2014Dataset
 from torchcell.datasets.scerevisiae.sameith2015 import SmMicroarraySameith2015Dataset
+from torchcell.utils import (
+    PANEL_WIDTHS_MM,
+    PLOT_PALETTE,
+    PLOT_PALETTE_FILL,
+    mm_to_in,
+    savefig_true_size_svg,
+)
 
-# Load environment variables
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+EXPERIMENT_ROOT = os.getenv("EXPERIMENT_ROOT")
 
-# Configuration
 DEBUG_MODE = os.getenv("DEBUG_MODE", "False").lower() == "true"
 SAMPLE_SIZE = int(os.getenv("SAMPLE_SIZE", "50"))
 
-# Setup logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
-# Color schemes
-KEMMEREN_COLOR = "#D0838E"  # Pinkish/rose
-SAMEITH_COLOR = "#53777A"  # Teal/blue-green
-MEDIAN_COLOR = "#FF6B35"  # Orange
+# Panel geometry -- from notes/assets/drawio/figure-sizing-template.drawio.svg:
+# the full-width wide strip is 179.4 mm x 35.7 mm (~5:1), the canonical single-row
+# panel cell (width is the strict PANEL_WIDTHS_MM["full"]; 35.7 mm is the height unit).
+PANEL_H_MM = 35.7
+RED = PLOT_PALETTE[1]  # #B85450 -- the 012 lead color
+RED_FILL = PLOT_PALETTE_FILL[1]  # #F8CECC -- lighter member for the outer band
+INK = "#000000"
+GRID = "#4A4A4A"
+THRESHOLDS = (0.25, 0.5, 0.75, 1.0)
+
+
+def _apply_rc() -> None:
+    """Arial 6 pt, editable SVG text, thin axes -- the repo figure standard."""
+    plt.rcParams.update(
+        {
+            "font.family": "sans-serif",
+            "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
+            "font.size": 6,
+            "axes.titlesize": 6,
+            "axes.labelsize": 6,
+            "xtick.labelsize": 6,
+            "ytick.labelsize": 6,
+            "svg.fonttype": "none",
+            "axes.linewidth": 0.5,
+            # importing torchcell.datasets flips savefig.bbox -> "tight" globally, which
+            # re-crops at save time and defeats the strict full-width template (panels
+            # came out ~182 mm instead of 179 mm). Pin it back so the true-size SVG is
+            # exactly PANEL_WIDTHS_MM["full"] x PANEL_H_MM.
+            "savefig.bbox": None,
+        }
+    )
 
 
 def extract_expression_data(dataset, dataset_name, sample_range=None):
-    """
-    Extract log2 expression ratios for each gene deletion.
+    """Extract genome-wide log2 ratios per deletion.
 
-    Returns:
-        dict: {gene_systematic_name: [log2_ratios_across_all_measured_genes]}
+    Returns ``{systematic_gene_name: np.ndarray of log2_ratios}`` (NaNs dropped).
     """
     logger.info(f"Extracting expression data from {dataset_name}")
-
     data_dict = {}
-
-    # Determine iteration range
-    if sample_range is None:
-        iter_range = range(len(dataset))
-    else:
-        iter_range = range(min(sample_range, len(dataset)))
+    iter_range = range(
+        len(dataset) if sample_range is None else min(sample_range, len(dataset))
+    )
 
     for i in tqdm(iter_range, desc=f"Processing {dataset_name}"):
         data = dataset[i]
-
-        # Extract deleted gene
         perturbations = data["experiment"]["genotype"]["perturbations"]
         if len(perturbations) != 1:
-            logger.warning(
-                f"{dataset_name}[{i}]: Expected 1 perturbation, got {len(perturbations)}"
-            )
             continue
-
         gene_deleted = perturbations[0]["systematic_gene_name"]
-
-        # Extract expression log2 ratios
-        log2_ratios = list(
-            data["experiment"]["phenotype"]["expression_log2_ratio"].values()
+        values = np.asarray(
+            list(data["experiment"]["phenotype"]["expression_log2_ratio"].values()),
+            dtype=float,
         )
-
-        # Filter out NaN values
-        log2_ratios = [r for r in log2_ratios if not np.isnan(r)]
-
-        if gene_deleted in data_dict:
-            logger.warning(f"{dataset_name}: Duplicate gene {gene_deleted}")
-
-        data_dict[gene_deleted] = log2_ratios
+        values = values[~np.isnan(values)]
+        data_dict[gene_deleted] = values
 
     logger.info(f"Extracted data for {len(data_dict)} unique genes")
     return data_dict
 
 
-def calc_percentage_outside(data_dict, threshold):
+def _strain_quantiles(data_dict):
+    """Per-strain quantile table, sorted by IQR (quiet -> disruptive).
+
+    Returns a DataFrame indexed by rank with columns p5, q1, median, q3, p95, iqr,
+    n_genes and the fraction of genes beyond each THRESHOLD.
     """
-    Calculate percentage of expression values outside [-threshold, +threshold].
+    rows = []
+    for gene, values in data_dict.items():
+        p5, q1, med, q3, p95 = np.percentile(values, [5, 25, 50, 75, 95])
+        row = {
+            "gene": gene,
+            "p5": p5,
+            "q1": q1,
+            "median": med,
+            "q3": q3,
+            "p95": p95,
+            "iqr": q3 - q1,
+            "n_genes": values.size,
+        }
+        for t in THRESHOLDS:
+            row[f"frac_gt_{t}"] = float(np.mean(np.abs(values) > t))
+        rows.append(row)
+    df = pd.DataFrame(rows).sort_values("iqr").reset_index(drop=True)
+    return df
 
-    Returns average per deletion strain statistics rather than pooled counts.
 
-    Args:
-        data_dict: {gene_name: [log2_ratios]}
-        threshold: Absolute threshold value
+def _threshold_caption(data_dict):
+    """Pooled % of gene measurements beyond each threshold (for the note caption)."""
+    allv = np.concatenate([v for v in data_dict.values()])
+    parts = [
+        f"|log2FC|>{t}: {100 * np.mean(np.abs(allv) > t):.1f}%" for t in THRESHOLDS
+    ]
+    return "  ".join(parts)
 
-    Returns:
-        tuple: (avg_count_outside, avg_total_genes, percentage)
-            - avg_count_outside: Average number of genes outside threshold per deletion strain
-            - avg_total_genes: Average number of genes measured per deletion strain
-            - percentage: (total_outside / total_genes) * 100
-    """
-    num_strains = len(data_dict)
 
-    # Count total genes outside threshold (across all strains)
-    total_count_outside = sum(
-        sum(1 for v in gene_values if abs(v) > threshold)
-        for gene_values in data_dict.values()
+def _style_axes(ax, ymax):
+    """Box all four spines, symmetric y-limits, zero line, light y-grid."""
+    ax.set_ylim(-ymax, ymax)
+    ax.axhline(0, color=GRID, linestyle=":", linewidth=0.5, zorder=1)
+    for s in ("top", "right", "left", "bottom"):
+        ax.spines[s].set_visible(True)
+        ax.spines[s].set_color(INK)
+        ax.spines[s].set_linewidth(0.5)
+    ax.tick_params(colors=INK, width=0.5, length=2)
+    ax.grid(True, axis="y", alpha=0.15, linewidth=0.4, color=GRID)
+    ax.set_axisbelow(True)
+
+
+def _new_strip():
+    """A full-width x 35.7 mm strip figure + axes (true-size template cell)."""
+    fig, ax = plt.subplots(
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(PANEL_H_MM)),
+        constrained_layout=True,
     )
-
-    # Count total genes measured (across all strains)
-    total_genes = sum(len(gene_values) for gene_values in data_dict.values())
-
-    # Calculate averages per strain
-    avg_count_outside = total_count_outside / num_strains
-    avg_genes_measured = total_genes / num_strains
-    percentage = (total_count_outside / total_genes) * 100
-
-    return int(round(avg_count_outside)), int(round(avg_genes_measured)), percentage
+    return fig, ax
 
 
-def create_single_wide_boxplot(
-    data_dict,
-    title,
-    output_prefix,
-    xlabel="Single Gene Deletion Strains",
-):
-    """
-    Create single wide box plot matching deprecated script style.
-
-    Styling:
-    - Figure size: 100×20 inches (very wide)
-    - No individual gene labels (shows distribution only)
-    - Bold spines (10pt linewidth)
-    - Orange-red whiskers (#E84A26)
-    - Large fonts (80-100pt)
-    - Percentage statistics for values outside ±0.25, ±0.50, ±0.75, ±1.00 log2 FC
-    """
-    logger.info(f"Creating single wide box plot: {title}")
-
-    # Sort genes alphabetically for consistent ordering
-    genes_sorted = sorted(data_dict.keys())
-
-    # Melt data to long format for seaborn
-    records = []
-    for gene in genes_sorted:
-        for value in data_dict[gene]:
-            records.append({"Gene": gene, "Expression": value})
-
-    melted_df = pd.DataFrame(records)
-
-    # Calculate percentage statistics (values OUTSIDE ranges)
-    count_25, total_25, perc_25 = calc_percentage_outside(data_dict, 0.25)
-    count_50, total_50, perc_50 = calc_percentage_outside(data_dict, 0.50)
-    count_75, total_75, perc_75 = calc_percentage_outside(data_dict, 0.75)
-    count_100, total_100, perc_100 = calc_percentage_outside(data_dict, 1.00)
-
-    # Create figure
-    plt.figure(figsize=(100, 20))
-    ax = sns.boxplot(
-        x="Gene",
-        y="Expression",
-        data=melted_df,
-        order=genes_sorted,  # Ensure alphabetical order
-        showfliers=False,  # No outliers
-        showcaps=False,  # No caps
-        whiskerprops={"color": "#E84A26", "linewidth": 3},  # Orange-red whiskers, thicker
-    )
-
-    # Change the thickness of the axis border (spines)
-    for spine in ax.spines.values():
-        spine.set_linewidth(10)
-
-    # X-axis customization (no labels)
-    ax.set(xticklabels=[])
-    plt.xlabel(xlabel, fontsize=80)
-    plt.ylabel("Log2 Fold Change", fontsize=80)
-
-    # Y-axis customization
-    plt.yticks(fontsize=80)
-    ax.tick_params(axis="y", length=20, width=10)
-
-    # Title
-    plt.title(title, fontsize=100)
-
-    # Add text annotations for percentages with absolute counts (no timestamp needed - stable output)
-    text_str = (
-        f"±0.25 log2 FC: ({count_25}/{total_25}) {perc_25:.2f}%\n"
-        f"±0.50 log2 FC: ({count_50}/{total_50}) {perc_50:.2f}%\n"
-        f"±0.75 log2 FC: ({count_75}/{total_75}) {perc_75:.2f}%\n"
-        f"±1.00 log2 FC: ({count_100}/{total_100}) {perc_100:.2f}%"
-    )
-    ax.text(
-        0.5,
-        0.95,
-        text_str,
-        transform=ax.transAxes,
-        fontsize=80,
-        verticalalignment="top",
-        horizontalalignment="center",
-        color='black',
-        weight='bold',
-    )
-
-    # Save output (no timestamp - stable filenames for documentation)
+def _save(fig, output_prefix):
     output_dir = osp.join(ASSET_IMAGES_DIR, "012-sameith-kemmeren-expression")
     os.makedirs(output_dir, exist_ok=True)
-
     png_path = osp.join(output_dir, f"{output_prefix}.png")
-    plt.savefig(png_path, dpi=300, bbox_inches="tight")
-    logger.info(f"✓ Saved PNG: {png_path}")
+    svg_path = osp.join(output_dir, f"{output_prefix}.svg")
+    fig.savefig(png_path, dpi=300, facecolor="white")
+    savefig_true_size_svg(fig, svg_path, facecolor="white")
+    plt.close(fig)
+    logger.info(f"✓ Saved: {png_path} + {osp.basename(svg_path)}")
 
-    plt.close()
 
-    return png_path
+def plot_spread_band(df, xlabel, output_prefix):
+    """Kemmeren: per-strain quantile bands vs rank (1,484 strains, box-per-strain infeasible)."""
+    logger.info(f"Plotting sorted spread band: {output_prefix}")
+    _apply_rc()
+    fig, ax = _new_strip()
+    x = np.arange(len(df))
+
+    # two-level red band: 5-95% (lighter fill) with the IQR (line color) inside it,
+    # then the median line in black -- the sanctioned light/dark pairing.
+    ax.fill_between(x, df["p5"], df["p95"], facecolor=RED_FILL, linewidth=0, zorder=2)
+    ax.fill_between(x, df["q1"], df["q3"], facecolor=RED, linewidth=0, zorder=3)
+    ax.plot(x, df["median"], color=INK, linewidth=0.5, zorder=4)
+
+    ymax = float(np.ceil(max(df["p95"].abs().max(), df["p5"].abs().max()) * 10) / 10)
+    _style_axes(ax, ymax)
+    ax.set_xlim(0, len(df) - 1)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel("log2 fold-change")
+    _save(fig, output_prefix)
+
+
+def plot_sorted_boxplot(df, data_dict, xlabel, output_prefix):
+    """Sameith: box-per-strain (82 strains fit), sorted by IQR, 5-95% whiskers."""
+    logger.info(f"Plotting sorted box plot: {output_prefix}")
+    _apply_rc()
+    fig, ax = _new_strip()
+    ordered = [data_dict[g] for g in df["gene"]]
+    positions = np.arange(len(ordered))
+
+    bp = ax.boxplot(
+        ordered,
+        positions=positions,
+        widths=0.72,
+        whis=(5, 95),
+        showfliers=False,
+        showcaps=False,
+        patch_artist=True,
+    )
+    for patch in bp["boxes"]:
+        patch.set_facecolor(RED)
+        patch.set_edgecolor(INK)
+        patch.set_linewidth(0.3)
+    for element in ("medians", "whiskers"):
+        for artist in bp[element]:
+            artist.set_color(INK)
+            artist.set_linewidth(0.3)
+
+    ymax = float(
+        np.ceil(
+            max(max(np.percentile(v, 95), -np.percentile(v, 5)) for v in ordered) * 10
+        )
+        / 10
+    )
+    _style_axes(ax, ymax)
+    ax.set_xlim(-0.7, len(ordered) - 0.3)
+    ax.set_xticks([])
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel("log2 fold-change")
+    _save(fig, output_prefix)
 
 
 def main():
     logger.info("=" * 80)
-    logger.info("SINGLE MUTANT EXPRESSION DISTRIBUTION VISUALIZATION")
-    logger.info(f"Debug mode: {DEBUG_MODE}")
-    if DEBUG_MODE:
-        logger.info(f"Sample size: {SAMPLE_SIZE}")
+    logger.info("PER-KNOCKOUT GENOME-WIDE EXPRESSION DISTRIBUTIONS (Option A)")
     logger.info("=" * 80)
-
     sample_range = SAMPLE_SIZE if DEBUG_MODE else None
 
-    # Process Kemmeren dataset
-    logger.info("\n--- Processing Kemmeren 2014 ---")
     kemmeren = MicroarrayKemmeren2014Dataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/microarray_kemmeren2014"),
-        io_workers=0,
+        root=osp.join(DATA_ROOT, "data/torchcell/microarray_kemmeren2014"), io_workers=0
     )
-    logger.info(f"Loaded {len(kemmeren)} experiments")
-
-    kemmeren_data = extract_expression_data(kemmeren, "Kemmeren2014", sample_range)
-
-    # Create Kemmeren plot
-    logger.info("\n--- Creating Kemmeren Visualization ---")
-    create_single_wide_boxplot(
-        kemmeren_data,
-        title=f"Kemmeren 2014: Log2 Expression Changes ({len(kemmeren_data)} Genes)",
-        output_prefix="single_mutant_kemmeren",
-        xlabel="Single Gene Deletion Strains",
-    )
-
-    # Process Sameith dataset
-    logger.info("\n--- Processing Sameith 2015 (Single Mutants) ---")
+    logger.info(f"Loaded Kemmeren2014: {len(kemmeren)} experiments")
     sm_sameith = SmMicroarraySameith2015Dataset(
         root=osp.join(DATA_ROOT, "data/torchcell/sm_microarray_sameith2015"),
         io_workers=0,
     )
-    logger.info(f"Loaded {len(sm_sameith)} experiments")
+    logger.info(f"Loaded SmSameith2015: {len(sm_sameith)} experiments")
 
+    kemmeren_data = extract_expression_data(kemmeren, "Kemmeren2014", sample_range)
     sameith_data = extract_expression_data(sm_sameith, "SmSameith2015", sample_range)
 
-    # Create Sameith plot
-    logger.info("\n--- Creating Sameith Visualization ---")
-    create_single_wide_boxplot(
+    kemmeren_df = _strain_quantiles(kemmeren_data)
+    sameith_df = _strain_quantiles(sameith_data)
+
+    logger.info(f"Kemmeren pooled thresholds: {_threshold_caption(kemmeren_data)}")
+    logger.info(f"Sameith  pooled thresholds: {_threshold_caption(sameith_data)}")
+
+    plot_spread_band(
+        kemmeren_df,
+        "Kemmeren deletion strains, ranked by transcriptome spread (n = "
+        f"{len(kemmeren_df)})",
+        "single_mutant_kemmeren",
+    )
+    plot_sorted_boxplot(
+        sameith_df,
         sameith_data,
-        title=f"Sameith 2015: Log2 Expression Changes ({len(sameith_data)} GSTF Genes)",
-        output_prefix="single_mutant_sameith",
-        xlabel="GSTF Gene Deletion Strains",
+        f"Sameith GSTF deletion strains, ranked by spread (n = {len(sameith_df)})",
+        "single_mutant_sameith",
     )
 
-    logger.info("\n" + "=" * 80)
-    logger.info("✓ VISUALIZATION COMPLETE")
+    results_dir = osp.join(EXPERIMENT_ROOT, "012-sameith-kemmeren/results")
+    os.makedirs(results_dir, exist_ok=True)
+    kemmeren_df.to_csv(
+        osp.join(results_dir, "single_mutant_kemmeren_spread.csv"), index=False
+    )
+    sameith_df.to_csv(
+        osp.join(results_dir, "single_mutant_sameith_spread.csv"), index=False
+    )
+
     logger.info("=" * 80)
-    logger.info(f"\nOutputs saved to: {osp.join(ASSET_IMAGES_DIR, '012-sameith-kemmeren-expression')}")
+    logger.info("✓ COMPLETE")
+    logger.info("=" * 80)
 
 
 if __name__ == "__main__":

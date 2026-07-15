@@ -66,3 +66,17 @@ Verifiers live in `torchcell/verification/` (src, permanent gate — not throwaw
 "why the data is shaped this way" reasoning lives in dendron module notes: the schema
 note explains the object; the verifier is the machine-checkable statement of that
 intent; the two reference each other.
+
+## 2026.07.15 - Ohya count oracle 4718 -> 4695 (R64 reconciliation)
+
+The Ohya loader was provisioned for rebuild (sha256-pinned mirror, sourced
+YPD/liquid/25 C environment, drop-whole-row NaN policy, R64 gene-name reconciliation).
+The R64 reconciliation changes the mutant record-count oracle: **4718 raw -> 4695
+built** (4 legacy ORFs renamed in place; 23 dropped = 17 retired-from-SGD + 6
+merge-collisions). `OHYA_EXPECTED_COUNT` in `runners.py` and the `verify_morphology_dataset`
+docstrings are updated to 4695. The dated sections above (4718) reflect the pre-reconciliation
+build. Full detail: [[torchcell.datasets.scerevisiae.ohya2005]] (2026.07.15 section).
+
+**Re-run needed after the graph rebuild:** the L0-L4 morphology verification (and the
+abstract's r=0.619 single-KO result) were computed on the 4718-record build; re-run both
+against the rebuilt 4695-record LMDB.

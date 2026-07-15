@@ -74,6 +74,11 @@ def pmc_oa_api(pmcid: str) -> bytes:
 
 
 # Registry: dotted path -> retriever. RetrievalRecord.retriever names a key here.
+# The ``radiant_endpoint`` RetrievalMethod slot (issue #20) is intentionally left
+# without a retriever here: it is reserved for the Radiant VM serving library-rebuild
+# artifacts, a separate concern from the private literature endpoint in
+# ``torchcell.literature.server`` (which runs on GilaHyper). Its retriever is added
+# when that rebuild path is actually built.
 RETRIEVERS: dict[str, Callable[..., bytes]] = {
     "torchcell.literature.retrieve.springer_esm": springer_esm,
     "torchcell.literature.retrieve.direct_url": direct_url,

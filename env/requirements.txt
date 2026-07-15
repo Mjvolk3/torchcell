@@ -136,4 +136,8 @@
     # Literature / Zotero capture pipeline (MinerU OCR runs in the separate
     # swanki-mineru env, so mineru is NOT listed here)
     pyzotero>=1.5.0
+
+    # Keyed read-only endpoint serving the OCR literature mirror (issue #20)
+    fastapi>=0.115
+    uvicorn[standard]>=0.30
     unidecode>=1.3.0

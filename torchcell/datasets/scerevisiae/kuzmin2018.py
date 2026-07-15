@@ -19,6 +19,7 @@ from torch_geometric.data import download_url
 from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
+from torchcell.datamodels.media import SGA_TM_SELECTION
 from torchcell.datamodels.schema import (
     Environment,
     Experiment,
@@ -31,7 +32,6 @@ from torchcell.datamodels.schema import (
     GeneInteractionPhenotype,
     GenePerturbationType,
     Genotype,
-    Media,
     Publication,
     ReferenceGenome,
     SampleUnit,
@@ -313,7 +313,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
 
         # genotype
         environment = Environment(
-            media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
+            media=SGA_TM_SELECTION, temperature=Temperature(value=26)
         )
         environment_reference = environment.model_copy()
         # Phenotype
@@ -544,7 +544,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         assert len(genotype) == 2, "Genotype must have 2 perturbations."
         # genotype
         environment = Environment(
-            media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
+            media=SGA_TM_SELECTION, temperature=Temperature(value=26)
         )
         environment_reference = environment.model_copy()
         # Phenotype
@@ -796,7 +796,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         assert len(genotype) == 3, "Genotype must have 3 perturbations."
         # genotype
         environment = Environment(
-            media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
+            media=SGA_TM_SELECTION, temperature=Temperature(value=26)
         )
         environment_reference = environment.model_copy()
         # Phenotype based on temperature
@@ -1021,7 +1021,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
         assert len(genotype) == 2, "Genotype must have 2 perturbations."
 
         environment = Environment(
-            media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
+            media=SGA_TM_SELECTION, temperature=Temperature(value=26)
         )
         environment_reference = environment.model_copy()
 
@@ -1256,7 +1256,7 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
         assert len(genotype) == 3, "Genotype must have 3 perturbations."
 
         environment = Environment(
-            media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
+            media=SGA_TM_SELECTION, temperature=Temperature(value=26)
         )
         environment_reference = environment.model_copy()
 

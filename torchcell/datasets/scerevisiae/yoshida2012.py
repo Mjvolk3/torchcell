@@ -458,7 +458,8 @@ class OrganicAcidYoshida2012Dataset(ExperimentDataset):
         )
         # Static (no shaking) YPD liquid, 25 C, 72 h (Methods; Table 3 caption).
         environment = Environment(
-            media=Media(name="YPD", state="liquid"), temperature=Temperature(value=25)
+            media=Media(name="YPD", state="liquid", is_synthetic=False),
+            temperature=Temperature(value=25),
         )
         phenotype = self._phenotype(row["analytes"])
         # Reference = measured WT (BY4742) row, restricted to the analytes this strain

@@ -48,7 +48,8 @@ def _phenotype(score: float, *, ref: bool = False) -> VisualScorePhenotype:
 
 def _record(gene: str, score: float, *, ref_score: float = 0.0) -> dict[str, Any]:
     env = Environment(
-        media=Media(name="SC-URA", state="solid"), temperature=Temperature(value=30)
+        media=Media(name="SC-URA", state="solid", is_synthetic=True),
+        temperature=Temperature(value=30),
     )
     experiment = VisualScoreExperiment(
         dataset_name="test",

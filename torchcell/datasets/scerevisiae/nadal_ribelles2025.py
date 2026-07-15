@@ -425,7 +425,7 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
     @staticmethod
     def _environment(cond: str) -> Environment:
         """Base YPD (control) or YPD + 0.4 M NaCl for 15 min (osmostress)."""
-        media = Media(name="YPD", state="liquid")
+        media = Media(name="YPD", state="liquid", is_synthetic=False)
         temperature = Temperature(value=GROWTH_TEMP_C)
         if cond == "nacl":
             return Environment(

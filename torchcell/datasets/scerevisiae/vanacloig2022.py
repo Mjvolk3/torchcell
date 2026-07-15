@@ -295,7 +295,7 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
     def _environment(self, compound: str) -> Environment:
         """Anaerobic SynBase environment carrying the compound at its IC30."""
         return Environment(
-            media=Media(name="SynBase", state="liquid"),
+            media=Media(name="SynBase", state="liquid", is_synthetic=True),
             temperature=Temperature(value=30.0),
             perturbations=[
                 SmallMoleculePerturbation(

@@ -414,7 +414,7 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
                 )
             )
         return Environment(
-            media=Media(name="YPD", state="solid"),
+            media=Media(name="YPD", state="solid", is_synthetic=False),
             temperature=Temperature(value=spec["temperature"]),
             perturbations=perturbations,
             aerobicity="aerobic",

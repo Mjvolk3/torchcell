@@ -248,7 +248,8 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
         )
         # SWATH-MS on cells in synthetic minimal (SM) liquid medium, 30 C.
         environment = Environment(
-            media=Media(name="SM", state="liquid"), temperature=Temperature(value=30)
+            media=Media(name="SM", state="liquid", is_synthetic=True),
+            temperature=Temperature(value=30),
         )
         agg = row["agg"]
         phenotype = ProteinAbundancePhenotype(
@@ -504,7 +505,8 @@ class MetaboliteZelezniak2018Dataset(ExperimentDataset):
         )
         # SRM-MS/MS on cells in synthetic minimal (SM) liquid medium, 30 C (as proteome).
         environment = Environment(
-            media=Media(name="SM", state="liquid"), temperature=Temperature(value=30)
+            media=Media(name="SM", state="liquid", is_synthetic=True),
+            temperature=Temperature(value=30),
         )
         phenotype = self._phenotype(row["agg"])
         # Reference = the measured WT baseline RESTRICTED to the metabolites this strain

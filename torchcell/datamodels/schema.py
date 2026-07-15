@@ -15,6 +15,7 @@ from sortedcontainers import SortedDict
 
 from torchcell.datamodels.calmorph_labels import CALMORPH_LABELS, CALMORPH_STATISTICS
 from torchcell.datamodels.pydant import ModelStrict
+from torchcell.verification.sourced import SourcedValue
 
 # causes circular import
 # from torchcell.datasets.dataset_registry import dataset_registry
@@ -975,19 +976,9 @@ class Genotype(ModelStrict):
 
 
 # Environment
-class Media(ModelStrict):
-    """Growth medium identified by name and physical state."""
-
-    name: str
-    state: str
-
-    @field_validator("state", mode="after")
-    @classmethod
-    def validate_state(cls, v: str) -> str:
-        """Validate that state is one of solid, liquid, or gas."""
-        if v not in ["solid", "liquid", "gas"]:
-            raise ValueError('state must be one of "solid", "liquid", or "gas"')
-        return v
+# ``Media`` is defined below (after ``Compound`` / ``Concentration``, which its
+# component-based form depends on) and before ``Environment`` (its only consumer).
+# See the "Media as COMPONENTS" block.
 
 
 class TemperatureUnit(StrEnum):
@@ -1202,6 +1193,157 @@ class Solvent(ModelStrict):
         default=None,
         description="typed chemical identity of the vehicle; None if plain",
     )
+
+
+# --------------------------------------------------------------------------- #
+# Media as COMPONENTS (provenance-first). A base medium resolves to a list of
+# typed ``MediaComponent`` ingredients -- each a reused ``Compound`` (ChEBI /
+# InChIKey / SMILES when sourced) at a ``Concentration`` -- plus deliberately
+# omitted ``dropouts``. ``ComponentDefinition`` marks each ingredient's identity
+# completeness so an under-characterized medium stays queryable (``open_gaps``)
+# and fillable later; the amount axis is orthogonal (``concentration=None`` ==
+# amount not yet sourced). ``is_synthetic`` records defined-by-construction
+# (SD/SC/YNB) vs natural/complex (YPD, corn steep liquor) -- orthogonal to how
+# well the composition is known (a natural medium mass-spec'd into ``defined``
+# components is still ``is_synthetic=False``). Selection agents (canavanine /
+# G418 / clonNAT) are COMPONENTS, not ``EnvironmentPerturbation``s: they are
+# constant to the medium, not the studied edit -- a documented stopgap for the
+# absent genotype x medium mechanistic layer (see the media dendron note). A
+# future cobra/AMICI adapter maps components -> exchange bounds / species; those
+# model conventions do NOT live here.
+# Design: ``[[torchcell.datamodels.media-components]]``.
+# --------------------------------------------------------------------------- #
+
+
+class MediaComponentRole(StrEnum):
+    """Functional role of a medium component (never a phenotypic consequence)."""
+
+    carbon_source = "carbon_source"
+    nitrogen_source = "nitrogen_source"
+    amino_acid = "amino_acid"
+    nucleobase = "nucleobase"
+    vitamin = "vitamin"
+    trace_element = "trace_element"
+    bulk_salt = "bulk_salt"
+    buffer = "buffer"
+    selection_agent = "selection_agent"
+    gelling_agent = "gelling_agent"
+    complex_ingredient = "complex_ingredient"
+    other = "other"
+
+
+class ComponentDefinition(StrEnum):
+    """Identity/composition completeness of a component (the 'what is it' axis).
+
+    Orthogonal to the amount axis (``MediaComponent.concentration is None`` means
+    the amount is not yet sourced). ``composition_deferred`` is a DEFINED sub-mix
+    we have not expanded (commercial YNB, the SC 'amino-acid supplement'),
+    resolvable from a cited protocol -> follow ``defers_to``.
+    ``intrinsically_undefined`` is a batch-variable biological digest (peptone,
+    yeast extract, corn steep liquor) that no recipe fully pins; if later
+    mass-spec'd, its measured constituents become their own ``defined`` components.
+    """
+
+    defined = "defined"
+    composition_deferred = "composition_deferred"
+    intrinsically_undefined = "intrinsically_undefined"
+
+
+class MediaComponent(ModelStrict):
+    """One ingredient of a medium: a (possibly undefined) compound at a dose.
+
+    Reuses the typed ``Compound`` (name-only when undefined; InChIKey / ChEBI /
+    SMILES filled as SOURCED) and ``Concentration``. ``provenance`` is a LIST of
+    ``SourcedValue`` (quote + sha256): a component's value can be corroborated by
+    several papers, and the paper we READ may differ from the one that ORIGINATES
+    the recipe. ``defers_to`` names cited papers holding a fuller/original
+    definition not yet mirrored+quoted; following one promotes it into
+    ``provenance`` and can flip ``definition`` to ``defined``.
+    """
+
+    compound: Compound
+    role: MediaComponentRole
+    concentration: Concentration | None = Field(
+        default=None, description="amount in the final medium; None if not yet sourced"
+    )
+    definition: ComponentDefinition = Field(
+        default=ComponentDefinition.defined,
+        description="identity completeness; drives open_gaps + is_fully_characterized",
+    )
+    provenance: list[SourcedValue[Any]] = Field(
+        default_factory=list,
+        description="sourced (quote+sha256) justifications; a LIST for corroboration "
+        "+ deferral-chain traceability",
+    )
+    defers_to: list[str] = Field(
+        default_factory=list,
+        description="citation_keys of papers holding a fuller/original definition not "
+        "yet mirrored+quoted; follow to fill a composition_deferred gap",
+    )
+    note: str | None = Field(
+        default=None, description="gap detail / mechanism / role rationale"
+    )
+
+
+class Media(ModelStrict):
+    """Growth medium resolved to typed COMPONENTS (provenance-first).
+
+    ``name`` + ``state`` remain the human label; ``is_synthetic`` (REQUIRED)
+    records defined-by-construction vs natural/complex; ``components`` is the
+    compositional breakdown; ``dropouts`` are auxotrophic components deliberately
+    OMITTED (recorded so 'omitted' is distinguishable from 'not yet listed').
+    ``is_fully_characterized`` / ``open_gaps`` make under-definition queryable.
+    """
+
+    name: str
+    state: str
+    is_synthetic: bool = Field(
+        description="True = chemically defined by construction (SD/SC/YNB/SGA); "
+        "False = natural/complex (YPD, corn steep liquor). Orthogonal to how well "
+        "the composition is characterized."
+    )
+    base_medium: str | None = Field(
+        default=None,
+        description="canonical base label for grouping, e.g. 'SD_MSG' | 'YNB' | 'SC' | 'YPD'",
+    )
+    components: list[MediaComponent] = Field(
+        default_factory=list,
+        description="compositional breakdown; empty = composition not yet entered",
+    )
+    dropouts: list[Compound] = Field(
+        default_factory=list,
+        description="auxotrophic components deliberately OMITTED (e.g. -His/-Arg/-Lys/-Ura)",
+    )
+    provenance: list[SourcedValue[Any]] = Field(
+        default_factory=list,
+        description="recipe-level sourced justifications for the medium as a whole",
+    )
+
+    @field_validator("state", mode="after")
+    @classmethod
+    def validate_state(cls, v: str) -> str:
+        """Validate that state is one of solid, liquid, or gas."""
+        if v not in ["solid", "liquid", "gas"]:
+            raise ValueError('state must be one of "solid", "liquid", or "gas"')
+        return v
+
+    @property
+    def is_fully_characterized(self) -> bool:
+        """True iff every listed component has a defined identity AND a concentration."""
+        return bool(self.components) and all(
+            c.definition is ComponentDefinition.defined and c.concentration is not None
+            for c in self.components
+        )
+
+    @property
+    def open_gaps(self) -> list[str]:
+        """Component names still needing a fuller definition or a concentration."""
+        return [
+            c.compound.name
+            for c in self.components
+            if c.definition is not ComponentDefinition.defined
+            or c.concentration is None
+        ]
 
 
 class EnvironmentPerturbation(ModelStrict):

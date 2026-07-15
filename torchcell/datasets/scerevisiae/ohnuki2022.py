@@ -318,7 +318,8 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
 
         # Liquid YPD at 25 C (paper Methods: "Yeast cell culture and harvest").
         environment = Environment(
-            media=Media(name="YPD", state="liquid"), temperature=Temperature(value=25)
+            media=Media(name="YPD", state="liquid", is_synthetic=False),
+            temperature=Temperature(value=25),
         )
 
         measurements = {col: float(row[col]) for col in feature_cols}

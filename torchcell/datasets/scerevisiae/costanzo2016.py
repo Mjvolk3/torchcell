@@ -29,7 +29,6 @@ from torchcell.datamodels import (
     GeneInteractionExperimentReference,
     GeneInteractionPhenotype,
     Genotype,
-    Media,
     Publication,
     ReferenceGenome,
     SgaDampPerturbation,
@@ -39,6 +38,7 @@ from torchcell.datamodels import (
     SgaTsAllelePerturbation,
     Temperature,
 )
+from torchcell.datamodels.media import SGA_DM_SELECTION
 from torchcell.datamodels.schema import (
     GenePerturbationType,
     SampleUnit,
@@ -353,8 +353,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
             )
 
         environment = Environment(
-            media=Media(name="YEPD", state="solid"),
-            temperature=Temperature(value=row["Temperature"]),
+            media=SGA_DM_SELECTION, temperature=Temperature(value=row["Temperature"])
         )
         environment_reference = environment.model_copy()
         # Phenotype based on temperature
@@ -728,8 +727,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         genotype = Genotype(perturbations=perturbations)
         # genotype
         environment = Environment(
-            media=Media(name="YEPD", state="solid"),
-            temperature=Temperature(value=row["Temperature"]),
+            media=SGA_DM_SELECTION, temperature=Temperature(value=row["Temperature"])
         )
         environment_reference = environment.model_copy()
         # Phenotype based on temperature
@@ -1084,8 +1082,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         assert len(genotype) == 2, "Genotype must have 2 perturbations."
 
         environment = Environment(
-            media=Media(name="YEPD", state="solid"),
-            temperature=Temperature(value=row["Temperature"]),
+            media=SGA_DM_SELECTION, temperature=Temperature(value=row["Temperature"])
         )
         environment_reference = environment.model_copy()
 

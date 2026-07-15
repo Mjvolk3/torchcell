@@ -520,7 +520,7 @@ class RegressionTask(L.LightningModule):
                 ]
             )
             dummy_environment = Environment(
-                media=Media(name="YEPD", state="solid"),
+                media=Media(name="YEPD", state="solid", is_synthetic=False),
                 temperature=Temperature(value=30),
             )
             dummy_fitness = FitnessPhenotype(fitness=1.0, fitness_std=0.1)

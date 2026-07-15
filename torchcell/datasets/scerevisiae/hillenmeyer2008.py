@@ -326,7 +326,7 @@ class _Hillenmeyer2008Base(ExperimentDataset):
             _fname, c1, co1, u1, c2, co2, u2, gen, _pool, _scanner = parts[:10]
             perts, media, temp = self._perturbations(c1, co1, u1, c2, co2, u2)
             env = Environment(
-                media=Media(name=media, state="liquid"),
+                media=Media(name=media, state="liquid", is_synthetic=False),
                 temperature=Temperature(value=temp),
                 perturbations=perts,
                 aerobicity="aerobic",
@@ -375,7 +375,7 @@ class _Hillenmeyer2008Base(ExperimentDataset):
                 species="Saccharomyces cerevisiae", strain=strain, ploidy="diploid"
             ),
             environment_reference=Environment(
-                media=Media(name=_BASE_MEDIUM, state="liquid"),
+                media=Media(name=_BASE_MEDIUM, state="liquid", is_synthetic=False),
                 temperature=Temperature(value=_BASELINE_TEMPERATURE_C),
                 aerobicity="aerobic",
             ),

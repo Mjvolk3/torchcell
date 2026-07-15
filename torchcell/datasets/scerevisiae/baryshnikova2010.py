@@ -68,6 +68,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
+from torchcell.datamodels.media import SGA_DM_SELECTION
 from torchcell.datamodels.schema import (
     Environment,
     Experiment,
@@ -76,7 +77,6 @@ from torchcell.datamodels.schema import (
     FitnessExperimentReference,
     FitnessPhenotype,
     Genotype,
-    Media,
     Publication,
     ReferenceGenome,
     SampleUnit,
@@ -237,7 +237,7 @@ class SmfBaryshnikova2010Dataset(ExperimentDataset):
         """Build the fitness experiment/reference/publication for one SGA allele."""
         genotype = Genotype(perturbations=[self._perturbation(kind, orf, strain_id)])
         environment = Environment(
-            media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
+            media=SGA_DM_SELECTION, temperature=Temperature(value=30)
         )
         phenotype = FitnessPhenotype(
             fitness=fitness,

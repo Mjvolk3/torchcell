@@ -28,7 +28,7 @@ def fitness_experiment():
         systematic_gene_name="YAL003W", perturbed_gene_name="EFB1", strain_id="DMA2"
     )
     genotype = Genotype(perturbations=[perturbation1, perturbation2])
-    media = Media(name="YEPD", state="solid")
+    media = Media(name="YEPD", state="solid", is_synthetic=False)
     temperature = Temperature(value=30.0)
     environment = Environment(media=media, temperature=temperature)
     phenotype = FitnessPhenotype(
@@ -55,7 +55,7 @@ def gene_interaction_experiment():
         systematic_gene_name="YBR002W", perturbed_gene_name="AAC2", strain_id="DMA4"
     )
     genotype = Genotype(perturbations=[perturbation1, perturbation2])
-    media = Media(name="YEPD", state="solid")
+    media = Media(name="YEPD", state="solid", is_synthetic=False)
     temperature = Temperature(value=30.0)
     environment = Environment(media=media, temperature=temperature)
     phenotype = GeneInteractionPhenotype(

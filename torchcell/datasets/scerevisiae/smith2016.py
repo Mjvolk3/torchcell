@@ -289,7 +289,7 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
             key = (drug, str(conc_raw))
             if key not in env_cache:
                 environment = Environment(
-                    media=Media(name="SCM-Ura", state="liquid"),
+                    media=Media(name="SCM-Ura", state="liquid", is_synthetic=True),
                     temperature=Temperature(value=30.0),
                     perturbations=[
                         SmallMoleculePerturbation(

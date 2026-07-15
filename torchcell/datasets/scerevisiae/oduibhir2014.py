@@ -241,7 +241,8 @@ class SmfODuibhir2014Dataset(ExperimentDataset):
             ]
         )
         environment = Environment(
-            media=Media(name="SC", state="liquid"), temperature=Temperature(value=30)
+            media=Media(name="SC", state="liquid", is_synthetic=True),
+            temperature=Temperature(value=30),
         )
         # No per-strain uncertainty is released in Dataset S2 -> all uncertainty fields None.
         phenotype = FitnessPhenotype(

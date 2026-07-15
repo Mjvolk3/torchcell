@@ -63,7 +63,8 @@ def _record(
         n_replicates={g: 1 for g in genes},
     )
     environment = Environment(
-        media=Media(name="SC", state="liquid"), temperature=Temperature(value=30)
+        media=Media(name="SC", state="liquid", is_synthetic=True),
+        temperature=Temperature(value=30),
     )
     experiment = MicroarrayExpressionExperiment(
         dataset_name="test",

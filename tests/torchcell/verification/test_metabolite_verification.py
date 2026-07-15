@@ -41,7 +41,8 @@ def _phenotype(level: float, *, ref: bool = False) -> MetabolitePhenotype:
 
 def _record(gene: str, level: float, *, ref_level: float = 0.0) -> dict[str, Any]:
     env = Environment(
-        media=Media(name="SC", state="solid"), temperature=Temperature(value=30)
+        media=Media(name="SC", state="solid", is_synthetic=True),
+        temperature=Temperature(value=30),
     )
     experiment = MetaboliteExperiment(
         dataset_name="test",
@@ -128,7 +129,8 @@ def test_mixed_measurement_type_fails():
             ]
         ),
         environment=Environment(
-            media=Media(name="SC", state="solid"), temperature=Temperature(value=30)
+            media=Media(name="SC", state="solid", is_synthetic=True),
+            temperature=Temperature(value=30),
         ),
         phenotype=MetabolitePhenotype(
             metabolite_level={"betaxanthin": 1.0},

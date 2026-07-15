@@ -238,7 +238,8 @@ class AminoAcidMulleder2016Dataset(ExperimentDataset):
         )
         # Synthetic minimal (SM) agar, 30 C, exponential growth (Methods "Yeast").
         environment = Environment(
-            media=Media(name="SM", state="solid"), temperature=Temperature(value=30)
+            media=Media(name="SM", state="solid", is_synthetic=True),
+            temperature=Temperature(value=30),
         )
         phenotype = MetabolitePhenotype(
             metabolite_level={aa: row[aa] for aa in AMINO_ACIDS},

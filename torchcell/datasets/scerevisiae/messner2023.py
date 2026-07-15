@@ -341,7 +341,8 @@ class ProteomeMessner2023Dataset(ExperimentDataset):
         )
         # Grown in synthetic minimal (SM) liquid medium at 30 C.
         environment = Environment(
-            media=Media(name="SM", state="liquid"), temperature=Temperature(value=30)
+            media=Media(name="SM", state="liquid", is_synthetic=True),
+            temperature=Temperature(value=30),
         )
         # Single-replicate KO: n=1 per protein, per-strain SE undefined.
         abundance = row["abundance"]

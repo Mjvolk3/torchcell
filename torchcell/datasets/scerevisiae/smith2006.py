@@ -341,7 +341,7 @@ class FattyAcidSmith2006Dataset(ExperimentDataset):
         """Aerobic solid-agar plate carrying the added carbon/fatty-acid species (percent w/v)."""
         value, unit = spec["concentration"]
         return Environment(
-            media=Media(name=spec["media"], state="solid"),
+            media=Media(name=spec["media"], state="solid", is_synthetic=False),
             temperature=Temperature(value=30.0),
             perturbations=[
                 SmallMoleculePerturbation(

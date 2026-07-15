@@ -345,7 +345,8 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
         )
         # YPD rich medium, early exponential phase, 30 C (Methods "Strains").
         environment = Environment(
-            media=Media(name="YPD", state="liquid"), temperature=Temperature(value=30)
+            media=Media(name="YPD", state="liquid", is_synthetic=False),
+            temperature=Temperature(value=30),
         )
         level = row["level"]
         phenotype = MetabolitePhenotype(

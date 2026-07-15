@@ -2093,7 +2093,9 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
         # Environment - YPD medium at 30°C (or SC depending on dataset)
         environment = Environment(
-            media=Media(name="SC", state="liquid"),  # Kemmeren used SC medium
+            media=Media(
+                name="SC", state="liquid", is_synthetic=True
+            ),  # Kemmeren used SC medium
             temperature=Temperature(value=30),
         )
         environment_reference = environment.model_copy()

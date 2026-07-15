@@ -13,6 +13,11 @@ natural-isolate genomic diversity vs KO-driven expression variability, as a bit
 accounting for the inputs the Cell Graph Transformer consumes. Feeds **Fig. 1c /
 Supplementary Note 5**.
 
+**Future modeling setup** (Fig. 4, "Natural Genetic Variation vs Model-Design
+Perturbations") — how to turn this analysis into a prediction experiment (Kemmeren +
+Sameith + Caudal expression; does natural variation improve perturbation prediction; the
+sequence-encoding motivation): [[experiments.018-natural-isolate-genomics.expression-modeling-setup]].
+
 > **Read the [Corrections](#20260713---corrections-what-the-first-pass-got-wrong)
 > section at the bottom before citing anything here.** The first pass of this experiment
 > overclaimed in three places; the body below has been corrected, and the retractions are

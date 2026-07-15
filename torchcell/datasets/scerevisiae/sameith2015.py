@@ -623,9 +623,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
             # Check for required columns
             has_cy5 = "Signal Norm_Cy5" in table.columns
             has_cy3 = "Signal Norm_Cy3" in table.columns
-            has_value = "VALUE" in table.columns
-
-            if not (has_cy5 and has_cy3 and has_value):
+            if not (has_cy5 and has_cy3):
                 log.warning(
                     f"Missing required columns. Available: {list(table.columns)}"
                 )
@@ -641,16 +639,11 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
             # Determine which dye (Cy5/Cy3) corresponds to which sample (mutant/refpool)
             # Ch1 = Cy5, Ch2 = Cy3 (based on GEO data structure)
+            # ch1 == Cy5 throughout GSE42536; the a/b title suffix is the dye swap.
             if "refpool" in source_ch1.lower():
-                # Cy5 = refpool, Cy3 = mutant
-                mutant_channel = "Cy3"
-                # VALUE is log2(Cy5/Cy3) = log2(refpool/mutant), so negate it
-                ratio_sign = -1
+                mutant_channel = "Cy3"  # ch1=Cy5=refpool -> mutant is Cy3
             else:
-                # Cy5 = mutant, Cy3 = refpool
-                mutant_channel = "Cy5"
-                # VALUE is log2(Cy5/Cy3) = log2(mutant/refpool), correct sign
-                ratio_sign = 1
+                mutant_channel = "Cy5"  # ch1=Cy5=mutant
 
             for _, row in table.iterrows():
                 probe_id = str(int(row["ID_REF"]))
@@ -661,9 +654,8 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
                     try:
                         cy5_value = float(row["Signal Norm_Cy5"])
                         cy3_value = float(row["Signal Norm_Cy3"])
-                        value = float(row["VALUE"])
 
-                        # Assign to mutant/refpool based on channel assignment
+                        # Assign to mutant/refpool by the dye assignment.
                         if mutant_channel == "Cy5":
                             mutant_data[gene] = cy5_value
                             refpool_data[gene] = cy3_value
@@ -671,8 +663,15 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
                             mutant_data[gene] = cy3_value
                             refpool_data[gene] = cy5_value
 
-                        # Adjust log2 ratio sign to always be log2(mutant/refpool)
-                        log2_ratio_data[gene] = ratio_sign * value
+                        # log2(mutant / refpool) recomputed from the Signal columns
+                        # + dye assignment -- NOT from the VALUE column. VALUE's
+                        # orientation is inconsistent within GSE42536 (#72): 132
+                        # arrays are log2(Cy5/Cy3), 127 log2(Cy3/Cy5), so trusting it
+                        # mis-signs ~24% of arrays. The signals are orientation-proof.
+                        if mutant_data[gene] > 0 and refpool_data[gene] > 0:
+                            log2_ratio_data[gene] = float(
+                                np.log2(mutant_data[gene] / refpool_data[gene])
+                            )
 
                     except (ValueError, TypeError):
                         continue
@@ -1631,9 +1630,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
             # Check for required columns
             has_cy5 = "Signal Norm_Cy5" in table.columns
             has_cy3 = "Signal Norm_Cy3" in table.columns
-            has_value = "VALUE" in table.columns
-
-            if not (has_cy5 and has_cy3 and has_value):
+            if not (has_cy5 and has_cy3):
                 log.warning(
                     f"Missing required columns. Available: {list(table.columns)}"
                 )
@@ -1649,16 +1646,11 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
             # Determine which dye (Cy5/Cy3) corresponds to which sample (mutant/refpool)
             # Ch1 = Cy5, Ch2 = Cy3 (based on GEO data structure)
+            # ch1 == Cy5 throughout GSE42536; the a/b title suffix is the dye swap.
             if "refpool" in source_ch1.lower():
-                # Cy5 = refpool, Cy3 = mutant
-                mutant_channel = "Cy3"
-                # VALUE is log2(Cy5/Cy3) = log2(refpool/mutant), so negate it
-                ratio_sign = -1
+                mutant_channel = "Cy3"  # ch1=Cy5=refpool -> mutant is Cy3
             else:
-                # Cy5 = mutant, Cy3 = refpool
-                mutant_channel = "Cy5"
-                # VALUE is log2(Cy5/Cy3) = log2(mutant/refpool), correct sign
-                ratio_sign = 1
+                mutant_channel = "Cy5"  # ch1=Cy5=mutant
 
             for _, row in table.iterrows():
                 probe_id = str(int(row["ID_REF"]))
@@ -1669,9 +1661,8 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
                     try:
                         cy5_value = float(row["Signal Norm_Cy5"])
                         cy3_value = float(row["Signal Norm_Cy3"])
-                        value = float(row["VALUE"])
 
-                        # Assign to mutant/refpool based on channel assignment
+                        # Assign to mutant/refpool by the dye assignment.
                         if mutant_channel == "Cy5":
                             mutant_data[gene] = cy5_value
                             refpool_data[gene] = cy3_value
@@ -1679,8 +1670,15 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
                             mutant_data[gene] = cy3_value
                             refpool_data[gene] = cy5_value
 
-                        # Adjust log2 ratio sign to always be log2(mutant/refpool)
-                        log2_ratio_data[gene] = ratio_sign * value
+                        # log2(mutant / refpool) recomputed from the Signal columns
+                        # + dye assignment -- NOT from the VALUE column. VALUE's
+                        # orientation is inconsistent within GSE42536 (#72): 132
+                        # arrays are log2(Cy5/Cy3), 127 log2(Cy3/Cy5), so trusting it
+                        # mis-signs ~24% of arrays. The signals are orientation-proof.
+                        if mutant_data[gene] > 0 and refpool_data[gene] > 0:
+                            log2_ratio_data[gene] = float(
+                                np.log2(mutant_data[gene] / refpool_data[gene])
+                            )
 
                     except (ValueError, TypeError):
                         continue
@@ -1710,9 +1708,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
             has_cy5 = "Signal Norm_Cy5" in table.columns
             has_cy3 = "Signal Norm_Cy3" in table.columns
-            has_value = "VALUE" in table.columns
-
-            if not (has_cy5 and has_cy3 and has_value):
+            if not (has_cy5 and has_cy3):
                 return mutant_data, refpool_data, log2_ratio_data
 
             # Determine which channel has mutant vs refpool by checking metadata
@@ -1722,15 +1718,11 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
                 else ""
             )
 
-            # Determine channel assignment and ratio sign
+            # ch1 == Cy5 throughout GSE42536; the a/b title suffix is the dye swap.
             if "refpool" in source_ch1.lower():
-                # Cy5 = refpool, Cy3 = mutant
-                mutant_channel = "Cy3"
-                ratio_sign = -1
+                mutant_channel = "Cy3"  # ch1=Cy5=refpool -> mutant is Cy3
             else:
-                # Cy5 = mutant, Cy3 = refpool
-                mutant_channel = "Cy5"
-                ratio_sign = 1
+                mutant_channel = "Cy5"  # ch1=Cy5=mutant
 
             for _, row in table.iterrows():
                 probe_id = str(int(row["ID_REF"]))
@@ -1740,9 +1732,8 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
                     try:
                         cy5_value = float(row["Signal Norm_Cy5"])
                         cy3_value = float(row["Signal Norm_Cy3"])
-                        value = float(row["VALUE"])
 
-                        # Assign to mutant/refpool based on channel assignment
+                        # Assign to mutant/refpool by the dye assignment.
                         if mutant_channel == "Cy5":
                             mutant_data[gene] = cy5_value
                             refpool_data[gene] = cy3_value
@@ -1750,8 +1741,15 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
                             mutant_data[gene] = cy3_value
                             refpool_data[gene] = cy5_value
 
-                        # Adjust log2 ratio sign to always be log2(mutant/refpool)
-                        log2_ratio_data[gene] = ratio_sign * value
+                        # log2(mutant / refpool) recomputed from the Signal columns
+                        # + dye assignment -- NOT from the VALUE column. VALUE's
+                        # orientation is inconsistent within GSE42536 (#72): 132
+                        # arrays are log2(Cy5/Cy3), 127 log2(Cy3/Cy5), so trusting it
+                        # mis-signs ~24% of arrays. The signals are orientation-proof.
+                        if mutant_data[gene] > 0 and refpool_data[gene] > 0:
+                            log2_ratio_data[gene] = float(
+                                np.log2(mutant_data[gene] / refpool_data[gene])
+                            )
 
                     except (ValueError, TypeError):
                         continue

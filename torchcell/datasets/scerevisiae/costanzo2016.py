@@ -1086,14 +1086,18 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         )
         environment_reference = environment.model_copy()
 
+        # Digenic interaction: relates two gene nodes -> an edge (not a hyperedge,
+        # which is >=3 genes). GeneInteractionPhenotype defaults to "hyperedge"
+        # (the trigenic case), so digenic loaders override it explicitly.
         phenotype = GeneInteractionPhenotype(
             gene_interaction=row["Genetic interaction score (ε)"],
             gene_interaction_p_value=row["P-value"],
+            graph_level="edge",
         )
 
         # By definition, the reference interaction would be 0.
         phenotype_reference = GeneInteractionPhenotype(
-            gene_interaction=0.0, gene_interaction_p_value=None
+            gene_interaction=0.0, gene_interaction_p_value=None, graph_level="edge"
         )
 
         reference = GeneInteractionExperimentReference(

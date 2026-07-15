@@ -1,0 +1,36 @@
+# docker-compose.tc-lit.yml
+# Standalone deployment for the keyed literature endpoint on GilaHyper. Kept
+# separate from docker-compose.yml (the Neo4j build/import/deploy pipeline) so it
+# starts/stops independently and does not entangle with that lifecycle.
+#
+# Requires (from a .env in this directory or the shell environment):
+#   DATA_ROOT         host mirror root (contains torchcell-library/); already in the repo .env
+#   TC_LIT_KEYS_FILE  host path to the JSON keys file {name: sha256hex}
+#   TC_LIT_PORT       host port to expose (default 8723)
+#
+# Mint a key first (writes nothing; prints the key + hash line):
+#   docker compose -f docker-compose.tc-lit.yml run --rm tc-lit-endpoint \
+#     python -m torchcell.literature.server --gen-key mac-m1
+# Then:
+#   docker compose -f docker-compose.tc-lit.yml up -d --build
+
+services:
+  tc-lit-endpoint:
+    build:
+      context: .
+      dockerfile: Dockerfile.tc-lit
+    image: tc-lit-endpoint:latest
+    container_name: tc-lit-endpoint
+    ports:
+      - "${TC_LIT_PORT:-8723}:8723"
+    volumes:
+      # Mirror + keys are mounted READ-ONLY: a read-only server backed by a
+      # read-only mount cannot mutate the 5.4 GB mirror under any circumstance.
+      - "${DATA_ROOT}/torchcell-library:/data/torchcell-library:ro"
+      - "${TC_LIT_KEYS_FILE}:/keys.json:ro"
+    environment:
+      DATA_ROOT: /data
+      TC_LIT_KEYS_FILE: /keys.json
+      TC_LIT_HOST: 0.0.0.0
+      TC_LIT_PORT: 8723
+    restart: unless-stopped

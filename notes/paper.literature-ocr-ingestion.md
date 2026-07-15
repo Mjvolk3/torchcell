@@ -273,3 +273,42 @@ are hashed at rest, a leaked keys file does not leak usable keys.
 Semantic search over `paper.md`/`content_list` blocks; a full client-side `radiant_endpoint`
 retriever that rebuilds a key locally; the optional `rsync` convenience-cache skill; SI-PDF
 OCR completeness (most SI is still raw `xlsx`).
+
+## 2026.07.15 - Docker deployment (containerized service)
+
+The endpoint now ships as a **container**, matching how the Neo4j graph DB is served
+(`docker-compose.yml`) — auto-restart, pinned deps, clean start/stop — instead of a bare
+uvicorn process. Files: `Dockerfile.tc-lit` + `docker-compose.tc-lit.yml` (repo root).
+
+**Slim by design.** `torchcell.literature` imports nothing heavy (verified: zero of
+torch/PyG/numpy/pandas load), so the image is `python:3.13-slim` + only the 7 real deps
+(`fastapi`, `uvicorn[standard]`, `pydantic`, `python-dotenv`, `pyzotero`, `httpx`,
+`unidecode`) with the package `COPY`'d in and `PYTHONPATH=/app` — **~180 MB**, not the
+multi-GB ML env a `pip install .` would drag in.
+
+**Read-only all the way down.** The mirror and keys file are bind-mounted `:ro`; a
+read-only server backed by a read-only mount cannot mutate the 5.4 GB mirror under any
+bug or key. Config is 100% env-driven (`DATA_ROOT`, `TC_LIT_KEYS_FILE`), so the same code
+runs bare or containerized. A `HEALTHCHECK` probes `/health` via stdlib urllib (no curl in
+slim).
+
+Own compose file (not wedged into the Neo4j build/import/deploy pipeline) so it
+starts/stops independently:
+
+```bash
+# requires DATA_ROOT + TC_LIT_KEYS_FILE + TC_LIT_PORT in a .env here or the shell env
+# 1. mint a key (writes nothing; prints the key + hash line for the keys file):
+docker compose -f docker-compose.tc-lit.yml run --rm tc-lit-endpoint \
+  python -m torchcell.literature.server --gen-key mac-m1
+# 2. start (builds on first run):
+docker compose -f docker-compose.tc-lit.yml up -d --build
+docker compose -f docker-compose.tc-lit.yml logs -f     # tail
+docker compose -f docker-compose.tc-lit.yml down         # stop
+```
+
+**Verified end-to-end (containerized, real mirror):** image builds to 180 MB; container
+`/health` → `n_keys=41`; bad key → 401, good key → 200; `paper.md` download where
+**downloaded sha256 == `X-Artifact-SHA256` == manifest**; raw `../` traversal → 400;
+Docker `HEALTHCHECK` → `healthy`; and a write into the mounted mirror fails with
+`Read-only file system` (RO enforced). The bare-uvicorn recipe above still works for a
+quick run; Docker is the durable path.

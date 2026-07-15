@@ -1,0 +1,37 @@
+# Dockerfile.tc-lit
+# Slim image for the keyed literature endpoint (torchcell.literature.server).
+# It serves the OCR mirror read-only over HTTP; it is NOT the torchcell ML env.
+# torchcell.literature imports nothing heavy (no torch/PyG/numpy), so we install
+# only its lightweight runtime deps and copy the package rather than `pip install .`
+# (which would pull the full env/requirements.txt ML stack for a file server).
+#
+# Build (context = repo root):  docker build -f Dockerfile.tc-lit -t tc-lit-endpoint:latest .
+# Run is via docker-compose.tc-lit.yml (bind-mounts the mirror + keys file, both :ro).
+
+FROM python:3.13-slim
+
+# Runtime deps for torchcell.literature only (server + backfill import surface).
+RUN pip install --no-cache-dir \
+    "fastapi>=0.115" \
+    "uvicorn[standard]>=0.30" \
+    "pydantic>=2.8" \
+    "python-dotenv>=1.0" \
+    "pyzotero>=1.5" \
+    "httpx>=0.27" \
+    "unidecode>=1.3"
+
+WORKDIR /app
+COPY torchcell/ /app/torchcell/
+
+ENV PYTHONPATH=/app \
+    TC_LIT_HOST=0.0.0.0 \
+    TC_LIT_PORT=8723
+
+EXPOSE 8723
+
+# /health needs no auth; curl is absent from slim, so probe via stdlib urllib.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD python -c "import sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8723/health').status==200 else 1)"
+
+# Config is 100% env-driven: DATA_ROOT (mirror mount), TC_LIT_KEYS_FILE (keys mount).
+CMD ["python", "-m", "torchcell.literature.server"]

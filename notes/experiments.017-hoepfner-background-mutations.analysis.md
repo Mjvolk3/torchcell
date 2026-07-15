@@ -178,3 +178,14 @@ Palette map: HIP = amber, HOP = steel blue, flagged/at-risk = brick, whi2 = lila
 (whi2 43 / empirical 107 / positional 157 / all-flagged 185) and **drops the 56.5% HIP-share
 "envelope"** (that number is just the HIP fraction of the dataset, not a risk estimate). The
 old timestamped PNGs are replaced by the `*_palette.svg` files referenced above.
+
+## 2026.07.15 - Scope note: LMDB rebuilt encodable-only; this analysis uses the FULL raw atlas
+
+The `env_chemgen_hoepfner2014` LMDB was subsequently rebuilt to contain ONLY the 150
+identifiable/encodable compounds (**3,112,880 records**; see
+`[[torchcell.datasets.scerevisiae.hoepfner2014]]`). This background-mutation analysis is
+**unaffected**: it reads the FULL raw score matrices (all 1,852 compounds, 29,996,238
+(ORF, column) cells) directly, so every "30M / all-compound" figure above refers to the full
+raw atlas, not the (now compound-filtered) LMDB. Strain-level promiscuity needs every compound
+profile, so the full atlas is the correct input here — the two record counts describe different
+things (raw atlas vs the built modeling dataset).

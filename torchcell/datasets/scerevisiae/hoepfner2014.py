@@ -7,7 +7,20 @@
 Hoepfner et al. 2014 (Microbiol Res, doi:10.1016/j.micres.2013.11.004) is the Novartis
 genome-wide chemogenomic resource: 2956 HIP + 2923 HOP experiments for 1776 discrete
 compounds (>40M data points), each compound profiled in duplicate at (or near) its
-S. cerevisiae IC30. It is the canonical use case for the WS15 schema extension
+S. cerevisiae IC30.
+
+ENCODABLE COMPOUNDS ONLY (build filter): ~92% of the profiled compounds are PROPRIETARY
+Novartis ``CMBxxx`` entries with no released structure -- black-box perturbations no
+molecular encoder can represent. This loader keeps ONLY the compounds with a released
+SMILES in Table S1 (150 of the 1852 deposited compounds; the one named-but-structureless
+case, CMB222 "Enniatin derivative", is also dropped), so every stored (ORF, compound)
+record is featurisable by the cell graph transformer. That is ~610 of the 5879 sensitivity
+columns; the full atlas is recoverable by removing the ``smiles is None`` skip in
+``_column_meta``. Provenance: paper.md line 110 ("In addition to 1641 proprietary compounds
+(named CMBxxx), we included 135 reference compounds ... Table S1"); analysis in
+``experiments/017-hoepfner-background-mutations`` (``compound_encodability.json``).
+
+It is the canonical use case for the WS15 schema extension
 (``EngineeredCopyNumberPerturbation`` + ``ReferenceGenome.ploidy``), because HIP and HOP
 are two DIPLOID deletion collections:
 
@@ -400,6 +413,8 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             media=Media(
                 name="YPD (1% yeast extract, 2% BactoPeptone, 2% glucose), 2% DMSO vehicle",
                 state="liquid",
+                is_synthetic=False,  # YPD = complex/rich medium (yeast extract + peptone)
+                base_medium="YPD",
             ),
             temperature=Temperature(value=30.0),
             aerobicity="aerobic",
@@ -438,10 +453,20 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             n_samples = 2 if match.group("prefix") == "Ad." else 1
             compound_name = self._compound_name(cmb, conc, assay, study, meta)
             smiles = (meta.get(cmb) or {}).get("smiles")
+            if smiles is None:
+                # ENCODABLE-COMPOUNDS-ONLY build: ~92% of the atlas is proprietary Novartis
+                # CMBxxx with no released structure (plus the lone named-but-structureless
+                # CMB222 "Enniatin derivative"); these are black-box perturbations a
+                # molecular encoder cannot represent, so they are dropped at build time.
+                # Only the 150 compounds with a released SMILES (Table S1) are kept, so every
+                # stored (ORF, compound) record is featurisable by the cell graph transformer.
+                continue
             env = Environment(
                 media=Media(
                     name="YPD (1% yeast extract, 2% BactoPeptone, 2% glucose)",
                     state="liquid",
+                    is_synthetic=False,  # YPD = complex/rich medium (yeast extract + peptone)
+                    base_medium="YPD",
                 ),
                 temperature=Temperature(value=30.0),
                 perturbations=[

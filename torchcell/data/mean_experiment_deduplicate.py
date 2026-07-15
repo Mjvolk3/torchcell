@@ -122,9 +122,12 @@ class MeanExperimentDeduplicator(Deduplicator):
             interaction_values, p_values
         )
 
+        # Preserve the source arity (digenic -> "edge", trigenic -> "hyperedge");
+        # do not fall back to the class default, which would relabel digenic means.
         mean_phenotype = GeneInteractionPhenotype(
             gene_interaction=cast(float, mean_interaction),
             gene_interaction_p_value=aggregated_p_value,
+            graph_level=duplicate_experiments[0]["experiment"].phenotype.graph_level,
         )
 
         mean_genotype = self._create_mean_genotype(duplicate_experiments)
@@ -218,6 +221,9 @@ class MeanExperimentDeduplicator(Deduplicator):
         mean_phenotype_reference = GeneInteractionPhenotype(
             gene_interaction=cast(float, mean_interaction_ref),
             gene_interaction_p_value=None,
+            graph_level=duplicate_experiments[0][
+                "experiment_reference"
+            ].phenotype_reference.graph_level,
         )
 
         dataset_name = ("+").join(

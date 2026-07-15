@@ -26,6 +26,7 @@ ROLE_PAPER_OCR = "paper_ocr"
 ROLE_SI_PDF = "si_pdf"
 ROLE_SI_OCR = "si_ocr"
 ROLE_SI_DATA = "si_data"
+ROLE_RAW_DATA = "raw_data"
 ROLE_OCR_IMAGE = "ocr_image"
 ROLE_OCR_LAYOUT = "ocr_layout"
 
@@ -155,6 +156,13 @@ class Manifest(BaseModel):
         description="SI items the paper says should exist (e.g. 'Data S1'..'S7'), "
         "for a completeness check against captured si_data files.",
     )
+    provenance_complete: bool = Field(
+        default=True,
+        description="False when the manifest was backfilled without being able to "
+        "source retrieval/processing provenance (e.g. the paper was OCR'd before "
+        "provenance was formalized and is not resolvable in Zotero). Files are still "
+        "sha256-pinned; only the upstream retrieval chain is unknown, not fabricated.",
+    )
     created_at: str | None = None
 
 
@@ -170,11 +178,27 @@ def _role_for(rel_path: str) -> str:
         return ROLE_SI_PDF
     if rel_path.startswith("si/") and rel_path.endswith(".md"):
         return ROLE_SI_OCR
+    # Loose SI files (not a PDF/markdown and not already under si/si_data/) are
+    # released supplementary data tables, e.g. hoepfner's ``si/Table_S5.xls``.
+    if rel_path.startswith("si/"):
+        return ROLE_SI_DATA
     # MinerU byproducts: extracted figures and layout JSON, for paper and SI.
     if "images/" in rel_path and rel_path.endswith((".jpg", ".jpeg", ".png")):
         return ROLE_OCR_IMAGE
     if rel_path.endswith(("_content_list.json", "_middle.json")):
         return ROLE_OCR_LAYOUT
+    # Large released quantitative tables kept beside the paper (data-only keys
+    # such as xue2025/lopez, and the ``data/`` companion of captured papers).
+    if rel_path.startswith("data/"):
+        return ROLE_RAW_DATA
+    # Data-only sources whose "paper" is a born-digital document (e.g. lopez's
+    # ``thesis.pdf`` + ``thesis.txt``): a top-level PDF is the source document;
+    # a top-level ``.txt``/``.md`` is its born-digital text extraction.
+    if "/" not in rel_path:
+        if rel_path.endswith(".pdf"):
+            return ROLE_PAPER_PDF
+        if rel_path.endswith((".txt", ".md")):
+            return ROLE_PAPER_OCR
     return "other"
 
 
@@ -191,6 +215,7 @@ def build_manifest(
     zotero_md5: dict[str, str] | None = None,
     si_data_sources: list[str] | None = None,
     si_expected: list[str] | None = None,
+    provenance_complete: bool = True,
     created_at: str | None = None,
 ) -> Manifest:
     """Scan an artifact directory and build its manifest.
@@ -210,6 +235,8 @@ def build_manifest(
         zotero_md5: Optional map of relative-path -> Zotero-reported md5.
         si_data_sources: External URLs the SI data came from.
         si_expected: SI items the paper says exist (completeness checklist).
+        provenance_complete: False when retrieval/processing provenance could not
+            be sourced (backfill of a pre-formalization key); files stay hashed.
         created_at: ISO timestamp; defaults to now (UTC).
     """
     sources = sources or {}
@@ -242,6 +269,7 @@ def build_manifest(
         files=files,
         si_data_sources=si_data_sources or [],
         si_expected=si_expected or [],
+        provenance_complete=provenance_complete,
         created_at=created_at or datetime.now(UTC).isoformat(),
     )
 

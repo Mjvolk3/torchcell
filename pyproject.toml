@@ -40,6 +40,8 @@ Homepage = "https://github.com/Mjvolk3/Dendron-Template"
 [project.scripts]
 torchcell = "torchcell.__main__:main"
 tcdb = "torchcell.database.tcdb:main"
+tc-lit-server = "torchcell.literature.server:main"
+tc-lit-backfill = "torchcell.literature.backfill:main"
 
 [tool.pyright]
 include = ["torchcell", "experiments"]

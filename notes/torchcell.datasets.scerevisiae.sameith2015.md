@@ -423,3 +423,31 @@ for gene, values in grouped_values.items():
 This approach enables validation (compare computed vs expected to detect issues) while ensuring data integrity across both single and double mutant datasets.
 
 Related: [[torchcell.datamodels.schema#20260129---philosophy-around-n_replicates]]
+
+## 2026.07.15 - Fix: per-array dye-orientation sign error (#72)
+
+GSE42536 is a **dye-swap** design AND GEO declares **both** `#VALUE` ratio directions
+within the series (132 arrays `log2(Cy5/Cy3)`, 127 `log2(Cy3/Cy5)`). The loader assumed a
+single orientation and derived the sign from `source_name_ch1` alone, so **70/287 arrays
+(24%) were signed backwards**; averaging mixed-sign replicates then attenuated the
+magnitudes and inflated the SE.
+
+**Fix:** ignore `VALUE`; recompute `log2(mutant / refpool)` directly from the
+`Signal Norm_Cy5`/`Cy3` columns + the dye assignment (as `kemmeren2014` already does) --
+orientation-proof by construction. Applied to all three extraction blocks
+(`_extract_expression_from_gsm` in SM and DM, plus `_extract_expression_from_gsm_static`);
+the `VALUE`/`ratio_sign`/`has_value` machinery is removed.
+
+**Rebuilt + verified 2026.07.15** (deleted-gene oracle -- a deleted gene's own probe must
+go DOWN):
+
+| dataset | deleted-gene median log2 | frac_neg | (was) |
+|---|---:|---:|---|
+| SM (81 genes) | **-2.06** | **0.975** | -0.71 / 0.84 |
+| DM (143 genes) | **-1.99** | **0.979** | -0.32 / 0.72 |
+| Kemmeren (ref) | -2.48 | 0.970 | -- |
+
+Now consistent with Kemmeren, so Sameith double-KO expression is usable as a
+prediction target (previously excluded from the 018 DE comparison and the Fig 4
+modeling plan pending this fix). The rebuild also gives the datasets fresh records
+carrying `Media.is_synthetic` (they previously failed L0 structural, #92).

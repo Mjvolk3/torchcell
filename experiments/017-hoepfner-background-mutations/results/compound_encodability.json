@@ -1,0 +1,25 @@
+{
+  "paper_quote": "In addition to 1641 proprietary compounds (named CMBxxx), we included 135 reference compounds with a previously reported molecular mechanism of action (Table S1). [Hoepfner 2014 paper.md line 110]",
+  "paper_stated": {
+    "proprietary": 1641,
+    "reference": 135,
+    "total": 1776,
+    "headline_text": "nearly 1800 biologically active compounds"
+  },
+  "measured_from_deposited_data": {
+    "unique_compounds": 1852,
+    "with_released_smiles_encodable": 150,
+    "with_common_name": 139,
+    "not_encodable_no_smiles": 1702,
+    "proprietary_no_name_no_smiles": 1701,
+    "pct_encodable": 8.1,
+    "pct_not_encodable": 91.9
+  },
+  "experiment_columns": {
+    "HIP": 2956,
+    "HOP": 2923,
+    "total": 5879,
+    "using_non_encodable_compound": 5269,
+    "pct_using_non_encodable": 89.6
+  }
+}

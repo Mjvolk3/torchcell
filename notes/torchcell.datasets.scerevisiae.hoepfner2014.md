@@ -28,3 +28,16 @@ diploid deletion collections, stored as `env × genotype → (adjusted) MADL sen
   list (Table_S5) + risk audit + purge set:
   `[[torchcell.datasets.scerevisiae.hoepfner2014.background-mutations]]`. Experiment:
   `[[experiments.017-hoepfner-background-mutations.analysis]]`.
+- **Compound encodability — most compounds are PROPRIETARY (no released structure).** They are
+  Novartis `CMBxxx` entries with NO released SMILES, so they cannot be featurised by any
+  molecular encoder (SMILES / graph / fingerprint); only the reference + novel-MoA compounds
+  carry a structure (Table S1). Paper (paper.md line 110): *"In addition to 1641 proprietary
+  compounds (named CMBxxx), we included 135 reference compounds with a previously reported
+  molecular mechanism of action (Table S1)."* Measured from the deposited HIP+HOP matrices: of
+  **1,852 unique compounds, only 150 (8.1%) carry a released SMILES → 1,702 (91.9%) are NOT
+  molecular-encodable** (1,701 fully proprietary, no name or structure), and **89.6% of the
+  5,879 experiment columns** use a non-encodable compound. **Modeling implication:** a
+  SMILES/graph compound encoder covers only ~8% of this atlas; the remaining ~92% are usable
+  only via an opaque per-compound id embedding (or must be dropped). Reproduced by
+  `experiments/017-hoepfner-background-mutations/scripts/hoepfner_compound_encodability.py`
+  → `results/compound_encodability.json`.

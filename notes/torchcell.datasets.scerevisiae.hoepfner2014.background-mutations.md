@@ -78,9 +78,9 @@ HIP promiscuity (elevated, just below the conservative cut), and its 31 "false p
 candidates for the **uncharacterised clusters the paper predicted**. So Table_S5 is now the
 authoritative purge list; the detector remains useful for finding what Table_S5 does not cover.
 
-![authoritative clusters recovered](assets/images/017-hoepfner-background-mutations/08_table_s5_cluster_recovery_2026-07-13-19-37-13.png)
-![risk tiers](assets/images/017-hoepfner-background-mutations/06_risk_tiers_pct_records_2026-07-13-18-19-21.png)
-![HIP vs HOP specificity](assets/images/017-hoepfner-background-mutations/05_hip_vs_hop_specificity_2026-07-13-18-19-21.png)
+![authoritative clusters recovered](assets/images/017-hoepfner-background-mutations/08_table_s5_cluster_recovery_palette.svg)
+![risk tiers](assets/images/017-hoepfner-background-mutations/06_risk_tiers_pct_records_palette.svg)
+![HIP vs HOP specificity](assets/images/017-hoepfner-background-mutations/05_hip_vs_hop_specificity_palette.svg)
 
 ### How to represent this (design assessment — NOT yet built)
 

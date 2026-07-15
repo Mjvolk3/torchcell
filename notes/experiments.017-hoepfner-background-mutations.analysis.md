@@ -84,8 +84,8 @@ Empirical-run sweep (threshold robustness): 3× → 137 strains / 1.34%; 4× →
 70% the dataset's HIP share might suggest at worst case. HOP (43.5%) is not implicated by
 this finding.
 
-![risk tiers](assets/images/017-hoepfner-background-mutations/06_risk_tiers_pct_records_2026-07-13-18-19-21.png)
-![record composition](assets/images/017-hoepfner-background-mutations/07_record_composition_2026-07-13-18-19-21.png)
+![risk tiers](assets/images/017-hoepfner-background-mutations/06_risk_tiers_pct_records_palette.svg)
+![record composition](assets/images/017-hoepfner-background-mutations/07_record_composition_palette.svg)
 
 ### The empirical detector recovers the paper's clusters
 
@@ -102,17 +102,17 @@ The whi2/YOR043w handle validates cluster 3: **32 of 43 whi2-correlated strains 
 contiguous adjacent-ORF block on chr XII** (YLR279W→YLR297W), every one present in all 2,956
 experiments, whi2_corr ≈ 0.7–0.86 — the textbook batch fingerprint.
 
-![genome map](assets/images/017-hoepfner-background-mutations/03_genome_promiscuity_map_hip_2026-07-13-18-19-21.png)
-![whi2 cluster](assets/images/017-hoepfner-background-mutations/04_whi2_cluster3_signature_2026-07-13-18-19-21.png)
+![genome map](assets/images/017-hoepfner-background-mutations/03_genome_promiscuity_map_hip_palette.svg)
+![whi2 cluster](assets/images/017-hoepfner-background-mutations/04_whi2_cluster3_signature_palette.svg)
 
 **HOP control confirms it is a construction artifact, not gene biology.** The flagged strains
 are enriched for hypersensitivity **5.5× over baseline in HIP but only 1.7× in HOP**; on the
 HIP-vs-HOP scatter they sit above the diagonal (high HIP / low HOP), exactly as expected for
 a heterozygous-collection-specific batch mutation.
 
-![HIP vs HOP specificity](assets/images/017-hoepfner-background-mutations/05_hip_vs_hop_specificity_2026-07-13-18-19-21.png)
-![score distribution](assets/images/017-hoepfner-background-mutations/01_score_distribution_hip_vs_hop_2026-07-13-18-19-21.png)
-![promiscuity ecdf](assets/images/017-hoepfner-background-mutations/02_promiscuity_ecdf_2026-07-13-18-19-21.png)
+![HIP vs HOP specificity](assets/images/017-hoepfner-background-mutations/05_hip_vs_hop_specificity_palette.svg)
+![score distribution](assets/images/017-hoepfner-background-mutations/01_score_distribution_hip_vs_hop_palette.svg)
+![promiscuity ecdf](assets/images/017-hoepfner-background-mutations/02_promiscuity_ecdf_palette.svg)
 
 **Detector nuance (honest):** the rolling flag is a **region** flag — a few individually-clean
 strains inside a hot batch neighbourhood (e.g. COR1, SAF1) are flagged by proximity. This is
@@ -165,4 +165,16 @@ lives under the DATASET hierarchy:
   `hoepfner_plot_table_s5_crossval.py` (fig 08 cluster recovery). New results:
   `table_s5_affected_strains.csv` (the purge list), `table_s5_crossvalidation.json`.
 
-![authoritative clusters recovered](assets/images/017-hoepfner-background-mutations/08_table_s5_cluster_recovery_2026-07-13-19-37-13.png)
+![authoritative clusters recovered](assets/images/017-hoepfner-background-mutations/08_table_s5_cluster_recovery_palette.svg)
+
+## 2026.07.14 - Figures remade with the repo ordered palette (true-size SVG)
+
+Re-rendered all 8 figures against `torchcell.utils.PLOT_PALETTE` (the green-free ordered
+repo palette) at Nature panel widths, exported as true-physical-size SVG via
+`savefig_true_size_svg` (import into draw.io at exact mm). Script:
+`[[experiments.017-hoepfner-background-mutations.scripts.hoepfner_plot_risk_palette]]`.
+Palette map: HIP = amber, HOP = steel blue, flagged/at-risk = brick, whi2 = lilac, clusters
+1–4 = amber/brick/lilac/blue. The risk-tiers figure now shows the AUTHORITATIVE Table_S5 tiers
+(whi2 43 / empirical 107 / positional 157 / all-flagged 185) and **drops the 56.5% HIP-share
+"envelope"** (that number is just the HIP fraction of the dataset, not a risk estimate). The
+old timestamped PNGs are replaced by the `*_palette.svg` files referenced above.

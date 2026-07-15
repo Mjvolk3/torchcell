@@ -12,6 +12,7 @@ import os
 import os.path as osp
 import shutil
 import tarfile
+from enum import StrEnum
 from itertools import product
 from typing import Any, SupportsIndex, cast
 
@@ -21,6 +22,7 @@ from attrs import define, field
 from Bio import SeqIO
 from gffutils.feature import Feature
 from goatools.obo_parser import GODag
+from pydantic import BaseModel, Field
 from sortedcontainers import SortedDict, SortedSet
 from torch_geometric.data import download_url
 
@@ -399,6 +401,67 @@ class SCerevisiaeGene(Gene):
         return f"DnaSelectionResult(id={self.id}, chromosome={self.chromosome}, strand={self.strand}, start={self.start}, end={self.end},  seq={self.seq})"
 
 
+# Gene-like LOCUS feature types in the SGD R64 GFF (a deletion/perturbation can target
+# these). "gene" is the protein-coding-ORF universe (== gene_set); the rest are RNA genes,
+# transposon genes, pseudogenes, and blocked_reading_frame pseudogenes. Every OTHER GFF
+# featuretype (region, CDS, mRNA, ARS, intron, telomere, ...) is deliberately excluded so a
+# non-locus feature id can never shadow a real gene name during resolution.
+_LOCUS_FEATURE_TYPES = frozenset(
+    {
+        "gene",
+        "tRNA_gene",
+        "snoRNA_gene",
+        "snRNA_gene",
+        "ncRNA_gene",
+        "rRNA_gene",
+        "telomerase_RNA_gene",
+        "transposable_element_gene",
+        "pseudogene",
+        "blocked_reading_frame",
+    }
+)
+
+
+class GeneNameStatus(StrEnum):
+    """Outcome of resolving a source gene name against the current R64 annotation.
+
+    The layered resolver (:meth:`SCerevisiaeGenome.resolve_gene_name`) reconciles a
+    dataset's source gene name -- systematic (e.g. Ohya 2005) or common (e.g. Cachera) --
+    to the current R64-4-1 annotation. Datasets carry historical names: SGD renames/merges
+    features and retires dubious ORFs, so a 2005-era systematic name may no longer be a
+    live "gene". This status tells the loader what the name resolved to so it can RETAIN
+    the record (a real strain / perturbation) with the correct identifier and provenance,
+    rather than silently dropping it.
+    """
+
+    CURRENT = "current"  # a live R64 "gene" feature (systematic_name == input)
+    RENAMED = (
+        "renamed"  # alias of exactly one current gene (systematic_name = that gene)
+    )
+    NON_GENE_FEATURE = "non_gene_feature"  # a valid R64 feature that is not a "gene"
+    RETIRED = "retired"  # not present in R64-4-1 at all; retained as a legacy name
+    AMBIGUOUS = "ambiguous"  # alias mapping to >1 current feature; needs human review
+
+
+class GeneNameResolution(BaseModel):
+    """Typed result of :meth:`SCerevisiaeGenome.resolve_gene_name` (pydantic-first)."""
+
+    input_name: str
+    status: GeneNameStatus
+    # The identifier the loader should store. For CURRENT/RENAMED this is a live systematic
+    # gene id; for NON_GENE_FEATURE the (valid) feature id; for RETIRED the original name
+    # kept as a legacy systematic identifier; None only for AMBIGUOUS.
+    systematic_name: str | None
+    feature_type: str | None = None  # GFF featuretype for NON_GENE_FEATURE resolutions
+    candidates: list[str] = Field(default_factory=list)  # populated only for AMBIGUOUS
+    note: str | None = None
+
+    @property
+    def is_current_gene(self) -> bool:
+        """True when the name resolved to a live R64 gene (CURRENT or RENAMED)."""
+        return self.status in (GeneNameStatus.CURRENT, GeneNameStatus.RENAMED)
+
+
 @define(eq=False)
 class SCerevisiaeGenome(Genome):
     """S288C genome wrapper exposing genes, GO annotations, and sequence queries."""
@@ -422,6 +485,8 @@ class SCerevisiaeGenome(Genome):
     _alias_to_systematic: dict[str, list[str]] = field(
         init=False, default=None, repr=False
     )
+    # Cached all-feature index (upper-cased) backing resolve_gene_name.
+    _feature_index: dict[str, Any] = field(init=False, default=None, repr=False)
     # Use factory to ensure GO DAG is not pickled
     _go_dag: GODag | None = field(init=False, factory=lambda: None, repr=False)
     _obo_path: str | None = field(init=False, default=None, repr=False)
@@ -633,6 +698,126 @@ class SCerevisiaeGenome(Genome):
                         alias_map[alias].append(gene_id)
             self._alias_to_systematic = alias_map
         return self._alias_to_systematic
+
+    @property
+    def feature_index(self) -> dict[str, Any]:
+        """Cached locus-feature index (upper-cased) backing :meth:`resolve_gene_name`.
+
+        Indexes only GENE-LIKE LOCUS features (``_LOCUS_FEATURE_TYPES``: ``gene`` plus the
+        RNA-gene / pseudogene / transposon-gene / ``blocked_reading_frame`` types) so that
+        non-locus features (``region``, ``CDS``, ``mRNA``, ``ARS`` ...) never shadow a real
+        gene name -- e.g. a ``region`` feature literally id'd ``ADE1`` must NOT intercept the
+        gene ADE1. Unlike :attr:`alias_to_systematic` (``"gene"`` features only), this also
+        covers non-``"gene"`` loci (e.g. ``blocked_reading_frame`` pseudogenes like
+        ``YER109C``/FLO8). Keys: ``genes`` (upper ids of live ``"gene"`` features),
+        ``locus_type`` (upper id -> featuretype for non-``"gene"`` loci), ``standard_to_ids``
+        (upper standard/common name from the GFF ``gene`` attribute -> locus ids) and
+        ``alias_to_ids`` (upper ``Alias`` value -> locus ids).
+        """
+        if self._feature_index is None:
+            genes = {g.upper() for g in self.gene_set}
+            locus_type: dict[str, str] = {}
+            standard_to_ids: dict[str, list[str]] = {}
+            alias_to_ids: dict[str, list[str]] = {}
+            for feat in self.db.all_features():
+                if feat.featuretype not in _LOCUS_FEATURE_TYPES:
+                    continue
+                fid = feat.id
+                if feat.featuretype != "gene":
+                    locus_type[fid.upper()] = feat.featuretype
+                for std in feat.attributes.get("gene", []) or []:
+                    standard_to_ids.setdefault(std.strip().upper(), []).append(fid)
+                for alias in feat.attributes.get("Alias", []) or []:
+                    alias_to_ids.setdefault(alias.strip().upper(), []).append(fid)
+            self._feature_index = {
+                "genes": genes,
+                "locus_type": locus_type,
+                "standard_to_ids": standard_to_ids,
+                "alias_to_ids": alias_to_ids,
+            }
+        return self._feature_index
+
+    def resolve_gene_name(self, name: str) -> GeneNameResolution:
+        """Reconcile a source gene name to the current R64-4-1 annotation (layered).
+
+        Layers, in order: (1) exact live gene id; (2) a valid non-``"gene"`` LOCUS id
+        (e.g. a ``blocked_reading_frame`` pseudogene); (3) the standard/common name of a
+        locus (from the GFF ``gene`` attribute); (4) a secondary ``Alias`` of a locus; (5)
+        not found -> retired, retained with the original name. The standard-name layer runs
+        BEFORE the alias layer so a common name resolves to the gene that OWNS it (e.g.
+        ``AAP1`` -> ``YHR047C``, whose standard name is AAP1) rather than to a gene that
+        merely lists it as a secondary alias (``Q0080``). Within layers 3-4 a unique gene
+        wins; multiple genes are ``AMBIGUOUS``; a unique non-gene locus is
+        ``NON_GENE_FEATURE``. The resolver is pure/per-name and applies NO drop policy --
+        callers decide retention and any batch-level collision handling.
+        """
+        raw = name
+        n = name.strip().upper()
+        idx = self.feature_index
+        genes: set[str] = idx["genes"]
+        locus_type: dict[str, str] = idx["locus_type"]
+
+        # 1. Exact live gene.
+        if n in genes:
+            return GeneNameResolution(
+                input_name=raw, status=GeneNameStatus.CURRENT, systematic_name=n
+            )
+        # 2. A valid non-"gene" locus by its own id (e.g. blocked_reading_frame pseudogene).
+        if n in locus_type:
+            return GeneNameResolution(
+                input_name=raw,
+                status=GeneNameStatus.NON_GENE_FEATURE,
+                systematic_name=n,
+                feature_type=locus_type[n],
+                note=f"valid R64 {locus_type[n]}, not a gene feature",
+            )
+        # 3. Standard/common name; then 4. secondary alias -- same resolution semantics.
+        for mapping_key, layer in (
+            ("standard_to_ids", "standard name"),
+            ("alias_to_ids", "alias"),
+        ):
+            ids = sorted(set(idx[mapping_key].get(n, [])))
+            if not ids:
+                continue
+            gene_ids = [i for i in ids if i.upper() in genes]
+            if len(gene_ids) == 1:
+                return GeneNameResolution(
+                    input_name=raw,
+                    status=GeneNameStatus.RENAMED,
+                    systematic_name=gene_ids[0],
+                    note=f"{layer} of current gene {gene_ids[0]}",
+                )
+            if len(gene_ids) > 1:
+                return GeneNameResolution(
+                    input_name=raw,
+                    status=GeneNameStatus.AMBIGUOUS,
+                    systematic_name=None,
+                    candidates=gene_ids,
+                    note=f"{layer} of multiple current genes",
+                )
+            if len(ids) == 1:
+                t = ids[0]
+                return GeneNameResolution(
+                    input_name=raw,
+                    status=GeneNameStatus.NON_GENE_FEATURE,
+                    systematic_name=t,
+                    feature_type=locus_type.get(t.upper()),
+                    note=f"{layer} of {locus_type.get(t.upper())} {t} (not a gene feature)",
+                )
+            return GeneNameResolution(
+                input_name=raw,
+                status=GeneNameStatus.AMBIGUOUS,
+                systematic_name=None,
+                candidates=ids,
+                note=f"{layer} of multiple non-gene loci",
+            )
+        # 5. Not found anywhere in R64-4-1: a retired/dubious 2005-era ORF.
+        return GeneNameResolution(
+            input_name=raw,
+            status=GeneNameStatus.RETIRED,
+            systematic_name=n,
+            note="not found in R64-4-1; retained as a legacy systematic name",
+        )
 
     @property
     def go(self) -> SortedSet[str]:

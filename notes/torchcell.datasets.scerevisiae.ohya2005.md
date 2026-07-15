@@ -188,3 +188,24 @@ mirror: 4695 records, media YPD/liquid, temp 25, 281+220 vocabulary, Ohya-2005 c
 - **Abstract/paper morphology result** (r=0.619, single-KO) was computed on the 4718-record
   build; it should be re-run on the 4695-record dataset for consistency.
 - **Verifier** (`torchcell/verification/morphology.py`): count oracle 4718 -> 4695.
+
+## 2026.07.15 - Supersede the 4695/drop reconciliation with the shared genome resolver
+
+The 2026.07.15 section above (4718 -> 4695, drop 23 via a hand-authored `_LEGACY_ORF_RENAMES`
+table) is **superseded**. That per-loader table was error-prone: a crude GFF grep found only 4
+renames and mis-bucketed the other 23. The loader now calls the shared
+`SCerevisiaeGenome.resolve_gene_name` (see [[torchcell.sequence.genome.scerevisiae.s288c]]).
+
+Retention policy (per user decision "track the perturbation as long as we know it"): **NO
+record is dropped for a naming reason** -- every strain is a real measured deletion. A name
+that resolves to a current R64 identifier (live gene, SGD rename, or valid non-`"gene"`
+feature) is remapped to it; a name whose remap would collide with another strain's record (an
+SGD merge of two distinct 2005 ORFs) or that SGD retired entirely is kept verbatim as its
+legacy 2005 systematic name.
+
+Build outcome (4718, 0 dropped): resolver statuses `{current: 4678, renamed: 20,
+non_gene_feature: 16, retired: 4}`; **17 remapped** to current ids; **12** kept as legacy
+names on 6 merge-collisions (YDL038C/YDL039C, YDL134C-A/YDL133C-A, YER108C/YER109C,
+YIL167W/YIL168W, YIR043C/YIR044C, YML033W/YML034W); **4** retired legacy names (YAR037W,
+YAR040C, YAR043C, YGL154W). `OHYA_EXPECTED_COUNT` back to 4718; the paper's r=0.619 dataset
+(4718) is reproduced.

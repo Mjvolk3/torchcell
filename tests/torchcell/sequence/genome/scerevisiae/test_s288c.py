@@ -190,3 +190,62 @@ def test_YDL061C_window(genome):
 if __name__ == "__main__":
     print()
     # genome['YAL037W'].seq
+
+
+# --- Gene-name resolver (resolve_gene_name) -------------------------------------------- #
+from torchcell.sequence.genome.scerevisiae.s288c import GeneNameStatus  # noqa: E402
+
+
+def test_resolve_current_gene(genome):
+    r = genome.resolve_gene_name("YAL002W")
+    assert r.status is GeneNameStatus.CURRENT
+    assert r.systematic_name == "YAL002W"
+    assert r.is_current_gene
+
+
+def test_resolve_common_name_standard_owner(genome):
+    # AAP1 is an alias of both YHR047C (its standard-name owner) and Q0080 (secondary
+    # alias); the standard-name layer must disambiguate to YHR047C, not flag AMBIGUOUS.
+    r = genome.resolve_gene_name("AAP1")
+    assert r.status is GeneNameStatus.RENAMED
+    assert r.systematic_name == "YHR047C"
+
+
+def test_resolve_common_name_not_shadowed_by_region(genome):
+    # A non-locus "region" feature is literally id'd ADE1; it must NOT intercept the gene.
+    r = genome.resolve_gene_name("ADE1")
+    assert r.status is GeneNameStatus.RENAMED
+    assert r.systematic_name == "YAR015W"
+
+
+def test_resolve_non_gene_feature_pseudogene(genome):
+    # FLO8 is a blocked_reading_frame pseudogene (YER109C) -- a valid, retained locus.
+    r = genome.resolve_gene_name("FLO8")
+    assert r.status is GeneNameStatus.NON_GENE_FEATURE
+    assert r.systematic_name == "YER109C"
+    assert r.feature_type == "blocked_reading_frame"
+
+
+def test_resolve_legacy_systematic_rename(genome):
+    # 2005 ORF YGR272C is an SGD alias of the current gene YGR271C-A.
+    r = genome.resolve_gene_name("YGR272C")
+    assert r.status is GeneNameStatus.RENAMED
+    assert r.systematic_name == "YGR271C-A"
+
+
+def test_resolve_retired(genome):
+    r = genome.resolve_gene_name("YAR037W")
+    assert r.status is GeneNameStatus.RETIRED
+    assert r.systematic_name == "YAR037W"  # retained verbatim as a legacy name
+
+
+def test_resolve_ambiguous_common_name(genome):
+    # FEN1 names two distinct genes (YCR034W, YKL113C); never silently pick one.
+    r = genome.resolve_gene_name("FEN1")
+    assert r.status is GeneNameStatus.AMBIGUOUS
+    assert r.systematic_name is None
+    assert set(r.candidates) == {"YCR034W", "YKL113C"}
+
+
+def test_resolve_is_case_insensitive(genome):
+    assert genome.resolve_gene_name("yal002w").systematic_name == "YAL002W"

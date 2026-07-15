@@ -43,15 +43,19 @@ by Suzuki 2018 (which reuses this data, "grown at 25 C") and by the same-lab Ohn
 25 C here follows the deferral convention (defer method detail to the cited/related mirrored
 paper); FLAG: pin the verbatim Ohya-2005 temperature once that paper is mirrored.
 
-ORFs are 2005-annotation SGD systematic names, reconciled to the current R64-4-1 universe:
-(1) four legacy names that SGD renamed/merged with NO measured twin are remapped to their
-current systematic name (``_LEGACY_ORF_RENAMES``, sourced from the R64 GFF ``Alias`` field);
-(2) all remaining names are validated against the S288C R64 gene universe, and any that do
-not resolve are logged + dropped -- 17 ORFs retired from SGD since 2005 plus 6 legacy names
-whose R64 target is an already-measured gene (an SGD merge; dropping the legacy strain avoids
-duplicating that gene's morphology). Rows with any missing CalMorph value are dropped whole
--- values are NEVER imputed. Net built records: 4718 raw -> 4695 (4 renamed in place, 23
-dropped).
+ORFs are 2005-annotation SGD systematic names, reconciled to the current R64-4-1 annotation
+by the shared genome resolver (:meth:`SCerevisiaeGenome.resolve_gene_name`). Every strain is
+a real measured perturbation, so NO record is dropped for a naming reason: a name that
+resolves to a current R64 identifier (a live gene, an SGD rename, or a valid non-"gene"
+feature such as a ``blocked_reading_frame`` pseudogene) is remapped to that id; a name that
+SGD retired entirely, or whose remap would collide with another strain's record (an SGD
+merge of two distinct 2005 ORFs), is retained verbatim with its legacy 2005 systematic name.
+Rows with any missing CalMorph value are dropped whole -- values are NEVER imputed. Net
+built records: 4718 (0 dropped for naming; ~17 remapped to current ids, the rest kept as
+current or legacy systematic names). Historical note: an earlier build dropped 23
+non-R64 names (4695 records) with a hand-authored rename table; the resolver supersedes that,
+retaining all 4718 and correctly remapping 20 renames + non-gene features the manual table
+missed.
 """
 
 # torchcell/datasets/scerevisiae/ohya2005
@@ -88,6 +92,7 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.sequence.genome.scerevisiae import GeneNameStatus, SCerevisiaeGenome
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -110,40 +115,13 @@ _RAW_FILES: dict[str, dict[str, str]] = {
 # Library mirror holding the sha256-pinned raw matrices (relative to DATA_ROOT).
 _MIRROR_DIR = "torchcell-library/ohyaHighdimensionalLargescalePhenotyping2005a/data"
 
-# Legacy 2005-annotation ORFs that SGD has since renamed/merged, mapped to their current
-# R64-4-1 systematic name. Sourced from the R64-4-1 GFF, where each legacy name is listed
-# as an ``Alias`` of the target feature. ONLY the four whose target is NOT itself measured
-# elsewhere in this screen are remapped here (a clean 1:1 rename that recovers a real
-# strain). The other six aliases (YDL038C->YDL039C, YDL134C-A->YDL133C-A, YER108C->YER109C,
-# YIL168W->YIL167W, YIR044C->YIR043C, YML033W->YML034W) COLLIDE with a gene that already has
-# its own strain record -- an SGD merge of two 2005 ORFs -- so remapping them would duplicate
-# that gene's morphology; those legacy strains are instead dropped (the canonical target
-# strain is retained). See module docstring.
-_LEGACY_ORF_RENAMES: dict[str, str] = {
-    "YGR272C": "YGR271C-A",  # EFG1
-    "YIL015C-A": "YIL014C-A",
-    "YLR391W": "YLR390W-A",  # CCW14
-    "YMR158C-B": "YMR158C-A",
-}
-
-# S288C R64 gene universe (systematic ORF + RNA-coding names) for R64 validation.
-_SGD_GENE_FASTAS = (
-    "data/sgd/genome/S288C_reference_genome_R64-4-1_20230830/"
-    "orf_coding_all_R64-4-1_20230830.fasta",
-    "data/sgd/genome/S288C_reference_genome_R64-4-1_20230830/"
-    "rna_coding_R64-4-1_20230830.fasta",
+# Statuses whose resolved systematic id is a valid R64 identifier we prefer over the legacy
+# 2005 name (a live gene, or a valid non-"gene" feature such as a blocked_reading_frame).
+_REMAP_STATUSES = (
+    GeneNameStatus.CURRENT,
+    GeneNameStatus.RENAMED,
+    GeneNameStatus.NON_GENE_FEATURE,
 )
-
-
-def _load_sgd_genes(data_root: str) -> set[str]:
-    """S288C R64 systematic-name universe from the ORF + RNA-coding FASTA headers."""
-    genes: set[str] = set()
-    for rel in _SGD_GENE_FASTAS:
-        with open(osp.join(data_root, rel)) as handle:
-            for line in handle:
-                if line.startswith(">"):
-                    genes.add(line[1:].split()[0])
-    return genes
 
 
 @register_dataset
@@ -161,9 +139,15 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
+        genome: SCerevisiaeGenome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset rooted at ``root`` with optional transforms."""
+        """Initialize the dataset; an optional genome resolves 2005 ORF names to R64.
+
+        If ``genome`` is not supplied one is constructed from ``DATA_ROOT`` during
+        processing (used only to reconcile source ORF names to the current annotation).
+        """
+        self.genome = genome
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -251,29 +235,19 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         return df
 
     def preprocess_calmorph_data(self, df_mutant: pd.DataFrame) -> pd.DataFrame:
-        """Clean the mutant matrix, drop incomplete rows, and validate ORFs vs R64."""
+        """Clean the mutant matrix, drop incomplete rows, and reconcile ORF names to R64.
+
+        Names are reconciled to the current R64-4-1 annotation with the genome's layered
+        resolver (:meth:`SCerevisiaeGenome.resolve_gene_name`). NO record is dropped for a
+        naming reason -- every strain is a real measured perturbation. A resolved current
+        identifier (live gene, SGD rename, or valid non-"gene" feature) replaces the legacy
+        2005 name UNLESS doing so would collide with another strain's record (an SGD merge
+        of two distinct 2005 ORFs), in which case the original 2005 systematic name is kept
+        so the two strains stay distinct. Retired/ambiguous names are kept verbatim.
+        """
         df_mutant = df_mutant.copy()
         # The ORF column carries the systematic gene name; there is no common-name column.
         df_mutant["systematic_gene_name"] = df_mutant["ORF"].str.strip().str.upper()
-
-        # Reconcile legacy 2005-annotation ORF names to their current R64 systematic name
-        # (SGD alias-based renames; see _LEGACY_ORF_RENAMES). Renaming happens BEFORE R64
-        # validation so the recovered strains survive; collisions/retired names do not.
-        renamed = df_mutant["systematic_gene_name"].isin(_LEGACY_ORF_RENAMES)
-        if renamed.any():
-            log.info(
-                "Ohya 2005: remapping %d legacy ORF name(s) to R64: %s",
-                int(renamed.sum()),
-                {
-                    o: _LEGACY_ORF_RENAMES[o]
-                    for o in df_mutant.loc[renamed, "systematic_gene_name"].unique()
-                },
-            )
-            df_mutant["systematic_gene_name"] = df_mutant[
-                "systematic_gene_name"
-            ].replace(_LEGACY_ORF_RENAMES)
-        df_mutant["perturbed_gene_name"] = df_mutant["systematic_gene_name"]
-
         df_mutant = df_mutant[df_mutant["systematic_gene_name"].notna()]
         df_mutant = df_mutant[df_mutant["systematic_gene_name"] != ""]
 
@@ -292,29 +266,79 @@ class ScmdOhya2005Dataset(ExperimentDataset):
                 n_nan,
                 df_mutant.loc[~has_all, "systematic_gene_name"].tolist()[:20],
             )
-        df_mutant = df_mutant[has_all]
+        df_mutant = df_mutant[has_all].reset_index(drop=True)
 
-        # Validate against the SGD R64 universe; log + drop any non-resolving ORF.
-        data_root = os.environ["DATA_ROOT"]
-        r64_genes = _load_sgd_genes(data_root)
-        in_r64 = df_mutant["systematic_gene_name"].isin(r64_genes)
-        dropped = df_mutant.loc[~in_r64, "systematic_gene_name"].tolist()
-        if dropped:
-            log.warning(
-                "Ohya 2005: dropping %d ORF(s) not resolving to SGD R64 after rename "
-                "reconciliation (retired 2005 ORFs + legacy names that collide with an "
-                "already-measured gene): %s",
-                len(dropped),
-                sorted(dropped)[:25],
-            )
-        df_mutant = df_mutant[in_r64]
+        df_mutant["systematic_gene_name"] = self._reconcile_orf_names(
+            df_mutant["systematic_gene_name"]
+        )
+        df_mutant["perturbed_gene_name"] = df_mutant["systematic_gene_name"]
 
         log.info(
-            "Ohya 2005: %d non-essential deletion strains after completeness + R64 "
-            "validation",
+            "Ohya 2005: %d non-essential deletion strains (0 dropped for naming)",
             len(df_mutant),
         )
-        return df_mutant.reset_index(drop=True)
+        return df_mutant
+
+    def _reconcile_orf_names(self, names: pd.Series) -> pd.Series:
+        """Map 2005 ORF names to current R64 ids via the genome resolver (retain-all).
+
+        Collision-safe: a remap is applied only when its target is not already claimed by
+        another strain in the screen; otherwise the original 2005 name is kept so merged
+        2005 ORFs remain distinct records. Nothing is dropped.
+        """
+        from collections import Counter
+
+        if self.genome is None:
+            data_root = os.environ["DATA_ROOT"]
+            self.genome = SCerevisiaeGenome(
+                genome_root=osp.join(data_root, "data/sgd/genome"),
+                go_root=osp.join(data_root, "data/go"),
+                overwrite=False,
+            )
+        genome = self.genome
+
+        resolutions = {name: genome.resolve_gene_name(name) for name in names.unique()}
+        # Proposed identifier: the resolved R64 id when it is a valid identifier, else the
+        # original 2005 name (retired/ambiguous names are retained verbatim).
+        proposed = {
+            name: (
+                res.systematic_name
+                if res.status in _REMAP_STATUSES and res.systematic_name is not None
+                else name
+            )
+            for name, res in resolutions.items()
+        }
+        # Collision guard: if a proposed id is claimed by >1 source ORF (an SGD merge of two
+        # distinct 2005 strains), keep BOTH originals so the strains stay distinct records.
+        proposed_counts = Counter(proposed.values())
+        final = {
+            name: (name if proposed_counts[prop] > 1 else prop)
+            for name, prop in proposed.items()
+        }
+
+        remapped = {n: f for n, f in final.items() if f != n}
+        by_status: dict[str, int] = {}
+        for res in resolutions.values():
+            by_status[res.status.value] = by_status.get(res.status.value, 0) + 1
+        collided = sorted(
+            n for n, prop in proposed.items() if proposed_counts[prop] > 1
+        )
+        retired = sorted(
+            n for n, r in resolutions.items() if r.status == GeneNameStatus.RETIRED
+        )
+        log.info(
+            "Ohya 2005 ORF reconciliation: %d unique names %s; %d remapped to current R64 "
+            "ids; %d kept as legacy names on merge-collision %s; %d retained as retired "
+            "legacy names %s",
+            len(resolutions),
+            by_status,
+            len(remapped),
+            len(collided),
+            collided,
+            len(retired),
+            retired,
+        )
+        return names.map(final)
 
     def _calculate_wt_reference(self, df_wt: pd.DataFrame) -> dict[str, Any]:
         """Aggregate the WT replicate averages into a per-feature mean reference."""

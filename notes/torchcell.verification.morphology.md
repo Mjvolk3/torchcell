@@ -80,3 +80,12 @@ build. Full detail: [[torchcell.datasets.scerevisiae.ohya2005]] (2026.07.15 sect
 **Re-run needed after the graph rebuild:** the L0-L4 morphology verification (and the
 abstract's r=0.619 single-KO result) were computed on the 4718-record build; re-run both
 against the rebuilt 4695-record LMDB.
+
+## 2026.07.15 - Ohya count oracle back to 4718 (resolver retention supersedes 4695)
+
+Superseding the 2026.07.15 "4718 -> 4695" section: the Ohya loader now reconciles ORF names
+via the shared genome resolver and RETAINS all strains (0 dropped for naming; ~17 remapped to
+current R64 ids). `OHYA_EXPECTED_COUNT` is back to **4718**, so the count oracle and the
+abstract's r=0.619 dataset agree again. Full detail:
+[[torchcell.datasets.scerevisiae.ohya2005]] (2026.07.15 supersede section) and
+[[torchcell.sequence.genome.scerevisiae.s288c]].

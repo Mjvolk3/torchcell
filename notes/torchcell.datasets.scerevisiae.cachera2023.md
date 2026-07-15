@@ -164,3 +164,18 @@ ARO4^K229L + ARO7^G141S; the natMX marker is omitted as a non-betaxanthin gene).
 The on-disk canonical LMDB predated the required `Media.is_synthetic` field and failed
 schema round-trip; it was rebuilt in place under `$DATA_ROOT` as part of this cleanup.
 sha256 verification of `GA1_2_4_6.csv` (`DATA_SHA256`) was added to `download()`.
+
+## 2026.07.15 - Resolve gene names via the shared genome resolver (retain pseudogenes)
+
+`_resolve_systematic` now delegates to `SCerevisiaeGenome.resolve_gene_name` (see
+[[torchcell.sequence.genome.scerevisiae.s288c]]) instead of the gene-only
+`alias_to_systematic`. This closes the standing follow-up in this note: common names that
+resolve to a valid non-`"gene"` R64 feature (AAD6/CRS5/FLO8 -> YFL056C/YOR031W/YER109C,
+`blocked_reading_frame` pseudogenes) are now **retained** as real loci rather than dropped as
+"unresolved". The resolver's standard-name layer also fixes common-name disambiguation (e.g.
+AAP1 -> YHR047C, not the mito Q0080).
+
+Outcome: **4647 -> 4719 usable ORFs**; unresolved drops fell 85 -> 11 (only the `WT` control,
+the malformed `YLR287-A`, genuinely AMBIGUOUS common names FEN1/PPA1, and a few retired
+dubious ORFs). Removed the local `_SYSTEMATIC_RE` regex path. The heterologous Btx-cassette
+(CYP76AD1/DOD + ARO4/ARO7 variants) is unaffected (separate fixed constant).

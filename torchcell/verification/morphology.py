@@ -28,7 +28,7 @@ asserted by the caller across datasets, not here.
 NOTE on the WT: the 122 wildtype profiles are AGGREGATED into each record's reference
 phenotype (a single mean-WT baseline, itself carrying the full 281+220 vocabulary),
 not stored as 122 separate records. So the record-count oracle is the mutant count
-(4695; 4718 raw minus 23 R64-unresolved ORFs, see loader); the WT is verified as a populated reference, not counted from records.
+(4718; all strains retained, ORF names reconciled to R64); the WT is verified as a populated reference, not counted from records.
 """
 
 from __future__ import annotations
@@ -161,7 +161,7 @@ def verify_morphology_dataset(
         records: the per-LMDB-entry dicts (experiment/reference/publication).
         dataset_name: dataset identity for the report.
         provenance: where the records came from.
-        expected_count: the mutant record-count oracle (Ohya2005 = 4695).
+        expected_count: the mutant record-count oracle (Ohya2005 = 4718).
 
     Returns:
         A :class:`VerificationReport` carrying the L0-L3 results. L4 (cross-source

@@ -689,3 +689,32 @@ if gene_name in genome.gene_attribute_table['gene'].values:
 # 3. Keep as-is if no conversion found
 return gene_name
 ```
+
+## 2026.07.15 - Layered gene-name resolver (resolve_gene_name)
+
+Added a shared, layered gene-name resolver to `SCerevisiaeGenome` so datasets stop
+reinventing (inconsistent, error-prone) per-loader ORF-name reconciliation. Motivation: two
+divergent "gene universes" existed -- Ohya/Ohnuki validated against the `orf_coding_all`
+FASTA headers while Cachera validated against `gene_set` (GFF `"gene"` features) -- so the
+same name (e.g. `YER109C`/FLO8) resolved in one loader and dropped in another.
+
+`resolve_gene_name(name) -> GeneNameResolution` (pydantic) walks layers and returns a
+`GeneNameStatus`:
+
+- **CURRENT** -- exact live `"gene"` (in `gene_set`).
+- **NON_GENE_FEATURE** -- a valid non-`"gene"` LOCUS (RNA gene, transposon gene, pseudogene,
+  `blocked_reading_frame`). `_LOCUS_FEATURE_TYPES` whitelists the 10 gene-like types so
+  non-locus features (`region`, `CDS`, `mRNA`, `ARS`, ...) never shadow a real gene name --
+  a `region` literally id'd `ADE1` must not intercept the gene ADE1.
+- **RENAMED** -- resolved to a current gene via the **standard name** (GFF `gene` attribute)
+  or a secondary `Alias`. The standard-name layer runs FIRST so a common name resolves to the
+  gene that OWNS it (`AAP1` -> `YHR047C`, standard name AAP1) not to one that merely lists it
+  as a secondary alias (`Q0080`).
+- **AMBIGUOUS** -- maps to >1 current gene (e.g. `FEN1` = YCR034W/YKL113C); never silently
+  picked.
+- **RETIRED** -- absent from R64-4-1 (dubious ORF removed since 2005); returned verbatim as a
+  legacy name.
+
+Pure/per-name, applies NO drop policy -- callers own retention + batch collision handling.
+Consumed by `ohya2005` and `cachera2023`; unit tests in `test_s288c.py` (`test_resolve_*`).
+Backing index (`feature_index`) is cached and covers only `_LOCUS_FEATURE_TYPES`.

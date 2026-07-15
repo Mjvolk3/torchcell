@@ -28,7 +28,6 @@ import math
 import os
 import os.path as osp
 import pickle
-import re
 import urllib.request
 from collections.abc import Callable
 from typing import Any, cast
@@ -54,14 +53,13 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae import GeneNameStatus, SCerevisiaeGenome
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 MEASUREMENT_TYPE = "cri_spa_corrected_fluorescence_intensity_24h"
 TARGET_METABOLITE = "betaxanthin"
-_SYSTEMATIC_RE = re.compile(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$")
 
 
 # The constant engineered background transferred by CRI-SPA into every YKO strain: the
@@ -197,14 +195,26 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
         log.info("Wrote %s (%d bytes, sha256 verified)", dest, len(data))
 
     def _resolve_systematic(self, gene: str) -> str | None:
-        """Resolve a source gene name (common or systematic) to a systematic ORF id."""
-        gene = gene.strip().upper()
-        if _SYSTEMATIC_RE.match(gene):
-            return gene
+        """Resolve a source gene name (common or systematic) to an R64 identifier.
+
+        Uses the genome's layered resolver. Returns the current R64 identifier for a live
+        gene, an SGD rename, or a valid non-"gene" feature (e.g. a ``blocked_reading_frame``
+        pseudogene such as ``YER109C``/FLO8 or ``YFL056C``/AAD6 -- REAL loci that are
+        retained, not dropped). Returns None only when the name is not a recognisable R64
+        feature (a control like ``WT`` or a malformed id), which the caller drops.
+        """
         genome = cast(SCerevisiaeGenome, self.genome)
-        candidates = genome.alias_to_systematic.get(gene, [])
-        if candidates:
-            return candidates[0]
+        res = genome.resolve_gene_name(gene)
+        if (
+            res.status
+            in (
+                GeneNameStatus.CURRENT,
+                GeneNameStatus.RENAMED,
+                GeneNameStatus.NON_GENE_FEATURE,
+            )
+            and res.systematic_name is not None
+        ):
+            return res.systematic_name
         return None
 
     @post_process
@@ -249,11 +259,11 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
                 {"orf": systematic, "level": float(level), "se": se, "n": max(count, 1)}
             )
         # Unresolved names are dropped by design (never guessed into an ORF): 'WT' is a
-        # control and 'YLR287-A' is a malformed id, but AAD6/CRS5/FLO8 are REAL genes whose
-        # systematic ids (YFL056C/YOR031W/YER109C) are absent from the reference gene_set,
-        # so admitting them would orphan gene nodes in the KG. Log the full list (there are
-        # only a handful) rather than a truncated sample so the drop is auditable. See
-        # [[torchcell.datasets.scerevisiae.cachera2023]] for the standing follow-up.
+        # control and 'YLR287-A' is a malformed id. Names that resolve to a valid non-"gene"
+        # R64 feature (AAD6/CRS5/FLO8 -> YFL056C/YOR031W/YER109C, blocked_reading_frame
+        # pseudogenes) are now RETAINED via the genome resolver rather than dropped -- they
+        # are real loci with a real perturbation. Log the full unresolved list (only a
+        # handful) so the drop stays auditable.
         log.info(
             "Cachera: %d usable ORFs, %d control/NaN rows, %d unresolved names dropped %s, "
             "%d ORF collisions deduped",

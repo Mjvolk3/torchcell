@@ -105,7 +105,7 @@ EXPRESSION_DATASETS: dict[str, dict[str, Any]] = {
 OHYA_SOURCE_ROOT = "data/torchcell/scmd_ohya2005"
 OHYA_REPORT_ROOT = "data/torchcell/scmd_ohya2005"
 OHYA_EXPECTED_COUNT = (
-    4695  # 4718 raw - 23 R64-unresolved (see loader); 122 WT aggregated
+    4718  # all strains retained; ORF names reconciled to R64, 0 dropped
 )
 OHYA_PROVENANCE = Provenance(
     source_uri="http://www.yeast.ib.k.u-tokyo.ac.jp/SCMD/ (mt4718data.tsv, wt122data.tsv)",

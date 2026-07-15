@@ -524,6 +524,28 @@ EXPERIMENT_ROOT="/home/michaelvolk/Documents/projects/torchcell/experiments"
 - Where we want to save all image output
 - Often convenient if there are more than one image for that given experiment to put them into dir with something like `osp.join(ASSET_IMAGES_DIR, f"006-kuzmin-tmi-inferece_1_{timestamp}")`. Often we like to start by default putting time stamps on images and we iterate to a decent idea, then if we want things to stably overwrite we will ask to remove `timestamp` after. So add by default.
 
+### `$DATA_ROOT/data/...` vs `$DATA_ROOT/database/data/...` -- two separate trees
+
+These are **different build trees owned by different users** and must never be conflated
+(this distinction keeps getting confused):
+
+- **`$DATA_ROOT/data/torchcell/<dataset>/`** -- the **source-code dataset builds**. Owned by
+  the dev user; this is what dataset loaders write by default (loader
+  `root="data/torchcell/<dataset>"`) and what you rebuild when developing/testing a loader.
+  Clearing/rebuilding a dataset *for development* touches only this tree.
+- **`$DATA_ROOT/database/data/torchcell/<dataset>/`** -- the **database / knowledge-graph
+  build tree**. Owned by the **KG-build user (uid 7474)** and **read-only to the dev user**;
+  populated by the Neo4j/BioCypher graph build, not by a plain loader run. Clearing or
+  rebuilding it is the KG build's responsibility and must be done *as that user* -- the dev
+  user cannot delete it.
+
+Consequence: after fixing a loader, clearing `data/...` reruns the *dev* build, but the
+*graph* rebuild only picks up the fix once the KG-build user clears `database/data/...` too
+(the dataset base class skips `process()` when `processed/` already exists, so a stale build
+is silently reused otherwise). Verifiers may **read** the `database/...` LMDB and **write**
+their report back to the writable `data/...` tree (e.g. the morphology verifier) -- source
+vs report paths are deliberately separate.
+
 **`EXPERIMENT_ROOT`**
 
 This is what a typical experiment looks like. There is configuration in `conf/` that parameterizes experiements written in `scripts`. Slurm scripts are also in scripts and they typically have matching names with their experiments. Inside naming is also typically a designation of which slurm machine or partition a given scripts belongs to. We try to copy slurm scripts are typically numbered in a fashion that matches yamls to have a very transparaent experiment ecosystem. If we are running sweeps with optuna or wandb. we break from this pattern because we only need one config specifying the script - so we can many outputs for one script instead of one-to-one. Sometimes we inspect models here and dump `profile_results/`. `slurm/outputs` is resereved for concatenated slurm output and error. `queries/` holds the queries that the experiment used for the study.

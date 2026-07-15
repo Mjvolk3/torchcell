@@ -156,8 +156,8 @@ def plot_correlation_distribution(df_corr, corr_type, output_prefix):
     """Histogram of the per-deletion cross-study correlation, repo palette + standards.
 
     One distribution (the 82 per-deletion correlations), so a single hue -- ``PLOT_PALETTE``
-    slot 0. Green-free (the old red->white->green gradient violated the palette). Boxed
-    axes, Arial 6 pt, ``half`` panel width, true-size SVG for draw.io + a 300-dpi PNG.
+    slot 1 (red). Green-free (the old red->white->green gradient violated the palette).
+    Boxed axes, Arial 6 pt, ``half`` panel width, true-size SVG for draw.io + a 300-dpi PNG.
     """
     logger.info(f"Creating {corr_type} correlation distribution plot")
     r_col = f"{corr_type}_r"
@@ -175,7 +175,7 @@ def plot_correlation_distribution(df_corr, corr_type, output_prefix):
             "axes.linewidth": 0.5,
         }
     )
-    color = PLOT_PALETTE[0]  # orange
+    color = PLOT_PALETTE[1]  # red
     ink = "#000000"
 
     w = mm_to_in(PANEL_WIDTHS_MM["half"])
@@ -195,14 +195,20 @@ def plot_correlation_distribution(df_corr, corr_type, output_prefix):
     ax.axvline(median_r, color=ink, linestyle="--", linewidth=1.0)
     ax.axvline(0, color="#4A4A4A", linestyle=":", linewidth=0.6)
 
-    # headroom + median label
+    # headroom + median label. Anchor the label on the side of the median line
+    # that has room: median r is strongly positive here, so hang its RIGHT edge
+    # just left of the line (ha="right", offset left) -- otherwise a right-side
+    # median (~0.74) pushes "median r = 0.74" off the right spine.
     lo, hi = ax.get_ylim()
     ax.set_ylim(lo, hi * 1.25)
+    on_right = median_r > 0
     ax.annotate(
         f"median r = {median_r:.2f}",
-        xy=(median_r, ax.get_ylim()[1] * 0.9),
-        xytext=(4, 0),
+        xy=(median_r, ax.get_ylim()[1] * 0.92),
+        xytext=(-4 if on_right else 4, 0),
         textcoords="offset points",
+        ha="right" if on_right else "left",
+        va="top",
         color=ink,
         fontsize=6,
     )

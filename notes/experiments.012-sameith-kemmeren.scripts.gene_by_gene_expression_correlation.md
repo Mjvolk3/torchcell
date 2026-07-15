@@ -39,17 +39,23 @@ Assesses cross-study reproducibility between Kemmeren2014 and Sameith2015 by cor
 
 ![Correlation Distribution Pearson](./assets/images/012-sameith-kemmeren-expression/gene_expression_correlation_dist_pearson.png)
 
-*Figure 1: Cross-study expression profile correlation distribution (Pearson). Shows **median r = 0.599** with 57.3% of genes having r > 0.5, confirming biological consistency after sign convention fix. The positive correlation demonstrates that identical gene deletions produce similar transcriptional responses across independent studies.*
+*Figure 1: Cross-study expression profile correlation distribution (Pearson), on the #72 sign-fixed Sameith rebuild. Shows **median r = 0.744** with 82% of deletions having r > 0.5, confirming that identical gene deletions produce similar genome-wide transcriptional responses across independent studies. (Numbers refreshed 2026.07.15 after #72; see the dated section below for the full before/after. Bars use repo palette red `#B85450`.)*
 
 ![Correlation Distribution Spearman](./assets/images/012-sameith-kemmeren-expression/gene_expression_correlation_dist_spearman.png)
 
-*Figure 2: Cross-study expression profile correlation distribution (Spearman). Shows **median r = 0.593**, consistent with Pearson results. The similarity between Pearson and Spearman correlations indicates linear relationships without major rank-order distortions.*
+*Figure 2: Cross-study expression profile correlation distribution (Spearman). Shows **median r = 0.791**, consistent with the Pearson result — the similarity indicates linear relationships without major rank-order distortion.*
 
 ### Data Files
 
 - `results/gene_expression_correlations.csv` - Per-gene Pearson and Spearman correlation coefficients
 
 ## Key Findings (Post-Fix)
+
+> **Superseded 2026.07.15 (#72).** The figures above and the current values are on the
+> per-array sign-fixed Sameith rebuild: median Pearson r = **0.744**, Spearman **0.791**,
+> 82% of deletions r > 0.5. The r = 0.599 values in this section predate the #72 fix (they
+> reflect only the earlier 2026-01-06 dye-swap correction) and are kept as the pre-#72
+> record. See the 2026.07.15 section at the end of this note for the full before/after.
 
 ### GOOD Cross-Study Reproducibility Confirmed
 

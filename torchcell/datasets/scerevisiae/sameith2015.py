@@ -771,7 +771,8 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
         # Environment - SC medium at 30°C
         environment = Environment(
-            media=Media(name="SC", state="liquid"), temperature=Temperature(value=30)
+            media=Media(name="SC", state="liquid", is_synthetic=True),
+            temperature=Temperature(value=30),
         )
         environment_reference = environment.model_copy()
 
@@ -1861,7 +1862,8 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
         # Environment - SC medium at 30°C
         environment = Environment(
-            media=Media(name="SC", state="liquid"), temperature=Temperature(value=30)
+            media=Media(name="SC", state="liquid", is_synthetic=True),
+            temperature=Temperature(value=30),
         )
         environment_reference = environment.model_copy()
 

@@ -39,7 +39,8 @@ def _phenotype(scale: float) -> ProteinAbundancePhenotype:
 
 def _record(gene: str, scale: float, *, ref_scale: float = 9.0) -> dict[str, Any]:
     env = Environment(
-        media=Media(name="SM", state="liquid"), temperature=Temperature(value=30)
+        media=Media(name="SM", state="liquid", is_synthetic=True),
+        temperature=Temperature(value=30),
     )
     experiment = ProteinAbundanceExperiment(
         dataset_name="test",
@@ -127,7 +128,8 @@ def test_mixed_measurement_type_fails():
             ]
         ),
         environment=Environment(
-            media=Media(name="SM", state="liquid"), temperature=Temperature(value=30)
+            media=Media(name="SM", state="liquid", is_synthetic=True),
+            temperature=Temperature(value=30),
         ),
         phenotype=ProteinAbundancePhenotype(
             protein_abundance={p: 8.0 for p in PROTS},

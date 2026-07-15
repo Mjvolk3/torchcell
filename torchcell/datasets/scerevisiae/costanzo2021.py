@@ -271,7 +271,7 @@ class EnvChemgenCostanzo2021Dataset(ExperimentDataset):
         """Build the treated 26 C environment carrying this condition's edit."""
         value, unit_token = spec["conc"]
         concentration = Concentration(value=value, unit=_UNIT[unit_token])
-        media = Media(name=_BASE_MEDIUM, state="solid")
+        media = Media(name=_BASE_MEDIUM, state="solid", is_synthetic=True)
         temperature = Temperature(value=_REFERENCE_TEMPERATURE_C)
         if spec["kind"] == "carbon":
             perturbation: Any = EnvironmentPhysicalPerturbation(
@@ -302,7 +302,7 @@ class EnvChemgenCostanzo2021Dataset(ExperimentDataset):
                 strain="SGA reference (BY4741-derived deletion / TS array background)",
             ),
             environment_reference=Environment(
-                media=Media(name=_BASE_MEDIUM, state="solid"),
+                media=Media(name=_BASE_MEDIUM, state="solid", is_synthetic=True),
                 temperature=Temperature(value=_REFERENCE_TEMPERATURE_C),
                 aerobicity="aerobic",
             ),

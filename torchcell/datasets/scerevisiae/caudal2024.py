@@ -594,7 +594,8 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
         genotype = Genotype(perturbations=row["perturbations"])
         # SC liquid medium, 30 C, harvested at mid-log (OD ~0.3) -- Caudal Methods.
         environment = Environment(
-            media=Media(name="SC", state="liquid"), temperature=Temperature(value=30)
+            media=Media(name="SC", state="liquid", is_synthetic=True),
+            temperature=Temperature(value=30),
         )
         phenotype = RNASeqExpressionPhenotype(
             expression_tpm=row["expression_tpm"],

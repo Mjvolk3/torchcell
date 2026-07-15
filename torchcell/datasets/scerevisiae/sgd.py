@@ -237,7 +237,7 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
         )
 
         environment = Environment(
-            media=Media(name="YEPD", state="solid"),
+            media=Media(name="YEPD", state="solid", is_synthetic=False),
             temperature=Temperature(value=30),  # Assuming standard temperature
         )
 

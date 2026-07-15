@@ -281,7 +281,8 @@ class ScmdOhya2005Dataset(ExperimentDataset):
 
         # Environment
         environment = Environment(
-            media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
+            media=Media(name="YEPD", state="solid", is_synthetic=False),
+            temperature=Temperature(value=30),
         )
         environment_reference = environment.model_copy()
 

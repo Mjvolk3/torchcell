@@ -228,7 +228,7 @@ class CrisprMagicLian2019Dataset(ExperimentDataset):
     def _environment(self, furfural_mm: float) -> Environment:
         """SED/G418 liquid culture carrying furfural (mM), 30 C, aerobic."""
         return Environment(
-            media=Media(name="SED/G418", state="liquid"),
+            media=Media(name="SED/G418", state="liquid", is_synthetic=True),
             temperature=Temperature(value=30.0),
             perturbations=[
                 SmallMoleculePerturbation(

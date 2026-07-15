@@ -277,7 +277,7 @@ class EnvChemgenMota2024Dataset(ExperimentDataset):
     def _environment(self, spec: dict[str, Any]) -> Environment:
         """Aerobic YPD (pH 4.5) plate carrying the acid at its fixed inhibitory molarity."""
         return Environment(
-            media=Media(name="YPD, pH 4.5", state="solid"),
+            media=Media(name="YPD, pH 4.5", state="solid", is_synthetic=False),
             temperature=Temperature(value=30.0),
             perturbations=[
                 SmallMoleculePerturbation(

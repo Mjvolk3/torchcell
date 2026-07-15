@@ -307,7 +307,7 @@ class FattyAcidXue2025Dataset(ExperimentDataset):
     def _environment(self) -> Environment:
         """FFA-production medium, 30 C, aerobic (media name + 30 C are in-house-assumed)."""
         return Environment(
-            media=Media(name="SC (FFA production)", state="liquid"),
+            media=Media(name="SC (FFA production)", state="liquid", is_synthetic=True),
             temperature=Temperature(value=30.0),
             aerobicity="aerobic",
         )

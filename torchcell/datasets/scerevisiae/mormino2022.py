@@ -195,7 +195,7 @@ class CrispriMormino2022Dataset(ExperimentDataset):
     def _environment(self) -> Environment:
         """Aerobic acetic-acid (50 mM, pH 3.5) liquid culture, 30 C."""
         return Environment(
-            media=Media(name="SD, pH 3.5", state="liquid"),
+            media=Media(name="SD, pH 3.5", state="liquid", is_synthetic=True),
             temperature=Temperature(value=30.0),
             perturbations=[
                 SmallMoleculePerturbation(

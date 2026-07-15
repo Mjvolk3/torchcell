@@ -288,7 +288,8 @@ class ScmdOhnuki2018Dataset(ExperimentDataset):
 
         # Optimal growth conditions: nutrient-rich liquid YPD at 25 C (Methods).
         environment = Environment(
-            media=Media(name="YPD", state="liquid"), temperature=Temperature(value=25)
+            media=Media(name="YPD", state="liquid", is_synthetic=False),
+            temperature=Temperature(value=25),
         )
         environment_reference = environment.model_copy()
 

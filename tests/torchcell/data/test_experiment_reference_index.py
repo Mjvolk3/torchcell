@@ -28,7 +28,8 @@ def _reference(dataset_name: str) -> FitnessExperimentReference:
             species="Saccharomyces cerevisiae", strain="S288C"
         ),
         environment_reference=Environment(
-            media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30.0)
+            media=Media(name="YEPD", state="solid", is_synthetic=False),
+            temperature=Temperature(value=30.0),
         ),
         phenotype_reference=FitnessPhenotype(
             graph_level="global",

@@ -229,7 +229,7 @@ class _IsobutanolLopez2024Base(ExperimentDataset):
     def _environment(self) -> Environment:
         """Aerobic SC-liquid medium; 30 C (standard yeast temp, not explicit in the source)."""
         return Environment(
-            media=Media(name="SC", state="liquid"),
+            media=Media(name="SC", state="liquid", is_synthetic=True),
             temperature=Temperature(value=30.0),
             aerobicity="aerobic",
         )

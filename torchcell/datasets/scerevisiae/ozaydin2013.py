@@ -333,7 +333,8 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
         )
         # Screen scored on SC-URA agar (URA-selective plasmid), 30 C.
         environment = Environment(
-            media=Media(name="SC-URA", state="solid"), temperature=Temperature(value=30)
+            media=Media(name="SC-URA", state="solid", is_synthetic=True),
+            temperature=Temperature(value=30),
         )
 
         vmin = row["visual_score_min"]

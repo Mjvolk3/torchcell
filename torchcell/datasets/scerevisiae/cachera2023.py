@@ -278,7 +278,8 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
             ]
         )
         environment = Environment(
-            media=Media(name="SC", state="solid"), temperature=Temperature(value=30)
+            media=Media(name="SC", state="solid", is_synthetic=True),
+            temperature=Temperature(value=30),
         )
         phenotype = MetabolitePhenotype(
             metabolite_level={TARGET_METABOLITE: row["level"]},

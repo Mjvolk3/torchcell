@@ -60,7 +60,8 @@ def _record(
         calmorph_coefficient_of_variation=ref_cv if ref_cv is not None else _full_cv(),
     )
     environment = Environment(
-        media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
+        media=Media(name="YEPD", state="solid", is_synthetic=False),
+        temperature=Temperature(value=30),
     )
     experiment = CalMorphExperiment(
         dataset_name="test",

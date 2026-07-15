@@ -77,7 +77,7 @@ def _fitness_record():
             ]
         },
         "environment": {
-            "media": {"name": "YEPD", "state": "solid"},
+            "media": {"name": "YEPD", "state": "solid", "is_synthetic": False},
             "temperature": {"value": 30.0},
         },
         "phenotype": {

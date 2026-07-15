@@ -250,7 +250,11 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
     def _environment(self, cell: dict[str, Any]) -> Environment:
         """Aerobic SC (2% glucose) liquid culture carrying the compound at 20 uM in DMSO."""
         return Environment(
-            media=Media(name="synthetic complete (SC), 2% glucose", state="liquid"),
+            media=Media(
+                name="synthetic complete (SC), 2% glucose",
+                state="liquid",
+                is_synthetic=True,
+            ),
             temperature=Temperature(value=30.0),
             perturbations=[
                 SmallMoleculePerturbation(

@@ -204,15 +204,23 @@ def main() -> None:
     MD_OUT.write_text(note.rstrip("\n") + "\n")
     print(f"Wrote {MD_OUT.relative_to(REPO)}")
 
-    _preview_pdf(data_path.parent)
+    n_lines = len(records) + len(payload["sections"])  # data rows + section headers
+    _preview_pdf(data_path.parent, n_lines)
 
 
-def _preview_pdf(out_dir: Path) -> None:
-    """Wrap the fragment in a standalone doc and compile a preview PDF (pdflatex)."""
+def _preview_pdf(out_dir: Path, n_lines: int) -> None:
+    """Wrap the fragment in a standalone doc and compile a preview PDF (pdflatex).
+
+    A ``table*`` taller than ``\\textheight`` does not paginate -- it runs off the
+    bottom of the page silently. So the page HEIGHT is sized to the row count (data
+    rows + section headers + caption/header/totals slack); width stays ~A4 landscape.
+    This is a "see every row at once" canvas, not the journal layout.
+    """
+    height_in = 3.0 + n_lines * 0.17  # ~caption+header+totals slack + per-line
     wrapper = out_dir / "_preview.tex"
     wrapper.write_text(
         "\\documentclass[9pt]{article}\n"
-        "\\usepackage[a4paper,landscape,margin=0.4in]{geometry}\n"
+        f"\\usepackage[paperwidth=11.7in,paperheight={height_in:.1f}in,margin=0.4in]{{geometry}}\n"
         "\\usepackage[T1]{fontenc}\\usepackage{lmodern}\\usepackage{booktabs}\n"
         "\\usepackage{amsmath,amssymb}\\usepackage{textcomp}\n"
         "\\pagestyle{empty}\\twocolumn\n"

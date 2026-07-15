@@ -46,6 +46,8 @@ shared reference genome is never counted. Instances, Shape, Graph role, and Sign
 | Kuzmin 2020 tmf | 301,798 | 1 | 301,798 | triple-mutant fitness | scalar | global | 1.1×10⁷ |
 | Kuzmin 2020 dmi | 632,797 | 1 | 632,797 | digenic interaction | scalar | edge | 2.2×10⁷ |
 | Kuzmin 2020 tmi | 301,798 | 1 | 301,798 | trigenic interaction | scalar | hyperedge | 1.2×10⁷ |
+| Baryshnikova 2010 (smf) | 5,993 | 1 | 5,993 | single-mutant fitness | scalar | global | 2.1×10⁵ |
+| O'Duibhir 2014 (smf) | 1,312 | 1 | 1,312 | single-mutant fitness | scalar | global | 3.3×10⁴ |
 
 ### Environmental / chemogenomic
 
@@ -59,6 +61,10 @@ shared reference genome is never counted. Instances, Shape, Graph role, and Sign
 | Hillenmeyer 2008 hom (FitDb HOP) | 4,667 | 279 | 1,179,520 | HOP fitness-defect z-score | scalar | global | 4.3×10⁷ |
 | Wildenhain 2015 (drug tolerance) | 256 | 5,178 | 428,573 | growth-inhibition z-score | scalar | global | 1.9×10⁷ |
 | Hoepfner 2014 (HIP/HOP atlas) | 10,719 | 5,879 | 29,996,238 | HIP/HOP sensitivity score | scalar | global | 1.1×10⁹ |
+| Smith 2006 (chemogenomic) | 4,721 | 3 | 14,163 | chemogenomic sensitivity (clear-zone ordinal) | scalar | global | 2.1×10⁵ |
+| Lian 2019 (MAGIC CRISPR-AID) | 266,415 | 3 | 266,415 | furfural tolerance fitness (log2-ratio) | scalar | global | 1.6×10⁷ |
+| Mormino 2022 (CRISPRi acetic-acid) | 12 | 1 | 12 | acetic-acid sensitivity (categorical) | scalar | global | 1.1×10³ |
+| Smith 2016 (CRISPRi chem-genetic) | 1,035 | 26 | 14,463 | chemogenomic fitness (log2-ratio) | scalar | global | 6.0×10⁵ |
 
 ### Viability
 
@@ -73,6 +79,8 @@ shared reference genome is never counted. Instances, Shape, Graph role, and Sign
 | Dataset | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bytes) |
 | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
 | Ohya 2005 (SCMD CalMorph) | 4,718 | 1 | 4,718 | cell morphology (CalMorph) | vector (281) | global | 1.9×10⁷ |
+| Ohnuki 2018 (SCMD CalMorph) | 1,112 | 1 | 1,112 | cell morphology (CalMorph) | vector (281) | global | 5.9×10⁶ |
+| Ohnuki 2022 (SCMD CalMorph) | 1,979 | 1 | 1,979 | cell morphology (CalMorph) | vector (281) | global | 1.1×10⁷ |
 
 ### Expression (microarray)
 
@@ -87,6 +95,7 @@ shared reference genome is never counted. Instances, Shape, Graph role, and Sign
 | Dataset | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bytes) |
 | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
 | Caudal 2024 (pan-transcriptome) | 943 | 1 | 943 | mRNA abundance (RNA-seq) | vector (6000) | node | 1.9×10⁸ |
+| Nadal-Ribelles 2025 (Perturb-seq) | 3,150 | 2 | 6,188 | mRNA logFC (Perturb-seq) | vector (5639) | node | 2.8×10⁸ |
 
 ### Metabolite
 
@@ -96,22 +105,28 @@ shared reference genome is never counted. Instances, Shape, Graph role, and Sign
 | Mülleder 2016 (amino-acid metabolome) | 4,678 | 1 | 4,678 | amino-acid concentrations | vector (19) | bipartite node | 9.9×10⁵ |
 | Zelezniak 2018 (metabolome) | 95 | 1 | 95 | metabolite levels | vector (25) | bipartite node | 3.8×10⁴ |
 | Ozaydin 2013 (β-carotene screen) | 4,474 | 1 | 4,474 | β-carotene (colony-color visual score) | scalar | global | 1.2×10⁵ |
+| da Silveira 2014 (lipidomics) | 127 | 1 | 127 | lipid-species relative abundance | vector (135) | bipartite node | 1.2×10⁵ |
+| Yoshida 2012 (organic acids) | 17 | 1 | 17 | organic-acid titer | vector (6) | bipartite node | 1.7×10³ |
+| Xue 2025 (free fatty acids, private) | 176 | 1 | 176 | free-fatty-acid titer | vector (5) | bipartite node | 2.2×10⁴ |
+| Lopez 2024 (isobutanol screen, private) | 4,554 | 1 | 4,554 | isobutanol biosensor fold-change | scalar | bipartite node | 1.1×10⁵ |
+| Lopez 2024 (isobutanol validated, private) | 224 | 1 | 224 | isobutanol biosensor fold-change (validated) | scalar | bipartite node | 9.3×10³ |
 
 ### Protein abundance
 
 | Dataset | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bytes) |
 | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
 | Zelezniak 2018 (SWATH proteome) | 97 | 1 | 97 | protein abundance | vector (726) | node | 2.1×10⁶ |
+| Messner 2023 (proteome) | 4,699 | 1 | 4,699 | protein abundance | vector (1830) | node | 1.4×10⁸ |
 
 ### Total
 
 | Dataset | Genotypes | Env | Instances | Phenotype | Shape | Graph role | Signal (gzip, bytes) |
 | :-- | --: | --: | --: | :-- | :-- | :-- | --: |
-| **Total (34 datasets)** |  |  | **79,102,224** |  |  |  | **3.3×10⁹** |
+| **Total (49 datasets)** |  |  | **79,423,658** |  |  |  | **3.8×10⁹** |
 
 ### In progress (not yet built/verified)
 
-Baryshnikova 2010 (smf; liquid-growth assay -- MinerU the paper first) · Ohnuki 2018 / 2022 (morphology) · O'Duibhir 2014 (expression) · Lian 2017 (AID furfural tolerance). See `[[paper.north-star.dataset-triage]]` for the full ~75-candidate backlog.
+Ho 2009 (bioethanol tolerance -- genotype needs a WGS pipeline) · Trikka 2015 (sclareol titers -- figure-only data). See `[[paper.north-star.dataset-triage]]` for the full ~75-candidate backlog.
 
 ## Reference databases
 

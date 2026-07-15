@@ -39,6 +39,21 @@
     "key": "1783565827:858554368",
     "n": 943
   },
+  "data/torchcell/crispr_magic_lian2019#instance": {
+    "bytes": 15986602,
+    "key": "1783919522:1103577088",
+    "n": 266415
+  },
+  "data/torchcell/crispri_chemgen_smith2016#instance": {
+    "bytes": 601726,
+    "key": "1784002347:59879424",
+    "n": 14463
+  },
+  "data/torchcell/crispri_mormino2022#instance": {
+    "bytes": 1100,
+    "key": "1783922118:61440",
+    "n": 12
+  },
   "data/torchcell/dm_microarray_sameith2015": {
     "bytes": 20893941,
     "key": "1783566140:45723648",
@@ -169,6 +184,11 @@
     "key": "1783736377:4780032",
     "n": 1273
   },
+  "data/torchcell/env_chemgen_smith2006#instance": {
+    "bytes": 210722,
+    "key": "1783834086:58638336",
+    "n": 14163
+  },
   "data/torchcell/env_chemgen_vanacloig2022": {
     "bytes": 6083115,
     "key": "1783704431:679714816",
@@ -189,6 +209,11 @@
     "key": "1783705128:1775452160",
     "n": 428573
   },
+  "data/torchcell/ffa_xue2025#instance": {
+    "bytes": 22436,
+    "key": "1783966477:663552",
+    "n": 176
+  },
   "data/torchcell/gene_essentiality_sgd": {
     "bytes": 584,
     "key": "1727829740:2572288",
@@ -198,6 +223,21 @@
     "bytes": 15066,
     "key": "1727829740:2572288",
     "n": 1329
+  },
+  "data/torchcell/isobutanol_screen_lopez2024#instance": {
+    "bytes": 113983,
+    "key": "1783923848:17092608",
+    "n": 4554
+  },
+  "data/torchcell/isobutanol_validated_lopez2024#instance": {
+    "bytes": 9301,
+    "key": "1783923848:843776",
+    "n": 224
+  },
+  "data/torchcell/metabolite_dasilveira2014#instance": {
+    "bytes": 124938,
+    "key": "1783835010:1052672",
+    "n": 127
   },
   "data/torchcell/metabolite_zelezniak2018": {
     "bytes": 35544,
@@ -219,6 +259,21 @@
     "key": "1783620293:954310656",
     "n": 1484
   },
+  "data/torchcell/nadal_ribelles_perturbseq2025#instance": {
+    "bytes": 280373497,
+    "key": "1784005697:1294630912",
+    "n": 6188
+  },
+  "data/torchcell/organic_acid_yoshida2012#instance": {
+    "bytes": 1679,
+    "key": "1783835023:73728",
+    "n": 17
+  },
+  "data/torchcell/proteome_messner2023#instance": {
+    "bytes": 135352593,
+    "key": "1783832342:531382272",
+    "n": 4699
+  },
   "data/torchcell/proteome_zelezniak2018": {
     "bytes": 2024641,
     "key": "1783565977:5521408",
@@ -228,6 +283,16 @@
     "bytes": 2061165,
     "key": "1783565977:5521408",
     "n": 97
+  },
+  "data/torchcell/scmd_ohnuki2018#instance": {
+    "bytes": 5945434,
+    "key": "1783884300:27385856",
+    "n": 1112
+  },
+  "data/torchcell/scmd_ohnuki2022#instance": {
+    "bytes": 10960966,
+    "key": "1783884654:40624128",
+    "n": 1979
   },
   "data/torchcell/scmd_ohya2005": {
     "bytes": 18784045,
@@ -243,6 +308,11 @@
     "bytes": 22595217,
     "key": "1783618560:52072448",
     "n": 82
+  },
+  "data/torchcell/smf_baryshnikova2010#instance": {
+    "bytes": 209093,
+    "key": "1784000534:22495232",
+    "n": 5993
   },
   "data/torchcell/smf_costanzo2016": {
     "bytes": 103398,
@@ -273,6 +343,11 @@
     "bytes": 9244,
     "key": "1727829766:966656",
     "n": 472
+  },
+  "data/torchcell/smf_oduibhir2014#instance": {
+    "bytes": 33173,
+    "key": "1783884576:4927488",
+    "n": 1312
   },
   "data/torchcell/synth_lethality_yeast_synth_leth_db": {
     "bytes": 15684,

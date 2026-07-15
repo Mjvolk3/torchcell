@@ -236,3 +236,48 @@ The 5.7% of measured genes outside the SGD ORF+RNA set are accessory/novel pange
 the 6015-gene x 1011-isolate sequence diff (~a few min; cached to
 `preprocess/sequence_variants.parquet` for resumable re-assembly). Verification re-validates
 all ~5.7M perturbations through the schema union, so `run_rnaseq` itself takes ~20 min.
+
+## 2026.07.15 - Fix: gene-absence edits were silently dropped (#71)
+
+`_content_perturbations` gated both loops on **population frequency** (`core_mask`, present
+in >=99% of isolates) instead of **S288C reference membership** (`s288c_mask`). A reference
+ORF that is *variable* (not core) and *absent* from an isolate matched neither loop, so **no
+perturbation record was emitted** and the isolate reconstructed as if it still carried the
+gene -- the exact failure the "never dropped" invariant forbids.
+
+Measured impact (audit vs the released presence/absence matrix): median **0** absence
+records emitted per isolate vs **126** that should be, **134,428** missing gene-absence
+edits across the 1,011-isolate panel.
+
+**Fix (both guards now on `s288c_mask`):**
+
+- Reference ORF ABSENT -> `NaturalGeneAbsencePerturbation`.
+- Non-reference (accessory) ORF PRESENT -> `NaturalGenePresencePerturbation`.
+- A reference ORF present and an accessory ORF absent are both no-ops vs S288C.
+- `_orf_to_s288c` now strips the `_NumOfGenes_N` paralog-cluster suffix, recovering **793**
+  reference ORFs it previously returned `None` for (5,276 -> 6,069 reference columns; every
+  reference name maps from exactly one column, so no de-dup needed).
+
+**Rebuilt** 2026-07-15 (cached `sequence_variants.parquet` reused): 943 records; record 0
+perturbation-type counts `natural_gene_absence` **2 -> 163**, `natural_gene_presence`
+**511 -> 48** (the ~451 removed were *present variable-reference* ORFs the old code
+mislabeled as accessory presences under their pangenome id, not `YAL005C`), `sequence_variant`
+4,557 (unchanged). Phenotype (expression TPM) unchanged, so the L1-L4 expression checks are
+unaffected.
+
+**DEFERRED -- reference-ORF dosage (CNV).** The old presence path was also (buggily) the
+only place reference-ORF copy-number reached the record; the clean fix drops it. ~102
+present reference ORFs/isolate carry |CN-1|>0.5. Representing this properly needs
+`CopyNumberVariantPerturbation` + a dosage threshold, and **Peter 2018 gives no citable CNV
+cutoff** (raw coverage-ratio only), so per the never-guess-a-threshold rule this is a
+follow-up, not part of this fix. Sequence variants (~4,557/isolate) dominate the genotype,
+so the headline genotype-information counting is ~unchanged.
+
+**Downstream:** the genotype-side 018 analyses (`bit_accounting`, `verify_signal_composition`)
+and the `Signal (gzip)` genotype block change (fewer, differently-typed perturbations);
+`differential_expression_comparison` / expression figures are phenotype-based and unchanged.
+
+**Note on rebuild hygiene:** a partial rebuild that keeps `preprocess/` must also clear the
+stale `experiment_reference_index.json` (pre-WS15 dense format, 2026-07-10 redesign) or
+`ExperimentReferenceIndex.from_stored` raises; a full `processed` + regenerable-`preprocess`
+clear (keeping only `sequence_variants.parquet`) rebuilds cleanly.

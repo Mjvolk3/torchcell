@@ -198,8 +198,16 @@ def _orf_to_s288c(orf_id: str) -> str | None:
     reference ORFs (``1834-YAL063C`` -> ``YAL063C``) and an assembly id otherwise
     (``1-EC1118_1F14_0012g`` -> None). Residual ``.`` (from mangled ``-B`` suffixes) is
     restored before the pattern test.
+
+    A ``_NumOfGenes_N`` suffix marks a pangenome ORF that collapses N paralogous copies
+    of a gene into one cluster (``1771-YAL005C_NumOfGenes_3`` -> ``YAL005C``). These ARE
+    reference genes -- 793 of them -- so we strip the suffix and map the cluster to its
+    S288C name. This conflates paralogs for the presence/absence question (the cluster is
+    present iff any copy is), which is the right granularity here; every reference name
+    maps from exactly one pangenome column, so no de-duplication is needed.
     """
     suffix = re.sub(r"^\d+-", "", orf_id).replace(".", "-")
+    suffix = re.sub(r"_NumOfGenes_\d+$", "", suffix)
     return suffix if _S288C_RE.match(suffix) else None
 
 
@@ -341,7 +349,6 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
                     strain,
                     presence_vals[row],
                     copynumber_vals[row],
-                    core_mask,
                     s288c_mask,
                     orf_ids,
                     s288c_names,
@@ -529,23 +536,32 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
         strain: str,
         presence_row: np.ndarray,
         copynumber_row: np.ndarray,
-        core_mask: np.ndarray,
         s288c_mask: np.ndarray,
         orf_ids: list[str],
         s288c_names: list[str | None],
     ) -> tuple[
         list[NaturalGenePresencePerturbation], list[NaturalGeneAbsencePerturbation]
     ]:
-        """AXIS-1 presence/absence edits for one isolate from Peter's matrices.
+        """AXIS-1 presence/absence edits for one isolate, RELATIVE TO S288C.
 
-        Accessory ORF present -> a natural PRESENCE (with observed copy number); core ORF
-        absent -> a natural ABSENCE. These are NATURAL genome-content edits off S288C, NOT
-        engineered CNV (copy_number != 0 for present genes is a separate dosage axis). Every
-        absence is recorded -- an unmapped core ORF (no S288C systematic name) is kept by its
-        pangenome id, never dropped (a dropped absence would wrongly reconstruct as present).
+        Presence/absence vs S288C is a question of **reference membership** (is this ORF
+        in S288C?), NOT population frequency (is it in >=99% of isolates?). The two sets
+        differ -- a reference ORF can be variable, an accessory ORF can be near-ubiquitous
+        -- so both loops gate on ``s288c_mask`` (does the pangenome column map to an S288C
+        systematic name, paralog clusters included), never on a frequency ``core_mask``:
+
+        * non-reference ORF PRESENT -> a natural PRESENCE (S288C lacks it, the isolate has
+          it), with observed copy number;
+        * reference ORF ABSENT -> a natural ABSENCE (S288C has it, the isolate lost it).
+
+        A reference ORF present and an accessory ORF absent are BOTH no-ops vs S288C. The
+        earlier core/accessory gating silently dropped every *variable* reference ORF that
+        was absent (~133 per isolate), so those isolates reconstructed as if they still
+        carried the gene -- the exact failure the "never dropped" invariant forbids.
+        copy_number != 1 on a present gene is a separate dosage axis, not modelled here.
         """
         presence: list[NaturalGenePresencePerturbation] = []
-        for j in np.nonzero((~core_mask) & (presence_row == 1))[0]:
+        for j in np.nonzero((~s288c_mask) & (presence_row == 1))[0]:
             cn = copynumber_row[j]
             copy_number = float(cn) if np.isfinite(cn) and cn > 0 else 1.0
             orf_id = orf_ids[j]
@@ -561,9 +577,9 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
                 )
             )
         absence: list[NaturalGeneAbsencePerturbation] = []
-        for j in np.nonzero(core_mask & (presence_row == 0))[0]:
-            # Prefer the S288C systematic name; fall back to the pangenome id so no
-            # absence is ever dropped (the natural-absence validator accepts either).
+        for j in np.nonzero(s288c_mask & (presence_row == 0))[0]:
+            # s288c_mask guarantees a systematic name here; keep the pangenome-id fallback
+            # defensively so an absence is never dropped.
             name = s288c_names[j] or orf_ids[j]
             absence.append(
                 NaturalGeneAbsencePerturbation(

@@ -99,3 +99,31 @@ Median r = 0.599 is good for cross-platform comparisons, with variance from:
 python experiments/012-sameith-kemmeren/scripts/gene_by_gene_expression_correlation.py
 # Or: bash experiments/012-sameith-kemmeren/scripts/012-sameith-kemmeren.sh
 ```
+
+## 2026.07.15 - Reproduced on the sign-fixed Sameith (#72)
+
+Re-ran on the Sameith rebuild from the per-array dye-orientation fix (#72). "When both
+labs delete the same gene, do their genome-wide expression responses agree?" -- now
+**yes, clearly**, over the 82 single deletions measured by both:
+
+| statistic | fixed Sameith | buggy Sameith (pre-#72) |
+|---|---:|---:|
+| Pearson median r | **0.744** | 0.59 |
+| Pearson mean r | **0.666** | 0.42 |
+| Spearman median r | **0.791** | -- |
+| deletions with r > 0.5 | **82%** (67/82) | -- |
+| deletions with r > 0.7 | **57%** (47/82) | -- |
+| deletions with r > 0 | **98.8%** | -- |
+
+The 24% of Sameith arrays that were sign-flipped had been dragging the cross-lab
+correlation down (mean 0.42) and inflating the tail of low/negative r; with the fix the
+distribution collapses onto a tight high-positive cluster (one deletion remains negative
+at r~-0.75). This both **validates the #72 fix** and is a clean cross-lab reproducibility
+result: two independent Holstege-lab-pipeline microarray studies agree on the
+transcriptional response to a single deletion.
+
+Figure follows the repo palette + Nature standards (single-hue histogram -- one
+distribution; green-free; boxed; Arial 6 pt; `half` panel width; true-size SVG). The
+per-deletion numbers are in `experiments/012-sameith-kemmeren/results/gene_expression_correlations.csv`.
+
+![](assets/images/012-sameith-kemmeren-expression/gene_expression_correlation_dist_pearson.png)

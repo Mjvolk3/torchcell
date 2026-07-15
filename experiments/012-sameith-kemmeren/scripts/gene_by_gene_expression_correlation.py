@@ -15,23 +15,26 @@ This is different from comparing mean expression - we're asking:
 the entire genome in both studies?"
 """
 
+import logging
 import os
 import os.path as osp
-import numpy as np
+
 import matplotlib.pyplot as plt
-import seaborn as sns
-from scipy import stats
-from dotenv import load_dotenv
-from tqdm import tqdm
-import logging
+import numpy as np
 import pandas as pd
+from dotenv import load_dotenv
+from scipy import stats
+from tqdm import tqdm
 
 # Removed timestamp import - using stable filenames instead
-from torchcell.datasets.scerevisiae.kemmeren2014 import (
-    MicroarrayKemmeren2014Dataset,
-)
-from torchcell.datasets.scerevisiae.sameith2015 import (
-    SmMicroarraySameith2015Dataset,
+from torchcell.datasets.scerevisiae.kemmeren2014 import MicroarrayKemmeren2014Dataset
+from torchcell.datasets.scerevisiae.sameith2015 import SmMicroarraySameith2015Dataset
+from torchcell.utils import (
+    MAX_HEIGHT_MM,
+    PANEL_WIDTHS_MM,
+    PLOT_PALETTE,
+    mm_to_in,
+    savefig_true_size_svg,
 )
 
 # Load environment variables
@@ -45,14 +48,9 @@ SAMPLE_SIZE = int(os.getenv("SAMPLE_SIZE", "50"))
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
-
-# Color schemes
-KEMMEREN_COLOR = "#D0838E"
-SAMEITH_COLOR = "#53777A"
 
 
 def extract_expression_profiles(dataset, dataset_name, sample_range=None):
@@ -82,9 +80,7 @@ def extract_expression_profiles(dataset, dataset_name, sample_range=None):
         gene_deleted = perturbations[0]["systematic_gene_name"]
 
         # Get full expression profile (dict of {gene: log2_ratio})
-        expression_profile = data["experiment"]["phenotype"][
-            "expression_log2_ratio"
-        ]
+        expression_profile = data["experiment"]["phenotype"]["expression_log2_ratio"]
 
         # Remove NaN values
         expression_profile = {
@@ -130,9 +126,7 @@ def compute_gene_correlations(kemmeren_profiles, sameith_profiles):
         common_measured = kemmeren_measured & sameith_measured
 
         if len(common_measured) < 10:  # Need minimum genes for correlation
-            logger.warning(
-                f"{gene}: Only {len(common_measured)} common measured genes"
-            )
+            logger.warning(f"{gene}: Only {len(common_measured)} common measured genes")
             continue
 
         # Extract values for common genes
@@ -142,9 +136,7 @@ def compute_gene_correlations(kemmeren_profiles, sameith_profiles):
 
         # Compute correlations
         pearson_r, pearson_p = stats.pearsonr(kemmeren_values, sameith_values)
-        spearman_r, spearman_p = stats.spearmanr(
-            kemmeren_values, sameith_values
-        )
+        spearman_r, spearman_p = stats.spearmanr(kemmeren_values, sameith_values)
 
         results.append(
             {
@@ -161,115 +153,100 @@ def compute_gene_correlations(kemmeren_profiles, sameith_profiles):
 
 
 def plot_correlation_distribution(df_corr, corr_type, output_prefix):
-    """
-    Publication-quality histogram with color-coded bars.
+    """Histogram of the per-deletion cross-study correlation, repo palette + standards.
 
-    Args:
-        df_corr: DataFrame with correlation results
-        corr_type: "pearson" or "spearman"
-        output_prefix: Prefix for output file
-
-    Displays:
-    - Histogram with bars colored by correlation value
-    - Summary statistics in top left corner
+    One distribution (the 82 per-deletion correlations), so a single hue -- ``PLOT_PALETTE``
+    slot 0. Green-free (the old red->white->green gradient violated the palette). Boxed
+    axes, Arial 6 pt, ``half`` panel width, true-size SVG for draw.io + a 300-dpi PNG.
     """
     logger.info(f"Creating {corr_type} correlation distribution plot")
-
-    # Select appropriate column
     r_col = f"{corr_type}_r"
 
-    # Use torchcell style
-    plt.style.use('torchcell/torchcell.mplstyle')
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    # Create histogram with color gradient based on correlation value
-    bins = np.linspace(-1, 1, 31)  # 30 bins
-    counts, edges = np.histogram(df_corr[r_col], bins=bins)
-
-    # Color map: negative (red) to positive (green) with white at 0
-    from matplotlib.colors import to_rgb
-
-    # Use torchcell colors for negative/positive
-    neg_color = np.array(to_rgb('#B73C39'))  # Red from torchcell palette
-    pos_color = np.array(to_rgb('#6B8D3A'))  # Green from torchcell palette
-    white = np.array([1.0, 1.0, 1.0])
-
-    # Create color for each bin by interpolating RGB values
-    colors = []
-    for i in range(len(edges) - 1):
-        bin_center = (edges[i] + edges[i+1]) / 2
-        if bin_center < 0:
-            # Interpolate from white (at 0) to red (at -1)
-            t = abs(bin_center)  # 0 to 1
-            color = (1 - t) * white + t * neg_color
-            colors.append(tuple(color))
-        else:
-            # Interpolate from white (at 0) to green (at +1)
-            t = bin_center  # 0 to 1
-            color = (1 - t) * white + t * pos_color
-            colors.append(tuple(color))
-
-    # Plot bars with individual colors
-    ax.bar(edges[:-1], counts, width=np.diff(edges), align='edge',
-           edgecolor='black', linewidth=0.8, color=colors)
-
-    # Add vertical line at r=0
-    ax.axvline(x=0, color='#000000', linestyle='--', linewidth=1.5, alpha=0.5)
-
-    ax.set_xlabel(f"{corr_type.capitalize()} Correlation Coefficient (r)", fontsize=14, weight='bold')
-    ax.set_ylabel("Number of Genes", fontsize=14, weight='bold')
-    ax.set_title(
-        f"Cross-Study Expression Profile Correlation\n"
-        f"Kemmeren 2014 vs Sameith 2015",
-        fontsize=16,
-        weight='bold',
-        pad=20
+    plt.rcParams.update(
+        {
+            "font.family": "sans-serif",
+            "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
+            "font.size": 6,
+            "axes.titlesize": 6,
+            "axes.labelsize": 6,
+            "xtick.labelsize": 6,
+            "ytick.labelsize": 6,
+            "svg.fonttype": "none",
+            "axes.linewidth": 0.5,
+        }
     )
-    ax.set_xlim(-1, 1)
-    ax.grid(axis="y", alpha=0.3, linestyle=':', linewidth=0.8)
+    color = PLOT_PALETTE[0]  # orange
+    ink = "#000000"
 
-    # Summary stats - TOP LEFT
+    w = mm_to_in(PANEL_WIDTHS_MM["half"])
+    fig, ax = plt.subplots(
+        figsize=(w, min(w * 0.72, mm_to_in(MAX_HEIGHT_MM))), constrained_layout=True
+    )
+
+    # correlations are all positive here (median ~0.74); a single-hue histogram is honest.
+    ax.hist(
+        df_corr[r_col],
+        bins=np.linspace(-1, 1, 41),
+        color=color,
+        edgecolor=ink,
+        linewidth=0.25,
+    )
     median_r = df_corr[r_col].median()
-    mean_r = df_corr[r_col].mean()
-    std_r = df_corr[r_col].std()
-    n_total = len(df_corr)
-    n_strong = (df_corr[r_col].abs() > 0.7).sum()
-    n_moderate = ((df_corr[r_col].abs() > 0.5) & (df_corr[r_col].abs() <= 0.7)).sum()
+    ax.axvline(median_r, color=ink, linestyle="--", linewidth=1.0)
+    ax.axvline(0, color="#4A4A4A", linestyle=":", linewidth=0.6)
 
-    stats_text = (
-        f"n = {n_total} gene deletions\n"
-        f"Median r = {median_r:.3f}\n"
-        f"Mean r = {mean_r:.3f} ± {std_r:.3f}\n"
-        f"|r| > 0.7: {n_strong} ({100*n_strong/n_total:.1f}%)\n"
-        f"|r| > 0.5: {n_strong + n_moderate} ({100*(n_strong + n_moderate)/n_total:.1f}%)"
+    # headroom + median label
+    lo, hi = ax.get_ylim()
+    ax.set_ylim(lo, hi * 1.25)
+    ax.annotate(
+        f"median r = {median_r:.2f}",
+        xy=(median_r, ax.get_ylim()[1] * 0.9),
+        xytext=(4, 0),
+        textcoords="offset points",
+        color=ink,
+        fontsize=6,
     )
 
-    # Place in top left with box
-    ax.text(
-        0.02,  # Top left corner
-        0.98,
-        stats_text,
-        transform=ax.transAxes,
-        fontsize=11,
-        verticalalignment="top",
-        horizontalalignment="left",
-        bbox=dict(boxstyle='round', facecolor='white', alpha=0.95, edgecolor='#666666', linewidth=1.2),
-        fontfamily='sans-serif',
-        fontweight='normal'
+    ax.set_xlabel(f"{corr_type.capitalize()} r  (Kemmeren vs Sameith, per deletion)")
+    ax.set_ylabel("gene deletions")
+    ax.set_xlim(-1, 1)
+    for s in ("top", "right", "left", "bottom"):
+        ax.spines[s].set_visible(True)
+        ax.spines[s].set_color(ink)
+        ax.spines[s].set_linewidth(0.5)
+    ax.tick_params(colors=ink, width=0.5, length=2)
+    ax.grid(True, alpha=0.15, linewidth=0.4, color="#4A4A4A")
+    ax.set_axisbelow(True)
+
+    n = len(df_corr)
+    n5 = int((df_corr[r_col] > 0.5).sum())
+    n7 = int((df_corr[r_col] > 0.7).sum())
+    ax.annotate(
+        f"n = {n} deletions\nmean r = {df_corr[r_col].mean():.2f}\n"
+        f"r > 0.5: {100 * n5 / n:.0f}%\nr > 0.7: {100 * n7 / n:.0f}%",
+        xy=(0.03, 0.97),
+        xycoords="axes fraction",
+        va="top",
+        ha="left",
+        fontsize=6,
+        color=ink,
+    )
+    fig.suptitle(
+        "Two labs' expression profiles for the same deletion agree",
+        x=0.005,
+        ha="left",
+        fontsize=7,
+        color=ink,
     )
 
-    plt.tight_layout()
-
-    # Save (no timestamp - stable filenames for documentation)
     output_dir = osp.join(ASSET_IMAGES_DIR, "012-sameith-kemmeren-expression")
     os.makedirs(output_dir, exist_ok=True)
-
     png_path = osp.join(output_dir, f"{output_prefix}_{corr_type}.png")
-    plt.savefig(png_path, dpi=300, bbox_inches="tight", facecolor='white')
-    logger.info(f"✓ Saved PNG: {png_path}")
-
+    svg_path = osp.join(output_dir, f"{output_prefix}_{corr_type}.svg")
+    fig.savefig(png_path, dpi=300, facecolor="white")
+    savefig_true_size_svg(fig, svg_path, facecolor="white")
+    logger.info(f"✓ Saved: {png_path}")
     plt.close()
-    plt.style.use('default')  # Reset style
 
 
 def main():
@@ -286,8 +263,7 @@ def main():
     logger.info("\n--- Loading Datasets ---")
 
     kemmeren = MicroarrayKemmeren2014Dataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/microarray_kemmeren2014"),
-        io_workers=0,
+        root=osp.join(DATA_ROOT, "data/torchcell/microarray_kemmeren2014"), io_workers=0
     )
     logger.info(f"Loaded Kemmeren2014: {len(kemmeren)} experiments")
 
@@ -344,13 +320,15 @@ def main():
 
     # Create visualizations
     logger.info("\n--- Creating Visualizations ---")
-    plot_correlation_distribution(df_corr, "pearson", "gene_expression_correlation_dist")
-    plot_correlation_distribution(df_corr, "spearman", "gene_expression_correlation_dist")
+    plot_correlation_distribution(
+        df_corr, "pearson", "gene_expression_correlation_dist"
+    )
+    plot_correlation_distribution(
+        df_corr, "spearman", "gene_expression_correlation_dist"
+    )
 
     # Save correlation data (no timestamp - stable filenames for documentation)
-    output_dir = osp.join(
-        os.getenv("EXPERIMENT_ROOT"), "012-sameith-kemmeren/results"
-    )
+    output_dir = osp.join(os.getenv("EXPERIMENT_ROOT"), "012-sameith-kemmeren/results")
     os.makedirs(output_dir, exist_ok=True)
 
     csv_path = osp.join(output_dir, "gene_expression_correlations.csv")

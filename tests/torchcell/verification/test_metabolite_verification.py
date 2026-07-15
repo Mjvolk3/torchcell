@@ -103,7 +103,7 @@ def test_duplicate_orf_fails_uniqueness():
     report = verify_metabolite_dataset(
         records, dataset_name="dup", provenance=PROV, expected_count=4
     )
-    u = [r for r in report.results if r.name == "orf_uniqueness"]
+    u = [r for r in report.results if r.name == "genotype_uniqueness"]
     assert u and not u[0].passed
 
 

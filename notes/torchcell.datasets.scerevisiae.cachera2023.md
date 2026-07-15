@@ -80,7 +80,7 @@ From `torchcell-library/cacheraCRISPAHighthroughputMethod2023/paper.md` (MinerU 
   of the ingested `GA1_2_4_6.csv`). Our mirror has the composition + locus; the
   plasmid sequences are the remaining external dig.
 
-### Heterologous-cassette perturbation -- DESIGN SIGN-OFF PENDING
+### Heterologous-cassette perturbation -- DESIGN ADOPTED (see 2026.07.15 below)
 
 Same schema gap + three-option decision as documented in
 `[[torchcell.datasets.scerevisiae.ozaydin2013]]` (recommendation = per-gene
@@ -88,7 +88,8 @@ Same schema gap + three-option decision as documented in
 `chromosomal_integration` localization + a `locus="XII-5"` value, and the native
 feedback-resistant alleles (ARO4^K229L / ARO7^G141S) are the concrete case for the
 "native extras" sub-decision (new addition type flagged native vs reuse
-`AllelePerturbation`).
+`AllelePerturbation`). **Resolved (2026.07.15):** recommendation A is implemented in
+`cachera2023.py::_betaxanthin_cassette` -- see the dated section below.
 
 ### 2026.07.05 - Plasmid availability (answer: YES, GenBank maps provided)
 
@@ -112,3 +113,54 @@ Verified by web research (do they provide the plasmid so it can be downloaded?):
 - Upstream heterologous parts ARE on Addgene (e.g. `pL0-BvCYP76AD1` #162529, a MoClo
   L0 part; DOD from the DeLoache 2015 betaxanthin biosensor lineage), useful as
   cross-checks but they are PARTS, not the assembled pBTX1/pBTX2.
+
+## 2026.07.15 - Pre-adapter audit: gene-drop documentation + design adopted
+
+Pre-adapter cleanup ahead of the BioCypher/graph-DB rebuild
+([[plan.ozaydin-cachera-preadapter-cleanup.2026.07.15]]). The loader code is current and
+rebuilds clean: **4735 usable ORFs** (matches the paper's ~4800-strain / 4761-gene
+genome-wide CRI-SPA screen; the data is the authors' `GA1_2_4_6.csv`, not a PDF selection).
+
+### Unresolved gene names -- 5 dropped, by design (NOT backfilled)
+
+`process()` resolves source common names to systematic ORF ids via the injected
+`SCerevisiaeGenome`; 5 names do not resolve and are dropped (never guessed into an ORF):
+
+- `WT` -- wild-type control row, correctly excluded.
+- `YLR287-A` -- malformed systematic id (missing the trailing W/C), excluded.
+- **`AAD6`, `CRS5`, `FLO8`** -- real *S. cerevisiae* genes (Aad6 aryl-alcohol
+  dehydrogenase; Crs5 copper metallothionein; Flo8 flocculation TF). Their SGD systematic
+  ids **YFL056C / YOR031W / YER109C are absent from the reference `gene_set` (6607)** used
+  to build the cell graph, so admitting these 3 records would create perturbations pointing
+  at gene nodes that do not exist in the KG (orphaned references).
+
+**Decision: document, do NOT backfill.** Injecting an alias map to force these in would
+(a) require guessing/sourcing systematic ids (against the no-guess rule) and (b) orphan
+gene nodes downstream. Dropping is the graph-safe, provenance-correct behavior. Net loss
+is **3 records / 4735** (0.06%). The `process()` log now prints the full unresolved list
+(not a truncated sample) so the drop is auditable. **Follow-up:** revisit if the reference
+genome annotation is updated to include YFL056C/YOR031W/YER109C, at which point these 3
+strains can be admitted with valid gene nodes. This same alias-map behavior affects other
+common-name loaders (Sameith, caudal2024) and may warrant a central fix.
+
+Additionally, **20 ORF collisions are deduped (first-kept)**: distinct source names that
+alias to the same systematic ORF keep the first occurrence; the rest are logged and
+skipped (already existing behavior, called out here for the rebuild audit).
+
+### Cassette-perturbation design -- ADOPTED (recommendation A)
+
+The three-option decision (see the PENDING section above, now resolved) is settled and
+**implemented in code**: each cassette gene is a per-gene `GeneAdditionPerturbation` in the
+genotype's `perturbations` list with `localization="chromosomal_integration"`,
+`integration_locus="XII-5"`, `source_organism`, `construct_name="Btx-cassette"`. The native
+feedback-resistant alleles **ARO4^K229L (YBR249C) / ARO7^G141S (YPR060C)** are carried as
+`variant="K229L"` / `"G141S"` on `GeneAdditionPerturbation` -- NOT as `AllelePerturbation` --
+because they are integrated ectopically at XII-5, not edited at the native locus. So the
+Cachera genotype is `{kanmx_deletion: 1, gene_addition: 4}` (deletion + CYP76AD1 + DOD +
+ARO4^K229L + ARO7^G141S; the natMX marker is omitted as a non-betaxanthin gene).
+
+### Rebuild note
+
+The on-disk canonical LMDB predated the required `Media.is_synthetic` field and failed
+schema round-trip; it was rebuilt in place under `$DATA_ROOT` as part of this cleanup.
+sha256 verification of `GA1_2_4_6.csv` (`DATA_SHA256`) was added to `download()`.

@@ -22,6 +22,7 @@ source are COMMON names, so a genome is required to resolve them to systematic O
 (same pattern as Sameith); unresolved names + control/NaN rows are excluded and logged.
 """
 
+import hashlib
 import logging
 import math
 import os
@@ -119,6 +120,11 @@ def _betaxanthin_cassette() -> list[GeneAdditionPerturbation]:
 # Gene-level corrected+filtered dataset (replicates 1/2/4/6) from the CRI-SPA repo.
 DATA_URL = "https://raw.githubusercontent.com/pc2912/CRI-SPA_repo/main/GA1_2_4_6.csv"
 DATA_FILENAME = "GA1_2_4_6.csv"
+# Pinned sha256 of GA1_2_4_6.csv (role si_data in the library manifest:
+# torchcell-library/cacheraCRISPAHighthroughputMethod2023/manifest.json). The stored
+# artifact + this hash is canonical, NOT the live GitHub URL; verified on download so
+# upstream drift is detected rather than silently followed.
+DATA_SHA256 = "71f55609067301e1430a1ab3226618c46428488753c6412603e8f0c21bbcac8a"
 _LEVEL = "corrected_mean_intensity.24_mean"
 _STD = "corrected_mean_intensity.24_std"
 _COUNT = "corrected_mean_intensity.24_count"
@@ -157,9 +163,21 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
         return [DATA_FILENAME]
 
     def download(self) -> None:
-        """Download the gene-level CRI-SPA dataset from the authors' GitHub repo."""
+        """Download the gene-level CRI-SPA dataset from the authors' GitHub repo.
+
+        The stored artifact's sha256 is canonical: an already-present file is verified
+        against ``DATA_SHA256`` rather than trusted, and a freshly downloaded file is
+        verified before use. A mismatch means upstream drift or corruption and raises
+        (never silently followed).
+        """
         dest = osp.join(self.raw_dir, DATA_FILENAME)
         if osp.exists(dest):
+            digest = hashlib.sha256(open(dest, "rb").read()).hexdigest()
+            if digest != DATA_SHA256:
+                raise RuntimeError(
+                    f"CRI-SPA data sha256 mismatch for {dest}: got {digest}, "
+                    f"expected {DATA_SHA256}"
+                )
             return
         os.makedirs(self.raw_dir, exist_ok=True)
         log.info("Downloading CRI-SPA data from %s", DATA_URL)
@@ -168,9 +186,15 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
             data = resp.read()
         if len(data) < 10000:
             raise RuntimeError(f"CRI-SPA download too small: {len(data)} bytes")
+        digest = hashlib.sha256(data).hexdigest()
+        if digest != DATA_SHA256:
+            raise RuntimeError(
+                f"CRI-SPA data sha256 mismatch on download: got {digest}, "
+                f"expected {DATA_SHA256}"
+            )
         with open(dest, "wb") as handle:
             handle.write(data)
-        log.info("Wrote %s (%d bytes)", dest, len(data))
+        log.info("Wrote %s (%d bytes, sha256 verified)", dest, len(data))
 
     def _resolve_systematic(self, gene: str) -> str | None:
         """Resolve a source gene name (common or systematic) to a systematic ORF id."""
@@ -224,13 +248,19 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
             rows.append(
                 {"orf": systematic, "level": float(level), "se": se, "n": max(count, 1)}
             )
+        # Unresolved names are dropped by design (never guessed into an ORF): 'WT' is a
+        # control and 'YLR287-A' is a malformed id, but AAD6/CRS5/FLO8 are REAL genes whose
+        # systematic ids (YFL056C/YOR031W/YER109C) are absent from the reference gene_set,
+        # so admitting them would orphan gene nodes in the KG. Log the full list (there are
+        # only a handful) rather than a truncated sample so the drop is auditable. See
+        # [[torchcell.datasets.scerevisiae.cachera2023]] for the standing follow-up.
         log.info(
-            "Cachera: %d usable ORFs, %d control/NaN rows, %d unresolved names (e.g. %s), "
+            "Cachera: %d usable ORFs, %d control/NaN rows, %d unresolved names dropped %s, "
             "%d ORF collisions deduped",
             len(rows),
             n_control_or_nan,
             len(unresolved),
-            sorted(unresolved)[:5],
+            sorted(unresolved),
             len(collisions),
         )
         pd.DataFrame(rows).to_csv(

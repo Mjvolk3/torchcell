@@ -95,7 +95,7 @@ From `torchcell-library/ozaydinCarotenoidbasedPhenotypicScreen2013a/paper.md`
   (enough to name genes + localization for the schema); the backbone SEQUENCE is
   the remaining external dig.
 
-### Heterologous-cassette perturbation -- DESIGN SIGN-OFF STILL PENDING
+### Heterologous-cassette perturbation -- DESIGN ADOPTED (Option A; see 2026.07.15 below)
 
 The schema has only loss-of-function perturbations (Deletion/Damp/Allele/Ts/
 Suppressor), all subclassing `GenePerturbation` whose `systematic_gene_name`
@@ -141,3 +141,31 @@ Verified by web research (do they provide the plasmid so it can be downloaded?):
 - Net: Ozaydin's "plasmid-as-raw" is a MANUAL reconstruction/deposit job (no direct
   download), unlike Cachera where a GenBank map exists. Both still end at our mirror
   with sha256 provenance; only the retrieval recipe differs (reconstruct vs download).
+
+## 2026.07.15 - Pre-adapter audit: design adopted + sha256 + rebuild
+
+Pre-adapter cleanup ahead of the graph-DB rebuild
+([[plan.ozaydin-cachera-preadapter-cleanup.2026.07.15]]). Loader is current and rebuilds
+clean: **4474 usable ORFs** (Sheet 1 whole-collection screen; text-only/malformed rows
+excluded and logged -- this is the full screen, not a PDF selection).
+
+### Cassette-perturbation design -- ADOPTED (Option A)
+
+The three-option decision above is settled and **implemented in code**
+(`ozaydin2013.py::_carotenogenic_cassette`): the YB/I/BTS1 chassis is three per-gene
+`GeneAdditionPerturbation`s in the genotype `perturbations` list --
+`crtYB` + `crtI` (`is_heterologous=True`, `source_organism="Xanthophyllomyces
+dendrorhous"`) and native `BTS1`/YPL069C (`is_heterologous=False`) -- all with
+`localization="episomal_2micron"`, `construct_name="YB/I/BTS1"`. The native-extras
+sub-decision resolved to: **model native additions with the same `GeneAdditionPerturbation`
+type flagged `is_heterologous=False`** (BTS1 here; Cachera's ARO4^K229L/ARO7^G141S use the
+same type with `variant=`), NOT a separate native-addition type and NOT `AllelePerturbation`
+(these are extra/ectopic copies, not native-locus edits). So the Ozaydin genotype is
+`{kanmx_deletion: 1, gene_addition: 3}`. `plasmid_contig_id`/`locus_tag` stay `None` until
+the plasmid-sequence store lands (Ozaydin plasmid is physical-only, reconstruct-from-parts).
+
+### sha256 + rebuild
+
+Added `_SI_SHA256` pin + verification to `download()` (the stored SI is canonical, not the
+Elsevier URL). The on-disk canonical LMDB predated the required `Media.is_synthetic` field
+and failed schema round-trip; rebuilt in place under `$DATA_ROOT` as part of this cleanup.

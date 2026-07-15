@@ -23,6 +23,7 @@ text-only rows (`pet`, `tiny`, `_`) carry no usable measurement and are excluded
 (counted + logged, never silently dropped).
 """
 
+import hashlib
 import logging
 import os
 import os.path as osp
@@ -65,6 +66,12 @@ SCORE_SEMANTICS = (
     "higher = more orange/red colony = more carotenoid (beta-carotene) accumulation"
 )
 TARGET_PRODUCT = "beta-carotene"
+
+# Pinned sha256 of the SI spreadsheet (role si_data in the library manifest:
+# torchcell-library/ozaydinCarotenoidbasedPhenotypicScreen2013a/manifest.json).
+# The stored artifact + this hash is canonical, NOT the live URL; we verify on
+# download and refuse to silently follow upstream drift.
+_SI_SHA256 = "4818726e352ead3cb739fd9becf08a0c04d14b8a8761732184214344447507f0"
 
 
 # The constant engineered background: every screened strain carries the carotenogenic
@@ -174,9 +181,21 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
         return [self.si_filename]
 
     def download(self) -> None:
-        """Download the SI spreadsheet from the Elsevier ESM (scriptable direct URL)."""
+        """Download the SI spreadsheet from the Elsevier ESM (scriptable direct URL).
+
+        The stored artifact's sha256 is canonical: an already-present file is verified
+        against ``_SI_SHA256`` rather than trusted, and a freshly downloaded file is
+        verified before use. A mismatch means upstream drift or corruption and raises
+        (never silently followed).
+        """
         dest = osp.join(self.raw_dir, self.si_filename)
         if osp.exists(dest):
+            digest = hashlib.sha256(open(dest, "rb").read()).hexdigest()
+            if digest != _SI_SHA256:
+                raise RuntimeError(
+                    f"Ozaydin SI sha256 mismatch for {dest}: got {digest}, "
+                    f"expected {_SI_SHA256}"
+                )
             return
         os.makedirs(self.raw_dir, exist_ok=True)
         log.info("Downloading Ozaydin SI from %s", self.si_url)
@@ -185,9 +204,15 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
             data = resp.read()
         if len(data) < 10000:
             raise RuntimeError(f"Ozaydin SI download too small: {len(data)} bytes")
+        digest = hashlib.sha256(data).hexdigest()
+        if digest != _SI_SHA256:
+            raise RuntimeError(
+                f"Ozaydin SI sha256 mismatch on download: got {digest}, "
+                f"expected {_SI_SHA256}"
+            )
         with open(dest, "wb") as handle:
             handle.write(data)
-        log.info("Wrote %s (%d bytes)", dest, len(data))
+        log.info("Wrote %s (%d bytes, sha256 verified)", dest, len(data))
 
     def _aggregate_by_orf(self) -> pd.DataFrame:
         """Read Sheet 1, aggregate replicate rows to one row per ORF."""

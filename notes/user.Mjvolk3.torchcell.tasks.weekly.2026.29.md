@@ -20,3 +20,7 @@ created: 1783986627743
 - [ ] Re-examine the SVR interaction fits at random (d=1000), where a CV s.d. of 0.383 against a mean of 0.458 sits in the same cell that produced a diverged MSE #medium [[experiments.smf-dmf-tmf-001.traditional_ml-summary_table]]
 - [ ] Commit the gilahyper phenotype/gzip script so the phenotype-dataset and integrated-graph tables come from a script instead of a hand transcription; they are the last numbers in the paper without a generating script, and one of them is sourced from a scratch note #high [[paper.information-accounting]]
 - [ ] Reconcile the paper-facing classical-ML plot script with the new figure standard, since its PNG output conflicts with the palette SVG route that now feeds the classical-ML figure #medium [[experiments.smf-dmf-tmf-001.traditional_ml-plot_paper]]
+
+## 2026.07.15
+
+- [ ] Pre-adapter cleanup + canonical rebuild for the β-carotene (Ozaydin 2013) and betaxanthin (Cachera 2023) datasets before BioCypher adapters: fix stale metabolite-verifier test, add sha256 verification to both loaders, document the intentional Cachera gene-drop (AAD6/CRS5/FLO8), add build-smoke tests, rebuild both stale LMDBs, promote the adopted cassette design in the notes #high [[plan.ozaydin-cachera-preadapter-cleanup.2026.07.15]]

@@ -199,6 +199,7 @@ ignore_errors = true
 [tool.pytest.ini_options]
 markers = [
     "gpu: requires a CUDA device; deselected on CPU-only CI via -m 'not gpu'",
+    "slow: builds a full dataset from $DATA_ROOT mirror files (skipped when absent); deselect via -m 'not slow'",
 ]
 
 [tool.coverage.run]

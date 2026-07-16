@@ -25,10 +25,16 @@ first surfacing what it is and why it's being retired.
 ## The graveyard
 
 - Default: `/tmp/torchcell-deprecated` (a GilaHyper path; also a folder in the VS Code
-  workspace so you can see things arrive).
-- Override with `DEPRECATED_DIR` for a **same-filesystem** move of large data (e.g. an LMDB
-  under `$DATA_ROOT` -- keeping the move on `/scratch` avoids a cross-filesystem copy):
-  `DEPRECATED_DIR=$DATA_ROOT/torchcell-deprecated /deprecate <path> "reason"`.
+  workspace so you can see things arrive). Good for small builds; `/tmp` is on the root fs.
+- **Large data on `/scratch`** (e.g. a multi-GB LMDB under `$DATA_ROOT`): override with the
+  **sibling** graveyard so the move is an instant same-filesystem rename:
+  `DEPRECATED_DIR=/scratch/projects/torchcell-deprecated /deprecate <path> "reason"`.
+- **SAFETY -- the graveyard must NOT live inside `$DATA_ROOT`.** Use the sibling
+  `/scratch/projects/torchcell-deprecated`, NEVER `$DATA_ROOT/torchcell-deprecated`. Nesting
+  the graveyard inside the data root means a later hand `rm -rf` that accidentally drops the
+  final `torchcell-deprecated` component lands on `$DATA_ROOT` and wipes ALL data. The
+  graveyard and the data root must diverge ABOVE the data (they are siblings, sharing only
+  `/scratch/projects`). The script refuses a `DEPRECATED_DIR` inside `$DATA_ROOT`.
 - **Nothing is auto-deleted.** Purging the graveyard is a manual, periodic chore (yours).
 
 ## Steps
@@ -40,7 +46,7 @@ first surfacing what it is and why it's being retired.
    ```bash
    bash scripts/deprecate.sh <path> "<why it is being retired>"
    # large data on /scratch:
-   DEPRECATED_DIR="$DATA_ROOT/torchcell-deprecated" bash scripts/deprecate.sh <path> "<why>"
+   DEPRECATED_DIR=/scratch/projects/torchcell-deprecated bash scripts/deprecate.sh <path> "<why>"
    ```
    The script resolves the absolute source path, creates `"$GRAVEYARD/<timestamp>__<name>/"`,
    writes `DEPRECATION.txt` (original path, timestamp, host, user, git HEAD, size, reason),

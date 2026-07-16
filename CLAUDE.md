@@ -551,6 +551,18 @@ is silently reused otherwise). Verifiers may **read** the `database/...` LMDB an
 their report back to the writable `data/...` tree (e.g. the morphology verifier) -- source
 vs report paths are deliberately separate.
 
+**Rebuild policy -- the WHOLE `database/data/...` tree is remade in one full build run (for
+now).** We do NOT incrementally rebuild individual datasets under `database/data/...` when a
+loader changes. Instead, **everything under `$DATA_ROOT/database/data/...` is remade as part
+of the entire database build run** -- the full KG build re-processes every dataset from
+scratch. This is deliberately inefficient: the goal right now is a **reliable start-to-end
+rebuild-from-scratch**, so we gain confidence the whole thing can be reconstructed
+deterministically before we optimize. So when a loader lands (e.g. the morphology resolver
+migration), the follow-up is "the next full database build run picks it up," NOT "clear just
+that one `database/data/<dataset>`." Once the end-to-end rebuild is trusted, we can move to
+smaller/incremental rebuilds; until then, assume any `database/data/...` change means a full
+rebuild.
+
 **`EXPERIMENT_ROOT`**
 
 This is what a typical experiment looks like. There is configuration in `conf/` that parameterizes experiements written in `scripts`. Slurm scripts are also in scripts and they typically have matching names with their experiments. Inside naming is also typically a designation of which slurm machine or partition a given scripts belongs to. We try to copy slurm scripts are typically numbered in a fashion that matches yamls to have a very transparaent experiment ecosystem. If we are running sweeps with optuna or wandb. we break from this pattern because we only need one config specifying the script - so we can many outputs for one script instead of one-to-one. Sometimes we inspect models here and dump `profile_results/`. `slurm/outputs` is resereved for concatenated slurm output and error. `queries/` holds the queries that the experiment used for the study.

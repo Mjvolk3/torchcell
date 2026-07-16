@@ -38,7 +38,7 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae import GeneNameStatus, SCerevisiaeGenome
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -269,6 +269,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         self.resolved_by_excel = 0
         self.resolved_by_gene_table = 0
         self.resolved_by_alias = 0
+        self.resolved_by_shared_reconciler = 0
         self.unresolved_genes = 0
 
         # Load mating type information from supplementary table
@@ -478,11 +479,15 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         log.info(f"Resolved by Excel mapping: {self.resolved_by_excel}")
         log.info(f"Resolved by gene_attribute_table: {self.resolved_by_gene_table}")
         log.info(f"Resolved by alias_to_systematic: {self.resolved_by_alias}")
+        log.info(
+            f"Resolved by shared R64 reconciler: {self.resolved_by_shared_reconciler}"
+        )
         log.info(f"Could not resolve: {self.unresolved_genes}")
         total_attempts = (
             self.resolved_by_excel
             + self.resolved_by_gene_table
             + self.resolved_by_alias
+            + self.resolved_by_shared_reconciler
             + self.unresolved_genes
         )
         log.info(f"Total resolution attempts: {total_attempts}")
@@ -1816,6 +1821,26 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             log.info(f"Using {gene_upper} directly (found in Excel)")
             self.resolved_by_excel += 1
             return gene_upper
+
+        # Pass 7: Shared R64 reconciler (SCerevisiaeGenome.resolve_gene_name, PR #98).
+        # The passes above filter alias hits by Excel membership (systematic_to_strain),
+        # which drops valid one-to-one aliases whose systematic id is not an Excel strain
+        # key (e.g. CDK8 -> YPL042C, the Mediator/CDK-module common names). The shared
+        # reconciler is the ONE source->R64 resolver designed to RETAIN such records; we
+        # accept only a definite live gene (CURRENT / RENAMED) so ambiguous / retired names
+        # still fall through to review rather than being silently invented.
+        if hasattr(genome, "resolve_gene_name"):
+            res = genome.resolve_gene_name(gene_name)
+            if (
+                res.status in (GeneNameStatus.CURRENT, GeneNameStatus.RENAMED)
+                and res.systematic_name is not None
+            ):
+                log.info(
+                    f"Resolved {gene_name} -> {res.systematic_name} via shared R64 "
+                    f"reconciler ({res.status})"
+                )
+                self.resolved_by_shared_reconciler += 1
+                return res.systematic_name
 
         # Final: Cannot resolve
         log.info(f"Cannot resolve {gene_name} - not in genome annotations or Excel")

@@ -92,7 +92,11 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.sequence.genome.scerevisiae import GeneNameStatus, SCerevisiaeGenome
+from torchcell.datasets.scerevisiae.gene_name_reconcile import (
+    default_genome,
+    reconcile_systematic_names,
+)
+from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -114,14 +118,6 @@ _RAW_FILES: dict[str, dict[str, str]] = {
 
 # Library mirror holding the sha256-pinned raw matrices (relative to DATA_ROOT).
 _MIRROR_DIR = "torchcell-library/ohyaHighdimensionalLargescalePhenotyping2005a/data"
-
-# Statuses whose resolved systematic id is a valid R64 identifier we prefer over the legacy
-# 2005 name (a live gene, or a valid non-"gene" feature such as a blocked_reading_frame).
-_REMAP_STATUSES = (
-    GeneNameStatus.CURRENT,
-    GeneNameStatus.RENAMED,
-    GeneNameStatus.NON_GENE_FEATURE,
-)
 
 
 @register_dataset
@@ -268,8 +264,10 @@ class ScmdOhya2005Dataset(ExperimentDataset):
             )
         df_mutant = df_mutant[has_all].reset_index(drop=True)
 
-        df_mutant["systematic_gene_name"] = self._reconcile_orf_names(
-            df_mutant["systematic_gene_name"]
+        if self.genome is None:
+            self.genome = default_genome()
+        df_mutant["systematic_gene_name"] = reconcile_systematic_names(
+            self.genome, df_mutant["systematic_gene_name"], label="Ohya 2005"
         )
         df_mutant["perturbed_gene_name"] = df_mutant["systematic_gene_name"]
 
@@ -278,67 +276,6 @@ class ScmdOhya2005Dataset(ExperimentDataset):
             len(df_mutant),
         )
         return df_mutant
-
-    def _reconcile_orf_names(self, names: pd.Series) -> pd.Series:
-        """Map 2005 ORF names to current R64 ids via the genome resolver (retain-all).
-
-        Collision-safe: a remap is applied only when its target is not already claimed by
-        another strain in the screen; otherwise the original 2005 name is kept so merged
-        2005 ORFs remain distinct records. Nothing is dropped.
-        """
-        from collections import Counter
-
-        if self.genome is None:
-            data_root = os.environ["DATA_ROOT"]
-            self.genome = SCerevisiaeGenome(
-                genome_root=osp.join(data_root, "data/sgd/genome"),
-                go_root=osp.join(data_root, "data/go"),
-                overwrite=False,
-            )
-        genome = self.genome
-
-        resolutions = {name: genome.resolve_gene_name(name) for name in names.unique()}
-        # Proposed identifier: the resolved R64 id when it is a valid identifier, else the
-        # original 2005 name (retired/ambiguous names are retained verbatim).
-        proposed = {
-            name: (
-                res.systematic_name
-                if res.status in _REMAP_STATUSES and res.systematic_name is not None
-                else name
-            )
-            for name, res in resolutions.items()
-        }
-        # Collision guard: if a proposed id is claimed by >1 source ORF (an SGD merge of two
-        # distinct 2005 strains), keep BOTH originals so the strains stay distinct records.
-        proposed_counts = Counter(proposed.values())
-        final = {
-            name: (name if proposed_counts[prop] > 1 else prop)
-            for name, prop in proposed.items()
-        }
-
-        remapped = {n: f for n, f in final.items() if f != n}
-        by_status: dict[str, int] = {}
-        for res in resolutions.values():
-            by_status[res.status.value] = by_status.get(res.status.value, 0) + 1
-        collided = sorted(
-            n for n, prop in proposed.items() if proposed_counts[prop] > 1
-        )
-        retired = sorted(
-            n for n, r in resolutions.items() if r.status == GeneNameStatus.RETIRED
-        )
-        log.info(
-            "Ohya 2005 ORF reconciliation: %d unique names %s; %d remapped to current R64 "
-            "ids; %d kept as legacy names on merge-collision %s; %d retained as retired "
-            "legacy names %s",
-            len(resolutions),
-            by_status,
-            len(remapped),
-            len(collided),
-            collided,
-            len(retired),
-            retired,
-        )
-        return names.map(final)
 
     def _calculate_wt_reference(self, df_wt: pd.DataFrame) -> dict[str, Any]:
         """Aggregate the WT replicate averages into a per-feature mean reference."""

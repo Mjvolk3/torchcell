@@ -23,3 +23,13 @@ CalMorph morphology of the essential-gene HETEROZYGOUS diploid deletion collecti
   BY4743 **diploid**. Env YPD **25 C** liquid (log-phase; sourced verbatim).
 - Raw per-strain CalMorph averages (not z-scores); zero NaN; 0 ORFs dropped. Only the
   YPD/25 C arm built (SD/37 C poor-medium arm has no released matrix).
+
+## 2026.07.15 - Migrate ORF reconciliation onto the shared genome resolver
+
+Replaced the local `_load_sgd_genes` FASTA R64 drop with the shared
+`reconcile_systematic_names` helper (genome resolver; see
+[[torchcell.sequence.genome.scerevisiae.s288c]] and
+[[torchcell.datasets.scerevisiae.gene_name_reconcile]]). Retain-all: **0 dropped for
+naming** (was already empirically zero). Build: 1112 strains — 1111 CURRENT + 1
+NON_GENE_FEATURE (a valid non-`"gene"` essential locus, now retained rather than at risk of a
+FASTA-vs-gene_set mismatch). Added an optional injectable `genome` (defaults to `DATA_ROOT`).

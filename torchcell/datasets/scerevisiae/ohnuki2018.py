@@ -79,6 +79,11 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.datasets.scerevisiae.gene_name_reconcile import (
+    default_genome,
+    reconcile_systematic_names,
+)
+from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -101,25 +106,6 @@ _RAW_FILES: dict[str, dict[str, str]] = {
 # Library mirror holding the sha256-pinned raw matrices (relative to DATA_ROOT).
 _MIRROR_DIR = "torchcell-library/ohnukiHighdimensionalSinglecellPhenotyping2018/data"
 
-# S288C R64 gene universe (systematic ORF + RNA-coding names) for R64 validation.
-_SGD_GENE_FASTAS = (
-    "data/sgd/genome/S288C_reference_genome_R64-4-1_20230830/"
-    "orf_coding_all_R64-4-1_20230830.fasta",
-    "data/sgd/genome/S288C_reference_genome_R64-4-1_20230830/"
-    "rna_coding_R64-4-1_20230830.fasta",
-)
-
-
-def _load_sgd_genes(data_root: str) -> set[str]:
-    """S288C R64 systematic-name universe from the ORF + RNA-coding FASTA headers."""
-    genes: set[str] = set()
-    for rel in _SGD_GENE_FASTAS:
-        with open(osp.join(data_root, rel)) as handle:
-            for line in handle:
-                if line.startswith(">"):
-                    genes.add(line[1:].split()[0])
-    return genes
-
 
 @register_dataset
 class ScmdOhnuki2018Dataset(ExperimentDataset):
@@ -136,9 +122,15 @@ class ScmdOhnuki2018Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
+        genome: SCerevisiaeGenome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset. ORFs are already systematic, so no genome is required."""
+        """Initialize the dataset; an optional genome reconciles ORF names to R64.
+
+        If ``genome`` is not supplied one is constructed from ``DATA_ROOT`` during
+        processing (used only to reconcile source ORF names to the current annotation).
+        """
+        self.genome = genome
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -220,33 +212,32 @@ class ScmdOhnuki2018Dataset(ExperimentDataset):
         return df
 
     def preprocess_calmorph_data(self, df_mutant: pd.DataFrame) -> pd.DataFrame:
-        """Clean the mutant matrix and validate ORFs against the S288C R64 gene set."""
+        """Clean the mutant matrix and reconcile ORF names to R64 (retain-all).
+
+        Names are reconciled to the current R64-4-1 annotation with the shared genome
+        resolver (see :mod:`torchcell.datasets.scerevisiae.gene_name_reconcile`); no record
+        is dropped for a naming reason.
+        """
         df_mutant = df_mutant.copy()
         # The ORF column carries the systematic gene name; there is no common-name column.
         df_mutant["systematic_gene_name"] = df_mutant["ORF"].str.strip().str.upper()
+        df_mutant = df_mutant[df_mutant["systematic_gene_name"].notna()]
+        df_mutant = df_mutant[df_mutant["systematic_gene_name"] != ""].reset_index(
+            drop=True
+        )
+
+        if self.genome is None:
+            self.genome = default_genome()
+        df_mutant["systematic_gene_name"] = reconcile_systematic_names(
+            self.genome, df_mutant["systematic_gene_name"], label="Ohnuki 2018"
+        )
         df_mutant["perturbed_gene_name"] = df_mutant["systematic_gene_name"]
 
-        df_mutant = df_mutant[df_mutant["systematic_gene_name"].notna()]
-        df_mutant = df_mutant[df_mutant["systematic_gene_name"] != ""]
-
-        # Validate against the SGD R64 universe; log + drop any non-resolving ORF.
-        data_root = os.environ["DATA_ROOT"]
-        r64_genes = _load_sgd_genes(data_root)
-        in_r64 = df_mutant["systematic_gene_name"].isin(r64_genes)
-        dropped = df_mutant.loc[~in_r64, "systematic_gene_name"].tolist()
-        if dropped:
-            log.warning(
-                "Dropping %d ORF(s) not resolving to SGD R64: %s",
-                len(dropped),
-                dropped[:20],
-            )
-        df_mutant = df_mutant[in_r64]
-
         log.info(
-            "Ohnuki 2018: %d essential-gene heterozygote strains after R64 validation",
+            "Ohnuki 2018: %d essential-gene heterozygote strains (0 dropped for naming)",
             len(df_mutant),
         )
-        return df_mutant.reset_index(drop=True)
+        return df_mutant
 
     def _calculate_wt_reference(self, df_wt: pd.DataFrame) -> dict[str, Any]:
         """Aggregate the WT replicate averages into a per-feature mean reference."""

@@ -86,6 +86,11 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.datasets.scerevisiae.gene_name_reconcile import (
+    default_genome,
+    reconcile_systematic_names,
+)
+from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -147,9 +152,15 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
+        genome: SCerevisiaeGenome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset rooted at ``root`` with optional transforms."""
+        """Initialize the dataset; an optional genome reconciles target ORF names to R64.
+
+        If ``genome`` is not supplied one is constructed from ``DATA_ROOT`` during
+        processing (used only to reconcile the target ORF name to the current annotation).
+        """
+        self.genome = genome
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -215,6 +226,15 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
         df_mutant["ORF"] = df_mutant["ORF"].str.strip().str.upper()
         feature_cols = [c for c in df_mutant.columns if c != "ORF"]
 
+        # Reconcile the target ORF name to the current R64 annotation (retain-all,
+        # collision-safe; shared genome resolver). NOT dropped for naming here -- only the
+        # NaN and 3Delta-background filters below drop rows.
+        if self.genome is None:
+            self.genome = default_genome()
+        df_mutant["systematic_gene_name"] = reconcile_systematic_names(
+            self.genome, df_mutant["ORF"], label="Ohnuki 2022"
+        )
+
         # Drop the single strain with missing CalMorph values (never impute).
         has_all = df_mutant[feature_cols].notna().all(axis=1)
         n_nan = int((~has_all).sum())
@@ -222,18 +242,19 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
             log.info(
                 "Ohnuki: dropping %d mutant row(s) with missing CalMorph values: %s",
                 n_nan,
-                df_mutant.loc[~has_all, "ORF"].tolist(),
+                df_mutant.loc[~has_all, "systematic_gene_name"].tolist(),
             )
         # Drop target ORFs that coincide with the 3Delta background (cannot be an
-        # independent quadruple deletion of an already-deleted gene).
-        not_bg = ~df_mutant["ORF"].isin(BACKGROUND_GENES)
+        # independent quadruple deletion of an already-deleted gene). Checked on the
+        # reconciled name so a legacy alias of a background gene is also caught.
+        not_bg = ~df_mutant["systematic_gene_name"].isin(BACKGROUND_GENES)
         n_bg = int((~not_bg).sum())
         if n_bg:
             log.info(
                 "Ohnuki: dropping %d target row(s) colliding with the 3Delta "
                 "background: %s",
                 n_bg,
-                df_mutant.loc[~not_bg, "ORF"].tolist(),
+                df_mutant.loc[~not_bg, "systematic_gene_name"].tolist(),
             )
         df_mutant = df_mutant.loc[has_all & not_bg].reset_index(drop=True)
 
@@ -306,7 +327,7 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
         background: list[Any],
     ) -> tuple[CalMorphExperiment, CalMorphExperimentReference]:
         """Build one quadruple-deletion CalMorph experiment + 3Delta reference."""
-        orf = str(row["ORF"])
+        orf = str(row["systematic_gene_name"])
         genotype = Genotype(
             perturbations=[
                 KanMxDeletionPerturbation(

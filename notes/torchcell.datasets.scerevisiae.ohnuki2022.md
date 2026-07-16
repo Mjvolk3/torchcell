@@ -25,3 +25,14 @@ compounds, no released morphology vectors.)
   asymmetry shared with Vanacloig 2022.
 - 3 dropped: YGL141W (NaN in 2 CV traits → dropped whole, no imputation), PDR1/SNQ2 as
   targets (already in background). Env YPD 25 C liquid (sourced). 501 CalMorph traits.
+
+## 2026.07.15 - Add shared-resolver ORF reconciliation (retain-all naming)
+
+The target ORF name is now reconciled to current R64 via the shared
+`reconcile_systematic_names` helper (see
+[[torchcell.datasets.scerevisiae.gene_name_reconcile]]) before the NaN + 3Δ-background
+drops. Previously the loader stored raw ORF names with no R64 reconciliation. Build unchanged
+at **1979** (1982 − 1 NaN row YGL141W − 2 background-collision rows), but 7 target names are
+now correctly remapped to current R64 ids and 1 (YAR037W) retained as a legacy name. The
+3Δ-background collision check now runs on the reconciled name (catches a legacy alias of a
+background gene too). Added an optional injectable `genome`.

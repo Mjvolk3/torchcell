@@ -5,6 +5,14 @@
             "path": "."
         },
         {
+            "name": "🖼 screenshots (tmp)",
+            "path": "/tmp/screenshots"
+        },
+        {
+            "name": "🪦 deprecated (tmp graveyard)",
+            "path": "/tmp/torchcell-deprecated"
+        },
+        {
             "name": "iBioFoundry-AI",
             "path": "../iBioFoundry-AI"
         },

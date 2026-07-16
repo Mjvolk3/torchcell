@@ -21,7 +21,11 @@
             "path": "../torchcell-overleaf"
         },
         {
-            "name": "/tmp/screenshots",
+            "name": "🪦 deprecated (scratch graveyard)",
+            "path": "/scratch/projects/torchcell-deprecated"
+        },
+        {
+            "name": "📥 shared files (tmp)",
             "path": "/tmp/screenshots"
         }
     ],

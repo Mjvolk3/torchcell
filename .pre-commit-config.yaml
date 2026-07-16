@@ -32,3 +32,15 @@ repos:
         types_or: [python, pyi]
         files: ^(torchcell|tests)/
         require_serial: true
+
+      # Schema-dependency gate: when a schema-surface file changes, report which dataset
+      # loaders the change forces to rebuild (closure + contract-fingerprint scoped) and
+      # block on a breaking change unless TORCHCELL_SCHEMA_ACK=1. Fires only on the surface
+      # files so it never runs on ordinary commits. See torchcell/provenance/schema_impact.py.
+      - id: schema-impact
+        name: schema impact (dataset rebuild gate)
+        entry: bash scripts/run-schema-impact.sh
+        language: system
+        pass_filenames: false
+        files: ^torchcell/datamodels/(schema|pydant)\.py$
+        require_serial: true

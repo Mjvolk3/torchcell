@@ -29,6 +29,7 @@ from torchcell.datamodels import (
     Publication,
 )
 from torchcell.loader import CpuExperimentLoaderMultiprocessing
+from torchcell.provenance.build_manifest import write_build_manifest
 from torchcell.sequence import GeneSet
 
 logging.basicConfig(level=logging.INFO)
@@ -138,6 +139,12 @@ def post_process(func: Callable[..., Any]) -> Callable[..., Any]:
         assert torch.all(covered).item() is True, (
             "Each item in the dataset must be covered by exactly one reference."
         )
+
+        # Record the schema contract this LMDB was built against (schema-dependency tracking):
+        # writes preprocess/build_manifest.json with the contract fingerprint of every schema
+        # symbol in this loader's closure, so the dataset can be flagged for rebuild when a
+        # depended-on symbol changes. See torchcell/provenance/.
+        write_build_manifest(self)
 
         return result
 

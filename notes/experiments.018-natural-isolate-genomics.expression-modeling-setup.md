@@ -178,3 +178,41 @@ Gene features from `esm2` / `protT5` / `nucleotide_transformer` / `fungal_up_dow
   biologically interesting (network perturbation) but is gated on the #72 rebuild.
 - Split granularity for E1/E2: held-out **strains** (predict a new perturbed strain) is
   the primary; add held-out **genes** (E3) for the harder claim.
+
+## 2026.07.16 - Fig 4 panels: one plot, one question
+
+Refined the figure into a **panel-per-question** layout. Descriptive panels (a–f) are
+buildable now from 018 data; modeling panels (g–h) are the E-series above. The
+descriptive set lives in a paired note + script,
+[[experiments.018-natural-isolate-genomics.dataset-comparison]] (`dataset_comparison.py`).
+
+| # | Question | Panel | Status |
+|---|---|---|---|
+| a | What are we comparing? | setup schematic (KO → double KO → natural isolate on a genotype-edit axis) | author draw.io |
+| b | **How genetically different are these strains?** | # reference ORFs absent (x) vs % sequence divergence on shared genes (y); KO at (1, 0), isolates far out | ✅ built |
+| c | genotype design-space coverage | folded into b (the two axes *are* the coverage) | b |
+| d | **What do their transcriptomes look like?** | Kemmeren-single / Sameith-single / Sameith-double / Caudal as **matched spread bands** on one scale | ✅ built |
+| e | How many genes move? | per-strain DE-count distribution, KO vs natural (single hue per dataset) | ✅ built |
+| f | transcriptome design-space coverage | **PCA + UMAP** of the joint expression matrix, coloured by dataset | ✅ built |
+| g | Does natural variation improve KO prediction? | E1 2×2 interaction | ⛔ modeling |
+| h | Can each modality reconstruct the other? | E2 bidirectional transfer | ⛔ modeling |
+
+**PCA/UMAP methodology (panel f).** Each strain = its log2 expression vector on the
+shared S288C ORFs; stack all datasets, **z-score per gene within each dataset**, restrict
+to shared measured genes, then PCA (linear, interpretable, global geometry) **and** UMAP
+(non-linear, cluster/coverage structure). Caveat stated on the panel: Kemmeren/Sameith are
+microarray log2(mut/WT) and Caudal is RNA-seq log2(iso/pop-mean), so some separation is
+**platform, not biology** — the within-dataset z-score is the mitigation, and it is the
+same batch confound the modeling side dodges with two decoder heads (Option B).
+
+**E4 (digenic) is now unblocked** — #72 landed (Sameith per-array dye-orientation fixed),
+so the double-KO labels are corrected. Sameith doubles enter panel d as their own band and
+are in scope for E4.
+
+**Bit ledger — retracted from Fig 4.** The per-strain *phenotype* codelengths come out ~equal
+across all three datasets only because each is a ~6,000-float vector and the gzip cost is
+~80–90% serialization (repeated gene-name keys + float-as-ASCII), not biological signal — so
+that "equality" is an artifact, not a result. The real, keep-able finding is the *genotype*
+codelength: a KO encodes in ~15 bits, a natural isolate in ~3.3 Mbit — the isolate genome
+**requires more information because it contains more variation**. That belongs with the
+**supported-datasets table** (`Signal (gzip)` column), not a Fig 4 panel and not Fig 1c.

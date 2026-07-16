@@ -152,6 +152,54 @@ calmorph phenotype:
         calmorph: str
         calmorph_coefficient_of_variation: str
         serialized_data: str
+
+microarray expression phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        expression_log2_ratio: str
+        expression_log2_ratio_se: str
+        serialized_data: str
+
+rnaseq expression phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        expression_tpm: str
+        measurement_type: str
+        n_mapped_reads: int
+        serialized_data: str
+
+visual score phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        visual_score: float
+        n_replicates: int
+        target_product: str
+        target_metabolite_id: str
+        serialized_data: str
+
+metabolite phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        metabolite_level: str
+        metabolite_level_se: str
+        measurement_type: str
+        serialized_data: str
 # PHENOTYPES END
 
 # RELATIONSHIPS
@@ -186,6 +234,10 @@ phenotype member of:
             synthetic rescue phenotype,
             gene interaction phenotype,
             calmorph phenotype,
+            microarray expression phenotype,
+            rnaseq expression phenotype,
+            visual score phenotype,
+            metabolite phenotype,
         ]
     target: [experiment, experiment reference]
 

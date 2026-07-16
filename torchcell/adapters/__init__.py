@@ -1,9 +1,21 @@
 """BioCypher adapters mapping torchcell datasets into knowledge-graph nodes and edges."""
 
+from .cachera2023_adapter import (
+    BetaxanthinCachera2023Adapter as BetaxanthinCachera2023Adapter,
+)
+from .caudal2024_adapter import (
+    CaudalPanTranscriptome2024Adapter as CaudalPanTranscriptome2024Adapter,
+)
 from .cell_adapter import CellAdapter as CellAdapter
 from .costanzo2016_adapter import DmfCostanzo2016Adapter as DmfCostanzo2016Adapter
 from .costanzo2016_adapter import DmiCostanzo2016Adapter as DmiCostanzo2016Adapter
 from .costanzo2016_adapter import SmfCostanzo2016Adapter as SmfCostanzo2016Adapter
+from .dasilveira2014_adapter import (
+    MetaboliteDaSilveira2014Adapter as MetaboliteDaSilveira2014Adapter,
+)
+from .kemmeren2014_adapter import (
+    MicroarrayKemmeren2014Adapter as MicroarrayKemmeren2014Adapter,
+)
 from .kuzmin2018_adapter import DmfKuzmin2018Adapter as DmfKuzmin2018Adapter
 from .kuzmin2018_adapter import DmiKuzmin2018Adapter as DmiKuzmin2018Adapter
 from .kuzmin2018_adapter import SmfKuzmin2018Adapter as SmfKuzmin2018Adapter
@@ -14,7 +26,18 @@ from .kuzmin2020_adapter import DmiKuzmin2020Adapter as DmiKuzmin2020Adapter
 from .kuzmin2020_adapter import SmfKuzmin2020Adapter as SmfKuzmin2020Adapter
 from .kuzmin2020_adapter import TmfKuzmin2020Adapter as TmfKuzmin2020Adapter
 from .kuzmin2020_adapter import TmiKuzmin2020Adapter as TmiKuzmin2020Adapter
+from .ohnuki2018_adapter import ScmdOhnuki2018Adapter as ScmdOhnuki2018Adapter
+from .ohnuki2022_adapter import ScmdOhnuki2022Adapter as ScmdOhnuki2022Adapter
 from .ohya2005_adapter import ScmdOhya2005Adapter as ScmdOhya2005Adapter
+from .ozaydin2013_adapter import (
+    CarotenoidOzaydin2013Adapter as CarotenoidOzaydin2013Adapter,
+)
+from .sameith2015_adapter import (
+    DmMicroarraySameith2015Adapter as DmMicroarraySameith2015Adapter,
+)
+from .sameith2015_adapter import (
+    SmMicroarraySameith2015Adapter as SmMicroarraySameith2015Adapter,
+)
 from .sgd_adapter import GeneEssentialitySgdAdapter as GeneEssentialitySgdAdapter
 from .synth_leth_db_adapter import (
     SynthLethalityYeastSynthLethDbAdapter as SynthLethalityYeastSynthLethDbAdapter,
@@ -56,6 +79,21 @@ synth_leth_db_adapters = [
 
 ohya2005_adapters = ["ScmdOhya2005Adapter"]
 
+expression_adapters = [
+    "MicroarrayKemmeren2014Adapter",
+    "SmMicroarraySameith2015Adapter",
+    "DmMicroarraySameith2015Adapter",
+    "CaudalPanTranscriptome2024Adapter",
+]
+
+morphology_adapters = ["ScmdOhnuki2018Adapter", "ScmdOhnuki2022Adapter"]
+
+metabolite_adapters = [
+    "CarotenoidOzaydin2013Adapter",
+    "BetaxanthinCachera2023Adapter",
+    "MetaboliteDaSilveira2014Adapter",
+]
+
 
 __all__ = (
     cell_adapters
@@ -65,4 +103,7 @@ __all__ = (
     + gene_essentiality_adapters
     + synth_leth_db_adapters
     + ohya2005_adapters
+    + expression_adapters
+    + morphology_adapters
+    + metabolite_adapters
 )

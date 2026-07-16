@@ -26,26 +26,13 @@ compounds, no released morphology vectors.)
 - 3 dropped: YGL141W (NaN in 2 CV traits → dropped whole, no imputation), PDR1/SNQ2 as
   targets (already in background). Env YPD 25 C liquid (sourced). 501 CalMorph traits.
 
-## 2026.07.15 - Migrated to the shared layered gene-name resolver
+## 2026.07.15 - Add shared-resolver ORF reconciliation (retain-all naming)
 
-Target ORF names now reconcile through `SCerevisiaeGenome.resolve_gene_name` (the layered
-resolver on main, [[torchcell.sequence.genome.scerevisiae.s288c]], PR #98), the same
-retain-all and collision-safe pattern as [[torchcell.datasets.scerevisiae.ohya2005]].
-Previously the
-loader did NO R64 reconciliation (bare uppercase), so stale target names were stored
-verbatim.
-
-- Added a `genome` ctor param (lazy-built if not injected) and `_reconcile_orf_names`;
-  reconciliation runs AFTER the NaN-completeness drop and BEFORE the 3Delta-background
-  collision drop (so a legacy target that maps onto a background gene is still caught).
-- Rebuild result: **1979 records, unchanged** (1982 raw − 1 NaN `YGL141W` − 2 background
-  `YGL013C`/`YDR011W`). Reconciliation over 1981 unique names: 1970 `current`, **7
-  `renamed`** now stored under their current R64 id, 3 `non_gene_feature`, 1 `retired`.
-  - **7 remapped:** `YAL058C-A→YAL056C-A`, `YGR272C→YGR271C-A`, `YIR020W-B→YIR020W-A`,
-    `YLR391W→YLR390W-A`, `YML010C-B→YML009C-A`, `YML013C-A→YML012C-A`, `YML033W→YML034W`.
-  - **3 non_gene_feature (retained):** `YDR134C` (blocked_reading_frame), `YFL056C`
-    (pseudogene), `YIR043C` (blocked_reading_frame).
-  - **1 retired (retained verbatim):** `YAR037W`.
-  - 0 merge-collisions.
-- L0-L4 verifier PASS (`run_ohnuki_morphology`): 1979 records; genotype
-  (`kanmx_deletion` target + 3Delta `natmx/marker` background) and round-trip unchanged.
+The target ORF name is now reconciled to current R64 via the shared
+`reconcile_systematic_names` helper (see
+[[torchcell.datasets.scerevisiae.gene_name_reconcile]]) before the NaN + 3Δ-background
+drops. Previously the loader stored raw ORF names with no R64 reconciliation. Build unchanged
+at **1979** (1982 − 1 NaN row YGL141W − 2 background-collision rows), but 7 target names are
+now correctly remapped to current R64 ids and 1 (YAR037W) retained as a legacy name. The
+3Δ-background collision check now runs on the reconciled name (catches a legacy alias of a
+background gene too). Added an optional injectable `genome`.

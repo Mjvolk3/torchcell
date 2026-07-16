@@ -43,12 +43,6 @@ Every strain is modeled with FOUR deletion perturbations at full genotype fideli
   asymmetry (mutants carry the explicit 3Delta background; the reference genome is a
   WT-only placeholder) is the design decision flagged for human review.
 
-NAME RECONCILIATION -- target ORF names are reconciled to the current R64-4-1 annotation
-by the shared genome resolver (:meth:`SCerevisiaeGenome.resolve_gene_name`): live names
-are kept, SGD renames/merges and valid non-"gene" loci are remapped to their current
-systematic id (collision-safe), retired names retained verbatim. NO record is dropped for
-a naming reason; the two drop rules below are the ONLY drops.
-
 DROPPED STRAINS (3 of 1982 -> 1979 records):
   * ``YGL141W`` (HRD1): the single mutant row with missing values (2 CV traits
     ``ACV103_A1B``, ``ACV103_C`` are NaN). CalMorph completeness requires the full
@@ -92,7 +86,11 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.sequence.genome.scerevisiae import GeneNameStatus, SCerevisiaeGenome
+from torchcell.datasets.scerevisiae.gene_name_reconcile import (
+    default_genome,
+    reconcile_systematic_names,
+)
+from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -118,14 +116,6 @@ BACKGROUND_GENES = frozenset({"YGL013C", "YBL005W", "YDR011W"})
 
 # CV traits carry raw CalMorph coefficients-of-variation; the remaining traits are base.
 _CV_LABELS = frozenset(CALMORPH_STATISTICS)
-
-# Statuses whose resolved systematic id is a valid R64 identifier we prefer over the
-# source name (a live gene, an SGD rename, or a valid non-"gene" locus).
-_REMAP_STATUSES = (
-    GeneNameStatus.CURRENT,
-    GeneNameStatus.RENAMED,
-    GeneNameStatus.NON_GENE_FEATURE,
-)
 
 
 def _sha256(path: str) -> str:
@@ -168,7 +158,7 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
         """Initialize the dataset; an optional genome reconciles target ORF names to R64.
 
         If ``genome`` is not supplied one is constructed from ``DATA_ROOT`` during
-        processing (used only to reconcile the target ORF column to the current annotation).
+        processing (used only to reconcile the target ORF name to the current annotation).
         """
         self.genome = genome
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
@@ -236,6 +226,15 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
         df_mutant["ORF"] = df_mutant["ORF"].str.strip().str.upper()
         feature_cols = [c for c in df_mutant.columns if c != "ORF"]
 
+        # Reconcile the target ORF name to the current R64 annotation (retain-all,
+        # collision-safe; shared genome resolver). NOT dropped for naming here -- only the
+        # NaN and 3Delta-background filters below drop rows.
+        if self.genome is None:
+            self.genome = default_genome()
+        df_mutant["systematic_gene_name"] = reconcile_systematic_names(
+            self.genome, df_mutant["ORF"], label="Ohnuki 2022"
+        )
+
         # Drop the single strain with missing CalMorph values (never impute).
         has_all = df_mutant[feature_cols].notna().all(axis=1)
         n_nan = int((~has_all).sum())
@@ -243,27 +242,21 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
             log.info(
                 "Ohnuki: dropping %d mutant row(s) with missing CalMorph values: %s",
                 n_nan,
-                df_mutant.loc[~has_all, "ORF"].tolist(),
+                df_mutant.loc[~has_all, "systematic_gene_name"].tolist(),
             )
-        df_mutant = df_mutant.loc[has_all].reset_index(drop=True)
-
-        # Reconcile the target ORF names to the current R64 annotation (retain-all); no
-        # record is dropped for a naming reason.
-        df_mutant["ORF"] = self._reconcile_orf_names(df_mutant["ORF"])
-
         # Drop target ORFs that coincide with the 3Delta background (cannot be an
-        # independent quadruple deletion of an already-deleted gene) -- checked on the
-        # reconciled names so a legacy target that maps onto the background is caught.
-        not_bg = ~df_mutant["ORF"].isin(BACKGROUND_GENES)
+        # independent quadruple deletion of an already-deleted gene). Checked on the
+        # reconciled name so a legacy alias of a background gene is also caught.
+        not_bg = ~df_mutant["systematic_gene_name"].isin(BACKGROUND_GENES)
         n_bg = int((~not_bg).sum())
         if n_bg:
             log.info(
                 "Ohnuki: dropping %d target row(s) colliding with the 3Delta "
                 "background: %s",
                 n_bg,
-                df_mutant.loc[~not_bg, "ORF"].tolist(),
+                df_mutant.loc[~not_bg, "systematic_gene_name"].tolist(),
             )
-        df_mutant = df_mutant.loc[not_bg].reset_index(drop=True)
+        df_mutant = df_mutant.loc[has_all & not_bg].reset_index(drop=True)
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         df_mutant.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
@@ -297,63 +290,6 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
                     ),
                 )
         env.close()
-
-    def _reconcile_orf_names(self, names: pd.Series) -> pd.Series:
-        """Map target ORF names to current R64 ids via the genome resolver (retain-all).
-
-        Collision-safe: a remap is applied only when its target is not already claimed by
-        another strain in the screen; otherwise the original name is kept so merged ORFs
-        stay distinct records. Nothing is dropped.
-        """
-        from collections import Counter
-
-        if self.genome is None:
-            data_root = os.environ["DATA_ROOT"]
-            self.genome = SCerevisiaeGenome(
-                genome_root=osp.join(data_root, "data/sgd/genome"),
-                go_root=osp.join(data_root, "data/go"),
-                overwrite=False,
-            )
-        genome = self.genome
-
-        resolutions = {name: genome.resolve_gene_name(name) for name in names.unique()}
-        proposed = {
-            name: (
-                res.systematic_name
-                if res.status in _REMAP_STATUSES and res.systematic_name is not None
-                else name
-            )
-            for name, res in resolutions.items()
-        }
-        proposed_counts = Counter(proposed.values())
-        final = {
-            name: (name if proposed_counts[prop] > 1 else prop)
-            for name, prop in proposed.items()
-        }
-
-        remapped = {n: f for n, f in final.items() if f != n}
-        by_status: dict[str, int] = {}
-        for res in resolutions.values():
-            by_status[res.status.value] = by_status.get(res.status.value, 0) + 1
-        collided = sorted(
-            n for n, prop in proposed.items() if proposed_counts[prop] > 1
-        )
-        retired = sorted(
-            n for n, r in resolutions.items() if r.status == GeneNameStatus.RETIRED
-        )
-        log.info(
-            "Ohnuki 2022 ORF reconciliation: %d unique names %s; %d remapped to current "
-            "R64 ids; %d kept as legacy names on merge-collision %s; %d retained as "
-            "retired legacy names %s",
-            len(resolutions),
-            by_status,
-            len(remapped),
-            len(collided),
-            collided,
-            len(retired),
-            retired,
-        )
-        return names.map(final)
 
     @staticmethod
     def _split_traits(
@@ -391,7 +327,7 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
         background: list[Any],
     ) -> tuple[CalMorphExperiment, CalMorphExperimentReference]:
         """Build one quadruple-deletion CalMorph experiment + 3Delta reference."""
-        orf = str(row["ORF"])
+        orf = str(row["systematic_gene_name"])
         genotype = Genotype(
             perturbations=[
                 KanMxDeletionPerturbation(

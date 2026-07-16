@@ -24,23 +24,12 @@ CalMorph morphology of the essential-gene HETEROZYGOUS diploid deletion collecti
 - Raw per-strain CalMorph averages (not z-scores); zero NaN; 0 ORFs dropped. Only the
   YPD/25 C arm built (SD/37 C poor-medium arm has no released matrix).
 
-## 2026.07.15 - Migrated to the shared layered gene-name resolver
+## 2026.07.15 - Migrate ORF reconciliation onto the shared genome resolver
 
-Reconciliation of the 2018 ORF names now goes through
-`SCerevisiaeGenome.resolve_gene_name` (the layered resolver landed on main in
-[[torchcell.sequence.genome.scerevisiae.s288c]], PR #98), replacing the old FASTA-based
-R64 gene-set validation. Same pattern as the sibling
-[[torchcell.datasets.scerevisiae.ohya2005]] migration: retain-all + collision-safe.
-
-- Removed `_load_sgd_genes` + `_SGD_GENE_FASTAS`; the loader no longer drops any strain
-  for a naming reason. Added a `genome` ctor param (lazy-built from `DATA_ROOT` if not
-  injected) and `_reconcile_orf_names`.
-- Rebuild result: **1112 strains, unchanged.** Reconciliation over 1112 unique names:
-  1111 `current`, **1 `non_gene_feature`** (a valid non-`gene` locus, now retained with
-  its correct systematic id rather than being at the mercy of the FASTA ORF-coding set);
-  0 remapped, 0 retired, 0 merge-collisions.
-- L0-L4 verifier PASS (`run_morphology_ohnuki`): 1112 records, L4 SGD gene containment
-  1.000. `EngineeredCopyNumberPerturbation` genotype and round-trip unchanged.
-- Unchanged (out of scope): this loader still imputes missing CalMorph values to 0.0 in
-  `create_calmorph_experiment` rather than dropping incomplete rows like Ohya/Ohnuki 2022
-  — flagged for a future consistency pass, not touched here.
+Replaced the local `_load_sgd_genes` FASTA R64 drop with the shared
+`reconcile_systematic_names` helper (genome resolver; see
+[[torchcell.sequence.genome.scerevisiae.s288c]] and
+[[torchcell.datasets.scerevisiae.gene_name_reconcile]]). Retain-all: **0 dropped for
+naming** (was already empirically zero). Build: 1112 strains — 1111 CURRENT + 1
+NON_GENE_FEATURE (a valid non-`"gene"` essential locus, now retained rather than at risk of a
+FASTA-vs-gene_set mismatch). Added an optional injectable `genome` (defaults to `DATA_ROOT`).

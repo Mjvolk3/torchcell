@@ -40,12 +40,9 @@ verifies both hashes, never the live URL):
   ``http://www.yeast.ib.k.u-tokyo.ac.jp/SCMD/download.php?path=ess1112data.tsv`` and
   ``...=wt114data.tsv``.
 
-ORFs are 2018-annotation SGD systematic names, reconciled to the current R64-4-1
-annotation by the shared genome resolver
-(:meth:`SCerevisiaeGenome.resolve_gene_name`): live names are kept, SGD renames/merges
-and valid non-"gene" loci (pseudogene / blocked_reading_frame) are remapped to their
-current systematic id (collision-safe), and retired names are retained verbatim. NO
-record is dropped for a naming reason -- every strain is a real measured perturbation.
+ORFs are already SGD systematic names; they are validated against the S288C R64 gene
+universe (any not resolving would be logged + dropped -- empirically zero drops, all
+1,112 present).
 """
 
 # torchcell/datasets/scerevisiae/ohnuki2018
@@ -82,22 +79,17 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.sequence.genome.scerevisiae import GeneNameStatus, SCerevisiaeGenome
+from torchcell.datasets.scerevisiae.gene_name_reconcile import (
+    default_genome,
+    reconcile_systematic_names,
+)
+from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 # CV parameters are prefixed CCV/ACV/DCV/TCV; everything else is a base parameter.
 _CV_PREFIXES = ("CCV", "ACV", "DCV", "TCV")
-
-# Statuses whose resolved systematic id is a valid R64 identifier we prefer over the
-# source name (a live gene, an SGD rename, or a valid non-"gene" locus such as a
-# blocked_reading_frame / pseudogene).
-_REMAP_STATUSES = (
-    GeneNameStatus.CURRENT,
-    GeneNameStatus.RENAMED,
-    GeneNameStatus.NON_GENE_FEATURE,
-)
 
 # sha256-pinned raw matrices in the library mirror ``data/`` directory.
 _RAW_FILES: dict[str, dict[str, str]] = {
@@ -135,9 +127,8 @@ class ScmdOhnuki2018Dataset(ExperimentDataset):
     ) -> None:
         """Initialize the dataset; an optional genome reconciles ORF names to R64.
 
-        ORFs are 2018-annotation systematic names; the genome's layered resolver maps
-        them to the current R64-4-1 annotation. If ``genome`` is not supplied one is
-        constructed from ``DATA_ROOT`` during processing.
+        If ``genome`` is not supplied one is constructed from ``DATA_ROOT`` during
+        processing (used only to reconcile source ORF names to the current annotation).
         """
         self.genome = genome
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
@@ -221,15 +212,11 @@ class ScmdOhnuki2018Dataset(ExperimentDataset):
         return df
 
     def preprocess_calmorph_data(self, df_mutant: pd.DataFrame) -> pd.DataFrame:
-        """Clean the mutant matrix and reconcile ORF names to the current R64 annotation.
+        """Clean the mutant matrix and reconcile ORF names to R64 (retain-all).
 
-        Names are reconciled with the genome's layered resolver
-        (:meth:`SCerevisiaeGenome.resolve_gene_name`); NO record is dropped for a naming
-        reason -- every strain is a real measured perturbation. A resolved current
-        identifier (live gene, SGD rename, or valid non-"gene" feature) replaces the 2018
-        name unless it would collide with another strain (an SGD merge), in which case the
-        original name is kept so the strains stay distinct. Retired/ambiguous names are
-        kept verbatim.
+        Names are reconciled to the current R64-4-1 annotation with the shared genome
+        resolver (see :mod:`torchcell.datasets.scerevisiae.gene_name_reconcile`); no record
+        is dropped for a naming reason.
         """
         df_mutant = df_mutant.copy()
         # The ORF column carries the systematic gene name; there is no common-name column.
@@ -239,8 +226,10 @@ class ScmdOhnuki2018Dataset(ExperimentDataset):
             drop=True
         )
 
-        df_mutant["systematic_gene_name"] = self._reconcile_orf_names(
-            df_mutant["systematic_gene_name"]
+        if self.genome is None:
+            self.genome = default_genome()
+        df_mutant["systematic_gene_name"] = reconcile_systematic_names(
+            self.genome, df_mutant["systematic_gene_name"], label="Ohnuki 2018"
         )
         df_mutant["perturbed_gene_name"] = df_mutant["systematic_gene_name"]
 
@@ -249,63 +238,6 @@ class ScmdOhnuki2018Dataset(ExperimentDataset):
             len(df_mutant),
         )
         return df_mutant
-
-    def _reconcile_orf_names(self, names: pd.Series) -> pd.Series:
-        """Map 2018 ORF names to current R64 ids via the genome resolver (retain-all).
-
-        Collision-safe: a remap is applied only when its target is not already claimed by
-        another strain in the screen; otherwise the original name is kept so merged ORFs
-        stay distinct records. Nothing is dropped.
-        """
-        from collections import Counter
-
-        if self.genome is None:
-            data_root = os.environ["DATA_ROOT"]
-            self.genome = SCerevisiaeGenome(
-                genome_root=osp.join(data_root, "data/sgd/genome"),
-                go_root=osp.join(data_root, "data/go"),
-                overwrite=False,
-            )
-        genome = self.genome
-
-        resolutions = {name: genome.resolve_gene_name(name) for name in names.unique()}
-        proposed = {
-            name: (
-                res.systematic_name
-                if res.status in _REMAP_STATUSES and res.systematic_name is not None
-                else name
-            )
-            for name, res in resolutions.items()
-        }
-        proposed_counts = Counter(proposed.values())
-        final = {
-            name: (name if proposed_counts[prop] > 1 else prop)
-            for name, prop in proposed.items()
-        }
-
-        remapped = {n: f for n, f in final.items() if f != n}
-        by_status: dict[str, int] = {}
-        for res in resolutions.values():
-            by_status[res.status.value] = by_status.get(res.status.value, 0) + 1
-        collided = sorted(
-            n for n, prop in proposed.items() if proposed_counts[prop] > 1
-        )
-        retired = sorted(
-            n for n, r in resolutions.items() if r.status == GeneNameStatus.RETIRED
-        )
-        log.info(
-            "Ohnuki 2018 ORF reconciliation: %d unique names %s; %d remapped to current "
-            "R64 ids; %d kept as legacy names on merge-collision %s; %d retained as "
-            "retired legacy names %s",
-            len(resolutions),
-            by_status,
-            len(remapped),
-            len(collided),
-            collided,
-            len(retired),
-            retired,
-        )
-        return names.map(final)
 
     def _calculate_wt_reference(self, df_wt: pd.DataFrame) -> dict[str, Any]:
         """Aggregate the WT replicate averages into a per-feature mean reference."""

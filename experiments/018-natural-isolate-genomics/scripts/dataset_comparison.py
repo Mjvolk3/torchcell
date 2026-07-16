@@ -31,6 +31,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
+from matplotlib.lines import Line2D
 from scipy.stats import false_discovery_control, norm
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
@@ -43,6 +44,7 @@ from torchcell.datasets.scerevisiae.sameith2015 import (
     DmMicroarraySameith2015Dataset,
     SmMicroarraySameith2015Dataset,
 )
+from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
@@ -71,34 +73,34 @@ PANEL_H_MM = (
     35.7  # canonical wide-strip height unit (figure-sizing-template.drawio.svg)
 )
 
-# per-dataset colours, consistent across every panel. Deliberate (not palette-order):
-# the LARGE datasets (Kemmeren 1,484, Caudal 943) take the lighter warm hues (yellow,
-# orange) so their dense clouds recede; the SMALL datasets (Sameith 82/72) take the bold
-# purple/red so their few points stay visible on top. Green-free throughout.
+# per-dataset colours, consistent across every panel; green-free. Red is our lead
+# hue (Caudal, the natural-isolate focus). Kemmeren single = orange, Caudal = red,
+# and BOTH Sameith arms = purple (one lab/platform, grouped as a single colour).
+# Yellow is intentionally retired from the arms so the scheme reads as three hues.
 DS = {
     "kemmeren_single": {
         "label": "Kemmeren single KO",
-        "line": PLOT_PALETTE[3],  # yellow
-        "fill": PLOT_PALETTE_FILL[3],
+        "line": PLOT_PALETTE[0],  # orange
+        "fill": PLOT_PALETTE_FILL[0],
         "marker": "o",
     },
     "caudal": {
         "label": "Caudal natural isolate",
-        "line": PLOT_PALETTE[0],  # orange
-        "fill": PLOT_PALETTE_FILL[0],
-        "marker": "s",
+        "line": PLOT_PALETTE[1],  # red
+        "fill": PLOT_PALETTE_FILL[1],
+        "marker": "o",
     },
     "sameith_single": {
         "label": "Sameith single KO",
         "line": PLOT_PALETTE[2],  # purple
         "fill": PLOT_PALETTE_FILL[2],
-        "marker": "^",
+        "marker": "o",
     },
     "sameith_double": {
         "label": "Sameith double KO",
-        "line": PLOT_PALETTE[1],  # red
-        "fill": PLOT_PALETTE_FILL[1],
-        "marker": "D",
+        "line": PLOT_PALETTE[2],  # purple (grouped with Sameith single)
+        "fill": PLOT_PALETTE_FILL[2],
+        "marker": "o",
     },
 }
 
@@ -463,14 +465,15 @@ def panel_f_expression_embedding(log2_by_dataset):
         ),
         (axu, xy_umap, "UMAP"),
     ]:
-        # big datasets first (they recede in the lighter warm hues) so the few Sameith
-        # points (bold, larger) sit on top and stay visible.
+        # dots only (no shapes) — colour alone distinguishes the arms. Plot the dense
+        # big clouds first with SMALL dots so they don't blob; the few Sameith points
+        # (purple) go on top a little larger so they stay pickable.
         plot_order = ["kemmeren_single", "caudal", "sameith_single", "sameith_double"]
         sizes = {
-            "kemmeren_single": 16,
-            "caudal": 16,
-            "sameith_single": 46,
-            "sameith_double": 46,
+            "kemmeren_single": 6,
+            "caudal": 6,
+            "sameith_single": 22,
+            "sameith_double": 22,
         }
         for z, key in enumerate(plot_order):
             m = labels == key
@@ -478,7 +481,7 @@ def panel_f_expression_embedding(log2_by_dataset):
                 xy[m, 0],
                 xy[m, 1],
                 s=sizes[key],
-                marker=DS[key]["marker"],
+                marker="o",
                 facecolor=DS[key]["line"],
                 edgecolor="none",
                 alpha=0.6,
@@ -492,12 +495,32 @@ def panel_f_expression_embedding(log2_by_dataset):
     axp.set_xlabel("PC1", fontsize=7)
     axp.set_ylabel("PC2", fontsize=7)
     axu.set_xlabel("UMAP-1", fontsize=7)
+    # custom legend: uniform-size circles decoupled from the scatter sizes, three
+    # entries (both Sameith arms collapse to one purple dot).
+    legend_spec = [
+        ("kemmeren_single", "Kemmeren single KO"),
+        ("caudal", "Caudal natural isolate"),
+        ("sameith_single", "Sameith KO (single + double)"),
+    ]
+    handles = [
+        Line2D(
+            [0],
+            [0],
+            linestyle="none",
+            marker="o",
+            markerfacecolor=DS[k]["line"],
+            markeredgecolor="none",
+            markersize=5,
+            label=lab,
+        )
+        for k, lab in legend_spec
+    ]
     axu.legend(
+        handles=handles,
         loc="best",
         frameon=False,
         handletextpad=0.3,
         borderpad=0.3,
-        markerscale=2.4,
         fontsize=7,
     )
     fig.suptitle(
@@ -541,7 +564,7 @@ def panel_overlap_response(log2_by_dataset):
         ko_freq[ok],
         iso_sd[ok],
         s=3,
-        facecolor=DS["caudal"]["line"],
+        facecolor=PLOT_PALETTE[1],  # red -- default single hue for supporting panels
         edgecolor="none",
         alpha=0.3,
     )
@@ -574,7 +597,7 @@ def panel_regulatory_divergence():
     ax.bar(
         range(len(order_reg)),
         pis,
-        color=DS["caudal"]["line"],
+        color=PLOT_PALETTE[1],  # red -- default single hue for supporting panels
         edgecolor=INK,
         linewidth=0.5,
         width=0.7,
@@ -612,7 +635,7 @@ def panel_decoupling():
         m["pct"],
         m["n_de_paper_exact"],
         s=6,
-        facecolor=DS["caudal"]["line"],
+        facecolor=PLOT_PALETTE[1],  # red -- default single hue for supporting panels
         edgecolor="none",
         alpha=0.5,
     )
@@ -632,8 +655,22 @@ def panel_decoupling():
 def main():
     logger.info("=" * 80)
     sample = int(os.getenv("SAMPLE_SIZE", "0")) or None
+    # Inject a genome so the Kemmeren loader can resolve alias-only KO names (CDK8,
+    # MED*, ATG*, ...) to systematic ids via the shared R64 reconciler; without it the
+    # loader silently drops those 34 strains (1,484 -> 1,450). Cached roots avoid the
+    # go.obo re-download (upstream 403s).
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        go_root=osp.join(DATA_ROOT, "data/go"),
+        overwrite=False,
+    )
+    # process_workers>0: the sequential build path silently loses the LMDB write for
+    # this loader (documented); the parallel path materialises processed/lmdb reliably.
     kem = MicroarrayKemmeren2014Dataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/microarray_kemmeren2014"), io_workers=0
+        root=osp.join(DATA_ROOT, "data/torchcell/microarray_kemmeren2014"),
+        io_workers=0,
+        process_workers=8,
+        genome=genome,
     )
     sm = SmMicroarraySameith2015Dataset(
         root=osp.join(DATA_ROOT, "data/torchcell/sm_microarray_sameith2015"),

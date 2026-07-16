@@ -16,11 +16,13 @@ one-panel-one-question map live in the plan note
 single-KO detail is [[experiments.012-sameith-kemmeren.scripts.single_mutant_expression_distributions]].
 
 **Script**: `experiments/018-natural-isolate-genomics/scripts/dataset_comparison.py`.
-Four arms, one colour each across every panel. The **large** datasets take the lighter warm
-hues so their dense clouds recede (Kemmeren single KO = yellow, Caudal natural isolate =
-orange); the **small** Sameith datasets take the bold hues so their few points stay visible
-(Sameith single KO = purple, Sameith double KO = red). Repo figure standard throughout
-(Arial 6 pt, boxed, true-size SVG). Panel **a** (setup schematic) is authored in draw.io.
+Three hues, consistent across every panel: **Kemmeren single KO = orange**, **Caudal natural
+isolate = red** (our lead hue, the natural-isolate focus), and **both Sameith arms = purple**
+(one lab/platform, grouped as a single colour). Point panels use plain dots (no shape
+coding) — colour alone separates the arms, and in panel f the rare Sameith dots are drawn
+larger and on top so they stay pickable against the dense clouds. The supporting panels
+default to red. Repo figure standard throughout (Arial 6 pt, boxed, true-size SVG). Panel
+**a** (setup schematic) is authored in draw.io.
 
 **Platform caveat (applies throughout).** Kemmeren and Sameith are two-colour **microarray**
 (log2 mut/WT); Caudal is **RNA-seq** (log2 iso/pop-mean). Any KO-vs-isolate comparison of
@@ -82,9 +84,9 @@ technologies — but the single ≪ double ≈ natural ordering is robust to it.
 ![PCA + UMAP coverage](./assets/images/018-natural-isolate-genomics/comparison_f_expression_embedding.svg)
 
 *PCA and UMAP of the joint expression matrix (**5,811 genes** shared across all four
-datasets), per-gene **z-scored within each dataset**. UMAP separates natural isolates (orange)
-from KOs (yellow), with the few Sameith points enlarged in bold purple/red so they read on
-top. **Caveat, stated on the panel:** Kemmeren/Sameith are microarray
+datasets), per-gene **z-scored within each dataset**. UMAP separates natural isolates (red)
+from KOs (orange), with the Sameith arms (purple) drawn as larger dots on top so they read
+against the overlapping clouds. **Caveat, stated on the panel:** Kemmeren/Sameith are microarray
 log2(mut/WT) and Caudal is RNA-seq log2(iso/pop-mean), so the split is **partly platform,
 not purely biology** — PC1+PC2 explain only 23 %, i.e. no single dominant axis. Read this as
 coverage, not clean biological separation; the modeling side (Option B, two decoder heads)
@@ -133,3 +135,31 @@ Reads the 018 result parquets (`natural_ko_burden`, `per_strain_divergence_summa
 d + f; writes all panels to
 `notes/assets/images/018-natural-isolate-genomics/comparison_*` and a numeric summary to
 `results/dataset_comparison_summary.json`.
+
+The Kemmeren dataset is built with an **injected `SCerevisiaeGenome`** and
+**`process_workers=8`** — both are required for a faithful 1,484-strain build (see the
+provenance note below); without them the loader silently produces a partial dataset.
+
+## 2026.07.16 - Kemmeren 1,484 restoration (loader resolver fix)
+
+Rebuilding Kemmeren for these panels initially yielded **1,450** strains, not 1,484. Two
+independent loader defects, both now fixed:
+
+1. **Alias-only KO names were dropped (1,484 → 1,450).** The loader's gene-name resolver
+   filters alias hits by Excel membership (`systematic_to_strain`), which rejects a valid
+   one-to-one alias whose systematic id is not itself an Excel strain key — e.g. `CDK8 →
+   YPL042C`, and the whole Mediator / CDK-module set (`MED3/5/9/12/13/15/16/18/20/31`,
+   `SSN6`, `CDK8`), autophagy (`ATG6/24/31`), and others (34 genes total). Fix: (a) the
+   script now **injects a genome** (without one, the alias passes are skipped entirely and
+   resolution falls back to the Excel common-name map, which lacks these); (b) added a
+   final **Pass 7** in `resolve_gene_name_comprehensive` that defers to the shared R64
+   reconciler `SCerevisiaeGenome.resolve_gene_name` (PR #98), accepting only a definite
+   live gene (`CURRENT`/`RENAMED`) so ambiguous/retired names still fall through to review.
+   Result: `Could not resolve: 0`, `Perfect match: all 1484`.
+2. **Sequential build path lost the LMDB (1,484 written, then unreadable).** With
+   `process_workers=0` the build wrote all 1,484 records but the `processed/lmdb` store was
+   not reliably materialised for the readonly `compute_gene_set` pass. Fix: build with
+   `process_workers=8` (parallel path), which persists `processed/lmdb` + `pre_filter.pt`.
+
+Net: panels b/c/d/f (LMDB) and panel e (`de_counts` parquet) are now **all 1,484**,
+internally consistent. Loader change: `torchcell/datasets/scerevisiae/kemmeren2014.py`.

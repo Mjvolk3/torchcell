@@ -13,10 +13,6 @@
             "path": "/tmp/torchcell-deprecated"
         },
         {
-            "name": "🪦 deprecated (scratch graveyard)",
-            "path": "/scratch/projects/torchcell-deprecated"
-        },
-        {
             "name": "iBioFoundry-AI",
             "path": "../iBioFoundry-AI"
         },

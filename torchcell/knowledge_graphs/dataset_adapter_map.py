@@ -1,6 +1,7 @@
 """Mapping from S. cerevisiae dataset classes to their BioCypher adapters."""
 
 from torchcell.adapters import (
+    AminoAcidMulleder2016Adapter,
     BetaxanthinCachera2023Adapter,
     CarotenoidOzaydin2013Adapter,
     CaudalPanTranscriptome2024Adapter,
@@ -13,7 +14,9 @@ from torchcell.adapters import (
     DmMicroarraySameith2015Adapter,
     GeneEssentialitySgdAdapter,
     MetaboliteDaSilveira2014Adapter,
+    MetaboliteZelezniak2018Adapter,
     MicroarrayKemmeren2014Adapter,
+    ProteomeZelezniak2018Adapter,
     ScmdOhnuki2018Adapter,
     ScmdOhnuki2022Adapter,
     SmfCostanzo2016Adapter,
@@ -53,6 +56,7 @@ from torchcell.datasets.scerevisiae.kuzmin2020 import (
     TmfKuzmin2020Dataset,
     TmiKuzmin2020Dataset,
 )
+from torchcell.datasets.scerevisiae.mulleder2016 import AminoAcidMulleder2016Dataset
 from torchcell.datasets.scerevisiae.ohnuki2018 import ScmdOhnuki2018Dataset
 from torchcell.datasets.scerevisiae.ohnuki2022 import ScmdOhnuki2022Dataset
 from torchcell.datasets.scerevisiae.ohya2005 import ScmdOhya2005Dataset
@@ -65,6 +69,10 @@ from torchcell.datasets.scerevisiae.sgd import GeneEssentialitySgdDataset
 from torchcell.datasets.scerevisiae.synth_leth_db import (
     SynthLethalityYeastSynthLethDbDataset,
     SynthRescueYeastSynthLethDbDataset,
+)
+from torchcell.datasets.scerevisiae.zelezniak2018 import (
+    MetaboliteZelezniak2018Dataset,
+    ProteomeZelezniak2018Dataset,
 )
 
 dataset_adapter_map = {
@@ -94,4 +102,7 @@ dataset_adapter_map = {
     CarotenoidOzaydin2013Dataset: CarotenoidOzaydin2013Adapter,
     BetaxanthinCachera2023Dataset: BetaxanthinCachera2023Adapter,
     MetaboliteDaSilveira2014Dataset: MetaboliteDaSilveira2014Adapter,
+    MetaboliteZelezniak2018Dataset: MetaboliteZelezniak2018Adapter,
+    ProteomeZelezniak2018Dataset: ProteomeZelezniak2018Adapter,
+    AminoAcidMulleder2016Dataset: AminoAcidMulleder2016Adapter,
 }

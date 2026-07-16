@@ -200,6 +200,17 @@ metabolite phenotype:
         metabolite_level_se: str
         measurement_type: str
         serialized_data: str
+
+protein abundance phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        protein_abundance: str
+        measurement_type: str
+        serialized_data: str
 # PHENOTYPES END
 
 # RELATIONSHIPS
@@ -238,6 +249,7 @@ phenotype member of:
             rnaseq expression phenotype,
             visual score phenotype,
             metabolite phenotype,
+            protein abundance phenotype,
         ]
     target: [experiment, experiment reference]
 

@@ -114,6 +114,10 @@ class CellAdapter:
             ("visual score phenotype (chunked)", self._visual_score_phenotype_node),
             ("metabolite phenotype (chunked)", self._metabolite_phenotype_node),
             (
+                "protein abundance phenotype (chunked)",
+                self._protein_abundance_phenotype_node,
+            ),
+            (
                 "fitness phenotype reference",
                 self._get_fitness_phenotype_reference_nodes,
             ),
@@ -152,6 +156,10 @@ class CellAdapter:
             (
                 "metabolite phenotype reference",
                 self._get_metabolite_phenotype_reference_nodes,
+            ),
+            (
+                "protein abundance phenotype reference",
+                self._get_protein_abundance_phenotype_reference_nodes,
             ),
             ("dataset", self._get_dataset_nodes),
             ("publication (chunked)", self._publication_node),
@@ -1186,6 +1194,64 @@ class CellAdapter:
                     node_id=phenotype_id,
                     preferred_id="metabolite phenotype",
                     node_label="metabolite phenotype",
+                    properties=properties,
+                )
+            )
+        return nodes
+
+    @data_chunker
+    def _protein_abundance_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        properties = {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "protein_abundance": json.dumps(phenotype.protein_abundance),
+            "protein_abundance_se": (
+                json.dumps(phenotype.protein_abundance_se)
+                if phenotype.protein_abundance_se is not None
+                else None
+            ),
+            "measurement_type": phenotype.measurement_type,
+            "serialized_data": json.dumps(phenotype.model_dump()),
+        }
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="protein abundance phenotype",
+            properties=properties,
+        )
+
+    def _get_protein_abundance_phenotype_reference_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            properties = {
+                "graph_level": phenotype.graph_level,
+                "label_name": phenotype.label_name,
+                "label_statistic_name": phenotype.label_statistic_name,
+                "protein_abundance": json.dumps(phenotype.protein_abundance),
+                "protein_abundance_se": (
+                    json.dumps(phenotype.protein_abundance_se)
+                    if phenotype.protein_abundance_se is not None
+                    else None
+                ),
+                "measurement_type": phenotype.measurement_type,
+                "serialized_data": json.dumps(phenotype.model_dump()),
+            }
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="protein abundance phenotype",
+                    node_label="protein abundance phenotype",
                     properties=properties,
                 )
             )

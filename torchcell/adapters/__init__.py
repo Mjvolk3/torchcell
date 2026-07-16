@@ -26,6 +26,9 @@ from .kuzmin2020_adapter import DmiKuzmin2020Adapter as DmiKuzmin2020Adapter
 from .kuzmin2020_adapter import SmfKuzmin2020Adapter as SmfKuzmin2020Adapter
 from .kuzmin2020_adapter import TmfKuzmin2020Adapter as TmfKuzmin2020Adapter
 from .kuzmin2020_adapter import TmiKuzmin2020Adapter as TmiKuzmin2020Adapter
+from .mulleder2016_adapter import (
+    AminoAcidMulleder2016Adapter as AminoAcidMulleder2016Adapter,
+)
 from .ohnuki2018_adapter import ScmdOhnuki2018Adapter as ScmdOhnuki2018Adapter
 from .ohnuki2022_adapter import ScmdOhnuki2022Adapter as ScmdOhnuki2022Adapter
 from .ohya2005_adapter import ScmdOhya2005Adapter as ScmdOhya2005Adapter
@@ -44,6 +47,12 @@ from .synth_leth_db_adapter import (
 )
 from .synth_leth_db_adapter import (
     SynthRescueYeastSynthLethDbAdapter as SynthRescueYeastSynthLethDbAdapter,
+)
+from .zelezniak2018_adapter import (
+    MetaboliteZelezniak2018Adapter as MetaboliteZelezniak2018Adapter,
+)
+from .zelezniak2018_adapter import (
+    ProteomeZelezniak2018Adapter as ProteomeZelezniak2018Adapter,
 )
 
 cell_adapters = ["CellAdapter"]
@@ -94,6 +103,12 @@ metabolite_adapters = [
     "MetaboliteDaSilveira2014Adapter",
 ]
 
+proteome_metabolome_adapters = [
+    "MetaboliteZelezniak2018Adapter",
+    "ProteomeZelezniak2018Adapter",
+    "AminoAcidMulleder2016Adapter",
+]
+
 
 __all__ = (
     cell_adapters
@@ -106,4 +121,5 @@ __all__ = (
     + expression_adapters
     + morphology_adapters
     + metabolite_adapters
+    + proteome_metabolome_adapters
 )

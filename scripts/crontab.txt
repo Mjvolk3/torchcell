@@ -21,3 +21,12 @@
 # time; drop it once the backlog is drained. Writes JSON reports under
 # torchcell-library/_sync_reports/.
 30 3 * * * bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && /home/michaelvolk/miniconda3/envs/torchcell/bin/python scripts/lit_sync_database.py --limit 10 >> /tmp/torchcell-lit-sync-database.log 2>&1'
+
+# deprecation-graveyard retention sweep: remove graveyard entries that have STAYED past the
+# retention window (14 days), keeping recent ones. The 14-day RETENTION is enforced by the
+# script's age gate (age read from each entry's moved-in timestamp), so this runs DAILY and
+# purges each item promptly the day it crosses 14 days. (For a literal "every 14 days"
+# cadence use `0 4 */14 * *` instead -- but then an item can linger up to ~a month before a
+# run catches it; daily + age-gate is the precise way to get "removed after staying 14 days".)
+# Sweeps both /tmp and the /scratch sibling graveyard; never touches non-deprecate entries.
+0 4 * * * bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && bash scripts/purge_deprecated.sh >> /tmp/torchcell-purge-deprecated.log 2>&1'

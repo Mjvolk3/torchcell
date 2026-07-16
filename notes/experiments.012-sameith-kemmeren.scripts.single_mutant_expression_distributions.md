@@ -44,11 +44,11 @@ Box plots show log2 expression change distributions per deletion strain:
 
 ### Images
 
-![Single Mutant Kemmeren](./assets/images/012-sameith-kemmeren-expression/single_mutant_kemmeren.png)
+![Single Mutant Kemmeren](./assets/images/012-sameith-kemmeren-expression/single_mutant_kemmeren.svg)
 
 *Figure 1: Kemmeren 2014 — genome-wide log2 fold-change for 1,484 single deletions, drawn as a **sorted spread band** (1,484 box-per-strain would be 0.12 mm/box at print width, invisible). Strains are ranked by IQR, quiet → disruptive; the dark-red band is the per-strain IQR (Q1–Q3), the light-red band the 5–95% range, the black line the median. Most deletions barely move the transcriptome — pooled, only **12.1%** of gene measurements exceed |log2FC| > 0.25 (2.8% > 0.5, 0.6% > 1.0) — with a disruptive minority in the right tail. Full-width × 35.7 mm true-size panel, palette red.*
 
-![Single Mutant Sameith](./assets/images/012-sameith-kemmeren-expression/single_mutant_sameith.png)
+![Single Mutant Sameith](./assets/images/012-sameith-kemmeren-expression/single_mutant_sameith.svg)
 
 *Figure 2: Sameith 2015 — genome-wide log2 fold-change for 82 GSTF deletions, **box-per-strain** (82 boxes survive at ~2.2 mm each), sorted by IQR; boxes = Q1–Q3, whiskers = 5–95%, median black. On the #72 sign-fixed data, pooled **8.4%** of gene measurements exceed |log2FC| > 0.25 (1.8% > 0.5). Same full-width × 35.7 mm true-size panel as Fig 1.*
 

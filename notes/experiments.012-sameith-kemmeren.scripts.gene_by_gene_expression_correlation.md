@@ -37,11 +37,11 @@ Assesses cross-study reproducibility between Kemmeren2014 and Sameith2015 by cor
 
 ### Images
 
-![Correlation Distribution Pearson](./assets/images/012-sameith-kemmeren-expression/gene_expression_correlation_dist_pearson.png)
+![Correlation Distribution Pearson](./assets/images/012-sameith-kemmeren-expression/gene_expression_correlation_dist_pearson.svg)
 
 *Figure 1: Cross-study expression profile correlation distribution (Pearson), on the #72 sign-fixed Sameith rebuild. Shows **median r = 0.744** with 82% of deletions having r > 0.5, confirming that identical gene deletions produce similar genome-wide transcriptional responses across independent studies. (Numbers refreshed 2026.07.15 after #72; see the dated section below for the full before/after. Bars use repo palette red `#B85450`.)*
 
-![Correlation Distribution Spearman](./assets/images/012-sameith-kemmeren-expression/gene_expression_correlation_dist_spearman.png)
+![Correlation Distribution Spearman](./assets/images/012-sameith-kemmeren-expression/gene_expression_correlation_dist_spearman.svg)
 
 *Figure 2: Cross-study expression profile correlation distribution (Spearman). Shows **median r = 0.791**, consistent with the Pearson result — the similarity indicates linear relationships without major rank-order distortion.*
 
@@ -132,4 +132,4 @@ Figure follows the repo palette + Nature standards (single-hue histogram -- one
 distribution; green-free; boxed; Arial 6 pt; `half` panel width; true-size SVG). The
 per-deletion numbers are in `experiments/012-sameith-kemmeren/results/gene_expression_correlations.csv`.
 
-![](assets/images/012-sameith-kemmeren-expression/gene_expression_correlation_dist_pearson.png)
+![](assets/images/012-sameith-kemmeren-expression/gene_expression_correlation_dist_pearson.svg)

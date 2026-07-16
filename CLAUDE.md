@@ -493,6 +493,11 @@ them to the best of the plot's ability (some plots legitimately deviate — say 
   imports at true mm in draw.io (it rescales matplotlib's 72-dpi points to draw.io's
   100-units/inch). Do NOT pass `bbox_inches="tight"` on a fixed-width panel — it
   defeats the width template (fine only for a standalone legend crop).
+- **Embed the SVG in notes, not the PNG.** Scripts write BOTH `.png` and `.svg`, but the
+  Dendron note references the true-size `.svg` (`![](….svg)`) — vector, and the *same* file
+  that goes into draw.io, so the note shows exactly what the figure will be. The `.png` stays
+  on disk as a raster fallback: Dendron/VSCode preview renders SVG crisply, but GitHub's
+  markdown viewer renders relative-path SVGs inconsistently. So save both, embed the SVG.
 - **Reference prior work:** match the look of already-approved paper figures in
   `notes/assets/images/*_palette.svg` where reasonable.
 

@@ -104,6 +104,16 @@ class CellAdapter:
             ),
             ("calmorph phenotype (chunked)", self._calmorph_phenotype_node),
             (
+                "microarray expression phenotype (chunked)",
+                self._microarray_expression_phenotype_node,
+            ),
+            (
+                "rnaseq expression phenotype (chunked)",
+                self._rnaseq_expression_phenotype_node,
+            ),
+            ("visual score phenotype (chunked)", self._visual_score_phenotype_node),
+            ("metabolite phenotype (chunked)", self._metabolite_phenotype_node),
+            (
                 "fitness phenotype reference",
                 self._get_fitness_phenotype_reference_nodes,
             ),
@@ -126,6 +136,22 @@ class CellAdapter:
             (
                 "calmorph phenotype reference",
                 self._get_calmorph_phenotype_reference_nodes,
+            ),
+            (
+                "microarray expression phenotype reference",
+                self._get_microarray_expression_phenotype_reference_nodes,
+            ),
+            (
+                "rnaseq expression phenotype reference",
+                self._get_rnaseq_expression_phenotype_reference_nodes,
+            ),
+            (
+                "visual score phenotype reference",
+                self._get_visual_score_phenotype_reference_nodes,
+            ),
+            (
+                "metabolite phenotype reference",
+                self._get_metabolite_phenotype_reference_nodes,
             ),
             ("dataset", self._get_dataset_nodes),
             ("publication (chunked)", self._publication_node),
@@ -941,6 +967,228 @@ class CellAdapter:
                 properties=properties,
             )
             nodes.append(node)
+        return nodes
+
+    # --- Expression / metabolite / visual-score phenotypes (abstract datasets) ---
+    # Multi-valued phenotypes (expression, metabolite) serialize their per-key dicts to
+    # JSON strings (the CalMorph pattern); the scalar VisualScore stores plain scalars.
+
+    @data_chunker
+    def _microarray_expression_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        properties = {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "expression_log2_ratio": json.dumps(phenotype.expression_log2_ratio),
+            "expression_log2_ratio_se": (
+                json.dumps(phenotype.expression_log2_ratio_se)
+                if phenotype.expression_log2_ratio_se is not None
+                else None
+            ),
+            "serialized_data": json.dumps(phenotype.model_dump()),
+        }
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="microarray expression phenotype",
+            properties=properties,
+        )
+
+    def _get_microarray_expression_phenotype_reference_nodes(
+        self,
+    ) -> list[BioCypherNode]:
+        nodes = []
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            properties = {
+                "graph_level": phenotype.graph_level,
+                "label_name": phenotype.label_name,
+                "label_statistic_name": phenotype.label_statistic_name,
+                "expression_log2_ratio": json.dumps(phenotype.expression_log2_ratio),
+                "expression_log2_ratio_se": (
+                    json.dumps(phenotype.expression_log2_ratio_se)
+                    if phenotype.expression_log2_ratio_se is not None
+                    else None
+                ),
+                "serialized_data": json.dumps(phenotype.model_dump()),
+            }
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="microarray expression phenotype",
+                    node_label="microarray expression phenotype",
+                    properties=properties,
+                )
+            )
+        return nodes
+
+    @data_chunker
+    def _rnaseq_expression_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        properties = {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "expression_tpm": json.dumps(phenotype.expression_tpm),
+            "measurement_type": phenotype.measurement_type,
+            "n_mapped_reads": phenotype.n_mapped_reads,
+            "serialized_data": json.dumps(phenotype.model_dump()),
+        }
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="rnaseq expression phenotype",
+            properties=properties,
+        )
+
+    def _get_rnaseq_expression_phenotype_reference_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            properties = {
+                "graph_level": phenotype.graph_level,
+                "label_name": phenotype.label_name,
+                "label_statistic_name": phenotype.label_statistic_name,
+                "expression_tpm": json.dumps(phenotype.expression_tpm),
+                "measurement_type": phenotype.measurement_type,
+                "n_mapped_reads": phenotype.n_mapped_reads,
+                "serialized_data": json.dumps(phenotype.model_dump()),
+            }
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="rnaseq expression phenotype",
+                    node_label="rnaseq expression phenotype",
+                    properties=properties,
+                )
+            )
+        return nodes
+
+    @data_chunker
+    def _visual_score_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        properties = {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "visual_score": phenotype.visual_score,
+            "n_replicates": phenotype.n_replicates,
+            "target_product": phenotype.target_product,
+            "target_metabolite_id": phenotype.target_metabolite_id,
+            "serialized_data": json.dumps(phenotype.model_dump()),
+        }
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="visual score phenotype",
+            properties=properties,
+        )
+
+    def _get_visual_score_phenotype_reference_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            properties = {
+                "graph_level": phenotype.graph_level,
+                "label_name": phenotype.label_name,
+                "label_statistic_name": phenotype.label_statistic_name,
+                "visual_score": phenotype.visual_score,
+                "n_replicates": phenotype.n_replicates,
+                "target_product": phenotype.target_product,
+                "target_metabolite_id": phenotype.target_metabolite_id,
+                "serialized_data": json.dumps(phenotype.model_dump()),
+            }
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="visual score phenotype",
+                    node_label="visual score phenotype",
+                    properties=properties,
+                )
+            )
+        return nodes
+
+    @data_chunker
+    def _metabolite_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        properties = {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "metabolite_level": json.dumps(phenotype.metabolite_level),
+            "metabolite_level_se": (
+                json.dumps(phenotype.metabolite_level_se)
+                if phenotype.metabolite_level_se is not None
+                else None
+            ),
+            "measurement_type": phenotype.measurement_type,
+            "serialized_data": json.dumps(phenotype.model_dump()),
+        }
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="metabolite phenotype",
+            properties=properties,
+        )
+
+    def _get_metabolite_phenotype_reference_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            properties = {
+                "graph_level": phenotype.graph_level,
+                "label_name": phenotype.label_name,
+                "label_statistic_name": phenotype.label_statistic_name,
+                "metabolite_level": json.dumps(phenotype.metabolite_level),
+                "metabolite_level_se": (
+                    json.dumps(phenotype.metabolite_level_se)
+                    if phenotype.metabolite_level_se is not None
+                    else None
+                ),
+                "measurement_type": phenotype.measurement_type,
+                "serialized_data": json.dumps(phenotype.model_dump()),
+            }
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="metabolite phenotype",
+                    node_label="metabolite phenotype",
+                    properties=properties,
+                )
+            )
         return nodes
 
     def _get_dataset_nodes(self) -> list[BioCypherNode]:

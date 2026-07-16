@@ -4,6 +4,12 @@
     "median_absent":124.0,
     "median_pct_div":0.3782462214
   },
+  "panel_c":{
+    "kemmeren_single":0.1551935131,
+    "sameith_single":0.1419887896,
+    "sameith_double":0.1775451539,
+    "caudal":0.5683069371
+  },
   "panel_d":{
     "shared_ymax":2.6,
     "kemmeren_single":1484,
@@ -13,6 +19,7 @@
   },
   "panel_e":{
     "kemmeren_median":4.0,
+    "sameith_double_median":58.0,
     "caudal_median":59.0
   },
   "panel_f":{

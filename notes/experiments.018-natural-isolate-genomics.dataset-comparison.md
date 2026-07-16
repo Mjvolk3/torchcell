@@ -8,7 +8,7 @@ created: 1784179714166
 
 # Dataset Comparison — Engineered KO vs Natural Isolate
 
-The **descriptive** panels (b, d, e, f) of Fig 4 ("Natural Genetic Variation vs
+The **descriptive** panels (b, c, d, e, f) of Fig 4 ("Natural Genetic Variation vs
 Model-Design Perturbations"): how different are engineered-knockout and natural-isolate
 strains, in **genotype** and in **transcriptome**? Modeling panels (g, h = E1/E2) and the
 one-panel-one-question map live in the plan note
@@ -34,6 +34,16 @@ gene edit in an isogenic background; an isolate is hundreds of absences **plus**
 divergence spread across thousands of shared genes. A deletion-only model cannot represent
 the isolate axis at all.*
 
+## c — Per-strain spread across datasets, on one axis
+
+![Per-strain spread violins](./assets/images/018-natural-isolate-genomics/comparison_c_spread_by_dataset.svg)
+
+*The cross-dataset noise comparison panel d cannot show together — each dataset has a
+different strain count, hence a different x-axis. Each strain is collapsed to its **IQR of
+genome-wide log2 FC** and the four IQR distributions drawn as violins on one shared axis
+(black bar = median). Single and double KOs sit tight (median IQR ~0.14–0.18); **Caudal
+natural isolates are ~3.6× wider (median 0.57)**. Same per-dataset colours as panel f.*
+
 ## d — Transcriptome: natural isolates move far more than any KO
 
 ![Transcriptome spread bands](./assets/images/018-natural-isolate-genomics/comparison_d_transcriptome_bands.svg)
@@ -46,14 +56,18 @@ n = 1,484; Sameith n = 82) are tight, double KOs (n = 72) a touch wider at the t
 isolate perturbs far more of its transcriptome than any single or double deletion. This is
 the transcriptome counterpart of panel b.*
 
-## e — How many genes move: 4 vs 59
+## e — How many genes move: single KO ≪ double KO ≈ natural isolate
 
 ![DE-count distribution](./assets/images/018-natural-isolate-genomics/comparison_e_de_counts.svg)
 
-*Differentially expressed genes per strain, identical rule on both arms (Kemmeren 2014:
-|log2 FC| > log2(1.7) = 0.766 **and** BH-adjusted p < 0.05; Caudal noise-controlled from its
-29 replicate cultures — without that control its count would be ~1,011, not 59). A single KO
-changes a median of **4** genes; a natural isolate changes **59** — ~15× more.*
+*Differentially expressed genes per strain, one noise-controlled rule for all three arms
+(|log2 FC| > log2(1.7) = 0.766 **and** BH-adjusted p < 0.05; the p-value from each dataset's
+own noise model — Kemmeren limma, Caudal its 29 replicate cultures, Sameith its stored
+per-gene log2-ratio SE via z = M/SE). A **single KO** changes a median of **4** genes; a
+**Sameith double KO** changes **58**; a **natural isolate** changes **59**. So a double TF
+knockout perturbs about as much of the transcriptome as a natural isolate, while a single KO
+moves ~15× fewer genes — the "a double deletion perturbs a network, not a node" point
+(plan note E4, now unblocked by #72) made concrete.*
 
 ## f — Transcriptome design-space coverage (with a platform caveat)
 

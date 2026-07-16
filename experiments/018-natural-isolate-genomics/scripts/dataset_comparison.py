@@ -71,30 +71,33 @@ PANEL_H_MM = (
     35.7  # canonical wide-strip height unit (figure-sizing-template.drawio.svg)
 )
 
-# per-dataset colours, consistent across every panel (line, fill); green-free, warm first.
+# per-dataset colours, consistent across every panel. Deliberate (not palette-order):
+# the LARGE datasets (Kemmeren 1,484, Caudal 943) take the lighter warm hues (yellow,
+# orange) so their dense clouds recede; the SMALL datasets (Sameith 82/72) take the bold
+# purple/red so their few points stay visible on top. Green-free throughout.
 DS = {
     "kemmeren_single": {
         "label": "Kemmeren single KO",
-        "line": PLOT_PALETTE[0],
-        "fill": PLOT_PALETTE_FILL[0],
+        "line": PLOT_PALETTE[3],  # yellow
+        "fill": PLOT_PALETTE_FILL[3],
         "marker": "o",
     },
     "caudal": {
         "label": "Caudal natural isolate",
-        "line": PLOT_PALETTE[1],
-        "fill": PLOT_PALETTE_FILL[1],
+        "line": PLOT_PALETTE[0],  # orange
+        "fill": PLOT_PALETTE_FILL[0],
         "marker": "s",
     },
     "sameith_single": {
         "label": "Sameith single KO",
-        "line": PLOT_PALETTE[2],
+        "line": PLOT_PALETTE[2],  # purple
         "fill": PLOT_PALETTE_FILL[2],
         "marker": "^",
     },
     "sameith_double": {
         "label": "Sameith double KO",
-        "line": PLOT_PALETTE[3],
-        "fill": PLOT_PALETTE_FILL[3],
+        "line": PLOT_PALETTE[1],  # red
+        "fill": PLOT_PALETTE_FILL[1],
         "marker": "D",
     },
 }
@@ -303,14 +306,15 @@ def panel_c_spread_by_dataset(frames):
         pc.set_alpha(0.85)
     parts["cmedians"].set_color(INK)
     parts["cmedians"].set_linewidth(0.8)
+    labs = [
+        "Kemmeren\nsingle KO",
+        "Sameith\nsingle KO",
+        "Sameith\ndouble KO",
+        "Caudal\nisolate",
+    ]
     ax.set_xticks(range(len(order)))
     ax.set_xticklabels(
-        [
-            "Kemmeren\nsingle KO",
-            "Sameith\nsingle KO",
-            "Sameith\ndouble KO",
-            "Caudal\nisolate",
-        ]
+        [f"{lab}\n(n = {len(frames[k])})" for k, lab in zip(order, labs)]
     )
     ax.set_ylabel("per-strain spread (IQR of log2 FC)")
     ax.set_title(
@@ -459,17 +463,27 @@ def panel_f_expression_embedding(log2_by_dataset):
         ),
         (axu, xy_umap, "UMAP"),
     ]:
-        for key in order:
+        # big datasets first (they recede in the lighter warm hues) so the few Sameith
+        # points (bold, larger) sit on top and stay visible.
+        plot_order = ["kemmeren_single", "caudal", "sameith_single", "sameith_double"]
+        sizes = {
+            "kemmeren_single": 16,
+            "caudal": 16,
+            "sameith_single": 46,
+            "sameith_double": 46,
+        }
+        for z, key in enumerate(plot_order):
             m = labels == key
             ax.scatter(
                 xy[m, 0],
                 xy[m, 1],
-                s=12,
+                s=sizes[key],
                 marker=DS[key]["marker"],
                 facecolor=DS[key]["line"],
                 edgecolor="none",
                 alpha=0.6,
                 label=DS[key]["label"],
+                zorder=2 + z,
             )
         ax.set_title(ttl, loc="left", color=INK, fontsize=7)
         ax.set_xticks([])
@@ -487,7 +501,8 @@ def panel_f_expression_embedding(log2_by_dataset):
         fontsize=7,
     )
     fig.suptitle(
-        "Transcriptome coverage (per-gene z-scored within dataset; residual split is partly platform)",
+        "Transcriptome coverage (z-scored within dataset; split is partly platform: "
+        "Kemmeren/Sameith microarray vs Caudal RNA-seq)",
         x=0.005,
         ha="left",
         fontsize=8,
@@ -498,6 +513,120 @@ def panel_f_expression_embedding(log2_by_dataset):
         "n_shared_genes": len(genes),
         "pc1_var": float(pca.explained_variance_ratio_[0]),
     }
+
+
+# ------------------------------------------------------- further explanation (1) overlap
+def panel_overlap_response(log2_by_dataset):
+    """Per gene: KO-response frequency (fraction of Kemmeren single KOs where the gene is
+    DE) vs natural-isolate variability (SD across Caudal isolates). Do the two modalities
+    move the SAME genes, or complementary ones? Caveat: Kemmeren is microarray, Caudal is
+    RNA-seq -- the per-gene dynamic ranges are not identical.
+    """
+    kem, cau = log2_by_dataset["kemmeren_single"], log2_by_dataset["caudal"]
+    genes = sorted(
+        set.union(*[set(p) for p in kem.values()])
+        & set.union(*[set(p) for p in cau.values()])
+    )
+    kem_mat = np.array([[p.get(g, np.nan) for g in genes] for p in kem.values()])
+    cau_mat = np.array([[p.get(g, np.nan) for g in genes] for p in cau.values()])
+    ko_freq = 100.0 * np.nanmean(np.abs(kem_mat) > LOG2_FC, axis=0)
+    iso_sd = np.nanstd(cau_mat, axis=0)
+    ok = np.isfinite(ko_freq) & np.isfinite(iso_sd)
+    r = float(np.corrcoef(ko_freq[ok], iso_sd[ok])[0, 1])
+
+    _apply_rc()
+    w = mm_to_in(PANEL_WIDTHS_MM["half_plus"])
+    fig, ax = plt.subplots(figsize=(w, mm_to_in(66)), constrained_layout=True)
+    ax.scatter(
+        ko_freq[ok],
+        iso_sd[ok],
+        s=3,
+        facecolor=DS["caudal"]["line"],
+        edgecolor="none",
+        alpha=0.3,
+    )
+    ax.set_xlabel("KO-response frequency (% of Kemmeren KOs where gene is DE)")
+    ax.set_ylabel("natural-isolate variability (SD of log2 across Caudal)")
+    ax.set_title(
+        f"Do KOs and isolates move the same genes?  r = {r:.2f}",
+        loc="left",
+        color=INK,
+        fontsize=7,
+    )
+    _box(ax)
+    _save(fig, "comparison_overlap_response")
+    return {"n_genes": int(ok.sum()), "r": r}
+
+
+# --------------------------------------------------- further explanation (2) regulatory
+def panel_regulatory_divergence():
+    """Nucleotide diversity by region: regulatory (up/downstream) vs coding, across the
+    1,011 natural isolates. Motivates encoding the promoter/terminator window.
+    """
+    reg = pd.read_parquet(osp.join(RESULTS, "regulatory_divergence_by_region.parquet"))
+    order_reg = ["cds", "upstream_1000", "downstream_297", "intergenic_other"]
+    labs = ["CDS", "upstream\n(1000 bp)", "downstream\n(297 bp)", "intergenic"]
+    pis = reg.set_index("region").loc[order_reg, "pi_percent"].to_numpy()
+
+    _apply_rc()
+    w = mm_to_in(PANEL_WIDTHS_MM["half_plus"])
+    fig, ax = plt.subplots(figsize=(w, mm_to_in(60)), constrained_layout=True)
+    ax.bar(
+        range(len(order_reg)),
+        pis,
+        color=DS["caudal"]["line"],
+        edgecolor=INK,
+        linewidth=0.5,
+        width=0.7,
+    )
+    ax.set_xticks(range(len(order_reg)))
+    ax.set_xticklabels(labs)
+    ax.set_ylabel("nucleotide diversity π (%)")
+    ax.set_title(
+        "Regulatory sequence is ~2× as variable as coding",
+        loc="left",
+        color=INK,
+        fontsize=7,
+    )
+    _box(ax)
+    _save(fig, "comparison_regulatory_divergence")
+    return dict(zip(order_reg, [float(x) for x in pis]))
+
+
+# --------------------------------------------------- further explanation (3) decoupling
+def panel_decoupling():
+    """Genome divergence does not predict transcriptome response (one point per isolate);
+    natural isolates teach WHICH genes move, not HOW MANY.
+    """
+    div = pd.read_parquet(osp.join(RESULTS, "per_strain_divergence_summary.parquet"))
+    de = pd.read_parquet(osp.join(RESULTS, "de_counts_per_strain.parquet"))
+    cau = de[de["dataset"].str.startswith("caudal")][["strain", "n_de_paper_exact"]]
+    m = cau.merge(div[["strain", "genome_wide_divergence"]], on="strain", how="inner")
+    m["pct"] = 100.0 * m["genome_wide_divergence"]
+    r = float(np.corrcoef(m["pct"], m["n_de_paper_exact"])[0, 1])
+
+    _apply_rc()
+    w = mm_to_in(PANEL_WIDTHS_MM["half_plus"])
+    fig, ax = plt.subplots(figsize=(w, mm_to_in(66)), constrained_layout=True)
+    ax.scatter(
+        m["pct"],
+        m["n_de_paper_exact"],
+        s=6,
+        facecolor=DS["caudal"]["line"],
+        edgecolor="none",
+        alpha=0.5,
+    )
+    ax.set_xlabel("genome-wide divergence from S288C (%)")
+    ax.set_ylabel("differentially expressed genes")
+    ax.set_title(
+        f"Genome divergence poorly predicts response  (r = {r:.2f})",
+        loc="left",
+        color=INK,
+        fontsize=7,
+    )
+    _box(ax)
+    _save(fig, "comparison_decoupling")
+    return {"r": r, "n": int(len(m))}
 
 
 def main():
@@ -534,6 +663,9 @@ def main():
         "panel_d": panel_d_transcriptome_bands(frames),
         "panel_e": panel_e_de_counts(sameith_de),
         "panel_f": panel_f_expression_embedding(log2),
+        "overlap": panel_overlap_response(log2),
+        "regulatory": panel_regulatory_divergence(),
+        "decoupling": panel_decoupling(),
     }
     os.makedirs(RESULTS, exist_ok=True)
     pd.Series(summary, dtype=object).to_json(

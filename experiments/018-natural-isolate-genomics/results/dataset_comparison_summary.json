@@ -25,5 +25,19 @@
   "panel_f":{
     "n_shared_genes":5811,
     "pc1_var":0.1190584875
+  },
+  "overlap":{
+    "n_genes":5811,
+    "r":0.3352075006
+  },
+  "regulatory":{
+    "cds":0.4123596172,
+    "upstream_1000":0.787772831,
+    "downstream_297":0.8427004783,
+    "intergenic_other":0.6524337358
+  },
+  "decoupling":{
+    "r":0.0379026906,
+    "n":865
   }
 }

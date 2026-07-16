@@ -8,7 +8,7 @@ created: 1784179714166
 
 # Dataset Comparison — Engineered KO vs Natural Isolate
 
-The **descriptive** panels (b, c, d, e, f) of Fig 4 ("Natural Genetic Variation vs
+The **descriptive** panels (b–f, plus three supporting panels) of Fig 4 ("Natural Genetic Variation vs
 Model-Design Perturbations"): how different are engineered-knockout and natural-isolate
 strains, in **genotype** and in **transcriptome**? Modeling panels (g, h = E1/E2) and the
 one-panel-one-question map live in the plan note
@@ -16,10 +16,16 @@ one-panel-one-question map live in the plan note
 single-KO detail is [[experiments.012-sameith-kemmeren.scripts.single_mutant_expression_distributions]].
 
 **Script**: `experiments/018-natural-isolate-genomics/scripts/dataset_comparison.py`.
-Four arms, one colour each across every panel: Kemmeren single KO (amber), Sameith single
-KO (purple), Sameith double KO (yellow), Caudal natural isolate (red). Repo figure standard
-throughout (Arial 6 pt, boxed, true-size SVG). Panel **a** (setup schematic) is authored in
-draw.io.
+Four arms, one colour each across every panel. The **large** datasets take the lighter warm
+hues so their dense clouds recede (Kemmeren single KO = yellow, Caudal natural isolate =
+orange); the **small** Sameith datasets take the bold hues so their few points stay visible
+(Sameith single KO = purple, Sameith double KO = red). Repo figure standard throughout
+(Arial 6 pt, boxed, true-size SVG). Panel **a** (setup schematic) is authored in draw.io.
+
+**Platform caveat (applies throughout).** Kemmeren and Sameith are two-colour **microarray**
+(log2 mut/WT); Caudal is **RNA-seq** (log2 iso/pop-mean). Any KO-vs-isolate comparison of
+magnitude, spread, or embedding is therefore partly confounded by technology, not only
+biology — restated on the panels where it bites hardest (e, f, and the gene-overlap panel).
 
 ## b — Genotype: engineered and natural occupy disjoint space
 
@@ -67,19 +73,54 @@ per-gene log2-ratio SE via z = M/SE). A **single KO** changes a median of **4** 
 **Sameith double KO** changes **58**; a **natural isolate** changes **59**. So a double TF
 knockout perturbs about as much of the transcriptome as a natural isolate, while a single KO
 moves ~15× fewer genes — the "a double deletion perturbs a network, not a node" point
-(plan note E4, now unblocked by #72) made concrete.*
+(plan note E4, now unblocked by #72) made concrete. **Platform caveat:** Kemmeren/Sameith
+are microarray, Caudal RNA-seq, so the absolute counts are not perfectly comparable across
+technologies — but the single ≪ double ≈ natural ordering is robust to it.*
 
 ## f — Transcriptome design-space coverage (with a platform caveat)
 
 ![PCA + UMAP coverage](./assets/images/018-natural-isolate-genomics/comparison_f_expression_embedding.svg)
 
 *PCA and UMAP of the joint expression matrix (**5,811 genes** shared across all four
-datasets), per-gene **z-scored within each dataset**. UMAP separates natural isolates (red)
-from KOs (amber). **Caveat, stated on the panel:** Kemmeren/Sameith are microarray
+datasets), per-gene **z-scored within each dataset**. UMAP separates natural isolates (orange)
+from KOs (yellow), with the few Sameith points enlarged in bold purple/red so they read on
+top. **Caveat, stated on the panel:** Kemmeren/Sameith are microarray
 log2(mut/WT) and Caudal is RNA-seq log2(iso/pop-mean), so the split is **partly platform,
 not purely biology** — PC1+PC2 explain only 23 %, i.e. no single dominant axis. Read this as
 coverage, not clean biological separation; the modeling side (Option B, two decoder heads)
 is what dodges the confound properly.*
+
+## Supporting panels (further explanation)
+
+### Do KOs and natural isolates move the same genes?
+
+![Gene-response overlap](./assets/images/018-natural-isolate-genomics/comparison_overlap_response.svg)
+
+*Per gene (5,811 shared): x = KO-response frequency (% of Kemmeren single KOs where the gene
+is DE), y = its variability across Caudal isolates (SD of log2). The two are **moderately
+correlated (r = 0.34)** — a shared "responsive core" both modalities move, plus substantial
+per-gene coverage each has that the other lacks. Natural isolates and KOs are **partly
+complementary**, not redundant. Platform caveat applies (Kemmeren microarray, Caudal RNA-seq).*
+
+### Where the natural variation sits: regulatory vs coding
+
+![Regulatory divergence](./assets/images/018-natural-isolate-genomics/comparison_regulatory_divergence.svg)
+
+*Nucleotide diversity π across the 1,011 isolates, by region. **Regulatory sequence (upstream
+0.79 %, downstream 0.84 %) is ~2× as variable as coding (CDS 0.41 %)** — purifying selection
+on protein sequence, drift in promoters/terminators. This is why the sequence encoder must
+read the regulatory window; the SpeciesLM input (1000 bp up + 297 bp down) already covers
+~93 % of all π.*
+
+### Genome divergence does not predict transcriptome response
+
+![Decoupling](./assets/images/018-natural-isolate-genomics/comparison_decoupling.svg)
+
+*One point per isolate (n = 865): genome-wide sequence divergence from S288C vs number of DE
+genes. **r = 0.04** — an isolate twice as diverged does not move twice as many genes; natural
+gene loss is concentrated in dispensable, buffered genes. Modeling consequence: score *which*
+genes move and in *what direction* (per-gene rank/direction agreement), not *how much*
+(magnitude MSE), or the isolates will look harder to predict than the mechanism deserves.*
 
 ## Reproduce
 
@@ -89,6 +130,6 @@ python experiments/018-natural-isolate-genomics/scripts/dataset_comparison.py
 
 Reads the 018 result parquets (`natural_ko_burden`, `per_strain_divergence_summary`,
 `de_counts_per_strain`) for b + e and the built Kemmeren / Sameith SM+DM / Caudal LMDBs for
-d + f; writes the four SVG/PNG panels to
+d + f; writes all panels to
 `notes/assets/images/018-natural-isolate-genomics/comparison_*` and a numeric summary to
 `results/dataset_comparison_summary.json`.

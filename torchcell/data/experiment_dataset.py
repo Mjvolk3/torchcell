@@ -18,6 +18,7 @@ import lmdb
 import numpy as np
 import pandas as pd
 import torch
+from pydantic import BaseModel
 from torch_geometric.data import Dataset
 from tqdm import tqdm
 
@@ -66,6 +67,49 @@ def serialize_for_hashing(obj: Any) -> str:
         return json.dumps(sorted_dict)
     else:
         return json.dumps(obj, sort_keys=True)
+
+
+# --------------------------------------------------------------------------- #
+# Content-addressed interning of constant sub-objects.
+#
+# The component-based Environment (~7.9 KB with Media components + SourcedValue
+# provenance) is constant across a dataset yet was stored inline on every record
+# (twice: experiment.environment + reference.environment_reference, plus the
+# constant reference/publication), ballooning dmi_costanzo2016 45 GB -> 159 GB.
+# We store each DISTINCT constant sub-object ONCE in a NAMED LMDB sub-db
+# ``interned`` keyed by a content hash, and replace the inline value in a record
+# with a tiny ``{"$ref": <hash>, "name": <hint>}`` pointer. ``resolve_interned``
+# splices the full object back on read, so ``get_single_item`` returns the whole
+# record unchanged (public API preserved). A record with no ``$ref`` (legacy
+# inline store) passes through untouched -- backward compatible.
+# Design: ``[[plan.experiment-dataset-interning.2026.07.15]]``.
+# --------------------------------------------------------------------------- #
+INTERN_MIN_BYTES = 512
+
+
+def canonical_json(obj: Any) -> str:
+    """Deterministic JSON for content-hashing (mode=json -> stable enum strings)."""
+    if isinstance(obj, BaseModel):
+        obj = obj.model_dump(mode="json")
+    return json.dumps(obj, sort_keys=True)
+
+
+def resolve_interned(obj: Any, interned: dict[str, Any]) -> Any:
+    """Recursively splice interned sub-objects back into a record dict.
+
+    A dict carrying a ``$ref`` key is replaced by the interned object it points
+    to; every other value is returned unchanged -- so a legacy record (no
+    ``$ref`` anywhere) is a byte-for-byte no-op. Reusable by any raw LMDB reader
+    (e.g. neo4j adapters) that bypasses ``get_single_item``.
+    """
+    if isinstance(obj, dict):
+        ref = obj.get("$ref")
+        if ref is not None:
+            return interned[ref]
+        return {k: resolve_interned(v, interned) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [resolve_interned(v, interned) for v in obj]
+    return obj
 
 
 def compute_experiment_reference_index_sequential(
@@ -172,6 +216,10 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
         self._gene_set: GeneSet | None = None
         self._df: pd.DataFrame | None = None
         self._experiment_reference_index: list[ExperimentReferenceIndex] | None = None
+        # Interned constant sub-objects, loaded once from the sibling `interned`
+        # env. Kept on its OWN attribute (NOT cleared by close_lmdb, which
+        # nulls self.env and re-runs _init_db many times) so it loads exactly once.
+        self._interned: dict[str, Any] | None = None
 
         # Automatically set the name based on the class name
         self.name = self.__class__.__name__
@@ -213,7 +261,7 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
         raise NotImplementedError
 
     def _init_db(self) -> None:
-        """Initialize the LMDB environment."""
+        """Initialize the records LMDB environment (interned lives in a sibling env)."""
         self.env = lmdb.open(
             osp.join(self.processed_dir, "lmdb"),
             readonly=True,
@@ -221,6 +269,96 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
             readahead=False,
             meminit=False,
         )
+
+    def _interned_dir(self) -> str:
+        """Path to the sibling `interned` env (separate from the records `lmdb`)."""
+        return osp.join(self.processed_dir, "interned")
+
+    def _load_interned(self) -> None:
+        """Load the whole `interned` env into a RAM dict once (idempotent).
+
+        A SEPARATE env (sibling of the records `lmdb`), NOT a named sub-db: a named
+        sub-db registers its name as a key in the main db, which would pollute the
+        records cursor (``compute_gene_set``) and the ``txn.stat`` entry count.
+        A legacy store with no `interned` dir -> empty dict, so pre-existing inline
+        LMDBs read unchanged.
+        """
+        if self._interned is not None:
+            return
+        interned: dict[str, Any] = {}
+        interned_dir = self._interned_dir()
+        if osp.isdir(interned_dir):
+            ienv = lmdb.open(
+                interned_dir, readonly=True, lock=False, readahead=False, meminit=False
+            )
+            with ienv.begin() as txn:
+                for key, value in txn.cursor():
+                    interned[key.decode()] = pickle.loads(value)
+            ienv.close()
+        self._interned = interned
+
+    def _open_write_lmdb(self, path: str) -> tuple[Any, Any]:
+        """Open the records WRITE env and a SEPARATE `interned` WRITE env (sibling)."""
+        env = lmdb.open(path, map_size=int(1e12))
+        interned_env = lmdb.open(
+            osp.join(osp.dirname(path), "interned"), map_size=int(1e10)
+        )
+        return env, interned_env
+
+    def _maybe_intern(
+        self, container: dict[str, Any], key: str, obj: Any, hint: Any, itxn: Any
+    ) -> None:
+        """Intern ``container[key]`` if its canonical JSON is >= INTERN_MIN_BYTES.
+
+        Put-if-absent into the `interned` env (LMDB serializes write txns per env,
+        so a `txn.get` sees all previously-committed interned rows -> no shared
+        dedup state needed), then replace the inline value with a `{"$ref", "name"}`
+        pointer. Small sub-objects stay inline.
+        """
+        payload = canonical_json(obj)
+        if len(payload) < INTERN_MIN_BYTES:
+            return
+        digest = compute_sha256_hash(payload)
+        digest_key = digest.encode()
+        if itxn.get(digest_key) is None:
+            itxn.put(digest_key, pickle.dumps(container[key]))
+        container[key] = {"$ref": digest, "name": str(hint)}
+
+    def _intern_record(
+        self,
+        experiment: Experiment,
+        reference: ExperimentReference,
+        publication: Publication,
+        itxn: Any,
+    ) -> bytes:
+        """Serialize one record, interning the constant sub-objects.
+
+        Interns `experiment.environment`, the whole `reference`, and `publication`
+        (each when >= INTERN_MIN_BYTES) into the sibling `interned` env via ``itxn``.
+        `genotype`/`phenotype`/`experiment_type` stay inline (they vary per record /
+        drive reconstruction).
+        """
+        rec: dict[str, Any] = {
+            "experiment": experiment.model_dump(),
+            "reference": reference.model_dump(),
+            "publication": publication.model_dump(),
+        }
+        self._maybe_intern(
+            rec["experiment"],
+            "environment",
+            experiment.environment,
+            experiment.environment.media.name,
+            itxn,
+        )
+        self._maybe_intern(rec, "reference", reference, reference.dataset_name, itxn)
+        self._maybe_intern(
+            rec,
+            "publication",
+            publication,
+            getattr(publication, "pubmed_id", None) or "publication",
+            itxn,
+        )
+        return pickle.dumps(rec)
 
     def close_lmdb(self) -> None:
         """Close the LMDB environment if it is open."""
@@ -279,14 +417,25 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
             return self.get_single_item(idx)
 
     def get_single_item(self, idx: int) -> Any:
-        """Return the deserialized item at ``idx``, or None if absent."""
+        """Return the deserialized item at ``idx``, or None if absent.
+
+        Resolves any interned ``$ref`` pointers back to the full sub-objects, so
+        the returned three-key dict is identical to the pre-interning format (a
+        no-op for legacy inline stores).
+        """
+        if self.env is None:
+            self._init_db()
+        if self._interned is None:
+            self._load_interned()
         with self.env.begin() as txn:
             serialized_data = txn.get(f"{idx}".encode())
             if serialized_data is None:
                 return None
 
             deserialized_data = pickle.loads(serialized_data)
-            return deserialized_data
+            return resolve_interned(
+                deserialized_data, cast("dict[str, Any]", self._interned)
+            )
 
     @staticmethod
     def extract_systematic_gene_names(genotype: dict[str, Any]) -> list[str]:

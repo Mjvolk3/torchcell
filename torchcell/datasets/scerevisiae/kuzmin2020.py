@@ -7,12 +7,10 @@
 import logging
 import os
 import os.path as osp
-import pickle
 import zipfile
 from collections.abc import Callable
 from typing import Any
 
-import lmdb
 import pandas as pd
 from torch_geometric.data import download_url
 from tqdm import tqdm
@@ -129,23 +127,20 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
 
         log.info("Processing Smf Files...")
 
-        env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
 
-        with env.begin(write=True) as txn:
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
                 experiment, reference, publication = self.create_experiment(
                     self.name, row
                 )
 
-                serialized_data = pickle.dumps(
-                    {
-                        "experiment": experiment.model_dump(),
-                        "reference": reference.model_dump(),
-                        "publication": publication.model_dump(),
-                    }
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, reference, publication, itxn),
                 )
-                txn.put(f"{index}".encode(), serialized_data)
         env.close()
+        interned_env.close()
 
     def preprocess_raw(self, df: pd.DataFrame) -> pd.DataFrame:  # type: ignore[override]  # dataset-specific signature
         """Filter to single mutants and clean allele names for processing."""
@@ -286,24 +281,21 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
 
         log.info("Processing Dmf Files...")
 
-        env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
 
-        with env.begin(write=True) as txn:
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
                 experiment, reference, publication = self.create_experiment(
                     self.name, row
                 )
 
-                serialized_data = pickle.dumps(
-                    {
-                        "experiment": experiment.model_dump(),
-                        "reference": reference.model_dump(),
-                        "publication": publication.model_dump(),
-                    }
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, reference, publication, itxn),
                 )
-                txn.put(f"{index}".encode(), serialized_data)
 
         env.close()
+        interned_env.close()
 
     def preprocess_raw(  # type: ignore[override]  # dataset-specific signature
         self, df_s1: pd.DataFrame, df_s3: pd.DataFrame, df_s5: pd.DataFrame
@@ -557,24 +549,21 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
 
         log.info("Processing Tmf Files...")
 
-        env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
 
-        with env.begin(write=True) as txn:
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
                 experiment, reference, publication = self.create_experiment(
                     self.name, row, phenotype_reference_std=self.phenotype_reference_std
                 )
 
-                serialized_data = pickle.dumps(
-                    {
-                        "experiment": experiment.model_dump(),
-                        "reference": reference.model_dump(),
-                        "publication": publication.model_dump(),
-                    }
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, reference, publication, itxn),
                 )
-                txn.put(f"{index}".encode(), serialized_data)
 
         env.close()
+        interned_env.close()
 
     def preprocess_raw(  # type: ignore[override]  # dataset-specific signature
         self, df_s1: pd.DataFrame, df_s3: pd.DataFrame
@@ -809,24 +798,21 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
 
         log.info("Processing Dmi Files...")
 
-        env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
 
-        with env.begin(write=True) as txn:
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
                 experiment, reference, publication = self.create_experiment(
                     self.name, row
                 )
 
-                serialized_data = pickle.dumps(
-                    {
-                        "experiment": experiment.model_dump(),
-                        "reference": reference.model_dump(),
-                        "publication": publication.model_dump(),
-                    }
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, reference, publication, itxn),
                 )
-                txn.put(f"{index}".encode(), serialized_data)
 
         env.close()
+        interned_env.close()
 
     def preprocess_raw(  # type: ignore[override]  # dataset-specific signature
         self, df_s1: pd.DataFrame, df_s3: pd.DataFrame
@@ -1044,24 +1030,21 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
 
         log.info("Processing Tmi Files...")
 
-        env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
 
-        with env.begin(write=True) as txn:
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
                 experiment, reference, publication = self.create_experiment(
                     self.name, row
                 )
 
-                serialized_data = pickle.dumps(
-                    {
-                        "experiment": experiment.model_dump(),
-                        "reference": reference.model_dump(),
-                        "publication": publication.model_dump(),
-                    }
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, reference, publication, itxn),
                 )
-                txn.put(f"{index}".encode(), serialized_data)
 
         env.close()
+        interned_env.close()
 
     def preprocess_raw(  # type: ignore[override]  # dataset-specific signature
         self, df_s1: pd.DataFrame, df_s3: pd.DataFrame

@@ -7,7 +7,6 @@
 import logging
 import os
 import os.path as osp
-import pickle
 import shutil
 import zipfile
 from collections.abc import Callable
@@ -175,12 +174,9 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         log.info("Processing SMF Files...")
 
         # Initialize LMDB environment
-        env = lmdb.open(
-            osp.join(self.processed_dir, "lmdb"),
-            map_size=int(1e12),  # Adjust map_size as needed
-        )
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
 
-        with env.begin(write=True) as txn:
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
                 experiment, reference, publication = self.create_experiment(
                     self.name,
@@ -189,17 +185,13 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
                     phenotype_reference_std_30=phenotype_reference_std_30,
                 )
 
-                # Serialize the Pydantic objects
-                serialized_data = pickle.dumps(
-                    {
-                        "experiment": experiment.model_dump(),
-                        "reference": reference.model_dump(),
-                        "publication": publication.model_dump(),
-                    }
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, reference, publication, itxn),
                 )
-                txn.put(f"{index}".encode(), serialized_data)
 
         env.close()
+        interned_env.close()
 
     def preprocess_raw(self, df: pd.DataFrame) -> pd.DataFrame:  # type: ignore[override]  # dataset-specific signature
         """Derive perturbation type from strain IDs and clean the SMF table."""
@@ -583,10 +575,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         log.info("Processing DMF Files...")
 
         # Initialize LMDB environment
-        env = lmdb.open(
-            osp.join(self.processed_dir, "lmdb"),
-            map_size=int(1e12),  # Adjust map_size as needed
-        )
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
 
         # Create a ThreadPoolExecutor for parallel processing
         with ThreadPoolExecutor(max_workers=self.io_workers) as executor:
@@ -594,7 +583,9 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
             for batch_start in range(0, df.shape[0], self.batch_size):
                 batch_end = min(batch_start + self.batch_size, df.shape[0])
                 batch_df = df.iloc[batch_start:batch_end]
-                future = executor.submit(self._process_batch, batch_df, env)
+                future = executor.submit(
+                    self._process_batch, batch_df, env, interned_env
+                )
                 futures.append(future)
 
             # Wait for all futures to complete
@@ -602,9 +593,12 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
                 future.result()
 
         env.close()
+        interned_env.close()
 
-    def _process_batch(self, batch_df: pd.DataFrame, env: lmdb.Environment) -> None:
-        with env.begin(write=True) as txn:
+    def _process_batch(
+        self, batch_df: pd.DataFrame, env: lmdb.Environment, interned_env: Any
+    ) -> None:
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in batch_df.iterrows():
                 experiment, reference, publication = self.create_experiment(
                     self.name,
@@ -613,16 +607,10 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
                     phenotype_reference_std_30=self.phenotype_reference_std_30,
                 )
 
-                # Serialize the Pydantic objects
-                serialized_data = pickle.dumps(
-                    {
-                        "experiment": experiment.model_dump(),
-                        "reference": reference.model_dump(),
-                        "publication": publication.model_dump(),
-                    }
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, reference, publication, itxn),
                 )
-
-                txn.put(f"{index}".encode(), serialized_data)
 
     @staticmethod
     def create_experiment(  # type: ignore[override]  # dataset-specific signature
@@ -945,10 +933,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         log.info("Processing DMI Files...")
 
         # Initialize LMDB environment
-        env = lmdb.open(
-            osp.join(self.processed_dir, "lmdb"),
-            map_size=int(1e12),  # Adjust map_size as needed
-        )
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
 
         # Create a ThreadPoolExecutor for parallel processing
         with ThreadPoolExecutor(max_workers=self.io_workers) as executor:
@@ -956,7 +941,9 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
             for batch_start in range(0, df.shape[0], self.batch_size):
                 batch_end = min(batch_start + self.batch_size, df.shape[0])
                 batch_df = df.iloc[batch_start:batch_end]
-                future = executor.submit(self._process_batch, batch_df, env)
+                future = executor.submit(
+                    self._process_batch, batch_df, env, interned_env
+                )
                 futures.append(future)
 
             # Wait for all futures to complete
@@ -964,24 +951,21 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
                 future.result()
 
         env.close()
+        interned_env.close()
 
-    def _process_batch(self, batch_df: pd.DataFrame, env: lmdb.Environment) -> None:
-        with env.begin(write=True) as txn:
+    def _process_batch(
+        self, batch_df: pd.DataFrame, env: lmdb.Environment, interned_env: Any
+    ) -> None:
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in batch_df.iterrows():
                 experiment, reference, publication = self.create_experiment(
                     self.name, row
                 )
 
-                # Serialize the Pydantic objects
-                serialized_data = pickle.dumps(
-                    {
-                        "experiment": experiment.model_dump(),
-                        "reference": reference.model_dump(),
-                        "publication": publication.model_dump(),
-                    }
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, reference, publication, itxn),
                 )
-
-                txn.put(f"{index}".encode(), serialized_data)
 
     @staticmethod
     def create_experiment(  # type: ignore[override]  # dataset-specific signature

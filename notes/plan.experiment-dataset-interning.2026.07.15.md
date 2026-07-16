@@ -117,3 +117,30 @@ dedups across io_workers threads). SMF sequential, DMF/DMI batched via ThreadPoo
   later.
 - After landing + baryshnikova verify: **full SGA re-rebuild** (separate step) on the lean
   encoding; expect 159 GB → ~45 GB.
+
+## 2026.07.15 - Write-path finished (separate-env) + Baryshnikova verified GREEN
+
+Finished the write-path migration from the (abandoned) named LMDB sub-db to a **separate
+sibling `interned` env** at `processed/interned/` — the named sub-db registered its name as
+a key in the records env, poisoning `compute_gene_set_sequential`'s raw cursor
+(`_pickle.UnpicklingError: invalid load key '\x00'`). The sibling env keeps the records env a
+pristine `0..N` keyspace.
+
+- **Code:** `_intern_record(...itxn)` (was `txn, interned_db`); all **14 write sites** across
+  `baryshnikova2010` (×1 inline), `costanzo2016` (×1 inline + ×2 `_process_batch`
+  ThreadPoolExecutor), `kuzmin2018` (×5 inline), `kuzmin2020` (×5 inline) now open a paired
+  `with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:` (records env
+  locked first → no cross-env deadlock) and close both. Removed dead `INTERN_DB_NAME`; test
+  moved to the sibling-env API.
+- **Gates:** ruff clean; mypy --strict clean (5 files); 4 unit tests pass.
+- **Baryshnikova rebuild (real LMDB):** 5993 records — **identical count to both
+  pre-interning backups** (interning is record-count-neutral). Raw `record[0]`:
+  `environment` + `reference` are `{"$ref"}` pointers; `publication` (<512 B) + `genotype`
+  stay inline. Interned env = **2 objects** (the one Environment + one Reference, shared by
+  all 5993). Public `ds[0]` resolves to full component media (name has "SGA",
+  `is_synthetic=True`, 9 components); `gene_set` (5436) builds with no `\x00`. Records env
+  keys all-integer.
+- **Storage:** environment field **187 B (`$ref`) vs 4632 B resolved → 25×**; whole dataset
+  on disk **48 MB → 11 MB (4.4×)**.
+- **Deferred (gated on this):** `nq merge`; full `dmi/dmf_costanzo2016` + `dmi_kuzmin*`
+  re-rebuilds; ChEBI/InChIKey/SMILES resolver; migrating the other ~30 loaders.

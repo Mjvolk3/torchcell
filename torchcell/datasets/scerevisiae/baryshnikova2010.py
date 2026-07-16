@@ -58,12 +58,10 @@ import hashlib
 import logging
 import os
 import os.path as osp
-import pickle
 import shutil
 from collections.abc import Callable
 from typing import Any
 
-import lmdb
 import pandas as pd
 from tqdm import tqdm
 
@@ -283,9 +281,9 @@ class SmfBaryshnikova2010Dataset(ExperimentDataset):
         occ: dict[str, int] = {}
 
         dropped: list[str] = []
-        env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e11))
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         idx = 0
-        with env.begin(write=True) as txn:
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for _, row in tqdm(df.iterrows(), total=len(df), desc="baryshnikova2010"):
                 raw_allele = str(row["allele"])
                 orf_token, kind = _parse_allele(raw_allele)
@@ -307,16 +305,11 @@ class SmfBaryshnikova2010Dataset(ExperimentDataset):
                 )
                 txn.put(
                     f"{idx}".encode(),
-                    pickle.dumps(
-                        {
-                            "experiment": experiment.model_dump(),
-                            "reference": reference.model_dump(),
-                            "publication": publication.model_dump(),
-                        }
-                    ),
+                    self._intern_record(experiment, reference, publication, itxn),
                 )
                 idx += 1
         env.close()
+        interned_env.close()
         log.info(
             "Wrote %d Baryshnikova2010 fitness experiments to LMDB (%d dropped: %s)",
             idx,

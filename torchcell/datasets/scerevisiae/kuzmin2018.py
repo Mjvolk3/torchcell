@@ -7,12 +7,10 @@
 import logging
 import os
 import os.path as osp
-import pickle
 import zipfile
 from collections.abc import Callable
 from typing import Any
 
-import lmdb
 import numpy as np
 import pandas as pd
 from torch_geometric.data import download_url
@@ -143,28 +141,21 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         log.info("Processing Dmf Files...")
 
         # Initialize LMDB environment
-        env = lmdb.open(
-            osp.join(self.processed_dir, "lmdb"),
-            map_size=int(1e12),  # Adjust map_size as needed
-        )
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
 
-        with env.begin(write=True) as txn:
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
                 experiment, reference, publication = self.create_experiment(
                     self.name, row, phenotype_reference_std=self.phenotype_reference_std
                 )
 
-                # Serialize the Pydantic objects
-                serialized_data = pickle.dumps(
-                    {
-                        "experiment": experiment.model_dump(),
-                        "reference": reference.model_dump(),
-                        "publication": publication.model_dump(),
-                    }
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, reference, publication, itxn),
                 )
-                txn.put(f"{index}".encode(), serialized_data)
 
         env.close()
+        interned_env.close()
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
@@ -411,28 +402,21 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         log.info("Processing Dmf Files...")
 
         # Initialize LMDB environment
-        env = lmdb.open(
-            osp.join(self.processed_dir, "lmdb"),
-            map_size=int(1e12),  # Adjust map_size as needed
-        )
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
 
-        with env.begin(write=True) as txn:
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
                 experiment, reference, publication = self.create_experiment(
                     self.name, row, phenotype_reference_std=self.phenotype_reference_std
                 )
 
-                # Serialize the Pydantic objects
-                serialized_data = pickle.dumps(
-                    {
-                        "experiment": experiment.model_dump(),
-                        "reference": reference.model_dump(),
-                        "publication": publication.model_dump(),
-                    }
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, reference, publication, itxn),
                 )
-                txn.put(f"{index}".encode(), serialized_data)
 
         env.close()
+        interned_env.close()
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
@@ -646,28 +630,21 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         log.info("Processing Dmf Files...")
 
         # Initialize LMDB environment
-        env = lmdb.open(
-            osp.join(self.processed_dir, "lmdb"),
-            map_size=int(1e12),  # Adjust map_size as needed
-        )
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
 
-        with env.begin(write=True) as txn:
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
                 experiment, reference, publication = self.create_experiment(
                     self.name, row, phenotype_reference_std=self.phenotype_reference_std
                 )
 
-                # Serialize the Pydantic objects
-                serialized_data = pickle.dumps(
-                    {
-                        "experiment": experiment.model_dump(),
-                        "reference": reference.model_dump(),
-                        "publication": publication.model_dump(),
-                    }
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, reference, publication, itxn),
                 )
-                txn.put(f"{index}".encode(), serialized_data)
 
         env.close()
+        interned_env.close()
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
@@ -893,24 +870,21 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
 
         log.info("Processing Dmi Files...")
 
-        env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
 
-        with env.begin(write=True) as txn:
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
                 experiment, reference, publication = self.create_experiment(
                     self.name, row
                 )
 
-                serialized_data = pickle.dumps(
-                    {
-                        "experiment": experiment.model_dump(),
-                        "reference": reference.model_dump(),
-                        "publication": publication.model_dump(),
-                    }
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, reference, publication, itxn),
                 )
-                txn.put(f"{index}".encode(), serialized_data)
 
         env.close()
+        interned_env.close()
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
@@ -1116,24 +1090,21 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
 
         log.info("Processing Tmi Files...")
 
-        env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
 
-        with env.begin(write=True) as txn:
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
                 experiment, reference, publication = self.create_experiment(
                     self.name, row
                 )
 
-                serialized_data = pickle.dumps(
-                    {
-                        "experiment": experiment.model_dump(),
-                        "reference": reference.model_dump(),
-                        "publication": publication.model_dump(),
-                    }
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, reference, publication, itxn),
                 )
-                txn.put(f"{index}".encode(), serialized_data)
 
         env.close()
+        interned_env.close()
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None

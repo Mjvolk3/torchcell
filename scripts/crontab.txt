@@ -13,3 +13,11 @@
 # Self-flocks so it never races an on-demand drain. `bash -lc` sources the login
 # shell so conda/PATH and (optionally) SLACK_CLAUDE_WEBHOOK are present.
 */2 * * * * bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && /home/michaelvolk/miniconda3/envs/torchcell/bin/python scripts/drain_merge_queue.py >> /tmp/torchcell-drain-merge-queue.log 2>&1'
+
+# literature sync: nightly mirror + MinerU OCR of new papers in the Zotero
+# `database` collection (diff vs $DATA_ROOT/torchcell-library; captures only the
+# new keys). Self-flocks against on-demand runs. Runs at 03:30 on the GPU host so
+# MinerU has the GPUs to itself. `--limit 10` bounds a big-backlog night's GPU
+# time; drop it once the backlog is drained. Writes JSON reports under
+# torchcell-library/_sync_reports/.
+30 3 * * * bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && /home/michaelvolk/miniconda3/envs/torchcell/bin/python scripts/lit_sync_database.py --limit 10 >> /tmp/torchcell-lit-sync-database.log 2>&1'

@@ -229,13 +229,25 @@ TC_LIT_PORT=8723
 
 ### Set up a key + run the server
 
-```bash
-# 1. Mint a key (prints the key ONCE + the hash line to store):
-python -m torchcell.literature.server --gen-key mac-m1
-#   -> API key for 'mac-m1':  <random-key>          (give this to the Mac)
-#   -> {"mac-m1": "<sha256hex>"}                     (paste into TC_LIT_KEYS_FILE)
+**Foolproof key mint (server side).** `--gen-key` prints the plaintext key AND its hash, but
+hand-copying the hash into the keys file is error-prone (a stale `<placeholder>` there → 401
+for every key). Instead derive + store the hash automatically; only the plaintext is handled:
 
-# 2. Run (documented recipe; no systemd precedent in repo — model on scripts/crontab.txt):
+```bash
+mkdir -p ~/.config/torchcell
+KEY=$(~/miniconda3/envs/torchcell/bin/python -c "import secrets; print(secrets.token_urlsafe(32))")
+printf '{"mac-m1": "%s"}\n' "$(printf '%s' "$KEY" | sha256sum | awk '{print $1}')" \
+  > ~/.config/torchcell/tc_lit_keys.json
+chmod 600 ~/.config/torchcell/tc_lit_keys.json
+echo "==> PUT THIS ON THE MAC as TC_LIT_API_KEY:  $KEY"
+```
+
+The keys file stores only `{name: sha256hex}`; `printf '%s' KEY | sha256sum` matches the
+server's `_hash_key`. Additional collaborators = more `{name: hash}` entries in the same JSON.
+
+Run (Docker is the durable path — see the 2026.07.15 section; bare recipe below for a quick run):
+
+```bash
 bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && \
   TC_LIT_KEYS_FILE=~/.config/torchcell/tc_lit_keys.json \
   ~/miniconda3/envs/torchcell/bin/python -m torchcell.literature.server \
@@ -246,14 +258,20 @@ Console scripts also installed: `tc-lit-server` and `tc-lit-backfill`.
 
 ### Pull from the M1 Mac
 
-Set `TC_LIT_URL` (e.g. `http://<gilahyper-lan-ip>:8723`) and `TC_LIT_API_KEY` (the minted
-key). See the `lit-pull` Claude Code skill (`.claude/skills/lit-pull/`) — it lists
-keys, pulls an artifact, and verifies `X-Artifact-SHA256`. Minimal by hand:
+Put `TC_LIT_URL` and `TC_LIT_API_KEY` (the **plaintext** key) in the client `.env`, then
+load just those two (a safe partial-source that ignores the rest of `.env`):
 
 ```bash
+# .env:  TC_LIT_URL=http://192.168.1.17:8723
+#        TC_LIT_API_KEY=<plaintext key>
+set -a; source <(grep -E '^(TC_LIT_URL|TC_LIT_API_KEY)=' "${TC_LIT_ENV:-.env}"); set +a
 curl -H "X-API-Key: $TC_LIT_API_KEY" "$TC_LIT_URL/keys"
 curl -H "X-API-Key: $TC_LIT_API_KEY" "$TC_LIT_URL/keys/<ck>/artifact/paper.md" -o paper.md
 ```
+
+The `lit-pull` Claude Code skill (`.claude/skills/lit-pull/`) wraps this `.env` load + the
+list/pull/verify flow. 401 self-check: `printf '%s' "$TC_LIT_API_KEY" | sha256sum` must equal
+the hash in the server's keys file.
 
 **LAN exposure note.** No TLS on a trusted LAN initially; for off-LAN access put it behind
 an SSH tunnel or reverse proxy. Rotate a key = edit the keys file + restart. Because keys

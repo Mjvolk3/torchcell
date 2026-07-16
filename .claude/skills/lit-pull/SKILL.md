@@ -10,14 +10,29 @@ Client for the private keyed read-only literature endpoint served by
 mirror (`$DATA_ROOT/torchcell-library/<citation_key>/`) over the LAN, verifying every
 download against the manifest sha256.
 
-## Prerequisites (set once on the client)
+## Prerequisites (set once on the client, in `.env`)
+
+Put these two lines in your `.env` (repo root, or wherever you keep it — point at it with
+`TC_LIT_ENV` if not `./.env`):
 
 ```bash
-export TC_LIT_URL="http://<gilahyper-lan-ip>:8723"   # the server host:port
-export TC_LIT_API_KEY="<key minted on the server>"    # server: python -m torchcell.literature.server --gen-key <name>
+TC_LIT_URL=http://192.168.1.17:8723        # the GilaHyper server host:port
+TC_LIT_API_KEY=<plaintext key from the server>   # server: python -m torchcell.literature.server --gen-key <name>
 ```
 
-All requests send the key as the `X-API-Key` header. A missing/unknown key returns 401.
+**`TC_LIT_API_KEY` is the PLAINTEXT key** printed by `--gen-key` (the first block), NOT the
+`{name: sha256hex}` hash that goes in the server's keys file — they are different strings.
+
+Load just those two vars into the shell (a safe partial-source that ignores the rest of the
+`.env`, so unrelated lines can't break or execute):
+
+```bash
+set -a; source <(grep -E '^(TC_LIT_URL|TC_LIT_API_KEY)=' "${TC_LIT_ENV:-.env}"); set +a
+```
+
+All requests send the key as the `X-API-Key` header. A missing/unknown key returns 401. If
+you get 401, confirm the key matches the server's stored hash:
+`printf '%s' "$TC_LIT_API_KEY" | sha256sum` must equal the hash in the server's keys file.
 
 ## Step 1: Confirm the endpoint is up
 

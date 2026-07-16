@@ -11,12 +11,12 @@ full-width strip (179 mm x 35.7 mm -- the canonical wide-strip cell of
 ``notes/assets/drawio/figure-sizing-template.drawio.svg``), strains ranked by how
 much their transcriptome moves (IQR, quiet -> disruptive):
 
-- **Kemmeren 2014** (1,484 deletions) -- a *sorted spread band*. 1,484 boxes do
-  not survive a 179 mm panel (0.12 mm/box), so we plot per-strain quantiles vs
-  rank: the IQR band (Q1-Q3) inside a 5-95% band, with the median line. Same
-  message as a box-per-strain plot at a width that actually prints.
-- **Sameith 2015** (82 GSTF deletions) -- box-per-strain survives at 82 (~2.2
-  mm/box), so it keeps the box plot, sorted by IQR, 5-95% whiskers.
+**Both panels are the same *sorted spread band*** (per-strain quantiles vs rank: the
+IQR band Q1-Q3 inside a 5-95% band, black median line) on **one shared y-scale**, so
+their spread is directly comparable when the strips are stacked. Kemmeren 2014 has
+1,484 deletions (box-per-strain would be 0.12 mm/box, invisible); Sameith 2015 has 82
+GSTF deletions. Drawing Sameith as the matching band rather than boxes keeps the pair a
+consistent chart type / coloration on the shared scale.
 
 Repo figure standards (CLAUDE.md "Figure & Plotting Standards" +
 [[paper.nature-biotech.figures]]): palette red (``PLOT_PALETTE[1]``) as the 012
@@ -188,8 +188,19 @@ def _save(fig, output_prefix):
     logger.info(f"✓ Saved: {png_path} + {osp.basename(svg_path)}")
 
 
-def plot_spread_band(df, xlabel, output_prefix):
-    """Kemmeren: per-strain quantile bands vs rank (1,484 strains, box-per-strain infeasible)."""
+def _band_ymax(df):
+    """Symmetric y-limit that contains a strain-quantile frame's 5-95% band."""
+    return float(np.ceil(max(df["p95"].abs().max(), df["p5"].abs().max()) * 10) / 10)
+
+
+def plot_spread_band(df, xlabel, output_prefix, ymax):
+    """Per-strain quantile bands vs rank, sorted by IQR (quiet -> disruptive).
+
+    Used for BOTH panels so they are the same chart type and coloration; ``ymax`` is
+    passed in (shared across the two datasets) so the spread is directly comparable when
+    the panels are stacked. 1,484 box-per-strain would be 0.12 mm/box, and at 82 boxes
+    Sameith's spread reads better as the matching band than as boxes on the shared scale.
+    """
     logger.info(f"Plotting sorted spread band: {output_prefix}")
     _apply_rc()
     fig, ax = _new_strip()
@@ -201,49 +212,8 @@ def plot_spread_band(df, xlabel, output_prefix):
     ax.fill_between(x, df["q1"], df["q3"], facecolor=RED, linewidth=0, zorder=3)
     ax.plot(x, df["median"], color=INK, linewidth=0.5, zorder=4)
 
-    ymax = float(np.ceil(max(df["p95"].abs().max(), df["p5"].abs().max()) * 10) / 10)
     _style_axes(ax, ymax)
     ax.set_xlim(0, len(df) - 1)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel("log2 fold-change")
-    _save(fig, output_prefix)
-
-
-def plot_sorted_boxplot(df, data_dict, xlabel, output_prefix):
-    """Sameith: box-per-strain (82 strains fit), sorted by IQR, 5-95% whiskers."""
-    logger.info(f"Plotting sorted box plot: {output_prefix}")
-    _apply_rc()
-    fig, ax = _new_strip()
-    ordered = [data_dict[g] for g in df["gene"]]
-    positions = np.arange(len(ordered))
-
-    bp = ax.boxplot(
-        ordered,
-        positions=positions,
-        widths=0.72,
-        whis=(5, 95),
-        showfliers=False,
-        showcaps=False,
-        patch_artist=True,
-    )
-    for patch in bp["boxes"]:
-        patch.set_facecolor(RED)
-        patch.set_edgecolor(INK)
-        patch.set_linewidth(0.3)
-    for element in ("medians", "whiskers"):
-        for artist in bp[element]:
-            artist.set_color(INK)
-            artist.set_linewidth(0.3)
-
-    ymax = float(
-        np.ceil(
-            max(max(np.percentile(v, 95), -np.percentile(v, 5)) for v in ordered) * 10
-        )
-        / 10
-    )
-    _style_axes(ax, ymax)
-    ax.set_xlim(-0.7, len(ordered) - 0.3)
-    ax.set_xticks([])
     ax.set_xlabel(xlabel)
     ax.set_ylabel("log2 fold-change")
     _save(fig, output_prefix)
@@ -274,17 +244,22 @@ def main():
     logger.info(f"Kemmeren pooled thresholds: {_threshold_caption(kemmeren_data)}")
     logger.info(f"Sameith  pooled thresholds: {_threshold_caption(sameith_data)}")
 
+    # one shared y-scale across both panels so the spread is directly comparable when
+    # the two strips are stacked (Kemmeren's disruptive tail sets the ceiling).
+    shared_ymax = max(_band_ymax(kemmeren_df), _band_ymax(sameith_df))
+    logger.info(f"Shared y-scale: +/-{shared_ymax}")
     plot_spread_band(
         kemmeren_df,
         "Kemmeren deletion strains, ranked by transcriptome spread (n = "
         f"{len(kemmeren_df)})",
         "single_mutant_kemmeren",
+        shared_ymax,
     )
-    plot_sorted_boxplot(
+    plot_spread_band(
         sameith_df,
-        sameith_data,
-        f"Sameith GSTF deletion strains, ranked by spread (n = {len(sameith_df)})",
+        f"Sameith GSTF deletion strains, ranked by transcriptome spread (n = {len(sameith_df)})",
         "single_mutant_sameith",
+        shared_ymax,
     )
 
     results_dir = osp.join(EXPERIMENT_ROOT, "012-sameith-kemmeren/results")

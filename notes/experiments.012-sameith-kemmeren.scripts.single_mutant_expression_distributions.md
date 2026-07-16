@@ -46,11 +46,11 @@ Box plots show log2 expression change distributions per deletion strain:
 
 ![Single Mutant Kemmeren](./assets/images/012-sameith-kemmeren-expression/single_mutant_kemmeren.svg)
 
-*Figure 1: Kemmeren 2014 — genome-wide log2 fold-change for 1,484 single deletions, drawn as a **sorted spread band** (1,484 box-per-strain would be 0.12 mm/box at print width, invisible). Strains are ranked by IQR, quiet → disruptive; the dark-red band is the per-strain IQR (Q1–Q3), the light-red band the 5–95% range, the black line the median. Most deletions barely move the transcriptome — pooled, only **12.1%** of gene measurements exceed |log2FC| > 0.25 (2.8% > 0.5, 0.6% > 1.0) — with a disruptive minority in the right tail. Full-width × 35.7 mm true-size panel, palette red.*
+*Figure 1: Kemmeren 2014 — genome-wide log2 fold-change for 1,484 single deletions, drawn as a **sorted spread band** (1,484 box-per-strain would be 0.12 mm/box at print width, invisible). Strains are ranked by IQR, quiet → disruptive; the dark-red band is the per-strain IQR (Q1–Q3), the light-red band the 5–95% range, the black line the median. Most deletions barely move the transcriptome — pooled, only **12.1%** of gene measurements exceed |log2FC| > 0.25 (2.8% > 0.5, 0.6% > 1.0) — with a disruptive minority in the right tail. Full-width × 35.7 mm true-size panel, palette red; shares its ±2.1 y-scale with Fig 2.*
 
 ![Single Mutant Sameith](./assets/images/012-sameith-kemmeren-expression/single_mutant_sameith.svg)
 
-*Figure 2: Sameith 2015 — genome-wide log2 fold-change for 82 GSTF deletions, **box-per-strain** (82 boxes survive at ~2.2 mm each), sorted by IQR; boxes = Q1–Q3, whiskers = 5–95%, median black. On the #72 sign-fixed data, pooled **8.4%** of gene measurements exceed |log2FC| > 0.25 (1.8% > 0.5). Same full-width × 35.7 mm true-size panel as Fig 1.*
+*Figure 2: Sameith 2015 — genome-wide log2 fold-change for 82 GSTF deletions, drawn as the **same sorted spread band** as Fig 1 (dark-red IQR inside a light-red 5–95% band, black median), ranked by IQR, on the **same ±2.1 y-scale** so spread is directly comparable when the two strips are stacked. On the #72 sign-fixed data, pooled **8.4%** of gene measurements exceed |log2FC| > 0.25 (1.8% > 0.5) — visibly tighter than Kemmeren's disruptive tail. Full-width × 35.7 mm true-size panel.*
 
 ## Key Findings
 
@@ -114,3 +114,14 @@ instead of 179 × 35.7 mm. The script now pins `savefig.bbox = None` in its rc b
 correlation figure ([[experiments.012-sameith-kemmeren.scripts.gene_by_gene_expression_correlation]],
 PR #97) has the same latent issue and needs the same one-line fix; the proper fix is
 removing `savefig.bbox: tight` from the mplstyle so true-size works by default.
+
+## 2026.07.16 - Matched spread bands + shared scale (consistency)
+
+Sameith (Fig 2) was redrawn from box-per-strain to the **same sorted spread band** as
+Kemmeren, and both panels now share **one y-scale** (±2.1, set by Kemmeren's disruptive
+tail). This removes the box/band mix — both are now red IQR / light-red 5–95% / black
+median throughout — and, the actual point, makes the two strips directly comparable when
+stacked: Sameith's 82 GSTF single-KOs sit visibly tighter than Kemmeren's tail on the
+shared axis. `plot_spread_band` now takes the shared `ymax`; the box-plot code path was
+removed. This is the plotting form we carry into the 018 three-dataset comparison
+(Kemmeren / Sameith / Caudal as matched bands on a shared scale).

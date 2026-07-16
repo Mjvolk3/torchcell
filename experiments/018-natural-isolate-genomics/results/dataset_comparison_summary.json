@@ -1,0 +1,22 @@
+{
+  "panel_b":{
+    "n_isolates":918,
+    "median_absent":124.0,
+    "median_pct_div":0.3782462214
+  },
+  "panel_d":{
+    "shared_ymax":2.6,
+    "kemmeren_single":1484,
+    "sameith_single":82,
+    "sameith_double":72,
+    "caudal":943
+  },
+  "panel_e":{
+    "kemmeren_median":4.0,
+    "caudal_median":59.0
+  },
+  "panel_f":{
+    "n_shared_genes":5811,
+    "pc1_var":0.1190584875
+  }
+}

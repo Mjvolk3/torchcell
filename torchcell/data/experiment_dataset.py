@@ -76,12 +76,16 @@ def serialize_for_hashing(obj: Any) -> str:
 # provenance) is constant across a dataset yet was stored inline on every record
 # (twice: experiment.environment + reference.environment_reference, plus the
 # constant reference/publication), ballooning dmi_costanzo2016 45 GB -> 159 GB.
-# We store each DISTINCT constant sub-object ONCE in a NAMED LMDB sub-db
-# ``interned`` keyed by a content hash, and replace the inline value in a record
+# We store each DISTINCT constant sub-object ONCE in a SEPARATE sibling LMDB env
+# ``processed/interned/`` (NOT a named sub-db: a named sub-db registers its name as
+# a key in the records db, poisoning compute_gene_set's raw cursor and the txn.stat
+# entry count) keyed by a content hash, and replace the inline value in a record
 # with a tiny ``{"$ref": <hash>, "name": <hint>}`` pointer. ``resolve_interned``
 # splices the full object back on read, so ``get_single_item`` returns the whole
-# record unchanged (public API preserved). A record with no ``$ref`` (legacy
-# inline store) passes through untouched -- backward compatible.
+# record unchanged (public API preserved). Raw readers that bypass get_single_item
+# (e.g. verification runners, neo4j adapters) must call ``resolve_interned`` too.
+# A record with no ``$ref`` (legacy inline store) passes through untouched --
+# backward compatible.
 # Design: ``[[plan.experiment-dataset-interning.2026.07.15]]``.
 # --------------------------------------------------------------------------- #
 INTERN_MIN_BYTES = 512
@@ -298,7 +302,14 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
         self._interned = interned
 
     def _open_write_lmdb(self, path: str) -> tuple[Any, Any]:
-        """Open the records WRITE env and a SEPARATE `interned` WRITE env (sibling)."""
+        """Open the records WRITE env and a SEPARATE `interned` WRITE env (sibling).
+
+        Crash-safety invariant: callers MUST commit the interned txn BEFORE the records
+        txn -- write ``with env.begin() as txn, interned_env.begin() as itxn:`` so the
+        context managers exit LIFO (itxn commits first). A crash between the two commits
+        then leaves only orphan interned rows (harmless), never a record with a dangling
+        ``$ref``.
+        """
         env = lmdb.open(path, map_size=int(1e12))
         interned_env = lmdb.open(
             osp.join(osp.dirname(path), "interned"), map_size=int(1e10)

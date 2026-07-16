@@ -26,6 +26,7 @@ from typing import Any
 
 import lmdb
 
+from torchcell.data.experiment_dataset import resolve_interned
 from torchcell.verification.environment_response import (
     environment_response_gene_set,
     verify_environment_response_dataset,
@@ -179,30 +180,54 @@ OHNUKI_PROVENANCE = Provenance(
 )
 
 
+def _load_interned(abs_root: str) -> dict[str, Any]:
+    """Load the sibling ``interned`` env (content-addressed sub-objects) into a RAM dict.
+
+    Empty dict when there is no ``interned`` dir (a legacy inline LMDB), so resolving is a
+    no-op there. Mirrors :meth:`ExperimentDataset._load_interned` so these raw cursor readers
+    resolve ``{"$ref": ...}`` pointers exactly as ``get_single_item`` does. The interned env
+    holds only a handful of constant sub-objects, so loading it whole is cheap even for the
+    streaming path (the records are what's large, not the interned set).
+    """
+    interned_dir = osp.join(abs_root, "processed", "interned")
+    if not osp.isdir(interned_dir):
+        return {}
+    env = lmdb.open(interned_dir, readonly=True, lock=False)
+    interned: dict[str, Any] = {}
+    with env.begin() as txn:
+        for key, value in txn.cursor():
+            interned[key.decode()] = pickle.loads(value)
+    env.close()
+    return interned
+
+
 def load_records(abs_root: str) -> list[dict[str, Any]]:
-    """Read every LMDB entry under ``<abs_root>/processed/lmdb``."""
+    """Read every LMDB entry under ``<abs_root>/processed/lmdb``, resolving interned sub-objects."""
+    interned = _load_interned(abs_root)
     env = lmdb.open(osp.join(abs_root, "processed", "lmdb"), readonly=True, lock=False)
     records: list[dict[str, Any]] = []
     with env.begin() as txn:
         cursor = txn.cursor()
         for _, value in cursor:
-            records.append(pickle.loads(value))
+            records.append(resolve_interned(pickle.loads(value), interned))
     env.close()
     return records
 
 
 def stream_records(abs_root: str) -> Any:
-    """Yield every LMDB entry under ``<abs_root>/processed/lmdb`` one at a time.
+    """Yield every LMDB entry under ``<abs_root>/processed/lmdb``, resolving interned sub-objects.
 
     Memory-bounded alternative to :func:`load_records` for very large datasets (e.g.
     the 30M-record Hoepfner HIP-HOP atlas) whose full materialization would exceed RAM.
+    The interned set is small and loaded once up front; only the records stream.
     """
+    interned = _load_interned(abs_root)
     env = lmdb.open(osp.join(abs_root, "processed", "lmdb"), readonly=True, lock=False)
     try:
         with env.begin() as txn:
             cursor = txn.cursor()
             for _, value in cursor:
-                yield pickle.loads(value)
+                yield resolve_interned(pickle.loads(value), interned)
     finally:
         env.close()
 

@@ -8,7 +8,8 @@ never an LMDB -- so re-rendering is instant.
 Views written:
   - paper/nature-biotech/sections/datasets_table.tex   (\input into the SI)
   - notes/paper.supported-datasets-and-databases.md      (readable mirror)
-  - <pre-build dir>/datasets_table_preview.pdf           (standalone preview)
+  - <pre-build dir>/datasets_table_preview.pdf           (standalone preview, gitignored)
+  - notes/assets/pdf-output/paper.supported-datasets-and-databases.pdf  (committed copy)
 
 Run from the repo root (defaults to the newest pre-build snapshot):
   python experiments/database/scripts/render_supported_datasets_table.py
@@ -19,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -37,6 +39,7 @@ REPO = SCRIPT.parents[3]
 RESULTS = SCRIPT.parent.parent / "results"
 TEX_OUT = REPO / "paper" / "nature-biotech" / "sections" / "datasets_table.tex"
 MD_OUT = REPO / "notes" / "paper.supported-datasets-and-databases.md"
+PDF_OUT = REPO / "notes" / "assets" / "pdf-output" / "paper.supported-datasets-and-databases.pdf"
 
 SIGNAL_HEADER = "Signal (gzip, bytes)"
 COLUMNS = [
@@ -209,7 +212,7 @@ def main() -> None:
 
 
 def _preview_pdf(out_dir: Path, n_lines: int) -> None:
-    """Wrap the fragment in a standalone doc and compile a preview PDF (pdflatex).
+    r"""Wrap the fragment in a standalone doc and compile a preview PDF (pdflatex).
 
     A ``table*`` taller than ``\\textheight`` does not paginate -- it runs off the
     bottom of the page silently. So the page HEIGHT is sized to the row count (data
@@ -232,8 +235,14 @@ def _preview_pdf(out_dir: Path, n_lines: int) -> None:
                        cwd=out_dir, capture_output=True, check=False)
     pdf = out_dir / "_preview.pdf"
     if pdf.exists():
-        pdf.rename(out_dir / "datasets_table_preview.pdf")
-        print(f"Wrote {(out_dir / 'datasets_table_preview.pdf').relative_to(REPO)}")
+        final = out_dir / "datasets_table_preview.pdf"
+        pdf.rename(final)
+        print(f"Wrote {final.relative_to(REPO)}")
+        # also publish a committed copy next to the note it mirrors, so the table PDF
+        # has a stable home instead of only the gitignored pre-build snapshot.
+        PDF_OUT.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(final, PDF_OUT)
+        print(f"Wrote {PDF_OUT.relative_to(REPO)}")
     else:
         print("(preview PDF not built -- pdflatex missing?)")
 

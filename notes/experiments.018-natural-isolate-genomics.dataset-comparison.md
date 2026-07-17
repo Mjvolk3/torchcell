@@ -16,13 +16,14 @@ one-panel-one-question map live in the plan note
 single-KO detail is [[experiments.012-sameith-kemmeren.scripts.single_mutant_expression_distributions]].
 
 **Script**: `experiments/018-natural-isolate-genomics/scripts/dataset_comparison.py`.
-Three hues, consistent across every panel: **Kemmeren single KO = orange**, **Caudal natural
-isolate = red** (our lead hue, the natural-isolate focus), and **both Sameith arms = purple**
-(one lab/platform, grouped as a single colour). Point panels use plain dots (no shape
-coding) — colour alone separates the arms, and in panel f the rare Sameith dots are drawn
-larger and on top so they stay pickable against the dense clouds. The supporting panels
-default to red. Repo figure standard throughout (Arial 6 pt, boxed, true-size SVG). Panel
-**a** (setup schematic) is authored in draw.io.
+**Kemmeren single KO = orange**, **Caudal natural isolate = red** (our lead hue, the
+natural-isolate focus). In the panels that separate strains by position (c, d, e) **both
+Sameith arms share purple**; in the two **overlay** panels (**d2** and **f**) they split into
+**dark purple (single)** and **dark red (double)** so the sparse arms stay distinguishable
+where they land on top of the dense clouds. Point panels use plain dots (no shape coding) —
+colour alone separates the arms, and the rare Sameith dots are drawn larger and on top so
+they stay pickable. The supporting panels default to red. Repo figure standard throughout
+(Arial 6 pt, boxed, true-size SVG). Panel **a** (setup schematic) is authored in draw.io.
 
 **Platform caveat (applies throughout).** Kemmeren and Sameith are two-colour **microarray**
 (log2 mut/WT); Caudal is **RNA-seq** (log2 iso/pop-mean). Any KO-vs-isolate comparison of
@@ -42,6 +43,19 @@ gene edit in an isogenic background; an isolate is hundreds of absences **plus**
 divergence spread across thousands of shared genes. A deletion-only model cannot represent
 the isolate axis at all.*
 
+**Computation.** For isolate $s$ with shared-gene set $G_s$ (genes present in both $s$ and
+S288C), the axes are a count of absences and a base-averaged divergence:
+
+$$
+n^{\text{abs}}_s = \bigl|\{\, g : g \text{ is a reference ORF absent from } s \,\}\bigr|,
+\qquad
+\text{div}_s = 100\cdot\frac{\displaystyle\sum_{g\in G_s}\ \sum_{i=1}^{L_g}\mathbb{1}\!\left[a^{s}_{g,i}\neq a^{\text{ref}}_{g,i}\right]}{\displaystyle\sum_{g\in G_s} L_g}\ \%
+$$
+
+i.e. the numerator sums mismatched coding bases over every shared gene and every base
+$i$ in gene $g$ (length $L_g$), divided by all shared coding bases. Plotted $x=n^{\text{abs}}_s$,
+$y=\text{div}_s$.
+
 ## c — Per-strain spread across datasets, on one axis
 
 ![Per-strain spread violins](./assets/images/018-natural-isolate-genomics/comparison_c_spread_by_dataset.svg)
@@ -50,7 +64,18 @@ the isolate axis at all.*
 different strain count, hence a different x-axis. Each strain is collapsed to its **IQR of
 genome-wide log2 FC** and the four IQR distributions drawn as violins on one shared axis
 (black bar = median). Single and double KOs sit tight (median IQR ~0.14–0.18); **Caudal
-natural isolates are ~3.6× wider (median 0.57)**. Same per-dataset colours as panel f.*
+natural isolates are ~3.6× wider (median 0.57)**. Both Sameith arms share purple here
+(separated by position); the split dark-purple / dark-red is used only in the overlay
+panels d2 and f.*
+
+**Computation.** Each strain $s$ collapses to a single spread scalar over its genome-wide
+fold-changes $\ell_{s,g}=\log_2\mathrm{FC}_{s,g}$; the violin for dataset $D$ is the
+distribution of that scalar across its strains $s\in D$:
+
+$$
+\mathrm{IQR}_s = Q_{0.75}\bigl(\{\ell_{s,g}\}_{g}\bigr)-Q_{0.25}\bigl(\{\ell_{s,g}\}_{g}\bigr),
+\qquad \text{violin}_D=\{\mathrm{IQR}_s : s\in D\}.
+$$
 
 ## d — Transcriptome: natural isolates move far more than any KO
 
@@ -63,6 +88,40 @@ n = 1,484; Sameith n = 82) are tight, double KOs (n = 72) a touch wider at the t
 **natural isolates (Caudal n = 943) are dramatically broader across the whole panel** — an
 isolate perturbs far more of its transcriptome than any single or double deletion. This is
 the transcriptome counterpart of panel b.*
+
+**Computation.** Within each dataset, strains are ranked by $\mathrm{IQR}_s$ (as in c) and
+each contributes a vertical band of genome-wide percentiles of its $\{\ell_{s,g}\}_g$:
+
+$$
+\text{band}_s = \bigl(Q_{0.05},\,Q_{0.25},\,\mathrm{median},\,Q_{0.75},\,Q_{0.95}\bigr)\bigl(\{\ell_{s,g}\}_{g}\bigr),
+\qquad x = \operatorname{rank}_{\mathrm{IQR}}(s)\in\{0,\dots,N_D-1\}.
+$$
+
+Every dataset is stretched to the same panel width, so **d hides the size gap** — which is
+what d2 restores.
+
+## d2 — Dataset size and spread on one aligned axis
+
+![Size-aligned spread](./assets/images/018-natural-isolate-genomics/comparison_d2_size_aligned.svg)
+
+*Companion to d that makes **dataset size legible**. The same per-strain spread
+$\mathrm{IQR}_s$ is drawn as one curve per dataset, but all four are **right-aligned at their
+highest-variance strain** ($x=0$) and extend **left** for exactly as many strains as the
+dataset has. So the **tail length is the sample size** and the **curve height is the spread
+profile**: the two Sameith arms (dark purple / dark red) **peter out into a short tail**
+(72–82 strains) while Kemmeren (1,484) and Caudal (943) run far to the left, with Caudal
+riding highest — most spread AND many strains. This is the single view that shows *both*
+axes at once: how noisy each dataset is per strain, and how much of it there is.*
+
+**Computation.** With $N_D$ = number of strains in dataset $D$, and strains sorted ascending
+by $\mathrm{IQR}_s$ so the highest-variance strain is last:
+
+$$
+y_s = \mathrm{IQR}_s,\qquad x_s = \operatorname{rank}_{\mathrm{IQR}}(s) - (N_D-1)\ \in\ \{-(N_D-1),\dots,0\},
+$$
+
+which pins every dataset's highest-variance strain to $x=0$ (right edge) and lets the tail
+run to $x=-(N_D-1)$ on the left.
 
 ## e — How many genes move: single KO ≪ double KO ≈ natural isolate
 
@@ -79,18 +138,51 @@ moves ~15× fewer genes — the "a double deletion perturbs a network, not a nod
 are microarray, Caudal RNA-seq, so the absolute counts are not perfectly comparable across
 technologies — but the single ≪ double ≈ natural ordering is robust to it.*
 
+**Computation.** The DE count for strain $s$ counts genes passing an effect-size **and** a
+significance gate; the significance $p$ is BH-adjusted *within each strain* (over its
+$\{g\}$):
+
+$$
+\mathrm{DE}_s = \Bigl|\bigl\{\, g : |\ell_{s,g}| > \log_2 1.7 \ \wedge\ p^{\mathrm{BH}}_{s,g} < 0.05 \,\bigr\}\Bigr|.
+$$
+
+The raw $p$ comes from each dataset's own noise model — Kemmeren from limma, Caudal from its
+29 replicate cultures. For Sameith the stored per-gene log2-ratio SE gives a $z$-test:
+
+$$
+z_{s,g} = \frac{M_{s,g}}{\mathrm{SE}_{s,g}},\qquad p_{s,g} = 2\,\Phi\!\left(-|z_{s,g}|\right),\qquad p^{\mathrm{BH}}_{s,\cdot}=\mathrm{BH}\bigl(\{p_{s,g}\}_g\bigr),
+$$
+
+with $\Phi$ the standard-normal CDF and $\mathrm{BH}$ the Benjamini–Hochberg step-up.
+
 ## f — Transcriptome design-space coverage (with a platform caveat)
 
 ![PCA + UMAP coverage](./assets/images/018-natural-isolate-genomics/comparison_f_expression_embedding.svg)
 
 *PCA and UMAP of the joint expression matrix (**5,811 genes** shared across all four
-datasets), per-gene **z-scored within each dataset**. UMAP separates natural isolates (red)
-from KOs (orange), with the Sameith arms (purple) drawn as larger dots on top so they read
-against the overlapping clouds. **Caveat, stated on the panel:** Kemmeren/Sameith are microarray
-log2(mut/WT) and Caudal is RNA-seq log2(iso/pop-mean), so the split is **partly platform,
-not purely biology** — PC1+PC2 explain only 23 %, i.e. no single dominant axis. Read this as
-coverage, not clean biological separation; the modeling side (Option B, two decoder heads)
-is what dodges the confound properly.*
+datasets), per-gene **z-scored within each dataset**. Dots only (no shapes) — colour alone
+separates the arms: Kemmeren = orange, Caudal = red, and the two sparse Sameith arms split
+into **dark purple (single)** and **dark red (double)**, drawn as larger dots on top so they
+read against the overlapping clouds. UMAP separates natural isolates from KOs. **Caveat,
+stated on the panel:** Kemmeren/Sameith are microarray log2(mut/WT) and Caudal is RNA-seq
+log2(iso/pop-mean), so the split is **partly platform, not purely biology** — PC1+PC2 explain
+only 23 %, i.e. no single dominant axis. Read this as coverage, not clean biological
+separation; the modeling side (Option B, two decoder heads) is what dodges the confound
+properly.*
+
+**Computation.** Each strain becomes a length-5,811 vector; every gene is **z-scored within
+its own dataset** $D$ first (this is the platform-confound guard — it removes each
+technology's per-gene mean and scale before mixing), then all strains are stacked and
+embedded:
+
+$$
+z_{s,g}=\frac{\ell_{s,g}-\mu^{D}_g}{\sigma^{D}_g},\quad
+\mu^{D}_g=\frac{1}{|D|}\sum_{s\in D}\ell_{s,g},\quad
+\bigl(\sigma^{D}_g\bigr)^2=\frac{1}{|D|}\sum_{s\in D}\bigl(\ell_{s,g}-\mu^{D}_g\bigr)^2,
+$$
+
+and PCA / UMAP run on the row-stacked matrix $Z=[\,z_{s,g}\,]$ over all strains of all four
+datasets.
 
 ## Supporting panels (further explanation)
 
@@ -104,6 +196,16 @@ correlated (r = 0.34)** — a shared "responsive core" both modalities move, plu
 per-gene coverage each has that the other lacks. Natural isolates and KOs are **partly
 complementary**, not redundant. Platform caveat applies (Kemmeren microarray, Caudal RNA-seq).*
 
+**Computation.** Each of the 5,811 genes gets two scalars — how often a KO moves it, and how
+much it varies across isolates — and the panel is the Pearson correlation of the two over
+genes:
+
+$$
+f^{\mathrm{KO}}_g=\frac{1}{N_K}\sum_{s\in\text{Kemmeren}}\mathbb{1}\!\left[g \text{ is DE in } s\right],\qquad
+\sigma^{\mathrm{iso}}_g=\operatorname{SD}_{s\in\text{Caudal}}\bigl(\ell_{s,g}\bigr),\qquad
+r=\operatorname{Pearson}_g\bigl(f^{\mathrm{KO}}_g,\ \sigma^{\mathrm{iso}}_g\bigr).
+$$
+
 ### Where the natural variation sits: regulatory vs coding
 
 ![Regulatory divergence](./assets/images/018-natural-isolate-genomics/comparison_regulatory_divergence.svg)
@@ -114,6 +216,17 @@ on protein sequence, drift in promoters/terminators. This is why the sequence en
 read the regulatory window; the SpeciesLM input (1000 bp up + 297 bp down) already covers
 ~93 % of all π.*
 
+**Computation.** Per region, $\pi$ is the mean per-site nucleotide diversity — the average,
+over sites $i$ in that region, of the probability that two randomly drawn isolate alleles
+differ:
+
+$$
+\pi_{\text{region}}=\frac{1}{L}\sum_{i=1}^{L}\ \frac{n_i}{n_i-1}\Bigl(1-\sum_{b\in\{A,C,G,T\}} \hat p_{i,b}^{\,2}\Bigr),
+$$
+
+with $\hat p_{i,b}$ the allele-$b$ frequency at site $i$ across the $n_i$ isolates genotyped
+there (per Peter 2018's het-weighting), reported as a percentage.
+
 ### Genome divergence does not predict transcriptome response
 
 ![Decoupling](./assets/images/018-natural-isolate-genomics/comparison_decoupling.svg)
@@ -123,6 +236,15 @@ genes. **r = 0.04** — an isolate twice as diverged does not move twice as many
 gene loss is concentrated in dispensable, buffered genes. Modeling consequence: score *which*
 genes move and in *what direction* (per-gene rank/direction agreement), not *how much*
 (magnitude MSE), or the isolates will look harder to predict than the mechanism deserves.*
+
+**Computation.** One point per isolate; the reported $r$ is the Pearson correlation, over the
+$n=865$ isolates with both measures, of genome-wide divergence against DE count:
+
+$$
+r=\operatorname{Pearson}_{s\in\text{isolates}}\bigl(\text{div}_s,\ \mathrm{DE}_s\bigr),
+$$
+
+with $\text{div}_s$ as defined in b and $\mathrm{DE}_s$ as in e.
 
 ## Reproduce
 

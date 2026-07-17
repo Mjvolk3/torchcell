@@ -270,7 +270,9 @@ def fig_pangenome():
     ax.hist(
         bd["n_frameshift"] + bd["n_premature_stop"],
         bins=50,
-        color=NAT_FILL,
+        # a lighter RED (translucent NAT), not the pinkish PLOT_PALETTE_FILL[1] --
+        # the black edge stays opaque since edgecolor is set separately.
+        color=to_rgba(NAT, 0.5),
         edgecolor=INK,
         linewidth=0.25,
         label="frameshift / premature stop (PREDICTED LoF, unverified)",
@@ -457,8 +459,7 @@ def fig_de_comparison():
         density=True,
         color=to_rgba(NAT, 0.55),
         histtype="stepfilled",
-        edgecolor=NAT,
-        linewidth=0.6,
+        edgecolor="none",
         label="Caudal natural isolate",
     )
     ax.hist(
@@ -467,8 +468,7 @@ def fig_de_comparison():
         density=True,
         color=to_rgba(KO, 0.72),
         histtype="stepfilled",
-        edgecolor=KO,
-        linewidth=0.6,
+        edgecolor="none",
         label="Kemmeren single KO",
     )
     t = float(np.log2(1.7))
@@ -694,9 +694,9 @@ def fig_coupling():
         ax.scatter(x, y, s=13, color=NAT, alpha=0.5, edgecolor="none")
         r = float(np.corrcoef(x, y)[0, 1])
         rs.append(r)
-        m, b = np.polyfit(x, y, 1)
+        m, b = np.polyfit(x, y, 1)  # degree-1 = ordinary least-squares linear fit
         xs = np.linspace(float(x.min()), float(x.max()), 50)
-        ax.plot(xs, m * xs + b, color=INK, linewidth=2)
+        ax.plot(xs, m * xs + b, color=INK, linewidth=1.0)
         _headroom(ax, 0.18)
         ax.annotate(
             f"Pearson r = {r:.2f}   (n = {len(j)})",

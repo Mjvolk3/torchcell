@@ -5,17 +5,23 @@
     "median_pct_div":0.3782462214
   },
   "panel_c":{
-    "kemmeren_single":0.1549590652,
+    "kemmeren_single":0.1551935131,
     "sameith_single":0.1419887896,
     "sameith_double":0.1775451539,
     "caudal":0.5683069371
   },
   "panel_d":{
     "shared_ymax":2.6,
-    "kemmeren_single":1450,
+    "kemmeren_single":1484,
     "sameith_single":82,
     "sameith_double":72,
     "caudal":943
+  },
+  "panel_d2":{
+    "kemmeren_single":1484,
+    "caudal":943,
+    "sameith_single":82,
+    "sameith_double":72
   },
   "panel_e":{
     "kemmeren_median":4.0,
@@ -24,11 +30,11 @@
   },
   "panel_f":{
     "n_shared_genes":5811,
-    "pc1_var":0.1187166409
+    "pc1_var":0.1190584875
   },
   "overlap":{
     "n_genes":5811,
-    "r":0.3210116571
+    "r":0.3352075006
   },
   "regulatory":{
     "cds":0.4123596172,

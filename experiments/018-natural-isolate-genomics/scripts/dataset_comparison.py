@@ -9,18 +9,22 @@ One panel, one question (see [[experiments.018-natural-isolate-genomics.expressi
 - **b** genotype divergence — # reference ORFs absent (x) vs % sequence divergence on
   shared genes (y). Engineered KOs sit at (1 gene, 0 bp); natural isolates spread far out.
   The two occupy disjoint genotype design spaces.
+- **c** per-strain spread violins — IQR of genome-wide log2 FC per strain, one axis.
 - **d** transcriptome spread — Kemmeren single-KO / Sameith single-KO / Sameith double-KO /
   Caudal natural-isolate as matched sorted spread bands on ONE shared y-scale.
+- **d2** size-aligned spread — the same per-strain IQR profiles OVERLAID on one axis and
+  right-aligned at the highest-variance strain, so tail length reads off dataset size.
 - **e** how many genes move — per-strain DE-count distribution, KO (Kemmeren) vs natural
   (Caudal), on the paper-exact rule.
 - **f** transcriptome design-space coverage — PCA and UMAP of the joint expression matrix,
   coloured by dataset (per-gene z-scored WITHIN dataset to blunt the microarray/RNA-seq
   platform confound; residual separation is partly platform, stated on the panel).
 
-Palette per dataset, consistent across panels: Kemmeren = orange, Caudal = red (the focus),
-Sameith single = purple, Sameith double = yellow. Repo figure standard throughout
-(Arial 6 pt, boxed, true-size SVG + PNG). Genotype inputs (b) come from the 018 result
-parquets; expression (d, e, f) from the built LMDBs.
+Palette (green-free): Kemmeren = orange, Caudal = red (the focus). In c/d/e both Sameith
+arms share purple (separated by position); in the OVERLAY panels f and d2 they split into
+dark purple (single) and dark red (double) via ``SPLIT_COLORS`` so they read where they
+overlap. Repo figure standard throughout (Arial 6 pt, boxed, true-size SVG + PNG). Genotype
+inputs (b) come from the 018 result parquets; expression (c, d, d2, e, f) from the built LMDBs.
 """
 
 import logging
@@ -102,6 +106,18 @@ DS = {
         "fill": PLOT_PALETTE_FILL[2],
         "marker": "o",
     },
+}
+
+# Panels f and d2 OVERLAY the two sparse Sameith arms (embedding scatter; right-aligned
+# curves), so unlike c/d/e — which separate them by position and keep both purple — they
+# need distinct colours. Use the DARK tier so the least-populous Sameith arms read on top:
+# Sameith single = dark purple, Sameith double = dark red (distinct from Caudal's brighter
+# red). Kemmeren orange and Caudal red are unchanged.
+SPLIT_COLORS = {
+    "kemmeren_single": PLOT_PALETTE[0],  # orange
+    "caudal": PLOT_PALETTE[1],  # red
+    "sameith_single": PLOT_PALETTE[8],  # dark purple
+    "sameith_double": PLOT_PALETTE[7],  # dark red
 }
 
 
@@ -369,6 +385,54 @@ def panel_d_transcriptome_bands(frames):
     return {"shared_ymax": ymax, **{k: int(len(v)) for k, v in frames.items()}}
 
 
+# ---------------------------------------------------------------------------- panel d2
+def panel_d2_size_aligned(frames):
+    """Companion to d: all four per-strain IQR profiles OVERLAID on one axis and
+    RIGHT-ALIGNED at each dataset's highest-variance strain (x = 0, right edge). Panel d
+    stretches every dataset to the same panel width, hiding the size gap; here each
+    dataset's curve extends left for exactly as many strains as it has, so the TAIL LENGTH
+    reads off dataset size (Sameith peters out fast; Kemmeren/Caudal run the full width)
+    while the curve HEIGHT is the spread profile. Uses the split Sameith colours (f-scheme)
+    so the two arms are distinguishable where they overlap.
+    """
+    _apply_rc()
+    order = ["kemmeren_single", "caudal", "sameith_single", "sameith_double"]
+    w = mm_to_in(PANEL_WIDTHS_MM["full"])
+    fig, ax = plt.subplots(
+        figsize=(w, mm_to_in(2 * PANEL_H_MM)), constrained_layout=True
+    )
+    for key in order:
+        df = frames[
+            key
+        ]  # sorted ascending by IQR -> last row is the highest-variance strain
+        n = len(df)
+        x = np.arange(n) - (
+            n - 1
+        )  # highest-variance strain at x=0 (right); tail runs left
+        ax.plot(
+            x,
+            df["iqr"].to_numpy(),
+            color=SPLIT_COLORS[key],
+            linewidth=0.9,
+            label=f"{DS[key]['label']}  (n = {n})",
+            zorder=2,
+        )
+    ax.axvline(0, color=GRID, linestyle=":", linewidth=0.5, zorder=1)
+    ax.set_xlabel(
+        "strains ranked by spread, right-aligned at the highest-variance strain (x = 0)"
+    )
+    ax.set_ylabel("per-strain IQR of log2 FC")
+    ax.set_title(
+        "Dataset size and spread on one aligned axis", loc="left", color=INK, fontsize=7
+    )
+    ax.legend(
+        loc="upper left", frameon=False, handletextpad=0.4, borderpad=0.3, fontsize=6
+    )
+    _box(ax)
+    _save(fig, "comparison_d2_size_aligned")
+    return {k: int(len(frames[k])) for k in order}
+
+
 # ----------------------------------------------------------------------------- panel e
 def panel_e_de_counts(sameith_de):
     """Per-strain DE-count distribution: single KO (Kemmeren) vs double KO (Sameith) vs
@@ -466,8 +530,8 @@ def panel_f_expression_embedding(log2_by_dataset):
         (axu, xy_umap, "UMAP"),
     ]:
         # dots only (no shapes) — colour alone distinguishes the arms. Plot the dense
-        # big clouds first with SMALL dots so they don't blob; the few Sameith points
-        # (purple) go on top a little larger so they stay pickable.
+        # big clouds first with SMALL dots so they don't blob; the two sparse Sameith
+        # arms (dark purple / dark red) go on top a little larger so they stay pickable.
         plot_order = ["kemmeren_single", "caudal", "sameith_single", "sameith_double"]
         sizes = {
             "kemmeren_single": 6,
@@ -482,7 +546,7 @@ def panel_f_expression_embedding(log2_by_dataset):
                 xy[m, 1],
                 s=sizes[key],
                 marker="o",
-                facecolor=DS[key]["line"],
+                facecolor=SPLIT_COLORS[key],
                 edgecolor="none",
                 alpha=0.6,
                 label=DS[key]["label"],
@@ -495,12 +559,13 @@ def panel_f_expression_embedding(log2_by_dataset):
     axp.set_xlabel("PC1", fontsize=7)
     axp.set_ylabel("PC2", fontsize=7)
     axu.set_xlabel("UMAP-1", fontsize=7)
-    # custom legend: uniform-size circles decoupled from the scatter sizes, three
-    # entries (both Sameith arms collapse to one purple dot).
+    # custom legend: uniform-size circles decoupled from the scatter sizes; four entries
+    # (the two Sameith arms are now distinct dark colours).
     legend_spec = [
         ("kemmeren_single", "Kemmeren single KO"),
         ("caudal", "Caudal natural isolate"),
-        ("sameith_single", "Sameith KO (single + double)"),
+        ("sameith_single", "Sameith single KO"),
+        ("sameith_double", "Sameith double KO"),
     ]
     handles = [
         Line2D(
@@ -508,7 +573,7 @@ def panel_f_expression_embedding(log2_by_dataset):
             [0],
             linestyle="none",
             marker="o",
-            markerfacecolor=DS[k]["line"],
+            markerfacecolor=SPLIT_COLORS[k],
             markeredgecolor="none",
             markersize=5,
             label=lab,
@@ -698,6 +763,7 @@ def main():
         "panel_b": panel_b_genotype_divergence(),
         "panel_c": panel_c_spread_by_dataset(frames),
         "panel_d": panel_d_transcriptome_bands(frames),
+        "panel_d2": panel_d2_size_aligned(frames),
         "panel_e": panel_e_de_counts(sameith_de),
         "panel_f": panel_f_expression_embedding(log2),
         "overlap": panel_overlap_response(log2),

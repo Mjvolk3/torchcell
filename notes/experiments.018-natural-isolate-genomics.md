@@ -127,6 +127,21 @@ average **36.7 bp** of edit distance, which is why total divergence (**0.693%**)
 above SNP-only (**0.420%**). Median indel is **3 bp** -- in-frame, the signature of
 selection against frameshifts.
 
+**Computation.** Divergence is one ratio over *all* coding bases of *all* shared genes (not
+a mean of per-gene percentages), with heterozygous sites down-weighted per Peter 2018's
+half-weight convention:
+
+$$
+\text{div}=100\cdot\frac{\displaystyle\sum_{g}\sum_{i=1}^{L_g} c_{g,i}}{\displaystyle\sum_{g} L_g}\ \%,
+\qquad
+c_{g,i}=1-\frac{\mathbb{1}\!\left[\text{ref}_{g,i}\in\mathcal A(\text{code}_{g,i})\right]}{\bigl|\mathcal A(\text{code}_{g,i})\bigr|}
+$$
+
+where $\mathcal A(\text{code})$ is the base set an IUPAC code admits, so a het call carrying
+the reference base costs $1-\tfrac12=\tfrac12$ and a homozygous non-reference call costs $1$;
+indel-bearing alleles (which Hamming cannot score) instead contribute
+$\operatorname{editdist}(a^{s}_g,a^{\text{ref}}_g)$ mismatched bases to the numerator.
+
 ![](assets/images/018-natural-isolate-genomics/pangenome_and_ko_burden.png)
 
 *Core = present in all 1,011 isolates (Peter 2018's own definition; we recompute their count and reproduce it -- 4,942 vs their published 4,940, within 2). NOT comparable to a KO one-for-one: a KanMX deletion is a verified complete null in an isogenic background; a natural variant allele is unverified, selected-upon and compensated.*
@@ -165,6 +180,19 @@ include_stop_codon=True)` = **stop + 297 bp downstream**.
   downstream), so in a genome this compact it is a small, odd residue (5.3% of bp) and its
   π (0.652%) should not be over-read.
 
+**Computation.** Per region, $\pi$ is the mean per-site nucleotide diversity — averaging,
+over the $L$ sites of that region, the probability that two randomly drawn isolate alleles
+differ:
+
+$$
+\pi_{\text{region}}=\frac{1}{L}\sum_{i=1}^{L}\frac{n_i}{n_i-1}\Bigl(1-\sum_{b\in\{A,C,G,T\}}\hat p_{i,b}^{\,2}\Bigr),
+$$
+
+with $\hat p_{i,b}$ the frequency of base $b$ at site $i$ across the $n_i$ isolates genotyped
+there (the $\tfrac{n_i}{n_i-1}$ factor is the finite-sample correction). Region membership is
+assigned by precedence CDS $>$ upstream $>$ downstream $>$ intergenic, and each site is
+counted once.
+
 ### 6. Single KO vs natural isolate -- the expression comparison
 
 ![](assets/images/018-natural-isolate-genomics/de_comparison_ko_vs_natural.png)
@@ -189,6 +217,29 @@ Variance decomposition: observed SD **0.678** = noise **0.390** ⊕ biological *
 Caudal's single-culture RNA-seq is *close to noise-parity per gene*, and any analysis that
 skips this will over-state natural variation by ~6x.
 
+**Computation.** The identical DE rule is an effect-size gate AND a per-strain BH-significance
+gate:
+
+$$
+\mathrm{DE}_s=\Bigl|\bigl\{g:\ |\ell_{s,g}|>\log_2 1.7\ \wedge\ p^{\mathrm{BH}}_{s,g}<0.05\bigr\}\Bigr|.
+$$
+
+Caudal has no published $p$, so a per-gene noise SD is built from its 29 replicate culture
+**pairs** and turned into a $z$-test (the $\sqrt2$ removes the two independent noise draws a
+difference-of-pair carries):
+
+$$
+\sigma_g=\frac{\operatorname{SD}_{\text{pairs}}\!\bigl(\Delta_g\bigr)}{\sqrt2},\qquad
+z_{s,g}=\frac{\ell_{s,g}}{\sigma_g},\qquad p_{s,g}=2\,\Phi(-|z_{s,g}|),\ \ p^{\mathrm{BH}}_{s,\cdot}=\mathrm{BH}\bigl(\{p_{s,g}\}_g\bigr).
+$$
+
+The variance split is an additive decomposition of the observed per-gene variance into the
+replicate-noise floor and the residual biological component:
+
+$$
+\sigma^2_{\text{obs}}=\sigma^2_{\text{noise}}+\sigma^2_{\text{bio}}\ \Rightarrow\ 0.678^2=0.390^2+0.554^2.
+$$
+
 **Results:**
 
 - A **typical single deletion changes 4 genes** out of ~6,100. **5% change nothing at all.**
@@ -207,6 +258,16 @@ This is the most surprising result. Across the 865 isolates with both measuremen
 - `r(genome-wide divergence, n_DE)` = **0.038**
 - `r(natural-KO burden, n_DE)` = **0.086**
 - `r(genome-wide divergence, natural-KO burden)` = **0.477**
+
+**Computation.** Each $r$ is a Pearson correlation over the $n=865$ isolates carrying both
+quantities — the fit line in the panel is the matching degree-1 (least-squares) regression:
+
+$$
+r(u,v)=\frac{\sum_{s}(u_s-\bar u)(v_s-\bar v)}{\sqrt{\sum_{s}(u_s-\bar u)^2}\,\sqrt{\sum_{s}(v_s-\bar v)^2}},
+$$
+
+with $(u,v)$ ranging over the three pairs above ($\text{div}_s$, natural-KO burden, and
+$\mathrm{DE}_s$).
 
 The third correlation is the control: the two *genotype* measures agree with each other, so
 the genotype axis is measured fine. It simply **does not predict how much the transcriptome
@@ -233,6 +294,19 @@ they were.
 `L_C` = gzip codelength (zlib level 6, streamed) -- a *computable upper bound* on Kolmogorov
 complexity, **not** an entropy. Same compressor as the paper's `Signal (gzip)` column. All
 figures are **bits PER STRAIN** (per record), not dataset totals.
+
+**Computation.** For a modality serialized to a byte stream $x$ over $N$ strains, the
+per-strain codelength and the right-panel ratio are:
+
+$$
+L_C(\text{per strain})=\frac{8\cdot\bigl|\mathrm{gzip}_{6}(x)\bigr|}{N}\ \text{bits},
+\qquad
+\text{ratio}=\frac{L_C^{\text{phenotype}}}{L_C^{\text{genotype}}},
+$$
+
+with $|\mathrm{gzip}_6(x)|$ the compressed size in bytes ($\times 8$ = bits). The ratio is
+pure arithmetic on the two codelengths — nothing is inferred — so parity (dotted line) is
+$\text{ratio}=1$.
 
 **How to read the two-panel figure.** Left panel: two bars per dataset -- genotype
 codelength and phenotype codelength, per strain. Right panel: their **ratio**,

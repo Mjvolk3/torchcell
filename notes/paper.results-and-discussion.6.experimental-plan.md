@@ -178,3 +178,106 @@ pursued later, adding a KO × isoprenoid-intermediate metabolomics dataset is th
 - `domenzainComputationalBiologyPredicts2025` — ecFactory / ecYeastGEM CBM baseline.
 - [[torchcell.datasets.scerevisiae.zelezniak2018]] — reg-network metabolome (Arm A).
 - [[torchcell.datasets.scerevisiae.mulleder2016]] — AA-precursor metabolome (Arm B).
+
+## 2026.07.17 - CABBI alignment, precursor-pool proof-of-concept, cross-host strategies
+
+### Framing: proof-of-concept on NATIVE precursor pools, no heterologous pathway
+
+torchcell here is a **proof-of-concept for the virtual cell** (CABBI framing), not a
+metabolic-engineering feat. Deliberately keep any heterologous pathway *out of the
+prediction*: a heterologous enzyme adds reactions outside the trained network and the
+metabolic model, so a claim about the heterologous product extrapolates beyond what the
+model represents. Instead predict/measure **native precursor pools**, which sit entirely
+inside the genotype → native-phenotype space the datasets cover; the pool doubles as a
+chassis-capacity proxy for whatever product is bolted on downstream. This is why the
+experiment targets pools (succinate, malate, acetyl-CoA, valine) rather than engineering
+the products directly.
+
+### CABBI alignment (grounded)
+
+CABBI's target portfolio (grounded from cabbi.bio + genomicscience.energy.gov): **organic
+acids** (3-HP → acrylic; citramalate → methacrylate; succinate, malate, citric, pyruvic in
+*Issatchenkia orientalis*), **oleochemicals / fatty alcohols** (biodiesel, jet fuel,
+lubricants), and the **triacetic acid lactone (TAL)** polyketide; hosts *I. orientalis*,
+*Rhodosporidium toruloides*, *Yarrowia lipolytica*, and *S. cerevisiae*.
+
+- **On-axis** (central-carbon / amino-acid-derived, all pool-anchored in our data):
+  succinate, malate (Arm A); isobutanol (← valine); citramalate (← pyruvate + acetyl-CoA);
+  3-HP (← aspartate / malonyl-CoA); fatty alcohols / TAL (← acetyl-CoA / malonyl-CoA).
+- **Off-axis** (specialty/pharma, not CABBI-central): tyrosine-derived aromatics —
+  betalains, benzylisoquinoline alkaloids, flavonoids, stilbenoids, tyrosol, vitamin E.
+  Keep these as the general-bioproduction story, not the CABBI-grant story.
+
+### Strategy — acetyl-CoA → TAL, *S. cerevisiae* discovery → *I. orientalis* transfer
+
+**Author-flagged: acetyl-CoA is the limiting node for TAL production in our *I.
+orientalis* strain.** TAL (4-hydroxy-6-methyl-2-pyrone) is made by a heterologous
+2-pyrone synthase from one acetyl-CoA (starter) + two malonyl-CoA (extender, itself from
+acetyl-CoA via ACC1), so acetyl-CoA is the central precursor feeding both units.
+
+- **Plan:** use torchcell to find *S. cerevisiae* gene KOs (single + regulatory-network
+  double) predicted to **raise the acetyl-CoA pool**; map the hits to their *I. orientalis*
+  orthologs; test whether the acetyl-CoA-boosting strategy transfers to relieve the TAL
+  bottleneck in IO.
+- **Why it fits the proof-of-concept:** the *prediction* is on the **native acetyl-CoA
+  pool** — no heterologous enzyme in the *S. cerevisiae* discovery loop; the heterologous
+  2-PS is only the downstream converter in the IO production strain. Clean genotype →
+  native-phenotype prediction plus a concrete **cross-host generalization test** — exactly
+  the virtual-cell claim CABBI cares about.
+- **Data anchor:** acetyl-CoA is measured in **Zelezniak 2018** (kinase/phosphatase-KO
+  metabolome), so torchcell can learn KO → acetyl-CoA and rank regulatory double-KOs.
+- **Cross-host step:** *S. cerevisiae* hit → *I. orientalis* ortholog mapping
+  (kinase-signaling is broadly conserved across yeasts; use an orthology resource). This
+  is the concrete instance of the host-transfer bridge.
+- **Detection:** acetyl-CoA is an unstable CoA thioester → LC-MS/MS in *S. cerevisiae*
+  (or use TAL titer as an acetyl-CoA reporter if 2-PS is expressed in the discovery host);
+  TAL by HPLC/LC-MS in IO.
+- **Caveats:** (1) **malonyl-CoA, the co-precursor, is NOT measured in any of our
+  datasets** — the model sees acetyl-CoA but not the ACC1-derived extender pool; (2)
+  acetyl-CoA is compartmentalized (cytosolic vs mitochondrial) and TAL synthesis draws on
+  the *cytosolic* pool, which a whole-cell pool measurement may not resolve.
+
+### Per-row dataset mapping (CABBI products → native pool → our datasets)
+
+| CABBI product | Native pool | Our dataset(s) | Perturbation / readout |
+|---|---|---|---|
+| succinate | succinate | Zelezniak 2018 · Yoshida 2012 | kinase-KO SRM metabolome · 17 gene-deletion HPLC titers |
+| malate | malate | Zelezniak 2018 · Yoshida 2012 | same two |
+| citramalate | pyruvate + acetyl-CoA | Zelezniak 2018 (both) · Yoshida 2012 (pyruvate) | citramalate itself: none (heterologous CimA) |
+| isobutanol | valine / α-ketoisovalerate | Mülleder 2016 (valine, genome-wide) · Zelezniak 2018 (valine + pyruvate) · López 2024 | López = YKO isobutanol/BCAA biosensor (α-ketoisovalerate) |
+| 3-HP | malonyl-CoA / aspartate | Mülleder 2016 (aspartate) · Zelezniak 2018 (aspartate + acetyl-CoA) | **malonyl-CoA: none**; 3-HP itself: none |
+| fatty alcohols / TAL | acetyl-CoA / malonyl-CoA | Zelezniak 2018 (acetyl-CoA) · da Silveira 2014 (lipidome) · Xue 2025 (FFA titers) | **malonyl-CoA pool: none** |
+
+Cross-cutting: the double-KO epistasis prediction for every row rides on **Costanzo 2016 +
+Kuzmin 2018/2020 SGA** (they measure no metabolite → method layer, not a per-row pool
+source). **Xue 2025** is itself a *combinatorial-deletion* (multi-KO) titer set — direct
+multi-KO evidence for the fatty-acid / TAL row, not just single-KO extrapolation.
+
+### Dataset corrections (supersede the earlier "Dataset mapping" table)
+
+The earlier table under-credited our holdings. We DO have loaders (all wired via the
+`ce90fcdb` CABBI-metabolism-adapters landing) for:
+
+- **Yoshida 2012** ([[torchcell.datasets.scerevisiae.yoshida2012]]) — WT + 17 gene
+  deletions × organic-acid **HPLC titers** (acetate, citrate, malate, pyruvate, succinate,
+  mM). Direct deletion → succinate/malate map with our planned assay.
+- **da Silveira dos Santos 2014** ([[torchcell.datasets.scerevisiae.dasilveira2014]]) —
+  kinase/phosphatase **lipidome** (the reg-network lipid dataset earlier miscalled "not
+  built" — it exists).
+- **Montaño López 2024** ([[torchcell.datasets.scerevisiae.lopez2024]]) — genome-wide YKO
+  **isobutanol/BCAA biosensor** (Leu3p/LEU1-yEGFP reporting α-ketoisovalerate).
+- **Xue 2025** ([[torchcell.datasets.scerevisiae.xue2025]]) — in-house **FFA
+  combinatorial-deletion** titers (chassis + up to 3 stacked TF deletions).
+
+State caveats: `dasilveira2014` had an LMDB-build caveat (needs an injected
+`SCerevisiaeGenome`); `lopez2024` / `xue2025` are DOI-less in-house sources with privacy
+handling pending — confirm before counting them in this build.
+
+### Gaps (defer or add)
+
+- **malonyl-CoA pool** — not measured; blocks a *direct* precursor anchor for 3-HP, TAL,
+  and fatty alcohols (proxy through acetyl-CoA instead).
+- **isoprenoid / mevalonate pool** — not measured; terpene chassis stays deferred.
+- Non-native products themselves (citramalate, 3-HP, TAL) are absent from *S. cerevisiae*
+  data by construction — the strategy is native-precursor-pool prediction + heterologous
+  conversion downstream, never predicting the non-native product directly.

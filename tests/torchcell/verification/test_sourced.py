@@ -1,6 +1,9 @@
 """Tests for torchcell.verification.sourced (SourcedValue + audit)."""
 
+import pickle
+
 import pytest
+from pydantic import BaseModel
 
 from torchcell.verification import (
     Provenance,
@@ -33,6 +36,12 @@ def _sourced(citation_key, rel, sha, value=2, quote=KUZMIN_QUOTE):
             source_uri=rel, citation_key=citation_key, sha256=sha, page="S-methods"
         ),
     )
+
+
+class _ProvenanceHolder(BaseModel):
+    """Module-level so its instances are picklable (mirrors MediaComponent)."""
+
+    provenance: list[SourcedValue]
 
 
 # --------------------------------------------------------------------------- #
@@ -106,3 +115,25 @@ def test_audit_raises_when_artifact_missing(tmp_path):
     assert not library_available(tmp_path / "nope")
     with pytest.raises(FileNotFoundError):
         audit_sourced_value(sv, tmp_path)  # citation_key dir does not exist
+
+
+# --------------------------------------------------------------------------- #
+# Picklability across process boundaries (regression)
+# --------------------------------------------------------------------------- #
+def test_pickles_bare_and_when_embedded_in_a_model_field():
+    """A SourcedValue must pickle by qualified name, even after field coercion.
+
+    SourcedValue is deliberately NON-generic: a parametrized pydantic generic
+    (``SourcedValue[Any]``) gets a bracketed ``__qualname__`` that ``pickle``
+    cannot resolve, so any object embedding one (a Media provenance list inside a
+    dataset's reference index) fails to cross a ``multiprocessing.Queue`` /
+    ``ProcessPoolExecutor`` -- surfacing as a silent adapter build hang.
+    """
+    sv = _sourced("kuzmin2018", "si/si1.md", "abc")
+    assert pickle.loads(pickle.dumps(sv)).value == sv.value
+
+    holder = _ProvenanceHolder(provenance=[sv])
+    # Coercion into the field must keep a module-findable class name.
+    assert type(holder.provenance[0]).__qualname__ == "SourcedValue"
+    restored = pickle.loads(pickle.dumps(holder))
+    assert restored.provenance[0].value == sv.value

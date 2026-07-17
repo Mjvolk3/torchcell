@@ -33,8 +33,6 @@ Design note: ``[[torchcell.datamodels.media-components]]``.
 
 from __future__ import annotations
 
-from typing import Any
-
 from torchcell.datamodels.schema import (
     ComponentDefinition,
     Compound,
@@ -63,7 +61,7 @@ def _sv(
     ck: str = _TONG2006,
     sha: str = _TONG2006_SHA,
     note: str | None = None,
-) -> SourcedValue[Any]:
+) -> SourcedValue:
     """A SourcedValue pinned to a mirrored paper.txt (quote + sha256)."""
     return SourcedValue(
         value=value,

@@ -1,0 +1,25 @@
+# torchcell/knowledge_graphs/conf/kg_small.yaml
+# [[torchcell.knowledge_graphs.conf.kg_small.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/conf/kg_small.yaml
+# Test file: tests/torchcell/knowledge_graphs/conf/test_kg_small.yaml
+#
+# Small/test KG build: EVERY dataset in dataset_adapter_map, each capped to a small
+# random subset so the full build pipeline runs in minutes. Mirror of the real KG
+# build -- to run the real build, set `subset.size: null` (subsetting off).
+
+defaults:
+  - default
+  - _self_ # append to end for overriding duplicate configs in default
+
+wandb:
+  mode: online # disabled, offline, online
+  project: tcdb
+
+adapters:
+  io_to_total_worker_ratio: 0.1
+  chunk_size: 4e5
+  loader_batch_size: 1e3
+
+subset:
+  size: 1000 # max records per dataset; null => full dataset (real KG build)
+  seed: 42

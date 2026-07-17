@@ -278,14 +278,22 @@ class CellAdapter:
                 data_chunk, batch_size=loader_batch_size, num_workers=self.io_workers
             )
             datas = []
-            for batch in tqdm(data_loader):
-                for data in batch:
-                    transformed_data = data_chunk.transform_item(data)
-                    data = data_creation_logic(self, transformed_data, method_name)
-                    if isinstance(data, list):
-                        datas.extend(data)
-                    else:
-                        datas.append(data)
+            # close() in a finally so an error inside the loop tears the loader's
+            # worker processes down instead of orphaning them. Orphaned non-daemon
+            # workers block interpreter shutdown, which -- when this runs inside a
+            # ProcessPoolExecutor worker -- prevents the worker from ever returning
+            # the exception, turning a clean crash into a silent Queue "deadlock".
+            try:
+                for batch in tqdm(data_loader):
+                    for data in batch:
+                        transformed_data = data_chunk.transform_item(data)
+                        data = data_creation_logic(self, transformed_data, method_name)
+                        if isinstance(data, list):
+                            datas.extend(data)
+                        else:
+                            datas.append(data)
+            finally:
+                data_loader.close()
             return datas
 
         return decorator
@@ -433,7 +441,11 @@ class CellAdapter:
                     "perturbed_gene_name": perturbation.perturbed_gene_name,
                     "perturbation_type": perturbation.perturbation_type,
                     "description": perturbation.description,
-                    "strain_id": perturbation.strain_id,
+                    # strain_id is declared only on the Sga*/Marker/Natural*/
+                    # SequenceVariant/CopyNumberVariant leaves -- not on the base
+                    # KanMxDeletion/GeneAddition types the metabolite/morphology
+                    # datasets use, so read it defensively.
+                    "strain_id": getattr(perturbation, "strain_id", None),
                     "serialized_data": json.dumps(perturbation.model_dump()),
                 },
             )

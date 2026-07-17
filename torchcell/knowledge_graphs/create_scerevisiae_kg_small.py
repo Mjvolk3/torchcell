@@ -47,6 +47,25 @@ def get_num_workers() -> int:
     return 10
 
 
+def _count_while_writing(write_fn: Any, generator: Any) -> int:
+    """Stream a node/edge generator into BioCypher while counting items for wandb.
+
+    BioCypher's write_nodes/write_edges consume a generator without returning a
+    count, so we wrap the generator to tally items as they pass through -- giving
+    per-adapter + running-total node/edge counts to monitor build scale/progress.
+    """
+    count = 0
+
+    def counting() -> Any:
+        nonlocal count
+        for item in generator:
+            count += 1
+            yield item
+
+    write_fn(counting())
+    return count
+
+
 @hydra.main(version_base=None, config_path="conf", config_name="kg_small")
 def main(cfg: DictConfig) -> None:
     """Run the BioCypher build for the small S. cerevisiae knowledge graph."""
@@ -189,23 +208,41 @@ def main(cfg: DictConfig) -> None:
     )
     wandb.log({"n_adapters": len(adapters), "skipped_datasets": skipped})
 
+    total_nodes = 0
+    total_edges = 0
     for adapter in adapters:
         adapter_name = type(adapter).__name__
         log.info(f"Writing nodes for adapter: {adapter_name}")
         start_time = time.time()
-        bc.write_nodes(adapter.get_nodes())
-        end_time = time.time()
-        write_nodes_time = end_time - start_time
-        wandb.log({f"{adapter_name}_write_nodes_time(s)": write_nodes_time})
+        n_nodes = _count_while_writing(bc.write_nodes, adapter.get_nodes())
+        total_nodes += n_nodes
+        wandb.log(
+            {
+                f"{adapter_name}_write_nodes_time(s)": time.time() - start_time,
+                f"{adapter_name}_n_nodes": n_nodes,
+                "total_nodes": total_nodes,
+            }
+        )
 
         log.info(f"Writing edges for adapter: {adapter_name}")
         start_time = time.time()
-        bc.write_edges(adapter.get_edges())
-        end_time = time.time()
-        write_edges_time = end_time - start_time
-        wandb.log({f"{adapter_name}_write_edges_time": write_edges_time})
+        n_edges = _count_while_writing(bc.write_edges, adapter.get_edges())
+        total_edges += n_edges
+        wandb.log(
+            {
+                f"{adapter_name}_write_edges_time": time.time() - start_time,
+                f"{adapter_name}_n_edges": n_edges,
+                "total_edges": total_edges,
+            }
+        )
 
-    log.info("Finished iterating nodes and edges")
+    log.info(
+        "Finished iterating nodes and edges: %d nodes, %d edges across %d adapters",
+        total_nodes,
+        total_edges,
+        len(adapters),
+    )
+    wandb.log({"total_nodes": total_nodes, "total_edges": total_edges})
     # Write admin import statement and schema information (for biochatter)
     bc.write_import_call()
     bc.write_schema_info(as_node=True)

@@ -95,13 +95,16 @@ echo "----------------NOW_BUILDING_GRAPHS---------------------"
 
 echo "Creating knowledge graph..."
 
-#torchcell.knowledge_graphs.minimal_kg
-#torchcell.knowledge_graphs.create_scerevisiae_kg
-#torchcell.knowledge_graphs.gene_interactions_scerevisae_kg_small
-#torchcell.knowledge_graphs.dmi_kuzmin_2018_kg
-#torchcell.knowledge_graphs.dmi_costanzo_2016_kg
-#torchcell.knowledge_graphs.gene_interactions_scerevisae_kg
-if ! docker exec tc-neo4j python -m torchcell.knowledge_graphs.gene_interactions_scerevisae_kg; then
+# Parameterized build. create_scerevisiae_kg_small iterates EVERY dataset in the
+# registry; KG_CONFIG picks the hydra yaml -> kg_small (subset.size=1000, fast test)
+# or kg_full (subset.size=null, the real build). Override via sbatch, e.g.:
+#   sbatch --export=ALL,KG_CONFIG=kg_full gilahyper_first_build-slurm_docker.slurm
+# Other builders (create_scerevisiae_kg, gene_interactions_scerevisae_kg, ...) can be
+# selected with KG_MODULE.
+KG_MODULE="${KG_MODULE:-torchcell.knowledge_graphs.create_scerevisiae_kg_small}"
+KG_CONFIG="${KG_CONFIG:-kg_small}"
+echo "Building KG: module=$KG_MODULE config=$KG_CONFIG"
+if ! docker exec tc-neo4j python -m "$KG_MODULE" --config-name "$KG_CONFIG"; then
     echo "Error: Failed to create knowledge graph"
     docker logs tc-neo4j
     exit 1

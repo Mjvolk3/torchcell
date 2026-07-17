@@ -1,0 +1,25 @@
+# torchcell/knowledge_graphs/conf/kg_full.yaml
+# [[torchcell.knowledge_graphs.conf.kg_full.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/conf/kg_full.yaml
+# Test file: tests/torchcell/knowledge_graphs/conf/test_kg_full.yaml
+#
+# Real (full) KG build: identical to kg_small.yaml but with subsetting OFF
+# (subset.size: null => every dataset built in full). Pass to the same build script:
+#   python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small --config-name kg_full
+
+defaults:
+  - default
+  - _self_ # append to end for overriding duplicate configs in default
+
+wandb:
+  mode: online # disabled, offline, online
+  project: tcdb
+
+adapters:
+  io_to_total_worker_ratio: 0.1
+  chunk_size: 4e5
+  loader_batch_size: 1e3
+
+subset:
+  size: null # null => full dataset (the real build); an int caps each dataset
+  seed: 42

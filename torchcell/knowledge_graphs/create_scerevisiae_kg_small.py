@@ -5,6 +5,7 @@
 """Build a small S. cerevisiae BioCypher knowledge graph from Costanzo/Kuzmin data."""
 
 import hashlib
+import inspect
 import json
 import logging
 import math
@@ -23,22 +24,10 @@ from omegaconf import DictConfig, OmegaConf
 
 import torchcell
 from biocypher import BioCypher  # type: ignore[attr-defined]  # untyped re-export
-from torchcell.adapters import (
-    DmfCostanzo2016Adapter,
-    DmfKuzmin2018Adapter,
-    SmfCostanzo2016Adapter,
-    SmfKuzmin2018Adapter,
-    TmfKuzmin2018Adapter,
-)
-from torchcell.datasets.scerevisiae.costanzo2016 import (
-    DmfCostanzo2016Dataset,
-    SmfCostanzo2016Dataset,
-)
-from torchcell.datasets.scerevisiae.kuzmin2018 import (
-    DmfKuzmin2018Dataset,
-    SmfKuzmin2018Dataset,
-    TmfKuzmin2018Dataset,
-)
+from torchcell.graph import SCerevisiaeGraph
+from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
+from torchcell.knowledge_graphs.subset import subset_dataset
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
@@ -138,77 +127,69 @@ def main(cfg: DictConfig) -> None:
         }
     )
 
-    # Define dataset configurations
-    dataset_configs: list[dict[str, Any]] = [
-        {
-            "class": SmfCostanzo2016Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"),
-            "kwargs": {"io_workers": num_workers},
-        },
-        {
-            "class": SmfKuzmin2018Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018"),
-            "kwargs": {"io_workers": num_workers},
-        },
-        {
-            "class": DmfKuzmin2018Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018"),
-            "kwargs": {"io_workers": num_workers},
-        },
-        {
-            "class": TmfKuzmin2018Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018"),
-            "kwargs": {"io_workers": num_workers},
-        },
-        {
-            "class": DmfCostanzo2016Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_5e5"),
-            "kwargs": {
-                "subset_n": int(5e5),
-                "io_workers": num_workers,
-                "batch_size": int(1e3),
-            },
-        },
-    ]
+    # Build a shared genome + graph once; datasets that declare them get them injected.
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=False
+    )
+    graph = SCerevisiaeGraph(
+        sgd_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        string_root=osp.join(DATA_ROOT, "data/string"),
+        tflink_root=osp.join(DATA_ROOT, "data/tflink"),
+        genome=genome,
+    )
 
-    # Instantiate datasets
-    datasets = []
-    for config in dataset_configs:
-        dataset_class = config["class"]
-        dataset_path = config["path"]
-        dataset_kwargs = config["kwargs"]
-        dataset_name = dataset_class.__name__
+    # Subsetting: cap every dataset to a small random subset for a fast TEST build.
+    # `subset.size: null` => full dataset -- the real KG build runs this same script
+    # with subsetting flipped off.
+    subset_size_cfg = wandb.config.subset["size"]
+    subset_size = None if subset_size_cfg is None else int(subset_size_cfg)
+    subset_seed = int(wandb.config.subset["seed"])
 
-        log.info(f"Instantiating dataset: {dataset_name}")
+    # Build EVERY dataset in the registry (subset), each paired with its adapter.
+    # A dataset's root is its loader's default; genome/graph are injected when the
+    # loader declares them. Datasets whose dev-tree LMDB is absent are skipped LOUDLY
+    # so a test build reports coverage instead of aborting on the first missing one.
+    adapters = []
+    skipped: list[str] = []
+    for dataset_class, adapter_class in dataset_adapter_map.items():
+        params = inspect.signature(
+            dataset_class.__init__  # type: ignore[misc]  # inspecting a class's __init__
+        ).parameters
+        root = osp.join(DATA_ROOT, params["root"].default)
+        if not osp.isdir(osp.join(root, "processed", "lmdb")):
+            log.warning("SKIP %s: no LMDB at %s", dataset_class.__name__, root)
+            skipped.append(dataset_class.__name__)
+            continue
+        kwargs: dict[str, Any] = {"io_workers": num_workers}
+        if "genome" in params:
+            kwargs["genome"] = genome
+        if "scerevisiae_graph" in params:
+            kwargs["scerevisiae_graph"] = graph
+        log.info("Instantiating dataset: %s", dataset_class.__name__)
         start_time = time.time()
-        dataset = dataset_class(root=dataset_path, **dataset_kwargs)
-        end_time = time.time()
-        instantiation_time = end_time - start_time
-        wandb.log({f"{dataset_name}_time(s)": instantiation_time})
-        datasets.append(dataset)
-
-    # Define dataset-adapter mapping
-    dataset_adapter_map = {
-        DmfCostanzo2016Dataset: DmfCostanzo2016Adapter,
-        SmfCostanzo2016Dataset: SmfCostanzo2016Adapter,
-        SmfKuzmin2018Dataset: SmfKuzmin2018Adapter,
-        DmfKuzmin2018Dataset: DmfKuzmin2018Adapter,
-        TmfKuzmin2018Dataset: TmfKuzmin2018Adapter,
-    }
-
-    # Instantiate adapters based on the dataset-adapter mapping
-    adapters = [
-        dataset_adapter_map[cast(Any, type(dataset))](
-            dataset=dataset,
-            process_workers=process_workers,
-            io_workers=io_workers,
-            chunk_size=chunk_size,
-            loader_batch_size=loader_batch_size,
+        dataset = subset_dataset(
+            dataset_class(root=root, **kwargs), subset_size, subset_seed
         )
-        for dataset in datasets
-    ]
+        wandb.log({f"{dataset_class.__name__}_time(s)": time.time() - start_time})
+        wandb.log({f"{dataset_class.__name__}_len": len(dataset)})
+        adapters.append(
+            adapter_class(
+                dataset=dataset,
+                process_workers=process_workers,
+                io_workers=io_workers,
+                chunk_size=chunk_size,
+                loader_batch_size=loader_batch_size,
+            )
+        )
+    log.info(
+        "Built %d adapters; skipped %d with no LMDB: %s",
+        len(adapters),
+        len(skipped),
+        skipped,
+    )
+    wandb.log({"n_adapters": len(adapters), "skipped_datasets": skipped})
 
-    for i, adapter in enumerate(adapters):
+    for adapter in adapters:
         adapter_name = type(adapter).__name__
         log.info(f"Writing nodes for adapter: {adapter_name}")
         start_time = time.time()

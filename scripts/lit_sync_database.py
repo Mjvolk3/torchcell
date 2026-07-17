@@ -5,6 +5,12 @@
 
 """Nightly sync: mirror + OCR new papers in the Zotero ``database`` collection.
 
+.. note::
+   Superseded by ``scripts/lit_sync.py``, which syncs every tracked collection
+   (``database`` + ``paper``) in one pass and is what the nightly cron now runs.
+   This database-only entrypoint is retained for ad-hoc single-collection runs;
+   it delegates to the same engine via :func:`torchcell.literature.sync.sync_database`.
+
 Diffs the Zotero ``database`` collection against ``<DATA_ROOT>/torchcell-library/``
 and captures (download PDF -> MinerU OCR -> manifest) any paper present in Zotero
 but missing from the mirror. Idempotent: already-mirrored papers are skipped, so

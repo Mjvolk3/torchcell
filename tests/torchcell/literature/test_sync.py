@@ -1,9 +1,19 @@
-"""Tests for torchcell.literature.sync (Zotero database-collection diff)."""
+"""Tests for torchcell.literature.sync (Zotero collection diff)."""
 
 from pathlib import Path
 from typing import Any
 
-from torchcell.literature.sync import SyncMode, plan_database_sync, sync_database
+import pytest
+
+from torchcell.literature.backfill import library_root
+from torchcell.literature.sync import (
+    SyncMode,
+    plan_collection_sync,
+    plan_database_sync,
+    sync_collection,
+    sync_collections,
+    sync_database,
+)
 
 
 def _item(key: str, doi: str | None, citation_key: str) -> dict[str, Any]:
@@ -103,3 +113,90 @@ def test_summary_tallies_modes(tmp_path: Path) -> None:
     summary = report.summary()
     assert "present=1" in summary
     assert "unsupported=1" in summary
+
+
+def test_plan_collection_sync_labels_the_named_collection(tmp_path: Path) -> None:
+    lib_root = tmp_path / "torchcell-library"
+    lib_root.mkdir()
+    items = [_item("K2", "10.2/new", "newPaper2021")]
+    lib = _FakeLib(items, has_pdf={"K2"})
+
+    report = plan_collection_sync(lib, "paper", data_root=tmp_path)  # type: ignore[arg-type]
+
+    # The report carries the collection it was asked for -- not a hardcoded name.
+    assert report.collection == "paper"
+    assert report.by_mode(SyncMode.WOULD_CAPTURE)[0].citation_key == "newPaper2021"
+
+
+def test_sync_collections_returns_one_report_per_collection(tmp_path: Path) -> None:
+    lib_root = tmp_path / "torchcell-library"
+    lib_root.mkdir()
+    items = [_item("K2", "10.2/new", "newPaper2021")]
+    lib = _FakeLib(items, has_pdf={"K2"})
+
+    reports = sync_collections(
+        lib,  # type: ignore[arg-type]
+        ["database", "paper"],
+        data_root=tmp_path,
+        dry_run=True,
+    )
+
+    assert [r.collection for r in reports] == ["database", "paper"]
+
+
+def test_sync_collections_captures_once_then_present(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A key in both collections is captured on the first pass, present on the second."""
+    lib_root = tmp_path / "torchcell-library"
+    lib_root.mkdir()
+    items = [_item("K2", "10.2/new", "newPaper2021")]
+    lib = _FakeLib(items, has_pdf={"K2"})
+    doi_to_key = {"10.2/new": "newPaper2021"}
+
+    def fake_capture(_lib: Any, doi: str, *, do_ocr: bool, data_root: Any) -> Path:
+        key = doi_to_key[doi]
+        _mirror_key(library_root(data_root), key)  # dir + manifest, as capture does
+        return library_root(data_root) / key
+
+    monkeypatch.setattr("torchcell.literature.sync.capture_by_doi", fake_capture)
+
+    reports = sync_collections(
+        lib,  # type: ignore[arg-type]
+        ["database", "paper"],
+        data_root=tmp_path,
+    )
+
+    assert reports[0].by_mode(SyncMode.CAPTURED)[0].citation_key == "newPaper2021"
+    assert reports[1].by_mode(SyncMode.PRESENT)[0].citation_key == "newPaper2021"
+
+
+def test_sync_collection_limit_bounds_captures(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``limit`` caps captures per pass; the remainder is reported would_capture."""
+    lib_root = tmp_path / "torchcell-library"
+    lib_root.mkdir()
+    items = [
+        _item("K1", "10.1/a", "paperA2021"),
+        _item("K2", "10.2/b", "paperB2021"),
+        _item("K3", "10.3/c", "paperC2021"),
+    ]
+    lib = _FakeLib(items, has_pdf={"K1", "K2", "K3"})
+    doi_to_key = {
+        "10.1/a": "paperA2021",
+        "10.2/b": "paperB2021",
+        "10.3/c": "paperC2021",
+    }
+
+    def fake_capture(_lib: Any, doi: str, *, do_ocr: bool, data_root: Any) -> Path:
+        key = doi_to_key[doi]
+        _mirror_key(library_root(data_root), key)
+        return library_root(data_root) / key
+
+    monkeypatch.setattr("torchcell.literature.sync.capture_by_doi", fake_capture)
+
+    report = sync_collection(lib, "paper", data_root=tmp_path, limit=2)  # type: ignore[arg-type]
+
+    assert len(report.by_mode(SyncMode.CAPTURED)) == 2
+    assert len(report.by_mode(SyncMode.WOULD_CAPTURE)) == 1

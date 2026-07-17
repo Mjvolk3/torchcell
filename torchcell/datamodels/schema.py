@@ -1270,7 +1270,7 @@ class MediaComponent(ModelStrict):
         default=ComponentDefinition.defined,
         description="identity completeness; drives open_gaps + is_fully_characterized",
     )
-    provenance: list[SourcedValue[Any]] = Field(
+    provenance: list[SourcedValue] = Field(
         default_factory=list,
         description="sourced (quote+sha256) justifications; a LIST for corroboration "
         "+ deferral-chain traceability",
@@ -1314,7 +1314,7 @@ class Media(ModelStrict):
         default_factory=list,
         description="auxotrophic components deliberately OMITTED (e.g. -His/-Arg/-Lys/-Ura)",
     )
-    provenance: list[SourcedValue[Any]] = Field(
+    provenance: list[SourcedValue] = Field(
         default_factory=list,
         description="recipe-level sourced justifications for the medium as a whole",
     )

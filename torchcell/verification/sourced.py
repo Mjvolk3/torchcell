@@ -24,16 +24,20 @@ Design notes:
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TypeVar
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from torchcell.verification.report import Level, LevelResult, Provenance, sha256_file
 
-T = TypeVar("T")
 
-
-class SourcedValue[T](BaseModel):
+# NOTE: intentionally NON-generic. A parametrized pydantic generic (``SourcedValue
+# [Any]``) has a bracketed ``__qualname__`` that ``pickle`` cannot resolve by name,
+# so any object embedding one (a Media provenance list inside a dataset's reference
+# index) fails to pickle across a ``multiprocessing.Queue`` / ``ProcessPoolExecutor``
+# -- surfacing as a silent adapter hang. ``value: Any`` matches every real usage
+# (all were ``SourcedValue[Any]``) with zero loss of typing.
+class SourcedValue(BaseModel):
     """A hardcoded value plus the provenance that justifies it.
 
     ``provenance.source_uri`` is interpreted as the path RELATIVE to
@@ -43,7 +47,7 @@ class SourcedValue[T](BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    value: T
+    value: Any
     provenance: Provenance
     quote: str = Field(
         description="Verbatim substring from the source that justifies the value."
@@ -53,7 +57,7 @@ class SourcedValue[T](BaseModel):
     )
 
     @model_validator(mode="after")
-    def _require_auditable_provenance(self) -> SourcedValue[T]:
+    def _require_auditable_provenance(self) -> SourcedValue:
         if not self.provenance.citation_key:
             raise ValueError("SourcedValue.provenance.citation_key is required")
         if not self.provenance.sha256:
@@ -73,9 +77,7 @@ class SourcedValue[T](BaseModel):
         )
 
 
-def audit_sourced_value[T](
-    sv: SourcedValue[T], library_root: str | Path
-) -> LevelResult:
+def audit_sourced_value(sv: SourcedValue, library_root: str | Path) -> LevelResult:
     """Verify a ``SourcedValue`` against its source artifact.
 
     Checks (1) the file hash still equals the pinned ``sha256`` and (2) the quote

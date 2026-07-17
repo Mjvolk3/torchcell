@@ -26,6 +26,12 @@ from .kuzmin2020_adapter import DmiKuzmin2020Adapter as DmiKuzmin2020Adapter
 from .kuzmin2020_adapter import SmfKuzmin2020Adapter as SmfKuzmin2020Adapter
 from .kuzmin2020_adapter import TmfKuzmin2020Adapter as TmfKuzmin2020Adapter
 from .kuzmin2020_adapter import TmiKuzmin2020Adapter as TmiKuzmin2020Adapter
+from .lopez2024_adapter import (
+    IsobutanolScreenLopez2024Adapter as IsobutanolScreenLopez2024Adapter,
+)
+from .lopez2024_adapter import (
+    IsobutanolValidatedLopez2024Adapter as IsobutanolValidatedLopez2024Adapter,
+)
 from .mulleder2016_adapter import (
     AminoAcidMulleder2016Adapter as AminoAcidMulleder2016Adapter,
 )
@@ -47,6 +53,10 @@ from .synth_leth_db_adapter import (
 )
 from .synth_leth_db_adapter import (
     SynthRescueYeastSynthLethDbAdapter as SynthRescueYeastSynthLethDbAdapter,
+)
+from .xue2025_adapter import FattyAcidXue2025Adapter as FattyAcidXue2025Adapter
+from .yoshida2012_adapter import (
+    OrganicAcidYoshida2012Adapter as OrganicAcidYoshida2012Adapter,
 )
 from .zelezniak2018_adapter import (
     MetaboliteZelezniak2018Adapter as MetaboliteZelezniak2018Adapter,
@@ -101,6 +111,10 @@ metabolite_adapters = [
     "CarotenoidOzaydin2013Adapter",
     "BetaxanthinCachera2023Adapter",
     "MetaboliteDaSilveira2014Adapter",
+    "OrganicAcidYoshida2012Adapter",
+    "IsobutanolScreenLopez2024Adapter",
+    "IsobutanolValidatedLopez2024Adapter",
+    "FattyAcidXue2025Adapter",
 ]
 
 proteome_metabolome_adapters = [

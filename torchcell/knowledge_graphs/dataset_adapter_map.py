@@ -12,10 +12,14 @@ from torchcell.adapters import (
     DmiKuzmin2018Adapter,
     DmiKuzmin2020Adapter,
     DmMicroarraySameith2015Adapter,
+    FattyAcidXue2025Adapter,
     GeneEssentialitySgdAdapter,
+    IsobutanolScreenLopez2024Adapter,
+    IsobutanolValidatedLopez2024Adapter,
     MetaboliteDaSilveira2014Adapter,
     MetaboliteZelezniak2018Adapter,
     MicroarrayKemmeren2014Adapter,
+    OrganicAcidYoshida2012Adapter,
     ProteomeZelezniak2018Adapter,
     ScmdOhnuki2018Adapter,
     ScmdOhnuki2022Adapter,
@@ -56,6 +60,10 @@ from torchcell.datasets.scerevisiae.kuzmin2020 import (
     TmfKuzmin2020Dataset,
     TmiKuzmin2020Dataset,
 )
+from torchcell.datasets.scerevisiae.lopez2024 import (
+    IsobutanolScreenLopez2024Dataset,
+    IsobutanolValidatedLopez2024Dataset,
+)
 from torchcell.datasets.scerevisiae.mulleder2016 import AminoAcidMulleder2016Dataset
 from torchcell.datasets.scerevisiae.ohnuki2018 import ScmdOhnuki2018Dataset
 from torchcell.datasets.scerevisiae.ohnuki2022 import ScmdOhnuki2022Dataset
@@ -70,6 +78,8 @@ from torchcell.datasets.scerevisiae.synth_leth_db import (
     SynthLethalityYeastSynthLethDbDataset,
     SynthRescueYeastSynthLethDbDataset,
 )
+from torchcell.datasets.scerevisiae.xue2025 import FattyAcidXue2025Dataset
+from torchcell.datasets.scerevisiae.yoshida2012 import OrganicAcidYoshida2012Dataset
 from torchcell.datasets.scerevisiae.zelezniak2018 import (
     MetaboliteZelezniak2018Dataset,
     ProteomeZelezniak2018Dataset,
@@ -105,4 +115,8 @@ dataset_adapter_map = {
     MetaboliteZelezniak2018Dataset: MetaboliteZelezniak2018Adapter,
     ProteomeZelezniak2018Dataset: ProteomeZelezniak2018Adapter,
     AminoAcidMulleder2016Dataset: AminoAcidMulleder2016Adapter,
+    OrganicAcidYoshida2012Dataset: OrganicAcidYoshida2012Adapter,
+    IsobutanolScreenLopez2024Dataset: IsobutanolScreenLopez2024Adapter,
+    IsobutanolValidatedLopez2024Dataset: IsobutanolValidatedLopez2024Adapter,
+    FattyAcidXue2025Dataset: FattyAcidXue2025Adapter,
 }

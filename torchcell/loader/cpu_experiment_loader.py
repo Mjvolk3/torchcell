@@ -5,6 +5,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/loader/cpu_experiment_loader
 # Test file: tests/torchcell/loader/test_cpu_experiment_loader.py
 
+import queue
 from collections.abc import Iterator, Sequence
 from multiprocessing import Process, Queue
 from typing import Any
@@ -86,11 +87,31 @@ class CpuExperimentLoaderMultiprocessing:
         return (len(self.dataset) + self.batch_size - 1) // self.batch_size
 
     def close(self) -> None:
-        """Signal workers to terminate and join them once (idempotent)."""
-        if not self.is_closed:
-            # Send termination signal to each worker
-            for _ in self.workers:
-                self.load_queue.put(None)
+        """Tear down workers once (idempotent); never block indefinitely.
+
+        On the normal path workers are parked on ``load_queue.get()`` and exit on
+        the ``None`` sentinel. On an error path the consumer may have abandoned
+        iteration with ``data_queue`` full and workers blocked on ``put`` -- those
+        never reach the sentinel, so a plain ``join()`` would hang forever. We
+        drain ``data_queue`` to unblock them within a bounded budget, then
+        force-terminate any straggler so ``close()`` itself can never deadlock.
+        """
+        if self.is_closed:
+            return
+        self.is_closed = True
+        for _ in self.workers:
+            self.load_queue.put(None)
+        for _ in range(50):  # ~5s graceful budget (50 x 0.1s)
+            if not any(worker.is_alive() for worker in self.workers):
+                break
+            try:
+                while True:
+                    self.data_queue.get_nowait()
+            except queue.Empty:
+                pass
             for worker in self.workers:
-                worker.join()  # Wait for all workers to finish
-            self.is_closed = True  # Set the flag to prevent repeated cleanup
+                worker.join(timeout=0.1)
+        for worker in self.workers:
+            if worker.is_alive():
+                worker.terminate()
+                worker.join()

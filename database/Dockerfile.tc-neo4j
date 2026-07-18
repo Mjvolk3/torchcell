@@ -34,9 +34,12 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     libhdf5-dev
     
-    # @mjvolk3 intall torchell and dependency
-# We install torchcell here and in database builds so we can get latest push.
-RUN python -m pip install torchcell
+    # @mjvolk3 install torchcell and dependencies.
+# Install from @main (not the PyPI release) so the image's DEPENDENCY SET matches the
+# code the build runs: the slurm build later does `pip install torchcell@main --no-deps`
+# to refresh only the code, relying on the image already having every dep. A stale PyPI
+# base misses deps main added later (e.g. hypernetx in neo4j_cell), failing at import.
+RUN python -m pip install "git+https://github.com/Mjvolk3/torchcell.git@main"
 # torch-scatter has no py3.13 wheel -> builds from source; --no-build-isolation lets
 # its build import the torch that torchcell just installed (pip's isolated build env
 # otherwise can't see it: "ModuleNotFoundError: No module named 'torch'").

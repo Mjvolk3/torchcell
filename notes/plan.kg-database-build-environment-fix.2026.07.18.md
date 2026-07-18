@@ -126,3 +126,69 @@ datasets).
   Dockerfile changes again.
 - Related: [[simb2026-interning-db-rebuild]], [[abstract-biocypher-adapters]], memory
   `kg-adapter-pickle-hang-fixes`, memory `schema-impact-worktree-crash`.
+
+## 2026.07.18 - RESULT: subset KG database BUILT + SERVING
+
+The plan above executed. **A queryable neo4j knowledge-graph DB was built end-to-end**
+(job 965 on GilaHyper): served by `tc-neo4j-readonly` (healthy).
+
+- **DB contents:** 77,488 nodes / 179,446 edges, from **31 adapters** (216,525 nodes
+  written -> dedup 77,488, since datasets share gene/genotype/environment nodes). Node
+  types: Genotype 31,554 · Experiment 22,362 · PhenotypicFeature 20,841 · Perturbation
+  14,145 · FitnessPhenotype 6,203 · GeneInteractionPhenotype 5,002 · MetabolitePhenotype
+  3,761 · CalmorphPhenotype 3,003 · MicroarrayExpressionPhenotype 2,792 · ExperimentReference
+  1,789. Multi-modal (fitness / interaction / metabolite / morphology / expression).
+- Query it: `docker exec tc-neo4j-readonly bash -c 'source /.env && cypher-shell -u "$NEO4J_USER" -p "$NEO4J_PASSWORD" -d torchcell "MATCH (n) RETURN count(n);"'`
+
+### Two fixes LANDED to main
+
+- **PR #133 `8a006f1e`** build-env (this plan's A-D): `database/conf/gh_neo4j.conf` (the
+  missing file that crashed `directory_setup`), `database/database.env.template`, slurm
+  `DATA_ROOT=/scratch/projects/torchcell` override for `directory_setup` + `--mem 980G->256G`
+  / `--cpus 64->32`.
+- **PR #134 `c913291f`** `ExperimentDataset._download` returns early when `processed/lmdb`
+  exists. **The big unblock** beyond this plan: PyG's `Dataset.__init__` runs `_download()`
+  before `_process()` and re-fetches raw whenever `raw_file_names` are incomplete -- regardless
+  of the built LMDB -- 403ing (`current.geneontology.org`, `thecellmap.org`) or colliding on
+  `shutil.move`. The build read only the LMDBs, so this was pure friction.
+
+### Runtime setup performed (host, not committed)
+
+- Cleared stale `7474`/root build-tree subdirs via a root alpine container, then
+  `directory_setup` (DATA_ROOT=/scratch/projects/torchcell) rebuilt them as michaelvolk.
+- **Hardlink-staged** `cp -al torchcell-scratch/data/{torchcell,sgd,string,tflink,go} ->
+  .../torchcell/database/data/` (3.2 TB, same fsid = instant; a real copy is impossible --
+  1.5 TB free). Placed `go.obo` at `data/go/go.obo`. Real `database/database.env` (gitignored)
+  carries the WANDB key.
+
+### 3 datasets flagged -- USER FOLLOW-UP
+
+1. **GeneEssentialitySgd** -- EXCLUDED. Schema drift: stored `GeneEssentialityPhenotype(is_essential=...)`
+   fails `ExperimentReferenceIndex` validation against `EnvironmentResponseExperimentReference`
+   (`ModelStrict`, forbids `is_essential`). Fix: rebuild the LMDB against `@main` schema, or
+   reconcile the schema (schema.py -> user-territory, schema-impact gate).
+2. **CaudalPanTranscriptome2024** -- EXCLUDED. Subset-perf blowup: ~1 h+ and never finished;
+   its `perturbation->genotype` edges explode (each isolate ~12.5k perturbations off S288C, so
+   subset=1000 isolates -> ~12.5M edges). Fix: a much smaller Caudal-specific subset, or drop it
+   from `kg_small` (the config comment promises "runs in minutes").
+3. **ProteomeZelezniak2018** -- PARTIAL. BioCypher dropped the `protein abundance phenotype`
+   nodes: inconsistent property sets (some carry `protein_abundance_se`, some don't) and
+   BioCypher requires a uniform per-class property set. Fix: the adapter should always emit
+   `protein_abundance_se` (null when absent).
+
+Excluded LMDBs were moved to `.../database/data/torchcell/<ds>/processed/lmdb.excluded_20260718`
+(build tree only; the dev tree is untouched). Restore them after the fixes to re-include.
+
+### Code follow-ups (documented, NOT auto-landed -- for review)
+
+- **`SCerevisiaeGenome` `go.obo` provenance.** `__attrs_post_init__` unconditionally
+  `download_url("http://current.geneontology.org/ontology/go.obo", go_root)` which **403s**
+  (bare-urllib UA on the http->https redirect; curl works). Staged manually for now; per the
+  provenance principle this should be a sha256-pinned mirror, not a live download.
+- **`directory_setup` not idempotent.** The neo4j entrypoint `chown -R neo4j /data` (+ conf)
+  flips bind-mount ownership to uid 7474, so a 2nd michaelvolk `directory_setup` PermissionErrors
+  on `conf/neo4j.conf` (non-fatal this run -- existing valid config was reused). Fix: remove-then-copy
+  in `directory_setup`. The same chown flipped **dev-tree** hardlink inodes to 7474; chowned back
+  to 1000 this session.
+- **kg_small Caudal cost** -- see flag #2; the subset should cap per-record genotype size, not just
+  record count, or exclude Caudal from the fast config.

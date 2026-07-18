@@ -163,6 +163,18 @@ def main(cfg: DictConfig) -> None:
     subset_size_cfg = wandb.config.subset["size"]
     subset_size = None if subset_size_cfg is None else int(subset_size_cfg)
     subset_seed = int(wandb.config.subset["seed"])
+    # Per-dataset caps OVERRIDE the global size for named datasets (keyed by class
+    # name), so the full build can cap only the giant Costanzo double-mutant sets
+    # (20.7M records each) while every other dataset builds in full.
+    _per = cfg.subset.get("per_dataset", {})
+    _per_map = (
+        cast("dict[str, Any]", OmegaConf.to_container(_per, resolve=True))
+        if _per
+        else {}
+    )
+    subset_per_dataset = {
+        name: (None if v is None else int(v)) for name, v in _per_map.items()
+    }
 
     # Build EVERY dataset in the registry (subset), each paired with its adapter.
     # A dataset's root is its loader's default; genome/graph are injected when the
@@ -186,8 +198,9 @@ def main(cfg: DictConfig) -> None:
             kwargs["scerevisiae_graph"] = graph
         log.info("Instantiating dataset: %s", dataset_class.__name__)
         start_time = time.time()
+        ds_size = subset_per_dataset.get(dataset_class.__name__, subset_size)
         dataset = subset_dataset(
-            dataset_class(root=root, **kwargs), subset_size, subset_seed
+            dataset_class(root=root, **kwargs), ds_size, subset_seed
         )
         wandb.log({f"{dataset_class.__name__}_time(s)": time.time() - start_time})
         wandb.log({f"{dataset_class.__name__}_len": len(dataset)})

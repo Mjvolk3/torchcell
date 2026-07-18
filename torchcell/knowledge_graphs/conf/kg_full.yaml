@@ -23,3 +23,9 @@ adapters:
 subset:
   size: null # null => full dataset (the real build); an int caps each dataset
   seed: 42
+  # Per-dataset caps override `size` for the named giant datasets so the full
+  # build stays tractable. The Costanzo double-mutant sets are 20.7M records each;
+  # cap them to 100k while everything else builds in full. Keyed by dataset class.
+  per_dataset:
+    DmfCostanzo2016Dataset: 100000
+    DmiCostanzo2016Dataset: 100000

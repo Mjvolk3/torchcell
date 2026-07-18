@@ -1371,10 +1371,14 @@ class CellAdapter:
     ) -> list[BioCypherEdge]:
         edges = []
         genotype = data["experiment"].genotype
+        # genotype_id is invariant across this genotype's perturbations, so hash it
+        # ONCE. Recomputing it inside the loop re-serializes the entire genotype
+        # (all perturbations) every iteration -- O(P^2) per record, catastrophic for
+        # natural isolates (~5k perturbations each: ~33 h for Caudal vs seconds).
+        genotype_id = hashlib.sha256(
+            json.dumps(genotype.model_dump()).encode("utf-8")
+        ).hexdigest()
         for perturbation in genotype.perturbations:
-            genotype_id = hashlib.sha256(
-                json.dumps(genotype.model_dump()).encode("utf-8")
-            ).hexdigest()
             perturbation_id = hashlib.sha256(
                 json.dumps(perturbation.model_dump()).encode("utf-8")
             ).hexdigest()

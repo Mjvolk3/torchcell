@@ -105,7 +105,10 @@ echo "Creating knowledge graph..."
 KG_MODULE="${KG_MODULE:-torchcell.knowledge_graphs.create_scerevisiae_kg_small}"
 KG_CONFIG="${KG_CONFIG:-kg_small}"
 echo "Building KG: module=$KG_MODULE config=$KG_CONFIG"
-if ! docker exec tc-neo4j python -m "$KG_MODULE" --config-name "$KG_CONFIG"; then
+# source /.env INSIDE the container so DATA_ROOT et al. are in the environment before
+# python imports torchcell -- several torchcell modules (e.g. torchcell.graph.sgd) read
+# DATA_ROOT at import time, before the build script's own load_dotenv runs.
+if ! docker exec tc-neo4j bash -c "set -a && source /.env && set +a && python -m $KG_MODULE --config-name $KG_CONFIG"; then
     echo "Error: Failed to create knowledge graph"
     docker logs tc-neo4j
     exit 1

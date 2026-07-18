@@ -190,21 +190,37 @@ datasets.
 
 ![Gene-response overlap](./assets/images/018-natural-isolate-genomics/comparison_overlap_response.svg)
 
-*Per gene (5,811 shared): x = KO-response frequency (% of Kemmeren single KOs where the gene
-is DE), y = its variability across Caudal isolates (SD of log2). The two are **moderately
-correlated (r = 0.34)** — a shared "responsive core" both modalities move, plus substantial
-per-gene coverage each has that the other lacks. Natural isolates and KOs are **partly
-complementary**, not redundant. Platform caveat applies (Kemmeren microarray, Caudal RNA-seq).*
+*The unit here is a **gene** (5,811 shared across all four datasets), **not a strain**. For
+each gene we ask two independent things and correlate them across genes: **how often a
+knockout moves this gene** (x) and **how much this gene naturally varies across isolates**
+(y). **What a high Pearson $r$ would mean:** the genes that knockouts frequently perturb are
+exactly the genes that vary most in nature — i.e. **both populations engage the same
+"responsive core" of genes.** We get **$r = 0.34$** (moderate): a real shared core, but each
+modality also moves genes the other does not — so KOs and natural isolates are **partly
+overlapping, partly complementary**, not redundant. Platform caveat applies (Kemmeren
+microarray, Caudal RNA-seq).*
 
-**Computation.** Each of the 5,811 genes gets two scalars — how often a KO moves it, and how
-much it varies across isolates — and the panel is the Pearson correlation of the two over
-genes:
+**Computation.** Symbols: $g$ indexes the 5,811 shared genes; $s$ a strain; $\ell_{s,g}$ is
+the $\log_2$ **expression** fold-change of gene $g$ in strain $s$ **versus its reference**
+(wild-type for Kemmeren KOs, the population-mean expression for Caudal isolates); $N_K$ = the
+number of Kemmeren single-KO strains; $\mathbb{1}[\cdot]$ = the indicator (1 if the bracket is
+true, else 0); $\operatorname{SD}$ = standard deviation; "$g$ is DE in $s$" uses the panel-e
+rule. Each gene gets a KO-response frequency and a natural-variability, then **one Pearson
+correlation over the genes**:
 
 $$
-f^{\mathrm{KO}}_g=\frac{1}{N_K}\sum_{s\in\text{Kemmeren}}\mathbb{1}\!\left[g \text{ is DE in } s\right],\qquad
-\sigma^{\mathrm{iso}}_g=\operatorname{SD}_{s\in\text{Caudal}}\bigl(\ell_{s,g}\bigr),\qquad
-r=\operatorname{Pearson}_g\bigl(f^{\mathrm{KO}}_g,\ \sigma^{\mathrm{iso}}_g\bigr).
+\underbrace{f^{\mathrm{KO}}_g}_{\text{how often a KO moves }g}=\frac{1}{N_K}\sum_{s\in\text{Kemmeren}}\mathbb{1}\!\left[g\text{ is DE in }s\right]\in[0,1],
+\qquad
+\underbrace{\sigma^{\mathrm{iso}}_g}_{\text{natural variability of }g}=\operatorname{SD}_{s\in\text{Caudal}}\bigl(\ell_{s,g}\bigr),
 $$
+
+$$
+r=\operatorname{Pearson}_{g}\bigl(f^{\mathrm{KO}}_g,\ \sigma^{\mathrm{iso}}_g\bigr)\in[-1,1],\qquad r=0.34.
+$$
+
+Reading it: $r\to 1$ means the same genes are the "movers" in both populations; $r\to 0$ means
+KO-responsive genes and isolate-variable genes are unrelated sets. $0.34$ sits in between —
+overlapping but not identical.
 
 ### Where the natural variation sits: regulatory vs coding
 
@@ -231,20 +247,38 @@ there (per Peter 2018's het-weighting), reported as a percentage.
 
 ![Decoupling](./assets/images/018-natural-isolate-genomics/comparison_decoupling.svg)
 
-*One point per isolate (n = 865): genome-wide sequence divergence from S288C vs number of DE
-genes. **r = 0.04** — an isolate twice as diverged does not move twice as many genes; natural
-gene loss is concentrated in dispensable, buffered genes. Modeling consequence: score *which*
-genes move and in *what direction* (per-gene rank/direction agreement), not *how much*
-(magnitude MSE), or the isolates will look harder to predict than the mechanism deserves.*
+*First, what "DE" is here, since it is easy to misread: **each point is one isolate**, and its
+"DE genes" is a count over the **whole transcriptome** — the number of genes (out of ~6,000)
+whose **mRNA expression level** in that isolate differs significantly from a **reference
+baseline** (the population-mean expression of each gene). It is **not** an allele-vs-allele
+comparison and **not** a single reporter gene; it is the isolate's genome-wide expression
+readout, exactly as in panel e. The x-axis is a completely different molecular layer — the
+isolate's **DNA-sequence** divergence from S288C. So the panel asks one question: **does a
+more sequence-diverged genome move more of the transcriptome?** The **naive** expectation
+(and the one that "makes intuitive sense") is yes — a dose-response — which would appear as a
+**high** $r$. We instead find **$r = 0.04$**, essentially none. That near-zero value **is**
+the finding: genome divergence and transcriptome response are **decoupled**. An isolate twice
+as sequence-diverged does not differentially express twice as many genes, because most
+natural divergence sits in **dispensable / buffered** genes whose sequence change never
+propagates to expression. Modeling consequence: score *which* genes move and in *what
+direction* (per-gene rank/direction agreement), not *how much* (magnitude MSE), or the
+isolates will look harder to predict than the mechanism deserves.*
 
-**Computation.** One point per isolate; the reported $r$ is the Pearson correlation, over the
-$n=865$ isolates with both measures, of genome-wide divergence against DE count:
+**Computation.** Symbols: $s$ indexes the $n=865$ isolates that have **both** measurements;
+$\text{div}_s\in[0,1]$ = the fraction of coding bases in isolate $s$ that differ from S288C
+(the genome-wide **sequence** divergence, defined in **b**); $\mathrm{DE}_s\in\mathbb{Z}_{\ge
+0}$ = the isolate's genome-wide **expression** DE-gene count (defined in **e**: a gene counts
+when its expression vs the population reference passes $|\ell_{s,g}|>\log_2 1.7$ **and**
+BH-adjusted $p<0.05$); overbars denote the mean over isolates. The panel is a **single**
+Pearson correlation across isolates:
 
 $$
-r=\operatorname{Pearson}_{s\in\text{isolates}}\bigl(\text{div}_s,\ \mathrm{DE}_s\bigr),
+r=\operatorname{Pearson}_{s}\bigl(\text{div}_s,\ \mathrm{DE}_s\bigr)=\frac{\displaystyle\sum_{s}(\text{div}_s-\overline{\text{div}})(\mathrm{DE}_s-\overline{\mathrm{DE}})}{\sqrt{\displaystyle\sum_{s}(\text{div}_s-\overline{\text{div}})^2}\ \sqrt{\displaystyle\sum_{s}(\mathrm{DE}_s-\overline{\mathrm{DE}})^2}}=0.04.
 $$
 
-with $\text{div}_s$ as defined in b and $\mathrm{DE}_s$ as in e.
+Reading it: $r\to 1$ is the dose-response the naive picture predicts (more diverged genome →
+proportionally more genes move); $r\approx 0$ is the observed **decoupling** — the genotype
+magnitude tells you almost nothing about how much the transcriptome moves.
 
 ## Reproduce
 

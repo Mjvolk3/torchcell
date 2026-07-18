@@ -18,8 +18,8 @@ fi && \
 rm /miniconda.sh
 ENV PATH /miniconda/bin:$PATH
 
-# @mjvolk3 Create python 3.11 environment
-RUN conda create -n myenv python=3.11
+# @mjvolk3 Create python 3.13 environment (torchcell requires >=3.13; PEP 695 generics)
+RUN conda create -n myenv python=3.13
 # @mjvolk3 Activate the environment
 RUN echo "source activate myenv" > ~/.bashrc
 ENV PATH /miniconda/envs/myenv/bin:$PATH

@@ -1,22 +1,26 @@
 #!/bin/bash
 #SBATCH --job-name=build_database
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=64
-#SBATCH --mem=980G
-#SBATCH --time=365-00:00:00
+#SBATCH --cpus-per-task=32
+#SBATCH --mem=256G
+#SBATCH --time=12:00:00
 #SBATCH --output=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --error=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --no-requeue
 
-##SBATCH --mem=64G
-##SBATCH --time=12:00:00
+# GilaHyper node = 128 CPU / 513 G. The subset (kg_small) build is small; 32 CPU /
+# 256 G is ample. The full (kg_full) build can bump these via `sbatch --mem=...`.
 
 echo "Running on $(hostname)"
 
 ###
 source ~/.zshrc # Source a minimal environment, adjust to your shell if needed
 conda activate ~/miniconda3/envs/torchcell
-python -m torchcell.database.directory_setup
+# directory_setup builds DATA_ROOT/database/... and copies conf/gh_neo4j.conf +
+# database.env in. The BUILD TREE is the mounted drive /scratch/projects/torchcell
+# (what the docker run below bind-mounts), NOT the dev tree in the host .env
+# (torchcell-scratch). load_dotenv(override=False) keeps this explicit DATA_ROOT.
+DATA_ROOT=/scratch/projects/torchcell python -m torchcell.database.directory_setup
 ###
 
 echo "Checking Docker availability..."

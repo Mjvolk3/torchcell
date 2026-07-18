@@ -37,7 +37,10 @@ RUN apt-get update && apt-get install -y \
     # @mjvolk3 intall torchell and dependency
 # We install torchcell here and in database builds so we can get latest push.
 RUN python -m pip install torchcell
-RUN python -m pip install torch-scatter
+# torch-scatter has no py3.13 wheel -> builds from source; --no-build-isolation lets
+# its build import the torch that torchcell just installed (pip's isolated build env
+# otherwise can't see it: "ModuleNotFoundError: No module named 'torch'").
+RUN python -m pip install torch-scatter --no-build-isolation
 
 # @mjvolk3 use installed jdk (generalize use). ENV JAVA_HOME=/opt/java/openjdk
 COPY --from=eclipse-temurin:11 $JAVA_HOME $JAVA_HOME

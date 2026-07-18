@@ -259,6 +259,21 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
         """Build the processed LMDB store from raw data (implemented by subclasses)."""
         raise NotImplementedError
 
+    def _download(self) -> None:
+        """Skip PyG's raw download when the processed LMDB already exists.
+
+        Consumers -- the BioCypher KG build and any training run -- read the
+        processed ``lmdb`` store, not the raw files, so once it is present the
+        raw data is not needed. PyG's default ``_download`` re-fetches whenever
+        ``raw_file_names`` are absent/incomplete, which for a dataset restored
+        from a built LMDB (raw pruned, or a partially-extracted leftover) means
+        an unnecessary network download that either 403s or collides on move.
+        A genuinely un-built dataset (no ``lmdb``) still downloads as before.
+        """
+        if osp.isdir(osp.join(self.processed_dir, "lmdb")):
+            return
+        super()._download()
+
     @abstractmethod
     def download(self) -> None:
         """Download raw data into the raw directory (implemented by subclasses)."""

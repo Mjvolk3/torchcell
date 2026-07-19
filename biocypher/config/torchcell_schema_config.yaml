@@ -209,6 +209,7 @@ protein abundance phenotype:
         label_name: str
         label_statistic_name: str
         protein_abundance: str
+        protein_abundance_se: str
         measurement_type: str
         serialized_data: str
 # PHENOTYPES END

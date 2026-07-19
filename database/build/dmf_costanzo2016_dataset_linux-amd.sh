@@ -9,7 +9,7 @@ python -m pip uninstall torchcell -y
 python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
 
 python -m pip uninstall biocypher -y
-python -m pip install git+https://github.com/Mjvolk3/biocypher@main
+python -m pip install biocypher==0.15.2
 
 # Echo a message
 echo "----------------NOW_BUILDING_GRAPHS----------------"

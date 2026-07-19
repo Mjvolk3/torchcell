@@ -107,11 +107,10 @@
     twine>=4.0.2
     memory-profiler>=0.61.0
 
-    # biocypher
-    # Swith to biocypher after path change is implemented
-    # biocypher>=0.5.35
-    # Not allowed in Pypi
-    # biocypher@git+https://github.com/Mjvolk3/biocypher@main
+    # biocypher (stock upstream on PyPI; fork Mjvolk3/biocypher retired 2026-07,
+    # its only patch — an import_call_file_prefix auto-join — is now handled by
+    # dropping that config key so the absolute output_directory is used verbatim)
+    biocypher==0.15.2
 
     # neo4j
     neo4j>=4.4.11,<5.0

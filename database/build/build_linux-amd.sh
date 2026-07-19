@@ -9,7 +9,7 @@ python -m pip uninstall torchcell -y
 python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
 
 python -m pip uninstall biocypher -y
-python -m pip install git+https://github.com/Mjvolk3/biocypher@main
+python -m pip install biocypher==0.15.2
 
 # TODO Should be moved into requirements.txt then removed after image build.
 python -m pip install git+https://github.com/oxpig/CaLM@main

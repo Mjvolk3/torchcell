@@ -47,7 +47,7 @@ docker start tc-neo4j
 docker exec tc-neo4j python -m pip uninstall torchcell -y
 docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
 docker exec tc-neo4j python -m pip uninstall biocypher -y
-docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/biocypher@main
+docker exec tc-neo4j python -m pip install biocypher==0.15.2
 
 # docker exec -it tc-neo4j /bin/bash -c "chmod +x $bash_script_path"
 # docker exec -it tc-neo4j /bin/bash -c "$bash_script_path"

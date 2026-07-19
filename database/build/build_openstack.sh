@@ -131,7 +131,7 @@ python -m pip uninstall -y torchcell && \
 python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main && \
 python -m pip install --force-reinstall --no-cache-dir torch_scatter -f https://data.pyg.org/whl/torch-2.8.0+cpu.html && \
 python -m pip uninstall -y biocypher && \
-python -m pip install git+https://github.com/Mjvolk3/biocypher@main && \
+python -m pip install biocypher==0.15.2 && \
 python -m pip install git+https://github.com/oxpig/CaLM@main && \
 python -m pip install --no-cache-dir hypernetx fastjsonschema"
 

@@ -57,7 +57,7 @@ apptainer exec --writable-tmpfs \
 #  & python -m pip uninstall torchcell -y
 #  & python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
 #  & python -m pip uninstall biocypher -y
-#  & python -m pip install git+https://github.com/Mjvolk3/biocypher@main
+#  & python -m pip install biocypher==0.15.2
 #  & echo "----------------NOW_BUILDING_GRAPHS----------------"
 #  & bash_script_path=$(python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
 #  & cd /var/lib/neo4j # this is where relative biocypher path is
@@ -77,7 +77,7 @@ apptainer exec --writable-tmpfs \
 #  -B $(pwd)/import:/var/lib/import \
 #  -B $(pwd)/plugins:/plugins \
 #  $(pwd)/tc-neo4j.sif \
-#  /bin/bash -c "conda activate myenv; python -m pip uninstall torchcell -y; python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main; python -m pip uninstall biocypher -y; python -m pip install git+https://github.com/Mjvolk3/biocypher@main; echo '----------------NOW_BUILDING_GRAPHS----------------'; bash_script_path=$(python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small); cd /var/lib/neo4j; chmod +x ${bash_script_path}; /bin/bash -c '${bash_script_path}'"
+#  /bin/bash -c "conda activate myenv; python -m pip uninstall torchcell -y; python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main; python -m pip uninstall biocypher -y; python -m pip install biocypher==0.15.2; echo '----------------NOW_BUILDING_GRAPHS----------------'; bash_script_path=$(python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small); cd /var/lib/neo4j; chmod +x ${bash_script_path}; /bin/bash -c '${bash_script_path}'"
 
 
 
@@ -188,7 +188,7 @@ apptainer exec --writable-tmpfs \
 #& python -m pip uninstall torchcell -y
 #& python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
 #& python -m pip uninstall biocypher -y
-#& python -m pip install git+https://github.com/Mjvolk3/biocypher@main
+#& python -m pip install biocypher==0.15.2
 #& echo "----------------NOW_BUILDING_GRAPHS----------------"
 #& bash_script_path=$(python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
 #& cd /var/lib/neo4j # this is where relative biocypher path is

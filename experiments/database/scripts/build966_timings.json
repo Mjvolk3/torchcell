@@ -1,0 +1,246 @@
+{
+  "generation_total_sec": 33180.0,
+  "first": "2026-07-19 01:44:39",
+  "finish": "2026-07-19 10:57:39",
+  "finish_nodes": 28357239,
+  "finish_edges": 31427685,
+  "subsets": {
+    "DmiCostanzo2016Dataset": [
+      20705612,
+      100000
+    ]
+  },
+  "adapters": [
+    {
+      "adapter": "SmfCostanzo2016Adapter",
+      "node_sec": 68.0,
+      "edge_sec": 75.0,
+      "total_sec": 143.0,
+      "n_nodes": 163883
+    },
+    {
+      "adapter": "DmfCostanzo2016Adapter",
+      "node_sec": 67.0,
+      "edge_sec": 80.0,
+      "total_sec": 147.0,
+      "n_nodes": 163883
+    },
+    {
+      "adapter": "DmiCostanzo2016Adapter",
+      "node_sec": 405.0,
+      "edge_sec": 456.0,
+      "total_sec": 861.0,
+      "n_nodes": 900011
+    },
+    {
+      "adapter": "SmfKuzmin2018Adapter",
+      "node_sec": 34.0,
+      "edge_sec": 38.0,
+      "total_sec": 72.0,
+      "n_nodes": 12319
+    },
+    {
+      "adapter": "DmfKuzmin2018Adapter",
+      "node_sec": 1433.0,
+      "edge_sec": 1606.0,
+      "total_sec": 3039.0,
+      "n_nodes": 3693598
+    },
+    {
+      "adapter": "TmfKuzmin2018Adapter",
+      "node_sec": 413.0,
+      "edge_sec": 476.0,
+      "total_sec": 889.0,
+      "n_nodes": 911117
+    },
+    {
+      "adapter": "DmiKuzmin2018Adapter",
+      "node_sec": 1354.0,
+      "edge_sec": 1551.0,
+      "total_sec": 2905.0,
+      "n_nodes": 3693598
+    },
+    {
+      "adapter": "TmiKuzmin2018Adapter",
+      "node_sec": 407.0,
+      "edge_sec": 477.0,
+      "total_sec": 884.0,
+      "n_nodes": 911117
+    },
+    {
+      "adapter": "SmfKuzmin2020Adapter",
+      "node_sec": 74.0,
+      "edge_sec": 84.0,
+      "total_sec": 158.0,
+      "n_nodes": 3783
+    },
+    {
+      "adapter": "DmfKuzmin2020Adapter",
+      "node_sec": 1462.0,
+      "edge_sec": 1745.0,
+      "total_sec": 3207.0,
+      "n_nodes": 5695180
+    },
+    {
+      "adapter": "TmfKuzmin2020Adapter",
+      "node_sec": 1290.0,
+      "edge_sec": 1486.0,
+      "total_sec": 2776.0,
+      "n_nodes": 3017987
+    },
+    {
+      "adapter": "DmiKuzmin2020Adapter",
+      "node_sec": 1511.0,
+      "edge_sec": 1761.0,
+      "total_sec": 3272.0,
+      "n_nodes": 5695180
+    },
+    {
+      "adapter": "TmiKuzmin2020Adapter",
+      "node_sec": 1306.0,
+      "edge_sec": 1514.0,
+      "total_sec": 2820.0,
+      "n_nodes": 3017987
+    },
+    {
+      "adapter": "GeneEssentialitySgdAdapter",
+      "node_sec": 142.0,
+      "edge_sec": 161.0,
+      "total_sec": 303.0,
+      "n_nodes": 10639
+    },
+    {
+      "adapter": "SynthLethalityYeastSynthLethDbAdapter",
+      "node_sec": 163.0,
+      "edge_sec": 185.0,
+      "total_sec": 348.0,
+      "n_nodes": 126007
+    },
+    {
+      "adapter": "SynthRescueYeastSynthLethDbAdapter",
+      "node_sec": 151.0,
+      "edge_sec": 174.0,
+      "total_sec": 325.0,
+      "n_nodes": 62539
+    },
+    {
+      "adapter": "ScmdOhya2005Adapter",
+      "node_sec": 177.0,
+      "edge_sec": 200.0,
+      "total_sec": 377.0,
+      "n_nodes": 37751
+    },
+    {
+      "adapter": "MicroarrayKemmeren2014Adapter",
+      "node_sec": 718.0,
+      "edge_sec": 788.0,
+      "total_sec": 1506.0,
+      "n_nodes": 14846
+    },
+    {
+      "adapter": "SmMicroarraySameith2015Adapter",
+      "node_sec": 165.0,
+      "edge_sec": 185.0,
+      "total_sec": 350.0,
+      "n_nodes": 825
+    },
+    {
+      "adapter": "DmMicroarraySameith2015Adapter",
+      "node_sec": 160.0,
+      "edge_sec": 179.0,
+      "total_sec": 339.0,
+      "n_nodes": 797
+    },
+    {
+      "adapter": "CaudalPanTranscriptome2024Adapter",
+      "node_sec": 2737.0,
+      "edge_sec": 3065.0,
+      "total_sec": 5802.0,
+      "n_nodes": 6608
+    },
+    {
+      "adapter": "ScmdOhnuki2018Adapter",
+      "node_sec": 105.0,
+      "edge_sec": 117.0,
+      "total_sec": 222.0,
+      "n_nodes": 8903
+    },
+    {
+      "adapter": "ScmdOhnuki2022Adapter",
+      "node_sec": 123.0,
+      "edge_sec": 144.0,
+      "total_sec": 267.0,
+      "n_nodes": 21776
+    },
+    {
+      "adapter": "CarotenoidOzaydin2013Adapter",
+      "node_sec": 111.0,
+      "edge_sec": 135.0,
+      "total_sec": 246.0,
+      "n_nodes": 49224
+    },
+    {
+      "adapter": "BetaxanthinCachera2023Adapter",
+      "node_sec": 114.0,
+      "edge_sec": 129.0,
+      "total_sec": 243.0,
+      "n_nodes": 56827
+    },
+    {
+      "adapter": "MetaboliteDaSilveira2014Adapter",
+      "node_sec": 100.0,
+      "edge_sec": 111.0,
+      "total_sec": 211.0,
+      "n_nodes": 1251
+    },
+    {
+      "adapter": "MetaboliteZelezniak2018Adapter",
+      "node_sec": 98.0,
+      "edge_sec": 109.0,
+      "total_sec": 207.0,
+      "n_nodes": 773
+    },
+    {
+      "adapter": "ProteomeZelezniak2018Adapter",
+      "node_sec": 100.0,
+      "edge_sec": 112.0,
+      "total_sec": 212.0,
+      "n_nodes": 783
+    },
+    {
+      "adapter": "AminoAcidMulleder2016Adapter",
+      "node_sec": 104.0,
+      "edge_sec": 118.0,
+      "total_sec": 222.0,
+      "n_nodes": 37431
+    },
+    {
+      "adapter": "OrganicAcidYoshida2012Adapter",
+      "node_sec": 97.0,
+      "edge_sec": 107.0,
+      "total_sec": 204.0,
+      "n_nodes": 143
+    },
+    {
+      "adapter": "IsobutanolScreenLopez2024Adapter",
+      "node_sec": 101.0,
+      "edge_sec": 114.0,
+      "total_sec": 215.0,
+      "n_nodes": 36447
+    },
+    {
+      "adapter": "IsobutanolValidatedLopez2024Adapter",
+      "node_sec": 96.0,
+      "edge_sec": 109.0,
+      "total_sec": 205.0,
+      "n_nodes": 1799
+    },
+    {
+      "adapter": "FattyAcidXue2025Adapter",
+      "node_sec": 96.0,
+      "edge_sec": 107.0,
+      "total_sec": 203.0,
+      "n_nodes": 2227
+    }
+  ]
+}

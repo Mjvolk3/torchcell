@@ -24,3 +24,4 @@ subset:
   size: 1000 # max records per dataset; null => full dataset (real KG build)
   seed: 42
   per_dataset: {} # per-dataset caps (class-name -> int); none for the subset test
+  prefilter: {} # record prefilters (class-name -> RecordFilter); none for the test

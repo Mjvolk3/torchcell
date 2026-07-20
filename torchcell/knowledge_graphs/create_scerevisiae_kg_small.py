@@ -26,7 +26,11 @@ import torchcell
 from biocypher import BioCypher  # type: ignore[attr-defined]  # untyped re-export
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
-from torchcell.knowledge_graphs.subset import subset_dataset
+from torchcell.knowledge_graphs.subset import (
+    RecordFilter,
+    select_indices,
+    subset_dataset,
+)
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 log = logging.getLogger(__name__)
@@ -175,6 +179,17 @@ def main(cfg: DictConfig) -> None:
     subset_per_dataset = {
         name: (None if v is None else int(v)) for name, v in _per_map.items()
     }
+    # Prefilter: restrict WHICH records are eligible before `size` samples from them.
+    # A random cap cannot serve a join -- 100k of 20.7M (0.48%) hits ~none of a specific
+    # 72-pair list -- so a filter names the eligible records and the sample draws from
+    # that pool. Keyed by dataset class name; each value is a RecordFilter.
+    _pre = cfg.subset.get("prefilter", {})
+    _pre_map = (
+        cast("dict[str, Any]", OmegaConf.to_container(_pre, resolve=True))
+        if _pre
+        else {}
+    )
+    subset_prefilter = {name: RecordFilter(**spec) for name, spec in _pre_map.items()}
 
     # Build EVERY dataset in the registry (subset), each paired with its adapter.
     # A dataset's root is its loader's default; genome/graph are injected when the
@@ -199,8 +214,14 @@ def main(cfg: DictConfig) -> None:
         log.info("Instantiating dataset: %s", dataset_class.__name__)
         start_time = time.time()
         ds_size = subset_per_dataset.get(dataset_class.__name__, subset_size)
+        record_filter = subset_prefilter.get(dataset_class.__name__)
+        prefilter_indices = (
+            select_indices(osp.join(root, "processed", "lmdb"), record_filter)
+            if record_filter is not None
+            else None
+        )
         dataset = subset_dataset(
-            dataset_class(root=root, **kwargs), ds_size, subset_seed
+            dataset_class(root=root, **kwargs), ds_size, subset_seed, prefilter_indices
         )
         wandb.log({f"{dataset_class.__name__}_time(s)": time.time() - start_time})
         wandb.log({f"{dataset_class.__name__}_len": len(dataset)})

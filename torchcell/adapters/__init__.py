@@ -35,6 +35,7 @@ from .lopez2024_adapter import (
 from .mulleder2016_adapter import (
     AminoAcidMulleder2016Adapter as AminoAcidMulleder2016Adapter,
 )
+from .oduibhir2014_adapter import SmfODuibhir2014Adapter as SmfODuibhir2014Adapter
 from .ohnuki2018_adapter import ScmdOhnuki2018Adapter as ScmdOhnuki2018Adapter
 from .ohnuki2022_adapter import ScmdOhnuki2022Adapter as ScmdOhnuki2022Adapter
 from .ohya2005_adapter import ScmdOhya2005Adapter as ScmdOhya2005Adapter
@@ -98,6 +99,8 @@ synth_leth_db_adapters = [
 
 ohya2005_adapters = ["ScmdOhya2005Adapter"]
 
+oduibhir2014_adapters = ["SmfODuibhir2014Adapter"]
+
 expression_adapters = [
     "MicroarrayKemmeren2014Adapter",
     "SmMicroarraySameith2015Adapter",
@@ -132,6 +135,7 @@ __all__ = (
     + gene_essentiality_adapters
     + synth_leth_db_adapters
     + ohya2005_adapters
+    + oduibhir2014_adapters
     + expression_adapters
     + morphology_adapters
     + metabolite_adapters

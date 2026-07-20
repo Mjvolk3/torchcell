@@ -51,6 +51,16 @@ class CpuExperimentLoaderMultiprocessing:
         batch_size: int,
     ) -> None:
         """Pull batch indices, slice the dataset, and push batches until stopped."""
+        # An LMDB environment must never be shared across fork(): the child
+        # inherits the parent's memory map + reader-table slot, so once the file
+        # has grown past that mapping a read in the child raises MDB_MAP_RESIZED
+        # ("Database contents grew beyond environment mapsize"). Drop any handle
+        # inherited from the parent so this worker lazily opens its OWN env
+        # (via `_init_db`) on first access. Left-shared handles bite hardest on
+        # large-record datasets (e.g. Kemmeren, ~640 KB/record) where the file
+        # grows far past the parent's inherited mapping.
+        if getattr(dataset, "env", None) is not None:
+            dataset.env = None  # type: ignore[attr-defined]
         while True:
             batch_index = load_queue.get()  # Get unique batch index
             if batch_index is None:  # If None signal received, terminate the worker

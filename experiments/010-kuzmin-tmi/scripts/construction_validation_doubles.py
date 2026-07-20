@@ -49,8 +49,9 @@ TEN = {"YBR203W", "YDR057W", "YER079W", "YGL087C", "YJR060W",
 
 # Costanzo significant-interaction thresholds (their SI: |eps|>=0.08, P<0.05).
 EPS_THRESH, P_THRESH = 0.08, 0.05
-COLOR_COV = PLOT_PALETTE[5]   # gray  — coverage doubles (triple reconstruction)
-COLOR_VAL = PLOT_PALETTE[1]   # red   — validation doubles (dynamic range / signal)
+COLOR_COV = PLOT_PALETTE[4]   # blue #6C8EBF — coverage doubles (triple reconstruction)
+COLOR_VAL = PLOT_PALETTE[1]   # red  #B85450 — validation doubles (dynamic range / signal)
+COLOR_OTHER = "0.82"          # light neutral — de-emphasized (unselected) background
 
 plt.rcParams.update({"font.family": "Arial", "font.size": 6,
                      "svg.fonttype": "none", "axes.linewidth": 0.5})
@@ -144,7 +145,7 @@ def plot(sel: pd.DataFrame) -> None:
     plt.close(fig)
 
 
-TIER_COLOR = {"coverage": PLOT_PALETTE[4], "validation": PLOT_PALETTE[1], "other": "0.75"}
+TIER_COLOR = {"coverage": COLOR_COV, "validation": COLOR_VAL, "other": COLOR_OTHER}
 
 
 def plot_forest(df: pd.DataFrame) -> None:
@@ -166,10 +167,11 @@ def plot_forest(df: pd.DataFrame) -> None:
     ax.set_xlabel("Double-mutant fitness (Costanzo2016)")
     ax.set_title(f"All {len(d)} measured within-10 doubles by DMF\n"
                  "color = tier; ring = significant ε")
-    handles = [plt.Line2D([], [], marker="o", lw=0, color=TIER_COLOR[t],
+    handles = [plt.Line2D([], [], marker="o", lw=0, markersize=4, color=TIER_COLOR[t],
                           label=f"{t} (n={int((d.tier == t).sum())})")
                for t in ("coverage", "validation", "other")]
-    ax.legend(handles=handles, frameon=True, fontsize=5.5, loc="lower right")
+    ax.legend(handles=handles, frameon=True, fontsize=5.5, loc="lower right",
+              labelspacing=1.0, handletextpad=0.5, borderpad=0.6)
     for sp in ("top", "right", "left", "bottom"):
         ax.spines[sp].set_visible(True)
         ax.spines[sp].set_linewidth(0.5)

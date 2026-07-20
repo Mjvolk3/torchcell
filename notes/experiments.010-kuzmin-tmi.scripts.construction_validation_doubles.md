@@ -85,5 +85,19 @@ below the magnitude bar) is highly significant (p=1.4e-5) because its DMF SD is 
 assay validation the 3 *significant* doubles are the strong anchors; high-SD/high-|ε| doubles
 validate fitness dynamic range, not interaction detection.
 
+**Sampling depth beats SD — the assay's key lever.** The resolving quantity is SE, not SD:
+`SE = SD/√n`. SD is a fixed biological property of a strain (colony-to-colony spread), but
+**n is ours to choose** — so a "high-SD, insignificant" double is not disqualified, it just
+needs more colonies. Because our goal is **sampling specific predictions precisely (depth),
+not screening many strains (breadth)**, the right trade is few doubles × many colonies each:
+plate a high-SD double like YGL087C+YJR060W (SD 0.172) at large n and its SE shrinks by √n
+until the interaction resolves. This is the opposite of a genome-wide screen (breadth, low n
+per pair) and is what echo dispensing enables — dense, uniform replication of a handful of
+constructs. So the validation tier is chosen for interesting *point estimates* (DMF extremes,
+high |ε|); driving each to significance is a sampling decision at the bench, not a property of
+the reference. Caveat: deep sampling lowers *our* SE, but the Costanzo reference stays n=4 —
+so once our error bar is tighter than theirs, a disagreement may reflect the reference's own
+noise as much as the assay's, making our measurement the more trustworthy of the two.
+
 Related: [[experiments.010-kuzmin-tmi.scripts.topk_triples_from_constructed_10]],
 [[experiments.010-kuzmin-tmi.scripts.optimized_doubles_setcover_constructed_10]].

@@ -101,13 +101,21 @@ expressed genes**. `r = 0.04` means: an isolate whose genome is twice as diverge
 **not** differentially express more genes. Renamed here to **"genome-wide divergence from
 S288C (scalar)"** to kill the ambiguity.
 
-**Modeling consequence:** the map from genome-divergence-size → response-size is weak, so
-predicting *how much* an isolate's transcriptome moves will be hard. The winnable signal
-is *which* genes move and in *what direction* (through the graph), not the magnitude. Score
-accordingly — per-gene direction/rank agreement, not just magnitude MSE — or the isolates
-will look harder to predict than the mechanism claim deserves. ("isolates look harder" =
-a magnitude-only metric will report low performance and be mistaken for the model failing,
-when it is the metric probing the one thing that genuinely is not there.)
+**Modeling consequence (careful — this is about the genotype *representation*, not the
+target).** `r = 0.04` says a **scalar** "how diverged" summary carries almost no information
+about the response, because what matters is **where** the edits fall (which genes, which
+regulatory windows), **not how many** there are. So the genotype must enter the model
+**position-specifically** — the sequence encoder reading the actual variant positions and the
+regulatory window (§4-5) — rather than as a divergence magnitude. This does **not** license
+dropping per-gene magnitude from the target: `|log2 FC|` remains a legitimate regression
+target, and collapsing it to direction/rank would just be trading a hard regression for an
+easier classification, which the decoupling does not justify. The one quantity `r = 0.04`
+genuinely marks as near-unpredictable is the *isolate-level count of genes moved* from a
+*genotype-size scalar* — so if a magnitude-only summary over isolates reports low performance,
+that is the metric probing the one thing that is not there, not necessarily the model failing.
+(A separate, legitimate reason one might down-weight per-gene magnitude is **noise** —
+Caudal's single-culture per-gene magnitude sits near noise-parity, variance split 0.39 noise /
+0.55 bio — but that is a noise argument, not the `r = 0.04` decoupling.)
 
 ### 3. "matched target values" — a shared encoder with two decoder heads
 
@@ -172,8 +180,12 @@ Gene features from `esm2` / `protT5` / `nucleotide_transformer` / `fungal_up_dow
 
 ## Open decisions for the author
 
-- Primary metric: per-gene **direction/rank agreement** vs magnitude MSE (recommend the
-  former, given r = 0.04).
+- Primary metric: per-gene **magnitude** (MSE / per-gene correlation) is a valid target and
+  should be reported. Whether to *also* lead with **direction/rank agreement** is a call about
+  **noise robustness** (Caudal near noise-parity), **not** about the `r = 0.04` decoupling —
+  that decoupling concerns a genotype-*size* scalar, not per-gene magnitude, so it must not be
+  the reason to drop magnitude. Recommend: report both; use rank as a complement where noise
+  makes magnitude unstable.
 - Whether E4 (digenic) is in scope for Fig. 4 or held for a follow-up — it is the most
   biologically interesting (network perturbation) but is gated on the #72 rebuild.
 - Split granularity for E1/E2: held-out **strains** (predict a new perturbed strain) is

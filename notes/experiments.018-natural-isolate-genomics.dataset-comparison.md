@@ -253,10 +253,16 @@ basis, and even the weak mutational-load nudge one might expect is diluted by bu
 panel's job is to **measure how weak the coupling actually is: $r = 0.04$**, essentially zero
 — not even the faint positive trend a mutational-load view would predict. That does two useful
 things. **(1) It quantifies buffering:** natural sequence variation is so concentrated in
-dispensable / redundant genes that it barely reaches the transcriptome. **(2) It is a modeling
-caution:** a model that predicts *how much* of the transcriptome moves from *how large* the
-genotype edit is has no signal to learn — so score *which* genes move and in *what direction*
-(per-gene rank/direction agreement), not *how much* (magnitude MSE).*
+dispensable / redundant genes that it barely reaches the transcriptome. **(2) It cautions
+against a *scalar* genotype feature:** the *size* of an isolate's response is not predictable
+from the *size* of its divergence — because it is **not how big the edit is, but where it
+lands** (which genes, which regulatory windows). The lesson is a **position-specific** genotype
+representation — the sequence encoder reading the actual variant positions and the regulatory
+window (regulatory panel) — **not** a divergence scalar. It says **nothing** against predicting
+per-gene expression **magnitude** ($|\log_2\mathrm{FC}|$): that stays a valid target. The only
+thing r = 0.04 marks as near-unpredictable is the *isolate-level count of genes moved* from a
+*genotype-size scalar* — so don't read a low score on that one summary as the whole model
+failing.*
 
 **Computation.** $s$ indexes the $n=865$ isolates with **both** measurements; $\text{div}_s$ =
 genome-wide sequence divergence (panel **b**); $\mathrm{DE}_s$ = the isolate's genome-wide

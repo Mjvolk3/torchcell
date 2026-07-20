@@ -51,6 +51,13 @@ coverage-only 0.152), ε from **−0.130 to +0.098**, **3 significant interactio
 
 ![](assets/images/010-kuzmin-tmi/construction_validation_doubles.svg)
 
+All 44 measured within-10 doubles ranked by DMF, with the 13 selected marked by tier
+(coverage = blue `(C)`, validation = red `(V)`, unused = gray; significant ε ringed) — the
+tiered companion to `constructed_10_dmf_forest` (which predates the validation tier and marks
+only the 8 set-cover doubles):
+
+![](assets/images/010-kuzmin-tmi/construction_validation_doubles_forest.svg)
+
 Notes: DMF/SD/SE and ε/p are the published Costanzo values (SD = sample SD over 4 colonies,
 directly comparable to the assay's colony SD — see
 [[experiments.010-kuzmin-tmi.scripts.constructed_10_dmf_reference]]). The low-DMF end is

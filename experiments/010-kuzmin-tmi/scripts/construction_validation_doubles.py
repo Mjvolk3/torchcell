@@ -88,7 +88,8 @@ def load_doubles() -> pd.DataFrame:
     return df
 
 
-def select(df: pd.DataFrame, triples: list[frozenset]) -> pd.DataFrame:
+def annotate_tiers(df: pd.DataFrame, triples: list[frozenset]) -> pd.DataFrame:
+    """Tag EVERY measured within-10 double as coverage / validation / other."""
     coverage = setcover(triples)
     # validation = significant interactions + DMF extremes not already covered
     sig = set(df.loc[df.significant, "pair"])
@@ -96,19 +97,19 @@ def select(df: pd.DataFrame, triples: list[frozenset]) -> pd.DataFrame:
     hi = {df.loc[df.DmfCostanzo2016_fitness.idxmax(), "pair"]}
     validation = (sig | lo | hi) - coverage
 
-    tier = {}
-    for p in coverage:
-        tier[p] = "coverage"
-    for p in validation:
-        tier[p] = "validation"
-    sel = df[df.pair.isin(tier)].copy()
-    sel["tier"] = sel.pair.map(tier)
+    def tier_of(p: tuple) -> str:
+        if p in coverage:
+            return "coverage"
+        if p in validation:
+            return "validation"
+        return "other"
 
-    # how many within-10 top-k triples each double enables
-    sel["n_triples_enabled"] = sel.pair.apply(
+    df = df.copy()
+    df["tier"] = df.pair.apply(tier_of)
+    df["n_triples_enabled"] = df.pair.apply(
         lambda pr: sum(set(pr).issubset(t) for t in triples)
     )
-    return sel.sort_values(["tier", "DmfCostanzo2016_fitness"]).reset_index(drop=True)
+    return df
 
 
 def plot(sel: pd.DataFrame) -> None:
@@ -143,11 +144,49 @@ def plot(sel: pd.DataFrame) -> None:
     plt.close(fig)
 
 
+TIER_COLOR = {"coverage": PLOT_PALETTE[4], "validation": PLOT_PALETTE[1], "other": "0.75"}
+
+
+def plot_forest(df: pd.DataFrame) -> None:
+    """All 45 within-10 doubles ranked by DMF, colored by tier."""
+    d = df.sort_values("DmfCostanzo2016_fitness").reset_index(drop=True)
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half_plus"]), mm_to_in(150)))
+    for i, r in d.iterrows():
+        c = TIER_COLOR[r.tier]
+        big = r.tier != "other"
+        ax.errorbar(r.DmfCostanzo2016_fitness, i, xerr=r.DmfCostanzo2016_std, fmt="o",
+                    ms=3.4 if big else 2.2, lw=0, elinewidth=0.6, capsize=1.3,
+                    color=c, zorder=4 if big else 2)
+        if r.significant:  # ring significant interactions
+            ax.scatter(r.DmfCostanzo2016_fitness, i, s=42, facecolors="none",
+                       edgecolors="black", linewidths=0.6, zorder=5)
+    ax.axvline(1.0, color="0.4", ls=":", lw=0.8, zorder=1)
+    ax.set_yticks(range(len(d)))
+    ax.set_yticklabels(
+        [f"{r.gene1}+{r.gene2}" + {"coverage": " (C)", "validation": " (V)"}.get(r.tier, "")
+         for _, r in d.iterrows()], fontsize=4.5)
+    ax.set_xlabel("Double-mutant fitness (Costanzo2016)")
+    ax.set_title(f"All {len(d)} measured within-10 doubles by DMF\n"
+                 "C = coverage, V = validation, ring = significant ε")
+    handles = [plt.Line2D([], [], marker="o", lw=0, color=TIER_COLOR[t],
+                          label=f"{t} (n={int((d.tier == t).sum())})")
+               for t in ("coverage", "validation", "other")]
+    ax.legend(handles=handles, frameon=True, fontsize=5.5, loc="lower right")
+    for sp in ("top", "right", "left", "bottom"):
+        ax.spines[sp].set_visible(True)
+        ax.spines[sp].set_linewidth(0.5)
+    fig.tight_layout()
+    fig.savefig(osp.join(OUT_DIR, "construction_validation_doubles_forest.png"), dpi=200)
+    savefig_true_size_svg(fig, osp.join(OUT_DIR, "construction_validation_doubles_forest.svg"))
+    plt.close(fig)
+
+
 def main() -> None:
     os.makedirs(OUT_DIR, exist_ok=True)
     triples = within_ten_triples()
-    df = load_doubles()
-    sel = select(df, triples)
+    df = annotate_tiers(load_doubles(), triples)
+    sel = df[df.tier != "other"].sort_values(
+        ["tier", "DmfCostanzo2016_fitness"]).reset_index(drop=True)
 
     cols = ["gene1", "gene2", "tier", "n_triples_enabled",
             "DmfCostanzo2016_fitness", "DmfCostanzo2016_std", "se",
@@ -155,6 +194,7 @@ def main() -> None:
     out = osp.join(RESULTS_DIR, "construction_validation_doubles.csv")
     sel[cols].to_csv(out, index=False)
     plot(sel)
+    plot_forest(df)
 
     cov, val = sel[sel.tier == "coverage"], sel[sel.tier == "validation"]
     covered = sum(any(set(pr).issubset(t) for pr in sel.pair) for t in triples)

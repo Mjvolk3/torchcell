@@ -431,7 +431,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
 
     def __init__(
         self,
-        root: str = "data/torchcell/smf_costanzo2016",
+        root: str = "data/torchcell/dmf_costanzo2016",
         subset_n: int | None = None,
         batch_size: int = int(1e4),
         io_workers: int = 1,

@@ -43,4 +43,31 @@ still disagree by ~0.10 — the authentic-gene-vs-merged-feature split from the 
 investigation, now visible in the validation panel. The CSV also carries `*_strain_id`
 provenance columns (which Costanzo `_sn` / Kuzmin strain each value came from).
 
-Related: [[experiments.010-kuzmin-tmi.scripts.optimized_doubles_setcover]].
+### Uncertainty typing — the SMF "std" is NOT one statistic (sourced)
+
+Added `*_uncertainty_type`, `*_n_samples`, `*_sample_unit`, `*_se` columns per source, so
+the SMF uncertainty is unambiguous where it is used. Unlike the doubles (all sample_sd,
+n=4), the three singles sources carry **three different statistics** — labelling them is
+what makes any of them comparable to a wet-lab assay SD:
+
+| source | type | n | unit | SE derivation |
+|--------|------|---|------|---------------|
+| Costanzo2016 | `bootstrap_se` | 17 | screen | **used as-is (never /√n)** |
+| Kuzmin2018 | none stored (`fitness_std=None`) | — | — | — |
+| Kuzmin2020 | `sample_sd` | 4 | colony | SD/√4 |
+
+Costanzo's SMF is a **bootstrap SE of the estimator** (SI si1.md line 94: *"bootstrapped
+means … across replicates were used in variance estimation and final fitness values"*), so
+`fitness_se` = the reported number, NOT SD/√17 — dividing again would understate it ~4×.
+Kuzmin2018 stores no single-mutant uncertainty (its "12–24 colony" figure is the query-
+fitness column, a different quantity). SE is computed with the schema's own `derive_se` so
+it cannot drift from the ontology.
+
+Consequence for assay comparison: **the singles reference SD is not apples-to-apples with a
+colony-level assay SD** (bootstrap SE over screens vs sample SD over colonies) — this is why
+the earlier singles-SD comparison looked inflated. The doubles
+([[experiments.010-kuzmin-tmi.scripts.constructed_10_dmf_reference]]) ARE comparable
+(both colony sample SDs); prefer the doubles for assay validation.
+
+Related: [[experiments.010-kuzmin-tmi.scripts.optimized_doubles_setcover]],
+[[experiments.010-kuzmin-tmi.scripts.constructed_10_dmf_reference]].

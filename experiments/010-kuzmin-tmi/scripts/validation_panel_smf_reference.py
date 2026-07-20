@@ -24,11 +24,17 @@ Output:
 import os
 import os.path as osp
 
+import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
 from tqdm import tqdm
 
+from torchcell.datamodels.schema import UncertaintyType, derive_se
 from torchcell.datasets.scerevisiae import SmfCostanzo2016Dataset, SmfKuzmin2018Dataset
+from torchcell.datasets.scerevisiae.costanzo2016 import N_SAMPLES_QUERY_SMF_SCREENS
+from torchcell.datasets.scerevisiae.kuzmin2020 import (
+    N_SAMPLES_COMBINED_MUTANT as N_KUZMIN2020,
+)
 from torchcell.datasets.scerevisiae.kuzmin2020 import SmfKuzmin2020Dataset
 
 load_dotenv()
@@ -59,6 +65,21 @@ SMF_CONFIGS = [
     ("SmfKuzmin2018", SmfKuzmin2018Dataset, "smf_kuzmin2018"),
     ("SmfKuzmin2020", SmfKuzmin2020Dataset, "smf_kuzmin2020"),
 ]
+
+# What each source's SMF uncertainty IS, from the loaders' sourced constants.
+# These are NOT all the same statistic -- naming the type is what makes the number
+# comparable to a wet-lab assay SD:
+#   Costanzo2016 -> BOOTSTRAP SE over control screens (already an SE; never /sqrt(n)).
+#     Costanzo SI si1.md line 94: "...bootstrapped means, instead of medians, across
+#     replicates were used in variance estimation and final fitness values."
+#   Kuzmin2018   -> loader stores NO single-mutant uncertainty (fitness_std=None);
+#     the "12-24 colony" figure in their SI is the query-fitness column, not this one.
+#   Kuzmin2020   -> sample SD over colony replicates -> SE = SD/sqrt(n).
+SMF_DESIGN: dict[str, tuple[UncertaintyType, int, str] | None] = {
+    "SmfCostanzo2016": (UncertaintyType.bootstrap_se, N_SAMPLES_QUERY_SMF_SCREENS, "screen"),
+    "SmfKuzmin2018": None,
+    "SmfKuzmin2020": (UncertaintyType.sample_sd, N_KUZMIN2020, "colony"),
+}
 
 
 def build_single_index(dataset, name: str) -> dict:
@@ -91,7 +112,37 @@ def query_panel() -> pd.DataFrame:
             rows[g][f"{name}_strain_id"] = data["strain_id"] if data else None
         hits = sum(rows[g][f"{name}_fitness"] is not None for g in genes)
         print(f"  Matches found: {hits}/{len(genes)}")
-    return pd.DataFrame([rows[orf] for _, orf in PANEL])
+    df = pd.DataFrame([rows[orf] for _, orf in PANEL])
+    return annotate_uncertainty(df)
+
+
+def annotate_uncertainty(df: pd.DataFrame) -> pd.DataFrame:
+    """Say what each reported uncertainty IS, and derive the SE accordingly.
+
+    Uses the schema's own ``derive_se`` so the conversion cannot drift from the
+    uncertainty ontology: bootstrap_se is used as-is, sample_sd is divided by
+    sqrt(n). A source that stores no uncertainty (Kuzmin2018) gets empty columns
+    rather than a fabricated type.
+    """
+    for src, design in SMF_DESIGN.items():
+        std_col = f"{src}_std"
+        if std_col not in df.columns:
+            continue
+        if design is None:
+            df[f"{src}_uncertainty_type"] = None
+            df[f"{src}_n_samples"] = np.nan
+            df[f"{src}_sample_unit"] = None
+            df[f"{src}_se"] = np.nan
+            continue
+        unc_type, n, unit = design
+        has = df[std_col].notna()
+        df[f"{src}_uncertainty_type"] = np.where(has, str(unc_type), None)
+        df[f"{src}_n_samples"] = np.where(has, n, np.nan)
+        df[f"{src}_sample_unit"] = np.where(has, unit, None)
+        df[f"{src}_se"] = [
+            derive_se(v, unc_type, n) if pd.notna(v) else np.nan for v in df[std_col]
+        ]
+    return df
 
 
 def markdown_table(df: pd.DataFrame) -> str:

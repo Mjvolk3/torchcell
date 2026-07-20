@@ -26,6 +26,7 @@ from torchcell.adapters import (
     SmfCostanzo2016Adapter,
     SmfKuzmin2018Adapter,
     SmfKuzmin2020Adapter,
+    SmfODuibhir2014Adapter,
     SmMicroarraySameith2015Adapter,
     SynthLethalityYeastSynthLethDbAdapter,
     SynthRescueYeastSynthLethDbAdapter,
@@ -65,6 +66,7 @@ from torchcell.datasets.scerevisiae.lopez2024 import (
     IsobutanolValidatedLopez2024Dataset,
 )
 from torchcell.datasets.scerevisiae.mulleder2016 import AminoAcidMulleder2016Dataset
+from torchcell.datasets.scerevisiae.oduibhir2014 import SmfODuibhir2014Dataset
 from torchcell.datasets.scerevisiae.ohnuki2018 import ScmdOhnuki2018Dataset
 from torchcell.datasets.scerevisiae.ohnuki2022 import ScmdOhnuki2022Dataset
 from torchcell.datasets.scerevisiae.ohya2005 import ScmdOhya2005Dataset
@@ -90,6 +92,7 @@ dataset_adapter_map = {
     DmfCostanzo2016Dataset: DmfCostanzo2016Adapter,
     DmiCostanzo2016Dataset: DmiCostanzo2016Adapter,
     SmfKuzmin2018Dataset: SmfKuzmin2018Adapter,
+    SmfODuibhir2014Dataset: SmfODuibhir2014Adapter,
     DmfKuzmin2018Dataset: DmfKuzmin2018Adapter,
     TmfKuzmin2018Dataset: TmfKuzmin2018Adapter,
     DmiKuzmin2018Dataset: DmiKuzmin2018Adapter,

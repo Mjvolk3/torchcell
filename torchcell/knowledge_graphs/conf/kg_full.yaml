@@ -29,3 +29,6 @@ subset:
   per_dataset:
     DmfCostanzo2016Dataset: 100000
     DmiCostanzo2016Dataset: 100000
+  # Prefilter: restrict which records are eligible BEFORE `size`/`per_dataset` samples
+  # from them (RecordFilter per dataset class). See kg_no_costanzo_doubles.yaml.
+  prefilter: {}

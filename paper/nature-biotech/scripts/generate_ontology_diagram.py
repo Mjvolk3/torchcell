@@ -1,0 +1,545 @@
+#!/usr/bin/env python
+# paper/nature-biotech/scripts/generate_ontology_diagram.py
+# [[paper.nature-biotech.scripts.generate_ontology_diagram]]
+# https://github.com/Mjvolk3/torchcell/tree/main/paper/nature-biotech/scripts/generate_ontology_diagram
+"""Regenerate the torchcell schema/ontology map from the live pydantic models.
+
+Writes two artifacts into ``$ASSET_IMAGES_DIR/schema-ontology/``:
+
+``torchcell-ontology.svg``
+    One vector map of every schema class, laid out as the hourglass the data model
+    actually is. Sized to Nature's full 179 mm width, so it drops into the
+    manuscript as a figure and stays losslessly zoomable in the PDF.
+
+``torchcell-ontology-explorer.html``
+    A self-contained pan/zoom/search explorer wrapping the same SVG. This is the
+    link the paper points at for readers who want to walk the ontology.
+
+Run from the repo root::
+
+    python paper/nature-biotech/scripts/generate_ontology_diagram.py
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import os.path as osp
+
+from dotenv import load_dotenv
+
+from torchcell.paper.ontology_graph import (
+    LANE_ORDER,
+    LANE_PALETTE_INDEX,
+    LANE_TITLES,
+    OntologyGraph,
+    build_ontology_graph,
+)
+from torchcell.paper.ontology_svg import build_layout, render_schematic_svg, render_svg
+from torchcell.utils import MAX_HEIGHT_MM, PANEL_WIDTHS_MM, PLOT_PALETTE
+
+TITLE = "The torchcell experiment ontology"
+SUBTITLE = (
+    "Every record is a typed genotype × environment → phenotype experiment, "
+    "carried by pydantic models with provenance attached."
+)
+# Printed on the figure so a reader of the PDF can reach the interactive map.
+# Update once the explorer is published at its final home.
+EXPLORE_URL = "https://torchcell.org/ontology"
+
+
+def _rendered_height_mm(svg: str) -> float:
+    """Pull the height back out of the rendered SVG header, in mm."""
+    marker = ' height="'
+    start = svg.index(marker) + len(marker)
+    return float(svg[start : svg.index("mm", start)])
+
+
+def _class_index(graph: OntologyGraph) -> list[dict[str, object]]:
+    """Compact per-class payload the explorer's detail panel and search read."""
+    index: list[dict[str, object]] = []
+    for name in sorted(graph.classes):
+        cls = graph.classes[name]
+        index.append(
+            {
+                "name": name,
+                "kind": cls.kind,
+                "lane": cls.lane,
+                "doc": cls.doc,
+                "parent": cls.parent,
+                "children": graph.children_of(name),
+                "abstract": cls.is_abstract,
+                "inherited": cls.inherited_field_count,
+                "members": cls.enum_members,
+                "fields": [
+                    {
+                        "name": f.name,
+                        "type": f.type_label,
+                        "required": f.required,
+                        "desc": f.description,
+                        "refs": f.references,
+                    }
+                    for f in cls.own_fields
+                ],
+            }
+        )
+    return index
+
+
+def _explorer_html(
+    svg: str, graph: OntologyGraph, standalone: bool = True
+) -> str:
+    """Wrap the SVG in a self-contained pan/zoom/search shell.
+
+    Level of detail is the whole trick: below a zoom threshold the field rows are
+    hidden so the reader sees domain blocks and the hourglass, and above it the
+    fields fade in. That is what lets one artifact serve both "the zoomed-out
+    figure" and "the thing you explore".
+
+    ``standalone=True`` emits a complete HTML document (for the repo file and for
+    serving at torchcell.org). ``standalone=False`` emits only the page body, which
+    is what the claude.ai Artifact host expects -- it supplies its own
+    ``<!doctype>``/``<head>``/``<body>`` skeleton.
+    """
+    payload = json.dumps(_class_index(graph), separators=(",", ":"))
+    lanes = json.dumps(
+        {
+            k: {
+                "title": LANE_TITLES[k],
+                "color": PLOT_PALETTE[LANE_PALETTE_INDEX[k]],
+            }
+            for k in LANE_ORDER
+        },
+        separators=(",", ":"),
+    )
+    # The SVG is embedded inline (not as <img>) so scripts can address its nodes;
+    # its own width/height in mm are stripped so it fills the viewport instead.
+    inline = svg.replace(
+        'xmlns="http://www.w3.org/2000/svg"',
+        'xmlns="http://www.w3.org/2000/svg" id="map"',
+        1,
+    )
+    head_end = inline.index(">")
+    head = inline[:head_end]
+    for attr in ("width", "height"):
+        start = head.find(f' {attr}="')
+        if start != -1:
+            end = head.index('"', start + len(attr) + 3) + 1
+            head = head[:start] + head[end:]
+    inline = head + inline[head_end:]
+
+    mono = 'ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace'
+    sans = (
+        '-apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", '
+        "Arial, sans-serif"
+    )
+    accent = PLOT_PALETTE[0]  # amber -- the single chrome accent, from the repo palette
+    style = f"""<style>
+  :root {{
+    /* Warm-paper neutrals: the accents are all warm primaries, so the ground is
+       biased warm to match rather than fight them. */
+    --bg:#F4F1EA; --stage:#EFEBE2; --fg:#221F1A; --muted:#6E675B;
+    --line:#E2DBCE; --panel:#FBF9F4; --grid:rgba(120,108,86,.09);
+    --accent:{accent};
+  }}
+  @media (prefers-color-scheme: dark) {{
+    :root {{ --bg:#16130D; --stage:#100E09; --fg:#ECE6DA; --muted:#9B9384;
+             --line:#2F2A20; --panel:#1C1811; --grid:rgba(214,155,0,.07); }}
+  }}
+  :root[data-theme="dark"] {{
+    --bg:#16130D; --stage:#100E09; --fg:#ECE6DA; --muted:#9B9384;
+    --line:#2F2A20; --panel:#1C1811; --grid:rgba(214,155,0,.07);
+  }}
+  :root[data-theme="light"] {{
+    --bg:#F4F1EA; --stage:#EFEBE2; --fg:#221F1A; --muted:#6E675B;
+    --line:#E2DBCE; --panel:#FBF9F4; --grid:rgba(120,108,86,.09);
+  }}
+  * {{ box-sizing:border-box; }}
+  html, body {{ height:100%; margin:0; }}
+  body {{
+    font:13px/1.5 {sans}; background:var(--bg); color:var(--fg); overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }}
+  #bar {{
+    position:fixed; inset:0 0 auto 0; height:54px; z-index:6;
+    display:flex; align-items:center; gap:14px; padding:0 16px;
+    background:var(--panel); border-bottom:1px solid var(--line);
+  }}
+  .brand {{ display:flex; align-items:baseline; gap:8px; }}
+  .brand b {{ font-size:14px; font-weight:700; letter-spacing:.02em; }}
+  .brand em {{
+    font-family:{mono}; font-style:normal; font-size:11px; color:var(--muted);
+    letter-spacing:.04em;
+  }}
+  .hourglass {{ width:16px; height:16px; flex:0 0 auto; }}
+  #q {{
+    flex:0 1 300px; padding:7px 11px; border:1px solid var(--line);
+    border-radius:7px; background:var(--bg); color:var(--fg);
+    font:12px/1 {mono}; letter-spacing:.02em;
+  }}
+  #q:focus {{ outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent); }}
+  .tools {{ display:flex; gap:6px; margin-left:auto; }}
+  button {{
+    padding:7px 11px; border:1px solid var(--line); border-radius:7px;
+    background:var(--bg); color:var(--fg); font:12px/1 {sans}; cursor:pointer;
+  }}
+  button:hover {{ border-color:var(--muted); }}
+  button:focus-visible {{ outline:2px solid var(--accent); outline-offset:1px; }}
+  #count {{ font-family:{mono}; font-size:11px; color:var(--muted); align-self:center; }}
+
+  /* Lane rail: legend and filter in one. Each chip = one domain of the schema. */
+  #rail {{
+    position:fixed; top:54px; left:0; right:0; z-index:5;
+    display:flex; flex-wrap:wrap; gap:7px; padding:9px 16px;
+    background:var(--panel); border-bottom:1px solid var(--line);
+  }}
+  .lchip {{
+    display:inline-flex; align-items:center; gap:7px; padding:4px 10px 4px 8px;
+    border:1px solid var(--line); border-radius:20px; background:var(--bg);
+    font:11px/1 {sans}; cursor:pointer; user-select:none;
+    transition:opacity .12s, border-color .12s;
+  }}
+  .lchip .dot {{ width:9px; height:9px; border-radius:50%; flex:0 0 auto; }}
+  .lchip .n {{ font-family:{mono}; color:var(--muted); font-size:10px; }}
+  .lchip[aria-pressed="false"] {{ opacity:.4; }}
+  .lchip:hover {{ border-color:var(--muted); }}
+
+  #stage {{
+    position:fixed; inset:96px 0 0 0; overflow:hidden; cursor:grab;
+    background:var(--stage);
+    background-image:linear-gradient(var(--grid) 1px, transparent 1px),
+                     linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:26px 26px;
+  }}
+  #stage.drag {{ cursor:grabbing; }}
+  /* Concrete px size comes from the viewBox at runtime; see the script below. */
+  #map {{ position:absolute; top:0; left:0; transform-origin:0 0; }}
+  #map .lod-detail {{ transition:opacity .12s linear; }}
+  #stage.coarse #map .lod-detail {{ opacity:0; }}
+  #stage.coarse #map .compose:not(.backbone) {{ opacity:0; }}
+  .node {{ cursor:pointer; }}
+  .node.dim {{ opacity:.1; }}
+  .node.hit .card {{ stroke-width:3.4; }}
+
+  #panel {{
+    position:fixed; top:54px; right:0; bottom:0; width:360px; z-index:7;
+    background:var(--panel); border-left:1px solid var(--line);
+    overflow:auto; padding:18px 20px 40px; transform:translateX(100%);
+    transition:transform .18s ease; box-shadow:-14px 0 34px rgba(20,16,8,.08);
+  }}
+  #panel.open {{ transform:none; }}
+  #panel .kicker {{
+    font-family:{mono}; font-size:10.5px; text-transform:uppercase;
+    letter-spacing:.11em; font-weight:600;
+  }}
+  #panel h2 {{ font:600 20px/1.2 {mono}; margin:5px 0 0; word-break:break-word; }}
+  #panel .doc {{ color:var(--muted); margin:11px 0 4px; font-size:12.5px; }}
+  #panel h3 {{
+    font:600 10.5px/1 {sans}; text-transform:uppercase; letter-spacing:.09em;
+    color:var(--muted); margin:20px 0 8px;
+  }}
+  #panel table {{ width:100%; border-collapse:collapse; }}
+  #panel td {{
+    padding:5px 0; vertical-align:top; border-bottom:1px solid var(--line);
+    font-size:12px;
+  }}
+  #panel td.n {{ font-family:{mono}; font-size:11.5px; }}
+  #panel td.t {{
+    color:var(--muted); text-align:right; padding-left:10px; white-space:nowrap;
+    font-family:{mono}; font-size:10.5px;
+  }}
+  #panel .req {{ color:var(--accent); font-weight:700; }}
+  #panel .desc {{ display:block; color:var(--muted); font-size:11px; margin-top:2px; }}
+  .chip {{
+    display:inline-flex; align-items:center; gap:6px; padding:3px 9px;
+    margin:0 5px 5px 0; border-radius:14px; border:1px solid var(--line);
+    background:var(--bg); font:11px/1.2 {mono}; cursor:pointer;
+  }}
+  .chip .dot {{ width:7px; height:7px; border-radius:50%; }}
+  .chip:hover {{ border-color:var(--muted); }}
+  #close {{
+    position:absolute; top:14px; right:16px; padding:4px 9px; font-family:{mono};
+  }}
+  #hint {{
+    position:fixed; left:16px; bottom:14px; z-index:4; font-size:11px;
+    color:var(--muted); background:var(--panel); border:1px solid var(--line);
+    border-radius:7px; padding:7px 11px; font-family:{mono};
+  }}
+  @media (max-width:760px) {{
+    #panel {{ width:100%; }} .brand em {{ display:none; }}
+  }}
+</style>"""
+    hourglass = (
+        f'<svg class="hourglass" viewBox="0 0 16 16" aria-hidden="true">'
+        f'<path d="M3 2 H13 L8 8 Z" fill="{PLOT_PALETTE[0]}"/>'
+        f'<path d="M3 14 H13 L8 8 Z" fill="{PLOT_PALETTE[2]}"/>'
+        f'<path d="M3 2 H13 M3 14 H13" stroke="{PLOT_PALETTE[5]}" '
+        f'stroke-width="1.4" stroke-linecap="round"/></svg>'
+    )
+    body_markup = f"""
+<div id="bar">
+  <span class="brand">{hourglass}<b>torchcell ontology</b>
+    <em>genotype × environment → phenotype</em></span>
+  <input id="q" type="search" placeholder="search classes, fields, values…"
+         aria-label="search" />
+  <span id="count"></span>
+  <span class="tools">
+    <button id="fit">Fit</button>
+    <button id="zin" aria-label="zoom in">+</button>
+    <button id="zout" aria-label="zoom out">&minus;</button>
+  </span>
+</div>
+<div id="rail" aria-label="filter by domain"></div>
+<div id="stage">{inline}</div>
+<aside id="panel" aria-live="polite">
+  <button id="close">close</button><div id="body"></div>
+</aside>
+<div id="hint">drag to pan &middot; scroll to zoom &middot; click a class</div>
+
+<script>"""
+
+    js = f"""
+const CLASSES = {payload};
+const LANES = {lanes};
+const byName = new Map(CLASSES.map(c => [c.name, c]));
+const map = document.getElementById('map');
+const stage = document.getElementById('stage');
+const vb = map.getAttribute('viewBox').split(/\\s+/).map(Number);
+const W = vb[2], H = vb[3];
+map.style.width = W + 'px';
+map.style.height = H + 'px';
+const esc = s => String(s).replace(/[&<>]/g, c => ({{'&':'&amp;','<':'&lt;','>':'&gt;'}})[c]);
+const laneColor = k => (LANES[k] || {{}}).color || '#888';
+
+// --- pan / zoom -------------------------------------------------------------
+let z = 1, tx = 0, ty = 0;
+function apply() {{
+  map.style.transform = `translate(${{tx}}px,${{ty}}px) scale(${{z}})`;
+  stage.classList.toggle('coarse', z < 0.34);
+}}
+function fit() {{
+  const r = stage.getBoundingClientRect();
+  z = Math.min(r.width / W, r.height / H) * 0.96;
+  tx = (r.width - W * z) / 2; ty = (r.height - H * z) / 2;
+  apply();
+}}
+function zoomTo(name, scale) {{
+  const el = document.getElementById('node-' + name);
+  if (!el) return;
+  const b = el.getBBox(), r = stage.getBoundingClientRect();
+  z = scale || 1.5;
+  tx = r.width / 2 - (b.x + b.width / 2) * z;
+  ty = r.height / 2 - (b.y + b.height / 2) * z;
+  apply();
+}}
+stage.addEventListener('wheel', e => {{
+  e.preventDefault();
+  const r = stage.getBoundingClientRect();
+  const mx = e.clientX - r.left, my = e.clientY - r.top;
+  const f = Math.exp(-e.deltaY * 0.0016);
+  const nz = Math.min(9, Math.max(0.04, z * f));
+  tx = mx - (mx - tx) * (nz / z); ty = my - (my - ty) * (nz / z);
+  z = nz; apply();
+}}, {{ passive: false }});
+let drag = null;
+stage.addEventListener('pointerdown', e => {{
+  drag = {{ x: e.clientX, y: e.clientY, tx, ty, moved: false }};
+  stage.setPointerCapture(e.pointerId); stage.classList.add('drag');
+}});
+stage.addEventListener('pointermove', e => {{
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+  tx = drag.tx + dx; ty = drag.ty + dy; apply();
+}});
+stage.addEventListener('pointerup', () => {{ drag = null; stage.classList.remove('drag'); }});
+document.getElementById('fit').onclick = fit;
+document.getElementById('zin').onclick = () => {{ z = Math.min(9, z * 1.4); apply(); }};
+document.getElementById('zout').onclick = () => {{ z = Math.max(0.04, z / 1.4); apply(); }};
+
+// --- detail drawer ----------------------------------------------------------
+const panel = document.getElementById('panel'), body = document.getElementById('body');
+document.getElementById('close').onclick = () => panel.classList.remove('open');
+const chip = nm => {{
+  const c = byName.get(nm);
+  const col = c ? laneColor(c.lane) : '#888';
+  return `<span class="chip" data-go="${{nm}}"><span class="dot" style="background:${{col}}"></span>${{esc(nm)}}</span>`;
+}};
+function show(name) {{
+  const c = byName.get(name);
+  if (!c) return;
+  const lane = LANES[c.lane] || {{ title: c.lane, color: '#888' }};
+  const head = lane.title.split(' \\u2014 ')[0];
+  let h = `<div class="kicker" style="color:${{lane.color}}">${{esc(head)}}` +
+          `${{c.abstract ? ' \\u00b7 abstract base' : ''}}</div>`;
+  h += `<h2>${{esc(c.name)}}</h2>`;
+  if (c.doc) h += `<div class="doc">${{esc(c.doc)}}</div>`;
+  if (c.parent) h += `<h3>inherits from</h3>${{chip(c.parent)}}`;
+  if (c.children.length)
+    h += `<h3>specialised by (${{c.children.length}})</h3>` + c.children.map(chip).join('');
+  if (c.kind === 'enum') {{
+    h += `<h3>values (${{c.members.length}})</h3><table>` +
+         c.members.map(m => `<tr><td class="n">${{esc(m)}}</td></tr>`).join('') + '</table>';
+  }} else {{
+    h += `<h3>declared fields (${{c.fields.length}}` +
+         (c.inherited ? `, +${{c.inherited}} inherited` : '') + `)</h3><table>`;
+    for (const f of c.fields) {{
+      h += `<tr><td class="n">${{esc(f.name)}}` +
+           `${{f.required ? '' : '<span class="req"> ?</span>'}}` +
+           (f.desc ? `<span class="desc">${{esc(f.desc)}}</span>` : '') +
+           `</td><td class="t">${{esc(f.type)}}</td></tr>`;
+    }}
+    h += '</table>';
+    const refs = [...new Set(c.fields.flatMap(f => f.refs))];
+    if (refs.length) h += `<h3>holds</h3>` + refs.map(chip).join('');
+  }}
+  body.innerHTML = h;
+  panel.classList.add('open');
+  history.replaceState(null, '', '#' + name);
+  body.querySelectorAll('[data-go]').forEach(el =>
+    el.onclick = () => {{ show(el.dataset.go); zoomTo(el.dataset.go, Math.max(z, 1.1)); }});
+}}
+map.querySelectorAll('.node').forEach(n => {{
+  n.addEventListener('click', () => {{ if (!drag || !drag.moved) show(n.dataset.name); }});
+}});
+
+// --- combined lane-filter + search visibility -------------------------------
+const activeLanes = new Set(Object.keys(LANES));
+let term = '';
+const q = document.getElementById('q'), count = document.getElementById('count');
+function hitsTerm(c) {{
+  if (!term) return false;
+  return c.name.toLowerCase().includes(term) ||
+    c.fields.some(f => f.name.toLowerCase().includes(term) ||
+                       f.type.toLowerCase().includes(term)) ||
+    (c.members || []).some(m => m.toLowerCase().includes(term));
+}}
+function refresh() {{
+  let n = 0;
+  map.querySelectorAll('.node').forEach(node => {{
+    const c = byName.get(node.dataset.name);
+    const laneOn = c && activeLanes.has(c.lane);
+    const hit = c && hitsTerm(c);
+    node.classList.toggle('hit', !!hit);
+    node.classList.toggle('dim', !laneOn || (term && !hit));
+    if (hit) n++;
+  }});
+  count.textContent = term ? (n + ' match' + (n === 1 ? '' : 'es')) : '';
+}}
+q.addEventListener('input', () => {{ term = q.value.trim().toLowerCase(); refresh(); }});
+q.addEventListener('keydown', e => {{
+  if (e.key !== 'Enter') return;
+  const first = map.querySelector('.node.hit');
+  if (first) {{ show(first.dataset.name); zoomTo(first.dataset.name, 1.4); }}
+}});
+
+// --- lane rail (legend + filter) --------------------------------------------
+const rail = document.getElementById('rail');
+for (const [k, l] of Object.entries(LANES)) {{
+  const n = CLASSES.filter(c => c.lane === k).length;
+  const b = document.createElement('button');
+  b.className = 'lchip'; b.setAttribute('aria-pressed', 'true');
+  b.innerHTML = `<span class="dot" style="background:${{l.color}}"></span>` +
+                `${{esc(l.title.split(' \\u2014 ')[0])}} <span class="n">${{n}}</span>`;
+  b.onclick = () => {{
+    if (activeLanes.has(k)) activeLanes.delete(k); else activeLanes.add(k);
+    b.setAttribute('aria-pressed', activeLanes.has(k) ? 'true' : 'false');
+    refresh();
+  }};
+  rail.appendChild(b);
+}}
+
+fit();
+if (location.hash.length > 1) {{
+  const n = decodeURIComponent(location.hash.slice(1));
+  if (byName.has(n)) {{ show(n); zoomTo(n, 1.5); }}
+}}
+"""
+
+    title = "<title>torchcell ontology explorer</title>"
+    head = f"{title}{style}"
+    page_body = f"{body_markup}{js}</script>"
+    if not standalone:
+        # Artifact host supplies the <!doctype>/<head>/<body> skeleton.
+        return head + page_body
+    return (
+        '<!doctype html>\n<html lang="en">\n<head>\n'
+        '<meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+        f"{head}\n</head>\n<body>\n{page_body}\n</body>\n</html>\n"
+    )
+
+
+def main() -> None:
+    """Regenerate all ontology artifacts into ``$ASSET_IMAGES_DIR/schema-ontology``."""
+    load_dotenv()
+    asset_dir = os.environ["ASSET_IMAGES_DIR"]
+    out_dir = osp.join(asset_dir, "schema-ontology")
+    os.makedirs(out_dir, exist_ok=True)
+
+    graph = build_ontology_graph()
+
+    # Full map: every field on every class. Too tall to be a one-page figure, so this
+    # is the supplementary/link artifact and the source for the explorer.
+    layout = build_layout(graph, compact=False)
+    svg = render_svg(
+        graph,
+        layout,
+        physical_width_mm=PANEL_WIDTHS_MM["full"],
+        title=TITLE,
+        subtitle=SUBTITLE,
+        explore_url=EXPLORE_URL,
+    )
+    svg_path = osp.join(out_dir, "torchcell-ontology.svg")
+    with open(svg_path, "w", encoding="utf-8") as fh:
+        fh.write(svg)
+
+    # Overview panel: same lanes, same topology, class names only -- sized to fit
+    # Nature's 179 mm width inside the 170 mm height ceiling.
+    overview_layout = build_layout(graph, compact=True)
+    overview = render_svg(
+        graph,
+        overview_layout,
+        physical_width_mm=PANEL_WIDTHS_MM["full"],
+        title=TITLE,
+        subtitle=SUBTITLE,
+        compact=True,
+        explore_url=EXPLORE_URL,
+    )
+    overview_path = osp.join(out_dir, "torchcell-ontology-overview.svg")
+    with open(overview_path, "w", encoding="utf-8") as fh:
+        fh.write(overview)
+
+    # Schematic panel: the one that is actually legible in print (all type >= 6 pt).
+    schematic = render_schematic_svg(
+        graph, physical_width_mm=PANEL_WIDTHS_MM["full"], explore_url=EXPLORE_URL
+    )
+    schematic_path = osp.join(out_dir, "torchcell-ontology-schematic.svg")
+    with open(schematic_path, "w", encoding="utf-8") as fh:
+        fh.write(schematic)
+
+    html_path = osp.join(out_dir, "torchcell-ontology-explorer.html")
+    with open(html_path, "w", encoding="utf-8") as fh:
+        fh.write(_explorer_html(svg, graph))
+
+    n_models = sum(1 for c in graph.classes.values() if c.kind == "model")
+    n_enums = sum(1 for c in graph.classes.values() if c.kind == "enum")
+    ov_h = _rendered_height_mm(overview)
+    print(f"classes : {n_models} models + {n_enums} enums")
+    print(f"full    : {layout.width:.0f} x {layout.height:.0f} units -> {svg_path}")
+    print(
+        f"overview: {overview_layout.width:.0f} x {overview_layout.height:.0f} units, "
+        f"{PANEL_WIDTHS_MM['full']:.0f} x {ov_h:.1f} mm "
+        f"({'OK' if ov_h <= MAX_HEIGHT_MM else 'OVER ' + str(MAX_HEIGHT_MM) + 'mm'})"
+    )
+    print(f"          -> {overview_path}")
+    print(
+        f"panel   : {PANEL_WIDTHS_MM['full']:.0f} x "
+        f"{_rendered_height_mm(schematic):.1f} mm, all type >= 6 pt "
+        f"-> {schematic_path}"
+    )
+    print(f"explorer: {html_path} ({osp.getsize(html_path) / 1024:.0f} kB)")
+
+
+if __name__ == "__main__":
+    main()

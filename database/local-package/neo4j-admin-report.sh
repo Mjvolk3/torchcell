@@ -5,7 +5,7 @@
 
 function find_report_destination
 {
-    local to_flag="--to"
+    local to_flag="--to-path"
 
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -28,7 +28,7 @@ function find_report_destination
     echo "/tmp/reports"
 }
 
-report_cmd=("neo4j-admin" "report")
+report_cmd=("neo4j-admin" "server" "report")
 
 # note, these debug messages are unlikely to work in a docker exec, since environment isn't preserved.
 debug_msg "Called ${0}"

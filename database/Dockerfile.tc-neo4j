@@ -1,7 +1,10 @@
 FROM debian:bullseye-slim
 
-# @mjvolk3 Install Java dependency 11
-FROM eclipse-temurin:11-jre as base
+# @mjvolk3 Install Java dependency 17. neo4j 5.26 requires JDK 17 or 21; we pin 17
+# (upstream's own image ships 21) because 17 is the version this upgrade was validated
+# on AND it is the smaller base-OS jump for the conda/python-3.13/torch-scatter layers
+# built on top of this base.
+FROM eclipse-temurin:17-jre as base
 # @mjvolk3 Install dependencies required for downloading and installing Miniconda
 RUN apt-get update && apt-get install -y curl wget && \
     rm -rf /var/lib/apt/lists/*
@@ -47,15 +50,15 @@ RUN python -m pip install "git+https://github.com/Mjvolk3/torchcell.git@main"
 RUN python -m pip install torch-scatter --no-build-isolation
 
 # @mjvolk3 use installed jdk (generalize use). ENV JAVA_HOME=/opt/java/openjdk
-COPY --from=eclipse-temurin:11 $JAVA_HOME $JAVA_HOME
+COPY --from=eclipse-temurin:17 $JAVA_HOME $JAVA_HOME
 
 
 ENV PATH="${JAVA_HOME}/bin:${PATH}" \
-    NEO4J_SHA256=9513dddcc0732dc3ad66b7c4c0becde8ce7c6810bf898264f01b2fe634dd4b0e \
-    NEO4J_TARBALL=neo4j-enterprise-4.4.30-unix.tar.gz \
+    NEO4J_SHA256=3434b34d02fa4e281d669a11eb4141e5a3b20f79360f1a2f093f28e9b526281b \
+    NEO4J_TARBALL=neo4j-enterprise-5.26.28-unix.tar.gz \
     NEO4J_EDITION=enterprise \
     NEO4J_HOME="/var/lib/neo4j"
-ARG NEO4J_URI=https://dist.neo4j.org/neo4j-enterprise-4.4.30-unix.tar.gz
+ARG NEO4J_URI=https://dist.neo4j.org/neo4j-enterprise-5.26.28-unix.tar.gz
 
 RUN addgroup --gid 7474 --system neo4j && adduser --uid 7474 --system --no-create-home --home "${NEO4J_HOME}" --ingroup neo4j neo4j
 

@@ -1,13 +1,13 @@
 {
-  "apoc": {
+  "apoc-extended": {
     "versions": "https://neo4j-contrib.github.io/neo4j-apoc-procedures/versions.json",
     "properties": {
       "dbms.security.procedures.unrestricted": "apoc.*"
     }
   },
-  "apoc-core": {
+  "apoc": {
     "location": "/var/lib/neo4j/labs/apoc-*-core.jar",
-    "versions": "https://neo4j-contrib.github.io/neo4j-apoc-procedures/versions.json",
+    "versions": "https://neo4j.github.io/apoc/versions.json",
     "properties": {
       "dbms.security.procedures.unrestricted": "apoc.*"
     }
@@ -16,26 +16,9 @@
     "location": "/var/lib/neo4j/products/bloom-plugin-*.jar",
     "versions": "https://bloom-plugins.s3.eu-west-2.amazonaws.com/versions.json",
     "properties": {
-      "dbms.unmanaged_extension_classes": "com.neo4j.bloom.server=/browser/bloom",
+      "server.unmanaged_extension_classes": "com.neo4j.bloom.server=/browser/bloom",
       "dbms.security.procedures.unrestricted": "bloom.*",
-      "neo4j.bloom.license_file": "/licenses/bloom.license"
-    }
-  },
-  "streams": {
-    "versions": "https://neo4j-contrib.github.io/neo4j-streams/versions.json",
-    "properties": {}
-  },
-  "graphql": {
-    "versions": "https://neo4j-graphql.github.io/neo4j-graphql/versions.json",
-    "properties": {
-      "dbms.unmanaged_extension_classes": "org.neo4j.graphql=/graphql",
-      "dbms.security.procedures.unrestricted": "graphql.*"
-    }
-  },
-  "graph-algorithms": {
-    "versions": "https://neo4j-contrib.github.io/neo4j-graph-algorithms/versions.json",
-    "properties": {
-      "dbms.security.procedures.unrestricted": "algo.*"
+      "dbms.bloom.license_file": "/licenses/bloom.license"
     }
   },
   "graph-data-science": {
@@ -49,6 +32,19 @@
     "versions": "https://neo4j-labs.github.io/neosemantics/versions.json",
     "properties": {
       "dbms.security.procedures.unrestricted":"semantics.*"
+    }
+  },
+  "genai": {
+    "location": "/var/lib/neo4j/products/neo4j-genai-plugin-*.jar",
+    "properties": {
+      "dbms.security.procedures.unrestricted": "genai.*"
+    }
+  },
+  "fleet-management": {
+    "location": "/var/lib/neo4j/products/neo4j-fleet-management-*.jar",
+    "properties": {
+      "dbms.security.procedures.unrestricted": "fleetManagement.*",
+      "dbms.security.procedures.allowlist": "fleetManagement.*"
     }
   },
   "_testing": {

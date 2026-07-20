@@ -66,7 +66,7 @@ docker run \
     -v $(pwd)/database/logs:/logs \
     -v $(pwd)/database/metrics:/metrics \
     -e NEO4J_AUTH=neo4j/torchcell \
-    -e NEO4J_dbms_read__only=false \
+    -e NEO4J_server_databases_default__to__read__only=false \
     michaelvolk/tc-neo4j:latest
 
 #--health-cmd="curl -f http://gilahyper.zapto.org:7474 || exit 1" \
@@ -120,8 +120,16 @@ fi
 
 echo "Knowledge graph creation completed."
 
+# neo4j 5 refuses to bulk-import into a database that exists and is online
+# ("The database is in use. Stop database 'torchcell' and try again."), which neo4j 4.4
+# did not enforce. Dropping it also clears the "Database name or alias already exists"
+# failure that CREATE DATABASE hits on every rebuild. IF EXISTS makes the first build
+# (no such database yet) a no-op.
+echo "Dropping any existing torchcell database before import..."
+docker exec tc-neo4j bash -c 'source /.env && cypher-shell -u "$NEO4J_USER" -p "$NEO4J_PASSWORD" "DROP DATABASE torchcell IF EXISTS;"'
+
 echo "Executing generated bash script..."
-docker exec tc-neo4j bash -c 'if [ -f biocypher_file_name.txt ]; then 
+docker exec tc-neo4j bash -c 'if [ -f biocypher_file_name.txt ]; then
     bash_script_path_cleaned=$(cat biocypher_file_name.txt)
     chmod +x "${bash_script_path_cleaned}"
     "${bash_script_path_cleaned}"
@@ -142,7 +150,9 @@ docker exec tc-neo4j neo4j start
 # sleep for db to come up before query
 sleep 60
 
-# We must run a query to get the database/data/databases/torchcell/neostore.indexstats.db file which is needed for the readonly container.
+# We must run a query to generate the index-stats file the readonly container needs.
+# neo4j 5.26 Enterprise defaults to BLOCK store format, so this is
+# database/data/databases/torchcell/block.indexstats.db (4.4 wrote neostore.indexstats.db).
 docker exec tc-neo4j bash -c 'source /.env && cypher-shell -u $NEO4J_USER -p $NEO4J_PASSWORD -d torchcell "MATCH (n) RETURN count(n);"'
 
 echo "Stopping the writable container..."
@@ -169,7 +179,7 @@ docker run \
     -v $(pwd)/database/logs:/logs \
     -v $(pwd)/database/metrics:/metrics \
     -e NEO4J_AUTH=neo4j/torchcell \
-    -e NEO4J_dbms_read__only=true \
+    -e NEO4J_server_databases_default__to__read__only=true \
     michaelvolk/tc-neo4j:latest
 
 

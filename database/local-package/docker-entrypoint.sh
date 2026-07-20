@@ -1,20 +1,5 @@
 #!/bin/bash -eu
 
-################# TORCHCELL #################
-#source /miniconda/etc/profile.d/conda.sh
-#conda activate myenv
-#echo "Conda environment activated."
-#
-## Display the current Conda environments for debugging
-#echo "Current Conda environments:"
-#conda env list
-#
-## Then run the pip install command
-#echo "Installing torchcell package from Git..."
-#python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
-#echo "Continuing with Neo4j database entrypoint"
-################# TORCHCELL #################
-
 cmd="$1"
 
 # load useful utility functions
@@ -168,14 +153,21 @@ function load_plugin_from_url
 
     # Now we call out to github to get the versions.json for this plugin and we parse that to find the url for the correct plugin jar for our neo4j version
     echo "Fetching versions.json for Plugin '${_plugin_name}' from ${_versions_json_url}"
-    local _versions_json="$(wget -q --timeout 300 --tries 30 -O - "${_versions_json_url}")"
+    local _versions_json
+    if ! _versions_json="$(wget -q --timeout 300 --tries 30 -O - "${_versions_json_url}")"; then
+        debug_msg "ERROR: could not fetch '${_versions_json}'"
+        echo >&2 "ERROR: could not query ${_versions_json_url} for plugin compatibility information.
+    This could indicate a problem with your network or this container's network settings.
+    Neo4j will continue to start, but \"${_plugin_name}\" will not be loaded."
+        return 1
+    fi
     local _plugin_jar_url="$(echo "${_versions_json}" | jq -L/startup --raw-output "import \"semver\" as lib; [ .[] | select(.neo4j|lib::semver(\"${_neo4j_version}\")) ] | min_by(.neo4j) | .jar")"
     if [[ -z "${_plugin_jar_url}" ]] || [[ "${_plugin_jar_url}" == "null" ]]; then
         debug_msg "ERROR: '${_versions_json_url}' does not contain an entry for ${_neo4j_version}"
-        echo >&2 "ERROR: No compatible \"${_plugin_name}\" plugin found for Neo4j ${_neo4j_version}."
-        echo >&2 "This can happen with the newest Neo4j versions when a compatible plugin has not yet been released."
-        echo >&2 "You can either use an older version of Neo4j, or continue without ${_plugin_name}."
-        echo >&2 "Neo4j will continue to start, but \"${_plugin_name}\" will not be loaded."
+        echo >&2 "ERROR: No compatible \"${_plugin_name}\" plugin found for Neo4j ${_neo4j_version} ${NEO4J_EDITION}.
+    This can happen with the newest Neo4j versions when a compatible plugin has not yet been released.
+    You can either use an older version of Neo4j, or continue without ${_plugin_name}.
+    Neo4j will continue to start, but \"${_plugin_name}\" will not be loaded."
     else
         echo "Installing Plugin '${_plugin_name}' from ${_plugin_jar_url} to ${_destination} "
         wget -q --timeout 300 --tries 30 --output-document="${_destination}" "${_plugin_jar_url}"
@@ -219,7 +211,7 @@ function apply_plugin_default_configuration
     done
 }
 
-function install_neo4j_labs_plugins
+function install_neo4j_plugins
 {
     # first verify that the requested plugins are valid.
     debug_msg "One or more NEO4J_PLUGINS have been requested."
@@ -246,12 +238,15 @@ function install_neo4j_labs_plugins
         if [ "${_location}" != "null" -a -n "$(shopt -s nullglob; echo ${_location})" ]; then
             debug_msg "$plugin_name is already in the container at ${_location}"
             load_plugin_from_location "${plugin_name}" "${_location}"
+            debug_msg "Applying plugin specific configurations."
+            apply_plugin_default_configuration "${plugin_name}" "${_old_config}"
         else
             debug_msg "$plugin_name must be downloaded."
-            load_plugin_from_url "${plugin_name}"
+            if load_plugin_from_url "${plugin_name}"; then
+                debug_msg "Applying plugin specific configurations."
+                apply_plugin_default_configuration "${plugin_name}" "${_old_config}"
+            fi
         fi
-        debug_msg "Applying plugin specific configurations."
-        apply_plugin_default_configuration "${plugin_name}" "${_old_config}"
     done
     rm "${_old_config}"
 }
@@ -262,7 +257,7 @@ function add_docker_default_to_conf
     local _setting="${1}"
     local _value="${2}"
 
-    if ! grep -q "^${_setting}=" "${NEO4J_HOME}"/conf/neo4j.conf
+    if [ ! -e "${NEO4J_HOME}"/conf/neo4j.conf ] || ! grep -q "^${_setting}=" "${NEO4J_HOME}"/conf/neo4j.conf
     then
         debug_msg "Appended ${_setting}=${_value} to ${NEO4J_HOME}/conf/neo4j.conf"
         echo -e "\n"${_setting}=${_value} >> "${NEO4J_HOME}"/conf/neo4j.conf
@@ -274,20 +269,31 @@ function add_env_setting_to_conf
     # settings from environment variables should overwrite values already in the conf
     local _setting=${1}
     local _value=${2}
-    local _append_not_replace_configs=("dbms.jvm.additional")
+    local _conf_file
+    local _append_not_replace_configs=("server.jvm.additional")
 
-    if grep -q -F "${_setting}=" "${NEO4J_HOME}"/conf/neo4j.conf; then
+    # different settings need to go in different files now.
+    case "$(echo ${_setting} | cut -d . -f 1)" in
+        apoc)
+            _conf_file="${NEO4J_HOME}"/conf/apoc.conf
+        ;;
+        *)
+            _conf_file="${NEO4J_HOME}"/conf/neo4j.conf
+        ;;
+    esac
+
+    if [ -e "${_conf_file}" ] && grep -q -F "${_setting}=" "${_conf_file}"; then
         if containsElement "${_setting}" "${_append_not_replace_configs[@]}"; then
-            debug_msg "${_setting} will be appended to neo4j.conf without replacing existing settings."
+            debug_msg "${_setting} will be appended to ${_conf_file} without replacing existing settings."
         else
             # Remove any lines containing the setting already
-            debug_msg "Removing existing setting for ${_setting}"
-            sed --in-place "/^${_setting}=.*/d" "${NEO4J_HOME}"/conf/neo4j.conf
+            debug_msg "Removing existing setting for ${_setting} in ${_conf_file}"
+            sed --in-place "/^${_setting}=.*/d" "${_conf_file}"
         fi
     fi
     # Then always append setting to file
-    debug_msg "Appended ${_setting}=${_value} to ${NEO4J_HOME}/conf/neo4j.conf"
-    echo "${_setting}=${_value}" >> "${NEO4J_HOME}"/conf/neo4j.conf
+    debug_msg "Appended ${_setting}=${_value} to ${_conf_file}"
+    echo "${_setting}=${_value}" >> "${_conf_file}"
 }
 
 function set_initial_password
@@ -313,6 +319,16 @@ function set_initial_password
                 exit 1
             fi
 
+            # this line has an inbuilt assumption that any configuration settings from the environment have already been applied to neo4j.conf
+            local _min_password_length=$(cat "${NEO4J_HOME}"/conf/neo4j.conf | grep dbms.security.auth_minimum_password_length | sed -E 's/.*=(.*)/\1/')
+            if [ "${#password}" -lt "${_min_password_length:-"8"}" ]; then
+                echo >&2 "Invalid value for password. The minimum password length is 8 characters.
+If Neo4j fails to start, you can:
+  1) Use a stronger password.
+  2) Set configuration dbms.security.auth_minimum_password_length to override the minimum password length requirement.
+  3) Set environment variable NEO4J_dbms_security_auth__minimum__password__length to override the minimum password length requirement."
+            fi
+
             if running_as_root; then
                 # running set-initial-password as root will create subfolders to /data as root, causing startup fail when neo4j can't read or write the /data/dbms folder
                 # creating the folder first will avoid that
@@ -332,15 +348,8 @@ function set_initial_password
                 extra_args+=("--verbose")
             fi
             debug_msg "Setting initial password"
-            debug_msg "${neo4j_admin_cmd} set-initial-password ${password} ${extra_args[*]}"
-            if debugging_enabled; then
-                # don't suppress any output or errors in debugging mode
-                ${neo4j_admin_cmd} set-initial-password "${password}" "${extra_args[@]}"
-            else
-            # Will exit with error if users already exist (and print a message explaining that)
-            # we probably don't want the message though, since it throws an error message on restarting the container.
-                ${neo4j_admin_cmd} set-initial-password "${password}" "${extra_args[@]}" 2>/dev/null || true
-            fi
+            debug_msg "${neo4j_admin_cmd} dbms set-initial-password ***** ${extra_args[*]}"
+            ${neo4j_admin_cmd} dbms set-initial-password "${password}" "${extra_args[@]}"
 
         elif [ -n "${_neo4j_auth:-}" ]; then
             echo "$_neo4j_auth is invalid"
@@ -388,20 +397,53 @@ if running_as_root; then
     find "${NEO4J_HOME}"/conf -type f -exec chmod -R 600 {} \;
 fi
 
+## == EXTRACT SECRETS FROM FILES ===
+# These environment variables are set by using docker secrets and they override their equivalent env vars
+# They are suffixed with _FILE and prefixed by the name of the env var they should override
+# e.g. NEO4J_AUTH_FILE will override the value of the NEO4J_AUTH
+# It's best to do this first so that the secrets are available for the rest of the script
+for variable_name in $(printenv | awk -F= '{print $1}'); do
+  # Check if the variable ends with "_FILE" and starts with "NEO4J_"
+  if [[ $variable_name == *"_FILE" &&
+        $variable_name == "NEO4J_"* ]]; then
+    # Create a new variable name by removing the "_FILE" suffix
+    base_variable_name=${variable_name%_FILE}
+
+    # Get the value of the _FILE variable
+    secret_file_path="${!variable_name}"
+
+    if is_readable "${secret_file_path}"; then
+      # Read the secret value from the file
+      secret_value=$(<"$secret_file_path")
+    else
+      # File not readable
+      echo >&2 "The secret file '$secret_file_path' does not exist or is not readable. Make sure you have correctly configured docker secrets."
+      exit 1
+    fi
+    # Assign the value to the new variable
+    export "$base_variable_name"="$secret_value"
+  fi
+done
+
 # ==== CHECK LICENSE AGREEMENT ====
 
 # Only prompt for license agreement if command contains "neo4j" in it
 if [[ "${cmd}" == *"neo4j"* ]]; then
   if [ "${NEO4J_EDITION}" == "enterprise" ]; then
-    if [ "${NEO4J_ACCEPT_LICENSE_AGREEMENT:=no}" != "yes" ]; then
+    : ${NEO4J_ACCEPT_LICENSE_AGREEMENT:="not accepted"}
+    if [[ "$NEO4J_ACCEPT_LICENSE_AGREEMENT" != "yes" && "$NEO4J_ACCEPT_LICENSE_AGREEMENT" != "eval" ]]; then
       echo >&2 "
 In order to use Neo4j Enterprise Edition you must accept the license agreement.
 
 The license agreement is available at https://neo4j.com/terms/licensing/
 If you have a support contract the following terms apply https://neo4j.com/terms/support-terms/
 
+If you do not have a commercial license and want to evaluate the Software
+please read the terms of the evaluation agreement before you accept.
+https://neo4j.com/terms/enterprise_us/
+
 (c) Neo4j Sweden AB. All Rights Reserved.
-Use of this Software without a proper commercial license
+Use of this Software without a proper commercial license, or evaluation license
 with Neo4j, Inc. or its affiliates is prohibited.
 Neo4j has the right to terminate your usage if you are not compliant.
 
@@ -411,60 +453,25 @@ If you have further inquiries about licensing, please contact us via https://neo
 To accept the commercial license agreement set the environment variable
 NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
 
+To accept the terms of the evaluation agreement set the environment variable
+NEO4J_ACCEPT_LICENSE_AGREEMENT=eval
+
 To do this you can use the following docker argument:
 
-        --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+        --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=<yes|eval>
 "
       exit 1
     fi
   fi
 fi
 
-# NEO4JLABS_PLUGINS is renamed to NEO4J_PLUGINS in 5.x, but we want the new name to work against 4.4 images too
+# NEO4JLABS_PLUGINS has been renamed to NEO4J_PLUGINS, but we want the old name to work for now.
 if [ -n "${NEO4JLABS_PLUGINS:-}" ];
 then
+    echo >&2 "NEO4JLABS_PLUGINS has been renamed to NEO4J_PLUGINS since Neo4j 5.0.0.
+The old name will still work, but is likely to be deprecated in future releases."
     : ${NEO4J_PLUGINS:=${NEO4JLABS_PLUGINS:-}}
 fi
-
-# ==== RENAME LEGACY ENVIRONMENT CONF VARIABLES ====
-
-# Env variable naming convention:
-# - prefix NEO4J_
-# - double underscore char '__' instead of single underscore '_' char in the setting name
-# - underscore char '_' instead of dot '.' char in the setting name
-# Example:
-# NEO4J_dbms_tx__log_rotation_retention__policy env variable to set
-#       dbms.tx_log.rotation.retention_policy setting
-
-# Backward compatibility - map old hardcoded env variables into new naming convention (if they aren't set already)
-# Set some to default values if unset
-: ${NEO4J_dbms_tx__log_rotation_retention__policy:=${NEO4J_dbms_txLog_rotation_retentionPolicy:-}}
-: ${NEO4J_dbms_unmanaged__extension__classes:=${NEO4J_dbms_unmanagedExtensionClasses:-}}
-: ${NEO4J_dbms_allow__format__migration:=${NEO4J_dbms_allowFormatMigration:-}}
-: ${NEO4J_dbms_connectors_default__advertised__address:=${NEO4J_dbms_connectors_defaultAdvertisedAddress:-}}
-
-if [ "${NEO4J_EDITION}" == "enterprise" ];
-  then
-   : ${NEO4J_causal__clustering_expected__core__cluster__size:=${NEO4J_causalClustering_expectedCoreClusterSize:-}}
-   : ${NEO4J_causal__clustering_initial__discovery__members:=${NEO4J_causalClustering_initialDiscoveryMembers:-}}
-    debug_msg "Copying contents of /conf to ${NEO4J_HOME}/conf/*"
-   : ${NEO4J_causal__clustering_discovery__advertised__address:=${NEO4J_causalClustering_discoveryAdvertisedAddress:-}}
-   : ${NEO4J_causal__clustering_transaction__advertised__address:=${NEO4J_causalClustering_transactionAdvertisedAddress:-}}
-   : ${NEO4J_causal__clustering_raft__advertised__address:=${NEO4J_causalClustering_raftAdvertisedAddress:-}}
-fi
-
-# unset old hardcoded unsupported env variables
-unset NEO4J_dbms_txLog_rotation_retentionPolicy NEO4J_UDC_SOURCE \
-    NEO4J_dbms_unmanagedExtensionClasses NEO4J_dbms_allowFormatMigration \
-    NEO4J_dbms_connectors_defaultAdvertisedAddress NEO4J_ha_serverId \
-    NEO4J_ha_initialHosts NEO4J_causalClustering_expectedCoreClusterSize \
-    NEO4J_causalClustering_initialDiscoveryMembers \
-    NEO4J_causalClustering_discoveryListenAddress \
-    NEO4J_causalClustering_discoveryAdvertisedAddress \
-    NEO4J_causalClustering_transactionListenAddress \
-    NEO4J_causalClustering_transactionAdvertisedAddress \
-    NEO4J_causalClustering_raftListenAddress \
-    NEO4J_causalClustering_raftAdvertisedAddress
 
 # ==== CHECK FILE PERMISSIONS ON MOUNTED FOLDERS ====
 
@@ -489,12 +496,12 @@ if [ -d /plugins ]; then
         check_mounted_folder_writable_with_chown "/plugins"
     fi
     check_mounted_folder_readable "/plugins"
-    : ${NEO4J_dbms_directories_plugins:="/plugins"}
+    : ${NEO4J_server_directories_plugins:="/plugins"}
 fi
 
 if [ -d /import ]; then
     check_mounted_folder_readable "/import"
-    : ${NEO4J_dbms_directories_import:="/import"}
+    : ${NEO4J_server_directories_import:="/import"}
 fi
 
 if [ -d /metrics ]; then
@@ -502,13 +509,13 @@ if [ -d /metrics ]; then
     if [ "${NEO4J_EDITION}" == "enterprise" ];
     then
         check_mounted_folder_writable_with_chown "/metrics"
-        : ${NEO4J_dbms_directories_metrics:="/metrics"}
+        : ${NEO4J_server_directories_metrics:="/metrics"}
     fi
 fi
 
 if [ -d /logs ]; then
     check_mounted_folder_writable_with_chown "/logs"
-    : ${NEO4J_dbms_directories_logs:="/logs"}
+    : ${NEO4J_server_directories_logs:="/logs"}
 fi
 
 if [ -d /data ]; then
@@ -526,7 +533,37 @@ fi
 
 if [ -d /licenses ]; then
     check_mounted_folder_readable "/licenses"
-    : ${NEO4J_dbms_directories_licenses:="/licenses"}
+    : ${NEO4J_server_directories_licenses:="/licenses"}
+fi
+
+
+# ==== LOAD PLUGINS ====
+
+if [[ -n "${NEO4J_PLUGINS:-}" ]]; then
+  # NEO4J_PLUGINS should be a json array of plugins like '["graph-algorithms", "apoc", "streams", "graphql"]'
+  install_neo4j_plugins
+fi
+
+# ==== RENAME LEGACY ENVIRONMENT CONF VARIABLES ====
+
+# Env variable naming convention:
+# - prefix NEO4J_
+# - double underscore char '__' instead of single underscore '_' char in the setting name
+# - underscore char '_' instead of dot '.' char in the setting name
+# Example:
+# NEO4J_server_tx__log_rotation_retention__policy env variable to set
+#       server.tx_log.rotation.retention_policy setting
+
+# we only need to override the configurations with a docker specific override.
+# The other config renames will be taken care of inside Neo4j.
+: ${NEO4J_db_tx__log_rotation_retention__policy:=${NEO4J_dbms_tx__log_rotation_retention__policy:-}}
+: ${NEO4J_server_memory_pagecache_size:=${NEO4J_dbms_memory_pagecache_size:-}}
+: ${NEO4J_server_default__listen__address:=${NEO4J_dbms_default__listen__address:-}}
+if [ "${NEO4J_EDITION}" == "enterprise" ];
+  then
+   : ${NEO4J_server_discovery_advertised__address:=${NEO4J_causal__clustering_discovery__advertised__address:-}}
+   : ${NEO4J_server_cluster_advertised__address:=${NEO4J_causal__clustering_transaction__advertised__address:-}}
+   : ${NEO4J_server_cluster_raft_advertised__address:=${NEO4J_causal__clustering_raft__advertised__address:-}}
 fi
 
 # ==== SET CONFIGURATIONS ====
@@ -535,15 +572,17 @@ fi
 ## these should not override *any* configurations set by the user
 
 debug_msg "Setting docker specific configuration overrides"
-add_docker_default_to_conf "dbms.memory.pagecache.size" "512M"
-add_docker_default_to_conf "dbms.default_listen_address" "0.0.0.0"
+add_docker_default_to_conf "server.memory.pagecache.size" "512M"
+add_docker_default_to_conf "server.default_listen_address" "0.0.0.0"
+
 # set enterprise only docker defaults
 if [ "${NEO4J_EDITION}" == "enterprise" ];
 then
     debug_msg "Setting docker specific Enterprise Edition overrides"
-    add_docker_default_to_conf "causal_clustering.discovery_advertised_address" "$(hostname):5000"
-    add_docker_default_to_conf "causal_clustering.transaction_advertised_address" "$(hostname):6000"
-    add_docker_default_to_conf "causal_clustering.raft_advertised_address" "$(hostname):7000"
+    add_docker_default_to_conf "server.discovery.advertised_address" "$(hostname):5000"
+    add_docker_default_to_conf "server.cluster.advertised_address" "$(hostname):6000"
+    add_docker_default_to_conf "server.cluster.raft.advertised_address" "$(hostname):7000"
+    add_docker_default_to_conf "server.routing.advertised_address" "$(hostname):7688"
 fi
 
 ## == ENVIRONMENT VARIABLE CONFIGURATIONS ===
@@ -551,7 +590,7 @@ fi
 
 # these are docker control envs that have the NEO4J_ prefix but we don't want to add to the config.
 not_configs=("NEO4J_ACCEPT_LICENSE_AGREEMENT" "NEO4J_AUTH" "NEO4J_AUTH_PATH" "NEO4J_DEBUG" "NEO4J_EDITION" \
-             "NEO4J_HOME" "NEO4J_PLUGINS" "NEO4J_SHA256" "NEO4J_TARBALL")
+             "NEO4J_HOME" "NEO4J_PLUGINS" "NEO4J_SHA256" "NEO4J_TARBALL" "NEO4J_DEPRECATION_WARNING")
 
 debug_msg "Applying configuration settings that have been set using environment variables."
 # list env variables with prefix NEO4J_ and create settings from them
@@ -559,6 +598,12 @@ for i in $( set | grep ^NEO4J_ | awk -F'=' '{print $1}' | sort -rn ); do
     if containsElement "$i" "${not_configs[@]}"; then
         continue
     fi
+
+    # Skip env variables with suffix _FILE, these are docker secrets
+    if [[ "$i" == *"_FILE" ]]; then
+        continue
+    fi
+
     setting=$(echo "${i}" | sed 's|^NEO4J_||' | sed 's|_|.|g' | sed 's|\.\.|_|g')
     value=$(echo "${!i}")
     # Don't allow settings with no value or settings that start with a number (neo4j converts settings to env variables and you cannot have an env variable that starts with a number)
@@ -566,12 +611,12 @@ for i in $( set | grep ^NEO4J_ | awk -F'=' '{print $1}' | sort -rn ); do
         if [[ ! "${setting}" =~ ^[0-9]+.*$ ]]; then
             add_env_setting_to_conf "${setting}" "${value}"
         else
-            echo >&2 "WARNING: ${setting} not written to conf file because settings that start with a number are not permitted"
+            echo >&2 "WARNING: ${setting} not written to conf file. Settings that start with a number are not permitted."
         fi
     fi
 done
 
-# ==== SET PASSWORD AND PLUGINS ====
+# ==== SET PASSWORD ====
 
 if [[ -n "${NEO4J_AUTH_PATH:-}" ]]; then
     # Validate the existence of the password file
@@ -589,10 +634,11 @@ else
     set_initial_password "${NEO4J_AUTH:-}"
 fi
 
+# ==== CLEANUP RUN FILE ====
 
-if [[ ! -z "${NEO4J_PLUGINS:-}" ]]; then
-  # NEO4J_PLUGINS should be a json array of plugins like '["graph-algorithms", "apoc", "streams", "graphql"]'
-  install_neo4j_labs_plugins
+if [ -f "${NEO4J_HOME}"/run/neo4j.pid ];
+then
+  rm "${NEO4J_HOME}"/run/neo4j.pid
 fi
 
 # ==== INVOKE NEO4J STARTUP ====
@@ -620,9 +666,6 @@ function get_neo4j_run_cmd {
     if [ "${EXTENDED_CONF+"yes"}" == "yes" ]; then
         extra_args+=("--expand-commands")
     fi
-    if debugging_enabled ; then
-        extra_args+=("--verbose")
-    fi
 
     if running_as_root; then
         su-exec neo4j:neo4j neo4j console --dry-run "${extra_args[@]}"
@@ -631,14 +674,12 @@ function get_neo4j_run_cmd {
     fi
 }
 
-# Use su-exec to drop privileges to neo4j user
-# Note that su-exec, despite its name, does not replicate the
-# functionality of exec, so we need to use both
 if [ "${cmd}" == "neo4j" ]; then
     # separate declaration and use of get_neo4j_run_cmd so that error codes are correctly surfaced
     debug_msg "getting full neo4j run command"
     neo4j_console_cmd="$(get_neo4j_run_cmd)"
     debug_msg "${exec_cmd} ${neo4j_console_cmd}"
+    #%%DEPRECATION_WARNING_PLACEHOLDER%%
     eval ${exec_cmd} ${neo4j_console_cmd?:No Neo4j command was generated}
 else
     debug_msg "${exec_cmd}" "$@"

@@ -779,6 +779,30 @@ def run_rnaseq(data_root: str) -> bool:
 # Environment-response chemogenomic datasets (WS15)
 # --------------------------------------------------------------------------- #
 ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
+    "yeastphenome": {
+        "root": "data/torchcell/yeastphenome",
+        # Curated YeastPhenome GROWTH screens (NPV z-score label): 47 complete-loss-of-
+        # function deletion screens (haploid BY4741/BY4742 + homozygous-diploid BY4743;
+        # heterozygous/dosage screens excluded) minus already-built primaries, x their
+        # encodable single-dosed-compound growth conditions = 83 environments, 296777
+        # records (one per (ORF, condition, screen); non-ORF rows + unparseable /
+        # het-or-ambiguous / unknown-media columns drop-and-logged). Widen via SCREENS.
+        "expected_count": 296777,
+        "background_genes": frozenset(),
+        "provenance": Provenance(
+            source_uri="https://doi.org/10.5281/zenodo.7714347",
+            citation_key="turcoGlobalAnalysisYeast2023",
+            method=(
+                "curated YeastPhenome NPV (mode-referenced modified z-score) from "
+                "yp-data @ v1.0 (commit 83e2917bf86955ec6ba66dc70ff2ed0fe24ecbe8), the "
+                "freeze Zenodo 7714347 archives; label = NPV (valuez.txt); readout method "
+                "recorded in units (distinguishes near-replicate screens); temperature + "
+                "n_samples/uncertainty/sample_unit are not_carried_by_curation "
+                "ProvenanceGaps; exact modified-z formula deferred to Turco2023 note S4"
+            ),
+            page="Sci Adv 2023 adg5702; yp-data Datasets/<PMID>/<stem>_valuez.txt",
+        ),
+    },
     "env_chemgen_vanacloig2022": {
         "root": "data/torchcell/env_chemgen_vanacloig2022",
         # 3647 screened ORFs (3651 barcodes - 2 all-NaN QC rows - 2 background-gene rows)

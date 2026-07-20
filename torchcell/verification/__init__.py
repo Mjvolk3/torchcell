@@ -35,9 +35,15 @@ from torchcell.verification.report import (
     sha256_file,
 )
 from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapCensus,
+    ProvenanceGapReason,
     SourcedValue,
     audit_sourced_value,
+    l1_provenance_gaps,
     library_available,
+    provenance_gap_census,
+    provenance_gap_level_result,
 )
 from torchcell.verification.visual_score import (
     verify_visual_score_dataset,
@@ -55,6 +61,12 @@ __all__ = [
     "SourcedValue",
     "audit_sourced_value",
     "library_available",
+    "ProvenanceGap",
+    "ProvenanceGapReason",
+    "ProvenanceGapCensus",
+    "provenance_gap_census",
+    "provenance_gap_level_result",
+    "l1_provenance_gaps",
     "l0_structural",
     "l1_completeness",
     "l1_count",

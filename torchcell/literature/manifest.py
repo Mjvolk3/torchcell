@@ -66,6 +66,7 @@ class RetrievalMethod(StrEnum):
     zotero_attachment = "zotero_attachment"
     pmc_oa_api = "pmc_oa_api"
     direct_url = "direct_url"
+    zenodo = "zenodo"
     radiant_endpoint = "radiant_endpoint"
 
 

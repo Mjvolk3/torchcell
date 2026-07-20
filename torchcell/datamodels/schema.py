@@ -15,7 +15,7 @@ from sortedcontainers import SortedDict
 
 from torchcell.datamodels.calmorph_labels import CALMORPH_LABELS, CALMORPH_STATISTICS
 from torchcell.datamodels.pydant import ModelStrict
-from torchcell.verification.sourced import SourcedValue
+from torchcell.verification.sourced import ProvenanceGap, SourcedValue
 
 # causes circular import
 # from torchcell.datasets.dataset_registry import dataset_registry
@@ -1409,7 +1409,50 @@ EnvironmentPerturbationType = (
 )
 
 
-class Environment(ModelStrict):
+class ProvenanceGapMixin(ModelStrict):
+    """Mixin giving a model a ``provenance_gaps`` list of typed field-absences.
+
+    Shared by ``Phenotype`` and ``Environment`` so a field the source does not carry
+    -- a phenotype ``n_samples`` a secondary curation layer dropped, an environment
+    ``temperature`` YeastPhenome never recorded -- is a documented, typed ABSENCE (with
+    a reason + ``looked_in``) rather than a guess or a silent None. Two invariants keep
+    it honest and machine-checkable: (1) each ``gap.field`` names a real field on the
+    concrete model (checked against ``model_fields``, so inherited fields resolve too);
+    (2) a gapped field must be ``None`` -- you cannot both store a value and declare it
+    missing. ``provenance_gaps`` itself cannot be gapped.
+    """
+
+    provenance_gaps: list[ProvenanceGap] = Field(
+        default_factory=list,
+        description="documented, typed ABSENCES of a sourced value for a field on this "
+        "model (e.g. a phenotype n_samples, or an environment temperature the curation "
+        "layer did not carry). An honest typed gap -- never a guess. The gapped field "
+        "must be None (enforced below).",
+    )
+
+    @model_validator(mode="after")
+    def validate_provenance_gaps(self) -> "ProvenanceGapMixin":
+        """Each ProvenanceGap must name a real field on this model, and that field must
+        be None (you cannot both store a value and declare it missing).
+        """
+        model_fields = type(self).model_fields
+        for gap in self.provenance_gaps:
+            if gap.field not in model_fields:
+                raise ValueError(
+                    f"provenance_gap field '{gap.field}' is not a field of "
+                    f"{type(self).__name__}"
+                )
+            if gap.field == "provenance_gaps":
+                raise ValueError("provenance_gaps cannot itself be gapped")
+            if getattr(self, gap.field) is not None:
+                raise ValueError(
+                    f"field '{gap.field}' has a ProvenanceGap but is not None "
+                    "(cannot both store a value and declare it missing)"
+                )
+        return self
+
+
+class Environment(ProvenanceGapMixin):
     """Experimental environment: base medium + temperature + optional perturbations.
 
     ``perturbations`` mirror ``Genotype.perturbations`` on the environment axis: the
@@ -1417,11 +1460,13 @@ class Environment(ModelStrict):
     defaults to an empty list, so an unperturbed environment (every dataset predating
     the environment-perturbation ontology) is unchanged. ``aerobicity`` records the
     oxygen regime (anaerobic fermentation is standard for biofuel screens);
-    ``duration_hours`` is the optional treatment time.
+    ``duration_hours`` is the optional treatment time. ``temperature`` is optional: a
+    secondary curation layer (YeastPhenome) may not carry it, in which case it is a
+    ``ProvenanceGap`` (``field='temperature'``), NOT a guessed value.
     """
 
     media: Media
-    temperature: Temperature
+    temperature: Temperature | None = None
     perturbations: list[EnvironmentPerturbationType] = Field(
         default_factory=list,
         description="environmental perturbations (added compounds / physical stresses) "
@@ -1453,8 +1498,13 @@ class Environment(ModelStrict):
 
 
 # Phenotype
-class Phenotype(ModelStrict):
-    """Base phenotype describing an observed label and its graph level."""
+class Phenotype(ProvenanceGapMixin):
+    """Base phenotype describing an observed label and its graph level.
+
+    Inherits ``provenance_gaps`` (+ its two honesty validators) from
+    ``ProvenanceGapMixin`` -- a phenotype field the source does not carry (n_samples,
+    an uncertainty) is a typed absence, shared with ``Environment``.
+    """
 
     graph_level: str = Field(
         description="most natural level of graph at which phenotype is observed"

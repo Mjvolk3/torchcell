@@ -56,6 +56,7 @@ from .wildenhain2015 import (
     EnvChemgenWildenhain2015Dataset as EnvChemgenWildenhain2015Dataset,
 )
 from .xue2025 import FattyAcidXue2025Dataset as FattyAcidXue2025Dataset
+from .yeastphenome import YeastPhenomeDataset as YeastPhenomeDataset
 from .yoshida2012 import OrganicAcidYoshida2012Dataset as OrganicAcidYoshida2012Dataset
 from .zelezniak2018 import (
     MetaboliteZelezniak2018Dataset as MetaboliteZelezniak2018Dataset,
@@ -123,6 +124,8 @@ xue_datasets = ["FattyAcidXue2025Dataset"]
 
 nadal_ribelles_datasets = ["NadalRibellesPerturbSeq2025Dataset"]
 
+yeastphenome_datasets = ["YeastPhenomeDataset"]
+
 __all__ = (
     costanzo_datasets
     + kuzmin_datasets
@@ -150,4 +153,5 @@ __all__ = (
     + lopez_datasets
     + xue_datasets
     + nadal_ribelles_datasets
+    + yeastphenome_datasets
 )

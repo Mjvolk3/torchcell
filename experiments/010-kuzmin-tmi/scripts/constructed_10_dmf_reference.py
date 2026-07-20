@@ -26,6 +26,13 @@ import pandas as pd
 from dotenv import load_dotenv
 from matplotlib.ticker import MultipleLocator
 
+from torchcell.datasets.scerevisiae.costanzo2016 import N_SAMPLES_DOUBLE_MUTANT
+from torchcell.datasets.scerevisiae.kuzmin2018 import (
+    N_SAMPLES_COMBINED_MUTANT as N_KUZMIN2018,
+)
+from torchcell.datasets.scerevisiae.kuzmin2020 import (
+    N_SAMPLES_COMBINED_MUTANT as N_KUZMIN2020,
+)
 from torchcell.utils import PLOT_PALETTE, PANEL_WIDTHS_MM, mm_to_in, savefig_true_size_svg
 
 load_dotenv()
@@ -47,6 +54,18 @@ OPTIMIZED = {
 COLOR_OPT = PLOT_PALETTE[1]   # red — the doubles to construct
 COLOR_OTHER = PLOT_PALETTE[5]  # gray — other measured doubles
 
+# Replicate design behind each source's DMF uncertainty, taken from the loaders
+# (which carry the verbatim SI provenance). All three are a SAMPLE SD over colony
+# replicates of one screen -- NOT a bootstrap SE (that is the SMF column) -- so the
+# derived standard error is SD/sqrt(n). Costanzo SI, si1.md line 80:
+#   "All screens were conducted a single time with 4 replicate colonies per double
+#    mutant, unless otherwise indicated"
+DMF_DESIGN = {
+    "DmfCostanzo2016": (N_SAMPLES_DOUBLE_MUTANT, "sample_sd", "colony"),
+    "DmfKuzmin2018": (N_KUZMIN2018, "sample_sd", "colony"),
+    "DmfKuzmin2020": (N_KUZMIN2020, "sample_sd", "colony"),
+}
+
 plt.rcParams.update({"font.family": "Arial", "font.size": 6,
                      "svg.fonttype": "none", "axes.linewidth": 0.5})
 
@@ -67,6 +86,20 @@ def build_reference() -> pd.DataFrame:
             "DmfKuzmin2020_fitness", "DmfKuzmin2020_std",
             "DmfCostanzo2016_strain_id"]
     out = df[[c for c in keep if c in df.columns]].copy()
+
+    # Make the uncertainty unambiguous at the point of use: state the replicate
+    # design + estimator type alongside each SD, and derive the standard error
+    # (SE = SD/sqrt(n)) so a measured assay SD/SE can be compared like-for-like.
+    for src, (n, unc_type, unit) in DMF_DESIGN.items():
+        std_col = f"{src}_std"
+        if std_col not in out.columns:
+            continue
+        has = out[std_col].notna()
+        out[f"{src}_uncertainty_type"] = np.where(has, unc_type, None)
+        out[f"{src}_n_samples"] = np.where(has, n, np.nan)
+        out[f"{src}_sample_unit"] = np.where(has, unit, None)
+        out[f"{src}_se"] = out[std_col] / np.sqrt(n)
+
     return out.sort_values("DmfCostanzo2016_fitness").reset_index(drop=True)
 
 

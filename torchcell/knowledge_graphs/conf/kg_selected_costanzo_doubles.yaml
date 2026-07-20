@@ -1,12 +1,14 @@
-# torchcell/knowledge_graphs/conf/kg_no_costanzo_doubles.yaml
-# [[torchcell.knowledge_graphs.conf.kg_no_costanzo_doubles.yaml]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/conf/kg_no_costanzo_doubles.yaml
+# torchcell/knowledge_graphs/conf/kg_selected_costanzo_doubles.yaml
+# [[torchcell.knowledge_graphs.conf.kg_selected_costanzo_doubles.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/conf/kg_selected_costanzo_doubles.yaml
 #
-# Training build: every dataset FULL except the two Costanzo double-mutant sets, which
-# are prefiltered to just the records that join to Sameith double-knockout expression.
+# Training build: every dataset FULL; the two Costanzo double-mutant sets are prefiltered
+# to SELECT just the records that join to Sameith double-knockout expression (Costanzo is
+# included, not excluded -- the "selected" name reflects this, unlike the earlier
+# "no_costanzo_doubles" which wrongly implied the doubles were dropped).
 #
 #   python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small \
-#       --config-name kg_no_costanzo_doubles
+#       --config-name kg_selected_costanzo_doubles
 #
 # WHY. The Costanzo doubles are 20.7M records each and dominate build time: measured on
 # job 970 the whole build is 8.63 h with them capped at 100k, ~98.5 h (4.1 days) with

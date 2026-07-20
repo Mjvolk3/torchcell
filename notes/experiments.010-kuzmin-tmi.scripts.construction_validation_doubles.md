@@ -67,5 +67,23 @@ enable no top-k triple — they are pure validation targets; the third (YDR057W+
 strongest positive ε) also rebuilds 3 triples. The set is tunable: drop the two triple-less
 validation doubles for an 11-double set, or add more near-significant ε to stress the assay.
 
+### There are only 3 significant interactions in the whole panel
+
+Surveyed across all 66 panel-12 doubles and all three sources: exactly **3** clear
+Costanzo's bar (`P<0.05 & |ε|>0.08`), and all 3 are within-10 and already in the
+validation tier — YDR057W+YGL087C (+0.098), YJR060W+YKL033W-A (−0.082),
+YER079W+YPL081W (−0.130). None hide in the dropped-gene doubles; Kuzmin2018/2020 have
+too few measured pairs to reach significance. So "construct the significant ones" = these
+3, already selected. The panel is near-neutral by design, so strong interactions are scarce.
+
+**High-|ε| but insignificant** doubles (e.g. YGL087C+YJR060W, ε=−0.075, p=0.27, DMF SD
+0.172) arise from **large SE(ε)**: ε significance is |ε|/SE(ε), and SE(ε) folds in the SD of
+the double-mutant fitness AND both single-mutant fitnesses (n=4 colonies each). A wide
+colony SD or a noisy constituent single (CBF1, RPS9A) inflates SE(ε) so even a sizable ε
+is indistinguishable from the multiplicative null. Mirror case: YBR203W+YDR057W (ε=+0.062,
+below the magnitude bar) is highly significant (p=1.4e-5) because its DMF SD is 0.010. For
+assay validation the 3 *significant* doubles are the strong anchors; high-SD/high-|ε| doubles
+validate fitness dynamic range, not interaction detection.
+
 Related: [[experiments.010-kuzmin-tmi.scripts.topk_triples_from_constructed_10]],
 [[experiments.010-kuzmin-tmi.scripts.optimized_doubles_setcover_constructed_10]].

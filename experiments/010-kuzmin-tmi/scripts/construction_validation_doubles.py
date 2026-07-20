@@ -162,12 +162,10 @@ def plot_forest(df: pd.DataFrame) -> None:
                        edgecolors="black", linewidths=0.6, zorder=5)
     ax.axvline(1.0, color="0.4", ls=":", lw=0.8, zorder=1)
     ax.set_yticks(range(len(d)))
-    ax.set_yticklabels(
-        [f"{r.gene1}+{r.gene2}" + {"coverage": " (C)", "validation": " (V)"}.get(r.tier, "")
-         for _, r in d.iterrows()], fontsize=4.5)
+    ax.set_yticklabels([f"{r.gene1}+{r.gene2}" for _, r in d.iterrows()], fontsize=4.5)
     ax.set_xlabel("Double-mutant fitness (Costanzo2016)")
     ax.set_title(f"All {len(d)} measured within-10 doubles by DMF\n"
-                 "C = coverage, V = validation, ring = significant ε")
+                 "color = tier; ring = significant ε")
     handles = [plt.Line2D([], [], marker="o", lw=0, color=TIER_COLOR[t],
                           label=f"{t} (n={int((d.tier == t).sum())})")
                for t in ("coverage", "validation", "other")]

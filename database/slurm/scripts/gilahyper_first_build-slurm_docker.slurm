@@ -67,7 +67,7 @@ docker run \
     -v $(pwd)/database/metrics:/metrics \
     -e NEO4J_AUTH=neo4j/torchcell \
     -e NEO4J_server_databases_default__to__read__only=false \
-    michaelvolk/tc-neo4j:latest
+    michaelvolk/tc-neo4j:5.26.28
 
 #--health-cmd="curl -f http://gilahyper.zapto.org:7474 || exit 1" \
 #--health-interval=30s \
@@ -180,7 +180,7 @@ docker run \
     -v $(pwd)/database/metrics:/metrics \
     -e NEO4J_AUTH=neo4j/torchcell \
     -e NEO4J_server_databases_default__to__read__only=true \
-    michaelvolk/tc-neo4j:latest
+    michaelvolk/tc-neo4j:5.26.28
 
 
 echo "Waiting for read-only Neo4j to start..."

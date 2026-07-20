@@ -1,0 +1,79 @@
+# torchcell/knowledge_graphs/conf/scerevisiae_small_global_kg.yaml
+# [[torchcell.knowledge_graphs.conf.scerevisiae_small_global_kg.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/conf/scerevisiae_small_global_kg.yaml
+
+defaults:
+  - default
+  - _self_ # append to end for overriding duplicate configs in default
+
+wandb:
+  mode: online # disabled, offline, online
+  project: tcdb
+
+adapters:
+  io_to_total_worker_ratio: 0.1 #0.62
+  chunk_size: 4e5 #4e4 # 2e4 works on delta 256 gb
+  loader_batch_size: 1e3 #1e4
+
+datasets:
+  # Costanzo 2016
+  SmfCostanzo2016Dataset:
+    path: data/torchcell/smf_costanzo2016
+    kwargs: null
+  DmfCostanzo2016Dataset:
+    path: data/torchcell/dmf_costanzo2016_5e5
+    kwargs:
+      # batch_size: 1000 # 1e3
+      subset_n: 500000 # 5e5
+  DmiCostanzo2016Dataset:
+    path: data/torchcell/dmi_costanzo2016_5e5
+    kwargs:
+      # batch_size: 1000 # 1e3
+      subset_n: 500000 # 5e5
+
+  # Kuzmin 2018
+  SmfKuzmin2018Dataset:
+    path: data/torchcell/smf_kuzmin2018
+    kwargs: null
+  DmfKuzmin2018Dataset:
+    path: data/torchcell/dmf_kuzmin2018
+    kwargs: null
+  TmfKuzmin2018Dataset:
+    path: data/torchcell/tmf_kuzmin2018
+    kwargs: null
+  DmiKuzmin2018Dataset:
+    path: data/torchcell/dmi_kuzmin2018
+    kwargs: null
+  TmiKuzmin2018Dataset:
+    path: data/torchcell/tmi_kuzmin2018
+    kwargs: null
+
+  # Kuzmin 2020
+  SmfKuzmin2020Dataset:
+    path: data/torchcell/smf_kuzmin2020
+    kwargs: null
+  DmfKuzmin2020Dataset:
+    path: data/torchcell/dmf_kuzmin2020
+    kwargs: null
+  TmfKuzmin2020Dataset:
+    path: data/torchcell/tmf_kuzmin2020
+    kwargs: null
+  DmiKuzmin2020Dataset:
+    path: data/torchcell/dmi_kuzmin2020
+    kwargs: null
+  TmiKuzmin2020Dataset:
+    path: data/torchcell/tmi_kuzmin2020
+    kwargs: null
+
+  # Synth Leth
+  SynthLethalityYeastSynthLethDbDataset:
+    path: data/torchcell/synth_lethality_yeast_synth_leth_db
+    kwargs: null
+  SynthRescueYeastSynthLethDbDataset:
+    path: data/torchcell/synth_rescue_yeast_synth_leth_db
+    kwargs: null
+
+  # Gene Essentiality
+  GeneEssentialitySgdDataset:
+    path: data/torchcell/gene_essentiality_sgd
+    kwargs: null

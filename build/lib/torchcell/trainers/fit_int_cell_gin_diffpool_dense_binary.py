@@ -1,0 +1,546 @@
+# torchcell/trainers/fit_int_cell_gin_diffpool_dense_binary
+# [[torchcell.trainers.fit_int_cell_gin_diffpool_dense_binary]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/fit_int_cell_gin_diffpool_dense_binary
+# Test file: tests/torchcell/trainers/test_fit_int_cell_gin_diffpool_dense_binary.py
+"""Lightning trainer for the dense GIN+DiffPool binary fitness/interaction model."""
+
+import logging
+import os.path as osp
+import sys
+from typing import Any, cast
+
+import lightning as L
+import matplotlib.pyplot as plt
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import wandb
+from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.core.optimizer import LightningOptimizer
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch_geometric.data import HeteroData
+from torchmetrics import MetricCollection
+
+import torchcell
+from torchcell.metrics.nan_tolerant_classification_metrics import (
+    NaNTolerantAccuracy,
+    NaNTolerantAUROC,
+    NaNTolerantF1Score,
+)
+from torchcell.viz import fitness, genetic_interaction_score
+
+log = logging.getLogger(__name__)
+
+style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
+plt.style.use(style_file_path)
+
+
+def log_error_information(
+    batch_idx: int,
+    y: torch.Tensor,
+    y_hat: torch.Tensor,
+    x: torch.Tensor,
+    adj_dict: dict[str, torch.Tensor],
+    mask: torch.Tensor,
+    head_loss: torch.Tensor,
+    dim_losses: torch.Tensor,
+    graph_link_losses: dict[str, Any],
+    graph_entropy_losses: dict[str, Any],
+    graph_pool_attention: dict[str, Any] | None,
+    graph_cluster_assignments: dict[str, Any],
+) -> None:
+    """Log batch tensors and loss components to aid debugging a NaN loss."""
+    log.error("NaN loss detected. Logging relevant information and terminating.")
+    log.error(f"Batch index: {batch_idx}")
+    log.error(f"y: {y}")
+    log.error(f"y_hat: {y_hat}")
+    log.error(f"x: {x}")
+    log.error(f"adj_dict: {adj_dict}")
+    log.error(f"mask: {mask}")
+    log.error(f"head_loss: {head_loss}")
+    log.error(f"dim_losses: {dim_losses}")
+    log.error(f"graph_link_losses: {graph_link_losses}")
+    log.error(f"graph_entropy_losses: {graph_entropy_losses}")
+    log.error(f"graph_pool_attention: {graph_pool_attention}")
+    log.error(f"graph_cluster_assignments: {graph_cluster_assignments}")
+
+    with open("nan_loss_debug.log", "w") as f:
+        f.write(f"Batch index: {batch_idx}\n")
+        f.write(f"y: {y}\n")
+        f.write(f"y_hat: {y_hat}\n")
+        f.write(f"x: {x}\n")
+        f.write(f"adj_dict: {adj_dict}\n")
+        f.write(f"mask: {mask}\n")
+        f.write(f"head_loss: {head_loss}\n")
+        f.write(f"dim_losses: {dim_losses}\n")
+        f.write(f"graph_link_losses: {graph_link_losses}\n")
+        f.write(f"graph_entropy_losses: {graph_entropy_losses}\n")
+        f.write(f"graph_pool_attention: {graph_pool_attention}\n")
+        f.write(f"graph_cluster_assignments: {graph_cluster_assignments}\n")
+
+
+class RegressionTask(L.LightningModule):
+    """Lightning task training the dense model on binary fitness/interaction."""
+
+    # Per-stage metric ModuleDicts assigned in __init__; declare their types here
+    # so attribute access type-checks (Lightning otherwise resolves to Tensor).
+    train_metrics: nn.ModuleDict
+    val_metrics: nn.ModuleDict
+    test_metrics: nn.ModuleDict
+
+    def __init__(
+        self,
+        model: nn.Module,
+        optimizer_config: dict[str, Any],
+        lr_scheduler_config: dict[str, Any],
+        batch_size: int | None = None,
+        clip_grad_norm: bool = False,
+        clip_grad_norm_max_norm: float = 0.1,
+        boxplot_every_n_epochs: int = 1,
+        loss_func: nn.Module | None = None,
+        cluster_loss_weight: float = 1.0,
+        link_pred_loss_weight: float = 1.0,
+        entropy_loss_weight: float = 1.0,
+        grad_accumulation_schedule: dict[int, int] | None = None,
+    ) -> None:
+        """Store the model, loss, optimizer config, and per-stage metrics.
+
+        Args:
+            model: The underlying graph model to train.
+            optimizer_config: Optimizer hyperparameters.
+            lr_scheduler_config: Learning-rate scheduler hyperparameters.
+            batch_size: Optional batch size for logging.
+            clip_grad_norm: Whether to clip gradient norms.
+            clip_grad_norm_max_norm: Maximum norm when clipping gradients.
+            boxplot_every_n_epochs: Frequency of boxplot logging.
+            loss_func: Combined loss module.
+            cluster_loss_weight: Weight for the DiffPool cluster loss.
+            link_pred_loss_weight: Weight for the link-prediction loss.
+            entropy_loss_weight: Weight for the entropy regularization loss.
+            grad_accumulation_schedule: Optional epoch-to-steps accumulation map.
+        """
+        super().__init__()
+        self.save_hyperparameters(ignore=["model"])
+
+        self.model = model
+        self.combined_loss = loss_func
+        self.current_accumulation_steps = 1
+
+        metrics = MetricCollection(
+            {
+                "Accuracy": NaNTolerantAccuracy(task="binary"),
+                "F1": NaNTolerantF1Score(task="binary"),
+                "AUROC": NaNTolerantAUROC(task="binary"),
+            }
+        )
+
+        self.train_metrics = nn.ModuleDict(
+            {
+                "fitness": metrics.clone(prefix="train/fitness/"),
+                "gene_interaction": metrics.clone(prefix="train/gene_interaction/"),
+            }
+        )
+        self.val_metrics = nn.ModuleDict(
+            {
+                "fitness": metrics.clone(prefix="val/fitness/"),
+                "gene_interaction": metrics.clone(prefix="val/gene_interaction/"),
+            }
+        )
+        self.test_metrics = nn.ModuleDict(
+            {
+                "fitness": metrics.clone(prefix="test/fitness/"),
+                "gene_interaction": metrics.clone(prefix="test/gene_interaction/"),
+            }
+        )
+
+        self.true_values: list[torch.Tensor] = []
+        self.predictions: list[torch.Tensor] = []
+        self.last_logged_best_step: int | None = None
+        self.automatic_optimization = False
+
+    def setup(self, stage: str | None = None) -> None:
+        """Move the model and loss weights to the active device."""
+        self.model = self.model.to(self.device)
+        assert self.combined_loss is not None
+        self.combined_loss.weights = self.combined_loss.weights.to(self.device)
+
+    def update_accumulation_steps(self, epoch: int) -> None:
+        """Update gradient-accumulation steps from the schedule for an epoch."""
+        if self.hparams["grad_accumulation_schedule"] is not None:
+            self.current_accumulation_steps = max(
+                [
+                    steps
+                    for e, steps in self.hparams["grad_accumulation_schedule"].items()
+                    if int(e) <= epoch
+                ],
+                default=1,
+            )
+
+    # return: model output tuple, dynamic from nn.Module
+    def forward(
+        self, x: torch.Tensor, adj_dict: dict[str, torch.Tensor], mask: torch.Tensor
+    ) -> Any:
+        """Run the wrapped model on node features, adjacencies, and mask."""
+        return self.model(x, adj_dict, mask)
+
+    def on_train_start(self) -> None:
+        """Log model parameter count and initialize accumulation steps."""
+        parameter_size = sum(p.numel() for p in self.parameters())
+        self.log("model/parameters_size", float(parameter_size), on_epoch=True)
+        self.update_accumulation_steps(self.current_epoch)
+
+    def _shared_step(
+        self, batch: HeteroData, batch_idx: int, stage: str = "train"
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        # Process input data for dense format
+        x = batch["gene"].x
+        adj_dict = {
+            "physical_interaction": batch["gene", "physical_interaction", "gene"].adj,
+            "regulatory_interaction": batch[
+                "gene", "regulatory_interaction", "gene"
+            ].adj,
+        }
+        mask = batch["gene"].mask
+        y = torch.stack(
+            [
+                batch["gene"].fitness.squeeze(-1),
+                batch["gene"].gene_interaction.squeeze(-1),
+            ],
+            dim=1,
+        )
+
+        # Forward pass with dense GIN model
+        (
+            final_output,
+            graph_link_losses,
+            graph_entropy_losses,
+            graph_cluster_assignments,
+            graph_cluster_outputs,
+            individual_predictions,
+        ) = self(x, adj_dict, mask)
+
+        # Define thresholds for each dimension
+        thresholds = torch.tensor([0.9305, -0.0018], device=y.device)
+
+        # Create binary targets
+        binary_targets = torch.zeros_like(y)
+        for i in range(y.shape[1]):
+            binary_targets[:, i] = torch.where(
+                ~torch.isnan(y[:, i]), (y[:, i] > thresholds[i]).float(), float("nan")
+            )
+
+        # Compute head loss with binary targets
+        assert self.combined_loss is not None
+        head_loss, dim_losses = self.combined_loss(final_output, binary_targets)
+
+        # Compute individual prediction losses with binary targets
+        individual_losses = {
+            graph_name: self.combined_loss(pred, binary_targets)[0]
+            for graph_name, pred in individual_predictions.items()
+        }
+
+        # Compute cluster losses for each graph with binary targets
+        cluster_losses = {}
+        total_cluster_loss: float = 0
+        for graph_name, clusters in graph_cluster_outputs.items():
+            graph_cluster_loss = sum(
+                self.combined_loss(pred, binary_targets)[0] for pred in clusters
+            ) / len(clusters)
+            cluster_losses[graph_name] = graph_cluster_loss
+            total_cluster_loss += graph_cluster_loss
+
+        # Weighted losses
+        total_cluster_loss = total_cluster_loss * self.hparams["cluster_loss_weight"]
+        total_link_loss = (
+            sum(sum(losses) for losses in graph_link_losses.values())
+            * self.hparams["link_pred_loss_weight"]
+        )
+        total_entropy_loss = (
+            sum(sum(losses) for losses in graph_entropy_losses.values())
+            * self.hparams["entropy_loss_weight"]
+        )
+        total_individual_loss = sum(individual_losses.values()) * 0.1
+
+        # Total loss
+        loss = (
+            head_loss
+            + total_cluster_loss
+            + total_link_loss
+            + total_entropy_loss
+            + total_individual_loss
+        )
+
+        if torch.isnan(loss):
+            log_error_information(
+                batch_idx,
+                binary_targets,
+                final_output,
+                x,
+                adj_dict,
+                mask,
+                head_loss,
+                dim_losses,
+                graph_link_losses,
+                graph_entropy_losses,
+                None,  # No pool attention
+                graph_cluster_assignments,
+            )
+            sys.exit(1)
+
+        # Batch size for logging
+        batch_size = x.size(0)
+
+        # Logging
+        self.log(f"{stage}/loss", loss, batch_size=batch_size, sync_dist=True)
+        self.log(f"{stage}/head_loss", head_loss, batch_size=batch_size, sync_dist=True)
+        self.log(
+            f"{stage}/cluster_loss",
+            total_cluster_loss,
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            f"{stage}/fitness_loss",
+            dim_losses[0],
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            f"{stage}/gene_interaction_loss",
+            dim_losses[1],
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            f"{stage}/link_pred_loss",
+            total_link_loss,
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            f"{stage}/entropy_loss",
+            total_entropy_loss,
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            f"{stage}/individual_pred_loss",
+            total_individual_loss,
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+
+        # Log individual graph losses
+        for graph_name, loss_value in individual_losses.items():
+            self.log(
+                f"{stage}/{graph_name}_loss",
+                loss_value,
+                batch_size=batch_size,
+                sync_dist=True,
+            )
+
+        # Update metrics with binary outputs and targets, masking out NaN values
+        metrics = getattr(self, f"{stage}_metrics")
+
+        # Handle fitness metrics
+        fitness_mask = ~torch.isnan(binary_targets[:, 0])
+        if fitness_mask.any():
+            metrics["fitness"](
+                torch.sigmoid(final_output[fitness_mask, 0]),
+                binary_targets[fitness_mask, 0],
+            )
+
+        # Handle gene interaction metrics
+        gi_mask = ~torch.isnan(binary_targets[:, 1])
+        if gi_mask.any():
+            metrics["gene_interaction"](
+                torch.sigmoid(final_output[gi_mask, 1]), binary_targets[gi_mask, 1]
+            )
+
+        if stage in ["val", "test"]:
+            self.true_values.append(binary_targets.detach())
+            self.predictions.append(final_output.detach())
+
+        return loss, final_output, binary_targets
+
+    def training_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
+        """Run a manual-optimization training step with grad accumulation."""
+        loss, _, _ = self._shared_step(batch, batch_idx, "train")
+
+        # Scale loss by accumulation steps
+        if self.hparams["grad_accumulation_schedule"] is not None:
+            loss = loss / self.current_accumulation_steps
+
+        opt = cast(LightningOptimizer, self.optimizers())
+        self.manual_backward(loss)
+
+        if (
+            self.hparams["grad_accumulation_schedule"] is None
+            or (batch_idx + 1) % self.current_accumulation_steps == 0
+        ):
+            if self.hparams["clip_grad_norm"]:
+                nn.utils.clip_grad_norm_(
+                    self.parameters(), max_norm=self.hparams["clip_grad_norm_max_norm"]
+                )
+            opt.step()
+            opt.zero_grad()
+
+        self.log(
+            "learning_rate",
+            cast(LightningOptimizer, self.optimizers()).param_groups[0]["lr"],
+            batch_size=batch["gene"].x.size(0),
+            sync_dist=True,
+        )
+
+        return loss
+
+    def validation_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
+        """Run a validation step and return its loss."""
+        loss, _, _ = self._shared_step(batch, batch_idx, "val")
+        return loss
+
+    def test_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
+        """Run a test step and return its loss."""
+        loss, _, _ = self._shared_step(batch, batch_idx, "test")
+        return loss
+
+    def on_train_epoch_end(self) -> None:
+        """Compute, log, and reset the training metrics for the epoch."""
+        # Compute and log metrics for each metric type
+        for metric_name, metric_dict in self.train_metrics.items():
+            metric_collection = cast(MetricCollection, metric_dict)
+            computed_metrics = metric_collection.compute()
+            for name, value in computed_metrics.items():
+                self.log(f"train/{metric_name}/{name}", value, sync_dist=True)
+            metric_collection.reset()  # Reset metrics after logging
+
+    def on_validation_epoch_end(self) -> None:
+        """Log validation metrics, optionally plot, and save the best model."""
+        # Compute and log metrics for each metric type
+        for metric_name, metric_dict in self.val_metrics.items():
+            metric_collection = cast(MetricCollection, metric_dict)
+            computed_metrics = metric_collection.compute()
+            for name, value in computed_metrics.items():
+                self.log(f"val/{metric_name}/{name}", value, sync_dist=True)
+            metric_collection.reset()  # Reset metrics after logging
+
+        # Skip plotting during sanity check
+        if self.trainer.sanity_checking:
+            return
+
+        # Clear the stored values for the next epoch
+        self.true_values = []
+        self.predictions = []
+
+        # Log model artifact if needed
+        current_global_step = self.global_step
+        ckpt = cast(ModelCheckpoint, self.trainer.checkpoint_callback)
+        assert ckpt is not None
+        best_model_path = ckpt.best_model_path
+        if best_model_path and current_global_step != self.last_logged_best_step:
+            artifact = wandb.Artifact(
+                name=f"model-global_step-{current_global_step}",
+                type="model",
+                description=f"Model on validation epoch end step - {current_global_step}",
+                metadata=dict(self.hparams),
+            )
+            artifact.add_file(best_model_path)
+            wandb.log_artifact(artifact)
+            self.last_logged_best_step = current_global_step
+
+    def compute_prediction_stats(
+        self, true_values: torch.Tensor, predictions: torch.Tensor, stage: str = "val"
+    ) -> None:
+        """Compute binned prediction statistics for the given stage."""
+        # Define the bin edges for each dimension
+        bin_edges = {
+            "fitness": torch.tensor(
+                [-float("inf"), 0] + [i * 0.1 for i in range(1, 13)] + [float("inf")]
+            ),
+            "gene_interaction": torch.tensor(
+                [-float("inf"), -0.2, -0.1, 0, 0.1, 0.2, float("inf")]
+            ),
+        }
+
+        for dim, dim_name in enumerate(["fitness", "gene_interaction"]):
+            # Prepare a table with columns for the range, mean, and standard deviation
+            wandb_table = wandb.Table(columns=["Range", "Mean", "StdDev"])
+
+            dim_pred = predictions[:, dim]
+
+            # Calculate mean and std for each bin and add to the table
+            for i in range(len(bin_edges[dim_name]) - 1):
+                bin_mask = (dim_pred >= bin_edges[dim_name][i]) & (
+                    dim_pred < bin_edges[dim_name][i + 1]
+                )
+                if bin_mask.any():
+                    bin_predictions = dim_pred[bin_mask]
+                    mean_val = bin_predictions.mean().item()
+                    std_val = bin_predictions.std().item()
+                    if i == len(bin_edges[dim_name]) - 2:
+                        range_str = f"{bin_edges[dim_name][i].item():.2f} - inf"
+                    else:
+                        range_str = f"{bin_edges[dim_name][i].item():.2f} - {bin_edges[dim_name][i + 1].item():.2f}"
+                    wandb_table.add_data(range_str, mean_val, std_val)
+
+            # Log the table to wandb
+            wandb.log(
+                {
+                    f"{stage}/{dim_name}_Prediction_Stats_{self.current_epoch}": wandb_table
+                }
+            )
+
+    def on_test_epoch_end(self) -> None:
+        """Compute, log, and reset the test metrics at epoch end."""
+        test_metrics = cast(MetricCollection, self.test_metrics)
+        self.log_dict(test_metrics.compute(), sync_dist=True)
+        test_metrics.reset()
+
+        # Convert lists to tensors
+        true_values = torch.cat(self.true_values, dim=0)
+        predictions = torch.cat(self.predictions, dim=0)
+        self.compute_prediction_stats(true_values, predictions, stage="test")
+
+        # Create and log box plots for both fitness and gene interaction
+        fig_fitness = fitness.box_plot(true_values[:, 0], predictions[:, 0])
+        wandb.log({"test_fitness_binned_values_box_plot": wandb.Image(fig_fitness)})
+        plt.close(fig_fitness)
+
+        fig_gi = genetic_interaction_score.box_plot(
+            true_values[:, 1], predictions[:, 1]
+        )
+        wandb.log({"test_gene_interaction_binned_values_box_plot": wandb.Image(fig_gi)})
+        plt.close(fig_gi)
+
+        # Clear the stored values
+        self.true_values = []
+        self.predictions = []
+
+    def configure_optimizers(self) -> Any:  # Lightning accepts optimizer or config dict
+        """Build the optimizer and learning-rate scheduler from config."""
+        optimizer_class = getattr(optim, self.hparams["optimizer_config"]["type"])
+        optimizer_params = {
+            k: v for k, v in self.hparams["optimizer_config"].items() if k != "type"
+        }
+
+        # Replace 'learning_rate' with 'lr' if present
+        if "learning_rate" in optimizer_params:
+            optimizer_params["lr"] = optimizer_params.pop("learning_rate")
+
+        optimizer = optimizer_class(self.parameters(), **optimizer_params)
+
+        # Remove 'type' from lr_scheduler_config before passing to ReduceLROnPlateau
+        scheduler_params = {
+            k: v for k, v in self.hparams["lr_scheduler_config"].items() if k != "type"
+        }
+        scheduler = ReduceLROnPlateau(optimizer, **scheduler_params)
+
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "monitor": "val/loss",
+                "interval": "epoch",
+                "frequency": 1,
+            },
+        }

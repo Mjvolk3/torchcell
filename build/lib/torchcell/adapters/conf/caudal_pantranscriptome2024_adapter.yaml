@@ -1,0 +1,54 @@
+# COMPACT GENOTYPE (option c). Caudal natural isolates carry ~5k perturbations EACH
+# (sequence variants off S288C) -> ~5M perturbation nodes + edges at 943 isolates.
+# Those per-variant nodes are redundant graph pointers: the full perturbation set is
+# already on the genotype node (its serialized_data + systematic_gene_names lists),
+# and the actual variant sequences live off-graph in the sha256-pinned Peter tarball.
+# So we OMIT the per-perturbation node + perturbation->genotype edge methods for
+# Caudal ONLY -- all 943 isolates and full sequence-level fidelity are kept, and the
+# build drops from >1 h to minutes. To restore first-class perturbation nodes for a
+# stratified subset of isolates later, re-add these two methods.
+cell_adapter:
+  node_methods:
+    - method_name: "experiment reference"
+    - method_name: "genome"
+    - method_name: "experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment reference"
+    - method_name: "media (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media reference"
+    - method_name: "temperature (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature reference"
+    - method_name: "rnaseq expression phenotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "rnaseq expression phenotype reference"
+    - method_name: "dataset"
+    - method_name: "publication (chunked)"
+      memory_reduction_factor: 1.0
+
+  edge_methods:
+    - method_name: "experiment reference to dataset"
+    - method_name: "experiment to dataset (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "experiment reference to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment reference"
+    - method_name: "phenotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genome to experiment reference"
+    - method_name: "phenotype to experiment reference"
+    - method_name: "publication to experiment (chunked)"
+      memory_reduction_factor: 1.0

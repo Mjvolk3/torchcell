@@ -35,6 +35,12 @@ from torchcell.verification.report import (
     Provenance,
     VerificationReport,
 )
+from torchcell.verification.sourced import (
+    ProvenanceGapCensus,
+    ProvenanceGapReason,
+    l1_provenance_gaps,
+    provenance_gap_level_result,
+)
 
 Record = dict[str, Any]
 
@@ -142,21 +148,44 @@ def _genotype_signature(
     )
 
 
+def _study_key(record: Record) -> tuple[str, str]:
+    """Measurement-context discriminator: (source publication, readout ``units``).
+
+    A single-study, single-assay dataset has a constant context, so this does not affect
+    uniqueness. A MULTI-study / multi-assay aggregation (e.g. YeastPhenome) legitimately
+    measures the SAME (strain, condition) in DIFFERENT screens -- a different study, or the
+    same study by a different assay (microarray vs barseq, recorded in ``units``). Each NPV
+    is normalized within its own screen, so those are independent measurements, NOT
+    duplicates -- the context joins the uniqueness key. A true duplicate (same context, same
+    strain, same condition) is still caught.
+    """
+    pub = record.get("publication") or {}
+    units = record["experiment"]["phenotype"].get("units") or ""
+    return (str(pub.get("pubmed_id") or pub.get("doi") or ""), str(units))
+
+
 def _l1_pair_uniqueness(
     records: Sequence[Record], background: frozenset[str]
 ) -> LevelResult:
-    """L1: exactly one record per (screened STRAIN, condition) pair.
+    """L1: exactly one record per (study, screened STRAIN, condition) triple.
 
     The screened unit is the STRAIN (the full genotype signature), not the bare gene: an
     essential gene screened as an allelic series (18 ACT1 ts alleles) contributes 18 distinct
-    strains, not 18 duplicate ACT1 records. Datasets with genuine replicate measurements of an
-    identical (strain, condition) must aggregate them into one record (n_samples); a repeated
-    (strain, condition) here is a real duplicate.
+    strains, not 18 duplicate ACT1 records. Genuine replicate measurements of an identical
+    (strain, condition) WITHIN one study must aggregate into one record (n_samples); a repeat
+    within a study is a real duplicate. The study (source publication) joins the key so that
+    independent near-replicate SCREENS across studies (a curated multi-study aggregation) are
+    not flagged as duplicates -- for a single-study dataset the study is constant and the key
+    reduces to (strain, condition).
     """
     seen: dict[tuple[Any, ...], int] = {}
     for rec in records:
         exp = rec["experiment"]
-        key = (_genotype_signature(exp, background), _condition_signature(exp))
+        key = (
+            _study_key(rec),
+            _genotype_signature(exp, background),
+            _condition_signature(exp),
+        )
         seen[key] = seen.get(key, 0) + 1
     dups = {k: n for k, n in seen.items() if n > 1}
     return LevelResult(
@@ -164,9 +193,9 @@ def _l1_pair_uniqueness(
         name="pair_uniqueness",
         passed=not dups,
         message=(
-            f"{len(seen)} unique (strain, condition) records, one each"
+            f"{len(seen)} unique (study, strain, condition) records, one each"
             if not dups
-            else f"{len(dups)} (strain, condition) pairs appear in multiple records"
+            else f"{len(dups)} (study, strain, condition) triples appear in multiple records"
         ),
         details={"n_pairs": len(seen), "n_duplicated": len(dups)},
     )
@@ -300,6 +329,18 @@ def verify_environment_response_dataset(
     report.add(l0_structural((rec["experiment"] for rec in records), validate))
     report.add(l1_count(len(records), expected_count))
     report.add(_l1_pair_uniqueness(records, background_genes))
+    # Census gaps from BOTH gap-capable carriers (phenotype + environment) per record.
+    report.add(
+        l1_provenance_gaps(
+            {
+                "provenance_gaps": (
+                    rec["experiment"]["phenotype"].get("provenance_gaps") or []
+                )
+                + (rec["experiment"]["environment"].get("provenance_gaps") or [])
+            }
+            for rec in records
+        )
+    )
 
     responses = [
         float(rec["experiment"]["phenotype"]["environment_response"])
@@ -388,19 +429,42 @@ def verify_environment_response_dataset_streaming(
     media_counts: Counter[Any] = Counter()
     no_pert_env: list[tuple[Any, Any]] = []
     screened: set[str] = set()
+    # Provenance-gap census (single-pass; a documented gap is informational, never a fail).
+    gap_records_with = 0
+    gap_total = 0
+    gap_by_reason: Counter[str] = Counter()
+    gap_by_field: Counter[str] = Counter()
+    gap_worklist: set[str] = set()
 
     for i, rec in enumerate(records):
         exp = rec["experiment"]
         n_records += 1
+        gaps = (exp["phenotype"].get("provenance_gaps") or []) + (
+            exp["environment"].get("provenance_gaps") or []
+        )
+        if gaps:
+            gap_records_with += 1
+        for gap in gaps:
+            gap_total += 1
+            reason = str(gap["reason"])
+            field = str(gap["field"])
+            gap_by_reason[reason] += 1
+            gap_by_field[field] += 1
+            if reason == ProvenanceGapReason.deferred_pending_source_review:
+                gap_worklist.add(field)
         try:
             validate(exp)
         except (ValueError, TypeError) as err:
             l0_failures.append({"index": i, "error": str(err)[:500]})
 
-        # L1 uniqueness keys on the STRAIN (genotype signature) x the full CONDITION
-        # signature (environment identity); L4 gene-containment accumulates the bare
-        # screened systematic names.
-        pkey = (_genotype_signature(exp, background_genes), _condition_signature(exp))
+        # L1 uniqueness keys on the STUDY x the STRAIN (genotype signature) x the full
+        # CONDITION signature (environment identity); L4 gene-containment accumulates the
+        # bare screened systematic names.
+        pkey = (
+            _study_key(rec),
+            _genotype_signature(exp, background_genes),
+            _condition_signature(exp),
+        )
         if pkey in pair_seen:
             n_pair_dups += 1
         else:
@@ -472,6 +536,18 @@ def verify_environment_response_dataset_streaming(
                 else f"{n_pair_dups} (strain, condition) records duplicate an existing pair"
             ),
             details={"n_pairs": n_pairs, "n_duplicated": n_pair_dups},
+        )
+    )
+    report.add(
+        provenance_gap_level_result(
+            ProvenanceGapCensus(
+                n_records=n_records,
+                n_records_with_gaps=gap_records_with,
+                n_gaps=gap_total,
+                by_reason=dict(gap_by_reason),
+                by_field=dict(gap_by_field),
+                worklist_fields=sorted(gap_worklist),
+            )
         )
     )
     report.add(

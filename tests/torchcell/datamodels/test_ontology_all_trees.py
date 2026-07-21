@@ -221,6 +221,11 @@ _ENV_FACTORY: dict[type[EnvironmentPerturbation], dict[str, Any]] = {
         magnitude=Concentration(value=1.0, unit=ConcentrationUnit.molar),
         agent=Compound(name="sodium chloride"),
     ),
+    s.BiologicPerturbation: dict(
+        agent_class=s.BiologicAgentClass.protein,
+        name="nisin",
+        concentration=Concentration(value=1.0, unit=ConcentrationUnit.millimolar),
+    ),
 }
 _ENV_ADAPTER: TypeAdapter[EnvironmentPerturbation] = TypeAdapter(
     EnvironmentPerturbationType

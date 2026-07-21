@@ -1078,7 +1078,51 @@ class PhysicalFactor(StrEnum):
     radiation = "radiation"
 
 
-class Compound(ModelStrict):
+class ProvenanceGapMixin(ModelStrict):
+    """Mixin giving a model a ``provenance_gaps`` list of typed field-absences.
+
+    Shared by ``Phenotype``, ``Environment``, and ``Compound`` so a field the source does
+    not carry -- a phenotype ``n_samples`` a secondary curation layer dropped, an
+    environment ``temperature`` YeastPhenome never recorded, a compound ``inchikey`` no
+    resolver could map -- is a documented, typed ABSENCE (with a reason + ``looked_in``)
+    rather than a guess or a silent None. Two invariants keep it honest and
+    machine-checkable: (1) each ``gap.field`` names a real field on the concrete model
+    (checked against ``model_fields``, so inherited fields resolve too); (2) a gapped
+    field must be ``None`` -- you cannot both store a value and declare it missing.
+    ``provenance_gaps`` itself cannot be gapped.
+    """
+
+    provenance_gaps: list[ProvenanceGap] = Field(
+        default_factory=list,
+        description="documented, typed ABSENCES of a sourced value for a field on this "
+        "model (e.g. a phenotype n_samples, or an environment temperature the curation "
+        "layer did not carry). An honest typed gap -- never a guess. The gapped field "
+        "must be None (enforced below).",
+    )
+
+    @model_validator(mode="after")
+    def validate_provenance_gaps(self) -> "ProvenanceGapMixin":
+        """Each ProvenanceGap must name a real field on this model, and that field must
+        be None (you cannot both store a value and declare it missing).
+        """
+        model_fields = type(self).model_fields
+        for gap in self.provenance_gaps:
+            if gap.field not in model_fields:
+                raise ValueError(
+                    f"provenance_gap field '{gap.field}' is not a field of "
+                    f"{type(self).__name__}"
+                )
+            if gap.field == "provenance_gaps":
+                raise ValueError("provenance_gaps cannot itself be gapped")
+            if getattr(self, gap.field) is not None:
+                raise ValueError(
+                    f"field '{gap.field}' has a ProvenanceGap but is not None "
+                    "(cannot both store a value and declare it missing)"
+                )
+        return self
+
+
+class Compound(ProvenanceGapMixin):
     """Chemical identity of a small molecule, keyed by a canonical InChIKey.
 
     Identity is carried by stable, resolvable identifiers -- not the human name alone.
@@ -1404,52 +1448,57 @@ class EnvironmentPhysicalPerturbation(EnvironmentPerturbation, ModelStrict):
     )
 
 
-EnvironmentPerturbationType = (
-    SmallMoleculePerturbation | EnvironmentPhysicalPerturbation
-)
+class BiologicAgentClass(StrEnum):
+    """Material class of a proteinaceous / biologic agent added to the medium.
 
+    Identity of a biologic is carried by sequence / UniProt, NOT an InChIKey -- which is
+    exactly why it cannot be a ``SmallMoleculePerturbation``.
 
-class ProvenanceGapMixin(ModelStrict):
-    """Mixin giving a model a ``provenance_gaps`` list of typed field-absences.
-
-    Shared by ``Phenotype`` and ``Environment`` so a field the source does not carry
-    -- a phenotype ``n_samples`` a secondary curation layer dropped, an environment
-    ``temperature`` YeastPhenome never recorded -- is a documented, typed ABSENCE (with
-    a reason + ``looked_in``) rather than a guess or a silent None. Two invariants keep
-    it honest and machine-checkable: (1) each ``gap.field`` names a real field on the
-    concrete model (checked against ``model_fields``, so inherited fields resolve too);
-    (2) a gapped field must be ``None`` -- you cannot both store a value and declare it
-    missing. ``provenance_gaps`` itself cannot be gapped.
+    - ``peptide``: a short (ribosomal or synthetic) peptide, e.g. an antimicrobial plant
+      defensin.
+    - ``protein``: a full-length protein / enzyme.
+    - ``antibody``: an immunoglobulin or antibody fragment.
+    - ``toxin``: a proteinaceous toxin as an ADDED agent (never a phenotypic consequence).
     """
 
-    provenance_gaps: list[ProvenanceGap] = Field(
-        default_factory=list,
-        description="documented, typed ABSENCES of a sourced value for a field on this "
-        "model (e.g. a phenotype n_samples, or an environment temperature the curation "
-        "layer did not carry). An honest typed gap -- never a guess. The gapped field "
-        "must be None (enforced below).",
+    peptide = "peptide"
+    protein = "protein"
+    antibody = "antibody"
+    toxin = "toxin"
+
+
+class BiologicPerturbation(EnvironmentPerturbation, ModelStrict):
+    """An added BIOLOGIC agent (peptide / protein / antibody / toxin).
+
+    Use when the medium-borne agent is proteinaceous rather than a small molecule: its
+    identity is a sequence / UniProt accession, not an InChIKey, so a ``Compound`` (keyed
+    by InChIKey) cannot represent it. Names the EDIT (the agent ADDED); whether the strain
+    is sensitive or tolerant is an ``EnvironmentResponsePhenotype`` property, never part of
+    the edit (M1). Mirrors ``SmallMoleculePerturbation`` on the biologic axis.
+    """
+
+    perturbation_type: Literal["biologic"] = "biologic"
+    description: str = (
+        "Biologic (peptide/protein/antibody/toxin) agent added to the medium"
+    )
+    agent_class: BiologicAgentClass = Field(
+        description="material class of the biologic agent added"
+    )
+    name: str = Field(description="agent name, e.g. 'plant defensin DmAMP1'")
+    uniprot_id: str | None = Field(
+        default=None, description="UniProt accession of the agent; None if unmapped"
+    )
+    sequence: str | None = Field(
+        default=None, description="amino-acid sequence of the agent; None if unknown"
+    )
+    concentration: Concentration = Field(
+        description="dose (numeric value+unit and/or basis)"
     )
 
-    @model_validator(mode="after")
-    def validate_provenance_gaps(self) -> "ProvenanceGapMixin":
-        """Each ProvenanceGap must name a real field on this model, and that field must
-        be None (you cannot both store a value and declare it missing).
-        """
-        model_fields = type(self).model_fields
-        for gap in self.provenance_gaps:
-            if gap.field not in model_fields:
-                raise ValueError(
-                    f"provenance_gap field '{gap.field}' is not a field of "
-                    f"{type(self).__name__}"
-                )
-            if gap.field == "provenance_gaps":
-                raise ValueError("provenance_gaps cannot itself be gapped")
-            if getattr(self, gap.field) is not None:
-                raise ValueError(
-                    f"field '{gap.field}' has a ProvenanceGap but is not None "
-                    "(cannot both store a value and declare it missing)"
-                )
-        return self
+
+EnvironmentPerturbationType = (
+    SmallMoleculePerturbation | EnvironmentPhysicalPerturbation | BiologicPerturbation
+)
 
 
 class Environment(ProvenanceGapMixin):
@@ -2659,6 +2708,32 @@ class ProteinAbundanceExperiment(Experiment, ModelStrict):
     phenotype: ProteinAbundancePhenotype
 
 
+class AssayType(StrEnum):
+    """HOW an environment-response readout was physically measured (experimental design).
+
+    Orthogonal to ``MeasurementType`` (WHAT the number is): a pooled Bar-seq assay can
+    yield a ``log2_ratio`` OR a ``z_score``, so the two axes cross. The free-text
+    ``units`` string is NOT a substitute for this typed method axis.
+
+    - ``pooled_competitive_growth_barcode``: pooled competitive growth read out by
+      molecular barcodes (HIP/HOP, Bar-seq).
+    - ``colony_size_array``: pinned colony-size array (SGA / condition-SGA).
+    - ``spot_dilution``: serial-dilution spot growth on plates.
+    - ``halo_zone``: halo / zone-of-inhibition (disk-diffusion) assay.
+    - ``liquid_od_growth``: liquid-culture optical-density growth curve / MIC.
+    - ``biosensor_readout``: a biosensor / reporter signal (e.g. fluorescence).
+    - ``other``: a measured assay not covered above (record detail in ``units``).
+    """
+
+    pooled_competitive_growth_barcode = "pooled_competitive_growth_barcode"
+    colony_size_array = "colony_size_array"
+    spot_dilution = "spot_dilution"
+    halo_zone = "halo_zone"
+    liquid_od_growth = "liquid_od_growth"
+    biosensor_readout = "biosensor_readout"
+    other = "other"
+
+
 class MeasurementType(StrEnum):
     """What an environment-response readout number IS, so heterogeneous chemogenomic
     scores are never silently compared.
@@ -2695,8 +2770,10 @@ class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
     ``FitnessPhenotype`` -- a strictly positive ko/wt growth-rate RATIO that clamps
     non-positive values to 0 -- because this readout is a SIGNED score (log2 ratio,
     z-score, sensitivity score) that is routinely NEGATIVE, or a qualitative
-    ``category``. ``measurement_type`` records WHAT the number is; ``units`` gives its
-    human-readable definition. The uncertainty ontology mirrors ``FitnessPhenotype``:
+    ``category``. ``measurement_type`` records WHAT the number is, ``assay_type`` records
+    HOW it was measured (the experimental design), and ``units`` gives its human-readable
+    definition -- ``units`` is NOT a substitute for the typed ``assay_type`` axis. The
+    uncertainty ontology mirrors ``FitnessPhenotype``:
     ``environment_response_se`` is the DERIVED, ML-facing SE (auto-filled from the
     source-reported uncertainty + its type via ``derive_se``).
     """
@@ -2707,6 +2784,13 @@ class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
 
     measurement_type: MeasurementType = Field(
         description="what the response number is (log2_ratio, z_score, ...)"
+    )
+    assay_type: AssayType | None = Field(
+        default=None,
+        description="HOW the response was measured (experimental design); orthogonal to "
+        "measurement_type (WHAT the number is). Free-text units is NOT a substitute for "
+        "this typed method axis. None until sourced; a genuine absence is a ProvenanceGap "
+        "on 'assay_type'.",
     )
     environment_response: float | None = Field(
         default=None,

@@ -303,3 +303,23 @@ However, we intentionally avoid this distinction for now:
 **Future work**: Could add typed replicate counts as optional metadata fields once we have reliable NLP extraction, but the primary `n_replicates` field should remain a simple count.
 
 Related: [[torchcell.datasets.scerevisiae.kemmeren2014]] [[torchcell.datasets.scerevisiae.sameith2015]]
+
+## 2026.07.20 - UI-1 env-schema foundation (assay_type / BiologicPerturbation / Compound gap)
+
+Additive, non-breaking schema extension (UI-1 of a 3-unit env/chemogenomic audit
+follow-up; plan [[plan.env-schema-assay-compound-biologic.2026.07.20]]):
+
+- **`AssayType` enum + nullable `assay_type` on `EnvironmentResponsePhenotype`** -- records
+  HOW a response was measured (experimental design), orthogonal to `MeasurementType` (WHAT
+  the number is). Formalizes the method axis previously smuggled into free-text `units`.
+- **`BiologicAgentClass` + `BiologicPerturbation`** added as a third `EnvironmentPerturbationType`
+  union leaf (`Literal["biologic"]`) -- peptide/protein/antibody/toxin agents whose identity is
+  sequence/UniProt, not an InChIKey. Required the coordinated `_ENV_FACTORY` entry in
+  `test_ontology_all_trees.py`.
+- **`Compound` now inherits `ProvenanceGapMixin`** (relocated above `Compound`) -- AFFORDANCE
+  ONLY, no structure-or-gap validator this unit. A `Compound` with no structure and no gap
+  still constructs.
+
+Follow-ups: UI-2 = compound-identity resolver + gap ENFORCEMENT on `Compound` + reconcile
+`Compound` gaps vs `Media.open_gaps`. UI-3 = `assay_type` population across loaders + the L1
+uniqueness-key decision + the full DB rebuild the schema-impact gate flags as breaking.

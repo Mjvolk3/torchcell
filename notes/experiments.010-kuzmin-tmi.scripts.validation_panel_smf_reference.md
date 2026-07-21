@@ -71,3 +71,10 @@ the earlier singles-SD comparison looked inflated. The doubles
 
 Related: [[experiments.010-kuzmin-tmi.scripts.optimized_doubles_setcover]],
 [[experiments.010-kuzmin-tmi.scripts.constructed_10_dmf_reference]].
+
+## 2026.07.20 - Uncertainty Typed Per Source (SMF)
+
+Added `*_uncertainty_type` / `*_n_samples` / `*_sample_unit` / `*_se` columns (detail in the
+"Uncertainty typing" section above) so the SMF uncertainty is unambiguous where used — the
+three sources are three different statistics (Costanzo bootstrap SE, Kuzmin2018 none, Kuzmin2020
+sample SD), and SE is derived via the schema's `derive_se` so it cannot diverge from the ontology.

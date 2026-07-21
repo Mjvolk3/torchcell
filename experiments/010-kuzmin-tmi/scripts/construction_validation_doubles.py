@@ -33,6 +33,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
+from matplotlib.ticker import MultipleLocator
 
 from torchcell.datasets.scerevisiae.costanzo2016 import N_SAMPLES_DOUBLE_MUTANT
 from torchcell.utils import PLOT_PALETTE, PANEL_WIDTHS_MM, mm_to_in, savefig_true_size_svg
@@ -140,9 +141,14 @@ def plot(sel: pd.DataFrame) -> None:
     for thr in (EPS_THRESH, -EPS_THRESH):
         ax.axhline(thr, color="0.75", ls="--", lw=0.5)
     ax.margins(x=0.08, y=0.10)  # room so labels/rings do not clip the frame
-    ax.set_xlabel("Double-mutant fitness (Costanzo2016)")
-    ax.set_ylabel("Digenic interaction ε (Costanzo2016)")
-    ax.set_title("Doubles for construction + assay validation", fontsize=7)
+    # tenth gridlines on the DMF (0-1 metric) axis: line every 0.1, label every 0.2
+    ax.xaxis.set_major_locator(MultipleLocator(0.2))
+    ax.xaxis.set_minor_locator(MultipleLocator(0.1))
+    ax.tick_params(which="minor", length=0)
+    ax.grid(which="both", axis="x", lw=0.3, color="0.9", zorder=0)
+    ax.set_xlabel("Double-mutant fitness")
+    ax.set_ylabel("Digenic interaction ε")
+    ax.set_title("Doubles for construction + assay validation (Costanzo2016)", fontsize=7)
     ax.legend(frameon=True, fontsize=5.5, loc="upper left")
     for sp in ("top", "right", "left", "bottom"):
         ax.spines[sp].set_visible(True)

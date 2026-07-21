@@ -77,8 +77,8 @@ import lmdb
 from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
+from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    Compound,
     Concentration,
     ConcentrationUnit,
     DoseBasis,
@@ -287,7 +287,7 @@ class _Hillenmeyer2008Base(ExperimentDataset):
             nutrient = _DROPOUT_RE.match(cl)
             name = nutrient.group(1).strip() if nutrient else cl
             pert = EnvironmentPhysicalPerturbation(
-                factor=PhysicalFactor.nutrient_dropout, agent=Compound(name=name)
+                factor=PhysicalFactor.nutrient_dropout, agent=resolved_compound(name)
             )
             return [pert], _BASE_MEDIUM, _BASELINE_TEMPERATURE_C
 
@@ -296,19 +296,19 @@ class _Hillenmeyer2008Base(ExperimentDataset):
 
         if low == "yp glycerol":
             pert = EnvironmentPhysicalPerturbation(
-                factor=PhysicalFactor.carbon_source, agent=Compound(name="glycerol")
+                factor=PhysicalFactor.carbon_source, agent=resolved_compound("glycerol")
             )
             return [pert], _BASE_MEDIUM, _BASELINE_TEMPERATURE_C
 
         perts: list[Any] = [
             SmallMoleculePerturbation(
-                compound=Compound(name=cl), concentration=_concentration(conc, unit)
+                compound=resolved_compound(cl), concentration=_concentration(conc, unit)
             )
         ]
         if cond2.strip():
             perts.append(
                 SmallMoleculePerturbation(
-                    compound=Compound(name=cond2.strip()),
+                    compound=resolved_compound(cond2.strip()),
                     concentration=_concentration(conc2, unit2),
                 )
             )

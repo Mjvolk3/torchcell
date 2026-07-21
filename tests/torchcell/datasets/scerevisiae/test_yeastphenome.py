@@ -162,3 +162,28 @@ def test_near_replicate_screens_are_distinct_records(dataset):
     assert len(matches) == 2  # microarray + barseq
     assert "microarray" in " ".join(matches) and "barseq" in " ".join(matches)
     assert matches[0] != matches[1]  # distinct readout -> distinct records
+
+
+def test_parse_condition_defensin_is_peptide_biologic():
+    """The four PMID-31451498 plant defensins parse to a peptide BiologicPerturbation
+    (sequence-identified, NOT a small molecule) -- the audit DEFECT fix. Pure unit test
+    of ``_parse_condition`` (no build/network).
+    """
+    from torchcell.datamodels.schema import (
+        BiologicAgentClass,
+        BiologicPerturbation,
+        SmallMoleculePerturbation,
+    )
+
+    for name in ("DmAMP1", "NaD1", "NbD6", "SBI6"):
+        pert = yp_mod._parse_condition(f"{name} [10 uM]")
+        assert isinstance(pert, BiologicPerturbation)
+        assert pert.agent_class == BiologicAgentClass.peptide
+        assert pert.name == name
+        assert pert.concentration.value == 10.0
+
+    # a normal dosed compound still routes to a resolver-filled SmallMoleculePerturbation
+    small = yp_mod._parse_condition("furfural [10 mM]")
+    assert isinstance(small, SmallMoleculePerturbation)
+    assert small.compound.name == "furfural"
+    assert small.compound.inchikey is not None  # resolved via the pinned table

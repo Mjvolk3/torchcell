@@ -93,8 +93,8 @@ import lmdb
 from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
+from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    Compound,
     Concentration,
     ConcentrationUnit,
     Environment,
@@ -258,8 +258,8 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
             temperature=Temperature(value=30.0),
             perturbations=[
                 SmallMoleculePerturbation(
-                    compound=Compound(
-                        name=cell["compound_name"],
+                    compound=resolved_compound(
+                        cell["compound_name"],
                         pubchem_cid=cell["pubchem_cid"],
                         smiles=cell["smiles"],
                     ),

@@ -112,8 +112,8 @@ import requests
 from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
+from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    Compound,
     Concentration,
     ConcentrationUnit,
     DoseBasis,
@@ -452,6 +452,7 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             study = match.group("study")
             n_samples = 2 if match.group("prefix") == "Ad." else 1
             compound_name = self._compound_name(cmb, conc, assay, study, meta)
+            has_common_name = (meta.get(cmb) or {}).get("common_name") is not None
             smiles = (meta.get(cmb) or {}).get("smiles")
             if smiles is None:
                 # ENCODABLE-COMPOUNDS-ONLY build: ~92% of the atlas is proprietary Novartis
@@ -471,7 +472,11 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                 temperature=Temperature(value=30.0),
                 perturbations=[
                     SmallMoleculePerturbation(
-                        compound=Compound(name=compound_name, smiles=smiles),
+                        compound=resolved_compound(
+                            compound_name,
+                            smiles=smiles,
+                            known_proprietary=not has_common_name,
+                        ),
                         concentration=Concentration(
                             value=conc,
                             unit=ConcentrationUnit.micromolar,

@@ -68,6 +68,7 @@ class RetrievalMethod(StrEnum):
     direct_url = "direct_url"
     zenodo = "zenodo"
     radiant_endpoint = "radiant_endpoint"
+    pubchem_api = "pubchem_api"
 
 
 class SourceCheck(BaseModel):

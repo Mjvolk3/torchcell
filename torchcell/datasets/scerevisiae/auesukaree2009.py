@@ -103,8 +103,9 @@ import lmdb
 from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
+from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    Compound,
+    BiologicPerturbation,
     Concentration,
     ConcentrationUnit,
     Environment,
@@ -401,13 +402,15 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
         perturbation -- its edit is the raised ``Environment.temperature`` alone (M2).
         """
         perturbations: list[
-            SmallMoleculePerturbation | EnvironmentPhysicalPerturbation
+            SmallMoleculePerturbation
+            | EnvironmentPhysicalPerturbation
+            | BiologicPerturbation
         ] = []
         if spec["kind"] == "small_molecule":
             value, unit = spec["concentration"]
             perturbations.append(
                 SmallMoleculePerturbation(
-                    compound=Compound(name=spec["compound_name"]),
+                    compound=resolved_compound(spec["compound_name"]),
                     concentration=Concentration(
                         value=value, unit=ConcentrationUnit(unit)
                     ),

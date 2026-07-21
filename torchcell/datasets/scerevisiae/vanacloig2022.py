@@ -51,8 +51,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
+from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    Compound,
     Concentration,
     DoseBasis,
     Environment,
@@ -299,7 +299,7 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
             temperature=Temperature(value=30.0),
             perturbations=[
                 SmallMoleculePerturbation(
-                    compound=Compound(name=compound),
+                    compound=resolved_compound(compound),
                     concentration=Concentration(basis=DoseBasis.IC30),
                 )
             ],

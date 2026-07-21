@@ -59,8 +59,8 @@ import lmdb
 from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
+from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    Compound,
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
@@ -199,7 +199,7 @@ class CrispriMormino2022Dataset(ExperimentDataset):
             temperature=Temperature(value=30.0),
             perturbations=[
                 SmallMoleculePerturbation(
-                    compound=Compound(name="acetic acid"),
+                    compound=resolved_compound("acetic acid"),
                     concentration=Concentration(
                         value=_ACETIC_ACID_MM, unit=ConcentrationUnit.millimolar
                     ),

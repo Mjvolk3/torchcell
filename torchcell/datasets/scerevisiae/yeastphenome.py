@@ -63,8 +63,10 @@ from typing import Any, Literal
 import lmdb
 
 from torchcell.data import ExperimentDataset, post_process
+from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    Compound,
+    BiologicAgentClass,
+    BiologicPerturbation,
     Concentration,
     ConcentrationUnit,
     Environment,
@@ -126,6 +128,13 @@ _UNIT_MAP = {
     "g/L": ConcentrationUnit.g_per_l,
     "g/l": ConcentrationUnit.g_per_l,
 }
+
+# Plant-defensin conditions (PMID 31451498): sequence-identified antimicrobial
+# PEPTIDES, not small molecules -- their identity is a sequence, not an InChIKey, so a
+# ``Compound``/``SmallMoleculePerturbation`` cannot represent them. Retyped to
+# ``BiologicPerturbation(agent_class=peptide)`` (audit DEFECT fix).
+_DEFENSIN_NAMES = {"dmamp1", "nad1", "nbd6", "sbi6"}
+
 # Rich (non-synthetic) base media; synthetic-defined media are is_synthetic=True.
 _RICH_MEDIA = {"YPD", "YPAD", "YEPD", "YP", "YPG", "YPGal", "YP4D"}
 _SYNTHETIC_MEDIA = {"SD", "SC", "YNB", "CSM", "MM", "SynBase"}
@@ -433,12 +442,16 @@ def _column_meta(col_header: str) -> dict[str, str | None] | None:
     }
 
 
-def _parse_condition(condition: str) -> SmallMoleculePerturbation | None:
-    """Parse a CLEAN single dosed-compound condition; None if not encodable (-> drop-and-log).
+def _parse_condition(
+    condition: str,
+) -> SmallMoleculePerturbation | BiologicPerturbation | None:
+    """Parse a CLEAN single dosed-agent condition; None if not encodable (-> drop-and-log).
 
-    Handles ``<compound> [<value> <unit>]`` only. Physical stresses, dose ranges,
-    multi-component conditions, and unmapped units return None and are dropped-and-logged --
-    never guessed, never mis-parsed.
+    Handles ``<agent> [<value> <unit>]`` only. The four plant defensins (PMID 31451498)
+    are retyped to a peptide ``BiologicPerturbation`` BEFORE the small-molecule path; every
+    other agent becomes a resolver-routed ``SmallMoleculePerturbation`` (fill-or-gap).
+    Physical stresses, dose ranges, multi-component conditions, and unmapped units return
+    None and are dropped-and-logged -- never guessed, never mis-parsed.
     """
     m = _DOSE_RE.match(condition.strip())
     if m is None:
@@ -446,9 +459,16 @@ def _parse_condition(condition: str) -> SmallMoleculePerturbation | None:
     unit = _UNIT_MAP.get(m.group("unit").strip())
     if unit is None:
         return None
+    name = m.group("name").strip()
+    concentration = Concentration(value=float(m.group("val")), unit=unit)
+    if name.lower() in _DEFENSIN_NAMES:
+        return BiologicPerturbation(
+            agent_class=BiologicAgentClass.peptide,
+            name=name,
+            concentration=concentration,
+        )
     return SmallMoleculePerturbation(
-        compound=Compound(name=m.group("name").strip()),
-        concentration=Concentration(value=float(m.group("val")), unit=unit),
+        compound=resolved_compound(name), concentration=concentration
     )
 
 
@@ -534,9 +554,11 @@ class YeastPhenomeDataset(ExperimentDataset):
         return header, rows
 
     def _environment(
-        self, media: Media, perturbation: SmallMoleculePerturbation
+        self,
+        media: Media,
+        perturbation: SmallMoleculePerturbation | BiologicPerturbation,
     ) -> Environment:
-        """Environment carrying one dosed compound; temperature is a typed gap."""
+        """Environment carrying one dosed agent; temperature is a typed gap."""
         return Environment(
             media=media,
             temperature=None,  # not carried by YeastPhenome curation -> gap below

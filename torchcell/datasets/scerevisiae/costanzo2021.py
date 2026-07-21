@@ -77,8 +77,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
+from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    Compound,
     Concentration,
     ConcentrationUnit,
     Environment,
@@ -277,11 +277,11 @@ class EnvChemgenCostanzo2021Dataset(ExperimentDataset):
             perturbation: Any = EnvironmentPhysicalPerturbation(
                 factor=PhysicalFactor.carbon_source,
                 magnitude=concentration,
-                agent=Compound(name=spec["name"]),
+                agent=resolved_compound(spec["name"]),
             )
         else:
             perturbation = SmallMoleculePerturbation(
-                compound=Compound(name=spec["name"]), concentration=concentration
+                compound=resolved_compound(spec["name"]), concentration=concentration
             )
         return Environment(
             media=media,

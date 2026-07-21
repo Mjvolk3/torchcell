@@ -78,8 +78,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
+from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    Compound,
     Concentration,
     ConcentrationUnit,
     Environment,
@@ -433,7 +433,7 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
                 temperature=temperature,
                 perturbations=[
                     SmallMoleculePerturbation(
-                        compound=Compound(name="sodium chloride"),
+                        compound=resolved_compound("sodium chloride"),
                         concentration=Concentration(
                             value=NACL_MOLAR, unit=ConcentrationUnit.molar
                         ),

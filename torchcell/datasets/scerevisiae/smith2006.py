@@ -87,8 +87,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, post_process
+from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
-    Compound,
     Concentration,
     ConcentrationUnit,
     Environment,
@@ -345,7 +345,7 @@ class FattyAcidSmith2006Dataset(ExperimentDataset):
             temperature=Temperature(value=30.0),
             perturbations=[
                 SmallMoleculePerturbation(
-                    compound=Compound(name=spec["compound_name"]),
+                    compound=resolved_compound(spec["compound_name"]),
                     concentration=Concentration(
                         value=value, unit=ConcentrationUnit(unit)
                     ),

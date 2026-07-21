@@ -114,32 +114,41 @@ def annotate_tiers(df: pd.DataFrame, triples: list[frozenset]) -> pd.DataFrame:
 
 
 def plot(sel: pd.DataFrame) -> None:
-    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["wide"]), mm_to_in(85)))
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["wide"]), mm_to_in(85)),
+                           layout="constrained")
     for tier, color in [("coverage", COLOR_COV), ("validation", COLOR_VAL)]:
         s = sel[sel.tier == tier]
         ax.errorbar(s.DmfCostanzo2016_fitness, s.eps, xerr=s.DmfCostanzo2016_std,
                     fmt="o", ms=4, lw=0, elinewidth=0.6, capsize=1.5, color=color,
                     label=f"{tier} (n={len(s)})", zorder=3)
-    # ring the significant-interaction doubles
+    # ring the significant-interaction doubles (tight so it does not cover error bars)
     sig = sel[sel.significant]
-    ax.scatter(sig.DmfCostanzo2016_fitness, sig.eps, s=90, facecolors="none",
-               edgecolors="black", linewidths=0.7, zorder=4,
+    ax.scatter(sig.DmfCostanzo2016_fitness, sig.eps, s=40, facecolors="none",
+               edgecolors="black", linewidths=0.6, zorder=4,
                label=f"significant ε (n={len(sig)})")
-    # label each validation double with its gene pair
+    # label each validation double; place text INTO the plot (away from the near edge)
+    xmid = sel.DmfCostanzo2016_fitness.median()
     for _, r in sel[sel.tier == "validation"].iterrows():
+        right = r.DmfCostanzo2016_fitness > xmid
+        top = r.eps > 0.05
+        dx, ha = (-5, "right") if right else (5, "left")
+        dy, va = (-6, "top") if top else (5, "bottom")
         ax.annotate(f"{r.gene1}+{r.gene2}", (r.DmfCostanzo2016_fitness, r.eps),
-                    textcoords="offset points", xytext=(4, 4), fontsize=5, color="0.2")
+                    textcoords="offset points", xytext=(dx, dy), ha=ha, va=va,
+                    fontsize=5, color="0.2")
     ax.axhline(0.0, color="0.4", ls=":", lw=0.8)
     for thr in (EPS_THRESH, -EPS_THRESH):
         ax.axhline(thr, color="0.75", ls="--", lw=0.5)
+    ax.margins(x=0.08, y=0.10)  # room so labels/rings do not clip the frame
     ax.set_xlabel("Double-mutant fitness (Costanzo2016)")
     ax.set_ylabel("Digenic interaction ε (Costanzo2016)")
     ax.set_title("Doubles for construction + assay validation", fontsize=7)
-    ax.legend(frameon=True, fontsize=5.5, loc="lower right")
+    ax.legend(frameon=True, fontsize=5.5, loc="upper left")
     for sp in ("top", "right", "left", "bottom"):
         ax.spines[sp].set_visible(True)
         ax.spines[sp].set_linewidth(0.5)
-    fig.tight_layout()
+    # constrained_layout (set at subplots) fits all labels inside the fixed-size
+    # figure, so neither the PNG nor the true-size SVG clips the axis titles.
     fig.savefig(osp.join(OUT_DIR, "construction_validation_doubles.png"), dpi=200)
     savefig_true_size_svg(fig, osp.join(OUT_DIR, "construction_validation_doubles.svg"))
     plt.close(fig)

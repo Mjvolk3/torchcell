@@ -169,6 +169,8 @@ module = [
     "networkx", "networkx.*",
     "openpyxl", "openpyxl.*",
     "owlready2", "owlready2.*",
+    "pandas", "pandas.*",
+    "pydantic", "pydantic.*",
     "plotly", "plotly.*",
     "psutil", "psutil.*",
     "pytorch_metric_learning", "pytorch_metric_learning.*",
@@ -176,6 +178,7 @@ module = [
     "rustworkx", "rustworkx.*",
     "scipy", "scipy.*",
     "seaborn", "seaborn.*",
+    "skimage", "skimage.*",
     "sklearn", "sklearn.*",
     "sortedcontainers", "sortedcontainers.*",
     "sympy", "sympy.*",
@@ -193,6 +196,14 @@ ignore_missing_imports = true
 # experiments/DEPRECATED_*). Kept for history but not gated; do not maintain.
 module = "torchcell.trainers.graph_convolution_regression"
 ignore_errors = true
+
+[[tool.mypy.overrides]]
+# pydantic is resolved as Any in the mypy env (untyped-import override above), so
+# BaseModel subclasses trip disallow_subclassing_any. This is an env artifact, not a
+# code defect (pydantic ships types when installed); relax only subclassing for the
+# SGA pydantic-schema module so its models stay otherwise strict-gated.
+module = "torchcell.sga.models"
+disallow_subclassing_any = false
 
 [tool.pytest.ini_options]
 markers = [

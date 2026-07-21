@@ -5,6 +5,10 @@
             "path": "."
         },
         {
+            "name": "sgatools (reference: gitter colony IA)",
+            "path": "../sgatools"
+        },
+        {
             "name": "iBioFoundry-AI",
             "path": "../iBioFoundry-AI"
         },

@@ -76,41 +76,63 @@ def setcover(triples: list[frozenset]) -> set[tuple]:
     return set(chosen)
 
 
-def load_doubles() -> pd.DataFrame:
+LOW_DMF = 0.75  # "low-DMF" band for choosing a tight low-fitness anchor
+
+
+def load_doubles(triples: list[frozenset]) -> pd.DataFrame:
+    """ALL 45 within-10 pairs (C(10,2)) -- kept even when Costanzo is unmeasured,
+    with Kuzmin DMF alongside so cross-dataset disagreement is visible."""
     df = pd.read_csv(osp.join(INF3, "doubles_table_panel12_k200_queried.csv"))
     df = df[df.apply(lambda r: {r.gene1, r.gene2}.issubset(TEN), axis=1)].copy()
     g = df.apply(lambda r: tuple(sorted((r.gene1, r.gene2))), axis=1)
     df["gene1"], df["gene2"] = [x[0] for x in g], [x[1] for x in g]
-    df = df.dropna(subset=["DmfCostanzo2016_fitness"]).reset_index(drop=True)
+    df = df.reset_index(drop=True)
     df["pair"] = list(zip(df.gene1, df.gene2))
     df["eps"] = df["DmiCostanzo2016_gene_interaction"]
     df["p"] = df["DmiCostanzo2016_gene_interaction_p_value"]
     df["significant"] = (df.p < P_THRESH) & (df.eps.abs() > EPS_THRESH)
     df["se"] = df["DmfCostanzo2016_std"] / np.sqrt(N_SAMPLES_DOUBLE_MUTANT)
+    df["measured"] = df["DmfCostanzo2016_fitness"].notna()
+    df["n_triples_enabled"] = df.pair.apply(
+        lambda pr: sum(set(pr).issubset(t) for t in triples)
+    )
     return df
 
 
 def annotate_tiers(df: pd.DataFrame, triples: list[frozenset]) -> pd.DataFrame:
-    """Tag EVERY measured within-10 double as coverage / validation / other."""
-    coverage = setcover(triples)
-    # validation = significant interactions + DMF extremes not already covered
-    sig = set(df.loc[df.significant, "pair"])
-    lo = {df.loc[df.DmfCostanzo2016_fitness.idxmin(), "pair"]}
-    hi = {df.loc[df.DmfCostanzo2016_fitness.idxmax(), "pair"]}
-    validation = (sig | lo | hi) - coverage
+    """Tag every within-10 double: coverage / validation / novel / other.
 
-    def tier_of(p: tuple) -> str:
+    validation = the 3 significant interactions + the highest-DMF double + a LOW-DMF
+    anchor chosen for QUALITY not just extremeness: among low-DMF (<0.75) measured
+    doubles, prefer one that also reconstructs triples, breaking ties by lowest SD
+    (tightest reference). This avoids the noisy DMF-minimum (YGL087C+YJR060W, SD 0.172)
+    in favour of YER079W+YJR060W (covers 3 triples, SD 0.018).
+    novel = pairs unmeasured by Costanzo AND Kuzmin -- construction candidates.
+    """
+    coverage = setcover(triples)
+    meas = df[df.measured]
+    sig = set(meas.loc[meas.significant, "pair"])
+    hi = {meas.loc[meas.DmfCostanzo2016_fitness.idxmax(), "pair"]}
+
+    low = meas[meas.DmfCostanzo2016_fitness < LOW_DMF]
+    covering = low[low.n_triples_enabled > 0]
+    pool = covering if len(covering) else low
+    low_anchor = {pool.loc[pool.DmfCostanzo2016_std.idxmin(), "pair"]}
+
+    validation = (sig | hi | low_anchor) - coverage
+    novel = set(df.loc[~df.measured, "pair"])  # unmeasured everywhere
+
+    def tier_of(p: tuple, measured: bool) -> str:
         if p in coverage:
             return "coverage"
         if p in validation:
             return "validation"
+        if p in novel:
+            return "novel"
         return "other"
 
     df = df.copy()
-    df["tier"] = df.pair.apply(tier_of)
-    df["n_triples_enabled"] = df.pair.apply(
-        lambda pr: sum(set(pr).issubset(t) for t in triples)
-    )
+    df["tier"] = [tier_of(p, m) for p, m in zip(df.pair, df.measured)]
     return df
 
 
@@ -160,12 +182,13 @@ def plot(sel: pd.DataFrame) -> None:
     plt.close(fig)
 
 
-TIER_COLOR = {"coverage": COLOR_COV, "validation": COLOR_VAL, "other": COLOR_OTHER}
+TIER_COLOR = {"coverage": COLOR_COV, "validation": COLOR_VAL,
+              "novel": PLOT_PALETTE[0], "other": COLOR_OTHER}
 
 
 def plot_forest(df: pd.DataFrame) -> None:
-    """All 45 within-10 doubles ranked by DMF, colored by tier."""
-    d = df.sort_values("DmfCostanzo2016_fitness").reset_index(drop=True)
+    """All measured within-10 doubles ranked by DMF, colored by tier."""
+    d = df[df.measured].sort_values("DmfCostanzo2016_fitness").reset_index(drop=True)
     fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half_plus"]), mm_to_in(150)))
     for i, r in d.iterrows():
         c = TIER_COLOR[r.tier]
@@ -199,28 +222,39 @@ def plot_forest(df: pd.DataFrame) -> None:
 def main() -> None:
     os.makedirs(OUT_DIR, exist_ok=True)
     triples = within_ten_triples()
-    df = annotate_tiers(load_doubles(), triples)
-    sel = df[df.tier != "other"].sort_values(
-        ["tier", "DmfCostanzo2016_fitness"]).reset_index(drop=True)
+    df = annotate_tiers(load_doubles(triples), triples)
 
-    cols = ["gene1", "gene2", "tier", "n_triples_enabled",
-            "DmfCostanzo2016_fitness", "DmfCostanzo2016_std", "se",
-            "eps", "p", "significant", "DmfCostanzo2016_strain_id"]
+    # ---- full 45-row SI table: EVERY within-10 pair, tier blank if unselected,
+    #      Costanzo + Kuzmin DMF side-by-side so disagreement is auditable ----
+    si = df.copy()
+    si["tier_si"] = si.tier.map(lambda t: "" if t == "other" else t)
+    si_cols = ["gene1", "gene2", "tier_si", "n_triples_enabled", "significant",
+               "DmfCostanzo2016_fitness", "DmfCostanzo2016_std", "se",
+               "eps", "p",
+               "DmfKuzmin2018_fitness", "DmfKuzmin2018_std",
+               "DmfKuzmin2020_fitness", "DmfKuzmin2020_std",
+               "DmfCostanzo2016_strain_id"]
+    si = si[si_cols].rename(columns={"tier_si": "tier"}).sort_values(
+        "DmfCostanzo2016_fitness", na_position="last").reset_index(drop=True)
     out = osp.join(RESULTS_DIR, "construction_validation_doubles.csv")
-    sel[cols].to_csv(out, index=False)
+    si.to_csv(out, index=False)
+
+    sel = df[df.tier.isin(["coverage", "validation"])]
     plot(sel)
     plot_forest(df)
 
-    cov, val = sel[sel.tier == "coverage"], sel[sel.tier == "validation"]
     covered = sum(any(set(pr).issubset(t) for pr in sel.pair) for t in triples)
-    print(f"total doubles: {len(sel)}  (coverage {len(cov)} + validation {len(val)})")
+    print(f"selected: {len(sel)} (coverage {int((df.tier=='coverage').sum())} + "
+          f"validation {int((df.tier=='validation').sum())}); "
+          f"novel/unmeasured {int((df.tier=='novel').sum())}")
     print(f"triples reconstructed: {covered}/{len(triples)} within-10 top-k")
-    print(f"DMF range: {sel.DmfCostanzo2016_fitness.min():.3f}-{sel.DmfCostanzo2016_fitness.max():.3f}"
-          f"  (span {sel.DmfCostanzo2016_fitness.max()-sel.DmfCostanzo2016_fitness.min():.3f})")
-    print(f"eps range: {sel.eps.min():+.3f} to {sel.eps.max():+.3f}; significant: {int(sel.significant.sum())}")
-    print(f"\nSaved: {out}")
-    print(sel[["gene1", "gene2", "tier", "DmfCostanzo2016_fitness", "eps", "p", "significant",
-               "n_triples_enabled"]].to_string(index=False))
+    print(f"DMF range: {sel.DmfCostanzo2016_fitness.min():.3f}-{sel.DmfCostanzo2016_fitness.max():.3f}")
+    print(f"novel pairs (unmeasured Costanzo & Kuzmin): "
+          f"{[f'{a}+{b}' for a,b in df.loc[df.tier=='novel','pair']]}")
+    print(f"\nSaved SI table ({len(si)} rows): {out}")
+    print(df[df.tier.isin(['coverage','validation','novel'])][
+        ['gene1','gene2','tier','DmfCostanzo2016_fitness','eps','p','significant',
+         'n_triples_enabled']].sort_values(['tier','DmfCostanzo2016_fitness']).to_string(index=False))
 
 
 if __name__ == "__main__":

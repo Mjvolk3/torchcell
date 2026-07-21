@@ -27,6 +27,12 @@ from torchcell.sga.assay import (
     volume_position_confound,
     zfactor,
 )
+from torchcell.sga.cellpose_seg import (
+    CellposeSegConfig,
+    PlateSegResult,
+    load_cellpose_model,
+    quantify_plate_image_cellpose,
+)
 from torchcell.sga.image import quantify_plate_image
 from torchcell.sga.io import (
     merge_layout,
@@ -51,6 +57,10 @@ __all__ = [
     "score_plate",
     "score_table",
     "quantify_plate_image",
+    "quantify_plate_image_cellpose",
+    "load_cellpose_model",
+    "CellposeSegConfig",
+    "PlateSegResult",
     "resolve_orientation",
     "volume_assay_metrics",
     "volume_position_confound",

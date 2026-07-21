@@ -114,3 +114,89 @@ Downloaded instance-mask PNG for reference:
 - Reference tool studied: `sgatools` (Boone/Andrews SGA web app) added to the VS Code workspace;
   its image analysis calls **gitter** (`public/gitter/gitter.R`), the method the classical pipeline
   already follows.
+
+## 2026.07.21 - GPU env set up + Cellpose module landed + validated on all six run-2 plates
+
+Implemented the plan on the gila workstation (4x RTX 6000 Ada, slurm partition `main`,
+`gpu:rtx6000:4`). Cellpose is now a working, benchmarked alternative segmenter.
+
+### Environment (torchcell conda env, GilaHyper)
+
+- `pip install cellpose` -> **cellpose 4.2.1.1** (Cellpose-SAM). NOTE the model is **`cpsam`**,
+  not `cyto3`: cellpose 4.x replaced the v3 generalist lineage with a single SAM-based
+  super-generalist. `models.CellposeModel(gpu=True)` loads it (diameter-agnostic; no diameter
+  tuning). Weights auto-download to `~/.cellpose/models/cpsam_v2` (**1.15 GB**).
+- **torch/torchvision ABI gotcha (important):** `pip install cellpose` pulled `torchvision`
+  from PyPI, which mismatched the pinned `torch 2.11.0+cu128` -> `RuntimeError: operator
+  torchvision::nms does not exist` on import. Fix: reinstall the cu128-matched build
+  `pip install --no-deps --force-reinstall --index-url https://download.pytorch.org/whl/cu128
+  torchvision==0.26.0`. Verify with `from torchvision.ops import nms`.
+- `pip install scikit-image` (**0.26.0**) was also needed -- `image.py`'s `_gel_polygon` imports
+  `skimage.draw`; the classical path had only ever run on the M1 Mac, so it was absent here.
+- GPU smoke test on the committed full-res crop: model on `cuda:0`, eval **0.8 s -> 55 instance
+  masks**, areas ~3.1-3.7 k px. Full 384 plate at full-res: **~55 s/plate**.
+
+### Code (branch `paper/figures-fig1`)
+
+- **`torchcell/sga/cellpose_seg.py`** (new): `quantify_plate_image_cellpose(path, model, cfg,
+  overlay_path=, return_masks=)` + `CellposeSegConfig` (pydantic) + `PlateSegResult` +
+  `load_cellpose_model`. It REUSES `image.py`'s lattice helpers (`_detect_blobs_backlit` ->
+  `_fit_lines` -> `_gel_polygon` -> `_signed_dist`) verbatim -- the classical `image.py` is
+  untouched -- and returns the SAME `[row,col,size,circularity,flags,cx,cy]` schema so
+  `normalize_plate`/`score_plate` consume it unchanged. Well-assignment rules are now exact:
+  an instance within `node_tol*pitch` of a node IS that well; a second instance on the node (or
+  a near-stray within `stray_tol*pitch`) -> flag `M`; an instance off every node -> counted
+  off-grid contaminant; instances outside the gel hexagon are dropped. Exported from
+  `torchcell/sga/__init__.py`; `cellpose` added to mypy untyped-imports; `cellpose_seg` added to
+  the pydantic `disallow_subclassing_any=false` override. ruff+format+mypy clean.
+- **`experiments/019-echo-crispr-array/scripts/run2_cellpose_segmentation.py`** (new): imports the
+  run-2 flow (`run2_volume_timepoints` conditions, orientation resolver, geometry) verbatim and
+  swaps ONLY the segmenter. Crops each plate at FULL resolution (no 1400-px downscale -- that
+  downscale was the source of the shadow tails) and runs both Cellpose and classical on the SAME
+  pixels for an apples-to-apples comparison. Writes `run2_cellpose_*` CSVs to `results/` and QC
+  overlays to `assets/images/019-echo-crispr-array/cellpose/`.
+- **`experiments/019-echo-crispr-array/scripts/gh_cellpose_segmentation.slurm`** (new): GilaHyper
+  GPU job, `-p main --gres=gpu:rtx6000:1`, ~2 h wall. Do NOT hardcode `CUDA_VISIBLE_DEVICES`
+  (slurm sets it from the gres alloc).
+- Data moved M1 -> gila via rsync (30 files) to
+  `/home/michaelvolk/Documents/projects/torchcell/torchcell-scratch/019-echo-crispr-array/data/`;
+  the worktree already holds the committed copies used for the validation run.
+
+### Validation (all 6 plate x timepoint images, Cellpose vs classical on identical full-res pixels)
+
+`results/run2_cellpose_vs_classical.csv`. WT CV = colony-size CV across the on-plate BY4741 wells
+(lower = tighter reference = better assay); target was `<=` classical ~0.11-0.17.
+
+| group  | occ cp/cl | M cp/cl | size r (P/S) | WT CV cp / cl |
+|--------|-----------|---------|--------------|---------------|
+| P1_t44 | 276 / 284 | 1 / 16  | 0.40 / 0.44  | **0.147 / 0.239** |
+| P2_t44 | 333 / 363 | 3 / 2   | 0.65 / 0.73  | 0.126 / 0.138 |
+| P1_t50 | 277 / 297 | 1 / 3   | 0.75 / 0.78  | 0.133 / 0.130 |
+| P2_t50 | 343 / 363 | 3 / 0   | 0.85 / 0.86  | 0.126 / 0.123 |
+| P1_t72 | 285 / 297 | 1 / 2   | 0.67 / 0.68  | 0.138 / 0.167 |
+| P2_t72 | 319 / 353 | 35 / 16 | 0.45 / 0.48  | **0.180 / 0.349** |
+
+Reading it:
+
+- **WT CV: Cellpose matches or beats classical on every plate, and wins big on the hard ones** --
+  P1_t44 (0.147 vs 0.239) and the crowded/overgrown P2_t72 (0.180 vs 0.349, where all six blanks
+  are occupied and classical's reference falls apart). Meets the promotion criterion.
+- **Multi-colony `M`**: on the overgrown P2_t72, Cellpose separates and rejects **35** competing-
+  colony wells vs classical's 16 -- the instance masks catch merged pairs that thresholding fused
+  into one oversized (fitness-corrupting) colony. Conversely at P1_t44 classical raised 16 `M`
+  flags to Cellpose's 1: those look like classical splitting one colony into blob+speck, i.e.
+  false `M`s Cellpose avoids.
+- **off-grid contaminants = 0** on all plates; every instance landed on the array.
+- Cellpose is slightly more conservative on occupancy (rejects faint/edge wells the threshold
+  keeps) -- expected, and desirable for a fitness readout.
+- **Circularity saturates at ~1.0** under Cellpose (masks are smooth by construction), so the `C`
+  low-circularity QC flag loses discriminative power -- lean on WT CV + size agreement instead.
+- Visual QC overlays (`run2_cellpose_overlay_<group>.png`) confirm tight per-colony boundaries,
+  faint/empty wells correctly unmarked, and no frame/shelf/reflection detections.
+
+### Next
+
+- Promote `seg_method='cellpose'` to the run-2 default once the above holds on a re-image with the
+  diffuse-backlight SOP; keep classical available for comparison.
+- Consider a light fine-tune only if the faint 2.5 nL (P1) colonies under-segment; zero-shot
+  `cpsam` already handled them here.

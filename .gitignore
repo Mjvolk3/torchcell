@@ -193,3 +193,7 @@ paper/nature-biotech/wordcount.tex
 
 # setuptools build artifacts
 build/
+
+# 019 ECHO-CRISPR: regenerable full-res plate crops written by the segmentation
+# runners (large, reproduced from data/ on every run) -- do not commit
+experiments/019-echo-crispr-array/quant/

@@ -26,55 +26,41 @@
     }
   },
   "aggregation_modality_census": {
-    "aggregated_groups": 9407,
-    "groups_ge2_modalities": 1448,
-    "groups_expression_and_fitness": 90,
-    "groups_expression_and_morphology": 1358,
+    "aggregated_groups": 5125,
+    "groups_ge2_modalities": 4405,
+    "groups_expression_and_fitness": 1416,
+    "groups_expression_and_morphology": 1439,
     "combos": {
-      "expression+morphology": 1358,
-      "expression+fitness": 90
+      "fitness+morphology": 2875,
+      "expression+fitness+morphology": 1325,
+      "expression+morphology": 114,
+      "expression+fitness": 91
     }
   },
-  "dataset_len": 9407,
+  "dataset_len": 5125,
   "dataset_root": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/019-simb-multimodal/fig3_core",
   "dataset_sample": {
-    "valid_index": 2,
-    "vector_blocked_indices": 2,
-    "vector_block_error": "must be real number, not dict",
-    "item": {
+    "first_valid_index": 0,
+    "multimodal_expr_fitness_index": 0,
+    "first_item": {
       "type": "HeteroData",
       "node_types": {
         "gene": {
-          "num_nodes": 6606,
+          "num_nodes": 6607,
           "keys": [
-            "ids_pert",
-            "node_ids",
+            "mask",
             "num_nodes",
             "pert_mask",
             "perturbation_indices",
+            "perturbed_genes",
             "phenotype_sample_indices",
+            "phenotype_stat_sample_indices",
+            "phenotype_stat_type_indices",
+            "phenotype_stat_types",
+            "phenotype_stat_values",
             "phenotype_type_indices",
             "phenotype_types",
-            "phenotype_values",
-            "x",
-            "x_pert"
-          ]
-        },
-        "reaction": {
-          "num_nodes": 7122,
-          "keys": [
-            "node_ids",
-            "num_nodes",
-            "pert_mask",
-            "w_growth"
-          ]
-        },
-        "metabolite": {
-          "num_nodes": 2806,
-          "keys": [
-            "node_ids",
-            "num_nodes",
-            "pert_mask"
+            "phenotype_values"
           ]
         }
       },
@@ -82,27 +68,173 @@
         "gene.perturbation_indices": [
           1
         ],
-        "gene.x": [
-          6606,
-          1600
+        "gene.pert_mask": [
+          6607
         ],
-        "gene.x_pert": [
-          1,
-          1600
+        "gene.mask": [
+          6607
         ],
         "gene.phenotype_values": [
-          1
+          6451
         ],
         "gene.phenotype_type_indices": [
-          1
+          6451
         ],
         "gene.phenotype_sample_indices": [
+          6451
+        ],
+        "gene.phenotype_stat_values": [
+          6389
+        ],
+        "gene.phenotype_stat_type_indices": [
+          6389
+        ],
+        "gene.phenotype_stat_sample_indices": [
+          6389
+        ]
+      },
+      "phenotype_types": [
+        "calmorph",
+        "fitness",
+        "expression_log2_ratio"
+      ],
+      "phenotype_breakdown": {
+        "expression_log2_ratio": {
+          "0": 6169
+        },
+        "fitness": {
+          "1": 1
+        },
+        "calmorph": {
+          "2": 281
+        }
+      },
+      "perturbed_genes": [
+        "YDL170W"
+      ]
+    },
+    "multimodal_item": {
+      "type": "HeteroData",
+      "node_types": {
+        "gene": {
+          "num_nodes": 6607,
+          "keys": [
+            "mask",
+            "num_nodes",
+            "pert_mask",
+            "perturbation_indices",
+            "perturbed_genes",
+            "phenotype_sample_indices",
+            "phenotype_stat_sample_indices",
+            "phenotype_stat_type_indices",
+            "phenotype_stat_types",
+            "phenotype_stat_values",
+            "phenotype_type_indices",
+            "phenotype_types",
+            "phenotype_values"
+          ]
+        },
+        "num_nodes": {
+          "num_nodes": 0,
+          "keys": []
+        },
+        "phenotype_type_indices": {
+          "num_nodes": 0,
+          "keys": []
+        },
+        "phenotype_values": {
+          "num_nodes": 0,
+          "keys": []
+        },
+        "perturbed_genes": {
+          "num_nodes": 0,
+          "keys": []
+        },
+        "mask": {
+          "num_nodes": 0,
+          "keys": []
+        },
+        "pert_mask": {
+          "num_nodes": 0,
+          "keys": []
+        },
+        "phenotype_sample_indices": {
+          "num_nodes": 0,
+          "keys": []
+        },
+        "phenotype_stat_sample_indices": {
+          "num_nodes": 0,
+          "keys": []
+        },
+        "phenotype_stat_types": {
+          "num_nodes": 0,
+          "keys": []
+        },
+        "phenotype_stat_type_indices": {
+          "num_nodes": 0,
+          "keys": []
+        },
+        "phenotype_types": {
+          "num_nodes": 0,
+          "keys": []
+        },
+        "phenotype_stat_values": {
+          "num_nodes": 0,
+          "keys": []
+        },
+        "perturbation_indices": {
+          "num_nodes": 0,
+          "keys": []
+        }
+      },
+      "labels": {
+        "gene.perturbation_indices": [
           1
         ],
         "gene.pert_mask": [
           6607
+        ],
+        "gene.mask": [
+          6607
+        ],
+        "gene.phenotype_values": [
+          6451
+        ],
+        "gene.phenotype_type_indices": [
+          6451
+        ],
+        "gene.phenotype_sample_indices": [
+          6451
+        ],
+        "gene.phenotype_stat_values": [
+          6389
+        ],
+        "gene.phenotype_stat_type_indices": [
+          6389
+        ],
+        "gene.phenotype_stat_sample_indices": [
+          6389
         ]
-      }
+      },
+      "phenotype_types": [
+        "calmorph",
+        "fitness",
+        "expression_log2_ratio"
+      ],
+      "phenotype_breakdown": {
+        "expression_log2_ratio": {
+          "0": 6169
+        },
+        "fitness": {
+          "1": 1
+        },
+        "calmorph": {
+          "2": 281
+        }
+      },
+      "perturbed_genes": [
+        "YDL170W"
+      ]
     }
   }
 }

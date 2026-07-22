@@ -187,7 +187,7 @@ def aggregation_modality_census(dataset_root: str) -> dict[str, Any]:
 def build_dataset(query_path: str) -> tuple[Any, str]:
     """Build the Fig-3 Neo4jCellDataset mirroring the 010 build pattern."""
     from torchcell.data import GenotypeAggregator, MeanExperimentDeduplicator
-    from torchcell.data.graph_processor import SubgraphRepresentation
+    from torchcell.data.graph_processor import Perturbation
     from torchcell.data.neo4j_cell import Neo4jCellDataset
     from torchcell.datasets import CodonFrequencyDataset
     from torchcell.datasets.fungal_up_down_transformer import (
@@ -242,6 +242,11 @@ def build_dataset(query_path: str) -> tuple[Any, str]:
         username=NEO4J_AUTH[0],
         password=NEO4J_AUTH[1],
         graphs=gene_multigraph,
+        # Metabolism incidence (reaction/metabolite/gpr) is baked into the shared
+        # cell_graph by to_cell_data and remains available on dataset.cell_graph.
+        # The Perturbation processor reads that cell_graph for structure but emits a
+        # minimal per-sample perturbation + phenotype-COO view (it does not copy the
+        # graph), so the metabolism incidence still loads and needs no extra handling.
         incidence_graphs={"metabolism_bipartite": YeastGEM().bipartite_graph},
         node_embeddings={
             "codon_frequency": codon_frequency,
@@ -251,9 +256,33 @@ def build_dataset(query_path: str) -> tuple[Any, str]:
         converter=None,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,
-        graph_processor=SubgraphRepresentation(),
+        # Perturbation (WS1-fixed) tensorizes dict-valued VECTOR phenotypes
+        # (expression_log2_ratio, calmorph) to a key-sorted COO vector alongside
+        # scalar phenotypes (fitness) -- SubgraphRepresentation cannot ("must be
+        # real number, not dict"), which is why the earlier build only built scalars.
+        graph_processor=Perturbation(),
     )
     return dataset, dataset_root
+
+
+def phenotype_breakdown(data: Any) -> dict[str, dict[int, int]]:
+    """Return {label_name: {sample_index: n_values}} from the COO phenotype store.
+
+    The ``Perturbation`` processor stores every phenotype in a flat COO layout:
+    ``phenotype_values`` (all values), ``phenotype_type_indices`` (which
+    phenotype label each value belongs to), and ``phenotype_sample_indices``
+    (which aggregated experiment within the genotype group). A dict-valued VECTOR
+    phenotype (e.g. ``expression_log2_ratio``) contributes many values for one
+    (label, sample) pair; a SCALAR (``fitness``) contributes exactly one.
+    """
+    gene = data["gene"]
+    types = list(gene["phenotype_types"])
+    type_idx = gene["phenotype_type_indices"].tolist()
+    sample_idx = gene["phenotype_sample_indices"].tolist()
+    counts: dict[str, dict[int, int]] = defaultdict(lambda: defaultdict(int))
+    for t, s in zip(type_idx, sample_idx):
+        counts[types[t]][s] += 1
+    return {lab: dict(smap) for lab, smap in counts.items()}
 
 
 def describe_item(data: Any) -> dict[str, Any]:
@@ -275,6 +304,9 @@ def describe_item(data: Any) -> dict[str, Any]:
             val = gene[key]
             if hasattr(val, "shape"):
                 info["labels"][f"gene.{key}"] = list(val.shape)
+        info["phenotype_types"] = list(gene["phenotype_types"])
+        info["phenotype_breakdown"] = phenotype_breakdown(data)
+        info["perturbed_genes"] = list(gene["perturbed_genes"])
     for key in data.keys():
         val = data[key]
         if hasattr(val, "shape"):
@@ -325,29 +357,34 @@ def main() -> None:
     for k, v in agg_census.items():
         print(f"  {k}: {v}")
 
-    # Confirm the pipeline yields a valid HeteroData sample. The stock
-    # SubgraphRepresentation processor tensor-izes phenotype fields directly, so it
-    # only supports SCALAR phenotypes (fitness/gene interaction); dict-valued VECTOR
-    # phenotypes (expression_log2_ratio, calmorph) raise "must be real number, not
-    # dict". We therefore scan for the first index that builds -- proving the graph
-    # pipeline is valid for scalar groups -- and record how many early indices are
-    # blocked by the vector-phenotype limitation (a WS2 substrate finding).
+    # Confirm the pipeline yields a valid HeteroData sample. With the WS1-fixed
+    # Perturbation processor, dict-valued VECTOR phenotypes (expression_log2_ratio,
+    # calmorph) tensorize alongside SCALAR phenotypes (fitness) in one COO store, so
+    # EVERY index builds. We scan for the first index whose aggregated genotype
+    # carries BOTH a vector expression label AND a scalar fitness label -- the exact
+    # multimodal co-location Fig-3 depends on -- and exhibit the label shapes.
     sample_info: dict[str, Any] = {
-        "valid_index": None,
-        "vector_blocked_indices": 0,
-        "vector_block_error": None,
+        "first_valid_index": None,
+        "multimodal_expr_fitness_index": None,
     }
-    scan_cap = min(len(dataset), 500)
+    scan_cap = min(len(dataset), len(dataset))
     for idx in range(scan_cap):
-        try:
-            sample = dataset[idx]
-        except TypeError as exc:
-            sample_info["vector_blocked_indices"] += 1
-            sample_info["vector_block_error"] = str(exc)
-            continue
-        sample_info["valid_index"] = idx
-        sample_info["item"] = describe_item(sample)
-        break
+        sample = dataset[idx]  # Perturbation processor: no vector blocking
+        if sample_info["first_valid_index"] is None:
+            sample_info["first_valid_index"] = idx
+            sample_info["first_item"] = describe_item(sample)
+        bd = phenotype_breakdown(sample)
+        has_vector_expr = any(
+            lab.startswith("expression") and max(smap.values()) > 1
+            for lab, smap in bd.items()
+        )
+        has_scalar_fitness = "fitness" in bd and all(
+            v == 1 for v in bd["fitness"].values()
+        )
+        if has_vector_expr and has_scalar_fitness:
+            sample_info["multimodal_expr_fitness_index"] = idx
+            sample_info["multimodal_item"] = describe_item(sample)
+            break
     report["dataset_sample"] = sample_info
     print("\ndataset sample summary:")
     print(json.dumps(sample_info, indent=2))

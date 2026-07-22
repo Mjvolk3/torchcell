@@ -27,8 +27,10 @@ echo "job=$SLURM_JOB_ID name=$SLURM_JOB_NAME config=$CONFIG_NAME host=$(hostname
 # Change to the experiments directory (matches 010 GilaHyper convention)
 cd /home/michaelvolk/Documents/projects/torchcell/experiments || exit 1
 
-# DDP rendezvous — loopback (GilaHyper's bare hostname does not route: errno 113).
-# torchrun --standalone reads MASTER_ADDR; 127.0.0.1 always routes on a single node.
+# DDP rendezvous — pin to loopback. GilaHyper's bare hostname does not route
+# (errno 113), and torchrun's --local-addr defaults to that hostname, so we set it
+# explicitly to 127.0.0.1 along with an explicit c10d rendezvous endpoint. MASTER_ADDR
+# is kept for Lightning's benefit.
 export MASTER_ADDR=127.0.0.1
 export MASTER_PORT=$(shuf -i 10000-65500 -n 1)
 
@@ -51,7 +53,9 @@ export WANDB__SERVICE_WAIT=600
 # Calculate num_workers from SLURM CPU allocation (reserve 2 for overhead)
 export NUM_WORKERS=$((SLURM_CPUS_PER_TASK - 2))
 
-torchrun --standalone --nnodes=1 --nproc_per_node=4 \
+torchrun --nnodes=1 --nproc_per_node=4 \
+  --rdzv-backend=c10d --rdzv-endpoint=127.0.0.1:$MASTER_PORT \
+  --rdzv-id=$SLURM_JOB_ID --local-addr=127.0.0.1 \
   /home/michaelvolk/Documents/projects/torchcell/experiments/019-simb-multimodal/scripts/train_cgt_multitask.py \
   --config-name "$CONFIG_NAME" \
   data_module.num_workers=$NUM_WORKERS

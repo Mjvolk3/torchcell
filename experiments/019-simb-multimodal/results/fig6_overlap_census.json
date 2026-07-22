@@ -1,0 +1,325 @@
+{
+  "query_file": "fig6_build.cql",
+  "db_overlap_census": {
+    "Q3_per_dataset": {
+      "CarotenoidOzaydin2013Dataset": {
+        "modality": "beta_carotene_score",
+        "unique_genotypes_full": 4474,
+        "unique_genes": 4476,
+        "unique_deletion_genesets": 4474,
+        "geneset_sizes": {
+          "4": 4474
+        },
+        "perturbation_types": {
+          "gene_addition": 13422,
+          "kanmx_deletion": 4474
+        },
+        "n_experiments": 4474,
+        "graph_level": [
+          "global"
+        ],
+        "media": [
+          "SC-URA"
+        ],
+        "temperature": [
+          30.0
+        ]
+      },
+      "BetaxanthinCachera2023Dataset": {
+        "modality": "betaxanthin",
+        "unique_genotypes_full": 4734,
+        "unique_genes": 4737,
+        "unique_deletion_genesets": 4735,
+        "geneset_sizes": {
+          "5": 4735
+        },
+        "perturbation_types": {
+          "gene_addition": 18940,
+          "kanmx_deletion": 4735
+        },
+        "n_experiments": 4735,
+        "graph_level": [
+          "metabolism"
+        ],
+        "media": [
+          "SC"
+        ],
+        "temperature": [
+          30.0
+        ]
+      },
+      "AminoAcidMulleder2016Dataset": {
+        "modality": "metabolome",
+        "unique_genotypes_full": 4678,
+        "unique_genes": 4678,
+        "unique_deletion_genesets": 4678,
+        "geneset_sizes": {
+          "1": 4678
+        },
+        "perturbation_types": {
+          "kanmx_deletion": 4678
+        },
+        "n_experiments": 4678,
+        "graph_level": [
+          "metabolism"
+        ],
+        "media": [
+          "SM"
+        ],
+        "temperature": [
+          30.0
+        ]
+      },
+      "MetaboliteZelezniak2018Dataset": {
+        "modality": "metabolome",
+        "unique_genotypes_full": 95,
+        "unique_genes": 95,
+        "unique_deletion_genesets": 95,
+        "geneset_sizes": {
+          "1": 95
+        },
+        "perturbation_types": {
+          "kanmx_deletion": 95
+        },
+        "n_experiments": 95,
+        "graph_level": [
+          "metabolism"
+        ],
+        "media": [
+          "SM"
+        ],
+        "temperature": [
+          30.0
+        ]
+      },
+      "MetaboliteDaSilveira2014Dataset": {
+        "modality": "metabolome",
+        "unique_genotypes_full": 127,
+        "unique_genes": 127,
+        "unique_deletion_genesets": 127,
+        "geneset_sizes": {
+          "1": 127
+        },
+        "perturbation_types": {
+          "kanmx_deletion": 127
+        },
+        "n_experiments": 127,
+        "graph_level": [
+          "metabolism"
+        ],
+        "media": [
+          "YPD"
+        ],
+        "temperature": [
+          30.0
+        ]
+      },
+      "IsobutanolScreenLopez2024Dataset": {
+        "modality": "isobutanol",
+        "unique_genotypes_full": 4554,
+        "unique_genes": 4554,
+        "unique_deletion_genesets": 4554,
+        "geneset_sizes": {
+          "1": 4554
+        },
+        "perturbation_types": {
+          "kanmx_deletion": 4554
+        },
+        "n_experiments": 4554,
+        "graph_level": [
+          "metabolism"
+        ],
+        "media": [
+          "SC"
+        ],
+        "temperature": [
+          30.0
+        ]
+      },
+      "IsobutanolValidatedLopez2024Dataset": {
+        "modality": "isobutanol",
+        "unique_genotypes_full": 224,
+        "unique_genes": 224,
+        "unique_deletion_genesets": 224,
+        "geneset_sizes": {
+          "1": 224
+        },
+        "perturbation_types": {
+          "kanmx_deletion": 224
+        },
+        "n_experiments": 224,
+        "graph_level": [
+          "metabolism"
+        ],
+        "media": [
+          "SC"
+        ],
+        "temperature": [
+          30.0
+        ]
+      }
+    },
+    "Q1_gene_level_deletion_overlap": {
+      "metabolome_genes_and_isobutanol_IsobutanolScreenLopez2024Dataset": 4366,
+      "metabolome_genes_and_isobutanol_IsobutanolValidatedLopez2024Dataset": 215,
+      "metabolome_genes_and_betaxanthin_BetaxanthinCachera2023Dataset": 4439,
+      "metabolome_genes_and_beta_carotene_score_CarotenoidOzaydin2013Dataset": 4226,
+      "metabolome_gene_union": 4685
+    },
+    "Q2_genotype_colocation_full_geneset": {
+      "total_unique_genotypes": 14082,
+      "genotypes_ge2_modalities": 4367,
+      "metabolome_and_isobutanol": 4367,
+      "metabolome_and_betaxanthin": 0,
+      "metabolome_and_beta_carotene_score": 0,
+      "isobutanol_and_betaxanthin": 0,
+      "combos": {
+        "isobutanol+metabolome": 4367
+      }
+    },
+    "Q2b_genotype_colocation_deletion_keyed": {
+      "genotypes_ge2_modalities": 4948,
+      "metabolome_and_betaxanthin": 4439,
+      "metabolome_and_beta_carotene_score": 4226,
+      "combos": {
+        "beta_carotene_score+betaxanthin+isobutanol+metabolome": 3760,
+        "betaxanthin+isobutanol+metabolome": 378,
+        "beta_carotene_score+betaxanthin+metabolome": 268,
+        "beta_carotene_score+isobutanol+metabolome": 188,
+        "beta_carotene_score+betaxanthin+isobutanol": 135,
+        "beta_carotene_score+betaxanthin": 86,
+        "isobutanol+metabolome": 41,
+        "betaxanthin+isobutanol": 37,
+        "betaxanthin+metabolome": 33,
+        "beta_carotene_score+isobutanol": 12,
+        "beta_carotene_score+metabolome": 10
+      }
+    }
+  },
+  "aggregation_modality_census": {
+    "aggregated_groups": 13948,
+    "groups_ge2_modalities": 4367,
+    "groups_metabolome_and_isobutanol": 4367,
+    "combos": {
+      "isobutanol+metabolome": 4367
+    }
+  },
+  "dataset_len": 13948,
+  "dataset_root": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/019-simb-multimodal/fig6_build",
+  "dataset_sample": {
+    "first_valid_index": 0,
+    "metabolite_vector_index": 2,
+    "visual_score_scalar_index": 0,
+    "first_item": {
+      "type": "HeteroData",
+      "labels": {
+        "gene.perturbation_indices": [
+          2
+        ],
+        "gene.pert_mask": [
+          6607
+        ],
+        "gene.mask": [
+          6607
+        ],
+        "gene.phenotype_values": [
+          1
+        ],
+        "gene.phenotype_type_indices": [
+          1
+        ],
+        "gene.phenotype_sample_indices": [
+          1
+        ]
+      },
+      "phenotype_types": [
+        "visual_score",
+        "metabolite_level"
+      ],
+      "phenotype_breakdown": {
+        "visual_score": {
+          "0": 1
+        }
+      },
+      "perturbed_genes": [
+        "YPL069C",
+        "crtI",
+        "crtYB",
+        "YLL063C"
+      ]
+    },
+    "visual_score_item": {
+      "type": "HeteroData",
+      "labels": {
+        "gene.perturbation_indices": [
+          2
+        ],
+        "gene.pert_mask": [
+          6607
+        ],
+        "gene.mask": [
+          6607
+        ],
+        "gene.phenotype_values": [
+          1
+        ],
+        "gene.phenotype_type_indices": [
+          1
+        ],
+        "gene.phenotype_sample_indices": [
+          1
+        ]
+      },
+      "phenotype_types": [
+        "visual_score",
+        "metabolite_level"
+      ],
+      "phenotype_breakdown": {
+        "visual_score": {
+          "0": 1
+        }
+      },
+      "perturbed_genes": [
+        "YPL069C",
+        "crtI",
+        "crtYB",
+        "YLL063C"
+      ]
+    },
+    "metabolite_vector_item": {
+      "type": "HeteroData",
+      "labels": {
+        "gene.perturbation_indices": [
+          1
+        ],
+        "gene.pert_mask": [
+          6607
+        ],
+        "gene.mask": [
+          6607
+        ],
+        "gene.phenotype_values": [
+          20
+        ],
+        "gene.phenotype_type_indices": [
+          20
+        ],
+        "gene.phenotype_sample_indices": [
+          20
+        ]
+      },
+      "phenotype_types": [
+        "visual_score",
+        "metabolite_level"
+      ],
+      "phenotype_breakdown": {
+        "metabolite_level": {
+          "0": 20
+        }
+      },
+      "perturbed_genes": [
+        "YDR420W"
+      ]
+    }
+  }
+}

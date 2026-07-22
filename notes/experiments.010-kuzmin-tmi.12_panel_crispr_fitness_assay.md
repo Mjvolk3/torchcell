@@ -1032,15 +1032,17 @@ clean singles, worst on the crowded P2 72 h plate. We turned the crank -- a 6-re
 (`gh_cellpose_detection_sweep.sh`: cellprob $-2$ to $-8$, CLAHE clip 0.01-0.03, plus a flatfield
 pass) on the two diagnostic plates (P1 50 h faint, P2 72 h crowded) -- and reached a clear picture.
 New knobs live in `torchcell/sga/cellpose_seg.py`; the finalize recipe (CLAHE 0.02, cellprob $-4$,
-tighten on, `node_tol` 0.60, `edge_margin` 0.70, `multi_min_frac` 0.5) is applied to all six plates
-in the montage + per-page renders above (regenerated).
+tighten on with `tighten_grow_px` 3, `node_tol` 0.60, `edge_margin` 0.70, `multi_min_frac` 0.5) is
+applied to all six plates in the montage + per-page renders above (regenerated).
 
 **(1) Boundary air gap -- FIXED (biggest win).** Each accepted Cellpose mask is now trimmed to its
-dark colony core by a per-instance Otsu split (`tighten_size`, default on), dropping the faint halo
-Cellpose includes -- **~30-40 % of the mask area was halo** (mean colony size fell e.g. P1 50 h
-$\approx 2300 \rightarrow 1468$ px). The drawn outline now hugs the colony, and -- because area is
-fitness -- this **corrects a systematic ~35 % size inflation** that fed the reference comparison.
-Detection stays permissive; sizing is decoupled from it.
+dark colony core by a per-instance Otsu split (`tighten_size`, default on), then the core is dilated
+`tighten_grow_px`=3 px back out to the visual edge (raw Otsu splits a hair *inside* the soft colony
+rim -- calibrated against the image, grow 0 was too tight, grow 3 lands on the edge). Net, the halo
+Cellpose included is a **~22 % size correction** (P1 50 h mean colony area $\approx 2724 \rightarrow
+1882$ px; raw Otsu alone would cut ~35 %). The drawn outline now sits on the colony, and -- because
+area is fitness -- this removes a systematic size inflation that fed the reference comparison.
+Detection stays permissive; sizing is decoupled from it and the amount is a one-knob dial.
 
 **(2) Missed colonies -- a Cellpose detection-floor limit, not a tuning miss.** Occupied count is
 flat (~281 on P1) across every cellprob/CLAHE/flatfield setting; aggressive settings add instances
@@ -1066,15 +1068,48 @@ targets. Updated per-plate invalidation (finalize recipe):
 
 | capture | occupied | accepted | multi (`M`) | neighbour (`N`) | mean size (px) |
 |---------|---------:|---------:|------------:|----------------:|---------------:|
-| P1 44 h | 281 | 279 | 1 | 1 | 1007 |
-| P2 44 h | 350 | 346 | 2 | 2 | 1232 |
-| P1 50 h | 281 | 279 | 1 | 1 | 1468 |
-| P2 50 h | 354 | 350 | 2 | 2 | 1366 |
-| P1 72 h | 283 | 281 | 1 | 1 | 2750 |
-| **P2 72 h** | 323 | 287 | **35** | 1 | 2621 |
+| P1 44 h | 281 | 279 | 1 | 1 | 1354 |
+| P2 44 h | 350 | 346 | 2 | 2 | 1616 |
+| P1 50 h | 281 | 279 | 1 | 1 | 1882 |
+| P2 50 h | 354 | 350 | 2 | 2 | 1769 |
+| P1 72 h | 283 | 281 | 1 | 1 | 3313 |
+| **P2 72 h** | 323 | 287 | **35** | 1 | 3162 |
 
 **Next levers (open, deferred pending review):** grid-guided faint-colony recovery (probe each empty
 node for an intensity depression to rescue sub-floor colonies) and per-row grid de-drift. Both are
 new algorithm work with false-positive tradeoffs; the 48 h re-run may make the crowding half moot, so
 these await a decision. The reference-comparison figures (Spearman/Pearson vs Costanzo; SD/SE vs
 Costanzo + Kuzmin) are the next deliverable once detection is accepted.
+
+## 2026.07.22 - Benchmark vs published SMF: correlation + measurement-error comparison
+
+With the tightened (halo-corrected) sizes, we benchmark the assay against published single-mutant
+fitness (SMF). Per-genotype fitness is the mean over the six captures; the reference is
+`reference_smf_12panel.csv` (Costanzo 2016 for all 12 panel genes, Kuzmin 2018 for the 4 it covers).
+Script: `costanzo_kuzmin_comparison.py` -> `results/run2_reference_comparison{,_stats}.csv`.
+
+**Correlation (value + rank).** Against Costanzo (n=12): **Pearson r = 0.61 (p = 0.036)** and
+**Spearman $\rho$ = 0.52 (p = 0.085)** -- a significant agreement in value, with the rank agreement
+just short of significance at n=12. Kuzmin (n=4): r = 0.80, $\rho$ = 0.40 (not significant at n=4).
+The one clearly sick gene, **CBF1 (YJR060W)**, anchors both correlations (Costanzo 0.59 / Kuzmin 0.75
+vs our 0.73); the remaining near-neutral genes cluster around 1.0. Our values sit **slightly below
+the identity line** (a mild downward fitness bias, ~0.85-0.95 vs a published ~1.0) -- expected for a
+young assay and a candidate for a per-plate calibration later.
+
+![Assay fitness (mean over the six captures, halo-corrected) vs published single-mutant fitness: Costanzo 2016 (orange, n=12) and Kuzmin 2018 (red diamonds, n=4), identity line dashed. Pearson r (value) and Spearman rho (rank) annotated; x error = published SD, y error = our settings-to-settings SD across the six captures. CBF1 anchors the low end.](assets/images/019-echo-crispr-array/cellpose/run2_fitness_correlation_reference.svg)
+
+**Measurement error (SD).** Our within-genotype replicate SD averages **0.165** vs Costanzo's SMF SD
+of **0.08** -- our single-colony measurement is ~2x noisier per genotype, consistent across genes
+(figure). But because we average **~21-27 replicate colonies** per strain, the reference-comparable
+**SE = SD/$\sqrt{n}$ is ~0.03-0.05** (the 5 nL plates reach ~0.027), on the same footing as Costanzo's
+4-colony SE. **Kuzmin's released SMF carries no per-strain SD** (only point fitness for 4 genes), so
+no Kuzmin-SD comparison is possible from the released data -- flagged in the figure, not fabricated;
+sourcing it would require combing the Kuzmin SI for the single-mutant replicate structure.
+
+![Per-genotype measurement error: our replicate-colony fitness SD (orange) vs Costanzo 2016 SMF SD (red), by gene, sorted by the Costanzo SD; dashed lines are the means (ours 0.18, Costanzo 0.08). Our SD is ~2x higher per genotype, but averaging ~21-27 colonies brings the SE to ~0.03-0.05. Kuzmin SMF has no released per-strain SD.](assets/images/019-echo-crispr-array/cellpose/run2_sd_vs_reference.svg)
+
+**Caveats.** The aggregate includes the crowded P2 72 h plate (untrustworthy sizes) for
+completeness; excluding it is a one-line change if we prefer the five clean captures. Correlations
+are on n=12 (Costanzo) / n=4 (Kuzmin) genes -- small panels, so the point estimates are
+noise-sensitive (the CBF1 anchor dominates). This benchmark rides on the tightened sizes; if
+detection changes (e.g. the 48 h re-run or grid-guided recovery), regenerate via the same script.

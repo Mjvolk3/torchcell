@@ -111,14 +111,19 @@ def _wt_cv(df: pd.DataFrame, wt_name: str) -> float:
 
 def main() -> None:
     cfg = NormalizationConfig()
-    # tuned recipe (see the sizing + detection sweeps): CLAHE contrast + cellprob -4,
-    # with the colony-validity invalidation model (M/N/C) active.
+    # finalize recipe (sizing + detection sweeps, 2026.07.22 round 2): CLAHE 0.02 +
+    # cellprob -4, Otsu size-tightening (removes the ~35% halo), wider edge margin to
+    # keep row A/P colonies, node_tol 0.60, and the multi_min_frac gate, with the
+    # colony-validity invalidation model (M/N/C) active.
     seg_cfg = CellposeSegConfig(
         n_rows=N_ROWS,
         n_cols=N_COLS,
         contrast="clahe",
-        clahe_clip=0.01,
+        clahe_clip=0.02,
         cellprob_threshold=-4.0,
+        node_tol=0.60,
+        edge_margin_frac=0.70,
+        multi_min_frac=0.5,
     )
 
     print("[0] loading Cellpose-SAM (cpsam) on GPU ...")

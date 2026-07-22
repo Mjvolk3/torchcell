@@ -1,0 +1,14 @@
+
+ArgumentError: activate does not accept more than one argument:
+['--contrast', 'clahe', '--clahe_clip', '0.02', '--cellprob', '-4', '--node_tol', '0.60', '--edge_margin', '0.70', '--multi_min_frac', '0.5', '--conditions', 'all', '--tag', 'best', '--save_masks']
+
+
+/home/michaelvolk/miniconda3/envs/torchcell/lib/python3.13/site-packages/cellpose/dynamics.py:541: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:760.)
+  coo = torch.sparse_coo_tensor(pt, torch.ones(pt.shape[1], device=pt.device, dtype=torch.int),
+    P1_t44: occupied=281 accepted=279 M=1 N=1 C=0 inst=292 offgrid=0 mean_size=1354
+    P2_t44: occupied=350 accepted=346 M=2 N=2 C=0 inst=372 offgrid=1 mean_size=1616
+    P1_t50: occupied=281 accepted=279 M=1 N=1 C=0 inst=293 offgrid=0 mean_size=1882
+    P2_t50: occupied=354 accepted=350 M=2 N=2 C=0 inst=368 offgrid=1 mean_size=1769
+    P1_t72: occupied=283 accepted=281 M=1 N=1 C=0 inst=305 offgrid=3 mean_size=3313
+    P2_t72: occupied=323 accepted=287 M=35 N=1 C=0 inst=388 offgrid=1 mean_size=3162
+RECIPE_JSON {"contrast": "clahe", "clahe_clip": 0.02, "cellprob": -4.0, "flow": 0.4, "tag": "best", "stats": [{"group": "P1_t44", "occupied": 281, "accepted": 279, "multi": 1, "neighbour": 1, "noncirc": 0, "instances": 292, "offgrid": 0, "mean_size": 1354}, {"group": "P2_t44", "occupied": 350, "accepted": 346, "multi": 2, "neighbour": 2, "noncirc": 0, "instances": 372, "offgrid": 1, "mean_size": 1616}, {"group": "P1_t50", "occupied": 281, "accepted": 279, "multi": 1, "neighbour": 1, "noncirc": 0, "instances": 293, "offgrid": 0, "mean_size": 1882}, {"group": "P2_t50", "occupied": 354, "accepted": 350, "multi": 2, "neighbour": 2, "noncirc": 0, "instances": 368, "offgrid": 1, "mean_size": 1769}, {"group": "P1_t72", "occupied": 283, "accepted": 281, "multi": 1, "neighbour": 1, "noncirc": 0, "instances": 305, "offgrid": 3, "mean_size": 3313}, {"group": "P2_t72", "occupied": 323, "accepted": 287, "multi": 35, "neighbour": 1, "noncirc": 0, "instances": 388, "offgrid": 1, "mean_size": 3162}]}

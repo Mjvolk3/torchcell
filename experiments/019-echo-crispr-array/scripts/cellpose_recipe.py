@@ -58,6 +58,7 @@ def main() -> None:
     ap.add_argument("--multi_min_frac", type=float, default=0.5, help="2nd-colony area frac to fire M (higher = fewer false reds)")
     ap.add_argument("--no_tighten", action="store_true", help="disable Otsu size-tightening (keep raw Cellpose mask)")
     ap.add_argument("--tighten_min_frac", type=float, default=0.20)
+    ap.add_argument("--tighten_grow_px", type=int, default=3, help="dilate Otsu core back toward the visual edge (0=tightest)")
     ap.add_argument("--conditions", default="P1_t50,P1_t72", help="comma list or 'all'")
     ap.add_argument("--tag", default="probe")
     ap.add_argument("--save_masks", action="store_true", help="save crop+masks for montage")
@@ -81,6 +82,7 @@ def main() -> None:
         multi_min_frac=args.multi_min_frac,
         tighten_size=not args.no_tighten,
         tighten_min_frac=args.tighten_min_frac,
+        tighten_grow_px=args.tighten_grow_px,
     )
 
     stats = []

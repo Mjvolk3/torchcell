@@ -92,6 +92,12 @@ class CellposeSegConfig(BaseModel):
         description="keep the original mask if the tightened (dark) region is smaller "
         "than this fraction of it -- guards faint colonies where Otsu over-shrinks.",
     )
+    tighten_grow_px: int = Field(
+        default=3,
+        description="dilate the Otsu colony core back out this many px toward the "
+        "visual edge (Otsu splits a hair inside the soft rim), bounded by the original "
+        "mask. 0 = raw Otsu core (tightest); larger = looser. 3 lands on the edge.",
+    )
     edge_margin_frac: float = Field(
         default=0.5,
         description="gel-edge gate half-width in pitch units. A colony is dropped as "
@@ -189,18 +195,27 @@ def _contrast_enhance(img: np.ndarray, method: str, clahe_clip: float) -> np.nda
 
 
 def _tighten_instance(
-    masks: np.ndarray, iid: int, g: np.ndarray, invert: bool, min_frac: float
+    masks: np.ndarray,
+    iid: int,
+    g: np.ndarray,
+    invert: bool,
+    min_frac: float,
+    grow_px: int = 0,
 ) -> int:
     """Shrink instance ``iid`` in ``masks`` to its dark-colony core and return the
     tightened area (px). Cellpose masks on backlit plates include a faint halo of
     near-agar pixels; Otsu within the mask splits colony (dark, if ``invert``) from
     halo (bright), we keep the largest colony component and ZERO the halo pixels of
-    this id in ``masks`` (so drawn contours + montage tighten too). If the colony
-    core is < ``min_frac`` of the mask (a faint colony Otsu over-shrinks), the mask
-    is left untouched and the original area returned.
+    this id in ``masks`` (so drawn contours + montage tighten too). The core is then
+    dilated ``grow_px`` px back out toward the visual edge (Otsu splits a hair inside
+    the soft colony rim), bounded by the original mask so it never re-enters the halo
+    or a neighbour. If the colony core is < ``min_frac`` of the mask (a faint colony
+    Otsu over-shrinks), the mask is left untouched and the original area returned.
     """
+    from scipy.ndimage import binary_dilation
     from scipy.ndimage import label as _label
     from skimage.filters import threshold_otsu
+    from skimage.morphology import disk
 
     ys, xs = np.where(masks == iid)
     if ys.size == 0:
@@ -221,6 +236,8 @@ def _tighten_instance(
     counts = np.bincount(lab.ravel())
     counts[0] = 0
     cc = lab == int(counts.argmax())
+    if grow_px > 0:  # grow back to the visual edge, bounded by the original mask
+        cc = binary_dilation(cc, structure=disk(grow_px)) & subm  # type: ignore[no-untyped-call]
     if cc.sum() < max(min_frac * subm.sum(), MIN_COLONY_AREA):
         return int(subm.sum())  # over-shrunk faint colony -> keep original mask
     masks[y0:y1, x0:x1][subm & ~cc] = 0  # zero the halo pixels of this id
@@ -431,7 +448,12 @@ def quantify_plate_image_cellpose(
             # already happened, so this only sharpens the size/outline, never recall.
             size = (
                 _tighten_instance(
-                    masks, int(best["id"]), g, invert, cfg.tighten_min_frac
+                    masks,
+                    int(best["id"]),
+                    g,
+                    invert,
+                    cfg.tighten_min_frac,
+                    cfg.tighten_grow_px,
                 )
                 if cfg.tighten_size
                 else orig_area

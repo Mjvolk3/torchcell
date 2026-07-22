@@ -408,6 +408,7 @@ def quantify_plate_image_cellpose(
     cfg: CellposeSegConfig | None = None,
     overlay_path: str | None = None,
     return_masks: bool = False,
+    precomputed_masks: np.ndarray | None = None,
 ) -> PlateSegResult:
     """Segment a backlit plate with Cellpose-SAM and quantify colonies onto the
     fitted array grid.
@@ -416,6 +417,12 @@ def quantify_plate_image_cellpose(
     ``quantify_plate_image`` schema (``row, col, size, circularity, flags, cx,
     cy``); ``flags`` codes: ``C`` low circularity, ``E`` straddles gel edge,
     ``M`` multiple colonies on the well (rejected downstream).
+
+    ``precomputed_masks`` skips the Cellpose forward pass and re-runs only the
+    grid/gel/assignment/scoring on a given instance-mask array (``model`` may be
+    ``None``) -- for re-deriving the grid (e.g. relaxation) from cached masks
+    without a GPU. If those masks are already Otsu-tightened, pass
+    ``tighten_size=False`` so they are not tightened twice.
     """
     cfg = cfg or CellposeSegConfig()
     g = _grayscale(path)
@@ -424,17 +431,20 @@ def quantify_plate_image_cellpose(
     )
     edge_margin = cfg.edge_margin_frac * pitch
 
-    img = np.asarray(ImageOps.exif_transpose(Image.open(path)).convert("RGB"))
-    if cfg.contrast != "none":
-        img = _contrast_enhance(img, cfg.contrast, cfg.clahe_clip)
-    masks = np.asarray(
-        model.eval(
-            img,
-            flow_threshold=cfg.flow_threshold,
-            cellprob_threshold=cfg.cellprob_threshold,
-            diameter=cfg.diameter,
-        )[0]
-    )
+    if precomputed_masks is not None:
+        masks = np.asarray(precomputed_masks)
+    else:
+        img = np.asarray(ImageOps.exif_transpose(Image.open(path)).convert("RGB"))
+        if cfg.contrast != "none":
+            img = _contrast_enhance(img, cfg.contrast, cfg.clahe_clip)
+        masks = np.asarray(
+            model.eval(
+                img,
+                flow_threshold=cfg.flow_threshold,
+                cellprob_threshold=cfg.cellprob_threshold,
+                diameter=cfg.diameter,
+            )[0]
+        )
     props = _instance_props(masks, cfg.min_instance_area)
 
     # relax the grid onto the Cellpose colony centroids (follows plate distortion),

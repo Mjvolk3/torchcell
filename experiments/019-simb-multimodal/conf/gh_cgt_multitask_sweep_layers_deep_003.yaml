@@ -1,0 +1,13 @@
+# experiments/019-simb-multimodal/conf/gh_cgt_multitask_sweep_layers_deep_003.yaml
+# EDGE-OF-CONFIG-SPACE sweep 003: DEEP transformer (depth edge). Overrides
+# num_transformer_layers 8 -> 12 at hidden_channels 180. graph_reg_layer [1,2,3,4] stays
+# valid (< 12). Probes the deep-model edge.
+defaults:
+  - gh_cgt_multitask_joint_000
+  - _self_
+
+wandb:
+  tags: [ws-run, gilahyper, sweep, layers_deep]
+
+model:
+  num_transformer_layers: 12

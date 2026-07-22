@@ -1,0 +1,17 @@
+# experiments/019-simb-multimodal/conf/gh_cgt_multitask_sweep_dmodel_large_002.yaml
+# EDGE-OF-CONFIG-SPACE sweep 002: d_model LARGE (capacity ceiling). Overrides
+# hidden_channels 180 -> 360 (heads/pert kept at 9, 360/9=40). Probes the large-model edge
+# on 4x GPU DDP; reduce batch_size if it OOMs.
+defaults:
+  - gh_cgt_multitask_joint_000
+  - _self_
+
+wandb:
+  tags: [ws-run, gilahyper, sweep, dmodel_large]
+
+model:
+  hidden_channels: 360
+  num_attention_heads: 9
+  perturbation_head:
+    num_heads: 9
+    dropout: 0.1

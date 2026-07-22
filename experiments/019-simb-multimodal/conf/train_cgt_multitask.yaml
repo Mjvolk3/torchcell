@@ -52,25 +52,34 @@ trainer:
 multitask:
   active_heads: [gene_interaction, per_gene, global]
   loss_fn: mse
-  # WS10b: per-FEATURE z-score of vector targets, computed on the TRAIN split only.
-  # The CalMorph `global` target is 281-D with features spanning ~8 orders of magnitude
-  # (cell-size counts ~1e4 vs 0-1 ratios); pooling one mean/std leaves big features
-  # dominating an un-normalized MSE (loss O(1e6)). Standardizing each feature makes the
-  # loss O(1). Stats are inverted (`task.denormalize`) for raw-scale inference.
+  # Part A: per-FEATURE normalization of vector targets, fit on the TRAIN split only.
+  # The CalMorph `global` target has features spanning ~8 orders of magnitude (cell-size
+  # counts ~1e4 vs 0-1 ratios); pooling one mean/std leaves big features dominating an
+  # un-normalized MSE (loss O(1e6)). `vector_norm_method`:
+  #   yeo_johnson (default) -- per-feature Yeo-Johnson power transform THEN z-score
+  #     (sklearn PowerTransformer, standardize=True), fit on train. Realizes Ohya SI's
+  #     published "Box-Cox then standardize"; Yeo-Johnson is the zero/negative-safe
+  #     generalization (CalMorph has zeros/negatives, so strict Box-Cox is undefined).
+  #   zscore -- plain per-feature z-score (legacy WS10b), for ablation.
+  # Stats (lambda + transformed mean/std) are inverted (`task.denormalize`) for raw-unit
+  # reporting and the epoch per-feature Pearson metric.
   normalize_vector_targets: [global]
+  vector_norm_method: yeo_johnson
   target_norm_eps: 1.0e-8
-  # Near-constant features (robust CV = IQR/|median| < threshold) are FLAGGED, kept, and
-  # epsilon-floored (NOT dropped) -- Ohya 2005's own 254/247 keep/discard is a normality
-  # verdict over all 501 base+CV params, not a variance floor on our 281 base target, so
-  # we default to keep-with-epsilon and surface candidates for user review.
+  # Part A decision: DROP 3 degenerate CalMorph features (constant/near-constant) from the
+  # `global` target AND the head output_dim: 281 -> 278. These are dropped, NOT merely
+  # epsilon-floored. Remaining near-constant features (robust CV = IQR/|median| < threshold)
+  # are still FLAGGED + kept + floored by the standardizer.
+  drop_features:
+    global: [A113_A1B, A113_C, C123_C]
   degenerate_robust_cv: 0.01
   heads:
     global:
-      # CalMorph morphology. The Fig-3 build's calmorph vector is 281-D (constant
-      # across strains) -- the non-NaN CalMorph parameter set actually stored, NOT
-      # the nominal 501. VERIFIED against a materialized batch (WS10a). If a future
-      # build stores more/fewer CalMorph params, match this to that vector length.
-      output_dim: 281
+      # CalMorph morphology. The Fig-3 build's calmorph vector is 281-D (constant across
+      # strains); after Part A's 3-feature drop the `global` target/output is 278-D.
+      # VERIFIED against a materialized batch (WS10a). If a future build stores more/fewer
+      # CalMorph params, match output_dim to (stored_length - dropped).
+      output_dim: 278
       use_gene_pool: true
     per_gene:
       output_dim: 1         # per-gene expression scalar (one value per gene node)

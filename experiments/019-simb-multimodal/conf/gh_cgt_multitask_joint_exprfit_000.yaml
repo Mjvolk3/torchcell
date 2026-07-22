@@ -1,5 +1,12 @@
-# experiments/019-simb-multimodal/conf/igb_cabbi_train_cgt_multitask_000.yaml
-# IGB cabbi full-run config: JOINT multitask Fig-3 CGT (4 GPU DDP).
+# experiments/019-simb-multimodal/conf/gh_cgt_multitask_joint_exprfit_000.yaml
+# GilaHyper full-run: JOINT expression + fitness (WS11a) on the Fig-3 build.
+# Real model size, 4-GPU DDP. Two heads active: gene_interaction (scalar fitness, the
+# built-in Type-II perturbation head) + per_gene (expression log2-ratios). The ~1416
+# co-located genotypes (expression AND fitness, per the Fig-3 aggregation census) are the
+# rows where BOTH heads receive supervision; MaskedMultitaskLoss masks each head to its
+# supervised rows, so the joint signal is learned on the co-located intersection while
+# each head still trains on its full marginal set. Fitness is standardized via the COO
+# normalization transform; expression log2-ratios are used as-is.
 defaults:
   - default
   - _self_
@@ -8,7 +15,7 @@ dry_run: false
 
 wandb:
   project: torchcell_019-simb-multimodal_cgt_multitask
-  tags: [ws13, igb_cabbi, joint]
+  tags: [ws-run, gilahyper, joint, expr_fit, ws11a]
 
 cell_dataset:
   graphs: [physical, regulatory]
@@ -38,18 +45,16 @@ trainer:
   devices: 4
   overfit_batches: 0
   precision: bf16-mixed
+  log_every_n_steps: 10
   fast_dev_run: false
 
 multitask:
-  active_heads: [gene_interaction, per_gene, global]
+  active_heads: [gene_interaction, per_gene]
   loss_fn: mse
-  # Part A: morphology target drops 3 degenerate CalMorph features (-> 278) and uses
-  # per-feature Yeo-Johnson + z-score (TRAIN-split fit). See gh_cgt_multitask_joint_000.
-  normalize_vector_targets: [global]
+  normalize_vector_targets: []
   vector_norm_method: yeo_johnson
   target_norm_eps: 1.0e-8
-  drop_features:
-    global: [A113_A1B, A113_C, C123_C]
+  drop_features: {}
   degenerate_robust_cv: 0.01
   heads:
     global:

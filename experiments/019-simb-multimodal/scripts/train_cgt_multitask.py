@@ -136,13 +136,95 @@ def build_heads_config(cfg: DictConfig) -> dict[str, Any] | None:
 
 
 def _pearson(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-    """Pearson correlation between two flattened tensors (grad-free metric)."""
+    """Pearson correlation between two flattened tensors (grad-free metric).
+
+    Retained for the SCALAR case (gene_interaction) and as the 1-feature reduction of
+    :func:`per_feature_pearson`. NOT used as the vector-head metric anymore -- flattening
+    a multi-feature vector correlates across features of different scales, which is a
+    scale artifact rather than an honest per-phenotype correlation (Part B).
+    """
     p = pred.reshape(-1).float()
     t = target.reshape(-1).float()
     p = p - p.mean()
     t = t - t.mean()
     denom = (p.norm() * t.norm()).clamp_min(1e-8)
     return cast(torch.Tensor, (p * t).sum() / denom)
+
+
+def per_feature_pearson(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    """Mean over per-FEATURE Pearson correlations for a vector head (Part B).
+
+    ``pred`` / ``target`` are ``[N, F]`` (N supervised genotypes, F features:
+    morphology -> 278 CalMorph features; expression -> 6127 measured genes). We
+    correlate EACH feature's column across genotypes, then average the F correlations.
+    This is the honest vector metric: a flatten-then-correlate (the old ``_pearson``)
+    is dominated by whichever features have the largest raw scale, so it reports a
+    feature-scale artifact rather than "how well is each phenotype predicted".
+
+    Features whose prediction OR target column is (near-)constant over the batch have an
+    undefined correlation (0/0); they are DROPPED from the average rather than counted as
+    zero, so a constant CalMorph feature does not deflate the reported r. A ``[N]`` /
+    ``[N, 1]`` scalar input reduces to a single-feature correlation (== ``_pearson``).
+    """
+    if pred.ndim == 1:
+        pred = pred.unsqueeze(1)
+    if target.ndim == 1:
+        target = target.unsqueeze(1)
+    p = pred.float()
+    t = target.float()
+    pc = p - p.mean(dim=0, keepdim=True)
+    tc = t - t.mean(dim=0, keepdim=True)
+    num = (pc * tc).sum(dim=0)
+    denom = pc.norm(dim=0) * tc.norm(dim=0)
+    valid = denom > 1e-8
+    if not bool(valid.any()):
+        return torch.zeros((), device=pred.device)
+    r = num[valid] / denom[valid]
+    return cast(torch.Tensor, r.mean())
+
+
+def _yeo_johnson_forward(x: torch.Tensor, lam: torch.Tensor) -> torch.Tensor:
+    """Per-feature Yeo-Johnson power transform (torch, matches sklearn).
+
+    ``x`` is ``[B, F]``; ``lam`` is ``[F]`` (broadcast over rows). Yeo-Johnson is the
+    zero/negative-safe generalization of Box-Cox -- CalMorph features include zeros and
+    negatives, so strict Box-Cox is undefined; this realizes Ohya SI's "Box-Cox then
+    standardize" with domain safety (Part A). Definition per feature with parameter L:
+    x>=0: ((x+1)^L - 1)/L (L!=0) or log(x+1) (L==0);
+    x<0 : -((-x+1)^(2-L) - 1)/(2-L) (L!=2) or -log(-x+1) (L==2).
+    """
+    near0 = lam.abs() < 1e-6
+    lam2 = 2.0 - lam
+    near2 = lam2.abs() < 1e-6
+    xp = torch.clamp(x, min=0.0)
+    pos_ne = (torch.pow(xp + 1.0, lam) - 1.0) / torch.where(near0, torch.ones_like(lam), lam)
+    pos_e = torch.log1p(xp)
+    pos_val = torch.where(near0, pos_e, pos_ne)
+    xn = torch.clamp(x, max=0.0)
+    neg_ne = -(torch.pow(-xn + 1.0, lam2) - 1.0) / torch.where(
+        near2, torch.ones_like(lam2), lam2
+    )
+    neg_e = -torch.log1p(-xn)
+    neg_val = torch.where(near2, neg_e, neg_ne)
+    return torch.where(x >= 0, pos_val, neg_val)
+
+
+def _yeo_johnson_inverse(y: torch.Tensor, lam: torch.Tensor) -> torch.Tensor:
+    """Invert :func:`_yeo_johnson_forward` back to raw units (metric/inference only)."""
+    near0 = lam.abs() < 1e-6
+    lam2 = 2.0 - lam
+    near2 = lam2.abs() < 1e-6
+    yp = torch.clamp(y, min=0.0)
+    base_pos = torch.clamp(yp * lam + 1.0, min=1e-8)
+    pos_ne = torch.pow(base_pos, 1.0 / torch.where(near0, torch.ones_like(lam), lam)) - 1.0
+    pos_e = torch.expm1(yp)
+    pos_val = torch.where(near0, pos_e, pos_ne)
+    yn = torch.clamp(y, max=0.0)
+    base_neg = torch.clamp(-lam2 * yn + 1.0, min=1e-8)
+    neg_ne = 1.0 - torch.pow(base_neg, 1.0 / torch.where(near2, torch.ones_like(lam2), lam2))
+    neg_e = 1.0 - torch.expm1(-yn)
+    neg_val = torch.where(near2, neg_e, neg_ne)
+    return torch.where(y >= 0, pos_val, neg_val)
 
 
 def _vector_phenotype_keys(dataset: Any, name: str, scan: int = 5000) -> list[str] | None:
@@ -174,6 +256,7 @@ def build_head_alignments(
     active_heads: list[str],
     head_phenotypes: dict[str, list[str]],
     node_ids: list[str],
+    drop_features: dict[str, list[str]] | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Precompute per-head COO->target alignment from the real Fig-3 build.
 
@@ -190,6 +273,7 @@ def build_head_alignments(
       metabolites M); identity alignment, ``feat_dim`` = vector length.
     """
     nid_to_pos = {n: i for i, n in enumerate(node_ids)}
+    drop_features = drop_features or {}
     align: dict[str, dict[str, Any]] = {}
     for head in active_heads:
         if head == "gene_interaction":
@@ -207,6 +291,7 @@ def build_head_alignments(
                 "keep_mask": None,
                 "col_idx": None,
                 "feat_dim": None,
+                "dropped_features": [],
             }
             continue
         if head == "per_gene":
@@ -221,14 +306,34 @@ def build_head_alignments(
                 "keep_mask": keep,
                 "col_idx": col,
                 "feat_dim": int(keep.sum().item()),
+                "dropped_features": [],
             }
         else:
-            align[head] = {
-                "is_scalar": False,
-                "keep_mask": None,
-                "col_idx": None,
-                "feat_dim": len(keys),
-            }
+            # global / per_metabolite: identity-length vector. Part A -- optionally DROP
+            # degenerate features (e.g. CalMorph A113_A1B/A113_C/C123_C) from the target
+            # AND the head output_dim: build a keep_mask over the key-sorted feature vector
+            # so the decoded target is restricted to the kept features (the head's
+            # output_dim MUST equal the kept count).
+            drop_set = set(drop_features.get(head, []))
+            if drop_set:
+                keep = torch.tensor(
+                    [k not in drop_set for k in keys], dtype=torch.bool
+                )
+                align[head] = {
+                    "is_scalar": False,
+                    "keep_mask": keep,
+                    "col_idx": None,
+                    "feat_dim": int(keep.sum().item()),
+                    "dropped_features": [k for k in keys if k in drop_set],
+                }
+            else:
+                align[head] = {
+                    "is_scalar": False,
+                    "keep_mask": None,
+                    "col_idx": None,
+                    "feat_dim": len(keys),
+                    "dropped_features": [],
+                }
     return align
 
 
@@ -241,26 +346,36 @@ def compute_per_feature_target_stats(
     heads_to_normalize: list[str],
     eps: float,
     degenerate_robust_cv: float,
+    vector_norm_method: str = "yeo_johnson",
 ) -> dict[str, dict[str, Any]]:
-    """Per-FEATURE target standardization stats, computed on the TRAIN split ONLY.
+    """Per-FEATURE target normalization stats, computed on the TRAIN split ONLY.
 
-    WS10b. The morphology target (``calmorph``) is a 281-D vector whose features span
-    ~8 orders of magnitude (cell-size counts ~1e4 vs 0--1 ratios), so a single pooled
-    mean/std (what ``COOLabelNormalizationTransform`` would compute for the whole
-    ``calmorph`` label) leaves the large-scale features dominating an un-normalized MSE
-    (loss O(1e6)). Instead we z-score EACH feature independently.
+    WS10b + Part A. The morphology target (``calmorph``) is a multi-hundred-D vector whose
+    features span ~8 orders of magnitude (cell-size counts ~1e4 vs 0--1 ratios), so a single
+    pooled mean/std leaves large-scale features dominating an un-normalized MSE (loss O(1e6)).
+    We normalize EACH feature independently, with two selectable methods:
+
+    * ``vector_norm_method="yeo_johnson"`` (Part A default): a per-feature Yeo-Johnson power
+      transform THEN z-score, fit with ``sklearn.preprocessing.PowerTransformer(
+      method="yeo-johnson", standardize=True)`` on the TRAIN targets. This realizes Ohya SI's
+      published "Box-Cox then standardize", using Yeo-Johnson (the zero/negative-safe
+      generalization) because CalMorph features contain zeros/negatives. The fitted params
+      -- per-feature lambda + the transformed-space mean/std -- are stored and inverted at
+      report/inference time for raw-unit reporting.
+    * ``vector_norm_method="zscore"`` (legacy WS10b): plain per-feature z-score (mean/std),
+      no power transform. Kept for ablation.
 
     Stats are accumulated over ``train_indices`` alone (never val/test) so there is no
-    leakage; the same affine is inverted at report/inference time. ``std`` is floored
-    with ``eps`` so a truly constant feature maps to ~0 rather than exploding.
-
-    For each vector head in ``heads_to_normalize`` we resolve its key-sorted feature
+    leakage. For each vector head in ``heads_to_normalize`` we resolve its key-sorted feature
     vocabulary (restricted by the head's ``keep_mask`` so it matches the gathered
-    prediction/target length), read every train genotype's vector, and compute per-feature
-    mean/std/median/IQR. Near-constant features (robust CV = IQR/|median| below
-    ``degenerate_robust_cv``) are FLAGGED (not dropped) -- the epsilon floor keeps them
-    finite; the user decides whether to drop.
+    prediction/target length -- i.e. AFTER Part A drops), read every train genotype's vector,
+    and compute the stats. Near-constant features (robust CV = IQR/|median| below
+    ``degenerate_robust_cv``) are FLAGGED (not dropped here); the standardizer/epsilon floor
+    keeps them finite.
     """
+    assert vector_norm_method in ("yeo_johnson", "zscore"), (
+        f"unsupported vector_norm_method {vector_norm_method!r}"
+    )
     stats: dict[str, dict[str, Any]] = {}
     for head in active_heads:
         if head not in heads_to_normalize:
@@ -300,8 +415,8 @@ def compute_per_feature_target_stats(
 
         arr = np.asarray(collected, dtype=float)
         arr = np.where(np.isfinite(arr), arr, np.nan)
-        mean = np.nanmean(arr, axis=0)
-        std = np.nanstd(arr, axis=0)
+        raw_mean = np.nanmean(arr, axis=0)
+        raw_std = np.nanstd(arr, axis=0)
         median = np.nanmedian(arr, axis=0)
         q25 = np.nanpercentile(arr, 25, axis=0)
         q75 = np.nanpercentile(arr, 75, axis=0)
@@ -311,15 +426,49 @@ def compute_per_feature_target_stats(
         degenerate_idx = [
             i for i, rc in enumerate(robust_cv) if rc < degenerate_robust_cv
         ]
-        stats[head] = {
-            "keys": kept_keys,
-            "mean": torch.tensor(mean, dtype=torch.float32),
-            "std": torch.tensor(std, dtype=torch.float32),
-            "eps": float(eps),
-            "n_train": int(arr.shape[0]),
-            "degenerate_features": [kept_keys[i] for i in degenerate_idx],
-            "robust_cv": robust_cv.tolist(),
-        }
+
+        # Impute any residual NaN with the per-feature median so the fit sees a dense
+        # matrix (CalMorph is dense per build; this only guards rare missing values).
+        col_median = np.where(np.isfinite(median), median, 0.0)
+        arr_dense = np.where(np.isfinite(arr), arr, col_median[None, :])
+
+        if vector_norm_method == "yeo_johnson":
+            from sklearn.preprocessing import PowerTransformer
+
+            pt = PowerTransformer(method="yeo-johnson", standardize=True)
+            pt.fit(arr_dense)
+            lambdas = np.asarray(pt.lambdas_, dtype=float)
+            # PowerTransformer standardizes on the TRANSFORMED values via an internal
+            # StandardScaler: mean/std here are in Yeo-Johnson space, not raw space.
+            t_mean = np.asarray(pt._scaler.mean_, dtype=float)
+            t_std = np.asarray(pt._scaler.scale_, dtype=float)
+            stats[head] = {
+                "method": "yeo_johnson",
+                "keys": kept_keys,
+                "lambdas": torch.tensor(lambdas, dtype=torch.float32),
+                "mean": torch.tensor(t_mean, dtype=torch.float32),
+                "std": torch.tensor(t_std, dtype=torch.float32),
+                "raw_mean": raw_mean.tolist(),
+                "raw_std": raw_std.tolist(),
+                "eps": float(eps),
+                "n_train": int(arr.shape[0]),
+                "degenerate_features": [kept_keys[i] for i in degenerate_idx],
+                "robust_cv": robust_cv.tolist(),
+            }
+        else:
+            stats[head] = {
+                "method": "zscore",
+                "keys": kept_keys,
+                "lambdas": None,
+                "mean": torch.tensor(raw_mean, dtype=torch.float32),
+                "std": torch.tensor(raw_std, dtype=torch.float32),
+                "raw_mean": raw_mean.tolist(),
+                "raw_std": raw_std.tolist(),
+                "eps": float(eps),
+                "n_train": int(arr.shape[0]),
+                "degenerate_features": [kept_keys[i] for i in degenerate_idx],
+                "robust_cv": robust_cv.tolist(),
+            }
     return stats
 
 
@@ -358,15 +507,27 @@ class MultitaskCGTTask(L.LightningModule):
         self.lr_scheduler_config = lr_scheduler_config
         self.clip_grad_norm = clip_grad_norm
         self.clip_grad_norm_max_norm = clip_grad_norm_max_norm
-        # WS10b per-feature target standardization (TRAIN-split stats). Registered as
-        # buffers so mean/std move with .to(device) and are checkpointed for inversion.
+        # WS10b + Part A per-feature target normalization (TRAIN-split stats). Registered
+        # as buffers so params move with .to(device) and are checkpointed for inversion.
+        # yeo_johnson: normalize(x) = zscore(YJ(x, lambda)); zscore: normalize(x) = zscore(x).
         self.norm_heads: list[str] = list((target_stats or {}).keys())
         self.norm_eps: dict[str, float] = {}
+        self.norm_method: dict[str, str] = {}
         for head, st in (target_stats or {}).items():
             safe = head.replace("/", "_")
             self.register_buffer(f"_norm_mean_{safe}", st["mean"], persistent=True)
             self.register_buffer(f"_norm_std_{safe}", st["std"], persistent=True)
+            method = st.get("method", "zscore")
+            self.norm_method[head] = method
+            if method == "yeo_johnson":
+                self.register_buffer(
+                    f"_norm_lambda_{safe}", st["lambdas"], persistent=True
+                )
             self.norm_eps[head] = float(st["eps"])
+        # Part B: per-FEATURE Pearson is an EPOCH-level metric in ORIGINAL (inverse-
+        # transformed) units, so per-step supervised (pred, target) pairs are cached here
+        # and reduced at epoch end. Keyed by stage -> head -> list of [n, feat] CPU tensors.
+        self._metric_cache: dict[str, dict[str, dict[str, list[torch.Tensor]]]] = {}
         self.save_hyperparameters(
             ignore=["model", "cell_graph", "head_align", "target_stats"]
         )
@@ -378,15 +539,28 @@ class MultitaskCGTTask(L.LightningModule):
             cast(torch.Tensor, getattr(self, f"_norm_std_{safe}")),
         )
 
+    def _norm_lambda(self, head: str) -> torch.Tensor:
+        safe = head.replace("/", "_")
+        return cast(torch.Tensor, getattr(self, f"_norm_lambda_{safe}"))
+
     def _normalize_target(self, head: str, values: torch.Tensor) -> torch.Tensor:
-        """Per-feature z-score a decoded [B, feat] target for a normalized head."""
+        """Normalize a decoded [B, feat] target for a normalized head (train space).
+
+        yeo_johnson: z-score of the Yeo-Johnson transform; zscore: plain per-feature
+        z-score. Both use the TRAIN-split stats stored as buffers.
+        """
         mean, std = self._norm_mean_std(head)
+        if self.norm_method.get(head) == "yeo_johnson":
+            values = _yeo_johnson_forward(values, self._norm_lambda(head))
         return (values - mean) / (std + self.norm_eps[head])
 
     def denormalize(self, head: str, values: torch.Tensor) -> torch.Tensor:
-        """Invert the per-feature z-score back to raw CalMorph scale (inference)."""
+        """Invert normalization back to raw units (metric reporting / inference)."""
         mean, std = self._norm_mean_std(head)
-        return values * (std + self.norm_eps[head]) + mean
+        raw = values * (std + self.norm_eps[head]) + mean
+        if self.norm_method.get(head) == "yeo_johnson":
+            raw = _yeo_johnson_inverse(raw, self._norm_lambda(head))
+        return raw
 
     def forward(self, batch: HeteroData) -> tuple[torch.Tensor, dict[str, Any]]:
         """Run the multitask CGT on a batch, moving cell_graph to its device.
@@ -498,9 +672,10 @@ class MultitaskCGTTask(L.LightningModule):
                         head_vals = head_vals[keep]
                     target[b] = head_vals.to(device)
                 row_mask[b] = True
-            # WS10b: per-feature z-score (TRAIN-split stats) so a multi-scale vector
-            # target (CalMorph 281-D) yields an O(1) loss. Masked rows are zeros ->
-            # become -mean/std but are dropped by MaskedMultitaskLoss's row mask.
+            # WS10b + Part A: per-feature normalization (TRAIN-split stats) so a multi-scale
+            # vector target (CalMorph 278-D) yields an O(1) loss -- Yeo-Johnson+z-score
+            # (default) or plain z-score. Masked rows are zeros -> transform to some finite
+            # value but are dropped by MaskedMultitaskLoss's row mask.
             if head in self.norm_heads:
                 target = self._normalize_target(head, target)
             targets[head] = target
@@ -523,20 +698,29 @@ class MultitaskCGTTask(L.LightningModule):
         self.log(f"{stage}/loss", total, batch_size=bsz, sync_dist=True)
         for name, val in per_head.items():
             self.log(f"{stage}/{name}/loss", val, batch_size=bsz, sync_dist=True)
-        # Pearson metric on supervised rows (skips heads with <2 supervised rows).
-        # For per-feature-normalized vector heads (WS10b) this correlates in the
-        # NORMALIZED space: model prediction and target are both z-scored, so every
-        # CalMorph feature contributes equally. Inverting per-feature to raw scale would
-        # re-couple the 8-orders-of-magnitude spread and let a couple of huge features
-        # dominate the correlation, so normalized-space Pearson is the honest metric here.
+        # Part B: cache supervised (pred, target) rows in ORIGINAL (inverse-transformed)
+        # units for the EPOCH-level per-feature Pearson. Per-feature averaging in raw units
+        # is the honest vector metric (each CalMorph feature / each measured gene weighted
+        # equally, comparable to the abstract's r); a per-batch flatten-Pearson was a
+        # feature-scale artifact. Normalized heads are inverted via `denormalize`; scalar /
+        # un-normalized heads (gene_interaction fitness, per_gene expression log2-ratios)
+        # are already in raw units.
         for name, pred in head_outputs.items():
             if name not in targets:
                 continue
             m = masks[name]
-            if int(m.sum().item()) < 2:
+            if int(m.sum().item()) < 1:
                 continue
-            pear = _pearson(pred[m].detach(), targets[name][m].detach())
-            self.log(f"{stage}/{name}/pearson", pear, batch_size=bsz, sync_dist=True)
+            p = pred[m].detach()
+            t = targets[name][m].detach()
+            if name in self.norm_heads:
+                p = self.denormalize(name, p)
+                t = self.denormalize(name, t)
+            cache = self._metric_cache.setdefault(stage, {}).setdefault(
+                name, {"pred": [], "target": []}
+            )
+            cache["pred"].append(p.float().cpu())
+            cache["target"].append(t.float().cpu())
         return cast(torch.Tensor, total)
 
     def training_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
@@ -546,6 +730,26 @@ class MultitaskCGTTask(L.LightningModule):
     def validation_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
         """Masked multitask validation step."""
         return self._step(batch, "val")
+
+    def test_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
+        """Masked multitask test step (same masked path + epoch metric)."""
+        return self._step(batch, "test")
+
+    def _reduce_epoch_pearson(self, stage: str) -> None:
+        """Compute + log per-feature-averaged Pearson from the epoch cache (Part B)."""
+        stage_cache = self._metric_cache.get(stage, {})
+        for name, cache in stage_cache.items():
+            if not cache["pred"]:
+                continue
+            pred = torch.cat(cache["pred"], dim=0)
+            target = torch.cat(cache["target"], dim=0)
+            if pred.shape[0] < 2:
+                continue
+            pear = per_feature_pearson(pred, target)
+            # sync_dist averages the per-rank correlations under DDP (rows are sharded
+            # across ranks; per-rank per-feature Pearson then mean-reduced is the metric).
+            self.log(f"{stage}/{name}/pearson", pear, sync_dist=True)
+        self._metric_cache[stage] = {}
 
     def _print_epoch(self, stage: str) -> None:
         metrics = self.trainer.callback_metrics
@@ -557,13 +761,32 @@ class MultitaskCGTTask(L.LightningModule):
         if parts:
             print(f"[{stage} epoch {self.current_epoch}] " + "  ".join(sorted(parts)))
 
+    def on_train_epoch_start(self) -> None:
+        """Reset the train epoch metric cache (Part B)."""
+        self._metric_cache["train"] = {}
+
+    def on_validation_epoch_start(self) -> None:
+        """Reset the val epoch metric cache (Part B)."""
+        self._metric_cache["val"] = {}
+
+    def on_test_epoch_start(self) -> None:
+        """Reset the test epoch metric cache (Part B)."""
+        self._metric_cache["test"] = {}
+
     def on_train_epoch_end(self) -> None:
-        """Print aggregated train metrics for the epoch (smoke-run visibility)."""
+        """Reduce + log epoch per-feature Pearson, then print aggregated train metrics."""
+        self._reduce_epoch_pearson("train")
         self._print_epoch("train")
 
     def on_validation_epoch_end(self) -> None:
-        """Print aggregated val metrics for the epoch (smoke-run visibility)."""
+        """Reduce + log epoch per-feature Pearson, then print aggregated val metrics."""
+        self._reduce_epoch_pearson("val")
         self._print_epoch("val")
+
+    def on_test_epoch_end(self) -> None:
+        """Reduce + log epoch per-feature Pearson, then print aggregated test metrics."""
+        self._reduce_epoch_pearson("test")
+        self._print_epoch("test")
 
     def configure_optimizers(self) -> Any:
         """Build the optimizer and optional LR scheduler from config."""
@@ -889,12 +1112,18 @@ def run_training(cfg: DictConfig) -> None:
 
     # Resolve each head's COO->target alignment against the REAL build (WS10a):
     # real phenotype-type strings are fitness / calmorph / expression_log2_ratio.
+    # Part A: `drop_features` removes degenerate CalMorph features (e.g. A113_A1B/A113_C/
+    # C123_C -> 278) from the `global` target AND the head output_dim.
+    drop_features = {
+        k: list(v) for k, v in _as_dict(cfg.multitask.get("drop_features", {})).items()
+    }
     node_ids = list(dataset.cell_graph["gene"].node_ids)
     head_align = build_head_alignments(
         dataset=dataset,
         active_heads=active_heads,
         head_phenotypes={k: list(v) for k, v in head_phenotypes.items()},
         node_ids=node_ids,
+        drop_features=drop_features,
     )
     print("head_align:")
     for h, a in head_align.items():
@@ -903,8 +1132,25 @@ def run_training(cfg: DictConfig) -> None:
         }
         print(f"  {h}: {printable}")
 
-    # ---- WS10b: per-FEATURE target standardization stats (TRAIN split only) ----
+    # Part A sanity: a vector head's model output_dim MUST equal its (post-drop) target
+    # feature count, else MaskedMultitaskLoss gets a [B, out] vs [B, feat] shape mismatch.
+    for h, a in head_align.items():
+        if a.get("is_scalar", False) or a.get("feat_dim") is None:
+            continue
+        model_head = getattr(model, f"{h}_head", None)
+        out_dim = getattr(model_head, "output_dim", None)
+        if h == "per_gene":
+            continue  # per_gene output is [B, N] gathered to feat_dim; out_dim is 1
+        if out_dim is not None and int(out_dim) != int(a["feat_dim"]):
+            raise ValueError(
+                f"head '{h}' output_dim={out_dim} != target feat_dim={a['feat_dim']} "
+                f"(dropped {a.get('dropped_features')}). Set heads.{h}.output_dim="
+                f"{a['feat_dim']} in the config."
+            )
+
+    # ---- WS10b + Part A: per-FEATURE target normalization stats (TRAIN split only) ----
     heads_to_normalize = list(cfg.multitask.get("normalize_vector_targets", []))
+    vector_norm_method = str(cfg.multitask.get("vector_norm_method", "yeo_johnson"))
     target_stats: dict[str, dict[str, Any]] = {}
     if heads_to_normalize:
         train_indices = list(data_module.train_dataset.indices)
@@ -917,16 +1163,24 @@ def run_training(cfg: DictConfig) -> None:
             heads_to_normalize=heads_to_normalize,
             eps=float(cfg.multitask.get("target_norm_eps", 1e-8)),
             degenerate_robust_cv=float(cfg.multitask.get("degenerate_robust_cv", 0.01)),
+            vector_norm_method=vector_norm_method,
         )
         is_rank0 = not dist.is_initialized() or dist.get_rank() == 0
         for head, st in target_stats.items():
             std = st["std"]
+            lam = st.get("lambdas")
+            lam_desc = (
+                f", lambda in [{float(lam.min()):.3g}, {float(lam.max()):.3g}]"
+                if lam is not None
+                else ""
+            )
             print(
-                f"[WS10b] per-feature norm '{head}': {len(st['keys'])} features, "
+                f"[Part A] '{head}' norm={st['method']}: {len(st['keys'])} features, "
                 f"n_train={st['n_train']}, std in "
-                f"[{float(std.min()):.4g}, {float(std.max()):.4g}]; "
+                f"[{float(std.min()):.4g}, {float(std.max()):.4g}]{lam_desc}; "
+                f"dropped {head_align[head].get('dropped_features')}; "
                 f"{len(st['degenerate_features'])} near-constant FLAGGED (kept, "
-                f"epsilon-floored): {st['degenerate_features']}"
+                f"floored): {st['degenerate_features']}"
             )
             if is_rank0:
                 out = osp.join(
@@ -939,21 +1193,32 @@ def run_training(cfg: DictConfig) -> None:
                     json.dump(
                         {
                             "head": head,
+                            "method": st["method"],
                             "n_train": st["n_train"],
                             "eps": st["eps"],
+                            "dropped_features": head_align[head].get(
+                                "dropped_features", []
+                            ),
                             "degenerate_robust_cv_threshold": float(
                                 cfg.multitask.get("degenerate_robust_cv", 0.01)
                             ),
                             "degenerate_features": st["degenerate_features"],
                             "keys": st["keys"],
+                            "lambdas": (
+                                st["lambdas"].tolist()
+                                if st.get("lambdas") is not None
+                                else None
+                            ),
                             "mean": st["mean"].tolist(),
                             "std": st["std"].tolist(),
+                            "raw_mean": st["raw_mean"],
+                            "raw_std": st["raw_std"],
                             "robust_cv": st["robust_cv"],
                         },
                         f,
                         indent=2,
                     )
-                print(f"[WS10b] wrote {out}")
+                print(f"[Part A] wrote {out}")
 
     task = MultitaskCGTTask(
         model=model,

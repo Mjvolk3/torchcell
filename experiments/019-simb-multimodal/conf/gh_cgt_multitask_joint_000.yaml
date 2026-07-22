@@ -1,5 +1,13 @@
-# experiments/019-simb-multimodal/conf/igb_cabbi_train_cgt_multitask_000.yaml
-# IGB cabbi full-run config: JOINT multitask Fig-3 CGT (4 GPU DDP).
+# experiments/019-simb-multimodal/conf/gh_cgt_multitask_joint_000.yaml
+# GilaHyper full-run: FULL JOINT multitask (gene_interaction + per_gene + global) on the
+# Fig-3 build -- "one embedding, many phenotypes". Real model size, 4-GPU DDP. This is the
+# reference JOINT run AND the base config the edge-of-config-space sweep overrides
+# (gh_cgt_multitask_sweep_00N inherit this and vary one knob each).
+#   - fitness (gene_interaction, scalar) standardized via the COO transform;
+#   - expression (per_gene) log2-ratios as-is;
+#   - morphology (global) Part A: drop 3 degenerate CalMorph features -> 278, Yeo-Johnson +
+#     z-score fit on TRAIN.
+# Metric (Part B): epoch per-feature Pearson per head in raw units.
 defaults:
   - default
   - _self_
@@ -8,7 +16,7 @@ dry_run: false
 
 wandb:
   project: torchcell_019-simb-multimodal_cgt_multitask
-  tags: [ws13, igb_cabbi, joint]
+  tags: [ws-run, gilahyper, joint, triple, yeo_johnson]
 
 cell_dataset:
   graphs: [physical, regulatory]
@@ -38,13 +46,12 @@ trainer:
   devices: 4
   overfit_batches: 0
   precision: bf16-mixed
+  log_every_n_steps: 10
   fast_dev_run: false
 
 multitask:
   active_heads: [gene_interaction, per_gene, global]
   loss_fn: mse
-  # Part A: morphology target drops 3 degenerate CalMorph features (-> 278) and uses
-  # per-feature Yeo-Johnson + z-score (TRAIN-split fit). See gh_cgt_multitask_joint_000.
   normalize_vector_targets: [global]
   vector_norm_method: yeo_johnson
   target_norm_eps: 1.0e-8

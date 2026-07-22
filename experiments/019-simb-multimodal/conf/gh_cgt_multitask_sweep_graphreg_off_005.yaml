@@ -1,0 +1,14 @@
+# experiments/019-simb-multimodal/conf/gh_cgt_multitask_sweep_graphreg_off_005.yaml
+# EDGE-OF-CONFIG-SPACE sweep 005: graph regularization OFF (graph_reg_lambda 0.001 -> 0).
+# Isolates the contribution of the attention graph-regularization term against the joint
+# base. regularized_heads left in place but zero-weighted via the shared lambda ref.
+defaults:
+  - gh_cgt_multitask_joint_000
+  - _self_
+
+wandb:
+  tags: [ws-run, gilahyper, sweep, graphreg_off]
+
+model:
+  graph_regularization:
+    graph_reg_lambda: 0.0

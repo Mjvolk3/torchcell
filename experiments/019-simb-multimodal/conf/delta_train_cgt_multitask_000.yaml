@@ -43,9 +43,17 @@ trainer:
 multitask:
   active_heads: [gene_interaction, per_gene, global]
   loss_fn: mse
+  # Part A: morphology target drops 3 degenerate CalMorph features (-> 278) and uses
+  # per-feature Yeo-Johnson + z-score (TRAIN-split fit). See gh_cgt_multitask_joint_000.
+  normalize_vector_targets: [global]
+  vector_norm_method: yeo_johnson
+  target_norm_eps: 1.0e-8
+  drop_features:
+    global: [A113_A1B, A113_C, C123_C]
+  degenerate_robust_cv: 0.01
   heads:
     global:
-      output_dim: 501
+      output_dim: 278
       use_gene_pool: true
     per_gene:
       output_dim: 1
@@ -58,7 +66,7 @@ multitask:
     per_metabolite: 1.0
   head_phenotypes:
     gene_interaction: [fitness, gene_interaction]
-    per_gene: [microarray_expression, rnaseq_expression]
+    per_gene: [expression_log2_ratio]
     global: [calmorph]
     per_metabolite: [metabolite]
 

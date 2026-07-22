@@ -1,5 +1,9 @@
-# experiments/019-simb-multimodal/conf/igb_cabbi_train_cgt_multitask_000.yaml
-# IGB cabbi full-run config: JOINT multitask Fig-3 CGT (4 GPU DDP).
+# experiments/019-simb-multimodal/conf/gh_cgt_multitask_expr_000.yaml
+# GilaHyper full-run: EXPRESSION-ONLY baseline (per_gene head) on the Fig-3 build.
+# Real model size, 4-GPU DDP. Trains the per_gene expression head (Kemmeren/Sameith
+# microarray log2-ratios) on the ~1484 expression genotypes; MaskedMultitaskLoss
+# restricts supervision to expression-carrying rows. Metric: epoch per-feature Pearson
+# averaged over the 6127 measured genes, in raw log2-ratio units (Part B).
 defaults:
   - default
   - _self_
@@ -8,7 +12,7 @@ dry_run: false
 
 wandb:
   project: torchcell_019-simb-multimodal_cgt_multitask
-  tags: [ws13, igb_cabbi, joint]
+  tags: [ws-run, gilahyper, expr, baseline]
 
 cell_dataset:
   graphs: [physical, regulatory]
@@ -16,12 +20,10 @@ cell_dataset:
   query_file: fig3_core.cql
   dataset_tag: fig3_core
 
+# Expression targets (log2-ratios) are not renormalized; gene_interaction transform
+# is inactive since the scalar head is off here.
 transforms:
-  use_transforms: true
-  forward_transform:
-    normalization:
-      gene_interaction:
-        strategy: standard
+  use_transforms: false
 
 data_module:
   is_perturbation_subset: false
@@ -38,18 +40,16 @@ trainer:
   devices: 4
   overfit_batches: 0
   precision: bf16-mixed
+  log_every_n_steps: 10
   fast_dev_run: false
 
 multitask:
-  active_heads: [gene_interaction, per_gene, global]
+  active_heads: [per_gene]
   loss_fn: mse
-  # Part A: morphology target drops 3 degenerate CalMorph features (-> 278) and uses
-  # per-feature Yeo-Johnson + z-score (TRAIN-split fit). See gh_cgt_multitask_joint_000.
-  normalize_vector_targets: [global]
+  normalize_vector_targets: []
   vector_norm_method: yeo_johnson
   target_norm_eps: 1.0e-8
-  drop_features:
-    global: [A113_A1B, A113_C, C123_C]
+  drop_features: {}
   degenerate_robust_cv: 0.01
   heads:
     global:

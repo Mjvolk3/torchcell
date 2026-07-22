@@ -1,0 +1,17 @@
+# experiments/019-simb-multimodal/conf/gh_cgt_multitask_sweep_dmodel_small_001.yaml
+# EDGE-OF-CONFIG-SPACE sweep 001: d_model SMALL (capacity floor). Inherits the full
+# triple-head joint base; overrides hidden_channels 180 -> 90 (heads/pert kept at 9,
+# 90/9=10). Probes whether the joint multitask signal survives a small embedding.
+defaults:
+  - gh_cgt_multitask_joint_000
+  - _self_
+
+wandb:
+  tags: [ws-run, gilahyper, sweep, dmodel_small]
+
+model:
+  hidden_channels: 90
+  num_attention_heads: 9
+  perturbation_head:
+    num_heads: 9
+    dropout: 0.1

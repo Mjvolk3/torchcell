@@ -6,138 +6,109 @@ updated: 1784699671781
 created: 1784699671781
 ---
 
-## 2026.07.22 - WS13 Fig-3 multitask CGT training harness + cluster launch
+## 2026.07.22 - WS-RUN: GilaHyper training setup (Part A norm, Part B metric, Part C configs + sweep)
 
-Compute harness for the Fig-3 multitask Cell Graph Transformer (WS7 heads on the
-WS2 Fig-3 multimodal build). Authored on GilaHyper/M1; real runs launch on IGB
-(mmli/cabbi) and Delta with NO Claude Code on those machines (write here, transfer,
-`sbatch` there).
+Script: `experiments/019-simb-multimodal/scripts/train_cgt_multitask.py`
 
-### Files
+### Part A - Normalization decision (supersedes WS10b z-score-only)
 
-- Training script:
-  `experiments/019-simb-multimodal/scripts/train_cgt_multitask.py`
-- Configs (`experiments/019-simb-multimodal/conf/`):
-  - `default.yaml` -- Hydra base (profiler/logging).
-  - `train_cgt_multitask.yaml` -- **workstation-verify** (tiny: 16-d model, 128
-    subset, 1 GPU, 2 epochs). Default `@hydra.main` config; use for `dry_run=true`
-    and a fast `trainer.fast_dev_run=true` smoke test.
-  - `igb_mmli_train_cgt_multitask_000.yaml`, `igb_cabbi_train_cgt_multitask_000.yaml`,
-    `delta_train_cgt_multitask_000.yaml` -- full 4-GPU DDP joint runs (180-d, 8
-    layers, 9 heads, 600 epochs).
-- SLURM (same dir): `igb_mmli_*.slurm` (`-p mmli`), `igb_cabbi_*.slurm`
-  (`-p cabbi`, `expandable_segments:True`), `delta_*.slurm` (`gpuA40x4`,
-  `bbub-delta-gpu`, apptainer + `/projects/bbub` binds).
+- **Drop 3 degenerate CalMorph features** from the `global` (morphology) target AND the
+  head `output_dim`: **281 -> 278**. Dropped list (config `multitask.drop_features.global`):
+  `A113_A1B`, `A113_C`, `C123_C`. These are a subset of the 6 robust-CV-flagged
+  near-constant features (`A113_A, A113_A1B, A113_C, C123_C, D203, D205`); the author chose
+  to hard-drop these 3 (the remaining flagged features stay, floored by the standardizer).
+  Implemented via a `keep_mask` over the key-sorted CalMorph vector in
+  `build_head_alignments` (analogue of the `per_gene` measured-gene mask), so the decoded
+  target is restricted to the 278 kept features and a runtime check asserts
+  `heads.global.output_dim == 278`.
+- **Per-feature Yeo-Johnson power transform + z-score** replaces plain z-score. Fit with
+  `sklearn.preprocessing.PowerTransformer(method="yeo-johnson", standardize=True)` on the
+  **TRAIN split only** (in `compute_per_feature_target_stats`). This **realizes Ohya 2005
+  SI's published "Box-Cox then standardize"**; we use **Yeo-Johnson** (the zero/negative-safe
+  generalization of Box-Cox) because CalMorph features contain zeros and negatives, so strict
+  Box-Cox is undefined. The fitted params are stored as checkpointed buffers -- per-feature
+  `lambda` + the transformed-space `mean`/`std` -- and re-implemented in torch
+  (`_yeo_johnson_forward` / `_yeo_johnson_inverse`) so normalization runs on-device and is
+  **invertible** for raw-unit reporting. Verified the torch transform matches sklearn to
+  ~3e-4 (float32) and inverse round-trips to ~5e-5. Selectable via
+  `multitask.vector_norm_method: {yeo_johnson (default) | zscore}` (`zscore` kept for
+  ablation, e.g. sweep 006). Stats + lambdas + dropped list are written to
+  `results/calmorph_train_target_norm_global.json`.
 
-### Head selection (individual baseline vs joint)
+### Part B - Honest metric (per-feature-averaged Pearson)
 
-`multitask.active_heads` picks which heads train, so ONE script does both:
+Replaced the per-batch **flatten-Pearson** (a feature-scale artifact -- flattening a
+multi-scale vector correlates across features of different magnitudes) with
+**per-feature-averaged Pearson** (`per_feature_pearson`), computed at **EPOCH level** in
+**ORIGINAL (inverse-transformed) units**:
 
-- individual baseline: `multitask.active_heads=[per_gene]` (or `[global]`,
-  `[gene_interaction]`).
-- joint: `multitask.active_heads=[gene_interaction,per_gene,global]`.
+- morphology (`global`): mean Pearson over the **278** CalMorph features;
+- expression (`per_gene`): mean Pearson over the **6127** measured genes;
+- fitness (`gene_interaction`): the single-feature reduction (== ordinary Pearson).
 
-Heads: `gene_interaction` = the built-in scalar `perturbation_head` (fitness);
-`per_gene` = `PerGeneHead` (expression, `[B,N]`); `global` = `GlobalHead`
-(CalMorph 501-D); `per_metabolite` = `PerMetaboliteHead` (needs the metabolism
-incidence graph -- only pulled in when that head is active). Loss =
-`MaskedMultitaskLoss` (each head masked to genotypes carrying that phenotype;
-graph-reg term added unchanged).
+Supervised `(pred, target)` rows are cached per step in raw units (normalized heads are
+inverted via `denormalize`; expression log2-ratios / fitness are already raw), concatenated
+at epoch end, and reduced. Features with a (near-)constant prediction/target column over the
+epoch are dropped from the average (undefined correlation), not counted as zero. Logged as
+`{stage}/{head}/pearson` for train/val/test; under DDP the per-rank per-feature correlation
+is `sync_dist`-averaged. This makes numbers comparable to the abstract's r values.
 
-### Dry-run / verification
+### Part C - GilaHyper full-Hydra configs + SLURM
 
-- `python .../train_cgt_multitask.py --help` and `... --cfg job` -- config OK.
-- `python .../train_cgt_multitask.py dry_run=true` -- builds the model from config
-  and runs ONE synthetic forward + masked loss + backward on a tiny synthetic
-  `cell_graph`/`batch` (no genome/dataset/wandb/GPU). Works for every head combo
-  and for the full cluster configs (`--config-name igb_mmli_... dry_run=true`).
-- mypy + ruff clean on the `.py`; `bash -n` clean on all three `.slurm`.
+W&B project (every config): **`torchcell_019-simb-multimodal_cgt_multitask`**.
+Real model size for 4x GPU DDP: `hidden_channels=180, num_transformer_layers=8,
+num_attention_heads=9, perturbation_head.num_heads=9`, `precision: bf16-mixed`, 600 epochs,
+CosineAnnealingWarmupRestarts, batch_size 32, physical+regulatory graphs with graph-reg on
+heads 0/1.
 
-### Head-wiring ASSUMPTIONS (validate on first real Fig-3 batch)
+Main configs (`experiments/019-simb-multimodal/conf/`):
 
-1. **Graph processor.** The transformer consumes per-genotype
-   `perturbation_indices` batches, so the harness (re)builds the dataset with the
-   `Perturbation` processor -- NOT the `SubgraphRepresentation` that
-   `query_fig3.py` used for the census. First cluster run materializes this build
-   under `$DATA_ROOT/data/torchcell/experiments/019-simb-multimodal/fig3_core`.
-2. **Target/mask decode.** `MultitaskCGTTask._extract_targets_and_masks` decodes
-   per-head targets + supervision masks from the COO `phenotype_values` /
-   `phenotype_type_indices` / `phenotype_sample_indices` fields on `batch['gene']`,
-   keyed by `multitask.head_phenotypes` (head -> phenotype-type-name list). The
-   name strings (`microarray_expression`, `calmorph`, `fitness`, ...) are a
-   best-effort placeholder and MUST be reconciled against the actual
-   `phenotype_types` strings in a materialized batch before a production run. The
-   synthetic dry-run does not touch this path.
+| Config | active_heads | Notes |
+| --- | --- | --- |
+| `gh_cgt_multitask_expr_000` | `[per_gene]` | expression-only baseline |
+| `gh_cgt_multitask_morph_000` | `[global]` | morphology-only; Part A (278 + Yeo-Johnson) |
+| `gh_cgt_multitask_joint_exprfit_000` | `[gene_interaction, per_gene]` | WS11a joint expr+fitness; ~1416 co-located genotypes (masked loss restricts each head; the intersection is where both are supervised) |
+| `gh_cgt_multitask_joint_000` | `[gene_interaction, per_gene, global]` | full triple-head joint; **sweep base** |
 
-## Transfer
+Edge-of-config-space sweep (each inherits `gh_cgt_multitask_joint_000`, varies ONE knob):
 
-What to move to each cluster before `sbatch` (code goes via `git pull`; large data
-lives under that cluster's `DATA_ROOT` and is NOT git-tracked).
+| Config | Knob | Value (vs base) |
+| --- | --- | --- |
+| `gh_cgt_multitask_sweep_dmodel_small_001` | `d_model` | hidden_channels 90 (vs 180) |
+| `gh_cgt_multitask_sweep_dmodel_large_002` | `d_model` | hidden_channels 360 (vs 180) |
+| `gh_cgt_multitask_sweep_layers_deep_003` | `num_transformer_layers` | 12 (vs 8) |
+| `gh_cgt_multitask_sweep_lr_high_004` | `learning_rate` | lr 3e-4 / max_lr 1e-3 (vs 1e-4 / 5e-4) |
+| `gh_cgt_multitask_sweep_graphreg_off_005` | `graph_reg_lambda` | 0.0 (vs 0.001) |
+| `gh_cgt_multitask_sweep_zscore_only_006` | normalization | zscore (Yeo-Johnson OFF) |
 
-### 1. Code (all clusters) -- git
+The **heads on/off** axis is spanned by the four main configs (1 head -> expr/morph, 2 ->
+exprfit, 3 -> joint), so it is not duplicated as a sweep entry.
 
-Land this branch, then on each cluster:
-
-```bash
-cd <cluster>/torchcell && git pull   # brings scripts + conf + queries
-```
-
-Paths per cluster (match the SLURM `cd`/python paths):
-
-- IGB mmli & cabbi: `/home/a-m/mjvolk3/projects/torchcell`
-- Delta: `/scratch/bbub/mjvolk3/torchcell`
-
-### 2. Fig-3 dataset LMDB (under each cluster's `DATA_ROOT`)
-
-`$DATA_ROOT/data/torchcell/experiments/019-simb-multimodal/fig3_core/` (the
-`Perturbation`-processor build). If absent on the target cluster, the first run
-builds it from the Neo4j DB + the mirrored query
-(`queries/fig3_core.cql`), which needs DB reachability + the node-embedding /
-genome caches below. Alternatively `rsync` a prebuilt LMDB from GilaHyper:
+SLURM: `experiments/019-simb-multimodal/scripts/gh_cgt_multitask.slurm` -- ONE parameterized
+GilaHyper launcher (`#SBATCH -p main`, `--gres=gpu:4`, `torchrun --standalone --nproc_per_node=4`,
+conda `torchcell` env, output `experiments/019-simb-multimodal/slurm/output/%x_%j.out`). Pass
+the Hydra config name as `$1`. Launch (orchestrator runs these; do NOT sbatch from here):
 
 ```bash
-rsync -a $DATA_ROOT/data/torchcell/experiments/019-simb-multimodal/fig3_core/ \
-  <cluster>:$DATA_ROOT/data/torchcell/experiments/019-simb-multimodal/fig3_core/
+sbatch -J gh_cgt_multitask_expr_000            experiments/019-simb-multimodal/scripts/gh_cgt_multitask.slurm gh_cgt_multitask_expr_000
+sbatch -J gh_cgt_multitask_morph_000           experiments/019-simb-multimodal/scripts/gh_cgt_multitask.slurm gh_cgt_multitask_morph_000
+sbatch -J gh_cgt_multitask_joint_exprfit_000   experiments/019-simb-multimodal/scripts/gh_cgt_multitask.slurm gh_cgt_multitask_joint_exprfit_000
+sbatch -J gh_cgt_multitask_joint_000           experiments/019-simb-multimodal/scripts/gh_cgt_multitask.slurm gh_cgt_multitask_joint_000
+sbatch -J gh_cgt_multitask_sweep_dmodel_small_001  experiments/019-simb-multimodal/scripts/gh_cgt_multitask.slurm gh_cgt_multitask_sweep_dmodel_small_001
+sbatch -J gh_cgt_multitask_sweep_dmodel_large_002  experiments/019-simb-multimodal/scripts/gh_cgt_multitask.slurm gh_cgt_multitask_sweep_dmodel_large_002
+sbatch -J gh_cgt_multitask_sweep_layers_deep_003   experiments/019-simb-multimodal/scripts/gh_cgt_multitask.slurm gh_cgt_multitask_sweep_layers_deep_003
+sbatch -J gh_cgt_multitask_sweep_lr_high_004       experiments/019-simb-multimodal/scripts/gh_cgt_multitask.slurm gh_cgt_multitask_sweep_lr_high_004
+sbatch -J gh_cgt_multitask_sweep_graphreg_off_005  experiments/019-simb-multimodal/scripts/gh_cgt_multitask.slurm gh_cgt_multitask_sweep_graphreg_off_005
+sbatch -J gh_cgt_multitask_sweep_zscore_only_006   experiments/019-simb-multimodal/scripts/gh_cgt_multitask.slurm gh_cgt_multitask_sweep_zscore_only_006
 ```
 
-### 3. Genome + node-embedding caches (under each cluster's `DATA_ROOT`)
+### Verification (no cluster run, no sbatch)
 
-Needed by the full training path (not the dry-run): `data/sgd/genome`, `data/go`,
-`data/string`, `data/tflink`. (Fig-3 configs use learnable gene embeddings, so no
-external embedding tensors are required; if a config sets
-`cell_dataset.node_embeddings`, ship the matching
-`data/scerevisiae/*_embedding` dirs too.)
-
-### 4. Container
-
-The SLURM scripts `singularity/apptainer exec` `rockylinux_9.sif` at the repo root
-on each cluster (IGB: `/home/a-m/mjvolk3/projects/torchcell/rockylinux_9.sif`;
-Delta: `/scratch/bbub/mjvolk3/torchcell/rockylinux_9.sif`). Ensure the image is
-present + the `torchcell` conda env exists inside it.
-
-### 5. Launch
-
-```bash
-# IGB mmli
-sbatch experiments/019-simb-multimodal/scripts/igb_mmli_train_cgt_multitask_000.slurm
-# IGB cabbi
-sbatch experiments/019-simb-multimodal/scripts/igb_cabbi_train_cgt_multitask_000.slurm
-# Delta
-sbatch experiments/019-simb-multimodal/scripts/delta_train_cgt_multitask_000.slurm
-```
-
-For an individual-phenotype baseline, override on the CLI (or clone a config):
-`... --config-name igb_mmli_train_cgt_multitask_000 'multitask.active_heads=[per_gene]'`.
-Ensure the SLURM output dir exists on the cluster
-(`.../experiments/019-simb-multimodal/slurm/output/`).
-
-## 2026.07.22 - WS10b per-feature CalMorph target normalization
-
-The `global` (CalMorph 281-D) target was RAW -> un-normalized MSE ~4.7 M. Added
-`compute_per_feature_target_stats()` (TRAIN-split-only per-feature mean/std, no leakage),
-applied in `_extract_targets_and_masks` and invertible via `task.denormalize()`. Config:
-`multitask.normalize_vector_targets: [global]` (+ `target_norm_eps`, `degenerate_robust_cv`);
-stats stored as buffers. Smoke: loss 4.5 M -> ~1.14 (O(1)); val loss falls below the z-scored
-variance floor (real signal); flatten-Pearson ~0 post-norm (the baseline's rising Pearson was
-a feature-scale artifact). Full source/variance/decision writeup:
-[[experiments.019-simb-multimodal.scripts.calmorph_variance_analysis]].
+- `dry_run=true` constructs model + heads + masked loss for every config (expr/morph/
+  exprfit/joint + all 6 sweeps + updated igb/delta); `global` head is 278-D.
+- Yeo-Johnson torch transform matches sklearn (~3e-4) and inverse round-trips (~5e-5);
+  `per_feature_pearson` returns ~1 on perfectly correlated synthetic features and drops
+  constant columns.
+- `bash -n` clean on all slurm; `mypy` + `ruff` clean on `train_cgt_multitask.py`.
+- Stale sibling configs (`igb_cabbi/igb_mmli/delta`) updated off the broken `output_dim: 501`
+  - `microarray_/rnaseq_expression` to the corrected 278 + `expression_log2_ratio` + Part A knobs.

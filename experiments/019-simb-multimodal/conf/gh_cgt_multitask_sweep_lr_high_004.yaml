@@ -1,0 +1,25 @@
+# experiments/019-simb-multimodal/conf/gh_cgt_multitask_sweep_lr_high_004.yaml
+# EDGE-OF-CONFIG-SPACE sweep 004: HIGH learning rate (LR ceiling). Overrides base lr
+# 1e-4 -> 3e-4 and scheduler max_lr 5e-4 -> 1e-3. Probes stability at the high-LR edge.
+defaults:
+  - gh_cgt_multitask_joint_000
+  - _self_
+
+wandb:
+  tags: [ws-run, gilahyper, sweep, lr_high]
+
+regression_task:
+  optimizer:
+    type: AdamW
+    lr: 3e-4
+    weight_decay: 1e-8
+  lr_scheduler:
+    type: CosineAnnealingWarmupRestarts
+    first_cycle_steps: 40
+    cycle_mult: 1.0
+    max_lr: 1e-3
+    min_lr: 1e-7
+    warmup_steps: 1
+    gamma: 0.70
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0

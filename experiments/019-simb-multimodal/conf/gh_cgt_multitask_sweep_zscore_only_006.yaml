@@ -1,0 +1,14 @@
+# experiments/019-simb-multimodal/conf/gh_cgt_multitask_sweep_zscore_only_006.yaml
+# EDGE-OF-CONFIG-SPACE sweep 006: normalization ablation. Overrides the morphology vector
+# normalization from Yeo-Johnson+z-score to plain per-feature z-score (legacy WS10b).
+# Part A drop (278) is retained; only the power transform is turned off, to measure what
+# the Box-Cox/Yeo-Johnson step buys over plain standardization.
+defaults:
+  - gh_cgt_multitask_joint_000
+  - _self_
+
+wandb:
+  tags: [ws-run, gilahyper, sweep, zscore_only]
+
+multitask:
+  vector_norm_method: zscore

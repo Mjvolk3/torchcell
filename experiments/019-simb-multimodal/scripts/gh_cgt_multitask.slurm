@@ -27,12 +27,14 @@ echo "job=$SLURM_JOB_ID name=$SLURM_JOB_NAME config=$CONFIG_NAME host=$(hostname
 # Change to the experiments directory (matches 010 GilaHyper convention)
 cd /home/michaelvolk/Documents/projects/torchcell/experiments || exit 1
 
-# DDP rendezvous (torchrun --standalone handles a single-node 4-GPU group)
-export MASTER_ADDR=$(hostname)
+# DDP rendezvous — loopback (GilaHyper's bare hostname does not route: errno 113).
+# torchrun --standalone reads MASTER_ADDR; 127.0.0.1 always routes on a single node.
+export MASTER_ADDR=127.0.0.1
 export MASTER_PORT=$(shuf -i 10000-65500 -n 1)
 
-# Activate conda environment directly (no container on GilaHyper)
-source ~/miniconda3/bin/activate
+# Activate conda (no container on GilaHyper). Source conda.sh (NOT bin/activate, which
+# consumes the script's $1 = config name and errors "env not found: <config>").
+source ~/miniconda3/etc/profile.d/conda.sh
 conda activate torchcell
 
 # Add project to PYTHONPATH

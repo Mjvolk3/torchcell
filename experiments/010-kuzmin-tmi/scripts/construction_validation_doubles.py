@@ -27,6 +27,9 @@ Run from repo root:
 """
 import os
 import os.path as osp
+import shutil
+import subprocess
+import tempfile
 from itertools import combinations
 
 import matplotlib.pyplot as plt
@@ -143,69 +146,75 @@ def annotate_tiers(df: pd.DataFrame, triples: list[frozenset]) -> pd.DataFrame:
 
 
 def plot_table(df: pd.DataFrame) -> None:
-    """Standalone image of the construction+validation table (13 selected + 1 novel).
+    """Standalone LaTeX-booktabs image of the table (13 selected + 1 novel), all black.
 
-    Rows sorted by Costanzo DMF (novel, unmeasured, last). Index column; tier color
-    on the double name (coverage blue, validation red, novel black); a check mark
-    for significant interactions.
+    Renders a real booktabs table via pdflatex (crisp LaTeX typography), crops to the
+    table bbox with ghostscript, and emits PDF + PNG + SVG. Rows sorted by Costanzo
+    DMF (novel, unmeasured, last); check mark for significant interactions.
     """
     meas = df[df.tier.isin(["coverage", "validation"])].sort_values(
         "DmfCostanzo2016_fitness")
     nov = df[df.tier == "novel"]
     rows = pd.concat([meas, nov]).reset_index(drop=True)
 
-    def fmt(v, s=None, dec=3):
-        if pd.isna(v):
-            return "—"
-        return f"{v:.{dec}f} ± {s:.3f}" if s is not None and pd.notna(s) else f"{v:+.3f}"
+    def dmf(v, s):
+        return "---" if pd.isna(v) else rf"${v:.3f} \pm {s:.3f}$"
 
-    headers = ["#", "Double", "Tier", "DMF ± SD", "ε", "p", "sig", "triples"]
-    cell_text, name_colors = [], []
+    body = []
     for i, r in rows.iterrows():
-        cell_text.append([
+        body.append(" & ".join([
             str(i + 1),
             f"{r.gene1}+{r.gene2}",
             r.tier,
-            fmt(r.DmfCostanzo2016_fitness, r.DmfCostanzo2016_std),
-            "—" if pd.isna(r.eps) else f"{r.eps:+.3f}",
-            "—" if pd.isna(r.p) else f"{r.p:.3f}",
-            "✓" if r.significant else "",
+            dmf(r.DmfCostanzo2016_fitness, r.DmfCostanzo2016_std),
+            "---" if pd.isna(r.eps) else rf"${r.eps:+.3f}$",
+            "---" if pd.isna(r.p) else f"{r.p:.3f}",
+            r"$\checkmark$" if r.significant else "",
             str(int(r.n_triples_enabled)),
-        ])
-        name_colors.append(TIER_COLOR.get(r.tier if r.tier != "novel" else "x", "black")
-                           if r.tier != "novel" else "black")
+        ]) + r" \\")
 
-    col_widths = [0.05, 0.26, 0.13, 0.19, 0.10, 0.09, 0.06, 0.09]
-    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]),
-                                    mm_to_in(6.5 * len(rows) + 16)))
-    ax.axis("off")
-    tbl = ax.table(cellText=cell_text, colLabels=headers, cellLoc="center",
-                   colWidths=col_widths, edges="horizontal", bbox=[0, 0, 1, 0.93])
-    tbl.auto_set_font_size(False)
-    tbl.set_fontsize(6)
-    tbl.scale(1, 1.5)
-    for (row, col), cell in tbl.get_celld().items():
-        cell.set_linewidth(0.4)
-        cell.PAD = 0.03
-        if col in (1, 2):  # left-align the double + tier text
-            cell.set_text_props(ha="left")
-            cell._text.set_x(0.03)
-        if row == 0:  # header
-            cell.set_text_props(fontweight="bold")
-            cell.set_edgecolor("black")
-        else:
-            r = rows.iloc[row - 1]
-            if col == 1:  # double name -> black (Nature: no cell coloring)
-                cell.set_text_props(color="black", fontweight="bold", ha="left")
-                cell._text.set_x(0.03)
-            if col == 6 and r.significant:
-                cell.set_text_props(fontweight="bold")
-    ax.set_title("Doubles to construct: 13 selected + 1 novel (Costanzo2016 reference)",
-                 fontsize=7, pad=10)
-    fig.savefig(osp.join(OUT_DIR, "construction_validation_doubles_table.png"),
-                dpi=200, bbox_inches="tight")
-    savefig_true_size_svg(fig, osp.join(OUT_DIR, "construction_validation_doubles_table.svg"))
-    plt.close(fig)
+    tex = r"""\documentclass[10pt]{article}
+\usepackage[margin=6pt,paperwidth=24cm,paperheight=16cm]{geometry}
+\usepackage{booktabs}
+\usepackage{amssymb}
+\pagestyle{empty}
+\begin{document}
+\begin{tabular}{r l l c c c c c}
+\toprule
+\# & Double & Tier & DMF $\pm$ SD & $\varepsilon$ & $p$ & sig & triples \\
+\midrule
+""" + "\n".join(body) + r"""
+\bottomrule
+\end{tabular}
+\end{document}
+"""
+    base = "construction_validation_doubles_table"
+    with tempfile.TemporaryDirectory() as d:
+        tpath = osp.join(d, "t.tex")
+        with open(tpath, "w") as fh:
+            fh.write(tex)
+        subprocess.run(["pdflatex", "-interaction=nonstopmode", "-halt-on-error", "t.tex"],
+                       cwd=d, check=True, capture_output=True)
+        # crop to the table's bounding box
+        bbox = subprocess.run(["gs", "-q", "-dBATCH", "-dNOPAUSE", "-sDEVICE=bbox",
+                               osp.join(d, "t.pdf")], capture_output=True, text=True)
+        line = [x for x in bbox.stderr.splitlines() if "HiResBoundingBox" in x][0]
+        x0, y0, x1, y1 = (float(v) for v in line.split(":")[1].split())
+        pad = 4
+        w, h = (x1 - x0) + 2 * pad, (y1 - y0) + 2 * pad
+        # resize the page to the table bbox (PageOffset + FIXEDMEDIA) so the crop is
+        # honored by pdftoppm/pdftocairo, not just the CropBox.
+        subprocess.run(["gs", "-o", osp.join(d, "crop.pdf"), "-sDEVICE=pdfwrite",
+                        f"-dDEVICEWIDTHPOINTS={w:.2f}", f"-dDEVICEHEIGHTPOINTS={h:.2f}",
+                        "-dFIXEDMEDIA",
+                        "-c", f"<</PageOffset [{pad - x0:.2f} {pad - y0:.2f}]>> setpagedevice",
+                        "-f", osp.join(d, "t.pdf")], check=True, capture_output=True)
+        shutil.copy(osp.join(d, "crop.pdf"), osp.join(OUT_DIR, f"{base}.pdf"))
+        subprocess.run(["pdftoppm", "-png", "-r", "300", osp.join(d, "crop.pdf"),
+                        osp.join(d, "png")], check=True, capture_output=True)
+        shutil.copy(osp.join(d, "png-1.png"), osp.join(OUT_DIR, f"{base}.png"))
+        subprocess.run(["pdftocairo", "-svg", osp.join(d, "crop.pdf"),
+                        osp.join(OUT_DIR, f"{base}.svg")], check=True, capture_output=True)
 
 
 def plot_cross_dataset(df: pd.DataFrame) -> None:

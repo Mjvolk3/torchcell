@@ -251,17 +251,11 @@ def plot_cross_dataset(df: pd.DataFrame) -> None:
     #        (Costanzo = COLOR_COV purple; three-color scheme = first three palette colors)
     fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["wide"]), mm_to_in(65)),
                            layout="constrained")
-    top = len(d) - 1
     for i, r in d.iterrows():
         ax.errorbar(r.DmfCostanzo2016_fitness, i, xerr=r.DmfCostanzo2016_std, fmt="o",
                     ms=4, elinewidth=0.6, capsize=1.5, color=COLOR_COV, zorder=3)
-        ax.scatter(r.kuzmin, i, s=22, color=kcolor[r.ksrc], zorder=3)
-        # keep the label inside the frame: high-x -> left of the dot; top row -> below
-        dx, ha = (-4, "right") if r.kuzmin >= 1.0 else (4, "left")
-        dy, va = (-5, "top") if i == top else (3, "bottom")
-        ax.annotate(r.ksrc, (r.kuzmin, i), textcoords="offset points",
-                    xytext=(dx, dy), ha=ha, va=va, fontsize=4.5, color="black")
-    ax.margins(x=0.06, y=0.12)
+        ax.scatter(r.kuzmin, i, s=22, color=kcolor[r.ksrc], zorder=3)  # color denotes K2018/K2020
+    ax.margins(x=0.04, y=0.10)
     ax.axvline(1.0, color="0.4", ls=":", lw=0.8, zorder=0)
     ax.set_yticks(range(len(d)))
     ax.set_yticklabels([f"{r.gene1}+{r.gene2}" for _, r in d.iterrows()], fontsize=5.5)

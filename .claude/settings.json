@@ -2,10 +2,10 @@
   "permissions": {
     "allow": [
       "Read(**)",
-      "Search(**)",
       "Glob(**)",
       "Grep(**)",
       "Write(**/*.py)",
+      "Edit(**/*.py)",
       "Bash(mkdir:*)",
       "Bash(ls:*)",
       "Bash(python:*)",

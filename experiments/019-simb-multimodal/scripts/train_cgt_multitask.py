@@ -1210,6 +1210,77 @@ def run_training(cfg: DictConfig) -> None:
     head_phenotypes = _as_dict(cfg.multitask.head_phenotypes)
     active_heads = list(cfg.multitask.active_heads)
 
+    # ---- Scale metadata -> wandb config + summary (scaling-study axis data) ----
+    # Recorded to BOTH wandb.config (queryable as a hyperparameter) and wandb.summary
+    # (queryable as a final scalar) so "outcome vs params x dataset size x modality x
+    # dataset type" is recoverable across the whole sweep for the model-class-H scaling
+    # study. Computed here because the model + the (restricted) splits both now exist.
+    total_param_count = int(sum(p.numel() for p in model.parameters()))
+    trainable_param_count = int(
+        sum(p.numel() for p in model.parameters() if p.requires_grad)
+    )
+    standardize_heads_cfg = list(cfg.multitask.get("standardize_per_feature_target", []))
+    # n genotypes actually SUPERVISED for the active head(s): a split row counts only if it
+    # carries an active head's phenotype label (dataset.phenotype_label_index), intersected
+    # with that split's (post-restriction) indices. For the expression grid this equals the
+    # restricted split sizes; the label intersection keeps it correct under any config.
+    supervised_labels: set[str] = set()
+    for _h in active_heads:
+        supervised_labels.update(head_phenotypes.get(_h, []))
+    label_index = dataset.phenotype_label_index
+    supervised_idx: set[int] = set()
+    for _lbl in supervised_labels:
+        supervised_idx.update(label_index.get(_lbl, []))
+    n_train_supervised = len(set(data_module.train_dataset.indices) & supervised_idx)
+    n_val_supervised = len(set(data_module.val_dataset.indices) & supervised_idx)
+    n_test_supervised = len(set(data_module.test_dataset.indices) & supervised_idx)
+    # dataset_type / composition string from the row-level restriction.
+    if restrict_names:
+        _has_kem = any("Kemmeren" in n for n in restrict_names)
+        _has_sam = any("Sameith" in n for n in restrict_names)
+        if _has_kem and _has_sam:
+            dataset_type = "kemmeren+sameith"
+        elif _has_kem:
+            dataset_type = "kemmeren_only"
+        elif _has_sam:
+            dataset_type = "sameith_only"
+        else:
+            dataset_type = "+".join(restrict_names)
+    else:
+        dataset_type = str(cfg.cell_dataset.get("dataset_tag", "all"))
+    scale_meta: dict[str, Any] = {
+        "total_param_count": total_param_count,
+        "trainable_param_count": trainable_param_count,
+        "n_train_supervised": n_train_supervised,
+        "n_val_supervised": n_val_supervised,
+        "n_test_supervised": n_test_supervised,
+        "dataset_type": dataset_type,
+        "dataset_composition": (
+            list(restrict_names) if restrict_names else [dataset_type]
+        ),
+        "active_heads": list(active_heads),
+        "active_head": active_heads[0] if active_heads else None,
+        "hidden_channels": int(cfg.model.hidden_channels),
+        "num_layers": int(cfg.model.num_transformer_layers),
+        "num_heads": int(cfg.model.num_attention_heads),
+        "target_standardized": bool(standardize_heads_cfg),
+        "standardize_heads": standardize_heads_cfg,
+        "graph_reg_lambda": float(cfg.model.graph_regularization.graph_reg_lambda),
+        "lr": float(cfg.regression_task.optimizer.lr),
+        "dropout": float(cfg.model.dropout),
+        "weight_decay": float(cfg.regression_task.optimizer.weight_decay),
+        "seed": seed,
+        "total_param_count": int(sum(p.numel() for p in model.parameters())),
+        "trainable_param_count": int(
+            sum(p.numel() for p in model.parameters() if p.requires_grad)
+        ),
+    }
+    print("[scale-meta] " + json.dumps(scale_meta))
+    if run is not None:
+        run.config.update(scale_meta, allow_val_change=True)  # type: ignore[no-untyped-call]
+        for _k, _v in scale_meta.items():
+            run.summary[_k] = _v
+
     # Resolve each head's COO->target alignment against the REAL build (WS10a):
     # real phenotype-type strings are fitness / calmorph / expression_log2_ratio.
     # Part A: `drop_features` removes degenerate CalMorph features (e.g. A113_A1B/A113_C/

@@ -79,6 +79,14 @@ In `train_cgt_multitask.py`:
 5. **Config-driven `seed`** + `seed_everything(seed, workers=True)` so seed replicates are
    reproducible (model init + the CellDataModule split).
 6. **Row-level dataset restriction** `cell_dataset.restrict_dataset_names` (see below).
+7. **Scale metadata -> wandb** (config + summary, both queryable across the sweep) at
+   startup: `total_param_count` / `trainable_param_count`, per-split SUPERVISED genotype
+   counts (`n_{train,val,test}_supervised`, intersecting each split with the active head's
+   `phenotype_label_index`), `dataset_type` (`kemmeren_only` vs `kemmeren+sameith`) +
+   `dataset_composition`, `active_head(s)`, `hidden_channels`, `num_layers`, `num_heads`,
+   `target_standardized` (bool), `graph_reg_lambda`, `lr`, `dropout`, `weight_decay`,
+   `seed`. This is the axis data for the model-class-H scaling study (outcome vs
+   params x dataset size x modality x dataset type). Also echoed to stdout as `[scale-meta]`.
 
 ### Kemmeren <-> Sameith cross-platform mean-merge confound
 

@@ -119,10 +119,12 @@ exists, report both. The full per-double Costanzo+Kuzmin comparison is in the SI
 Of C(10,2)=45 pairs, **44 have a Costanzo DMF; 1 does not: YPL046C+YPL081W (ELC1+RPS9A)** — and
 it is also absent from Kuzmin2018/2020. Missing ≠ synthetic-lethal (an SL pair would show as a
 measured low fitness or an explicit flag, not a blank); a NaN just means the pair was never in a
-scored query×array orientation. **Recommendation: construct it** to fill the last cell of the
-10×10 matrix — it is a genuine unknown. **Before assuming it is buildable, check its
-synthetic-lethality status** in SynLethDB / BioGRID (not resolvable from the local build here).
-It is tagged `novel` in the SI table.
+scored query×array orientation. **SL check (SynthLethDB `Yeast_SL.csv`): NOT synthetic-lethal** —
+ELC1/YPL046C appears in **zero** SL records, and RPS9A/YPL081W is SL only with its paralog **RPS9B**
+(the classic redundant-duplicate case), not with ELC1. So it is not a known SL and should be
+buildable (caveat: absence = "not a *known* SL", not "proven non-SL"; BioGRID is a second source).
+**Recommendation: construct it** — the one cell of the 10×10 matrix with no value in Costanzo,
+Kuzmin, or SynthLethDB. It is tagged `novel` in the SI table.
 
 ### Supplementary table — all 45 within-10 doubles
 

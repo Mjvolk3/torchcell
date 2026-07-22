@@ -50,6 +50,14 @@ def main() -> None:
     ap.add_argument("--clahe_clip", type=float, default=0.01)
     ap.add_argument("--cellprob", type=float, default=-4.0)
     ap.add_argument("--flow", type=float, default=0.4)
+    # detection / assignment / error-flag knobs (see CellposeSegConfig)
+    ap.add_argument("--node_tol", type=float, default=0.55, help="on-node radius (xpitch); higher recovers offset colonies")
+    ap.add_argument("--stray_tol", type=float, default=1.0)
+    ap.add_argument("--edge_margin", type=float, default=0.5, help="gel-edge gate (xpitch); higher keeps row A/P edge colonies")
+    ap.add_argument("--min_area", type=int, default=20, help="min instance area (px)")
+    ap.add_argument("--multi_min_frac", type=float, default=0.5, help="2nd-colony area frac to fire M (higher = fewer false reds)")
+    ap.add_argument("--no_tighten", action="store_true", help="disable Otsu size-tightening (keep raw Cellpose mask)")
+    ap.add_argument("--tighten_min_frac", type=float, default=0.20)
     ap.add_argument("--conditions", default="P1_t50,P1_t72", help="comma list or 'all'")
     ap.add_argument("--tag", default="probe")
     ap.add_argument("--save_masks", action="store_true", help="save crop+masks for montage")
@@ -66,6 +74,13 @@ def main() -> None:
         flow_threshold=args.flow,
         contrast=args.contrast,
         clahe_clip=args.clahe_clip,
+        node_tol=args.node_tol,
+        stray_tol=args.stray_tol,
+        edge_margin_frac=args.edge_margin,
+        min_instance_area=args.min_area,
+        multi_min_frac=args.multi_min_frac,
+        tighten_size=not args.no_tighten,
+        tighten_min_frac=args.tighten_min_frac,
     )
 
     stats = []
@@ -84,15 +99,28 @@ def main() -> None:
             crop.save(osp.join(QUANT_DIR, f"run2_cellpose_{args.tag}_crop_{g}.png"))
             with open(osp.join(QUANT_DIR, f"run2_cellpose_{args.tag}_color_{g}.json"), "w") as fh:
                 json.dump({str(k): v for k, v in res.kept_color.items()}, fh)
+        tbl = res.table
+        occ = tbl[tbl["size"] > 0]
+        fl = occ["flags"].astype(str)
         stats.append(
             dict(
                 group=g,
-                occupied=int((res.table["size"] > 0).sum()),
+                occupied=int(len(occ)),
+                accepted=int((~fl.str.contains("[MNC]", regex=True)).sum()),
+                multi=int(fl.str.contains("M").sum()),
+                neighbour=int(fl.str.contains("N").sum()),
+                noncirc=int(fl.str.contains("C").sum()),
                 instances=res.n_instances,
                 offgrid=res.n_offgrid,
+                mean_size=int(occ["size"].mean()) if len(occ) else 0,
             )
         )
-        print(f"    {g}: occupied={stats[-1]['occupied']} instances={res.n_instances}")
+        s = stats[-1]
+        print(
+            f"    {g}: occupied={s['occupied']} accepted={s['accepted']} "
+            f"M={s['multi']} N={s['neighbour']} C={s['noncirc']} "
+            f"inst={res.n_instances} offgrid={res.n_offgrid} mean_size={s['mean_size']}"
+        )
 
     print(
         "RECIPE_JSON "

@@ -80,6 +80,30 @@ class CellposeSegConfig(BaseModel):
         default=MIN_COLONY_AREA,
         description="drop Cellpose instances smaller than this (px)",
     )
+    tighten_size: bool = Field(
+        default=True,
+        description="shrink each accepted mask to the dark colony pixels (Otsu within "
+        "the mask), dropping the faint halo Cellpose includes -- removes the air gap "
+        "between the drawn outline and the colony and makes the stored size the colony "
+        "itself. Detection stays as permissive as cellprob/contrast allow.",
+    )
+    tighten_min_frac: float = Field(
+        default=0.20,
+        description="keep the original mask if the tightened (dark) region is smaller "
+        "than this fraction of it -- guards faint colonies where Otsu over-shrinks.",
+    )
+    edge_margin_frac: float = Field(
+        default=0.5,
+        description="gel-edge gate half-width in pitch units. A colony is dropped as "
+        "off-gel only if it sits more than this*pitch outside the fitted gel hexagon. "
+        "Larger keeps more true edge-row (row A / row P) colonies.",
+    )
+    multi_min_frac: float = Field(
+        default=0.5,
+        description="a second colony on/near a well triggers the multi ('M') flag only "
+        "if its area is at least this fraction of the primary colony's -- so a Cellpose "
+        "over-split fragment of one colony no longer falsely rejects the well.",
+    )
 
 
 class PlateSegResult(BaseModel):
@@ -162,6 +186,45 @@ def _contrast_enhance(img: np.ndarray, method: str, clahe_clip: float) -> np.nda
         raise ValueError(f"contrast must be 'none'|'clahe'|'flatfield', got {method!r}")
     out: np.ndarray = (np.stack([enh] * 3, axis=-1) * 255).astype(np.uint8)
     return out
+
+
+def _tighten_instance(
+    masks: np.ndarray, iid: int, g: np.ndarray, invert: bool, min_frac: float
+) -> int:
+    """Shrink instance ``iid`` in ``masks`` to its dark-colony core and return the
+    tightened area (px). Cellpose masks on backlit plates include a faint halo of
+    near-agar pixels; Otsu within the mask splits colony (dark, if ``invert``) from
+    halo (bright), we keep the largest colony component and ZERO the halo pixels of
+    this id in ``masks`` (so drawn contours + montage tighten too). If the colony
+    core is < ``min_frac`` of the mask (a faint colony Otsu over-shrinks), the mask
+    is left untouched and the original area returned.
+    """
+    from scipy.ndimage import label as _label
+    from skimage.filters import threshold_otsu
+
+    ys, xs = np.where(masks == iid)
+    if ys.size == 0:
+        return 0
+    y0, y1 = int(ys.min()), int(ys.max()) + 1
+    x0, x1 = int(xs.min()), int(xs.max()) + 1
+    subm = masks[y0:y1, x0:x1] == iid
+    subg = g[y0:y1, x0:x1]
+    vals = subg[subm]
+    if vals.size < 10 or vals.min() == vals.max():
+        return int(subm.sum())
+    t = threshold_otsu(vals)  # type: ignore[no-untyped-call]
+    colony = (subg <= t) if invert else (subg >= t)
+    colony &= subm
+    lab, n = _label(colony)
+    if n == 0:
+        return int(subm.sum())
+    counts = np.bincount(lab.ravel())
+    counts[0] = 0
+    cc = lab == int(counts.argmax())
+    if cc.sum() < max(min_frac * subm.sum(), MIN_COLONY_AREA):
+        return int(subm.sum())  # over-shrunk faint colony -> keep original mask
+    masks[y0:y1, x0:x1][subm & ~cc] = 0  # zero the halo pixels of this id
+    return int(cc.sum())
 
 
 def _well(
@@ -294,18 +357,20 @@ def quantify_plate_image_cellpose(
     if cfg.gel_detect:
         _gel_poly, gel_mask = _gel_polygon(g, nodes, pitch, theta, center)
         gel_sd = _signed_dist(gel_mask)
-    edge_margin = 0.5 * pitch
+    edge_margin = cfg.edge_margin_frac * pitch
 
     img = np.asarray(ImageOps.exif_transpose(Image.open(path)).convert("RGB"))
     if cfg.contrast != "none":
         img = _contrast_enhance(img, cfg.contrast, cfg.clahe_clip)
-    masks = model.eval(
-        img,
-        flow_threshold=cfg.flow_threshold,
-        cellprob_threshold=cfg.cellprob_threshold,
-        diameter=cfg.diameter,
-    )[0]
-    props = _instance_props(np.asarray(masks), cfg.min_instance_area)
+    masks = np.asarray(
+        model.eval(
+            img,
+            flow_threshold=cfg.flow_threshold,
+            cellprob_threshold=cfg.cellprob_threshold,
+            diameter=cfg.diameter,
+        )[0]
+    )
+    props = _instance_props(masks, cfg.min_instance_area)
 
     node_yx = nodes.reshape(-1, 2)  # (n_rows*n_cols, 2)
     # bucket each in-gel instance to its nearest node; track off-grid contaminants
@@ -344,7 +409,7 @@ def quantify_plate_image_cellpose(
                 continue
             pool = on if on else near
             best = max(pool, key=lambda p: p["area"])
-            size = int(best["area"])
+            orig_area = int(best["area"])
             cym, cxm = best["cy"], best["cx"]
             sd_val = pitch
             if gel_sd is not None:
@@ -352,7 +417,7 @@ def quantify_plate_image_cellpose(
                 sxi = min(max(int(round(cxm)), 0), g.shape[1] - 1)
                 sd_val = float(gel_sd[syi, sxi])
             accepted = (
-                size >= MIN_COLONY_AREA
+                orig_area >= MIN_COLONY_AREA
                 and best["dist"] <= cfg.node_tol * pitch
                 and best["aspect"] <= MAX_ASPECT
                 and best["extent"] >= MIN_EXTENT
@@ -362,12 +427,30 @@ def quantify_plate_image_cellpose(
             if not accepted:
                 recs.append(_well(ri, ci, 0, np.nan, "", cxm, cym, -1))
                 continue
+            # tighten the stored size to the dark colony core (drop the halo); detection
+            # already happened, so this only sharpens the size/outline, never recall.
+            size = (
+                _tighten_instance(
+                    masks, int(best["id"]), g, invert, cfg.tighten_min_frac
+                )
+                if cfg.tighten_size
+                else orig_area
+            )
             flags = ""
             if best["circ"] < cfg.circularity_reject:
                 flags += "C"  # non-circular -> invalidate (purple)
             if -edge_margin <= sd_val < edge_margin:
                 flags += "E"
-            if len(on) >= 2 or (on and near):
+            # multi ('M') fires only on a SECOND real colony (area >= multi_min_frac of
+            # the primary) on/near the well -- a Cellpose over-split fragment no longer
+            # falsely rejects a clean single colony.
+            competitors = [
+                p
+                for p in (on + near)
+                if int(p["id"]) != int(best["id"])
+                and p["area"] >= cfg.multi_min_frac * orig_area
+            ]
+            if competitors:
                 flags += "M"  # two colonies compete for nutrient -> invalidate (red)
             well_idx[(ri, ci)] = len(recs)
             recs.append(

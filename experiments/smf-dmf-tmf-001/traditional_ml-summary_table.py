@@ -186,7 +186,7 @@ def latex_paper_table(summary):
     LBL = {"random_1": r"random ($d{=}1$)", "random_10": r"random ($d{=}10$)",
         "random_100": r"random ($d{=}100$)", "random_1000": r"random ($d{=}1000$)",
         "codon_frequency": "codon frequency", "normalized_chrom_pathways": "chromosome pathways",
-        "calm": "CaLM", "fudt_upstream": "FUDT upstream", "fudt_downstream": "FUDT downstream",
+        "calm": "CaLM", "fudt_upstream": "species LM up", "fudt_downstream": "species LM down",
         "prot_T5_all": "ProtT5", "prot_T5_no_dubious": "ProtT5 (no dubious)",
         "esm2_t33_650M_UR50D_all": "ESM2-650M", "esm2_t33_650M_UR50D_no_dubious": "ESM2-650M (no dubious)",
         "nt_window_5979": "Nucleotide Tr.\\ (5979)", "nt_window_three_prime_300": "Nucleotide Tr.\\ (3$'$ 300)",
@@ -255,7 +255,7 @@ def latex_paper_table_full(summary):
     LBL = {"random_1": r"random ($d{=}1$)", "random_10": r"random ($d{=}10$)",
         "random_100": r"random ($d{=}100$)", "random_1000": r"random ($d{=}1000$)",
         "codon_frequency": "codon freq.", "normalized_chrom_pathways": "chrom. pathways",
-        "calm": "CaLM", "fudt_upstream": "FUDT up", "fudt_downstream": "FUDT down",
+        "calm": "CaLM", "fudt_upstream": "species LM up", "fudt_downstream": "species LM down",
         "prot_T5_all": "ProtT5", "prot_T5_no_dubious": "ProtT5 (nd)",
         "esm2_t33_650M_UR50D_all": "ESM2", "esm2_t33_650M_UR50D_no_dubious": "ESM2 (nd)",
         "nt_window_5979": "NT 5979", "nt_window_three_prime_300": "NT 3$'$",
@@ -332,7 +332,7 @@ def latex_bench_table(summary, metric="spearman"):
     LBL = {"random_1": r"random ($d{=}1$)", "random_10": r"random ($d{=}10$)",
         "random_100": r"random ($d{=}100$)", "random_1000": r"random ($d{=}1000$)",
         "codon_frequency": "codon freq.", "normalized_chrom_pathways": "chrom. pathways",
-        "calm": "CaLM", "fudt_upstream": "FUDT up", "fudt_downstream": "FUDT down",
+        "calm": "CaLM", "fudt_upstream": "species LM up", "fudt_downstream": "species LM down",
         "prot_T5_all": "ProtT5", "prot_T5_no_dubious": "ProtT5 (nd)",
         "esm2_t33_650M_UR50D_all": "ESM2", "esm2_t33_650M_UR50D_no_dubious": "ESM2 (nd)",
         "nt_window_5979": "NT 5979", "nt_window_three_prime_300": "NT 3$'$",
@@ -357,7 +357,7 @@ def latex_bench_table(summary, metric="spearman"):
                    if metric == "mse" else "")
     L = [r"\begin{table*}[t]", r"\centering\scriptsize",
          r"\setlength{\tabcolsep}{3pt}",
-         r"\caption{Classical-ML gene-representation benchmark --- test %s at "
+         r"\caption{Classical-ML gene-representation benchmark -- test %s at "
          r"$n=10^{3},10^{4},10^{5}$ for random forest (RF) and support-vector regression "
          r"(SVR), validation-selected best configuration per encoding. \textbf{Bold} = best "
          r"encoding per column within each dataset; $\pm$ is the 5-fold CV s.d.\ "

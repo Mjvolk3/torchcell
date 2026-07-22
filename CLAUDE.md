@@ -151,6 +151,22 @@ authors or trust a live URL. Model these records with pydantic.
   Dataset RAW files get the same treatment: a raw-data mirror with a per-file
   provenance record (source_url + retrieval_command + sha256) that dataset loaders
   reference, so every built LMDB traces to an exact, hash-pinned raw version.
+- **TorchCell Lit API (`tc-lit`) -- the HTTP access layer over the mirror, NOT a new
+  library.** `tc-lit` is a running FastAPI/uvicorn service that streams the OCR'd,
+  `sha256`-verified paper artifacts *out of* the `$DATA_ROOT/torchcell-library/`
+  mirror above; it is neither the Zotero library (canonical PDFs) nor a second copy of
+  the data -- it is read-only access to the mirror. Configured via `TC_LIT_URL` +
+  `TC_LIT_API_KEY` (in repo-root `.env`); driven by the `/lit-pull` skill. Endpoints:
+  `GET /keys` (list citation keys), `GET /keys/{ck}/files` (per-key artifact manifest:
+  path, role, bytes, sha256), `GET /keys/{ck}/artifact/{rel_path}` (stream any file --
+  `paper.md`, `paper.pdf`, `si/...`, `images/...`, `data/...`). Every artifact response
+  carries an `X-Artifact-SHA256` header sourced from that key's `manifest.json`; ALWAYS
+  verify downloaded bytes against it (`shasum -a 256` on macOS). Naming discipline: say
+  "the mirror" for the on-disk files, "Zotero" for canonical PDFs, "`tc-lit`" for this
+  API -- never call `tc-lit` "the library." Per-key `manifest.json` corruption surfaces
+  as HTTP 500 on `/files` + manifest-backed artifacts (vs a clean 404 for a genuinely
+  absent OCR file) -- that is the honest no-fallback behavior, and it flags a key that
+  needs re-OCR/re-backfill.
 - **Rebuild guarantee:** retrieval code + OCR/extraction recipes + backed-up mirrors
   (Zotero PDFs, raw-data mirror) + manual recipes for un-scriptable files =
   full rebuild-from-scratch, with sha256 verifying every rebuilt file matches.
@@ -237,6 +253,12 @@ The rules that get broken most often, in short:
 The Nature Biotechnology manuscript lives in `paper/nature-biotech/`. It uses the
 Springer Nature `sn-jnl` class (Nature Portfolio `sn-nature` style) with a shared
 body (`content.tex`) compiled by thin wrappers, and builds via Tectonic.
+
+- **Canonical style guide, read first.** Before ANY paper writing, figure, or table work, read
+  [[paper.nature-biotech.style-guide]]: the single source of truth for prose/typography
+  (notably **no em-dashes** -- use ` -- ` or a comma), Nature supplementary-citation form, the
+  color palette, figure sizing, table provenance, and proof formatting. Record every new paper
+  standard or preference there, under its topical section.
 
 - **Two tiers (workshop vs shared).** `paper/nature-biotech/` is the **workshop**:
   private, full, versioned in torchcell (`editing.tex`, `figure-proto.tex`,

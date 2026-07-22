@@ -5,8 +5,8 @@
 TorchCell confronts the data-fragmentation barrier by unifying heterogeneous phenotype
 data under a single schema and exposing it as deep-learning-ready datasets. Each
 experimental record is typed by an experiment ontology grounded in the Biolink Model and
-validated at ingestion---for acyclicity, subtype substitutability, Biolink conformance,
-and referential integrity---so that records from unrelated studies share one
+validated at ingestion -- for acyclicity, subtype substitutability, Biolink conformance,
+and referential integrity -- so that records from unrelated studies share one
 machine-checkable structure (Fig.~\ref{fig:torchcell}a; ontology data model in
 \suppfig{fig:data-model}). Validated records are emitted as typed
 subgraphs into a Neo4j knowledge graph hosted at NCSA, and datasets are recovered as
@@ -26,12 +26,12 @@ genome, over which optional gene, regulatory, protein-interaction, and metabolic
 add structure. The yeast knockout library, for instance, is a single reference with
 ${\sim}10^{4\text{--}6}$ deletion strains, each represented as a perturbation over that
 reference rather than as an independently rebuilt graph. A mechanistic join-and-aggregation
-step then merges compatible records---recasting lethality to fitness, or pooling
-equivalent genotypes measured under different assays---enlarging datasets while shrinking
+step then merges compatible records -- recasting lethality to fitness, or pooling
+equivalent genotypes measured under different assays -- enlarging datasets while shrinking
 the label vocabulary the model must decode (\suppfig{fig:conversion-dedup-agg}).
 
 This organization exposes a favorable information budget (Fig.~\ref{fig:torchcell}c). The
-cell's molecular parts---DNA, RNA, protein, and small molecules---are \emph{persistent
+cell's molecular parts -- DNA, RNA, protein, and small molecules -- are \emph{persistent
 entities}: a sequence is the same object in a glucose assay and in an oxidative-stress
 assay, and the public archives already hold ${\sim}10^{13}$ compressed bits of them
 (\supptab{tab:entity-corpora}). Measured phenotypes are \emph{contingent
@@ -43,31 +43,34 @@ record constrains the map at one context and no other. We therefore cut the mode
 shared representation, taking entity encoders already trained on the abundant side and
 spending the scarce labels only on the perturbation operator and the decoders
 (\suppnoteref{note:info-accounting}). Consistent with this budget, classical baselines predict knockout
-fitness from almost any representation yet fail on gene interactions (\suppfig{fig:classical-ml})---so fitness alone does not justify a deep model, but the
+fitness from almost any representation yet fail on gene interactions (\suppfig{fig:classical-ml}) -- so fitness alone does not justify a deep model, but the
 harder, structured labels do, motivating the architecture that follows.
 
 %% --- Figure 1 (R1): TorchCell database + software overview ---
 \begin{figure*}[t]
 \tcfig{figures/Fig1-torchcell-overview.pdf}{TorchCell and the Cell Graph Transformer (CGT).
-\textbf{Top row --- data.}
+\textbf{Top row -- data.}
 (a) Literature and public databases are annotated with TorchCell's Biolink-grounded
 experiment ontology and ingested into a Neo4j knowledge graph (hosted at NCSA), queryable
 across datasets.
-(b) Each experiment is a shared reference cell (genome, gene networks, metabolism, Gene
-Ontology) acted on by an experiment-specific perturbation (genotype, environment) with a
-measured phenotype; many strains reuse one reference.
+(b) Each experiment is a shared reference cell (genome, gene networks) acted on by an
+experiment-specific perturbation (genotype, environment) with a measured phenotype; many
+strains reuse one reference. Gene, regulatory, and protein-interaction networks form a
+multigraph over genes; metabolism and Gene Ontology form bipartite graphs that can be
+mapped into the model or held aside as verification artifacts (for example, to test whether
+the model captures Gene Ontology it was not given; Methods).
 (c) Information accounting: molecular parts (DNA, RNA, protein, small molecules) enter as
-\emph{persistent entities}---identities that do not change between assays, and whose public
-archives carry ${\sim}10^{13}$ compressed bits---and are mapped by encode ($F_\theta$),
+\emph{persistent entities} -- identities that do not change between assays, and whose public
+archives carry ${\gtrsim}10^{13}$ compressed bits -- and are mapped by encode ($F_\theta$),
 perturb ($\mathcal{T}_\psi$), and decode ($\mathcal{R}_\phi$) into \emph{contingent
 observations}, phenotypes measured in one genotype, environment, and assay, of which we
 integrate ${\sim}10^{10}$ compressed bits. Bit counts are compressed lengths of the
-distributed archives---an upper bound on description length, not an information content.
+distributed archives, an upper bound on description length, not an information content.
 The model is cut at the shared representation $H$. \suppnoteref{note:info-accounting} gives the
 full accounting for this panel and states precisely what the bit counts do and do not mean;
 \supptab{tab:entity-corpora} reports the measured size of every
 archive summed here, with its source and release.
-\textbf{Bottom row --- model.}
+\textbf{Bottom row -- model.}
 (d) CGT overview: multimodal cell input $\to$ cell encoder (ENC) $\to$ perturbation
 operator (PERT) $\to$ multitask decoder (DEC) $\to$ per-task outputs and loss.
 (e) Cell-encoder self-attention block: scaled dot-product attention $\alpha^{(\ell,a)}$
@@ -78,10 +81,14 @@ extends from gene deletions to drug and environment perturbations.
 (g) Functional equivalence: applying the operator to the reference representation
 approximates re-encoding the perturbed graph with a graph network,
 $\Phi(G_p)\approx\mathcal{R}_\phi(\mathcal{T}_\psi(H,p))$, so a strain is obtained without
-rebuilding or re-encoding its graph (proof in Methods and \suppnoteref{note:equivalence}).
+rebuilding or re-encoding its graph. The reference is encoded once and reused, and only the
+small-parameter operator runs per perturbation, amortizing compute across strains (proof and
+compute accounting in Methods and \suppnoteref{note:equivalence}).
 (h) Graph-regularized attention: each biological adjacency $A^{(k)}$ is row-normalized to
-$\tilde{A}^{(k)}=(D^{(k)})^{-1}A^{(k)}$ and matched to an attention head by a
-KL prior $\Omega_k$, a soft constraint rather than a hard mask (Methods).}{fig:torchcell}
+$\tilde{A}^{(k)}=(D^{(k)})^{-1}A^{(k)}$ and matched to an attention head by a KL prior
+$\Omega_k$ that biases the head toward the biological graph: a soft constraint, not a hard
+mask that forces it, so supervision can overrule an edge the labels contradict (Methods and
+\suppnoteref{note:graph-attention}).}{fig:torchcell}
 \end{figure*}
 \FloatBarrier
 
@@ -109,8 +116,8 @@ triple-mutant fitness is compared against the fitness expected from the single- 
 double-mutant terms,
 $\tau_{ijk}=f_{ijk}-f_if_jf_k-\varepsilon_{ij}f_k-\varepsilon_{ik}f_j-\varepsilon_{jk}f_i$,
 with digenic interactions $\varepsilon_{ij}=f_{ij}-f_if_j$.
-(b) The nested cell representation---genome, gene networks, metabolism, and
-environment---feeds TorchCell and a Learn--Design--Build--Test loop with the NSF
+(b) The nested cell representation -- genome, gene networks, metabolism, and
+environment -- feeds TorchCell and a Learn--Design--Build--Test loop with the NSF
 iBioFoundry.
 (c) Predicted versus measured trigenic gene--gene interaction.
 (d) State of the art on trigenic interactions: Pearson $r$ for Yeast9 FBA ($0.0006$),
@@ -129,7 +136,7 @@ expression diagnostics in \suppfig{fig:expr-diag}).
 % true-size with \tcfig. Update the caption panel-by-panel as each is finalized.
 \begin{figure*}[t]
 \tcfig{figures/Fig3-systems-biology-fitness-expression-morphology.pdf}{One latent cell
-embedding generalizes across systems-biology phenotypes---expression, morphology, and
+embedding generalizes across systems-biology phenotypes -- expression, morphology, and
 fitness. (a)--(e).}{fig:multitask}
 \end{figure*}
 \FloatBarrier

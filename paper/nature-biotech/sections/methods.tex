@@ -29,11 +29,11 @@ labels need only fit the perturbation operator $\mathcal{T}_\psi$ and the decode
 $\mathcal{R}_\phi$. The notation, the data, and each factor are specified below.
 
 \subsection*{Notation}
-We fix one notation, chosen to stay compatible with three literatures---machine learning
-on graphs, transformers, and constraint-based metabolic modeling---and to avoid the
+We fix one notation, chosen to stay compatible with three literatures -- machine learning
+on graphs, transformers, and constraint-based metabolic modeling -- and to avoid the
 symbol collisions between them. Calligraphic letters denote spaces and learned operators. We cast the model as a
-three-stage framework---encode (ENC), perturb (PERT), decode (DEC), the stage names in
-Fig.~\ref{fig:torchcell}c---instantiated for CGT by the encoder $F_\theta$, perturbation
+three-stage framework -- encode (ENC), perturb (PERT), decode (DEC), the stage names in
+Fig.~\ref{fig:torchcell}c -- instantiated for CGT by the encoder $F_\theta$, perturbation
 operator $\mathcal{T}_\psi$, and decoder $\mathcal{R}_\phi$ (Table~\ref{tab:notation}):
 ENC/PERT/DEC name the concept, $F_\theta/\mathcal{T}_\psi/\mathcal{R}_\phi$ the CGT
 implementation. Table~\ref{tab:notation} is the full glossary.
@@ -89,13 +89,13 @@ each class maps to a Biolink category and each relation to a Biolink predicate. 
 ingestion, records are validated programmatically against properties that keep the schema
 machine-checkable:
 \begin{itemize}
-\item \emph{acyclicity}---$\Sigma$ is a directed acyclic graph, so type and relation
+\item \emph{acyclicity} -- $\Sigma$ is a directed acyclic graph, so type and relation
 dependencies have no cycles and ingestion terminates;
-\item \emph{Liskov substitutability}---each subtype is usable wherever its supertype is,
+\item \emph{Liskov substitutability} -- each subtype is usable wherever its supertype is,
 so the class hierarchy is sound and a query on a supertype returns its subtypes;
-\item \emph{Biolink conformance}---each class and relation resolves to a Biolink
+\item \emph{Biolink conformance} -- each class and relation resolves to a Biolink
 category/predicate, with field- and cardinality-level constraints;
-\item \emph{referential integrity}---each typed edge connects declared node types.
+\item \emph{referential integrity} -- each typed edge connects declared node types.
 \end{itemize}
 $\Sigma$ acts as an hourglass whose narrow waist forces heterogeneous sources into one
 typed structure. A raw record $x$ is validated and emitted as a typed subgraph $\iota(x)$
@@ -109,10 +109,10 @@ metabolic engineering (Supplementary Figs.~\ref{fig:data-model}, \ref{fig:conver
 
 \subsection*{Datasets: a reference acted on by a perturbation}
 Each experiment is a tuple $(G,\varepsilon,p,y)$ (Fig.~\ref{fig:torchcell}b). The minimal
-\emph{reference} is a genome---a sequence (FASTA) and an annotation (GFF) giving gene positions and sequence
+\emph{reference} is a genome -- a sequence (FASTA) and an annotation (GFF) giving gene positions and sequence
 features; this alone is a valid record. Optional annotations add structure over that
-genome---gene, regulatory, and protein-interaction networks $\{A^{(k)}\}$, metabolism
-(the bipartite graph from $(S,\rho)$), and Gene Ontology---and are optional precisely
+genome -- gene, regulatory, and protein-interaction networks $\{A^{(k)}\}$, metabolism
+(the bipartite graph from $(S,\rho)$), and Gene Ontology -- and are optional precisely
 because they presuppose the genome. Data factorize as \emph{few references, many
 perturbations}: rather than store a genome per strain (the yeast knockout library is one
 reference and ${\sim}10^{4\text{--}6}$ deletion strains), we store a shared reference $G$
@@ -128,8 +128,8 @@ the decoder's output domain $\mathcal{Y}$ to fewer symbol types
 (\suppfig{fig:conversion-dedup-agg}).
 
 \subsection*{Encoded entities}
-The cell's molecular parts---DNA, RNA, protein, and small molecules such as metabolites and
-drugs---form the universe $\mathcal{U}$ of \emph{encoded entities}: each entity arrives with
+The cell's molecular parts -- DNA, RNA, protein, and small molecules such as metabolites and
+drugs -- form the universe $\mathcal{U}$ of \emph{encoded entities}: each entity arrives with
 a representation $\operatorname{Embed}:\mathcal{U}\to\mathbb{R}^{d}$, supplied by a
 self-supervised model (a DNA, RNA, or protein language model, or a small-molecule encoder),
 a learnable lookup $\mathbf{E}\in\mathbb{R}^{N\times d}$, or a fixed featurization.
@@ -138,7 +138,7 @@ encoders represent any candidate molecule rather than only those native to the o
 they place similar entities near one another in $\mathbb{R}^{d}$, so the geometry is a usable
 prior: entities with similar representations are expected to act similarly on the cell.
 
-The framing is deliberately \emph{reductionist}---a cell is described by its parts---while an
+The framing is deliberately \emph{reductionist} -- a cell is described by its parts -- while an
 instance is \emph{holistic}, a specific cell being a collection of entities assembled under a
 perturbation and an environment whose phenotype is a property of the whole. We hypothesize
 that the phenotype of a combination of entities can be estimated from supervised data, and
@@ -155,23 +155,23 @@ so that the labels fit only the operator and the decoder.
 A measured information accounting motivates this cut (Fig.~\ref{fig:torchcell}c; \suppnoteref{note:info-accounting}). Both sides are measured with one instrument, the compressed length
 $L_C(D)=8\lvert C(s(D))\rvert$ of a corpus $D$ under a fixed serialization $s$ and lossless
 compressor $C$. On the entity side we take the public archives in the representation in which
-each is actually distributed---nucleotide (NCBI \texttt{nt}), protein (UniProtKB/TrEMBL),
-small molecule (PubChem), and structure (wwPDB)---whose sizes are read from HTTP
+each is actually distributed -- nucleotide (NCBI \texttt{nt}), protein (UniProtKB/TrEMBL),
+small molecule (PubChem), and structure (wwPDB) -- whose sizes are read from HTTP
 \texttt{Content-Length}, BLAST metadata, and the wwPDB index without downloading any payload
 (\supptab{tab:entity-corpora}); they total ${\sim}10^{13}$ bits. A counting bound
 corroborates the compressor: \texttt{nt} holds $4.06\times10^{12}$ nucleotides, which a
 four-letter alphabet cannot write in under $8.1\times10^{12}$ bits, and the archive is
 distributed in $7.1\times10^{12}$. On the label side, the phenotype corpus we integrate
 (\supptab{tab:datasets}) occupies ${\sim}1.4\times10^{9}$ compressed bytes, or
-${\sim}10^{10}$ bits---an asymmetry of ${\sim}10^{3}$.
+${\sim}10^{10}$ bits -- an asymmetry of ${\sim}10^{3}$.
 
 Scale is only half the argument, and the weaker half. An entity representation is a function
 of the entity alone, so one sequence informs the encoder for every instance in which that
 entity appears; a phenotype record is pinned to a single genotype, environment, and assay, and
 constrains the map nowhere else. Nor are these compressed sizes usable supervision: both are
 upper bounds on description length (\suppnoteref{note:info-accounting}, Proposition~\ref{prop:codelength}),
-and the labels in particular are noisy and strongly redundant---interaction matrices are
-approximately low rank---which places the effective supervision nearer $10^{6}$--$10^{7}$ bits
+and the labels in particular are noisy and strongly redundant -- interaction matrices are
+approximately low rank -- which places the effective supervision nearer $10^{6}$--$10^{7}$ bits
 than $10^{10}$. That discount only sharpens the conclusion. A sequence encoder carries
 $10^{8}$--$10^{10}$ parameters and the phenotype labels cannot pay for it, whereas the operator
 and decoder together carry ${\sim}5\times10^{4}$ and they can. This is exactly the
@@ -278,15 +278,15 @@ Two advantages follow from realizing a strain as an operator rather than a graph
 no graph is constructed per strain: the wildtype is encoded once (Eq.~\ref{eq:encode}) and
 each of the ${\sim}10^{4\text{--}6}$ strains is obtained by applying $\mathcal{T}_\psi$ to
 the shared $H$, so the data pipeline never builds or re-encodes a perturbed graph, and the
-operator is a learned, functionally equivalent substitute for re-encoding---applying it to
+operator is a learned, functionally equivalent substitute for re-encoding -- applying it to
 the reference representation approximates re-encoding the perturbed graph with a graph
 network, $\Phi(G_p)\approx\mathcal{R}_\phi(\mathcal{T}_\psi(H,p))$
-(Fig.~\ref{fig:torchcell}g; proved in \suppnoteref{note:equivalence})---at
+(Fig.~\ref{fig:torchcell}g; proved in \suppnoteref{note:equivalence}) -- at
 $\mathcal{O}(BL)$ rather than $\mathcal{O}(BL\lvert E\rvert)$ cost. Second, the model does
 not require a graph at all: genes enter as a token set and interact through learned
 attention, with the networks $\{A^{(k)}\}$ acting only as an optional soft prior
 (Eq.~\ref{eq:graphreg}), never as a message-passing substrate. Its minimal input is
-therefore a genome---a set of encodable entities---so interaction networks sharpen the
+therefore a genome -- a set of encodable entities -- so interaction networks sharpen the
 model where available but are not a prerequisite, which lowers the minimal data criterion
 for a new organism or dataset.
 

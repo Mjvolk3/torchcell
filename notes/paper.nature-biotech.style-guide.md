@@ -1,0 +1,90 @@
+---
+id: k1o94gkud7dmo7489p7937c
+title: Style Guide
+desc: ''
+updated: 1784590893960
+created: 1784590893960
+---
+
+Canonical standards for the Nature Biotechnology manuscript (`paper/nature-biotech/`):
+prose, citations, figures, tables, proofs, provenance. **Read this before any paper
+writing, figure creation, or table creation, and record every new preference or standard
+here** under the relevant section. `CLAUDE.md` points here so agents load it. This is a
+living *topical* reference (not a date-logged work note): update the rule in place under
+its heading rather than appending dated sections. Where a rule is enforced repo-wide (the
+palette, figure standards) this note gives the canonical summary and points to the
+authoritative source (code + `CLAUDE.md`) rather than re-listing values that would drift.
+
+Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
+[[torchcell.utils.utils]], [[paper.nature-biotech.check-figures]].
+
+## Prose & typography
+
+- **No em-dashes, ever.** Never use `---` (the "—" glyph) in prose. Use a spaced en-dash
+  ` -- ` or a comma. This is a general standing preference across all of the author's writing.
+  - **Keep** range/name en-dashes `--`: `$10^{4\text{--}6}$`, `gene--gene`,
+    `Kullback--Leibler`, `(a)--(d)`. Those are correct; only the 3-hyphen `---` is the target.
+  - **Do not touch** editorial comment dividers (`%% ---- ... ----`) or markdown table
+    separators (`|---|`) -- structure/syntax, not prose.
+  - For auto-generated tables, fix the em-dash in the **generator script's** caption string
+    and regenerate; never hand-edit the `.tex`.
+  - Sweep used before: a Python pass replacing `*--- *` -> ` -- ` on non-comment lines of
+    `sections/*.tex` + `content.tex`.
+
+## Nature Supplementary citations
+
+- Spell out with the "Supplementary" prefix: **Supplementary Fig. N**, **Supplementary
+  Table N**, **Supplementary Note N**. Only "Fig." abbreviates; "Table"/"Note" do not.
+- **"Fig. S1" / "Table S1" is WRONG** (no "S" prefix; SI floats are numbered from 1).
+- Use the macros so the correct form is the only convenient one: `\suppfig{...}`,
+  `\supptab{...}`, `\suppnoteref{...}` (defined in `preamble.tex`).
+
+## Color palette
+
+- **Canonical source is code + the swatch SVG, not this note:**
+  `torchcell.utils.PLOT_PALETTE` / `PLOT_PALETTE_FILL` / `PLOT_PALETTE_NAMES` and
+  `notes/assets/images/color-palette.svg` (from `notes/assets/scripts/generate_color_palette.py`).
+  Full rules in `CLAUDE.md` "Figure & Plotting Standards".
+- **18 colors** = orange · red · purple · yellow · blue · gray, repeated 3 times; a series of
+  N takes the first N (primaries spent before blue/gray). Green-free.
+- Tiers differ by **chroma, not lightness** (lightness encodes validation-vs-test within a
+  series). 18 is the ceiling; cap new colors at `C* <= 36`; for >18 series disambiguate with
+  hatching, not more color.
+- **Use the LINE/border colors** (`PLOT_PALETTE`) for plot marks; the pale `PLOT_PALETTE_FILL`
+  is only the lighter member of a two-level bar (validation = line color, test = fill).
+  Hatches/edges solid black. Draw.io Fig 1 primaries (1--6) are **LOCKED**.
+
+## Figures
+
+- **Panel width is STRICT; height is loose.** Use `torchcell.utils.PANEL_WIDTHS_MM`
+  (full 179 / wide 118.9 / half 88 / third 57.8 / sixth 28.3 mm) + `mm_to_in`; height
+  `<= MAX_HEIGHT_MM` (170). Box all four spines (~0.5 pt). Arial 6 pt, `svg.fonttype: none`.
+- Tenth gridlines on 0--1 axes (`MultipleLocator(0.2)` major + `0.1` minor, minor ticks hidden).
+- Export true-size via `torchcell.utils.savefig_true_size_svg` (rescales 72 -> 100 dpi for
+  draw.io); do NOT pass `bbox_inches="tight"` on a fixed-width panel.
+- Compose in draw.io at Nature print size (180 mm full / 88 mm column, `<= 170` mm tall);
+  export vector PDF into `paper/nature-biotech/figures/` (auto via `make fig`/`make paper`).
+  The size gate allows `+2` mm grace and requires `\tcfig` (never `\tcfigfit`). See
+  `paper/nature-biotech/figures/README.md` and [[paper.nature-biotech.figures]].
+
+## Tables
+
+- **Every paper table comes from a committed script** in the relevant `experiments/<id>/`
+  folder (STRICT RULE in `CLAUDE.md`); never hand-author numbers. Generated `.tex` carries a
+  `%% SOURCE:` header and "AUTO-GENERATED -- do not hand-edit"; regenerate, don't edit.
+  - Classical-ML tables: `experiments/smf-dmf-tmf-001/traditional_ml-summary_table.py --write-tables`.
+  - Entity-corpora table: `.../persistent_entity_corpus_sizes.py --from-csv --write-table`
+    (offline re-render from the frozen snapshot; never re-hammer the archives for a format fix).
+
+## Proofs & formal claims
+
+- Follow [[paper.proof-writing-standard]]: Setup -> Claim -> Proof -> Consequence ->
+  Interpretation; `proposition`/`lemma` + `proof` environments, `\pfstep{...}` step headers,
+  no bullets inside a proof. Prefer **Proposition** for main claims; do NOT use **Theorem**
+  (the paper is empirical).
+
+## Provenance
+
+- Any artifact used in the paper or `notes/` (figure, table, derived number) MUST be produced
+  by a committed script that reads the real result files, and the artifact should point to its
+  generating script.

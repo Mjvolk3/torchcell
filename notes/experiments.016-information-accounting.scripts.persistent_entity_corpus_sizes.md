@@ -138,3 +138,9 @@ gilahyper and is the only number in Supplementary Note 5 not produced by a commi
 to move into `experiments/016-information-accounting/scripts/` and regenerate Table S5
 (`tab:datasets`) with a compressed-size column — that table currently lists 27 studies (~4.4 × 10⁷
 genotypes) against the gilahyper table's 34 (~7.9 × 10⁷ instances).
+
+## 2026.07.21 - En-dash caption, snapshot unchanged
+
+Converted the Supplementary table's caption em-dash to an en-dash for the no-em-dash house
+rule, then re-rendered offline with `--from-csv` so the frozen 2026-07-12 snapshot's numbers
+stay byte-identical. A formatting fix must not re-query the live archives.

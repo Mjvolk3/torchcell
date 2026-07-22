@@ -426,7 +426,7 @@ growth of each route.
 Encode reference & folded into per-strain & $\mathcal{O}(L\lvert E\rvert d)$, once \\
 Per strain & $\mathcal{O}(L\lvert E\rvert d)$ & $\mathcal{O}(\lvert p\rvert N d)$ \\
 Batch of $B$ strains & $\mathcal{O}(B\,L\lvert E\rvert d)$ & $\mathcal{O}(L\lvert E\rvert d+B\lvert p\rvert N d)$ \\
-Deeper operator, $L_{\mathrm{op}}$ layers over $N$ genes & --- & $\mathcal{O}(L\lvert E\rvert d+B\,L_{\mathrm{op}}N^2 d)$ \\
+Deeper operator, $L_{\mathrm{op}}$ layers over $N$ genes & -- & $\mathcal{O}(L\lvert E\rvert d+B\,L_{\mathrm{op}}N^2 d)$ \\
 \bottomrule
 \end{tabular}
 \caption{Growth of per-batch compute for the two routes. The operator route wins by amortizing the
@@ -637,8 +637,8 @@ Fig.~\ref{fig:torchcell}c do and do not mean, and draws the consequence that det
 architecture: the model is cut at the shared representation $H$, entity encoders are taken already
 trained, and the phenotype corpus is spent only on the perturbation operator and the decoder.
 
-\notesec{Setting} Write $\mathcal{U}$ for the \emph{persistent entities}---DNA, RNA and protein
-sequences, small molecules, and experimentally determined structures---and $\mathcal{I}$ for the
+\notesec{Setting} Write $\mathcal{U}$ for the \emph{persistent entities} -- DNA, RNA and protein
+sequences, small molecules, and experimentally determined structures -- and $\mathcal{I}$ for the
 \emph{contingent observations}, the phenotype records of \supptab{tab:datasets}. An entity
 $x\in\mathcal{U}$ is an identity, the same object in every experiment in which it occurs. An
 observation is a value measured on a cell in a context,
@@ -695,7 +695,7 @@ is exactly the Kullback--Leibler divergence between them.
 Two consequences govern how Fig.~\ref{fig:torchcell}c should be read. Because $L_C$ is an upper bound
 on each corpus and not an entropy, no single number in the figure is an information content. Because
 both corpora are measured with the \emph{same} $s$ and $C$, however, the comparison between them is
-like for like, and it is the ratio---to order of magnitude---that the figure claims.
+like for like, and it is the ratio -- to order of magnitude -- that the figure claims.
 
 \notesec{The persistent-entity corpora} \supptab{tab:entity-corpora} evaluates \eqref{eq:codelength}
 for the public archives in the representation in which each is actually distributed. No payload is
@@ -744,16 +744,16 @@ Fig.~\ref{fig:torchcell}c: $F_\theta$ maps persistent entities into the shared r
 phenotype labels fit only $\mathcal{T}_\psi$ and $\mathcal{R}_\phi$. The capacity arithmetic is
 one-sided. A sequence encoder carries $10^{8}$--$10^{10}$ parameters, whereas the operator and decoder
 together carry ${\sim}5\times10^{4}$; and the \emph{usable} supervision in the phenotype corpus is far
-below its compressed size, because the measurements are noisy and strongly redundant---interaction
-matrices are approximately low rank---which places the effective supervision nearer $10^{6}$--$10^{7}$
+below its compressed size, because the measurements are noisy and strongly redundant -- interaction
+matrices are approximately low rank -- which places the effective supervision nearer $10^{6}$--$10^{7}$
 bits than $10^{10}$. Fitting an entity encoder from phenotype labels is thus underdetermined by orders
 of magnitude, while fitting the operator and decoder is not. \suppnoteref{note:classical-ml} is the empirical
 counterpart: across ${\sim}17$ gene encodings, no pretrained biological embedding beats a one-hot code
 on fitness, which is what one expects when the labels cannot pay for a representation.
 
 \notesec{An objection, and what persistence answers} It may be objected that only the \emph{yeast}
-entities are needed, and that the yeast proteome---some $3\times10^{6}$ residues, on the order of
-$10^{7}$ bits---is smaller than the phenotype corpus, so the accounting would favour the labels. The
+entities are needed, and that the yeast proteome -- some $3\times10^{6}$ residues, on the order of
+$10^{7}$ bits -- is smaller than the phenotype corpus, so the accounting would favour the labels. The
 objection is correct about the arithmetic and inverts the argument. An entity encoder is not fit on
 the yeast slice; it is fit on the whole archive and \emph{applied} to the yeast slice, because a
 protein sequence means the same thing in every organism. Fungal DNA language models are built in
@@ -770,7 +770,7 @@ the phenotype side discounted by noise and low rank, the entity side by homology
 latter is worth stating plainly, because it is the mechanism the architecture exploits: a protein
 language model compresses TrEMBL far better than \texttt{gzip} does, and the gap between the two is
 exactly the evolutionary structure a pretrained encoder supplies and \texttt{gzip} cannot see. Third,
-the archives overlap---RefSeq transcripts also occur in \texttt{nt}---so \supptab{tab:entity-corpora}
+the archives overlap -- RefSeq transcripts also occur in \texttt{nt} -- so \supptab{tab:entity-corpora}
 reports a conservative total that omits the duplication. Fourth, corpora of \emph{predicted} structures
 are excluded, being model outputs rather than observations; including them would widen the separation
 while weakening its interpretation.
@@ -782,29 +782,35 @@ while weakening its interpretation.
 \suppnote{note:classical-ml}{a classical-machine-learning case study on gene representation and pooling\secstatus{todo}}
 
 Before introducing the Cell Graph Transformer we ask what simple models already achieve, and
-where they stall---because the answer dictates two architectural choices. Trained on
+where they stall -- because the answer dictates two architectural choices. Trained on
 $10^3$--$10^5$ instances over ${\sim}17$ gene encodings, classical models
 (\supptab{tab:classical-ml-results}, \suppfig{fig:classical-ml}) show a sharp split:
-\emph{knockout fitness is essentially saturated by gene identity alone}---one-hot encoding
+\emph{knockout fitness is essentially saturated by gene identity alone} -- one-hot encoding
 reaches Pearson ${\approx}\,0.87$--$0.90$ at $10^5$ and no pretrained biological embedding
-beats it---whereas \emph{gene interactions are not learnable from any encoding}, plateauing at
+beats it -- whereas \emph{gene interactions are not learnable from any encoding}, plateauing at
 Pearson ${\approx}\,0.4$ (Spearman ${\approx}\,0.47$) regardless of representation or dataset
 size. The first result says a deep model is unnecessary for fitness; the second says the
 barrier to interactions lies not in the features but in how genes are combined.
 
-\notesec{Setup} Each strain is featurized as $\phi = Mx$, where $x\in\{0,1\}^{N}$ ($N=6607$)
-indicates the perturbed genes and the columns of $M$ are per-gene vectors: one-hot ($M=I$),
-random (i.i.d., dimension $1$--$1000$), or pretrained biological embeddings (ESM2, ProtT5,
-CaLM, nucleotide-transformer windows, fungal up/down-stream), aggregated over the gene set by
-sum or mean. Fitness data are single/double/triple deletion strains ($smf/dmf/tmf$, quality
-filter $\sigma_f<0.15$); interaction data are an equal ($\approx$50/50) mixture of digenic and
-trigenic Kuzmin~2018 measurements. Random forest and support-vector regression are tuned per
-encoding by validation Spearman; reported values are held-out test scores.
+\notesec{Setup} A pooled bag of per-gene embeddings is about the simplest representation of a
+genome one can write down, and it is the object tested here. Each strain is featurized as
+$\phi = Mx$, where $x\in\{0,1\}^{N}$ ($N=6607$) selects genes and the columns of $M$ are
+per-gene vectors: one-hot ($M=I$), random (i.i.d., dimension $1$--$1000$), or pretrained
+biological embeddings -- the protein language models ESM2 and ProtT5, the codon language model
+CaLM, nucleotide-transformer windows, and a species-aware DNA language
+model~\cite{karollusSpeciesawareDNALanguage2024}. The bag is taken over either the perturbed
+(deleted) genes or the intact genome and pooled by sum or mean, giving one fixed-length vector
+per strain (\suppfig{fig:classical-ml}a). Fitness data are single/double/triple deletion strains
+($smf/dmf/tmf$, quality filter $\sigma_f<0.15$); interaction data are an equal ($\approx$50/50)
+mixture of digenic and trigenic Kuzmin~2018 measurements. Elastic net, random forest and
+support-vector regression are tuned per encoding by validation Spearman; reported values are
+held-out test scores, and the tables give the two nonlinear regressors, whose sweep is complete
+across all encodings and sizes.
 
 \notesec{Representation is about identity, not biology} On fitness a purely random code matches
 or exceeds every biological embedding once its dimension is large enough, and one-hot is best
 of all. The feature $\phi=Mx$ with $\le 3$ perturbed genes is a $k$-sparse recovery problem, so
-a random projection of dimension $d\gtrsim k\log N$---a few hundred---already preserves gene
+a random projection of dimension $d\gtrsim k\log N$ -- a few hundred -- already preserves gene
 identity (Johnson--Lindenstrauss; compressed sensing [cite: Johnson--Lindenstrauss 1984;
 Cand\`es--Tao 2005]). Extra dimensions add no identity information, so accuracy rises with $d$
 and saturates at the exactly-orthogonal one-hot limit; a wider random vector cannot surpass it,
@@ -813,17 +819,44 @@ removes the gene-aligned coordinates trees split on [cite: Grinsztajn et al.\ 20
 consequence: preserve gene identity with a learnable token rather than hard-coding a biological
 prior at the reference cell.
 
-\notesec{The barrier is pooling, not features} Interactions are epistasis---defined by
-subtracting lower-order effects---so they live in the \emph{combination} of perturbed genes.
+\notesec{The barrier is pooling, not features} Interactions are epistasis -- defined by
+subtracting lower-order effects -- so they live in the \emph{combination} of perturbed genes.
 Additive sum/mean pooling of $Mx$ is permutation-invariant and keeps only the bag of perturbed
 genes; the combination structure is discarded before the model sees it, and no choice of $M$
-can restore it. Hence the flat ${\approx}\,0.47$ ceiling across encodings and sizes. That
-ceiling is further blurred by the digenic/trigenic mixture: the experimental reproducibility
-limit is higher for digenic (${\approx}\,0.8$ [cite: Costanzo et al.\ 2016]) than for trigenic
-interactions, so the achievable metric is a range, not a point. Together these results motivate
-the two design choices of the Cell Graph Transformer---identity-preserving gene tokens (this
-note) and attention over the gene set in place of additive pooling (\suppnoteref{note:gi-from-fitness})---so
+can restore it. Hence the flat ${\approx}\,0.47$ ceiling across encodings and sizes. Within
+additive pooling, sum outperforms mean, and not by accident: sum is injective on the multiset
+of perturbed genes whereas mean discards its cardinality, making sum the strictly more
+expressive aggregator~[cite: Xu et al.\ 2019, GIN]; concretely the number of deleted
+genes -- and hence single/double/triple order -- is linearly recoverable from a summed embedding
+but not a mean.
+
+How far below the achievable does this plateau sit? The relevant bound is the \emph{limit of
+experimental reproducibility} -- the correlation between independent replicate measurements,
+which no predictor of a single measurement can exceed~[cite: Ma et al.\ 2018, DCell].
+Double-mutant fitness reproduces at $r{=}0.89$ across 211 duplicate genome-wide SGA
+screens~[cite: Baryshnikova et al.\ 2010], so the one-hot fitness result (${\approx}\,0.87$--$0.90$)
+already sits \emph{at} this ceiling -- fitness is saturated by identity. Interaction scores are
+noisier but still highly reproducible: $r{=}0.82$--$0.87$ for digenic~[cite: Baryshnikova et
+al.\ 2010]\cite{costanzoGlobalGeneticInteraction2016} and $r{=}0.74$--$0.81$ for adjusted
+trigenic scores~\cite{kuzminSystematicAnalysisComplex2018}, a variance-weighted ceiling of
+$r{\approx}\,0.81$--$0.86$ for the $\approx$50/50 mixture (dashed line, \suppfig{fig:classical-ml}).
+The classical plateau near $0.45$ therefore lies far below the noise ceiling -- the barrier is
+model capacity, not measurement error, and substantial reproducible interaction signal remains
+for a readout that preserves higher-order structure. Together these results motivate
+the two design choices of the Cell Graph Transformer -- identity-preserving gene tokens (this
+note) and attention over the gene set in place of additive pooling (\suppnoteref{note:gi-from-fitness}) -- so
 that higher-order structure survives to the readout.
+
+\notesec{Scope} These encodings are deliberately minimal. A pooled bag of pretrained gene
+vectors is among the simplest genome representations available, and the biological embeddings
+differ mainly in the domain they were pretrained on -- protein, codon, or regulatory-DNA
+context -- so what generality they carry is inherited from that pretraining rather than learned
+from phenotype here. Richer, learned cell representations exist and are advancing
+quickly~\cite{rosenUniversalCellEmbedding2026}; the point is not that additive pooling of gene
+embeddings is the right way to represent a cell, but that even this minimal encoding already
+saturates fitness and stalls on interactions, which is what isolates the readout -- not the
+features -- as the object the Cell Graph Transformer must improve. This is an early-stage
+baseline, and it is meant to be one.
 
 % Spearman (bold=best) + MSE + Pearson (the metric quoted in
 % this Note's prose); generated by
@@ -833,16 +866,34 @@ that higher-order structure survives to the readout.
 \input{sections/tab-classical-ml-mse}
 \input{sections/tab-classical-ml-pearson}
 
-% --- Classical-ML baselines (sits with [note:classical-ml]); author composes from the bar charts ---
+% --- Classical-ML baselines (sits with [note:classical-ml]) ---
+%% Figure source: notes/assets/drawio/Fig7-Traditional-ML-justification-of-CGT.drawio.svg
+%%   -> figures/Fig7-Traditional-ML-justification-of-CGT.pdf (auto-exported by `make fig`/`make paper`).
+%% STATUS (2026-07-14): panel (a) featurization schematic and (c) representation legend are composed;
+%% the quantitative panels (b, d, f-j) are still EMPTY in the draw.io source and are to be filled from
+%% the committed palette plot scripts (compose the exported SVGs into the draw.io grid):
+%%   experiments/smf-dmf-tmf-001/traditional_ml-plot_{random_forest,svr,elastic_net}_palette.py
+%%   experiments/smf-dmf-tmf-001/traditional_ml-plot_random_forest-best_performance_vs_dataset_size_palette.py
+%%   experiments/002-dmi-tmi/scripts/traditional_ml-plot_*_palette.py   (interaction dataset)
+%% Exported PDF is 181 mm wide (within the +2 mm size-gate grace); resize the draw.io grid to <=180 mm
+%% when the panels are finalized so it can stay true-size (\tcfig).
 \begin{figure*}[t]
 \centering
-\figph{55mm}{\textbf{[Suppl. Fig. -- classical-ML baselines; compose from report Fig.~2]}\\[3pt]
-Classical models (random forest, SVR, linear) across entity representations (one-hot,
-lookup, language-model embeddings): knockout fitness is predicted well from almost any
-representation given enough data, whereas trigenic gene--gene interactions are not
-(empirical backing for the information-accounting cut).}
-\caption{Classical machine-learning baselines: fitness is saturable, interactions are not.}
-\label{fig:classical-ml}
+\tcfig{figures/Fig7-Traditional-ML-justification-of-CGT.pdf}{\textbf{Classical machine-learning
+baselines: fitness is saturable, interactions are not.} (a)~Featurization. Each strain is reduced
+to a single fixed-length vector by mapping its genes through a per-gene encoder and pooling: the
+bag is taken over either the perturbed (deleted) genes or the intact genome and aggregated by sum
+or mean. (c)~The seventeen gene representations, grouped as identity (one-hot), random projections
+($d{=}1$--$1000$), hand-crafted (codon frequency, chromosome/pathway features), and pretrained
+biological encoders (CaLM, a species-aware DNA language
+model~\cite{karollusSpeciesawareDNALanguage2024}, nucleotide-transformer windows, ProtT5, ESM2).
+Remaining panels report held-out test performance (Spearman~$\rho$, Pearson~$r$, MSE) for random
+forest and support-vector regression across all representations and dataset sizes
+$n{=}10^{3}$--$10^{5}$, for knockout fitness ($smf/dmf/tmf$) and for the digenic/trigenic
+interaction mixture. Fitness is saturated by gene identity -- one-hot reaches Pearson
+${\approx}\,0.90$ at $n{=}10^{5}$ and no pretrained embedding surpasses it -- whereas interactions
+plateau near Pearson ${\approx}\,0.4$ regardless of representation or scale, the empirical backing
+for the information-accounting cut of \suppnoteref{note:info-accounting}.}{fig:classical-ml}
 \end{figure*}
 
 % --- Tables: dataset scale + integrated graphs; fills the old fig:data-scale slot ---
@@ -916,7 +967,7 @@ graph, with node and edge counts over the shared gene vocabulary. \textbf{Physic
 \textbf{Regulatory} are the curated graphs taken directly from SGD; the remaining rows add
 TFLink and the nine STRING~v12 channels. Relative to the SGD-native baseline
 (Physical\,$+$\,Regulatory), aggregating these additional sources increases connectivity by
-$4.16\times$ in nodes and $16.24\times$ in edges---the justification for aggregating across
+$4.16\times$ in nodes and $16.24\times$ in edges -- the justification for aggregating across
 sources rather than relying on a single database. (STRING~v11, used in earlier experiments,
 is reported separately to avoid mixing graph versions.)}
 \label{tab:databases}

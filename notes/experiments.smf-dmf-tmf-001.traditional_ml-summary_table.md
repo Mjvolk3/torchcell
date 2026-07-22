@@ -69,3 +69,11 @@ SVR / interaction / `random (d=1000)` at 1e3 reports a CV s.d. of 0.383 against 
 of 0.458 -- a spread nearly as large as the value, in the same encoding-and-model cell that
 produced one of the diverged MSE fits. The two symptoms likely share a cause and the fits there
 are worth re-examining.
+
+## 2026.07.21 - Species-aware LM naming and en-dash captions
+
+Aligned the benchmark-table labels with the paper's terminology and the new no-em-dash house
+rule. The "fungal up/down transformer" is now the species-aware DNA language model (Gagneur-lab
+SpeciesLM), so the classical-ML tables read `species LM up` / `species LM down`, and the
+generated caption's em-dash became an en-dash. Both are label-only changes; the metrics are
+untouched. Regenerate with `--write-tables`.

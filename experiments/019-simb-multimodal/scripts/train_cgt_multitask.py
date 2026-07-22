@@ -1271,8 +1271,16 @@ def run_training(cfg: DictConfig) -> None:
     devices = get_num_devices(cfg.trainer.devices)
     print(f"devices: {devices} ({timestamp()})")
 
+    # The masked multitask model activates only a SUBSET of heads per run (e.g. the
+    # expression-only baseline uses just per_gene), so the inactive heads' parameters
+    # do not contribute to the loss on that run. Vanilla DDP forbids unused parameters,
+    # so map plain "ddp" -> the find-unused-parameters variant. Only rank-0 devices>1.
+    strategy = cfg.trainer.strategy
+    if strategy == "ddp" and devices > 1:
+        strategy = "ddp_find_unused_parameters_true"
+
     trainer = L.Trainer(
-        strategy=cfg.trainer.strategy,
+        strategy=strategy,
         accelerator=cfg.trainer.accelerator,
         devices=devices,
         num_nodes=get_slurm_nodes(),

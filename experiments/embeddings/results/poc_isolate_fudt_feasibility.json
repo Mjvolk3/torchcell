@@ -1,0 +1,82 @@
+{
+  "isolates": [
+    "AAA",
+    "AAB",
+    "AAC"
+  ],
+  "n_genes_cap": 40,
+  "blastn": "/home/michaelvolk/miniconda3/envs/biomni_e1/bin/blastn",
+  "per_isolate": {
+    "AAA": {
+      "n_genes": 40,
+      "n_mapped": 40,
+      "n_unmapped": 0,
+      "assembly": "AAA_6.re.fa",
+      "n_contigs": 4893,
+      "mean_pident": 99.918,
+      "min_pident": 97.804,
+      "mean_coverage": 0.9968,
+      "n_full_length_100pct": 38,
+      "median_unique_bitscore_margin": 2343.8,
+      "n_second_hit": 4,
+      "five_prime_full": 38,
+      "five_prime_truncated": 2,
+      "three_prime_full": 40,
+      "three_prime_truncated": 0,
+      "three_prime_unembeddable_lt12bp": 0,
+      "insufficient_flank_rate": 0.025
+    },
+    "AAB": {
+      "n_genes": 40,
+      "n_mapped": 40,
+      "n_unmapped": 0,
+      "assembly": "AAB_6.re.fa",
+      "n_contigs": 5814,
+      "mean_pident": 99.92,
+      "min_pident": 97.864,
+      "mean_coverage": 0.9968,
+      "n_full_length_100pct": 38,
+      "median_unique_bitscore_margin": 2335.3,
+      "n_second_hit": 4,
+      "five_prime_full": 38,
+      "five_prime_truncated": 2,
+      "three_prime_full": 40,
+      "three_prime_truncated": 0,
+      "three_prime_unembeddable_lt12bp": 0,
+      "insufficient_flank_rate": 0.025
+    },
+    "AAC": {
+      "n_genes": 40,
+      "n_mapped": 40,
+      "n_unmapped": 0,
+      "assembly": "AAC_6.re.fa",
+      "n_contigs": 4908,
+      "mean_pident": 99.604,
+      "min_pident": 97.455,
+      "mean_coverage": 0.9733,
+      "n_full_length_100pct": 5,
+      "median_unique_bitscore_margin": 0.0,
+      "n_second_hit": 22,
+      "five_prime_full": 37,
+      "five_prime_truncated": 3,
+      "three_prime_full": 38,
+      "three_prime_truncated": 2,
+      "three_prime_unembeddable_lt12bp": 1,
+      "insufficient_flank_rate": 0.0625
+    }
+  },
+  "embedding_roundtrip": {
+    "isolate": "AAA",
+    "gene": "YAL001C",
+    "five_prime_len": 1003,
+    "three_prime_len": 300,
+    "upstream_embedding_shape": [
+      1,
+      768
+    ],
+    "downstream_embedding_shape": [
+      1,
+      768
+    ]
+  }
+}

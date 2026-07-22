@@ -60,8 +60,13 @@ the new assay has real signal to validate against a public reference (Costanzo20
 
 ### Next actions ("add into the fold")
 
-1. [ ] **Push exp-019 from the M1** so a GilaHyper/cloud session can read the ECHO picklist and
-   the plate gene identities (blocker for everything below).
+1. [ ] **Land exp-019 on `main`.** It is ALREADY pushed — on `origin/paper/figures-fig1`
+   (commit `48396713`), NOT on main, which is why a main-based cloud session can't see it. That
+   branch is only **3 commits ahead of main** (the other two are a figure-sizing template + docs),
+   so this is a small targeted land, not a 90-commit entanglement: cherry-pick `48396713` onto a
+   clean branch off main → `/enqueue-merge`. That commit brings exp-019 + `torchcell/sga` (the
+   assay pipeline) + the assay note + env. Caveat: main has advanced ~112 commits since the branch
+   diverged (merge-base `6c70f426`), so watch for conflicts in env/pyproject and `torchcell/sga`.
 2. [ ] **Merge this 14-double list into the exp-019 plate/ECHO-picklist design** — add the 8+5
    selected doubles and the novel ELC1+RPS9A; carry the `tier` so the plate map records why each
    double is present.
@@ -72,7 +77,9 @@ the new assay has real signal to validate against a public reference (Costanzo20
 
 ### Blockers / open
 
-- exp-019 is M1-only (unpushed) — cannot design the plate integration from a cloud session until pushed.
+- exp-019 is on `origin/paper/figures-fig1` (commit `48396713`), NOT on main — a main-based cloud
+  session can't see it until it is landed on main (see action 1; it's a 1-commit cherry-pick, not
+  the "~90 commits" some framings suggest — the branch is only 3 ahead of main).
 - ELC1+RPS9A "not a *known* SL" ≠ proven non-SL (no source tested it); low risk, flagged.
 
 Related: [[experiments.010-kuzmin-tmi.scripts.construction_validation_doubles]],

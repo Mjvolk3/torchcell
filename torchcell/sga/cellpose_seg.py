@@ -25,9 +25,8 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from PIL import Image, ImageDraw, ImageOps
+from PIL import Image, ImageOps
 from pydantic import BaseModel, Field
-from scipy import ndimage
 
 from torchcell.sga.image import (
     MAX_ASPECT,
@@ -63,11 +62,20 @@ class CellposeSegConfig(BaseModel):
     node_tol: float = 0.55
     stray_tol: float = 1.0
     circularity_flag: float = 0.80
+    circularity_reject: float = 0.65  # below this -> invalidate the well (non-circular)
+    neighbor_invalidate: bool = (
+        True  # invalidate the closest crowded neighbour of a multi
+    )
+    neighbor_dist: float = (
+        0.85  # flag the nearest neighbour if within this*pitch of the multi
+    )
     gel_detect: bool = True
     edge_policy: str = "flag"  # 'flag' | 'drop'
     flow_threshold: float = 0.4
     cellprob_threshold: float = 0.0
-    diameter: float | None = None
+    diameter: float | None = None  # no-op for Cellpose-SAM (cpsam is diameter-agnostic)
+    contrast: str = "none"  # 'none' | 'clahe' | 'flatfield' -- boosts faint colonies
+    clahe_clip: float = 0.01
     min_instance_area: int = Field(
         default=MIN_COLONY_AREA,
         description="drop Cellpose instances smaller than this (px)",
@@ -86,6 +94,9 @@ class PlateSegResult(BaseModel):
     n_instances: int
     n_offgrid: int
     masks: np.ndarray | None = None
+    # drawn instance-id -> invalidation category ('' accepted / 'M' multi / 'N'
+    # neighbour / 'C' non-circular), for colouring overlays and the montage
+    kept_color: dict[int, str] = Field(default_factory=dict)
 
 
 def load_cellpose_model(gpu: bool = True) -> Any:
@@ -127,6 +138,58 @@ def _fit_lattice(
     return nodes, pitch, invert, theta, center, (r0, r1, c0, c1)
 
 
+def _contrast_enhance(img: np.ndarray, method: str, clahe_clip: float) -> np.ndarray:
+    """Boost faint-colony contrast BEFORE Cellpose, returning a 3-channel uint8.
+
+    Faint colonies on backlit plates differ only slightly from the bright agar, so
+    Cellpose misses them though the eye can see them. Two local operations lift them:
+    ``clahe`` (contrast-limited adaptive histogram equalization -- local contrast
+    stretch) and ``flatfield`` (divide out the smooth illumination background, which
+    also removes the transillumination gradient). Applied to luminance, restacked to
+    RGB. Only the image Cellpose SEES is changed; the lattice fit uses the original.
+    """
+    from skimage import color, exposure
+    from skimage.filters import gaussian
+
+    gray = color.rgb2gray(img)  # float [0,1]
+    if method == "clahe":
+        enh = exposure.equalize_adapthist(gray, clip_limit=clahe_clip)
+    elif method == "flatfield":
+        bg = gaussian(gray, sigma=max(gray.shape) * 0.03)  # type: ignore[no-untyped-call]
+        enh = np.clip(gray / (bg + 1e-6), 0, None)
+        enh = exposure.rescale_intensity(enh, out_range=(0.0, 1.0))  # type: ignore[no-untyped-call]
+    else:
+        raise ValueError(f"contrast must be 'none'|'clahe'|'flatfield', got {method!r}")
+    out: np.ndarray = (np.stack([enh] * 3, axis=-1) * 255).astype(np.uint8)
+    return out
+
+
+def _well(
+    ri: int, ci: int, size: int, circ: float, flags: str, cx: float, cy: float, iid: int
+) -> dict[str, float | str | int]:
+    """One per-well record (1-based row/col); ``iid`` is the drawn instance id or -1."""
+    return {
+        "row": ri + 1,
+        "col": ci + 1,
+        "size": size,
+        "circularity": circ,
+        "flags": flags,
+        "cx": cx,
+        "cy": cy,
+        "id": iid,
+    }
+
+
+# invalidation category -> outline colour (green accepted; agar is yellow, so the
+# non-circular category is PURPLE, not yellow)
+_CATEGORY_COLOR = {
+    "": (0, 255, 0),  # accepted -- green
+    "M": (255, 0, 0),  # multiple colonies -- red
+    "N": (255, 140, 0),  # neighbour of a multi well -- orange
+    "C": (170, 0, 255),  # non-circular -- purple
+}
+
+
 def _instance_props(masks: np.ndarray, min_area: int) -> list[dict[str, float]]:
     """Per-instance geometry from a Cellpose integer-label image: area, centroid,
     circularity, bbox aspect, extent. Instances below ``min_area`` are dropped.
@@ -160,28 +223,50 @@ def _instance_props(masks: np.ndarray, min_area: int) -> list[dict[str, float]]:
     return props
 
 
+# distinct, green-free instance-fill colours (green is reserved for accepted
+# outlines); cycled per colony so touching colonies are visually separable.
+_INSTANCE_COLORS = np.array(
+    [
+        [230, 25, 75],
+        [245, 130, 48],
+        [255, 225, 25],
+        [0, 130, 200],
+        [145, 30, 180],
+        [70, 240, 240],
+        [240, 50, 230],
+        [250, 190, 190],
+        [0, 128, 128],
+        [230, 190, 255],
+        [170, 110, 40],
+        [128, 0, 0],
+    ],
+    dtype=float,
+)
+
+
 def _draw_cellpose_overlay(
-    path: str, masks: np.ndarray, kept_ids: set[int], df: pd.DataFrame, out: str
+    path: str, masks: np.ndarray, kept_color: dict[int, str], df: pd.DataFrame, out: str
 ) -> None:
-    """QC overlay in the project's SGA convention: kept colony boundaries in green,
-    a cross at each measured centroid (green clean, magenta 'M' rejected). Mirrors
-    ``image._draw_overlay`` so cellpose and classical overlays read the same.
+    """Visual-QC overlay: draw each IN-GEL colony's circumference on the original,
+    coloured by invalidation category -- green accepted, red multi-colony, orange
+    neighbour-of-multi, purple non-circular. Only kept (in-gel, on-grid) instances
+    are drawn, so off-plate/frame detections never appear. ``df`` is accepted for a
+    stable signature but the colouring comes from ``kept_color`` (instance id ->
+    category), which matches exactly what the pipeline invalidates.
     """
+    from skimage.segmentation import find_boundaries
+
     im = ImageOps.exif_transpose(Image.open(path)).convert("RGB")
-    ov = np.asarray(im).copy()
-    det = np.isin(masks, list(kept_ids)) if kept_ids else np.zeros(masks.shape, bool)
-    edge = det & ~ndimage.binary_erosion(det, iterations=2)
-    ov[edge] = [0, 220, 0]
-    pim = Image.fromarray(ov)
-    dr = ImageDraw.Draw(pim)
-    for _, r in df.iterrows():
-        if r["size"] <= 0:
+    over = np.asarray(im).copy()
+    masks = np.asarray(masks)
+    # draw accepted first, then invalidations on top (purple < orange < red priority)
+    for cat in ("", "C", "N", "M"):
+        ids = [i for i, c in kept_color.items() if c == cat]
+        if not ids:
             continue
-        x, y = float(r["cx"]), float(r["cy"])
-        col = (255, 0, 255) if "M" in str(r["flags"]) else (0, 220, 0)
-        dr.line([(x - 5, y), (x + 5, y)], fill=col, width=1)
-        dr.line([(x, y - 5), (x, y + 5)], fill=col, width=1)
-    pim.save(out)
+        sel = np.where(np.isin(masks, ids), masks, 0)
+        over[find_boundaries(sel, mode="thick")] = list(_CATEGORY_COLOR[cat])  # type: ignore[no-untyped-call]
+    Image.fromarray(over).save(out)
 
 
 def quantify_plate_image_cellpose(
@@ -212,6 +297,8 @@ def quantify_plate_image_cellpose(
     edge_margin = 0.5 * pitch
 
     img = np.asarray(ImageOps.exif_transpose(Image.open(path)).convert("RGB"))
+    if cfg.contrast != "none":
+        img = _contrast_enhance(img, cfg.contrast, cfg.clahe_clip)
     masks = model.eval(
         img,
         flow_threshold=cfg.flow_threshold,
@@ -239,8 +326,8 @@ def quantify_plate_image_cellpose(
         p = {**p, "dist": dist}
         buckets.setdefault(j, []).append(p)
 
-    records: list[tuple[int, int, int, float, str, float, float]] = []
-    kept_ids: set[int] = set()
+    recs: list[dict[str, float | str | int]] = []
+    well_idx: dict[tuple[int, int], int] = {}  # (ri,ci) -> recs index, occupied only
     for ri in range(cfg.n_rows):
         for ci in range(cfg.n_cols):
             j = ri * cfg.n_cols + ci
@@ -253,13 +340,12 @@ def quantify_plate_image_cellpose(
                 if cfg.node_tol * pitch < p["dist"] <= cfg.stray_tol * pitch
             ]
             if not on and not near:
-                records.append((ri + 1, ci + 1, 0, np.nan, "", xc, yc))
+                recs.append(_well(ri, ci, 0, np.nan, "", xc, yc, -1))
                 continue
             pool = on if on else near
             best = max(pool, key=lambda p: p["area"])
             size = int(best["area"])
             cym, cxm = best["cy"], best["cx"]
-            flags = ""
             sd_val = pitch
             if gel_sd is not None:
                 syi = min(max(int(round(cym)), 0), g.shape[0] - 1)
@@ -274,30 +360,74 @@ def quantify_plate_image_cellpose(
                 and (cfg.edge_policy != "drop" or sd_val >= edge_margin)
             )
             if not accepted:
-                records.append((ri + 1, ci + 1, 0, np.nan, "", cxm, cym))
+                recs.append(_well(ri, ci, 0, np.nan, "", cxm, cym, -1))
                 continue
-            if best["circ"] < cfg.circularity_flag:
-                flags += "C"
+            flags = ""
+            if best["circ"] < cfg.circularity_reject:
+                flags += "C"  # non-circular -> invalidate (purple)
             if -edge_margin <= sd_val < edge_margin:
                 flags += "E"
-            # two colonies claim this well (a second on-node instance, or a
-            # near-stray in the ring): they compete for nutrient -> reject.
             if len(on) >= 2 or (on and near):
-                flags += "M"
-            kept_ids.add(int(best["id"]))
-            records.append((ri + 1, ci + 1, size, float(best["circ"]), flags, cxm, cym))
+                flags += "M"  # two colonies compete for nutrient -> invalidate (red)
+            well_idx[(ri, ci)] = len(recs)
+            recs.append(
+                _well(
+                    ri, ci, size, float(best["circ"]), flags, cxm, cym, int(best["id"])
+                )
+            )
 
-    df = pd.DataFrame(
-        records, columns=["row", "col", "size", "circularity", "flags", "cx", "cy"]
-    )
+    # neighbour invalidation: a multi well holds a duplicate that crowds ONE adjacent
+    # colony. Flag the single nearest occupied orthogonal neighbour whose colony comes
+    # within neighbor_dist*pitch of any of this well's colonies -- the closest crowded
+    # neighbour, not all four; normally-spaced neighbours (further than the cutoff) are
+    # left accepted.
+    if cfg.neighbor_invalidate:
+        for (ri, ci), idx in list(well_idx.items()):
+            if "M" not in str(recs[idx]["flags"]):
+                continue
+            j = ri * cfg.n_cols + ci
+            mine = [(float(p["cy"]), float(p["cx"])) for p in buckets.get(j, [])]
+            best_nb: int | None = None
+            best_d: float = 1e18
+            for dr, dc in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+                nb = well_idx.get((ri + dr, ci + dc))
+                if nb is None:
+                    continue
+                ny, nx = float(recs[nb]["cy"]), float(recs[nb]["cx"])
+                nbd = float(
+                    min(((ny - my) ** 2 + (nx - mx) ** 2) ** 0.5 for my, mx in mine)
+                )
+                if nbd < best_d:
+                    best_d = nbd
+                    best_nb = nb
+            if (
+                best_nb is not None
+                and best_d < cfg.neighbor_dist * pitch
+                and not ({"M", "N"} & set(str(recs[best_nb]["flags"])))
+            ):
+                recs[best_nb]["flags"] = str(recs[best_nb]["flags"]) + "N"
+
+    kept_color: dict[int, str] = {}
+    for r in recs:
+        rid = int(r["id"])
+        if rid < 0:
+            continue
+        f = str(r["flags"])
+        kept_color[rid] = (
+            "M" if "M" in f else "N" if "N" in f else "C" if "C" in f else ""
+        )
+
+    cols = ["row", "col", "size", "circularity", "flags", "cx", "cy"]
+    df = pd.DataFrame([{k: r[k] for k in cols} for r in recs])
     df.loc[df["size"] < MIN_COLONY_AREA, ["size", "circularity"]] = [0, np.nan]
 
     masks_arr = np.asarray(masks)
     if overlay_path is not None:
-        _draw_cellpose_overlay(path, masks_arr, kept_ids, df, overlay_path)
+        _draw_cellpose_overlay(path, masks_arr, kept_color, df, overlay_path)
     return PlateSegResult(
         table=df,
         n_instances=len(props),
         n_offgrid=n_offgrid,
         masks=masks_arr if return_masks else None,
+        kept_color=kept_color,
     )

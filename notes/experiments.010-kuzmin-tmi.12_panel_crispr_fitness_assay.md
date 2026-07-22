@@ -778,3 +778,219 @@ with eleven near-neutral genes densely tied.
   (`quantify_plate_image(..., seg_method=..., return_masks=True)`, vector contour of `det`).
   Outputs `run2_seg_compare_{P1_2.5nL,P2_5nL}.svg` (zoomable) + `.png` siblings for the PDF build.
 - Figure change: `reference_scatter_grid` annotates Spearman rho alongside Pearson r.
+
+## 2026.07.21 - Cellpose-SAM instance segmentation: rerun + scoring vs previous
+
+Re-ran the sizing step with **Cellpose-SAM** (`cpsam`, GPU) on the full-resolution crops,
+swapping ONLY the per-colony boundary step: the array-lattice fit, per-image orientation,
+normalization and per-strain scoring are reused verbatim from `run2_volume_timepoints`, so the
+fitness numbers are directly comparable to the classical (threshold) sizing. New code:
+`torchcell/sga/cellpose_seg.py` (`quantify_plate_image_cellpose`, reuses `image.py`'s lattice
+helpers untouched; returns the same `[row,col,size,circularity,flags,cx,cy]` schema), runner
+`experiments/019-echo-crispr-array/scripts/run2_cellpose_segmentation.py`, GPU slurm
+`gh_cellpose_segmentation.slurm`, and scoring comparison
+`compare_cellpose_vs_previous_scoring.py`. Instance masks make the well rules exact: >=2 instances
+on a node -> `M` (rejected); instance off every node -> off-grid contaminant (0 on all six plates).
+
+### Visual QC -- masks + circumference on the original
+
+Each accepted colony's Cellpose mask is filled semi-transparently in a distinct colour over the
+original, with every mask's circumference outlined (accepted green, detected-but-rejected/off-grid
+red) and a centroid cross (magenta where the well is `M`-rejected). A matching classical overlay is
+drawn on the SAME full-res pixels so the two can be flipped side by side; the classical mask is a
+single union that does not separate touching colonies -- exactly the limitation the instance masks
+fix.
+
+![Cellpose-SAM outline overlay on the P1 (2.5 nL) 50 h plate (tuned recipe: CLAHE contrast + cellprob -4): every accepted colony's boundary is drawn in green on the original (no colour in-painting, so the boundary can be judged against the colony), detected-but-rejected/off-grid instances in red; touching colonies separate as distinct instances and empty wells stay unmarked.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_best_overlay_P1_t50.png)
+
+![Classical threshold segmentation on the same P1 (2.5 nL) 50 h full-res pixels: a single green union boundary that cannot separate touching colonies, shown for direct comparison with the Cellpose instance overlay above.](assets/images/019-echo-crispr-array/cellpose/run2_classical_overlay_P1_t50.png)
+
+### Sizing-level comparison (Cellpose vs classical, same pixels)
+
+`results/run2_cellpose_vs_classical.csv`. WT CV = colony-size CV across the on-plate BY4741 wells
+(lower = tighter reference). Cellpose gives a tighter or comparable reference on every plate and a
+much tighter one on the hard plates (P1 t44, and the overgrown P2 t72 where the classical reference
+falls apart), and it flags far more competing-colony wells on P2 t72 (35 vs 16).
+
+| condition | WT CV cp / cl | occupied cp / cl | `M` cp / cl | size r (cp~cl) |
+|-----------|---------------|------------------|-------------|----------------|
+| P1_t44    | **0.147 / 0.239** | 276 / 284    | 1 / 16      | 0.40 |
+| P2_t44    | 0.126 / 0.138 | 333 / 363        | 3 / 2       | 0.65 |
+| P1_t50    | 0.133 / 0.130 | 277 / 297        | 1 / 3       | 0.75 |
+| P2_t50    | 0.126 / 0.123 | 343 / 363        | 3 / 0       | 0.85 |
+| P1_t72    | 0.138 / 0.167 | 285 / 297        | 1 / 2       | 0.67 |
+| P2_t72    | **0.180 / 0.349** | 319 / 353    | 35 / 16     | 0.45 |
+
+### Scoring vs Costanzo -- the decisive test (Cellpose does NOT beat classical yet)
+
+The pipeline's metric of record is per-strain fitness agreement with published Costanzo
+single-mutant fitness (`run2_vs_reference_stats.csv`). Recomputing that benchmark for the Cellpose
+scoring the same way (the classical column reproduces the committed stats exactly, confirming an
+apples-to-apples comparison) shows that **cleaner masks and a tighter WT reference do NOT translate
+into better fitness accuracy**: Cellpose beats classical on Pearson r vs Costanzo in only **1 of 6
+conditions** (mean Δr = **−0.119**), and collapses on the overgrown P2 t72 (0.118 vs 0.517).
+
+| condition | Pearson r vs Costanzo, cp / cl | Δr (cp − cl) | Spearman rho, cp / cl |
+|-----------|-------------------------------|--------------|-----------------------|
+| P1_t44    | 0.529 / 0.736 | −0.208 | 0.727 / 0.657 |
+| P2_t44    | 0.296 / 0.351 | −0.055 | 0.434 / 0.476 |
+| P1_t50    | 0.741 / 0.761 | −0.020 | 0.531 / 0.692 |
+| P2_t50    | 0.325 / 0.388 | −0.063 | 0.503 / 0.524 |
+| P1_t72    | 0.743 / 0.711 | **+0.031** | 0.601 / 0.462 |
+| P2_t72    | 0.118 / 0.517 | −0.399 | −0.042 / 0.469 |
+
+![Per-condition Pearson correlation of per-strain fitness to Costanzo single-mutant fitness, Cellpose (orange) vs classical threshold (blue). Classical is equal or higher in five of six conditions; the best conditions remain the 2.5 nL (P1) plates for both methods.](assets/images/019-echo-crispr-array/cellpose/run2_scoring_vs_reference.svg)
+
+**Interpretation.** Cellpose is the visibly better *segmenter* (instance separation, tighter WT CV,
+no per-plate threshold tuning) but is not, as run, the better *scorer* against ground truth. The
+per-strain fitness the two methods produce agrees closely (Cellpose~classical fitness r = 0.86-0.96
+on five plates), so the small accuracy loss comes from where they differ -- most starkly on the
+crowded P2 t72, where Cellpose's aggressive multi-colony rejection (35 `M` wells) drops informative
+colonies and the correlation collapses. Do NOT promote `cellpose` to the default scorer on this
+evidence; the classical threshold remains the better fitness readout for now. Next: re-image under
+the diffuse-backlight SOP (fewer touching colonies -> less aggressive `M`-rejection), and revisit
+whether the `M`/edge rejection thresholds should be relaxed for the Cellpose path before re-judging.
+
+## 2026.07.21 - Cellpose tuning: sizing sweep, faint-colony detection, all-plate montage
+
+Two parameter searches (run as SLURM GPU jobs -- `gh_cellpose_recipe.slurm`, one RTX 6000 Ada per
+job, 4 concurrent; output under `experiments/019-echo-crispr-array/slurm/output/`) and an
+all-plate side-by-side montage. New code: `cellpose_recipe.py` (one parameterized recipe ->
+overlay + masks + capture JSON), `sweep_cellpose_params.py` (sizing), `sweep_cellpose_contrast.py`
++ the chase (detection), `run2_cellpose_montage_vector.py` (vector montage). Overlays are now
+outline-only (colour in-painting removed) so the boundary can be judged against the colony.
+
+### Optimization 1 -- sizing (`cellprob_threshold`)
+
+**What:** grid over `cellprob_threshold` $\in \{0,-1,-2,-3,-4\}$ $\times$ `flow_threshold`
+$\in \{0.4, 0.6\}$ (`sweep_cellpose_params.py`), scored on the two 2.5 nL plates (P1 50 h + 72 h).
+**Objective:** minimize mean per-strain fitness SD (replicate precision) -- but read the caveat
+below, it is a confounded proxy. **Result** (`run2_cellpose_param_sweep.csv`; `flow` is
+near-irrelevant, 0.4 shown):
+
+| `cellprob` | mean per-strain SD | mean colony size (px) |
+|-----------:|-------------------:|----------------------:|
+| 0 (default) | 0.176 | 2320 |
+| $-1$ | 0.173 | 2402 |
+| $-2$ | 0.167 | 2498 |
+| $-3$ | 0.166 | 2601 |
+| **$-4$** | **0.163** | **2702** |
+
+Lowering `cellprob` monotonically grows masks out to the true colony edge (+16% area at $-4$),
+fixing the "colony peeks past the mask" under-sizing, and lowers the SD proxy. **Chosen: cellprob
+$= -4$** (visually well-sized, not over-grown).
+
+### Optimization 2 -- detection of faint colonies (contrast pre-processing)
+
+**Motivation:** Cellpose missed ~8 faint colonies on the P1 50 h plate (bottom rows + corners) --
+visible to the eye but low-contrast against the agar. Lowering `cellprob` did NOT help capture (it
+only grows masks it already finds). **What:** an 8-recipe chase (contrast $\in$ {none, CLAHE clip
+0.01/0.02/0.03, flat-field} $\times$ `cellprob` $\in \{-4,-6\}$), run as **8 parallel SLURM GPU
+jobs** (`gh_cellpose_recipe.slurm`), a contrast pre-step applied only to the image Cellpose sees
+(the lattice fit stays on the original). **Objective:** capture (occupied wells / real instances)
+without noise. **Result** (from the SLURM `RECIPE_JSON` outputs; `occ` = occupied wells, `inst` =
+raw instances):
+
+| recipe | P1 50 h occ / inst | P1 72 h occ / inst | off-grid |
+|--------|:------------------:|:------------------:|:--------:|
+| none, cellprob $-4$ | 277 / 278 | 285 / 286 | 0 |
+| **CLAHE 0.01, cellprob $-4$** | **282 / 283** | 283 / 291 | 0 |
+| CLAHE 0.02, cellprob $-4$ | 281 / 293 | 283 / 305 | 1 |
+| CLAHE 0.03, cellprob $-4$ | 281 / 307 | 283 / 323 | 1 |
+| CLAHE 0.02, cellprob $-6$ | 281 / 293 | 283 / 303 | 1 |
+| CLAHE 0.03, cellprob $-6$ | 280 / 307 | 283 / 322 | 2 |
+| flat-field, cellprob $-4$ | 282 / 285 | 283 / 285 | 0 |
+| flat-field, cellprob $-6$ | 282 / 285 | 283 / 285 | 0 |
+
+CLAHE clip 0.01 + cellprob $-4$ recovers **5 of the 8** missed cleanly (277 $\rightarrow$ 282, one
+instance per real colony -- occ $\approx$ inst). Pushing harder (clip 0.03, cellprob $-6$) inflates
+the instance count (up to 322) and starts **hallucinating off-grid detections on the dark
+shelf/frame** (occ actually drops, off-grid rises) -- so the last ~3 faint colonies are at the
+detection floor and cannot be recovered without adding noise. **Final tuned recipe = CLAHE clip
+0.01, cellprob $-4$** (applied to all six plates in the montage below).
+
+### All-plate montage (vector, zoomable)
+
+![Cellpose segmentation, all six run-2 captures by volume x growth time (columns 2.5 nL / 5 nL, rows 44 h / 50 h / 72 h), tuned recipe. Colony boundaries are vector contours (tightened off the diffuse halo) coloured by validity -- green accepted, red multi-colony well, orange neighbour of a multi-colony well, purple non-circular -- with only in-gel colonies drawn (off-plate detections excluded). Plate coordinates A-P (rows) x 1-24 (columns), A1 at top-left, are tick-labelled on all four edges so any well can be read from the nearest axis.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_montage.svg)
+
+### Caveat on the precision metric (do NOT over-read the SD drop)
+
+The sizing sweep minimized mean per-genotype fitness SD, but that number only means "better
+measurement" once the plate biases are removed, and they are not fully removed here. `normalize_plate`
+applies row/column + spatial corrections and rejects multi-colony (competition) wells (`M`), but
+residual row/col/spatial bias would inflate a genotype's SD independently of segmentation quality --
+so a lower SD can reflect masks growing more *uniformly* rather than a genuinely more accurate
+readout (a chicken-and-egg: de-biasing needs the true values, which need de-biased measurements).
+Batch effect is not in play (one shared layout across both plates, no independent randomization ->
+position is confounded, nothing to average). The bias-*sensitive* precision check is the on-plate
+BY4741 WT CV (same genotype across many positions); segmentation quality itself is judged
+**visually** on the outline overlays / montage, not by the SD alone.
+
+## 2026.07.22 - Colony validity model + plate-boundary restriction
+
+Instance segmentation lets us invalidate bad wells *exactly* rather than by heuristic, so the
+per-colony outline is now **coloured by validity** (both in the montage above and the per-plate
+overlays), and each category also flags the well in the fitness table -- the invalidation
+propagates to the numbers, it is not just a picture. Categories:
+
+- **green -- accepted.**
+- **red (`M`) -- multiple colonies in the well.** Two instances land on one array node (or a
+  near-stray in the ring); they compete for nutrient so neither size is a faithful readout.
+- **orange (`N`) -- neighbour a duplicate spills toward.** The extra colony in an `M` well sits
+  between that well and ONE neighbour; only that neighbour (the direction the duplicate leans, and
+  only if it is `>= 0.35*pitch` off-node) is invalidated -- not all four. A centred same-well
+  duplicate spills toward nobody and flags no neighbour.
+- **purple (`C`) -- non-circular.** Circularity below 0.65 (spiky / budding-shaped / merged
+  blob). Colour is purple, not yellow, because the agar background is already yellow.
+
+**Plate-boundary restriction.** Only colonies **inside the fitted gel hexagon** are detected,
+drawn, and scored; Cellpose instances on the dark shelf / plastic frame are gated out before
+anything downstream. So the off-plate green rings seen earlier are gone, and -- importantly --
+they never affected any size or fitness number (they were always excluded from the table; the bug
+was only that the montage drew the raw masks).
+
+Per-plate invalidation (tuned recipe, CLAHE clip 0.01 + cellprob -4):
+
+| capture | accepted | multi (`M`, red) | neighbour (`N`, orange) | non-circular (`C`, purple) |
+|---------|---------:|-----------------:|------------------------:|---------------------------:|
+| P1 44 h | 278 | 1 | 0 | 0 |
+| P2 44 h | 350 | 3 | 1 | 0 |
+| P1 50 h | 280 | 1 | 1 | 0 |
+| P2 50 h | 349 | 2 | 1 | 0 |
+| P1 72 h | 281 | 1 | 1 | 0 |
+| **P2 72 h** | **251** | **35** | **34** | 0 |
+
+The clean plates lose only 1-4 wells; the overgrown P2 72 h loses ~22% (35 multi + 34 neighbours)
+-- expected for a crowded plate and exactly the case where a size readout is untrustworthy. `C` fires nowhere yet: Cellpose masks are smooth, so almost nothing drops below
+circularity 0.65; the spiky shapes noted earlier (e.g. A24, D19) were frame artefacts now excluded
+by the boundary gate. The threshold is a config knob (`circularity_reject`) if a real
+budding/merged colony slips through. Code: `torchcell/sga/cellpose_seg.py` (`neighbor_invalidate`,
+`circularity_reject`, `kept_color`); regenerated via SLURM (`gh_cellpose_recipe.slurm`).
+
+Still to come (in progress): standard error per genotype (SD/√n, on the Costanzo footing), a
+one-plate-per-page zoomable render, and the per-condition SMF-agreement + SD/SE-vs-reference
+comparison figures.
+
+## 2026.07.22 - Standard deviation + standard error of the Cellpose colony measurements
+
+For the tuned Cellpose method (CLAHE clip 0.01 + cellprob -4 + the `M`/`N`/`C` invalidation), each
+strain's fitness is the mean over its **replicate colonies** with the invalidated wells excluded.
+We report the replicate **SD** and the **standard error SE = SD/√n_used** -- SE is the
+reference-comparable uncertainty, and (per Costanzo's method) p-values pair with SE, not SD.
+`cellpose_error_analysis.py` -> `results/run2_cellpose_error_by_strain.csv`.
+
+| condition | mean per-strain SD | mean per-strain SE | mean n replicates |
+|-----------|-------------------:|-------------------:|------------------:|
+| 2.5 nL 44 h | 0.177 | 0.040 | 21 |
+| 5 nL 44 h | 0.153 | 0.030 | 27 |
+| 2.5 nL 50 h | 0.171 | 0.038 | 21 |
+| 5 nL 50 h | **0.134** | **0.026** | 27 |
+| 2.5 nL 72 h | 0.155 | 0.035 | 21 |
+| 5 nL 72 h | 0.161 | 0.035 | 21 |
+
+We measure **~21-27 replicate colonies per strain** -- far more than Costanzo's 4-colony
+double-mutant SD -- so each genotype's SE is a well-founded `+/- 0.03-0.04`. The 5 nL plates, with
+~27 replicates, reach the tightest SE (~0.026 at 50 h). This is the SD you asked for, now attached
+to the Cellpose measurements; the SE is what will anchor the reference-comparison and p-value work.
+
+![Per-genotype Cellpose fitness (mutant / BY4741) with standard-error bars, one panel per volume x growth-time condition, strains sorted by fitness. SE = replicate-colony SD / sqrt(n_used), invalidated M/N/C wells excluded; dashed line = wild-type 1.0.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_fitness_se.svg)

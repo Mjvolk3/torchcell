@@ -40,9 +40,12 @@ def _flag_validity(df: pd.DataFrame, cfg: NormalizationConfig) -> pd.DataFrame:
     df = df.copy()
     df["is_missing"] = df["size"].isna() | (df["size"] <= cfg.min_size)
     flags = df["flags"].fillna("").astype(str)
-    # 'S' spill/gash and 'M' multiple-colony cells are always rejected: both mean
-    # the measured size is not a faithful single-colony fitness readout.
-    is_flagged = flags.str.contains("S") | flags.str.contains("M")
+    # 'S' spill/gash, 'M' multiple-colony, and 'N' (neighbour a duplicate crowds)
+    # cells are always rejected: in each the measured size is not a faithful
+    # single-colony fitness readout.
+    is_flagged = (
+        flags.str.contains("S") | flags.str.contains("M") | flags.str.contains("N")
+    )
     if cfg.exclude_low_circularity:
         is_flagged = is_flagged | flags.str.contains("C")
     df["is_flagged"] = is_flagged & ~df["is_missing"]

@@ -1,0 +1,10 @@
+
+ArgumentError: activate does not accept more than one argument:
+['--contrast', 'clahe', '--clahe_clip', '0.03', '--cellprob', '-4', '--conditions', 'P1_t50,P1_t72', '--tag', 'chase_clahe03_cp4']
+
+
+/home/michaelvolk/miniconda3/envs/torchcell/lib/python3.13/site-packages/cellpose/dynamics.py:541: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:760.)
+  coo = torch.sparse_coo_tensor(pt, torch.ones(pt.shape[1], device=pt.device, dtype=torch.int),
+    P1_t50: occupied=281 instances=307
+    P1_t72: occupied=283 instances=323
+RECIPE_JSON {"contrast": "clahe", "clahe_clip": 0.03, "cellprob": -4.0, "flow": 0.4, "tag": "chase_clahe03_cp4", "stats": [{"group": "P1_t50", "occupied": 281, "instances": 307, "offgrid": 0}, {"group": "P1_t72", "occupied": 283, "instances": 323, "offgrid": 1}]}

@@ -1,0 +1,7 @@
+group,contrast,instances,occupied,offgrid
+P1_t50,none,278,277,0
+P1_t50,clahe,283,282,0
+P1_t50,flatfield,285,282,0
+P1_t72,none,286,285,0
+P1_t72,clahe,291,283,0
+P1_t72,flatfield,285,283,0

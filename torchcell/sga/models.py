@@ -26,45 +26,46 @@ class NormalizationConfig(BaseModel):
 
     # --- colony validity ---
     min_size: float = Field(
-        1.0,
+        default=1.0,
         description="Colony sizes <= this are treated as MISSING (gitter reports "
         "absent colonies as size 0).",
     )
     exclude_low_circularity: bool = Field(
-        True,
+        default=True,
         description="Drop gitter 'C' (low-circularity) colonies from the reference "
         "fit and from scoring. 'S' (spill/edge) is always dropped.",
     )
 
     # --- names of the special layout groups ---
     wt_name: str = Field(
-        "BY4741", description="Sample name of the on-plate wild-type reference strain."
+        default="BY4741",
+        description="Sample name of the on-plate wild-type reference strain.",
     )
     blank_name: str = Field(
-        "Blank_media",
+        default="Blank_media",
         description="Sample name of the no-cell control (background / contamination).",
     )
 
     # --- positional artifact correction (Baryshnikova 2010) ---
     row_col_correction: bool = Field(
-        True,
+        default=True,
         description="Divide out per-row and per-column median gradients "
         "(SGA row/column normalization).",
     )
     spatial_correction: bool = Field(
-        True,
+        default=True,
         description="Divide out a local neighbourhood-median surface (SGA spatial "
         "normalization). Legitimate here because the ECHO layout is randomized, so a "
         "local window is genotype-agnostic and estimates only positional bias.",
     )
     spatial_radius: int = Field(
-        2,
+        default=2,
         ge=1,
         description="Chebyshev radius of the spatial window; radius 2 = a 5x5 "
         "neighbourhood.",
     )
     spatial_min_neighbors: int = Field(
-        4,
+        default=4,
         ge=1,
         description="Minimum reference neighbours in the window; below this the "
         "colony falls back to the plate median (no local correction).",
@@ -72,13 +73,13 @@ class NormalizationConfig(BaseModel):
 
     # --- replicate filtering ---
     jackknife: bool = Field(
-        True,
+        default=True,
         description="Flag within-strain outlier replicates (SGA jackknife, adapted to "
         "LOGICAL replicate groups since ECHO replicates are scattered, not blocked). "
         "Also the instrument for catching CRISPR escapers.",
     )
     jackknife_z: float = Field(
-        3.5,
+        default=3.5,
         gt=0,
         description="MAD-based robust z threshold above which a replicate is flagged "
         "'JK' and excluded from that strain's score.",
@@ -86,7 +87,7 @@ class NormalizationConfig(BaseModel):
 
     # --- capping (SGA 'CP') ---
     cap_norm: float | None = Field(
-        None,
+        default=None,
         description="If set, normalized sizes above this are flagged 'CP' and capped. "
         "None = flag-free (recommended until growth settings are stable).",
     )

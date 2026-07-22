@@ -69,6 +69,9 @@ def preprocess_fullres(path: str) -> str:
     """Crop to the plate with the same bright-plate detector as
     ``r2._preprocess`` but KEEP native resolution (no downscale).
     """
+    out = osp.join(QUANT_DIR, osp.splitext(osp.basename(path))[0] + "_fullres.png")
+    if osp.exists(out):
+        return out  # deterministic crop cache -> safe for parallel readers
     im = ImageOps.exif_transpose(Image.open(path)).convert("RGB")
     g = np.asarray(im.convert("L"), float)
     bright = ndimage.gaussian_filter(g, 40) > 0.80 * np.percentile(g, 99)
@@ -84,6 +87,20 @@ def preprocess_fullres(path: str) -> str:
     return out
 
 
+def _draw_classical_overlay(path: str, det: np.ndarray, out: str) -> None:
+    """Classical-segmentation boundary (green) on the SAME full-res crop, so the
+    Cellpose overlay and this one can be flipped side-by-side. The classical mask is
+    a single union (touching colonies are NOT separated) -- that's exactly the
+    limitation Cellpose's instance masks fix, and it shows here visually.
+    """
+    from skimage.segmentation import find_boundaries
+
+    im = ImageOps.exif_transpose(Image.open(path)).convert("RGB")
+    over = np.asarray(im).copy()
+    over[find_boundaries(det.astype(bool), mode="inner")] = [0, 255, 0]
+    Image.fromarray(over).save(out)
+
+
 def _wt_cv(df: pd.DataFrame, wt_name: str) -> float:
     """Coefficient of variation of raw colony size across the on-plate wild-type
     wells (lower = tighter reference = better assay). Target <= classical ~0.11-0.17.
@@ -94,7 +111,15 @@ def _wt_cv(df: pd.DataFrame, wt_name: str) -> float:
 
 def main() -> None:
     cfg = NormalizationConfig()
-    seg_cfg = CellposeSegConfig(n_rows=N_ROWS, n_cols=N_COLS)
+    # tuned recipe (see the sizing + detection sweeps): CLAHE contrast + cellprob -4,
+    # with the colony-validity invalidation model (M/N/C) active.
+    seg_cfg = CellposeSegConfig(
+        n_rows=N_ROWS,
+        n_cols=N_COLS,
+        contrast="clahe",
+        clahe_clip=0.01,
+        cellprob_threshold=-4.0,
+    )
 
     print("[0] loading Cellpose-SAM (cpsam) on GPU ...")
     model = load_cellpose_model(gpu=True)
@@ -126,8 +151,11 @@ def main() -> None:
         reports[g] = score_plate(df, cfg, plate_id=g)
 
         # classical segmentation on the SAME full-res pixels -> apples-to-apples
-        cls = quantify_plate_image(
-            proc, n_rows=N_ROWS, n_cols=N_COLS, grid_mode="lattice"
+        cls, cls_det = quantify_plate_image(
+            proc, n_rows=N_ROWS, n_cols=N_COLS, grid_mode="lattice", return_masks=True
+        )
+        _draw_classical_overlay(
+            proc, cls_det, osp.join(IMG_DIR, f"run2_classical_overlay_{g}.png")
         )
         cls_m = r2.apply_orientation(cls, op).merge(
             layout, on=["row", "col"], how="inner"
@@ -190,6 +218,13 @@ def main() -> None:
                     strain=s.strain,
                     fitness=s.relative_fitness,
                     fitness_sd=s.fitness_sd,
+                    # standard error of the mean fitness across the strain's replicate
+                    # colonies (SD / sqrt(n)); the reference-comparable uncertainty.
+                    fitness_se=(
+                        s.fitness_sd / (s.n_used**0.5)
+                        if s.fitness_sd is not None and s.n_used
+                        else None
+                    ),
                     n_used=s.n_used,
                     n_total=s.n_total,
                     pvalue=s.pvalue,

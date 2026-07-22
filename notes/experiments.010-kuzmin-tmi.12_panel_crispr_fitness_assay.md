@@ -994,3 +994,32 @@ double-mutant SD -- so each genotype's SE is a well-founded `+/- 0.03-0.04`. The
 to the Cellpose measurements; the SE is what will anchor the reference-comparison and p-value work.
 
 ![Per-genotype Cellpose fitness (mutant / BY4741) with standard-error bars, one panel per volume x growth-time condition, strains sorted by fitness. SE = replicate-colony SD / sqrt(n_used), invalidated M/N/C wells excluded; dashed line = wild-type 1.0.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_fitness_se.svg)
+
+## 2026.07.22 - Per-plate full-page zoomable renders
+
+The all-plate montage above packs six captures into one figure, which is good for comparison but
+too small to judge an individual colony's boundary. Here each capture gets its **own full page** --
+the same tuned-recipe vector outlines coloured by validity (green accepted / red multi-colony `M` /
+orange crowded-neighbour `N` / purple non-circular `C`), with the A-P x 1-24 plate axes on all four
+edges and larger tick labels so any well reads off the nearest axis. Because the outlines are vector
+contours over the raster plate, each page zooms without pixelation, so the **green accepted
+boundary** can be inspected well by well. Regenerated with the montage script
+(`run2_cellpose_montage_vector.py`, which now also writes these six per-page renders); no new
+segmentation -- same cached masks as the montage.
+
+Note (flagged for the 48 h re-run): on **5 nL, 72 h (P2)** several visually clean single colonies
+carry red (`M`) outlines -- the crowded 72 h plate pushes the multi-colony rule past where it should
+fire, so that plate's red flags are not fully trustworthy. This does not affect the cleaner plates,
+and the 48 h assay (colonies imaged before they crowd) is expected to remove the ambiguity.
+
+![Per-plate full-page render, 2.5 nL at 43.7 h (P1). Vector validity outlines over the full plate with A-P x 1-24 axes on all four edges; zoom to inspect the green accepted boundaries well by well.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_page_P1_t44.svg)
+
+![Per-plate full-page render, 2.5 nL at 50.3 h (P1).](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_page_P1_t50.svg)
+
+![Per-plate full-page render, 2.5 nL at 72.2 h (P1).](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_page_P1_t72.svg)
+
+![Per-plate full-page render, 5 nL at 43.7 h (P2).](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_page_P2_t44.svg)
+
+![Per-plate full-page render, 5 nL at 50.3 h (P2).](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_page_P2_t50.svg)
+
+![Per-plate full-page render, 5 nL at 72.2 h (P2) - the crowded plate; several clean singles are red-flagged here (see note above), to be resolved by the 48 h assay.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_page_P2_t72.svg)

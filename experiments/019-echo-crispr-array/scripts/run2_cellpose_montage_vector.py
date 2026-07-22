@@ -56,7 +56,15 @@ def _row_labels() -> list[str]:
     return [chr(ord("A") + r) for r in range(N_ROWS)]
 
 
-def _draw_panel(ax: plt.Axes, tag: str, plate: str, t: str, title: str) -> None:
+def _draw_panel(
+    ax: plt.Axes,
+    tag: str,
+    plate: str,
+    t: str,
+    title: str,
+    tick_fs: float = 3.5,
+    title_fs: float = 9,
+) -> None:
     crop_p = osp.join(QUANT_DIR, f"run2_cellpose_{tag}_crop_{plate}_{t}.png")
     mask_p = osp.join(QUANT_DIR, f"run2_cellpose_{tag}_masks_{plate}_{t}.npy")
     if not (osp.exists(crop_p) and osp.exists(mask_p)):
@@ -94,9 +102,9 @@ def _draw_panel(ax: plt.Axes, tag: str, plate: str, t: str, title: str) -> None:
     row_y = nodes[:, :, 0].mean(axis=1)
     col_x = nodes[:, :, 1].mean(axis=0)
     ax.set_xticks(col_x)
-    ax.set_xticklabels([str(c + 1) for c in range(N_COLS)], fontsize=3.5)
+    ax.set_xticklabels([str(c + 1) for c in range(N_COLS)], fontsize=tick_fs)
     ax.set_yticks(row_y)
-    ax.set_yticklabels(_row_labels(), fontsize=3.5)
+    ax.set_yticklabels(_row_labels(), fontsize=tick_fs)
     ax.set_xlim(0, img.shape[1])
     ax.set_ylim(img.shape[0], 0)
     ax.tick_params(
@@ -107,7 +115,24 @@ def _draw_panel(ax: plt.Axes, tag: str, plate: str, t: str, title: str) -> None:
     for s in ax.spines.values():
         s.set_visible(True)
         s.set_linewidth(0.4)
-    ax.set_title(title, fontsize=9, pad=12)
+    ax.set_title(title, fontsize=title_fs, pad=12)
+
+
+def _write_per_page(tag: str) -> None:
+    """One standalone full-plate figure per capture (all six), for a page-filling,
+    zoomable read of a single plate. Same vector validity outlines + A1-P24 axes as a
+    montage panel, but larger axis fonts since each plate now owns the whole page --
+    lets the green accepted boundary be inspected well by well."""
+    for plate, vol in COLUMNS:
+        for t, hrs in ROWS:
+            fig, ax = plt.subplots(figsize=(8.5, 8.9))
+            _draw_panel(ax, tag, plate, t, f"{vol} - {hrs}", tick_fs=5.0, title_fs=13)
+            fig.tight_layout()
+            out = osp.join(IMG_DIR, f"run2_cellpose_page_{plate}_{t}.svg")
+            fig.savefig(out)
+            fig.savefig(out.replace(".svg", ".png"), dpi=200)
+            plt.close(fig)
+            print(f"wrote per-page plate -> {out} (+ .png)")
 
 
 def main() -> None:
@@ -115,18 +140,21 @@ def main() -> None:
     ap.add_argument("--tag", default="best")
     args = ap.parse_args()
 
+    os.makedirs(IMG_DIR, exist_ok=True)
+
     fig, axes = plt.subplots(len(ROWS), len(COLUMNS), figsize=(13, 13.5))
     for i, (t, hrs) in enumerate(ROWS):
         for j, (plate, vol) in enumerate(COLUMNS):
             _draw_panel(axes[i, j], args.tag, plate, t, f"{vol} - {hrs}")
     fig.suptitle("Cellpose segmentation (vector outlines, plate A1-P24 axes)", fontsize=11)
     fig.tight_layout()
-    os.makedirs(IMG_DIR, exist_ok=True)
     out = osp.join(IMG_DIR, "run2_cellpose_montage.svg")
     fig.savefig(out)
     fig.savefig(out.replace(".svg", ".png"), dpi=200)
     plt.close(fig)
     print(f"wrote {len(ROWS)}x{len(COLUMNS)} montage with plate axes -> {out} (+ .png)")
+
+    _write_per_page(args.tag)
 
 
 if __name__ == "__main__":

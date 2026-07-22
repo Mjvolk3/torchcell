@@ -68,6 +68,7 @@ from typing import Any, cast
 
 import hydra
 import lightning as L
+import numpy as np
 import torch
 import torch.distributed as dist
 import wandb
@@ -231,6 +232,97 @@ def build_head_alignments(
     return align
 
 
+def compute_per_feature_target_stats(
+    dataset: Any,
+    train_indices: list[int],
+    active_heads: list[str],
+    head_phenotypes: dict[str, list[str]],
+    head_align: dict[str, dict[str, Any]],
+    heads_to_normalize: list[str],
+    eps: float,
+    degenerate_robust_cv: float,
+) -> dict[str, dict[str, Any]]:
+    """Per-FEATURE target standardization stats, computed on the TRAIN split ONLY.
+
+    WS10b. The morphology target (``calmorph``) is a 281-D vector whose features span
+    ~8 orders of magnitude (cell-size counts ~1e4 vs 0--1 ratios), so a single pooled
+    mean/std (what ``COOLabelNormalizationTransform`` would compute for the whole
+    ``calmorph`` label) leaves the large-scale features dominating an un-normalized MSE
+    (loss O(1e6)). Instead we z-score EACH feature independently.
+
+    Stats are accumulated over ``train_indices`` alone (never val/test) so there is no
+    leakage; the same affine is inverted at report/inference time. ``std`` is floored
+    with ``eps`` so a truly constant feature maps to ~0 rather than exploding.
+
+    For each vector head in ``heads_to_normalize`` we resolve its key-sorted feature
+    vocabulary (restricted by the head's ``keep_mask`` so it matches the gathered
+    prediction/target length), read every train genotype's vector, and compute per-feature
+    mean/std/median/IQR. Near-constant features (robust CV = IQR/|median| below
+    ``degenerate_robust_cv``) are FLAGGED (not dropped) -- the epsilon floor keeps them
+    finite; the user decides whether to drop.
+    """
+    stats: dict[str, dict[str, Any]] = {}
+    for head in active_heads:
+        if head not in heads_to_normalize:
+            continue
+        align = head_align.get(head, {})
+        if align.get("is_scalar", False) or align.get("feat_dim") is None:
+            continue
+        keys: list[str] | None = None
+        name: str | None = None
+        for cand in head_phenotypes.get(head, []):
+            keys = _vector_phenotype_keys(dataset, cand)
+            if keys is not None:
+                name = cand
+                break
+        if keys is None or name is None:
+            continue
+        keep = align.get("keep_mask")
+        keep_list = keep.tolist() if keep is not None else [True] * len(keys)
+        kept_keys = [k for k, flag in zip(keys, keep_list) if flag]
+
+        collected: list[list[float]] = []
+        for idx in train_indices:
+            raw = dataset._read_from_lmdb(idx)
+            if raw is None:
+                continue
+            for item in dataset._deserialize_json(raw):
+                value = item["experiment"]["phenotype"].get(name)
+                if not isinstance(value, dict):
+                    continue
+                vec = [
+                    float(value[k])
+                    for k, flag in zip(keys, keep_list)
+                    if flag and k in value
+                ]
+                if len(vec) == len(kept_keys):
+                    collected.append(vec)
+
+        arr = np.asarray(collected, dtype=float)
+        arr = np.where(np.isfinite(arr), arr, np.nan)
+        mean = np.nanmean(arr, axis=0)
+        std = np.nanstd(arr, axis=0)
+        median = np.nanmedian(arr, axis=0)
+        q25 = np.nanpercentile(arr, 25, axis=0)
+        q75 = np.nanpercentile(arr, 75, axis=0)
+        iqr = q75 - q25
+        with np.errstate(divide="ignore", invalid="ignore"):
+            robust_cv = np.where(np.abs(median) > 0, iqr / np.abs(median), 0.0)
+        degenerate_idx = [
+            i for i, rc in enumerate(robust_cv) if rc < degenerate_robust_cv
+        ]
+        stats[head] = {
+            "keys": kept_keys,
+            "mean": torch.tensor(mean, dtype=torch.float32),
+            "std": torch.tensor(std, dtype=torch.float32),
+            "eps": float(eps),
+            "n_train": int(arr.shape[0]),
+            "degenerate_features": [kept_keys[i] for i in degenerate_idx],
+            "robust_cv": robust_cv.tolist(),
+        }
+    return stats
+
+
 class MultitaskCGTTask(L.LightningModule):
     """Lightning wrapper: multitask CGT + ``MaskedMultitaskLoss`` + optim/sched.
 
@@ -252,6 +344,7 @@ class MultitaskCGTTask(L.LightningModule):
         lr_scheduler_config: dict[str, Any] | None,
         clip_grad_norm: bool,
         clip_grad_norm_max_norm: float,
+        target_stats: dict[str, dict[str, Any]] | None = None,
     ) -> None:
         """Store the model, cell_graph, masked loss, and optim/sched config."""
         super().__init__()
@@ -265,7 +358,35 @@ class MultitaskCGTTask(L.LightningModule):
         self.lr_scheduler_config = lr_scheduler_config
         self.clip_grad_norm = clip_grad_norm
         self.clip_grad_norm_max_norm = clip_grad_norm_max_norm
-        self.save_hyperparameters(ignore=["model", "cell_graph", "head_align"])
+        # WS10b per-feature target standardization (TRAIN-split stats). Registered as
+        # buffers so mean/std move with .to(device) and are checkpointed for inversion.
+        self.norm_heads: list[str] = list((target_stats or {}).keys())
+        self.norm_eps: dict[str, float] = {}
+        for head, st in (target_stats or {}).items():
+            safe = head.replace("/", "_")
+            self.register_buffer(f"_norm_mean_{safe}", st["mean"], persistent=True)
+            self.register_buffer(f"_norm_std_{safe}", st["std"], persistent=True)
+            self.norm_eps[head] = float(st["eps"])
+        self.save_hyperparameters(
+            ignore=["model", "cell_graph", "head_align", "target_stats"]
+        )
+
+    def _norm_mean_std(self, head: str) -> tuple[torch.Tensor, torch.Tensor]:
+        safe = head.replace("/", "_")
+        return (
+            cast(torch.Tensor, getattr(self, f"_norm_mean_{safe}")),
+            cast(torch.Tensor, getattr(self, f"_norm_std_{safe}")),
+        )
+
+    def _normalize_target(self, head: str, values: torch.Tensor) -> torch.Tensor:
+        """Per-feature z-score a decoded [B, feat] target for a normalized head."""
+        mean, std = self._norm_mean_std(head)
+        return (values - mean) / (std + self.norm_eps[head])
+
+    def denormalize(self, head: str, values: torch.Tensor) -> torch.Tensor:
+        """Invert the per-feature z-score back to raw CalMorph scale (inference)."""
+        mean, std = self._norm_mean_std(head)
+        return values * (std + self.norm_eps[head]) + mean
 
     def forward(self, batch: HeteroData) -> tuple[torch.Tensor, dict[str, Any]]:
         """Run the multitask CGT on a batch, moving cell_graph to its device.
@@ -377,6 +498,11 @@ class MultitaskCGTTask(L.LightningModule):
                         head_vals = head_vals[keep]
                     target[b] = head_vals.to(device)
                 row_mask[b] = True
+            # WS10b: per-feature z-score (TRAIN-split stats) so a multi-scale vector
+            # target (CalMorph 281-D) yields an O(1) loss. Masked rows are zeros ->
+            # become -mean/std but are dropped by MaskedMultitaskLoss's row mask.
+            if head in self.norm_heads:
+                target = self._normalize_target(head, target)
             targets[head] = target
             masks[head] = row_mask
         return targets, masks
@@ -398,6 +524,11 @@ class MultitaskCGTTask(L.LightningModule):
         for name, val in per_head.items():
             self.log(f"{stage}/{name}/loss", val, batch_size=bsz, sync_dist=True)
         # Pearson metric on supervised rows (skips heads with <2 supervised rows).
+        # For per-feature-normalized vector heads (WS10b) this correlates in the
+        # NORMALIZED space: model prediction and target are both z-scored, so every
+        # CalMorph feature contributes equally. Inverting per-feature to raw scale would
+        # re-couple the 8-orders-of-magnitude spread and let a couple of huge features
+        # dominate the correlation, so normalized-space Pearson is the honest metric here.
         for name, pred in head_outputs.items():
             if name not in targets:
                 continue
@@ -772,6 +903,58 @@ def run_training(cfg: DictConfig) -> None:
         }
         print(f"  {h}: {printable}")
 
+    # ---- WS10b: per-FEATURE target standardization stats (TRAIN split only) ----
+    heads_to_normalize = list(cfg.multitask.get("normalize_vector_targets", []))
+    target_stats: dict[str, dict[str, Any]] = {}
+    if heads_to_normalize:
+        train_indices = list(data_module.train_dataset.indices)
+        target_stats = compute_per_feature_target_stats(
+            dataset=dataset,
+            train_indices=train_indices,
+            active_heads=active_heads,
+            head_phenotypes={k: list(v) for k, v in head_phenotypes.items()},
+            head_align=head_align,
+            heads_to_normalize=heads_to_normalize,
+            eps=float(cfg.multitask.get("target_norm_eps", 1e-8)),
+            degenerate_robust_cv=float(cfg.multitask.get("degenerate_robust_cv", 0.01)),
+        )
+        is_rank0 = not dist.is_initialized() or dist.get_rank() == 0
+        for head, st in target_stats.items():
+            std = st["std"]
+            print(
+                f"[WS10b] per-feature norm '{head}': {len(st['keys'])} features, "
+                f"n_train={st['n_train']}, std in "
+                f"[{float(std.min()):.4g}, {float(std.max()):.4g}]; "
+                f"{len(st['degenerate_features'])} near-constant FLAGGED (kept, "
+                f"epsilon-floored): {st['degenerate_features']}"
+            )
+            if is_rank0:
+                out = osp.join(
+                    experiment_root,
+                    "019-simb-multimodal/results",
+                    f"calmorph_train_target_norm_{head}.json",
+                )
+                os.makedirs(osp.dirname(out), exist_ok=True)
+                with open(out, "w") as f:
+                    json.dump(
+                        {
+                            "head": head,
+                            "n_train": st["n_train"],
+                            "eps": st["eps"],
+                            "degenerate_robust_cv_threshold": float(
+                                cfg.multitask.get("degenerate_robust_cv", 0.01)
+                            ),
+                            "degenerate_features": st["degenerate_features"],
+                            "keys": st["keys"],
+                            "mean": st["mean"].tolist(),
+                            "std": st["std"].tolist(),
+                            "robust_cv": st["robust_cv"],
+                        },
+                        f,
+                        indent=2,
+                    )
+                print(f"[WS10b] wrote {out}")
+
     task = MultitaskCGTTask(
         model=model,
         cell_graph=dataset.cell_graph,
@@ -788,6 +971,7 @@ def run_training(cfg: DictConfig) -> None:
         ),
         clip_grad_norm=cfg.regression_task.clip_grad_norm,
         clip_grad_norm_max_norm=cfg.regression_task.clip_grad_norm_max_norm,
+        target_stats=target_stats,
     )
 
     model_base_path = osp.join(data_root, "models/checkpoints")

@@ -52,6 +52,18 @@ trainer:
 multitask:
   active_heads: [gene_interaction, per_gene, global]
   loss_fn: mse
+  # WS10b: per-FEATURE z-score of vector targets, computed on the TRAIN split only.
+  # The CalMorph `global` target is 281-D with features spanning ~8 orders of magnitude
+  # (cell-size counts ~1e4 vs 0-1 ratios); pooling one mean/std leaves big features
+  # dominating an un-normalized MSE (loss O(1e6)). Standardizing each feature makes the
+  # loss O(1). Stats are inverted (`task.denormalize`) for raw-scale inference.
+  normalize_vector_targets: [global]
+  target_norm_eps: 1.0e-8
+  # Near-constant features (robust CV = IQR/|median| < threshold) are FLAGGED, kept, and
+  # epsilon-floored (NOT dropped) -- Ohya 2005's own 254/247 keep/discard is a normality
+  # verdict over all 501 base+CV params, not a variance floor on our 281 base target, so
+  # we default to keep-with-epsilon and surface candidates for user review.
+  degenerate_robust_cv: 0.01
   heads:
     global:
       # CalMorph morphology. The Fig-3 build's calmorph vector is 281-D (constant

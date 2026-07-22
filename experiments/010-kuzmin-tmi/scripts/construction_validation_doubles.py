@@ -246,15 +246,15 @@ def plot_cross_dataset(df: pd.DataFrame) -> None:
     d["gap"] = (d.DmfCostanzo2016_fitness - d.kuzmin).abs()
     d = d.sort_values("gap").reset_index(drop=True)
 
+    kcolor = {"K2018": PLOT_PALETTE[0], "K2020": PLOT_PALETTE[2]}  # orange / purple
     fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["wide"]), mm_to_in(65)),
                            layout="constrained")
     for i, r in d.iterrows():
-        ax.plot([r.DmfCostanzo2016_fitness, r.kuzmin], [i, i], color="0.6", lw=0.8, zorder=1)
         ax.errorbar(r.DmfCostanzo2016_fitness, i, xerr=r.DmfCostanzo2016_std, fmt="o",
                     ms=4, elinewidth=0.6, capsize=1.5, color=COLOR_COV, zorder=3)
-        ax.scatter(r.kuzmin, i, s=22, color=PLOT_PALETTE[0], zorder=3)
+        ax.scatter(r.kuzmin, i, s=22, color=kcolor[r.ksrc], zorder=3)
         ax.annotate(r.ksrc, (r.kuzmin, i), textcoords="offset points",
-                    xytext=(4, 3), fontsize=4.5, color=PLOT_PALETTE[0])
+                    xytext=(4, 3), fontsize=4.5, color="black")
     ax.axvline(1.0, color="0.4", ls=":", lw=0.8, zorder=0)
     ax.set_yticks(range(len(d)))
     ax.set_yticklabels([f"{r.gene1}+{r.gene2}" for _, r in d.iterrows()], fontsize=5.5)
@@ -267,8 +267,10 @@ def plot_cross_dataset(df: pd.DataFrame) -> None:
     ax.grid(which="both", axis="x", lw=0.3, color="0.9", zorder=0)
     ax.legend(handles=[plt.Line2D([], [], marker="o", lw=0, ms=4, color=COLOR_COV,
                                   label="Costanzo2016 (± SD)"),
-                       plt.Line2D([], [], marker="o", lw=0, ms=4, color=PLOT_PALETTE[0],
-                                  label="Kuzmin")],
+                       plt.Line2D([], [], marker="o", lw=0, ms=4, color=kcolor["K2018"],
+                                  label="Kuzmin2018"),
+                       plt.Line2D([], [], marker="o", lw=0, ms=4, color=kcolor["K2020"],
+                                  label="Kuzmin2020")],
               frameon=True, fontsize=5.5, loc="lower left")
     for sp in ("top", "right", "left", "bottom"):
         ax.spines[sp].set_visible(True)

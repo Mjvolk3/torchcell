@@ -66,4 +66,4 @@ done
 echo "=== 6/6 verify counts (expect the GilaHyper source counts) ==="
 docker exec "$CONTAINER" cypher-shell -d "$DB" "MATCH (n) RETURN count(n) AS nodes;"
 docker exec "$CONTAINER" cypher-shell -d "$DB" "MATCH ()-[r]->() RETURN count(r) AS rels;"
-echo "✓ load complete (nodes should be 7,158,410 / rels 20,996,966 for the 2026-07 build)."
+echo "✓ load complete — verify these match the GilaHyper build the dump came from."

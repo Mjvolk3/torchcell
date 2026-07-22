@@ -1,0 +1,109 @@
+# experiments/019-simb-multimodal/conf/igb_mmli_train_cgt_multitask_000.yaml
+# IGB mmli full-run config: JOINT multitask Fig-3 CGT (4 GPU DDP).
+defaults:
+  - default
+  - _self_
+
+dry_run: false
+
+wandb:
+  project: torchcell_019-simb-multimodal_cgt_multitask
+  tags: [ws13, igb_mmli, joint]
+
+cell_dataset:
+  graphs: [physical, regulatory]
+  node_embeddings: []
+  query_file: fig3_core.cql
+  dataset_tag: fig3_core
+
+transforms:
+  use_transforms: true
+  forward_transform:
+    normalization:
+      gene_interaction:
+        strategy: standard
+
+data_module:
+  is_perturbation_subset: false
+  perturbation_subset_size: 10000
+  batch_size: 32
+  num_workers: 14
+  pin_memory: true
+  prefetch: false
+
+trainer:
+  max_epochs: 600
+  strategy: ddp
+  accelerator: gpu
+  devices: 4
+  overfit_batches: 0
+  precision: bf16-mixed
+  fast_dev_run: false
+
+multitask:
+  active_heads: [gene_interaction, per_gene, global]
+  loss_fn: mse
+  heads:
+    global:
+      output_dim: 501
+      use_gene_pool: true
+    per_gene:
+      output_dim: 1
+    per_metabolite:
+      output_dim: 1
+  head_weights:
+    gene_interaction: 1.0
+    per_gene: 1.0
+    global: 1.0
+    per_metabolite: 1.0
+  head_phenotypes:
+    gene_interaction: [fitness, gene_interaction]
+    per_gene: [microarray_expression, rnaseq_expression]
+    global: [calmorph]
+    per_metabolite: [metabolite]
+
+model:
+  checkpoint_path: null
+  gene_num: 6607
+  hidden_channels: 180
+  num_transformer_layers: 8
+  num_attention_heads: 9
+  dropout: 0.1
+  learnable_embedding:
+    enabled: true
+    size: ${model.hidden_channels}
+    preprocessor:
+      num_layers: 2
+      dropout: 0.1
+  graph_regularization:
+    graph_reg_lambda: 0.001
+    graph_reg_layer: [1, 2, 3, 4]
+    row_sampling_rate: 1.0
+    regularized_heads:
+      physical:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 0
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      regulatory:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 1
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+  perturbation_head:
+    num_heads: 9
+    dropout: 0.1
+
+regression_task:
+  optimizer:
+    type: AdamW
+    lr: 1e-4
+    weight_decay: 1e-8
+  lr_scheduler:
+    type: CosineAnnealingWarmupRestarts
+    first_cycle_steps: 40
+    cycle_mult: 1.0
+    max_lr: 5e-4
+    min_lr: 1e-7
+    warmup_steps: 1
+    gamma: 0.70
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0

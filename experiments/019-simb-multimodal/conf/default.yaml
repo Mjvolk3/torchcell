@@ -1,0 +1,14 @@
+# experiments/019-simb-multimodal/conf/default.yaml
+defaults:
+  - _self_ # suppresses warning, recommended for default.yaml
+
+# HYDRA_LOGGING_SETTINGS - toggle to suppress output
+hydra_logging:
+  loggers:
+    logging_example:
+      level: INFO
+
+# Profiler configuration
+profiler:
+  enabled: false
+  is_pytorch: true

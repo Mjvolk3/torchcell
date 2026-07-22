@@ -17,6 +17,7 @@ Related:
 - Harness: [[experiments.019-simb-multimodal.scripts.train_cgt_multitask]]
 - Grid generator: [[experiments.019-simb-multimodal.scripts.generate_expr_grid]]
 - Fig-3 query/build: [[experiments.019-simb-multimodal.scripts.query_fig3]]
+- Proteome↔expression EDA: [[experiments.019-simb-multimodal.proteome-expression-eda]]
 - Roadmap: `plan.simb-2026-multimodal-cgt.2026.07.21` (memory `simb2026-multimodal-cgt-plan`)
 
 ## 2026.07.22 - Fig-3 expression single-GPU sniff sweep

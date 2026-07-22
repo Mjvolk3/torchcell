@@ -3,6 +3,11 @@
 # Fig-3 build. Tiny model, no subset, a few limited batches per epoch, 1 GPU, wandb
 # offline. Proves the global morphology head trains (loss decreases + val Pearson
 # computes) with the WS10a-fixed COO decode. NOT a real run.
+#
+# WS10b: inherits `multitask.normalize_vector_targets: [global]` from the base config, so
+# the 281-D CalMorph target is per-feature z-scored (TRAIN-split stats). This is what
+# brings the morphology loss from O(1e6) to O(1). Override with
+# `multitask.normalize_vector_targets=[]` on the CLI to reproduce the un-normalized loss.
 defaults:
   - train_cgt_multitask
   - _self_

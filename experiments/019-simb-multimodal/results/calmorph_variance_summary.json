@@ -1,0 +1,171 @@
+{
+  "source_file": "/scratch/projects/torchcell-scratch/torchcell-library/ohyaHighdimensionalLargescalePhenotyping2005a/data/mt4718data.tsv",
+  "n_mutants": 4718,
+  "n_base_features": 281,
+  "n_cv_features": 220,
+  "n_total_features": 501,
+  "robust_cv_degenerate_threshold": 0.01,
+  "zero_std_features": [],
+  "n_zero_std": 0,
+  "degenerate_features": [
+    "A113_A1B",
+    "C123_C",
+    "A113_C"
+  ],
+  "n_degenerate": 3,
+  "scale_span": {
+    "min_mean_abs": 6.713113225943195e-05,
+    "max_mean_abs": 14913.404512749894,
+    "min_std": 1.2060215937827764e-05,
+    "max_std": 5460.069600990198
+  },
+  "least_variable_top20": [
+    {
+      "feature": "A113_A1B",
+      "description": "Actin_n_ratio",
+      "mean": 0.0017773284266638404,
+      "std": 0.006783130254686739,
+      "robust_cv": 0.0
+    },
+    {
+      "feature": "C123_C",
+      "description": "Small_bud_ratio",
+      "mean": 0.0004962380873251378,
+      "std": 0.0038794814270944316,
+      "robust_cv": 0.0
+    },
+    {
+      "feature": "A113_C",
+      "description": "Actin_n_ratio",
+      "mean": 0.001156950998092412,
+      "std": 0.006448515731600758,
+      "robust_cv": 0.0
+    },
+    {
+      "feature": "D105_A",
+      "description": "Ratio_of_D102_to_C103",
+      "mean": 0.5917684564559135,
+      "std": 0.008242271097457898,
+      "robust_cv": 0.016491522054032384
+    },
+    {
+      "feature": "D206",
+      "description": "nuclear_A_ratio_to_no_bud_cells",
+      "mean": 0.9834788945777871,
+      "std": 0.03253980191217976,
+      "robust_cv": 0.018141970679511104
+    },
+    {
+      "feature": "C115_A",
+      "description": "Whole_cell_axis_ratio",
+      "mean": 1.2156122547689698,
+      "std": 0.051184102359278054,
+      "robust_cv": 0.024119897132804543
+    },
+    {
+      "feature": "C115_A1B",
+      "description": "Mother_axis_ratio",
+      "mean": 1.2068279934599406,
+      "std": 0.05231524849351661,
+      "robust_cv": 0.025852631243759704
+    },
+    {
+      "feature": "C115_C",
+      "description": "Mother_axis_ratio",
+      "mean": 1.214561129181645,
+      "std": 0.05366772261405504,
+      "robust_cv": 0.028144077649713998
+    },
+    {
+      "feature": "D107_A1B",
+      "description": "Ratio_of_D104_to_C103",
+      "mean": 0.6164710808762187,
+      "std": 0.015759416796128762,
+      "robust_cv": 0.02854276716478573
+    },
+    {
+      "feature": "C116_C",
+      "description": "Axis_ratio_ratio",
+      "mean": 0.8399932481377702,
+      "std": 0.02225827449487524,
+      "robust_cv": 0.030869905485965226
+    },
+    {
+      "feature": "C114_C",
+      "description": "Bud_axis_ratio",
+      "mean": 1.0175629265245867,
+      "std": 0.04814182170304281,
+      "robust_cv": 0.0312994104871656
+    },
+    {
+      "feature": "D182_A",
+      "description": "Nuclear_axis_ratio",
+      "mean": 2.3898317017420516,
+      "std": 0.07906260588504055,
+      "robust_cv": 0.032744328157017215
+    },
+    {
+      "feature": "C117_C",
+      "description": "Cell_outline_ratio",
+      "mean": 0.7609380581646885,
+      "std": 0.0247012215263773,
+      "robust_cv": 0.03717152349104558
+    },
+    {
+      "feature": "C114_A1B",
+      "description": "Bud_axis_ratio",
+      "mean": 0.9364048332787197,
+      "std": 0.04363407491028977,
+      "robust_cv": 0.039545077613894454
+    },
+    {
+      "feature": "C116_A1B",
+      "description": "Axis_ratio_ratio",
+      "mean": 0.7773602890813904,
+      "std": 0.02641606182691785,
+      "robust_cv": 0.03998918942298731
+    },
+    {
+      "feature": "C109_A1B",
+      "description": "Neck_width",
+      "mean": 12.607947603851207,
+      "std": 0.5546059404993455,
+      "robust_cv": 0.04009145050867437
+    },
+    {
+      "feature": "C103_A1B",
+      "description": "Long_axis_length_in_mother",
+      "mean": 36.64020612157058,
+      "std": 2.2601312302829575,
+      "robust_cv": 0.043884982525262406
+    },
+    {
+      "feature": "C103_C",
+      "description": "Long_axis_length_in_mother",
+      "mean": 36.583221748688004,
+      "std": 2.312844291073812,
+      "robust_cv": 0.04393722811973826
+    },
+    {
+      "feature": "D185_C",
+      "description": "Total_length_of_two_straight_segments_D11-1C4-1_and_D11-2C4-1",
+      "mean": 57.69224087597923,
+      "std": 3.5355787425315452,
+      "robust_cv": 0.044659367867448806
+    },
+    {
+      "feature": "D186_C",
+      "description": "Total_length_of_two_straight_segments_D12-1C4-1_and_D12-2C4-1",
+      "mean": 57.53607428837008,
+      "std": 3.5010883402822683,
+      "robust_cv": 0.04472931168008189
+    }
+  ],
+  "ohya_paper_reliability": {
+    "note": "Ohya 2005 SI (si12.md, 'Supporting Text') fit a per-parameter Box-Cox power transform to the WILD-TYPE data (x divided by the WT mean, then F_{p,a}(x), then standardized y=(F-Mean)/SD), and applied a Shapiro-Wilk normality test. At P>=0.5 they KEPT 254 of 501 parameters and DISCARDED 247 as non-normal / unreliable. This is the published precedent for dropping degenerate CalMorph parameters.",
+    "kept_parameters_at_p0.5": 254,
+    "discarded_parameters": 247,
+    "of_total": 501
+  },
+  "recommendation": "KEEP all 281 base features with a per-feature z-score computed on the TRAIN split only, using an epsilon-floored std (std + eps) so any near-constant / zero-std feature maps to ~0 instead of exploding. FLAG the degenerate list above for optional user-driven dropping -- do NOT silently drop. The Ohya paper's own 254/247 keep/discard is a normality verdict (for their abnormality test), not a variance floor, and it spans all 501 params (base+CV); our target is only the 281 base params, so we default to keep-with-epsilon and surface the candidates rather than importing their 247-drop wholesale."
+}

@@ -209,3 +209,23 @@ names on 6 merge-collisions (YDL038C/YDL039C, YDL134C-A/YDL133C-A, YER108C/YER10
 YIL167W/YIL168W, YIR043C/YIR044C, YML033W/YML034W); **4** retired legacy names (YAR037W,
 YAR040C, YAR043C, YGL154W). `OHYA_EXPECTED_COUNT` back to 4718; the paper's r=0.619 dataset
 (4718) is reproduced.
+
+## 2026.07.22 - CalMorph normalization sourced from the SI (WS10b)
+
+The Ohya-2005 SI prescribes the CalMorph normalization; used for the morphology training
+target in experiment 019. Full analysis + variance study + implemented transform:
+[[experiments.019-simb-multimodal.scripts.calmorph_variance_analysis]].
+
+- **281 vs 501 resolved:** served `calmorph` = the 281 BASE params (`CALMORPH_LABELS`);
+  `calmorph_coefficient_of_variation` = the 220 CV params (`CALMORPH_STATISTICS`); 501 total.
+- **Paper's own per-parameter pipeline** (SI `si12.md`, Supporting Text): WT data *"divided
+  by the mean"* -> Box-Cox `F_{p,a}(x)` (Anderson-Darling-minimizing params) -> standardized
+  *"y = (F_{p,a}(x) - Mean)/SD"*, then a **Shapiro-Wilk** normality filter that **kept 254 of
+  501 and discarded 247** as unreliable (P>=0.5 threshold; paper.md line 25/38).
+- **Near-constant features** (the "values barely change across samples" set): on 4718
+  mutants, 3 features have zero IQR - `A113_A1B`/`A113_C` (Actin_n_ratio = no-actin-patch
+  ratio) and `C123_C` (Small_bud_ratio). 0 truly-constant. Per-feature scale spans ~8 orders
+  of magnitude (|mean| 6.7e-5 .. 1.49e4), the root cause of the O(1e6) morphology loss.
+- **torchcell decision:** KEEP all 281 with a per-feature z-score (train-split only,
+  epsilon-floored) + FLAG the degenerate set for user review; do NOT import the paper's
+  247-drop (a normality verdict over base+CV, not a variance floor on our 281 base target).

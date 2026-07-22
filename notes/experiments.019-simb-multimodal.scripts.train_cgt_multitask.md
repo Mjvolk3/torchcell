@@ -130,3 +130,14 @@ For an individual-phenotype baseline, override on the CLI (or clone a config):
 `... --config-name igb_mmli_train_cgt_multitask_000 'multitask.active_heads=[per_gene]'`.
 Ensure the SLURM output dir exists on the cluster
 (`.../experiments/019-simb-multimodal/slurm/output/`).
+
+## 2026.07.22 - WS10b per-feature CalMorph target normalization
+
+The `global` (CalMorph 281-D) target was RAW -> un-normalized MSE ~4.7 M. Added
+`compute_per_feature_target_stats()` (TRAIN-split-only per-feature mean/std, no leakage),
+applied in `_extract_targets_and_masks` and invertible via `task.denormalize()`. Config:
+`multitask.normalize_vector_targets: [global]` (+ `target_norm_eps`, `degenerate_robust_cv`);
+stats stored as buffers. Smoke: loss 4.5 M -> ~1.14 (O(1)); val loss falls below the z-scored
+variance floor (real signal); flatten-Pearson ~0 post-norm (the baseline's rising Pearson was
+a feature-scale artifact). Full source/variance/decision writeup:
+[[experiments.019-simb-multimodal.scripts.calmorph_variance_analysis]].

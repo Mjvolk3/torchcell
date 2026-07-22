@@ -54,7 +54,13 @@ COLOR_COV = PLOT_PALETTE[4]   # blue #6C8EBF — coverage doubles (triple recons
 COLOR_VAL = PLOT_PALETTE[1]   # red  #B85450 — validation doubles (dynamic range / signal)
 COLOR_OTHER = "0.82"          # light neutral — de-emphasized (unselected) background
 
+# Set the label/tick sizes ABSOLUTELY (not the relative "medium", which resolves to
+# the default 10 pt and then gets ~1.4x-scaled by the true-size SVG export -> huge
+# axis labels). Nature Biotech in-figure text is 5-7 pt.
 plt.rcParams.update({"font.family": "Arial", "font.size": 6,
+                     "axes.labelsize": 6, "axes.titlesize": 7,
+                     "xtick.labelsize": 6, "ytick.labelsize": 6,
+                     "legend.fontsize": 5.5,
                      "svg.fonttype": "none", "axes.linewidth": 0.5})
 
 
@@ -136,7 +142,7 @@ def annotate_tiers(df: pd.DataFrame, triples: list[frozenset]) -> pd.DataFrame:
     return df
 
 
-def plot(sel: pd.DataFrame) -> None:
+def plot(sel: pd.DataFrame, novel_labels: list[str] | None = None) -> None:
     fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["wide"]), mm_to_in(85)),
                            layout="constrained")
     for tier, color in [("coverage", COLOR_COV), ("validation", COLOR_VAL)]:
@@ -172,6 +178,10 @@ def plot(sel: pd.DataFrame) -> None:
     ax.set_ylabel("Digenic interaction ε")
     ax.set_title("Doubles for construction + assay validation (Costanzo2016)", fontsize=7)
     ax.legend(frameon=True, fontsize=5.5, loc="upper left")
+    # the novel pair has no DMF to plot -- note it so it appears on the figure
+    if novel_labels:
+        ax.text(0.02, 0.02, "+ novel (unmeasured, construct): " + ", ".join(novel_labels),
+                transform=ax.transAxes, fontsize=5, color=PLOT_PALETTE[0], va="bottom", ha="left")
     for sp in ("top", "right", "left", "bottom"):
         ax.spines[sp].set_visible(True)
         ax.spines[sp].set_linewidth(0.5)
@@ -240,7 +250,8 @@ def main() -> None:
     si.to_csv(out, index=False)
 
     sel = df[df.tier.isin(["coverage", "validation"])]
-    plot(sel)
+    novel_labels = [f"{a}+{b}" for a, b in df.loc[df.tier == "novel", "pair"]]
+    plot(sel, novel_labels)
     plot_forest(df)
 
     covered = sum(any(set(pr).issubset(t) for pr in sel.pair) for t in triples)

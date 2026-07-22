@@ -1,0 +1,41 @@
+# experiments/019-simb-multimodal/conf/train_cgt_multitask_smoke_morph.yaml
+# WS10a LOCAL smoke baseline: MORPHOLOGY-ONLY (global head, CalMorph 281-D) on the
+# Fig-3 build. Tiny model, no subset, a few limited batches per epoch, 1 GPU, wandb
+# offline. Proves the global morphology head trains (loss decreases + val Pearson
+# computes) with the WS10a-fixed COO decode. NOT a real run.
+defaults:
+  - train_cgt_multitask
+  - _self_
+
+dry_run: false
+
+wandb:
+  project: torchcell_019-simb-multimodal_cgt_multitask
+  tags: [ws10a, smoke, morph]
+
+transforms:
+  use_transforms: false
+
+data_module:
+  is_perturbation_subset: false
+  batch_size: 16
+  num_workers: 2
+  pin_memory: false
+  prefetch: false
+
+trainer:
+  max_epochs: 4
+  strategy: auto
+  accelerator: auto
+  devices: 1
+  overfit_batches: 0
+  # CalMorph morphology covers ~4718 genotypes, so nearly every batch carries
+  # supervised global rows.
+  limit_train_batches: 25
+  limit_val_batches: 8
+  log_every_n_steps: 5
+  precision: 32-true
+  fast_dev_run: false
+
+multitask:
+  active_heads: [global]

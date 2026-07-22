@@ -34,14 +34,22 @@ config and run ONE synthetic forward + masked-loss + backward on a tiny syntheti
 GPU required -- this is the local wiring check that runs anywhere. Use it (and
 ``--help`` / ``--cfg job``) to validate a config before shipping to a cluster.
 
-Assumptions flagged for validation on the first REAL Fig-3 batch (see the WS13
-note): (1) the dataset is (re)built with the ``Perturbation`` graph processor --
-the transformer consumes per-genotype ``perturbation_indices`` batches, NOT the
-``SubgraphRepresentation`` used by ``query_fig3.py`` for the census; (2) per-head
-targets/masks are decoded from the COO ``phenotype_values`` /
-``phenotype_type_indices`` / ``phenotype_sample_indices`` fields keyed by the
-config ``multitask.head_phenotypes`` map. The synthetic dry-run does NOT exercise
-(2); the first cluster run must confirm the COO decode against a materialized batch.
+Two WS13 assumptions are now VALIDATED against a materialized Fig-3 batch (WS10a):
+(1) the dataset is built with the ``Perturbation`` graph processor -- the
+transformer consumes per-genotype ``perturbation_indices`` batches, NOT the
+``SubgraphRepresentation`` used by ``query_fig3.py`` for the census (CONFIRMED
+correct). (2) Per-head targets/masks are decoded from the COO ``phenotype_values``
+/ ``phenotype_type_indices`` fields, but the placeholder assumptions in the WS13
+note were WRONG and are FIXED here: the real ``phenotype_types`` strings are
+``fitness`` / ``calmorph`` / ``expression_log2_ratio`` (not microarray_/rnaseq_);
+the batch-row map is ``phenotype_values_batch`` (needs
+``follow_batch=['phenotype_values']``), NOT ``phenotype_sample_indices`` (which
+indexes experiments within a genotype and does not offset across the batch); and
+``phenotype_types`` collates to a per-graph list-of-lists with graph-LOCAL type
+indices. Vector heads are aligned to the measured feature subset via
+``build_head_alignments`` (per_gene gathers to the 6127 measured-gene node columns;
+global is the 281-D CalMorph vector). The synthetic dry-run does NOT exercise the
+decode; ``_extract_targets_and_masks`` is what carries it.
 """
 
 # MUST be first import to catch SWIG warnings in worker processes
@@ -126,6 +134,103 @@ def build_heads_config(cfg: DictConfig) -> dict[str, Any] | None:
     return heads_config or None
 
 
+def _pearson(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    """Pearson correlation between two flattened tensors (grad-free metric)."""
+    p = pred.reshape(-1).float()
+    t = target.reshape(-1).float()
+    p = p - p.mean()
+    t = t - t.mean()
+    denom = (p.norm() * t.norm()).clamp_min(1e-8)
+    return cast(torch.Tensor, (p * t).sum() / denom)
+
+
+def _vector_phenotype_keys(dataset: Any, name: str, scan: int = 5000) -> list[str] | None:
+    """Return the sorted dict keys of the first vector phenotype ``name`` found.
+
+    The ``Perturbation`` processor flattens a dict-valued phenotype to a
+    key-sorted vector and DROPS the keys, so the per-value feature identity
+    (which gene an expression value belongs to; which CalMorph parameter) is not
+    recoverable from a built HeteroData sample. We recover it once from the raw
+    reconstructed experiment records (same key-sort the processor uses), so the
+    decode can align each head to its target.
+    """
+    n = min(len(dataset), scan)
+    if dataset.env is None:
+        dataset._init_lmdb_read()
+    for idx in range(n):
+        raw = dataset._read_from_lmdb(idx)
+        if raw is None:
+            continue
+        for item in dataset._deserialize_json(raw):
+            value = item["experiment"]["phenotype"].get(name)
+            if isinstance(value, dict):
+                return sorted(value.keys())
+    return None
+
+
+def build_head_alignments(
+    dataset: Any,
+    active_heads: list[str],
+    head_phenotypes: dict[str, list[str]],
+    node_ids: list[str],
+) -> dict[str, dict[str, Any]]:
+    """Precompute per-head COO->target alignment from the real Fig-3 build.
+
+    For each active head we resolve its phenotype name to the actual COO layout:
+
+    * ``gene_interaction`` -- SCALAR (fitness); ``{"is_scalar": True}``.
+    * ``per_gene`` -- expression, a per-gene VECTOR. The processor emits one value
+      per MEASURED gene in key-sorted order; the ``per_gene`` head emits one value
+      per graph NODE. We build ``col_idx`` (node positions of the measured genes
+      that exist in the cell graph) so the prediction is gathered to the measured
+      subset, and ``keep_mask`` (over the raw key-sorted vector) dropping measured
+      genes absent from the gene set -- so gathered prediction and target align 1:1.
+    * ``global`` / ``per_metabolite`` -- a fixed-length feature VECTOR (CalMorph 281,
+      metabolites M); identity alignment, ``feat_dim`` = vector length.
+    """
+    nid_to_pos = {n: i for i, n in enumerate(node_ids)}
+    align: dict[str, dict[str, Any]] = {}
+    for head in active_heads:
+        if head == "gene_interaction":
+            align[head] = {"is_scalar": True}
+            continue
+        keys: list[str] | None = None
+        for name in head_phenotypes.get(head, []):
+            keys = _vector_phenotype_keys(dataset, name)
+            if keys is not None:
+                break
+        if keys is None:
+            # No such vector phenotype present in this build -> head unsupervised.
+            align[head] = {
+                "is_scalar": False,
+                "keep_mask": None,
+                "col_idx": None,
+                "feat_dim": None,
+            }
+            continue
+        if head == "per_gene":
+            keep = torch.tensor(
+                [k in nid_to_pos for k in keys], dtype=torch.bool
+            )
+            col = torch.tensor(
+                [nid_to_pos[k] for k in keys if k in nid_to_pos], dtype=torch.long
+            )
+            align[head] = {
+                "is_scalar": False,
+                "keep_mask": keep,
+                "col_idx": col,
+                "feat_dim": int(keep.sum().item()),
+            }
+        else:
+            align[head] = {
+                "is_scalar": False,
+                "keep_mask": None,
+                "col_idx": None,
+                "feat_dim": len(keys),
+            }
+    return align
+
+
 class MultitaskCGTTask(L.LightningModule):
     """Lightning wrapper: multitask CGT + ``MaskedMultitaskLoss`` + optim/sched.
 
@@ -141,6 +246,7 @@ class MultitaskCGTTask(L.LightningModule):
         active_heads: list[str],
         head_weights: dict[str, float],
         head_phenotypes: dict[str, list[str]],
+        head_align: dict[str, dict[str, Any]],
         loss_fn: str,
         optimizer_config: dict[str, Any],
         lr_scheduler_config: dict[str, Any] | None,
@@ -153,17 +259,24 @@ class MultitaskCGTTask(L.LightningModule):
         self.cell_graph = cell_graph.clone()
         self.active_heads = active_heads
         self.head_phenotypes = head_phenotypes
+        self.head_align = head_align
         self.loss = MaskedMultitaskLoss(head_weights=head_weights, loss_fn=loss_fn)
         self.optimizer_config = optimizer_config
         self.lr_scheduler_config = lr_scheduler_config
         self.clip_grad_norm = clip_grad_norm
         self.clip_grad_norm_max_norm = clip_grad_norm_max_norm
-        self.save_hyperparameters(ignore=["model", "cell_graph"])
+        self.save_hyperparameters(ignore=["model", "cell_graph", "head_align"])
 
     def forward(self, batch: HeteroData) -> tuple[torch.Tensor, dict[str, Any]]:
-        """Run the multitask CGT on a batch, moving cell_graph to its device."""
-        if self.cell_graph["gene"].x.device != batch["gene"].x.device:
-            self.cell_graph = self.cell_graph.to(batch["gene"].x.device)
+        """Run the multitask CGT on a batch, moving cell_graph to its device.
+
+        The ``Perturbation`` batch has NO ``gene.x`` (only ``perturbation_indices`` +
+        the phenotype COO), so the device is taken from ``perturbation_indices``.
+        """
+        dev = batch["gene"].perturbation_indices.device
+        if getattr(self, "_cell_graph_device", None) != dev:
+            self.cell_graph = self.cell_graph.to(dev)
+            self._cell_graph_device = dev
         return cast(
             "tuple[torch.Tensor, dict[str, Any]]",
             self.model(self.cell_graph, batch),
@@ -172,56 +285,98 @@ class MultitaskCGTTask(L.LightningModule):
     def _batch_size(self, batch: HeteroData) -> int:
         return int(batch["gene"].perturbation_indices_batch.max().item() + 1)
 
+    def _gather_predictions(
+        self, head_outputs: dict[str, torch.Tensor]
+    ) -> dict[str, torch.Tensor]:
+        """Gather VECTOR head predictions to the measured-feature subset.
+
+        ``per_gene`` predicts one value per graph NODE ([B, N]); expression is only
+        measured on a gene subset. ``col_idx`` selects the measured-gene columns so
+        the gathered prediction ([B, feat_dim]) aligns 1:1 with the decoded target.
+        Heads with no ``col_idx`` (scalar, global/per_metabolite identity) pass through.
+        """
+        out = dict(head_outputs)
+        for head, pred in head_outputs.items():
+            col = self.head_align.get(head, {}).get("col_idx")
+            if col is not None:
+                out[head] = pred.index_select(1, col.to(pred.device))
+        return out
+
     def _extract_targets_and_masks(
         self, batch: HeteroData, head_outputs: dict[str, torch.Tensor], bsz: int
     ) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]:
         """Decode per-head targets + supervision masks from the COO phenotype fields.
 
-        ASSUMPTION (flagged in the module docstring + WS13 note): the batch carries
-        the COO triplet ``phenotype_values`` / ``phenotype_type_indices`` /
-        ``phenotype_sample_indices`` on ``batch['gene']`` plus a per-row
-        ``phenotype_types`` list, produced by the graph processor. Each active head
-        gathers the rows whose phenotype name is listed in
-        ``multitask.head_phenotypes[head]``. Where a modality is absent for a
-        genotype, the mask is False so ``MaskedMultitaskLoss`` skips it.
+        VALIDATED against a materialized Fig-3 batch (WS10a). The batch carries the
+        COO triplet ``phenotype_values`` / ``phenotype_type_indices`` /
+        ``phenotype_values_batch`` on ``batch['gene']`` (the last requires
+        ``follow_batch=['phenotype_values']``), plus ``phenotype_types`` -- a
+        PER-GRAPH list-of-lists after collation (one type-name list per genotype).
 
-        This decode MUST be validated against a materialized Fig-3 batch before a
-        production run; the synthetic dry-run does not touch it.
+        Two collation facts drive this decode (both learned empirically, both broke
+        the earlier assumption-based version):
+
+        * ``phenotype_sample_indices`` is NOT the batch row -- it indexes the
+          experiments WITHIN a genotype group and is not offset across the batch, so
+          all graphs collide at 0,1,2. The batch row comes from
+          ``phenotype_values_batch`` instead.
+        * ``phenotype_types`` collates to a list-of-lists; type indices are
+          LOCAL to each graph, so a value's name is ``phenotype_types[b][type_idx]``.
+
+        For each active head, per graph ``b`` we select the values whose local name
+        is in ``head_phenotypes[head]``; if any, the mask is True and the target row
+        is those values (scalar mean for scalar heads; the key-sorted vector for
+        vector heads, restricted by ``keep_mask`` to the measured features that the
+        gathered prediction covers). Absent modalities keep mask False so
+        ``MaskedMultitaskLoss`` skips them.
         """
         device = head_outputs[next(iter(head_outputs))].device
         gene = batch["gene"]
         values = getattr(gene, "phenotype_values", None)
         type_idx = getattr(gene, "phenotype_type_indices", None)
-        sample_idx = getattr(gene, "phenotype_sample_indices", None)
-        pheno_types = getattr(gene, "phenotype_types", None)
+        val_batch = getattr(gene, "phenotype_values_batch", None)
+        pheno_types = gene["phenotype_types"] if "phenotype_types" in gene else None
         targets: dict[str, torch.Tensor] = {}
         masks: dict[str, torch.Tensor] = {}
-        if values is None or type_idx is None or sample_idx is None:
+        if values is None or type_idx is None or val_batch is None or pheno_types is None:
             return targets, masks
 
+        # Normalize phenotype_types to a per-graph list-of-lists (single-graph batch
+        # collates to a flat list of strings).
+        if len(pheno_types) > 0 and isinstance(pheno_types[0], str):
+            per_graph_types: list[list[str]] = [list(pheno_types)]
+        else:
+            per_graph_types = [list(t) for t in pheno_types]
+
         for head, pred in head_outputs.items():
-            names = self.head_phenotypes.get(head, [])
-            if not names or pheno_types is None:
+            names = set(self.head_phenotypes.get(head, []))
+            if not names:
                 continue
-            wanted = {i for i, nm in enumerate(pheno_types) if nm in names}
-            if not wanted:
-                continue
+            align = self.head_align.get(head, {})
+            is_scalar = bool(align.get("is_scalar", False))
+            keep = align.get("keep_mask")
             row_mask = torch.zeros(bsz, dtype=torch.bool, device=device)
             target = torch.zeros_like(pred)
-            sel = torch.tensor(
-                [int(t.item()) in wanted for t in type_idx],
-                dtype=torch.bool,
-                device=values.device,
-            )
-            for s in sample_idx[sel].unique():
-                row_mask[int(s.item())] = True
-            # Scatter the observed values into the target tensor by sample row.
-            for v, s in zip(values[sel], sample_idx[sel]):
-                r = int(s.item())
-                if target.dim() == 1:
-                    target[r] = v
+            for b in range(bsz):
+                sel_b = val_batch == b
+                if not bool(sel_b.any()):
+                    continue
+                gtypes = per_graph_types[b]
+                tb = type_idx[sel_b].tolist()
+                vb = values[sel_b]
+                name_sel = torch.tensor(
+                    [gtypes[t] in names for t in tb], dtype=torch.bool
+                )
+                if not bool(name_sel.any()):
+                    continue
+                head_vals = vb[name_sel]
+                if is_scalar:
+                    target[b] = head_vals.float().mean().to(device)
                 else:
-                    target[r] = target[r] + v
+                    if keep is not None:
+                        head_vals = head_vals[keep]
+                    target[b] = head_vals.to(device)
+                row_mask[b] = True
             targets[head] = target
             masks[head] = row_mask
         return targets, masks
@@ -232,6 +387,9 @@ class MultitaskCGTTask(L.LightningModule):
         head_outputs: dict[str, torch.Tensor] = dict(reps["head_outputs"])
         if "gene_interaction" in self.active_heads:
             head_outputs["gene_interaction"] = predictions.squeeze(-1)
+        # Gather VECTOR head predictions to the measured-feature subset so pred and
+        # decoded target align 1:1 (per_gene: [B, N] -> [B, n_measured_genes]).
+        head_outputs = self._gather_predictions(head_outputs)
         targets, masks = self._extract_targets_and_masks(batch, head_outputs, bsz)
         total, per_head = self.loss(
             head_outputs, targets, masks, graph_reg_loss=reps["graph_reg_loss"]
@@ -239,6 +397,15 @@ class MultitaskCGTTask(L.LightningModule):
         self.log(f"{stage}/loss", total, batch_size=bsz, sync_dist=True)
         for name, val in per_head.items():
             self.log(f"{stage}/{name}/loss", val, batch_size=bsz, sync_dist=True)
+        # Pearson metric on supervised rows (skips heads with <2 supervised rows).
+        for name, pred in head_outputs.items():
+            if name not in targets:
+                continue
+            m = masks[name]
+            if int(m.sum().item()) < 2:
+                continue
+            pear = _pearson(pred[m].detach(), targets[name][m].detach())
+            self.log(f"{stage}/{name}/pearson", pear, batch_size=bsz, sync_dist=True)
         return cast(torch.Tensor, total)
 
     def training_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
@@ -248,6 +415,24 @@ class MultitaskCGTTask(L.LightningModule):
     def validation_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
         """Masked multitask validation step."""
         return self._step(batch, "val")
+
+    def _print_epoch(self, stage: str) -> None:
+        metrics = self.trainer.callback_metrics
+        parts = [
+            f"{k}={float(v):.5f}"
+            for k, v in metrics.items()
+            if k.startswith(stage) and hasattr(v, "item")
+        ]
+        if parts:
+            print(f"[{stage} epoch {self.current_epoch}] " + "  ".join(sorted(parts)))
+
+    def on_train_epoch_end(self) -> None:
+        """Print aggregated train metrics for the epoch (smoke-run visibility)."""
+        self._print_epoch("train")
+
+    def on_validation_epoch_end(self) -> None:
+        """Print aggregated val metrics for the epoch (smoke-run visibility)."""
+        self._print_epoch("val")
 
     def configure_optimizers(self) -> Any:
         """Build the optimizer and optional LR scheduler from config."""
@@ -520,7 +705,9 @@ def run_training(cfg: DictConfig) -> None:
     print(f"Dataset Length: {len(dataset)}")
 
     seed = 42
-    follow_batch = ["perturbation_indices"]
+    # "phenotype_values" -> phenotype_values_batch: the per-COO-value batch-row map
+    # the target/mask decode relies on (phenotype_sample_indices are NOT batch rows).
+    follow_batch = ["perturbation_indices", "phenotype_values"]
     data_module: Any = CellDataModule(
         dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
@@ -567,13 +754,31 @@ def run_training(cfg: DictConfig) -> None:
 
     head_weights = _as_dict(cfg.multitask.head_weights)
     head_phenotypes = _as_dict(cfg.multitask.head_phenotypes)
+    active_heads = list(cfg.multitask.active_heads)
+
+    # Resolve each head's COO->target alignment against the REAL build (WS10a):
+    # real phenotype-type strings are fitness / calmorph / expression_log2_ratio.
+    node_ids = list(dataset.cell_graph["gene"].node_ids)
+    head_align = build_head_alignments(
+        dataset=dataset,
+        active_heads=active_heads,
+        head_phenotypes={k: list(v) for k, v in head_phenotypes.items()},
+        node_ids=node_ids,
+    )
+    print("head_align:")
+    for h, a in head_align.items():
+        printable = {
+            k: (int(v.numel()) if hasattr(v, "numel") else v) for k, v in a.items()
+        }
+        print(f"  {h}: {printable}")
 
     task = MultitaskCGTTask(
         model=model,
         cell_graph=dataset.cell_graph,
-        active_heads=list(cfg.multitask.active_heads),
+        active_heads=active_heads,
         head_weights={k: float(v) for k, v in head_weights.items()},
         head_phenotypes={k: list(v) for k, v in head_phenotypes.items()},
+        head_align=head_align,
         loss_fn=str(cfg.multitask.loss_fn),
         optimizer_config=_as_dict(cfg.regression_task.optimizer),
         lr_scheduler_config=(
@@ -614,8 +819,10 @@ def run_training(cfg: DictConfig) -> None:
         logger=wandb_logger,
         max_epochs=cfg.trainer.max_epochs,
         callbacks=checkpoint_callbacks,
-        log_every_n_steps=10,
+        log_every_n_steps=cfg.trainer.get("log_every_n_steps", 10),
         overfit_batches=cfg.trainer.get("overfit_batches", 0),
+        limit_train_batches=cfg.trainer.get("limit_train_batches", 1.0),
+        limit_val_batches=cfg.trainer.get("limit_val_batches", 1.0),
         precision=cfg.trainer.get("precision", "32-true"),
         fast_dev_run=cfg.trainer.get("fast_dev_run", False),
     )

@@ -1,0 +1,42 @@
+# experiments/019-simb-multimodal/conf/train_cgt_multitask_smoke_expr.yaml
+# WS10a LOCAL smoke baseline: EXPRESSION-ONLY (per_gene head) on the Fig-3 build.
+# Tiny model, no subset, a few limited batches per epoch, 1 GPU, wandb offline.
+# Proves the per_gene expression head trains (loss decreases + val Pearson computes)
+# with the WS10a-fixed COO decode. NOT a real run.
+defaults:
+  - train_cgt_multitask
+  - _self_
+
+dry_run: false
+
+wandb:
+  project: torchcell_019-simb-multimodal_cgt_multitask
+  tags: [ws10a, smoke, expr]
+
+# No normalization transform (it targets gene_interaction, which is inactive here).
+transforms:
+  use_transforms: false
+
+data_module:
+  is_perturbation_subset: false
+  batch_size: 16
+  num_workers: 2
+  pin_memory: false
+  prefetch: false
+
+trainer:
+  max_epochs: 4
+  strategy: auto
+  accelerator: auto
+  devices: 1
+  overfit_batches: 0
+  # Keep each epoch tiny + fast; expression genotypes (~1484) are well-represented
+  # so a handful of batches carry supervised per_gene rows.
+  limit_train_batches: 25
+  limit_val_batches: 8
+  log_every_n_steps: 5
+  precision: 32-true
+  fast_dev_run: false
+
+multitask:
+  active_heads: [per_gene]

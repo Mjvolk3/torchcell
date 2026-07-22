@@ -1258,12 +1258,12 @@ def run_training(cfg: DictConfig) -> None:
             save_top_k=1,
             monitor="val/loss",
             mode="min",
-            filename=f"{run.id}-best-{{epoch:02d}}-{{val/loss:.4f}}",
+            filename=f"{job_id}-best-{{epoch:02d}}-{{val/loss:.4f}}",
         ),
         ModelCheckpoint(
             dirpath=osp.join(model_base_path, group),
             save_last=True,
-            filename=f"{run.id}-last",
+            filename=f"{job_id}-last",
         ),
     ]
 

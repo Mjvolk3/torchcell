@@ -745,9 +745,12 @@ class MultitaskCGTTask(L.LightningModule):
             target = torch.cat(cache["target"], dim=0)
             if pred.shape[0] < 2:
                 continue
-            pear = per_feature_pearson(pred, target)
-            # sync_dist averages the per-rank correlations under DDP (rows are sharded
-            # across ranks; per-rank per-feature Pearson then mean-reduced is the metric).
+            # `pear` is computed from CPU-cached rows; move it to the compute device so the
+            # DDP sync_dist all-reduce runs on the NCCL (GPU) backend — a CPU tensor has no
+            # NCCL backend ("No backend type associated with device type cpu"). sync_dist
+            # then mean-averages the per-rank per-feature Pearson (rows are sharded across
+            # ranks; per-rank per-feature Pearson mean-reduced is the metric).
+            pear = per_feature_pearson(pred, target).to(self.device)
             self.log(f"{stage}/{name}/pearson", pear, sync_dist=True)
         self._metric_cache[stage] = {}
 

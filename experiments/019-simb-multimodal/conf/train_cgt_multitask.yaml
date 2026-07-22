@@ -1,0 +1,105 @@
+# experiments/019-simb-multimodal/conf/train_cgt_multitask.yaml
+# Rapid WORKSTATION-VERIFY config for the Fig-3 multitask CGT (SIMB 2026 WS13).
+# Tiny model, tiny subset, 1 GPU, 2 epochs -- meant for `dry_run=true` wiring
+# checks and a fast fast_dev_run smoke test on a workstation, NOT a real run.
+# Cluster runs use igb_mmli_* / igb_cabbi_* / delta_* which override this.
+defaults:
+  - default
+  - _self_
+
+# Set true (or `+dry_run=true`) to build the model from config and run one
+# synthetic forward + masked loss + backward -- no dataset / genome / wandb / GPU.
+dry_run: false
+
+wandb:
+  project: torchcell_019-simb-multimodal_cgt_multitask
+  tags: [ws13, verify]
+
+cell_dataset:
+  # Fig-3 build uses physical + regulatory gene graphs (see query_fig3.py).
+  graphs: [physical, regulatory]
+  node_embeddings: []  # transformer uses learnable gene embeddings
+  query_file: fig3_core.cql
+  dataset_tag: fig3_core
+
+transforms:
+  use_transforms: true
+  forward_transform:
+    normalization:
+      gene_interaction:
+        strategy: standard
+
+data_module:
+  is_perturbation_subset: true
+  perturbation_subset_size: 128
+  batch_size: 8
+  num_workers: 2
+  pin_memory: false
+  prefetch: false
+
+trainer:
+  max_epochs: 2
+  strategy: auto
+  accelerator: auto
+  devices: 1
+  overfit_batches: 0
+  precision: 32-true
+  fast_dev_run: false  # set true for a 1-train/1-val-batch smoke test
+
+# ---- Multitask head selection (WS7) ----
+# active_heads picks which heads are trained. One head => individual baseline;
+# several => joint multitask. gene_interaction is the built-in scalar head.
+multitask:
+  active_heads: [gene_interaction, per_gene, global]
+  loss_fn: mse
+  heads:
+    global:
+      output_dim: 501       # CalMorph morphology
+      use_gene_pool: true
+    per_gene:
+      output_dim: 1         # per-gene expression scalar
+    per_metabolite:
+      output_dim: 1
+  head_weights:
+    gene_interaction: 1.0
+    per_gene: 1.0
+    global: 1.0
+    per_metabolite: 1.0
+  # ASSUMPTION (validate on first real Fig-3 batch): schema phenotype-type names
+  # routed to each head. Reconcile with the actual phenotype_types strings.
+  head_phenotypes:
+    gene_interaction: [fitness, gene_interaction]
+    per_gene: [microarray_expression, rnaseq_expression]
+    global: [calmorph]
+    per_metabolite: [metabolite]
+
+model:
+  checkpoint_path: null
+  gene_num: 6607
+  hidden_channels: 16
+  num_transformer_layers: 2
+  num_attention_heads: 4
+  dropout: 0.1
+  learnable_embedding:
+    enabled: true
+    size: ${model.hidden_channels}
+    preprocessor:
+      num_layers: 2
+      dropout: 0.1
+  graph_regularization:
+    graph_reg_lambda: 0.0   # disabled for the tiny verify config
+    graph_reg_layer: [1]
+    row_sampling_rate: 1.0
+    regularized_heads: {}
+  perturbation_head:
+    num_heads: 4
+    dropout: 0.1
+
+regression_task:
+  optimizer:
+    type: AdamW
+    lr: 1e-4
+    weight_decay: 1e-8
+  lr_scheduler: null
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0

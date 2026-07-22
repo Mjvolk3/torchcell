@@ -20,6 +20,7 @@ from torchcell.adapters import (
     MetaboliteZelezniak2018Adapter,
     MicroarrayKemmeren2014Adapter,
     OrganicAcidYoshida2012Adapter,
+    ProteomeMessner2023Adapter,
     ProteomeZelezniak2018Adapter,
     ScmdOhnuki2018Adapter,
     ScmdOhnuki2022Adapter,
@@ -65,6 +66,7 @@ from torchcell.datasets.scerevisiae.lopez2024 import (
     IsobutanolScreenLopez2024Dataset,
     IsobutanolValidatedLopez2024Dataset,
 )
+from torchcell.datasets.scerevisiae.messner2023 import ProteomeMessner2023Dataset
 from torchcell.datasets.scerevisiae.mulleder2016 import AminoAcidMulleder2016Dataset
 from torchcell.datasets.scerevisiae.oduibhir2014 import SmfODuibhir2014Dataset
 from torchcell.datasets.scerevisiae.ohnuki2018 import ScmdOhnuki2018Dataset
@@ -116,6 +118,7 @@ dataset_adapter_map = {
     BetaxanthinCachera2023Dataset: BetaxanthinCachera2023Adapter,
     MetaboliteDaSilveira2014Dataset: MetaboliteDaSilveira2014Adapter,
     MetaboliteZelezniak2018Dataset: MetaboliteZelezniak2018Adapter,
+    ProteomeMessner2023Dataset: ProteomeMessner2023Adapter,
     ProteomeZelezniak2018Dataset: ProteomeZelezniak2018Adapter,
     AminoAcidMulleder2016Dataset: AminoAcidMulleder2016Adapter,
     OrganicAcidYoshida2012Dataset: OrganicAcidYoshida2012Adapter,

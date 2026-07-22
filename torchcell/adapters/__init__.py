@@ -32,6 +32,9 @@ from .lopez2024_adapter import (
 from .lopez2024_adapter import (
     IsobutanolValidatedLopez2024Adapter as IsobutanolValidatedLopez2024Adapter,
 )
+from .messner2023_adapter import (
+    ProteomeMessner2023Adapter as ProteomeMessner2023Adapter,
+)
 from .mulleder2016_adapter import (
     AminoAcidMulleder2016Adapter as AminoAcidMulleder2016Adapter,
 )
@@ -123,6 +126,7 @@ metabolite_adapters = [
 proteome_metabolome_adapters = [
     "MetaboliteZelezniak2018Adapter",
     "ProteomeZelezniak2018Adapter",
+    "ProteomeMessner2023Adapter",
     "AminoAcidMulleder2016Adapter",
 ]
 

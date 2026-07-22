@@ -1160,9 +1160,80 @@ NOT his SMF SD.
   as our reference-comparable SE. Our current six captures are 2 plates $\times$ 3 timepoints -- not
   $N$ independent biological replicates -- so they cannot yet furnish that number.
 
-**Kuzmin.** Kuzmin's single-mutant fitness has **no reported std**; its only released colony SD is the
-*combined*-mutant "standard deviation" (Baryshnikova Eq. 14 sample SD, $n \approx 4$), a different
-measurement. So a Kuzmin **SMF** SD does not exist in the released data.
+**Kuzmin uses the same bootstrap -- and also means, not medians.** Verbatim (Kuzmin 2018 SI): *"The
+quantitative scoring method employed for single and double mutant fitness estimation was described
+previously (Baryshnikova 2010), with the exception that **bootstrapped means, instead of medians**,
+across replicates were used in variance estimation and final fitness values."* So both Costanzo and
+Kuzmin bootstrap **means**; the underlying Baryshnikova 2010 pipeline bootstrapped **medians**.
+Kuzmin's *query* SMF is 6 replicate screens (12--24 colonies), but its **array** SMF values "were
+taken from a previous study" = **Costanzo 2016** -- so for array genes "Kuzmin" and "Costanzo" SMF are
+the *same number*, not independent. Either way Kuzmin **releases no per-strain SMF SD** (only the
+combined-mutant colony SD, Baryshnikova Eq. 14, $n\approx4$). For scale, Kuzmin's own SMF-vs-Costanzo
+agreement is only $r\approx0.63$ (their Fig. S1C): the field's cross-lab SMF-vs-SMF correlation is
+~0.5--0.6, which puts our aggregate 0.61 on par and the single-plate 0.27 below.
+
+### Worked bootstrap example + our plate composition
+
+**Bootstrap in one example.** Suppose a strain was measured on $N=5$ independent screens with values
+$\{0.98, 1.02, 0.95, 1.05, 1.00\}$ (raw SD $\approx 0.04$). Resample the *screens* with replacement:
+draw #1 $= \{1.02, 1.02, 0.95, 1.00, 0.98\} \to$ mean $0.994$; draw #2 $= \{0.98, 0.95, 1.05, 1.05,
+1.02\} \to$ mean $1.010$; ... repeat $B\approx1000$ times. The **reported fitness** is the centre of
+those 1000 means ($\approx1.00$) and the **reported "SD" is their spread** ($\approx0.018$) -- smaller
+than the raw 0.04 by $\sqrt{N}$, because it is the SE of a mean of $N$ screens. Resampling *screens*
+(not colonies) is the whole point: biological day-to-day variation lives between screens; colonies
+within a screen are correlated technical replicates.
+
+**Our plate (5 nL / 50 h) fills all 384 wells:** **12 engineered strains** at **29 replicate wells**
+each (348), **1 wildtype BY4741** at **30 wells**, and **6 no-cell blanks** ($12\times29 + 30 + 6 =
+384$). Every mutant's fitness is its colony area over the **WT median** of those 30 BY4741 wells. So
+our ~29 replicates are *same-plate colonies* -- the analogue of Costanzo's within-one-screen
+colonies, **not** his $N$ screens -- which is exactly why bootstrapping them gives a technical, not a
+biological, SE.
+
+### How many independent days, and the campaign plan
+
+There is no single magic $N$; it follows from $\mathrm{SE}\approx\sigma_{\text{day}}/\sqrt{N}$ once we
+measure the residual day-to-day SD $\sigma_{\text{day}}$ (the spread of a strain's WT-normalized
+fitness across re-randomized plates). Taking a plausible $\sigma_{\text{day}}\approx0.10$:
+
+| $N$ days | 2 | 3 | 5 | 8 | 12 | 17 |
+|----------|---|---|---|---|----|----|
+| SE $\approx$ | 0.071 | 0.058 | 0.045 | 0.035 | 0.029 | 0.024 |
+
+Practical rule: **$N\ge3$** to estimate a variance at all (and for the bootstrap to have units to
+resample), **$N\approx5$--8** for a workable SE, **$N\gtrsim10$** to approach Costanzo-grade
+($\sim0.03$); returns diminish as $\sqrt{N}$ (10$\to$20 days only tightens SE ~1.4x). Because this is
+round 1 (12 SMF strains) and the panel grows -- **+14 DMF strains next (plate SMF + DMF together),
+then 20--30 triples** -- the design lever is to **carry the SMF and DMF control strains on every plate
+of every later screen**, with re-randomized positions. Those controls then accumulate $N$ independent
+plate-days "for free" across the campaign, so by the time the triples are screened each SMF/DMF anchor
+has enough days for a real cross-day bootstrap SE -- and drift between campaigns is monitored on the
+same anchors.
+
+### Bootstrap trade-offs, and why per-plate WT-normalization is necessary but not sufficient
+
+**Advantages.** Non-parametric (no normality assumed); works for any statistic (mean, median, ratio),
+which matters because fitness is a ratio; yields a full sampling distribution (confidence intervals,
+not just an SE); robust to outliers, especially with the median.
+
+**Disadvantages / where it misleads.** It only sees the variation *present in the resampled units*:
+(1) with few independent units it is unstable, and resampling **non-independent** units (our
+same-plate colonies) yields a confidently *small* SE that is biologically wrong; (2) it quantifies
+**precision, not accuracy** -- any error shared by all replicates (batch/day offset, spatial/edge
+gradient, WT drift, the colony-size/halo bias we just fixed) is a **systematic bias** the bootstrap
+neither detects nor removes, and a tight bootstrap SE around a biased mean just makes you confidently
+wrong.
+
+**Why not "just normalize each plate to its WT" and stop?** We *do* normalize per plate (fitness =
+colony area / on-plate WT median), and it is necessary -- it removes the plate's multiplicative
+**mean** batch shift (overall growth level that day). But it is not sufficient: (a) it centres the
+mean, it does **not** quantify the residual day-to-day **variance** of a strain -- that needs replicate
+days; (b) the WT median is itself estimated from finite wells (30 here), so it carries its own
+sampling error that propagates into every fitness; (c) within-plate spatial/position bias is
+strain-position-confounded on a single plate and only averages out across days with **re-randomized
+layouts**. So the three controls are complementary: **per-plate WT-normalization** removes batch mean
+bias, **across-day replication with re-randomization** averages residual position/day bias, and the
+**cross-day bootstrap** quantifies what remains as an honest SE.
 
 **Caveats.** The single 5 nL / 50 h plate is noisier than a multi-plate mean (Pearson 0.27 weak,
 Spearman 0.50 holds); n=12/n=4 are small so estimates are noise-sensitive. Regenerate via

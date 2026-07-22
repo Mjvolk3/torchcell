@@ -37,21 +37,7 @@ has not been shown to detect signal.
 Result: 31/31 triples still reconstructed, DMF range **0.610–1.178**, eps from **−0.130 to
 +0.098**, **3 significant interactions**.
 
-| tier | double | DMF ± SD | eps | p | sig | # triples |
-|------|--------|----------|--:|--:|:---:|:---:|
-| validation | YER079W+YJR060W | 0.610 ± 0.018 | −0.003 | 0.45 | | **3** |
-| validation | YER079W+YPL081W | 0.863 ± 0.098 | **−0.130** | 0.035 | [x] | 0 |
-| validation | YJR060W+YKL033W-A | 0.871 ± 0.023 | **−0.082** | 0.007 | [x] | 0 |
-| coverage | YJR060W+YPL046C | 0.966 ± 0.018 | +0.003 | 0.45 | | 4 |
-| coverage | YDR057W+YLL012W | 1.000 ± 0.069 | −0.036 | 0.30 | | 5 |
-| coverage | YLR312C-B+YPL081W | 1.017 ± 0.042 | −0.019 | 0.36 | | 3 |
-| coverage | YLL012W+YPL046C | 1.025 ± 0.053 | −0.010 | 0.43 | | 5 |
-| coverage | YDR057W+YPL081W | 1.035 ± 0.045 | +0.039 | 0.26 | | 3 |
-| coverage | YDR057W+YER079W | 1.096 ± 0.054 | +0.012 | 0.44 | | 5 |
-| coverage | YER079W+YLR312C-B | 1.099 ± 0.039 | −0.027 | 0.29 | | 5 |
-| coverage | YBR203W+YPL046C | 1.118 ± 0.017 | +0.036 | 0.077 | | 5 |
-| validation | YDR057W+YGL087C | 1.137 ± 0.024 | **+0.098** | 0.001 | [x] | 3 |
-| validation | YDR057W+YLR312C-B | 1.178 ± 0.026 | +0.047 | 0.12 | | 1 |
+![](assets/images/010-kuzmin-tmi/construction_validation_doubles_table.svg)
 
 ![](assets/images/010-kuzmin-tmi/construction_validation_doubles.svg)
 
@@ -113,6 +99,10 @@ CBF1/YJR060W's low DMF is largely a *Costanzo* phenomenon — Kuzmin reads those
 (YJR060W+YLL012W disagrees by ~0.5). So the low-DMF "signal" our assay would validate against
 is reference-dependent; treat the low-DMF anchor's target loosely and, where a Kuzmin value
 exists, report both. The full per-double Costanzo+Kuzmin comparison is in the SI table below.
+
+Dumbbell of every within-10 double measured in both (Costanzo o with SD, Kuzmin o connected):
+
+![](assets/images/010-kuzmin-tmi/construction_validation_cross_dataset.svg)
 
 ### Novel construction candidate — the one unmeasured pair
 

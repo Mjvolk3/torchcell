@@ -230,6 +230,7 @@ torchcell = [
     "knowledge_graphs/conf/*.yaml",
     "knowledge_graphs/conf/gene_sets/*.txt", # prefilter gene-set lists (build inputs)
     "adapters/conf/*.yaml",
+    "datamodels/*.json", # pinned data tables (e.g. compound_identity_table.json)
 ]
 
 [tool.setuptools.packages.find]

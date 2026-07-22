@@ -73,7 +73,7 @@ import torch
 import torch.distributed as dist
 import wandb
 from dotenv import load_dotenv
-from lightning.pytorch.callbacks import Callback, ModelCheckpoint
+from lightning.pytorch.callbacks import Callback, EarlyStopping, ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig, OmegaConf
 from torch_geometric.data import HeteroData
@@ -176,6 +176,43 @@ def per_feature_pearson(pred: torch.Tensor, target: torch.Tensor) -> torch.Tenso
     tc = t - t.mean(dim=0, keepdim=True)
     num = (pc * tc).sum(dim=0)
     denom = pc.norm(dim=0) * tc.norm(dim=0)
+    valid = denom > 1e-8
+    if not bool(valid.any()):
+        return torch.zeros((), device=pred.device)
+    r = num[valid] / denom[valid]
+    return cast(torch.Tensor, r.mean())
+
+
+def per_strain_pearson(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    """Mean over per-STRAIN (per-row) Pearson correlations for a vector head.
+
+    ``pred`` / ``target`` are ``[N, F]`` (N supervised genotypes/strains, F features:
+    expression -> the measured-gene columns). For EACH genotype (row) we correlate its
+    predicted vector against its actual vector ACROSS the feature dimension, then average
+    the N per-strain correlations. This is the complement of :func:`per_feature_pearson`:
+
+    * per-FEATURE (``per_feature_pearson``) asks "across strains, is each gene's up/down
+      predicted?" -- it is destroyed by regression-to-the-per-gene-mean (a model that
+      always predicts each gene's train mean has zero variance across strains -> r=0).
+    * per-STRAIN (this function) asks "within one strain, is the shape of its expression
+      profile predicted?" -- it stays HIGH even under mean-collapse, because a strain's
+      profile is dominated by the shared per-gene mean structure. The GAP between the two
+      is the diagnostic: high per-strain + ~0 per-gene == mean-collapse / no real signal.
+
+    Rows whose prediction OR target is (near-)constant across features have an undefined
+    correlation (0/0) and are DROPPED rather than counted as zero. A single-feature input
+    (F==1, e.g. a scalar head) has no within-row spread and yields an empty average (0).
+    """
+    if pred.ndim == 1:
+        pred = pred.unsqueeze(1)
+    if target.ndim == 1:
+        target = target.unsqueeze(1)
+    p = pred.float()
+    t = target.float()
+    pc = p - p.mean(dim=1, keepdim=True)
+    tc = t - t.mean(dim=1, keepdim=True)
+    num = (pc * tc).sum(dim=1)
+    denom = pc.norm(dim=1) * tc.norm(dim=1)
     valid = denom > 1e-8
     if not bool(valid.any()):
         return torch.zeros((), device=pred.device)
@@ -347,6 +384,7 @@ def compute_per_feature_target_stats(
     eps: float,
     degenerate_robust_cv: float,
     vector_norm_method: str = "yeo_johnson",
+    head_norm_method: dict[str, str] | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Per-FEATURE target normalization stats, computed on the TRAIN split ONLY.
 
@@ -376,10 +414,16 @@ def compute_per_feature_target_stats(
     assert vector_norm_method in ("yeo_johnson", "zscore"), (
         f"unsupported vector_norm_method {vector_norm_method!r}"
     )
+    head_norm_method = head_norm_method or {}
     stats: dict[str, dict[str, Any]] = {}
     for head in active_heads:
         if head not in heads_to_normalize:
             continue
+        # Per-head method: `standardize_per_feature_target` heads (e.g. per_gene) force
+        # plain z-score; everything else uses the shared `vector_norm_method` (Yeo-Johnson
+        # for morphology). Resolved here so one build can mix z-scored + power-transformed
+        # heads without a second stats pass.
+        method_for_head = head_norm_method.get(head, vector_norm_method)
         align = head_align.get(head, {})
         if align.get("is_scalar", False) or align.get("feat_dim") is None:
             continue
@@ -432,7 +476,7 @@ def compute_per_feature_target_stats(
         col_median = np.where(np.isfinite(median), median, 0.0)
         arr_dense = np.where(np.isfinite(arr), arr, col_median[None, :])
 
-        if vector_norm_method == "yeo_johnson":
+        if method_for_head == "yeo_johnson":
             from sklearn.preprocessing import PowerTransformer
 
             pt = PowerTransformer(method="yeo-johnson", standardize=True)
@@ -745,13 +789,22 @@ class MultitaskCGTTask(L.LightningModule):
             target = torch.cat(cache["target"], dim=0)
             if pred.shape[0] < 2:
                 continue
-            # `pear` is computed from CPU-cached rows; move it to the compute device so the
-            # DDP sync_dist all-reduce runs on the NCCL (GPU) backend — a CPU tensor has no
-            # NCCL backend ("No backend type associated with device type cpu"). sync_dist
-            # then mean-averages the per-rank per-feature Pearson (rows are sharded across
-            # ranks; per-rank per-feature Pearson mean-reduced is the metric).
-            pear = per_feature_pearson(pred, target).to(self.device)
-            self.log(f"{stage}/{name}/pearson", pear, sync_dist=True)
+            # Both Pearson variants are computed from the CPU-cached rows and moved to the
+            # compute device so any DDP sync_dist all-reduce runs on the NCCL (GPU) backend —
+            # a CPU tensor has no NCCL backend. (This grid is single-GPU so sync is a no-op,
+            # but the metrics stay DDP-safe.)
+            #   pearson_per_gene   — across STRAINS, per feature/gene (the abstract's metric;
+            #                        collapses to ~0 under regression-to-the-per-gene-mean).
+            #   pearson_per_strain — within each STRAIN, across features (stays high under
+            #                        mean-collapse). The gap between them is the diagnostic.
+            pear_gene = per_feature_pearson(pred, target).to(self.device)
+            self.log(f"{stage}/{name}/pearson_per_gene", pear_gene, sync_dist=True)
+            feat_dim = pred.shape[1] if pred.ndim > 1 else 1
+            if feat_dim > 1:
+                pear_strain = per_strain_pearson(pred, target).to(self.device)
+                self.log(
+                    f"{stage}/{name}/pearson_per_strain", pear_strain, sync_dist=True
+                )
         self._metric_cache[stage] = {}
 
     def _print_epoch(self, stage: str) -> None:
@@ -955,6 +1008,12 @@ def run_training(cfg: DictConfig) -> None:
     data_root = os.environ["DATA_ROOT"]
     experiment_root = os.environ["EXPERIMENT_ROOT"]
 
+    # Config-driven seed: the overnight grid replicates each config across several seeds so
+    # real expression signal is separable from split/init noise on the small (~1.1k train)
+    # expression set. seed_everything makes model init + the CellDataModule split reproducible.
+    seed = int(cfg.get("seed", 42))
+    L.seed_everything(seed, workers=True)
+
     os.environ["WANDB__SERVICE_WAIT"] = "600"
     if not (dist.is_available() and dist.is_initialized()):
         os.environ["TORCH_DISTRIBUTED_DEFAULT_TIMEOUT"] = "7200"
@@ -1069,7 +1128,6 @@ def run_training(cfg: DictConfig) -> None:
             dataset.transform = Compose(transforms_list)
     print(f"Dataset Length: {len(dataset)}")
 
-    seed = 42
     # "phenotype_values" -> phenotype_values_batch: the per-COO-value batch-row map
     # the target/mask decode relies on (phenotype_sample_indices are NOT batch rows).
     follow_batch = ["perturbation_indices", "phenotype_values"]
@@ -1098,6 +1156,37 @@ def run_training(cfg: DictConfig) -> None:
             follow_batch=follow_batch,
         )
         data_module.setup()
+
+    # ---- Dataset-name restriction (Kemmeren-only vs Kemmeren+Sameith) ----
+    # The fig3_core build fuses Kemmeren + Sameith(Sm/Dm) expression, all carrying the SAME
+    # phenotype type `expression_log2_ratio`, so there is no per-head phenotype switch to
+    # separate them. We restrict at the ROW level instead: `dataset.dataset_name_index`
+    # maps each exact `dataset_name` -> the row indices carrying it, so intersecting each
+    # already-split Subset with the allowed names keeps the split assignment but drops
+    # non-selected rows. Pure Kemmeren = the exact key `MicroarrayKemmeren2014Dataset`; the
+    # mean-merged `MicroarrayKemmeren2014Dataset+SmMicroarraySameith2015Dataset` twin is a
+    # SEPARATE key, so it is EXCLUDED from Kemmeren-only (that cross-platform mean-merge is
+    # the confound documented in the note) and INCLUDED only in the +Sameith condition.
+    restrict_names = list(cfg.cell_dataset.get("restrict_dataset_names", []))
+    if restrict_names:
+        name_index = dataset.dataset_name_index
+        missing = [nm for nm in restrict_names if nm not in name_index]
+        if missing:
+            raise ValueError(
+                f"restrict_dataset_names {missing} not in dataset_name_index "
+                f"(available: {sorted(name_index)[:12]}...)"
+            )
+        allowed = set()
+        for nm in restrict_names:
+            allowed.update(name_index[nm])
+        for split_attr in ("train_dataset", "val_dataset", "test_dataset"):
+            sub = getattr(data_module, split_attr)
+            before = len(sub.indices)
+            sub.indices = [i for i in sub.indices if i in allowed]
+            print(
+                f"[restrict] {split_attr}: {before} -> {len(sub.indices)} rows "
+                f"(names={restrict_names})"
+            )
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     heads_config = build_heads_config(cfg)
@@ -1160,8 +1249,18 @@ def run_training(cfg: DictConfig) -> None:
             )
 
     # ---- WS10b + Part A: per-FEATURE target normalization stats (TRAIN split only) ----
-    heads_to_normalize = list(cfg.multitask.get("normalize_vector_targets", []))
+    # Two selectable levers, both fit on the TRAIN split only (no leakage) and inverted for
+    # raw-unit metric reporting:
+    #   normalize_vector_targets    -> `vector_norm_method` (default Yeo-Johnson) — morphology.
+    #   standardize_per_feature_target -> plain per-feature z-score, FORCED. This is the
+    #     anti-mean-collapse lever for expression: z-scoring each gene across train strains
+    #     makes the model predict DEVIATIONS from the per-gene mean, so a constant "predict
+    #     the mean" output scores ~0 (it no longer wins the raw-scale MSE by default).
+    normalize_vector_targets = list(cfg.multitask.get("normalize_vector_targets", []))
+    standardize_heads = list(cfg.multitask.get("standardize_per_feature_target", []))
     vector_norm_method = str(cfg.multitask.get("vector_norm_method", "yeo_johnson"))
+    head_norm_method = {h: "zscore" for h in standardize_heads}
+    heads_to_normalize = list(dict.fromkeys(normalize_vector_targets + standardize_heads))
     target_stats: dict[str, dict[str, Any]] = {}
     if heads_to_normalize:
         train_indices = list(data_module.train_dataset.indices)
@@ -1175,6 +1274,7 @@ def run_training(cfg: DictConfig) -> None:
             eps=float(cfg.multitask.get("target_norm_eps", 1e-8)),
             degenerate_robust_cv=float(cfg.multitask.get("degenerate_robust_cv", 0.01)),
             vector_norm_method=vector_norm_method,
+            head_norm_method=head_norm_method,
         )
         is_rank0 = not dist.is_initialized() or dist.get_rank() == 0
         for head, st in target_stats.items():
@@ -1267,6 +1367,24 @@ def run_training(cfg: DictConfig) -> None:
         ),
     ]
 
+    # EarlyStopping: cut the marathon. The prior 373-epoch/5.4h run overfit long after the
+    # metric peaked, so stop when val/loss stops improving. Configurable via
+    # trainer.early_stopping (default on, monitor val/loss, patience 20).
+    es_cfg = _as_dict(cfg.trainer.get("early_stopping", {"enabled": True}))
+    if es_cfg.get("enabled", True):
+        es_monitor = str(es_cfg.get("monitor", "val/loss"))
+        es_patience = int(es_cfg.get("patience", 20))
+        checkpoint_callbacks.append(
+            EarlyStopping(
+                monitor=es_monitor,
+                mode=str(es_cfg.get("mode", "min")),
+                patience=es_patience,
+                min_delta=float(es_cfg.get("min_delta", 0.0)),
+                verbose=True,
+            )
+        )
+        print(f"[early-stopping] monitor={es_monitor} patience={es_patience}")
+
     torch.set_float32_matmul_precision("medium")
     devices = get_num_devices(cfg.trainer.devices)
     print(f"devices: {devices} ({timestamp()})")
@@ -1276,7 +1394,12 @@ def run_training(cfg: DictConfig) -> None:
     # do not contribute to the loss on that run. Vanilla DDP forbids unused parameters,
     # so map plain "ddp" -> the find-unused-parameters variant. Only rank-0 devices>1.
     strategy = cfg.trainer.strategy
-    if strategy == "ddp" and devices > 1:
+    if devices == 1:
+        # Single-GPU grid: no DDP process group, plain `python` launch. Force `auto` so a
+        # stray `strategy: ddp` in a config never spins up a 1-rank DDP group (extra sync
+        # overhead + the find-unused-parameters machinery are pointless with one device).
+        strategy = "auto"
+    elif strategy == "ddp" and devices > 1:
         strategy = "ddp_find_unused_parameters_true"
 
     trainer = L.Trainer(

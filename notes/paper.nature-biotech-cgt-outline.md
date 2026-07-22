@@ -61,7 +61,7 @@ Each abstract claim -> where it lands in the paper. Source sentences from
 | 3 | Literature + public data annotated with shared experimental ontology -> Neo4j KG at NCSA (genotype/phenotype/environment)                                                                  | Results R1                     | Fig 1a   |
 | 4 | Dataloaders build DL-ready datasets; strain = perturbation operator over shared wildtype reference (genome seq + gene networks + metabolism + environment); millions of strains at scale   | Results R1                     | Fig 1b-c |
 | 5 | CGT = virtual-cell architecture; interaction graphs constrain multi-head attention via loss aligning attention to network priors; equivariant perturbation operator; multitask heads       | Results R2                     | Fig 2    |
-| 6 | Trigenic GGI: CGT r=0.454+/-0.006, rho=0.421+/-0.004; beats DANGO 0.367, DCell 0.157, Yeast9 FBA 0.0006                                                                                    | Results R3 (headline)          | Fig 3    |
+| 6 | Trigenic GGI: CGT r=0.454+/-0.004, rho=0.421+/-0.003 (SEM); beats DANGO 0.367, DCell 0.157, Yeast9 FBA 0.0006                                                                                    | Results R3 (headline)          | Fig 3    |
 | 7 | Same architecture predicts expression under single+double KO (r=0.543+/-0.023) and morphology under single KO (r=0.619+/-0.037); one latent embedding generalizes across phenotype classes | Results R4                     | Fig 4    |
 | 8 | Applied CGT to recommend gene deletions for beta-carotene and betaxanthin in S. cerevisiae                                                                                                 | Results R5                     | Fig 5    |
 | 9 | Unlike DBTL tools that don't represent the strain, TorchCell pairs with autonomous platforms (UIUC iBioFoundry) for iterative AI-guided strain engineering (chemicals, fuels, pigments)    | Results R5 + Discussion        | Fig 5    |
@@ -126,7 +126,7 @@ equivariant perturbation operator maps the reference embedding to the perturbed
 strain state; multitask heads decode phenotypes. -> Fig 2.
 
 **R3. CGT predicts trigenic gene-gene interactions at state of the art.** The
-headline result: r=0.454+/-0.006, rho=0.421+/-0.004; outperforms DANGO, DCell,
+headline result: r=0.454+/-0.004, rho=0.421+/-0.003 (SEM); outperforms DANGO, DCell,
 and Yeast9 FBA (which recovers no epistatic signal). Open by noting classical-ML
 baselines fail on this task (Suppl. Fig. S1), then show CGT closes the gap. Note
 increased noise at the extremes of the interaction range (expected). -> Fig 3.

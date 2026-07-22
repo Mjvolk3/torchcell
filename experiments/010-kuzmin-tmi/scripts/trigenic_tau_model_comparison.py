@@ -14,19 +14,39 @@ from torchcell.timestamp import timestamp
 
 load_dotenv()
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+assert ASSET_IMAGES_DIR is not None, "ASSET_IMAGES_DIR must be set in the environment"
 
 style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
 
-# --- Data from [[experiments.010-kuzmin-tmi.scripts.trigenic_tau_model_comparison]] ---
-# TorchCell (Ours): reported as mean ± SE across 3 replicates
-torchcell_vals = np.array([0.454 + 0.006, 0.454, 0.454 - 0.006])
-# Dango Repro Best: 3 replicates
+# --- Replicate Pearson r values (Trigenic tau) for each model ---
+# Every model is now grounded in 3 REAL replicate Pearson values (except the
+# deterministic FBA model, which has a single value by nature). All error bars
+# are the SAME statistic: the standard error of the mean (SEM = sample-SD/sqrt(n),
+# ddof=1). This resolves the WS14 error-bar-provenance blocker so the four whiskers
+# are apples-to-apples.
+#
+# TorchCell / CGT: 3 replicate runs tagged `inf_1` on wandb, Pearson r read from
+#   the wandb scatter plots. Source of truth:
+#   [[experiments.010-kuzmin-tmi.performance-diff-010-009]] (010 "All" models).
+#   (Historical note: the abstract's earlier "0.454 +/- 0.006" reported the
+#   POPULATION SD, np.std(ddof=0), of these same three values -- NOT a SEM. The
+#   +/- 0.006 is replaced here by the SEM = 0.004, matching DANGO/DCell.)
+torchcell_vals = np.array([0.462, 0.452, 0.447])
+# DANGO (repro best): 3 replicate Pearson values.
 dango_vals = np.array([0.36759, 0.36708, 0.36637])
-# DCell: 3 replicates
+# DCell: 3 replicate Pearson values.
 dcell_vals = np.array([0.17321017384529114, 0.1550033837556839, 0.14192065596580505])
-# GEM: deterministic (single value)
+# Yeast9 (GEM/FBA): deterministic modeling -> single value, no error by nature.
 gem_vals = np.array([0.0006])
+
+
+def sem(a: np.ndarray) -> float:
+    """Standard error of the mean; 0 for a single deterministic value."""
+    if len(a) < 2:
+        return 0.0
+    return float(a.std(ddof=1) / np.sqrt(len(a)))
+
 
 models = ["Yeast9", "DCell", "DANGO", "TorchCell"]
 means = [
@@ -36,10 +56,10 @@ means = [
     torchcell_vals.mean(),
 ]
 sems = [
-    0.0,  # deterministic
-    dcell_vals.std(ddof=1) / np.sqrt(len(dcell_vals)),
-    dango_vals.std(ddof=1) / np.sqrt(len(dango_vals)),
-    0.006,  # reported SE
+    sem(gem_vals),  # 0.0 (deterministic, single value)
+    sem(dcell_vals),  # SEM
+    sem(dango_vals),  # SEM
+    sem(torchcell_vals),  # SEM (from real replicates; was pop-SD 0.006)
 ]
 
 # --- Colors from draw.io diagram (fill / outline) ---
@@ -71,8 +91,8 @@ ax.set_ylim(0, 0.55)
 ax.set_yticks(np.arange(0, 0.55, 0.1))
 
 # Add value labels above bars
-for bar, mean, sem in zip(bars, means, sems):
-    label_y = mean + sem + 0.012
+for bar, mean, sem_val in zip(bars, means, sems):
+    label_y = mean + sem_val + 0.012
     if mean < 0.01:
         label = f"{mean:.4f}"
     else:
@@ -94,10 +114,15 @@ for spine in ax.spines.values():
 
 plt.tight_layout()
 
-save_path = osp.join(
-    ASSET_IMAGES_DIR, f"010-kuzmin-tmi/trigenic_tau_model_comparison_{timestamp()}.png"
-)
-os.makedirs(osp.dirname(save_path), exist_ok=True)
-plt.savefig(save_path, dpi=300)
-print(f"Saved: {save_path}")
+# Report the numbers driving the figure (all SEM, all apples-to-apples).
+for model, mean, sem_val in zip(models, means, sems):
+    print(f"{model:>10}: r = {mean:.4f} +/- {sem_val:.4f} (SEM)")
+
+out_dir = osp.join(ASSET_IMAGES_DIR, "010-kuzmin-tmi")
+os.makedirs(out_dir, exist_ok=True)
+base = osp.join(out_dir, f"trigenic_tau_model_comparison_{timestamp()}")
+plt.savefig(f"{base}.png", dpi=300)
+plt.savefig(f"{base}.svg")
+print(f"Saved: {base}.png")
+print(f"Saved: {base}.svg")
 plt.close()

@@ -643,12 +643,18 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
                     for label_name in label_names:
                         try:
                             value = getattr(experiment.phenotype, label_name)
-                            if not np.isnan(
-                                value
-                            ):  # Only update if we find a non-NaN value
-                                row_data[label_name] = value
                         except AttributeError:
-                            continue  # Try next experiment if label doesn't exist in this one
+                            continue  # Try next experiment if label doesn't exist
+                        # Vector-valued labels (expression/morphology/metabolite dicts,
+                        # or list values) have no scalar summary for the label_df;
+                        # presence is tracked separately via phenotype_label_index, so
+                        # leave the cell as NaN here rather than crashing np.isnan.
+                        if isinstance(value, (dict, list, tuple)):
+                            continue
+                        if value is not None and not np.isnan(
+                            value
+                        ):  # Only update if we find a non-NaN value
+                            row_data[label_name] = value
 
                 # Add row data to data_dict
                 for key, value in row_data.items():

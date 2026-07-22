@@ -2097,8 +2097,16 @@ class Perturbation(GraphProcessor):
             for type_idx, field_name in enumerate(phenotype_types):
                 value = getattr(phenotype, field_name, None)
                 if value is not None:
-                    # Convert single values to lists for consistent handling
-                    values = [value] if not isinstance(value, (list, tuple)) else value
+                    # Dict-valued labels (expression per gene, calmorph 501-D
+                    # morphology vector, per-metabolite level) flatten to a
+                    # deterministic key-sorted vector; scalars (fitness, visual_score)
+                    # become a single-element list.
+                    if isinstance(value, dict):
+                        values = [value[k] for k in sorted(value)]
+                    elif isinstance(value, (list, tuple)):
+                        values = list(value)
+                    else:
+                        values = [value]
 
                     # Add all values with their type indices and sample indices
                     all_values.extend(values)
@@ -2109,12 +2117,14 @@ class Perturbation(GraphProcessor):
             for stat_type_idx, stat_field_name in enumerate(stat_types):
                 stat_value = getattr(phenotype, stat_field_name, None)
                 if stat_value is not None:
-                    # Convert single values to lists for consistent handling
-                    stat_values = (
-                        [stat_value]
-                        if not isinstance(stat_value, (list, tuple))
-                        else stat_value
-                    )
+                    # Dict-valued statistics (per-key SE) flatten to a key-sorted
+                    # vector; scalars become a single-element list.
+                    if isinstance(stat_value, dict):
+                        stat_values = [stat_value[k] for k in sorted(stat_value)]
+                    elif isinstance(stat_value, (list, tuple)):
+                        stat_values = list(stat_value)
+                    else:
+                        stat_values = [stat_value]
 
                     # Add all statistic values with their type indices and sample indices
                     all_stat_values.extend(stat_values)

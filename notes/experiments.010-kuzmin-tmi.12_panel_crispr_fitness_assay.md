@@ -1023,3 +1023,58 @@ and the 48 h assay (colonies imaged before they crowd) is expected to remove the
 ![Per-plate full-page render, 5 nL at 50.3 h (P2).](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_page_P2_t50.svg)
 
 ![Per-plate full-page render, 5 nL at 72.2 h (P2) - the crowded plate; several clean singles are red-flagged here (see note above), to be resolved by the 48 h assay.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_page_P2_t72.svg)
+
+## 2026.07.22 - Detection tuning round 2: boundary tightening, grid audit, recall limit
+
+Visual QC on the per-page renders found three issues: (1) a faint air gap between the drawn
+boundary and the colony (masks too loose), (2) missed faint colonies, (3) false red (`M`) flags on
+clean singles, worst on the crowded P2 72 h plate. We turned the crank -- a 6-recipe GPU sweep
+(`gh_cellpose_detection_sweep.sh`: cellprob $-2$ to $-8$, CLAHE clip 0.01-0.03, plus a flatfield
+pass) on the two diagnostic plates (P1 50 h faint, P2 72 h crowded) -- and reached a clear picture.
+New knobs live in `torchcell/sga/cellpose_seg.py`; the finalize recipe (CLAHE 0.02, cellprob $-4$,
+tighten on, `node_tol` 0.60, `edge_margin` 0.70, `multi_min_frac` 0.5) is applied to all six plates
+in the montage + per-page renders above (regenerated).
+
+**(1) Boundary air gap -- FIXED (biggest win).** Each accepted Cellpose mask is now trimmed to its
+dark colony core by a per-instance Otsu split (`tighten_size`, default on), dropping the faint halo
+Cellpose includes -- **~30-40 % of the mask area was halo** (mean colony size fell e.g. P1 50 h
+$\approx 2300 \rightarrow 1468$ px). The drawn outline now hugs the colony, and -- because area is
+fitness -- this **corrects a systematic ~35 % size inflation** that fed the reference comparison.
+Detection stays permissive; sizing is decoupled from it.
+
+**(2) Missed colonies -- a Cellpose detection-floor limit, not a tuning miss.** Occupied count is
+flat (~281 on P1) across every cellprob/CLAHE/flatfield setting; aggressive settings add instances
+that land off-grid, not in empty wells. On P1 50 h **all 283 detected instances already assign to a
+grid node**, so the misses are colonies Cellpose never segments (faint, below its floor), not an
+assignment failure. Probing the wells flagged as missed (A15, M9, P17, N19, K18) found a detected
+instance at each -- the grid's mild vertical drift shifts the axis *labels* off the colony, so most
+"missed at X" reads were a label offset. The genuinely missed wells are bottom-row edge wells
+(row P), now largely recovered by the wider `edge_margin`.
+
+**(3) Grid audit -- the lattice is sound; refit/relaxation do NOT help.** Rendering the fitted grid
+over the colonies: P1 50 h assigns 283/283, P2 72 h 330/378 (the rest are genuine crowding strays).
+Refitting the lattice to the Cellpose centroids (265/378) and per-row relaxation (326/378) both did
+*worse* than the classical fit (330/378), so that code was removed. There is a mild vertical drift
+(grid aligned mid-plate, off at the extremes) that a future per-row de-drift could correct to fix
+the label offset + a few edge wells -- deferred.
+
+**P2 72 h false reds are real crowding, not a rule bug.** The `multi_min_frac` gate (a 2nd colony
+must be $\ge 0.5$ of the primary to fire `M`) removed split-fragment false reds on the clean plates
+(P2 44/50 h now `M`=2) but P2 72 h holds `M`=35 -- the overgrown colonies genuinely merge/abut, so a
+size readout there is untrustworthy regardless of segmentation. This is the plate the **48 h re-run**
+targets. Updated per-plate invalidation (finalize recipe):
+
+| capture | occupied | accepted | multi (`M`) | neighbour (`N`) | mean size (px) |
+|---------|---------:|---------:|------------:|----------------:|---------------:|
+| P1 44 h | 281 | 279 | 1 | 1 | 1007 |
+| P2 44 h | 350 | 346 | 2 | 2 | 1232 |
+| P1 50 h | 281 | 279 | 1 | 1 | 1468 |
+| P2 50 h | 354 | 350 | 2 | 2 | 1366 |
+| P1 72 h | 283 | 281 | 1 | 1 | 2750 |
+| **P2 72 h** | 323 | 287 | **35** | 1 | 2621 |
+
+**Next levers (open, deferred pending review):** grid-guided faint-colony recovery (probe each empty
+node for an intensity depression to rescue sub-floor colonies) and per-row grid de-drift. Both are
+new algorithm work with false-positive tradeoffs; the 48 h re-run may make the crowding half moot, so
+these await a decision. The reference-comparison figures (Spearman/Pearson vs Costanzo; SD/SE vs
+Costanzo + Kuzmin) are the next deliverable once detection is accepted.

@@ -1,0 +1,10 @@
+
+ArgumentError: activate does not accept more than one argument:
+['--contrast', 'flatfield', '--cellprob', '-6', '--node_tol', '0.65', '--edge_margin', '0.8', '--multi_min_frac', '0.5', '--conditions', 'P1_t50,P1_t72', '--tag', 'rec_ff_cp6']
+
+
+/home/michaelvolk/miniconda3/envs/torchcell/lib/python3.13/site-packages/cellpose/dynamics.py:541: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:760.)
+  coo = torch.sparse_coo_tensor(pt, torch.ones(pt.shape[1], device=pt.device, dtype=torch.int),
+    P1_t50: occupied=282 accepted=280 M=1 N=1 C=0 inst=285 offgrid=0 mean_size=1453
+    P1_t72: occupied=283 accepted=281 M=1 N=1 C=0 inst=285 offgrid=0 mean_size=2722
+RECIPE_JSON {"contrast": "flatfield", "clahe_clip": 0.01, "cellprob": -6.0, "flow": 0.4, "tag": "rec_ff_cp6", "stats": [{"group": "P1_t50", "occupied": 282, "accepted": 280, "multi": 1, "neighbour": 1, "noncirc": 0, "instances": 285, "offgrid": 0, "mean_size": 1453}, {"group": "P1_t72", "occupied": 283, "accepted": 281, "multi": 1, "neighbour": 1, "noncirc": 0, "instances": 285, "offgrid": 0, "mean_size": 2722}]}

@@ -2156,7 +2156,14 @@ class Perturbation(GraphProcessor):
             )
             integrated_subgraph["gene"]["phenotype_types"] = phenotype_types
 
-        # Store statistic data in the graph
+        # Store statistic data in the graph. ALWAYS emit the four stat keys so the
+        # COO schema is consistent across samples: a genotype whose phenotypes carry
+        # no statistic (e.g. calmorph/expression-only strains) would otherwise be
+        # MISSING these keys, and PyG's `Batch.from_data_list` raises KeyError when a
+        # batch mixes samples with and without them. The empty-tensor placeholder
+        # (length 0, not a NaN sentinel) preserves the `len(...) > 0` "has a stat"
+        # semantics that downstream consumers rely on. `stat_types` is derived from
+        # `phenotype_info` and is identical for every sample regardless of values.
         if all_stat_values:
             integrated_subgraph["gene"]["phenotype_stat_values"] = torch.tensor(
                 all_stat_values, dtype=torch.float, device=self.device
@@ -2166,6 +2173,17 @@ class Perturbation(GraphProcessor):
             )
             integrated_subgraph["gene"]["phenotype_stat_sample_indices"] = torch.tensor(
                 all_stat_sample_indices, dtype=torch.long, device=self.device
+            )
+            integrated_subgraph["gene"]["phenotype_stat_types"] = stat_types
+        else:
+            integrated_subgraph["gene"]["phenotype_stat_values"] = torch.tensor(
+                [], dtype=torch.float, device=self.device
+            )
+            integrated_subgraph["gene"]["phenotype_stat_type_indices"] = torch.tensor(
+                [], dtype=torch.long, device=self.device
+            )
+            integrated_subgraph["gene"]["phenotype_stat_sample_indices"] = torch.tensor(
+                [], dtype=torch.long, device=self.device
             )
             integrated_subgraph["gene"]["phenotype_stat_types"] = stat_types
 

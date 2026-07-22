@@ -54,10 +54,14 @@ multitask:
   loss_fn: mse
   heads:
     global:
-      output_dim: 501       # CalMorph morphology
+      # CalMorph morphology. The Fig-3 build's calmorph vector is 281-D (constant
+      # across strains) -- the non-NaN CalMorph parameter set actually stored, NOT
+      # the nominal 501. VERIFIED against a materialized batch (WS10a). If a future
+      # build stores more/fewer CalMorph params, match this to that vector length.
+      output_dim: 281
       use_gene_pool: true
     per_gene:
-      output_dim: 1         # per-gene expression scalar
+      output_dim: 1         # per-gene expression scalar (one value per gene node)
     per_metabolite:
       output_dim: 1
   head_weights:
@@ -65,11 +69,14 @@ multitask:
     per_gene: 1.0
     global: 1.0
     per_metabolite: 1.0
-  # ASSUMPTION (validate on first real Fig-3 batch): schema phenotype-type names
-  # routed to each head. Reconcile with the actual phenotype_types strings.
+  # Schema phenotype-type (label_name) strings routed to each head. VERIFIED (WS10a)
+  # against the real Fig-3 COO: the actual phenotype_types are exactly
+  # {fitness, calmorph, expression_log2_ratio}. per_gene expression is
+  # `expression_log2_ratio` (was the placeholders microarray_/rnaseq_expression);
+  # global morphology is `calmorph`; the scalar head reads `fitness`.
   head_phenotypes:
     gene_interaction: [fitness, gene_interaction]
-    per_gene: [microarray_expression, rnaseq_expression]
+    per_gene: [expression_log2_ratio]
     global: [calmorph]
     per_metabolite: [metabolite]
 

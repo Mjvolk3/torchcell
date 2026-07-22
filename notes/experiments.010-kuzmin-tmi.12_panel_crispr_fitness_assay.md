@@ -1081,6 +1081,38 @@ new algorithm work with false-positive tradeoffs; the 48 h re-run may make the c
 these await a decision. The reference-comparison figures (Spearman/Pearson vs Costanzo; SD/SE vs
 Costanzo + Kuzmin) are the next deliverable once detection is accepted.
 
+## 2026.07.22 - P2 72 h lattice relaxation; segmentation history + imaging note
+
+**Why P2 72 h alone looked broken (off-plate green, off-center A-P labels, banded reds/misses).** Not
+crowding after all: the re-shot P2 72 h capture has ~17% **vertical perspective distortion** (row
+pitch 117-124 px vs column pitch ~101 px), and the classical `_detect_blobs_backlit` fit picks up
+lid/reflection blobs on it, so the even-spacing lattice landed **stretched and shifted up** -- top row
+in the lid, gel polygon reaching into the lid (the off-plate green leak), rows drifting off the
+colonies (off-center labels + colonies bucketed to the wrong node -> false `M` and misses). The other
+five captures are near-square and fit fine.
+
+**Fix: grid relaxation** (`relax_grid`, default on, `cellpose_seg._relax_lattice`). After the
+even-spacing fit, each row/column line is snapped to the median of the Cellpose colony centroids
+assigned to it, so the grid FOLLOWS the distortion; empty margin rows are linearly extrapolated from
+the colony grid (not the lid). The gel polygon is then derived from the corrected grid, so its
+boundary tracks the true colony extent and the lid leak is gone. Verified: on P2 72 h the rows now sit
+on the colonies; on the good P2 50 h it is a near-identity change (no regression). The montage/per-page
+axes relax identically so labels line up with the drawn colonies.
+
+**Segmentation history (answer to "did the algorithm change?").** No. The classical segmenter
+`torchcell/sga/image.py::quantify_plate_image` has a single commit and is unchanged between the
+plate-5 figures (dark-field / transillumination, which look clean) and the run-2 "gel-without-gash"
+overlays. What changed is the **input**: plate-5 was a 14x22 sub-array on cleaner imaging; run-2 is the
+full 16x24 384-array with a metal-shelf background and denser, size-variable colonies -- harder for a
+fixed threshold, which is exactly what motivated the Cellpose-SAM switch. The "SGA repo we cloned" is
+`torchcell.sga` itself (our reimplementation of the SGAtools normalisation/scoring; the image step is
+our own `quantify_plate_image`, the `gitter` analogue) -- nothing to revert.
+
+**Imaging idea for the next round.** Light vs dark background looked equivalent before (dark-field vs
+transillumination correlated at r = 0.96), but given the perspective/leak trouble on the backlit
+72 h re-shoot, **try a dark background next round** with a fixed, square-on camera geometry; consistent
+imaging removes the distortion at the source rather than correcting it in software.
+
 ## 2026.07.22 - Benchmark vs published SMF: correlation + measurement-error comparison
 
 With the tightened (halo-corrected) sizes, we benchmark against published single-mutant fitness (SMF).
@@ -1123,7 +1155,10 @@ sha256-pinned; full quotes + provenance in
 
 **Costanzo SMF "standard deviation" = a bootstrap standard error across control SCREENS, not
 colonies.** SMF sits on a hierarchy: each control *screen* $s$ contributes ~4 colonies averaged to a
-screen value $m_s$, and a strain is measured on $N$ screens ($N = 17$ query, $N = 350$ array). Fitness
+screen value $m_s$, and a strain is measured on $N$ screens ($N = 17$ query, $N = 350$ array). These
+$N$ are *screens accumulated across the whole study, not days*: the array (the fixed deletion
+collection) rides on **every** cross, so an array strain reaches ~350 screens just by being present
+each time, while a query appears in only ~17; many screens run in parallel per day. Fitness
 and its uncertainty come from a **bootstrap over screens** (Costanzo bootstraps means; Baryshnikova
 2010 Eq. 11 bootstraps the median, $B \approx 800$):
 
@@ -1210,19 +1245,46 @@ plate-days "for free" across the campaign, so by the time the triples are screen
 has enough days for a real cross-day bootstrap SE -- and drift between campaigns is monitored on the
 same anchors.
 
+### Bootstrap-across-plates vs pooled SD/$\sqrt{n}$, on our data
+
+Treating our six run-2 captures as replicate "screens" and bootstrapping each strain's mean fitness
+across them (`bootstrap_across_plates.py`, 4000 resamples) makes the difference concrete: the
+**bootstrap-across-plates SE averages 0.031** across strains, while the **naive pooled SD/$\sqrt{n}$**
+(pool all ~130 colonies across the plates, divide by the total count) averages **0.014 -- ~2.2x
+smaller**. The pooled number is over-confident because it treats correlated same-plate colonies as
+independent and discards the between-plate variance (the honest reproducibility). The bootstrap SE
+$\approx$ between-plate SD $/\sqrt{n_\text{plates}}$, so it is the quantity that actually shrinks with
+more plate-days. Bootstrapping the **median** gives a larger, noisier SE (0.047) than the **mean**
+(0.031) at only six plates -- the mean is the more stable centre here, consistent with
+Costanzo/Kuzmin's choice of bootstrapped means.
+
+![Per-strain SE: bootstrap-across-plates (orange, resampling the 6 plate-level fitnesses) vs the naive pooled colony SD/sqrt(n) (red, pooling all ~130 colonies). Dashed lines are the means (0.031 vs 0.014); the pooled SE is ~2.2x too small because it ignores between-plate variance.](assets/images/019-echo-crispr-array/cellpose/run2_bootstrap_vs_pooled_se.svg)
+
+**On mixing volumes (is it legitimate?).** These six plates are 2.5 nL and 5 nL $\times$ three
+timepoints -- not independent days. Because fitness is WT-normalised per plate, the normalised values
+are broadly comparable across volume, so mixing them is defensible; any systematic volume effect
+enters the *between-plate* variance and makes the across-plate SE **conservative (larger), not
+wrong**. Restrict to one volume (`--conditions P1_t44,P1_t50,P1_t72`) to strip that out. The deeper
+caveat holds: these are pseudo-replicates (one shared layout, no re-randomisation, correlated
+timepoints), so even this bootstrap SE understates the true across-day error -- the real fix is $N$
+independent, re-randomised plate-days.
+
 ### Bootstrap trade-offs, and why per-plate WT-normalization is necessary but not sufficient
 
-**Advantages.** Non-parametric (no normality assumed); works for any statistic (mean, median, ratio),
-which matters because fitness is a ratio; yields a full sampling distribution (confidence intervals,
-not just an SE); robust to outliers, especially with the median.
+**Advantages.** Non-parametric -- it assumes no distribution, so it fits the skewed, ratio-valued
+fitness (colony area / WT median) better than normal-theory $\sigma/\sqrt{n}$; it applies to whatever
+statistic you centre on (mean or median); it returns a full sampling distribution (confidence
+intervals, not just an SE); and it is robust to outliers, especially with the median.
 
 **Disadvantages / where it misleads.** It only sees the variation *present in the resampled units*:
 (1) with few independent units it is unstable, and resampling **non-independent** units (our
 same-plate colonies) yields a confidently *small* SE that is biologically wrong; (2) it quantifies
 **precision, not accuracy** -- any error shared by all replicates (batch/day offset, spatial/edge
 gradient, WT drift, the colony-size/halo bias we just fixed) is a **systematic bias** the bootstrap
-neither detects nor removes, and a tight bootstrap SE around a biased mean just makes you confidently
-wrong.
+neither detects nor removes. It reports how *precisely* it pinned down a (possibly wrong) number, not
+how *accurate* that number is; a small SE around a biased mean is a confident wrong answer. Bias must
+be engineered out up front -- WT-normalization, position re-randomization, consistent imaging -- it
+cannot be recovered from the SE.
 
 **Why not "just normalize each plate to its WT" and stop?** We *do* normalize per plate (fitness =
 colony area / on-plate WT median), and it is necessary -- it removes the plate's multiplicative

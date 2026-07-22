@@ -35,7 +35,13 @@ from scipy.ndimage import binary_erosion
 from skimage.measure import find_contours
 from skimage.morphology import disk
 
-from torchcell.sga.cellpose_seg import _CATEGORY_COLOR, _fit_lattice
+from torchcell.sga.cellpose_seg import (
+    _CATEGORY_COLOR,
+    _fit_lattice,
+    _instance_props,
+    _relax_lattice,
+)
+from torchcell.sga.image import MIN_COLONY_AREA
 
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
 import run2_cellpose_segmentation as base  # noqa: E402
@@ -98,7 +104,18 @@ def _draw_panel(
 
     # plate coordinate axes from the lattice fit: A-P rows, 1-24 cols, A1 top-left
     g = np.asarray(Image.open(crop_p).convert("L"), float)
-    nodes, _pitch, _inv, _theta, _ctr, _roi = _fit_lattice(g, N_ROWS, N_COLS, "auto")
+    nodes, pitch, _inv, theta, ctr, _roi = _fit_lattice(g, N_ROWS, N_COLS, "auto")
+    # match the segmenter: relax the grid onto the same colony centroids so the axis
+    # ticks line up with the drawn colonies on distorted plates.
+    cents = np.array(
+        [[p["cy"], p["cx"]] for p in _instance_props(masks, MIN_COLONY_AREA)]
+    )
+    if len(cents) >= 0.5 * N_ROWS * N_COLS:
+        dd = np.sqrt(((cents[:, None, :] - cents[None, :, :]) ** 2).sum(-1))
+        np.fill_diagonal(dd, np.inf)
+        cents = cents[dd.min(axis=1) < 1.8 * pitch]
+        if len(cents) >= 0.5 * N_ROWS * N_COLS:
+            nodes = _relax_lattice(nodes, cents, N_ROWS, N_COLS, theta, ctr)
     row_y = nodes[:, :, 0].mean(axis=1)
     col_x = nodes[:, :, 1].mean(axis=0)
     ax.set_xticks(col_x)
@@ -108,9 +125,17 @@ def _draw_panel(
     ax.set_xlim(0, img.shape[1])
     ax.set_ylim(img.shape[0], 0)
     ax.tick_params(
-        top=True, bottom=True, left=True, right=True,
-        labeltop=True, labelbottom=True, labelleft=True, labelright=True,
-        length=2, width=0.4, pad=1,
+        top=True,
+        bottom=True,
+        left=True,
+        right=True,
+        labeltop=True,
+        labelbottom=True,
+        labelleft=True,
+        labelright=True,
+        length=2,
+        width=0.4,
+        pad=1,
     )
     for s in ax.spines.values():
         s.set_visible(True)
@@ -122,7 +147,8 @@ def _write_per_page(tag: str) -> None:
     """One standalone full-plate figure per capture (all six), for a page-filling,
     zoomable read of a single plate. Same vector validity outlines + A1-P24 axes as a
     montage panel, but larger axis fonts since each plate now owns the whole page --
-    lets the green accepted boundary be inspected well by well."""
+    lets the green accepted boundary be inspected well by well.
+    """
     for plate, vol in COLUMNS:
         for t, hrs in ROWS:
             fig, ax = plt.subplots(figsize=(8.5, 8.9))
@@ -146,7 +172,9 @@ def main() -> None:
     for i, (t, hrs) in enumerate(ROWS):
         for j, (plate, vol) in enumerate(COLUMNS):
             _draw_panel(axes[i, j], args.tag, plate, t, f"{vol} - {hrs}")
-    fig.suptitle("Cellpose segmentation (vector outlines, plate A1-P24 axes)", fontsize=11)
+    fig.suptitle(
+        "Cellpose segmentation (vector outlines, plate A1-P24 axes)", fontsize=11
+    )
     fig.tight_layout()
     out = osp.join(IMG_DIR, "run2_cellpose_montage.svg")
     fig.savefig(out)

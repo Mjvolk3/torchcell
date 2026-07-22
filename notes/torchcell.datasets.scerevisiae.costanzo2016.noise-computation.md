@@ -210,6 +210,7 @@ s.d. (geometric/log).
 CONCLUSION: `background_std` (pooled expected s.d.) is NOT written to the output
 file (output columns: escore, escore_std, pval, smfit i/j +std, dm_expected,
 dm_actual, dm_actual_std). It is an internal quantity requiring the raw colony data
+
 - control screens. **Costanzo's exact p-value is therefore NOT reproducible from
 the released summary data** -- only the raw SGA pipeline reproduces it. This closes
 the p-value chase definitively.
@@ -300,3 +301,31 @@ Kuzmin uses the same Boone-lab pipeline. Sourced from the Kuzmin 2018 MinerU SI
 Policy precedent (unexplained range -> value): back-solve from another provided
 statistic first; if precluded, take the conservative lower-end. Here both agree on
 4. See [[torchcell.datasets.scerevisiae.kuzmin2018]].
+
+## 2026.07.22 - Kuzmin SMF scoring: bootstrapped MEANS (verbatim), array SMF = Costanzo
+
+Confirmed from the Kuzmin 2018 SI (`kuzminSystematicAnalysisComplex2018/si/si1.md`),
+sourced for the 019 CRISPR-fitness-assay benchmark
+([[experiments.010-kuzmin-tmi.12_panel_crispr_fitness_assay]]):
+
+> "The quantitative scoring method employed for single and double mutant fitness
+> estimation was described previously (Baryshnikova 2010), with the exception that
+> **bootstrapped means, instead of medians, across replicates were used in variance
+> estimation and final fitness values.**"
+
+So Kuzmin -- like Costanzo 2016 -- bootstraps **means**, deviating from Baryshnikova
+2010's bootstrapped **medians**. All three use the same bootstrap-over-replicate-screens
+machinery; only mean-vs-median differs. Provenance facts:
+
+- **Kuzmin QUERY SMF:** high-density array screened in triplicate -> 6 replicate
+  screens, 12-24 colony measurements per estimate. Resampling unit = the screen.
+- **Kuzmin ARRAY SMF:** "Estimates of the mean single mutant fitness of each array
+  strain were taken from a previous study (7)" = **Costanzo 2016** -> for array genes
+  Kuzmin's SMF value is NOT independent of Costanzo's (it *is* Costanzo's number).
+- **No per-strain Kuzmin SMF SD** is released (only the combined-mutant col-12 sample
+  SD, Baryshnikova Eq. 14, n~4) -- so a Kuzmin SMF-SD cannot be compared to ours.
+- Kuzmin-vs-Costanzo SMF agreement r ~ 0.63 (their Fig. S1C, n=331); the field's
+  cross-lab SMF-vs-SMF correlation is ~0.5-0.63.
+
+Bottom line for the SD ontology: Kuzmin SMF uncertainty, where it exists, is a
+bootstrap SE (same as Costanzo SMF), not a colony sample SD.

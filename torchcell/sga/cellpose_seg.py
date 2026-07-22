@@ -98,6 +98,14 @@ class CellposeSegConfig(BaseModel):
         "visual edge (Otsu splits a hair inside the soft rim), bounded by the original "
         "mask. 0 = raw Otsu core (tightest); larger = looser. 3 lands on the edge.",
     )
+    relax_grid: bool = Field(
+        default=True,
+        description="after the classical even-spacing lattice fit, snap each row/column "
+        "line to the median of the Cellpose colony centroids assigned to it, so the grid "
+        "FOLLOWS a distorted/perspective plate (rows land on colony rows, not between "
+        "them). Empty margin rows are extrapolated from the colony grid. Fixes the "
+        "off-center labels + off-gel leak + mis-bucketed multis on skewed captures.",
+    )
     edge_margin_frac: float = Field(
         default=0.5,
         description="gel-edge gate half-width in pitch units. A colony is dropped as "
@@ -166,6 +174,51 @@ def _fit_lattice(
     nodes_rot = np.stack([gy.ravel(), gx.ravel()], axis=1)
     nodes = _rotate(nodes_rot, theta, center).reshape(n_rows, n_cols, 2)
     return nodes, pitch, invert, theta, center, (r0, r1, c0, c1)
+
+
+def _relax_lattice(
+    nodes: np.ndarray,
+    cents: np.ndarray,
+    n_rows: int,
+    n_cols: int,
+    theta: float,
+    center: np.ndarray,
+    iters: int = 4,
+) -> np.ndarray:
+    """Snap the even-spacing lattice to the colony centroids so it follows plate
+    distortion. Working in the de-rotated frame, each row line is moved to the median
+    y of the centroids nearest it (each column line to the median x), iterated a few
+    times; rows/columns with too few colonies (empty margins) are linearly
+    extrapolated from the ones that snapped, so they sit on the colony grid rather
+    than drifting into the lid/frame. Returns nodes in the original frame.
+    """
+    cr = _rotate(cents, -theta, center)
+    nrot = _rotate(nodes.reshape(-1, 2), -theta, center).reshape(n_rows, n_cols, 2)
+
+    def _snap(
+        base: np.ndarray, n: int, coord: np.ndarray, min_count: int
+    ) -> np.ndarray:
+        vals = base.copy()
+        snapped = np.zeros(n, dtype=bool)
+        for _ in range(iters):
+            idx = np.abs(coord[:, None] - vals[None, :]).argmin(axis=1)
+            for k in range(n):
+                m = idx == k
+                if int(m.sum()) >= min_count:
+                    vals[k] = float(np.median(coord[m]))
+                    snapped[k] = True
+        if snapped.sum() >= 2:  # extrapolate empty lines from the snapped grid
+            ks = np.where(snapped)[0]
+            a, b = np.polyfit(ks, vals[ks], 1)
+            miss = np.where(~snapped)[0]
+            vals[miss] = a * miss + b
+        return vals
+
+    ys = _snap(nrot[:, :, 0].mean(axis=1), n_rows, cr[:, 0], 4)
+    xs = _snap(nrot[:, :, 1].mean(axis=0), n_cols, cr[:, 1], 3)
+    gy, gx = np.meshgrid(ys, xs, indexing="ij")
+    nodes_rot = np.stack([gy.ravel(), gx.ravel()], axis=1)
+    return _rotate(nodes_rot, theta, center).reshape(n_rows, n_cols, 2)
 
 
 def _contrast_enhance(img: np.ndarray, method: str, clahe_clip: float) -> np.ndarray:
@@ -369,11 +422,6 @@ def quantify_plate_image_cellpose(
     nodes, pitch, invert, theta, center, _roi = _fit_lattice(
         g, cfg.n_rows, cfg.n_cols, cfg.polarity
     )
-
-    gel_sd = None
-    if cfg.gel_detect:
-        _gel_poly, gel_mask = _gel_polygon(g, nodes, pitch, theta, center)
-        gel_sd = _signed_dist(gel_mask)
     edge_margin = cfg.edge_margin_frac * pitch
 
     img = np.asarray(ImageOps.exif_transpose(Image.open(path)).convert("RGB"))
@@ -388,6 +436,23 @@ def quantify_plate_image_cellpose(
         )[0]
     )
     props = _instance_props(masks, cfg.min_instance_area)
+
+    # relax the grid onto the Cellpose colony centroids (follows plate distortion),
+    # then derive the gel polygon from the corrected grid so its boundary tracks the
+    # true colony extent (no lid/frame leak). Drop NN-isolated specks first so a lone
+    # lid/frame detection cannot bias the snap.
+    if cfg.relax_grid and len(props) >= 0.5 * cfg.n_rows * cfg.n_cols:
+        cents = np.array([[p["cy"], p["cx"]] for p in props])
+        dd = np.sqrt(((cents[:, None, :] - cents[None, :, :]) ** 2).sum(-1))
+        np.fill_diagonal(dd, np.inf)
+        cents = cents[dd.min(axis=1) < 1.8 * pitch]
+        if len(cents) >= 0.5 * cfg.n_rows * cfg.n_cols:
+            nodes = _relax_lattice(nodes, cents, cfg.n_rows, cfg.n_cols, theta, center)
+
+    gel_sd = None
+    if cfg.gel_detect:
+        _gel_poly, gel_mask = _gel_polygon(g, nodes, pitch, theta, center)
+        gel_sd = _signed_dist(gel_mask)
 
     node_yx = nodes.reshape(-1, 2)  # (n_rows*n_cols, 2)
     # bucket each in-gel instance to its nearest node; track off-grid contaminants

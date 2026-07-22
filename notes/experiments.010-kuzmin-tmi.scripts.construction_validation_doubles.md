@@ -121,10 +121,13 @@ it is also absent from Kuzmin2018/2020. Missing ≠ synthetic-lethal (an SL pair
 measured low fitness or an explicit flag, not a blank); a NaN just means the pair was never in a
 scored query×array orientation. **SL check (SynthLethDB `Yeast_SL.csv`): NOT synthetic-lethal** —
 ELC1/YPL046C appears in **zero** SL records, and RPS9A/YPL081W is SL only with its paralog **RPS9B**
-(the classic redundant-duplicate case), not with ELC1. So it is not a known SL and should be
-buildable (caveat: absence = "not a *known* SL", not "proven non-SL"; BioGRID is a second source).
-**Recommendation: construct it** — the one cell of the 10×10 matrix with no value in Costanzo,
-Kuzmin, or SynthLethDB. It is tagged `novel` in the SI table.
+(the classic redundant-duplicate case), not with ELC1. **BioGRID / SGD second source (checked
+via SGD's aggregated interaction API):** ELC1 has **97** recorded genetic-interaction partners
+and **RPS9A is not among them** — no interaction of any type (SL, negative/positive genetic,
+synthetic growth defect). ELC1 is well-studied (97 partners), so RPS9A's absence is a real gap,
+not sparse coverage. **Recommendation: construct it** — the one cell of the 10×10 matrix with no
+value in Costanzo, Kuzmin, SynthLethDB, or BioGRID; not synthetic-lethal, so it should be
+buildable. Tagged `novel` in the SI table.
 
 ### Supplementary table — all 45 within-10 doubles
 

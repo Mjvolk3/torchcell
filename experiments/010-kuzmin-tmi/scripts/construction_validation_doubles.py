@@ -173,37 +173,55 @@ def plot_table(df: pd.DataFrame) -> None:
             str(int(r.n_triples_enabled)),
         ]) + r" \\")
 
-    tex = r"""\documentclass[10pt]{article}
+    tabular = (r"\begin{tabular}{r l l c c c c c}" + "\n\\toprule\n"
+               r"\# & Double & Tier & DMF $\pm$ SD & $\varepsilon$ & $p$ & sig & triples \\"
+               + "\n\\midrule\n" + "\n".join(body) + "\n\\bottomrule\n\\end{tabular}")
+    _render_latex_table(tabular, "construction_validation_doubles_table")
+
+
+# common names for the panel-10 genes (SGD R64; "" = no standard name)
+COMMON = {"YBR203W": "COS111", "YDR057W": "YOS9", "YER079W": "", "YGL087C": "MMS2",
+          "YJR060W": "CBF1", "YKL033W-A": "", "YLL012W": "YEH1",
+          "YLR312C-B": "(SPH1 locus)", "YPL046C": "ELC1", "YPL081W": "RPS9A"}
+
+
+def plot_genes(df: pd.DataFrame) -> None:
+    """LaTeX-booktabs image of the unique single-KO genes to inoculate for the 14
+    doubles, with common name and how many of the 14 doubles each participates in."""
+    sel = df[df.tier.isin(["coverage", "validation", "novel"])]
+    genes = sorted(set(sel.gene1) | set(sel.gene2))
+    body = []
+    for i, g in enumerate(genes, 1):
+        n = int(((sel.gene1 == g) | (sel.gene2 == g)).sum())
+        common = COMMON.get(g, "") or "---"
+        body.append(f"{i} & {g} & {common} & {n} " + r"\\")
+    tabular = (r"\begin{tabular}{r l l c}" + "\n\\toprule\n"
+               r"\# & Systematic & Common & \# doubles \\"
+               + "\n\\midrule\n" + "\n".join(body) + "\n\\bottomrule\n\\end{tabular}")
+    _render_latex_table(tabular, "construction_validation_genes_to_inoculate")
+
+
+def _render_latex_table(tabular: str, base: str) -> None:
+    """Compile a booktabs tabular via pdflatex, crop to its bbox, emit PDF/PNG/SVG."""
+    tex = (r"""\documentclass[10pt]{article}
 \usepackage[margin=6pt,paperwidth=24cm,paperheight=16cm]{geometry}
 \usepackage{booktabs}
 \usepackage{amssymb}
 \pagestyle{empty}
 \begin{document}
-\begin{tabular}{r l l c c c c c}
-\toprule
-\# & Double & Tier & DMF $\pm$ SD & $\varepsilon$ & $p$ & sig & triples \\
-\midrule
-""" + "\n".join(body) + r"""
-\bottomrule
-\end{tabular}
-\end{document}
-"""
-    base = "construction_validation_doubles_table"
+""" + tabular + "\n\\end{document}\n")
     with tempfile.TemporaryDirectory() as d:
-        tpath = osp.join(d, "t.tex")
-        with open(tpath, "w") as fh:
+        with open(osp.join(d, "t.tex"), "w") as fh:
             fh.write(tex)
         subprocess.run(["pdflatex", "-interaction=nonstopmode", "-halt-on-error", "t.tex"],
                        cwd=d, check=True, capture_output=True)
-        # crop to the table's bounding box
         bbox = subprocess.run(["gs", "-q", "-dBATCH", "-dNOPAUSE", "-sDEVICE=bbox",
                                osp.join(d, "t.pdf")], capture_output=True, text=True)
         line = [x for x in bbox.stderr.splitlines() if "HiResBoundingBox" in x][0]
         x0, y0, x1, y1 = (float(v) for v in line.split(":")[1].split())
         pad = 4
         w, h = (x1 - x0) + 2 * pad, (y1 - y0) + 2 * pad
-        # resize the page to the table bbox (PageOffset + FIXEDMEDIA) so the crop is
-        # honored by pdftoppm/pdftocairo, not just the CropBox.
+        # resize the page to the bbox so the crop is honored by pdftoppm/pdftocairo
         subprocess.run(["gs", "-o", osp.join(d, "crop.pdf"), "-sDEVICE=pdfwrite",
                         f"-dDEVICEWIDTHPOINTS={w:.2f}", f"-dDEVICEHEIGHTPOINTS={h:.2f}",
                         "-dFIXEDMEDIA",
@@ -366,6 +384,7 @@ def main() -> None:
     sel = df[df.tier.isin(["coverage", "validation"])]
     plot(sel)
     plot_table(df)
+    plot_genes(df)
     plot_cross_dataset(df)
     plot_forest(df)
 

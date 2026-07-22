@@ -39,6 +39,16 @@ Result: 31/31 triples still reconstructed, DMF range **0.610–1.178**, eps from
 
 ![](assets/images/010-kuzmin-tmi/construction_validation_doubles_table.svg)
 
+### Single mutants to inoculate (10)
+
+To build the 14 doubles above, cross these 10 single-mutant strains pairwise. **Every** panel-10
+gene appears in at least one double, so all 10 are required — no smaller set builds all 14. The
+`# doubles` column is how many of the 14 each gene crosses into (YOS9/YDR057W is the busiest hub
+at 5; COS111, MMS2, YKL033W-A each appear once). The novel pair adds no new strain (ELC1 + RPS9A
+are already in the set).
+
+![](assets/images/010-kuzmin-tmi/construction_validation_genes_to_inoculate.svg)
+
 ![](assets/images/010-kuzmin-tmi/construction_validation_doubles.svg)
 
 All 44 measured within-10 doubles ranked by DMF, colored by tier (coverage = blue,

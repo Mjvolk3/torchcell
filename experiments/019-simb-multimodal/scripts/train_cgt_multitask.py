@@ -971,15 +971,23 @@ def run_training(cfg: DictConfig) -> None:
     experiment_dir = osp.join(data_root, "wandb-experiments", group)
     os.makedirs(experiment_dir, exist_ok=True)
 
-    run = wandb.init(
-        mode=cast(Any, WANDB_MODE),
-        project=wandb_cfg["wandb"]["project"],
-        config=wandb_cfg,
-        group=group,
-        tags=wandb_cfg["wandb"]["tags"],
-        dir=experiment_dir,
-        name=f"run_{group}",
-    )
+    # Only global rank 0 initializes the wandb run. Under torchrun every rank runs this
+    # script top-to-bottom, so an unguarded wandb.init() creates one run per GPU, all
+    # writing to the same group dir → write-conflicts + "Logging error" → a rank exits 1
+    # and torchrun SIGTERMs the job. WandbLogger below is rank-safe on its own (Lightning
+    # @rank_zero_experiment). torchrun sets RANK before the DDP process group exists.
+    is_rank_zero = int(os.environ.get("RANK", os.environ.get("LOCAL_RANK", "0"))) == 0
+    run = None
+    if is_rank_zero:
+        run = wandb.init(
+            mode=cast(Any, WANDB_MODE),
+            project=wandb_cfg["wandb"]["project"],
+            config=wandb_cfg,
+            group=group,
+            tags=wandb_cfg["wandb"]["tags"],
+            dir=experiment_dir,
+            name=f"run_{group}",
+        )
     wandb_logger = WandbLogger(
         project=wandb_cfg["wandb"]["project"],
         log_model=True,
@@ -1279,7 +1287,8 @@ def run_training(cfg: DictConfig) -> None:
         fast_dev_run=cfg.trainer.get("fast_dev_run", False),
     )
     trainer.fit(model=task, datamodule=data_module)
-    wandb.finish()
+    if run is not None:
+        wandb.finish()
 
 
 @hydra.main(

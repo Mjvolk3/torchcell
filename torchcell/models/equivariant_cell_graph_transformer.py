@@ -476,6 +476,252 @@ class PerturbationHead(nn.Module):
         return cast(torch.Tensor, predictions)
 
 
+class GlobalHead(nn.Module):
+    """Whole-cell readout head for global phenotypes.
+
+    Maps the CLS token (whole-cell representation), optionally concatenated with a
+    mean pool over the equivariant perturbed gene embeddings, to a configurable
+    output vector. Used for CalMorph morphology (501-D) AND scalar VisualScore
+    (e.g. beta-carotene, output_dim=1).
+
+    graph_level == "global" selects this head.
+    """
+
+    def __init__(
+        self,
+        hidden_dim: int,
+        output_dim: int,
+        use_gene_pool: bool = True,
+        dropout: float = 0.1,
+    ):
+        """Build the MLP mapping [h_CLS (|| GlobalPool(H_genes_pert))] to output_dim.
+
+        Args:
+            hidden_dim: Model hidden dimension.
+            output_dim: Output vector dimension (e.g. 501 morphology, 1 scalar).
+            use_gene_pool: Concatenate a mean pool over genes with h_CLS.
+            dropout: Dropout probability.
+        """
+        super().__init__()
+        self.hidden_dim = hidden_dim
+        self.output_dim = output_dim
+        self.use_gene_pool = use_gene_pool
+
+        in_dim = hidden_dim * 2 if use_gene_pool else hidden_dim
+        self.mlp = nn.Sequential(
+            nn.Linear(in_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, output_dim),
+        )
+
+    def forward(self, h_CLS: torch.Tensor, H_genes_pert: torch.Tensor) -> torch.Tensor:
+        """Forward pass of the global head.
+
+        Args:
+            h_CLS: [d] whole-cell CLS representation.
+            H_genes_pert: [batch, N, d] equivariant perturbed gene embeddings.
+
+        Returns:
+            predictions: [batch_size, output_dim] global phenotype predictions.
+        """
+        batch_size = H_genes_pert.shape[0]
+        h = h_CLS.unsqueeze(0).expand(batch_size, -1)  # [batch, d]
+        if self.use_gene_pool:
+            pooled = H_genes_pert.mean(dim=1)  # [batch, d]
+            h = torch.cat([h, pooled], dim=-1)  # [batch, 2d]
+        return cast(torch.Tensor, self.mlp(h))  # [batch, output_dim]
+
+
+class PerGeneHead(nn.Module):
+    """Per-gene (equivariant) readout head for gene-resolved phenotypes.
+
+    Maps the equivariant perturbed gene embeddings H_genes_pert [batch, N, d] to a
+    per-gene prediction, preserving the per-node structure. Used for expression
+    (MicroarrayExpressionPhenotype / RnaseqExpressionPhenotype) AND proteome
+    (ProteinAbundancePhenotype).
+
+    graph_level == "node" selects this head.
+    """
+
+    def __init__(self, hidden_dim: int, output_dim: int = 1, dropout: float = 0.1):
+        """Build the shared MLP applied to every gene embedding.
+
+        Args:
+            hidden_dim: Model hidden dimension.
+            output_dim: Per-gene output dimension (default 1 -> scalar per gene).
+            dropout: Dropout probability.
+        """
+        super().__init__()
+        self.hidden_dim = hidden_dim
+        self.output_dim = output_dim
+        self.mlp = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, output_dim),
+        )
+
+    def forward(self, H_genes_pert: torch.Tensor) -> torch.Tensor:
+        """Forward pass of the per-gene head.
+
+        Args:
+            H_genes_pert: [batch, N, d] equivariant perturbed gene embeddings.
+
+        Returns:
+            predictions: [batch, N] if output_dim == 1, else [batch, N, output_dim].
+        """
+        out = self.mlp(H_genes_pert)  # [batch, N, output_dim]
+        if self.output_dim == 1:
+            out = out.squeeze(-1)  # [batch, N]
+        return cast(torch.Tensor, out)
+
+
+class PerMetaboliteHead(nn.Module):
+    """Per-metabolite readout head via GPR pooling of gene embeddings.
+
+    Metabolism enters as a REPRESENTATION ANNOTATION (not an attention prior):
+    perturbed gene embeddings are pooled over the genes catalyzing each reaction
+    (gene->gpr->reaction incidence), then pooled over the reactions each metabolite
+    participates in (metabolite<-reaction incidence), producing a per-metabolite
+    vector. Metabolites are NEVER promoted to encoder nodes -- the encoder keeps
+    fixed N gene nodes. Used for MetabolitePhenotype (mapped to Yeast9 metabolite
+    ids by the cell_graph metabolite node ordering).
+
+    graph_level == "metabolism" selects this head.
+
+    TODO(ws7): the pooling here is a mean over the catalyzing genes / participating
+    reactions using the sha-normalized incidence built from cell_graph. Stoichiometry
+    (edge weights on the metabolite<->reaction hyperedge) is ignored for now; a future
+    version can weight the reaction->metabolite pool by |stoichiometric coefficient|.
+    """
+
+    def __init__(self, hidden_dim: int, output_dim: int = 1, dropout: float = 0.1):
+        """Build the MLP applied to every per-metabolite pooled embedding.
+
+        Args:
+            hidden_dim: Model hidden dimension.
+            output_dim: Per-metabolite output dimension (default 1 -> scalar).
+            dropout: Dropout probability.
+        """
+        super().__init__()
+        self.hidden_dim = hidden_dim
+        self.output_dim = output_dim
+        self.mlp = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, output_dim),
+        )
+
+    def forward(
+        self,
+        H_genes_pert: torch.Tensor,
+        gpr_incidence_T: torch.Tensor,
+        mr_incidence: torch.Tensor,
+    ) -> torch.Tensor:
+        """Forward pass of the per-metabolite head.
+
+        Args:
+            H_genes_pert: [batch, N, d] equivariant perturbed gene embeddings.
+            gpr_incidence_T: sparse [R, N] reaction<-gene incidence (row-normalized
+                so each reaction row is a mean over its catalyzing genes).
+            mr_incidence: sparse [M, R] metabolite<-reaction incidence (row-normalized
+                so each metabolite row is a mean over its participating reactions).
+
+        Returns:
+            predictions: [batch, M] if output_dim == 1, else [batch, M, output_dim].
+        """
+        batch_size, num_genes, d = H_genes_pert.shape
+        # Flatten batch/feature into columns so sparse.mm applies once: [N, B*d]
+        h_flat = H_genes_pert.permute(1, 0, 2).reshape(num_genes, batch_size * d)
+        reaction = torch.sparse.mm(gpr_incidence_T, h_flat)  # [R, B*d]
+        metabolite = torch.sparse.mm(mr_incidence, reaction)  # [M, B*d]
+        num_met = metabolite.shape[0]
+        met = metabolite.reshape(num_met, batch_size, d).permute(1, 0, 2)  # [B, M, d]
+        out = self.mlp(met)  # [B, M, output_dim]
+        if self.output_dim == 1:
+            out = out.squeeze(-1)  # [B, M]
+        return cast(torch.Tensor, out)
+
+
+class MaskedMultitaskLoss(nn.Module):
+    """Masked multitask loss over config-selected heads plus graph regularization.
+
+    Each head's loss is masked to the genotypes in the batch that actually carry
+    that phenotype (sparse supervision): absent modalities contribute zero. The
+    existing graph-regularization attention loss term is added UNCHANGED.
+    """
+
+    def __init__(
+        self, head_weights: dict[str, float] | None = None, loss_fn: str = "mse"
+    ):
+        """Build the masked multitask loss.
+
+        Args:
+            head_weights: Per-head scalar weights (default 1.0 for any head present).
+            loss_fn: Elementwise regression loss, "mse" or "l1".
+        """
+        super().__init__()
+        self.head_weights = head_weights or {}
+        assert loss_fn in ("mse", "l1"), f"unsupported loss_fn {loss_fn}"
+        self.loss_fn = loss_fn
+
+    def _elementwise(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        if self.loss_fn == "mse":
+            return F.mse_loss(pred, target)
+        return F.l1_loss(pred, target)
+
+    def forward(
+        self,
+        head_outputs: dict[str, torch.Tensor],
+        targets: dict[str, torch.Tensor],
+        masks: dict[str, torch.Tensor] | None = None,
+        graph_reg_loss: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+        """Compute the masked multitask loss.
+
+        Args:
+            head_outputs: {head_name: prediction [B, ...]}.
+            targets: {head_name: target [B, ...]} for supervised heads.
+            masks: {head_name: bool [B]} selecting supervised genotypes per head.
+                A missing mask means all rows are supervised for that head.
+            graph_reg_loss: Optional scalar graph-regularization loss, added as-is.
+
+        Returns:
+            total_loss: scalar summed loss.
+            per_head_loss: {head_name: detached scalar loss} for logging.
+        """
+        masks = masks or {}
+        # Establish a device/grad anchor. graph_reg_loss stays UNCHANGED.
+        if graph_reg_loss is not None:
+            total = graph_reg_loss
+        else:
+            any_pred = next(iter(head_outputs.values()))
+            total = torch.zeros((), device=any_pred.device)
+
+        per_head: dict[str, torch.Tensor] = {}
+        for name, pred in head_outputs.items():
+            if name not in targets:
+                continue
+            target = targets[name]
+            weight = self.head_weights.get(name, 1.0)
+            mask = masks.get(name)
+            if mask is not None:
+                if mask.sum() == 0:
+                    # No genotype in this batch carries this phenotype -> zero loss,
+                    # but keep it connected to the graph so grads flow as zero.
+                    loss = pred.sum() * 0.0
+                else:
+                    loss = self._elementwise(pred[mask], target[mask])
+            else:
+                loss = self._elementwise(pred, target)
+            total = total + weight * loss
+            per_head[name] = loss.detach()
+
+        return total, per_head
+
+
 class CellGraphTransformer(nn.Module):
     """Equivariant Cell Graph Transformer model.
 
@@ -499,6 +745,7 @@ class CellGraphTransformer(nn.Module):
         graph_reg_lambda: float = 0.0,  # Loss lambda for graph regularization
         node_embeddings: dict[str, Any] | None = None,  # Pre-computed embeddings
         learnable_embedding_config: dict[str, Any] | None = None,  # Learnable config
+        heads_config: dict[str, Any] | None = None,  # Multitask decoder heads
     ):
         """Build embeddings, transformer encoder, and perturbation heads.
 
@@ -514,6 +761,12 @@ class CellGraphTransformer(nn.Module):
             graph_reg_lambda: Loss weight for graph regularization.
             node_embeddings: Optional pre-computed node embeddings.
             learnable_embedding_config: Optional config for learnable embeddings.
+            heads_config: Optional multitask decoder head config. When None, only the
+                single gene-interaction PerturbationHead is active, reproducing the
+                pre-multitask single-head behavior exactly (no extra parameters).
+                Otherwise a dict selecting any of "global" / "per_gene" /
+                "per_metabolite" (each a sub-dict, e.g.
+                {"global": {"output_dim": 501, "use_gene_pool": True}}).
         """
         super().__init__()
         self.gene_num = gene_num
@@ -643,6 +896,115 @@ class CellGraphTransformer(nn.Module):
         self.perturbation_head = PerturbationHead(
             hidden_dim=hidden_channels, dropout=pert_head_config.get("dropout", dropout)
         )
+
+        # === Multitask decoder heads (config-selectable) ===
+        # When heads_config is None NO extra parameters/buffers are created, so the
+        # model state_dict + forward output are identical to the single-head model.
+        self.heads_config = heads_config or {}
+
+        self.global_head: GlobalHead | None = None
+        if "global" in self.heads_config:
+            g_cfg = self.heads_config["global"] or {}
+            self.global_head = GlobalHead(
+                hidden_dim=hidden_channels,
+                output_dim=g_cfg.get("output_dim", 501),
+                use_gene_pool=g_cfg.get("use_gene_pool", True),
+                dropout=g_cfg.get("dropout", dropout),
+            )
+
+        self.per_gene_head: PerGeneHead | None = None
+        if "per_gene" in self.heads_config:
+            pg_cfg = self.heads_config["per_gene"] or {}
+            self.per_gene_head = PerGeneHead(
+                hidden_dim=hidden_channels,
+                output_dim=pg_cfg.get("output_dim", 1),
+                dropout=pg_cfg.get("dropout", dropout),
+            )
+
+        self.per_metabolite_head: PerMetaboliteHead | None = None
+        self.num_metabolites = 0
+        if "per_metabolite" in self.heads_config:
+            incidence = self._build_metabolic_incidence(cell_graph)
+            if incidence is None:
+                raise ValueError(
+                    "per_metabolite head requested but cell_graph lacks the "
+                    "('gene','gpr','reaction') and/or "
+                    "('metabolite','reaction','metabolite') edges needed to build "
+                    "the GPR/RMR incidence."
+                )
+            gpr_incidence_T, mr_incidence, num_metabolites = incidence
+            # Sparse incidence is fixed graph structure -> non-persistent buffers so
+            # it moves with .to(device) but is not written into checkpoints.
+            self.register_buffer("gpr_incidence_T", gpr_incidence_T, persistent=False)
+            self.register_buffer("mr_incidence", mr_incidence, persistent=False)
+            self.num_metabolites = num_metabolites
+            pm_cfg = self.heads_config["per_metabolite"] or {}
+            self.per_metabolite_head = PerMetaboliteHead(
+                hidden_dim=hidden_channels,
+                output_dim=pm_cfg.get("output_dim", 1),
+                dropout=pm_cfg.get("dropout", dropout),
+            )
+
+    def _build_metabolic_incidence(
+        self, cell_graph: HeteroData
+    ) -> tuple[torch.Tensor, torch.Tensor, int] | None:
+        """Build row-normalized sparse GPR/RMR incidence for the metabolite head.
+
+        Args:
+            cell_graph: HeteroData carrying ('gene','gpr','reaction') and
+                ('metabolite','reaction','metabolite') edges.
+
+        Returns:
+            (gpr_incidence_T [R, N], mr_incidence [M, R], num_metabolites), or None
+            if the required metabolic edges are absent.
+        """
+        gpr_edge = ("gene", "gpr", "reaction")
+        rmr_edge = ("metabolite", "reaction", "metabolite")
+        if gpr_edge not in cell_graph.edge_types:
+            return None
+        if rmr_edge not in cell_graph.edge_types:
+            return None
+
+        gpr_ei = cell_graph[gpr_edge].edge_index  # [2, E_gpr]: row0 gene, row1 reaction
+        rmr_ei = cell_graph[
+            rmr_edge
+        ].edge_index  # [2, E_rmr]: row0 metab, row1 reaction
+
+        # Resolve reaction / metabolite counts from node stores when available.
+        if "reaction" in cell_graph.node_types and (
+            cell_graph["reaction"].get("num_nodes", None) is not None
+        ):
+            num_react = int(cell_graph["reaction"].num_nodes)
+        else:
+            num_react = int(max(int(gpr_ei[1].max()), int(rmr_ei[1].max()))) + 1
+        if "metabolite" in cell_graph.node_types and (
+            cell_graph["metabolite"].get("num_nodes", None) is not None
+        ):
+            num_met = int(cell_graph["metabolite"].num_nodes)
+        else:
+            num_met = int(rmr_ei[0].max()) + 1
+
+        # Reaction <- gene, row-normalized (each reaction = mean over its genes).
+        gene_idx = gpr_ei[0]
+        react_idx = gpr_ei[1]
+        react_deg = torch.zeros(num_react)
+        react_deg.index_add_(0, react_idx, torch.ones(react_idx.shape[0]))
+        gpr_vals = 1.0 / react_deg[react_idx].clamp(min=1.0)
+        gpr_incidence_T = torch.sparse_coo_tensor(
+            torch.stack([react_idx, gene_idx]), gpr_vals, (num_react, self.gene_num)
+        ).coalesce()
+
+        # Metabolite <- reaction, row-normalized (each metabolite = mean over reactions).
+        met_idx = rmr_ei[0]
+        rmr_react_idx = rmr_ei[1]
+        met_deg = torch.zeros(num_met)
+        met_deg.index_add_(0, met_idx, torch.ones(met_idx.shape[0]))
+        mr_vals = 1.0 / met_deg[met_idx].clamp(min=1.0)
+        mr_incidence = torch.sparse_coo_tensor(
+            torch.stack([met_idx, rmr_react_idx]), mr_vals, (num_met, num_react)
+        ).coalesce()
+
+        return gpr_incidence_T, mr_incidence, num_met
 
     def _normalize_adjacency_matrices(
         self, cell_graph: HeteroData
@@ -894,12 +1256,28 @@ class CellGraphTransformer(nn.Module):
         )  # [batch, N, d] - EQUIVARIANT!
 
         # 6. Perturbation readout head (Type II Virtual Instrument)
+        #    This is the ORIGINAL single (gene-interaction) head; kept as the first
+        #    returned element so single-head behavior is unchanged.
         predictions = self.perturbation_head(
             h_CLS,
             H_genes_pert,
             batch["gene"].perturbation_indices,
             batch["gene"].perturbation_indices_batch,
         )
+
+        # 7. Multitask decoder heads (config-selectable). graph_level selects the
+        #    head downstream: global -> class-token, node -> per-gene,
+        #    metabolism -> per-metabolite. When no heads are configured this dict is
+        #    empty and nothing here runs.
+        head_outputs: dict[str, torch.Tensor] = {}
+        if self.global_head is not None:
+            head_outputs["global"] = self.global_head(h_CLS, H_genes_pert)
+        if self.per_gene_head is not None:
+            head_outputs["per_gene"] = self.per_gene_head(H_genes_pert)
+        if self.per_metabolite_head is not None:
+            head_outputs["per_metabolite"] = self.per_metabolite_head(
+                H_genes_pert, self.gpr_incidence_T, self.mr_incidence
+            )
 
         return predictions, {
             "h_CLS": h_CLS,
@@ -909,6 +1287,7 @@ class CellGraphTransformer(nn.Module):
             "attention_weights": all_attention_weights,
             "residual_update_ratios": residual_update_ratios,
             "graph_reg_loss": total_graph_reg_loss,
+            "head_outputs": head_outputs,
         }
 
     @property
@@ -925,6 +1304,12 @@ class CellGraphTransformer(nn.Module):
             "perturbation_transform": count_params(self.perturbation_transform),
             "perturbation_head": count_params(self.perturbation_head),
         }
+        if self.global_head is not None:
+            counts["global_head"] = count_params(self.global_head)
+        if self.per_gene_head is not None:
+            counts["per_gene_head"] = count_params(self.per_gene_head)
+        if self.per_metabolite_head is not None:
+            counts["per_metabolite_head"] = count_params(self.per_metabolite_head)
         counts["total"] = sum(counts.values())
         return counts
 

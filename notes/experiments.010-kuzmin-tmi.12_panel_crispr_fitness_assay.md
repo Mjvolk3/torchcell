@@ -222,7 +222,7 @@ would if anything *inflate* an abnormal-shape signal at low volume, and we see n
 Protocol: grow in liquid culture → **normalize OD** → dispense by ECHO. With OD (cells/mL) fixed,
 the number of cells deposited per spot = concentration × volume, so 5 nL deposits ≈2× the cells of
 2.5 nL. At these nL volumes the founder count per spot is small (tens of cells), so its relative
-variability scales like 1/√N — **more volume → more reproducible starting cell count → fewer empty
+variability scales like $1/\sqrt{N}$ — **more volume → more reproducible starting cell count → fewer empty
 spots and tighter colonies** (consistent with 5 nL: missing 6.3% vs 16.1%, WT CV 0.18 vs 0.26). The
 counter-risk was abnormal morphology at high volume; the shape analysis above shows that did not
 happen here. So on the reliability/shape axes 5 nL is favorable — but see the confound before
@@ -967,7 +967,7 @@ by the boundary gate. The threshold is a config knob (`circularity_reject`) if a
 budding/merged colony slips through. Code: `torchcell/sga/cellpose_seg.py` (`neighbor_invalidate`,
 `circularity_reject`, `kept_color`); regenerated via SLURM (`gh_cellpose_recipe.slurm`).
 
-Still to come (in progress): standard error per genotype (SD/√n, on the Costanzo footing), a
+Still to come (in progress): standard error per genotype (SD/$\sqrt{n}$, on the Costanzo footing), a
 one-plate-per-page zoomable render, and the per-condition SMF-agreement + SD/SE-vs-reference
 comparison figures.
 
@@ -975,7 +975,7 @@ comparison figures.
 
 For the tuned Cellpose method (CLAHE clip 0.01 + cellprob -4 + the `M`/`N`/`C` invalidation), each
 strain's fitness is the mean over its **replicate colonies** with the invalidated wells excluded.
-We report the replicate **SD** and the **standard error SE = SD/√n_used** -- SE is the
+We report the replicate **SD** and the **standard error** $\mathrm{SE} = \mathrm{SD}/\sqrt{n_\text{used}}$ -- SE is the
 reference-comparable uncertainty, and (per Costanzo's method) p-values pair with SE, not SD.
 `cellpose_error_analysis.py` -> `results/run2_cellpose_error_by_strain.csv`.
 
@@ -993,7 +993,7 @@ double-mutant SD -- so each genotype's SE is a well-founded `+/- 0.03-0.04`. The
 ~27 replicates, reach the tightest SE (~0.026 at 50 h). This is the SD you asked for, now attached
 to the Cellpose measurements; the SE is what will anchor the reference-comparison and p-value work.
 
-![Per-genotype Cellpose fitness (mutant / BY4741) with standard-error bars, one panel per volume x growth-time condition, strains sorted by fitness. SE = replicate-colony SD / sqrt(n_used), invalidated M/N/C wells excluded; dashed line = wild-type 1.0.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_fitness_se.svg)
+![Per-genotype Cellpose fitness (mutant / BY4741) with standard-error bars, one panel per volume x growth-time condition, strains sorted by fitness. SE = replicate-colony SD / $\sqrt{n_\text{used}}$, invalidated M/N/C wells excluded; dashed line = wild-type 1.0.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_fitness_se.svg)
 
 ## 2026.07.22 - Per-plate full-page zoomable renders
 
@@ -1083,33 +1083,87 @@ Costanzo + Kuzmin) are the next deliverable once detection is accepted.
 
 ## 2026.07.22 - Benchmark vs published SMF: correlation + measurement-error comparison
 
-With the tightened (halo-corrected) sizes, we benchmark the assay against published single-mutant
-fitness (SMF). Per-genotype fitness is the mean over the six captures; the reference is
-`reference_smf_12panel.csv` (Costanzo 2016 for all 12 panel genes, Kuzmin 2018 for the 4 it covers).
-Script: `costanzo_kuzmin_comparison.py` -> `results/run2_reference_comparison{,_stats}.csv`.
+With the tightened (halo-corrected) sizes, we benchmark against published single-mutant fitness (SMF).
+We use the **single capture closest to the planned assay -- 5 nL / 50 h (P2_t50)** -- because the
+panel is engineered at 5 nL and will be imaged at ~48 h; we compare the condition we will actually
+run, not an average over settings we will not. Reference: `reference_smf_12panel.csv` (Costanzo 2016
+for all 12 genes, Kuzmin 2018 for the 4 it covers). Script: `costanzo_kuzmin_comparison.py` (set
+`CONDITION`) -> `results/run2_reference_comparison{,_stats}.csv`.
 
-**Correlation (value + rank).** Against Costanzo (n=12): **Pearson r = 0.61 (p = 0.036)** and
-**Spearman $\rho$ = 0.52 (p = 0.085)** -- a significant agreement in value, with the rank agreement
-just short of significance at n=12. Kuzmin (n=4): r = 0.80, $\rho$ = 0.40 (not significant at n=4).
-The one clearly sick gene, **CBF1 (YJR060W)**, anchors both correlations (Costanzo 0.59 / Kuzmin 0.75
-vs our 0.73); the remaining near-neutral genes cluster around 1.0. Our values sit **slightly below
-the identity line** (a mild downward fitness bias, ~0.85-0.95 vs a published ~1.0) -- expected for a
-young assay and a candidate for a per-plate calibration later.
+**Correlation (value vs rank).** At 5 nL / 50 h, against Costanzo (n=12): **Pearson r = 0.27
+(p = 0.40, n.s.)** but **Spearman $\rho$ = 0.50 (p = 0.095)** -- the **rank ordering largely holds
+while the absolute values scatter**. This is markedly weaker than an average over all six captures
+(which reached Pearson 0.61): averaging suppressed per-plate noise and folded in the
+tighter-correlating 2.5 nL plates, so a single 5 nL plate is noisier in value. Kuzmin (n=4) collapses
+to r = 0.13, $\rho = -0.40$ -- uninformative at that n on one plate. **CBF1 (YJR060W)**, the one
+clearly sick gene, stays the strongest signal (published 0.59 vs our 0.76). Values sit **below the
+identity line** (a downward bias, most near-neutral genes read ~0.68-0.93 vs a published ~1.0) -- a
+candidate for a per-plate WT calibration. *Engineering read:* for rank/triage screening 5 nL is
+defensible (rank preserved), but single-plate value agreement is weak and multi-plate averaging is
+what buys the value correlation.
 
-![Assay fitness (mean over the six captures, halo-corrected) vs published single-mutant fitness: Costanzo 2016 (orange, n=12) and Kuzmin 2018 (red diamonds, n=4), identity line dashed. Pearson r (value) and Spearman rho (rank) annotated; x error = published SD, y error = our settings-to-settings SD across the six captures. CBF1 anchors the low end.](assets/images/019-echo-crispr-array/cellpose/run2_fitness_correlation_reference.svg)
+![Assay fitness at 5 nL / 50 h (halo-corrected) vs published SMF: Costanzo 2016 (orange circles, n=12) and Kuzmin 2018 (red circles, n=4), identity line dashed, points labelled by systematic ORF. Pearson r (value) and Spearman rho (rank) annotated; error bars are SE-vs-SE (x = Costanzo bootstrap-SE column, y = our SD/sqrt(n)). CBF1/YJR060W anchors the low end.](assets/images/019-echo-crispr-array/cellpose/run2_fitness_correlation_reference.svg)
 
-**Measurement error (SD).** Our within-genotype replicate SD averages **0.165** vs Costanzo's SMF SD
-of **0.08** -- our single-colony measurement is ~2x noisier per genotype, consistent across genes
-(figure). But because we average **~21-27 replicate colonies** per strain, the reference-comparable
-**SE = SD/$\sqrt{n}$ is ~0.03-0.05** (the 5 nL plates reach ~0.027), on the same footing as Costanzo's
-4-colony SE. **Kuzmin's released SMF carries no per-strain SD** (only point fitness for 4 genes), so
-no Kuzmin-SD comparison is possible from the released data -- flagged in the figure, not fabricated;
-sourcing it would require combing the Kuzmin SI for the single-mutant replicate structure.
+**Measurement error -- and why the two SDs are NOT the same number.** At 5 nL / 50 h our
+within-genotype replicate SD averages **0.141** vs Costanzo's SMF "SD" of **0.081**, and our
+$\mathrm{SE} = \mathrm{SD}/\sqrt{n}$ is **0.028** over ~27 colonies. A bare SD-vs-SD read is
+misleading: the two columns are **different statistics** (derived below) -- Costanzo's is a bootstrap
+SE across screens, ours a raw sample SD across same-plate colonies. Like-for-like on the SE scale we
+are *tighter* (0.028 vs 0.081), but that SE understates our true variance because same-plate colonies
+are not independent. **Kuzmin's released SMF carries no per-strain SD** (only point fitness for 4
+genes), so no Kuzmin-SD comparison exists -- flagged in the figure, not fabricated.
 
-![Per-genotype measurement error: our replicate-colony fitness SD (orange) vs Costanzo 2016 SMF SD (red), by gene, sorted by the Costanzo SD; dashed lines are the means (ours 0.18, Costanzo 0.08). Our SD is ~2x higher per genotype, but averaging ~21-27 colonies brings the SE to ~0.03-0.05. Kuzmin SMF has no released per-strain SD.](assets/images/019-echo-crispr-array/cellpose/run2_sd_vs_reference.svg)
+![Per-genotype measurement error at 5 nL / 50 h: our replicate-colony fitness SD (orange) vs Costanzo 2016 SMF SD (red, itself a bootstrap SE), by systematic ORF, sorted by the Costanzo value; dashed lines are the means (ours 0.14, Costanzo 0.08). Kuzmin SMF has no released per-strain SD.](assets/images/019-echo-crispr-array/cellpose/run2_sd_vs_reference.svg)
 
-**Caveats.** The aggregate includes the crowded P2 72 h plate (untrustworthy sizes) for
-completeness; excluding it is a one-line change if we prefer the five clean captures. Correlations
-are on n=12 (Costanzo) / n=4 (Kuzmin) genes -- small panels, so the point estimates are
-noise-sensitive (the CBF1 anchor dominates). This benchmark rides on the tightened sizes; if
-detection changes (e.g. the 48 h re-run or grid-guided recovery), regenerate via the same script.
+### How Costanzo computes SD vs how we do (for a fair comparison)
+
+Sourced from the Costanzo 2016 SOM and the Baryshnikova 2010 method it defers to (both mirrored,
+sha256-pinned; full quotes + provenance in
+[[torchcell.datasets.scerevisiae.costanzo2016.noise-computation]]).
+
+**Costanzo SMF "standard deviation" = a bootstrap standard error across control SCREENS, not
+colonies.** SMF sits on a hierarchy: each control *screen* $s$ contributes ~4 colonies averaged to a
+screen value $m_s$, and a strain is measured on $N$ screens ($N = 17$ query, $N = 350$ array). Fitness
+and its uncertainty come from a **bootstrap over screens** (Costanzo bootstraps means; Baryshnikova
+2010 Eq. 11 bootstraps the median, $B \approx 800$):
+
+$$ \hat{f} = \operatorname*{mean}_{b}\big(\bar{m}^{(b)}\big), \qquad
+   \sigma_{C} = \operatorname*{SD}_{b}\big(\bar{m}^{(b)}\big) \;\approx\; \frac{\sigma_{\text{screen}}}{\sqrt{N}}, $$
+
+where $\bar{m}^{(b)}$ is the mean over a screen-resampled set. So the **published "SD" column is
+already a standard error** (the SD of the sampling distribution of the mean) -- you must **not** divide
+it by $\sqrt{\,\cdot\,}$. Because the resampling unit is the *screen*, it also captures **biological**
+(day-to-day) variation.
+
+**Our assay SD = a raw sample SD across same-plate replicate COLONIES.** On one plate a genotype has
+$n \approx 21\text{--}27$ replicate colonies; fitness is $f_k = a_k / \tilde{a}_{\text{WT}}$ (colony
+area over the on-plate WT median), and
+
+$$ \bar{f} = \frac{1}{n}\sum_{k} f_k, \qquad
+   \sigma_{\text{us}} = \sqrt{\frac{1}{n-1}\sum_{k}\big(f_k - \bar{f}\big)^2}, \qquad
+   \mathrm{SE}_{\text{us}} = \frac{\sigma_{\text{us}}}{\sqrt{n}}. $$
+
+This is the same *form* as Costanzo's **double-mutant** SD (Baryshnikova Eq. 14, a colony sample SD),
+NOT his SMF SD.
+
+**Why they are not directly comparable, and how to compare fairly.**
+
+- **Kind of number.** $\sigma_{C}$ is a bootstrap **SE** (screen-level); $\sigma_{\text{us}}$ is a
+  sample **SD** (colony-level). The matching quantities are $\sigma_{C}$ vs $\mathrm{SE}_{\text{us}}$;
+  if one insists on SDs, compare Costanzo's *DMF* colony SD vs our colony SD.
+- **Replicate level.** Costanzo's SE averages out **biological** day-to-day variation ($N$ screens on
+  different days); our $\mathrm{SE}_{\text{us}}$ averages only **technical** same-plate colonies, which
+  are spatially correlated. Baryshnikova explicitly warns the colony s.d. "can dramatically
+  underestimate the true variance" -- so our SE is optimistic about the true across-day error.
+- **Fair future comparison.** To put our number on Costanzo's footing, run the 5 nL / 48 h plate on
+  $N$ **independent days** and bootstrap each genotype's mean across plates; report that bootstrap SD
+  as our reference-comparable SE. Our current six captures are 2 plates $\times$ 3 timepoints -- not
+  $N$ independent biological replicates -- so they cannot yet furnish that number.
+
+**Kuzmin.** Kuzmin's single-mutant fitness has **no reported std**; its only released colony SD is the
+*combined*-mutant "standard deviation" (Baryshnikova Eq. 14 sample SD, $n \approx 4$), a different
+measurement. So a Kuzmin **SMF** SD does not exist in the released data.
+
+**Caveats.** The single 5 nL / 50 h plate is noisier than a multi-plate mean (Pearson 0.27 weak,
+Spearman 0.50 holds); n=12/n=4 are small so estimates are noise-sensitive. Regenerate via
+`costanzo_kuzmin_comparison.py` (edit `CONDITION`) if the plate/detection changes (48 h re-run).

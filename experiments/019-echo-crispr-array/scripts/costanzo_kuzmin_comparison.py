@@ -14,9 +14,14 @@ Two deliverables, both on the tightened Cellpose measurements (halo-corrected si
       so a Kuzmin-SD comparison is not possible from the released data -- flagged,
       not fabricated.
 
-Our per-genotype fitness = mean over the six (volume x growth-time) captures; the
-replicate SD/SE are averaged over those captures. P2 72 h is included for
-completeness but is the crowded plate (untrustworthy sizes; see the note).
+We benchmark the SINGLE capture closest to the planned assay -- 5 nL / 50 h (P2_t50),
+the engineering target being 5 nL / 48 h -- not an average over settings we will not
+run. Per-genotype fitness, replicate-colony SD, and SE all come from that one plate.
+NOTE on a fair error comparison: Costanzo's SD column is a bootstrap SE across 17/350
+control screens (already SE-like), whereas our SD is a raw sample SD across ~27 same-
+plate colonies -- different kinds of number. The correlation uses SE-vs-SE error bars;
+the SD figure shows both SDs with that caveat. Full derivation in the note section
+"How Costanzo computes SD vs how we do" ([[torchcell.datasets.scerevisiae.costanzo2016.noise-computation]]).
 
 Inputs (regenerate first, tightened recipe):
   results/run2_cellpose_error_by_strain.csv   (fitness, fitness_sd, fitness_se, n)
@@ -59,6 +64,12 @@ IMG_DIR = osp.join(ASSET_IMAGES_DIR, "019-echo-crispr-array", "cellpose")
 os.makedirs(IMG_DIR, exist_ok=True)
 
 WT_NAME = "BY4741"
+# The panel is engineered at 5 nL, and the planned assay images at 48 h; of the six
+# captures, 5 nL / 50 h (P2_t50) is the closest to that target, so we benchmark THAT
+# single condition -- the one we will actually run -- not an average over settings we
+# will not use.
+CONDITION = "P2_t50"
+CONDITION_LABEL = "5 nL, 50 h"
 C_ORANGE, C_RED, C_PURPLE, C_GRAY = (
     PLOT_PALETTE[0],
     PLOT_PALETTE[1],
@@ -67,23 +78,20 @@ C_ORANGE, C_RED, C_PURPLE, C_GRAY = (
 )
 
 
-def _aggregate(fit: pd.DataFrame) -> pd.DataFrame:
-    """Per-strain aggregate over the six captures: mean fitness, the settings-to-
-    settings SD (spread of the six per-condition fitness values), and the mean
-    within-condition replicate SD/SE (the measurement precision).
+def _select(fit: pd.DataFrame) -> pd.DataFrame:
+    """Per-strain measurements for the single engineering-target capture (CONDITION):
+    fitness, the within-plate replicate-colony SD (raw sample SD over ~27 colonies),
+    and SE = SD / sqrt(n_used).
     """
-    fit = fit[fit["strain"] != WT_NAME]
-    g = fit.groupby("strain")
-    out = pd.DataFrame(
+    d = fit[(fit["group"] == CONDITION) & (fit["strain"] != WT_NAME)]
+    return pd.DataFrame(
         {
-            "our_fitness": g["fitness"].mean(),
-            "our_between_sd": g["fitness"].std(ddof=1),
-            "our_repl_sd": g["fitness_sd"].mean(),
-            "our_repl_se": g["fitness_se"].mean(),
-            "n_conditions": g["fitness"].size(),
+            "strain": d["strain"].to_numpy(),
+            "our_fitness": d["fitness"].to_numpy(),
+            "our_sd": d["fitness_sd"].to_numpy(),
+            "our_se": d["fitness_se"].to_numpy(),
         }
-    ).reset_index()
-    return out
+    )
 
 
 def _corr(x: np.ndarray, y: np.ndarray) -> tuple[float, float, float, float, int]:
@@ -111,12 +119,13 @@ def _fig_correlation(df: pd.DataFrame) -> None:
     lim = (0.4, 1.3)
     ax.plot(lim, lim, ls="--", lw=0.5, color=C_GRAY, zorder=1)  # identity
 
-    # Costanzo (all 12) with our between-condition SD as the y error bar
+    # Costanzo (all 12); x error = Costanzo SD column (a bootstrap SE), y error = our SE
+    # -- SE-vs-SE, the like-for-like uncertainty (see the SD-method note).
     cst = df.dropna(subset=["costanzo_smf"])
     ax.errorbar(
         cst["costanzo_smf"],
         cst["our_fitness"],
-        yerr=cst["our_between_sd"],
+        yerr=cst["our_se"],
         xerr=cst["costanzo_sd"],
         fmt="o",
         ms=3,
@@ -129,13 +138,13 @@ def _fig_correlation(df: pd.DataFrame) -> None:
         zorder=3,
         label="Costanzo 2016",
     )
-    # Kuzmin (4 genes) overlaid
+    # Kuzmin (4 genes) overlaid as red circles
     kuz = df.dropna(subset=["kuzmin_smf"])
     ax.scatter(
         kuz["kuzmin_smf"],
         kuz["our_fitness"],
-        s=22,
-        marker="D",
+        s=16,
+        marker="o",
         facecolor=C_RED,
         edgecolor="black",
         linewidth=0.4,
@@ -176,8 +185,8 @@ def _fig_correlation(df: pd.DataFrame) -> None:
     ax.yaxis.set_minor_locator(MultipleLocator(0.1))
     ax.tick_params(which="minor", length=0)
     ax.set_xlabel("published single-mutant fitness")
-    ax.set_ylabel("CRISPR assay fitness (mean over 6 captures)")
-    ax.set_title("Assay fitness vs published SMF", fontsize=6)
+    ax.set_ylabel(f"CRISPR assay fitness ({CONDITION_LABEL})")
+    ax.set_title(f"Assay fitness vs published SMF ({CONDITION_LABEL})", fontsize=6)
     ax.legend(fontsize=4.5, loc="lower right", frameon=False)
     for s in ax.spines.values():
         s.set_visible(True)
@@ -206,12 +215,12 @@ def _fig_sd(df: pd.DataFrame) -> None:
     )
     ax.bar(
         x - w / 2,
-        d["our_repl_sd"],
+        d["our_sd"],
         w,
         color=C_ORANGE,
         edgecolor="black",
         linewidth=0.4,
-        label="CRISPR assay (replicate SD)",
+        label=f"CRISPR assay replicate SD ({CONDITION_LABEL})",
     )
     ax.bar(
         x + w / 2,
@@ -220,19 +229,24 @@ def _fig_sd(df: pd.DataFrame) -> None:
         color=C_RED,
         edgecolor="black",
         linewidth=0.4,
-        label="Costanzo 2016 (SMF SD)",
+        label="Costanzo 2016 SMF SD (bootstrap SE)",
     )
-    ax.axhline(d["our_repl_sd"].mean(), color=C_ORANGE, lw=0.5, ls="--")
+    ax.axhline(d["our_sd"].mean(), color=C_ORANGE, lw=0.5, ls="--")
     ax.axhline(d["costanzo_sd"].mean(), color=C_RED, lw=0.5, ls="--")
     ax.set_xticks(x)
     ax.set_xticklabels(d["label"], rotation=90, fontsize=4)
     ax.yaxis.set_major_locator(MultipleLocator(0.05))
+    ax.set_ylim(0, float(max(d["our_sd"].max(), d["costanzo_sd"].max())) * 1.10)
     ax.set_ylabel("fitness standard deviation")
-    ax.set_title(
-        "Measurement error vs Costanzo (Kuzmin SMF has no released per-strain SD)",
-        fontsize=5.5,
+    # legend ABOVE the axes so it never occludes the bars
+    ax.legend(
+        fontsize=4.5,
+        loc="lower center",
+        bbox_to_anchor=(0.5, 1.005),
+        ncol=1,
+        frameon=False,
+        handlelength=1.2,
     )
-    ax.legend(fontsize=4.5, loc="upper left", frameon=False)
     for s in ax.spines.values():
         s.set_visible(True)
     fig.tight_layout()
@@ -244,13 +258,9 @@ def _fig_sd(df: pd.DataFrame) -> None:
 def main() -> None:
     fit = pd.read_csv(osp.join(RESULTS_DIR, "run2_cellpose_error_by_strain.csv"))
     ref = pd.read_csv(osp.join(RESULTS_DIR, "reference_smf_12panel.csv"))
-    agg = _aggregate(fit)
-    df = agg.merge(ref, on="strain", how="inner")
-    df["label"] = (
-        df["common_name"]
-        .fillna("")
-        .where(df["common_name"].astype(str).str.len() > 0, df["strain"])
-    )
+    sel = _select(fit)
+    df = sel.merge(ref, on="strain", how="inner")
+    df["label"] = df["orf"]  # systematic ORF -> every gene is labelled
     df.to_csv(osp.join(RESULTS_DIR, "run2_reference_comparison.csv"), index=False)
 
     pr, pp, sr, sp, n = _corr(
@@ -269,7 +279,8 @@ def main() -> None:
                 pearson_p=pp,
                 spearman_rho=sr,
                 spearman_p=sp,
-                our_mean_sd=float(sd["our_repl_sd"].mean()),
+                our_mean_sd=float(sd["our_sd"].mean()),
+                our_mean_se=float(sd["our_se"].mean()),
                 ref_mean_sd=float(sd["costanzo_sd"].mean()),
             ),
             dict(
@@ -297,8 +308,8 @@ def main() -> None:
     )
     print(f"Kuzmin    Pearson r={kpr:.3f}  Spearman rho={ksr:.3f}  (n={kn})")
     print(
-        f"mean replicate SD ours={sd['our_repl_sd'].mean():.3f}  "
-        f"Costanzo SMF SD={sd['costanzo_sd'].mean():.3f}"
+        f"[{CONDITION_LABEL}] mean replicate SD ours={sd['our_sd'].mean():.3f}  "
+        f"SE ours={sd['our_se'].mean():.3f}  Costanzo SMF SD={sd['costanzo_sd'].mean():.3f}"
     )
     print(f"wrote -> {RESULTS_DIR}/run2_reference_comparison.csv (+ _stats.csv)")
     print(f"wrote -> {IMG_DIR}/run2_fitness_correlation_reference.{{png,svg}}")

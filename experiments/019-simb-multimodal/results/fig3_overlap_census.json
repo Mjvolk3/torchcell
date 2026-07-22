@@ -1,0 +1,108 @@
+{
+  "query_file": "fig3_core.cql",
+  "db_overlap_census": {
+    "expression_single_unique": 1484,
+    "kemmeren_unique": 1484,
+    "sameith_sm_unique": 82,
+    "sameith_dm_unique": 72,
+    "ohya_unique": 4718,
+    "smf_deletion_unique": 4602,
+    "dmf_deletion_unique": 770498,
+    "Q1_sameith_dm_with_dmf_fitness": 57,
+    "Q2_single_expr_with_smf_fitness": 1360,
+    "Q2_kemmeren_with_smf": 1360,
+    "Q2_sameith_sm_with_smf": 79,
+    "ohya_with_expression": 1440,
+    "ohya_with_smf_fitness": 4220,
+    "Q3_total_unique_genotypes": 775623,
+    "Q3_ge2_modalities": 4425,
+    "Q3_expression_and_fitness": 1417,
+    "Q3_expression_and_morphology": 1440,
+    "Q3_combos": {
+      "fitness+morphology": 2894,
+      "expression+fitness+morphology": 1326,
+      "expression+morphology": 114,
+      "expression+fitness": 91
+    }
+  },
+  "aggregation_modality_census": {
+    "aggregated_groups": 9407,
+    "groups_ge2_modalities": 1448,
+    "groups_expression_and_fitness": 90,
+    "groups_expression_and_morphology": 1358,
+    "combos": {
+      "expression+morphology": 1358,
+      "expression+fitness": 90
+    }
+  },
+  "dataset_len": 9407,
+  "dataset_root": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/019-simb-multimodal/fig3_core",
+  "dataset_sample": {
+    "valid_index": 2,
+    "vector_blocked_indices": 2,
+    "vector_block_error": "must be real number, not dict",
+    "item": {
+      "type": "HeteroData",
+      "node_types": {
+        "gene": {
+          "num_nodes": 6606,
+          "keys": [
+            "ids_pert",
+            "node_ids",
+            "num_nodes",
+            "pert_mask",
+            "perturbation_indices",
+            "phenotype_sample_indices",
+            "phenotype_type_indices",
+            "phenotype_types",
+            "phenotype_values",
+            "x",
+            "x_pert"
+          ]
+        },
+        "reaction": {
+          "num_nodes": 7122,
+          "keys": [
+            "node_ids",
+            "num_nodes",
+            "pert_mask",
+            "w_growth"
+          ]
+        },
+        "metabolite": {
+          "num_nodes": 2806,
+          "keys": [
+            "node_ids",
+            "num_nodes",
+            "pert_mask"
+          ]
+        }
+      },
+      "labels": {
+        "gene.perturbation_indices": [
+          1
+        ],
+        "gene.x": [
+          6606,
+          1600
+        ],
+        "gene.x_pert": [
+          1,
+          1600
+        ],
+        "gene.phenotype_values": [
+          1
+        ],
+        "gene.phenotype_type_indices": [
+          1
+        ],
+        "gene.phenotype_sample_indices": [
+          1
+        ],
+        "gene.pert_mask": [
+          6607
+        ]
+      }
+    }
+  }
+}

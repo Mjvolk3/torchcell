@@ -195,10 +195,8 @@ def plot_table(df: pd.DataFrame) -> None:
             cell.set_edgecolor("black")
         else:
             r = rows.iloc[row - 1]
-            if col == 1:  # double name -> tier color
-                cell.set_text_props(color=(COLOR_COV if r.tier == "coverage"
-                                           else COLOR_VAL if r.tier == "validation"
-                                           else "black"), fontweight="bold", ha="left")
+            if col == 1:  # double name -> black (Nature: no cell coloring)
+                cell.set_text_props(color="black", fontweight="bold", ha="left")
                 cell._text.set_x(0.03)
             if col == 6 and r.significant:
                 cell.set_text_props(fontweight="bold")
@@ -244,7 +242,7 @@ def plot_cross_dataset(df: pd.DataFrame) -> None:
                                   label="Costanzo2016 (± SD)"),
                        plt.Line2D([], [], marker="o", lw=0, ms=4, color=PLOT_PALETTE[0],
                                   label="Kuzmin")],
-              frameon=True, fontsize=5.5, loc="lower right")
+              frameon=True, fontsize=5.5, loc="lower left")
     for sp in ("top", "right", "left", "bottom"):
         ax.spines[sp].set_visible(True)
         ax.spines[sp].set_linewidth(0.5)

@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-07-22T00:24:10.801281</dc:date>
+    <dc:date>2026-07-22T00:32:34.893902</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -138,7 +138,7 @@ M 27.469908 67.826919
 " style="fill: #ffffff; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_10">
-     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start; fill: #b85450" x="30.632014" y="62.242604" transform="rotate(-0 30.632014 62.242604)">YER079W+YJR060W</text>
+     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start" x="30.632014" y="62.242604" transform="rotate(-0 30.632014 62.242604)">YER079W+YJR060W</text>
     </g>
     <g id="patch_12">
      <path d="M 132.873431 67.826919 
@@ -223,7 +223,7 @@ M 27.469908 82.306799
 " style="fill: #ffffff; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_17">
-     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start; fill: #b85450" x="30.632014" y="76.722484" transform="rotate(-0 30.632014 76.722484)">YER079W+YPL081W</text>
+     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start" x="30.632014" y="76.722484" transform="rotate(-0 30.632014 76.722484)">YER079W+YPL081W</text>
     </g>
     <g id="patch_20">
      <path d="M 132.873431 82.306799 
@@ -311,7 +311,7 @@ M 27.469908 96.786679
 " style="fill: #ffffff; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_25">
-     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start; fill: #b85450" x="30.632014" y="91.202364" transform="rotate(-0 30.632014 91.202364)">YJR060W+YKL033W-A</text>
+     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start" x="30.632014" y="91.202364" transform="rotate(-0 30.632014 91.202364)">YJR060W+YKL033W-A</text>
     </g>
     <g id="patch_28">
      <path d="M 132.873431 96.786679 
@@ -399,7 +399,7 @@ M 27.469908 111.26656
 " style="fill: #ffffff; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_33">
-     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start; fill: #6c8ebf" x="30.632014" y="105.682245" transform="rotate(-0 30.632014 105.682245)">YJR060W+YPL046C</text>
+     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start" x="30.632014" y="105.682245" transform="rotate(-0 30.632014 105.682245)">YJR060W+YPL046C</text>
     </g>
     <g id="patch_36">
      <path d="M 132.873431 111.26656 
@@ -484,7 +484,7 @@ M 27.469908 125.74644
 " style="fill: #ffffff; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_40">
-     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start; fill: #6c8ebf" x="30.632014" y="120.162125" transform="rotate(-0 30.632014 120.162125)">YDR057W+YLL012W</text>
+     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start" x="30.632014" y="120.162125" transform="rotate(-0 30.632014 120.162125)">YDR057W+YLL012W</text>
     </g>
     <g id="patch_44">
      <path d="M 132.873431 125.74644 
@@ -569,7 +569,7 @@ M 27.469908 140.22632
 " style="fill: #ffffff; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_47">
-     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start; fill: #6c8ebf" x="30.632014" y="134.642005" transform="rotate(-0 30.632014 134.642005)">YLR312C-B+YPL081W</text>
+     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start" x="30.632014" y="134.642005" transform="rotate(-0 30.632014 134.642005)">YLR312C-B+YPL081W</text>
     </g>
     <g id="patch_52">
      <path d="M 132.873431 140.22632 
@@ -654,7 +654,7 @@ M 27.469908 154.706201
 " style="fill: #ffffff; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_54">
-     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start; fill: #6c8ebf" x="30.632014" y="149.121886" transform="rotate(-0 30.632014 149.121886)">YLL012W+YPL046C</text>
+     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start" x="30.632014" y="149.121886" transform="rotate(-0 30.632014 149.121886)">YLL012W+YPL046C</text>
     </g>
     <g id="patch_60">
      <path d="M 132.873431 154.706201 
@@ -739,7 +739,7 @@ M 27.469908 169.186081
 " style="fill: #ffffff; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_61">
-     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start; fill: #6c8ebf" x="30.632014" y="163.601766" transform="rotate(-0 30.632014 163.601766)">YDR057W+YPL081W</text>
+     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start" x="30.632014" y="163.601766" transform="rotate(-0 30.632014 163.601766)">YDR057W+YPL081W</text>
     </g>
     <g id="patch_68">
      <path d="M 132.873431 169.186081 
@@ -824,7 +824,7 @@ M 27.469908 183.665961
 " style="fill: #ffffff; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_68">
-     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start; fill: #6c8ebf" x="30.632014" y="178.081646" transform="rotate(-0 30.632014 178.081646)">YDR057W+YER079W</text>
+     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start" x="30.632014" y="178.081646" transform="rotate(-0 30.632014 178.081646)">YDR057W+YER079W</text>
     </g>
     <g id="patch_76">
      <path d="M 132.873431 183.665961 
@@ -909,7 +909,7 @@ M 27.469908 198.145842
 " style="fill: #ffffff; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_75">
-     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start; fill: #6c8ebf" x="30.632014" y="192.561527" transform="rotate(-0 30.632014 192.561527)">YER079W+YLR312C-B</text>
+     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start" x="30.632014" y="192.561527" transform="rotate(-0 30.632014 192.561527)">YER079W+YLR312C-B</text>
     </g>
     <g id="patch_84">
      <path d="M 132.873431 198.145842 
@@ -994,7 +994,7 @@ M 27.469908 212.625722
 " style="fill: #ffffff; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_82">
-     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start; fill: #6c8ebf" x="30.632014" y="207.041407" transform="rotate(-0 30.632014 207.041407)">YBR203W+YPL046C</text>
+     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start" x="30.632014" y="207.041407" transform="rotate(-0 30.632014 207.041407)">YBR203W+YPL046C</text>
     </g>
     <g id="patch_92">
      <path d="M 132.873431 212.625722 
@@ -1079,7 +1079,7 @@ M 27.469908 227.105602
 " style="fill: #ffffff; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_89">
-     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start; fill: #b85450" x="30.632014" y="221.521287" transform="rotate(-0 30.632014 221.521287)">YDR057W+YGL087C</text>
+     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start" x="30.632014" y="221.521287" transform="rotate(-0 30.632014 221.521287)">YDR057W+YGL087C</text>
     </g>
     <g id="patch_100">
      <path d="M 132.873431 227.105602 
@@ -1167,7 +1167,7 @@ M 27.469908 241.585483
 " style="fill: #ffffff; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_97">
-     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start; fill: #b85450" x="30.632014" y="236.001167" transform="rotate(-0 30.632014 236.001167)">YDR057W+YLR312C-B</text>
+     <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: start" x="30.632014" y="236.001167" transform="rotate(-0 30.632014 236.001167)">YDR057W+YLR312C-B</text>
     </g>
     <g id="patch_108">
      <path d="M 132.873431 241.585483 

@@ -60,32 +60,24 @@ workers pinned per GPU over one shared SQLite study **per condition** (3 studies
 - `scripts/delta_joint_expr_morph.slurm` — 4-worker launcher (`--export=ALL,CONDITION=…`).
 - Harness: `run_training` gained `cell_dataset.require_modalities` (intersection filter).
 
-### Delta provisioning (NOT done yet — Delta is unprovisioned for torchcell)
+### Delta setup (ALREADY provisioned — storage bbub, charge CHM230022)
 
-Unlike IGB (env pre-existed), Delta has NO torchcell repo / env / data. Allocation =
-**CHM230022** ("Generative ML for ODE Parameter Estimation"), Delta account code **rotates** —
-`Parameter_Estimation` notes use **`bbhh-delta-gpu`** (live `/projects/bbhh/mjvolk3`), its
-workspace + PDE4 use **`bbtp-delta-gpu`**. Partition = **`gpuA40x4`** (confirmed). Delta needs
-Duo 2FA, so these are user-run.
+torchcell IS on Delta at **`/projects/bbub/mjvolk3/torchcell`** (repo + `rockylinux_9.sif` +
+`/projects/bbub/miniconda3` env `torchcell` + `data/`). STORAGE stays on `bbub`; only the GPU
+**charge account** points at CHM230022 — code rotates **`bbhh-delta-gpu`** (live in
+`Parameter_Estimation` notes) vs **`bbtp-delta-gpu`** (its workspace + PDE4). Partition =
+**`gpuA40x4`**. Host `login.delta.ncsa.illinois.edu`; Duo 2FA (user-run). Remaining steps:
 
-1. **Account:** on a Delta login node `accounts` (or `sacctmgr -n show assoc user=$USER
-   format=account%20`) → pick the live code; or just try both at submit (invalid → instant
-   `Invalid account`). Default in the slurm is `bbhh-delta-gpu`; override `--account=bbtp-delta-gpu`.
-2. **Clone torchcell** to `/projects/<acct>/mjvolk3/torchcell`, `git checkout feat/igb-mmli-optuna-morph`.
-3. **conda env `torchcell`** on Delta with `optuna` installed. Parameter_Estimation's Delta env
-   is `env-param-delta` (different); torchcell needs its own — confirm one exists or build it,
-   then `pip install optuna` (same stale-env lesson as IGB).
-4. **`.env`** in the clone: set `DATA_ROOT=/projects/bbhh/mjvolk3/torchcell` (or wherever data
-   lands) so `run_training`'s dataset_root resolves.
-5. **Data → Delta** (Duo, one prompt): `bash …/sync_delta_fig3_core.sh` — 13 GB `fig3_core` to
-   `$DATA_ROOT/data/torchcell/experiments/019-simb-multimodal/fig3_core`.
-6. **Pre-create log dir:** `mkdir -p /projects/bbhh/mjvolk3/torchcell/experiments/019-simb-multimodal/slurm/output`
-   (SLURM opens `--output` before the script's mkdir → else instant no-log failure).
-7. Confirm the slurm knobs: `--output` path, `PROJECT_ROOT`/`DELTA_TC_ROOT`, `ACCT_PROJECTS`,
-   `CONDA_BASE`, and whether the apptainer container is even needed (Parameter_Estimation runs
-   bare conda on Delta).
+1. **Account:** `accounts` on Delta → live code; or try both at submit (invalid → instant
+   `Invalid account`). slurm default `bbhh-delta-gpu`; override `--account=bbtp-delta-gpu`.
+2. **Branch:** `cd /projects/bbub/mjvolk3/torchcell && git fetch && git checkout feat/igb-mmli-optuna-morph`.
+3. **optuna** in the Delta `torchcell` env (same stale-env lesson as IGB — it may be missing):
+   `singularity exec rockylinux_9.sif bash -c 'source /projects/bbub/miniconda3/bin/activate && conda activate torchcell && pip install optuna'`
+4. **Data:** confirm `grep DATA_ROOT /projects/bbub/mjvolk3/torchcell/.env`, then from GilaHyper
+   `bash …/sync_delta_fig3_core.sh` (Duo, one prompt) — set `DELTA_DATA_ROOT` to match `.env`.
+5. **Log dir:** `mkdir -p /projects/bbub/mjvolk3/torchcell/experiments/019-simb-multimodal/slurm/output`.
 
-### Launch (after provisioning)
+### Launch
 
 Run all three conditions (each its own study, W&B online). Try `bbhh` first, `bbtp` if rejected:
 

@@ -29,20 +29,18 @@
 #SBATCH --constraint="scratch"
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END,FAIL
-# CONFIRM ON DELTA before first submit (Delta is NOT provisioned for torchcell yet):
-#   * PROJECT_ROOT below = where you clone torchcell (default /projects/bbhh/mjvolk3, where
-#     Parameter_Estimation lives). --output path MUST be a real dir (pre-create it) or the
-#     job fails instantly with no log.
-#   * conda env `torchcell` must exist on Delta + `optuna` installed (see runbook note).
-#   * DATA_ROOT in the cloned repo's .env must point where sync_delta_fig3_core.sh landed the data.
-#SBATCH --output=/projects/bbhh/mjvolk3/torchcell/experiments/019-simb-multimodal/slurm/output/%x_%j.out
-#SBATCH --error=/projects/bbhh/mjvolk3/torchcell/experiments/019-simb-multimodal/slurm/output/%x_%j.out
+# torchcell IS provisioned on Delta at /projects/bbub/mjvolk3/torchcell (repo + rockylinux_9.sif
+# + conda). STORAGE stays on bbub; only the CHARGE account points at CHM230022 (bbhh/bbtp) above.
+# Pre-create the --output dir once (SLURM opens it before the script's mkdir), and confirm the
+# `torchcell` conda env has `optuna` (pip install if not — same stale-env lesson as IGB).
+#SBATCH --output=/projects/bbub/mjvolk3/torchcell/experiments/019-simb-multimodal/slurm/output/%x_%j.out
+#SBATCH --error=/projects/bbub/mjvolk3/torchcell/experiments/019-simb-multimodal/slurm/output/%x_%j.out
 
 module reset
 source ~/.bashrc
 
-# Single storage-root knob: change here (and the --output path above) to switch bbhh<->bbtp.
-PROJECT_ROOT="${DELTA_TC_ROOT:-/projects/bbhh/mjvolk3/torchcell}"
+# Storage root = the existing bbub clone (override with DELTA_TC_ROOT if you relocate).
+PROJECT_ROOT="${DELTA_TC_ROOT:-/projects/bbub/mjvolk3/torchcell}"
 CONDITION="${CONDITION:-joint}"
 OPTUNA_DIR=$PROJECT_ROOT/experiments/019-simb-multimodal/optuna
 mkdir -p "$OPTUNA_DIR"
@@ -51,14 +49,12 @@ mkdir -p "$PROJECT_ROOT/experiments/019-simb-multimodal/slurm/output"
 cd "$PROJECT_ROOT" || exit 1
 export NUM_WORKERS=$((SLURM_CPUS_PER_TASK / 4))
 
-# Provisioning knobs — set once for your Delta allocation (defaults = bbhh, where
-# Parameter_Estimation lives). CONFIRM the conda base + whether the apptainer container is
-# needed (Parameter_Estimation runs bare conda on Delta; torchcell's heavier env may too).
-ACCT_PROJECTS="${DELTA_ACCT_PROJECTS:-/projects/bbhh}"
-CONDA_BASE="${DELTA_CONDA_BASE:-$ACCT_PROJECTS/miniconda3}"
+# Delta torchcell conda base (from the existing bbub setup; env `torchcell`).
+CONDA_BASE="${DELTA_CONDA_BASE:-/projects/bbub/miniconda3}"
 
 srun apptainer exec --nv \
-    --bind "$ACCT_PROJECTS:$ACCT_PROJECTS" \
+    --bind /projects/bbub:/projects/bbub \
+    --bind /scratch/bbub/mjvolk3:/scratch/bbub/mjvolk3 \
     --bind /work:/work \
     "$PROJECT_ROOT/rockylinux_9.sif" bash -c "
 source $CONDA_BASE/bin/activate
@@ -70,7 +66,11 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export PYTHONUNBUFFERED=1
 export PYTHONWARNINGS=ignore
 
-# Delta compute has internet -> W&B ONLINE (no offline dance).
+# W&B: Delta compute has internet -> ONLINE (live dashboards). If a compute node ever blocks
+# egress, flip to the IGB-proven offline path — uncomment these two, then 'wandb sync' the run
+# dir from a Delta LOGIN node afterward:
+#   export WANDB_MODE=offline
+#   export WANDB_DIR=$PROJECT_ROOT/experiments/019-simb-multimodal
 export WANDB__SERVICE_WAIT=600
 
 export CONDITION='$CONDITION'

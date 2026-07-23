@@ -53,8 +53,12 @@ workers pinned per GPU over one shared SQLite study **per condition** (3 studies
 ### Delta specifics
 
 - 48 h walltime cap; compute nodes **have internet → W&B ONLINE** (no offline/sync dance).
-- `gpuA40x4`, account `bbub-delta-gpu`, apptainer `rockylinux_9.sif`, project on
-  `/scratch/bbub/mjvolk3/torchcell`, conda `/projects/bbub/miniconda3/envs/torchcell`.
+- `gpuA40x4`, account **`bbtp-delta-gpu`** (CHM230022, 10.4K hrs). NO singularity — call the env
+  python DIRECTLY. Repo `/projects/bbub/mjvolk3/torchcell`; DATA_ROOT `/work/hdd/bbub/mjvolk3/torchcell`.
+- **Env (rebuilt 2026-07-23):** py3.13 at `/work/hdd/bbub/miniconda3/envs/torchcell` (torch
+  2.5.1+cu124, PyG 2.4.0, optuna). It's a PREFIX env; `/work/hdd/bbub/miniconda3` has NO
+  `bin/activate` (base conda is at `/projects/bbub`) → slurm calls
+  `/work/hdd/bbub/miniconda3/envs/torchcell/bin/python` directly, no `conda activate`.
 - Single-GPU per trial also sidesteps the DDP `find_unused_parameters` failure the masked
   multitask heads trip (job 1012).
 
@@ -67,11 +71,11 @@ workers pinned per GPU over one shared SQLite study **per condition** (3 studies
 
 ### Delta setup (ALREADY provisioned — storage bbub, charge CHM230022)
 
-torchcell IS on Delta at **`/projects/bbub/mjvolk3/torchcell`** (repo + `rockylinux_9.sif` +
-`/projects/bbub/miniconda3` env `torchcell` + `data/`). STORAGE stays on `bbub`; only the GPU
-**charge account** points at CHM230022 — code rotates **`bbhh-delta-gpu`** (live in
-`Parameter_Estimation` notes) vs **`bbtp-delta-gpu`** (its workspace + PDE4). Partition =
-**`gpuA40x4`**. Host `login.delta.ncsa.illinois.edu`; Duo 2FA (user-run). Remaining steps:
+Repo at **`/projects/bbub/mjvolk3/torchcell`**; DATA_ROOT **`/work/hdd/bbub/mjvolk3/torchcell`**;
+py3.13 env **`/work/hdd/bbub/miniconda3/envs/torchcell`** (rebuilt 2026-07-23 — old envs were
+3.11, too old). Charge account = **`bbtp-delta-gpu`** (CHM230022, 10.4K hrs; `bbhh` is overdrawn).
+Partition `gpuA40x4`. Host `login.delta.ncsa.illinois.edu`; Duo 2FA (user-run). Setup done;
+remaining steps:
 
 1. **Account:** `accounts` on Delta → live code; or try both at submit (invalid → instant
    `Invalid account`). slurm default `bbhh-delta-gpu`; override `--account=bbtp-delta-gpu`.

@@ -49,47 +49,39 @@ mkdir -p "$PROJECT_ROOT/experiments/019-simb-multimodal/slurm/output"
 cd "$PROJECT_ROOT" || exit 1
 export NUM_WORKERS=$((SLURM_CPUS_PER_TASK / 4))
 
-# Delta torchcell conda base (from the existing bbub setup; env `torchcell`).
+# BARE conda on Delta (no singularity — matches 003 delta_wandb; the env at
+# $CONDA_BASE/envs/torchcell runs natively, and bare avoids the container-bind pitfalls).
 CONDA_BASE="${DELTA_CONDA_BASE:-/projects/bbub/miniconda3}"
-
-srun apptainer exec --nv \
-    --bind /projects/bbub:/projects/bbub \
-    --bind /scratch/bbub/mjvolk3:/scratch/bbub/mjvolk3 \
-    --bind /work:/work \
-    "$PROJECT_ROOT/rockylinux_9.sif" bash -c "
-source $CONDA_BASE/bin/activate
+source "$CONDA_BASE/bin/activate"
 conda activate torchcell
 
-export PYTHONPATH=\"$PROJECT_ROOT:\$PYTHONPATH\"
+export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
 export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export PYTHONUNBUFFERED=1
 export PYTHONWARNINGS=ignore
 
 # W&B: Delta compute has internet -> ONLINE (live dashboards). If a compute node ever blocks
-# egress, flip to the IGB-proven offline path — uncomment these two, then 'wandb sync' the run
-# dir from a Delta LOGIN node afterward:
+# egress, flip to the IGB-proven offline path — uncomment these two, then 'wandb sync' from a
+# Delta LOGIN node afterward:
 #   export WANDB_MODE=offline
 #   export WANDB_DIR=$PROJECT_ROOT/experiments/019-simb-multimodal
 export WANDB__SERVICE_WAIT=600
 
-export CONDITION='$CONDITION'
-export OPTUNA_STORAGE=\"sqlite:///$OPTUNA_DIR/optuna_019_joint_${CONDITION}.db\"
-export OPTUNA_STUDY_NAME='joint_${CONDITION}_000'
+export OPTUNA_STORAGE="sqlite:///$OPTUNA_DIR/optuna_019_joint_${CONDITION}.db"
+export OPTUNA_STUDY_NAME="joint_${CONDITION}_000"
 export OPTUNA_N_TRIALS=20
-export JOINT_BASE_CONFIG='delta_joint_expr_morph_000'
-export NUM_WORKERS=$NUM_WORKERS
+export JOINT_BASE_CONFIG="delta_joint_expr_morph_000"
 
 SWEEP=$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/optuna_joint_sweep.py
 
-# Pre-create the study in ONE process so the 4 workers only load_if_exists — a stagger is not
-# enough (each worker imports torch for >15s before create_study, so all four race the fresh
-# DB's DDL: sqlite 'table studies already exists'). Serializing creation kills the race.
-python -c \"import os, optuna; optuna.create_study(study_name=os.environ['OPTUNA_STUDY_NAME'], storage=os.environ['OPTUNA_STORAGE'], direction='maximize', load_if_exists=True)\"
+# Pre-create the study in ONE process so the 4 workers only load_if_exists — avoids the fresh-DB
+# DDL race (sqlite 'table studies already exists'). --create-only makes the driver create the
+# study with the RIGHT directions (joint = multi-objective, expr/morph = single) from one place.
+python $SWEEP --create-only
 
-CUDA_VISIBLE_DEVICES=0 OPTUNA_WORKER_ID=0 python \$SWEEP &
-CUDA_VISIBLE_DEVICES=1 OPTUNA_WORKER_ID=1 python \$SWEEP &
-CUDA_VISIBLE_DEVICES=2 OPTUNA_WORKER_ID=2 python \$SWEEP &
-CUDA_VISIBLE_DEVICES=3 OPTUNA_WORKER_ID=3 python \$SWEEP &
+CUDA_VISIBLE_DEVICES=0 OPTUNA_WORKER_ID=0 python $SWEEP &
+CUDA_VISIBLE_DEVICES=1 OPTUNA_WORKER_ID=1 python $SWEEP &
+CUDA_VISIBLE_DEVICES=2 OPTUNA_WORKER_ID=2 python $SWEEP &
+CUDA_VISIBLE_DEVICES=3 OPTUNA_WORKER_ID=3 python $SWEEP &
 wait
-"

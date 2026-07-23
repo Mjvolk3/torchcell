@@ -29,9 +29,14 @@ also have fitness). The primitive is a new harness filter **`cell_dataset.requir
 
 | CONDITION | active_heads | objective |
 |---|---|---|
-| `expr` | `[per_gene]` | `val/per_gene/pearson_per_gene` |
-| `morph` | `[global]` | `val/global/pearson_per_gene` |
-| `joint` | `[per_gene, global]` | mean(expr, morph) honest r (both logged) |
+| `expr` | `[per_gene]` | single: `val/per_gene/pearson_per_gene` |
+| `morph` | `[global]` | single: `val/global/pearson_per_gene` |
+| `joint` | `[per_gene, global]` | **MULTI-OBJECTIVE**: maximize (expr, morph) → Pareto front |
+
+The `joint` condition is a true **multi-objective** Optuna study (`directions=["maximize",
+"maximize"]`) — `study.best_trials` is the **Pareto front** of configs trading expression vs
+morphology, not a hand-weighted scalar. This is the scientific object: which configs are on
+the frontier of "good at both." (Single-objective `expr`/`morph` use `best_value`.)
 
 **Read-out:** `joint − morph` = does expression help Ohya morphology; `joint − expr` = does
 morphology rescue expression. Same 1,440 split across all three → the delta IS the

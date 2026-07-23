@@ -30,8 +30,13 @@ module load singularity
 PROJECT_ROOT=/home/a-m/mjvolk3/projects/torchcell
 SCRATCH_ROOT=/home/a-m/mjvolk3/scratch/torchcell
 OPTUNA_DIR=$SCRATCH_ROOT/experiments/019-simb-multimodal/optuna
+# Persistent W&B base: wandb writes offline runs to $WANDB_BASE/wandb/offline-run-*. Pin it
+# to shared scratch (NOT the CWD default) so all 80 trials collect in one place; after the
+# run, `wandb sync` them from a biologin LOGIN node (login nodes have internet; compute don't).
+WANDB_BASE=$SCRATCH_ROOT/experiments/019-simb-multimodal
 mkdir -p "$OPTUNA_DIR"
 mkdir -p "$SCRATCH_ROOT/experiments/019-simb-multimodal/slurm/output"
+mkdir -p "$WANDB_BASE/wandb"
 
 cd "$PROJECT_ROOT/experiments" || exit 1
 
@@ -50,6 +55,8 @@ export PYTHONWARNINGS=ignore
 # --- OFFLINE: no internet on IGB compute nodes ---
 export WANDB_MODE=offline
 export WANDB__SERVICE_WAIT=600
+# Persistent, findable offline-run dir on shared scratch (sync from a login node later).
+export WANDB_DIR=$SCRATCH_ROOT/experiments/019-simb-multimodal
 
 # --- Optuna shared study (SQLite on scratch) ---
 export OPTUNA_STORAGE='sqlite:////home/a-m/mjvolk3/scratch/torchcell/experiments/019-simb-multimodal/optuna/optuna_019_morph.db'

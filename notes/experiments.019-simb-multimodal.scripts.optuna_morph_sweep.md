@@ -98,8 +98,15 @@ wrapper, so unused head params never trip this — the sweep avoids the bug for 
      print(len(s.trials), s.best_value, s.best_params)"
    ```
 
-5. **W&B sync** (from an internet machine, offline runs live under the singularity CWD
-   `experiments/wandb/offline-*`): `wandb sync experiments/wandb/offline-run-*`.
+5. **W&B sync** — offline runs are pinned to shared scratch via `WANDB_DIR`, at
+   `/home/a-m/mjvolk3/scratch/torchcell/experiments/019-simb-multimodal/wandb/offline-run-*`.
+   IGB compute nodes are offline but **login nodes have internet**, and scratch is shared, so
+   sync from a `biologin` login node after the run:
+
+   ```bash
+   cd /home/a-m/mjvolk3/scratch/torchcell/experiments/019-simb-multimodal
+   wandb sync wandb/offline-run-*
+   ```
 
 ### Open / next
 

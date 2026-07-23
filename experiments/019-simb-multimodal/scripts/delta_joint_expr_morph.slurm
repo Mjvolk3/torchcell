@@ -19,10 +19,10 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --partition=gpuA40x4
-# CHM230022 (ODE param-estimation) alloc — code rotates: TRY BOTH. Parameter_Estimation notes
-# use bbhh (live /projects/bbhh/mjvolk3); its workspace + PDE4 use bbtp. An expired account is
-# rejected instantly ("Invalid account"). Override at submit: sbatch --account=bbtp-delta-gpu ...
-#SBATCH --account=bbhh-delta-gpu
+# CHM230022 = bbtp-delta-gpu (`accounts`: 10,418 hrs, "generative ml for ODE param est").
+# NOT bbhh (that's overdrawn -6447, a different project). bbub-delta-gpu (3851 hrs, torchcell
+# multimodal) also valid. Override at submit: sbatch --account=bbub-delta-gpu ...
+#SBATCH --account=bbtp-delta-gpu
 #SBATCH --gpus-per-node=4
 #SBATCH --job-name=019-joint-optuna
 #SBATCH --time=48:00:00

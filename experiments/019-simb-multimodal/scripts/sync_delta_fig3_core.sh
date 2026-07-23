@@ -30,10 +30,12 @@ fi
 echo "== fig3_core sync GilaHyper -> Delta =="
 echo "  src : $SRC  ($(du -sh "$SRC" | cut -f1))"
 echo "  dest: $DELTA_USER@$DELTA_HOST:$DEST_DIR"
+echo "  NOTE: Delta uses Duo 2FA — approve the ONE push prompt when it appears."
 
-ssh "$DELTA_USER@$DELTA_HOST" "mkdir -p '$(dirname "$DEST_DIR")'"
-
+# Single SSH connection = a SINGLE Duo approval: create the dest dir inside the rsync's own
+# remote session via --rsync-path (mkdir -p ... && rsync), instead of a separate ssh mkdir.
 rsync -aP --human-readable \
+  --rsync-path="mkdir -p '$DEST_DIR' && rsync" \
   "$SRC/" "$DELTA_USER@$DELTA_HOST:$DEST_DIR/"
 
 echo "== done. Verify on Delta: ls '$DEST_DIR' =="

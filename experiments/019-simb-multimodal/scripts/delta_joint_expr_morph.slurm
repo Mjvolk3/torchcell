@@ -9,6 +9,11 @@
 #   sbatch --export=ALL,CONDITION=expr  experiments/019-simb-multimodal/scripts/delta_joint_expr_morph.slurm
 #   sbatch --export=ALL,CONDITION=joint experiments/019-simb-multimodal/scripts/delta_joint_expr_morph.slurm
 #
+# ONE-TIME SETUP before the first sbatch — SLURM opens --output at job start, BEFORE this
+# script's own mkdir runs, so the log dir must already exist or the job FAILS instantly with
+# no output:
+#   mkdir -p /scratch/bbub/mjvolk3/torchcell/experiments/019-simb-multimodal/slurm/output
+#
 #SBATCH --mem=200g
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -62,9 +67,12 @@ export NUM_WORKERS=$NUM_WORKERS
 
 SWEEP=$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/optuna_joint_sweep.py
 
-# Worker 0 creates the study + tables; stagger the rest to dodge a fresh-DB race.
+# Pre-create the study in ONE process so the 4 workers only load_if_exists — a stagger is not
+# enough (each worker imports torch for >15s before create_study, so all four race the fresh
+# DB's DDL: sqlite 'table studies already exists'). Serializing creation kills the race.
+python -c \"import os, optuna; optuna.create_study(study_name=os.environ['OPTUNA_STUDY_NAME'], storage=os.environ['OPTUNA_STORAGE'], direction='maximize', load_if_exists=True)\"
+
 CUDA_VISIBLE_DEVICES=0 OPTUNA_WORKER_ID=0 python \$SWEEP &
-sleep 15
 CUDA_VISIBLE_DEVICES=1 OPTUNA_WORKER_ID=1 python \$SWEEP &
 CUDA_VISIBLE_DEVICES=2 OPTUNA_WORKER_ID=2 python \$SWEEP &
 CUDA_VISIBLE_DEVICES=3 OPTUNA_WORKER_ID=3 python \$SWEEP &

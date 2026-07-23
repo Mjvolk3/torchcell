@@ -67,10 +67,13 @@ export NUM_WORKERS=$NUM_WORKERS
 
 SWEEP=$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/optuna_morph_sweep.py
 
-# Worker 0 first — it creates the study + tables; the others load_if_exists after a short
-# stagger to avoid a fresh-DB table-creation race.
+# Pre-create the study in ONE process (no torch import, returns in ms) so the 4 workers only
+# ever load_if_exists — a stagger is not enough because each worker spends >15s importing
+# torch before create_study, so all four race the fresh-DB DDL (sqlite 'table studies already
+# exists'). Serializing creation here eliminates that race.
+python -c \"import os, optuna; optuna.create_study(study_name=os.environ['OPTUNA_STUDY_NAME'], storage=os.environ['OPTUNA_STORAGE'], direction='maximize', load_if_exists=True)\"
+
 CUDA_VISIBLE_DEVICES=0 OPTUNA_WORKER_ID=0 python \$SWEEP &
-sleep 15
 CUDA_VISIBLE_DEVICES=1 OPTUNA_WORKER_ID=1 python \$SWEEP &
 CUDA_VISIBLE_DEVICES=2 OPTUNA_WORKER_ID=2 python \$SWEEP &
 CUDA_VISIBLE_DEVICES=3 OPTUNA_WORKER_ID=3 python \$SWEEP &

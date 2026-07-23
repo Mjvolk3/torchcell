@@ -31,6 +31,7 @@ Environment (set by the Delta slurm):
 
 import os
 import os.path as osp
+import sys
 
 import optuna
 import torch
@@ -70,7 +71,7 @@ def _norm_choice(trial: optuna.Trial, head: str) -> str:
     return trial.suggest_categorical("morph_norm", ["raw", "yeo_johnson", "zscore"])
 
 
-def objective(trial: optuna.Trial) -> float:
+def objective(trial: optuna.Trial) -> float | tuple[float, float]:
     hidden = trial.suggest_categorical("hidden_channels", [16, 32, 64])
     layers = trial.suggest_categorical("num_transformer_layers", [2, 3])
     graph_reg = trial.suggest_categorical("graph_reg_lambda", [0.0, 0.001])
@@ -122,17 +123,17 @@ def objective(trial: optuna.Trial) -> float:
     trial.set_user_attr("expr_pearson", expr_r)
     trial.set_user_attr("morph_pearson", morph_r)
 
-    if CONDITION == "expr":
-        objective_metric = EXPR_METRIC
-    elif CONDITION == "morph":
-        objective_metric = MORPH_METRIC
-    else:  # joint -> reward both being good
+    if CONDITION == "joint":
+        # MULTI-OBJECTIVE: maximize BOTH honest metrics -> Optuna returns the Pareto front of
+        # (expression, morphology). This is the scientific object: the configs on the frontier
+        # of "good at both", NOT a hand-weighted scalar that hides the trade-off.
         if expr_r is None or morph_r is None:
             raise optuna.TrialPruned(
                 f"joint needs both metrics (expr={expr_r}, morph={morph_r})"
             )
-        return 0.5 * (expr_r + morph_r)
+        return expr_r, morph_r
 
+    objective_metric = EXPR_METRIC if CONDITION == "expr" else MORPH_METRIC
     if objective_metric not in metrics:
         raise optuna.TrialPruned(
             f"{objective_metric} not logged (keys: {sorted(metrics)[:12]}...)"
@@ -140,24 +141,41 @@ def objective(trial: optuna.Trial) -> float:
     return metrics[objective_metric]
 
 
-def main() -> None:
+def get_study() -> optuna.Study:
+    """Create-or-load the study. joint = MULTI-objective (maximize expr, maximize morph);
+    expr/morph = single-objective. TPESampler handles both (MOTPE for the multi case)."""
     sampler = optuna.samplers.TPESampler(seed=WORKER_ID, multivariate=True, group=True)
-    study = optuna.create_study(
-        study_name=STUDY_NAME,
-        storage=STORAGE,
-        direction="maximize",
-        sampler=sampler,
-        load_if_exists=True,
+    common = dict(
+        study_name=STUDY_NAME, storage=STORAGE, sampler=sampler, load_if_exists=True
     )
+    if CONDITION == "joint":
+        return optuna.create_study(directions=["maximize", "maximize"], **common)
+    return optuna.create_study(direction="maximize", **common)
+
+
+def main() -> None:
+    study = get_study()
+    # --create-only: the slurm runs this ONCE (serialized) before the 4 workers so they only
+    # load_if_exists — avoids the fresh-DB DDL race. The directions logic lives HERE (one place)
+    # so pre-create and workers always agree on single- vs multi-objective.
+    if "--create-only" in sys.argv:
+        print(f"[create-only] study={STUDY_NAME} directions={study.directions}", flush=True)
+        return
+
     print(
         f"[{CONDITION} w{WORKER_ID}] study={STUDY_NAME} heads={ACTIVE_HEADS} "
-        f"n_trials={N_TRIALS} storage={STORAGE}",
+        f"n_trials={N_TRIALS} multi_obj={CONDITION == 'joint'}",
         flush=True,
     )
     study.optimize(objective, n_trials=N_TRIALS, catch=(Exception,))
 
     if WORKER_ID == 0:
-        print(f"[{CONDITION} w0] best={study.best_value:.4f} params={study.best_params}")
+        if CONDITION == "joint":
+            print(f"[joint w0] Pareto front ({len(study.best_trials)} trials):")
+            for t in study.best_trials[:10]:
+                print(f"  t{t.number} (expr,morph)={[round(v, 4) for v in t.values]} {t.params}")
+        else:
+            print(f"[{CONDITION} w0] best={study.best_value:.4f} params={study.best_params}")
 
 
 if __name__ == "__main__":

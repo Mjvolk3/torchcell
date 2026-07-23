@@ -1,0 +1,131 @@
+# experiments/019-simb-multimodal/conf/delta_joint_expr_morph_000.yaml
+# Delta (NCSA) CONTROLLED expression<->morphology auxiliary-task sweep BASE config.
+#
+# Question: does expression data improve MORPHOLOGY prediction on Ohya (and does morphology
+# rescue expression's val floor)? To isolate the auxiliary-task effect from a data-quantity
+# confound, ALL conditions run on the SAME instance set — the 1,440 genotypes carrying BOTH
+# modalities (`require_modalities: [expression_log2_ratio, calmorph]`). optuna_joint_sweep.py
+# then varies ONLY which heads are active:
+#   CONDITION=expr  -> active_heads=[per_gene]          (expression baseline on the 1,440)
+#   CONDITION=morph -> active_heads=[global]            (morphology baseline on the 1,440)
+#   CONDITION=joint -> active_heads=[per_gene, global]  (shared embedding -> both phenotypes)
+# joint − morph = "does expression help Ohya morphology"; joint − expr = the reverse.
+#
+# Delta compute nodes HAVE internet -> W&B ONLINE (no offline/sync dance, unlike IGB). Single
+# GPU per trial (4 workers pinned per GPU in the slurm) — also sidesteps the DDP
+# find_unused_parameters failure the masked multitask heads trip under DDP.
+defaults:
+  - default
+  - _self_
+
+dry_run: false
+seed: 0
+
+wandb:
+  project: torchcell_019-simb-multimodal_cgt_multitask
+  tags: [ws-run, delta, joint, optuna, single-gpu]
+
+cell_dataset:
+  graphs: [physical, regulatory]
+  node_embeddings: []
+  query_file: fig3_core.cql
+  dataset_tag: fig3_core
+  # THE control: fix the instance set to genotypes with BOTH modalities (the 1,440).
+  require_modalities: [expression_log2_ratio, calmorph]
+
+transforms:
+  use_transforms: false
+
+data_module:
+  is_perturbation_subset: false
+  perturbation_subset_size: 10000
+  batch_size: 32
+  num_workers: 4
+  pin_memory: true
+  prefetch: false
+
+trainer:
+  max_epochs: 150
+  strategy: auto        # single-GPU per trial
+  accelerator: gpu
+  devices: 1
+  overfit_batches: 0
+  precision: bf16-mixed
+  log_every_n_steps: 10
+  fast_dev_run: false
+  early_stopping:
+    enabled: true
+    monitor: val/loss
+    mode: min
+    patience: 20
+    min_delta: 0.0
+
+multitask:
+  # Driver overrides per CONDITION; default = joint.
+  active_heads: [per_gene, global]
+  loss_fn: mse
+  # Per-head target-norm levers — driver sweeps raw/yeo_johnson/zscore per modality.
+  normalize_vector_targets: [global]
+  standardize_per_feature_target: []
+  vector_norm_method: yeo_johnson
+  target_norm_eps: 1.0e-8
+  drop_features:
+    global: [A113_A, D203, D205]
+  degenerate_robust_cv: 0.01
+  heads:
+    global:
+      output_dim: 278
+      use_gene_pool: true
+    per_gene:
+      output_dim: 1
+    per_metabolite:
+      output_dim: 1
+  head_weights:
+    gene_interaction: 1.0
+    per_gene: 1.0
+    global: 1.0
+    per_metabolite: 1.0
+  head_phenotypes:
+    gene_interaction: [fitness, gene_interaction]
+    per_gene: [expression_log2_ratio]
+    global: [calmorph]
+    per_metabolite: [metabolite]
+
+model:
+  checkpoint_path: null
+  gene_num: 6607
+  hidden_channels: 32
+  num_transformer_layers: 2
+  num_attention_heads: 4
+  dropout: 0.1
+  learnable_embedding:
+    enabled: true
+    size: ${model.hidden_channels}
+    preprocessor:
+      num_layers: 2
+      dropout: 0.1
+  graph_regularization:
+    graph_reg_lambda: 0.001
+    graph_reg_layer: [1, 2]
+    row_sampling_rate: 1.0
+    regularized_heads:
+      physical:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 0
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      regulatory:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 1
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+  perturbation_head:
+    num_heads: 4
+    dropout: 0.1
+
+regression_task:
+  optimizer:
+    type: AdamW
+    lr: 3e-4
+    weight_decay: 1e-8
+  lr_scheduler: null
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0

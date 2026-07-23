@@ -1188,6 +1188,32 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
                 f"(names={restrict_names})"
             )
 
+    # ---- require_modalities: keep only genotypes carrying ALL listed phenotype types ----
+    # Enables the CONTROLLED auxiliary-task experiment (does expression help morphology, and
+    # vice versa): fix the instance set to those with BOTH modalities, then vary only which
+    # heads are active. Unlike restrict_dataset_names (UNION over dataset names), this is the
+    # INTERSECTION over phenotype-type presence, using the dataset's phenotype_label_index.
+    require_modalities = list(cfg.cell_dataset.get("require_modalities", []))
+    if require_modalities:
+        label_index = dataset.phenotype_label_index
+        missing = [m for m in require_modalities if m not in label_index]
+        if missing:
+            raise ValueError(
+                f"require_modalities {missing} not in phenotype_label_index "
+                f"(available: {sorted(label_index)[:12]}...)"
+            )
+        allowed = set(label_index[require_modalities[0]])
+        for m in require_modalities[1:]:
+            allowed &= set(label_index[m])
+        for split_attr in ("train_dataset", "val_dataset", "test_dataset"):
+            sub = getattr(data_module, split_attr)
+            before = len(sub.indices)
+            sub.indices = [i for i in sub.indices if i in allowed]
+            print(
+                f"[require_modalities] {split_attr}: {before} -> {len(sub.indices)} rows "
+                f"(all of {require_modalities})"
+            )
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
     heads_config = build_heads_config(cfg)
     model = CellGraphTransformer(

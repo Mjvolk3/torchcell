@@ -19,9 +19,9 @@ SRC="$GH_DATA_ROOT/$REL"
 # --- Destination (Delta) ---
 DELTA_USER="${DELTA_USER:-mjvolk3}"
 DELTA_HOST="${DELTA_HOST:-login.delta.ncsa.illinois.edu}"
-# Must equal DATA_ROOT in the existing Delta repo's .env (torchcell already lives at
-# /projects/bbub/mjvolk3/torchcell). CONFIRM: grep DATA_ROOT /projects/bbub/mjvolk3/torchcell/.env
-DELTA_DATA_ROOT="${DELTA_DATA_ROOT:-/projects/bbub/mjvolk3/torchcell}"
+# Delta .env DATA_ROOT (confirmed 2026-07-22): /work/hdd/bbub/mjvolk3/torchcell — the large
+# /work/hdd space, NOT /projects (which has a tight quota). run_training reads this DATA_ROOT.
+DELTA_DATA_ROOT="${DELTA_DATA_ROOT:-/work/hdd/bbub/mjvolk3/torchcell}"
 DEST_DIR="$DELTA_DATA_ROOT/$REL"
 
 if [[ ! -d "$SRC" ]]; then

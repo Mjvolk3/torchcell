@@ -984,7 +984,7 @@ def run_dry_run(cfg: DictConfig) -> None:
     print("[dry-run] OK -- model + heads + masked loss wired correctly.")
 
 
-def run_training(cfg: DictConfig) -> None:
+def run_training(cfg: DictConfig) -> dict[str, float]:
     """Full training path: genome/graph/embeddings/dataset/datamodule + Trainer."""
     # Deferred heavy imports so --help / dry-run never pay for them.
     from torch_geometric.transforms import Compose
@@ -1485,8 +1485,15 @@ def run_training(cfg: DictConfig) -> None:
         fast_dev_run=cfg.trainer.get("fast_dev_run", False),
     )
     trainer.fit(model=task, datamodule=data_module)
+    # Snapshot the final logged metrics BEFORE wandb.finish() so an external driver
+    # (e.g. the Optuna sweep) can read the objective (e.g. val/global/pearson_per_gene).
+    # main() ignores this return, so the plain training path is byte-for-byte unchanged.
+    final_metrics = {
+        k: float(v) for k, v in trainer.callback_metrics.items() if v is not None
+    }
     if run is not None:
         wandb.finish()
+    return final_metrics
 
 
 @hydra.main(

@@ -11,7 +11,7 @@ dry_run: false
 seed: 0
 
 wandb:
-  project: torchcell_019-simb-multimodal_cgt_multitask
+  project: torchcell_019_expr
   tags: [ws-run, gilahyper, expr, optuna, peak]
 
 cell_dataset:

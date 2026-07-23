@@ -10,9 +10,9 @@
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
-#SBATCH --gres=gpu:4
+#SBATCH --gres=gpu:3
 #SBATCH --job-name=019-expr-peak
-#SBATCH --time=6:00:00
+#SBATCH --time=24:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END,FAIL
 #SBATCH --output=/scratch/projects/torchcell-scratch/experiments/019-simb-multimodal/slurm/output/%x_%j.out
@@ -39,7 +39,7 @@ export JOINT_BASE_CONFIG=gh_expr_optuna_000
 export OPTUNA_STORAGE="sqlite:///$OPTUNA_DIR/optuna_019_expr_peak.db"
 export OPTUNA_STUDY_NAME=expr_peak_000
 export OPTUNA_N_TRIALS="${OPTUNA_N_TRIALS:-30}"
-export NUM_WORKERS=$((SLURM_CPUS_PER_TASK / 4))
+export NUM_WORKERS=$((SLURM_CPUS_PER_TASK / 3))
 
 SWEEP=$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/optuna_joint_sweep.py
 
@@ -49,5 +49,4 @@ python $SWEEP --create-only
 CUDA_VISIBLE_DEVICES=0 OPTUNA_WORKER_ID=0 python $SWEEP &
 CUDA_VISIBLE_DEVICES=1 OPTUNA_WORKER_ID=1 python $SWEEP &
 CUDA_VISIBLE_DEVICES=2 OPTUNA_WORKER_ID=2 python $SWEEP &
-CUDA_VISIBLE_DEVICES=3 OPTUNA_WORKER_ID=3 python $SWEEP &
 wait

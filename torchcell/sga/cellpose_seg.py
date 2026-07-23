@@ -530,6 +530,7 @@ _CATEGORY_COLOR = {
     "N": (255, 140, 0),  # neighbour of a multi well -- orange
     "C": (170, 0, 255),  # non-circular -- purple
     "R": (0, 128, 255),  # grid-recovered Cellpose miss -- blue
+    "X": (255, 20, 147),  # extra colliding colony (cause of a multi) -- deep pink
 }
 
 
@@ -602,8 +603,8 @@ def _draw_cellpose_overlay(
     im = ImageOps.exif_transpose(Image.open(path)).convert("RGB")
     over = np.asarray(im).copy()
     masks = np.asarray(masks)
-    # draw accepted first, then recovered, then invalidations on top
-    for cat in ("", "R", "C", "N", "M"):
+    # draw accepted first, then recovered, then invalidations + collision partners on top
+    for cat in ("", "R", "X", "C", "N", "M"):
         ids = [i for i, c in kept_color.items() if c == cat]
         if not ids:
             continue
@@ -698,6 +699,7 @@ def quantify_plate_image_cellpose(
     recs: list[dict[str, float | str | int]] = []
     well_idx: dict[tuple[int, int], int] = {}  # (ri,ci) -> recs index, occupied only
     empty_wells: list[tuple[int, int, int]] = []  # (ri,ci,recs_idx) with no instance
+    competitor_ids: set[int] = set()  # extra colliding colonies (cause of a multi flag)
     for ri in range(cfg.n_rows):
         for ci in range(cfg.n_cols):
             j = ri * cfg.n_cols + ci
@@ -763,6 +765,9 @@ def quantify_plate_image_cellpose(
             ]
             if competitors:
                 flags += "M"  # two colonies compete for nutrient -> invalidate (red)
+                # the extra colliding colonies are not grid wells; mark them so the
+                # collision shows BOTH colonies, not just the invalidated well.
+                competitor_ids.update(int(p["id"]) for p in competitors)
             well_idx[(ri, ci)] = len(recs)
             recs.append(
                 _well(
@@ -863,6 +868,10 @@ def quantify_plate_image_cellpose(
             if "C" in f
             else ""
         )
+    # the extra colliding colonies (not grid wells) drawn distinctly from the red well
+    for cid in competitor_ids:
+        if cid not in kept_color:
+            kept_color[cid] = "X"
 
     cols = ["row", "col", "size", "circularity", "flags", "cx", "cy", "detector"]
     df = pd.DataFrame([{k: r[k] for k in cols} for r in recs])

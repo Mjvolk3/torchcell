@@ -156,16 +156,21 @@ def _fig_correlation(df: pd.DataFrame) -> None:
         zorder=3,
         label="Costanzo 2016",
     )
-    # Kuzmin (4 genes) overlaid as red circles
+    # Kuzmin (4 genes) overlaid as red circles. Only a y (our assay) error bar: Kuzmin
+    # 2018 released point SMF values with NO per-strain SD, so there is no x error bar.
     kuz = df.dropna(subset=["kuzmin_smf"])
-    ax.scatter(
+    ax.errorbar(
         kuz["kuzmin_smf"],
         kuz["boot_fitness"],
-        s=16,
-        marker="o",
-        facecolor=C_RED,
-        edgecolor="black",
-        linewidth=0.4,
+        yerr=kuz["boot_se"],
+        fmt="o",
+        ms=4,  # equal to Costanzo marker size
+        mfc=C_RED,
+        mec="black",
+        mew=0.4,
+        ecolor="black",
+        elinewidth=0.4,
+        capsize=1.2,
         zorder=4,
         label="Kuzmin 2018",
     )
@@ -187,8 +192,7 @@ def _fig_correlation(df: pd.DataFrame) -> None:
     ax.text(
         0.03,
         0.97,
-        f"Costanzo (n={n}): Pearson r={pr:.2f} (p={pp:.3f})\n"
-        f"                 Spearman ρ={sr:.2f} (p={sp:.3f})\n"
+        f"Costanzo (n={n}): Pearson r={pr:.2f} (p={pp:.3f}), Spearman ρ={sr:.2f} (p={sp:.3f})\n"
         f"Kuzmin (n={kn}): Pearson r={kpr:.2f}, Spearman ρ={ksr:.2f}",
         transform=ax.transAxes,
         fontsize=4.5,

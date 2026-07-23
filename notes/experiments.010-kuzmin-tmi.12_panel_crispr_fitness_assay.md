@@ -1363,7 +1363,7 @@ better than pre-fix (was r ~= 0.60, Spearman 0.52). Figure polish: equal marker 
 reference series; bar-chart legends moved inside top-right; pooled-SE label clarified to
 "pooled SE (colony SD / sqrt(n))".
 
-![Assay fitness (bootstrap mean across 6 plates) vs published single-mutant fitness: Costanzo 2016 (orange, n=12) and Kuzmin 2018 (red, n=4), identity line dashed, points labelled by systematic ORF. Costanzo Pearson r=0.61 (p=0.034), Spearman rho=0.64 (p=0.024); Kuzmin r=0.85. Error bars are SE-vs-SE (x = Costanzo bootstrap-SE, y = our bootstrap-across-plates SE).](assets/images/019-echo-crispr-array/cellpose/run2_fitness_correlation_reference.svg)
+![Assay fitness (bootstrap mean across 6 plates) vs published single-mutant fitness: Costanzo 2016 (orange, n=12) and Kuzmin 2018 (red, n=4), identity line dashed, points labelled by systematic ORF. Costanzo Pearson r=0.61 (p=0.034), Spearman rho=0.64 (p=0.024); Kuzmin r=0.85. Costanzo error bars are SE-vs-SE (x = Costanzo bootstrap SE, y = our bootstrap-across-plates SE); Kuzmin points have a y error bar only (our SE) -- Kuzmin 2018 released point SMF values with no per-strain SD, so no x error bar is possible.](assets/images/019-echo-crispr-array/cellpose/run2_fitness_correlation_reference.svg)
 
 ![Per-genotype measurement error: our replicate-colony fitness SD (orange, 5 nL / 50 h) vs Costanzo 2016 SMF SD (red, itself a bootstrap SE), by systematic ORF, sorted by the Costanzo value; dashed lines are the means (ours 0.146, Costanzo 0.082). Legend inside top-right.](assets/images/019-echo-crispr-array/cellpose/run2_sd_vs_reference.svg)
 

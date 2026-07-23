@@ -1,0 +1,135 @@
+# experiments/019-simb-multimodal/conf/igb_mmli_optuna_morph_000.yaml
+# IGB mmli MORPHOLOGY sniff sweep BASE config (Optuna-driven, SINGLE-GPU per trial).
+#
+# This is the fixed backbone; optuna_morph_sweep.py overrides the SWEPT knobs per trial
+# (model.hidden_channels, model.num_transformer_layers, target normalization on/off,
+# graph_reg_lambda, and the lr/dropout/weight_decay profile) via Hydra compose overrides.
+#
+# Mirrors the GilaHyper EXPRESSION grid recipe (small model, single GPU, EarlyStopping,
+# raw-unit per-feature Pearson) but on the CalMorph MORPHOLOGY `global` head (278 features,
+# n_train=3757) instead of expression. IGB compute nodes are OFFLINE, so W&B runs in
+# `offline` mode (WANDB_MODE=offline set by the slurm launcher) and is `wandb sync`'d later.
+#
+# Objective the driver maximizes: val/global/pearson_per_gene  (== per-FEATURE Pearson,
+# "across instances" — the honest morphology metric; per-STRAIN pearson stays high under
+# mean-collapse, so it is NOT the objective).
+defaults:
+  - default
+  - _self_
+
+dry_run: false
+seed: 0
+
+wandb:
+  project: torchcell_019-simb-multimodal_cgt_multitask
+  tags: [ws-run, igb, mmli, morph, optuna, single-gpu]
+
+cell_dataset:
+  graphs: [physical, regulatory]
+  node_embeddings: []
+  query_file: fig3_core.cql
+  dataset_tag: fig3_core
+
+transforms:
+  use_transforms: false
+
+data_module:
+  is_perturbation_subset: false
+  perturbation_subset_size: 10000
+  batch_size: 32
+  num_workers: 8
+  pin_memory: true
+  prefetch: false
+
+trainer:
+  max_epochs: 150
+  strategy: auto        # single-GPU per trial — no DDP
+  accelerator: gpu
+  devices: 1
+  overfit_batches: 0
+  precision: bf16-mixed
+  log_every_n_steps: 10
+  fast_dev_run: false
+  early_stopping:
+    enabled: true
+    monitor: val/loss
+    mode: min
+    patience: 20
+    min_delta: 0.0
+
+multitask:
+  active_heads: [global]
+  loss_fn: mse
+  # Target-normalization levers — SWEPT by the driver (raw / yeo_johnson / zscore):
+  #   normalize_vector_targets=[global] + vector_norm_method=yeo_johnson  -> Yeo-Johnson
+  #   standardize_per_feature_target=[global]                             -> z-score (anti-collapse)
+  #   both empty                                                          -> raw
+  # Declared here (with defaults) so the driver can override with `=` under struct mode.
+  normalize_vector_targets: [global]
+  standardize_per_feature_target: []
+  vector_norm_method: yeo_johnson
+  target_norm_eps: 1.0e-8
+  drop_features:
+    global: [A113_A, D203, D205]
+  degenerate_robust_cv: 0.01
+  heads:
+    global:
+      output_dim: 278
+      use_gene_pool: true
+    per_gene:
+      output_dim: 1
+    per_metabolite:
+      output_dim: 1
+  head_weights:
+    gene_interaction: 1.0
+    per_gene: 1.0
+    global: 1.0
+    per_metabolite: 1.0
+  head_phenotypes:
+    gene_interaction: [fitness, gene_interaction]
+    per_gene: [expression_log2_ratio]
+    global: [calmorph]
+    per_metabolite: [metabolite]
+
+model:
+  checkpoint_path: null
+  gene_num: 6607
+  # hidden_channels / num_transformer_layers / dropout are SWEPT by the driver.
+  hidden_channels: 32
+  num_transformer_layers: 2
+  # 4 divides every swept hidden (16/32/64), so attention is always valid.
+  num_attention_heads: 4
+  dropout: 0.1
+  learnable_embedding:
+    enabled: true
+    size: ${model.hidden_channels}
+    preprocessor:
+      num_layers: 2
+      dropout: 0.1
+  graph_regularization:
+    graph_reg_lambda: 0.001   # SWEPT by the driver (0.0 vs 0.001)
+    graph_reg_layer: [1, 2]
+    row_sampling_rate: 1.0
+    regularized_heads:
+      physical:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 0
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      regulatory:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 1
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+  perturbation_head:
+    num_heads: 4
+    dropout: 0.1
+
+regression_task:
+  optimizer:
+    type: AdamW
+    lr: 3e-4              # SWEPT by the driver (profile)
+    weight_decay: 1e-8   # SWEPT by the driver (profile)
+  # Scheduler OFF so the swept optimizer.lr is honest (CosineAnnealingWarmupRestarts would
+  # drive the effective LR from max_lr and override it — same rationale as the expr grid).
+  lr_scheduler: null
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0

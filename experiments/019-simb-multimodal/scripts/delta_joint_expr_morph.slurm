@@ -49,11 +49,13 @@ mkdir -p "$PROJECT_ROOT/experiments/019-simb-multimodal/slurm/output"
 cd "$PROJECT_ROOT" || exit 1
 export NUM_WORKERS=$((SLURM_CPUS_PER_TASK / 4))
 
-# BARE conda on Delta (no singularity — matches 003 delta_wandb; the env at
-# $CONDA_BASE/envs/torchcell runs natively, and bare avoids the container-bind pitfalls).
-CONDA_BASE="${DELTA_CONDA_BASE:-/projects/bbub/miniconda3}"
+# BARE conda on Delta (no singularity — matches 003 delta_wandb). NOTE: the old envs at
+# /projects/bbub/miniconda3 AND /work/hdd/bbub/miniconda3 are Python 3.11 — TOO OLD (repo
+# requires >=3.13). Build torchcell313 first (see notes/scratch.2026.07.22.*-delta-exps).
+CONDA_BASE="${DELTA_CONDA_BASE:-/work/hdd/bbub/miniconda3}"
+CONDA_ENV="${DELTA_CONDA_ENV:-torchcell313}"
 source "$CONDA_BASE/bin/activate"
-conda activate torchcell
+conda activate "$CONDA_ENV"
 
 export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
 export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python

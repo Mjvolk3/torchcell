@@ -1336,6 +1336,22 @@ neighbour-of-multi, purple = non-circular. The only un-outlined marks are now in
 collision invalidations. Per-plate full-page review: `run2_cellpose_overlay_pdf.py` ->
 `run2_cellpose_redetection.pdf`.
 
+**New-detection overlays (all six captures, post-fix).** green = accepted, blue = recovered
+faint colony, red = multi well, deep pink = colliding colony, orange = neighbour, purple =
+non-circular.
+
+![P1 (2.5 nL), 44 h -- new detection overlay.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_overlay_P1_t44.png)
+
+![P2 (5 nL), 44 h -- new detection overlay.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_overlay_P2_t44.png)
+
+![P1 (2.5 nL), 50 h -- new detection overlay.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_overlay_P1_t50.png)
+
+![P2 (5 nL), 50 h -- new detection overlay.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_overlay_P2_t50.png)
+
+![P1 (2.5 nL), 72 h -- new detection overlay.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_overlay_P1_t72.png)
+
+![P2 (5 nL), 72 h -- new detection overlay (rows E/L recovered by the homography grid).](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_overlay_P2_t72.png)
+
 **Post-fix occupied / WT CV:** P1_t44 284/0.128, P2_t44 358/0.109, P1_t50 285/0.119, P2_t50
 358/0.107, P1_t72 285/0.126, P2_t72 358/0.098.
 

@@ -52,7 +52,8 @@ STUDY_NAME = os.getenv("OPTUNA_STUDY_NAME", "morph_000")
 N_TRIALS = int(os.getenv("OPTUNA_N_TRIALS", "20"))
 WORKER_ID = int(os.getenv("OPTUNA_WORKER_ID", "0"))
 
-OBJECTIVE_METRIC = "val/global/pearson_per_gene"  # honest per-feature (across-instances)
+# PEAK (max over training), not the last epoch — runs peak then MSE-collapse to the mean.
+OBJECTIVE_METRIC = "val/global/pearson_per_gene_max"  # honest per-feature (across-instances), peak
 
 # Bundled secondary hyperparameter profiles (mirror the expression grid).
 PROFILES = {

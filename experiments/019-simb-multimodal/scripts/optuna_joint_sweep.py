@@ -53,8 +53,9 @@ ACTIVE_HEADS = {
     "joint": ["per_gene", "global"],
 }[CONDITION]
 
-EXPR_METRIC = "val/per_gene/pearson_per_gene"    # honest per-feature (across instances)
-MORPH_METRIC = "val/global/pearson_per_gene"
+# PEAK (max over training), not the last epoch — runs peak then MSE-collapse to the mean.
+EXPR_METRIC = "val/per_gene/pearson_per_gene_max"    # expression honest per-gene, peak
+MORPH_METRIC = "val/global/pearson_per_gene_max"     # morphology honest per-feature, peak
 
 PROFILES = {
     "baseline": {"lr": 3.0e-4, "dropout": 0.1, "weight_decay": 1.0e-8},

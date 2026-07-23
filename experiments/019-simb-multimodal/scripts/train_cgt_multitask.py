@@ -984,6 +984,29 @@ def run_dry_run(cfg: DictConfig) -> None:
     print("[dry-run] OK -- model + heads + masked loss wired correctly.")
 
 
+class BestMetricTracker(Callback):
+    """Track the PEAK (max) of every val metric over training.
+
+    These runs reach a per-feature-Pearson peak early, then MSE-collapse toward the per-feature
+    mean — so ``trainer.callback_metrics`` (the LAST epoch) reports the post-collapse value and
+    understates the achievable signal. The Optuna objective should use the peak instead; this
+    callback records it so ``run_training`` can return ``{metric}_max`` alongside the last value.
+    """
+
+    def __init__(self) -> None:
+        self.best_max: dict[str, float] = {}
+
+    def on_validation_epoch_end(self, trainer: L.Trainer, pl_module: L.LightningModule) -> None:
+        for k, v in trainer.callback_metrics.items():
+            if v is None:
+                continue
+            fv = float(v)
+            if fv != fv:  # NaN
+                continue
+            if k not in self.best_max or fv > self.best_max[k]:
+                self.best_max[k] = fv
+
+
 def run_training(cfg: DictConfig) -> dict[str, float]:
     """Full training path: genome/graph/embeddings/dataset/datamodule + Trainer."""
     # Deferred heavy imports so --help / dry-run never pay for them.
@@ -1445,7 +1468,9 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
 
     model_base_path = osp.join(data_root, "models/checkpoints")
     os.makedirs(model_base_path, exist_ok=True)
+    best_tracker = BestMetricTracker()
     checkpoint_callbacks: list[Callback] = [
+        best_tracker,
         ModelCheckpoint(
             dirpath=osp.join(model_base_path, group),
             save_top_k=1,
@@ -1517,6 +1542,9 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
     final_metrics = {
         k: float(v) for k, v in trainer.callback_metrics.items() if v is not None
     }
+    # PEAK value of each metric over training (`{metric}_max`) — the Optuna objective uses this,
+    # NOT the last epoch, because runs peak then collapse toward the per-feature mean.
+    final_metrics.update({f"{k}_max": v for k, v in best_tracker.best_max.items()})
     if run is not None:
         wandb.finish()
     return final_metrics

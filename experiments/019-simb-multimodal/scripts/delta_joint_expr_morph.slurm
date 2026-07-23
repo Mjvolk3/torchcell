@@ -49,13 +49,12 @@ mkdir -p "$PROJECT_ROOT/experiments/019-simb-multimodal/slurm/output"
 cd "$PROJECT_ROOT" || exit 1
 export NUM_WORKERS=$((SLURM_CPUS_PER_TASK / 4))
 
-# BARE conda on Delta (no singularity — matches 003 delta_wandb). The env at
-# /work/hdd/bbub/miniconda3/envs/torchcell was REBUILT to Python 3.13 (+optuna) on 2026-07-23,
-# replacing the old 3.11 envs (repo requires >=3.13; PEP 695 syntax broke on 3.11).
-CONDA_BASE="${DELTA_CONDA_BASE:-/work/hdd/bbub/miniconda3}"
-CONDA_ENV="${DELTA_CONDA_ENV:-torchcell}"
-source "$CONDA_BASE/bin/activate"
-conda activate "$CONDA_ENV"
+# Call the env's python DIRECTLY — NO conda activate. The py3.13 env (rebuilt 2026-07-23,
+# torch 2.5.1+cu124/PyG 2.4.0/optuna) is a PREFIX env at /work/hdd/bbub/miniconda3/envs/torchcell,
+# but /work/hdd/bbub/miniconda3 is NOT a conda install (no bin/activate — base conda is at
+# /projects/bbub). `source .../bin/activate` there fails silently -> job runs system python3.9.
+# The env python resolves its own libs via rpath, so bare invocation is the zero-ambiguity path.
+ENV_PY="${DELTA_ENV_PY:-/work/hdd/bbub/miniconda3/envs/torchcell/bin/python}"
 
 export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
 export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
@@ -80,10 +79,10 @@ SWEEP=$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/optuna_joint_sweep.p
 # Pre-create the study in ONE process so the 4 workers only load_if_exists — avoids the fresh-DB
 # DDL race (sqlite 'table studies already exists'). --create-only makes the driver create the
 # study with the RIGHT directions (joint = multi-objective, expr/morph = single) from one place.
-python $SWEEP --create-only
+$ENV_PY $SWEEP --create-only
 
-CUDA_VISIBLE_DEVICES=0 OPTUNA_WORKER_ID=0 python $SWEEP &
-CUDA_VISIBLE_DEVICES=1 OPTUNA_WORKER_ID=1 python $SWEEP &
-CUDA_VISIBLE_DEVICES=2 OPTUNA_WORKER_ID=2 python $SWEEP &
-CUDA_VISIBLE_DEVICES=3 OPTUNA_WORKER_ID=3 python $SWEEP &
+CUDA_VISIBLE_DEVICES=0 OPTUNA_WORKER_ID=0 $ENV_PY $SWEEP &
+CUDA_VISIBLE_DEVICES=1 OPTUNA_WORKER_ID=1 $ENV_PY $SWEEP &
+CUDA_VISIBLE_DEVICES=2 OPTUNA_WORKER_ID=2 $ENV_PY $SWEEP &
+CUDA_VISIBLE_DEVICES=3 OPTUNA_WORKER_ID=3 $ENV_PY $SWEEP &
 wait

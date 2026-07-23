@@ -127,6 +127,23 @@ class CellposeSegConfig(BaseModel):
         "if its area is at least this fraction of the primary colony's -- so a Cellpose "
         "over-split fragment of one colony no longer falsely rejects the well.",
     )
+    recover_missed_wells: bool = Field(
+        default=True,
+        description="after assignment, recover colonies Cellpose MISSED: at every empty "
+        "in-gel grid node, probe the intensity depression vs the local agar and, if it "
+        "reads as a real colony (depth > recover_depth_thresh), threshold it in (Otsu "
+        "core + tighten_grow_px, the SAME size basis as a detected colony -- faintness is "
+        "a contrast property, not a size one, so a recovered colony is scored normally). "
+        "Cellpose misses the FAINTEST colonies at the corners/edges (backlight falloff) "
+        "on the less-grown plates; the correct grid tells us exactly which wells to check. "
+        "Recovered wells carry detector='recovered' (provenance only, not a quality flag).",
+    )
+    recover_depth_thresh: float = Field(
+        default=12.0,
+        description="minimum agar-minus-colony depression (gray levels) for an empty node "
+        "to be recovered as a colony. Empty wells sit near 0; real colonies are far above "
+        "this -- so it separates faint colonies from bare agar without recovering blanks.",
+    )
 
 
 class PlateSegResult(BaseModel):
@@ -414,9 +431,20 @@ def _tighten_instance(
 
 
 def _well(
-    ri: int, ci: int, size: int, circ: float, flags: str, cx: float, cy: float, iid: int
+    ri: int,
+    ci: int,
+    size: int,
+    circ: float,
+    flags: str,
+    cx: float,
+    cy: float,
+    iid: int,
+    detector: str = "",
 ) -> dict[str, float | str | int]:
-    """One per-well record (1-based row/col); ``iid`` is the drawn instance id or -1."""
+    """One per-well record (1-based row/col); ``iid`` is the drawn instance id or -1.
+    ``detector`` records provenance: '' empty, 'cellpose' detected, 'recovered' filled in
+    by the grid-guided miss recovery.
+    """
     return {
         "row": ri + 1,
         "col": ci + 1,
@@ -426,7 +454,72 @@ def _well(
         "cx": cx,
         "cy": cy,
         "id": iid,
+        "detector": detector,
     }
+
+
+def _recover_colony(
+    g: np.ndarray,
+    ny: int,
+    nx: int,
+    pitch: float,
+    invert: bool,
+    depth_thresh: float,
+    grow_px: int,
+) -> tuple[int, float, np.ndarray, int, int] | None:
+    """Recover a Cellpose-missed colony at an empty grid node from image intensity.
+
+    Cellpose misses the faintest colonies (low contrast vs agar, worst at the backlight-
+    falloff corners); the correct grid says a well SHOULD sit here, so we look directly.
+    Measure the agar-minus-colony depression (median annulus minus 25th-pct core); if it
+    clears ``depth_thresh`` the well holds a colony. Threshold it with Otsu inside a disk
+    and grow the core ``grow_px`` px -- the SAME size basis as ``_tighten_instance`` -- so
+    a faint colony gets its TRUE size (faintness is contrast, not growth). Returns
+    ``(size, circularity, colony_bbox_mask, y0, x0)`` or None if no colony.
+    """
+    from scipy.ndimage import binary_dilation
+    from scipy.ndimage import label as _label
+    from skimage.filters import threshold_otsu
+    from skimage.morphology import disk as _disk
+
+    r_out = int(0.78 * pitch)
+    y0, y1 = max(0, ny - r_out), min(g.shape[0], ny + r_out + 1)
+    x0, x1 = max(0, nx - r_out), min(g.shape[1], nx + r_out + 1)
+    sub = g[y0:y1, x0:x1].astype(float)
+    yy, xx = np.mgrid[y0:y1, x0:x1]
+    rr = np.hypot(yy - ny, xx - nx)
+    core = sub[rr <= 0.28 * pitch]
+    ann = sub[(rr >= 0.55 * pitch) & (rr <= r_out)]
+    if core.size < 20 or ann.size < 20:
+        return None
+    bg = float(np.median(ann))
+    depth = (
+        bg - float(np.percentile(core, 25))
+        if invert
+        else float(np.percentile(core, 75)) - bg
+    )
+    if depth <= depth_thresh:
+        return None
+    win = rr <= 0.46 * pitch
+    vals = sub[win]
+    if vals.size < 20 or vals.min() == vals.max():
+        return None
+    t = threshold_otsu(vals)  # type: ignore[no-untyped-call]
+    colony = ((sub <= t) if invert else (sub >= t)) & win
+    lab, n = _label(colony)
+    if n == 0:
+        return None
+    counts = np.bincount(lab.ravel())
+    counts[0] = 0
+    cc = lab == int(counts.argmax())
+    if grow_px > 0:
+        cc = binary_dilation(cc, structure=_disk(grow_px)) & win  # type: ignore[no-untyped-call]
+    size = int(cc.sum())
+    if size < MIN_COLONY_AREA:
+        return None
+    perim = _perimeter(cc)
+    circ = float(min(1.0, 4 * np.pi * size / (perim**2))) if perim else 0.0
+    return size, circ, cc, y0, x0
 
 
 # invalidation category -> outline colour (green accepted; agar is yellow, so the
@@ -436,6 +529,7 @@ _CATEGORY_COLOR = {
     "M": (255, 0, 0),  # multiple colonies -- red
     "N": (255, 140, 0),  # neighbour of a multi well -- orange
     "C": (170, 0, 255),  # non-circular -- purple
+    "R": (0, 128, 255),  # grid-recovered Cellpose miss -- blue
 }
 
 
@@ -508,8 +602,8 @@ def _draw_cellpose_overlay(
     im = ImageOps.exif_transpose(Image.open(path)).convert("RGB")
     over = np.asarray(im).copy()
     masks = np.asarray(masks)
-    # draw accepted first, then invalidations on top (purple < orange < red priority)
-    for cat in ("", "C", "N", "M"):
+    # draw accepted first, then recovered, then invalidations on top
+    for cat in ("", "R", "C", "N", "M"):
         ids = [i for i, c in kept_color.items() if c == cat]
         if not ids:
             continue
@@ -603,6 +697,7 @@ def quantify_plate_image_cellpose(
 
     recs: list[dict[str, float | str | int]] = []
     well_idx: dict[tuple[int, int], int] = {}  # (ri,ci) -> recs index, occupied only
+    empty_wells: list[tuple[int, int, int]] = []  # (ri,ci,recs_idx) with no instance
     for ri in range(cfg.n_rows):
         for ci in range(cfg.n_cols):
             j = ri * cfg.n_cols + ci
@@ -615,6 +710,7 @@ def quantify_plate_image_cellpose(
                 if cfg.node_tol * pitch < p["dist"] <= cfg.stray_tol * pitch
             ]
             if not on and not near:
+                empty_wells.append((ri, ci, len(recs)))
                 recs.append(_well(ri, ci, 0, np.nan, "", xc, yc, -1))
                 continue
             pool = on if on else near
@@ -670,7 +766,15 @@ def quantify_plate_image_cellpose(
             well_idx[(ri, ci)] = len(recs)
             recs.append(
                 _well(
-                    ri, ci, size, float(best["circ"]), flags, cxm, cym, int(best["id"])
+                    ri,
+                    ci,
+                    size,
+                    float(best["circ"]),
+                    flags,
+                    cxm,
+                    cym,
+                    int(best["id"]),
+                    "cellpose",
                 )
             )
 
@@ -705,6 +809,43 @@ def quantify_plate_image_cellpose(
             ):
                 recs[best_nb]["flags"] = str(recs[best_nb]["flags"]) + "N"
 
+    # grid-guided recovery of Cellpose MISSES: at each empty in-gel node, look directly at
+    # the image for a colony Cellpose failed to detect (faint corners / backlight falloff)
+    # and fill it in with a true-size threshold. New instance ids are written into `masks`
+    # so the overlay draws them; recovered wells are scored like any colony (detector tag
+    # is provenance only).
+    if cfg.recover_missed_wells:
+        next_id = int(masks.max()) + 1
+        for ri, ci, idx in empty_wells:
+            yc = int(round(float(recs[idx]["cy"])))
+            xc = int(round(float(recs[idx]["cx"])))
+            if gel_sd is not None:
+                yi = min(max(yc, 0), g.shape[0] - 1)
+                xi = min(max(xc, 0), g.shape[1] - 1)
+                if gel_sd[yi, xi] < -edge_margin:
+                    continue  # off-gel -- do not invent colonies on the frame/bevel
+            rec = _recover_colony(
+                g, yc, xc, pitch, invert, cfg.recover_depth_thresh, cfg.tighten_grow_px
+            )
+            if rec is None:
+                continue
+            size, circ, cc, y0, x0 = rec
+            masks[y0 : y0 + cc.shape[0], x0 : x0 + cc.shape[1]][cc] = next_id
+            ys, xs = np.where(cc)
+            recs[idx] = _well(
+                ri,
+                ci,
+                size,
+                circ,
+                "",
+                float(x0 + xs.mean()),
+                float(y0 + ys.mean()),
+                next_id,
+                "recovered",
+            )
+            well_idx[(ri, ci)] = idx
+            next_id += 1
+
     kept_color: dict[int, str] = {}
     for r in recs:
         rid = int(r["id"])
@@ -712,10 +853,18 @@ def quantify_plate_image_cellpose(
             continue
         f = str(r["flags"])
         kept_color[rid] = (
-            "M" if "M" in f else "N" if "N" in f else "C" if "C" in f else ""
+            "R"
+            if r.get("detector") == "recovered"
+            else "M"
+            if "M" in f
+            else "N"
+            if "N" in f
+            else "C"
+            if "C" in f
+            else ""
         )
 
-    cols = ["row", "col", "size", "circularity", "flags", "cx", "cy"]
+    cols = ["row", "col", "size", "circularity", "flags", "cx", "cy", "detector"]
     df = pd.DataFrame([{k: r[k] for k in cols} for r in recs])
     df.loc[df["size"] < MIN_COLONY_AREA, ["size", "circularity"]] = [0, np.nan]
 

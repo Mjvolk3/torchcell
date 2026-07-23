@@ -115,6 +115,13 @@ def main() -> None:
     # cellprob -4, Otsu size-tightening (removes the ~35% halo), wider edge margin to
     # keep row A/P colonies, node_tol 0.60, and the multi_min_frac gate, with the
     # colony-validity invalidation model (M/N/C) active.
+    # RUN2_CACHED_MASKS=1 re-derives on CPU from the cached instance masks
+    # (quant/cellpose_proc/run2_cellpose_best_masks_*.npy) instead of running Cellpose on
+    # a GPU -- used to regenerate results after a grid/assignment change (e.g. the
+    # homography lattice refit) without a GPU. The cached masks are ALREADY Otsu-tightened,
+    # so tighten_size is disabled in that mode to avoid tightening twice; the cached crop
+    # is byte-identical to preprocess_fullres's output, so registration is unchanged.
+    use_cached = os.environ.get("RUN2_CACHED_MASKS") == "1"
     seg_cfg = CellposeSegConfig(
         n_rows=N_ROWS,
         n_cols=N_COLS,
@@ -124,10 +131,15 @@ def main() -> None:
         node_tol=0.60,
         edge_margin_frac=0.70,
         multi_min_frac=0.5,
+        tighten_size=not use_cached,
     )
 
-    print("[0] loading Cellpose-SAM (cpsam) on GPU ...")
-    model = load_cellpose_model(gpu=True)
+    if use_cached:
+        print("[0] CPU re-derivation from cached instance masks (no GPU) ...")
+        model = None
+    else:
+        print("[0] loading Cellpose-SAM (cpsam) on GPU ...")
+        model = load_cellpose_model(gpu=True)
 
     colonies, reports, cmp_rows = {}, {}, []
     print(
@@ -137,11 +149,17 @@ def main() -> None:
         g = cond["group"]
         proc = preprocess_fullres(cond["image"])
 
+        pm = (
+            np.load(osp.join(QUANT_DIR, f"run2_cellpose_best_masks_{g}.npy"))
+            if use_cached
+            else None
+        )
         res = quantify_plate_image_cellpose(
             proc,
             model,
             seg_cfg,
             overlay_path=osp.join(IMG_DIR, f"run2_cellpose_overlay_{g}.png"),
+            precomputed_masks=pm,
         )
         grid = res.table
         layout = read_echo_picklist(cond["picklist"])

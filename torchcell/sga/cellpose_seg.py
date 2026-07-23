@@ -106,6 +106,15 @@ class CellposeSegConfig(BaseModel):
         "them). Empty margin rows are extrapolated from the colony grid. Fixes the "
         "off-center labels + off-gel leak + mis-bucketed multis on skewed captures.",
     )
+    homography_refit: bool = Field(
+        default=True,
+        description="after the even-spacing relax, refit the lattice as a PROJECTIVE "
+        "(homography) map from array index (row, col) to pixels, estimated by RANSAC from "
+        "the colonies the relaxed grid already places well. A homography is the exact "
+        "omni-tray-on-a-table perspective, so it recovers rows a single isotropic pitch "
+        "SKIPS on a tilted capture (in-image row pitch != column pitch, i.e. a trapezoid) "
+        "-- while leaving correctly-fit plates unchanged. Deterministic (seeded RANSAC).",
+    )
     edge_margin_frac: float = Field(
         default=0.5,
         description="gel-edge gate half-width in pitch units. A colony is dropped as "
@@ -219,6 +228,113 @@ def _relax_lattice(
     gy, gx = np.meshgrid(ys, xs, indexing="ij")
     nodes_rot = np.stack([gy.ravel(), gx.ravel()], axis=1)
     return _rotate(nodes_rot, theta, center).reshape(n_rows, n_cols, 2)
+
+
+def _fit_homography(src: np.ndarray, dst: np.ndarray) -> np.ndarray:
+    """3x3 homography ``H`` mapping ``src`` -> ``dst`` (both ``(N, 2)``) by the direct
+    linear transform, with isotropic (Hartley) normalization for conditioning. In
+    homogeneous coords ``dst ~ H @ [src; 1]``. Used to model the array as a projective
+    grid: index space ``(col, row)`` -> pixels, exact for a plate photographed at an
+    angle (perspective/trapezoid).
+    """
+
+    def _norm(p: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        c = p.mean(0)
+        s = np.sqrt(2) / (np.sqrt(((p - c) ** 2).sum(1)).mean() + 1e-12)
+        t = np.array([[s, 0, -s * c[0]], [0, s, -s * c[1]], [0, 0, 1]])
+        ph = (t @ np.c_[p, np.ones(len(p))].T).T
+        return ph[:, :2], t
+
+    sn, ts = _norm(src)
+    dn, td = _norm(dst)
+    n = len(src)
+    a = np.zeros((2 * n, 9))
+    for k in range(n):
+        u, v = sn[k]
+        x, y = dn[k]
+        a[2 * k] = [-u, -v, -1, 0, 0, 0, x * u, x * v, x]
+        a[2 * k + 1] = [0, 0, 0, -u, -v, -1, y * u, y * v, y]
+    _, _, vt = np.linalg.svd(a)
+    hn = vt[-1].reshape(3, 3)
+    h = np.linalg.inv(td) @ hn @ ts
+    out: np.ndarray = h / h[2, 2]
+    return out
+
+
+def _apply_homography(h: np.ndarray, pts: np.ndarray) -> np.ndarray:
+    """Apply homography ``h`` to ``(N, 2)`` points, returning ``(N, 2)``. A degenerate
+    RANSAC sample can map a point onto the line at infinity (``w`` -> 0); clamp ``w`` so
+    such a point becomes a large finite coordinate (rejected as an outlier) rather than
+    a divide-by-zero NaN.
+    """
+    ph = (h @ np.c_[pts, np.ones(len(pts))].T).T
+    w = ph[:, 2:3]
+    w = np.where(np.abs(w) < 1e-12, 1e-12, w)
+    out: np.ndarray = ph[:, :2] / w
+    return out
+
+
+def _homography_lattice(
+    nodes: np.ndarray,
+    cents: np.ndarray,
+    n_rows: int,
+    n_cols: int,
+    pitch: float,
+    iters: int = 4,
+    ransac_iters: int = 200,
+    thresh: float = 8.0,
+) -> np.ndarray:
+    """Refit the lattice as a PROJECTIVE grid and return the corrected nodes.
+
+    The even-spacing relax carries a single isotropic pitch, so on a plate shot at a
+    tilt -- where the in-image row pitch differs from the column pitch (a trapezoid) --
+    the 16-row lattice is too short to span the rows and SKIPS the faintest interior
+    rows. Here we instead assign colonies to the current grid to label them with array
+    indices ``(row, col)``, RANSAC-fit a homography ``index -> pixel`` (the exact
+    perspective of an omni tray on a light box), regenerate all nodes from it, and
+    iterate. RANSAC discards the mislabeled colonies of any skipped row, so the fit
+    recovers those rows; on a correctly-fit plate the homography reproduces the grid.
+    Deterministic: fixed RNG seed.
+    """
+    rng = np.random.default_rng(0)
+    ii, jj = np.meshgrid(np.arange(n_rows), np.arange(n_cols), indexing="ij")
+    idx_all = np.stack([jj.ravel(), ii.ravel()], axis=1).astype(float)  # (col, row)
+    grid = nodes
+    for _ in range(iters):
+        nyx = grid.reshape(-1, 2)
+        src, dst = [], []
+        for cy, cx in cents:
+            d = np.hypot(nyx[:, 0] - cy, nyx[:, 1] - cx)
+            k = int(np.argmin(d))
+            if d[k] <= 0.5 * pitch:
+                i, j = divmod(k, n_cols)
+                src.append([j, i])
+                dst.append([cx, cy])
+        if len(src) < 12:
+            return grid
+        src_a = np.array(src, float)
+        dst_a = np.array(dst, float)
+        best_h: np.ndarray | None = None
+        best_inl = -1
+        best_mask = np.ones(len(src_a), bool)
+        for _r in range(ransac_iters):
+            sel = rng.choice(len(src_a), 4, replace=False)
+            try:
+                h = _fit_homography(src_a[sel], dst_a[sel])
+            except np.linalg.LinAlgError:
+                continue
+            err = np.sqrt(((_apply_homography(h, src_a) - dst_a) ** 2).sum(1))
+            mask = err < thresh
+            if int(mask.sum()) > best_inl:
+                best_inl = int(mask.sum())
+                best_h = h
+                best_mask = mask
+        if best_h is None:
+            return grid
+        h = _fit_homography(src_a[best_mask], dst_a[best_mask])  # refit on inliers
+        px = _apply_homography(h, idx_all)  # (x, y)
+        grid = np.stack([px[:, 1], px[:, 0]], axis=1).reshape(n_rows, n_cols, 2)
+    return grid
 
 
 def _contrast_enhance(img: np.ndarray, method: str, clahe_clip: float) -> np.ndarray:
@@ -458,6 +574,8 @@ def quantify_plate_image_cellpose(
         cents = cents[dd.min(axis=1) < 1.8 * pitch]
         if len(cents) >= 0.5 * cfg.n_rows * cfg.n_cols:
             nodes = _relax_lattice(nodes, cents, cfg.n_rows, cfg.n_cols, theta, center)
+            if cfg.homography_refit:
+                nodes = _homography_lattice(nodes, cents, cfg.n_rows, cfg.n_cols, pitch)
 
     gel_sd = None
     if cfg.gel_detect:

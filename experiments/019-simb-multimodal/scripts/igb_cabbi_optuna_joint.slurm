@@ -65,8 +65,8 @@ SWEEP=$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/optuna_joint_sweep.p
 for COND in $CONDITIONS; do
   echo \"===== CONDITION=\$COND =====\"
   export CONDITION=\$COND
-  export OPTUNA_STORAGE=\"sqlite:///$OPTUNA_DIR/optuna_019_joint_\${COND}.db\"
-  export OPTUNA_STUDY_NAME=\"joint_\${COND}_000\"
+  export OPTUNA_STORAGE=\"sqlite:///$OPTUNA_DIR/optuna_019_joint_\${COND}_peak.db\"
+  export OPTUNA_STUDY_NAME=\"joint_\${COND}_peak_000\"
 
   # Pre-create the study (one process) so the 4 workers only load_if_exists — kills the
   # fresh-DB DDL race; --create-only sets single- vs multi-objective directions correctly.

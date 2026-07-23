@@ -19,7 +19,9 @@ SRC="$GH_DATA_ROOT/$REL"
 # --- Destination (Delta) ---
 DELTA_USER="${DELTA_USER:-mjvolk3}"
 DELTA_HOST="${DELTA_HOST:-login.delta.ncsa.illinois.edu}"
-DELTA_DATA_ROOT="${DELTA_DATA_ROOT:-/scratch/bbub/mjvolk3/torchcell}"
+# Must equal DATA_ROOT in the cloned repo's .env on Delta (default = co-located with the
+# torchcell clone at /projects/bbhh/mjvolk3). Change to bbtp / a scratch path if you relocate.
+DELTA_DATA_ROOT="${DELTA_DATA_ROOT:-/projects/bbhh/mjvolk3/torchcell}"
 DEST_DIR="$DELTA_DATA_ROOT/$REL"
 
 if [[ ! -d "$SRC" ]]; then

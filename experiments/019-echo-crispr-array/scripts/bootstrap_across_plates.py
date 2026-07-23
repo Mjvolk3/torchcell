@@ -169,17 +169,17 @@ def main() -> None:
         color=C_RED,
         edgecolor="black",
         linewidth=0.4,
-        label="pooled colony SD/$\\sqrt{n}$ SE",
+        label="pooled SE (colony SD $/\\sqrt{n}$)",
     )
     ax.axhline(res["boot_mean_se"].mean(), color=C_ORANGE, lw=0.5, ls="--")
     ax.axhline(res["pooled_se"].mean(), color=C_RED, lw=0.5, ls="--")
     ax.set_xticks(x)
     ax.set_xticklabels(res["strain"], rotation=90, fontsize=4)
     ax.yaxis.set_major_locator(MultipleLocator(0.02))
+    ax.set_ylim(0, float(max(res["boot_mean_se"].max(), res["pooled_se"].max())) * 1.28)
     ax.set_ylabel("standard error of the mean fitness")
-    ax.legend(
-        fontsize=4.5, loc="lower center", bbox_to_anchor=(0.5, 1.005), frameon=False
-    )
+    # legend inside, top-right (headroom above the right-hand bars)
+    ax.legend(fontsize=4.5, loc="upper right", frameon=False)
     for s in ax.spines.values():
         s.set_visible(True)
     fig.tight_layout()

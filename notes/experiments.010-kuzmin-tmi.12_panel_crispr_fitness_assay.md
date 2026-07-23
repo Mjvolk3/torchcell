@@ -1300,3 +1300,55 @@ bias, **across-day replication with re-randomization** averages residual positio
 **Caveats.** The single 5 nL / 50 h plate is noisier than a multi-plate mean (Pearson 0.27 weak,
 Spearman 0.50 holds); n=12/n=4 are small so estimates are noise-sensitive. Regenerate via
 `costanzo_kuzmin_comparison.py` (edit `CONDITION`) if the plate/detection changes (48 h re-run).
+
+## 2026.07.23 - Grid-registration fix (homography), faint-colony recovery, collision overlay + refreshed benchmark
+
+Three detection fixes landed on `paper/figures-fig1` (commits `154cd235`, `2933a080`,
+`bb4ebbe4`, `b62b85be`); all quantification re-derived on CPU from the cached Cellpose masks
+via `RUN2_CACHED_MASKS=1 python .../run2_cellpose_segmentation.py`. **Cellpose detection was
+never the bottleneck** -- it detects every colony on the fully-grown plates -- the losses were
+downstream, in the array-lattice registration and at the faint edges.
+
+**1. Homography lattice refit (`homography_refit`, [[torchcell.sga.cellpose_seg]]).** P2 72 h
+was shot at a tilt, so in-image row pitch (~146 px) != column pitch (~107 px) -- a trapezoid.
+The single-isotropic-pitch lattice was too short to span 16 rows and SKIPPED two faint interior
+rows (E and L), cascading into 32 false multi-flags and ~60 dropped colonies. Fix: after the
+even-spacing relax, refit the lattice as a **projective (homography) map** from array index
+(row, col) to pixels, RANSAC-estimated from the colonies the relaxed grid already places
+(pure-numpy DLT + seeded RANSAC, no OpenCV dep). RANSAC discards the mislabeled skipped-row
+colonies, so those rows come back; correctly-fit plates are reproduced unchanged. **P2_t72
+occupied 319 -> 357, false multis 32 -> 2.**
+
+**2. Grid-guided recovery of Cellpose misses (`recover_missed_wells`).** Cellpose misses the
+FAINTEST colonies -- low contrast vs agar at the backlight-falloff corners/edges of the
+less-grown plates. With the grid now correct, at each empty in-gel node we probe the
+agar-minus-colony depression and, if it clears `recover_depth_thresh`, threshold the colony in
+with the same Otsu-core + grow size basis as a detected colony. **Faintness is a contrast
+property, not a size one** -- recovered colonies measure at normal size (recovered sizes
+1109-1711 vs detected median 1635 on P2_t44) and are scored normally. Recovered per plate:
+P2_t44 8, P1_t50 4, P2_t50 4, P1_t44 3, P1_t72 2, P2_t72 1. A `detector` column records
+provenance (`cellpose` | `recovered`), never a quality flag.
+
+**3. Overlay legend (collision competitors now shown).** green = Cellpose accepted, **blue** =
+grid-recovered faint colony, red = invalidated multi WELL, **deep pink** = the extra colliding
+COLONY that caused the multi (aberrant plating; overlay-only, no scoring change), orange =
+neighbour-of-multi, purple = non-circular. The only un-outlined marks are now intentional
+collision invalidations. Per-plate full-page review: `run2_cellpose_overlay_pdf.py` ->
+`run2_cellpose_redetection.pdf`.
+
+**Post-fix occupied / WT CV:** P1_t44 284/0.128, P2_t44 358/0.109, P1_t50 285/0.119, P2_t50
+358/0.107, P1_t72 285/0.126, P2_t72 358/0.098.
+
+**Refreshed benchmark (bootstrap-across-6-plates mean; figures re-rendered in Arial).** Against
+Costanzo (n=12): **Pearson r = 0.613 (p = 0.034), Spearman rho = 0.643 (p = 0.024)**; Kuzmin
+(n=4): Pearson r = 0.851. Mean bootstrap-across-plates SE = **0.025** vs naive pooled colony
+SD/sqrt(n) SE 0.014 (pooled is ~1.8x too small -- it ignores between-plate variance). Slightly
+better than pre-fix (was r ~= 0.60, Spearman 0.52). Figure polish: equal marker size for both
+reference series; bar-chart legends moved inside top-right; pooled-SE label clarified to
+"pooled SE (colony SD / sqrt(n))".
+
+![Assay fitness (bootstrap mean across 6 plates) vs published single-mutant fitness: Costanzo 2016 (orange, n=12) and Kuzmin 2018 (red, n=4), identity line dashed, points labelled by systematic ORF. Costanzo Pearson r=0.61 (p=0.034), Spearman rho=0.64 (p=0.024); Kuzmin r=0.85. Error bars are SE-vs-SE (x = Costanzo bootstrap-SE, y = our bootstrap-across-plates SE).](assets/images/019-echo-crispr-array/cellpose/run2_fitness_correlation_reference.svg)
+
+![Per-genotype measurement error: our replicate-colony fitness SD (orange, 5 nL / 50 h) vs Costanzo 2016 SMF SD (red, itself a bootstrap SE), by systematic ORF, sorted by the Costanzo value; dashed lines are the means (ours 0.146, Costanzo 0.082). Legend inside top-right.](assets/images/019-echo-crispr-array/cellpose/run2_sd_vs_reference.svg)
+
+![Per-strain SE: bootstrap-across-plates (orange, resampling the 6 plate-level fitnesses) vs the naive pooled SE (red, colony SD / sqrt(n) over all colonies). Dashed lines are the means (0.025 vs 0.014); the pooled SE is ~1.8x too small because it ignores between-plate variance.](assets/images/019-echo-crispr-array/cellpose/run2_bootstrap_vs_pooled_se.svg)

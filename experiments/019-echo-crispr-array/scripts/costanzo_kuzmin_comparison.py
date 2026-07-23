@@ -146,7 +146,7 @@ def _fig_correlation(df: pd.DataFrame) -> None:
         yerr=cst["boot_se"],
         xerr=cst["costanzo_sd"],
         fmt="o",
-        ms=3,
+        ms=4,  # match Kuzmin scatter s=16 (markersize^2) so both markers are equal size
         mfc=C_ORANGE,
         mec="black",
         mew=0.4,
@@ -256,17 +256,10 @@ def _fig_sd(df: pd.DataFrame) -> None:
     ax.set_xticks(x)
     ax.set_xticklabels(d["label"], rotation=90, fontsize=4)
     ax.yaxis.set_major_locator(MultipleLocator(0.05))
-    ax.set_ylim(0, float(max(d["our_sd"].max(), d["costanzo_sd"].max())) * 1.10)
+    ax.set_ylim(0, float(max(d["our_sd"].max(), d["costanzo_sd"].max())) * 1.28)
     ax.set_ylabel("fitness standard deviation")
-    # legend ABOVE the axes so it never occludes the bars
-    ax.legend(
-        fontsize=4.5,
-        loc="lower center",
-        bbox_to_anchor=(0.5, 1.005),
-        ncol=1,
-        frameon=False,
-        handlelength=1.2,
-    )
+    # legend inside, top-right (headroom above the right-hand bars)
+    ax.legend(fontsize=4.5, loc="upper right", frameon=False, handlelength=1.2)
     for s in ax.spines.values():
         s.set_visible(True)
     fig.tight_layout()

@@ -64,10 +64,13 @@ IMG_DIR = osp.join(ASSET_IMAGES_DIR, "019-echo-crispr-array", "cellpose")
 os.makedirs(IMG_DIR, exist_ok=True)
 
 WT_NAME = "BY4741"
-# The panel is engineered at 5 nL, and the planned assay images at 48 h; of the six
-# captures, 5 nL / 50 h (P2_t50) is the closest to that target, so we benchmark THAT
-# single condition -- the one we will actually run -- not an average over settings we
-# will not use.
+# Correlation (Fig 33): the point is each strain's BOOTSTRAP MEAN fitness across the
+# plates and the y error bar is the BOOTSTRAP-ACROSS-PLATES SE (resample the plate-level
+# fitnesses) -- the honest across-plate reproducibility, not a single-plate SE.
+BOOT_CONDITIONS = ["P1_t44", "P2_t44", "P1_t50", "P2_t50", "P1_t72", "P2_t72"]
+N_BOOT = 4000
+SEED = 1234
+# SD figure (Fig 34) still shows the single engineering-target capture's replicate SD.
 CONDITION = "P2_t50"
 CONDITION_LABEL = "5 nL, 50 h"
 C_ORANGE, C_RED, C_PURPLE, C_GRAY = (
@@ -79,19 +82,33 @@ C_ORANGE, C_RED, C_PURPLE, C_GRAY = (
 
 
 def _select(fit: pd.DataFrame) -> pd.DataFrame:
-    """Per-strain measurements for the single engineering-target capture (CONDITION):
-    fitness, the within-plate replicate-colony SD (raw sample SD over ~27 colonies),
-    and SE = SD / sqrt(n_used).
+    """Per strain: the bootstrap-across-plates mean fitness + SE (over BOOT_CONDITIONS,
+    the resampling unit = the plate) for the correlation, plus the single-condition
+    (CONDITION) replicate SD/SE for the SD figure.
     """
-    d = fit[(fit["group"] == CONDITION) & (fit["strain"] != WT_NAME)]
-    return pd.DataFrame(
-        {
-            "strain": d["strain"].to_numpy(),
-            "our_fitness": d["fitness"].to_numpy(),
-            "our_sd": d["fitness_sd"].to_numpy(),
-            "our_se": d["fitness_se"].to_numpy(),
-        }
+    rng = np.random.default_rng(SEED)
+    boot = fit[fit["group"].isin(BOOT_CONDITIONS) & (fit["strain"] != WT_NAME)]
+    single = fit[(fit["group"] == CONDITION) & (fit["strain"] != WT_NAME)].set_index(
+        "strain"
     )
+    rows = []
+    for strain, d in boot.groupby("strain"):
+        vals = d["fitness"].to_numpy(dtype=float)
+        if len(vals) < 2 or strain not in single.index:
+            continue
+        idx = rng.integers(0, len(vals), size=(N_BOOT, len(vals)))
+        boot_means = vals[idx].mean(axis=1)
+        rows.append(
+            {
+                "strain": strain,
+                "boot_fitness": float(boot_means.mean()),
+                "boot_se": float(boot_means.std(ddof=1)),
+                "n_plates": int(len(vals)),
+                "our_sd": float(single.loc[strain, "fitness_sd"]),
+                "our_se": float(single.loc[strain, "fitness_se"]),
+            }
+        )
+    return pd.DataFrame(rows)
 
 
 def _corr(x: np.ndarray, y: np.ndarray) -> tuple[float, float, float, float, int]:
@@ -119,13 +136,14 @@ def _fig_correlation(df: pd.DataFrame) -> None:
     lim = (0.4, 1.3)
     ax.plot(lim, lim, ls="--", lw=0.5, color=C_GRAY, zorder=1)  # identity
 
-    # Costanzo (all 12); x error = Costanzo SD column (a bootstrap SE), y error = our SE
-    # -- SE-vs-SE, the like-for-like uncertainty (see the SD-method note).
+    # Costanzo (all 12); x error = Costanzo SD column (a bootstrap SE), y = our
+    # bootstrap-across-plates mean, y error = our bootstrap-across-plates SE -- SE-vs-SE,
+    # both bootstrap SEs, the like-for-like uncertainty (see the SD-method note).
     cst = df.dropna(subset=["costanzo_smf"])
     ax.errorbar(
         cst["costanzo_smf"],
-        cst["our_fitness"],
-        yerr=cst["our_se"],
+        cst["boot_fitness"],
+        yerr=cst["boot_se"],
         xerr=cst["costanzo_sd"],
         fmt="o",
         ms=3,
@@ -142,7 +160,7 @@ def _fig_correlation(df: pd.DataFrame) -> None:
     kuz = df.dropna(subset=["kuzmin_smf"])
     ax.scatter(
         kuz["kuzmin_smf"],
-        kuz["our_fitness"],
+        kuz["boot_fitness"],
         s=16,
         marker="o",
         facecolor=C_RED,
@@ -154,17 +172,17 @@ def _fig_correlation(df: pd.DataFrame) -> None:
     for _, r in cst.iterrows():
         ax.annotate(
             r["label"],
-            (r["costanzo_smf"], r["our_fitness"]),
+            (r["costanzo_smf"], r["boot_fitness"]),
             fontsize=3.5,
             xytext=(3, 2),
             textcoords="offset points",
         )
 
     pr, pp, sr, sp, n = _corr(
-        cst["costanzo_smf"].to_numpy(), cst["our_fitness"].to_numpy()
+        cst["costanzo_smf"].to_numpy(), cst["boot_fitness"].to_numpy()
     )
     kpr, _, ksr, _, kn = _corr(
-        kuz["kuzmin_smf"].to_numpy(), kuz["our_fitness"].to_numpy()
+        kuz["kuzmin_smf"].to_numpy(), kuz["boot_fitness"].to_numpy()
     )
     ax.text(
         0.03,
@@ -185,8 +203,10 @@ def _fig_correlation(df: pd.DataFrame) -> None:
     ax.yaxis.set_minor_locator(MultipleLocator(0.1))
     ax.tick_params(which="minor", length=0)
     ax.set_xlabel("published single-mutant fitness")
-    ax.set_ylabel(f"CRISPR assay fitness ({CONDITION_LABEL})")
-    ax.set_title(f"Assay fitness vs published SMF ({CONDITION_LABEL})", fontsize=6)
+    ax.set_ylabel(
+        f"CRISPR assay fitness (bootstrap mean, {len(BOOT_CONDITIONS)} plates)"
+    )
+    ax.set_title("Assay fitness vs published SMF (bootstrap across plates)", fontsize=6)
     ax.legend(fontsize=4.5, loc="lower right", frameon=False)
     for s in ax.spines.values():
         s.set_visible(True)
@@ -264,10 +284,10 @@ def main() -> None:
     df.to_csv(osp.join(RESULTS_DIR, "run2_reference_comparison.csv"), index=False)
 
     pr, pp, sr, sp, n = _corr(
-        df["costanzo_smf"].to_numpy(), df["our_fitness"].to_numpy()
+        df["costanzo_smf"].to_numpy(), df["boot_fitness"].to_numpy()
     )
     kpr, kpp, ksr, ksp, kn = _corr(
-        df["kuzmin_smf"].to_numpy(), df["our_fitness"].to_numpy()
+        df["kuzmin_smf"].to_numpy(), df["boot_fitness"].to_numpy()
     )
     sd = df.dropna(subset=["costanzo_sd"])
     stats = pd.DataFrame(
@@ -279,6 +299,7 @@ def main() -> None:
                 pearson_p=pp,
                 spearman_rho=sr,
                 spearman_p=sp,
+                our_boot_se=float(sd["boot_se"].mean()),
                 our_mean_sd=float(sd["our_sd"].mean()),
                 our_mean_se=float(sd["our_se"].mean()),
                 ref_mean_sd=float(sd["costanzo_sd"].mean()),
@@ -304,9 +325,15 @@ def main() -> None:
 
     print(f"strains compared: {len(df)}  (Costanzo n={n}, Kuzmin n={kn})")
     print(
+        f"correlation on the bootstrap-across-{len(BOOT_CONDITIONS)}-plates mean fitness:"
+    )
+    print(
         f"Costanzo  Pearson r={pr:.3f} (p={pp:.3f})  Spearman rho={sr:.3f} (p={sp:.3f})"
     )
     print(f"Kuzmin    Pearson r={kpr:.3f}  Spearman rho={ksr:.3f}  (n={kn})")
+    print(
+        f"mean bootstrap-across-plates SE (y error bars) = {sd['boot_se'].mean():.3f}"
+    )
     print(
         f"[{CONDITION_LABEL}] mean replicate SD ours={sd['our_sd'].mean():.3f}  "
         f"SE ours={sd['our_se'].mean():.3f}  Costanzo SMF SD={sd['costanzo_sd'].mean():.3f}"

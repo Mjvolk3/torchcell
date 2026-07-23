@@ -19,8 +19,11 @@ REL="data/torchcell/experiments/019-simb-multimodal/fig3_core"
 SRC="$GH_DATA_ROOT/$REL"
 
 # --- Destination (IGB) ---
+# From GilaHyper only the FQDN resolves (the `biologin` alias / `biologin-3` short name live
+# in the LAPTOP's ~/.ssh/config and inside the IGB network respectively). One-time setup on
+# GilaHyper: `ssh mjvolk3@biologin.igb.illinois.edu` to accept the host key + confirm key auth.
 IGB_USER="${IGB_USER:-mjvolk3}"
-IGB_HOST="${IGB_HOST:-biologin-3}"
+IGB_HOST="${IGB_HOST:-biologin.igb.illinois.edu}"
 IGB_DATA_ROOT="${IGB_DATA_ROOT:-/home/a-m/mjvolk3/scratch/torchcell}"
 DEST_DIR="$IGB_DATA_ROOT/$REL"
 

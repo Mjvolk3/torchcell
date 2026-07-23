@@ -8,9 +8,9 @@ rescue expression's val floor)? The control is a FIXED instance set — the 1,44
 with BOTH modalities (`require_modalities: [expression_log2_ratio, calmorph]` in the base
 config) — with only the active heads varied by CONDITION:
 
-    CONDITION=expr   active_heads=[per_gene]          objective = val/per_gene/pearson_per_gene
-    CONDITION=morph  active_heads=[global]            objective = val/global/pearson_per_gene
-    CONDITION=joint  active_heads=[per_gene, global]  objective = mean(expr, morph) honest r
+    CONDITION=expr   active_heads=[per_gene]          single-obj: val/per_gene/pearson_per_gene
+    CONDITION=morph  active_heads=[global]            single-obj: val/global/pearson_per_gene
+    CONDITION=joint  active_heads=[per_gene, global]  MULTI-obj: (expr, morph) -> Pareto front
 
 joint − morph = "does expression help Ohya morphology"; joint − expr = the reverse. Because
 the instance set is identical across conditions, any difference is the auxiliary-task effect,
@@ -143,7 +143,8 @@ def objective(trial: optuna.Trial) -> float | tuple[float, float]:
 
 def get_study() -> optuna.Study:
     """Create-or-load the study. joint = MULTI-objective (maximize expr, maximize morph);
-    expr/morph = single-objective. TPESampler handles both (MOTPE for the multi case)."""
+    expr/morph = single-objective. TPESampler handles both (MOTPE for the multi case).
+    """
     sampler = optuna.samplers.TPESampler(seed=WORKER_ID, multivariate=True, group=True)
     common = dict(
         study_name=STUDY_NAME, storage=STORAGE, sampler=sampler, load_if_exists=True

@@ -1368,3 +1368,62 @@ reference series; bar-chart legends moved inside top-right; pooled-SE label clar
 ![Per-genotype measurement error: our replicate-colony fitness SD (orange, 5 nL / 50 h) vs Costanzo 2016 SMF SD (red, itself a bootstrap SE), by systematic ORF, sorted by the Costanzo value; dashed lines are the means (ours 0.146, Costanzo 0.082). Legend inside top-right.](assets/images/019-echo-crispr-array/cellpose/run2_sd_vs_reference.svg)
 
 ![Per-strain SE: bootstrap-across-plates (orange, resampling the 6 plate-level fitnesses) vs the naive pooled SE (red, colony SD / sqrt(n) over all colonies). Dashed lines are the means (0.025 vs 0.014); the pooled SE is ~1.8x too small because it ignores between-plate variance.](assets/images/019-echo-crispr-array/cellpose/run2_bootstrap_vs_pooled_se.svg)
+
+## 2026.07.24 - Run 3: 48 h, three RE-RANDOMIZED plates (the proper batch-effect design)
+
+Run 2's across-plate SE came from 6 captures that were really 2 plates re-imaged at 3
+timepoints -- correlated, so they under-state the true between-plate variance. Run 3 fixes
+the design: **three separate plates (P1/P2/P3), each with an INDEPENDENT randomized strain
+layout** (`cherrypick_Plate{1,2,3}`, ~8 % position overlap between plates), all 5 nL / OD1,
+imaged 48 h from the start of incubation. Re-randomizing every strain's position per plate
+is what lets the bootstrap-across-plates average out plate/position batch bias and quantify
+an honest between-plate SE. Pipeline: `run3_48h_3rand.py` (full-res crop -> Cellpose-SAM
+homography grid + faint-colony recovery -> per-plate 4-way orientation -> normalize to
+on-plate BY4741 -> QC gate -> bootstrap-across-plates + Costanzo comparison). Raw data
+(sha256-pinned) in `experiments/019-echo-crispr-array/data/run3_2026-07-23/`.
+
+**QC (`run3_plate_qc.csv`): 2 of 3 plates pass.** A plate is usable only if its orientation
+resolves confidently AND its on-plate WT reference is consistent (WT CV < 0.18).
+
+| plate | orientation | WT CV | occupied | blanks empty | QC |
+|---|---|---|---|---|---|
+| P1 | identity (confident) | 0.065 | 356/384 | 6/6 | **PASS** |
+| P2 | identity (confident) | 0.141 | 347/384 | 6/6 | **PASS** |
+| P3 | ambiguous | 0.243 | 335/384 | 1/6 | **FAIL** |
+
+**P3 is a wet-lab QC failure, not a software one.** Its grid misregisters by exactly one
+row (Cellpose detects the top row of 26 colonies but the lattice fits one row low, parking
+its bottom row on the plastic frame), which scrambles the strain assignment. But fixing the
+row shift does not rescue it: across six diagnostics (homography, span-forced re-fit, one-row
+shift, all four orientations, cross-replicate matching, and all three layouts) **P3's blank
+wells are contaminated in EVERY layout x orientation** (`blanks_empty` never > 1) and its WT
+CV never drops near P1/P2's range (best 0.18, against Plate1's layout rather than its own --
+hinting at a plating/labelling mixup). Orientation-independent blank contamination means the
+plate itself is compromised; P3 is excluded and flagged for **re-plate** to reach the full
+n = 3.
+
+![Run 3 detection overlay, P1 (5 nL, 48 h) -- QC pass. green = accepted, blue = grid-recovered faint colony, red = multi/collision, orange = neighbour, purple = non-circular.](assets/images/019-echo-crispr-array/run3/run3_overlay_P1.png)
+
+![Run 3 detection overlay, P2 (5 nL, 48 h) -- QC pass. More empty wells (failed 5 nL transfers) but clean registration.](assets/images/019-echo-crispr-array/run3/run3_overlay_P2.png)
+
+![Run 3 detection overlay, P3 (5 nL, 48 h) -- QC FAIL. The entire top row is unoutlined (grid shifted down one row) and the red/pink/orange flags are misregistration artifacts; blanks contaminated. Excluded, re-plate.](assets/images/019-echo-crispr-array/run3/run3_overlay_P3.png)
+
+**Batch effect (P1 + P2, the two clean re-randomizations).** Mean bootstrap-across-plates
+SE = **0.085** (across-plate SD 0.169) -- roughly **3x run 2's 0.025**. That jump is the
+point: two genuinely re-randomized plates expose the real between-plate variance that run 2's
+correlated timepoints hid. n = 2 is thin (the SE estimate is itself unstable); re-plating P3
+gives the full three-replicate estimate.
+
+**vs Costanzo 2016 (n = 12).** Pearson r = **0.65 (p = 0.02)** (value agreement, driven by
+the one sick strain CBF1/YJR060W), Spearman ρ = 0.23 (rank agreement is noise-limited -- 11
+of 12 strains are near-neutral and only 2 replicates back each mean). Kuzmin has no per-strain
+SD, so no x error bars; y error bars are the bootstrap-across-2-plates SE.
+
+![Run 3: assay fitness (bootstrap mean over the 2 QC-pass re-randomized plates) vs Costanzo 2016 SMF. Identity line dashed; Pearson r=0.65 (p=0.02), Spearman rho=0.23; large y error bars = the 2-plate bootstrap SE.](assets/images/019-echo-crispr-array/run3/run3_fitness_correlation_reference.svg)
+
+![Run 3 per-strain SE: bootstrap-across-2-plates SE (orange, the batch effect) vs the within-plate colony SE (red, colony SD/sqrt(n)). The across-plate SE is much larger -- most of a strain's uncertainty is between-plate, not within-plate.](assets/images/019-echo-crispr-array/run3/run3_se_batch_effect.svg)
+
+**Detection QC (P1/P2).** Spot imperfections exist -- an occasional merged doublet (Cellpose
+segments two touching colonies as one, so the collision is not red-flagged) and a rare
+off-grid speck -- but they are washed out by the per-strain median over ~29 replicate wells
+(P2 has 0 size-outlier wells; max 1.5x median), so they do not move any strain's fitness.

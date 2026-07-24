@@ -8,8 +8,8 @@
 # then varies ONLY which heads are active:
 #   CONDITION=expr  -> active_heads=[per_gene]          (expression baseline on the 1,440)
 #   CONDITION=morph -> active_heads=[global]            (morphology baseline on the 1,440)
-#   CONDITION=joint -> active_heads=[per_gene, global]  (shared embedding -> both phenotypes)
-# joint − morph = "does expression help Ohya morphology"; joint − expr = the reverse.
+#   CONDITION=expr_morph -> active_heads=[per_gene, global]  (shared embedding -> both phenotypes)
+# expr_morph − morph = "does expression help Ohya morphology"; expr_morph − expr = the reverse.
 #
 # Delta compute nodes HAVE internet -> W&B ONLINE (no offline/sync dance, unlike IGB). Single
 # GPU per trial (4 workers pinned per GPU in the slurm) — also sidesteps the DDP
@@ -22,8 +22,10 @@ dry_run: false
 seed: 0
 
 wandb:
-  project: torchcell_019_joint
-  tags: [ws-run, delta, joint, optuna, single-gpu]
+  # NOTE: the driver (optuna_joint_sweep.py) overrides this to torchcell_019_<condition>
+  # so each arm logs to its own project; this default is used only if run without the driver.
+  project: torchcell_019_expr_morph
+  tags: [ws-run, ctrl-split, expr_morph, optuna, single-gpu]
 
 cell_dataset:
   graphs: [physical, regulatory]

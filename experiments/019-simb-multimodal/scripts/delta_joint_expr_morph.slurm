@@ -7,7 +7,7 @@
 # Launch all THREE conditions (each its own study) to get the controlled comparison:
 #   sbatch --export=ALL,CONDITION=morph experiments/019-simb-multimodal/scripts/delta_joint_expr_morph.slurm
 #   sbatch --export=ALL,CONDITION=expr  experiments/019-simb-multimodal/scripts/delta_joint_expr_morph.slurm
-#   sbatch --export=ALL,CONDITION=joint experiments/019-simb-multimodal/scripts/delta_joint_expr_morph.slurm
+#   sbatch --export=ALL,CONDITION=expr_morph experiments/019-simb-multimodal/scripts/delta_joint_expr_morph.slurm
 #
 # ONE-TIME SETUP before the first sbatch — SLURM opens --output at job start, BEFORE this
 # script's own mkdir runs, so the log dir must already exist or the job FAILS instantly with
@@ -24,7 +24,7 @@
 # multimodal) also valid. Override at submit: sbatch --account=bbub-delta-gpu ...
 #SBATCH --account=bbtp-delta-gpu
 #SBATCH --gpus-per-node=4
-#SBATCH --job-name=019-joint-optuna
+#SBATCH --job-name=019-expr_morph-optuna
 #SBATCH --time=48:00:00
 #SBATCH --constraint="scratch"
 #SBATCH --mail-user=mjvolk3@illinois.edu
@@ -41,7 +41,7 @@ source ~/.bashrc
 
 # Storage root = the existing bbub clone (override with DELTA_TC_ROOT if you relocate).
 PROJECT_ROOT="${DELTA_TC_ROOT:-/projects/bbub/mjvolk3/torchcell}"
-CONDITION="${CONDITION:-joint}"
+CONDITION="${CONDITION:-expr_morph}"
 OPTUNA_DIR=$PROJECT_ROOT/experiments/019-simb-multimodal/optuna
 mkdir -p "$OPTUNA_DIR"
 mkdir -p "$PROJECT_ROOT/experiments/019-simb-multimodal/slurm/output"
@@ -78,7 +78,7 @@ SWEEP=$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/optuna_joint_sweep.p
 
 # Pre-create the study in ONE process so the 4 workers only load_if_exists — avoids the fresh-DB
 # DDL race (sqlite 'table studies already exists'). --create-only makes the driver create the
-# study with the RIGHT directions (joint = multi-objective, expr/morph = single) from one place.
+# study with the RIGHT directions (expr_morph = multi-objective, expr/morph = single) from one place.
 $ENV_PY $SWEEP --create-only
 
 CUDA_VISIBLE_DEVICES=0 OPTUNA_WORKER_ID=0 $ENV_PY $SWEEP &

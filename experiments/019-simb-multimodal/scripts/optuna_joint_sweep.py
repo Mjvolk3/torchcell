@@ -8,11 +8,11 @@ rescue expression's val floor)? The control is a FIXED instance set — the 1,44
 with BOTH modalities (`require_modalities: [expression_log2_ratio, calmorph]` in the base
 config) — with only the active heads varied by CONDITION:
 
-    CONDITION=expr   active_heads=[per_gene]          single-obj: val/per_gene/pearson_per_gene
-    CONDITION=morph  active_heads=[global]            single-obj: val/global/pearson_per_gene
-    CONDITION=joint  active_heads=[per_gene, global]  MULTI-obj: (expr, morph) -> Pareto front
+    CONDITION=expr       active_heads=[per_gene]          single-obj: val/per_gene/pearson_per_gene
+    CONDITION=morph      active_heads=[global]            single-obj: val/global/pearson_per_gene
+    CONDITION=expr_morph active_heads=[per_gene, global]  MULTI-obj: (expr, morph) -> Pareto front
 
-joint − morph = "does expression help Ohya morphology"; joint − expr = the reverse. Because
+expr_morph − morph = "does expression help Ohya morphology"; expr_morph − expr = the reverse. Because
 the instance set is identical across conditions, any difference is the auxiliary-task effect,
 NOT a data-quantity confound.
 
@@ -20,7 +20,7 @@ One process = one Optuna worker (4 pinned per GPU by the Delta slurm), all on ON
 SQLite study PER CONDITION. Delta compute nodes have internet -> W&B ONLINE (no offline dance).
 
 Environment (set by the Delta slurm):
-    CONDITION           expr | morph | joint   (default: joint)
+    CONDITION           expr | morph | expr_morph   (default: expr_morph)
     OPTUNA_STORAGE      sqlite:////<scratch>/.../optuna_019_joint_<condition>.db   (required)
     OPTUNA_STUDY_NAME   default: joint_<condition>_000
     OPTUNA_N_TRIALS     trials THIS worker runs (default: 20)
@@ -42,7 +42,7 @@ from train_cgt_multitask import run_training
 CONF_DIR = osp.abspath(osp.join(osp.dirname(__file__), "../conf"))
 BASE_CONFIG = os.getenv("JOINT_BASE_CONFIG", "delta_joint_expr_morph_000")
 STORAGE = os.environ["OPTUNA_STORAGE"]
-CONDITION = os.getenv("CONDITION", "joint")
+CONDITION = os.getenv("CONDITION", "expr_morph")
 STUDY_NAME = os.getenv("OPTUNA_STUDY_NAME", f"joint_{CONDITION}_000")
 N_TRIALS = int(os.getenv("OPTUNA_N_TRIALS", "20"))
 WORKER_ID = int(os.getenv("OPTUNA_WORKER_ID", "0"))
@@ -50,7 +50,7 @@ WORKER_ID = int(os.getenv("OPTUNA_WORKER_ID", "0"))
 ACTIVE_HEADS = {
     "expr": ["per_gene"],
     "morph": ["global"],
-    "joint": ["per_gene", "global"],
+    "expr_morph": ["per_gene", "global"],
 }[CONDITION]
 
 # PEAK (max over training), not the last epoch — runs peak then MSE-collapse to the mean.
@@ -73,9 +73,11 @@ def _norm_choice(trial: optuna.Trial, head: str) -> str:
 
 
 def objective(trial: optuna.Trial) -> float | tuple[float, float]:
-    hidden = trial.suggest_categorical("hidden_channels", [16, 32, 64])
-    layers = trial.suggest_categorical("num_transformer_layers", [2, 3])
-    graph_reg = trial.suggest_categorical("graph_reg_lambda", [0.0, 0.001])
+    hidden = trial.suggest_categorical("hidden_channels", [64, 96, 128])
+    layers = trial.suggest_categorical("num_transformer_layers", [2, 4])
+    graph_reg = trial.suggest_categorical(
+        "graph_reg_lambda", [0.0, 0.0003, 0.001, 0.003]
+    )
     profile_name = trial.suggest_categorical("hp_profile", ["baseline", "aggressive"])
     profile = PROFILES[profile_name]
 
@@ -101,7 +103,10 @@ def objective(trial: optuna.Trial) -> float | tuple[float, float]:
         f"regression_task.optimizer.lr={profile['lr']}",
         f"regression_task.optimizer.weight_decay={profile['weight_decay']}",
         f"data_module.num_workers={os.getenv('NUM_WORKERS', '4')}",
-        "wandb.tags=[ws-run,delta,joint,optuna,single-gpu,"
+        # One W&B project per condition (separate by modality): expr | morph | expr_morph.
+        # _v2 marks this controlled same-1,161-split round, distinct from the old full-data runs.
+        f"wandb.project=torchcell_019_{CONDITION}_v2",
+        "wandb.tags=[ws-run,ctrl-split,optuna,single-gpu,"
         f"{CONDITION},trial-{trial.number},{profile_name}]",
     ]
 
@@ -124,13 +129,13 @@ def objective(trial: optuna.Trial) -> float | tuple[float, float]:
     trial.set_user_attr("expr_pearson", expr_r)
     trial.set_user_attr("morph_pearson", morph_r)
 
-    if CONDITION == "joint":
+    if CONDITION == "expr_morph":
         # MULTI-OBJECTIVE: maximize BOTH honest metrics -> Optuna returns the Pareto front of
         # (expression, morphology). This is the scientific object: the configs on the frontier
         # of "good at both", NOT a hand-weighted scalar that hides the trade-off.
         if expr_r is None or morph_r is None:
             raise optuna.TrialPruned(
-                f"joint needs both metrics (expr={expr_r}, morph={morph_r})"
+                f"expr_morph needs both metrics (expr={expr_r}, morph={morph_r})"
             )
         return expr_r, morph_r
 
@@ -143,14 +148,14 @@ def objective(trial: optuna.Trial) -> float | tuple[float, float]:
 
 
 def get_study() -> optuna.Study:
-    """Create-or-load the study. joint = MULTI-objective (maximize expr, maximize morph);
+    """Create-or-load the study. expr_morph = MULTI-objective (maximize expr, maximize morph);
     expr/morph = single-objective. TPESampler handles both (MOTPE for the multi case).
     """
     sampler = optuna.samplers.TPESampler(seed=WORKER_ID, multivariate=True, group=True)
     common = dict(
         study_name=STUDY_NAME, storage=STORAGE, sampler=sampler, load_if_exists=True
     )
-    if CONDITION == "joint":
+    if CONDITION == "expr_morph":
         return optuna.create_study(directions=["maximize", "maximize"], **common)
     return optuna.create_study(direction="maximize", **common)
 
@@ -166,14 +171,14 @@ def main() -> None:
 
     print(
         f"[{CONDITION} w{WORKER_ID}] study={STUDY_NAME} heads={ACTIVE_HEADS} "
-        f"n_trials={N_TRIALS} multi_obj={CONDITION == 'joint'}",
+        f"n_trials={N_TRIALS} multi_obj={CONDITION == 'expr_morph'}",
         flush=True,
     )
     study.optimize(objective, n_trials=N_TRIALS, catch=(Exception,))
 
     if WORKER_ID == 0:
-        if CONDITION == "joint":
-            print(f"[joint w0] Pareto front ({len(study.best_trials)} trials):")
+        if CONDITION == "expr_morph":
+            print(f"[expr_morph w0] Pareto front ({len(study.best_trials)} trials):")
             for t in study.best_trials[:10]:
                 print(f"  t{t.number} (expr,morph)={[round(v, 4) for v in t.values]} {t.params}")
         else:

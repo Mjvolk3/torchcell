@@ -10,8 +10,8 @@
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
-#SBATCH --gres=gpu:3
-#SBATCH --job-name=019-expr-peak
+#SBATCH --gres=gpu:4
+#SBATCH --job-name=019-expr
 #SBATCH --time=24:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END,FAIL
@@ -34,12 +34,14 @@ export PYTHONUNBUFFERED=1
 export PYTHONWARNINGS=ignore
 export WANDB__SERVICE_WAIT=600
 
+# CONTROLLED arm: expr head on the SAME 1,161 both-modality split as morph/expr_morph
+# (delta_joint_expr_morph_000 = require_modalities), so joint − single is confound-free.
 export CONDITION=expr
-export JOINT_BASE_CONFIG=gh_expr_optuna_000
-export OPTUNA_STORAGE="sqlite:///$OPTUNA_DIR/optuna_019_expr_peak.db"
-export OPTUNA_STUDY_NAME=expr_peak_000
+export JOINT_BASE_CONFIG=delta_joint_expr_morph_000
+export OPTUNA_STORAGE="sqlite:///$OPTUNA_DIR/optuna_019_expr_002.db"
+export OPTUNA_STUDY_NAME=expr_002
 export OPTUNA_N_TRIALS="${OPTUNA_N_TRIALS:-30}"
-export NUM_WORKERS=$((SLURM_CPUS_PER_TASK / 3))
+export NUM_WORKERS=$((SLURM_CPUS_PER_TASK / 4))
 
 SWEEP=$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/optuna_joint_sweep.py
 
@@ -49,4 +51,5 @@ python $SWEEP --create-only
 CUDA_VISIBLE_DEVICES=0 OPTUNA_WORKER_ID=0 python $SWEEP &
 CUDA_VISIBLE_DEVICES=1 OPTUNA_WORKER_ID=1 python $SWEEP &
 CUDA_VISIBLE_DEVICES=2 OPTUNA_WORKER_ID=2 python $SWEEP &
+CUDA_VISIBLE_DEVICES=3 OPTUNA_WORKER_ID=3 python $SWEEP &
 wait

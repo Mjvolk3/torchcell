@@ -5,12 +5,12 @@
 #
 # Runs the THREE conditions SEQUENTIALLY in one job (only 4 GPUs free — parallel jobs would
 # just queue). Each: pre-create the Optuna study, then 4 GPU-pinned workers, then wait.
-#   morph / expr = single-objective; joint = MULTI-objective (Pareto of expr x morph).
-# All on the SAME 1,440 both-modality instances (require_modalities), so joint-vs-baseline
+#   morph / expr = single-objective; expr_morph = MULTI-objective (Pareto of expr x morph).
+# All on the SAME 1,440 both-modality instances (require_modalities), so expr_morph-vs-baseline
 # isolates the auxiliary-task effect. IGB compute is OFFLINE -> W&B offline + `wandb sync` later.
 #
 #   sbatch experiments/019-simb-multimodal/scripts/igb_cabbi_optuna_joint.slurm
-#   CONDITIONS="joint" sbatch --export=ALL,CONDITIONS=joint .../igb_cabbi_optuna_joint.slurm   # one only
+#   CONDITIONS="expr_morph" sbatch --export=ALL,CONDITIONS=expr_morph .../igb_cabbi_optuna_joint.slurm   # one only
 #
 #SBATCH -p cabbi
 #SBATCH --mem=120g
@@ -18,7 +18,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --gres=gpu:4
-#SBATCH --job-name=019-joint-cabbi
+#SBATCH --job-name=019-expr_morph-cabbi
 #SBATCH --time=24:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END,FAIL
@@ -39,8 +39,8 @@ mkdir -p "$SCRATCH_ROOT/experiments/019-simb-multimodal/wandb"
 cd "$PROJECT_ROOT/experiments" || exit 1
 export NUM_WORKERS=$((SLURM_CPUS_PER_TASK / 4))
 
-# Conditions to run, in order (override: --export=ALL,CONDITIONS="joint").
-CONDITIONS="${CONDITIONS:-morph expr joint}"
+# Conditions to run, in order (override: --export=ALL,CONDITIONS="expr_morph").
+CONDITIONS="${CONDITIONS:-morph expr expr_morph}"
 
 singularity exec --nv "$PROJECT_ROOT/rockylinux_9.sif" bash -c "
 source \$HOME/miniconda3/bin/activate
@@ -65,8 +65,8 @@ SWEEP=$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/optuna_joint_sweep.p
 for COND in $CONDITIONS; do
   echo \"===== CONDITION=\$COND =====\"
   export CONDITION=\$COND
-  export OPTUNA_STORAGE=\"sqlite:///$OPTUNA_DIR/optuna_019_joint_\${COND}_peak.db\"
-  export OPTUNA_STUDY_NAME=\"joint_\${COND}_peak_000\"
+  export OPTUNA_STORAGE=\"sqlite:///$OPTUNA_DIR/optuna_019_\${COND}_002.db\"
+  export OPTUNA_STUDY_NAME=\"\${COND}_002\"
 
   # Pre-create the study (one process) so the 4 workers only load_if_exists — kills the
   # fresh-DB DDL race; --create-only sets single- vs multi-objective directions correctly.

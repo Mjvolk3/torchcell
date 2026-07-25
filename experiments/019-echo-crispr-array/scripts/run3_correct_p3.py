@@ -69,9 +69,12 @@ def main() -> None:
     # recover_missed_wells OFF: Cellpose already detected P3's top row, and with the grid
     # shifted onto the true rows the recovery probe otherwise fires on the lid-seam frame
     # just above row 1 (blue frame artifacts). Detection of the real colonies is unchanged.
+    # tighten_size=True: the top-row instances were never assigned in the original run, so
+    # their cached masks still carry the raw Cellpose halo -- re-tighten so their outlines
+    # hug the colony like the rest (already-tight masks are ~unchanged by a second Otsu).
     cfg = CellposeSegConfig(
         n_rows=16, n_cols=24, contrast="clahe", clahe_clip=0.02, cellprob_threshold=-4.0,
-        node_tol=0.60, edge_margin_frac=0.70, multi_min_frac=0.5, tighten_size=False,
+        node_tol=0.60, edge_margin_frac=0.70, multi_min_frac=0.5, tighten_size=True,
         recover_missed_wells=False,
     )
     grid = spanning_grid(crop, masks, cfg.n_rows, cfg.n_cols)

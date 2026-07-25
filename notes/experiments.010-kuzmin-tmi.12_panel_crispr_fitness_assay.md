@@ -1406,7 +1406,7 @@ n = 3.
 
 ![Run 3 detection overlay, P2 (5 nL, 48 h) -- QC pass. More empty wells (failed 5 nL transfers) but clean registration.](assets/images/019-echo-crispr-array/run3/run3_overlay_P2.png)
 
-![Run 3 detection overlay, P3 (5 nL, 48 h) -- registration CORRECTED (`run3_correct_p3.py`): the grid was re-fit one row up so the top row is registered (green) and no marks land on the frame. P3 is still QC-EXCLUDED from the batch effect -- its blank wells are contaminated in every layout x orientation, so the plate itself is compromised and needs a re-plate; the correction only makes the overlay show the true detection.](assets/images/019-echo-crispr-array/run3/run3_overlay_P3.png)
+![Run 3 detection overlay, P3 (5 nL, 48 h) -- best-effort re-registration (`run3_correct_p3.py`, grid re-fit to span the full detected extent). P3 RESISTS clean registration: a one-row shift fixes the top row but drops the bottom; spanning both rows re-introduces edge/frame flag artifacts. This is itself a symptom of a compromised plate (blank wells contaminated in every layout x orientation), not a fixable detection bug. P3 stays QC-EXCLUDED and is flagged for RE-PLATE; the batch-effect result (P1+P2) is unaffected.](assets/images/019-echo-crispr-array/run3/run3_overlay_P3.png)
 
 **Batch effect (P1 + P2, the two clean re-randomizations).** Mean bootstrap-across-plates
 SE = **0.085** (across-plate SD 0.169) -- roughly **3x run 2's 0.025**. That jump is the

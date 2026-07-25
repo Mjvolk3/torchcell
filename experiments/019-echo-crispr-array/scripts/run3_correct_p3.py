@@ -25,12 +25,11 @@ import torchcell.sga.cellpose_seg as cs
 from torchcell.sga.cellpose_seg import (
     CellposeSegConfig,
     _fit_lattice,
-    _homography_lattice,
     _instance_props,
     _relax_lattice,
     quantify_plate_image_cellpose,
 )
-from torchcell.sga.image import _grayscale, _rotate
+from torchcell.sga.image import _fit_lines, _grayscale, _rotate
 
 load_dotenv()
 ASSET_IMAGES_DIR = os.environ["ASSET_IMAGES_DIR"]
@@ -40,27 +39,28 @@ IMG_DIR = osp.join(ASSET_IMAGES_DIR, "019-echo-crispr-array", "run3")
 
 
 def spanning_grid(crop: str, masks: np.ndarray, n_rows: int, n_cols: int) -> np.ndarray:
-    """Fit the grid, then shift it UP one row pitch if Cellpose detected a full row of
-    colonies above the fitted top row (the one-row-low misregistration).
+    """Fit the row/column lines DIRECTLY to the Cellpose centroids so the grid spans the
+    full detected extent -- top row to bottom row. P3's original lattice fit one row too
+    low with too small a row pitch (16 rows couldn't span all 16 colony rows); ``_fit_lines``
+    (which penalises out-of-range indices, forcing the pitch to stretch) lands all 16 rows
+    on the detected colonies. Then relax onto the centroid medians for the residual
+    non-uniform spacing.
     """
     g = _grayscale(crop)
-    n0, pitch, invert, theta, center, _roi = _fit_lattice(g, n_rows, n_cols, "auto")
+    _n0, pitch, _inv, theta, center, _roi = _fit_lattice(g, n_rows, n_cols, "auto")
     props = _instance_props(masks, 50)
     allc = np.array([[p["cy"], p["cx"]] for p in props])
     dd = np.sqrt(((allc[:, None, :] - allc[None, :, :]) ** 2).sum(-1))
     np.fill_diagonal(dd, np.inf)
     cf = allc[dd.min(axis=1) < 1.8 * pitch]
-    grid = _homography_lattice(
-        _relax_lattice(n0, cf, n_rows, n_cols, theta, center), cf, n_rows, n_cols, pitch
+    cr = _rotate(cf, -theta, center)
+    ys = _fit_lines(cr[:, 0], n_rows)  # span-forcing row lines (top -> bottom)
+    xs = _fit_lines(cr[:, 1], n_cols)
+    gy, gx = np.meshgrid(ys, xs, indexing="ij")
+    seed = _rotate(np.stack([gy.ravel(), gx.ravel()], 1), theta, center).reshape(
+        n_rows, n_cols, 2
     )
-    gr = _rotate(grid.reshape(-1, 2), -theta, center).reshape(n_rows, n_cols, 2)
-    row_pitch = float(np.median(np.diff(gr[:, :, 0].mean(axis=1))))
-    cr = _rotate(allc, -theta, center)
-    # colonies a full row above the current top grid line -> shift the grid up one pitch
-    top = gr[:, :, 0].min()
-    if int((cr[:, 0] < top - 0.5 * row_pitch).sum()) >= 0.4 * n_cols:
-        gr[:, :, 0] -= row_pitch
-    return _rotate(gr.reshape(-1, 2), theta, center).reshape(n_rows, n_cols, 2)
+    return _relax_lattice(seed, cf, n_rows, n_cols, theta, center)
 
 
 def main() -> None:

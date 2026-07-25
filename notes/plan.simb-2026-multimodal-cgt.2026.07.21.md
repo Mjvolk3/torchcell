@@ -42,6 +42,7 @@ Legend: ✅ done · 🔨 in progress · ⬜ not started · ⏸ deferred (North S
 | WS12   | Fig 6 strain-design inference (deletion ranking)            | C     | ⬜      | (issue: WS12)        |
 | WS13   | Compute prep (IGB mmli/cabbi + Delta SLURM + configs)       | C     | ✅      | PR #163 → 4c10f694   |
 | WS14   | Error-bar provenance fix (trigenic τ ±0.006)                | D     | ✅      | PR #157 → cd3b928d   |
+| WS16   | Precursor-pool target set (13 molecules) + FBA-imputed labels | A/B | ⬜      | (issue: WS16)        |
 | WS-NS1 | Additive perturbation operator (inverse design)             | NS    | ⏸      | (issue: WS-NS1)      |
 | WS-NS2 | Enzyme-constrained FBA regularizer + kcat/KM                | NS    | ⏸      | (issue: WS-NS2)      |
 
@@ -675,3 +676,88 @@ subtelomere), BLAST+ in run env, wire SCerevisiaeGenome reference-fallback.
 - Morphology norm: z-score (default) vs + Ohya Box–Cox.
 - Cassette aggregation for pigment metabolome-transfer (optional; isobutanol powers WS11b).
 - Small cleanup: `chown`/temp-dir fix for the pre-existing stoich-test perms failure.
+
+## 2026.07.25 - WS16. Precursor-pool target set (13 molecules) + FBA-imputed labels
+
+*(Numbered 16, skipping 15, because WS15 is already taken by the env-chemogenomic roadmap
+[[plan.schematization-ingestion-roadmap.2026.06.23]] — the two are unrelated.)*
+Working detail for the metabolism dataset prep: [[scratch.2026.07.25.010919-adding-metabolism]].
+
+**Why this enters the roadmap.** Fig 6 and the abstract commit us to *recommending deletions for
+a production target*, but the roadmap so far only names the products we happen to hold screens
+for (β-carotene, betaxanthin, isobutanol). Domenzain 2025 supplies the generalizable target set:
+platform/chassis-strain design reduces to the turnover of **12 central-carbon precursor pools**
+(their Fig 4C), and their clustering shows those pools define the shared engineering strategies
+across chemical families (terpenes → up R5P/E4P/PEP + NADPH; shikimate-derived → up E4P/PEP). We
+add **malonyl-CoA** — the extender pool for TAL / 3-HP / fatty alcohols, absent from their 12 —
+giving **13 targets**. Acetyl-CoA was already among the 12.
+
+**All 13 resolve in Yeast9, and our measured coverage is very uneven.** Verified against
+`YeastGEM().model` (2,806 metabolites / 4,131 reactions) and the built
+`metabolite_zelezniak2018` LMDB (95 records, 50 keys):
+
+| module | molecule | Yeast9 | measured key (Zelezniak) | n/95 |
+| --- | --- | --- | --- | --: |
+| glycolysis | glucose-6-phosphate | `s_0568` (c) | `g6p;f6p;g6p-B` **merged** | 95 |
+| glycolysis | fructose-6-phosphate | `s_0557` (c) | `f6p` | 95 |
+| glycolysis | glyceraldehyde-3-phosphate | `s_0764` (c) | `g3p` | 95 |
+| glycolysis | 3-phosphoglycerate | `s_0260` (c) | `3pg;2pg` **merged** | 95 |
+| glycolysis | phosphoenolpyruvate | `s_1360` (c) | `pep` | 95 |
+| glycolysis | pyruvate | `s_1399` (c) | `pyr` | 95 |
+| PPP | ribose-5-phosphate | `s_1408` (c) — **see defect** | `r5p` | 95 |
+| PPP | erythrose-4-phosphate | `s_0551` (c) | `e4p` | 55 |
+| acetyl-CoA node | **acetyl-CoA** | `s_0373` (c) | `accoa` | **18** |
+| TCA | 2-oxoglutarate | `s_0180` (c) | `akg` | **18** |
+| TCA | oxaloacetate | `s_1271` (c) | `oaa` | **18** |
+| TCA | succinyl-CoA | `s_1464` (**m only**) | — **not measured** | 0 |
+| extender | **malonyl-CoA** | `s_1101` (c) | — **not measured** | 0 |
+
+**The FBA lever — this is what makes the target set usable.** Because every one of the 13 is a
+real Yeast9 metabolite, a constraint-based solve (FBA/pFBA over Yeast9; ecFBA under WS-NS2) can
+emit a value for **all 13 on any genotype**, including the two nothing in our DB measures. So the
+precursor vector becomes a **complete, always-available readout axis whose width does not depend
+on screen coverage** — which is exactly the gap that blocks WS12 today. Three concrete uses:
+
+1. **WS12 design objective.** Rank deletions by predicted turnover of whichever pool limits the
+   product of interest, even for products with no screen at all. This is what lets Fig 6
+   generalize past the three products we have data for.
+2. **WS8 weak supervision.** FBA-imputed values supply targets for the per-metabolite head where
+   measurements are absent, with the measured subset as anchor + validation set.
+3. **Design Decision 4, honestly implemented.** FBA supplies *values at nodes*, not an attention
+   constraint — metabolism stays representation annotation, never an attention prior.
+
+**Load-bearing caveat: FBA turnover is a FLUX; Zelezniak is a POOL SIZE.** A constraint-based
+solve yields reaction fluxes (turnover rate through a node), whereas the measurement is a
+steady-state concentration signal in arbitrary SRM-MS units. These are different physical
+quantities and must not be regressed onto one head as if interchangeable. Treat them as two
+label families (`precursor_flux` vs `metabolite_level`) and, if we want them joined, first
+measure how well they even correlate on the 18–95 strains where both exist. That correlation is
+itself a reportable result and a cheap CPU-only experiment.
+
+**Three coverage findings that change what we can claim.**
+
+- **The pool that matters most is the sparsest.** Acetyl-CoA — the TAL-limiting node — plus
+  2-oxoglutarate and OAA are measured in only **18 of 95** strains. The FBA route is therefore
+  not a nice-to-have; it is the only way to cover the acetyl-CoA node at scale.
+- **Two pools are measured nowhere in our DB** (succinyl-CoA, malonyl-CoA) → FBA-only by
+  necessity. Note succinyl-CoA has **no cytosolic form in Yeast9** (`s_1464` is mitochondrial),
+  so any cytosolic-pool framing has to say so explicitly.
+- **Co-elution merges cap what is resolvable.** G6P is never measured alone (only
+  `g6p;f6p;g6p-B`) and 3PG only as `3pg;2pg`. For those two the measured signal cannot be
+  attributed to the single pool, so FBA is the only route to a per-pool value.
+
+**DEFECT found while pinning the IDs (fix in WS8).** `build_metabolite_s_id_map`
+(`torchcell/datasets/scerevisiae/zelezniak2018.py:289`) resolves KEGG-first, and Zelezniak's
+`r5p` carries KEGG `C00117` → it maps onto **`s_3768`** ("D-ribofuranose 5-phosphate",
+**1 reaction**, a near-dead-end stub) instead of **`s_1408`** ("ribose-5-phosphate", BiGG `r5p`,
+KEGG `C03736`, **7 reactions** — the actual PPP hub). Any GPR-pooled readout or FBA turnover
+computed at `s_3768` is close to meaningless, and R5P is one of the terpene-relevant pools. Needs
+a resolution-order fix (prefer the BiGG id, or prefer the higher-degree node on tie) plus an
+audit of the other 47 mapped ids for the same failure.
+
+**Next actions.** (1) Commit the 13-target set as a module constant with its Yeast9 ids +
+provenance (Domenzain 2025 Fig 4C + our malonyl-CoA addition), so figures/tables regenerate from
+it per the CLAUDE.md artifact rule. (2) Fix the R5P mis-resolution and audit the map. (3) Populate
+`target_metabolite_ids` for Mülleder (19 AA) so the metabolome sets share one alignment key.
+(4) Write the FBA precursor-turnover script over Yeast9 and correlate flux vs measured pool on the
+overlap — the go/no-go for using FBA values as supervision rather than only as a design objective.

@@ -46,7 +46,7 @@ trainer:
   # fast and the deployed checkpoint is the peak, not the collapsed tail.
   early_stopping:
     enabled: true
-    monitor: val/per_gene/pearson_per_gene
+    monitor: val/expression/pearson_per_feature
     mode: max
     patience: 15
     min_delta: 0.0

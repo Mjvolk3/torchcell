@@ -1,0 +1,170 @@
+# experiments/019-simb-multimodal/conf/cgt_decoder_003.yaml
+# DECODER x DISTRIBUTIONAL study (_003) BASE config -- shared by all three arms.
+#
+# Question: morphology sits at per-feature Pearson ~0.04 against a measured noise ceiling of
+# 0.61 (`morphology_noise_ceiling.py`), while expression is at its ~0.09-0.11 ceiling
+# (`expression_noise_ceiling.py`). Expression reads its OWN token (S0 per-gene); morphology
+# reads a SHARED pooled vector (S1). PCA of the 278 CalMorph targets gives an effective rank
+# of 11.7, so a d=96 embedding is not the constraint -- the model is not capacity-limited.
+# The remaining suspect is the DECODER: a mean over ~6000 gene tokens dilutes a 1-2 gene
+# perturbation before readout. This sweep tests that directly.
+#
+# Two orthogonal axes, both swept by optuna_joint_sweep.py:
+#   multitask.decoder = s1_pool | s3_xattn     (STRUCTURAL, morphology head only)
+#   multitask.dist    = point | crps | quantile (DISTRIBUTIONAL, all vector heads)
+#
+# Three arms share THIS config, differing only in CONDITION (which heads are active):
+#   CONDITION=morph      active_heads=[global]              -> mmli,  4 GPU, offline
+#   CONDITION=expr_morph active_heads=[per_gene, global]    -> GH,    4 GPU, online (Pareto)
+#   CONDITION=expr       active_heads=[per_gene]            -> cabbi, 2 GPU, offline (control)
+#
+# THE CONTROL: `require_modalities` fixes the instance set to the genotypes carrying BOTH
+# modalities, so expr_morph - morph isolates the auxiliary-task effect from a data-quantity
+# confound. Same split as the _002 round, so _003 is directly comparable to it.
+defaults:
+  - default
+  - _self_
+
+dry_run: false
+seed: 0
+
+wandb:
+  # The driver (optuna_joint_sweep.py) overrides this to torchcell_019_<condition>_v3.
+  project: torchcell_019_decoder_v3
+  tags: [ws-run, ctrl-split, decoder, optuna, single-gpu]
+
+cell_dataset:
+  graphs: [physical, regulatory]
+  node_embeddings: []
+  query_file: fig3_core.cql
+  dataset_tag: fig3_core
+  # THE control: fix the instance set to genotypes carrying BOTH modalities.
+  require_modalities: [expression_log2_ratio, calmorph]
+
+transforms:
+  use_transforms: false
+
+data_module:
+  is_perturbation_subset: false
+  perturbation_subset_size: 10000
+  batch_size: 32
+  num_workers: 4
+  pin_memory: true
+  prefetch: false
+
+trainer:
+  max_epochs: 150
+  strategy: auto        # single GPU per trial (workers are GPU-pinned by the slurm)
+  accelerator: gpu
+  devices: 1
+  overfit_batches: 0
+  precision: bf16-mixed
+  log_every_n_steps: 10
+  fast_dev_run: false
+  early_stopping:
+    enabled: true
+    monitor: val/loss
+    mode: min
+    patience: 20
+    min_delta: 0.0
+
+multitask:
+  # Driver overrides per CONDITION; default = the joint arm.
+  active_heads: [per_gene, global]
+  loss_fn: mse          # only used by heads with no DistHead (gene_interaction)
+
+  # ---- Decoder study axes (SWEPT by the driver; declared here so Hydra struct-mode
+  # `=` overrides are legal) ----
+  # decoder: s1_pool = GlobalHead (pool then fan out; the dilution baseline)
+  #          s3_xattn = CrossAttnHead (one learned query per feature over {CLS, genes})
+  decoder: s1_pool
+  # dist: point (MSE) | crps (closed-form Gaussian CRPS) | quantile (pinball, K=19).
+  # Only widens the head's final projection; output_dim stays the FEATURE count.
+  # The metric always reads DistHead.point(), so ranking is loss-agnostic.
+  dist: point
+
+  # ---- ALWAYS STANDARDIZE (no `raw` lever in this study) ----
+  # An un-standardized 278-D CalMorph target spans ~8 orders of magnitude, so a y-unit loss
+  # (MSE, CRPS, pinball) is dominated by a handful of large-magnitude features while the
+  # per-feature Pearson weights all 278 equally. Comparing decoders under that mismatch
+  # would confound structural form with "which features the loss happened to care about".
+  # The guard below FAILS FAST if any active vector head is left un-normalized.
+  require_standardized_targets: true
+  # Driver sweeps target_norm in {zscore, yeo_johnson} by moving heads between these lists:
+  #   normalize_vector_targets       -> vector_norm_method (Yeo-Johnson + z-score)
+  #   standardize_per_feature_target -> plain per-feature z-score
+  normalize_vector_targets: [global]
+  standardize_per_feature_target: [per_gene]
+  vector_norm_method: yeo_johnson
+  target_norm_eps: 1.0e-8
+
+  # Part A: drop 3 degenerate (near-constant) CalMorph features -> 281 - 3 = 278.
+  # NOTE: the train-split stats found SIX near-constant features
+  # (A113_A, A113_A1B, A113_C, C123_C, D203, D205); this set is the same 3-subset the _002
+  # sweep dropped, kept identical so _003 targets the SAME 278 features and is comparable.
+  drop_features:
+    global: [A113_A, D203, D205]
+  degenerate_robust_cv: 0.01
+
+  heads:
+    global:
+      output_dim: 278      # FEATURE count; the dist axis widens params, not this
+      use_gene_pool: true  # s1_pool only (s3_xattn attends to all tokens directly)
+    per_gene:
+      output_dim: 1
+    per_metabolite:
+      output_dim: 1
+  head_weights:
+    gene_interaction: 1.0
+    per_gene: 1.0
+    global: 1.0
+    per_metabolite: 1.0
+  head_phenotypes:
+    gene_interaction: [fitness, gene_interaction]
+    per_gene: [expression_log2_ratio]
+    global: [calmorph]
+    per_metabolite: [metabolite]
+
+model:
+  checkpoint_path: null
+  gene_num: 6607
+  # hidden_channels / num_transformer_layers / dropout are SWEPT by the driver.
+  hidden_channels: 96
+  num_transformer_layers: 2
+  # 4 divides every swept hidden (64/96/128), so both the encoder attention and the
+  # s3_xattn cross-attention are always valid.
+  num_attention_heads: 4
+  dropout: 0.1
+  learnable_embedding:
+    enabled: true
+    size: ${model.hidden_channels}
+    preprocessor:
+      num_layers: 2
+      dropout: 0.1
+  graph_regularization:
+    graph_reg_lambda: 0.001   # SWEPT by the driver {0, 3e-4, 1e-3, 3e-3}
+    graph_reg_layer: [1, 2]
+    row_sampling_rate: 1.0
+    regularized_heads:
+      physical:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 0
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      regulatory:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 1
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+  perturbation_head:
+    num_heads: 4
+    dropout: 0.1
+
+regression_task:
+  optimizer:
+    type: AdamW
+    lr: 3e-4              # SWEPT by the driver (hp_profile)
+    weight_decay: 1e-8    # SWEPT by the driver (hp_profile)
+  # Scheduler OFF so the swept optimizer.lr is honest (CosineAnnealingWarmupRestarts would
+  # drive the effective LR from max_lr and override it).
+  lr_scheduler: null
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0

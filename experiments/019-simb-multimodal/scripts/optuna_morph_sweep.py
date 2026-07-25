@@ -53,7 +53,9 @@ N_TRIALS = int(os.getenv("OPTUNA_N_TRIALS", "20"))
 WORKER_ID = int(os.getenv("OPTUNA_WORKER_ID", "0"))
 
 # PEAK (max over training), not the last epoch — runs peak then MSE-collapse to the mean.
-OBJECTIVE_METRIC = "val/global/pearson_per_gene_max"  # honest per-feature (across-instances), peak
+# Metrics are namespaced by PHENOTYPE (`morphology`), not by the head name (`global`), and
+# the honest per-feature metric is `pearson_per_feature` (was `pearson_per_gene`).
+OBJECTIVE_METRIC = "val/morphology/pearson_per_feature_max"
 
 # Bundled secondary hyperparameter profiles (mirror the expression grid).
 PROFILES = {
@@ -128,7 +130,9 @@ def objective(trial: optuna.Trial) -> float:
             f"{OBJECTIVE_METRIC} not logged (keys: {sorted(metrics)[:12]}...)"
         )
     value = metrics[OBJECTIVE_METRIC]
-    trial.set_user_attr("val_pearson_per_strain", metrics.get("val/global/pearson_per_strain"))
+    trial.set_user_attr(
+        "val_pearson_per_instance", metrics.get("val/morphology/pearson_per_instance")
+    )
     trial.set_user_attr("val_loss", metrics.get("val/loss"))
     return value
 

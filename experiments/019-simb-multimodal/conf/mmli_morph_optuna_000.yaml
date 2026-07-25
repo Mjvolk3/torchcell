@@ -42,7 +42,7 @@ trainer:
   fast_dev_run: false
   early_stopping:
     enabled: true
-    monitor: val/global/pearson_per_gene
+    monitor: val/morphology/pearson_per_feature
     mode: max
     patience: 15
     min_delta: 0.0

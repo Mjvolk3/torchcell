@@ -208,3 +208,83 @@ sbatch experiments/019-simb-multimodal/scripts/gh_joint_decoder_003.slurm
 
 Sync IGB offline runs with `wandb_sync_agent_dirs` (filter to the `_003` job ids). Land via
 `/enqueue-merge`. Cluster rules: [[cluster-rules-igb-delta]]; prior run: [[019-controlled-multitask-v2-sweep]].
+
+## 2026.07.25 - Implementation landed (commit `d07037b1`)
+
+Built on `feat/igb-mmli-optuna-morph`. Deviations from the spec above are flagged **[CHANGED]**.
+
+### What shipped
+
+| file | state |
+|---|---|
+| `torchcell/losses/distributional.py` | NEW — `gaussian_crps`, `pinball`, `DistHead` (`.point()` / `.loss(params,y,mask)` / `.param_dim`), `make_dist_head`, `dist_param_dim` |
+| `tests/torchcell/losses/test_distributional.py` | NEW — 17 tests |
+| `torchcell/models/equivariant_cell_graph_transformer.py` | `CrossAttnHead` (S3); `param_dim` on `GlobalHead`/`PerGeneHead`; head factory on (`decoder`,`dist`); `MaskedMultitaskLoss(dist_heads=...)` |
+| `experiments/019-simb-multimodal/scripts/train_cgt_multitask.py` | phenotype-namespaced metrics; `DistHead` wiring; always-standardize guard; `decoder`/`dist` in scale-meta |
+| `experiments/019-simb-multimodal/scripts/optuna_joint_sweep.py` | `decoder`/`dist` axes; `_003` studies; `_v3` projects; per-feature peak objective |
+| `experiments/019-simb-multimodal/conf/cgt_decoder_003.yaml` | NEW base config (all three arms) |
+| `.../scripts/{mmli_morph,gh_joint,cabbi_expr}_decoder_003.slurm` + `requeue_until.sh` | NEW |
+
+### Design decisions
+
+- **Param layout `[B,F]` / `[B,F,P]`.** `output_dim` stays the FEATURE count (278); `param_dim`
+  (1/2/19) only widens the head's final projection. This keeps the Part A `output_dim ==
+  feat_dim` sanity check valid and leaves the `per_gene` `index_select` gather untouched.
+- **`.point()` feeds the metric** → ranking is loss-agnostic across `point`/`crps`/`quantile`.
+- **`pearson_per_instance` is computed on NORMALIZED features**, `pearson_per_feature` on raw
+  units. Per-instance correlates *across* features, so on raw multi-scale CalMorph values it
+  would be dominated by the largest-magnitude features rather than measuring profile shape.
+- **Backward compatible**: a `heads_config` without `decoder`/`param_dim` builds the old
+  `GlobalHead`, emits `[B,F]`, and uses the plain MSE path.
+- **S3 cost is ~1.5x S1** at d=32 (17.5k vs 11.3k params); the readout is a *shared*
+  `Linear(d→P)`, so parameter count is independent of F and the per-feature specificity lives
+  in the 278 learned queries. A win is therefore evidence for pool-dilution, not capacity.
+
+### [CHANGED] vs the spec
+
+1. **`quantile` is excluded from the JOINT arm** (morph/expr sweep all three). K=19 params over
+   both a 6127-gene and a 278-feature head is a large readout for the shared 4-GPU node.
+2. **`decoder` is not suggested for the `expr` arm** — expression is S0 by construction, so
+   sweeping it would add a phantom dimension that splits the TPE search space without changing
+   the model.
+3. **Always-standardize is an OPT-IN guard** (`multitask.require_standardized_targets`, on in
+   `cgt_decoder_003`, off elsewhere) — several legacy configs legitimately run an
+   un-normalized head, and a global default would have broken them.
+4. **`drop_features` = `[A113_A, D203, D205]`** (matching `_002` via `delta_joint_expr_morph_000`)
+   so `_003` targets the SAME 278 features and stays comparable. **OPEN ISSUE:** the train-split
+   stats find **six** near-constant features (`A113_A, A113_A1B, A113_C, C123_C, D203, D205`),
+   and the repo's configs split them into two different 3-subsets (`train_cgt_multitask.yaml` /
+   `gh_cgt_multitask_*` drop the other three). Both give 278. Worth reconciling before the
+   paper figure; dropping all six would give 275 and break comparability with `_002`.
+
+### Fixes forced by the refactor
+
+- `_extract_targets_and_masks` sized the target buffer from the head output, so any
+  distributional run crashed (`[B,F,P]` vs a decoded `[F]` row). Targets are now sized from
+  `.point()`. **Only the real-data path caught this** — the synthetic dry-run built its targets
+  from `.point()` and passed.
+- The metric rename broke three live references: `optuna_morph_sweep.py`'s objective (would have
+  pruned every trial) and the early-stopping monitors in `gh_expr_optuna_000.yaml` /
+  `mmli_morph_optuna_000.yaml`. All updated.
+
+### Verification
+
+`22 passed` (17 new distributional + 5 pre-existing model), `mypy --strict` + `ruff` clean, and
+**12/12 real-data `fast_dev_run` combinations** train end-to-end: morph {s1_pool,s3_xattn} ×
+{point,crps,quantile}, morph s3+crps under z-score, expr S0 × 3, joint × 2 — plus the
+always-standardize guard correctly failing fast on an un-standardized head. CRPS is validated
+against the Monte-Carlo energy form (`E|X-y| - ½E|X-X'|`) to ~1e-4 and shown proper.
+
+### Launch (NOT yet submitted)
+
+```bash
+# IGB — sbatch from a LOGIN node only (no compute on login nodes)
+ssh mjvolk3@biologin.igb.illinois.edu 'sbatch /home/a-m/mjvolk3/projects/torchcell/experiments/019-simb-multimodal/scripts/mmli_morph_decoder_003.slurm'
+ssh mjvolk3@biologin.igb.illinois.edu 'sbatch /home/a-m/mjvolk3/projects/torchcell/experiments/019-simb-multimodal/scripts/cabbi_expr_decoder_003.slurm'
+# GilaHyper — from the worktree root so SLURM_SUBMIT_DIR picks up worktree code
+cd ~/Documents/projects/torchcell.worktrees/feat/igb-mmli-optuna-morph && \
+  sbatch experiments/019-simb-multimodal/scripts/gh_joint_decoder_003.slurm
+```
+
+IGB requires the branch to be synced to `/home/a-m/mjvolk3/projects/torchcell` first. Sync IGB
+offline runs with `wandb_sync_agent_dirs` (filter to the `_003` job ids). Land via `/enqueue-merge`.

@@ -1405,7 +1405,22 @@ recovered, **all six P3 blanks are empty, WT CV drops to 0.078, and the orientat
 confidently to `identity`**: P3 is a clean plate. It is NOT contaminated and needs no re-plate;
 it is the valid third replicate.
 
-![Run 3 detection overlay, P1 (5 nL, 48 h) -- QC pass. green = accepted, blue = grid-recovered faint colony, red = multi/collision, orange = neighbour, purple = non-circular.](assets/images/019-echo-crispr-array/run3/run3_overlay_P1.png)
+**Overlay colour legend** -- the outline colour marks each well's validity category, in every
+run-2/run-3 overlay and in the labelled artifact overlays:
+
+- **green** -- accepted colony (valid, scored)
+- **red** -- multi (`M`): a second real colony sits on the well, so the well is rejected
+- **pink** -- the colliding colony that *caused* a red multi (its partner; the pair shows both colonies)
+- **orange** -- neighbour (`N`): an adjacent well crowded by a multi's duplicate, rejected
+- **blue** -- grid-recovered faint colony (Cellpose missed it -> recovered from the grid and scored)
+- **purple** -- non-circular (`C`): spiky / merged shape, rejected
+
+The **labelled artifact overlays** (`experiments/019-echo-crispr-array/artifacts/<collection>/images/`,
+built by `plate_artifacts.py`) additionally draw the fitted grid nodes (cyan crosses) and the
+standard 384-well address -- rows **A--P**, columns **1--24**, in black on all four sides -- so any
+well is addressable and a mis-registered node (sitting off its colony) is visible directly.
+
+![Run 3 detection overlay, P1 (5 nL, 48 h) -- QC pass. Colours per the legend above.](assets/images/019-echo-crispr-array/run3/run3_overlay_P1.png)
 
 ![Run 3 detection overlay, P2 (5 nL, 48 h) -- QC pass. More empty wells (failed 5 nL transfers) but clean registration.](assets/images/019-echo-crispr-array/run3/run3_overlay_P2.png)
 

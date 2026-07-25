@@ -1470,3 +1470,33 @@ keep whichever assigns the MOST real colonies, accepting a shift only when it ad
 fraction of a row. It is self-guarding -- on a correctly-fit plate any shift only sheds colonies,
 so P1/P2 (and all of run2) are byte-identical no-ops. Consequence: run 3 is now the full
 **n = 3** the design intended; SE 0.085 -> **0.068**, Costanzo Pearson r 0.65 -> **0.73** (p=0.007).
+
+### Why some touching doublets show only one green outline (detection vs rendering)
+
+Reviewing the labelled overlays surfaced wells that clearly hold two touching colonies but
+draw a single green outline (e.g. `L23` on the 5 nL / 50 h plate, `K13` on run-3 P1). Cellpose
+**does detect** the second colony -- it is a separate instance in the mask array. Two
+independent things then hide it, and it is worth separating them:
+
+1. **Not flagged.** The multi (`M`) rule fires only when the second instance is at least
+   `multi_min_frac` (0.5) of the primary's area. At `L23` the raw Cellpose areas are
+   **2897 px** (primary) and **1181 px** (second) -> ratio **0.41**, below the cutoff, so the
+   rule classifies it as an over-split fragment rather than a competing colony. The rule is
+   behaving as configured; the threshold is simply too strict for these real doublets.
+   (Careful with diagnostics here: `tighten_size` shrinks the *accepted* instance in the mask
+   array in place, so re-measuring areas after a run compares a tightened primary against an
+   untightened second and inflates the ratio -- 0.56 instead of the true 0.41.)
+2. **Not drawn.** The overlay is well-centric: it draws each well's winning colony (green) plus
+   flag partners (red multi, pink collider, orange neighbour, blue recovered). A detected
+   instance that is neither its node's winner nor a qualifying competitor is drawn nowhere, so
+   a genuinely-detected colony can be invisible.
+
+A third, separate case is a true detection miss: faint corner colonies (e.g. `P24` on run-3 P2,
+`K13` on the P2 timepoints) where Cellpose returns **no** instance and the grid-recovery probe
+does not fire either.
+
+None of this moves a fitness number -- each strain's value is the median over ~29 replicate
+wells -- but it does make the overlays under-report crowding. The candidate fixes are to lower
+`multi_min_frac` toward ~0.4 (with a centroid-separation guard so real over-split slivers are
+not promoted to competitors) and to draw every in-gel instance so nothing detected is invisible.
+Neither is applied yet.

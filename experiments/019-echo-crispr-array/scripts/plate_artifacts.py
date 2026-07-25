@@ -106,18 +106,38 @@ def _font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     return ImageFont.load_default()
 
 
-def _label_overlay(overlay_path: str, nodes: np.ndarray) -> None:
-    """Draw the fitted grid nodes (cyan crosses) + 384-well headers (magenta) onto the
+def _plate_labels(op: str, n_rows: int, n_cols: int) -> tuple[list[str], list[str]]:
+    """Per-image-index PLATE labels (rows A-P, cols 1-24) under the resolved orientation.
+
+    The overlay is drawn in IMAGE order, but the well a colony belongs to is its PLATE
+    address -- ``r2.apply_orientation`` maps image (row, col) -> plate (row, col). All four
+    ops keep rows and columns separable (each either preserved or reversed), so the mapping
+    collapses to a per-axis label list. Without this the headers would silently show image
+    coordinates on any plate that resolves to rot180/flip_v/flip_h.
+    """
+    rows_rev = op in ("rot180", "flip_v")  # nr = n_rows + 1 - r
+    cols_rev = op in ("rot180", "flip_h")  # nc = n_cols + 1 - c
+    rows = [
+        chr(ord("A") + (n_rows - 1 - ri if rows_rev else ri)) for ri in range(n_rows)
+    ]
+    cols = [str(n_cols - ci if cols_rev else ci + 1) for ci in range(n_cols)]
+    return rows, cols
+
+
+def _label_overlay(overlay_path: str, nodes: np.ndarray, op: str = "identity") -> None:
+    """Draw the fitted grid nodes (cyan crosses) + 384-well headers (black) onto the
     boundary overlay in place. Standard 384-well addressing -- rows A-P, columns 1-24 --
-    and the headers are repeated on ALL FOUR sides (columns top+bottom, rows left+right)
-    so a well can be read off from any orientation. A mis-fit node -- sitting off its
+    repeated on ALL FOUR sides (columns top+bottom, rows left+right) so a well can be read
+    off from any side. Headers are PLATE addresses under the resolved orientation ``op``
+    (see ``_plate_labels``), not raw image indices. A mis-fit node -- sitting off its
     colony -- is visible directly.
     """
     im = Image.open(overlay_path).convert("RGB")
     d = ImageDraw.Draw(im)
     n_rows, n_cols, _ = nodes.shape
+    row_lab, col_lab = _plate_labels(op, n_rows, n_cols)
     w, h = im.width, im.height
-    fs = max(18, int(w / 72))  # a little bigger than the node crosses
+    fs = max(48, int(w / 26))  # large headers, readable when the plate is zoomed out
     fnt = _font(fs)
     blk = (0, 0, 0)  # black headers -- high contrast on the cream agar margin
     for ri in range(n_rows):
@@ -134,15 +154,14 @@ def _label_overlay(overlay_path: str, nodes: np.ndarray) -> None:
     top_y = min(max(fs, float(nodes[0, :, 0].mean()) - 1.9 * fs), h - fs)
     bot_y = min(float(nodes[-1, :, 0].mean()) + 1.9 * fs, h - fs)
     for ci in range(n_cols):
-        ctext(float(nodes[0, ci, 1]), top_y, str(ci + 1))
-        ctext(float(nodes[-1, ci, 1]), bot_y, str(ci + 1))
+        ctext(float(nodes[0, ci, 1]), top_y, col_lab[ci])
+        ctext(float(nodes[-1, ci, 1]), bot_y, col_lab[ci])
     # rows A..P on LEFT and RIGHT
     left_x = max(fs, float(nodes[:, 0, 1].mean()) - 1.9 * fs)
     right_x = min(float(nodes[:, -1, 1].mean()) + 1.9 * fs, w - fs)
     for ri in range(n_rows):
-        lab = chr(ord("A") + ri)
-        ctext(left_x, float(nodes[ri, 0, 0]), lab)
-        ctext(right_x, float(nodes[ri, -1, 0]), lab)
+        ctext(left_x, float(nodes[ri, 0, 0]), row_lab[ri])
+        ctext(right_x, float(nodes[ri, -1, 0]), row_lab[ri])
     im.save(overlay_path)
 
 
@@ -183,11 +202,11 @@ def process_collection(name: str, model_holder: dict) -> None:
         res = quantify_plate_image_cellpose(
             proc, model_holder["model"], seg_cfg, overlay_path=overlay
         )
-        _label_overlay(overlay, res.nodes)
-
         grid = res.table
         layout = read_echo_picklist(cond["picklist"])
         op, be, confident = _resolve_orientation(grid, layout, cfg, g)
+        # label AFTER the orientation is resolved so the headers carry PLATE addresses
+        _label_overlay(overlay, res.nodes, op)
         merged = r2.apply_orientation(grid, op).merge(
             layout, on=["row", "col"], how="inner"
         )

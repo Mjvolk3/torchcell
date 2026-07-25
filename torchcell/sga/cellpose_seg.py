@@ -125,7 +125,10 @@ class CellposeSegConfig(BaseModel):
         "the grid as-is and shifted +/-1 row/col (edge extrapolated), keep whichever "
         "assigns the MOST real colonies, accepting a shift only if it adds a substantial "
         "fraction of a row. Self-guarding: on a correctly-fit plate a shift only LOSES "
-        "colonies, so it is a no-op.",
+        "colonies, so it is a no-op. Only ONE axis is corrected and only by ONE step (a "
+        "2-row slip, or a simultaneous row+col slip, is not covered). REQUIRES "
+        "``relax_grid`` -- the correction runs inside the centroid-snap block, so it is "
+        "silently inert when ``relax_grid=False``.",
     )
     edge_margin_frac: float = Field(
         default=0.5,

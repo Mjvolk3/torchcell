@@ -34,21 +34,48 @@ _requeue_deadline_epoch() {
   date -d "$DEADLINE" +%s
 }
 
-# Resubmit $1 (the slurm script path) iff we are still before the deadline.
+# Resubmit $1 (the slurm script path) iff enough time remains before the deadline.
+#
+# The resubmit's walltime is sized to the REMAINING window, not taken from the script's
+# `#SBATCH --time`. This matters because the scripts request a multi-day walltime: SLURM
+# refuses (or holds) a job whose time limit cannot fit before `--deadline`, so a fixed
+# 4-day request resubmitted with 20h left would be REJECTED and the chain would die
+# silently well before the deadline. Passing `--time=<remaining minutes>` keeps every
+# resubmit valid right up to the end, and the last one simply runs out the clock.
 requeue_if_before_deadline() {
   local script="$1"
-  local now deadline_epoch
+  local now deadline_epoch remaining_min
   now=$(date +%s)
   deadline_epoch=$(_requeue_deadline_epoch) || return 0
-  if [ "$now" -lt "$deadline_epoch" ]; then
-    echo "[requeue] $(date -Is): before deadline $DEADLINE -- resubmitting $script"
-    # --deadline makes SLURM itself refuse to start a job that would run past the deadline,
-    # so the chain terminates cleanly even if this guard is somehow reached late.
-    sbatch --deadline="$DEADLINE" "$script"
-  else
-    echo "[requeue] $(date -Is): deadline $DEADLINE passed -- chain ends here."
+  remaining_min=$(( (deadline_epoch - now) / 60 ))
+  # Below this, a fresh job cannot import torch, build the dataset, and finish a trial --
+  # it would only add a RUNNING row to the study. End the chain instead.
+  if [ "$remaining_min" -lt "${REQUEUE_MIN_MINUTES:-45}" ]; then
+    echo "[requeue] $(date -Is): only ${remaining_min}m left before $DEADLINE -- chain ends here."
+    return 0
   fi
+  echo "[requeue] $(date -Is): ${remaining_min}m left before $DEADLINE -- resubmitting $script"
+  # A bare integer --time is MINUTES in SLURM. --deadline is kept as a belt-and-braces
+  # backstop so the chain can never outlive the deadline.
+  sbatch --time="$remaining_min" --deadline="$DEADLINE" "$script"
 }
+
+# Submit $1 sized to the remaining window before $DEADLINE. Use this for the FIRST
+# submission of a chain, so the initial job is subject to exactly the same time arithmetic
+# as a requeue: with a 5-day partition cap and a deadline under 5 days out, ONE job covers
+# the whole window and the chain needs no handoff at all (a handoff costs one in-flight
+# trial per worker, since Optuna resumes at trial granularity, not epoch).
+#
+#   DEADLINE="2026-07-29T10:00:00" \
+#     bash experiments/019-simb-multimodal/scripts/requeue_until.sh submit <script>
+submit_until_deadline() {
+  requeue_if_before_deadline "$1"
+}
+
+# Allow `bash requeue_until.sh submit <script>` as a launcher, while still being sourceable.
+if [ "${1:-}" = "submit" ] && [ -n "${2:-}" ]; then
+  submit_until_deadline "$2"
+fi
 
 # Arm a SIGUSR1 trap that resubmits before the walltime kills this job.
 requeue_arm_trap() {

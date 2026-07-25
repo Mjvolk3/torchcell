@@ -52,6 +52,27 @@ trainer:
 multitask:
   active_heads: [gene_interaction, per_gene, global]
   loss_fn: mse
+  # ---- Decoder study axes (declared here so Hydra struct-mode `=` overrides work in every
+  # config that inherits this one; the Optuna driver sweeps both) ----
+  # decoder -- STRUCTURAL form of the `global` (morphology) head:
+  #   s1_pool  = GlobalHead, pool [h_CLS || mean_genes] then fan out to all F features.
+  #              All F outputs share ONE pooled vector; a mean over ~6000 gene tokens
+  #              dilutes a few-gene perturbation before readout (the pool bottleneck).
+  #   s3_xattn = CrossAttnHead, one LEARNED QUERY per feature cross-attending the full
+  #              token set {CLS, genes}, so each output reads its own mixture.
+  # Expression (`per_gene`) is per-token by construction (S0) and has no decoder lever.
+  decoder: s1_pool
+  # dist -- DISTRIBUTIONAL form/loss applied to every vector head. Widens the head's final
+  # projection to param_dim params per feature; output_dim stays the FEATURE count.
+  #   point    = 1 param  -> MSE (baseline; rewards mean-collapse)
+  #   crps     = 2 params (mu, sigma) -> closed-form Gaussian CRPS (proper scoring rule)
+  #   quantile = 19 params -> pinball over tau in [0.05, 0.95] (distribution-free)
+  # The metric always uses DistHead.point(), so ranking is loss-agnostic.
+  dist: point
+  # When true, EVERY active vector head must be standardized (Yeo-Johnson or z-score).
+  # Off here so legacy configs with an un-normalized head keep working; the decoder-study
+  # base config turns it on.
+  require_standardized_targets: false
   # Part A: per-FEATURE normalization of vector targets, fit on the TRAIN split only.
   # The CalMorph `global` target has features spanning ~8 orders of magnitude (cell-size
   # counts ~1e4 vs 0-1 ratios); pooling one mean/std leaves big features dominating an

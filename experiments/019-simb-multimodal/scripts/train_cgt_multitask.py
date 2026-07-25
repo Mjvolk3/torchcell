@@ -28,6 +28,24 @@ The loss is ``MaskedMultitaskLoss``: each head's loss is masked to the genotypes
 in the batch that actually carry that phenotype (sparse supervision), and the
 graph-regularization attention term is added unchanged.
 
+DECODER STUDY (``multitask.decoder`` x ``multitask.dist``). The decoder factorizes into two
+orthogonal axes, both swept by ``optuna_joint_sweep.py``:
+
+* STRUCTURAL (``multitask.decoder``, the ``global``/morphology head only) -- ``s1_pool``
+  (``GlobalHead``: pool to one vector, fan out to all F features) vs ``s3_xattn``
+  (``CrossAttnHead``: one learned query per feature, cross-attending the full token set).
+  S1's shared pool dilutes a few-gene perturbation across ~6000 gene tokens before readout;
+  S3 restores per-output support. Expression is per-token by construction (S0), so it has no
+  decoder lever.
+* DISTRIBUTIONAL (``multitask.dist``, every vector head) -- ``point`` (MSE),
+  ``crps`` (Gaussian CRPS, a proper scoring rule) or ``quantile`` (pinball over K=19
+  quantiles). This only widens the head's final projection to ``param_dim`` params per
+  feature; ``output_dim`` remains the feature count F.
+
+Metrics are namespaced by PHENOTYPE (``val/morphology/...``, ``val/expression/...``), and
+the primary metric ``pearson_per_feature`` is always computed from ``DistHead.point()`` --
+so Optuna ranks every loss on the same point-estimate correlation.
+
 DRY-RUN (``dry_run=true``): build the model straight from ``model`` + ``multitask``
 config and run ONE synthetic forward + masked-loss + backward on a tiny synthetic
 ``cell_graph``/``batch`` (mirrors the WS7 unit test). No genome, dataset, wandb, or
@@ -78,6 +96,7 @@ from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig, OmegaConf
 from torch_geometric.data import HeteroData
 
+from torchcell.losses.distributional import dist_param_dim, make_dist_head
 from torchcell.models.equivariant_cell_graph_transformer import (
     CellGraphTransformer,
     MaskedMultitaskLoss,
@@ -87,6 +106,23 @@ from torchcell.timestamp import timestamp
 log = logging.getLogger(__name__)
 load_dotenv()
 WANDB_MODE = os.getenv("WANDB_MODE")
+
+# Metrics are namespaced by PHENOTYPE, not by the internal head name, so a dashboard/Optuna
+# objective reads `val/morphology/pearson_per_feature` rather than `val/global/...`. The head
+# name is an implementation detail (which structural module runs); the phenotype is the
+# scientific object and is stable across decoder variants (s1_pool vs s3_xattn both predict
+# morphology). Unknown heads fall back to their own name.
+HEAD_TO_PHENOTYPE: dict[str, str] = {
+    "global": "morphology",
+    "per_gene": "expression",
+    "gene_interaction": "fitness",
+    "per_metabolite": "metabolite",
+}
+
+
+def phenotype_name(head: str) -> str:
+    """Map an internal head name to its phenotype metric namespace."""
+    return HEAD_TO_PHENOTYPE.get(head, head)
 
 
 def _as_dict(node: Any) -> dict[str, Any]:
@@ -118,10 +154,23 @@ def build_heads_config(cfg: DictConfig) -> dict[str, Any] | None:
     ``gene_interaction`` maps to the built-in ``perturbation_head`` (always present)
     and therefore contributes NO entry to ``heads_config``. Only the multitask heads
     (``global`` / ``per_gene`` / ``per_metabolite``) are declared here.
+
+    Two decoder-study knobs are injected into every vector head spec:
+
+    * ``multitask.decoder`` -- the STRUCTURAL form of the ``global`` (morphology) head,
+      ``s1_pool`` (pool then fan out) or ``s3_xattn`` (one learned query per feature).
+      Expression is per-token by construction (S0 ``PerGeneHead``), so the decoder lever
+      applies to ``global`` only.
+    * ``multitask.dist`` -- the DISTRIBUTIONAL form (``point`` / ``crps`` / ``quantile``),
+      applied to EVERY vector head. It only widens the head's final projection
+      (``param_dim`` params per feature); ``output_dim`` stays the feature count.
     """
     active = list(cfg.multitask.active_heads)
     head_specs = OmegaConf.to_container(cfg.multitask.heads, resolve=True)
     assert isinstance(head_specs, dict)
+    decoder = str(cfg.multitask.get("decoder", "s1_pool"))
+    dist = str(cfg.multitask.get("dist", "point"))
+    param_dim = dist_param_dim(dist)
     heads_config: dict[str, Any] = {}
     for head in active:
         if head == "gene_interaction":
@@ -131,7 +180,11 @@ def build_heads_config(cfg: DictConfig) -> dict[str, Any] | None:
                 f"active head '{head}' has no spec under multitask.heads "
                 f"(available: {sorted(head_specs)})"
             )
-        heads_config[head] = head_specs[head]
+        spec = dict(head_specs[head] or {})
+        spec["param_dim"] = param_dim
+        if head == "global":
+            spec["decoder"] = decoder
+        heads_config[head] = spec
     return heads_config or None
 
 
@@ -538,6 +591,7 @@ class MultitaskCGTTask(L.LightningModule):
         clip_grad_norm: bool,
         clip_grad_norm_max_norm: float,
         target_stats: dict[str, dict[str, Any]] | None = None,
+        dist: str = "point",
     ) -> None:
         """Store the model, cell_graph, masked loss, and optim/sched config."""
         super().__init__()
@@ -546,7 +600,17 @@ class MultitaskCGTTask(L.LightningModule):
         self.active_heads = active_heads
         self.head_phenotypes = head_phenotypes
         self.head_align = head_align
-        self.loss = MaskedMultitaskLoss(head_weights=head_weights, loss_fn=loss_fn)
+        # Distributional readout (point / crps / quantile) for every VECTOR head. The scalar
+        # gene_interaction head keeps the plain point loss, so `dist` never changes the
+        # fitness arm. `.point()` feeds the metric, so RANKING IS LOSS-AGNOSTIC: a CRPS run
+        # and an MSE run are compared on the same per-feature Pearson of a point estimate.
+        self.dist = dist
+        self.dist_heads = {
+            h: make_dist_head(dist) for h in active_heads if h != "gene_interaction"
+        }
+        self.loss = MaskedMultitaskLoss(
+            head_weights=head_weights, loss_fn=loss_fn, dist_heads=self.dist_heads
+        )
         self.optimizer_config = optimizer_config
         self.lr_scheduler_config = lr_scheduler_config
         self.clip_grad_norm = clip_grad_norm
@@ -695,7 +759,14 @@ class MultitaskCGTTask(L.LightningModule):
             is_scalar = bool(align.get("is_scalar", False))
             keep = align.get("keep_mask")
             row_mask = torch.zeros(bsz, dtype=torch.bool, device=device)
-            target = torch.zeros_like(pred)
+            # Targets are always POINT-shaped [B, feat]: a distributional head emits
+            # [B, feat, param_dim] params, but the observation it is scored against is one
+            # value per feature. Size the target buffer from `.point()`, NOT from the raw
+            # head output, or the decoded [feat] row cannot be assigned into it.
+            dist_head = self.dist_heads.get(head)
+            target = torch.zeros_like(
+                dist_head.point(pred) if dist_head is not None else pred
+            )
             for b in range(bsz):
                 sel_b = val_batch == b
                 if not bool(sel_b.any()):
@@ -741,30 +812,47 @@ class MultitaskCGTTask(L.LightningModule):
         )
         self.log(f"{stage}/loss", total, batch_size=bsz, sync_dist=True)
         for name, val in per_head.items():
-            self.log(f"{stage}/{name}/loss", val, batch_size=bsz, sync_dist=True)
-        # Part B: cache supervised (pred, target) rows in ORIGINAL (inverse-transformed)
-        # units for the EPOCH-level per-feature Pearson. Per-feature averaging in raw units
-        # is the honest vector metric (each CalMorph feature / each measured gene weighted
-        # equally, comparable to the abstract's r); a per-batch flatten-Pearson was a
-        # feature-scale artifact. Normalized heads are inverted via `denormalize`; scalar /
-        # un-normalized heads (gene_interaction fitness, per_gene expression log2-ratios)
-        # are already in raw units.
+            self.log(
+                f"{stage}/{phenotype_name(name)}/loss", val, batch_size=bsz, sync_dist=True
+            )
+        # Part B: cache supervised (pred, target) rows for the EPOCH-level Pearson metrics.
+        # The head's params are first reduced to a POINT estimate via `DistHead.point()`
+        # (identity / mu / median quantile) so the metric -- and therefore the Optuna
+        # ranking -- is identical in form no matter which loss trained the run.
+        #
+        # TWO spaces are cached because the two metrics want different ones:
+        #   * raw  -> pearson_per_feature: per-feature correlation across strains in ORIGINAL
+        #     units, so each CalMorph feature / measured gene is weighted equally and the
+        #     number is comparable to the abstract's r. (Per-feature correlation is invariant
+        #     to a per-feature affine map, but Yeo-Johnson is nonlinear, so the space matters.)
+        #   * norm -> pearson_per_instance: within-strain correlation ACROSS features, which
+        #     is only meaningful on comparably-scaled features -- on raw multi-scale CalMorph
+        #     values it would be dominated by the largest-magnitude features. Computing it on
+        #     the z-scored/normalized features is what makes it a real shape diagnostic.
         for name, pred in head_outputs.items():
             if name not in targets:
                 continue
             m = masks[name]
             if int(m.sum().item()) < 1:
                 continue
-            p = pred[m].detach()
-            t = targets[name][m].detach()
+            dist_head = self.dist_heads.get(name)
+            point = dist_head.point(pred) if dist_head is not None else pred
+            p_norm = point[m].detach()
+            t_norm = targets[name][m].detach()
             if name in self.norm_heads:
-                p = self.denormalize(name, p)
-                t = self.denormalize(name, t)
+                p_raw = self.denormalize(name, p_norm)
+                t_raw = self.denormalize(name, t_norm)
+            else:
+                # Un-normalized heads (gene_interaction fitness, raw expression log2-ratios)
+                # are already in raw units; the two spaces coincide.
+                p_raw, t_raw = p_norm, t_norm
             cache = self._metric_cache.setdefault(stage, {}).setdefault(
-                name, {"pred": [], "target": []}
+                name, {"pred": [], "target": [], "pred_norm": [], "target_norm": []}
             )
-            cache["pred"].append(p.float().cpu())
-            cache["target"].append(t.float().cpu())
+            cache["pred"].append(p_raw.float().cpu())
+            cache["target"].append(t_raw.float().cpu())
+            cache["pred_norm"].append(p_norm.float().cpu())
+            cache["target_norm"].append(t_norm.float().cpu())
         return cast(torch.Tensor, total)
 
     def training_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
@@ -780,7 +868,18 @@ class MultitaskCGTTask(L.LightningModule):
         return self._step(batch, "test")
 
     def _reduce_epoch_pearson(self, stage: str) -> None:
-        """Compute + log per-feature-averaged Pearson from the epoch cache (Part B)."""
+        """Compute + log the epoch Pearson metrics from the cache (Part B).
+
+        Logged under the PHENOTYPE namespace (``val/morphology/...``), not the head name, so
+        the metric key is stable across decoder variants:
+
+        * ``pearson_per_feature`` (PRIMARY, raw units) -- across STRAINS, per feature/gene.
+          The honest metric and the Optuna objective; collapses to ~0 under
+          regression-to-the-per-feature-mean.
+        * ``pearson_per_instance`` (DIAGNOSTIC, normalized/z-scored features) -- within each
+          STRAIN, across features. Stays high under mean-collapse, so a large gap between the
+          two is the mean-collapse signature.
+        """
         stage_cache = self._metric_cache.get(stage, {})
         for name, cache in stage_cache.items():
             if not cache["pred"]:
@@ -789,21 +888,21 @@ class MultitaskCGTTask(L.LightningModule):
             target = torch.cat(cache["target"], dim=0)
             if pred.shape[0] < 2:
                 continue
-            # Both Pearson variants are computed from the CPU-cached rows and moved to the
-            # compute device so any DDP sync_dist all-reduce runs on the NCCL (GPU) backend —
-            # a CPU tensor has no NCCL backend. (This grid is single-GPU so sync is a no-op,
-            # but the metrics stay DDP-safe.)
-            #   pearson_per_gene   — across STRAINS, per feature/gene (the abstract's metric;
-            #                        collapses to ~0 under regression-to-the-per-gene-mean).
-            #   pearson_per_strain — within each STRAIN, across features (stays high under
-            #                        mean-collapse). The gap between them is the diagnostic.
-            pear_gene = per_feature_pearson(pred, target).to(self.device)
-            self.log(f"{stage}/{name}/pearson_per_gene", pear_gene, sync_dist=True)
+            pheno = phenotype_name(name)
+            # Metrics are computed from the CPU-cached rows and moved to the compute device so
+            # any DDP sync_dist all-reduce runs on the NCCL (GPU) backend — a CPU tensor has no
+            # NCCL backend. (Single-GPU trials make the sync a no-op, but this stays DDP-safe.)
+            pear_feat = per_feature_pearson(pred, target).to(self.device)
+            self.log(f"{stage}/{pheno}/pearson_per_feature", pear_feat, sync_dist=True)
             feat_dim = pred.shape[1] if pred.ndim > 1 else 1
             if feat_dim > 1:
-                pear_strain = per_strain_pearson(pred, target).to(self.device)
+                # Per-instance runs on the NORMALIZED features (comparable scales); falls back
+                # to the raw cache for heads that are not normalized (the two coincide there).
+                pred_n = torch.cat(cache["pred_norm"], dim=0)
+                target_n = torch.cat(cache["target_norm"], dim=0)
+                pear_inst = per_strain_pearson(pred_n, target_n).to(self.device)
                 self.log(
-                    f"{stage}/{name}/pearson_per_strain", pear_strain, sync_dist=True
+                    f"{stage}/{pheno}/pearson_per_instance", pear_inst, sync_dist=True
                 )
         self._metric_cache[stage] = {}
 
@@ -929,7 +1028,12 @@ def run_dry_run(cfg: DictConfig) -> None:
     """
     print(f"[dry-run] Building multitask CGT from config ({timestamp()})")
     heads_config = build_heads_config(cfg)
+    dist = str(cfg.multitask.get("dist", "point"))
     print(f"[dry-run] active_heads={list(cfg.multitask.active_heads)}")
+    print(
+        f"[dry-run] decoder={cfg.multitask.get('decoder', 's1_pool')} dist={dist} "
+        f"param_dim={dist_param_dim(dist)}"
+    )
     print(f"[dry-run] heads_config={heads_config}")
 
     gene_num = int(cfg.model.gene_num)
@@ -965,8 +1069,22 @@ def run_dry_run(cfg: DictConfig) -> None:
         print(f"[dry-run]   head '{name}' output shape: {tuple(out.shape)}")
 
     # One synthetic masked-loss + backward to prove the training path is connected.
-    loss_fn = MaskedMultitaskLoss(loss_fn=str(cfg.multitask.loss_fn))
-    targets = {k: torch.randn_like(v) for k, v in head_outputs.items()}
+    # Vector heads route through their DistHead (point/crps/quantile); gene_interaction keeps
+    # the plain point loss. Targets are POINT-shaped: a DistHead consumes [B, F] targets even
+    # when the head emits [B, F, P] params, so `.point()` gives the target shape.
+    dist_heads = {
+        h: make_dist_head(dist)
+        for h in cfg.multitask.active_heads
+        if h != "gene_interaction"
+    }
+    loss_fn = MaskedMultitaskLoss(
+        loss_fn=str(cfg.multitask.loss_fn), dist_heads=dist_heads
+    )
+    targets = {}
+    for k, v in head_outputs.items():
+        dh = dist_heads.get(k)
+        point_shape = dh.point(v).shape if dh is not None else v.shape
+        targets[k] = torch.randn(point_shape)
     masks = {
         k: torch.randint(0, 2, (batch_size,), dtype=torch.bool)
         for k in head_outputs
@@ -977,6 +1095,13 @@ def run_dry_run(cfg: DictConfig) -> None:
     total.backward()
     print(f"[dry-run] masked total loss: {total.item():.6f}")
     print(f"[dry-run] per-head losses: { {k: round(v.item(), 6) for k, v in per_head.items()} }")
+    for k, v in head_outputs.items():
+        dh = dist_heads.get(k)
+        if dh is not None:
+            print(
+                f"[dry-run]   head '{k}': params {tuple(v.shape)} -> point "
+                f"{tuple(dh.point(v).shape)} (mode={dh.mode})"
+            )
     grad_norm = sum(
         p.grad.norm().item() for p in model.parameters() if p.grad is not None
     )
@@ -994,9 +1119,11 @@ class BestMetricTracker(Callback):
     """
 
     def __init__(self) -> None:
+        """Start with an empty peak table (metric name -> best value seen)."""
         self.best_max: dict[str, float] = {}
 
     def on_validation_epoch_end(self, trainer: L.Trainer, pl_module: L.LightningModule) -> None:
+        """Record the running max of every finite validation metric."""
         for k, v in trainer.callback_metrics.items():
             if v is None:
                 continue
@@ -1269,6 +1396,9 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         sum(p.numel() for p in model.parameters() if p.requires_grad)
     )
     standardize_heads_cfg = list(cfg.multitask.get("standardize_per_feature_target", []))
+    # A head is "standardized" if it is in EITHER normalization list (z-score OR
+    # Yeo-Johnson+z-score); both put the target in a comparable per-feature scale.
+    normalize_heads_cfg = list(cfg.multitask.get("normalize_vector_targets", []))
     # n genotypes actually SUPERVISED for the active head(s): a split row counts only if it
     # carries an active head's phenotype label (dataset.phenotype_label_index), intersected
     # with that split's (post-restriction) indices. For the expression grid this equals the
@@ -1309,11 +1439,21 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         ),
         "active_heads": list(active_heads),
         "active_head": active_heads[0] if active_heads else None,
+        # Decoder-study axes: the structural form of the morphology head and the
+        # distributional readout/loss. Recorded so "outcome vs decoder x dist" is queryable
+        # across the whole sweep without re-deriving it from the Optuna trial params.
+        "decoder": str(cfg.multitask.get("decoder", "s1_pool")),
+        "dist": str(cfg.multitask.get("dist", "point")),
+        "dist_param_dim": dist_param_dim(str(cfg.multitask.get("dist", "point"))),
         "hidden_channels": int(cfg.model.hidden_channels),
         "num_layers": int(cfg.model.num_transformer_layers),
         "num_heads": int(cfg.model.num_attention_heads),
-        "target_standardized": bool(standardize_heads_cfg),
+        "target_standardized": bool(standardize_heads_cfg or normalize_heads_cfg),
         "standardize_heads": standardize_heads_cfg,
+        "normalize_heads": normalize_heads_cfg,
+        "target_norm": (
+            "zscore" if standardize_heads_cfg else "yeo_johnson"
+        ) if (standardize_heads_cfg or normalize_heads_cfg) else "raw",
         "graph_reg_lambda": float(cfg.model.graph_regularization.graph_reg_lambda),
         "lr": float(cfg.regression_task.optimizer.lr),
         "dropout": float(cfg.model.dropout),
@@ -1375,6 +1515,32 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
     normalize_vector_targets = list(cfg.multitask.get("normalize_vector_targets", []))
     standardize_heads = list(cfg.multitask.get("standardize_per_feature_target", []))
     vector_norm_method = str(cfg.multitask.get("vector_norm_method", "yeo_johnson"))
+
+    # ALWAYS-STANDARDIZE invariant (decoder study): every active VECTOR head must be in one
+    # of the two normalization lists. `raw` was dropped as a lever because an un-standardized
+    # multi-scale target makes the MSE (and the CRPS/pinball, which are in y-units) dominated
+    # by the largest-magnitude features -- the loss then optimizes a handful of cell-size
+    # counts while the per-feature Pearson averages all 278 equally. Comparing decoders under
+    # that mismatch would confound "structural form" with "which features the loss cared
+    # about", so the invariant is enforced here rather than left to config hygiene.
+    #
+    # OPT-IN (default off) so the pre-existing configs -- which legitimately run an
+    # un-normalized head (e.g. raw expression log2-ratios) -- keep working unchanged. The
+    # decoder-study base config sets `require_standardized_targets: true`.
+    if bool(cfg.multitask.get("require_standardized_targets", False)):
+        _normalized = set(normalize_vector_targets) | set(standardize_heads)
+        _unnormalized = [
+            h
+            for h in active_heads
+            if h != "gene_interaction" and h not in _normalized
+        ]
+        if _unnormalized:
+            raise ValueError(
+                f"active vector head(s) {_unnormalized} are not standardized. The decoder "
+                "study requires every vector head in multitask.normalize_vector_targets "
+                "(Yeo-Johnson) or multitask.standardize_per_feature_target (z-score). "
+                "Set multitask.require_standardized_targets=false to override."
+            )
     head_norm_method = {h: "zscore" for h in standardize_heads}
     heads_to_normalize = list(dict.fromkeys(normalize_vector_targets + standardize_heads))
     target_stats: dict[str, dict[str, Any]] = {}
@@ -1464,6 +1630,7 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         clip_grad_norm=cfg.regression_task.clip_grad_norm,
         clip_grad_norm_max_norm=cfg.regression_task.clip_grad_norm_max_norm,
         target_stats=target_stats,
+        dist=str(cfg.multitask.get("dist", "point")),
     )
 
     model_base_path = osp.join(data_root, "models/checkpoints")

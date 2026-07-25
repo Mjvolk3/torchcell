@@ -15,7 +15,7 @@ Implements the generalized virtual cell architecture:
 import os
 import os.path as osp
 from collections.abc import Sequence
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import hydra
 import numpy as np
@@ -24,6 +24,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 from omegaconf import DictConfig
 from torch_geometric.data import HeteroData
+
+if TYPE_CHECKING:
+    # Type-only import: keeps the models package free of a runtime dependency on
+    # torchcell.losses (whose __init__ imports other model-specific losses).
+    from torchcell.losses.distributional import DistHead
 
 
 class GraphRegularizedTransformerLayer(nn.Module):
@@ -493,26 +498,33 @@ class GlobalHead(nn.Module):
         output_dim: int,
         use_gene_pool: bool = True,
         dropout: float = 0.1,
+        param_dim: int = 1,
     ):
         """Build the MLP mapping [h_CLS (|| GlobalPool(H_genes_pert))] to output_dim.
 
         Args:
             hidden_dim: Model hidden dimension.
-            output_dim: Output vector dimension (e.g. 501 morphology, 1 scalar).
+            output_dim: Output vector dimension (e.g. 501 morphology, 1 scalar). This is the
+                FEATURE count F -- it stays the phenotype dimensionality regardless of the
+                distributional mode.
             use_gene_pool: Concatenate a mean pool over genes with h_CLS.
             dropout: Dropout probability.
+            param_dim: Distributional params PER FEATURE (1 point, 2 gaussian, K quantile).
+                The output Linear widens to ``output_dim * param_dim`` and the forward
+                reshapes to ``[batch, output_dim, param_dim]`` when > 1.
         """
         super().__init__()
         self.hidden_dim = hidden_dim
         self.output_dim = output_dim
         self.use_gene_pool = use_gene_pool
+        self.param_dim = param_dim
 
         in_dim = hidden_dim * 2 if use_gene_pool else hidden_dim
         self.mlp = nn.Sequential(
             nn.Linear(in_dim, hidden_dim),
             nn.ReLU(),
             nn.Dropout(dropout),
-            nn.Linear(hidden_dim, output_dim),
+            nn.Linear(hidden_dim, output_dim * param_dim),
         )
 
     def forward(self, h_CLS: torch.Tensor, H_genes_pert: torch.Tensor) -> torch.Tensor:
@@ -523,14 +535,130 @@ class GlobalHead(nn.Module):
             H_genes_pert: [batch, N, d] equivariant perturbed gene embeddings.
 
         Returns:
-            predictions: [batch_size, output_dim] global phenotype predictions.
+            predictions: [batch_size, output_dim] global phenotype predictions, or
+            [batch_size, output_dim, param_dim] when param_dim > 1 (distributional).
         """
         batch_size = H_genes_pert.shape[0]
         h = h_CLS.unsqueeze(0).expand(batch_size, -1)  # [batch, d]
         if self.use_gene_pool:
             pooled = H_genes_pert.mean(dim=1)  # [batch, d]
             h = torch.cat([h, pooled], dim=-1)  # [batch, 2d]
-        return cast(torch.Tensor, self.mlp(h))  # [batch, output_dim]
+        out = self.mlp(h)  # [batch, output_dim * param_dim]
+        if self.param_dim > 1:
+            out = out.view(batch_size, self.output_dim, self.param_dim)
+        return cast(torch.Tensor, out)
+
+
+class CrossAttnHead(nn.Module):
+    r"""S3 cross-attention readout head (DETR / Perceiver style) for vector phenotypes.
+
+    The S1 :class:`GlobalHead` collapses the token set to ONE pooled vector
+    ``u = [h_CLS || mean_i h_i_pert]`` that every output feature must read from. A mean over
+    ~6000 gene tokens dilutes a 1-2 gene perturbation by ~3 orders of magnitude, so the
+    strain-specific signal is largely gone BEFORE the readout -- the pool-dilution
+    bottleneck. That is the leading hypothesis for morphology sitting at r~0.04 against a
+    0.61 noise ceiling while expression (which reads its own token, S0) is at its ceiling.
+
+    S3 removes the shared bottleneck: each of the F output features gets a LEARNED QUERY
+    ``q_k`` that cross-attends over the FULL token set ``{h_CLS_pert, h_1_pert, ..., h_N_pert}``:
+
+    .. math::
+        A = \mathrm{softmax}\!\Big(\frac{(QW_Q)(H_{\mathrm{pert}}W_K)^\top}{\sqrt{d_k}}\Big),
+        \qquad C = A\,(H_{\mathrm{pert}}W_V),
+
+    so output ``k`` reads its OWN weighted mixture ``c_k`` -- per-output support is recovered
+    WITHOUT needing a 1-to-1 feature<->token map (morphology features are not genes). Feature
+    ``k`` can place attention mass directly on the perturbed genes instead of averaging them
+    away. CLS is kept as a key so a feature can still read the whole-cell summary.
+
+    Queries are parameters (like the CLS token), NOT label values, so nothing about the
+    target leaks in. The readout is ``DistHead``-agnostic: ``param_dim`` widens the final
+    projection to emit point / gaussian / quantile parameters per feature.
+    """
+
+    def __init__(
+        self,
+        hidden_dim: int,
+        output_dim: int,
+        num_heads: int = 4,
+        dropout: float = 0.1,
+        param_dim: int = 1,
+        use_ffn: bool = True,
+    ):
+        """Build the F learned queries, the cross-attention block, and the readout.
+
+        Args:
+            hidden_dim: Model hidden dimension d (query/key/value width).
+            output_dim: Number of output FEATURES F (e.g. 278 CalMorph features). One
+                learned query per feature.
+            num_heads: Cross-attention heads (must divide hidden_dim).
+            dropout: Dropout probability (attention + FFN + readout).
+            param_dim: Distributional params per feature (1 point, 2 gaussian, K quantile).
+            use_ffn: Apply a residual feed-forward block to the attended context C.
+        """
+        super().__init__()
+        assert hidden_dim % num_heads == 0, (
+            f"hidden_dim {hidden_dim} must be divisible by num_heads {num_heads}"
+        )
+        self.hidden_dim = hidden_dim
+        self.output_dim = output_dim
+        self.param_dim = param_dim
+        self.use_ffn = use_ffn
+
+        # F learned feature queries -- parameters, like the CLS token.
+        self.queries = nn.Parameter(torch.randn(output_dim, hidden_dim) * 0.02)
+
+        self.cross_attn = nn.MultiheadAttention(
+            hidden_dim, num_heads, dropout=dropout, batch_first=True
+        )
+        self.norm1 = nn.LayerNorm(hidden_dim)
+        self.dropout = nn.Dropout(dropout)
+
+        if use_ffn:
+            self.ffn = nn.Sequential(
+                nn.Linear(hidden_dim, hidden_dim * 2),
+                nn.GELU(),
+                nn.Dropout(dropout),
+                nn.Linear(hidden_dim * 2, hidden_dim),
+            )
+            self.norm2 = nn.LayerNorm(hidden_dim)
+
+        # Per-feature readout: each feature's context vector -> its param_dim parameters.
+        # A shared Linear (d -> param_dim) applied to every feature's context keeps the
+        # parameter count independent of F; the per-feature specificity lives in the queries.
+        self.readout = nn.Linear(hidden_dim, param_dim)
+
+    def forward(self, h_CLS: torch.Tensor, H_genes_pert: torch.Tensor) -> torch.Tensor:
+        """Forward pass of the cross-attention head.
+
+        Args:
+            h_CLS: [d] whole-cell CLS representation.
+            H_genes_pert: [batch, N, d] equivariant perturbed gene embeddings.
+
+        Returns:
+            predictions: [batch, output_dim] when param_dim == 1, else
+            [batch, output_dim, param_dim].
+        """
+        batch_size = H_genes_pert.shape[0]
+
+        # Keys/values = {CLS} U {perturbed gene tokens}: [batch, N+1, d].
+        cls_tok = (
+            h_CLS.unsqueeze(0).expand(batch_size, -1).unsqueeze(1)
+        )  # [batch, 1, d]
+        kv = torch.cat([cls_tok, H_genes_pert], dim=1)  # [batch, N+1, d]
+
+        # F learned queries, shared across the batch: [batch, F, d].
+        q = self.queries.unsqueeze(0).expand(batch_size, -1, -1)
+
+        attended, _ = self.cross_attn(query=q, key=kv, value=kv, need_weights=False)
+        c = self.norm1(q + self.dropout(attended))  # [batch, F, d]
+        if self.use_ffn:
+            c = self.norm2(c + self.dropout(self.ffn(c)))
+
+        out = self.readout(c)  # [batch, F, param_dim]
+        if self.param_dim == 1:
+            out = out.squeeze(-1)  # [batch, F]
+        return cast(torch.Tensor, out)
 
 
 class PerGeneHead(nn.Module):
@@ -544,22 +672,33 @@ class PerGeneHead(nn.Module):
     graph_level == "node" selects this head.
     """
 
-    def __init__(self, hidden_dim: int, output_dim: int = 1, dropout: float = 0.1):
+    def __init__(
+        self,
+        hidden_dim: int,
+        output_dim: int = 1,
+        dropout: float = 0.1,
+        param_dim: int = 1,
+    ):
         """Build the shared MLP applied to every gene embedding.
 
         Args:
             hidden_dim: Model hidden dimension.
             output_dim: Per-gene output dimension (default 1 -> scalar per gene).
             dropout: Dropout probability.
+            param_dim: Distributional params PER GENE (1 point, 2 gaussian, K quantile).
+                With the default ``output_dim=1`` the trailing axis carries the params:
+                ``[batch, N]`` (point) or ``[batch, N, param_dim]`` (distributional). The
+                measured-gene ``index_select(1, col)`` gather is unaffected either way.
         """
         super().__init__()
         self.hidden_dim = hidden_dim
         self.output_dim = output_dim
+        self.param_dim = param_dim
         self.mlp = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
             nn.Dropout(dropout),
-            nn.Linear(hidden_dim, output_dim),
+            nn.Linear(hidden_dim, output_dim * param_dim),
         )
 
     def forward(self, H_genes_pert: torch.Tensor) -> torch.Tensor:
@@ -569,11 +708,19 @@ class PerGeneHead(nn.Module):
             H_genes_pert: [batch, N, d] equivariant perturbed gene embeddings.
 
         Returns:
-            predictions: [batch, N] if output_dim == 1, else [batch, N, output_dim].
+            predictions: [batch, N] if output_dim == param_dim == 1;
+            [batch, N, param_dim] for a distributional scalar-per-gene head;
+            else [batch, N, output_dim (, param_dim)].
         """
-        out = self.mlp(H_genes_pert)  # [batch, N, output_dim]
+        out = self.mlp(H_genes_pert)  # [batch, N, output_dim * param_dim]
         if self.output_dim == 1:
-            out = out.squeeze(-1)  # [batch, N]
+            # Scalar per gene: the trailing axis is the distributional param axis (or is
+            # squeezed away entirely in the point case).
+            if self.param_dim == 1:
+                out = out.squeeze(-1)  # [batch, N]
+        elif self.param_dim > 1:
+            batch, num_genes, _ = out.shape
+            out = out.view(batch, num_genes, self.output_dim, self.param_dim)
         return cast(torch.Tensor, out)
 
 
@@ -651,21 +798,35 @@ class MaskedMultitaskLoss(nn.Module):
     Each head's loss is masked to the genotypes in the batch that actually carry
     that phenotype (sparse supervision): absent modalities contribute zero. The
     existing graph-regularization attention loss term is added UNCHANGED.
+
+    A head may carry a :class:`~torchcell.losses.distributional.DistHead`
+    (``dist_heads[name]``), in which case its loss is the head's proper scoring rule
+    (Gaussian CRPS / pinball) over the predicted DISTRIBUTION parameters. Heads with no
+    entry keep the plain elementwise point loss (``mse``/``l1``) -- this is what
+    ``gene_interaction`` and the synthetic dry-run use, so the pre-distributional behavior
+    is preserved exactly when no ``dist_heads`` are passed.
     """
 
     def __init__(
-        self, head_weights: dict[str, float] | None = None, loss_fn: str = "mse"
+        self,
+        head_weights: dict[str, float] | None = None,
+        loss_fn: str = "mse",
+        dist_heads: dict[str, nn.Module] | None = None,
     ):
         """Build the masked multitask loss.
 
         Args:
             head_weights: Per-head scalar weights (default 1.0 for any head present).
-            loss_fn: Elementwise regression loss, "mse" or "l1".
+            loss_fn: Elementwise regression loss, "mse" or "l1", for heads with no DistHead.
+            dist_heads: Optional {head_name: DistHead} routing that head's params through a
+                distributional loss. Registered as a ModuleDict so the quantile grid buffer
+                moves with ``.to(device)``.
         """
         super().__init__()
         self.head_weights = head_weights or {}
         assert loss_fn in ("mse", "l1"), f"unsupported loss_fn {loss_fn}"
         self.loss_fn = loss_fn
+        self.dist_heads = nn.ModuleDict(dist_heads or {})
 
     def _elementwise(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         if self.loss_fn == "mse":
@@ -707,7 +868,15 @@ class MaskedMultitaskLoss(nn.Module):
             target = targets[name]
             weight = self.head_weights.get(name, 1.0)
             mask = masks.get(name)
-            if mask is not None:
+            dist_head = (
+                cast("DistHead", self.dist_heads[name])
+                if name in self.dist_heads
+                else None
+            )
+            if dist_head is not None:
+                # Distributional head: it owns the mask + the empty-supervision guard.
+                loss = dist_head.loss(pred, target, mask)
+            elif mask is not None:
                 if mask.sum() == 0:
                     # No genotype in this batch carries this phenotype -> zero loss,
                     # but keep it connected to the graph so grads flow as zero.
@@ -902,15 +1071,39 @@ class CellGraphTransformer(nn.Module):
         # model state_dict + forward output are identical to the single-head model.
         self.heads_config = heads_config or {}
 
-        self.global_head: GlobalHead | None = None
+        # The `global` (vector-phenotype) head has TWO structural forms, selected by the
+        # head spec's `decoder` key -- this is the S1-vs-S3 axis of the decoder study:
+        #   s1_pool  -> GlobalHead    (pool to one vector, fan out; the pool-dilution baseline)
+        #   s3_xattn -> CrossAttnHead (one learned query per feature; per-output support)
+        # `param_dim` (1 point / 2 gaussian / K quantile) is the ORTHOGONAL distributional
+        # axis and only widens the final projection -- it never changes `output_dim` (=F).
+        self.global_head: GlobalHead | CrossAttnHead | None = None
         if "global" in self.heads_config:
             g_cfg = self.heads_config["global"] or {}
-            self.global_head = GlobalHead(
-                hidden_dim=hidden_channels,
-                output_dim=g_cfg.get("output_dim", 501),
-                use_gene_pool=g_cfg.get("use_gene_pool", True),
-                dropout=g_cfg.get("dropout", dropout),
-            )
+            g_decoder = g_cfg.get("decoder", "s1_pool")
+            g_param_dim = int(g_cfg.get("param_dim", 1))
+            if g_decoder == "s1_pool":
+                self.global_head = GlobalHead(
+                    hidden_dim=hidden_channels,
+                    output_dim=g_cfg.get("output_dim", 501),
+                    use_gene_pool=g_cfg.get("use_gene_pool", True),
+                    dropout=g_cfg.get("dropout", dropout),
+                    param_dim=g_param_dim,
+                )
+            elif g_decoder == "s3_xattn":
+                self.global_head = CrossAttnHead(
+                    hidden_dim=hidden_channels,
+                    output_dim=g_cfg.get("output_dim", 501),
+                    num_heads=int(g_cfg.get("num_heads", num_attention_heads)),
+                    dropout=g_cfg.get("dropout", dropout),
+                    param_dim=g_param_dim,
+                    use_ffn=bool(g_cfg.get("use_ffn", True)),
+                )
+            else:
+                raise ValueError(
+                    f"unknown global head decoder {g_decoder!r} "
+                    "(expected 's1_pool' or 's3_xattn')"
+                )
 
         self.per_gene_head: PerGeneHead | None = None
         if "per_gene" in self.heads_config:
@@ -919,6 +1112,7 @@ class CellGraphTransformer(nn.Module):
                 hidden_dim=hidden_channels,
                 output_dim=pg_cfg.get("output_dim", 1),
                 dropout=pg_cfg.get("dropout", dropout),
+                param_dim=int(pg_cfg.get("param_dim", 1)),
             )
 
         self.per_metabolite_head: PerMetaboliteHead | None = None

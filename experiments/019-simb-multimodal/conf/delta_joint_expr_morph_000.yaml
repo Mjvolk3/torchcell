@@ -66,6 +66,11 @@ multitask:
   # Driver overrides per CONDITION; default = joint.
   active_heads: [per_gene, global]
   loss_fn: mse
+  # Decoder-study axes, declared so optuna_joint_sweep.py's Hydra `=` overrides remain legal
+  # against this (_002-era) base config. Defaults reproduce the original _002 behavior:
+  # s1_pool = the pooled GlobalHead, point = plain MSE.
+  decoder: s1_pool
+  dist: point
   # Per-head target-norm levers — driver sweeps raw/yeo_johnson/zscore per modality.
   normalize_vector_targets: [global]
   standardize_per_feature_target: []

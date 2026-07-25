@@ -1,4 +1,4 @@
 group,op,orientation_confident,wt_cv,occupied,blanks_empty,qc_pass
 P1,identity,True,0.065,356,6,True
 P2,identity,True,0.141,347,6,True
-P3,flip_h,False,0.243,335,1,False
+P3,identity,True,0.078,350,6,True

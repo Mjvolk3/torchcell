@@ -1382,49 +1382,76 @@ homography grid + faint-colony recovery -> per-plate 4-way orientation -> normal
 on-plate BY4741 -> QC gate -> bootstrap-across-plates + Costanzo comparison). Raw data
 (sha256-pinned) in `experiments/019-echo-crispr-array/data/run3_2026-07-23/`.
 
-**QC (`run3_plate_qc.csv`): 2 of 3 plates pass.** A plate is usable only if its orientation
+**QC (`run3_plate_qc.csv`): 3 of 3 plates pass.** A plate is usable only if its orientation
 resolves confidently AND its on-plate WT reference is consistent (WT CV < 0.18).
 
 | plate | orientation | WT CV | occupied | blanks empty | QC |
 |---|---|---|---|---|---|
 | P1 | identity (confident) | 0.065 | 356/384 | 6/6 | **PASS** |
 | P2 | identity (confident) | 0.141 | 347/384 | 6/6 | **PASS** |
-| P3 | ambiguous | 0.243 | 335/384 | 1/6 | **FAIL** |
+| P3 | identity (confident) | 0.078 | 350/384 | 6/6 | **PASS** |
 
-**P3 is a wet-lab QC failure, not a software one.** Detection and registration are clean:
-the pipeline's homography grid (projective index->pixel fit, default) places all 16 rows --
-350/384 occupied, ZERO false multi flags (overlay below). What sinks P3 is contamination, not
-the grid: across six diagnostics (homography, span-forced re-fit, one-row shift, all four
-orientations, cross-replicate matching, and all three layouts) **P3's blank wells are
-contaminated in EVERY layout x orientation** (`blanks_empty` never > 1). Because the
-orientation resolver keys on blank-well emptiness, contaminated blanks leave the orientation
-ambiguous, and the WT CV never drops near P1/P2's range (best 0.18, against Plate1's layout
-rather than its own -- hinting at a plating/labelling mixup). Orientation-independent blank
-contamination means the plate itself is compromised; P3 is excluded and flagged for
-**re-plate** to reach the full n = 3.
+**P3's earlier "contamination" was a one-row registration slip, not a wet-lab failure.** P3's
+top colony row is faint, so the lattice fit locked one row too low -- skipping the true top
+row and parking its bottom row on the plastic frame. That single-row shift mis-assigned every
+strain by a row: each blank well (interior positions, rows 6 & 11) picked up the *neighbouring*
+row's colony, so all six blanks read as "grown," the WT reference scrambled (CV 0.21), and the
+orientation went ambiguous -- three signals that agreed on the wrong answer and read as robust
+"contamination in every orientation." The fix is a pipeline-level registration correction
+(`CellposeSegConfig.correct_row_shift`, `_snap_edge_row`): among the lattice as-is and shifted
++/-1 row/col, keep whichever assigns the most real colonies, accepting a shift only if it adds
+a substantial fraction of a row -- a no-op on the already-correct P1/P2. With the top row
+recovered, **all six P3 blanks are empty, WT CV drops to 0.078, and the orientation resolves
+confidently to `identity`**: P3 is a clean plate. It is NOT contaminated and needs no re-plate;
+it is the valid third replicate.
 
 ![Run 3 detection overlay, P1 (5 nL, 48 h) -- QC pass. green = accepted, blue = grid-recovered faint colony, red = multi/collision, orange = neighbour, purple = non-circular.](assets/images/019-echo-crispr-array/run3/run3_overlay_P1.png)
 
 ![Run 3 detection overlay, P2 (5 nL, 48 h) -- QC pass. More empty wells (failed 5 nL transfers) but clean registration.](assets/images/019-echo-crispr-array/run3/run3_overlay_P2.png)
 
-![Run 3 detection overlay, P3 (5 nL, 48 h) -- QC excluded. Detection is clean: the canonical homography grid (regenerated from cached masks by `run3_correct_p3.py` with the same seg-config as P1/P2) registers all 16 rows -- 350/384 occupied, ZERO false multi flags, green = accepted. P3 is excluded for a WET-LAB reason, not a detection one: its blank wells are contaminated in every layout x orientation, so the orientation cannot be confidently resolved and the WT reference is noisy (CV 0.243). Flagged for RE-PLATE; the batch-effect result (P1+P2) is unaffected.](assets/images/019-echo-crispr-array/run3/run3_overlay_P3.png)
+![Run 3 detection overlay, P3 (5 nL, 48 h) -- QC PASS after the row-registration fix. The lattice had locked one row low (faint top row skipped, bottom row on the frame); `correct_row_shift` recovers the top row so all 16 rows register -- 350/384 occupied, 6/6 blanks empty, WT CV 0.078, green = accepted. P3 is a clean third replicate; the earlier "contamination" was the one-row slip mis-assigning strains, now corrected.](assets/images/019-echo-crispr-array/run3/run3_overlay_P3.png)
 
-**Batch effect (P1 + P2, the two clean re-randomizations).** Mean bootstrap-across-plates
-SE = **0.085** (across-plate SD 0.169) -- roughly **3x run 2's 0.025**. That jump is the
-point: two genuinely re-randomized plates expose the real between-plate variance that run 2's
-correlated timepoints hid. n = 2 is thin (the SE estimate is itself unstable); re-plating P3
-gives the full three-replicate estimate.
+**Batch effect (P1 + P2 + P3, the full three re-randomizations).** Mean bootstrap-across-plates
+SE = **0.068** (across-plate SD 0.143) -- roughly **3x run 2's 0.025**. That jump is the
+point: three genuinely re-randomized plates expose the real between-plate variance that run 2's
+correlated timepoints hid. Recovering P3 (see the registration fix above) gives the full
+three-replicate estimate the design intended, tightening the SE from the earlier n = 2 (0.085).
 
-**vs Costanzo 2016 (n = 12).** Pearson r = **0.65 (p = 0.02)** (value agreement, driven by
-the one sick strain CBF1/YJR060W), Spearman ρ = 0.23 (rank agreement is noise-limited -- 11
-of 12 strains are near-neutral and only 2 replicates back each mean). Kuzmin has no per-strain
-SD, so no x error bars; y error bars are the bootstrap-across-2-plates SE.
+**vs Costanzo 2016 (n = 12).** Pearson r = **0.73 (p = 0.007)** (value agreement, driven by
+the one sick strain CBF1/YJR060W), Spearman ρ = 0.39 (rank agreement is noise-limited -- 11
+of 12 strains are near-neutral). Kuzmin has no per-strain SD, so no x error bars; y error bars
+are the bootstrap-across-3-plates SE.
 
-![Run 3: assay fitness (bootstrap mean over the 2 QC-pass re-randomized plates) vs Costanzo 2016 SMF. Identity line dashed; Pearson r=0.65 (p=0.02), Spearman rho=0.23; large y error bars = the 2-plate bootstrap SE.](assets/images/019-echo-crispr-array/run3/run3_fitness_correlation_reference.svg)
+![Run 3: assay fitness (bootstrap mean over the 3 QC-pass re-randomized plates) vs Costanzo 2016 SMF. Identity line dashed; Pearson r=0.73 (p=0.007), Spearman rho=0.39; y error bars = the 3-plate bootstrap SE.](assets/images/019-echo-crispr-array/run3/run3_fitness_correlation_reference.svg)
 
-![Run 3 per-strain SE: bootstrap-across-2-plates SE (orange, the batch effect) vs the within-plate colony SE (red, colony SD/sqrt(n)). The across-plate SE is much larger -- most of a strain's uncertainty is between-plate, not within-plate.](assets/images/019-echo-crispr-array/run3/run3_se_batch_effect.svg)
+![Run 3 per-strain SE: bootstrap-across-3-plates SE (orange, the batch effect) vs the within-plate colony SE (red, colony SD/sqrt(n)). The across-plate SE is much larger -- most of a strain's uncertainty is between-plate, not within-plate.](assets/images/019-echo-crispr-array/run3/run3_se_batch_effect.svg)
 
-**Detection QC (P1/P2).** Spot imperfections exist -- an occasional merged doublet (Cellpose
+**Detection QC (P1/P2/P3).** Spot imperfections exist -- an occasional merged doublet (Cellpose
 segments two touching colonies as one, so the collision is not red-flagged) and a rare
 off-grid speck -- but they are washed out by the per-strain median over ~29 replicate wells
 (P2 has 0 size-outlier wells; max 1.5x median), so they do not move any strain's fitness.
+
+## 2026.07.25 - P3 recovered: the "contamination" was a one-row registration slip (n=2 -> n=3)
+
+P3 was previously excluded as a wet-lab contamination failure. That was wrong -- it was a
+software registration bug. P3's faint top colony row was under-detected, so the lattice fit
+locked one row too low: it skipped the true top row and parked its bottom row on the plastic
+frame. A whole-plate one-row shift silently mis-assigns every strain by a row, and every
+downstream QC signal then agreed on the wrong answer: the interior blank wells (rows 6 & 11)
+sampled the neighbouring row's colony and read as "grown" (`blanks_empty` 1/6), the WT
+reference scrambled (CV 0.21), and the orientation went ambiguous -- which looked like robust
+"contamination in every orientation."
+
+Diagnosis came from drawing the grid **nodes + row/col labels** on the overlay (`PlateSegResult.nodes`,
+now exposed): the column headers sat on the true top row while grid row 1 started at the second
+row and grid row 16 landed on the frame seam (where the recovery probe invented blue wells).
+Correcting the registration (shift the lattice up one row) flips every signal at once: 6/6
+blanks empty, WT CV 0.078, confident `identity` -- a clean plate. A wrong shift could not make
+all three improve together.
+
+Fix landed in the pipeline as `CellposeSegConfig.correct_row_shift` / `_snap_edge_row`: among
+the lattice as-is and shifted +/-1 row/col (vacated edge extrapolated, opposite edge dropped),
+keep whichever assigns the MOST real colonies, accepting a shift only when it adds a substantial
+fraction of a row. It is self-guarding -- on a correctly-fit plate any shift only sheds colonies,
+so P1/P2 (and all of run2) are byte-identical no-ops. Consequence: run 3 is now the full
+**n = 3** the design intended; SE 0.085 -> **0.068**, Costanzo Pearson r 0.65 -> **0.73** (p=0.007).

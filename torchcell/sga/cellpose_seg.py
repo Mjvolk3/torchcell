@@ -115,6 +115,18 @@ class CellposeSegConfig(BaseModel):
         "SKIPS on a tilted capture (in-image row pitch != column pitch, i.e. a trapezoid) "
         "-- while leaving correctly-fit plates unchanged. Deterministic (seeded RANSAC).",
     )
+    correct_row_shift: bool = Field(
+        default=True,
+        description="after fitting, correct a whole-plate one-row (or one-column) "
+        "registration slip: when a FAINT edge row is under-detected, the lattice can lock "
+        "one row too low, skipping the true edge row and parking its opposite edge row on "
+        "the frame. This silently mis-assigns every strain by a row (blanks pick up a "
+        "neighbour's colony -> false 'contamination'; WT reference scrambled). Fix: among "
+        "the grid as-is and shifted +/-1 row/col (edge extrapolated), keep whichever "
+        "assigns the MOST real colonies, accepting a shift only if it adds a substantial "
+        "fraction of a row. Self-guarding: on a correctly-fit plate a shift only LOSES "
+        "colonies, so it is a no-op.",
+    )
     edge_margin_frac: float = Field(
         default=0.5,
         description="gel-edge gate half-width in pitch units. A colony is dropped as "
@@ -161,6 +173,10 @@ class PlateSegResult(BaseModel):
     # drawn instance-id -> invalidation category ('' accepted / 'M' multi / 'N'
     # neighbour / 'C' non-circular), for colouring overlays and the montage
     kept_color: dict[int, str] = Field(default_factory=dict)
+    # final fitted lattice (n_rows, n_cols, 2) in (y, x) pixels -- the grid actually used
+    # for assignment, so a labelled overlay can show WHERE each (row, col) well landed and
+    # expose a mis-registration (grid node off its colony) directly.
+    nodes: np.ndarray | None = None
 
 
 def load_cellpose_model(gpu: bool = True) -> Any:
@@ -613,6 +629,56 @@ def _draw_cellpose_overlay(
     Image.fromarray(over).save(out)
 
 
+def _snap_edge_row(
+    nodes: np.ndarray,
+    cents: np.ndarray,
+    n_rows: int,
+    n_cols: int,
+    pitch: float,
+    node_tol: float,
+) -> np.ndarray:
+    """Correct a whole-plate one-row/one-column registration slip (see
+    ``CellposeSegConfig.correct_row_shift``). Among the lattice as-is and shifted by one
+    row/column in each direction -- the vacated edge extrapolated linearly per line, the
+    opposite edge dropped -- keep whichever places the MOST colony centroids within
+    ``node_tol * pitch`` of a node. A shift is accepted only if it assigns at least
+    ``max(0.25 * lane, 6)`` more colonies than the current fit, so a correctly-registered
+    plate (where any shift only sheds colonies) is left untouched.
+    """
+    tol = node_tol * pitch
+
+    def assigned(g: np.ndarray) -> int:
+        ny = g.reshape(-1, 2)
+        d = np.sqrt(((cents[:, None, :] - ny[None, :, :]) ** 2).sum(-1))
+        return int((d.min(axis=1) <= tol).sum())
+
+    cands: dict[tuple[str, int], np.ndarray] = {("none", 0): nodes}
+    # row shifts: extrapolate a new edge row, drop the opposite edge row
+    cands[("row", +1)] = np.concatenate(
+        [(2 * nodes[0] - nodes[1])[None], nodes[:-1]], 0
+    )
+    cands[("row", -1)] = np.concatenate(
+        [nodes[1:], (2 * nodes[-1] - nodes[-2])[None]], 0
+    )
+    # column shifts (same idea along axis 1)
+    cands[("col", +1)] = np.concatenate(
+        [(2 * nodes[:, 0] - nodes[:, 1])[:, None], nodes[:, :-1]], 1
+    )
+    cands[("col", -1)] = np.concatenate(
+        [nodes[:, 1:], (2 * nodes[:, -1] - nodes[:, -2])[:, None]], 1
+    )
+    base = assigned(nodes)
+    best_grid, best_score = nodes, base
+    for key, grid in cands.items():
+        if key == ("none", 0):
+            continue
+        lane = n_cols if key[0] == "row" else n_rows
+        s = assigned(grid)
+        if s > best_score and s - base >= max(0.25 * lane, 6):
+            best_grid, best_score = grid, s
+    return best_grid
+
+
 def quantify_plate_image_cellpose(
     path: str,
     model: Any,
@@ -671,6 +737,12 @@ def quantify_plate_image_cellpose(
             nodes = _relax_lattice(nodes, cents, cfg.n_rows, cfg.n_cols, theta, center)
             if cfg.homography_refit:
                 nodes = _homography_lattice(nodes, cents, cfg.n_rows, cfg.n_cols, pitch)
+            if cfg.correct_row_shift:
+                # fix a one-row/col slip BEFORE the gel polygon is derived, so the gel
+                # (and every downstream assignment) tracks the corrected grid.
+                nodes = _snap_edge_row(
+                    nodes, cents, cfg.n_rows, cfg.n_cols, pitch, cfg.node_tol
+                )
 
     gel_sd = None
     if cfg.gel_detect:
@@ -886,4 +958,5 @@ def quantify_plate_image_cellpose(
         n_offgrid=n_offgrid,
         masks=masks_arr if return_masks else None,
         kept_color=kept_color,
+        nodes=node_yx.reshape(cfg.n_rows, cfg.n_cols, 2),
     )

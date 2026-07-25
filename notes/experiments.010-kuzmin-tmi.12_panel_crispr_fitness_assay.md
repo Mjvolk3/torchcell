@@ -1391,22 +1391,23 @@ resolves confidently AND its on-plate WT reference is consistent (WT CV < 0.18).
 | P2 | identity (confident) | 0.141 | 347/384 | 6/6 | **PASS** |
 | P3 | ambiguous | 0.243 | 335/384 | 1/6 | **FAIL** |
 
-**P3 is a wet-lab QC failure, not a software one.** Its grid misregisters by exactly one
-row (Cellpose detects the top row of 26 colonies but the lattice fits one row low, parking
-its bottom row on the plastic frame), which scrambles the strain assignment. But fixing the
-row shift does not rescue it: across six diagnostics (homography, span-forced re-fit, one-row
-shift, all four orientations, cross-replicate matching, and all three layouts) **P3's blank
-wells are contaminated in EVERY layout x orientation** (`blanks_empty` never > 1) and its WT
-CV never drops near P1/P2's range (best 0.18, against Plate1's layout rather than its own --
-hinting at a plating/labelling mixup). Orientation-independent blank contamination means the
-plate itself is compromised; P3 is excluded and flagged for **re-plate** to reach the full
-n = 3.
+**P3 is a wet-lab QC failure, not a software one.** Detection and registration are clean:
+the pipeline's homography grid (projective index->pixel fit, default) places all 16 rows --
+350/384 occupied, ZERO false multi flags (overlay below). What sinks P3 is contamination, not
+the grid: across six diagnostics (homography, span-forced re-fit, one-row shift, all four
+orientations, cross-replicate matching, and all three layouts) **P3's blank wells are
+contaminated in EVERY layout x orientation** (`blanks_empty` never > 1). Because the
+orientation resolver keys on blank-well emptiness, contaminated blanks leave the orientation
+ambiguous, and the WT CV never drops near P1/P2's range (best 0.18, against Plate1's layout
+rather than its own -- hinting at a plating/labelling mixup). Orientation-independent blank
+contamination means the plate itself is compromised; P3 is excluded and flagged for
+**re-plate** to reach the full n = 3.
 
 ![Run 3 detection overlay, P1 (5 nL, 48 h) -- QC pass. green = accepted, blue = grid-recovered faint colony, red = multi/collision, orange = neighbour, purple = non-circular.](assets/images/019-echo-crispr-array/run3/run3_overlay_P1.png)
 
 ![Run 3 detection overlay, P2 (5 nL, 48 h) -- QC pass. More empty wells (failed 5 nL transfers) but clean registration.](assets/images/019-echo-crispr-array/run3/run3_overlay_P2.png)
 
-![Run 3 detection overlay, P3 (5 nL, 48 h) -- best-effort re-registration (`run3_correct_p3.py`, grid re-fit to span the full detected extent). P3 RESISTS clean registration: a one-row shift fixes the top row but drops the bottom; spanning both rows re-introduces edge/frame flag artifacts. This is itself a symptom of a compromised plate (blank wells contaminated in every layout x orientation), not a fixable detection bug. P3 stays QC-EXCLUDED and is flagged for RE-PLATE; the batch-effect result (P1+P2) is unaffected.](assets/images/019-echo-crispr-array/run3/run3_overlay_P3.png)
+![Run 3 detection overlay, P3 (5 nL, 48 h) -- QC excluded. Detection is clean: the canonical homography grid (regenerated from cached masks by `run3_correct_p3.py` with the same seg-config as P1/P2) registers all 16 rows -- 350/384 occupied, ZERO false multi flags, green = accepted. P3 is excluded for a WET-LAB reason, not a detection one: its blank wells are contaminated in every layout x orientation, so the orientation cannot be confidently resolved and the WT reference is noisy (CV 0.243). Flagged for RE-PLATE; the batch-effect result (P1+P2) is unaffected.](assets/images/019-echo-crispr-array/run3/run3_overlay_P3.png)
 
 **Batch effect (P1 + P2, the two clean re-randomizations).** Mean bootstrap-across-plates
 SE = **0.085** (across-plate SD 0.169) -- roughly **3x run 2's 0.025**. That jump is the

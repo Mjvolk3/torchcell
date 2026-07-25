@@ -62,11 +62,11 @@ export WANDB_DIR=$SCRATCH_ROOT/experiments/019-simb-multimodal
 export WANDB__SERVICE_WAIT=600
 
 export CONDITION=morph
-export JOINT_BASE_CONFIG=cgt_decoder_003
-export OPTUNA_STORAGE='sqlite:///$OPTUNA_DIR/optuna_019_morph_003.db'
-export OPTUNA_STUDY_NAME=morph_003
+export JOINT_BASE_CONFIG=cgt_decoder_004
+export OPTUNA_STORAGE='sqlite:///$OPTUNA_DIR/optuna_019_morph_004.db'
+export OPTUNA_STUDY_NAME=morph_004
 export OPTUNA_N_TRIALS=\${OPTUNA_N_TRIALS:-30}
-export WANDB_PROJECT_SUFFIX=v3
+export WANDB_PROJECT_SUFFIX=v4
 export NUM_WORKERS=$NUM_WORKERS
 
 SWEEP=$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/optuna_joint_sweep.py

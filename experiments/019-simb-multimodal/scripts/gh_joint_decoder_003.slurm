@@ -53,11 +53,11 @@ export PYTHONWARNINGS=ignore
 export WANDB__SERVICE_WAIT=600
 
 export CONDITION=expr_morph
-export JOINT_BASE_CONFIG=cgt_decoder_003
-export OPTUNA_STORAGE="sqlite:///$OPTUNA_DIR/optuna_019_expr_morph_003.db"
-export OPTUNA_STUDY_NAME=expr_morph_003
+export JOINT_BASE_CONFIG=cgt_decoder_004
+export OPTUNA_STORAGE="sqlite:///$OPTUNA_DIR/optuna_019_expr_morph_004.db"
+export OPTUNA_STUDY_NAME=expr_morph_004
 export OPTUNA_N_TRIALS="${OPTUNA_N_TRIALS:-30}"
-export WANDB_PROJECT_SUFFIX=v3
+export WANDB_PROJECT_SUFFIX=v4
 export NUM_WORKERS=$((SLURM_CPUS_PER_TASK / 4))
 
 SWEEP=$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/optuna_joint_sweep.py

@@ -881,6 +881,7 @@ class MultitaskCGTTask(L.LightningModule):
           two is the mean-collapse signature.
         """
         stage_cache = self._metric_cache.get(stage, {})
+        per_feature_values: list[torch.Tensor] = []
         for name, cache in stage_cache.items():
             if not cache["pred"]:
                 continue
@@ -894,6 +895,7 @@ class MultitaskCGTTask(L.LightningModule):
             # NCCL backend. (Single-GPU trials make the sync a no-op, but this stays DDP-safe.)
             pear_feat = per_feature_pearson(pred, target).to(self.device)
             self.log(f"{stage}/{pheno}/pearson_per_feature", pear_feat, sync_dist=True)
+            per_feature_values.append(pear_feat)
             feat_dim = pred.shape[1] if pred.ndim > 1 else 1
             if feat_dim > 1:
                 # Per-instance runs on the NORMALIZED features (comparable scales); falls back
@@ -904,6 +906,15 @@ class MultitaskCGTTask(L.LightningModule):
                 self.log(
                     f"{stage}/{pheno}/pearson_per_instance", pear_inst, sync_dist=True
                 )
+        # Single monitorable scalar across ALL arms: the mean per-feature Pearson over the
+        # supervised phenotypes this epoch. For a single-head arm (morph / expr) it equals
+        # that head's value; for the JOINT arm it averages expression and morphology, which
+        # is what makes one uniform EarlyStopping key possible -- Lightning can only monitor
+        # one metric, and stopping the joint run on morphology alone would cut it while
+        # expression was still improving (or vice versa).
+        if per_feature_values:
+            mean_pf = torch.stack(per_feature_values).mean()
+            self.log(f"{stage}/mean/pearson_per_feature", mean_pf, sync_dist=True)
         self._metric_cache[stage] = {}
 
     def _print_epoch(self, stage: str) -> None:

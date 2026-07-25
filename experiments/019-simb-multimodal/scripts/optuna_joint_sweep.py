@@ -60,13 +60,13 @@ from omegaconf import OmegaConf
 from train_cgt_multitask import run_training
 
 CONF_DIR = osp.abspath(osp.join(osp.dirname(__file__), "../conf"))
-BASE_CONFIG = os.getenv("JOINT_BASE_CONFIG", "cgt_decoder_003")
+BASE_CONFIG = os.getenv("JOINT_BASE_CONFIG", "cgt_decoder_004")
 STORAGE = os.environ["OPTUNA_STORAGE"]
 CONDITION = os.getenv("CONDITION", "expr_morph")
-STUDY_NAME = os.getenv("OPTUNA_STUDY_NAME", f"{CONDITION}_003")
+STUDY_NAME = os.getenv("OPTUNA_STUDY_NAME", f"{CONDITION}_004")
 N_TRIALS = int(os.getenv("OPTUNA_N_TRIALS", "20"))
 WORKER_ID = int(os.getenv("OPTUNA_WORKER_ID", "0"))
-PROJECT_SUFFIX = os.getenv("WANDB_PROJECT_SUFFIX", "v3")
+PROJECT_SUFFIX = os.getenv("WANDB_PROJECT_SUFFIX", "v4")
 
 ACTIVE_HEADS = {
     "expr": ["per_gene"],

@@ -1,0 +1,45 @@
+# experiments/019-simb-multimodal/conf/cgt_decoder_004.yaml
+# DECODER x DISTRIBUTIONAL study, round _004 -- identical to _003 EXCEPT the stopping rule.
+#
+# Inherits cgt_decoder_003 wholesale (same controlled both-modality split, same 278-feature
+# CalMorph target, same search space) and overrides ONLY `trainer`, so the two rounds differ
+# in exactly one protocol dimension and _003 stays reproducible from its own file.
+#
+# WHY (measured on the _003 round, 78 completed morph trials):
+#   * `val/loss` stopped improving around epoch 2, so EarlyStopping(monitor=val/loss,
+#     patience=20) ended essentially every run at ~22 epochs. Run length was therefore set by
+#     a metric UNRELATED to the objective we rank on.
+#   * The ranked metric (per-feature Pearson) peaked at a median epoch 7 and then collapsed
+#     ~82% by the final epoch -- so the peak was usually captured, BUT 15% of runs still
+#     peaked inside their final 20%, i.e. were plausibly still climbing when the run ended.
+#   * 0/40 runs ever reached max_epochs, confirming the stop was always patience-driven.
+#
+# THE FIX: stop on the ranked metric itself, with real room to fit.
+#   monitor `val/mean/pearson_per_feature` -- the mean per-feature Pearson over the arm's
+#   supervised phenotypes. It equals the single value for the morph/expr arms and averages
+#   expression+morphology for the JOINT arm, so all three arms share ONE monitor key
+#   (Lightning's EarlyStopping can only watch one metric, and stopping the joint arm on
+#   morphology alone would cut it while expression was still improving, or vice versa).
+#
+# COST: patience 40 on a metric that peaks early means trials run longer past their peak.
+# That is only compute -- BestMetricTracker still reports the PEAK, so the post-peak collapse
+# never enters the Optuna objective.
+defaults:
+  - cgt_decoder_003
+  - _self_
+
+trainer:
+  max_epochs: 200          # was 150; 0/40 _003 runs reached it, so this is headroom, not a target
+  strategy: auto
+  accelerator: gpu
+  devices: 1
+  overfit_batches: 0
+  precision: bf16-mixed
+  log_every_n_steps: 10
+  fast_dev_run: false
+  early_stopping:
+    enabled: true
+    monitor: val/mean/pearson_per_feature   # the RANKED metric, not val/loss
+    mode: max
+    patience: 40                            # was 20 (on the wrong metric)
+    min_delta: 0.0

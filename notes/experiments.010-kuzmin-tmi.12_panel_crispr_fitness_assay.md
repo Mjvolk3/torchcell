@@ -1540,14 +1540,30 @@ Provenance chain (the draw count is NOT in the Costanzo SOM -- it defers to a ci
   procedure only -- *"Variance in single mutant fitness estimates was estimated from bootstrap
   sampling of the median"* -- with no iteration count.
 
-**The number of bootstrap draws is an OPEN provenance gap, not a known value.** Combed and not
-found in: the Costanzo SOM (one bootstrap mention, quoted above), Costanzo `si1`, the
-Baryshnikova SI, or the Baryshnikova supplementary Matlab source (16 `.m` files, which contain
-**no bootstrap code at all** -- that 2010 release computes the median SMF, and bootstrapped
-*means* are precisely the Costanzo 2016 modification). A Baryshnikova figure legend reads
-*"s.e.m. derived from bootstrapping (n = 800)"*, but there `n` is parallel to *"s.d. (n = 4)"*
-for double mutants -- it is a **sample size, not a draw count** -- so it must not be cited as
-the iteration count. Do not fill this in without a source.
+**The number of bootstrap draws is an OPEN provenance gap, not a known value.** Searched
+exhaustively across the whole mirrored library (82 entries, `.md` and `.txt`) and not found:
+
+- **Costanzo 2016 SOM + `si1`** -- one bootstrap mention (quoted above), no count.
+- **Baryshnikova 2010** SI (procedure only) and its supplementary Matlab source: 16 `.m` files
+  containing **no bootstrap code at all**. That release computes the *median* SMF (Eq. 11);
+  bootstrapped *means* are precisely the Costanzo 2016 modification of it.
+- **The rest of the SGA lineage repeats the same deferral verbatim** -- Kuzmin 2018 SI,
+  Kuzmin 2020 SI and Costanzo 2021 all read *"...described previously (N), with the exception
+  that bootstrapped means, instead of medians, across replicates were used..."*. They pin
+  replicate structure (Kuzmin: triplicate x 4 technical = 12-24 colony measurements per fitness
+  estimate) but never the draw count.
+- **The SGA protocol chain ends without it too:** the Cold Spring Harbor SGA protocol
+  (Kuzmin 2016) points to the **SGAtools** pipeline, and SGAtools (Wagih 2013) scores fitness
+  from the *median* of replicates with no SMF bootstrap. Its only "1000" is 1000 *simulated
+  data sets* used to validate normalization, and its other "bootstrap" hit is the Twitter
+  Bootstrap UI library -- neither is a draw count.
+
+The one number ever attached to an SMF bootstrap is a Baryshnikova figure legend, *"s.e.m.
+derived from bootstrapping (n = 800)"* -- but there `n` is parallel to *"s.d. (n = 4)"* for
+double mutants, i.e. a **sample size, not a draw count**. It must not be cited as the iteration
+count. If the value is ever needed, the remaining place to look is **code, not papers**:
+`github.com/boonelab/sgatools` or the Costanzo raw-data processing scripts, neither mirrored
+here. Do not fill this in without a source.
 
 Two consequences worth flagging. **(a) Our n is far smaller.** With n = 3 our SE is itself
 unstable: a 3-value bootstrap draws from only 10 distinct resample multisets, so `N_BOOT = 4000`

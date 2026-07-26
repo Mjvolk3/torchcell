@@ -1,0 +1,67 @@
+{
+  "n_strains_kemmeren": 1484,
+  "n_strains_sameith_sm": 82,
+  "n_reporter_genes": 6169,
+  "observed": 0.109,
+  "route_a_within_study": {
+    "n_genes": 6169,
+    "mean_ceiling": 0.06077169206329932,
+    "median_ceiling": 0.0,
+    "iqr": [
+      0.0,
+      0.0
+    ],
+    "mean_reliability": 0.041881019505919374,
+    "frac_above": {
+      "0.05": 0.09985410925595721,
+      "0.10": 0.09855730264224348,
+      "0.20": 0.09499108445453072,
+      "0.30": 0.08947965634624737,
+      "0.50": 0.06824444804668504
+    },
+    "observed": 0.109,
+    "frac_of_ceiling_realized": 1.7935982412085294
+  },
+  "cross_study_test_retest": {
+    "n_shared_deletions": 82,
+    "per_instance_mean_r": 0.6655069906255285,
+    "per_instance_median_r": 0.7435776938351029,
+    "per_feature_mean_r": 0.6110432525511217,
+    "per_feature_median_r": 0.6203487824324245
+  },
+  "se_validation": {
+    "median_ratio_observed_over_predicted": 0.10189989221000512,
+    "iqr": [
+      0.07694076508880472,
+      0.14869960185609402
+    ]
+  },
+  "shared_subset_variance_ratio": 0.702614341769665,
+  "route_b_cross_study": {
+    "n_genes": 6169,
+    "mean_ceiling": 0.8623435897414371,
+    "median_ceiling": 0.8827269430638542,
+    "iqr": [
+      0.8358894510774013,
+      0.9177560148628192
+    ],
+    "mean_reliability": 0.7547177367868205,
+    "frac_above": {
+      "0.05": 0.9930296644512887,
+      "0.10": 0.9930296644512887,
+      "0.20": 0.992543361971146,
+      "0.30": 0.9910844545307181,
+      "0.50": 0.9870319338628627
+    },
+    "observed": 0.109,
+    "frac_of_ceiling_realized": 0.12639973358262255
+  },
+  "verdict": {
+    "primary_ceiling": 0.8623435897414371,
+    "cross_check_sqrt_test_retest": 0.7816925562848361,
+    "superseded_estimates": {
+      "p_value_inversion": 0.092,
+      "route_a_reported_se": 0.06077169206329932
+    }
+  }
+}

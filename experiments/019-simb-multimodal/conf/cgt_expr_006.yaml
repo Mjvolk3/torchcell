@@ -76,7 +76,7 @@ model:
     enabled: false # NOT swept: cold start makes it inert on val
 
   graph_regularization:
-    graph_reg_lambda: 1.0e-6 # SWEPT {1e-8..1e-5}; 1e-6 ~ parity with the task loss
+    graph_reg_lambda: 2.0e-5 # SWEPT {2e-7..2e-4}; 2e-5 = MEASURED parity (ratio_to_data=1)
     # SINGLE layer, as 010 (`graph_reg_layer: 1`, python-indexed). Spanning the whole
     # stack -- which _006 did initially -- left ZERO unconstrained attention anywhere, so
     # at high lambda the model could not represent any interaction the graphs miss, and

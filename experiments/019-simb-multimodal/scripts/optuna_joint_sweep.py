@@ -163,29 +163,21 @@ def objective(trial: optuna.Trial) -> float | tuple[float, float]:
     hidden = trial.suggest_categorical("hidden_channels", [90, 180])
     # Widened from {2,4}: L=2 won _003, but under memorization depth mostly buys memorization.
     layers = trial.suggest_categorical("num_transformer_layers", [2, 4, 6, 8])
-    # Re-centered and log-spaced for _006. Two model-side fixes changed what lambda MEANS:
-    # it is no longer applied twice (the old effective weight was lambda^2 -- 1e-6 at the
-    # swept 1e-3, i.e. the graph term was off), and normalization is now per-graph mean
-    # degree instead of the summed degree over all graphs. 0.0 is dropped: the point of
-    # this round is a WIDE, ENFORCED graph channel, and `val/graph_reg/ratio_to_data` (logged per
-    # step) is what tells us which of these values actually constrain attention rather
-    # than guessing the scale in advance.
-    # CALIBRATED FROM THE MONITOR, not guessed. The first _006 launch used {1e-3 .. 1.0}
-    # and `val/graph_reg/ratio_to_data` immediately read 0.99992 -- graph_reg_loss 6609 against an
-    # expression loss of 0.54, i.e. the KL term was the entire objective and the task was
-    # not being trained at all. At lambda=1e-2 the unweighted graph term is ~6.6e5, so
-    # parity with the task loss sits near lambda ~ 8e-7:
+    # MEASURED, not guessed. calibrate_graph_reg_lambda.py ran one epoch per lambda on
+    # THIS config (9 graphs, single regularized layer, main's per-graph edge-count
+    # normalization) and read val/graph_reg/ratio_to_data = graph_term / data_term:
     #
-    #     lambda 1e-8 -> frac ~0.01     1e-7 -> ~0.11     1e-6 -> ~0.55     1e-5 -> ~0.92
+    #     lambda   1e-8      1e-6      1e-4      1e-2
+    #     ratio    0.00048   0.048     4.17      406
     #
-    # This grid therefore brackets "barely on" to "dominant" with the centre where the
-    # graph term and the task term are comparable, which is the intent of the round.
+    # so ratio ~ 4.8e4 * lambda and PARITY (ratio = 1) sits at lambda ~ 2e-5. This grid
+    # spans ratio ~0.01 -> ~10, centred on parity.
     #
-    # Worth recording: the old doubled-lambda code computed lambda^2, so the previously
-    # swept 1e-3 landed at an effective 1e-6 -- accidentally inside this workable band.
-    # Applying lambda once is still the correct fix; it just means the grid had to move
-    # with it rather than being carried over.
-    graph_reg = trial.suggest_categorical("graph_reg_lambda", [1e-8, 1e-7, 1e-6, 1e-5])
+    # The grid this replaces, {1e-8 .. 1e-5}, topped out at ratio ~0.5 -- the graph prior
+    # would have been weaker than the data term in EVERY trial, making "graphs do not
+    # help" true by construction rather than measured. lambda is not portable across
+    # normalizations or layer counts, and both changed here, so it was re-measured.
+    graph_reg = trial.suggest_categorical("graph_reg_lambda", [2e-7, 2e-6, 2e-5, 2e-4])
     profile_name = trial.suggest_categorical("hp_profile", ["baseline", "aggressive"])
     profile = PROFILES[profile_name]
 

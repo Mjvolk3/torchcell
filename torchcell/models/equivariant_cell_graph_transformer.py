@@ -1320,19 +1320,44 @@ class CellGraphTransformer(nn.Module):
                 log_target=False,
             )
 
-            total_loss = total_loss + lambda_k * kl_loss
-
-        # Apply global scale factor and normalize by number of edges
-        total_edges = sum(
-            len(self.adjacency_matrices[g].nonzero()[0])
-            for g in self.adjacency_matrices.keys()
-        )
-        if total_edges > 0:
-            total_loss = (
-                total_loss * self.graph_reg_lambda / (total_edges / self.gene_num)
-            )
+            # PER-GRAPH edge-density normalization, with lambda applied EXACTLY ONCE.
+            #
+            # Two compounding defects lived here and both silently weakened the prior:
+            #
+            # (a) LAMBDA WAS SQUARED. `lambda_k` was applied per graph and then
+            #     `self.graph_reg_lambda` again as a global scale -- but the config sets
+            #     BOTH from the same key (`regularized_heads.<g>.lambda:
+            #     ${model.graph_regularization.graph_reg_lambda}`), so the effective weight
+            #     was lambda^2. At the configured 1e-3 that is 1e-6: a 1000x
+            #     under-application, i.e. the graph prior was very nearly off.
+            #
+            # (b) THE DIVISOR SUMMED EDGES OVER EVERY GRAPH, so activating more graphs
+            #     shrank the term for graphs that were ALREADY there. Going from 2 to 9
+            #     graphs weakens each one by ~7.5x, so lambda does not mean the same thing
+            #     across graph counts and a 2-graph vs 9-graph comparison is not
+            #     interpretable -- the graph count and the prior strength are confounded.
+            #
+            # Normalizing by THIS graph's own edge count makes lambda_k a per-graph
+            # quantity invariant to how many other graphs are active, which is what lets
+            # us port 010's 9-graph block and keep the tuned lambda meaningful.
+            edges_k = self._edge_count(graph_name, A_tilde)
+            if edges_k > 0:
+                total_loss = total_loss + lambda_k * kl_loss / (edges_k / self.gene_num)
 
         return total_loss
+
+    def _edge_count(self, graph_name: str, A_tilde: torch.Tensor) -> int:
+        """Nonzero count of a normalized adjacency, cached.
+
+        `A_tilde` is dense [N, N] with N = 6,607 (~43.7 M entries), so counting nonzeros
+        on every layer of every batch is not affordable. The adjacency is fixed for the
+        life of the model, so the count is computed once per graph.
+        """
+        if not hasattr(self, "_edge_count_cache"):
+            self._edge_count_cache: dict[str, int] = {}
+        if graph_name not in self._edge_count_cache:
+            self._edge_count_cache[graph_name] = int((A_tilde > 0).sum().item())
+        return self._edge_count_cache[graph_name]
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData, return_attention: bool = False

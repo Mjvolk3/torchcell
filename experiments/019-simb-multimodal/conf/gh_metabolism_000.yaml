@@ -1,0 +1,269 @@
+# experiments/019-simb-multimodal/conf/gh_metabolism_000.yaml
+# [[plan.cgt-metabolism-flux-layer.2026.07.26]]
+#
+# CGT-Metabolism -- betaxanthin + the 19-AA metabolome, on the FULL graph block.
+#
+# WHAT CHANGES FROM `gh_pigment_base.yaml`, AND WHY EACH ONE
+# ----------------------------------------------------------
+# 1. NINE GRAPHS, not two. `gh_pigment_base` ran `[physical, regulatory]`. 010 ran the
+#    full block (tflink + the six STRING 12.0 channels) and that is where its performance
+#    came from. Running metabolism on two graphs would repeat the mistake already made on
+#    the expression arms. All nine adjacency pickles are already built on disk under
+#    `$DATA_ROOT/data/string/graph/` and `$DATA_ROOT/data/tflink/graph/`, so this costs a
+#    config line, not a rebuild -- `build_gene_multigraph` assembles them at train time
+#    and they are NOT baked into the LMDB.
+#
+# 2. NO LEARNABLE EMBEDDING TABLE. With `node_embeddings: []` every gene is a free
+#    learnable vector, and since the split is by strain, a VAL gene's embedding never
+#    received a gradient as a perturbed gene -- generalization is impossible by
+#    construction. That is exactly the observed train r=0.86 / val r~0.02. Content
+#    features give an unseen gene meaningful input.
+#
+# 3. `prot_T5_all` as the content feature. Chosen on measured evidence, not preference:
+#    the kNN embedding probe ranked the axes by how well a similarity average alone
+#    predicts held-out phenotype, and the split is by MOLECULE TYPE --
+#      prot_T5_all 0.0704 morph / 0.1174 expr   <- best, zero learned parameters
+#      esm2_650M   0.0589 / 0.0920
+#      calm        0.0484 / 0.0692  ~= codon_frequency 0.0483 / 0.0644 (64 raw dims!)
+#      fudt        0.0261 / 0.0138   nt_5'3' -0.0123 / 0.0118   nt_5979 0.0061 / 0.0052
+#      random_100  0.0102 / 0.0180  <- every DNA axis lands on the control
+#    Protein representations carry real signal; nucleotide ones do not, at 2560-5120 dim
+#    (so it is not a dimensionality or coverage artifact). calm matching a 64-d codon
+#    frequency vector says the codon LM recovered frequency statistics and little else.
+#
+# 4. hidden_channels 90, num_attention_heads 9. One regularized head per graph requires
+#    heads >= graphs, and hidden must divide by heads: 128 does not divide by 9, 90 and
+#    180 do. 90 is the smaller setting and this dataset is ~4.9 k genotypes, where 019
+#    has repeatedly shown that small + decayed beats large.
+#
+# 5. BETA-CAROTENE IS OFF. Its head stays DEFINED so it can be switched on without a
+#    config fork, but it is out of `active_heads`. Two independent reasons it is the weak
+#    arm: the readout is a subjective ordinal -5..+5 whose replicate rank agreement is
+#    only ~0.54, and Mulleder measures none of its precursors (acetyl-CoA / GGPP), so
+#    there is no transfer path. Betaxanthin's ceiling is r = 0.914 and tyrosine -- its
+#    direct precursor -- IS one of the 19 amino acids.
+#
+# NOTE ON GRAPH REGULARIZATION. `compute_graph_regularization_loss` carried two
+# compounding defects, both fixed in this branch: lambda was applied per-graph AND
+# globally from the same config key (so the effective weight was lambda^2 = 1e-6, a 1000x
+# under-application), and the edge-density divisor summed over EVERY graph, so going 2 ->
+# 9 graphs weakened each graph ~7.5x. Normalization is now per-graph, so the lambda below
+# means the same thing here as it did at two graphs.
+defaults:
+  - default
+  - _self_
+
+dry_run: false
+seed: 42
+
+wandb:
+  project: torchcell_019_metabolism
+  tags: [ws11b, gilahyper, metabolism, betaxanthin, metabolome, ninegraph]
+
+cell_dataset:
+  # The 010 block. `physical` and `regulatory` stay first so head indices 0/1 keep the
+  # meaning they had in the two-graph runs and the arms remain comparable.
+  graphs:
+    [
+      physical,
+      regulatory,
+      tflink,
+      string12_0_neighborhood,
+      string12_0_fusion,
+      string12_0_cooccurence,
+      string12_0_coexpression,
+      string12_0_experimental,
+      string12_0_database,
+    ]
+  node_embeddings: [prot_T5_all]
+  query_file: fig6_pigment_transfer.cql
+  dataset_tag: fig6_pigment_transfer
+  aggregator: deletion_keyed
+
+transforms:
+  use_transforms: false # no fitness label in this build
+
+data_module:
+  is_perturbation_subset: false
+  perturbation_subset_size: 10000
+  # The encoder runs the full 6,608-token sequence ONCE PER BATCH regardless of batch
+  # size, so step cost is nearly batch-independent and epoch time is set by step count.
+  batch_size: 128
+  num_workers: 8
+  pin_memory: true
+  prefetch: false
+
+trainer:
+  max_epochs: 150
+  strategy: auto
+  accelerator: gpu
+  devices: 1
+  overfit_batches: 0
+  precision: bf16-mixed
+  log_every_n_steps: 20
+  fast_dev_run: false
+  early_stopping:
+    enabled: true
+    monitor: val/loss
+    mode: min
+    patience: 30
+    min_delta: 0.0
+
+multitask:
+  active_heads: [betaxanthin, mulleder19]
+  loss_fn: mse
+  decoder: s1_pool
+  dist: point
+  require_standardized_targets: true
+  normalize_vector_targets: []
+  standardize_per_feature_target: [betaxanthin, beta_carotene, mulleder19]
+  vector_norm_method: zscore
+  target_norm_eps: 1.0e-8
+  degenerate_robust_cv: 0.01
+  drop_features: {}
+  scalar_heads: [gene_interaction, betaxanthin, beta_carotene]
+  heads:
+    global:
+      output_dim: 278
+      use_gene_pool: true
+    per_gene:
+      output_dim: 1
+    per_metabolite:
+      output_dim: 1
+    betaxanthin:
+      kind: scalar
+      output_dim: 1
+      use_gene_pool: true
+    beta_carotene:
+      kind: scalar
+      output_dim: 1
+      use_gene_pool: true
+    mulleder19:
+      kind: vector
+      output_dim: 19
+      use_gene_pool: true
+  head_weights:
+    gene_interaction: 1.0
+    per_gene: 1.0
+    global: 1.0
+    per_metabolite: 1.0
+    betaxanthin: 1.0
+    beta_carotene: 1.0
+    mulleder19: 1.0
+  head_phenotypes:
+    gene_interaction: [fitness, gene_interaction]
+    per_gene: [expression_log2_ratio]
+    global: [calmorph]
+    per_metabolite: [metabolite_level]
+    betaxanthin: [metabolite_level]
+    beta_carotene: [visual_score]
+    mulleder19: [metabolite_level]
+  # betaxanthin and the metabolome are BOTH MetabolitePhenotype -> both label
+  # `metabolite_level`. These pins resolve each head to its own key set.
+  head_phenotype_keys:
+    betaxanthin: [betaxanthin]
+    mulleder19:
+      [
+        alanine,
+        arginine,
+        asparagine,
+        aspartate,
+        glutamate,
+        glutamine,
+        glycine,
+        histidine,
+        isoleucine,
+        leucine,
+        lysine,
+        methionine,
+        phenylalanine,
+        proline,
+        serine,
+        threonine,
+        tryptophan,
+        tyrosine,
+        valine,
+      ]
+
+model:
+  model_class: metabolism
+  checkpoint_path: null
+  gene_num: 6607
+  # 90 = 2 * 3^2 * 5, so it divides by 9 (attention heads, one per graph) and by 6
+  # (perturbation head). 128 divides by neither.
+  hidden_channels: 90
+  num_transformer_layers: 2
+  num_attention_heads: 9
+  dropout: 0.1
+  learnable_embedding:
+    enabled: false
+    size: ${model.hidden_channels}
+    preprocessor:
+      num_layers: 2
+      dropout: 0.1
+  graph_regularization:
+    # RE-TUNED, and it has to be. The old 1e-3 was tuned while lambda was being SQUARED,
+    # so the strength that value actually delivered was 1e-6. With the double-application
+    # removed, 1e-3 makes the prior 3.85x the data loss (measured on a real batch:
+    # data 3.198 vs reg 12.313) -- the prior would dominate training outright.
+    #
+    # 6.5e-5 puts the prior at ~25% of the data loss, i.e. a real constraint that does not
+    # take over. Watch `train/graph_reg/ratio_to_data` and move this if it drifts: the
+    # ratio is the quantity to hold near centre, not the raw lambda, because the raw term
+    # scales with how much data loss there is to begin with.
+    graph_reg_lambda: 6.5e-5
+    graph_reg_layer: [1]
+    row_sampling_rate: 0.25
+    # One head per graph, in the same order as `cell_dataset.graphs`.
+    regularized_heads:
+      physical:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 0
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      regulatory:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 1
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      tflink:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 2
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_neighborhood:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 3
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_fusion:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 4
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_cooccurence:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 5
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_coexpression:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 6
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_experimental:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 7
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_database:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 8
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+  perturbation_head:
+    # 90 / 6 = 15. Must divide hidden_channels.
+    num_heads: 6
+    dropout: 0.1
+
+regression_task:
+  optimizer:
+    type: AdamW
+    lr: 1e-3
+    # 1e-6 was 100x below the best 019 expression run and the model memorized. On a few
+    # thousand genotypes this architecture needs to be small AND decayed.
+    weight_decay: 1e-4
+  lr_scheduler: null
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0

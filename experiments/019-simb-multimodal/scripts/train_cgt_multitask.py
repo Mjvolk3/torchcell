@@ -1032,6 +1032,23 @@ class MultitaskCGTTask(L.LightningModule):
             self.log(
                 f"{stage}/{phenotype_name(name)}/loss", val, batch_size=bsz, sync_dist=True
             )
+        # GRAPH-REGULARIZATION TELEMETRY. The prior was previously folded into `total` and
+        # never surfaced, so "is the graph prior actually being enforced?" was
+        # unanswerable from the logs -- which is how a lambda that had been silently
+        # SQUARED (applied both per-graph and globally from the same config key, giving an
+        # effective 1e-6) went unnoticed. Log the term itself and, more usefully, its RATIO
+        # to the data loss: that ratio is the quantity to keep near a chosen centre, and
+        # unlike the raw term it is comparable across graph counts and phenotypes.
+        reg = reps["graph_reg_loss"]
+        if reg is not None:
+            data_loss = total.detach() - reg.detach()
+            self.log(f"{stage}/graph_reg/loss", reg, batch_size=bsz, sync_dist=True)
+            self.log(
+                f"{stage}/graph_reg/ratio_to_data",
+                reg.detach() / data_loss.clamp_min(1e-8),
+                batch_size=bsz,
+                sync_dist=True,
+            )
         # Part B: cache supervised (pred, target) rows for the EPOCH-level Pearson metrics.
         # The head's params are first reduced to a POINT estimate via `DistHead.point()`
         # (identity / mu / median quantile) so the metric -- and therefore the Optuna

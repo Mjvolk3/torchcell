@@ -56,9 +56,21 @@
     "observed": 0.109,
     "frac_of_ceiling_realized": 0.12639973358262255
   },
+  "primary_ceiling_mean_sqrt_r": {
+    "ceiling": 0.7746269669017283,
+    "percentiles": {
+      "p10": 0.6478135651255728,
+      "p25": 0.721682972215385,
+      "p50": 0.7876222333278972,
+      "p75": 0.8428989339188525,
+      "p90": 0.8911765573669598
+    },
+    "mean_reliability_r": 0.6111483414326859,
+    "n_paired_strains": 82
+  },
   "verdict": {
-    "primary_ceiling": 0.8623435897414371,
-    "cross_check_sqrt_test_retest": 0.7816925562848361,
+    "primary_ceiling": 0.7746269669017283,
+    "cross_check_sqrt_test_retest": 0.8623435897414371,
     "superseded_estimates": {
       "p_value_inversion": 0.092,
       "route_a_reported_se": 0.06077169206329932

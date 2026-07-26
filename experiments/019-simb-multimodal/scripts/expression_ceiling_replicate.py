@@ -272,11 +272,32 @@ def main() -> None:
     # (median across-strain variance 0.70x the full panel), so it is not a high-effect
     # subset as feared. Cross-checked by the assumption-free per-feature test-retest r:
     # ceiling = sqrt(r) = sqrt(0.611) = 0.78, consistent with Route B's 0.86.
-    primary = results["route_b_cross_study"]["mean_ceiling"]
-    xcheck = float(np.sqrt(np.nanmean(per_feature)))
+    #
+    # HEADLINE estimator -- matches the metric's own aggregation. `pearson_per_feature`
+    # is mean_g(across-strain Pearson for gene g), so its ceiling is mean_g(ceiling_g),
+    # NOT sqrt of a pooled reliability. Using the assumption-free test-retest r_g:
+    #     ceiling_g = sqrt(r_g)      ->      ceiling = mean_g sqrt(r_g)
+    # This is preferred over Route B's 0.862 because it needs no variance decomposition
+    # (Route B divides the paired noise by the FULL-panel total variance, which inflates
+    # it slightly), and over sqrt(mean r) because mean-then-sqrt is the wrong order.
+    rg = np.clip(per_feature[np.isfinite(per_feature)], 0.0, 1.0)
+    primary = float(np.sqrt(rg).mean())
+    results["primary_ceiling_mean_sqrt_r"] = {
+        "ceiling": primary,
+        "percentiles": {
+            f"p{q}": float(np.percentile(np.sqrt(rg), q)) for q in (10, 25, 50, 75, 90)
+        },
+        "mean_reliability_r": float(rg.mean()),
+        "n_paired_strains": len(pairs),
+    }
+    xcheck = results["route_b_cross_study"]["mean_ceiling"]
     print("\n" + "=" * 68)
-    print(f"EXPRESSION per-feature ceiling (replicate-based): {primary:.3f}")
-    print(f"  cross-check sqrt(test-retest r) = sqrt({np.nanmean(per_feature):.3f}) = {xcheck:.3f}")
+    print(f"EXPRESSION per-feature ceiling = mean_g sqrt(r_g) = {primary:.3f}")
+    print(
+        f"  per-gene ceiling: median {np.percentile(np.sqrt(rg), 50):.3f} "
+        f"IQR [{np.percentile(np.sqrt(rg), 25):.3f}, {np.percentile(np.sqrt(rg), 75):.3f}]"
+    )
+    print(f"  cross-check, variance-decomposition route (Route B): {xcheck:.3f}")
     print(f"  observed {OBS:.3f} -> {100 * OBS / primary:.0f}% of ceiling")
     print("  SUPERSEDES 0.092 (p-value inversion) and Route A 0.061 -- both use an")
     print("  SE that overstates noise ~10x in variance, and both are VIOLATED by 0.109.")

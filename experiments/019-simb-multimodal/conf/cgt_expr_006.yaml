@@ -86,7 +86,7 @@ model:
     #
     # NOTE this changes lambda's scale AGAIN: the KL is now summed over 1 layer instead
     # of 8, so the same lambda gives a ~8x smaller graph term. Recalibrate against
-    # val/graph_reg_frac before committing the 3-day window.
+    # val/graph_reg/ratio_to_data before committing the 3-day window.
     graph_reg_layer: [1]
     row_sampling_rate: 1.0
     regularized_heads:

@@ -167,11 +167,11 @@ def objective(trial: optuna.Trial) -> float | tuple[float, float]:
     # it is no longer applied twice (the old effective weight was lambda^2 -- 1e-6 at the
     # swept 1e-3, i.e. the graph term was off), and normalization is now per-graph mean
     # degree instead of the summed degree over all graphs. 0.0 is dropped: the point of
-    # this round is a WIDE, ENFORCED graph channel, and `val/graph_reg_frac` (logged per
+    # this round is a WIDE, ENFORCED graph channel, and `val/graph_reg/ratio_to_data` (logged per
     # step) is what tells us which of these values actually constrain attention rather
     # than guessing the scale in advance.
     # CALIBRATED FROM THE MONITOR, not guessed. The first _006 launch used {1e-3 .. 1.0}
-    # and `val/graph_reg_frac` immediately read 0.99992 -- graph_reg_loss 6609 against an
+    # and `val/graph_reg/ratio_to_data` immediately read 0.99992 -- graph_reg_loss 6609 against an
     # expression loss of 0.54, i.e. the KL term was the entire objective and the task was
     # not being trained at all. At lambda=1e-2 the unweighted graph term is ~6.6e5, so
     # parity with the task loss sits near lambda ~ 8e-7:

@@ -74,6 +74,40 @@ and it is exactly Design Decision 3 (cassette = reference-strain background: we 
 a function of the *deletion* on a fixed pathway-carrying reference strain). Nothing else in Track A
 matters until this lands.
 
+### 2026.07.25 — GATE PASSED, and it uncovered a genotype collision
+
+`DeletionKeyedGenotypeAggregator` landed in `torchcell/data/genotype_aggregate.py` as a subclass
+(the aggregator is passed as a *class* and instantiated with only `root=` at
+`neo4j_cell.py:431`, so a constructor flag would need plumbing through 20+ call sites). Verified
+against the real source LMDBs by
+`experiments/019-simb-multimodal/scripts/verify_deletion_keyed_aggregation.py` →
+`results/deletion_keyed_aggregation_census.json`:
+
+| pair | full-key | deletion-key |
+| --- | ---: | ---: |
+| betaxanthin ∩ metabolome | **0** | **4,432** |
+| β-carotene ∩ metabolome | **0** | **4,221** |
+
+Within 7 and 5 of the live-DB census (4,439 / 4,226) — the small gap is the query's `gene_set`
+filter, which this raw-LMDB check does not apply.
+
+**Unexpected finding — full-key aggregation silently MERGES two distinct betaxanthin strains.**
+Betaxanthin has 4,735 records but only **4,734** unique full-keys, versus 4,735 deletion-keys.
+The colliding bucket, confirmed by inspection:
+
+```text
+deletions: ['YBR249C']   all: ['CYP76AD1', 'DOD', 'YBR249C', 'YPR060C']
+deletions: ['YPR060C']   all: ['CYP76AD1', 'DOD', 'YBR249C', 'YPR060C']
+```
+
+Because the cassette carries **ARO4 (YBR249C)** and **ARO7 (YPR060C)** as feedback-resistant
+*alleles*, both gene names are already in every strain's perturbation set — so the ARO4-deletion
+strain and the ARO7-deletion strain have **identical full gene-name sets** and get averaged
+together. This is a correctness bug, not just lost co-location, and it lands on precisely the two
+tyrosine-pathway genes the betaxanthin story is about. Deletion-keying resolves it (4,735 distinct).
+It also confirms the `GenotypeAggregator` TODO was right: the full-set key is unsafe the moment a
+non-deletion axis touches a gene that is also deletable.
+
 ### Datasets
 
 Build `fig6_pigment_transfer` — three datasets, deletion-keyed:

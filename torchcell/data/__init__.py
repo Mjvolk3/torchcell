@@ -9,7 +9,7 @@ from .experiment_dataset import (
     compute_experiment_reference_index_sequential,
     post_process,
 )
-from .genotype_aggregate import GenotypeAggregator
+from .genotype_aggregate import DeletionKeyedGenotypeAggregator, GenotypeAggregator
 from .graph_processor import (
     DCellGraphProcessor,
     IncidenceSubgraphRepresentation,
@@ -30,6 +30,7 @@ __all__ = [
     "Deduplicator",
     "MeanExperimentDeduplicator",
     "Aggregator",
+    "DeletionKeyedGenotypeAggregator",
     "GenotypeAggregator",
     "ExperimentDataset",
     "Neo4jCellDataset",

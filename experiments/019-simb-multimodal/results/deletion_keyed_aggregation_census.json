@@ -1,0 +1,29 @@
+{
+  "n_records": {
+    "betaxanthin": 4735,
+    "beta_carotene": 4474,
+    "metabolome": 4678
+  },
+  "n_unique_keys": {
+    "full_geneset": {
+      "betaxanthin": 4734,
+      "beta_carotene": 4474,
+      "metabolome": 4678
+    },
+    "deletion_only": {
+      "betaxanthin": 4735,
+      "beta_carotene": 4474,
+      "metabolome": 4678
+    }
+  },
+  "colocation": {
+    "betaxanthin__metabolome": {
+      "full_geneset": 0,
+      "deletion_only": 4432
+    },
+    "beta_carotene__metabolome": {
+      "full_geneset": 0,
+      "deletion_only": 4221
+    }
+  }
+}

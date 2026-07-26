@@ -160,12 +160,17 @@ def objective(trial: optuna.Trial) -> float | tuple[float, float]:
     # unseen gene).
     learnable = False
 
-    hidden = trial.suggest_categorical("hidden_channels", [128, 180])
+    hidden = trial.suggest_categorical("hidden_channels", [90, 180])
     # Widened from {2,4}: L=2 won _003, but under memorization depth mostly buys memorization.
     layers = trial.suggest_categorical("num_transformer_layers", [2, 4, 6, 8])
-    graph_reg = trial.suggest_categorical(
-        "graph_reg_lambda", [0.0, 0.0003, 0.001, 0.003]
-    )
+    # Re-centered and log-spaced for _006. Two model-side fixes changed what lambda MEANS:
+    # it is no longer applied twice (the old effective weight was lambda^2 -- 1e-6 at the
+    # swept 1e-3, i.e. the graph term was off), and normalization is now per-graph mean
+    # degree instead of the summed degree over all graphs. 0.0 is dropped: the point of
+    # this round is a WIDE, ENFORCED graph channel, and `val/graph_reg_frac` (logged per
+    # step) is what tells us which of these values actually constrain attention rather
+    # than guessing the scale in advance.
+    graph_reg = trial.suggest_categorical("graph_reg_lambda", [1e-3, 1e-2, 1e-1, 1.0])
     profile_name = trial.suggest_categorical("hp_profile", ["baseline", "aggressive"])
     profile = PROFILES[profile_name]
 

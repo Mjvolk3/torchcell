@@ -451,14 +451,25 @@ class CellDataModule(L.LightningDataModule):
         return osp.exists(index_file) and osp.exists(details_file)
 
     def setup(self, stage: str | None = None) -> None:
-        """Build train/val/test Subset datasets from the computed split indices."""
-        train_index = self.index.train
-        val_index = self.index.val
-        test_index = self.index.test
+        """Build train/val/test Subset datasets from the computed split indices.
 
-        self.train_dataset = torch.utils.data.Subset(self.dataset, train_index)
-        self.val_dataset = torch.utils.data.Subset(self.dataset, val_index)
-        self.test_dataset = torch.utils.data.Subset(self.dataset, test_index)
+        IDEMPOTENT BY DESIGN. Lightning calls ``setup()`` again inside ``trainer.fit()``
+        even when the caller already invoked it, so an unconditional rebuild silently
+        discarded any post-setup narrowing of ``Subset.indices`` (e.g. the
+        ``require_modalities`` filter in experiments/019, which logged "4074 -> 1161 rows"
+        while every epoch still ran 128 batches = 4074/32). Rebuilding only when the
+        subsets do not yet exist makes the caller's filter survive the second call.
+        """
+        if (
+            getattr(self, "train_dataset", None) is not None
+            and getattr(self, "val_dataset", None) is not None
+            and getattr(self, "test_dataset", None) is not None
+        ):
+            return
+
+        self.train_dataset = torch.utils.data.Subset(self.dataset, self.index.train)
+        self.val_dataset = torch.utils.data.Subset(self.dataset, self.index.val)
+        self.test_dataset = torch.utils.data.Subset(self.dataset, self.index.test)
 
     def _get_dataloader(
         self,

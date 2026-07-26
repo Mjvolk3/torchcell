@@ -1344,6 +1344,11 @@ class CellGraphTransformer(nn.Module):
             if edges_k > 0:
                 total_loss = total_loss + lambda_k * kl_loss / (edges_k / self.gene_num)
 
+        # NOTE: lambda is applied ONCE, here via lambda_k (= graph_reg_lambda from the
+        # config). The previous code multiplied by `self.graph_reg_lambda` a SECOND time
+        # after the loop, making the effective weight lambda^2 -- at the swept lambda=1e-3
+        # that is 1e-6 before degree normalization, i.e. the graph term was effectively
+        # switched off in every run to date.
         return total_loss
 
     def _edge_count(self, graph_name: str, A_tilde: torch.Tensor) -> int:

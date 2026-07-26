@@ -16,16 +16,36 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import requests
 from attrs import define, field
+from dotenv import load_dotenv
 from matplotlib.patches import Patch
 
 from torchcell.sequence import GeneSet
+
+load_dotenv()
+
+#: Canonical on-disk home for the GEM, anchored to DATA_ROOT.
+#:
+#: This default USED to be the relative path "data/torchcell/yeast-GEM", which is a
+#: directory-pollution generator: `_download()` does not merely read from `root`, it
+#: creates it and extracts a 34 MB GitHub tarball into it. So any process whose cwd was not
+#: the repo root materialized a full GEM tree wherever it happened to be standing. That is
+#: exactly how a complete yeast-GEM 9.0.2 checkout ended up under `notes/` (deprecated
+#: 2026-07-26, byte-identical to the canonical copy). Anchoring to DATA_ROOT makes the
+#: location a property of the machine rather than of the caller's cwd.
+#: With DATA_ROOT unset this degrades to the old relative path rather than to a wrong
+#: absolute one, so an environment without a .env behaves as before instead of silently
+#: writing to a nested "data/data/..." directory.
+DEFAULT_YEAST_GEM_ROOT = osp.join(
+    os.environ.get("DATA_ROOT", ""), "data/torchcell/yeast-GEM"
+)
 
 
 @define
 class YeastGEM:
     """Download, load, and expose the yeast-GEM genome-scale model."""
 
-    root: str = field(default="data/torchcell/yeast-GEM")
+    root: str = field(default=DEFAULT_YEAST_GEM_ROOT)
+    #: 9.0.2 is the CURRENT upstream release (2024-11-23), not a stale pin.
     version: str = field(default="9.0.2")
     induced_gene_set: GeneSet | None = field(default=None)
     _model: cobra.Model | None = field(default=None, init=False)

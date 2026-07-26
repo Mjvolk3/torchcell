@@ -1,0 +1,47 @@
+# experiments/019-simb-multimodal/conf/gh_metabolism_003.yaml
+# [[plan.cgt-metabolism-flux-layer.2026.07.26]]
+#
+# ARM C -- the ATTRIBUTION ablation, and the one that answers the standing question.
+#
+# _000 changed three things at once against the old pigment run: nine graphs instead of two,
+# content embeddings instead of a learnable table, and a re-tuned lambda. It produced the
+# first real signal (0.323). This arm reverts ONLY the graph block to the original two,
+# holding embeddings, lambda, capacity and selection rule fixed, so the difference is
+# attributable rather than assumed.
+#
+# This comparison was NOT previously possible. The old normalization divided by edges summed
+# over ALL graphs, so changing the graph count silently rescaled the prior for every graph --
+# graph count and prior strength moved together and could not be separated. With per-graph
+# normalization, lambda means the same thing at 2 graphs and at 9, so this is a clean
+# one-variable ablation.
+#
+# Prediction on the record, so it is falsifiable: if graphs are carrying the gain, betaxanthin
+# should fall well below 0.32 here. If it does not, the gain came from dropping the learnable
+# embedding table and the nine-graph port is not what mattered.
+defaults:
+  - gh_metabolism_001
+  - _self_
+
+wandb:
+  tags: [ws11b, gilahyper, metabolism, betaxanthin, metabolome, twograph, ablation]
+
+cell_dataset:
+  graphs: [physical, regulatory]
+
+model:
+  # 9 heads with 2 regularized graphs would leave 7 unconstrained heads and change capacity
+  # as well as the graph count -- two variables at once. Match the original 4-head geometry;
+  # 4 divides 88, and 88/4 = 22 keeps the per-head width close to _000's 90/9 = 10... it does
+  # not, so hidden stays 90 and heads drop to 6 (90/6 = 15) with only heads 0-1 regularized.
+  hidden_channels: 90
+  num_attention_heads: 6
+  graph_regularization:
+    regularized_heads:
+      physical:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 0
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      regulatory:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 1
+        lambda: ${model.graph_regularization.graph_reg_lambda}

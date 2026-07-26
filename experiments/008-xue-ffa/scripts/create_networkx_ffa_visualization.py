@@ -36,7 +36,7 @@ def create_networkx_ffa_visualization():
 
     # Load Yeast GEM
     print("\nLoading Yeast GEM model...")
-    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
+    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast-GEM"))
     model = yeast_gem.model
     print(f"Loaded model: {len(model.reactions)} reactions")
 

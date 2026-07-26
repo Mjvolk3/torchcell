@@ -1,0 +1,22 @@
+# experiments/019-simb-multimodal/conf/gh_metabolism_002.yaml
+# [[plan.cgt-metabolism-flux-layer.2026.07.26]]
+#
+# ARM B -- "stop paying for the mean". Arm A plus a proper scoring rule.
+#
+# Mean-collapse is not a bug, it is what point-MSE REWARDS on a z-scored target: once the
+# model cannot resolve which strains are high, predicting 0 everywhere is the loss-optimal
+# answer and Pearson goes to exactly 0. Gaussian CRPS is a proper scoring rule, so a
+# confident-and-wrong prediction is penalized differently from an unconfident one, and
+# collapsing to the mean stops being free.
+#
+# This is the decoder work's distributional axis applied to the metabolism arm -- same
+# machinery, different head.
+defaults:
+  - gh_metabolism_001
+  - _self_
+
+wandb:
+  tags: [ws11b, gilahyper, metabolism, betaxanthin, metabolome, ninegraph, crps]
+
+multitask:
+  dist: crps

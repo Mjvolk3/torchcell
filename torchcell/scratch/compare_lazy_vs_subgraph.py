@@ -62,7 +62,7 @@ def load_dataset_with_processor(graph_processor):
     graph_names = ["physical", "regulatory"]
     gene_multigraph = build_gene_multigraph(graph=graph, graph_names=graph_names)
 
-    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
+    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast-GEM"))
     incidence_graphs = {"metabolism_bipartite": yeast_gem.bipartite_graph}
 
     with open(

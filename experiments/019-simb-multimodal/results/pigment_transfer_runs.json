@@ -1,0 +1,141 @@
+{
+  "base_config": "gh_pigment_base",
+  "fast_dev_run": false,
+  "seeds": [
+    42
+  ],
+  "metric_taken_at": "peak",
+  "primary_metric_per_target": {
+    "betaxanthin": "pearson",
+    "beta_carotene": "spearman"
+  },
+  "runs": {
+    "42": {
+      "A1": {
+        "condition": "A1",
+        "active_heads": [
+          "betaxanthin"
+        ],
+        "target": "betaxanthin",
+        "seed": 42,
+        "n_epochs_run": null,
+        "betaxanthin_pearson_peak": 0.057212911546230316,
+        "betaxanthin_pearson_last": -1.612633759862092e-08,
+        "betaxanthin_spearman_peak": 0.05755439028143883,
+        "betaxanthin_spearman_last": 0.0,
+        "val_loss_last": 0.9698932766914368,
+        "_all_metrics": {
+          "train/loss": 0.7443298101425171,
+          "train/betaxanthin/loss": 0.7443298101425171,
+          "val/loss": 0.9698932766914368,
+          "val/betaxanthin/loss": 0.9698932766914368,
+          "val/betaxanthin/pearson_per_feature": -1.612633759862092e-08,
+          "val/betaxanthin/spearman_per_feature": 0.0,
+          "val/mean/pearson_per_feature": -1.612633759862092e-08,
+          "train/betaxanthin/pearson_per_feature": 0.003954954445362091,
+          "train/betaxanthin/spearman_per_feature": 0.017047230154275894,
+          "train/mean/pearson_per_feature": 0.003954954445362091,
+          "val/loss_max": 1.24739408493042,
+          "val/betaxanthin/loss_max": 1.24739408493042,
+          "train/loss_max": 2.5318753719329834,
+          "train/betaxanthin/loss_max": 2.5318753719329834,
+          "val/betaxanthin/pearson_per_feature_max": 0.057212911546230316,
+          "val/betaxanthin/spearman_per_feature_max": 0.05755439028143883,
+          "val/mean/pearson_per_feature_max": 0.057212911546230316,
+          "train/betaxanthin/pearson_per_feature_max": 0.03836534172296524,
+          "train/betaxanthin/spearman_per_feature_max": 0.03014826774597168,
+          "train/mean/pearson_per_feature_max": 0.03836534172296524
+        }
+      }
+    }
+  },
+  "deltas_per_seed": {
+    "42": {}
+  },
+  "summary_across_seeds": {
+    "betaxanthin": {
+      "pearson_alone": {
+        "mean": null,
+        "sd": null,
+        "n": 0
+      },
+      "pearson_joint": {
+        "mean": null,
+        "sd": null,
+        "n": 0
+      },
+      "delta_pearson": {
+        "mean": null,
+        "sd": null,
+        "n": 0
+      },
+      "spearman_alone": {
+        "mean": null,
+        "sd": null,
+        "n": 0
+      },
+      "spearman_joint": {
+        "mean": null,
+        "sd": null,
+        "n": 0
+      },
+      "delta_spearman": {
+        "mean": null,
+        "sd": null,
+        "n": 0
+      },
+      "delta_primary": {
+        "mean": null,
+        "sd": null,
+        "n": 0
+      },
+      "primary_metric": "pearson"
+    },
+    "beta_carotene": {
+      "pearson_alone": {
+        "mean": null,
+        "sd": null,
+        "n": 0
+      },
+      "pearson_joint": {
+        "mean": null,
+        "sd": null,
+        "n": 0
+      },
+      "delta_pearson": {
+        "mean": null,
+        "sd": null,
+        "n": 0
+      },
+      "spearman_alone": {
+        "mean": null,
+        "sd": null,
+        "n": 0
+      },
+      "spearman_joint": {
+        "mean": null,
+        "sd": null,
+        "n": 0
+      },
+      "delta_spearman": {
+        "mean": null,
+        "sd": null,
+        "n": 0
+      },
+      "delta_primary": {
+        "mean": null,
+        "sd": null,
+        "n": 0
+      },
+      "primary_metric": "spearman"
+    }
+  },
+  "headline": {
+    "delta_betaxanthin_primary_mean": null,
+    "delta_betaxanthin_primary_sd": null,
+    "delta_beta_carotene_primary_mean": null,
+    "delta_beta_carotene_primary_sd": null,
+    "asymmetry": null,
+    "hypothesis_direction_holds": null
+  }
+}

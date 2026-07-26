@@ -1093,7 +1093,7 @@ def create_ffa_bipartite_network():
 
     # Load Yeast GEM
     print("\nLoading Yeast GEM model...")
-    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
+    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast-GEM"))
     model = yeast_gem.model
 
     # Load FFA data from Step 1

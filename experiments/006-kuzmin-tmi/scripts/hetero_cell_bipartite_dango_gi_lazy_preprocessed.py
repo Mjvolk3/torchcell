@@ -208,7 +208,7 @@ def main(cfg: DictConfig) -> None:
     # This eliminates 10ms/sample processing overhead during training
 
     incidence_graphs = {}
-    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
+    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast-GEM"))
     if "metabolism_hypergraph" in wandb.config.cell_dataset["incidence_graphs"]:
         incidence_graphs["metabolism_hypergraph"] = yeast_gem.reaction_map
     elif "metabolism_bipartite" in wandb.config.cell_dataset["incidence_graphs"]:

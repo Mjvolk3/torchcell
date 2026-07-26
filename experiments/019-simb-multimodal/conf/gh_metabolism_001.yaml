@@ -1,0 +1,30 @@
+# experiments/019-simb-multimodal/conf/gh_metabolism_001.yaml
+# [[plan.cgt-metabolism-flux-layer.2026.07.26]]
+#
+# ARM A -- "keep the model that worked". Identical to _000 except that BEST is selected on
+# the metric instead of the loss.
+#
+# Job 1341 (=_000) peaked at betaxanthin val Pearson 0.323 on epoch 55, where val loss was
+# 0.885 -- the only point it fell below 0.971, the variance of the z-scored target. It then
+# decayed to EXACTLY 0.00000 by epoch ~80 as loss climbed back. Early stopping fired on the
+# loss plateau 31 epochs later and the checkpoint saved was the COLLAPSED model.
+#
+# So this arm changes nothing about the model and only asks: how much of _000's apparent
+# failure was the selection rule throwing away a model that had already worked?
+defaults:
+  - gh_metabolism_000
+  - _self_
+
+wandb:
+  tags: [ws11b, gilahyper, metabolism, betaxanthin, metabolome, ninegraph, metric-select]
+
+trainer:
+  checkpoint:
+    monitor: val/mean/pearson_per_feature
+    mode: max
+  early_stopping:
+    enabled: true
+    monitor: val/mean/pearson_per_feature
+    mode: max
+    patience: 40
+    min_delta: 0.0

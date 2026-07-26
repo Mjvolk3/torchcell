@@ -105,7 +105,7 @@ def load_sample_data_batch(
     # Prepare incidence graphs
     incidence_graphs = {}
     if selected_config["use_metabolism"]:
-        yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
+        yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast-GEM"))
         incidence_graphs["metabolism_bipartite"] = yeast_gem.bipartite_graph
 
     # Load query - same as in hetero_cell_bipartite_dango_gi.py
@@ -252,7 +252,7 @@ def inspect_data() -> None:
     gene_multigraph = build_gene_multigraph(graph=graph, graph_names=graph_names)
 
     # Load metabolism
-    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
+    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast-GEM"))
     incidence_graphs = {"metabolism_bipartite": yeast_gem.bipartite_graph}
 
     # Load query

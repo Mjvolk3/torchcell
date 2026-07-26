@@ -243,7 +243,7 @@ def identify_ffa_reactions():
 
     # Load Yeast GEM
     print("Loading Yeast GEM model...")
-    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
+    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast-GEM"))
     model = yeast_gem.model
 
     print(f"Total reactions in model: {len(model.reactions)}")

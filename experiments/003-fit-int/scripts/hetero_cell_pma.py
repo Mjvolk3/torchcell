@@ -341,7 +341,7 @@ def main(cfg: DictConfig) -> None:
     graph_processor = SubgraphRepresentation()
 
     incidence_graphs = {}
-    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
+    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast-GEM"))
     if "metabolism" in wandb.config.cell_dataset["incidence_graphs"]:
         incidence_graphs["metabolism"] = yeast_gem.reaction_map
 

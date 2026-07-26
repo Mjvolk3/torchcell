@@ -31,7 +31,7 @@ def test_stoichiometric_matrix_equivalence():
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
     assert DATA_ROOT is not None, "DATA_ROOT must be set to run the cell-data tests"
-    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
+    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast-GEM"))
 
     # 1. Get the COBRApy S matrix
     cobra_S = cobra.util.array.create_stoichiometric_matrix(
@@ -161,7 +161,7 @@ def test_stoichiometric_matrix_with_duplicate_detection():
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
     assert DATA_ROOT is not None, "DATA_ROOT must be set to run the cell-data tests"
-    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
+    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast-GEM"))
 
     # 1. Get the COBRApy S matrix
     cobra_S = cobra.util.array.create_stoichiometric_matrix(
@@ -288,7 +288,7 @@ def test_stoichiometric_matrix_exact_equivalence():
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
     assert DATA_ROOT is not None, "DATA_ROOT must be set to run the cell-data tests"
-    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
+    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast-GEM"))
 
     # 1. Get the COBRApy S matrix
     cobra_S = cobra.util.array.create_stoichiometric_matrix(

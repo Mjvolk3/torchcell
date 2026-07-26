@@ -169,7 +169,7 @@ def main():
 
     # Setup metabolism
     print("Initializing metabolism...")
-    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
+    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast-GEM"))
     incidence_graphs = {"metabolism_bipartite": yeast_gem.bipartite_graph}
 
     # Create source dataset

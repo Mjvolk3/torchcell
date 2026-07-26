@@ -633,7 +633,7 @@ def load_sample_data_batch() -> "tuple[Neo4jCellDataset, HeteroData, int, int]":
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
     )
-    gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
+    gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast-GEM"))
     reaction_map = gem.reaction_map
 
     dataset = Neo4jCellDataset(

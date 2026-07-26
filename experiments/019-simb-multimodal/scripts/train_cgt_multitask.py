@@ -1937,14 +1937,32 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
     model_base_path = osp.join(data_root, "models/checkpoints")
     os.makedirs(model_base_path, exist_ok=True)
     best_tracker = BestMetricTracker()
+    # Selection key for the saved "best" checkpoint. See the ModelCheckpoint comment below.
+    _ckpt_cfg = _as_dict(cfg.trainer.get("checkpoint", {}))
+    ckpt_monitor = str(_ckpt_cfg.get("monitor", "val/loss"))
+    ckpt_mode = str(_ckpt_cfg.get("mode", "min"))
     checkpoint_callbacks: list[Callback] = [
         best_tracker,
+        # WHAT "BEST" MEANS IS NOW A CONFIG DECISION, and it has to be.
+        #
+        # This was pinned to val/loss, which silently discards the model we actually want
+        # whenever a run peaks on the METRIC and then MSE-collapses toward the per-feature
+        # mean -- the documented failure mode of these runs (see BestMetricTracker). Job
+        # 1341 is the worked example: betaxanthin val Pearson peaked at 0.323 on epoch 55
+        # (val loss 0.885, the only point it dropped below the z-scored target's variance),
+        # then decayed to EXACTLY 0.00000 by epoch ~80 while val/loss returned to 0.971.
+        # Early stopping fired 31 epochs after the peak and the saved checkpoint was the
+        # collapsed model -- i.e. the run found signal and then threw it away.
+        #
+        # Loss and metric are different statistics here, so selecting on loss is not a
+        # proxy for selecting on the metric. Default stays val/loss so existing arms are
+        # unchanged; metabolism arms monitor val/mean/pearson_per_feature with mode=max.
         ModelCheckpoint(
             dirpath=osp.join(model_base_path, group),
             save_top_k=1,
-            monitor="val/loss",
-            mode="min",
-            filename=f"{job_id}-best-{{epoch:02d}}-{{val/loss:.4f}}",
+            monitor=ckpt_monitor,
+            mode=ckpt_mode,
+            filename=f"{job_id}-best-{{epoch:02d}}",
         ),
         ModelCheckpoint(
             dirpath=osp.join(model_base_path, group),

@@ -189,7 +189,7 @@ def load_sample_data_batch(
 
     # Add metabolism graph if requested
     if selected_config["use_metabolism"]:
-        gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
+        gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast-GEM"))
         incidence_graphs["metabolism_bipartite"] = gem.bipartite_graph
 
     # Add gene ontology graph if requested

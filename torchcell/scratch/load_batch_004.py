@@ -87,7 +87,7 @@ def load_sample_data_batch(
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/004-dmi-tmi/001-small-build"
     )
-    gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
+    gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast-GEM"))
     incidence_graphs = {}
     if metabolism_graph == "metabolism_hypergraph":
         incidence_graphs["metabolism_hypergraph"] = gem.reaction_map

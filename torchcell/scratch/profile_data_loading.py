@@ -107,7 +107,7 @@ def profile_dataset_creation():
             )
 
         with TimingContext("4. Load metabolism model"):
-            yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
+            yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast-GEM"))
             incidence_graphs = {"metabolism_bipartite": yeast_gem.bipartite_graph}
 
         with TimingContext("5. Build node embeddings"):

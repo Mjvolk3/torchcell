@@ -232,7 +232,41 @@ replicate max and min on the 130 replicated rows) — so Spearman is the only ho
 and the arm is weak for two independent reasons: no measured precursor *and* a noisy ordinal
 readout.
 
-### 2026.07.26 — ROOT CAUSE: the scalar head dilutes the perturbation ~6,607×
+### 2026.07.26b — CORRECTION: the ~6,607× claim below is WRONG (measured 2.5×)
+
+The section immediately below reasoned that a mean over 6,607 gene tokens must attenuate a
+single-gene deletion ~6,607-fold. **A `main()` added to the model file measured it on a real
+batch and refuted that.** Run it with
+
+```bash
+PYTHONPATH=$PWD ~/miniconda3/envs/torchcell/bin/python \
+  torchcell/models/cell_graph_transformer_metabolism.py
+```
+
+| head input term | across-batch std |
+| --- | ---: |
+| `h_CLS` (reference cell) | **0.000e+00** |
+| mean over ALL 6,607 gene tokens | 1.309e-02 |
+| mean over PERTURBED genes only | 3.217e-02 |
+
+**What survives:** `h_CLS` really does carry *exactly zero* per-sample information — it is the
+encoding of the unperturbed reference graph, broadcast across the batch — while occupying a full
+`hidden_dim` of the head's input. That is confirmed and worth knowing.
+
+**What does not:** the genome-wide pool is *not* 1/6607-attenuated. The **equivariant perturbation
+operator cross-attends**, so it has already propagated the perturbation into many gene
+representations before any pooling happens. The perturbed-gene pool carries only **~2.5×** the
+across-batch signal, not ~6607×.
+
+**Consequence:** `perturbed_gene_pool` is a modest, justified signal-to-background improvement, but
+it is **not** the explanation for the mean collapse, and job 1332 confirms that — with the fix in
+(params 905,106 → 906,130, exactly +32²), val loss still sits at 0.972 and pearson wanders
+(−0.165, −0.154, 0.000, 0.098, −0.038 on 345 val genotypes where SE ≈ 0.054). Measurable genotype
+signal reaches the head either way; the model simply does not map it onto betaxanthin. That points
+at the target/representation, not the readout plumbing. Read the section below with this correction
+applied.
+
+### 2026.07.26 — (superseded in part) the scalar head and the perturbation signal
 
 Six SLURM iterations converged on a structural diagnosis that explains every null so far.
 `ScalarHead.forward` (`cell_graph_transformer_metabolism.py:113-119`) computes

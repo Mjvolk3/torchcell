@@ -94,12 +94,13 @@ class ProductScalarHead(nn.Module):
         Args:
             hidden_dim: Model hidden dimension.
             use_gene_pool: Concatenate a mean pool over ALL gene tokens of the perturbed
-                representation. Note this averages the whole genome, so on its own it
-                attenuates a single-gene deletion ~1/6607 -- see ``perturbed_gene_pool``.
+                representation. Measured across-batch std 1.3e-2 -- the perturbation
+                operator cross-attends, so this is NOT as diluted as "one of 6,607 tokens
+                differs" would suggest (see ``perturbed_gene_pool``).
             use_pert_pool: Concatenate a mean pool over ONLY the perturbed gene tokens.
-                This is the term that actually carries the genotype for a single-KO
-                strain; keep it on unless you are deliberately reproducing the
-                pool-diluted baseline.
+                Measured across-batch std 3.2e-2, i.e. ~2.5x the genome-wide pool. For a
+                single-KO strain this is the genotype itself, so keep it on; it is a
+                modest signal-to-background gain, not a cure for the observed nulls.
             dropout: Dropout probability.
             param_dim: Distributional params for the single feature (1 point, 2
                 gaussian, K quantile). ``output_dim`` stays 1 either way.
@@ -133,9 +134,7 @@ class ProductScalarHead(nn.Module):
             if pert_pool is None:
                 raise ValueError(
                     "use_pert_pool=True but pert_pool was not supplied; the model's "
-                    "forward must pass perturbed_gene_pool(...). Without it the head "
-                    "sees only a constant h_CLS and a genome-wide mean, which attenuates "
-                    "a single-gene deletion ~6607-fold."
+                    "forward must pass perturbed_gene_pool(...)."
                 )
             h = torch.cat([h, pert_pool], dim=-1)
         out = self.mlp(h)
@@ -151,22 +150,38 @@ def perturbed_gene_pool(
 ) -> torch.Tensor:
     """Mean over ONLY the perturbed gene tokens, per sample. Returns ``[batch, d]``.
 
-    WHY THIS EXISTS. ``H_genes_pert`` is the perturbed representation of ALL ``N=6607``
-    genes, so ``H_genes_pert.mean(dim=1)`` averages the whole genome. For a single-gene
-    deletion exactly ONE of those 6,607 tokens differs between strains, so that mean
-    attenuates the only per-sample signal by ~1/6607. The other head input, ``h_CLS``,
-    is the encoding of the UNPERTURBED reference graph (the parent encodes ``G`` once at
-    batch size 1) and is broadcast identically across the batch, carrying no per-sample
-    information at all.
+    WHY THIS EXISTS, with the numbers MEASURED rather than assumed (run ``main()`` in this
+    file to reproduce them on a real batch):
 
-    The measured consequence (job 1331): the head emits a constant, val pearson is
-    exactly 0.00000 and val loss sits at ~0.97 -- the variance of the standardized
-    target. Under MSE, zeroing a 1.5e-4 signal branch and predicting the mean is both
-    easier and cheaper than learning it.
+    ======================================  ==================
+    head input term                         across-batch std
+    ======================================  ==================
+    ``h_CLS``                               **0.000e+00**
+    mean over ALL 6607 gene tokens          1.309e-02
+    mean over PERTURBED genes only          3.217e-02
+    ======================================  ==================
 
-    Pooling over the perturbed indices instead makes the genotype the head's input: for a
-    single-KO strain the perturbed gene's representation IS the genotype. This is the S0
-    argument from the decoder note applied to a scalar target.
+    Two conclusions, one of which corrects an earlier guess:
+
+    1. ``h_CLS`` is the encoding of the UNPERTURBED reference graph (the parent encodes
+       ``G`` once at batch size 1) and is broadcast identically across the batch. Its
+       across-batch variance is EXACTLY zero -- it cannot distinguish two strains, yet it
+       occupies a full ``hidden_dim`` of the head's input width. That part is confirmed.
+    2. The genome-wide mean is NOT attenuated ~1/6607, as a naive "only one of 6,607
+       tokens differs" argument predicts. The equivariant perturbation operator
+       cross-attends, so it has already propagated the perturbation into many gene
+       representations before any pooling happens. The perturbed-gene pool carries only
+       **~2.5x** the across-batch signal of the genome-wide pool, not ~6607x.
+
+    So this pool is a real but MODEST improvement in signal-to-background, and it is NOT
+    a sufficient explanation for the observed mean collapse (job 1331: val pearson exactly
+    0.00000, val loss ~0.97 = the variance of the standardized target). The genotype
+    signal reaching the head is measurable either way; the model's failure to map it onto
+    betaxanthin is a separate problem.
+
+    Keeping it is still justified -- for a single-KO strain the perturbed gene's
+    representation IS the genotype, which is the S0 argument from the decoder note applied
+    to a scalar target -- but do not cite it as the fix for the nulls.
 
     Index convention matches the parent operator
     (``equivariant_cell_graph_transformer.py:1649``): ``perturbation_indices`` is a flat
@@ -213,12 +228,13 @@ class MetabolomeVectorHead(nn.Module):
             hidden_dim: Model hidden dimension.
             output_dim: Number of measured metabolite columns F (19 for Mulleder).
             use_gene_pool: Concatenate a mean pool over ALL gene tokens of the perturbed
-                representation. Note this averages the whole genome, so on its own it
-                attenuates a single-gene deletion ~1/6607 -- see ``perturbed_gene_pool``.
+                representation. Measured across-batch std 1.3e-2 -- the perturbation
+                operator cross-attends, so this is NOT as diluted as "one of 6,607 tokens
+                differs" would suggest (see ``perturbed_gene_pool``).
             use_pert_pool: Concatenate a mean pool over ONLY the perturbed gene tokens.
-                This is the term that actually carries the genotype for a single-KO
-                strain; keep it on unless you are deliberately reproducing the
-                pool-diluted baseline.
+                Measured across-batch std 3.2e-2, i.e. ~2.5x the genome-wide pool. For a
+                single-KO strain this is the genotype itself, so keep it on; it is a
+                modest signal-to-background gain, not a cure for the observed nulls.
             dropout: Dropout probability.
             param_dim: Distributional params PER COLUMN; ``output_dim`` stays F.
         """
@@ -256,9 +272,7 @@ class MetabolomeVectorHead(nn.Module):
             if pert_pool is None:
                 raise ValueError(
                     "use_pert_pool=True but pert_pool was not supplied; the model's "
-                    "forward must pass perturbed_gene_pool(...). Without it the head "
-                    "sees only a constant h_CLS and a genome-wide mean, which attenuates "
-                    "a single-gene deletion ~6607-fold."
+                    "forward must pass perturbed_gene_pool(...)."
                 )
             h = torch.cat([h, pert_pool], dim=-1)
         out = self.mlp(h)
@@ -362,3 +376,150 @@ class CellGraphTransformerMetabolism(CellGraphTransformer):
             total += n
         counts["total"] = total
         return counts
+
+
+def main() -> None:
+    r"""Run ONE real batch through the model and report what each head actually sees.
+
+    Run from the repo/worktree root::
+
+        PYTHONPATH=$PWD ~/miniconda3/envs/torchcell/bin/python \\
+            torchcell/models/cell_graph_transformer_metabolism.py
+
+    The point of this entry is the HEAD-INPUT VARIANCE table. A readout can only
+    distinguish two strains through terms that DIFFER between them, and on the
+    ``fig6_pigment_transfer`` build the three candidate terms differ by orders of
+    magnitude:
+
+    * ``h_CLS`` -- the encoding of the unperturbed reference graph, broadcast across the
+      batch. Across-batch std is EXACTLY 0: it cannot carry genotype.
+    * ``mean over all N=6607 gene tokens`` -- one token differs per single-KO strain, so
+      the across-batch std is ~1/6607 of the per-token scale.
+    * ``mean over the perturbed gene tokens only`` -- the genotype itself.
+
+    Reading those three numbers side by side is what turns "the model predicts a
+    constant" into a diagnosis. It is the check that would have caught the pooling
+    defect immediately, so it lives with the model rather than in a notebook.
+    """
+    import os
+    import os.path as osp
+
+    from dotenv import load_dotenv
+    from torch_geometric.loader import DataLoader
+
+    from torchcell.data import (
+        DeletionKeyedGenotypeAggregator,
+        MeanExperimentDeduplicator,
+    )
+    from torchcell.data.graph_processor import Perturbation
+    from torchcell.data.neo4j_cell import Neo4jCellDataset
+    from torchcell.graph import SCerevisiaeGraph
+    from torchcell.graph.graph import build_gene_multigraph
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+
+    load_dotenv()
+    data_root = os.environ["DATA_ROOT"]
+    experiment_root = os.environ["EXPERIMENT_ROOT"]
+    query_path = osp.join(
+        experiment_root, "019-simb-multimodal/queries/fig6_pigment_transfer.cql"
+    )
+    with open(query_path) as f:
+        query = f.read()
+
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(data_root, "data/sgd/genome"),
+        go_root=osp.join(data_root, "data/go"),
+    )
+    graph = SCerevisiaeGraph(
+        sgd_root=osp.join(data_root, "data/sgd/genome"),
+        string_root=osp.join(data_root, "data/string"),
+        tflink_root=osp.join(data_root, "data/tflink"),
+        genome=genome,
+    )
+    dataset = Neo4jCellDataset(
+        root=osp.join(
+            data_root,
+            "data/torchcell/experiments/019-simb-multimodal/fig6_pigment_transfer",
+        ),
+        query=query,
+        gene_set=genome.gene_set,
+        uri="neo4j+s://torchcell-database.ncsa.illinois.edu:7687",
+        username="readonly",
+        password="ReadOnly",
+        graphs=build_gene_multigraph(
+            graph=graph, graph_names=["physical", "regulatory"]
+        ),
+        incidence_graphs=None,
+        node_embeddings={},
+        converter=None,
+        deduplicator=MeanExperimentDeduplicator,
+        aggregator=DeletionKeyedGenotypeAggregator,
+        graph_processor=Perturbation(),
+    )
+    print(f"dataset: {len(dataset)} aggregated genotypes")
+
+    # follow_batch is what creates `perturbation_indices_batch`, which the perturbed-gene
+    # pool needs to attribute each perturbed gene to its sample.
+    loader = DataLoader(
+        dataset,
+        batch_size=8,
+        shuffle=False,
+        follow_batch=["perturbation_indices", "phenotype_values"],
+    )
+    batch = next(iter(loader))
+
+    heads_config: dict[str, Any] = {
+        "betaxanthin": {"kind": "scalar", "output_dim": 1},
+        "beta_carotene": {"kind": "scalar", "output_dim": 1},
+        "mulleder19": {"kind": "vector", "output_dim": 19},
+    }
+    torch.manual_seed(42)
+    model = CellGraphTransformerMetabolism(
+        cell_graph=dataset.cell_graph,
+        gene_num=6607,
+        hidden_channels=32,
+        num_transformer_layers=2,
+        num_attention_heads=4,
+        dropout=0.1,
+        heads_config=heads_config,
+    )
+    model.eval()
+
+    print("\nparameters:")
+    for k, v in model.num_parameters.items():
+        print(f"  {k:28s} {v:>9,}")
+
+    with torch.no_grad():
+        _, reps = model(dataset.cell_graph, batch)
+        h_CLS = reps["h_CLS"]
+        H_genes_pert = reps["H_genes_pert"]
+        pert_pool = perturbed_gene_pool(
+            H_genes_pert,
+            batch["gene"].perturbation_indices,
+            batch["gene"].perturbation_indices_batch,
+        )
+        b = H_genes_pert.shape[0]
+        cls_b = h_CLS.unsqueeze(0).expand(b, -1)
+        gene_pool = H_genes_pert.mean(dim=1)
+
+        print(f"\nbatch: {b} strains, H_genes_pert {tuple(H_genes_pert.shape)}")
+        print("\nHEAD-INPUT VARIANCE (std ACROSS the batch, averaged over dims):")
+        print(f"  {'term':<34}{'across-batch std':>18}")
+        for label, t in (
+            ("h_CLS (reference cell)", cls_b),
+            ("mean over ALL 6607 gene tokens", gene_pool),
+            ("mean over PERTURBED genes only", pert_pool),
+        ):
+            print(f"  {label:<34}{t.std(dim=0).mean().item():>18.3e}")
+        ratio = pert_pool.std(dim=0).mean() / gene_pool.std(dim=0).mean().clamp(
+            min=1e-12
+        )
+        print(f"\n  perturbed-pool signal is {ratio.item():.1f}x the genome-wide pool")
+
+        print("\nhead outputs:")
+        for name, out in cast(dict[str, torch.Tensor], reps["head_outputs"]).items():
+            print(f"  {name:<20}{str(tuple(out.shape)):>16}")
+
+
+if __name__ == "__main__":
+    main()

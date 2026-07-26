@@ -9,8 +9,8 @@
 #
 # Changes vs _005:
 #   * 9 graphs (010's set), each on its own regularized head, heads 0-8.
-#   * num_attention_heads 4 -> 9. Heads must divide hidden_channels, so the size axis is
-#     {90, 180} (90/9=10, 180/9=20). 128 is dropped -- 128/9 is not an integer.
+#   * num_attention_heads 4 -> 10 (9 graphs + 1 FREE head). Heads must divide
+#     hidden_channels, so the size axis is {90, 180} (90/10=9, 180/10=18). 128 is dropped.
 #   * graph_reg layers span the whole stack, not just [1,2]: with L up to 8 the old setting
 #     left most layers unconstrained.
 #   * learnable_embedding OFF, not swept: only 4.8% of val genes are ever perturbed in
@@ -57,8 +57,15 @@ multitask:
   active_heads: [per_gene]
 
 model:
-  hidden_channels: 90 # SWEPT {90, 180}; both divisible by 9 heads
-  num_attention_heads: 9 # one head per regularized graph
+  hidden_channels: 90 # SWEPT {90, 180}; both divisible by 10 heads
+  # 10 heads for 9 graphs: heads 0-8 are pinned to a graph, head 9 is FREE at every
+  # layer, so the model retains one attention map that can point wherever the graphs do
+  # not. 010 ran 9 heads for 9 graphs -- zero spare -- and got its unconstrained capacity
+  # from depth instead (graph_reg_layer: 1, so 7 of 8 layers were entirely free). With
+  # _006 regularizing the whole stack, that depth-bypass is gone, and a free head is the
+  # cheapest replacement: 10 divides both hidden sizes (90/10=9, 180/10=18) and costs
+  # only 1.11x the per-layer attention tensor, against 1.67x for the 15-head version.
+  num_attention_heads: 10
 
   # The perturbation head carries its OWN head count, inherited as 4 from
   # cgt_decoder_003. Raising num_attention_heads to 9 without it made every hidden=90

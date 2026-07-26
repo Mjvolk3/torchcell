@@ -62,9 +62,13 @@ import numpy as np
 import torch
 from dotenv import load_dotenv
 
-from torchcell.datamodels.calmorph_labels import CALMORPH_LABELS
-from torchcell.datasets.node_embedding_builder import NodeEmbeddingBuilder
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+# MUST precede the torchcell imports: torchcell.graph.sgd reads DATA_ROOT at IMPORT time
+# and raises if it is unset, so loading the .env inside main() is too late.
+load_dotenv("/home/michaelvolk/Documents/projects/torchcell/.env")
+
+from torchcell.datamodels.calmorph_labels import CALMORPH_LABELS  # noqa: E402
+from torchcell.datasets.node_embedding_builder import NodeEmbeddingBuilder  # noqa: E402
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome  # noqa: E402
 
 # Same three dropped features as the training config (multitask.drop_features.global).
 DROPPED = ["A113_A", "D203", "D205"]
@@ -164,7 +168,6 @@ def _knn_predict(
 
 
 def main() -> None:
-    load_dotenv("/home/michaelvolk/Documents/projects/torchcell/.env")
     data_root = os.environ["DATA_ROOT"]
     base = osp.join(data_root, "data/torchcell/experiments", DATASET_TAG)
 

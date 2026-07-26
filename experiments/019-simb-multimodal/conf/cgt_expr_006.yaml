@@ -63,7 +63,7 @@ model:
     enabled: false # NOT swept: cold start makes it inert on val
 
   graph_regularization:
-    graph_reg_lambda: 0.001 # SWEPT, centered per the round's brief
+    graph_reg_lambda: 1.0e-6 # SWEPT {1e-8..1e-5}; 1e-6 ~ parity with the task loss
     # Span the stack rather than only the first two layers: L is swept to 8.
     graph_reg_layer: [0, 1, 2, 3, 4, 5, 6, 7]
     row_sampling_rate: 1.0

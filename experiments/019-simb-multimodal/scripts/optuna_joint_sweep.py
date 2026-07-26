@@ -170,7 +170,22 @@ def objective(trial: optuna.Trial) -> float | tuple[float, float]:
     # this round is a WIDE, ENFORCED graph channel, and `val/graph_reg_frac` (logged per
     # step) is what tells us which of these values actually constrain attention rather
     # than guessing the scale in advance.
-    graph_reg = trial.suggest_categorical("graph_reg_lambda", [1e-3, 1e-2, 1e-1, 1.0])
+    # CALIBRATED FROM THE MONITOR, not guessed. The first _006 launch used {1e-3 .. 1.0}
+    # and `val/graph_reg_frac` immediately read 0.99992 -- graph_reg_loss 6609 against an
+    # expression loss of 0.54, i.e. the KL term was the entire objective and the task was
+    # not being trained at all. At lambda=1e-2 the unweighted graph term is ~6.6e5, so
+    # parity with the task loss sits near lambda ~ 8e-7:
+    #
+    #     lambda 1e-8 -> frac ~0.01     1e-7 -> ~0.11     1e-6 -> ~0.55     1e-5 -> ~0.92
+    #
+    # This grid therefore brackets "barely on" to "dominant" with the centre where the
+    # graph term and the task term are comparable, which is the intent of the round.
+    #
+    # Worth recording: the old doubled-lambda code computed lambda^2, so the previously
+    # swept 1e-3 landed at an effective 1e-6 -- accidentally inside this workable band.
+    # Applying lambda once is still the correct fix; it just means the grid had to move
+    # with it rather than being carried over.
+    graph_reg = trial.suggest_categorical("graph_reg_lambda", [1e-8, 1e-7, 1e-6, 1e-5])
     profile_name = trial.suggest_categorical("hp_profile", ["baseline", "aggressive"])
     profile = PROFILES[profile_name]
 

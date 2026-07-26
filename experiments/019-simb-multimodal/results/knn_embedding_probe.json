@@ -237,6 +237,44 @@
         }
       }
     },
+    "codon_frequency": {
+      "dim": 64,
+      "n_genes": 6607,
+      "modalities": {
+        "morphology": {
+          "n_train": 3757,
+          "n_val": 469,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": 0.010318513959646225,
+            "3": 0.0209126565605402,
+            "5": 0.023790277540683746,
+            "10": 0.03014587238430977,
+            "25": 0.04712432250380516,
+            "50": 0.04832660034298897
+          },
+          "best_k": 50,
+          "best_pearson_per_feature": 0.04832660034298897,
+          "train_mean_anchor": 3.045808512069925e-07
+        },
+        "expression": {
+          "n_train": 1190,
+          "n_val": 140,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": 0.022642984986305237,
+            "3": 0.02937558852136135,
+            "5": 0.030943769961595535,
+            "10": 0.057942409068346024,
+            "25": 0.046435654163360596,
+            "50": 0.06438635289669037
+          },
+          "best_k": 50,
+          "best_pearson_per_feature": 0.06438635289669037,
+          "train_mean_anchor": -9.633976949530165e-10
+        }
+      }
+    },
     "random_100": {
       "dim": 100,
       "n_genes": 6607,

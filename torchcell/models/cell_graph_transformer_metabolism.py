@@ -85,6 +85,7 @@ class ProductScalarHead(nn.Module):
         self,
         hidden_dim: int,
         use_gene_pool: bool = True,
+        use_pert_pool: bool = True,
         dropout: float = 0.1,
         param_dim: int = 1,
     ) -> None:
@@ -92,7 +93,13 @@ class ProductScalarHead(nn.Module):
 
         Args:
             hidden_dim: Model hidden dimension.
-            use_gene_pool: Concatenate a mean pool over the perturbed gene tokens.
+            use_gene_pool: Concatenate a mean pool over ALL gene tokens of the perturbed
+                representation. Note this averages the whole genome, so on its own it
+                attenuates a single-gene deletion ~1/6607 -- see ``perturbed_gene_pool``.
+            use_pert_pool: Concatenate a mean pool over ONLY the perturbed gene tokens.
+                This is the term that actually carries the genotype for a single-KO
+                strain; keep it on unless you are deliberately reproducing the
+                pool-diluted baseline.
             dropout: Dropout probability.
             param_dim: Distributional params for the single feature (1 point, 2
                 gaussian, K quantile). ``output_dim`` stays 1 either way.
@@ -101,8 +108,9 @@ class ProductScalarHead(nn.Module):
         self.hidden_dim = hidden_dim
         self.output_dim = 1
         self.use_gene_pool = use_gene_pool
+        self.use_pert_pool = use_pert_pool
         self.param_dim = param_dim
-        in_dim = hidden_dim * 2 if use_gene_pool else hidden_dim
+        in_dim = hidden_dim * (1 + int(use_gene_pool) + int(use_pert_pool))
         self.mlp = nn.Sequential(
             nn.Linear(in_dim, hidden_dim),
             nn.ReLU(),
@@ -110,16 +118,73 @@ class ProductScalarHead(nn.Module):
             nn.Linear(hidden_dim, param_dim),
         )
 
-    def forward(self, h_CLS: torch.Tensor, H_genes_pert: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        h_CLS: torch.Tensor,
+        H_genes_pert: torch.Tensor,
+        pert_pool: torch.Tensor | None = None,
+    ) -> torch.Tensor:
         """Return ``[batch, 1]`` (point) or ``[batch, 1, param_dim]`` (distributional)."""
         batch_size = H_genes_pert.shape[0]
         h = h_CLS.unsqueeze(0).expand(batch_size, -1)
         if self.use_gene_pool:
             h = torch.cat([h, H_genes_pert.mean(dim=1)], dim=-1)
+        if self.use_pert_pool:
+            if pert_pool is None:
+                raise ValueError(
+                    "use_pert_pool=True but pert_pool was not supplied; the model's "
+                    "forward must pass perturbed_gene_pool(...). Without it the head "
+                    "sees only a constant h_CLS and a genome-wide mean, which attenuates "
+                    "a single-gene deletion ~6607-fold."
+                )
+            h = torch.cat([h, pert_pool], dim=-1)
         out = self.mlp(h)
         if self.param_dim > 1:
             out = out.view(batch_size, 1, self.param_dim)
         return cast(torch.Tensor, out)
+
+
+def perturbed_gene_pool(
+    H_genes_pert: torch.Tensor,
+    perturbation_indices: torch.Tensor,
+    perturbation_indices_batch: torch.Tensor,
+) -> torch.Tensor:
+    """Mean over ONLY the perturbed gene tokens, per sample. Returns ``[batch, d]``.
+
+    WHY THIS EXISTS. ``H_genes_pert`` is the perturbed representation of ALL ``N=6607``
+    genes, so ``H_genes_pert.mean(dim=1)`` averages the whole genome. For a single-gene
+    deletion exactly ONE of those 6,607 tokens differs between strains, so that mean
+    attenuates the only per-sample signal by ~1/6607. The other head input, ``h_CLS``,
+    is the encoding of the UNPERTURBED reference graph (the parent encodes ``G`` once at
+    batch size 1) and is broadcast identically across the batch, carrying no per-sample
+    information at all.
+
+    The measured consequence (job 1331): the head emits a constant, val pearson is
+    exactly 0.00000 and val loss sits at ~0.97 -- the variance of the standardized
+    target. Under MSE, zeroing a 1.5e-4 signal branch and predicting the mean is both
+    easier and cheaper than learning it.
+
+    Pooling over the perturbed indices instead makes the genotype the head's input: for a
+    single-KO strain the perturbed gene's representation IS the genotype. This is the S0
+    argument from the decoder note applied to a scalar target.
+
+    Index convention matches the parent operator
+    (``equivariant_cell_graph_transformer.py:1649``): ``perturbation_indices`` is a flat
+    ``[total_pert_genes]`` tensor of gene indices and ``perturbation_indices_batch``
+    assigns each entry to its sample.
+    """
+    batch_size, _, d = H_genes_pert.shape
+    gathered = H_genes_pert[perturbation_indices_batch, perturbation_indices]
+    pooled = H_genes_pert.new_zeros(batch_size, d)
+    pooled.index_add_(0, perturbation_indices_batch, gathered)
+    counts = H_genes_pert.new_zeros(batch_size)
+    counts.index_add_(
+        0,
+        perturbation_indices_batch,
+        torch.ones_like(counts[perturbation_indices_batch]),
+    )
+    # A sample with no perturbation (wild type) keeps a zero vector rather than NaN.
+    return pooled / counts.clamp(min=1.0).unsqueeze(-1)
 
 
 class MetabolomeVectorHead(nn.Module):
@@ -138,6 +203,7 @@ class MetabolomeVectorHead(nn.Module):
         hidden_dim: int,
         output_dim: int,
         use_gene_pool: bool = True,
+        use_pert_pool: bool = True,
         dropout: float = 0.1,
         param_dim: int = 1,
     ) -> None:
@@ -146,7 +212,13 @@ class MetabolomeVectorHead(nn.Module):
         Args:
             hidden_dim: Model hidden dimension.
             output_dim: Number of measured metabolite columns F (19 for Mulleder).
-            use_gene_pool: Concatenate a mean pool over the perturbed gene tokens.
+            use_gene_pool: Concatenate a mean pool over ALL gene tokens of the perturbed
+                representation. Note this averages the whole genome, so on its own it
+                attenuates a single-gene deletion ~1/6607 -- see ``perturbed_gene_pool``.
+            use_pert_pool: Concatenate a mean pool over ONLY the perturbed gene tokens.
+                This is the term that actually carries the genotype for a single-KO
+                strain; keep it on unless you are deliberately reproducing the
+                pool-diluted baseline.
             dropout: Dropout probability.
             param_dim: Distributional params PER COLUMN; ``output_dim`` stays F.
         """
@@ -159,8 +231,9 @@ class MetabolomeVectorHead(nn.Module):
         self.hidden_dim = hidden_dim
         self.output_dim = output_dim
         self.use_gene_pool = use_gene_pool
+        self.use_pert_pool = use_pert_pool
         self.param_dim = param_dim
-        in_dim = hidden_dim * 2 if use_gene_pool else hidden_dim
+        in_dim = hidden_dim * (1 + int(use_gene_pool) + int(use_pert_pool))
         self.mlp = nn.Sequential(
             nn.Linear(in_dim, hidden_dim),
             nn.ReLU(),
@@ -168,12 +241,26 @@ class MetabolomeVectorHead(nn.Module):
             nn.Linear(hidden_dim, output_dim * param_dim),
         )
 
-    def forward(self, h_CLS: torch.Tensor, H_genes_pert: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        h_CLS: torch.Tensor,
+        H_genes_pert: torch.Tensor,
+        pert_pool: torch.Tensor | None = None,
+    ) -> torch.Tensor:
         """Return ``[batch, F]`` (point) or ``[batch, F, param_dim]``."""
         batch_size = H_genes_pert.shape[0]
         h = h_CLS.unsqueeze(0).expand(batch_size, -1)
         if self.use_gene_pool:
             h = torch.cat([h, H_genes_pert.mean(dim=1)], dim=-1)
+        if self.use_pert_pool:
+            if pert_pool is None:
+                raise ValueError(
+                    "use_pert_pool=True but pert_pool was not supplied; the model's "
+                    "forward must pass perturbed_gene_pool(...). Without it the head "
+                    "sees only a constant h_CLS and a genome-wide mean, which attenuates "
+                    "a single-gene deletion ~6607-fold."
+                )
+            h = torch.cat([h, pert_pool], dim=-1)
         out = self.mlp(h)
         if self.param_dim > 1:
             out = out.view(batch_size, self.output_dim, self.param_dim)
@@ -219,6 +306,7 @@ class CellGraphTransformerMetabolism(CellGraphTransformer):
                 head = ProductScalarHead(
                     hidden_dim=self.hidden_channels,
                     use_gene_pool=bool(spec.get("use_gene_pool", True)),
+                    use_pert_pool=bool(spec.get("use_pert_pool", True)),
                     dropout=float(spec.get("dropout", 0.1)),
                     param_dim=int(spec.get("param_dim", 1)),
                 )
@@ -227,6 +315,7 @@ class CellGraphTransformerMetabolism(CellGraphTransformer):
                     hidden_dim=self.hidden_channels,
                     output_dim=output_dim,
                     use_gene_pool=bool(spec.get("use_gene_pool", True)),
+                    use_pert_pool=bool(spec.get("use_pert_pool", True)),
                     dropout=float(spec.get("dropout", 0.1)),
                     param_dim=int(spec.get("param_dim", 1)),
                 )
@@ -251,9 +340,14 @@ class CellGraphTransformerMetabolism(CellGraphTransformer):
         h_CLS = reps["h_CLS"]
         H_genes_pert = reps["H_genes_pert"]
         head_outputs = cast(dict[str, torch.Tensor], reps["head_outputs"])
+        pert_pool = perturbed_gene_pool(
+            H_genes_pert,
+            batch["gene"].perturbation_indices,
+            batch["gene"].perturbation_indices_batch,
+        )
         for name in self.metabolism_head_names:
             head = cast(nn.Module, getattr(self, f"{name}_head"))
-            head_outputs[name] = head(h_CLS, H_genes_pert)
+            head_outputs[name] = head(h_CLS, H_genes_pert, pert_pool)
         return predictions, reps
 
     @property

@@ -1,0 +1,40 @@
+{
+  "42": {
+    "A1": {
+      "condition": "A1",
+      "active_heads": [
+        "betaxanthin"
+      ],
+      "target": "betaxanthin",
+      "seed": 42,
+      "n_epochs_run": null,
+      "betaxanthin_pearson_peak": 0.1056477427482605,
+      "betaxanthin_pearson_last": 0.09366968274116516,
+      "betaxanthin_spearman_peak": 0.09914138168096542,
+      "betaxanthin_spearman_last": 0.10019741207361221,
+      "val_loss_last": 0.9698668718338013,
+      "_all_metrics": {
+        "train/loss": 0.7443891167640686,
+        "train/betaxanthin/loss": 0.7443891167640686,
+        "val/loss": 0.9698668718338013,
+        "val/betaxanthin/loss": 0.9698668718338013,
+        "val/betaxanthin/pearson_per_feature": 0.09366968274116516,
+        "val/betaxanthin/spearman_per_feature": 0.10019741207361221,
+        "val/mean/pearson_per_feature": 0.09366968274116516,
+        "train/betaxanthin/pearson_per_feature": 0.004451326560229063,
+        "train/betaxanthin/spearman_per_feature": 0.018773451447486877,
+        "train/mean/pearson_per_feature": 0.004451326560229063,
+        "val/loss_max": 1.24739408493042,
+        "val/betaxanthin/loss_max": 1.24739408493042,
+        "train/loss_max": 2.5318753719329834,
+        "train/betaxanthin/loss_max": 2.5318753719329834,
+        "val/betaxanthin/pearson_per_feature_max": 0.1056477427482605,
+        "val/betaxanthin/spearman_per_feature_max": 0.09914138168096542,
+        "val/mean/pearson_per_feature_max": 0.1056477427482605,
+        "train/betaxanthin/pearson_per_feature_max": 0.03836534172296524,
+        "train/betaxanthin/spearman_per_feature_max": 0.03014826774597168,
+        "train/mean/pearson_per_feature_max": 0.03836534172296524
+      }
+    }
+  }
+}

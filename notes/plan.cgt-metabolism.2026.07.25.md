@@ -232,6 +232,52 @@ replicate max and min on the 130 replicated rows) — so Spearman is the only ho
 and the arm is weak for two independent reasons: no measured precursor *and* a noisy ordinal
 readout.
 
+### 2026.07.26 — ROOT CAUSE: the scalar head dilutes the perturbation ~6,607×
+
+Six SLURM iterations converged on a structural diagnosis that explains every null so far.
+`ScalarHead.forward` (`cell_graph_transformer_metabolism.py:113-119`) computes
+
+```python
+h = h_CLS.unsqueeze(0).expand(batch_size, -1)          # shared across the batch
+if self.use_gene_pool:
+    h = torch.cat([h, H_genes_pert.mean(dim=1)], dim=-1)
+```
+
+and the parent encodes the **unperturbed reference graph once**, at batch size 1
+(`equivariant_cell_graph_transformer.py:1401-1402`: `X = cat([cls_token, gene_embs]).unsqueeze(0)`).
+That is the intended ENC/PERT design — encode $G$ once, inject the perturbation late — but it has a
+consequence nobody had traced to the scalar readout:
+
+| term | per-sample information |
+| --- | --- |
+| `h_CLS` | **none.** It is the reference cell, broadcast identically to every strain in the batch |
+| `H_genes_pert.mean(dim=1)` | the **only** per-sample signal — a mean over 6,607 tokens, of which **one** differs |
+
+So a single-gene-deletion strain differs from its neighbours by roughly **1 part in 6,607** of the
+head's input, against a constant background that carries no signal at all. The target is z-scored to
+unit variance, so the head must amplify a ~1.5e-4 relative perturbation. Under MSE with weight
+decay, zeroing that branch and emitting the constant mean is both easier and *cheaper* — which is
+exactly what we observe: **val pearson = 0.00000 exactly, val loss ≈ 0.97 ≈ the variance of the
+standardized target** (job 1331, epochs 0/2/3/5).
+
+**This unifies both failure regimes.** With learnable embeddings the model can tune each perturbed
+gene's own vector, so the diluted pool still carries a memorizable trace — train r 0.86, val r 0.02.
+With ESM2 content features it cannot memorize, so it takes the honest degenerate solution and
+collapses to the mean. Same metric, two different mechanisms, one shared cause.
+
+**The fix is a readout change, not a hyperparameter.** For a single-KO strain the perturbed gene's
+representation *is* the genotype, so the head should **gather `H_genes_pert` at
+`perturbation_indices`** (pool over the handful of perturbed genes) instead of averaging all 6,607.
+That is the S0 argument from [[scratch.2026.07.25.172340-adding-metabolism-explainer]] applied to a
+scalar target, and it is the same pool-dilution finding the decoder note reached for morphology:
+*"a mean over ~6,000 genes averages the perturbation of a handful of genes into noise before the
+decoder sees it."* Concatenating `h_CLS` is still worthwhile as a whole-cell context term, but it
+must not be the only well-conditioned input.
+
+**Consequence for the transfer contrast:** Δ(betaxanthin) vs Δ(β-carotene) cannot decide anything
+until a head exists that can see the perturbation. The 12-run baseline should be re-read as
+"measured under a readout that attenuates the input 6,607-fold", not as evidence about tyrosine.
+
 ### Delta is prepared (not yet submitted)
 
 - `scripts/delta_pigment_transfer.slurm` — 1× A40, **`--account=bbtp-delta-gpu`**, bare

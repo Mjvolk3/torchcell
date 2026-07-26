@@ -1,0 +1,25 @@
+# experiments/020-metabolism-prediction/conf/betaxanthin.yaml
+# ARM 1 of 3 -- betaxanthin alone (Cachera 2023 CRI-SPA corrected fluorescence).
+#
+# The flagship target and the one with a real ceiling: replicate reproducibility gives
+# r = 0.914 (reliability 0.836, median 15 replicates, 4,696/4,735 records carry an SE), so
+# regression is genuinely available here -- which is precisely what Merzbacher abandoned.
+# Population-centred, so values can be negative. Pearson is the primary metric.
+#
+# Best recorded so far on the joint arm: 0.434 (47% of ceiling). This isolates whether the
+# metabolome head was helping or diluting.
+defaults:
+  - base
+  - _self_
+wandb:
+  tags: ["020", gilahyper, metabolism, betaxanthin, ninegraph, crps, single-target]
+multitask:
+  active_heads: [betaxanthin]
+trainer:
+  checkpoint: { monitor: val/betaxanthin/pearson_per_feature, mode: max }
+  early_stopping:
+    enabled: true
+    monitor: val/betaxanthin/pearson_per_feature
+    mode: max
+    patience: 50
+    min_delta: 0.0

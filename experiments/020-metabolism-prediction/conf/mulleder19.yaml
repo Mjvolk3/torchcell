@@ -1,0 +1,30 @@
+# experiments/020-metabolism-prediction/conf/mulleder19.yaml
+# ARM 3 of 3 -- the 19-amino-acid metabolome alone (Mulleder 2016, absolute intracellular mM).
+#
+# The only VECTOR target of the three: 19 dense features per strain, key-sorted
+# (alanine..valine), measured on 4,678 strains. Deliberately NOT aligned to Yeast9 metabolite
+# ids -- the 19 columns are dense in every record, so no s_NNNN mapping is needed.
+#
+# This is the arm that has never learned: it peaked at r <= 0.025 in every previous run, which
+# is why the metabolome-transfer contrast could not decide anything -- there was no signal to
+# transfer. Running it alone, on nine graphs, with metric-based selection and a proper scoring
+# rule, is the first fair test of whether that is the target or was the setup.
+#
+# Judged on per-FEATURE Pearson (correlation across strains, per amino acid, so each AA is
+# weighted equally) rather than per-instance, which on 19 comparably-scaled features is a
+# profile-shape diagnostic and a different question.
+defaults:
+  - base
+  - _self_
+wandb:
+  tags: ["020", gilahyper, metabolism, metabolome, ninegraph, crps, single-target, vector]
+multitask:
+  active_heads: [mulleder19]
+trainer:
+  checkpoint: { monitor: val/mulleder19/pearson_per_feature, mode: max }
+  early_stopping:
+    enabled: true
+    monitor: val/mulleder19/pearson_per_feature
+    mode: max
+    patience: 50
+    min_delta: 0.0

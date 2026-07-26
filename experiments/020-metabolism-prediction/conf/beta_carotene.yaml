@@ -1,0 +1,28 @@
+# experiments/020-metabolism-prediction/conf/beta_carotene.yaml
+# ARM 2 of 3 -- beta-carotene alone (Ozaydin 2013 colony-colour visual score).
+#
+# JUDGED ON SPEARMAN, NOT PEARSON, and this is not a preference -- the readout is a
+# SUBJECTIVE ORDINAL on -5..+5, so a Pearson on it asserts interval scale that the
+# measurement does not have. Its ceiling is a rank agreement of ~0.54 (Spearman between
+# replicate max and min on the 130 replicated rows), and only 0.075 on the paper's own
+# independent re-screen -- so this arm is weak for two independent reasons and a low number
+# here is a property of the label, not necessarily of the model. Report against 0.54, never
+# against betaxanthin's 0.914.
+#
+# Previously excluded from the joint arm; included now that each target has its own GPU and
+# its own metric, which is exactly what it needed.
+defaults:
+  - base
+  - _self_
+wandb:
+  tags: ["020", gilahyper, metabolism, beta-carotene, ninegraph, crps, single-target, ordinal]
+multitask:
+  active_heads: [beta_carotene]
+trainer:
+  checkpoint: { monitor: val/beta_carotene/spearman_per_feature, mode: max }
+  early_stopping:
+    enabled: true
+    monitor: val/beta_carotene/spearman_per_feature
+    mode: max
+    patience: 50
+    min_delta: 0.0

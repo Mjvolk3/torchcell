@@ -31,17 +31,18 @@ def load_dataset() -> Any:  # reason: Neo4jCellDataset imported only inside func
         MeanExperimentDeduplicator,
         Neo4jCellDataset,
     )
-    from torchcell.data.neo4j_cell import SubgraphRepresentation
+    from torchcell.data.graph_processor import SubgraphRepresentation
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
     from torchcell.datasets import CodonFrequencyDataset
     from torchcell.graph import SCerevisiaeGraph
+    from torchcell.graph.graph import build_gene_multigraph
     from torchcell.metabolism.yeast_GEM import YeastGEM
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
+    DATA_ROOT = os.environ["DATA_ROOT"]
     print(f"DATA_ROOT: {DATA_ROOT}")
 
     # Simple setup
@@ -51,7 +52,7 @@ def load_dataset() -> Any:  # reason: Neo4jCellDataset imported only inside func
     )
     genome.drop_empty_go()
     graph = SCerevisiaeGraph(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+        sgd_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
 
     # Load codon frequency embedding (just for completeness)
@@ -68,14 +69,16 @@ def load_dataset() -> Any:  # reason: Neo4jCellDataset imported only inside func
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
     )
-    gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
+    gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast-GEM"))
 
     # Create dataset
     dataset = Neo4jCellDataset(
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs=build_gene_multigraph(
+            graph=graph, graph_names=["physical", "regulatory"]
+        ),
         incidence_graphs={"metabolism": gem.reaction_map},
         node_embeddings=node_embeddings,
         converter=CompositeFitnessConverter,
@@ -95,7 +98,7 @@ def calculate_graph_statistics(
     print(f"Calculating statistics for {name} network...")
 
     # PyG representation stats
-    stats = {}
+    stats: dict[str, Any] = {}
     stats["num_nodes"] = num_nodes
     stats["pyg_num_edges"] = edge_index.size(1)  # Original edge count in PyG
 

@@ -1573,8 +1573,17 @@ and **not in the OCR mirror**, so it cannot be pulled automatically. `nature.com
 sources CLAUDE.md records as un-scriptable (auth redirect), so this is a **manual-once ->
 deposit -> reproducible** case: add the PDF to the tracked Zotero group, then
 `capture_by_doi(lib, "10.1038/s41596-020-00456-3")` mirrors + OCRs it and the count can be
-grepped and cited properly. Failing that, the value lives in **code, not papers**:
-`github.com/boonelab/sgatools` or the Costanzo raw-data processing scripts. Do not fill this
+grepped and cited properly. **SGAtools is ruled OUT as the source** (checked, not assumed): its published source
+(`github.com/boonelab/sgatools`) loads the R `bootstrap` package on a single line --
+`library(bootstrap)  # For jackknife function` -- and uses it only for `jackknifeFilter`, a
+leave-one-out *outlier* filter; scoring itself takes plain `mean`/`sd` of replicates. There is
+no numeric bootstrap parameter anywhere in the repo. This is consistent with the SGAtools paper
+itself, which notes that large-scale SGA best practices "cannot be implemented directly for
+smaller screens" -- SGAtools is the small-screen web tool, while the bootstrapped-means
+procedure belongs to the large-scale Costanzo/Kuzmin pipeline, which is separate code.
+(Baryshnikova's supplementary Matlab is that pipeline's 2010 release and, as noted above,
+computes the median with no bootstrap.) So the remaining candidates are the tau-SGA protocol
+above, or the Costanzo raw-data processing scripts. Do not fill this
 in without a source.
 
 **Why the draw count barely matters here anyway.** `B` only controls Monte Carlo noise in

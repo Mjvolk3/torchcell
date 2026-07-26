@@ -827,7 +827,12 @@ def quantify_plate_image_cellpose(
                 # was rejected (too far / wrong shape / off-gel) stayed 0 even though the
                 # recovery probe would have found it.
                 empty_wells.append((ri, ci, len(recs)))
-                recs.append(_well(ri, ci, 0, np.nan, "", cxm, cym, -1))
+                # Record the NODE, not the rejected instance's centroid: the well is empty,
+                # its nominal position is its grid node, and recovery probes from this
+                # stored position. Storing the reject's centroid would send the probe to
+                # whatever was rejected (e.g. a frame blob at a corner) and let it "recover"
+                # that instead of the well -- matching the truly-empty branch above.
+                recs.append(_well(ri, ci, 0, np.nan, "", xc, yc, -1))
                 continue
             # tighten the stored size to the dark colony core (drop the halo); detection
             # already happened, so this only sharpens the size/outline, never recall.
@@ -931,8 +936,30 @@ def quantify_plate_image_cellpose(
             if rec is None:
                 continue
             size, circ, cc, y0, x0 = rec
-            masks[y0 : y0 + cc.shape[0], x0 : x0 + cc.shape[1]][cc] = next_id
+            # Validate the RECOVERED REGION, not just the node it was probed from. At a
+            # corner well the threshold can run downhill off the colony onto the plastic
+            # frame/bevel, so the blob ends up outside the gel and well away from its node
+            # (observed: centroid 0.68*pitch off-node at gel_sd -40 while the node itself
+            # read +19). Trim the region to in-gel pixels, then require what survives to be
+            # a real colony still centred on its own well.
             ys, xs = np.where(cc)
+            gy = np.clip(y0 + ys, 0, g.shape[0] - 1)
+            gx = np.clip(x0 + xs, 0, g.shape[1] - 1)
+            if gel_sd is not None:
+                keep = gel_sd[gy, gx] >= -edge_margin
+                if not keep.any():
+                    continue
+                cc = np.zeros_like(cc)
+                cc[ys[keep], xs[keep]] = True
+                ys, xs = ys[keep], xs[keep]
+                size = int(keep.sum())
+            if size < MIN_COLONY_AREA:
+                continue
+            if float(np.hypot((y0 + ys.mean()) - yc, (x0 + xs.mean()) - xc)) > (
+                cfg.node_tol * pitch
+            ):
+                continue  # recovered blob is not centred on this well -- frame artefact
+            masks[y0 : y0 + cc.shape[0], x0 : x0 + cc.shape[1]][cc] = next_id
             recs[idx] = _well(
                 ri,
                 ci,

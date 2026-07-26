@@ -1427,17 +1427,17 @@ well is addressable and a mis-registered node (sitting off its colony) is visibl
 ![Run 3 detection overlay, P3 (5 nL, 48 h) -- QC PASS after the row-registration fix. The lattice had locked one row low (faint top row skipped, bottom row on the frame); `correct_row_shift` recovers the top row so all 16 rows register -- 350/384 occupied, 6/6 blanks empty, WT CV 0.078, green = accepted. P3 is a clean third replicate; the earlier "contamination" was the one-row slip mis-assigning strains, now corrected.](assets/images/019-echo-crispr-array/run3/run3_overlay_P3.png)
 
 **Batch effect (P1 + P2 + P3, the full three re-randomizations).** Mean bootstrap-across-plates
-SE = **0.067** (across-plate SD 0.141) -- roughly **3x run 2's 0.025**. That jump is the
+SE = **0.066** (across-plate SD 0.140) -- roughly **3x run 2's 0.025**. That jump is the
 point: three genuinely re-randomized plates expose the real between-plate variance that run 2's
 correlated timepoints hid. Recovering P3 (see the registration fix above) gives the full
 three-replicate estimate the design intended, tightening the SE from the earlier n = 2 (0.085).
 
-**vs Costanzo 2016 (n = 12).** Pearson r = **0.73 (p = 0.007)** (value agreement, driven by
+**vs Costanzo 2016 (n = 12).** Pearson r = **0.74 (p = 0.006)** (value agreement, driven by
 the one sick strain CBF1/YJR060W), Spearman ρ = 0.32 (rank agreement is noise-limited -- 11
 of 12 strains are near-neutral). Kuzmin has no per-strain SD, so no x error bars; y error bars
 are the bootstrap-across-3-plates SE.
 
-![Run 3: assay fitness (bootstrap mean over the 3 QC-pass re-randomized plates) vs Costanzo 2016 SMF. Identity line dashed; Pearson r=0.73 (p=0.007), Spearman rho=0.32; y error bars = the 3-plate bootstrap SE.](assets/images/019-echo-crispr-array/run3/run3_fitness_correlation_reference.svg)
+![Run 3: assay fitness (bootstrap mean over the 3 QC-pass re-randomized plates) vs Costanzo 2016 SMF. Identity line dashed; Pearson r=0.74 (p=0.006), Spearman rho=0.32; y error bars = the 3-plate bootstrap SE.](assets/images/019-echo-crispr-array/run3/run3_fitness_correlation_reference.svg)
 
 ![Run 3 per-strain SE: bootstrap-across-3-plates SE (orange, the batch effect) vs the within-plate colony SE (red, colony SD/sqrt(n)). The across-plate SE is much larger -- most of a strain's uncertainty is between-plate, not within-plate.](assets/images/019-echo-crispr-array/run3/run3_se_batch_effect.svg)
 
@@ -1469,7 +1469,7 @@ the lattice as-is and shifted +/-1 row/col (vacated edge extrapolated, opposite 
 keep whichever assigns the MOST real colonies, accepting a shift only when it adds a substantial
 fraction of a row. It is self-guarding -- on a correctly-fit plate any shift only sheds colonies,
 so P1/P2 (and all of run2) are byte-identical no-ops. Consequence: run 3 is now the full
-**n = 3** the design intended; SE 0.085 -> **0.067**, Costanzo Pearson r 0.65 -> **0.73** (p=0.007).
+**n = 3** the design intended; SE 0.085 -> **0.066**, Costanzo Pearson r 0.65 -> **0.74** (p=0.006).
 
 ### Why some touching doublets show only one green outline (detection vs rendering)
 
@@ -1519,18 +1519,35 @@ as-is (never divided by sqrt(n)). Our reference table nevertheless called it `co
 which is actively misleading -- the columns are now **`costanzo_se` / `kuzmin_se`** (values
 unchanged; `build_reference_smf.py` regenerates them).
 
-So the reference comparison is genuinely **SE vs SE**. But the two SEs are NOT built the same way:
+So the reference comparison is genuinely **SE vs SE**. But the two SEs are NOT built the same way
+-- sourced from the mirrored SOM and the paper it defers to, not assumed:
 
-| | resampling unit | n | draws |
-|---|---|---|---|
-| this assay (run 3) | **plate** | **3** | 4000 |
-| Costanzo 2016 SMF | **control screen** | **17** | published |
+| | resampling unit | n | draws | statistic |
+|---|---|---|---|---|
+| this assay (run 3) | **plate** | **3** | 4000 | mean |
+| Costanzo 2016 SMF (query) | **control screen** | **17** | **800** | mean |
+| Costanzo 2016 SMF (array) | **control screen** | **350** | **800** | mean |
 
-Costanzo averages the 4 colonies within a screen *before* resampling, so its n is 17 screens,
-not 68 colonies. Ours is 3 plates. Both are "bootstrap SE of a mean fitness estimate" -- the
-right quantity to compare -- but with n = 3 our SE is itself unstable: a 3-value bootstrap draws
-from only 10 distinct resample multisets, so `N_BOOT = 4000` samples a tiny discrete space and
-buys precision that the data does not contain. The SE is limited by n = 3, not by draw count.
+Provenance chain (the draw count is NOT in the Costanzo SOM -- it defers to a cited paper):
+
+- Costanzo SOM, SMF methods: *"Colony size measurements of SGA deletion and TS query mutant
+  strains were based on an average of **17** replicate control screens... **350** replicate
+  control screens [for array strains]... used to estimate single mutant fitness as described
+  previously (5) with the exception that **bootstrapped means, instead of medians**, across
+  replicates were used in variance estimation and final fitness values."*
+- Reference (5) = Baryshnikova et al., *Nat Methods* **7**, 1017 (2010), whose SI states
+  *"Variance in single mutant fitness estimates was estimated from bootstrap sampling of the
+  median"* and whose figure legend pins the count: *"s.e.m. derived from bootstrapping
+  (**n = 800**)"*.
+
+Two consequences worth flagging. **(a) Our n is far smaller.** With n = 3 our SE is itself
+unstable: a 3-value bootstrap draws from only 10 distinct resample multisets, so `N_BOOT = 4000`
+samples a tiny discrete space and buys precision the data does not contain -- the SE is limited
+by n = 3, not by draw count. Costanzo's 800 draws sit over 17 (or 350) screens.
+**(b) Our loader assumes the QUERY n.** `N_SAMPLES_QUERY_SMF_SCREENS = 17` is used for every
+SMF record, but Costanzo derives array-strain SMF from **350** control screens and states it
+treats array and query estimates for the same mutant as independent. Which of the two a given
+12-panel gene's published value came from is not resolved here -- flagged, not guessed.
 
 Related: the per-strain SE figure previously divided the within-plate colony SD by a hardcoded
 sqrt(29). The real `n_used` varies **20-30** (median 27-28) as wells are lost to failed transfers

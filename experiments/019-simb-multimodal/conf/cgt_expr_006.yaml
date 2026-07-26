@@ -9,10 +9,10 @@
 #
 # Changes vs _005:
 #   * 9 graphs (010's set), each on its own regularized head, heads 0-8.
-#   * num_attention_heads 4 -> 10 (9 graphs + 1 FREE head). Heads must divide
-#     hidden_channels, so the size axis is {90, 180} (90/10=9, 180/10=18). 128 is dropped.
-#   * graph_reg layers span the whole stack, not just [1,2]: with L up to 8 the old setting
-#     left most layers unconstrained.
+#   * num_attention_heads 4 -> 9, one per graph, as 010. Heads must divide
+#     hidden_channels, so the size axis is {90, 180} (90/9=10, 180/9=20). 128 is dropped.
+#   * graph_reg on a SINGLE layer, as 010 -- the remaining L-1 layers stay free, which
+#     is where 010's unconstrained capacity came from.
 #   * learnable_embedding OFF, not swept: only 4.8% of val genes are ever perturbed in
 #     training (seed 0), so a free per-gene row is at init for ~95% of the val set.
 #   * require_modalities is EXPRESSION ONLY. With masked per-head losses a morphology-only
@@ -57,15 +57,12 @@ multitask:
   active_heads: [per_gene]
 
 model:
-  hidden_channels: 90 # SWEPT {90, 180}; both divisible by 10 heads
-  # 10 heads for 9 graphs: heads 0-8 are pinned to a graph, head 9 is FREE at every
-  # layer, so the model retains one attention map that can point wherever the graphs do
-  # not. 010 ran 9 heads for 9 graphs -- zero spare -- and got its unconstrained capacity
-  # from depth instead (graph_reg_layer: 1, so 7 of 8 layers were entirely free). With
-  # _006 regularizing the whole stack, that depth-bypass is gone, and a free head is the
-  # cheapest replacement: 10 divides both hidden sizes (90/10=9, 180/10=18) and costs
-  # only 1.11x the per-layer attention tensor, against 1.67x for the 15-head version.
-  num_attention_heads: 10
+  hidden_channels: 90 # SWEPT {90, 180}; both divisible by 9 heads
+  # 9 heads for 9 graphs, exactly as 010. No free head is needed because the BYPASS COMES
+  # FROM DEPTH: graph_reg_layer is a single layer, so every other layer has all 9 heads
+  # unconstrained and free to attend wherever the graphs do not point. Adding a 10th free
+  # head on top would be redundant with 7 already-free layers.
+  num_attention_heads: 9
 
   # The perturbation head carries its OWN head count, inherited as 4 from
   # cgt_decoder_003. Raising num_attention_heads to 9 without it made every hidden=90
@@ -80,8 +77,17 @@ model:
 
   graph_regularization:
     graph_reg_lambda: 1.0e-6 # SWEPT {1e-8..1e-5}; 1e-6 ~ parity with the task loss
-    # Span the stack rather than only the first two layers: L is swept to 8.
-    graph_reg_layer: [0, 1, 2, 3, 4, 5, 6, 7]
+    # SINGLE layer, as 010 (`graph_reg_layer: 1`, python-indexed). Spanning the whole
+    # stack -- which _006 did initially -- left ZERO unconstrained attention anywhere, so
+    # at high lambda the model could not represent any interaction the graphs miss, and
+    # "graphs do not help" would have been indistinguishable from "the model could not
+    # express anything else". Injecting once and leaving L-1 layers free is the
+    # configuration that actually worked in 010.
+    #
+    # NOTE this changes lambda's scale AGAIN: the KL is now summed over 1 layer instead
+    # of 8, so the same lambda gives a ~8x smaller graph term. Recalibrate against
+    # val/graph_reg_frac before committing the 3-day window.
+    graph_reg_layer: [1]
     row_sampling_rate: 1.0
     regularized_heads:
       physical:

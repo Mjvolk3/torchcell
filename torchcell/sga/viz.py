@@ -284,59 +284,60 @@ def plate_labels(op: str, n_rows: int, n_cols: int) -> tuple[list[str], list[str
 def label_plate_overlay(
     overlay_path: str, nodes: np.ndarray, op: str = "identity"
 ) -> None:
-    """Draw the fitted grid nodes (cyan crosses) + 384-well headers (black) onto the
-    boundary overlay in place. Standard 384-well addressing -- rows A-P, columns 1-24 --
-    repeated on ALL FOUR sides (columns top+bottom, rows left+right) so a well can be read
-    off from any side. Headers are PLATE addresses under the resolved orientation ``op``
-    (see ``plate_labels``), not raw image indices. A mis-fit node -- sitting off its
-    colony -- is visible directly.
+    """Add 384-well axis labels to a detection overlay, matplotlib-style.
+
+    The plate image is matted into a white margin and the headers are drawn OUTSIDE it --
+    rows A-P down the left and right, columns 1-24 across the top and bottom, each aligned
+    to its fitted grid line and joined to the image edge by a short tick. Keeping them off
+    the plate is the point: drawn in-image they collide with edge-row colonies, and no
+    amount of halo makes small glyphs legible over agar, plastic and the dark lid at once.
+
+    Headers are PLATE addresses under the resolved orientation ``op`` (see ``plate_labels``),
+    not raw image indices. Grid nodes are marked on the plate itself (cyan crosses), so a
+    mis-fit node -- sitting off its colony -- stays visible.
     """
     im = Image.open(overlay_path).convert("RGB")
-    d = ImageDraw.Draw(im)
     n_rows, n_cols, _ = nodes.shape
     row_lab, col_lab = plate_labels(op, n_rows, n_cols)
     w, h = im.width, im.height
-    fs = max(48, int(w / 26))  # large headers, readable when the plate is zoomed out
-    fnt = _overlay_font(fs)
-    blk = (0, 0, 0)  # black headers -- high contrast on the cream agar margin
+
+    # grid nodes go on the plate image itself
+    dp = ImageDraw.Draw(im)
     for ri in range(n_rows):
         for ci in range(n_cols):
             y, x = float(nodes[ri, ci, 0]), float(nodes[ri, ci, 1])
-            d.line([(x - 5, y), (x + 5, y)], fill=(0, 255, 255), width=1)
-            d.line([(x, y - 5), (x, y + 5)], fill=(0, 255, 255), width=1)
+            dp.line([(x - 5, y), (x + 5, y)], fill=(0, 255, 255), width=1)
+            dp.line([(x, y - 5), (x, y + 5)], fill=(0, 255, 255), width=1)
 
-    # White stroke behind the black glyphs: the header band can fall on cream agar, clear
-    # plastic or the dark lid depending on how the plate sits in frame, and plain black is
-    # unreadable on the last of those.
-    stroke = max(2, fs // 10)
+    fs = max(30, int(w / 45))
+    fnt = _overlay_font(fs)
+    pad = int(2.2 * fs)  # margin band, sized to hold the glyphs + tick
+    tick = max(3, fs // 4)
+    canvas = Image.new("RGB", (w + 2 * pad, h + 2 * pad), (255, 255, 255))
+    canvas.paste(im, (pad, pad))
+    d = ImageDraw.Draw(canvas)
+    blk = (0, 0, 0)
 
     def ctext(cx: float, cy: float, s: str) -> None:
-        tw = d.textlength(s, font=fnt)
+        x0, y0, x1, y1 = d.textbbox((0, 0), s, font=fnt)
         d.text(
-            (cx - tw / 2, cy - fs / 2),
-            s,
-            fill=blk,
-            font=fnt,
-            stroke_width=stroke,
-            stroke_fill=(255, 255, 255),
+            (cx - (x1 - x0) / 2 - x0, cy - (y1 - y0) / 2 - y0), s, fill=blk, font=fnt
         )
 
-    # Offset the header band by the GRID PITCH, not by the font size: at large font sizes a
-    # font-scaled offset walks the labels off the plate entirely (onto the dark background).
-    # 0.65*pitch puts them just outside the colony grid, still on the plate.
-    row_pitch = float(np.median(np.abs(np.diff(nodes[:, :, 0], axis=0))))
-    col_pitch = float(np.median(np.abs(np.diff(nodes[:, :, 1], axis=1))))
-    pad_y, pad_x = 0.65 * row_pitch, 0.65 * col_pitch
-    # columns 1..24 on TOP and BOTTOM
-    top_y = min(max(fs, float(nodes[0, :, 0].mean()) - pad_y), h - fs)
-    bot_y = min(float(nodes[-1, :, 0].mean()) + pad_y, h - fs)
+    # columns 1..24 across the TOP and BOTTOM margins
     for ci in range(n_cols):
-        ctext(float(nodes[0, ci, 1]), top_y, col_lab[ci])
-        ctext(float(nodes[-1, ci, 1]), bot_y, col_lab[ci])
-    # rows A..P on LEFT and RIGHT
-    left_x = max(fs, float(nodes[:, 0, 1].mean()) - pad_x)
-    right_x = min(float(nodes[:, -1, 1].mean()) + pad_x, w - fs)
+        xt = pad + float(nodes[0, ci, 1])
+        xb = pad + float(nodes[-1, ci, 1])
+        d.line([(xt, pad - tick), (xt, pad)], fill=blk, width=2)
+        d.line([(xb, pad + h), (xb, pad + h + tick)], fill=blk, width=2)
+        ctext(xt, pad - tick - fs * 0.7, col_lab[ci])
+        ctext(xb, pad + h + tick + fs * 0.7, col_lab[ci])
+    # rows A..P down the LEFT and RIGHT margins
     for ri in range(n_rows):
-        ctext(left_x, float(nodes[ri, 0, 0]), row_lab[ri])
-        ctext(right_x, float(nodes[ri, -1, 0]), row_lab[ri])
-    im.save(overlay_path)
+        yl = pad + float(nodes[ri, 0, 0])
+        yr = pad + float(nodes[ri, -1, 0])
+        d.line([(pad - tick, yl), (pad, yl)], fill=blk, width=2)
+        d.line([(pad + w, yr), (pad + w + tick, yr)], fill=blk, width=2)
+        ctext(pad - tick - fs * 0.7, yl, row_lab[ri])
+        ctext(pad + w + tick + fs * 0.7, yr, row_lab[ri])
+    canvas.save(overlay_path)

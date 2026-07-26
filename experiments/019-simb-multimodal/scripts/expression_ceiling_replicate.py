@@ -72,6 +72,8 @@ import lmdb
 import numpy as np
 from dotenv import load_dotenv
 
+from torchcell.utils.paths import experiment_results_dir
+
 # Best observed val/expression/pearson_per_feature to date, for the realized-fraction
 # report. expr_002 controlled 1,161 split; expr_005 (in flight) currently peaks at 0.0795.
 OBS = 0.109
@@ -310,9 +312,11 @@ def main() -> None:
         else {},
     }
 
+    # Checkout-relative: $EXPERIMENT_ROOT points at the primary tree, so a worktree run
+    # would write its results into the wrong checkout.
     out = osp.join(
-        os.environ["EXPERIMENT_ROOT"],
-        "019-simb-multimodal/results/expression_ceiling_replicate.json",
+        experiment_results_dir("019-simb-multimodal", __file__),
+        "expression_ceiling_replicate.json",
     )
     with open(out, "w") as f:
         json.dump(results, f, indent=2)

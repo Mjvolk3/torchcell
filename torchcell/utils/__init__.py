@@ -2,6 +2,7 @@
 
 # torchcell/utils/__init__.py
 from .file_lock import FileLockHelper
+from .paths import asset_images_dir, experiment_results_dir, experiment_root, repo_root
 from .utils import (
     MAX_HEIGHT_MM,
     PANEL_WIDTHS_MM,
@@ -17,6 +18,10 @@ from .utils import (
 
 __all__ = [
     "FileLockHelper",
+    "repo_root",
+    "experiment_root",
+    "experiment_results_dir",
+    "asset_images_dir",
     "format_scientific_notation",
     "savefig_true_size_svg",
     "mm_to_in",

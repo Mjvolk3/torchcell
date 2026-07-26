@@ -43,6 +43,7 @@ from dotenv import load_dotenv
 from matplotlib.ticker import MultipleLocator
 
 from torchcell.utils import PANEL_WIDTHS_MM, PLOT_PALETTE, mm_to_in, savefig_true_size_svg
+from torchcell.utils.paths import asset_images_dir, experiment_results_dir
 
 load_dotenv("/home/michaelvolk/Documents/projects/torchcell/.env")
 
@@ -105,11 +106,10 @@ def _style() -> None:
 
 def main() -> None:
     _style()
-    # Resolve results relative to THIS script, not $EXPERIMENT_ROOT: the env var points at
-    # the primary checkout, so a worktree run would read the wrong tree's results.
-    results_dir = osp.abspath(osp.join(osp.dirname(__file__), "..", "results"))
-    images_dir = osp.join(os.environ["ASSET_IMAGES_DIR"], "019-simb-multimodal")
-    os.makedirs(images_dir, exist_ok=True)
+    # Checkout-relative, so a worktree run reads AND writes inside that worktree. The
+    # env vars point at the primary checkout and would silently cross trees.
+    results_dir = experiment_results_dir("019-simb-multimodal", __file__)
+    images_dir = asset_images_dir(__file__, subdir="019-simb-multimodal")
 
     with open(osp.join(results_dir, "knn_embedding_probe.json")) as f:
         res = json.load(f)

@@ -69,6 +69,7 @@ load_dotenv("/home/michaelvolk/Documents/projects/torchcell/.env")
 from torchcell.datamodels.calmorph_labels import CALMORPH_LABELS  # noqa: E402
 from torchcell.datasets.node_embedding_builder import NodeEmbeddingBuilder  # noqa: E402
 from torchcell.graph.graph import SCerevisiaeGraph  # noqa: E402
+from torchcell.utils.paths import experiment_results_dir  # noqa: E402
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome  # noqa: E402
 
 # Same three dropped features as the training config (multitask.drop_features.global).
@@ -304,8 +305,11 @@ def main() -> None:
             }
         results["arms"][label] = arm
 
+    # Checkout-relative: $EXPERIMENT_ROOT points at the primary tree, so a worktree run
+    # would write its results into the wrong checkout.
     out = osp.join(
-        os.environ["EXPERIMENT_ROOT"], "019-simb-multimodal/results/knn_embedding_probe.json"
+        experiment_results_dir("019-simb-multimodal", __file__),
+        "knn_embedding_probe.json",
     )
     with open(out, "w") as f:
         json.dump(results, f, indent=2)

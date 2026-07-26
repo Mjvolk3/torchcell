@@ -92,18 +92,36 @@ MORPH_FEATS = [f for f in CALMORPH_LABELS if f not in DROPPED]
 # `Invalid model_name 'window_three_prime_5979'` -- the name reaches BaseEmbeddingDataset's
 # check having lost its `nt_` prefix. Tracked separately; the 1003/300 pair covers the
 # regulatory axis meanwhile.
+# NOTE ON NAMES: `species_lm_five_prime` / `species_lm_three_prime` are the FUDT
+# embeddings -- torchcell registers them as `fudt_upstream` / `fudt_downstream`, which load
+# the `upstream_species_lm` / `downstream_species_lm` models. Same thing, registry spelling.
 EMBEDDINGS: dict[str, tuple[str, ...]] = {
+    # --- protein ---
     "prot_T5_all": ("prot_T5_all",),
+    "prot_T5_no_dubious": ("prot_T5_no_dubious",),
     "esm2_t33_650M_UR50D_all": ("esm2_t33_650M_UR50D_all",),
-    "fudt_up_down": ("fudt_upstream", "fudt_downstream"),
-    "nt_5prime_3prime": ("nt_window_five_prime_1003", "nt_window_three_prime_300"),
-    "nt_window_5979": ("nt_window_5979",),
+    "esm2_t33_650M_UR50D_no_dubious": ("esm2_t33_650M_UR50D_no_dubious",),
+    # --- codon / ORF ---
     "calm": ("calm",),
-    # Explicit codon USAGE (64-d frequency vector), distinct from calm's learned codon
-    # language model. Separates "is the signal raw codon bias / expression level proxy"
-    # from "is it what the language model abstracted on top of codon bias".
     "codon_frequency": ("codon_frequency",),
+    # --- regulatory DNA (species LM = FUDT) ---
+    "species_lm_five_prime": ("fudt_upstream",),
+    "species_lm_three_prime": ("fudt_downstream",),
+    "species_lm_5p_3p": ("fudt_upstream", "fudt_downstream"),
+    # --- nucleotide transformer ---
+    "nt_window_5979": ("nt_window_5979",),
+    "nt_window_five_prime_1003": ("nt_window_five_prime_1003",),
+    "nt_window_three_prime_300": ("nt_window_three_prime_300",),
+    "nt_5prime_3prime": ("nt_window_five_prime_1003", "nt_window_three_prime_300"),
+    # --- structural / pathway ---
+    "normalized_chrom_pathways": ("normalized_chrom_pathways",),
+    # --- identity-only (NOT content): the static stand-in for a learnable table ---
+    "one_hot_gene": ("one_hot_gene",),
+    # --- random controls at four dimensionalities ---
+    "random_1": ("random_1",),
+    "random_10": ("random_10",),
     "random_100": ("random_100",),
+    "random_1000": ("random_1000",),
 }
 K_GRID = [1, 3, 5, 10, 25, 50]
 

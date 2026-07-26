@@ -257,6 +257,18 @@ def main() -> None:
             y_tr = np.stack([train[mod][g] for g in tr_genes])
             y_va = np.stack([val[mod][g] for g in va_genes])
 
+            # DEGENERATE-GEOMETRY CHECK. one_hot_gene makes every pair of distinct genes
+            # ORTHOGONAL, so every cosine similarity is exactly 0, every kNN weight is 0,
+            # and the readout is undefined -- not "bad", but structurally incapable of
+            # transfer. That is the whole argument against a learnable per-gene table
+            # under a cold-start split, made geometric: identity-only representations
+            # carry no notion of "similar gene", so nothing can be carried to an unseen
+            # one. Recorded explicitly rather than emitted as a bare NaN.
+            en_t = e_tr / np.linalg.norm(e_tr, axis=1, keepdims=True)
+            en_v = e_va / np.linalg.norm(e_va, axis=1, keepdims=True)
+            max_sim = float(np.max(en_v @ en_t.T))
+            degenerate = max_sim < 1e-8
+
             per_k = {}
             for k in K_GRID:
                 pred = _knn_predict(e_va, e_tr, y_tr, k)
@@ -271,9 +283,17 @@ def main() -> None:
                 f"  {mod:<12} train={len(tr_genes):>5} val={len(va_genes):>4}"
                 f" dropped={dropped:>3} | "
                 + "  ".join(f"k={k}:{per_k[k]:+.4f}" for k in K_GRID)
-                + f"  || best k={best_k} r={per_k[best_k]:+.4f}  train-mean anchor={anchor:+.4f}"
+                + (
+                    "  || UNDEFINED (all cosine similarities are 0: orthogonal one-hot"
+                    " geometry, no notion of a similar gene)"
+                    if degenerate
+                    else f"  || best k={best_k} r={per_k[best_k]:+.4f}"
+                    f"  train-mean anchor={anchor:+.4f}"
+                )
             )
             arm["modalities"][mod] = {
+                "degenerate_orthogonal_geometry": degenerate,
+                "max_cosine_similarity": max_sim,
                 "n_train": len(tr_genes),
                 "n_val": len(va_genes),
                 "n_val_dropped_missing_embedding": dropped,

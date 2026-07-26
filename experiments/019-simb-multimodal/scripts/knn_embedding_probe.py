@@ -99,6 +99,10 @@ EMBEDDINGS: dict[str, tuple[str, ...]] = {
     "nt_5prime_3prime": ("nt_window_five_prime_1003", "nt_window_three_prime_300"),
     "nt_window_5979": ("nt_window_5979",),
     "calm": ("calm",),
+    # Explicit codon USAGE (64-d frequency vector), distinct from calm's learned codon
+    # language model. Separates "is the signal raw codon bias / expression level proxy"
+    # from "is it what the language model abstracted on top of codon bias".
+    "codon_frequency": ("codon_frequency",),
     "random_100": ("random_100",),
 }
 K_GRID = [1, 3, 5, 10, 25, 50]

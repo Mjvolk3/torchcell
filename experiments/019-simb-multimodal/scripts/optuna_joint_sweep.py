@@ -96,15 +96,18 @@ TARGET_NORMS = ["zscore", "yeo_johnson"]
 # fail that bar are deliberately absent (one_hot_gene / fudt_downstream miss the 28
 # mitochondrial Q0* genes; the esm2/prot_T5 `no_dubious` / `no_uncharacterized` variants emit
 # 684/668 ALL-ZERO vectors, i.e. silently information-free for the hardest ORFs).
-#   ""            -- the _003/_004 baseline: learnable-only, no content features.
+#   (""            -- DROPPED: learnable-only baseline, superseded by random_100.)
 #   codon_frequency (64d)  -- only option smaller than hidden, so no lossy compression.
 #   calm (768d), fudt_upstream (768d), prot_T5_all (1024d), esm2_..._all (1280d),
 #   nt_window_5979 (2560d) -- real sequence/protein content.
 #   random_100 (100d)      -- CONTROL: unique but meaningless. Paired with
 #     learnable_embedding=false it isolates CONTENT from IDENTITY; with learnable=true it is
 #     redundant with the free table, which is why `learnable` is swept alongside it.
+# NOTE: "" (no content features) is DROPPED now that learnable_embedding is pinned False
+# -- "" + no free table leaves genes with no node features at all. `random_100` is the
+# strictly better version of that baseline: same "unique but meaningless" semantics, but
+# explicit, fixed, and usable at cold start.
 NODE_EMBEDDINGS = [
-    "",
     "codon_frequency",
     "calm",
     "fudt_upstream",
@@ -139,11 +142,23 @@ def objective(trial: optuna.Trial) -> float | tuple[float, float]:
 
     # ---- Cold-start axes (_005) ----
     node_emb = trial.suggest_categorical("node_embeddings", NODE_EMBEDDINGS)
-    # With NO content features the model has only the free table, so disabling it would
-    # leave genes featureless -- keep it on for the "" baseline.
-    learnable = (
-        True if node_emb == "" else trial.suggest_categorical("learnable_embedding", [True, False])
-    )
+    # learnable_embedding is NO LONGER SWEPT -- it is pinned False.
+    #
+    # Measured on the actual split (seed 0, the seed these runs use): only 26 of 539
+    # validation genes (4.8%) and 14 of 519 test genes (2.7%) are ever perturbed in
+    # training. Because every strain is a SINGLE deletion, splitting by strain IS
+    # splitting by gene -- there is no warm-start regime in this dataset. So a free
+    # per-gene row is still at initialization for ~95% of evaluation genes and cannot
+    # contribute to the ranked (validation) metric; it can only memorize train, which is
+    # exactly the train 0.9 / val 0.02 gap observed on morphology.
+    #
+    # Sweeping it therefore spent trials on a lever that provably cannot move val. The
+    # honest version of "unique but meaningless vector" is `random_100`, which stays in
+    # NODE_EMBEDDINGS as the explicit control -- and, combined with graph regularization,
+    # is also the test of whether GRAPH POSITION alone carries the signal (a fixed random
+    # vector makes each gene's neighborhood aggregate a computable fingerprint even for an
+    # unseen gene).
+    learnable = False
 
     hidden = trial.suggest_categorical("hidden_channels", [128, 180])
     # Widened from {2,4}: L=2 won _003, but under memorization depth mostly buys memorization.

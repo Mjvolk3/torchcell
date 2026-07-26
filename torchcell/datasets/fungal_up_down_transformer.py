@@ -50,8 +50,12 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
         """
         self.genome: SCerevisiaeGenome | ParsedGenome | None = genome
         self.model_name = model_name
-        # BUG I just moved this here to recompute the data but we don't want to do this when training models
-        self.transformer = self.initialize_model()
+        # LAZY: only build/download the LM when the embeddings must actually be computed
+        # (the conditional call below). Initializing it here downloaded model weights on
+        # EVERY construction -- which fails on OFFLINE compute nodes (IGB) with
+        # ConnectionError/EOFError/OSError even though the processed .pt already exists.
+        # (This is the "BUG ... we don't want to do this when training models" note.)
+        self.transformer = None
         super().__init__(root, self.model_name, transform, pre_transform)
         # convert genome to parsed genome after process, so have potential issue
         # with sqlite database

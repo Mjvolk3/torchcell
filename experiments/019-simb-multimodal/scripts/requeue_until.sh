@@ -54,10 +54,22 @@ requeue_if_before_deadline() {
     echo "[requeue] $(date -Is): only ${remaining_min}m left before $DEADLINE -- chain ends here."
     return 0
   fi
-  echo "[requeue] $(date -Is): ${remaining_min}m left before $DEADLINE -- resubmitting $script"
+  # QUEUE SLACK -- do NOT request the full remaining window. SLURM refuses (State=DEADLINE,
+  # Elapsed=00:00:00) any job whose TimeLimit cannot fit before --deadline, and it re-checks
+  # at SCHEDULING time, not just submission. Requesting exactly `remaining` therefore only
+  # works if the job starts INSTANTLY: a job that waits for busy GPUs is killed before it
+  # ever runs. (Observed: the mmli 4-GPU morph arm died this way while the 3-GPU GH and
+  # 2-GPU cabbi arms, which started immediately, survived.) Reserving slack lets a job sit
+  # in the queue that long and still fit.
+  local slack="${REQUEUE_QUEUE_SLACK_MINUTES:-120}"
+  local req_min=$(( remaining_min - slack ))
+  if [ "$req_min" -lt "${REQUEUE_MIN_MINUTES:-45}" ]; then
+    req_min="${REQUEUE_MIN_MINUTES:-45}"
+  fi
+  echo "[requeue] $(date -Is): ${remaining_min}m left before $DEADLINE -- resubmitting $script (--time=${req_min}m, ${slack}m queue slack)"
   # A bare integer --time is MINUTES in SLURM. --deadline is kept as a belt-and-braces
   # backstop so the chain can never outlive the deadline.
-  sbatch --time="$remaining_min" --deadline="$DEADLINE" "$script"
+  sbatch --time="$req_min" --deadline="$DEADLINE" "$script"
 }
 
 # Submit $1 sized to the remaining window before $DEADLINE. Use this for the FIRST

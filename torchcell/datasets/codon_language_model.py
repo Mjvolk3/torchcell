@@ -45,7 +45,11 @@ class CalmDataset(BaseEmbeddingDataset):
         """Initialize the CaLM model, parse the genome, and process embeddings."""
         self.genome: SCerevisiaeGenome | ParsedGenome | None = genome
         self.model_name = model_name
-        self.model = self.initialize_model()
+        # LAZY: only build/download the LM when the embeddings must actually be computed
+        # (the conditional call below). Initializing it here downloads model weights on
+        # EVERY construction, which fails on OFFLINE compute nodes (IGB) with
+        # ConnectionError/EOFError/OSError even though the processed .pt already exists.
+        self.model = None
         self.batch_size = batch_size
         super().__init__(root, self.model_name, transform, pre_transform)
         self.genome = self.parse_genome(genome)
@@ -74,6 +78,11 @@ class CalmDataset(BaseEmbeddingDataset):
 
     def process(self) -> None:
         """Embed each gene's CDS with CaLM and save the processed data list."""
+        # `self.model` is lazily built: it is None unless the caller initialized it because
+        # embeddings actually need computing (see __init__). Reaching process() without it
+        # is a programming error, not a runtime condition.
+        if self.model is None:
+            self.model = self.initialize_model()
         data_list = []
         (window_method, window_size, is_max_size) = self.MODEL_TO_WINDOW[
             cast(str, self.model_name)

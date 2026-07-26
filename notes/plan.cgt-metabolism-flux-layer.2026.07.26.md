@@ -47,7 +47,7 @@ Companions: [[plan.cgt-metabolism.2026.07.25]] (Track A execution, run logs, noi
 | 2 | exactness budget | the **box**, now *dynamic* in $(\varepsilon,p,\mathrm{seq})$ |
 | 3 | growth objective | **drop the prior**; supervise $v_{\mathrm{bio}}$ with fitness |
 | 4 | flux head | **stochastic → amortized flux sampler**; report against FVA width |
-| 5 | $K_M$ | **required, not deferred** — it is what makes promiscuity cost something |
+| 5 | $K_M$ | **required *if and only if* promiscuity is enabled** — it is what makes promiscuous flux cost something. Sourced from the Open Enzyme Database / BRENDA, **not** from ecYeastGEM (GECKO carries no $K_M$) |
 | 6 | $S$ source | Yeast9 now; Yeast-MetaTwin a live option — decide, do not drift |
 | 7 | media | port the corrected iBioFoundry media into `torchcell/metabolism/` |
 | — | $S$ vs $\rho$ | **hard chemistry, soft biology** — $S$ never softens; $\rho$'s zeros mean *untested* |
@@ -86,21 +86,49 @@ ML — the un-amortized version of the stochastic head below.**
   through $Sv=0$.
 - Code/data: Zenodo `10.5281/zenodo.15518666`.
 
-**The margin is inside binomial noise under either reading of their test N.** Fig. 4b says $N=659$,
-Table S6 says $N=649$, and 20 % of 811 is **162** (80 % of 811 is 649 — so the caption most likely
-reports the *training* size):
+### Are they just predicting "medium"? No — and Table S6 is what proves it
 
-| test N | majority | binomial SE | 2.6 pp margin | extra deletions correct |
-| --- | --- | --- | --- | --- |
-| 162 (20 % of 811) | 67.2 % | 3.69 pp | **0.70 SE** | +4 |
-| 659 (as captioned) | 67.2 % | 1.83 pp | **1.42 SE** | +17 |
+The obvious suspicion, given 69.8 % against a 67.2 % majority, is that the classifier collapsed onto
+the majority class. **It did not, and the paper does clarify this — in the SI, not the main text.**
 
-At $n=162$ the entire published improvement is **four deletions**. Be fair in the manuscript: they
-claim "promising accuracy," not a significant gain — the honest statement is that *the published bar
-is not distinguishable from predicting the majority class*, which is a statement about how hard the
-task is, not an accusation. **Their $N$ is internally inconsistent and their split is unreleased, so
-an exact head-to-head requires re-running their Zenodo code.** Budget for that; the alternative is
-comparing against a number we cannot reproduce.
+**Table S4** confirms the class breakdown exactly: **N = 138 low, N = 545 medium, N = 128 high**,
+summing to 811, so the majority rate is $545/811 = 67.20\,\%$ — matching their stated figure.
+
+**Table S6** gives per-model **high-producer accuracy**, and a pure majority predictor would score
+exactly **0 %** there:
+
+| model | baseline | resampled | balanced | both |
+| --- | --: | --: | --: | --: |
+| HistGradientBoosting | 11.4 | 13.6 | 14.1 | 14.6 |
+| LinearSVC | **23.8** | 24.0 | 27.2 | 26.8 |
+| LogisticRegression | 23.3 | 26.2 | **29.5** | 28.9 |
+| RandomForest | 18.1 | 11.7 | 19.1 | 18.4 |
+
+So there is **real minority-class signal**: the model recovers 11–30 % of high producers, which
+majority-prediction cannot do at all. **The correct criticism is not "they predicted medium" — it is
+that 3-class accuracy is the wrong metric to report.** Decompose it on a stratified $n = 162$
+(20 % of 811 → ~28 low / ~109 medium / ~25 high):
+
+- majority-only → 108.9 correct = 67.2 %, with **0** high producers found
+- best reported → 113.1 correct = 69.8 %, i.e. **+4.2 deletions**
+- at 23.8 % high accuracy the model finds ~6 high producers — so it **gains ~6 on the minority class
+  and gives back ~2 on low+medium**, netting the +4
+
+That is a genuine but small effect, and the overall-accuracy number **hides it in both directions**:
+it understates that they learned something about high producers, and it overstates how usable the
+model is, because ~24 % high-producer accuracy means **missing three out of every four high
+producers** — which is precisely the class a metabolic engineer cares about.
+
+**This is the opening, and it is a methodological one rather than a "we beat their number" one.**
+The right target is not 3-class accuracy. It is high-producer recall/precision and ranking — and we
+can report what they cannot: **regression** (our noise ceiling is $r = 0.914$, reliability 0.836), so
+Spearman and top-$k$ enrichment over the full ~4,735, which is the quantity that actually drives
+strain design.
+
+**Caveat on their $N$, unchanged:** Fig. 4b says $N=659$, Table S6 says $N=649$, and 20 % of 811 is
+**162** — while 80 % of 811 is 649, so the SI most likely reports the *training* size. Their split is
+also unreleased. **An exact head-to-head requires re-running their Zenodo code**; budget for it,
+because the alternative is comparing against a number we cannot reproduce.
 
 **Comparison protocol, in order:**
 
@@ -389,14 +417,70 @@ $$\text{feas}_{\mathrm{bal}}=\operatorname{median}_i\frac{\lvert[Sv]_i\rvert}{\o
 
 Report alongside every flux-derived claim, restricted to the reactions the FVA mask licenses.
 
-## $k_{\mathrm{cat}}$ and $K_M$
+## $k_{\mathrm{cat}}$ and $K_M$ — different jobs, different sources
 
-$k_{\mathrm{cat}}$ constrains capacity and is **the only source of magnitude in the whole model** —
-4,129 of 4,131 Yeast9 bounds carry none. $K_M$ is **required, not deferred**: Wu 2026 finds
-promiscuity is a $K_M$ effect (~2× higher on non-native substrates) with $k_{\mathrm{cat}}$
-indistinguishable, so a $k_{\mathrm{cat}}$-only model **gives promiscuous flux away for free** —
-$\Delta\Pi$ would cost nothing and the $\ell_1$ prior would be doing all the work. Carry both as edge
-features on $(g,j)$, and prefer distributions over point values early (be conservative).
+**They are not the same kind of parameter and they are not required for the same reason.** Both are
+edge features on $(g,j)$ — the prediction input is a *(protein sequence, substrate)* pair, which is
+itself an argument for the edge and against an enzyme node.
+
+| | what it is | where it enters | why required |
+| --- | --- | --- | --- |
+| $k_{\mathrm{cat}}$ | max turnover, h$^{-1}$ | capacity $\lvert v_j\rvert\le k_{\mathrm{cat},gj}E_g$ | **unconditionally** — the only source of magnitude in the whole model; **4,129 of 4,131** Yeast9 bounds carry none |
+| $K_M$ | half-saturation, mM | saturation $\eta^{\mathrm{sat}}$ inside the *box*, not a loss term | **only because we allow promiscuity** — see below |
+
+**$k_{\mathrm{cat}}$ tightens the polytope; $K_M$ by itself does not.** Adding capacity constraints
+is what makes $\mathcal{F}_{\mathrm{ec}}\subseteq\mathcal{F}_{\mathrm{FBA}}$ — it removes flux
+distributions that are stoichiometrically fine but need more protein than exists. $K_M$ belongs to a
+rate law $v=k_{\mathrm{cat}}E\,c/(K_M+c)$ that needs a **concentration** $c$; introducing it adds a
+parameter *and* a free variable, so on its own it **enlarges** the model's freedom. That is the trap:
+$K_M$ looks like extra constraint and is actually extra slack.
+
+**What promotes it to required.** Wu 2026 (`wuSystematicallyExploringYeast2026`, *Nature Catalysis*)
+measured underground vs known reactions across three independent predictors: median $K_M$ is **~2×
+higher** (0.25 vs 0.11 mM Boost_KM; 0.21 vs 0.11 UniKP; 0.25 vs 0.07 EITLEM) while
+**$k_{\mathrm{cat}}$ distributions are indistinguishable** (DLKcat 5.52 vs 5.28 s⁻¹; TurNuP 10.09 vs
+11.01). Underground metabolism is *"dominated by variations in $K_m$ and not $k_{cat}$."* So if
+promiscuous edges carry the same $k_{\mathrm{cat}}$ as native ones, a **$k_{\mathrm{cat}}$-only model
+gives promiscuous flux away for free** — $\Delta\Pi$ routes at full native capacity and only the
+$\ell_1$ prior resists. Affinity is what limits promiscuous flux in the cell:
+
+$$\lvert v_j\rvert\le k_{\mathrm{cat},gj}\,E_g\,\eta^{\mathrm{sat}}_j,\qquad \eta^{\mathrm{sat}}_j=\prod_{i\in\mathrm{sub}(j)}\frac{c_i}{K_{M,ij}+c_i},\qquad c_i=e^{\,u^{\!\top}h^{\mathrm{m}}_i}.$$
+
+**The requirement is therefore contingent, and that is worth stating plainly: drop promiscuity and
+$K_M$ becomes optional again.** It also needs no new machinery — the concentration is the
+$\mu_i\approx\ln c_i$ already introduced for thermodynamics, so one quantity satisfies both, and
+$\eta^{\mathrm{sat}}$ folds into the dynamic box rather than adding a loss weight.
+
+**Where the numbers actually come from — and ecYeastGEM is NOT a source of $K_M$.** GECKO's
+formulation uses only $k_{\mathrm{cat}}$, so mirroring ecYeastGEM yields
+$k_{\mathrm{cat}}$/MW/$P_{\mathrm{avail}}$ and **no $K_M$ at all**. Sourcing order, published before
+predicted, with a per-value provenance tag so we can ablate "published only" vs "published +
+predicted":
+
+| parameter | 1. published | 2. database | 3. predicted (gaps only) |
+| --- | --- | --- | --- |
+| $k_{\mathrm{cat}}$ | **ecYeastGEM** (GECKO-curated) — not yet mirrored | Open Enzyme Database (`yuanOpenEnzymeDatabase2026`, **already in our mirror**) | DLKcat · TurNuP · KcatNet |
+| $K_M$ | **none — GECKO has no $K_M$** | Open Enzyme Database; BRENDA / SABIO-RK | Boost_KM · UniKP · EITLEM |
+
+**Promiscuous edges have no published $k_{\mathrm{cat}}$ or $K_M$ by definition**, so if we want the
+model to *use* a promiscuous activity, prediction is the only possible source. Promiscuity and
+kinetic-parameter prediction are the same workstream, not two.
+
+**Carry uncertainty rather than point values.** A predicted $k_{\mathrm{cat}}$ that is too low
+forbids feasible flux; too high is vacuous. Push the predictor's posterior quantile into the box:
+
+$$\bar v^u_j \;=\; \min\Big(v^u_j(\varepsilon),\ c_j(p)\cdot \textstyle\sum_g \Pi_{gj}\,\hat k^{(q)}_{\mathrm{cat},gj}\,\bar E_g\,\eta^{\mathrm{sat}}_j\Big)$$
+
+$q$ is a single interpretable conservatism dial: $q=0.1$ → the model may only use capacity it is
+confident exists (**start here**); $q=0.5$ → the usual ecFBA point estimate; $q\sim\mathrm{Uniform}$
+resampled per forward pass → **the box itself becomes stochastic**, which composes with the
+amortized-sampler framing and propagates parameter uncertainty into the predictive interval. That
+last one is the principled version and the one to aim for.
+
+**Activation policy:** enable $\eta^{\mathrm{sat}}$ only on metabolites with anchored concentrations
+and set $\eta^{\mathrm{sat}}=1$ elsewhere. We are partly anchored already — Mülleder gives
+**absolute intracellular mM for 19 amino acids across 4,678 strains**, Zelezniak relative pools for
+~50 metabolites.
 
 ## GECKO: comparison, not parity
 
@@ -467,13 +551,17 @@ why their model has no mechanistic route to the product at all.
 
 ## Build order
 
-1. **Mirror ecYeastGEM** ($k_{\mathrm{cat}}$, $K_M$, MW, $P_{\mathrm{avail}}$) with sha256 provenance
-   — **blocking; nothing below works without parameters.** `grep` for `ecYeast|GECKO|kcat` over
-   `torchcell/` returns nothing today: we hold plain yeast-GEM 9.0.2 via cobra
-   (`torchcell/metabolism/yeast_GEM.py`) and no turnover numbers, no MWs, no protein pool. Published
-   values before predicted ones. Acquire first: Sánchez 2017 (GECKO), Domenzain 2022 (GECKO 2.0 —
-   where ecYeastGEM's $k_{\mathrm{cat}}$/$P_{\mathrm{avail}}$ come from), Elsemman 2022 (**already in
-   Zotero, just uncollected — one-line fix**), Chen/Li/Nielsen 2022.
+1. **Mirror ecYeastGEM** ($k_{\mathrm{cat}}$, MW, $P_{\mathrm{avail}}$ — **not $K_M$; GECKO has
+   none**) with sha256 provenance — **blocking; nothing below works without parameters.** `grep` for
+   `ecYeast|GECKO|kcat` over `torchcell/` returns nothing today: we hold plain yeast-GEM 9.0.2 via
+   cobra (`torchcell/metabolism/yeast_GEM.py`) and no turnover numbers, no MWs, no protein pool.
+   Acquire first: Sánchez 2017 (GECKO), Domenzain 2022 (GECKO 2.0 — where ecYeastGEM's
+   $k_{\mathrm{cat}}$/$P_{\mathrm{avail}}$ come from), Elsemman 2022 (**already in Zotero, just
+   uncollected — one-line fix**), Chen/Li/Nielsen 2022.
+   **1b. $K_M$ comes from a different source entirely** — Open Enzyme Database
+   (`yuanOpenEnzymeDatabase2026`, already mirrored) and BRENDA/SABIO-RK, then Boost_KM/UniKP/EITLEM
+   for gaps. This is only blocking **if promiscuity is enabled**; without $\Delta\Pi$ the model runs
+   on $k_{\mathrm{cat}}$ alone with $\eta^{\mathrm{sat}}=1$.
 2. **Load the thermodynamics we already have** — `data/databases/model_metDeltaG.csv` holds 2,389
    real $\Delta_fG'^\circ$ values (85.1 % of 2,806 metabolites); the SBML drops them.
 3. **Fix the metabolic incidence defects** — same code path.
@@ -497,14 +585,20 @@ why their model has no mechanistic route to the product at all.
 Fit on double-mutant **fitness**, then apply to double-mutant **production**. Two things need pinning
 down before this is a plan rather than an intention.
 
-- **Which double-mutant fitness data.** Costanzo/Kuzmin DMF/TMI is in the database at ~$10^7$ records
-  and would supervise $v_{\mathrm{bio}}$ at $\lvert p\rvert=2$ directly. If instead this means newly
-  collected in-house data, it is not in the repo yet — `experiments/019-echo-crispr-array` currently
-  holds a **single**-strain colony assay (`reference_smf_12panel.csv` is Costanzo/Kuzmin *single*-
-  mutant fitness).
-- **There are no double-mutant β-carotene labels.** Ozaydin 2013 is the haploid BY4741 deletion
-  collection — single deletions only. So the production step is a genuine extrapolation and needs an
-  evaluation design decided *before* training. The amortized-sampler framing gives one:
-  $\text{width}_{\mathrm{FVA}} - \text{width}_{\text{posterior}}$ is computable on a double-deletion
-  cone **without any production label**, so we can show the model gains information on doubles even
-  where we cannot score production directly.
+- **Which double-mutant fitness data — still to pin down.** Costanzo/Kuzmin DMF/TMI is in the
+  database at ~$10^7$ records and would supervise $v_{\mathrm{bio}}$ at $\lvert p\rvert=2$ directly.
+  If instead this means newly collected in-house data, it is not in the repo yet —
+  `experiments/019-echo-crispr-array` currently holds a **single**-strain colony assay
+  (`reference_smf_12panel.csv` is Costanzo/Kuzmin *single*-mutant fitness).
+- **No in-house β-carotene data has been added yet** (author, 2026.07.26), and the published
+  β-carotene labels are singles only — Ozaydin 2013 is the haploid BY4741 deletion collection. So
+  **there is no double-mutant β-carotene label anywhere**, and the production step is a genuine
+  extrapolation whose evaluation must be designed *before* training rather than after.
+- **The amortized-sampler framing supplies a label-free evaluation, and this is why it matters
+  here.** $\text{width}_{\mathrm{FVA}}(j)-\text{width}_{\text{posterior}}(j)$ is computable on a
+  double-deletion cone **with no production label at all**, so we can demonstrate the model gains
+  information on doubles before any β-carotene measurement on doubles exists. The sequence is:
+  (1) fit $v_{\mathrm{bio}}$ on double-mutant fitness; (2) show posterior narrowing on doubles vs
+  FVA; (3) predict β-carotene on doubles as a *ranked* output; (4) let that ranking select which
+  doubles are worth measuring in-house. Step 4 is the inverse-design payoff and it makes the missing
+  data a deliverable rather than a blocker.

@@ -62,7 +62,7 @@ class ProtT5Dataset(BaseEmbeddingDataset):
             # HACK we send cpu because all data needs to be on cpu for lightning
             # lightning automatically moves
             self.data, self.slices = torch.load(
-                self.processed_paths[0], map_location="cpu"
+                self.processed_paths[0], map_location="cpu", weights_only=False
             )
 
     @staticmethod

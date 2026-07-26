@@ -41,9 +41,11 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
 
         # Load the categorical_features dictionary if it exists
         if osp.exists(self.processed_paths[1]):
-            self.categorical_features = torch.load(self.processed_paths[1])
+            self.categorical_features = torch.load(
+                self.processed_paths[1], weights_only=False
+            )
 
-        self.data, self.slices = torch.load(self.processed_paths[0])
+        self.data, self.slices = torch.load(self.processed_paths[0], weights_only=False)
 
     def initialize_model(self) -> None:
         """Do nothing; features come from graph attributes, not a model."""

@@ -52,7 +52,9 @@ class OneHotGeneDataset(BaseEmbeddingDataset):
             if not os.path.exists(self.processed_paths[0]):
                 self.transformer = self.initialize_transformer()
                 self.process()
-            self.data, self.slices = torch.load(self.processed_paths[0])
+            self.data, self.slices = torch.load(
+                self.processed_paths[0], weights_only=False
+            )
 
     # This is done to avoid pkl error when since genome uses sqlite
     @staticmethod

@@ -21,7 +21,7 @@
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
-#SBATCH --gres=gpu:4
+#SBATCH --gres=gpu:3
 #SBATCH --job-name=019-joint-dec003
 #SBATCH --time=5-00:00:00
 #SBATCH --signal=B:USR1@180
@@ -53,22 +53,23 @@ export PYTHONWARNINGS=ignore
 export WANDB__SERVICE_WAIT=600
 
 export CONDITION=expr_morph
-export JOINT_BASE_CONFIG=cgt_decoder_004
-export OPTUNA_STORAGE="sqlite:///$OPTUNA_DIR/optuna_019_expr_morph_004.db"
-export OPTUNA_STUDY_NAME=expr_morph_004
+export JOINT_BASE_CONFIG=cgt_embed_005
+export OPTUNA_STORAGE="sqlite:///$OPTUNA_DIR/optuna_019_expr_morph_005.db"
+export OPTUNA_STUDY_NAME=expr_morph_005
 export OPTUNA_N_TRIALS="${OPTUNA_N_TRIALS:-30}"
-export WANDB_PROJECT_SUFFIX=v4
-export NUM_WORKERS=$((SLURM_CPUS_PER_TASK / 4))
+export WANDB_PROJECT_SUFFIX=v5
+export NUM_WORKERS=$((SLURM_CPUS_PER_TASK / 3))
 
 SWEEP=$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/optuna_joint_sweep.py
 
 # Pre-create the study (one process, sets multi-objective directions); workers load it.
 python $SWEEP --create-only
 
+# 3 workers only: GPU 3 is deliberately LEFT FREE on GilaHyper for ad-hoc work
+# (e.g. computing any embedding that still needs building) while the sweep runs.
 CUDA_VISIBLE_DEVICES=0 OPTUNA_WORKER_ID=0 python $SWEEP &
 CUDA_VISIBLE_DEVICES=1 OPTUNA_WORKER_ID=1 python $SWEEP &
 CUDA_VISIBLE_DEVICES=2 OPTUNA_WORKER_ID=2 python $SWEEP &
-CUDA_VISIBLE_DEVICES=3 OPTUNA_WORKER_ID=3 python $SWEEP &
 wait
 
 # Clean exit before the deadline (workers finished their trial budget): keep going.

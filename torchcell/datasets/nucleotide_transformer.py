@@ -63,7 +63,9 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
             # only her bc computed on delta.
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             self.data, self.slices = torch.load(
-                self.processed_paths[0], map_location=torch.device(device)
+                self.processed_paths[0],
+                map_location=torch.device(device),
+                weights_only=False,
             )
 
         self.genome = self.parse_genome(genome)

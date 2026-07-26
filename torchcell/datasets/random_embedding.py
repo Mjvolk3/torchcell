@@ -61,7 +61,7 @@ class RandomEmbeddingDataset(BaseEmbeddingDataset):
 
         if not os.path.exists(self.processed_paths[0]):
             self.process()
-        self.data, self.slices = torch.load(self.processed_paths[0])
+        self.data, self.slices = torch.load(self.processed_paths[0], weights_only=False)
 
     @staticmethod
     def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome | None:
@@ -114,7 +114,9 @@ class RandomEmbeddingDataset(BaseEmbeddingDataset):
             if (i + 1) % self.batch_size == 0 or (i + 1) == len(genome.gene_set):
                 # Load existing data from the file if it exists
                 if os.path.exists(self.processed_paths[0]):
-                    existing_data = torch.load(self.processed_paths[0])
+                    existing_data = torch.load(
+                        self.processed_paths[0], weights_only=False
+                    )
                     existing_data_list = existing_data.get("data_list", [])
                     data_list = existing_data_list + data_list
                 if (i + 1) == len(genome.gene_set):

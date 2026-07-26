@@ -949,13 +949,21 @@ class CellGraphTransformer(nn.Module):
         self.node_embeddings = node_embeddings
         self.learnable_embedding_config = learnable_embedding_config
 
-        # Calculate pre-computed embedding dimension
+        # Calculate pre-computed embedding dimension.
+        # `node_embeddings` maps name -> BaseEmbeddingDataset; each item is a PyG Data with
+        # `.id` (gene) and `.embeddings` (dict of [1, D] tensors, one per sub-embedding).
+        # The total per-gene width is the sum over EVERY selected dataset's sub-embeddings,
+        # matching how `Neo4jCellDataset` concatenates them into `cell_graph["gene"].x`.
+        # (The previous `.graph.nodes(...)` access assumed a networkx-backed dataset and
+        # raised AttributeError -- this path had never been exercised, since every 019
+        # config ran with `node_embeddings: []`.)
         precomputed_dim = 0
         if node_embeddings is not None and len(node_embeddings) > 0:
-            # Get dimension from first node's embedding in first graph
-            first_graph = list(node_embeddings.values())[0]
-            first_node = list(first_graph.graph.nodes(data=True))[0]
-            precomputed_dim = first_node[1]["embedding"].shape[0]
+            for ds in node_embeddings.values():
+                first = ds[0]
+                precomputed_dim += sum(
+                    int(t.shape[-1]) for t in first.embeddings.values()
+                )
 
         # Learnable embedding configuration
         learnable_enabled = False
@@ -1492,7 +1500,20 @@ class CellGraphTransformer(nn.Module):
             return sum(p.numel() for p in module.parameters() if p.requires_grad)
 
         counts = {
-            "gene_embedding": count_params(cast(nn.Module, self.gene_embedding)),
+            # None when learnable embeddings are disabled (content features only).
+            "gene_embedding": (
+                count_params(self.gene_embedding)
+                if self.gene_embedding is not None
+                else 0
+            ),
+            # Projects concat(content_embeddings [+ learnable]) -> hidden. Was omitted from
+            # this tally, which made every node-embedding variant report an identical total
+            # even though the projection scales with the content dim (NT 2560 vs codon 64).
+            "embedding_preprocessor": (
+                count_params(self.embedding_preprocessor)
+                if self.embedding_preprocessor is not None
+                else 0
+            ),
             "cls_token": self.cls_token.numel(),
             "transformer_layers": count_params(self.transformer_layers),
             "perturbation_transform": count_params(self.perturbation_transform),

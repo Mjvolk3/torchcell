@@ -111,7 +111,7 @@ class Esm2Dataset(BaseEmbeddingDataset):
                 self.transformer = self.initialize_model()
                 self.process()
             self.data, self.slices = torch.load(
-                self.processed_paths[0], map_location="cpu"
+                self.processed_paths[0], map_location="cpu", weights_only=False
             )
 
     @staticmethod

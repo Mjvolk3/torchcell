@@ -1,0 +1,63 @@
+# experiments/019-simb-multimodal/conf/cgt_embed_005.yaml
+# NODE-EMBEDDING (cold-start) study, round _005. Inherits cgt_decoder_004 (which inherits
+# _003), overriding only what this round changes, so every earlier round stays reproducible.
+#
+# WHY (measured on the _003 round, 81 morph + 56 expr trials, from the synced W&B histories):
+#   TRAIN per-feature Pearson  median 0.66 (max 0.78)  |  VAL median 0.023 (max 0.075)
+#   -> the model fits training strains BETTER than the assay's 0.61 noise ceiling and
+#      transfers ~3.5% of it. Expression: train 0.46 / val 0.067 (14% transfer).
+# This is NOT capacity overfitting -- the sweep rules that out:
+#   dropout 0 -> 0.1 : val 0.0215 -> 0.0235 (nothing)
+#   weight decay x1e4: val 0.0215 -> 0.0235 (nothing)
+#   hidden 64 -> 128 : val 0.0083 -> 0.0307 (BIGGER IS BETTER)
+#   graph_reg 0 -> >0: val 0.0139 -> 0.0260 (+87%)
+# Regularization is inert and capacity helps, which is the signature of a COLD-START
+# problem, not overfitting.
+#
+# THE MECHANISM: `node_embeddings: []` in every prior 019 config, so each gene is a FREE
+# LEARNABLE VECTOR (6607 x d ~ 41% of all parameters) with no content features. Each strain
+# is a single-gene deletion and the split is by strain, so a VAL gene has never appeared as
+# a perturbed gene during training. The cheapest solution is to write gene g's phenotype
+# into gene g's embedding -- perfect on train, undefined for an unseen gene. `graph_reg`
+# helping so much is the tell: attention-to-adjacency is currently the model's ONLY
+# generalization channel.
+#
+# THE FIX: give genes CONTENT features so an unseen gene arrives with a meaningful
+# representation and "representation -> phenotype effect" can extrapolate instead of memorize.
+#
+# COVERAGE-AUDITED (all 6607 genes, 0 missing, 0 zero-vectors) -- only dense embeddings are
+# swept here. Deliberately EXCLUDED:
+#   one_hot_gene, fudt_downstream            -- missing the 28 mitochondrial (Q0*) genes
+#   esm2/prot_T5 `no_dubious`, `no_uncharacterized` -- emit 684/668 ALL-ZERO vectors by
+#     design; silently information-free for exactly the hard-to-generalize ORFs.
+defaults:
+  - cgt_decoder_004
+  - _self_
+
+wandb:
+  project: torchcell_019_embed_v5
+  tags: [ws-run, ctrl-split, node-embeddings, cold-start, optuna, single-gpu]
+
+cell_dataset:
+  # SWEPT by the driver. Declared here so Hydra struct-mode `=` overrides are legal.
+  node_embeddings: []
+
+model:
+  # hidden 128 won _003 decisively (0.0307 vs 0.0083 at 64); 180 matches the 010-scale model.
+  hidden_channels: 128
+  # WIDENED from {2,4}. L=2 "won" _003, but under a memorization regime depth mostly buys
+  # more memorization, so that result should not be trusted once content features exist.
+  # (010 ran L=8.)
+  num_transformer_layers: 4
+  num_attention_heads: 4
+  learnable_embedding:
+    # SWEPT. The critical control: with content features present, does the free per-gene
+    # table still help (a real representation) or hurt (a memorization device)? If val rises
+    # while train falls when this is FALSE, the table was storing answers.
+    enabled: true
+    size: ${model.hidden_channels}
+    preprocessor:
+      # Projects concat(content_dim [+ learnable]) -> hidden. Content dims are large
+      # (NT 2560, ESM2 1280, ProtT5 1024) vs hidden 128, so this compression matters.
+      num_layers: 2
+      dropout: 0.1

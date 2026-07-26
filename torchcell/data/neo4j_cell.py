@@ -102,10 +102,22 @@ def min_max_normalize_embedding(embedding: torch.Tensor) -> torch.Tensor:
 
 
 def min_max_normalize_dataset(dataset: BaseEmbeddingDataset) -> None:
-    """Normalizes embeddings across the entire dataset to range [0,1] using min-max scaling per feature."""
+    """Normalizes embeddings across the entire dataset to range [0,1] using min-max scaling per feature.
+
+    Most embedding datasets store their collated tensor as ``[n_genes, D]`` (per item
+    ``[1, D]``), but ``esm2_*`` stores it FLAT as ``[n_genes * D]`` (per item ``[D]``).
+    Both hold identical data; only the layout differs. Normalization is per FEATURE, so the
+    flat case is viewed as ``[n_genes, D]`` for the computation and written back flat --
+    reshaping in place keeps PyG's ``slices`` offsets valid, so no rebuild is needed.
+    """
     first_key = list(dataset._data.embeddings.keys())[0]
     embeddings = dataset._data.embeddings[first_key]
-    dataset._data.embeddings[first_key] = min_max_normalize_embedding(embeddings)
+    if embeddings.dim() == 1:
+        feat_dim = int(dataset[0].embeddings[first_key].numel())
+        normalized = min_max_normalize_embedding(embeddings.view(-1, feat_dim))
+        dataset._data.embeddings[first_key] = normalized.reshape(-1)
+    else:
+        dataset._data.embeddings[first_key] = min_max_normalize_embedding(embeddings)
 
 
 def create_embedding_graph(

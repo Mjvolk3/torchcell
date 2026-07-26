@@ -60,13 +60,13 @@ from omegaconf import OmegaConf
 from train_cgt_multitask import run_training
 
 CONF_DIR = osp.abspath(osp.join(osp.dirname(__file__), "../conf"))
-BASE_CONFIG = os.getenv("JOINT_BASE_CONFIG", "cgt_decoder_004")
+BASE_CONFIG = os.getenv("JOINT_BASE_CONFIG", "cgt_embed_005")
 STORAGE = os.environ["OPTUNA_STORAGE"]
 CONDITION = os.getenv("CONDITION", "expr_morph")
-STUDY_NAME = os.getenv("OPTUNA_STUDY_NAME", f"{CONDITION}_004")
+STUDY_NAME = os.getenv("OPTUNA_STUDY_NAME", f"{CONDITION}_005")
 N_TRIALS = int(os.getenv("OPTUNA_N_TRIALS", "20"))
 WORKER_ID = int(os.getenv("OPTUNA_WORKER_ID", "0"))
-PROJECT_SUFFIX = os.getenv("WANDB_PROJECT_SUFFIX", "v4")
+PROJECT_SUFFIX = os.getenv("WANDB_PROJECT_SUFFIX", "v5")
 
 ACTIVE_HEADS = {
     "expr": ["per_gene"],
@@ -91,6 +91,29 @@ PROFILES = {
 # 278 equally — that would confound the decoder comparison.
 TARGET_NORMS = ["zscore", "yeo_johnson"]
 
+# ---- Node-embedding (cold-start) axis, round _005 ----
+# Every option is COVERAGE-AUDITED: all 6607 genes, 0 missing, 0 zero-vectors. Variants that
+# fail that bar are deliberately absent (one_hot_gene / fudt_downstream miss the 28
+# mitochondrial Q0* genes; the esm2/prot_T5 `no_dubious` / `no_uncharacterized` variants emit
+# 684/668 ALL-ZERO vectors, i.e. silently information-free for the hardest ORFs).
+#   ""            -- the _003/_004 baseline: learnable-only, no content features.
+#   codon_frequency (64d)  -- only option smaller than hidden, so no lossy compression.
+#   calm (768d), fudt_upstream (768d), prot_T5_all (1024d), esm2_..._all (1280d),
+#   nt_window_5979 (2560d) -- real sequence/protein content.
+#   random_100 (100d)      -- CONTROL: unique but meaningless. Paired with
+#     learnable_embedding=false it isolates CONTENT from IDENTITY; with learnable=true it is
+#     redundant with the free table, which is why `learnable` is swept alongside it.
+NODE_EMBEDDINGS = [
+    "",
+    "codon_frequency",
+    "calm",
+    "fudt_upstream",
+    "prot_T5_all",
+    "esm2_t33_650M_UR50D_all",
+    "nt_window_5979",
+    "random_100",
+]
+
 
 def _norm_choice(trial: optuna.Trial, head: str) -> str:
     """Per-modality target-norm lever, always standardized ({zscore, yeo_johnson})."""
@@ -114,8 +137,17 @@ def objective(trial: optuna.Trial) -> float | tuple[float, float]:
     )
     dist = trial.suggest_categorical("dist", dist_choices)
 
-    hidden = trial.suggest_categorical("hidden_channels", [64, 96, 128])
-    layers = trial.suggest_categorical("num_transformer_layers", [2, 4])
+    # ---- Cold-start axes (_005) ----
+    node_emb = trial.suggest_categorical("node_embeddings", NODE_EMBEDDINGS)
+    # With NO content features the model has only the free table, so disabling it would
+    # leave genes featureless -- keep it on for the "" baseline.
+    learnable = (
+        True if node_emb == "" else trial.suggest_categorical("learnable_embedding", [True, False])
+    )
+
+    hidden = trial.suggest_categorical("hidden_channels", [128, 180])
+    # Widened from {2,4}: L=2 won _003, but under memorization depth mostly buys memorization.
+    layers = trial.suggest_categorical("num_transformer_layers", [2, 4, 6, 8])
     graph_reg = trial.suggest_categorical(
         "graph_reg_lambda", [0.0, 0.0003, 0.001, 0.003]
     )
@@ -134,6 +166,8 @@ def objective(trial: optuna.Trial) -> float | tuple[float, float]:
 
     overrides = [
         f"multitask.active_heads=[{','.join(ACTIVE_HEADS)}]",
+        f"cell_dataset.node_embeddings=[{node_emb}]",
+        f"model.learnable_embedding.enabled={learnable}",
         f"multitask.decoder={decoder}",
         f"multitask.dist={dist}",
         f"multitask.normalize_vector_targets=[{','.join(normalize_list)}]",
@@ -157,6 +191,7 @@ def objective(trial: optuna.Trial) -> float | tuple[float, float]:
 
     print(
         f"[{CONDITION} w{WORKER_ID}] trial {trial.number}: heads={ACTIVE_HEADS} "
+        f"emb={node_emb or '(none)'} learnable={learnable} "
         f"decoder={decoder} dist={dist} hidden={hidden} layers={layers} "
         f"graph_reg={graph_reg} profile={profile_name} "
         f"norm+={normalize_list} std+={standardize_list}",
@@ -172,6 +207,8 @@ def objective(trial: optuna.Trial) -> float | tuple[float, float]:
     trial.set_user_attr("expr_pearson", expr_r)
     trial.set_user_attr("morph_pearson", morph_r)
     trial.set_user_attr("decoder", decoder)
+    trial.set_user_attr("node_embeddings", node_emb or "(none)")
+    trial.set_user_attr("learnable_embedding", learnable)
     trial.set_user_attr("dist", dist)
     # The mean-collapse diagnostic: per-instance stays high under collapse, so a large gap
     # vs per-feature is the signature. Recorded per trial so the sweep can be read for

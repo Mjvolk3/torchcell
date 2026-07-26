@@ -54,7 +54,7 @@ class CalmDataset(BaseEmbeddingDataset):
         if not os.path.exists(self.processed_paths[0]):
             self.model = self.initialize_model()
             self.process()
-        self.data, self.slices = torch.load(self.processed_paths[0])
+        self.data, self.slices = torch.load(self.processed_paths[0], weights_only=False)
 
     def initialize_model(self) -> "CaLM":
         """Return a new CaLM model instance."""
@@ -107,7 +107,9 @@ class CalmDataset(BaseEmbeddingDataset):
             if (i + 1) % self.batch_size == 0 or (i + 1) == len(genome.gene_set):
                 # Load existing data from the file if it exists
                 if os.path.exists(self.processed_paths[0]):
-                    existing_data = torch.load(self.processed_paths[0])
+                    existing_data = torch.load(
+                        self.processed_paths[0], weights_only=False
+                    )
                     existing_data_list = existing_data.get("data_list", [])
                     data_list = existing_data_list + data_list
                 if (i + 1) == len(genome.gene_set):

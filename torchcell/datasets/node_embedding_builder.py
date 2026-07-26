@@ -74,7 +74,7 @@ class NodeEmbeddingBuilder:
             "class": NucleotideTransformerDataset,
             "root_path": "data/scerevisiae/nucleotide_transformer_embedding",
             "requires_genome": True,
-            "model_name": "window_three_prime_5979",
+            "model_name": "nt_window_three_prime_5979",
         },
         "nt_window_five_prime_5979": {
             "class": NucleotideTransformerDataset,

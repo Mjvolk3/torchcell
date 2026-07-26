@@ -51,7 +51,7 @@ class ProtT5Dataset(BaseEmbeddingDataset):
         self.genome = self.parse_genome(genome)
         del genome
 
-        # self.data, self.slices = torch.load(self.processed_paths[0])
+        # self.data, self.slices = torch.load(self.processed_paths[0], weights_only=False)
         # self.data, self.slices = torch.load(
         #     self.processed_paths[0], map_location=self.device
         # )

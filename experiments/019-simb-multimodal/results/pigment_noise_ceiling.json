@@ -1,0 +1,175 @@
+{
+  "betaxanthin": {
+    "n_records": 4735,
+    "n_with_se": 4696,
+    "n_replicates_min": 1,
+    "n_replicates_median": 15.0,
+    "n_replicates_max": 44,
+    "value_mean": -0.0146307035657104,
+    "value_sd": 0.5827487317644204,
+    "total_var": 0.33959608437304045,
+    "mean_se_squared": 0.055833256414339706,
+    "median_se": 0.2016303509626658,
+    "reliability": 0.8355892220682738,
+    "ceiling_pearson": 0.9141056952389444
+  },
+  "beta_carotene": {
+    "n_records": 4474,
+    "n_replicates_hist": {
+      "1": 4344,
+      "2": 128,
+      "3": 2
+    },
+    "n_replicated_rows": 130,
+    "score_min": -5.0,
+    "score_max": 5.0,
+    "replicate_max_vs_min": {
+      "n": 130,
+      "spearman": 0.5435281992608196,
+      "spearman_p": 2.3553387923175083e-11,
+      "pearson": 0.44574462526725095
+    },
+    "independent_rescreen": {
+      "sheet": "2ndRoundOfTransformations",
+      "n": 119,
+      "spearman": 0.07541439699405152,
+      "spearman_p": 0.4149852748332912,
+      "pearson": 0.06374336031631031,
+      "first_screen_mean": 3.819327731092437,
+      "second_screen_mean": 2.735294117647059,
+      "sd_full_screen": 1.4747450872739007,
+      "sd_rescreened_subset": 0.8918916585915283,
+      "range_restriction_ratio": 1.6535025000713788,
+      "pearson_range_restriction_corrected": 0.10503043799459828,
+      "caveat": "re-screen covers SELECTED TOP HITS only (1st-screen scores concentrated in 3..5 of a -5..+5 scale), so the raw value is deflated by range restriction; the corrected value assumes linearity + homoscedasticity."
+    },
+    "ceiling_spearman": 0.5435281992608196,
+    "ceiling_source": "replicate_max_vs_min"
+  },
+  "mulleder_external_check": {
+    "n_shared_deletions": 4432,
+    "per_amino_acid": {
+      "alanine": {
+        "pearson": -0.02401684883072951,
+        "pearson_p": 0.10989624145742839,
+        "spearman": -0.018377985239733684
+      },
+      "arginine": {
+        "pearson": -0.11753393173559257,
+        "pearson_p": 4.172648528256808e-15,
+        "spearman": -0.07715132950705958
+      },
+      "asparagine": {
+        "pearson": -0.015978023044280833,
+        "pearson_p": 0.28756567033433966,
+        "spearman": 0.011558480075473589
+      },
+      "aspartate": {
+        "pearson": 0.12668341118681356,
+        "pearson_p": 2.5510937135239224e-17,
+        "spearman": 0.0873404978585946
+      },
+      "glutamate": {
+        "pearson": -0.0887315179703802,
+        "pearson_p": 3.2755840380979468e-09,
+        "spearman": -0.06729381518477616
+      },
+      "glutamine": {
+        "pearson": -0.010308315778248287,
+        "pearson_p": 0.49266082227851576,
+        "spearman": 0.0021417833172490295
+      },
+      "glycine": {
+        "pearson": 0.027870938384253453,
+        "pearson_p": 0.06355390506213232,
+        "spearman": 0.04669484217418677
+      },
+      "histidine": {
+        "pearson": -0.05580443633615314,
+        "pearson_p": 0.00020165653264142357,
+        "spearman": -0.020974785225347934
+      },
+      "isoleucine": {
+        "pearson": -0.06583844573044759,
+        "pearson_p": 1.1513418502539755e-05,
+        "spearman": -0.04935654908615249
+      },
+      "leucine": {
+        "pearson": -0.039257543115555245,
+        "pearson_p": 0.008954844330372745,
+        "spearman": -0.011365739333516764
+      },
+      "lysine": {
+        "pearson": -0.06407706695982462,
+        "pearson_p": 1.9634792891161275e-05,
+        "spearman": -0.04499321749903461
+      },
+      "methionine": {
+        "pearson": 0.1401263713662263,
+        "pearson_p": 7.095978696650031e-21,
+        "spearman": 0.12690457626536458
+      },
+      "phenylalanine": {
+        "pearson": -0.03792917382374723,
+        "pearson_p": 0.011561093854660177,
+        "spearman": -0.03667942121835957
+      },
+      "proline": {
+        "pearson": 0.03999380880347557,
+        "pearson_p": 0.007748589690507609,
+        "spearman": 0.010206458303468231
+      },
+      "serine": {
+        "pearson": -0.04708824479650205,
+        "pearson_p": 0.0017146002084369504,
+        "spearman": -0.012665267315170134
+      },
+      "threonine": {
+        "pearson": 0.11074020413705898,
+        "pearson_p": 1.4354644396372554e-13,
+        "spearman": 0.09234151632647714
+      },
+      "tryptophan": {
+        "pearson": 0.0033027012530759646,
+        "pearson_p": 0.8260189799770935,
+        "spearman": 0.002405110147459076
+      },
+      "tyrosine": {
+        "pearson": -0.07615889329445091,
+        "pearson_p": 3.8528202304448866e-07,
+        "spearman": -0.0792050920019647
+      },
+      "valine": {
+        "pearson": -0.041417912793145106,
+        "pearson_p": 0.0058204014917549035,
+        "spearman": -0.02273006216212094
+      }
+    },
+    "tyrosine_rank_by_abs_pearson": 6,
+    "ranking_by_abs_pearson": [
+      "methionine",
+      "aspartate",
+      "arginine",
+      "threonine",
+      "glutamate",
+      "tyrosine",
+      "isoleucine",
+      "lysine",
+      "histidine",
+      "serine",
+      "valine",
+      "proline",
+      "leucine",
+      "phenylalanine",
+      "glycine",
+      "alanine",
+      "asparagine",
+      "glutamine",
+      "tryptophan"
+    ]
+  },
+  "figure": {
+    "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/plan/cgt-metabolism/notes/assets/images/019-simb-multimodal/pigment_noise_ceiling.png",
+    "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/plan/cgt-metabolism/notes/assets/images/019-simb-multimodal/pigment_noise_ceiling.svg"
+  }
+}

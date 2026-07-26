@@ -21,6 +21,13 @@ cell_dataset:
   node_embeddings: []  # transformer uses learnable gene embeddings
   query_file: fig3_core.cql
   dataset_tag: fig3_core
+  # Genotype key for aggregation.
+  #   genotype       -- hash of the FULL perturbation set (default; every Fig-3 build).
+  #   deletion_keyed -- hash of the DELETION set only; a constant engineered cassette is
+  #                     treated as reference-strain background. Required for the pigment
+  #                     builds (cassette additions otherwise make production genotypes
+  #                     key-disjoint from single-KO metabolome genotypes -> 0 co-location).
+  aggregator: genotype
 
 transforms:
   use_transforms: true
@@ -94,6 +101,10 @@ multitask:
   drop_features:
     global: [A113_A1B, A113_C, C123_C]
   degenerate_robust_cv: 0.01
+  # Heads whose target is ONE value per genotype. Declared explicitly: a scalar target
+  # assigned into a vector head BROADCASTS across every column instead of erroring, so
+  # scalar-vs-vector must be config, not an `== "gene_interaction"` special case.
+  scalar_heads: [gene_interaction, betaxanthin, beta_carotene]
   heads:
     global:
       # CalMorph morphology. The Fig-3 build's calmorph vector is 281-D (constant across
@@ -106,23 +117,64 @@ multitask:
       output_dim: 1         # per-gene expression scalar (one value per gene node)
     per_metabolite:
       output_dim: 1
+    # ---- CGT-Metabolism production / metabolome heads (model.model_class=metabolism) ----
+    # THREE SEPARATE heads, never one shared scalar head: the units are mutually
+    # incomparable (CRI-SPA fluorescence centred at 0; a subjective ordinal -5..+5; mM).
+    betaxanthin:
+      kind: scalar
+      output_dim: 1
+      use_gene_pool: true
+    beta_carotene:
+      kind: scalar
+      output_dim: 1
+      use_gene_pool: true
+    mulleder19:
+      kind: vector
+      output_dim: 19        # 19 fixed key-sorted amino acids; NO Yeast9 alignment
+      use_gene_pool: true
   head_weights:
     gene_interaction: 1.0
     per_gene: 1.0
     global: 1.0
     per_metabolite: 1.0
+    betaxanthin: 1.0
+    beta_carotene: 1.0
+    mulleder19: 1.0
   # Schema phenotype-type (label_name) strings routed to each head. VERIFIED (WS10a)
   # against the real Fig-3 COO: the actual phenotype_types are exactly
   # {fitness, calmorph, expression_log2_ratio}. per_gene expression is
   # `expression_log2_ratio` (was the placeholders microarray_/rnaseq_expression);
   # global morphology is `calmorph`; the scalar head reads `fitness`.
+  #
+  # DEFECT FIX: `per_metabolite` used to be routed to `metabolite`, which is the
+  # EXPERIMENT_TYPE, not a label. The COO label defined by MetabolitePhenotype is
+  # `metabolite_level` (torchcell/datamodels/schema.py), so the head matched nothing,
+  # resolved feat_dim=None and trained with zero gradient and no warning. Likewise
+  # `visual_score` (VisualScorePhenotype) was routed nowhere at all.
   head_phenotypes:
     gene_interaction: [fitness, gene_interaction]
     per_gene: [expression_log2_ratio]
     global: [calmorph]
-    per_metabolite: [metabolite]
+    per_metabolite: [metabolite_level]
+    betaxanthin: [metabolite_level]
+    beta_carotene: [visual_score]
+    mulleder19: [metabolite_level]
+  # Betaxanthin (Cachera) and the 19-AA metabolome (Mulleder) are BOTH
+  # MetabolitePhenotype, so both carry label_name `metabolite_level`; the Perturbation
+  # processor key-sorts each dict and DROPS the keys. These pins name the exact key set
+  # each head owns, so alignment resolves by identity and the decode can separate the
+  # 1-value and 19-value groups within one genotype.
+  head_phenotype_keys:
+    betaxanthin: [betaxanthin]
+    mulleder19: [alanine, arginine, asparagine, aspartate, glutamate, glutamine,
+                 glycine, histidine, isoleucine, leucine, lysine, methionine,
+                 phenylalanine, proline, serine, threonine, tryptophan, tyrosine,
+                 valine]
 
 model:
+  # cell_graph_transformer (Fig-3) | metabolism (CGT-Metabolism fork: same encoder +
+  # PERT operator, plus the named production/metabolome heads).
+  model_class: cell_graph_transformer
   checkpoint_path: null
   gene_num: 6607
   hidden_channels: 16

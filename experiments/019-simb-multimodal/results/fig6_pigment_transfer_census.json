@@ -1,0 +1,80 @@
+{
+  "query_file": "fig6_pigment_transfer.cql",
+  "dataset_tag": "fig6_pigment_transfer",
+  "dataset_root": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/019-simb-multimodal/fig6_pigment_transfer",
+  "aggregator": "DeletionKeyedGenotypeAggregator",
+  "graph_processor": "Perturbation",
+  "datasets": [
+    "AminoAcidMulleder2016Dataset",
+    "BetaxanthinCachera2023Dataset",
+    "CarotenoidOzaydin2013Dataset"
+  ],
+  "dataset_len": 4930,
+  "modality_census": {
+    "aggregated_genotype_groups": 4930,
+    "groups_ge2_modalities": 4800,
+    "betaxanthin_and_metabolome": 4432,
+    "beta_carotene_and_metabolome": 4221,
+    "betaxanthin_and_beta_carotene": 4193,
+    "all_three_modalities": 4023,
+    "combos": {
+      "beta_carotene+betaxanthin+metabolome": 4023,
+      "betaxanthin+metabolome": 409,
+      "beta_carotene+metabolome": 198,
+      "beta_carotene+betaxanthin": 170,
+      "betaxanthin": 67,
+      "metabolome": 48,
+      "beta_carotene": 15
+    },
+    "per_dataset_rows": {
+      "AminoAcidMulleder2016Dataset": 4678,
+      "BetaxanthinCachera2023Dataset": 4669,
+      "CarotenoidOzaydin2013Dataset": 4406
+    },
+    "phenotype_value_counts": {
+      "metabolite_level": {
+        "1": 4669,
+        "19": 4678
+      },
+      "visual_score": {
+        "1": 4406
+      }
+    },
+    "deduplicator_merged_dataset_names": {}
+  },
+  "phenotype_shapes": {
+    "colocated_index": 0,
+    "phenotype_types": [
+      "metabolite_level",
+      "visual_score"
+    ],
+    "value_groups": [
+      {
+        "label": "metabolite_level",
+        "sample_index": 0,
+        "n_values": 1
+      },
+      {
+        "label": "metabolite_level",
+        "sample_index": 2,
+        "n_values": 19
+      },
+      {
+        "label": "visual_score",
+        "sample_index": 1,
+        "n_values": 1
+      }
+    ],
+    "perturbed_genes": [
+      "YLR435W",
+      "YPL069C",
+      "YPR060C",
+      "DOD",
+      "CYP76AD1",
+      "YBR249C",
+      "crtI",
+      "crtYB"
+    ],
+    "n_perturbation_indices": 4
+  }
+}

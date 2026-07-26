@@ -1,0 +1,28 @@
+{
+  "head": "betaxanthin",
+  "method": "zscore",
+  "n_train": 4028,
+  "eps": 1e-08,
+  "dropped_features": [],
+  "degenerate_robust_cv_threshold": 0.01,
+  "degenerate_features": [],
+  "keys": [
+    "betaxanthin"
+  ],
+  "lambdas": null,
+  "mean": [
+    -0.016828373074531555
+  ],
+  "std": [
+    0.5846728086471558
+  ],
+  "raw_mean": [
+    -0.01682837241960367
+  ],
+  "raw_std": [
+    0.5846728124056901
+  ],
+  "robust_cv": [
+    54.131750815630085
+  ]
+}

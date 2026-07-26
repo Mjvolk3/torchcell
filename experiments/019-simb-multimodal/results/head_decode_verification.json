@@ -1,0 +1,86 @@
+{
+  "alignment": {
+    "betaxanthin": {
+      "is_scalar": true,
+      "feat_dim": 1,
+      "raw_dim": 1,
+      "n_keys": 1
+    },
+    "mulleder19": {
+      "is_scalar": false,
+      "feat_dim": 19,
+      "raw_dim": 19,
+      "n_keys": 19
+    },
+    "beta_carotene": {
+      "is_scalar": true,
+      "feat_dim": 1,
+      "raw_dim": 1,
+      "n_keys": null
+    }
+  },
+  "check_1_label_collision": {
+    "betaxanthin_decoded": 0.699999988079071,
+    "betaxanthin_expected": 0.7,
+    "mulleder19_decoded": [
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.7,
+      0.8,
+      0.9,
+      1.0,
+      1.1,
+      1.2,
+      1.3,
+      1.4,
+      1.5,
+      1.6,
+      1.7,
+      1.8,
+      1.9
+    ],
+    "mulleder19_expected": [
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.7,
+      0.8,
+      0.9,
+      1.0,
+      1.1,
+      1.2,
+      1.3,
+      1.4,
+      1.5,
+      1.6,
+      1.7,
+      1.8,
+      1.9
+    ],
+    "beta_carotene_decoded": 3.0,
+    "beta_carotene_expected": 3.0,
+    "all_masks_true": true
+  },
+  "check_2_broadcast_guard": {
+    "raised": "head 'mulleder19' decoded 19 target values but the head emits 18. Assigning these would BROADCAST rather than align; fix the head's output_dim / drop_features / head_phenotype_keys."
+  },
+  "check_2_broadcast_demo": {
+    "assigning_1_value_into_19_columns_gives": [
+      0.7,
+      0.7,
+      0.7,
+      0.7
+    ],
+    "note": "this is what the old code did with a scalar target in a vector head"
+  },
+  "check_3_equal_width_collision_rejected": {
+    "raised": "active heads ['betaxanthin', 'betaxanthin_twin'] all read phenotype 'metabolite_level' with value counts [1, 1]; the COO drops dict keys, so heads sharing a label_name must have DISTINCT value counts to be separable."
+  }
+}

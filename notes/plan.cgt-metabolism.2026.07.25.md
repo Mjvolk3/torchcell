@@ -101,12 +101,24 @@ deletions: ['YPR060C']   all: ['CYP76AD1', 'DOD', 'YBR249C', 'YPR060C']
 ```
 
 Because the cassette carries **ARO4 (YBR249C)** and **ARO7 (YPR060C)** as feedback-resistant
-*alleles*, both gene names are already in every strain's perturbation set — so the ARO4-deletion
-strain and the ARO7-deletion strain have **identical full gene-name sets** and get averaged
-together. This is a correctness bug, not just lost co-location, and it lands on precisely the two
-tyrosine-pathway genes the betaxanthin story is about. Deletion-keying resolves it (4,735 distinct).
-It also confirms the `GenotypeAggregator` TODO was right: the full-set key is unsafe the moment a
-non-deletion axis touches a gene that is also deletable.
+*alleles*, both gene names are already in every strain's perturbation set — so under a
+**set-valued** key the ARO4-deletion and ARO7-deletion strains are indistinguishable.
+
+**Scope of the claim — corrected 2026.07.26.** This is a property of the AGGREGATOR only, and the
+two components of the pipeline disagree about what a genotype is:
+
+| component | key | duplicate gene names |
+| --- | --- | --- |
+| `MeanExperimentDeduplicator.duplicate_check` (`mean_experiment_deduplicate.py:110`) | `sorted([...])` — a **list** (multiset) | **preserved** → ARO4 and ARO7 strains stay distinct |
+| `GenotypeAggregator.aggregate_check` | `sorted({...})` — a **set** | **collapsed** → the two strains collide |
+
+So the collision I measured (4,734 unique keys for 4,735 records) is real at the *aggregation*
+step, and the deduplicator would not have produced it. It does **not** appear in the built
+`fig6_pigment_transfer` dataset — verified independently: ΔARO4 (+0.253) and ΔARO7 (−0.519) are
+separate groups there — because that build uses deletion-keyed aggregation, i.e. the fix. The
+durable lesson is the mismatch itself: **one component treats a genotype as a multiset and the
+other as a set**, which is safe only while every gene appears under at most one perturbation type.
+The `GenotypeAggregator` TODO anticipated exactly this.
 
 ### Datasets
 
@@ -189,6 +201,50 @@ alongside, since theirs is random and leaks related genes.
 
 **Their method is the un-amortized version of Track B's flux sampler** — OptGPSampler MCMC over
 each deletion's flux cone, then shallow sklearn on the samples. Worth stating plainly in the paper.
+
+### 2026.07.25 — SLURM run log (Track A item 6)
+
+Everything now goes through SLURM (`gh_pigment_transfer.slurm`, 1 GPU, all four conditions in
+ONE job so the split and seed are byte-identical across arms).
+
+| job | settings | outcome |
+| --- | --- | --- |
+| **1325** | hidden 24 · 3 layers · lr 1e-3 · wd 1e-6 · dropout 0.1 (189,890 params) | **DIVERGED — cancelled.** A1 val loss rose monotonically 0.766 → 0.974 → 0.975 → 1.243 → 1.531 → 2.053 over six epochs; val pearson collapsed to ~0.02 while **train** pearson hit 0.86 |
+| **1326** | hidden 16 · 2 layers · lr 3e-4 · wd 1e-4 · dropout 0.2 | A1-only convergence check, 60 epochs |
+
+**Diagnosis.** Train 0.86 vs val 0.02 is memorization, not a broken pipeline — the model has
+ample capacity and every head is genuinely supervised (verified: all of `betaxanthin`,
+`beta_carotene`, `mulleder19` report finite non-zero per-head val losses in all four
+conditions, so the silent-zero-gradient trap is closed). With `n_train_supervised = 4,235`,
+`n_val = 340`, `n_test = 340`, and most of the 190 K parameters sitting in the 6,607 × hidden
+gene embedding, this is the 019 `_v2` lesson recurring: on a few thousand genotypes the model
+must be small **and decayed**, not merely "not huge". `wd = 1e-6` was 100× below the best 019
+expression run (116 K params, hidden 16, 2 layers, wd 1e-4), and val loss climbing from epoch 1
+is a step-size symptom on top of that.
+
+**Hyperparameters are now overridable at submit time** via `PIGMENT_OVERRIDES` (hydra
+pass-through), so retuning does not require editing the config that defines the science.
+
+**Context for reading these numbers:** the betaxanthin noise ceiling is **r = 0.914**
+(`results/pigment_noise_ceiling.json`; reliability 0.836, median 15 replicates, 4,696/4,735
+records carry an SE). β-carotene's ceiling is **rank agreement ≈ 0.54** (Spearman between
+replicate max and min on the 130 replicated rows) — so Spearman is the only honest metric there,
+and the arm is weak for two independent reasons: no measured precursor *and* a noisy ordinal
+readout.
+
+### Delta is prepared (not yet submitted)
+
+- `scripts/delta_pigment_transfer.slurm` — 1× A40, **`--account=bbtp-delta-gpu`**, bare
+  `ENV_PY=/work/hdd/bbub/miniconda3/envs/torchcell/bin/python` with **no `conda activate`** and
+  no apptainer, `WANDB_MODE=offline`. The older `delta_train_cgt_multitask_000.slurm` is stale on
+  all three and must not be used as a template.
+- `conf/delta_pigment_base.yaml` — **inherits `gh_pigment_base`** and overrides only
+  `num_workers` and wandb tags, so the science block has one definition across machines.
+- `scripts/sync_delta_dataset.sh <tag>` — generalizes the fig3-only sync; the pigment build is
+  **291 MB** (vs fig3_core's 13 GB), one Duo prompt.
+- **Four prerequisites** are in the slurm header, including two that are not yet done: pushing
+  `plan/cgt-metabolism` and checking it out on Delta, and making the driver honour
+  `PIGMENT_BASE_CONFIG` (it currently hardcodes `gh_pigment_base`).
 
 ### Runs — GPU 0 on GilaHyper is free
 
@@ -437,3 +493,89 @@ enzymes acting as generalists, 52 % of underground reactions re-linking metaboli
 contains, and Yeast9 overstating fragility 2×. The design consequence is not "add slack for
 uncertainty" but **"the annotated network is a subset of the real one, so treat $\rho$ as a floor
 and let the model add to it."**
+
+## 2026.07.26 — Track A executed: build, ceilings, and the four runs
+
+Everything in Track A is implemented and run. Artifacts, all regenerable:
+
+| artifact | script | output |
+| --- | --- | --- |
+| build query | `scripts/generate_fig6_pigment_transfer_cql.py` | `queries/fig6_pigment_transfer.cql` |
+| dataset + census | `scripts/query_fig6_pigment_transfer.py` | `results/fig6_pigment_transfer_census.json` |
+| decode-defect proof | `scripts/verify_head_decode.py` | `results/head_decode_verification.json` |
+| noise ceilings | `scripts/pigment_noise_ceiling.py` | `results/pigment_noise_ceiling.json` + figure |
+| the four conditions | `scripts/run_pigment_conditions.py` + `conf/gh_pigment_base.yaml` | `results/pigment_transfer_runs.json` |
+| model class | `torchcell/models/cell_graph_transformer_metabolism.py` | tests `tests/torchcell/models/test_cell_graph_transformer_metabolism.py` |
+
+### The gate held: 4,432 / 4,221, exactly as predicted
+
+`DeletionKeyedGenotypeAggregator` + the deletion-in-gene_set filter give **4,930 aggregated
+genotypes**, of which **4,800 carry >=2 modalities** and **4,023 carry all three**.
+Betaxanthin n metabolome = **4,432**, beta-carotene n metabolome = **4,221** — landing on the
+raw-LMDB prediction to the record. The cassette survives the query and stops blocking
+co-location.
+
+**The ARO4/ARO7 collision does NOT occur in the built dataset.** `MeanExperimentDeduplicator`
+keys on a sorted LIST of gene names, not a set, so the duplicated `YBR249C` / `YPR060C` entries
+keep the two strains distinct. Verified directly: dARO4 and dARO7 are separate genotype groups
+with betaxanthin +0.253 and -0.519.
+
+### Ceilings first, and they reframe the result before it is read
+
+| target | ceiling | metric |
+| --- | ---: | --- |
+| betaxanthin | **0.914** | Pearson, from per-record SE (n up to **44**, median 15 — the plan's "up to 16" was wrong) |
+| beta-carotene | **0.54** | Spearman, replicate max-vs-min on 130 rows; the paper's own re-screen gives only 0.075, range-restricted to 0.105 corrected |
+| Mulleder | none exists | n=1, no SE |
+
+**Tyrosine does not stand out.** On the 4,432 shared deletions, tyrosine's marginal correlation
+with betaxanthin is **-0.076** — 6th of 19 by |r|, and NEGATIVE; methionine leads at +0.140. The
+mechanistic premise is not visible as a marginal correlation. Recorded before the runs.
+
+### The four conditions — 3 seeds x 4 conditions, identical split within each seed
+
+Peak validation metric; ~4.9 k genotypes, 191,541 parameters, early stopping at 22-32 epochs.
+
+| seed | A1 bx alone | A2 bx + metabolome | A3 bc alone | A4 bc + metabolome |
+| --- | ---: | ---: | ---: | ---: |
+| 42 | r 0.1233 | r 0.1283 | rho 0.0986 | rho 0.1306 |
+| 7 | r 0.0736 | r 0.0796 | rho 0.1254 | rho 0.1254 |
+| 1234 | r **-0.0526** | r 0.0636 | rho 0.0445 | rho 0.0419 |
+
+$$\Delta_{\text{betaxanthin}} = +0.042 \pm 0.064\ (\mathrm{sd},\ n=3)\qquad
+\Delta_{\beta\text{-carotene}} = +0.010 \pm 0.019$$
+
+**The direction predicted by the hypothesis holds — and the evidence for it is weak.** Three
+things have to be said plainly:
+
+1. **The mean is carried by one seed.** Per-seed $\Delta_{\text{betaxanthin}}$ is +0.005, +0.006,
+   **+0.116**. Seeds 42 and 7 show essentially nothing; seed 1234 supplies the entire effect.
+2. **That seed's A1 did not converge.** Its peak validation Pearson was **-0.053** — negative for
+   the whole run, i.e. the betaxanthin-alone arm never learned. A2 then reaching +0.064 is at
+   least as consistent with "the auxiliary task rescued a failed optimization" as with
+   "tyrosine transferred". With sd 0.064 and n=3, the SE on $\Delta_{\text{betaxanthin}}$ is
+   ~0.037 and the interval covers zero. **The asymmetry (+0.033) is not statistically supported.**
+3. **Everything sits far below its ceiling.** Best betaxanthin r = 0.128 against 0.914 (14 % of
+   ceiling); best beta-carotene rho = 0.131 against 0.54 (24 %). And the auxiliary head itself is
+   near-dead: `mulleder19` peaks at r = 0.007-0.025 in every run, so the metabolome task is
+   contributing almost no learned signal for anything to transfer THROUGH.
+
+The last point is the actionable one. Before this contrast can settle the science, the
+metabolome head has to learn something at all — the current result is closer to "no arm works
+well yet" than to "transfer happens on betaxanthin and not on beta-carotene".
+
+### Caveats to carry forward
+
+- **Split imbalance.** `CellDataModule` intersects independently-shuffled per-key splits, and a
+  multi-key record lands in the train union with high probability; the realized split is ~86/7/7,
+  not 80/10/10, leaving **345 val genotypes**. A Pearson there has SE ~0.05, which is why a
+  single-seed Delta was never going to be interpretable. Rebalancing the shared splitter is a
+  separate change and was not made.
+- **`Perturbation` marks cassette genes as perturbed.** ARO4/ARO7/BTS1 are real S288C nodes, so a
+  co-located genotype carries 4 perturbation indices and a metabolome-only genotype 1 — the input
+  marking depends on which modalities were measured. Constant across A1-A4 (same dataset, same
+  splits), so it cannot bias a Delta, but it would confound a cross-genotype generalization claim.
+- **A concurrent job wrote into `results/`.** `pigment_transfer_runs_slurm_1329.json` and a
+  same-content `pigment_transfer_runs.json` (seed 42, A1 only) appeared at 00:00 from a SLURM job
+  outside this session. The authoritative sweep is the 12-run file plus its
+  `pigment_transfer_runs_partial.json` checkpoint.

@@ -236,6 +236,38 @@ def per_feature_pearson(pred: torch.Tensor, target: torch.Tensor) -> torch.Tenso
     return cast(torch.Tensor, r.mean())
 
 
+def _rank(x: torch.Tensor) -> torch.Tensor:
+    """Column-wise average ranks of ``[N, F]`` (ties share their mean rank).
+
+    Tie averaging is not optional here: the beta-carotene colony score is an ordinal with
+    ~11 distinct values over thousands of strains, so an arbitrary tie-break would invent
+    an ordering the data does not contain. ``scipy.stats.rankdata`` does this vectorized
+    over the strain axis; the metric already runs at epoch end on CPU-cached tensors.
+    """
+    from scipy.stats import rankdata
+
+    arr = rankdata(x.detach().cpu().numpy(), axis=0)
+    return torch.as_tensor(arr, dtype=torch.float32)
+
+
+def per_feature_spearman(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    """Mean over per-FEATURE Spearman rank correlations for a head.
+
+    Pearson is the wrong primary metric for an ORDINAL target: the beta-carotene colony
+    score is a subjective -5..+5 rank, so "did the model order the strains correctly" is
+    the question, and the spacing between adjacent scores carries no quantitative meaning.
+    Computed as :func:`per_feature_pearson` on average ranks, so it reduces to the usual
+    Spearman rho for a single feature and averages per-feature rho for a vector head.
+    Rank transformation is monotone, so this is also invariant to the target
+    standardization -- unlike Pearson under Yeo-Johnson.
+    """
+    if pred.ndim == 1:
+        pred = pred.unsqueeze(1)
+    if target.ndim == 1:
+        target = target.unsqueeze(1)
+    return per_feature_pearson(_rank(pred.float()), _rank(target.float()))
+
+
 def per_strain_pearson(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
     """Mean over per-STRAIN (per-row) Pearson correlations for a vector head.
 
@@ -317,27 +349,51 @@ def _yeo_johnson_inverse(y: torch.Tensor, lam: torch.Tensor) -> torch.Tensor:
     return torch.where(y >= 0, pos_val, neg_val)
 
 
-def _vector_phenotype_keys(dataset: Any, name: str, scan: int = 5000) -> list[str] | None:
-    """Return the sorted dict keys of the first vector phenotype ``name`` found.
+def _vector_phenotype_keys(
+    dataset: Any, name: str, expected_keys: list[str] | None = None
+) -> list[str] | None:
+    """Return the sorted dict keys of a vector phenotype ``name`` in this build.
 
     The ``Perturbation`` processor flattens a dict-valued phenotype to a
     key-sorted vector and DROPS the keys, so the per-value feature identity
-    (which gene an expression value belongs to; which CalMorph parameter) is not
-    recoverable from a built HeteroData sample. We recover it once from the raw
-    reconstructed experiment records (same key-sort the processor uses), so the
-    decode can align each head to its target.
+    (which gene an expression value belongs to; which CalMorph parameter; which
+    amino acid) is not recoverable from a built HeteroData sample. We recover it
+    once from the raw reconstructed experiment records (same key-sort the
+    processor uses), so the decode can align each head to its target.
+
+    DEFECT FIX (was ``scan=5000``): the old version scanned only the FIRST 5,000
+    LMDB rows in index order, so a phenotype whose records all sort past that cap
+    (e.g. every metabolome row in a union whose first ~9.2k rows are pigment
+    records) was reported ABSENT -- the head then went silently unsupervised with
+    ``feat_dim: None`` and zero gradient. We now iterate ``phenotype_label_index[
+    name]`` -- the exact row indices carrying that label -- with NO cap, so the
+    scan is both complete and cheaper than the old prefix scan.
+
+    ``expected_keys`` pins WHICH vector phenotype is wanted when several heads
+    share one ``label_name``. Betaxanthin (Cachera) and the 19-AA metabolome
+    (Mulleder) are both ``MetabolitePhenotype`` and therefore both label
+    ``metabolite_level``; only the key set distinguishes them. When
+    ``expected_keys`` is given we return the first record whose sorted key set
+    equals it exactly, and ``None`` if no such record exists (a hard, visible
+    "that phenotype is not in this build" answer rather than the wrong one).
     """
-    n = min(len(dataset), scan)
+    candidates = dataset.phenotype_label_index.get(name)
+    if not candidates:
+        return None
     if dataset.env is None:
         dataset._init_lmdb_read()
-    for idx in range(n):
+    want = sorted(expected_keys) if expected_keys is not None else None
+    for idx in candidates:
         raw = dataset._read_from_lmdb(idx)
         if raw is None:
             continue
         for item in dataset._deserialize_json(raw):
             value = item["experiment"]["phenotype"].get(name)
-            if isinstance(value, dict):
-                return sorted(value.keys())
+            if not isinstance(value, dict):
+                continue
+            keys = sorted(value.keys())
+            if want is None or keys == want:
+                return keys
     return None
 
 
@@ -347,33 +403,75 @@ def build_head_alignments(
     head_phenotypes: dict[str, list[str]],
     node_ids: list[str],
     drop_features: dict[str, list[str]] | None = None,
+    scalar_heads: list[str] | None = None,
+    head_phenotype_keys: dict[str, list[str]] | None = None,
 ) -> dict[str, dict[str, Any]]:
-    """Precompute per-head COO->target alignment from the real Fig-3 build.
+    """Precompute per-head COO->target alignment from the real build.
 
     For each active head we resolve its phenotype name to the actual COO layout:
 
-    * ``gene_interaction`` -- SCALAR (fitness); ``{"is_scalar": True}``.
+    * SCALAR heads -- declared EXPLICITLY by ``scalar_heads`` (see below). One value
+      per genotype: fitness (``gene_interaction``), the beta-carotene ordinal
+      ``visual_score``, the 1-key betaxanthin ``metabolite_level``.
     * ``per_gene`` -- expression, a per-gene VECTOR. The processor emits one value
       per MEASURED gene in key-sorted order; the ``per_gene`` head emits one value
       per graph NODE. We build ``col_idx`` (node positions of the measured genes
       that exist in the cell graph) so the prediction is gathered to the measured
       subset, and ``keep_mask`` (over the raw key-sorted vector) dropping measured
       genes absent from the gene set -- so gathered prediction and target align 1:1.
-    * ``global`` / ``per_metabolite`` -- a fixed-length feature VECTOR (CalMorph 281,
-      metabolites M); identity alignment, ``feat_dim`` = vector length.
+    * every other head -- a fixed-length feature VECTOR (CalMorph 281, Mulleder 19);
+      identity alignment, ``feat_dim`` = vector length.
+
+    DEFECT FIX -- ``is_scalar`` used to be hardcoded ``True`` for the single head
+    name ``gene_interaction`` and ``False`` for everything else. A scalar target
+    routed into a vector head then hit ``target[b] = head_vals`` with a 1-element
+    ``head_vals`` and a ``[F]`` row, which torch BROADCASTS: the one scalar is
+    silently copied across all F columns and trains as if every feature had been
+    measured at that value. ``scalar_heads`` now declares the scalar path per head,
+    and ``raw_dim`` (below) lets the decode REJECT any row whose value count does
+    not match the head, instead of broadcasting it.
+
+    ``raw_dim`` is the number of COO values the head's phenotype contributes per
+    genotype BEFORE ``keep_mask`` drops any (1 for a scalar head, ``len(keys)``
+    for a vector head). It is what the decode matches against, and it is also how
+    two heads sharing one ``label_name`` are told apart -- betaxanthin
+    (``metabolite_level``, 1 key) vs the Mulleder metabolome (``metabolite_level``,
+    19 keys). ``head_phenotype_keys`` pins each such head's exact key set so the
+    resolution is by IDENTITY, not merely by count.
     """
     nid_to_pos = {n: i for i, n in enumerate(node_ids)}
     drop_features = drop_features or {}
+    scalar_set = set(scalar_heads if scalar_heads is not None else ["gene_interaction"])
+    head_phenotype_keys = head_phenotype_keys or {}
     align: dict[str, dict[str, Any]] = {}
     for head in active_heads:
-        if head == "gene_interaction":
-            align[head] = {"is_scalar": True}
-            continue
+        pinned = head_phenotype_keys.get(head)
         keys: list[str] | None = None
         for name in head_phenotypes.get(head, []):
-            keys = _vector_phenotype_keys(dataset, name)
+            keys = _vector_phenotype_keys(dataset, name, expected_keys=pinned)
             if keys is not None:
                 break
+        if head in scalar_set:
+            # A scalar head reads ONE value per genotype. Two shapes reach here: a
+            # plain float phenotype (fitness, visual_score) -> no dict keys at all;
+            # and a 1-key dict phenotype (betaxanthin's metabolite_level) -> keys
+            # resolved above. Either way raw_dim is 1, and a pinned key set of
+            # length != 1 is a config error, not something to paper over.
+            if pinned is not None and len(pinned) != 1:
+                raise ValueError(
+                    f"scalar head '{head}' pinned to {len(pinned)} keys {pinned}; "
+                    "a scalar head must name exactly one (or zero) phenotype keys."
+                )
+            align[head] = {
+                "is_scalar": True,
+                "keep_mask": None,
+                "col_idx": None,
+                "feat_dim": 1,
+                "raw_dim": 1,
+                "keys": keys,
+                "dropped_features": [],
+            }
+            continue
         if keys is None:
             # No such vector phenotype present in this build -> head unsupervised.
             align[head] = {
@@ -381,6 +479,8 @@ def build_head_alignments(
                 "keep_mask": None,
                 "col_idx": None,
                 "feat_dim": None,
+                "raw_dim": None,
+                "keys": None,
                 "dropped_features": [],
             }
             continue
@@ -396,6 +496,8 @@ def build_head_alignments(
                 "keep_mask": keep,
                 "col_idx": col,
                 "feat_dim": int(keep.sum().item()),
+                "raw_dim": len(keys),
+                "keys": keys,
                 "dropped_features": [],
             }
         else:
@@ -414,6 +516,8 @@ def build_head_alignments(
                     "keep_mask": keep,
                     "col_idx": None,
                     "feat_dim": int(keep.sum().item()),
+                    "raw_dim": len(keys),
+                    "keys": keys,
                     "dropped_features": [k for k in keys if k in drop_set],
                 }
             else:
@@ -422,8 +526,30 @@ def build_head_alignments(
                     "keep_mask": None,
                     "col_idx": None,
                     "feat_dim": len(keys),
+                    "raw_dim": len(keys),
+                    "keys": keys,
                     "dropped_features": [],
                 }
+
+    # Two heads may legitimately share a `label_name` (betaxanthin and the Mulleder
+    # metabolome are both MetabolitePhenotype -> `metabolite_level`). The COO drops the
+    # dict keys, so at decode time the ONLY thing separating their value groups within a
+    # genotype is the group SIZE. Distinct sizes are therefore a hard requirement, not a
+    # nicety: equal sizes would make the assignment arbitrary and silently wrong.
+    by_label: dict[str, list[tuple[str, int]]] = {}
+    for head, a in align.items():
+        if a.get("raw_dim") is None:
+            continue
+        for name in head_phenotypes.get(head, []):
+            by_label.setdefault(name, []).append((head, int(a["raw_dim"])))
+    for name, entries in by_label.items():
+        dims = [d for _, d in entries]
+        if len(set(dims)) != len(dims):
+            raise ValueError(
+                f"active heads {[h for h, _ in entries]} all read phenotype "
+                f"'{name}' with value counts {dims}; the COO drops dict keys, so heads "
+                "sharing a label_name must have DISTINCT value counts to be separable."
+            )
     return align
 
 
@@ -463,6 +589,15 @@ def compute_per_feature_target_stats(
     and compute the stats. Near-constant features (robust CV = IQR/|median| below
     ``degenerate_robust_cv``) are FLAGGED (not dropped here); the standardizer/epsilon floor
     keeps them finite.
+
+    DEFECT FIX -- SCALAR heads used to be skipped outright (``if align["is_scalar"]:
+    continue``), so a scalar target could not be standardized at all. That is wrong for the
+    new production heads, whose raw units are mutually incomparable and none of which is
+    O(1): betaxanthin is a population-centred CRI-SPA fluorescence (can be negative) and
+    beta-carotene is an ordinal -5..+5. Scalar heads are now handled as the F=1 case --
+    single-column stats, same z-score/Yeo-Johnson machinery, same inversion for raw-unit
+    metric reporting. A scalar head reads either a plain float phenotype (``visual_score``)
+    or a 1-key dict (``metabolite_level``); both are collected here.
     """
     assert vector_norm_method in ("yeo_johnson", "zscore"), (
         f"unsupported vector_norm_method {vector_norm_method!r}"
@@ -478,20 +613,29 @@ def compute_per_feature_target_stats(
         # heads without a second stats pass.
         method_for_head = head_norm_method.get(head, vector_norm_method)
         align = head_align.get(head, {})
-        if align.get("is_scalar", False) or align.get("feat_dim") is None:
+        if align.get("feat_dim") is None:
             continue
-        keys: list[str] | None = None
+        is_scalar = bool(align.get("is_scalar", False))
+        # `keys` was already resolved (and, for a shared label_name, key-pinned) by
+        # build_head_alignments -- reuse it instead of re-scanning the LMDB, which would
+        # re-introduce the ambiguity between betaxanthin and the 19-AA metabolome.
+        keys = align.get("keys")
         name: str | None = None
         for cand in head_phenotypes.get(head, []):
-            keys = _vector_phenotype_keys(dataset, cand)
-            if keys is not None:
+            if cand in dataset.phenotype_label_index:
                 name = cand
                 break
-        if keys is None or name is None:
+        if name is None:
             continue
-        keep = align.get("keep_mask")
-        keep_list = keep.tolist() if keep is not None else [True] * len(keys)
-        kept_keys = [k for k, flag in zip(keys, keep_list) if flag]
+        if is_scalar:
+            kept_keys = keys if keys else [head]
+            keep_list = [True] * len(kept_keys)
+        else:
+            if keys is None:
+                continue
+            keep = align.get("keep_mask")
+            keep_list = keep.tolist() if keep is not None else [True] * len(keys)
+            kept_keys = [k for k, flag in zip(keys, keep_list) if flag]
 
         collected: list[list[float]] = []
         for idx in train_indices:
@@ -500,13 +644,25 @@ def compute_per_feature_target_stats(
                 continue
             for item in dataset._deserialize_json(raw):
                 value = item["experiment"]["phenotype"].get(name)
-                if not isinstance(value, dict):
+                if value is None:
                     continue
-                vec = [
-                    float(value[k])
-                    for k, flag in zip(keys, keep_list)
-                    if flag and k in value
-                ]
+                if isinstance(value, dict):
+                    if keys is None:
+                        continue
+                    if not set(keys) <= set(value):
+                        # A different phenotype sharing this label_name (e.g. the
+                        # 19-AA metabolome when standardizing betaxanthin, whose keys
+                        # are disjoint from this head's).
+                        continue
+                    vec = [
+                        float(value[k])
+                        for k, flag in zip(keys, keep_list)
+                        if flag and k in value
+                    ]
+                elif is_scalar:
+                    vec = [float(value)]
+                else:
+                    continue
                 if len(vec) == len(kept_keys):
                     collected.append(vec)
 
@@ -609,7 +765,9 @@ class MultitaskCGTTask(L.LightningModule):
             h: make_dist_head(dist) for h in active_heads if h != "gene_interaction"
         }
         self.loss = MaskedMultitaskLoss(
-            head_weights=head_weights, loss_fn=loss_fn, dist_heads=self.dist_heads
+            head_weights=head_weights,
+            loss_fn=loss_fn,
+            dist_heads=cast(dict[str, torch.nn.Module], self.dist_heads),
         )
         self.optimizer_config = optimizer_config
         self.lr_scheduler_config = lr_scheduler_config
@@ -727,21 +885,47 @@ class MultitaskCGTTask(L.LightningModule):
           LOCAL to each graph, so a value's name is ``phenotype_types[b][type_idx]``.
 
         For each active head, per graph ``b`` we select the values whose local name
-        is in ``head_phenotypes[head]``; if any, the mask is True and the target row
-        is those values (scalar mean for scalar heads; the key-sorted vector for
-        vector heads, restricted by ``keep_mask`` to the measured features that the
+        is in ``head_phenotypes[head]``, then split those by
+        ``phenotype_sample_indices`` (which experiment WITHIN the genotype produced
+        the value) and keep the sample group(s) whose SIZE equals the head's
+        ``raw_dim``. If any survive, the mask is True and the target row is those
+        values (mean over groups for a scalar head; the key-sorted vector for a
+        vector head, restricted by ``keep_mask`` to the measured features the
         gathered prediction covers). Absent modalities keep mask False so
         ``MaskedMultitaskLoss`` skips them.
+
+        TWO DEFECTS ARE FIXED HERE, both of which produced a plausible-looking
+        number rather than an error:
+
+        * BROADCAST. The old code assigned ``target[b] = head_vals`` with no shape
+          check. A 1-element ``head_vals`` assigned into an ``[F]`` row is a legal
+          torch broadcast, so a scalar observation was silently replicated across
+          every feature of a vector head and trained on as if F features had been
+          measured. Every assignment is now size-checked and a mismatch RAISES.
+        * LABEL COLLISION. Two heads can share a ``label_name``: betaxanthin and the
+          19-AA metabolome are both ``MetabolitePhenotype`` -> ``metabolite_level``.
+          Selecting purely by name concatenated 1 + 19 values into one 20-value blob.
+          The COO drops the dict keys, but it does keep
+          ``phenotype_sample_indices``, so the two experiments' values remain
+          separable by group size -- which ``build_head_alignments`` has already
+          guaranteed to be unique per label_name.
         """
         device = head_outputs[next(iter(head_outputs))].device
         gene = batch["gene"]
         values = getattr(gene, "phenotype_values", None)
         type_idx = getattr(gene, "phenotype_type_indices", None)
         val_batch = getattr(gene, "phenotype_values_batch", None)
+        samp_idx = getattr(gene, "phenotype_sample_indices", None)
         pheno_types = gene["phenotype_types"] if "phenotype_types" in gene else None
         targets: dict[str, torch.Tensor] = {}
         masks: dict[str, torch.Tensor] = {}
-        if values is None or type_idx is None or val_batch is None or pheno_types is None:
+        if (
+            values is None
+            or type_idx is None
+            or val_batch is None
+            or samp_idx is None
+            or pheno_types is None
+        ):
             return targets, masks
 
         # Normalize phenotype_types to a per-graph list-of-lists (single-graph batch
@@ -758,6 +942,11 @@ class MultitaskCGTTask(L.LightningModule):
             align = self.head_align.get(head, {})
             is_scalar = bool(align.get("is_scalar", False))
             keep = align.get("keep_mask")
+            raw_dim = align.get("raw_dim")
+            if raw_dim is None:
+                # Head is unsupervised in this build (no such phenotype present).
+                continue
+            raw_dim = int(raw_dim)
             row_mask = torch.zeros(bsz, dtype=torch.bool, device=device)
             # Targets are always POINT-shaped [B, feat]: a distributional head emits
             # [B, feat, param_dim] params, but the observation it is scored against is one
@@ -767,6 +956,7 @@ class MultitaskCGTTask(L.LightningModule):
             target = torch.zeros_like(
                 dist_head.point(pred) if dist_head is not None else pred
             )
+            expected = int(target.shape[1]) if target.ndim > 1 else 1
             for b in range(bsz):
                 sel_b = val_batch == b
                 if not bool(sel_b.any()):
@@ -774,17 +964,44 @@ class MultitaskCGTTask(L.LightningModule):
                 gtypes = per_graph_types[b]
                 tb = type_idx[sel_b].tolist()
                 vb = values[sel_b]
+                sb = samp_idx[sel_b]
                 name_sel = torch.tensor(
                     [gtypes[t] in names for t in tb], dtype=torch.bool
                 )
                 if not bool(name_sel.any()):
                     continue
-                head_vals = vb[name_sel]
+                cand_vals = vb[name_sel]
+                cand_samp = sb[name_sel]
+                # Keep only the per-experiment value groups of the head's own width.
+                groups = [
+                    cand_vals[cand_samp == s]
+                    for s in cand_samp.unique(sorted=True).tolist()
+                ]
+                groups = [g for g in groups if int(g.numel()) == raw_dim]
+                if not groups:
+                    continue
                 if is_scalar:
-                    target[b] = head_vals.float().mean().to(device)
+                    # Several replicate records of a scalar phenotype (e.g. two fitness
+                    # measurements of one genotype) average, as before.
+                    head_vals = torch.stack([g.reshape(()) for g in groups]).mean()
+                    target[b] = head_vals.float().to(device)
                 else:
+                    if len(groups) > 1:
+                        raise ValueError(
+                            f"head '{head}' matched {len(groups)} value groups of width "
+                            f"{raw_dim} in batch row {b}; a vector head must resolve to "
+                            "exactly one measurement per genotype."
+                        )
+                    head_vals = groups[0]
                     if keep is not None:
                         head_vals = head_vals[keep]
+                    if int(head_vals.numel()) != expected:
+                        raise ValueError(
+                            f"head '{head}' decoded {int(head_vals.numel())} target "
+                            f"values but the head emits {expected}. Assigning these "
+                            "would BROADCAST rather than align; fix the head's "
+                            "output_dim / drop_features / head_phenotype_keys."
+                        )
                     target[b] = head_vals.to(device)
                 row_mask[b] = True
             # WS10b + Part A: per-feature normalization (TRAIN-split stats) so a multi-scale
@@ -896,6 +1113,11 @@ class MultitaskCGTTask(L.LightningModule):
             pear_feat = per_feature_pearson(pred, target).to(self.device)
             self.log(f"{stage}/{pheno}/pearson_per_feature", pear_feat, sync_dist=True)
             per_feature_values.append(pear_feat)
+            # Rank metric, logged for every head. It is the PRIMARY metric for an ordinal
+            # target (the beta-carotene colour score) and a useful monotone-invariant
+            # companion elsewhere.
+            spear_feat = per_feature_spearman(pred, target).to(self.device)
+            self.log(f"{stage}/{pheno}/spearman_per_feature", spear_feat, sync_dist=True)
             feat_dim = pred.shape[1] if pred.ndim > 1 else 1
             if feat_dim > 1:
                 # Per-instance runs on the NORMALIZED features (comparable scales); falls back
@@ -1089,7 +1311,8 @@ def run_dry_run(cfg: DictConfig) -> None:
         if h != "gene_interaction"
     }
     loss_fn = MaskedMultitaskLoss(
-        loss_fn=str(cfg.multitask.loss_fn), dist_heads=dist_heads
+        loss_fn=str(cfg.multitask.loss_fn),
+        dist_heads=cast(dict[str, torch.nn.Module], dist_heads),
     )
     targets = {}
     for k, v in head_outputs.items():
@@ -1151,6 +1374,8 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
     from torch_geometric.transforms import Compose
 
     from torchcell.data import (
+        Aggregator,
+        DeletionKeyedGenotypeAggregator,
         GenotypeAggregator,
         MeanExperimentDeduplicator,
         Neo4jCellDataset,
@@ -1263,6 +1488,19 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
 
         incidence_graphs = {"metabolism_bipartite": YeastGEM().bipartite_graph}
 
+    # Genotype key. `genotype` keys on the FULL perturbation set (the default, and what
+    # every Fig-3 build uses). `deletion_keyed` keys on the DELETION set alone, treating a
+    # constant engineered cassette as reference-strain background -- required for the
+    # pigment builds, where the betaxanthin/beta-carotene strains carry 4/3 `gene_addition`
+    # perturbations that make their genotypes key-disjoint from every single-KO metabolome
+    # genotype (measured co-location exactly ZERO under the full key).
+    aggregator_name = str(cfg.cell_dataset.get("aggregator", "genotype"))
+    aggregator_cls: type[Aggregator] = {
+        "genotype": GenotypeAggregator,
+        "deletion_keyed": DeletionKeyedGenotypeAggregator,
+    }[aggregator_name]
+    print(f"[aggregator] {aggregator_name} -> {aggregator_cls.__name__}")
+
     dataset = Neo4jCellDataset(
         root=dataset_root,
         query=query,
@@ -1272,7 +1510,7 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         node_embeddings=node_embeddings,
         converter=None,
         deduplicator=MeanExperimentDeduplicator,
-        aggregator=GenotypeAggregator,
+        aggregator=aggregator_cls,
         graph_processor=Perturbation(),
         transform=None,
     )
@@ -1377,7 +1615,24 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     heads_config = build_heads_config(cfg)
-    model = CellGraphTransformer(
+    # Model class. `cell_graph_transformer` is the Fig-3 model; `metabolism` is the
+    # CGT-Metabolism fork, which reuses that model's encoder + PERT operator UNCHANGED
+    # (parity-tested) and adds the named production/metabolome heads.
+    model_class = str(cfg.model.get("model_class", "cell_graph_transformer"))
+    if model_class == "metabolism":
+        from torchcell.models.cell_graph_transformer_metabolism import (
+            CellGraphTransformerMetabolism,
+        )
+
+        model_cls: type[CellGraphTransformer] = CellGraphTransformerMetabolism
+    elif model_class == "cell_graph_transformer":
+        model_cls = CellGraphTransformer
+    else:
+        raise ValueError(
+            f"unknown model.model_class {model_class!r} "
+            "(expected 'cell_graph_transformer' or 'metabolism')"
+        )
+    model = model_cls(
         gene_num=cfg.model.gene_num,
         hidden_channels=cfg.model.hidden_channels,
         num_transformer_layers=cfg.model.num_transformer_layers,
@@ -1485,24 +1740,42 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         k: list(v) for k, v in _as_dict(cfg.multitask.get("drop_features", {})).items()
     }
     node_ids = list(dataset.cell_graph["gene"].node_ids)
+    # `scalar_heads` declares the scalar path explicitly (was: hardcoded to
+    # gene_interaction only, which let a scalar target broadcast across a vector head).
+    # `head_phenotype_keys` pins the exact dict keys for heads that SHARE a label_name --
+    # betaxanthin and the Mulleder metabolome are both `metabolite_level`.
+    scalar_heads = list(cfg.multitask.get("scalar_heads", ["gene_interaction"]))
+    head_phenotype_keys = {
+        k: list(v)
+        for k, v in _as_dict(cfg.multitask.get("head_phenotype_keys", {})).items()
+    }
     head_align = build_head_alignments(
         dataset=dataset,
         active_heads=active_heads,
         head_phenotypes={k: list(v) for k, v in head_phenotypes.items()},
         node_ids=node_ids,
         drop_features=drop_features,
+        scalar_heads=scalar_heads,
+        head_phenotype_keys=head_phenotype_keys,
     )
     print("head_align:")
     for h, a in head_align.items():
         printable = {
-            k: (int(v.numel()) if hasattr(v, "numel") else v) for k, v in a.items()
+            k: (
+                int(v.numel())
+                if hasattr(v, "numel")
+                else (f"[{len(v)} keys]" if isinstance(v, list) and len(v) > 8 else v)
+            )
+            for k, v in a.items()
         }
         print(f"  {h}: {printable}")
 
-    # Part A sanity: a vector head's model output_dim MUST equal its (post-drop) target
-    # feature count, else MaskedMultitaskLoss gets a [B, out] vs [B, feat] shape mismatch.
+    # Part A sanity: a head's model output_dim MUST equal its (post-drop) target feature
+    # count, else MaskedMultitaskLoss gets a [B, out] vs [B, feat] shape mismatch. Scalar
+    # heads are checked too (output_dim must be 1) -- they were previously skipped, which
+    # is exactly how a scalar/vector mismatch reached the silent-broadcast path.
     for h, a in head_align.items():
-        if a.get("is_scalar", False) or a.get("feat_dim") is None:
+        if a.get("feat_dim") is None:
             continue
         model_head = getattr(model, f"{h}_head", None)
         out_dim = getattr(model_head, "output_dim", None)

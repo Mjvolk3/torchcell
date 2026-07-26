@@ -1,0 +1,188 @@
+{
+  "base_config": "gh_pigment_base",
+  "fast_dev_run": true,
+  "conditions": {
+    "A1": {
+      "condition": "A1",
+      "active_heads": [
+        "betaxanthin"
+      ],
+      "target": "betaxanthin",
+      "seed": 42,
+      "n_epochs_run": null,
+      "betaxanthin_pearson_peak": null,
+      "betaxanthin_pearson_last": 0.052365679293870926,
+      "betaxanthin_spearman_peak": null,
+      "betaxanthin_spearman_last": -0.005681163631379604,
+      "val_loss_last": 1.0460928678512573,
+      "_all_metrics": {
+        "train/loss": 1.1072838306427002,
+        "train/betaxanthin/loss": 1.1072838306427002,
+        "val/loss": 1.0460928678512573,
+        "val/betaxanthin/loss": 1.0460928678512573,
+        "val/betaxanthin/pearson_per_feature": 0.052365679293870926,
+        "val/betaxanthin/spearman_per_feature": -0.005681163631379604,
+        "val/mean/pearson_per_feature": 0.052365679293870926,
+        "train/betaxanthin/pearson_per_feature": -0.1682402342557907,
+        "train/betaxanthin/spearman_per_feature": -0.10664589703083038,
+        "train/mean/pearson_per_feature": -0.1682402342557907,
+        "train/loss_max": 1.1072838306427002,
+        "train/betaxanthin/loss_max": 1.1072838306427002,
+        "val/loss_max": 1.0460928678512573,
+        "val/betaxanthin/loss_max": 1.0460928678512573
+      }
+    },
+    "A2": {
+      "condition": "A2",
+      "active_heads": [
+        "betaxanthin",
+        "mulleder19"
+      ],
+      "target": "betaxanthin",
+      "seed": 42,
+      "n_epochs_run": null,
+      "betaxanthin_pearson_peak": null,
+      "betaxanthin_pearson_last": 0.31831279397010803,
+      "betaxanthin_spearman_peak": null,
+      "betaxanthin_spearman_last": 0.29105105996131897,
+      "mulleder19_pearson_peak": null,
+      "mulleder19_pearson_last": 0.012145217508077621,
+      "mulleder19_spearman_peak": null,
+      "mulleder19_spearman_last": -0.005603963043540716,
+      "val_loss_last": 4.979433059692383,
+      "_all_metrics": {
+        "train/loss": 2.062870502471924,
+        "train/betaxanthin/loss": 1.0462853908538818,
+        "train/mulleder19/loss": 1.0165852308273315,
+        "val/loss": 4.979433059692383,
+        "val/betaxanthin/loss": 1.046838402748108,
+        "val/mulleder19/loss": 3.9325947761535645,
+        "val/betaxanthin/pearson_per_feature": 0.31831279397010803,
+        "val/betaxanthin/spearman_per_feature": 0.29105105996131897,
+        "val/mulleder19/pearson_per_feature": 0.012145217508077621,
+        "val/mulleder19/spearman_per_feature": -0.005603963043540716,
+        "val/mulleder19/pearson_per_instance": -0.028351126238703728,
+        "val/mean/pearson_per_feature": 0.16522900760173798,
+        "train/betaxanthin/pearson_per_feature": -0.19147524237632751,
+        "train/betaxanthin/spearman_per_feature": -0.08899904042482376,
+        "train/mulleder19/pearson_per_feature": -0.030998148024082184,
+        "train/mulleder19/spearman_per_feature": -0.0142350560054183,
+        "train/mulleder19/pearson_per_instance": -0.012859100475907326,
+        "train/mean/pearson_per_feature": -0.11123669147491455,
+        "train/loss_max": 2.062870502471924,
+        "train/betaxanthin/loss_max": 1.0462853908538818,
+        "train/mulleder19/loss_max": 1.0165852308273315,
+        "val/loss_max": 4.979433059692383,
+        "val/betaxanthin/loss_max": 1.046838402748108,
+        "val/mulleder19/loss_max": 3.9325947761535645
+      }
+    },
+    "A3": {
+      "condition": "A3",
+      "active_heads": [
+        "beta_carotene"
+      ],
+      "target": "beta_carotene",
+      "seed": 42,
+      "n_epochs_run": null,
+      "beta_carotene_pearson_peak": null,
+      "beta_carotene_pearson_last": 0.046392180025577545,
+      "beta_carotene_spearman_peak": null,
+      "beta_carotene_spearman_last": -0.020609183236956596,
+      "val_loss_last": 1.2453910112380981,
+      "_all_metrics": {
+        "train/loss": 0.39768096804618835,
+        "train/beta_carotene/loss": 0.39768096804618835,
+        "val/loss": 1.2453910112380981,
+        "val/beta_carotene/loss": 1.2453910112380981,
+        "val/beta_carotene/pearson_per_feature": 0.046392180025577545,
+        "val/beta_carotene/spearman_per_feature": -0.020609183236956596,
+        "val/mean/pearson_per_feature": 0.046392180025577545,
+        "train/beta_carotene/pearson_per_feature": 0.1659710705280304,
+        "train/beta_carotene/spearman_per_feature": 0.0372762531042099,
+        "train/mean/pearson_per_feature": 0.1659710705280304,
+        "train/loss_max": 0.39768096804618835,
+        "train/beta_carotene/loss_max": 0.39768096804618835,
+        "val/loss_max": 1.2453910112380981,
+        "val/beta_carotene/loss_max": 1.2453910112380981
+      }
+    },
+    "A4": {
+      "condition": "A4",
+      "active_heads": [
+        "beta_carotene",
+        "mulleder19"
+      ],
+      "target": "beta_carotene",
+      "seed": 42,
+      "n_epochs_run": null,
+      "beta_carotene_pearson_peak": null,
+      "beta_carotene_pearson_last": -0.03585728630423546,
+      "beta_carotene_spearman_peak": null,
+      "beta_carotene_spearman_last": -0.12433025985956192,
+      "mulleder19_pearson_peak": null,
+      "mulleder19_pearson_last": 0.004893654491752386,
+      "mulleder19_spearman_peak": null,
+      "mulleder19_spearman_last": -0.018500689417123795,
+      "val_loss_last": 5.128173828125,
+      "_all_metrics": {
+        "train/loss": 2.5009665489196777,
+        "train/beta_carotene/loss": 1.4843814373016357,
+        "train/mulleder19/loss": 1.0165852308273315,
+        "val/loss": 5.128173828125,
+        "val/beta_carotene/loss": 1.1987426280975342,
+        "val/mulleder19/loss": 3.929431438446045,
+        "val/beta_carotene/pearson_per_feature": -0.03585728630423546,
+        "val/beta_carotene/spearman_per_feature": -0.12433025985956192,
+        "val/mulleder19/pearson_per_feature": 0.004893654491752386,
+        "val/mulleder19/spearman_per_feature": -0.018500689417123795,
+        "val/mulleder19/pearson_per_instance": -0.028770675882697105,
+        "val/mean/pearson_per_feature": -0.015481815673410892,
+        "train/beta_carotene/pearson_per_feature": -0.07749377191066742,
+        "train/beta_carotene/spearman_per_feature": -0.06756565719842911,
+        "train/mulleder19/pearson_per_feature": -0.030998148024082184,
+        "train/mulleder19/spearman_per_feature": -0.0142350560054183,
+        "train/mulleder19/pearson_per_instance": -0.012859100475907326,
+        "train/mean/pearson_per_feature": -0.0542459599673748,
+        "train/loss_max": 2.5009665489196777,
+        "train/beta_carotene/loss_max": 1.4843814373016357,
+        "train/mulleder19/loss_max": 1.0165852308273315,
+        "val/loss_max": 5.128173828125,
+        "val/beta_carotene/loss_max": 1.1987426280975342,
+        "val/mulleder19/loss_max": 3.929431438446045
+      }
+    }
+  },
+  "deltas": {
+    "betaxanthin": {
+      "alone": "A1",
+      "joint": "A2",
+      "pearson_alone": null,
+      "pearson_joint": null,
+      "delta_pearson": null,
+      "spearman_alone": null,
+      "spearman_joint": null,
+      "delta_spearman": null,
+      "primary_metric": "pearson",
+      "delta_primary": null
+    },
+    "beta_carotene": {
+      "alone": "A3",
+      "joint": "A4",
+      "pearson_alone": null,
+      "pearson_joint": null,
+      "delta_pearson": null,
+      "spearman_alone": null,
+      "spearman_joint": null,
+      "delta_spearman": null,
+      "primary_metric": "spearman",
+      "delta_primary": null
+    }
+  },
+  "headline": {
+    "delta_betaxanthin_primary": null,
+    "delta_beta_carotene_primary": null,
+    "asymmetry": null,
+    "hypothesis_direction_holds": null
+  }
+}

@@ -343,6 +343,34 @@ class CellDataModule(L.LightningDataModule):
             ),
         }
 
+        # A record may appear under SEVERAL keys of the same split index, and those keys
+        # are shuffled independently -- so it can be drawn into train under one key and
+        # into val under another, landing in two of the intersections above. That is a
+        # train/val/test leak, and `DataModuleIndex` rightly refuses it.
+        #
+        # It is not hypothetical: under deletion-keyed aggregation one genotype group
+        # holds records with DIFFERENT perturbation counts (a betaxanthin record carries
+        # its 4-gene cassette + the deletion = 5, a beta-carotene record 4, a metabolome
+        # record 1), so `perturbation_count_index` files that single record under three
+        # keys. The same happens in `phenotype_label_index` for any multi-modality
+        # genotype.
+        #
+        # Conflicts are pulled OUT of every split and returned to `remaining`, so the
+        # ratio-balancing assignment below places each conflicted record exactly once.
+        # When no record is multiply-keyed this is a no-op and the split is unchanged.
+        conflicted = (
+            (final_splits["train"] & final_splits["val"])
+            | (final_splits["train"] & final_splits["test"])
+            | (final_splits["val"] & final_splits["test"])
+        )
+        if conflicted:
+            log.info(
+                f"{len(conflicted)} records were assigned to more than one split by "
+                "independently-shuffled index keys; reassigning them exactly once."
+            )
+            for split in ("train", "val", "test"):
+                final_splits[split] -= conflicted
+
         # Sophisticated assignment of remaining indices
         remaining = all_indices - (
             final_splits["train"] | final_splits["val"] | final_splits["test"]

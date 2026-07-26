@@ -1,0 +1,22 @@
+# experiments/019-simb-multimodal/conf/delta_pigment_base.yaml
+# Delta (NCSA) config for the pigment metabolome-transfer contrast (CGT-Metabolism Track A).
+#
+# INHERITS `gh_pigment_base` and overrides ONLY infrastructure. That is deliberate: the whole
+# result is a Delta between conditions, and the plan's rule is that everything except
+# `multitask.active_heads` must be identical across the four arms. Duplicating the science
+# block here would let GilaHyper and Delta silently drift apart and make cross-machine
+# numbers incomparable.
+defaults:
+  - gh_pigment_base
+  - _self_
+
+wandb:
+  project: torchcell_019_pigment_transfer
+  tags: [ws11b, delta, pigment, metabolome-transfer]
+
+# Delta gpuA40x4 nodes give 16 cores per GPU; GilaHyper's base config uses 8.
+data_module:
+  num_workers: 16
+
+trainer:
+  devices: 1

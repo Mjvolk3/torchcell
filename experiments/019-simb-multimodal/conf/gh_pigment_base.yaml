@@ -1,0 +1,171 @@
+# experiments/019-simb-multimodal/conf/gh_pigment_base.yaml
+# GilaHyper base config for the pigment metabolome-transfer contrast (CGT-Metabolism
+# Track A). ONE config for all four conditions; `run_pigment_conditions.py` composes it
+# and overrides ONLY `multitask.active_heads`:
+#
+#   A1  [betaxanthin]                  betaxanthin alone
+#   A2  [betaxanthin, mulleder19]      + the 19-AA metabolome   -> Delta_betaxanthin
+#   A3  [beta_carotene]                beta-carotene alone
+#   A4  [beta_carotene, mulleder19]    + the 19-AA metabolome   -> Delta_beta_carotene
+#
+# Everything else -- dataset, split seed, model size, optimizer, epochs -- is byte
+# identical across the four by construction. That is deliberate: the 019 `_v2` lesson is
+# that an unmatched split silently invalidates a Delta, and a Delta is the entire result
+# here.
+#
+# SIZE. ~192 K parameters (hidden 24 x 3 layers). The prior 019 work showed a 5 M-param
+# model overfitting ~1.3 k samples badly; this build has ~4.9 k genotypes, so the model is
+# deliberately small. Most of the count is the 6,607 x 24 learnable gene embedding.
+defaults:
+  - default
+  - _self_
+
+dry_run: false
+seed: 42
+
+wandb:
+  project: torchcell_019_pigment_transfer
+  tags: [ws11b, gilahyper, pigment, metabolome-transfer]
+
+cell_dataset:
+  graphs: [physical, regulatory]
+  node_embeddings: []          # learnable gene embeddings
+  query_file: fig6_pigment_transfer.cql
+  dataset_tag: fig6_pigment_transfer
+  # THE GATE. Full-gene-set keying puts every cassette-bearing pigment genotype in its own
+  # bucket -> 0 co-located genotypes -> no transfer experiment at all. Deletion keying
+  # treats the constant cassette as reference-strain background and recovers 4,432
+  # betaxanthin/metabolome and 4,221 beta-carotene/metabolome genotypes (measured, see
+  # results/fig6_pigment_transfer_census.json).
+  aggregator: deletion_keyed
+
+transforms:
+  use_transforms: false        # no fitness label in this build
+
+data_module:
+  is_perturbation_subset: false
+  perturbation_subset_size: 10000
+  # 128, not 32: the encoder runs the full 6,608-token sequence ONCE PER BATCH regardless
+  # of batch size, so step cost is nearly batch-independent and epoch time is set by the
+  # step count (30 s/epoch at 32 vs 17 s/epoch at 128, measured).
+  batch_size: 128
+  num_workers: 8
+  pin_memory: true
+  prefetch: false
+
+trainer:
+  max_epochs: 80
+  strategy: auto
+  accelerator: gpu
+  devices: 1
+  overfit_batches: 0
+  precision: bf16-mixed
+  log_every_n_steps: 20
+  fast_dev_run: false
+  early_stopping:
+    enabled: true
+    monitor: val/loss
+    mode: min
+    patience: 20
+    min_delta: 0.0
+
+multitask:
+  active_heads: [betaxanthin]  # overridden per condition by run_pigment_conditions.py
+  loss_fn: mse
+  decoder: s1_pool
+  dist: point
+  require_standardized_targets: true
+  # Plain per-feature z-score for all three targets. NOT Yeo-Johnson: a power transform on
+  # a subjective ordinal (-5..+5) has no meaning, and the point of standardizing here is
+  # only to put three incomparable unit systems on one loss scale.
+  normalize_vector_targets: []
+  standardize_per_feature_target: [betaxanthin, beta_carotene, mulleder19]
+  vector_norm_method: zscore
+  target_norm_eps: 1.0e-8
+  degenerate_robust_cv: 0.01
+  drop_features: {}
+  scalar_heads: [gene_interaction, betaxanthin, beta_carotene]
+  heads:
+    global:
+      output_dim: 278
+      use_gene_pool: true
+    per_gene:
+      output_dim: 1
+    per_metabolite:
+      output_dim: 1
+    betaxanthin:
+      kind: scalar
+      output_dim: 1
+      use_gene_pool: true
+    beta_carotene:
+      kind: scalar
+      output_dim: 1
+      use_gene_pool: true
+    mulleder19:
+      kind: vector
+      output_dim: 19
+      use_gene_pool: true
+  head_weights:
+    gene_interaction: 1.0
+    per_gene: 1.0
+    global: 1.0
+    per_metabolite: 1.0
+    betaxanthin: 1.0
+    beta_carotene: 1.0
+    mulleder19: 1.0
+  head_phenotypes:
+    gene_interaction: [fitness, gene_interaction]
+    per_gene: [expression_log2_ratio]
+    global: [calmorph]
+    per_metabolite: [metabolite_level]
+    betaxanthin: [metabolite_level]
+    beta_carotene: [visual_score]
+    mulleder19: [metabolite_level]
+  # betaxanthin and the metabolome are BOTH MetabolitePhenotype -> both label
+  # `metabolite_level`. These pins resolve each head to its own key set.
+  head_phenotype_keys:
+    betaxanthin: [betaxanthin]
+    mulleder19: [alanine, arginine, asparagine, aspartate, glutamate, glutamine,
+                 glycine, histidine, isoleucine, leucine, lysine, methionine,
+                 phenylalanine, proline, serine, threonine, tryptophan, tyrosine,
+                 valine]
+
+model:
+  model_class: metabolism
+  checkpoint_path: null
+  gene_num: 6607
+  hidden_channels: 24
+  num_transformer_layers: 3
+  num_attention_heads: 4
+  dropout: 0.1
+  learnable_embedding:
+    enabled: true
+    size: ${model.hidden_channels}
+    preprocessor:
+      num_layers: 2
+      dropout: 0.1
+  graph_regularization:
+    graph_reg_lambda: 0.001
+    graph_reg_layer: [1]
+    row_sampling_rate: 0.25
+    regularized_heads:
+      physical:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 0
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      regulatory:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 1
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+  perturbation_head:
+    num_heads: 4
+    dropout: 0.1
+
+regression_task:
+  optimizer:
+    type: AdamW
+    lr: 1e-3
+    weight_decay: 1e-6
+  lr_scheduler: null
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0

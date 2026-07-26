@@ -1742,6 +1742,17 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         "dropout": float(cfg.model.dropout),
         "weight_decay": float(cfg.regression_task.optimizer.weight_decay),
         "seed": seed,
+        # Hardware + graph-channel breadth, to W&B (not only Optuna user_attrs) so runs
+        # can be grouped and filtered on them in the UI. gpu_type matters because a study
+        # pooled across IGB partitions mixes A100 (mmli) and RTX6000 (cabbi); n_graphs /
+        # n_regularized_heads make the _005 (2-graph) vs _006 (9-graph) contrast queryable.
+        "gpu_type": (
+            torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu"
+        ),
+        "n_graphs": len(list(cfg.cell_dataset.graphs)),
+        "n_regularized_heads": len(
+            _as_dict(cfg.model.graph_regularization.get("regularized_heads", {}))
+        ),
     }
     print("[scale-meta] " + json.dumps(scale_meta))
     if run is not None:

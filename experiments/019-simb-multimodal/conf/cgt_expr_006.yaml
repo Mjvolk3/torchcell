@@ -1,0 +1,118 @@
+# experiments/019-simb-multimodal/conf/cgt_expr_006.yaml
+# EXPRESSION-ONLY sweep, round _006 -- WIDE GRAPH CHANNEL.
+#
+# Why this round exists. The kNN probe (knn_embedding_probe.py) showed a parameter-free
+# similarity average over prot_T5 beats the transformer on both modalities, and that every
+# NUCLEOTIDE embedding sits at the random control. So node content is not the bottleneck;
+# the remaining channel is TOPOLOGY. 010 ran NINE graphs, one per attention head, and that
+# is the configuration that worked there. 019 has been running TWO.
+#
+# Changes vs _005:
+#   * 9 graphs (010's set), each on its own regularized head, heads 0-8.
+#   * num_attention_heads 4 -> 9. Heads must divide hidden_channels, so the size axis is
+#     {90, 180} (90/9=10, 180/9=20). 128 is dropped -- 128/9 is not an integer.
+#   * graph_reg layers span the whole stack, not just [1,2]: with L up to 8 the old setting
+#     left most layers unconstrained.
+#   * learnable_embedding OFF, not swept: only 4.8% of val genes are ever perturbed in
+#     training (seed 0), so a free per-gene row is at init for ~95% of the val set.
+#   * require_modalities is EXPRESSION ONLY. With masked per-head losses a morphology-only
+#     row contributes no expression gradient, so keeping it only wastes the batch; the
+#     _005 arms ran ~28% useful rows per batch (effective batch 9 of 32).
+#     This now actually takes effect -- CellDataModule.setup() is idempotent as of this
+#     branch, so the filter survives Lightning's second setup() call inside fit().
+#
+# Two model-side fixes land with this config and change what lambda MEANS, so _006 numbers
+# are not comparable to _005 on the graph axis:
+#   * lambda was applied twice (lambda_k in the loop AND graph_reg_lambda after it), making
+#     the effective weight lambda^2 -- 1e-6 at the swept 1e-3, i.e. off.
+#   * normalization is now per-graph mean degree, so adding graphs no longer dilutes the
+#     penalty on the graphs already present.
+
+defaults:
+  - cgt_embed_005
+  - _self_
+
+wandb:
+  project: torchcell_019_expr
+  tags: []
+
+cell_dataset:
+  # 010's nine-graph set (equivariant_cell_graph_transformer_cabbi_002.yaml).
+  graphs:
+    [
+      physical,
+      regulatory,
+      tflink,
+      string12_0_neighborhood,
+      string12_0_fusion,
+      string12_0_cooccurence,
+      string12_0_coexpression,
+      string12_0_experimental,
+      string12_0_database,
+    ]
+  # Expression only: keep rows that actually carry the expression label.
+  require_modalities: [expression_log2_ratio]
+
+multitask:
+  active_heads: [per_gene]
+
+model:
+  hidden_channels: 90 # SWEPT {90, 180}; both divisible by 9 heads
+  num_attention_heads: 9 # one head per regularized graph
+  learnable_embedding:
+    enabled: false # NOT swept: cold start makes it inert on val
+
+  graph_regularization:
+    graph_reg_lambda: 0.001 # SWEPT, centered per the round's brief
+    # Span the stack rather than only the first two layers: L is swept to 8.
+    graph_reg_layer: [0, 1, 2, 3, 4, 5, 6, 7]
+    row_sampling_rate: 1.0
+    regularized_heads:
+      physical:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 0
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      regulatory:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 1
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      tflink:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 2
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_neighborhood:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 3
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_fusion:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 4
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_cooccurence:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 5
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_coexpression:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 6
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_experimental:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 7
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_database:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 8
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+
+trainer:
+  max_epochs: 200
+  early_stopping:
+    enabled: true
+    monitor: val/mean/pearson_per_feature
+    mode: max
+    patience: 40
+    # Was 0.0, which never fired on a collapsed run: a correlation metric wiggles at the
+    # 8th decimal around zero, so every wiggle reset patience and dead trials burned 130+
+    # epochs. 1e-4 is well below any real improvement and well above that noise.
+    min_delta: 1.0e-4

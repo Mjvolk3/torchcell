@@ -347,8 +347,16 @@ it good."
 
 ## Track B — CGT-Metabolism (after SIMB)
 
-Full mathematics and every derivation: [[scratch.2026.07.25.172340-adding-metabolism-explainer]].
-Settled decisions, with the reasons recorded there:
+**2026.07.26 — REPRIORITIZED, and the math is now committed.** Track B is no longer "after SIMB":
+the headline comparison is **Merzbacher 2025 Flux Cone Learning**, whose method is the un-amortized
+version of this flux layer, so comparing a gene-token model carrying no metabolic structure against
+it is a category error. The full specification — gene-centric entities, soft catalysis $\Pi$, the
+amortized flux sampler, the objective term by term, the FCL comparison protocol and the
+doubles-scaling argument — is now a real note: **[[plan.cgt-metabolism-flux-layer.2026.07.26]]**.
+
+Derivations from definitions up (Parts 0–7, Q1–Q15) remain in
+[[scratch.2026.07.25.172340-adding-metabolism-explainer]], which is UNTRACKED and authoritative
+where the two disagree. Settled decisions, with the reasons recorded there:
 
 | decision | resolution |
 | --- | --- |

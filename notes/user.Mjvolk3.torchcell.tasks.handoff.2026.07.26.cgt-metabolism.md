@@ -1,3 +1,10 @@
+---
+id: 1whc5tbi52rhsj5mv068aoz
+title: 'Handoff 2026.07.26 — CGT-Metabolism Track A'
+desc: 'Session handoff: Track A pigment/metabolome transfer -- what was built, the honest scientific state, verification checklist, and the traps'
+updated: 1785094150992
+created: 1785094150992
+---
 
 ## 2026.07.26 - Handoff: CGT-Metabolism Track A
 
@@ -98,8 +105,23 @@ The point of the next session is to check the model is what we intended:
 3. Confirm the three heads exist with the right widths and are all SUPERVISED (per-head val
    losses finite and non-zero in every condition) -- a silently-unsupervised head reads as a
    clean null.
-4. Check job **1333** (submitted 2026-07-26, all four conditions, 60 epochs, GPU 0) in
-   `results/pigment_transfer_runs.json`.
+4. Check job **1333** (submitted 2026-07-26 13:58, GPU 0) in `results/pigment_transfer_runs.json`.
+   **CORRECTION (verified from the job banner): it runs `A1` ONLY at 60 epochs, not all four
+   conditions** -- so it produces NO Delta. It is the betaxanthin-alone diagnostic. Verified items
+   1-3 all pass: package + model file both resolve to the worktree root, 7/7 tests, and the three
+   heads (3,137 / 3,137 / 3,731 params) are genuinely supervised -- `val_loss_last` is ~1.10 in the
+   one-head arms vs ~2.47 in the two-head arms, so `mulleder19` carries real gradient.
+5. **`metric_taken_at: "peak"` is a biased estimator and every Delta is read through it.**
+   `BestMetricTracker` (`train_cgt_multitask.py:1367`) keeps the running MAX over epochs. Measured
+   on the non-learning trajectories: val-pearson has mean ~0 and sd 0.027-0.071 across epochs, and
+   the running max over only ~20 epochs is **+0.083 / +0.106 / +0.092** (jobs 1331 / 1332 / 1333).
+   The 12-run baseline's "peaks" (0.064-0.128) sit entirely inside that band, so
+   `Delta = peak(joint) - peak(alone)` differences two maxima-of-noise: per-arm bias ~2.5x the
+   claimed effect (+0.042), and differencing predicts a scatter (~0.05) matching the observed SD
+   (0.064). The tracker is NOT wrong in general -- `:1349` justifies it for the 019 decoder sweep
+   where runs genuinely peak then MSE-collapse. It only becomes a noise-maximizer on a null.
+   **Fix: report the primary metric at the epoch selected by best val LOSS; keep peak as a labelled
+   diagnostic.**
 
 ### Traps that already cost jobs
 

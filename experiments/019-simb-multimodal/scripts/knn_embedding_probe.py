@@ -75,10 +75,30 @@ DROPPED = ["A113_A", "D203", "D205"]
 MORPH_FEATS = [f for f in CALMORPH_LABELS if f not in DROPPED]
 
 # Concatenated groups are expressed as tuples; a bare string is a single embedding.
+#
+# Chosen to span FOUR distinct representational axes, because "the embeddings don't work"
+# is only meaningful if the axes are separated:
+#   PROTEIN         prot_T5_all, esm2 -- what the deleted protein IS.
+#   REGULATORY DNA  fudt (promoter+terminator) and its Nucleotide Transformer analogue
+#                   (5' 1003 + 3' 300) -- how the gene is CONTROLLED. A different axis
+#                   from protein identity, so it gets a like-for-like NT comparator
+#                   rather than being represented by fudt alone.
+#   LOCUS DNA       nt_window_5979 -- the gene plus its genomic neighbourhood.
+#   CODON/ORF       calm -- a codon language model over the coding sequence.
+#   CONTROL         random_100 -- unique but meaningless; must score ~0.
+#
+# Absent: nt_window_three_prime_5979, which would give the 5979-scale 3' partner to
+# nt_window_five_prime_5979. Its .pt is built and present on disk, but loading it raises
+# `Invalid model_name 'window_three_prime_5979'` -- the name reaches BaseEmbeddingDataset's
+# check having lost its `nt_` prefix. Tracked separately; the 1003/300 pair covers the
+# regulatory axis meanwhile.
 EMBEDDINGS: dict[str, tuple[str, ...]] = {
-    "fudt_up_down": ("fudt_upstream", "fudt_downstream"),
-    "esm2_t33_650M_UR50D_all": ("esm2_t33_650M_UR50D_all",),
     "prot_T5_all": ("prot_T5_all",),
+    "esm2_t33_650M_UR50D_all": ("esm2_t33_650M_UR50D_all",),
+    "fudt_up_down": ("fudt_upstream", "fudt_downstream"),
+    "nt_5prime_3prime": ("nt_window_five_prime_1003", "nt_window_three_prime_300"),
+    "nt_window_5979": ("nt_window_5979",),
+    "calm": ("calm",),
     "random_100": ("random_100",),
 }
 K_GRID = [1, 3, 5, 10, 25, 50]

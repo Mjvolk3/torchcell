@@ -57,6 +57,26 @@ the GPR-derived availability chain all attach at the same place these heads do -
 forecloses them; nothing in Track A pays for them either.
 """
 
+if __name__ == "__main__":
+    # WORKTREE IMPORT BOOTSTRAP -- must run BEFORE any `torchcell` import below.
+    #
+    # Running this file directly (python .../cell_graph_transformer_metabolism.py, or a
+    # VS Code debug session) puts THIS file's directory on sys.path, but the `torchcell`
+    # PACKAGE still resolves through the editable install, which points at the PRIMARY
+    # checkout. You then execute the worktree's model file against main's library and get
+    # errors like `cannot import name 'DeletionKeyedGenotypeAggregator' from
+    # 'torchcell.data'` -- a symbol that exists only on this branch.
+    #
+    # Prepending the worktree root (three levels up: torchcell/models/<file>) makes the
+    # sibling `torchcell` package win, so the file is always debugged against the code it
+    # actually lives in. Only applies to direct execution; imports are unaffected.
+    import os.path as _osp
+    import sys as _sys
+
+    _sys.path.insert(
+        0, _osp.dirname(_osp.dirname(_osp.dirname(_osp.abspath(__file__))))
+    )
+
 from typing import Any, cast
 
 import torch
@@ -407,6 +427,7 @@ def main() -> None:
     from dotenv import load_dotenv
     from torch_geometric.loader import DataLoader
 
+    import torchcell
     from torchcell.data import (
         DeletionKeyedGenotypeAggregator,
         MeanExperimentDeduplicator,
@@ -416,6 +437,11 @@ def main() -> None:
     from torchcell.graph import SCerevisiaeGraph
     from torchcell.graph.graph import build_gene_multigraph
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+
+    # Print WHICH torchcell won. If this is not the tree containing this file, the run is
+    # meaningless -- see the worktree import bootstrap at the top of the module.
+    print(f"torchcell package: {osp.dirname(osp.abspath(torchcell.__file__))}")
+    print(f"this model file  : {osp.abspath(__file__)}")
 
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]

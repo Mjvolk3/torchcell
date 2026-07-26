@@ -105,13 +105,13 @@ def _style() -> None:
 
 def main() -> None:
     _style()
-    experiment_root = os.environ["EXPERIMENT_ROOT"]
+    # Resolve results relative to THIS script, not $EXPERIMENT_ROOT: the env var points at
+    # the primary checkout, so a worktree run would read the wrong tree's results.
+    results_dir = osp.abspath(osp.join(osp.dirname(__file__), "..", "results"))
     images_dir = osp.join(os.environ["ASSET_IMAGES_DIR"], "019-simb-multimodal")
     os.makedirs(images_dir, exist_ok=True)
 
-    with open(
-        osp.join(experiment_root, "019-simb-multimodal/results/knn_embedding_probe.json")
-    ) as f:
+    with open(osp.join(results_dir, "knn_embedding_probe.json")) as f:
         res = json.load(f)
     arms = res["arms"]
 
@@ -179,7 +179,6 @@ def main() -> None:
 
         ax.set_yticks(y)
         ax.set_yticklabels(labels)
-        ax.invert_yaxis()
         ax.set_xlabel("per-feature Pearson $r$ (best $k$)")
         ax.set_title(
             f"{mod}  (n$_{{val}}$="
@@ -195,11 +194,16 @@ def main() -> None:
             s.set_visible(True)
         ax.legend(loc="lower right", frameon=True, framealpha=0.95, borderpad=0.3)
 
-    # Annotate the undefined bar once, on the left panel.
+    axes[0].invert_yaxis()  # once only -- the y axis is shared between panels
+
+    # Annotate the undefined bar once, on the left panel, anchored to its real row.
+    one_hot_row = next(
+        i for i, (_, k, _) in enumerate(AXES_ORDER) if k == "one_hot_gene"
+    )
     axes[0].annotate(
-        "undefined: one-hot vectors are\nmutually orthogonal, so every\ncosine similarity is 0",
-        xy=(0.001, AXES_ORDER.index(("one-hot gene", "one_hot_gene", "Identity only"))),
-        xytext=(0.055, 12.2),
+        "undefined: one-hot vectors are mutually\northogonal, so every cosine similarity is 0\nand kNN has no notion of a similar gene",
+        xy=(0.002, one_hot_row),
+        xytext=(0.042, one_hot_row - 3.2),
         fontsize=5,
         arrowprops=dict(arrowstyle="->", lw=0.4, color="black"),
     )

@@ -47,6 +47,44 @@
         }
       }
     },
+    "prot_T5_no_dubious": {
+      "dim": 1024,
+      "n_genes": 6607,
+      "modalities": {
+        "morphology": {
+          "n_train": 3757,
+          "n_val": 469,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": NaN,
+            "3": NaN,
+            "5": NaN,
+            "10": NaN,
+            "25": NaN,
+            "50": NaN
+          },
+          "best_k": 1,
+          "best_pearson_per_feature": NaN,
+          "train_mean_anchor": 3.045808512069925e-07
+        },
+        "expression": {
+          "n_train": 1190,
+          "n_val": 140,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": 0.06458883732557297,
+            "3": 0.07415790855884552,
+            "5": 0.07585233449935913,
+            "10": 0.0908433049917221,
+            "25": 0.1173500344157219,
+            "50": 0.10376659035682678
+          },
+          "best_k": 25,
+          "best_pearson_per_feature": 0.1173500344157219,
+          "train_mean_anchor": -9.633976949530165e-10
+        }
+      }
+    },
     "esm2_t33_650M_UR50D_all": {
       "dim": 1280,
       "n_genes": 6607,
@@ -85,46 +123,8 @@
         }
       }
     },
-    "fudt_up_down": {
-      "dim": 1536,
-      "n_genes": 6579,
-      "modalities": {
-        "morphology": {
-          "n_train": 3757,
-          "n_val": 469,
-          "n_val_dropped_missing_embedding": 0,
-          "pearson_per_feature_by_k": {
-            "1": -0.009265247732400894,
-            "3": 0.013257422484457493,
-            "5": 0.01065597590059042,
-            "10": 0.023087378591299057,
-            "25": 0.02610190398991108,
-            "50": 0.018424754962325096
-          },
-          "best_k": 25,
-          "best_pearson_per_feature": 0.02610190398991108,
-          "train_mean_anchor": 3.045808512069925e-07
-        },
-        "expression": {
-          "n_train": 1190,
-          "n_val": 140,
-          "n_val_dropped_missing_embedding": 0,
-          "pearson_per_feature_by_k": {
-            "1": 0.009050927124917507,
-            "3": 0.003525132080540061,
-            "5": -0.005599353928118944,
-            "10": 0.004805963486433029,
-            "25": 0.013771340250968933,
-            "50": 0.009373098611831665
-          },
-          "best_k": 25,
-          "best_pearson_per_feature": 0.013771340250968933,
-          "train_mean_anchor": -9.633976949530165e-10
-        }
-      }
-    },
-    "nt_5prime_3prime": {
-      "dim": 5120,
+    "esm2_t33_650M_UR50D_no_dubious": {
+      "dim": 1280,
       "n_genes": 6607,
       "modalities": {
         "morphology": {
@@ -132,15 +132,15 @@
           "n_val": 469,
           "n_val_dropped_missing_embedding": 0,
           "pearson_per_feature_by_k": {
-            "1": -0.02065631002187729,
-            "3": -0.02266552299261093,
-            "5": -0.01553594321012497,
-            "10": -0.012308537028729916,
-            "25": -0.02647235244512558,
-            "50": -0.019285185262560844
+            "1": NaN,
+            "3": NaN,
+            "5": NaN,
+            "10": NaN,
+            "25": NaN,
+            "50": NaN
           },
-          "best_k": 10,
-          "best_pearson_per_feature": -0.012308537028729916,
+          "best_k": 1,
+          "best_pearson_per_feature": NaN,
           "train_mean_anchor": 3.045808512069925e-07
         },
         "expression": {
@@ -148,53 +148,15 @@
           "n_val": 140,
           "n_val_dropped_missing_embedding": 0,
           "pearson_per_feature_by_k": {
-            "1": -0.01731441728770733,
-            "3": -0.0026644018944352865,
-            "5": -0.002965944819152355,
-            "10": 0.004298123065382242,
-            "25": 0.009030533954501152,
-            "50": 0.011817601509392262
+            "1": 0.0642368346452713,
+            "3": 0.07128822058439255,
+            "5": 0.08234996348619461,
+            "10": 0.08010150492191315,
+            "25": 0.08267348259687424,
+            "50": 0.0920306146144867
           },
           "best_k": 50,
-          "best_pearson_per_feature": 0.011817601509392262,
-          "train_mean_anchor": -9.633976949530165e-10
-        }
-      }
-    },
-    "nt_window_5979": {
-      "dim": 2560,
-      "n_genes": 6607,
-      "modalities": {
-        "morphology": {
-          "n_train": 3757,
-          "n_val": 469,
-          "n_val_dropped_missing_embedding": 0,
-          "pearson_per_feature_by_k": {
-            "1": 0.004942664876580238,
-            "3": 0.006140537094324827,
-            "5": -0.009377685375511646,
-            "10": -0.0060168541967868805,
-            "25": -0.012201715260744095,
-            "50": -0.02676195651292801
-          },
-          "best_k": 3,
-          "best_pearson_per_feature": 0.006140537094324827,
-          "train_mean_anchor": 3.045808512069925e-07
-        },
-        "expression": {
-          "n_train": 1190,
-          "n_val": 140,
-          "n_val_dropped_missing_embedding": 0,
-          "pearson_per_feature_by_k": {
-            "1": -0.010487779974937439,
-            "3": 0.005108315497636795,
-            "5": 0.0007470501586794853,
-            "10": 0.0018775953212752938,
-            "25": 0.005246623419225216,
-            "50": -0.0029389590490609407
-          },
-          "best_k": 25,
-          "best_pearson_per_feature": 0.005246623419225216,
+          "best_pearson_per_feature": 0.0920306146144867,
           "train_mean_anchor": -9.633976949530165e-10
         }
       }
@@ -275,6 +237,424 @@
         }
       }
     },
+    "species_lm_five_prime": {
+      "dim": 768,
+      "n_genes": 6607,
+      "modalities": {
+        "morphology": {
+          "n_train": 3757,
+          "n_val": 469,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": 0.0027857162058353424,
+            "3": 0.04590278118848801,
+            "5": 0.03447830677032471,
+            "10": 0.021961767226457596,
+            "25": 0.018177716061472893,
+            "50": 0.024939432740211487
+          },
+          "best_k": 3,
+          "best_pearson_per_feature": 0.04590278118848801,
+          "train_mean_anchor": 3.045808512069925e-07
+        },
+        "expression": {
+          "n_train": 1190,
+          "n_val": 140,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": 0.00575730437412858,
+            "3": 0.012198112905025482,
+            "5": 0.004112208262085915,
+            "10": 0.012507299892604351,
+            "25": 0.006775116082280874,
+            "50": 0.01951446570456028
+          },
+          "best_k": 50,
+          "best_pearson_per_feature": 0.01951446570456028,
+          "train_mean_anchor": -9.633976949530165e-10
+        }
+      }
+    },
+    "species_lm_three_prime": {
+      "dim": 768,
+      "n_genes": 6579,
+      "modalities": {
+        "morphology": {
+          "n_train": 3757,
+          "n_val": 469,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": 0.006509187165647745,
+            "3": 0.0027067214250564575,
+            "5": 0.0005176950944587588,
+            "10": 0.007674399763345718,
+            "25": 0.0075215245597064495,
+            "50": 0.013163949362933636
+          },
+          "best_k": 50,
+          "best_pearson_per_feature": 0.013163949362933636,
+          "train_mean_anchor": 3.045808512069925e-07
+        },
+        "expression": {
+          "n_train": 1190,
+          "n_val": 140,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": 0.027629712596535683,
+            "3": 0.03597380965948105,
+            "5": 0.020769396796822548,
+            "10": -0.003432996803894639,
+            "25": -0.0162795539945364,
+            "50": -0.010585850104689598
+          },
+          "best_k": 3,
+          "best_pearson_per_feature": 0.03597380965948105,
+          "train_mean_anchor": -9.633976949530165e-10
+        }
+      }
+    },
+    "species_lm_5p_3p": {
+      "dim": 1536,
+      "n_genes": 6579,
+      "modalities": {
+        "morphology": {
+          "n_train": 3757,
+          "n_val": 469,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": -0.009265247732400894,
+            "3": 0.013257422484457493,
+            "5": 0.01065597590059042,
+            "10": 0.023087378591299057,
+            "25": 0.02610190398991108,
+            "50": 0.018424754962325096
+          },
+          "best_k": 25,
+          "best_pearson_per_feature": 0.02610190398991108,
+          "train_mean_anchor": 3.045808512069925e-07
+        },
+        "expression": {
+          "n_train": 1190,
+          "n_val": 140,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": 0.009050927124917507,
+            "3": 0.003525132080540061,
+            "5": -0.005599353928118944,
+            "10": 0.004805963486433029,
+            "25": 0.013771340250968933,
+            "50": 0.009373098611831665
+          },
+          "best_k": 25,
+          "best_pearson_per_feature": 0.013771340250968933,
+          "train_mean_anchor": -9.633976949530165e-10
+        }
+      }
+    },
+    "nt_window_5979": {
+      "dim": 2560,
+      "n_genes": 6607,
+      "modalities": {
+        "morphology": {
+          "n_train": 3757,
+          "n_val": 469,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": 0.004942664876580238,
+            "3": 0.006140537094324827,
+            "5": -0.009377685375511646,
+            "10": -0.0060168541967868805,
+            "25": -0.012201715260744095,
+            "50": -0.02676195651292801
+          },
+          "best_k": 3,
+          "best_pearson_per_feature": 0.006140537094324827,
+          "train_mean_anchor": 3.045808512069925e-07
+        },
+        "expression": {
+          "n_train": 1190,
+          "n_val": 140,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": -0.010487779974937439,
+            "3": 0.005108315497636795,
+            "5": 0.0007470501586794853,
+            "10": 0.0018775953212752938,
+            "25": 0.005246623419225216,
+            "50": -0.0029389590490609407
+          },
+          "best_k": 25,
+          "best_pearson_per_feature": 0.005246623419225216,
+          "train_mean_anchor": -9.633976949530165e-10
+        }
+      }
+    },
+    "nt_window_five_prime_1003": {
+      "dim": 2560,
+      "n_genes": 6607,
+      "modalities": {
+        "morphology": {
+          "n_train": 3757,
+          "n_val": 469,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": -0.012991574592888355,
+            "3": -0.014590597711503506,
+            "5": -0.015892472118139267,
+            "10": -0.002298895502462983,
+            "25": -0.011797651648521423,
+            "50": 0.01747490093111992
+          },
+          "best_k": 50,
+          "best_pearson_per_feature": 0.01747490093111992,
+          "train_mean_anchor": 3.045808512069925e-07
+        },
+        "expression": {
+          "n_train": 1190,
+          "n_val": 140,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": -0.014953868463635445,
+            "3": -0.0051928856410086155,
+            "5": 0.011576153337955475,
+            "10": 0.002888145623728633,
+            "25": -0.019301394000649452,
+            "50": -0.006210339721292257
+          },
+          "best_k": 5,
+          "best_pearson_per_feature": 0.011576153337955475,
+          "train_mean_anchor": -9.633976949530165e-10
+        }
+      }
+    },
+    "nt_window_three_prime_300": {
+      "dim": 2560,
+      "n_genes": 6607,
+      "modalities": {
+        "morphology": {
+          "n_train": 3757,
+          "n_val": 469,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": 0.006511677987873554,
+            "3": -0.00598915945738554,
+            "5": -0.007540988270193338,
+            "10": -0.00989242922514677,
+            "25": -0.010112190619111061,
+            "50": -0.020966337993741035
+          },
+          "best_k": 1,
+          "best_pearson_per_feature": 0.006511677987873554,
+          "train_mean_anchor": 3.045808512069925e-07
+        },
+        "expression": {
+          "n_train": 1190,
+          "n_val": 140,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": -0.03203576058149338,
+            "3": -0.0019769854843616486,
+            "5": -0.014016999863088131,
+            "10": -0.01673743687570095,
+            "25": -0.016931811347603798,
+            "50": 0.006440025754272938
+          },
+          "best_k": 50,
+          "best_pearson_per_feature": 0.006440025754272938,
+          "train_mean_anchor": -9.633976949530165e-10
+        }
+      }
+    },
+    "nt_5prime_3prime": {
+      "dim": 5120,
+      "n_genes": 6607,
+      "modalities": {
+        "morphology": {
+          "n_train": 3757,
+          "n_val": 469,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": -0.02065631002187729,
+            "3": -0.02266552299261093,
+            "5": -0.01553594321012497,
+            "10": -0.012308537028729916,
+            "25": -0.02647235244512558,
+            "50": -0.019285185262560844
+          },
+          "best_k": 10,
+          "best_pearson_per_feature": -0.012308537028729916,
+          "train_mean_anchor": 3.045808512069925e-07
+        },
+        "expression": {
+          "n_train": 1190,
+          "n_val": 140,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": -0.01731441728770733,
+            "3": -0.0026644018944352865,
+            "5": -0.002965944819152355,
+            "10": 0.004298123065382242,
+            "25": 0.009030533954501152,
+            "50": 0.011817601509392262
+          },
+          "best_k": 50,
+          "best_pearson_per_feature": 0.011817601509392262,
+          "train_mean_anchor": -9.633976949530165e-10
+        }
+      }
+    },
+    "normalized_chrom_pathways": {
+      "dim": 197,
+      "n_genes": 6607,
+      "modalities": {
+        "morphology": {
+          "n_train": 3757,
+          "n_val": 469,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": 0.0464438870549202,
+            "3": 0.059007082134485245,
+            "5": 0.06944026798009872,
+            "10": 0.09648443758487701,
+            "25": 0.10017168521881104,
+            "50": 0.09854032099246979
+          },
+          "best_k": 25,
+          "best_pearson_per_feature": 0.10017168521881104,
+          "train_mean_anchor": 3.045808512069925e-07
+        },
+        "expression": {
+          "n_train": 1190,
+          "n_val": 140,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": 0.014806048013269901,
+            "3": 0.050591841340065,
+            "5": 0.03951738774776459,
+            "10": 0.021145422011613846,
+            "25": 0.023882469162344933,
+            "50": 0.0012581649934872985
+          },
+          "best_k": 3,
+          "best_pearson_per_feature": 0.050591841340065,
+          "train_mean_anchor": -9.633976949530165e-10
+        }
+      }
+    },
+    "one_hot_gene": {
+      "dim": 6579,
+      "n_genes": 6579,
+      "modalities": {
+        "morphology": {
+          "n_train": 3757,
+          "n_val": 469,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": NaN,
+            "3": NaN,
+            "5": NaN,
+            "10": NaN,
+            "25": NaN,
+            "50": NaN
+          },
+          "best_k": 1,
+          "best_pearson_per_feature": NaN,
+          "train_mean_anchor": 3.045808512069925e-07
+        },
+        "expression": {
+          "n_train": 1190,
+          "n_val": 140,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": NaN,
+            "3": NaN,
+            "5": NaN,
+            "10": NaN,
+            "25": NaN,
+            "50": NaN
+          },
+          "best_k": 1,
+          "best_pearson_per_feature": NaN,
+          "train_mean_anchor": -9.633976949530165e-10
+        }
+      }
+    },
+    "random_1": {
+      "dim": 1,
+      "n_genes": 6607,
+      "modalities": {
+        "morphology": {
+          "n_train": 3757,
+          "n_val": 469,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": 1.7092925475026277e-07,
+            "3": -3.246332482831349e-07,
+            "5": -8.975105458830512e-08,
+            "10": 9.285654556379086e-08,
+            "25": 1.2284131933881781e-08,
+            "50": 1.143891239507866e-07
+          },
+          "best_k": 1,
+          "best_pearson_per_feature": 1.7092925475026277e-07,
+          "train_mean_anchor": 3.045808512069925e-07
+        },
+        "expression": {
+          "n_train": 1190,
+          "n_val": 140,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": -3.778554413802482e-10,
+            "3": 2.942927845861476e-10,
+            "5": -1.1863737769957083e-10,
+            "10": 1.6381208611804254e-09,
+            "25": 9.010147489219023e-11,
+            "50": -4.5980361185193885e-10
+          },
+          "best_k": 10,
+          "best_pearson_per_feature": 1.6381208611804254e-09,
+          "train_mean_anchor": -9.633976949530165e-10
+        }
+      }
+    },
+    "random_10": {
+      "dim": 10,
+      "n_genes": 6607,
+      "modalities": {
+        "morphology": {
+          "n_train": 3757,
+          "n_val": 469,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": -0.00517852371558547,
+            "3": -0.01780201680958271,
+            "5": -0.018748708069324493,
+            "10": -0.005762934684753418,
+            "25": -0.0027734856121242046,
+            "50": -0.0027821955736726522
+          },
+          "best_k": 25,
+          "best_pearson_per_feature": -0.0027734856121242046,
+          "train_mean_anchor": 3.045808512069925e-07
+        },
+        "expression": {
+          "n_train": 1190,
+          "n_val": 140,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": -0.00023575709201395512,
+            "3": 0.010722765699028969,
+            "5": -0.0068853325210511684,
+            "10": 0.002745990874245763,
+            "25": -0.006408751476556063,
+            "50": -0.010502475313842297
+          },
+          "best_k": 3,
+          "best_pearson_per_feature": 0.010722765699028969,
+          "train_mean_anchor": -9.633976949530165e-10
+        }
+      }
+    },
     "random_100": {
       "dim": 100,
       "n_genes": 6607,
@@ -309,6 +689,44 @@
           },
           "best_k": 5,
           "best_pearson_per_feature": 0.017952341586351395,
+          "train_mean_anchor": -9.633976949530165e-10
+        }
+      }
+    },
+    "random_1000": {
+      "dim": 1000,
+      "n_genes": 6607,
+      "modalities": {
+        "morphology": {
+          "n_train": 3757,
+          "n_val": 469,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": 0.030711768195033073,
+            "3": 0.036132264882326126,
+            "5": 0.029069818556308746,
+            "10": 0.015353209339082241,
+            "25": 0.01739049144089222,
+            "50": 0.012205258943140507
+          },
+          "best_k": 3,
+          "best_pearson_per_feature": 0.036132264882326126,
+          "train_mean_anchor": 3.045808512069925e-07
+        },
+        "expression": {
+          "n_train": 1190,
+          "n_val": 140,
+          "n_val_dropped_missing_embedding": 0,
+          "pearson_per_feature_by_k": {
+            "1": 0.0080561563372612,
+            "3": 0.01813834346830845,
+            "5": 0.033393777906894684,
+            "10": 0.0156289990991354,
+            "25": -0.0007568737491965294,
+            "50": -0.007575158961117268
+          },
+          "best_k": 5,
+          "best_pearson_per_feature": 0.033393777906894684,
           "train_mean_anchor": -9.633976949530165e-10
         }
       }

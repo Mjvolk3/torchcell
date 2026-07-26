@@ -28,7 +28,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:2
-#SBATCH --job-name=019-expr-dec003
+#SBATCH --job-name=019-expr-embed005
 #SBATCH --time=5-00:00:00
 #SBATCH --signal=B:USR1@180
 #SBATCH --mail-user=mjvolk3@illinois.edu

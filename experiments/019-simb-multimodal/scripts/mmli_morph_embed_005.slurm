@@ -30,7 +30,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --gres=gpu:4
-#SBATCH --job-name=019-morph-dec003
+#SBATCH --job-name=019-morph-embed005
 #SBATCH --time=5-00:00:00
 #SBATCH --signal=B:USR1@180
 #SBATCH --mail-user=mjvolk3@illinois.edu

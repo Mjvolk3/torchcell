@@ -1561,9 +1561,33 @@ exhaustively across the whole mirrored library (82 entries, `.md` and `.txt`) an
 The one number ever attached to an SMF bootstrap is a Baryshnikova figure legend, *"s.e.m.
 derived from bootstrapping (n = 800)"* -- but there `n` is parallel to *"s.d. (n = 4)"* for
 double mutants, i.e. a **sample size, not a draw count**. It must not be cited as the iteration
-count. If the value is ever needed, the remaining place to look is **code, not papers**:
-`github.com/boonelab/sgatools` or the Costanzo raw-data processing scripts, neither mirrored
-here. Do not fill this in without a source.
+count.
+
+**Best remaining lead -- not yet obtainable here.** The detailed SGA scoring *protocol* is
+Kuzmin et al., *"tau-SGA: Synthetic Genetic Array Analysis for Systematically Screening and
+Quantifying Trigenic Interactions in Yeast"*, **Nature Protocols** (2021),
+`doi:10.1038/s41596-020-00456-3` (`kuzminTSGASyntheticGenetic2021`). A Protocols paper is the
+natural place for a draw count, and it IS in our `bib.bib` -- but it is **not in Zotero group
+6582362** (the library the capture tooling reads, which holds only SGAtools from this family)
+and **not in the OCR mirror**, so it cannot be pulled automatically. `nature.com` is one of the
+sources CLAUDE.md records as un-scriptable (auth redirect), so this is a **manual-once ->
+deposit -> reproducible** case: add the PDF to the tracked Zotero group, then
+`capture_by_doi(lib, "10.1038/s41596-020-00456-3")` mirrors + OCRs it and the count can be
+grepped and cited properly. Failing that, the value lives in **code, not papers**:
+`github.com/boonelab/sgatools` or the Costanzo raw-data processing scripts. Do not fill this
+in without a source.
+
+**Why the draw count barely matters here anyway.** `B` only controls Monte Carlo noise in
+*estimating* a bootstrap SE (error ~ 1/sqrt(B)); it adds no real precision and no bias. Sample
+size `n` is what sets precision -- and at our `n = 3` there are only **10 distinct resample
+multisets** (27 ordered), so the ideal bootstrap SE is computable exactly by enumeration and
+`N_BOOT = 4000` merely re-samples a 10-outcome space. The consequential effect at small `n` is
+a **bias**: a bootstrap of the mean uses the plug-in variance (divide by `n`) rather than the
+sample variance (divide by `n-1`), so it converges to `sqrt((n-1)/n) * s/sqrt(n)`. At `n = 3`
+that is a factor **0.816**, and our numbers match it almost exactly -- observed bootstrap SE
+**0.0662** vs plug-in prediction **0.0659**, against a classical `s/sqrt(n)` of **0.0807**. Our
+reported across-plate SE is therefore **~18% below** the classical SE by construction, an
+artefact of `n = 3` that no choice of `B` can fix.
 
 Two consequences worth flagging. **(a) Our n is far smaller.** With n = 3 our SE is itself
 unstable: a 3-value bootstrap draws from only 10 distinct resample multisets, so `N_BOOT = 4000`

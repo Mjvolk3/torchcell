@@ -68,6 +68,7 @@ load_dotenv("/home/michaelvolk/Documents/projects/torchcell/.env")
 
 from torchcell.datamodels.calmorph_labels import CALMORPH_LABELS  # noqa: E402
 from torchcell.datasets.node_embedding_builder import NodeEmbeddingBuilder  # noqa: E402
+from torchcell.graph.graph import SCerevisiaeGraph  # noqa: E402
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome  # noqa: E402
 
 # Same three dropped features as the training config (multitask.drop_features.global).
@@ -165,13 +166,15 @@ def _load_targets(base: str, ids: list[int]) -> dict[str, Any]:
     return {"genes": genes, "morphology": morph, "expression": expr}
 
 
-def _embedding_matrix(names: tuple[str, ...], data_root: str, genome: Any) -> dict[str, np.ndarray]:
+def _embedding_matrix(
+    names: tuple[str, ...], data_root: str, genome: Any, graph: Any
+) -> dict[str, np.ndarray]:
     """gene -> concatenated embedding vector, over the given embedding names."""
     per_gene: dict[str, list[np.ndarray]] = {}
     counts: dict[str, int] = {}
     for name in names:
         built = NodeEmbeddingBuilder.build(
-            embedding_names=[name], data_root=data_root, genome=genome, graph=None
+            embedding_names=[name], data_root=data_root, genome=genome, graph=graph
         )
         ds = built[name]
         for item in ds:
@@ -221,6 +224,14 @@ def main() -> None:
         overwrite=False,
     )
     genome.drop_empty_go()
+    # normalized_chrom_pathways is derived from the gene graph, not from sequence, so the
+    # builder requires a graph instance; the sequence-based embeddings ignore it.
+    graph = SCerevisiaeGraph(
+        sgd_root=osp.join(data_root, "data/sgd/genome"),
+        string_root=osp.join(data_root, "data/string"),
+        tflink_root=osp.join(data_root, "data/tflink"),
+        genome=genome,
+    )
 
     split = _load_split(base)
     train = _load_targets(base, split["train"])
@@ -232,7 +243,7 @@ def main() -> None:
     results: dict[str, Any] = {"seed": SEED, "k_grid": K_GRID, "arms": {}}
 
     for label, names in EMBEDDINGS.items():
-        emb = _embedding_matrix(names, data_root, genome)
+        emb = _embedding_matrix(names, data_root, genome, graph)
         dim = len(next(iter(emb.values())))
         print(f"\n### {label}  ({'+'.join(names)}, dim={dim}, genes={len(emb)})")
         arm: dict[str, Any] = {"dim": dim, "n_genes": len(emb), "modalities": {}}

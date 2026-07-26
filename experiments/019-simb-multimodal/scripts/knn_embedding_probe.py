@@ -153,7 +153,9 @@ def _embedding_matrix(names: tuple[str, ...], data_root: str, genome: Any) -> di
         )
         ds = built[name]
         for item in ds:
-            vec = torch.cat([t.flatten() for t in item.embeddings.values()]).numpy()
+            # BaseEmbeddingDataset loads with map_location=cuda when a GPU is visible,
+            # so move to host before numpy.
+            vec = torch.cat([t.flatten() for t in item.embeddings.values()]).cpu().numpy()
             per_gene.setdefault(item.id, []).append(vec)
             counts[item.id] = counts.get(item.id, 0) + 1
     # keep only genes present in EVERY constituent embedding

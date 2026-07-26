@@ -1,0 +1,12 @@
+{
+  "n_doubles_next_round": 14,
+  "rung_rate_point_estimate": 0.22880010140880777,
+  "rung_rate_fdr_significant": 0.0036373367511857435,
+  "expected_rungs_if_random_point": 3.203201419723309,
+  "expected_rungs_if_random_significant": 0.05092271451660041,
+  "p_zero_significant_rungs_if_random": 0.950263892640987,
+  "enrichment_needed_for_one_expected_rung": 19.637601991425807,
+  "single_deletion_ceiling": 1.1118,
+  "double_deletion_ceiling": 1.3398,
+  "triple_deletion_ceiling": 1.2677
+}

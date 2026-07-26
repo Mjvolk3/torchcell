@@ -106,3 +106,20 @@ Everything above takes `sigma_plate = 0.140` as given. It is the dominant term, 
 shrinks it (same-batch agar, same incubator shelf/position, same imaging session, tighter
 timing) is worth more than any amount of extra replication -- halving it would do what
 quadrupling the plate count does.
+
+## 2026.07.26 - Feasibility check: is there upward headroom at all?
+
+The design above answers *how precisely* the next round can measure a ladder. It does not
+answer *whether an upward ladder exists*. That headroom audit is now in
+[[experiments.019-echo-crispr-array.scripts.ladder_feasibility]]
+(`experiments/019-echo-crispr-array/scripts/ladder_feasibility.py`).
+
+Verdict: **the upward version of the claim is not reachable with a deletion panel scored on
+growth.** Zero of our 12 singles are above WT; only 2.7% of all 7,738 genome-wide deletion
+strains are significantly above WT, and the genome-wide ceiling is 1.1118. Stacking
+deletions makes it worse, not better -- the fraction above WT falls 23.0% -> 13.8% -> 6.9%
+from singles to doubles to triples (Kuzmin 2018). Fourteen randomly chosen doubles yield
+0.051 expected significant "rungs" (`P(zero) = 95%`).
+
+So the power numbers above should be read against a **descending** ordered trend
+(WT > single > double) or against an **epistasis** ordering, not against fitness gain.

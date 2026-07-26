@@ -1,7 +1,7 @@
 {
   "head": "beta_carotene",
   "method": "zscore",
-  "n_train": 3851,
+  "n_train": 3846,
   "eps": 1e-08,
   "dropped_features": [],
   "degenerate_robust_cv_threshold": 0.01,
@@ -13,16 +13,16 @@
   ],
   "lambdas": null,
   "mean": [
-    0.03245910257101059
+    0.03991159796714783
   ],
   "std": [
-    1.4622793197631836
+    1.4698055982589722
   ],
   "raw_mean": [
-    0.032459101532069594
+    0.039911596463858556
   ],
   "raw_std": [
-    1.4622793407907304
+    1.4698056134492006
   ],
   "robust_cv": [
     0.0

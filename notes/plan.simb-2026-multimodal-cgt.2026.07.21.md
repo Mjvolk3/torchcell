@@ -761,3 +761,116 @@ it per the CLAUDE.md artifact rule. (2) Fix the R5P mis-resolution and audit the
 `target_metabolite_ids` for Mülleder (19 AA) so the metabolome sets share one alignment key.
 (4) Write the FBA precursor-turnover script over Yeast9 and correlate flux vs measured pool on the
 overlap — the go/no-go for using FBA values as supervision rather than only as a design objective.
+
+## 2026.07.26 - Metabolism WS status: what landed, what moved, and what is deliberately deferred
+
+Everything below is on `plan/cgt-metabolism` and in `experiments/020-metabolism-prediction`.
+
+### WS status changes
+
+| WS | was | now | why |
+| --- | --- | --- | --- |
+| WS8 metabolite readout | ⬜ | **⬜ DEFERRED, with a reason** | not blocked on effort — blocked on parameters. See below. |
+| WS11 joint/leave-out | ⬜ | **▣ partially answered** | the auxiliary-task contrast ran; the estimator it used was biased, and the fix changed the answer. |
+| WS12 deletion ranking | ⬜ | **▣ reframed** | the ranking target is now the Merzbacher head-to-head plus an in-house double-mutant set. |
+
+### The one thing that mattered most: nine graphs, not two
+
+`gh_pigment_base.yaml` ran `graphs: [physical, regulatory]`. Porting 010's full block
+(tflink + six STRING 12.0 channels) is what produced the first real signal on betaxanthin.
+Measured, holding embeddings / lambda / capacity / selection rule fixed:
+
+| arm | change | peak *r* | min betaxanthin val loss |
+| --- | --- | --: | --: |
+| 1341 | 9 graphs, select on loss | 0.323 | 0.885 |
+| 1343 | select on the **metric** | 0.413 | 0.805 |
+| 1344 | + CRPS | **0.434** | 0.480 (CRPS scale) |
+| 1345 | **2 graphs** (ablation) | **0.121** | **0.968** |
+
+The 2-graph arm never got below 0.968 — the variance of the z-scored target — i.e. it never
+learned anything. **0.121 → 0.413 is the graphs.** 0.434 against the r = 0.914 noise ceiling is
+47 % of achievable, on a target Merzbacher abandoned regressing.
+
+**This comparison was not previously possible.** `compute_graph_regularization_loss` applied
+lambda twice from the same config key (effective weight lambda², 1e-6 at a nominal 1e-3) AND
+divided by edges summed over EVERY graph, so activating graphs silently weakened the ones already
+present (~7.5× going 2 → 9). Graph count and prior strength moved together. Both fixed; lambda is
+now per-graph normalized and `train|val/graph_reg/{loss,ratio_to_data}` are logged, because a
+prior folded into the total and never surfaced is a prior nobody can audit.
+
+**Consequence for every inherited lambda grid:** the expression/morphology sweep's
+`{0, 3e-4, 1e-3, 3e-3}` was tuned under the squared bug. Post-fix a nominal 1e-3 puts the prior at
+3.85× the data loss. 020 uses `{0, 2.6e-5, 6.5e-5, 1.3e-4}`, bracketing 10/25/50 % of data loss.
+
+### Selection was throwing away the model that worked
+
+`ModelCheckpoint` was pinned to `val/loss`. These runs peak on the METRIC then MSE-collapse
+toward the per-feature mean, so the saved checkpoint was the collapsed model — job 1341 peaked at
+0.323 on epoch 55 and was checkpointed at 0.000. Now `trainer.checkpoint.{monitor,mode}`.
+**The monitor change alone moved the recorded result 0.323 → 0.413.**
+
+Related: read every peak ALONGSIDE the val loss at that epoch. A peak with a flat loss is a
+maximum of noise (a null run reliably "peaks" at ~0.10 over 20 epochs); a peak with a loss drop is
+a fit. Only 6 of 1341's 88 epochs ever beat "predict the mean".
+
+### WS8 is deferred on PARAMETER COVERAGE, not effort
+
+Full flux-layer specification, promoted out of two untracked scratch notes:
+**[[plan.cgt-metabolism-flux-layer.2026.07.26]]** — gene-centric entities (no enzyme node layer),
+soft catalysis `Π = Π^GPR + ΔΠ`, the flux head with the box exact and dynamic, the four physics
+residuals, the amortized-flux-sampler framing, and the verified Merzbacher comparison.
+
+`torchcell/metabolism/enzyme_kinetics.py` now sources k_cat/K_M from the Open Enzyme Database with
+sha256-pinned provenance and a 30 °C selection cascade (wildtype > nearest-temperature >
+median-of-ties). **The blocking number: 1,126 OED records → 106 accessions → 94 map to a
+systematic ORF → 79 of Yeast9's 1,161 genes carry a published k_cat. 6.8 %.** A capacity constraint
+built today would be ~93 % predicted parameters — hard to defend against FCL, whose cone geometry
+at least comes from curated stoichiometry.
+
+Two further corrections the flux-layer note needs before it is executable, found by verification:
+the metabolic incidence in `equivariant_cell_graph_transformer.py:1150` is written against
+`_process_metabolism_hypergraph`, which has **zero callers** — the live processor is
+`_process_metabolism_bipartite`, emitting `("reaction","rmr","metabolite").hyperedge_index`
+transposed. And `YeastGEM.bipartite_graph`'s reaction axis is **expanded** per
+(reaction × gene-combination × direction), so it is not cobra's 4,131 reactions and an `S` built
+from it is not cobra's `S`.
+
+### WS12 now has a real double-mutant test set
+
+In-house β-carotene under a `dCIT2` background: **11 true double mutants** (X∆ cit2∆) plus a crt
+reference and the CIT2 single (1.174, so the background alone lifts β-carotene 17 %). Fold-changes
+0.737 (ROX1) to 1.979 (PAH1), 3 replicates.
+**Replicate-Spearman noise ceiling = 0.661.** 6 of 11 are Yeast9 metabolic genes (55 % vs ~18 %
+genome-wide) — these were chosen as engineering targets, so the 81 %-no-mechanism ceiling that
+bounds the random screens barely applies here. Scored by Spearman only: Ozaydin is a subjective
+colour score, this is an OD fold-change, so only the ordering is commensurable, and n = 11 gives a
+~±0.5 interval.
+
+### Running now — `experiments/020-metabolism-prediction`
+
+Three single-target Optuna studies, one arm per GPU, ~2 days, W&B online:
+
+| job | arm | objective | ceiling |
+| --- | --- | --- | --- |
+| 1349 | betaxanthin | `pearson_per_feature_max` | 0.914 |
+| 1350 | beta_carotene | **`spearman`**`_per_feature_max` | ~0.54 |
+| 1351 | mulleder19 | `pearson_per_feature_max` | unmeasured |
+
+Regression only — no binning. Merzbacher's metric stays recoverable by binning our PREDICTIONS post
+hoc, which is strictly more informative than training a classifier, since binning discards the
+ordering within a class that strain design needs.
+
+Two sweep-design points worth carrying forward: `hidden_channels` must be `{90, 180}` because nine
+graphs means nine attention heads and 128 does not divide by 9; and there is **no decoder axis** —
+`multitask.decoder` switches the inherited `global`/morphology head only, so sweeping it for the
+metabolism heads would be a phantom dimension costing half the trial budget. A true S3
+cross-attention decoder for the 19-AA vector **does not exist** and is the next structural lever if
+that arm stays flat.
+
+### Next
+
+1. Best betaxanthin model → Merzbacher head-to-head on the 811 Yeast9 genes, their stratification,
+   our regression + post-hoc binning.
+2. Best beta-carotene model → zero-shot inference on the 11 CIT2 doubles (`|p| = 2` is the same
+   forward pass; this is the thing FCL structurally cannot attempt).
+3. WS8 revisits when kinetic coverage improves, or on the CIT2 set where coverage is 55 %.

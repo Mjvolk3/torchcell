@@ -1160,7 +1160,8 @@ $N$ are *screens accumulated across the whole study, not days*: the array (the f
 collection) rides on **every** cross, so an array strain reaches ~350 screens just by being present
 each time, while a query appears in only ~17; many screens run in parallel per day. Fitness
 and its uncertainty come from a **bootstrap over screens** (Costanzo bootstraps means; Baryshnikova
-2010 Eq. 11 bootstraps the median, $B \approx 800$):
+2010 estimates SMF as the median, Eq. 11, and its variance by bootstrap sampling of that median --
+the number of draws $B$ is **not stated in any mirrored source**, see the provenance gap below):
 
 $$ \hat{f} = \operatorname*{mean}_{b}\big(\bar{m}^{(b)}\big), \qquad
    \sigma_{C} = \operatorname*{SD}_{b}\big(\bar{m}^{(b)}\big) \;\approx\; \frac{\sigma_{\text{screen}}}{\sqrt{N}}, $$
@@ -1525,8 +1526,8 @@ So the reference comparison is genuinely **SE vs SE**. But the two SEs are NOT b
 | | resampling unit | n | draws | statistic |
 |---|---|---|---|---|
 | this assay (run 3) | **plate** | **3** | 4000 | mean |
-| Costanzo 2016 SMF (query) | **control screen** | **17** | **800** | mean |
-| Costanzo 2016 SMF (array) | **control screen** | **350** | **800** | mean |
+| Costanzo 2016 SMF (query) | **control screen** | **17** | *not stated* | mean |
+| Costanzo 2016 SMF (array) | **control screen** | **350** | *not stated* | mean |
 
 Provenance chain (the draw count is NOT in the Costanzo SOM -- it defers to a cited paper):
 
@@ -1535,15 +1536,23 @@ Provenance chain (the draw count is NOT in the Costanzo SOM -- it defers to a ci
   control screens [for array strains]... used to estimate single mutant fitness as described
   previously (5) with the exception that **bootstrapped means, instead of medians**, across
   replicates were used in variance estimation and final fitness values."*
-- Reference (5) = Baryshnikova et al., *Nat Methods* **7**, 1017 (2010), whose SI states
-  *"Variance in single mutant fitness estimates was estimated from bootstrap sampling of the
-  median"* and whose figure legend pins the count: *"s.e.m. derived from bootstrapping
-  (**n = 800**)"*.
+- Reference (5) = Baryshnikova et al., *Nat Methods* **7**, 1017 (2010), whose SI gives the
+  procedure only -- *"Variance in single mutant fitness estimates was estimated from bootstrap
+  sampling of the median"* -- with no iteration count.
+
+**The number of bootstrap draws is an OPEN provenance gap, not a known value.** Combed and not
+found in: the Costanzo SOM (one bootstrap mention, quoted above), Costanzo `si1`, the
+Baryshnikova SI, or the Baryshnikova supplementary Matlab source (16 `.m` files, which contain
+**no bootstrap code at all** -- that 2010 release computes the median SMF, and bootstrapped
+*means* are precisely the Costanzo 2016 modification). A Baryshnikova figure legend reads
+*"s.e.m. derived from bootstrapping (n = 800)"*, but there `n` is parallel to *"s.d. (n = 4)"*
+for double mutants -- it is a **sample size, not a draw count** -- so it must not be cited as
+the iteration count. Do not fill this in without a source.
 
 Two consequences worth flagging. **(a) Our n is far smaller.** With n = 3 our SE is itself
 unstable: a 3-value bootstrap draws from only 10 distinct resample multisets, so `N_BOOT = 4000`
 samples a tiny discrete space and buys precision the data does not contain -- the SE is limited
-by n = 3, not by draw count. Costanzo's 800 draws sit over 17 (or 350) screens.
+by n = 3, not by draw count. Costanzo's (unstated) draw count sits over 17 (or 350) screens.
 **(b) Our loader assumes the QUERY n.** `N_SAMPLES_QUERY_SMF_SCREENS = 17` is used for every
 SMF record, but Costanzo derives array-strain SMF from **350** control screens and states it
 treats array and query estimates for the same mutant as independent. Which of the two a given

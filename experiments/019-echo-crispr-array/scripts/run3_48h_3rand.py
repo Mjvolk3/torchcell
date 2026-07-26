@@ -47,6 +47,7 @@ from torchcell.sga import (
     score_plate,
     score_table,
 )
+from torchcell.sga.viz import label_plate_overlay
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
@@ -188,7 +189,7 @@ def detect_and_score() -> pd.DataFrame:
     model = load_cellpose_model(gpu=True)
 
     print("[1a] crop -> Cellpose seg (all plates)")
-    plates = {}
+    plates, overlays = {}, {}
     for cond in CONDITIONS:
         g = cond["group"]
         proc = preprocess_fullres(cond["image"])
@@ -198,6 +199,7 @@ def detect_and_score() -> pd.DataFrame:
             return_masks=True,
         )
         np.save(osp.join(QUANT_DIR, f"run3_masks_{g}.npy"), res.masks)
+        overlays[g] = (osp.join(IMG_DIR, f"run3_overlay_{g}.png"), res.nodes)
         res.table.to_csv(osp.join(QUANT_DIR, f"run3_grid_{g}.csv"), index=False)
         layout = read_echo_picklist(cond["picklist"])
         plates[g] = dict(grid=res.table, layout=layout)
@@ -222,6 +224,11 @@ def detect_and_score() -> pd.DataFrame:
         op, _be, _how = _resolve_op(plates[g]["grid"], plates[g]["layout"], cfg, g,
                                     consensus)
         resolved[g] = op
+
+    # burn the 384-well address (rows A-P, cols 1-24, all four sides) + grid nodes onto each
+    # overlay, using the RESOLVED orientation so the headers are plate wells not image indices
+    for g, (path, nodes) in overlays.items():
+        label_plate_overlay(path, nodes, resolved[g])
 
     # QC gate: a plate is usable only if its orientation is confidently resolved AND its
     # on-plate WT reference is consistent (WT_CV below WT_CV_MAX). A plate that is

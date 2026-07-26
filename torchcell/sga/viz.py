@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.colors import Colormap
 from matplotlib.figure import Figure
+from PIL import Image, ImageDraw, ImageFont
 
 from torchcell.sga.models import NormalizationConfig, ScoreReport
 from torchcell.utils import PLOT_PALETTE
@@ -244,3 +245,98 @@ def strain_fitness_plot(report: ScoreReport, alpha: float = 0.05) -> Figure:
         spine.set_visible(True)
     fig.tight_layout()
     return fig
+
+
+# --- plate-address overlay labelling (shared by the run scripts + artifact builder) ---
+
+
+def _overlay_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+    """Bold TrueType at `size`, falling back to PIL's bitmap default."""
+    import os.path as osp
+
+    for p in (
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",
+    ):
+        if osp.exists(p):
+            return ImageFont.truetype(p, size)
+    return ImageFont.load_default()
+
+
+def plate_labels(op: str, n_rows: int, n_cols: int) -> tuple[list[str], list[str]]:
+    """Per-image-index PLATE labels (rows A-P, cols 1-24) under the resolved orientation.
+
+    The overlay is drawn in IMAGE order, but the well a colony belongs to is its PLATE
+    address -- ``r2.apply_orientation`` maps image (row, col) -> plate (row, col). All four
+    ops keep rows and columns separable (each either preserved or reversed), so the mapping
+    collapses to a per-axis label list. Without this the headers would silently show image
+    coordinates on any plate that resolves to rot180/flip_v/flip_h.
+    """
+    rows_rev = op in ("rot180", "flip_v")  # nr = n_rows + 1 - r
+    cols_rev = op in ("rot180", "flip_h")  # nc = n_cols + 1 - c
+    rows = [
+        chr(ord("A") + (n_rows - 1 - ri if rows_rev else ri)) for ri in range(n_rows)
+    ]
+    cols = [str(n_cols - ci if cols_rev else ci + 1) for ci in range(n_cols)]
+    return rows, cols
+
+
+def label_plate_overlay(
+    overlay_path: str, nodes: np.ndarray, op: str = "identity"
+) -> None:
+    """Draw the fitted grid nodes (cyan crosses) + 384-well headers (black) onto the
+    boundary overlay in place. Standard 384-well addressing -- rows A-P, columns 1-24 --
+    repeated on ALL FOUR sides (columns top+bottom, rows left+right) so a well can be read
+    off from any side. Headers are PLATE addresses under the resolved orientation ``op``
+    (see ``plate_labels``), not raw image indices. A mis-fit node -- sitting off its
+    colony -- is visible directly.
+    """
+    im = Image.open(overlay_path).convert("RGB")
+    d = ImageDraw.Draw(im)
+    n_rows, n_cols, _ = nodes.shape
+    row_lab, col_lab = plate_labels(op, n_rows, n_cols)
+    w, h = im.width, im.height
+    fs = max(48, int(w / 26))  # large headers, readable when the plate is zoomed out
+    fnt = _overlay_font(fs)
+    blk = (0, 0, 0)  # black headers -- high contrast on the cream agar margin
+    for ri in range(n_rows):
+        for ci in range(n_cols):
+            y, x = float(nodes[ri, ci, 0]), float(nodes[ri, ci, 1])
+            d.line([(x - 5, y), (x + 5, y)], fill=(0, 255, 255), width=1)
+            d.line([(x, y - 5), (x, y + 5)], fill=(0, 255, 255), width=1)
+
+    # White stroke behind the black glyphs: the header band can fall on cream agar, clear
+    # plastic or the dark lid depending on how the plate sits in frame, and plain black is
+    # unreadable on the last of those.
+    stroke = max(2, fs // 10)
+
+    def ctext(cx: float, cy: float, s: str) -> None:
+        tw = d.textlength(s, font=fnt)
+        d.text(
+            (cx - tw / 2, cy - fs / 2),
+            s,
+            fill=blk,
+            font=fnt,
+            stroke_width=stroke,
+            stroke_fill=(255, 255, 255),
+        )
+
+    # Offset the header band by the GRID PITCH, not by the font size: at large font sizes a
+    # font-scaled offset walks the labels off the plate entirely (onto the dark background).
+    # 0.65*pitch puts them just outside the colony grid, still on the plate.
+    row_pitch = float(np.median(np.abs(np.diff(nodes[:, :, 0], axis=0))))
+    col_pitch = float(np.median(np.abs(np.diff(nodes[:, :, 1], axis=1))))
+    pad_y, pad_x = 0.65 * row_pitch, 0.65 * col_pitch
+    # columns 1..24 on TOP and BOTTOM
+    top_y = min(max(fs, float(nodes[0, :, 0].mean()) - pad_y), h - fs)
+    bot_y = min(float(nodes[-1, :, 0].mean()) + pad_y, h - fs)
+    for ci in range(n_cols):
+        ctext(float(nodes[0, ci, 1]), top_y, col_lab[ci])
+        ctext(float(nodes[-1, ci, 1]), bot_y, col_lab[ci])
+    # rows A..P on LEFT and RIGHT
+    left_x = max(fs, float(nodes[:, 0, 1].mean()) - pad_x)
+    right_x = min(float(nodes[:, -1, 1].mean()) + pad_x, w - fs)
+    for ri in range(n_rows):
+        ctext(left_x, float(nodes[ri, 0, 0]), row_lab[ri])
+        ctext(right_x, float(nodes[ri, -1, 0]), row_lab[ri])
+    im.save(overlay_path)

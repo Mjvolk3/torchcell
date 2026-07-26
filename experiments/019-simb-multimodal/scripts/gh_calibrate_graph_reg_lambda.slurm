@@ -37,6 +37,19 @@ mkdir -p /scratch/projects/torchcell-scratch/experiments/019-simb-multimodal/slu
 
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate torchcell
+
+# train_cgt_multitask.py calls bare `load_dotenv()`, which searches UPWARD FROM CWD. A
+# git worktree has no `.env` unless setup-worktree.sh created one (it is gitignored and
+# machine-specific), so a run launched from a worktree dies at import on
+# "DATA_ROOT environment variable is not set". Resolve it explicitly: worktree first,
+# primary checkout as fallback.
+ENV_FILE="$PROJECT_ROOT/.env"
+[ -f "$ENV_FILE" ] || ENV_FILE="$HOME/Documents/projects/torchcell/.env"
+set -a
+. "$ENV_FILE"
+set +a
+echo "sourced env from $ENV_FILE (DATA_ROOT=$DATA_ROOT)"
+
 cd "$PROJECT_ROOT/experiments" || exit 1
 
 export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
@@ -44,18 +57,6 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export PYTHONUNBUFFERED=1
 export PYTHONWARNINGS=ignore
 export WANDB_MODE=disabled
+export HYDRA_FULL_ERROR=1
 
-for LAM in 1e-8 1e-6 1e-4 1e-2; do
-  echo "########## graph_reg_lambda=$LAM ##########"
-  python "$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/train_cgt_multitask.py" \
-    --config-name cgt_expr_006 \
-    model.graph_regularization.graph_reg_lambda=$LAM \
-    model.hidden_channels=90 \
-    model.num_transformer_layers=4 \
-    multitask.dist=point \
-    cell_dataset.node_embeddings=[random_100] \
-    trainer.max_epochs=1 \
-    trainer.early_stopping.enabled=false \
-    data_module.num_workers=4 2>&1 | grep -E "^\[(train|val) epoch|graph_reg"
-done
-echo "########## DONE -- read ratio_to_data per lambda above ##########"
+python "$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/calibrate_graph_reg_lambda.py"

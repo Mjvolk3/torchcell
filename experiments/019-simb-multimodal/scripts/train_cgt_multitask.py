@@ -126,7 +126,20 @@ def phenotype_name(head: str) -> str:
 
 
 def _as_dict(node: Any) -> dict[str, Any]:
-    """Resolve an OmegaConf node to a plain ``dict[str, Any]`` (typed for mypy)."""
+    """Resolve an OmegaConf node to a plain ``dict[str, Any]`` (typed for mypy).
+
+    Accepts a plain dict because every caller reaches this through
+    ``cfg.<section>.get("<key>", {})``, and OmegaConf's ``.get`` returns the PYTHON
+    default verbatim when the key is absent -- it does not wrap it in a config node.
+    ``OmegaConf.to_container({})`` then raises "Input cfg is not an OmegaConf config
+    object (dict)", so any config omitting an optional key crashed. That is how
+    ``head_phenotype_keys`` (optional, defined only by the metabolism configs) took down
+    every config that does not set it.
+    """
+    if node is None:
+        return {}
+    if isinstance(node, dict):
+        return node
     return cast(dict[str, Any], OmegaConf.to_container(node, resolve=True))
 
 

@@ -59,6 +59,15 @@ multitask:
 model:
   hidden_channels: 90 # SWEPT {90, 180}; both divisible by 9 heads
   num_attention_heads: 9 # one head per regularized graph
+
+  # The perturbation head carries its OWN head count, inherited as 4 from
+  # cgt_decoder_003. Raising num_attention_heads to 9 without it made every hidden=90
+  # trial die on `embed_dim must be divisible by num_heads` (90/4 = 22.5), while
+  # hidden=180 passed (180/4 = 45) -- a silent 50% loss of the trial budget, since a
+  # FAILed trial returns no objective and TPE keeps re-proposing the same region.
+  # Bound to the transformer's head count so the two can never drift apart again.
+  perturbation_head:
+    num_heads: ${model.num_attention_heads}
   learnable_embedding:
     enabled: false # NOT swept: cold start makes it inert on val
 

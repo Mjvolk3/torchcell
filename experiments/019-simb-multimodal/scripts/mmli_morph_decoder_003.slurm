@@ -15,7 +15,12 @@
 #     'sbatch /home/a-m/mjvolk3/projects/torchcell/experiments/019-simb-multimodal/scripts/mmli_morph_decoder_003.slurm'
 #
 #SBATCH -p mmli
-#SBATCH --mem=488g
+# 120g, NOT 488g. compute-5-7 has 500 GB total; requesting ~488 GB demands essentially the
+# WHOLE node, so the job cannot schedule whenever another user holds any memory (observed:
+# 256 GB allocated -> our job sat PENDING/Resources with an estimated start a YEAR out).
+# The 488g came from the old empty-node sniff sweep. 4 single-GPU workers on the 1,439-strain
+# fig3_core build need far less; this matches the gh/cabbi launchers.
+#SBATCH --mem=120g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16

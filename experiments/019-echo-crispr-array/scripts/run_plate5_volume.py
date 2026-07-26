@@ -303,7 +303,8 @@ def assay_summary_plot(metrics, best_vol):
 
 def _ref_join(fit, ref, cfg):
     """Join our per-strain per-volume fitness + SD to reference SMF via the
-    strain<->ORF map carried in the reference file."""
+    strain<->ORF map carried in the reference file.
+    """
     ours = fit.pivot(index="strain", columns="volume_nl", values="fitness")
     ours.columns = [f"ours_{c}nL" for c in ours.columns]
     sd = fit.pivot(index="strain", columns="volume_nl", values="fitness_sd")
@@ -322,7 +323,7 @@ def fitness_vs_reference_bars(fit, ref, cfg):
     for c in fit["volume_nl"].unique():
         series.append((f"ours {c} nL", f"ours_{c}nL", f"ours_sd_{c}nL"))
     src_cols = [c for c in ("costanzo_smf", "kuzmin_smf") if c in m.columns]
-    sd_map = {"costanzo_smf": "costanzo_sd", "kuzmin_smf": "kuzmin_sd"}
+    sd_map = {"costanzo_smf": "costanzo_se", "kuzmin_smf": "kuzmin_se"}
     for c in src_cols:
         series.append((c.replace("_smf", "").capitalize() + " SMF", c, sd_map.get(c)))
     n = len(series)
@@ -366,7 +367,7 @@ def fitness_vs_reference_bars(fit, ref, cfg):
 def fitness_vs_reference_scatter(fit, ref, cfg):
     # prefer Costanzo (most genes + has SD); fall back to Kuzmin
     ref_col = "costanzo_smf" if ref["costanzo_smf"].notna().sum() >= 3 else "kuzmin_smf"
-    sd_col = "costanzo_sd" if ref_col == "costanzo_smf" else "kuzmin_sd"
+    sd_col = "costanzo_se" if ref_col == "costanzo_smf" else "kuzmin_se"
     m = _ref_join(fit, ref, cfg)
     our_col = f"ours_{sorted(fit['volume_nl'].unique())[-1]}nL"  # larger volume
     our_sd = f"ours_sd_{sorted(fit['volume_nl'].unique())[-1]}nL"

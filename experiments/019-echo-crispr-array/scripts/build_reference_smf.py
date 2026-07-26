@@ -56,7 +56,8 @@ PANEL = {
 
 def _lookup(src, orf):
     """Return (costanzo_fit, costanzo_std, kuzmin_fit, kuzmin_std) for an ORF row
-    keyed by 'gene', or NaNs if absent."""
+    keyed by 'gene', or NaNs if absent.
+    """
     if orf not in src.index:
         return (np.nan,) * 4
     r = src.loc[orf]
@@ -92,9 +93,9 @@ def main():
                 "orf": orf,
                 "common_name": common,
                 "costanzo_smf": cf,
-                "costanzo_sd": cs,
+                "costanzo_se": cs,
                 "kuzmin_smf": kf,
-                "kuzmin_sd": ks,
+                "kuzmin_se": ks,
             }
         )
     df = pd.DataFrame(rows)

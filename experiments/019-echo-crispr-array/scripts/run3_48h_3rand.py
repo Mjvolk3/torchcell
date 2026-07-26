@@ -182,7 +182,7 @@ def detect_and_score() -> pd.DataFrame:
         cellprob_threshold=-4.0,
         node_tol=0.60,
         edge_margin_frac=0.70,
-        multi_min_frac=0.5,
+        multi_min_frac=0.35,
     )
     print("[0] loading Cellpose-SAM (cpsam) on GPU ...")
     model = load_cellpose_model(gpu=True)
@@ -299,6 +299,12 @@ def bootstrap_across_plates(fit: pd.DataFrame) -> pd.DataFrame:
                 boot_se=float(bm.std(ddof=1)),
                 across_plate_sd=float(vals.std(ddof=1)),
                 mean_within_plate_sd=float(d["fitness_sd"].mean()),
+                # within-plate SE from the ACTUAL replicate count per plate
+                # (fitness_sd / sqrt(n_used)), averaged over plates -- n_used varies
+                # 20-30 as wells are lost to failed transfers / M-N-C invalidation, so a
+                # single hardcoded n misstates this comparison.
+                mean_within_plate_se=float(d["fitness_se"].mean()),
+                mean_n_used=float(d["n_used"].mean()),
             )
         )
     res = pd.DataFrame(out)
@@ -341,7 +347,7 @@ def fig_correlation(m: pd.DataFrame, used: list) -> None:
     cst = m.dropna(subset=["costanzo_smf"])
     ax.errorbar(
         cst["costanzo_smf"], cst["boot_fitness"], yerr=cst["boot_se"],
-        xerr=cst["costanzo_sd"], fmt="o", ms=4, mfc=C_ORANGE, mec="black", mew=0.4,
+        xerr=cst["costanzo_se"], fmt="o", ms=4, mfc=C_ORANGE, mec="black", mew=0.4,
         ecolor="black", elinewidth=0.4, capsize=1.2, zorder=3, label="Costanzo 2016",
     )
     for _, r in cst.iterrows():
@@ -382,13 +388,14 @@ def fig_se(boot: pd.DataFrame, used: list) -> None:
     fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half_plus"]), mm_to_in(72)))
     ax.bar(x - w / 2, d["boot_se"], w, color=C_ORANGE, edgecolor="black", linewidth=0.4,
            label=f"bootstrap-across-plates SE (n={npl} plates)")
-    ax.bar(x + w / 2, d["mean_within_plate_sd"] / np.sqrt(29), w, color=C_RED,
+    nbar = d["mean_n_used"].mean()
+    ax.bar(x + w / 2, d["mean_within_plate_se"], w, color=C_RED,
            edgecolor="black", linewidth=0.4,
-           label="within-plate SE (colony SD/√n, n≈29)")
+           label=f"within-plate SE (colony SD/√n_used, mean n={nbar:.0f})")
     ax.set_xticks(x)
     ax.set_xticklabels(d["strain"], rotation=90, fontsize=4)
     ax.set_ylim(0, float(max(d["boot_se"].max(),
-                (d["mean_within_plate_sd"] / np.sqrt(29)).max())) * 1.28)
+                d["mean_within_plate_se"].max())) * 1.28)
     ax.set_ylabel("standard error of the mean fitness")
     ax.legend(fontsize=4.5, loc="upper right", frameon=False)
     _rc(ax)

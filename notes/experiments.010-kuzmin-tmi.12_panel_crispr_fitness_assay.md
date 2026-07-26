@@ -1388,7 +1388,7 @@ resolves confidently AND its on-plate WT reference is consistent (WT CV < 0.18).
 | plate | orientation | WT CV | occupied | blanks empty | QC |
 |---|---|---|---|---|---|
 | P1 | identity (confident) | 0.065 | 356/384 | 6/6 | **PASS** |
-| P2 | identity (confident) | 0.141 | 347/384 | 6/6 | **PASS** |
+| P2 | identity (confident) | 0.141 | 348/384 | 6/6 | **PASS** |
 | P3 | identity (confident) | 0.078 | 350/384 | 6/6 | **PASS** |
 
 **P3's earlier "contamination" was a one-row registration slip, not a wet-lab failure.** P3's
@@ -1427,17 +1427,17 @@ well is addressable and a mis-registered node (sitting off its colony) is visibl
 ![Run 3 detection overlay, P3 (5 nL, 48 h) -- QC PASS after the row-registration fix. The lattice had locked one row low (faint top row skipped, bottom row on the frame); `correct_row_shift` recovers the top row so all 16 rows register -- 350/384 occupied, 6/6 blanks empty, WT CV 0.078, green = accepted. P3 is a clean third replicate; the earlier "contamination" was the one-row slip mis-assigning strains, now corrected.](assets/images/019-echo-crispr-array/run3/run3_overlay_P3.png)
 
 **Batch effect (P1 + P2 + P3, the full three re-randomizations).** Mean bootstrap-across-plates
-SE = **0.068** (across-plate SD 0.143) -- roughly **3x run 2's 0.025**. That jump is the
+SE = **0.067** (across-plate SD 0.141) -- roughly **3x run 2's 0.025**. That jump is the
 point: three genuinely re-randomized plates expose the real between-plate variance that run 2's
 correlated timepoints hid. Recovering P3 (see the registration fix above) gives the full
 three-replicate estimate the design intended, tightening the SE from the earlier n = 2 (0.085).
 
 **vs Costanzo 2016 (n = 12).** Pearson r = **0.73 (p = 0.007)** (value agreement, driven by
-the one sick strain CBF1/YJR060W), Spearman ρ = 0.39 (rank agreement is noise-limited -- 11
+the one sick strain CBF1/YJR060W), Spearman ρ = 0.32 (rank agreement is noise-limited -- 11
 of 12 strains are near-neutral). Kuzmin has no per-strain SD, so no x error bars; y error bars
 are the bootstrap-across-3-plates SE.
 
-![Run 3: assay fitness (bootstrap mean over the 3 QC-pass re-randomized plates) vs Costanzo 2016 SMF. Identity line dashed; Pearson r=0.73 (p=0.007), Spearman rho=0.39; y error bars = the 3-plate bootstrap SE.](assets/images/019-echo-crispr-array/run3/run3_fitness_correlation_reference.svg)
+![Run 3: assay fitness (bootstrap mean over the 3 QC-pass re-randomized plates) vs Costanzo 2016 SMF. Identity line dashed; Pearson r=0.73 (p=0.007), Spearman rho=0.32; y error bars = the 3-plate bootstrap SE.](assets/images/019-echo-crispr-array/run3/run3_fitness_correlation_reference.svg)
 
 ![Run 3 per-strain SE: bootstrap-across-3-plates SE (orange, the batch effect) vs the within-plate colony SE (red, colony SD/sqrt(n)). The across-plate SE is much larger -- most of a strain's uncertainty is between-plate, not within-plate.](assets/images/019-echo-crispr-array/run3/run3_se_batch_effect.svg)
 
@@ -1469,7 +1469,7 @@ the lattice as-is and shifted +/-1 row/col (vacated edge extrapolated, opposite 
 keep whichever assigns the MOST real colonies, accepting a shift only when it adds a substantial
 fraction of a row. It is self-guarding -- on a correctly-fit plate any shift only sheds colonies,
 so P1/P2 (and all of run2) are byte-identical no-ops. Consequence: run 3 is now the full
-**n = 3** the design intended; SE 0.085 -> **0.068**, Costanzo Pearson r 0.65 -> **0.73** (p=0.007).
+**n = 3** the design intended; SE 0.085 -> **0.067**, Costanzo Pearson r 0.65 -> **0.73** (p=0.007).
 
 ### Why some touching doublets show only one green outline (detection vs rendering)
 
@@ -1495,8 +1495,44 @@ A third, separate case is a true detection miss: faint corner colonies (e.g. `P2
 `K13` on the P2 timepoints) where Cellpose returns **no** instance and the grid-recovery probe
 does not fire either.
 
-None of this moves a fitness number -- each strain's value is the median over ~29 replicate
-wells -- but it does make the overlays under-report crowding. The candidate fixes are to lower
-`multi_min_frac` toward ~0.4 (with a centroid-separation guard so real over-split slivers are
-not promoted to competitors) and to draw every in-gel instance so nothing detected is invisible.
-Neither is applied yet.
+**Both are now fixed in the pipeline.**
+
+*Crowding.* `multi_min_frac` 0.5 -> **0.35**, plus a new `multi_min_sep_frac` (0.30) guard:
+a second instance counts as a competing colony only if its centroid is at least 0.30 x pitch
+from the primary's. Measured real doublets sit **0.41-0.55 pitch** apart, while a Cellpose
+over-split sliver of one colony shares its centre -- so the separation test is what lets the
+area threshold come down far enough to catch real doublets without promoting fragments.
+
+*Faint corner misses.* The root cause was **not** the recovery threshold: a well whose only
+nearby instance failed the `accepted` gate (too far / wrong shape / off-gel) was recorded as
+size 0 but never added to `empty_wells`, so grid-guided recovery never probed it. `P24` on
+run-3 P2 sits in-gel (`gel_sd` +18 vs a 74 px margin) and `_recover_colony` returns a colony
+there even at the default threshold -- it was simply never asked. Rejected wells now join
+`empty_wells`, so recovery probes them.
+
+### Costanzo error bars are SEs, not SDs (naming corrected)
+
+The published column is named `Single mutant fitness (30 deg) stddev`, which invites reading it
+as a sample SD. It is not: per the Costanzo SOM the value is a **bootstrap standard error** of
+the bootstrapped-mean fitness, so the loader tags it `UncertaintyType.bootstrap_se` and uses it
+as-is (never divided by sqrt(n)). Our reference table nevertheless called it `costanzo_sd`,
+which is actively misleading -- the columns are now **`costanzo_se` / `kuzmin_se`** (values
+unchanged; `build_reference_smf.py` regenerates them).
+
+So the reference comparison is genuinely **SE vs SE**. But the two SEs are NOT built the same way:
+
+| | resampling unit | n | draws |
+|---|---|---|---|
+| this assay (run 3) | **plate** | **3** | 4000 |
+| Costanzo 2016 SMF | **control screen** | **17** | published |
+
+Costanzo averages the 4 colonies within a screen *before* resampling, so its n is 17 screens,
+not 68 colonies. Ours is 3 plates. Both are "bootstrap SE of a mean fitness estimate" -- the
+right quantity to compare -- but with n = 3 our SE is itself unstable: a 3-value bootstrap draws
+from only 10 distinct resample multisets, so `N_BOOT = 4000` samples a tiny discrete space and
+buys precision that the data does not contain. The SE is limited by n = 3, not by draw count.
+
+Related: the per-strain SE figure previously divided the within-plate colony SD by a hardcoded
+sqrt(29). The real `n_used` varies **20-30** (median 27-28) as wells are lost to failed transfers
+and M/N/C invalidation, and the pipeline already computes the correct per-plate
+`fitness_sd / sqrt(n_used)` -- the figure now uses that (`mean_within_plate_se`) instead.

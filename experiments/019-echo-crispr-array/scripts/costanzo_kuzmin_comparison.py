@@ -144,7 +144,7 @@ def _fig_correlation(df: pd.DataFrame) -> None:
         cst["costanzo_smf"],
         cst["boot_fitness"],
         yerr=cst["boot_se"],
-        xerr=cst["costanzo_sd"],
+        xerr=cst["costanzo_se"],
         fmt="o",
         ms=4,  # match Kuzmin scatter s=16 (markersize^2) so both markers are equal size
         mfc=C_ORANGE,
@@ -231,7 +231,7 @@ def _fig_sd(df: pd.DataFrame) -> None:
             "axes.linewidth": 0.5,
         }
     )
-    d = df.dropna(subset=["costanzo_sd"]).sort_values("costanzo_sd")
+    d = df.dropna(subset=["costanzo_se"]).sort_values("costanzo_se")
     x = np.arange(len(d))
     w = 0.38
     fig, ax = plt.subplots(
@@ -248,7 +248,7 @@ def _fig_sd(df: pd.DataFrame) -> None:
     )
     ax.bar(
         x + w / 2,
-        d["costanzo_sd"],
+        d["costanzo_se"],
         w,
         color=C_RED,
         edgecolor="black",
@@ -256,11 +256,11 @@ def _fig_sd(df: pd.DataFrame) -> None:
         label="Costanzo 2016 SMF SD (bootstrap SE)",
     )
     ax.axhline(d["our_sd"].mean(), color=C_ORANGE, lw=0.5, ls="--")
-    ax.axhline(d["costanzo_sd"].mean(), color=C_RED, lw=0.5, ls="--")
+    ax.axhline(d["costanzo_se"].mean(), color=C_RED, lw=0.5, ls="--")
     ax.set_xticks(x)
     ax.set_xticklabels(d["label"], rotation=90, fontsize=4)
     ax.yaxis.set_major_locator(MultipleLocator(0.05))
-    ax.set_ylim(0, float(max(d["our_sd"].max(), d["costanzo_sd"].max())) * 1.28)
+    ax.set_ylim(0, float(max(d["our_sd"].max(), d["costanzo_se"].max())) * 1.28)
     ax.set_ylabel("fitness standard deviation")
     # legend inside, top-right (headroom above the right-hand bars)
     ax.legend(fontsize=4.5, loc="upper right", frameon=False, handlelength=1.2)
@@ -286,7 +286,7 @@ def main() -> None:
     kpr, kpp, ksr, ksp, kn = _corr(
         df["kuzmin_smf"].to_numpy(), df["boot_fitness"].to_numpy()
     )
-    sd = df.dropna(subset=["costanzo_sd"])
+    sd = df.dropna(subset=["costanzo_se"])
     stats = pd.DataFrame(
         [
             dict(
@@ -299,7 +299,7 @@ def main() -> None:
                 our_boot_se=float(sd["boot_se"].mean()),
                 our_mean_sd=float(sd["our_sd"].mean()),
                 our_mean_se=float(sd["our_se"].mean()),
-                ref_mean_sd=float(sd["costanzo_sd"].mean()),
+                ref_mean_sd=float(sd["costanzo_se"].mean()),
             ),
             dict(
                 reference="Kuzmin2018",
@@ -333,7 +333,7 @@ def main() -> None:
     )
     print(
         f"[{CONDITION_LABEL}] mean replicate SD ours={sd['our_sd'].mean():.3f}  "
-        f"SE ours={sd['our_se'].mean():.3f}  Costanzo SMF SD={sd['costanzo_sd'].mean():.3f}"
+        f"SE ours={sd['our_se'].mean():.3f}  Costanzo SMF SD={sd['costanzo_se'].mean():.3f}"
     )
     print(f"wrote -> {RESULTS_DIR}/run2_reference_comparison.csv (+ _stats.csv)")
     print(f"wrote -> {IMG_DIR}/run2_fitness_correlation_reference.{{png,svg}}")

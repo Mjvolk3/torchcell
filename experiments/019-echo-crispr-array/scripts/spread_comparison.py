@@ -77,7 +77,7 @@ def main():
     vols = sorted(fit["volume_nl"].dropna().unique())
     sd_25 = fit[fit.volume_nl == vols[0]]["fitness_sd"].dropna().to_numpy()
     sd_5 = fit[fit.volume_nl == vols[1]]["fitness_sd"].dropna().to_numpy()
-    ref_sd = ref["costanzo_sd"].dropna().to_numpy()
+    ref_sd = ref["costanzo_se"].dropna().to_numpy()
     groups = [sd_25, sd_5, ref_sd]
     labels = [
         f"ours {vols[0]} nL\n(n={len(sd_25)})",
@@ -139,7 +139,7 @@ def main():
         "median SD  ours:",
         round(float(m["fitness_sd"].median()), 3),
         "Costanzo:",
-        round(float(m["costanzo_sd"].median()), 3),
+        round(float(m["costanzo_se"].median()), 3),
     )
     print(f"wrote {IMG}/plate5_spread_vs_reference.svg/.png")
 

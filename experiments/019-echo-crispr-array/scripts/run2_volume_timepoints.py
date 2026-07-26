@@ -254,7 +254,8 @@ def apply_orientation(grid: pd.DataFrame, op: str) -> pd.DataFrame:
 
 def _strain_structure_H(grid, layout, cfg):
     """Kruskal-Wallis H across strain groups after a full normalize -- the signal
-    that separates the true labelling from a flipped one."""
+    that separates the true labelling from a flipped one.
+    """
     m = grid.merge(layout, on=["row", "col"], how="inner")
     if not (m["strain"] != cfg.blank_name).any():
         return 0.0
@@ -273,7 +274,8 @@ def _strain_structure_H(grid, layout, cfg):
 def resolve_and_check(grid, layout, cfg, group):
     """Return (best_op, blanks_empty, diagnostics_df). Pick the op with the
     strongest strain structure; require it to clear H_MIN and beat the runner-up
-    by H_MARGIN, else fail loudly (orientation genuinely ambiguous)."""
+    by H_MARGIN, else fail loudly (orientation genuinely ambiguous).
+    """
     rows = []
     for op in OPS:
         m = apply_orientation(grid, op).merge(layout, on=["row", "col"], how="inner")
@@ -696,7 +698,7 @@ def reference_bars(comp, wide):
     mean_fit = wide.mean(axis=1)
     sd_fit = wide.std(axis=1)
     m = (
-        comp[["strain", "costanzo_smf", "costanzo_sd"]]
+        comp[["strain", "costanzo_smf", "costanzo_se"]]
         .drop_duplicates()
         .set_index("strain")
         .join(genes)
@@ -722,7 +724,7 @@ def reference_bars(comp, wide):
         x + 0.2,
         m["costanzo_smf"],
         0.4,
-        yerr=m["costanzo_sd"],
+        yerr=m["costanzo_se"],
         capsize=1.5,
         color=PLOT_PALETTE[4],
         edgecolor="black",
@@ -751,7 +753,7 @@ def reference_scatter_grid(comp, ref_stats):
         ax.errorbar(
             d["costanzo_smf"],
             d["fitness"],
-            xerr=d["costanzo_sd"],
+            xerr=d["costanzo_se"],
             yerr=d["fitness_sd"],
             fmt="o",
             ms=3,
@@ -892,7 +894,7 @@ def dynamic_range_plot(qual, wide, ref, anchor="YJR060W"):
     )
 
     pub = float(ref.loc[ref["strain"] == anchor, "costanzo_smf"].iloc[0])
-    pub_sd = float(ref.loc[ref["strain"] == anchor, "costanzo_sd"].iloc[0])
+    pub_sd = float(ref.loc[ref["strain"] == anchor, "costanzo_se"].iloc[0])
     axr.bar(
         range(len(GROUPS)),
         [wide.loc[anchor, g] for g in GROUPS],
@@ -923,7 +925,8 @@ def saturation_plot(sat, wide):
     """Left: resolution-invariant WT colony footprint (fraction of well cell
     filled) vs time -- does growth level off? Right: the sick strain's relative
     fitness vs time -- does compression worsen? Raw pixel size is NOT used: the
-    t72 camera has ~19x the pixel density of t44/t50."""
+    t72 camera has ~19x the pixel density of t44/t50.
+    """
     fig, (axl, axr) = plt.subplots(1, 2, figsize=(5.6, 2.6))
     for i, plate in enumerate(("P1", "P2")):
         s = sat[sat["plate"] == plate].sort_values("hours")

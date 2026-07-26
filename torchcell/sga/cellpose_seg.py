@@ -137,10 +137,23 @@ class CellposeSegConfig(BaseModel):
         "Larger keeps more true edge-row (row A / row P) colonies.",
     )
     multi_min_frac: float = Field(
-        default=0.5,
+        default=0.35,
         description="a second colony on/near a well triggers the multi ('M') flag only "
         "if its area is at least this fraction of the primary colony's -- so a Cellpose "
-        "over-split fragment of one colony no longer falsely rejects the well.",
+        "over-split fragment of one colony no longer falsely rejects the well. NOTE the "
+        "comparison is RAW-area vs RAW-area (pre-tightening): the primary's raw mask "
+        "carries a ~1.3-1.4x halo, so a genuine second colony reads ~0.4 of it, not the "
+        "~0.55 you get if you re-measure after `tighten_size` has shrunk the primary in "
+        "place. Set this from raw ratios (~0.35), not post-hoc ones.",
+    )
+    multi_min_sep_frac: float = Field(
+        default=0.30,
+        description="companion guard to ``multi_min_frac``: a second instance counts as a "
+        "competing colony only if its centroid is at least this fraction of the pitch away "
+        "from the primary's. Real touching doublets sit 0.4-0.55 pitch apart, while a "
+        "Cellpose over-split sliver of ONE colony shares its centre -- so the separation "
+        "test is what lets multi_min_frac be lowered enough to catch real doublets without "
+        "promoting fragments.",
     )
     recover_missed_wells: bool = Field(
         default=True,
@@ -808,6 +821,12 @@ def quantify_plate_image_cellpose(
                 and (cfg.edge_policy != "drop" or sd_val >= edge_margin)
             )
             if not accepted:
+                # The well holds no VALID colony, so it is empty for scoring purposes --
+                # and it must go on empty_wells too, or grid-guided recovery never probes
+                # it. Missing this is why a faint corner colony whose only nearby instance
+                # was rejected (too far / wrong shape / off-gel) stayed 0 even though the
+                # recovery probe would have found it.
+                empty_wells.append((ri, ci, len(recs)))
                 recs.append(_well(ri, ci, 0, np.nan, "", cxm, cym, -1))
                 continue
             # tighten the stored size to the dark colony core (drop the halo); detection
@@ -837,6 +856,8 @@ def quantify_plate_image_cellpose(
                 for p in (on + near)
                 if int(p["id"]) != int(best["id"])
                 and p["area"] >= cfg.multi_min_frac * orig_area
+                and float(np.hypot(p["cy"] - best["cy"], p["cx"] - best["cx"]))
+                >= cfg.multi_min_sep_frac * pitch
             ]
             if competitors:
                 flags += "M"  # two colonies compete for nutrient -> invalidate (red)

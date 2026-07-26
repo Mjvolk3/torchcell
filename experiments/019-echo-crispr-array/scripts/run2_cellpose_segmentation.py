@@ -130,7 +130,7 @@ def main() -> None:
         cellprob_threshold=-4.0,
         node_tol=0.60,
         edge_margin_frac=0.70,
-        multi_min_frac=0.5,
+        multi_min_frac=0.35,
         tighten_size=not use_cached,
     )
 

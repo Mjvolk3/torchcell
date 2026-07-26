@@ -237,6 +237,163 @@ in Zotero, just unassigned to a collection — one-line fix)**, Chen & Nielsen 2
 Already mirrored: `domenzainComputationalBiologyPredicts2025`, `wuSystematicallyExploringYeast2026`,
 `yuanOpenEnzymeDatabase2026` (the Open Enzyme Database), `longEnzymeEngineeringDatabase2026`.
 
+## 2026.07.25 — iBioFoundry β-carotene case study: media + four negative results
+
+The user supplied the iBF `s-cerevsisiae-beta-carotene-knockout` code dump. It contains the
+**corrected `media_setup.py`** flagged as missing earlier, plus a run history with results that
+change the Fig-6 narrative. Not yet ported; recorded here first.
+
+### The media layer we should port
+
+`media_setup.py` layers recipes, each calling the previous: `reset_media` (close all exchanges) →
+`setup_minimal_media` (glucose + NH4 + O2 + H2O + P/S + H+ + 9 trace metals) → `setup_ynb_media`
+(+9 vitamins) → `setup_sc_media` (+20 AAs + uracil + adenine) → `setup_sc_ura_media` (SC − uracil,
+for URA3-plasmid selection) → `setup_sc_ura_adenine_media` (SC − uracil − adenine). Supplements are
+capped at **5 % of the glucose uptake rate**, sourced to Suthers et al. 2020
+(`suthersGenomescaleMetabolicReconstruction2020`). **Correct DOI is `10.1016/j.mec.2020.e00148`**
+(*Metabolic Engineering Communications* **11**, e00148) — the iBF `media_setup.py` docstring cites
+`10.1016/j.ymben.2020.03.010`, which is an unrelated paper; we already flagged this in
+[[torchcell.datamodels.media-components]] and `torchcell/datamodels/media.py:21` has it right.
+
+### Suthers 2020 checked against the source — the 5 % rule does NOT mean what our code does
+
+Already mirrored (`$DATA_ROOT/torchcell-library/suthersGenomescaleMetabolicReconstruction2020/`,
+captured 2026-07-14 via the `database` collection, born-digital `pdftotext` OCR). §2.5 "Modeling
+simulations", verbatim:
+
+> "During initial testing … the carbon substrate uptake rate was set to a value 3.3 mmol gDW⁻¹ hr⁻¹;
+> we chose this value as a rough estimate for glucose uptake … and arbitrarily applied it to each
+> carbon substrate. … **For growth predictions involving rich media, supplementary compound uptake
+> rates were set to 0.165 mmol gDW⁻¹ hr⁻¹ (i.e., 5 % of default substrate uptake rate of 3.3 mmol
+> gDW⁻¹ hr⁻¹).** … The undefined composition of yeast extract in Yeast-Peptone-Dextrose (YPD) media
+> was assumed to be that of YNB media plus 20 amino acids and D-glucose. … Glucose uptake rate was
+> set to 10.0 mmol gDW⁻¹ hr⁻¹ during OptKnock simulations."
+
+**The 5 % is anchored to the DEFAULT 3.3, giving a fixed absolute 0.165 — it is not 5 % of whatever
+glucose bound you set.** The paper's own OptKnock runs use glucose 10.0 and do **not** rescale
+supplements. Our code does rescale: `experiments/007-kuzmin-tm/scripts/setup_media_conditions.py:71,124`
+computes `glucose_rate * 0.05`, and iBF's `media_setup.py` does the same at `glucose_rate=10.0` →
+supplements at **0.5, i.e. 3.03× the sourced value**. `torchcell/datamodels/media.py:19` repeats the
+"5 % of glucose" phrasing.
+
+**Decide and document before porting.** Constant-ratio scaling is a defensible modeling choice, but
+it is not what the source did, and tripling amino-acid availability changes biosynthetic burden —
+material for an amino-acid readout like Mülleder. Per CLAUDE.md this cannot ship as "sourced".
+
+Three further findings that shape the port:
+
+- **YPD-as-stand-in has a citable basis after all.** Suthers explicitly models YPD as *"YNB media plus
+  20 amino acids and D-glucose"*, declaring yeast extract's composition undefined and substituting
+  that set. So an approximation is defensible **provided it is named as an assumption**, which is
+  exactly what iBF's retirement of the `setup_ypd_media` name enforces. Peptone is never modeled.
+- **The SC recipe is not in Suthers at all.** SC is used throughout their Fig. 4 but its composition
+  appears nowhere in the paper or SI. Our SC (`setup_sc_media` = YNB + 20 AAs + uracil + adenine)
+  therefore needs its own source — the standard Difco/Sigma formulation already cited in
+  `media.py:18`. This matters: **SC is betaxanthin's medium**, the Track A headline dataset.
+- **The real derivation is one deferral further out.** The 5 % rule carries no justification in
+  Suthers ("rough estimate", "arbitrarily applied"); it points to **Dinh et al. 2019**
+  (*Metab Eng Commun* **9**, e00101), which is **not in our mirror**. Per the CLAUDE.md
+  follow-deferrals rule, that is the paper to capture if we want the convention's actual basis.
+
+Suthers SI is open-access and retrievable in one scriptable call —
+`curl -s "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC7586132/supplementaryFiles"` —
+including `mmc8.zip` with `iIsor850.{json,xml}` (the actual exchange bounds). Not yet mirrored;
+`manifest.json` has `si_data_sources: []`. Note `mmc5.xlsx` is growth data *labelled by* medium, not
+recipes — no media-composition table exists in the SI.
+
+### Our datasets need exactly four media, and one of them cannot be represented
+
+| medium | datasets | maps to |
+| --- | --- | --- |
+| **SC** | Cachera betaxanthin · Lopez isobutanol · Kemmeren expression | `setup_sc_media` ✅ |
+| **SC-URA** | Ozaydin β-carotene | `setup_sc_ura_media` ✅ |
+| **SM** | Mülleder AA · Zelezniak metabolome+proteome · Messner proteome | `setup_ynb_media` (decide + document: SM = YNB + glucose, no AAs) |
+| **YPD** | **Ohya morphology (4,718)** · da Silveira lipids · Yoshida organic acids | **NOT REPRESENTABLE** |
+
+**YPD: we approximate it, and Suthers tells us exactly how (RESOLVED).** iBF's `media_setup.py`
+retires the name — *"Real YPD contains peptone-derived peptides, yeast-extract lipids, and undefined
+nutrients that Yeast9 has no way to represent"* — but retiring the name is not the same as refusing
+to model it. Suthers §2.5 states the substitution outright:
+
+> "The undefined composition of yeast extract in Yeast-Peptone-Dextrose (YPD) media was assumed to be
+> that of **YNB media plus 20 amino acids and D-glucose**."
+
+So the YPD stand-in is **YNB + 20 AAs, no nucleobases** — which is *numerically identical* to iBF's
+`setup_sc_ura_adenine_media` (its docstring even says so: "functionally identical to our
+pre-retirement `setup_ypd_media` helper"). Port it as a **separately named** entry point,
+`setup_ypd_approx_media`, delegating to the same bound-setter but carrying the Suthers quote in its
+docstring. Same bounds, different claim, different provenance — the name must record what it asserts,
+so a reader can never mistake it for real YPD. Peptone is never modeled, by us or by Suthers.
+
+**Consequence worth knowing before investing in WS6: our four media collapse to ~two bound-vectors.**
+
+| medium | exchanges opened beyond YNB |
+| --- | --- |
+| SC | 20 AAs + uracil + adenine |
+| SC-URA | 20 AAs + adenine |
+| YPD (approx) | 20 AAs |
+| SM | — (YNB only) |
+
+The three amino-acid media differ from each other by **one or two nucleobase exchanges**; the only
+large axis is **±20 amino acids** (SM vs the rest). So exchange-bound ε-conditioning carries roughly
+one bit of real information across our datasets — worth doing for correctness, but it will not
+explain much variance. It also *shrinks* the Track A media confound: betaxanthin(SC) vs Mülleder(SM)
+and β-carotene(SC-URA) vs Mülleder(SM) differ by the same 20-amino-acid step plus/minus adenine, so
+the two arms are near-identical in medium distance and the confound cancels almost exactly in the
+paired contrast.
+
+### The media confound in Track A — and why the paired design absorbs it
+
+Track A's three datasets sit on **three different media**: betaxanthin SC, β-carotene SC-URA,
+Mülleder SM. Medium is perfectly collinear with dataset, so ε-conditioning cannot separate them —
+a single-arm "metabolome helped" result would be confounded with a medium change.
+
+The positive/negative control pair rescues this. Both arms pair against the *same* Mülleder/SM, and
+SC vs SC-URA differ only in uracil, so the two arms are near-matched and the confound largely
+cancels in the difference of differences $\Delta_{\text{betax}}-\Delta_{\beta\text{-car}}$. **This is
+a second, independent reason to report the contrast rather than either lift alone.**
+
+### Four iBF negative results that strengthen the Fig-6 story
+
+1. **MCS finds ZERO growth-coupled single-KO designs.** The first run produced cell-killers because
+   it specified only a SUPPRESS module; corrected with an inverted target (`{bc<=0.01, biomass>=1.5}`)
+   plus a PROTECT module (`{biomass>=1.5}`), re-run at MAX_COST=1 on both bases (jobs 3056/3057,
+   1.8 h each) → **0 solutions**. Under the single-KO experimental constraint, growth-coupled
+   β-carotene production is unreachable on Yeast9+Crt+SC-Ura. Network redundancy bypasses any single cut.
+2. **FSEOF never increases the β-carotene envelope.** All 50 biomass-feasible candidates give
+   `bc_max_ko == bc_max_base == 2.851` exactly.
+3. **PAH1 KO *shrinks* the envelope ~9 %** (−0.27 on 2.851) despite collaborator lab evidence
+   favouring it — a documented FBA-vs-wet-lab disagreement.
+4. **Flux sampling is intractable** on Yeast9 (4,131 rxns) under GLPK — OptGP/ACHR warmup is
+   ~`2·n_reactions` LP solves per cone; a minimal init ran >15 min CPU before being killed.
+
+**Consequence:** for β-carotene single-KO design, constraint-based methods produce *nothing usable* —
+zero MCS designs, zero FSEOF ceiling shifts, and a wrong-signed FBA call on the one candidate lab
+data supports. Meanwhile we hold **4,474 measured deletions**. That is a far stronger Fig-6 framing
+than "our model also does this": it is the case where mechanistic design has no answer and data does.
+
+### They already ran Flux Cone Learning — and it failed on β-carotene
+
+Using Merzbacher's own pre-computed WT Yeast9 flux samples (Zenodo 10.5281/zenodo.15761895, mirrored
+locally at `databases/fcl/paper_merzbacher_2025/`) with Ozaydin colour labels 3-class binned:
+**balanced accuracy 0.362 (HGB) / 0.354 (RF) against a 0.33 random baseline**, 89 % of predictions
+collapsing to "medium". The paper reports ~0.70 on *betaxanthin*.
+
+Their diagnosis — and it corroborates our precursor asymmetry from the *label* side:
+
+- visual ordinal scoring has higher measurement error than fluorescence;
+- class imbalance 9/67/24 high/medium/low;
+- **many low-colour deletions are flagged petite** — mitochondrial dysfunction starves the MVA
+  pathway, a non-metabolic confound flux geometry cannot see;
+- carotenoid (MVA→FPP) and betaxanthin (tyrosine) use different precursor pathways.
+
+**Two actionable consequences for Track A.** (a) **Filter or condition on petite** — our
+`CarotenoidOzaydin2013Dataset` already emits `comment_annotations` with `flag_petite` plus six other
+QC booleans (`ozaydin2013.py:116-124`), so this is available now; without it we are partly predicting
+mitochondrial dysfunction rather than carotenoid flux. (b) Expect β-carotene to be the weak arm for
+**two independent reasons** — no measured precursor *and* a noisy ordinal readout — which makes the
+noise-ceiling work (rank agreement, not Pearson) essential rather than optional.
+
 ## Framing correction (2026-07-25)
 
 Wu 2026 is **not** an argument about noise or uncertainty in metabolism. It is evidence that **the

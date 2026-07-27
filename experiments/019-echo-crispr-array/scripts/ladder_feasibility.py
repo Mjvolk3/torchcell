@@ -238,6 +238,9 @@ def part_c(smf: pd.DataFrame) -> tuple[pd.DataFrame, list[dict[str, Any]]]:
     j["smf_best"] = j[["smf0", "smf1"]].max(axis=1)
     j["smf_best_se"] = np.where(j.smf0 >= j.smf1, j.smf0_se, j.smf1_se)
     j["se_diff"] = np.hypot(j.fitness_se, j.smf_best_se)
+    # digenic epistasis under the multiplicative null; its SPREAD sets how much true
+    # signal the next round has to work with, which drives correlation attenuation
+    j["epsilon"] = j.fitness - j.smf0 * j.smf1
 
     rows = [
         summarise(
@@ -486,6 +489,16 @@ def main() -> None:
         "single_deletion_ceiling": float(smf.fitness.max()),
         "double_deletion_ceiling": float(dbl.fitness.max()),
         "triple_deletion_ceiling": float(orders[3].fitness.max()),
+        # digenic epsilon reference: the spread of TRUE signal available to the next round
+        "epsilon_sd_random_pairs": float(dbl.epsilon.std(ddof=1)),
+        "epsilon_iqr_random_pairs": float(
+            dbl.epsilon.quantile(0.75) - dbl.epsilon.quantile(0.25)
+        ),
+        "epsilon_sd_extreme_decile_span": float(
+            dbl.epsilon.quantile(0.95) - dbl.epsilon.quantile(0.05)
+        ),
+        "epsilon_q05": float(dbl.epsilon.quantile(0.05)),
+        "epsilon_q95": float(dbl.epsilon.quantile(0.95)),
     }
     print(json.dumps(summary, indent=2))
     with open(osp.join(RESULTS, "run3_ladder_feasibility_summary.json"), "w") as fh:

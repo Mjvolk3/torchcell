@@ -8,5 +8,10 @@
   "enrichment_needed_for_one_expected_rung": 19.637601991425807,
   "single_deletion_ceiling": 1.1118,
   "double_deletion_ceiling": 1.3398,
-  "triple_deletion_ceiling": 1.2677
+  "triple_deletion_ceiling": 1.2677,
+  "epsilon_sd_random_pairs": 0.04669931277053921,
+  "epsilon_iqr_random_pairs": 0.04008742500000001,
+  "epsilon_sd_extreme_decile_span": 0.12976174500000004,
+  "epsilon_q05": -0.07085948,
+  "epsilon_q95": 0.05890226500000004
 }

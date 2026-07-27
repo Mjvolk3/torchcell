@@ -1,4 +1,4 @@
-# experiments/020-metabolism-prediction/conf/mulleder19.yaml
+# experiments/022-mulleder-metabolome/conf/mulleder19.yaml
 # ARM 3 of 3 -- the 19-amino-acid metabolome alone (Mulleder 2016, absolute intracellular mM).
 #
 # The only VECTOR target of the three: 19 dense features per strain, key-sorted

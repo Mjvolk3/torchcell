@@ -1,6 +1,6 @@
-# experiments/020-metabolism-prediction/scripts/optuna_metabolism_sweep.py
-# [[experiments.020-metabolism-prediction.scripts.optuna_metabolism_sweep]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/020-metabolism-prediction/scripts/optuna_metabolism_sweep
+# experiments/020-cachera-betaxanthin/scripts/optuna_metabolism_sweep.py
+# [[experiments.020-cachera-betaxanthin.scripts.optuna_metabolism_sweep]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/020-cachera-betaxanthin/scripts/optuna_metabolism_sweep
 """Optuna sweep driver for the three single-target metabolism arms.
 
 ONE ARM PER GPU, three concurrent studies. Each arm is a SEPARATE study with its OWN

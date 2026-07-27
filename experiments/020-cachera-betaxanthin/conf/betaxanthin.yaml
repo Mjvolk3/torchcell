@@ -1,4 +1,4 @@
-# experiments/020-metabolism-prediction/conf/betaxanthin.yaml
+# experiments/020-cachera-betaxanthin/conf/betaxanthin.yaml
 # ARM 1 of 3 -- betaxanthin alone (Cachera 2023 CRI-SPA corrected fluorescence).
 #
 # The flagship target and the one with a real ceiling: replicate reproducibility gives

@@ -1,4 +1,4 @@
-# experiments/020-metabolism-prediction/conf/beta_carotene.yaml
+# experiments/021-ozaydin-beta-carotene/conf/beta_carotene.yaml
 # ARM 2 of 3 -- beta-carotene alone (Ozaydin 2013 colony-colour visual score).
 #
 # JUDGED ON SPEARMAN, NOT PEARSON, and this is not a preference -- the readout is a

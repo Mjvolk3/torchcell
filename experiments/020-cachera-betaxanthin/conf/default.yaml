@@ -1,4 +1,4 @@
-# experiments/020-metabolism-prediction/conf/default.yaml
+# experiments/020-cachera-betaxanthin/conf/default.yaml
 defaults:
   - _self_ # suppresses warning, recommended for default.yaml
 

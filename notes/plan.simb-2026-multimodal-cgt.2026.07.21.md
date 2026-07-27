@@ -787,9 +787,31 @@ Measured, holding embeddings / lambda / capacity / selection rule fixed:
 | 1344 | + CRPS | **0.434** | 0.480 (CRPS scale) |
 | 1345 | **2 graphs** (ablation) | **0.121** | **0.968** |
 
-The 2-graph arm never got below 0.968 — the variance of the z-scored target — i.e. it never
-learned anything. **0.121 → 0.413 is the graphs.** 0.434 against the r = 0.914 noise ceiling is
-47 % of achievable, on a target Merzbacher abandoned regressing.
+**CORRECTION (2026.07.26, later the same day): the attribution claim above is WITHDRAWN.**
+An earlier version of this section read "0.121 → 0.413 is the graphs." It is not supported.
+Job 1345, the 2-graph arm, logged `graph_reg/loss = 0.00000` on **every epoch** despite
+reporting `graph_reg_lambda = 6.5e-5`, while the 9-graph arms ran at ~0.26. So that arm
+changed two things at once — the graph count *and* whether the prior was applied at all — and
+cannot separate them. Most likely cause: `gh_metabolism_003.yaml` overrode `regularized_heads`
+with two entries, but OmegaConf **merges** dicts rather than replacing, so seven stale entries
+survived pointing at attention heads 2–8 that do not exist under the `num_attention_heads: 6`
+the same file set. They are skipped by the `graph_name not in adjacency_matrices` guard before
+the head index is used, so it fails **silently** instead of raising.
+
+What survives: **the 9-graph configuration reaches 0.413 (0.434 with CRPS), 47 % of the
+r = 0.914 ceiling, on a target Merzbacher abandoned regressing** — and the 2-graph number is
+not a valid comparison. The two-graph setting was only ever a smoke-test default for checking
+the pipeline runs, never a scientific choice, so nothing downstream depended on the
+attribution. A clean ablation is a few hours on a free GPU if a reviewer ever asks "why nine
+graphs?"; it is not on the critical path and is deliberately not queued.
+
+This is the same failure mode as the λ² bug one layer up: λ² was silent because the term was
+not logged, this was silent because a config *override* was really a *merge* and the skip-guard
+swallowed the inconsistency. Both needed a measured readout to surface. The lesson worth
+keeping: **an ablation config is the most dangerous config to write**, because it is the one
+where you deliberately change a setting and therefore have no baseline expectation against
+which a *second*, accidental change would look wrong. Assert non-zero `graph_reg/loss` in the
+smoke test whenever λ > 0.
 
 **This comparison was not previously possible.** `compute_graph_regularization_loss` applied
 lambda twice from the same config key (effective weight lambda², 1e-6 at a nominal 1e-3) AND
@@ -852,9 +874,32 @@ Three single-target Optuna studies, one arm per GPU, ~2 days, W&B online:
 
 | job | arm | objective | ceiling |
 | --- | --- | --- | --- |
-| 1349 | betaxanthin | `pearson_per_feature_max` | 0.914 |
-| 1350 | beta_carotene | **`spearman`**`_per_feature_max` | ~0.54 |
-| 1351 | mulleder19 | `pearson_per_feature_max` | unmeasured |
+| `020-cachera-betaxanthin` | betaxanthin | `pearson_per_feature_max` | r = 0.914 |
+| `021-ozaydin-beta-carotene` | beta_carotene | **`spearman`**`_per_feature_max` | **0.1–0.54, see below** |
+| `022-mulleder-metabolome` | mulleder19 | `pearson_per_feature_max` | unmeasured |
+
+One experiment directory per unique dataset, each with its own conf/scripts/results, Optuna DB
+and W&B project — the three targets are not commensurable, so a shared base config carrying
+three incompatible metrics was the wrong shape.
+
+**The β-carotene ceiling is the weakest number in this whole setup and was being quoted at its
+optimistic end.** It is NOT from Ozaydin's SI — we computed it
+(`019-simb-multimodal/scripts/pigment_noise_ceiling.py` → `results/pigment_noise_ceiling.json`).
+Of 4,474 records only **130 carry any replicate** (128 with 2, 2 with 3); 4,344 are n = 1. Two
+estimates, disagreeing ~7×:
+
+| estimate | n | Spearman | note |
+| --- | --: | --: | --- |
+| replicate **max vs min** on replicated rows | 130 | 0.544 (p = 2e-11) | the figure previously quoted |
+| **independent re-screen** (`2ndRoundOfTransformations`) | 119 | **0.075 (p = 0.41)** | not significant |
+
+The re-screen is deflated by range restriction — it re-tested selected top hits only, so
+first-screen scores concentrate in 3…5 of a −5…+5 scale (SD 0.89 vs 1.47 full screen, ratio
+1.65); range-corrected Pearson is 0.105, still far below 0.54. And max-vs-min is **not a random
+split-half**: sorting the two replicates within a row before correlating induces a within-pair
+anti-dependency whose sign and size are unquantified here. So the honest statement is that the
+ceiling lies somewhere in **~0.1 to ~0.54** and we do not know where. That matters for reading
+the sweep: if the truth is near 0.1, an arm scoring 0.09 is AT ceiling, not failing.
 
 Regression only — no binning. Merzbacher's metric stays recoverable by binning our PREDICTIONS post
 hoc, which is strictly more informative than training a classifier, since binning discards the

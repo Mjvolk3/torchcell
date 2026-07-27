@@ -1,6 +1,6 @@
 #!/bin/bash
-# experiments/020-metabolism-prediction/scripts/gh_optuna_metabolism.slurm
-# [[experiments.020-metabolism-prediction]]
+# experiments/021-ozaydin-beta-carotene/scripts/gh_optuna_metabolism.slurm
+# [[experiments.021-ozaydin-beta-carotene]]
 #
 # ONE Optuna study on ONE GPU. Three of these run concurrently for ~2 days -- betaxanthin,
 # beta-carotene, and the 19-AA metabolome.
@@ -30,15 +30,15 @@
 #SBATCH --time=48:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END,FAIL
-#SBATCH --output=/scratch/projects/torchcell-scratch/experiments/020-metabolism-prediction/slurm/output/%x_%j.out
-#SBATCH --error=/scratch/projects/torchcell-scratch/experiments/020-metabolism-prediction/slurm/output/%x_%j.out
+#SBATCH --output=/scratch/projects/torchcell-scratch/experiments/021-ozaydin-beta-carotene/slurm/output/%x_%j.out
+#SBATCH --error=/scratch/projects/torchcell-scratch/experiments/021-ozaydin-beta-carotene/slurm/output/%x_%j.out
 
 set -euo pipefail
 
 # Resolve the worktree root from the submit dir so the BRANCH's code is used, not the primary
 # checkout's -- the editable install otherwise wins (memory: worktree-build-needs-pythonpath).
 PROJECT_ROOT="${SLURM_SUBMIT_DIR:-/home/michaelvolk/Documents/projects/torchcell}"
-SCRATCH_EXP=/scratch/projects/torchcell-scratch/experiments/020-metabolism-prediction
+SCRATCH_EXP=/scratch/projects/torchcell-scratch/experiments/021-ozaydin-beta-carotene
 OPTUNA_DIR="$SCRATCH_EXP/optuna"
 # Pre-create BOTH dirs: slurm will not create the --output path itself, and a missing optuna
 # dir surfaces as an opaque SQLite "unable to open database file".
@@ -61,7 +61,7 @@ export OPTUNA_N_TRIALS="${OPTUNA_N_TRIALS:-40}"
 export OPTUNA_WORKER_ID="${OPTUNA_WORKER_ID:-0}"
 export NUM_WORKERS=$((SLURM_CPUS_PER_TASK / 2))
 
-SWEEP="$PROJECT_ROOT/experiments/020-metabolism-prediction/scripts/optuna_metabolism_sweep.py"
+SWEEP="$PROJECT_ROOT/experiments/021-ozaydin-beta-carotene/scripts/optuna_metabolism_sweep.py"
 
 echo "=========================================================="
 echo "host          : $(hostname)"

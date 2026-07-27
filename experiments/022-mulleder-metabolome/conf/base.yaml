@@ -1,5 +1,5 @@
-# experiments/020-metabolism-prediction/conf/base.yaml
-# [[experiments.020-metabolism-prediction]]
+# experiments/022-mulleder-metabolome/conf/base.yaml
+# [[experiments.022-mulleder-metabolome]]
 #
 # SHARED SETTINGS for the three single-target metabolism arms. Each target gets its OWN
 # run on its OWN GPU -- betaxanthin, beta-carotene, and the 19-AA metabolome -- so that

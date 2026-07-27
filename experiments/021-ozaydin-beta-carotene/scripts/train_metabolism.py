@@ -1,6 +1,6 @@
-# experiments/020-metabolism-prediction/scripts/train_metabolism.py
-# [[experiments.020-metabolism-prediction.scripts.train_metabolism]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/020-metabolism-prediction/scripts/train_metabolism
+# experiments/021-ozaydin-beta-carotene/scripts/train_metabolism.py
+# [[experiments.021-ozaydin-beta-carotene.scripts.train_metabolism]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/021-ozaydin-beta-carotene/scripts/train_metabolism
 """Hydra entrypoint for the three single-target metabolism arms.
 
 WHY THIS IS A THIN WRAPPER RATHER THAN A COPY
@@ -26,7 +26,7 @@ today would be ~93 % predicted parameters.
 
 Usage (one target per GPU):
 
-    python experiments/020-metabolism-prediction/scripts/train_metabolism.py \
+    python experiments/021-ozaydin-beta-carotene/scripts/train_metabolism.py \
         --config-name=betaxanthin
 """
 

@@ -1,13 +1,13 @@
 #!/bin/bash
-# experiments/020-metabolism-prediction/scripts/gh_metabolism_arm.slurm
-# [[experiments.020-metabolism-prediction]]
+# experiments/020-cachera-betaxanthin/scripts/gh_metabolism_arm.slurm
+# [[experiments.020-cachera-betaxanthin]]
 #
 # ONE metabolism arm on ONE GPU. Three of these run concurrently -- betaxanthin,
 # beta-carotene, and the 19-AA metabolome -- one target each, so every arm is early-stopped
 # and checkpointed on ITS OWN metric. That matters concretely: beta-carotene is a subjective
 # ordinal and must be judged on Spearman, which a shared monitor cannot express.
 #
-#   METAB_ARM=betaxanthin   sbatch experiments/020-metabolism-prediction/scripts/gh_metabolism_arm.slurm
+#   METAB_ARM=betaxanthin   sbatch experiments/020-cachera-betaxanthin/scripts/gh_metabolism_arm.slurm
 #   METAB_ARM=beta_carotene sbatch ...
 #   METAB_ARM=mulleder19    sbatch ...
 #
@@ -23,15 +23,15 @@
 #SBATCH --time=24:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END,FAIL
-#SBATCH --output=/scratch/projects/torchcell-scratch/experiments/020-metabolism-prediction/slurm/output/%x_%j.out
-#SBATCH --error=/scratch/projects/torchcell-scratch/experiments/020-metabolism-prediction/slurm/output/%x_%j.out
+#SBATCH --output=/scratch/projects/torchcell-scratch/experiments/020-cachera-betaxanthin/slurm/output/%x_%j.out
+#SBATCH --error=/scratch/projects/torchcell-scratch/experiments/020-cachera-betaxanthin/slurm/output/%x_%j.out
 
 set -euo pipefail
 
 # Resolve the worktree root from the submit dir so the BRANCH's code is used and not the
 # primary checkout's -- the editable install otherwise wins. Memory: worktree-build-needs-pythonpath.
 PROJECT_ROOT="${SLURM_SUBMIT_DIR:-/home/michaelvolk/Documents/projects/torchcell}"
-mkdir -p /scratch/projects/torchcell-scratch/experiments/020-metabolism-prediction/slurm/output
+mkdir -p /scratch/projects/torchcell-scratch/experiments/020-cachera-betaxanthin/slurm/output
 
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate torchcell
@@ -55,7 +55,7 @@ echo "=========================================================="
 nvidia-smi --query-gpu=index,name,memory.used,memory.total --format=csv,noheader
 echo "=========================================================="
 
-python experiments/020-metabolism-prediction/scripts/train_metabolism.py \
+python experiments/020-cachera-betaxanthin/scripts/train_metabolism.py \
   --config-name="$ARM"
 
 echo "=========================================================="

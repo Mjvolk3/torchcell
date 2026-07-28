@@ -770,6 +770,7 @@ class MultitaskCGTTask(L.LightningModule):
         dist: str = "point",
         energy_rank: int = DEFAULT_ENERGY_RANK,
         energy_samples: int = DEFAULT_ENERGY_SAMPLES,
+        smooth_window: int = 5,
     ) -> None:
         """Store the model, cell_graph, masked loss, and optim/sched config."""
         super().__init__()
@@ -843,6 +844,10 @@ class MultitaskCGTTask(L.LightningModule):
         # cache because it is EVAL-ONLY: PIT costs a full CDF evaluation (and, for `energy`,
         # 256 predictive samples) and answers nothing about the training trajectory.
         self._calib_cache: dict[str, dict[str, list[torch.Tensor]]] = {}
+        # Trailing window of the mean per-feature Pearson, per stage, for the smoothed
+        # EarlyStopping key. Kept as plain floats: it is a scalar history, not a metric cache.
+        self.smooth_window = int(smooth_window)
+        self._smooth_hist: dict[str, list[float]] = {}
         self.save_hyperparameters(
             ignore=["model", "cell_graph", "head_align", "target_stats"]
         )
@@ -1223,6 +1228,34 @@ class MultitaskCGTTask(L.LightningModule):
         if per_feature_values:
             mean_pf = torch.stack(per_feature_values).mean()
             self.log(f"{stage}/mean/pearson_per_feature", mean_pf, sync_dist=True)
+            # SMOOTHED companion -- the key EarlyStopping should monitor.
+            #
+            # WHY. Measured on _007 trial 77 (the round's best run): over epochs 90-152 the
+            # raw metric has sd 0.0116 and a median epoch-to-epoch swing of 0.0092, while
+            # EarlyStopping's min_delta is 1e-4 -- 92x SMALLER than the noise. Its peak of
+            # 0.1702 at epoch 112 sat +1.65 sd above the local mean, i.e. it was an upward
+            # noise spike; the next 40 epochs never beat that lucky draw, so patience expired
+            # and the run stopped at epoch 152 -- while val/loss was STILL FALLING
+            # (0.5470 -> 0.5398). The run was ended by noise, not by convergence.
+            #
+            # A trailing mean over `smooth_window` validation epochs cuts that noise by
+            # ~sqrt(window), so patience measures real stagnation instead of failure to
+            # re-roll a spike. The RAW metric is still logged and still what the sweep ranks
+            # on (`..._max`), so this changes when runs STOP, not how they are SCORED --
+            # deliberately, since the longer-run bias in the ranking is wanted.
+            hist = self._smooth_hist.setdefault(stage, [])
+            # Lightning runs a sanity-check validation pass BEFORE training, which fires this
+            # hook on an untrained model. Letting that value into the window would poison the
+            # first `smooth_window` epochs with an at-init score.
+            if not self.trainer.sanity_checking:
+                hist.append(float(mean_pf.detach()))
+                if len(hist) > self.smooth_window:
+                    hist.pop(0)
+                self.log(
+                    f"{stage}/mean/pearson_per_feature_smooth",
+                    torch.tensor(sum(hist) / len(hist), device=self.device),
+                    sync_dist=True,
+                )
         self._metric_cache[stage] = {}
 
     def _reduce_epoch_calibration(self, stage: str) -> None:
@@ -2273,6 +2306,7 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         dist=str(cfg.multitask.get("dist", "point")),
         energy_rank=int(cfg.multitask.get("energy_rank", DEFAULT_ENERGY_RANK)),
         energy_samples=int(cfg.multitask.get("energy_samples", DEFAULT_ENERGY_SAMPLES)),
+        smooth_window=int(cfg.trainer.get("smooth_window", 5)),
     )
 
     model_base_path = osp.join(data_root, "models/checkpoints")

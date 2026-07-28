@@ -104,3 +104,25 @@ model:
     # SWEPT {0 (ablation), 2e-7, 2e-6, 2e-5, 2e-4}. 2e-5 is MEASURED parity
     # (val/graph_reg/ratio_to_data = 1); ratio ~ 4.8e4 * lambda on this config.
     graph_reg_lambda: 2.0e-5
+
+trainer:
+  # EARLY STOPPING NOW WATCHES THE SMOOTHED METRIC.
+  #
+  # MEASURED on _007 trial 77, the round's best run: over epochs 90-152 the raw
+  # `val/mean/pearson_per_feature` has sd 0.0116 and a median epoch-to-epoch swing of 0.0092,
+  # against a `min_delta` of 1e-4 -- the stopping threshold is 92x SMALLER than the metric's
+  # own noise, so it may as well be zero. Its peak of 0.1702 at epoch 112 sat +1.65 sd above
+  # the local mean, i.e. an upward noise spike. The next 40 epochs never re-rolled that spike,
+  # patience expired, and the run stopped at epoch 152 -- while `val/loss` was STILL FALLING
+  # (0.5470 -> 0.5398). It was ended by noise, not by convergence.
+  #
+  # A trailing mean over 5 validation epochs cuts that noise by ~sqrt(5), so patience measures
+  # real stagnation. This changes when runs STOP; it does NOT change how they are SCORED --
+  # the sweep still ranks on the RAW metric's peak (`..._max`), which keeps the bias toward
+  # longer runs that we want, and keeps _007-vs-_006 comparability on the ranked number.
+  smooth_window: 5
+  early_stopping:
+    monitor: val/mean/pearson_per_feature_smooth
+    mode: max
+    patience: 40
+    min_delta: 1.0e-4

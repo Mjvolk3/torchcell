@@ -1,0 +1,209 @@
+{
+  "source": "Merzbacher 2025 Zenodo deposit, figures/fig4/ (sha256-pinned mirror)",
+  "aggregation": "majority vote over each deletion's flux samples (their knockout_voting)",
+  "per_fold_metrics_their_own": {
+    "HistGradientBoostingClassifier": {
+      "overall_accuracy": 0.6609904233870968,
+      "macro_weighted_f1": 0.5780362740740482,
+      "mcc": 0.10190770767479951,
+      "class_2_accuracy": 0.1135806451612903
+    },
+    "HistGradientBoostingClassifier_Balanced": {
+      "overall_accuracy": 0.6452469758064516,
+      "macro_weighted_f1": 0.5786683609271851,
+      "mcc": 0.09723403248828032,
+      "class_2_accuracy": 0.1364838709677419
+    },
+    "HistGradientBoostingClassifier_Resampled": {
+      "overall_accuracy": 0.6297530241935484,
+      "macro_weighted_f1": 0.5750407659854385,
+      "mcc": 0.08531994423586689,
+      "class_2_accuracy": 0.14059677419354838
+    },
+    "HistGradientBoostingClassifier_Resampled_Balanced": {
+      "overall_accuracy": 0.6294480846774194,
+      "macro_weighted_f1": 0.5741525988518388,
+      "mcc": 0.08448448505366121,
+      "class_2_accuracy": 0.14559677419354833
+    },
+    "LinearSVC": {
+      "overall_accuracy": 0.49697328629032256,
+      "macro_weighted_f1": 0.5084056040085408,
+      "mcc": 0.031673955196976016,
+      "class_2_accuracy": 0.23832258064516126
+    },
+    "LinearSVC_Balanced": {
+      "overall_accuracy": 0.4922353830645161,
+      "macro_weighted_f1": 0.5052208884068714,
+      "mcc": 0.029766271184339898,
+      "class_2_accuracy": 0.23991935483870966
+    },
+    "LinearSVC_Resampled": {
+      "overall_accuracy": 0.44496219758064515,
+      "macro_weighted_f1": 0.47389968858405973,
+      "mcc": 0.03094169833585326,
+      "class_2_accuracy": 0.2727903225806451
+    },
+    "LinearSVC_Resampled_Balanced": {
+      "overall_accuracy": 0.44599546370967735,
+      "macro_weighted_f1": 0.4752980337667815,
+      "mcc": 0.03434474256273258,
+      "class_2_accuracy": 0.26822580645161287
+    },
+    "LogisticRegression": {
+      "overall_accuracy": 0.515398185483871,
+      "macro_weighted_f1": 0.5207356117895376,
+      "mcc": 0.0408634028713557,
+      "class_2_accuracy": 0.23298387096774192
+    },
+    "LogisticRegression_Balanced": {
+      "overall_accuracy": 0.4817918346774193,
+      "macro_weighted_f1": 0.49971780294862417,
+      "mcc": 0.03426474861886024,
+      "class_2_accuracy": 0.26235483870967735
+    },
+    "LogisticRegression_Resampled": {
+      "overall_accuracy": 0.44879536290322586,
+      "macro_weighted_f1": 0.4775335328113061,
+      "mcc": 0.038100165732093974,
+      "class_2_accuracy": 0.29519354838709677
+    },
+    "LogisticRegression_Resampled_Balanced": {
+      "overall_accuracy": 0.44794354838709677,
+      "macro_weighted_f1": 0.47784972143702753,
+      "mcc": 0.03888193002971606,
+      "class_2_accuracy": 0.2891290322580645
+    },
+    "RandomForestClassifier": {
+      "overall_accuracy": 0.698109879032258,
+      "macro_weighted_f1": 0.6103574889241807,
+      "mcc": 0.2320692848356916,
+      "class_2_accuracy": 0.18127419354838706
+    },
+    "RandomForestClassifier_Balanced": {
+      "overall_accuracy": 0.6978402217741936,
+      "macro_weighted_f1": 0.5982615171701149,
+      "mcc": 0.23261555303009396,
+      "class_2_accuracy": 0.11725806451612901
+    },
+    "RandomForestClassifier_Resampled": {
+      "overall_accuracy": 0.6896345766129033,
+      "macro_weighted_f1": 0.6100470695842114,
+      "mcc": 0.20519014246043876,
+      "class_2_accuracy": 0.19117741935483865
+    },
+    "RandomForestClassifier_Resampled_Balanced": {
+      "overall_accuracy": 0.6896295362903226,
+      "macro_weighted_f1": 0.6088549942495858,
+      "mcc": 0.20317910747456844,
+      "class_2_accuracy": 0.18361290322580642
+    }
+  },
+  "gene_level": {
+    "HistGradientBoostingClassifier_Resampled_Balanced": {
+      "n_genes": 640,
+      "gene_level_accuracy": 0.6390625,
+      "majority_class_rate": 0.6734375,
+      "fraction_predicted_medium": 0.878125,
+      "high_producers_true": 100,
+      "high_producers_found": 14,
+      "high_producer_recall": 0.14,
+      "confusion_matrix": {
+        "true_low": {
+          "pred_low": 9,
+          "pred_medium": 94,
+          "pred_high": 6
+        },
+        "true_medium": {
+          "pred_low": 11,
+          "pred_medium": 386,
+          "pred_high": 34
+        },
+        "true_high": {
+          "pred_low": 4,
+          "pred_medium": 82,
+          "pred_high": 14
+        }
+      }
+    },
+    "LinearSVC_Balanced": {
+      "n_genes": 640,
+      "gene_level_accuracy": 0.5640625,
+      "majority_class_rate": 0.6734375,
+      "fraction_predicted_medium": 0.7359375,
+      "high_producers_true": 100,
+      "high_producers_found": 17,
+      "high_producer_recall": 0.17,
+      "confusion_matrix": {
+        "true_low": {
+          "pred_low": 20,
+          "pred_medium": 73,
+          "pred_high": 16
+        },
+        "true_medium": {
+          "pred_low": 56,
+          "pred_medium": 324,
+          "pred_high": 51
+        },
+        "true_high": {
+          "pred_low": 9,
+          "pred_medium": 74,
+          "pred_high": 17
+        }
+      }
+    },
+    "LogisticRegression": {
+      "n_genes": 640,
+      "gene_level_accuracy": 0.5859375,
+      "majority_class_rate": 0.6734375,
+      "fraction_predicted_medium": 0.7734375,
+      "high_producers_true": 100,
+      "high_producers_found": 17,
+      "high_producer_recall": 0.17,
+      "confusion_matrix": {
+        "true_low": {
+          "pred_low": 17,
+          "pred_medium": 78,
+          "pred_high": 14
+        },
+        "true_medium": {
+          "pred_low": 43,
+          "pred_medium": 341,
+          "pred_high": 47
+        },
+        "true_high": {
+          "pred_low": 7,
+          "pred_medium": 76,
+          "pred_high": 17
+        }
+      }
+    },
+    "RandomForestClassifier_Resampled": {
+      "n_genes": 640,
+      "gene_level_accuracy": 0.7,
+      "majority_class_rate": 0.6734375,
+      "fraction_predicted_medium": 0.9484375,
+      "high_producers_true": 100,
+      "high_producers_found": 18,
+      "high_producer_recall": 0.18,
+      "confusion_matrix": {
+        "true_low": {
+          "pred_low": 6,
+          "pred_medium": 101,
+          "pred_high": 2
+        },
+        "true_medium": {
+          "pred_low": 2,
+          "pred_medium": 424,
+          "pred_high": 5
+        },
+        "true_high": {
+          "pred_low": 0,
+          "pred_medium": 82,
+          "pred_high": 18
+        }
+      }
+    }
+  },
+  "reading": "Accuracy on a 67%-majority problem cannot separate 'learned something' from 'predicted the majority'. MCC can, and they computed it without reporting it. Note also that models with higher high-producer accuracy have LOWER overall accuracy -- the only way to call more highs is to stop calling everything medium -- so accuracy actively selects against the capability the task is about."
+}

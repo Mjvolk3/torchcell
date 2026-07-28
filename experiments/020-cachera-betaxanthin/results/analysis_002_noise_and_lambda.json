@@ -1,0 +1,762 @@
+{
+  "betaxanthin": {
+    "study": "betaxanthin_002",
+    "db": "/scratch/projects/torchcell-scratch/experiments/020-cachera-betaxanthin/optuna/optuna_020_betaxanthin.db",
+    "n_features_in_metric": 1,
+    "n_trials": 37,
+    "n_complete": 36,
+    "states": {
+      "COMPLETE": 36,
+      "RUNNING": 1
+    },
+    "values": {
+      "max": 0.4301,
+      "median": 0.2306,
+      "min": 0.0555,
+      "sd_between_trials": 0.1286,
+      "top5": [
+        0.4301,
+        0.4234,
+        0.4216,
+        0.4211,
+        0.4095
+      ],
+      "top5_spread": 0.0206
+    },
+    "replicate_noise": {
+      "sigma": 0.0302,
+      "dof": 3,
+      "groups": [
+        {
+          "trials": [
+            3,
+            10,
+            11
+          ],
+          "values": [
+            0.4216,
+            0.4095,
+            0.3584
+          ],
+          "range": 0.0632
+        },
+        {
+          "trials": [
+            19,
+            31
+          ],
+          "values": [
+            0.4211,
+            0.3896
+          ],
+          "range": 0.0315
+        }
+      ],
+      "usable": true
+    },
+    "duration_min": {
+      "median": 34.9,
+      "min": 14.3,
+      "max": 91.2
+    },
+    "run_length_confound": {
+      "r_duration_objective": 0.248,
+      "r_within_hidden90": 0.121,
+      "n_within_cell": 23
+    },
+    "lambda_calibration": {
+      "points": {
+        "2.6e-05": {
+          "ratio_median": 0.2414,
+          "n": 6
+        },
+        "6.5e-05": {
+          "ratio_median": 0.4119,
+          "n": 19
+        },
+        "0.00013": {
+          "ratio_median": 0.5417,
+          "n": 6
+        }
+      },
+      "slope_ratio_per_lambda": 6336.9,
+      "parity_lambda": 0.00016
+    },
+    "marginal_effects_TPE_CONFOUNDED": {
+      "dist": {
+        "levels": [
+          {
+            "value": "crps",
+            "mean": 0.2752,
+            "n": 18
+          },
+          {
+            "value": "quantile",
+            "mean": 0.2317,
+            "n": 12
+          },
+          {
+            "value": "point",
+            "mean": 0.1724,
+            "n": 6
+          }
+        ],
+        "spread": 0.1028
+      },
+      "graph_reg_lambda": {
+        "levels": [
+          {
+            "value": "6.5e-05",
+            "mean": 0.2803,
+            "n": 19
+          },
+          {
+            "value": "2.6e-05",
+            "mean": 0.2533,
+            "n": 6
+          },
+          {
+            "value": "0.00013",
+            "mean": 0.2262,
+            "n": 6
+          },
+          {
+            "value": "0.0",
+            "mean": 0.1129,
+            "n": 5
+          }
+        ],
+        "spread": 0.1675
+      },
+      "hidden_channels": {
+        "levels": [
+          {
+            "value": "90",
+            "mean": 0.2614,
+            "n": 23
+          },
+          {
+            "value": "180",
+            "mean": 0.212,
+            "n": 13
+          }
+        ],
+        "spread": 0.0494
+      },
+      "hp_profile": {
+        "levels": [
+          {
+            "value": "baseline",
+            "mean": 0.2931,
+            "n": 5
+          },
+          {
+            "value": "decayed",
+            "mean": 0.2787,
+            "n": 21
+          },
+          {
+            "value": "aggressive",
+            "mean": 0.145,
+            "n": 10
+          }
+        ],
+        "spread": 0.1482
+      },
+      "learnable_embedding": {
+        "levels": [
+          {
+            "value": "False",
+            "mean": 0.2792,
+            "n": 26
+          },
+          {
+            "value": "True",
+            "mean": 0.1509,
+            "n": 10
+          }
+        ],
+        "spread": 0.1282
+      },
+      "node_embeddings": {
+        "levels": [
+          {
+            "value": "prot_T5_all",
+            "mean": 0.2947,
+            "n": 15
+          },
+          {
+            "value": "esm2_t33_650M_UR50D_all",
+            "mean": 0.2398,
+            "n": 8
+          },
+          {
+            "value": "codon_frequency",
+            "mean": 0.2395,
+            "n": 4
+          },
+          {
+            "value": "calm",
+            "mean": 0.1723,
+            "n": 5
+          },
+          {
+            "value": "random_100",
+            "mean": 0.1523,
+            "n": 4
+          }
+        ],
+        "spread": 0.1424
+      },
+      "num_transformer_layers": {
+        "levels": [
+          {
+            "value": "2",
+            "mean": 0.2881,
+            "n": 24
+          },
+          {
+            "value": "4",
+            "mean": 0.1967,
+            "n": 5
+          },
+          {
+            "value": "6",
+            "mean": 0.1242,
+            "n": 7
+          }
+        ],
+        "spread": 0.1639
+      },
+      "target_norm": {
+        "levels": [
+          {
+            "value": "yeo_johnson",
+            "mean": 0.2583,
+            "n": 24
+          },
+          {
+            "value": "zscore",
+            "mean": 0.214,
+            "n": 12
+          }
+        ],
+        "spread": 0.0442
+      }
+    },
+    "selection_inflation": {
+      "expected_max_of_n_sd_units": 2.114,
+      "inflation": 0.064,
+      "reported_best": 0.4301,
+      "bias_corrected_floor": 0.3662,
+      "top5_spread_in_sigma": 0.68,
+      "top5_separable": false,
+      "replicates_for_sigma_eff_0p010": 10
+    }
+  },
+  "beta_carotene": {
+    "study": "beta_carotene_002",
+    "db": "/scratch/projects/torchcell-scratch/experiments/021-ozaydin-beta-carotene/optuna/optuna_020_beta_carotene.db",
+    "n_features_in_metric": 1,
+    "n_trials": 40,
+    "n_complete": 40,
+    "states": {
+      "COMPLETE": 40
+    },
+    "values": {
+      "max": 0.2231,
+      "median": 0.1187,
+      "min": 0.0332,
+      "sd_between_trials": 0.0398,
+      "top5": [
+        0.2231,
+        0.1993,
+        0.1521,
+        0.1498,
+        0.1494
+      ],
+      "top5_spread": 0.0736
+    },
+    "replicate_noise": {
+      "sigma": 0.0249,
+      "dof": 3,
+      "groups": [
+        {
+          "trials": [
+            18,
+            22
+          ],
+          "values": [
+            0.1993,
+            0.1494
+          ],
+          "range": 0.0499
+        },
+        {
+          "trials": [
+            30,
+            31
+          ],
+          "values": [
+            0.1521,
+            0.1184
+          ],
+          "range": 0.0337
+        },
+        {
+          "trials": [
+            35,
+            37
+          ],
+          "values": [
+            0.1498,
+            0.1398
+          ],
+          "range": 0.01
+        }
+      ],
+      "usable": true
+    },
+    "duration_min": {
+      "median": 25.0,
+      "min": 17.1,
+      "max": 49.4
+    },
+    "run_length_confound": {
+      "r_duration_objective": 0.208,
+      "r_within_hidden90": 0.239,
+      "n_within_cell": 32
+    },
+    "lambda_calibration": {
+      "points": {
+        "2.6e-05": {
+          "ratio_median": 0.0921,
+          "n": 5
+        },
+        "6.5e-05": {
+          "ratio_median": 0.1694,
+          "n": 12
+        },
+        "0.00013": {
+          "ratio_median": 0.3794,
+          "n": 6
+        }
+      },
+      "slope_ratio_per_lambda": 2918.8,
+      "parity_lambda": 0.00034
+    },
+    "marginal_effects_TPE_CONFOUNDED": {
+      "dist": {
+        "levels": [
+          {
+            "value": "crps",
+            "mean": 0.1273,
+            "n": 17
+          },
+          {
+            "value": "quantile",
+            "mean": 0.1168,
+            "n": 14
+          },
+          {
+            "value": "point",
+            "mean": 0.0915,
+            "n": 9
+          }
+        ],
+        "spread": 0.0358
+      },
+      "graph_reg_lambda": {
+        "levels": [
+          {
+            "value": "0.0",
+            "mean": 0.1205,
+            "n": 17
+          },
+          {
+            "value": "6.5e-05",
+            "mean": 0.1151,
+            "n": 12
+          },
+          {
+            "value": "2.6e-05",
+            "mean": 0.1138,
+            "n": 5
+          },
+          {
+            "value": "0.00013",
+            "mean": 0.1041,
+            "n": 6
+          }
+        ],
+        "spread": 0.0165
+      },
+      "hidden_channels": {
+        "levels": [
+          {
+            "value": "90",
+            "mean": 0.1166,
+            "n": 32
+          },
+          {
+            "value": "180",
+            "mean": 0.1117,
+            "n": 8
+          }
+        ],
+        "spread": 0.0049
+      },
+      "hp_profile": {
+        "levels": [
+          {
+            "value": "aggressive",
+            "mean": 0.1208,
+            "n": 24
+          },
+          {
+            "value": "decayed",
+            "mean": 0.1125,
+            "n": 12
+          },
+          {
+            "value": "baseline",
+            "mean": 0.0938,
+            "n": 4
+          }
+        ],
+        "spread": 0.027
+      },
+      "learnable_embedding": {
+        "levels": [
+          {
+            "value": "False",
+            "mean": 0.1204,
+            "n": 24
+          },
+          {
+            "value": "True",
+            "mean": 0.1085,
+            "n": 16
+          }
+        ],
+        "spread": 0.0119
+      },
+      "node_embeddings": {
+        "levels": [
+          {
+            "value": "prot_T5_all",
+            "mean": 0.1295,
+            "n": 3
+          },
+          {
+            "value": "calm",
+            "mean": 0.1209,
+            "n": 21
+          },
+          {
+            "value": "codon_frequency",
+            "mean": 0.1141,
+            "n": 9
+          },
+          {
+            "value": "esm2_t33_650M_UR50D_all",
+            "mean": 0.1007,
+            "n": 3
+          },
+          {
+            "value": "random_100",
+            "mean": 0.0918,
+            "n": 4
+          }
+        ],
+        "spread": 0.0377
+      },
+      "num_transformer_layers": {
+        "levels": [
+          {
+            "value": "4",
+            "mean": 0.123,
+            "n": 21
+          },
+          {
+            "value": "6",
+            "mean": 0.112,
+            "n": 13
+          },
+          {
+            "value": "2",
+            "mean": 0.0973,
+            "n": 6
+          }
+        ],
+        "spread": 0.0258
+      },
+      "target_norm": {
+        "levels": [
+          {
+            "value": "zscore",
+            "mean": 0.1217,
+            "n": 24
+          },
+          {
+            "value": "yeo_johnson",
+            "mean": 0.1064,
+            "n": 16
+          }
+        ],
+        "spread": 0.0153
+      }
+    },
+    "selection_inflation": {
+      "expected_max_of_n_sd_units": 2.156,
+      "inflation": 0.0537,
+      "reported_best": 0.2231,
+      "bias_corrected_floor": 0.1694,
+      "top5_spread_in_sigma": 2.96,
+      "top5_separable": true,
+      "replicates_for_sigma_eff_0p010": 7
+    }
+  },
+  "mulleder19": {
+    "study": "mulleder19_002",
+    "db": "/scratch/projects/torchcell-scratch/experiments/022-mulleder-metabolome/optuna/optuna_020_mulleder19.db",
+    "n_features_in_metric": 19,
+    "n_trials": 31,
+    "n_complete": 30,
+    "states": {
+      "COMPLETE": 30,
+      "RUNNING": 1
+    },
+    "values": {
+      "max": 0.1798,
+      "median": 0.0972,
+      "min": 0.0,
+      "sd_between_trials": 0.0555,
+      "top5": [
+        0.1798,
+        0.178,
+        0.1685,
+        0.1645,
+        0.1606
+      ],
+      "top5_spread": 0.0192
+    },
+    "replicate_noise": {
+      "sigma": 0.0012,
+      "dof": 1,
+      "groups": [
+        {
+          "trials": [
+            7,
+            10
+          ],
+          "values": [
+            0.1798,
+            0.178
+          ],
+          "range": 0.0017
+        }
+      ],
+      "usable": false
+    },
+    "duration_min": {
+      "median": 46.1,
+      "min": 17.4,
+      "max": 72.2
+    },
+    "run_length_confound": {
+      "r_duration_objective": 0.754,
+      "r_within_hidden90": 0.799,
+      "n_within_cell": 23
+    },
+    "lambda_calibration": {
+      "points": {
+        "2.6e-05": {
+          "ratio_median": 0.2342,
+          "n": 16
+        },
+        "6.5e-05": {
+          "ratio_median": 0.291,
+          "n": 5
+        },
+        "0.00013": {
+          "ratio_median": 0.4832,
+          "n": 7
+        }
+      },
+      "slope_ratio_per_lambda": 4476.7,
+      "parity_lambda": 0.00022
+    },
+    "marginal_effects_TPE_CONFOUNDED": {
+      "dist": {
+        "levels": [
+          {
+            "value": "quantile",
+            "mean": 0.1204,
+            "n": 19
+          },
+          {
+            "value": "crps",
+            "mean": 0.1007,
+            "n": 5
+          },
+          {
+            "value": "point",
+            "mean": 0.0253,
+            "n": 6
+          }
+        ],
+        "spread": 0.0951
+      },
+      "graph_reg_lambda": {
+        "levels": [
+          {
+            "value": "6.5e-05",
+            "mean": 0.1348,
+            "n": 5
+          },
+          {
+            "value": "2.6e-05",
+            "mean": 0.1075,
+            "n": 16
+          },
+          {
+            "value": "0.00013",
+            "mean": 0.0737,
+            "n": 7
+          },
+          {
+            "value": "0.0",
+            "mean": 0.016,
+            "n": 2
+          }
+        ],
+        "spread": 0.1188
+      },
+      "hidden_channels": {
+        "levels": [
+          {
+            "value": "90",
+            "mean": 0.1069,
+            "n": 23
+          },
+          {
+            "value": "180",
+            "mean": 0.0691,
+            "n": 7
+          }
+        ],
+        "spread": 0.0378
+      },
+      "hp_profile": {
+        "levels": [
+          {
+            "value": "baseline",
+            "mean": 0.1286,
+            "n": 2
+          },
+          {
+            "value": "aggressive",
+            "mean": 0.1002,
+            "n": 21
+          },
+          {
+            "value": "decayed",
+            "mean": 0.083,
+            "n": 7
+          }
+        ],
+        "spread": 0.0456
+      },
+      "learnable_embedding": {
+        "levels": [
+          {
+            "value": "False",
+            "mean": 0.1071,
+            "n": 21
+          },
+          {
+            "value": "True",
+            "mean": 0.077,
+            "n": 9
+          }
+        ],
+        "spread": 0.0301
+      },
+      "node_embeddings": {
+        "levels": [
+          {
+            "value": "esm2_t33_650M_UR50D_all",
+            "mean": 0.1295,
+            "n": 3
+          },
+          {
+            "value": "prot_T5_all",
+            "mean": 0.1083,
+            "n": 16
+          },
+          {
+            "value": "calm",
+            "mean": 0.0866,
+            "n": 3
+          },
+          {
+            "value": "codon_frequency",
+            "mean": 0.0774,
+            "n": 5
+          },
+          {
+            "value": "random_100",
+            "mean": 0.058,
+            "n": 3
+          }
+        ],
+        "spread": 0.0715
+      },
+      "num_transformer_layers": {
+        "levels": [
+          {
+            "value": "2",
+            "mean": 0.115,
+            "n": 4
+          },
+          {
+            "value": "4",
+            "mean": 0.1088,
+            "n": 20
+          },
+          {
+            "value": "6",
+            "mean": 0.051,
+            "n": 6
+          }
+        ],
+        "spread": 0.0639
+      },
+      "target_norm": {
+        "levels": [
+          {
+            "value": "yeo_johnson",
+            "mean": 0.0981,
+            "n": 11
+          },
+          {
+            "value": "zscore",
+            "mean": 0.0981,
+            "n": 19
+          }
+        ],
+        "spread": 0.0
+      }
+    },
+    "selection_inflation": {
+      "expected_max_of_n_sd_units": 2.04,
+      "inflation": 0.0025,
+      "reported_best": 0.1798,
+      "bias_corrected_floor": 0.1773,
+      "top5_spread_in_sigma": 15.68,
+      "top5_separable": true,
+      "replicates_for_sigma_eff_0p010": 1
+    }
+  }
+}

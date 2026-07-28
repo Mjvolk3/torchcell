@@ -1,5 +1,5 @@
 {
-  "n_runs": 14,
+  "n_runs": 18,
   "rows": [
     {
       "name": "run_compute-3-3-2317357_27aafb937c57a6c98f3fc00316f30678c641b1d00377e0dbf216f1f0a6c62a7d",
@@ -196,6 +196,62 @@
       "pit_ks": 0.027698397636413578,
       "|coverage_50-nominal|": 0.02681887149810791,
       "|coverage_80-nominal|": 0.015747356414794966
+    },
+    {
+      "name": "run_compute-5-7-2317356_58a2d83794d909aa187b3bd75466378a3ca5dc8769273ad27e404edfe1b643a5",
+      "rank": 0,
+      "graph_reg_on": false,
+      "emb": null,
+      "lr": 8.918288802534469e-05,
+      "pearson": 0.03480440005660057,
+      "loss": 85.43999481201172,
+      "coverage_50": 0.4866592586040497,
+      "coverage_80": 0.7448185682296753,
+      "pit_ks": 0.04181873798370361,
+      "|coverage_50-nominal|": 0.013340741395950317,
+      "|coverage_80-nominal|": 0.05518143177032475
+    },
+    {
+      "name": "run_compute-5-7-2317356_5b1ef18f73275b55157870df56a210f64a25765912879b6c759836a554b17654",
+      "rank": 32,
+      "graph_reg_on": true,
+      "emb": null,
+      "lr": 0.0004558259416581705,
+      "pearson": 0.023702140897512436,
+      "loss": 64.16683197021484,
+      "coverage_50": 0.5650210380554199,
+      "coverage_80": 0.804241418838501,
+      "pit_ks": 0.04801701009273529,
+      "|coverage_50-nominal|": 0.06502103805541992,
+      "|coverage_80-nominal|": 0.004241418838500932
+    },
+    {
+      "name": "run_compute-5-7-2317356_77c8d6522b99c4c2ba080d0a5fb074f6266fcfe1c5a143aa154f3212cb6231a4",
+      "rank": 0,
+      "graph_reg_on": true,
+      "emb": null,
+      "lr": 7.357062948366501e-05,
+      "pearson": 0.018233001232147217,
+      "loss": 82.21055603027344,
+      "coverage_50": 0.5646219253540039,
+      "coverage_80": 0.8156272768974304,
+      "pit_ks": 0.04105852544307709,
+      "|coverage_50-nominal|": 0.0646219253540039,
+      "|coverage_80-nominal|": 0.015627276897430376
+    },
+    {
+      "name": "run_compute-5-7-2317356_a3151c19d99e357c7eb1041de4f8065ee2a2bce3ddae95a7c5ff443c11fce655",
+      "rank": 32,
+      "graph_reg_on": false,
+      "emb": null,
+      "lr": 0.000232995868016331,
+      "pearson": 0.025862205773591995,
+      "loss": 55.11436462402344,
+      "coverage_50": 0.5790961980819702,
+      "coverage_80": 0.8258822560310364,
+      "pit_ks": 0.05376514792442322,
+      "|coverage_50-nominal|": 0.07909619808197021,
+      "|coverage_80-nominal|": 0.025882256031036333
     }
   ]
 }

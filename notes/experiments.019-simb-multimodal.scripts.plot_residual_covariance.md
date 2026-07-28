@@ -60,6 +60,36 @@ perturbation-specific. So:
   therefore **expected**, and is not evidence against the joint head. Judging it requires a
   proper scoring rule, which is why `val_loss` is now captured in the sweep's `user_attrs`.
 
+### 2026.07.28 revision -- data panels + cross-validated spectrum
+
+Redesigned after review. Three changes:
+
+1. **The null is now shown, not asserted** (Panel F): a side-by-side of an observed vs
+   shuffled sub-block, plus the statement of what the permutation does. Each GENE COLUMN is
+   permuted over strains INDEPENDENTLY -- not whole rows, which would preserve everything.
+   Panel C is relabelled a **floor check**: "is there any cross-gene structure at all", to
+   which the answer was always going to be yes, because yeast has a general expression
+   program (regulons, ribosomal co-regulation, stress response). Panel E is the real test.
+2. **Panels A + B show the actual data** -- the residual matrix R, and four individual
+   deletion profiles, so the object the covariance is computed from is visible.
+3. **Panel D is now CROSS-VALIDATED.** With S=1,482 strains and F=6,169 genes, `F/S ~ 4.2`,
+   so the sample correlation matrix is rank-deficient and its in-sample eigenvalues are
+   inflated by sampling noise. Fitting components on half A and scoring them on half B
+   separates real structure from overfit:
+
+| k | in-sample | held-out | gap | random floor |
+|---|---:|---:|---:|---:|
+| 8 | 37.6% | 34.0% | 3.6 | 0.13% |
+| **32** | **59.1%** | **52.7%** | **6.4** | 0.52% |
+| 64 | 68.3% | 59.6% | 8.7 | 1.04% |
+| 128 | 76.0% | 64.2% | 11.8 | 2.07% |
+
+Held-out variance is **still rising at k=128**, so extra rank does capture real structure --
+the components are not noise. But the marginal return halves with each doubling (+6.9 points
+for 32->64, +4.6 for 64->128) while the parameter cost `F x k` doubles: 197k at k=32, 395k at
+k=64, 790k at k=128, against a model whose TOTAL size is ~517k. So k=64 is a defensible arm
+to test; k=128 would make Sigma larger than the entire rest of the model.
+
 ### Gotcha found while making this figure
 
 `torchcell.graph.graph` calls `plt.style.use(...)` **at module import**, which overwrites

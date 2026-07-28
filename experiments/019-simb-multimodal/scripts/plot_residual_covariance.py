@@ -60,6 +60,8 @@ import matplotlib  # noqa: E402
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import torch  # noqa: E402
+from matplotlib.lines import Line2D  # noqa: E402
+from matplotlib.patches import Patch  # noqa: E402
 from matplotlib.ticker import MultipleLocator  # noqa: E402
 
 from torchcell.datasets.node_embedding_builder import NodeEmbeddingBuilder  # noqa: E402
@@ -256,90 +258,180 @@ def main() -> None:
         str(k): float(cum[k - 1]) for k in RANK_GRID if k <= len(cum)
     }
 
+    # ---- Panel D: CROSS-VALIDATED spectrum -- which components actually generalize ----
+    # In-sample cumulative variance OVERSTATES the usable rank. With S=1482 strains and
+    # F=6169 genes, F/S ~ 4.2 > 1, so the sample correlation matrix is rank-deficient and
+    # its eigenvalues are inflated by sampling noise (Marchenko-Pastur): a component can
+    # "explain variance" purely by fitting the noise of the strains it was estimated on.
+    #
+    # The honest question for choosing k is not "how much variance does component k hold?"
+    # but "does component k REPLICATE?" -- so fit the directions on half A and measure the
+    # variance they explain in the HELD-OUT half B. Where that curve saturates is where
+    # extra rank stops buying anything real.
+    #
+    # Baseline: k random orthonormal directions explain k/F of the variance in expectation,
+    # which is the floor a component must beat to be doing anything at all.
+    Xa = X[ia]
+    Xb = X[ib]
+    Va = np.linalg.svd(Xa, full_matrices=False)[2]  # [r, F] right singular vectors
+    Bproj = Xb @ Va.T  # [n_b, r] held-out data in A's component basis
+    held_out = np.cumsum((Bproj**2).sum(axis=0)) / (Xb**2).sum()
+    in_sample = cum
+    k_max = min(256, held_out.size)
+    results["cv_spectrum"] = {
+        str(k): {"in_sample": float(in_sample[k - 1]), "held_out": float(held_out[k - 1])}
+        for k in RANK_GRID
+        if k <= k_max
+    }
+    print("\ncross-validated spectrum (fit on half A, evaluated on half B):")
+    print(f"  {'k':>5} {'in-sample':>11} {'held-out':>10} {'random floor':>13}")
+    for k in RANK_GRID:
+        if k <= k_max:
+            print(f"  {k:>5} {100 * in_sample[k - 1]:>10.1f}% {100 * held_out[k - 1]:>9.1f}%"
+                  f" {100 * k / F:>12.2f}%")
+
     # ---------------- figure ----------------
     _apply_plot_style()
-    # Width is STRICT (full 179 mm so the row tiles the Nature page); height is loose, but
-    # three panels each carrying a title + both axis labels need ~68 mm -- at 52 mm
-    # tight_layout cannot fit them and the labels collide and clip off the canvas.
     w = PANEL_WIDTHS_MM["full"]
-    fig, axes = plt.subplots(1, 3, figsize=(mm_to_in(w), mm_to_in(58)))
+    fig = plt.figure(figsize=(mm_to_in(w), mm_to_in(112)))
+    gs = fig.add_gridspec(2, 3, hspace=0.75, wspace=0.55)
+    axA, axB, axC = (fig.add_subplot(gs[0, i]) for i in range(3))
+    axD, axE = fig.add_subplot(gs[1, 0]), fig.add_subplot(gs[1, 1])
+    axF = fig.add_subplot(gs[1, 2])
 
-    # A: split-half hexbin
-    ax = axes[0]
+    # Order genes by their loading on the leading residual component, so the shared
+    # co-expression program is visible as a gradient rather than scrambled.
+    gene_order = np.argsort(Va[0])
+    strain_order = np.argsort(X @ Va[0])
+
+    # --- A: THE DATA the covariance is computed from ---
+    n_s, n_g = 120, 400
+    si = strain_order[np.linspace(0, S - 1, n_s).astype(int)]
+    gi = gene_order[np.linspace(0, F - 1, n_g).astype(int)]
+    M = R[np.ix_(si, gi)]
+    v = float(np.percentile(np.abs(M), 98))
+    im = axA.imshow(M, aspect="auto", cmap="RdBu_r", vmin=-v, vmax=v, interpolation="nearest")
+    axA.set_xlabel(f"reporter genes ({n_g} of {F})")
+    axA.set_ylabel(f"strains ({n_s} of {S})")
+    axA.set_title("A  the residual matrix R, log2 ratio\n(1 deletion strain per row)", fontsize=6)
+    cb = fig.colorbar(im, ax=axA, fraction=0.045, pad=0.03)
+    cb.ax.tick_params(labelsize=5, width=0.4)
+    cb.outline.set_linewidth(0.4)
+
+    # --- B: individual perturbations -- what one ROW looks like ---
+    for j, row in enumerate(si[:: max(1, n_s // 4)][:4]):
+        axB.plot(
+            R[row, gi], lw=0.35, color=PLOT_PALETTE[j], alpha=0.85,
+            label=f"$\\Delta${genes[row]}",
+        )
+    axB.axhline(0, color="black", lw=0.4)
+    # One strain can carry large excursions that flatten the rest; a robust limit
+    # keeps all four profiles legible (outliers clip rather than dominate).
+    blim = float(np.percentile(np.abs(R[np.ix_(si, gi)]), 99.5))
+    axB.set_ylim(-blim, blim)
+    axB.set_xlabel("reporter genes (same order as A)")
+    axB.set_ylabel("residual log2 ratio")
+    axB.set_title("B  four individual perturbations\n(each row of A)", fontsize=6)
+    axB.legend(frameon=False, fontsize=5, loc="upper right", handlelength=1.2, ncol=2)
+
+    # --- C: split-half agreement, with the null made visible ---
     sub = rng.choice(oa.size, size=min(300_000, oa.size), replace=False)
-    ax.hexbin(na[sub], nb[sub], gridsize=45, cmap="Greys", mincnt=1, linewidths=0)
-    ax.hexbin(
-        oa[sub], ob[sub], gridsize=45, cmap="Oranges", mincnt=1, linewidths=0, alpha=0.75
+    axC.hexbin(oa[sub], ob[sub], gridsize=42, cmap="Oranges", mincnt=1, linewidths=0)
+    # The null collapses to a dot at the origin, so an overlaid hexbin is invisible. Draw
+    # its 99% extent as an explicit ring instead -- that is the honest visual for "the null
+    # occupies this much of the plane".
+    nr = float(np.percentile(np.abs(np.stack([na, nb])), 99))
+    axC.add_patch(
+        plt.Circle((0, 0), nr, fill=False, ec=PLOT_PALETTE[5], lw=0.7, ls="--", zorder=5)
     )
-    lim = 1.0
-    ax.plot([-lim, lim], [-lim, lim], color="black", lw=0.5, ls="--")
-    ax.set_xlim(-lim, lim)
-    ax.set_ylim(-lim, lim)
-    ax.set_xlabel("gene-gene corr, split half A")
-    ax.set_ylabel("gene-gene corr, split half B")
-    ax.set_title(f"A  reproducible  r={obs:.3f}\nnull r={null:.4f}", fontsize=6)
-    ax.xaxis.set_major_locator(MultipleLocator(0.5))
-    ax.yaxis.set_major_locator(MultipleLocator(0.5))
+    axC.plot([-1, 1], [-1, 1], color="black", lw=0.5, ls=(0, (4, 3)))
+    axC.set_xlim(-1, 1)
+    axC.set_ylim(-1, 1)
+    axC.set_xlabel("gene-gene corr, half A")
+    axC.set_ylabel("gene-gene corr, half B")
+    axC.set_title(f"C  floor check: structure exists\nr={obs:.3f} vs null {null:.4f}", fontsize=6)
+    axC.xaxis.set_major_locator(MultipleLocator(0.5))
+    axC.yaxis.set_major_locator(MultipleLocator(0.5))
+    axC.legend(
+        handles=[
+            Patch(facecolor=PLOT_PALETTE[0], label="observed pairs"),
+            Line2D([0], [0], color=PLOT_PALETTE[5], ls="--", lw=0.7, label="null (99%)"),
+            Line2D([0], [0], color="black", ls=(0, (4, 3)), lw=0.5, label="y = x"),
+        ],
+        frameon=False, fontsize=5, loc="upper left", handlelength=1.4,
+    )
 
-    # B: eigenspectrum
-    ax = axes[1]
-    ks = np.arange(1, min(256, len(cum)) + 1)
-    ax.plot(ks, 100 * cum[: len(ks)], color=PLOT_PALETTE[0], lw=1.0)
-    ax.axvline(CHOSEN_RANK, color=PLOT_PALETTE[1], lw=0.8, ls="--")
-    ax.axvline(eff, color=PLOT_PALETTE[2], lw=0.8, ls=":")
-    ax.annotate(
-        f"k={CHOSEN_RANK}\n{100 * cum[CHOSEN_RANK - 1]:.0f}%",
-        xy=(CHOSEN_RANK, 100 * cum[CHOSEN_RANK - 1]),
-        xytext=(CHOSEN_RANK * 1.6, 100 * cum[CHOSEN_RANK - 1] - 22),
-        fontsize=5,
-        color=PLOT_PALETTE[1],
-        arrowprops={"arrowstyle": "-", "lw": 0.4, "color": PLOT_PALETTE[1]},
-    )
-    ax.annotate(
-        f"eff. rank {eff:.1f}",
-        xy=(eff, 8),
-        xytext=(eff * 1.7, 6),
-        fontsize=5,
-        color=PLOT_PALETTE[2],
-    )
-    ax.set_xscale("log")
-    ax.set_xlabel("rank k")
-    ax.set_ylabel("cumulative residual variance (%)")
-    ax.set_ylim(0, 100)
-    ax.set_title("B  how much rank-k can hold", fontsize=6)
-    ax.yaxis.set_major_locator(MultipleLocator(20))
-    ax.yaxis.set_minor_locator(MultipleLocator(10))
-    ax.tick_params(which="minor", length=0)
-    ax.grid(axis="y", which="both", lw=0.3, color="0.9")
-    ax.set_axisbelow(True)
+    # --- D: cross-validated spectrum ---
+    ks = np.arange(1, k_max + 1)
+    axD.plot(ks, 100 * in_sample[:k_max], color=PLOT_PALETTE[0], lw=1.0, label="in-sample")
+    axD.plot(ks, 100 * held_out[:k_max], color=PLOT_PALETTE[1], lw=1.0, label="held-out")
+    axD.plot(ks, 100 * ks / F, color=PLOT_PALETTE[5], lw=0.7, ls=":", label="random floor")
+    axD.axvline(CHOSEN_RANK, color="black", lw=0.6, ls=(0, (4, 3)))
+    axD.text(CHOSEN_RANK * 1.15, 4, f"k={CHOSEN_RANK}", fontsize=5)
+    axD.set_xscale("log")
+    axD.set_xlabel("rank k")
+    axD.set_ylabel("cumulative variance (%)")
+    axD.set_ylim(0, 100)
+    axD.set_title("D  which components GENERALIZE\n(fit half A, score half B)", fontsize=6)
+    axD.yaxis.set_major_locator(MultipleLocator(20))
+    axD.yaxis.set_minor_locator(MultipleLocator(10))
+    axD.tick_params(which="minor", length=0)
+    axD.grid(axis="y", which="both", lw=0.3, color="0.9")
+    axD.set_axisbelow(True)
+    axD.legend(frameon=False, fontsize=5, loc="upper left", handlelength=1.4)
 
-    # C: conditional vs random split
-    ax = axes[2]
+    # --- E: the conditional test ---
     labels = ["random\nsplit", "split by\nperturbed gene", "shuffled\nnull"]
     vals = [float(np.mean(reps)), cond, null]
     errs = [float(np.std(reps)), 0.0, 0.0]
-    colors = [PLOT_PALETTE[0], PLOT_PALETTE[1], PLOT_PALETTE[5]]
-    ax.bar(
-        range(3), vals, yerr=errs, color=colors, edgecolor="black", linewidth=0.5,
-        capsize=2, error_kw={"lw": 0.5},
+    axE.bar(
+        range(3), vals, yerr=errs, color=[PLOT_PALETTE[0], PLOT_PALETTE[1], PLOT_PALETTE[5]],
+        edgecolor="black", linewidth=0.5, capsize=2, error_kw={"lw": 0.5},
     )
-    for i, v in enumerate(vals):
-        ax.text(i, v + 0.03, f"{v:.3f}", ha="center", fontsize=5)
-    ax.set_xticks(range(3))
-    ax.set_xticklabels(labels)
-    ax.set_ylabel("split-half agreement r")
-    ax.set_ylim(0, 1.0)
-    ax.yaxis.set_major_locator(MultipleLocator(0.2))
-    ax.yaxis.set_minor_locator(MultipleLocator(0.1))
-    ax.tick_params(which="minor", length=0)
-    ax.grid(axis="y", which="both", lw=0.3, color="0.9")
-    ax.set_axisbelow(True)
-    ax.set_title("C  conditional on perturbation?\n(split by perturbed-gene PC1)", fontsize=6)
+    for i, val in enumerate(vals):
+        axE.text(i, val + 0.03, f"{val:.3f}", ha="center", fontsize=5)
+    axE.set_xticks(range(3))
+    axE.set_xticklabels(labels)
+    axE.set_ylabel("split-half agreement r")
+    axE.set_ylim(0, 1.0)
+    axE.yaxis.set_major_locator(MultipleLocator(0.2))
+    axE.yaxis.set_minor_locator(MultipleLocator(0.1))
+    axE.tick_params(which="minor", length=0)
+    axE.grid(axis="y", which="both", lw=0.3, color="0.9")
+    axE.set_axisbelow(True)
+    axE.set_title("E  THE RESULT: not conditional\non which gene was deleted", fontsize=6)
 
-    fig.tight_layout(pad=0.6, w_pad=1.2)
+    # --- F: what the null actually does, drawn small so the control is legible ---
+    axF.axis("off")
+    axF.set_title("F  what the null destroys", fontsize=6)
+    demo = R[np.ix_(si[:14], gi[:14])]
+    dv = float(np.percentile(np.abs(demo), 95))
+    a1 = axF.inset_axes((0.02, 0.52, 0.42, 0.40))
+    a2 = axF.inset_axes((0.56, 0.52, 0.42, 0.40))
+    a1.imshow(demo, cmap="RdBu_r", vmin=-dv, vmax=dv, interpolation="nearest")
+    shuf = demo.copy()
+    for c in range(shuf.shape[1]):
+        rng.shuffle(shuf[:, c])
+    a2.imshow(shuf, cmap="RdBu_r", vmin=-dv, vmax=dv, interpolation="nearest")
+    for a, t in ((a1, "observed"), (a2, "null")):
+        a.set_xticks([])
+        a.set_yticks([])
+        a.set_title(t, fontsize=5, pad=2)
+        for sp in a.spines.values():
+            sp.set_linewidth(0.4)
+    axF.text(
+        0.0, 0.40,
+        "Each GENE COLUMN is permuted over strains\nINDEPENDENTLY. Every gene keeps its own\n"
+        "values (same column histogram), but the\npairing between columns is destroyed -- so\n"
+        "any gene-gene correlation is removed while\nper-gene properties are held fixed.\n\n"
+        "This is a FLOOR, not the interesting test:\nit only asks whether cross-gene structure\n"
+        "exists at all. Panel E is the real question.",
+        fontsize=5, va="top", linespacing=1.5,
+    )
+
     out_dir = asset_images_dir(__file__, "019-simb-multimodal")
     stem = osp.join(out_dir, "residual_covariance_diagnostic")
-    fig.savefig(f"{stem}.png", dpi=300)
+    fig.savefig(f"{stem}.png", dpi=300, bbox_inches="tight")
     savefig_true_size_svg(fig, f"{stem}.svg")
     print(f"\nwrote {stem}.png / .svg")
 

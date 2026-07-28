@@ -1193,6 +1193,18 @@ class MultitaskCGTTask(L.LightningModule):
             spear_feat = per_feature_spearman(pred, target).to(self.device)
             self.log(f"{stage}/{pheno}/spearman_per_feature", spear_feat, sync_dist=True)
             feat_dim = pred.shape[1] if pred.ndim > 1 else 1
+            # DISPERSION RATIO sd(pred)/sd(target) across STRAINS, averaged over features.
+            # This is the mean-collapse diagnostic for a SCALAR head. `pearson_per_instance`
+            # (the usual signature) correlates ACROSS features within a strain and is therefore
+            # undefined at feat_dim == 1 -- it is skipped below, which left the betaxanthin and
+            # beta-carotene arms with no collapse signal at all. The ratio has one everywhere:
+            # collapse to the per-feature mean drives sd(pred) -> 0 while Pearson is scale-free
+            # and cannot see it. ~1 means the head spans the target's range; << 1 means it is
+            # hedging toward the mean even when the correlation still looks acceptable.
+            sd_ratio = (
+                pred.std(dim=0) / target.std(dim=0).clamp_min(1e-8)
+            ).mean().to(self.device)
+            self.log(f"{stage}/{pheno}/pred_sd_ratio", sd_ratio, sync_dist=True)
             if feat_dim > 1:
                 # Per-instance runs on the NORMALIZED features (comparable scales); falls back
                 # to the raw cache for heads that are not normalized (the two coincide there).
@@ -1557,6 +1569,21 @@ class BestMetricTracker(Callback):
       max over training is the single most over-dispersed epoch, which is the OPPOSITE of the
       best one. And a calibration number is only meaningful paired with the point estimate it
       accompanied, so it must be read at the same epoch the run is ranked on.
+    * ``{metric}_smooth3_max`` — the max of a 3-epoch centred rolling mean. A max over a long
+      noisy sequence is BIASED UPWARD by the number of draws taken, and run length here is set
+      by early stopping, so it varies with the hyperparameters: measured on the 002 metabolism
+      studies, r(duration, objective) = +0.75 on mulleder19 (+0.80 within a fixed
+      architecture cell). Any axis that changes how long a run trains — `lr` above all, which
+      is what this round exists to attribute — therefore gets credit partly through the number
+      of draws rather than through the model. Averaging three consecutive epochs first cuts
+      that inflation roughly in half. Recorded, NOT ranked: ranking stays on ``_max`` so the
+      numbers remain comparable to _006/_007. If the two disagree for a config, its ``_max``
+      was a noise spike.
+
+    Also recorded, so the confound above is auditable rather than inferred:
+    ``val/n_val_epochs`` (how many draws the max was taken over) and ``val/peak_epoch`` (where
+    the anchor peaked). A peak_epoch near the end means the run was still improving when it
+    stopped; peaks scattered early with a long tail are the signature of a noise-driven max.
     """
 
     def __init__(self, anchor: str = "val/mean/pearson_per_feature") -> None:
@@ -1571,6 +1598,11 @@ class BestMetricTracker(Callback):
         self.anchor = anchor
         self.best_max: dict[str, float] = {}
         self.at_peak: dict[str, float] = {}
+        self.peak_epoch: int = 0
+        self.n_val_epochs: int = 0
+        # Last two observations per metric, so a 3-epoch rolling mean needs no full history.
+        self._recent: dict[str, list[float]] = {}
+        self.best_smooth3: dict[str, float] = {}
 
     def on_validation_epoch_end(self, trainer: L.Trainer, pl_module: L.LightningModule) -> None:
         """Record the running max of every finite val metric, and snapshot at the anchor peak."""
@@ -1584,6 +1616,17 @@ class BestMetricTracker(Callback):
             finite[k] = fv
             if k not in self.best_max or fv > self.best_max[k]:
                 self.best_max[k] = fv
+            window = self._recent.setdefault(k, [])
+            window.append(fv)
+            if len(window) > 3:
+                window.pop(0)
+            # Only score a FULL window: a 1- or 2-epoch mean at the start of training is a
+            # different (noisier) estimator than the 3-epoch one, and mixing them would
+            # reintroduce the very bias this metric removes.
+            if len(window) == 3:
+                smooth = sum(window) / 3.0
+                if k not in self.best_smooth3 or smooth > self.best_smooth3[k]:
+                    self.best_smooth3[k] = smooth
         anchor_value = finite.get(self.anchor)
         # `>=` rather than `>` so the very first epoch populates the snapshot; without it a
         # run that never improves after epoch 0 would report no `_at_peak` values at all.
@@ -1591,6 +1634,10 @@ class BestMetricTracker(Callback):
             self.anchor, float("-inf")
         ):
             self.at_peak = dict(finite)
+            self.peak_epoch = int(trainer.current_epoch)
+        # Counted from the callback rather than read off the trainer so sanity-check and
+        # fast_dev_run passes are counted the same way the metrics were.
+        self.n_val_epochs += 1
 
 
 def run_training(cfg: DictConfig) -> dict[str, float]:
@@ -2263,6 +2310,17 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
     # the calibration metrics, which have a target (0.5 / 0.8 / 0) rather than a direction --
     # a max over epochs would report the most over-dispersed epoch as if it were the best.
     final_metrics.update({f"{k}_at_peak": v for k, v in best_tracker.at_peak.items()})
+    # `_smooth3_max`: the max of a 3-epoch rolling mean, the de-biased companion to `_max`.
+    # Not the ranking metric (that stays `_max`, for comparability with _006/_007) but the
+    # check on it -- a config whose `_max` far exceeds its `_smooth3_max` peaked on one lucky
+    # epoch rather than on a real plateau.
+    final_metrics.update(
+        {f"{k}_smooth3_max": v for k, v in best_tracker.best_smooth3.items()}
+    )
+    # Run length and peak location: the covariates that make the max-over-epochs bias
+    # auditable instead of silent. See BestMetricTracker for the measured confound.
+    final_metrics["val/n_val_epochs"] = float(best_tracker.n_val_epochs)
+    final_metrics["val/peak_epoch"] = float(best_tracker.peak_epoch)
     if run is not None:
         wandb.finish()
     return final_metrics

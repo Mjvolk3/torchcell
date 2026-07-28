@@ -774,8 +774,17 @@ class MultitaskCGTTask(L.LightningModule):
         # fitness arm. `.point()` feeds the metric, so RANKING IS LOSS-AGNOSTIC: a CRPS run
         # and an MSE run are compared on the same per-feature Pearson of a point estimate.
         self.dist = dist
+        # `num_features` is REQUIRED by dist=energy: its head owns a global low-rank factor
+        # V of shape [F, k] whose Gram VV^T is the predicted gene-gene covariance, so the
+        # head must know F. Sourced from head_align[h]["feat_dim"], the same per-head
+        # feature count the COO->target alignment already resolved. Ignored by the
+        # marginal modes (point/crps/quantile/laplace_crps/nll).
         self.dist_heads = {
-            h: make_dist_head(dist) for h in active_heads if h != "gene_interaction"
+            h: make_dist_head(
+                dist, num_features=int(head_align[h]["feat_dim"])
+            )
+            for h in active_heads
+            if h != "gene_interaction"
         }
         self.loss = MaskedMultitaskLoss(
             head_weights=head_weights,
@@ -1335,8 +1344,14 @@ def run_dry_run(cfg: DictConfig) -> None:
     # Vector heads route through their DistHead (point/crps/quantile); gene_interaction keeps
     # the plain point loss. Targets are POINT-shaped: a DistHead consumes [B, F] targets even
     # when the head emits [B, F, P] params, so `.point()` gives the target shape.
+    # `num_features` is required by dist=energy (its head owns a global [F, k] factor V).
+    # run_dry_run has no head_align in scope -- it deliberately never builds the dataset --
+    # so F comes from the head's own output shape, which is available because the forward
+    # pass above already ran. That is the PRE-gather width for per_gene (N genes, not the
+    # measured subset), which is fine here: the dry run only proves the path connects and
+    # backprops, it is not a training run.
     dist_heads = {
-        h: make_dist_head(dist)
+        h: make_dist_head(dist, num_features=int(head_outputs[h].shape[1]))
         for h in cfg.multitask.active_heads
         if h != "gene_interaction"
     }

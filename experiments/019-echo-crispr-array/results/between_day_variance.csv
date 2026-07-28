@@ -1,0 +1,2 @@
+sd_plate_all_run3,sd_plate_clean_only,sd_run2_same_plate_timepoints,flagged_plates,mean_day_shift,var_diff,var_plate_part,sigma_day_estimate,n_strains
+0.1397850557562649,0.028318855500657866,0.04277998812283076,run3_P2,-0.04048594333956399,0.0015709298286705016,0.0008019575768671403,0.019608317773375683,12

@@ -1,0 +1,6 @@
+group,n_above_wt,frac_above_wt,median_fitness,flagged
+run3_P1,0,0.0,0.7783576567375006,False
+run3_P2,6,0.5,0.9995760642939805,True
+run3_P3,0,0.0,0.7705214692694344,False
+run2_P2_t44,0,0.0,0.7957503501115253,False
+run2_P2_t50,0,0.0,0.8607082318687422,False

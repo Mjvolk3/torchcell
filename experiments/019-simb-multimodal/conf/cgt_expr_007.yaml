@@ -59,6 +59,19 @@ multitask:
   # would have captured only 37.6% of it.
   energy_rank: 32
 
+  # `m`, the TRAINING predictive-sample count (eval uses 256, for PIT resolution). NOT
+  # swept -- declared so the value that ran is in the W&B config for every run instead of
+  # sitting implicit in a library default.
+  #
+  # MEASURED. What matters is MC noise's share of the gradient noise the optimizer already
+  # absorbs from minibatch sampling: sigma_batch = 99.8% and sigma_MC = 150/sqrt(m) (both on
+  # shared params, B=32 equivalent), so total noise is inflated by sqrt(1 + 2.25/m) -- 1.035
+  # at m=32, 1.009 at m=128. In effective-batch terms m=32 trains at 29.9 instances of 32.
+  # 128 over 32 buys robustness, not headroom: sigma_batch came from a synthetic readout, and
+  # if the real value were half as large rho(32) would be 1.13 while rho(128) stays 1.035.
+  # It costs 0.04% of a step -- the encoder (attention over 6,607 tokens) dominates entirely.
+  energy_samples: 128
+
 model:
   # FROZEN. 90 = 9 heads x 10 channels; the 180 arm did not beat it in _006.
   hidden_channels: 90

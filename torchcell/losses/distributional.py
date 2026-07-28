@@ -95,16 +95,40 @@ DEFAULT_NUM_QUANTILES = 19
 DEFAULT_ENERGY_RANK = 32
 
 # SAMPLES. `energy_score` is unbiased in m (the pairwise term divides by m(m-1), not m^2),
-# so m buys variance reduction only -- never bias. Train and eval want different points on
-# that trade:
-#   * TRAIN m=32 -- gradient noise scales ~1/sqrt(m), so 32 vs 10 cuts the score's MC
-#     standard error by sqrt(3.2) ~ 1.8x, at 3.2x the sampling cost of a head whose cost is
-#     dominated by the encoder anyway.
-#   * EVAL m=256 -- the empirical CDF has PIT resolution 1/m, so m=10 admits only 11
-#     distinct PIT values and cannot populate a histogram or resolve `coverage_50` to better
-#     than +/-10 points. m=256 gives resolution 0.4%, and eval needs no gradients so the
-#     samples are nearly free.
-DEFAULT_ENERGY_SAMPLES = 32
+# so m buys variance reduction only -- never bias. Both values are MEASURED on the 019 shapes
+# (B=32, F=6169, k=32) rather than guessed.
+#
+# TRAIN m=128. What matters is not MC noise in isolation but its share of the gradient noise
+# the optimizer ALREADY absorbs from minibatch sampling. Measuring both on the same SHARED
+# parameters (the global V plus a readout -- per-instance params are orthogonal across
+# disjoint batch halves by construction and would report a meaningless 100%):
+#
+#     sigma_batch = 99.8%   (B=32 equivalent)
+#     sigma_MC(m) = 150.0 / sqrt(m)     [fit exact: m=8 -> 52.5%, m=256 -> 9.4%]
+#
+# so the inflation of total gradient noise over minibatch-only is
+#
+#     rho(m) = sqrt(1 + sigma_MC^2 / sigma_batch^2) = sqrt(1 + 2.25/m)
+#
+# giving rho = 1.035 (m=32), 1.017 (m=64), 1.009 (m=128) -- matching measurement to three
+# decimals. Since noise ~ 1/sqrt(B_eff), rho is equivalent to shrinking the batch by rho^2:
+# m=32 trains at an effective batch of 29.9 out of 32.
+#
+# 128 rather than 32 because sigma_batch was measured on a synthetic readout, and a real
+# model near convergence may have SMALLER minibatch noise, which raises MC's share. If the
+# true sigma_batch were half what was measured, rho(32) would be 1.13 while rho(128) stays
+# 1.035. m=128 is robust across that range and costs 0.04% of a training step -- the encoder
+# (4 layers of attention over 6,607 gene tokens, ~4.9 s/step) dominates completely and does
+# not amortize with batch size.
+#
+# EVAL m=256. The empirical CDF has PIT resolution 1/m, so a small m cannot populate a
+# histogram or resolve `coverage_50` finely; 256 gives 0.4% resolution, and eval needs no
+# gradients so the samples are nearly free.
+#
+# NOTE the joint ablation does NOT depend on this choice: the measured k=32 vs k=0 energy
+# gap is ~3.6 against an MC sd of 0.16 at m=32 (SNR 22.6, and still 8.6 at m=8), so MC noise
+# was never what limited the ability to detect whether modelling the covariance pays.
+DEFAULT_ENERGY_SAMPLES = 128
 DEFAULT_ENERGY_EVAL_SAMPLES = 256
 # Init scale of V: per-feature low-rank variance starts at ~V_INIT^2, i.e. small relative to
 # the diagonal, so an `energy` head begins near-diagonal and *learns* correlation.

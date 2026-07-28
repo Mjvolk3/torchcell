@@ -98,6 +98,7 @@ from torch_geometric.data import HeteroData
 
 from torchcell.losses.distributional import (
     DEFAULT_ENERGY_RANK,
+    DEFAULT_ENERGY_SAMPLES,
     coverage,
     dist_param_dim,
     make_dist_head,
@@ -768,6 +769,7 @@ class MultitaskCGTTask(L.LightningModule):
         target_stats: dict[str, dict[str, Any]] | None = None,
         dist: str = "point",
         energy_rank: int = DEFAULT_ENERGY_RANK,
+        energy_samples: int = DEFAULT_ENERGY_SAMPLES,
     ) -> None:
         """Store the model, cell_graph, masked loss, and optim/sched config."""
         super().__init__()
@@ -792,9 +794,16 @@ class MultitaskCGTTask(L.LightningModule):
         # the gene-gene covariance pay?" from "is the energy score a better objective?" --
         # comparing energy(k=32) against crps would confound the two.
         self.energy_rank = int(energy_rank)
+        # `m`, the TRAINING predictive-sample count. Surfaced as a constructor arg (not left
+        # to the library default) so the value that actually ran is recorded in the W&B
+        # config for every run rather than being implicit.
+        self.energy_samples = int(energy_samples)
         self.dist_heads = {
             h: make_dist_head(
-                dist, num_features=int(head_align[h]["feat_dim"]), rank=self.energy_rank
+                dist,
+                num_features=int(head_align[h]["feat_dim"]),
+                rank=self.energy_rank,
+                num_samples=self.energy_samples,
             )
             for h in active_heads
             if h != "gene_interaction"
@@ -1459,6 +1468,9 @@ def run_dry_run(cfg: DictConfig) -> None:
             dist,
             num_features=int(head_outputs[h].shape[1]),
             rank=int(cfg.multitask.get("energy_rank", DEFAULT_ENERGY_RANK)),
+            num_samples=int(
+                cfg.multitask.get("energy_samples", DEFAULT_ENERGY_SAMPLES)
+            ),
         )
         for h in cfg.multitask.active_heads
         if h != "gene_interaction"
@@ -1912,6 +1924,9 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         # filter on `dist == energy` can group by rank without a null column; for the
         # marginal modes it is simply the unused default.
         "energy_rank": int(cfg.multitask.get("energy_rank", DEFAULT_ENERGY_RANK)),
+        "energy_samples": int(
+            cfg.multitask.get("energy_samples", DEFAULT_ENERGY_SAMPLES)
+        ),
         "hidden_channels": int(cfg.model.hidden_channels),
         "num_layers": int(cfg.model.num_transformer_layers),
         "num_heads": int(cfg.model.num_attention_heads),
@@ -2128,6 +2143,7 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         target_stats=target_stats,
         dist=str(cfg.multitask.get("dist", "point")),
         energy_rank=int(cfg.multitask.get("energy_rank", DEFAULT_ENERGY_RANK)),
+        energy_samples=int(cfg.multitask.get("energy_samples", DEFAULT_ENERGY_SAMPLES)),
     )
 
     model_base_path = osp.join(data_root, "models/checkpoints")

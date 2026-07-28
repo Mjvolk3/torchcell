@@ -62,22 +62,27 @@ multitask:
 model:
   # FROZEN. 90 = 9 heads x 10 channels; the 180 arm did not beat it in _006.
   hidden_channels: 90
-
-  perturbation_head:
-    # BOUND to the swept `model.dropout`, for the same reason `num_heads` is bound to
-    # `num_attention_heads` in _006 -- and it is the same latent defect, caught before it
-    # could cost trials rather than after.
-    #
-    # The model reads `pert_head_config.get("dropout", dropout)`, so it falls back to
-    # `model.dropout` only when the key is ABSENT. It is not absent: cgt_decoder_003 sets it
-    # to a literal 0.1, which every later config inherited. The driver overrides
-    # `model.dropout` and nothing else, so a trial sampling dropout=0.0 would still run the
-    # perturbation head at 0.1 -- the "no dropout" arm would not actually be dropout-free,
-    # and dropout attribution is one of this round's headline questions.
-    dropout: ${model.dropout}
   # FROZEN at 4. Deep enough that a single regularized layer leaves 3 free ones (the
   # capacity bypass 010 relied on), shallow enough to afford a wide optimizer sweep.
   num_transformer_layers: 4
+
+  # ---- Sub-module dropouts BOUND to the swept `model.dropout` ----
+  # The model reads these as `<sub>_config.get("dropout", dropout)`, i.e. it falls back to
+  # `model.dropout` only when the key is ABSENT. It is not absent: cgt_decoder_003 sets a
+  # literal 0.1 in both places, which every later config inherited, and the driver overrides
+  # `model.dropout` and nothing else. A trial sampling dropout=0.0 would therefore still run
+  # these sub-modules at 0.1 -- the "no dropout" arm would not be dropout-free, and dropout
+  # attribution is one of this round's headline questions.
+  #
+  # This is the SAME defect class as perturbation_head.num_heads in _006, where a stale 4
+  # inherited from _003 failed every hidden=90 trial. Caught before it cost trials this time.
+  perturbation_head:
+    dropout: ${model.dropout}
+  learnable_embedding:
+    preprocessor:
+      # INERT today (learnable_embedding.enabled is false), bound anyway so re-enabling that
+      # flag cannot silently reintroduce a dropout the trial never chose.
+      dropout: ${model.dropout}
 
   graph_regularization:
     # SWEPT {[1], [2]} -- early vs middle. With L=4 (layers 0..3), [1] is early and [2] is

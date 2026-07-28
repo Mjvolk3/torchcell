@@ -1322,7 +1322,34 @@ class MultitaskCGTTask(L.LightningModule):
         }
 
     def on_before_optimizer_step(self, optimizer: Any) -> None:
-        """Clip gradients by norm when configured."""
+        """Log the PRE-clip gradient norm, then clip by norm when configured.
+
+        `clip_grad_norm_max_norm` is 10.0, inherited from the _003 base config -- chosen for
+        a different regime (hidden 96, L=2, lr 3e-4, MSE only). _007 sweeps lr up to 2e-3 and
+        adds an `nll` arm whose gradients grow as sigma shrinks, so clipping may now be
+        BINDING on some trials. That matters for attribution: if clipping saturates, the
+        effective step size stops tracking the sampled lr, and the lr axis silently stops
+        measuring what it claims to.
+
+        Logged PRE-clip (`self.clip_gradients` mutates the grads in place, so the order here
+        is load-bearing) and as a fraction of the threshold, so `train/grad_norm_clip_frac`
+        > 1 reads directly as "this step was clipped".
+        """
+        total = torch.sqrt(
+            sum(
+                (p.grad.detach() ** 2).sum()
+                for p in self.parameters()
+                if p.grad is not None
+            )
+        )
+        self.log("train/grad_norm", total, on_step=False, on_epoch=True, sync_dist=True)
+        self.log(
+            "train/grad_norm_clip_frac",
+            total / self.clip_grad_norm_max_norm,
+            on_step=False,
+            on_epoch=True,
+            sync_dist=True,
+        )
         if self.clip_grad_norm:
             self.clip_gradients(
                 optimizer,

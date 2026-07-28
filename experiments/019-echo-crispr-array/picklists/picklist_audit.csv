@@ -1,0 +1,4 @@
+plate,n_wells,unique_wells,n_strains,n_wt,n_blank,blank_wells,blanks_surviving_rot180,blanks_surviving_flip_v,blanks_surviving_flip_h,orientation_resolved_by_blanks
+Plate1_12strain_384_5nL,384,384,14,222,6,"[(1, 9), (4, 6), (6, 18), (9, 2), (15, 24), (16, 10)]",0,0,0,True
+Plate2_12strain_384_5nL,384,384,14,222,6,"[(5, 4), (7, 11), (8, 22), (9, 21), (13, 4), (15, 11)]",0,0,0,True
+Plate3_12strain_384_5nL,384,384,14,222,6,"[(3, 2), (3, 20), (5, 11), (12, 22), (15, 6), (15, 15)]",0,0,0,True

@@ -13,23 +13,41 @@ The DECODER factorizes into two orthogonal axes (see
   sets the mean-collapse incentive. It applies on TOP of any structural form, so it is a
   pluggable head, not a fourth structural row.
 
-Three modes, all avoiding the binning + KDE-bandwidth tuning of past attempts (they model
+Six modes, all avoiding the binning + KDE-bandwidth tuning of past attempts (they model
 the conditional distribution in continuous space, per instance):
 
-* ``point``    -- one value per feature; MSE. Baseline; *rewards* mean-collapse (the optimal
-                  point prediction under MSE is the conditional mean).
-* ``gaussian`` -- ``(mu, sigma)`` per feature; closed-form Gaussian CRPS -- a PROPER scoring
-                  rule (minimized in expectation only by the true distribution), in y-units,
-                  with no ``1/sigma^2`` blow-up. Selected by the config value ``dist=crps``.
-* ``quantile`` -- ``K`` predicted quantiles per feature; pinball / quantile loss
-                  (distribution-free; no kernel/bandwidth). Mean pinball ~= empirical CRPS.
-                  Selected by ``dist=quantile``.
+* ``point``        -- one value per feature; MSE. Baseline; *rewards* mean-collapse (the
+                      optimal point prediction under MSE is the conditional mean).
+* ``gaussian``     -- ``(mu, sigma)`` per feature; closed-form Gaussian CRPS -- a PROPER
+                      scoring rule (minimized in expectation only by the true distribution),
+                      in y-units, with no ``1/sigma^2`` blow-up. Config ``dist=crps``.
+* ``quantile``     -- ``K`` predicted quantiles per feature; pinball / quantile loss
+                      (distribution-free; no kernel/bandwidth). Mean pinball ~= empirical
+                      CRPS. Config ``dist=quantile``.
+* ``laplace``      -- ``(mu, b)`` per feature; closed-form Laplace CRPS. The PARAMETRIC TWIN
+                      of the quantile head (a Laplace point estimate is the MEDIAN, not the
+                      mean), so comparing it against ``gaussian`` isolates whether a quantile
+                      head's advantage comes from the distributional loss or merely from a
+                      robust point estimate. Config ``dist=laplace_crps``.
+* ``nll_gaussian`` -- ``(mu, sigma)`` per feature; Gaussian negative log-likelihood. Included
+                      deliberately as the NEGATIVE control: it carries the ``1/sigma^2``
+                      gradient-scaling pathology ("sigma-collapse"), which the PIT/coverage
+                      diagnostic below can MEASURE rather than assume. Config ``dist=nll``.
+* ``energy``       -- ``(mu, sigma)`` per feature PLUS a global low-rank factor ``V [F, k]``
+                      owned by the head; the multivariate energy score, i.e. the
+                      generalization of CRPS to the JOINT distribution over features. The
+                      only mode whose score couples features. Config ``dist=energy``.
 
 Layout convention: a structural head emits ``[..., F]`` for ``point`` (unchanged from the
-pre-distributional model) or ``[..., F, P]`` for ``P>1`` (``P=2`` gaussian, ``P=K``
-quantile), where the LAST axis holds one feature's distributional parameters. ``DistHead``
-reads that last axis, so the rest of the pipeline -- ``[..., F]`` targets, per-feature
-Pearson computed on ``.point()`` -- is untouched and ranking stays loss-agnostic.
+pre-distributional model) or ``[..., F, P]`` for ``P>1`` (``P=2`` gaussian / laplace /
+nll_gaussian / energy, ``P=K`` quantile), where the LAST axis holds one feature's
+distributional parameters. ``DistHead`` reads that last axis, so the rest of the pipeline --
+``[..., F]`` targets, per-feature Pearson computed on ``.point()`` -- is untouched and
+ranking stays loss-agnostic.
+
+Calibration is assessed for EVERY probabilistic mode through one common diagnostic, the
+probability integral transform (:func:`pit_values`) and its interval companion
+(:func:`coverage`).
 """
 
 import math
@@ -53,11 +71,24 @@ DIST_TO_MODE: dict[str, str] = {
     "point": "point",
     "crps": "gaussian",
     "quantile": "quantile",
+    "laplace_crps": "laplace",
+    "nll": "nll_gaussian",
+    "energy": "energy",
 }
 
 # Default quantile grid: K=19 evenly spaced tau in [0.05, 0.95] (step 0.05, 0.5 included).
 # Evenly spaced is the *robust* choice -- no kernel, no bandwidth to tune.
 DEFAULT_NUM_QUANTILES = 19
+
+# `energy` mode defaults. The rank k of the global factor V is deliberately SMALL: k=8 adds
+# F*k parameters (one extra column block, not an F x F covariance) and the sampler never
+# forms Sigma. m=10 antithetic-free samples is the standard cheap choice -- the estimator is
+# unbiased in m (see `energy_score`), so m trades variance, never bias.
+DEFAULT_ENERGY_RANK = 8
+DEFAULT_ENERGY_SAMPLES = 10
+# Init scale of V: per-feature low-rank variance starts at ~V_INIT^2, i.e. small relative to
+# the diagonal, so an `energy` head begins near-diagonal and *learns* correlation.
+DEFAULT_ENERGY_V_INIT = 0.1
 
 
 def gaussian_crps(
@@ -90,6 +121,174 @@ def gaussian_crps(
     return sigma * (z * (2.0 * cdf - 1.0) + 2.0 * pdf - _INV_SQRT_PI)
 
 
+def laplace_crps(
+    mu: torch.Tensor, b: torch.Tensor, target: torch.Tensor
+) -> torch.Tensor:
+    r"""Closed-form CRPS of a Laplace :math:`\mathrm{Lap}(\mu,b)` vs observations.
+
+    .. math::
+        \mathrm{CRPS}(\mathrm{Lap}(\mu,b), y)
+        = |y-\mu| + b\,e^{-|y-\mu|/b} - \tfrac{3}{4}b .
+
+    Like the Gaussian form this is a PROPER scoring rule in the units of ``y`` with no
+    :math:`1/b^2` term, so ``b`` cannot be driven to a degenerate optimum.
+
+    Why this mode exists: the Laplace point estimate is the **median**, whereas the
+    Gaussian's is the **mean**. It is therefore the parametric twin of the ``quantile``
+    head, and the ``laplace`` vs ``gaussian`` contrast is the controlled experiment that
+    separates two confounded explanations for a quantile head's advantage -- the
+    distributional loss itself, versus simply using a robust (median) point estimate. That
+    matters here because expression log2-ratios are sparse and heavy-tailed: most features
+    sit at zero and the informative ones are outliers, exactly the regime where a
+    mean-seeking Gaussian and a median-seeking Laplace disagree.
+
+    Args:
+        mu: Predicted location (the MEDIAN of the predictive distribution), any shape.
+        b: Predicted scale (STRICTLY positive), broadcastable to ``mu``. Note ``b`` is the
+            Laplace scale, not a standard deviation (:math:`\sigma = \sqrt{2}\,b`).
+        target: Observations, broadcastable to ``mu``.
+
+    Returns:
+        Elementwise CRPS with the broadcast shape of the inputs (callers reduce).
+    """
+    d = (target - mu).abs()
+    return d + b * torch.exp(-d / b) - 0.75 * b
+
+
+def gaussian_nll(
+    mu: torch.Tensor, sigma: torch.Tensor, target: torch.Tensor
+) -> torch.Tensor:
+    r"""Gaussian negative log-likelihood, WITHOUT the constant term.
+
+    .. math::
+        \mathrm{NLL}(\mu,\sigma;y)
+        = \tfrac{1}{2}\Big(\log\sigma^2 + \frac{(y-\mu)^2}{\sigma^2}\Big) .
+
+    The dropped additive constant is :math:`\tfrac12\log(2\pi)`; it is omitted because it
+    shifts every value by the same amount and so changes neither gradients nor the ranking
+    of models. Values are therefore NOT comparable to a full log-likelihood in absolute
+    terms, and unlike CRPS they can be negative.
+
+    KNOWN PATHOLOGY -- read before using. The :math:`1/\sigma^2` factor multiplies the
+    gradient on :math:`\mu`:
+
+    .. math::
+        \frac{\partial\,\mathrm{NLL}}{\partial \mu} = -\frac{y-\mu}{\sigma^2} .
+
+    A model can therefore lower its loss on points it fits badly by INFLATING
+    :math:`\sigma` there, and doing so simultaneously SHRINKS those same points' gradient
+    on :math:`\mu` -- so the hard points stop teaching the mean, the fit stalls, and
+    :math:`\sigma` keeps growing to cover the residual. This positive feedback is
+    "sigma-collapse" (Seitzer et al. 2022, *On the Pitfalls of Heteroscedastic Uncertainty
+    Estimation with Probabilistic Neural Networks*; the beta-NLL fix reweights by
+    :math:`\sigma^{2\beta}`). CRPS has no such factor, which is why it is the default.
+
+    It is implemented here UNPATCHED and on purpose: it is the negative control of the
+    distributional sweep. Rather than assuming the pathology occurs, we MEASURE it with
+    :func:`pit_values` / :func:`coverage` -- sigma-collapse shows up as an n-shaped
+    (hump-at-0.5) PIT histogram and over-coverage.
+
+    Args:
+        mu: Predicted mean, any shape.
+        sigma: Predicted standard deviation (STRICTLY positive), broadcastable to ``mu``.
+        target: Observations, broadcastable to ``mu``.
+
+    Returns:
+        Elementwise NLL with the broadcast shape of the inputs (callers reduce).
+    """
+    var = sigma * sigma
+    return 0.5 * (torch.log(var) + (target - mu) ** 2 / var)
+
+
+def energy_score(
+    mu: torch.Tensor,
+    sigma: torch.Tensor,
+    v: torch.Tensor | None,
+    target: torch.Tensor,
+    num_samples: int = DEFAULT_ENERGY_SAMPLES,
+) -> torch.Tensor:
+    r"""Monte-Carlo energy score of a low-rank-plus-diagonal Gaussian, per row.
+
+    The energy score is the multivariate proper scoring rule that GENERALIZES CRPS to a
+    joint distribution (Gneiting & Raftery 2007):
+
+    .. math::
+        \mathrm{ES}(F, y) = \mathbb E\|X-y\|_2 - \tfrac12\,\mathbb E\|X-X'\|_2,
+        \qquad X, X' \stackrel{iid}{\sim} F .
+
+    At :math:`F=1` the Euclidean norm is the absolute value and this is exactly the energy
+    form of CRPS, so :func:`gaussian_crps` is its ORACLE in one dimension.
+
+    The predictive family is Gaussian with a low-rank-plus-diagonal covariance,
+
+    .. math:: \Sigma = \mathrm{diag}(\sigma^2) + V V^\top,\quad V\in\mathbb R^{F\times k},
+
+    sampled WITHOUT ever forming :math:`\Sigma` (which would be ``F x F``):
+
+    .. math::
+        x = \mu + \sigma\odot\varepsilon + V z,\quad
+        \varepsilon\sim\mathcal N(0, I_F),\ z\sim\mathcal N(0, I_k).
+
+    The estimator from ``m`` samples is
+
+    .. math::
+        \widehat{\mathrm{ES}} = \frac1m\sum_i \|x_i-y\|
+        - \frac{1}{2m(m-1)}\sum_{i\neq j}\|x_i-x_j\| ,
+
+    which is UNBIASED for every ``m >= 2``: the pairwise term divides by ``m(m-1)``, not
+    ``m^2``. Excluding the ``m`` zero self-distances is exactly what removes the bias.
+    Dividing by ``m^2`` instead keeps those zeros in the average, shrinking the SUBTRACTED
+    term by a factor ``(m-1)/m`` and so inflating the score by
+    :math:`\tfrac{1}{2m}\mathbb E\|X-X'\|`. That surcharge is proportional to the
+    predictive SPREAD, so it is not a harmless offset: it penalizes dispersion and moves
+    the optimum to an over-sharp (overconfident) distribution, the more so the smaller
+    ``m`` is. With the correct denominator ``m`` trades variance only. The pairwise
+    distances go through :func:`torch.cdist`, which materializes
+    ``[B, m, m]``; the naive ``x[:, :, None] - x[:, None]`` would materialize
+    ``[B, m, m, F]`` (~790 MB at ``B=32, m=10, F=6169``) and is never formed.
+
+    Sampling is reparameterized -- ``eps`` and ``z`` are noise, ``mu``/``sigma``/``V`` carry
+    the gradient -- so the score is differentiable end to end. Nothing is detached.
+
+    ``k = 0`` (``v is None`` or ``v.shape[-1] == 0``) is the ABLATION arm and the
+    distinction is worth stating precisely: the SCORE still couples coordinates (the
+    Euclidean norm is taken over all ``F`` features jointly), but the predictive FAMILY is
+    diagonal, so it cannot represent any correlation between features. Comparing ``k = 0``
+    against ``k > 0`` therefore separates "scoring jointly" from "modelling jointly".
+
+    Args:
+        mu: Predicted means ``[B, F]``.
+        sigma: Predicted marginal scales ``[B, F]`` (STRICTLY positive); the diagonal part.
+        v: Global low-rank factor ``V`` ``[F, k]``, SHARED across the batch (a learned
+            feature-correlation basis, not a per-row output), or ``None`` for ``k = 0``.
+        target: Observations ``[B, F]``.
+        num_samples: ``m``, the number of predictive samples. Must be ``>= 2``.
+
+    Returns:
+        Per-row energy score ``[B]`` (callers reduce over the batch).
+    """
+    assert mu.dim() == 2, f"energy_score expects mu [B, F]; got {tuple(mu.shape)}"
+    assert num_samples >= 2, "the unbiased pairwise term requires num_samples >= 2"
+    b_rows, n_feat = mu.shape
+    m = num_samples
+    eps = torch.randn(m, b_rows, n_feat, device=mu.device, dtype=mu.dtype)
+    x = mu.unsqueeze(0) + sigma.unsqueeze(0) * eps
+    if v is not None and v.shape[-1] > 0:
+        assert v.shape[0] == n_feat, (
+            f"V must be [F, k]; got {tuple(v.shape)}, F={n_feat}"
+        )
+        z = torch.randn(m, b_rows, v.shape[-1], device=mu.device, dtype=mu.dtype)
+        x = x + z @ v.transpose(0, 1)
+    x = x.permute(1, 0, 2)  # [B, m, F]
+    dist: torch.Tensor = torch.linalg.vector_norm(x - target.unsqueeze(1), dim=-1)
+    term1 = dist.mean(dim=1)
+    # cdist's diagonal is exactly zero, so summing the FULL [m, m] matrix equals the
+    # sum over i != j; the m(m-1) denominator is what makes the estimator unbiased.
+    pair = torch.cdist(x, x)
+    term2 = pair.sum(dim=(1, 2)) / (2.0 * m * (m - 1))
+    return term1 - term2
+
+
 def pinball(
     pred_q: torch.Tensor, target: torch.Tensor, taus: torch.Tensor
 ) -> torch.Tensor:
@@ -111,41 +310,232 @@ def pinball(
     return torch.maximum(taus * u, (taus - 1.0) * u)
 
 
+def _quantile_pit(
+    quantiles: torch.Tensor, target: torch.Tensor, taus: torch.Tensor
+) -> torch.Tensor:
+    r"""PIT from a quantile head: the empirical CDF interpolated through the knots.
+
+    The head gives ``K`` points :math:`(\hat q_{\tau_k}, \tau_k)` of the predictive CDF.
+    :math:`\hat F(y)` is the piecewise-linear interpolant through them. Outside the knot
+    range the grid carries NO information, so values below the lowest knot map to ``0`` and
+    values above the highest to ``1`` -- no tail shape is invented. With the default
+    ``tau in [0.05, 0.95]`` grid a perfectly calibrated head therefore puts ~5% of its PIT
+    mass exactly at each endpoint; that is a property of the grid, not miscalibration.
+
+    Args:
+        quantiles: Predicted quantiles ``[..., F, K]`` (last axis indexes ``taus``).
+        target: Observations ``[..., F]``.
+        taus: Quantile levels ``[K]``, ascending, in ``(0, 1)``.
+
+    Returns:
+        PIT values ``[..., F]`` in ``[0, 1]``.
+    """
+    # Sorting repairs quantile crossing (nothing constrains the head's K outputs to be
+    # monotone), which the interpolation below requires.
+    q, _ = torch.sort(quantiles, dim=-1)
+    k = q.shape[-1]
+    y = target.unsqueeze(-1)
+    idx = torch.searchsorted(q.contiguous(), y.contiguous())  # [..., F, 1] in [0, K]
+    lo = (idx - 1).clamp(0, k - 1)
+    hi = idx.clamp(0, k - 1)
+    q_lo = q.gather(-1, lo)
+    q_hi = q.gather(-1, hi)
+    t = taus.to(q.dtype).to(q.device).expand_as(q)
+    t_lo = t.gather(-1, lo)
+    t_hi = t.gather(-1, hi)
+    gap = q_hi - q_lo
+    # gap == 0 only at the two boundaries (lo == hi), which are overwritten below.
+    safe = torch.where(gap > 0, gap, torch.ones_like(gap))
+    w = ((y - q_lo) / safe).clamp(0.0, 1.0)
+    pit = t_lo + w * (t_hi - t_lo)
+    # Only STRICTLY outside the knot range is clamped. Landing exactly ON the lowest or
+    # highest knot collapses lo == hi, which the w = 0 / w = 1 branches already resolve to
+    # that knot's tau -- the interpolant stays continuous at the ends, as a CDF must.
+    pit = torch.where(y < q[..., :1], torch.zeros_like(pit), pit)
+    pit = torch.where(y > q[..., -1:], torch.ones_like(pit), pit)
+    return pit.squeeze(-1)
+
+
+def pit_values(
+    mode: str,
+    target: torch.Tensor,
+    mu: torch.Tensor | None = None,
+    scale: torch.Tensor | None = None,
+    quantiles: torch.Tensor | None = None,
+    taus: torch.Tensor | None = None,
+    samples: torch.Tensor | None = None,
+) -> torch.Tensor:
+    r"""Probability integral transform -- ONE calibration diagnostic for every mode.
+
+    .. math:: \mathrm{PIT}_{s,f} = \hat F_{s,f}(y_{s,f}) \in [0,1],
+
+    the predictive CDF of instance ``s``, feature ``f``, evaluated at its own observation.
+    Its whole point is mode-independence: a Gaussian CRPS head, a quantile head and a
+    sample-based energy head all produce PIT values on the same ``[0, 1]`` scale, so
+    calibration can be compared ACROSS the distributional sweep even though the losses are
+    not comparable to each other.
+
+    Per mode:
+
+    * ``gaussian`` / ``nll_gaussian``: :math:`\Phi\!\big((y-\mu)/\sigma\big)`;
+    * ``laplace``: the Laplace CDF at ``y``;
+    * ``quantile``: the empirical CDF interpolated through the ``K`` knots
+      (see :func:`_quantile_pit`);
+    * ``energy``: :math:`\frac1m\sum_i \mathbf 1[x_{i,f}\le y_f]` from predictive samples
+      (per feature -- the MARGINAL calibration of a joint model).
+
+    If the predictive distribution is correct then ``PIT ~ Uniform(0, 1)``. Read the
+    histogram shape as a diagnosis:
+
+    * **flat** -- calibrated;
+    * **U-shaped** (mass piled at 0 and 1) -- too many observations land in the tails, so
+      the intervals are too NARROW: OVERCONFIDENT / under-dispersed;
+    * **n-shaped** (hump at 0.5) -- observations cluster near the predictive median, so the
+      intervals are too WIDE: UNDERCONFIDENT / over-dispersed. This is the signature of
+      NLL sigma-collapse (see :func:`gaussian_nll`);
+    * **skewed / shifted** (mass toward 0 or toward 1) -- the location is biased, i.e. the
+      predicted mean is systematically high or low.
+
+    Args:
+        mode: A :class:`DistHead` mode. ``point`` has no predictive distribution and is
+            rejected.
+        target: Observations ``[..., F]``.
+        mu: ``gaussian`` / ``nll_gaussian`` / ``laplace`` -- predicted location ``[..., F]``.
+        scale: ``gaussian`` / ``nll_gaussian`` -- ``sigma``; ``laplace`` -- ``b``. Already
+            positive (this function does NOT apply the softplus; pass ``DistHead``-
+            transformed values, e.g. via :meth:`DistHead.pit`).
+        quantiles: ``quantile`` -- predicted quantiles ``[..., F, K]``.
+        taus: ``quantile`` -- the levels ``[K]``.
+        samples: ``energy`` -- predictive samples ``[..., m, F]``.
+
+    Returns:
+        PIT values ``[..., F]`` in ``[0, 1]``.
+    """
+    if mode in ("gaussian", "nll_gaussian"):
+        assert mu is not None and scale is not None, f"{mode} PIT needs mu and scale"
+        return 0.5 * (1.0 + torch.erf((target - mu) / scale * _INV_SQRT_2))
+    if mode == "laplace":
+        assert mu is not None and scale is not None, "laplace PIT needs mu and scale"
+        z = (target - mu) / scale
+        # exp(-|z|) form: algebraically identical to the two-branch CDF, overflow-free.
+        half = 0.5 * torch.exp(-z.abs())
+        return torch.where(z < 0, half, 1.0 - half)
+    if mode == "quantile":
+        assert quantiles is not None and taus is not None, (
+            "quantile PIT needs quantiles and taus"
+        )
+        return _quantile_pit(quantiles, target, taus)
+    if mode == "energy":
+        assert samples is not None, "energy PIT needs samples [..., m, F]"
+        le = (samples <= target.unsqueeze(-2)).to(target.dtype)
+        return le.mean(dim=-2)
+    raise ValueError(f"mode {mode!r} has no predictive CDF, so no PIT")
+
+
+def coverage(pit: torch.Tensor, alpha: float) -> torch.Tensor:
+    r"""Empirical coverage of the central ``alpha`` predictive interval, from PIT values.
+
+    An observation lies inside the central ``alpha`` interval
+    :math:`[\hat F^{-1}(\tfrac{1-\alpha}{2}),\ \hat F^{-1}(\tfrac{1+\alpha}{2})]` exactly
+    when its PIT lies in :math:`[\tfrac{1-\alpha}{2}, \tfrac{1+\alpha}{2}]`, so coverage is
+    a scalar read-off of the same transform rather than a second computation:
+
+    .. math::
+        \mathrm{cov}_\alpha
+        = \frac1N\sum \mathbf 1\!\left[\tfrac{1-\alpha}{2}\le \mathrm{PIT}\le
+          \tfrac{1+\alpha}{2}\right].
+
+    Calibrated means :math:`\mathrm{cov}_\alpha \approx \alpha`. UNDER-coverage
+    (:math:`<\alpha`) is the U-shaped-PIT / overconfident case; OVER-coverage
+    (:math:`>\alpha`) is the n-shaped / sigma-collapse case.
+
+    Args:
+        pit: PIT values, any shape (all entries are pooled).
+        alpha: Nominal central interval mass in ``(0, 1)``, e.g. ``0.8``.
+
+    Returns:
+        Scalar coverage fraction.
+    """
+    assert 0.0 < alpha < 1.0, f"alpha must be in (0, 1); got {alpha}"
+    lo = 0.5 * (1.0 - alpha)
+    hi = 0.5 * (1.0 + alpha)
+    inside = (pit >= lo) & (pit <= hi)
+    return inside.to(pit.dtype).mean()
+
+
 class DistHead(nn.Module):
     """Pluggable distributional readout: interpret a head's raw params, score them, pool.
 
-    Stateless except for the quantile grid (``quantile`` mode). Given a structural head's
-    output ``params`` -- ``[..., F]`` (point) or ``[..., F, P]`` (``P=2`` gaussian, ``P=K``
+    Stateless except for the quantile grid (``quantile`` mode) and the global low-rank
+    factor ``V`` (``energy`` mode). Given a structural head's output ``params`` -- ``[..., F]``
+    (point) or ``[..., F, P]`` (``P=2`` gaussian / laplace / nll_gaussian / energy, ``P=K``
     quantile) -- it exposes:
 
     * :meth:`point` -- the point estimate ``[..., F]`` used by the (loss-agnostic) metric
-      and any downstream reporting: identity (point), ``mu`` (gaussian), or the median
-      quantile (quantile);
+      and any downstream reporting: identity (point), ``mu`` (gaussian / nll_gaussian /
+      energy), the predictive MEDIAN ``mu`` (laplace), or the median quantile (quantile);
     * :meth:`loss` -- a masked scalar training loss: MSE (point), mean Gaussian CRPS
-      (gaussian), or mean pinball (quantile).
+      (gaussian), mean pinball (quantile), mean Laplace CRPS (laplace), mean Gaussian NLL
+      (nll_gaussian), or mean energy score (energy);
+    * :meth:`pit` -- per-feature PIT values ``[B, F]`` for the calibration diagnostic
+      (every mode but ``point``).
+
+    ``energy`` is the one mode with learnable state of its own: ``V`` is an
+    ``nn.Parameter`` of shape ``[num_features, rank]`` that is GLOBAL (shared across the
+    batch), because a correlation basis over features is a property of the phenotype space,
+    not of an individual strain. It therefore does NOT widen ``param_dim`` -- the structural
+    head still emits ``(mu, sigma)``, i.e. ``P=2``, and only the head owns ``V``.
     """
 
-    VALID_MODES = ("point", "gaussian", "quantile")
+    VALID_MODES = ("point", "gaussian", "quantile", "laplace", "nll_gaussian", "energy")
 
     def __init__(
         self,
         mode: str,
         quantiles: torch.Tensor | list[float] | None = None,
         sigma_floor: float = 1e-3,
+        num_features: int | None = None,
+        rank: int = DEFAULT_ENERGY_RANK,
+        num_samples: int = DEFAULT_ENERGY_SAMPLES,
+        v_init: float = DEFAULT_ENERGY_V_INIT,
     ) -> None:
         """Build the head.
 
         Args:
-            mode: One of ``point`` / ``gaussian`` / ``quantile``.
+            mode: One of ``point`` / ``gaussian`` / ``quantile`` / ``laplace`` /
+                ``nll_gaussian`` / ``energy``.
             quantiles: ``quantile`` mode only -- the ``tau`` grid (defaults to K=19 evenly
                 spaced in ``[0.05, 0.95]``). Ignored otherwise.
-            sigma_floor: ``gaussian`` mode only -- additive floor on ``softplus(raw)`` so
-                ``sigma`` stays strictly positive.
+            sigma_floor: additive floor on ``softplus(raw)`` so the scale (``sigma``, or the
+                Laplace ``b``) stays strictly positive. Ignored by ``point``/``quantile``.
+            num_features: ``energy`` mode only -- ``F``, the number of features, needed to
+                allocate the global factor ``V [F, rank]``. REQUIRED for ``energy``.
+            rank: ``energy`` mode only -- ``k``, the rank of ``V`` (small, 4-16;
+                default 8). ``rank=0`` is the diagonal-only ABLATION: ``V`` is ``None``, so
+                the score still couples features but the family cannot represent
+                correlation.
+            num_samples: ``energy`` mode only -- ``m``, predictive samples per score. The
+                estimator is unbiased in ``m``, so this trades variance for compute.
+            v_init: ``energy`` mode only -- std of the ``V`` init, scaled by
+                ``1/sqrt(rank)`` so the initial per-feature low-rank variance is
+                ``~v_init^2`` regardless of ``rank``.
         """
         super().__init__()
         assert mode in self.VALID_MODES, f"unknown DistHead mode {mode!r}"
         self.mode = mode
         self.sigma_floor = float(sigma_floor)
+        self.num_samples = int(num_samples)
+        # Declared once so every mode has the same attribute type; only `energy` with
+        # rank > 0 fills it (register_parameter(None) keeps state_dict uniform otherwise).
+        self._v: nn.Parameter | None
+        self.register_parameter("_v", None)
+        if mode == "energy":
+            assert num_features is not None, "energy mode requires num_features (F)"
+            assert rank >= 0, f"energy rank must be >= 0; got {rank}"
+            if rank > 0:
+                self._v = nn.Parameter(
+                    torch.randn(num_features, rank) * (v_init / math.sqrt(rank))
+                )
         if mode == "quantile":
             if quantiles is None:
                 q = torch.linspace(0.05, 0.95, DEFAULT_NUM_QUANTILES)
@@ -171,25 +561,76 @@ class DistHead(nn.Module):
         return cast(torch.Tensor, self._taus)
 
     @property
+    def v(self) -> torch.Tensor | None:
+        """The global low-rank factor ``V [F, k]`` (``energy`` mode) or ``None``.
+
+        ``None`` for every non-``energy`` mode and for ``energy`` with ``rank=0`` (the
+        diagonal-only ablation). Surfaced through a property for the same reason as
+        :attr:`taus`: ``nn.Module.__getattr__`` is typed ``Tensor | Module``.
+        """
+        return self._v
+
+    @property
     def param_dim(self) -> int:
-        """Params per feature: 1 (point), 2 (gaussian), or K (quantile)."""
+        """Params per feature: 1 (point), K (quantile), or 2 (every parametric mode).
+
+        ``energy`` is 2 as well -- its extra state is the GLOBAL ``V``, owned by this head,
+        not per-feature output of the structural head.
+        """
         if self.mode == "point":
             return 1
-        if self.mode == "gaussian":
-            return 2
-        return int(self.taus.numel())
+        if self.mode == "quantile":
+            return int(self.taus.numel())
+        return 2
 
     def _sigma(self, raw: torch.Tensor) -> torch.Tensor:
-        """Map the raw scale param to a strictly-positive sigma via softplus + floor."""
+        """Map a raw scale param to a strictly-positive scale via softplus + floor.
+
+        Shared by every parametric mode: ``sigma`` for gaussian / nll_gaussian / energy and
+        the Laplace ``b``, so positivity is enforced identically everywhere.
+        """
         return F.softplus(raw) + self.sigma_floor
 
     def point(self, params: torch.Tensor) -> torch.Tensor:
-        """Reduce raw params to a point estimate ``[..., F]`` (metric / reporting)."""
+        """Reduce raw params to a point estimate ``[..., F]`` (metric / reporting).
+
+        Identity (point), the median knot (quantile), or ``mu`` for every parametric mode --
+        which is the predictive MEAN for gaussian / nll_gaussian / energy and the predictive
+        MEDIAN for laplace.
+        """
         if self.mode == "point":
             return params
-        if self.mode == "gaussian":
-            return params[..., 0]
-        return params[..., self.median_index]
+        if self.mode == "quantile":
+            return params[..., self.median_index]
+        return params[..., 0]
+
+    def _location_scale(
+        self, params: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Split ``[..., F, 2]`` raw params into ``(mu, positive scale)``."""
+        return params[..., 0], self._sigma(params[..., 1])
+
+    def samples(self, params: torch.Tensor, num_samples: int) -> torch.Tensor:
+        """Draw ``energy``-mode predictive samples ``[B, m, F]`` (reparameterized).
+
+        Args:
+            params: Head params ``[B, F, 2]``.
+            num_samples: ``m``, samples per row.
+
+        Returns:
+            Samples ``[B, m, F]`` from ``N(mu, diag(sigma^2) + V V^T)``.
+        """
+        assert self.mode == "energy", "samples() is energy-mode only"
+        mu, sigma = self._location_scale(params)
+        eps = torch.randn(num_samples, *mu.shape, device=mu.device, dtype=mu.dtype)
+        x = mu.unsqueeze(0) + sigma.unsqueeze(0) * eps
+        v = self.v
+        if v is not None and v.shape[-1] > 0:
+            z = torch.randn(
+                num_samples, mu.shape[0], v.shape[-1], device=mu.device, dtype=mu.dtype
+            )
+            x = x + z @ v.to(mu.device).transpose(0, 1)
+        return x.permute(1, 0, 2)
 
     def loss(
         self,
@@ -200,7 +641,7 @@ class DistHead(nn.Module):
         """Masked scalar training loss for this head.
 
         Args:
-            params: Head params ``[B, F]`` (point) or ``[B, F, P]`` (gaussian/quantile).
+            params: Head params ``[B, F]`` (point) or ``[B, F, P]`` (every other mode).
             target: Point targets ``[B, F]`` (same F as ``params``).
             mask: Optional bool ``[B]`` selecting supervised rows. When no row is
                 supervised, a graph-connected zero is returned (grads flow as zero).
@@ -212,25 +653,113 @@ class DistHead(nn.Module):
             params = params[mask]
             target = target[mask]
         if target.shape[0] == 0:
-            # Keep the head connected to the graph so DDP find-unused stays happy.
-            return params.sum() * 0.0
+            # Keep the head connected to the graph so DDP find-unused stays happy -- V too,
+            # since it is a parameter of this head and would otherwise go untouched.
+            zero = params.sum() * 0.0
+            v = self.v
+            if v is not None:
+                zero = zero + v.sum() * 0.0
+            return zero
         if self.mode == "point":
             return F.mse_loss(params, target)
+        if self.mode == "quantile":
+            return pinball(params, target, self.taus.to(params.device)).mean()
+        mu, scale = self._location_scale(params)
         if self.mode == "gaussian":
-            mu = params[..., 0]
-            sigma = self._sigma(params[..., 1])
-            return gaussian_crps(mu, sigma, target).mean()
-        return pinball(params, target, self.taus.to(params.device)).mean()
+            return gaussian_crps(mu, scale, target).mean()
+        if self.mode == "laplace":
+            return laplace_crps(mu, scale, target).mean()
+        if self.mode == "nll_gaussian":
+            return gaussian_nll(mu, scale, target).mean()
+        v = self.v
+        return energy_score(
+            mu,
+            scale,
+            None if v is None else v.to(params.device),
+            target,
+            self.num_samples,
+        ).mean()
+
+    def pit(
+        self,
+        params: torch.Tensor,
+        target: torch.Tensor,
+        mask: torch.Tensor | None = None,
+        num_samples: int | None = None,
+    ) -> torch.Tensor:
+        """Per-feature PIT values ``[B, F]`` for this head's predictive distribution.
+
+        The mode-agnostic calibration diagnostic -- see :func:`pit_values` for how to read
+        the histogram and :func:`coverage` for the interval summary. Not available in
+        ``point`` mode (no predictive distribution).
+
+        Args:
+            params: Head params ``[B, F]`` (point) or ``[B, F, P]``.
+            target: Point targets ``[B, F]``.
+            mask: Optional bool ``[B]`` selecting rows, as in :meth:`loss`.
+            num_samples: ``energy`` mode only -- samples used to build the empirical CDF.
+                Defaults to the head's training ``m``, which is chosen for cheap gradients
+                (10) and gives PIT resolution ``1/m``; pass a larger value (e.g. 256) when
+                the PIT histogram itself is the output.
+
+        Returns:
+            PIT values ``[B, F]`` in ``[0, 1]``.
+        """
+        if mask is not None:
+            params = params[mask]
+            target = target[mask]
+        if self.mode == "quantile":
+            return pit_values(
+                self.mode, target, quantiles=params, taus=self.taus.to(params.device)
+            )
+        if self.mode == "energy":
+            m = self.num_samples if num_samples is None else num_samples
+            return pit_values(self.mode, target, samples=self.samples(params, m))
+        mu, scale = self._location_scale(params)
+        return pit_values(self.mode, target, mu=mu, scale=scale)
 
 
 def dist_param_dim(dist: str, num_quantiles: int = DEFAULT_NUM_QUANTILES) -> int:
-    """Params-per-feature for a config ``dist`` value (the head Linear-width multiplier)."""
-    return {"point": 1, "crps": 2, "quantile": num_quantiles}[dist]
+    """Params-per-feature for a config ``dist`` value (the head Linear-width multiplier).
+
+    ``energy`` is 2 because its low-rank factor ``V`` is owned by the :class:`DistHead`
+    (global, ``[F, k]``), not emitted per feature by the structural head.
+    """
+    return {
+        "point": 1,
+        "crps": 2,
+        "quantile": num_quantiles,
+        "laplace_crps": 2,
+        "nll": 2,
+        "energy": 2,
+    }[dist]
 
 
-def make_dist_head(dist: str, num_quantiles: int = DEFAULT_NUM_QUANTILES) -> DistHead:
-    """Build a :class:`DistHead` from a config ``dist`` value (``point``/``crps``/``quantile``)."""
+def make_dist_head(
+    dist: str,
+    num_quantiles: int = DEFAULT_NUM_QUANTILES,
+    num_features: int | None = None,
+    rank: int = DEFAULT_ENERGY_RANK,
+    num_samples: int = DEFAULT_ENERGY_SAMPLES,
+) -> DistHead:
+    """Build a :class:`DistHead` from a config ``dist`` value.
+
+    Args:
+        dist: One of ``point`` / ``crps`` / ``quantile`` / ``laplace_crps`` / ``nll`` /
+            ``energy`` (the keys of :data:`DIST_TO_MODE`).
+        num_quantiles: ``quantile`` only -- size of the ``tau`` grid.
+        num_features: ``energy`` only -- ``F``; REQUIRED there to allocate ``V [F, rank]``.
+        rank: ``energy`` only -- ``k`` (``0`` = the diagonal-only ablation).
+        num_samples: ``energy`` only -- ``m`` predictive samples per score.
+
+    Returns:
+        The configured head.
+    """
     mode = DIST_TO_MODE[dist]
     if mode == "quantile":
         return DistHead(mode, quantiles=torch.linspace(0.05, 0.95, num_quantiles))
+    if mode == "energy":
+        return DistHead(
+            mode, num_features=num_features, rank=rank, num_samples=num_samples
+        )
     return DistHead(mode)

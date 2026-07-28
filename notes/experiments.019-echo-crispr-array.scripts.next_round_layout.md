@@ -785,3 +785,14 @@ blanks self-sufficient, so the controls no longer depend on happening to be comp
    that strips or rewrites EXIF would silently rotate every plate 90 degrees and break the
    16 x 24 lattice fit. Worth an explicit assertion on the cropped aspect ratio (expect
    landscape, ~1.26 for these crops) rather than trusting the tag.
+
+**Resolved by protocol (2026.07.27).** Plates are imaged **A1 top-left, agar side up**, which
+fixes the orientation deterministically -- consistent with all five plates scored here
+resolving to `identity`. The chamfer/blank/strain analysis above stands as a record of what
+each control can and cannot see, but orientation is not an open risk.
+
+The one thing worth carrying forward is a change of posture rather than more machinery: since
+orientation is guaranteed, the pipeline should **assert** `identity` and fail loudly, instead
+of running a resolver that will silently accommodate `flip_v` or `rot180` if the colony
+pattern happens to favour one. A guaranteed invariant should be checked, not inferred. The
+asymmetric blanks from `generate_picklist.py` are what make that assertion cheap to verify.

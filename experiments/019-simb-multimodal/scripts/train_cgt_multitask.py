@@ -1351,13 +1351,29 @@ class MultitaskCGTTask(L.LightningModule):
                 if p.grad is not None
             )
         )
-        self.log("train/grad_norm", total, on_step=False, on_epoch=True, sync_dist=True)
+        # `batch_size=1` is REQUIRED, not cosmetic, and is also the correct weighting.
+        #   * Required: without it Lightning infers the batch size by ITERATING the batch,
+        #     and this batch is a PyG HeteroData whose FeatureStore.__iter__ raises
+        #     NotImplementedError -- every step would die. (Every other self.log call in
+        #     this module passes batch_size=bsz, which is why none of them hit it; the
+        #     batch is not in scope in this hook.)
+        #   * Correct: the gradient norm is a property of the STEP, not of a sample, so the
+        #     epoch mean should weight each step equally rather than by its row count.
+        self.log(
+            "train/grad_norm",
+            total,
+            on_step=False,
+            on_epoch=True,
+            sync_dist=True,
+            batch_size=1,
+        )
         self.log(
             "train/grad_norm_clip_frac",
             total / self.clip_grad_norm_max_norm,
             on_step=False,
             on_epoch=True,
             sync_dist=True,
+            batch_size=1,
         )
         if self.clip_grad_norm:
             self.clip_gradients(

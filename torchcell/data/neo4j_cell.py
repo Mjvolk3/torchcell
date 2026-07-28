@@ -235,6 +235,7 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         self._dataset_name_index: dict[str, list[int]] | None = None
         self._perturbation_count_index: dict[int, list[int]] | None = None
         self._is_any_perturbed_gene_index: dict[str, list[int]] | None = None
+        self._is_any_deletion_gene_index_cache: dict[str, list[int]] | None = None
 
         # Cached label df for converting regression to classification
         self._label_df: pd.DataFrame | None = None
@@ -921,6 +922,61 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         self._is_any_perturbed_gene_index_cache = result
         self._write_json_with_lock(cache_path, result)
 
+        return result
+
+    def compute_is_any_deletion_gene_index(self) -> dict[str, list[int]]:
+        """Map gene -> record indices where the gene is DELETED (not merely perturbed).
+
+        The deletion-only counterpart of :meth:`compute_is_any_perturbed_gene_index`, and the
+        one to use whenever a gene name is meant to identify an experimental SUBJECT rather
+        than anything appearing in a genotype.
+
+        The two differ sharply on the pigment screens, because their engineered cassettes are
+        emitted as ``gene_addition`` / ``allele`` perturbations on EVERY strain -- and three
+        cassette members are native ORFs that also exist in the deletion collection:
+        ``ARO4`` (YBR249C) and ``ARO7`` (YPR060C) in Cachera's betaxanthin cassette,
+        ``BTS1`` (YPL069C) in Ozaydin's beta-carotene cassette. Under the perturbed-gene index
+        each of those resolves to ~4,400-4,700 records -- the whole screen -- instead of the
+        single record in which it is the deleted gene. Selecting a gene set through the wrong
+        index therefore silently selects nearly the entire dataset.
+
+        This is the same distinction :class:`DeletionKeyedGenotypeAggregator` exists to make:
+        the cassette belongs to the reference cell, not to the perturbation.
+        """
+        print("Computing is any deletion gene index...")
+        index: dict[str, set[int]] = {}
+
+        self._init_lmdb_read()
+        try:
+            with self.env.begin() as txn:
+                entries = [(key, value) for key, value in txn.cursor()]
+            for key, value in entries:
+                idx = int(key.decode())
+                for data in json.loads(value.decode()):
+                    for pert in data["experiment"]["genotype"]["perturbations"]:
+                        if not pert["perturbation_type"].endswith("deletion"):
+                            continue
+                        index.setdefault(pert["systematic_gene_name"], set()).add(idx)
+        finally:
+            self.close_lmdb()
+
+        return {gene: sorted(indices) for gene, indices in index.items()}
+
+    @property
+    def is_any_deletion_gene_index(self) -> dict[str, list[int]]:
+        """Return the cached gene-to-deleted-indices mapping."""
+        if self._is_any_deletion_gene_index_cache is not None:
+            return self._is_any_deletion_gene_index_cache
+
+        cache_path = osp.join(self.processed_dir, "is_any_deletion_gene_index.json")
+        if osp.exists(cache_path):
+            loaded: dict[str, list[int]] = self._read_json_with_lock(cache_path)
+            self._is_any_deletion_gene_index_cache = loaded
+            return loaded
+
+        result = self.compute_is_any_deletion_gene_index()
+        self._is_any_deletion_gene_index_cache = result
+        self._write_json_with_lock(cache_path, result)
         return result
 
     # HACK

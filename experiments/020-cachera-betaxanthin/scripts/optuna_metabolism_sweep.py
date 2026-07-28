@@ -1,7 +1,7 @@
 # experiments/020-cachera-betaxanthin/scripts/optuna_metabolism_sweep.py
 # [[experiments.020-cachera-betaxanthin.scripts.optuna_metabolism_sweep]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/020-cachera-betaxanthin/scripts/optuna_metabolism_sweep
-"""OPTIMIZER x DISTRIBUTIONAL sweep driver (_003) for the three metabolism arms.
+"""OPTIMIZER x DISTRIBUTIONAL sweep driver (_004) for the three metabolism arms.
 
 This is the metabolism port of the expression round `_007`
 (`experiments/019-simb-multimodal/scripts/optuna_joint_sweep.py`): same decomposed optimizer
@@ -82,19 +82,28 @@ WHAT HAD TO CHANGE, AND WHY (each is forced by a measurement, not a preference)
 * `graph_reg_depth` is NOT swept. _007 can compare early [1] against middle [2] because L is
   frozen at 4; with L swept down to 2 (layers 0..1) a depth of [2] is out of range half the
   time, which would make the axis mean different things in different trials.
-* `node_embeddings` is cut from _007's eight to {prot_T5_all, random_1000}. `_002` put
-  prot_T5_all ahead on betaxanthin (0.295) and mulleder19, and trials here are scarce; the
-  width-matched random control is retained because it is what makes "content, not identity"
-  a measurement rather than an assumption.
+* `node_embeddings` is _007's FULL EIGHT, unchanged. An earlier cut of this round narrowed
+  it to {prot_T5_all, random_1000} to buy resolution on the optimizer axes; that traded away
+  the cross-round comparison, which is the point of mirroring _007. Restored.
+
+ROUND _004 (this one) ADDS, on top of the above:
+* THE PINNED CACHERA/MERZBACHER TEST SPLIT on the betaxanthin arm
+  (`data_module.pinned_test_split_file`). Their 639 usable test ORFs are forced into OUR test
+  split instead of being scattered by the 80/10/10 random split, which had left roughly 511
+  of them in our TRAIN set -- so any score quoted against their Fig 4b would have been partly
+  a training score. Ranking still happens on VAL, which is untouched and stays comparable.
+* `ranked_smooth3`, the smoothed companion OF THE RANKED METRIC, derived from
+  `OBJECTIVE_METRIC` rather than hardcoded to Pearson. `_003` recorded `pearson_smooth3` on
+  every arm, which is the wrong metric on beta-carotene (it ranks on Spearman).
 
 Environment (set by the slurm launcher):
     ARM                 betaxanthin | beta_carotene | mulleder19   (required)
     STAGE               screen | confirm                           (default: screen)
     OPTUNA_STORAGE      sqlite:////<scratch>/.../optuna_020_<arm>.db   (required)
-    OPTUNA_STUDY_NAME   default: <arm>_003_<stage>
+    OPTUNA_STUDY_NAME   default: <arm>_004_<stage>
     OPTUNA_N_TRIALS     trials THIS worker runs (default: 60 screen)
     OPTUNA_WORKER_ID    seeds the Halton scramble (default: 0)
-    METAB_BASE_CONFIG   base Hydra config (default: <arm>_003)
+    METAB_BASE_CONFIG   base Hydra config (default: <arm>_004)
     CONFIRM_TOP_K       configs promoted from screen to confirm (default: 8)
     NUM_WORKERS         dataloader workers per trial (default: 4)
 """
@@ -120,15 +129,15 @@ from train_cgt_multitask import run_training  # type: ignore[import-not-found]  
 CONF_DIR = osp.abspath(osp.join(osp.dirname(__file__), "../conf"))
 ARM = os.environ["ARM"]
 STAGE = os.getenv("STAGE", "screen")
-BASE_CONFIG = os.getenv("METAB_BASE_CONFIG", f"{ARM}_003")
+BASE_CONFIG = os.getenv("METAB_BASE_CONFIG", f"{ARM}_004")
 STORAGE = os.environ["OPTUNA_STORAGE"]
-STUDY_NAME = os.getenv("OPTUNA_STUDY_NAME", f"{ARM}_003_{STAGE}")
+STUDY_NAME = os.getenv("OPTUNA_STUDY_NAME", f"{ARM}_004_{STAGE}")
 N_TRIALS = int(os.getenv("OPTUNA_N_TRIALS", "60"))
 WORKER_ID = int(os.getenv("OPTUNA_WORKER_ID", "0"))
 CONFIRM_TOP_K = int(os.getenv("CONFIRM_TOP_K", "8"))
 #: Completed screen trials after which the launcher switches this arm to `confirm`.
 SCREEN_TARGET = int(os.getenv("SCREEN_TARGET", "60"))
-SCREEN_STUDY_NAME = os.getenv("SCREEN_STUDY_NAME", f"{ARM}_003_screen")
+SCREEN_STUDY_NAME = os.getenv("SCREEN_STUDY_NAME", f"{ARM}_004_screen")
 
 assert STAGE in ("screen", "confirm"), f"STAGE must be screen|confirm, got {STAGE!r}"
 
@@ -140,6 +149,15 @@ OBJECTIVE_METRIC = {
     "beta_carotene": "val/beta_carotene/spearman_per_feature_max",
     "mulleder19": "val/mulleder19/pearson_per_feature_max",
 }[ARM]
+
+#: The de-biased companion OF THE RANKED METRIC -- derived from it rather than hardcoded.
+#: An earlier cut recorded `pearson_smooth3` on every arm, which is the wrong metric on
+#: beta-carotene: that arm RANKS ON SPEARMAN, so its spikiness check was comparing a Spearman
+#: maximum against a Pearson rolling mean. The tell was arithmetically impossible values
+#: (`smooth3 > max`, which cannot happen within one metric, since the max of a 3-epoch mean
+#: is bounded by the max of the series). Deriving the key removes the chance of them drifting
+#: apart again.
+RANKED_SMOOTH3 = OBJECTIVE_METRIC.replace("_max", "_smooth3_max")
 
 #: Screen seed. 42 rather than _007's 0, deliberately: the `_002` studies ran at 42, so a
 #: screen winner can be read against 36-40 trials of existing history at the same seed.
@@ -179,10 +197,33 @@ GRAPH_REG_LAMBDAS = {
     "mulleder19": [2.2e-6, 2.2e-5, 2.2e-4, 2.2e-3],
 }[ARM]
 
-#: prot_T5_all led the kNN embedding probe and `_002`; random_1000 is the CONTROL -- unique but
-#: meaningless, and WIDTH-MATCHED (_007's upgrade from random_100, which at 7-25x narrower than
-#: the real embeddings made "content wins" partly a statement about dimensionality).
-NODE_EMBEDDINGS = ["prot_T5_all", "random_1000"]
+#: THE FULL _007 EMBEDDING AXIS, verbatim. An earlier cut of this round narrowed it to
+#: {prot_T5_all, random_1000} to buy resolution on the optimizer axes; that traded away the
+#: comparison with the expression round, which is the reason to mirror _007 in the first
+#: place. All eight are coverage-audited (6607 genes, 0 missing, 0 zero-vectors) -- variants
+#: that fail that bar are deliberately absent (one_hot_gene / fudt_downstream-alone miss the
+#: 28 mitochondrial Q0* genes; the esm2/prot_T5 `no_dubious` / `no_uncharacterized` variants
+#: emit 684/668 ALL-ZERO vectors, i.e. silently information-free for the hardest ORFs).
+#:
+#:   codon_frequency (64d)          the only option narrower than hidden, so no compression
+#:   calm (768d), fudt_upstream (768d), prot_T5_all (1024d),
+#:   esm2_t33_650M_UR50D_all (1280d), nt_window_5979 (2560d)   real sequence/protein content
+#:   fudt_upstream,fudt_downstream (1536d)  promoter + terminator, i.e. the REGULATORY axis,
+#:     orthogonal to the protein-coding one; a comma-joined entry becomes a multi-embedding
+#:     override that the model concatenates
+#:   random_1000 (1000d)            CONTROL -- unique but meaningless, and WIDTH-MATCHED.
+#:     _007's upgrade from random_100, which at 7-25x narrower than the real embeddings made
+#:     "content wins" partly a statement about dimensionality.
+NODE_EMBEDDINGS = [
+    "codon_frequency",
+    "calm",
+    "fudt_upstream",
+    "fudt_upstream,fudt_downstream",
+    "prot_T5_all",
+    "esm2_t33_650M_UR50D_all",
+    "nt_window_5979",
+    "random_1000",
+]
 
 TARGET_NORMS = ["zscore", "yeo_johnson"]
 
@@ -292,7 +333,12 @@ def _record(trial: optuna.Trial, metrics: dict[str, float], suffix: str = "") ->
     for name, key in (
         ("pearson", f"val/{ARM}/pearson_per_feature_max"),
         ("spearman", f"val/{ARM}/spearman_per_feature_max"),
+        # `ranked_smooth3` is the one to read: it is the smoothed companion of whichever
+        # metric THIS arm is ranked on. Both raw variants are kept alongside so a study can
+        # be re-read on the other correlation without re-running.
+        ("ranked_smooth3", RANKED_SMOOTH3),
         ("pearson_smooth3", f"val/{ARM}/pearson_per_feature_smooth3_max"),
+        ("spearman_smooth3", f"val/{ARM}/spearman_per_feature_smooth3_max"),
         ("pred_sd_ratio", f"val/{ARM}/pred_sd_ratio_at_peak"),
         ("graph_reg_ratio", "val/graph_reg/ratio_to_data_at_peak"),
         ("n_val_epochs", "val/n_val_epochs"),
@@ -464,7 +510,7 @@ def _resolve_stage() -> None:
     if _n_complete(SCREEN_STUDY_NAME) < SCREEN_TARGET:
         print("screen")
         return
-    print("done" if _n_complete(f"{ARM}_003_confirm") >= CONFIRM_TOP_K else "confirm")
+    print("done" if _n_complete(f"{ARM}_004_confirm") >= CONFIRM_TOP_K else "confirm")
 
 
 def main() -> None:

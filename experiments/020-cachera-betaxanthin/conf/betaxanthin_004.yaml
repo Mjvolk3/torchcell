@@ -1,7 +1,7 @@
-# experiments/020-cachera-betaxanthin/conf/betaxanthin_003.yaml
+# experiments/020-cachera-betaxanthin/conf/betaxanthin_004.yaml
 # [[experiments.020-cachera-betaxanthin]]
 #
-# BETAXANTHIN, round _003 -- OPTIMIZER x DISTRIBUTIONAL, the metabolism port of expression
+# BETAXANTHIN, round _004 -- OPTIMIZER x DISTRIBUTIONAL, the metabolism port of expression
 # round _007. Small fast model, budget spent on the probabilistic head.
 #
 # WHAT _002 SETTLED, and is therefore frozen here:
@@ -30,6 +30,23 @@ seed: 42
 wandb:
   project: torchcell_020_betaxanthin_v3
   tags: ["020", gilahyper, metabolism, betaxanthin, ninegraph, optuna]
+
+data_module:
+  # MERZBACHER'S TEST SET, NESTED IN OURS. Their 639 usable betaxanthin test ORFs are pinned
+  # to our test split; train/val are drawn from the remaining pool and still re-roll with the
+  # seed, so the confirm stage's repeated subsampling leaves the comparison set untouched.
+  #
+  # This is what makes the head-to-head legitimate. Under the ordinary 80/10/10 random split
+  # roughly 511 of those 639 genes land in our TRAIN set, so any accuracy we quoted against
+  # their Fig 4b would have been partly a training score. It also means our test split is
+  # LARGER than 10% and is NOT comparable to the _002/_004 numbers, which were computed on a
+  # random test set -- val remains the ranking metric and stays comparable.
+  #
+  # Built by scripts/build_merzbacher_split.py from the RAW screen + the shared name
+  # resolver (NOT the stale LMDB); 629 of the 639 are present in the current build, the
+  # remaining 10 blocked on issue #195. The one gene of their 640 we cannot ever supply is
+  # IPP1 -- essential, so no deletion strain exists.
+  pinned_test_split_file: 020-cachera-betaxanthin/results/merzbacher_nested_split.json
 
 model:
   # SWEPT {2, 4} by the driver. Declared at _002's measured winner so a non-sweep run of this

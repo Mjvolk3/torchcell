@@ -85,6 +85,11 @@ data_module:
   # so epoch time is set by step count, not batch size.
   batch_size: 128
   num_workers: 8
+  # Path (absolute, or relative to EXPERIMENT_ROOT) to a JSON whose `split.test` lists
+  # SYSTEMATIC gene names to PIN into the test split, reproducing an external split inside
+  # ours. null = the ordinary seeded 80/10/10 random split. Declared on every arm so the
+  # lookup never hits Hydra's struct mode; only the betaxanthin arm sets it today.
+  pinned_test_split_file: null
   pin_memory: true
   prefetch: false
 

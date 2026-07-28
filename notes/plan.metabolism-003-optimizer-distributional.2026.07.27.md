@@ -181,3 +181,89 @@ window on each arm.
 - The Cachera build is stale w.r.t. the shared name resolver (issue #195), costing 10 of the 639.
 - The flux layer stays deferred -- published k_cat covers 79 of Yeast9's 1,161 genes (6.8%).
   [[plan.cgt-metabolism-flux-layer.2026.07.26]]
+
+## 2026.07.28 - Round _004: full_007 embedding axis + the pinned Cachera split
+
+`_003` was cancelled at 26 / 28 / 18 of 60 screen trials. Three changes, two of which force a
+fresh study (`suggest_categorical` rejects a changed value list, and 020's data changed):
+
+1. **`node_embeddings` restored to _007's full EIGHT.** `_003` cut it to
+   {prot_T5_all, random_1000} to buy resolution on the optimizer axes. That traded away the
+   cross-round comparison, which is the reason to mirror_007 at all.
+2. **The Cachera/Merzbacher test split is WIRED IN** on the betaxanthin arm
+   (`data_module.pinned_test_split_file`).
+3. **`ranked_smooth3`** replaces `_003`'s `pearson_smooth3`, derived from `OBJECTIVE_METRIC`
+   rather than hardcoded -- beta-carotene ranks on Spearman, so its spikiness check had been
+   comparing a Spearman maximum against a Pearson rolling mean. The tell was arithmetically
+   impossible values (`smooth3 > max`, which cannot occur within one metric).
+
+### What `_003` measured before it was stopped
+
+Its headline question is already answered, consistently across all three arms: **the
+`hp_profile` bundle was `lr`, not `weight_decay`.**
+
+| | betaxanthin | beta_carotene | mulleder19 |
+|---|---|---|---|
+| lr, low / mid / high tercile | 0.132 / **0.177** / 0.087 | 0.120 / **0.132** / 0.097 | 0.059 / **0.092** / 0.031 |
+| top-quartile lr median | **1.4e-4** | **1.4e-4** | **1.6e-4** |
+| weight_decay terciles | 0.130 / 0.134 / 0.123 | 0.121 / 0.116 / 0.110 | 0.046 / 0.059 / 0.077 |
+
+A clean inverted-U on lr, three independent arms landing on ~1.4e-4 -- between 010's 1e-4 and
+`baseline`'s 3e-4, and well below `aggressive`'s 1e-3, which is why `_002` saw "aggressive
+loses" without being able to say why. Weight decay is nearly flat (rho = -0.21 / -0.19 /
++0.09), vindicating the suspicion that `_002`'s naive bundle reading contradicted 010's
+checkpointed 1e-8.
+
+The new diagnostics also paid for themselves immediately:
+
+- **`pred_sd_ratio`**: 21/26, 24/28 and 11/18 trials were COLLAPSED (< 0.05) -- predicting a
+  near-constant while Pearson still read 0.14-0.18, because Pearson is scale-free. The top
+  betaxanthin configs were healthy (0.618 / 0.288 / 0.566), so the ranking was selecting real
+  models; **beta-carotene's leader was not** (0.001).
+- **run length**: r(n_val_epochs, objective) = **+0.687** betaxanthin, +0.415 mulleder19,
+  +0.125 beta-carotene. Real, but NOT distorting the leaders -- top-5 by `_max` and by
+  `_smooth3_max` are identical in order on both Pearson arms, with top-3 gaps of
+  0.020 / 0.011 / 0.009 (plateaus) against 0.059 / 0.061 for mid-ranked trials (spikes).
+
+### The pinned split, and the bug it exposed
+
+Wiring it surfaced a defect that would have invalidated the comparison in the opposite
+direction from the one being fixed. The first implementation mapped gene names through
+`is_any_perturbed_gene_index`, which resolved **639 genes to 4,885 of 4,930 records**, leaving
+**train = 28**. It trained anyway.
+
+The cause is real biology, not a coding slip. Both pigment cassettes contain NATIVE ORFs that
+also exist in the deletion collection, and they are emitted as `gene_addition` / `allele`
+perturbations on EVERY strain:
+
+| cassette member | systematic | records | in Merzbacher's test list |
+|---|---|---:|---|
+| `ARO4` (K229L) | YBR249C | 4,669 | **yes** |
+| `ARO7` (G141S) | YPR060C | 4,669 | no |
+| `BTS1` | YPL069C | 4,406 | **yes** |
+| `CYP76AD1`, `DOD`, `crtI`, `crtYB` | -- | 4,406-4,669 | no (heterologous) |
+
+So `ARO4` as a *deletion target* is one record, but as a *cassette member* it is the whole
+screen -- and two such genes are in the pinned list. This is exactly the distinction
+[[torchcell.data.genotype_aggregate]]'s `DeletionKeyedGenotypeAggregator` exists to make
+("the cassette belongs to the reference cell, not to the perturbation"); the split wiring
+simply used the wrong index.
+
+**Fix:** a new `Neo4jCellDataset.is_any_deletion_gene_index` (deletion-only counterpart,
+disk-cached like its sibling), plus a hard assertion that a pinned test set is under half the
+dataset. Verified live: **639 genes -> 639 records, 13.0% of 4,930**, splits
+train 3,703 / val 294 / test 933, with zero pinned records in train or val.
+
+Nine tests in `tests/torchcell/datamodules/test_cell.py` (the first tests this datamodule has
+had) cover the properties that are invisible at runtime: pinned records land in test and
+nowhere else, the pin changes the cache key so a pinned run cannot reuse an unpinned cached
+index, the same pin reuses its own cache across a requeue, absent genes are reported not
+fatal, and the pin survives a seed sweep so the confirm stage's 5 seeds re-roll train/val
+without ever moving the comparison genes.
+
+### Reading `_004` numbers
+
+**Val remains the ranking metric and stays comparable to `_002`/`_003`.** The betaxanthin
+TEST split is now larger (933 vs ~490) and contains Merzbacher's genes by construction, so it
+is NOT comparable to earlier test numbers -- it is the comparison set, to be read against
+their Fig 4b via [[experiments.020-cachera-betaxanthin.merzbacher-comparison]].

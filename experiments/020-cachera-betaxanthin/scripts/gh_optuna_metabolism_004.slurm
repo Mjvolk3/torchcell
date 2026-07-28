@@ -1,8 +1,8 @@
 #!/bin/bash
-# experiments/021-ozaydin-beta-carotene/scripts/gh_optuna_metabolism_003.slurm
-# [[experiments.021-ozaydin-beta-carotene]]
+# experiments/020-cachera-betaxanthin/scripts/gh_optuna_metabolism_004.slurm
+# [[experiments.020-cachera-betaxanthin]]
 #
-# ONE arm, ONE GPU, round _003 -- the metabolism port of expression round _007. Three of
+# ONE arm, ONE GPU, round _004 -- the metabolism port of expression round _007. Three of
 # these run concurrently on GilaHyper: betaxanthin here, beta-carotene in 021, the 19-AA
 # metabolome in 022. Each arm keeps its own GPU because each has its own objective metric
 # (beta-carotene ranks on Spearman, the other two on Pearson) and its own downstream use --
@@ -10,7 +10,7 @@
 # double-mutant panel.
 #
 #   cd <worktree-root>
-#   ARM=betaxanthin sbatch --job-name=020-bx-003 experiments/021-ozaydin-beta-carotene/scripts/gh_optuna_metabolism_003.slurm
+#   ARM=betaxanthin sbatch --job-name=020-bx-003 experiments/020-cachera-betaxanthin/scripts/gh_optuna_metabolism_004.slurm
 #
 # TWO STAGES, RESOLVED AT JOB START, NOT BAKED IN. The driver reports which stage to run from
 # the number of completed screen trials (`--resolve-stage`), so a requeue after a walltime
@@ -37,15 +37,15 @@
 #SBATCH --signal=B:USR1@180
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END,FAIL
-#SBATCH --output=/scratch/projects/torchcell-scratch/experiments/021-ozaydin-beta-carotene/slurm/output/%x_%j.out
-#SBATCH --error=/scratch/projects/torchcell-scratch/experiments/021-ozaydin-beta-carotene/slurm/output/%x_%j.out
+#SBATCH --output=/scratch/projects/torchcell-scratch/experiments/020-cachera-betaxanthin/slurm/output/%x_%j.out
+#SBATCH --error=/scratch/projects/torchcell-scratch/experiments/020-cachera-betaxanthin/slurm/output/%x_%j.out
 
 set -euo pipefail
 
 # Resolve the worktree root from the submit dir so the BRANCH's code is used, not the primary
 # checkout's -- the editable install otherwise wins (memory: worktree-build-needs-pythonpath).
 PROJECT_ROOT="${SLURM_SUBMIT_DIR:-/home/michaelvolk/Documents/projects/torchcell}"
-EXP_DIR=experiments/021-ozaydin-beta-carotene
+EXP_DIR=experiments/020-cachera-betaxanthin
 SCRATCH_EXP=/scratch/projects/torchcell-scratch/$EXP_DIR
 OPTUNA_DIR="$SCRATCH_EXP/optuna"
 # Pre-create BOTH: slurm will not create the --output path itself, and a missing optuna dir
@@ -57,7 +57,7 @@ mkdir -p "$OPTUNA_DIR" "$SCRATCH_EXP/slurm/output"
 # the environment, and so does the requeue's own sbatch).
 export DEADLINE="${DEADLINE:-2026-07-30T22:00:00}"
 source "$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/requeue_until.sh"
-requeue_arm_trap "$PROJECT_ROOT/$EXP_DIR/scripts/gh_optuna_metabolism_003.slurm"
+requeue_arm_trap "$PROJECT_ROOT/$EXP_DIR/scripts/gh_optuna_metabolism_004.slurm"
 
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate torchcell
@@ -71,7 +71,7 @@ export WANDB__SERVICE_WAIT=600
 
 export ARM="${ARM:?set ARM to one of betaxanthin | beta_carotene | mulleder19}"
 export OPTUNA_STORAGE="sqlite:///$OPTUNA_DIR/optuna_020_${ARM}.db"
-export METAB_BASE_CONFIG="${METAB_BASE_CONFIG:-${ARM}_003}"
+export METAB_BASE_CONFIG="${METAB_BASE_CONFIG:-${ARM}_004}"
 export OPTUNA_N_TRIALS="${OPTUNA_N_TRIALS:-20}"
 export OPTUNA_WORKER_ID="${OPTUNA_WORKER_ID:-0}"
 export SCREEN_TARGET="${SCREEN_TARGET:-60}"
@@ -83,6 +83,14 @@ SWEEP="$PROJECT_ROOT/$EXP_DIR/scripts/optuna_metabolism_sweep.py"
 # `tail -n1`: the driver imports the trainer module, so stdout may carry other lines; only the
 # final one is the stage word.
 STAGE_RESOLVED=$(python "$SWEEP" --resolve-stage | tail -n1)
+
+# `done` = the screen target is met AND the confirm study is full. Exit WITHOUT requeueing:
+# the deadline chain would otherwise keep taking a GPU to promote nothing, for however many
+# hours remain.
+if [ "$STAGE_RESOLVED" = "done" ]; then
+  echo "[$ARM] screen + confirm both complete -- chain ends here (deadline $DEADLINE)."
+  exit 0
+fi
 export STAGE="$STAGE_RESOLVED"
 
 echo "=========================================================="
@@ -112,4 +120,4 @@ echo "=========================================================="
 # Also resubmit on a CLEAN exit before the deadline: `optimize(n_trials=N)` returns after N
 # trials, which is well short of the window. This is what carries the arm from screen into
 # confirm without anyone watching it.
-requeue_if_before_deadline "$PROJECT_ROOT/$EXP_DIR/scripts/gh_optuna_metabolism_003.slurm"
+requeue_if_before_deadline "$PROJECT_ROOT/$EXP_DIR/scripts/gh_optuna_metabolism_004.slurm"

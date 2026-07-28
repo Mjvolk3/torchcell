@@ -1640,6 +1640,70 @@ class BestMetricTracker(Callback):
         self.n_val_epochs += 1
 
 
+def _pinned_test_indices(
+    cfg: DictConfig, dataset: Any, experiment_root: str
+) -> set[int] | None:
+    """Resolve an EXTERNAL gene-level test split into dataset record indices.
+
+    Reproduces somebody else's split inside ours so their numbers and ours are computed on
+    the same genes. Without this the comparison is not merely imprecise, it is invalid: our
+    CellDataModule splits 80/10/10 at random, so about 511 of Merzbacher 2025's 639
+    betaxanthin test genes land in OUR TRAIN set, and any score we quoted on them would be
+    partly a training score.
+
+    Config: ``data_module.pinned_test_split_file`` -- a path (absolute, or relative to
+    ``EXPERIMENT_ROOT``) to a JSON carrying ``split.test`` as a list of SYSTEMATIC gene names.
+    Absent or null means no pin, and the split is the ordinary seeded random one.
+
+    Genes are mapped through ``dataset.is_any_deletion_gene_index`` -- the DELETION-only
+    index, NOT ``is_any_perturbed_gene_index``. That distinction is load-bearing and was
+    found the hard way: the pigment cassettes are emitted as perturbations on every strain,
+    and three of their members are native ORFs that also exist in the deletion collection
+    (``ARO4``/YBR249C and ``ARO7``/YPR060C in Cachera's betaxanthin cassette, ``BTS1``/YPL069C
+    in Ozaydin's). Two of those are in Merzbacher's test list, so under the perturbed-gene
+    index this pin resolved 639 genes to 4,885 of 4,930 records and left 28 training
+    examples -- a silent, catastrophic split that still ran.
+
+    A requested gene absent from the built LMDB is COUNTED AND REPORTED, never silently
+    dropped -- the Cachera build is currently stale w.r.t. the shared name resolver (issue
+    #195) and loses a handful, and a comparison that quietly shrank its own test set would
+    be reporting on a different gene set than it claims.
+    """
+    pin_file = cfg.data_module.get("pinned_test_split_file")
+    if not pin_file:
+        return None
+    path = pin_file if osp.isabs(pin_file) else osp.join(experiment_root, pin_file)
+    with open(path) as fh:
+        payload = json.load(fh)
+    genes = payload["split"]["test"]
+    gene_index = dataset.is_any_deletion_gene_index
+    indices: set[int] = set()
+    found = 0
+    for gene in genes:
+        hits = gene_index.get(gene)
+        if hits:
+            found += 1
+            indices.update(hits)
+    frac = len(indices) / len(dataset)
+    print(
+        f"[pinned-split] {path}\n"
+        f"[pinned-split] {found}/{len(genes)} requested genes present in the build "
+        f"-> {len(indices)} records pinned to TEST ({frac:.1%} of {len(dataset)}); "
+        f"{len(genes) - found} absent, see issue #195",
+        flush=True,
+    )
+    # A pinned gene list is a TEST SET, so it must leave a training set behind. Wiring this
+    # through the perturbed-gene index instead of the deletion index put 99.3% of the data in
+    # test and left 28 training records -- and trained anyway, reporting plausible-looking
+    # numbers. Assert rather than trust: the failure is silent and the result is unusable.
+    assert frac < 0.5, (
+        f"pinned test set is {frac:.1%} of the dataset ({len(indices)}/{len(dataset)}). "
+        f"{len(genes)} genes should select a small minority of records; this means the gene "
+        "index is resolving cassette membership rather than deletions."
+    )
+    return indices
+
+
 def run_training(cfg: DictConfig) -> dict[str, float]:
     """Full training path: genome/graph/embeddings/dataset/datamodule + Trainer."""
     # Deferred heavy imports so --help / dry-run never pay for them.
@@ -1802,6 +1866,7 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
     # "phenotype_values" -> phenotype_values_batch: the per-COO-value batch-row map
     # the target/mask decode relies on (phenotype_sample_indices are NOT batch rows).
     follow_batch = ["perturbation_indices", "phenotype_values"]
+    pinned_test = _pinned_test_indices(cfg, dataset, experiment_root)
     data_module: Any = CellDataModule(
         dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
@@ -1812,6 +1877,7 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         pin_memory=cfg.data_module.pin_memory,
         prefetch=cfg.data_module.prefetch,
         follow_batch=follow_batch,
+        pinned_test_indices=pinned_test,
     )
     data_module.setup()
 

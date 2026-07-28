@@ -1,7 +1,7 @@
-# experiments/021-ozaydin-beta-carotene/conf/beta_carotene_003.yaml
+# experiments/021-ozaydin-beta-carotene/conf/beta_carotene_004.yaml
 # [[experiments.021-ozaydin-beta-carotene]]
 #
-# BETA-CAROTENE, round _003 -- OPTIMIZER x DISTRIBUTIONAL, the metabolism port of expression
+# BETA-CAROTENE, round _004 -- OPTIMIZER x DISTRIBUTIONAL, the metabolism port of expression
 # round _007. Small fast model, budget spent on the probabilistic head.
 #
 # READ THIS ARM'S NUMBERS WITH THE MOST CAUTION OF THE THREE. `_002` measured a replicate
@@ -77,7 +77,7 @@ model:
     graph_reg_layer: [1]
 
 trainer:
-  # Mirrors _007; see betaxanthin_003 for why 200 / patience 40 / min_delta 1e-4 rather than
+  # Mirrors _007; see betaxanthin_004 for why 200 / patience 40 / min_delta 1e-4 rather than
   # base.yaml's 250 / 50 / 0.0 -- min_delta 0.0 lets a noise blip reset patience, which is the
   # mechanism behind the measured run-length/objective confound.
   max_epochs: 200

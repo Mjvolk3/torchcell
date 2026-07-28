@@ -4,12 +4,14 @@
 # [[torchcell.datamodules.cell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodules/cell.py
 # Test file: torchcell/datamodules/test_cell.py
+import hashlib
 import json
 import logging
 import os
 import os.path as osp
 import random
 from collections import defaultdict
+from collections.abc import Iterable
 from typing import Any, cast
 
 import lightning as L
@@ -230,8 +232,17 @@ class CellDataModule(L.LightningDataModule):
         train_shuffle: bool = True,
         collate_fn: object | None = None,
         val_batch_size: int | None = None,
+        pinned_test_indices: Iterable[int] | None = None,
     ) -> None:
-        """Store dataloader/split configuration and compute the split indices."""
+        """Store dataloader/split configuration and compute the split indices.
+
+        ``pinned_test_indices`` forces those record indices into the TEST split, overriding
+        the random assignment. It reproduces an EXTERNAL split inside ours -- e.g. Merzbacher
+        2025's betaxanthin test ORFs, so their published numbers and ours are computed on the
+        same genes. The remaining records are split train/val/test by ``random_seed`` as
+        usual, so sweeping the seed still re-rolls train/val while the pinned comparison set
+        stays fixed.
+        """
         super().__init__()
         self.dataset = dataset
         self.cache_dir = cache_dir
@@ -248,6 +259,9 @@ class CellDataModule(L.LightningDataModule):
         self.train_shuffle = train_shuffle
         self.train_ratio = 0.8
         self.val_ratio = 0.1
+        self.pinned_test_indices: set[int] = (
+            set(pinned_test_indices) if pinned_test_indices is not None else set()
+        )
         self.split_indices = (
             split_indices
             if isinstance(split_indices, list)
@@ -281,11 +295,27 @@ class CellDataModule(L.LightningDataModule):
             self._load_or_compute_index()
         return self._index_details  # type: ignore[return-value]  # _load_or_compute_index() always populates _index_details
 
+    def _pin_tag(self) -> str:
+        """Cache-key suffix identifying the pinned test set, empty when there is none.
+
+        The cached index is keyed by seed alone, so WITHOUT this a pinned run would silently
+        load an UNPINNED `index_seed_42.json` left by an earlier run and train on the wrong
+        split -- with no error, and with the pinned genes back in train. The tag hashes the
+        pinned index set so any change to it (or removing the pin) selects a different file.
+        """
+        if not self.pinned_test_indices:
+            return ""
+        payload = ",".join(map(str, sorted(self.pinned_test_indices))).encode()
+        return f"_pin{len(self.pinned_test_indices)}-{hashlib.sha256(payload).hexdigest()[:8]}"
+
     def _load_or_compute_index(self) -> None:
         os.makedirs(self.cache_dir, exist_ok=True)
-        index_file = osp.join(self.cache_dir, f"index_seed_{self.random_seed}.json")
+        tag = self._pin_tag()
+        index_file = osp.join(
+            self.cache_dir, f"index_seed_{self.random_seed}{tag}.json"
+        )
         details_file = osp.join(
-            self.cache_dir, f"index_details_seed_{self.random_seed}.json"
+            self.cache_dir, f"index_details_seed_{self.random_seed}{tag}.json"
         )
         if osp.exists(index_file) and osp.exists(details_file):
             try:
@@ -409,6 +439,28 @@ class CellDataModule(L.LightningDataModule):
                     current_counts[best_split] += 1
                     remaining.remove(idx)
 
+        # PINNED TEST SET, applied last so it overrides every ratio-driven assignment above.
+        # Reproduces an EXTERNAL split inside ours: the pinned records go to test and are
+        # removed from train/val, and everything else keeps its seed-driven assignment. That
+        # is what makes a head-to-head comparison possible -- their metric and ours are then
+        # computed on the same genes -- while sweeping `random_seed` still re-rolls train/val
+        # around a comparison set that never moves.
+        #
+        # Test therefore ends up LARGER than `1 - train_ratio - val_ratio`, by design; the
+        # ratios govern the remaining pool, not the pinned block.
+        if self.pinned_test_indices:
+            pinned = self.pinned_test_indices & all_indices
+            missing = len(self.pinned_test_indices) - len(pinned)
+            final_splits["train"] -= pinned
+            final_splits["val"] -= pinned
+            final_splits["test"] |= pinned
+            log.info(
+                f"Pinned {len(pinned)} records into test "
+                f"({missing} requested indices are outside the dataset). "
+                f"Splits: train={len(final_splits['train'])} "
+                f"val={len(final_splits['val'])} test={len(final_splits['test'])}"
+            )
+
         # Create DataModuleIndexDetails object
         self._index_details = DataModuleIndexDetails(
             methods=self.split_indices,
@@ -444,9 +496,12 @@ class CellDataModule(L.LightningDataModule):
             json.dump(self._index_details.model_dump(), f, indent=2)
 
     def _cached_files_exist(self) -> bool:
-        index_file = osp.join(self.cache_dir, f"index_seed_{self.random_seed}.json")
+        tag = self._pin_tag()
+        index_file = osp.join(
+            self.cache_dir, f"index_seed_{self.random_seed}{tag}.json"
+        )
         details_file = osp.join(
-            self.cache_dir, f"index_details_seed_{self.random_seed}.json"
+            self.cache_dir, f"index_details_seed_{self.random_seed}{tag}.json"
         )
         return osp.exists(index_file) and osp.exists(details_file)
 

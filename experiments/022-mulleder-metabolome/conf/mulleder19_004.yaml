@@ -1,7 +1,7 @@
-# experiments/022-mulleder-metabolome/conf/mulleder19_003.yaml
+# experiments/022-mulleder-metabolome/conf/mulleder19_004.yaml
 # [[experiments.022-mulleder-metabolome]]
 #
-# 19-AA METABOLOME, round _003 -- OPTIMIZER x DISTRIBUTIONAL, the metabolism port of
+# 19-AA METABOLOME, round _004 -- OPTIMIZER x DISTRIBUTIONAL, the metabolism port of
 # expression round _007. Small fast model, budget spent on the probabilistic head.
 #
 # THE ONLY ARM OF THE THREE WITH A JOINT DISTRIBUTION TO MODEL. betaxanthin and beta-carotene
@@ -78,7 +78,7 @@ model:
     graph_reg_layer: [1]
 
 trainer:
-  # Mirrors _007; see betaxanthin_003 for the reasoning. `min_delta` matters MOST on this arm
+  # Mirrors _007; see betaxanthin_004 for the reasoning. `min_delta` matters MOST on this arm
   # -- it is the one where run length correlated with the ranked objective at r = +0.75, and
   # base.yaml's min_delta 0.0 is what let a noise blip keep resetting patience.
   max_epochs: 200

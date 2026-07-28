@@ -742,3 +742,46 @@ absorbs 222 wells. Once the 14 doubles are built, add them to `SOURCE_WELLS` (co
 source plate's odd-column pattern C7, C9, ...) and to `panel`, then re-run: 26 strains x 13
 reps = 338 wells, + 6 blanks, leaving WT 40. Output format matches the Echo Cherry Pick
 layout used previously, so it drops into the existing workflow unchanged.
+
+### 2026.07.27 - The chamfered corners: a physical anchor that covers the blanks' blind spot
+
+Plates are imaged with the **chamfered corners at the bottom**. Confirmed by eye on all three
+run-3 crops: bottom-left and bottom-right carry a clear 45-degree facet in the inner rim,
+top-left and top-right are square.
+
+**What the chamfer settles.** The pattern (both bottom corners cut, both top square) is
+symmetric under a LEFT-RIGHT mirror but asymmetric under a TOP-BOTTOM one. So it:
+
+- excludes `flip_v` (chamfers would appear at the top)
+- excludes `rot180` (same)
+- does NOT exclude `flip_h` (chamfers stay at the bottom)
+
+**Which is exactly complementary to the old blanks.** The mirror-symmetric blank rows could
+not see `flip_v`, but their asymmetric COLUMNS did exclude `flip_h` and `rot180`. Chamfer
+kills `flip_v`; blanks kill `flip_h`; both kill `rot180`. Together all three wrong
+orientations are excluded by physical/positional evidence alone, with no reliance on strain
+identity.
+
+So `identity` is now confirmed **three independent ways**: chamfer geometry, blank positions,
+and the strain-structure test (H = 97 / 146 / 126 against a null of ~12).
+
+**But that complementarity was luck, not design.** Nobody planned for the chamfer to cover
+the blanks' blind spot. The asymmetric blanks now emitted by `generate_picklist.py` make the
+blanks self-sufficient, so the controls no longer depend on happening to be complementary.
+
+### Two follow-ups this exposed
+
+1. **Automate the chamfer check.** It is a free, per-image, physical control independent of
+   all strain data -- exactly what would catch a flipped plate. Two quick attempts here FAILED
+   to detect it: a corner fill-fraction and a bounding-box diagonal walk both return ~equal
+   values at all four corners, because the chamfer lives in the INNER rim geometry, not in
+   the outer skirt outline that drives the crop bounding box. A working detector needs to
+   segment the inner agar/rim region and test its corner angles. Not built -- flagged.
+
+2. **The pipeline currently depends on EXIF surviving.** The raw JPEGs are stored
+   4654 x 3490 with EXIF orientation tag **6**, and `preprocess_fullres` calls
+   `ImageOps.exif_transpose` before cropping. The plate is therefore PORTRAIT in the stored
+   pixels and LANDSCAPE only after the tag is honoured. Any copy, export or camera change
+   that strips or rewrites EXIF would silently rotate every plate 90 degrees and break the
+   16 x 24 lattice fit. Worth an explicit assertion on the cropped aspect ratio (expect
+   landscape, ~1.26 for these crops) rather than trusting the tag.

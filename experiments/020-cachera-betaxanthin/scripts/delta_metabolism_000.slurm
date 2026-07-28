@@ -27,7 +27,14 @@
 # Delta compute nodes HAVE internet, so W&B is ONLINE -- no offline/sync dance.
 #
 #   cd /projects/bbub/mjvolk3/torchcell
-#   ARM=betaxanthin sbatch --account=bbtp-delta-gpu experiments/020-cachera-betaxanthin/scripts/delta_metabolism_000.slurm
+#   mkdir -p experiments/020-cachera-betaxanthin/{slurm/output,optuna}   # REQUIRED, see below
+#   NUM_WORKERS=0 ARM=betaxanthin sbatch --account=bbtp-delta-gpu \
+#     experiments/020-cachera-betaxanthin/scripts/delta_metabolism_000.slurm
+#
+# THE mkdir IS NOT OPTIONAL. --output points into slurm/output/, which is gitignored, so it
+# does NOT exist on a fresh clone. Slurm does not create it: the job dies at t=0 with NO LOG
+# ANYWHERE. The `mkdir -p` at the top of this script cannot save you -- by the time the
+# script runs, slurm has already failed to open the output file.
 #
 #SBATCH --partition=gpuA40x4
 #SBATCH --nodes=1
@@ -85,7 +92,20 @@ export WANDB__SERVICE_WAIT=600
 export SCREEN_TARGET="${SCREEN_TARGET:-80}"
 export CONFIRM_TOP_K="${CONFIRM_TOP_K:-8}"
 export OPTUNA_N_TRIALS="${OPTUNA_N_TRIALS:-30}"
-export NUM_WORKERS=$((SLURM_CPUS_PER_TASK / 8))
+# Dataloader workers, OVERRIDABLE from the submit line -- and on Delta the override matters.
+#
+# The datamodule uses multiprocessing_context="spawn" (required: CUDA is already initialized
+# in the parent, so fork would corrupt the context). Under spawn every worker is a FRESH
+# interpreter that re-imports torch + PyG + torchcell from /work/hdd. On GilaHyper's local
+# NVMe that costs seconds; on Delta's parallel filesystem the 2026-07-28 interactive smoke
+# test sat in `Sanity Checking` for 38 MINUTES (15:51:45 -> killed at the 1h wall) without
+# reaching a single val batch. Same code, same dataset, 20x the startup cost -- the variable
+# is the filesystem, not the model.
+#
+# NUM_WORKERS=0 removes the mechanism entirely (no spawn, load in the main process). The
+# dataset is small enough that this is a real option, not a crippled fallback: 3,694 train
+# rows at batch 32 is 116 batches/epoch.
+export NUM_WORKERS="${NUM_WORKERS:-$((SLURM_CPUS_PER_TASK / 8))}"
 
 SWEEP="$PROJECT_ROOT/experiments/020-cachera-betaxanthin/scripts/optuna_metabolism_sweep.py"
 

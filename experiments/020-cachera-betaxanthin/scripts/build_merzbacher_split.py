@@ -94,6 +94,35 @@ RESULTS_DIR = osp.join(EXPERIMENT_ROOT, "020-cachera-betaxanthin", "results")
 #: Verbatim from yeast_training_production.py:51. NOT re-derived -- copied.
 MERZBACHER_THRESHOLDS = (0.40, 0.65)
 
+#: SCREEN-LOCAL alias disambiguation. Deliberately NOT pushed into the shared resolver.
+#:
+#: `resolve_gene_name` returns AMBIGUOUS for these two names and that is CORRECT -- in the
+#: yeast namespace they really are aliases of two different current genes, and guessing would
+#: silently attach a measured value to the wrong gene. What makes them decidable here is
+#: context the resolver cannot see: which collection this screen used, and what else is in the
+#: file. That context belongs to THIS dataset, so the table lives here.
+#:
+#: PPA1 -> VMA16 (YHR026W), not IPP1 (YBR011C).
+#:   Cachera screened the haploid NON-ESSENTIAL deletion collection. IPP1 is essential --
+#:   SGD S000000215, "null mutant inviable ... essential for viability" -- so an ipp1-delta
+#:   strain cannot exist in it. VMA16 is non-essential (SGD S000001068, "null mutants are
+#:   viable"). Independently confirmed from the file itself: CDC28, ACT1, TUB1, RPB1, PGK1
+#:   and SEC61 are ALL absent, i.e. this is a non-essential-only collection.
+#:
+#: FEN1 -> ELO2 (YCR034W), not RAD27 (YKL113C).
+#:   Both are non-essential, so essentiality cannot decide it -- but RAD27 appears in the
+#:   screen SEPARATELY under its own standard name, while ELO2 never appears. One row per
+#:   gene, so the FEN1 row is ELO2's. SGD lists FEN1 among ELO2's aliases (GNS1, VBM2, FEN1;
+#:   S000000630).
+#:
+#: If either premise stops holding -- a different collection, or RAD27 disappearing from the
+#: file -- this table is wrong and must be re-derived, which is why the reasoning is recorded
+#: rather than just the mapping.
+SCREEN_ALIAS_DISAMBIGUATION: dict[str, str] = {
+    "PPA1": "YHR026W",  # VMA16
+    "FEN1": "YCR034W",  # ELO2
+}
+
 
 class MerzbacherRetrieval(BaseModel):
     """Provenance for the fetched code archive.
@@ -206,15 +235,22 @@ def read_cachera_raw() -> tuple[dict[str, float], dict[str, str]]:
         res = genome.resolve_gene_name(name)
         status = getattr(res.status, "value", str(res.status))
         statuses[name] = status
+        systematic = res.systematic_name
+        # Screen-local disambiguation, applied ONLY to names the resolver flagged ambiguous.
+        # Gating on the status matters: if SGD ever makes one of these unambiguous, the
+        # resolver wins and this table stops firing rather than silently overriding it.
+        if status == "ambiguous" and name.upper() in SCREEN_ALIAS_DISAMBIGUATION:
+            systematic = SCREEN_ALIAS_DISAMBIGUATION[name.upper()]
+            statuses[name] = "ambiguous_resolved_screen_local"
         # Same acceptance set as the loader (cachera2023.py:208-217): a RENAMED gene is a
         # real gene under an old label, not a bad record.
-        if res.systematic_name is None or status not in {
+        elif systematic is None or status not in {
             "current",
             "renamed",
             "non_gene_feature",
         }:
             continue
-        values[res.systematic_name] = float(level)
+        values[systematic] = float(level)
     return values, statuses
 
 

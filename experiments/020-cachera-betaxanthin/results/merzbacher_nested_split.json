@@ -4,7 +4,7 @@
     "retrieval_method": "zenodo_api",
     "retrieval_command": "curl -sL \"https://zenodo.org/api/records/15761895/files/deletionprediction-main.zip/content\" -o deletionprediction-main.zip",
     "sha256": "036f192aea79b691b3041b2a7080cd7ed026a59bf94580feced11f173d4340c2",
-    "retrieved_at": "2026-07-28T01:44:32.840712Z",
+    "retrieved_at": "2026-07-28T01:59:24.095987Z",
     "bytes": 49246288,
     "zenodo_record": "15761895"
   },
@@ -16,18 +16,16 @@
     "their_test_genes": 640,
     "paper_states_metabolic_genes": 811,
     "gap_640_vs_811": 171,
-    "our_single_deletion_genes": 4719,
-    "shared": 637,
-    "their_genes_missing_from_ours": 3,
+    "our_single_deletion_genes": 4721,
+    "shared": 639,
+    "their_genes_missing_from_ours": 1,
     "missing_examples": [
-      "YBR011C",
-      "YCR034W",
-      "YHR026W"
+      "YBR011C"
     ],
-    "our_test_size": 637,
+    "our_test_size": 639,
     "our_train_val_pool": 4082,
     "resolution_status_counts": {
-      "ambiguous": 2,
+      "ambiguous_resolved_screen_local": 2,
       "current": 1101,
       "non_gene_feature": 16,
       "renamed": 3632,
@@ -36,10 +34,11 @@
   },
   "availability_in_current_build": {
     "genes_in_built_lmdb": 4735,
-    "split_test_genes_trainable_today": 628,
+    "split_test_genes_trainable_today": 629,
     "split_test_genes_missing_from_build": [
       "YEL024W",
       "YHL011C",
+      "YHR026W",
       "YKL148C",
       "YML022W",
       "YML100W",
@@ -51,15 +50,15 @@
     "note": "The split is authoritative and derived from the RAW screen + the shared name resolver. The built LMDB is stale (predates resolver commit 567fa6aa, and is hardlinked from the KG tree, uid 7474), so it lacks some resolvable genes. Rebuilding needs a full KG rebuild + requery, so it is tracked as an issue rather than blocking this split."
   },
   "label_check": {
-    "n_compared": 637,
-    "agreement": 0.8116169544740973,
+    "n_compared": 639,
+    "agreement": 0.812206572769953,
     "our_range_class_counts": {
-      "0": 772,
+      "0": 774,
       "1": 3724,
       "2": 223
     },
     "their_range_class_counts": {
-      "0": 105,
+      "0": 107,
       "1": 476,
       "2": 56
     },
@@ -150,6 +149,7 @@
       "YCR024C",
       "YCR024C-A",
       "YCR028C",
+      "YCR034W",
       "YCR037C",
       "YCR048W",
       "YCR068W",
@@ -345,6 +345,7 @@
       "YHR011W",
       "YHR013C",
       "YHR018C",
+      "YHR026W",
       "YHR043C",
       "YHR044C",
       "YHR046C",

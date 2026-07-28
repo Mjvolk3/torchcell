@@ -48,10 +48,19 @@ PROJECT_ROOT="${SLURM_SUBMIT_DIR:-/projects/bbub/mjvolk3/torchcell}"
 # DATA_ROOT is the LARGE /work/hdd space, not /projects (tight quota). This must agree with
 # the Delta .env, because run_training resolves the dataset from $DATA_ROOT.
 DELTA_DATA_ROOT="${DELTA_DATA_ROOT:-/work/hdd/bbub/mjvolk3/torchcell}"
-# Python 3.13 env built on /work/hdd -- Delta's stock torchcell envs are 3.11 and the repo
-# uses PEP 695 generics, which are a SyntaxError there.
+# THE WORKING ENV, as validated interactively on Delta 2026-07-28: `torchcell` on /work/hdd
+# (NOT `torchcell313`, an earlier name from the July notes, and NOT Delta's stock envs, which
+# are Python 3.11 and hit a SyntaxError on the repo's PEP 695 generics).
+#   torch 2.8.0+cu128 / PyG 2.7.0 / torch_scatter 2.1.2+pt28cu128 / torchcell 1.2.0
+#
+# GOTCHA WORTH KEEPING: install into it with the env's EXPLICIT pip
+# (`$DELTA_CONDA_BASE/envs/$DELTA_CONDA_ENV/bin/pip`). A bare `pip` on the Delta login node
+# is system python3.9 and silently drops packages into ~/.local, where this env never sees
+# them -- which is how a "successful" install can still leave a ModuleNotFoundError at run
+# time.
 DELTA_CONDA_BASE="${DELTA_CONDA_BASE:-/work/hdd/bbub/miniconda3}"
-DELTA_CONDA_ENV="${DELTA_CONDA_ENV:-torchcell313}"
+DELTA_CONDA_ENV="${DELTA_CONDA_ENV:-torchcell}"
+DELTA_PY="$DELTA_CONDA_BASE/envs/$DELTA_CONDA_ENV/bin/python"
 
 export ARM="${ARM:?set ARM to betaxanthin|beta_carotene|mulleder19|bx_ctrl|bx_m19|bx_pair}"
 
@@ -79,18 +88,24 @@ export OPTUNA_N_TRIALS="${OPTUNA_N_TRIALS:-30}"
 export NUM_WORKERS=$((SLURM_CPUS_PER_TASK / 8))
 
 SWEEP="$PROJECT_ROOT/experiments/020-cachera-betaxanthin/scripts/optuna_metabolism_sweep.py"
-RUN="singularity exec --nv $PROJECT_ROOT/rockylinux_9.sif bash -c"
+
+# NO SINGULARITY. An earlier draft wrapped every call in
+# `singularity exec --nv rockylinux_9.sif`, inherited from the 019 launchers. The env that
+# was actually validated on Delta runs NATIVELY on the host -- its torch is built against
+# the host CUDA (2.8.0+cu128) and the interactive smoke test that got through the whole
+# import chain called `$DELTA_PY` directly. Running a host-built CUDA wheel inside a
+# container that carries its own driver stack is an untested second variable, and there is
+# nothing to gain from it here. Kept out rather than "probably fine".
 
 # One worker: $1 = ARM, $2 = CUDA device, $3 = optuna worker id.
 launch_worker() {
   local arm="$1" dev="$2" wid="$3"
-  $RUN "
-    source $DELTA_CONDA_BASE/bin/activate && conda activate $DELTA_CONDA_ENV
+  bash -c "
     export ARM=$arm
     export OPTUNA_STORAGE='sqlite:///$OPTUNA_DIR/optuna_020_${arm}_delta.db'
-    export STAGE=\$(python '$SWEEP' --resolve-stage | tail -n1)
+    export STAGE=\$('$DELTA_PY' '$SWEEP' --resolve-stage | tail -n1)
     [ \"\$STAGE\" = done ] && { echo '[$arm] screen+confirm complete'; exit 0; }
-    CUDA_VISIBLE_DEVICES=$dev OPTUNA_WORKER_ID=$wid python '$SWEEP'
+    CUDA_VISIBLE_DEVICES=$dev OPTUNA_WORKER_ID=$wid '$DELTA_PY' '$SWEEP'
   " &
 }
 
@@ -99,7 +114,7 @@ echo "host        : $(hostname)"
 echo "job         : ${SLURM_JOB_ID:-none}   arm=$ARM   base=$METAB_BASE_CONFIG"
 echo "project     : $PROJECT_ROOT"
 echo "DATA_ROOT   : $DATA_ROOT"
-echo "conda       : $DELTA_CONDA_BASE / $DELTA_CONDA_ENV"
+echo "python      : $DELTA_PY"
 echo "screen tgt  : $SCREEN_TARGET   confirm top-k: $CONFIRM_TOP_K"
 echo "=========================================================="
 nvidia-smi --query-gpu=index,name,memory.total --format=csv,noheader
@@ -109,9 +124,8 @@ if [ "$ARM" = bx_pair ]; then
   # The controlled pair, 2 GPUs each, in ONE job -- same node, same software, same queue
   # slot, so the only difference between the arms is the one under test.
   for a in bx_ctrl bx_m19; do
-    $RUN "source $DELTA_CONDA_BASE/bin/activate && conda activate $DELTA_CONDA_ENV
-          ARM=$a OPTUNA_STORAGE='sqlite:///$OPTUNA_DIR/optuna_020_${a}_delta.db' \
-          python '$SWEEP' --create-only"
+    ARM=$a OPTUNA_STORAGE="sqlite:///$OPTUNA_DIR/optuna_020_${a}_delta.db" \
+      "$DELTA_PY" "$SWEEP" --create-only
   done
   launch_worker bx_ctrl 0 0
   launch_worker bx_ctrl 1 1
@@ -120,9 +134,8 @@ if [ "$ARM" = bx_pair ]; then
 else
   # Serialized pre-create so the four workers never race a fresh SQLite file's DDL -- each
   # spends >15s importing torch before it would reach create_study.
-  $RUN "source $DELTA_CONDA_BASE/bin/activate && conda activate $DELTA_CONDA_ENV
-        ARM=$ARM OPTUNA_STORAGE='sqlite:///$OPTUNA_DIR/optuna_020_${ARM}_delta.db' \
-        python '$SWEEP' --create-only"
+  ARM=$ARM OPTUNA_STORAGE="sqlite:///$OPTUNA_DIR/optuna_020_${ARM}_delta.db" \
+    "$DELTA_PY" "$SWEEP" --create-only
   for i in 0 1 2 3; do launch_worker "$ARM" "$i" "$i"; done
 fi
 wait

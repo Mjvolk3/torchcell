@@ -352,8 +352,22 @@ running study would mix provenance within one study for no gain.
   `/work/hdd/bbub/mjvolk3/torchcell`** (the large space; `/projects` has a tight quota and
   `run_training` resolves the dataset from DATA_ROOT).
 - Account **`bbtp-delta-gpu`**, partition **`gpuA40x4`**.
-- Env **`/work/hdd/bbub/miniconda3` / `torchcell313`** -- Delta's stock torchcell envs are
-  Python 3.11 and the repo uses PEP 695 generics, a SyntaxError there.
+- Env **`/work/hdd/bbub/miniconda3/envs/torchcell`** -- the name is `torchcell`, NOT the
+  `torchcell313` the July notes used. Validated interactively 2026-07-28: torch 2.8.0+cu128,
+  PyG 2.7.0, torch_scatter 2.1.2+pt28cu128, torchcell 1.2.0, full `torchcell.datasets` import
+  chain clean. Delta's stock envs are Python 3.11 and hit a SyntaxError on the repo's PEP 695
+  generics, which is why a dedicated env exists at all.
+- **NO SINGULARITY.** An earlier draft of the launcher wrapped every call in
+  `singularity exec --nv rockylinux_9.sif`, inherited from the 019 launchers. The env that
+  was actually validated runs NATIVELY -- its torch is built against the host CUDA, and the
+  smoke test that cleared the whole import chain called the env python directly. Running a
+  host-built CUDA wheel inside a container with its own driver stack is an untested second
+  variable with nothing to gain, so the launcher calls `$DELTA_PY` directly.
+- **Install with the env's EXPLICIT pip**
+  (`/work/hdd/bbub/miniconda3/envs/torchcell/bin/pip`). A bare `pip` on the Delta login node
+  is system python3.9 and silently drops packages into `~/.local`, where this env never sees
+  them -- which is how a "successful" install still leaves a `ModuleNotFoundError` at run
+  time. This cost most of one evening.
 - **W&B ONLINE** -- Delta compute nodes have internet, so no offline/sync dance.
 - Four workers share ONE study per arm: they sit on one node and one filesystem, so
   concurrent SQLite is safe. The Delta and GilaHyper studies are deliberately NOT pooled --
@@ -394,6 +408,26 @@ for A in betaxanthin beta_carotene mulleder19 bx_pair; do
 done
 ```
 
-**Open before launch:** confirm `torchcell313` still exists on Delta and that `optuna` is
-installed into it -- the July note flagged both as blockers, and neither is verifiable from
-GilaHyper.
+**Env status (2026-07-28): CLEARED.** The `torchcell` env imports the full chain
+(`torch_scatter` ABI, `torch_geometric.utils._subgraph`, `torchcell` 1.2.0, and the ten
+previously-missing deps including GEOparse). What remains unproven is a real trial on a
+COMPUTE node -- GPU binding and a cold LMDB build. Prove it with a one-trial interactive run
+before committing four 2-day jobs:
+
+```bash
+srun --account=bbtp-delta-gpu --partition=gpuA40x4-interactive \
+  --nodes=1 --gpus-per-node=1 --cpus-per-task=16 --mem=64g --time=01:00:00 \
+  bash -c '
+cd /projects/bbub/mjvolk3/torchcell
+export PYTHONPATH=/projects/bbub/mjvolk3/torchcell:$PYTHONPATH PYTHONUNBUFFERED=1
+export DATA_ROOT=/work/hdd/bbub/mjvolk3/torchcell
+export ARM=betaxanthin STAGE=screen OPTUNA_N_TRIALS=1 WANDB_MODE=offline \
+       OPTUNA_STORAGE=sqlite:////tmp/tc_metab_smoke.db METAB_BASE_CONFIG=delta_betaxanthin_000
+/work/hdd/bbub/miniconda3/envs/torchcell/bin/python -u \
+  experiments/020-cachera-betaxanthin/scripts/optuna_metabolism_sweep.py
+'
+```
+
+Reaching a `val/betaxanthin/...` line means green for all four sbatch jobs. A cold LMDB build
+may exceed the 1 h interactive limit -- if so, rerun on the non-interactive `gpuA40x4` with a
+2 h limit rather than assuming failure.

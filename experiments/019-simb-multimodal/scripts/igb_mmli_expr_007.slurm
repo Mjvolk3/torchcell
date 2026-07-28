@@ -19,8 +19,8 @@
 # {false,true} (the lambda=0 ablation). Sampler is Halton QMC, not TPE: this round is about
 # ATTRIBUTION across axes, not refining a single winner.
 #
-# DO NOT START WHILE _006 IS RUNNING -- it holds the same 6 GPUs. _006's own requeue
-# deadline is 2026-07-29T18:00, and this one runs 3 days from there.
+# _006 was cancelled early (2026-07-27 ~21:15) to free the GPUs, so this window is 3 days
+# from the ACTUAL launch rather than from _006 hitting its own deadline.
 #
 #   cd <worktree-root> && sbatch experiments/019-simb-multimodal/scripts/igb_mmli_expr_007.slurm
 #
@@ -49,7 +49,7 @@ mkdir -p "$OPTUNA_DIR"
 mkdir -p "$SCRATCH_ROOT/experiments/019-simb-multimodal/slurm/output"
 
 # Up to 3 days, resubmitting across walltime boundaries.
-export DEADLINE="2026-08-01T18:00:00"
+export DEADLINE="2026-07-30T22:00:00"
 source "$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/requeue_until.sh"
 requeue_arm_trap "$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/igb_mmli_expr_007.slurm"
 

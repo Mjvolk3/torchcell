@@ -1,0 +1,89 @@
+# experiments/021-ozaydin-beta-carotene/conf/beta_carotene_003.yaml
+# [[experiments.021-ozaydin-beta-carotene]]
+#
+# BETA-CAROTENE, round _003 -- OPTIMIZER x DISTRIBUTIONAL, the metabolism port of expression
+# round _007. Small fast model, budget spent on the probabilistic head.
+#
+# READ THIS ARM'S NUMBERS WITH THE MOST CAUTION OF THE THREE. `_002` measured a replicate
+# sigma of 0.025 (identical config AND identical seed: trials 18/22 gave 0.1993 / 0.1494),
+# against a whole between-trial range of median 0.119 -> max 0.223. The best `_002` trial is
+# about 4 sigma above the median while max-of-40 selection alone buys ~2 sigma, and its
+# winning configuration (calm + learnable=True + 6 layers + aggressive) contradicts every
+# other arm's winner -- the signature of a noise maximum, not a finding. NOTHING in `_002`
+# was attributable on this arm: its largest marginal spread was 0.038 against sigma 0.025.
+#
+# That is exactly why this arm keeps its own GPU rather than being folded in: the confirm
+# stage (5 seeds, ranked on the mean) is the only thing that can tell a real config apart
+# from a lucky one here, and this is the model that will be applied to the in-house CIT2
+# double-mutant panel -- so the selected config has to be the one that actually generalizes,
+# not the one that won a draw.
+#
+# The ceiling is ~0.54 rank agreement on the 130 replicated rows. Report against that, never
+# against betaxanthin's 0.914.
+defaults:
+  - beta_carotene
+  - _self_
+
+# Screen runs at 42 (matching _002); the confirm stage overrides it per repeat. `seed` drives
+# model init AND the CellDataModule split.
+seed: 42
+
+wandb:
+  project: torchcell_020_beta_carotene_v3
+  tags:
+    ["020", gilahyper, metabolism, beta-carotene, ninegraph, optuna, ordinal]
+
+model:
+  # SWEPT {2, 4} by the driver. Declared at 4, this arm's _002 preference (4 -> 0.123,
+  # 6 -> 0.112, 2 -> 0.097) -- note this DISAGREES with betaxanthin, which is why the axis
+  # stays swept rather than frozen to expression's value.
+  num_transformer_layers: 4
+
+  # ---- Sub-module bindings: the SILENT DEFECT _007 fixed for expression ----
+  # base.yaml sets a literal 0.1 dropout in both places, and the model only falls back to
+  # `model.dropout` when the key is ABSENT. The driver overrides `model.dropout` alone, so a
+  # _002 trial sampling dropout 0.0 still ran these at 0.1 -- the "no dropout" arm was never
+  # dropout-free. Dropout is a headline question this round, so the binding must be real.
+  perturbation_head:
+    dropout: ${model.dropout}
+    # Bound to the attention-head count as in _007, rather than base.yaml's literal 6. Both
+    # divide hidden=90; the point is that expression and metabolism were quietly running
+    # different perturbation operators. Changes the model relative to _002.
+    num_heads: ${model.num_attention_heads}
+  learnable_embedding:
+    preprocessor:
+      dropout: ${model.dropout}
+
+  graph_regularization:
+    # SWEPT {0 (ablation), 3.4e-6, 3.4e-5, 3.4e-4, 3.4e-3}. MEASURED for THIS arm: _002's
+    # `graph_reg_ratio` read 0.092 / 0.169 / 0.379 at lambda 2.6e-5 / 6.5e-5 / 1.3e-4, so
+    # parity sits at ~3.4e-4 -- more than DOUBLE betaxanthin's 1.6e-4. On the old shared
+    # 6.5e-5 this arm's prior was running at ratio 0.17 while betaxanthin's ran at 0.41.
+    #
+    # The ablation matters more here than anywhere: lambda = 0 posted this arm's HIGHEST
+    # marginal mean in _002 (0.121, n=17), i.e. the graph prior may be doing nothing at all
+    # for beta-carotene even though it appears decisive for betaxanthin.
+    #
+    # DECLARED at 3.4e-5, one decade BELOW the extrapolated parity, because the two available
+    # measurements of this arm disagree and the weaker prior is the safer default:
+    #   * _002 full runs, ratio at LAST epoch  -> parity ~3.4e-4
+    #   * a 5-epoch smoke run, ratio AT PEAK   -> ratio 8.6 at 3.4e-4, i.e. parity ~4e-5
+    # (The same check reproduced mulleder19's predicted parity exactly -- 2.2e-4 -> 0.992 --
+    # so the extrapolation is not generally wrong, this arm specifically disagrees.) The grid
+    # spans four decades and brackets BOTH estimates, so the sweep settles it; this value only
+    # governs a manual non-sweep run, where a prior at 8.6x the data loss would train the
+    # prior rather than the data. Watch `val/graph_reg/ratio_to_data`, never the raw lambda.
+    graph_reg_lambda: 3.4e-5
+    graph_reg_layer: [1]
+
+trainer:
+  # Mirrors _007; see betaxanthin_003 for why 200 / patience 40 / min_delta 1e-4 rather than
+  # base.yaml's 250 / 50 / 0.0 -- min_delta 0.0 lets a noise blip reset patience, which is the
+  # mechanism behind the measured run-length/objective confound.
+  max_epochs: 200
+  early_stopping:
+    enabled: true
+    monitor: val/beta_carotene/spearman_per_feature
+    mode: max
+    patience: 40
+    min_delta: 1.0e-4

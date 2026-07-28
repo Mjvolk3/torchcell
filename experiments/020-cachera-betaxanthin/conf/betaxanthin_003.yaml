@@ -1,0 +1,81 @@
+# experiments/020-cachera-betaxanthin/conf/betaxanthin_003.yaml
+# [[experiments.020-cachera-betaxanthin]]
+#
+# BETAXANTHIN, round _003 -- OPTIMIZER x DISTRIBUTIONAL, the metabolism port of expression
+# round _007. Small fast model, budget spent on the probabilistic head.
+#
+# WHAT _002 SETTLED, and is therefore frozen here:
+#   * learnable_embedding FALSE (0.279 vs 0.151). Also forced structurally: every strain is a
+#     single deletion, so a strain-level split IS a gene-level split and a val gene's free row
+#     never receives a gradient.
+#   * hidden_channels 90 (0.261 vs 0.212 at 180) -- and 90 = 9 heads x 10, so the nine-graph
+#     geometry divides it exactly.
+#   * The proper scoring rules beat point-MSE (crps 0.275 / quantile 0.232 / point 0.172), so
+#     `point` is dropped from the sweep entirely.
+#
+# WHAT _002 COULD NOT ANSWER, and what this round buys. Its top FIVE configs spanned 0.021
+# against a MEASURED replicate sigma of 0.030 -- identical hyperparameters and identical seed
+# gave 0.4216 / 0.4095 / 0.3584 on trials 3/10/11. The reported best of 0.4301 therefore
+# carries roughly 2 sigma of selection inflation over 36 trials, putting its bias-corrected
+# floor near 0.37. Ranking axes was possible; picking a winner was not. The sweep driver's
+# two-stage screen/confirm design is the answer, and this config is its base.
+defaults:
+  - betaxanthin
+  - _self_
+
+# Screen runs at 42 (matching _002, so a winner reads against that history); the confirm
+# stage overrides it per repeat. `seed` drives model init AND the CellDataModule split.
+seed: 42
+
+wandb:
+  project: torchcell_020_betaxanthin_v3
+  tags: ["020", gilahyper, metabolism, betaxanthin, ninegraph, optuna]
+
+model:
+  # SWEPT {2, 4} by the driver. Declared at _002's measured winner so a non-sweep run of this
+  # config is the fast one. _002: 2 -> 0.288, 4 -> 0.197, 6 -> 0.124.
+  num_transformer_layers: 2
+
+  # ---- Sub-module bindings: the SILENT DEFECT _007 fixed for expression ----
+  # The model reads these as `<sub>_config.get("dropout", dropout)`, i.e. it falls back to
+  # `model.dropout` only when the key is ABSENT -- and it is not absent, because base.yaml
+  # sets a literal 0.1 in both places. The driver overrides `model.dropout` and nothing else,
+  # so in _002 a trial sampling dropout 0.0 still ran these sub-modules at 0.1: the "no
+  # dropout" arm was never dropout-free, which makes _002's dropout attribution partly void.
+  # Dropout is one of THIS round's headline questions, so the binding has to be real.
+  perturbation_head:
+    dropout: ${model.dropout}
+    # Bound to the attention-head count as in _007, rather than base.yaml's literal 6. Both
+    # divide hidden=90 (into 10 and 15), so neither crashes -- but expression and metabolism
+    # were quietly running different perturbation operators. NOTE this changes the model
+    # relative to _002; screen numbers are comparable to _002 only up to this change.
+    num_heads: ${model.num_attention_heads}
+  learnable_embedding:
+    preprocessor:
+      # INERT today (learnable_embedding.enabled is false), bound anyway so re-enabling that
+      # flag cannot silently reintroduce a dropout the trial never chose.
+      dropout: ${model.dropout}
+
+  graph_regularization:
+    # SWEPT {0 (ablation), 1.6e-6, 1.6e-5, 1.6e-4, 1.6e-3}. MEASURED for THIS arm: _002's
+    # `graph_reg_ratio` (graph term / data term) read 0.241 / 0.412 / 0.542 at lambda
+    # 2.6e-5 / 6.5e-5 / 1.3e-4, so parity (ratio = 1) sits at ~1.6e-4 and the grid is decades
+    # around it. The old shared 6.5e-5 put this arm at ratio 0.41 while beta-carotene sat at
+    # 0.17 on the same nominal value -- a shared lambda is NOT a shared prior strength.
+    graph_reg_lambda: 1.6e-4
+    graph_reg_layer: [1]
+
+trainer:
+  # Mirrors _007. Two changes from base.yaml, both aimed at the max-over-epochs bias:
+  #   * 250 -> 200 epochs: on _007 the cap never binds (median final epoch 71), and a lower
+  #     cap bounds the number of draws the running max is taken over.
+  #   * min_delta 0.0 -> 1e-4: with 0.0 ANY improvement resets patience, including a noise
+  #     blip, so a noisy metric keeps a run alive on nothing. That is the direct mechanism
+  #     behind the measured r(duration, objective) = +0.75 on _002 mulleder19.
+  max_epochs: 200
+  early_stopping:
+    enabled: true
+    monitor: val/betaxanthin/pearson_per_feature
+    mode: max
+    patience: 40
+    min_delta: 1.0e-4

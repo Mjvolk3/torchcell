@@ -1,0 +1,90 @@
+# experiments/022-mulleder-metabolome/conf/mulleder19_003.yaml
+# [[experiments.022-mulleder-metabolome]]
+#
+# 19-AA METABOLOME, round _003 -- OPTIMIZER x DISTRIBUTIONAL, the metabolism port of
+# expression round _007. Small fast model, budget spent on the probabilistic head.
+#
+# THE ONLY ARM OF THE THREE WITH A JOINT DISTRIBUTION TO MODEL. betaxanthin and beta-carotene
+# are F = 1, where Sigma = diag(sigma^2) + V V^T collapses to a scalar and the energy score
+# degenerates into a Monte-Carlo CRPS; here F = 19, so `energy` is a real option and the
+# rank-0 arm is a real ablation.
+#
+# ALSO THE QUIETEST ARM, for the same reason. `pearson_per_feature` averages over features, so
+# its noise falls as 1/sqrt(F_eff): _002's one duplicate pair (trials 7/10, identical config
+# and seed) differed by 0.0017 where betaxanthin's differed by up to 0.063. That single pair
+# is dof = 1 and its sigma estimate is not usable on its own -- plan on ~0.007 from the
+# 1/sqrt(19) argument -- but the DIRECTION is solid and it is why this arm can afford a wider
+# screen than the scalar ones.
+#
+# WHAT _002 SETTLED HERE: quantile 0.120 > crps 0.101 >> point 0.025, and lambda = 0 collapsed
+# the arm to 0.016 (n=2). It also produced this round's sharpest warning -- r(duration,
+# objective) = +0.754, rising to +0.799 inside a fixed architecture cell. More than half the
+# between-trial variance in the ranked metric tracked how LONG the run went, which is what the
+# `min_delta` change below and the new `_smooth3_max` / `n_val_epochs` / `peak_epoch` records
+# exist to disentangle.
+defaults:
+  - mulleder19
+  - _self_
+
+# Screen runs at 42 (matching _002); the confirm stage overrides it per repeat. `seed` drives
+# model init AND the CellDataModule split.
+seed: 42
+
+wandb:
+  project: torchcell_020_mulleder19_v3
+  tags: ["020", gilahyper, metabolism, metabolome, ninegraph, optuna, vector]
+
+multitask:
+  # SWEPT {0, 8}, and DECLARED here so the driver can override it with plain dotted syntax --
+  # Hydra's struct mode rejects an override of a key the config never declares.
+  #
+  # k is the rank of the global factor V in Sigma = diag(sigma^2) + V V^T. NOT _007's 32:
+  # a 19x19 covariance has rank <= 19, so 32 cannot be realized, and `DistHead` has no guard
+  # against it -- it would simply allocate V [19, 32] and waste the excess columns. _007's 32
+  # was MEASURED (participation-ratio effective rank 32.8 of the 6,127-gene expression
+  # residual); the equivalent measurement has not been made for 19 amino acids, so k is SWEPT
+  # rather than asserted. Re-running residual_covariance_diagnostic.py on this target is the
+  # follow-up that would let it be pinned.
+  energy_rank: 8
+  # Training predictive-sample count (eval uses the library's larger default for PIT
+  # resolution). Declared so the value that ran is in the W&B config rather than sitting
+  # implicit in a library default.
+  energy_samples: 128
+
+model:
+  # SWEPT {2, 4} by the driver. Declared at 4: _002 put 2 -> 0.115 and 4 -> 0.109 (a tie
+  # within noise) and 6 -> 0.051 (a real drop), and every one of this arm's top five trials
+  # used 4.
+  num_transformer_layers: 4
+
+  # ---- Sub-module bindings: the SILENT DEFECT _007 fixed for expression ----
+  # base.yaml sets a literal 0.1 dropout in both places, and the model only falls back to
+  # `model.dropout` when the key is ABSENT. The driver overrides `model.dropout` alone, so a
+  # _002 trial sampling dropout 0.0 still ran these at 0.1.
+  perturbation_head:
+    dropout: ${model.dropout}
+    # Bound to the attention-head count as in _007, rather than base.yaml's literal 6. Changes
+    # the model relative to _002.
+    num_heads: ${model.num_attention_heads}
+  learnable_embedding:
+    preprocessor:
+      dropout: ${model.dropout}
+
+  graph_regularization:
+    # SWEPT {0 (ablation), 2.2e-6, 2.2e-5, 2.2e-4, 2.2e-3}. MEASURED for THIS arm: _002's
+    # `graph_reg_ratio` read 0.234 / 0.291 / 0.483 at lambda 2.6e-5 / 6.5e-5 / 1.3e-4, so
+    # parity sits at ~2.2e-4.
+    graph_reg_lambda: 2.2e-4
+    graph_reg_layer: [1]
+
+trainer:
+  # Mirrors _007; see betaxanthin_003 for the reasoning. `min_delta` matters MOST on this arm
+  # -- it is the one where run length correlated with the ranked objective at r = +0.75, and
+  # base.yaml's min_delta 0.0 is what let a noise blip keep resetting patience.
+  max_epochs: 200
+  early_stopping:
+    enabled: true
+    monitor: val/mulleder19/pearson_per_feature
+    mode: max
+    patience: 40
+    min_delta: 1.0e-4

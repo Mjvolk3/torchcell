@@ -1,0 +1,75 @@
+# experiments/019-simb-multimodal/conf/cgt_expr_007.yaml
+# EXPRESSION-ONLY sweep, round _007 -- OPTIMIZER + DISTRIBUTIONAL, ARCHITECTURE FROZEN.
+#
+# WHAT _006 SETTLED (so _007 does not re-litigate it). The nine-graph configuration took
+# expression from 0.109 to 0.1746 peak per-feature Pearson, with 0 failed trials. That
+# answered the architecture question this branch opened with: topology is the channel that
+# matters, and 9 graphs on 9 regularized heads is the configuration that carries it.
+#
+# WHAT _006 LEFT UNANSWERED. Its largest single measured effect was `hp_profile` -- a ~2x
+# spread between two BUNDLES of (lr, dropout, weight_decay). A bundle cannot be attributed:
+# `aggressive` changes all three at once, so "aggressive wins" is compatible with "lr 1e-3
+# is right", "dropout 0 is right", "weight_decay 1e-4 is right", or any combination -- and
+# 010's checkpointed model used weight_decay 1e-8, contradicting the naive reading. _007
+# spends its budget resolving that, plus the two axes that were never sampled at all
+# (calibration and the joint predictive distribution).
+#
+# FROZEN HERE (was swept in _006), each to _006's measured winner or to the value the
+# 9-head geometry forces:
+#   * hidden_channels 90. 180 did not beat it and doubles step time. Freezing also removes
+#     the head-divisibility trap: every head count in this config must divide hidden, and
+#     90 = 9 x 10 already does.
+#   * num_transformer_layers 4. _006 swept {2,4,6,8}; 4 leaves 3 unregularized layers as
+#     the capacity bypass while keeping the step cheap enough for a wide optimizer sweep.
+#   * 9 graphs, 9 attention heads, one regularized head per graph -- unchanged from _006.
+#
+# SWEPT BY THE DRIVER (optuna_joint_sweep.py, Halton QMC):
+#   * lr, weight_decay (log-uniform, CONTINUOUS -- this is what QMC is for), dropout
+#     -- the hp_profile bundle, decomposed.
+#   * dist in {crps, quantile, laplace_crps, nll, energy}; `point` is dropped (MSE is the
+#     mean-collapse baseline _003 already ruled out).
+#   * energy rank k in {0, 32} -- the JOINT ablation. k=0 is diagonal-only.
+#   * graph_reg_on in {false, true} -- the lambda=0 ABLATION, i.e. is the graph prior
+#     carrying _006's gain at all.
+#   * graph_reg_layer in {[1], [2]} -- early vs middle injection, with L=4 fixed so the
+#     two are actually comparable.
+#
+# NEW METRICS THIS ROUND (`calib/*`, logged every val epoch by train_cgt_multitask.py):
+# coverage_50 / coverage_80 (cross-mode comparable) and pit_ks (within-mode only). Pearson
+# cannot see whether the predicted uncertainty is honest; without these the distributional
+# axis would be ranked purely on its point estimate, which is not what it is for.
+
+defaults:
+  - cgt_expr_006
+  - _self_
+
+wandb:
+  project: torchcell_019_expr
+  tags: []
+
+multitask:
+  # SWEPT {0, 32}, and DECLARED HERE so the driver can override it with plain dotted syntax
+  # (`multitask.energy_rank=0`) -- Hydra's struct mode rejects an override of a key the
+  # config never declares, and a `+` append would silently differ between the two arms.
+  #
+  # k is the rank of the global factor V in Sigma = diag(sigma^2) + V V^T. Only `energy`
+  # reads it. 32 is MEASURED: residual_covariance_diagnostic.py puts the participation-ratio
+  # effective rank of the reproducible residual gene-gene correlation at 32.8 (split-half
+  # r = 0.869 vs a within-gene-shuffled null of 0.0001), where the previous default k=8
+  # would have captured only 37.6% of it.
+  energy_rank: 32
+
+model:
+  # FROZEN. 90 = 9 heads x 10 channels; the 180 arm did not beat it in _006.
+  hidden_channels: 90
+  # FROZEN at 4. Deep enough that a single regularized layer leaves 3 free ones (the
+  # capacity bypass 010 relied on), shallow enough to afford a wide optimizer sweep.
+  num_transformer_layers: 4
+
+  graph_regularization:
+    # SWEPT {[1], [2]} -- early vs middle. With L=4 (layers 0..3), [1] is early and [2] is
+    # middle; _006 used [1] throughout and never tested whether that choice mattered.
+    graph_reg_layer: [1]
+    # SWEPT {0 (ablation), 2e-7, 2e-6, 2e-5, 2e-4}. 2e-5 is MEASURED parity
+    # (val/graph_reg/ratio_to_data = 1); ratio ~ 4.8e4 * lambda on this config.
+    graph_reg_lambda: 2.0e-5

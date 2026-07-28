@@ -80,12 +80,32 @@ DIST_TO_MODE: dict[str, str] = {
 # Evenly spaced is the *robust* choice -- no kernel, no bandwidth to tune.
 DEFAULT_NUM_QUANTILES = 19
 
-# `energy` mode defaults. The rank k of the global factor V is deliberately SMALL: k=8 adds
-# F*k parameters (one extra column block, not an F x F covariance) and the sampler never
-# forms Sigma. m=10 antithetic-free samples is the standard cheap choice -- the estimator is
-# unbiased in m (see `energy_score`), so m trades variance, never bias.
-DEFAULT_ENERGY_RANK = 8
-DEFAULT_ENERGY_SAMPLES = 10
+# `energy` mode defaults -- all three MEASURED, not guessed, by
+# `experiments/019-simb-multimodal/scripts/residual_covariance_diagnostic.py` on the 019
+# expression panel (S=1,482 strains, F=6,169 reporter genes).
+#
+# RANK. The diagnostic SVDs the standardized kNN residuals and reports the
+# participation-ratio effective rank  (sum lambda_i)^2 / sum lambda_i^2 = 32.8, with
+# cumulative variance
+#     k=8 -> 37.6%    k=16 -> 48.4%    k=32 -> 59.1%    k=64 -> 68.3%
+# so the original k=8 could represent barely a third of the reproducible residual structure
+# -- it would have understated the joint arm by construction. k=32 sits at the measured
+# effective rank and still costs only F*k = 197k parameters (one column block; the sampler
+# never forms the F x F Sigma). rank=0 remains the diagonal-only ablation.
+DEFAULT_ENERGY_RANK = 32
+
+# SAMPLES. `energy_score` is unbiased in m (the pairwise term divides by m(m-1), not m^2),
+# so m buys variance reduction only -- never bias. Train and eval want different points on
+# that trade:
+#   * TRAIN m=32 -- gradient noise scales ~1/sqrt(m), so 32 vs 10 cuts the score's MC
+#     standard error by sqrt(3.2) ~ 1.8x, at 3.2x the sampling cost of a head whose cost is
+#     dominated by the encoder anyway.
+#   * EVAL m=256 -- the empirical CDF has PIT resolution 1/m, so m=10 admits only 11
+#     distinct PIT values and cannot populate a histogram or resolve `coverage_50` to better
+#     than +/-10 points. m=256 gives resolution 0.4%, and eval needs no gradients so the
+#     samples are nearly free.
+DEFAULT_ENERGY_SAMPLES = 32
+DEFAULT_ENERGY_EVAL_SAMPLES = 256
 # Init scale of V: per-feature low-rank variance starts at ~V_INIT^2, i.e. small relative to
 # the diagonal, so an `energy` head begins near-diagonal and *learns* correlation.
 DEFAULT_ENERGY_V_INIT = 0.1
@@ -463,6 +483,44 @@ def coverage(pit: torch.Tensor, alpha: float) -> torch.Tensor:
     return inside.to(pit.dtype).mean()
 
 
+def pit_ks(pit: torch.Tensor) -> torch.Tensor:
+    r"""Kolmogorov-Smirnov distance between the PIT distribution and ``Uniform(0,1)``.
+
+    One scalar for the whole PIT histogram -- the sup-norm gap between the empirical CDF of
+    the pooled PIT values and the uniform CDF that perfect calibration implies:
+
+    .. math::
+        D = \sup_{u\in[0,1]} \big| F_N(u) - u \big|
+          = \max_{i=1..N} \max\!\Big(\tfrac{i}{N} - p_{(i)},\; p_{(i)} - \tfrac{i-1}{N}\Big),
+
+    with :math:`p_{(1)}\le\dots\le p_{(N)}` the sorted PIT values. ``0`` is perfect; larger
+    is worse, in either direction (it is a distance, so it does not say WHICH way -- read
+    :func:`coverage` or the histogram shape for that).
+
+    **Comparable WITHIN a head, not ACROSS distributional modes.** A calibrated ``quantile``
+    head on the default ``tau in [0.05, 0.95]`` grid parks ~5% of its PIT mass exactly at
+    ``0`` and ~5% exactly at ``1`` (see :func:`_quantile_pit`), which alone forces
+    :math:`D \approx 0.05` even when the head is perfect. A parametric head has no such
+    floor. Comparing ``pit_ks`` between a quantile arm and a Gaussian arm therefore measures
+    the grid, not the model. Use :func:`coverage` for cross-mode comparison -- it evaluates
+    the CDF at interior points where no mode has a structural artifact -- and use
+    ``pit_ks`` to track one head across epochs or hyperparameters.
+
+    Args:
+        pit: PIT values, any shape (all entries are pooled and flattened).
+
+    Returns:
+        Scalar KS distance in ``[0, 1]``.
+    """
+    p, _ = torch.sort(pit.flatten())
+    n = p.numel()
+    assert n > 0, "pit_ks needs at least one PIT value"
+    i = torch.arange(1, n + 1, device=p.device, dtype=p.dtype)
+    above = i / n - p  # ECDF just AFTER each point minus uniform
+    below = p - (i - 1) / n  # uniform minus ECDF just BEFORE it
+    return torch.maximum(above.max(), below.max())
+
+
 class DistHead(nn.Module):
     """Pluggable distributional readout: interpret a head's raw params, score them, pool.
 
@@ -510,12 +568,13 @@ class DistHead(nn.Module):
                 Laplace ``b``) stays strictly positive. Ignored by ``point``/``quantile``.
             num_features: ``energy`` mode only -- ``F``, the number of features, needed to
                 allocate the global factor ``V [F, rank]``. REQUIRED for ``energy``.
-            rank: ``energy`` mode only -- ``k``, the rank of ``V`` (small, 4-16;
-                default 8). ``rank=0`` is the diagonal-only ABLATION: ``V`` is ``None``, so
-                the score still couples features but the family cannot represent
-                correlation.
-            num_samples: ``energy`` mode only -- ``m``, predictive samples per score. The
-                estimator is unbiased in ``m``, so this trades variance for compute.
+            rank: ``energy`` mode only -- ``k``, the rank of ``V`` (default 32, the
+                measured effective rank of the 019 residuals). ``rank=0`` is the
+                diagonal-only ABLATION: ``V`` is ``None``, so the score still couples
+                features but the family cannot represent correlation.
+            num_samples: ``energy`` mode only -- ``m``, TRAINING predictive samples per
+                score. The estimator is unbiased in ``m``, so this trades variance for
+                compute. :meth:`pit` uses the larger eval default instead.
             v_init: ``energy`` mode only -- std of the ``V`` init, scaled by
                 ``1/sqrt(rank)`` so the initial per-feature low-rank variance is
                 ``~v_init^2`` regardless of ``rank``.
@@ -698,9 +757,10 @@ class DistHead(nn.Module):
             target: Point targets ``[B, F]``.
             mask: Optional bool ``[B]`` selecting rows, as in :meth:`loss`.
             num_samples: ``energy`` mode only -- samples used to build the empirical CDF.
-                Defaults to the head's training ``m``, which is chosen for cheap gradients
-                (10) and gives PIT resolution ``1/m``; pass a larger value (e.g. 256) when
-                the PIT histogram itself is the output.
+                Defaults to :data:`DEFAULT_ENERGY_EVAL_SAMPLES`, NOT the head's training
+                ``m``: PIT resolution is ``1/m``, so the (deliberately cheap) training
+                ``m`` would quantize the histogram far too coarsely to read. Eval needs no
+                gradients, so the extra samples are nearly free.
 
         Returns:
             PIT values ``[B, F]`` in ``[0, 1]``.
@@ -713,7 +773,7 @@ class DistHead(nn.Module):
                 self.mode, target, quantiles=params, taus=self.taus.to(params.device)
             )
         if self.mode == "energy":
-            m = self.num_samples if num_samples is None else num_samples
+            m = DEFAULT_ENERGY_EVAL_SAMPLES if num_samples is None else num_samples
             return pit_values(self.mode, target, samples=self.samples(params, m))
         mu, scale = self._location_scale(params)
         return pit_values(self.mode, target, mu=mu, scale=scale)

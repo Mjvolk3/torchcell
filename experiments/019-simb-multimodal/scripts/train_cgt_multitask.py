@@ -96,7 +96,13 @@ from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig, OmegaConf
 from torch_geometric.data import HeteroData
 
-from torchcell.losses.distributional import dist_param_dim, make_dist_head
+from torchcell.losses.distributional import (
+    DEFAULT_ENERGY_RANK,
+    coverage,
+    dist_param_dim,
+    make_dist_head,
+    pit_ks,
+)
 from torchcell.models.equivariant_cell_graph_transformer import (
     CellGraphTransformer,
     MaskedMultitaskLoss,
@@ -761,6 +767,7 @@ class MultitaskCGTTask(L.LightningModule):
         clip_grad_norm_max_norm: float,
         target_stats: dict[str, dict[str, Any]] | None = None,
         dist: str = "point",
+        energy_rank: int = DEFAULT_ENERGY_RANK,
     ) -> None:
         """Store the model, cell_graph, masked loss, and optim/sched config."""
         super().__init__()
@@ -779,9 +786,15 @@ class MultitaskCGTTask(L.LightningModule):
         # head must know F. Sourced from head_align[h]["feat_dim"], the same per-head
         # feature count the COO->target alignment already resolved. Ignored by the
         # marginal modes (point/crps/quantile/laplace_crps/nll).
+        # `energy_rank` is the JOINT ABLATION knob and only `energy` reads it: k=0 makes V
+        # None, so the head is diagonal (independent genes) while the LOSS stays the energy
+        # score. Holding the loss fixed and varying only k is what isolates "does modelling
+        # the gene-gene covariance pay?" from "is the energy score a better objective?" --
+        # comparing energy(k=32) against crps would confound the two.
+        self.energy_rank = int(energy_rank)
         self.dist_heads = {
             h: make_dist_head(
-                dist, num_features=int(head_align[h]["feat_dim"])
+                dist, num_features=int(head_align[h]["feat_dim"]), rank=self.energy_rank
             )
             for h in active_heads
             if h != "gene_interaction"
@@ -816,6 +829,11 @@ class MultitaskCGTTask(L.LightningModule):
         # transformed) units, so per-step supervised (pred, target) pairs are cached here
         # and reduced at epoch end. Keyed by stage -> head -> list of [n, feat] CPU tensors.
         self._metric_cache: dict[str, dict[str, dict[str, list[torch.Tensor]]]] = {}
+        # Part C: CALIBRATION. PIT values are cached the same way (stage -> head -> list of
+        # [n, feat] CPU tensors) and reduced at epoch end into coverage + KS. Kept in its own
+        # cache because it is EVAL-ONLY: PIT costs a full CDF evaluation (and, for `energy`,
+        # 256 predictive samples) and answers nothing about the training trajectory.
+        self._calib_cache: dict[str, dict[str, list[torch.Tensor]]] = {}
         self.save_hyperparameters(
             ignore=["model", "cell_graph", "head_align", "target_stats"]
         )
@@ -1109,6 +1127,14 @@ class MultitaskCGTTask(L.LightningModule):
             cache["target"].append(t_raw.float().cpu())
             cache["pred_norm"].append(p_norm.float().cpu())
             cache["target_norm"].append(t_norm.float().cpu())
+            # Part C: cache PIT for the calibration metrics. Eval stages only (see
+            # `_calib_cache`), and `point` has no predictive CDF so it has no PIT at all --
+            # a `point` arm simply logs no calib/* keys, which is the honest answer.
+            if stage != "train" and dist_head is not None and dist_head.mode != "point":
+                with torch.no_grad():
+                    self._calib_cache.setdefault(stage, {}).setdefault(
+                        name, []
+                    ).append(dist_head.pit(pred, targets[name], m).float().cpu())
         return cast(torch.Tensor, total)
 
     def training_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
@@ -1178,6 +1204,53 @@ class MultitaskCGTTask(L.LightningModule):
             self.log(f"{stage}/mean/pearson_per_feature", mean_pf, sync_dist=True)
         self._metric_cache[stage] = {}
 
+    def _reduce_epoch_calibration(self, stage: str) -> None:
+        """Compute + log the epoch CALIBRATION metrics from the PIT cache (Part C).
+
+        Pearson says whether the predicted MEAN tracks the truth; it is completely blind to
+        whether the predicted UNCERTAINTY is honest. Two arms can tie on
+        ``pearson_per_feature`` while one reports intervals twice as wide as it should. These
+        are the metrics that separate them, and they are the reason for running a
+        distributional sweep at all.
+
+        Logged per phenotype, mirroring the Pearson namespace:
+
+        * ``calib/coverage_50`` / ``calib/coverage_80`` (CROSS-MODE COMPARABLE) -- the
+          fraction of observations inside the central 50% / 80% predictive interval.
+          Calibrated is 0.50 / 0.80; BELOW is overconfident (intervals too narrow), ABOVE is
+          underconfident and is the signature of NLL sigma-collapse. Both evaluate the
+          predictive CDF at INTERIOR points, where no mode has a structural artifact, so
+          these are the keys to compare a ``quantile`` arm against a ``crps`` arm.
+        * ``calib/pit_ks`` (WITHIN-MODE ONLY) -- sup-norm distance of the whole PIT
+          histogram from Uniform(0,1). Strictly more informative than the two coverages
+          (it sees the entire shape, not two interior points) but NOT comparable across
+          modes: the ``tau in [0.05, 0.95]`` quantile grid parks ~5% of PIT mass at each
+          endpoint even when perfectly calibrated, forcing KS ~ 0.05 for reasons that have
+          nothing to do with the model. Use it to track one arm across epochs.
+
+        PIT is computed in the head's OWN output space, which is the normalized space for
+        normalized heads. That costs nothing: PIT is invariant under any strictly increasing
+        map applied to both prediction and observation, and both the z-score and the
+        Yeo-Johnson transforms are strictly increasing.
+        """
+        for name, chunks in self._calib_cache.get(stage, {}).items():
+            if not chunks:
+                continue
+            pit = torch.cat(chunks, dim=0)
+            pheno = phenotype_name(name)
+            for alpha in (0.5, 0.8):
+                self.log(
+                    f"{stage}/{pheno}/calib/coverage_{int(100 * alpha)}",
+                    coverage(pit, alpha).to(self.device),
+                    sync_dist=True,
+                )
+            self.log(
+                f"{stage}/{pheno}/calib/pit_ks",
+                pit_ks(pit).to(self.device),
+                sync_dist=True,
+            )
+        self._calib_cache[stage] = {}
+
     def _print_epoch(self, stage: str) -> None:
         metrics = self.trainer.callback_metrics
         parts = [
@@ -1193,12 +1266,14 @@ class MultitaskCGTTask(L.LightningModule):
         self._metric_cache["train"] = {}
 
     def on_validation_epoch_start(self) -> None:
-        """Reset the val epoch metric cache (Part B)."""
+        """Reset the val epoch metric + calibration caches (Parts B, C)."""
         self._metric_cache["val"] = {}
+        self._calib_cache["val"] = {}
 
     def on_test_epoch_start(self) -> None:
-        """Reset the test epoch metric cache (Part B)."""
+        """Reset the test epoch metric + calibration caches (Parts B, C)."""
         self._metric_cache["test"] = {}
+        self._calib_cache["test"] = {}
 
     def on_train_epoch_end(self) -> None:
         """Reduce + log epoch per-feature Pearson, then print aggregated train metrics."""
@@ -1206,13 +1281,15 @@ class MultitaskCGTTask(L.LightningModule):
         self._print_epoch("train")
 
     def on_validation_epoch_end(self) -> None:
-        """Reduce + log epoch per-feature Pearson, then print aggregated val metrics."""
+        """Reduce + log epoch Pearson and calibration, then print aggregated val metrics."""
         self._reduce_epoch_pearson("val")
+        self._reduce_epoch_calibration("val")
         self._print_epoch("val")
 
     def on_test_epoch_end(self) -> None:
-        """Reduce + log epoch per-feature Pearson, then print aggregated test metrics."""
+        """Reduce + log epoch Pearson and calibration, then print aggregated test metrics."""
         self._reduce_epoch_pearson("test")
+        self._reduce_epoch_calibration("test")
         self._print_epoch("test")
 
     def configure_optimizers(self) -> Any:
@@ -1351,7 +1428,11 @@ def run_dry_run(cfg: DictConfig) -> None:
     # measured subset), which is fine here: the dry run only proves the path connects and
     # backprops, it is not a training run.
     dist_heads = {
-        h: make_dist_head(dist, num_features=int(head_outputs[h].shape[1]))
+        h: make_dist_head(
+            dist,
+            num_features=int(head_outputs[h].shape[1]),
+            rank=int(cfg.multitask.get("energy_rank", DEFAULT_ENERGY_RANK)),
+        )
         for h in cfg.multitask.active_heads
         if h != "gene_interaction"
     }
@@ -1381,6 +1462,22 @@ def run_dry_run(cfg: DictConfig) -> None:
                 f"[dry-run]   head '{k}': params {tuple(v.shape)} -> point "
                 f"{tuple(dh.point(v).shape)} (mode={dh.mode})"
             )
+    # Exercise the CALIBRATION path too (Part C), so a dry run proves the configured `dist`
+    # can actually produce the calib/* metrics -- not just a loss. On random params these
+    # numbers are meaningless; the point is that the PIT -> coverage -> KS chain runs and
+    # returns finite scalars for THIS mode.
+    for k, v in head_outputs.items():
+        dh = dist_heads.get(k)
+        if dh is None or dh.mode == "point":
+            continue
+        with torch.no_grad():
+            pit = dh.pit(v.detach(), targets[k])
+        print(
+            f"[dry-run]   head '{k}' calib: coverage_50={coverage(pit, 0.5).item():.3f} "
+            f"coverage_80={coverage(pit, 0.8).item():.3f} "
+            f"pit_ks={pit_ks(pit).item():.3f}"
+        )
+
     grad_norm = sum(
         p.grad.norm().item() for p in model.parameters() if p.grad is not None
     )
@@ -1389,28 +1486,56 @@ def run_dry_run(cfg: DictConfig) -> None:
 
 
 class BestMetricTracker(Callback):
-    """Track the PEAK (max) of every val metric over training.
+    """Track the PEAK (max) of every val metric, plus a SNAPSHOT of all metrics at the peak.
 
     These runs reach a per-feature-Pearson peak early, then MSE-collapse toward the per-feature
     mean — so ``trainer.callback_metrics`` (the LAST epoch) reports the post-collapse value and
     understates the achievable signal. The Optuna objective should use the peak instead; this
     callback records it so ``run_training`` can return ``{metric}_max`` alongside the last value.
+
+    Two DIFFERENT reductions, because two kinds of metric need different ones:
+
+    * ``{metric}_max`` — the running max, correct for any metric with a DIRECTION (Pearson,
+      Spearman: higher is better).
+    * ``{metric}_at_peak`` — the value at the epoch where ``anchor`` peaked. Correct for any
+      metric with a TARGET rather than a direction. ``calib/coverage_80`` should be 0.8; its
+      max over training is the single most over-dispersed epoch, which is the OPPOSITE of the
+      best one. And a calibration number is only meaningful paired with the point estimate it
+      accompanied, so it must be read at the same epoch the run is ranked on.
     """
 
-    def __init__(self) -> None:
-        """Start with an empty peak table (metric name -> best value seen)."""
+    def __init__(self, anchor: str = "val/mean/pearson_per_feature") -> None:
+        """Start with an empty peak table.
+
+        Args:
+            anchor: The metric whose peak defines "the best epoch" for the ``_at_peak``
+                snapshot. Defaults to the same uniform key EarlyStopping monitors, so the
+                snapshot, the stopping rule and the Optuna ranking all agree on which epoch
+                the run is being judged by.
+        """
+        self.anchor = anchor
         self.best_max: dict[str, float] = {}
+        self.at_peak: dict[str, float] = {}
 
     def on_validation_epoch_end(self, trainer: L.Trainer, pl_module: L.LightningModule) -> None:
-        """Record the running max of every finite validation metric."""
+        """Record the running max of every finite val metric, and snapshot at the anchor peak."""
+        finite = {}
         for k, v in trainer.callback_metrics.items():
             if v is None:
                 continue
             fv = float(v)
             if fv != fv:  # NaN
                 continue
+            finite[k] = fv
             if k not in self.best_max or fv > self.best_max[k]:
                 self.best_max[k] = fv
+        anchor_value = finite.get(self.anchor)
+        # `>=` rather than `>` so the very first epoch populates the snapshot; without it a
+        # run that never improves after epoch 0 would report no `_at_peak` values at all.
+        if anchor_value is not None and anchor_value >= self.best_max.get(
+            self.anchor, float("-inf")
+        ):
+            self.at_peak = dict(finite)
 
 
 def run_training(cfg: DictConfig) -> dict[str, float]:
@@ -1756,6 +1881,10 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         "decoder": str(cfg.multitask.get("decoder", "s1_pool")),
         "dist": str(cfg.multitask.get("dist", "point")),
         "dist_param_dim": dist_param_dim(str(cfg.multitask.get("dist", "point"))),
+        # The joint ablation knob. Recorded for EVERY run, not just energy ones, so a W&B
+        # filter on `dist == energy` can group by rank without a null column; for the
+        # marginal modes it is simply the unused default.
+        "energy_rank": int(cfg.multitask.get("energy_rank", DEFAULT_ENERGY_RANK)),
         "hidden_channels": int(cfg.model.hidden_channels),
         "num_layers": int(cfg.model.num_transformer_layers),
         "num_heads": int(cfg.model.num_attention_heads),
@@ -1971,6 +2100,7 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         clip_grad_norm_max_norm=cfg.regression_task.clip_grad_norm_max_norm,
         target_stats=target_stats,
         dist=str(cfg.multitask.get("dist", "point")),
+        energy_rank=int(cfg.multitask.get("energy_rank", DEFAULT_ENERGY_RANK)),
     )
 
     model_base_path = osp.join(data_root, "models/checkpoints")
@@ -2070,6 +2200,10 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
     # PEAK value of each metric over training (`{metric}_max`) — the Optuna objective uses this,
     # NOT the last epoch, because runs peak then collapse toward the per-feature mean.
     final_metrics.update({f"{k}_max": v for k, v in best_tracker.best_max.items()})
+    # `_at_peak`: every val metric AS OF the best epoch. This is the correct reduction for
+    # the calibration metrics, which have a target (0.5 / 0.8 / 0) rather than a direction --
+    # a max over epochs would report the most over-dispersed epoch as if it were the best.
+    final_metrics.update({f"{k}_at_peak": v for k, v in best_tracker.at_peak.items()})
     if run is not None:
         wandb.finish()
     return final_metrics

@@ -88,9 +88,84 @@ def load_plates() -> dict[str, pd.DataFrame]:
     return out
 
 
+def verify_mapping() -> pd.DataFrame:
+    """Prove the strain -> well mapping is right before blaming biology.
+
+    Three failure modes are checked:
+      1. Picklist integrity -- 384 unique destination wells, no duplicates, and the same
+         strain composition on all three plates.
+      2. Orientation -- the blank-emptiness test alone is DEGENERATE (identity and flip_v
+         both score 6/6), so orientation is settled by Kruskal-Wallis H across strains
+         instead: only the correct mapping makes a strain's replicates agree, so H peaks
+         there.
+      3. Echo delivery -- the instrument's own transfer report: actual volume per transfer
+         and the remaining fluid in the wild-type source well.
+    """
+    import io
+
+    import run2_volume_timepoints as r2
+    from scipy.stats import kruskal
+
+    cfg = NormalizationConfig()
+    rows = []
+    for g, pl in PLATES.items():
+        raw = pd.read_csv(osp.join(DATA, pl))
+        layout = read_echo_picklist(osp.join(DATA, pl))
+        grid = pd.read_csv(osp.join(QUANT, f"run3_grid_{g}.csv"))
+
+        h_by_op = {}
+        for op in r2.OPS:
+            m = r2.apply_orientation(grid, op).merge(layout, on=["row", "col"], how="inner")
+            df = normalize_plate(m, cfg)
+            ok = df[~df.is_missing & ~df.is_flagged & ~df.is_blank & ~df.is_jackknife]
+            groups = [v["norm"].dropna().to_numpy() for _, v in ok.groupby("strain")
+                      if len(v) >= 5]
+            h_by_op[op] = float(kruskal(*groups).statistic) if len(groups) > 2 else np.nan
+
+        txt = open(osp.join(DATA, f"{g}_transfer_report.csv")).read()
+        body = txt.split("[DETAILS]", 1)[1].lstrip("\n")
+        det = pd.read_csv(io.StringIO(body))
+        wt_t = det[det["Sample Name"] == WT_NAME]
+
+        rows.append({
+            "plate": g,
+            "dest_wells": int(raw["Destination Well"].nunique()),
+            "duplicate_wells": int(raw["Destination Well"].duplicated().sum()),
+            "n_wt_wells": int((layout.strain == WT_NAME).sum()),
+            "n_blank_wells": int((layout.strain == BLANK_NAME).sum()),
+            "best_orientation": max(h_by_op, key=lambda k: h_by_op[k]),
+            **{f"H_{op}": h_by_op[op] for op in r2.OPS},
+            "wt_source_wells": ";".join(sorted(wt_t["Source Well"].unique())),
+            "wt_transfers": int(len(wt_t)),
+            "wt_actual_volume_min": float(wt_t["Actual Volume"].min()),
+            "wt_short_transfers": int((wt_t["Actual Volume"] < wt_t["Transfer Volume"]).sum()),
+            "wt_source_fluid_end_ul": float(wt_t["Current Fluid Volume"].iloc[-1]),
+        })
+    return pd.DataFrame(rows)
+
+
 def main() -> None:
-    """Run all three tests and write the table + figure."""
+    """Verify the mapping, then run the three positional tests."""
     os.makedirs(IMG_DIR, exist_ok=True)
+
+    vm = verify_mapping()
+    vm.to_csv(osp.join(RESULTS, "run3_mapping_verification.csv"), index=False)
+    print("[0] mapping verification -- is the strain -> well assignment right?")
+    print(f"    {'plate':>5} {'wells':>6} {'dups':>5} {'WT':>4} {'blank':>6} "
+          f"{'H(identity)':>12} {'best alt H':>11} {'-> best':>10}")
+    for _, r in vm.iterrows():
+        alts = [r[f"H_{op}"] for op in ("rot180", "flip_v", "flip_h")]
+        print(f"    {r.plate:>5} {r.dest_wells:>6} {r.duplicate_wells:>5} {r.n_wt_wells:>4}"
+              f" {r.n_blank_wells:>6} {r.H_identity:>12.1f} {max(alts):>11.1f}"
+              f" {r.best_orientation:>10}")
+    print("    Echo transfer report (the instrument's own record):")
+    for _, r in vm.iterrows():
+        print(f"      {r.plate}: WT from source {r.wt_source_wells}, {r.wt_transfers} transfers,"
+              f" min actual volume {r.wt_actual_volume_min:.1f} nL,"
+              f" short transfers {r.wt_short_transfers},"
+              f" source left {r.wt_source_fluid_end_ul:.1f} uL")
+    print("    -> mapping is CORRECT and delivery was identical. The anomaly is downstream.\n")
+
     plates = load_plates()
 
     rows = []

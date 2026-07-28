@@ -599,3 +599,49 @@ draft -- "anomalous WT reference" is what the evidence supports.
 divided by a bad reference, even though its mutant colony sizes are fine. And `sigma_plate`
 computed with P2 included (0.140) is not a noise estimate -- it is one plate's reference
 problem.
+
+### 2026.07.27 - Mapping verification: the strain->well assignment is correct
+
+Added to `p2_reference_diagnosis.py` (section `[0]`). Output:
+`results/run3_mapping_verification.csv`.
+
+Before blaming biology, the mapping was re-checked end to end.
+
+**Picklist integrity.** All three files: 384 rows, 384 unique destination wells, zero
+duplicates, identical composition (30 BY4741 + 6 Blank_media + 12 mutants x 29), rows 1-16,
+cols 1-24.
+
+**Orientation -- and a real weakness found in the usual check.** The blank-emptiness test is
+**degenerate**: `identity` and `flip_v` BOTH place all 6 blanks on empty wells, on every
+plate. It cannot distinguish them. Settled instead by Kruskal-Wallis H across strains, since
+only the correct mapping makes a strain's own replicates agree:
+
+| plate | H(identity) | best alternative | verdict |
+|---|---|---|---|
+| P1 | 97.1 | 15.0 | identity |
+| **P2** | **146.3** | 13.7 | identity |
+| P3 | 125.9 | 16.8 | identity |
+
+Identity wins by an order of magnitude everywhere, and **P2 has the STRONGEST strain
+separation of the three**. A mis-mapped plate would show the opposite -- replicate groups
+would be random mixtures and H would collapse. P2's mutants are cleanly resolved.
+
+**Echo delivery (the instrument's own transfer report).** BY4741 is drawn from source well
+**A1 on all three plates**; 30 transfers each; **actual volume 5.0 nL on every one** of the
+1,164 transfers across the three plates; zero short transfers; the WT source well went
+59.8 -> 59.3 uL, i.e. essentially undepleted. Plates were dispensed 4-5 minutes apart
+(17:31:52 / 17:36:16 / 17:41:00 on 2026-07-21) from the same source.
+
+**All 30 WT wells were detected and unflagged on every plate**, so the WT median is not
+computed from a biased surviving subset.
+
+### Where that leaves the P2 anomaly
+
+Eliminated: mis-mapping, wrong orientation, picklist error, dispense failure, source-well
+depletion, biased detection, local plate defect, and (for ~3/4 of the gap) positional bias.
+The earlier "WT source well" inference is **withdrawn** -- the Echo record contradicts it.
+
+What remains: the WT colonies on P2 are genuinely ~25% smaller relative to that plate's own
+mutants, uniformly across the plate, after identical dispense from the same source well
+minutes apart. That is now a question for the physical plate and its incubation, not for the
+data pipeline -- and it needs an eye on the image rather than more computation.

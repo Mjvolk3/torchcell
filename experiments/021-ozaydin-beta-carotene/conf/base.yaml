@@ -74,6 +74,11 @@ cell_dataset:
   # Keys on the DELETION gene-set only, treating the constant heterologous cassette as
   # reference-strain background. Without it, pigment/metabolome co-location is literally zero.
   aggregator: deletion_keyed
+  # Heads whose TARGET KEYS must all be present for a genotype to be kept -- the instance-set
+  # control for the auxiliary-task experiment. Empty = no restriction. Distinct from
+  # `require_modalities`, which intersects on phenotype LABEL and therefore cannot separate
+  # betaxanthin from the 19-AA metabolome (both are `metabolite_level`).
+  require_head_targets: []
 
 transforms:
   use_transforms: false

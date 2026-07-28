@@ -1,0 +1,30 @@
+# experiments/021-ozaydin-beta-carotene/conf/delta_beta_carotene_000.yaml
+# [[experiments.021-ozaydin-beta-carotene]]
+#
+# DELTA (NCSA) mirror of the GilaHyper `beta_carotene_004` arm -- Ozaydin 2013 colony-colour ordinal.
+# Same model, same swept axes, same two-stage screen/confirm design; only the platform and
+# the epoch cap differ.
+#
+# WHY RUN IT AGAIN ON DELTA rather than just waiting for GilaHyper: Delta gives 4 GPUs per
+# job against GilaHyper's 1, so the screen fills roughly 4x faster and the confirm stage
+# (top-K x 5 seeds) stops being the budget's tail. The two are the SAME study design on
+# separate storage, so they are pooled by reading, not by sharing a SQLite file across
+# filesystems -- concurrent SQLite over two clusters is exactly the coherence problem the
+# IGB pooled study avoided by staying on one GPFS mount.
+#
+# max_epochs 400, up from 200. On the _003/_004 runs the 200 cap NEVER bound (0/24 runs;
+# longest run 175 epochs, latest peak at 134) -- but the BEST run was also the latest-peaking
+# one, leaving only 66 epochs of headroom above it. Raising the cap is close to free: a
+# converged run stops on `patience` regardless, so the extra ceiling is only ever spent by a
+# run that is genuinely still improving, which is precisely the case worth not truncating.
+defaults:
+  - beta_carotene_004
+  - _self_
+
+wandb:
+  # Distinct project so the Delta and GilaHyper sweeps stay separable when read together.
+  project: torchcell_020_beta_carotene_delta
+  tags: ["020", delta, metabolism, beta_carotene, ninegraph, optuna]
+
+trainer:
+  max_epochs: 400

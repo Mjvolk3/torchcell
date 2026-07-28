@@ -124,7 +124,7 @@ _TRAINER_DIR = osp.join(_REPO_ROOT, "experiments", "019-simb-multimodal", "scrip
 if _TRAINER_DIR not in sys.path:
     sys.path.insert(0, _TRAINER_DIR)
 
-from train_cgt_multitask import run_training  # type: ignore[import-not-found]  # noqa: E402
+from train_cgt_multitask import run_training  # type: ignore[import-not-found]  # noqa: E402, I001
 
 CONF_DIR = osp.abspath(osp.join(osp.dirname(__file__), "../conf"))
 ARM = os.environ["ARM"]
@@ -144,10 +144,29 @@ assert STAGE in ("screen", "confirm"), f"STAGE must be screen|confirm, got {STAG
 #: Ranking metric per arm. Beta-carotene is ranked on SPEARMAN and that is not a preference:
 #: Ozaydin's readout is a SUBJECTIVE ORDINAL on -5..+5, so a Pearson on it asserts an interval
 #: scale the measurement does not have, and would select models that fit a scale artifact.
+#: ACTIVE HEADS per arm. Most arms are a single head named after the arm; the two `bx_*`
+#: arms are the CONTROLLED auxiliary-task pair, which is why this is a map rather than
+#: `[ARM]`. Both run on the SAME restricted instance set (see `require_head_targets` in their
+#: config) and differ ONLY in whether the metabolome head is present, so
+#: `bx_m19 - bx_ctrl` is the auxiliary-task effect with the data-quantity confound removed.
+ACTIVE_HEADS = {
+    "betaxanthin": ["betaxanthin"],
+    "beta_carotene": ["beta_carotene"],
+    "mulleder19": ["mulleder19"],
+    "bx_ctrl": ["betaxanthin"],
+    "bx_m19": ["betaxanthin", "mulleder19"],
+}[ARM]
+
+#: The metric each arm is RANKED on. Both `bx_*` arms rank on BETAXANTHIN -- the metabolome
+#: is an auxiliary task there, not a second objective, because the question is whether the
+#: rest of the metabolism signal improves PRODUCTION prediction. Ranking the joint arm on a
+#: Pareto front of both would answer a different question and make the pair incomparable.
 OBJECTIVE_METRIC = {
     "betaxanthin": "val/betaxanthin/pearson_per_feature_max",
     "beta_carotene": "val/beta_carotene/spearman_per_feature_max",
     "mulleder19": "val/mulleder19/pearson_per_feature_max",
+    "bx_ctrl": "val/betaxanthin/pearson_per_feature_max",
+    "bx_m19": "val/betaxanthin/pearson_per_feature_max",
 }[ARM]
 
 #: The de-biased companion OF THE RANKED METRIC -- derived from it rather than hardcoded.
@@ -158,6 +177,11 @@ OBJECTIVE_METRIC = {
 #: is bounded by the max of the series). Deriving the key removes the chance of them drifting
 #: apart again.
 RANKED_SMOOTH3 = OBJECTIVE_METRIC.replace("_max", "_smooth3_max")
+
+#: The PHENOTYPE namespace the ranked metric lives under. Metrics are logged per phenotype,
+#: not per arm, so `bx_ctrl` and `bx_m19` both report under `betaxanthin` -- reading them as
+#: `val/bx_m19/...` would silently record None for every diagnostic.
+RANK_PHENO = OBJECTIVE_METRIC.split("/")[1]
 
 #: Screen seed. 42 rather than _007's 0, deliberately: the `_002` studies ran at 42, so a
 #: screen winner can be read against 36-40 trials of existing history at the same seed.
@@ -181,6 +205,11 @@ DIST_CHOICES = {
     "betaxanthin": ["crps", "quantile", "laplace_crps", "nll"],
     "beta_carotene": ["crps", "quantile", "laplace_crps", "nll"],
     "mulleder19": ["crps", "quantile", "laplace_crps", "nll", "energy"],
+    # The controlled pair keeps the SCALAR dist set on both sides. `energy` would be
+    # available to bx_m19 (its metabolome head is F=19) but not to bx_ctrl, and an axis
+    # present in only one arm of a paired comparison is a confound, not a lever.
+    "bx_ctrl": ["crps", "quantile", "laplace_crps", "nll"],
+    "bx_m19": ["crps", "quantile", "laplace_crps", "nll"],
 }[ARM]
 
 #: Rank of the low-rank factor V in Sigma = diag(sigma^2) + V V^T, mulleder19 only. Swept, not
@@ -195,6 +224,10 @@ GRAPH_REG_LAMBDAS = {
     "betaxanthin": [1.6e-6, 1.6e-5, 1.6e-4, 1.6e-3],
     "beta_carotene": [3.4e-6, 3.4e-5, 3.4e-4, 3.4e-3],
     "mulleder19": [2.2e-6, 2.2e-5, 2.2e-4, 2.2e-3],
+    # Both sides of the controlled pair use BETAXANTHIN's grid: they are ranked on
+    # betaxanthin, and the grids must be identical for the arms to be comparable.
+    "bx_ctrl": [1.6e-6, 1.6e-5, 1.6e-4, 1.6e-3],
+    "bx_m19": [1.6e-6, 1.6e-5, 1.6e-4, 1.6e-3],
 }[ARM]
 
 #: THE FULL _007 EMBEDDING AXIS, verbatim. An earlier cut of this round narrowed it to
@@ -272,11 +305,15 @@ def _suggest_params(trial: optuna.Trial) -> dict[str, Any]:
 def _overrides(params: dict[str, Any], seed: int) -> list[str]:
     """Translate a sampled configuration into Hydra overrides."""
     graph_reg = params["graph_reg_lambda"] if params["graph_reg_on"] else 0.0
-    normalize_list = [] if params["target_norm"] == "zscore" else [ARM]
-    standardize_list = [ARM] if params["target_norm"] == "zscore" else []
+    # Normalization is applied to EVERY active head, so the joint arm standardizes the
+    # metabolome too -- an un-standardized 19-AA target would let a few large-magnitude amino
+    # acids dominate the auxiliary loss and change what the shared encoder is pulled toward.
+    heads = ",".join(ACTIVE_HEADS)
+    normalize_list = [] if params["target_norm"] == "zscore" else list(ACTIVE_HEADS)
+    standardize_list = list(ACTIVE_HEADS) if params["target_norm"] == "zscore" else []
     ov = [
         f"seed={seed}",
-        f"multitask.active_heads=[{ARM}]",
+        f"multitask.active_heads=[{heads}]",
         f"cell_dataset.node_embeddings=[{params['node_embeddings']}]",
         "model.learnable_embedding.enabled=false",
         f"multitask.decoder={DECODER}",
@@ -331,23 +368,37 @@ def _record(trial: optuna.Trial, metrics: dict[str, float], suffix: str = "") ->
     which on `_002` mulleder19 correlated with the objective at r = +0.75.
     """
     for name, key in (
-        ("pearson", f"val/{ARM}/pearson_per_feature_max"),
-        ("spearman", f"val/{ARM}/spearman_per_feature_max"),
+        ("pearson", f"val/{RANK_PHENO}/pearson_per_feature_max"),
+        ("spearman", f"val/{RANK_PHENO}/spearman_per_feature_max"),
         # `ranked_smooth3` is the one to read: it is the smoothed companion of whichever
         # metric THIS arm is ranked on. Both raw variants are kept alongside so a study can
         # be re-read on the other correlation without re-running.
         ("ranked_smooth3", RANKED_SMOOTH3),
-        ("pearson_smooth3", f"val/{ARM}/pearson_per_feature_smooth3_max"),
-        ("spearman_smooth3", f"val/{ARM}/spearman_per_feature_smooth3_max"),
-        ("pred_sd_ratio", f"val/{ARM}/pred_sd_ratio_at_peak"),
+        ("pearson_smooth3", f"val/{RANK_PHENO}/pearson_per_feature_smooth3_max"),
+        ("spearman_smooth3", f"val/{RANK_PHENO}/spearman_per_feature_smooth3_max"),
+        ("pred_sd_ratio", f"val/{RANK_PHENO}/pred_sd_ratio_at_peak"),
         ("graph_reg_ratio", "val/graph_reg/ratio_to_data_at_peak"),
         ("n_val_epochs", "val/n_val_epochs"),
         ("peak_epoch", "val/peak_epoch"),
     ):
         trial.set_user_attr(f"{name}{suffix}", metrics.get(key))
+    # The auxiliary head's own numbers, so a joint trial can be read on BOTH phenotypes --
+    # "the metabolome helped betaxanthin" is a different claim from "the metabolome head
+    # itself learned anything", and the second is what tells you why.
+    for aux in ACTIVE_HEADS:
+        if aux == RANK_PHENO:
+            continue
+        trial.set_user_attr(
+            f"aux_{aux}_pearson{suffix}",
+            metrics.get(f"val/{aux}/pearson_per_feature_max"),
+        )
+        trial.set_user_attr(
+            f"aux_{aux}_pred_sd_ratio{suffix}",
+            metrics.get(f"val/{aux}/pred_sd_ratio_at_peak"),
+        )
     for key in ("coverage_50", "coverage_80", "pit_ks"):
         trial.set_user_attr(
-            f"calib_{key}{suffix}", metrics.get(f"val/{ARM}/calib/{key}_at_peak")
+            f"calib_{key}{suffix}", metrics.get(f"val/{RANK_PHENO}/calib/{key}_at_peak")
         )
 
 

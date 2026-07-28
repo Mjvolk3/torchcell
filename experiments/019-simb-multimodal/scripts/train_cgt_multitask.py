@@ -1640,6 +1640,59 @@ class BestMetricTracker(Callback):
         self.n_val_epochs += 1
 
 
+def _genotypes_with_all_head_targets(
+    dataset: Any, wanted: dict[str, set[str]]
+) -> set[int]:
+    """Record indices carrying at least one target key for EVERY head in ``wanted``.
+
+    Reads the LMDB once and inspects each experiment's phenotype value dict, because the
+    dataset's cached indices key on phenotype LABEL and cannot see inside a
+    ``metabolite_level`` payload. Cached next to the dataset so the scan is paid once per
+    build rather than once per trial -- a sweep runs this hundreds of times.
+    """
+    cache_path = osp.join(dataset.processed_dir, "head_target_presence_index.json")
+    if osp.exists(cache_path):
+        with open(cache_path) as fh:
+            presence: dict[str, list[int]] = json.load(fh)
+    else:
+        print("Computing head-target presence index...", flush=True)
+        import lmdb
+
+        found: dict[str, set[int]] = {}
+        env = lmdb.open(
+            osp.join(dataset.processed_dir, "lmdb"), readonly=True, lock=False, subdir=True
+        )
+        with env.begin() as txn:
+            for raw_key, raw_value in txn.cursor():
+                idx = int(raw_key.decode())
+                for record in json.loads(raw_value.decode()):
+                    phenotype = record["experiment"]["phenotype"]
+                    label = phenotype.get("label_name")
+                    value = phenotype.get(label)
+                    if isinstance(value, dict):
+                        for key in value:
+                            found.setdefault(key, set()).add(idx)
+                    elif label is not None:
+                        found.setdefault(label, set()).add(idx)
+        env.close()
+        presence = {k: sorted(v) for k, v in found.items()}
+        with open(cache_path, "w") as fh:
+            json.dump(presence, fh)
+
+    allowed: set[int] | None = None
+    for head, keys in wanted.items():
+        have: set[int] = set()
+        for key in keys:
+            have |= set(presence.get(key, []))
+        assert have, (
+            f"require_head_targets: head {head!r} matched no records for any of its keys "
+            f"{sorted(keys)[:6]} (dataset carries: {sorted(presence)[:12]})"
+        )
+        allowed = have if allowed is None else (allowed & have)
+    assert allowed, "require_head_targets left no genotypes -- the heads do not co-occur"
+    return allowed
+
+
 def _pinned_test_indices(
     cfg: DictConfig, dataset: Any, experiment_root: str
 ) -> set[int] | None:
@@ -1949,6 +2002,40 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
             print(
                 f"[require_modalities] {split_attr}: {before} -> {len(sub.indices)} rows "
                 f"(all of {require_modalities})"
+            )
+
+    # ---- require_head_targets: the same control, one level finer ----
+    # `require_modalities` intersects on PHENOTYPE LABEL, which is enough to separate
+    # expression from calmorph but NOT betaxanthin from the 19-AA metabolome: both are
+    # `metabolite_level`, and what distinguishes them is which KEYS their value dict carries
+    # (`{betaxanthin: ...}` vs `{alanine: ..., ...}`). Asking for
+    # `require_modalities: [metabolite_level, metabolite_level]` is a no-op.
+    #
+    # This resolves each named HEAD through `multitask.head_phenotype_keys` and keeps only
+    # genotypes carrying at least one key for EVERY listed head -- so the betaxanthin-only
+    # control and the betaxanthin+metabolome joint arm run on an identical instance set, and
+    # "the metabolome helps" cannot be a restatement of "the joint arm saw more data".
+    # Measured on fig6_pigment_transfer: 4,669 betaxanthin and 4,678 metabolome genotypes
+    # share 4,432, so the control costs only 237 rows (5%).
+    require_head_targets = list(cfg.cell_dataset.get("require_head_targets", []))
+    if require_head_targets:
+        head_keys = _as_dict(cfg.multitask.get("head_phenotype_keys", {}))
+        wanted = {}
+        for head in require_head_targets:
+            keys = list(head_keys.get(head, []))
+            assert keys, (
+                f"require_head_targets lists {head!r} but multitask.head_phenotype_keys has "
+                f"no key set for it (have: {sorted(head_keys)})"
+            )
+            wanted[head] = set(keys)
+        allowed = _genotypes_with_all_head_targets(dataset, wanted)
+        for split_attr in ("train_dataset", "val_dataset", "test_dataset"):
+            sub = getattr(data_module, split_attr)
+            before = len(sub.indices)
+            sub.indices = [i for i in sub.indices if i in allowed]
+            print(
+                f"[require_head_targets] {split_attr}: {before} -> {len(sub.indices)} rows "
+                f"(all of {require_head_targets})"
             )
 
     device = "cuda" if torch.cuda.is_available() else "cpu"

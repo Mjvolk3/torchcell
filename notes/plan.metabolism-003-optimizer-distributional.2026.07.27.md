@@ -267,3 +267,133 @@ without ever moving the comparison genes.
 TEST split is now larger (933 vs ~490) and contains Merzbacher's genes by construction, so it
 is NOT comparable to earlier test numbers -- it is the comparison set, to be read against
 their Fig 4b via [[experiments.020-cachera-betaxanthin.merzbacher-comparison]].
+
+## 2026.07.28 - Delta: four jobs, and the controlled auxiliary-task experiment
+
+Four 2-day / 4-GPU jobs on Delta (NCSA), alongside the GilaHyper `_004` sweep. Three mirror
+the GilaHyper arms at 4x the GPU count; the fourth is a new experiment.
+
+| job | ARM | base config | what it is |
+|---|---|---|---|
+| 1 | `betaxanthin` | `delta_betaxanthin_000` | mirror of the GH arm |
+| 2 | `beta_carotene` | `delta_beta_carotene_000` | mirror of the GH arm |
+| 3 | `mulleder19` | `delta_mulleder19_000` | mirror of the GH arm |
+| 4 | `bx_pair` | `delta_bx_m19_000` | **the controlled pair**, 2 GPUs per side |
+
+### The question job 4 answers
+
+**Does the rest of the metabolism signal improve betaxanthin prediction?** Two arms, one base
+config, differing in EXACTLY one thing -- whether the 19-AA metabolome head is attached:
+
+```text
+ARM=bx_ctrl   active_heads=[betaxanthin]                 control
+ARM=bx_m19    active_heads=[betaxanthin, mulleder19]     joint
+```
+
+Both rank on `val/betaxanthin/pearson_per_feature`. The metabolome is an **auxiliary task**,
+not a second objective: a Pareto front over both would answer "which configs are good at
+both" and would make the two arms incomparable. `bx_m19 - bx_ctrl` is then the auxiliary-task
+effect, read on one metric, at the confirm stage (top-K x 5 seeds) -- betaxanthin's replicate
+sigma is 0.030, so a single-seed difference under ~0.06 is not readable.
+
+Both run as ONE slurm job (2 GPUs each) so they cannot drift apart in node, queue position or
+software state. A paired comparison split across two jobs days apart is a worse comparison
+for no benefit.
+
+### The control needed a new mechanism
+
+`require_modalities` intersects on phenotype LABEL, which separates expression from calmorph
+but **cannot** separate betaxanthin from the metabolome: both are `metabolite_level`, and
+what distinguishes them is which KEYS their value dict carries (`{betaxanthin: ...}` vs the
+19 amino acids). `require_modalities: [metabolite_level]` is a no-op here -- it would have
+silently left the two arms on different instance sets, which is precisely the confound the
+control exists to remove.
+
+New `cell_dataset.require_head_targets` resolves each named head through
+`multitask.head_phenotype_keys` and keeps genotypes carrying at least one key for every
+listed head. Measured on this build:
+
+| | genotypes |
+|---|---:|
+| betaxanthin | 4,669 |
+| mulleder19 | 4,678 |
+| beta_carotene | 4,406 |
+| **betaxanthin AND mulleder19** | **4,432** |
+| all three | 4,023 |
+
+So the restriction costs only **237 rows (5%)** -- a far better position than the 019
+expression/morphology control, whose both-modality intersection was 1,440. Verified live:
+4,930 -> 4,432 (train 3,820 / val 311 / test 301), and both heads train.
+
+The joint arm also **drops the pinned Merzbacher split** (`pinned_test_split_file: null`).
+That pin is right for the head-to-head against their Fig 4b, but this is an INTERNAL contrast
+between two of our own arms, and both sides should see the same ordinary seeded split rather
+than whatever remains after a 639-gene block is removed.
+
+Recorded alongside the headline: `aux_mulleder19_pearson`, the metabolome head's OWN score in
+the joint arm. "The metabolome helped betaxanthin" and "the metabolome head learned anything"
+are different claims -- an auxiliary head at r ~ 0 that still moves the primary metric would
+mean the gain came from regularization, not from shared metabolic signal.
+
+### max_epochs 400
+
+Up from 200, on all four Delta configs. On `_003`/`_004` the 200 cap NEVER bound (0/24 runs;
+longest run 175 epochs, latest peak at 134) -- but the BEST run was also the latest-peaking
+one, leaving only 66 epochs of headroom. Raising it is nearly free: a converged run stops on
+`patience` regardless, so the extra ceiling is only ever spent by a run genuinely still
+improving. See [[experiments.022-mulleder-metabolome.scripts.analyze_training_length]].
+
+**GilaHyper `_004` keeps 200** deliberately -- it is mid-flight, and changing the cap under a
+running study would mix provenance within one study for no gain.
+
+### Delta specifics
+
+- Repo `/projects/bbub/mjvolk3/torchcell` + `rockylinux_9.sif`; **DATA_ROOT
+  `/work/hdd/bbub/mjvolk3/torchcell`** (the large space; `/projects` has a tight quota and
+  `run_training` resolves the dataset from DATA_ROOT).
+- Account **`bbtp-delta-gpu`**, partition **`gpuA40x4`**.
+- Env **`/work/hdd/bbub/miniconda3` / `torchcell313`** -- Delta's stock torchcell envs are
+  Python 3.11 and the repo uses PEP 695 generics, a SyntaxError there.
+- **W&B ONLINE** -- Delta compute nodes have internet, so no offline/sync dance.
+- Four workers share ONE study per arm: they sit on one node and one filesystem, so
+  concurrent SQLite is safe. The Delta and GilaHyper studies are deliberately NOT pooled --
+  different filesystems, and cross-cluster SQLite has no coherent locking. They are pooled by
+  READING, not by sharing a file.
+
+### Transfer
+
+`experiments/020-cachera-betaxanthin/scripts/sync_delta_fig6.sh` moves ~13 GB: the
+`fig6_pigment_transfer` dataset (293 MB), all seven embedding trees the eight-way axis can
+draw (1.1 GB), and the genome/graph trees (`sgd/genome` 11 GB, `string` 326 MB, `tflink`
+80 MB, `go` 33 MB). Directory names were verified against `NodeEmbeddingBuilder`'s
+`root_path` entries rather than guessed -- a missing embedding does not fail at submit time,
+it fails ~20 minutes into whichever trial first draws it, so the script refuses to transfer a
+partial set.
+
+**Duo:** Delta requires 2FA per SSH connection. The script keeps it to **ONE push** via
+`ControlMaster` multiplexing plus `--rsync-path="mkdir -p ... && rsync"` (the destination is
+created inside the rsync's own session rather than by a separate `ssh mkdir`). `DRY_RUN=1`
+does a purely LOCAL inventory and opens no connection at all -- `rsync --dry-run` would still
+authenticate, which defeats the point.
+
+rsync is incremental, so if the July-2026 fig3_core transfer already placed the shared trees
+on Delta, only `fig6_pigment_transfer` is genuinely new.
+
+### Launch
+
+```bash
+# from GilaHyper -- one Duo push
+DRY_RUN=1 bash experiments/020-cachera-betaxanthin/scripts/sync_delta_fig6.sh   # inventory
+bash experiments/020-cachera-betaxanthin/scripts/sync_delta_fig6.sh            # transfer
+
+# on Delta
+cd /projects/bbub/mjvolk3/torchcell
+for A in betaxanthin beta_carotene mulleder19 bx_pair; do
+  ARM=$A sbatch --account=bbtp-delta-gpu --job-name=020-$A-delta \
+    experiments/020-cachera-betaxanthin/scripts/delta_metabolism_000.slurm
+done
+```
+
+**Open before launch:** confirm `torchcell313` still exists on Delta and that `optuna` is
+installed into it -- the July note flagged both as blockers, and neither is verifiable from
+GilaHyper.

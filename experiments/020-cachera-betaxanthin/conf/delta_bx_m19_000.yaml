@@ -1,0 +1,78 @@
+# experiments/020-cachera-betaxanthin/conf/delta_bx_m19_000.yaml
+# [[experiments.020-cachera-betaxanthin]]
+#
+# DELTA (NCSA) -- THE CONTROLLED AUXILIARY-TASK EXPERIMENT.
+#
+# QUESTION: does the rest of the metabolism signal improve BETAXANTHIN prediction? Concretely,
+# does adding the 19-amino-acid metabolome as a second supervised head, on a shared encoder,
+# lift the production number we actually care about?
+#
+# THE COMPARISON, and why it needs a config of its own. Two arms share this base and differ in
+# EXACTLY ONE THING -- whether the metabolome head is attached:
+#
+#     ARM=bx_ctrl   active_heads=[betaxanthin]                 the control
+#     ARM=bx_m19    active_heads=[betaxanthin, mulleder19]     the joint arm
+#
+# Both rank on `val/betaxanthin/pearson_per_feature`. The metabolome is an AUXILIARY TASK, not
+# a second objective: ranking the joint arm on a Pareto front of both would answer a different
+# question ("which configs are good at both") and would make the two arms incomparable.
+# `bx_m19 - bx_ctrl` is then the auxiliary-task effect, read on one metric.
+#
+# THE CONTROL THAT MAKES IT A MEASUREMENT: `require_head_targets` fixes BOTH arms to the
+# genotypes carrying BOTH targets, so the joint arm cannot win merely by seeing more rows.
+# Measured on this build: 4,669 betaxanthin genotypes, 4,678 metabolome, 4,432 shared -- so
+# the restriction costs only 237 rows (5%) and the comparison is nearly free. That is a much
+# better position than the 019 expression<->morphology control, where the both-modality
+# intersection was 1,440.
+#
+# WHY `require_head_targets` RATHER THAN `require_modalities`: the existing mechanism
+# intersects on phenotype LABEL, and betaxanthin and the metabolome are BOTH
+# `metabolite_level` -- what separates them is which KEYS their value dict carries
+# (`{betaxanthin: ...}` vs the 19 amino acids). `require_modalities: [metabolite_level]`
+# would be a no-op here, silently leaving the arms on different instance sets.
+#
+# READ-OUT. `bx_m19` best minus `bx_ctrl` best, both at the confirm stage (top-K x 5 seeds,
+# ranked on the mean) -- because betaxanthin's replicate sigma is 0.030 and a single-seed
+# difference below ~0.06 is not readable. Recorded alongside: `aux_mulleder19_pearson`, the
+# metabolome head's OWN score in the joint arm. "The metabolome helped betaxanthin" and "the
+# metabolome head learned anything" are different claims, and the second is what explains the
+# first -- an auxiliary head at r ~ 0 that still moves the primary metric would mean the gain
+# came from regularization, not from shared metabolic signal.
+defaults:
+  - betaxanthin_004
+  - _self_
+
+wandb:
+  project: torchcell_020_bx_m19_delta
+  tags: ["020", delta, metabolism, joint, betaxanthin, mulleder19, controlled, optuna]
+
+cell_dataset:
+  # THE control. Both arms restrict to the 4,432 genotypes carrying betaxanthin AND the
+  # 19-AA metabolome; `active_heads` is what differs between them, and nothing else.
+  require_head_targets: [betaxanthin, mulleder19]
+
+multitask:
+  # Overridden per arm by the driver (bx_ctrl -> [betaxanthin]); declared so a manual
+  # non-sweep run of this config is the JOINT one.
+  active_heads: [betaxanthin, mulleder19]
+  # Equal weights. The auxiliary head is 19 features against the primary's 1, so an
+  # unweighted sum already gives the metabolome the larger share of the gradient -- which is
+  # the point of an auxiliary task, and is left explicit here rather than tuned, since a
+  # swept head weight would be a second axis on which the two arms could differ.
+  head_weights:
+    betaxanthin: 1.0
+    mulleder19: 1.0
+
+data_module:
+  # NO PINNED SPLIT on this arm. betaxanthin_004 pins Merzbacher's 639 test genes, which is
+  # right for the head-to-head against their Fig 4b but wrong here: this experiment is an
+  # INTERNAL contrast between two of our own arms, and both sides must see the same ordinary
+  # seeded split so the auxiliary-task effect is measured on the full val set rather than on
+  # whatever remains after a 639-gene block is removed.
+  pinned_test_split_file: null
+
+trainer:
+  # 400, up from 200 -- see delta_betaxanthin_000.yaml. The joint arm has a second loss term
+  # and may well take longer to converge than either single-target arm, so the extra ceiling
+  # matters more here than anywhere.
+  max_epochs: 400

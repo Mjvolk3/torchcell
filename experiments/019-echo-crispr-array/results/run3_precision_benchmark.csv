@@ -1,0 +1,8 @@
+source,error_model,n,median_se,q25,q75
+ours: bootstrap over 3 plates,honest,12,0.05700605375134425,0.02528648716745115,0.11056136711496684
+ours: bias-corrected (/0.816),honest,12,0.06981787197023213,0.030969495473845025,0.1354094673480983
+Costanzo SMF: bootstrap over 17 screens,honest,7738,0.05185,0.0316,0.0781
+Kuzmin S4 query standard: 12-24 colonies / 6 screens,partial,507,0.013,0.0105,0.016
+ours: within-plate colonies only,optimistic,12,0.032354722229986005,0.0297944935421257,0.0349149416871533
+"Costanzo DMF: 4 colonies, one screen",optimistic,300427,0.01575,0.00945,0.02505
+"Kuzmin TMF: 4 colonies, one screen",optimistic,57880,0.02735,0.0191,0.0405

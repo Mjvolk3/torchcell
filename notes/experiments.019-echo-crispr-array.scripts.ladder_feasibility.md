@@ -17,7 +17,7 @@ knockouts to test whether stacking deletions walks fitness upward. That is only 
 doing if upward headroom exists. All tests are **one-sided** (only improvement counts)
 with **Benjamini-Hochberg FDR at 0.05**.
 
-![](./assets/images/019-echo-crispr-array/ladder_feasibility.svg)
+![](assets/images/019-echo-crispr-array/ladder_feasibility.svg)
 
 ### Results
 

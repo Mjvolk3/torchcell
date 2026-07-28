@@ -174,6 +174,22 @@ def main() -> None:
     print("    perfectly confounded with the strain effect. K=3 both shrinks it AND makes it")
     print("    measurable for the first time.")
 
+    print("\n[7] panel growth: CRISPR strains are kept, so the panel accumulates")
+    print(f"    {'round':>22} {'strains':>8} {'c':>4} {'WT':>4} {'SE @ P=4':>10} {'vs 26':>7}")
+    base = strain_se(var_p, var_c, 4, c_dense)
+    for label, n_str in (
+        ("now: 12 S + 14 D", 26),
+        ("+14 triples", 40),
+        ("+28 triples", 54),
+        ("+14 more of each", 68),
+    ):
+        c = (WELLS - 20) // n_str  # keep >= 20 WT wells
+        wt = WELLS - n_str * c
+        se = strain_se(var_p, var_c, 4, c)
+        print(f"    {label:>22} {n_str:>8} {c:>4} {wt:>4} {se:>10.4f} {se / base:>6.2f}x")
+    print("    -> a panel 2.6x larger costs <10% SE. Accumulating strains is nearly free,")
+    print("       because colonies only ever divide the SMALLER variance term.")
+
     make_figure(var_p, var_c, f_bar, sd_eps_random, c_dense, osp.join(IMG_DIR, "next_round_layout"))
     print("\nfigure:", osp.join(IMG_DIR, "next_round_layout.svg"))
 

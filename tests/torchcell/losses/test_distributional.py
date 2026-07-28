@@ -16,6 +16,7 @@ from torchcell.losses.distributional import (
     laplace_crps,
     make_dist_head,
     pinball,
+    pit_ks,
     pit_values,
 )
 
@@ -31,11 +32,8 @@ def build_head(dist: str, num_features: int = NUM_FEATURES) -> DistHead:
 
 
 def ks_statistic(pit: torch.Tensor) -> float:
-    """Kolmogorov-Smirnov distance between the PIT sample and Uniform(0, 1)."""
-    flat, _ = torch.sort(pit.reshape(-1))
-    n = flat.numel()
-    grid = torch.arange(1, n + 1, dtype=flat.dtype) / n
-    return float((flat - grid).abs().max().item())
+    """KS distance to Uniform(0, 1) -- the library function, as a float."""
+    return float(pit_ks(pit).item())
 
 
 @pytest.mark.parametrize(
@@ -714,3 +712,70 @@ def test_laplace_and_nll_head_losses_match_the_free_functions() -> None:
         dh = build_head(dist)
         expected = fn(params[..., 0], dh._sigma(params[..., 1]), target).mean()
         assert dh.loss(params, target).item() == pytest.approx(expected.item())
+
+
+# ---------------------------------------------------------------------------
+# pit_ks -- the scalar calibration summary
+# ---------------------------------------------------------------------------
+
+
+def test_pit_ks_is_zero_on_an_exactly_uniform_sample() -> None:
+    """The midpoint grid (i-0.5)/N is the best possible uniform sample: D = 1/(2N)."""
+    n = 1000
+    p = (torch.arange(n, dtype=torch.float64) + 0.5) / n
+    assert pit_ks(p).item() == pytest.approx(0.5 / n, abs=1e-9)
+
+
+def test_pit_ks_is_two_sided() -> None:
+    """A sample entirely BELOW uniform and one entirely ABOVE score the same distance.
+
+    A one-sided max(i/N - p) would report ~0 for the all-ones case; the sup-norm must not.
+    """
+    n = 500
+    lo = pit_ks(torch.zeros(n))
+    hi = pit_ks(torch.ones(n))
+    assert lo.item() == pytest.approx(1.0, abs=1.0 / n)
+    assert hi.item() == pytest.approx(1.0, abs=1.0 / n)
+
+
+def test_pit_ks_matches_scipy_kstest() -> None:
+    """Oracle: the same statistic scipy computes for the uniform null."""
+    scipy_stats = pytest.importorskip("scipy.stats")
+    torch.manual_seed(21)
+    for sample in (torch.rand(2000), torch.rand(2000) ** 2, torch.rand(500) * 0.6):
+        expected = scipy_stats.kstest(sample.numpy(), "uniform").statistic
+        assert pit_ks(sample).item() == pytest.approx(float(expected), abs=1e-6)
+
+
+def test_pit_ks_grows_with_miscalibration() -> None:
+    """Monotone in how far the predictive sigma is from the truth."""
+    torch.manual_seed(22)
+    y = torch.randn(4000)
+    mu = torch.zeros_like(y)
+    ds = [
+        pit_ks(pit_values("gaussian", y, mu=mu, scale=torch.full_like(y, s))).item()
+        for s in (1.0, 0.7, 0.4, 0.2)
+    ]
+    assert ds == sorted(ds), f"KS should increase as sigma shrinks below 1: {ds}"
+
+
+def test_pit_ks_quantile_grid_has_a_structural_floor() -> None:
+    """WHY pit_ks is within-head only: a PERFECT quantile head still scores D ~ 0.05.
+
+    The tau in [0.05, 0.95] grid carries no information outside its knots, so a calibrated
+    head puts ~5% of PIT mass exactly at 0 and ~5% exactly at 1. That is a property of the
+    grid, and it swamps any honest cross-mode comparison against a parametric head.
+    """
+    torch.manual_seed(23)
+    n = 4000
+    y = torch.randn(n, 1)
+    taus = torch.linspace(0.05, 0.95, 19)
+    # EXACTLY calibrated knots: the true standard-normal quantiles, same for every row.
+    knots = torch.distributions.Normal(0.0, 1.0).icdf(taus).expand(n, 1, 19)
+    d_quantile = pit_ks(pit_values("quantile", y, quantiles=knots, taus=taus)).item()
+    d_gaussian = pit_ks(
+        pit_values("gaussian", y, mu=torch.zeros_like(y), scale=torch.ones_like(y))
+    ).item()
+    assert d_quantile == pytest.approx(0.05, abs=0.015)
+    assert d_gaussian < 0.03
+    assert d_quantile > d_gaussian

@@ -103,6 +103,17 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
         if not self.model_name:
             return
 
+        # Initialize the LM HERE, not in __init__. The lazy-init guard below __init__
+        # exists so an OFFLINE compute node (IGB) can load an existing .pt without
+        # reaching the network -- but `super().__init__()` runs InMemoryDataset._process()
+        # -> self.process() BEFORE that guard is reached, so on a genuine rebuild the
+        # transformer was still None and this crashed with
+        # "'NoneType' object has no attribute 'embed'". process() only runs when the
+        # processed file is ABSENT, so initializing here downloads the model exactly when
+        # it is needed and never otherwise -- which is what the guard was trying to achieve.
+        if self.transformer is None:
+            self.transformer = self.initialize_model()
+
         data_list = []
         (window_method, window_size, include_cds_codon, allow_undersize) = (
             self.MODEL_TO_WINDOW[self.model_name]

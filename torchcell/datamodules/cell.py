@@ -547,7 +547,17 @@ class CellDataModule(L.LightningDataModule):
             "follow_batch": self.follow_batch,
             "timeout": 10800,
             "multiprocessing_context": ("spawn" if self.num_workers > 0 else None),
-            "prefetch_factor": self.prefetch_factor,
+            # Torch REJECTS a non-None prefetch_factor at num_workers=0 ("could only be
+            # specified in multiprocessing"), so this needs the same guard its two
+            # neighbours already carry. Without it num_workers=0 is not merely slow, it is
+            # unconstructible -- every DataLoader raises ValueError before the first batch.
+            #
+            # That is not hypothetical: on 2026-07-28 Delta job 20556837 ran NUM_WORKERS=0
+            # and all 119 optuna trials died here, ~15s apiece, while the job still exited
+            # COMPLETED 0:0. num_workers=0 is worth supporting because on a parallel
+            # filesystem the spawn path is the expensive one -- each worker re-imports the
+            # whole stack off /work/hdd.
+            "prefetch_factor": (self.prefetch_factor if self.num_workers > 0 else None),
         }
 
         # Add collate_fn if provided

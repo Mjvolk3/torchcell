@@ -177,3 +177,38 @@ def test_pin_is_invariant_to_seed_while_train_val_reroll(
     idx = _build(tmp_path / f"s{seed}", pinned=pinned, seed=seed).index
     assert pinned <= set(idx.test)
     assert not (pinned & set(idx.train))
+
+
+# ---------------------------------------------------------------------------
+# num_workers=0 -- the setting that was unconstructible until 2026-07-28
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("num_workers", [0, 2])
+def test_dataloaders_construct_at_any_worker_count(
+    tmp_path: Any, num_workers: int
+) -> None:
+    """Every dataloader must build at num_workers=0 as well as >0.
+
+    torch rejects a non-None `prefetch_factor` when num_workers=0, so passing it
+    unconditionally made zero-worker mode raise ValueError before the first batch --
+    silently, from the caller's view, since the failure surfaces inside Lightning's
+    sanity check rather than at datamodule construction.
+
+    This is not a theoretical setting. On a parallel filesystem the spawn path is the
+    expensive one (each worker re-imports the stack), so num_workers=0 is the lever for
+    diagnosing slow-start jobs, and it must actually work when reached for.
+    """
+    dm = CellDataModule(
+        dataset=_FakeDataset(),
+        cache_dir=str(tmp_path / "cache"),
+        split_indices=["phenotype_label_index"],
+        random_seed=42,
+        num_workers=num_workers,
+    )
+    dm.setup()
+    for name in ("train_dataloader", "val_dataloader", "test_dataloader"):
+        loader = getattr(dm, name)()
+        assert loader.num_workers == num_workers, name
+        expected = 2 if num_workers > 0 else None
+        assert loader.prefetch_factor == expected, name

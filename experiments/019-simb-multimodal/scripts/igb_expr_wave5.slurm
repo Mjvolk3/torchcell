@@ -11,8 +11,9 @@
 #       --array=0 --export=ALL,W5_STAGE=canary \
 #       experiments/019-simb-multimodal/scripts/igb_expr_wave5.slurm
 #
-#   # H2 on mmli -- 4 x A100 80GB, 3 runs per GPU, 36 runs over 3 rounds.
-#   sbatch -p mmli --gres=gpu:1 --cpus-per-task=12 --mem=100g --time=20:00:00 \
+#   # H2 on mmli -- 4 x A100 80GB, 2 runs per GPU, 24 runs over 3 rounds.
+#   # --cpus-per-task=16 is load-bearing: it is what gives 7 dataloader workers per run.
+#   sbatch -p mmli --gres=gpu:1 --cpus-per-task=16 --mem=100g --time=20:00:00 \
 #       --array=0-11%4 --export=ALL,W5_STAGE=h2 \
 #       experiments/019-simb-multimodal/scripts/igb_expr_wave5.slurm
 #
@@ -72,9 +73,22 @@ case "$STAGE" in
   # nothing routes between gene tokens once the perturbation is applied. 9 paired replicates
   # per arm, because the prior evidence (E0_perceiver_on -0.0302, GEARS_crossgene -0.0243)
   # was n=1 on seed 0 alone and carries no significance.
-  h2)     ARMS=(W_ref X_mix X_mix64 X_mix_rezero); SEEDS=(0 1 2 3 4 5 6 7 8)
-          RUNS_PER_GPU=3
-          EXTRA_OV="trainer.max_epochs=400 trainer.train_eval_every=5" ;;
+  # PACKING IS 2, NOT 3, AND THAT IS A MEASURED CORRECTION. The first mmli submission
+  # (2324287) ran 3 runs/GPU with --cpus-per-task=12, giving each run only (12-2)/3 = 3
+  # dataloader workers against GilaHyper's 7. After 14 minutes all 12 runs were at epoch 1-2
+  # while GH reached ~23 and cabbi (1 run/GPU, 6 workers) reached 5 -- and the A100s read 0%
+  # utilization at 25 GB, i.e. idle waiting on data rather than compute-bound. So the limit was
+  # never VRAM (3 x 20 GB fits an 80 GB card comfortably); it was worker starvation, made worse
+  # by LMDB reads over GPFS. At that rate 400 epochs x 3 rounds needed ~50 h against a 20 h
+  # walltime. Submit with --cpus-per-task=16 so this yields (16-2)/2 = 7 workers, matching GH.
+  #
+  # X_mix64 IS DROPPED to buy the replicates back. It was a capacity variant of X_mix, whereas
+  # W_ref / X_mix / X_mix_rezero are the actual H2 question: is the channel useful, and does
+  # "not useful" separate from "never opened" (rezero starts it closed). 3 arms x 8 replicates
+  # = 24 runs at 2/GPU = 3 rounds, which fits.
+  h2)     ARMS=(W_ref X_mix X_mix_rezero); SEEDS=(0 1 2 3 4 5 6 7)
+          RUNS_PER_GPU=2
+          EXTRA_OV="trainer.max_epochs=300 trainer.train_eval_every=5" ;;
   # PROBES -- lr below the frozen 3e-4 (the _007 top 12 cluster at 1e-4 while the wave-3
   # ladder only swept 3e-4/1e-3/3e-3), and dropout off on a model that underfits.
   probe)  ARMS=(W_ref P_lr1e4 P_lr3e5 H1_nodrop); SEEDS=(0 1)

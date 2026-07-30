@@ -226,8 +226,12 @@ def build_heads_config(cfg: DictConfig) -> dict[str, Any] | None:
             # Rank-R multiplicative interaction between h_i and c, appended to the head
             # input. The parameter-lean alternative to concat_context.
             spec["bilinear_rank"] = int(cfg.multitask.get("bilinear_rank", 0))
-            spec["pert_set_context"] = bool(cfg.multitask.get("pert_set_context", False))
-            spec["film_on_pert_set"] = bool(cfg.multitask.get("film_on_pert_set", False))
+            spec["pert_set_context"] = bool(
+                cfg.multitask.get("pert_set_context", False)
+            )
+            spec["film_on_pert_set"] = bool(
+                cfg.multitask.get("film_on_pert_set", False)
+            )
             spec["response_basis_rank"] = int(
                 cfg.multitask.get("response_basis_rank", 0)
             )
@@ -366,7 +370,9 @@ def _yeo_johnson_forward(x: torch.Tensor, lam: torch.Tensor) -> torch.Tensor:
     lam2 = 2.0 - lam
     near2 = lam2.abs() < 1e-6
     xp = torch.clamp(x, min=0.0)
-    pos_ne = (torch.pow(xp + 1.0, lam) - 1.0) / torch.where(near0, torch.ones_like(lam), lam)
+    pos_ne = (torch.pow(xp + 1.0, lam) - 1.0) / torch.where(
+        near0, torch.ones_like(lam), lam
+    )
     pos_e = torch.log1p(xp)
     pos_val = torch.where(near0, pos_e, pos_ne)
     xn = torch.clamp(x, max=0.0)
@@ -385,12 +391,16 @@ def _yeo_johnson_inverse(y: torch.Tensor, lam: torch.Tensor) -> torch.Tensor:
     near2 = lam2.abs() < 1e-6
     yp = torch.clamp(y, min=0.0)
     base_pos = torch.clamp(yp * lam + 1.0, min=1e-8)
-    pos_ne = torch.pow(base_pos, 1.0 / torch.where(near0, torch.ones_like(lam), lam)) - 1.0
+    pos_ne = (
+        torch.pow(base_pos, 1.0 / torch.where(near0, torch.ones_like(lam), lam)) - 1.0
+    )
     pos_e = torch.expm1(yp)
     pos_val = torch.where(near0, pos_e, pos_ne)
     yn = torch.clamp(y, max=0.0)
     base_neg = torch.clamp(-lam2 * yn + 1.0, min=1e-8)
-    neg_ne = 1.0 - torch.pow(base_neg, 1.0 / torch.where(near2, torch.ones_like(lam2), lam2))
+    neg_ne = 1.0 - torch.pow(
+        base_neg, 1.0 / torch.where(near2, torch.ones_like(lam2), lam2)
+    )
     neg_e = 1.0 - torch.expm1(-yn)
     neg_val = torch.where(near2, neg_e, neg_ne)
     return torch.where(y >= 0, pos_val, neg_val)
@@ -532,9 +542,7 @@ def build_head_alignments(
             }
             continue
         if head == "per_gene":
-            keep = torch.tensor(
-                [k in nid_to_pos for k in keys], dtype=torch.bool
-            )
+            keep = torch.tensor([k in nid_to_pos for k in keys], dtype=torch.bool)
             col = torch.tensor(
                 [nid_to_pos[k] for k in keys if k in nid_to_pos], dtype=torch.long
             )
@@ -555,9 +563,7 @@ def build_head_alignments(
             # output_dim MUST equal the kept count).
             drop_set = set(drop_features.get(head, []))
             if drop_set:
-                keep = torch.tensor(
-                    [k not in drop_set for k in keys], dtype=torch.bool
-                )
+                keep = torch.tensor([k not in drop_set for k in keys], dtype=torch.bool)
                 align[head] = {
                     "is_scalar": False,
                     "keep_mask": keep,
@@ -870,6 +876,10 @@ class MultitaskCGTTask(L.LightningModule):
         # cache because it is EVAL-ONLY: PIT costs a full CDF evaluation (and, for `energy`,
         # 256 predictive samples) and answers nothing about the training trajectory.
         self._calib_cache: dict[str, dict[str, list[torch.Tensor]]] = {}
+        # Epoch interval for the eval-mode TRAIN pass (see _train_eval_pass). 0 = off, which
+        # is the default for every pre-existing arm, so none of them changes cost or output.
+        # Set by main() from `trainer.train_eval_every`.
+        self.train_eval_every: int = 0
         self.save_hyperparameters(
             ignore=["model", "cell_graph", "head_align", "target_stats"]
         )
@@ -915,8 +925,7 @@ class MultitaskCGTTask(L.LightningModule):
             self.cell_graph = self.cell_graph.to(dev)
             self._cell_graph_device = dev
         return cast(
-            "tuple[torch.Tensor, dict[str, Any]]",
-            self.model(self.cell_graph, batch),
+            "tuple[torch.Tensor, dict[str, Any]]", self.model(self.cell_graph, batch)
         )
 
     def _batch_size(self, batch: HeteroData) -> int:
@@ -1106,7 +1115,10 @@ class MultitaskCGTTask(L.LightningModule):
         self.log(f"{stage}/loss", total, batch_size=bsz, sync_dist=True)
         for name, val in per_head.items():
             self.log(
-                f"{stage}/{phenotype_name(name)}/loss", val, batch_size=bsz, sync_dist=True
+                f"{stage}/{phenotype_name(name)}/loss",
+                val,
+                batch_size=bsz,
+                sync_dist=True,
             )
         # GRAPH-REGULARIZATION TELEMETRY. The prior was previously folded into `total` and
         # never surfaced, so "is the graph prior actually being enforced?" was
@@ -1168,9 +1180,9 @@ class MultitaskCGTTask(L.LightningModule):
             # a `point` arm simply logs no calib/* keys, which is the honest answer.
             if stage != "train" and dist_head is not None and dist_head.mode != "point":
                 with torch.no_grad():
-                    self._calib_cache.setdefault(stage, {}).setdefault(
-                        name, []
-                    ).append(dist_head.pit(pred, targets[name], m).float().cpu())
+                    self._calib_cache.setdefault(stage, {}).setdefault(name, []).append(
+                        dist_head.pit(pred, targets[name], m).float().cpu()
+                    )
         return cast(torch.Tensor, total)
 
     def training_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
@@ -1218,7 +1230,9 @@ class MultitaskCGTTask(L.LightningModule):
             # target (the beta-carotene colour score) and a useful monotone-invariant
             # companion elsewhere.
             spear_feat = per_feature_spearman(pred, target).to(self.device)
-            self.log(f"{stage}/{pheno}/spearman_per_feature", spear_feat, sync_dist=True)
+            self.log(
+                f"{stage}/{pheno}/spearman_per_feature", spear_feat, sync_dist=True
+            )
             feat_dim = pred.shape[1] if pred.ndim > 1 else 1
             # DISPERSION RATIO sd(pred)/sd(target) across STRAINS, averaged over features.
             # This is the mean-collapse diagnostic for a SCALAR head. `pearson_per_instance`
@@ -1229,8 +1243,10 @@ class MultitaskCGTTask(L.LightningModule):
             # and cannot see it. ~1 means the head spans the target's range; << 1 means it is
             # hedging toward the mean even when the correlation still looks acceptable.
             sd_ratio = (
-                pred.std(dim=0) / target.std(dim=0).clamp_min(1e-8)
-            ).mean().to(self.device)
+                (pred.std(dim=0) / target.std(dim=0).clamp_min(1e-8))
+                .mean()
+                .to(self.device)
+            )
             self.log(f"{stage}/{pheno}/pred_sd_ratio", sd_ratio, sync_dist=True)
             if feat_dim > 1:
                 # Per-instance runs on the NORMALIZED features (comparable scales); falls back
@@ -1366,11 +1382,45 @@ class MultitaskCGTTask(L.LightningModule):
         self._log_gates()
         self._print_epoch("train")
 
+    @torch.no_grad()
+    def _train_eval_pass(self) -> None:
+        """Metric over the TRAIN set in EVAL MODE -- dropout off, weights frozen.
+
+        WHY THIS IS NOT THE SAME AS ``train/expression/pearson_per_feature``. That series is
+        accumulated over the training batches, so it is computed (a) with dropout ACTIVE and
+        (b) across weights that are still being updated within the epoch. It is therefore a
+        biased LOW estimate of how well the model actually fits its training set -- and "does
+        the model fit its own training data" is the question that separates a capacity limit
+        from a generalization limit. Every previous round read only the biased series, so the
+        train-side saturation question has never actually been measured.
+
+        Logged under the ``traineval/`` namespace so it can never be confused with the
+        during-training series. Cost is one extra no-grad forward pass over the train split
+        (~4 batches at the 019 expression size), gated by ``trainer.train_eval_every``.
+        """
+        loader = self.trainer.datamodule.train_dataloader()
+        was_training = self.training
+        self.eval()
+        # Fresh cache for the namespace, so a previous epoch's tensors cannot leak in.
+        self._metric_cache["traineval"] = {}
+        for batch in loader:
+            self._step(batch.to(self.device), "traineval")
+        self._reduce_epoch_pearson("traineval")
+        if was_training:
+            self.train()
+
     def on_validation_epoch_end(self) -> None:
         """Reduce + log epoch Pearson and calibration, then print aggregated val metrics."""
         self._reduce_epoch_pearson("val")
         self._reduce_epoch_calibration("val")
         self._print_epoch("val")
+        # Runs inside the validation hook because the module is already in eval mode and
+        # under no_grad here; `every` = 0 disables it so no existing arm pays the cost.
+        if (
+            self.train_eval_every > 0
+            and self.current_epoch % self.train_eval_every == 0
+        ):
+            self._train_eval_pass()
 
     def on_test_epoch_end(self) -> None:
         """Reduce + log epoch Pearson and calibration, then print aggregated test metrics."""
@@ -1586,15 +1636,16 @@ def run_dry_run(cfg: DictConfig) -> None:
         point_shape = dh.point(v).shape if dh is not None else v.shape
         targets[k] = torch.randn(point_shape)
     masks = {
-        k: torch.randint(0, 2, (batch_size,), dtype=torch.bool)
-        for k in head_outputs
+        k: torch.randint(0, 2, (batch_size,), dtype=torch.bool) for k in head_outputs
     }
     total, per_head = loss_fn(
         head_outputs, targets, masks, graph_reg_loss=reps["graph_reg_loss"]
     )
     total.backward()
     print(f"[dry-run] masked total loss: {total.item():.6f}")
-    print(f"[dry-run] per-head losses: { {k: round(v.item(), 6) for k, v in per_head.items()} }")
+    print(
+        f"[dry-run] per-head losses: { {k: round(v.item(), 6) for k, v in per_head.items()} }"
+    )
     for k, v in head_outputs.items():
         dh = dist_heads.get(k)
         if dh is not None:
@@ -1621,7 +1672,9 @@ def run_dry_run(cfg: DictConfig) -> None:
     grad_norm = sum(
         p.grad.norm().item() for p in model.parameters() if p.grad is not None
     )
-    print(f"[dry-run] summed grad norm (nonzero => backward connected): {grad_norm:.6f}")
+    print(
+        f"[dry-run] summed grad norm (nonzero => backward connected): {grad_norm:.6f}"
+    )
     print("[dry-run] OK -- model + heads + masked loss wired correctly.")
 
 
@@ -1677,7 +1730,9 @@ class BestMetricTracker(Callback):
         self._recent: dict[str, list[float]] = {}
         self.best_smooth3: dict[str, float] = {}
 
-    def on_validation_epoch_end(self, trainer: L.Trainer, pl_module: L.LightningModule) -> None:
+    def on_validation_epoch_end(
+        self, trainer: L.Trainer, pl_module: L.LightningModule
+    ) -> None:
         """Record the running max of every finite val metric, and snapshot at the anchor peak."""
         finite = {}
         for k, v in trainer.callback_metrics.items():
@@ -1733,7 +1788,10 @@ def _genotypes_with_all_head_targets(
 
         found: dict[str, set[int]] = {}
         env = lmdb.open(
-            osp.join(dataset.processed_dir, "lmdb"), readonly=True, lock=False, subdir=True
+            osp.join(dataset.processed_dir, "lmdb"),
+            readonly=True,
+            lock=False,
+            subdir=True,
         )
         with env.begin() as txn:
             for raw_key, raw_value in txn.cursor():
@@ -1762,7 +1820,9 @@ def _genotypes_with_all_head_targets(
             f"{sorted(keys)[:6]} (dataset carries: {sorted(presence)[:12]})"
         )
         allowed = have if allowed is None else (allowed & have)
-    assert allowed, "require_head_targets left no genotypes -- the heads do not co-occur"
+    assert allowed, (
+        "require_head_targets left no genotypes -- the heads do not co-occur"
+    )
     return allowed
 
 
@@ -1974,12 +2034,16 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
     wandb_cfg["source"] = {
         "git_hash": subprocess.run(
             ["git", "-C", PROJECT_ROOT, "rev-parse", "HEAD"],
-            capture_output=True, text=True, check=True,
+            capture_output=True,
+            text=True,
+            check=True,
         ).stdout.strip(),
         "diff_sha256": hashlib.sha256(
             subprocess.run(
                 ["git", "-C", PROJECT_ROOT, "diff", "HEAD"],
-                capture_output=True, text=True, check=True,
+                capture_output=True,
+                text=True,
+                check=True,
             ).stdout.encode("utf-8")
         ).hexdigest(),
     }
@@ -2114,12 +2178,33 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
     # the target/mask decode relies on (phenotype_sample_indices are NOT batch rows).
     follow_batch = ["perturbation_indices", "phenotype_values"]
     pinned_test = _pinned_test_indices(cfg, dataset, experiment_root)
+    # SPLIT SEED IS SEPARATE FROM THE RUN SEED, and this is the single most important
+    # confound control in the round.
+    #
+    # `CellDataModule(random_seed=...)` drives `random.seed -> random.shuffle`, so it selects
+    # the train/val/test PARTITION, not just the weight init. With one knob doing both, a
+    # "replicate" changed the validation set, and the measured consequence is severe: the
+    # between-seed sd of the score is 0.0444 against a within-seed across-arm sd of 0.0058,
+    # i.e. the nuisance axis is 7.7x the axis we are trying to measure. Seed 0 sits +0.0893
+    # above the other seeds across 7 fully-crossed blocks (Friedman p = 1.7e-4) while fitting
+    # TRAIN significantly worse -- so it is a property of its 155-KO validation draw, not of
+    # any model, and the project's "best ~0.17" is that draw's number (best non-seed-0 result
+    # anywhere is 0.0901).
+    #
+    # Pinning `split_seed` holds the partition fixed so `seed` varies ONLY initialization,
+    # which is what makes paired replicates cheap. Cost to accept: the absolute level then
+    # belongs to that one draw, so only arm RANKINGS transfer, not the number.
+    #
+    # Defaults to `seed`, exactly reproducing every earlier run when unset.
+    split_seed = int(cfg.data_module.get("split_seed", seed))
+    if split_seed != seed:
+        print(f"[split] partition pinned to split_seed={split_seed}; init seed={seed}")
     data_module: Any = CellDataModule(
         dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
         split_indices=["phenotype_label_index", "perturbation_count_index"],
         batch_size=cfg.data_module.batch_size,
-        random_seed=seed,
+        random_seed=split_seed,
         num_workers=cfg.data_module.num_workers,
         pin_memory=cfg.data_module.pin_memory,
         prefetch=cfg.data_module.prefetch,
@@ -2289,7 +2374,9 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
     trainable_param_count = int(
         sum(p.numel() for p in model.parameters() if p.requires_grad)
     )
-    standardize_heads_cfg = list(cfg.multitask.get("standardize_per_feature_target", []))
+    standardize_heads_cfg = list(
+        cfg.multitask.get("standardize_per_feature_target", [])
+    )
     # A head is "standardized" if it is in EITHER normalization list (z-score OR
     # Yeo-Johnson+z-score); both put the target in a comparable per-feature scale.
     normalize_heads_cfg = list(cfg.multitask.get("normalize_vector_targets", []))
@@ -2374,9 +2461,9 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         "target_standardized": bool(standardize_heads_cfg or normalize_heads_cfg),
         "standardize_heads": standardize_heads_cfg,
         "normalize_heads": normalize_heads_cfg,
-        "target_norm": (
-            "zscore" if standardize_heads_cfg else "yeo_johnson"
-        ) if (standardize_heads_cfg or normalize_heads_cfg) else "raw",
+        "target_norm": ("zscore" if standardize_heads_cfg else "yeo_johnson")
+        if (standardize_heads_cfg or normalize_heads_cfg)
+        else "raw",
         "graph_reg_lambda": float(cfg.model.graph_regularization.graph_reg_lambda),
         "lr": float(cfg.regression_task.optimizer.lr),
         "dropout": float(cfg.model.dropout),
@@ -2497,9 +2584,7 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
     if bool(cfg.multitask.get("require_standardized_targets", False)):
         _normalized = set(normalize_vector_targets) | set(standardize_heads)
         _unnormalized = [
-            h
-            for h in active_heads
-            if h != "gene_interaction" and h not in _normalized
+            h for h in active_heads if h != "gene_interaction" and h not in _normalized
         ]
         if _unnormalized:
             raise ValueError(
@@ -2509,7 +2594,9 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
                 "Set multitask.require_standardized_targets=false to override."
             )
     head_norm_method = {h: "zscore" for h in standardize_heads}
-    heads_to_normalize = list(dict.fromkeys(normalize_vector_targets + standardize_heads))
+    heads_to_normalize = list(
+        dict.fromkeys(normalize_vector_targets + standardize_heads)
+    )
     target_stats: dict[str, dict[str, Any]] = {}
     if heads_to_normalize:
         train_indices = list(data_module.train_dataset.indices)
@@ -2601,6 +2688,12 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         energy_rank=int(cfg.multitask.get("energy_rank", DEFAULT_ENERGY_RANK)),
         energy_samples=int(cfg.multitask.get("energy_samples", DEFAULT_ENERGY_SAMPLES)),
     )
+    # Eval-mode train metric (see MultitaskCGTTask._train_eval_pass). 0 = off.
+    task.train_eval_every = int(cfg.trainer.get("train_eval_every", 0))
+    if task.train_eval_every > 0:
+        print(
+            f"[traineval] eval-mode train pass every {task.train_eval_every} epoch(s)"
+        )
 
     model_base_path = osp.join(data_root, "models/checkpoints")
     os.makedirs(model_base_path, exist_ok=True)

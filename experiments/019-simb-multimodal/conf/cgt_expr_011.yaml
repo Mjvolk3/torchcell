@@ -1,0 +1,59 @@
+# experiments/019-simb-multimodal/conf/cgt_expr_011.yaml
+# EXPRESSION round _011 -- FIXED SPLIT + an honest train-fit metric.
+#
+# Two standing changes on top of _010 (which froze hard graph masking). Both are confound
+# controls, not arms; every _011 experiment inherits them.
+#
+# 1. THE PARTITION IS PINNED (`data_module.split_seed: 0`), so `seed` varies ONLY weight
+#    initialization. Previously one knob did both, because `CellDataModule(random_seed=)`
+#    drives `random.seed -> random.shuffle` and therefore selects the train/val/test split.
+#    Measured consequence: between-seed sd of the score is 0.0444 against a within-seed
+#    across-arm sd of 0.0058 -- the nuisance axis was 7.7x the signal axis. Seed 0 sits
+#    +0.0893 above the other seeds across 7 fully-crossed blocks (Friedman p = 1.7e-4)
+#    while fitting TRAIN significantly WORSE, so it is a property of its 155-KO validation
+#    draw, not of any model. The project's familiar "~0.17" is that draw's number; the best
+#    non-seed-0 result anywhere in 67 usable runs is 0.0901.
+#
+#    WHAT THIS BUYS: paired replicates that differ only by init, so the paired sd should
+#    fall and small effects become resolvable. At n=4 with the old scheme the MDE was
+#    +0.0191 -- 7.9x the effect we were trying to measure.
+#    WHAT IT COSTS, stated plainly: the absolute level now belongs to ONE validation draw.
+#    Arm RANKINGS transfer; the number does not. If a generalizable absolute level is
+#    wanted later, the fix is K-fold with arms paired on fold, not a different single seed.
+#
+#    split_seed 0 is chosen because `index_seed_0.json` already exists under
+#    fig3_core/data_module_cache/, so no concurrent task races to build it.
+#
+# 2. `trainer.train_eval_every: 1` turns on an EVAL-MODE pass over the train split, logged
+#    as `traineval/expression/pearson_per_feature`. The existing `train/...` series is
+#    accumulated over training batches, i.e. WITH DROPOUT ACTIVE and across weights that are
+#    still updating within the epoch, so it is a biased-low estimate of the model's actual
+#    fit. That bias is why "is training saturated?" has never been answered: every round read
+#    only the biased series, which ends at 0.27-0.31 and is still climbing.
+#
+#    This matters because the train asymptote is a CAPACITY measurement. If eval-mode train
+#    pearson saturates far below 1.0, the model cannot fit 1244 strains and more data will
+#    not help. If it climbs toward 1.0, capacity is fine and the entire problem is
+#    generalization. Those two outcomes imply opposite next rounds.
+#
+# NOT CHANGED HERE, recorded so it is not misread: the epoch budget. Wave 4b measured every
+# run to be 28-258 epochs PAST its own val-loss minimum, with 5 of 8 ending at a val loss
+# worse than epoch 0 and 7 of 8 finishing below their own best smoothed score (up to 38.4%
+# given back). So a longer budget is a TRAIN-side probe (H1), not a way to score higher.
+# `ModelCheckpoint` already saves best-on-val-loss + last, so the peak model is retained
+# regardless of where the cap lands.
+defaults:
+  - cgt_expr_010
+  - _self_
+
+wandb:
+  project: torchcell_019_expr_v8
+  tags: [fixed-split, traineval, _011]
+
+data_module:
+  # DECLARED so `seed` and the partition can be swept independently -- hydra struct mode
+  # rejects a CLI override on an undeclared key.
+  split_seed: 0
+
+trainer:
+  train_eval_every: 1

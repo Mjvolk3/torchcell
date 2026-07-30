@@ -1774,12 +1774,38 @@ class MaskedMultitaskLoss(nn.Module):
             return F.mse_loss(pred, target)
         return F.l1_loss(pred, target)
 
+    def _elementwise_masked(
+        self,
+        pred: torch.Tensor,
+        target: torch.Tensor,
+        feature_mask: torch.Tensor | None,
+    ) -> torch.Tensor:
+        """Point loss reduced over the entries ``feature_mask`` selects.
+
+        With ``feature_mask=None`` this is EXACTLY ``_elementwise`` (both reduce with an
+        unweighted mean), so every pre-existing head is bit-identical. The masked path
+        exists for the masked-label objective, which must not score a gene whose value it
+        was just handed as input.
+        """
+        if feature_mask is None:
+            return self._elementwise(pred, target)
+        # DEFERRED import, not module-level: the top-of-file import of
+        # torchcell.losses.distributional is deliberately TYPE_CHECKING-only so this models
+        # module carries no runtime dependency on torchcell.losses (whose __init__ pulls in
+        # other model-specific losses). Importing inside the function keeps that property
+        # while still using ONE definition of the reduction rather than a copy that can drift.
+        from torchcell.losses.distributional import masked_mean
+
+        elem = (pred - target) ** 2 if self.loss_fn == "mse" else (pred - target).abs()
+        return masked_mean(elem, feature_mask)
+
     def forward(
         self,
         head_outputs: dict[str, torch.Tensor],
         targets: dict[str, torch.Tensor],
         masks: dict[str, torch.Tensor] | None = None,
         graph_reg_loss: torch.Tensor | None = None,
+        feature_masks: dict[str, torch.Tensor] | None = None,
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """Compute the masked multitask loss.
 
@@ -1789,12 +1815,18 @@ class MaskedMultitaskLoss(nn.Module):
             masks: {head_name: bool [B]} selecting supervised genotypes per head.
                 A missing mask means all rows are supervised for that head.
             graph_reg_loss: Optional scalar graph-regularization loss, added as-is.
+            feature_masks: {head_name: bool [B, F]} selecting which FEATURES to score.
+                Used by the masked-label objective so a step is scored only on the genes
+                still HIDDEN at that step; a revealed gene is model input, and scoring it
+                would reward copying. A missing entry scores every feature, which is the
+                pre-existing behaviour.
 
         Returns:
             total_loss: scalar summed loss.
             per_head_loss: {head_name: detached scalar loss} for logging.
         """
         masks = masks or {}
+        feature_masks = feature_masks or {}
         # Establish a device/grad anchor. graph_reg_loss stays UNCHANGED.
         if graph_reg_loss is not None:
             total = graph_reg_loss
@@ -1814,18 +1846,22 @@ class MaskedMultitaskLoss(nn.Module):
                 if name in self.dist_heads
                 else None
             )
+            fmask = feature_masks.get(name)
             if dist_head is not None:
-                # Distributional head: it owns the mask + the empty-supervision guard.
-                loss = dist_head.loss(pred, target, mask)
+                # Distributional head: it owns the row mask, the feature mask and the
+                # empty-supervision guard.
+                loss = dist_head.loss(pred, target, mask, feature_mask=fmask)
             elif mask is not None:
                 if mask.sum() == 0:
                     # No genotype in this batch carries this phenotype -> zero loss,
                     # but keep it connected to the graph so grads flow as zero.
                     loss = pred.sum() * 0.0
                 else:
-                    loss = self._elementwise(pred[mask], target[mask])
+                    loss = self._elementwise_masked(
+                        pred[mask], target[mask], None if fmask is None else fmask[mask]
+                    )
             else:
-                loss = self._elementwise(pred, target)
+                loss = self._elementwise_masked(pred, target, fmask)
             total = total + weight * loss
             per_head[name] = loss.detach()
 

@@ -1,0 +1,60 @@
+# experiments/019-simb-multimodal/conf/cgt_expr_v9_mask.yaml
+# TEACHER-FORCED MASKED-LABEL OBJECTIVE -- project v9.
+#
+# Separate project from v8 because this changes what a run MEANS: v8 runs predict expression
+# from genotype alone, while these additionally see a growing set of revealed true labels.
+# The two live together only at k=0.
+#
+# THE OBJECTIVE. At unmasking step k a random set M_k of measured genes has its TRUE value
+# revealed to the model (teacher forcing), and the loss is scored ONLY on the genes still
+# hidden, U_k = G \ (M_k u H_b):
+#
+#     L = (1/|U_k|) sum_{g in U_k} pinball(yhat_{b,g}, y_{b,g})
+#
+# Scoring a revealed gene would let the model copy its own input -- train loss collapses and
+# none of it transfers to validation, where nothing is revealed. `mask_schedule` gives the
+# number REVEALED per step.
+#
+# WHY THIS SCHEDULE. residual_covariance_diagnostic.json puts the effective rank of the
+# reproducible residual gene-gene structure at 32.78 (split-half r = 0.8687 vs a 8.45e-05
+# permutation null), so identifying it needs |M| >~ 33: 10 UNDER-determines, 100
+# OVER-determines by ~3x, 1000 saturates. The measured oracle on exactly this grid is
+# 0.0 / 0.4084 / 0.6756 / 0.7932 within-study and 0.0 / 0.2335 / 0.3815 / 0.4838 CROSS-study
+# (masked_conditioning_oracle.json, cross_study_conditioning_oracle.json) -- the cross-study
+# number is the honest target, since the within-study one is inflated ~40% by same-array
+# measurement structure.
+#
+# MIXING IS MANDATORY, NOT AN ARM. Without cross-gene routing after the perturbation, an
+# observed value at gene j can never reach gene i and the objective is inert -- which is why
+# the earlier Perceiver arms measured null: mixing was tested with NOTHING REQUIRING IT.
+#
+# WHAT THIS IS AND IS NOT. conditioning_gain_after_genotype.json measured the gene-gene
+# signal to be ORTHOGONAL to genotype: 97.5 / 99.2 / 100.6% of the conditioning gain SURVIVES
+# removing a genotype-based predictor. So this is NOT expected to improve the k=0 score, and
+# `pearson_per_feature@k0` is reported precisely so that claim stays falsifiable. What it
+# buys is IMPUTATION -- predicting a strain's unmeasured genes from a partial measurement --
+# which is a different capability from genotype -> expression, not a better version of it.
+defaults:
+  - cgt_expr_012
+  - _self_
+
+wandb:
+  project: torchcell_019_expr_v9
+  tags: [masked-obj, teacher-forced, v9]
+
+multitask:
+  # Genes REVEALED at each step; nested across k via a shared per-row random key.
+  # No fully-revealed step: it would leave U_k empty, score nothing, and (since
+  # training samples one k per batch) waste that batch. The figure's final
+  # 'unmask all' is the trajectory's end state, not a scored step.
+  mask_schedule: [0, 10, 100, 1000]
+
+model:
+  observed_labels:
+    enabled: true
+    gate_mode: "on"   # QUOTED: bare `on` is boolean True in YAML 1.1.
+  post_perturbation_mixing:
+    # The channel the objective needs. Forced ON, not swept.
+    enabled: true
+    num_latents: 32
+    gate_mode: "on"

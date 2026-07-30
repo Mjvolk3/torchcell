@@ -69,8 +69,8 @@ load_dotenv("/home/michaelvolk/Documents/projects/torchcell/.env")
 from torchcell.datamodels.calmorph_labels import CALMORPH_LABELS  # noqa: E402
 from torchcell.datasets.node_embedding_builder import NodeEmbeddingBuilder  # noqa: E402
 from torchcell.graph.graph import SCerevisiaeGraph  # noqa: E402
-from torchcell.utils.paths import experiment_results_dir  # noqa: E402
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome  # noqa: E402
+from torchcell.utils.paths import experiment_results_dir  # noqa: E402
 
 # Same three dropped features as the training config (multitask.drop_features.global).
 DROPPED = ["A113_A", "D203", "D205"]
@@ -137,8 +137,10 @@ def _load_split(base: str) -> dict[str, list[int]]:
 
 
 def _load_targets(base: str, ids: list[int]) -> dict[str, Any]:
-    """gene -> {morphology: [278], expression: [6169]} for the given LMDB row ids."""
-    env = lmdb.open(osp.join(base, "processed", "lmdb"), readonly=True, lock=False, subdir=True)
+    """Gene -> {morphology: [278], expression: [6169]} for the given LMDB row ids."""
+    env = lmdb.open(
+        osp.join(base, "processed", "lmdb"), readonly=True, lock=False, subdir=True
+    )
     genes: list[str] = []
     morph: dict[str, np.ndarray] = {}
     expr: dict[str, np.ndarray] = {}
@@ -157,7 +159,9 @@ def _load_targets(base: str, ids: list[int]) -> dict[str, Any]:
                 ph = r["experiment"]["phenotype"]
                 if ph["label_name"] == "calmorph":
                     d = ph["calmorph"]
-                    morph[gene] = np.array([d[f] for f in MORPH_FEATS], dtype=np.float32)
+                    morph[gene] = np.array(
+                        [d[f] for f in MORPH_FEATS], dtype=np.float32
+                    )
                 elif ph["label_name"] == "expression_log2_ratio":
                     d = ph["expression_log2_ratio"]
                     if expr_keys is None:
@@ -170,7 +174,7 @@ def _load_targets(base: str, ids: list[int]) -> dict[str, Any]:
 def _embedding_matrix(
     names: tuple[str, ...], data_root: str, genome: Any, graph: Any
 ) -> dict[str, np.ndarray]:
-    """gene -> concatenated embedding vector, over the given embedding names."""
+    """Gene -> concatenated embedding vector, over the given embedding names."""
     per_gene: dict[str, list[np.ndarray]] = {}
     counts: dict[str, int] = {}
     for name in names:
@@ -181,7 +185,9 @@ def _embedding_matrix(
         for item in ds:
             # BaseEmbeddingDataset loads with map_location=cuda when a GPU is visible,
             # so move to host before numpy.
-            vec = torch.cat([t.flatten() for t in item.embeddings.values()]).cpu().numpy()
+            vec = (
+                torch.cat([t.flatten() for t in item.embeddings.values()]).cpu().numpy()
+            )
             per_gene.setdefault(item.id, []).append(vec)
             counts[item.id] = counts.get(item.id, 0) + 1
     # keep only genes present in EVERY constituent embedding
@@ -237,9 +243,13 @@ def main() -> None:
     split = _load_split(base)
     train = _load_targets(base, split["train"])
     val = _load_targets(base, split["val"])
-    print(f"split seed {SEED}: train strains={len(split['train'])} val strains={len(split['val'])}")
+    print(
+        f"split seed {SEED}: train strains={len(split['train'])} val strains={len(split['val'])}"
+    )
     for mod in ("morphology", "expression"):
-        print(f"  {mod:<12} train genes={len(train[mod]):>5}  val genes={len(val[mod]):>4}")
+        print(
+            f"  {mod:<12} train genes={len(train[mod]):>5}  val genes={len(val[mod]):>4}"
+        )
 
     results: dict[str, Any] = {"seed": SEED, "k_grid": K_GRID, "arms": {}}
 
@@ -276,7 +286,9 @@ def main() -> None:
                 per_k[k] = _pearson_per_feature(pred, y_va)
             # Anchor: predict the train mean for every strain -> per-feature r is ~0
             # (zero variance across strains), i.e. the mean-collapse solution.
-            mean_pred = np.repeat(y_tr.mean(axis=0, keepdims=True), len(va_genes), axis=0)
+            mean_pred = np.repeat(
+                y_tr.mean(axis=0, keepdims=True), len(va_genes), axis=0
+            )
             anchor = _pearson_per_feature(mean_pred, y_va)
 
             best_k = max(per_k, key=lambda kk: per_k[kk])

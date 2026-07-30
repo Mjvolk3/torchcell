@@ -49,7 +49,6 @@ import gzip
 import json
 import os
 import os.path as osp
-import random
 import re
 
 from dotenv import load_dotenv
@@ -150,7 +149,9 @@ def main() -> None:
         json.dump(payload, handle, indent=2)
 
     print(f"{RESPONSIVE_GSE} (responsive)     : {len(responsive):>5} strain tokens")
-    print(f"{NONRESPONSIVE_GSE} (non-responsive) : {len(nonresponsive):>5} strain tokens")
+    print(
+        f"{NONRESPONSIVE_GSE} (non-responsive) : {len(nonresponsive):>5} strain tokens"
+    )
     print(f"overlap (ambiguous)              : {len(overlap):>5}")
     print(f"wrote {out_path}")
 

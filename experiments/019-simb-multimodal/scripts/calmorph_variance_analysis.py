@@ -87,7 +87,9 @@ def main() -> None:
         q75 = float(np.percentile(v, 75))
         iqr = q75 - q25
         cv = std / abs(mean) if abs(mean) > 0 else np.inf
-        robust_cv = iqr / abs(median) if abs(median) > 0 else (0.0 if iqr == 0 else np.inf)
+        robust_cv = (
+            iqr / abs(median) if abs(median) > 0 else (0.0 if iqr == 0 else np.inf)
+        )
         rows.append(
             {
                 "feature": col,
@@ -106,7 +108,11 @@ def main() -> None:
             }
         )
 
-    stats = pd.DataFrame(rows).sort_values("robust_cv", ascending=True).reset_index(drop=True)
+    stats = (
+        pd.DataFrame(rows)
+        .sort_values("robust_cv", ascending=True)
+        .reset_index(drop=True)
+    )
 
     zero_std = stats[stats["std"] <= ZERO_STD_EPS]["feature"].tolist()
     degenerate = stats[stats["robust_cv"] < ROBUST_CV_DEGENERATE]["feature"].tolist()
@@ -167,7 +173,9 @@ def main() -> None:
     print(f"Wrote {json_path}")
     print(f"n_mutants={n_mutants} base={len(base_cols)} cv={len(cv_cols)}")
     print(f"zero-std features ({len(zero_std)}): {zero_std}")
-    print(f"degenerate (robust_cv<{ROBUST_CV_DEGENERATE}) [{len(degenerate)}]: {degenerate}")
+    print(
+        f"degenerate (robust_cv<{ROBUST_CV_DEGENERATE}) [{len(degenerate)}]: {degenerate}"
+    )
     print("\nLeast-variable 15 base features (robust_cv ascending):")
     print(
         stats.head(15)[

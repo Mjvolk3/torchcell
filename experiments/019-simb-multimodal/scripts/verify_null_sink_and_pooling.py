@@ -79,15 +79,11 @@ def main() -> None:
     with torch.no_grad():
         off = context_of(build(), h_genes, [7])
         sham = context_of(
-            build(
-                null_sink=True, null_sink_bias_init=-20.0, null_sink_trainable=False
-            ),
+            build(null_sink=True, null_sink_bias_init=-20.0, null_sink_trainable=False),
             h_genes,
             [7],
         )
-        on = context_of(
-            build(null_sink=True, null_sink_bias_init=-4.0), h_genes, [7]
-        )
+        on = context_of(build(null_sink=True, null_sink_bias_init=-4.0), h_genes, [7])
 
     off_spread = float((off.max(0).values - off.min(0).values).mean())
     on_spread = float((on.max(0).values - on.min(0).values).mean())

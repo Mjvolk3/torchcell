@@ -44,9 +44,24 @@ from train_cgt_multitask import (  # type: ignore[import-not-found]  # noqa: E40
 )
 
 AA = [
-    "alanine", "arginine", "asparagine", "aspartate", "glutamate", "glutamine",
-    "glycine", "histidine", "isoleucine", "leucine", "lysine", "methionine",
-    "phenylalanine", "proline", "serine", "threonine", "tryptophan", "tyrosine",
+    "alanine",
+    "arginine",
+    "asparagine",
+    "aspartate",
+    "glutamate",
+    "glutamine",
+    "glycine",
+    "histidine",
+    "isoleucine",
+    "leucine",
+    "lysine",
+    "methionine",
+    "phenylalanine",
+    "proline",
+    "serine",
+    "threonine",
+    "tryptophan",
+    "tyrosine",
     "valine",
 ]
 BX_VALUE = 0.7
@@ -61,7 +76,9 @@ class _FakeDataset:
         """Store label -> list of raw ``{"experiment": {"phenotype": {...}}}`` items."""
         self._records = records
         self.env = object()
-        self.phenotype_label_index = {k: list(range(len(v))) for k, v in records.items()}
+        self.phenotype_label_index = {
+            k: list(range(len(v))) for k, v in records.items()
+        }
 
     def _read_from_lmdb(self, idx: int) -> int:
         return idx
@@ -79,7 +96,11 @@ def _fake_dataset() -> _FakeDataset:
     return _FakeDataset(
         {
             "metabolite_level": [
-                {"experiment": {"phenotype": {"metabolite_level": {"betaxanthin": BX_VALUE}}}},
+                {
+                    "experiment": {
+                        "phenotype": {"metabolite_level": {"betaxanthin": BX_VALUE}}
+                    }
+                },
                 {
                     "experiment": {
                         "phenotype": {

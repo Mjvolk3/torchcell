@@ -39,7 +39,11 @@ from dotenv import load_dotenv
 
 from torchcell.datamodels.calmorph_labels import CALMORPH_LABELS
 
-DROPPED = ["A113_A", "D203", "D205"]  # experiments/019 delta config multitask.drop_features.global
+DROPPED = [
+    "A113_A",
+    "D203",
+    "D205",
+]  # experiments/019 delta config multitask.drop_features.global
 
 
 def _load(data_dir: str) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -49,12 +53,17 @@ def _load(data_dir: str) -> tuple[pd.DataFrame, pd.DataFrame]:
 
 
 def _reliability(mt: pd.DataFrame, wt: pd.DataFrame, feats: list[str]) -> pd.DataFrame:
-    noise_var = wt[feats].var(ddof=1)           # across 122 WT replicates
-    total_var = mt[feats].var(ddof=1)           # across 4,718 mutants (signal + noise)
+    noise_var = wt[feats].var(ddof=1)  # across 122 WT replicates
+    total_var = mt[feats].var(ddof=1)  # across 4,718 mutants (signal + noise)
     rel = (1.0 - noise_var / total_var).clip(lower=0.0, upper=1.0)
     ceiling = np.sqrt(rel)
     return pd.DataFrame(
-        {"noise_var": noise_var, "total_var": total_var, "reliability": rel, "ceiling": ceiling}
+        {
+            "noise_var": noise_var,
+            "total_var": total_var,
+            "reliability": rel,
+            "ceiling": ceiling,
+        }
     )
 
 
@@ -62,10 +71,14 @@ def _summary(name: str, df: pd.DataFrame) -> None:
     c = df["ceiling"]
     print(f"\n== {name} (n={len(df)}) ==")
     print(f"  mean ceiling (=max achievable mean per-gene Pearson): {c.mean():.4f}")
-    print(f"  median ceiling: {c.median():.4f}   |  ceiling IQR: [{c.quantile(.25):.3f}, {c.quantile(.75):.3f}]")
+    print(
+        f"  median ceiling: {c.median():.4f}   |  ceiling IQR: [{c.quantile(0.25):.3f}, {c.quantile(0.75):.3f}]"
+    )
     print(f"  reliability mean: {df['reliability'].mean():.4f}")
     for thr in (0.05, 0.10, 0.20, 0.30, 0.50):
-        print(f"    features with ceiling > {thr:.2f}: {(c > thr).sum():4d}  ({100*(c>thr).mean():.1f}%)")
+        print(
+            f"    features with ceiling > {thr:.2f}: {(c > thr).sum():4d}  ({100 * (c > thr).mean():.1f}%)"
+        )
 
 
 def main() -> None:
@@ -76,10 +89,12 @@ def main() -> None:
     )
     mt, wt = _load(data_dir)
     cols = list(mt.columns)
-    base = [k for k in CALMORPH_LABELS if k in cols]       # 281 base labels
-    model_feats = [k for k in base if k not in DROPPED]     # the 278 the model predicts
-    cv = [c for c in cols if c not in set(base)]            # 220 CV statistics
-    print(f"loaded mt={mt.shape} wt={wt.shape} | base={len(base)} model={len(model_feats)} cv={len(cv)}")
+    base = [k for k in CALMORPH_LABELS if k in cols]  # 281 base labels
+    model_feats = [k for k in base if k not in DROPPED]  # the 278 the model predicts
+    cv = [c for c in cols if c not in set(base)]  # 220 CV statistics
+    print(
+        f"loaded mt={mt.shape} wt={wt.shape} | base={len(base)} model={len(model_feats)} cv={len(cv)}"
+    )
 
     rel_all = _reliability(mt, wt, cols)
     rel_model = rel_all.loc[model_feats]
@@ -92,14 +107,16 @@ def main() -> None:
     print("\n" + "=" * 64)
     print(f"OBSERVED morph per-gene (morph_002, 1,161 control): {obs:.3f}")
     print(f"CEILING  morph per-gene (278 feats, target noise) : {ceil:.3f}")
-    print(f"fraction of ceiling realized: {obs/ceil:.1%}")
+    print(f"fraction of ceiling realized: {obs / ceil:.1%}")
     print(f"headroom (ceiling - observed): {ceil - obs:.3f}")
     print("=" * 64)
     # top predictable features (where signal is real)
     top = rel_model.sort_values("ceiling", ascending=False).head(12)
     print("\nMost-reliable modeled features (ceiling | reliability | label):")
     for k, row in top.iterrows():
-        print(f"  {k:10s} {row['ceiling']:.3f} | {row['reliability']:.3f} | {CALMORPH_LABELS.get(k, '')[:52]}")
+        print(
+            f"  {k:10s} {row['ceiling']:.3f} | {row['reliability']:.3f} | {CALMORPH_LABELS.get(k, '')[:52]}"
+        )
 
 
 if __name__ == "__main__":

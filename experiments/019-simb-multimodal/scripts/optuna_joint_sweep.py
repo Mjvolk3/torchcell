@@ -256,7 +256,9 @@ def objective(trial: optuna.Trial) -> float | tuple[float, float]:
     # so ratio ~ 4.8e4 * lambda and PARITY (ratio = 1) sits at lambda ~ 2e-5. This grid
     # spans ratio ~0.01 -> ~10, centred on parity. Suggested unconditionally (fixed-
     # dimension space, as with energy_rank) and then zeroed when the ablation is on.
-    graph_reg_grid = trial.suggest_categorical("graph_reg_lambda", [2e-7, 2e-6, 2e-5, 2e-4])
+    graph_reg_grid = trial.suggest_categorical(
+        "graph_reg_lambda", [2e-7, 2e-6, 2e-5, 2e-4]
+    )
     graph_reg = graph_reg_grid if graph_reg_on else 0.0
     reg_depth = trial.suggest_categorical("graph_reg_depth", list(GRAPH_REG_LAYERS))
 
@@ -282,7 +284,7 @@ def objective(trial: optuna.Trial) -> float | tuple[float, float]:
     dropout = trial.suggest_categorical("dropout", [0.0, 0.1, 0.2])
 
     # Build the two per-head normalization lists from each active head's sampled lever.
-    normalize_list: list[str] = []   # -> Yeo-Johnson (vector_norm_method)
+    normalize_list: list[str] = []  # -> Yeo-Johnson (vector_norm_method)
     standardize_list: list[str] = []  # -> per-feature z-score
     for head in ACTIVE_HEADS:
         choice = _norm_choice(trial, head)
@@ -448,7 +450,10 @@ def main() -> None:
     # load_if_exists — avoids the fresh-DB DDL race. The directions logic lives HERE (one
     # place) so pre-create and workers always agree on single- vs multi-objective.
     if "--create-only" in sys.argv:
-        print(f"[create-only] study={STUDY_NAME} directions={study.directions}", flush=True)
+        print(
+            f"[create-only] study={STUDY_NAME} directions={study.directions}",
+            flush=True,
+        )
         return
 
     print(
@@ -462,9 +467,13 @@ def main() -> None:
         if CONDITION == "expr_morph":
             print(f"[expr_morph w0] Pareto front ({len(study.best_trials)} trials):")
             for t in study.best_trials[:10]:
-                print(f"  t{t.number} (expr,morph)={[round(v, 4) for v in t.values]} {t.params}")
+                print(
+                    f"  t{t.number} (expr,morph)={[round(v, 4) for v in t.values]} {t.params}"
+                )
         else:
-            print(f"[{CONDITION} w0] best={study.best_value:.4f} params={study.best_params}")
+            print(
+                f"[{CONDITION} w0] best={study.best_value:.4f} params={study.best_params}"
+            )
 
 
 if __name__ == "__main__":

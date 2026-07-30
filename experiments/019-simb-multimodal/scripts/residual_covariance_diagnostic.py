@@ -166,7 +166,9 @@ def main() -> None:
         embedding_names=[EMBEDDING], data_root=data_root, genome=genome, graph=None
     )
     lookup = {
-        item.id: torch.cat([t.flatten() for t in item.embeddings.values()]).cpu().numpy()
+        item.id: torch.cat([t.flatten() for t in item.embeddings.values()])
+        .cpu()
+        .numpy()
         for item in built[EMBEDDING]
     }
     emb = np.stack([lookup[g] for g in genes])
@@ -203,7 +205,7 @@ def main() -> None:
     sv = np.linalg.svd(X, compute_uv=False)
     ev = sv**2
     cum = np.cumsum(ev) / ev.sum()
-    print(f"\ncumulative variance of knn residual correlation, top-k components:")
+    print("\ncumulative variance of knn residual correlation, top-k components:")
     spec = {}
     for k in RANK_GRID:
         if k <= len(cum):

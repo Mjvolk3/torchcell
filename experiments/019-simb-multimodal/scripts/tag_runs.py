@@ -174,7 +174,9 @@ def main() -> None:
                 if note_differ:
                     run.notes = note
                 run.update()
-    print(f"\n{changed} of {len(runs)} runs {'updated' if args.apply else 'would change'}")
+    print(
+        f"\n{changed} of {len(runs)} runs {'updated' if args.apply else 'would change'}"
+    )
     if not args.apply and changed:
         print("re-run with --apply to write")
 

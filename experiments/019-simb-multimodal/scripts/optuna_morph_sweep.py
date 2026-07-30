@@ -138,9 +138,7 @@ def objective(trial: optuna.Trial) -> float:
 
 
 def main() -> None:
-    sampler = optuna.samplers.TPESampler(
-        seed=WORKER_ID, multivariate=True, group=True
-    )
+    sampler = optuna.samplers.TPESampler(seed=WORKER_ID, multivariate=True, group=True)
     study = optuna.create_study(
         study_name=STUDY_NAME,
         storage=STORAGE,
@@ -158,7 +156,9 @@ def main() -> None:
     study.optimize(objective, n_trials=N_TRIALS, catch=(Exception,))
 
     if WORKER_ID == 0:
-        print(f"[worker 0] best value={study.best_value:.4f} params={study.best_params}")
+        print(
+            f"[worker 0] best value={study.best_value:.4f} params={study.best_params}"
+        )
 
 
 if __name__ == "__main__":

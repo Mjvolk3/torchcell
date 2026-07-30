@@ -1,0 +1,37 @@
+[
+  {
+    "contract": "C1_masked_mean_selects",
+    "pass": true,
+    "detail": "got 1.000000 vs expected 1.000000"
+  },
+  {
+    "contract": "C2_none_is_identity",
+    "pass": true,
+    "detail": "none=0.54242224 explicit_none=0.54242224 all_true=0.54242224"
+  },
+  {
+    "contract": "C3_revealed_zero_grad",
+    "pass": true,
+    "detail": "|grad| hidden=0.4941 revealed=0.000e+00"
+  },
+  {
+    "contract": "C4_nested_sets",
+    "pass": true,
+    "detail": "M_k subset M_{k+1} for every consecutive pair"
+  },
+  {
+    "contract": "C5_reveal_counts",
+    "pass": true,
+    "detail": "per-row revealed = [0, 5, 10, 20, 40] (expected [0, 5, 10, 20, 40])"
+  },
+  {
+    "contract": "C7_unsupervised_rows_reveal_nothing",
+    "pass": true,
+    "detail": "revealed entries on unsupervised rows = 0"
+  },
+  {
+    "contract": "C6_scatter_is_gather_inverse",
+    "pass": true,
+    "detail": "round-trip exact=True, no mass off the mapped nodes=True"
+  }
+]

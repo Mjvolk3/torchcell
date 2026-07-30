@@ -98,9 +98,7 @@ def _deletion(record: dict[str, Any]) -> str:
     return "|".join(names)
 
 
-def _matrix(
-    records: list[dict[str, Any]], genes: list[str], field: str
-) -> np.ndarray:
+def _matrix(records: list[dict[str, Any]], genes: list[str], field: str) -> np.ndarray:
     """[n_strains, n_genes] from the per-gene dicts, NaN where a gene is absent."""
     out = np.full((len(records), len(genes)), np.nan, dtype=np.float64)
     for i, rec in enumerate(records):
@@ -153,7 +151,9 @@ def main() -> None:
     kem_genes = set(kem[0]["experiment"]["phenotype"]["expression_log2_ratio"])
     sam_genes = set(sam[0]["experiment"]["phenotype"]["expression_log2_ratio"])
     genes = sorted(kem_genes & sam_genes)
-    print(f"reporter genes: kemmeren={len(kem_genes)} sameith={len(sam_genes)} shared={len(genes)}")
+    print(
+        f"reporter genes: kemmeren={len(kem_genes)} sameith={len(sam_genes)} shared={len(genes)}"
+    )
 
     M_kem = _matrix(kem, genes, "expression_log2_ratio")
     SE_kem = _matrix(kem, genes, "expression_log2_ratio_se")
@@ -180,7 +180,11 @@ def main() -> None:
 
     # ---- ROUTE B: cross-study Kemmeren vs Sameith on the shared deletions ----
     kem_by_del = {_deletion(r): i for i, r in enumerate(kem)}
-    pairs = [(kem_by_del[d], i) for i, r in enumerate(sam) if (d := _deletion(r)) in kem_by_del]
+    pairs = [
+        (kem_by_del[d], i)
+        for i, r in enumerate(sam)
+        if (d := _deletion(r)) in kem_by_del
+    ]
     print(f"\nshared single deletions (Kemmeren AND Sameith): {len(pairs)}")
 
     X = M_kem[[k for k, _ in pairs], :]
@@ -302,12 +306,17 @@ def main() -> None:
     print(f"  cross-check, variance-decomposition route (Route B): {xcheck:.3f}")
     print(f"  observed {OBS:.3f} -> {100 * OBS / primary:.0f}% of ceiling")
     print("  SUPERSEDES 0.092 (p-value inversion) and Route A 0.061 -- both use an")
-    print("  SE that overstates noise ~10x in variance, and both are VIOLATED by 0.109.")
+    print(
+        "  SE that overstates noise ~10x in variance, and both are VIOLATED by 0.109."
+    )
     print("=" * 68)
     results["verdict"] = {
         "primary_ceiling": primary,
         "cross_check_sqrt_test_retest": xcheck,
-        "superseded_estimates": {"p_value_inversion": 0.092, "route_a_reported_se": hi_a}
+        "superseded_estimates": {
+            "p_value_inversion": 0.092,
+            "route_a_reported_se": hi_a,
+        }
         if (hi_a := results["route_a_within_study"]["mean_ceiling"])
         else {},
     }

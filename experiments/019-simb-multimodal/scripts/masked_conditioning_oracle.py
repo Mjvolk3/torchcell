@@ -123,7 +123,11 @@ def per_feature_pearson(pred: np.ndarray, true: np.ndarray) -> float:
 
 
 def conditional_mean(
-    R_fit: np.ndarray, R_eval: np.ndarray, obs: np.ndarray, unobs: np.ndarray, lam: float
+    R_fit: np.ndarray,
+    R_eval: np.ndarray,
+    obs: np.ndarray,
+    unobs: np.ndarray,
+    lam: float,
 ) -> np.ndarray:
     """E[R_U | R_M] = Sigma_UM (Sigma_MM + lam I)^{-1} R_M, Sigma from R_fit only.
 
@@ -182,7 +186,9 @@ def main() -> None:
             out["results"].append(
                 {"m": 0, "lam": None, "val_mean": 0.0, "val_sd": 0.0, "per_draw": []}
             )
-            print(f"m={0:>5}  val pearson_per_feature = 0.0000  (floor, by construction)")
+            print(
+                f"m={0:>5}  val pearson_per_feature = 0.0000  (floor, by construction)"
+            )
             continue
 
         per_draw = []

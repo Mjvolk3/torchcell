@@ -61,7 +61,7 @@ PROJECT_ROOT="${W5_PROJECT_ROOT:-/home/a-m/mjvolk3/projects/torchcell.worktrees/
 SIF="${W5_SIF:-/home/a-m/mjvolk3/projects/torchcell/rockylinux_9.sif}"
 ARM_SH="$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/gh_expr_008_arm.sh"
 
-STAGE="${W5_STAGE:?set W5_STAGE=canary|h2|probe via --export=ALL,W5_STAGE=...}"
+STAGE="${W5_STAGE:?set W5_STAGE=canary|h2|probe|long via --export=ALL,W5_STAGE=...}"
 
 # SEEDS ARE INIT-ONLY. cgt_expr_011 pins data_module.split_seed=0, so every run reads the
 # SAME index_seed_0.json and these vary weight initialization only. That also removes the old
@@ -94,12 +94,34 @@ case "$STAGE" in
   probe)  ARMS=(W_ref P_lr1e4 P_lr3e5 H1_nodrop); SEEDS=(0 1)
           RUNS_PER_GPU=1
           EXTRA_OV="trainer.max_epochs=400 trainer.train_eval_every=5" ;;
+  # LONG -- the H1 question taken to its limit on ONE A100. The 1500-epoch GH runs showed
+  # (a) eval-mode TRAIN pearson still rising at 0.64-0.72 with max == last in 4 of 4 runs, and
+  # (b) val pearson dipping around epoch 200-300 and then climbing past its early peak to a
+  # project-best 0.1980 at epoch 1367. Neither had plateaued, so the cap was still the binding
+  # constraint rather than the model. 10000 epochs is deliberately far past where anything is
+  # expected to move; it can be cancelled the moment the curves flatten or turn over, and
+  # ModelCheckpoint now keeps best-by-loss AND best-by-metric AND last, so cancelling costs
+  # nothing.
+  #
+  # Reference for reading the train side: the replicate-based expression ceiling is 0.775
+  # (mean_g sqrt(rho_g), notes/experiments.019-simb-multimodal.scripts.expression_ceiling_replicate).
+  # traineval already sits at 0.64-0.72, i.e. the model is approaching the point where it fits
+  # TRAIN as well as the experiment reproduces itself -- past that, additional train fit is
+  # fitting measurement noise by construction.
+  #
+  # train_eval_every=10 rather than 5: the eval-mode pass costs ~65 s on its own (it sweeps
+  # 4074 train records against validation's 534), so at every=5 it would add ~13 s to every
+  # epoch and cost ~36 h across 10000 of them. At every=10 that halves and still yields 1000
+  # curve points.
+  long)   ARMS=(W_ref); SEEDS=(0 1)
+          RUNS_PER_GPU=2
+          EXTRA_OV="trainer.max_epochs=10000 trainer.train_eval_every=10" ;;
   # CANARY -- one fast_dev_run to prove container + conda + PYTHONPATH + LMDB path before a
   # wave is committed to the queue. Exits in minutes.
   canary) ARMS=(X_mix); SEEDS=(0)
           RUNS_PER_GPU=1
           EXTRA_OV="trainer.fast_dev_run=true" ;;
-  *) echo "unknown W5_STAGE '$STAGE' (expected canary|h2|probe)" >&2; exit 1 ;;
+  *) echo "unknown W5_STAGE '$STAGE' (expected canary|h2|probe|long)" >&2; exit 1 ;;
 esac
 
 # SEED-MAJOR, so each task's co-resident runs are DIFFERENT arms rather than three copies of

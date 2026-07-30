@@ -1248,6 +1248,31 @@ class MultitaskCGTTask(L.LightningModule):
                 .to(self.device)
             )
             self.log(f"{stage}/{pheno}/pred_sd_ratio", sd_ratio, sync_dist=True)
+            # MSE AND NMSE -- added because the training LOSS moves OPPOSITE the metric we
+            # actually care about on this task, so neither one alone is readable.
+            # Measured on the H1 long runs: val/expression/loss bottoms at epoch ~103-136 and
+            # then rises to 0.270-0.293 by epoch 1500, while val pearson RISES the whole way,
+            # from ~0.13 to 0.198. The quantile loss is a proper score dominated by the
+            # predictive spread (pred_sd_ratio climbs 0.001 -> 0.52 over the same span), so it
+            # penalises the model for committing to bolder predictions even as the ORDERING
+            # improves. A plain squared error on the point prediction has no such term.
+            #
+            # `nmse` is the scale-free one and the one to read: it divides per-feature squared
+            # error by that feature's variance, so 1.0 is exactly "predict each gene's mean"
+            # and anything below 1.0 is real predictive value. Unlike pearson it is NOT
+            # invariant to scale, so the two together separate "right ordering" from "right
+            # magnitude" -- which is the distinction the loss/metric divergence turns on.
+            mse = ((pred - target) ** 2).mean().to(self.device)
+            self.log(f"{stage}/{pheno}/mse", mse, sync_dist=True)
+            nmse = (
+                (
+                    ((pred - target) ** 2).mean(dim=0)
+                    / target.var(dim=0, unbiased=False).clamp_min(1e-8)
+                )
+                .mean()
+                .to(self.device)
+            )
+            self.log(f"{stage}/{pheno}/nmse", nmse, sync_dist=True)
             if feat_dim > 1:
                 # Per-instance runs on the NORMALIZED features (comparable scales); falls back
                 # to the raw cache for heads that are not normalized (the two coincide there).
@@ -2643,6 +2668,23 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
             monitor=ckpt_monitor,
             mode=ckpt_mode,
             filename=f"{job_id}-best-{{epoch:02d}}",
+        ),
+        # BEST-BY-METRIC, alongside best-by-loss. 010 has carried this trio (best-mse,
+        # best-pearson, last) since inception and 019 never did -- it kept only best-by-loss,
+        # which on this task selects the WRONG model. Measured on the H1 long runs: val loss
+        # bottoms at epoch ~103-136 while val pearson keeps climbing to epoch ~1367-1508, so
+        # every "best" checkpoint 019 has ever saved for expression is the early-dip model,
+        # not the best one. Both are kept because they answer different questions: the loss
+        # checkpoint is the calibrated predictor, the pearson checkpoint is the one that
+        # ranks strains correctly, and on this task they are ~1300 epochs apart.
+        ModelCheckpoint(
+            dirpath=osp.join(model_base_path, group),
+            save_top_k=int(_ckpt_cfg.get("metric_save_top_k", 1)),
+            monitor=str(
+                _ckpt_cfg.get("metric_monitor", "val/mean/pearson_per_feature")
+            ),
+            mode="max",
+            filename=f"{job_id}-best-metric-{{epoch:02d}}",
         ),
         ModelCheckpoint(
             dirpath=osp.join(model_base_path, group),

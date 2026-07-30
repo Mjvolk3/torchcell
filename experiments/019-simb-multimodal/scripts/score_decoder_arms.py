@@ -93,6 +93,11 @@ WAVE_BOUNDARIES = [
     # the manual softmax path, so a wave4b run is not comparable to a wave3/wave4a run even
     # at an identical seed -- this boundary is what stops them being pooled.
     ("2026-07-30T01:38:57", "wave4b"),
+    # wave5: cgt_expr_011 -- the PARTITION is pinned (split_seed 0) so `seed` varies
+    # initialization only, and the eval-mode train metric (`traineval/*`) is logged. A wave5
+    # run is therefore not comparable to any earlier run even at an identical seed, because
+    # "seed 3" no longer means the same validation set.
+    ("2026-07-30T05:07:59", "wave5"),
 ]
 
 
@@ -198,6 +203,28 @@ def main() -> None:
             {
                 "arm": arm_label(run),
                 "wave": wave_of(run.created_at),
+                # POOL = GPU TYPE. Wave 5 ran the SAME arms on GilaHyper RTX 6000 Ada and on
+                # IGB A100s, so a groupby on (wave, arm) alone would silently average two
+                # hardware pools together -- the exact defect that made _007's rankings
+                # uninterpretable (A100 mean 0.0242 vs Ada 0.0182 on identical arms). Each
+                # pool co-launches its own reference, so pairing must happen WITHIN a pool.
+                # POOL = HOST, not gpu_type. gpu_type alone is NOT sufficient: IGB's cabbi
+                # partition reports the identical device string to GilaHyper
+                # ("NVIDIA RTX 6000 Ada Ge") even though SLURM advertises it as RTX6000, so
+                # keying on the model silently merged GilaHyper's 2-runs-per-GPU runs with
+                # cabbi's 1-run-per-GPU probes -- different packing, and it produced a
+                # duplicate (arm, seed) that crashed the paired report. The host is the thing
+                # that actually fixes hardware AND packing regime together.
+                "pool": (run.metadata or {}).get("host", "unknown"),
+                # BUDGET completes the pairing key. Within one (wave, pool) the SAME arm and
+                # seed can appear from two different stages at different epoch caps -- wave 5
+                # ran mask depth at 400 and the H2 replication at 300, both with their own
+                # W_ref at seeds 0-3 on the same GPU type. Keying on (wave, pool, arm, seed)
+                # alone made `ref_by_seed[seed]` return TWO rows, so the "delta" became a
+                # Series and the report crashed. Runs at different budgets are not comparable
+                # anyway (the scored statistic is a max over epochs, whose selection bias
+                # grows with the number of epochs run), so the budget belongs in the key.
+                "budget": int(round(len(series) / 50.0) * 50),
                 "source_hash": (run.config.get("source") or {}).get("git_hash", "")[:8],
                 "seed": run.config.get("seed"),
                 "run_id": run.id,
@@ -214,14 +241,14 @@ def main() -> None:
     if not rows:
         raise SystemExit(f"no finished runs with '{METRIC}' in {args.project}")
 
-    df = pd.DataFrame(rows).sort_values(["wave", "arm", "seed"]).reset_index(drop=True)
+    df = pd.DataFrame(rows).sort_values(["wave", "pool", "budget", "arm", "seed"]).reset_index(drop=True)
 
     # GROUPED BY (wave, arm) -- NEVER by arm alone. Two runs of the same arm on opposite
     # sides of a source edit are different experiments, and averaging them reports the
     # edit as if it were seed variance.
-    per_arm: dict[tuple[str, str], dict[str, float]] = defaultdict(dict)
-    for (wave, arm), grp in df.groupby(["wave", "arm"]):
-        per_arm[(str(wave), str(arm))] = {
+    per_arm: dict[tuple[str, str, str, str], dict[str, float]] = defaultdict(dict)
+    for (wave, pool, budget, arm), grp in df.groupby(["wave", "pool", "budget", "arm"]):
+        per_arm[(str(wave), str(pool), str(budget), str(arm))] = {
             "n_seeds": len(grp),
             "smoothed_mean": grp["smoothed"].mean(),
             "smoothed_spread": grp["smoothed"].max() - grp["smoothed"].min(),
@@ -231,8 +258,8 @@ def main() -> None:
 
     summary = (
         pd.DataFrame(per_arm)
-        .T.reset_index(names=["wave", "arm"])
-        .sort_values(["wave", "smoothed_mean"], ascending=[True, False])
+        .T.reset_index(names=["wave", "pool", "budget", "arm"])
+        .sort_values(["wave", "pool", "budget", "smoothed_mean"], ascending=[True, True, True, False])
     )
 
     print(f"\nPER-RUN (window={args.window})")
@@ -253,13 +280,13 @@ def main() -> None:
     # previously pooled paired sd of 0.0039 is NOT used: it is heteroscedastic across arms
     # (0.0055 vs 0.00084, F(2,2)=42.9, p~0.023), it was measured only on arms that are
     # exact identities at init, and it was measured pre-edit.
-    for wave, wave_df in df.groupby("wave"):
+    for (wave, pool, budget), wave_df in df.groupby(["wave", "pool", "budget"]):
         ref = wave_df[wave_df["arm"] == args.reference]
         if ref.empty:
-            print(f"\n{wave}: no in-wave reference '{args.reference}' -- no paired report")
+            print(f"\n{wave} / {pool} / {budget}ep: no in-pool reference '{args.reference}'")
             continue
         ref_by_seed = ref.set_index("seed")["smoothed"]
-        print(f"\nPAIRED vs {args.reference} ({wave})")
+        print(f"\nPAIRED vs {args.reference} ({wave} / {pool} / {budget}ep)")
         for arm, grp in wave_df.groupby("arm"):
             if arm == args.reference:
                 continue

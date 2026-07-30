@@ -1243,6 +1243,14 @@ class MultitaskCGTTask(L.LightningModule):
                 self._cache_masked_metric(
                     head, head_outputs, targets, masks, hidden, k, stage
                 )
+                # k=0 reveals nothing, so this pass IS the unconditioned model. Cache it
+                # under the STANDARD namespace as well, so `val/mean/pearson_per_feature`
+                # exists with exactly its usual meaning: the scorer reads that key, the
+                # best-metric ModelCheckpoint monitors it, and without it a v9 run cannot
+                # be compared to any v8 arm. (Its absence is what crashed job 1439 --
+                # fast_dev_run disables checkpointing, so the smoke test never hit it.)
+                if n_reveal == 0:
+                    self._cache_epoch_metric(stage, head_outputs, targets, masks)
 
         self.log(f"{stage}/loss", total, batch_size=bsz, sync_dist=True)
         return total
@@ -1381,6 +1389,26 @@ class MultitaskCGTTask(L.LightningModule):
         #     is only meaningful on comparably-scaled features -- on raw multi-scale CalMorph
         #     values it would be dominated by the largest-magnitude features. Computing it on
         #     the z-scored/normalized features is what makes it a real shape diagnostic.
+        self._cache_epoch_metric(stage, head_outputs, targets, masks)
+        return cast(torch.Tensor, total)
+
+    def _cache_epoch_metric(
+        self,
+        stage: str,
+        head_outputs: dict[str, torch.Tensor],
+        targets: dict[str, torch.Tensor],
+        masks: dict[str, torch.Tensor],
+    ) -> None:
+        """Cache (pred, target) in BOTH spaces for the epoch Pearson + calibration metrics.
+
+        Factored out so the masked-label path can publish the SAME canonical metrics at
+        k=0. At k=0 nothing is revealed, so the forward pass is identical to the
+        unconditioned model and `val/mean/pearson_per_feature` is directly comparable to
+        every non-masked arm -- which is what the scorer reads and what the best-metric
+        checkpoint monitors. Duplicating the logic instead of sharing it would let the two
+        drift, and a metric that silently means something different per config is worse
+        than no metric.
+        """
         for name, pred in head_outputs.items():
             if name not in targets:
                 continue
@@ -1413,7 +1441,6 @@ class MultitaskCGTTask(L.LightningModule):
                     self._calib_cache.setdefault(stage, {}).setdefault(name, []).append(
                         dist_head.pit(pred, targets[name], m).float().cpu()
                     )
-        return cast(torch.Tensor, total)
 
     def training_step(self, batch: HeteroData, batch_idx: int) -> torch.Tensor:
         """Masked multitask training step."""

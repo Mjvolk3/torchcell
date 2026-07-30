@@ -23,10 +23,13 @@ So this script reports, per run, whether each series had actually stopped moving
     the clip threshold -- the train side is what tells us whether the optimizer still had
     somewhere to go.
 
-EVERY KEY IS READ ONE AT A TIME via ``scan_history(keys=[k])``. A multi-key
+SERIES ARE ALIGNED ON THE LOGGED ``epoch``, NOT ON ROW POSITION, and the full history is
+pulled in ONE unfiltered ``scan_history()``. Both choices are load-bearing. A multi-key
 ``history(keys=[...])`` silently returns ZERO rows when any requested key is not co-logged
-in the same step as the others, which is why the train-side series went unread in this
-project for several rounds. Do not "optimize" this into one multi-key call.
+in the same step as the others -- that is why the train-side series went unread in this
+project for several rounds -- and a per-key pull stacked by row index silently mislabels a
+step-level series as epochs, which is how the train-loss trend came to be measured on
+batch noise (``train/expression/loss`` logs 3.90x per epoch).
 
 Usage
 -----
@@ -66,6 +69,8 @@ SERIES_KEYS = [
     "gate/perturbation_transform.null_bias",
 ]
 VAL_METRIC = "val/mean/pearson_per_feature"
+# The gate exists only on the null-sink arm, so it is the one key allowed to be absent.
+GATE_KEY = "gate/perturbation_transform.null_bias"
 
 
 def parse_args() -> argparse.Namespace:
@@ -134,16 +139,41 @@ def main() -> None:
 
     for run in sorted(runs, key=lambda r: (arm_of(r), r.config.get("seed", -1))):
         arm, seed = arm_of(run), run.config.get("seed")
-        # ONE KEY PER scan_history CALL -- see module docstring.
-        series: dict[str, pd.Series] = {}
+        # JOIN ON THE LOGGED `epoch`, NEVER ON ROW POSITION.
+        #
+        # The first version pulled each key with its own scan_history(keys=[k]) and stacked
+        # the resulting lists side by side, treating row INDEX as the epoch. That is wrong
+        # whenever two keys log at different rates, and they do: the val metrics, train
+        # pearson, grad_norm and the gate log once per epoch (300 rows), while
+        # `train/expression/loss` logs per OPTIMIZER STEP -- 1171 rows for 300 epochs
+        # (1200 for seed 1), i.e. 3.90 rows per epoch. So a column labelled `epoch` held a
+        # step index for that one series, "the last 100 epochs" was really the last 25.6,
+        # and the endpoint values were single-batch samples rather than epoch aggregates.
+        # Every train-loss trend computed off the old CSV was measuring batch noise.
+        #
+        # Fix: pull the FULL history once (no key filter, so nothing can be dropped by the
+        # multi-key co-logging trap either) and aggregate by the logged `epoch`. Mean is
+        # correct for both rates: it is the epoch-mean loss for a step-level series, and
+        # the identity for a series that already has exactly one row per epoch.
+        raw = pd.DataFrame(run.scan_history())
+        if "epoch" not in raw:
+            raise ValueError(f"run {run.id} logs no `epoch` key; cannot align series")
+        present = [k for k in SERIES_KEYS if k in raw]
+        missing = [k for k in SERIES_KEYS if k not in raw and k != GATE_KEY]
+        if missing:
+            raise ValueError(f"run {run.id} is missing expected keys: {missing}")
+        frame = (
+            raw[["epoch", *present]]
+            .apply(pd.to_numeric, errors="coerce")
+            .groupby("epoch", as_index=False)
+            .mean()
+            .sort_values("epoch")
+            .reset_index(drop=True)
+        )
         for key in SERIES_KEYS:
-            vals = [
-                r[key] for r in run.scan_history(keys=[key]) if r.get(key) is not None
-            ]
-            series[key] = pd.Series(vals, dtype=float)
-
-        frame = pd.DataFrame(series)
-        frame.insert(0, "epoch", frame.index)
+            if key not in frame:
+                frame[key] = pd.Series(dtype=float)
+        series = {key: frame[key] for key in SERIES_KEYS}
         frame.insert(0, "seed", seed)
         frame.insert(0, "arm", arm)
         frame.insert(0, "run_id", run.id)
@@ -236,9 +266,7 @@ def main() -> None:
     for arm, grp in conv.groupby("arm"):
         if arm == "R_ref":
             continue
-        d = pd.Series(
-            {int(r.seed): r.roll_max - ref[r.seed] for r in grp.itertuples()}
-        )
+        d = pd.Series({int(r.seed): r.roll_max - ref[r.seed] for r in grp.itertuples()})
         from scipy import stats
 
         half = stats.t.ppf(0.975, len(d) - 1) * d.sem()
@@ -254,7 +282,9 @@ def main() -> None:
     for arm, grp in conv.groupby("arm"):
         if arm == "R_ref":
             continue
-        d = pd.Series({int(r.seed): r.roll_end - ref_e[r.seed] for r in grp.itertuples()})
+        d = pd.Series(
+            {int(r.seed): r.roll_end - ref_e[r.seed] for r in grp.itertuples()}
+        )
         from scipy import stats
 
         half = stats.t.ppf(0.975, len(d) - 1) * d.sem()
@@ -263,7 +293,9 @@ def main() -> None:
             f"  {arm:<12} n={len(d)} mean {d.mean():+.4f} 95% CI +/-{half:.4f} [{verdict}]"
         )
 
-    results_dir = osp.join(os.environ["EXPERIMENT_ROOT"], "019-simb-multimodal", "results")
+    results_dir = osp.join(
+        os.environ["EXPERIMENT_ROOT"], "019-simb-multimodal", "results"
+    )
     os.makedirs(results_dir, exist_ok=True)
     h_out = osp.join(results_dir, f"wave_history_{args.stage_tag}.csv")
     c_out = osp.join(results_dir, f"wave_convergence_{args.stage_tag}.csv")

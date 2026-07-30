@@ -78,7 +78,29 @@ case "$STAGE" in
   # 300 epochs to match the mmli budget, so the two are at least reduced the same way.
   h2gh)      ARMS=(W_ref X_mix X_mix_rezero); SEEDS=(0 1 2 3)
              EXTRA_OV="trainer.max_epochs=300 trainer.train_eval_every=5" ;;
-  *) echo "unknown W5_STAGE '$STAGE' (expected h1|maskdepth|h2gh)" >&2; exit 1 ;;
+  # THROUGHPUT BENCH -- the launch blocker, not science. Wave 6 targets 5,000 epochs in
+  # 24 h = 17.3 s/epoch, and the best rate measured so far is 32 s/epoch (2 runs/GPU,
+  # 7 workers); 3 workers gave 270 s/epoch with the A100 at 0% util, i.e. dataloader-starved.
+  #
+  # The lever being tested is BATCH SIZE. The encoder runs on the WILDTYPE graph at batch 1,
+  # so its cost C_enc is paid once per STEP regardless of B, and per-epoch cost is
+  # ceil(n/B) * (C_enc + B*C_pert). At the current B=8 that is ~155 steps to process 1,244
+  # strains -- the dominant cost paid 155 times. B=32 should cut the C_enc term ~4x.
+  #
+  # Each task is ONE (batch, packing) cell, 60 epochs, and the answer is read from
+  # `perf/epoch_seconds` (median over the last 40 epochs) rather than job elapsed, so
+  # dataset load and startup are excluded.
+  #
+  #   sbatch --array=0-3%4 --export=ALL,W5_STAGE=bench<N> ... one cell per task, see below.
+  bench_b8_p2)  ARMS=(W_ref W_ref); SEEDS=(0); STAGE_RUNS_PER_GPU=2
+                EXTRA_OV="trainer.max_epochs=60 trainer.train_eval_every=0 data_module.batch_size=8" ;;
+  bench_b32_p2) ARMS=(W_ref W_ref); SEEDS=(0); STAGE_RUNS_PER_GPU=2
+                EXTRA_OV="trainer.max_epochs=60 trainer.train_eval_every=0 data_module.batch_size=32" ;;
+  bench_b8_p3)  ARMS=(W_ref W_ref W_ref); SEEDS=(0); STAGE_RUNS_PER_GPU=3
+                EXTRA_OV="trainer.max_epochs=60 trainer.train_eval_every=0 data_module.batch_size=8" ;;
+  bench_b32_p3) ARMS=(W_ref W_ref W_ref); SEEDS=(0); STAGE_RUNS_PER_GPU=3
+                EXTRA_OV="trainer.max_epochs=60 trainer.train_eval_every=0 data_module.batch_size=32" ;;
+  *) echo "unknown W5_STAGE '$STAGE' (expected h1|maskdepth|h2gh|bench_*)" >&2; exit 1 ;;
 esac
 
 JOBS=()
@@ -88,7 +110,7 @@ for arm in "${ARMS[@]}"; do
   done
 done
 
-RUNS_PER_GPU=2
+RUNS_PER_GPU="${STAGE_RUNS_PER_GPU:-2}"
 TASK="${SLURM_ARRAY_TASK_ID:?this script must be submitted with --array}"
 START=$((TASK * RUNS_PER_GPU))
 if [[ "$START" -ge "${#JOBS[@]}" ]]; then

@@ -83,6 +83,7 @@ import os.path as osp
 import shutil
 import socket
 import subprocess
+import time
 import uuid
 from typing import Any, cast
 
@@ -880,6 +881,8 @@ class MultitaskCGTTask(L.LightningModule):
         # is the default for every pre-existing arm, so none of them changes cost or output.
         # Set by main() from `trainer.train_eval_every`.
         self.train_eval_every: int = 0
+        # Wall clock for perf/epoch_seconds; None until the first epoch starts.
+        self._epoch_t0: float | None = None
         self.save_hyperparameters(
             ignore=["model", "cell_graph", "head_align", "target_stats"]
         )
@@ -1351,8 +1354,16 @@ class MultitaskCGTTask(L.LightningModule):
             print(f"[{stage} epoch {self.current_epoch}] " + "  ".join(sorted(parts)))
 
     def on_train_epoch_start(self) -> None:
-        """Reset the train epoch metric cache (Part B)."""
+        """Reset the train epoch metric cache (Part B) and stamp the epoch start.
+
+        The timestamp feeds `perf/epoch_seconds`. Throughput was inferred all round from
+        (job elapsed / epochs reached), which folds in dataset load and process startup and
+        so understates the steady-state rate -- and the bias is not a fixed offset, because
+        setup is constant while epoch cost scales with batch size and GPU co-residency.
+        Logging the interval directly makes every packing/batch question a one-line query.
+        """
         self._metric_cache["train"] = {}
+        self._epoch_t0 = time.monotonic()
 
     def on_validation_epoch_start(self) -> None:
         """Reset the val epoch metric + calibration caches (Parts B, C)."""
@@ -1403,6 +1414,10 @@ class MultitaskCGTTask(L.LightningModule):
 
     def on_train_epoch_end(self) -> None:
         """Reduce + log epoch per-feature Pearson, then print aggregated train metrics."""
+        if self._epoch_t0 is not None:
+            self.log(
+                "perf/epoch_seconds", time.monotonic() - self._epoch_t0, sync_dist=False
+            )
         self._reduce_epoch_pearson("train")
         self._log_gates()
         self._print_epoch("train")

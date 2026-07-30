@@ -376,6 +376,7 @@ class EquivariantPerturbationTransform(nn.Module):
         num_layers: int = 1,
         ffn_mult: int = 4,
         extra_layer_ffn_mult: int | None = None,
+        hadamard: str = "off",
         null_sink: bool = False,
         null_sink_bias_init: float = -4.0,
         null_sink_trainable: bool = True,
@@ -412,6 +413,10 @@ class EquivariantPerturbationTransform(nn.Module):
             extra_layer_ffn_mult: FFN multiplier for blocks AFTER the first. ``None``
                 means every block uses ``ffn_mult``; a smaller value makes the extra
                 depth cheap, so "deeper" and "wider" stay separable as arms.
+            hadamard: ``off`` | ``replace`` | ``add``. ``replace`` swaps the additive
+                context for ``h_i * (1 + gamma(c_b))`` (no additive path, so at init the
+                model sees no perturbation); ``add`` keeps both and is the identity to the
+                additive reference at init. Either way a rank-d pair term versus rank 0.
             null_sink: Append one zero-valued key/value column to the perturbation
                 context, making the real-key weight ``sigmoid(q_i.k_p/sqrt(d) - b)``
                 and therefore dependent on the QUERYING gene. This is what supplies a
@@ -488,6 +493,45 @@ class EquivariantPerturbationTransform(nn.Module):
         # Dividing by sigmoid(-bias_init) restores the expected context norm at init, so the
         # arm differs from the reference by the QUERY-DEPENDENT GATE alone -- which is the
         # only thing it was built to test.
+        # HADAMARD ASSERTION. The default operator combines gene and strain ADDITIVELY --
+        # H_pert_i = g(h_i + c_b) -- so at |S|=1 nothing depends on the pair (p, i): c_b is
+        # one d-vector shared by all N genes. This mode instead ASSERTS the perturbation
+        # multiplicatively into every gene's channels,
+        #
+        #     H_pert_i = g( h_i * (1 + gamma(c_b)) ),   gamma: R^d -> R^d,
+        #
+        # which is a rank-d (=90) interaction between gene identity and strain, against the
+        # null sink's rank-9 (one bounded scalar per head) and the additive form's rank 0.
+        # gamma's final layer is zero-initialised so the block is the EXACT identity at init
+        # and the arm is a clean ablation: any movement is attributable to the mechanism, not
+        # to the extra parameters.
+        #
+        # TWO MODES, and the difference is not cosmetic.
+        #   "replace" -- H_pert_i = g(h_i * (1 + gamma(c_b))). The additive path is GONE, so
+        #       at init (gamma = 0) the block is the identity on h_i and the model sees NO
+        #       perturbation at all; it must learn the entire pathway through gamma. This is
+        #       "assertion instead of cross-attention" in its literal form, and it starts
+        #       from a strictly worse place than the reference rather than an equal one.
+        #   "add"     -- H_pert_i = g(h_i + c_b + h_i * gamma(c_b)). Identity to the ADDITIVE
+        #       REFERENCE at init, so it is a clean ablation: the multiplicative pair term is
+        #       added on top of a working model and any movement is attributable to it.
+        # Both are run, because "replace" answers the question that was asked and "add"
+        # is the one whose null result would be interpretable.
+        if hadamard not in ("off", "replace", "add"):
+            raise ValueError(
+                f"hadamard must be 'off' | 'replace' | 'add', got {hadamard!r}"
+            )
+        self.hadamard = hadamard
+        self.hadamard_gamma: nn.Sequential | None = None
+        if hadamard != "off":
+            self.hadamard_gamma = nn.Sequential(
+                nn.Linear(hidden_dim, hidden_dim),
+                nn.ReLU(),
+                nn.Linear(hidden_dim, hidden_dim),
+            )
+            gamma_out = cast(nn.Linear, self.hadamard_gamma[-1])
+            nn.init.zeros_(gamma_out.weight)
+            nn.init.zeros_(gamma_out.bias)
         self.null_sink = null_sink
         self.null_scale = 1.0
         if null_sink:
@@ -670,6 +714,13 @@ class EquivariantPerturbationTransform(nn.Module):
                     attended = attended.squeeze(0)  # [N, d]
                 else:
                     attended = torch.zeros_like(H_cur)
+                if self.hadamard_gamma is not None:
+                    # x + x*gamma(c) == x*(1 + gamma(c)), so routing the modulation through
+                    # the EXISTING residual keeps postln/rezero, dropout and the FFN
+                    # byte-identical between this arm and the reference; only the meaning of
+                    # `attended` changes. "add" keeps the additive context alongside it.
+                    mod = H_cur * self.hadamard_gamma(attended)
+                    attended = mod if self.hadamard == "replace" else attended + mod
                 if first_context is None:
                     first_context = attended
                 H_cur = self._apply_residual(H_cur, attended, layer_idx)
@@ -1996,6 +2047,7 @@ class CellGraphTransformer(nn.Module):
                 if pert_head_config.get("extra_layer_ffn_mult") is None
                 else int(pert_head_config["extra_layer_ffn_mult"])
             ),
+            hadamard=str(pert_head_config.get("hadamard", "off")),
             null_sink=bool(pert_head_config.get("null_sink", False)),
             null_sink_bias_init=float(
                 pert_head_config.get("null_sink_bias_init", -4.0)
@@ -2128,7 +2180,14 @@ class CellGraphTransformer(nn.Module):
                 in_mult=(3 if pg_cfg.get("concat_context", False) else 1)
                 + (2 if pg_cfg.get("pert_set_context", False) else 0),
                 extra_dim=int(pg_cfg.get("bilinear_rank", 0)),
-                film_dim=(2 * hidden_channels)
+                # film_dim = hidden_channels, NOT 2*hidden_channels. The conditioner is
+                # fed z_S ALONE (see the call site). `pert_cond` is [z_S ; h_CLS], and
+                # h_CLS comes from the encoder on the WILDTYPE graph, so it is
+                # byte-identical for every strain in the batch -- measured across-strain
+                # sd 0.0, against 0.973 for z_S. Feeding it meant half the conditioner's
+                # first-layer weights saw a constant and could only contribute a fixed
+                # offset, i.e. half the FiLM parameters were structurally inert.
+                film_dim=hidden_channels
                 if pg_cfg.get("film_on_pert_set", False)
                 else 0,
             )
@@ -2802,8 +2861,9 @@ class CellGraphTransformer(nn.Module):
                 )
             if self.bilinear is not None:
                 pg_in = torch.cat([pg_in, self.bilinear(H_genes, pert_context)], dim=-1)
+            # z_S ONLY as the FiLM conditioner -- pert_cond's h_CLS half is strain-constant.
             head_outputs["per_gene"] = self.per_gene_head(
-                pg_in, film_cond=pert_cond if self.per_gene_film else None
+                pg_in, film_cond=z_S if self.per_gene_film else None
             )
             if self.response_basis is not None:
                 assert pert_cond is not None, (

@@ -61,7 +61,7 @@ PROJECT_ROOT="${W5_PROJECT_ROOT:-/home/a-m/mjvolk3/projects/torchcell.worktrees/
 SIF="${W5_SIF:-/home/a-m/mjvolk3/projects/torchcell/rockylinux_9.sif}"
 ARM_SH="$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/gh_expr_008_arm.sh"
 
-STAGE="${W5_STAGE:?set W5_STAGE=canary|h2|probe|long via --export=ALL,W5_STAGE=...}"
+STAGE="${W5_STAGE:?set W5_STAGE=canary|h2|probe|long|wave6 via --export=ALL,W5_STAGE=...}"
 
 # SEEDS ARE INIT-ONLY. cgt_expr_011 pins data_module.split_seed=0, so every run reads the
 # SAME index_seed_0.json and these vary weight initialization only. That also removes the old
@@ -116,12 +116,22 @@ case "$STAGE" in
   long)   ARMS=(W_ref); SEEDS=(0 1)
           RUNS_PER_GPU=2
           EXTRA_OV="trainer.max_epochs=10000 trainer.train_eval_every=10" ;;
+  # WAVE 6 -- the pair-term rank ladder plus regularization, 12 arms, ONE seed, no replicates.
+  # 3 runs/GPU x 4 A100 = 12 slots. Measured 23.51 s/epoch at this packing and batch 32
+  # (jobs 1431-1434), so a 48 h walltime reaches ~7,350 of the 10,000-epoch cap -- the runs
+  # are EXPECTED to hit the wall, which is fine because ModelCheckpoint retains best-by-loss,
+  # best-by-metric and last. The noise floor is carried from wave 5's measured across-init
+  # sd of ~0.006 (n=8, fixed split) rather than spent on in-wave replicates.
+  wave6)  ARMS=(V_ref V_sink V_basis16 V_basis32 V_basis64 V_film V_hadamard V_hadamard_add
+                V_drop2 V_drop3 V_wd1e4 V_wd1e2); SEEDS=(0)
+          RUNS_PER_GPU=3; STAGE_CONFIG=cgt_expr_012
+          EXTRA_OV="" ;;
   # CANARY -- one fast_dev_run to prove container + conda + PYTHONPATH + LMDB path before a
   # wave is committed to the queue. Exits in minutes.
   canary) ARMS=(X_mix); SEEDS=(0)
           RUNS_PER_GPU=1
           EXTRA_OV="trainer.fast_dev_run=true" ;;
-  *) echo "unknown W5_STAGE '$STAGE' (expected canary|h2|probe|long)" >&2; exit 1 ;;
+  *) echo "unknown W5_STAGE '$STAGE' (expected canary|h2|probe|long|wave6)" >&2; exit 1 ;;
 esac
 
 # SEED-MAJOR, so each task's co-resident runs are DIFFERENT arms rather than three copies of
@@ -182,7 +192,7 @@ CONTAINER_ENV="source \$HOME/miniconda3/bin/activate && conda activate torchcell
 CONTAINER_ENV="$CONTAINER_ENV && export PYTHONPATH='$PROJECT_ROOT'"
 CONTAINER_ENV="$CONTAINER_ENV && export WANDB_MODE=offline WANDB__SERVICE_WAIT=600"
 CONTAINER_ENV="$CONTAINER_ENV && export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True"
-CONTAINER_ENV="$CONTAINER_ENV && export TORCHCELL_CONFIG=cgt_expr_011"
+CONTAINER_ENV="$CONTAINER_ENV && export TORCHCELL_CONFIG=${STAGE_CONFIG:-cgt_expr_011}"
 # SOURCE PROVENANCE MUST BE RESOLVED AT SUBMIT TIME, ON THE LOGIN NODE.
 #
 # Two canaries died establishing where git actually lives here. 2324270: the train script

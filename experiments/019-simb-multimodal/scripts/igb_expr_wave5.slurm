@@ -121,9 +121,16 @@ echo "gpus          : ${CUDA_VISIBLE_DEVICES:-unset}  ($RUNS_PER_GPU runs co-res
 echo "num_workers   : $NUM_WORKERS  (of $SLURM_CPUS_PER_TASK cpus)"
 echo "=========================================================="
 
+# `set -u` MUST be relaxed around the module/bashrc bootstrap. IGB's /etc/bashrc line 12
+# references BASHRCSOURCED before defining it, so under `set -u` sourcing it aborts the job
+# with "BASHRCSOURCED: unbound variable" -- which is exactly how the first canary (2324269)
+# died, before reaching python at all. Cluster init scripts are not ours to make -u clean, so
+# the strictness is dropped for the bootstrap and restored immediately after.
+set +u
 module purge
 source ~/.bashrc
 module load singularity
+set -u
 
 # ONE `singularity exec` PER RUN, not one container wrapping the whole loop. The loop lives in
 # the OUTER shell so every variable (arm, seed, paths, worker count) is expanded here and the
@@ -152,7 +159,9 @@ for k in $(seq 0 $((RUNS_PER_GPU - 1))); do
   LOG="$OUT_DIR/019-wave5-igb_${SLURM_ARRAY_JOB_ID}_${TASK}_${ARM}_seed${SEED}.out"
   echo "  launching $ARM seed=$SEED -> $LOG"
   singularity exec --nv "$SIF" bash -c "
-    set -euo pipefail
+    # -u omitted on purpose: conda's activate scripts reference unset variables, the same
+    # class of failure as /etc/bashrc above. -e and pipefail still catch real errors.
+    set -eo pipefail
     $CONTAINER_ENV
     export TORCHCELL_EXTRA_OVERRIDES='$EXTRA_OV trainer.early_stopping.enabled=false data_module.num_workers=$NUM_WORKERS'
     echo \"python: \$(which python)\"

@@ -52,12 +52,19 @@ export TORCHCELL_CONFIG=cgt_expr_011
 # initialization against a FIXED validation draw. That is the whole point: the old scheme had
 # one knob doing both, and the between-seed sd (0.0444) was 7.7x the across-arm sd (0.0058).
 case "$STAGE" in
-  # H1: 4 runs, 2000-epoch cap, eval-mode train metric every epoch. NO early stopping -- we
-  # want the whole train curve, and ModelCheckpoint already retains best-on-val-loss so a
-  # long cap costs nothing on the val side. At ~19 s/epoch plus the traineval pass this is
-  # ~13 h; the 23 h walltime leaves margin without needing a requeue chain.
+  # H1: 4 runs, 2000-epoch cap, NO early stopping -- we want the whole train curve, and
+  # ModelCheckpoint already retains best-on-val-loss so a long cap costs nothing on the val side.
+  #
+  # train_eval_every=5, NOT 1, and the reason is measured. The first submission (job 1417) ran
+  # every=1 and clocked 85 s/epoch -- reaching only epoch 17 in 24:04 -- against 36 s/epoch for
+  # the every=5 maskdepth stage in the same window. So the eval-mode train pass costs ~65 s on
+  # its own, which is unsurprising in hindsight: it sweeps the 1244-strain TRAIN split against
+  # validation's 155, i.e. ~8x the rows. At 85 s/epoch the 23 h walltime truncates at ~970
+  # epochs, short of the cap; at ~36 s/epoch the full 2000 fit with margin. Sampling the
+  # saturation curve every 5 epochs still yields 400 points, which is far more than a
+  # "has it stopped moving" question needs.
   h1)        ARMS=(H1_ref H1_nodrop); SEEDS=(0 1)
-             EXTRA_OV="trainer.max_epochs=2000 trainer.train_eval_every=1" ;;
+             EXTRA_OV="trainer.max_epochs=2000 trainer.train_eval_every=5" ;;
   # Mask depth: W_ref co-launched as the in-pool paired reference. 400 epochs brackets every
   # val-loss optimum observed in wave 4b (42-272) with margin.
   maskdepth) ARMS=(W_ref G_l3 G_l13); SEEDS=(0 1 2 3)

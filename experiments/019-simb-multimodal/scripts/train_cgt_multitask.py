@@ -80,6 +80,7 @@ import json
 import logging
 import os
 import os.path as osp
+import shutil
 import socket
 import subprocess
 import uuid
@@ -2031,22 +2032,43 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
     # (the config was identical), and neither can the git hash alone (this worktree runs
     # dirty). Record BOTH the commit and a hash of the working-tree diff, so any two runs
     # can be tested for source identity after the fact.
-    wandb_cfg["source"] = {
-        "git_hash": subprocess.run(
-            ["git", "-C", PROJECT_ROOT, "rev-parse", "HEAD"],
-            capture_output=True,
-            text=True,
-            check=True,
-        ).stdout.strip(),
-        "diff_sha256": hashlib.sha256(
-            subprocess.run(
-                ["git", "-C", PROJECT_ROOT, "diff", "HEAD"],
+    #
+    # THE LAUNCHER MAY SUPPLY THESE, AND ON IGB IT MUST. Runs there execute inside
+    # `rockylinux_9.sif`, a 62 MB image with NO git binary, so shelling out raised
+    # FileNotFoundError('git') and killed the job before the first epoch (canary 2324270).
+    # Reading them from the environment is also the BETTER provenance: the launcher resolves
+    # the commit on the host, outside the container, where the repo and git both exist.
+    # `shutil.which` is an explicit capability check, not an error-swallowing fallback -- if
+    # git is genuinely absent AND the launcher said nothing, that is recorded as
+    # "unavailable" rather than silently reported as some other commit.
+    env_hash = os.environ.get("TORCHCELL_SOURCE_GIT_HASH", "")
+    env_diff = os.environ.get("TORCHCELL_SOURCE_DIFF_SHA256", "")
+    if env_hash and env_diff:
+        wandb_cfg["source"] = {"git_hash": env_hash, "diff_sha256": env_diff}
+    elif shutil.which("git") is not None:
+        wandb_cfg["source"] = {
+            "git_hash": subprocess.run(
+                ["git", "-C", PROJECT_ROOT, "rev-parse", "HEAD"],
                 capture_output=True,
                 text=True,
                 check=True,
-            ).stdout.encode("utf-8")
-        ).hexdigest(),
-    }
+            ).stdout.strip(),
+            "diff_sha256": hashlib.sha256(
+                subprocess.run(
+                    ["git", "-C", PROJECT_ROOT, "diff", "HEAD"],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                ).stdout.encode("utf-8")
+            ).hexdigest(),
+        }
+    else:
+        wandb_cfg["source"] = {"git_hash": "unavailable", "diff_sha256": "unavailable"}
+        print(
+            "[source] WARNING: no git binary and no TORCHCELL_SOURCE_GIT_HASH in the "
+            "environment -- this run is NOT source-attributable and must not be pooled "
+            "with runs that are."
+        )
 
     slurm_job_id = os.environ.get("SLURM_JOB_ID", "")
     job_id = slurm_job_id or str(uuid.uuid4())

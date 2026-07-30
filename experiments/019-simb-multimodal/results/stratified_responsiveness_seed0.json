@@ -1,0 +1,43 @@
+{
+  "seed": 0,
+  "split": "val",
+  "groups": {
+    "responsive": {
+      "n_strains": 77,
+      "mean_abs": 0.16454181004392848,
+      "sd": 0.28196023342669196,
+      "frac_gt1": 0.011210219509781837
+    },
+    "nonresponsive": {
+      "n_strains": 78,
+      "mean_abs": 0.09990071653992667,
+      "sd": 0.17023659444441103,
+      "frac_gt1": 0.0018724723701219082
+    }
+  },
+  "balance": {
+    "train": {
+      "responsive": 594,
+      "nonresponsive": 642,
+      "unlabelled": 2838
+    },
+    "val": {
+      "responsive": 77,
+      "nonresponsive": 78,
+      "unlabelled": 379
+    },
+    "test": {
+      "responsive": 75,
+      "nonresponsive": 79,
+      "unlabelled": 363
+    }
+  },
+  "per_gene": {
+    "var_share_top_0.01": 0.1744327988217051,
+    "var_share_top_0.05": 0.3768988157913283,
+    "var_share_top_0.1": 0.49523873543256064,
+    "var_share_top_0.25": 0.6800723862290878,
+    "var_share_top_0.5": 0.8454475204863352,
+    "median_gene_sd": 0.14416422752043828
+  }
+}

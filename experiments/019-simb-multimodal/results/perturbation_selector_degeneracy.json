@@ -1,0 +1,23 @@
+{
+  "hidden_dim": 90,
+  "num_heads": 9,
+  "num_genes": 6607,
+  "seed": 0,
+  "s1_weights_unique": [
+    1.0
+  ],
+  "s1_query_spread": 3.311369178859991e-09,
+  "s1_output_magnitude": 0.30137500166893005,
+  "s1_relative_spread": 1.0987537654160296e-08,
+  "s1_wq_wk_ablation_max_change": 0.0,
+  "s1_dead_params": 16200,
+  "s1_total_attn_params": 32760,
+  "s2_weight_min": 0.02178230509161949,
+  "s2_weight_max": 0.9782177209854126,
+  "s2_query_spread": 0.574381947517395,
+  "null_real_key_weight_min": 0.05245610699057579,
+  "null_real_key_weight_max": 0.9580947160720825,
+  "null_query_spread": 0.3202262222766876,
+  "null_spread_gain_vs_s1": 96705080.279491,
+  "null_added_params": 90
+}

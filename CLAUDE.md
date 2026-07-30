@@ -82,6 +82,34 @@ worktree by default -- code AND notes (roadmap/plan/weekly/dendron/`.claude/*`).
   for structured data. New structured objects should be pydantic unless there is a
   clear reason not to.
 
+## Evidence Discipline -- Never State an Unrun Experiment as a Result
+
+**Every claim must trace to something actually RUN and OBSERVED. If it was not measured, it
+is a hypothesis, and it must be LABELED as one in the same breath.** This is not a style
+preference: an unlabeled hypothesis becomes an assumed fact within two messages, and then
+experiments get designed on top of it.
+
+- **Measured claims cite their source.** Give the script, job/run id, or log path, plus the
+  statistic and the sample size -- "train_pf 0.1043 at epoch 58 (job 1396, seed 0)", not
+  "the model reaches ~0.10".
+- **Hypotheses are prefixed, every time.** "Hypothesis (untested):", "I have not measured
+  this, but expect:", "Plausible mechanism, unverified:". No exceptions for claims that feel
+  obvious.
+- **Never explain a result with an unverified mechanism as though the explanation were part
+  of the result.** "Higher lr scored worse" is a finding. "...because post-LN without warmup
+  destabilizes" is a SEPARATE untested claim -- label it or leave it out. Mechanism stories
+  are the most common way a guess gets laundered into a fact.
+- **Partial runs are partial.** A cancelled or in-flight job has NO final result. State the
+  epoch reached and call it partial; never report it as an outcome.
+- **Name the statistic, especially when it is biased.** A raw max over noisy epochs is an
+  upward-biased order statistic whose bias grows with the number of epochs run -- it is not
+  "the score". Report the scoring rule alongside the number.
+- **Distinguish "not measured" from "measured and null".** Saying an arm "did not help" when
+  it was never run, or when its result is within the noise floor, are three different
+  statements. Keep them separate.
+- **When a prior claim proves wrong, correct it plainly and continue** -- state the
+  correction, not a post-mortem, and do not re-litigate claims that were accurate.
+
 ## Provenance & Reproducibility
 
 Core principle: for ANY artifact (paper PDF, supplementary file, OCR markdown,

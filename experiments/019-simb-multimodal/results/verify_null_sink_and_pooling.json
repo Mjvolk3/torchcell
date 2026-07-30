@@ -1,0 +1,29 @@
+{
+  "C1_sink_off_unchanged": {
+    "pass": true,
+    "detail": "|S|=1 context is query-independent without the sink (spread 2.98e-09)"
+  },
+  "C2_sham_is_identity": {
+    "pass": true,
+    "detail": "bias=-20 non-trainable matches sink=off to 5.96e-08"
+  },
+  "C3_sink_restores_query_dependence": {
+    "pass": true,
+    "detail": "spread 2.98e-09 -> 0.0624 (2.09e+07x)"
+  },
+  "C4_gradient_revives_qk": {
+    "pass": true,
+    "detail": "W_Q/W_K grad 0.0 -> 56645.7; null_bias grad 418.7"
+  },
+  "qk_grad_off": 0.0,
+  "qk_grad_on": 56645.67578125,
+  "null_bias_grad": 418.6933288574219,
+  "C5_sum_inert_at_S1": {
+    "pass": true,
+    "detail": "sum 0.1022434 == mean 0.1022434 at |S|=1"
+  },
+  "C6_sum_is_cardinality_aware": {
+    "pass": true,
+    "detail": "S={A,A} vs S={A}: mean 0.1022434 vs 0.1022434 (blind); sum 0.1868488 vs 0.1022434 (aware)"
+  }
+}

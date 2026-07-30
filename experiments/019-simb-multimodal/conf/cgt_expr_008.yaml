@@ -1,0 +1,265 @@
+# experiments/019-simb-multimodal/conf/cgt_expr_008.yaml
+# EXPRESSION-ONLY round _008 -- PAIR-(p, i) ROUTING vs DECODER CAPACITY.
+#
+# WHY THIS ROUND EXISTS. _006 and _007 both top out at a peak val/mean/pearson_per_feature
+# of ~0.172 (measured: _006 kmd40o2h 0.1721 at L=6, xenfbzn5 0.1719 at L=4; _007 nrurev80
+# 0.1702), against a replicate-based expression ceiling of 0.775. Reading the model
+# explains why, and the explanation is STRUCTURAL, not a matter of tuning:
+#
+#   * The encoder runs at BATCH 1 on the wildtype graph (`X = [cls; gene_embs].unsqueeze(0)`),
+#     so `H_genes` and `h_CLS` are IDENTICAL for every strain in the dataset. All four
+#     layers and nine graph-regularized heads compute one fixed prior over genes.
+#   * The only strain-dependent step is EquivariantPerturbationTransform, whose K/V set is
+#     just the |S_b| perturbed tokens. For a SINGLE deletion the softmax is over one key,
+#     so the attention weight is exactly 1.0 for every query gene and the attended vector
+#     is query-independent. VERIFIED numerically: max |attended_i - attended_0| = 0.
+#   * Hence H_pert[b,i] = g(h_i + c_b) with c_b = W_O W_V h_p, and ~96% of the expression
+#     rows are single deletions (Kemmeren2014 1,484 singles; the Sameith2015 double-KO
+#     sub-study is n=72). The model's prediction factorizes ADDITIVELY -- gene identity in
+#     h_i, strain identity in one 90-d vector -- and NO term depends on the pair (p, i).
+#
+# By data processing every head output is then a function of c_b alone, so no readout
+# change can enlarge the hypothesis class. That is the round's central claim, and the arms
+# below are built to TEST it rather than assume it.
+#
+# ARMS (all share this base; the runner overrides only the listed keys):
+#   A0 baseline    -- unchanged _007 architecture. Reproduces ~0.172 on GH hardware, which
+#                     is what makes every other arm comparable (IGB numbers are not).
+#   A1 free_gene   -- multitask.free_gene_dim=16. CAPACITY ONLY: a free per-gene row unties
+#                     output-gene identity from h_k. Does NOT add information, so if the
+#                     structural claim is right this moves little. Unlike learnable_embedding
+#                     (inert on val: only 4.8% of val genes are ever perturbed in training)
+#                     this indexes MEASURED genes -- col_idx is row-invariant, so all 6,127
+#                     are supervised by every training strain. No cold start.
+#   A2 prop_h1     -- perturbation_propagation hops=1. INFORMATION: routes the deletion to
+#                     1-hop graph neighbours, i.e. adds the missing pair term.
+#   A3 prop_h2     -- hops=2. Two-hop routing.
+#   A4 prop+free   -- A3 + A1, to see whether the two compose.
+#
+# The propagation module is ReZero-gated at ZERO, so at init it is an EXACT identity and
+# A2/A3 start from the A0 function. Any gain is attributable to routing, not to parameters.
+#
+# HYPERPARAMETERS ARE FROZEN at _006's measured winner (lr 3e-4, weight_decay 1e-8,
+# dropout 0.1, dist quantile, graph_reg_lambda 2e-7, hidden 90, L=4, 9 heads) so this round
+# varies ONE thing. _007 is still resolving the optimizer bundle; _008 does not re-litigate
+# it and should be re-checked against whatever _007 settles on.
+#
+# SCORING. val/mean/pearson_per_feature swings +/-0.05 between consecutive epochs (measured
+# on kmd40o2h), so a max over ~135 epochs is an upward-biased order statistic, and the three
+# 0.1719 "replicates" in _006 are the SAME seed re-run, not independent draws. Arms are
+# therefore compared on the max of a 5-EPOCH ROLLING MEAN across 3 SEEDS, computed by
+# experiments/019-simb-multimodal/scripts/score_decoder_arms.py -- never on the raw peak.
+
+defaults:
+  - cgt_expr_006
+  - _self_
+
+wandb:
+  project: torchcell_019_expr_v8
+  tags: [decoder, pair-routing, _008]
+
+cell_dataset:
+  # PINNED, not swept. `node_embeddings` is a DRIVER-swept axis in _005.._007 (the config
+  # itself carries `[]`, which cannot build a model), and all three reference runs -- _006
+  # kmd40o2h (0.1721), _006 xenfbzn5 (0.1719), _007 nrurev80 (0.1702) -- landed on `calm`.
+  # Pinning it is what makes _008 a one-variable round instead of re-running the embedding
+  # sweep. learnable_embedding stays false (inherited from _006): only 4.8% of val genes
+  # are ever perturbed in training, so a free per-PERTURBED-gene row is at init on val.
+  node_embeddings: [calm]
+
+multitask:
+  # A1/A4 override to 16. Width of a FREE per-gene embedding concatenated to each token
+  # before the per-gene MLP. 0 = the original S0 head.
+  free_gene_dim: 0
+
+  # DECLARED so the runner can override with plain dotted syntax. Hydra struct mode
+  # REJECTS `=` on a key the config never declares (and a `+` append would silently differ
+  # between arms) -- the same trap cgt_expr_007 documents for `energy_rank`. C0/D1 both
+  # died instantly on "Key 'concat_context' is not in struct" before this was added.
+  #
+  # concat_context: hand the per-gene head [h_pert ; h_i ; c] instead of h_pert alone.
+  # h_i and c meet exactly once, by ADDITION, and the next op is a LayerNorm -- so the
+  # head sees only g(h_i + c_b), and the sum is not injective.
+  concat_context: false
+  # bilinear_rank R: explicit <u_r,h_i>*<v_r,c> features appended to the head input. The
+  # parameter-lean version of the same fix (2*d*R params). 0 disables.
+  bilinear_rank: 0
+  # H0_factor: r response PROGRAMS. rank 32 is MEASURED -- the participation-ratio
+  # effective rank of the reproducible residual gene-gene correlation is 32.8.
+  response_basis_rank: 0
+  # F0/F2: hand the per-gene head the pooled perturbed-set summary z_S (+ h_CLS), either
+  # concatenated (pert_set_context) or as FiLM scale/shift (film_on_pert_set).
+  pert_set_context: false
+  film_on_pert_set: false
+
+  # _006's winner. quantile -> param_dim 19 (pinball, K=19).
+  dist: quantile
+  standardize_per_feature_target: [per_gene]
+  normalize_vector_targets: []
+
+model:
+  hidden_channels: 90
+  num_transformer_layers: 4
+  num_attention_heads: 9
+  dropout: 0.1
+
+  # A2/A3/A4 override `enabled: true`. Routes the deletion along the SAME nine graphs the
+  # attention prior uses; `graphs: []` means "every gene-gene relation in cell_graph".
+  perturbation_propagation:
+    enabled: false
+    hops: 2
+    graphs: []
+    # `on` FORCES the pathway (gate fixed at 1). A closed ReZero gate cannot distinguish
+    # "nothing to gain" from "never left the basin" -- measured: Perceiver gate finished
+    # at 1.0e-5 while propagation's reached 0.125 under the same mechanism.
+    gate_mode: rezero
+
+  # GEARS-style pooled cross-gene mixing: project each gene -> mean -> broadcast back.
+  # The cheapest cross-gene communication; ablating it measurably hurt GEARS.
+  cross_gene:
+    enabled: false
+    rank: 64
+
+  # E-arm: POST-perturbation cross-gene mixing through M learned latents. The only place
+  # genes interact after the perturbation is injected. M=32 is the measured effective
+  # rank (32.8) of the reproducible residual gene-gene correlation. Graph-free.
+  post_perturbation_mixing:
+    enabled: false
+    num_latents: 32
+    gate_mode: rezero
+
+  # Masked-label conditioning (expression only, for now). Gate defaults ON: the point is
+  # to force gradient through the conditioning pathway. Inference is unaffected because a
+  # 100%-masked forward encodes all-zero features.
+  observed_labels:
+    enabled: false
+    gate_mode: "on"   # QUOTED: bare `on` is boolean True in YAML 1.1, which would
+                      # stringify to "True" and silently fall back to rezero.
+
+  # DECLARED for the S2/S3 stability arms. `postln` = the historical residual
+  # (LN(h_i + attn) -> LN(x + FFN)); `rezero` = h_i + beta*attn with beta init 0, matching
+  # what GraphRegularizedTransformerLayer already does in the ENCODER. The perturbation
+  # transform is the one block still on post-LN, and post-LN without warmup is the standard
+  # cause of the init-dependent failure we measured (seed 1 stuck at ~0.015 for 83 epochs).
+  perturbation_head:
+    residual: postln
+    # F1 arms override. Depth of STAGE 2 -- the only strain-conditional stage in the
+    # model, and one layer since inception. |S| is 1-3 so this is ~0.7% of encoder cost
+    # at L=4, and it needs no graphs.
+    num_layers: 1
+    # FFN width on the ADDED layers. 4 = same as layer 0; 0 = attention-only.
+    # Measured: one extra layer is 34.3 GFLOP of which the d->4d->d FFN over all 6,607
+    # tokens is 27.4 -- 80%. So `num_layers` alone tests "more FFN capacity", not the
+    # repeated-attention hypothesis. extra_layer_ffn_mult=0 isolates the attention:
+    # L=4 attention-only is 1.20x vs 1.34x for L=2 WITH the FFN.
+    ffn_mult: 4
+    extra_layer_ffn_mult: null
+
+    # z_S pooling over the perturbed-gene tokens. DEFAULT CHANGED to `sum`: a mean is
+    # cardinality-blind (z_S for S={A} and S={A,A} was bit-identical at -0.3520988), and
+    # every explicit-set model in the field sums. INERT ON TODAY'S DATA -- at |S|=1 sum
+    # and mean are the same operation and 95.4% of the expression build is |S|=1 -- so
+    # this is future-proofing for mixed-cardinality joint training, NOT an arm. `mean`
+    # reproduces the 010 configuration exactly.
+    pooling: sum
+
+    # NULL SINK (A4/A5). One extra K/V column holding the zero vector, plus ONE learned
+    # scalar added to its logit. At |S|=1 today the softmax is over a single key, so
+    # alpha = 1.0 identically, the context is query-independent, and W_Q/W_K are dead
+    # (std=10 re-draw changes the output by EXACTLY 0.0). With the sink,
+    # alpha_i = sigmoid(q_i.k_p/sqrt(d_k) - null_bias), which depends on the MEASURED
+    # gene -- the pair-(p, i) term the round says is missing. Equivalently this is
+    # sigmoid attention at |S|=1.
+    #
+    # bias_init -4.0 => p_null ~ 0.018 at a zero logit: open enough to receive gradient,
+    # closed enough to start near the baseline function. A closed gate cannot distinguish
+    # "nothing to gain" from "never left the basin" (measured: the Perceiver gate
+    # finished at 1.0e-5 while propagation's reached 0.125), so LOG null_bias and, if it
+    # does not move, retry at 0.0 rather than reading the arm as negative.
+    #
+    # A5_sham := bias_init -20.0 + trainable false => p_null ~ 2e-9, numerically the
+    # exact identity on the SAME code path. That is the empirical paired null: the paired
+    # sd everything else is powered on was measured only on ReZero-identity-at-init arms,
+    # so nothing establishes that pairing transfers to an arm that changes the forward
+    # pass from step 0.
+    null_sink: false
+    null_sink_bias_init: -4.0
+    null_sink_trainable: true
+    # MAGNITUDE MATCHING. A zero-valued sink attenuates the context for EVERY query, not just
+    # the ones that should be damped: measured ||c_sink||/||c_ref|| = 0.5139 at bias 0, and a
+    # bare scalar 0.5 on the reference context with NO sink reproduces 97.8% of the arm's
+    # downstream deviation. So without this the arm differs from the reference by a pair term
+    # AND a permanent ~2x attenuation, and the attenuation is 2.6x the mechanism. It cannot be
+    # trained away -- A4's measured null_bias drift projects alpha ~ 0.53 for a whole 300-epoch
+    # run, and alpha=1 sits on the boundary of the parameter space. Rescaling the attended
+    # vector by 1/sigmoid(-bias_init) restores the norm so the ONLY difference from the
+    # reference is the query-dependent gate. Default false keeps every earlier run identical.
+    null_sink_magnitude_match: false
+
+  # D2_mask: hard graph masking as an ALTERNATIVE to the KL. Uses the cell_graph
+  # relation names (SUFFIXED: physical_interaction / regulatory_interaction) -- the exact
+  # mismatch that made heads 0 and 1 silently unregularized under graph_reg, which named
+  # them `physical` / `regulatory`. An unmatched name here RAISES.
+  attention_mask:
+    enabled: false
+    layers: [1]
+    head_graphs:
+      0: physical_interaction
+      1: regulatory_interaction
+      2: tflink
+      3: string12_0_neighborhood
+      4: string12_0_fusion
+      5: string12_0_cooccurence
+      6: string12_0_coexpression
+      7: string12_0_experimental
+      8: string12_0_database
+
+  graph_regularization:
+    # _006's winning lambda -- 2e-7, NOT the 2e-5 measured-parity default.
+    # MEASURED CONSEQUENCE: val/graph_reg/ratio_to_data runs 0.031 -> 0.015, i.e. the graph
+    # prior contributes ~2% of the loss. If neighbour information enters h_i BECAUSE
+    # attention is forced toward neighbours, that forcing is currently almost off -- so the
+    # lambda sweep is a direct test of that mechanism, not a tuning knob.
+    graph_reg_lambda: 2.0e-7
+    graph_reg_layer: [1]
+    # NOTE: `regularized_heads` is INHERITED from cgt_expr_006, which keys heads 0 and 1 as
+    # `physical` / `regulatory`. Those are the graph-BUILDER names; `to_cell_data` emits
+    # `physical_interaction` / `regulatory_interaction`, so they never matched and
+    # compute_graph_regularization_loss skipped them with a bare `continue` -- _006/_007
+    # ran SEVEN regularized heads while declaring nine. Fixed in the MODEL rather than here:
+    # `_normalize_adjacency_matrices` now registers both the suffixed name and its stem, so
+    # every existing config resolves, and an unmatched name RAISES instead of skipping.
+    # Redeclaring the block here does not work -- OmegaConf deep-MERGES, so it would add
+    # the corrected names alongside the broken ones and double-assign heads 0 and 1.
+
+
+regression_task:
+  optimizer:
+    type: AdamW
+    lr: 3.0e-4
+    weight_decay: 1.0e-8
+  # DECLARED for the S1/S3 warmup arms (hydra struct mode rejects `=` on undeclared keys).
+  # null = the _006/_007 behaviour: no schedule, no warmup, full lr from step 0.
+  lr_scheduler:
+    type: null
+    first_cycle_steps: 140
+    cycle_mult: 1.0
+    max_lr: 3.0e-4
+    min_lr: 1.0e-6
+    warmup_steps: 0
+    gamma: 1.0
+
+trainer:
+  # RAISED from 140. Multiple arms were still improving AT the cap -- A4 peaked at epoch
+  # 141/141, A6 at 141/141, C0_concat flipped from -0.0151 at epoch 85 to +0.0084 by 141.
+  # A cap that binds is an unmeasured confound: it scores "how fast" as if it were "how
+  # well", and penalizes exactly the arms that keep learning.
+  max_epochs: 400
+  early_stopping:
+    enabled: true
+    monitor: val/mean/pearson_per_feature
+    mode: max
+    # RAISED from 40. With a noisy metric (+/-0.05 epoch to epoch) a 40-epoch window fires
+    # on plateaus that later resume climbing.
+    patience: 100
+    min_delta: 1.0e-4

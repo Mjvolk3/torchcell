@@ -1,0 +1,66 @@
+# experiments/019-simb-multimodal/conf/cgt_expr_010.yaml
+# EXPRESSION round _010 -- HARD GRAPH MASKING IS NOW THE FROZEN DEFAULT.
+#
+# All nine graphs are burned into attention STRUCTURALLY (one graph per head, layer 1) and the
+# KL penalty is switched OFF. This is a standing architecture decision, not an arm: every
+# experiment from here forward inherits it, so the graph prior stops being a swept
+# hyperparameter.
+#
+# WHY -- MEASURED, per-epoch, under identical conditions. `D2_mask` (run au8fu60o) ran
+# 03:36:41 -> 05:26:25 on 2026-07-29 alongside SEVEN other runs all launched within 21
+# seconds of it: 8 runs on 4 GPUs, i.e. the same 2-per-GPU packing, same box, same window.
+#
+#   D2_mask         mask on,  lambda 0       28.0 s/epoch   (235 epochs / 6584 s)
+#   D1_bilinear32   mask off, lambda 2e-7    42.3
+#   H0_factor       mask off, lambda 2e-7    42.9
+#   F1_attn4        mask off, lambda 2e-7    45.5
+#   A0_baseline     mask off, lambda 2e-7    47.1
+#   GEARS_crossgene mask off, lambda 2e-7    47.8
+#   E0_perceiver_on mask off, lambda 2e-7    48.6
+#   F1_deep2        mask off, lambda 2e-7    48.7
+#
+# 1.51x-1.74x faster per epoch; 1.68x against A0_baseline. Arm-to-arm spread among the KL
+# runs is +/-5 s/epoch, so 28.0 is far outside it. Memory also drops (~35.3 vs ~40 GB per GPU
+# pair, second-hand from the round audit).
+#
+# MECHANISM, which is why the speedup is structural rather than incidental: the KL needs
+# attention WEIGHTS, so `GraphRegularizedTransformerLayer` must take the manual path and
+# materialize a [1, 9, 6608, 6608] matmul per regularized layer (9 x 6608^2 x 4B = 1.57 GB).
+# Turning the KL off is what allows `scaled_dot_product_attention`'s fused kernel, which never
+# forms that matrix. The mask is what makes turning the KL off acceptable -- it keeps the graph
+# prior, exactly and without a lambda to calibrate.
+#
+# IT ALSO PRESERVES THE ORGANISM-TRANSFER STORY: graphs remain STRUCTURE ON ATTENTION rather
+# than input features, so "no graph" simply means "no mask" -- the model still runs on an
+# organism with no curated interactome. That is the same criterion that disqualified the
+# graph-propagation arms, and masking passes it where propagation does not.
+#
+# TWO THINGS THIS CONFIG DOES **NOT** ESTABLISH, recorded so they are not misread later:
+#   * ACCURACY. D2_mask's score was computed by the pre-fix scorer, which resolved it to the
+#     literal string "A0_baseline" and averaged it INTO the baseline. Mask-vs-KL on accuracy
+#     is effectively UNMEASURED. It is frozen here on the speed/memory/transfer case.
+#   * ATTRIBUTION. That run changed BOTH mask-on and lambda->0, so the two cannot be
+#     separated from this data. By the mechanism above they are a package by design.
+# A clean mask-vs-KL A/B at 4 paired seeds is still owed, and it now has to be run against
+# THIS config as the reference, because wave 3 logs n_regularized_heads=9 whereas _006-_008
+# silently regularized only 7 (the `physical`/`regulatory` vs `physical_interaction` /
+# `regulatory_interaction` name mismatch).
+defaults:
+  - cgt_expr_008
+  - _self_
+
+wandb:
+  project: torchcell_019_expr_v8
+  tags: [graph-mask-frozen, _010]
+
+model:
+  attention_mask:
+    # All nine gene-gene relations, one per attention head, at layer 1 -- the head_graphs map
+    # and `layers` are inherited from cgt_expr_008 unchanged. An unmatched relation name
+    # RAISES here rather than being skipped, which is how the 7-of-9 bug stayed silent for
+    # three rounds.
+    enabled: true
+  graph_regularization:
+    # The mask REPLACES the KL. Leaving both on would apply a hard constraint and a soft
+    # penalty to the same heads.
+    graph_reg_lambda: 0.0

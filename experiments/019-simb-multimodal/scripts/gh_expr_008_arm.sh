@@ -184,6 +184,85 @@ case "$ARM" in
   # cannot be part of the organism-general story no matter how well it scores.
   R_ref)             OVERRIDES=()
                      ARM_TAGS=(mech-baseline xfer-yes stage-wave4b) ;;
+
+  # ------------------------------------------------------------------ WAVE 5 (cgt_expr_011)
+  # Launch with TORCHCELL_CONFIG=cgt_expr_011, which pins the PARTITION (split_seed 0) so
+  # `seed` varies initialization only, and turns on the eval-mode train metric. Two
+  # hypotheses plus two config-only probes.
+  #
+  # THE WAVE-5 REFERENCE. Every pool gets its OWN co-launched W_ref, because the three GPU
+  # types available (RTX 6000 Ada on GilaHyper, A100 on mmli, RTX 6000 on cabbi) are not
+  # interchangeable -- _007 pooled A100 with Ada runs and their means differ (0.0242 vs
+  # 0.0182). A paired reference is only a valid denominator for arms that ran beside it on the
+  # same hardware under the same packing, so it is re-run per pool rather than shared.
+  W_ref)             OVERRIDES=()
+                     ARM_TAGS=(mech-baseline xfer-yes stage-wave5) ;;
+
+  # H1 -- IS TRAINING ACTUALLY SATURATED? The `train/...` pearson series everyone has been
+  # reading is accumulated over training batches, so it is measured WITH DROPOUT ACTIVE and
+  # across weights still updating inside the epoch: a biased-low estimate of the model's real
+  # fit. `traineval/...` is the eval-mode answer. These arms run a long cap so the train
+  # asymptote is observable, which is a CAPACITY measurement -- saturating far below 1.0 means
+  # the model cannot fit 1244 strains and more data will not help.
+  # H1_nodrop exists because dropout is a confound for exactly this question: the model
+  # underfits (train pf ~0.30) with grad_norm ~0.05 against a clip of 10.0, so regularizing it
+  # is plausibly harmful. Paired against H1_ref at the same init seed.
+  H1_ref)            OVERRIDES=()
+                     ARM_TAGS=(mech-baseline hyp-h1 xfer-yes stage-wave5) ;;
+  H1_nodrop)         OVERRIDES=(model.dropout=0.0)
+                     ARM_TAGS=(mech-regularization hyp-h1 xfer-yes stage-wave5) ;;
+
+  # H2 -- DOES MIXING GENES AFTER THE PERTURBATION TELL OTHER GENES HOW TO EXPRESS? The
+  # encoder runs on the WILDTYPE graph at batch 1, so `H_genes` is strain-INDEPENDENT and
+  # nothing routes information between gene tokens once the perturbation is applied. Gene i
+  # therefore learns about a deletion only through a shared additive context vector. X_mix
+  # opens that channel (Perceiver-style latents over the perturbed tokens).
+  # Status of the prior evidence: E0_perceiver_on measured -0.0302 and GEARS_crossgene
+  # -0.0243, but both were n=1 on seed 0 alone, i.e. no significance and taken before we knew
+  # cross-seed comparison is invalid. H2 is effectively UNTESTED, which is why it gets the
+  # largest pool and 9 paired replicates.
+  # NOTE what is NOT here: the masked-label objective that would FORCE the channel to be used.
+  # `model.observed_labels.enabled` builds ObservedLabelEncoder, but train_cgt_multitask.py
+  # never passes observed_values/observed_mask, so the module receives nothing and the arm is
+  # inert. Wiring it needs per-batch label masking AND restriction of the loss to the held-out
+  # entries -- without the second part the model trivially copies the observed values and the
+  # train fit explodes for no reason. Deferred to its own wave rather than shipped half-built.
+  X_mix)             OVERRIDES=(model.post_perturbation_mixing.enabled=true
+                                model.post_perturbation_mixing.num_latents=32
+                                model.post_perturbation_mixing.gate_mode=on)
+                     ARM_TAGS=(mech-postpert-mixing hyp-h2 xfer-yes stage-wave5) ;;
+  X_mix64)           OVERRIDES=(model.post_perturbation_mixing.enabled=true
+                                model.post_perturbation_mixing.num_latents=64
+                                model.post_perturbation_mixing.gate_mode=on)
+                     ARM_TAGS=(mech-postpert-mixing hyp-h2 xfer-yes stage-wave5) ;;
+  # gate_mode=rezero starts the channel CLOSED (beta init 0), so this separates "the mechanism
+  # does not help" from "the optimizer never opened the door". Both are logged via gate/.
+  X_mix_rezero)      OVERRIDES=(model.post_perturbation_mixing.enabled=true
+                                model.post_perturbation_mixing.num_latents=32
+                                model.post_perturbation_mixing.gate_mode=rezero)
+                     ARM_TAGS=(mech-postpert-mixing hyp-h2 xfer-yes stage-wave5) ;;
+
+  # MASK DEPTH. Not the before/after-perturbation contrast that was asked for -- true
+  # post-perturbation graph masking needs a new masked attention layer over the [batch, N, d]
+  # perturbed tokens and is NOT built. These arms move the mask WITHIN the encoder, which is
+  # config-only: layer 4 is the last encoder layer, i.e. as late as the graph can currently be
+  # applied. All of these remain PRE-perturbation, so none of them can express
+  # deletion-neighbour coupling; the point is only to test whether mask depth matters at all
+  # before spending code on the post-perturbation version.
+  # Encoder layers are 0-INDEXED, so the last of the four is 3 -- `layers=[4]` raises. The
+  # default is [1]; layer 3 is as late as the graph can currently be applied.
+  G_l3)              OVERRIDES=("model.attention_mask.layers=[3]")
+                     ARM_TAGS=(mech-maskdepth xfer-yes stage-wave5) ;;
+  G_l13)             OVERRIDES=("model.attention_mask.layers=[1,3]")
+                     ARM_TAGS=(mech-maskdepth xfer-yes stage-wave5) ;;
+
+  # PROBES from the 007 review: its top 12 runs cluster at lr 1e-4 (6 of 12) and the best two
+  # are 1e-4 and 5e-4, yet the wave-3 ladder swept 3e-4 / 1e-3 / 3e-3 and NEVER tested below
+  # 3e-4 before freezing 3e-4. Seed-0 order statistics, so a lead rather than a result.
+  P_lr1e4)           OVERRIDES=(regression_task.optimizer.lr=1e-4)
+                     ARM_TAGS=(mech-optimizer hyp-lr xfer-yes stage-wave5) ;;
+  P_lr3e5)           OVERRIDES=(regression_task.optimizer.lr=3e-5)
+                     ARM_TAGS=(mech-optimizer hyp-lr xfer-yes stage-wave5) ;;
   # The null sink RETRIED STARTING OPEN. The first attempt (bias_init -4.0) was chosen to keep
   # the arm attributable and that backfired: read from all four last.ckpt at epoch ~187,
   # null_bias had moved only -4.0 -> -3.92/-3.95, so the sink carried ~1.9% of the attention

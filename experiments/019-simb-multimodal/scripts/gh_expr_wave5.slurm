@@ -45,7 +45,7 @@ mkdir -p /scratch/projects/torchcell-scratch/experiments/019-simb-multimodal/slu
 PROJECT_ROOT="${W5_PROJECT_ROOT:-/home/michaelvolk/Documents/projects/torchcell.worktrees/019-decoder-pair-routing}"
 ARM_SH="$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/gh_expr_008_arm.sh"
 
-STAGE="${W5_STAGE:?set W5_STAGE=h1|maskdepth via --export=ALL,W5_STAGE=...}"
+STAGE="${W5_STAGE:?set W5_STAGE=h1|maskdepth|h2gh via --export=ALL,W5_STAGE=...}"
 export TORCHCELL_CONFIG=cgt_expr_011
 
 # SEEDS ARE INIT-ONLY NOW. cgt_expr_011 pins data_module.split_seed=0, so these vary weight
@@ -69,7 +69,16 @@ case "$STAGE" in
   # val-loss optimum observed in wave 4b (42-272) with margin.
   maskdepth) ARMS=(W_ref G_l3 G_l13); SEEDS=(0 1 2 3)
              EXTRA_OV="trainer.max_epochs=400 trainer.train_eval_every=5" ;;
-  *) echo "unknown W5_STAGE '$STAGE' (expected h1|maskdepth)" >&2; exit 1 ;;
+  # H2 REPLICATED ON GILAHYPER HARDWARE. The powered H2 test runs on mmli A100s; this is the
+  # SAME three arms at 4 replicates on RTX 6000 Ada with its own co-launched W_ref. It is not
+  # pooled with the mmli runs -- different GPU type, different packing, so a cross-pool
+  # comparison would be confounded (_007 pooled A100 with Ada and their means differ, 0.0242
+  # vs 0.0182). Its value is INDEPENDENT REPLICATION: a mechanism that shows the same sign on
+  # two hardware pools with separate references is a far stronger claim than one pool at n=8.
+  # 300 epochs to match the mmli budget, so the two are at least reduced the same way.
+  h2gh)      ARMS=(W_ref X_mix X_mix_rezero); SEEDS=(0 1 2 3)
+             EXTRA_OV="trainer.max_epochs=300 trainer.train_eval_every=5" ;;
+  *) echo "unknown W5_STAGE '$STAGE' (expected h1|maskdepth|h2gh)" >&2; exit 1 ;;
 esac
 
 JOBS=()

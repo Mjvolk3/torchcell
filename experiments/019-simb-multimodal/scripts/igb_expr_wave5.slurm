@@ -147,6 +147,15 @@ CONTAINER_ENV="$CONTAINER_ENV && export PYTHONPATH='$PROJECT_ROOT'"
 CONTAINER_ENV="$CONTAINER_ENV && export WANDB_MODE=offline WANDB__SERVICE_WAIT=600"
 CONTAINER_ENV="$CONTAINER_ENV && export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True"
 CONTAINER_ENV="$CONTAINER_ENV && export TORCHCELL_CONFIG=cgt_expr_011"
+# SOURCE PROVENANCE IS RESOLVED HERE, ON THE HOST. rockylinux_9.sif has no git binary, so the
+# train script's `git rev-parse` raised FileNotFoundError('git') and killed the job before the
+# first epoch (canary 2324270). Resolving it outside the container is also more correct: the
+# host has the repo and git, the container has neither.
+SRC_HASH="$(git -C "$PROJECT_ROOT" rev-parse HEAD)"
+SRC_DIFF="$(git -C "$PROJECT_ROOT" diff HEAD | sha256sum | cut -d" " -f1)"
+echo "source        : $SRC_HASH (diff $SRC_DIFF)"
+CONTAINER_ENV="$CONTAINER_ENV && export TORCHCELL_SOURCE_GIT_HASH='$SRC_HASH'"
+CONTAINER_ENV="$CONTAINER_ENV && export TORCHCELL_SOURCE_DIFF_SHA256='$SRC_DIFF'"
 
 PIDS=()
 LABELS=()

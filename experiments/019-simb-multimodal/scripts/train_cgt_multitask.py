@@ -81,6 +81,7 @@ import logging
 import os
 import os.path as osp
 import socket
+import subprocess
 import uuid
 from typing import Any, cast
 
@@ -95,6 +96,14 @@ from lightning.pytorch.callbacks import Callback, EarlyStopping, ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig, OmegaConf
 from torch_geometric.data import HeteroData
+
+import torchcell
+
+# The repo whose SOURCE actually ran -- derived from the IMPORTED package, not from this
+# file's path. Those differ exactly when PYTHONPATH is wrong, which is the failure this
+# hash exists to catch (a worktree script silently importing the primary checkout's
+# torchcell would otherwise log the worktree's commit while running main's code).
+PROJECT_ROOT = osp.dirname(osp.dirname(osp.abspath(torchcell.__file__)))
 
 from torchcell.losses.distributional import (
     DEFAULT_ENERGY_RANK,
@@ -204,6 +213,23 @@ def build_heads_config(cfg: DictConfig) -> dict[str, Any] | None:
         spec["param_dim"] = param_dim
         if head == "global":
             spec["decoder"] = decoder
+        if head == "per_gene":
+            # FREE OUTPUT-GENE EMBEDDING width (0 = the original S0 head). This is the
+            # capacity-only decoder arm: it unties output-gene identity from h_k without
+            # touching what information reaches the decoder.
+            spec["free_gene_dim"] = int(cfg.multitask.get("free_gene_dim", 0))
+            # CONCAT arm: feed the head [h_pert ; h_i ; c] instead of h_pert alone, so it
+            # can learn arbitrary (h_i, c_b) interactions rather than only functions of
+            # their sum. Equivariant (shared MLP per token) and graph-free.
+            spec["concat_context"] = bool(cfg.multitask.get("concat_context", False))
+            # Rank-R multiplicative interaction between h_i and c, appended to the head
+            # input. The parameter-lean alternative to concat_context.
+            spec["bilinear_rank"] = int(cfg.multitask.get("bilinear_rank", 0))
+            spec["pert_set_context"] = bool(cfg.multitask.get("pert_set_context", False))
+            spec["film_on_pert_set"] = bool(cfg.multitask.get("film_on_pert_set", False))
+            spec["response_basis_rank"] = int(
+                cfg.multitask.get("response_basis_rank", 0)
+            )
         heads_config[head] = spec
     return heads_config or None
 
@@ -1296,9 +1322,47 @@ class MultitaskCGTTask(L.LightningModule):
         self._metric_cache["test"] = {}
         self._calib_cache["test"] = {}
 
+    # Scalar parameters that GATE a mechanism on or off. Every one of these is a switch the
+    # optimizer may simply decline to throw, and a mechanism whose gate stayed shut has NOT
+    # been tested -- it produced no signal because it was never in the forward pass.
+    #
+    # THIS EXISTS BECAUSE WE LOST A ROUND TO IT. The null-sink arm ran 4 seeds x ~190 epochs
+    # and scored a paired delta of ~0 against its reference. That looked like a clean negative
+    # result. It was not: reading `null_bias` out of the last.ckpt afterwards showed it had
+    # moved from -4.0 to only -3.92/-3.95 across all four seeds, so the attention sink carried
+    # ~1.9% of the mass instead of the ~1.8% it started with. The pair term the arm existed to
+    # test was never actually available. Because the gate was not logged, "explored and found
+    # nothing" was indistinguishable from "never engaged" until the runs were already dead.
+    #
+    # Matching by SUFFIX rather than a hardcoded list so a new gate is picked up automatically;
+    # a mechanism added later cannot silently go unlogged.
+    GATE_PARAM_SUFFIXES = ("null_bias", "gate", "beta_attn", "beta_ffn", "ablate_mask")
+
+    def _log_gates(self) -> None:
+        """Log every gate/mask scalar so gate movement is visible DURING a run, not post-mortem.
+
+        Vector-valued gates (e.g. a learned per-dimension ablation mask) are logged as their
+        mean and their max absolute deviation from the identity, which is what distinguishes
+        "moved off init" from "stayed put".
+        """
+        for name, param in self.model.named_parameters():
+            if not name.endswith(self.GATE_PARAM_SUFFIXES):
+                continue
+            flat = param.detach().float().flatten()
+            if flat.numel() == 1:
+                self.log(f"gate/{name}", flat[0], sync_dist=False)
+            else:
+                self.log(f"gate/{name}/mean", flat.mean(), sync_dist=False)
+                # Distance from the identity element (1.0 for a multiplicative mask), i.e.
+                # "how far has this actually travelled".
+                self.log(
+                    f"gate/{name}/max_dev", (flat - 1.0).abs().max(), sync_dist=False
+                )
+
     def on_train_epoch_end(self) -> None:
         """Reduce + log epoch per-feature Pearson, then print aggregated train metrics."""
         self._reduce_epoch_pearson("train")
+        self._log_gates()
         self._print_epoch("train")
 
     def on_validation_epoch_end(self) -> None:
@@ -1322,6 +1386,14 @@ class MultitaskCGTTask(L.LightningModule):
             return optimizer
         sched_cfg = dict(self.lr_scheduler_config)
         sched_type = sched_cfg.pop("type", "ReduceLROnPlateau")
+        # `type: null` means NO SCHEDULER, not "fall through to the default". The _008
+        # config declares the whole lr_scheduler block so hydra struct mode will accept
+        # `regression_task.lr_scheduler.type=...` overrides for the warmup arms -- but that
+        # makes the config a dict rather than None for EVERY arm, so without this guard the
+        # no-warmup baseline would silently acquire a ReduceLROnPlateau it never had, and
+        # A0 would stop being comparable to _006/_007.
+        if sched_type is None:
+            return optimizer
         scheduler: Any
         if sched_type == "CosineAnnealingWarmupRestarts":
             from torchcell.scheduler.cosine_annealing_warmup import (
@@ -1794,6 +1866,25 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         os.environ["TORCH_DISTRIBUTED_DEFAULT_TIMEOUT"] = "7200"
 
     wandb_cfg = _as_dict(cfg)
+    # SOURCE VERSION -- the single highest-leverage line in the whole scoring contract.
+    # A source edit on 2026-07-28 22:26:23 landed ten minutes before a wave launched, so
+    # runs on two different model versions were pooled and reported as seed variance; the
+    # phantom 0.0032 "noise floor" was that edit. The config hash alone cannot catch it
+    # (the config was identical), and neither can the git hash alone (this worktree runs
+    # dirty). Record BOTH the commit and a hash of the working-tree diff, so any two runs
+    # can be tested for source identity after the fact.
+    wandb_cfg["source"] = {
+        "git_hash": subprocess.run(
+            ["git", "-C", PROJECT_ROOT, "rev-parse", "HEAD"],
+            capture_output=True, text=True, check=True,
+        ).stdout.strip(),
+        "diff_sha256": hashlib.sha256(
+            subprocess.run(
+                ["git", "-C", PROJECT_ROOT, "diff", "HEAD"],
+                capture_output=True, text=True, check=True,
+            ).stdout.encode("utf-8")
+        ).hexdigest(),
+    }
 
     slurm_job_id = os.environ.get("SLURM_JOB_ID", "")
     job_id = slurm_job_id or str(uuid.uuid4())
@@ -2070,6 +2161,15 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         node_embeddings=node_embeddings,
         learnable_embedding_config=_as_dict(cfg.model.learnable_embedding),
         heads_config=heads_config,
+        perturbation_propagation_config=_as_dict(
+            cfg.model.get("perturbation_propagation", None)
+        ),
+        post_perturbation_mixing_config=_as_dict(
+            cfg.model.get("post_perturbation_mixing", None)
+        ),
+        attention_mask_config=_as_dict(cfg.model.get("attention_mask", None)),
+        cross_gene_config=_as_dict(cfg.model.get("cross_gene", None)),
+        observed_label_config=_as_dict(cfg.model.get("observed_labels", None)),
     ).to(device)
     print("Parameter counts:", model.num_parameters)
 
@@ -2118,6 +2218,28 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
             dataset_type = "+".join(restrict_names)
     else:
         dataset_type = str(cfg.cell_dataset.get("dataset_tag", "all"))
+
+    # How the graph prior actually entered THIS run: a soft KL on attention weights, a hard
+    # structural mask, both, or neither. Derived once here so the three logged keys below
+    # cannot disagree with each other.
+    _n_declared_reg_heads = len(
+        _as_dict(cfg.model.graph_regularization.get("regularized_heads", {}))
+    )
+    _kl_on = float(cfg.model.graph_regularization.graph_reg_lambda) > 0.0
+    # Read through `_as_dict(cfg.model.get("attention_mask", None))`, the SAME idiom line
+    # 2170 uses to build the model. Only cgt_expr_008/009/010 declare this block; the
+    # metabolism, Delta and smoke configs do not, and for those "absent" genuinely means
+    # "this config predates hard masking", not an error to surface.
+    _mask_cfg = _as_dict(cfg.model.get("attention_mask", None))
+    _mask_on = bool(_mask_cfg.get("enabled", False))
+    _n_masked_heads = len(_as_dict(_mask_cfg.get("head_graphs", {}))) if _mask_on else 0
+    _graph_prior = {
+        (True, True): "kl+mask",
+        (True, False): "kl",
+        (False, True): "mask",
+        (False, False): "none",
+    }[(_kl_on, _mask_on)]
+
     scale_meta: dict[str, Any] = {
         "total_param_count": total_param_count,
         "trainable_param_count": trainable_param_count,
@@ -2165,9 +2287,24 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
             torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu"
         ),
         "n_graphs": len(list(cfg.cell_dataset.graphs)),
-        "n_regularized_heads": len(
-            _as_dict(cfg.model.graph_regularization.get("regularized_heads", {}))
+        # GRAPH-PRIOR TELEMETRY. `n_regularized_heads` used to report the DECLARED count
+        # straight from the config, so a run with graph_reg_lambda=0.0 logged
+        # n_regularized_heads=9 while regularizing nothing -- the whole wave-4 series is
+        # tagged that way in W&B. It now reports what actually ran: lambda=0 means zero
+        # regularized heads, whatever the inherited `regularized_heads` block still declares.
+        # The declared count is kept alongside it so the 9-declared/7-effective era stays
+        # diagnosable, and `n_masked_heads` gives the hard-masking count that REPLACED the
+        # KL, which had no telemetry at all.
+        "n_declared_reg_heads": _n_declared_reg_heads,
+        "n_regularized_heads": (
+            _n_declared_reg_heads
+            if float(cfg.model.graph_regularization.graph_reg_lambda) > 0.0
+            else 0
         ),
+        "n_masked_heads": _n_masked_heads,
+        # One categorical so "how did the graph prior enter this run" is a single W&B
+        # filter instead of a two-key inference the reader has to do by hand.
+        "graph_prior": _graph_prior,
     }
     print("[scale-meta] " + json.dumps(scale_meta))
     if run is not None:

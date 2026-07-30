@@ -75,13 +75,28 @@ class GraphRegularizedTransformerLayer(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(
-        self, x: torch.Tensor, return_attention: bool = False
+        self,
+        x: torch.Tensor,
+        return_attention: bool = False,
+        head_mask: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor | None]:
         """Forward pass with manual attention computation.
 
         Args:
             x: [batch, N+1, d] where N+1 includes CLS token at position 0
             return_attention: Whether to return attention weights for regularization
+            head_mask: Optional [heads, N+1, N+1] bool mask, True where attention is
+                ALLOWED. When given (and weights are not requested) attention runs through
+                ``scaled_dot_product_attention``.
+
+                WHY THAT MATTERS FOR MEMORY. This layer computes attention MANUALLY --
+                explicit matmul then softmax -- because the graph-regularization KL needs
+                the weights. That materializes a [batch, heads, N+1, N+1] tensor every
+                layer: 9 x 6608^2 x 4B = 1.57 GB, and it is the bulk of the measured
+                19.3 GB/run. Turning the KL off does NOT free it; the manual path
+                materializes regardless. Masking replaces the KL as the way to inject
+                graph structure, which removes the need for the weights, which finally
+                allows the fused/flash SDPA kernel that never forms the matrix.
 
         Returns:
             output: [batch, N+1, d] transformed features
@@ -99,26 +114,56 @@ class GraphRegularizedTransformerLayer(nn.Module):
         k = k.transpose(1, 2)
         v = v.transpose(1, 2)
 
-        # Manual attention computation (get both output AND weights)
-        attention_scores = torch.matmul(q, k.transpose(-2, -1)) / (
-            self.head_dim**0.5
-        )  # [batch, heads, seq_len, seq_len]
-        attention_weights = F.softmax(attention_scores, dim=-1)
+        if not return_attention:
+            # FUSED PATH: never forms the [batch, heads, N+1, N+1] matrix.
+            #
+            # GATED ON `return_attention` ALONE, not on having a mask. The earlier condition
+            # `head_mask is not None and not return_attention` forfeited the fused kernel on
+            # every UNMASKED layer, so with attention_mask.layers=[1] on a four-layer encoder
+            # only ONE layer fused and the other three still materialized
+            # [1, 9, 6608, 6608] (9 x 6608^2 x 4B = 1.57 GB) and then discarded it. The KL is
+            # the only consumer that needs the weights; when nobody asks for them there is no
+            # reason to build them, mask or no mask. SDPA accepts attn_mask=None.
+            #
+            # dropout_p IS PASSED EXPLICITLY. The old fused branch passed none, so a masked
+            # layer silently trained at p=0 while every manual layer applied p=0.1 -- a
+            # regularization difference confounded with the mask itself. Note SDPA consumes
+            # RNG differently from the manual softmax path, so trajectories will not match
+            # earlier runs at an identical seed; that is why this lands on a new wave boundary
+            # rather than being pooled with wave3/wave4a.
+            attn_output = F.scaled_dot_product_attention(
+                q,
+                k,
+                v,
+                attn_mask=None if head_mask is None else head_mask.unsqueeze(0),
+                dropout_p=self.dropout.p if self.training else 0.0,
+            )
+            gene_attention_weights = None
+        else:
+            # Manual attention computation (get both output AND weights)
+            attention_scores = torch.matmul(q, k.transpose(-2, -1)) / (
+                self.head_dim**0.5
+            )  # [batch, heads, seq_len, seq_len]
+            if head_mask is not None:
+                attention_scores = attention_scores.masked_fill(
+                    ~head_mask.unsqueeze(0), float("-inf")
+                )
+            attention_weights = F.softmax(attention_scores, dim=-1)
 
-        # Apply dropout to attention weights
-        attention_weights_dropout = self.dropout(attention_weights)
+            # Apply dropout to attention weights
+            attention_weights_dropout = self.dropout(attention_weights)
 
-        # Apply attention to values
-        attn_output = torch.matmul(
-            attention_weights_dropout, v
-        )  # [batch, heads, seq_len, head_dim]
+            # Apply attention to values
+            attn_output = torch.matmul(
+                attention_weights_dropout, v
+            )  # [batch, heads, seq_len, head_dim]
 
-        # Extract gene-gene attention block for regularization (exclude CLS token)
-        # attention_weights: [batch, heads, N+1, N+1]
-        # gene_attention_weights: [batch, heads, N, N]
-        gene_attention_weights = (
-            attention_weights[:, :, 1:, 1:] if return_attention else None
-        )
+            # Extract gene-gene attention block for regularization (exclude CLS token)
+            # attention_weights: [batch, heads, N+1, N+1]
+            # gene_attention_weights: [batch, heads, N, N]
+            gene_attention_weights = (
+                attention_weights[:, :, 1:, 1:] if return_attention else None
+            )
 
         # Reshape back: [batch, seq_len, hidden_dim]
         attn_output = (
@@ -322,40 +367,245 @@ class EquivariantPerturbationTransform(nn.Module):
     Implements Type I Virtual Instrument: H_genes → H_genes_pert
     """
 
-    def __init__(self, hidden_dim: int, num_heads: int = 8, dropout: float = 0.1):
+    def __init__(
+        self,
+        hidden_dim: int,
+        num_heads: int = 8,
+        dropout: float = 0.1,
+        residual: str = "postln",
+        num_layers: int = 1,
+        ffn_mult: int = 4,
+        extra_layer_ffn_mult: int | None = None,
+        null_sink: bool = False,
+        null_sink_bias_init: float = -4.0,
+        null_sink_trainable: bool = True,
+        null_sink_magnitude_match: bool = False,
+    ):
         """Build the cross-attention, feedforward, and normalization layers.
 
         Args:
             hidden_dim: Model hidden dimension.
             num_heads: Number of cross-attention heads.
             dropout: Dropout probability.
+            residual: ``postln`` (default, unchanged) or ``rezero``.
+
+                POSTLN is `LN(h_i + attn)` -> `LN(x + FFN(x))`, the historical behaviour.
+                Two costs, both measured elsewhere in this round:
+
+                  * STABILITY. A post-LN block with NO warmup is the canonical recipe for
+                    init-dependent divergence, and that is what we see: identical config,
+                    three seeds, val/mean/pearson_per_feature 0.1527 / 0.0235 / 0.0661,
+                    with seed 1 stuck at ~0.015 for all 83 epochs. Note the ENCODER
+                    already avoids this -- `GraphRegularizedTransformerLayer` closes with
+                    a ReZero residual (`beta * out + x`) and no norm. This block is the
+                    one place the model still uses post-LN, so the two are inconsistent.
+                  * INFORMATION. LayerNorm is invariant to positive rescaling of its
+                    input, so `LN(h_i + c_b)` discards the magnitude of the sum -- which
+                    is exactly where <h_i, c_b> lives (||h+c||^2 = ||h||^2 + 2<h,c> +
+                    ||c||^2). ReZero keeps the residual stream unnormalized.
+
+                REZERO is `h_i + beta * attn` -> `x + beta_ffn * FFN(x)` with both betas
+                initialized to ZERO, so the block starts as an exact identity and the
+                network begins as its own well-conditioned shallow limit.
+            num_layers: Number of stacked cross-attention + FFN blocks.
+            ffn_mult: Hidden width of each block's FFN as a multiple of ``hidden_dim``.
+            extra_layer_ffn_mult: FFN multiplier for blocks AFTER the first. ``None``
+                means every block uses ``ffn_mult``; a smaller value makes the extra
+                depth cheap, so "deeper" and "wider" stay separable as arms.
+            null_sink: Append one zero-valued key/value column to the perturbation
+                context, making the real-key weight ``sigmoid(q_i.k_p/sqrt(d) - b)``
+                and therefore dependent on the QUERYING gene. This is what supplies a
+                pair-(p, i) term at ``|S| = 1``; see the block comment below.
+            null_sink_bias_init: Initial value of the learned ``null_bias`` logit
+                offset. ``0.0`` starts the sink carrying ~50% of the attention mass, so
+                the model closing it is itself an observable result; a strongly negative
+                init starts it nearly shut and can never engage (measured: at ``-4.0``
+                the gate moved 0.07 over 187 epochs).
+            null_sink_trainable: Whether ``null_bias`` receives gradient. ``False``
+                pins the sink at its init, which is the sham control for the gate.
+            null_sink_magnitude_match: Rescale the attended output by
+                ``1/sigmoid(-null_sink_bias_init)``. A zero-valued sink diverts mass to
+                a zero vector and so ATTENUATES the context norm (measured 0.5129 at
+                ``bias_init=0.0``); 97.8% of the unmatched sink's downstream effect was
+                that attenuation rather than the gate. Matching removes the confound
+                (norm ratio 1.0258) while leaving the per-query spread untouched
+                (CV 0.0971 either way).
         """
         super().__init__()
         self.hidden_dim = hidden_dim
+        # NULL SINK -- one learned scalar that un-degenerates the |S|=1 softmax.
+        #
+        # THE DEFECT. Every gene token QUERIES the |S| perturbed tokens. At |S|=1 the
+        # softmax runs over a ONE-element key set, so alpha = 1.0 for every query
+        # regardless of the logit: the attended vector is query-INDEPENDENT and the
+        # context collapses to an affine map of the deleted gene, c = W_O(W_V h_p + b_V)
+        # + b_O (verified to 2.4e-7). W_Q and W_K are then dead weight -- re-drawing them
+        # at std=10 changes the output by EXACTLY 0.0 -- which is 16,380 of 32,760
+        # attention parameters receiving no gradient on 95.4% of the expression build.
+        # It is a d x d linear layer wearing an attention costume.
+        #
+        # THE FIX. Append one extra key/value column holding the ZERO vector (which
+        # projects to the in_proj biases b_K / b_V), and add a learned scalar `null_bias`
+        # to that column's logit. The softmax now has two terms, so at |S|=1
+        #
+        #     alpha_i = sigmoid( q_i . k_p / sqrt(d_k) - null_bias )
+        #
+        # which DEPENDS ON i. The deletion can finally affect gene 17 and gene 900 by
+        # different amounts -- a genuine pair-(p, i) term, learned inside the attention.
+        # Per head it is rank-1; across heads the induced per-gene variation has rank
+        # exactly `num_heads` (verified). Equivalently: this IS sigmoid (unnormalized)
+        # attention at |S|=1, expressed as a softmax over {sink, p}.
+        #
+        # WHAT IT DOES NOT DO. It does not restore cardinality. A zero-valued sink keeps
+        # the output a convex combination that now includes the origin, so ||c|| SHRINKS
+        # with the sink rather than growing with |S| (measured 4.75/2.48/1.91 with sink
+        # vs 5.43/2.65/1.95 without, at |S| = 1/2/3). Cardinality needs sum pooling or an
+        # explicit |S| feature; this arm is only a probe of whether the |S|=1 degeneracy
+        # costs anything at all.
+        #
+        # `null_sink_bias_init=-20` with `null_sink_trainable=False` makes the sink
+        # numerically inert (p_null ~ 2e-9) on the SAME code path -- the sham arm, which
+        # is what calibrates whether the paired estimator transfers to an arm that is not
+        # an exact identity at init.
+        # MAGNITUDE MATCHING -- without it the arm is uninterpretable, because the sink does
+        # not only add a pair term, it PERMANENTLY ATTENUATES the context.
+        #
+        # A zero-valued sink means alpha_p = sigmoid(q.k_p/sqrt(d) - b) < 1 for EVERY query, so
+        # the attended vector shrinks. MEASURED on the real module (N=2048, d=90, 9 heads,
+        # |S|=1): ||c_sink|| / ||c_ref|| = 0.5139 at bias 0. Worse, that attenuation -- not the
+        # pair term -- is almost the whole effect: a bare scalar 0.5 applied to the REFERENCE
+        # context, with no sink at all, reproduces 97.8% of the arm's downstream deviation at
+        # LN(h_i + c).
+        #
+        # And it cannot be trained away. AdamW is per-parameter scale-free, so null_bias moves
+        # at most ~3e-4 * 11,700 steps = 3.51 in principle, but A4's measured drift rate
+        # (0.07 over 7,293 steps) projects only 0.112 across 300 epochs -- alpha stays near
+        # 0.53 for the entire run. The reference (alpha = 1) sits on the BOUNDARY of the arm's
+        # parameter space, reachable only as null_bias -> -inf. The attenuation also halves
+        # grad W_V (0.0313 -> 0.0168), so the arm slows its own compensation, which biases
+        # early epochs in a max-over-epochs score.
+        #
+        # Dividing by sigmoid(-bias_init) restores the expected context norm at init, so the
+        # arm differs from the reference by the QUERY-DEPENDENT GATE alone -- which is the
+        # only thing it was built to test.
+        self.null_sink = null_sink
+        self.null_scale = 1.0
+        if null_sink:
+            self.null_bias = nn.Parameter(
+                torch.tensor([float(null_sink_bias_init)]),
+                requires_grad=null_sink_trainable,
+            )
+            if null_sink_magnitude_match:
+                self.null_scale = 1.0 / float(
+                    torch.sigmoid(torch.tensor(-float(null_sink_bias_init)))
+                )
+        if residual not in ("postln", "rezero"):
+            raise ValueError(f"residual must be 'postln' or 'rezero', got {residual!r}")
+        self.residual = residual
+        if residual == "rezero":
+            self.beta_attn = nn.Parameter(torch.zeros(1))
+            self.beta_ffn = nn.Parameter(torch.zeros(1))
 
         # Cross-attention: each gene attends to perturbation context
-        self.cross_attn = nn.MultiheadAttention(
-            hidden_dim, num_heads, dropout=dropout, batch_first=True
+        # DEPTH. Stage 2 is where ALL strain conditioning happens, and it has been ONE
+        # layer. Deepening it is nearly free because |S| is tiny (1-3 perturbed genes):
+        # cost is L * N * |S| * d * B ~ 0.46 GFLOP at L=4, i.e. 0.7% of the encoder. Each
+        # extra layer lets gene i and the perturbed set interact again, and -- unlike the
+        # graph arms -- needs no adjacency, so it transfers to any organism.
+        # FFN WIDTH IS THE COST, NOT THE ATTENTION. Measured at B=32, one extra layer is
+        # 34.3 GFLOP: cross-attention 0.076, QKVO projections 6.85, and the d->4d->d FFN
+        # over all 6,607 tokens 27.4 -- i.e. the FFN is 80% of it. Adding depth with
+        # mult=4 therefore mostly buys FEEDFORWARD CAPACITY, which confounds the
+        # repeated-attention hypothesis it was built to test.
+        #
+        # `extra_layer_ffn_mult=0` makes layers 1.. attention-only, leaving layer 0
+        # untouched, so the ONLY difference from the L=1 baseline is repeated attention.
+        # Cost: L=4 attention-only is 1.20x vs 1.34x for L=2 with the FFN -- three extra
+        # rounds of attention for less than one extra FFN block.
+        self.num_layers = num_layers
+        self.ffn_mults = [ffn_mult] + [
+            ffn_mult if extra_layer_ffn_mult is None else extra_layer_ffn_mult
+        ] * (num_layers - 1)
+        self.cross_attn_layers = nn.ModuleList(
+            nn.MultiheadAttention(
+                hidden_dim, num_heads, dropout=dropout, batch_first=True
+            )
+            for _ in range(num_layers)
         )
-
-        # Feed-forward network for refinement
-        self.ffn = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim * 4),
-            nn.GELU(),
-            nn.Dropout(dropout),
-            nn.Linear(hidden_dim * 4, hidden_dim),
+        self.ffn_layers = nn.ModuleList(
+            (
+                nn.Sequential(
+                    nn.Linear(hidden_dim, hidden_dim * m),
+                    nn.GELU(),
+                    nn.Dropout(dropout),
+                    nn.Linear(hidden_dim * m, hidden_dim),
+                )
+                if m > 0
+                else nn.Identity()
+            )
+            for m in self.ffn_mults
         )
-
-        self.norm1 = nn.LayerNorm(hidden_dim)
-        self.norm2 = nn.LayerNorm(hidden_dim)
+        self.norm1_layers = nn.ModuleList(
+            nn.LayerNorm(hidden_dim) for _ in range(num_layers)
+        )
+        self.norm2_layers = nn.ModuleList(
+            nn.LayerNorm(hidden_dim) for _ in range(num_layers)
+        )
         self.dropout = nn.Dropout(dropout)
+        # Back-compat aliases so single-layer state_dicts and any external reference to
+        # `.cross_attn` / `.ffn` / `.norm1` / `.norm2` still resolve to layer 0.
+        self.cross_attn = self.cross_attn_layers[0]
+        self.ffn = self.ffn_layers[0]
+        self.norm1 = self.norm1_layers[0]
+        self.norm2 = self.norm2_layers[0]
+
+    def _apply_residual(
+        self, x: torch.Tensor, attended: torch.Tensor, layer_idx: int
+    ) -> torch.Tensor:
+        """Combine a layer's attended output with its input, per the residual mode.
+
+        Args:
+            x: [N, d] the layer's input representation.
+            attended: [N, d] cross-attention output for this layer.
+            layer_idx: Which layer's norm/FFN parameters to use.
+
+        Returns:
+            [N, d] the layer's output.
+        """
+        # Every `nn.Module.__call__` is untyped under the gate's --follow-imports=silent,
+        # so each of these expressions is `Any` and every `return` would leak it. Bind the
+        # intermediate to an explicitly annotated local and cast at the boundary -- the
+        # same idiom `GraphRegularizedTransformerLayer` already uses for its ReZero return.
+        has_ffn = self.ffn_mults[layer_idx] > 0
+        out: torch.Tensor
+        if self.residual == "rezero":
+            # Unnormalized residual stream: preserves the magnitude of h_i + c (where
+            # <h_i, c> lives), and is an exact identity at init since both betas are 0.
+            out = cast(torch.Tensor, x + self.beta_attn * self.dropout(attended))
+            if not has_ffn:
+                return out
+            return cast(
+                torch.Tensor,
+                out + self.beta_ffn * self.dropout(self.ffn_layers[layer_idx](out)),
+            )
+        out = cast(
+            torch.Tensor, self.norm1_layers[layer_idx](x + self.dropout(attended))
+        )
+        if not has_ffn:
+            return out
+        return cast(
+            torch.Tensor,
+            self.norm2_layers[layer_idx](
+                out + self.dropout(self.ffn_layers[layer_idx](out))
+            ),
+        )
 
     def forward(
         self,
         H_genes: torch.Tensor,
         perturbation_indices: torch.Tensor,
         batch_assignment: torch.Tensor,
-    ) -> torch.Tensor:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Apply equivariant perturbation transformation.
 
         Args:
@@ -365,45 +615,590 @@ class EquivariantPerturbationTransform(nn.Module):
 
         Returns:
             H_genes_pert: [batch, N, d] - perturbed gene embeddings (EQUIVARIANT!)
+            context: [batch, N, d] - the attended perturbation context, returned
+                separately so downstream heads can condition on it directly (the
+                concat/bilinear/FiLM arms all need c_b, not only h_i + c_b).
         """
         batch_size = int(batch_assignment.max().item()) + 1
         N, d = H_genes.shape
 
         H_genes_pert_list = []
+        # The RAW attended context c_{b,i} kept alongside the fused output. The fused
+        # tensor is g(h_i + c_b) -- h_i and c_b meet exactly once, by ADDITION, so any
+        # downstream head can only ever see a function of their SUM. Exposing c lets a
+        # head take [h_pert ; h_i ; c] and learn arbitrary (h_i, c_b) interactions
+        # instead. Cheap: it is already computed, just discarded today.
+        context_list = []
 
         for b in range(batch_size):
             # Get perturbation context for this sample
             mask = batch_assignment == b
             pert_idx_b = perturbation_indices[mask]
 
-            if len(pert_idx_b) > 0:
-                # Context: embeddings of perturbed genes
-                perturbation_context = H_genes[pert_idx_b]  # [|S_b|, d]
+            H_cur = H_genes
+            first_context: torch.Tensor | None = None
+            for layer_idx in range(self.num_layers):
+                if len(pert_idx_b) > 0:
+                    # K/V read the CURRENT representation of the perturbed genes, so the
+                    # set summary evolves with depth rather than being frozen at layer 0.
+                    perturbation_context = H_cur[pert_idx_b]  # [|S_b|, d]
+                    # The sink is prepended as an extra K/V ROW; `attn_mask` is a float
+                    # tensor ADDED to the logits, so putting `null_bias` in column 0 is
+                    # what makes the sink's mass learnable. Gradient flows into a
+                    # Parameter placed there (verified: grad -1105.5, and the in_proj
+                    # Q/K grads go from exactly zero to 148.2 / 212.0).
+                    attn_mask = None
+                    if self.null_sink:
+                        perturbation_context = torch.cat(
+                            [H_cur.new_zeros(1, d), perturbation_context], dim=0
+                        )  # [|S_b| + 1, d]
+                        attn_mask = torch.cat(
+                            [
+                                self.null_bias.to(H_cur.dtype).view(1, 1).expand(N, 1),
+                                H_cur.new_zeros(N, len(pert_idx_b)),
+                            ],
+                            dim=1,
+                        )  # [N, |S_b| + 1]
+                    attended, _ = self.cross_attn_layers[layer_idx](
+                        query=H_cur.unsqueeze(0),  # [1, N, d]
+                        key=perturbation_context.unsqueeze(0),  # [1, |S_b|(+1), d]
+                        value=perturbation_context.unsqueeze(0),  # [1, |S_b|(+1), d]
+                        attn_mask=attn_mask,
+                    )
+                    if self.null_scale != 1.0:
+                        attended = attended * self.null_scale
+                    attended = attended.squeeze(0)  # [N, d]
+                else:
+                    attended = torch.zeros_like(H_cur)
+                if first_context is None:
+                    first_context = attended
+                H_cur = self._apply_residual(H_cur, attended, layer_idx)
 
-                # Each gene cross-attends to perturbation context
-                # Query: all genes, Key/Value: perturbed genes
-                H_pert_b, _ = self.cross_attn(
-                    query=H_genes.unsqueeze(0),  # [1, N, d]
-                    key=perturbation_context.unsqueeze(0),  # [1, |S_b|, d]
-                    value=perturbation_context.unsqueeze(0),  # [1, |S_b|, d]
-                )
-                H_pert_b = H_pert_b.squeeze(0)  # [N, d]
-            else:
-                # No perturbation: identity transformation
-                H_pert_b = torch.zeros_like(H_genes)
-
-            # Residual connection + LayerNorm
-            H_pert_b = self.norm1(H_genes + self.dropout(H_pert_b))
-
-            # Feed-forward network
-            H_pert_b = self.norm2(H_pert_b + self.dropout(self.ffn(H_pert_b)))
+            assert first_context is not None
+            context_list.append(first_context)
+            H_pert_b = H_cur
 
             H_genes_pert_list.append(H_pert_b)
 
         # Stack to create batch dimension
         H_genes_pert = torch.stack(H_genes_pert_list, dim=0)  # [batch, N, d]
+        context = torch.stack(context_list, dim=0)  # [batch, N, d]
 
-        return H_genes_pert
+        return H_genes_pert, context
+
+
+class PerturbationGraphPropagation(nn.Module):
+    r"""Route the perturbation to graph NEIGHBOURS -- the missing pair-(p, i) term.
+
+    WHY THIS EXISTS. The encoder runs at batch 1 on the WILDTYPE graph, so ``H_genes``
+    and ``h_CLS`` are identical for every strain; the only strain-dependent step is
+    :class:`EquivariantPerturbationTransform`, whose K/V set is just the |S_b| perturbed
+    tokens.  For a SINGLE deletion the softmax is over one key, so the attention weight
+    is exactly 1 for every query gene and the attended vector is query-INDEPENDENT:
+
+    .. math::
+        H^{\mathrm{pert}}_{b,i} = g\big(h_i + c_b\big), \qquad c_b = W_O W_V h_p .
+
+    Verified numerically (max :math:`|attended_i - attended_0| = 0`).  ~96% of the
+    expression rows are single deletions (Kemmeren2014 1,484 singles + Sameith2015,
+    whose double-KO sub-study is n=72), so for almost the whole training set the model's
+    prediction factorizes ADDITIVELY: gene identity enters as :math:`h_i`, strain
+    identity as one 90-d vector, and **no term depends on the pair (p, i)**.  By data
+    processing every head output is then a function of :math:`c_b` alone, which is why
+    no readout change (S0 -> S1 -> S3, any scoring rule) can enlarge the hypothesis
+    class.  The nine graphs shape :math:`h_i` but never CARRY the deletion.
+
+    WHAT THIS DOES.  For each graph ``g`` and hop ``t``, spread unit mass outward from
+    the perturbed genes over the row-normalized adjacency:
+
+    .. math::
+        r^{g,1} = \hat A_g^\top p_b, \qquad r^{g,t} = \hat A_g^\top r^{g,t-1},
+
+    giving ``len(graphs) * hops`` scalars per gene that answer "how strongly is gene i
+    reached from the deletion, along graph g, in t hops".  That quantity depends on the
+    PAIR, so it is exactly the term the additive form lacks.  The features are projected
+    to ``d`` and added to ``H_genes_pert`` through a ReZero gate initialized at ZERO --
+    so the module starts as an exact identity and this is a clean ablation: any gain is
+    attributable to propagation, not to the extra parameters.
+
+    Cost is a sparse mat-vec per (graph, hop), i.e. O(|E|) -- negligible next to the
+    encoder's dense attention over 6,607 tokens.
+    """
+
+    def __init__(
+        self,
+        hidden_dim: int,
+        graph_names: list[str],
+        hops: int = 2,
+        dropout: float = 0.1,
+        gate_mode: str = "rezero",
+    ):
+        """Build the propagation feature projection.
+
+        Args:
+            hidden_dim: Model hidden dimension d.
+            graph_names: Relation names to propagate over (the ``cell_dataset.graphs``
+                set; one sparse adjacency each).
+            hops: Number of propagation steps t. Hop t reaches the t-step neighbourhood.
+            dropout: Dropout probability inside the projection MLP.
+            gate_mode: ``rezero`` (learned scalar, init 0 -- the module starts as an exact
+                identity, so any gain is attributable to propagation rather than to the
+                extra parameters) or ``on`` (fixed 1.0, forcing gradient through the
+                pathway; a closed ReZero gate is not evidence against a mechanism).
+        """
+        super().__init__()
+        assert hops >= 0, f"hops must be >= 0, got {hops}"
+        self.graph_names = list(graph_names)
+        self.hops = hops
+        # +1 for the HOP-0 SELF-INDICATOR ("is gene i itself deleted in strain b?").
+        #
+        # This is the cheapest possible pair-(p, i) term and it plugs a real hole: in the
+        # baseline every gene receives the SAME c_b, so nothing marks WHICH gene was
+        # deleted. The model can only infer it indirectly, by learning that h_i resembles
+        # the deletion signature carried in c_b. Yet a deleted gene's own strong
+        # down-regulation is the most predictable single value in a Kemmeren profile, and
+        # the deleted gene is itself one of the 6,127 measured columns. hop-0 is graph
+        # independent, hence ONE feature rather than one per graph.
+        self.num_features = len(self.graph_names) * hops + 1
+        self.proj = nn.Sequential(
+            nn.Linear(self.num_features, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, hidden_dim),
+        )
+        self.gate_mode = gate_mode
+        self.gate: nn.Parameter | torch.Tensor
+        if gate_mode == "on":
+            # FORCED ON -- see PerceiverMixing.gate_mode for why a closed ReZero gate is
+            # not evidence against a mechanism.
+            self.register_buffer("gate", torch.ones(1), persistent=False)
+        else:
+            self.gate = nn.Parameter(torch.zeros(1))
+
+    def forward(
+        self,
+        H_genes_pert: torch.Tensor,
+        adjacencies_T: dict[str, torch.Tensor],
+        perturbation_indices: torch.Tensor,
+        batch_assignment: torch.Tensor,
+    ) -> torch.Tensor:
+        """Add graph-routed perturbation features to the perturbed gene embeddings.
+
+        Args:
+            H_genes_pert: [batch, N, d] equivariant perturbed gene embeddings.
+            adjacencies_T: relation name -> TRANSPOSED row-normalized sparse adjacency
+                [N, N], so ``A_T @ x`` spreads mass outward from the perturbed genes.
+            perturbation_indices: [total_pert_genes] indices of perturbed genes.
+            batch_assignment: [total_pert_genes] batch index per perturbed gene.
+
+        Returns:
+            [batch, N, d] embeddings with the pair-(p, i) signal added.
+        """
+        batch_size, num_genes, _ = H_genes_pert.shape
+        device = H_genes_pert.device
+
+        # FLOAT32 THROUGHOUT THE SPARSE PATH. Training runs `precision: bf16-mixed` and
+        # CUDA has no bf16 `addmm_sparse` kernel ("NotImplementedError:
+        # addmm_sparse_cuda not implemented for 'BFloat16'"). The propagation is O(|E|)
+        # sparse mat-vecs, utterly negligible next to the encoder's dense attention over
+        # 6,607 tokens, so running it in fp32 costs nothing and avoids the gap entirely.
+        # autocast disabled so the sparse ops cannot be silently re-cast back to bf16.
+        with torch.autocast(device_type=device.type, enabled=False):
+            p0 = torch.zeros(num_genes, batch_size, device=device, dtype=torch.float32)
+            p0[perturbation_indices, batch_assignment] = 1.0
+            p0 = p0 / p0.sum(dim=0, keepdim=True).clamp(min=1.0)
+
+            # hop 0: the perturbation indicator itself, before any propagation.
+            feats: list[torch.Tensor] = [p0.t()]
+            for name in self.graph_names:
+                x = p0
+                A_T = adjacencies_T[name]
+                for _ in range(self.hops):
+                    x = torch.sparse.mm(A_T, x)  # [N, batch]
+                    feats.append(x.t())  # [batch, N]
+
+            # log1p(N * r) keeps "unreached == exactly 0" while lifting the
+            # 1/degree-scaled reachabilities off the floor -- a raw r is ~1e-4 and would
+            # vanish in the MLP.
+            features = torch.stack(feats, dim=-1)  # [batch, N, num_features]
+            features = torch.log1p(features * num_genes)
+        features = features.to(H_genes_pert.dtype)
+
+        return cast(torch.Tensor, H_genes_pert + self.gate * self.proj(features))
+
+
+class LowRankBilinear(nn.Module):
+    r"""Explicit rank-R multiplicative interaction between gene identity and perturbation.
+
+    WHY. ``h_i`` (what gene *i* is) and ``c`` (what was deleted) meet exactly once, by
+    ADDITION, and the very next op is a LayerNorm. The natural pair-term for expression is
+    an inner product -- "how related is output gene *i* to the deleted gene" -- and the sum
+    does contain it:
+
+    .. math:: \|h_i + c\|^2 = \|h_i\|^2 + 2\langle h_i, c\rangle + \|c\|^2
+
+    but LayerNorm divides by the per-channel standard deviation, DISCARDING exactly the
+    magnitude in which :math:`\langle h_i, c\rangle` is encoded. So the interaction is not
+    merely hard to read off the sum -- the operation immediately after the sum removes it.
+
+    This computes the interaction directly as a rank-R bilinear form,
+
+    .. math:: b_r = \langle u_r, h_i\rangle \cdot \langle v_r, c\rangle,
+              \qquad r = 1 \ldots R,
+
+    yielding R scalars per (strain, gene) that are appended to the per-gene head input.
+    R=32 matches the measured effective rank (32.8) of the reproducible residual gene-gene
+    correlation. Cost is two d x R projections -- negligible -- and it is the parameter-lean
+    alternative to the full ``concat_context`` arm: if concat wins because the head is
+    re-deriving an inner product, this should recover most of it for 2*d*R parameters.
+
+    Permutation-equivariant (no gene-indexed parameters), graph-free.
+    """
+
+    def __init__(self, hidden_dim: int, rank: int = 32):
+        """Build the two projections whose elementwise product is the bilinear form.
+
+        Args:
+            hidden_dim: Model hidden dimension d.
+            rank: Number of bilinear components R (the output width).
+        """
+        super().__init__()
+        self.rank = rank
+        self.u = nn.Linear(hidden_dim, rank, bias=False)
+        self.v = nn.Linear(hidden_dim, rank, bias=False)
+
+    def forward(self, H_genes: torch.Tensor, context: torch.Tensor) -> torch.Tensor:
+        """Compute the rank-R interaction per (strain, gene).
+
+        Args:
+            H_genes: [N, d] strain-invariant wildtype gene embeddings.
+            context: [batch, N, d] attended perturbation context.
+
+        Returns:
+            [batch, N, rank] bilinear interaction features.
+        """
+        batch_size = context.shape[0]
+        a = self.u(H_genes).unsqueeze(0).expand(batch_size, -1, -1)  # [B, N, R]
+        b = self.v(context)  # [B, N, R]
+        # NO LayerNorm here. The first version normalized `a * b` across the R
+        # components, which discards the MAGNITUDE of the interaction -- exactly the
+        # quantity this module exists to expose, and exactly the defect it was built to
+        # route around. The measured null result (-0.0006) was that bug, not evidence.
+        return cast(torch.Tensor, a * b)
+
+
+class ObservedLabelEncoder(nn.Module):
+    r"""Encode PARTIALLY OBSERVED labels so the decoder can condition on them.
+
+    WHY. Every arm in this round changes what information reaches the per-gene readout;
+    none changes the OUTPUT FACTORIZATION. The decoder emits 6,127 INDEPENDENT marginals
+    in one shot, even though the reproducible residual gene-gene correlation has a measured
+    participation-ratio effective rank of 32.8 (split-half r = 0.869 against a 1e-4 null).
+    That joint structure is simply discarded at the output.
+
+    Masked prediction -- the scGPT / BERT objective -- restores it: mask a fraction of the
+    measured genes, feed the REST in as input, and predict the held-out ones. Gene i's
+    prediction then depends on gene j's observed value, which is exactly the dependence a
+    per-token readout cannot express.
+
+    IT ONLY WORKS WITH CROSS-GENE MIXING. If nothing routes information between gene
+    tokens after the perturbation, an observed value at gene j can never reach gene i and
+    the conditioning is inert. This module therefore pairs with
+    :class:`PerceiverMixing`: the Perceiver is the channel, masking is the objective that
+    forces the model to use it. (Measured: the Perceiver alone moved seed 0 by only
+    +0.0045 -- a pathway with nothing requiring it.)
+
+    EVALUATION STAYS COMPARABLE. At validation no labels are observed, so the mask is
+    100% and the forward pass is identical to the unconditioned model. The per-feature
+    metric is therefore directly comparable to every other arm -- masking changes the
+    TRAINING signal, not the inference task.
+    """
+
+    def __init__(self, hidden_dim: int, dropout: float = 0.1, gate_mode: str = "on"):
+        """Build the projection from (value, observed-flag) to a token-space offset.
+
+        Args:
+            hidden_dim: Model hidden dimension d.
+            dropout: Dropout probability.
+            gate_mode: ``on`` (fixed 1.0, the default) or ``rezero`` (learned scalar,
+                init 0). Defaults to forced-on because the whole point is to push
+                gradient through the conditioning pathway; with everything masked the
+                encoded features are zero anyway, so a 100%-masked (validation) forward
+                is still an identity.
+        """
+        super().__init__()
+        self.proj = nn.Sequential(
+            nn.Linear(2, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, hidden_dim),
+        )
+        # Defaults to FORCED ON: the whole point is to push gradient through the
+        # conditioning pathway. With everything masked the encoded features are all zero
+        # anyway, so a 100%-masked (validation) forward is still identity.
+        self.gate_mode = gate_mode
+        self.gate: nn.Parameter | torch.Tensor
+        if gate_mode == "on":
+            self.register_buffer("gate", torch.ones(1), persistent=False)
+        else:
+            self.gate = nn.Parameter(torch.zeros(1))
+
+    def forward(
+        self,
+        H_genes_pert: torch.Tensor,
+        observed_values: torch.Tensor,
+        observed_mask: torch.Tensor,
+    ) -> torch.Tensor:
+        """Add an encoding of the observed labels to the gene tokens.
+
+        Args:
+            H_genes_pert: [batch, N, d] post-perturbation gene embeddings.
+            observed_values: [batch, N] label values, ZERO where unobserved.
+            observed_mask: [batch, N] 1.0 where the label is observed, else 0.0.
+
+        Returns:
+            [batch, N, d] embeddings carrying the observed-label context.
+        """
+        # Values are zeroed where unobserved, so the flag is what distinguishes "observed
+        # and happens to be 0" from "not observed" -- without it the two are identical.
+        features = torch.stack(
+            [observed_values * observed_mask, observed_mask], dim=-1
+        ).to(H_genes_pert.dtype)
+        return cast(torch.Tensor, H_genes_pert + self.gate * self.proj(features))
+
+
+class CrossGeneMixing(nn.Module):
+    r"""GEARS-style cross-gene mixing: one shared global state, then per-gene readout.
+
+    GEARS computes a single ``cross_gene_state`` from ALL gene embeddings and concatenates
+    it to every gene before the gene-specific output layer; ablating that layer measurably
+    hurt its differential-expression correlation. It is the cheapest form of cross-gene
+    communication -- one pooled vector, no pairwise term -- and sits strictly between the
+    per-token readout (no communication at all) and full attention.
+
+    GEARS flattens ``[N, d]`` into a single Linear, which here would be 6,607 x 90 ->
+    38M parameters. This uses the low-rank equivalent: project each gene to ``rank``, mean
+    across genes, broadcast back. Same information path (every gene sees a summary of every
+    other gene), tractable parameter count.
+
+    NOTE ON WHAT THIS CAN AND CANNOT DO. Every post-perturbation token is g(h_i + c_b), so
+    the pooled state is a function of c_b -- pooling adds no INFORMATION. It does enlarge
+    the FUNCTION CLASS: the map c_b -> profile is no longer "add c_b to each h_i and apply
+    one shared MLP". Since the reproducible signal has effective rank ~33 and c_b carries
+    90 dimensions, information is not the binding constraint here; expressivity is. That is
+    the hypothesis this arm tests.
+    """
+
+    def __init__(self, hidden_dim: int, rank: int = 64, dropout: float = 0.1):
+        """Build the project -> pool -> broadcast path.
+
+        Args:
+            hidden_dim: Model hidden dimension d.
+            rank: Width of the pooled cross-gene state.
+            dropout: Dropout probability.
+        """
+        super().__init__()
+        self.to_state = nn.Linear(hidden_dim, rank)
+        self.from_state = nn.Sequential(
+            nn.Linear(hidden_dim + rank, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, hidden_dim),
+        )
+
+    def forward(self, H_genes_pert: torch.Tensor) -> torch.Tensor:
+        """Mix a pooled cross-gene state back into every gene token.
+
+        Args:
+            H_genes_pert: [batch, N, d] post-perturbation gene embeddings.
+
+        Returns:
+            [batch, N, d] with the shared cross-gene state folded in.
+        """
+        state = self.to_state(H_genes_pert).mean(dim=1)  # [batch, rank]
+        state = state.unsqueeze(1).expand(-1, H_genes_pert.shape[1], -1)
+        return cast(
+            torch.Tensor,
+            H_genes_pert + self.from_state(torch.cat([H_genes_pert, state], dim=-1)),
+        )
+
+
+class ResponseBasisHead(nn.Module):
+    r"""Low-rank response-basis decoder: the perturbation activates shared programs.
+
+    .. math:: \hat y_i = \hat y_i^{\text{local}} + \sum_{j=1}^{r} b_{ij}(h_i)\, a_j(z_S)
+
+    The perturbation picks an amplitude for each of ``r`` global response PROGRAMS, and each
+    gene carries a learned sensitivity to each program. This is a conditional factor model,
+    not attention -- and it is the multiplicative interaction between gene identity and
+    perturbation that the additive ``g(h_i + c_b)`` form cannot represent, since h_i and
+    c_b meet exactly once by addition and the next op is a LayerNorm that removes the scale
+    in which their inner product lives.
+
+    ``rank=32`` is MEASURED, not chosen: residual_covariance_diagnostic.py puts the
+    participation-ratio effective rank of the reproducible residual gene-gene correlation
+    at 32.8 (split-half r = 0.869 vs a 1e-4 null). If the response really is that low-rank,
+    this parameterizes it directly for ~2*d*r parameters.
+
+    Supersedes ``LowRankBilinear``, whose first version applied a LayerNorm to the product
+    and so normalized away the magnitude it existed to expose.
+    """
+
+    def __init__(
+        self, hidden_dim: int, rank: int = 32, param_dim: int = 1, dropout: float = 0.1
+    ):
+        """Build the per-gene sensitivity and per-perturbation amplitude maps.
+
+        Args:
+            hidden_dim: Model hidden dimension d.
+            rank: Number of response programs r.
+            param_dim: Distributional params per gene (1 point, 19 quantile).
+            dropout: Dropout probability.
+        """
+        super().__init__()
+        self.rank = rank
+        self.param_dim = param_dim
+        self.sensitivity = nn.Linear(hidden_dim, rank, bias=False)  # b_i = q(h_i)
+        self.amplitude = nn.Sequential(  # a = g(z_S)
+            nn.Linear(2 * hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, rank * param_dim),
+        )
+        # Zero-init the amplitude output so the head starts as an exact identity: the arm
+        # is then a clean ablation against the local readout alone.
+        # Indexing an nn.Sequential yields Module, so `.weight` types as Tensor|Module.
+        amplitude_out = cast(nn.Linear, self.amplitude[-1])
+        nn.init.zeros_(amplitude_out.weight)
+        nn.init.zeros_(amplitude_out.bias)
+
+    def forward(
+        self, H_genes_pert: torch.Tensor, pert_context: torch.Tensor
+    ) -> torch.Tensor:
+        """Compute the low-rank response contribution.
+
+        Args:
+            H_genes_pert: [batch, N, d] post-perturbation gene embeddings.
+            pert_context: [batch, 2d] the [z_S ; h_CLS] perturbation summary.
+
+        Returns:
+            [batch, N] when ``param_dim == 1`` else [batch, N, param_dim].
+        """
+        batch_size = H_genes_pert.shape[0]
+        b = self.sensitivity(H_genes_pert)  # [batch, N, r]
+        a = self.amplitude(pert_context).view(batch_size, self.rank, self.param_dim)
+        out = torch.einsum("bnr,brp->bnp", b, a)
+        return out.squeeze(-1) if self.param_dim == 1 else out
+
+
+class PerceiverMixing(nn.Module):
+    r"""POST-perturbation gene-gene mixing through a learned latent bottleneck.
+
+    WHY. The encoder is the ONLY place gene representations interact, and it runs on the
+    wildtype graph at batch 1 -- so that mixing is identical for every strain. After
+    :class:`EquivariantPerturbationTransform` injects the perturbation there is NO
+    gene-gene interaction anywhere: the transform's keys/values are the perturbed genes
+    only, ``PerGeneHead`` is a per-token MLP, and the global/perturbation heads merely
+    pool. Gene *i*'s post-perturbation state therefore depends on :math:`(h_i, \{h_p\})`
+    and never on :math:`h_j` for any other gene, which makes downstream cascades
+    ("delete p -> changes j -> changes i") structurally unrepresentable.
+
+    Naive fix -- dense self-attention over the N tokens AFTER the perturbation -- is
+    per-instance, so it costs B times the encoder: ~503 GFLOP and a
+    ``[32, 9, 6607, 6607]`` attention tensor (~25 GB in bf16). Not affordable.
+
+    This block routes every gene through ``num_latents`` learned latents instead:
+    genes -> latents -> genes. Every gene still influences every other, but through an
+    M-dim bottleneck, so cost is O(N*M) not O(N^2): ~4.9 GFLOP and a ~0.12 GB attention
+    tensor at M=32. M=32 is also the MEASURED participation-ratio effective rank (32.8)
+    of the reproducible residual gene-gene correlation.
+
+    Graph-FREE -- unlike graph-masked attention it needs no adjacency, so it transfers to
+    organisms with no curated interaction networks. Permutation-equivariant: the latents
+    are shared across genes, never indexed by gene. ReZero-gated at ZERO so the block is
+    an exact identity at init and the arm is a clean ablation.
+    """
+
+    def __init__(
+        self,
+        hidden_dim: int,
+        num_latents: int = 32,
+        num_heads: int = 9,
+        dropout: float = 0.1,
+        gate_mode: str = "rezero",
+    ):
+        """Build the latent bank and the two cross-attention stages.
+
+        Args:
+            hidden_dim: Model hidden dimension d.
+            num_latents: Bottleneck width M. Every gene-gene path runs through these.
+            num_heads: Attention heads (must divide hidden_dim).
+            dropout: Dropout probability.
+            gate_mode: ``rezero`` (learned scalar, init 0) or ``on`` (fixed 1.0).
+
+                ``on`` FORCES the pathway. A ReZero gate initialized at zero has a
+                chicken-and-egg failure: the block's internals receive gradient only in
+                proportion to the gate, and the gate receives gradient only in proportion
+                to how useful the block is with UNTRAINED internals -- which is random. A
+                block that only becomes useful once its internals are trained can sit at
+                gate ~ 0 indefinitely. MEASURED: the Perceiver's gate finished at 1.0e-5,
+                i.e. never opened, while the propagation module's reached 0.125 under the
+                identical mechanism. A closed gate is therefore NOT evidence the mechanism
+                is useless -- it cannot distinguish "nothing to gain" from "never left the
+                basin". ``on`` removes the confound so backprop must flow through the
+                pathway, which is the only way to test the mechanism itself.
+        """
+        super().__init__()
+        assert hidden_dim % num_heads == 0, (
+            f"hidden_dim {hidden_dim} must be divisible by num_heads {num_heads}"
+        )
+        self.latents = nn.Parameter(torch.randn(num_latents, hidden_dim) * 0.02)
+        self.write_attn = nn.MultiheadAttention(
+            hidden_dim, num_heads, dropout=dropout, batch_first=True
+        )
+        self.read_attn = nn.MultiheadAttention(
+            hidden_dim, num_heads, dropout=dropout, batch_first=True
+        )
+        self.norm_latent = nn.LayerNorm(hidden_dim)
+        self.norm_out = nn.LayerNorm(hidden_dim)
+        self.ffn = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim * 2),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim * 2, hidden_dim),
+        )
+        self.dropout = nn.Dropout(dropout)
+        self.gate_mode = gate_mode
+        self.gate: nn.Parameter | torch.Tensor
+        if gate_mode == "on":
+            self.register_buffer("gate", torch.ones(1), persistent=False)
+        else:
+            self.gate = nn.Parameter(torch.zeros(1))
+
+    def forward(self, H_genes_pert: torch.Tensor) -> torch.Tensor:
+        """Mix gene representations through the latent bottleneck.
+
+        Args:
+            H_genes_pert: [batch, N, d] post-perturbation gene embeddings.
+
+        Returns:
+            [batch, N, d] with cross-gene information mixed in.
+        """
+        batch_size = H_genes_pert.shape[0]
+        latents = self.latents.unsqueeze(0).expand(batch_size, -1, -1)  # [B, M, d]
+
+        # WRITE: latents read from all genes -- this is where cross-gene info is pooled.
+        written, _ = self.write_attn(
+            query=latents, key=H_genes_pert, value=H_genes_pert, need_weights=False
+        )
+        latents = self.norm_latent(latents + self.dropout(written))
+        latents = latents + self.dropout(self.ffn(latents))
+
+        # READ: every gene queries the latents -- this is where it comes back out.
+        read, _ = self.read_attn(
+            query=H_genes_pert, key=latents, value=latents, need_weights=False
+        )
+        return cast(torch.Tensor, H_genes_pert + self.gate * self.norm_out(read))
 
 
 class PerturbationHead(nn.Module):
@@ -415,15 +1210,36 @@ class PerturbationHead(nn.Module):
     Implements Type II Virtual Instrument: H_genes_pert → y_GI
     """
 
-    def __init__(self, hidden_dim: int, dropout: float = 0.1):
+    def __init__(self, hidden_dim: int, dropout: float = 0.1, pooling: str = "sum"):
         """Build the prediction MLP mapping [h_CLS || z_S] to a scalar.
 
         Args:
             hidden_dim: Model hidden dimension.
             dropout: Dropout probability.
+            pooling: ``sum`` (default) or ``mean`` over the perturbed-gene tokens.
+
+                SUM IS THE DEFAULT because a MEAN is cardinality-blind: it makes z_S for
+                S={A} and S={A,A} bit-identical (measured: both -0.3520988), and it makes
+                a double's summary a convex combination of its two singles rather than
+                something outside their span. Every explicit-set model in the field sums --
+                GEARS ``MLP(sum h_Pi)``, CPA ``.sum(dim=1)``, GenePert g(p1)+g(p2),
+                SAMS-VAE ``sum m_p e_p`` -- and Deep Sets says why.
+
+                THE CHANGE IS INERT ON TODAY'S DATA, which is the point: at |S|=1 sum and
+                mean are the same operation, and 95.4% of the expression build is |S|=1
+                (100% of the kemmeren-only arm). At the constant |S|=3 of 010 it is a
+                factor of 3 absorbed by the next linear layer. Sum and mean only diverge
+                when |S| VARIES within a run -- i.e. exactly the mixed-cardinality joint
+                training this is being landed ahead of. So it is future-proofing, not an
+                experimental arm; there is nothing here to measure yet.
+
+                ``mean`` is retained so the 010 configuration is exactly reproducible.
         """
         super().__init__()
         self.hidden_dim = hidden_dim
+        if pooling not in ("sum", "mean"):
+            raise ValueError(f"pooling must be 'sum' or 'mean', got {pooling!r}")
+        self.pooling = pooling
 
         # Prediction MLP: [h_CLS || z_S] -> scalar
         self.mlp = nn.Sequential(
@@ -462,7 +1278,11 @@ class PerturbationHead(nn.Module):
             if len(pert_idx_b) > 0:
                 # Extract perturbed genes for this sample from H_genes_pert
                 h_pert_b = H_genes_pert[b, pert_idx_b, :]  # [|S_b|, d]
-                z_S_list.append(h_pert_b.mean(dim=0))  # [d]
+                z_S_list.append(
+                    h_pert_b.sum(dim=0)
+                    if self.pooling == "sum"
+                    else h_pert_b.mean(dim=0)
+                )  # [d]
             else:
                 # No perturbation
                 z_S_list.append(
@@ -678,6 +1498,11 @@ class PerGeneHead(nn.Module):
         output_dim: int = 1,
         dropout: float = 0.1,
         param_dim: int = 1,
+        free_gene_dim: int = 0,
+        num_genes: int = 0,
+        in_mult: int = 1,
+        extra_dim: int = 0,
+        film_dim: int = 0,
     ):
         """Build the shared MLP applied to every gene embedding.
 
@@ -689,29 +1514,94 @@ class PerGeneHead(nn.Module):
                 With the default ``output_dim=1`` the trailing axis carries the params:
                 ``[batch, N]`` (point) or ``[batch, N, param_dim]`` (distributional). The
                 measured-gene ``index_select(1, col)`` gather is unaffected either way.
+            free_gene_dim: Width of a FREE per-gene embedding concatenated to each token
+                before the MLP (0 disables it -- the original S0 behaviour).
+            num_genes: Number of gene nodes N; required when ``free_gene_dim > 0``.
+            in_mult: How many ``hidden_dim``-wide blocks the head consumes per gene.
+                ``1`` is ``h_pert`` alone; ``3`` is the CONCAT arm ``[h_pert ; h_i ; c]``,
+                which can represent arbitrary functions of ``(h_i, c_b)`` rather than
+                only functions of their sum.
+            extra_dim: Extra input width appended per gene, used by the bilinear arm to
+                pass its rank-``r`` interaction features (0 disables it).
+            film_dim: Width of the FiLM conditioning vector. ``> 0`` builds a conditioner
+                emitting per-feature scale/shift, giving ``h_i * gamma(c) + beta(c)`` --
+                a genuine rank-``d`` pair term, which the purely additive form lacks.
+                ``0`` disables FiLM.
         """
         super().__init__()
         self.hidden_dim = hidden_dim
         self.output_dim = output_dim
         self.param_dim = param_dim
+
+        # FREE OUTPUT-GENE EMBEDDING (``free_gene_dim > 0``).  Without it, output-gene
+        # identity enters ONLY as the point h_i through a shared MLP, so genes with
+        # nearby encoder embeddings are forced into near-identical response functions
+        # for every strain.  A free row per gene unties that.
+        #
+        # Unlike ``learnable_embedding`` (which indexes PERTURBED genes and is inert on
+        # val, since only ~4.8% of val genes are ever perturbed in training), this
+        # indexes MEASURED genes: ``col_idx`` is row-invariant, so every one of the
+        # 6,127 measured genes is supervised by every training strain. No cold start.
+        self.free_gene_dim = free_gene_dim
+        self.free_gene_embedding: nn.Parameter | None = None
+        if free_gene_dim > 0:
+            assert num_genes > 0, "free_gene_dim > 0 requires num_genes"
+            self.free_gene_embedding = nn.Parameter(
+                torch.randn(num_genes, free_gene_dim) * 0.02
+            )
+
+        # in_mult = 3 for the CONCAT arm: the head receives [h_pert ; h_i ; c] instead of
+        # h_pert alone, so it can represent arbitrary functions of (h_i, c_b) rather than
+        # only functions of their sum.
+        self.in_mult = in_mult
+        self.extra_dim = extra_dim
+        # FiLM generator: cond -> (gamma, beta). Zero-initialized final layer so the head
+        # starts as an EXACT identity and the arm is a clean ablation.
+        self.film: nn.Sequential | None = None
+        if film_dim > 0:
+            width = hidden_dim * in_mult + free_gene_dim + extra_dim
+            self.film = nn.Sequential(
+                nn.Linear(film_dim, hidden_dim),
+                nn.ReLU(),
+                nn.Linear(hidden_dim, 2 * width),
+            )
+            film_out = cast(nn.Linear, self.film[-1])
+            nn.init.zeros_(film_out.weight)
+            nn.init.zeros_(film_out.bias)
         self.mlp = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim),
+            nn.Linear(hidden_dim * in_mult + free_gene_dim + extra_dim, hidden_dim),
             nn.ReLU(),
             nn.Dropout(dropout),
             nn.Linear(hidden_dim, output_dim * param_dim),
         )
 
-    def forward(self, H_genes_pert: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, H_genes_pert: torch.Tensor, film_cond: torch.Tensor | None = None
+    ) -> torch.Tensor:
         """Forward pass of the per-gene head.
 
         Args:
             H_genes_pert: [batch, N, d] equivariant perturbed gene embeddings.
+            film_cond: [batch, film_dim] strain-level conditioning vector. Required for
+                FiLM to engage: the scale/shift are only applied when the head was built
+                with ``film_dim > 0`` AND this is not ``None``, so passing ``None``
+                reduces the head to its unconditioned form.
 
         Returns:
             predictions: [batch, N] if output_dim == param_dim == 1;
             [batch, N, param_dim] for a distributional scalar-per-gene head;
             else [batch, N, output_dim (, param_dim)].
         """
+        if self.free_gene_embedding is not None:
+            batch_size = H_genes_pert.shape[0]
+            emb = self.free_gene_embedding.unsqueeze(0).expand(batch_size, -1, -1)
+            H_genes_pert = torch.cat([H_genes_pert, emb], dim=-1)
+        if self.film is not None and film_cond is not None:
+            # FiLM: the perturbation-set summary generates a per-channel scale and shift
+            # for EVERY gene. Multiplicative conditioning -- a class no arm has tested;
+            # concat/bilinear/propagation are all additive or feature-appending.
+            gamma, beta = self.film(film_cond).chunk(2, dim=-1)
+            H_genes_pert = H_genes_pert * (1.0 + gamma.unsqueeze(1)) + beta.unsqueeze(1)
         out = self.mlp(H_genes_pert)  # [batch, N, output_dim * param_dim]
         if self.output_dim == 1:
             # Scalar per gene: the trailing axis is the distributional param axis (or is
@@ -915,6 +1805,21 @@ class CellGraphTransformer(nn.Module):
         node_embeddings: dict[str, Any] | None = None,  # Pre-computed embeddings
         learnable_embedding_config: dict[str, Any] | None = None,  # Learnable config
         heads_config: dict[str, Any] | None = None,  # Multitask decoder heads
+        perturbation_propagation_config: (
+            dict[str, Any] | None
+        ) = None,  # Pair-(p,i) routing
+        post_perturbation_mixing_config: (
+            dict[str, Any] | None
+        ) = None,  # Perceiver cross-gene mixing
+        attention_mask_config: (
+            dict[str, Any] | None
+        ) = None,  # Hard graph masking (replaces the KL)
+        observed_label_config: (
+            dict[str, Any] | None
+        ) = None,  # Masked-label conditioning
+        cross_gene_config: (
+            dict[str, Any] | None
+        ) = None,  # GEARS-style pooled cross-gene mixing
     ):
         """Build embeddings, transformer encoder, and perturbation heads.
 
@@ -936,6 +1841,22 @@ class CellGraphTransformer(nn.Module):
                 Otherwise a dict selecting any of "global" / "per_gene" /
                 "per_metabolite" (each a sub-dict, e.g.
                 {"global": {"output_dim": 501, "use_gene_pool": True}}).
+            attention_mask_config: Optional HARD graph masking of encoder attention.
+                ``{"enabled": bool, "layers": [...], "head_graphs": {head: relation}}``
+                burns one relation into each head's attention structurally, so the graph
+                prior needs no KL and no lambda. An out-of-range entry in ``layers`` or an
+                unmatched relation name RAISES rather than silently applying no mask.
+            perturbation_propagation_config: Optional multi-hop spreading of the
+                perturbation over each graph's adjacency, supplying a pair-(p, i) feature
+                the additive form lacks. NOTE this pathway needs curated organism graphs,
+                so it does NOT transfer to an organism without an interactome.
+            observed_label_config: Optional masked-prediction conditioning, letting the
+                decoder see a fraction of the measured labels and predict the rest. Inert
+                without cross-gene mixing, and identity at validation (100% masked).
+            post_perturbation_mixing_config: Optional Perceiver-style mixing BETWEEN gene
+                tokens after the perturbation is applied -- the channel that makes
+                ``observed_label_config`` able to do anything.
+            cross_gene_config: Optional GEARS-style pooled cross-gene mixing.
         """
         super().__init__()
         self.gene_num = gene_num
@@ -1067,12 +1988,93 @@ class CellGraphTransformer(nn.Module):
             hidden_dim=hidden_channels,
             num_heads=pert_head_config.get("num_heads", 8),
             dropout=pert_head_config.get("dropout", dropout),
+            residual=str(pert_head_config.get("residual", "postln")),
+            num_layers=int(pert_head_config.get("num_layers", 1)),
+            ffn_mult=int(pert_head_config.get("ffn_mult", 4)),
+            extra_layer_ffn_mult=(
+                None
+                if pert_head_config.get("extra_layer_ffn_mult") is None
+                else int(pert_head_config["extra_layer_ffn_mult"])
+            ),
+            null_sink=bool(pert_head_config.get("null_sink", False)),
+            null_sink_bias_init=float(
+                pert_head_config.get("null_sink_bias_init", -4.0)
+            ),
+            null_sink_trainable=bool(pert_head_config.get("null_sink_trainable", True)),
+            null_sink_magnitude_match=bool(
+                pert_head_config.get("null_sink_magnitude_match", False)
+            ),
         )
 
-        # Perturbation readout head (Type II Virtual Instrument)
+        # Perturbation readout head (Type II Virtual Instrument). `pooling` is read once
+        # and shared with the per-gene z_S site so the two can never disagree.
+        self.pert_pooling = str(pert_head_config.get("pooling", "sum"))
         self.perturbation_head = PerturbationHead(
-            hidden_dim=hidden_channels, dropout=pert_head_config.get("dropout", dropout)
+            hidden_dim=hidden_channels,
+            dropout=pert_head_config.get("dropout", dropout),
+            pooling=self.pert_pooling,
         )
+
+        # === Hard graph masking: burn the graphs into attention STRUCTURALLY ===
+        # An alternative to the KL, not a companion to it. The KL is a soft penalty whose
+        # strength needs calibrating (lambda 2e-7 makes the graph term ~1% of the data
+        # loss) and whose gradient requires materializing dense attention. A mask is exact,
+        # has no lambda, and -- because the weights are no longer needed -- unlocks the
+        # fused SDPA kernel.
+        #
+        # It also FAILS LOUDLY where the KL failed silently: `compute_graph_regularization_loss`
+        # skips an unmatched graph name with a bare `continue`, which is why `physical` and
+        # `regulatory` (config names) never matched `physical_interaction` /
+        # `regulatory_interaction` (cell_graph names) and 2 of 9 heads went unregularized
+        # for three rounds. Here an unmatched name raises.
+        mask_cfg = attention_mask_config or {}
+        self.attention_head_mask: torch.Tensor | None = None
+        self.attention_mask_layers: list[int] = list(mask_cfg.get("layers", []))
+        if mask_cfg.get("enabled", False):
+            # VALIDATE THE LAYER INDICES. `layers` is compared against `layer_idx` at the
+            # forward site, so an index outside the encoder simply never matches: masking is
+            # silently absent everywhere while the run still reports attention_mask.enabled=
+            # true and n_graphs=9. Verified: layers=[7] on a four-layer stack applies NO mask,
+            # raises nothing, logs nothing. That is a no-graph model wearing a masked model's
+            # config -- exactly the silent-skip failure the `physical`/`physical_interaction`
+            # name mismatch caused for three rounds, and it would now poison every arm since
+            # masking is the frozen base. An empty list still means ALL layers.
+            bad = [
+                int(layer)
+                for layer in self.attention_mask_layers
+                if not 0 <= int(layer) < num_transformer_layers
+            ]
+            if bad:
+                raise ValueError(
+                    f"attention_mask.layers={self.attention_mask_layers} names layer(s) "
+                    f"{bad} outside the {num_transformer_layers}-layer encoder "
+                    "(use [] to mask every layer)"
+                )
+            self.attention_head_mask = self._build_head_mask(
+                cell_graph, dict(mask_cfg.get("head_graphs", {})), num_attention_heads
+            )
+
+        # === Pair-(p, i) routing: propagate the deletion along the graphs ===
+        # Sparse TRANSPOSED row-normalized adjacencies are built here (independent of
+        # graph_reg_lambda, which owns the dense ones) so the propagation arm can run
+        # with the graph prior switched off -- the two are separate levers.
+        prop_cfg = perturbation_propagation_config or {}
+        self.perturbation_propagation: PerturbationGraphPropagation | None = None
+        self.adjacency_T_sparse: dict[str, torch.Tensor] = {}
+        if prop_cfg.get("enabled", False):
+            prop_graphs = list(
+                prop_cfg.get("graphs", [])
+            ) or self._gene_gene_relation_names(cell_graph)
+            self.adjacency_T_sparse = self._build_sparse_adjacency_T(
+                cell_graph, prop_graphs
+            )
+            self.perturbation_propagation = PerturbationGraphPropagation(
+                hidden_dim=hidden_channels,
+                graph_names=prop_graphs,
+                hops=int(prop_cfg.get("hops", 2)),
+                dropout=prop_cfg.get("dropout", dropout),
+                gate_mode=str(prop_cfg.get("gate_mode", "rezero")),
+            )
 
         # === Multitask decoder heads (config-selectable) ===
         # When heads_config is None NO extra parameters/buffers are created, so the
@@ -1121,6 +2123,69 @@ class CellGraphTransformer(nn.Module):
                 output_dim=pg_cfg.get("output_dim", 1),
                 dropout=pg_cfg.get("dropout", dropout),
                 param_dim=int(pg_cfg.get("param_dim", 1)),
+                free_gene_dim=int(pg_cfg.get("free_gene_dim", 0)),
+                num_genes=gene_num,
+                in_mult=(3 if pg_cfg.get("concat_context", False) else 1)
+                + (2 if pg_cfg.get("pert_set_context", False) else 0),
+                extra_dim=int(pg_cfg.get("bilinear_rank", 0)),
+                film_dim=(2 * hidden_channels)
+                if pg_cfg.get("film_on_pert_set", False)
+                else 0,
+            )
+        pg_spec = self.heads_config.get("per_gene") or {}
+        self.per_gene_concat_context = bool(pg_spec.get("concat_context", False))
+        # F0: give the per-gene head the POOLED PERTURBED-SET representation z_S (and
+        # h_CLS) -- exactly the pair of inputs PerturbationHead uses, and the mechanism
+        # behind the trigenic-interaction result. PerGeneHead currently sees neither: it
+        # gets gene i's own token and nothing else, so the set structure that made the
+        # other head work is simply absent from this one.
+        self.per_gene_pert_set = bool(pg_spec.get("pert_set_context", False))
+        self.per_gene_film = bool(pg_spec.get("film_on_pert_set", False))
+        self.bilinear: LowRankBilinear | None = None
+        if int(pg_spec.get("bilinear_rank", 0)) > 0:
+            self.bilinear = LowRankBilinear(
+                hidden_dim=hidden_channels, rank=int(pg_spec["bilinear_rank"])
+            )
+
+        # GEARS-style cross-gene mixing (pool -> broadcast), and the low-rank response
+        # basis. Both live in the DECODER, after the perturbation operator.
+        cg_cfg = cross_gene_config or {}
+        self.cross_gene_mixing: CrossGeneMixing | None = None
+        if cg_cfg.get("enabled", False):
+            self.cross_gene_mixing = CrossGeneMixing(
+                hidden_dim=hidden_channels,
+                rank=int(cg_cfg.get("rank", 64)),
+                dropout=cg_cfg.get("dropout", dropout),
+            )
+        self.response_basis: ResponseBasisHead | None = None
+        pg0 = (heads_config or {}).get("per_gene") or {}
+        if int(pg0.get("response_basis_rank", 0)) > 0:
+            self.response_basis = ResponseBasisHead(
+                hidden_dim=hidden_channels,
+                rank=int(pg0["response_basis_rank"]),
+                param_dim=int(pg0.get("param_dim", 1)),
+                dropout=dropout,
+            )
+
+        obs_cfg = observed_label_config or {}
+        self.observed_label_encoder: ObservedLabelEncoder | None = None
+        if obs_cfg.get("enabled", False):
+            self.observed_label_encoder = ObservedLabelEncoder(
+                hidden_dim=hidden_channels,
+                dropout=obs_cfg.get("dropout", dropout),
+                gate_mode=str(obs_cfg.get("gate_mode", "on")),
+            )
+
+        # Post-perturbation cross-gene mixing (Perceiver bottleneck).
+        mix_cfg = post_perturbation_mixing_config or {}
+        self.post_perturbation_mixing: PerceiverMixing | None = None
+        if mix_cfg.get("enabled", False):
+            self.post_perturbation_mixing = PerceiverMixing(
+                hidden_dim=hidden_channels,
+                num_latents=int(mix_cfg.get("num_latents", 32)),
+                num_heads=int(mix_cfg.get("num_heads", num_attention_heads)),
+                dropout=mix_cfg.get("dropout", dropout),
+                gate_mode=str(mix_cfg.get("gate_mode", "rezero")),
             )
 
         self.per_metabolite_head: PerMetaboliteHead | None = None
@@ -1208,6 +2273,100 @@ class CellGraphTransformer(nn.Module):
 
         return gpr_incidence_T, mr_incidence, num_met
 
+    def _build_head_mask(
+        self, cell_graph: HeteroData, head_graphs: dict[Any, str], num_heads: int
+    ) -> torch.Tensor:
+        """Build a [heads, N+1, N+1] bool mask, True where attention is ALLOWED.
+
+        Heads with no assigned graph stay FULLY FREE -- the same hedge the KL design uses
+        by regularizing a single layer and leaving the rest unconstrained. CLS attends
+        everywhere and is attended by everyone, and every gene keeps a self-loop, so no
+        softmax row can be entirely -inf (which would produce NaN).
+
+        Args:
+            cell_graph: HeteroData providing (gene, rel, gene) edges.
+            head_graphs: head index -> relation name.
+            num_heads: Total attention heads.
+
+        Returns:
+            [num_heads, N+1, N+1] boolean mask.
+        """
+        available = {
+            rel: cell_graph[(src, rel, dst)].edge_index
+            for (src, rel, dst) in cell_graph.edge_types
+            if src == "gene" and dst == "gene"
+        }
+        num_nodes = self.gene_num
+        mask = torch.ones(num_heads, num_nodes + 1, num_nodes + 1, dtype=torch.bool)
+        for head_str, rel in head_graphs.items():
+            head = int(head_str)
+            if rel not in available:
+                raise ValueError(
+                    f"attention_mask head {head} names graph {rel!r}, which is not a "
+                    f"gene-gene relation in cell_graph (available: {sorted(available)}). "
+                    "The KL path skipped this silently; masking does not."
+                )
+            edge_index = available[rel]
+            head_mask = torch.zeros(num_nodes + 1, num_nodes + 1, dtype=torch.bool)
+            head_mask[edge_index[0] + 1, edge_index[1] + 1] = True
+            head_mask[edge_index[1] + 1, edge_index[0] + 1] = True  # symmetric
+            head_mask.fill_diagonal_(True)  # self-loops: no all -inf row
+            head_mask[0, :] = True  # CLS attends to everything
+            head_mask[:, 0] = True  # everything attends to CLS
+            mask[head] = head_mask
+        return mask
+
+    @staticmethod
+    def _gene_gene_relation_names(cell_graph: HeteroData) -> list[str]:
+        """Relation names of every (gene, rel, gene) edge type, in graph order."""
+        return [
+            rel
+            for (src, rel, dst) in cell_graph.edge_types
+            if src == "gene" and dst == "gene"
+        ]
+
+    def _build_sparse_adjacency_T(
+        self, cell_graph: HeteroData, graph_names: list[str]
+    ) -> dict[str, torch.Tensor]:
+        """Build TRANSPOSED row-normalized SPARSE adjacencies for propagation.
+
+        Row-normalized as in :meth:`_normalize_adjacency_matrices` (A[i,:] / deg(i)), then
+        transposed once here so ``A_T @ x`` spreads mass OUTWARD from the perturbed genes.
+        Sparse, not dense: nine dense 6,607 x 6,607 float32 matrices would be ~1.6 GB of
+        GPU memory to do O(|E|) work.
+
+        Args:
+            cell_graph: HeteroData providing (gene, rel, gene) edge indices.
+            graph_names: Relation names to build.
+
+        Returns:
+            Mapping relation name -> sparse [N, N] transposed normalized adjacency.
+        """
+        available = {
+            rel: cell_graph[(src, rel, dst)].edge_index
+            for (src, rel, dst) in cell_graph.edge_types
+            if src == "gene" and dst == "gene"
+        }
+        missing = [g for g in graph_names if g not in available]
+        if missing:
+            raise ValueError(
+                f"perturbation_propagation.graphs {missing} are not gene-gene relations "
+                f"in cell_graph (available: {sorted(available)})"
+            )
+
+        num_nodes = self.gene_num
+        out: dict[str, torch.Tensor] = {}
+        for name in graph_names:
+            edge_index = available[name]
+            row, col = edge_index[0], edge_index[1]
+            degree = torch.zeros(num_nodes).index_add_(0, row, torch.ones(row.numel()))
+            values = 1.0 / degree[row].clamp(min=1.0)
+            # Transposed: entry (col, row) carries the normalized weight of row -> col.
+            out[name] = torch.sparse_coo_tensor(
+                torch.stack([col, row]), values, (num_nodes, num_nodes)
+            ).coalesce()
+        return out
+
     def _normalize_adjacency_matrices(
         self, cell_graph: HeteroData
     ) -> dict[str, torch.Tensor]:
@@ -1241,8 +2400,16 @@ class CellGraphTransformer(nn.Module):
             row_sums = A.sum(dim=1, keepdim=True) + 1e-10  # [num_nodes, 1]
             A_tilde = A / row_sums  # [num_nodes, num_nodes]
 
-            # Use the relation name as the key (e.g., "physical", "regulatory")
+            # Key by the relation name AND, when `to_cell_data` has suffixed it, by the
+            # bare stem. The graph BUILDER names these `physical` / `regulatory`, while
+            # `to_cell_data` emits `physical_interaction` / `regulatory_interaction`; every
+            # 019 config uses the builder spelling. Accepting both is what makes the two
+            # naming systems meet -- previously they silently did not, and
+            # compute_graph_regularization_loss skipped the mismatch with a bare
+            # `continue`, so _006/_007 ran 7 regularized heads while declaring 9.
             normalized_matrices[rel] = A_tilde
+            if rel.endswith("_interaction"):
+                normalized_matrices[rel[: -len("_interaction")]] = A_tilde
 
         return normalized_matrices
 
@@ -1280,7 +2447,16 @@ class CellGraphTransformer(nn.Module):
 
             # Get normalized adjacency from dict
             if graph_name not in self.adjacency_matrices:
-                continue
+                # RAISE, do not skip. The bare `continue` that used to be here is why
+                # `physical` / `regulatory` went unregularized across _006, _007 and _008
+                # without a single warning: the run still logged graph_reg/loss and
+                # ratio_to_data, just computed over 7 graphs while the config declared 9.
+                raise ValueError(
+                    f"regularized head names {graph_name!r} but cell_graph has no such "
+                    f"gene-gene relation (available: {sorted(self.adjacency_matrices)}). "
+                    "to_cell_data SUFFIXES two of them: physical -> physical_interaction, "
+                    "regulatory -> regulatory_interaction."
+                )
             A_tilde = self.adjacency_matrices[graph_name].to(
                 attention_weights.device
             )  # [N, N]
@@ -1365,14 +2541,28 @@ class CellGraphTransformer(nn.Module):
         return self._edge_count_cache[graph_name]
 
     def forward(
-        self, cell_graph: HeteroData, batch: HeteroData, return_attention: bool = False
+        self,
+        cell_graph: HeteroData,
+        batch: HeteroData,
+        return_attention: bool = False,
+        observed_values: torch.Tensor | None = None,
+        observed_mask: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """Forward pass of Equivariant Cell Graph Transformer.
 
         Args:
             cell_graph: Full wildtype graph structure (not used directly, genes indexed by order)
             batch: Perturbation data with indices and phenotypes
-            return_attention: If True, store and return attention weights (memory intensive)
+            return_attention: If True, store and return attention weights (memory
+                intensive: it forces the manual softmax path, which materializes a
+                [1, heads, N+1, N+1] matrix per layer instead of using the fused kernel)
+            observed_values: [batch, N] partially observed measured labels for masked
+                prediction, or None. Only consumed when the model was built with an
+                ``observed_label_config``.
+            observed_mask: [batch, N] boolean companion to ``observed_values``, True where
+                a value is observed. At validation everything is masked, so the forward
+                pass is identical to the unconditioned model and the metric stays
+                comparable across arms.
 
         Returns:
             predictions: [batch_size, 1] gene interaction predictions
@@ -1449,7 +2639,26 @@ class CellGraphTransformer(nn.Module):
             need_attention_for_graph_reg = self.graph_reg_lambda > 0.0
             should_return_attention = need_attention_for_graph_reg or return_attention
 
-            H, attention_weights = layer(H, return_attention=should_return_attention)
+            layer_mask = (
+                self.attention_head_mask
+                if self.attention_head_mask is not None
+                and (
+                    not self.attention_mask_layers
+                    or layer_idx in self.attention_mask_layers
+                )
+                else None
+            )
+            if layer_mask is not None and layer_mask.device != H.device:
+                # `layer_mask` IS `self.attention_head_mask` here -- the conditional above
+                # yields either that tensor or None. Move the NARROWED local and write it
+                # back, rather than re-reading the Optional attribute (which mypy cannot
+                # narrow through a ternary). Same one-time transfer, cached for later
+                # layers, one less indirection.
+                layer_mask = layer_mask.to(H.device)
+                self.attention_head_mask = layer_mask
+            H, attention_weights = layer(
+                H, return_attention=should_return_attention, head_mask=layer_mask
+            )
 
             if attention_weights is not None:
                 # Always compute graph regularization loss (needed for training)
@@ -1481,11 +2690,49 @@ class CellGraphTransformer(nn.Module):
         H_genes = H_squeezed[1:]  # [N, d]
 
         # 5. Apply EQUIVARIANT perturbation transformation (Type I Virtual Instrument)
-        H_genes_pert = self.perturbation_transform(
+        H_genes_pert, pert_context = self.perturbation_transform(
             H_genes,
             batch["gene"].perturbation_indices,
             batch["gene"].perturbation_indices_batch,
-        )  # [batch, N, d] - EQUIVARIANT!
+        )  # [batch, N, d] each - EQUIVARIANT!
+
+        # 5b. Pair-(p, i) routing. Without this the ONLY strain-dependent quantity is a
+        #     single d-vector added uniformly to every gene, so nothing downstream can
+        #     depend on the relationship between the deleted gene p and the read-out
+        #     gene i. Gated by a ReZero parameter initialized at 0 -> exact identity at
+        #     init, so enabling it is a clean ablation.
+        if self.perturbation_propagation is not None:
+            # Move ONCE and cache: these are fixed buffers, and re-uploading nine sparse
+            # matrices every step would cost more than the propagation itself.
+            if next(iter(self.adjacency_T_sparse.values())).device != device:
+                self.adjacency_T_sparse = {
+                    name: A.to(device) for name, A in self.adjacency_T_sparse.items()
+                }
+            H_genes_pert = self.perturbation_propagation(
+                H_genes_pert,
+                self.adjacency_T_sparse,
+                batch["gene"].perturbation_indices,
+                batch["gene"].perturbation_indices_batch,
+            )
+
+        # 5b2. Observed-label conditioning. Injected BEFORE the cross-gene mixing so the
+        #      revealed values have a pathway to reach other genes -- without mixing the
+        #      conditioning is inert.
+        if self.observed_label_encoder is not None and observed_values is not None:
+            assert observed_mask is not None
+            H_genes_pert = self.observed_label_encoder(
+                H_genes_pert, observed_values, observed_mask
+            )
+
+        # 5b3. GEARS-style pooled cross-gene mixing.
+        if self.cross_gene_mixing is not None:
+            H_genes_pert = self.cross_gene_mixing(H_genes_pert)
+
+        # 5c. Post-perturbation cross-gene mixing. This is the ONLY place gene
+        #     representations interact after the perturbation is injected; without it a
+        #     gene's state depends on (h_i, {h_p}) and never on any other gene.
+        if self.post_perturbation_mixing is not None:
+            H_genes_pert = self.post_perturbation_mixing(H_genes_pert)
 
         # 6. Perturbation readout head (Type II Virtual Instrument)
         #    This is the ORIGINAL single (gene-interaction) head; kept as the first
@@ -1505,7 +2752,67 @@ class CellGraphTransformer(nn.Module):
         if self.global_head is not None:
             head_outputs["global"] = self.global_head(h_CLS, H_genes_pert)
         if self.per_gene_head is not None:
-            head_outputs["per_gene"] = self.per_gene_head(H_genes_pert)
+            if self.per_gene_concat_context:
+                # [h_pert ; h_i ; c] -- h_i is the strain-INVARIANT encoder output, c the
+                # raw attended perturbation context. Giving the head all three lets it
+                # learn arbitrary (h_i, c_b) interactions; with h_pert alone it can only
+                # see g(h_i + c_b), i.e. functions of the SUM.
+                pg_in = torch.cat(
+                    [
+                        H_genes_pert,
+                        H_genes.unsqueeze(0).expand(H_genes_pert.shape[0], -1, -1),
+                        pert_context,
+                    ],
+                    dim=-1,
+                )
+            else:
+                pg_in = H_genes_pert
+
+            # z_S: pooled over the PERTURBED gene tokens -- the same pooled set summary
+            # PerturbationHead uses, and permutation-invariant over S. Paired with h_CLS
+            # it is exactly that head's input, which is the configuration behind the
+            # trigenic-interaction result. Pooling follows `perturbation_head.pooling`
+            # (default sum) so the two z_S sites can never silently disagree.
+            pert_cond: torch.Tensor | None = None
+            if (
+                self.per_gene_pert_set
+                or self.per_gene_film
+                or self.response_basis is not None
+            ):
+                bsz = H_genes_pert.shape[0]
+                pert_idx = batch["gene"].perturbation_indices
+                pert_b = batch["gene"].perturbation_indices_batch
+                z_S = torch.zeros(
+                    bsz, self.hidden_channels, device=device, dtype=H_genes_pert.dtype
+                )
+                for b in range(bsz):
+                    sel = pert_idx[pert_b == b]
+                    if len(sel) > 0:
+                        h_sel = H_genes_pert[b, sel, :]
+                        z_S[b] = (
+                            h_sel.sum(dim=0)
+                            if self.pert_pooling == "sum"
+                            else h_sel.mean(dim=0)
+                        )
+                pert_cond = torch.cat([z_S, h_CLS.unsqueeze(0).expand(bsz, -1)], dim=-1)
+            if self.per_gene_pert_set and pert_cond is not None:
+                pg_in = torch.cat(
+                    [pg_in, pert_cond.unsqueeze(1).expand(-1, pg_in.shape[1], -1)],
+                    dim=-1,
+                )
+            if self.bilinear is not None:
+                pg_in = torch.cat([pg_in, self.bilinear(H_genes, pert_context)], dim=-1)
+            head_outputs["per_gene"] = self.per_gene_head(
+                pg_in, film_cond=pert_cond if self.per_gene_film else None
+            )
+            if self.response_basis is not None:
+                assert pert_cond is not None, (
+                    "response_basis needs the perturbation summary; the head spec must "
+                    "also request it so z_S is computed"
+                )
+                head_outputs["per_gene"] = head_outputs[
+                    "per_gene"
+                ] + self.response_basis(H_genes_pert, pert_cond)
         if self.per_metabolite_head is not None:
             head_outputs["per_metabolite"] = self.per_metabolite_head(
                 H_genes_pert, self.gpr_incidence_T, self.mr_incidence

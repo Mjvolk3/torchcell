@@ -1,0 +1,49 @@
+# experiments/019-simb-multimodal/conf/cgt_expr_009.yaml
+# EXPRESSION round _009 -- SATURATION SWEEP under HARD GRAPH MASKING.
+#
+# Two changes from _008, both driven by _008 wave-1 measurements.
+#
+# 1. NO EARLY STOPPING, 1000 EPOCHS. In _008 the arms stopped at wildly different epochs
+#    (A0 at 149, D2_mask at 236) because patience fires off a metric that swings +/-0.05
+#    epoch to epoch. Different budgets per arm is a confound: it scores "how long did the
+#    plateau look flat" alongside "how good is the mechanism". A fixed 1000-epoch budget
+#    removes it.
+#
+#    EXPECT OVERFITTING, NOT SATURATION. Measured at seed 0: every _008 arm PEAKED around
+#    epoch 80-150 and then declined -- A0 went 0.1697 (peak) -> 0.1064 (last), i.e. the tail
+#    is 63% of the peak. So this sweep documents the full overfit curve; it does not find a
+#    plateau. ROLL5 still reads the peak, so the ranking is unaffected by the tail.
+#
+# 2. HARD GRAPH MASKING EVERYWHERE (attention_mask on, graph_reg_lambda 0). Measured
+#    cheaper AND faster: D2_mask reached 236 epochs while every other arm was at ~150 (~1.6x),
+#    used ~35.3 GB vs ~40 GB per GPU pair, and sat at 67% utilisation instead of 100%.
+#    The speedup is mechanical: dropping the KL removes the need for attention WEIGHTS, which
+#    lets the fused SDPA kernel run instead of the manual materialised
+#    [1, 9, 6608, 6608] matmul.
+#
+#    It also keeps graphs as STRUCTURE ON ATTENTION rather than input features, so the
+#    "bring graphs if you have them" property is preserved -- no graph simply means no mask.
+defaults:
+  - cgt_expr_008
+  - _self_
+
+wandb:
+  # SAME project as _008 on purpose. These arms are only interpretable against the _008
+  # seed-0 baseline (A0 ROLL5 0.1576), and splitting them across projects would make the
+  # comparison a cross-project join in the W&B UI for no benefit. The `_009` tag plus the
+  # per-arm tags are what separate the rounds.
+  project: torchcell_019_expr_v8
+  tags: [decoder, saturation, graph-mask, _009]
+
+model:
+  attention_mask:
+    enabled: true
+  graph_regularization:
+    # The mask REPLACES the KL. Leaving both on would apply a hard constraint and a soft
+    # penalty to the same heads.
+    graph_reg_lambda: 0.0
+
+trainer:
+  max_epochs: 1000
+  early_stopping:
+    enabled: false

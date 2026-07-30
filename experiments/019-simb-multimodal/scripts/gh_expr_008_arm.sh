@@ -248,6 +248,43 @@ case "$ARM" in
   V_wd1e2)           OVERRIDES=(regression_task.optimizer.weight_decay=1e-2)
                      ARM_TAGS=(mech-regularization xfer-yes stage-wave6) ;;
 
+  # ------------------------------------------------ V9: TEACHER-FORCED MASKED OBJECTIVE
+  # Launch with TORCHCELL_CONFIG=cgt_expr_v9_mask (project torchcell_019_expr_v9). Separate
+  # project because these runs SEE revealed labels; they coincide with v8 only at k=0.
+  #
+  # The three questions, in order of importance:
+  #   A does the objective work at all -- does pearson@k rise with k?        M_sched
+  #   B is cross-gene mixing NECESSARY, as claimed?                          M_nomix
+  #   C does the objective help or hurt the genotype-only score at k=0?      M_sched vs M_off
+  # M_off is the control that isolates the OBJECTIVE from the extra modules: it builds the
+  # observed-label encoder and the mixing channel but never reveals anything, so any
+  # difference from M_sched is the objective and not the parameters.
+  # M_nomix is a NEGATIVE control and should come back inert: with no routing between gene
+  # tokens after the perturbation, a revealed value at gene j cannot reach gene i. If it
+  # moves anyway, the mechanism is not what we think it is.
+  M_off)             OVERRIDES=("~multitask.mask_schedule")
+                     ARM_TAGS=(mech-mask-control xfer-yes stage-v9) ;;
+  M_sched)           OVERRIDES=()
+                     ARM_TAGS=(mech-mask xfer-yes stage-v9) ;;
+  M_nomix)           OVERRIDES=(model.post_perturbation_mixing.enabled=false)
+                     ARM_TAGS=(mech-mask-nomix xfer-yes stage-v9) ;;
+  # Schedule shape. The residual structure has effective rank 32.78, so the interesting
+  # region is around |M| ~ 33: M_fine samples densely across it, M_coarse skips it, M_lo
+  # stays under-determined throughout and M_hi starts already saturated.
+  M_fine)            OVERRIDES=("multitask.mask_schedule=[0,10,30,100,300,1000]")
+                     ARM_TAGS=(mech-mask sched-fine xfer-yes stage-v9) ;;
+  M_coarse)          OVERRIDES=("multitask.mask_schedule=[0,100,1000]")
+                     ARM_TAGS=(mech-mask sched-coarse xfer-yes stage-v9) ;;
+  M_lo)              OVERRIDES=("multitask.mask_schedule=[0,5,10,30]")
+                     ARM_TAGS=(mech-mask sched-lo xfer-yes stage-v9) ;;
+  M_hi)              OVERRIDES=("multitask.mask_schedule=[0,1000,3000]")
+                     ARM_TAGS=(mech-mask sched-hi xfer-yes stage-v9) ;;
+  # The conditioning gate starts CLOSED, so "the objective did not help" stays separable
+  # from "the pathway was never opened" -- the ambiguity that made the first null-sink
+  # attempt uninformative.
+  M_gate_rezero)     OVERRIDES=(model.observed_labels.gate_mode=rezero)
+                     ARM_TAGS=(mech-mask gate-closed xfer-yes stage-v9) ;;
+
   # THE WAVE-5 REFERENCE. Every pool gets its OWN co-launched W_ref, because the three GPU
   # types available (RTX 6000 Ada on GilaHyper, A100 on mmli, RTX 6000 on cabbi) are not
   # interchangeable -- _007 pooled A100 with Ada runs and their means differ (0.0242 vs

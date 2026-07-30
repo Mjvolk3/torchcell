@@ -287,11 +287,7 @@ def phenotype_breakdown(data: Any) -> dict[str, dict[int, int]]:
 
 def describe_item(data: Any) -> dict[str, Any]:
     """Summarize a built HeteroData sample: node/edge stores and label shapes."""
-    info: dict[str, Any] = {
-        "type": type(data).__name__,
-        "node_types": {},
-        "labels": {},
-    }
+    info: dict[str, Any] = {"type": type(data).__name__, "node_types": {}, "labels": {}}
     for nt in data.node_types:
         store = data[nt]
         info["node_types"][nt] = {

@@ -33,7 +33,6 @@ Run from repo root:
 from __future__ import annotations
 
 import json
-import os
 import os.path as osp
 
 import matplotlib as mpl
@@ -42,7 +41,12 @@ import numpy as np
 from dotenv import load_dotenv
 from matplotlib.ticker import MultipleLocator
 
-from torchcell.utils import PANEL_WIDTHS_MM, PLOT_PALETTE, mm_to_in, savefig_true_size_svg
+from torchcell.utils import (
+    PANEL_WIDTHS_MM,
+    PLOT_PALETTE,
+    mm_to_in,
+    savefig_true_size_svg,
+)
 from torchcell.utils.paths import asset_images_dir, experiment_results_dir
 
 load_dotenv("/home/michaelvolk/Documents/projects/torchcell/.env")
@@ -127,10 +131,7 @@ def main() -> None:
     }
 
     fig, axes = plt.subplots(
-        1,
-        2,
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(78.0)),
-        sharey=True,
+        1, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(78.0)), sharey=True
     )
 
     for ax, mod in zip(axes, modalities):
@@ -140,16 +141,18 @@ def main() -> None:
             if arm is None:
                 continue
             m = arm["modalities"][mod]
-            deg = bool(m.get("degenerate_orthogonal_geometry", False)) or not np.isfinite(
-                m["best_pearson_per_feature"]
-            )
+            deg = bool(
+                m.get("degenerate_orthogonal_geometry", False)
+            ) or not np.isfinite(m["best_pearson_per_feature"])
             labels.append(f"{label}  ({arm['dim']}d)")
             vals.append(0.0 if deg else m["best_pearson_per_feature"])
             colors.append(AXIS_COLOR[axis_name])
             undefined.append(deg)
 
         y = np.arange(len(vals))
-        ax.axhspan(-0.5, len(vals) - 0.5, xmin=0, xmax=0, color="none")  # keep limits sane
+        ax.axhspan(
+            -0.5, len(vals) - 0.5, xmin=0, xmax=0, color="none"
+        )  # keep limits sane
         # Noise-floor band, drawn first so bars sit on top of it.
         ax.axvspan(
             -floor[mod],
@@ -161,7 +164,13 @@ def main() -> None:
             label=f"noise floor (|r| < {floor[mod]:.3f})",
         )
         bars = ax.barh(
-            y, vals, color=colors, edgecolor="black", linewidth=0.4, height=0.72, zorder=2
+            y,
+            vals,
+            color=colors,
+            edgecolor="black",
+            linewidth=0.4,
+            height=0.72,
+            zorder=2,
         )
         for b, deg in zip(bars, undefined):
             if deg:

@@ -46,7 +46,6 @@ PROJECT_ROOT="${W5_PROJECT_ROOT:-/home/michaelvolk/Documents/projects/torchcell.
 ARM_SH="$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/gh_expr_008_arm.sh"
 
 STAGE="${W5_STAGE:?set W5_STAGE=h1|maskdepth|h2gh via --export=ALL,W5_STAGE=...}"
-export TORCHCELL_CONFIG=cgt_expr_011
 
 # SEEDS ARE INIT-ONLY NOW. cgt_expr_011 pins data_module.split_seed=0, so these vary weight
 # initialization against a FIXED validation draw. That is the whole point: the old scheme had
@@ -100,8 +99,19 @@ case "$STAGE" in
                 EXTRA_OV="trainer.max_epochs=60 trainer.train_eval_every=0 data_module.batch_size=8" ;;
   bench_b32_p3) ARMS=(W_ref W_ref W_ref); SEEDS=(0); STAGE_RUNS_PER_GPU=3
                 EXTRA_OV="trainer.max_epochs=60 trainer.train_eval_every=0 data_module.batch_size=32" ;;
-  *) echo "unknown W5_STAGE '$STAGE' (expected h1|maskdepth|h2gh|bench_*)" >&2; exit 1 ;;
+  # V9 -- the teacher-forced masked-label objective. 8 arms, one seed, 2 runs/GPU on 4 GPUs.
+  # Budget matches wave 6 (10,000-epoch cap, 48 h wall) so the k=0 numbers are reduced the
+  # same way; the masked path costs one forward per training step (k is SAMPLED), with the
+  # full k sweep paid only at validation.
+  v9)        ARMS=(M_off M_sched M_nomix M_fine M_coarse M_lo M_hi M_gate_rezero); SEEDS=(0)
+             STAGE_CONFIG=cgt_expr_v9_mask
+             EXTRA_OV="trainer.max_epochs=10000 trainer.train_eval_every=25" ;;
+  *) echo "unknown W5_STAGE '$STAGE' (expected h1|maskdepth|h2gh|v9|bench_*)" >&2; exit 1 ;;
 esac
+
+# AFTER the case block, because that is where STAGE_CONFIG is set. Exporting earlier
+# silently pinned every stage to cgt_expr_011 regardless of what the stage selected.
+export TORCHCELL_CONFIG="${STAGE_CONFIG:-cgt_expr_011}"
 
 JOBS=()
 for arm in "${ARMS[@]}"; do

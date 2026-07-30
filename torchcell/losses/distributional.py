@@ -354,6 +354,40 @@ def pinball(
     return torch.maximum(taus * u, (taus - 1.0) * u)
 
 
+def masked_mean(elem: torch.Tensor, feature_mask: torch.Tensor | None) -> torch.Tensor:
+    r"""Mean of ``elem`` over the entries ``feature_mask`` selects.
+
+    WHY THIS EXISTS. The masked-label objective scores a prediction ONLY on the genes that
+    are still hidden at unmasking step :math:`k`. Genes whose true value has been revealed
+    are model INPUT at that step, so including them in the loss lets the network copy the
+    input to the output -- train loss collapses, train Pearson inflates, and none of it
+    transfers to validation, where nothing is revealed. Restricting the reduction is the
+    whole correctness requirement of that objective.
+
+    ``feature_mask`` is ``[B, F]`` (True = score this entry) while ``elem`` may be
+    ``[B, F]`` (point) or ``[B, F, K]`` (quantile / distributional), so the mask is
+    broadcast along any trailing axes -- a quantile knot is scored exactly when its gene is.
+
+    Args:
+        elem: Elementwise loss ``[B, F]`` or ``[B, F, ...]``.
+        feature_mask: Optional bool ``[B, F]``; ``None`` reduces over everything.
+
+    Returns:
+        Scalar mean over selected entries. Returns a graph-connected zero when the mask
+        selects nothing, so DDP find-unused stays happy.
+    """
+    if feature_mask is None:
+        return elem.mean()
+    w = feature_mask.to(elem.dtype)
+    while w.dim() < elem.dim():
+        w = w.unsqueeze(-1)
+    w = w.expand_as(elem)
+    denom = w.sum()
+    if float(denom) == 0.0:
+        return elem.sum() * 0.0
+    return (elem * w).sum() / denom
+
+
 def _quantile_pit(
     quantiles: torch.Tensor, target: torch.Tensor, taus: torch.Tensor
 ) -> torch.Tensor:
@@ -720,6 +754,7 @@ class DistHead(nn.Module):
         params: torch.Tensor,
         target: torch.Tensor,
         mask: torch.Tensor | None = None,
+        feature_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Masked scalar training loss for this head.
 
@@ -728,6 +763,11 @@ class DistHead(nn.Module):
             target: Point targets ``[B, F]`` (same F as ``params``).
             mask: Optional bool ``[B]`` selecting supervised rows. When no row is
                 supervised, a graph-connected zero is returned (grads flow as zero).
+            feature_mask: Optional bool ``[B, F]`` selecting which FEATURES to score.
+                Used by the masked-label objective to score only the genes still hidden
+                at the current unmasking step -- scoring a revealed gene would let the
+                model copy its own input. Row-masked alongside ``params``/``target`` so
+                the two stay aligned.
 
         Returns:
             Scalar loss.
@@ -735,6 +775,8 @@ class DistHead(nn.Module):
         if mask is not None:
             params = params[mask]
             target = target[mask]
+            if feature_mask is not None:
+                feature_mask = feature_mask[mask]
         if target.shape[0] == 0:
             # Keep the head connected to the graph so DDP find-unused stays happy -- V too,
             # since it is a parameter of this head and would otherwise go untouched.
@@ -744,16 +786,18 @@ class DistHead(nn.Module):
                 zero = zero + v.sum() * 0.0
             return zero
         if self.mode == "point":
-            return F.mse_loss(params, target)
+            return masked_mean((params - target) ** 2, feature_mask)
         if self.mode == "quantile":
-            return pinball(params, target, self.taus.to(params.device)).mean()
+            return masked_mean(
+                pinball(params, target, self.taus.to(params.device)), feature_mask
+            )
         mu, scale = self._location_scale(params)
         if self.mode == "gaussian":
-            return gaussian_crps(mu, scale, target).mean()
+            return masked_mean(gaussian_crps(mu, scale, target), feature_mask)
         if self.mode == "laplace":
-            return laplace_crps(mu, scale, target).mean()
+            return masked_mean(laplace_crps(mu, scale, target), feature_mask)
         if self.mode == "nll_gaussian":
-            return gaussian_nll(mu, scale, target).mean()
+            return masked_mean(gaussian_nll(mu, scale, target), feature_mask)
         v = self.v
         return energy_score(
             mu,

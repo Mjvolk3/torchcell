@@ -179,7 +179,9 @@ def main() -> None:
                 f"{len(series)} epochs < window {args.window}, smoothed score undefined"
             )
             continue
-        smoothed = series.rolling(args.window, center=True, min_periods=args.window).mean()
+        smoothed = series.rolling(
+            args.window, center=True, min_periods=args.window
+        ).mean()
         # TRAIN-SIDE FIT. Read ONE KEY AT A TIME via scan_history: a multi-key
         # history(keys=[...]) filter that includes a key which is not co-logged with the
         # others silently returns ZERO rows, which is why nobody had read this series --
@@ -191,7 +193,9 @@ def main() -> None:
             ("train/expression/pearson_per_feature", "train_pf"),
             ("train/expression/loss", "train_loss"),
         ]:
-            vals = [r[key] for r in run.scan_history(keys=[key]) if r.get(key) is not None]
+            vals = [
+                r[key] for r in run.scan_history(keys=[key]) if r.get(key) is not None
+            ]
             train_fit[f"{name}_last"] = float(vals[-1]) if vals else float("nan")
             train_fit[f"{name}_best"] = (
                 float(max(vals) if name == "train_pf" else min(vals))
@@ -241,7 +245,11 @@ def main() -> None:
     if not rows:
         raise SystemExit(f"no finished runs with '{METRIC}' in {args.project}")
 
-    df = pd.DataFrame(rows).sort_values(["wave", "pool", "budget", "arm", "seed"]).reset_index(drop=True)
+    df = (
+        pd.DataFrame(rows)
+        .sort_values(["wave", "pool", "budget", "arm", "seed"])
+        .reset_index(drop=True)
+    )
 
     # GROUPED BY (wave, arm) -- NEVER by arm alone. Two runs of the same arm on opposite
     # sides of a source edit are different experiments, and averaging them reports the
@@ -259,7 +267,10 @@ def main() -> None:
     summary = (
         pd.DataFrame(per_arm)
         .T.reset_index(names=["wave", "pool", "budget", "arm"])
-        .sort_values(["wave", "pool", "budget", "smoothed_mean"], ascending=[True, True, True, False])
+        .sort_values(
+            ["wave", "pool", "budget", "smoothed_mean"],
+            ascending=[True, True, True, False],
+        )
     )
 
     print(f"\nPER-RUN (window={args.window})")
@@ -283,7 +294,9 @@ def main() -> None:
     for (wave, pool, budget), wave_df in df.groupby(["wave", "pool", "budget"]):
         ref = wave_df[wave_df["arm"] == args.reference]
         if ref.empty:
-            print(f"\n{wave} / {pool} / {budget}ep: no in-pool reference '{args.reference}'")
+            print(
+                f"\n{wave} / {pool} / {budget}ep: no in-pool reference '{args.reference}'"
+            )
             continue
         ref_by_seed = ref.set_index("seed")["smoothed"]
         print(f"\nPAIRED vs {args.reference} ({wave} / {pool} / {budget}ep)")
@@ -305,7 +318,9 @@ def main() -> None:
                 from scipy import stats
 
                 half = stats.t.ppf(0.975, len(deltas) - 1) * deltas.sem()
-                verdict = "CI excludes 0" if abs(deltas.mean()) > half else "CI CONTAINS 0"
+                verdict = (
+                    "CI excludes 0" if abs(deltas.mean()) > half else "CI CONTAINS 0"
+                )
                 line += f"  sd {deltas.std():.4f}  95% CI +/-{half:.4f}  [{verdict}]"
             else:
                 line += "  (single seed -- NO significance claim)"

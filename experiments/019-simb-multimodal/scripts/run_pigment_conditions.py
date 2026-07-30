@@ -76,7 +76,9 @@ CONDITIONS: dict[str, tuple[list[str], str]] = {
 PRIMARY_METRIC = {"betaxanthin": "pearson", "beta_carotene": "spearman"}
 
 
-def _metric(metrics: dict[str, float], head: str, kind: str, peak: bool) -> float | None:
+def _metric(
+    metrics: dict[str, float], head: str, kind: str, peak: bool
+) -> float | None:
     """Read ``val/<head>/<kind>_per_feature`` (peak or last) from a run's metrics."""
     key = f"val/{head}/{kind}_per_feature"
     if peak:
@@ -232,9 +234,7 @@ def main() -> None:
         "runs": all_results,
     }
 
-    per_seed_deltas = {
-        s: _seed_deltas(r, peak) for s, r in all_results.items()
-    }
+    per_seed_deltas = {s: _seed_deltas(r, peak) for s, r in all_results.items()}
     report["deltas_per_seed"] = per_seed_deltas
 
     summary: dict[str, Any] = {}
@@ -261,7 +261,9 @@ def main() -> None:
         d_bc = summary["beta_carotene"]["delta_primary"]["mean"]
         report["headline"] = {
             "delta_betaxanthin_primary_mean": d_bx,
-            "delta_betaxanthin_primary_sd": summary["betaxanthin"]["delta_primary"]["sd"],
+            "delta_betaxanthin_primary_sd": summary["betaxanthin"]["delta_primary"][
+                "sd"
+            ],
             "delta_beta_carotene_primary_mean": d_bc,
             "delta_beta_carotene_primary_sd": summary["beta_carotene"]["delta_primary"][
                 "sd"

@@ -170,13 +170,18 @@ def main() -> None:
     )
     data_module.setup()
     print(f"\n=== RESPONSIVENESS BALANCE, ALL SPLITS (seed {args.seed}) ===")
-    print(f"{'split':<8}{'n_expr':>8}{'resp':>7}{'nonresp':>9}{'unlab':>7}{'% resp':>9}")
+    print(
+        f"{'split':<8}{'n_expr':>8}{'resp':>7}{'nonresp':>9}{'unlab':>7}{'% resp':>9}"
+    )
     balance: dict[str, dict[str, int]] = {}
     for split_name in ("train", "val", "test"):
         counts = {"responsive": 0, "nonresponsive": 0, "unlabelled": 0}
         for idx in getattr(data_module.index, split_name):
             rec = dataset[int(idx)]
-            nm = [dataset.gene_set[int(i)] for i in rec["gene"].perturbation_indices.tolist()]
+            nm = [
+                dataset.gene_set[int(i)]
+                for i in rec["gene"].perturbation_indices.tolist()
+            ]
             tys = list(rec["gene"].phenotype_types)
             if not any("expression" in str(t).lower() for t in tys):
                 continue
@@ -189,13 +194,19 @@ def main() -> None:
         tot = counts["responsive"] + counts["nonresponsive"]
         pct = 100.0 * counts["responsive"] / tot if tot else float("nan")
         balance[split_name] = counts
-        print(f"{split_name:<8}{sum(counts.values()):>8}{counts['responsive']:>7}"
-              f"{counts['nonresponsive']:>9}{counts['unlabelled']:>7}{pct:>8.1f}%")
+        print(
+            f"{split_name:<8}{sum(counts.values()):>8}{counts['responsive']:>7}"
+            f"{counts['nonresponsive']:>9}{counts['unlabelled']:>7}{pct:>8.1f}%"
+        )
 
     indices = getattr(data_module.index, args.split)
     print(f"\n{args.split} split: {len(indices)} records (seed {args.seed})")
 
-    groups: dict[str, list[np.ndarray]] = {"responsive": [], "nonresponsive": [], "unlabelled": []}
+    groups: dict[str, list[np.ndarray]] = {
+        "responsive": [],
+        "nonresponsive": [],
+        "unlabelled": [],
+    }
     unresolved: list[str] = []
     for idx in indices:
         record = dataset[int(idx)]
@@ -245,8 +256,10 @@ def main() -> None:
             f"{stats['sd']:>10.4f}{stats['frac_gt1']:>12.4f}"
         )
     if unresolved:
-        print(f"\nunlabelled strains: {len(groups['unlabelled'])} "
-              f"(e.g. {sorted(set(unresolved))[:6]})")
+        print(
+            f"\nunlabelled strains: {len(groups['unlabelled'])} "
+            f"(e.g. {sorted(set(unresolved))[:6]})"
+        )
 
     # PER-GENE SIGNAL. pearson_per_feature averages a correlation over all 6,127 measured
     # genes. A gene whose values barely move ACROSS STRAINS contributes a pure-noise
@@ -258,21 +271,34 @@ def main() -> None:
         Y = np.vstack(all_rows)  # [n_strains, n_genes]
         per_gene_sd = Y.std(axis=0)
         order = np.argsort(-per_gene_sd)
-        total_var = float((per_gene_sd ** 2).sum())
+        total_var = float((per_gene_sd**2).sum())
         print("\n=== PER-GENE SIGNAL across val strains ===")
-        print(f"  matrix {Y.shape}, median gene SD={np.median(per_gene_sd):.4f}, "
-              f"max={per_gene_sd.max():.4f}")
+        print(
+            f"  matrix {Y.shape}, median gene SD={np.median(per_gene_sd):.4f}, "
+            f"max={per_gene_sd.max():.4f}"
+        )
         for frac in (0.01, 0.05, 0.10, 0.25, 0.50):
             k = max(1, int(frac * len(per_gene_sd)))
             share = float((per_gene_sd[order[:k]] ** 2).sum()) / total_var
-            print(f"  top {frac:>5.0%} of genes ({k:>5}) hold {share:>6.1%} of total across-strain variance")
+            print(
+                f"  top {frac:>5.0%} of genes ({k:>5}) hold {share:>6.1%} of total across-strain variance"
+            )
             gene_stats[f"var_share_top_{frac}"] = share
         gene_stats["median_gene_sd"] = float(np.median(per_gene_sd))
 
     out = osp.join(results_dir, f"stratified_responsiveness_seed{args.seed}.json")
     with open(out, "w") as handle:
-        json.dump({"seed": args.seed, "split": args.split, "groups": summary,
-                   "balance": balance, "per_gene": gene_stats}, handle, indent=2)
+        json.dump(
+            {
+                "seed": args.seed,
+                "split": args.split,
+                "groups": summary,
+                "balance": balance,
+                "per_gene": gene_stats,
+            },
+            handle,
+            indent=2,
+        )
     print(f"\nwrote {out}")
 
 

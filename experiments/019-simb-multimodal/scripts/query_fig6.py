@@ -207,6 +207,7 @@ def db_overlap_census() -> dict[str, Any]:
         "+".join(sorted(c)): n
         for c, n in Counter(frozenset(ms) for ms in multi.values()).most_common()
     }
+
     # explicit pair breakdown for the WS11b question
     def _pair(a: str, b: str) -> int:
         return sum(1 for ms in mod.values() if a in ms and b in ms)

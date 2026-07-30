@@ -98,12 +98,14 @@ def main() -> None:
     with torch.no_grad():
         # 1. |S| = 1 -- the degenerate case.
         out1, w1 = attend(attn, h_genes, pert_single)
-        results["s1_weights_unique"] = sorted({round(float(v), 6) for v in w1.flatten()})
+        results["s1_weights_unique"] = sorted(
+            {round(float(v), 6) for v in w1.flatten()}
+        )
         results["s1_query_spread"] = query_spread(out1)
         results["s1_output_magnitude"] = float(out1.abs().mean())
-        results["s1_relative_spread"] = results["s1_query_spread"] / results[
-            "s1_output_magnitude"
-        ]
+        results["s1_relative_spread"] = (
+            results["s1_query_spread"] / results["s1_output_magnitude"]
+        )
 
         # 2. |S| = 1 -- ablate W_Q and W_K. If the selector is a no-op this is EXACTLY 0.
         in_proj = attn.in_proj_weight.clone()
@@ -115,9 +117,7 @@ def main() -> None:
             (out1_ablated - out1).abs().max()
         )
         results["s1_dead_params"] = 2 * HIDDEN_DIM * HIDDEN_DIM
-        results["s1_total_attn_params"] = int(
-            sum(p.numel() for p in attn.parameters())
-        )
+        results["s1_total_attn_params"] = int(sum(p.numel() for p in attn.parameters()))
         attn.in_proj_weight.copy_(in_proj)  # restore
 
         # 3. |S| = 2 -- the selector is alive.
@@ -153,8 +153,12 @@ def main() -> None:
         json.dump(results, f, indent=2)
 
     print(f"|S|=1  attention weights (unique values) : {results['s1_weights_unique']}")
-    print(f"|S|=1  query spread                      : {results['s1_query_spread']:.3e}")
-    print(f"|S|=1  relative spread                   : {results['s1_relative_spread']:.2e}")
+    print(
+        f"|S|=1  query spread                      : {results['s1_query_spread']:.3e}"
+    )
+    print(
+        f"|S|=1  relative spread                   : {results['s1_relative_spread']:.2e}"
+    )
     print(
         f"|S|=1  W_Q/W_K ablation (std=10) change  : "
         f"{results['s1_wq_wk_ablation_max_change']:.1f}  "
@@ -164,7 +168,9 @@ def main() -> None:
         f"|S|=2  weight range                      : "
         f"[{results['s2_weight_min']:.4f}, {results['s2_weight_max']:.4f}]"
     )
-    print(f"|S|=2  query spread                      : {results['s2_query_spread']:.4f}")
+    print(
+        f"|S|=2  query spread                      : {results['s2_query_spread']:.4f}"
+    )
     print(
         f"null   real-key weight range             : "
         f"[{results['null_real_key_weight_min']:.4f}, {results['null_real_key_weight_max']:.4f}]"

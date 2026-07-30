@@ -193,7 +193,11 @@ def per_feature_pearson(pred: np.ndarray, true: np.ndarray) -> float:
 
 
 def conditional_mean(
-    R_fit: np.ndarray, R_eval: np.ndarray, obs: np.ndarray, unobs: np.ndarray, lam: float
+    R_fit: np.ndarray,
+    R_eval: np.ndarray,
+    obs: np.ndarray,
+    unobs: np.ndarray,
+    lam: float,
 ) -> np.ndarray:
     """E[R_U | R_M] = Sigma_UM (Sigma_MM + lam I)^{-1} R_M, Sigma from R_fit only.
 
@@ -232,7 +236,9 @@ def main() -> None:
     # Pairing: verbatim from expression_ceiling_replicate.py.
     kem_by_del = {_deletion(r): i for i, r in enumerate(kem)}
     pairs = [
-        (kem_by_del[d], i) for i, r in enumerate(sam) if (d := _deletion(r)) in kem_by_del
+        (kem_by_del[d], i)
+        for i, r in enumerate(sam)
+        if (d := _deletion(r)) in kem_by_del
     ]
     kem_eval_rows = [k for k, _ in pairs]
     sam_eval_rows = [s for _, s in pairs]
@@ -377,7 +383,9 @@ def main() -> None:
         row["retention_cross_over_within"] = float(c / w) if w != 0 else None
         out["results"].append(row)
 
-        print(f"\n=== m = {m}   (n_eval = {n_eval} strains, {n_gene - m} held-out genes) ===")
+        print(
+            f"\n=== m = {m}   (n_eval = {n_eval} strains, {n_gene - m} held-out genes) ==="
+        )
         print(f"{'arm':<20}{'mean':>9}{'sd':>8}{'null':>9}{'oracle-lam':>12}")
         for a in ARMS:
             print(

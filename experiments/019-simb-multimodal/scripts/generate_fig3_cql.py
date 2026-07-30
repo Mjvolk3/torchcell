@@ -39,17 +39,13 @@ EXPRESSION = [
     ("SmMicroarraySameith2015Dataset", "node", False),
     ("DmMicroarraySameith2015Dataset", "node", False),
 ]
-MORPHOLOGY = [
-    ("ScmdOhya2005Dataset", "global", False),
-]
+MORPHOLOGY = [("ScmdOhya2005Dataset", "global", False)]
 FITNESS_SINGLE = [
     ("SmfCostanzo2016Dataset", "global", True),
     ("SmfKuzmin2018Dataset", "global", True),
     ("SmfKuzmin2020Dataset", "global", True),
 ]
-FITNESS_DOUBLE_CORE = [
-    ("DmfCostanzo2016Dataset", "global", True),
-]
+FITNESS_DOUBLE_CORE = [("DmfCostanzo2016Dataset", "global", True)]
 FITNESS_DOUBLE_LARGE = [
     ("DmfKuzmin2018Dataset", "global", True),
     ("DmfKuzmin2020Dataset", "global", True),

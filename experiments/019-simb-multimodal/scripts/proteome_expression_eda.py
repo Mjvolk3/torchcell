@@ -70,7 +70,11 @@ NEO4J_URI = "neo4j+s://torchcell-database.ncsa.illinois.edu:7687"
 NEO4J_AUTH = ("readonly", "ReadOnly")
 NEO4J_DB = "torchcell"
 
-PROTEOME = ("ProteomeMessner2023Dataset", "ProteinAbundancePhenotype", "protein_abundance")
+PROTEOME = (
+    "ProteomeMessner2023Dataset",
+    "ProteinAbundancePhenotype",
+    "protein_abundance",
+)
 EXPRESSION = (
     "MicroarrayKemmeren2014Dataset",
     "MicroarrayExpressionPhenotype",
@@ -121,8 +125,7 @@ def pull_dataset(
 
 
 def build_matrices(
-    proteome: dict[str, dict[str, float]],
-    expression: dict[str, dict[str, float]],
+    proteome: dict[str, dict[str, float]], expression: dict[str, dict[str, float]]
 ) -> tuple[pd.DataFrame, pd.DataFrame, list[str]]:
     """Return (P, E) strains x genes frames over shared KO strains and shared genes.
 
@@ -134,14 +137,12 @@ def build_matrices(
     proteome_genes = set().union(*(set(proteome[s]) for s in shared_strains))
     expression_genes = set().union(*(set(expression[s]) for s in shared_strains))
     shared_genes = sorted(proteome_genes & expression_genes)
-    p_frame = (
-        pd.DataFrame({s: pd.Series(proteome[s]) for s in shared_strains})
-        .T.reindex(index=shared_strains, columns=shared_genes)
-    )
-    e_frame = (
-        pd.DataFrame({s: pd.Series(expression[s]) for s in shared_strains})
-        .T.reindex(index=shared_strains, columns=shared_genes)
-    )
+    p_frame = pd.DataFrame(
+        {s: pd.Series(proteome[s]) for s in shared_strains}
+    ).T.reindex(index=shared_strains, columns=shared_genes)
+    e_frame = pd.DataFrame(
+        {s: pd.Series(expression[s]) for s in shared_strains}
+    ).T.reindex(index=shared_strains, columns=shared_genes)
     return p_frame, e_frame, shared_genes
 
 
@@ -160,7 +161,9 @@ def per_gene_correlations(
     """Across-strain Pearson r between mRNA and protein for each shared gene."""
     records: list[dict[str, Any]] = []
     for gene in p_z.columns:
-        pair = pd.concat([p_z[gene], e_z[gene]], axis=1, keys=["protein", "mrna"]).dropna()
+        pair = pd.concat(
+            [p_z[gene], e_z[gene]], axis=1, keys=["protein", "mrna"]
+        ).dropna()
         if len(pair) < min_strains:
             continue
         if pair["protein"].std() == 0 or pair["mrna"].std() == 0:
@@ -214,9 +217,7 @@ def _standardize_train_test(
     return tr, te
 
 
-def linear_map(
-    source: pd.DataFrame, target: pd.DataFrame, name: str
-) -> dict[str, Any]:
+def linear_map(source: pd.DataFrame, target: pd.DataFrame, name: str) -> dict[str, Any]:
     """Fit ridge source->target on a train split; report held-out R^2 + baseline.
 
     Both matrices are per-gene standardized on TRAIN strains (proteome is
@@ -307,11 +308,14 @@ def _save(fig: Any, name: str, stamp: str) -> tuple[str, str]:
 def plot_gene_hist(gene_corr: pd.DataFrame, stamp: str) -> tuple[str, str]:
     """Histogram of the per-gene across-strain mRNA<->protein correlations."""
     r = gene_corr["r"].to_numpy(dtype=float)
-    fig, ax = plt.subplots(
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(55.0))
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(55.0)))
+    ax.hist(
+        r,
+        bins=np.arange(-0.6, 0.9001, 0.05).tolist(),
+        color=PLOT_PALETTE[0],
+        edgecolor=INK,
+        linewidth=0.4,
     )
-    ax.hist(r, bins=np.arange(-0.6, 0.9001, 0.05).tolist(), color=PLOT_PALETTE[0],
-            edgecolor=INK, linewidth=0.4)
     med = float(np.median(r))
     ax.axvline(0.0, color=INK, linewidth=0.6, linestyle="--")
     ax.axvline(med, color=PLOT_PALETTE[1], linewidth=0.8)
@@ -347,8 +351,12 @@ def plot_representative_scatters(
             [p_z[gene], e_z[gene]], axis=1, keys=["protein", "mrna"]
         ).dropna()
         ax.scatter(
-            pair["protein"], pair["mrna"], s=3, color=PLOT_PALETTE[0],
-            edgecolor="none", alpha=0.6,
+            pair["protein"],
+            pair["mrna"],
+            s=3,
+            color=PLOT_PALETTE[0],
+            edgecolor="none",
+            alpha=0.6,
         )
         r = float(gene_corr.loc[gene, "r"])
         ax.set_title(f"{gene}\nr={r:.2f} (n={len(pair)})")
@@ -364,18 +372,30 @@ def plot_representative_scatters(
 
 def plot_r2_summary(maps: list[dict[str, Any]], stamp: str) -> tuple[str, str]:
     """Bar chart of held-out R^2 for each linear map vs its baseline."""
-    fig, ax = plt.subplots(
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(55.0))
-    )
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(55.0)))
     labels = [m["name"] for m in maps]
     x = np.arange(len(labels))
     width = 0.38
     ridge = [m["r2_uniform_average"] for m in maps]
     base = [m["baseline_r2_uniform_average"] for m in maps]
-    ax.bar(x - width / 2, ridge, width, color=PLOT_PALETTE[0], edgecolor=INK,
-           linewidth=0.4, label="ridge")
-    ax.bar(x + width / 2, base, width, color=PLOT_PALETTE[5], edgecolor=INK,
-           linewidth=0.4, label="baseline (per-gene mean)")
+    ax.bar(
+        x - width / 2,
+        ridge,
+        width,
+        color=PLOT_PALETTE[0],
+        edgecolor=INK,
+        linewidth=0.4,
+        label="ridge",
+    )
+    ax.bar(
+        x + width / 2,
+        base,
+        width,
+        color=PLOT_PALETTE[5],
+        edgecolor=INK,
+        linewidth=0.4,
+        label="baseline (per-gene mean)",
+    )
     for xi, val in zip(x - width / 2, ridge):
         ax.text(xi, val + 0.005, f"{val:.3f}", ha="center", va="bottom", fontsize=5)
     ax.set_xticks(x)
@@ -473,7 +493,10 @@ def main() -> None:
         "overlap": overlap,
         "per_gene_correlation": gene_dist,
         "per_strain_correlation": strain_dist,
-        "linear_map": {"proteome_to_expression": map_p2e, "expression_to_proteome": map_e2p},
+        "linear_map": {
+            "proteome_to_expression": map_p2e,
+            "expression_to_proteome": map_e2p,
+        },
         "representative_genes": rep_genes,
         "figures": {
             "per_gene_corr_hist": {"png": hist_png, "svg": hist_svg},

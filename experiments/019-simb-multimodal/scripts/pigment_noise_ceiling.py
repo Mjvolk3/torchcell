@@ -180,7 +180,8 @@ def beta_carotene_ceiling(data_root: str) -> dict[str, Any]:
     score = np.array([r["phenotype"]["visual_score"] for r in recs])
     smin = np.array(
         [
-            np.nan if r["phenotype"]["visual_score_min"] is None
+            np.nan
+            if r["phenotype"]["visual_score_min"] is None
             else r["phenotype"]["visual_score_min"]
             for r in recs
         ]
@@ -191,11 +192,7 @@ def beta_carotene_ceiling(data_root: str) -> dict[str, Any]:
     r_pear, _ = pearsonr(score[rep], smin[rep])
 
     # Independent re-screen: 157 strains re-transformed and re-scored (SI sheet).
-    si = osp.join(
-        data_root,
-        "data/torchcell/carotenoid_ozaydin2013/raw",
-        OZAYDIN_SI,
-    )
+    si = osp.join(data_root, "data/torchcell/carotenoid_ozaydin2013/raw", OZAYDIN_SI)
     resc = pd.read_excel(si, sheet_name=RESCREEN_SHEET, skiprows=2)
     resc = resc.dropna(subset=["1st Screen", "2nd Screen"])
     first = pd.to_numeric(resc["1st Screen"], errors="coerce")
@@ -210,9 +207,7 @@ def beta_carotene_ceiling(data_root: str) -> dict[str, Any]:
     sd_full = float(np.std(score, ddof=1))
     sd_sub = float(np.std(first[keep].to_numpy(dtype=float), ddof=1))
     ratio = sd_full / sd_sub
-    r2_corrected = float(
-        r2 * ratio / np.sqrt(1.0 + r2**2 * (ratio**2 - 1.0))
-    )
+    r2_corrected = float(r2 * ratio / np.sqrt(1.0 + r2**2 * (ratio**2 - 1.0)))
 
     return {
         "n_records": int(len(recs)),
@@ -259,9 +254,7 @@ def beta_carotene_ceiling(data_root: str) -> dict[str, Any]:
     }
 
 
-def tyrosine_betaxanthin_check(
-    data_root: str, bx: dict[str, Any]
-) -> dict[str, Any]:
+def tyrosine_betaxanthin_check(data_root: str, bx: dict[str, Any]) -> dict[str, Any]:
     """External sanity check: does measured tyrosine track measured betaxanthin?
 
     Mulleder is n=1 with no SE, so it has no within-dataset ceiling. Its relevance to the
@@ -290,14 +283,16 @@ def tyrosine_betaxanthin_check(
         x = np.array([aa_by_gene[g][aa] for g in shared])
         r_p, p_p = pearsonr(x, y)
         rho_s, _ = spearmanr(x, y)
-        per_aa[aa] = {"pearson": float(r_p), "pearson_p": float(p_p), "spearman": float(rho_s)}
+        per_aa[aa] = {
+            "pearson": float(r_p),
+            "pearson_p": float(p_p),
+            "spearman": float(rho_s),
+        }
     ranked = sorted(per_aa.items(), key=lambda kv: -abs(kv[1]["pearson"]))
     return {
         "n_shared_deletions": len(shared),
         "per_amino_acid": per_aa,
-        "tyrosine_rank_by_abs_pearson": (
-            1 + [k for k, _ in ranked].index("tyrosine")
-        ),
+        "tyrosine_rank_by_abs_pearson": (1 + [k for k, _ in ranked].index("tyrosine")),
         "ranking_by_abs_pearson": [k for k, _ in ranked],
         "_shared": shared,
         "_tyr": np.array([aa_by_gene[g]["tyrosine"] for g in shared]),
@@ -425,8 +420,12 @@ def main() -> None:
         f"n_replicates min/median/max = {bx['n_replicates_min']}/"
         f"{bx['n_replicates_median']:.0f}/{bx['n_replicates_max']}"
     )
-    print(f"  Var(values) = {bx['total_var']:.5f}   mean(SE^2) = {bx['mean_se_squared']:.5f}")
-    print(f"  reliability = {bx['reliability']:.4f}   CEILING r = {bx['ceiling_pearson']:.4f}")
+    print(
+        f"  Var(values) = {bx['total_var']:.5f}   mean(SE^2) = {bx['mean_se_squared']:.5f}"
+    )
+    print(
+        f"  reliability = {bx['reliability']:.4f}   CEILING r = {bx['ceiling_pearson']:.4f}"
+    )
 
     print("\n" + "=" * 72)
     print("BETA-CAROTENE (Ozaydin 2013) -- ordinal, so the ceiling is RANK agreement")
@@ -453,8 +452,7 @@ def main() -> None:
         f"{rs['pearson_range_restriction_corrected']:.4f}"
     )
     print(
-        f"  CEILING rho = {bc['ceiling_spearman']:.4f} "
-        f"(source: {bc['ceiling_source']})"
+        f"  CEILING rho = {bc['ceiling_spearman']:.4f} (source: {bc['ceiling_source']})"
     )
 
     print("\n" + "=" * 72)

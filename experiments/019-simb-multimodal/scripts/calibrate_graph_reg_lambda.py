@@ -38,9 +38,11 @@ from dotenv import load_dotenv
 # setup-worktree.sh made one, so resolve the primary checkout as a fallback before any
 # torchcell import (torchcell.graph.sgd reads DATA_ROOT at IMPORT time).
 _WT_ENV = osp.abspath(osp.join(osp.dirname(__file__), "..", "..", "..", ".env"))
-load_dotenv(_WT_ENV if osp.exists(_WT_ENV) else osp.expanduser(
-    "~/Documents/projects/torchcell/.env"
-))
+load_dotenv(
+    _WT_ENV
+    if osp.exists(_WT_ENV)
+    else osp.expanduser("~/Documents/projects/torchcell/.env")
+)
 
 sys.path.insert(0, osp.dirname(__file__))
 

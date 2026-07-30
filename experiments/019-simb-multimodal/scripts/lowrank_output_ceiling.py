@@ -191,7 +191,9 @@ def main() -> None:
     # Same rng call sequence as masked_conditioning_oracle.py -- one permutation, val first.
     perm = rng.permutation(n_strain)
     val_idx = perm[:N_VAL]
-    fit_idx = perm[N_VAL:]  # train + tune: nothing here is tuned, so all of it is fit data
+    fit_idx = perm[
+        N_VAL:
+    ]  # train + tune: nothing here is tuned, so all of it is fit data
     train_only_idx = perm[N_VAL + N_TUNE :]  # that script's TRAIN set, for sensitivity
     print(
         f"split: val={len(val_idx)}  fit={len(fit_idx)} "
@@ -232,8 +234,12 @@ def main() -> None:
     # tune strains are legitimately fit data -- this check says whether that choice moved
     # anything, rather than asserting it did not.
     mu_tr = Y[train_only_idx].mean(axis=0, keepdims=True)
-    Vt_tr = np.linalg.svd((Y[train_only_idx] - mu_tr).astype(np.float64), full_matrices=False)[2]
-    curve_train_only = _rank_curve(Vt_tr, (Y[val_idx] - mu_tr).astype(np.float64), RANK_GRID)
+    Vt_tr = np.linalg.svd(
+        (Y[train_only_idx] - mu_tr).astype(np.float64), full_matrices=False
+    )[2]
+    curve_train_only = _rank_curve(
+        Vt_tr, (Y[val_idx] - mu_tr).astype(np.float64), RANK_GRID
+    )
 
     by_rank_val = {row["rank"]: row for row in curve_val_basis}
     by_rank_tr = {row["rank"]: row for row in curve_train_only}
@@ -259,12 +265,14 @@ def main() -> None:
     )
     print(f"{'ident':>6}{identity:>13.4f}{1.0:>14.4f}   (R_hat = R_val exactly)")
     print(
-        f"\nsingular spectrum (fit): "
+        "\nsingular spectrum (fit): "
         + "  ".join(f"s{i + 1}={sv[i]:.1f}" for i in [0, 1, 3, 7, 15, 31, 63, 127])
     )
     print(
         "cumulative fit variance: "
-        + "  ".join(f"r={r}:{100 * cum[r - 1]:.1f}%" for r in RANK_GRID if r <= len(cum))
+        + "  ".join(
+            f"r={r}:{100 * cum[r - 1]:.1f}%" for r in RANK_GRID if r <= len(cum)
+        )
     )
 
     # Reference numbers are READ from the result files that measured them, never

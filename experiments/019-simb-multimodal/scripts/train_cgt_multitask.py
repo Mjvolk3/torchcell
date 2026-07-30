@@ -882,6 +882,8 @@ class MultitaskCGTTask(L.LightningModule):
         # is the default for every pre-existing arm, so none of them changes cost or output.
         # Set by main() from `trainer.train_eval_every`.
         self.train_eval_every: int = 0
+        # Reveal schedule for the masked-label objective; None = objective off (default).
+        self.mask_schedule: list[int] | None = None
         # Wall clock for perf/epoch_seconds; None until the first epoch starts.
         self._epoch_t0: float | None = None
         self.save_hyperparameters(
@@ -918,7 +920,12 @@ class MultitaskCGTTask(L.LightningModule):
             raw = _yeo_johnson_inverse(raw, self._norm_lambda(head))
         return raw
 
-    def forward(self, batch: HeteroData) -> tuple[torch.Tensor, dict[str, Any]]:
+    def forward(
+        self,
+        batch: HeteroData,
+        observed_values: torch.Tensor | None = None,
+        observed_mask: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
         """Run the multitask CGT on a batch, moving cell_graph to its device.
 
         The ``Perturbation`` batch has NO ``gene.x`` (only ``perturbation_indices`` +
@@ -929,7 +936,13 @@ class MultitaskCGTTask(L.LightningModule):
             self.cell_graph = self.cell_graph.to(dev)
             self._cell_graph_device = dev
         return cast(
-            "tuple[torch.Tensor, dict[str, Any]]", self.model(self.cell_graph, batch)
+            "tuple[torch.Tensor, dict[str, Any]]",
+            self.model(
+                self.cell_graph,
+                batch,
+                observed_values=observed_values,
+                observed_mask=observed_mask,
+            ),
         )
 
     def _batch_size(self, batch: HeteroData) -> int:
@@ -1103,7 +1116,221 @@ class MultitaskCGTTask(L.LightningModule):
             masks[head] = row_mask
         return targets, masks
 
+    # ---- MASKED-LABEL OBJECTIVE (teacher-forced iterative unmasking) -------------------
+    #
+    # SCHEDULE. `multitask.mask_schedule` is the number of genes REVEALED at each step,
+    # e.g. [0, 10, 100, 1000, -1] with -1 meaning "all". The sizes are log-spaced on
+    # purpose: residual_covariance_diagnostic.json puts the effective rank of the
+    # reproducible residual gene-gene structure at 32.78, so identifying it needs |M| >~ 33
+    # -- 10 under-determines, 100 over-determines ~3x, 1000 saturates.
+    #
+    # ONE k PER BATCH IN TRAINING, ALL k AT VALIDATION. Running every step each
+    # optimizer step would cost K+1 forward passes (~5x). Sampling k uniformly is an
+    # unbiased estimator of the same k-averaged objective at 1x cost. Validation sweeps
+    # every k because that is where pearson@k is reported and it is paid once per epoch.
+    #
+    # WHAT IS COMPARABLE TO PRIOR ARMS. At k=0 the observed set is EMPTY, every encoded
+    # feature is zero, and the forward pass is identical to the unconditioned model -- so
+    # `val/.../pearson_per_feature@k0` is directly comparable to every previous round. The
+    # k>0 numbers are an imputation capability, not a better genotype->expression score;
+    # conditioning_gain_after_genotype.json measured the gene-gene signal to be ORTHOGONAL
+    # to genotype (97.5-100.6% retained after removing a genotype predictor).
+
+    def _observed_feature_mask(
+        self, n_rows: int, n_feat: int, n_reveal: int, scores: torch.Tensor
+    ) -> torch.Tensor:
+        """Bool [B, F], True where the gene's value is REVEALED to the model.
+
+        `scores` is a per-row random key; taking the `n_reveal` smallest makes the sets
+        NESTED across steps when the same `scores` is reused, which is what makes the
+        validation sweep an unmasking trajectory rather than K unrelated draws.
+        """
+        obs = torch.zeros(n_rows, n_feat, dtype=torch.bool, device=scores.device)
+        if n_reveal < 0 or n_reveal >= n_feat:
+            return ~obs
+        if n_reveal > 0:
+            obs.scatter_(1, scores.argsort(dim=1)[:, :n_reveal], True)
+        return obs
+
+    def _to_token_space(
+        self, obs_feat: torch.Tensor, target_feat: torch.Tensor, col: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Scatter measured-gene [B, F] observations into token space [B, N].
+
+        `col_idx` maps measured-feature -> graph node (it is what _gather_predictions uses
+        in the other direction), so this is its inverse. Values are TEACHER-FORCED ground
+        truth in the SAME normalized space the head predicts in -- feeding raw units here
+        would hand the model a differently-scaled quantity than it emits.
+        """
+        n_nodes = int(self.cell_graph["gene"].num_nodes)
+        col = col.to(target_feat.device)
+        vals = target_feat.new_zeros(target_feat.shape[0], n_nodes)
+        msk = target_feat.new_zeros(target_feat.shape[0], n_nodes)
+        obs_f = obs_feat.to(target_feat.dtype)
+        vals[:, col] = target_feat * obs_f
+        msk[:, col] = obs_f
+        return vals, msk
+
+    def _masked_step(self, batch: HeteroData, stage: str) -> torch.Tensor:
+        """One teacher-forced unmasking step (train) or the full sweep (val/test).
+
+        The loss is scored ONLY on genes still hidden. That restriction is the entire
+        correctness requirement: a revealed gene is model INPUT at this step, so scoring it
+        rewards copying input to output -- train loss collapses and nothing transfers to
+        validation, where nothing is revealed.
+        """
+        head = "per_gene"
+        col = self.head_align.get(head, {}).get("col_idx")
+        if col is None:
+            raise ValueError(
+                "mask_schedule requires the per_gene head with a col_idx alignment; "
+                f"head_align has {sorted(self.head_align)}"
+            )
+        bsz = self._batch_size(batch)
+
+        # Targets are decoded ONCE, from an unconditioned pass, and reused for every k --
+        # they do not depend on what is revealed, and re-decoding per step would be pure
+        # cost. The unconditioned pass also supplies the shapes for the scatter.
+        with torch.no_grad():
+            _, reps0 = self(batch)
+        probe = self._gather_predictions(dict(reps0["head_outputs"]))
+        targets0, masks0 = self._extract_targets_and_masks(batch, probe, bsz)
+        target = targets0[head]
+        row_mask = masks0[head]
+        n_rows, n_feat = target.shape
+
+        # Shared random key -> NESTED observed sets across k (M_1 subset M_2 subset ...).
+        scores = torch.rand(n_rows, n_feat, device=target.device)
+        if stage == "train":
+            ks = [int(torch.randint(len(self.mask_schedule), (1,)).item())]
+        else:
+            ks = list(range(len(self.mask_schedule)))
+
+        total = target.new_zeros(())
+        for k in ks:
+            n_reveal = int(self.mask_schedule[k])
+            obs_feat = self._observed_feature_mask(n_rows, n_feat, n_reveal, scores)
+            # Only SUPERVISED rows may reveal: an unsupervised row has no ground truth to
+            # teacher-force, and handing it zeros would teach "unmeasured == 0".
+            obs_feat = obs_feat & row_mask.unsqueeze(1)
+            obs_vals, obs_msk = self._to_token_space(obs_feat, target, col)
+
+            predictions, reps = self(
+                batch, observed_values=obs_vals, observed_mask=obs_msk
+            )
+            head_outputs = dict(reps["head_outputs"])
+            if "gene_interaction" in self.active_heads:
+                head_outputs["gene_interaction"] = predictions.squeeze(-1)
+            head_outputs = self._gather_predictions(head_outputs)
+            targets, masks = self._extract_targets_and_masks(batch, head_outputs, bsz)
+
+            # score the HIDDEN genes only
+            hidden = ~obs_feat
+            loss_k, per_head = self.loss(
+                head_outputs,
+                targets,
+                masks,
+                graph_reg_loss=reps["graph_reg_loss"] if k == ks[0] else None,
+                feature_masks={head: hidden},
+            )
+            total = total + loss_k / len(ks)
+
+            n_rev = n_feat if n_reveal < 0 else min(n_reveal, n_feat)
+            self.log(f"{stage}/mask/loss@k{k}", loss_k, batch_size=bsz, sync_dist=True)
+            self.log(f"{stage}/mask/n_revealed@k{k}", float(n_rev), batch_size=bsz)
+            # Cache (pred, target) for the epoch metric at THIS k, restricted to hidden
+            # genes so pearson@k answers "how well are the genes it must predict predicted".
+            if stage != "train":
+                self._cache_masked_metric(
+                    head, head_outputs, targets, masks, hidden, k, stage
+                )
+
+        self.log(f"{stage}/loss", total, batch_size=bsz, sync_dist=True)
+        return total
+
+    def _reduce_masked_metrics(self, stage: str) -> None:
+        """Reduce pearson@k / spearman-free diagnostics for each unmasking step.
+
+        NAN-AWARE BY NECESSITY. Which genes are hidden differs per STRAIN, so a per-feature
+        correlation across strains has a different valid subset for every gene. Revealed
+        entries were cached as NaN; here each feature's correlation is computed over its own
+        finite pairs, and features with fewer than 3 pairs are dropped (a correlation on 2
+        points is either +/-1 or undefined and would be pure noise in the mean).
+        """
+        # STAGE-NAMESPACED. The eval-mode train pass also runs the full k sweep, so an
+        # un-namespaced cache would let `traineval` rows be reduced and logged as `val`
+        # metrics -- a silent cross-contamination that would look like a plausible number.
+        prefix = f"{stage}_mask_k"
+        for key in [k for k in self._metric_cache if k.startswith(prefix)]:
+            k = key.split(prefix)[1]
+            for head, cache in self._metric_cache[key].items():
+                if not cache["pred"]:
+                    continue
+                pred = torch.cat(cache["pred"], dim=0)
+                true = torch.cat(cache["target"], dim=0)
+                valid = torch.isfinite(pred) & torch.isfinite(true)
+                n = valid.sum(dim=0)
+                zeros = torch.zeros_like(pred)
+                p = torch.where(valid, pred, zeros)
+                t = torch.where(valid, true, zeros)
+                denom_n = n.clamp_min(1).to(pred.dtype)
+                pc = torch.where(valid, pred - (p.sum(0) / denom_n), zeros)
+                tc = torch.where(valid, true - (t.sum(0) / denom_n), zeros)
+                num = (pc * tc).sum(0)
+                den = pc.pow(2).sum(0).sqrt() * tc.pow(2).sum(0).sqrt()
+                r = torch.where(den > 1e-12, num / den.clamp_min(1e-12), zeros[0])
+                keep = n >= 3
+                if keep.sum() == 0:
+                    continue
+                pheno = phenotype_name(head)
+                self.log(
+                    f"{stage}/{pheno}/pearson_per_feature@k{k}",
+                    r[keep].mean().to(self.device),
+                    sync_dist=True,
+                )
+                self.log(
+                    f"{stage}/{pheno}/n_scored_genes@k{k}",
+                    float(keep.sum()),
+                    sync_dist=True,
+                )
+            self._metric_cache[key] = {}
+
+    def _cache_masked_metric(
+        self,
+        head: str,
+        head_outputs: dict[str, torch.Tensor],
+        targets: dict[str, torch.Tensor],
+        masks: dict[str, torch.Tensor],
+        hidden: torch.Tensor,
+        k: int,
+        stage: str,
+    ) -> None:
+        """Cache (pred, target) for pearson@k under a k-suffixed stage namespace.
+
+        Revealed entries are written as NaN and dropped by the reducer rather than being
+        set to the target: leaving them in at their true value would inflate the
+        correlation with values the model was handed.
+        """
+        dist = self.dist_heads.get(head)
+        pred = head_outputs[head]
+        point = dist.point(pred) if dist is not None else pred
+        row = masks[head]
+        if row.sum() == 0:
+            return
+        p = point[row].detach().float()
+        t = targets[head][row].detach().float()
+        h = hidden[row]
+        p = p.masked_fill(~h, float("nan"))
+        t = t.masked_fill(~h, float("nan"))
+        cache = self._metric_cache.setdefault(f"{stage}_mask_k{k}", {}).setdefault(
+            head, {"pred": [], "target": []}
+        )
+        cache["pred"].append(p.cpu())
+        cache["target"].append(t.cpu())
+
     def _step(self, batch: HeteroData, stage: str) -> torch.Tensor:
+        if self.mask_schedule is not None:
+            return self._masked_step(batch, stage)
         predictions, reps = self(batch)
         bsz = self._batch_size(batch)
         head_outputs: dict[str, torch.Tensor] = dict(reps["head_outputs"])
@@ -1454,6 +1681,9 @@ class MultitaskCGTTask(L.LightningModule):
         """Reduce + log epoch Pearson and calibration, then print aggregated val metrics."""
         self._reduce_epoch_pearson("val")
         self._reduce_epoch_calibration("val")
+        if self.mask_schedule is not None:
+            self._reduce_masked_metrics("val")
+            self._reduce_masked_metrics("traineval")
         self._print_epoch("val")
         # Runs inside the validation hook because the module is already in eval mode and
         # under no_grad here; `every` = 0 disables it so no existing arm pays the cost.
@@ -2752,6 +2982,22 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
     )
     # Eval-mode train metric (see MultitaskCGTTask._train_eval_pass). 0 = off.
     task.train_eval_every = int(cfg.trainer.get("train_eval_every", 0))
+    _sched = cfg.multitask.get("mask_schedule", None)
+    if _sched is not None:
+        task.mask_schedule = [int(x) for x in _sched]
+        # A step that reveals EVERY gene has U_k = {} and therefore scores nothing: its
+        # loss is a graph-connected zero, it contributes no gradient, and in training --
+        # where one k is sampled per batch -- landing on it wastes the batch outright.
+        # The figure's final "unmask all" is the END STATE of the trajectory, not a
+        # scored step. Reject it loudly rather than silently averaging in a zero.
+        _n_feat_hint = -1 in task.mask_schedule
+        if _n_feat_hint:
+            raise ValueError(
+                "mask_schedule contains -1 (reveal all), which leaves nothing to predict "
+                "-- that step scores an empty set and contributes no gradient. Use the "
+                "largest partial reveal instead, e.g. [0, 10, 100, 1000]."
+            )
+        print(f"[masked-obj] reveal schedule (genes per step): {task.mask_schedule}")
     if task.train_eval_every > 0:
         print(
             f"[traineval] eval-mode train pass every {task.train_eval_every} epoch(s)"

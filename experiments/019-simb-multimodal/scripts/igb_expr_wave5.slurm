@@ -88,9 +88,13 @@ case "$STAGE" in
   *) echo "unknown W5_STAGE '$STAGE' (expected canary|h2|probe)" >&2; exit 1 ;;
 esac
 
+# SEED-MAJOR, so each task's co-resident runs are DIFFERENT arms rather than three copies of
+# one. The metric is unaffected either way (the budget is a fixed epoch count, so a slower
+# neighbour costs wall time, not score), but arm-blocked packing aligns "what you share a GPU
+# with" perfectly with the arm axis, and there is no reason to leave that correlation in.
 JOBS=()
-for arm in "${ARMS[@]}"; do
-  for seed in "${SEEDS[@]}"; do
+for seed in "${SEEDS[@]}"; do
+  for arm in "${ARMS[@]}"; do
     JOBS+=("$arm:$seed")
   done
 done

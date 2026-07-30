@@ -190,6 +190,64 @@ case "$ARM" in
   # `seed` varies initialization only, and turns on the eval-mode train metric. Two
   # hypotheses plus two config-only probes.
   #
+  # ------------------------------------------------------------------ WAVE 6 (cgt_expr_012)
+  # Launch with TORCHCELL_CONFIG=cgt_expr_012. Two axes, one seed, no replicates.
+  #
+  # AXIS 1 -- PAIR-TERM RANK. Every arm here differs ONLY in how much (perturbation, gene)
+  # interaction the architecture can express, so the axis is monotone and the question is
+  # "does pair rank predict performance, and where does it saturate":
+  #     V_ref      additive g(h_i + c_b)                      rank 0
+  #     V_sink     gated attention, one bounded scalar/head    rank 9
+  #     V_basis*   explicit factor model sum_j b_ij(h_i) a_j(z_S)   rank r
+  #     V_film     diagonal multiplicative at the readout      rank d = 90
+  #     V_hadamard diagonal multiplicative at the OPERATOR     rank d = 90
+  # Headroom is not the constraint: the measured rank-r reconstruction ceiling is 0.727 at
+  # r=32 and 0.780 at r=64 (lowrank_output_ceiling.json), both far above the 0.198 best. So a
+  # null here is about the MECHANISM, not about capacity.
+  #
+  # AXIS 2 -- REGULARIZATION. train 0.64-0.72 vs val 0.20 is a generalization gap, and
+  # weight_decay is currently 1e-8, i.e. effectively off, while 86% of parameters sit in the
+  # encoder + embedding preprocessor (369,639 + 393,480 of 887,879). Dropout direction is
+  # already measured: dropout 0.1 beat dropout 0 by +0.0145 / +0.0565 paired.
+  #
+  # NOT IN THIS WAVE: post-perturbation graph masking (needs batched masked attention over
+  # [B, N, d], not built) and the masked-label objective (measured orthogonal to genotype --
+  # conditioning_gain_after_genotype.json retains 97.5-100.6% after removing a genotype
+  # predictor -- so it cannot move the m=0 metric and is an imputation capability instead).
+  V_ref)             OVERRIDES=()
+                     ARM_TAGS=(mech-baseline pair-rank0 xfer-yes stage-wave6) ;;
+  V_sink)            OVERRIDES=(model.perturbation_head.null_sink=true
+                                model.perturbation_head.null_sink_bias_init=0.0
+                                model.perturbation_head.null_sink_magnitude_match=true)
+                     ARM_TAGS=(mech-nullsink pair-rank9 xfer-yes stage-wave6) ;;
+  V_basis16)         OVERRIDES=(multitask.response_basis_rank=16)
+                     ARM_TAGS=(mech-basis pair-rank16 xfer-yes stage-wave6) ;;
+  V_basis32)         OVERRIDES=(multitask.response_basis_rank=32)
+                     ARM_TAGS=(mech-basis pair-rank32 xfer-yes stage-wave6) ;;
+  V_basis64)         OVERRIDES=(multitask.response_basis_rank=64)
+                     ARM_TAGS=(mech-basis pair-rank64 xfer-yes stage-wave6) ;;
+  V_film)            OVERRIDES=(multitask.film_on_pert_set=true)
+                     ARM_TAGS=(mech-film pair-rank90 xfer-yes stage-wave6) ;;
+  # TWO HADAMARD ARMS, because the two inits answer different questions. `replace` drops the
+  # additive path entirely, so at init (gamma=0) the model sees NO perturbation and must
+  # learn the whole pathway -- the literal "assertion instead of cross-attention", and a
+  # strictly harder start than the reference. `add` keeps the additive context, so it is
+  # bit-identical to the reference at init (verified: max|diff| = 0.000e+00) and a null
+  # result there is interpretable as "the multiplicative term does not help" rather than
+  # "the arm never got off the ground".
+  V_hadamard)        OVERRIDES=(model.perturbation_head.hadamard=replace)
+                     ARM_TAGS=(mech-hadamard pair-rank90 xfer-yes stage-wave6) ;;
+  V_hadamard_add)    OVERRIDES=(model.perturbation_head.hadamard=add)
+                     ARM_TAGS=(mech-hadamard pair-rank90 xfer-yes stage-wave6) ;;
+  V_drop2)           OVERRIDES=(model.dropout=0.2)
+                     ARM_TAGS=(mech-regularization xfer-yes stage-wave6) ;;
+  V_drop3)           OVERRIDES=(model.dropout=0.3)
+                     ARM_TAGS=(mech-regularization xfer-yes stage-wave6) ;;
+  V_wd1e4)           OVERRIDES=(regression_task.optimizer.weight_decay=1e-4)
+                     ARM_TAGS=(mech-regularization xfer-yes stage-wave6) ;;
+  V_wd1e2)           OVERRIDES=(regression_task.optimizer.weight_decay=1e-2)
+                     ARM_TAGS=(mech-regularization xfer-yes stage-wave6) ;;
+
   # THE WAVE-5 REFERENCE. Every pool gets its OWN co-launched W_ref, because the three GPU
   # types available (RTX 6000 Ada on GilaHyper, A100 on mmli, RTX 6000 on cabbi) are not
   # interchangeable -- _007 pooled A100 with Ada runs and their means differ (0.0242 vs

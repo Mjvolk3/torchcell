@@ -1,0 +1,70 @@
+# experiments/019-simb-multimodal/conf/cgt_expr_012.yaml
+# EXPRESSION round _012 -- WAVE 6. Long budget, batch 32, L=6, one seed, arms not replicates.
+#
+# Inherits the fixed partition and the eval-mode train metric from _011, and changes three
+# things, each for a measured reason.
+#
+# 1. batch_size 8 -> 32. The encoder runs on the WILDTYPE graph at batch 1, so its cost is
+#    paid once per STEP regardless of batch:
+#        T_epoch ~ ceil(n_train/B) * (C_enc + B*C_pert) + T_val
+#    At B=8 that is ~155 steps to process 1,244 strains, i.e. the dominant cost paid 155
+#    times. Measured directly via `perf/epoch_seconds` (jobs 1431-1434, 60 epochs each):
+#
+#        batch  runs/GPU   median s/epoch
+#            8         2            27.67
+#            8         3            46.66
+#           32         2            17.05
+#           32         3            23.51
+#
+#    STATE PLAINLY WHAT THIS COSTS: 4x fewer optimizer updates per epoch at fixed lr is a
+#    real change to the optimization, not a free speedup. An "epoch" here is not the same
+#    amount of learning as an _011 epoch, so epoch counts are NOT comparable across configs.
+#
+# 2. num_transformer_layers 4 -> 6. Fixed for the round, not swept: with eval-mode train
+#    Pearson at 0.64-0.72 and val at 0.20, the deficit is generalization, so capacity is set
+#    once at a value _007's top runs support and the slots are spent elsewhere.
+#
+# 3. max_epochs 10,000 with a 48 h walltime, NO early stopping. The _011 long runs had not
+#    converged at 1,500: eval-mode train Pearson was still rising (max == last in 4 of 4),
+#    and val DIPPED around epoch 200-300 before climbing past its early peak to a
+#    project-best 0.1980 at epoch 1367. Every arm ever scored at 300-400 epochs was scored
+#    inside that dip. Runs are expected to hit the walltime rather than the cap; that is
+#    fine, because ModelCheckpoint keeps best-by-loss AND best-by-metric AND last.
+#
+# train_eval_every 25 (not 5): the eval-mode train pass sweeps 4,074 records against
+# validation's 534 and costs ~65 s on its own, so at every-5 it would add ~13 s to every
+# epoch. At every-25 that is ~2.6 s and still yields hundreds of curve points.
+#
+# NOT CHANGED: quantile loss (the _007 distributional sweep found the five modes within
+# noise of each other on accuracy while calibration succeeded), hard edge masking with the
+# KL off, and split_seed 0.
+defaults:
+  - cgt_expr_011
+  - _self_
+
+wandb:
+  project: torchcell_019_expr_v8
+  tags: [wave6, _012]
+
+data_module:
+  batch_size: 32
+
+model:
+  num_transformer_layers: 6
+  perturbation_head:
+    # DECLARED so the Hadamard arm can be selected from the CLI -- hydra struct mode rejects
+    # an override on an undeclared key. Default false = the additive reference operator.
+    hadamard: "off"
+
+trainer:
+  max_epochs: 10000
+  train_eval_every: 25
+  early_stopping:
+    enabled: false
+  # Select the retained checkpoint on the METRIC as well as the loss. On this task the two
+  # diverge: val loss bottoms at epoch ~103-136 while val Pearson climbs to ~1367, so a
+  # loss-only checkpoint saves the early-dip model.
+  checkpoint:
+    monitor: val/loss
+    mode: min
+    metric_monitor: val/mean/pearson_per_feature

@@ -147,15 +147,36 @@ CONTAINER_ENV="$CONTAINER_ENV && export PYTHONPATH='$PROJECT_ROOT'"
 CONTAINER_ENV="$CONTAINER_ENV && export WANDB_MODE=offline WANDB__SERVICE_WAIT=600"
 CONTAINER_ENV="$CONTAINER_ENV && export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True"
 CONTAINER_ENV="$CONTAINER_ENV && export TORCHCELL_CONFIG=cgt_expr_011"
-# SOURCE PROVENANCE IS RESOLVED HERE, ON THE HOST. rockylinux_9.sif has no git binary, so the
-# train script's `git rev-parse` raised FileNotFoundError('git') and killed the job before the
-# first epoch (canary 2324270). Resolving it outside the container is also more correct: the
-# host has the repo and git, the container has neither.
-SRC_HASH="$(git -C "$PROJECT_ROOT" rev-parse HEAD)"
-SRC_DIFF="$(git -C "$PROJECT_ROOT" diff HEAD | sha256sum | cut -d" " -f1)"
-echo "source        : $SRC_HASH (diff $SRC_DIFF)"
-CONTAINER_ENV="$CONTAINER_ENV && export TORCHCELL_SOURCE_GIT_HASH='$SRC_HASH'"
-CONTAINER_ENV="$CONTAINER_ENV && export TORCHCELL_SOURCE_DIFF_SHA256='$SRC_DIFF'"
+# SOURCE PROVENANCE MUST BE RESOLVED AT SUBMIT TIME, ON THE LOGIN NODE.
+#
+# Two canaries died establishing where git actually lives here. 2324270: the train script
+# shelled out to `git rev-parse` and rockylinux_9.sif has no git -> FileNotFoundError('git').
+# 2324272: moving that call into this launcher failed too, because **IGB COMPUTE NODES HAVE NO
+# GIT EITHER** -- verified directly, `which git` on compute-3-3 returns nothing while
+# /usr/bin/sha256sum is present. Only the login node has it.
+#
+# So the submitting shell exports the values and they ride in through --export:
+#
+#   H=$(git -C "$WT" rev-parse HEAD)
+#   D=$(git -C "$WT" diff HEAD | sha256sum | cut -d" " -f1)
+#   sbatch ... --export=ALL,W5_STAGE=h2,TORCHCELL_SOURCE_GIT_HASH=$H,TORCHCELL_SOURCE_DIFF_SHA256=$D ...
+#
+# The `command -v git` branch below is kept so the same script still self-resolves on a host
+# that DOES have git (GilaHyper). If neither path yields a hash the run records "unavailable"
+# and says so loudly -- an unattributable run must not be pooled with attributable ones.
+SRC_HASH="${TORCHCELL_SOURCE_GIT_HASH:-}"
+SRC_DIFF="${TORCHCELL_SOURCE_DIFF_SHA256:-}"
+if [[ -z "$SRC_HASH" ]] && command -v git >/dev/null 2>&1; then
+  SRC_HASH="$(git -C "$PROJECT_ROOT" rev-parse HEAD)"
+  SRC_DIFF="$(git -C "$PROJECT_ROOT" diff HEAD | sha256sum | cut -d" " -f1)"
+fi
+if [[ -n "$SRC_HASH" && -n "$SRC_DIFF" ]]; then
+  echo "source        : $SRC_HASH (diff ${SRC_DIFF:0:12})"
+  CONTAINER_ENV="$CONTAINER_ENV && export TORCHCELL_SOURCE_GIT_HASH='$SRC_HASH'"
+  CONTAINER_ENV="$CONTAINER_ENV && export TORCHCELL_SOURCE_DIFF_SHA256='$SRC_DIFF'"
+else
+  echo "source        : UNAVAILABLE -- no git here and no hash exported at submit time"
+fi
 
 PIDS=()
 LABELS=()

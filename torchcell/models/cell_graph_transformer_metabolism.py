@@ -362,15 +362,36 @@ class CellGraphTransformerMetabolism(CellGraphTransformer):
             self.metabolism_head_names.append(name)
 
     def forward(
-        self, cell_graph: HeteroData, batch: HeteroData, return_attention: bool = False
+        self,
+        cell_graph: HeteroData,
+        batch: HeteroData,
+        *args: Any,
+        **kwargs: Any,
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """Run the inherited forward, then append the metabolism head outputs.
 
         The encoder, graph-regularization loss and equivariant perturbation operator are
         the parent's, invoked unchanged; the heads read the ``h_CLS`` /
         ``H_genes_pert`` pair the parent already returns.
+
+        ``*args``/``**kwargs`` FORWARD WHATEVER THE PARENT ACCEPTS, and that is deliberate
+        rather than lazy. This override exists only to append heads -- it has no opinion on
+        the parent's signature -- but by naming the parent's arguments explicitly it USED to
+        pin them, so when the masked-label objective added ``observed_values`` /
+        ``observed_mask`` to the parent and the trainer began passing them unconditionally,
+        every metabolism run died with::
+
+            TypeError: CellGraphTransformerMetabolism.forward() got an unexpected
+            keyword argument 'observed_values'
+
+        -- at the first training batch, i.e. ~20 minutes into a job, after the dataset and
+        embeddings had loaded. A pass-through signature makes the subclass transparent to
+        future parent arguments, which is the property the "subclass rather than transcribe"
+        decision in this module's header was chosen for in the first place. (It is
+        ``*args, **kwargs`` rather than named-plus-``**kwargs`` because that is the form
+        mypy accepts as a Liskov-compatible override.)
         """
-        predictions, reps = super().forward(cell_graph, batch, return_attention)
+        predictions, reps = super().forward(cell_graph, batch, *args, **kwargs)
         h_CLS = reps["h_CLS"]
         H_genes_pert = reps["H_genes_pert"]
         head_outputs = cast(dict[str, torch.Tensor], reps["head_outputs"])

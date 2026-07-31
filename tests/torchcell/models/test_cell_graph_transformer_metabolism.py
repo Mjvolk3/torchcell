@@ -183,3 +183,46 @@ def test_num_parameters_includes_metabolism_heads() -> None:
     for name in ("betaxanthin_head", "beta_carotene_head", "mulleder19_head"):
         assert counts[name] > 0
     assert counts["total"] == sum(v for k, v in counts.items() if k != "total")
+
+
+def test_forward_accepts_every_parent_keyword() -> None:
+    """The subclass must not pin the parent's forward signature.
+
+    REGRESSION TEST, and the bug it guards was live on main. This override exists only to
+    append heads, so it has no opinion on what arguments the parent takes -- but it used to
+    NAME them, which silently made it a signature contract. When the masked-label objective
+    added ``observed_values`` / ``observed_mask`` to the parent and the trainer began passing
+    them unconditionally, every metabolism run died with
+
+        TypeError: ...forward() got an unexpected keyword argument 'observed_values'
+
+    at the FIRST TRAINING BATCH -- i.e. ~20 minutes in, after the dataset and embeddings had
+    loaded, on a job that had already been queued and scheduled.
+
+    Every other test here calls ``model(cell_graph, batch)`` positionally, which is precisely
+    why none of them caught it: the trainer's call and the tests' call had diverged. This test
+    calls it the way `train_cgt_multitask` does -- by keyword, with the full argument set the
+    parent accepts -- so the two cannot drift apart again.
+    """
+    import inspect
+
+    model = _build(CellGraphTransformerMetabolism, _metabolism_heads_config())
+    model.eval()
+    parent_params = inspect.signature(CellGraphTransformer.forward).parameters
+    # Anything the PARENT accepts beyond (self, cell_graph, batch, return_attention) is an
+    # argument the trainer may pass; assert the subclass tolerates all of them at their
+    # defaults rather than enumerating a list that would itself go stale.
+    extra = {
+        name: p.default
+        for name, p in parent_params.items()
+        if name not in ("self", "cell_graph", "batch", "return_attention")
+        and p.kind is not inspect.Parameter.VAR_KEYWORD
+    }
+    with torch.no_grad():
+        _, reps = model(
+            cell_graph=_make_cell_graph(),
+            batch=_make_batch(),
+            return_attention=False,
+            **extra,
+        )
+    assert set(reps["head_outputs"]) >= {"betaxanthin", "beta_carotene", "mulleder19"}

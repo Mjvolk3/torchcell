@@ -38,12 +38,24 @@ wandb:
   log_model: false
 
 trainer:
-  max_epochs: 400
+  # A CEILING, NOT A TARGET. The stop that actually fires is `trainer.max_time_s`, set per
+  # trial by the grid runner from the job's remaining wall clock. 10,000 is simply high
+  # enough that the clock, not the counter, decides -- because we do not yet know where this
+  # target saturates, and an epoch cap picked in advance is the guess this round exists to
+  # replace.
+  max_epochs: 10000
   early_stopping:
-    enabled: true
-    monitor: val/beta_carotene/spearman_per_feature
-    mode: max
-    patience: 50
-    min_delta: 1.0e-4
+    # OFF. On 019 expression, smoothed val Pearson peaked ~0.14 at epoch 85-136, FELL to
+    # 0.08-0.11 by epoch 200-300, and then rose to a project-best 0.198 at epoch 1367 --
+    # while val LOSS bottomed at epoch 103-136 and rose thereafter. Any patience small enough
+    # to be useful kills the run inside that dip, on either monitor. Every metabolism run so
+    # far early-stopped at a median of ~71-135 epochs, i.e. exactly there.
+    #
+    # Nothing is lost by turning it off: `checkpoint.monitor` still saves the best-by-metric
+    # model, so a run that peaks early and decays still yields its peak checkpoint, and the
+    # decay is now DATA about the shape of the curve rather than a reason to stop.
+    enabled: false
+  # Set per trial by the grid runner (seconds); null = train to `max_epochs`.
+  max_time_s: null
   run_test: false
   dump_test_predictions: false

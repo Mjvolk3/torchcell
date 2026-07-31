@@ -63,14 +63,32 @@ DELTA_PY="$DELTA_CONDA_BASE/envs/$DELTA_CONDA_ENV/bin/python"
 # exited COMPLETED 0:0.
 export NUM_WORKERS="${NUM_WORKERS:-0}"
 
-# Seed rounds to enqueue. 12 x 8 settings = 96 runs, comfortably more than 48 h buys at the
-# ~20-45 min/run measured on GilaHyper -- deliberately so, because the deadline is what stops
-# the job and an under-sized queue would idle the node instead.
-export GRID_ROUNDS="${GRID_ROUNDS:-12}"
-# Reserve for one in-flight trial: a worker stops CLAIMING work this far before the wall
-# clock, so slurm never kills a run that was nearly finished. 90 min covers the longest
-# metabolism run ever recorded (91 min) with the epoch cap now at 400.
-export GRID_TRIAL_MARGIN_S="${GRID_TRIAL_MARGIN_S:-5400}"
+# Seed rounds to enqueue. ROUND 0 IS THE EXPERIMENT: 8 settings, one seed, each trained for
+# the whole allocation. Rounds 1-2 are replicate seeds and only run if a setting converges
+# early enough to free a worker -- they exist so a freed GPU has work, not because the plan
+# expects to reach them.
+export GRID_ROUNDS="${GRID_ROUNDS:-3}"
+# Don't CLAIM a trial with less than this much training time left. An hour says nothing about
+# where a curve saturates, so the slot is better left idle than filled with an unreadable run.
+export GRID_MIN_TRIAL_S="${GRID_MIN_TRIAL_S:-3600}"
+# Reserved AFTER training for the test pass + prediction dump + wandb teardown, subtracted
+# from every trial's time budget. The graceful `Timer` stop is worth nothing if slurm kills
+# the process during the work the stop exists to protect.
+export GRID_TEARDOWN_S="${GRID_TEARDOWN_S:-900}"
+
+# WORKERS PER GPU. 2 is the default because the experiment is EIGHT LONG RUNS: at 2/GPU all
+# eight start at t=0 and share the full 48 h window, so if the job dies at hour 30 you have
+# eight partial curves instead of four complete ones and four that never started -- and for a
+# question about where the curve saturates, eight partial curves is the better outcome. Total
+# compute per run is identical either way (2 runs sharing a GPU for 48 h == 1 run owning it
+# for 24 h); only the failure mode differs.
+#
+# THE RISK IS MEMORY, and it is the reason this is a knob. The encoder runs the full
+# 6,607-token sequence once per step, and the L=6 settings are the widest this grid produces.
+# On a 48 GB A40 two of them should fit (the L=4 GilaHyper runs sit near 19 GB), but that is
+# an inference from a different depth on a different card. If the log shows CUDA OOM, resubmit
+# with GRID_WORKERS_PER_GPU=1 -- the queue is unchanged, the runs just serialize.
+export GRID_WORKERS_PER_GPU="${GRID_WORKERS_PER_GPU:-2}"
 
 run_grid_job() {
   local exp="$1" arms="$2" base_config="$3" job_seconds="$4"
@@ -135,23 +153,27 @@ run_grid_job() {
       "$DELTA_PY" "$runner" --create-only
   done
 
-  # One worker per GPU. Four concurrent runs on four A40s, all draining the SAME queue, so a
-  # fast setting does not leave its GPU idle waiting for a slow one -- which is exactly what a
-  # static setting-per-GPU assignment would do.
-  local dev=0
-  local wid=0
-  while [[ $dev -lt 4 ]]; do
-    for arm in $arms; do
-      [[ $dev -lt 4 ]] || break
-      bash -c "
-        export ARM=$arm
-        export OPTUNA_STORAGE='sqlite:///$optuna_dir/optuna_${exp}_${arm}_grid.db'
-        export OPTUNA_WORKER_ID=$wid
-        CUDA_VISIBLE_DEVICES=$dev '$DELTA_PY' '$runner'
-      " &
-      dev=$((dev + 1))
-      wid=$((wid + 1))
-    done
+  # Workers are laid out GPU-major and, where there are two arms, ALTERNATING between them,
+  # so the controlled pair always gets an equal share of the node no matter how many workers
+  # per GPU are configured. All workers on an arm drain the SAME queue, so a setting that
+  # converges early frees its slot for the next queued run instead of idling a GPU.
+  local n_workers=$((4 * GRID_WORKERS_PER_GPU))
+  local n_arms
+  n_arms=$(echo "$arms" | wc -w)
+  echo "launching $n_workers workers ($GRID_WORKERS_PER_GPU per GPU) over $n_arms arm(s)"
+  local i=0
+  local arm_list
+  read -r -a arm_list <<<"$arms"
+  while [[ $i -lt $n_workers ]]; do
+    local dev=$((i % 4))
+    arm="${arm_list[$((i % n_arms))]}"
+    bash -c "
+      export ARM=$arm
+      export OPTUNA_STORAGE='sqlite:///$optuna_dir/optuna_${exp}_${arm}_grid.db'
+      export OPTUNA_WORKER_ID=$i
+      CUDA_VISIBLE_DEVICES=$dev '$DELTA_PY' '$runner'
+    " &
+    i=$((i + 1))
   done
   wait
 

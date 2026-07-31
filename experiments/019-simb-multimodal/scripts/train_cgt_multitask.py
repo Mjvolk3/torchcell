@@ -82,6 +82,7 @@ import os
 import os.path as osp
 import socket
 import uuid
+from datetime import timedelta
 from typing import Any, cast
 
 import hydra
@@ -91,7 +92,7 @@ import torch
 import torch.distributed as dist
 import wandb
 from dotenv import load_dotenv
-from lightning.pytorch.callbacks import Callback, EarlyStopping, ModelCheckpoint
+from lightning.pytorch.callbacks import Callback, EarlyStopping, ModelCheckpoint, Timer
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig, OmegaConf
 from torch_geometric.data import HeteroData
@@ -2518,6 +2519,22 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
             )
         )
         print(f"[early-stopping] monitor={es_monitor} patience={es_patience}")
+
+    # WALL-CLOCK BUDGET. `trainer.max_time_s` stops training GRACEFULLY after a duration:
+    # `fit` returns normally, so the metric snapshot, the test pass and the prediction dump
+    # all still happen. Without it, an epoch-capped long run is killed mid-fit by slurm and
+    # loses every one of those, and its optuna trial is left RUNNING rather than COMPLETE.
+    #
+    # This is what makes "train for the whole allocation and look at where it saturates" a
+    # runnable instruction. The 019 expression measurement is the reason it is needed:
+    # smoothed val Pearson peaked ~0.14 at epoch 85-136, FELL to 0.08-0.11 by epoch 200-300,
+    # then rose to a project-best 0.198 at epoch 1367 -- so an epoch cap chosen in advance
+    # either truncates in the dip or is a guess. A time budget is the honest cap: it spends
+    # exactly the compute available and lets the curve decide where the peak is.
+    max_time_s = cfg.trainer.get("max_time_s")
+    if max_time_s:
+        checkpoint_callbacks.append(Timer(duration=timedelta(seconds=float(max_time_s))))
+        print(f"[max-time] stopping training after {float(max_time_s) / 3600:.2f} h")
 
     torch.set_float32_matmul_precision("medium")
     devices = get_num_devices(cfg.trainer.devices)

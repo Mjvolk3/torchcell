@@ -3,7 +3,7 @@
 # [[experiments.023-metabolome-betaxanthin-joint]]
 #
 # DELTA EXPERIMENT 3 of 4 -- DOES THE METABOLOME IMPROVE BETAXANTHIN PREDICTION?
-# One A40x4 node, 48 h. TWO arms, two GPUs each, in ONE job.
+# One A40x4 node, 48 h. TWO arms, four long runs each (2 per GPU), in ONE job.
 #
 #   cd /projects/bbub/mjvolk3/torchcell
 #   mkdir -p experiments/023-metabolome-betaxanthin-joint/{slurm/output,optuna,results}

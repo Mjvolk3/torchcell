@@ -93,16 +93,19 @@ model:
 
 trainer:
   checkpoint: { monitor: val/betaxanthin/pearson_per_feature, mode: max }
-  # 400. The joint arm carries a second loss term and may well take longer to converge than
-  # either single-target arm, so the extra ceiling matters more here than anywhere -- and a
-  # cap that bound on ONE side of a paired comparison would be a difference between the arms
-  # that is not the one under test.
-  max_epochs: 400
+  # A CEILING, NOT A TARGET -- the stop that fires is `trainer.max_time_s`, set per trial from
+  # the job's remaining wall clock. This matters MORE on a paired comparison than anywhere
+  # else: the joint arm carries a second loss term and may well converge later than the
+  # control, so any epoch cap that bound would bind on ONE side and become a difference
+  # between the arms that is not the one under test. A wall-clock budget is symmetric by
+  # construction -- both arms get the same seconds.
+  max_epochs: 10000
   early_stopping:
-    enabled: true
-    monitor: val/betaxanthin/pearson_per_feature
-    mode: max
-    patience: 50
-    min_delta: 1.0e-4
+    # OFF, and for the paired design this is a correctness requirement rather than a
+    # preference. Early stopping is a data-dependent stopping rule, so with it on the two
+    # arms would stop at DIFFERENT epochs and the paired difference would confound "the
+    # metabolome helped" with "the metabolome head changed when the run stopped".
+    enabled: false
+  max_time_s: null
   run_test: false
   dump_test_predictions: false

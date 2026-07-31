@@ -3,7 +3,7 @@
 # [[experiments.022-mulleder-metabolome]]
 #
 # DELTA EXPERIMENT 2 of 4 -- MAX OUT THE 19-AMINO-ACID METABOLOME (Mulleder 2016).
-# One A40x4 node, 48 h, four workers draining one shared work queue.
+# One A40x4 node, 48 h. Eight long runs (2 per GPU) draining one shared work queue.
 #
 #   cd /projects/bbub/mjvolk3/torchcell
 #   mkdir -p experiments/022-mulleder-metabolome/{slurm/output,optuna,results}

@@ -21,6 +21,7 @@ from typing import Any, cast
 
 from pydantic import BaseModel, Field
 
+from torchcell.datamodels import compound_identity as compound_identity_module
 from torchcell.datamodels import media as media_module
 from torchcell.datamodels import pydant as pydant_module
 from torchcell.datamodels import schema as schema_module
@@ -46,13 +47,15 @@ LANE_ROOTS: dict[str, tuple[str, ...]] = {
         "Media",
         "MediaComponent",
         "Compound",
+        "CompoundIdentityRecord",
+        "CompoundIdentityResolution",
         "Concentration",
         "Solvent",
         "Temperature",
     ),
     "phenotype": ("Phenotype",),
     "experiment": ("Experiment", "ExperimentReference"),
-    "provenance": ("Publication", "ReferenceGenome", "SOTerm"),
+    "provenance": ("Publication", "ProvenanceGapMixin", "ReferenceGenome", "SOTerm"),
 }
 
 LANE_TITLES: dict[str, str] = {
@@ -62,6 +65,27 @@ LANE_TITLES: dict[str, str] = {
     "experiment": "Experiment — the typed record and its reference",
     "provenance": "Provenance — where the record came from",
     "enum": "Controlled vocabularies",
+}
+
+# Block heading + one-line gloss for the printed schematic panel. These two are the
+# only editorial strings on that figure; everything inside a block is derived from the
+# graph, so a class cannot be named on the panel unless it exists in the schema.
+LANE_HEADINGS: dict[str, str] = {
+    "genotype": "GENOTYPE",
+    "environment": "ENVIRONMENT",
+    "phenotype": "PHENOTYPE",
+    "experiment": "EXPERIMENT",
+    "provenance": "PROVENANCE",
+    "enum": "CONTROLLED VOCABULARIES",
+}
+
+LANE_SUBTITLES: dict[str, str] = {
+    "genotype": "1..n perturbations off a reference genome",
+    "environment": "medium × temperature × perturbation",
+    "phenotype": "what was measured, with its uncertainty",
+    "experiment": "the typed record, paired with its control",
+    "provenance": "where the record came from",
+    "enum": "closed sets, no free text",
 }
 
 # Domain -> palette slot. Six domains map onto the six primary palette colors, so the
@@ -142,6 +166,25 @@ class OntologyGraph(BaseModel):
         """Class names in a lane, in stable alphabetical order."""
         return sorted(c.name for c in self.classes.values() if c.lane == lane)
 
+    def descendants_of(self, name: str) -> list[str]:
+        """Every class below ``name`` in the inheritance tree, excluding itself."""
+        out: list[str] = []
+        frontier = self.children_of(name)
+        while frontier:
+            child = frontier.pop()
+            out.append(child)
+            frontier.extend(self.children_of(child))
+        return sorted(out)
+
+    def lane_roots(self, lane: str) -> list[str]:
+        """Classes in ``lane`` whose inheritance parent sits outside the lane."""
+        roots: list[str] = []
+        for name in self.lane_members(lane):
+            parent = self.classes[name].parent
+            if parent is None or self.classes[parent].lane != lane:
+                roots.append(name)
+        return roots
+
 
 def _collapse_type(annotation: Any) -> str:
     """Render an annotation compactly enough to fit a card row.
@@ -156,6 +199,7 @@ def _collapse_type(annotation: Any) -> str:
         "torchcell.datamodels.schema.",
         "torchcell.datamodels.pydant.",
         "torchcell.datamodels.media.",
+        "torchcell.datamodels.compound_identity.",
         "torchcell.verification.sourced.",
         "typing.",
     ):
@@ -204,7 +248,12 @@ def _is_collection(annotation: Any) -> bool:
 
 
 def _lane_for(name: str, parent_chain: list[str]) -> str:
-    """Lane of a class: its own root assignment, else its nearest assigned ancestor."""
+    """Lane of a class: its own root assignment, else its nearest assigned ancestor.
+
+    Raises rather than defaulting. A silent catch-all would file every newly added
+    top-level class under whichever lane the default named, and the figure would look
+    correct while quietly misplacing it -- the exact drift this module exists to stop.
+    """
     for lane, roots in LANE_ROOTS.items():
         if name in roots:
             return lane
@@ -212,12 +261,16 @@ def _lane_for(name: str, parent_chain: list[str]) -> str:
         for lane, roots in LANE_ROOTS.items():
             if ancestor in roots:
                 return lane
-    return "provenance"
+    raise KeyError(
+        f"{name!r} has no lane: it is not in LANE_ROOTS and none of its ancestors "
+        f"{parent_chain or '(no schema base)'} are either. Add it to LANE_ROOTS in "
+        f"torchcell/paper/ontology_graph.py."
+    )
 
 
 def build_ontology_graph() -> OntologyGraph:
     """Introspect the live schema modules into an :class:`OntologyGraph`."""
-    modules = (schema_module, media_module, pydant_module)
+    modules = (schema_module, media_module, pydant_module, compound_identity_module)
     module_names = {m.__name__ for m in modules}
 
     registry: dict[str, tuple[str, type]] = {}

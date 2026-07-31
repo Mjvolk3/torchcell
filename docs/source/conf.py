@@ -43,6 +43,13 @@ html_favicon = (
 )
 html_static_path = ["_static"]
 
+# Copied verbatim into the site root, no theme and no RST wrapper. The docs workflow
+# renders the ontology explorer into `_extra/ontology/index.html` just before the
+# Sphinx build, which publishes it at https://mjvolk3.github.io/torchcell/ontology/ --
+# the URL printed on the ontology figures (see EXPLORE_URL in
+# paper/nature-biotech/scripts/generate_ontology_diagram.py).
+html_extra_path = ["_extra"]
+
 add_module_names = False
 autodoc_member_order = "bysource"
 suppress_warnings = ["autodoc.import_object"]

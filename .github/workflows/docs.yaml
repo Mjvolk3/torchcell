@@ -33,6 +33,16 @@ jobs:
           # not the ancient PyPI 0.2.6 release.
           pip install -e .
 
+      - name: Render the ontology explorer
+        run: |
+          # Introspects the live pydantic schema, so the published map cannot lag the
+          # code. html_extra_path copies _extra/ verbatim into the site root, putting
+          # this at https://mjvolk3.github.io/torchcell/ontology/ -- the URL printed on
+          # the ontology figures. A failure here is meant to break the build: it means
+          # the schema no longer introspects.
+          python paper/nature-biotech/scripts/generate_ontology_diagram.py \
+            --explorer-only docs/source/_extra/ontology/index.html
+
       - name: Build the documentation
         run: |
           sphinx-build -b html docs/source build/docs

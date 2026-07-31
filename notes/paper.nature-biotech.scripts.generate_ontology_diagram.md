@@ -86,3 +86,89 @@ figure (e.g. "13 typed experiment/reference pairs") are computed from the graph,
 typed in.
 
 ![](assets/images/schema-ontology/torchcell-ontology-schematic.svg)
+
+## 2026.07.30 - Corrections: the panel was hand-authored, and the URL was fictional
+
+Regenerating against `main` (199 commits on from the 07.19 snapshot) exposed three real
+defects in the 07.19 version. All are fixed here; the 07.19 section above is left in
+place for history but its "Regeneration guarantee" claim was **only ever true of the full
+map, the overview, and the explorer** -- not of the printed schematic.
+
+### 1. The schematic's body text was typed by hand
+
+`render_schematic_svg` carried a literal list of exemplar lines under a comment claiming
+*"Exemplars are read off the graph so a renamed or newly added class cannot leave a stale
+label behind."* Exactly one line was computed (the experiment/reference pair count);
+roughly thirty were string literals. It had already drifted:
+
+- **PROVENANCE** printed `SourcedValue`, which lives in `torchcell.verification.sourced`
+  and is not introspected at all, and omitted `ProvenanceGapMixin`, which is -- while the
+  block header printed a *computed* "4 classes" beside the stale list of four.
+- **ENVIRONMENT** header said 11 classes over 4 typed lines; **CONTROLLED VOCABULARIES**
+  said 11 over 6 named, silently dropping `AssayType`, `BiologicAgentClass`,
+  `MeasurementType`, `TemperatureUnit`.
+
+Every body line is now derived by `_lane_body_lines()`: lane roots, lane-scoped subtype
+counts, and, where a family shares its parent's name as a suffix (`FitnessPhenotype`,
+`CalMorphPhenotype`, ...), the stripped names comma-wrapped so all thirteen fit. When the
+lines exceed the block budget the panel says how many it dropped. The only editorial
+strings left on the figure are `LANE_HEADINGS` and `LANE_SUBTITLES`.
+
+Guarded by `tests/torchcell/paper/test_ontology_graph.py`
+([[tests.torchcell.paper.test_ontology_graph]]): every CamelCase token printed on the
+panel must resolve to a class in the live graph, and every "N subtypes" count must equal
+the real lane-scoped subtree. The test was checked against the old `SourcedValue` string
+to confirm it is not vacuous.
+
+### 2. `EXPLORE_URL` pointed at a domain that does not exist
+
+`https://torchcell.org/ontology` was a placeholder printed on the figure as though live.
+`torchcell.org` has **no DNS record**. The explorer is now published by the docs workflow
+to GitHub Pages, which the repo already runs, and `EXPLORE_URL` is the real address:
+
+**`https://mjvolk3.github.io/torchcell/ontology/`**
+
+Wiring: `docs/source/conf.py` gains `html_extra_path = ["_extra"]` (Sphinx copies that
+tree verbatim into the site root), and `.github/workflows/docs.yaml` renders the explorer
+into `docs/source/_extra/ontology/index.html` immediately before `sphinx-build`. The page
+is **generated in CI, never committed** (`docs/source/_extra/.gitignore`) so the published
+map cannot lag `torchcell.datamodels` -- a snapshot would reintroduce exactly the drift
+described above. A generator failure deliberately breaks the docs build.
+
+Note `peaceiris/actions-gh-pages` replaces the `gh-pages` branch on each deploy, so a
+file hand-committed to that branch would be wiped by the next merge to `main`. Publishing
+*must* go through the Sphinx build.
+
+### 3. The backbone arrows were painted over
+
+The three hourglass arrows were appended to `parts` **before** the block rectangles,
+which are opaque white. With `col_w`-wide columns separated by a 9-unit gutter and
+vertical offsets of 50-90 units, a bezier with control points at the horizontal midpoint
+became a near-vertical squiggle, and the blocks then covered all but the sliver inside
+the gutter -- which is why the arrows read as misplaced hooks. They are now orthogonal
+elbows routed down the middle of the gutter (horizontal out, vertical run, horizontal in,
+3-unit rounded corners) and drawn *after* the blocks. Arrival is horizontal by
+construction, which is what makes the fixed right-pointing arrowhead correct.
+
+Related: child rows are indented by shifting the text `x`, not by prefixing spaces --
+SVG renderers collapse leading whitespace in a text node (rsvg drops it, and U+00A0 is
+honoured inconsistently), which flattened the parent/child structure.
+
+### 4. Two smaller fixes
+
+- `torchcell.datamodels.compound_identity` is now introspected (+2 models, +1 enum);
+  the map is 90 models + 12 enums, 404 declared fields.
+- `_lane_for()` **raises** instead of falling through to `return "provenance"`. The
+  catch-all would file any new top-level class under Provenance and the figure would look
+  correct while quietly misplacing it.
+
+### Current artifacts
+
+| File | Size |
+| --- | --- |
+| `torchcell-ontology-schematic.svg` | 179 × 113.2 mm, all type ≥ 6 pt |
+| `torchcell-ontology-overview.svg` | 179 × 78.0 mm (under the 170 mm ceiling) |
+| `torchcell-ontology.svg` | 4458 × 3113 units |
+| `torchcell-ontology-explorer.html` | 277 kB, self-contained |
+
+![](assets/images/schema-ontology/torchcell-ontology-schematic.svg)

@@ -22,6 +22,7 @@ Run from the repo root::
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import os.path as osp
@@ -43,9 +44,10 @@ SUBTITLE = (
     "Every record is a typed genotype × environment → phenotype experiment, "
     "carried by pydantic models with provenance attached."
 )
-# Printed on the figure so a reader of the PDF can reach the interactive map.
-# Update once the explorer is published at its final home.
-EXPLORE_URL = "https://torchcell.org/ontology"
+# Printed on the figure so a reader of the PDF can reach the interactive map. This is
+# where the docs workflow publishes the explorer (see ``--explorer-only`` below and
+# .github/workflows/docs.yaml), so the printed URL and the deployed page cannot drift.
+EXPLORE_URL = "https://mjvolk3.github.io/torchcell/ontology/"
 
 
 def _rendered_height_mm(svg: str) -> float:
@@ -86,9 +88,7 @@ def _class_index(graph: OntologyGraph) -> list[dict[str, object]]:
     return index
 
 
-def _explorer_html(
-    svg: str, graph: OntologyGraph, standalone: bool = True
-) -> str:
+def _explorer_html(svg: str, graph: OntologyGraph, standalone: bool = True) -> str:
     """Wrap the SVG in a self-contained pan/zoom/search shell.
 
     Level of detail is the whole trick: below a zoom threshold the field rows are
@@ -96,18 +96,15 @@ def _explorer_html(
     fields fade in. That is what lets one artifact serve both "the zoomed-out
     figure" and "the thing you explore".
 
-    ``standalone=True`` emits a complete HTML document (for the repo file and for
-    serving at torchcell.org). ``standalone=False`` emits only the page body, which
-    is what the claude.ai Artifact host expects -- it supplies its own
-    ``<!doctype>``/``<head>``/``<body>`` skeleton.
+    ``standalone=True`` emits a complete HTML document (for the repo file and for the
+    page the docs workflow publishes at ``EXPLORE_URL``). ``standalone=False`` emits
+    only the page body, which is what the claude.ai Artifact host expects -- it
+    supplies its own ``<!doctype>``/``<head>``/``<body>`` skeleton.
     """
     payload = json.dumps(_class_index(graph), separators=(",", ":"))
     lanes = json.dumps(
         {
-            k: {
-                "title": LANE_TITLES[k],
-                "color": PLOT_PALETTE[LANE_PALETTE_INDEX[k]],
-            }
+            k: {"title": LANE_TITLES[k], "color": PLOT_PALETTE[LANE_PALETTE_INDEX[k]]}
             for k in LANE_ORDER
         },
         separators=(",", ":"),
@@ -470,8 +467,49 @@ if (location.hash.length > 1) {{
     )
 
 
+def _write_explorer_only(dest: str) -> None:
+    """Render just the explorer to ``dest`` -- the docs/CI publishing path.
+
+    Kept separate from :func:`main` because CI has no ``.env`` and therefore no
+    ``ASSET_IMAGES_DIR``; the docs build only needs the one page it serves.
+    """
+    graph = build_ontology_graph()
+    layout = build_layout(graph, compact=False)
+    svg = render_svg(
+        graph,
+        layout,
+        physical_width_mm=PANEL_WIDTHS_MM["full"],
+        title=TITLE,
+        subtitle=SUBTITLE,
+        explore_url=EXPLORE_URL,
+    )
+    os.makedirs(osp.dirname(dest), exist_ok=True)
+    with open(dest, "w", encoding="utf-8") as fh:
+        fh.write(_explorer_html(svg, graph))
+    n_models = sum(1 for c in graph.classes.values() if c.kind == "model")
+    n_enums = sum(1 for c in graph.classes.values() if c.kind == "enum")
+    print(
+        f"explorer: {dest} ({osp.getsize(dest) / 1024:.0f} kB, "
+        f"{n_models} models + {n_enums} enums)"
+    )
+
+
 def main() -> None:
     """Regenerate all ontology artifacts into ``$ASSET_IMAGES_DIR/schema-ontology``."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--explorer-only",
+        metavar="PATH",
+        help=(
+            "render only the explorer HTML to PATH and exit. Used by the docs "
+            "workflow, which publishes it to GitHub Pages and has no ASSET_IMAGES_DIR."
+        ),
+    )
+    args = parser.parse_args()
+    if args.explorer_only:
+        _write_explorer_only(args.explorer_only)
+        return
+
     load_dotenv()
     asset_dir = os.environ["ASSET_IMAGES_DIR"]
     out_dir = osp.join(asset_dir, "schema-ontology")

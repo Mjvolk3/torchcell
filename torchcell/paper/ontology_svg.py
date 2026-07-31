@@ -20,8 +20,10 @@ from xml.sax.saxutils import escape
 from pydantic import BaseModel, Field
 
 from torchcell.paper.ontology_graph import (
+    LANE_HEADINGS,
     LANE_ORDER,
     LANE_PALETTE_INDEX,
+    LANE_SUBTITLES,
     LANE_TITLES,
     OntologyGraph,
 )
@@ -581,6 +583,96 @@ def _legend_svg(
     return "".join(parts)
 
 
+# Child rows are indented by shifting the text's x, not by prefixing spaces: leading
+# whitespace in an SVG text node is collapsed by renderers (rsvg drops it outright,
+# and a non-breaking space is honoured inconsistently), which silently flattens the
+# parent/child structure. An x offset is unambiguous everywhere.
+INDENT_W = 7.0
+
+
+def _wrap_csv(names: list[str], max_w: float, font_size: float) -> list[str]:
+    """Comma-join ``names`` and wrap so no line exceeds ``max_w``."""
+    lines: list[str] = []
+    current = ""
+    for i, name in enumerate(names):
+        piece = name + ("," if i < len(names) - 1 else "")
+        trial = f"{current} {piece}" if current else piece
+        if current and _text_w(trial, font_size) > max_w:
+            lines.append(current)
+            current = piece
+        else:
+            current = trial
+    if current:
+        lines.append(current)
+    return lines
+
+
+def _suffix_family(parent: str, children: list[str]) -> list[str] | None:
+    """Children with the parent's name stripped, when every child carries it as a suffix.
+
+    ``Phenotype`` -> ``FitnessPhenotype, CalMorphPhenotype, ...`` is the dominant shape
+    in this schema, and stripping the shared suffix is what lets all thirteen fit on a
+    printed panel without dropping any of them.
+    """
+    if not children or not all(c.endswith(parent) and c != parent for c in children):
+        return None
+    return [c[: -len(parent)] for c in children]
+
+
+def _lane_body_lines(
+    graph: OntologyGraph,
+    lane: str,
+    max_w: float,
+    font_size: float = 6.0,
+    max_lines: int = 11,
+) -> list[tuple[float, str]]:
+    """Derive a lane block's body as ``(x offset, text)`` rows.
+
+    Nothing here is typed by hand: the roots, the subtype counts, and the names all
+    come off :class:`OntologyGraph`, so the panel cannot name a class the schema does
+    not have, and cannot omit one it does without saying how many it dropped.
+    """
+
+    def in_lane(names: list[str]) -> list[str]:
+        return [n for n in names if graph.classes[n].lane == lane]
+
+    roots = graph.lane_roots(lane)
+    branching = [r for r in roots if in_lane(graph.children_of(r))]
+    flat = [r for r in roots if not in_lane(graph.children_of(r))]
+
+    inner_w = max_w - INDENT_W
+    lines: list[tuple[float, str]] = []
+    seen_families: dict[tuple[str, ...], str] = {}
+    for root in branching:
+        children = in_lane(graph.children_of(root))
+        n_desc = len(in_lane(graph.descendants_of(root)))
+        lines.append((0.0, f"{root}  ·  {n_desc} subtypes"))
+        family = _suffix_family(root, children)
+        if family is None:
+            for child in children:
+                extra = len(in_lane(graph.descendants_of(child)))
+                tail = f"  ·  {extra}" if extra else ""
+                lines.append((INDENT_W, f"{child}{tail}"))
+            continue
+        key = tuple(family)
+        if key in seen_families:
+            same = f"same {len(family)} families as {seen_families[key]}"
+            lines.append((INDENT_W, same))
+            continue
+        seen_families[key] = root
+        lines.extend((INDENT_W, text) for text in _wrap_csv(family, inner_w, font_size))
+    if flat:
+        lines.extend((0.0, text) for text in _wrap_csv(flat, max_w, font_size))
+
+    if len(lines) > max_lines:
+        dropped = len(lines) - max_lines + 1
+        lines = lines[: max_lines - 1]
+        lines.append(
+            (0.0, f"…  +{dropped} more lines — full list in the interactive map")
+        )
+    return lines
+
+
 def render_schematic_svg(
     graph: OntologyGraph,
     physical_width_mm: float = 179.0,
@@ -588,11 +680,11 @@ def render_schematic_svg(
 ) -> str:
     """Render the legible, Nature-compliant structural panel.
 
-    The full map cannot be a printed figure: 95 class names across 179 mm forces the
+    The full map cannot be a printed figure: every class name across 179 mm forces the
     labels to about 1.2 pt, five times under Nature's 6 pt floor. So this panel drops
     to the level that *is* legible -- the six domains, the hourglass between them, and
-    a handful of named exemplars per domain -- and prints the explorer URL for the
-    rest.
+    each domain's roots and subtype counts read off the graph -- and prints the
+    explorer URL for the rest.
 
     The whole thing is laid out in POINTS, with the viewBox width set to the physical
     width in points. A font-size of 6 in user units is therefore exactly 6 pt in the
@@ -604,91 +696,27 @@ def render_schematic_svg(
     gap = 9.0
     title_band = 26.0
 
-    # (lane, heading, exemplar lines). Exemplars are read off the graph so a renamed
-    # or newly added class cannot leave a stale label behind.
-    def kids(name: str, limit: int) -> list[str]:
-        return graph.children_of(name)[:limit]
-
-    blocks: list[tuple[str, str, str, list[str]]] = [
-        (
-            "genotype",
-            "GENOTYPE",
-            "1..n perturbations off a reference genome",
-            [
-                "presence / absence  ·  deletion, addition,",
-                "   natural gain and loss, marker & CRISPR",
-                "sequence  ·  allele, ts allele, DAmP,",
-                "   suppressor, sequence variant",
-                "dosage  ·  copy number, engineered copy",
-                "expression  ·  CRISPRa, CRISPRi",
-            ],
-        ),
-        (
-            "environment",
-            "ENVIRONMENT",
-            "medium × temperature × perturbation",
-            [
-                "Media  ·  typed components, not a string",
-                "MediaComponent → Compound + Concentration",
-                "Temperature, aerobicity, duration",
-                "perturbation  ·  small molecule, physical",
-            ],
-        ),
-        (
-            "experiment",
-            "EXPERIMENT",
-            "the typed record, paired with its control",
-            [
-                "Experiment",
-                "   genotype × environment → phenotype",
-                "ExperimentReference",
-                "   reference genome × environment → phenotype",
-                f"{len(kids('Experiment', 99))} typed experiment/reference pairs",
-            ],
-        ),
-        (
-            "phenotype",
-            "PHENOTYPE",
-            "what was measured, with its uncertainty",
-            [
-                "fitness, gene interaction, essentiality",
-                "synthetic lethality, synthetic rescue",
-                "expression  ·  microarray, RNA-seq, pseudobulk",
-                "protein abundance, metabolite",
-                "morphology (CalMorph), visual score",
-                "environment response",
-            ],
-        ),
-        (
-            "provenance",
-            "PROVENANCE",
-            "where the record came from",
-            [
-                "Publication  ·  DOI, PubMed",
-                "ReferenceGenome  ·  species, strain, ploidy",
-                "SOTerm  ·  Sequence Ontology anchor",
-                "SourcedValue  ·  sha256 + verbatim quote",
-            ],
-        ),
-        (
-            "enum",
-            "CONTROLLED VOCABULARIES",
-            "closed sets, no free text",
-            [
-                "UncertaintyType  ·  sample SD vs bootstrap SE",
-                "SampleUnit  ·  colony, screen, replicate",
-                "ConcentrationUnit, DoseBasis, PhysicalFactor",
-                "MediaComponentRole, ComponentDefinition",
-            ],
-        ),
-    ]
-
     # Three columns: inputs | waist | output, with the two supporting lanes beneath.
     col_w = (vb_w - margin * 2 - gap * 2) / 3
+    body_w = col_w - 10.0
+
+    # (lane, heading, gloss, body lines). Heading and gloss are the only editorial
+    # strings; every body line is derived from the graph, so a renamed or newly added
+    # class cannot leave a stale label behind.
+    blocks: list[tuple[str, str, str, list[tuple[float, str]]]] = [
+        (
+            lane,
+            LANE_HEADINGS[lane],
+            LANE_SUBTITLES[lane],
+            _lane_body_lines(graph, lane, body_w),
+        )
+        for lane in LANE_ORDER
+    ]
+
     line_h = 7.6
     head_h = 20.0
 
-    def block_h(lines: list[str]) -> float:
+    def block_h(lines: list[tuple[float, str]]) -> float:
         return head_h + len(lines) * line_h + 7.0
 
     placed: dict[str, tuple[float, float, float, float]] = {}
@@ -714,13 +742,37 @@ def render_schematic_svg(
     placed["enum"] = (x1, y2, col_w * 2 + gap, h_enum)
 
     parts: list[str] = []
+    arrows: list[str] = []
 
-    # Backbone arrows, drawn under the blocks.
     def arrow(xa: float, ya: float, xb: float, yb: float, color: str) -> str:
+        """Route a backbone arrow through the gutter between two columns.
+
+        The columns are adjacent -- the gutter is ``gap`` units wide while the blocks
+        it connects sit tens of units apart vertically. A bezier whose control points
+        sit at the horizontal midpoint therefore degenerates into a near-vertical
+        squiggle crammed into that gutter, so the connector is drawn as an orthogonal
+        elbow instead: out horizontally, down (or up) the middle of the gutter, then
+        horizontally into the target. Arrival is horizontal by construction, which is
+        what makes the fixed right-pointing head correct.
+        """
+        tip = xb - 4.4
+        if abs(yb - ya) < 0.5:
+            spine = f"M{xa:.1f} {ya:.1f} H{tip:.1f}"
+        else:
+            mid = (xa + xb) / 2
+            r = min(3.0, abs(yb - ya) / 2, (xb - xa) / 2)
+            sweep_in, sweep_out = (1, 0) if yb > ya else (0, 1)
+            step = r if yb > ya else -r
+            spine = (
+                f"M{xa:.1f} {ya:.1f} H{mid - r:.1f} "
+                f"A{r:.1f} {r:.1f} 0 0 {sweep_in} {mid:.1f} {ya + step:.1f} "
+                f"V{yb - step:.1f} "
+                f"A{r:.1f} {r:.1f} 0 0 {sweep_out} {mid + r:.1f} {yb:.1f} "
+                f"H{tip:.1f}"
+            )
         return (
-            f'<path d="M{xa:.1f} {ya:.1f} C{(xa + xb) / 2:.1f} {ya:.1f} '
-            f'{(xa + xb) / 2:.1f} {yb:.1f} {xb - 4:.1f} {yb:.1f}" fill="none" '
-            f'stroke="{color}" stroke-width="1.4"/>'
+            f'<path d="{spine}" fill="none" stroke="{color}" stroke-width="1.4" '
+            f'stroke-linecap="butt" stroke-linejoin="round"/>'
             f'<path d="M{xb:.1f} {yb:.1f} l-4.4 -2.2 v4.4 Z" fill="{color}"/>'
         )
 
@@ -728,9 +780,9 @@ def render_schematic_svg(
     ex, ey, ew, eh = placed["environment"]
     xx, xy, xw, xh = placed["experiment"]
     px, py, pw, ph = placed["phenotype"]
-    parts.append(arrow(gx + gw, gy + gh / 2, xx, xy + xh * 0.36, PLOT_PALETTE[0]))
-    parts.append(arrow(ex + ew, ey + eh / 2, xx, xy + xh * 0.64, PLOT_PALETTE[1]))
-    parts.append(arrow(xx + xw, xy + xh / 2, px, py + ph / 2, PLOT_PALETTE[2]))
+    arrows.append(arrow(gx + gw, gy + gh / 2, xx, xy + xh * 0.36, PLOT_PALETTE[0]))
+    arrows.append(arrow(ex + ew, ey + eh / 2, xx, xy + xh * 0.64, PLOT_PALETTE[1]))
+    arrows.append(arrow(xx + xw, xy + xh / 2, px, py + ph / 2, PLOT_PALETTE[2]))
 
     for key, head, sub, lines in blocks:
         bx, by, bw, bh = placed[key]
@@ -748,12 +800,16 @@ def render_schematic_svg(
             f'<text x="{bx + 5:.1f}" y="{by + 17.2:.1f}" font-size="6" '
             f'fill="#666666">{escape(_truncate(sub, bw - 10, 6))}</text>'
         )
-        for i, line in enumerate(lines):
+        for i, (dx, line) in enumerate(lines):
             parts.append(
-                f'<text x="{bx + 5:.1f}" y="{by + head_h + 6 + i * line_h:.1f}" '
+                f'<text x="{bx + 5 + dx:.1f}" y="{by + head_h + 6 + i * line_h:.1f}" '
                 f'font-size="6" fill="#2B2B2B">'
-                f"{escape(_truncate(line, bw - 10, 6))}</text>"
+                f"{escape(_truncate(line, bw - 10 - dx, 6))}</text>"
             )
+
+    # Arrows last: they run in the gutters, so they must not be painted over by the
+    # opaque block rectangles (which is what reduced them to steep slivers before).
+    parts.extend(arrows)
 
     n_models = sum(1 for c in graph.classes.values() if c.kind == "model")
     n_fields = sum(len(c.own_fields) for c in graph.classes.values())

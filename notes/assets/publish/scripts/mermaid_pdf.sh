@@ -47,6 +47,15 @@ fi
 # the content stream into scattered editable text boxes.
 pdftocairo -svg "${outdir}/${base}.pdf" "${outdir}/${base}.svg"
 
+# `mmdc -b <color>` paints the DIAGRAM, not the page, and `--pdfFit` fits the page with
+# a ~6 pt margin around it. pdftocairo therefore emits a canvas whose outer ~6 pt frame
+# has no fill, which every viewer renders as a transparency checkerboard around an
+# otherwise solid figure. Paint the full canvas so the background is uniform.
+if [ "${bg}" != "transparent" ]; then
+  sed -i "0,/<svg /s|\(<svg [^>]*>\)|\1<rect width=\"100%\" height=\"100%\" fill=\"${bg}\"/>|" \
+    "${outdir}/${base}.svg"
+fi
+
 # High-DPI PNG fallback (raster), in case an SVG embed is not wanted.
 rsvg-convert -z 4 "${outdir}/${base}.svg" -o "${outdir}/${base}.png" 2>/dev/null || true
 

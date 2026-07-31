@@ -27,10 +27,15 @@ graph BT
     GeneEssentialityPhenotype["gene essentiality phenotype"]
     GeneInteractionPhenotype["gene interaction phenotype"]
     Media["media"]
+    MetabolitePhenotype["metabolite phenotype"]
+    MicroarrayExpressionPhenotype["microarray expression phenotype"]
     Perturbation["perturbation"]
+    ProteinAbundancePhenotype["protein abundance phenotype"]
+    RnaseqExpressionPhenotype["rnaseq expression phenotype"]
     SyntheticLethalityPhenotype["synthetic lethality phenotype"]
     SyntheticRescuePhenotype["synthetic rescue phenotype"]
     Temperature["temperature"]
+    VisualScorePhenotype["visual score phenotype"]
 
     %% Class Inheritance
     EnvironmentalExposure -->|is_a| Environment
@@ -43,8 +48,13 @@ graph BT
     PhenotypicFeature -->|is_a| FitnessPhenotype
     PhenotypicFeature -->|is_a| GeneEssentialityPhenotype
     PhenotypicFeature -->|is_a| GeneInteractionPhenotype
+    PhenotypicFeature -->|is_a| MetabolitePhenotype
+    PhenotypicFeature -->|is_a| MicroarrayExpressionPhenotype
+    PhenotypicFeature -->|is_a| ProteinAbundancePhenotype
+    PhenotypicFeature -->|is_a| RnaseqExpressionPhenotype
     PhenotypicFeature -->|is_a| SyntheticLethalityPhenotype
     PhenotypicFeature -->|is_a| SyntheticRescuePhenotype
+    PhenotypicFeature -->|is_a| VisualScorePhenotype
 
     %% Data Relationships
     CalmorphPhenotype -.->|"phenotype member of<br/>(is_a: participates in)"| Experiment
@@ -63,13 +73,23 @@ graph BT
     Genome -.->|"genome member of<br/>(is_a: participates in)"| ExperimentReference
     Genotype -.->|"genotype member of<br/>(is_a: participates in)"| Experiment
     Media -.->|"media member of<br/>(is_a: part of)"| Environment
+    MetabolitePhenotype -.->|"phenotype member of<br/>(is_a: participates in)"| Experiment
+    MetabolitePhenotype -.->|"phenotype member of<br/>(is_a: participates in)"| ExperimentReference
+    MicroarrayExpressionPhenotype -.->|"phenotype member of<br/>(is_a: participates in)"| Experiment
+    MicroarrayExpressionPhenotype -.->|"phenotype member of<br/>(is_a: participates in)"| ExperimentReference
     Perturbation -.->|"perturbation member of<br/>(is_a: genetically associated with)"| Genotype
+    ProteinAbundancePhenotype -.->|"phenotype member of<br/>(is_a: participates in)"| Experiment
+    ProteinAbundancePhenotype -.->|"phenotype member of<br/>(is_a: participates in)"| ExperimentReference
     Publication -.->|"publication mentions experiment<br/>(is_a: mentions)"| Experiment
+    RnaseqExpressionPhenotype -.->|"phenotype member of<br/>(is_a: participates in)"| Experiment
+    RnaseqExpressionPhenotype -.->|"phenotype member of<br/>(is_a: participates in)"| ExperimentReference
     SyntheticLethalityPhenotype -.->|"phenotype member of<br/>(is_a: participates in)"| Experiment
     SyntheticLethalityPhenotype -.->|"phenotype member of<br/>(is_a: participates in)"| ExperimentReference
     SyntheticRescuePhenotype -.->|"phenotype member of<br/>(is_a: participates in)"| Experiment
     SyntheticRescuePhenotype -.->|"phenotype member of<br/>(is_a: participates in)"| ExperimentReference
     Temperature -.->|"temperature member of<br/>(is_a: part of)"| Environment
+    VisualScorePhenotype -.->|"phenotype member of<br/>(is_a: participates in)"| Experiment
+    VisualScorePhenotype -.->|"phenotype member of<br/>(is_a: participates in)"| ExperimentReference
 
     %% Legend
     subgraph Legend
@@ -86,5 +106,5 @@ graph BT
     classDef torchcellEntityStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px
     class EnvironmentalExposure,Genotype,InformationContentEntity,PhenotypicFeature,L1 biolinkClassStyle
     class Dataset,Genome,Genotype,Publication,L2 autoMappedStyle
-    class CalmorphPhenotype,Environment,Experiment,ExperimentReference,FitnessPhenotype,GeneEssentialityPhenotype,GeneInteractionPhenotype,Media,Perturbation,SyntheticLethalityPhenotype,SyntheticRescuePhenotype,Temperature,L3 torchcellEntityStyle
+    class CalmorphPhenotype,Environment,Experiment,ExperimentReference,FitnessPhenotype,GeneEssentialityPhenotype,GeneInteractionPhenotype,Media,MetabolitePhenotype,MicroarrayExpressionPhenotype,Perturbation,ProteinAbundancePhenotype,RnaseqExpressionPhenotype,SyntheticLethalityPhenotype,SyntheticRescuePhenotype,Temperature,VisualScorePhenotype,L3 torchcellEntityStyle
 ```

@@ -1,0 +1,3 @@
+# Generated at docs-build time by paper/nature-biotech/scripts/generate_ontology_diagram.py
+# --explorer-only (see .github/workflows/docs.yaml). The built page is not committed;
+# this directory exists so Sphinx's html_extra_path resolves in a clean checkout.

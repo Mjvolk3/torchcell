@@ -177,3 +177,18 @@ Questions to answer:
 - Kemmeren-only vs +Sameith: does the cross-platform mean-merge help or hurt per-gene r?
 - `graph_reg_lambda` 0 vs 0.001, and baseline vs aggressive hyperparameters.
 - Seed spread: is any apparent lift within seed noise?
+
+## 2026.07.30 - Round retrospective moved to its own note
+
+The waves that followed this grid (waves 1-6 + the v9 masked objective), the structural
+diagnosis that explains why they were flat, and the corrections to previously-reported
+numbers now live in
+[[experiments.019-simb-multimodal.expression-round-retrospective]]. Two results from there
+answer questions posed above directly:
+
+- **"Is any apparent lift within seed noise?"** -- yes for the arm that was on record as
+  best. `A2_prop_sparse` scores **+0.0030, 95% CI +-0.0321** against a valid in-wave
+  reference (n = 4 seeds); its headline +0.0231 was a cross-wave comparison.
+- **"Does ANY config lift per-gene val Pearson meaningfully?"** -- not yet, but the scoring
+  epoch was wrong: val Pearson **dips at epoch 200-300 and then climbs past its early peak**,
+  so every arm scored at 300-400 epochs was scored inside the dip.

@@ -47,6 +47,21 @@ jobs:
         run: |
           sphinx-build -b html docs/source build/docs
 
+      - name: Verify the explorer survived into the deploy tree
+        run: |
+          # The first deploy of this page rendered fine and still vanished: a
+          # .gitignore living in docs/source/_extra was copied verbatim into the site
+          # root by html_extra_path, and peaceiris/actions-gh-pages then honoured it
+          # when staging, dropping ontology/index.html while the build log happily
+          # reported it built. Fail loudly instead of publishing a 404.
+          test -s build/docs/ontology/index.html
+          if find build/docs -name '.gitignore' | grep -q .; then
+            echo "::error::a .gitignore reached build/docs; it will silently exclude"
+            echo "::error::files from the gh-pages deploy. Move the rule to the repo root."
+            exit 1
+          fi
+          echo "ontology/index.html: $(wc -c < build/docs/ontology/index.html) bytes"
+
       - name: Deploy to GitHub Pages
         if: github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v3

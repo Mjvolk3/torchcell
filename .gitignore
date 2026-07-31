@@ -197,3 +197,14 @@ build/
 # 019 ECHO-CRISPR: regenerable full-res plate crops written by the segmentation
 # runners (large, reproduced from data/ on every run) -- do not commit
 experiments/019-echo-crispr-array/quant/
+
+# The ontology explorer is rendered fresh by CI on every docs build (see
+# .github/workflows/docs.yaml) so the published map can never lag
+# torchcell.datamodels; a committed copy would silently go stale.
+#
+# This rule MUST live here, not in docs/source/_extra/.gitignore: Sphinx's
+# html_extra_path copies that directory verbatim into the published site root, and
+# peaceiris/actions-gh-pages then honours the copied .gitignore when it stages the
+# deploy -- silently dropping ontology/index.html from gh-pages while the build log
+# still reports it rendered.
+docs/source/_extra/ontology/index.html

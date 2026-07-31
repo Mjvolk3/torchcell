@@ -1,0 +1,264 @@
+# experiments/023-metabolome-betaxanthin-joint/conf/base.yaml
+# [[experiments.023-metabolome-betaxanthin-joint]]
+#
+# SHARED SETTINGS for the three single-target metabolism arms. Each target gets its OWN
+# run on its OWN GPU -- betaxanthin, beta-carotene, and the 19-AA metabolome -- so that
+# each can be monitored, early-stopped and tuned on ITS OWN metric. The joint
+# betaxanthin+metabolome arm already exists in 019 and is the contrast for "does sharing
+# an encoder help?"; these are the single-target baselines that contrast needs.
+#
+# NOTHING HERE REPRESENTS METABOLISM AS STRUCTURE. This is the gene-token CGT pointed at
+# metabolic labels: 6,607 gene tokens + CLS -> graph-regularized transformer -> equivariant
+# perturbation operator -> a readout head. No S matrix, no reactions, no flux. The flux
+# layer ([[plan.cgt-metabolism-flux-layer.2026.07.26]]) is deliberately deferred -- published
+# k_cat covers only 79 of Yeast9's 1,161 genes (6.8%), so a capacity constraint built today
+# would be ~93% predicted parameters.
+#
+# EVERY SETTING BELOW IS THE RESULT OF A MEASURED ABLATION, not a guess:
+#
+#   * NINE GRAPHS. The decisive one. Holding everything else fixed, reverting to
+#     [physical, regulatory] dropped betaxanthin from 0.413 to 0.121 -- and that 2-graph arm
+#     never got its val loss below 0.968, the variance of the z-scored target, meaning it
+#     never learned anything at all. 3.4x, and it is the graphs.
+#   * NO LEARNABLE EMBEDDING TABLE + prot_T5_all content features. With node_embeddings: []
+#     a val gene's embedding never receives a gradient as a perturbed gene, so generalization
+#     is impossible by construction (observed: train r 0.86 / val r 0.02). prot_T5_all led the
+#     kNN embedding probe (0.0704 morph / 0.1174 expr) with zero learned parameters, and every
+#     nucleotide axis in that probe landed on the random control even at 2560-5120 dim.
+#   * SELECT ON THE METRIC, NOT THE LOSS. These runs peak then MSE-collapse toward the
+#     per-feature mean. Selecting on val/loss saved the COLLAPSED model: job 1341 peaked at
+#     0.323 on epoch 55 and was checkpointed at 0.000. Switching the monitor alone took the
+#     recorded result 0.323 -> 0.413.
+#   * CRPS. Mean-collapse is what point-MSE REWARDS on a z-scored target -- once the model
+#     cannot resolve which strains are high, predicting 0 everywhere is loss-optimal and
+#     Pearson goes to exactly 0. A proper scoring rule makes that stop being free: 0.413 -> 0.434.
+#   * graph_reg_lambda 6.5e-5. NOT comparable to older configs' 1e-3: lambda used to be applied
+#     both per-graph and globally from the same key, so the effective weight was lambda^2 = 1e-6.
+#     With that fixed, 1e-3 puts the prior at 3.85x the data loss. 6.5e-5 lands at ~25%
+#     (verified: val/graph_reg/ratio_to_data = 0.251). Watch that ratio, not the raw lambda.
+#   * hidden 90 / 9 heads. One regularized head per graph; 128 divides by neither 9 nor 6.
+#
+# REGRESSION ONLY -- no binning, no tokenization of the target. Merzbacher binned into three
+# classes and abandoned regression; binning discards the ordering WITHIN a class, which is
+# exactly the ordering strain design needs. Their metric is still recoverable from ours by
+# binning our PREDICTIONS post hoc, which is strictly more informative than training a
+# classifier.
+defaults:
+  - default
+  - _self_
+
+dry_run: false
+seed: 42
+
+wandb:
+  project: torchcell_020_metabolism
+  # ONLINE, not offline. These are keeper runs, not fit-checks.
+  tags: ["020", gilahyper, metabolism, ninegraph, crps, single-target]
+
+cell_dataset:
+  graphs:
+    [
+      physical,
+      regulatory,
+      tflink,
+      string12_0_neighborhood,
+      string12_0_fusion,
+      string12_0_cooccurence,
+      string12_0_coexpression,
+      string12_0_experimental,
+      string12_0_database,
+    ]
+  node_embeddings: [prot_T5_all]
+  query_file: fig6_pigment_transfer.cql
+  dataset_tag: fig6_pigment_transfer
+  # Keys on the DELETION gene-set only, treating the constant heterologous cassette as
+  # reference-strain background. Without it, pigment/metabolome co-location is literally zero.
+  aggregator: deletion_keyed
+  # Heads whose TARGET KEYS must all be present for a genotype to be kept -- the instance-set
+  # control for the auxiliary-task experiment. Empty = no restriction. Distinct from
+  # `require_modalities`, which intersects on phenotype LABEL and therefore cannot separate
+  # betaxanthin from the 19-AA metabolome (both are `metabolite_level`).
+  require_head_targets: []
+
+transforms:
+  use_transforms: false
+
+data_module:
+  is_perturbation_subset: false
+  perturbation_subset_size: 10000
+  # The encoder runs the full 6,608-token sequence ONCE PER BATCH regardless of batch size,
+  # so epoch time is set by step count, not batch size.
+  batch_size: 128
+  num_workers: 8
+  # Path (absolute, or relative to EXPERIMENT_ROOT) to a JSON whose `split.test` lists
+  # SYSTEMATIC gene names to PIN into the test split, reproducing an external split inside
+  # ours. null = the ordinary seeded 80/10/10 random split. Declared on every arm so the
+  # lookup never hits Hydra's struct mode; only the betaxanthin arm sets it today.
+  pinned_test_split_file: null
+  pin_memory: true
+  prefetch: false
+
+trainer:
+  max_epochs: 250
+  strategy: auto
+  accelerator: gpu
+  devices: 1
+  overfit_batches: 0
+  precision: bf16-mixed
+  log_every_n_steps: 20
+  fast_dev_run: false
+  # monitor/mode are set PER ARM -- beta-carotene is an ordinal and must be judged on
+  # Spearman, not Pearson.
+  checkpoint:
+    monitor: val/mean/pearson_per_feature
+    mode: max
+  early_stopping:
+    enabled: true
+    monitor: val/mean/pearson_per_feature
+    mode: max
+    patience: 50
+    min_delta: 0.0
+
+multitask:
+  active_heads: [] # set per arm
+  loss_fn: mse
+  decoder: s1_pool
+  dist: crps
+  require_standardized_targets: true
+  normalize_vector_targets: []
+  standardize_per_feature_target: [betaxanthin, beta_carotene, mulleder19]
+  vector_norm_method: zscore
+  target_norm_eps: 1.0e-8
+  degenerate_robust_cv: 0.01
+  drop_features: {}
+  scalar_heads: [gene_interaction, betaxanthin, beta_carotene]
+  heads:
+    global:
+      output_dim: 278
+      use_gene_pool: true
+    per_gene:
+      output_dim: 1
+    per_metabolite:
+      output_dim: 1
+    betaxanthin:
+      kind: scalar
+      output_dim: 1
+      use_gene_pool: true
+    beta_carotene:
+      kind: scalar
+      output_dim: 1
+      use_gene_pool: true
+    mulleder19:
+      kind: vector
+      output_dim: 19
+      use_gene_pool: true
+  head_weights:
+    gene_interaction: 1.0
+    per_gene: 1.0
+    global: 1.0
+    per_metabolite: 1.0
+    betaxanthin: 1.0
+    beta_carotene: 1.0
+    mulleder19: 1.0
+  head_phenotypes:
+    gene_interaction: [fitness, gene_interaction]
+    per_gene: [expression_log2_ratio]
+    global: [calmorph]
+    per_metabolite: [metabolite_level]
+    betaxanthin: [metabolite_level]
+    beta_carotene: [visual_score]
+    mulleder19: [metabolite_level]
+  # betaxanthin and the metabolome are BOTH MetabolitePhenotype -> both label
+  # `metabolite_level`. These pins resolve each head to its own key set.
+  head_phenotype_keys:
+    betaxanthin: [betaxanthin]
+    mulleder19:
+      [
+        alanine,
+        arginine,
+        asparagine,
+        aspartate,
+        glutamate,
+        glutamine,
+        glycine,
+        histidine,
+        isoleucine,
+        leucine,
+        lysine,
+        methionine,
+        phenylalanine,
+        proline,
+        serine,
+        threonine,
+        tryptophan,
+        tyrosine,
+        valine,
+      ]
+
+model:
+  model_class: metabolism
+  checkpoint_path: null
+  gene_num: 6607
+  hidden_channels: 90
+  num_transformer_layers: 2
+  num_attention_heads: 9
+  dropout: 0.1
+  learnable_embedding:
+    enabled: false
+    size: ${model.hidden_channels}
+    preprocessor:
+      num_layers: 2
+      dropout: 0.1
+  graph_regularization:
+    graph_reg_lambda: 6.5e-5
+    graph_reg_layer: [1]
+    row_sampling_rate: 0.25
+    regularized_heads:
+      physical:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 0
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      regulatory:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 1
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      tflink:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 2
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_neighborhood:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 3
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_fusion:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 4
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_cooccurence:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 5
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_coexpression:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 6
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_experimental:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 7
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_database:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 8
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+  perturbation_head:
+    num_heads: 6
+    dropout: 0.1
+
+regression_task:
+  optimizer:
+    type: AdamW
+    lr: 1e-3
+    weight_decay: 1e-4
+  lr_scheduler: null
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0

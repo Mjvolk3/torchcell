@@ -1,0 +1,51 @@
+# experiments/022-mulleder-metabolome/conf/delta_grid_mulleder19.yaml
+# [[experiments.022-mulleder-metabolome]]
+#
+# DELTA EXPERIMENT 2 -- MAX OUT THE 19-AMINO-ACID METABOLOME (Mulleder 2016).
+#
+# 8 settings (2x2x2: dist x target_norm x graph_reg_lambda) x as many seeds as 48 h on four
+# A40s buys. Design and arithmetic: `experiments/019-simb-multimodal/scripts/
+# metabolism_grid_runner.py`.
+#
+# THIS ARM IS THE QUIET ONE, AND THAT CHANGES WHAT THE SEEDS ARE FOR.
+# `pearson_per_feature` is a MEAN OVER FEATURES, so its run-to-run noise falls as
+# 1/sqrt(F_eff). With F = 19 this arm is already far quieter than the F = 1 scalar arms --
+# `_002` re-proposed one config twice and got 0.1798 / 0.1780. So the replication here is not
+# rescuing an unreadable metric; it is buying the resolution to separate settings that differ
+# by ~0.01, which is the size of the gaps `_002` and `_004` actually produced (0.1798 vs
+# 0.1713 vs 0.1685).
+#
+# NO PINNED SPLIT AND NO TEST PASS. Mulleder is our own build with no external split to
+# reproduce, so the ordinary seeded 80/10/10 is the right one and `val` stays the ranking
+# metric -- which also keeps these numbers comparable to the whole `_002`/`_003`/`_004`
+# history.
+#
+# WHAT THE GRID VARIES THAT THE OTHER ARMS DO NOT: `energy`. This is the only arm with a
+# JOINT distribution to model -- at F = 1 the predictive covariance
+# Sigma = diag(sigma^2) + V V^T has V of shape [1, k], so V V^T is a scalar and the energy
+# score degenerates into a noisier Monte-Carlo CRPS. Here F = 19, `energy_rank` is fixed at 8
+# (32 cannot be realized by a 19x19 covariance, and `DistHead` has no guard), and the
+# question "does modelling the joint pay?" is a real one. `_004`'s best was energy (0.1713);
+# `_002`'s was quantile (0.1798); neither was replicated. That is the factor.
+defaults:
+  - mulleder19_004
+  - _self_
+
+wandb:
+  project: torchcell_022_mulleder19_delta_grid
+  tags: ["022", delta, grid, metabolism, metabolome, ninegraph, vector]
+  log_model: false
+
+trainer:
+  # 400. The measured need is real on THIS arm specifically: `results/
+  # training_length_analysis.json` records peaks at epochs 104 / 120 / 134 / 193, the last of
+  # which ran to epoch 201 -- i.e. against a 200 cap it was still climbing.
+  max_epochs: 400
+  early_stopping:
+    enabled: true
+    monitor: val/mulleder19/pearson_per_feature
+    mode: max
+    patience: 50
+    min_delta: 1.0e-4
+  run_test: false
+  dump_test_predictions: false

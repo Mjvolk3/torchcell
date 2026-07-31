@@ -1,0 +1,63 @@
+# experiments/020-cachera-betaxanthin/conf/delta_grid_betaxanthin.yaml
+# [[experiments.020-cachera-betaxanthin]]
+#
+# DELTA EXPERIMENT 1 -- MAX OUT BETAXANTHIN, ON MERZBACHER'S OWN TEST SPLIT.
+#
+# 8 settings (a 2x2x2 factorial: dist x target_norm x graph_reg_lambda) x as many seeds as
+# 48 h on four A40s buys. The design and the arithmetic behind it live in
+# `experiments/019-simb-multimodal/scripts/metabolism_grid_runner.py`; this file is only
+# what that grid holds constant.
+#
+# THIS IS THE FIRST RUN THAT ACTUALLY TRAINS UNDER THE PINNED SPLIT AND THEN SCORES IT.
+# `betaxanthin_004` introduced `pinned_test_split_file` and the `_004` screen trained under
+# it -- but `run_training` never called `trainer.test`, so their 639 genes were held out and
+# then never looked at. Two additions below close that:
+#
+#   trainer.run_test              -> evaluate the BEST checkpoint on the pinned test split
+#   trainer.dump_test_predictions -> write per-gene test predictions to
+#                                    $DATA_ROOT/test-predictions/<group>.json
+#
+# The dump, not the metric, is the deliverable: Merzbacher's comparison is a CLASSIFICATION
+# into low/medium/high, and the recipe fixed in advance
+# ([[experiments.020-cachera-betaxanthin.merzbacher-comparison]]) bins OUR predictions with
+# thresholds fitted on TRAIN only, then reports MCC + high-producer recall + Spearman
+# alongside accuracy. That needs raw per-gene numbers.
+#
+# ONE REVERT, AND IT IS DELIBERATE. The grid runner pins
+# `model.perturbation_head.num_heads = 6`, overriding `betaxanthin_004`'s binding to
+# `${model.num_attention_heads}` (= 9). `_004` changed the perturbation operator IN THE SAME
+# ROUND that it introduced the pinned split, and that round's best fell to 0.2469 from
+# `_003`'s 0.4050. Two changes, one drop, no attribution. The pinned split is required by the
+# question; the operator change is not, so it is the one that goes back. Re-testing 9 heads is
+# a follow-up round, not a factor of this grid.
+defaults:
+  - betaxanthin_004
+  - _self_
+
+wandb:
+  project: torchcell_020_betaxanthin_delta_grid
+  tags: ["020", delta, grid, metabolism, betaxanthin, ninegraph, merzbacher]
+  # ~96 runs x 2 checkpoints per job. Uploading them all would spend hours of the allocation
+  # on artifacts nobody reads; the checkpoints still land on disk under
+  # $DATA_ROOT/models/checkpoints/<group>/.
+  log_model: false
+
+trainer:
+  # 400, not 200. On `_003` the best betaxanthin run peaked at epoch 165 of a 201-epoch run,
+  # i.e. it was still improving near the cap -- and a converged run stops on `patience`
+  # regardless, so the extra ceiling is only ever spent by a run that is genuinely still
+  # improving. That is precisely the case worth not truncating.
+  max_epochs: 400
+  early_stopping:
+    enabled: true
+    monitor: val/betaxanthin/pearson_per_feature
+    mode: max
+    # 50, above the largest peak-to-recovery gap ever measured on these arms (35 epochs, in
+    # `results/training_length_analysis.json`). `min_delta` 1e-4 rather than 0.0 so a pure
+    # noise blip cannot reset patience -- with 0.0 ANY increase keeps a dead run alive, the
+    # mechanism behind the measured r(duration, objective) = +0.75 on `_002` mulleder19.
+    patience: 50
+    min_delta: 1.0e-4
+  # Score the held-out split and write the per-gene predictions the head-to-head needs.
+  run_test: true
+  dump_test_predictions: true

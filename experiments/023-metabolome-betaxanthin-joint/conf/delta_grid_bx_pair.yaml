@@ -1,0 +1,108 @@
+# experiments/023-metabolome-betaxanthin-joint/conf/delta_grid_bx_pair.yaml
+# [[experiments.023-metabolome-betaxanthin-joint]]
+#
+# DELTA EXPERIMENT 3 -- DOES THE REST OF THE METABOLISM SIGNAL IMPROVE BETAXANTHIN?
+#
+# Concretely: does adding the 19-amino-acid metabolome as a second supervised head, on a
+# shared encoder, lift the production number we actually care about?
+#
+# THE COMPARISON. Two arms share this config and differ in EXACTLY ONE THING -- whether the
+# metabolome head is attached:
+#
+#     ARM=bx_ctrl   active_heads=[betaxanthin]                 the control
+#     ARM=bx_m19    active_heads=[betaxanthin, mulleder19]     the joint arm
+#
+# Both rank on `val/betaxanthin/pearson_per_feature`. The metabolome is an AUXILIARY TASK, not
+# a second objective: ranking the joint arm on a Pareto front of both would answer a different
+# question ("which configs are good at both") and make the two arms incomparable.
+#
+# THE CONTROL THAT MAKES IT A MEASUREMENT: `require_head_targets` fixes BOTH arms to the
+# genotypes carrying BOTH targets, so the joint arm cannot win merely by seeing more rows.
+# Measured on this build: 4,669 betaxanthin genotypes, 4,678 metabolome, 4,432 shared -- the
+# restriction costs 237 rows (5%), so the comparison is nearly free. Compare the 019
+# expression<->morphology control, whose both-modality intersection was only 1,440.
+#
+# WHY `require_head_targets` RATHER THAN `require_modalities`: the older mechanism intersects
+# on phenotype LABEL, and betaxanthin and the metabolome are BOTH `metabolite_level` -- what
+# separates them is which KEYS their value dict carries. `require_modalities:
+# [metabolite_level]` would be a silent no-op, leaving the arms on DIFFERENT instance sets.
+#
+# THE 8 RUNS PER ROUND ARE 4 SETTINGS x 2 ARMS, and the pairing is the design. Both arms run
+# the SAME (setting, seed) cells, and `cfg.seed` drives model init AND the CellDataModule
+# split -- so within a cell the two arms see the identical split and the identical
+# initialization, and `bx_m19 - bx_ctrl` is a PAIRED difference. That removes the split and
+# init variance which, at sigma = 0.030, dominates any unpaired comparison at this sample
+# size. It is also why this experiment buys 4 settings rather than 8: the third factor's
+# budget is spent on the pairing, which is worth far more.
+#
+# NO PINNED SPLIT ON THIS ARM, unlike experiment 1. This is an INTERNAL contrast between two
+# of our own arms, so both sides must see the same ordinary seeded split, with the effect
+# measured on the full val set rather than on whatever remains after a 639-gene block is
+# removed. Its numbers are therefore NOT comparable to experiment 1's, and should never be
+# quoted next to them.
+#
+# READ-OUT. Per (setting, seed) cell, `bx_m19 - bx_ctrl`; then the mean paired difference with
+# its SE over cells. Recorded alongside: `aux_mulleder19_pearson`, the metabolome head's OWN
+# score in the joint arm. "The metabolome helped betaxanthin" and "the metabolome head learned
+# anything" are different claims, and the second is what explains the first -- an auxiliary
+# head at r ~ 0 that still moves the primary metric would mean the gain came from
+# regularization, not from shared metabolic signal.
+defaults:
+  - base
+  - _self_
+
+seed: 42
+
+wandb:
+  project: torchcell_023_bx_m19_delta_grid
+  tags: ["023", delta, grid, metabolism, joint, betaxanthin, mulleder19, controlled]
+  log_model: false
+
+cell_dataset:
+  # THE control. Both arms restrict to the 4,432 genotypes carrying betaxanthin AND the
+  # 19-AA metabolome; `multitask.active_heads` is what differs between them, and nothing else.
+  require_head_targets: [betaxanthin, mulleder19]
+
+multitask:
+  # Overridden per arm by the grid runner (bx_ctrl -> [betaxanthin]); declared as the JOINT
+  # arm so a manual non-grid run of this config is the joint one.
+  active_heads: [betaxanthin, mulleder19]
+  # Equal weights, left explicit rather than tuned. The auxiliary head is 19 features against
+  # the primary's 1, so an unweighted sum already gives the metabolome the larger share of the
+  # gradient -- which is the point of an auxiliary task. A SWEPT head weight would be a second
+  # axis on which the two arms could differ, and would stop the contrast being a measurement.
+  head_weights:
+    betaxanthin: 1.0
+    mulleder19: 1.0
+
+data_module:
+  pinned_test_split_file: null
+
+model:
+  num_transformer_layers: 2
+  # ---- Sub-module bindings: the SILENT DEFECT `_007` fixed for expression ----
+  # The model reads `<sub>_config.get("dropout", dropout)`, i.e. it falls back to
+  # `model.dropout` only when the key is ABSENT -- and base.yaml sets a literal 0.1 in both
+  # places, so a run choosing dropout 0.0 still ran these sub-modules at 0.1. Bound here so
+  # the setting the grid asks for is the setting that runs.
+  perturbation_head:
+    dropout: ${model.dropout}
+  learnable_embedding:
+    preprocessor:
+      dropout: ${model.dropout}
+
+trainer:
+  checkpoint: { monitor: val/betaxanthin/pearson_per_feature, mode: max }
+  # 400. The joint arm carries a second loss term and may well take longer to converge than
+  # either single-target arm, so the extra ceiling matters more here than anywhere -- and a
+  # cap that bound on ONE side of a paired comparison would be a difference between the arms
+  # that is not the one under test.
+  max_epochs: 400
+  early_stopping:
+    enabled: true
+    monitor: val/betaxanthin/pearson_per_feature
+    mode: max
+    patience: 50
+    min_delta: 1.0e-4
+  run_test: false
+  dump_test_predictions: false

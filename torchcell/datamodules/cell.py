@@ -545,7 +545,16 @@ class CellDataModule(L.LightningDataModule):
             else False,
             "pin_memory": self.pin_memory,
             "follow_batch": self.follow_batch,
-            "timeout": 10800,
+            # THE SAME GUARD AS `prefetch_factor` BELOW, and for the same reason -- this one
+            # was missed when that fix landed (commit 2cca6d83), so num_workers=0 was still
+            # unconstructible afterwards. `timeout` is a WORKER-QUEUE timeout, so at
+            # num_workers=0 torch asserts outright:
+            #   AssertionError: _SingleProcessDataLoaderIter requires timeout == 0
+            # raised from `iter(dataloader)`, i.e. during sanity-check, AFTER the dataset and
+            # embeddings have been loaded. A trial therefore burns its full startup cost and
+            # then dies, which is why 119 of them could fail in a job that still exited
+            # COMPLETED 0:0.
+            "timeout": (10800 if self.num_workers > 0 else 0),
             "multiprocessing_context": ("spawn" if self.num_workers > 0 else None),
             # Torch REJECTS a non-None prefetch_factor at num_workers=0 ("could only be
             # specified in multiprocessing"), so this needs the same guard its two

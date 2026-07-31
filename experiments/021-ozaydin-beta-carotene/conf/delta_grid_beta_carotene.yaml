@@ -1,0 +1,49 @@
+# experiments/021-ozaydin-beta-carotene/conf/delta_grid_beta_carotene.yaml
+# [[experiments.021-ozaydin-beta-carotene]]
+#
+# DELTA EXPERIMENT 4 -- MAX OUT BETA-CAROTENE (Ozaydin 2013 colony-colour visual score).
+#
+# 8 settings (2x2x2: dist x target_norm x graph_reg_lambda) x as many seeds as 48 h on four
+# A40s buys. Design and arithmetic: `experiments/019-simb-multimodal/scripts/
+# metabolism_grid_runner.py`.
+#
+# THIS IS THE ARM THAT NEEDS REPLICATION MOST, AND THE ONE WHERE A HEADLINE NUMBER IS LEAST
+# AVAILABLE. Both facts follow from the same measurement. `_002` gave sigma = 0.025 (identical
+# config AND identical seed: 0.1993 / 0.1494) against a whole between-trial range of median
+# 0.119 -> max 0.223 over 40 trials -- so max-of-40 selection alone buys ~2 sigma, and the
+# winning configuration (calm + learnable=True + 6 layers) contradicted every other arm's
+# winner. That is the signature of a noise maximum. `_003` then had `random_1000`, the
+# CONTROL embedding, top its screen. Neither result is a finding; both are what an
+# unreplicated search produces on a noisy arm.
+#
+# So the deliverable here is a NUMBER WITH AN ERROR BAR, not a maximum: 8 settings x R seeds
+# gives SE = 0.025/sqrt(R) per setting, and the honest statement at the end is "the best
+# setting scores X +- SE", which is the first time this arm can support one.
+#
+# RANKED ON SPEARMAN, AND THAT IS NOT A PREFERENCE. Ozaydin's readout is a SUBJECTIVE ORDINAL
+# on -5..+5, so a Pearson asserts an interval scale the measurement does not have, and would
+# select models that fit a scale artifact. Its ceiling is ~0.54 rank agreement on the 130
+# replicated rows (only 0.075 on the paper's own independent re-screen) -- report against
+# 0.54, never against betaxanthin's 0.914. A low number on this arm is a property of the
+# label at least as much as of the model.
+#
+# No pinned split, no test pass: there is no external split to reproduce here.
+defaults:
+  - beta_carotene_004
+  - _self_
+
+wandb:
+  project: torchcell_021_beta_carotene_delta_grid
+  tags: ["021", delta, grid, metabolism, beta-carotene, ninegraph, ordinal]
+  log_model: false
+
+trainer:
+  max_epochs: 400
+  early_stopping:
+    enabled: true
+    monitor: val/beta_carotene/spearman_per_feature
+    mode: max
+    patience: 50
+    min_delta: 1.0e-4
+  run_test: false
+  dump_test_predictions: false

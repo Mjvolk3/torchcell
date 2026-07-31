@@ -1757,6 +1757,103 @@ def _pinned_test_indices(
     return indices
 
 
+def _dump_test_predictions(
+    task: Any, data_module: Any, dataset: Any, cfg: DictConfig, out_path: str
+) -> dict[str, int]:
+    """Write per-GENE test predictions for every active head to ``out_path`` (JSON).
+
+    WHY THIS EXISTS. ``data_module.pinned_test_split_file`` reproduces somebody else's split
+    inside ours, but until now nothing ever SCORED that split -- ``run_training`` called
+    ``trainer.fit`` and stopped, so the pinned Merzbacher genes were held out and then never
+    looked at. The head-to-head their deposit makes possible (bin our predictions with
+    train-fitted thresholds; report MCC, high-producer recall, Spearman) needs the raw
+    per-gene numbers, not a scalar metric, because their comparison is a CLASSIFICATION on
+    bins we fit afterwards. So the predictions themselves are the artifact.
+
+    ALIGNMENT. ``CellDataModule.test_dataloader`` is built with ``shuffle=False``, so batches
+    arrive in the order of ``test_dataset.indices`` -- that is what lets a running cursor map
+    row -> dataset record -> gene. The gene name comes from ``is_any_deletion_gene_index``
+    (the DELETION index, NOT the perturbed-gene index: the pigment cassettes are emitted as
+    perturbations on every strain and three of their members are native ORFs, so the
+    perturbed index would name nearly every record).
+
+    Predictions are reduced to a POINT estimate via ``DistHead.point()`` and DENORMALIZED, so
+    the dumped numbers are in the target's raw units and comparable to the released screen
+    values regardless of which scoring rule trained the run. Rows the head did not supervise
+    (mask False) are written with ``target: null`` rather than dropped, so a reader can tell
+    "not measured" from "measured and missed".
+    """
+    idx_to_genes: dict[int, list[str]] = {}
+    for gene, rows in dataset.is_any_deletion_gene_index.items():
+        for row in rows:
+            idx_to_genes.setdefault(int(row), []).append(str(gene))
+    order = [int(i) for i in data_module.test_dataset.indices]
+
+    device = next(task.parameters()).device
+    task.eval()
+    records: dict[str, list[dict[str, Any]]] = {h: [] for h in task.active_heads}
+    cursor = 0
+    with torch.no_grad():
+        for batch in data_module.test_dataloader():
+            batch = batch.to(device)
+            _, reps = task(batch)
+            bsz = task._batch_size(batch)
+            head_outputs = task._gather_predictions(dict(reps["head_outputs"]))
+            targets, masks = task._extract_targets_and_masks(batch, head_outputs, bsz)
+            for head in task.active_heads:
+                if head not in head_outputs or head not in targets:
+                    continue
+                dist_head = task.dist_heads.get(head)
+                pred = head_outputs[head]
+                point = dist_head.point(pred) if dist_head is not None else pred
+                tgt = targets[head]
+                if head in task.norm_heads:
+                    point = task.denormalize(head, point)
+                    tgt = task.denormalize(head, tgt)
+                point = point.detach().float().cpu()
+                tgt = tgt.detach().float().cpu()
+                mask = masks[head].detach().cpu()
+                for row in range(bsz):
+                    rec = order[cursor + row]
+                    records[head].append(
+                        {
+                            "record_index": rec,
+                            "genes": idx_to_genes.get(rec, []),
+                            "pred": point[row].tolist(),
+                            "target": tgt[row].tolist() if bool(mask[row]) else None,
+                        }
+                    )
+            cursor += bsz
+    # A short count is a silent truncation of the comparison set, so it is an error.
+    assert cursor == len(order), f"test dump covered {cursor}/{len(order)} records"
+
+    os.makedirs(osp.dirname(out_path), exist_ok=True)
+    with open(out_path, "w") as fh:
+        json.dump(
+            {
+                # The run's IDENTITY, carried in the file rather than reconstructed from the
+                # filename: the dump name is `<hostname>-<jobid>_<cfg-sha256>.json`, which is
+                # unique but says nothing about WHICH grid cell produced it. Without these
+                # three keys, ~96 dumps per job cannot be grouped by setting or averaged over
+                # seeds -- i.e. the replication the grid exists for would be unusable.
+                "seed": int(cfg.get("seed", 42)),
+                "wandb_tags": list(cfg.wandb.get("tags", [])),
+                "dist": str(cfg.multitask.get("dist", "point")),
+                "n_test_records": len(order),
+                "active_heads": list(task.active_heads),
+                "head_keys": {
+                    h: list(task.head_align.get(h, {}).get("keys", []) or [])
+                    for h in task.active_heads
+                },
+                "predictions": records,
+            },
+            fh,
+        )
+    counts = {h: len(v) for h, v in records.items()}
+    print(f"[test-dump] wrote {out_path} ({counts})", flush=True)
+    return counts
+
+
 def run_training(cfg: DictConfig) -> dict[str, float]:
     """Full training path: genome/graph/embeddings/dataset/datamodule + Trainer."""
     # Deferred heavy imports so --help / dry-run never pay for them.
@@ -1824,7 +1921,12 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         )
     wandb_logger = WandbLogger(
         project=wandb_cfg["wandb"]["project"],
-        log_model=True,
+        # Default TRUE, so every existing arm keeps uploading its checkpoints. Turned OFF on
+        # the Delta grid runs: those are ~96 runs per job across four jobs, and each one
+        # ships two checkpoints, so leaving it on spends hours of a 2-day allocation
+        # uploading artifacts nobody reads. The checkpoints still land on disk under
+        # $DATA_ROOT/models/checkpoints/<group>/ either way.
+        log_model=bool(wandb_cfg["wandb"].get("log_model", True)),
         save_dir=experiment_dir,
         name=f"run_{group}",
     )
@@ -2474,6 +2576,38 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
     # auditable instead of silent. See BestMetricTracker for the measured confound.
     final_metrics["val/n_val_epochs"] = float(best_tracker.n_val_epochs)
     final_metrics["val/peak_epoch"] = float(best_tracker.peak_epoch)
+
+    # ---- HELD-OUT TEST PASS (opt-in) ----
+    # Off by default so every existing arm is byte-for-byte unchanged. Turned ON only where
+    # the test split MEANS something: `data_module.pinned_test_split_file` reproduces
+    # Merzbacher 2025's 639-gene betaxanthin test set inside our split, and a comparison
+    # against their Fig 4b has to be computed on those genes, not on val.
+    #
+    # `ckpt_path="best"` loads the checkpoint selected by `trainer.checkpoint.monitor` --
+    # which the metabolism arms point at the METRIC, not val/loss. Testing the LAST model
+    # instead would score the mean-collapsed end state these runs decay into (job 1341:
+    # peak 0.323 -> exactly 0.000 twenty-five epochs later), i.e. it would report ~0 for a
+    # run that worked.
+    #
+    # Note the metrics are namespaced `test/...` by Lightning and are merged in AFTER the
+    # fit snapshot, so no val key can be clobbered by the test run's callback_metrics.
+    if bool(cfg.trainer.get("run_test", False)):
+        trainer.test(model=task, datamodule=data_module, ckpt_path="best")
+        final_metrics.update(
+            {
+                k: float(v)
+                for k, v in trainer.callback_metrics.items()
+                if v is not None and k.startswith("test/")
+            }
+        )
+        if bool(cfg.trainer.get("dump_test_predictions", False)):
+            _dump_test_predictions(
+                task,
+                data_module,
+                dataset,
+                cfg,
+                osp.join(data_root, "test-predictions", f"{group}.json"),
+            )
     if run is not None:
         wandb.finish()
     return final_metrics

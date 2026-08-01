@@ -81,7 +81,15 @@ export GRID_MIN_TRIAL_S="${GRID_MIN_TRIAL_S:-3600}"
 # Reserved AFTER training for the test pass + prediction dump + wandb teardown, subtracted
 # from every trial's time budget. The graceful `Timer` stop is worth nothing if slurm kills
 # the process during the work the stop exists to protect.
-export GRID_TEARDOWN_S="${GRID_TEARDOWN_S:-900}"
+#
+# 1800, not 900, and the arithmetic is why. A worker computes its budget when it CLAIMS the
+# trial, i.e. AFTER the ~20 min dataset + embedding load, as `DEADLINE - now - TEARDOWN_S`.
+# At 900 that put the end of teardown at 1200 + (172800 - 1200 - 900) + 900 = 172800 -- the
+# slurm wall EXACTLY, with zero margin. Any overrun in `wandb.finish`'s artifact upload then
+# lands a SIGTERM in the middle of the test pass, losing the per-gene prediction dump that is
+# the entire deliverable of experiment 1. 30 minutes costs 0.6% of the run and removes the
+# cliff.
+export GRID_TEARDOWN_S="${GRID_TEARDOWN_S:-1800}"
 
 # WORKERS PER GPU. 2 is the default because the experiment is EIGHT LONG RUNS: at 2/GPU all
 # eight start at t=0 and share the full 48 h window, so if the job dies at hour 30 you have

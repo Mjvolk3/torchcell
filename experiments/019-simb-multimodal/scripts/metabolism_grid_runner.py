@@ -88,7 +88,7 @@ Environment (set by the slurm launcher):
     GRID_ROUNDS            seed rounds to enqueue (default 3)
     GRID_DEADLINE_EPOCH    unix seconds -- the job's wall clock (required for long runs)
     GRID_MIN_TRIAL_S       don't claim work with less than this left (default 3600)
-    GRID_TEARDOWN_S        reserve after training for test + dump (default 900)
+    GRID_TEARDOWN_S        reserve after training for test + dump (default 1800)
     OPTUNA_WORKER_ID       0..N-1, for logging only
     NUM_WORKERS            dataloader workers per trial
     GRID_MANIFEST_DIR      where --create-only writes grid_manifest_<arm>.json (optional)
@@ -135,7 +135,7 @@ MIN_TRIAL_S = float(os.getenv("GRID_MIN_TRIAL_S", "3600"))
 #: Reserved AFTER training for the test pass, the prediction dump and wandb teardown. Taken
 #: out of the trial's time budget rather than hoped for: the whole point of the graceful
 #: `Timer` stop is that those three still happen.
-TEARDOWN_S = float(os.getenv("GRID_TEARDOWN_S", "900"))
+TEARDOWN_S = float(os.getenv("GRID_TEARDOWN_S", "1800"))
 
 #: Seeds, in the order rounds consume them. These are now INIT-ONLY: the configs pin
 #: `data_module.split_seed: 0`, so `cfg.seed` no longer selects the partition. Round 0 runs

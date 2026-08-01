@@ -136,6 +136,13 @@ MIN_TRIAL_S = float(os.getenv("GRID_MIN_TRIAL_S", "3600"))
 #: out of the trial's time budget rather than hoped for: the whole point of the graceful
 #: `Timer` stop is that those three still happen.
 TEARDOWN_S = float(os.getenv("GRID_TEARDOWN_S", "600"))
+#: Restrict the grid to a comma-separated subset of setting names. Empty = the whole grid.
+#: For running a SLICE of the design on an opportunistic GPU -- e.g. a single freed cabbi card
+#: -- without forking the config or hand-writing overrides that could drift from the grid the
+#: rest of the results come from. The names must exist, and a typo RAISES rather than silently
+#: enqueuing nothing, because "the job ran and produced no trials" is indistinguishable from
+#: success in a slurm log.
+ONLY_SETTINGS = [s for s in os.getenv("GRID_ONLY_SETTINGS", "").split(",") if s]
 
 #: Seeds, in the order rounds consume them. These are now INIT-ONLY: the configs pin
 #: `data_module.split_seed: 0`, so `cfg.seed` no longer selects the partition. Round 0 runs
@@ -343,6 +350,15 @@ def settings() -> list[dict[str, Any]]:
 
 
 SETTINGS = settings()
+if ONLY_SETTINGS:
+    _known = {s["name"] for s in SETTINGS}
+    _bad = [s for s in ONLY_SETTINGS if s not in _known]
+    if _bad:
+        raise SystemExit(
+            f"GRID_ONLY_SETTINGS names {_bad} which do not exist on arm {ARM!r}.\n"
+            f"available: {sorted(_known)}"
+        )
+    SETTINGS = [s for s in SETTINGS if s["name"] in ONLY_SETTINGS]
 SETTING_NAMES = [s["name"] for s in SETTINGS]
 SETTING_BY_NAME = {s["name"]: s for s in SETTINGS}
 

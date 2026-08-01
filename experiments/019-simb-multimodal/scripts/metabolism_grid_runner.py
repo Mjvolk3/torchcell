@@ -363,6 +363,53 @@ SETTING_NAMES = [s["name"] for s in SETTINGS]
 SETTING_BY_NAME = {s["name"]: s for s in SETTINGS}
 
 
+#: Keys that BOTH `_overrides` and the per-trial log line need. Validated at IMPORT (below)
+#: rather than at trial time, so `--create-only` -- which every launcher runs first, before any
+#: GPU work -- fails loudly on a mis-split axis.
+REQUIRED_KEYS = (
+    "node_embeddings",
+    "lr",
+    "weight_decay",
+    "dist",
+    "target_norm",
+    "dropout",
+    "hadamard",
+    "mask_layers",
+    "attention_mask",
+    "num_transformer_layers",
+    "perturbation_num_heads",
+)
+
+
+def _resolve(setting: dict[str, Any]) -> dict[str, Any]:
+    """The EFFECTIVE config for one setting: the arm's frozen values overlaid by its factors.
+
+    THE SINGLE SOURCE OF TRUTH, and it exists because having two of them was a live bug. When
+    `lr` moved from FIXED into FACTORS, `_overrides` merged the two dicts and kept building the
+    right config -- but the trial's log line still read `FIXED[ARM]["lr"]`, so EVERY trial died
+    with `KeyError('lr')`. optuna's `catch=(Exception,)` swallowed it, so the job exited
+    `COMPLETED 0:0`: green exit code, full walltime held, zero runs. It reached two Delta jobs
+    and an IGB job before anything executed far enough to reveal it.
+
+    An axis may live in either dict. Nothing may read one of them directly.
+    """
+    fixed = dict(FIXED[ARM])
+    fixed.update({k: v for k, v in setting.items() if k != "name"})
+    return fixed
+
+
+# Fail at import if any setting cannot be fully resolved. This is the check that would have
+# caught the bug above during `--create-only`, i.e. seconds after submit rather than inside the
+# first trial of a two-day allocation.
+for _s in SETTINGS:
+    _missing = [k for k in REQUIRED_KEYS if k not in _resolve(_s)]
+    if _missing:
+        raise SystemExit(
+            f"arm {ARM!r} setting {_s['name']!r} is missing {_missing}. "
+            f"Every key in REQUIRED_KEYS must come from FIXED[{ARM!r}] or that arm's FACTORS."
+        )
+
+
 def _overrides(
     setting: dict[str, Any], seed: int, max_time_s: float | None
 ) -> list[str]:
@@ -372,8 +419,7 @@ def _overrides(
     can move between FACTORS and FIXED (as `dist` and depth do across arms) without this
     function needing to know which arm it is serving.
     """
-    fixed = dict(FIXED[ARM])
-    fixed.update({k: v for k, v in setting.items() if k != "name"})
+    fixed = _resolve(setting)
     heads = ",".join(ACTIVE_HEADS)
     # Normalization is applied to EVERY active head, so the joint arm standardizes the
     # metabolome too -- an un-standardized 19-AA target would let a few large-magnitude amino
@@ -486,10 +532,11 @@ def objective(trial: optuna.Trial) -> float:
         cfg = compose(
             config_name=BASE_CONFIG, overrides=_overrides(setting, seed, budget)
         )
+    eff = _resolve(setting)
     print(
         f"[{ARM} w{WORKER_ID}] trial {trial.number}: {name} seed={seed} "
-        f"emb={FIXED[ARM]['node_embeddings']} lr={FIXED[ARM]['lr']:.3g} "
-        f"wd={FIXED[ARM]['weight_decay']:.3g} "
+        f"emb={eff['node_embeddings']} L={eff['num_transformer_layers']} "
+        f"mask={eff['attention_mask']} lr={eff['lr']:.3g} wd={eff['weight_decay']:.3g} "
         f"budget={'unbounded' if budget is None else f'{budget / 3600:.2f} h'}",
         flush=True,
     )

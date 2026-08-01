@@ -381,7 +381,7 @@ FACTORS["bx_m19"] = dict(FACTORS["bx_ctrl"])
 #:
 #:   none  betaxanthin alone                          -- the control, shared by both contrasts
 #:   m19   + all 19 amino acids                       -- reproduces the grid's `bx_m19` arm
-#:   tyr   + tyrosine only                            -- the PRECURSOR
+#:   aro   + the 3 aromatic amino acids               -- the PRECURSOR BRANCH
 #:
 #: Why tyrosine and not another amino acid: betalains derive from L-tyrosine (tyrosine ->
 #: L-DOPA -> betalamic acid), and a betaxanthin IS betalamic acid condensed with an amino
@@ -392,7 +392,7 @@ FACTORS["bx_m19"] = dict(FACTORS["bx_ctrl"])
 #: The control is SHARED across both contrasts, so three cells per seed buy TWO paired
 #: differences (m19-none and tyr-none) rather than one. That is the whole reason `tyr` fits in
 #: a budget sized for a replication study.
-FACTORS["bx_aa"] = {"aux": ["none", "m19", "tyr"]}
+FACTORS["bx_aa"] = {"aux": ["none", "m19", "aro"]}
 
 #: Short factor names for the setting label (a W&B tag and a run-list column).
 ABBREV = {"num_transformer_layers": "L", "lr": "lr", "dropout": "d"}
@@ -409,7 +409,29 @@ AMINO_ACIDS_19 = [
 ]  # fmt: skip
 
 #: Which of the 19 each `aux` panel SCORES. `none` never reaches this map.
-AUX_PANELS: dict[str, list[str]] = {"m19": list(AMINO_ACIDS_19), "tyr": ["tyrosine"]}
+#: `aro` IS THE AROMATIC BRANCH, NOT TYROSINE ALONE, and that is a MODEL CONSTRAINT rather
+#: than a design preference. A tyrosine-only panel was tried first and rejected at runtime by
+#: `MetabolomeVectorHead`: "output_dim must be >= 2, got 1; use ProductScalarHead for a
+#: single-value phenotype" (IGB job 2332401). A one-feature VECTOR head is not something this
+#: model builds; a single-value phenotype has to go through the scalar head, which would mean
+#: declaring a NEW head -- and a new head is gated by `require_head_targets` through its own
+#: `head_phenotype_keys`, restricting the arm to tyrosine-carrying strains and breaking the
+#: shared denominator with `m19`.
+#:
+#: So the precursor contrast becomes the smallest PRINCIPLED panel of at least two: the three
+#: aromatic amino acids, which share the shikimate/chorismate route. Tyrosine is the actual
+#: betalain precursor (tyrosine -> L-DOPA -> betalamic acid); phenylalanine and tryptophan are
+#: pathway siblings and are NOT precursors. The contrast is therefore WEAKER than "tyrosine
+#: alone" would have been -- it asks whether the aromatic branch carries the signal, not
+#: whether tyrosine specifically does, and a positive result would not on its own pin the
+#: effect to the precursor. Recorded here so the readout is not over-read later.
+AUX_PANELS: dict[str, list[str]] = {
+    "m19": list(AMINO_ACIDS_19),
+    "aro": ["tyrosine", "phenylalanine", "tryptophan"],
+}
+
+#: `MetabolomeVectorHead` refuses output_dim < 2 (see AUX_PANELS above).
+MIN_VECTOR_HEAD_FEATURES = 2
 
 
 def settings() -> list[dict[str, Any]]:
@@ -539,6 +561,19 @@ if ARM == "bx_aa":
         _bad = [a for a in _panel if a not in AMINO_ACIDS_19]
         if _bad:
             raise SystemExit(f"AUX_PANELS[{_name!r}] names non-amino-acids {_bad}.")
+        # Enforce the MODEL's own constraint here, at import, rather than discovering it in
+        # the first trial. `MetabolomeVectorHead.__init__` raises on output_dim < 2, and
+        # optuna's `catch=(Exception,)` turns that into a FAILED cell instead of a crash --
+        # so the worker races through its entire queue failing every cell, at ~11 s each,
+        # while the slurm log shows nothing but healthy trial claims. Workers 2 and 5 of job
+        # 2332401 burned all four of their cells that way before anything looked wrong.
+        if len(_panel) < MIN_VECTOR_HEAD_FEATURES:
+            raise SystemExit(
+                f"AUX_PANELS[{_name!r}] has {len(_panel)} feature(s); MetabolomeVectorHead "
+                f"requires >= {MIN_VECTOR_HEAD_FEATURES}. A single-value phenotype needs a "
+                f"scalar head (ProductScalarHead), which is a different design -- see the "
+                f"AUX_PANELS comment."
+            )
 
 
 def _overrides(

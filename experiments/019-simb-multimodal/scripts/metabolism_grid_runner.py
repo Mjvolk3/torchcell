@@ -124,9 +124,26 @@ ARM = os.environ["ARM"]
 CONF_DIR = os.environ["GRID_CONF_DIR"]
 BASE_CONFIG = os.environ["GRID_BASE_CONFIG"]
 STORAGE = os.environ["OPTUNA_STORAGE"]
-STUDY_NAME = os.getenv("OPTUNA_STUDY_NAME", f"{ARM}_grid_000")
 ROUNDS = int(os.getenv("GRID_ROUNDS", "1"))
 WORKER_ID = int(os.getenv("OPTUNA_WORKER_ID", "0"))
+#: SHARDING -- how many workers split this arm's cells, or 0 for the shared-queue mode.
+#:
+#: WHY THIS EXISTS: optuna's WAITING-trial pop RACES on SQLite across processes. Measured on
+#: IGB job 2332400, six workers against one study file: w0 and w1 both claimed trial 0
+#: (`s00_ctrl` seed 0) and w2 and w3 both claimed trial 1 (`s01_auxm19` seed 0) -- six workers
+#: running THREE distinct cells. It is not new and it is not IGB-specific: the same race is
+#: visible in the Delta grids, where `s03_L2_maskon_lr0.001_energy` ran FOUR times and
+#: `bx_ctrl s01` twice, silently halving effective coverage while every log looked healthy.
+#:
+#: With sharding on, a worker owns a DISJOINT, DETERMINISTIC slice and gets its OWN study in
+#: its OWN SQLite file, so there is no cross-process claim to race. The cost is that there is
+#: no work stealing: a worker that finishes early idles rather than helping. That is the right
+#: trade here because every cell in this grid costs the same.
+SHARD_COUNT = int(os.getenv("GRID_SHARD_COUNT", "0"))
+STUDY_NAME = os.getenv(
+    "OPTUNA_STUDY_NAME",
+    f"{ARM}_grid_000_w{WORKER_ID}" if SHARD_COUNT else f"{ARM}_grid_000",
+)
 DEADLINE = float(os.getenv("GRID_DEADLINE_EPOCH", "0")) or None
 #: Don't claim a trial with less than this much wall clock left -- an hour of training is
 #: not enough to say anything about where a curve saturates, and the slot is better left idle
@@ -491,6 +508,19 @@ for _s in SETTINGS:
             f"Every key in REQUIRED_KEYS must come from FIXED[{ARM!r}] or that arm's FACTORS."
         )
 
+# Sharding must divide evenly into the setting count, or `_owns_cell` would leave cells owned
+# by nobody -- which looks exactly like a healthy short run in a slurm log.
+if SHARD_COUNT:
+    if SHARD_COUNT % len(SETTING_NAMES) != 0:
+        raise SystemExit(
+            f"GRID_SHARD_COUNT={SHARD_COUNT} must be a multiple of the setting count "
+            f"({len(SETTING_NAMES)} on arm {ARM!r}), so each worker owns exactly one setting."
+        )
+    if WORKER_ID >= SHARD_COUNT:
+        raise SystemExit(
+            f"OPTUNA_WORKER_ID={WORKER_ID} is outside GRID_SHARD_COUNT={SHARD_COUNT}."
+        )
+
 # Fail at import if the local copy of the amino-acid list has drifted from the loader's. The
 # copy exists for readability, but a stale one would silently mis-name a dropped feature --
 # and `drop_features` matches by NAME, so a typo drops nothing and the `tyr` cell would
@@ -732,13 +762,41 @@ def _enqueue_all(study: optuna.Study) -> int:
     added = 0
     for r in range(ROUNDS):
         seed = SEEDS[r % len(SEEDS)]
-        for name in SETTING_NAMES:
+        for i, name in enumerate(SETTING_NAMES):
+            if not _owns_cell(r, i):
+                continue
             if (name, seed) in seen:
                 continue
             study.enqueue_trial({"setting": name, "seed": seed})
             seen.add((name, seed))
             added += 1
     return added
+
+
+def _owns_cell(round_idx: int, setting_idx: int) -> bool:
+    """Does THIS worker own cell (round, setting)? Always true in shared-queue mode.
+
+    THE SHARDING RULE IS BY WHOLE SEED, not by a flat stride over the cell list, and that
+    choice is the whole point. With S settings and W workers there are G = W // S groups; group
+    g = WORKER_ID // S takes every G-th ROUND, and within a group worker w runs setting
+    `w % S`. So at any instant G COMPLETE seeds are in flight and they finish together.
+
+    A flat `cell_index % W` stride would also cover every cell exactly once, but with W = 6 and
+    S = 3 the stride is 6 -- two whole seeds -- so worker 0 would draw the CONTROL at seeds
+    0, 2, 4, 6 and nothing else. Every worker would own one setting across scattered seeds, and
+    a wall-clock stop would leave controls at seeds the treatments never reached: paired
+    differences with no partner, which is not a smaller result but an unreadable one.
+
+    Requires W % S == 0, checked at import.
+    """
+    if not SHARD_COUNT:
+        return True
+    n_settings = len(SETTING_NAMES)
+    n_groups = SHARD_COUNT // n_settings
+    return (
+        setting_idx == WORKER_ID % n_settings
+        and round_idx % n_groups == WORKER_ID // n_settings
+    )
 
 
 def _write_manifest() -> None:

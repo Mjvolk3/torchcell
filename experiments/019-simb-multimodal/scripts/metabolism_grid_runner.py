@@ -153,20 +153,47 @@ ONLY_SETTINGS = [s for s in os.getenv("GRID_ONLY_SETTINGS", "").split(",") if s]
 #: because a full factorial already estimates every main effect on 12-vs-12 runs
 #: (SE = sigma*sqrt(2/12) = 0.012) without spending a single run on a repeat.
 #: 42 is the seed the whole `_002`/`_003`/`_004` history used.
-SEEDS = [42]
+#:
+#: `bx_aa` INVERTS THAT TRADE, deliberately: it spends its whole budget on REPLICATES of one
+#: cell rather than on crossed settings, because what it must estimate is a NOISE FLOOR. The
+#: grid measured `bx_m19 - bx_ctrl` at +0.0203 in the L=6/mask-on/lr=1e-4 cell (against -0.049
+#: and -0.060 at L=2), and a single paired difference with no replicate cannot be told apart
+#: from init noise. Every crossed factor here would be a mechanism question asked ON TOP of an
+#: effect not yet shown to exist.
+SEEDS = {"bx_aa": [0, 1, 2, 3, 4, 5, 6, 7]}.get(ARM, [42])
 
 #: Heads active per arm. The two `bx_*` arms are the CONTROLLED auxiliary-task pair: same
 #: restricted instance set (`require_head_targets` in their config), same settings, same
 #: seeds -- differing ONLY in whether the metabolome head is attached. `bx_m19 - bx_ctrl`
 #: read within a (setting, seed) cell is then a PAIRED difference, which removes the split
 #: and init variance that dominates an unpaired comparison at this sample size.
+#:
+#: `bx_aa` is the one arm whose active heads vary PER SETTING rather than per arm -- its three
+#: settings ARE the control and the two auxiliary panels -- so this entry is the SUPERSET and
+#: `_active_heads(setting)` is what `_overrides` actually uses. It stays listed here because
+#: `_record` and the manifest want the union.
 ACTIVE_HEADS = {
     "betaxanthin": ["betaxanthin"],
     "beta_carotene": ["beta_carotene"],
     "mulleder19": ["mulleder19"],
     "bx_ctrl": ["betaxanthin"],
     "bx_m19": ["betaxanthin", "mulleder19"],
+    "bx_aa": ["betaxanthin", "mulleder19"],
 }[ARM]
+
+
+def _active_heads(setting: dict[str, Any]) -> list[str]:
+    """Heads active for ONE cell. Differs from `ACTIVE_HEADS` only on `bx_aa`.
+
+    The `aux` factor selects the head set: `none` is the control (betaxanthin alone), while
+    `m19` and `tyr` both attach the metabolome head and differ only in HOW MANY of its 19
+    features are scored -- see `_overrides` for why that distinction is made with
+    `drop_features` and not by re-pinning the head's phenotype keys.
+    """
+    if setting.get("aux", "none") == "none":
+        return ["betaxanthin"]
+    return list(ACTIVE_HEADS)
+
 
 #: The metric each arm is RANKED on. Beta-carotene is SPEARMAN and that is not a preference:
 #: Ozaydin's readout is a subjective ordinal on -5..+5, so a Pearson asserts an interval
@@ -178,6 +205,7 @@ OBJECTIVE_METRIC = {
     "mulleder19": "val/mulleder19/pearson_per_feature_max",
     "bx_ctrl": "val/betaxanthin/pearson_per_feature_max",
     "bx_m19": "val/betaxanthin/pearson_per_feature_max",
+    "bx_aa": "val/betaxanthin/pearson_per_feature_max",
 }[ARM]
 RANK_PHENO = OBJECTIVE_METRIC.split("/")[1]
 RANKED_SMOOTH3 = OBJECTIVE_METRIC.replace("_max", "_smooth3_max")
@@ -259,6 +287,28 @@ FIXED: dict[str, dict[str, Any]] = {
 }
 FIXED["bx_ctrl"] = dict(FIXED["betaxanthin"])
 FIXED["bx_m19"] = dict(FIXED["betaxanthin"])
+#: `bx_aa` freezes the ENTIRE grid at the one cell where the auxiliary head was measured to
+#: help, and varies nothing but the auxiliary panel and the seed. The three frozen values are
+#: not defaults -- they are the coordinates of that cell (`s04_L6_maskon_lr0.0001` in the
+#: `bx_ctrl`/`bx_m19` grid), and changing any one of them would make this round's paired
+#: differences incomparable to the +0.0203 it exists to replicate.
+FIXED["bx_aa"] = dict(FIXED["betaxanthin"])
+FIXED["bx_aa"].update(
+    {
+        # L=6. At L=2 the auxiliary head COST betaxanthin in both fully-run cells (-0.049 at
+        # s00, -0.060 at s02, both 1000 epochs, both arms finished); at L=6/mask-on it gained.
+        # Depth is not a nuisance parameter here, it is the condition under which the effect
+        # was seen at all, so it is pinned to where it was seen.
+        "num_transformer_layers": 6,
+        # mask ON. The other L=6 cell (s06, mask off) read -0.0153, so the gain does not
+        # survive dropping the graph prior on the evidence we have.
+        "attention_mask": "on",
+        # 1e-4. The decade above it collapses the model to a constant predictor: EVERY
+        # lr=1e-3 cell across projects 020/022/023 ended at pred_sd_ratio 0 and nmse 1.000,
+        # 21 of 22 of them, and none recovered by epoch 999.
+        "lr": 1e-4,
+    }
+)
 
 #: THE 24-RUN GRID: a full factorial, one seed, every cell the same cost.
 #:
@@ -310,9 +360,39 @@ FACTORS["bx_ctrl"] = {
     "lr": [1e-4, 1e-3],
 }
 FACTORS["bx_m19"] = dict(FACTORS["bx_ctrl"])
+#: ONE FACTOR, THREE LEVELS, and the replicate budget goes into `SEEDS` instead.
+#:
+#:   none  betaxanthin alone                          -- the control, shared by both contrasts
+#:   m19   + all 19 amino acids                       -- reproduces the grid's `bx_m19` arm
+#:   tyr   + tyrosine only                            -- the PRECURSOR
+#:
+#: Why tyrosine and not another amino acid: betalains derive from L-tyrosine (tyrosine ->
+#: L-DOPA -> betalamic acid), and a betaxanthin IS betalamic acid condensed with an amino
+#: acid. So tyrosine is the chromophore precursor and the pool is the co-substrate -- the
+#: mechanism predicts a coupling, which is what makes a null result here informative rather
+#: than merely negative.
+#:
+#: The control is SHARED across both contrasts, so three cells per seed buy TWO paired
+#: differences (m19-none and tyr-none) rather than one. That is the whole reason `tyr` fits in
+#: a budget sized for a replication study.
+FACTORS["bx_aa"] = {"aux": ["none", "m19", "tyr"]}
 
 #: Short factor names for the setting label (a W&B tag and a run-list column).
 ABBREV = {"num_transformer_layers": "L", "lr": "lr", "dropout": "d"}
+
+#: The 19 amino acids Mulleder 2016 measured, in the loader's order
+#: (`torchcell/datasets/scerevisiae/mulleder2016.py::AMINO_ACIDS`). Duplicated here rather
+#: than imported so the grid definition stays readable as a standalone artifact; the
+#: import-time check below fails loudly if the two ever drift.
+AMINO_ACIDS_19 = [
+    "alanine", "aspartate", "glutamate", "phenylalanine", "glycine",
+    "histidine", "isoleucine", "lysine", "leucine", "methionine",
+    "asparagine", "proline", "glutamine", "arginine", "serine",
+    "threonine", "valine", "tryptophan", "tyrosine",
+]  # fmt: skip
+
+#: Which of the 19 each `aux` panel SCORES. `none` never reaches this map.
+AUX_PANELS: dict[str, list[str]] = {"m19": list(AMINO_ACIDS_19), "tyr": ["tyrosine"]}
 
 
 def settings() -> list[dict[str, Any]]:
@@ -342,6 +422,8 @@ def settings() -> list[dict[str, Any]]:
                 bits.append(f"lr{v:g}")
             elif k == "target_norm":
                 bits.append("zs" if v == "zscore" else "yj")
+            elif k == "aux":
+                bits.append("ctrl" if v == "none" else f"aux{v}")
             else:
                 bits.append(str(v))
         params["name"] = f"s{i:02d}_" + "_".join(bits)
@@ -409,6 +491,25 @@ for _s in SETTINGS:
             f"Every key in REQUIRED_KEYS must come from FIXED[{ARM!r}] or that arm's FACTORS."
         )
 
+# Fail at import if the local copy of the amino-acid list has drifted from the loader's. The
+# copy exists for readability, but a stale one would silently mis-name a dropped feature --
+# and `drop_features` matches by NAME, so a typo drops nothing and the `tyr` cell would
+# quietly score all 19, i.e. become a duplicate of `m19` while still being labelled `tyr`.
+if ARM == "bx_aa":
+    from torchcell.datasets.scerevisiae.mulleder2016 import (  # noqa: E402
+        AMINO_ACIDS as _LOADER_AAS,
+    )
+
+    if list(_LOADER_AAS) != AMINO_ACIDS_19:
+        raise SystemExit(
+            "AMINO_ACIDS_19 has drifted from mulleder2016.AMINO_ACIDS.\n"
+            f"  here:   {AMINO_ACIDS_19}\n  loader: {list(_LOADER_AAS)}"
+        )
+    for _name, _panel in AUX_PANELS.items():
+        _bad = [a for a in _panel if a not in AMINO_ACIDS_19]
+        if _bad:
+            raise SystemExit(f"AUX_PANELS[{_name!r}] names non-amino-acids {_bad}.")
+
 
 def _overrides(
     setting: dict[str, Any], seed: int, max_time_s: float | None
@@ -420,13 +521,14 @@ def _overrides(
     function needing to know which arm it is serving.
     """
     fixed = _resolve(setting)
-    heads = ",".join(ACTIVE_HEADS)
+    active = _active_heads(setting)
+    heads = ",".join(active)
     # Normalization is applied to EVERY active head, so the joint arm standardizes the
     # metabolome too -- an un-standardized 19-AA target would let a few large-magnitude amino
     # acids dominate the auxiliary loss and change what the shared encoder is pulled toward.
     zscore = fixed["target_norm"] == "zscore"
-    normalize_list = [] if zscore else list(ACTIVE_HEADS)
-    standardize_list = list(ACTIVE_HEADS) if zscore else []
+    normalize_list = [] if zscore else list(active)
+    standardize_list = list(active) if zscore else []
     ov = [
         f"seed={seed}",
         f"multitask.active_heads=[{heads}]",
@@ -461,6 +563,28 @@ def _overrides(
     ]
     if "energy_rank" in fixed:
         ov.append(f"multitask.energy_rank={fixed['energy_rank']}")
+    # THE AUXILIARY PANEL, and the mechanism is `drop_features` -- NOT `head_phenotype_keys`.
+    # Two independent reasons, both of which cost a silently-wrong comparison if ignored:
+    #
+    # 1. INSTANCE-SET PARITY. `require_head_targets` resolves each head through
+    #    `head_phenotype_keys` and takes the UNION over its keys. Re-pinning mulleder19 to
+    #    [tyrosine] would therefore restrict the run to genotypes carrying TYROSINE, while
+    #    the `m19` cell keeps genotypes carrying any of the 19 -- so the two panels would be
+    #    scored on different strains and `tyr - none` would not be comparable to `m19 - none`.
+    #    `drop_features` leaves the gate on all 19 and only narrows what the head SCORES.
+    #
+    # 2. LABEL DISAMBIGUATION. betaxanthin and the metabolome are BOTH `metabolite_level`, and
+    #    the COO drops the dict keys, so the ONLY thing separating their value groups within a
+    #    genotype is the group SIZE -- which the aligner enforces as distinct. Re-pinning would
+    #    take mulleder19's raw_dim from 19 to 1, colliding with betaxanthin's 1 and making the
+    #    assignment arbitrary. `drop_features` keeps raw_dim at 19 and moves only feat_dim.
+    panel = AUX_PANELS.get(str(setting.get("aux", "none")))
+    if panel is not None:
+        dropped = [a for a in AMINO_ACIDS_19 if a not in panel]
+        if dropped:
+            ov.append(f"multitask.drop_features.mulleder19=[{','.join(dropped)}]")
+        # The head's output_dim MUST equal the post-drop feature count; the trainer asserts it.
+        ov.append(f"multitask.heads.mulleder19.output_dim={len(panel)}")
     if max_time_s is not None:
         ov.append(f"trainer.max_time_s={max_time_s:.0f}")
     return ov
@@ -475,7 +599,15 @@ def _trial_time_budget() -> float | None:
     prediction dump and the wandb teardown happen INSIDE the allocation -- the graceful stop
     is worth nothing if slurm kills the process during the work the stop exists to protect.
     """
-    if DEADLINE is None:
+    # `GRID_NO_TIME_CAP` keeps the DEADLINE gating which cells get CLAIMED (see
+    # `deadline_callback`) while removing the per-trial time cap, so every cell that starts
+    # runs the SAME number of epochs. That distinction is a correctness requirement for a
+    # paired design, not a preference: the objective is a max over epochs, an upward-biased
+    # order statistic whose bias grows with epochs run. If the clock cut one member of a pair
+    # at 400 epochs and its partner reached 600, the difference between them would be part
+    # effect and part unequal exposure, with no way to separate the two. Whole cells missing
+    # from the tail costs power; unevenly truncated pairs costs validity.
+    if DEADLINE is None or os.getenv("GRID_NO_TIME_CAP", "") == "1":
         return None
     return max(0.0, DEADLINE - time.time() - TEARDOWN_S)
 

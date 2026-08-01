@@ -1,0 +1,151 @@
+# experiments/023-metabolome-betaxanthin-joint/conf/igb_bx_aa.yaml
+# [[experiments.023-metabolome-betaxanthin-joint]]
+#
+# IGB cabbi -- DOES AMINO-ACID METABOLISM ACTUALLY HELP BETAXANTHIN? A REPLICATION.
+#
+# THE CLAIM UNDER TEST, stated exactly. In the Delta grid's `s04_L6_maskon_lr0.0001` cell,
+# `bx_m19 - bx_ctrl` on `val/betaxanthin/pearson_per_feature` read +0.0203 at a matched
+# epoch budget of 333 (ctrl 0.3968, joint 0.4171). That is ONE paired difference, at ONE
+# seed, and we have NO estimate of the noise floor on that difference. It cannot currently
+# be distinguished from initialization noise.
+#
+# The same grid read -0.049 (s00) and -0.060 (s02) in the two L=2 cells, both arms run to a
+# full 1000 epochs. So the sign of the effect FLIPS with depth, and the positive sits in the
+# deeper cell alone. Either depth is the condition that lets a shared encoder serve both
+# tasks, or the L=6 cell was a lucky draw. This round is built to tell those apart, and to
+# do nothing else.
+#
+# WHY REPLICATES AND NOT A WIDER GRID. Every mechanism question -- does the effect grow with
+# more auxiliary weight, more depth, a different amino-acid panel -- is asked ON TOP OF an
+# effect not yet shown to exist. Spending this allocation on those axes would produce a table
+# of differences with no scale to read them against. So: one cell, frozen at the coordinates
+# where the effect was seen, replicated across seeds.
+#
+# THE THREE SETTINGS, and why the control is shared:
+#
+#     aux=none   active_heads=[betaxanthin]                  control
+#     aux=m19    + all 19 amino acids                        reproduces the grid's bx_m19
+#     aux=tyr    + tyrosine only                             the PRECURSOR
+#
+# Three cells per seed buy TWO paired differences against a COMMON control, which is what
+# makes the tyrosine contrast affordable inside a budget sized for a replication.
+#
+# WHY TYROSINE SPECIFICALLY. Betalains derive from L-tyrosine (tyrosine -> L-DOPA ->
+# betalamic acid), and a betaxanthin IS betalamic acid condensed with an amino acid. So
+# tyrosine is the chromophore precursor and the free amino-acid pool is the co-substrate --
+# this is a mechanistic prediction of coupling, not a correlation we noticed. That is what
+# makes a NULL here informative: it would say the encoder cannot exploit a coupling we have
+# independent reason to believe is real.
+#
+# THE CONTROL THAT MAKES IT A MEASUREMENT. `require_head_targets` fixes ALL THREE settings to
+# the genotypes carrying betaxanthin AND the metabolome, so no arm can win by seeing more
+# rows. The `tyr` setting narrows what the head SCORES via `multitask.drop_features`, NOT by
+# re-pinning `head_phenotype_keys` -- re-pinning would also narrow the instance gate (which
+# unions over a head's keys) and would collapse mulleder19's raw_dim from 19 to 1, colliding
+# with betaxanthin's. See the `_overrides` comment in metabolism_grid_runner.py.
+#
+# READ-OUT: per seed, `m19 - none` and `tyr - none`; then the mean paired difference and its
+# SE across seeds, plus a sign test. `aux_mulleder19_pearson` is recorded alongside -- an
+# auxiliary head at r ~ 0 that still moved the primary metric would mean the gain came from
+# regularization, not from shared metabolic signal, and those are different findings.
+defaults:
+  - base
+  - _self_
+
+seed: 42 # overridden per cell by the grid runner; SEEDS = 0..7 on this arm
+
+wandb:
+  project: torchcell_023_bx_aa_v1
+  tags: ["023", igb, cabbi, grid, metabolism, betaxanthin, amino-acid, replication]
+  log_model: false
+
+cell_dataset:
+  # THE control. All three settings restrict to the genotypes carrying betaxanthin AND the
+  # 19-AA metabolome. Resolved through `head_phenotype_keys`, which `drop_features` does not
+  # touch -- so narrowing the `tyr` head to one feature leaves this gate on all 19 and the
+  # instance set identical across the three settings.
+  require_head_targets: [betaxanthin, mulleder19]
+
+multitask:
+  # Overridden per setting by the grid runner (aux=none -> [betaxanthin]); declared as the
+  # joint form so a manual non-grid run of this config is the joint one.
+  active_heads: [betaxanthin, mulleder19]
+  # EQUAL WEIGHTS, and left alone deliberately. A weight ladder was designed and then cut:
+  # it existed to rescue a NEGATIVE (the L=2 result), and at the cell this round actually
+  # runs there is no negative to rescue -- sweeping the weight down from 1.0 would mostly
+  # measure how fast the effect can be erased. Weight becomes a question if, and only if,
+  # the effect replicates.
+  head_weights:
+    betaxanthin: 1.0
+    mulleder19: 1.0
+  # DECLARED DOWN TO THE HEAD KEY, not merely as an empty dict. Hydra struct mode rejects an
+  # override on a key the config never declares, and `drop_features: {}` declares the MAPPING
+  # but not `mulleder19` inside it -- so `multitask.drop_features.mulleder19=[...]` fails to
+  # compose with "Key 'mulleder19' is not in struct". Empty list here = score all 19; the
+  # runner replaces it with the 18 non-tyrosine names for the `tyr` setting.
+  drop_features:
+    mulleder19: []
+
+model:
+  # ---- FROZEN AT THE CELL WHERE THE EFFECT WAS MEASURED ----
+  # These are not architecture preferences; they are the coordinates of Delta grid cell
+  # `s04_L6_maskon_lr0.0001`. Changing any one makes this round's differences incomparable
+  # to the +0.0203 it exists to replicate.
+  num_transformer_layers: 6
+  attention_mask:
+    # ON. The other L=6 cell (s06, mask off) read -0.0153, so on the evidence we have the
+    # gain does not survive dropping the graph prior.
+    enabled: true
+    layers: [1]
+    head_graphs:
+      0: physical_interaction
+      1: regulatory_interaction
+      2: tflink
+      3: string12_0_neighborhood
+      4: string12_0_fusion
+      5: string12_0_cooccurence
+      6: string12_0_coexpression
+      7: string12_0_experimental
+      8: string12_0_database
+  graph_regularization:
+    # The hard mask REPLACES the KL; both together would apply a constraint and a penalty to
+    # the same nine heads and give back the fused-kernel speedup for a prior already enforced.
+    graph_reg_lambda: 0.0
+  perturbation_head:
+    dropout: ${model.dropout}
+    hadamard: "off"
+
+data_module:
+  # PIN THE PARTITION. This is what makes `seed` a REPLICATE rather than a second experiment:
+  # with the split pinned, varying `seed` varies weight initialization only, so the spread
+  # across seeds estimates exactly the noise floor on the paired difference -- which is the
+  # quantity this whole round exists to measure. Were the split to move too, the spread would
+  # confound init noise with split noise and could not be used as an error bar for a
+  # within-split contrast.
+  split_seed: 0
+
+trainer:
+  checkpoint:
+    monitor: val/betaxanthin/pearson_per_feature
+    mode: max
+    metric_monitor: val/betaxanthin/spearman_per_feature
+  train_eval_every: 25
+  # 600, DOWN FROM 1000, and the number comes from the curves rather than from convenience:
+  # every lr=1e-4 peak observed across projects 020/022/023 falls at epoch 122-345, so 600
+  # clears the latest of them by ~1.7x. It cuts per-cell cost 40%, which is what buys the
+  # extra seeds -- and seeds are what this round is short of, not epochs.
+  #
+  # A FIXED EPOCH COUNT, NOT A TIME BUDGET (the launcher sets GRID_NO_TIME_CAP=1). The
+  # objective is a max over epochs, an upward-biased order statistic whose bias grows with
+  # epochs run; if the wall clock cut one member of a pair short its difference from its
+  # partner would be part effect, part unequal exposure. Cells missing from the tail cost
+  # power. Unevenly truncated pairs cost validity.
+  max_epochs: 600
+  early_stopping:
+    # OFF, and for a paired design this is correctness, not preference: a data-dependent
+    # stopping rule would stop the three settings at DIFFERENT epochs, confounding "the
+    # metabolome helped" with "the metabolome changed when the run stopped".
+    enabled: false
+  max_time_s: null
+  run_test: false
+  dump_test_predictions: false

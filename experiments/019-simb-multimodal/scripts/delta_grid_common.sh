@@ -82,14 +82,26 @@ export GRID_MIN_TRIAL_S="${GRID_MIN_TRIAL_S:-3600}"
 # from every trial's time budget. The graceful `Timer` stop is worth nothing if slurm kills
 # the process during the work the stop exists to protect.
 #
-# 1800, not 900, and the arithmetic is why. A worker computes its budget when it CLAIMS the
-# trial, i.e. AFTER the ~20 min dataset + embedding load, as `DEADLINE - now - TEARDOWN_S`.
-# At 900 that put the end of teardown at 1200 + (172800 - 1200 - 900) + 900 = 172800 -- the
-# slurm wall EXACTLY, with zero margin. Any overrun in `wandb.finish`'s artifact upload then
-# lands a SIGTERM in the middle of the test pass, losing the per-gene prediction dump that is
-# the entire deliverable of experiment 1. 30 minutes costs 0.6% of the run and removes the
-# cliff.
-export GRID_TEARDOWN_S="${GRID_TEARDOWN_S:-1800}"
+# SIZED TO WHAT ACTUALLY RUNS AFTER `fit`, which is very little:
+#
+#   020 betaxanthin   trainer.test(ckpt_path="best") over 933 test records, the per-gene
+#                     prediction dump (a JSON write), then wandb.finish
+#   021 / 022 / 023   `run_test: false` -- ONLY wandb.finish
+#
+# So three of the four jobs need essentially nothing here, and the fourth needs seconds:
+# `log_model: false` means wandb.finish is not uploading checkpoints either. 600 is already
+# an order of magnitude of headroom over the measured cost.
+#
+# The reserve is not free, and that is why it is not padded: a worker computes its budget at
+# CLAIM time as `DEADLINE - now - TEARDOWN_S`, so every second reserved is a second of
+# training not done -- in a round whose entire question is how far up the val curve 48 h
+# reaches. An earlier cut used 1800 "to be safe"; that was 2 node-hours across the four jobs
+# spent protecting an operation that takes seconds.
+#
+# What it must NOT be is zero. The budget is derived from the wall clock, so with no reserve
+# training runs to the wall and everything after `fit` is SIGTERMed -- which on 020 means
+# losing the per-gene dump that is the whole deliverable.
+export GRID_TEARDOWN_S="${GRID_TEARDOWN_S:-600}"
 
 # WORKERS PER GPU. 2 is the default because the experiment is EIGHT LONG RUNS: at 2/GPU all
 # eight start at t=0 and share the full 48 h window, so if the job dies at hour 30 you have

@@ -54,7 +54,7 @@ defaults:
 seed: 42
 
 wandb:
-  project: torchcell_023_bx_m19_delta_grid
+  project: torchcell_023_bx_m19_v1
   tags: ["023", delta, grid, metabolism, joint, betaxanthin, mulleder19, controlled]
   log_model: false
 
@@ -166,13 +166,15 @@ trainer:
   # on its own, so at every-1 it truncated a 019 run to epoch 17 in 24 h. At every-25 it adds
   # ~2.6 s per epoch and still yields hundreds of curve points over a 48 h run.
   train_eval_every: 25
-  # A CEILING, NOT A TARGET -- the stop that fires is `trainer.max_time_s`, set per trial from
-  # the job's remaining wall clock. This matters MORE on a paired comparison than anywhere
-  # else: the joint arm carries a second loss term and may well converge later than the
-  # control, so any epoch cap that bound would bind on ONE side and become a difference
-  # between the arms that is not the one under test. A wall-clock budget is symmetric by
-  # construction -- both arms get the same seconds.
-  max_epochs: 10000
+  # 1000, and it is now the stop that FIRES -- `max_time_s` drops to a backstop that only
+  # matters if a run would otherwise overrun the job. Chosen by the author: the val curve on
+  # expression peaks near epoch 2,075, but betaxanthin has never been run past ~120 and
+  # mulleder19 past ~160, so 1000 is already 6-40x anything metabolism has done, and spending
+  # beyond it buys less than spending the same GPU-hours on more crossed settings.
+  #
+  # STATE THE LIMIT PLAINLY: this round therefore does NOT establish saturation. If a curve is
+  # still climbing at 1000 the answer is "not yet saturated at 1000", not "converged".
+  max_epochs: 1000
   early_stopping:
     # OFF, and for the paired design this is a correctness requirement rather than a
     # preference. Early stopping is a data-dependent stopping rule, so with it on the two

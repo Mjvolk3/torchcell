@@ -125,7 +125,7 @@ CONF_DIR = os.environ["GRID_CONF_DIR"]
 BASE_CONFIG = os.environ["GRID_BASE_CONFIG"]
 STORAGE = os.environ["OPTUNA_STORAGE"]
 STUDY_NAME = os.getenv("OPTUNA_STUDY_NAME", f"{ARM}_grid_000")
-ROUNDS = int(os.getenv("GRID_ROUNDS", "3"))
+ROUNDS = int(os.getenv("GRID_ROUNDS", "1"))
 WORKER_ID = int(os.getenv("OPTUNA_WORKER_ID", "0"))
 DEADLINE = float(os.getenv("GRID_DEADLINE_EPOCH", "0")) or None
 #: Don't claim a trial with less than this much wall clock left -- an hour of training is
@@ -141,7 +141,12 @@ TEARDOWN_S = float(os.getenv("GRID_TEARDOWN_S", "600"))
 #: `data_module.split_seed: 0`, so `cfg.seed` no longer selects the partition. Round 0 runs
 #: every setting at 42 (the seed the whole `_002`/`_003`/`_004` history used), round 1
 #: replicates at 0, and any further round is spare capacity for a setting that finished early.
-SEEDS = [42, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+#: ONE SEED. The partition is pinned by `data_module.split_seed`, so `seed` varies weight
+#: initialization only -- and the budget goes to 24 crossed SETTINGS rather than replicates,
+#: because a full factorial already estimates every main effect on 12-vs-12 runs
+#: (SE = sigma*sqrt(2/12) = 0.012) without spending a single run on a repeat.
+#: 42 is the seed the whole `_002`/`_003`/`_004` history used.
+SEEDS = [42]
 
 #: Heads active per arm. The two `bx_*` arms are the CONTROLLED auxiliary-task pair: same
 #: restricted instance set (`require_head_targets` in their config), same settings, same
@@ -185,117 +190,122 @@ RANKED_SMOOTH3 = OBJECTIVE_METRIC.replace("_max", "_smooth3_max")
 #:   round's best fell to 0.2469 from `_003`'s 0.4050. Two changes, one drop, no attribution.
 #:   The pinned split is REQUIRED by the Merzbacher question, so the other change is the one
 #:   that gets reverted; re-testing 9 heads is a follow-up, not a factor of this grid.
-#: `dist` -- FROZEN. 019's `_007` settled it at n ~ 60 per mode: the five distributional
-#:   modes are within noise of each other on accuracy (means 0.017-0.028 against within-mode
-#:   sd 0.030-0.040) while calibration succeeded at both levels. "The distributional axis is
-#:   not the lever." Each arm takes its own measured best. `point` (MSE) was never a
-#:   candidate: its optimum IS the conditional mean, i.e. the mean-collapse the metric
-#:   punishes.
-#: `target_norm` -- FROZEN at zscore. `_002` preferred yeo_johnson and `_003` preferred
-#:   zscore, so it is unsettled -- but both readings came from runs that stopped near epoch
-#:   100, and this round exists because such readings are suspect. zscore is also the
-#:   anti-mean-collapse lever and what the joint arm's metabolome head needs.
-#: `dropout` -- FROZEN at 0.1, the level 019 measured paired against 0.0 (+0.0145, +0.0565).
-#:   Higher levels are not swept here.
-#: `graph_reg_lambda` -- GONE, not frozen: there is no KL term any more. `attention_mask`
-#:   burns all nine relations into attention structurally and `_010` set lambda to 0. Keeping
-#:   a lambda sweep would apply a hard constraint and a soft penalty to the same nine heads
-#:   AND give back the 1.5-1.7x per-epoch speedup the mask buys (the KL needs attention
-#:   WEIGHTS, so it must materialize a [1, 9, 6608, 6608] matmul and cannot use the fused
-#:   kernel). At 48 h that speedup IS the experiment.
-#: `num_transformer_layers` -- FROZEN at 6, matching `_012`. Metabolism `_002` measured a
-#:   preference for L=2, but that was under the KL, at ~100 epochs, and against a different
-#:   attention path; carrying it over would fight the architecture parity this round is for.
-#:   Freezing L is also what makes MASK DEPTH a legal factor -- layer 3 does not exist at
-#:   L=2, so the two axes cannot be crossed.
+#: `dist` -- FROZEN per arm at its own measured best (mulleder19 sweeps it instead; see
+#:   FACTORS). 019's `_007` settled the axis at n ~ 60 per mode: the five distributional modes
+#:   are within noise of each other on accuracy while calibration succeeded. `point` (MSE) was
+#:   never a candidate -- its optimum IS the conditional mean, i.e. the mean-collapse the
+#:   metric punishes.
+#: `hadamard` -- FROZEN at `off`. 019 wave 6 ran the whole pair-term ladder at 1000+ epochs
+#:   (ranks 0/9/16/32/64/90 across six mechanisms) and the rank-0 BASELINE placed 2nd of 12;
+#:   `replace` scored 0.1965 against the baseline's 0.2107. The mechanism argument still holds
+#:   (at |S_b| = 1 the cross-attention softmax is over a one-element key set, so alpha == 1 and
+#:   16,200 of 32,760 attention parameters are dead) -- it just does not buy accuracy, on the
+#:   same single-deletion regime metabolism lives in.
+#: `dropout` -- FROZEN at 0.1. Wave 6: 0.2 -> 0.1881 (below baseline), 0.3 -> COLLAPSED to
+#:   exactly 0 (peaked 0.1262 at epoch 225, then nmse 1.002 / pred_sd_ratio 0, i.e. predicting
+#:   each gene's mean). Higher dropout is not a lever here, it is a hazard.
+#: `weight_decay` -- FROZEN at 1e-8, the expression line's round value, replacing three per-arm
+#:   QMC samples (2.72e-6 / 2.11e-7 / 2.11e-5) that were spurious precision from a 19-trial
+#:   screen. Wave 6 measured wd as null anyway (wd1e2 0.2041, wd1e4 0.2024 vs baseline 0.2107).
+#: `node_embeddings` -- prot_T5_all. Pooled over every completed metabolism trial, betaxanthin
+#:   reads 0.2407 for prot_T5_all against 0.0983 for the WIDTH-MATCHED random control, and 8 of
+#:   the 10 best betaxanthin runs ever recorded use it. NOTE this deliberately differs from the
+#:   expression line, which pinned `calm`: calm ranks 4th on betaxanthin (0.1816), so importing
+#:   expression's choice would be a downgrade on the flagship arm. Do not "fix" this.
+#: `attention_mask.layers` -- [1]. Wave 5 measured depth at 4 seeds each: [3] 0.1609 vs [1,3]
+#:   0.1597. Null. Freezing it is also what frees `num_transformer_layers` to be swept, since
+#:   layer 3 does not exist at L = 2.
 FIXED: dict[str, dict[str, Any]] = {
     "betaxanthin": {
         "node_embeddings": "prot_T5_all",
-        "lr": 4.06e-4,  # _003 screen winner (0.4050)
-        "weight_decay": 2.72e-6,  # same trial
-        "dist": "crps",  # _002 best on this arm (0.4301)
+        "weight_decay": 1e-8,
+        "dist": "crps",  # best betaxanthin run ever recorded: 0.4301
         "target_norm": "zscore",
         "dropout": 0.1,
-        "perturbation_num_heads": 6,
-        # Frozen default; overridden by the factor on the arms that sweep it.
+        "hadamard": "off",
         "mask_layers": [1],
+        "perturbation_num_heads": 6,
     },
     "beta_carotene": {
         "node_embeddings": "prot_T5_all",
-        "lr": 1.81e-4,
-        "weight_decay": 2.11e-7,
+        "weight_decay": 1e-8,
         "dist": "quantile",
         "target_norm": "zscore",
         "dropout": 0.1,
-        "perturbation_num_heads": 6,
-        # Frozen default; overridden by the factor on the arms that sweep it.
+        "hadamard": "off",
         "mask_layers": [1],
+        "perturbation_num_heads": 6,
     },
     "mulleder19": {
         "node_embeddings": "prot_T5_all",
-        "lr": 4.56e-4,
-        "weight_decay": 2.11e-5,
-        "dist": "quantile",  # _002 best; `energy` is this arm's own factor, below
+        "weight_decay": 1e-8,
+        "dist": "quantile",  # swept on this arm -- see FACTORS
         "target_norm": "zscore",
         "dropout": 0.1,
-        "perturbation_num_heads": 6,
-        # Frozen default; overridden by the factor on the arms that sweep it.
+        "hadamard": "off",
         "mask_layers": [1],
-        # Rank of V in Sigma = diag(sigma^2) + V V^T. 8 fits inside F = 19 (32 cannot be
-        # realized by a 19x19 covariance and `DistHead` has no guard). Inert unless
-        # dist == energy.
+        "perturbation_num_heads": 6,
+        # Rank of V in Sigma = diag(sigma^2) + V V^T. 8 fits inside F = 19; 32 cannot be
+        # realized by a 19x19 covariance and `DistHead` has no guard. Inert unless dist=energy.
         "energy_rank": 8,
     },
 }
 FIXED["bx_ctrl"] = dict(FIXED["betaxanthin"])
 FIXED["bx_m19"] = dict(FIXED["betaxanthin"])
 
-#: TWO FACTORS x TWO INIT SEEDS = the 8 runs. The split is now PINNED (`split_seed: 0`), so
-#: `seed` varies weight initialization ONLY -- which is what makes replication worth paying
-#: for at this sample size. 019 measured between-seed sd 0.0444 against a within-seed
-#: across-arm sd of 0.0058 when one knob drove both; separating them is what turns two runs
-#: into a paired comparison rather than two draws from a wide nuisance distribution.
+#: THE 24-RUN GRID: a full factorial, one seed, every cell the same cost.
 #:
-#: `hadamard` {off, replace} -- THE PAIR TERM, and on a deletion panel it is the sharpest
-#:   architectural question we have. 019 proved the additive operator has NO pair term at
-#:   |S_b| = 1: the cross-attention softmax runs over a one-element key set, so alpha == 1
-#:   and H_pert[b,i] = g(h_i + c_b) with c_b shared by every gene i. Re-drawing W_Q, W_K at
-#:   std 10 changed the output by exactly 0.0 -- 16,200 of 32,760 attention parameters are
-#:   dead. EVERY metabolism strain is a single deletion, so this holds for all four arms
-#:   without exception. `replace` swaps in h_i * (1 + gamma(c_b)), a genuine rank-d = 90
-#:   bilinear interaction, identity at init.
-#: `mask_layers` {[1], [1,3]} -- MASK DEPTH, wave 5's own open stage. Layer 1 is where the
-#:   graph enters today; adding layer 3 routes it again deeper in the encoder. Legal only
-#:   because L is frozen at 6 -- at L=2 layer 3 does not exist and the config RAISES.
+#: DEPTH ORDER IS [2, 6, 4] AND THAT IS DELIBERATE. `itertools.product` varies the FIRST key
+#: slowest, so the enqueue order is depth-major and the grid completes in three waves of eight,
+#: each wave a COMPLETE 2x2x2 at one depth. All 24 cells cost the same (the third axis was
+#: chosen to be compute-neutral -- `hidden {90,180}` was rejected for exactly this reason), so
+#: if Delta runs slower than planned it is the LAST wave that gets squeezed. Ordering 2 before
+#: 6 before 4 means a squeeze costs the INTERPOLATION point and keeps both complete blocks of
+#: the contrast that matters: metabolism measured L=2 best (0.4301 vs 0.2764 at 4, 0.2396 at 6)
+#: while the expression line fixed L=6, and those were the OLD architecture at ~100 epochs.
+#:
+#: `attention_mask` {on, off} -- the graph ablation, and it is genuinely UNMEASURED. `_010`
+#:   froze masking on speed/memory/transfer and says so: its accuracy comparison was void
+#:   because the scorer resolved `D2_mask` to the literal string "A0_baseline" and averaged it
+#:   into the baseline. We just committed the architecture; this is the run that validates it.
+#: `lr` {1e-4, 1e-3} -- a decade apart, bracketing metabolism's own config default (1e-3) and
+#:   the direction longer training usually wants. Round numbers on purpose: every previous
+#:   metabolism lr was a single QMC sample, and all of them sat inside one half-decade.
+#: `target_norm` {zscore, yeo_johnson} -- the one axis our own rounds contradict (`_002`'s
+#:   betaxanthin winner was yeo-johnson, `_003`'s was zscore), never replicated, never run past
+#:   ~120 epochs.
 FACTORS: dict[str, dict[str, list[Any]]] = {
-    "betaxanthin": {"hadamard": ["off", "replace"], "mask_layers": [[1], [1, 3]]},
-    "beta_carotene": {"hadamard": ["off", "replace"], "mask_layers": [[1], [1, 3]]},
-    #: mulleder19 swaps MASK DEPTH for the DISTRIBUTION -- the only arm where that is a real
-    #: question, because it is the only one with a joint distribution to model. At F = 1 the
-    #: predictive covariance Sigma = diag(sigma^2) + V V^T has V of shape [1, k], so V V^T is
-    #: a scalar and `energy` degenerates into a noisier Monte-Carlo CRPS. Here F = 19. 019's
-    #: "the distributional axis is not the lever" was measured on expression, read by a
-    #: per-gene INDEPENDENT head -- a statement about MARGINALS, which says nothing about
-    #: whether modelling the joint pays.
-    "mulleder19": {"hadamard": ["off", "replace"], "dist": ["quantile", "energy"]},
+    "betaxanthin": {
+        "num_transformer_layers": [2, 6, 4],
+        "attention_mask": ["on", "off"],
+        "lr": [1e-4, 1e-3],
+        "target_norm": ["zscore", "yeo_johnson"],
+    }
 }
-#: The controlled pair runs TWO settings per side, so the 8 runs are
-#: 2 settings x {control, joint} x 2 init seeds. The pairing IS the experiment and it is
-#: worth the factor budget: both arms share every (setting, seed) cell, hence the same
-#: pinned split AND the same initialization, so `bx_m19 - bx_ctrl` is a PAIRED difference.
-#: Mask depth is frozen at [1] -- an axis that interacted with the auxiliary head would
-#: confound the one difference under test.
-FACTORS["bx_ctrl"] = {"hadamard": ["off", "replace"]}
+FACTORS["beta_carotene"] = dict(FACTORS["betaxanthin"])
+#: mulleder19 swaps `target_norm` for `dist`. It is the ONLY arm with a joint distribution to
+#: model: at F = 1 the predictive covariance Sigma = diag(sigma^2) + V V^T has V of shape
+#: [1, k], so V V^T is a scalar and `energy` degenerates into a noisier Monte-Carlo CRPS. Here
+#: F = 19. 019's "the distributional axis is not the lever" was measured on expression, read by
+#: a per-gene INDEPENDENT head -- a statement about MARGINALS, silent on modelling the joint.
+FACTORS["mulleder19"] = {
+    "num_transformer_layers": [2, 6, 4],
+    "attention_mask": ["on", "off"],
+    "lr": [1e-4, 1e-3],
+    "dist": ["quantile", "energy"],
+}
+#: The controlled pair swaps `target_norm` for the ARM itself, so the 24 runs per side become
+#: 12, and each (depth, mask, lr) cell is a PAIRED control-vs-joint comparison sharing the same
+#: pinned split and the same initialization.
+FACTORS["bx_ctrl"] = {
+    "num_transformer_layers": [2, 6, 4],
+    "attention_mask": ["on", "off"],
+    "lr": [1e-4, 1e-3],
+}
 FACTORS["bx_m19"] = dict(FACTORS["bx_ctrl"])
 
-#: Depth, frozen everywhere at the `_012` value. Left explicit rather than defaulted so a
-#: frozen architecture is always a stated choice.
-FIXED_LAYERS = {
-    a: 6 for a in ("betaxanthin", "beta_carotene", "mulleder19", "bx_ctrl", "bx_m19")
-}
-
-#: Short factor names for the setting label (a W&B tag, and a run-list column).
-ABBREV = {"dropout": "d", "num_transformer_layers": "L"}
+#: Short factor names for the setting label (a W&B tag and a run-list column).
+ABBREV = {"num_transformer_layers": "L", "lr": "lr", "dropout": "d"}
 
 
 def settings() -> list[dict[str, Any]]:
@@ -312,16 +322,22 @@ def settings() -> list[dict[str, Any]]:
     for i, levels in enumerate(itertools.product(*(factors[k] for k in keys))):
         params = dict(zip(keys, levels, strict=True))
         # Built from whatever factors THIS arm has, rather than a fixed template: mulleder19
-        # swaps depth for `dist`, so a hardcoded name would either KeyError or silently label
-        # two different settings identically. Abbreviated because the name becomes a W&B tag
-        # and a run-list column, where a 60-character label is unreadable.
-        parts = "_".join(
-            f"mask{''.join(str(x) for x in v)}"
-            if isinstance(v, list)
-            else (f"{ABBREV.get(k, k)}{v:g}" if isinstance(v, (int, float)) else f"{v}")
-            for k, v in sorted(params.items())
-        )
-        params["name"] = f"s{i}_{parts}"
+        # swaps target_norm for dist and the bx_* pair drops the axis entirely, so a hardcoded
+        # name would either KeyError or label two different settings identically. Zero-padded
+        # so the wave structure reads in sort order.
+        bits = []
+        for k, v in params.items():
+            if k == "num_transformer_layers":
+                bits.append(f"L{v}")
+            elif k == "attention_mask":
+                bits.append(f"mask{v}")
+            elif k == "lr":
+                bits.append(f"lr{v:g}")
+            elif k == "target_norm":
+                bits.append("zs" if v == "zscore" else "yj")
+            else:
+                bits.append(str(v))
+        params["name"] = f"s{i:02d}_" + "_".join(bits)
         out.append(params)
     return out
 
@@ -341,7 +357,6 @@ def _overrides(
     function needing to know which arm it is serving.
     """
     fixed = dict(FIXED[ARM])
-    fixed["num_transformer_layers"] = FIXED_LAYERS.get(ARM, 0)
     fixed.update({k: v for k, v in setting.items() if k != "name"})
     heads = ",".join(ACTIVE_HEADS)
     # Normalization is applied to EVERY active head, so the joint arm standardizes the
@@ -360,6 +375,10 @@ def _overrides(
         f"multitask.normalize_vector_targets=[{','.join(normalize_list)}]",
         f"multitask.standardize_per_feature_target=[{','.join(standardize_list)}]",
         f"model.num_transformer_layers={fixed['num_transformer_layers']}",
+        # THE GRAPH ABLATION. `off` leaves NO graph prior at all -- the mask is gone and the
+        # KL is already 0 -- which is the honest control for "do the nine graphs do anything
+        # under this architecture", a question `_010` never actually answered.
+        f"model.attention_mask.enabled={'true' if fixed['attention_mask'] == 'on' else 'false'}",
         f"model.dropout={fixed['dropout']}",
         f"model.perturbation_head.num_heads={fixed['perturbation_num_heads']}",
         # THE PAIR TERM. `off` is the additive reference operator, which at |S_b| = 1 has no
@@ -370,7 +389,7 @@ def _overrides(
         # is a structural constraint, so there is nothing to calibrate -- only where to apply
         # it. Layer indices must exist at `num_transformer_layers`, which is why L is frozen.
         f"model.attention_mask.layers=[{','.join(str(x) for x in fixed['mask_layers'])}]",
-        f"regression_task.optimizer.lr={fixed['lr']}",
+        f"regression_task.optimizer.lr={fixed['lr']:g}",
         f"regression_task.optimizer.weight_decay={fixed['weight_decay']}",
         f"data_module.num_workers={os.getenv('NUM_WORKERS', '4')}",
         # QUOTED elements. A tag like `s0_0.1_lam1.6e-05_2` contains `.` and `-`, which

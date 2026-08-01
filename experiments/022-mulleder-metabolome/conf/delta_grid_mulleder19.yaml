@@ -32,7 +32,7 @@ defaults:
   - _self_
 
 wandb:
-  project: torchcell_022_mulleder19_delta_grid
+  project: torchcell_022_mulleder19_v4
   tags: ["022", delta, grid, metabolism, metabolome, ninegraph, vector]
   log_model: false
 
@@ -126,12 +126,15 @@ trainer:
   # on its own, so at every-1 it truncated a 019 run to epoch 17 in 24 h. At every-25 it adds
   # ~2.6 s per epoch and still yields hundreds of curve points over a 48 h run.
   train_eval_every: 25
-  # A CEILING, NOT A TARGET. The stop that actually fires is `trainer.max_time_s`, set per
-  # trial by the grid runner from the job's remaining wall clock. 10,000 is simply high
-  # enough that the clock, not the counter, decides -- because we do not yet know where this
-  # target saturates, and an epoch cap picked in advance is the guess this round exists to
-  # replace.
-  max_epochs: 10000
+  # 1000, and it is now the stop that FIRES -- `max_time_s` drops to a backstop that only
+  # matters if a run would otherwise overrun the job. Chosen by the author: the val curve on
+  # expression peaks near epoch 2,075, but betaxanthin has never been run past ~120 and
+  # mulleder19 past ~160, so 1000 is already 6-40x anything metabolism has done, and spending
+  # beyond it buys less than spending the same GPU-hours on more crossed settings.
+  #
+  # STATE THE LIMIT PLAINLY: this round therefore does NOT establish saturation. If a curve is
+  # still climbing at 1000 the answer is "not yet saturated at 1000", not "converged".
+  max_epochs: 1000
   early_stopping:
     # OFF. On 019 expression, smoothed val Pearson peaked ~0.14 at epoch 85-136, FELL to
     # 0.08-0.11 by epoch 200-300, and then rose to a project-best 0.198 at epoch 1367 --

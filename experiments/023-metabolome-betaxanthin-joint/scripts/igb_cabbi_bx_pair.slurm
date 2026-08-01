@@ -51,10 +51,17 @@
 #SBATCH --output=/home/a-m/mjvolk3/scratch/torchcell/experiments/023-metabolome-betaxanthin-joint/slurm/output/%x_%j.out
 #SBATCH --error=/home/a-m/mjvolk3/scratch/torchcell/experiments/023-metabolome-betaxanthin-joint/slurm/output/%x_%j.out
 
-set -uo pipefail
+# `set -u` is DELIBERATELY OFF across the cluster init. IGB's /etc/bashrc line 12 reads
+# $BASHRCSOURCED before assigning it, so `source ~/.bashrc` under `set -u` aborts the job in
+# 10 seconds with a single line of output and nothing else -- which is exactly how job 2332340
+# died. Commit 93d5a7a9 fixed this for the other IGB launchers; this one reintroduced it.
+# pipefail is safe and stays on; -u comes back after the init, where it is ours to enforce.
+set -o pipefail
+set +u
 module purge
 source ~/.bashrc
 module load singularity
+set -u
 
 PROJECT_ROOT="${IGB_PROJECT_ROOT:-/home/a-m/mjvolk3/projects/torchcell-main}"
 SCRATCH_ROOT=/home/a-m/mjvolk3/scratch/torchcell

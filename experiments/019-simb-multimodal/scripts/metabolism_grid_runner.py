@@ -581,8 +581,19 @@ def _enqueue_all(study: optuna.Study) -> int:
     An enqueued (WAITING) trial keeps its values in `system_attrs["fixed_params"]` until it
     runs, so `.params` alone would fail to recognize the existing queue.
     """
+    # FAIL and PRUNED are DELIBERATELY ABSENT from `seen`, so a cell whose run died is
+    # re-enqueued rather than skipped. This is not hypothetical bookkeeping: the KeyError('lr')
+    # bug left FAILED trials in the Delta studies, and counting them as "already present" would
+    # have made the resubmit enqueue only the cells that had not yet reached the crash --
+    # silently running a PARTIAL factorial and reporting nothing wrong. The predecessor sweep
+    # driver had this exact carve-out; the rewrite dropped it.
+    #
+    # An enqueued (WAITING) trial keeps its values in `system_attrs["fixed_params"]` until it
+    # runs, so `.params` alone would fail to recognize a queue that is merely waiting.
     seen = set()
     for t in study.trials:
+        if t.state.name in ("FAIL", "PRUNED"):
+            continue
         params = t.params or t.system_attrs.get("fixed_params", {})
         if "setting" in params and "seed" in params:
             seen.add((params["setting"], params["seed"]))

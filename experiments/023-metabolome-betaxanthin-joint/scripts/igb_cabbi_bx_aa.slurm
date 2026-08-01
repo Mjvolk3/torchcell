@@ -117,7 +117,13 @@ singularity exec --nv "$PROJECT_ROOT/rockylinux_9.sif" bash -c "
   export GRID_BASE_CONFIG=igb_bx_aa
   export GRID_ROUNDS='$ROUNDS'
   export GRID_MANIFEST_DIR='$SCRATCH_ROOT/experiments/$EXP/results'
-  export OPTUNA_STORAGE='sqlite:///$OPTUNA_DIR/optuna_igb_bx_aa.db'
+  # SHARDED: each worker owns a disjoint slice in its OWN study and its OWN SQLite file.
+  # A SHARED queue does not work here -- optuna's WAITING-trial pop races across processes on
+  # SQLite. Measured on job 2332400 with this exact launcher: w0 and w1 both claimed trial 0,
+  # w2 and w3 both claimed trial 1, so six workers ran three distinct cells. The same race is
+  # in the Delta grids (one setting ran four times). Per-worker files remove the shared
+  # object entirely; see GRID_SHARD_COUNT / _owns_cell in the runner.
+  export GRID_SHARD_COUNT=$(( N_GPUS * WORKERS_PER_GPU ))
   # 0 dataloader workers: the dataset is small and spawn re-imports the whole stack per worker
   # off GPFS, which is the same cost that made Delta's sanity check take 38 minutes.
   export NUM_WORKERS=0
@@ -126,18 +132,26 @@ singularity exec --nv "$PROJECT_ROOT/rockylinux_9.sif" bash -c "
   # Fixed 600 epochs for EVERY cell that starts -- see the header and _trial_time_budget.
   export GRID_NO_TIME_CAP=1
 
-  # Build the queue ONCE, before any GPU work. This is also the import-time gate: a
-  # mis-specified arm (missing REQUIRED_KEYS, drifted amino-acid list, unknown panel) exits
-  # here in seconds rather than inside the first trial of a 22 h allocation.
-  python '$RUNNER' --create-only || exit 1
+  # Build each worker's queue ONCE, SEQUENTIALLY, before any GPU work. Sequential because
+  # each --create-only writes its own fresh SQLite file and a fresh file's DDL should not be
+  # raced. This is also the import-time gate: a mis-specified arm (missing REQUIRED_KEYS,
+  # drifted amino-acid list, unknown panel, shard count not dividing the settings) exits here
+  # in seconds rather than inside the first trial of a 22 h allocation.
+  for w in \$(seq 0 \$(( GRID_SHARD_COUNT - 1 ))); do
+    OPTUNA_WORKER_ID=\$w \
+      OPTUNA_STORAGE=\"sqlite:///$OPTUNA_DIR/optuna_igb_bx_aa_w\${w}.db\" \
+      python '$RUNNER' --create-only || exit 1
+  done
 
   w=0
   for g in \$(seq 0 \$(( $N_GPUS - 1 ))); do
     for k in \$(seq 1 $WORKERS_PER_GPU); do
-      CUDA_VISIBLE_DEVICES=\$g OPTUNA_WORKER_ID=\$w python '$RUNNER' &
+      CUDA_VISIBLE_DEVICES=\$g OPTUNA_WORKER_ID=\$w \
+        OPTUNA_STORAGE=\"sqlite:///$OPTUNA_DIR/optuna_igb_bx_aa_w\${w}.db\" \
+        python '$RUNNER' &
       w=\$(( w + 1 ))
-      # Stagger starts: six processes opening the same SQLite study and the same LMDB at once
-      # is a needless contention spike at t=0.
+      # Stagger starts: six processes opening the same LMDB at once is a needless contention
+      # spike at t=0.
       sleep 20
     done
   done

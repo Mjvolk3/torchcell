@@ -81,10 +81,17 @@ FIG4_DIR = osp.join(
 )
 OUT_DIR = osp.join(ASSET_IMAGES_DIR, "020-cachera-betaxanthin")
 
-#: low / medium / high. Red -> sand -> blue echoes their own Fig 4 encoding while staying
-#: inside the repo palette (indices 1, 3, 4), and it is ORDERED, which a categorical hue
+#: low / medium / high -- the PALE variants (PLOT_PALETTE_FILL 1, 3, 4), red -> sand -> blue.
+#: The hue order echoes their own Fig 4 encoding and is ORDERED, which a categorical hue
 #: assignment would not be.
-CLASS_COLORS = [PLOT_PALETTE[1], PLOT_PALETTE[3], PLOT_PALETTE[4]]
+#:
+#: This is a DELIBERATE departure from the repo default of using line colors for plot marks.
+#: These bars are large filled AREAS carrying in-bar numeric labels, not thin marks: at full
+#: chroma three saturated blocks fight each other for attention and the black text on the mid
+#: blue and mid red loses contrast. The pale fills with black edges are the draw.io Fig-1
+#: look, and the black edge is what keeps them legible -- which is why `edgecolor="black"` is
+#: not optional here.
+CLASS_COLORS = [PLOT_PALETTE_FILL[1], PLOT_PALETTE_FILL[3], PLOT_PALETTE_FILL[4]]
 CLASS_NAMES = ["low", "medium", "high"]
 #: TWO MODELS, TWO PRIMARY COLORS, and the binning is encoded by LIGHTNESS within a color --
 #: the sanctioned two-level bar (line color = the deployed binning, its pale companion from

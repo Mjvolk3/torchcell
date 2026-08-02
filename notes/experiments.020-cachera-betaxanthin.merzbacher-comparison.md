@@ -142,7 +142,7 @@ accuracy (0.7011 vs 0.700), asserted in the script rather than assumed.
 
 ### Fig 1 -- the published accuracy advantage is a majority-class artifact
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig1_accuracy_artifact_2026-08-01-22-25-09.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig1_accuracy_artifact_2026-08-01-22-28-03.svg)
 
 Their RF's 0.701 clears the 0.674 majority rate by calling **95 % of genes medium**; CGT's
 absolute binning sits at 0.681 doing the same thing (94 % medium, and it never calls a single
@@ -152,7 +152,7 @@ gene low). Force both sides to the true class marginal and RF drops to 0.556, CG
 
 ### Fig 3 -- per-class recall: CGT finds more high producers
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig3_per_class_recall_2026-08-01-22-25-09.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig3_per_class_recall_2026-08-01-22-28-03.svg)
 
 Rank-matched, CGT reaches **0.29 recall on high producers against their published 0.18**, and
 0.19 on low against their 0.06 -- paid for in medium recall (0.70 vs 0.98). Rank-matching
@@ -161,11 +161,11 @@ are shown for both models.
 
 ### Fig 2 -- predicted class distribution
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig2_class_distribution_2026-08-01-22-25-09.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig2_class_distribution_2026-08-01-22-28-03.svg)
 
 ### Fig 4 -- confusion matrices, both sides rank-matched
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig4_confusion_rank_matched_2026-08-01-22-25-09.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig4_confusion_rank_matched_2026-08-01-22-28-03.svg)
 
 The two confusion matrices are near-identical (0.556 vs 0.549) but the models are NOT making
 the same predictions: their gene-level score correlates with CGT's at **r = 0.108** and the

@@ -47,7 +47,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-from scipy.stats import rankdata, spearmanr
+from scipy.stats import hypergeom, rankdata, spearmanr
 from sklearn.metrics import roc_auc_score, roc_curve
 
 from torchcell.timestamp import timestamp
@@ -73,6 +73,11 @@ ASSET_IMAGES_DIR = os.environ["ASSET_IMAGES_DIR"]
 RESULTS_DIR = osp.join(EXPERIMENT_ROOT, "020-cachera-betaxanthin", "results")
 SPLIT_PATH = osp.join(RESULTS_DIR, "merzbacher_nested_split.json")
 BASELINE_PATH = osp.join(RESULTS_DIR, "merzbacher_baseline_analysis.json")
+#: yeast-GEM defines WHAT FCL CAN SEE. Their features are flux samples from this genome-scale
+#: metabolic model, so a deletion of a gene the model does not contain changes no flux and
+#: yields no feature -- the method has nothing to predict from. Their own test set is
+#: 639/640 (99.8 %) inside it, which is the empirical confirmation.
+GEM_PATH = osp.join(DATA_ROOT, "data", "scerevisiae", "yeast-GEM.xlsx")
 FIG4_DIR = osp.join(
     DATA_ROOT,
     "data",
@@ -358,6 +363,7 @@ def main() -> None:
     fig_roc(ours, rf_sc, t, best, ts)
     fig_cell_spread(ours, rf_sc, obs, t, best, ts)
     fig_label_provenance(t, obs, ts)
+    fig_nonmetabolic(dumps, raw, split, best, ts)
     # The class-distribution, per-class-recall and confusion panels are diagnostics that
     # informed the reading above and are cited in the note; they are not carried in the figure
     # set. `--all` regenerates them.
@@ -1027,6 +1033,114 @@ def fig_label_provenance(t: np.ndarray, obs: np.ndarray, ts: str) -> None:
     ax.set_axisbelow(True)
     fig.tight_layout(pad=0.4)
     save(fig, "merzbacher_fig7_label_provenance", ts)
+
+
+def load_gem_genes() -> set[str]:
+    """Systematic ORF names in yeast-GEM -- the boundary of what a flux-based method can see."""
+    df = pd.read_excel(GEM_PATH, sheet_name="GENES")
+    return {str(v).strip().upper() for v in df["NAME"].dropna()}
+
+
+def fig_nonmetabolic(dumps: list, raw: dict, split: dict, best: str, ts: str) -> None:
+    """CGT on genes INSIDE vs OUTSIDE the metabolic model -- the capability difference.
+
+    THE ARGUMENT. Merzbacher's features are flux samples drawn from yeast-GEM. Deleting a gene
+    the model does not contain perturbs no reaction, so the flux distribution is unchanged and
+    the method has no feature to predict from: its output for such a gene is not poor, it is
+    UNDEFINED. Their own test set is 639/640 (99.8 %) inside yeast-GEM, which is what that
+    constraint looks like in practice. CGT takes the whole-genome graph and is under no such
+    restriction.
+
+    So the question this figure asks is one their method cannot be asked at all: among the
+    deletions OUTSIDE the metabolic model, does CGT still find high betaxanthin producers?
+
+    LABELS ARE DERIVED HERE, and they have to be: Merzbacher never labelled these genes. Both
+    panels therefore use the SAME rule on the SAME scale (their 0.40/0.65 cuts on a train-pool
+    min-max), so the two sides are comparable to each other. That also means the left panel's
+    class counts differ from their released labels -- see Fig 7 -- and the comparison to make
+    is panel-vs-panel, not panel-vs-their-paper.
+
+    A STRUCTURAL claim, not a measured one: we did not run their model on non-GEM genes. The
+    claim is that their feature construction admits no such input, which follows from what
+    flux sampling is.
+    """
+    gem = load_gem_genes()
+    pool = np.array(
+        [raw[x] for x in split["split"]["train_val_pool"] if x in raw], dtype=float
+    )
+    lo, hi = float(np.nanmin(pool)), float(np.nanmax(pool))
+    d = [x for x in dumps if x["_setting"] == best][0]
+
+    fig, axes = plt.subplots(
+        1, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(62))
+    )
+    panels = [
+        ("in yeast-GEM\nCachera FCL CAN model these", lambda x: x in gem),
+        ("NOT in yeast-GEM\nCachera FCL has no features here", lambda x: x not in gem),
+    ]
+    for ax, (title, sel) in zip(axes, panels):
+        gs = sorted(x for x in d["_genes"] if x in raw and sel(x))
+        obs = np.array([raw[x] for x in gs], dtype=float)
+        pred = np.array([d["_genes"][x] for x in gs], dtype=float)
+        cls = scale_bins(obs, lo, hi)
+        is_hi = (cls == 2).astype(int)
+        n, k_hi = len(gs), int(is_hi.sum())
+        for c in range(3):
+            m = cls == c
+            ax.scatter(
+                obs[m],
+                pred[m],
+                s=6,
+                color=CLASS_COLORS[c],
+                linewidths=0.0,
+                label=f"{CLASS_NAMES[c]} (n={int(m.sum())})",
+                zorder=3,
+            )
+        top = np.argsort(-pred)[:25]
+        hits = int(is_hi[top].sum())
+        pv = hypergeom.sf(hits - 1, n, k_hi, 25)
+        ax.scatter(
+            obs[top],
+            pred[top],
+            s=26,
+            facecolors="none",
+            edgecolors="black",
+            linewidths=0.5,
+            zorder=4,
+            label="CGT top 25",
+        )
+        rho = float(spearmanr(pred, obs).statistic)
+        ax.set_title(
+            f"{title}\nn={n}, {k_hi} high ({k_hi / n:.1%})   Spearman {rho:+.3f}\n"
+            f"CGT top 25: {hits} high = {hits / 25:.0%} vs {k_hi / n:.0%} expected "
+            f"({hits / (25 * k_hi / n):.1f}x, p={pv:.0e})",
+            fontsize=5,
+            pad=4,
+        )
+        ax.set_xlabel("measured betaxanthin, our copy (z)")
+        ax.set_ylabel("CGT predicted betaxanthin (z)")
+        ax.grid(lw=0.3, color="0.92", zorder=0)
+        ax.set_axisbelow(True)
+        ax.legend(
+            frameon=False,
+            fontsize=4.5,
+            loc="upper left",
+            handletextpad=0.2,
+            markerscale=1.4,
+        )
+    fig.tight_layout(pad=0.4, rect=(0.0, 0.09, 1.0, 1.0))
+    fig.text(
+        0.5,
+        0.015,
+        "Both panels are HELD-OUT test genes for CGT, under the same derived labels (their "
+        "0.40/0.65 cuts on a train-pool min-max scale).\n"
+        "The right panel is a question Cachera's method cannot be asked: flux sampling gives "
+        "no feature for a deletion outside the metabolic model.",
+        ha="center",
+        fontsize=4.5,
+        color="0.35",
+    )
+    save(fig, "merzbacher_fig8_metabolic_vs_nonmetabolic", ts)
 
 
 if __name__ == "__main__":

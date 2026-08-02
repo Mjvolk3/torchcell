@@ -655,7 +655,7 @@ def fig_scatter(
         # of its points sit inside 0.22 of each other, so the cloud looks better spread than
         # it is. The band is the visual form of the number in the title.
         p10, p90 = np.percentile(y, [10, 90])
-        ax.axhspan(p10, p90, color="0.88", alpha=0.6, zorder=1)
+        ax.axhspan(p10, p90, color=PLOT_PALETTE_FILL[5], zorder=1)
         # The span goes in the TITLE and the band is explained ONCE in a figure caption.
         # An in-axes annotation was tried and landed on top of the point cloud, where it was
         # unreadable and hid the data it was describing.
@@ -669,28 +669,38 @@ def fig_scatter(
         ax.tick_params(labelsize=5)
         ax.grid(lw=0.3, color="0.92", zorder=0)
         ax.set_axisbelow(True)
-    axes[0].legend(
+    # FIGURE-level legend BELOW the panels, not inside panel 1. In-axes it sat in the
+    # upper-left of the first panel, directly on top of two red points -- and there is no
+    # in-axes corner that is reliably empty across all three panels, since each has a
+    # different x variable. Outside the axes it cannot collide with data at all.
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(
+        handles,
+        labels,
+        loc="lower center",
+        bbox_to_anchor=(0.5, 0.085),
+        ncol=3,
         frameon=False,
-        fontsize=4.5,
-        loc="upper left",
-        handletextpad=0.2,
+        fontsize=5,
+        handletextpad=0.3,
+        columnspacing=1.4,
         markerscale=1.8,
-        title="released class label",
-        title_fontsize=4.5,
+        title="released class label (FCL paper)",
+        title_fontsize=5,
     )
     # tight_layout FIRST (it computes label extents), then widen the gutters and reserve the
     # caption strip -- doing it in the other order lets tight_layout overwrite both, which is
     # how the x-labels got clipped off the bottom.
-    fig.tight_layout(pad=0.4, rect=(0.0, 0.075, 1.0, 1.0))
+    fig.tight_layout(pad=0.4, rect=(0.0, 0.20, 1.0, 1.0))
     fig.subplots_adjust(wspace=0.40)
     fig.text(
         0.5,
         0.018,
         "shaded band = middle 80% (10th-90th percentile) of the y-axis model's own output; a "
         "narrow band means the model returns nearly the same value for every gene.\n"
-        "Color is MERZBACHER'S released label, the x-axis is OUR copy of the same screen: "
-        "they agree at Spearman 0.73 and 18.8% of genes would bin differently, which is why "
-        "the colors overlap along x.",
+        "Color is the FCL paper's RELEASED class label; x is our copy of the Cachera screen. "
+        "They agree at Spearman 0.73 (88% of attainable) and 18.8% of genes fall in a "
+        "different bin, which is why the colors overlap along x -- see Fig 7.",
         ha="center",
         fontsize=4.5,
         color="0.35",

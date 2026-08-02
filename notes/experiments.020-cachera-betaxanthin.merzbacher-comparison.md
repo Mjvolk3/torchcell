@@ -123,16 +123,23 @@ so it is a plateau rather than a lucky trial. Companion arms: `021-ozaydin-beta-
 Related: [[plan.cgt-metabolism-flux-layer.2026.07.26]] ·
 [[plan.simb-2026-multimodal-cgt.2026.07.21]]
 
-## 2026.08.02 - Head-to-head vs Cachera/Merzbacher, and the capability gap
+## 2026.08.02 - CGT vs Flux Cone Learning on the Cachera betaxanthin screen
+
+**Naming, because the two get conflated.** *Cachera* is the genome-wide betaxanthin DELETION
+SCREEN -- the data, ~4,700 single deletions, and the ground truth for both models. *Flux Cone
+Learning* (FCL) is Merzbacher et al.'s METHOD, which learns from flux samples drawn through a
+genome-scale metabolic model; `RandomForest_Resampled` is its best variant and is what "FCL
+RF" means throughout. The comparison is **CGT vs FCL, both scored on the Cachera screen** --
+not "us vs Cachera".
 
 All figures regenerate from
 `experiments/020-cachera-betaxanthin/scripts/plot_merzbacher_comparison.py`, built from the
-10 finished Delta `020_v4` cells (`$DATA_ROOT/test-predictions/`) and their shipped
+10 finished Delta `020_v4` cells (`$DATA_ROOT/test-predictions/`) and the FCL paper's shipped
 `figures/fig4/fig4c_*.csv`.
 
 - **639 genes** carry their label, a CGT prediction and a raw screen value. Their 640th
   (IPP1/YBR011C) is essential -- no deletion strain exists, so no screen could measure it.
-- **Their model = RandomForest_Resampled**, their best (their other three read 0.56-0.64
+- **FCL model = RandomForest_Resampled**, the best of their four (the others read 0.56-0.64
   gene-level against RF's 0.700).
 - **CGT = ONE cell, selected by VALIDATION** (`s09_L6_maskon_lr0.0001_yj`, val 0.3639), never
   by its score on their test genes.
@@ -156,24 +163,24 @@ All figures regenerate from
 
 ### Fig 1 -- per-gene spread (639 points)
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig1_scatter_spread_2026-08-02-10-53-02.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig1_scatter_spread_2026-08-02-11-33-43.svg)
 
 **Fig 1. Both models emit a nearly constant value; the two disagree about which genes.** 80 %
 of their genes fall inside an E[class] band of 0.22 on a 0-2 scale, 80 % of CGT's inside 0.33
-z-units. Colour is Merzbacher's released label, x is OUR copy of the same screen.
+z-units. Colour is the FCL paper's released class label, x is OUR copy of the same screen.
 
 | pair | Pearson | Spearman |
 | --- | --: | --: |
-| measured vs Cachera RF | +0.244 | **+0.039** |
+| measured vs FCL RF | +0.244 | **+0.039** |
 | measured vs CGT | +0.294 | **+0.105** |
-| Cachera RF vs CGT | +0.108 | **-0.128** |
+| FCL RF vs CGT | +0.108 | **-0.128** |
 
 Pearson exceeds Spearman on both model rows because each gets a few extreme genes right and is
 otherwise flat. In RANK the two models are slightly ANTI-correlated.
 
 ### Fig 2 -- why the accuracy comparison is degenerate
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig2_accuracy_artifact_2026-08-02-10-53-02.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig2_accuracy_artifact_2026-08-02-11-33-43.svg)
 
 **Fig 2. Accuracy above the majority line is the conservative-majority strategy, not
 discrimination -- for both models.** RF's 0.701 clears the 0.674 majority rate by 0.027 by
@@ -182,14 +189,14 @@ the true class marginal, RF drops to 0.556 and CGT to 0.549. Evidence, not a res
 
 ### Fig 3 -- precision@k for high producers
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig3_precision_at_k_2026-08-02-10-53-02.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig3_precision_at_k_2026-08-02-11-33-43.svg)
 
 **Fig 3. Both models are strongly enriched at the top of their ranking.** Of the top k genes
 each nominates, the fraction truly high; random is 0.156.
 
 | model | k=10 | k=25 | k=50 |
 | --- | --: | --: | --: |
-| Cachera RF | 8 (5.1x, p=1e-05) | 19 (4.9x, p=8e-12) | 20 (2.6x, p=1e-05) |
+| FCL RF | 8 (5.1x, p=1e-05) | 19 (4.9x, p=8e-12) | 20 (2.6x, p=1e-05) |
 | CGT | **9** (5.8x, p=4e-07) | 18 (4.6x, p=1e-10) | **24** (3.1x, p=2e-08) |
 
 Nine of CGT's top ten are genuine high producers. The two models track each other closely and
@@ -198,7 +205,7 @@ cell choice matters more than the CGT-vs-RF gap.
 
 ### Fig 4 -- score by class, as percentile rank
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig4_score_by_class_2026-08-02-10-53-02.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig4_score_by_class_2026-08-02-11-33-43.svg)
 
 **Fig 4. Neither model orders the classes across the bulk of the population.** Percentile rank
 puts two models with incomparable units on one axis; a separating model shows three stepping
@@ -206,7 +213,7 @@ boxes.
 
 | model | low | medium | high |
 | --- | --: | --: | --: |
-| Cachera RF | 54 | 49 | 56 |
+| FCL RF | 54 | 49 | 56 |
 | CGT | 48 | 51 | 52 |
 
 **Read this WITH Fig 3, not instead of it.** A median is a bulk statistic and the top 25 genes
@@ -215,7 +222,7 @@ and confined to the tail -- not that there is none.
 
 ### Fig 5 -- ROC for high-producer detection
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig5_roc_high_producers_2026-08-02-10-53-02.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig5_roc_high_producers_2026-08-02-11-33-43.svg)
 
 **Fig 5. Threshold-free, and it goes marginally to their RF: AUC 0.570 vs CGT's 0.557.** Both
 near the 0.500 chance line, because AUC integrates over the whole ranking where neither model
@@ -224,7 +231,7 @@ precision@k is a wash, and no gap is large.
 
 ### Fig 6 -- how much is cell selection?
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig6_cell_spread_2026-08-02-10-53-02.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig6_cell_spread_2026-08-02-11-33-43.svg)
 
 **Fig 6. The spread across grid cells is wider than the gap between models.** CGT cells span
 0.013-0.158 Spearman (8 of 10 beat RF's 0.039) and 0.406-0.695 AUC (only 3 of 10 beat RF's
@@ -234,7 +241,7 @@ quoted, which is why the cell is fixed by validation in advance.
 
 ### Fig 7 -- do their labels track our copy of the screen?
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig7_label_provenance_2026-08-02-10-53-02.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig7_label_provenance_2026-08-02-11-33-43.svg)
 
 **Fig 7. Their labels reach 88 % of the attainable ceiling -- a modest caveat, not a problem.**
 Spearman 0.731 against a ceiling of 0.827 (a 3-level ordinal cannot reach 1.0 against a
@@ -244,7 +251,7 @@ values, so a model perfectly predicting OUR measurement would still be scored wr
 
 ### Fig 8 -- the capability gap: metabolic vs non-metabolic genes
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig8_metabolic_vs_nonmetabolic_2026-08-02-10-53-02.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig8_metabolic_vs_nonmetabolic_2026-08-02-11-33-43.svg)
 
 **Fig 8. CGT predicts high betaxanthin producers among deletions the flux-based method cannot
 represent.** Held-out test genes split by yeast-GEM membership, identical derived labels on
@@ -257,9 +264,9 @@ both sides (their 0.40/0.65 cuts on a train-pool min-max scale). Circled = CGT's
 | CGT Spearman vs measured | +0.124 | **+0.270** |
 | CGT top 25: high found | 17 (68%) | 9 (36%) |
 | enrichment over base rate | 9.3x, p=2e-15 | **4.4x, p=2e-05** |
-| **Cachera FCL prediction** | available | **none possible** |
+| **Flux Cone Learning prediction** | available | **none possible** |
 
-Merzbacher's test set is **639/640 (99.8 %) inside yeast-GEM**; of our other test genes only
+the FCL paper's test set is **639/640 (99.8 %) inside yeast-GEM**; of our other test genes only
 **21/294 (7.1 %)** are. That is what the constraint looks like in practice: flux sampling
 yields no feature for a deletion the metabolic model does not contain, so FCL's output for
 those genes is not poor, it is undefined.
@@ -268,7 +275,7 @@ CGT's rank correlation is *higher* on the non-metabolic set (+0.270 vs +0.124). 
 enrichments are strongly significant.
 
 **Caveats, and they matter for how hard this can be pushed.** (i) Labels for the non-GEM genes
-are DERIVED by us -- Merzbacher never labelled them -- so both panels use our derivation and
+are DERIVED by us -- the FCL paper never labelled them -- so both panels use our derivation and
 the comparison to make is panel-vs-panel, not panel-vs-their-paper. (ii) n=258 with 21
 positives is modest; the interval on 4.4x is wide. (iii) "FCL cannot model these" is a
 STRUCTURAL claim about flux-sample features, not an experiment we ran on their code.

@@ -149,10 +149,10 @@ signal += len(comp.flush())                                     # the "remainder
 
 ### Signal vs scale (the payoff)
 
-![Instances vs Signal for the supported datasets](assets/images/database/supported-datasets-instances-vs-signal.png)
+![Instances vs Signal for the supported datasets](assets/images/database/supported-datasets-instances-vs-signal.svg)
 
-Each point is a dataset; x = Instances (dataset length), y = Signal (gzip bytes),
-both log. Points ride a rough diagonal (more records -> more bytes), but the
+Each point is a dataset; x = Instances (dataset length), y = Signal (gzip bits),
+both log. Points ride a rough diagonal (more records -> more bits), but the
 residuals are the story: scalar-phenotype fitness/interaction/chemogenomic sets
 sit where their **combinatorial genotype** dominates, while high-dimensional
 omics (expression, morphology, proteome) float above the diagonal on
@@ -186,3 +186,26 @@ Nothing about the measurement changed -- only the display unit:
 So every prior number in this note stated in bytes is the same measurement; multiply
 by 8 to read it as the table now prints it (e.g. the 49-dataset total
 3.3x10^9 bytes -> **2.6x10^10 bits**).
+
+## 2026.08.01 - Scatter rebuilt on the repo palette + figure standard
+
+`plot_supported_datasets_signal.py` now follows the repo-wide Figure & Plotting
+Standards instead of the generic `torchcell.mplstyle` color cycle:
+
+- **Palette** -- the eight phenotype categories take the first eight entries of the
+  ordered green-free `torchcell.utils.PLOT_PALETTE`, in `sections` order (amber,
+  brick, lilac, wheat, steel blue, gray, bronze, maroon). Marker faces use the
+  LINE colors, with a 0.3 pt black edge.
+- **Shape as the second channel** -- entries 7-8 are the *dark* repeats of the
+  orange and red slots, so they sit near their primaries. The standard says
+  disambiguate with pattern rather than by inventing colors, so each category also
+  carries its own marker (`o s ^ D v P X h`).
+- **Panel geometry** -- `PANEL_WIDTHS_MM["full"]` (179 mm) x 120 mm via `mm_to_in`,
+  Arial 6 pt, `svg.fonttype: none`, all four spines boxed at 0.5 pt, major+minor
+  log grid behind the marks.
+- **Both files, SVG embedded** -- writes `.png` (raster fallback) and a true-size
+  `.svg` through `savefig_true_size_svg`; this note now embeds the SVG.
+- Axis limits are padded (x /4 and x20, y /6 and x4) because `adjust_text` can move
+  a label but cannot push it outside the axes -- without the pad the long right-hand
+  labels ran off a fixed-width panel. The legend sits INSIDE the axes at lower right
+  (empty, since the points ride the diagonal), which keeps the width at exactly 179 mm.

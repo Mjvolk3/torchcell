@@ -166,3 +166,23 @@ payload (natural-isolate perturbations hold only `sequence_uri` + `sequence_sha2
 pointers, not nucleotides). So the number measures the information in the **stored
 instance representation** (including stored annotation: SE, `n_replicates`,
 `measurement_type`, ontology IDs, descriptions), not a minimal encoding.
+
+## 2026.08.01 - Reporting unit changed to BITS
+
+The published views now report the Signal in **bits**, not bytes: the table column
+is `Signal (gzip, bits)` and the scatter's y-axis is `Signal (gzip, bits)`. A
+codelength is naturally quoted in bits, and it matches the bit accounting in
+[[experiments.018-natural-isolate-genomics]].
+
+Nothing about the measurement changed -- only the display unit:
+
+- `stream_gzip_signal` still returns **bytes** (that is what `zlib` reports), and the
+  raw-data artifact `results/pre-build/<date>/supported_datasets.json` still stores
+  `signal_bytes`. The unit is stable at the source of truth.
+- The two VIEW scripts multiply by `BITS_PER_BYTE = 8` at render time:
+  `render_supported_datasets_table.py` (`signal_cell` + `totals_footer`) and
+  `plot_supported_datasets_signal.py` (y values + label).
+
+So every prior number in this note stated in bytes is the same measurement; multiply
+by 8 to read it as the table now prints it (e.g. the 49-dataset total
+3.3x10^9 bytes -> **2.6x10^10 bits**).

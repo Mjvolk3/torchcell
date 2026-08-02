@@ -613,6 +613,8 @@ def fig_scatter(
             "CGT   predicted (z)",
         ),
     ]
+    # wspace is explicit: at the default the y-label of panels 2 and 3 crowds the previous
+    # panel's tick labels, which reads as one plot bleeding into the next.
     fig, axes = plt.subplots(
         1, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(56))
     )
@@ -629,13 +631,19 @@ def fig_scatter(
                 zorder=3,
             )
         rho = float(spearmanr(y, x).statistic)
-        # The 10th-90th percentile band of the y variable: the numeric statement of how
-        # compressed that model's output is, independent of where the cloud sits on the axis.
+        # THE BAND IS THE MIDDLE 80 % OF THE Y-AXIS MODEL'S OUTPUT (10th-90th percentile),
+        # and it is labelled in-axes because an unlabelled grey box explains nothing. It is
+        # here because the axis LIMITS hide the compression: panel 1 spans 0.1-2.0 while 80 %
+        # of its points sit inside 0.22 of each other, so the cloud looks better spread than
+        # it is. The band is the visual form of the number in the title.
         p10, p90 = np.percentile(y, [10, 90])
-        ax.axhspan(p10, p90, color="0.88", alpha=0.5, zorder=1)
+        ax.axhspan(p10, p90, color="0.88", alpha=0.6, zorder=1)
+        # The span goes in the TITLE and the band is explained ONCE in a figure caption.
+        # An in-axes annotation was tried and landed on top of the point cloud, where it was
+        # unreadable and hid the data it was describing.
         ax.set_title(
-            f"{name}\nSpearman {rho:+.3f}    80% of y within {p90 - p10:.2f}",
-            fontsize=5,
+            f"{name}\nSpearman {rho:+.3f}    middle 80% spans {p90 - p10:.2f}",
+            fontsize=5.5,
             pad=3,
         )
         ax.set_xlabel(xlab, fontsize=5.5)
@@ -652,7 +660,20 @@ def fig_scatter(
         title="true class",
         title_fontsize=4.5,
     )
-    fig.tight_layout(pad=0.4)
+    # tight_layout FIRST (it computes label extents), then widen the gutters and reserve the
+    # caption strip -- doing it in the other order lets tight_layout overwrite both, which is
+    # how the x-labels got clipped off the bottom.
+    fig.tight_layout(pad=0.4, rect=(0.0, 0.075, 1.0, 1.0))
+    fig.subplots_adjust(wspace=0.40)
+    fig.text(
+        0.5,
+        0.018,
+        "shaded band = middle 80% (10th-90th percentile) of the y-axis model's own output; "
+        "a narrow band means the model returns nearly the same value for every gene",
+        ha="center",
+        fontsize=4.5,
+        color="0.35",
+    )
     save(fig, "merzbacher_fig1_scatter_spread", ts)
 
 

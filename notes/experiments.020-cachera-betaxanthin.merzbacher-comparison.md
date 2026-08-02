@@ -141,7 +141,7 @@ published accuracy (0.7011 vs 0.700), asserted in the script rather than assumed
 
 ### Fig 1 -- the spread, per gene (639 points)
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig1_scatter_spread_2026-08-01-22-43-07.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig1_scatter_spread_2026-08-01-22-47-34.svg)
 
 **Both models emit a nearly constant value.** 80 % of their genes fall inside an E[class] band
 of 0.22 on a 0-2 scale; 80 % of CGT's inside 0.33 z-units. That is the whole reason the
@@ -162,7 +162,7 @@ ANTI-correlated -- they are wrong about different genes.
 
 ### Fig 2 -- why the accuracy comparison is degenerate
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig2_accuracy_artifact_2026-08-01-22-43-07.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig2_accuracy_artifact_2026-08-01-22-47-34.svg)
 
 Their RF's 0.701 clears the 0.674 majority rate by 0.027, and it does so by calling 95 % of
 genes medium; CGT's absolute binning sits at 0.681 doing the same (94 % medium, and it never

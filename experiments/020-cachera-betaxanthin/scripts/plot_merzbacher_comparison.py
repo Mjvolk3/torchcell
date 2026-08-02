@@ -106,7 +106,11 @@ TRUTH_C = PLOT_PALETTE[2]  # purple
 #: on their own gene-level numbers (0.56-0.64 against RF's 0.700), so carrying them would add
 #: three rows that only restate "RF wins among their models".
 RF_MODEL = "RandomForestClassifier_Resampled"
-RF_LABEL = "Cachera RF"
+#: THE METHOD, NOT THE DATASET. Cachera is the betaxanthin SCREEN we score against;
+#: Flux Cone Learning (FCL) is Merzbacher et al.'s METHOD, and RandomForest_Resampled is its
+#: best variant. Labelling their model "Cachera RF" conflated the data with the approach --
+#: the comparison is CGT vs FCL, both evaluated on the Cachera screen.
+RF_LABEL = "FCL RF"
 CGT_LABEL = "CGT"
 
 #: A sequential map built from the palette orange, replacing matplotlib's built-in `Oranges`
@@ -608,21 +612,21 @@ def fig_scatter(
             f"{RF_LABEL} vs measured",
             obs,
             rf_score,
-            "measured betaxanthin, our copy of the screen (z)",
-            "Cachera RF   E[class]",
+            "measured betaxanthin, Cachera screen (z)",
+            "FCL RF   E[class]",
         ),
         (
             f"{CGT_LABEL} vs measured",
             obs,
             cgt["raw"],
-            "measured betaxanthin, our copy of the screen (z)",
+            "measured betaxanthin, Cachera screen (z)",
             "CGT   predicted (z)",
         ),
         (
             f"{CGT_LABEL} vs {RF_LABEL}",
             rf_score,
             cgt["raw"],
-            "Cachera RF   E[class]",
+            "FCL RF   E[class]",
             "CGT   predicted (z)",
         ),
     ]
@@ -670,7 +674,7 @@ def fig_scatter(
         loc="upper left",
         handletextpad=0.2,
         markerscale=1.8,
-        title="Merzbacher label",
+        title="released class label",
         title_fontsize=4.5,
     )
     # tight_layout FIRST (it computes label extents), then widen the gutters and reserve the
@@ -859,7 +863,7 @@ def fig_score_by_class(
     ax.set_xticklabels(
         [f"{n}\n(n={int((t == c).sum())})" for c, n in enumerate(CLASS_NAMES)]
     )
-    ax.set_xlabel("Merzbacher label")
+    ax.set_xlabel("released class label (FCL paper)")
     ax.set_ylabel("model's own score, percentile rank")
     ax.set_ylim(0, 112)
     ax.set_yticks([0, 25, 50, 75, 100])
@@ -1014,8 +1018,8 @@ def fig_label_provenance(t: np.ndarray, obs: np.ndarray, ts: str) -> None:
     ax.set_yticklabels(
         [f"{n}\n(n={int((t == c).sum())})" for c, n in enumerate(CLASS_NAMES)]
     )
-    ax.set_xlabel("measured betaxanthin, OUR copy of the screen (z)")
-    ax.set_ylabel("Merzbacher released label")
+    ax.set_xlabel("measured betaxanthin, Cachera screen (z)")
+    ax.set_ylabel("released class label (FCL paper)")
     # A 3-level ordinal against a continuous variable is bounded well below 1 by its own
     # ties, so the raw Spearman is uninterpretable alone. The ceiling is the Spearman a
     # PERFECT 3-way rank-split of our values would achieve, and the ratio is what says whether
@@ -1075,8 +1079,11 @@ def fig_nonmetabolic(dumps: list, raw: dict, split: dict, best: str, ts: str) ->
         1, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(62))
     )
     panels = [
-        ("in yeast-GEM\nCachera FCL CAN model these", lambda x: x in gem),
-        ("NOT in yeast-GEM\nCachera FCL has no features here", lambda x: x not in gem),
+        ("in yeast-GEM\nFlux Cone Learning CAN model these", lambda x: x in gem),
+        (
+            "NOT in yeast-GEM\nFlux Cone Learning has no features here",
+            lambda x: x not in gem,
+        ),
     ]
     for ax, (title, sel) in zip(axes, panels):
         gs = sorted(x for x in d["_genes"] if x in raw and sel(x))
@@ -1117,7 +1124,7 @@ def fig_nonmetabolic(dumps: list, raw: dict, split: dict, best: str, ts: str) ->
             fontsize=5,
             pad=4,
         )
-        ax.set_xlabel("measured betaxanthin, our copy (z)")
+        ax.set_xlabel("measured betaxanthin, Cachera screen (z)")
         ax.set_ylabel("CGT predicted betaxanthin (z)")
         ax.grid(lw=0.3, color="0.92", zorder=0)
         ax.set_axisbelow(True)
@@ -1134,7 +1141,7 @@ def fig_nonmetabolic(dumps: list, raw: dict, split: dict, best: str, ts: str) ->
         0.015,
         "Both panels are HELD-OUT test genes for CGT, under the same derived labels (their "
         "0.40/0.65 cuts on a train-pool min-max scale).\n"
-        "The right panel is a question Cachera's method cannot be asked: flux sampling gives "
+        "The right panel is a question Flux Cone Learning cannot be asked: flux sampling gives "
         "no feature for a deletion outside the metabolic model.",
         ha="center",
         fontsize=4.5,

@@ -142,19 +142,42 @@ shipped `figures/fig4/fig4c_*.csv`.
 
 ### TL;DR
 
-**Neither model has usable signal on this task, and the published accuracy says nothing.**
+**Both models have strong signal at the TOP of their ranking and essentially none across the
+bulk. The published accuracy measures neither.**
+
+The two facts that look contradictory and are not:
+
+| region | Cachera RF | CGT | random |
+|---|--:|--:|--:|
+| top 10 genes: how many truly high | **8 / 10** (p=1e-05) | **9 / 10** (p=4e-07) | 1.6 |
+| top 25 | **19 / 25** (p=8e-12) | **18 / 25** (p=1e-10) | 3.9 |
+| top 50 | 20 / 50 (p=1e-05) | **24 / 50** (p=2e-08) | 7.8 |
+| whole-population ROC AUC | 0.570 | 0.557 | 0.500 |
+| median percentile rank, true highs | 56 | 52 | 50 |
+
+They coexist because AUC and median-rank integrate over the WHOLE ranking, and the top 25 is
+4 % of the population -- getting nearly all of it right barely moves a global average. The
+signal is real and concentrated in the extreme tail.
 
 | claim | verdict |
 |---|---|
-| RF beats the majority baseline meaningfully | **No** -- 0.701 vs 0.674, achieved by calling 95% of genes medium |
+| RF beats the majority baseline meaningfully | **No** -- 0.701 vs 0.674, by calling 95% of genes medium |
 | CGT beats RF on accuracy | **No, and the question is empty** -- rank-matched, 0.549 vs 0.556 |
+| Either model separates the three classes population-wide | **No** -- median percentile rank ~50 in every class |
+| Either model finds high producers at the top of its list | **YES, both** -- ~5x enrichment at k=10-25, p < 1e-06 |
+| CGT beats RF at the top | **Marginally / tied** -- 9 vs 8 at k=10, 24 vs 20 at k=50, 18 vs 19 at k=25 |
 | CGT beats RF on global rank correlation | **Yes** -- Spearman +0.105 vs +0.039 |
-| CGT beats RF at finding high producers | **No** -- ROC AUC 0.557 vs 0.570; precision@k comparable |
-| Either model separates the three classes | **No** -- median percentile rank ~50 in every class, both models |
-| The two models agree | **No** -- rank correlation -0.128; they are wrong about different genes |
+| CGT beats RF on high-producer AUC | **No** -- 0.557 vs 0.570 |
+| The two models agree | **No** -- rank correlation -0.128; wrong about different genes |
 
-The one defensible CGT advantage is the global Spearman, on a continuous prediction their
-classifier cannot produce at all. It is a weak advantage on a task neither model solves.
+**Usability depends entirely on the question.** "Which 25 genes should I test?" -- both models
+answer well (~72-76 % hit rate against 15.6 % random). "Classify every gene" or "rank all
+4,700 deletions" -- neither is usable. For strain design the first question is the operative
+one.
+
+CORRECTION: an earlier version of this note read "neither model has usable signal on this
+task". That was wrong and contradicted Fig 3 in the same document. It came from reading Fig 4
+and Fig 5 -- both bulk statistics -- as if they covered the whole ranking.
 
 ---
 
@@ -222,9 +245,13 @@ Median percentile rank by Merzbacher label:
 | Cachera RF | 54 | 49 | 56 |
 | CGT | 48 | 51 | 52 |
 
-**Every box sits on 50.** Neither model orders the classes in the bulk of the population. Read
-with Fig 3, the picture is coherent: whatever signal exists lives in a small number of extreme
-calls, not in a population-wide ordering. This is the figure that says the task is unsolved.
+**Every box sits on 50.** Neither model orders the classes in the bulk of the population.
+
+READ THIS WITH FIG 3, NOT INSTEAD OF IT. A median is a bulk statistic; the top 25 genes are
+4 % of the population and barely move it. Fig 3 shows those 25 are ~5x enriched at p ~ 1e-11.
+The two figures together say the signal is REAL and CONFINED TO THE TAIL -- not that there is
+no signal. Quoting this figure alone understates both models badly, which an earlier version
+of this note did.
 
 ### Fig 5 -- ROC for high-producer detection
 
@@ -306,5 +333,8 @@ published a gene-level MCC. Accuracy and high-producer recall are gene-level on 
 **Status.** 10 of 24 Delta `020_v4` cells have finished; wave C (L=4) has only just started.
 Re-running the rsync and both scripts picks up the rest. The CGT points can still move.
 
-**Slide set:** Fig 4 and Fig 2 make the argument most economically (the task is unsolved, and
-the published accuracy is a majority artifact). Fig 1 and Fig 6 are the honesty panels.
+**Slide set:** Fig 3 and Fig 2 make the argument most economically -- the published accuracy
+is a majority artifact (Fig 2), while both models genuinely enrich high producers at the top
+of the list (Fig 3), which is the operating point strain design actually uses. Fig 4 is the
+necessary qualifier (the signal does not extend to the bulk) and Fig 6 is the honesty panel
+(cell selection dominates any single-number claim).

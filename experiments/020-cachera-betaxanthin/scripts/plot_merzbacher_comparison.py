@@ -642,10 +642,16 @@ def fig_scatter(
     # The E[class] range carries deliberate headroom at the top: it is panel 1's y, and the
     # legend sits in that empty strip. Data ranges are measured -2.28..2.34, E[class]
     # 0.10..1.99, CGT -0.59..1.60.
+    # CGT's prediction shares the MEASURED scale, because it is the same quantity in the same
+    # units -- z-scored betaxanthin, predicted vs observed. Giving the prediction its own
+    # tighter axis magnified it to fill the panel and hid the very thing the figure is about:
+    # on the measurement's own scale the predictions collapse into a narrow horizontal band.
+    # FCL's E[class] keeps its own limits; it is a 0-2 class expectation, not a z-score, and
+    # forcing it onto the same axis would assert a comparability that does not exist.
     axis_spec = {
         "measured": ((-2.6, 2.6), 1.0),
         "fcl": ((0.0, 2.45), 0.5),
-        "cgt": ((-0.8, 1.8), 0.5),
+        "cgt": ((-2.6, 2.6), 1.0),
     }
     var_of = {
         "measured betaxanthin, Cachera screen (z)": "measured",
@@ -666,6 +672,15 @@ def fig_scatter(
                 linewidths=0.0,
                 label=f"{CLASS_NAMES[c]} (n={int(m.sum())})",
                 zorder=3,
+            )
+        # y = x, drawn ONLY where both axes carry the same quantity in the same units. It is
+        # the perfect-prediction line, and the gap between it and the point cloud is the
+        # compression stated numerically in the title.
+        if var_of[xlab] == "measured" and var_of[ylab] == "cgt":
+            lims = axis_spec["measured"][0]
+            ax.plot(lims, lims, ls="--", lw=0.6, color=TRUTH_C, zorder=2)
+            ax.text(
+                2.45, 2.30, "y = x", ha="right", va="top", fontsize=4.5, color=TRUTH_C
             )
         rho = float(spearmanr(y, x).statistic)
         # THE BAND IS THE MIDDLE 80 % OF THE Y-AXIS MODEL'S OUTPUT (10th-90th percentile),

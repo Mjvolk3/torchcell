@@ -81,17 +81,10 @@ FIG4_DIR = osp.join(
 )
 OUT_DIR = osp.join(ASSET_IMAGES_DIR, "020-cachera-betaxanthin")
 
-#: low / medium / high -- the PALE variants (PLOT_PALETTE_FILL 1, 3, 4), red -> sand -> blue.
-#: The hue order echoes their own Fig 4 encoding and is ORDERED, which a categorical hue
-#: assignment would not be.
-#:
-#: This is a DELIBERATE departure from the repo default of using line colors for plot marks.
-#: These bars are large filled AREAS carrying in-bar numeric labels, not thin marks: at full
-#: chroma three saturated blocks fight each other for attention and the black text on the mid
-#: blue and mid red loses contrast. The pale fills with black edges are the draw.io Fig-1
-#: look, and the black edge is what keeps them legible -- which is why `edgecolor="black"` is
-#: not optional here.
-CLASS_COLORS = [PLOT_PALETTE_FILL[1], PLOT_PALETTE_FILL[3], PLOT_PALETTE_FILL[4]]
+#: low / medium / high. Red -> sand -> blue echoes their own Fig 4 encoding while staying
+#: inside the repo palette (indices 1, 3, 4), and it is ORDERED, which a categorical hue
+#: assignment would not be. The PALE variants were tried and rejected -- washed out.
+CLASS_COLORS = [PLOT_PALETTE[1], PLOT_PALETTE[3], PLOT_PALETTE[4]]
 CLASS_NAMES = ["low", "medium", "high"]
 #: TWO MODELS, TWO PRIMARY COLORS, and the binning is encoded by LIGHTNESS within a color --
 #: the sanctioned two-level bar (line color = the deployed binning, its pale companion from
@@ -485,7 +478,9 @@ def draw_recall(ax: plt.Axes, cgt: dict, rf: dict, t: np.ndarray) -> None:
     ax.set_xticks(x)
     ax.set_xticklabels([f"{n}\n(n={counts[i]})" for i, n in enumerate(CLASS_NAMES)])
     ax.set_ylabel("recall within true class")
-    ax.set_ylim(0, 1.0)
+    # 1.08, not 1.0: the tallest bar is 0.98 and its value label sits 0.015 above it, so a
+    # 1.0 ceiling clipped the number clean off the axes.
+    ax.set_ylim(0, 1.08)
     tenth_grid(ax)
     # ABOVE the axes, not inside: the medium bars reach 0.98, so any in-axes placement
     # collides with them.

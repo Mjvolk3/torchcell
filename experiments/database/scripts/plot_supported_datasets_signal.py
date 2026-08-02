@@ -55,6 +55,10 @@ PANEL_H_MM = 120.0  # loose (<= MAX_HEIGHT_MM); five decades of y read comfortab
 # One marker per category, so the dark repeats (palette 7/8) never rest on color
 # alone. Index order matches the JSON's ``sections`` order.
 MARKERS = ["o", "s", "^", "D", "v", "P", "X", "h"]
+# Point annotations only. Axes/legend type stays at the 6 pt Nature minimum; the 49
+# dataset labels drop to 5 pt so they de-collide on this panel. Bump back to 6 if this
+# figure is ever submitted rather than kept as a note/report panel.
+LABEL_PT = 5
 
 
 def newest_json() -> Path:
@@ -145,9 +149,9 @@ def main() -> None:
     leg.get_frame().set_linewidth(0.5)
     leg.get_title().set_fontsize(6)
 
-    # De-collide the 6 pt labels with thin leader lines.
+    # De-collide the labels with thin leader lines.
     texts = [ax.text(r.instances, r.signal_bytes * BITS_PER_BYTE, r.name,
-                     color=INK, zorder=4) for r in records]
+                     fontsize=LABEL_PT, color=INK, zorder=4) for r in records]
     adjust_text(texts, ax=ax, expand=(1.15, 1.4),
                 arrowprops={"arrowstyle": "-", "color": GRID, "linewidth": 0.3})
 

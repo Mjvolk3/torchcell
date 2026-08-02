@@ -209,3 +209,8 @@ Standards instead of the generic `torchcell.mplstyle` color cycle:
   a label but cannot push it outside the axes -- without the pad the long right-hand
   labels ran off a fixed-width panel. The legend sits INSIDE the axes at lower right
   (empty, since the points ride the diagonal), which keeps the width at exactly 179 mm.
+- **Point annotations at 5 pt** (`LABEL_PT`), a deliberate exception to the repo's
+  Arial-6-pt rule: 49 dataset names on one panel collide at 6 pt. Axes, ticks, title,
+  and legend all stay at 6 pt. 5 pt is BELOW Nature's minimum, so bump `LABEL_PT` back
+  to 6 (and give the panel more height, or label fewer points) if this figure is ever
+  submitted rather than kept as a note/report panel.

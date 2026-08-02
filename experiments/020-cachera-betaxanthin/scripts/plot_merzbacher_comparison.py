@@ -52,6 +52,7 @@ from torchcell.timestamp import timestamp
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
+    PLOT_PALETTE_FILL,
     mm_to_in,
     savefig_true_size_svg,
 )
@@ -85,8 +86,28 @@ OUT_DIR = osp.join(ASSET_IMAGES_DIR, "020-cachera-betaxanthin")
 #: assignment would not be.
 CLASS_COLORS = [PLOT_PALETTE[1], PLOT_PALETTE[3], PLOT_PALETTE[4]]
 CLASS_NAMES = ["low", "medium", "high"]
-#: ours = orange (palette 0), Cachera = gray (palette 5), truth = purple (palette 2).
-OURS_C, THEIRS_C, TRUTH_C = PLOT_PALETTE[0], PLOT_PALETTE[5], PLOT_PALETTE[2]
+#: TWO MODELS, TWO PRIMARY COLORS, and the binning is encoded by LIGHTNESS within a color --
+#: the sanctioned two-level bar (line color = the deployed binning, its pale companion from
+#: PLOT_PALETTE_FILL = rank-matched). Hue therefore carries MODEL and lightness carries
+#: BINNING, so the two encodings never collide.
+#: Only palette indices 0-5 (the primaries) are used anywhere in this figure.
+CGT_C, CGT_FILL = PLOT_PALETTE[0], PLOT_PALETTE_FILL[0]  # orange
+RF_C, RF_FILL = PLOT_PALETTE[5], PLOT_PALETTE_FILL[5]  # gray
+TRUTH_C = PLOT_PALETTE[2]  # purple
+
+#: Their best model, and the ONLY Cachera model shown. Fig 4b's other three are strictly worse
+#: on their own gene-level numbers (0.56-0.64 against RF's 0.700), so carrying them would add
+#: three rows that only restate "RF wins among their models".
+RF_MODEL = "RandomForestClassifier_Resampled"
+RF_LABEL = "Cachera RF"
+CGT_LABEL = "CGT"
+
+#: A sequential map built from the palette orange, replacing matplotlib's built-in `Oranges`
+#: -- which is close to our hue but is NOT our color, and a figure that mixes the two reads as
+#: two different oranges.
+CGT_CMAP = mpl.colors.LinearSegmentedColormap.from_list(
+    "tc_orange", ["#FFFFFF", PLOT_PALETTE_FILL[0], PLOT_PALETTE[0], PLOT_PALETTE[6]]
+)
 _SETTING_TAG = re.compile(r"^s\d+_")
 
 #: THE CELL PANELS b/c/d FOCUS ON, and it is SELECTED BY VALIDATION, never by its test score.
@@ -252,17 +273,38 @@ def main() -> None:
 
     ours = {}
     for d in dumps:
-        p = np.array([d["_genes"][g] for g in genes], dtype=float)
+        pr = np.array([d["_genes"][g] for g in genes], dtype=float)
         ours[d["_setting"]] = {
-            "abs": scale_bins(p, lo, hi),
-            "rank": rank_bins(p, counts),  # type: ignore[arg-type]
-            "raw": p,
+            "abs": scale_bins(pr, lo, hi),
+            "rank": rank_bins(pr, counts),  # type: ignore[arg-type]
+            "raw": pr,
         }
 
-    panel_a(ours, t, baseline, ts, theirs, genes, counts)
-    panel_b(ours, t, theirs, genes, counts, ts)
-    panel_c(ours, t, theirs, genes, counts, ts)
-    panel_d(ours, t, theirs, genes, counts, ts)
+    best = focus_cell(ours)
+    rf_score = np.array([theirs[RF_MODEL]["score"].get(g, np.nan) for g in genes])
+    if np.isnan(rf_score).any():
+        raise SystemExit(f"{RF_MODEL} has no score for some genes -- name mismatch?")
+    rf = {
+        # Their DEPLOYED call: majority vote over each gene's flux samples, exactly as they
+        # report it. This is the number in their paper.
+        "published": np.array([theirs[RF_MODEL]["hard"][g] for g in genes], dtype=int),
+        "rank": rank_bins(rf_score, counts),  # type: ignore[arg-type]
+    }
+    cgt = ours[best]
+
+    # PROVENANCE CHECK, not decoration: our re-derivation of their DEPLOYED gene-level call
+    # must reproduce the accuracy they publish. If it does not, we are comparing against
+    # something other than their published model.
+    published = baseline["gene_level"][RF_MODEL]["gene_level_accuracy"]
+    recomputed = acc(rf["published"], t)
+    if abs(published - recomputed) > 0.005:
+        raise SystemExit(
+            f"re-derived {RF_MODEL} accuracy {recomputed:.4f} != published {published:.4f}"
+        )
+    print(f"  their published RF acc {published:.4f}; re-derived {recomputed:.4f} OK")
+
+    slide_1(cgt, rf, t, best, ts)
+    slide_2(cgt, rf, t, best, ts)
 
 
 # ---------------------------------------------------------------------------------- panels
@@ -272,128 +314,86 @@ def acc(pred: np.ndarray, true: np.ndarray) -> float:
     return float((pred == true).mean())
 
 
-def panel_a(
-    ours: dict[str, Any],
-    t: np.ndarray,
-    baseline: dict[str, Any],
-    ts: str,
-    theirs: dict[str, Any] | None = None,
-    genes: list[str] | None = None,
-    counts: tuple[int, ...] | None = None,
-) -> None:
-    """Gene-level accuracy: their four models against our grid cells.
+def recall(pred: np.ndarray, true: np.ndarray, c: int) -> float:
+    return float((pred[true == c] == c).mean()) if (true == c).any() else float("nan")
 
-    GENE LEVEL ON BOTH SIDES. Their Fig 4b plots per-FLUX-SAMPLE accuracy across 5 folds
-    (0.63-0.70); their gene-level numbers are different (0.56-0.70) and are the only ones
-    comparable to ours, since we predict one value per gene. Plotting our gene-level numbers
-    against their Fig 4b points would be a different population on each axis.
+
+def draw_accuracy(ax: plt.Axes, cgt: dict, rf: dict, t: np.ndarray, best: str) -> None:
+    """As-published vs rank-matched accuracy, both models.
+
+    The gap between filled and open is the whole message: their RF's headline 0.700 clears
+    the 0.674 majority rate only because it calls 95 % of genes medium, and stripping that
+    away drops it to 0.556 -- next to CGT's 0.549.
     """
-    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(52)))
-    # NOT named `theirs` -- that is the parameter carrying their per-gene SCORES, and
-    # shadowing it here silently fed the wrong dict to the rank-matched block below.
-    their_gl = baseline["gene_level"]
-    names = sorted(their_gl, key=lambda k: their_gl[k]["gene_level_accuracy"])
-    tv = [their_gl[k]["gene_level_accuracy"] for k in names]
-    ax.scatter(
-        range(len(names)),
-        tv,
-        s=14,
-        color=THEIRS_C,
-        zorder=3,
-        label="Cachera (as published)",
-    )
-    # THEIR rank-matched accuracy, on the same rule applied to our side. Without this the
-    # open markers would look like a penalty we alone pay, when in fact forcing the true
-    # marginal costs BOTH models the conservative-majority advantage.
-    if theirs and genes and counts:
-        for i, nm in enumerate(names):
-            if nm not in theirs:
-                continue
-            sc = np.array([theirs[nm]["score"].get(g, np.nan) for g in genes])
-            ok = ~np.isnan(sc)
-            if ok.sum() < 10:
-                continue
-            ax.scatter(
-                i,
-                acc(rank_bins(sc[ok], counts), t[ok]),
-                s=14,
-                color=THEIRS_C,
-                zorder=3,
-                facecolors="none",
-                linewidths=0.6,
-                label="Cachera (rank-matched)" if i == 0 else None,
-            )
-    # Ours: absolute binning (deployable) and rank-matched (ordering only).
-    keys = sorted(ours)
-    x0 = len(names)
-    for i, k in enumerate(keys):
+    for i, (name, c, dep, rk, dep_lab) in enumerate(
+        [
+            (RF_LABEL, RF_C, rf["published"], rf["rank"], "as published"),
+            (CGT_LABEL, CGT_C, cgt["abs"], cgt["rank"], "absolute bins"),
+        ]
+    ):
+        a_dep, a_rk = acc(dep, t), acc(rk, t)
+        ax.plot([i - 0.13, i + 0.13], [a_dep, a_rk], lw=0.7, color=c, zorder=3)
         ax.scatter(
-            x0 + i,
-            acc(ours[k]["abs"], t),
-            s=14,
-            color=OURS_C,
-            zorder=3,
-            label="ours (absolute bins)" if i == 0 else None,
+            i - 0.13,
+            a_dep,
+            s=30,
+            color=c,
+            zorder=4,
+            edgecolors="black",
+            linewidths=0.4,
+            label=dep_lab if i == 0 else None,
         )
         ax.scatter(
-            x0 + i,
-            acc(ours[k]["rank"], t),
-            s=14,
-            color=OURS_C,
-            zorder=3,
-            facecolors="none",
-            linewidths=0.6,
-            label="ours (rank-matched)" if i == 0 else None,
+            i + 0.13,
+            a_rk,
+            s=30,
+            color="white",
+            zorder=4,
+            edgecolors=c,
+            linewidths=1.0,
+            label="rank-matched" if i == 0 else None,
+        )
+        ax.text(
+            i - 0.13,
+            a_dep + 0.013,
+            f"{a_dep:.3f}",
+            ha="center",
+            va="bottom",
+            fontsize=5,
+        )
+        ax.text(
+            i + 0.13, a_rk - 0.015, f"{a_rk:.3f}", ha="center", va="top", fontsize=5
         )
     maj = float(np.bincount(t, minlength=3).max() / len(t))
-    ax.axhline(maj, ls="--", lw=0.6, color="0.35", zorder=2)
+    ax.axhline(maj, ls="--", lw=0.6, color=TRUTH_C, zorder=2)
+    # Anchored bottom-RIGHT: at top-left it sat on top of the RF "as published" marker,
+    # which lands only 0.027 above the majority line -- the very proximity the panel is about.
     ax.text(
-        len(names) + len(keys) - 0.4,
-        maj + 0.004,
+        1.45,
+        maj - 0.010,
         f"majority class {maj:.3f}",
         ha="right",
-        va="bottom",
+        va="top",
         fontsize=5,
-        color="0.35",
+        color=TRUTH_C,
     )
-    labels = [n.replace("Classifier", "").replace("_", "\n") for n in names] + [
-        k.split("_", 1)[1] if "_" in k else k for k in keys
-    ]
-    ax.set_xticks(range(len(labels)))
-    ax.set_xticklabels(labels, rotation=90, fontsize=4.5)
+    ax.set_xticks([0, 1])
+    ax.set_xticklabels([RF_LABEL, CGT_LABEL], fontsize=6)
+    ax.set_xlim(-0.5, 1.5)
     ax.set_ylabel("gene-level accuracy")
     ax.set_ylim(0.40, 0.80)
     tenth_grid(ax)
-    ax.legend(frameon=False, loc="upper left", fontsize=5, handletextpad=0.4)
-    fig.tight_layout(pad=0.3)
-    save(fig, "merzbacher_cmp_a_accuracy", ts)
+    ax.legend(frameon=False, loc="lower left", fontsize=5, handletextpad=0.4)
 
 
-def panel_b(
-    ours: dict[str, Any],
-    t: np.ndarray,
-    theirs: dict[str, Any],
-    genes: list[str],
-    counts: tuple[int, ...],
-    ts: str,
-) -> None:
-    """Predicted class distribution: truth vs their deployed call vs ours.
-
-    This is the panel that shows the shared failure mode. Their best model calls 94.8 % of
-    genes medium; our absolute binning calls a similar share and never calls LOW at all. A
-    model that predicts the majority everywhere scores well on accuracy and has learned
-    nothing about the tails, which is the whole point of the task.
-    """
-    rows: list[tuple[str, np.ndarray]] = [("truth", t)]
-    for model in ("RandomForestClassifier_Resampled", "LogisticRegression"):
-        if model in theirs:
-            hard = np.array([theirs[model]["hard"].get(g, 1) for g in genes], dtype=int)
-            rows.append((f"Cachera\n{model.replace('Classifier', '')}", hard))
-    best = focus_cell(ours)
-    rows.append((f"ours abs\n{best.split('_', 1)[-1]}", ours[best]["abs"]))
-    rows.append((f"ours rank\n{best.split('_', 1)[-1]}", ours[best]["rank"]))
-
-    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(48)))
+def draw_distribution(ax: plt.Axes, cgt: dict, rf: dict, t: np.ndarray) -> None:
+    """Where each model actually puts the genes -- the shared failure mode."""
+    rows = [
+        ("truth", t),
+        (f"{RF_LABEL}\nas published", rf["published"]),
+        (f"{CGT_LABEL}\nabsolute bins", cgt["abs"]),
+        ("both\nrank-matched", cgt["rank"]),
+    ]
     y = np.arange(len(rows))
     left = np.zeros(len(rows))
     for c in range(3):
@@ -402,7 +402,7 @@ def panel_b(
             y,
             w,
             left=left,
-            height=0.62,
+            height=0.6,
             color=CLASS_COLORS[c],
             edgecolor="black",
             linewidth=0.4,
@@ -410,21 +410,15 @@ def panel_b(
             zorder=3,
         )
         for yi, (wi, li) in enumerate(zip(w, left)):
-            if wi > 0.06:
+            if wi > 0.05:
                 ax.text(
-                    li + wi / 2,
-                    yi,
-                    f"{wi:.2f}",
-                    ha="center",
-                    va="center",
-                    fontsize=4.5,
-                    color="black",
+                    li + wi / 2, yi, f"{wi:.2f}", ha="center", va="center", fontsize=5
                 )
         left += w
     ax.set_yticks(y)
-    ax.set_yticklabels([n for n, _ in rows], fontsize=4.5)
+    ax.set_yticklabels([n for n, _ in rows], fontsize=5)
     ax.invert_yaxis()
-    ax.set_xlabel("fraction of genes assigned to each class")
+    ax.set_xlabel("fraction of genes assigned")
     ax.set_xlim(0, 1)
     ax.legend(
         frameon=False,
@@ -435,112 +429,58 @@ def panel_b(
         handletextpad=0.4,
         columnspacing=1.0,
     )
-    fig.tight_layout(pad=0.3)
-    save(fig, "merzbacher_cmp_b_class_distribution", ts)
 
 
-def panel_c(
-    ours: dict[str, Any],
-    t: np.ndarray,
-    theirs: dict[str, Any],
-    genes: list[str],
-    counts: tuple[int, ...],
-    ts: str,
-) -> None:
-    """Per-class recall -- what a single accuracy number hides.
-
-    Their own caption concedes the trade ("class rebalancing can increase accuracy for high
-    producers, often at the expense of overall accuracy"), but Fig 4b plots only the overall
-    number. Recall per class is where the models actually differ.
-    """
-    series: list[tuple[str, np.ndarray]] = []
-    for model in ("RandomForestClassifier_Resampled", "LogisticRegression"):
-        if model in theirs:
-            series.append(
-                (
-                    f"Cachera {model.replace('Classifier', '')}",
-                    np.array(
-                        [theirs[model]["hard"].get(g, 1) for g in genes], dtype=int
-                    ),
-                )
-            )
-    best = focus_cell(ours)
-    series.append((f"ours abs {best.split('_', 1)[-1]}", ours[best]["abs"]))
-    series.append((f"ours rank {best.split('_', 1)[-1]}", ours[best]["rank"]))
-
-    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(46)))
+def draw_recall(ax: plt.Axes, cgt: dict, rf: dict, t: np.ndarray) -> None:
+    """Per-class recall, rank-matched -- where CGT actually wins."""
+    counts = np.bincount(t, minlength=3)
+    series = [
+        (f"{RF_LABEL} as published", RF_C, rf["published"]),
+        (f"{RF_LABEL} rank-matched", RF_FILL, rf["rank"]),
+        (f"{CGT_LABEL} rank-matched", CGT_C, cgt["rank"]),
+    ]
     w = 0.8 / len(series)
     x = np.arange(3)
-    for i, (name, pred) in enumerate(series):
-        rec = [
-            float((pred[t == c] == c).mean()) if (t == c).any() else np.nan
-            for c in range(3)
-        ]
+    for i, (name, c, pred) in enumerate(series):
+        vals = [recall(pred, t, k) for k in range(3)]
         ax.bar(
             x + i * w - 0.4 + w / 2,
-            rec,
+            vals,
             width=w * 0.9,
-            color=PLOT_PALETTE[[5, 11, 0, 6][i % 4]],
+            color=c,
             edgecolor="black",
             linewidth=0.4,
             label=name,
             zorder=3,
         )
+        for xv, v in zip(x + i * w - 0.4 + w / 2, vals):
+            ax.text(xv, v + 0.015, f"{v:.2f}", ha="center", va="bottom", fontsize=4.5)
     ax.set_xticks(x)
     ax.set_xticklabels([f"{n}\n(n={counts[i]})" for i, n in enumerate(CLASS_NAMES)])
     ax.set_ylabel("recall within true class")
-    ax.set_ylim(0, 1.0)
+    ax.set_ylim(0, 1.12)
     tenth_grid(ax)
     ax.legend(
         frameon=False,
-        fontsize=4.5,
+        fontsize=5,
         loc="upper center",
-        ncol=2,
-        bbox_to_anchor=(0.5, 1.22),
+        ncol=1,
+        bbox_to_anchor=(0.72, 1.0),
         handletextpad=0.4,
-        columnspacing=0.8,
     )
-    fig.tight_layout(pad=0.3)
-    save(fig, "merzbacher_cmp_c_per_class_recall", ts)
 
 
-def panel_d(
-    ours: dict[str, Any],
-    t: np.ndarray,
-    theirs: dict[str, Any],
-    genes: list[str],
-    counts: tuple[int, ...],
-    ts: str,
-) -> None:
-    """Row-normalized confusion matrices with BOTH sides rank-matched -- apples-to-apples.
-
-    Their model is re-binned from its own gene-level E[class] score by the same rule applied
-    to ours, so neither side gets the conservative "call everything medium" advantage and
-    neither gets a marginal the other lacks. This is the only panel where the two numbers
-    answer exactly the same question.
-    """
-    model = "RandomForestClassifier_Resampled"
-    their_score = np.array([theirs[model]["score"].get(g, np.nan) for g in genes])
-    ok = ~np.isnan(their_score)
-    best = focus_cell(ours)
-    panels = [
-        (
-            f"Cachera {model.replace('Classifier', '')}\nrank-matched",
-            rank_bins(their_score[ok], counts),
-            t[ok],
-        ),  # type: ignore[arg-type]
-        (f"ours {best.split('_', 1)[-1]}\nrank-matched", ours[best]["rank"], t),
-    ]
-    fig, axes = plt.subplots(
-        1, len(panels), figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(54))
-    )
-    for ax, (name, pred, tt) in zip(np.atleast_1d(axes), panels):
+def draw_confusion(axes, cgt: dict, rf: dict, t: np.ndarray) -> None:
+    """Row-normalized confusion, both sides rank-matched -- apples-to-apples."""
+    for ax, (name, pred) in zip(
+        axes, [(RF_LABEL, rf["rank"]), (CGT_LABEL, cgt["rank"])]
+    ):
         cm = np.zeros((3, 3))
         for a in range(3):
             for b in range(3):
-                cm[a, b] = float(((tt == a) & (pred == b)).sum())
+                cm[a, b] = float(((t == a) & (pred == b)).sum())
         cmn = cm / cm.sum(axis=1, keepdims=True)
-        ax.imshow(cmn, cmap="Oranges", vmin=0, vmax=1)
+        ax.imshow(cmn, cmap=CGT_CMAP, vmin=0, vmax=1)
         for a in range(3):
             for b in range(3):
                 ax.text(
@@ -549,20 +489,64 @@ def panel_d(
                     f"{cmn[a, b]:.2f}",
                     ha="center",
                     va="center",
-                    fontsize=4.5,
-                    color="black" if cmn[a, b] < 0.6 else "white",
+                    fontsize=5,
+                    color="black" if cmn[a, b] < 0.65 else "white",
                 )
         ax.set_xticks(range(3))
-        ax.set_xticklabels(CLASS_NAMES, fontsize=4.5)
+        ax.set_xticklabels(CLASS_NAMES, fontsize=5)
         ax.set_yticks(range(3))
-        ax.set_yticklabels(CLASS_NAMES, fontsize=4.5)
+        ax.set_yticklabels(CLASS_NAMES, fontsize=5)
         ax.set_xlabel("predicted")
-        ax.set_title(f"{name}\nacc {acc(pred, tt):.3f}", fontsize=4.5, pad=3)
-        for s in ax.spines.values():
-            s.set_linewidth(0.5)
-    np.atleast_1d(axes)[0].set_ylabel("true")
-    fig.tight_layout(pad=0.3)
-    save(fig, "merzbacher_cmp_d_confusion_rank_matched", ts)
+        ax.set_title(f"{name} rank-matched\nacc {acc(pred, t):.3f}", fontsize=5, pad=3)
+        for sp in ax.spines.values():
+            sp.set_linewidth(0.5)
+    axes[0].set_ylabel("true")
+
+
+def slide_1(cgt: dict, rf: dict, t: np.ndarray, best: str, ts: str) -> None:
+    """SLIDE 1 -- the published accuracy advantage is a majority-class artifact."""
+    fig, axes = plt.subplots(
+        1,
+        2,
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(58)),
+        gridspec_kw={"width_ratios": [1.0, 1.45]},
+    )
+    draw_accuracy(axes[0], cgt, rf, t, best)
+    draw_distribution(axes[1], cgt, rf, t)
+    for ax, lab in zip(axes, "ab"):
+        ax.text(
+            -0.16,
+            1.06,
+            lab,
+            transform=ax.transAxes,
+            fontsize=8,
+            fontweight="bold",
+            va="bottom",
+            ha="left",
+        )
+    fig.tight_layout(pad=0.4)
+    save(fig, "merzbacher_slide1_accuracy_artifact", ts)
+
+
+def slide_2(cgt: dict, rf: dict, t: np.ndarray, best: str, ts: str) -> None:
+    """SLIDE 2 -- matched fairly, CGT equals their best model and finds more high producers."""
+    fig = plt.figure(figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(58)))
+    gs = fig.add_gridspec(1, 3, width_ratios=[1.55, 1.0, 1.0], wspace=0.42)
+    draw_recall(fig.add_subplot(gs[0, 0]), cgt, rf, t)
+    draw_confusion([fig.add_subplot(gs[0, 1]), fig.add_subplot(gs[0, 2])], cgt, rf, t)
+    for ax, lab, x in zip(fig.axes, "ab", (-0.13, -0.24)):
+        ax.text(
+            x,
+            1.06,
+            lab,
+            transform=ax.transAxes,
+            fontsize=8,
+            fontweight="bold",
+            va="bottom",
+            ha="left",
+        )
+    fig.tight_layout(pad=0.4)
+    save(fig, "merzbacher_slide2_matched_comparison", ts)
 
 
 if __name__ == "__main__":

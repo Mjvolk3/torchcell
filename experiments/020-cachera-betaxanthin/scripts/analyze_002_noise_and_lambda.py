@@ -61,9 +61,7 @@ optuna.logging.set_verbosity(optuna.logging.WARNING)
 
 DATA_ROOT = os.environ["DATA_ROOT"]
 SCRATCH_EXP = osp.join(DATA_ROOT, "experiments")
-OUT_DIR = osp.join(
-    osp.dirname(osp.dirname(osp.abspath(__file__))), "results"
-)
+OUT_DIR = osp.join(osp.dirname(osp.dirname(osp.abspath(__file__))), "results")
 
 #: (arm, experiment dir, study file, study name). One study per arm -- the three targets are
 #: not commensurable, so they were never pooled into one study.
@@ -112,9 +110,7 @@ def pearson(xs: list[float], ys: list[float]) -> float:
     """Pearson correlation of two equal-length sequences."""
     mx, my = st.mean(xs), st.mean(ys)
     num = sum((a - mx) * (b - my) for a, b in zip(xs, ys, strict=True))
-    den = math.sqrt(
-        sum((a - mx) ** 2 for a in xs) * sum((b - my) ** 2 for b in ys)
-    )
+    den = math.sqrt(sum((a - mx) ** 2 for a in xs) * sum((b - my) ** 2 for b in ys))
     return num / den if den else float("nan")
 
 
@@ -215,9 +211,7 @@ def analyze(arm: str, exp_dir: str, db_file: str, study_name: str) -> dict:
         for t in trials
         if t.datetime_complete
     ]
-    objectives = [
-        t.values[0] for t in trials if t.datetime_complete
-    ]
+    objectives = [t.values[0] for t in trials if t.datetime_complete]
     # Within a single architecture cell, so "bigger model is slower" cannot explain the
     # correlation. hidden=90 is the modal cell on all three arms.
     cell = [
@@ -238,7 +232,9 @@ def analyze(arm: str, exp_dir: str, db_file: str, study_name: str) -> dict:
             "min": round(values[-1], 4),
             "sd_between_trials": round(st.pstdev(values), 4),
             "top5": [round(v, 4) for v in values[:5]],
-            "top5_spread": round(values[0] - values[4], 4) if len(values) >= 5 else None,
+            "top5_spread": round(values[0] - values[4], 4)
+            if len(values) >= 5
+            else None,
         },
         "replicate_noise": {
             "sigma": round(sigma, 4) if sigma else None,
@@ -257,7 +253,8 @@ def analyze(arm: str, exp_dir: str, db_file: str, study_name: str) -> dict:
                 round(
                     pearson(
                         [
-                            (t.datetime_complete - t.datetime_start).total_seconds() / 60
+                            (t.datetime_complete - t.datetime_start).total_seconds()
+                            / 60
                             for t in cell
                         ],
                         [t.values[0] for t in cell],
@@ -301,9 +298,7 @@ def main() -> None:
         rn = r["replicate_noise"]
         print(f"\n{arm}  (F = {r['n_features_in_metric']} in the ranked metric)")
         for g in rn["groups"]:
-            print(
-                f"    trials {g['trials']}: {g['values']}  range={g['range']}"
-            )
+            print(f"    trials {g['trials']}: {g['values']}  range={g['range']}")
         note = "" if rn["usable"] else "   <-- dof too low to use on its own"
         print(f"    pooled sigma = {rn['sigma']} (dof {rn['dof']}){note}")
         si = r.get("selection_inflation")

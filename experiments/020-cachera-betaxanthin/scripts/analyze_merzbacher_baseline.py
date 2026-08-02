@@ -101,7 +101,9 @@ def gene_level_confusion(path: str) -> dict[str, Any]:
 
 def main() -> None:
     models = {
-        osp.basename(p).replace("fig4c_", "").replace(".csv", ""): gene_level_confusion(p)
+        osp.basename(p).replace("fig4c_", "").replace(".csv", ""): gene_level_confusion(
+            p
+        )
         for p in sorted(glob(osp.join(FIG4, "fig4c_*.csv")))
     }
     report = {

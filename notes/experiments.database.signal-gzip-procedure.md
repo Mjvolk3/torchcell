@@ -214,3 +214,36 @@ Standards instead of the generic `torchcell.mplstyle` color cycle:
   and legend all stay at 6 pt. 5 pt is BELOW Nature's minimum, so bump `LABEL_PT` back
   to 6 (and give the panel more height, or label fewer points) if this figure is ever
   submitted rather than kept as a note/report panel.
+
+## 2026.08.01 - Readability pass on the signal-vs-scale scatter
+
+Same data, same script, same 179 mm width — a legibility fix only. At 49 labeled
+points the panel had labels sitting on labels, and leader lines running through
+5 pt words so they read as struck through.
+
+- **Panel height 120 → 152 mm.** Width is fixed by the figure standard, so height is
+  the only room left to buy; 152 stays under the 170 mm ceiling. This is what actually
+  separated the crowded 10^5–10^6 band — adjustText tuning alone could not.
+- **Legend 6 → 5 pt** (title too), which shrinks its box and returns the lower-right
+  corner to the labels. Axis/tick type stays at the 6 pt Nature minimum.
+- **adjustText run to convergence** rather than to its default sub-second stopwatch,
+  with stronger label-on-label repulsion, weakened pull back to the marker (labels may
+  travel; the leader line preserves the association), and the legend passed as an
+  obstacle so nothing hides beneath it.
+- **A translucent white plate behind each label** (alpha 0.55) so a crossing leader line
+  passes behind the text instead of through it. It has to stay translucent: at full
+  strength the plate *erased* whatever it landed on — the `Kuzmin 2020 smf` marker
+  disappeared under the `Auesukaree 2009` label. At this alpha an overlapping plate dims
+  a marker rather than deleting it.
+
+A note on what was tried and rejected, so it is not re-attempted: raising `force_static`
+to push labels clear of the markers outright made things *worse*, not better. At 0.45 the
+top-right pair `Wildenhain 2015 (drug tolerance)` and `Hillenmeyer 2008 hom (FitDb HOP)`
+collided outright. Label-on-label is the worse failure of the two, so `force_static` stays
+below `force_text` and marker clearance is conceded to the translucent plate. Handing the
+scatter `PathCollection`s to adjustText as `objects` — the principled fix — is not
+available either: its cKDTree rejects the log-axis offsets as non-finite.
+
+Point labels remain at 5 pt — below the 6 pt Nature floor. That is deliberate and
+already documented in the script: this is a note/report panel, not a submission figure.
+Bump `LABEL_PT` back to 6 if it is ever submitted.

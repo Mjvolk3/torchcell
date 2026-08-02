@@ -51,7 +51,10 @@ BITS_PER_BYTE = 8
 INK = "#000000"
 GRID = "#4A4A4A"
 PANEL_W_MM = PANEL_WIDTHS_MM["full"]  # 179 mm -- 49 labeled points need the width
-PANEL_H_MM = 120.0  # loose (<= MAX_HEIGHT_MM); five decades of y read comfortably
+# Width is fixed by the standard, so height is the only axis left to buy label room on.
+# 152 mm stays under MAX_HEIGHT_MM (170) and is what actually de-collides the crowded
+# 10^5-10^6 band; tuning adjustText alone could not separate those on a 120 mm panel.
+PANEL_H_MM = 152.0
 # One marker per category, so the dark repeats (palette 7/8) never rest on color
 # alone. Index order matches the JSON's ``sections`` order.
 MARKERS = ["o", "s", "^", "D", "v", "P", "X", "h"]
@@ -65,7 +68,9 @@ def newest_json() -> Path:
     """The most recent pre-build snapshot's JSON."""
     cands = sorted(RESULTS.glob("pre-build/*/supported_datasets.json"))
     if not cands:
-        raise FileNotFoundError("No pre-build snapshot; run build_supported_datasets_table.py first")
+        raise FileNotFoundError(
+            "No pre-build snapshot; run build_supported_datasets_table.py first"
+        )
     return cands[-1]
 
 
@@ -81,7 +86,9 @@ def _apply_rc() -> None:
             "axes.labelsize": 6,
             "xtick.labelsize": 6,
             "ytick.labelsize": 6,
-            "legend.fontsize": 6,
+            # The legend is a key, not data: dropping it to 5 pt shrinks its box and
+            # hands the freed lower-right corner back to the point labels.
+            "legend.fontsize": 5,
             "svg.fonttype": "none",
             "axes.linewidth": 0.5,
             "savefig.bbox": None,  # torchcell.mplstyle sets 'tight'; would break true-size
@@ -104,14 +111,22 @@ def _box(ax) -> None:
 def main() -> None:
     """Draw the instances-vs-signal scatter and save PNG + true-size SVG."""
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--data", type=Path, default=None, help="supported_datasets.json (default: newest)")
+    ap.add_argument(
+        "--data",
+        type=Path,
+        default=None,
+        help="supported_datasets.json (default: newest)",
+    )
     args = ap.parse_args()
     load_dotenv()
 
     data_path = args.data or newest_json()
     payload = json.loads(data_path.read_text())
-    records = [DatasetSignalRecord(**d) for d in payload["datasets"]
-               if d["built"] and d["signal_bytes"] > 0]
+    records = [
+        DatasetSignalRecord(**d)
+        for d in payload["datasets"]
+        if d["built"] and d["signal_bytes"] > 0
+    ]
 
     _apply_rc()
     sections = payload["sections"]
@@ -123,37 +138,109 @@ def main() -> None:
         pts = [r for r in records if r.section == s]
         if not pts:
             continue
-        ax.scatter([r.instances for r in pts],
-                   [r.signal_bytes * BITS_PER_BYTE for r in pts],
-                   s=18, color=color[s], marker=marker[s], edgecolor=INK,
-                   linewidth=0.3, label=s, zorder=3)
+        ax.scatter(
+            [r.instances for r in pts],
+            [r.signal_bytes * BITS_PER_BYTE for r in pts],
+            s=18,
+            color=color[s],
+            marker=marker[s],
+            edgecolor=INK,
+            linewidth=0.3,
+            label=s,
+            zorder=3,
+        )
 
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlabel("Instances (dataset length)")
     ax.set_ylabel("Signal (gzip, bits)")
-    ax.set_title(f"Training signal vs scale — {payload['status']} ({payload['date']})",
-                 loc="left", color=INK)
+    ax.set_title(
+        f"Training signal vs scale — {payload['status']} ({payload['date']})",
+        loc="left",
+        color=INK,
+    )
     # Pad the limits by a fraction of a decade so the 6 pt labels have somewhere to
     # go: adjustText moves text but cannot push it outside the axes, and a label that
     # runs off the panel edge is the failure mode on a fixed 179 mm width.
     xs = [r.instances for r in records]
     ys = [r.signal_bytes * BITS_PER_BYTE for r in records]
-    ax.set_xlim(min(xs) / 4, max(xs) * 20)  # extra room right: the longest labels sit there
+    # Extra room on the right: the longest labels sit there.
+    ax.set_xlim(min(xs) / 4, max(xs) * 20)
     ax.set_ylim(min(ys) / 6, max(ys) * 4)
     _box(ax)
     # Legend INSIDE the axes (the points ride the diagonal, so the lower right is
     # empty), which keeps the panel at exactly 179 mm.
-    leg = ax.legend(title="Phenotype category", loc="lower right", framealpha=0.95,
-                    edgecolor=INK, handletextpad=0.4, borderpad=0.4, labelspacing=0.35)
+    leg = ax.legend(
+        title="Phenotype category",
+        loc="lower right",
+        framealpha=0.95,
+        edgecolor=INK,
+        handletextpad=0.4,
+        borderpad=0.3,
+        labelspacing=0.3,
+    )
     leg.get_frame().set_linewidth(0.5)
-    leg.get_title().set_fontsize(6)
+    leg.get_title().set_fontsize(5)
 
     # De-collide the labels with thin leader lines.
-    texts = [ax.text(r.instances, r.signal_bytes * BITS_PER_BYTE, r.name,
-                     fontsize=LABEL_PT, color=INK, zorder=4) for r in records]
-    adjust_text(texts, ax=ax, expand=(1.15, 1.4),
-                arrowprops={"arrowstyle": "-", "color": GRID, "linewidth": 0.3})
+    #
+    # The defaults give up far too early for 49 labels: adjustText stops on its own
+    # time limit after a fraction of a second, leaving the dense 10^5-10^6 band
+    # unresolved. So:
+    #   iter_lim/time_lim -- run the solver to convergence rather than to a stopwatch;
+    #   force_text        -- labels shove each other apart harder than they shove off
+    #                        the markers, since label-on-label is the collision we see;
+    #   force_pull        -- weakened, so a label may travel well away from its marker;
+    #                        the leader line keeps the association readable;
+    #   force_static      -- deliberately LOWER than force_text. Raising it to push
+    #                        labels off the markers costs more than it buys: at 0.45
+    #                        the top-right pair (Wildenhain 2015 / Hillenmeyer 2008 hom)
+    #                        collided outright. Label-on-label is the worse failure, so
+    #                        marker clearance is conceded to the translucent plate below;
+    #   objects=[leg]     -- the legend is an obstacle so nothing hides under the key.
+    #                        Only the legend: handing adjustText the scatter
+    #                        PathCollections instead makes its cKDTree reject the
+    #                        log-axis offsets as non-finite.
+    # A tight white plate behind each label. With 49 labels the long leader lines must
+    # cross other labels somewhere, and a bare line through a 5 pt word reads as a
+    # strikethrough; the plate lets the line pass behind the text instead. It also
+    # slightly inflates the collision box adjustText solves against, which helps.
+    #
+    # Kept translucent: at full strength the plate erased whatever it landed on -- it
+    # hid the Kuzmin 2020 smf marker under the Auesukaree 2009 label. At this alpha a
+    # plate that still overlaps a marker dims it rather than deleting it.
+    halo = {
+        "boxstyle": "square,pad=0.12",
+        "facecolor": "white",
+        "edgecolor": "none",
+        "alpha": 0.55,
+    }
+    texts = [
+        ax.text(
+            r.instances,
+            r.signal_bytes * BITS_PER_BYTE,
+            r.name,
+            fontsize=LABEL_PT,
+            color=INK,
+            zorder=5,
+            bbox=halo,
+        )
+        for r in records
+    ]
+    adjust_text(
+        texts,
+        ax=ax,
+        objects=[leg],
+        expand=(1.3, 1.6),
+        force_text=(0.5, 0.9),
+        force_static=(0.2, 0.35),
+        force_pull=(0.003, 0.003),
+        max_move=(90, 90),
+        iter_lim=3000,
+        time_lim=45,
+        min_arrow_len=2,
+        arrowprops={"arrowstyle": "-", "color": GRID, "linewidth": 0.3},
+    )
 
     out_dir = osp.join(os.environ["ASSET_IMAGES_DIR"], "database")
     os.makedirs(out_dir, exist_ok=True)

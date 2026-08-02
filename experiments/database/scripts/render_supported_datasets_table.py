@@ -41,7 +41,11 @@ TEX_OUT = REPO / "paper" / "nature-biotech" / "sections" / "datasets_table.tex"
 MD_OUT = REPO / "notes" / "paper.supported-datasets-and-databases.md"
 PDF_OUT = REPO / "notes" / "assets" / "pdf-output" / "paper.supported-datasets-and-databases.pdf"
 
-SIGNAL_HEADER = "Signal (gzip, bytes)"
+# The raw-data JSON stores the gzip size in BYTES (that is what zlib reports); the
+# table reports BITS, the natural unit for a codelength / Kolmogorov proxy. The
+# conversion lives here, in the view, so the raw artifact stays unit-stable.
+BITS_PER_BYTE = 8
+SIGNAL_HEADER = "Signal (gzip, bits)"
 COLUMNS = [
     Column(header="Dataset", align="l"),
     Column(header="Genotypes", align="r"),
@@ -69,7 +73,7 @@ of environments. *Instances* = dataset length (total genotype×environment recor
 *Shape* = shape of a single phenotype instance (`scalar` / `vector (D)`). *Graph role* =
 where the label sits in the cell graph (`global` / `node` / `edge` / `hyperedge` /
 `bipartite node`; a digenic interaction is an `edge`, a trigenic one a `hyperedge`).
-*Signal (gzip, bytes)* = scientific-notation gzip size of the concatenated stored
+*Signal (gzip, bits)* = scientific-notation gzip size, in bits, of the concatenated stored
 instances (the **perturbation** + environment + phenotype of every record) -- a
 Kolmogorov-complexity proxy. The perturbation counts each instance's edit off the S288C
 reference: a single deletion (a few bytes) or a natural isolate's thousands of gene-presence
@@ -121,18 +125,18 @@ def newest_json() -> Path:
 
 
 def signal_cell(rec: DatasetSignalRecord) -> str | Cell:
-    """Signal as a scientific-notation cell, or a marker for not-built/deferred."""
+    """Signal in BITS as a scientific-notation cell, or a marker for not-built/deferred."""
     if not rec.built:
         return "not built"
     if rec.signal_bytes <= 0:
         return "pending"  # built, but signal deferred (e.g. a very large LMDB)
-    return scientific(rec.signal_bytes)
+    return scientific(rec.signal_bytes * BITS_PER_BYTE)
 
 
 def totals_footer(records: list[DatasetSignalRecord]) -> Row:
     """A bold totals row summing ONLY the additive columns.
 
-    Instances (total dataset length) and Signal (total gzip bytes) sum cleanly.
+    Instances (total dataset length) and Signal (total gzip bits) sum cleanly.
     Genotypes/Env are left blank -- summing strain/condition counts across
     datasets double-counts the same genes/conditions -- and Shape/Graph role/
     Phenotype are categorical, so they get no total either.
@@ -144,7 +148,7 @@ def totals_footer(records: list[DatasetSignalRecord]) -> Row:
     return Row(bold=True, cells={
         "Dataset": f"Total ({n_built} datasets)",
         "Instances": f"{total_instances:,}",
-        SIGNAL_HEADER: scientific(total_signal),
+        SIGNAL_HEADER: scientific(total_signal * BITS_PER_BYTE),
     })
 
 
@@ -186,7 +190,7 @@ def main() -> None:
                 "verified in the TorchCell database. \\emph{Instances} is the dataset length (total "
                 "genotype$\\times$environment records); \\emph{Shape} the shape of one phenotype "
                 "instance; \\emph{Graph role} where the label sits in the cell graph; \\emph{Signal "
-                "(gzip, bytes)} a Kolmogorov-complexity proxy -- the gzip size in bytes of the "
+                "(gzip, bits)} a Kolmogorov-complexity proxy -- the gzip size in bits of the "
                 "concatenated per-record stored instances (perturbation + environment + phenotype), "
                 "so a natural isolate's genome-defining perturbation set counts alongside its "
                 "phenotype; the shared reference genome is never counted."

@@ -1,0 +1,1440 @@
+{
+  "protocol": "[[experiments.020-cachera-betaxanthin.merzbacher-comparison]]",
+  "ground_truth": "Merzbacher released labels (yeast_production_validation_split.csv)",
+  "bin_scale_fitted_on": {
+    "split": "train_val_pool",
+    "n_genes": 4082,
+    "min": -2.600495426201653,
+    "max": 2.7043779620586794,
+    "thresholds": [
+      0.4,
+      0.65
+    ]
+  },
+  "their_baseline_gene_level": {
+    "n_genes": 640,
+    "gene_level_accuracy": 0.7,
+    "majority_class_rate": 0.6734375,
+    "fraction_predicted_medium": 0.9484375,
+    "high_producers_true": 100,
+    "high_producers_found": 18,
+    "high_producer_recall": 0.18,
+    "confusion_matrix": {
+      "true_low": {
+        "pred_low": 6,
+        "pred_medium": 101,
+        "pred_high": 2
+      },
+      "true_medium": {
+        "pred_low": 2,
+        "pred_medium": 424,
+        "pred_high": 5
+      },
+      "true_high": {
+        "pred_low": 0,
+        "pred_medium": 82,
+        "pred_high": 18
+      }
+    }
+  },
+  "their_best_model": "RandomForestClassifier_Resampled",
+  "pooled": {
+    "n_runs": 10,
+    "spearman_vs_raw": {
+      "mean": 0.07789677720153318,
+      "sd": 0.049203411355532294,
+      "sem": 0.015559484853367491,
+      "n": 10
+    },
+    "pearson_vs_raw": {
+      "mean": 0.17333891002271737,
+      "sd": 0.13055162520898408,
+      "sem": 0.041284048789704535,
+      "n": 10
+    },
+    "mcc": {
+      "mean": 0.08369650224526759,
+      "sd": 0.09189151643330871,
+      "sem": 0.029058648957604766,
+      "n": 10
+    },
+    "accuracy": {
+      "mean": 0.6763693270735525,
+      "sd": 0.014861029842937428,
+      "sem": 0.004699470267941663,
+      "n": 10
+    },
+    "high_producer_recall": {
+      "mean": 0.086,
+      "sd": 0.09582391258043173,
+      "sem": 0.030302181806302696,
+      "n": 10
+    },
+    "fraction_predicted_medium": {
+      "mean": 0.9657276995305164,
+      "sd": 0.0499991224147716,
+      "sem": 0.01581111078402563,
+      "n": 10
+    },
+    "topk_50_high_precision": {
+      "mean": 0.354,
+      "sd": 0.20178095934838738,
+      "sem": 0.06380874199947494,
+      "n": 10
+    },
+    "topk_100_high_precision": {
+      "mean": 0.267,
+      "sd": 0.10975224624378106,
+      "sem": 0.03470670764500078,
+      "n": 10
+    },
+    "mcc_rank_matched": {
+      "mean": 0.0420193754434648,
+      "sd": 0.05470456330179475,
+      "sem": 0.01729910184385325,
+      "n": 10
+    },
+    "accuracy_rank_matched": {
+      "mean": 0.5852895148669797,
+      "sd": 0.022557901210682983,
+      "sem": 0.007133434705882803,
+      "n": 10
+    },
+    "high_producer_recall_rank_matched": {
+      "mean": 0.116,
+      "sd": 0.06619835513230085,
+      "sem": 0.020933757957476776,
+      "n": 10
+    },
+    "fraction_predicted_medium_rank_matched": {
+      "mean": 0.7902973395931142,
+      "sd": 0.0,
+      "sem": 0.0,
+      "n": 10
+    }
+  },
+  "by_setting": {
+    "s00_L2_maskon_lr0.0001_zs": {
+      "n_runs": 1,
+      "spearman_vs_raw": {
+        "mean": 0.017634217865052655,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "pearson_vs_raw": {
+        "mean": 0.034447442549834985,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc": {
+        "mean": 0.0,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy": {
+        "mean": 0.6744913928012519,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall": {
+        "mean": 0.0,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium": {
+        "mean": 1.0,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_50_high_precision": {
+        "mean": 0.1,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_100_high_precision": {
+        "mean": 0.08,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc_rank_matched": {
+        "mean": 0.023043841232599775,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy_rank_matched": {
+        "mean": 0.5774647887323944,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall_rank_matched": {
+        "mean": 0.04,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium_rank_matched": {
+        "mean": 0.7902973395931142,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      }
+    },
+    "s01_L2_maskon_lr0.0001_yj": {
+      "n_runs": 1,
+      "spearman_vs_raw": {
+        "mean": 0.15296998663675812,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "pearson_vs_raw": {
+        "mean": 0.31903014226210463,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc": {
+        "mean": 0.12483403039138521,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy": {
+        "mean": 0.6400625978090767,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall": {
+        "mean": 0.18,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium": {
+        "mean": 0.8419405320813772,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_50_high_precision": {
+        "mean": 0.52,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_100_high_precision": {
+        "mean": 0.39,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc_rank_matched": {
+        "mean": 0.08756065754954084,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy_rank_matched": {
+        "mean": 0.6040688575899843,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall_rank_matched": {
+        "mean": 0.18,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium_rank_matched": {
+        "mean": 0.7902973395931142,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      }
+    },
+    "s02_L2_maskon_lr0.001_zs": {
+      "n_runs": 1,
+      "spearman_vs_raw": {
+        "mean": 0.062424350783555835,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "pearson_vs_raw": {
+        "mean": 0.07991932801764724,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc": {
+        "mean": 0.0,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy": {
+        "mean": 0.6744913928012519,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall": {
+        "mean": 0.0,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium": {
+        "mean": 1.0,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_50_high_precision": {
+        "mean": 0.12,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_100_high_precision": {
+        "mean": 0.18,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc_rank_matched": {
+        "mean": -0.0452680819265143,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy_rank_matched": {
+        "mean": 0.5492957746478874,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall_rank_matched": {
+        "mean": 0.03,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium_rank_matched": {
+        "mean": 0.7902973395931142,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      }
+    },
+    "s03_L2_maskon_lr0.001_yj": {
+      "n_runs": 1,
+      "spearman_vs_raw": {
+        "mean": 0.07688171350049565,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "pearson_vs_raw": {
+        "mean": 0.05228408412798513,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc": {
+        "mean": 0.0,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy": {
+        "mean": 0.6744913928012519,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall": {
+        "mean": 0.0,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium": {
+        "mean": 1.0,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_50_high_precision": {
+        "mean": 0.12,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_100_high_precision": {
+        "mean": 0.15,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc_rank_matched": {
+        "mean": 0.004068307021734754,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy_rank_matched": {
+        "mean": 0.5696400625978091,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall_rank_matched": {
+        "mean": 0.04,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium_rank_matched": {
+        "mean": 0.7902973395931142,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      }
+    },
+    "s04_L2_maskoff_lr0.0001_zs": {
+      "n_runs": 1,
+      "spearman_vs_raw": {
+        "mean": 0.0737141870883072,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "pearson_vs_raw": {
+        "mean": 0.2528276091980482,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc": {
+        "mean": 0.19538010184959842,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy": {
+        "mean": 0.6917057902973396,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall": {
+        "mean": 0.17,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium": {
+        "mean": 0.9593114241001565,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_50_high_precision": {
+        "mean": 0.56,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_100_high_precision": {
+        "mean": 0.31,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc_rank_matched": {
+        "mean": 0.08756065754954084,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy_rank_matched": {
+        "mean": 0.6040688575899843,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall_rank_matched": {
+        "mean": 0.18,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium_rank_matched": {
+        "mean": 0.7902973395931142,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      }
+    },
+    "s05_L2_maskoff_lr0.0001_yj": {
+      "n_runs": 1,
+      "spearman_vs_raw": {
+        "mean": 0.06763343658054988,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "pearson_vs_raw": {
+        "mean": 0.2617878056752098,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc": {
+        "mean": 0.21880383786578725,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy": {
+        "mean": 0.6948356807511737,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall": {
+        "mean": 0.24,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium": {
+        "mean": 0.9389671361502347,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_50_high_precision": {
+        "mean": 0.58,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_100_high_precision": {
+        "mean": 0.38,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc_rank_matched": {
+        "mean": 0.06479001649650282,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy_rank_matched": {
+        "mean": 0.594679186228482,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall_rank_matched": {
+        "mean": 0.16,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium_rank_matched": {
+        "mean": 0.7902973395931142,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      }
+    },
+    "s06_L2_maskoff_lr0.001_zs": {
+      "n_runs": 1,
+      "spearman_vs_raw": {
+        "mean": 0.051378019379177346,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "pearson_vs_raw": {
+        "mean": 0.07152042985796,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc": {
+        "mean": 0.0,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy": {
+        "mean": 0.6744913928012519,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall": {
+        "mean": 0.0,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium": {
+        "mean": 1.0,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_50_high_precision": {
+        "mean": 0.3,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_100_high_precision": {
+        "mean": 0.24,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc_rank_matched": {
+        "mean": -0.030087654557822283,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy_rank_matched": {
+        "mean": 0.5555555555555556,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall_rank_matched": {
+        "mean": 0.08,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium_rank_matched": {
+        "mean": 0.7902973395931142,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      }
+    },
+    "s07_L2_maskoff_lr0.001_yj": {
+      "n_runs": 1,
+      "spearman_vs_raw": {
+        "mean": 0.012763699741107023,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "pearson_vs_raw": {
+        "mean": 0.02529955259969651,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc": {
+        "mean": 0.0,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy": {
+        "mean": 0.6744913928012519,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall": {
+        "mean": 0.0,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium": {
+        "mean": 1.0,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_50_high_precision": {
+        "mean": 0.22,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_100_high_precision": {
+        "mean": 0.24,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc_rank_matched": {
+        "mean": 0.030634054916945784,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy_rank_matched": {
+        "mean": 0.5805946791862285,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall_rank_matched": {
+        "mean": 0.09,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium_rank_matched": {
+        "mean": 0.7902973395931142,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      }
+    },
+    "s08_L6_maskon_lr0.0001_zs": {
+      "n_runs": 1,
+      "spearman_vs_raw": {
+        "mean": 0.15828612415099086,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "pearson_vs_raw": {
+        "mean": 0.3419938872507711,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc": {
+        "mean": 0.14514990194213034,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy": {
+        "mean": 0.6838810641627543,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall": {
+        "mean": 0.11,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium": {
+        "mean": 0.97339593114241,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_50_high_precision": {
+        "mean": 0.54,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_100_high_precision": {
+        "mean": 0.41,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc_rank_matched": {
+        "mean": 0.07617533702302183,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy_rank_matched": {
+        "mean": 0.5993740219092332,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall_rank_matched": {
+        "mean": 0.17,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium_rank_matched": {
+        "mean": 0.7902973395931142,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      }
+    },
+    "s09_L6_maskon_lr0.0001_yj": {
+      "n_runs": 1,
+      "spearman_vs_raw": {
+        "mean": 0.10528203628933717,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "pearson_vs_raw": {
+        "mean": 0.294278818687916,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc": {
+        "mean": 0.15279715040377462,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy": {
+        "mean": 0.6807511737089202,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall": {
+        "mean": 0.16,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium": {
+        "mean": 0.9436619718309859,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_50_high_precision": {
+        "mean": 0.48,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_100_high_precision": {
+        "mean": 0.29,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc_rank_matched": {
+        "mean": 0.12171661912909788,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy_rank_matched": {
+        "mean": 0.6181533646322379,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall_rank_matched": {
+        "mean": 0.19,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium_rank_matched": {
+        "mean": 0.7902973395931142,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      }
+    }
+  },
+  "per_run": [
+    {
+      "n_genes": 639,
+      "accuracy": 0.6917057902973396,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.19538010184959842,
+      "fraction_predicted_medium": 0.9593114241001565,
+      "high_producers_true": 100,
+      "high_producers_found": 17,
+      "high_producer_recall": 0.17,
+      "confusion_matrix": [
+        [
+          0,
+          105,
+          3
+        ],
+        [
+          0,
+          425,
+          6
+        ],
+        [
+          0,
+          83,
+          17
+        ]
+      ],
+      "mcc_rank_matched": 0.08756065754954084,
+      "accuracy_rank_matched": 0.6040688575899843,
+      "high_producer_recall_rank_matched": 0.18,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          18,
+          87,
+          3
+        ],
+        [
+          75,
+          350,
+          6
+        ],
+        [
+          14,
+          68,
+          18
+        ]
+      ],
+      "file": "gpub065.delta.ncsa.illinois.edu-20714232_1805fe9076940ca3ad5d5e70f3b5e3c462980a15fca4318d225ed6151a2c095c.json",
+      "setting": "s04_L2_maskoff_lr0.0001_zs",
+      "seed": 42,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": 0.0737141870883072,
+      "pearson_vs_raw": 0.2528276091980482,
+      "topk_50_high_precision": 0.56,
+      "topk_100_high_precision": 0.31
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6838810641627543,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.14514990194213034,
+      "fraction_predicted_medium": 0.97339593114241,
+      "high_producers_true": 100,
+      "high_producers_found": 11,
+      "high_producer_recall": 0.11,
+      "confusion_matrix": [
+        [
+          0,
+          107,
+          1
+        ],
+        [
+          0,
+          426,
+          5
+        ],
+        [
+          0,
+          89,
+          11
+        ]
+      ],
+      "mcc_rank_matched": 0.07617533702302183,
+      "accuracy_rank_matched": 0.5993740219092332,
+      "high_producer_recall_rank_matched": 0.17,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          22,
+          84,
+          2
+        ],
+        [
+          79,
+          344,
+          8
+        ],
+        [
+          6,
+          77,
+          17
+        ]
+      ],
+      "file": "gpub065.delta.ncsa.illinois.edu-20714232_18e790b185ba57be5ad844d42ebb96a64d3f6b66c5bff6ff957492984e2f2a98.json",
+      "setting": "s08_L6_maskon_lr0.0001_zs",
+      "seed": 42,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": 0.15828612415099086,
+      "pearson_vs_raw": 0.3419938872507711,
+      "topk_50_high_precision": 0.54,
+      "topk_100_high_precision": 0.41
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6744913928012519,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.0,
+      "fraction_predicted_medium": 1.0,
+      "high_producers_true": 100,
+      "high_producers_found": 0,
+      "high_producer_recall": 0.0,
+      "confusion_matrix": [
+        [
+          0,
+          108,
+          0
+        ],
+        [
+          0,
+          431,
+          0
+        ],
+        [
+          0,
+          100,
+          0
+        ]
+      ],
+      "mcc_rank_matched": 0.030634054916945784,
+      "accuracy_rank_matched": 0.5805946791862285,
+      "high_producer_recall_rank_matched": 0.09,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          13,
+          88,
+          7
+        ],
+        [
+          71,
+          349,
+          11
+        ],
+        [
+          23,
+          68,
+          9
+        ]
+      ],
+      "file": "gpub065.delta.ncsa.illinois.edu-20714232_341c48b55f7b4705d393adc835bf746257aa621e427d6e943da5d198336abd9d.json",
+      "setting": "s07_L2_maskoff_lr0.001_yj",
+      "seed": 42,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": 0.012763699741107023,
+      "pearson_vs_raw": 0.02529955259969651,
+      "topk_50_high_precision": 0.22,
+      "topk_100_high_precision": 0.24
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6744913928012519,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.0,
+      "fraction_predicted_medium": 1.0,
+      "high_producers_true": 100,
+      "high_producers_found": 0,
+      "high_producer_recall": 0.0,
+      "confusion_matrix": [
+        [
+          0,
+          108,
+          0
+        ],
+        [
+          0,
+          431,
+          0
+        ],
+        [
+          0,
+          100,
+          0
+        ]
+      ],
+      "mcc_rank_matched": 0.023043841232599775,
+      "accuracy_rank_matched": 0.5774647887323944,
+      "high_producer_recall_rank_matched": 0.04,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          20,
+          84,
+          4
+        ],
+        [
+          67,
+          345,
+          19
+        ],
+        [
+          20,
+          76,
+          4
+        ]
+      ],
+      "file": "gpub065.delta.ncsa.illinois.edu-20714232_407109627ee5607dd73c3d7217c970d0ab37229ca940e130924dafa7d1f6dd35.json",
+      "setting": "s00_L2_maskon_lr0.0001_zs",
+      "seed": 42,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": 0.017634217865052655,
+      "pearson_vs_raw": 0.034447442549834985,
+      "topk_50_high_precision": 0.1,
+      "topk_100_high_precision": 0.08
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6948356807511737,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.21880383786578725,
+      "fraction_predicted_medium": 0.9389671361502347,
+      "high_producers_true": 100,
+      "high_producers_found": 24,
+      "high_producer_recall": 0.24,
+      "confusion_matrix": [
+        [
+          0,
+          104,
+          4
+        ],
+        [
+          0,
+          420,
+          11
+        ],
+        [
+          0,
+          76,
+          24
+        ]
+      ],
+      "mcc_rank_matched": 0.06479001649650282,
+      "accuracy_rank_matched": 0.594679186228482,
+      "high_producer_recall_rank_matched": 0.16,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          16,
+          89,
+          3
+        ],
+        [
+          75,
+          348,
+          8
+        ],
+        [
+          16,
+          68,
+          16
+        ]
+      ],
+      "file": "gpub065.delta.ncsa.illinois.edu-20714232_67d7785c20a51678d7f60525328e3b9614bd2dc571c74f07dd8e9ba5247f68f2.json",
+      "setting": "s05_L2_maskoff_lr0.0001_yj",
+      "seed": 42,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": 0.06763343658054988,
+      "pearson_vs_raw": 0.2617878056752098,
+      "topk_50_high_precision": 0.58,
+      "topk_100_high_precision": 0.38
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6744913928012519,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.0,
+      "fraction_predicted_medium": 1.0,
+      "high_producers_true": 100,
+      "high_producers_found": 0,
+      "high_producer_recall": 0.0,
+      "confusion_matrix": [
+        [
+          0,
+          108,
+          0
+        ],
+        [
+          0,
+          431,
+          0
+        ],
+        [
+          0,
+          100,
+          0
+        ]
+      ],
+      "mcc_rank_matched": 0.004068307021734754,
+      "accuracy_rank_matched": 0.5696400625978091,
+      "high_producer_recall_rank_matched": 0.04,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          17,
+          86,
+          5
+        ],
+        [
+          70,
+          343,
+          18
+        ],
+        [
+          20,
+          76,
+          4
+        ]
+      ],
+      "file": "gpub065.delta.ncsa.illinois.edu-20714232_73e4b91ef2b3c976392837372d676ee06e04ac9a0e51282862a1aff08111bd4c.json",
+      "setting": "s03_L2_maskon_lr0.001_yj",
+      "seed": 42,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": 0.07688171350049565,
+      "pearson_vs_raw": 0.05228408412798513,
+      "topk_50_high_precision": 0.12,
+      "topk_100_high_precision": 0.15
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6400625978090767,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.12483403039138521,
+      "fraction_predicted_medium": 0.8419405320813772,
+      "high_producers_true": 100,
+      "high_producers_found": 18,
+      "high_producer_recall": 0.18,
+      "confusion_matrix": [
+        [
+          13,
+          94,
+          1
+        ],
+        [
+          47,
+          378,
+          6
+        ],
+        [
+          16,
+          66,
+          18
+        ]
+      ],
+      "mcc_rank_matched": 0.08756065754954084,
+      "accuracy_rank_matched": 0.6040688575899843,
+      "high_producer_recall_rank_matched": 0.18,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          16,
+          91,
+          1
+        ],
+        [
+          71,
+          352,
+          8
+        ],
+        [
+          20,
+          62,
+          18
+        ]
+      ],
+      "file": "gpub065.delta.ncsa.illinois.edu-20714232_7c56eb6dd16d431bfb93a2328f13f2fa794f90154baca6cd6d2eb91579e2bade.json",
+      "setting": "s01_L2_maskon_lr0.0001_yj",
+      "seed": 42,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": 0.15296998663675812,
+      "pearson_vs_raw": 0.31903014226210463,
+      "topk_50_high_precision": 0.52,
+      "topk_100_high_precision": 0.39
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6744913928012519,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.0,
+      "fraction_predicted_medium": 1.0,
+      "high_producers_true": 100,
+      "high_producers_found": 0,
+      "high_producer_recall": 0.0,
+      "confusion_matrix": [
+        [
+          0,
+          108,
+          0
+        ],
+        [
+          0,
+          431,
+          0
+        ],
+        [
+          0,
+          100,
+          0
+        ]
+      ],
+      "mcc_rank_matched": -0.030087654557822283,
+      "accuracy_rank_matched": 0.5555555555555556,
+      "high_producer_recall_rank_matched": 0.08,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          12,
+          94,
+          2
+        ],
+        [
+          79,
+          335,
+          17
+        ],
+        [
+          16,
+          76,
+          8
+        ]
+      ],
+      "file": "gpub065.delta.ncsa.illinois.edu-20714232_a3b312aa512dfb1083f1cff0a1dcf36949763404599b41011cc1efc3a8a0d367.json",
+      "setting": "s06_L2_maskoff_lr0.001_zs",
+      "seed": 42,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": 0.051378019379177346,
+      "pearson_vs_raw": 0.07152042985796,
+      "topk_50_high_precision": 0.3,
+      "topk_100_high_precision": 0.24
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6807511737089202,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.15279715040377462,
+      "fraction_predicted_medium": 0.9436619718309859,
+      "high_producers_true": 100,
+      "high_producers_found": 16,
+      "high_producer_recall": 0.16,
+      "confusion_matrix": [
+        [
+          2,
+          104,
+          2
+        ],
+        [
+          9,
+          417,
+          5
+        ],
+        [
+          2,
+          82,
+          16
+        ]
+      ],
+      "mcc_rank_matched": 0.12171661912909788,
+      "accuracy_rank_matched": 0.6181533646322379,
+      "high_producer_recall_rank_matched": 0.19,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          21,
+          85,
+          2
+        ],
+        [
+          70,
+          355,
+          6
+        ],
+        [
+          16,
+          65,
+          19
+        ]
+      ],
+      "file": "gpub065.delta.ncsa.illinois.edu-20714232_d130792439ecaf1a39d7b1d3e02481bee2a2b2558c8efe4188d3a2306e4ab3cd.json",
+      "setting": "s09_L6_maskon_lr0.0001_yj",
+      "seed": 42,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": 0.10528203628933717,
+      "pearson_vs_raw": 0.294278818687916,
+      "topk_50_high_precision": 0.48,
+      "topk_100_high_precision": 0.29
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6744913928012519,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.0,
+      "fraction_predicted_medium": 1.0,
+      "high_producers_true": 100,
+      "high_producers_found": 0,
+      "high_producer_recall": 0.0,
+      "confusion_matrix": [
+        [
+          0,
+          108,
+          0
+        ],
+        [
+          0,
+          431,
+          0
+        ],
+        [
+          0,
+          100,
+          0
+        ]
+      ],
+      "mcc_rank_matched": -0.0452680819265143,
+      "accuracy_rank_matched": 0.5492957746478874,
+      "high_producer_recall_rank_matched": 0.03,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          15,
+          89,
+          4
+        ],
+        [
+          78,
+          333,
+          20
+        ],
+        [
+          14,
+          83,
+          3
+        ]
+      ],
+      "file": "gpub065.delta.ncsa.illinois.edu-20714232_fe4ea9a9d3781a5d1ec015151f89cf03f5a9452af462da72ed537c3993888309.json",
+      "setting": "s02_L2_maskon_lr0.001_zs",
+      "seed": 42,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": 0.062424350783555835,
+      "pearson_vs_raw": 0.07991932801764724,
+      "topk_50_high_precision": 0.12,
+      "topk_100_high_precision": 0.18
+    }
+  ]
+}

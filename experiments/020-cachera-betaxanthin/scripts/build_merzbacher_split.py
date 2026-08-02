@@ -340,13 +340,20 @@ def build() -> dict[str, Any]:
             "agreement": agree / len(paired) if paired else None,
             "our_range_class_counts": {
                 int(k): int(v)
-                for k, v in zip(*np.unique(labels_our_range, return_counts=True), strict=False)
+                for k, v in zip(
+                    *np.unique(labels_our_range, return_counts=True), strict=False
+                )
             },
             "their_range_class_counts": {
                 int(k): int(v)
-                for k, v in zip(*np.unique(labels_their_range, return_counts=True), strict=False)
+                for k, v in zip(
+                    *np.unique(labels_their_range, return_counts=True), strict=False
+                )
             },
-            "their_released_class_counts": their_val["label"].value_counts().sort_index().to_dict(),
+            "their_released_class_counts": their_val["label"]
+            .value_counts()
+            .sort_index()
+            .to_dict(),
             "note": (
                 "Their rule min-max scales, so thresholds depend on the observed extremes. "
                 "Low agreement here means our build and theirs induce DIFFERENT classes and "
@@ -374,15 +381,22 @@ def main() -> None:
     print("MERZBACHER NESTED SPLIT")
     print("=" * 72)
     print(f"  their test genes        {rec['their_test_genes']}")
-    print(f"  paper states            {rec['paper_states_metabolic_genes']}  "
-          f"(gap {rec['gap_640_vs_811']}, unexplained)")
+    print(
+        f"  paper states            {rec['paper_states_metabolic_genes']}  "
+        f"(gap {rec['gap_640_vs_811']}, unexplained)"
+    )
     print(f"  our single-deletion set {rec['our_single_deletion_genes']}")
     print(f"  shared -> OUR TEST      {rec['our_test_size']}")
     print(f"  our train/val pool      {rec['our_train_val_pool']}")
-    print(f"  their genes we lack     {rec['their_genes_missing_from_ours']} "
-          f"{rec['missing_examples'][:5]}")
-    print(f"\n  label agreement vs their released labels: "
-          f"{lc['agreement']:.1%}" if lc["agreement"] is not None else "  no overlap")
+    print(
+        f"  their genes we lack     {rec['their_genes_missing_from_ours']} "
+        f"{rec['missing_examples'][:5]}"
+    )
+    print(
+        f"\n  label agreement vs their released labels: {lc['agreement']:.1%}"
+        if lc["agreement"] is not None
+        else "  no overlap"
+    )
     print(f"  our-range classes    {lc['our_range_class_counts']}")
     print(f"  their-range classes  {lc['their_range_class_counts']}")
     print(f"  their released       {lc['their_released_class_counts']}")

@@ -154,37 +154,6 @@ All figures regenerate from
 
 ---
 
-### Fig 8 -- the capability gap: metabolic vs non-metabolic genes
-
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig8_metabolic_vs_nonmetabolic_2026-08-02-10-53-02.svg)
-
-**Fig 8. CGT predicts high betaxanthin producers among deletions the flux-based method cannot
-represent.** Held-out test genes split by yeast-GEM membership, identical derived labels on
-both sides (their 0.40/0.65 cuts on a train-pool min-max scale). Circled = CGT's top 25.
-
-| | in yeast-GEM | NOT in yeast-GEM |
-| --- | --: | --: |
-| genes | 657 | 258 |
-| true high (derived) | 48 (7.3%) | 21 (8.1%) |
-| CGT Spearman vs measured | +0.124 | **+0.270** |
-| CGT top 25: high found | 17 (68%) | 9 (36%) |
-| enrichment over base rate | 9.3x, p=2e-15 | **4.4x, p=2e-05** |
-| **Cachera FCL prediction** | available | **none possible** |
-
-Merzbacher's test set is **639/640 (99.8 %) inside yeast-GEM**; of our other test genes only
-**21/294 (7.1 %)** are. That is what the constraint looks like in practice: flux sampling
-yields no feature for a deletion the metabolic model does not contain, so FCL's output for
-those genes is not poor, it is undefined.
-
-CGT's rank correlation is *higher* on the non-metabolic set (+0.270 vs +0.124). Both
-enrichments are strongly significant.
-
-**Caveats, and they matter for how hard this can be pushed.** (i) Labels for the non-GEM genes
-are DERIVED by us -- Merzbacher never labelled them -- so both panels use our derivation and
-the comparison to make is panel-vs-panel, not panel-vs-their-paper. (ii) n=258 with 21
-positives is modest; the interval on 4.4x is wide. (iii) "FCL cannot model these" is a
-STRUCTURAL claim about flux-sample features, not an experiment we ran on their code.
-
 ### Fig 1 -- per-gene spread (639 points)
 
 ![](assets/images/020-cachera-betaxanthin/merzbacher_fig1_scatter_spread_2026-08-02-10-53-02.svg)
@@ -272,6 +241,37 @@ Spearman 0.731 against a ceiling of 0.827 (a 3-level ordinal cannot reach 1.0 ag
 continuous variable because of its own ties, so the raw number is uninterpretable alone). The
 residual is real: **18.8 % of genes would bin differently** under a pure rank-split of our
 values, so a model perfectly predicting OUR measurement would still be scored wrong on ~19 %.
+
+### Fig 8 -- the capability gap: metabolic vs non-metabolic genes
+
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig8_metabolic_vs_nonmetabolic_2026-08-02-10-53-02.svg)
+
+**Fig 8. CGT predicts high betaxanthin producers among deletions the flux-based method cannot
+represent.** Held-out test genes split by yeast-GEM membership, identical derived labels on
+both sides (their 0.40/0.65 cuts on a train-pool min-max scale). Circled = CGT's top 25.
+
+| | in yeast-GEM | NOT in yeast-GEM |
+| --- | --: | --: |
+| genes | 657 | 258 |
+| true high (derived) | 48 (7.3%) | 21 (8.1%) |
+| CGT Spearman vs measured | +0.124 | **+0.270** |
+| CGT top 25: high found | 17 (68%) | 9 (36%) |
+| enrichment over base rate | 9.3x, p=2e-15 | **4.4x, p=2e-05** |
+| **Cachera FCL prediction** | available | **none possible** |
+
+Merzbacher's test set is **639/640 (99.8 %) inside yeast-GEM**; of our other test genes only
+**21/294 (7.1 %)** are. That is what the constraint looks like in practice: flux sampling
+yields no feature for a deletion the metabolic model does not contain, so FCL's output for
+those genes is not poor, it is undefined.
+
+CGT's rank correlation is *higher* on the non-metabolic set (+0.270 vs +0.124). Both
+enrichments are strongly significant.
+
+**Caveats, and they matter for how hard this can be pushed.** (i) Labels for the non-GEM genes
+are DERIVED by us -- Merzbacher never labelled them -- so both panels use our derivation and
+the comparison to make is panel-vs-panel, not panel-vs-their-paper. (ii) n=258 with 21
+positives is modest; the interval on 4.4x is wide. (iii) "FCL cannot model these" is a
+STRUCTURAL claim about flux-sample features, not an experiment we ran on their code.
 
 ---
 

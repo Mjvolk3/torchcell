@@ -163,7 +163,7 @@ represent.** Held-out test genes split by yeast-GEM membership, identical derive
 both sides (their 0.40/0.65 cuts on a train-pool min-max scale). Circled = CGT's top 25.
 
 | | in yeast-GEM | NOT in yeast-GEM |
-|---|--:|--:|
+| --- | --: | --: |
 | genes | 657 | 258 |
 | true high (derived) | 48 (7.3%) | 21 (8.1%) |
 | CGT Spearman vs measured | +0.124 | **+0.270** |
@@ -194,7 +194,7 @@ of their genes fall inside an E[class] band of 0.22 on a 0-2 scale, 80 % of CGT'
 z-units. Colour is Merzbacher's released label, x is OUR copy of the same screen.
 
 | pair | Pearson | Spearman |
-|---|--:|--:|
+| --- | --: | --: |
 | measured vs Cachera RF | +0.244 | **+0.039** |
 | measured vs CGT | +0.294 | **+0.105** |
 | Cachera RF vs CGT | +0.108 | **-0.128** |
@@ -219,7 +219,7 @@ the true class marginal, RF drops to 0.556 and CGT to 0.549. Evidence, not a res
 each nominates, the fraction truly high; random is 0.156.
 
 | model | k=10 | k=25 | k=50 |
-|---|--:|--:|--:|
+| --- | --: | --: | --: |
 | Cachera RF | 8 (5.1x, p=1e-05) | 19 (4.9x, p=8e-12) | 20 (2.6x, p=1e-05) |
 | CGT | **9** (5.8x, p=4e-07) | 18 (4.6x, p=1e-10) | **24** (3.1x, p=2e-08) |
 
@@ -236,7 +236,7 @@ puts two models with incomparable units on one axis; a separating model shows th
 boxes.
 
 | model | low | medium | high |
-|---|--:|--:|--:|
+| --- | --: | --: | --: |
 | Cachera RF | 54 | 49 | 56 |
 | CGT | 48 | 51 | 52 |
 
@@ -292,7 +292,7 @@ leak-free. Same marginal on both sides, so the RELATIVE claim holds; the ABSOLUT
 not deployable accuracy:
 
 | marginal | RF acc | CGT acc | RF hi-rec | CGT hi-rec |
-|---|--:|--:|--:|--:|
+| --- | --: | --: | --: | --: |
 | test counts (oracle, used here) | 0.5556 | 0.5493 | 0.290 | 0.290 |
 | train-pool counts (leak-free) | 0.6228 | 0.6166 | 0.190 | 0.190 |
 

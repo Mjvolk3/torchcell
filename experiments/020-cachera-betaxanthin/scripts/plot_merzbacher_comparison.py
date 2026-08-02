@@ -222,6 +222,24 @@ def load_their_gene_scores() -> dict[str, dict[str, Any]]:
     continuous score their ternary plots are drawn from, and it is what makes THEIR side
     rank-matchable on the same rule as ours -- without it, only our side could be re-binned
     and the comparison would be rigged in our favour.
+
+    THEY DO RELEASE MORE THAN CLASSES, which is the thing to check before believing any of
+    this: `fig4c_*.csv` carries `score0/score1/score2` -- P(low)/P(medium)/P(high), summing to
+    exactly 1.0 -- for each of 124 flux samples per gene, over 640 genes. Aggregated, that is
+    558 distinct gene-level values, i.e. a real ordering rather than a re-shuffle of three
+    labels.
+
+    TWO ROBUSTNESS CHECKS, both run before this was used for anything (2026.08.01):
+
+    * TIES ARE INERT. 82 genes share a score with another, and `rank_bins` breaks ties by
+      array position, which is arbitrary. Over 200 random permutations before ranking, their
+      accuracy moves 0.5563 +- 0.0008 and high-producer recall not at all -- the ties fall
+      INSIDE a class, never across a boundary.
+    * THE AGGREGATION IS NOT LOAD-BEARING, and the one used is the most generous to them:
+      E[class] gives acc 0.5556 / high-recall 0.290; `p_high - p_low` is identical; `p_high`
+      alone gives 0.5446 / 0.280. Collapsing the 3-simplex to one number does lose
+      information -- (0.5, 0, 0.5) and (0, 1, 0) both map to 1.0 -- but not enough to move
+      the comparison.
     """
     out: dict[str, dict[str, Any]] = {}
     for path in sorted(glob.glob(osp.join(FIG4_DIR, "fig4c_*.csv"))):
@@ -303,8 +321,10 @@ def main() -> None:
         )
     print(f"  their published RF acc {published:.4f}; re-derived {recomputed:.4f} OK")
 
-    slide_1(cgt, rf, t, best, ts)
-    slide_2(cgt, rf, t, best, ts)
+    fig_accuracy(cgt, rf, t, best, ts)
+    fig_distribution(cgt, rf, t, best, ts)
+    fig_recall(cgt, rf, t, best, ts)
+    fig_confusion(cgt, rf, t, best, ts)
 
 
 # ---------------------------------------------------------------------------------- panels
@@ -458,15 +478,18 @@ def draw_recall(ax: plt.Axes, cgt: dict, rf: dict, t: np.ndarray) -> None:
     ax.set_xticks(x)
     ax.set_xticklabels([f"{n}\n(n={counts[i]})" for i, n in enumerate(CLASS_NAMES)])
     ax.set_ylabel("recall within true class")
-    ax.set_ylim(0, 1.12)
+    ax.set_ylim(0, 1.0)
     tenth_grid(ax)
+    # ABOVE the axes, not inside: the medium bars reach 0.98, so any in-axes placement
+    # collides with them.
     ax.legend(
         frameon=False,
         fontsize=5,
-        loc="upper center",
-        ncol=1,
-        bbox_to_anchor=(0.72, 1.0),
+        loc="lower center",
+        ncol=3,
+        bbox_to_anchor=(0.5, 1.01),
         handletextpad=0.4,
+        columnspacing=1.0,
     )
 
 
@@ -503,50 +526,42 @@ def draw_confusion(axes, cgt: dict, rf: dict, t: np.ndarray) -> None:
     axes[0].set_ylabel("true")
 
 
-def slide_1(cgt: dict, rf: dict, t: np.ndarray, best: str, ts: str) -> None:
-    """SLIDE 1 -- the published accuracy advantage is a majority-class artifact."""
+def fig_accuracy(cgt: dict, rf: dict, t: np.ndarray, best: str, ts: str) -> None:
+    """STANDALONE: as-published vs rank-matched accuracy."""
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(60)))
+    draw_accuracy(ax, cgt, rf, t, best)
+    fig.tight_layout(pad=0.4)
+    save(fig, "merzbacher_fig1_accuracy_artifact", ts)
+
+
+def fig_distribution(cgt: dict, rf: dict, t: np.ndarray, best: str, ts: str) -> None:
+    """STANDALONE: where each model puts the genes."""
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(52)))
+    draw_distribution(ax, cgt, rf, t)
+    fig.tight_layout(pad=0.4)
+    save(fig, "merzbacher_fig2_class_distribution", ts)
+
+
+def fig_recall(cgt: dict, rf: dict, t: np.ndarray, best: str, ts: str) -> None:
+    """STANDALONE: per-class recall."""
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(58)))
+    draw_recall(ax, cgt, rf, t)
+    fig.tight_layout(pad=0.4)
+    save(fig, "merzbacher_fig3_per_class_recall", ts)
+
+
+def fig_confusion(cgt: dict, rf: dict, t: np.ndarray, best: str, ts: str) -> None:
+    """STANDALONE: the two rank-matched confusion matrices.
+
+    These stay in ONE figure because they are the same plot twice, side by side, which is how
+    a confusion comparison is read -- not two different plot types stacked under a/b labels.
+    """
     fig, axes = plt.subplots(
-        1,
-        2,
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(58)),
-        gridspec_kw={"width_ratios": [1.0, 1.45]},
+        1, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(52))
     )
-    draw_accuracy(axes[0], cgt, rf, t, best)
-    draw_distribution(axes[1], cgt, rf, t)
-    for ax, lab in zip(axes, "ab"):
-        ax.text(
-            -0.16,
-            1.06,
-            lab,
-            transform=ax.transAxes,
-            fontsize=8,
-            fontweight="bold",
-            va="bottom",
-            ha="left",
-        )
+    draw_confusion(axes, cgt, rf, t)
     fig.tight_layout(pad=0.4)
-    save(fig, "merzbacher_slide1_accuracy_artifact", ts)
-
-
-def slide_2(cgt: dict, rf: dict, t: np.ndarray, best: str, ts: str) -> None:
-    """SLIDE 2 -- matched fairly, CGT equals their best model and finds more high producers."""
-    fig = plt.figure(figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(58)))
-    gs = fig.add_gridspec(1, 3, width_ratios=[1.55, 1.0, 1.0], wspace=0.42)
-    draw_recall(fig.add_subplot(gs[0, 0]), cgt, rf, t)
-    draw_confusion([fig.add_subplot(gs[0, 1]), fig.add_subplot(gs[0, 2])], cgt, rf, t)
-    for ax, lab, x in zip(fig.axes, "ab", (-0.13, -0.24)):
-        ax.text(
-            x,
-            1.06,
-            lab,
-            transform=ax.transAxes,
-            fontsize=8,
-            fontweight="bold",
-            va="bottom",
-            ha="left",
-        )
-    fig.tight_layout(pad=0.4)
-    save(fig, "merzbacher_slide2_matched_comparison", ts)
+    save(fig, "merzbacher_fig4_confusion_rank_matched", ts)
 
 
 if __name__ == "__main__":

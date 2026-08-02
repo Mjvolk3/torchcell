@@ -633,8 +633,27 @@ def fig_scatter(
     ]
     # wspace is explicit: at the default the y-label of panels 2 and 3 crowds the previous
     # panel's tick labels, which reads as one plot bleeding into the next.
+    # ONE SCALE PER VARIABLE, not per panel. `measured` is the x of panels 1 and 2, FCL's
+    # E[class] is the y of panel 1 AND the x of panel 3, and CGT's prediction is the y of
+    # panels 2 and 3. Letting matplotlib autoscale each axis independently drew the same
+    # quantity at three different magnifications, so panel 3 could not be visually compared
+    # with panels 1-2. Limits and tick spacing are now keyed to the variable.
+    #
+    # The E[class] range carries deliberate headroom at the top: it is panel 1's y, and the
+    # legend sits in that empty strip. Data ranges are measured -2.28..2.34, E[class]
+    # 0.10..1.99, CGT -0.59..1.60.
+    axis_spec = {
+        "measured": ((-2.6, 2.6), 1.0),
+        "fcl": ((0.0, 2.45), 0.5),
+        "cgt": ((-0.8, 1.8), 0.5),
+    }
+    var_of = {
+        "measured betaxanthin, Cachera screen (z)": "measured",
+        "FCL RF   E[class]": "fcl",
+        "CGT   predicted (z)": "cgt",
+    }
     fig, axes = plt.subplots(
-        1, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(56))
+        1, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(58))
     )
     for ax, (name, x, y, xlab, ylab) in zip(axes, panels):
         for c in range(3):
@@ -666,6 +685,13 @@ def fig_scatter(
         )
         ax.set_xlabel(xlab, fontsize=5.5)
         ax.set_ylabel(ylab, fontsize=5.5)
+        for setlim, setloc, lab in (
+            (ax.set_xlim, ax.xaxis.set_major_locator, xlab),
+            (ax.set_ylim, ax.yaxis.set_major_locator, ylab),
+        ):
+            lims, step = axis_spec[var_of[lab]]
+            setlim(*lims)
+            setloc(mpl.ticker.MultipleLocator(step))
         ax.tick_params(labelsize=5)
         ax.grid(lw=0.3, color="0.92", zorder=0)
         ax.set_axisbelow(True)
@@ -673,29 +699,29 @@ def fig_scatter(
     # upper-left of the first panel, directly on top of two red points -- and there is no
     # in-axes corner that is reliably empty across all three panels, since each has a
     # different x variable. Outside the axes it cannot collide with data at all.
-    handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(
-        handles,
-        labels,
-        loc="lower center",
-        bbox_to_anchor=(0.5, 0.085),
-        ncol=3,
+    # BACK INSIDE panel 1, sitting in the empty strip the shared E[class] upper limit
+    # (2.45 against a data max of 1.99) deliberately leaves. A figure-level legend below the
+    # panels read as detached from the plot; an in-axes one at the default limits covered two
+    # red points. Making room for it is the fix, not moving it away.
+    axes[0].legend(
         frameon=False,
-        fontsize=5,
-        handletextpad=0.3,
-        columnspacing=1.4,
-        markerscale=1.8,
+        fontsize=4.5,
+        loc="upper left",
+        ncol=3,
+        handletextpad=0.2,
+        columnspacing=0.8,
+        markerscale=1.6,
         title="released class label (FCL paper)",
-        title_fontsize=5,
+        title_fontsize=4.5,
     )
     # tight_layout FIRST (it computes label extents), then widen the gutters and reserve the
     # caption strip -- doing it in the other order lets tight_layout overwrite both, which is
     # how the x-labels got clipped off the bottom.
-    fig.tight_layout(pad=0.4, rect=(0.0, 0.20, 1.0, 1.0))
+    fig.tight_layout(pad=0.4, rect=(0.0, 0.10, 1.0, 1.0))
     fig.subplots_adjust(wspace=0.40)
     fig.text(
         0.5,
-        0.018,
+        0.020,
         "shaded band = middle 80% (10th-90th percentile) of the y-axis model's own output; a "
         "narrow band means the model returns nearly the same value for every gene.\n"
         "Color is the FCL paper's RELEASED class label; x is our copy of the Cachera screen. "

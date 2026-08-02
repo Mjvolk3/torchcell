@@ -142,7 +142,7 @@ accuracy (0.7011 vs 0.700), asserted in the script rather than assumed.
 
 ### Fig 1 -- the published accuracy advantage is a majority-class artifact
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig1_accuracy_artifact_2026-08-01-22-33-29.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig1_accuracy_artifact_2026-08-01-22-39-38.svg)
 
 Their RF's 0.701 clears the 0.674 majority rate by calling **95 % of genes medium**; CGT's
 absolute binning sits at 0.681 doing the same thing (94 % medium, and it never calls a single
@@ -152,7 +152,7 @@ gene low). Force both sides to the true class marginal and RF drops to 0.556, CG
 
 ### Fig 3 -- per-class recall: CGT finds more high producers
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig3_per_class_recall_2026-08-01-22-33-29.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig3_per_class_recall_2026-08-01-22-39-38.svg)
 
 Rank-matched, CGT reaches **0.29 recall on high producers against their published 0.18**, and
 0.19 on low against their 0.06 -- paid for in medium recall (0.70 vs 0.98). Rank-matching
@@ -161,16 +161,49 @@ are shown for both models.
 
 ### Fig 2 -- predicted class distribution
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig2_class_distribution_2026-08-01-22-33-29.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig2_class_distribution_2026-08-01-22-39-38.svg)
 
 ### Fig 4 -- confusion matrices, both sides rank-matched
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig4_confusion_rank_matched_2026-08-01-22-33-29.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig4_confusion_rank_matched_2026-08-01-22-39-38.svg)
 
 The two confusion matrices are near-identical (0.556 vs 0.549) but the models are NOT making
-the same predictions: their gene-level score correlates with CGT's at **r = 0.108** and the
-rank-binned labels agree on only **52 %** of genes. Two differently-wrong models of equal
-strength -- which is what makes an ensemble worth testing.
+the same predictions: the rank-binned labels agree on only **52 %** of genes, and in RANK the
+two models are slightly ANTI-correlated (Spearman **-0.128**). Two differently-wrong models of
+equal strength.
+
+CORRECTION to an earlier reading of this note: the "+0.108" quoted for model-model agreement
+was a PEARSON correlation, and it is carried entirely by the extreme 10 % of their score.
+Restricted to the middle 90 %, Pearson flips to **-0.133** (Spearman -0.159). Rank is the
+relevant scale here because rank is what the binning uses.
+
+### Fig 5 -- the spread, per gene (639 points)
+
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig5_scatter_spread_2026-08-01-22-39-38.svg)
+
+**THE ACCURACY COMPARISON IS DEGENERATE AND THIS IS WHY.** Their RF beats the 0.674 majority
+rate by 0.027; rank-matched, every model lands near 0.55. The scatter shows the reason
+directly -- both models emit an almost constant value. 80 % of their genes fall within an
+E[class] band of 0.22 (on a 0-2 scale); 80 % of CGT's fall within 0.33 z-units. There is no
+classification signal to compare because there is barely any variation to classify with.
+
+The informative axis is the CONTINUOUS one, which is the task they tried and abandoned:
+
+| pair | Pearson | Spearman |
+|---|--:|--:|
+| measured vs Cachera RF | +0.244 | **+0.039** |
+| measured vs CGT | +0.294 | **+0.105** |
+| Cachera RF vs CGT | +0.108 | **-0.128** |
+
+CGT's rank correlation with measured production is **~2.7x theirs** (+0.105 vs +0.039). Note
+how far Pearson sits above Spearman on both rows: each model gets a handful of extreme genes
+roughly right and is otherwise flat, so Pearson flatters both.
+
+**The honest bottom line: neither model solves this task.** The published accuracy advantage
+is a majority-class artifact, and on the continuous ranking both are weak, with CGT the better
+of the two. Quoting "CGT matches their best model on accuracy" would be true and nearly
+meaningless; the defensible claim is the Spearman gap on a task their classifier cannot do at
+all.
 
 **Can their side really be ranked?** Yes -- they release more than classes.
 `fig4c_*.csv` carries `score0/score1/score2` (P(low)/P(med)/P(high), summing to 1.0) for each

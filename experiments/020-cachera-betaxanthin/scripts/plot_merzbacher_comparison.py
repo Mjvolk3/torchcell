@@ -47,6 +47,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
+from scipy.stats import spearmanr
 
 from torchcell.timestamp import timestamp
 from torchcell.utils import (
@@ -342,6 +343,8 @@ def main() -> None:
         )
     print(f"  their published RF acc {published:.4f}; re-derived {recomputed:.4f} OK")
 
+    obs = np.array([raw[g] for g in genes], dtype=float)
+    fig_scatter(cgt, rf, t, obs, theirs, genes, best, ts)
     fig_accuracy(cgt, rf, t, best, ts)
     fig_distribution(cgt, rf, t, best, ts)
     fig_recall(cgt, rf, t, best, ts)
@@ -547,6 +550,101 @@ def draw_confusion(axes, cgt: dict, rf: dict, t: np.ndarray) -> None:
         for sp in ax.spines.values():
             sp.set_linewidth(0.5)
     axes[0].set_ylabel("true")
+
+
+def fig_scatter(
+    cgt: dict,
+    rf: dict,
+    t: np.ndarray,
+    obs: np.ndarray,
+    theirs: dict,
+    genes: list,
+    best: str,
+    ts: str,
+) -> None:
+    """STANDALONE: every one of the 639 test genes, model score against measured production.
+
+    THE SPREAD IS THE POINT, and it is what every aggregate number in the other figures hides.
+    Both models compress: a predictor that emits nearly the same value for every gene can
+    still post a respectable accuracy by riding the majority class, and only a scatter shows
+    that this is what is happening.
+
+    Colored by TRUE class, so vertical structure = the model separating the classes and a
+    single horizontal smear = it not doing so. Spearman is annotated because with this much
+    overplotting the eye is a poor judge of monotone association.
+
+    Their y-axis is E[class] (0-2) and ours is a standardized regression output; the axes are
+    NOT comparable in units and are not meant to be. What compares is the SHAPE.
+    """
+    rf_score = np.array([theirs[RF_MODEL]["score"][g] for g in genes], dtype=float)
+    # THREE PAIRINGS, so the third is not left out: each model against the MEASUREMENT, and
+    # then the two models against EACH OTHER. The third panel is the one that says whether
+    # matching aggregate scores mean shared information -- two models can tie on every summary
+    # statistic and still be right about different genes, which panels 1 and 2 cannot show.
+    panels = [
+        (
+            f"{RF_LABEL} vs measured",
+            obs,
+            rf_score,
+            "measured betaxanthin (screen)",
+            "Cachera RF   E[class]",
+        ),
+        (
+            f"{CGT_LABEL} vs measured",
+            obs,
+            cgt["raw"],
+            "measured betaxanthin (screen)",
+            "CGT   predicted (z)",
+        ),
+        (
+            f"{CGT_LABEL} vs {RF_LABEL}",
+            rf_score,
+            cgt["raw"],
+            "Cachera RF   E[class]",
+            "CGT   predicted (z)",
+        ),
+    ]
+    fig, axes = plt.subplots(
+        1, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(56))
+    )
+    for ax, (name, x, y, xlab, ylab) in zip(axes, panels):
+        for c in range(3):
+            m = t == c
+            ax.scatter(
+                x[m],
+                y[m],
+                s=4,
+                color=CLASS_COLORS[c],
+                linewidths=0.0,
+                label=f"{CLASS_NAMES[c]} (n={int(m.sum())})",
+                zorder=3,
+            )
+        rho = float(spearmanr(y, x).statistic)
+        # The 10th-90th percentile band of the y variable: the numeric statement of how
+        # compressed that model's output is, independent of where the cloud sits on the axis.
+        p10, p90 = np.percentile(y, [10, 90])
+        ax.axhspan(p10, p90, color="0.88", alpha=0.5, zorder=1)
+        ax.set_title(
+            f"{name}\nSpearman {rho:+.3f}    80% of y within {p90 - p10:.2f}",
+            fontsize=5,
+            pad=3,
+        )
+        ax.set_xlabel(xlab, fontsize=5.5)
+        ax.set_ylabel(ylab, fontsize=5.5)
+        ax.tick_params(labelsize=5)
+        ax.grid(lw=0.3, color="0.92", zorder=0)
+        ax.set_axisbelow(True)
+    axes[0].legend(
+        frameon=False,
+        fontsize=4.5,
+        loc="upper left",
+        handletextpad=0.2,
+        markerscale=1.8,
+        title="true class",
+        title_fontsize=4.5,
+    )
+    fig.tight_layout(pad=0.4)
+    save(fig, "merzbacher_fig5_scatter_spread", ts)
 
 
 def fig_accuracy(cgt: dict, rf: dict, t: np.ndarray, best: str, ts: str) -> None:

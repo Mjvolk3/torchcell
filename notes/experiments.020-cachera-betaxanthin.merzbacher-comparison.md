@@ -189,6 +189,27 @@ their classifier never had. Their `fig4c_*.csv` ships per-flux-sample class PROB
 (`E[class] = p_med + 2*p_high`, averaged over a gene's flux samples). The same rule is applied
 to both.
 
+**THE FIGURES USE AN ORACLE MARGINAL, and nothing in them says so.** Rank-matching needs
+class counts to cut at, and these figures take them from the TRUE TEST labels (108/431/100).
+Both models are therefore handed the marginal of the answer, which no deployed model has. The
+sibling artifact `evaluate_merzbacher_head_to_head.py` uses the TRAIN-POOL marginal
+(107/504/28) and is leak-free; the two answer different questions and their numbers must not
+be quoted interchangeably.
+
+What it licenses: the same marginal is imposed on both sides, so the RELATIVE claim ("CGT is
+level with their best RF") holds. The ABSOLUTE values are not deployable accuracy. Measured
+both ways:
+
+| marginal | RF acc | CGT acc | RF hi-rec | CGT hi-rec |
+|---|--:|--:|--:|--:|
+| test counts (oracle, used by the figures) | 0.5556 | 0.5493 | 0.290 | 0.290 |
+| train-pool counts (leak-free) | 0.6228 | 0.6166 | 0.190 | 0.190 |
+
+RF leads by ~0.006 either way and high-producer recall is identical either way -- the
+comparison is robust to the choice, only the level moves. The pool expects just 28 high
+producers where the test set holds 100, so their test genes are enriched for extremes
+relative to the full screen; that is what suppresses high recall under the pool marginal.
+
 **Caveat on MCC.** The 0.205 quoted elsewhere is their PER-FLUX-SAMPLE MCC; they never
 published a gene-level MCC. Accuracy and high-producer recall are gene-level on both sides and
 are the clean comparisons.

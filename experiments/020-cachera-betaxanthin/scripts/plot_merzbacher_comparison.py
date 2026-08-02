@@ -367,6 +367,7 @@ def main() -> None:
     fig_roc(ours, rf_sc, t, best, ts)
     fig_cell_spread(ours, rf_sc, obs, t, best, ts)
     fig_label_provenance(t, obs, ts)
+    fig_screen_coverage(raw, ts)
     fig_nonmetabolic(dumps, raw, split, best, ts)
     # The class-distribution, per-class-recall and confusion panels are diagnostics that
     # informed the reading above and are cited in the note; they are not carried in the figure
@@ -806,7 +807,9 @@ def fig_topk(ours: dict, rf_sc: np.ndarray, t: np.ndarray, best: str, ts: str) -
     ax.set_xlabel("k = number of genes nominated")
     ax.set_ylabel("precision@k  (fraction truly high)")
     ax.set_xlim(1, kmax)
-    ax.set_ylim(0, 0.85)
+    # 1.0, not 0.85: precision@k hits 1.000 at k=1 for both models, so the old ceiling
+    # sliced the top off the very region the figure is about.
+    ax.set_ylim(0, 1.0)
     tenth_grid(ax)
     ax.legend(frameon=False, fontsize=5, loc="upper right", handletextpad=0.5)
     fig.tight_layout(pad=0.4)
@@ -903,7 +906,6 @@ def fig_roc(ours: dict, rf_sc: np.ndarray, t: np.ndarray, best: str, ts: str) ->
             label=f"{lab}   AUC {roc_auc_score(is_high, score):.3f}",
         )
     ax.plot([0, 1], [0, 1], ls="--", lw=0.7, color=TRUTH_C, zorder=3)
-    ax.text(0.97, 0.90, "chance  AUC 0.500", ha="right", fontsize=5, color=TRUTH_C)
     ax.set_xlabel("false positive rate")
     ax.set_ylabel("true positive rate (high producers found)")
     ax.set_xlim(0, 1)
@@ -1027,10 +1029,11 @@ def fig_label_provenance(t: np.ndarray, obs: np.ndarray, ts: str) -> None:
     rho_obs = float(spearmanr(t, obs).statistic)
     rho_max = float(spearmanr(ideal, obs).statistic)
     ax.set_title(
-        f"Spearman {rho_obs:.3f} of an attainable {rho_max:.3f} "
-        f"({100 * rho_obs / rho_max:.0f}% of ceiling)   "
-        f"{100 * disagree:.1f}% would bin differently",
-        fontsize=5.5,
+        "how much headroom do the released labels leave?\n"
+        f"they track our measurement at {rho_obs:.3f} of an attainable {rho_max:.3f} "
+        f"= {100 * rho_obs / rho_max:.0f}% of ceiling; "
+        f"{100 * disagree:.1f}% of genes sit in a different bin than our values would give",
+        fontsize=5,
         pad=3,
     )
     ax.grid(axis="x", lw=0.3, color="0.9", zorder=0)
@@ -1043,6 +1046,104 @@ def load_gem_genes() -> set[str]:
     """Systematic ORF names in yeast-GEM -- the boundary of what a flux-based method can see."""
     df = pd.read_excel(GEM_PATH, sheet_name="GENES")
     return {str(v).strip().upper() for v in df["NAME"].dropna()}
+
+
+def fig_screen_coverage(raw: dict, ts: str) -> None:
+    """WHY a genome-scale model is needed at all -- how little of the screen FCL can reach.
+
+    This is the motivating figure for the capability comparison, and it uses only the
+    MEASURED screen: no model, no prediction, nothing to argue about. yeast-GEM contains
+    1,161 genes, of which 915 appear in the Cachera screen -- 19.4 % of its 4,721 deletions.
+    A flux-based method has features for those and for nothing else.
+
+    The consequence is the second bar: of the 223 deletions the paper's own 0.65 cut calls
+    HIGH producers, 163 (73 %) lie outside the metabolic model.
+
+    STATE THE COUNTER-POINT HONESTLY, because it is real and it is small: metabolic genes ARE
+    enriched among high producers -- 26.9 % of the highs against 19.4 % of the screen, a 1.4x
+    enrichment, which is exactly what the biology predicts. It is simply nowhere near enough
+    to matter: they are such a small share of the genome that the large majority of high
+    producers is still outside the model. Restricting to metabolism buys a 1.4x concentration
+    and costs three quarters of the hits.
+    """
+    gem = load_gem_genes()
+    g = sorted(raw)
+    v = np.array([raw[x] for x in g], dtype=float)
+    in_gem = np.array([x in gem for x in g])
+    lo, hi = float(np.nanmin(v)), float(np.nanmax(v))
+    is_hi = scale_bins(v, lo, hi) == 2
+    order = np.argsort(-v)
+    top100 = np.zeros(len(g), dtype=bool)
+    top100[order[:100]] = True
+
+    rows = [
+        ("every deletion\nin the screen", np.ones(len(g), dtype=bool)),
+        ("top 100 measured\nproducers", top100),
+        ("all HIGH producers\n(their 0.65 cut)", is_hi),
+    ]
+    fig, ax = plt.subplots(
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["half_plus"]), mm_to_in(52))
+    )
+    y = np.arange(len(rows))
+    for i, (name, mask) in enumerate(rows):
+        n = int(mask.sum())
+        n_gem = int((mask & in_gem).sum())
+        n_out = n - n_gem
+        ax.barh(
+            i,
+            n_gem / n,
+            color=RF_C,
+            edgecolor="black",
+            linewidth=0.4,
+            height=0.6,
+            zorder=3,
+            label="in yeast-GEM (FCL can score)" if i == 0 else None,
+        )
+        ax.barh(
+            i,
+            n_out / n,
+            left=n_gem / n,
+            color=CGT_C,
+            edgecolor="black",
+            linewidth=0.4,
+            height=0.6,
+            zorder=3,
+            label="outside yeast-GEM (FCL cannot)" if i == 0 else None,
+        )
+        ax.text(
+            n_gem / n / 2,
+            i,
+            f"{n_gem}\n{n_gem / n:.0%}",
+            ha="center",
+            va="center",
+            fontsize=5,
+            color="white",
+        )
+        ax.text(
+            n_gem / n + n_out / n / 2,
+            i,
+            f"{n_out}\n{n_out / n:.0%}",
+            ha="center",
+            va="center",
+            fontsize=5,
+        )
+        ax.text(1.015, i, f"n={n}", va="center", fontsize=5, color="0.35")
+    ax.set_yticks(y)
+    ax.set_yticklabels([r[0] for r in rows], fontsize=5)
+    ax.invert_yaxis()
+    ax.set_xlim(0, 1)
+    ax.set_xlabel("fraction of deletions")
+    ax.legend(
+        frameon=False,
+        ncol=2,
+        fontsize=5,
+        loc="lower center",
+        bbox_to_anchor=(0.5, 1.01),
+        handletextpad=0.4,
+        columnspacing=1.0,
+    )
+    fig.tight_layout(pad=0.4)
+    save(fig, "merzbacher_fig8_screen_coverage", ts)
 
 
 def fig_nonmetabolic(dumps: list, raw: dict, split: dict, best: str, ts: str) -> None:
@@ -1147,7 +1248,7 @@ def fig_nonmetabolic(dumps: list, raw: dict, split: dict, best: str, ts: str) ->
         fontsize=4.5,
         color="0.35",
     )
-    save(fig, "merzbacher_fig8_metabolic_vs_nonmetabolic", ts)
+    save(fig, "merzbacher_fig9_metabolic_vs_nonmetabolic", ts)
 
 
 if __name__ == "__main__":

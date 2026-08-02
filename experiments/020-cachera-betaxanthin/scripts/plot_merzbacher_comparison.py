@@ -169,8 +169,29 @@ def save(fig: plt.Figure, name: str, ts: str) -> None:
 def rank_bins(values: np.ndarray, counts: tuple[int, int, int]) -> np.ndarray:
     """Sort and cut so exactly `counts` land in low / medium / high.
 
-    Ties are broken by position, which is arbitrary but affects only exact ties; the
-    regression outputs are continuous so this is inert in practice.
+    `counts` HERE ARE THE TRUE TEST COUNTS (108/431/100), i.e. ORACLE INFORMATION, and that
+    has to be said plainly because nothing in the figures announces it. Both models are handed
+    the marginal distribution of the answer, which no deployed model would have. The sibling
+    artifact `evaluate_merzbacher_head_to_head.py` deliberately uses the TRAIN-POOL marginal
+    instead (107/504/28) and is leak-free; these two scripts answer different questions and
+    should not be quoted as if they were the same number.
+
+    WHAT THIS DOES AND DOES NOT LICENSE. The same marginal is imposed on BOTH sides, so the
+    RELATIVE claim -- "CGT is level with their best RF" -- is sound. The ABSOLUTE values are
+    not deployable accuracy. Measured both ways (2026.08.01):
+
+        marginal                RF acc   CGT acc   RF hi-rec   CGT hi-rec
+        test counts (oracle)    0.5556   0.5493      0.290        0.290
+        train-pool (leak-free)  0.6228   0.6166      0.190        0.190
+
+    RF leads by ~0.006 either way and high-producer recall is identical either way, so the
+    comparison is robust to the choice; only the level moves. Note the pool expects just 28
+    high producers where the test set holds 100 -- their test genes are enriched for extremes
+    relative to the full screen, which is what suppresses high recall under the pool marginal.
+
+    Ties are broken by position, which is arbitrary but affects only exact ties. Verified
+    inert: over 200 random permutations before ranking, their accuracy moves 0.5563 +- 0.0008
+    and high-producer recall not at all -- ties fall inside a class, never across a boundary.
     """
     order = np.argsort(np.argsort(values))
     n_lo, n_med, _ = counts

@@ -125,69 +125,29 @@ Related: [[plan.cgt-metabolism-flux-layer.2026.07.26]] ·
 
 ## 2026.08.01 - Head-to-head vs Cachera/Merzbacher on their 639 test genes
 
-Four standalone figures from `experiments/020-cachera-betaxanthin/scripts/plot_merzbacher_comparison.py`,
+Two figures from `experiments/020-cachera-betaxanthin/scripts/plot_merzbacher_comparison.py`,
 built from the 10 finished Delta `020_v4` cells (`$DATA_ROOT/test-predictions/`) and their
 shipped `figures/fig4/fig4c_*.csv`. Scored on the 639 genes carrying their label, a CGT
 prediction, and a raw screen value (their 640th, IPP1/YBR011C, is essential -- no deletion
-strain exists, so no screen could measure it).
+strain exists, so no screen could have measured it).
 
-**Only their RandomForest_Resampled is shown** -- the other three Fig 4b models are strictly
-worse on their own gene-level numbers (0.56-0.64 vs RF's 0.700). **CGT is one cell**, selected
-by VALIDATION (`s09_L6_maskon_lr0.0001_yj`, val pearson 0.3639), never by its score on their
-test genes: with ~10 cells at sigma ~ 0.03, picking on test would be worth ~2 sigma of free
-improvement.
+**Only their RandomForest_Resampled**, their best model (the other three Fig 4b models read
+0.56-0.64 gene-level against RF's 0.700). **CGT is one cell**, selected by VALIDATION
+(`s09_L6_maskon_lr0.0001_yj`, val pearson 0.3639) and never by its score on their test genes:
+across ~10 cells at sigma ~ 0.03, picking on test is worth ~2 sigma of free improvement.
 
-Provenance: our re-derivation of their deployed gene-level vote reproduces their published
-accuracy (0.7011 vs 0.700), asserted in the script rather than assumed.
+Provenance: our re-derivation of their deployed gene-level majority vote reproduces their
+published accuracy (0.7011 vs 0.700), asserted in the script rather than assumed.
 
-### Fig 1 -- the published accuracy advantage is a majority-class artifact
+### Fig 1 -- the spread, per gene (639 points)
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig1_accuracy_artifact_2026-08-01-22-39-38.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig1_scatter_spread_2026-08-01-22-43-07.svg)
 
-Their RF's 0.701 clears the 0.674 majority rate by calling **95 % of genes medium**; CGT's
-absolute binning sits at 0.681 doing the same thing (94 % medium, and it never calls a single
-gene low). Force both sides to the true class marginal and RF drops to 0.556, CGT to 0.549.
-**Accuracy above the majority line is the conservative-majority strategy, not discrimination
--- for both models.**
+**Both models emit a nearly constant value.** 80 % of their genes fall inside an E[class] band
+of 0.22 on a 0-2 scale; 80 % of CGT's inside 0.33 z-units. That is the whole reason the
+classification comparison carries so little: there is barely any variation to classify with.
 
-### Fig 3 -- per-class recall: CGT finds more high producers
-
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig3_per_class_recall_2026-08-01-22-39-38.svg)
-
-Rank-matched, CGT reaches **0.29 recall on high producers against their published 0.18**, and
-0.19 on low against their 0.06 -- paid for in medium recall (0.70 vs 0.98). Rank-matching
-their RF costs them the same way and lands them at the same 0.29, which is why both binnings
-are shown for both models.
-
-### Fig 2 -- predicted class distribution
-
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig2_class_distribution_2026-08-01-22-39-38.svg)
-
-### Fig 4 -- confusion matrices, both sides rank-matched
-
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig4_confusion_rank_matched_2026-08-01-22-39-38.svg)
-
-The two confusion matrices are near-identical (0.556 vs 0.549) but the models are NOT making
-the same predictions: the rank-binned labels agree on only **52 %** of genes, and in RANK the
-two models are slightly ANTI-correlated (Spearman **-0.128**). Two differently-wrong models of
-equal strength.
-
-CORRECTION to an earlier reading of this note: the "+0.108" quoted for model-model agreement
-was a PEARSON correlation, and it is carried entirely by the extreme 10 % of their score.
-Restricted to the middle 90 %, Pearson flips to **-0.133** (Spearman -0.159). Rank is the
-relevant scale here because rank is what the binning uses.
-
-### Fig 5 -- the spread, per gene (639 points)
-
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig5_scatter_spread_2026-08-01-22-39-38.svg)
-
-**THE ACCURACY COMPARISON IS DEGENERATE AND THIS IS WHY.** Their RF beats the 0.674 majority
-rate by 0.027; rank-matched, every model lands near 0.55. The scatter shows the reason
-directly -- both models emit an almost constant value. 80 % of their genes fall within an
-E[class] band of 0.22 (on a 0-2 scale); 80 % of CGT's fall within 0.33 z-units. There is no
-classification signal to compare because there is barely any variation to classify with.
-
-The informative axis is the CONTINUOUS one, which is the task they tried and abandoned:
+The informative axis is the CONTINUOUS one -- the task they tried and abandoned:
 
 | pair | Pearson | Spearman |
 |---|--:|--:|
@@ -195,53 +155,57 @@ The informative axis is the CONTINUOUS one, which is the task they tried and aba
 | measured vs CGT | +0.294 | **+0.105** |
 | Cachera RF vs CGT | +0.108 | **-0.128** |
 
-CGT's rank correlation with measured production is **~2.7x theirs** (+0.105 vs +0.039). Note
-how far Pearson sits above Spearman on both rows: each model gets a handful of extreme genes
-roughly right and is otherwise flat, so Pearson flatters both.
+CGT's rank correlation with measured production is **~2.7x theirs**. Pearson sits far above
+Spearman on both model rows because each gets a handful of extreme genes roughly right and is
+otherwise flat, so Pearson flatters both. In RANK the two models are slightly
+ANTI-correlated -- they are wrong about different genes.
 
-**The honest bottom line: neither model solves this task.** The published accuracy advantage
-is a majority-class artifact, and on the continuous ranking both are weak, with CGT the better
-of the two. Quoting "CGT matches their best model on accuracy" would be true and nearly
-meaningless; the defensible claim is the Spearman gap on a task their classifier cannot do at
-all.
+### Fig 2 -- why the accuracy comparison is degenerate
 
-**Can their side really be ranked?** Yes -- they release more than classes.
-`fig4c_*.csv` carries `score0/score1/score2` (P(low)/P(med)/P(high), summing to 1.0) for each
-of 124 flux samples per gene across 640 genes, which aggregates to 558 distinct gene-level
-values. Two checks before relying on it: (1) TIES ARE INERT -- 82 genes share a value and tie
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig2_accuracy_artifact_2026-08-01-22-43-07.svg)
+
+Their RF's 0.701 clears the 0.674 majority rate by 0.027, and it does so by calling 95 % of
+genes medium; CGT's absolute binning sits at 0.681 doing the same (94 % medium, and it never
+calls a single gene low). Force both to the true class marginal and RF drops to 0.556, CGT to
+0.549. **Accuracy above the majority line is the conservative-majority strategy, not
+discrimination -- for both models.** This figure is EVIDENCE for that claim, not a result.
+
+### Bottom line
+
+**Neither model solves this task.** "CGT matches their best model on accuracy" is true and
+nearly meaningless -- it is a statement about the majority class. The defensible claim is the
+Spearman gap on a continuous prediction their classifier cannot produce at all.
+
+### Method notes
+
+**Can their side be ranked?** Yes -- they release more than classes. `fig4c_*.csv` carries
+`score0/score1/score2` (P(low)/P(med)/P(high), summing to 1.0) for 124 flux samples per gene
+across 640 genes, aggregating to 558 distinct gene-level values via
+`E[class] = p_med + 2*p_high`. Two checks: (1) TIES ARE INERT -- 82 genes share a value and tie
 order is arbitrary, but over 200 random permutations their accuracy moves 0.5563 +- 0.0008 and
 high recall not at all; (2) THE AGGREGATION IS NOT LOAD-BEARING, and the one used is the most
 generous to them -- `E[class]` 0.5556/0.290, `p_high - p_low` identical, `p_high` alone
 0.5446/0.280.
 
-**Why both sides can be rank-matched.** Their models emit classes; CGT emits a regression
-value, and binning it with their absolute cuts charges CGT for calibration as well as for
-ordering. Rank-matching only CGT would be rigged -- forcing the true marginal is information
-their classifier never had. Their `fig4c_*.csv` ships per-flux-sample class PROBABILITIES with
-`knockout_name`, so their model also has a continuous gene-level score
-(`E[class] = p_med + 2*p_high`, averaged over a gene's flux samples). The same rule is applied
-to both.
-
-**THE FIGURES USE AN ORACLE MARGINAL, and nothing in them says so.** Rank-matching needs
-class counts to cut at, and these figures take them from the TRUE TEST labels (108/431/100).
-Both models are therefore handed the marginal of the answer, which no deployed model has. The
-sibling artifact `evaluate_merzbacher_head_to_head.py` uses the TRAIN-POOL marginal
-(107/504/28) and is leak-free; the two answer different questions and their numbers must not
-be quoted interchangeably.
-
-What it licenses: the same marginal is imposed on both sides, so the RELATIVE claim ("CGT is
-level with their best RF") holds. The ABSOLUTE values are not deployable accuracy. Measured
-both ways:
+**The rank-matched numbers use an ORACLE class marginal.** Rank-matching needs counts to cut
+at, and these take them from the TRUE TEST labels (108/431/100), so both models are handed the
+marginal of the answer. The sibling `evaluate_merzbacher_head_to_head.py` uses the TRAIN-POOL
+marginal (107/504/28) and is leak-free. Same marginal on both sides, so the RELATIVE claim
+holds; the ABSOLUTE values are not deployable accuracy:
 
 | marginal | RF acc | CGT acc | RF hi-rec | CGT hi-rec |
 |---|--:|--:|--:|--:|
-| test counts (oracle, used by the figures) | 0.5556 | 0.5493 | 0.290 | 0.290 |
+| test counts (oracle, used here) | 0.5556 | 0.5493 | 0.290 | 0.290 |
 | train-pool counts (leak-free) | 0.6228 | 0.6166 | 0.190 | 0.190 |
 
-RF leads by ~0.006 either way and high-producer recall is identical either way -- the
-comparison is robust to the choice, only the level moves. The pool expects just 28 high
-producers where the test set holds 100, so their test genes are enriched for extremes
-relative to the full screen; that is what suppresses high recall under the pool marginal.
+RF leads by ~0.006 either way, high recall identical either way -- robust to the choice, only
+the level moves. The pool expects 28 high producers where the test set holds 100: their test
+genes are enriched for extremes relative to the full screen.
+
+**Diagnostics not carried as figures** (regenerate with `--all`): class distribution, per-class
+recall, rank-matched confusion matrices. Rank-matched, CGT reaches 0.29 recall on high
+producers vs their published 0.18 and 0.19 on low vs their 0.06, paid for in medium recall
+(0.70 vs 0.98); the two rank-binned label vectors agree on only 52 % of genes.
 
 **Caveat on MCC.** The 0.205 quoted elsewhere is their PER-FLUX-SAMPLE MCC; they never
 published a gene-level MCC. Accuracy and high-producer recall are gene-level on both sides and

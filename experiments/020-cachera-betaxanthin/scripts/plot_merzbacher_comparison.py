@@ -344,11 +344,20 @@ def main() -> None:
     print(f"  their published RF acc {published:.4f}; re-derived {recomputed:.4f} OK")
 
     obs = np.array([raw[g] for g in genes], dtype=float)
+    # TWO FIGURES BY DEFAULT. Fig 1 is the scatter because it is the only one that shows why
+    # every other comparison here is degenerate: both models emit a nearly constant value, so
+    # a classification metric on a 67 %-majority problem has almost nothing to measure. Fig 2
+    # is the accuracy collapse, which is the EVIDENCE for that claim rather than a result in
+    # its own right.
     fig_scatter(cgt, rf, t, obs, theirs, genes, best, ts)
     fig_accuracy(cgt, rf, t, best, ts)
-    fig_distribution(cgt, rf, t, best, ts)
-    fig_recall(cgt, rf, t, best, ts)
-    fig_confusion(cgt, rf, t, best, ts)
+    # The class-distribution, per-class-recall and confusion panels are diagnostics that
+    # informed the reading above and are cited in the note; they are not carried in the figure
+    # set. `--all` regenerates them.
+    if "--all" in sys.argv:
+        fig_distribution(cgt, rf, t, best, ts)
+        fig_recall(cgt, rf, t, best, ts)
+        fig_confusion(cgt, rf, t, best, ts)
 
 
 # ---------------------------------------------------------------------------------- panels
@@ -644,7 +653,7 @@ def fig_scatter(
         title_fontsize=4.5,
     )
     fig.tight_layout(pad=0.4)
-    save(fig, "merzbacher_fig5_scatter_spread", ts)
+    save(fig, "merzbacher_fig1_scatter_spread", ts)
 
 
 def fig_accuracy(cgt: dict, rf: dict, t: np.ndarray, best: str, ts: str) -> None:
@@ -652,7 +661,7 @@ def fig_accuracy(cgt: dict, rf: dict, t: np.ndarray, best: str, ts: str) -> None
     fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(60)))
     draw_accuracy(ax, cgt, rf, t, best)
     fig.tight_layout(pad=0.4)
-    save(fig, "merzbacher_fig1_accuracy_artifact", ts)
+    save(fig, "merzbacher_fig2_accuracy_artifact", ts)
 
 
 def fig_distribution(cgt: dict, rf: dict, t: np.ndarray, best: str, ts: str) -> None:
@@ -660,7 +669,7 @@ def fig_distribution(cgt: dict, rf: dict, t: np.ndarray, best: str, ts: str) -> 
     fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(52)))
     draw_distribution(ax, cgt, rf, t)
     fig.tight_layout(pad=0.4)
-    save(fig, "merzbacher_fig2_class_distribution", ts)
+    save(fig, "merzbacher_diag_class_distribution", ts)
 
 
 def fig_recall(cgt: dict, rf: dict, t: np.ndarray, best: str, ts: str) -> None:
@@ -668,7 +677,7 @@ def fig_recall(cgt: dict, rf: dict, t: np.ndarray, best: str, ts: str) -> None:
     fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(58)))
     draw_recall(ax, cgt, rf, t)
     fig.tight_layout(pad=0.4)
-    save(fig, "merzbacher_fig3_per_class_recall", ts)
+    save(fig, "merzbacher_diag_per_class_recall", ts)
 
 
 def fig_confusion(cgt: dict, rf: dict, t: np.ndarray, best: str, ts: str) -> None:
@@ -682,7 +691,7 @@ def fig_confusion(cgt: dict, rf: dict, t: np.ndarray, best: str, ts: str) -> Non
     )
     draw_confusion(axes, cgt, rf, t)
     fig.tight_layout(pad=0.4)
-    save(fig, "merzbacher_fig4_confusion_rank_matched", ts)
+    save(fig, "merzbacher_diag_confusion_rank_matched", ts)
 
 
 if __name__ == "__main__":

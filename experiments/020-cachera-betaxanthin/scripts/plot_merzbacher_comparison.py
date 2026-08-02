@@ -47,7 +47,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-from scipy.stats import spearmanr
+from scipy.stats import rankdata, spearmanr
+from sklearn.metrics import roc_auc_score, roc_curve
 
 from torchcell.timestamp import timestamp
 from torchcell.utils import (
@@ -349,8 +350,14 @@ def main() -> None:
     # a classification metric on a 67 %-majority problem has almost nothing to measure. Fig 2
     # is the accuracy collapse, which is the EVIDENCE for that claim rather than a result in
     # its own right.
+    rf_sc = np.array([theirs[RF_MODEL]["score"][g] for g in genes], dtype=float)
     fig_scatter(cgt, rf, t, obs, theirs, genes, best, ts)
     fig_accuracy(cgt, rf, t, best, ts)
+    fig_topk(ours, rf_sc, t, best, ts)
+    fig_score_by_class(cgt, rf_sc, t, best, ts)
+    fig_roc(ours, rf_sc, t, best, ts)
+    fig_cell_spread(ours, rf_sc, obs, t, best, ts)
+    fig_label_provenance(t, obs, ts)
     # The class-distribution, per-class-recall and confusion panels are diagnostics that
     # informed the reading above and are cited in the note; they are not carried in the figure
     # set. `--all` regenerates them.
@@ -595,14 +602,14 @@ def fig_scatter(
             f"{RF_LABEL} vs measured",
             obs,
             rf_score,
-            "measured betaxanthin (screen)",
+            "measured betaxanthin, our copy of the screen (z)",
             "Cachera RF   E[class]",
         ),
         (
             f"{CGT_LABEL} vs measured",
             obs,
             cgt["raw"],
-            "measured betaxanthin (screen)",
+            "measured betaxanthin, our copy of the screen (z)",
             "CGT   predicted (z)",
         ),
         (
@@ -657,7 +664,7 @@ def fig_scatter(
         loc="upper left",
         handletextpad=0.2,
         markerscale=1.8,
-        title="true class",
+        title="Merzbacher label",
         title_fontsize=4.5,
     )
     # tight_layout FIRST (it computes label extents), then widen the gutters and reserve the
@@ -668,8 +675,11 @@ def fig_scatter(
     fig.text(
         0.5,
         0.018,
-        "shaded band = middle 80% (10th-90th percentile) of the y-axis model's own output; "
-        "a narrow band means the model returns nearly the same value for every gene",
+        "shaded band = middle 80% (10th-90th percentile) of the y-axis model's own output; a "
+        "narrow band means the model returns nearly the same value for every gene.\n"
+        "Color is MERZBACHER'S released label, the x-axis is OUR copy of the same screen: "
+        "they agree at Spearman 0.73 and 18.8% of genes would bin differently, which is why "
+        "the colors overlap along x.",
         ha="center",
         fontsize=4.5,
         color="0.35",
@@ -713,6 +723,310 @@ def fig_confusion(cgt: dict, rf: dict, t: np.ndarray, best: str, ts: str) -> Non
     draw_confusion(axes, cgt, rf, t)
     fig.tight_layout(pad=0.4)
     save(fig, "merzbacher_diag_confusion_rank_matched", ts)
+
+
+def _pct(x: np.ndarray) -> np.ndarray:
+    """Percentile rank 0-100. Puts two models with incomparable units on ONE axis."""
+    return rankdata(x) / len(x) * 100.0
+
+
+def _precision_at_k(score: np.ndarray, is_high: np.ndarray, kmax: int) -> np.ndarray:
+    """Fraction of the top-k highest-scoring genes that are TRUE high producers."""
+    order = np.argsort(-score)
+    hits = np.cumsum(is_high[order][:kmax])
+    return hits / np.arange(1, kmax + 1)
+
+
+def fig_topk(ours: dict, rf_sc: np.ndarray, t: np.ndarray, best: str, ts: str) -> None:
+    """Precision@k for high producers -- the decision-relevant, binning-free comparison.
+
+    Every other comparison here has to choose a binning; this one does not. It answers the
+    question a strain-design campaign actually asks: "if I take the k genes the model likes
+    most, what fraction are genuinely high producers?" The random baseline is the class rate.
+
+    ALL TEN CGT CELLS ARE DRAWN, faintly, behind the val-selected one. A single curve would
+    hide that the grid spans a wide band and would invite reading the selected cell as "the"
+    CGT result rather than one draw from it.
+    """
+    is_high = (t == 2).astype(float)
+    kmax = 200
+    ks = np.arange(1, kmax + 1)
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(58)))
+    for name, d in sorted(ours.items()):
+        if name == best:
+            continue
+        ax.plot(
+            ks,
+            _precision_at_k(d["raw"], is_high, kmax),
+            lw=0.5,
+            color=CGT_C,
+            alpha=0.30,
+            zorder=2,
+        )
+    ax.plot(
+        [], [], lw=0.5, color=CGT_C, alpha=0.30, label="CGT, other grid cells (n=9)"
+    )
+    ax.plot(
+        ks,
+        _precision_at_k(rf_sc, is_high, kmax),
+        lw=1.4,
+        color=RF_C,
+        zorder=4,
+        label=f"{RF_LABEL}",
+    )
+    ax.plot(
+        ks,
+        _precision_at_k(ours[best]["raw"], is_high, kmax),
+        lw=1.4,
+        color=CGT_C,
+        zorder=5,
+        label=f"{CGT_LABEL} (val-selected)",
+    )
+    base = float(is_high.mean())
+    ax.axhline(base, ls="--", lw=0.7, color=TRUTH_C, zorder=3)
+    ax.text(
+        kmax,
+        base + 0.012,
+        f"random {base:.3f}",
+        ha="right",
+        va="bottom",
+        fontsize=5,
+        color=TRUTH_C,
+    )
+    ax.set_xlabel("k = number of genes nominated")
+    ax.set_ylabel("precision@k  (fraction truly high)")
+    ax.set_xlim(1, kmax)
+    ax.set_ylim(0, 0.85)
+    tenth_grid(ax)
+    ax.legend(frameon=False, fontsize=5, loc="upper right", handletextpad=0.5)
+    fig.tight_layout(pad=0.4)
+    save(fig, "merzbacher_fig3_precision_at_k", ts)
+
+
+def fig_score_by_class(
+    cgt: dict, rf_sc: np.ndarray, t: np.ndarray, best: str, ts: str
+) -> None:
+    """Each model's own score, as a PERCENTILE RANK, split by Merzbacher's label.
+
+    Percentile rank is what makes the two models comparable at all: their E[class] lives on
+    0-2 and CGT's output is a z-score, so raw values share no axis. Under a perfect model the
+    three boxes step cleanly from low to high; under a useless one all three sit on 50.
+
+    This is the separation question with NO binning decision anywhere in it -- no thresholds,
+    no marginal, no tie-breaking.
+    """
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(56)))
+    series = [(RF_LABEL, RF_C, _pct(rf_sc)), (CGT_LABEL, CGT_C, _pct(cgt["raw"]))]
+    w = 0.34
+    for i, (name, color, pr) in enumerate(series):
+        data = [pr[t == c] for c in range(3)]
+        pos = np.arange(3) + (i - 0.5) * w
+        bp = ax.boxplot(
+            data,
+            positions=pos,
+            widths=w * 0.82,
+            patch_artist=True,
+            showfliers=False,
+            medianprops={"color": "black", "lw": 0.8},
+            whiskerprops={"lw": 0.5},
+            capprops={"lw": 0.5},
+            boxprops={"lw": 0.4, "edgecolor": "black"},
+        )
+        for b in bp["boxes"]:
+            b.set_facecolor(color)
+        ax.plot([], [], color=color, lw=4, label=name)
+        for c, pos_c in zip(range(3), pos):
+            ax.text(
+                pos_c,
+                103,
+                f"{np.median(pr[t == c]):.0f}",
+                ha="center",
+                va="bottom",
+                fontsize=4.5,
+                color=color,
+            )
+    ax.axhline(50, ls="--", lw=0.6, color=TRUTH_C, zorder=1)
+    ax.text(
+        2.45, 51, "no information", ha="right", va="bottom", fontsize=5, color=TRUTH_C
+    )
+    ax.set_xticks(range(3))
+    ax.set_xticklabels(
+        [f"{n}\n(n={int((t == c).sum())})" for c, n in enumerate(CLASS_NAMES)]
+    )
+    ax.set_xlabel("Merzbacher label")
+    ax.set_ylabel("model's own score, percentile rank")
+    ax.set_ylim(0, 112)
+    ax.set_yticks([0, 25, 50, 75, 100])
+    ax.grid(axis="y", lw=0.3, color="0.9", zorder=0)
+    ax.set_axisbelow(True)
+    ax.legend(frameon=False, fontsize=5, loc="lower right", handlelength=1.2)
+    fig.tight_layout(pad=0.4)
+    save(fig, "merzbacher_fig4_score_by_class", ts)
+
+
+def fig_roc(ours: dict, rf_sc: np.ndarray, t: np.ndarray, best: str, ts: str) -> None:
+    """ROC for "is this gene a high producer" -- threshold-free, binning-free.
+
+    Collapses the whole ranking into one number per model with no cut points to argue about,
+    which is why it is the cleanest single-number comparison in this set. All ten CGT cells
+    are drawn faintly so the selected cell is visibly one draw from a spread.
+    """
+    is_high = (t == 2).astype(int)
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(58)))
+    for name, d in sorted(ours.items()):
+        if name == best:
+            continue
+        fpr, tpr, _ = roc_curve(is_high, d["raw"])
+        ax.plot(fpr, tpr, lw=0.5, color=CGT_C, alpha=0.30, zorder=2)
+    ax.plot([], [], lw=0.5, color=CGT_C, alpha=0.30, label="CGT, other cells (n=9)")
+    for score, color, lab in (
+        (rf_sc, RF_C, RF_LABEL),
+        (ours[best]["raw"], CGT_C, f"{CGT_LABEL} (val-selected)"),
+    ):
+        fpr, tpr, _ = roc_curve(is_high, score)
+        ax.plot(
+            fpr,
+            tpr,
+            lw=1.4,
+            color=color,
+            zorder=4,
+            label=f"{lab}   AUC {roc_auc_score(is_high, score):.3f}",
+        )
+    ax.plot([0, 1], [0, 1], ls="--", lw=0.7, color=TRUTH_C, zorder=3)
+    ax.text(0.97, 0.90, "chance  AUC 0.500", ha="right", fontsize=5, color=TRUTH_C)
+    ax.set_xlabel("false positive rate")
+    ax.set_ylabel("true positive rate (high producers found)")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    tenth_grid(ax)
+    ax.legend(frameon=False, fontsize=5, loc="lower right", handletextpad=0.5)
+    fig.tight_layout(pad=0.4)
+    save(fig, "merzbacher_fig5_roc_high_producers", ts)
+
+
+def fig_cell_spread(
+    ours: dict, rf_sc: np.ndarray, obs: np.ndarray, t: np.ndarray, best: str, ts: str
+) -> None:
+    """How much of "CGT beats their RF" is the CELL we picked?
+
+    Ten grid cells, two binning-free metrics, their RF as a reference line. This is the
+    honesty panel: with sigma ~ 0.03 between cells and a max taken over ten of them, a single
+    quoted number is an order statistic. The val-selected cell is marked so it is visible
+    whether we are quoting a typical cell or a lucky one -- and four cells here are the
+    lr = 1e-3 runs that collapsed to a constant predictor, which is why the low tail exists.
+    """
+    is_high = (t == 2).astype(int)
+    names = sorted(ours)
+    metrics = [
+        (
+            "Spearman vs measured",
+            [float(spearmanr(ours[n]["raw"], obs).statistic) for n in names],
+            float(spearmanr(rf_sc, obs).statistic),
+        ),
+        (
+            "ROC AUC, high producers",
+            [float(roc_auc_score(is_high, ours[n]["raw"])) for n in names],
+            float(roc_auc_score(is_high, rf_sc)),
+        ),
+    ]
+    fig, axes = plt.subplots(
+        1, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(56))
+    )
+    for ax, (lab, vals, rf_val) in zip(axes, metrics):
+        x = np.random.default_rng(0).normal(0, 0.045, len(vals))
+        for xi, v, n in zip(x, vals, names):
+            sel = n == best
+            ax.scatter(
+                xi,
+                v,
+                s=34 if sel else 16,
+                color=CGT_C if sel else "white",
+                edgecolors=CGT_C,
+                linewidths=1.0 if sel else 0.6,
+                zorder=5 if sel else 3,
+            )
+        ax.axhline(rf_val, ls="-", lw=1.2, color=RF_C, zorder=2)
+        ax.text(
+            0.16,
+            rf_val,
+            f" {RF_LABEL} {rf_val:.3f}",
+            va="center",
+            fontsize=5,
+            color=RF_C,
+        )
+        ax.scatter(
+            [], [], s=34, color=CGT_C, edgecolors=CGT_C, label="CGT val-selected"
+        )
+        ax.scatter(
+            [], [], s=16, color="white", edgecolors=CGT_C, label="CGT other cells"
+        )
+        ax.set_xlim(-0.18, 0.42)
+        ax.set_xticks([])
+        ax.set_ylabel(lab)
+        ax.grid(axis="y", lw=0.3, color="0.9", zorder=0)
+        ax.set_axisbelow(True)
+        ax.legend(frameon=False, fontsize=5, loc="lower right", handletextpad=0.3)
+    fig.tight_layout(pad=0.4)
+    save(fig, "merzbacher_fig6_cell_spread", ts)
+
+
+def fig_label_provenance(t: np.ndarray, obs: np.ndarray, ts: str) -> None:
+    """How well does MERZBACHER'S label track OUR copy of the same screen?
+
+    The whole comparison is scored against their released labels, so it matters how tightly
+    those labels correspond to the measurement we hold. They do not correspond tightly: their
+    rule min-max scales production and cuts at 0.40/0.65, and the extremes it scales by differ
+    between their (smaller) copy and ours. The classes therefore OVERLAP on our axis -- their
+    "low" reaches +0.02 while their "medium" starts at -1.05.
+
+    This is a ceiling on the whole exercise, not a footnote: a model perfectly predicting OUR
+    measured value would still be scored wrong on ~19 % of genes by these labels.
+    """
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(52)))
+    rng = np.random.default_rng(0)
+    for c in range(3):
+        v = obs[t == c]
+        ax.scatter(
+            v,
+            c + rng.normal(0, 0.09, len(v)),
+            s=5,
+            color=CLASS_COLORS[c],
+            linewidths=0.0,
+            zorder=3,
+        )
+        ax.plot(
+            [np.median(v)] * 2, [c - 0.28, c + 0.28], color="black", lw=1.0, zorder=4
+        )
+    order = np.argsort(obs)
+    n0, n1, _ = np.bincount(t, minlength=3)
+    ideal = np.zeros(len(obs), dtype=int)
+    ideal[order[:n0]] = 0
+    ideal[order[n0 : n0 + n1]] = 1
+    ideal[order[n0 + n1 :]] = 2
+    disagree = float((ideal != t).mean())
+    ax.set_yticks(range(3))
+    ax.set_yticklabels(
+        [f"{n}\n(n={int((t == c).sum())})" for c, n in enumerate(CLASS_NAMES)]
+    )
+    ax.set_xlabel("measured betaxanthin, OUR copy of the screen (z)")
+    ax.set_ylabel("Merzbacher released label")
+    # A 3-level ordinal against a continuous variable is bounded well below 1 by its own
+    # ties, so the raw Spearman is uninterpretable alone. The ceiling is the Spearman a
+    # PERFECT 3-way rank-split of our values would achieve, and the ratio is what says whether
+    # their labels track our copy of the screen well. They do: 88 % of attainable.
+    rho_obs = float(spearmanr(t, obs).statistic)
+    rho_max = float(spearmanr(ideal, obs).statistic)
+    ax.set_title(
+        f"Spearman {rho_obs:.3f} of an attainable {rho_max:.3f} "
+        f"({100 * rho_obs / rho_max:.0f}% of ceiling)   "
+        f"{100 * disagree:.1f}% would bin differently",
+        fontsize=5.5,
+        pad=3,
+    )
+    ax.grid(axis="x", lw=0.3, color="0.9", zorder=0)
+    ax.set_axisbelow(True)
+    fig.tight_layout(pad=0.4)
+    save(fig, "merzbacher_fig7_label_provenance", ts)
 
 
 if __name__ == "__main__":

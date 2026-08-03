@@ -163,7 +163,7 @@ All figures regenerate from
 
 ### Fig 1 -- per-gene spread (639 points)
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig1_scatter_spread_2026-08-02-19-49-17.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig1_scatter_spread_2026-08-02-19-52-45.svg)
 
 **Fig 1. Both models emit a nearly constant value; the two disagree about which genes.** 80 %
 of FCL's genes fall inside an $\mathbb{E}$[class] band of 0.22 on a 0-2 scale, 80 % of CGT's inside 0.33
@@ -182,7 +182,7 @@ otherwise flat. In RANK the two models are slightly ANTI-correlated.
 
 ### Fig 2 -- why the accuracy comparison is degenerate
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig2_accuracy_artifact_2026-08-02-19-49-17.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig2_accuracy_artifact_2026-08-02-19-52-45.svg)
 
 **Fig 2. Accuracy above the majority line is the conservative-majority strategy, not
 discrimination -- for both models.** RF's 0.701 clears the 0.674 majority rate by 0.027 by
@@ -191,7 +191,7 @@ the true class marginal, RF drops to 0.556 and CGT to 0.549. Evidence, not a res
 
 ### Fig 3 -- precision@k for high producers
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig3_precision_at_k_2026-08-02-19-49-17.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig3_precision_at_k_2026-08-02-19-52-45.svg)
 
 **Fig 3. Both models are strongly enriched at the top of their ranking.** Of the top k genes
 each nominates, the fraction truly high; random is 0.156.
@@ -207,7 +207,7 @@ cell choice matters more than the CGT-vs-RF gap.
 
 ### Fig 4 -- score by class, as percentile rank
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig4_score_by_class_2026-08-02-19-49-17.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig4_score_by_class_2026-08-02-19-52-45.svg)
 
 **Fig 4. Neither model orders the classes across the bulk of the population.** Percentile rank
 puts two models with incomparable units on one axis; a separating model shows three stepping
@@ -224,7 +224,7 @@ and confined to the tail -- not that there is none.
 
 ### Fig 5 -- ROC for high-producer detection
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig5_roc_high_producers_2026-08-02-19-49-17.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig5_roc_high_producers_2026-08-02-19-52-45.svg)
 
 **Fig 5. Threshold-free, and on the val-selected cell it goes marginally to FCL: AUC 0.570 vs
 CGT's 0.557.** Both near the 0.500 chance line, because AUC integrates over the whole ranking
@@ -250,7 +250,7 @@ is that this metric does not separate the two methods at the resolution we have.
 
 ### Fig 6 -- how much is cell selection?
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig6_cell_spread_2026-08-02-19-49-17.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig6_cell_spread_2026-08-02-19-52-45.svg)
 
 **Fig 6. The spread across grid cells is wider than the gap between models.** CGT cells span
 0.013-0.158 Spearman (8 of 10 beat RF's 0.039) and 0.406-0.695 AUC (only 3 of 10 beat RF's
@@ -260,7 +260,7 @@ quoted, which is why the cell is fixed by validation in advance.
 
 ### Fig 7 -- do their labels track our copy of the screen?
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig7_label_provenance_2026-08-02-19-49-17.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig7_label_provenance_2026-08-02-19-52-45.svg)
 
 **Fig 7. This is a HEADROOM bound on the scoring, not a claim that the FCL paper binned
 anything wrongly.** Their labels are a correct application of their own rule; the rule
@@ -278,7 +278,7 @@ every number in this note sits under.
 
 ### Fig 8 -- how little of the screen a flux-based method can reach
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig8_screen_coverage_2026-08-02-19-49-17.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig8_screen_coverage_2026-08-02-19-52-45.svg)
 
 **Fig 8. yeast-GEM covers 19 % of the screen and misses 73 % of its high producers.** Measured
 data only -- no model, no prediction. yeast-GEM contains 1,161 genes, of which **915 appear in
@@ -302,7 +302,7 @@ whether CGT actually delivers on that reach.
 
 ### Fig 9 -- the capability gap: metabolic vs non-metabolic genes
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig9_metabolic_vs_nonmetabolic_2026-08-02-19-49-17.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig9_metabolic_vs_nonmetabolic_2026-08-02-19-52-45.svg)
 
 **Fig 8. CGT predicts high betaxanthin producers among deletions the flux-based method cannot
 represent.** Held-out test genes split by yeast-GEM membership, identical derived labels on
@@ -357,7 +357,8 @@ not deployable accuracy:
 RF leads by ~0.006 either way, high recall identical either way. The pool expects 28 high
 producers where the test set holds 100: their test genes are enriched for extremes.
 
-**Diagnostics not carried as figures** (regenerate with `--all`): class distribution,
+**Diagnostics not carried as figures** -- regenerate with `--all`; they are current as of
+this render and sit alongside the others as `merzbacher_diag_*`: class distribution,
 per-class recall, rank-matched confusion matrices. Rank-matched, CGT reaches 0.29 recall on
 high producers vs their published 0.18 and 0.19 on low vs 0.06, paid for in medium recall
 (0.70 vs 0.98); the rank-binned labels agree on only 52 % of genes.

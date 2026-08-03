@@ -614,7 +614,7 @@ def fig_scatter(
             obs,
             rf_score,
             "measured betaxanthin, Cachera screen (z)",
-            "FCL RF   E[class]",
+            "FCL RF   $\\mathbb{E}$[class]",
         ),
         (
             f"{CGT_LABEL} vs measured",
@@ -627,7 +627,7 @@ def fig_scatter(
             f"{CGT_LABEL} vs {RF_LABEL}",
             rf_score,
             cgt["raw"],
-            "FCL RF   E[class]",
+            "FCL RF   $\\mathbb{E}$[class]",
             "CGT   predicted (z)",
         ),
     ]
@@ -648,14 +648,20 @@ def fig_scatter(
     # on the measurement's own scale the predictions collapse into a narrow horizontal band.
     # FCL's E[class] keeps its own limits; it is a 0-2 class expectation, not a z-score, and
     # forcing it onto the same axis would assert a comparability that does not exist.
+    # TICK STYLE FOLLOWS WHAT THE NUMBER IS, which the first version had backwards.
+    # E[class] is anchored on the CLASS VALUES 0 / 1 / 2 (low / medium / high) -- a tick at
+    # 0.5 names nothing -- so it ticks at integers and is formatted without decimals. The
+    # z-scores are genuinely continuous, so they carry a decimal to say so, with minor ticks
+    # at 0.5 for resolution the labels do not have to spend space on.
+    #                   (limits)        major  minor  format
     axis_spec = {
-        "measured": ((-2.6, 2.6), 1.0),
-        "fcl": ((0.0, 2.45), 0.5),
-        "cgt": ((-2.6, 2.6), 1.0),
+        "measured": ((-2.6, 2.6), 1.0, 0.5, "%.1f"),
+        "fcl": ((0.0, 2.45), 1.0, 0.5, "%.0f"),
+        "cgt": ((-2.6, 2.6), 1.0, 0.5, "%.1f"),
     }
     var_of = {
         "measured betaxanthin, Cachera screen (z)": "measured",
-        "FCL RF   E[class]": "fcl",
+        "FCL RF   $\\mathbb{E}$[class]": "fcl",
         "CGT   predicted (z)": "cgt",
     }
     fig, axes = plt.subplots(
@@ -700,13 +706,16 @@ def fig_scatter(
         )
         ax.set_xlabel(xlab, fontsize=5.5)
         ax.set_ylabel(ylab, fontsize=5.5)
-        for setlim, setloc, lab in (
-            (ax.set_xlim, ax.xaxis.set_major_locator, xlab),
-            (ax.set_ylim, ax.yaxis.set_major_locator, ylab),
+        for setlim, axis, lab in (
+            (ax.set_xlim, ax.xaxis, xlab),
+            (ax.set_ylim, ax.yaxis, ylab),
         ):
-            lims, step = axis_spec[var_of[lab]]
+            lims, major, minor, fmt = axis_spec[var_of[lab]]
             setlim(*lims)
-            setloc(mpl.ticker.MultipleLocator(step))
+            axis.set_major_locator(mpl.ticker.MultipleLocator(major))
+            axis.set_minor_locator(mpl.ticker.MultipleLocator(minor))
+            axis.set_major_formatter(mpl.ticker.FormatStrFormatter(fmt))
+        ax.tick_params(which="minor", length=0)
         ax.tick_params(labelsize=5)
         ax.grid(lw=0.3, color="0.92", zorder=0)
         ax.set_axisbelow(True)

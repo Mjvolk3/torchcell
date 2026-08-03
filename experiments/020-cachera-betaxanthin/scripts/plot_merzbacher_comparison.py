@@ -796,6 +796,22 @@ def fig_confusion(cgt: dict, rf: dict, t: np.ndarray, best: str, ts: str) -> Non
     save(fig, "merzbacher_diag_confusion_rank_matched", ts)
 
 
+def z_axis(axis, lims: tuple[float, float] | None = None) -> None:
+    """Format an axis carrying a z-score: one decimal, minor ticks at 0.5.
+
+    Centralized because "which axes are z-scores" is a property of the DATA, and having each
+    figure decide for itself is how Fig 7 and Fig 9 ended up with integer ticks while Fig 1
+    had decimals -- the same quantity styled two ways in one document.
+    """
+    axis.set_major_locator(mpl.ticker.MultipleLocator(1.0))
+    axis.set_minor_locator(mpl.ticker.MultipleLocator(0.5))
+    axis.set_major_formatter(mpl.ticker.FormatStrFormatter("%.1f"))
+    if lims is not None:
+        axis.axes.set_xlim(*lims) if axis is axis.axes.xaxis else axis.axes.set_ylim(
+            *lims
+        )
+
+
 def _pct(x: np.ndarray) -> np.ndarray:
     """Percentile rank 0-100. Puts two models with incomparable units on ONE axis."""
     return rankdata(x) / len(x) * 100.0
@@ -1082,6 +1098,8 @@ def fig_label_provenance(t: np.ndarray, obs: np.ndarray, ts: str) -> None:
     )
     ax.set_xlabel("measured betaxanthin, Cachera screen (z)")
     ax.set_ylabel("released class label (FCL paper)")
+    z_axis(ax.xaxis)
+    ax.tick_params(which="minor", length=0)
     # A 3-level ordinal against a continuous variable is bounded well below 1 by its own
     # ties, so the raw Spearman is uninterpretable alone. The ceiling is the Spearman a
     # PERFECT 3-way rank-split of our values would achieve, and the ratio is what says whether
@@ -1236,6 +1254,15 @@ def fig_nonmetabolic(dumps: list, raw: dict, split: dict, best: str, ts: str) ->
     lo, hi = float(np.nanmin(pool)), float(np.nanmax(pool))
     d = [x for x in dumps if x["_setting"] == best][0]
 
+    # SHARED LIMITS ACROSS THE TWO PANELS. They exist to be compared with each other, and
+    # independent autoscaling drew the two gene sets at different zooms -- which would make a
+    # difference in spread look like a difference in signal. Computed over the union first.
+    all_obs = np.array([raw[x] for x in d["_genes"] if x in raw], dtype=float)
+    all_pred = np.array([d["_genes"][x] for x in d["_genes"] if x in raw], dtype=float)
+    pad = 0.12
+    xlim = (all_obs.min() - pad, all_obs.max() + pad)
+    ylim = (all_pred.min() - pad, all_pred.max() + pad)
+
     fig, axes = plt.subplots(
         1, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(62))
     )
@@ -1287,6 +1314,11 @@ def fig_nonmetabolic(dumps: list, raw: dict, split: dict, best: str, ts: str) ->
         )
         ax.set_xlabel("measured betaxanthin, Cachera screen (z)")
         ax.set_ylabel("CGT predicted betaxanthin (z)")
+        ax.set_xlim(*xlim)
+        ax.set_ylim(*ylim)
+        z_axis(ax.xaxis)
+        z_axis(ax.yaxis)
+        ax.tick_params(which="minor", length=0)
         ax.grid(lw=0.3, color="0.92", zorder=0)
         ax.set_axisbelow(True)
         ax.legend(

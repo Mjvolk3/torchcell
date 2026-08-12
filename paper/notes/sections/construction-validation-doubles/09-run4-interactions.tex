@@ -34,6 +34,46 @@ drives every $\varepsilon$ in the fourth column negative. YPL046C$+$YPL081W has 
 $\varepsilon$ because it is the novel pair; it was constructed precisely because no reference
 value exists.
 
+\subsection{Our own significance --- and which error term you use decides everything}
+
+Section~\ref{sec:whyfixable} argued that a big-but-insignificant interaction is fixable
+because the error bar is set by how many colonies we plate, and that is our choice. This
+round is the first test of that argument, and the answer is more interesting than expected:
+\textbf{colony count was never the binding constraint.}
+
+Two error terms can be put on $\varepsilon$, and the table reports both.
+
+\notesec{Within-plate} $\varepsilon$ is a function of three strain means measured on the
+same plate, so by the delta method
+\begin{equation}
+  \operatorname{var}(\varepsilon) \;=\;
+  \operatorname{var}(f_{ab}) \;+\; f_b^{2}\operatorname{var}(f_a)
+  \;+\; f_a^{2}\operatorname{var}(f_b),
+\end{equation}
+each variance being $(\text{colony SD}/\sqrt{n})^{2}$. This is the term Costanzo's own
+$p$-value is built from, and the one that 14 colonies per plate rather than 4 was supposed to
+shrink. It averages \textbf{0.058} across the thirteen doubles.
+
+\notesec{Across-plate} The scatter of the three per-plate $\varepsilon$ values, which carries
+the batch effect the within-plate term cannot see. It is \textbf{larger than the within-plate
+term for 12 of 13 doubles}, by a median factor of \textbf{2.4} and up to \textbf{8.5}.
+
+That gap is the finding. Judged on colony scatter alone, \textbf{11 of 13} doubles would
+clear $p<0.05$ (median $|\varepsilon|/\mathrm{SE} = 5.9$). Judged honestly, on three
+independent plate-level estimates, \textbf{2 of 13} do. Plating deeper does buy precision
+within a plate --- it just buys precision on a quantity whose plate-to-plate reproducibility
+is the actual limit. The lever for this assay is \emph{more plates}, not more colonies per
+plate, which is the opposite of what Section~\ref{sec:whyfixable} assumed.
+
+\notesec{Read the \texorpdfstring{$p$}{p} column with the caveat below} The test is a
+two-sided $t$-test on three plate-level estimates, $df=2$ --- weak by construction, so a
+non-significant call here is poor evidence of absence. And more importantly: with the WT
+shift of Section~\ref{sec:wtshift} unresolved, this $p$ measures how \emph{reproducibly} we
+recover a biased $\varepsilon$, not whether that $\varepsilon$ is right. Precision is not
+accuracy. The two doubles that do clear $p<0.05$ (YER079W$+$YLR312C-B, YLL012W$+$YPL046C) are
+\emph{not} the two Costanzo calls significant, and neither should be reported as a detected
+interaction.
+
 \subsection{Why this is an artifact and not a result}
 
 \textbf{It should not be read as a failure to reproduce Costanzo's interactions.} Four
@@ -74,6 +114,7 @@ $\varepsilon$ (Costanzo) & & & $+0.098$ \\
 That $-0.654$ is arithmetic from two inflated singles, not a measured epistasis.
 
 \subsection{Where the inflation comes from}
+\label{sec:wtshift}
 
 The singles are on the same scale as run 3's --- just shifted. The eleven strains common to
 both rounds correlate at \textbf{$r=0.685$}, but run 4 sits a near-uniform

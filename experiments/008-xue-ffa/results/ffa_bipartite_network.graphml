@@ -1,0 +1,3392 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d12" for="edge" attr.name="stoich" attr.type="double" />
+  <key id="d11" for="edge" attr.name="edge_type" attr.type="string" />
+  <key id="d10" for="node" attr.name="is_target_ffa" attr.type="boolean" />
+  <key id="d9" for="node" attr.name="compartment" attr.type="string" />
+  <key id="d8" for="node" attr.name="formula" attr.type="string" />
+  <key id="d7" for="node" attr.name="reversible" attr.type="boolean" />
+  <key id="d6" for="node" attr.name="subsystem" attr.type="string" />
+  <key id="d5" for="node" attr.name="equation" attr.type="string" />
+  <key id="d4" for="node" attr.name="label" attr.type="string" />
+  <key id="d3" for="node" attr.name="name" attr.type="string" />
+  <key id="d2" for="node" attr.name="is_core" attr.type="boolean" />
+  <key id="d1" for="node" attr.name="bipartite" attr.type="long" />
+  <key id="d0" for="node" attr.name="node_type" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="YCR034W">
+      <data key="d0">gene</data>
+      <data key="d1">0</data>
+      <data key="d2">True</data>
+      <data key="d3">YCR034W</data>
+      <data key="d4">ELO2</data>
+    </node>
+    <node id="YDL052C">
+      <data key="d0">gene</data>
+      <data key="d1">0</data>
+      <data key="d2">True</data>
+      <data key="d3">YDL052C</data>
+      <data key="d4">SLC1</data>
+    </node>
+    <node id="YDL141W">
+      <data key="d0">gene</data>
+      <data key="d1">0</data>
+      <data key="d2">False</data>
+      <data key="d3">YDL141W</data>
+      <data key="d4">YDL141W</data>
+    </node>
+    <node id="YER015W">
+      <data key="d0">gene</data>
+      <data key="d1">0</data>
+      <data key="d2">True</data>
+      <data key="d3">YER015W</data>
+      <data key="d4">FAA2</data>
+    </node>
+    <node id="YGL055W">
+      <data key="d0">gene</data>
+      <data key="d1">0</data>
+      <data key="d2">True</data>
+      <data key="d3">YGL055W</data>
+      <data key="d4">OLE1</data>
+    </node>
+    <node id="YGL205W">
+      <data key="d0">gene</data>
+      <data key="d1">0</data>
+      <data key="d2">True</data>
+      <data key="d3">YGL205W</data>
+      <data key="d4">POX1</data>
+    </node>
+    <node id="YIL009W">
+      <data key="d0">gene</data>
+      <data key="d1">0</data>
+      <data key="d2">True</data>
+      <data key="d3">YIL009W</data>
+      <data key="d4">FAA3</data>
+    </node>
+    <node id="YJL196C">
+      <data key="d0">gene</data>
+      <data key="d1">0</data>
+      <data key="d2">True</data>
+      <data key="d3">YJL196C</data>
+      <data key="d4">ELO1</data>
+    </node>
+    <node id="YKL182W">
+      <data key="d0">gene</data>
+      <data key="d1">0</data>
+      <data key="d2">True</data>
+      <data key="d3">YKL182W</data>
+      <data key="d4">FAS1</data>
+    </node>
+    <node id="YKR089C">
+      <data key="d0">gene</data>
+      <data key="d1">0</data>
+      <data key="d2">False</data>
+      <data key="d3">YKR089C</data>
+      <data key="d4">YKR089C</data>
+    </node>
+    <node id="YLR372W">
+      <data key="d0">gene</data>
+      <data key="d1">0</data>
+      <data key="d2">True</data>
+      <data key="d3">YLR372W</data>
+      <data key="d4">ELO3</data>
+    </node>
+    <node id="YMR246W">
+      <data key="d0">gene</data>
+      <data key="d1">0</data>
+      <data key="d2">True</data>
+      <data key="d3">YMR246W</data>
+      <data key="d4">FAA4</data>
+    </node>
+    <node id="YNR016C">
+      <data key="d0">gene</data>
+      <data key="d1">0</data>
+      <data key="d2">True</data>
+      <data key="d3">YNR016C</data>
+      <data key="d4">ACC1</data>
+    </node>
+    <node id="YOR081C">
+      <data key="d0">gene</data>
+      <data key="d1">0</data>
+      <data key="d2">False</data>
+      <data key="d3">YOR081C</data>
+      <data key="d4">YOR081C</data>
+    </node>
+    <node id="YOR175C">
+      <data key="d0">gene</data>
+      <data key="d1">0</data>
+      <data key="d2">False</data>
+      <data key="d3">YOR175C</data>
+      <data key="d4">YOR175C</data>
+    </node>
+    <node id="YOR317W">
+      <data key="d0">gene</data>
+      <data key="d1">0</data>
+      <data key="d2">True</data>
+      <data key="d3">YOR317W</data>
+      <data key="d4">FAA1</data>
+    </node>
+    <node id="YPL231W">
+      <data key="d0">gene</data>
+      <data key="d1">0</data>
+      <data key="d2">True</data>
+      <data key="d3">YPL231W</data>
+      <data key="d4">FAS2</data>
+    </node>
+    <node id="r_0109">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0373 + s_0434 + s_0445 --&gt; s_0394 + s_0794 + s_1101 + s_1322</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_0120">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0605 + s_1279 --&gt; s_0840 + s_1507</data>
+      <data key="d6">Fatty acid degradation</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_0121">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_1076 + s_1279 --&gt; s_0840 + s_1510</data>
+      <data key="d6">Fatty acid degradation</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_0122">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0819 + s_1279 --&gt; s_0840 + s_1513</data>
+      <data key="d6">Fatty acid degradation</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_0123">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_1279 + s_1305 --&gt; s_0823 + s_0840</data>
+      <data key="d6">Fatty acid degradation</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_0124">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_1279 + s_1457 --&gt; s_0840 + s_1516</data>
+      <data key="d6">Fatty acid degradation</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_0125">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_1179 + s_1279 --&gt; s_0840 + s_1519</data>
+      <data key="d6">Fatty acid degradation</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_0399">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0439 + s_0534 + s_0600 &lt;=&gt; s_0426 + s_0605 + s_0638</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_0400">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0439 + s_0534 + s_1070 &lt;=&gt; s_0426 + s_0638 + s_1076</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_0402">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0439 + s_0534 + s_1291 &lt;=&gt; s_0426 + s_0638 + s_1305</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_0410">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0439 + s_0534 + s_1253 &lt;=&gt; s_0426 + s_0638 + s_1258</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_0412">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0439 + s_0534 + s_1166 &lt;=&gt; s_0426 + s_0638 + s_1179</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_2140">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0373 + 21.0 s_0794 + 7.0 s_1101 + 14.0 s_1212 --&gt; 7.0 s_0456 + 7.0 s_0529 + 7.0 s_0803 + 14.0 s_1207 + s_1302</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2141">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0373 + 24.0 s_0794 + 8.0 s_1101 + 16.0 s_1212 --&gt; 8.0 s_0456 + 8.0 s_0529 + 8.0 s_0803 + 16.0 s_1207 + s_1454</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2154">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2781 + s_2782 + s_2783 --&gt; s_2784 + s_2785 + s_2786</data>
+      <data key="d6">Biosynthesis of unsaturated fatty acids</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2155">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2782 + s_2783 + s_2787 --&gt; s_2784 + s_2785 + s_2788</data>
+      <data key="d6">Biosynthesis of unsaturated fatty acids</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2156">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2782 + s_2783 + s_2789 --&gt; s_2784 + s_2785 + s_2790</data>
+      <data key="d6">Biosynthesis of unsaturated fatty acids</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2157">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2782 + s_2783 + s_2791 --&gt; s_2784 + s_2785 + s_2792</data>
+      <data key="d6">Biosynthesis of unsaturated fatty acids</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2158">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2782 + s_2783 + s_2793 --&gt; s_2784 + s_2785 + s_2794</data>
+      <data key="d6">Biosynthesis of unsaturated fatty acids</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2159">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2782 + s_2783 + s_2795 --&gt; s_2784 + s_2785 + s_2796</data>
+      <data key="d6">Biosynthesis of unsaturated fatty acids</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2160">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2782 + s_2783 + s_2797 --&gt; s_2784 + s_2785 + s_2798</data>
+      <data key="d6">Biosynthesis of unsaturated fatty acids</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2182">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2783 + s_2789 + s_2817 + s_2818 --&gt; 2.0 s_2808 + s_2819 + s_2820</data>
+      <data key="d6">Biosynthesis of unsaturated fatty acids</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2183">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2783 + s_2791 + s_2817 + s_2818 --&gt; 2.0 s_2808 + s_2820 + s_2821</data>
+      <data key="d6">Biosynthesis of unsaturated fatty acids</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2194">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2785 + s_2831 + s_2832 &lt;=&gt; s_2781 + s_2833 + s_2834</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_2195">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2785 + s_2831 + s_2835 &lt;=&gt; s_2787 + s_2833 + s_2834</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_2196">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2785 + s_2831 + s_2836 &lt;=&gt; s_2789 + s_2833 + s_2834</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_2197">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2785 + s_2831 + s_2837 &lt;=&gt; s_2819 + s_2833 + s_2834</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_2198">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2785 + s_2831 + s_2838 &lt;=&gt; s_2791 + s_2833 + s_2834</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_2199">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2785 + s_2831 + s_2839 &lt;=&gt; s_2821 + s_2833 + s_2834</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_2200">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0531 + s_2840 + s_2841 &lt;=&gt; s_0635 + s_2842 + s_2843</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_2201">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0531 + s_2840 + s_2844 &lt;=&gt; s_0635 + s_2842 + s_2845</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_2202">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0531 + s_2840 + s_2846 &lt;=&gt; s_0635 + s_2842 + s_2847</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_2203">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0531 + s_2840 + s_2848 &lt;=&gt; s_0635 + s_2842 + s_2849</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_2204">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0531 + s_2840 + s_2850 &lt;=&gt; s_0635 + s_2842 + s_2851</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_2205">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0531 + s_2840 + s_2852 &lt;=&gt; s_0635 + s_2842 + s_2853</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_2206">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0439 + s_0534 + s_1298 &lt;=&gt; s_0426 + s_0638 + s_2854</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_2207">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0439 + s_0534 + s_1451 &lt;=&gt; s_0426 + s_0638 + s_1457</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_2208">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0439 + s_0534 + s_2855 &lt;=&gt; s_0426 + s_0638 + s_1265</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_2209">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2856 + s_2857 + s_2858 &lt;=&gt; s_2859 + s_2860 + s_2861</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_2210">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2856 + s_2857 + s_2862 &lt;=&gt; s_2859 + s_2860 + s_2863</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_2211">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2856 + s_2857 + s_2864 &lt;=&gt; s_2859 + s_2860 + s_2865</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_2212">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2856 + s_2857 + s_2866 &lt;=&gt; s_2859 + s_2860 + s_2867</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="r_2236">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_1279 + s_2884 --&gt; s_0840 + s_2886</data>
+      <data key="d6">Fatty acid degradation</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2237">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_1279 + s_2885 --&gt; s_0840 + s_2887</data>
+      <data key="d6">Fatty acid degradation</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2238">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_1258 + s_1279 --&gt; s_0840 + s_2888</data>
+      <data key="d6">Fatty acid degradation</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2239">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_1279 + s_2879 --&gt; s_0840 + s_2889</data>
+      <data key="d6">Fatty acid degradation</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2240">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_1279 + s_2881 --&gt; s_0840 + s_2890</data>
+      <data key="d6">Fatty acid degradation</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2241">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_1279 + s_1482 --&gt; s_0840 + s_2891</data>
+      <data key="d6">Fatty acid degradation</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2242">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">4.0 s_0801 + s_1279 + s_2854 --&gt; s_0840 + s_2892</data>
+      <data key="d6">Fatty acid degradation</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2243">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_1279 + s_2893 --&gt; s_0840 + s_2894</data>
+      <data key="d6">Fatty acid degradation</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2244">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_1279 + s_2895 --&gt; s_0840 + s_2896</data>
+      <data key="d6">Fatty acid degradation</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2245">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_1265 + s_1279 --&gt; s_0840 + s_2897</data>
+      <data key="d6">Fatty acid degradation</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2246">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_1279 + s_2898 --&gt; s_0840 + s_2899</data>
+      <data key="d6">Fatty acid degradation</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2247">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_1279 + s_2900 --&gt; s_0840 + s_2901</data>
+      <data key="d6">Fatty acid degradation</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2333">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2821 + s_2935 --&gt; s_2785 + s_2955</data>
+      <data key="d6">Glycerolipid metabolism</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2335">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2821 + s_2936 --&gt; s_2785 + s_2957</data>
+      <data key="d6">Glycerolipid metabolism</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2337">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2821 + s_2937 --&gt; s_2785 + s_2959</data>
+      <data key="d6">Glycerolipid metabolism</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2339">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2821 + s_2938 --&gt; s_2785 + s_2961</data>
+      <data key="d6">Glycerolipid metabolism</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2340">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2853 + s_2944 --&gt; s_0531 + s_2962</data>
+      <data key="d6">Glycerolipid metabolism</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2341">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2853 + s_2945 --&gt; s_0531 + s_2963</data>
+      <data key="d6">Glycerolipid metabolism</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2342">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2853 + s_2946 --&gt; s_0531 + s_2964</data>
+      <data key="d6">Glycerolipid metabolism</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_2343">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_2853 + s_2947 --&gt; s_0531 + s_2965</data>
+      <data key="d6">Glycerolipid metabolism</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_4584">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0434 + s_0529 + s_4191 --&gt; s_0423 + s_0633 + s_4190</data>
+      <data key="d6">Fatty acid biosynthesis</data>
+      <data key="d7">False</data>
+    </node>
+    <node id="r_4679">
+      <data key="d0">reaction</data>
+      <data key="d1">1</data>
+      <data key="d5">s_0439 + s_0534 + s_4251 &lt;=&gt; s_0426 + s_0638 + s_4252</data>
+      <data key="d6">Fatty acid ester pathway</data>
+      <data key="d7">True</data>
+    </node>
+    <node id="s_0373">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">acetyl-CoA</data>
+      <data key="d8">C23H34N7O17P3S</data>
+      <data key="d9">c</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0394">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">ADP</data>
+      <data key="d8">C10H12N5O10P2</data>
+      <data key="d9">c</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0423">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">AMP</data>
+      <data key="d8">C10H12N5O7P</data>
+      <data key="d9">c</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0426">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">AMP</data>
+      <data key="d8">C10H12N5O7P</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0434">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">ATP</data>
+      <data key="d8">C10H12N5O13P3</data>
+      <data key="d9">c</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0439">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">ATP</data>
+      <data key="d8">C10H12N5O13P3</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0445">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">bicarbonate</data>
+      <data key="d8">CHO3</data>
+      <data key="d9">c</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0456">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">carbon dioxide</data>
+      <data key="d8">CO2</data>
+      <data key="d9">c</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0529">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">coenzyme A</data>
+      <data key="d8">C21H32N7O16P3S</data>
+      <data key="d9">c</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0531">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">coenzyme A</data>
+      <data key="d8">C21H32N7O16P3S</data>
+      <data key="d9">lp</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0534">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">coenzyme A</data>
+      <data key="d8">C21H32N7O16P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0600">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">decanoate</data>
+      <data key="d8">C10H19O2</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0605">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">decanoyl-CoA</data>
+      <data key="d8">C31H50N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0633">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">diphosphate</data>
+      <data key="d8">HO7P2</data>
+      <data key="d9">c</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0635">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">diphosphate</data>
+      <data key="d8">HO7P2</data>
+      <data key="d9">lp</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0638">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">diphosphate</data>
+      <data key="d8">HO7P2</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0794">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">H+</data>
+      <data key="d8">H</data>
+      <data key="d9">c</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0801">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">H+</data>
+      <data key="d8">H</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0803">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">H2O</data>
+      <data key="d8">H2O</data>
+      <data key="d9">c</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0819">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">hexacosanoyl-CoA</data>
+      <data key="d8">C47H82N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0823">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">hexadec-2-enoyl-CoA</data>
+      <data key="d8">C37H60N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_0840">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">hydrogen peroxide</data>
+      <data key="d8">H2O2</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1070">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">laurate</data>
+      <data key="d8">C12H23O2</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1076">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">lauroyl-CoA</data>
+      <data key="d8">C33H54N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1101">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">malonyl-CoA</data>
+      <data key="d8">C24H33N7O19P3S</data>
+      <data key="d9">c</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1166">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">myristate</data>
+      <data key="d8">C14H27O2</data>
+      <data key="d9">p</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_1179">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">myristoyl-CoA</data>
+      <data key="d8">C35H58N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1207">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">NADP(+)</data>
+      <data key="d8">C21H25N7O17P3</data>
+      <data key="d9">c</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1212">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">NADPH</data>
+      <data key="d8">C21H26N7O17P3</data>
+      <data key="d9">c</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1253">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">octanoate</data>
+      <data key="d8">C8H15O2</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1258">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">octanoyl-CoA</data>
+      <data key="d8">C29H46N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1265">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">oleoyl-CoA</data>
+      <data key="d8">C39H64N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1279">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">oxygen</data>
+      <data key="d8">O2</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1291">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">palmitate</data>
+      <data key="d8">C16H31O2</data>
+      <data key="d9">p</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_1298">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">palmitoleate</data>
+      <data key="d8">C16H29O2</data>
+      <data key="d9">p</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_1302">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">palmitoyl-CoA</data>
+      <data key="d8">C37H62N7O17P3S</data>
+      <data key="d9">c</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1305">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">palmitoyl-CoA</data>
+      <data key="d8">C37H62N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1322">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">phosphate</data>
+      <data key="d8">HO4P</data>
+      <data key="d9">c</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1451">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">stearate</data>
+      <data key="d8">C18H35O2</data>
+      <data key="d9">p</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_1454">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">stearoyl-CoA</data>
+      <data key="d8">C39H66N7O17P3S</data>
+      <data key="d9">c</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1457">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">stearoyl-CoA</data>
+      <data key="d8">C39H66N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1482">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">tetracosanoyl-CoA</data>
+      <data key="d8">C45H78N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1507">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">trans-dec-2-enoyl-CoA</data>
+      <data key="d8">C31H48N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1510">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">trans-dodec-2-enoyl-CoA</data>
+      <data key="d8">C33H52N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1513">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">trans-hexacos-2-enoyl-CoA</data>
+      <data key="d8">C47H80N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1516">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">trans-octadec-2-enoyl-CoA</data>
+      <data key="d8">C39H64N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_1519">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">trans-tetradec-2-enoyl-CoA</data>
+      <data key="d8">C35H56N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2781">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">lauroyl-CoA</data>
+      <data key="d8">C33H54N7O17P3S</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2782">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">malonyl-CoA</data>
+      <data key="d8">C24H33N7O19P3S</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2783">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">H+</data>
+      <data key="d8">H</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2784">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">carbon dioxide</data>
+      <data key="d8">CO2</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2785">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">coenzyme A</data>
+      <data key="d8">C21H32N7O16P3S</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2786">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">3-oxotetradecanoyl-CoA</data>
+      <data key="d8">C35H56N7O18P3S</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2787">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">myristoyl-CoA</data>
+      <data key="d8">C35H58N7O17P3S</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2788">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">3-oxopalmitoyl-CoA</data>
+      <data key="d8">C37H60N7O18P3S</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2789">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">palmitoyl-CoA</data>
+      <data key="d8">C37H62N7O17P3S</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2790">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">3-oxooctadecanoyl-CoA</data>
+      <data key="d8">C39H64N7O18P3S</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2791">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">stearoyl-CoA</data>
+      <data key="d8">C39H66N7O17P3S</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2792">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">3-oxoicosanoyl-CoA</data>
+      <data key="d8">C41H68N7O18P3S</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2793">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">icosanoyl-CoA</data>
+      <data key="d8">C41H70N7O17P3S</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2794">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">3-oxodocosanoyl-CoA</data>
+      <data key="d8">C43H72N7O18P3S</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2795">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">docosanoyl-CoA</data>
+      <data key="d8">C43H74N7O17P3S</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2796">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">3-oxotetracosanoyl-CoA</data>
+      <data key="d8">C45H76N7O18P3S</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2797">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">tetracosanoyl-CoA</data>
+      <data key="d8">C45H78N7O17P3S</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2798">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">3-oxohexacosanoyl-CoA</data>
+      <data key="d8">C47H80N7O18P3S</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2808">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">H2O</data>
+      <data key="d8">H2O</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2817">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">oxygen</data>
+      <data key="d8">O2</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2818">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">NADH</data>
+      <data key="d8">C21H27N7O14P2</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2819">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">palmitoleoyl-CoA(4-)</data>
+      <data key="d8">C37H60N7O17P3S</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2820">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">NAD</data>
+      <data key="d8">C21H26N7O14P2</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2821">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">oleoyl-CoA</data>
+      <data key="d8">C39H64N7O17P3S</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2831">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">ATP</data>
+      <data key="d8">C10H12N5O13P3</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2832">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">laurate</data>
+      <data key="d8">C12H23O2</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2833">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">AMP</data>
+      <data key="d8">C10H12N5O7P</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2834">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">diphosphate</data>
+      <data key="d8">HO7P2</data>
+      <data key="d9">erm</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2835">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">myristate</data>
+      <data key="d8">C14H27O2</data>
+      <data key="d9">erm</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2836">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">palmitate</data>
+      <data key="d8">C16H31O2</data>
+      <data key="d9">erm</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2837">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">palmitoleate</data>
+      <data key="d8">C16H29O2</data>
+      <data key="d9">erm</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2838">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">stearate</data>
+      <data key="d8">C18H35O2</data>
+      <data key="d9">erm</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2839">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">oleate</data>
+      <data key="d8">C18H33O2</data>
+      <data key="d9">erm</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2840">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">ATP</data>
+      <data key="d8">C10H12N5O13P3</data>
+      <data key="d9">lp</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2841">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">laurate</data>
+      <data key="d8">C12H23O2</data>
+      <data key="d9">lp</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2842">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">AMP</data>
+      <data key="d8">C10H12N5O7P</data>
+      <data key="d9">lp</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2843">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">lauroyl-CoA</data>
+      <data key="d8">C33H54N7O17P3S</data>
+      <data key="d9">lp</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2844">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">myristate</data>
+      <data key="d8">C14H27O2</data>
+      <data key="d9">lp</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2845">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">myristoyl-CoA</data>
+      <data key="d8">C35H58N7O17P3S</data>
+      <data key="d9">lp</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2846">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">palmitate</data>
+      <data key="d8">C16H31O2</data>
+      <data key="d9">lp</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2847">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">palmitoyl-CoA</data>
+      <data key="d8">C37H62N7O17P3S</data>
+      <data key="d9">lp</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2848">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">palmitoleate</data>
+      <data key="d8">C16H29O2</data>
+      <data key="d9">lp</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2849">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">palmitoleoyl-CoA(4-)</data>
+      <data key="d8">C37H60N7O17P3S</data>
+      <data key="d9">lp</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2850">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">stearate</data>
+      <data key="d8">C18H35O2</data>
+      <data key="d9">lp</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2851">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">stearoyl-CoA</data>
+      <data key="d8">C39H66N7O17P3S</data>
+      <data key="d9">lp</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2852">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">oleate</data>
+      <data key="d8">C18H33O2</data>
+      <data key="d9">lp</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2853">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">oleoyl-CoA</data>
+      <data key="d8">C39H64N7O17P3S</data>
+      <data key="d9">lp</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2854">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">palmitoleoyl-CoA(4-)</data>
+      <data key="d8">C37H60N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2855">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">oleate</data>
+      <data key="d8">C18H33O2</data>
+      <data key="d9">p</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2856">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">ATP</data>
+      <data key="d8">C10H12N5O13P3</data>
+      <data key="d9">ce</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2857">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">coenzyme A</data>
+      <data key="d8">C21H32N7O16P3S</data>
+      <data key="d9">ce</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2858">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">arachidate</data>
+      <data key="d8">C20H39O2</data>
+      <data key="d9">ce</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2859">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">AMP</data>
+      <data key="d8">C10H12N5O7P</data>
+      <data key="d9">ce</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2860">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">diphosphate</data>
+      <data key="d8">HO7P2</data>
+      <data key="d9">ce</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2861">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">icosanoyl-CoA</data>
+      <data key="d8">C41H70N7O17P3S</data>
+      <data key="d9">ce</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2862">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">behenate</data>
+      <data key="d8">C22H43O2</data>
+      <data key="d9">ce</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2863">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">docosanoyl-CoA</data>
+      <data key="d8">C43H74N7O17P3S</data>
+      <data key="d9">ce</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2864">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">lignoceric acid</data>
+      <data key="d8">C24H47O2</data>
+      <data key="d9">ce</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2865">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">tetracosanoyl-CoA</data>
+      <data key="d8">C45H78N7O17P3S</data>
+      <data key="d9">ce</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2866">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">cerotic acid</data>
+      <data key="d8">C26H51O2</data>
+      <data key="d9">ce</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2867">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">hexacosanoyl-CoA</data>
+      <data key="d8">C47H82N7O17P3S</data>
+      <data key="d9">ce</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2879">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">icosanoyl-CoA</data>
+      <data key="d8">C41H70N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2881">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">docosanoyl-CoA</data>
+      <data key="d8">C43H74N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2884">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">butanoyl-CoA</data>
+      <data key="d8">C25H38N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2885">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">hexanoyl-CoA</data>
+      <data key="d8">C27H46N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2886">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">but-2-enoyl-CoA</data>
+      <data key="d8">C25H40N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2887">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">trans-hex-2-enoyl-CoA</data>
+      <data key="d8">C27H44N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2888">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">trans-oct-2-enoyl-CoA</data>
+      <data key="d8">C29H44N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2889">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">trans-icos-2-enoyl-CoA</data>
+      <data key="d8">C41H68N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2890">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">trans-docos-2-enoyl-CoA</data>
+      <data key="d8">C43H72N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2891">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">trans-tetracos-2-enoyl-CoA</data>
+      <data key="d8">C45H76N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2892">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">trans-2,cis-9-hexadecadienoyl-CoA</data>
+      <data key="d8">C37H62N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2893">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">cis-tetradec-7-enoyl-CoA</data>
+      <data key="d8">C35H60N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2894">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">trans-2,cis-7-tetradecadienoyl-CoA</data>
+      <data key="d8">C35H58N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2895">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">cis-dodec-5-enoyl-CoA</data>
+      <data key="d8">C33H56N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2896">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">trans-2,cis-5-dodecadienoyl-CoA</data>
+      <data key="d8">C33H54N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2897">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">trans-2,cis-9-octadecadienoyl-CoA</data>
+      <data key="d8">C39H62N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2898">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">cis-hexadec-7-enoyl-CoA</data>
+      <data key="d8">C37H64N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2899">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">trans-2,cis-7-hexadecadienoyl-CoA</data>
+      <data key="d8">C37H62N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2900">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">cis-tetradec-5-enoyl-CoA</data>
+      <data key="d8">C35H60N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2901">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">trans-2,cis-5-tetradecadienoyl-CoA</data>
+      <data key="d8">C35H58N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_2935">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">1-acyl-sn-glycerol 3-phosphate (16:0)</data>
+      <data key="d8">C19H39O7P</data>
+      <data key="d9">erm</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2936">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">1-acyl-sn-glycerol 3-phosphate (16:1)</data>
+      <data key="d8">C19H37O7P</data>
+      <data key="d9">erm</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2937">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">1-acyl-sn-glycerol 3-phosphate (18:0)</data>
+      <data key="d8">C21H43O7P</data>
+      <data key="d9">erm</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2938">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">1-acyl-sn-glycerol 3-phosphate (18:1)</data>
+      <data key="d8">C21H41O7P</data>
+      <data key="d9">erm</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2944">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">1-acyl-sn-glycerol 3-phosphate (16:0)</data>
+      <data key="d8">C19H39O7P</data>
+      <data key="d9">lp</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2945">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">1-acyl-sn-glycerol 3-phosphate (16:1)</data>
+      <data key="d8">C19H37O7P</data>
+      <data key="d9">lp</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2946">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">1-acyl-sn-glycerol 3-phosphate (18:0)</data>
+      <data key="d8">C21H43O7P</data>
+      <data key="d9">lp</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2947">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">1-acyl-sn-glycerol 3-phosphate (18:1)</data>
+      <data key="d8">C21H41O7P</data>
+      <data key="d9">lp</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2955">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">phosphatidate (1-16:0, 2-18:1)</data>
+      <data key="d8">C37H71O8P</data>
+      <data key="d9">erm</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2957">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">phosphatidate (1-16:1, 2-18:1)</data>
+      <data key="d8">C37H69O8P</data>
+      <data key="d9">erm</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2959">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">phosphatidate (1-18:0, 2-18:1)</data>
+      <data key="d8">C39H75O8P</data>
+      <data key="d9">erm</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2961">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">phosphatidate (1-18:1, 2-18:1)</data>
+      <data key="d8">C39H73O8P</data>
+      <data key="d9">erm</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2962">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">phosphatidate (1-16:0, 2-18:1)</data>
+      <data key="d8">C37H71O8P</data>
+      <data key="d9">lp</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2963">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">phosphatidate (1-16:1, 2-18:1)</data>
+      <data key="d8">C37H69O8P</data>
+      <data key="d9">lp</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2964">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">phosphatidate (1-18:0, 2-18:1)</data>
+      <data key="d8">C39H75O8P</data>
+      <data key="d9">lp</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_2965">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">phosphatidate (1-18:1, 2-18:1)</data>
+      <data key="d8">C39H73O8P</data>
+      <data key="d9">lp</data>
+      <data key="d10">True</data>
+    </node>
+    <node id="s_4190">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">trans-2,cis-9-octadecadienoyl-CoA</data>
+      <data key="d8">C39H62N7O17P3S</data>
+      <data key="d9">c</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_4191">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">(9Z,12Z)-octadecadienoate</data>
+      <data key="d8">C18H31O2</data>
+      <data key="d9">c</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_4251">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">propionate</data>
+      <data key="d8">C3H6O2</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <node id="s_4252">
+      <data key="d0">metabolite</data>
+      <data key="d1">2</data>
+      <data key="d3">propionyl-CoA</data>
+      <data key="d8">C24H36N7O17P3S</data>
+      <data key="d9">p</data>
+      <data key="d10">False</data>
+    </node>
+    <edge source="YCR034W" target="r_2156">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YCR034W" target="r_2157">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YCR034W" target="r_2158">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YCR034W" target="r_2159">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YDL052C" target="r_2333">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YDL052C" target="r_2335">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YDL052C" target="r_2337">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YDL052C" target="r_2339">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YDL052C" target="r_2340">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YDL052C" target="r_2341">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YDL052C" target="r_2342">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YDL052C" target="r_2343">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YER015W" target="r_0399">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YER015W" target="r_0400">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YER015W" target="r_0402">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YER015W" target="r_0410">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YER015W" target="r_0412">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YER015W" target="r_2206">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YER015W" target="r_2207">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YER015W" target="r_2208">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YER015W" target="r_4584">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YER015W" target="r_4679">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YGL055W" target="r_2182">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YGL055W" target="r_2183">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YGL205W" target="r_0120">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YGL205W" target="r_0121">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YGL205W" target="r_0122">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YGL205W" target="r_0123">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YGL205W" target="r_0124">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YGL205W" target="r_0125">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YGL205W" target="r_2236">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YGL205W" target="r_2237">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YGL205W" target="r_2238">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YGL205W" target="r_2239">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YGL205W" target="r_2240">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YGL205W" target="r_2241">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YGL205W" target="r_2242">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YGL205W" target="r_2243">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YGL205W" target="r_2244">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YGL205W" target="r_2245">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YGL205W" target="r_2246">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YGL205W" target="r_2247">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YIL009W" target="r_2209">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YIL009W" target="r_2210">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YIL009W" target="r_2211">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YIL009W" target="r_2212">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YIL009W" target="r_4584">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YIL009W" target="r_4679">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YJL196C" target="r_2154">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YJL196C" target="r_2155">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YKL182W" target="r_2140">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YKL182W" target="r_2141">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YLR372W" target="r_2157">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YLR372W" target="r_2158">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YLR372W" target="r_2159">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YLR372W" target="r_2160">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YMR246W" target="r_2195">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YMR246W" target="r_2196">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YMR246W" target="r_2197">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YMR246W" target="r_2198">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YMR246W" target="r_2199">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YMR246W" target="r_2201">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YMR246W" target="r_2202">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YMR246W" target="r_2203">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YMR246W" target="r_2204">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YMR246W" target="r_2205">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YMR246W" target="r_4584">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YMR246W" target="r_4679">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YNR016C" target="r_0109">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YOR317W" target="r_2194">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YOR317W" target="r_2195">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YOR317W" target="r_2196">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YOR317W" target="r_2197">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YOR317W" target="r_2198">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YOR317W" target="r_2199">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YOR317W" target="r_2200">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YOR317W" target="r_2201">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YOR317W" target="r_2202">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YOR317W" target="r_2203">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YOR317W" target="r_2204">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YOR317W" target="r_2205">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YOR317W" target="r_4584">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YOR317W" target="r_4679">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YPL231W" target="r_2140">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="YPL231W" target="r_2141">
+      <data key="d11">catalyzes</data>
+    </edge>
+    <edge source="r_0109" target="s_0394">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0109" target="s_0794">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0109" target="s_1101">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0109" target="s_1322">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0120" target="s_0840">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0120" target="s_1507">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0121" target="s_0840">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0121" target="s_1510">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0122" target="s_0840">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0122" target="s_1513">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0123" target="s_0823">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0123" target="s_0840">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0124" target="s_0840">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0124" target="s_1516">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0125" target="s_0840">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0125" target="s_1519">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0399" target="s_0426">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0399" target="s_0605">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0399" target="s_0638">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0400" target="s_0426">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0400" target="s_0638">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0400" target="s_1076">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0402" target="s_0426">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0402" target="s_0638">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0402" target="s_1305">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0410" target="s_0426">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0410" target="s_0638">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0410" target="s_1258">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0412" target="s_0426">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0412" target="s_0638">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_0412" target="s_1179">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2140" target="s_0456">
+      <data key="d11">produces</data>
+      <data key="d12">7.0</data>
+    </edge>
+    <edge source="r_2140" target="s_0529">
+      <data key="d11">produces</data>
+      <data key="d12">7.0</data>
+    </edge>
+    <edge source="r_2140" target="s_0803">
+      <data key="d11">produces</data>
+      <data key="d12">7.0</data>
+    </edge>
+    <edge source="r_2140" target="s_1207">
+      <data key="d11">produces</data>
+      <data key="d12">14.0</data>
+    </edge>
+    <edge source="r_2140" target="s_1302">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2141" target="s_0456">
+      <data key="d11">produces</data>
+      <data key="d12">8.0</data>
+    </edge>
+    <edge source="r_2141" target="s_0529">
+      <data key="d11">produces</data>
+      <data key="d12">8.0</data>
+    </edge>
+    <edge source="r_2141" target="s_0803">
+      <data key="d11">produces</data>
+      <data key="d12">8.0</data>
+    </edge>
+    <edge source="r_2141" target="s_1207">
+      <data key="d11">produces</data>
+      <data key="d12">16.0</data>
+    </edge>
+    <edge source="r_2141" target="s_1454">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2154" target="s_2784">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2154" target="s_2785">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2154" target="s_2786">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2155" target="s_2784">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2155" target="s_2785">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2155" target="s_2788">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2156" target="s_2784">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2156" target="s_2785">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2156" target="s_2790">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2157" target="s_2784">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2157" target="s_2785">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2157" target="s_2792">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2158" target="s_2784">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2158" target="s_2785">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2158" target="s_2794">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2159" target="s_2784">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2159" target="s_2785">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2159" target="s_2796">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2160" target="s_2784">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2160" target="s_2785">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2160" target="s_2798">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2182" target="s_2808">
+      <data key="d11">produces</data>
+      <data key="d12">2.0</data>
+    </edge>
+    <edge source="r_2182" target="s_2819">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2182" target="s_2820">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2183" target="s_2808">
+      <data key="d11">produces</data>
+      <data key="d12">2.0</data>
+    </edge>
+    <edge source="r_2183" target="s_2820">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2183" target="s_2821">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2194" target="s_2781">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2194" target="s_2833">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2194" target="s_2834">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2195" target="s_2787">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2195" target="s_2833">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2195" target="s_2834">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2196" target="s_2789">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2196" target="s_2833">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2196" target="s_2834">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2197" target="s_2819">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2197" target="s_2833">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2197" target="s_2834">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2198" target="s_2791">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2198" target="s_2833">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2198" target="s_2834">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2199" target="s_2821">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2199" target="s_2833">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2199" target="s_2834">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2200" target="s_0635">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2200" target="s_2842">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2200" target="s_2843">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2201" target="s_0635">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2201" target="s_2842">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2201" target="s_2845">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2202" target="s_0635">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2202" target="s_2842">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2202" target="s_2847">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2203" target="s_0635">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2203" target="s_2842">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2203" target="s_2849">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2204" target="s_0635">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2204" target="s_2842">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2204" target="s_2851">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2205" target="s_0635">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2205" target="s_2842">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2205" target="s_2853">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2206" target="s_0426">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2206" target="s_0638">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2206" target="s_2854">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2207" target="s_0426">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2207" target="s_0638">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2207" target="s_1457">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2208" target="s_0426">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2208" target="s_0638">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2208" target="s_1265">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2209" target="s_2859">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2209" target="s_2860">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2209" target="s_2861">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2210" target="s_2859">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2210" target="s_2860">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2210" target="s_2863">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2211" target="s_2859">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2211" target="s_2860">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2211" target="s_2865">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2212" target="s_2859">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2212" target="s_2860">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2212" target="s_2867">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2236" target="s_0840">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2236" target="s_2886">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2237" target="s_0840">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2237" target="s_2887">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2238" target="s_0840">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2238" target="s_2888">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2239" target="s_0840">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2239" target="s_2889">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2240" target="s_0840">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2240" target="s_2890">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2241" target="s_0840">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2241" target="s_2891">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2242" target="s_0840">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2242" target="s_2892">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2243" target="s_0840">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2243" target="s_2894">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2244" target="s_0840">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2244" target="s_2896">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2245" target="s_0840">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2245" target="s_2897">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2246" target="s_0840">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2246" target="s_2899">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2247" target="s_0840">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2247" target="s_2901">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2333" target="s_2785">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2333" target="s_2955">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2335" target="s_2785">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2335" target="s_2957">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2337" target="s_2785">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2337" target="s_2959">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2339" target="s_2785">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2339" target="s_2961">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2340" target="s_0531">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2340" target="s_2962">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2341" target="s_0531">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2341" target="s_2963">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2342" target="s_0531">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2342" target="s_2964">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2343" target="s_0531">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_2343" target="s_2965">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_4584" target="s_0423">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_4584" target="s_0633">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_4584" target="s_4190">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_4679" target="s_0426">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_4679" target="s_0638">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="r_4679" target="s_4252">
+      <data key="d11">produces</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0373" target="r_0109">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0373" target="r_2140">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0373" target="r_2141">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0434" target="r_0109">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0434" target="r_4584">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0439" target="r_0410">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0439" target="r_0412">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0439" target="r_4679">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0439" target="r_0399">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0439" target="r_2207">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0439" target="r_0400">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0439" target="r_0402">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0439" target="r_2206">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0439" target="r_2208">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0445" target="r_0109">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0529" target="r_4584">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0531" target="r_2204">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0531" target="r_2203">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0531" target="r_2202">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0531" target="r_2201">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0531" target="r_2200">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0531" target="r_2205">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0534" target="r_0410">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0534" target="r_0412">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0534" target="r_4679">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0534" target="r_0399">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0534" target="r_2207">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0534" target="r_0400">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0534" target="r_0402">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0534" target="r_2206">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0534" target="r_2208">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0600" target="r_0399">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0605" target="r_0120">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_0794" target="r_2140">
+      <data key="d11">consumed_by</data>
+      <data key="d12">21.0</data>
+    </edge>
+    <edge source="s_0794" target="r_2141">
+      <data key="d11">consumed_by</data>
+      <data key="d12">24.0</data>
+    </edge>
+    <edge source="s_0801" target="r_2242">
+      <data key="d11">consumed_by</data>
+      <data key="d12">4.0</data>
+    </edge>
+    <edge source="s_0819" target="r_0122">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1070" target="r_0400">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1076" target="r_0121">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1101" target="r_2140">
+      <data key="d11">consumed_by</data>
+      <data key="d12">7.0</data>
+    </edge>
+    <edge source="s_1101" target="r_2141">
+      <data key="d11">consumed_by</data>
+      <data key="d12">8.0</data>
+    </edge>
+    <edge source="s_1166" target="r_0412">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1179" target="r_0125">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1212" target="r_2140">
+      <data key="d11">consumed_by</data>
+      <data key="d12">14.0</data>
+    </edge>
+    <edge source="s_1212" target="r_2141">
+      <data key="d11">consumed_by</data>
+      <data key="d12">16.0</data>
+    </edge>
+    <edge source="s_1253" target="r_0410">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1258" target="r_2238">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1265" target="r_2245">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1279" target="r_2244">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1279" target="r_2247">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1279" target="r_2237">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1279" target="r_0125">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1279" target="r_2239">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1279" target="r_0122">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1279" target="r_2245">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1279" target="r_2241">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1279" target="r_0120">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1279" target="r_2236">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1279" target="r_2238">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1279" target="r_2240">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1279" target="r_0123">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1279" target="r_0124">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1279" target="r_2242">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1279" target="r_2243">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1279" target="r_0121">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1279" target="r_2246">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1291" target="r_0402">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1298" target="r_2206">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1305" target="r_0123">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1451" target="r_2207">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1457" target="r_0124">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_1482" target="r_2241">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2781" target="r_2154">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2782" target="r_2156">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2782" target="r_2155">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2782" target="r_2160">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2782" target="r_2157">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2782" target="r_2158">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2782" target="r_2154">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2782" target="r_2159">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2783" target="r_2156">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2783" target="r_2155">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2783" target="r_2160">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2783" target="r_2157">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2783" target="r_2158">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2783" target="r_2182">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2783" target="r_2154">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2783" target="r_2183">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2783" target="r_2159">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2785" target="r_2196">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2785" target="r_2197">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2785" target="r_2198">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2785" target="r_2194">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2785" target="r_2195">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2785" target="r_2199">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2787" target="r_2155">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2789" target="r_2156">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2789" target="r_2182">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2791" target="r_2157">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2791" target="r_2183">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2793" target="r_2158">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2795" target="r_2159">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2797" target="r_2160">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2817" target="r_2182">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2817" target="r_2183">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2818" target="r_2182">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2818" target="r_2183">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2821" target="r_2333">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2821" target="r_2339">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2821" target="r_2335">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2821" target="r_2337">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2831" target="r_2196">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2831" target="r_2197">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2831" target="r_2198">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2831" target="r_2194">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2831" target="r_2195">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2831" target="r_2199">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2832" target="r_2194">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2835" target="r_2195">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2836" target="r_2196">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2837" target="r_2197">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2838" target="r_2198">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2839" target="r_2199">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2840" target="r_2204">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2840" target="r_2203">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2840" target="r_2202">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2840" target="r_2201">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2840" target="r_2200">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2840" target="r_2205">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2841" target="r_2200">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2844" target="r_2201">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2846" target="r_2202">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2848" target="r_2203">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2850" target="r_2204">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2852" target="r_2205">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2853" target="r_2342">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2853" target="r_2340">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2853" target="r_2343">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2853" target="r_2341">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2854" target="r_2242">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2855" target="r_2208">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2856" target="r_2211">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2856" target="r_2212">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2856" target="r_2210">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2856" target="r_2209">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2857" target="r_2211">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2857" target="r_2212">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2857" target="r_2210">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2857" target="r_2209">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2858" target="r_2209">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2862" target="r_2210">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2864" target="r_2211">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2866" target="r_2212">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2879" target="r_2239">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2881" target="r_2240">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2884" target="r_2236">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2885" target="r_2237">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2893" target="r_2243">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2895" target="r_2244">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2898" target="r_2246">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2900" target="r_2247">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2935" target="r_2333">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2936" target="r_2335">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2937" target="r_2337">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2938" target="r_2339">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2944" target="r_2340">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2945" target="r_2341">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2946" target="r_2342">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_2947" target="r_2343">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_4191" target="r_4584">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+    <edge source="s_4251" target="r_4679">
+      <data key="d11">consumed_by</data>
+      <data key="d12">1.0</data>
+    </edge>
+  </graph>
+</graphml>

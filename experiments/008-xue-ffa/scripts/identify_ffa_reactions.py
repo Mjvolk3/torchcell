@@ -18,7 +18,7 @@ load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 
 # Results directory
-RESULTS_DIR = Path("/Users/michaelvolk/Documents/projects/torchcell/experiments/008-xue-ffa/results")
+RESULTS_DIR = Path(osp.join(os.getenv("EXPERIMENT_ROOT"), "008-xue-ffa/results"))
 FFA_REACTIONS_DIR = RESULTS_DIR / "ffa_reactions"
 os.makedirs(FFA_REACTIONS_DIR, exist_ok=True)
 

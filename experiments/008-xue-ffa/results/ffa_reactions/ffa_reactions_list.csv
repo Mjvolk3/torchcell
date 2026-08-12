@@ -1,0 +1,65 @@
+reaction_id,equation,reversible,subsystem,genes,gene_ids,num_metabolites
+r_0109,s_0373 + s_0434 + s_0445 --> s_0394 + s_0794 + s_1101 + s_1322,False,Fatty acid biosynthesis,ACC1(YNR016C),YNR016C,7
+r_0120,s_0605 + s_1279 --> s_0840 + s_1507,False,Fatty acid degradation,POX1(YGL205W),YGL205W,4
+r_0121,s_1076 + s_1279 --> s_0840 + s_1510,False,Fatty acid degradation,POX1(YGL205W),YGL205W,4
+r_0122,s_0819 + s_1279 --> s_0840 + s_1513,False,Fatty acid degradation,POX1(YGL205W),YGL205W,4
+r_0123,s_1279 + s_1305 --> s_0823 + s_0840,False,Fatty acid degradation,POX1(YGL205W),YGL205W,4
+r_0124,s_1279 + s_1457 --> s_0840 + s_1516,False,Fatty acid degradation,POX1(YGL205W),YGL205W,4
+r_0125,s_1179 + s_1279 --> s_0840 + s_1519,False,Fatty acid degradation,POX1(YGL205W),YGL205W,4
+r_0399,s_0439 + s_0534 + s_0600 <=> s_0426 + s_0605 + s_0638,True,Fatty acid biosynthesis,FAA2(YER015W),YER015W,6
+r_0400,s_0439 + s_0534 + s_1070 <=> s_0426 + s_0638 + s_1076,True,Fatty acid biosynthesis,FAA2(YER015W),YER015W,6
+r_0402,s_0439 + s_0534 + s_1291 <=> s_0426 + s_0638 + s_1305,True,Fatty acid biosynthesis,FAA2(YER015W),YER015W,6
+r_0410,s_0439 + s_0534 + s_1253 <=> s_0426 + s_0638 + s_1258,True,Fatty acid biosynthesis,FAA2(YER015W),YER015W,6
+r_0412,s_0439 + s_0534 + s_1166 <=> s_0426 + s_0638 + s_1179,True,Fatty acid biosynthesis,FAA2(YER015W),YER015W,6
+r_2140,s_0373 + 21.0 s_0794 + 7.0 s_1101 + 14.0 s_1212 --> 7.0 s_0456 + 7.0 s_0529 + 7.0 s_0803 + 14.0 s_1207 + s_1302,False,Fatty acid biosynthesis,"FAS1(YKL182W), FAS2(YPL231W)","YKL182W, YPL231W",9
+r_2141,s_0373 + 24.0 s_0794 + 8.0 s_1101 + 16.0 s_1212 --> 8.0 s_0456 + 8.0 s_0529 + 8.0 s_0803 + 16.0 s_1207 + s_1454,False,Fatty acid biosynthesis,"FAS1(YKL182W), FAS2(YPL231W)","YKL182W, YPL231W",9
+r_2154,s_2781 + s_2782 + s_2783 --> s_2784 + s_2785 + s_2786,False,Biosynthesis of unsaturated fatty acids,ELO1(YJL196C),YJL196C,6
+r_2155,s_2782 + s_2783 + s_2787 --> s_2784 + s_2785 + s_2788,False,Biosynthesis of unsaturated fatty acids,ELO1(YJL196C),YJL196C,6
+r_2156,s_2782 + s_2783 + s_2789 --> s_2784 + s_2785 + s_2790,False,Biosynthesis of unsaturated fatty acids,ELO2(YCR034W),YCR034W,6
+r_2157,s_2782 + s_2783 + s_2791 --> s_2784 + s_2785 + s_2792,False,Biosynthesis of unsaturated fatty acids,"ELO2(YCR034W), ELO3(YLR372W)","YCR034W, YLR372W",6
+r_2158,s_2782 + s_2783 + s_2793 --> s_2784 + s_2785 + s_2794,False,Biosynthesis of unsaturated fatty acids,"ELO2(YCR034W), ELO3(YLR372W)","YCR034W, YLR372W",6
+r_2159,s_2782 + s_2783 + s_2795 --> s_2784 + s_2785 + s_2796,False,Biosynthesis of unsaturated fatty acids,"ELO2(YCR034W), ELO3(YLR372W)","YCR034W, YLR372W",6
+r_2160,s_2782 + s_2783 + s_2797 --> s_2784 + s_2785 + s_2798,False,Biosynthesis of unsaturated fatty acids,ELO3(YLR372W),YLR372W,6
+r_2182,s_2783 + s_2789 + s_2817 + s_2818 --> 2.0 s_2808 + s_2819 + s_2820,False,Biosynthesis of unsaturated fatty acids,OLE1(YGL055W),YGL055W,7
+r_2183,s_2783 + s_2791 + s_2817 + s_2818 --> 2.0 s_2808 + s_2820 + s_2821,False,Biosynthesis of unsaturated fatty acids,OLE1(YGL055W),YGL055W,7
+r_2194,s_2785 + s_2831 + s_2832 <=> s_2781 + s_2833 + s_2834,True,Fatty acid biosynthesis,FAA1(YOR317W),YOR317W,6
+r_2195,s_2785 + s_2831 + s_2835 <=> s_2787 + s_2833 + s_2834,True,Fatty acid biosynthesis,"FAA4(YMR246W), FAA1(YOR317W)","YMR246W, YOR317W",6
+r_2196,s_2785 + s_2831 + s_2836 <=> s_2789 + s_2833 + s_2834,True,Fatty acid biosynthesis,"FAA4(YMR246W), FAA1(YOR317W)","YMR246W, YOR317W",6
+r_2197,s_2785 + s_2831 + s_2837 <=> s_2819 + s_2833 + s_2834,True,Fatty acid biosynthesis,"FAA4(YMR246W), FAA1(YOR317W)","YMR246W, YOR317W",6
+r_2198,s_2785 + s_2831 + s_2838 <=> s_2791 + s_2833 + s_2834,True,Fatty acid biosynthesis,"FAA4(YMR246W), FAA1(YOR317W)","YMR246W, YOR317W",6
+r_2199,s_2785 + s_2831 + s_2839 <=> s_2821 + s_2833 + s_2834,True,Fatty acid biosynthesis,"FAA4(YMR246W), FAA1(YOR317W)","YMR246W, YOR317W",6
+r_2200,s_0531 + s_2840 + s_2841 <=> s_0635 + s_2842 + s_2843,True,Fatty acid biosynthesis,FAA1(YOR317W),YOR317W,6
+r_2201,s_0531 + s_2840 + s_2844 <=> s_0635 + s_2842 + s_2845,True,Fatty acid biosynthesis,"FAA4(YMR246W), FAA1(YOR317W)","YMR246W, YOR317W",6
+r_2202,s_0531 + s_2840 + s_2846 <=> s_0635 + s_2842 + s_2847,True,Fatty acid biosynthesis,"FAA4(YMR246W), FAA1(YOR317W)","YMR246W, YOR317W",6
+r_2203,s_0531 + s_2840 + s_2848 <=> s_0635 + s_2842 + s_2849,True,Fatty acid biosynthesis,"FAA4(YMR246W), FAA1(YOR317W)","YMR246W, YOR317W",6
+r_2204,s_0531 + s_2840 + s_2850 <=> s_0635 + s_2842 + s_2851,True,Fatty acid biosynthesis,"FAA4(YMR246W), FAA1(YOR317W)","YMR246W, YOR317W",6
+r_2205,s_0531 + s_2840 + s_2852 <=> s_0635 + s_2842 + s_2853,True,Fatty acid biosynthesis,"FAA4(YMR246W), FAA1(YOR317W)","YMR246W, YOR317W",6
+r_2206,s_0439 + s_0534 + s_1298 <=> s_0426 + s_0638 + s_2854,True,Fatty acid biosynthesis,FAA2(YER015W),YER015W,6
+r_2207,s_0439 + s_0534 + s_1451 <=> s_0426 + s_0638 + s_1457,True,Fatty acid biosynthesis,FAA2(YER015W),YER015W,6
+r_2208,s_0439 + s_0534 + s_2855 <=> s_0426 + s_0638 + s_1265,True,Fatty acid biosynthesis,FAA2(YER015W),YER015W,6
+r_2209,s_2856 + s_2857 + s_2858 <=> s_2859 + s_2860 + s_2861,True,Fatty acid biosynthesis,FAA3(YIL009W),YIL009W,6
+r_2210,s_2856 + s_2857 + s_2862 <=> s_2859 + s_2860 + s_2863,True,Fatty acid biosynthesis,FAA3(YIL009W),YIL009W,6
+r_2211,s_2856 + s_2857 + s_2864 <=> s_2859 + s_2860 + s_2865,True,Fatty acid biosynthesis,FAA3(YIL009W),YIL009W,6
+r_2212,s_2856 + s_2857 + s_2866 <=> s_2859 + s_2860 + s_2867,True,Fatty acid biosynthesis,FAA3(YIL009W),YIL009W,6
+r_2236,s_1279 + s_2884 --> s_0840 + s_2886,False,Fatty acid degradation,POX1(YGL205W),YGL205W,4
+r_2237,s_1279 + s_2885 --> s_0840 + s_2887,False,Fatty acid degradation,POX1(YGL205W),YGL205W,4
+r_2238,s_1258 + s_1279 --> s_0840 + s_2888,False,Fatty acid degradation,POX1(YGL205W),YGL205W,4
+r_2239,s_1279 + s_2879 --> s_0840 + s_2889,False,Fatty acid degradation,POX1(YGL205W),YGL205W,4
+r_2240,s_1279 + s_2881 --> s_0840 + s_2890,False,Fatty acid degradation,POX1(YGL205W),YGL205W,4
+r_2241,s_1279 + s_1482 --> s_0840 + s_2891,False,Fatty acid degradation,POX1(YGL205W),YGL205W,4
+r_2242,4.0 s_0801 + s_1279 + s_2854 --> s_0840 + s_2892,False,Fatty acid degradation,POX1(YGL205W),YGL205W,5
+r_2243,s_1279 + s_2893 --> s_0840 + s_2894,False,Fatty acid degradation,POX1(YGL205W),YGL205W,4
+r_2244,s_1279 + s_2895 --> s_0840 + s_2896,False,Fatty acid degradation,POX1(YGL205W),YGL205W,4
+r_2245,s_1265 + s_1279 --> s_0840 + s_2897,False,Fatty acid degradation,POX1(YGL205W),YGL205W,4
+r_2246,s_1279 + s_2898 --> s_0840 + s_2899,False,Fatty acid degradation,POX1(YGL205W),YGL205W,4
+r_2247,s_1279 + s_2900 --> s_0840 + s_2901,False,Fatty acid degradation,POX1(YGL205W),YGL205W,4
+r_2333,s_2821 + s_2935 --> s_2785 + s_2955,False,Glycerolipid metabolism,SLC1(YDL052C),YDL052C,4
+r_2335,s_2821 + s_2936 --> s_2785 + s_2957,False,Glycerolipid metabolism,SLC1(YDL052C),YDL052C,4
+r_2337,s_2821 + s_2937 --> s_2785 + s_2959,False,Glycerolipid metabolism,SLC1(YDL052C),YDL052C,4
+r_2339,s_2821 + s_2938 --> s_2785 + s_2961,False,Glycerolipid metabolism,SLC1(YDL052C),YDL052C,4
+r_2340,s_2853 + s_2944 --> s_0531 + s_2962,False,Glycerolipid metabolism,SLC1(YDL052C),YDL052C,4
+r_2341,s_2853 + s_2945 --> s_0531 + s_2963,False,Glycerolipid metabolism,SLC1(YDL052C),YDL052C,4
+r_2342,s_2853 + s_2946 --> s_0531 + s_2964,False,Glycerolipid metabolism,SLC1(YDL052C),YDL052C,4
+r_2343,s_2853 + s_2947 --> s_0531 + s_2965,False,Glycerolipid metabolism,SLC1(YDL052C),YDL052C,4
+r_4584,s_0434 + s_0529 + s_4191 --> s_0423 + s_0633 + s_4190,False,Fatty acid biosynthesis,"FAA2(YER015W), FAA3(YIL009W), FAA4(YMR246W), FAA1(YOR317W)","YER015W, YIL009W, YMR246W, YOR317W",6
+r_4679,s_0439 + s_0534 + s_4251 <=> s_0426 + s_0638 + s_4252,True,Fatty acid ester pathway,"FAA2(YER015W), FAA3(YIL009W), FAA4(YMR246W), FAA1(YOR317W)","YER015W, YIL009W, YMR246W, YOR317W",6

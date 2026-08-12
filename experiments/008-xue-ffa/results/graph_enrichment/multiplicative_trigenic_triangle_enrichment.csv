@@ -1,0 +1,11 @@
+graph_type,sig_with_overlap,sig_without_overlap,nonsig_with_overlap,nonsig_without_overlap,sig_pct,nonsig_pct,fold_enrichment,odds_ratio,p_value
+physical_triangle,0,223,0,497,0.0,0.0,,,1.0
+regulatory_triangle,0,223,0,497,0.0,0.0,,,1.0
+genetic_triangle,6,217,24,473,2.690582959641256,4.82897384305835,0.5571748878923768,0.5449308755760369,0.22822131359509645
+tflink_triangle,0,223,0,497,0.0,0.0,,,1.0
+string12_0_neighborhood_triangle,0,223,0,497,0.0,0.0,,,1.0
+string12_0_fusion_triangle,0,223,0,497,0.0,0.0,,,1.0
+string12_0_cooccurence_triangle,0,223,0,497,0.0,0.0,,,1.0
+string12_0_coexpression_triangle,0,223,12,485,0.0,2.414486921529175,0.0,0.0,0.022307882364521574
+string12_0_experimental_triangle,0,223,18,479,0.0,3.6217303822937628,0.0,0.0,0.001471142286251327
+string12_0_database_triangle,0,223,0,497,0.0,0.0,,,1.0

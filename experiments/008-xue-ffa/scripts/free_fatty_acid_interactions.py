@@ -13,6 +13,7 @@ import matplotlib.style as mplstyle
 import seaborn as sns
 from pathlib import Path
 from dotenv import load_dotenv
+import torchcell
 from torchcell.timestamp import timestamp
 from scipy import stats
 from statsmodels.stats.multitest import multipletests
@@ -30,11 +31,12 @@ if not ASSET_IMAGES_DIR:
 os.makedirs(ASSET_IMAGES_DIR, exist_ok=True)
 
 # Results directory
-RESULTS_DIR = "/Users/michaelvolk/Documents/projects/torchcell/experiments/008-xue-ffa/results"
+EXPERIMENT_ROOT = os.getenv("EXPERIMENT_ROOT")
+RESULTS_DIR = osp.join(EXPERIMENT_ROOT, "008-xue-ffa/results")
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
 # Apply torchcell style
-STYLE_PATH = "/Users/michaelvolk/Documents/projects/torchcell/torchcell/torchcell.mplstyle"
+STYLE_PATH = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 if osp.exists(STYLE_PATH):
     plt.style.use(STYLE_PATH)
 else:
@@ -872,7 +874,9 @@ def main():
     print("Loading free fatty acid data...")
 
     # Load data with replicates
-    file_path = "/Users/michaelvolk/Documents/projects/torchcell/data/torchcell/ffa_xue2025/raw/Supplementary Data 1_Raw titers.xlsx"
+    file_path = osp.join(
+        DATA_ROOT, "data/torchcell/ffa_xue2025/raw/Supplementary Data 1_Raw titers.xlsx"
+    )
     raw_df, abbreviations, replicate_dict = load_ffa_data(file_path)
 
     print(f"Loaded data with {len(raw_df)} strains")

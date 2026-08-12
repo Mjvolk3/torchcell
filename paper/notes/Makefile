@@ -45,11 +45,13 @@ all: $(PDFS)
 
 figs: $(SVG_PDFS)
 
-# Vector SVG -> vector PDF. A missing source is a hard error, not a skipped figure: a note
-# that silently drops a figure is worse than one that fails to build.
-build/figs/%.pdf: $(ASSETS)/%.svg
-	@mkdir -p $(dir $@)
-	$(RSVG) -f pdf -o $@ $<
+# Vector SVG -> vector PDF at TRUE PHYSICAL SIZE. svg2pdf.sh picks the conversion DPI from
+# the file's own root units (72 for pt-tagged matplotlib output, 100 for the unitless
+# draw.io-unit output of savefig_true_size_svg) -- rsvg's 90/inch default is wrong for both
+# and silently oversizes every figure. A missing source is a hard error, not a skipped
+# figure: a note that silently drops a figure is worse than one that fails to build.
+build/figs/%.pdf: $(ASSETS)/%.svg svg2pdf.sh
+	@bash svg2pdf.sh $< $@
 
 # Each note depends on every source (they share the preamble and section files) and on the
 # converted figures, so editing any section or adding any \incsvg rebuilds correctly.

@@ -40,6 +40,15 @@ and search still resolve. Edit the `.tex`, not this file.
 6. Novel construction candidate -- YPL046C+YPL081W (ELC1+RPS9A)
 7. Supplementary table -- all 45 within-10 doubles
 8. What was actually built -- 13 of 14; `YKL033W-A x YJR060W` (CBF1) failed to construct
+9. **Run 4, the constructed panel measured** (2026-08-06, 3 re-randomized plates) --
+   singles reproduce Costanzo SMF at r=0.706 (p=0.015, n=11); doubles do not (r=0.255).
+   **No triples in this round** -- the strain list has only KO1/KO2.
+10. **Digenic interaction vs Costanzo -- measured, and NOT yet usable.** eps vs published
+    eps is r=-0.245 (p=0.44). Diagnosed as a normalization artifact, not a failure to
+    reproduce: 8/12 singles score above the on-plate WT, so f_a*f_b exceeds 1.0 for 10/13
+    pairs, all 13 eps come out negative, and corr(eps, f_a*f_b) = -0.926. eps is not
+    scale-invariant and run 4 sits 1.26x above run 3. **The WT shift is undiagnosed** --
+    do not apply a correction before it is.
 
 Related: [[experiments.010-kuzmin-tmi.scripts.topk_triples_from_constructed_10]],
 [[experiments.010-kuzmin-tmi.scripts.optimized_doubles_setcover_constructed_10]],

@@ -80,15 +80,39 @@
   \includegraphics[#1]{build/figs/\detokenize{#2}.pdf}%
 }
 
-%% Figure + caption for a note. Mirrors the manuscript's \tcfig: the graphic is measured into
-%% a save-box and the caption is set to the IMAGE's width, not the text width, so a
-%% half-column panel gets a half-column caption rather than a full-width one running under it.
+%% ---- Float placement ------------------------------------------------------------
+%% A note is read top-to-bottom as an argument, so a figure drifting two pages from the
+%% sentence that introduces it is worse than a slightly loose page. Let floats take much
+%% more of a page before LaTeX defers them, and cut the stretch it inserts around them --
+%% the defaults are tuned for a journal article with few, small figures and leave big
+%% vertical holes in a figure-dense note.
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\bottomfraction}{0.85}
+\renewcommand{\textfraction}{0.08}
+\renewcommand{\floatpagefraction}{0.75}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{10pt plus 2pt minus 3pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+
+%% Figure + caption for a note. Mirrors the manuscript's \tcfig -- the graphic is measured
+%% into a save-box and the caption set to the IMAGE's width, so a half-column panel does not
+%% get a full-width caption running under it.
+%%
+%% With ONE departure: a caption is never narrower than \notefigmincap. A panel authored at
+%% the 88.5 mm half_plus width would otherwise carry a caption less than half the text
+%% measure, which sets as a thin ragged column and reads badly. Below that threshold the
+%% caption widens to the minimum and the pair is centred together.
 \newsavebox{\notefigbox}
+\newlength{\notefigcapwd}
+\newlength{\notefigmincap}
+\setlength{\notefigmincap}{0.62\textwidth}
 \newcommand{\notefig}[2]{%
   \begin{figure}[htbp]\centering
   \sbox{\notefigbox}{#1}%
-  \begin{minipage}{\wd\notefigbox}%
+  \setlength{\notefigcapwd}{\wd\notefigbox}%
+  \ifdim\notefigcapwd<\notefigmincap \setlength{\notefigcapwd}{\notefigmincap}\fi
   \usebox{\notefigbox}\par
+  \begin{minipage}{\notefigcapwd}%
   \caption{#2}%
   \end{minipage}%
   \end{figure}%

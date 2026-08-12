@@ -21,5 +21,5 @@ created: 1784566139426
 
 - [x] Overhauled the SGA colony segmenter to a grid-constrained gitter-style method (6-sided gel-boundary gate + one shared accept predicate) that removes the phantom-boundary artefacts [[torchcell.sga.image]]
 - [x] Re-analysed the run-2 volume/timepoint sweep on full-resolution 72 h captures and added Spearman ordering to the reference scatter [[experiments.010-kuzmin-tmi.12_panel_crispr_fitness_assay]]
-- [x] Green-lit Cellpose for colony segmentation after a clean zero-shot web-demo result, and drafted the workstation/rsync + integration plan [[experiments.019-echo-crispr-array.cellpose-segmentation-plan]]
-- [x] Moved segmentation to Cellpose on gila: rsynced the run-2 images, wired a `seg_method='cellpose'` branch, and validated against the classical numbers #high [[experiments.019-echo-crispr-array.cellpose-segmentation-plan]]
+- [x] Green-lit Cellpose for colony segmentation after a clean zero-shot web-demo result, and drafted the workstation/rsync + integration plan [[experiments.W019-echo-crispr-array.cellpose-segmentation-plan]]
+- [x] Moved segmentation to Cellpose on gila: rsynced the run-2 images, wired a `seg_method='cellpose'` branch, and validated against the classical numbers #high [[experiments.W019-echo-crispr-array.cellpose-segmentation-plan]]

@@ -12,7 +12,7 @@ created: 1784674985413
 This pass made the backlit (`grid_mode='lattice'`) path trustworthy by fixing why the overlay drew
 boundaries that the numbers did not agree with, and by bounding detection to the physical gel.
 Motivation and full analysis: [[experiments.010-kuzmin-tmi.12_panel_crispr_fitness_assay]]; the
-segmenter is being superseded by Cellpose next ([[experiments.019-echo-crispr-array.cellpose-segmentation-plan]]),
+segmenter is being superseded by Cellpose next ([[experiments.W019-echo-crispr-array.cellpose-segmentation-plan]]),
 so this is the classical baseline the deep-learning path must beat.
 
 - The overlay `det` mask and the DataFrame had diverged (mask written for every blob, the size cull

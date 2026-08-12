@@ -19,7 +19,7 @@ Kuzmin 2018 SMF.
 This is an **SGAtools-style clone adapted to our design** (acoustic ECHO dispensing,
 randomized/blocked layouts, on-plate BY4741 reference + Blank_media control, no query×array
 cross). Pipeline module: `torchcell/sga/` ([[torchcell.sga]]). Runner + data:
-`experiments/019-echo-crispr-array/` (code lives in the 019 experiment; this note files it
+`experiments/W019-echo-crispr-array/` (code lives in the 019 experiment; this note files it
 under the 010 thread it serves). Plate analyzed here: **Plate 5, OD1, 2.5 vs 5 nL**.
 
 ### Pipeline (image in → results out)
@@ -127,7 +127,7 @@ no query–array linkage artifact.
 resolved to `identity` (21/22 blanks correctly empty; 89.3% blank/plated agreement — the
 shortfall is 32 plated wells that didn't grow, expected).
 
-![Plate 5 quantification overlay](assets/images/019-echo-crispr-array/plate5_quantification_overlay.png)
+![Plate 5 quantification overlay](assets/images/W019-echo-crispr-array/plate5_quantification_overlay.png)
 
 *Green = measured colony (radius ∝ size), red = flagged, blue = detected gash, yellow = plate ROI.*
 
@@ -137,7 +137,7 @@ shortfall is 32 plated wells that didn't grow, expected).
 > segmentation that under-measured colonies; the fixed edge detection changed them (fitness rose,
 > WT CV fell 0.26→0.085, offset to reference shrank). Use the 2026.07.17 table.
 
-![Fitness by volume](assets/images/019-echo-crispr-array/plate5_fitness_by_volume.svg)
+![Fitness by volume](assets/images/W019-echo-crispr-array/plate5_fitness_by_volume.svg)
 
 Fitness = median(mutant normalized size) / median(BY4741 normalized size); SD = spread of the
 per-replicate ratios. `n` = replicates surviving filters (11 placed per strain per volume; the
@@ -160,7 +160,7 @@ published reference SMF (see comparison below). Ordered by 5 nL fitness.
 | YLR312C-B       | YLR312C-B | 0.72 ± 0.18 (n=11)       | 1.04 ± 0.17 (n=11)       | 1.08 ± 0.04       |
 | **BY4741**      | —         | 1.00 ± 0.24 (n=9)        | 1.00 ± 0.18 (n=11)       | 1.00 (ref)        |
 
-Full per-colony + per-strain CSVs in `experiments/019-echo-crispr-array/results/`
+Full per-colony + per-strain CSVs in `experiments/W019-echo-crispr-array/results/`
 (`plate5_fitness_by_volume.csv`, `plate5_strain_scores_{2.5,5.0}nL.csv`).
 
 ### Plating success — attempted wells with no colony
@@ -204,7 +204,7 @@ higher-volume-is-more-reliable reading.
 The concern for the volume choice was colony **morphology**: too much dispensed liquid could
 spread/merge colonies into irregular shapes. The data says **no — the opposite**:
 
-![Colony shape by volume](assets/images/019-echo-crispr-array/plate5_colony_shape_by_volume.svg)
+![Colony shape by volume](assets/images/W019-echo-crispr-array/plate5_colony_shape_by_volume.svg)
 
 | volume | n   | median circularity | mean  | % circ < 0.90 | median size (px) |
 |--------|-----|--------------------|-------|---------------|------------------|
@@ -246,9 +246,9 @@ confound is purely at the block level (volume ↔ side); within a block, every s
 the local position space, so local gradients average out per strain and the per-volume
 fitness ratios are spatially unbiased. Only the *cross-volume* comparison is compromised.
 
-![Assay quality by volume](assets/images/019-echo-crispr-array/plate5_assay_quality_summary.svg)
+![Assay quality by volume](assets/images/W019-echo-crispr-array/plate5_assay_quality_summary.svg)
 
-![WT reproducibility](assets/images/019-echo-crispr-array/plate5_wt_distribution_by_volume.svg)
+![WT reproducibility](assets/images/W019-echo-crispr-array/plate5_wt_distribution_by_volume.svg)
 
 Raw numbers (confounded): 2.5 nL missing 16.1%, WT CV 0.26; 5.0 nL missing 6.3%, WT CV 0.18.
 Z′-factor is negative at **both** volumes → these knockouts do not separate from WT here
@@ -257,7 +257,7 @@ Z′-factor is negative at **both** volumes → these knockouts do not separate 
 Full-plate normalized heatmap (colorbar anchored at 0; black divider = the 2.5 nL | 5 nL block
 boundary between columns 12 and 13):
 
-![Normalized colony size, both volumes](assets/images/019-echo-crispr-array/plate5_heatmap_norm.svg)
+![Normalized colony size, both volumes](assets/images/W019-echo-crispr-array/plate5_heatmap_norm.svg)
 
 ### Reference SMF comparison (Costanzo / Kuzmin)
 
@@ -286,9 +286,9 @@ query-strain SMF and **350** for array-strain SMF, at 4 replicate colonies per s
 per volume (the `(n=…)` in the fitness table), a very different (smaller, colony-level) replicate
 structure — worth remembering when comparing SDs.
 
-![Fitness vs published SMF](assets/images/019-echo-crispr-array/plate5_fitness_vs_reference.svg)
+![Fitness vs published SMF](assets/images/W019-echo-crispr-array/plate5_fitness_vs_reference.svg)
 
-![Assay validation scatter](assets/images/019-echo-crispr-array/plate5_fitness_vs_reference_scatter.svg)
+![Assay validation scatter](assets/images/W019-echo-crispr-array/plate5_fitness_vs_reference_scatter.svg)
 
 > **Figures regenerated with corrected (2026.07.17) data; numbers updated. The original 07.16 text
 > claimed a large "systematic offset" and r = 0.39 — that was largely a segmentation artifact (see
@@ -354,11 +354,11 @@ early/late points bound how sensitive the assay is to timing.
 ### Provenance
 
 - Module: [[torchcell.sga]] — `image.py`, `register.py`, `normalize.py`, `score.py`, `assay.py`.
-- Runner: `experiments/019-echo-crispr-array/scripts/run_plate5_volume.py`.
-- Reference builder: `experiments/019-echo-crispr-array/scripts/build_reference_smf.py`.
-- Inputs: `experiments/019-echo-crispr-array/data/{Original.png, ECHO_picklist_Plate5_384_OD1_2p5-5nL.csv}`.
+- Runner: `experiments/W019-echo-crispr-array/scripts/run_plate5_volume.py`.
+- Reference builder: `experiments/W019-echo-crispr-array/scripts/build_reference_smf.py`.
+- Inputs: `experiments/W019-echo-crispr-array/data/{Original.png, ECHO_picklist_Plate5_384_OD1_2p5-5nL.csv}`.
 - Reference source: `experiments/010-kuzmin-tmi/results/inference_3/singles_table_panel12_k200_queried.csv`.
-- Figures: `notes/assets/images/019-echo-crispr-array/plate5_*` (SVG + PNG). Heatmaps use the
+- Figures: `notes/assets/images/W019-echo-crispr-array/plate5_*` (SVG + PNG). Heatmaps use the
   on-brand warm sequential colormap `torchcell.sga.viz.SEQUENTIAL_CMAP`.
 - Upstream SGAtools source (reference to clone from) cloned at `external/sgatools/`
   (github.com/boonelab/sgatools; gitignored, not vendored).
@@ -379,7 +379,7 @@ under-measuring colonies (bright-core only), which is why they read artificially
   0.61–1.02 vs Costanzo ~1.0). So the earlier "systematic offset" was **partly a quantification
   artifact, not biology** — a real caution the 07.16 scatter over-read.
 
-![Improved dark-field overlay (green = detected colony edge)](assets/images/019-echo-crispr-array/plate5_quantification_overlay.png)
+![Improved dark-field overlay (green = detected colony edge)](assets/images/W019-echo-crispr-array/plate5_quantification_overlay.png)
 
 **Corrected fitness (mutant / BY4741) ± SD, by volume** (supersedes the 07.16 table; `n` = colonies
 used of 11 placed):
@@ -402,7 +402,7 @@ used of 11 placed):
 
 ### Colony-size spread vs the published reference
 
-![Plate 5 per-strain fitness spread against the published single-mutant-fitness reference.](assets/images/019-echo-crispr-array/plate5_spread_vs_reference.svg)
+![Plate 5 per-strain fitness spread against the published single-mutant-fitness reference.](assets/images/W019-echo-crispr-array/plate5_spread_vs_reference.svg)
 
 ### Imaging modality: dark-field vs transillumination (does not change scores)
 
@@ -414,9 +414,9 @@ independent evidence that the registration (B2 = top-left for this border-free i
 plate) is correct, since a mis-registered plate could not correlate this closely. Either
 modality is usable; standardize on one.
 
-![Plate 5 transillumination overlay (green = detected colony edge).](assets/images/019-echo-crispr-array/plate5_transillum_overlay.png)
+![Plate 5 transillumination overlay (green = detected colony edge).](assets/images/W019-echo-crispr-array/plate5_transillum_overlay.png)
 
-![Per-strain fitness, dark-field vs transillumination, with the near-identity diagonal (r = 0.96, n = 13).](assets/images/019-echo-crispr-array/plate5_modality_comparison.svg)
+![Per-strain fitness, dark-field vs transillumination, with the near-identity diagonal (r = 0.96, n = 13).](assets/images/W019-echo-crispr-array/plate5_modality_comparison.svg)
 
 ## 2026.07.20 - Run 2: volume x growth-time settings sweep (2 plates x 3 timepoints)
 
@@ -424,7 +424,7 @@ This section documents run 2. It replaces two earlier drafts whose conclusions w
 an initial version that framed the six images as "batches," and a second that reported the
 72 h / 5 nL plate as overgrown with all no-cell controls overrun. Both errors are corrected
 here. All numbers come from
-`experiments/019-echo-crispr-array/scripts/run2_volume_timepoints.py`. Gene names are given
+`experiments/W019-echo-crispr-array/scripts/run2_volume_timepoints.py`. Gene names are given
 as systematic ORF with the common name in parentheses where one exists (uncharacterized ORFs
 YER079W, YKL033W-A, YLR312C-B have no common name).
 
@@ -489,23 +489,23 @@ one colony is bridged by the closing rather than counted twice. Multi-colony rej
 and crosses, red for edge/shape-flagged cells, magenta boxes for rejected multi-colony cells),
 kept consistent with the Plate 5 overlays.
 
-![Colony-detection overlay, 2.5 nL at 43.7 h (P1), showing each detected colony outlined in green with a green cross at its measured centroid; empty wells carry no mark and multi-colony wells (rejected) are boxed in magenta.](assets/images/019-echo-crispr-array/run2_overlay_P1_t44.png)
-![Normalized colony-size heatmap for the same plate (2.5 nL, 43.7 h) in true plate geometry (rows A-P, columns 1-24), magma colormap with 1.0 = plate average; white cells are empty wells.](assets/images/019-echo-crispr-array/run2_heatmap_norm_P1_t44.svg)
+![Colony-detection overlay, 2.5 nL at 43.7 h (P1), showing each detected colony outlined in green with a green cross at its measured centroid; empty wells carry no mark and multi-colony wells (rejected) are boxed in magenta.](assets/images/W019-echo-crispr-array/run2_overlay_P1_t44.png)
+![Normalized colony-size heatmap for the same plate (2.5 nL, 43.7 h) in true plate geometry (rows A-P, columns 1-24), magma colormap with 1.0 = plate average; white cells are empty wells.](assets/images/W019-echo-crispr-array/run2_heatmap_norm_P1_t44.svg)
 
-![Colony-detection overlay, 5 nL at 43.7 h (P2); the denser, larger colonies of the higher-volume plate are fully outlined to their circumference.](assets/images/019-echo-crispr-array/run2_overlay_P2_t44.png)
-![Normalized colony-size heatmap, 5 nL at 43.7 h (magma, 1.0 = plate average).](assets/images/019-echo-crispr-array/run2_heatmap_norm_P2_t44.svg)
+![Colony-detection overlay, 5 nL at 43.7 h (P2); the denser, larger colonies of the higher-volume plate are fully outlined to their circumference.](assets/images/W019-echo-crispr-array/run2_overlay_P2_t44.png)
+![Normalized colony-size heatmap, 5 nL at 43.7 h (magma, 1.0 = plate average).](assets/images/W019-echo-crispr-array/run2_heatmap_norm_P2_t44.svg)
 
-![Colony-detection overlay, 2.5 nL at 50.3 h (P1).](assets/images/019-echo-crispr-array/run2_overlay_P1_t50.png)
-![Normalized colony-size heatmap, 2.5 nL at 50.3 h (magma, 1.0 = plate average).](assets/images/019-echo-crispr-array/run2_heatmap_norm_P1_t50.svg)
+![Colony-detection overlay, 2.5 nL at 50.3 h (P1).](assets/images/W019-echo-crispr-array/run2_overlay_P1_t50.png)
+![Normalized colony-size heatmap, 2.5 nL at 50.3 h (magma, 1.0 = plate average).](assets/images/W019-echo-crispr-array/run2_heatmap_norm_P1_t50.svg)
 
-![Colony-detection overlay, 5 nL at 50.3 h (P2).](assets/images/019-echo-crispr-array/run2_overlay_P2_t50.png)
-![Normalized colony-size heatmap, 5 nL at 50.3 h (magma, 1.0 = plate average).](assets/images/019-echo-crispr-array/run2_heatmap_norm_P2_t50.svg)
+![Colony-detection overlay, 5 nL at 50.3 h (P2).](assets/images/W019-echo-crispr-array/run2_overlay_P2_t50.png)
+![Normalized colony-size heatmap, 5 nL at 50.3 h (magma, 1.0 = plate average).](assets/images/W019-echo-crispr-array/run2_heatmap_norm_P2_t50.svg)
 
-![Colony-detection overlay, 2.5 nL at 72.2 h (P1); the larger 72 h colonies are still captured to their full circumference.](assets/images/019-echo-crispr-array/run2_overlay_P1_t72.png)
-![Normalized colony-size heatmap, 2.5 nL at 72.2 h (magma, 1.0 = plate average).](assets/images/019-echo-crispr-array/run2_heatmap_norm_P1_t72.svg)
+![Colony-detection overlay, 2.5 nL at 72.2 h (P1); the larger 72 h colonies are still captured to their full circumference.](assets/images/W019-echo-crispr-array/run2_overlay_P1_t72.png)
+![Normalized colony-size heatmap, 2.5 nL at 72.2 h (magma, 1.0 = plate average).](assets/images/W019-echo-crispr-array/run2_heatmap_norm_P1_t72.svg)
 
-![Colony-detection overlay, 5 nL at 72.2 h (P2) - the plate previously mislabelled as overgrown. All six no-cell controls are empty and every colony is cleanly outlined, confirming the plate is well-formed and the earlier "overrun" reading was a detection artifact.](assets/images/019-echo-crispr-array/run2_overlay_P2_t72.png)
-![Normalized colony-size heatmap, 5 nL at 72.2 h (magma, 1.0 = plate average).](assets/images/019-echo-crispr-array/run2_heatmap_norm_P2_t72.svg)
+![Colony-detection overlay, 5 nL at 72.2 h (P2) - the plate previously mislabelled as overgrown. All six no-cell controls are empty and every colony is cleanly outlined, confirming the plate is well-formed and the earlier "overrun" reading was a detection artifact.](assets/images/W019-echo-crispr-array/run2_overlay_P2_t72.png)
+![Normalized colony-size heatmap, 5 nL at 72.2 h (magma, 1.0 = plate average).](assets/images/W019-echo-crispr-array/run2_heatmap_norm_P2_t72.svg)
 
 ### Registration and orientation
 
@@ -520,7 +520,7 @@ the comparison to Costanzo below stays independent. Per-image diagnostics are in
 
 ### Per-strain fitness across the six conditions
 
-![Per-strain relative fitness (colony size divided by the on-plate BY4741 wild-type) for all six conditions, grouped by strain and ordered by mean fitness; bars are coloured by condition (labelled by volume and growth time) and error bars are the within-condition replicate standard deviation.](assets/images/019-echo-crispr-array/run2_fitness_by_condition.svg)
+![Per-strain relative fitness (colony size divided by the on-plate BY4741 wild-type) for all six conditions, grouped by strain and ordered by mean fitness; bars are coloured by condition (labelled by volume and growth time) and error bars are the within-condition replicate standard deviation.](assets/images/W019-echo-crispr-array/run2_fitness_by_condition.svg)
 
 | strain (systematic / common) | 2.5nL 44h | 5nL 44h | 2.5nL 50h | 5nL 50h | 2.5nL 72h | 5nL 72h | Costanzo SMF |
 |---|---|---|---|---|---|---|---|
@@ -543,7 +543,7 @@ YLR313C) substitution described in the 2026.07.17 section; the canonical genes Y
 YLR104W were not built and remain unmeasured.
 ### Growth saturation over time
 
-![Colony growth versus incubation time, expressed as the resolution-invariant colony footprint (colony area as a fraction of the 4.5 mm well cell) so the three timepoints are comparable despite different cameras; left panel shows the plate-median footprint per plate with a growth curve that flattens between 50 and 72 h, right panel tracks the one clearly sick strain YJR060W (CBF1) toward the wild-type as growth proceeds.](assets/images/019-echo-crispr-array/run2_saturation.svg)
+![Colony growth versus incubation time, expressed as the resolution-invariant colony footprint (colony area as a fraction of the 4.5 mm well cell) so the three timepoints are comparable despite different cameras; left panel shows the plate-median footprint per plate with a growth curve that flattens between 50 and 72 h, right panel tracks the one clearly sick strain YJR060W (CBF1) toward the wild-type as growth proceeds.](assets/images/W019-echo-crispr-array/run2_saturation.svg)
 
 Colony footprint is expressed as a fraction of the well cell (area divided by pitch squared),
 which is resolution-independent, because the 72 h images are from a different camera. Growth
@@ -555,9 +555,9 @@ fitness signal compresses: the sick strain YJR060W (CBF1), published at 0.590, r
 
 ### Volume trade-off and dynamic range
 
-![Per-condition assay quality, one bar/box per condition (labelled by volume and growth time). Left: the spread of the ~30 individual BY4741 replicate colonies about the plate reference - the wild-type median is 1.0 by construction (fitness is colony size divided by the wild-type median), so this box shows how reproducible a single colony measurement is, not a value that should equal 1. Centre: plating-failure rate (fraction of plated wells with no colony). Right: wild-type coefficient of variation (lower is tighter).](assets/images/019-echo-crispr-array/run2_condition_quality.svg)
+![Per-condition assay quality, one bar/box per condition (labelled by volume and growth time). Left: the spread of the ~30 individual BY4741 replicate colonies about the plate reference - the wild-type median is 1.0 by construction (fitness is colony size divided by the wild-type median), so this box shows how reproducible a single colony measurement is, not a value that should equal 1. Centre: plating-failure rate (fraction of plated wells with no colony). Right: wild-type coefficient of variation (lower is tighter).](assets/images/W019-echo-crispr-array/run2_condition_quality.svg)
 
-![Dynamic range per condition (left, fitness spread across strains with the discrimination ratio = between-strain SD divided by within-strain SE annotated) and the sick-strain anchor (right, YJR060W/CBF1 measured against its published Costanzo value of 0.59).](assets/images/019-echo-crispr-array/run2_dynamic_range.svg)
+![Dynamic range per condition (left, fitness spread across strains with the discrimination ratio = between-strain SD divided by within-strain SE annotated) and the sick-strain anchor (right, YJR060W/CBF1 measured against its published Costanzo value of 0.59).](assets/images/W019-echo-crispr-array/run2_dynamic_range.svg)
 
 | condition | no-colony rate | WT CV | fitness range | discrimination |
 |---|---|---|---|---|
@@ -578,9 +578,9 @@ below shows.
 
 ### Comparison to published single-mutant fitness
 
-![Measured fitness (bar = mean over the six conditions; error bar = the standard deviation across those six conditions, i.e. the settings-to-settings spread, not a within-condition standard error) versus published Costanzo 2016 single-mutant fitness, one pair of bars per strain, ordered by published fitness.](assets/images/019-echo-crispr-array/run2_fitness_vs_reference.svg)
+![Measured fitness (bar = mean over the six conditions; error bar = the standard deviation across those six conditions, i.e. the settings-to-settings spread, not a within-condition standard error) versus published Costanzo 2016 single-mutant fitness, one pair of bars per strain, ordered by published fitness.](assets/images/W019-echo-crispr-array/run2_fitness_vs_reference.svg)
 
-![Per-condition scatter of measured fitness against published Costanzo single-mutant fitness, one panel per condition, with the identity line, Pearson r (agreement in value) and Spearman rho (agreement in rank/ordering); the panel's near-neutral genes cluster near 1.0 and the single sick gene (CBF1) anchors each correlation.](assets/images/019-echo-crispr-array/run2_fitness_vs_reference_scatter.svg)
+![Per-condition scatter of measured fitness against published Costanzo single-mutant fitness, one panel per condition, with the identity line, Pearson r (agreement in value) and Spearman rho (agreement in rank/ordering); the panel's near-neutral genes cluster near 1.0 and the single sick gene (CBF1) anchors each correlation.](assets/images/W019-echo-crispr-array/run2_fitness_vs_reference_scatter.svg)
 
 | condition | Pearson r | p | Spearman rho | RMSE | median bias | leave-one-out r |
 |---|---|---|---|---|---|---|
@@ -605,7 +605,7 @@ double-mutant construction+validation set now defined for the next round (see
 
 ### Agreement between conditions
 
-![Pearson correlation of per-strain fitness between every pair of conditions (magma colormap, 0 to 1), showing that plates of the same volume agree closely across time while different volumes agree less well.](assets/images/019-echo-crispr-array/run2_condition_correlation.svg)
+![Pearson correlation of per-strain fitness between every pair of conditions (magma colormap, 0 to 1), showing that plates of the same volume agree closely across time while different volumes agree less well.](assets/images/W019-echo-crispr-array/run2_condition_correlation.svg)
 
 Among the six conditions the strongest agreement is between plates of the same volume across
 time (for example P2 5 nL at 44 h versus 50 h, r = 0.96; P1 2.5 nL at 44 h versus 50 h,
@@ -637,7 +637,7 @@ entirely and is now part of the imaging SOP above.
 
 ### Provenance (2026.07.20)
 
-- Analysis script: `experiments/019-echo-crispr-array/scripts/run2_volume_timepoints.py`
+- Analysis script: `experiments/W019-echo-crispr-array/scripts/run2_volume_timepoints.py`
   (preprocess -> quantify -> register -> normalize -> score -> reference -> saturation).
 - Inputs: full-resolution 12.2 MP originals in `data/run2_2026-07-17/` -
   `P1_2p5nL_view_t44.jpg`, `P2_5nL_view_t44.jpg`, `t50/P1_2p5nL_view_t50.jpg`,
@@ -651,7 +651,7 @@ entirely and is now part of the imaging SOP above.
   (from EXIF) are unaffected.
 - Library changes: `torchcell/sga/image.py` overlay recoloured to the repo palette (green-free);
   `torchcell/sga/viz.py` heatmap colormap changed to magma. Plate 5 output (roi mode) unchanged.
-- Outputs: `results/run2_*.csv`; figures + overlays `notes/assets/images/019-echo-crispr-array/run2_*`.
+- Outputs: `results/run2_*.csv`; figures + overlays `notes/assets/images/W019-echo-crispr-array/run2_*`.
 - Reference: `results/reference_smf_12panel.csv` (Costanzo 2016 SMF), built by
   `scripts/build_reference_smf.py`.
 
@@ -750,9 +750,9 @@ side-by-side SVGs (below, zoomable to a single colony) are kept as the per-colon
 threshold remains the default; watershed's only distinct advantage is recovering the handful of
 colonies the threshold scores as zero.
 
-![Colony segmentation, threshold (red) vs watershed (cyan), 2.5 nL plate at all three timepoints (corrected top-side 72 h). Same 1400 px processed capture the pipeline segments; boundaries are vector contours so they stay crisp when the SVG is zoomed to an individual colony.](assets/images/019-echo-crispr-array/run2_seg_compare_P1_2.5nL.svg)
+![Colony segmentation, threshold (red) vs watershed (cyan), 2.5 nL plate at all three timepoints (corrected top-side 72 h). Same 1400 px processed capture the pipeline segments; boundaries are vector contours so they stay crisp when the SVG is zoomed to an individual colony.](assets/images/W019-echo-crispr-array/run2_seg_compare_P1_2.5nL.svg)
 
-![Colony segmentation, threshold (red) vs watershed (cyan), 5 nL plate at all three timepoints (same format).](assets/images/019-echo-crispr-array/run2_seg_compare_P2_5nL.svg)
+![Colony segmentation, threshold (red) vs watershed (cyan), 5 nL plate at all three timepoints (same format).](assets/images/W019-echo-crispr-array/run2_seg_compare_P2_5nL.svg)
 
 The per-condition scatter of measured fitness against Costanzo now annotates **Spearman rho**
 (rank/ordering agreement) next to Pearson r (value agreement), so "do we at least get the
@@ -774,7 +774,7 @@ with eleven near-neutral genes densely tied.
   `run2_volume_timepoints.py` `CONDITIONS` points to these. (A low-res 1499x1999 preview detour
   was reverted; those previews + a mislabeled archive were deleted -- they were the source of the
   apparent shadow-tail/raggedness once downscaled to 1400 px.)
-- Comparison script: `experiments/019-echo-crispr-array/scripts/compare_segmentation_svg.py`
+- Comparison script: `experiments/W019-echo-crispr-array/scripts/compare_segmentation_svg.py`
   (`quantify_plate_image(..., seg_method=..., return_masks=True)`, vector contour of `det`).
   Outputs `run2_seg_compare_{P1_2.5nL,P2_5nL}.svg` (zoomable) + `.png` siblings for the PDF build.
 - Figure change: `reference_scatter_grid` annotates Spearman rho alongside Pearson r.
@@ -787,7 +787,7 @@ normalization and per-strain scoring are reused verbatim from `run2_volume_timep
 fitness numbers are directly comparable to the classical (threshold) sizing. New code:
 `torchcell/sga/cellpose_seg.py` (`quantify_plate_image_cellpose`, reuses `image.py`'s lattice
 helpers untouched; returns the same `[row,col,size,circularity,flags,cx,cy]` schema), runner
-`experiments/019-echo-crispr-array/scripts/run2_cellpose_segmentation.py`, GPU slurm
+`experiments/W019-echo-crispr-array/scripts/run2_cellpose_segmentation.py`, GPU slurm
 `gh_cellpose_segmentation.slurm`, and scoring comparison
 `compare_cellpose_vs_previous_scoring.py`. Instance masks make the well rules exact: >=2 instances
 on a node -> `M` (rejected); instance off every node -> off-grid contaminant (0 on all six plates).
@@ -801,9 +801,9 @@ drawn on the SAME full-res pixels so the two can be flipped side by side; the cl
 single union that does not separate touching colonies -- exactly the limitation the instance masks
 fix.
 
-![Cellpose-SAM outline overlay on the P1 (2.5 nL) 50 h plate (tuned recipe: CLAHE contrast + cellprob -4): every accepted colony's boundary is drawn in green on the original (no colour in-painting, so the boundary can be judged against the colony), detected-but-rejected/off-grid instances in red; touching colonies separate as distinct instances and empty wells stay unmarked.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_best_overlay_P1_t50.png)
+![Cellpose-SAM outline overlay on the P1 (2.5 nL) 50 h plate (tuned recipe: CLAHE contrast + cellprob -4): every accepted colony's boundary is drawn in green on the original (no colour in-painting, so the boundary can be judged against the colony), detected-but-rejected/off-grid instances in red; touching colonies separate as distinct instances and empty wells stay unmarked.](assets/images/W019-echo-crispr-array/cellpose/run2_cellpose_best_overlay_P1_t50.png)
 
-![Classical threshold segmentation on the same P1 (2.5 nL) 50 h full-res pixels: a single green union boundary that cannot separate touching colonies, shown for direct comparison with the Cellpose instance overlay above.](assets/images/019-echo-crispr-array/cellpose/run2_classical_overlay_P1_t50.png)
+![Classical threshold segmentation on the same P1 (2.5 nL) 50 h full-res pixels: a single green union boundary that cannot separate touching colonies, shown for direct comparison with the Cellpose instance overlay above.](assets/images/W019-echo-crispr-array/cellpose/run2_classical_overlay_P1_t50.png)
 
 ### Sizing-level comparison (Cellpose vs classical, same pixels)
 
@@ -839,7 +839,7 @@ conditions** (mean Δr = **−0.119**), and collapses on the overgrown P2 t72 (0
 | P1_t72    | 0.743 / 0.711 | **+0.031** | 0.601 / 0.462 |
 | P2_t72    | 0.118 / 0.517 | −0.399 | −0.042 / 0.469 |
 
-![Per-condition Pearson correlation of per-strain fitness to Costanzo single-mutant fitness, Cellpose (orange) vs classical threshold (blue). Classical is equal or higher in five of six conditions; the best conditions remain the 2.5 nL (P1) plates for both methods.](assets/images/019-echo-crispr-array/cellpose/run2_scoring_vs_reference.svg)
+![Per-condition Pearson correlation of per-strain fitness to Costanzo single-mutant fitness, Cellpose (orange) vs classical threshold (blue). Classical is equal or higher in five of six conditions; the best conditions remain the 2.5 nL (P1) plates for both methods.](assets/images/W019-echo-crispr-array/cellpose/run2_scoring_vs_reference.svg)
 
 **Interpretation.** Cellpose is the visibly better *segmenter* (instance separation, tighter WT CV,
 no per-plate threshold tuning) but is not, as run, the better *scorer* against ground truth. The
@@ -854,7 +854,7 @@ whether the `M`/edge rejection thresholds should be relaxed for the Cellpose pat
 ## 2026.07.21 - Cellpose tuning: sizing sweep, faint-colony detection, all-plate montage
 
 Two parameter searches (run as SLURM GPU jobs -- `gh_cellpose_recipe.slurm`, one RTX 6000 Ada per
-job, 4 concurrent; output under `experiments/019-echo-crispr-array/slurm/output/`) and an
+job, 4 concurrent; output under `experiments/W019-echo-crispr-array/slurm/output/`) and an
 all-plate side-by-side montage. New code: `cellpose_recipe.py` (one parameterized recipe ->
 overlay + masks + capture JSON), `sweep_cellpose_params.py` (sizing), `sweep_cellpose_contrast.py`
 + the chase (detection), `run2_cellpose_montage_vector.py` (vector montage). Overlays are now
@@ -911,7 +911,7 @@ detection floor and cannot be recovered without adding noise. **Final tuned reci
 
 ### All-plate montage (vector, zoomable)
 
-![Cellpose segmentation, all six run-2 captures by volume x growth time (columns 2.5 nL / 5 nL, rows 44 h / 50 h / 72 h), tuned recipe. Colony boundaries are vector contours (tightened off the diffuse halo) coloured by validity -- green accepted, red multi-colony well, orange neighbour of a multi-colony well, purple non-circular -- with only in-gel colonies drawn (off-plate detections excluded). Plate coordinates A-P (rows) x 1-24 (columns), A1 at top-left, are tick-labelled on all four edges so any well can be read from the nearest axis.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_montage.svg)
+![Cellpose segmentation, all six run-2 captures by volume x growth time (columns 2.5 nL / 5 nL, rows 44 h / 50 h / 72 h), tuned recipe. Colony boundaries are vector contours (tightened off the diffuse halo) coloured by validity -- green accepted, red multi-colony well, orange neighbour of a multi-colony well, purple non-circular -- with only in-gel colonies drawn (off-plate detections excluded). Plate coordinates A-P (rows) x 1-24 (columns), A1 at top-left, are tick-labelled on all four edges so any well can be read from the nearest axis.](assets/images/W019-echo-crispr-array/cellpose/run2_cellpose_montage.svg)
 
 ### Caveat on the precision metric (do NOT over-read the SD drop)
 
@@ -993,7 +993,7 @@ double-mutant SD -- so each genotype's SE is a well-founded `+/- 0.03-0.04`. The
 ~27 replicates, reach the tightest SE (~0.026 at 50 h). This is the SD you asked for, now attached
 to the Cellpose measurements; the SE is what will anchor the reference-comparison and p-value work.
 
-![Per-genotype Cellpose fitness (mutant / BY4741) with standard-error bars, one panel per volume x growth-time condition, strains sorted by fitness. SE = replicate-colony SD / $\sqrt{n_\text{used}}$, invalidated M/N/C wells excluded; dashed line = wild-type 1.0.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_fitness_se.svg)
+![Per-genotype Cellpose fitness (mutant / BY4741) with standard-error bars, one panel per volume x growth-time condition, strains sorted by fitness. SE = replicate-colony SD / $\sqrt{n_\text{used}}$, invalidated M/N/C wells excluded; dashed line = wild-type 1.0.](assets/images/W019-echo-crispr-array/cellpose/run2_cellpose_fitness_se.svg)
 
 ## 2026.07.22 - Per-plate full-page zoomable renders
 
@@ -1012,17 +1012,17 @@ carry red (`M`) outlines -- the crowded 72 h plate pushes the multi-colony rule 
 fire, so that plate's red flags are not fully trustworthy. This does not affect the cleaner plates,
 and the 48 h assay (colonies imaged before they crowd) is expected to remove the ambiguity.
 
-![Per-plate full-page render, 2.5 nL at 43.7 h (P1). Vector validity outlines over the full plate with A-P x 1-24 axes on all four edges; zoom to inspect the green accepted boundaries well by well.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_page_P1_t44.svg)
+![Per-plate full-page render, 2.5 nL at 43.7 h (P1). Vector validity outlines over the full plate with A-P x 1-24 axes on all four edges; zoom to inspect the green accepted boundaries well by well.](assets/images/W019-echo-crispr-array/cellpose/run2_cellpose_page_P1_t44.svg)
 
-![Per-plate full-page render, 2.5 nL at 50.3 h (P1).](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_page_P1_t50.svg)
+![Per-plate full-page render, 2.5 nL at 50.3 h (P1).](assets/images/W019-echo-crispr-array/cellpose/run2_cellpose_page_P1_t50.svg)
 
-![Per-plate full-page render, 2.5 nL at 72.2 h (P1).](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_page_P1_t72.svg)
+![Per-plate full-page render, 2.5 nL at 72.2 h (P1).](assets/images/W019-echo-crispr-array/cellpose/run2_cellpose_page_P1_t72.svg)
 
-![Per-plate full-page render, 5 nL at 43.7 h (P2).](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_page_P2_t44.svg)
+![Per-plate full-page render, 5 nL at 43.7 h (P2).](assets/images/W019-echo-crispr-array/cellpose/run2_cellpose_page_P2_t44.svg)
 
-![Per-plate full-page render, 5 nL at 50.3 h (P2).](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_page_P2_t50.svg)
+![Per-plate full-page render, 5 nL at 50.3 h (P2).](assets/images/W019-echo-crispr-array/cellpose/run2_cellpose_page_P2_t50.svg)
 
-![Per-plate full-page render, 5 nL at 72.2 h (P2) - the crowded plate; several clean singles are red-flagged here (see note above), to be resolved by the 48 h assay.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_page_P2_t72.svg)
+![Per-plate full-page render, 5 nL at 72.2 h (P2) - the crowded plate; several clean singles are red-flagged here (see note above), to be resolved by the 48 h assay.](assets/images/W019-echo-crispr-array/cellpose/run2_cellpose_page_P2_t72.svg)
 
 ## 2026.07.22 - Detection tuning round 2: boundary tightening, grid audit, recall limit
 
@@ -1134,7 +1134,7 @@ candidate for a per-plate WT calibration. *Engineering read:* for rank/triage sc
 defensible (rank preserved), but single-plate value agreement is weak and multi-plate averaging is
 what buys the value correlation.
 
-![Assay fitness at 5 nL / 50 h (halo-corrected) vs published SMF: Costanzo 2016 (orange circles, n=12) and Kuzmin 2018 (red circles, n=4), identity line dashed, points labelled by systematic ORF. Pearson r (value) and Spearman rho (rank) annotated; error bars are SE-vs-SE (x = Costanzo bootstrap-SE column, y = our SD/sqrt(n)). CBF1/YJR060W anchors the low end.](assets/images/019-echo-crispr-array/cellpose/run2_fitness_correlation_reference.svg)
+![Assay fitness at 5 nL / 50 h (halo-corrected) vs published SMF: Costanzo 2016 (orange circles, n=12) and Kuzmin 2018 (red circles, n=4), identity line dashed, points labelled by systematic ORF. Pearson r (value) and Spearman rho (rank) annotated; error bars are SE-vs-SE (x = Costanzo bootstrap-SE column, y = our SD/sqrt(n)). CBF1/YJR060W anchors the low end.](assets/images/W019-echo-crispr-array/cellpose/run2_fitness_correlation_reference.svg)
 
 **Measurement error -- and why the two SDs are NOT the same number.** At 5 nL / 50 h our
 within-genotype replicate SD averages **0.141** vs Costanzo's SMF "SD" of **0.081**, and our
@@ -1145,7 +1145,7 @@ are *tighter* (0.028 vs 0.081), but that SE understates our true variance becaus
 are not independent. **Kuzmin's released SMF carries no per-strain SD** (only point fitness for 4
 genes), so no Kuzmin-SD comparison exists -- flagged in the figure, not fabricated.
 
-![Per-genotype measurement error at 5 nL / 50 h: our replicate-colony fitness SD (orange) vs Costanzo 2016 SMF SD (red, itself a bootstrap SE), by systematic ORF, sorted by the Costanzo value; dashed lines are the means (ours 0.14, Costanzo 0.08). Kuzmin SMF has no released per-strain SD.](assets/images/019-echo-crispr-array/cellpose/run2_sd_vs_reference.svg)
+![Per-genotype measurement error at 5 nL / 50 h: our replicate-colony fitness SD (orange) vs Costanzo 2016 SMF SD (red, itself a bootstrap SE), by systematic ORF, sorted by the Costanzo value; dashed lines are the means (ours 0.14, Costanzo 0.08). Kuzmin SMF has no released per-strain SD.](assets/images/W019-echo-crispr-array/cellpose/run2_sd_vs_reference.svg)
 
 ### How Costanzo computes SD vs how we do (for a fair comparison)
 
@@ -1259,7 +1259,7 @@ more plate-days. Bootstrapping the **median** gives a larger, noisier SE (0.047)
 (0.031) at only six plates -- the mean is the more stable centre here, consistent with
 Costanzo/Kuzmin's choice of bootstrapped means.
 
-![Per-strain SE: bootstrap-across-plates (orange, resampling the 6 plate-level fitnesses) vs the naive pooled colony SD/sqrt(n) (red, pooling all ~130 colonies). Dashed lines are the means (0.031 vs 0.014); the pooled SE is ~2.2x too small because it ignores between-plate variance.](assets/images/019-echo-crispr-array/cellpose/run2_bootstrap_vs_pooled_se.svg)
+![Per-strain SE: bootstrap-across-plates (orange, resampling the 6 plate-level fitnesses) vs the naive pooled colony SD/sqrt(n) (red, pooling all ~130 colonies). Dashed lines are the means (0.031 vs 0.014); the pooled SE is ~2.2x too small because it ignores between-plate variance.](assets/images/W019-echo-crispr-array/cellpose/run2_bootstrap_vs_pooled_se.svg)
 
 **On mixing volumes (is it legitimate?).** These six plates are 2.5 nL and 5 nL $\times$ three
 timepoints -- not independent days. Because fitness is WT-normalised per plate, the normalised values
@@ -1341,17 +1341,17 @@ collision invalidations. Per-plate full-page review: `run2_cellpose_overlay_pdf.
 faint colony, red = multi well, deep pink = colliding colony, orange = neighbour, purple =
 non-circular.
 
-![P1 (2.5 nL), 44 h -- new detection overlay.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_overlay_P1_t44.png)
+![P1 (2.5 nL), 44 h -- new detection overlay.](assets/images/W019-echo-crispr-array/cellpose/run2_cellpose_overlay_P1_t44.png)
 
-![P2 (5 nL), 44 h -- new detection overlay.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_overlay_P2_t44.png)
+![P2 (5 nL), 44 h -- new detection overlay.](assets/images/W019-echo-crispr-array/cellpose/run2_cellpose_overlay_P2_t44.png)
 
-![P1 (2.5 nL), 50 h -- new detection overlay.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_overlay_P1_t50.png)
+![P1 (2.5 nL), 50 h -- new detection overlay.](assets/images/W019-echo-crispr-array/cellpose/run2_cellpose_overlay_P1_t50.png)
 
-![P2 (5 nL), 50 h -- new detection overlay.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_overlay_P2_t50.png)
+![P2 (5 nL), 50 h -- new detection overlay.](assets/images/W019-echo-crispr-array/cellpose/run2_cellpose_overlay_P2_t50.png)
 
-![P1 (2.5 nL), 72 h -- new detection overlay.](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_overlay_P1_t72.png)
+![P1 (2.5 nL), 72 h -- new detection overlay.](assets/images/W019-echo-crispr-array/cellpose/run2_cellpose_overlay_P1_t72.png)
 
-![P2 (5 nL), 72 h -- new detection overlay (rows E/L recovered by the homography grid).](assets/images/019-echo-crispr-array/cellpose/run2_cellpose_overlay_P2_t72.png)
+![P2 (5 nL), 72 h -- new detection overlay (rows E/L recovered by the homography grid).](assets/images/W019-echo-crispr-array/cellpose/run2_cellpose_overlay_P2_t72.png)
 
 **Post-fix occupied / WT CV:** P1_t44 284/0.128, P2_t44 358/0.109, P1_t50 285/0.119, P2_t50
 358/0.107, P1_t72 285/0.126, P2_t72 358/0.098.
@@ -1364,11 +1364,11 @@ better than pre-fix (was r ~= 0.60, Spearman 0.52). Figure polish: equal marker 
 reference series; bar-chart legends moved inside top-right; pooled-SE label clarified to
 "pooled SE (colony SD / sqrt(n))".
 
-![Assay fitness (bootstrap mean across 6 plates) vs published single-mutant fitness: Costanzo 2016 (orange, n=12) and Kuzmin 2018 (red, n=4), identity line dashed, points labelled by systematic ORF. Costanzo Pearson r=0.61 (p=0.034), Spearman rho=0.64 (p=0.024); Kuzmin r=0.85. Costanzo error bars are SE-vs-SE (x = Costanzo bootstrap SE, y = our bootstrap-across-plates SE); Kuzmin points have a y error bar only (our SE) -- Kuzmin 2018 released point SMF values with no per-strain SD, so no x error bar is possible.](assets/images/019-echo-crispr-array/cellpose/run2_fitness_correlation_reference.svg)
+![Assay fitness (bootstrap mean across 6 plates) vs published single-mutant fitness: Costanzo 2016 (orange, n=12) and Kuzmin 2018 (red, n=4), identity line dashed, points labelled by systematic ORF. Costanzo Pearson r=0.61 (p=0.034), Spearman rho=0.64 (p=0.024); Kuzmin r=0.85. Costanzo error bars are SE-vs-SE (x = Costanzo bootstrap SE, y = our bootstrap-across-plates SE); Kuzmin points have a y error bar only (our SE) -- Kuzmin 2018 released point SMF values with no per-strain SD, so no x error bar is possible.](assets/images/W019-echo-crispr-array/cellpose/run2_fitness_correlation_reference.svg)
 
-![Per-genotype measurement error: our replicate-colony fitness SD (orange, 5 nL / 50 h) vs Costanzo 2016 SMF SD (red, itself a bootstrap SE), by systematic ORF, sorted by the Costanzo value; dashed lines are the means (ours 0.146, Costanzo 0.082). Legend inside top-right.](assets/images/019-echo-crispr-array/cellpose/run2_sd_vs_reference.svg)
+![Per-genotype measurement error: our replicate-colony fitness SD (orange, 5 nL / 50 h) vs Costanzo 2016 SMF SD (red, itself a bootstrap SE), by systematic ORF, sorted by the Costanzo value; dashed lines are the means (ours 0.146, Costanzo 0.082). Legend inside top-right.](assets/images/W019-echo-crispr-array/cellpose/run2_sd_vs_reference.svg)
 
-![Per-strain SE: bootstrap-across-plates (orange, resampling the 6 plate-level fitnesses) vs the naive pooled SE (red, colony SD / sqrt(n) over all colonies). Dashed lines are the means (0.025 vs 0.014); the pooled SE is ~1.8x too small because it ignores between-plate variance.](assets/images/019-echo-crispr-array/cellpose/run2_bootstrap_vs_pooled_se.svg)
+![Per-strain SE: bootstrap-across-plates (orange, resampling the 6 plate-level fitnesses) vs the naive pooled SE (red, colony SD / sqrt(n) over all colonies). Dashed lines are the means (0.025 vs 0.014); the pooled SE is ~1.8x too small because it ignores between-plate variance.](assets/images/W019-echo-crispr-array/cellpose/run2_bootstrap_vs_pooled_se.svg)
 
 ## 2026.07.24 - Run 3: 48 h, three RE-RANDOMIZED plates (the proper batch-effect design)
 
@@ -1381,7 +1381,7 @@ is what lets the bootstrap-across-plates average out plate/position batch bias a
 an honest between-plate SE. Pipeline: `run3_48h_3rand.py` (full-res crop -> Cellpose-SAM
 homography grid + faint-colony recovery -> per-plate 4-way orientation -> normalize to
 on-plate BY4741 -> QC gate -> bootstrap-across-plates + Costanzo comparison). Raw data
-(sha256-pinned) in `experiments/019-echo-crispr-array/data/run3_2026-07-23/`.
+(sha256-pinned) in `experiments/W019-echo-crispr-array/data/run3_2026-07-23/`.
 
 **QC (`run3_plate_qc.csv`): 3 of 3 plates pass.** A plate is usable only if its orientation
 resolves confidently AND its on-plate WT reference is consistent (WT CV < 0.18).
@@ -1416,16 +1416,16 @@ run-2/run-3 overlay and in the labelled artifact overlays:
 - **blue** -- grid-recovered faint colony (Cellpose missed it -> recovered from the grid and scored)
 - **purple** -- non-circular (`C`): spiky / merged shape, rejected
 
-The **labelled artifact overlays** (`experiments/019-echo-crispr-array/artifacts/<collection>/images/`,
+The **labelled artifact overlays** (`experiments/W019-echo-crispr-array/artifacts/<collection>/images/`,
 built by `plate_artifacts.py`) additionally draw the fitted grid nodes (cyan crosses) and the
 standard 384-well address -- rows **A--P**, columns **1--24**, in black on all four sides -- so any
 well is addressable and a mis-registered node (sitting off its colony) is visible directly.
 
-![Run 3 detection overlay, P1 (5 nL, 48 h) -- QC pass. Colours per the legend above.](assets/images/019-echo-crispr-array/run3/run3_overlay_P1.png)
+![Run 3 detection overlay, P1 (5 nL, 48 h) -- QC pass. Colours per the legend above.](assets/images/W019-echo-crispr-array/run3/run3_overlay_P1.png)
 
-![Run 3 detection overlay, P2 (5 nL, 48 h) -- QC pass. More empty wells (failed 5 nL transfers) but clean registration.](assets/images/019-echo-crispr-array/run3/run3_overlay_P2.png)
+![Run 3 detection overlay, P2 (5 nL, 48 h) -- QC pass. More empty wells (failed 5 nL transfers) but clean registration.](assets/images/W019-echo-crispr-array/run3/run3_overlay_P2.png)
 
-![Run 3 detection overlay, P3 (5 nL, 48 h) -- QC PASS after the row-registration fix. The lattice had locked one row low (faint top row skipped, bottom row on the frame); `correct_row_shift` recovers the top row so all 16 rows register -- 350/384 occupied, 6/6 blanks empty, WT CV 0.078, green = accepted. P3 is a clean third replicate; the earlier "contamination" was the one-row slip mis-assigning strains, now corrected.](assets/images/019-echo-crispr-array/run3/run3_overlay_P3.png)
+![Run 3 detection overlay, P3 (5 nL, 48 h) -- QC PASS after the row-registration fix. The lattice had locked one row low (faint top row skipped, bottom row on the frame); `correct_row_shift` recovers the top row so all 16 rows register -- 350/384 occupied, 6/6 blanks empty, WT CV 0.078, green = accepted. P3 is a clean third replicate; the earlier "contamination" was the one-row slip mis-assigning strains, now corrected.](assets/images/W019-echo-crispr-array/run3/run3_overlay_P3.png)
 
 **Batch effect (P1 + P2 + P3, the full three re-randomizations).** Mean bootstrap-across-plates
 SE = **0.066** (across-plate SD 0.140) -- roughly **3x run 2's 0.025**. That jump is the
@@ -1438,9 +1438,9 @@ the one sick strain CBF1/YJR060W), Spearman ρ = 0.32 (rank agreement is noise-l
 of 12 strains are near-neutral). Kuzmin has no per-strain SD, so no x error bars; y error bars
 are the bootstrap-across-3-plates SE.
 
-![Run 3: assay fitness (bootstrap mean over the 3 QC-pass re-randomized plates) vs Costanzo 2016 SMF. Identity line dashed; Pearson r=0.74 (p=0.006), Spearman rho=0.32; y error bars = the 3-plate bootstrap SE.](assets/images/019-echo-crispr-array/run3/run3_fitness_correlation_reference.svg)
+![Run 3: assay fitness (bootstrap mean over the 3 QC-pass re-randomized plates) vs Costanzo 2016 SMF. Identity line dashed; Pearson r=0.74 (p=0.006), Spearman rho=0.32; y error bars = the 3-plate bootstrap SE.](assets/images/W019-echo-crispr-array/run3/run3_fitness_correlation_reference.svg)
 
-![Run 3 per-strain SE: bootstrap-across-3-plates SE (orange, the batch effect) vs the within-plate colony SE (red, colony SD/sqrt(n)). The across-plate SE is much larger -- most of a strain's uncertainty is between-plate, not within-plate.](assets/images/019-echo-crispr-array/run3/run3_se_batch_effect.svg)
+![Run 3 per-strain SE: bootstrap-across-3-plates SE (orange, the batch effect) vs the within-plate colony SE (red, colony SD/sqrt(n)). The across-plate SE is much larger -- most of a strain's uncertainty is between-plate, not within-plate.](assets/images/W019-echo-crispr-array/run3/run3_se_batch_effect.svg)
 
 **Detection QC (P1/P2/P3).** Spot imperfections exist -- an occasional merged doublet (Cellpose
 segments two touching colonies as one, so the collision is not red-flagged) and a rare

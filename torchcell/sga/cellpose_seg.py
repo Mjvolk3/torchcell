@@ -16,7 +16,7 @@ boundary step. It returns the SAME DataFrame schema
 ``[row, col, size, circularity, flags, cx, cy]`` so ``normalize_plate`` /
 ``score_plate`` consume it without change.
 
-Decision + benchmarking rationale: [[experiments.019-echo-crispr-array.cellpose-segmentation-plan]].
+Decision + benchmarking rationale: [[experiments.W019-echo-crispr-array.cellpose-segmentation-plan]].
 """
 
 from __future__ import annotations

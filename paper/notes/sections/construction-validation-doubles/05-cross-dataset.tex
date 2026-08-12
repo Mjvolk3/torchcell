@@ -1,0 +1,57 @@
+\section{Cross-dataset check --- Costanzo versus Kuzmin DMF (a real caveat)}
+
+The DMF values above are \textbf{Costanzo only}. Where Kuzmin also measured a within-10
+double, the two references sometimes \textbf{disagree sharply}, especially for the low-DMF
+CBF1 doubles:
+
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+double & Costanzo DMF & Kuzmin DMF \\
+\midrule
+YJR060W+YLL012W & 0.605 & \textbf{1.119} (K2020) \\
+YJR060W+YPL046C & 0.966 & 0.738 (K2018) \\
+YBR203W+YJR060W & 0.609 & 0.768 (K2018) \\
+YGL087C+YPL046C & 1.111 & 0.998 (K2018) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+CBF1/YJR060W's low DMF is largely a \emph{Costanzo} phenomenon --- Kuzmin reads those pairs
+higher, and YJR060W+YLL012W disagrees by about 0.5. So the low-DMF ``signal'' our assay would
+validate against is reference-dependent; treat the low-DMF anchor's target loosely and, where
+a Kuzmin value exists, report both. The full per-double Costanzo+Kuzmin comparison is in the
+supplementary table (Section~\ref{sec:si-table}).
+
+\notefig{\incsvg{010-kuzmin-tmi/construction_validation_cross_dataset}}%
+  {Dumbbell of every within-10 double measured in both references: Costanzo with SD, joined
+   to the Kuzmin value.}
+
+\subsection{The same ambiguity exists \emph{within} Costanzo, at the strain level}
+
+The disagreement above is between \emph{datasets}. There is a second, easier-to-miss
+ambiguity \emph{inside} Costanzo: a gene can carry more than one strain, with materially
+different measurements. YJR060W (CBF1) is the case that matters for this panel ---
+
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+Costanzo strain & SMF & stddev \\
+\midrule
+\texttt{YJR060W\_dma2646} & 0.9230 & 0.0102 \\
+\texttt{YJR060W\_sn154}   & 0.5900 & 0.1138 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+--- two published single-mutant values 0.33 fitness units apart. The queried reference table
+the assay compares against picked \texttt{sn154} by a dictionary collision in
+\texttt{12\_panel\_inference\_3\_queried\_data\_tables.py} (the gene-keyed index is
+overwritten by each successive record, so the surviving row is whichever LMDB iteration
+reached last), not by any stated rule. The same code applies no temperature filter, so 26\,$^\circ$C
+versus 30\,$^\circ$C is also last-record-wins --- moot for this panel, where all 12 ORFs happen to
+carry identical 26/30 entries, but not moot in general (17\% of Costanzo strains differ
+between the two temperatures).
+
+This matters because CBF1 anchors the low end of every fitness correlation we report. It needs
+a deliberate strain-selection rule before those correlations carry weight.

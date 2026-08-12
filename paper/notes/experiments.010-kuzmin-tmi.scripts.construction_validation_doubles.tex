@@ -1,0 +1,44 @@
+%% paper/notes/experiments.010-kuzmin-tmi.scripts.construction_validation_doubles.tex
+%% [[experiments.010-kuzmin-tmi.scripts.construction_validation_doubles]]
+%%
+%% Lab note: selecting the double mutants that BOTH reconstruct top-ranked triples and
+%% give the echo-plating assay something with real dynamic range to validate against.
+%%
+%% Ported from the Dendron note of the same name (2026.07.20), which now links here
+%% rather than carrying the prose. Build:  make -C paper/notes
+%%
+%% Generating script:  experiments/010-kuzmin-tmi/scripts/construction_validation_doubles.py
+%% Result table:       experiments/010-kuzmin-tmi/results/construction_validation_doubles.csv
+
+\documentclass[pdflatex,sn-nature,Numbered]{sn-jnl}
+\input{notes-preamble}
+
+\title{Doubles for both triple reconstruction and assay validation}
+\author{torchcell lab notes}
+\date{2026.07.20}
+
+\begin{document}
+
+\maketitle
+
+{\small
+\noindent\textbf{Script}\quad \texttt{experiments/010-kuzmin-tmi/scripts/construction\_validation\_doubles.py}\\
+\noindent\textbf{Data}\quad \texttt{experiments/010-kuzmin-tmi/results/construction\_validation\_doubles.csv}\\
+\noindent\textbf{Dendron}\quad \texttt{[[experiments.010-kuzmin-tmi.scripts.construction\_validation\_doubles]]}
+}
+
+\vspace{1em}
+\hrule
+\tableofcontents
+\hrule
+\vspace{1em}
+
+\input{sections/construction-validation-doubles/01-objective}
+\input{sections/construction-validation-doubles/02-tiers}
+\input{sections/construction-validation-doubles/03-singles-to-inoculate}
+\input{sections/construction-validation-doubles/04-significance}
+\input{sections/construction-validation-doubles/05-cross-dataset}
+\input{sections/construction-validation-doubles/06-novel-candidate}
+\input{sections/construction-validation-doubles/07-si-table}
+
+\end{document}

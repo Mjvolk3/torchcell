@@ -1,0 +1,20 @@
+\section{Novel construction candidate --- the one unmeasured pair}
+\label{sec:novel}
+
+Of $\binom{10}{2}=45$ pairs, \textbf{44 have a Costanzo DMF; 1 does not: YPL046C+YPL081W
+(ELC1+RPS9A)} --- and it is also absent from Kuzmin 2018/2020. Missing is not the same as
+synthetic-lethal: an SL pair would show as a measured low fitness or an explicit flag, not a
+blank. A NaN just means the pair was never in a scored query$\times$array orientation.
+
+\notesec{SL check (SynthLethDB \texttt{Yeast\_SL.csv})} \textbf{not synthetic-lethal.}
+ELC1/YPL046C appears in \textbf{zero} SL records, and RPS9A/YPL081W is SL only with its
+paralog \textbf{RPS9B} --- the classic redundant-duplicate case --- not with ELC1.
+
+\notesec{BioGRID / SGD second source} Checked via SGD's aggregated interaction API: ELC1 has
+\textbf{97} recorded genetic-interaction partners and \textbf{RPS9A is not among them} --- no
+interaction of any type (SL, negative or positive genetic, synthetic growth defect). ELC1 is
+well studied at 97 partners, so RPS9A's absence is a real gap, not sparse coverage.
+
+\notesec{Recommendation} \textbf{Construct it.} It is the one cell of the $10\times10$ matrix
+with no value in Costanzo, Kuzmin, SynthLethDB or BioGRID, and it is not synthetic-lethal, so
+it should be buildable. Tagged \texttt{novel} in the supplementary table.

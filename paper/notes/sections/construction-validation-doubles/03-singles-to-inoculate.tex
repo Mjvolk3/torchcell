@@ -1,0 +1,34 @@
+\section{Single mutants to inoculate (10)}
+
+To build the doubles above, cross these 10 single-mutant strains pairwise. \textbf{Every}
+panel-10 gene appears in at least one double, so all 10 are required --- no smaller set builds
+them all. The \texttt{\# doubles} column is how many each gene crosses into (YOS9/YDR057W is
+the busiest hub at 5; COS111, MMS2 and YKL033W-A each appear once). The novel pair adds no new
+strain (ELC1 and RPS9A are already in the set).
+
+\notefig{\incsvg{010-kuzmin-tmi/construction_validation_genes_to_inoculate}}%
+  {The 10 single-mutant strains to inoculate, with the number of selected doubles each
+   participates in.}
+
+\notefig{\incsvg{010-kuzmin-tmi/construction_validation_doubles}}%
+  {The selected doubles as a gene-by-gene matrix.}
+
+All 44 measured within-10 doubles ranked by DMF, coloured by tier (coverage, validation,
+unused; significant $\varepsilon$ ringed) --- the tiered companion to
+\texttt{constructed\_10\_dmf\_forest}, which predates the validation tier and marks only the 8
+set-cover doubles. The 45th pair, YPL046C+YPL081W, is unmeasured and so absent here
+(Section~\ref{sec:novel}).
+
+\notefig{\incsvg{010-kuzmin-tmi/construction_validation_doubles_forest}}%
+  {Forest plot of all 44 measured within-10 doubles, ranked by Costanzo DMF and coloured by
+   tier.}
+
+DMF, SD, SE, $\varepsilon$ and $p$ are the published Costanzo values (SD = sample SD over 4
+colonies, directly comparable to the assay's colony SD --- see
+\texttt{[[experiments.010-kuzmin-tmi.scripts.constructed\_10\_dmf\_reference]]}). The low-DMF
+end is dominated by CBF1/YJR060W (its single defect), so a low DMF there is a fitness effect,
+not an interaction. Two of the three significant doubles (YER079W+YPL081W,
+YJR060W+YKL033W-A) enable no top-$k$ triple --- they are pure validation targets; the low
+anchor YER079W+YJR060W and the strongest-positive-$\varepsilon$ YDR057W+YGL087C each also
+rebuild triples. The set is tunable: drop the two triple-less validation doubles for an
+11-double set, or add more near-significant $\varepsilon$.

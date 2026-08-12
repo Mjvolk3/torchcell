@@ -1,0 +1,33 @@
+\section{Supplementary table --- all 45 within-10 doubles}
+\label{sec:si-table}
+
+\texttt{experiments/010-kuzmin-tmi/results/construction\_validation\_doubles.csv} is the full
+supplementary table: \textbf{every} within-10 pair, with \texttt{tier} blank when not selected
+(\texttt{coverage} / \texttt{validation} / \texttt{novel} otherwise), Costanzo DMF $\pm$ SD,
+derived SE, $\varepsilon$, $p$, the \textbf{Kuzmin 2018/2020 DMF $\pm$ SD} columns, and the
+strain id. 45 rows $=\binom{10}{2}$; kept as a CSV rather than inlined because its roughly 15
+columns are too wide to render at this page width.
+
+\section{What was actually built}
+
+Of the 14 doubles this selection called for, \textbf{13 were constructed}.
+\textbf{YKL033W-A $\times$ YJR060W (CBF1) failed to construct} (reported by Aurosish Sharma on
+handover of the 2026-08-06 plating). It is absent from the run-4 strain list, so the built
+panel is 12 singles + 13 doubles + WT. The missing pair is a construction failure, not a
+dropout to impute.
+
+The plating that resulted is recorded in
+\path{experiments/W019-echo-crispr-array/data/run4_doubles_2026-08-06/PROVENANCE.md}:
+three independently randomized plates, WT at 28 wells and each mutant at 14 wells per plate,
+with both constituent singles of every double present on the same plate so
+$\varepsilon = f_{ab} - f_a f_b$ is computable within-plate.
+
+\section{Related notes}
+
+\begin{itemize}
+  \item \texttt{[[experiments.010-kuzmin-tmi.scripts.topk\_triples\_from\_constructed\_10]]}
+  \item \texttt{[[experiments.010-kuzmin-tmi.scripts.optimized\_doubles\_setcover\_constructed\_10]]}
+  \item \texttt{[[experiments.010-kuzmin-tmi.scripts.constructed\_10\_dmf\_reference]]}
+  \item \texttt{[[experiments.010-kuzmin-tmi.12\_panel\_crispr\_fitness\_assay]]} --- the assay
+        these doubles validate
+\end{itemize}

@@ -66,15 +66,30 @@
 %% and this macro includes that PDF. Photos and plate overlays are PNG and use plain
 %% \includegraphics{assets/...} instead -- they are rasters, nothing to preserve.
 %%
-%%   \incsvg[width=0.8\linewidth]{W019-echo-crispr-array/run3/run3_se_batch_effect}
+%%   \incsvg{W019-echo-crispr-array/run3/run3_se_batch_effect}
 %%
 %% Path is relative to assets/ (the symlink to notes/assets/images), WITHOUT the extension.
-\newcommand{\incsvg}[2][width=\linewidth]{%
+%%
+%% NO DEFAULT WIDTH -- the figure is placed at its TRUE SIZE, exactly as the manuscript's
+%% \tcfig does and for the same reason: these panels are authored at a real print width
+%% (PANEL_WIDTHS_MM) with 6 pt type, so scaling them to \linewidth would silently resize the
+%% type and defeat the WYSIWYG contract the editing view exists to provide. Pass an explicit
+%% [width=...] ONLY to deliberately shrink an oversized draft panel, and treat that as a sign
+%% the panel should be re-authored at a standard width instead.
+\newcommand{\incsvg}[2][]{%
   \includegraphics[#1]{build/figs/\detokenize{#2}.pdf}%
 }
 
-%% Figure + caption for a note: same true-size discipline as the manuscript's \tcfig,
-%% but centred and without the label requirement (notes cross-reference by section).
+%% Figure + caption for a note. Mirrors the manuscript's \tcfig: the graphic is measured into
+%% a save-box and the caption is set to the IMAGE's width, not the text width, so a
+%% half-column panel gets a half-column caption rather than a full-width one running under it.
+\newsavebox{\notefigbox}
 \newcommand{\notefig}[2]{%
-  \begin{figure}[htbp]\centering #1\par\caption{#2}\end{figure}%
+  \begin{figure}[htbp]\centering
+  \sbox{\notefigbox}{#1}%
+  \begin{minipage}{\wd\notefigbox}%
+  \usebox{\notefigbox}\par
+  \caption{#2}%
+  \end{minipage}%
+  \end{figure}%
 }

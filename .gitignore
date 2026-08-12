@@ -196,11 +196,11 @@ build/
 
 # 019 ECHO-CRISPR: regenerable full-res plate crops written by the segmentation
 # runners (large, reproduced from data/ on every run) -- do not commit
-experiments/019-echo-crispr-array/quant/
+experiments/W019-echo-crispr-array/quant/
 
 # plate-artifact bundles: ~44 MB of overlays/xlsx, fully regenerable from the committed
 # scripts/plate_artifacts.py (fresh Cellpose off the sha256-pinned source images).
-experiments/019-echo-crispr-array/artifacts/
+experiments/W019-echo-crispr-array/artifacts/
 
 # The ontology explorer is rendered fresh by CI on every docs build (see
 # .github/workflows/docs.yaml) so the published map can never lag

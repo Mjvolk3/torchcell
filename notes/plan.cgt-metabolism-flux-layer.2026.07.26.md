@@ -588,7 +588,7 @@ down before this is a plan rather than an intention.
 - **Which double-mutant fitness data — still to pin down.** Costanzo/Kuzmin DMF/TMI is in the
   database at ~$10^7$ records and would supervise $v_{\mathrm{bio}}$ at $\lvert p\rvert=2$ directly.
   If instead this means newly collected in-house data, it is not in the repo yet —
-  `experiments/019-echo-crispr-array` currently holds a **single**-strain colony assay
+  `experiments/W019-echo-crispr-array` currently holds a **single**-strain colony assay
   (`reference_smf_12panel.csv` is Costanzo/Kuzmin *single*-mutant fitness).
 - **No in-house β-carotene data has been added yet** (author, 2026.07.26), and the published
   β-carotene labels are singles only — Ozaydin 2013 is the haploid BY4741 deletion collection. So

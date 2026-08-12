@@ -15,7 +15,7 @@ committed to `origin/main` (tip `43d6edab` at handoff). Entry-point note:
 ### What this is
 
 A double-mutant construction list for the **echo-plating SGA fitness assay** being developed
-in `experiments/019-echo-crispr-array/` (that experiment currently lives ONLY on the M1 Mac —
+in `experiments/W019-echo-crispr-array/` (that experiment currently lives ONLY on the M1 Mac —
 NOT yet pushed; see Blockers). The list serves two goals at once: (a) reconstruct the top-ranked
 trigenic-interaction triples of the constructed genes, and (b) span DMF / interaction variance so
 the new assay has real signal to validate against a public reference (Costanzo2016).

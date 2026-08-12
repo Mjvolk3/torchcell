@@ -1,0 +1,96 @@
+\section{Digenic interaction versus Costanzo --- measured, and not yet usable}
+\label{sec:run4-eps}
+
+The design supports the comparison cleanly. Both constituent singles of every double sit on
+the same plate, so
+
+\begin{equation}
+  \varepsilon_{ab} \;=\; f_{ab} \;-\; f_a f_b
+  \label{eq:eps}
+\end{equation}
+
+is formed entirely within a plate --- no cross-plate normalization enters the interaction
+term, and the three plates give three independent replicates of the same quantity, which is
+what the across-plate bootstrap turns into an error bar.
+
+Run against the published Costanzo $\varepsilon$ for the same pairs, the answer is
+\textbf{$r=-0.245$ ($p=0.44$, $n=12$)}: no agreement, and the sign is wrong.
+
+\subsection{Why this is an artifact and not a result}
+
+\textbf{It should not be read as a failure to reproduce Costanzo's interactions.} Four
+observations, all from \path{experiments/W019-echo-crispr-array/results/run4_interactions.csv},
+identify it as a normalization problem upstream of Equation~\eqref{eq:eps}:
+
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+diagnostic & value \\
+\midrule
+singles scoring \emph{above} the on-plate WT & \textbf{8 of 12} (up to 1.333) \\
+multiplicative expectation $f_a f_b > 1$ & \textbf{10 of 13} pairs (up to 1.712) \\
+sign of $\varepsilon$ & \textbf{negative for all 13} \\
+$\mathrm{corr}(\varepsilon,\; f_a f_b)$ & $\mathbf{-0.926}$ ($p=5\times10^{-6}$) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+A multiplicative null above 1.0 for two deletion mutants is not a meaningful expectation, and
+an $\varepsilon$ that correlates at $-0.93$ with its own expectation term is tracking the
+singles, not the doubles. Concretely, for the strongest published interaction in the panel:
+
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+YDR057W+YGL087C & $f_a$ & $f_b$ & \\
+\midrule
+run 4 fitness & 1.243 & 1.163 & \\
+expectation $f_a f_b$ & & & 1.446 \\
+observed $f_{ab}$ & & & 0.788 \\
+$\varepsilon$ (ours) & & & $\mathbf{-0.654}$ \\
+$\varepsilon$ (Costanzo) & & & $+0.098$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+That $-0.654$ is arithmetic from two inflated singles, not a measured epistasis.
+
+\subsection{Where the inflation comes from}
+
+The singles are on the same scale as run 3's --- just shifted. The eleven strains common to
+both rounds correlate at \textbf{$r=0.685$}, but run 4 sits a near-uniform
+\textbf{$1.26\times$} above run 3 (median ratio; dividing it out leaves a mean absolute
+difference of 0.111). In run 3 every single scored \emph{below} WT (0.67--0.92); in run 4
+most score above it.
+
+This matters for $\varepsilon$ and not for the correlations because \textbf{$\varepsilon$ is
+not scale-invariant}. Under a uniform inflation $f \to k f$,
+
+\begin{equation}
+  \varepsilon' \;=\; k f_{ab} - k^{2} f_a f_b,
+\end{equation}
+
+so the expectation term grows quadratically while the observed term grows linearly, driving
+$\varepsilon$ negative in proportion to $f_a f_b$ --- exactly the $-0.926$ correlation
+observed. A Pearson correlation, by contrast, is invariant to $k$, which is why the singles
+still reproduce at $r=0.706$ while every interaction is corrupted.
+
+\notefig{\incsvg{W019-echo-crispr-array/run4/run4_interactions_vs_reference}}%
+  {Run 4 $\varepsilon$ against published Costanzo $\varepsilon$, the two Costanzo-significant
+   pairs marked. Every point sits below zero and the published spread is not recovered. This
+   panel is published as the record of a diagnosed artifact, not as a measurement of
+   epistasis.}
+
+\subsection{What is not yet known}
+
+\textbf{Why the WT reference moved is untested.} At the colony level the WT median is
+\emph{higher} than the mutant median on all three plates (ratio 0.90--0.94), so this is not
+simply sick or contaminated WT wells. Run 3 named its wild type \texttt{BY4741} explicitly;
+run 4's strain list gives it as \verb|'-|. Whether that is a different stock, a different
+plating density, or something else has not been checked, and no correction should be applied
+before it is --- rescaling to make the numbers look right would bury the question.
+
+The cheapest next diagnostic is to re-score run 4 against the \emph{plate median} instead of
+the WT wells. If the singles fall back onto run 3's scale, the problem is localized to the WT
+wells specifically and $\varepsilon$ becomes computable; if they do not, it is something
+broader in the round and belongs at the bench.

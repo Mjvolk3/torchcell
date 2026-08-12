@@ -1,0 +1,56 @@
+\section{Run 4 --- the constructed panel, measured}
+
+The doubles selected above were built and plated on 2026-08-06 as three independently
+randomized 384-well plates (WT at 28 wells, every mutant at 14, 378 transfers + 6 blanks per
+plate; full provenance in
+\path{experiments/W019-echo-crispr-array/data/run4_doubles_2026-08-06/PROVENANCE.md}).
+Scoring is by \path{experiments/W019-echo-crispr-array/scripts/run4_doubles_48h.py}.
+
+\notesec{No triple mutants} This round carries \textbf{singles and doubles only} --- the
+strain list has a \texttt{KO1} and a \texttt{KO2} column and 26 rows (WT, \texttt{s1}--%
+\texttt{s12}, \texttt{d1}--\texttt{d13}). There is structurally no third-knockout field, so
+nothing here bears on trigenic interaction; that remains ahead of us.
+
+\notesec{Registration} All three plates resolved orientation confidently on strain structure
+and returned \textbf{6/6 blank wells empty}. That last number is load-bearing: this
+collaborator's Echo export \emph{omits} the blank wells rather than listing them, so the
+blanks are reconstructed as the complement of the 378 transfers. Six of six empty means the
+reconstruction and the orientation are both right, checked against the image rather than
+assumed.
+
+\begin{center}
+\begin{tabular}{lrrrl}
+\toprule
+plate & occupied & blanks empty & WT CV & QC \\
+\midrule
+P1 & 320/384 & 6/6 & 0.153 & pass \\
+P2 & 345/384 & 6/6 & 0.158 & pass \\
+P3 & 369/384 & 6/6 & 0.122 & pass \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Single-mutant fitness reproduces}
+
+Against the published Costanzo SMF the singles come back at \textbf{Pearson $r=0.706$
+($p=0.015$, $n=11$)}. Eleven, not twelve, because this panel's \texttt{s7} is
+\textbf{YLR104W (LCL2)} where run 3 carried YPL056C (LCL1) --- the two rounds' single panels
+differ by one strain, and the join is on the systematic ORF rather than on position in the
+list.
+
+\notefig{\incsvg{W019-echo-crispr-array/run4/run4_singles_vs_reference}}%
+  {Run 4 single-mutant fitness (bootstrap mean over the three re-randomized plates, plate as
+   the resampling unit) against published Costanzo 2016 SMF. Identity dashed; error bars are
+   SE-vs-SE.}
+
+\subsection{Double-mutant fitness does not}
+
+The same comparison for the 13 constructed doubles gives \textbf{$r=0.255$ ($p=0.42$,
+$n=12$)} --- twelve because YPL046C+YPL081W, the novel pair, has no published DMF anywhere,
+which is why it was selected. Singles reproducing while doubles do not is the first sign of
+the problem the next section is about, and it is not a coincidence: the two are measured on
+the same plates by the same code.
+
+\notefig{\incsvg{W019-echo-crispr-array/run4/run4_doubles_vs_reference}}%
+  {Run 4 double-mutant fitness against published Costanzo DMF. The 13th double, the novel
+   YPL046C+YPL081W, is absent because no published value exists for it.}

@@ -21,6 +21,18 @@
 # So the unit is decided by whether the root width carries an explicit `pt`, which is a real
 # property of the file, not a guess. Anything else is an error rather than a default, because
 # a silently mis-sized figure is worse than a failed build.
+#
+# HOW each family is converted, and why they differ -- this part is rsvg's doing, not ours:
+#   pt-tagged   --dpi-x/y 72       rsvg honours --dpi for a unit-tagged root, so this lands
+#                                  the declared points 1:1.
+#   unitless    -z 0.72            rsvg IGNORES --dpi when the root is unitless -- it maps
+#                                  1 user unit to 1 pt whatever you pass (verified: 479.7762
+#                                  in gives 479.77 pt out at --dpi 100). The zoom does it
+#                                  instead: 72/100, taking user units at 100/inch to points
+#                                  at 72/inch. Checked against the generating script's intent
+#                                  -- construction_validation_doubles.py asks for
+#                                  PANEL_WIDTHS_MM["wide"] = 118.9 mm and this yields 122 mm,
+#                                  where the naive conversion gave 169 mm.
 
 set -euo pipefail
 
@@ -32,13 +44,13 @@ w=$(grep -oE 'width="[^"]*"' "$in" | head -1 | sed -E 's/width="(.*)"/\1/')
 
 case "$w" in
   *pt)
-    dpi=72 ;;                       # family 1: PostScript points
+    scale=(--dpi-x 72 --dpi-y 72) ;;   # family 1: PostScript points, 1:1
   ''|*[!0-9.]*)
     echo "svg2pdf: $in -- root width '$w' is neither pt nor a bare number; refusing to guess" >&2
     exit 1 ;;
   *)
-    dpi=100 ;;                      # family 2: savefig_true_size_svg, draw.io units
+    scale=(-z 0.72) ;;                 # family 2: draw.io units at 100/inch -> 72/inch
 esac
 
 mkdir -p "$(dirname "$out")"
-rsvg-convert --dpi-x "$dpi" --dpi-y "$dpi" -f pdf -o "$out" "$in"
+rsvg-convert "${scale[@]}" -f pdf -o "$out" "$in"

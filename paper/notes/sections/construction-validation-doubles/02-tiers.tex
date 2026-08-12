@@ -1,0 +1,21 @@
+\section{Two tiers, unioned (13 doubles)}
+
+\begin{description}
+  \item[coverage (8)] the greedy set-cover doubles; reconstruct \textbf{all 31} within-10
+    top-$k$ triples.
+  \item[validation (5)] added for dynamic range and real signal: the doubles with a
+    \textbf{significant Costanzo interaction} ($P<0.05$ and $|\varepsilon|>0.08$, both signs),
+    the \textbf{highest-DMF} double, and a \textbf{low-DMF anchor chosen for quality} ---
+    among low-DMF ($<0.75$) doubles, the one that also reconstructs triples with the tightest
+    SD (YER079W+YJR060W: DMF $0.610 \pm \mathbf{0.018}$, covers 3 triples), \emph{not} the
+    noisy DMF-minimum (YGL087C+YJR060W was $0.513 \pm \mathbf{0.172}$).
+  \item[novel (1, separate)] \textbf{YPL046C+YPL081W (ELC1+RPS9A)}, the one within-10 pair
+    with \textbf{no DMF in Costanzo or Kuzmin} --- a construction candidate to fill the last
+    cell (Section~\ref{sec:novel}).
+\end{description}
+
+Result: 31/31 triples still reconstructed, DMF range \textbf{0.610--1.178}, $\varepsilon$ from
+$\mathbf{-0.130}$ to $\mathbf{+0.098}$, \textbf{3 significant interactions}.
+
+\notefig{\incsvg{010-kuzmin-tmi/construction_validation_doubles_table}}%
+  {The 13 selected doubles by tier, with Costanzo DMF, SD, $\varepsilon$ and $p$.}

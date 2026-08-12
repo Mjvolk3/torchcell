@@ -1,0 +1,29 @@
+\section{There are only 3 significant interactions in the whole panel}
+
+Surveyed across all 66 panel-12 doubles and all three sources: exactly \textbf{3} clear
+Costanzo's bar ($P<0.05$ and $|\varepsilon|>0.08$), and all 3 are within-10 and already in the
+validation tier --- YDR057W+YGL087C ($+0.098$), YJR060W+YKL033W-A ($-0.082$),
+YER079W+YPL081W ($-0.130$). None hide in the dropped-gene doubles; Kuzmin 2018/2020 have too
+few measured pairs to reach significance. So ``construct the significant ones'' means these 3,
+already selected. The panel is near-neutral by design, so strong interactions are scarce.
+
+\subsection{Why a big interaction can still be ``not significant'' --- and why that is fixable}
+
+A double's $\varepsilon$ is a point estimate; whether it counts as significant depends on how
+big it is \emph{relative to its error bar}. The error bar on $\varepsilon$ is driven by the
+colony-to-colony scatter of the double \emph{and} of the two singles it is compared against
+(all $n=4$ colonies in Costanzo). So a double sitting on a noisy strain (CBF1, RPS9A) can show
+a sizable $\varepsilon$ that is still inside its own error bar --- insignificant. The reverse
+also happens: YBR203W+YDR057W has a tiny $\varepsilon$ ($+0.062$) that \emph{is} significant
+($p=1.4\times10^{-5}$) only because its colonies were very tight (SD 0.010).
+
+The key point for us: \textbf{that error bar is set by how many colonies we plate, and that is
+our choice.} More colonies gives a smaller error bar, shrinking with the square root of the
+count. So a ``noisy but interesting'' double is not disqualified --- it just needs to be
+plated deeper. Our goal is depth (measure a few predicted doubles precisely), not breadth
+(screen many strains shallowly), which is exactly what echo dispensing is good at. So we pick
+the validation doubles for \emph{interesting values} (fitness extremes, large $\varepsilon$)
+and drive each to a tight measurement at the bench.
+
+One caveat: deeper plating tightens \emph{our} error bar, but Costanzo's stays at $n=4$. Once
+ours is tighter, a disagreement may be the reference's noise, not ours.

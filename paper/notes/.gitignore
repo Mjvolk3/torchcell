@@ -1,0 +1,10 @@
+# Converted figure intermediates: every build/figs/*.pdf is produced by rsvg-convert from a
+# committed .svg under notes/assets/images/ (reached via the `assets` symlink), so it is fully
+# regenerable with `make figs` and would otherwise duplicate the vector source in git.
+build/
+
+# Tectonic leaves these next to the source when --keep-logs / --keep-intermediates is used.
+*.log
+*.aux
+*.toc
+*.out

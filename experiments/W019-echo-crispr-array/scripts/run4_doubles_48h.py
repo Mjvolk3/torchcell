@@ -37,7 +37,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from matplotlib.ticker import MultipleLocator
 from PIL import Image, ImageOps
-from scipy import ndimage
+from scipy import ndimage, stats
 from scipy.stats import pearsonr, spearmanr
 
 from torchcell.sga import (
@@ -230,7 +230,9 @@ def detect_and_score(strains: dict[str, dict]) -> tuple[pd.DataFrame, pd.DataFra
     print("[1b] resolve orientations")
     resolved = {}
     for g in PLATES:
-        op, be, _d = r2.resolve_and_check(plates[g]["grid"], plates[g]["layout"], cfg, g)
+        op, be, _d = r2.resolve_and_check(
+            plates[g]["grid"], plates[g]["layout"], cfg, g
+        )
         resolved[g] = op
         print(f"    {g}: op={op} (strain-H confident) blanks_empty={be}/6")
 
@@ -257,8 +259,14 @@ def detect_and_score(strains: dict[str, dict]) -> tuple[pd.DataFrame, pd.DataFra
             f"WT_CV={wt_cv:.3f} -> QC {'PASS' if ok else 'FAIL'}"
         )
         qc.append(
-            dict(plate=g, op=resolved[g], occupied=occ, blanks_empty=be, wt_cv=wt_cv,
-                 qc_pass=ok)
+            dict(
+                plate=g,
+                op=resolved[g],
+                occupied=occ,
+                blanks_empty=be,
+                wt_cv=wt_cv,
+                qc_pass=ok,
+            )
         )
         for s in rep.strains:
             if s.strain == BLANK_NAME or s.relative_fitness is None:
@@ -280,7 +288,9 @@ def detect_and_score(strains: dict[str, dict]) -> tuple[pd.DataFrame, pd.DataFra
     return pd.DataFrame(rows), pd.DataFrame(qc)
 
 
-def bootstrap_strain_fitness(scores: pd.DataFrame, plates_ok: list[str]) -> pd.DataFrame:
+def bootstrap_strain_fitness(
+    scores: pd.DataFrame, plates_ok: list[str]
+) -> pd.DataFrame:
     """Per-strain fitness, bootstrapping ACROSS plates (the plate is the resampling unit,
     so the SE carries the between-plate batch effect rather than only colony scatter).
     """
@@ -320,6 +330,18 @@ def compute_interactions(
     """
     rng = np.random.default_rng(SEED + 1)
     fit = scores.pivot_table(index="strain", columns="plate", values="fitness")
+    # Colony scatter and colony count per strain per plate -- the inputs to the delta-method
+    # variance below. `fitness_sd` is the SD ACROSS COLONIES of that strain on that plate, so
+    # the SE of the strain mean is fitness_sd / sqrt(n_used).
+    sd = scores.pivot_table(index="strain", columns="plate", values="fitness_sd")
+    nn = scores.pivot_table(index="strain", columns="plate", values="n_used")
+
+    def _sem(strain: str, plate: str) -> float:
+        s, n = sd.at[strain, plate], nn.at[strain, plate]
+        if np.isnan(s) or np.isnan(n) or n < 2:
+            return float("nan")
+        return float(s / np.sqrt(n))
+
     doubles = [v for v in strains.values() if v["kind"] == "double"]
     out = []
     for d in doubles:
@@ -334,22 +356,58 @@ def compute_interactions(
             f_ab, f_a, f_b = fit.at[name, p], fit.at[a, p], fit.at[b, p]
             if np.isnan(f_ab) or np.isnan(f_a) or np.isnan(f_b):
                 continue
-            per_plate[p] = dict(eps=float(f_ab - f_a * f_b), f_ab=float(f_ab),
-                                expected=float(f_a * f_b))
+            s_ab, s_a, s_b = _sem(name, p), _sem(a, p), _sem(b, p)
+            var_within = s_ab**2 + (f_b * s_a) ** 2 + (f_a * s_b) ** 2
+            per_plate[p] = dict(
+                eps=float(f_ab - f_a * f_b),
+                f_ab=float(f_ab),
+                expected=float(f_a * f_b),
+                var_within=float(var_within),
+                n_ab=int(nn.at[name, p]) if not np.isnan(nn.at[name, p]) else 0,
+            )
         if not per_plate:
             continue
         e = np.array([v["eps"] for v in per_plate.values()])
         draws = rng.choice(e, size=(N_BOOT, e.size), replace=True).mean(axis=1)
+
+        # --- significance, two independent error terms -------------------------------
+        # (1) WITHIN-PLATE, by the delta method on colony scatter. eps is a function of
+        #     three independently-measured strain means on the same plate, so
+        #         var(eps) = var(f_ab) + f_b^2 var(f_a) + f_a^2 var(f_b),
+        #     each var being (colony SD / sqrt(n))^2. This is the term Costanzo's own
+        #     p-value is built from, and it is where plating 14 colonies instead of 4
+        #     buys precision -- so it is the like-for-like comparison against them.
+        # (2) ACROSS-PLATE, from the scatter of the three per-plate eps values. This
+        #     carries the batch effect that (1) cannot see.
+        # The honest test uses (2): a t-test on 3 independent plate-level estimates,
+        # df=2. Low power by construction -- three plates is three plates -- so a
+        # non-significant call here is weak evidence of absence, and is reported as such.
+        wv = [
+            v["var_within"] for v in per_plate.values() if not np.isnan(v["var_within"])
+        ]
+        se_within = float(np.sqrt(np.mean(wv) / len(wv))) if wv else np.nan
+        se_across = float(e.std(ddof=1) / np.sqrt(e.size)) if e.size > 1 else np.nan
+        if e.size > 1 and se_across > 0:
+            tstat = float(e.mean() / se_across)
+            pval = float(2 * stats.t.sf(abs(tstat), df=e.size - 1))
+        else:
+            tstat, pval = np.nan, np.nan
+
         out.append(
             dict(
                 double=name,
                 gene1=a,
                 gene2=b,
                 n_plates=int(e.size),
+                n_colonies=int(sum(v["n_ab"] for v in per_plate.values())),
                 dmf=float(np.mean([v["f_ab"] for v in per_plate.values()])),
                 expected=float(np.mean([v["expected"] for v in per_plate.values()])),
                 eps=float(e.mean()),
                 eps_se=float(draws.std(ddof=1)),
+                eps_se_within=se_within,
+                eps_se_across=se_across,
+                eps_t=tstat,
+                eps_p=pval,
                 eps_sd_across_plates=float(e.std(ddof=1)) if e.size > 1 else np.nan,
             )
         )
@@ -361,8 +419,12 @@ def _panel(width_key: str, h_mm: float):
         figsize=(mm_to_in(PANEL_WIDTHS_MM[width_key]), mm_to_in(h_mm))
     )
     plt.rcParams.update(
-        {"font.family": "Arial", "font.size": 6, "svg.fonttype": "none",
-         "axes.linewidth": 0.5}
+        {
+            "font.family": "Arial",
+            "font.size": 6,
+            "svg.fonttype": "none",
+            "axes.linewidth": 0.5,
+        }
     )
     for sp in ax.spines.values():
         sp.set_visible(True)
@@ -397,13 +459,28 @@ def plot_singles_vs_reference(boot: pd.DataFrame) -> pd.DataFrame:
     ]
     ax.plot(lim, lim, ls="--", lw=0.5, color=C_GRAY, zorder=0)
     ax.errorbar(
-        m["costanzo_smf"], m["fitness"], yerr=m["boot_se"], xerr=m["costanzo_se"],
-        fmt="o", ms=4, mfc=C_ORANGE, mec="black", mew=0.4, ecolor="black",
-        elinewidth=0.4, capsize=0, lw=0,
+        m["costanzo_smf"],
+        m["fitness"],
+        yerr=m["boot_se"],
+        xerr=m["costanzo_se"],
+        fmt="o",
+        ms=4,
+        mfc=C_ORANGE,
+        mec="black",
+        mew=0.4,
+        ecolor="black",
+        elinewidth=0.4,
+        capsize=0,
+        lw=0,
     )
     for _, r in m.iterrows():
-        ax.annotate(r["strain"], (r["costanzo_smf"], r["fitness"]), fontsize=3.5,
-                    xytext=(3, -1), textcoords="offset points")
+        ax.annotate(
+            r["strain"],
+            (r["costanzo_smf"], r["fitness"]),
+            fontsize=3.5,
+            xytext=(3, -1),
+            textcoords="offset points",
+        )
     ax.set_xlim(lim)
     ax.set_ylim(lim)
     ax.xaxis.set_major_locator(MultipleLocator(0.2))
@@ -426,14 +503,28 @@ def plot_doubles_vs_reference(boot: pd.DataFrame, inter: pd.DataFrame) -> pd.Dat
     """Our double-mutant fitness and interaction vs the published Costanzo values."""
     ref = pd.read_csv(DOUBLES_REF)
     ref["double"] = [
-        "+".join(sorted((a, b))) for a, b in zip(ref["gene1"], ref["gene2"], strict=True)
+        "+".join(sorted((a, b)))
+        for a, b in zip(ref["gene1"], ref["gene2"], strict=True)
     ]
     m = inter.merge(
-        ref[["double", "DmfCostanzo2016_fitness", "DmfCostanzo2016_std", "se", "eps",
-             "p", "significant"]].rename(
-            columns={"DmfCostanzo2016_fitness": "ref_dmf",
-                     "DmfCostanzo2016_std": "ref_dmf_sd", "se": "ref_dmf_se",
-                     "eps": "ref_eps", "p": "ref_p"}
+        ref[
+            [
+                "double",
+                "DmfCostanzo2016_fitness",
+                "DmfCostanzo2016_std",
+                "se",
+                "eps",
+                "p",
+                "significant",
+            ]
+        ].rename(
+            columns={
+                "DmfCostanzo2016_fitness": "ref_dmf",
+                "DmfCostanzo2016_std": "ref_dmf_sd",
+                "se": "ref_dmf_se",
+                "eps": "ref_eps",
+                "p": "ref_p",
+            }
         ),
         on="double",
         how="left",
@@ -445,21 +536,40 @@ def plot_doubles_vs_reference(boot: pd.DataFrame, inter: pd.DataFrame) -> pd.Dat
         pr, pp = pearsonr(d["ref_dmf"], d["dmf"])
         sr, sp = spearmanr(d["ref_dmf"], d["dmf"])
         fig, ax = _panel("half_plus", 80)
-        lim = [min(d["ref_dmf"].min(), d["dmf"].min()) - 0.08,
-               max(d["ref_dmf"].max(), d["dmf"].max()) + 0.08]
+        lim = [
+            min(d["ref_dmf"].min(), d["dmf"].min()) - 0.08,
+            max(d["ref_dmf"].max(), d["dmf"].max()) + 0.08,
+        ]
         ax.plot(lim, lim, ls="--", lw=0.5, color=C_GRAY, zorder=0)
-        ax.errorbar(d["ref_dmf"], d["dmf"], xerr=d["ref_dmf_se"], fmt="o", ms=4,
-                    mfc=C_RED, mec="black", mew=0.4, ecolor="black", elinewidth=0.4,
-                    capsize=0, lw=0)
+        ax.errorbar(
+            d["ref_dmf"],
+            d["dmf"],
+            xerr=d["ref_dmf_se"],
+            fmt="o",
+            ms=4,
+            mfc=C_RED,
+            mec="black",
+            mew=0.4,
+            ecolor="black",
+            elinewidth=0.4,
+            capsize=0,
+            lw=0,
+        )
         for _, r in d.iterrows():
-            ax.annotate(r["double"], (r["ref_dmf"], r["dmf"]), fontsize=3,
-                        xytext=(3, -1), textcoords="offset points")
+            ax.annotate(
+                r["double"],
+                (r["ref_dmf"], r["dmf"]),
+                fontsize=3,
+                xytext=(3, -1),
+                textcoords="offset points",
+            )
         ax.set_xlim(lim)
         ax.set_ylim(lim)
         ax.set_xlabel("published double-mutant fitness (Costanzo 2016)")
         ax.set_ylabel("run 4 assay DMF (3-plate bootstrap mean)")
-        ax.set_title(f"Doubles, n={len(d)}: r={pr:.2f} (p={pp:.3f}), rho={sr:.2f}",
-                     fontsize=6)
+        ax.set_title(
+            f"Doubles, n={len(d)}: r={pr:.2f} (p={pp:.3f}), rho={sr:.2f}", fontsize=6
+        )
         fig.tight_layout()
         save(fig, "run4_doubles_vs_reference")
 
@@ -475,23 +585,52 @@ def plot_doubles_vs_reference(boot: pd.DataFrame, inter: pd.DataFrame) -> pd.Dat
         ax.axvline(0, lw=0.4, color=C_GRAY, zorder=0)
         ax.plot([lo, hi], [lo, hi], ls="--", lw=0.5, color=C_GRAY, zorder=0)
         sig = e["significant"].fillna(False).astype(bool)
-        ax.errorbar(e.loc[~sig, "ref_eps"], e.loc[~sig, "eps"],
-                    yerr=e.loc[~sig, "eps_se"], fmt="o", ms=4, mfc=C_GRAY, mec="black",
-                    mew=0.4, ecolor="black", elinewidth=0.4, capsize=0, lw=0,
-                    label="not significant in Costanzo")
-        ax.errorbar(e.loc[sig, "ref_eps"], e.loc[sig, "eps"], yerr=e.loc[sig, "eps_se"],
-                    fmt="o", ms=5, mfc=C_PURPLE, mec="black", mew=0.5, ecolor="black",
-                    elinewidth=0.5, capsize=0, lw=0,
-                    label="significant in Costanzo")
+        ax.errorbar(
+            e.loc[~sig, "ref_eps"],
+            e.loc[~sig, "eps"],
+            yerr=e.loc[~sig, "eps_se"],
+            fmt="o",
+            ms=4,
+            mfc=C_GRAY,
+            mec="black",
+            mew=0.4,
+            ecolor="black",
+            elinewidth=0.4,
+            capsize=0,
+            lw=0,
+            label="not significant in Costanzo",
+        )
+        ax.errorbar(
+            e.loc[sig, "ref_eps"],
+            e.loc[sig, "eps"],
+            yerr=e.loc[sig, "eps_se"],
+            fmt="o",
+            ms=5,
+            mfc=C_PURPLE,
+            mec="black",
+            mew=0.5,
+            ecolor="black",
+            elinewidth=0.5,
+            capsize=0,
+            lw=0,
+            label="significant in Costanzo",
+        )
         for _, r in e.iterrows():
-            ax.annotate(r["double"], (r["ref_eps"], r["eps"]), fontsize=3,
-                        xytext=(3, -1), textcoords="offset points")
+            ax.annotate(
+                r["double"],
+                (r["ref_eps"], r["eps"]),
+                fontsize=3,
+                xytext=(3, -1),
+                textcoords="offset points",
+            )
         ax.set_xlim(lo, hi)
         ax.set_ylim(lo, hi)
         ax.set_xlabel(r"published interaction $\varepsilon$ (Costanzo 2016)")
         ax.set_ylabel(r"run 4 assay $\varepsilon = f_{ab} - f_a f_b$")
-        ax.set_title(f"Interactions, n={len(e)}: r={pr:.2f} (p={pp:.3f}), rho={sr:.2f}",
-                     fontsize=6)
+        ax.set_title(
+            f"Interactions, n={len(e)}: r={pr:.2f} (p={pp:.3f}), rho={sr:.2f}",
+            fontsize=6,
+        )
         ax.legend(fontsize=4.5, loc="upper left", frameon=False)
         fig.tight_layout()
         save(fig, "run4_interactions_vs_reference")
@@ -512,23 +651,74 @@ def plot_smf_dmf_combined(boot: pd.DataFrame, doubles_m: pd.DataFrame) -> None:
     d = doubles_m.dropna(subset=["ref_dmf"])
 
     fig, ax = _panel("wide", 85)
-    lo = min(s["costanzo_smf"].min(), d["ref_dmf"].min(), s["fitness"].min(),
-             d["dmf"].min()) - 0.08
-    hi = max(s["costanzo_smf"].max(), d["ref_dmf"].max(), s["fitness"].max(),
-             d["dmf"].max()) + 0.08
+    lo = (
+        min(
+            s["costanzo_smf"].min(),
+            d["ref_dmf"].min(),
+            s["fitness"].min(),
+            d["dmf"].min(),
+        )
+        - 0.08
+    )
+    hi = (
+        max(
+            s["costanzo_smf"].max(),
+            d["ref_dmf"].max(),
+            s["fitness"].max(),
+            d["dmf"].max(),
+        )
+        + 0.08
+    )
     ax.plot([lo, hi], [lo, hi], ls="--", lw=0.5, color=C_GRAY, zorder=0)
-    ax.errorbar(s["costanzo_smf"], s["fitness"], yerr=s["boot_se"], xerr=s["costanzo_se"],
-                fmt="o", ms=4.5, mfc=C_ORANGE, mec="black", mew=0.4, ecolor="black",
-                elinewidth=0.4, capsize=0, lw=0, label=f"singles (n={len(s)})")
-    ax.errorbar(d["ref_dmf"], d["dmf"], yerr=d["eps_se"], xerr=d["ref_dmf_se"],
-                fmt="s", ms=4.5, mfc=C_RED, mec="black", mew=0.4, ecolor="black",
-                elinewidth=0.4, capsize=0, lw=0, label=f"doubles (n={len(d)})")
+    ax.errorbar(
+        s["costanzo_smf"],
+        s["fitness"],
+        yerr=s["boot_se"],
+        xerr=s["costanzo_se"],
+        fmt="o",
+        ms=4.5,
+        mfc=C_ORANGE,
+        mec="black",
+        mew=0.4,
+        ecolor="black",
+        elinewidth=0.4,
+        capsize=0,
+        lw=0,
+        label=f"singles (n={len(s)})",
+    )
+    ax.errorbar(
+        d["ref_dmf"],
+        d["dmf"],
+        yerr=d["eps_se"],
+        xerr=d["ref_dmf_se"],
+        fmt="s",
+        ms=4.5,
+        mfc=C_RED,
+        mec="black",
+        mew=0.4,
+        ecolor="black",
+        elinewidth=0.4,
+        capsize=0,
+        lw=0,
+        label=f"doubles (n={len(d)})",
+    )
     for _, r in s.iterrows():
-        ax.annotate(r["strain"], (r["costanzo_smf"], r["fitness"]), fontsize=3.2,
-                    xytext=(3, -1), textcoords="offset points")
+        ax.annotate(
+            r["strain"],
+            (r["costanzo_smf"], r["fitness"]),
+            fontsize=3.2,
+            xytext=(3, -1),
+            textcoords="offset points",
+        )
     for _, r in d.iterrows():
-        ax.annotate(r["double"], (r["ref_dmf"], r["dmf"]), fontsize=2.8,
-                    xytext=(3, -1), textcoords="offset points", color=C_RED)
+        ax.annotate(
+            r["double"],
+            (r["ref_dmf"], r["dmf"]),
+            fontsize=2.8,
+            xytext=(3, -1),
+            textcoords="offset points",
+            color=C_RED,
+        )
     ax.set_xlim(lo, hi)
     ax.set_ylim(lo, hi)
     ax.xaxis.set_major_locator(MultipleLocator(0.2))
@@ -553,19 +743,27 @@ def write_interaction_table(doubles_m: pd.DataFrame) -> str:
     lines = [
         "% GENERATED by experiments/W019-echo-crispr-array/scripts/run4_doubles_48h.py",
         "% Do not edit; re-run the script.",
-        "\\begin{tabular}{lrrrrrc}",
+        "\\begin{tabular}{lrrrrrrrc}",
         "\\toprule",
-        "double & $f_{ab}$ & $f_a f_b$ & $\\varepsilon$ (ours) & SE & "
-        "$\\varepsilon$ (Costanzo) & sig. \\\\",
+        " & & & \\multicolumn{4}{c}{ours} & \\multicolumn{2}{c}{Costanzo} \\\\",
+        "\\cmidrule(lr){4-7}\\cmidrule(lr){8-9}",
+        "double & $f_{ab}$ & $f_a f_b$ & $\\varepsilon$ & SE$_{\\text{within}}$ & "
+        "SE$_{\\text{across}}$ & $p$ & $\\varepsilon$ & sig. \\\\",
         "\\midrule",
     ]
     for _, r in d.iterrows():
         name = r["double"].replace("+", "$+$")
         ref_eps = "---" if pd.isna(r["ref_eps"]) else f"{r['ref_eps']:+.3f}"
         sig = "$\\checkmark$" if bool(r["significant"]) is True else ""
+        p = "---" if pd.isna(r["eps_p"]) else f"{r['eps_p']:.3f}"
+        # Bold our p when it clears 0.05 -- see the caveat in the note: with the WT shift
+        # unresolved this measures PRECISION, not correctness.
+        if not pd.isna(r["eps_p"]) and r["eps_p"] < 0.05:
+            p = f"\\textbf{{{p}}}"
         lines.append(
             f"{name} & {r['dmf']:.3f} & {r['expected']:.3f} & "
-            f"{r['eps']:+.3f} & {r['eps_se']:.3f} & {ref_eps} & {sig} \\\\"
+            f"{r['eps']:+.3f} & {r['eps_se_within']:.3f} & {r['eps_se_across']:.3f} & "
+            f"{p} & {ref_eps} & {sig} \\\\"
         )
     lines += ["\\bottomrule", "\\end{tabular}", ""]
     out = osp.join(RESULTS_DIR, "run4_interactions_table.tex")
@@ -597,25 +795,33 @@ def main() -> None:
     singles_m = plot_singles_vs_reference(boot)
     if not singles_m.empty:
         pr, pp = pearsonr(singles_m["costanzo_smf"], singles_m["fitness"])
-        print(f"    singles vs Costanzo SMF (n={len(singles_m)}): r={pr:.3f} p={pp:.4f}")
+        print(
+            f"    singles vs Costanzo SMF (n={len(singles_m)}): r={pr:.3f} p={pp:.4f}"
+        )
         singles_m.to_csv(
             osp.join(RESULTS_DIR, "run4_singles_vs_reference.csv"), index=False
         )
     doubles_m = plot_doubles_vs_reference(boot, inter)
-    doubles_m.to_csv(osp.join(RESULTS_DIR, "run4_doubles_vs_reference.csv"), index=False)
+    doubles_m.to_csv(
+        osp.join(RESULTS_DIR, "run4_doubles_vs_reference.csv"), index=False
+    )
     plot_smf_dmf_combined(boot, doubles_m)
     print(f"    wrote {write_interaction_table(doubles_m)}")
     e = doubles_m.dropna(subset=["ref_eps"])
     if not e.empty:
         pr, pp = pearsonr(e["ref_eps"], e["eps"])
         sr, sp = spearmanr(e["ref_eps"], e["eps"])
-        print(f"    eps vs Costanzo eps (n={len(e)}): r={pr:.3f} p={pp:.4f} "
-              f"rho={sr:.3f} p={sp:.4f}")
+        print(
+            f"    eps vs Costanzo eps (n={len(e)}): r={pr:.3f} p={pp:.4f} "
+            f"rho={sr:.3f} p={sp:.4f}"
+        )
         sig = e[e["significant"].fillna(False).astype(bool)]
         for _, r in sig.iterrows():
-            print(f"      [Costanzo-significant] {r['double']}: "
-                  f"ours {r['eps']:+.3f} +/- {r['eps_se']:.3f}  "
-                  f"published {r['ref_eps']:+.3f}")
+            print(
+                f"      [Costanzo-significant] {r['double']}: "
+                f"ours {r['eps']:+.3f} +/- {r['eps_se']:.3f}  "
+                f"published {r['ref_eps']:+.3f}"
+            )
 
     print(f"\nwrote results -> {RESULTS_DIR}")
     print(f"wrote figures + overlays -> {IMG_DIR}")

@@ -1,0 +1,129 @@
+{
+  "C14:0": {
+    "n_digenic": 45,
+    "n_trigenic": 120,
+    "n_sig_digenic": 16,
+    "n_sig_trigenic": 21,
+    "n_sig_digenic_fdr": 0,
+    "n_sig_trigenic_fdr": 0,
+    "effect_size_digenic": {
+      "mean": 1.5393480620698048,
+      "median": 1.3977075576331268,
+      "max": 3.7987240097402886
+    },
+    "effect_size_trigenic": {
+      "mean": 4.188023191496196,
+      "median": 3.81270466381629,
+      "max": 11.765188663931799
+    }
+  },
+  "C16:0": {
+    "n_digenic": 45,
+    "n_trigenic": 120,
+    "n_sig_digenic": 25,
+    "n_sig_trigenic": 45,
+    "n_sig_digenic_fdr": 0,
+    "n_sig_trigenic_fdr": 0,
+    "effect_size_digenic": {
+      "mean": 0.5327395423826866,
+      "median": 0.5372250349461805,
+      "max": 0.9886322125299143
+    },
+    "effect_size_trigenic": {
+      "mean": 0.6072869178424263,
+      "median": 0.5695332777427856,
+      "max": 1.4801836019724046
+    }
+  },
+  "C18:0": {
+    "n_digenic": 45,
+    "n_trigenic": 120,
+    "n_sig_digenic": 23,
+    "n_sig_trigenic": 42,
+    "n_sig_digenic_fdr": 0,
+    "n_sig_trigenic_fdr": 0,
+    "effect_size_digenic": {
+      "mean": 0.40501544255338645,
+      "median": 0.44036175447021103,
+      "max": 0.755996697124566
+    },
+    "effect_size_trigenic": {
+      "mean": 0.4311859367017596,
+      "median": 0.4075336553383824,
+      "max": 1.4987751086713805
+    }
+  },
+  "C16:1": {
+    "n_digenic": 45,
+    "n_trigenic": 120,
+    "n_sig_digenic": 4,
+    "n_sig_trigenic": 5,
+    "n_sig_digenic_fdr": 0,
+    "n_sig_trigenic_fdr": 0,
+    "effect_size_digenic": {
+      "mean": 0.35076506182320116,
+      "median": 0.23149227876041933,
+      "max": 1.9409594860866148
+    },
+    "effect_size_trigenic": {
+      "mean": 0.6394700107281669,
+      "median": 0.5973987606733451,
+      "max": 2.5603292933896284
+    }
+  },
+  "C18:1": {
+    "n_digenic": 45,
+    "n_trigenic": 120,
+    "n_sig_digenic": 21,
+    "n_sig_trigenic": 54,
+    "n_sig_digenic_fdr": 0,
+    "n_sig_trigenic_fdr": 0,
+    "effect_size_digenic": {
+      "mean": 1.033239788444824,
+      "median": 0.45854878692774975,
+      "max": 3.4497227231153307
+    },
+    "effect_size_trigenic": {
+      "mean": 2.6498053528371357,
+      "median": 2.8276876016232575,
+      "max": 6.925784970130011
+    }
+  },
+  "Total Titer": {
+    "n_digenic": 45,
+    "n_trigenic": 120,
+    "n_sig_digenic": 25,
+    "n_sig_trigenic": 56,
+    "n_sig_digenic_fdr": 0,
+    "n_sig_trigenic_fdr": 0,
+    "effect_size_digenic": {
+      "mean": 0.4151110777061872,
+      "median": 0.40294616459857613,
+      "max": 0.9785673405653291
+    },
+    "effect_size_trigenic": {
+      "mean": 0.7121767231003401,
+      "median": 0.7220261609636682,
+      "max": 1.7992078920182242
+    }
+  },
+  "_overall": {
+    "total_interactions": 990,
+    "n_digenic": 270,
+    "n_trigenic": 720,
+    "n_sig_digenic": 114,
+    "n_sig_trigenic": 223,
+    "n_sig_digenic_fdr": 0,
+    "n_sig_trigenic_fdr": 0,
+    "effect_size_digenic": {
+      "mean": 0.7127031624966815,
+      "median": 0.4742689835024748,
+      "max": 3.7987240097402886
+    },
+    "effect_size_trigenic": {
+      "mean": 1.537991355451004,
+      "median": 0.7992106652039548,
+      "max": 11.765188663931799
+    }
+  }
+}

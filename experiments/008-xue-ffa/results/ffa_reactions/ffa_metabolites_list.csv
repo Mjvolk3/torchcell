@@ -1,0 +1,149 @@
+metabolite_id,metabolite_name,formula,compartment,charge,is_target_ffa
+s_0373,acetyl-CoA,C23H34N7O17P3S,c,-4,False
+s_0394,ADP,C10H12N5O10P2,c,-3,False
+s_0423,AMP,C10H12N5O7P,c,-2,False
+s_0426,AMP,C10H12N5O7P,p,-2,False
+s_0434,ATP,C10H12N5O13P3,c,-4,False
+s_0439,ATP,C10H12N5O13P3,p,-4,False
+s_0445,bicarbonate,CHO3,c,-1,False
+s_0456,carbon dioxide,CO2,c,0,False
+s_0529,coenzyme A,C21H32N7O16P3S,c,-4,False
+s_0531,coenzyme A,C21H32N7O16P3S,lp,-4,False
+s_0534,coenzyme A,C21H32N7O16P3S,p,-4,False
+s_0600,decanoate,C10H19O2,p,-1,False
+s_0605,decanoyl-CoA,C31H50N7O17P3S,p,-4,False
+s_0633,diphosphate,HO7P2,c,-3,False
+s_0635,diphosphate,HO7P2,lp,-3,False
+s_0638,diphosphate,HO7P2,p,-3,False
+s_0794,H+,H,c,1,False
+s_0801,H+,H,p,1,False
+s_0803,H2O,H2O,c,0,False
+s_0819,hexacosanoyl-CoA,C47H82N7O17P3S,p,-4,False
+s_0823,hexadec-2-enoyl-CoA,C37H60N7O17P3S,p,-4,False
+s_0840,hydrogen peroxide,H2O2,p,0,False
+s_1070,laurate,C12H23O2,p,-1,False
+s_1076,lauroyl-CoA,C33H54N7O17P3S,p,-4,False
+s_1101,malonyl-CoA,C24H33N7O19P3S,c,-5,False
+s_1166,myristate,C14H27O2,p,-1,True
+s_1179,myristoyl-CoA,C35H58N7O17P3S,p,-4,False
+s_1207,NADP(+),C21H25N7O17P3,c,-3,False
+s_1212,NADPH,C21H26N7O17P3,c,-4,False
+s_1253,octanoate,C8H15O2,p,-1,False
+s_1258,octanoyl-CoA,C29H46N7O17P3S,p,-4,False
+s_1265,oleoyl-CoA,C39H64N7O17P3S,p,-4,False
+s_1279,oxygen,O2,p,0,False
+s_1291,palmitate,C16H31O2,p,-1,True
+s_1298,palmitoleate,C16H29O2,p,-1,True
+s_1302,palmitoyl-CoA,C37H62N7O17P3S,c,-4,False
+s_1305,palmitoyl-CoA,C37H62N7O17P3S,p,-4,False
+s_1322,phosphate,HO4P,c,-2,False
+s_1451,stearate,C18H35O2,p,-1,True
+s_1454,stearoyl-CoA,C39H66N7O17P3S,c,-4,False
+s_1457,stearoyl-CoA,C39H66N7O17P3S,p,-4,False
+s_1482,tetracosanoyl-CoA,C45H78N7O17P3S,p,-4,False
+s_1507,trans-dec-2-enoyl-CoA,C31H48N7O17P3S,p,-4,False
+s_1510,trans-dodec-2-enoyl-CoA,C33H52N7O17P3S,p,-4,False
+s_1513,trans-hexacos-2-enoyl-CoA,C47H80N7O17P3S,p,-4,False
+s_1516,trans-octadec-2-enoyl-CoA,C39H64N7O17P3S,p,-4,False
+s_1519,trans-tetradec-2-enoyl-CoA,C35H56N7O17P3S,p,-4,False
+s_2781,lauroyl-CoA,C33H54N7O17P3S,erm,-4,False
+s_2782,malonyl-CoA,C24H33N7O19P3S,erm,-5,False
+s_2783,H+,H,erm,1,False
+s_2784,carbon dioxide,CO2,erm,0,False
+s_2785,coenzyme A,C21H32N7O16P3S,erm,-4,False
+s_2786,3-oxotetradecanoyl-CoA,C35H56N7O18P3S,erm,-4,False
+s_2787,myristoyl-CoA,C35H58N7O17P3S,erm,-4,False
+s_2788,3-oxopalmitoyl-CoA,C37H60N7O18P3S,erm,-4,False
+s_2789,palmitoyl-CoA,C37H62N7O17P3S,erm,-4,False
+s_2790,3-oxooctadecanoyl-CoA,C39H64N7O18P3S,erm,-4,False
+s_2791,stearoyl-CoA,C39H66N7O17P3S,erm,-4,False
+s_2792,3-oxoicosanoyl-CoA,C41H68N7O18P3S,erm,-4,False
+s_2793,icosanoyl-CoA,C41H70N7O17P3S,erm,-4,False
+s_2794,3-oxodocosanoyl-CoA,C43H72N7O18P3S,erm,-4,False
+s_2795,docosanoyl-CoA,C43H74N7O17P3S,erm,-4,False
+s_2796,3-oxotetracosanoyl-CoA,C45H76N7O18P3S,erm,-4,False
+s_2797,tetracosanoyl-CoA,C45H78N7O17P3S,erm,-4,False
+s_2798,3-oxohexacosanoyl-CoA,C47H80N7O18P3S,erm,-4,False
+s_2808,H2O,H2O,erm,0,False
+s_2817,oxygen,O2,erm,0,False
+s_2818,NADH,C21H27N7O14P2,erm,-2,False
+s_2819,palmitoleoyl-CoA(4-),C37H60N7O17P3S,erm,-4,False
+s_2820,NAD,C21H26N7O14P2,erm,-1,False
+s_2821,oleoyl-CoA,C39H64N7O17P3S,erm,-4,False
+s_2831,ATP,C10H12N5O13P3,erm,-4,False
+s_2832,laurate,C12H23O2,erm,-1,False
+s_2833,AMP,C10H12N5O7P,erm,-2,False
+s_2834,diphosphate,HO7P2,erm,-3,False
+s_2835,myristate,C14H27O2,erm,-1,True
+s_2836,palmitate,C16H31O2,erm,-1,True
+s_2837,palmitoleate,C16H29O2,erm,-1,True
+s_2838,stearate,C18H35O2,erm,-1,True
+s_2839,oleate,C18H33O2,erm,-1,True
+s_2840,ATP,C10H12N5O13P3,lp,-4,False
+s_2841,laurate,C12H23O2,lp,-1,False
+s_2842,AMP,C10H12N5O7P,lp,-2,False
+s_2843,lauroyl-CoA,C33H54N7O17P3S,lp,-4,False
+s_2844,myristate,C14H27O2,lp,-1,True
+s_2845,myristoyl-CoA,C35H58N7O17P3S,lp,-4,False
+s_2846,palmitate,C16H31O2,lp,-1,True
+s_2847,palmitoyl-CoA,C37H62N7O17P3S,lp,-4,False
+s_2848,palmitoleate,C16H29O2,lp,-1,True
+s_2849,palmitoleoyl-CoA(4-),C37H60N7O17P3S,lp,-4,False
+s_2850,stearate,C18H35O2,lp,-1,True
+s_2851,stearoyl-CoA,C39H66N7O17P3S,lp,-4,False
+s_2852,oleate,C18H33O2,lp,-1,True
+s_2853,oleoyl-CoA,C39H64N7O17P3S,lp,-4,False
+s_2854,palmitoleoyl-CoA(4-),C37H60N7O17P3S,p,-4,False
+s_2855,oleate,C18H33O2,p,-1,True
+s_2856,ATP,C10H12N5O13P3,ce,-4,False
+s_2857,coenzyme A,C21H32N7O16P3S,ce,-4,False
+s_2858,arachidate,C20H39O2,ce,-1,False
+s_2859,AMP,C10H12N5O7P,ce,-2,False
+s_2860,diphosphate,HO7P2,ce,-3,False
+s_2861,icosanoyl-CoA,C41H70N7O17P3S,ce,-4,False
+s_2862,behenate,C22H43O2,ce,-1,False
+s_2863,docosanoyl-CoA,C43H74N7O17P3S,ce,-4,False
+s_2864,lignoceric acid,C24H47O2,ce,-1,False
+s_2865,tetracosanoyl-CoA,C45H78N7O17P3S,ce,-4,False
+s_2866,cerotic acid,C26H51O2,ce,-1,False
+s_2867,hexacosanoyl-CoA,C47H82N7O17P3S,ce,-4,False
+s_2879,icosanoyl-CoA,C41H70N7O17P3S,p,-4,False
+s_2881,docosanoyl-CoA,C43H74N7O17P3S,p,-4,False
+s_2884,butanoyl-CoA,C25H38N7O17P3S,p,-4,False
+s_2885,hexanoyl-CoA,C27H46N7O17P3S,p,0,False
+s_2886,but-2-enoyl-CoA,C25H40N7O17P3S,p,0,False
+s_2887,trans-hex-2-enoyl-CoA,C27H44N7O17P3S,p,0,False
+s_2888,trans-oct-2-enoyl-CoA,C29H44N7O17P3S,p,-4,False
+s_2889,trans-icos-2-enoyl-CoA,C41H68N7O17P3S,p,-4,False
+s_2890,trans-docos-2-enoyl-CoA,C43H72N7O17P3S,p,-4,False
+s_2891,trans-tetracos-2-enoyl-CoA,C45H76N7O17P3S,p,-4,False
+s_2892,"trans-2,cis-9-hexadecadienoyl-CoA",C37H62N7O17P3S,p,0,False
+s_2893,cis-tetradec-7-enoyl-CoA,C35H60N7O17P3S,p,0,False
+s_2894,"trans-2,cis-7-tetradecadienoyl-CoA",C35H58N7O17P3S,p,0,False
+s_2895,cis-dodec-5-enoyl-CoA,C33H56N7O17P3S,p,0,False
+s_2896,"trans-2,cis-5-dodecadienoyl-CoA",C33H54N7O17P3S,p,0,False
+s_2897,"trans-2,cis-9-octadecadienoyl-CoA",C39H62N7O17P3S,p,-4,False
+s_2898,cis-hexadec-7-enoyl-CoA,C37H64N7O17P3S,p,0,False
+s_2899,"trans-2,cis-7-hexadecadienoyl-CoA",C37H62N7O17P3S,p,0,False
+s_2900,cis-tetradec-5-enoyl-CoA,C35H60N7O17P3S,p,0,False
+s_2901,"trans-2,cis-5-tetradecadienoyl-CoA",C35H58N7O17P3S,p,0,False
+s_2935,1-acyl-sn-glycerol 3-phosphate (16:0),C19H39O7P,erm,0,True
+s_2936,1-acyl-sn-glycerol 3-phosphate (16:1),C19H37O7P,erm,0,True
+s_2937,1-acyl-sn-glycerol 3-phosphate (18:0),C21H43O7P,erm,0,True
+s_2938,1-acyl-sn-glycerol 3-phosphate (18:1),C21H41O7P,erm,0,True
+s_2944,1-acyl-sn-glycerol 3-phosphate (16:0),C19H39O7P,lp,0,True
+s_2945,1-acyl-sn-glycerol 3-phosphate (16:1),C19H37O7P,lp,0,True
+s_2946,1-acyl-sn-glycerol 3-phosphate (18:0),C21H43O7P,lp,0,True
+s_2947,1-acyl-sn-glycerol 3-phosphate (18:1),C21H41O7P,lp,0,True
+s_2955,"phosphatidate (1-16:0, 2-18:1)",C37H71O8P,erm,0,True
+s_2957,"phosphatidate (1-16:1, 2-18:1)",C37H69O8P,erm,0,True
+s_2959,"phosphatidate (1-18:0, 2-18:1)",C39H75O8P,erm,0,True
+s_2961,"phosphatidate (1-18:1, 2-18:1)",C39H73O8P,erm,0,True
+s_2962,"phosphatidate (1-16:0, 2-18:1)",C37H71O8P,lp,0,True
+s_2963,"phosphatidate (1-16:1, 2-18:1)",C37H69O8P,lp,0,True
+s_2964,"phosphatidate (1-18:0, 2-18:1)",C39H75O8P,lp,0,True
+s_2965,"phosphatidate (1-18:1, 2-18:1)",C39H73O8P,lp,0,True
+s_4190,"trans-2,cis-9-octadecadienoyl-CoA",C39H62N7O17P3S,c,-4,False
+s_4191,"(9Z,12Z)-octadecadienoate",C18H31O2,c,-1,False
+s_4251,propionate,C3H6O2,p,0,False
+s_4252,propionyl-CoA,C24H36N7O17P3S,p,-4,False

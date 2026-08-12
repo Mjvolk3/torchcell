@@ -30,7 +30,7 @@ ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
 
 # Results directory
 RESULTS_DIR = Path(
-    "/Users/michaelvolk/Documents/projects/torchcell/experiments/008-xue-ffa/results"
+    osp.join(os.getenv("EXPERIMENT_ROOT"), "008-xue-ffa/results")
 )
 FFA_REACTIONS_DIR = RESULTS_DIR / "ffa_reactions"
 GRAPH_ENRICHMENT_DIR = RESULTS_DIR / "graph_enrichment"

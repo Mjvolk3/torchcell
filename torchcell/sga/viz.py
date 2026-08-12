@@ -250,17 +250,29 @@ def strain_fitness_plot(report: ScoreReport, alpha: float = 0.05) -> Figure:
 # --- plate-address overlay labelling (shared by the run scripts + artifact builder) ---
 
 
-def _overlay_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-    """Bold TrueType at `size`, falling back to PIL's bitmap default."""
+def _overlay_font(size: int) -> ImageFont.FreeTypeFont:
+    """Bold TrueType at `size`, from matplotlib's BUNDLED DejaVu.
+
+    Deliberately NOT a search over system font directories with a bitmap fallback: the
+    system paths are distro-specific (Debian ships
+    ``/usr/share/fonts/truetype/dejavu/``, RHEL ships ``/usr/share/fonts/dejavu-sans-fonts/``),
+    so a miss silently dropped every overlay to ``ImageFont.load_default()`` -- an ~11 px
+    bitmap that ignores `size` entirely and rendered the plate headers illegible while the
+    margins were still sized for the requested glyph. matplotlib is a hard dependency and
+    ships this exact font, so it resolves identically on every machine.
+    """
     import os.path as osp
 
-    for p in (
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-        "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",
-    ):
-        if osp.exists(p):
-            return ImageFont.truetype(p, size)
-    return ImageFont.load_default()
+    return ImageFont.truetype(
+        osp.join(
+            osp.dirname(matplotlib.__file__),
+            "mpl-data",
+            "fonts",
+            "ttf",
+            "DejaVuSans-Bold.ttf",
+        ),
+        size,
+    )
 
 
 def plate_labels(op: str, n_rows: int, n_cols: int) -> tuple[list[str], list[str]]:
@@ -309,10 +321,22 @@ def label_plate_overlay(
             dp.line([(x - 5, y), (x + 5, y)], fill=(0, 255, 255), width=1)
             dp.line([(x, y - 5), (x, y + 5)], fill=(0, 255, 255), width=1)
 
-    fs = max(30, int(w / 45))
+    # Glyphs as large as the GRID PITCH allows, not as large as the image allows: the
+    # binding constraint is a two-digit column label ("24") fitting between adjacent column
+    # lines -- size off the image width alone and 10..24 run together into one blur. DejaVu
+    # advances scale linearly in the point size, so measure once at 100 and solve directly.
+    col_pitch = float(np.diff(nodes[0, :, 1]).mean()) if n_cols > 1 else float(w)
+    row_pitch = float(np.diff(nodes[:, 0, 0]).mean()) if n_rows > 1 else float(h)
+    probe = _overlay_font(100)
+    w_per = max(probe.getlength(s) for s in col_lab) / 100.0
+    h_per = max(probe.getbbox(s)[3] - probe.getbbox(s)[1] for s in row_lab) / 100.0
+    # 0.60 of the pitch, not 0.80: at 0.80 adjacent two-digit labels leave only a hairline
+    # of white and read as one run of digits at page scale.
+    fs = max(30, int(min(w / 36, 0.60 * col_pitch / w_per, 0.60 * row_pitch / h_per)))
     fnt = _overlay_font(fs)
-    pad = int(2.2 * fs)  # margin band, sized to hold the glyphs + tick
-    tick = max(3, fs // 4)
+    pad = int(2.4 * fs)  # margin band, sized to hold the glyphs + tick
+    tick = max(4, int(0.6 * fs))  # long enough to carry the eye from label to grid line
+    lw = max(3, fs // 12)  # tick stroke, scaled with the glyph so it stays visible
     canvas = Image.new("RGB", (w + 2 * pad, h + 2 * pad), (255, 255, 255))
     canvas.paste(im, (pad, pad))
     d = ImageDraw.Draw(canvas)
@@ -328,16 +352,16 @@ def label_plate_overlay(
     for ci in range(n_cols):
         xt = pad + float(nodes[0, ci, 1])
         xb = pad + float(nodes[-1, ci, 1])
-        d.line([(xt, pad - tick), (xt, pad)], fill=blk, width=2)
-        d.line([(xb, pad + h), (xb, pad + h + tick)], fill=blk, width=2)
+        d.line([(xt, pad - tick), (xt, pad)], fill=blk, width=lw)
+        d.line([(xb, pad + h), (xb, pad + h + tick)], fill=blk, width=lw)
         ctext(xt, pad - tick - fs * 0.7, col_lab[ci])
         ctext(xb, pad + h + tick + fs * 0.7, col_lab[ci])
     # rows A..P down the LEFT and RIGHT margins
     for ri in range(n_rows):
         yl = pad + float(nodes[ri, 0, 0])
         yr = pad + float(nodes[ri, -1, 0])
-        d.line([(pad - tick, yl), (pad, yl)], fill=blk, width=2)
-        d.line([(pad + w, yr), (pad + w + tick, yr)], fill=blk, width=2)
+        d.line([(pad - tick, yl), (pad, yl)], fill=blk, width=lw)
+        d.line([(pad + w, yr), (pad + w + tick, yr)], fill=blk, width=lw)
         ctext(pad - tick - fs * 0.7, yl, row_lab[ri])
         ctext(pad + w + tick + fs * 0.7, yr, row_lab[ri])
     canvas.save(overlay_path)

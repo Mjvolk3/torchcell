@@ -17,6 +17,7 @@ single-mutant fitness.
 | Retrieval method | `manual_handoff` -- files copied from the collaborator's drop, not downloaded |
 | Integrity | `SHA256SUMS.txt`, all 11 files verified on copy into the repo |
 | Transfer volume / density | 5 nL at OD 1.0 |
+| Incubation at imaging | **48 h 12 min** (officially recorded; not the nominal "48 h") |
 | Images | 4712 x 3534 JPEG, same backlit rig as run 3 (EXIF portrait; the plate crop in `preprocess_fullres` finds the bright plate regardless of camera orientation) |
 
 `Single-and-Double-KO-Strains-List-Order.numbers` is the collaborator's original
@@ -57,7 +58,7 @@ cross-plate normalization in the interaction term.
 ## Files
 
 ```
-P{1,2,3}_sKO-dKO_OD1-5nL.JPG          plate images, 48 h
+P{1,2,3}_sKO-dKO_OD1-5nL.JPG          plate images, 48 h 12 min
 P{1,2,3}_Transfer_Report.csv          Echo per-transfer report (actual volumes, status)
 TC_sKO-dKO_OD1_5nL_P{1,2,3}.csv       Echo cherry-pick lists (well -> strain)
 Single-and-Double-KO-Strains-List-Order.csv       strain id -> KO1/KO2

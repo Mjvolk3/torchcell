@@ -14,6 +14,12 @@ double sit on the same plate**, so the interaction
 is computed entirely WITHIN a plate -- no cross-plate normalization enters the interaction
 term, only the across-plate bootstrap that puts an error bar on it.
 
+NB the `48h` in this filename is shorthand. The officially recorded incubation at imaging is
+**48 h 12 min**; that is the number of record and it is what PROVENANCE.md carries. The 12
+minutes are common to every well on a plate, so they cancel in the per-plate normalization to
+the reference and cannot explain any strain-to-strain effect -- but the timing of record
+should be the precise one wherever it is quoted.
+
 Pipeline per plate is run-3's, unchanged: full-res crop -> Cellpose-SAM instance seg
 (homography grid + faint-colony recovery) -> resolve the 4-way orientation against THIS
 plate's layout -> normalize to on-plate WT -> score. Then across the 3 plates, bootstrap

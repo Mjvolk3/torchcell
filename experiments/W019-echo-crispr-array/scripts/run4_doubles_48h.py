@@ -859,7 +859,7 @@ def plot_interaction_forest(doubles_m: pd.DataFrame) -> None:
     ax.set_yticklabels(d["double"], fontsize=4.5)
     ax.set_ylim(-0.7, len(d) - 0.3)
     ax.set_xlabel(r"digenic interaction $\varepsilon$")
-    ax.legend(fontsize=4.5, loc="lower left", frameon=False)
+    ax.legend(fontsize=4.5, loc="upper left", frameon=False)
     fig.tight_layout()
     save(fig, "run4_interactions_forest")
 

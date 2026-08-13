@@ -1,0 +1,49 @@
+\section{Detection overlays --- what was actually measured}
+\label{sec:overlays}
+
+Every number in Sections~\ref{sec:run4-fitness}--\ref{sec:run4-eps} is a colony area read off
+these three images. The overlays are the audit trail: each detected colony's boundary is drawn
+on the original plate photograph, coloured by whether the pipeline accepted it, and the fitted
+grid nodes are marked with cyan crosses so a node sitting off its colony stays visible rather
+than silently mis-assigning a strain.
+
+Plate addresses run down both sides (rows A--P) and across top and bottom (columns 1--24), set
+in the outside margin rather than on the agar --- drawn in-image they collide with edge-row
+colonies, and no amount of halo makes small glyphs legible over agar, plastic and the dark lid
+at once. The headers are \emph{plate} addresses under the resolved orientation, not raw image
+indices, so a well read off the figure can be looked up directly in the picklist.
+
+\notetab{%
+\begin{tabular}{ll}
+\toprule
+outline & meaning \\
+\midrule
+green & accepted -- in gel, on grid, circular, single colony \\
+red & multiple colonies detected on one well; rejected \\
+orange & neighbour of a multi-colony well \\
+purple & non-circular \\
+blue & recovered faint colony, or straddling the gel edge \\
+cyan cross & fitted grid node \\
+\bottomrule
+\end{tabular}
+}{Detection overlay colour key. Only in-gel, on-grid instances are drawn, so off-plate and frame detections never appear.}
+
+\notefig{\includegraphics[width=0.86\linewidth]%
+  {assets/W019-echo-crispr-array/run4/run4_overlay_P1.png}}%
+  {Run 4, plate P1 (5\,nL, OD 1.0, 48\,h). 320 of 384 wells occupied, 6/6 blanks empty,
+   WT CV 0.153.}
+
+\notefig{\includegraphics[width=0.86\linewidth]%
+  {assets/W019-echo-crispr-array/run4/run4_overlay_P2.png}}%
+  {Run 4, plate P2. 345 of 384 occupied, 6/6 blanks empty, WT CV 0.158.}
+
+\notefig{\includegraphics[width=0.86\linewidth]%
+  {assets/W019-echo-crispr-array/run4/run4_overlay_P3.png}}%
+  {Run 4, plate P3 -- the cleanest of the three. 369 of 384 occupied, 6/6 blanks empty,
+   WT CV 0.122.}
+
+\notesec{One thing to look at} Row P carries a visibly higher share of non-green outlines than
+the interior rows on all three plates, and occupancy differs substantially between plates
+(320 / 345 / 369). Whether the bottom row is subject to an edge effect in this rig has
+\emph{not} been tested; it is a separate question from the wild-type shift of
+Section~\ref{sec:wtshift} and is noted here only because these figures make it visible.

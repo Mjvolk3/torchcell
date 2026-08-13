@@ -4,7 +4,7 @@ The DMF values above are \textbf{Costanzo only}. Where Kuzmin also measured a wi
 double, the two references sometimes \textbf{disagree sharply}, especially for the low-DMF
 CBF1 doubles:
 
-\begin{center}
+\notetab{%
 \begin{tabular}{lrr}
 \toprule
 double & Costanzo DMF & Kuzmin DMF \\
@@ -15,7 +15,7 @@ YBR203W+YJR060W & 0.609 & 0.768 (K2018) \\
 YGL087C+YPL046C & 1.111 & 0.998 (K2018) \\
 \bottomrule
 \end{tabular}
-\end{center}
+}{Within-10 doubles where Kuzmin also measured a DMF. The two references disagree sharply on the low-DMF CBF1 pairs -- YJR060W+YLL012W by about 0.5 -- so the low-DMF target the assay validates against is reference-dependent.}
 
 CBF1/YJR060W's low DMF is largely a \emph{Costanzo} phenomenon --- Kuzmin reads those pairs
 higher, and YJR060W+YLL012W disagrees by about 0.5. So the low-DMF ``signal'' our assay would
@@ -33,7 +33,7 @@ The disagreement above is between \emph{datasets}. There is a second, easier-to-
 ambiguity \emph{inside} Costanzo: a gene can carry more than one strain, with materially
 different measurements. YJR060W (CBF1) is the case that matters for this panel ---
 
-\begin{center}
+\notetab{%
 \begin{tabular}{lrr}
 \toprule
 Costanzo strain & SMF & stddev \\
@@ -42,7 +42,7 @@ Costanzo strain & SMF & stddev \\
 \texttt{YJR060W\_sn154}   & 0.5900 & 0.1138 \\
 \bottomrule
 \end{tabular}
-\end{center}
+}{The same gene, two Costanzo strains, two published single-mutant fitnesses 0.33 apart. The queried reference table picked \texttt{sn154} by a dictionary collision rather than by any stated rule, and CBF1 anchors the low end of every fitness correlation reported here.}
 
 --- two published single-mutant values 0.33 fitness units apart. The queried reference table
 the assay compares against picked \texttt{sn154} by a dictionary collision in

@@ -1,0 +1,3 @@
+reference,n,pearson_r,p,median_ratio_run4_over_run3,mean_abs_diff_after_rescale,singles_above_reference,costanzo_r
+WT wells (as shipped),11,0.685,0.0201,1.263,0.111,8/12,0.706
+plate median,11,0.687,0.0194,1.368,0.111,9/12,0.708

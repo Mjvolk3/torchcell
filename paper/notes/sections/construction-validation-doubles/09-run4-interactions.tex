@@ -60,6 +60,7 @@ $\varepsilon$ because it is the novel pair; it was constructed precisely because
 value exists.
 
 \subsection{Our own significance --- and which error term you use decides everything}
+\label{sec:sig}
 
 Section~\ref{sec:whyfixable} argued that a big-but-insignificant interaction is fixable
 because the error bar is set by how many colonies we plate, and that is our choice. This
@@ -229,23 +230,102 @@ denominator changes that, because a common factor cancels from the ratio $f_{ab}
 only when it applies to all three equally. Here the singles sit near 1.2 and the doubles near
 0.8 against either reference.
 
-\notesec{Hypothesis, untested} A double carries two selection cassettes where a single carries
-one. If the second marker costs growth independently of any genetic interaction, every double
-is depressed by a roughly constant factor and $\varepsilon$ absorbs it --- which would produce
-exactly this signature, and would not be epistasis. Distinguishing that from real biology
-needs a marker-only control (a double-cassette strain with no second gene deleted), which this
-round does not contain. Nothing here tests it.
+\subsection{Replicate structure --- ours is technical, theirs is not}
+\label{sec:replicate-structure}
+
+Two facts about how these numbers are made, which together explain most of the gap in
+precision and bound what our error bars can mean.
+
+\notesec{Every strain is plated from a SINGLE picked colony} All 14 wells of a strain on a
+plate, and all three plates, descend from one picked colony grown up and diluted. That makes
+the 42 colonies per strain \textbf{technical replicates of one picking event}, not independent
+biological samples. It is what makes the experiment tractable, but it has a consequence that
+must not be glossed: \textbf{the across-plate SE used throughout this section does not contain
+colony-picking variance.} Re-randomizing position across three plates averages out position
+and plate handling; it cannot average out a draw that was made once, upstream of all three.
+So the honest error bar of Section~\ref{sec:sig} is still an \emph{under}-estimate with
+respect to the biological unit, and the $p$ values inherit that.
+
+\notesec{Costanzo's single-mutant fitness is averaged over hundreds of screens} From the SI
+(\texttt{costanzoGlobalGeneticInteraction2016/si/si1.md}, ``Single mutant fitness standard''):
+``\emph{Colony size measurements of SGA deletion and TS array mutant strains were based on an
+average of 350 replicate control screens \ldots\ query mutant strains were based on an average
+of 17 replicate control screens}.'' Their SMF is not a 4-colony number --- the 4 colonies
+apply to the double-mutant screens. Against 350 (or 17) independent control screens, three
+plates from one colony is a different order of replication, and that alone is enough to expect
+our agreement to be looser than their internal reproducibility.
+
+\notesec{Not verified} A reported reproducibility of roughly $0.9$ between duplicate fitness
+measurements is plausible from this design but \textbf{could not be confirmed from our
+mirror}. The SI text describes fig. S2 as the reproducibility analysis and frames it in terms
+of precision/recall of \emph{genetic interactions} across five replicate screens, not a
+fitness scatter; no correlation coefficient for duplicate fitness appears in the extracted
+text of either the paper or the SI. It may well sit inside a figure panel, which our OCR does
+not read. Treat the $0.9$ as unconfirmed here rather than as absent.
+
+\subsection{A single-colony wild type, and what it can and cannot explain}
+\label{sec:weakwt}
+
+The wild type is picked once per round like every other strain
+(Section~\ref{sec:replicate-structure}), so the entire round's denominator rests on one
+colony. If that colony happened to be a weak grower, everything normalized to it is inflated
+by a constant --- and because the three plates share it, no amount of within-round replication
+would reveal the problem. This is a much better candidate than the WT-wells hypothesis already
+rejected in Section~\ref{sec:wtdiag}, and it fits two observations directly: singles landing
+above 1.0, and run 4 sitting a near-uniform $1.26\times$ above run 3, since the two rounds
+drew independent wild-type colonies.
+
+\textbf{But it cannot be the whole story, and the arithmetic says so.} A reference error is a
+common factor $k$ applied to every strain on the plate, so it cancels out of any ratio between
+two strains:
+
+\notetab{%
+\begin{tabular}{lrrr}
+\toprule
+reference scale $k$ & mean single & mean double & double/single \\
+\midrule
+1.00 (as measured) & 1.066 & 0.809 & 0.758 \\
+1.26 & 1.344 & 1.019 & 0.758 \\
+1.50 & 1.600 & 1.213 & 0.758 \\
+\bottomrule
+\end{tabular}
+}{A weak wild type rescales singles and doubles together, so the double-to-single ratio is
+invariant to it. That ratio is 0.758 where a multiplicative model predicts roughly the mean
+single itself ($\sim$1.07); the discrepancy therefore survives any choice of reference.}
+
+So there are \textbf{two separable effects}, and conflating them is what made the earlier
+sections chase one explanation:
+
+\begin{enumerate}
+  \item a \emph{per-round scale} on the reference --- consistent with a single-colony wild
+        type, explains the $1.26\times$ between rounds and the singles above 1.0, and does not
+        touch $\varepsilon$'s \emph{ordering};
+  \item a \emph{doubles-versus-singles} discrepancy --- the double/single ratio is 0.758 where
+        a multiplicative model wants $\sim$1.07 --- which no reference choice can produce and
+        which is what actually corrupts $\varepsilon$.
+\end{enumerate}
+
+Effect (1) now has a plausible mechanism. Effect (2) does not, and it is the one that matters
+for interactions.
 
 \subsection{What is not yet known}
 
-The WT-wells explanation is now \emph{tested and rejected} (Section~\ref{sec:wtdiag}). What
-replaces it is a broader question about the round: why the doubles sit low relative to the
-singles under any normalization. The marker-load hypothesis above is one candidate and is
-untested; so is the possibility that this is partly real biology at 48\,h 12\,min on this medium.
+The WT-wells explanation is tested and rejected (Section~\ref{sec:wtdiag}); a single-colony
+wild type plausibly accounts for the per-round scale but provably not for the
+doubles-versus-singles gap (Section~\ref{sec:weakwt}). What remains open is that second
+effect: why the doubles sit low relative to the singles under any normalization. It may be
+partly real biology at 48\,h 12\,min on this medium; nothing here tests that.
 
-Distinguishing them belongs at the bench rather than in the analysis, and the cheapest
-discriminating control is a \textbf{marker-only strain} --- two cassettes, one gene deleted ---
-which would separate a constant construction cost from genuine epistasis. Until something of
-that kind exists, no $\varepsilon$ from this round should be reported as an interaction,
-and no rescaling should be applied to make the numbers look reasonable: every correction
-available here is cosmetic and would bury the question.
+What this round \emph{cannot} distinguish is a per-strain construction or picking effect from
+a genetic one, because each strain enters the experiment through a single picked colony
+(Section~\ref{sec:replicate-structure}). A double whose founding colony happened to be a poor
+grower is indistinguishable, in these data, from a double with a real negative interaction ---
+and with all three plates sharing that colony, no amount of within-round replication separates
+them. \textbf{The discriminating experiment is independent pickings}: two or more colonies per
+strain, carried as separate lineages through the whole round. That converts the replicate unit
+from technical to biological and is the same change that would let the across-plate SE of
+Section~\ref{sec:sig} mean what it currently only appears to mean.
+
+Until then, no $\varepsilon$ from this round should be reported as an interaction, and no
+rescaling should be applied to make the numbers look reasonable: every correction available
+here is cosmetic and would bury the question.

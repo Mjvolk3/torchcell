@@ -141,11 +141,28 @@ That $-0.654$ is arithmetic from two inflated singles, not a measured epistasis.
 \subsection{Where the inflation comes from}
 \label{sec:wtshift}
 
-The singles are on the same scale as run 3's --- just shifted. The eleven strains common to
-both rounds correlate at \textbf{$r=0.685$}, but run 4 sits a near-uniform
-\textbf{$1.26\times$} above run 3 (median ratio; dividing it out leaves a mean absolute
-difference of 0.111). In run 3 every single scored \emph{below} WT (0.67--0.92); in run 4
-most score above it.
+The singles are on the same scale as run 3's --- just shifted. Comparing our two rounds
+directly, the eleven strains common to both correlate at \textbf{$r=0.685$ ($p=0.020$)}, but
+run 4 sits a near-uniform \textbf{$1.26\times$} above run 3 (median ratio; dividing it out
+leaves a mean absolute difference of 0.111). In run 3 every single scored \emph{below} WT
+(0.67--0.92); in run 4 most score above it.
+
+\notesec{Two correlations, not one} Two similar numbers appear in this document and they are
+\emph{different comparisons} on the same eleven strains --- worth separating, because read
+together they look like one statistic quoted twice:
+
+\notetab{%
+\begin{tabular}{llrr}
+\toprule
+comparison & against & $r$ & $p$ \\
+\midrule
+run 4 singles vs run 3 singles & our own earlier round & 0.685 & 0.020 \\
+run 4 singles vs Costanzo SMF & the published reference & 0.706 & 0.015 \\
+\bottomrule
+\end{tabular}
+}{The two single-mutant correlations reported for run 4. Both are $n=11$ over the same
+strains; they differ in what run 4 is compared \emph{to}. Neither is a restatement of the
+other.}
 
 This matters for $\varepsilon$ and not for the correlations because \textbf{$\varepsilon$ is
 not scale-invariant}. Under a uniform inflation $f \to k f$,
@@ -157,7 +174,7 @@ not scale-invariant}. Under a uniform inflation $f \to k f$,
 so the expectation term grows quadratically while the observed term grows linearly, driving
 $\varepsilon$ negative in proportion to $f_a f_b$ --- exactly the $-0.926$ correlation
 observed. A Pearson correlation, by contrast, is invariant to $k$, which is why the singles
-still reproduce at $r=0.706$ while every interaction is corrupted.
+still reproduce the published values at $r=0.706$ while every interaction is corrupted.
 
 \notefig{\incsvg{W019-echo-crispr-array/run4/run4_interactions_vs_reference}}%
   {\label{fig:epsscatter}Run 4 $\varepsilon$ against published Costanzo $\varepsilon$, the two Costanzo-significant

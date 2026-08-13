@@ -38,7 +38,13 @@
 \providecommand{\secstatus}[1]{}
 
 %% ---- Notes-only: contents, numbering, links --------------------------------------
-\definecolor{tclink}{HTML}{6C8EBF}% palette blue -- the only non-black text colour used
+%% LINK COLOURS ARE THE CLASS DEFAULT AND ARE DELIBERATELY NOT OVERRIDDEN.
+%% sn-jnl.cls sets `colorlinks, citecolor=blue, linkcolor=blue, urlcolor=blue` (line ~1473),
+%% and neither editing.tex nor preamble.tex touches it -- so that blue IS the house colour
+%% the manuscript already uses for references, and these notes inherit it rather than
+%% inventing a second one. (An earlier version of this file set a custom palette blue; that
+%% was not the Nature default and has been removed.)
+%%
 %% NB: sn-jnl.cls ALREADY loads hyperref, so \usepackage[...]{hyperref} here is an option
 %% clash. Configure it with \hypersetup instead.
 %%
@@ -47,10 +53,14 @@
 %% xdvipdfmx warns "Object @figure.N already defined" for every figure. Letting hyperref number
 %% its destinations sequentially instead of by counter removes the collision -- \ref and the
 %% bookmark tree are unaffected.
-\hypersetup{hypertexnames=false,
-  colorlinks=true,linkcolor=tclink,citecolor=tclink,urlcolor=tclink,
-  bookmarksnumbered=true,bookmarksopen=true}
+\hypersetup{hypertexnames=false,bookmarksnumbered=true,bookmarksopen=true}
 \usepackage{bookmark}
+
+%% The contents page is the ONE place the blue is too much: every line is a link, so a
+%% coloured TOC is a wall of blue rather than a few highlighted references. \notetoc sets the
+%% links black for the duration of the contents only -- they stay clickable, and every link in
+%% the body keeps the house colour.
+\newcommand{\notetoc}{{\hypersetup{linkcolor=black}\tableofcontents}}
 
 %% Number sections (the manuscript's Results/Methods are numbered; notes want the same,
 %% plus subsubsections, because a note goes deeper than a paper section does) and show

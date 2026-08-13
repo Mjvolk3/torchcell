@@ -56,9 +56,19 @@ the doubles sit low and flat, compressed into a narrow band regardless of what t
 says they should be.
 
 \notefig{\incsvg{W019-echo-crispr-array/run4/run4_smf_dmf_vs_reference}}%
-  {Run 4 against published Costanzo values on one axis: single mutants (circles, SMF) and
-   double mutants (squares, DMF). Identity dashed. The singles spread along the line; the
-   doubles do not track it.}
+  {Run 4 against published Costanzo values on one axis: single mutants and double mutants,
+   distinguished by colour. Identity dashed. The singles spread along the line; the doubles
+   do not track it.
+   \textbf{All four error bars are standard errors, but the two published ones are SEs of
+   different provenance and this is worth stating.} For the \emph{singles}, Costanzo's
+   released ``single mutant fitness stddev'' column is, per the SOM, already a
+   \emph{bootstrap} SE over control screens --- it is used as published and never divided by
+   $\sqrt{n}$. For the \emph{doubles}, the released value is a \emph{sample SD over 4
+   colonies}, which we convert to an SE by dividing by $\sqrt{4}$ (verified: the ratio of the
+   stored SD to the derived SE is exactly 2.000 for every pair). So one is an SE as
+   published and the other is an SE we derived under the $n=4$ determination recorded in
+   \texttt{[[torchcell.datasets.scerevisiae.costanzo2016.noise-computation]]}. Vertical bars
+   are ours, bootstrapped across the three plates.}
 
 \subsection{Double-mutant fitness does not}
 

@@ -105,8 +105,12 @@
 %% \notetab{<tabular>}{<caption>} -- the table counterpart. Every table in a note gets a
 %% NUMBER and a CAPTION for the same reason every figure does: an unnumbered table cannot be
 %% referred to from the prose, and a reader landing mid-document has no way to tell what they
-%% are looking at. Caption ABOVE the table, per Nature Portfolio house style (figures caption
-%% below, tables above), and sized to the table's own width like \notefig.
+%% are looking at.
+%%
+%% Caption ABOVE the table, per Nature Portfolio house style (figures caption below, tables
+%% above). These notes follow the manuscript's conventions wherever there is one, so that a
+%% table drafted here can move into the paper unchanged. Sized to the table's own width like
+%% \notefig.
 \newsavebox{\notetabbox}
 \newlength{\notetabcapwd}
 \newcommand{\notetab}[2]{%

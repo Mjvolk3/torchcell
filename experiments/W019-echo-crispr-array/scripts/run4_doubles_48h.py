@@ -691,7 +691,10 @@ def plot_smf_dmf_combined(boot: pd.DataFrame, doubles_m: pd.DataFrame) -> None:
         d["dmf"],
         yerr=d["eps_se"],
         xerr=d["ref_dmf_se"],
-        fmt="s",
+        # Same marker SHAPE as the singles -- colour alone carries the distinction. Encoding
+        # one variable with both shape and colour is redundant, and a mixed-glyph scatter
+        # reads as two unrelated measurements rather than as one comparison.
+        fmt="o",
         ms=4.5,
         mfc=C_RED,
         mec="black",

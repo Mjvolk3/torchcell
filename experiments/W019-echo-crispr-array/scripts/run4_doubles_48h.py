@@ -91,12 +91,39 @@ BLANK_NAME = "Blank_media"
 N_BOOT = 4000
 SEED = 1234
 WT_CV_MAX = 0.18
-# The bar the panel calls a significant interaction, taken from Costanzo and applied
-# UNCHANGED to our own eps so the two "sig" columns of the comparison table mean the same
-# thing. Verified: recomputing (p < SIG_P) & (|eps| > SIG_EPS) over the reference table's 44
-# scored pairs reproduces its stored `significant` flag exactly (3 of 3).
+# Costanzo 2016's own confidence thresholds, applied UNCHANGED to our eps so both sides of
+# the comparison table mean the same thing. Sourced verbatim from the SI in the torchcell
+# library mirror (costanzoGlobalGeneticInteraction2016/si/si1.md, "General information about
+# SGA datasets"):
+#
+#   "We suggest three different thresholds [lenient (P < 0.05), intermediate (P < 0.05 and
+#    |e| > 0.08), and stringent confidence (P < 0.05 and e > 0.16 or e < -0.12)] that strike
+#    different balances between false negatives and false positives"
+#
+# so SIGNIFICANT is the lenient tier and STRONG is the stringent tier -- and the stringent
+# tier is ASYMMETRIC, +0.16 for positive interactions but only -0.12 for negative ones,
+# because negative interactions are the easier call.
+#
+# NB the OCR renders the intermediate tier as "|e| < 0.08" on two of the three lines it
+# appears on and "> 0.08" on the third. It is ">": the paper body states the same threshold
+# as "|e| > 0.08, P < 0.05" (Fig. 5 and Fig. 7 captions), and a tier more restrictive than
+# lenient cannot be an upper bound on effect size.
+# We use the INTERMEDIATE tier as the call, because that is the one the paper itself works
+# at: every genetic-interaction figure in Costanzo 2016 is drawn at "|e| > 0.08, P < 0.05"
+# (Figs. 5 and 7), and the reference table's stored `significant` flag is exactly this tier
+# (verified: recomputing it over the 44 scored pairs reproduces the stored flag, 3 of 3).
+# The stringent tier is recorded above only so the quoted definition stays complete.
 SIG_P = 0.05
-SIG_EPS = 0.08
+INT_EPS = 0.08
+
+
+def _is_intermediate(eps: float, p: float) -> bool:
+    """Costanzo's intermediate-confidence tier: P < 0.05 and |eps| > 0.08."""
+    if pd.isna(p) or pd.isna(eps):
+        return False
+    return bool(p < SIG_P and abs(eps) > INT_EPS)
+
+
 C_ORANGE, C_RED, C_PURPLE, C_GRAY = (
     PLOT_PALETTE[0],
     PLOT_PALETTE[1],
@@ -413,6 +440,19 @@ def compute_interactions(
                 n_plates=int(e.size),
                 n_colonies=int(sum(v["n_ab"] for v in per_plate.values())),
                 dmf=float(np.mean([v["f_ab"] for v in per_plate.values()])),
+                # SE of the DOUBLE'S FITNESS, bootstrapped across plates. Distinct from
+                # eps_se: eps carries the error of all THREE strains, so using it as the
+                # error bar on a DMF axis overstates it. They are different quantities and
+                # must not be interchanged on a plot.
+                dmf_se=float(
+                    rng.choice(
+                        np.array([v["f_ab"] for v in per_plate.values()]),
+                        size=(N_BOOT, len(per_plate)),
+                        replace=True,
+                    )
+                    .mean(axis=1)
+                    .std(ddof=1)
+                ),
                 expected=float(np.mean([v["expected"] for v in per_plate.values()])),
                 eps=float(e.mean()),
                 eps_se=float(draws.std(ddof=1)),
@@ -701,7 +741,7 @@ def plot_smf_dmf_combined(boot: pd.DataFrame, doubles_m: pd.DataFrame) -> None:
     ax.errorbar(
         d["ref_dmf"],
         d["dmf"],
-        yerr=d["eps_se"],
+        yerr=d["dmf_se"],
         xerr=d["ref_dmf_se"],
         # Same marker SHAPE as the singles -- colour alone carries the distinction. Encoding
         # one variable with both shape and colour is redundant, and a mixed-glyph scatter
@@ -761,26 +801,60 @@ def plot_interaction_forest(doubles_m: pd.DataFrame) -> None:
     fig, ax = _panel("half_plus", 95)
     ax.axvline(0, lw=0.6, color="black", zorder=1)
     ax.errorbar(
-        d["eps"], y, xerr=d["eps_se_across"], fmt="o", ms=4, mfc=C_ORANGE, mec="black",
-        mew=0.4, ecolor="black", elinewidth=0.5, capsize=1.5, lw=0, zorder=3,
+        d["eps"],
+        y,
+        xerr=d["eps_se_across"],
+        fmt="o",
+        ms=4,
+        mfc=C_ORANGE,
+        mec="black",
+        mew=0.4,
+        ecolor="black",
+        elinewidth=0.5,
+        capsize=1.5,
+        lw=0,
+        zorder=3,
         label=r"ours ($\pm$ across-plate SE)",
     )
     ref = d.dropna(subset=["ref_eps"])
     ax.scatter(
-        ref["ref_eps"], y[ref.index], s=22, marker="D", facecolor=C_RED,
-        edgecolor="black", linewidth=0.4, zorder=4, label="Costanzo 2016",
+        ref["ref_eps"],
+        y[ref.index],
+        s=22,
+        marker="D",
+        facecolor=C_RED,
+        edgecolor="black",
+        linewidth=0.4,
+        zorder=4,
+        label="Costanzo 2016",
     )
     # Mark the calls, using the SAME bar for both (SIG_P / SIG_EPS).
-    strong = (d["eps_p"] < SIG_P) & (d["eps"].abs() > SIG_EPS)
+    strong = (d["eps_p"] < SIG_P) & (d["eps"].abs() > INT_EPS)
     if strong.any():
-        ax.scatter(d.loc[strong, "eps"], y[strong.to_numpy()], s=90, marker="o",
-                   facecolor="none", edgecolor=C_PURPLE, linewidth=0.8, zorder=2,
-                   label="strong (ours)")
+        ax.scatter(
+            d.loc[strong, "eps"],
+            y[strong.to_numpy()],
+            s=90,
+            marker="o",
+            facecolor="none",
+            edgecolor=C_PURPLE,
+            linewidth=0.8,
+            zorder=2,
+            label="strong (ours)",
+        )
     csig = d["significant"].fillna(False).astype(bool)
     if csig.any():
-        ax.scatter(d.loc[csig, "ref_eps"], y[csig.to_numpy()], s=90, marker="D",
-                   facecolor="none", edgecolor=C_PURPLE, linewidth=0.8, zorder=2,
-                   label="significant (Costanzo)")
+        ax.scatter(
+            d.loc[csig, "ref_eps"],
+            y[csig.to_numpy()],
+            s=90,
+            marker="D",
+            facecolor="none",
+            edgecolor=C_PURPLE,
+            linewidth=0.8,
+            zorder=2,
+            label="significant (Costanzo)",
+        )
     ax.set_yticks(y)
     ax.set_yticklabels(d["double"], fontsize=4.5)
     ax.set_ylim(-0.7, len(d) - 0.3)
@@ -800,37 +874,34 @@ def write_interaction_table(doubles_m: pd.DataFrame) -> str:
     lines = [
         "% GENERATED by experiments/W019-echo-crispr-array/scripts/run4_doubles_48h.py",
         "% Do not edit; re-run the script.",
-        "\\begin{tabular}{lrrrrrrcrc}",
+        "\\begin{tabular}{lrrrrrrr}",
         "\\toprule",
-        " & & & \\multicolumn{5}{c}{ours} & \\multicolumn{2}{c}{Costanzo} \\\\",
-        "\\cmidrule(lr){4-8}\\cmidrule(lr){9-10}",
+        " & & & \\multicolumn{4}{c}{ours} & Costanzo \\\\",
+        "\\cmidrule(lr){4-7}\\cmidrule(lr){8-8}",
         "double & $f_{ab}$ & $f_a f_b$ & $\\varepsilon$ & SE$_{\\text{within}}$ & "
-        "SE$_{\\text{across}}$ & $p$ & strong & $\\varepsilon$ & sig. \\\\",
+        "SE$_{\\text{across}}$ & $p$ & $\\varepsilon$ \\\\",
         "\\midrule",
     ]
     for _, r in d.iterrows():
         name = r["double"].replace("+", "$+$")
-        ref_eps = "---" if pd.isna(r["ref_eps"]) else f"{r['ref_eps']:+.3f}"
-        sig = "$\\checkmark$" if bool(r["significant"]) is True else ""
+        # BOLD = meets Costanzo's intermediate-confidence tier, applied identically to both
+        # sides. Ours bolds our own eps (from our p); the Costanzo column bolds theirs (from
+        # their published p). Same rule, so the two columns are directly comparable rather
+        # than being two different bars sitting next to each other.
+        eps = f"{r['eps']:+.3f}"
+        if _is_intermediate(r["eps"], r["eps_p"]):
+            eps = f"\\textbf{{{eps}}}"
+        if pd.isna(r["ref_eps"]):
+            ref_eps = "---"
+        else:
+            ref_eps = f"{r['ref_eps']:+.3f}"
+            if bool(r["significant"]) is True:
+                ref_eps = f"\\textbf{{{ref_eps}}}"
         p = "---" if pd.isna(r["eps_p"]) else f"{r['eps_p']:.3f}"
-        # Bold our p when it clears 0.05 -- see the caveat in the note: with the WT shift
-        # unresolved this measures PRECISION, not correctness.
-        if not pd.isna(r["eps_p"]) and r["eps_p"] < 0.05:
-            p = f"\\textbf{{{p}}}"
-        # `strong` applies EXACTLY the bar the Costanzo `sig` column encodes, so the two
-        # right-hand columns are a like-for-like call rather than two different thresholds
-        # sitting next to each other. Verified against the reference table: recomputing
-        # (p < 0.05) & (|eps| > 0.08) over its 44 scored pairs reproduces its stored
-        # `significant` flag exactly, all 3 of them.
-        strong = (
-            "$\\checkmark$"
-            if (not pd.isna(r["eps_p"]) and r["eps_p"] < SIG_P and abs(r["eps"]) > SIG_EPS)
-            else ""
-        )
         lines.append(
             f"{name} & {r['dmf']:.3f} & {r['expected']:.3f} & "
-            f"{r['eps']:+.3f} & {r['eps_se_within']:.3f} & {r['eps_se_across']:.3f} & "
-            f"{p} & {strong} & {ref_eps} & {sig} \\\\"
+            f"{eps} & {r['eps_se_within']:.3f} & {r['eps_se_across']:.3f} & "
+            f"{p} & {ref_eps} \\\\"
         )
     lines += ["\\bottomrule", "\\end{tabular}", ""]
     out = osp.join(RESULTS_DIR, "run4_interactions_table.tex")

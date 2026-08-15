@@ -22,6 +22,7 @@ import warnings
 from itertools import combinations
 from typing import Dict, List, Tuple, Optional
 import os
+import os.path as osp
 from pathlib import Path
 from dotenv import load_dotenv
 import json
@@ -31,9 +32,10 @@ warnings.filterwarnings('ignore')
 
 # Load environment variables
 load_dotenv()
+DATA_ROOT = os.getenv("DATA_ROOT")
 
 # Define paths
-BASE_DIR = Path("/Users/michaelvolk/Documents/projects/torchcell/experiments/008-xue-ffa")
+BASE_DIR = Path(osp.join(os.getenv("EXPERIMENT_ROOT"), "008-xue-ffa"))
 DATA_DIR = BASE_DIR / "data"
 RESULTS_DIR = BASE_DIR / "results" / "glm_log_link"
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR", str(BASE_DIR / "figures"))
@@ -67,8 +69,16 @@ DELTA = 1e-6
 def load_ffa_data_with_replicates(file_path):
     """Load FFA data with proper strain identification."""
     # Read abbreviations
-    abbrev_df = pd.read_excel(file_path, sheet_name='Abbreviations')
+    # header=None is REQUIRED: the sheet has no header row, so pandas' default consumes
+    # the first data row (FKH1) as column names and silently yields only 9 of the 10 TFs.
+    # Strains containing 'F' then carry the bare letter as their gene name, mislabelling
+    # every FKH1-containing genotype. The assertion makes that failure loud, not silent.
+    abbrev_df = pd.read_excel(file_path, sheet_name='Abbreviations', header=None)
     abbreviations = dict(zip(abbrev_df.iloc[:, 0], abbrev_df.iloc[:, 1]))
+    if len(abbreviations) != 10:
+        raise ValueError(
+            f"expected 10 TF abbreviations, got {len(abbreviations)}: {abbreviations}"
+        )
 
     # Read raw titer data
     raw_df = pd.read_excel(file_path, sheet_name='raw-titer (mg-L)')
@@ -389,7 +399,7 @@ def main():
     """Main execution function."""
     print("Loading FFA data...")
 
-    file_path = "/Users/michaelvolk/Documents/projects/torchcell/data/torchcell/ffa_xue2025/raw/Supplementary Data 1_Raw titers.xlsx"
+    file_path = osp.join(DATA_ROOT, "data/torchcell/ffa_xue2025/raw/Supplementary Data 1_Raw titers.xlsx")
 
     if not Path(file_path).exists():
         print(f"Error: Data file not found at {file_path}")

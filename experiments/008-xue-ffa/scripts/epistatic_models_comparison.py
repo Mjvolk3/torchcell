@@ -12,6 +12,7 @@ from pathlib import Path
 import os
 import os.path as osp
 from dotenv import load_dotenv
+import torchcell
 from torchcell.timestamp import timestamp
 import warnings
 
@@ -19,9 +20,10 @@ warnings.filterwarnings('ignore')
 
 # Load environment variables
 load_dotenv()
+EXPERIMENT_ROOT = os.getenv("EXPERIMENT_ROOT")
 
 # Define paths
-BASE_DIR = Path("/Users/michaelvolk/Documents/projects/torchcell/experiments/008-xue-ffa")
+BASE_DIR = Path(osp.join(EXPERIMENT_ROOT, "008-xue-ffa"))
 RESULTS_DIR = BASE_DIR / "results" / "glm_models"
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
 if not ASSET_IMAGES_DIR:
@@ -30,7 +32,7 @@ if not ASSET_IMAGES_DIR:
 os.makedirs(ASSET_IMAGES_DIR, exist_ok=True)
 
 # Apply torchcell style
-STYLE_PATH = "/Users/michaelvolk/Documents/projects/torchcell/torchcell/torchcell.mplstyle"
+STYLE_PATH = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 if osp.exists(STYLE_PATH):
     plt.style.use(STYLE_PATH)
 

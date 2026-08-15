@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
 from dotenv import load_dotenv
+import torchcell
 from torchcell.timestamp import timestamp
 import glob
 import warnings
@@ -34,10 +35,10 @@ if not ASSET_IMAGES_DIR:
 os.makedirs(ASSET_IMAGES_DIR, exist_ok=True)
 
 # Results directory
-RESULTS_DIR = Path("/Users/michaelvolk/Documents/projects/torchcell/experiments/008-xue-ffa/results")
+RESULTS_DIR = Path(osp.join(os.getenv("EXPERIMENT_ROOT"), "008-xue-ffa/results"))
 
 # Apply torchcell style
-STYLE_PATH = "/Users/michaelvolk/Documents/projects/torchcell/torchcell/torchcell.mplstyle"
+STYLE_PATH = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 if osp.exists(STYLE_PATH):
     plt.style.use(STYLE_PATH)
 else:

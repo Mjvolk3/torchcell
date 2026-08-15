@@ -5,10 +5,15 @@ Create a minimal test Escher map with just one reaction to debug the issue.
 
 import json
 import os
+import os.path as osp
 from pathlib import Path
 from torchcell.timestamp import timestamp
+from dotenv import load_dotenv
 
-RESULTS_DIR = Path("/Users/michaelvolk/Documents/projects/torchcell/experiments/008-xue-ffa/results")
+load_dotenv()
+EXPERIMENT_ROOT = os.getenv("EXPERIMENT_ROOT")
+
+RESULTS_DIR = Path(osp.join(EXPERIMENT_ROOT, "008-xue-ffa/results"))
 
 
 def create_minimal_test_map():

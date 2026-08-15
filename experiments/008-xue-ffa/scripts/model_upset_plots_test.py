@@ -3,9 +3,15 @@
 
 import pandas as pd
 from pathlib import Path
+import os
+import os.path as osp
+from dotenv import load_dotenv
+
+load_dotenv()
+EXPERIMENT_ROOT = os.getenv("EXPERIMENT_ROOT")
 
 # Results directory
-RESULTS_DIR = Path("/Users/michaelvolk/Documents/projects/torchcell/experiments/008-xue-ffa/results")
+RESULTS_DIR = Path(osp.join(EXPERIMENT_ROOT, "008-xue-ffa/results"))
 
 # Load multiplicative digenic data
 mult_df = pd.read_csv(RESULTS_DIR / "multiplicative_digenic_interactions_3_delta_normalized.csv")

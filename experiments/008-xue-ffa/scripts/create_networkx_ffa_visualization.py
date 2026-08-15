@@ -19,10 +19,11 @@ import numpy as np
 
 # Load environment
 load_dotenv()
+EXPERIMENT_ROOT = os.getenv("EXPERIMENT_ROOT")
 DATA_ROOT = os.getenv("DATA_ROOT")
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
 
-RESULTS_DIR = Path("/Users/michaelvolk/Documents/projects/torchcell/experiments/008-xue-ffa/results")
+RESULTS_DIR = Path(osp.join(EXPERIMENT_ROOT, "008-xue-ffa/results"))
 FFA_REACTIONS_DIR = RESULTS_DIR / "ffa_reactions"
 
 

@@ -93,6 +93,14 @@ RAW_TITER_PATH = osp.join(
 RESULTS_DIR = osp.join(EXPERIMENT_ROOT, "008-xue-ffa/results")
 IMAGES_DIR = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
 
+# The canonical trigenic interaction table for 008, written by
+# free_fatty_acid_interactions.py. We read the significance columns from it rather than
+# re-deriving them, so the panels cannot disagree with the experiment's own statistics --
+# and we ASSERT its interaction_score equals the tau computed here (see load_significance).
+TRIGENIC_PATH = osp.join(
+    RESULTS_DIR, "multiplicative_trigenic_interactions_3_delta_normalized.csv"
+)
+
 # Rung 0 is the BASE PRODUCTION STRAIN: the '+ve Ctrl' row, i.e. the pox1/faa1/faa4
 # FFA-overproduction chassis. Its three deletions are the platform, present in EVERY
 # strain on the ladder; the TF knockouts counted on the x axis are ADDITIONAL on top of
@@ -230,6 +238,72 @@ def summarize_triples(path_df):
     return summary.merge(spread, on="triple")
 
 
+def load_significance():
+    """Trigenic significance for the plotted phenotype, keyed by sorted triple name.
+
+    The gene_set labels in that table carry a known defect: load_ffa_data reads the
+    Abbreviations sheet with a default header row, which consumes FKH1 as the header, so
+    all 36 FKH1-containing triples are labelled with the bare letter 'F'. Only the LABEL
+    is affected -- the grouping and therefore every statistic is computed off a consistent
+    gene identity -- so remapping 'F' -> 'FKH1' here recovers the correct name. The
+    assertion in attach_significance is what proves the values are sound.
+    """
+    df = pd.read_csv(TRIGENIC_PATH)
+    df = df[df["ffa_type"] == PHENOTYPE].copy()
+    df["triple"] = df["gene_set"].apply(
+        lambda s: "-".join(sorted("FKH1" if g == "F" else g for g in s.split("_")))
+    )
+    return df[
+        [
+            "triple",
+            "interaction_score",
+            "p_value",
+            "fdr_corrected_p",
+            "significant_p05",
+            "significant_fdr05",
+        ]
+    ]
+
+
+def attach_significance(summary):
+    """Join the canonical significance columns onto the per-triple summary.
+
+    Hard-fails if a triple is missing or if the table's interaction_score disagrees with
+    the tau computed here -- either means the results CSV is stale relative to the loaders
+    and the panels would annotate figures with statistics for a different model.
+    """
+    merged = summary.merge(load_significance(), on="triple", how="left", validate="1:1")
+
+    missing = merged.loc[merged["interaction_score"].isna(), "triple"].tolist()
+    if missing:
+        raise ValueError(
+            f"{len(missing)} triples absent from {TRIGENIC_PATH}: {missing[:5]} ... "
+            "regenerate it with free_fatty_acid_interactions.py"
+        )
+    dev = (merged["tau_multiplicative"] - merged["interaction_score"]).abs().max()
+    if dev > 1e-8:
+        raise ValueError(
+            f"tau disagrees with the canonical interaction_score by up to {dev:.3e}; "
+            f"{TRIGENIC_PATH} is stale relative to the loaders"
+        )
+    return merged
+
+
+def significance_mark(row):
+    """(marker, fillstyle, label) encoding the sign and significance of the triple's tau.
+
+    Direction encodes the SIGN of the interaction (up = positive, down = negative); fill
+    encodes how much support it has. Kept in black per the repo's solid-black convention
+    for pattern marks, so the badge cannot be mistaken for one of the six ordering colors.
+    """
+    marker = "^" if row["interaction_score"] > 0 else "v"
+    if row["significant_fdr05"]:
+        return marker, "full", "FDR<0.05"
+    if row["significant_p05"]:
+        return marker, "bottom", "P<0.05"
+    return marker, "none", "n.s."
+
+
 def select_triples(summary, mode, n_panels):
     """Pick the panel triples: highest endpoint titer, or widest path spread."""
     if mode == "top":
@@ -291,13 +365,30 @@ def plot_path_panels(path_df, selected, mode, out_stem, ncols=3):
         ax.axhline(1.0, color="black", linewidth=0.5, linestyle="--", zorder=2)
 
         ax.set_ylim(*y_lim)
+
+        marker, fillstyle, sig_label = significance_mark(tri)
         ax.set_title(
             f"{tri['triple'].replace('-', '–')}\n"
             f"$f_{{ijk}}$ = {tri['f_triple']:.3f}   "
-            f"$\\tau_{{ijk}}$ = {tri['tau_multiplicative']:+.3f}   "
+            f"$\\tau_{{ijk}}$ = {tri['tau_multiplicative']:+.3f} ({sig_label})   "
             f"{int(tri['n_monotone'])}/6 monotone",
             fontsize=6,
             pad=3,
+        )
+        # Sign-and-support badge, top right inside the panel.
+        ax.plot(
+            [0.955],
+            [0.93],
+            transform=ax.transAxes,
+            marker=marker,
+            fillstyle=fillstyle,
+            markersize=4.0,
+            markeredgewidth=0.6,
+            markeredgecolor="black",
+            markerfacecolor="black",
+            linestyle="none",
+            clip_on=False,
+            zorder=5,
         )
         ax.legend(
             title="Single → Double",
@@ -338,9 +429,11 @@ def plot_path_panels(path_df, selected, mode, out_stem, ncols=3):
     fig.suptitle(
         f"{title}: all 6 KO orders per triple. Total FFA titer relative to the base "
         "production strain (pox1$\\Delta$ faa1$\\Delta$ faa4$\\Delta$); TF knockouts are "
-        "additional to it.",
+        "additional to it.\nBadge = trigenic interaction: "
+        "$\\blacktriangle$ positive $\\tau$, $\\blacktriangledown$ negative $\\tau$; "
+        "filled = FDR<0.05, half = P<0.05, open = not significant.",
         fontsize=6,
-        y=0.995,
+        y=0.997,
     )
     fig.tight_layout(rect=(0, 0, 1, 0.98))
 
@@ -381,8 +474,18 @@ def main():
     print(f"singles={len(singles)}  doubles={len(doubles)}  triples={len(triples)}")
 
     path_df = build_paths(singles, doubles, triples)
-    summary = summarize_triples(path_df)
+    summary = attach_significance(summarize_triples(path_df))
     print(f"paths={len(path_df)} over {len(summary)} triples")
+
+    n_pos = int((summary["interaction_score"] > 0).sum())
+    print(
+        f"trigenic tau on {PHENOTYPE}: {n_pos} positive / "
+        f"{len(summary) - n_pos} negative; "
+        f"{int(summary['significant_p05'].sum())} at raw P<0.05, "
+        f"{int(summary['significant_fdr05'].sum())} at FDR<0.05 "
+        f"({int(((summary['interaction_score'] > 0) & summary['significant_p05']).sum())}"
+        " positive AND raw P<0.05)"
+    )
 
     n_reachable = int((summary["n_monotone"] > 0).sum())
     n_reachable_se = int((summary["n_monotone_within_se"] > 0).sum())

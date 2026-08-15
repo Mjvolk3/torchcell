@@ -43,6 +43,7 @@ import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
 from matplotlib.ticker import MultipleLocator
+from statsmodels.stats.multitest import multipletests
 
 import torchcell
 from torchcell.timestamp import timestamp
@@ -253,14 +254,34 @@ def load_significance():
     df["triple"] = df["gene_set"].apply(
         lambda s: "-".join(sorted("FKH1" if g == "F" else g for g in s.split("_")))
     )
+
+    # The stored fdr_corrected_p answers a DIFFERENT question than this figure asks. That
+    # column is Benjamini-Hochberg over the whole trigenic dict -- all 714 testable
+    # triple x FFA-readout combinations pooled -- so it is the right correction for a
+    # claim spanning every readout at once. This figure plots ONE readout, so its testing
+    # family is the triples within that readout, and correcting over 6x more tests than
+    # were performed would understate significance. Recompute BH within the readout with
+    # the same method, and keep the pooled flag alongside it so both are inspectable.
+    testable = df["p_value"].notna()
+    df["fdr_within_readout"] = np.nan
+    df["significant_fdr05_within"] = False
+    if testable.any():
+        reject, fdr, _, _ = multipletests(
+            df.loc[testable, "p_value"], method="fdr_bh", alpha=0.05
+        )
+        df.loc[testable, "fdr_within_readout"] = fdr
+        df.loc[testable, "significant_fdr05_within"] = reject
+
     return df[
         [
             "triple",
             "interaction_score",
             "p_value",
             "fdr_corrected_p",
+            "fdr_within_readout",
             "significant_p05",
             "significant_fdr05",
+            "significant_fdr05_within",
         ]
     ]
 
@@ -297,7 +318,12 @@ def significance_mark(row):
     for pattern marks, so the badge cannot be mistaken for one of the six ordering colors.
     """
     marker = "^" if row["interaction_score"] > 0 else "v"
-    if row["significant_fdr05"]:
+    # No SD means the triple was never testable, which is NOT the same as tested and
+    # found null -- GCN5-OPI1-TFC7 is the 'G-O-T 6d' strain released with a single
+    # replicate, so it has a tau but no p-value. Say so rather than badging it n.s.
+    if pd.isna(row["p_value"]):
+        return marker, "none", "no test (n=1)"
+    if row["significant_fdr05_within"]:
         return marker, "full", "FDR<0.05"
     if row["significant_p05"]:
         return marker, "bottom", "P<0.05"
@@ -431,7 +457,7 @@ def plot_path_panels(path_df, selected, mode, out_stem, ncols=3):
         "production strain (pox1$\\Delta$ faa1$\\Delta$ faa4$\\Delta$); TF knockouts are "
         "additional to it.\nBadge = trigenic interaction: "
         "$\\blacktriangle$ positive $\\tau$, $\\blacktriangledown$ negative $\\tau$; "
-        "filled = FDR<0.05, half = P<0.05, open = not significant.",
+        "filled = FDR<0.05 (BH within this readout), half = P<0.05, open = not significant.",
         fontsize=6,
         y=0.997,
     )
@@ -477,14 +503,19 @@ def main():
     summary = attach_significance(summarize_triples(path_df))
     print(f"paths={len(path_df)} over {len(summary)} triples")
 
-    n_pos = int((summary["interaction_score"] > 0).sum())
+    pos = summary["interaction_score"] > 0
+    within = summary["significant_fdr05_within"]
     print(
-        f"trigenic tau on {PHENOTYPE}: {n_pos} positive / "
-        f"{len(summary) - n_pos} negative; "
-        f"{int(summary['significant_p05'].sum())} at raw P<0.05, "
-        f"{int(summary['significant_fdr05'].sum())} at FDR<0.05 "
-        f"({int(((summary['interaction_score'] > 0) & summary['significant_p05']).sum())}"
-        " positive AND raw P<0.05)"
+        f"multiplicative trigenic tau on {PHENOTYPE} "
+        f"({int(summary['p_value'].notna().sum())} testable of {len(summary)}): "
+        f"{int(pos.sum())} positive / {int((~pos).sum())} negative\n"
+        f"  raw P<0.05:            {int(summary['significant_p05'].sum()):>3}"
+        f"  ({int((pos & summary['significant_p05']).sum())} positive)\n"
+        f"  FDR<0.05 within {PHENOTYPE}: {int(within.sum()):>3}"
+        f"  ({int((pos & within).sum())} positive)\n"
+        f"  FDR<0.05 pooled over all 6 readouts: "
+        f"{int(summary['significant_fdr05'].sum()):>3}"
+        f"  ({int((pos & summary['significant_fdr05']).sum())} positive)"
     )
 
     n_reachable = int((summary["n_monotone"] > 0).sum())

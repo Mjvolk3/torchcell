@@ -13,6 +13,7 @@ from matplotlib.patches import Rectangle
 import matplotlib.style as mplstyle
 from pathlib import Path
 from dotenv import load_dotenv
+import torchcell
 from torchcell.timestamp import timestamp
 import warnings
 import seaborn as sns
@@ -21,6 +22,7 @@ warnings.filterwarnings("ignore")
 
 # Load environment variables
 load_dotenv()
+EXPERIMENT_ROOT = os.getenv("EXPERIMENT_ROOT")
 DATA_ROOT = os.getenv("DATA_ROOT")
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
 if not ASSET_IMAGES_DIR:
@@ -30,7 +32,7 @@ os.makedirs(ASSET_IMAGES_DIR, exist_ok=True)
 
 # Apply torchcell style
 STYLE_PATH = (
-    "/Users/michaelvolk/Documents/projects/torchcell/torchcell/torchcell.mplstyle"
+    osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 )
 if osp.exists(STYLE_PATH):
     plt.style.use(STYLE_PATH)
@@ -39,7 +41,7 @@ if osp.exists(STYLE_PATH):
 import sys
 
 sys.path.append(
-    "/Users/michaelvolk/Documents/projects/torchcell/experiments/008-xue-ffa/scripts"
+    osp.join(EXPERIMENT_ROOT, "008-xue-ffa/scripts")
 )
 from free_fatty_acid_interactions import (
     load_ffa_data,
@@ -425,7 +427,7 @@ def main():
     """Main function to analyze distribution and composition of mutant types."""
 
     print("Loading FFA data...")
-    file_path = "/Users/michaelvolk/Documents/projects/torchcell/data/torchcell/ffa_xue2025/raw/Supplementary Data 1_Raw titers.xlsx"
+    file_path = osp.join(DATA_ROOT, "data/torchcell/ffa_xue2025/raw/Supplementary Data 1_Raw titers.xlsx")
     raw_df, abbreviations, replicate_dict = load_ffa_data(file_path)
 
     print("Normalizing by positive control (+ve Ctrl)...")

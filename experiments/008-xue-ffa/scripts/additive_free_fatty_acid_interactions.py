@@ -13,6 +13,7 @@ import matplotlib.style as mplstyle
 import seaborn as sns
 from pathlib import Path
 from dotenv import load_dotenv
+import torchcell
 from torchcell.timestamp import timestamp
 from scipy import stats
 from statsmodels.stats.multitest import multipletests
@@ -30,11 +31,11 @@ if not ASSET_IMAGES_DIR:
 os.makedirs(ASSET_IMAGES_DIR, exist_ok=True)
 
 # Results directory
-RESULTS_DIR = "/Users/michaelvolk/Documents/projects/torchcell/experiments/008-xue-ffa/results"
+RESULTS_DIR = osp.join(os.getenv("EXPERIMENT_ROOT"), "008-xue-ffa/results")
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
 # Apply torchcell style
-STYLE_PATH = "/Users/michaelvolk/Documents/projects/torchcell/torchcell/torchcell.mplstyle"
+STYLE_PATH = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 if osp.exists(STYLE_PATH):
     plt.style.use(STYLE_PATH)
 else:
@@ -46,8 +47,16 @@ else:
 def load_ffa_data(file_path):
     """Load FFA data from Excel file, returning both averaged and replicate data."""
     # Read abbreviations
-    abbrev_df = pd.read_excel(file_path, sheet_name='Abbreviations')
+    # header=None is REQUIRED: the sheet has no header row, so pandas' default consumes
+    # the first data row (FKH1) as column names and silently yields only 9 of the 10 TFs.
+    # Strains containing 'F' then carry the bare letter as their gene name, mislabelling
+    # every FKH1-containing genotype. The assertion makes that failure loud, not silent.
+    abbrev_df = pd.read_excel(file_path, sheet_name='Abbreviations', header=None)
     abbreviations = dict(zip(abbrev_df.iloc[:, 0], abbrev_df.iloc[:, 1]))
+    if len(abbreviations) != 10:
+        raise ValueError(
+            f"expected 10 TF abbreviations, got {len(abbreviations)}: {abbreviations}"
+        )
 
     # Read raw titer data - get all replicates
     raw_df = pd.read_excel(file_path, sheet_name='raw-titer (mg-L)')
@@ -216,6 +225,41 @@ def parse_genotype(genotype_str, abbreviations=None, reference_strain=None):
     return genes
 
 
+def welch_satterthwaite_df(terms):
+    """Effective degrees of freedom for a linear combination of independent means.
+
+    An interaction score is a linear combination of several independently measured
+    strains, so its SE pools variance from all of them. Referring the resulting t
+    statistic to the SMALLEST single input's df (the previous behaviour, giving df=1-2)
+    treats ~21 measurements as if they were 3 and makes the reference distribution far
+    too heavy-tailed, which understates significance badly -- at df=2 essentially nothing
+    clears FDR, while at the true effective df much of it does.
+
+    Welch-Satterthwaite for v = sum_m c_m * xbar_m:
+
+        df_eff = (sum_m u_m^2)^2 / sum_m (u_m^4 / df_m)
+
+    where u_m = |c_m| * SE_m is the term's contribution to the combined SE and
+    df_m = n_m - 1. Terms are (contribution, n_replicates) pairs; those with n < 2 carry
+    no variance estimate and are skipped. Returns NaN when nothing is estimable.
+    """
+    num = 0.0
+    den = 0.0
+    for contribution, n in terms:
+        if n is None or n < 2 or contribution is None:
+            continue
+        if np.isnan(contribution) or np.isnan(n):
+            continue
+        u2 = float(contribution) ** 2
+        if u2 == 0.0:
+            continue
+        num += u2
+        den += (u2 ** 2) / (float(n) - 1.0)
+    if den <= 0 or num <= 0:
+        return np.nan
+    return num ** 2 / den
+
+
 def compute_se_pvalue(observed_interaction, se_interaction, df=2):
     """
     Compute p-value using standard error and t-distribution.
@@ -235,6 +279,8 @@ def compute_se_pvalue(observed_interaction, se_interaction, df=2):
         Two-tailed p-value from t-test
     """
     if se_interaction == 0 or np.isnan(se_interaction):
+        return np.nan
+    if df is None or np.isnan(df) or df <= 0:
         return np.nan
 
     # t-statistic under null hypothesis that interaction = 0
@@ -388,8 +434,14 @@ def compute_additive_interactions_with_error_propagation(normalized_df, normaliz
                 if not np.isnan(epsilon_ij[idx]) and not np.isnan(se_epsilon_ij[idx]):
                     # Use minimum number of replicates minus 1 for df
                     # This is conservative but appropriate for error propagation
-                    min_reps = min(n_i[idx], n_j[idx], n_ij[idx])
-                    df = max(1, min_reps - 1)  # Ensure df is at least 1
+                    # Welch-Satterthwaite over the three strains entering epsilon. In
+                    # the ADDITIVE model every coefficient is +/-1, so each term's
+                    # contribution to the combined SE is simply its own SE.
+                    df = welch_satterthwaite_df([
+                        (se_ij[idx], n_ij[idx]),
+                        (se_i[idx], n_i[idx]),
+                        (se_j[idx], n_j[idx]),
+                    ])
                     pval = compute_se_pvalue(epsilon_ij[idx], se_epsilon_ij[idx], df=df)
                     pvalues.append(pval)
                 else:
@@ -472,8 +524,13 @@ def compute_additive_interactions_with_error_propagation(normalized_df, normaliz
             if not np.isnan(E_ijk[idx]) and not np.isnan(se_E_ijk[idx]):
                 # Use minimum number of replicates minus 1 for df
                 # Include single mutant replicates since they contribute to E_ijk
-                min_reps = min(n_i[idx], n_j[idx], n_k[idx], n_ij[idx], n_ik[idx], n_jk[idx], n_ijk[idx])
-                df = max(1, min_reps - 1)
+                # Welch-Satterthwaite over all seven strains entering E_ijk; unit
+                # coefficients again, so contributions are the component SEs.
+                df = welch_satterthwaite_df([
+                    (se_ijk[idx], n_ijk[idx]), (se_ij[idx], n_ij[idx]),
+                    (se_ik[idx], n_ik[idx]), (se_jk[idx], n_jk[idx]),
+                    (se_i[idx], n_i[idx]), (se_j[idx], n_j[idx]), (se_k[idx], n_k[idx]),
+                ])
                 pval = compute_se_pvalue(E_ijk[idx], se_E_ijk[idx], df=df)
                 pvalues.append(pval)
             else:
@@ -872,7 +929,7 @@ def main():
     print("\nLoading free fatty acid data...")
 
     # Load data with replicates
-    file_path = "/Users/michaelvolk/Documents/projects/torchcell/data/torchcell/ffa_xue2025/raw/Supplementary Data 1_Raw titers.xlsx"
+    file_path = osp.join(DATA_ROOT, "data/torchcell/ffa_xue2025/raw/Supplementary Data 1_Raw titers.xlsx")
     raw_df, abbreviations, replicate_dict = load_ffa_data(file_path)
 
     print(f"Loaded data with {len(raw_df)} strains")

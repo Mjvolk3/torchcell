@@ -10,6 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
 from dotenv import load_dotenv
+import torchcell
 from torchcell.timestamp import timestamp
 import warnings
 
@@ -17,6 +18,7 @@ warnings.filterwarnings("ignore")
 
 # Load environment variables
 load_dotenv()
+EXPERIMENT_ROOT = os.getenv("EXPERIMENT_ROOT")
 DATA_ROOT = os.getenv("DATA_ROOT")
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
 if not ASSET_IMAGES_DIR:
@@ -26,7 +28,7 @@ os.makedirs(ASSET_IMAGES_DIR, exist_ok=True)
 
 # Apply torchcell style
 STYLE_PATH = (
-    "/Users/michaelvolk/Documents/projects/torchcell/torchcell/torchcell.mplstyle"
+    osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 )
 if osp.exists(STYLE_PATH):
     plt.style.use(STYLE_PATH)
@@ -34,7 +36,7 @@ if osp.exists(STYLE_PATH):
 # Import functions from both model scripts
 import sys
 sys.path.append(
-    "/Users/michaelvolk/Documents/projects/torchcell/experiments/008-xue-ffa/scripts"
+    osp.join(EXPERIMENT_ROOT, "008-xue-ffa/scripts")
 )
 from free_fatty_acid_interactions import (
     load_ffa_data,
@@ -181,11 +183,11 @@ def compare_significant_interactions(mult_data, add_data, columns, p_threshold=0
     # Extract data from both models
     (mult_digenic_int, mult_digenic_sd, mult_digenic_se, mult_digenic_pval,
      mult_trigenic_int, mult_trigenic_sd, mult_trigenic_se, mult_trigenic_pval,
-     _, _, _, _, _, _, _, _, _) = mult_data
+     *_) = mult_data
 
     (add_digenic_int, add_digenic_sd, add_digenic_se, add_digenic_pval,
      add_trigenic_int, add_trigenic_sd, add_trigenic_se, add_trigenic_pval,
-     _, _, _, _, _, _, _, _, _) = add_data
+     *_) = add_data
 
     # Count significant interactions for each FFA
     ffa_types = columns
@@ -481,8 +483,9 @@ def main():
     """Main function for model comparison analysis."""
 
     print("Loading FFA data...")
-    file_path = ("/Users/michaelvolk/Documents/projects/torchcell/data/"
-                 "torchcell/ffa_xue2025/raw/Supplementary Data 1_Raw titers.xlsx")
+    file_path = osp.join(
+        DATA_ROOT, "data/torchcell/ffa_xue2025/raw/Supplementary Data 1_Raw titers.xlsx"
+    )
     raw_df, abbreviations, replicate_dict = load_ffa_data(file_path)
 
     print("Normalizing by positive control (+ve Ctrl)...")

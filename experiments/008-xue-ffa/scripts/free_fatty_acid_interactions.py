@@ -48,8 +48,16 @@ else:
 def load_ffa_data(file_path):
     """Load FFA data from Excel file, returning both averaged and replicate data."""
     # Read abbreviations
-    abbrev_df = pd.read_excel(file_path, sheet_name='Abbreviations')
+    # header=None is REQUIRED: the sheet has no header row, so pandas' default consumes
+    # the first data row (FKH1) as column names and silently yields only 9 of the 10 TFs.
+    # Strains containing 'F' then carry the bare letter as their gene name, mislabelling
+    # every FKH1-containing genotype. The assertion makes that failure loud, not silent.
+    abbrev_df = pd.read_excel(file_path, sheet_name='Abbreviations', header=None)
     abbreviations = dict(zip(abbrev_df.iloc[:, 0], abbrev_df.iloc[:, 1]))
+    if len(abbreviations) != 10:
+        raise ValueError(
+            f"expected 10 TF abbreviations, got {len(abbreviations)}: {abbreviations}"
+        )
 
     # Read raw titer data - get all replicates
     raw_df = pd.read_excel(file_path, sheet_name='raw-titer (mg-L)')
@@ -218,6 +226,41 @@ def parse_genotype(genotype_str, abbreviations=None, reference_strain=None):
     return genes
 
 
+def welch_satterthwaite_df(terms):
+    """Effective degrees of freedom for a linear combination of independent means.
+
+    An interaction score is a linear combination of several independently measured
+    strains, so its SE pools variance from all of them. Referring the resulting t
+    statistic to the SMALLEST single input's df (the previous behaviour, giving df=1-2)
+    treats ~21 measurements as if they were 3 and makes the reference distribution far
+    too heavy-tailed, which understates significance badly -- at df=2 essentially nothing
+    clears FDR, while at the true effective df much of it does.
+
+    Welch-Satterthwaite for v = sum_m c_m * xbar_m:
+
+        df_eff = (sum_m u_m^2)^2 / sum_m (u_m^4 / df_m)
+
+    where u_m = |c_m| * SE_m is the term's contribution to the combined SE and
+    df_m = n_m - 1. Terms are (contribution, n_replicates) pairs; those with n < 2 carry
+    no variance estimate and are skipped. Returns NaN when nothing is estimable.
+    """
+    num = 0.0
+    den = 0.0
+    for contribution, n in terms:
+        if n is None or n < 2 or contribution is None:
+            continue
+        if np.isnan(contribution) or np.isnan(n):
+            continue
+        u2 = float(contribution) ** 2
+        if u2 == 0.0:
+            continue
+        num += u2
+        den += (u2 ** 2) / (float(n) - 1.0)
+    if den <= 0 or num <= 0:
+        return np.nan
+    return num ** 2 / den
+
+
 def compute_se_pvalue(observed_interaction, se_interaction, df=2):
     """
     Compute p-value using standard error and t-distribution.
@@ -237,6 +280,8 @@ def compute_se_pvalue(observed_interaction, se_interaction, df=2):
         Two-tailed p-value from t-test
     """
     if se_interaction == 0 or np.isnan(se_interaction):
+        return np.nan
+    if df is None or np.isnan(df) or df <= 0:
         return np.nan
 
     # t-statistic under null hypothesis that interaction = 0
@@ -270,6 +315,8 @@ def compute_interactions_with_error_propagation(normalized_df, normalized_replic
     trigenic_sd = {}  # Standard deviations
     trigenic_se = {}  # Standard errors
     trigenic_pvalues = {}
+    trigenic_df = {}
+    digenic_df = {}
 
     # Get single, double, and triple mutants with their standard deviations, standard errors and replicate counts
     single_mutants = {}
@@ -379,21 +426,28 @@ def compute_interactions_with_error_propagation(normalized_df, normalized_replic
 
             # Compute p-values using t-test with appropriate degrees of freedom
             pvalues = []
+            dfs = []
             n_ij = double_n_reps[(gene1, gene2)]
             n_i = single_n_reps[gene1]
             n_j = single_n_reps[gene2]
 
             for idx in range(len(epsilon)):
                 if not np.isnan(epsilon[idx]) and not np.isnan(se_epsilon[idx]):
-                    # Use minimum number of replicates minus 1 for df
-                    # This is conservative but appropriate for error propagation
-                    min_reps = min(n_i[idx], n_j[idx], n_ij[idx])
-                    df = max(1, min_reps - 1)  # Ensure df is at least 1
+                    # Welch-Satterthwaite df over the three strains that actually
+                    # enter epsilon, weighted by each one's contribution to se_epsilon.
+                    df = welch_satterthwaite_df([
+                        (se_ij[idx], n_ij[idx]),
+                        (f_j[idx] * se_i[idx], n_i[idx]),
+                        (f_i[idx] * se_j[idx], n_j[idx]),
+                    ])
                     pval = compute_se_pvalue(epsilon[idx], se_epsilon[idx], df=df)
+                    dfs.append(df)
                     pvalues.append(pval)
                 else:
                     pvalues.append(np.nan)
+                    dfs.append(np.nan)
             digenic_pvalues[(gene1, gene2)] = np.array(pvalues)
+            digenic_df[(gene1, gene2)] = np.array(dfs)
 
     # Compute trigenic interactions with error propagation
     print("Computing trigenic interactions with error propagation...")
@@ -469,21 +523,39 @@ def compute_interactions_with_error_propagation(normalized_df, normalized_replic
 
         # Compute p-values with appropriate degrees of freedom
         pvalues = []
+        dfs = []
         n_ijk = triple_n_reps[(gene1, gene2, gene3)]
         n_i = single_n_reps[gene1]
         n_j = single_n_reps[gene2]
         n_k = single_n_reps[gene3]
+        # The doubles enter tau and se_tau, so they must enter the df too.
+        n_ij = double_n_reps[pair1]
+        n_ik = double_n_reps[pair2]
+        n_jk = double_n_reps[pair3]
 
         for idx in range(len(tau)):
             if not np.isnan(tau[idx]) and not np.isnan(se_tau[idx]):
-                # Use minimum number of replicates minus 1 for df
-                min_reps = min(n_i[idx], n_j[idx], n_k[idx], n_ijk[idx])
-                df = max(1, min_reps - 1)
+                # Welch-Satterthwaite df over all SEVEN strains entering tau, each
+                # weighted by its delta-method contribution to se_tau. The doubles are
+                # included here; the previous min-reps rule ignored them entirely even
+                # though they drive both tau and its SE.
+                df = welch_satterthwaite_df([
+                    (se_ijk[idx], n_ijk[idx]),
+                    (f_k[idx] * se_ij[idx], n_ij[idx]),
+                    (f_j[idx] * se_ik[idx], n_ik[idx]),
+                    (f_i[idx] * se_jk[idx], n_jk[idx]),
+                    ((-f_jk[idx] + 2 * f_j[idx] * f_k[idx]) * se_i[idx], n_i[idx]),
+                    ((-f_ik[idx] + 2 * f_i[idx] * f_k[idx]) * se_j[idx], n_j[idx]),
+                    ((-f_ij[idx] + 2 * f_i[idx] * f_j[idx]) * se_k[idx], n_k[idx]),
+                ])
                 pval = compute_se_pvalue(tau[idx], se_tau[idx], df=df)
                 pvalues.append(pval)
+                dfs.append(df)
             else:
                 pvalues.append(np.nan)
+                dfs.append(np.nan)
         trigenic_pvalues[(gene1, gene2, gene3)] = np.array(pvalues)
+        trigenic_df[(gene1, gene2, gene3)] = np.array(dfs)
 
     print(f"Found {len(digenic_interactions)} digenic TF interactions")
     print(f"Found {len(trigenic_interactions)} trigenic TF interactions")
@@ -491,7 +563,8 @@ def compute_interactions_with_error_propagation(normalized_df, normalized_replic
     return (digenic_interactions, digenic_sd, digenic_se, digenic_pvalues,
             trigenic_interactions, trigenic_sd, trigenic_se, trigenic_pvalues,
             single_mutants, double_mutants, triple_mutants,
-            single_sd, single_se, double_sd, double_se, triple_sd, triple_se)
+            single_sd, single_se, double_sd, double_se, triple_sd, triple_se,
+            digenic_df, trigenic_df)
 
 
 def apply_fdr_correction(p_values_dict, method='fdr_bh'):
@@ -527,7 +600,7 @@ def apply_fdr_correction(p_values_dict, method='fdr_bh'):
 
 def save_interaction_results(digenic_interactions, digenic_sd, digenic_se, digenic_pvalues, digenic_fdr,
                             trigenic_interactions, trigenic_sd, trigenic_se, trigenic_pvalues, trigenic_fdr,
-                            columns, results_dir):
+                            columns, results_dir, digenic_df=None, trigenic_df=None):
     """Save interaction results to CSV files with SD, SE, effect sizes and FDR-corrected p-values."""
 
     # Prepare digenic results
@@ -537,6 +610,7 @@ def save_interaction_results(digenic_interactions, digenic_sd, digenic_se, digen
         fdr_pvals = digenic_fdr[(gene1, gene2)]
         sds = digenic_sd[(gene1, gene2)]
         ses = digenic_se[(gene1, gene2)]
+        dfs = digenic_df[(gene1, gene2)] if digenic_df else None
 
         for idx, col_name in enumerate(columns):
             if idx < len(interactions) and not np.isnan(interactions[idx]):
@@ -548,6 +622,7 @@ def save_interaction_results(digenic_interactions, digenic_sd, digenic_se, digen
                     'standard_deviation': sds[idx],
                     'standard_error': ses[idx],
                     'p_value': pvalues[idx],
+                    'df_effective': dfs[idx] if dfs is not None else np.nan,
                     'fdr_corrected_p': fdr_pvals[idx],
                     'effect_size': abs(interactions[idx]),  # Absolute value for effect size
                     'significant_p05': pvalues[idx] < 0.05 if not np.isnan(pvalues[idx]) else False,
@@ -561,6 +636,7 @@ def save_interaction_results(digenic_interactions, digenic_sd, digenic_se, digen
         fdr_pvals = trigenic_fdr[(gene1, gene2, gene3)]
         sds = trigenic_sd[(gene1, gene2, gene3)]
         ses = trigenic_se[(gene1, gene2, gene3)]
+        dfs = trigenic_df[(gene1, gene2, gene3)] if trigenic_df else None
 
         for idx, col_name in enumerate(columns):
             if idx < len(interactions) and not np.isnan(interactions[idx]):
@@ -572,6 +648,7 @@ def save_interaction_results(digenic_interactions, digenic_sd, digenic_se, digen
                     'standard_deviation': sds[idx],
                     'standard_error': ses[idx],
                     'p_value': pvalues[idx],
+                    'df_effective': dfs[idx] if dfs is not None else np.nan,
                     'fdr_corrected_p': fdr_pvals[idx],
                     'effect_size': abs(interactions[idx]),
                     'significant_p05': pvalues[idx] < 0.05 if not np.isnan(pvalues[idx]) else False,
@@ -891,7 +968,8 @@ def main():
     (digenic_interactions, digenic_sd, digenic_se, digenic_pvalues,
      trigenic_interactions, trigenic_sd, trigenic_se, trigenic_pvalues,
      single_mutants, double_mutants, triple_mutants,
-     single_sd, single_se, double_sd, double_se, triple_sd, triple_se) = compute_interactions_with_error_propagation(
+     single_sd, single_se, double_sd, double_se, triple_sd, triple_se,
+     digenic_df, trigenic_df) = compute_interactions_with_error_propagation(
         normalized_df, normalized_replicates, abbreviations)
 
     # Apply FDR correction
@@ -907,7 +985,7 @@ def main():
     combined_df = save_interaction_results(
         digenic_interactions, digenic_sd, digenic_se, digenic_pvalues, digenic_fdr,
         trigenic_interactions, trigenic_sd, trigenic_se, trigenic_pvalues, trigenic_fdr,
-        columns, RESULTS_DIR
+        columns, RESULTS_DIR, digenic_df=digenic_df, trigenic_df=trigenic_df
     )
 
     # Create plots

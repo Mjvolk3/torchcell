@@ -16,8 +16,9 @@ matplotlib.use('Agg')
 
 # Load environment
 load_dotenv()
+EXPERIMENT_ROOT = os.getenv("EXPERIMENT_ROOT")
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
-RESULTS_DIR = Path("/Users/michaelvolk/Documents/projects/torchcell/experiments/008-xue-ffa/results")
+RESULTS_DIR = Path(osp.join(EXPERIMENT_ROOT, "008-xue-ffa/results"))
 
 
 def find_latest_image(pattern):

@@ -199,3 +199,36 @@ pooled flag in the CSV as `significant_fdr05` alongside `significant_fdr05_withi
 - **One triple is untestable, not null.** GCN5-OPI1-TFC7 is the `G-O-T 6d` strain released
   with a single replicate, so it has a tau but no SD and no p-value. It is badged
   "no test (n=1)" rather than silently shown as non-significant.
+
+## 2026.08.15 - Correction 2: the "Nothing Survives FDR" Result Was a Degrees-of-Freedom Bug
+
+The two sections above are **superseded on the significance question**. A full audit of the
+008 analysis ([[plan.008-xue-ffa-epistasis-audit.2026.08.15]]) found the p-values were
+referred to the wrong reference distribution.
+
+`compute_se_pvalue` used `df = max(1, min(n) - 1)` -- the smallest single input's df -- which
+is **1 or 2** for these strains. But tau is a linear combination of seven independently
+measured strains and its SE pools all seven, so the reference distribution must use the
+**Welch-Satterthwaite effective df** (realized median **4.31**, up to 9.77). df=2 is so
+heavy-tailed that it suppressed nearly everything.
+
+Total-titer trigenic, multiplicative model, BH within readout:
+
+| | raw P<0.05 | FDR<0.05 | positive AND FDR<0.05 |
+| --- | --- | --- | --- |
+| before | 56 | 21 | **0** |
+| after | 91 | 86 | **11** |
+
+So **"no positive trigenic interaction survives FDR" was wrong** -- it was an artifact of the
+df, not a property of the data. Two of the six highest-titer triples now badge as
+FDR-significant positive: **OPI1-RFX1-YAP6** (tau=+0.500) and **RFX1-SPT3-YAP6** (tau=+0.343).
+
+**But it is model-dependent, and that is the caveat to carry.** Across all four epistatic
+models, 73 trigenic interactions are FDR-significant in every one with zero sign
+discordance -- and that consensus set is *entirely negative*. The GLM log-link and log-OLS
+models find **no** positive trigenic interaction on total titer. Positive three-way
+epistasis here is a linear-scale phenomenon; any claim about it must name the model.
+
+What does NOT change: the accessibility result. Only 2 of 120 triples have a strictly
+monotone path, 90% of paths dip below the base strain, and the top producers still sit
+behind a valley. That analysis never used the p-values.

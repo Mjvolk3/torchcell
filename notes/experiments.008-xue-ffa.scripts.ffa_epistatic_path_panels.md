@@ -102,3 +102,53 @@ python experiments/008-xue-ffa/scripts/ffa_epistatic_path_panels.py --no-timesta
 
 `--select {top,divergent,both}` picks the panel set, `--n-panels` its size. Timestamped
 filenames are the default; `--no-timestamp` writes the stable names embedded above.
+
+## 2026.08.15 - Mark the Sign and Support of Each Trigenic Interaction
+
+Reading the panels, "which of these have a positive trigenic interaction?" could only be
+answered by squinting at the sign of the printed τ, and that question deserves a real
+answer because sign alone is not evidence. Each panel now carries a **badge** in its top
+right encoding both halves of the claim, and the τ in the title carries its support:
+
+- **direction** = sign of τ (▲ positive, ▼ negative)
+- **fill** = how much support it has (filled = FDR<0.05, half = P<0.05, open = n.s.)
+
+The badge is solid black, per the repo's convention for pattern marks, so it cannot be
+mistaken for one of the six ordering colors.
+
+### The answer, and why it deflates
+
+**All six highest-titer triples have positive τ — and not one of them is significant.**
+Their raw p-values run 0.055 to 0.69, so every badge in that figure is an open triangle.
+Across all 120 total-titer triples: 27 positive vs 93 negative, 56 reach raw P<0.05, and
+**0 survive FDR correction** — only 7 are both positive and raw-P significant, none of
+them in the top six.
+
+So the 2× titer gain at the endpoint is real and measured, but the *trigenic* term is not
+separable from noise at 3 replicates. The honest reading of the top panels is that the
+triples get there mostly through their marginal and digenic terms, and the figure should
+not be used to claim positive three-way epistasis. The route-dependent panels are where
+the significant interactions actually live (three of those six are negative at P<0.05).
+
+### Statistics come from the experiment's own table, and are asserted to agree
+
+Significance is read from `results/multiplicative_trigenic_interactions_3_delta_normalized.csv`
+(written by `free_fatty_acid_interactions.py`) rather than re-derived, so the panels cannot
+disagree with the experiment's own interaction analysis. `attach_significance` hard-fails
+if any triple is missing or if that table's `interaction_score` differs from the τ computed
+here by more than 1e-8. It currently agrees **exactly** (max deviation 0.0), which is a
+useful independent check of both implementations of the multiplicative model.
+
+### Defect found in the canonical interaction table: FKH1 is labelled `F`
+
+Joining exposed the Abbreviations-header trap in the wild. Because `load_ffa_data` reads
+that sheet with a default header row, FKH1 is consumed as the header and **all 36
+FKH1-containing triples in the committed interaction CSV are labelled with the bare letter
+`F`** (`F-MED4-OPI1` rather than `FKH1-MED4-OPI1`). Only the *label* is wrong — the
+grouping and every statistic are computed off a consistent gene identity, which is why the
+τ values still match exactly — so `load_significance` remaps `F` → `FKH1` and documents it.
+
+The root cause is still live in `free_fatty_acid_interactions.py` and affects every artifact
+that script writes. Fixing it is a one-line change (`header=None`) but invalidates the
+committed CSVs and network figures, so it is left flagged rather than done here. See
+[[experiments.008-xue-ffa.scripts.free_fatty_acid_interactions]].

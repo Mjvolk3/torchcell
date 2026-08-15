@@ -1,0 +1,721 @@
+gene_set,ffa_type,p_value,significant_p05,interaction_score,physical_triangle,physical_connected,regulatory_triangle,regulatory_connected,genetic_triangle,genetic_connected,tflink_triangle,tflink_connected,string12_0_neighborhood_triangle,string12_0_neighborhood_connected,string12_0_fusion_triangle,string12_0_fusion_connected,string12_0_cooccurence_triangle,string12_0_cooccurence_connected,string12_0_coexpression_triangle,string12_0_coexpression_connected,string12_0_experimental_triangle,string12_0_experimental_connected,string12_0_database_triangle,string12_0_database_connected
+RPD3_SPT3_YAP6,C14:0,0.2587279372210898,False,0.3626801193643039,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RPD3_SPT3_YAP6,C16:0,1.1505585597593182e-06,True,-1.5258094687408374,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RPD3_SPT3_YAP6,C18:0,3.237624734309108e-06,True,-1.65949491673284,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RPD3_SPT3_YAP6,C16:1,0.8397565637364215,False,0.0458870821981083,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RPD3_SPT3_YAP6,C18:1,0.0669029251863637,False,-0.7241893615640345,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RPD3_SPT3_YAP6,Total Titer,1.0021354190925535e-08,True,-1.1430759577658418,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RPD3_TFC7_YAP6,C14:0,0.252692343398512,False,0.5632548982280712,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RPD3_TFC7_YAP6,C16:0,1.325830274456763e-06,True,-1.625133293911642,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RPD3_TFC7_YAP6,C18:0,1.1585059069396664e-05,True,-1.705604455827583,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RPD3_TFC7_YAP6,C16:1,0.3632326320049672,False,0.2668426126132153,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RPD3_TFC7_YAP6,C18:1,0.0003680111524271,True,-0.5994342596763089,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RPD3_TFC7_YAP6,Total Titer,8.125859984886573e-10,True,-1.1366487946714623,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RPD3_SPT3_TFC7,C14:0,0.150927864194819,False,0.6902523048766023,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RPD3_SPT3_TFC7,C16:0,2.1830672414235863e-06,True,-1.510715356277631,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RPD3_SPT3_TFC7,C18:0,2.978347010795801e-06,True,-1.5729128407019273,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RPD3_SPT3_TFC7,C16:1,0.4018711098591183,False,0.209968671133931,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RPD3_SPT3_TFC7,C18:1,0.0973701124376664,False,-0.5683319140359113,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RPD3_SPT3_TFC7,Total Titer,1.8603520057780546e-08,True,-1.0582169769989402,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4_RPD3_YAP6,C14:0,0.0012691987134567,True,2.149098505608353,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4_RPD3_YAP6,C16:0,1.3073627862514314e-06,True,-1.689239680061852,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4_RPD3_YAP6,C18:0,9.136259737263508e-05,True,-1.281264273970764,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4_RPD3_YAP6,C16:1,0.5858838163924744,False,-0.1342221002389831,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4_RPD3_YAP6,C18:1,0.001584920247474,True,-4.085824496562538,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4_RPD3_YAP6,Total Titer,1.1672773458926144e-07,True,-1.4330000237080802,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4_RFX1_YAP6,C14:0,0.0007856627095481,True,2.4459746275710152,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+MED4_RFX1_YAP6,C16:0,4.9381098677026e-05,True,-1.589331081601264,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+MED4_RFX1_YAP6,C18:0,0.0007442952216454,True,-1.023264475288276,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+MED4_RFX1_YAP6,C16:1,0.1410036939624772,False,0.4123310550732002,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+MED4_RFX1_YAP6,C18:1,0.0013054831168703,True,-4.3709278095647495,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+MED4_RFX1_YAP6,Total Titer,1.82774965624688e-05,True,-1.235016899314382,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+MED4_RFX1_TFC7,C14:0,0.0047415426323307,True,2.556989441235457,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_RFX1_TFC7,C16:0,2.1466202530406875e-05,True,-1.6433079494768985,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_RFX1_TFC7,C18:0,0.0005575770648247,True,-1.0443927480958717,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_RFX1_TFC7,C16:1,0.2466111138532476,False,0.2986383992823818,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_RFX1_TFC7,C18:1,0.0003988131065675,True,-4.031405991576843,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_RFX1_TFC7,Total Titer,6.373203288445595e-06,True,-1.2486517084919415,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_OPI1_TFC7,C14:0,,False,-0.255739856622565,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_TFC7,C16:0,,False,-1.2230676682615529,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_TFC7,C18:0,,False,-0.8429487982463006,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_TFC7,C16:1,,False,-0.6293437004210656,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_TFC7,C18:1,,False,-3.4664037460319745,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_TFC7,Total Titer,,False,-1.202041606706334,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4_RGR1_YAP6,C14:0,0.0005712820551966,True,3.0421148255207147,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_YAP6,C16:0,0.0001497306840769,True,-1.7312057632110442,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_YAP6,C18:0,0.0002500684972652,True,-1.260079855946136,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_YAP6,C16:1,0.0137641488384712,True,0.9114725236472684,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_YAP6,C18:1,0.0009206883281027,True,-3.795255556704329,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_YAP6,Total Titer,0.0004050653634692,True,-1.194261280580582,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_TFC7_YAP6,C14:0,0.011125874094864,True,1.7201601766084045,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_TFC7_YAP6,C16:0,6.458932675368345e-07,True,-2.099755443551359,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_TFC7_YAP6,C18:0,3.271678957039725e-05,True,-1.5893335271946405,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_TFC7_YAP6,C16:1,0.0594965356096295,False,0.6708477537604676,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_TFC7_YAP6,C18:1,0.0011875897189279,True,-3.427200479049572,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_TFC7_YAP6,Total Titer,3.177989627012323e-08,True,-1.4717690677106017,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_MED4_RFX1,C14:0,0.1609389172273589,False,0.4236121895868496,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_MED4_RFX1,C16:0,0.0093702327252023,True,-0.6346317648195805,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_MED4_RFX1,C18:0,0.0289143723656435,True,-0.4843702117189161,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_MED4_RFX1,C16:1,0.0749639793865346,False,-0.5843477838843789,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_MED4_RFX1,C18:1,0.0042871526772902,True,-2.850107352373771,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_MED4_RFX1,Total Titer,0.0018854073269798,True,-0.781268554414428,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4_SPT3_TFC7,C14:0,0.0037506062706498,True,2.291545807804768,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_SPT3_TFC7,C16:0,2.150697875347163e-06,True,-1.9607153562776312,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_SPT3_TFC7,C18:0,7.324978048561803e-07,True,-1.4602308440795877,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_SPT3_TFC7,C16:1,0.0287933796450146,True,0.726592048626685,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_SPT3_TFC7,C18:1,0.0003783353884772,True,-2.771055856175542,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_SPT3_TFC7,Total Titer,1.938738913853655e-07,True,-1.2918791706328985,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_MED4_YAP6,C14:0,0.4887487876947487,False,-0.2904010927811979,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_MED4_YAP6,C16:0,0.0157385768287305,True,-0.6379495751794044,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_MED4_YAP6,C18:0,0.0160614813586235,True,-0.5318567625907327,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_MED4_YAP6,C16:1,0.0333794229859691,True,-0.9058234538066596,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_MED4_YAP6,C18:1,0.0024536537506871,True,-2.538887227334266,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_MED4_YAP6,Total Titer,0.0018352247512847,True,-0.8416549181762703,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4_RFX1_RPD3,C14:0,7.070938764508483e-06,True,2.395235614246901,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4_RFX1_RPD3,C16:0,4.015924320110997e-05,True,-1.6448096046965328,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4_RFX1_RPD3,C18:0,0.0006223873878723,True,-1.1800785138293948,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4_RFX1_RPD3,C16:1,0.2692513616787773,False,0.1669584223104374,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4_RFX1_RPD3,C18:1,1.088031036378112e-07,True,-5.320322980126683,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4_RFX1_RPD3,Total Titer,1.3408421726257558e-06,True,-1.4456925016538813,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4_SPT3_YAP6,C14:0,0.0007388252371689,True,2.1739682953181068,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_SPT3_YAP6,C16:0,1.7633569384667425e-06,True,-1.8818815285351345,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_SPT3_YAP6,C18:0,1.02452772308137e-05,True,-1.4469123485924555,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_SPT3_YAP6,C16:1,0.0163406711751945,True,0.8662632294170025,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_SPT3_YAP6,C18:1,0.0010930910318345,True,-3.1177425441224287,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_SPT3_YAP6,Total Titer,6.788136985846904e-08,True,-1.2664551451243031,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_RGR1_SPT3,C14:0,0.0006852070743457,True,2.9491716471372103,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_SPT3,C16:0,0.0001061141299707,True,-1.8152550479694285,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_SPT3,C18:0,0.0007899931905306,True,-1.3124107771974365,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_SPT3,C16:1,8.87911718088219e-05,True,1.2454462689864307,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_SPT3,C18:1,4.455708276229764e-05,True,-3.069513719675768,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_SPT3,Total Titer,0.0011436695792912,True,-1.1075159485554145,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RFX1_RGR1,C14:0,0.0009724792715706,True,3.7918522340729313,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RFX1_RGR1,C16:0,0.0002377745135793,True,-1.5740835685257657,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RFX1_RGR1,C18:0,0.0009702437087524,True,-1.0138853161244143,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RFX1_RGR1,C16:1,0.0048124727229728,True,0.6502764705488575,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RFX1_RGR1,C18:1,9.517924264335063e-05,True,-4.397311412553721,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RFX1_RGR1,Total Titer,0.0003345997937245,True,-1.1565236679712596,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_RFX1,C14:0,0.365186336346734,False,-0.9462393063911998,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_RFX1,C16:0,5.0182572594925645e-05,True,-1.7745506500484032,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_RFX1,C18:0,0.0106388722279926,True,-0.5774542841484829,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_RFX1,C16:1,0.0158461689344506,True,-0.8280661119404478,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_RFX1,C18:1,0.0007345547681165,True,-4.931274585617881,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_RFX1,Total Titer,1.4736964540462694e-05,True,-1.5414907478405353,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RPD3_SPT3,C14:0,6.651356458053925e-06,True,1.884219297674333,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4_RPD3_SPT3,C16:0,4.75972261870794e-06,True,-1.6456724319525369,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4_RPD3_SPT3,C18:0,4.934292223701675e-07,True,-1.2060552952097614,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4_RPD3_SPT3,C16:1,0.002258459974576,True,0.8994647985379867,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4_RPD3_SPT3,C18:1,1.467610458294466e-05,True,-3.744306638691668,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4_RPD3_SPT3,Total Titer,1.506314151189514e-07,True,-1.1644326510277772,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_GCN5_SPT3,C14:0,0.1917528269895947,False,-1.5367769968221854,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_SPT3,C16:0,0.0010663864270068,True,-1.8661012493181737,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_SPT3,C18:0,0.0013139749412642,True,-0.8105924886199687,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_SPT3,C16:1,0.0641692928475605,False,-0.5661219817516061,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_SPT3,C18:1,0.0099222916300689,True,-4.42678594200852,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_SPT3,Total Titer,3.43611306470315e-05,True,-1.5559095150268636,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RFX1_SPT3,C14:0,0.0001373613290722,True,2.954523669968053,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_RFX1_SPT3,C16:0,1.856236698860592e-05,True,-1.4921121126695969,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_RFX1_SPT3,C18:0,0.0006826601833995,True,-0.918241603382135,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_RFX1_SPT3,C16:1,0.0181456313865027,True,0.4765853544245342,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_RFX1_SPT3,C18:1,2.8990011893270665e-05,True,-3.720045621905038,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_RFX1_SPT3,Total Titer,4.040921958159416e-06,True,-1.078797539166235,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_RGR1_RPD3,C14:0,0.0004539350669141,True,3.3887589151675144,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_RPD3,C16:0,8.650131860465926e-05,True,-1.6354257952179636,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_RPD3,C18:0,0.0002282297638134,True,-1.244082383599333,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_RPD3,C16:1,0.0080544955676022,True,0.8795026877221643,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_RPD3,C18:1,1.09808174522108e-05,True,-4.578300045889348,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_RPD3,Total Titer,0.0002587775613493,True,-1.2290706205248965,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+SPT3_TFC7_YAP6,C14:0,0.3149150166544698,False,0.492090528505992,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+SPT3_TFC7_YAP6,C16:0,4.9083936826122e-07,True,-1.726984584589831,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+SPT3_TFC7_YAP6,C18:0,2.4771142621560216e-06,True,-1.91377906521569,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+SPT3_TFC7_YAP6,C16:1,0.2869677594449069,False,0.3295689603234639,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+SPT3_TFC7_YAP6,C18:1,0.1404484528234457,False,-0.4664262504032033,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+SPT3_TFC7_YAP6,Total Titer,6.297970367441508e-09,True,-1.2134530364042444,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_SPT3,C14:0,0.0015914709231148,True,1.147558859726904,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_SPT3,C16:0,2.04747077738876e-05,True,-1.8259062757476332,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_SPT3,C18:0,0.0007008993702637,True,-1.2778561921911176,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_SPT3,C16:1,0.7078727944704362,False,0.0950727325063764,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_SPT3,C18:1,0.0414842245442708,True,-3.4579225334312227,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_SPT3,Total Titer,0.0041623977222726,True,-1.3986612079624074,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_MED4_TFC7,C14:0,0.625892962513459,False,0.2752417594712435,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_MED4_TFC7,C16:0,0.0336748589416957,True,-1.4347801694695923,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_MED4_TFC7,C18:0,0.0158166161686617,True,-1.020914596637997,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_MED4_TFC7,C16:1,0.0104114445790839,True,-1.1221465963329171,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_MED4_TFC7,C18:1,3.8225549686021765e-05,True,-5.178510380222768,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_MED4_TFC7,Total Titer,0.0086284066133868,True,-1.5934624319488786,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RGR1_RPD3_YAP6,C14:0,0.0039662542769538,True,2.029077097517028,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RGR1_RPD3_YAP6,C16:0,0.000110366996888,True,-1.029576915705831,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RGR1_RPD3_YAP6,C18:0,0.0001357449747216,True,-1.1086874098265307,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RGR1_RPD3_YAP6,C16:1,0.0364435799722522,True,0.742441408995669,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RGR1_RPD3_YAP6,C18:1,0.0214034531748315,True,-0.5998470028906704,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RGR1_RPD3_YAP6,Total Titer,0.0098656907288396,True,-0.6063953033318943,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RGR1_SPT3_TFC7,C14:0,0.0168445882426209,True,1.6357034194499684,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_SPT3_TFC7,C16:0,0.0018166761644331,True,-1.3955352477423983,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_SPT3_TFC7,C18:0,0.0012751863013074,True,-1.5050116875999606,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_SPT3_TFC7,C16:1,0.0708439626448487,False,0.5355930728396134,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_SPT3_TFC7,C18:1,0.0535783515153773,False,-0.6939659910028171,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_SPT3_TFC7,Total Titer,0.0078045453033417,True,-0.9237589063625018,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_MED4_SPT3,C14:0,0.7160171048519901,False,-0.0980622504546309,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_MED4_SPT3,C16:0,0.0025317407734999,True,-0.7333511604555667,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_MED4_SPT3,C18:0,0.0003972072945352,True,-0.5761822930064533,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_MED4_SPT3,C16:1,0.1991551925478434,False,-0.3972950402656252,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_MED4_SPT3,C18:1,0.0073237416150384,True,-1.6150602839921189,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_MED4_SPT3,Total Titer,0.0023831695230343,True,-0.6979397840746007,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_MED4_RGR1,C14:0,0.0303261608887621,True,1.2429626326942629,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,True
+GCN5_MED4_RGR1,C16:0,0.008214190228287,True,-0.7782656803599712,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,True
+GCN5_MED4_RGR1,C18:0,0.0230284504437279,True,-0.6003608616389479,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,True
+GCN5_MED4_RGR1,C16:1,0.9689450443026096,False,0.0115767858457784,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,True
+GCN5_MED4_RGR1,C18:1,0.0044266630241815,True,-1.93970345109425,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,True
+GCN5_MED4_RGR1,Total Titer,0.0069244046197851,True,-0.6496715618980615,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,True
+FKH1_GCN5_YAP6,C14:0,0.2638865679953768,False,-1.301490049913249,False,False,False,False,False,True,False,True,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_YAP6,C16:0,1.1250646383409446e-05,True,-1.9015177078197456,False,False,False,False,False,True,False,True,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_YAP6,C18:0,0.0026789821064454,True,-0.9413616333560748,False,False,False,False,False,True,False,True,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_YAP6,C16:1,0.4551733951945906,False,-0.5055679026395241,False,False,False,False,False,True,False,True,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_YAP6,C18:1,0.1270254375712805,False,-4.216385400077167,False,False,False,False,False,True,False,True,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_YAP6,Total Titer,0.0008884187989846,True,-1.5706480814804498,False,False,False,False,False,True,False,True,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_TFC7,C14:0,0.0014876511367738,True,2.964494630443241,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_TFC7,C16:0,0.0001264299484726,True,-1.9450722612708085,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_TFC7,C18:0,0.0003797023845959,True,-1.4666472805359516,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_TFC7,C16:1,0.0135321622924982,True,0.9722809824411076,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_TFC7,C18:1,0.0003300077462593,True,-3.438012361748962,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_RGR1_TFC7,Total Titer,0.0006457119776752,True,-1.2931862977689392,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+RFX1_TFC7_YAP6,C14:0,0.0327302697595641,True,1.2635533089862214,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+RFX1_TFC7_YAP6,C16:0,0.0001397559838587,True,-1.1400310896275632,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+RFX1_TFC7_YAP6,C18:0,0.0002690331716279,True,-1.1141179496929907,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+RFX1_TFC7_YAP6,C16:1,0.4473562398568034,False,0.218922166511585,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+RFX1_TFC7_YAP6,C18:1,0.000414362783887,True,-0.8731552530910083,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+RFX1_TFC7_YAP6,Total Titer,0.0002237100211446,True,-0.7954684765350093,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+MED4_RPD3_TFC7,C14:0,0.0103038555385301,True,1.976995486265924,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_RPD3_TFC7,C16:0,1.3420634337180104e-07,True,-1.6679454146075383,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_RPD3_TFC7,C18:0,1.407855843238437e-06,True,-1.1694265806220707,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_RPD3_TFC7,C16:1,0.0128097325055456,True,0.9387129057523278,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_RPD3_TFC7,C18:1,0.000522987067004,True,-3.9219476652693297,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_RPD3_TFC7,Total Titer,6.235520544350948e-07,True,-1.1708965454079556,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_TFC7_YAP6,C14:0,0.021683295224526,True,1.5639646048437053,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_TFC7_YAP6,C16:0,3.89457447647068e-06,True,-1.4257952179631863,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_TFC7_YAP6,C18:0,3.492556859296947e-05,True,-1.5495375289393922,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_TFC7_YAP6,C16:1,0.0789222730281651,False,0.6043408553851513,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_TFC7_YAP6,C18:1,3.596034245112456e-05,True,-0.7102735063865127,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_TFC7_YAP6,Total Titer,3.4432556628161137e-07,True,-0.9383653571037692,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_SPT3_YAP6,C14:0,0.0130666802305032,True,1.5318641571440743,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_SPT3_YAP6,C16:0,0.0013908789822105,True,-1.163051828604095,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_SPT3_YAP6,C18:0,0.0007556300566926,True,-1.2925087517195863,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_SPT3_YAP6,C16:1,0.0470044680020549,True,0.6395172141408327,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_SPT3_YAP6,C18:1,0.0707004507457171,False,-0.6413416388596351,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_SPT3_YAP6,Total Titer,0.0127689635104595,True,-0.7464761511328404,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RGR1_RPD3,C14:0,0.0940142024120644,False,0.8222913003328105,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RGR1_RPD3,C16:0,0.0014375431403661,True,-0.652970631931898,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RGR1_RPD3,C18:0,0.0006648751216722,True,-0.8818165550100094,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RGR1_RPD3,C16:1,0.8526093052630836,False,0.0420262011072214,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RGR1_RPD3,C18:1,0.677052910080679,False,0.3068170958859069,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RGR1_RPD3,Total Titer,0.0254474766268113,True,-0.4602883779418723,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_GCN5_RPD3,C14:0,0.2709165488829597,False,-1.2123425494999491,False,True,False,True,False,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+FKH1_GCN5_RPD3,C16:0,0.0009799028257038,True,-1.6609400107781749,False,True,False,True,False,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+FKH1_GCN5_RPD3,C18:0,0.0017570369698596,True,-0.9390024158101352,False,True,False,True,False,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+FKH1_GCN5_RPD3,C16:1,0.4428980052568509,False,0.2798076086301653,False,True,False,True,False,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+FKH1_GCN5_RPD3,C18:1,0.0037729979122911,True,-3.520657218961989,False,True,False,True,False,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+FKH1_GCN5_RPD3,Total Titer,0.0009278160301302,True,-1.2511436712903916,False,True,False,True,False,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+GCN5_MED4_RPD3,C14:0,0.4041757568711619,False,-0.2735100753290957,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_MED4_RPD3,C16:0,0.0186988696829775,True,-0.510609867762612,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_MED4_RPD3,C18:0,0.0001312293654096,True,-0.7246613392088219,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_MED4_RPD3,C16:1,0.8247489613088068,False,0.0612126212487362,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_MED4_RPD3,C18:1,0.0035467072627963,True,-2.529108914959894,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_MED4_RPD3,Total Titer,0.0038308239376798,True,-0.6581816259780795,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RGR1_RPD3_TFC7,C14:0,0.0076873395964565,True,1.992485459363868,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_RPD3_TFC7,C16:0,0.0001097440246915,True,-1.1459795607812044,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_RPD3_TFC7,C18:0,0.0001124912829923,True,-1.2119672076142758,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_RPD3_TFC7,C16:1,0.0234477843935545,True,0.8353878955436693,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_RPD3_TFC7,C18:1,0.0253998177203851,True,-0.543914671251905,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1_RPD3_TFC7,Total Titer,0.0078427951456543,True,-0.6596485228404614,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_RPD3_SPT3,C14:0,0.1148009105057294,False,-0.6040154365363648,False,True,False,False,True,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+GCN5_RPD3_SPT3,C16:0,0.0055500813631821,True,-0.4813171485995748,False,True,False,False,True,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+GCN5_RPD3_SPT3,C18:0,0.009957100583289,True,-0.3784078580935229,False,True,False,False,True,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+GCN5_RPD3_SPT3,C16:1,0.3537025022542657,False,-0.2174226652296438,False,True,False,False,True,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+GCN5_RPD3_SPT3,C18:1,0.3961772746009533,False,-0.2775901145146342,False,True,False,False,True,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+GCN5_RPD3_SPT3,Total Titer,0.0223645764522271,True,-0.3823232067354332,False,True,False,False,True,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+MED4_OPI1_TFC7,C14:0,0.0492749802575187,True,1.1778984000708037,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_TFC7,C16:0,0.0019000068360963,True,-1.6252651545554162,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_TFC7,C18:0,0.0006967523330758,True,-1.0250148192056905,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_TFC7,C16:1,0.6599575535498494,False,-0.1333644055883196,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_TFC7,C18:1,0.0299697460433472,True,-3.810478296164701,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_TFC7,Total Titer,0.0069117257788238,True,-1.3245262849535857,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_OPI1_RFX1,C14:0,0.1230205178219512,False,0.7697594846027052,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_RFX1,C16:0,0.0129943816559527,True,-0.5318566306247576,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_RFX1,C18:0,0.0118889069930894,True,-0.5706990750578786,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_RFX1,C16:1,0.1263924009880772,False,0.3215057938319634,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_RFX1,C18:1,0.7771089836532055,False,-0.0625699796253904,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_RFX1,Total Titer,0.0433237255232605,True,-0.3054885017435187,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4_OPI1_RFX1,C14:0,7.568211018482707e-05,True,1.6604195785511626,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_RFX1,C16:0,3.247637227099531e-05,True,-1.6387722709351291,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_RFX1,C18:0,0.0003061601757261,True,-1.087396405363993,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_RFX1,C16:1,0.5216194355485131,False,-0.1643309479659658,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_RFX1,C18:1,0.027077441799397,True,-4.605937044510711,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_RFX1,Total Titer,0.0027074799971424,True,-1.4238305177552415,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_SPT3_TFC7,C14:0,0.6138711124019527,False,-0.294900632724322,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_SPT3_TFC7,C16:0,0.0421693693854525,True,-1.3743650623348675,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_SPT3_TFC7,C18:0,0.0165992574653768,True,-0.9518621310577003,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_SPT3_TFC7,C16:1,0.005399663790893,True,-1.077533922869404,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_SPT3_TFC7,C18:1,8.955525346587834e-05,True,-3.936554306798505,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_SPT3_TFC7,Total Titer,0.0132011904426248,True,-1.428215749375065,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_OPI1_RPD3,C14:0,0.0015206381108205,True,1.1128366722942218,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4_OPI1_RPD3,C16:0,4.8326190796643687e-05,True,-1.6607823513127915,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4_OPI1_RPD3,C18:0,0.0001761195686498,True,-1.129833018308709,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4_OPI1_RPD3,C16:1,0.2896174417143251,False,-0.2737359672787396,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4_OPI1_RPD3,C18:1,0.0214341886901936,True,-5.179806664620617,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4_OPI1_RPD3,Total Titer,0.0051389549877165,True,-1.5339054775083394,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_GCN5_TFC7,C14:0,0.404324797644348,False,-0.9160542316048216,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_TFC7,C16:0,0.0051672756728482,True,-2.249598684997207,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_TFC7,C18:0,0.0101722578730685,True,-0.9721186990415054,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_TFC7,C16:1,0.0159227249951241,True,-0.948786006439823,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_TFC7,C18:1,7.793445879311633e-06,True,-5.981152752170449,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_TFC7,Total Titer,0.0015020928176208,True,-1.971849853805585,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_OPI1_YAP6,C14:0,0.0071739965047903,True,1.2586822167560898,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_YAP6,C16:0,0.0001086937871823,True,-1.630946218875564,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_YAP6,C18:0,0.0001345313723439,True,-1.110198409591661,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_YAP6,C16:1,0.8823472093195508,False,-0.0446210412162022,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_YAP6,C18:1,0.023103474284251,True,-4.018063834790518,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4_OPI1_YAP6,Total Titer,0.0076729491510316,True,-1.3533925125985715,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_MED4_OPI1,C14:0,0.7576420332469684,False,0.1057170625159678,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_MED4_OPI1,C16:0,0.0054512823984496,True,-0.7995509367019769,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_MED4_OPI1,C18:0,0.0019594233226265,True,-0.8150776190848998,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_MED4_OPI1,C16:1,0.7927057066329004,False,0.0816048345527935,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_MED4_OPI1,C18:1,0.0703059367703,False,-2.687157440254972,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_MED4_OPI1,Total Titer,0.0271961460710477,True,-0.803417747089346,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_YAP6,C14:0,0.594801467382152,False,-0.2230048477136597,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_YAP6,C16:0,0.0030142254107989,True,-0.4976457551519841,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_YAP6,C18:0,0.0051945723205393,True,-0.5688626119828655,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_YAP6,C16:1,0.1581326374505034,False,0.4435979997723973,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_YAP6,C18:1,0.5504065691988644,False,0.1683398721034179,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_YAP6,Total Titer,0.0433189805041105,True,-0.2640107283934139,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_TFC7_YAP6,C14:0,0.9642730845724624,False,0.0278405381079052,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_TFC7_YAP6,C16:0,0.0379311455591164,True,-1.448392938166367,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_TFC7_YAP6,C18:0,0.0110413344516973,True,-1.0234148482848873,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_TFC7_YAP6,C16:1,0.0149111172116809,True,-1.0114822302403894,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_TFC7_YAP6,C18:1,0.0002606836018972,True,-4.049516465861358,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_TFC7_YAP6,Total Titer,0.0146520875844402,True,-1.4705015460591166,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_RFX1_TFC7,C14:0,0.0021428791941782,True,2.758033461414504,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RFX1_TFC7,C16:0,1.1491383295147983e-05,True,-1.611344438019764,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RFX1_TFC7,C18:0,0.0027630723897951,True,-0.7034268714140319,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RFX1_TFC7,C16:1,0.1291646172642462,False,-0.4162069981189296,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RFX1_TFC7,C18:1,0.0006809298447314,True,-4.758199663347652,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RFX1_TFC7,Total Titer,1.3891587953285267e-06,True,-1.3441516875443915,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_SPT3_YAP6,C14:0,0.1918921051524811,False,-0.5107382785690309,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_SPT3_YAP6,C16:0,0.0004903095238177,True,-0.7036841536266589,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_SPT3_YAP6,C18:0,0.0034286165437911,True,-0.5726710919238129,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_SPT3_YAP6,C16:1,0.1594647204317287,False,-0.4555320886580141,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_SPT3_YAP6,C18:1,0.0490808708558814,True,-0.8129394263864071,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_SPT3_YAP6,Total Titer,0.0005975781700691,True,-0.6246112767970322,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+RGR1_RPD3_SPT3,C14:0,0.0032351279486289,True,2.003819056541073,False,False,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RGR1_RPD3_SPT3,C16:0,0.003809089341294,True,-0.9175879166509692,False,False,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RGR1_RPD3_SPT3,C18:0,0.0033013100196739,True,-0.9239042176018604,False,False,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RGR1_RPD3_SPT3,C16:1,0.0215322312183967,True,0.6590693050748753,False,False,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RGR1_RPD3_SPT3,C18:1,0.0664026736955394,False,-0.65573236888513,False,False,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RGR1_RPD3_SPT3,Total Titer,0.0307106402198735,True,-0.5305656260768092,False,False,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RFX1_RPD3,C14:0,0.0002510247207785,True,2.3480067263488187,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1_RFX1_RPD3,C16:0,0.0005350539869928,True,-1.729693870363788,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1_RFX1_RPD3,C18:0,0.0017321967747225,True,-0.9215085392177698,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1_RFX1_RPD3,C16:1,0.0008694132960354,True,-0.8620676382185386,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1_RFX1_RPD3,C18:1,0.0004170451484364,True,-6.499757833396552,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1_RFX1_RPD3,Total Titer,0.0009144193783618,True,-1.7223235282559717,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,False
+GCN5_OPI1_RGR1,C14:0,0.0230306208504313,True,1.404893468862246,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_RGR1,C16:0,0.2977125067274846,False,-0.1100933999243234,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_RGR1,C18:0,0.0208568130552051,True,-0.2586025768641441,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_RGR1,C16:1,0.0051245525457879,True,0.8580645053319329,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_RGR1,C18:1,0.0691410398401477,False,0.5765642739519072,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_RGR1,Total Titer,0.2441690623617387,False,0.1325017155881274,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RGR1_SPT3,C14:0,0.4147966227746582,False,0.4114377988073574,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_RGR1_SPT3,C16:0,0.1617107602602654,False,-0.305383927416039,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_RGR1_SPT3,C18:0,0.6128617664210174,False,-0.0946037400319871,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_RGR1_SPT3,C16:1,0.1518310286099973,False,-0.4424248408453444,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_RGR1_SPT3,C18:1,0.0578648821139782,False,-0.749515911405835,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_RGR1_SPT3,Total Titer,0.1335946525868487,False,-0.3010559351554773,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4_OPI1_RGR1,C14:0,0.0028062647025295,True,2.3078490211893348,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4_OPI1_RGR1,C16:0,0.0005484973875475,True,-1.3561752550807291,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4_OPI1_RGR1,C18:0,0.0032344184022108,True,-0.7414859469192829,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4_OPI1_RGR1,C16:1,0.4519752699890842,False,0.1837658903623578,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4_OPI1_RGR1,C18:1,0.0312772337309008,True,-4.078228782047121,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4_OPI1_RGR1,Total Titer,0.0111119037335123,True,-1.0786351225788935,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RGR1_RPD3,C14:0,0.0638327276574344,False,1.0611750403697815,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RGR1_RPD3,C16:0,0.1622382497332444,False,-0.2155606206786974,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RGR1_RPD3,C18:0,0.0430654205504965,True,-0.3347154712507409,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RGR1_RPD3,C16:1,0.1201593790867696,False,0.4591720610778997,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RGR1_RPD3,C18:1,0.2509301651154738,False,-0.3038784816137658,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RGR1_RPD3,Total Titer,0.5340826953766351,False,-0.1031863172550324,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RGR1_TFC7,C14:0,0.1393598653325716,False,1.053121957654728,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_RGR1_TFC7,C16:0,0.0781344016091107,False,-1.073588476853952,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_RGR1_TFC7,C18:0,0.0421591590114167,True,-0.7150290791960723,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_RGR1_TFC7,C16:1,0.0172137133819791,True,-0.8759045540657242,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_RGR1_TFC7,C18:1,0.0006451936678615,True,-3.992979940777628,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_RGR1_TFC7,Total Titer,0.0266095717582004,True,-1.1804490505238672,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RFX1_RGR1,C14:0,0.0007450698760838,True,3.264242976826827,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RFX1_RGR1,C16:0,0.0003005974522058,True,-1.5810484313497453,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RFX1_RGR1,C18:0,0.0022608261998373,True,-0.7608057174173206,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RFX1_RGR1,C16:1,0.0529262337633233,False,-0.4140648534304438,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RFX1_RGR1,C18:1,0.000758771144723,True,-5.911752532801752,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RFX1_RGR1,Total Titer,0.000290847917219,True,-1.453405568281057,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+OPI1_RFX1_RPD3,C14:0,0.4021275686369878,False,0.1923288229390527,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RFX1_RPD3,C16:0,0.0001013869100654,True,-1.1713148226105792,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RFX1_RPD3,C18:0,4.953189243295242e-05,True,-1.4032389750701817,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RFX1_RPD3,C16:1,0.1802858343224167,False,-0.2110799086910817,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RFX1_RPD3,C18:1,0.1447589740708486,False,0.6473819425577556,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RFX1_RPD3,Total Titer,0.0006601141536091,True,-0.8446983374140462,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_OPI1_TFC7,C14:0,0.0096863706418099,True,1.948540425723776,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_OPI1_TFC7,C16:0,0.0040519500132805,True,-1.4854117901433757,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_OPI1_TFC7,C18:0,0.0062131731274874,True,-0.7038529934795501,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_OPI1_TFC7,C16:1,0.8039581661297914,False,-0.0653103097407332,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_OPI1_TFC7,C18:1,0.0102575262900677,True,-3.74417878777106,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_OPI1_TFC7,Total Titer,2.506465976326311e-06,True,-1.1410145564364351,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_GCN5_RGR1,C14:0,0.8344800786647029,False,0.2073311858446089,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_RGR1,C16:0,0.0008961365678399,True,-1.581621328991487,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_RGR1,C18:0,0.0007342209039638,True,-0.7237750947869952,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_RGR1,C16:1,0.2343039800973319,False,0.3108452769056731,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_RGR1,C18:1,0.0116698771548686,True,-3.401423515632876,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_RGR1,Total Titer,0.0003050462017033,True,-1.1116870929639284,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_RGR1_TFC7,C14:0,0.0012249721795947,True,3.022056011716004,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_RGR1_TFC7,C16:0,0.0016374512101415,True,-1.7700129239811098,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_RGR1_TFC7,C18:0,4.040074224631596e-05,True,-1.0178948898905067,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_RGR1_TFC7,C16:1,0.7081455288635372,False,0.0903667083938599,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_RGR1_TFC7,C18:1,0.007746912339327,True,-3.744236190225211,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_RGR1_TFC7,Total Titer,9.78171828736052e-06,True,-1.2939775630626809,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_GCN5_OPI1,C14:0,0.3514949620271375,False,-0.9863452447151912,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_GCN5_OPI1,C16:0,0.002642812952289,True,-1.5048260176611366,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_GCN5_OPI1,C18:0,0.0063005742662753,True,-0.7342705595508383,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_GCN5_OPI1,C16:1,0.1656938120501716,False,0.4156915445532632,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_GCN5_OPI1,C18:1,0.0140572344088796,True,-3.453033866469499,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_GCN5_OPI1,Total Titer,0.0002115761616467,True,-1.0922903759159683,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_RPD3,C14:0,0.090515454155867,False,0.7568361446064795,False,True,False,False,False,True,False,False,False,False,False,False,False,False,True,True,True,True,False,False
+GCN5_OPI1_RPD3,C16:0,0.0061873670569581,True,-0.457291484095641,False,True,False,False,False,True,False,False,False,False,False,False,False,False,True,True,True,True,False,False
+GCN5_OPI1_RPD3,C18:0,0.0019884517100059,True,-0.7152911274899063,False,True,False,False,False,True,False,False,False,False,False,False,False,False,True,True,True,True,False,False
+GCN5_OPI1_RPD3,C16:1,0.0024432820969206,True,1.0450134888173357,False,True,False,False,False,True,False,False,False,False,False,False,False,False,True,True,True,True,False,False
+GCN5_OPI1_RPD3,C18:1,0.1032746726400035,False,0.4680038394414216,False,True,False,False,False,True,False,False,False,False,False,False,False,False,True,True,True,True,False,False
+GCN5_OPI1_RPD3,Total Titer,0.3655197393668543,False,-0.1249223722759658,False,True,False,False,False,True,False,False,False,False,False,False,False,False,True,True,True,True,False,False
+FKH1_RFX1_SPT3,C14:0,1.4419386870967443e-05,True,2.3869387264356523,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RFX1_SPT3,C16:0,0.0018477855239473,True,-1.5388497493009754,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RFX1_SPT3,C18:0,0.006415937850275,True,-0.6652704924450017,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RFX1_SPT3,C16:1,0.0153312217750223,True,-0.7264564910331162,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RFX1_SPT3,C18:1,0.0019313916709946,True,-6.617039200983929,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RFX1_SPT3,Total Titer,3.885780883061685e-06,True,-1.5568453184173785,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RGR1_RPD3,C14:0,0.0005766543527516,True,3.1872072460210505,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RGR1_RPD3,C16:0,0.0022167784039182,True,-1.3725358030313202,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RGR1_RPD3,C18:0,0.0037633479794361,True,-0.751642415362763,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RGR1_RPD3,C16:1,0.3339718632205128,False,-0.2303876612465938,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RGR1_RPD3,C18:1,0.0015508232747771,True,-5.279537884152063,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RGR1_RPD3,Total Titer,0.0018628953710855,True,-1.2709620511581394,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RFX1_YAP6,C14:0,0.0001851920019728,True,2.63166143153669,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RFX1_YAP6,C16:0,1.776640862005685e-05,True,-1.5992599423744407,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RFX1_YAP6,C18:0,0.0030040296324653,True,-0.8784204404379774,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RFX1_YAP6,C16:1,0.2155444856306583,False,-0.5900403660389739,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RFX1_YAP6,C18:1,0.0667485556508928,False,-5.958386156093581,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RFX1_YAP6,Total Titer,0.0025581850361455,True,-1.545875898268303,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RPD3_SPT3,C14:0,0.0001597416117824,True,1.966565303862976,False,False,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RPD3_SPT3,C16:0,0.0034105064840601,True,-1.4280868085301548,False,False,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RPD3_SPT3,C18:0,0.0052542424199224,True,-0.7144020310700026,False,False,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RPD3_SPT3,C16:1,0.0428806320932244,True,-0.5448712370216149,False,False,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RPD3_SPT3,C18:1,0.002964420422695,True,-5.632502313221058,False,False,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RPD3_SPT3,Total Titer,0.0032386306574501,True,-1.4020911825752758,False,False,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RFX1_RGR1,C14:0,0.0275764673920626,True,1.2629321069602994,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_RFX1_RGR1,C16:0,0.2655297505639629,False,-0.1612004560248845,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_RFX1_RGR1,C18:0,0.905203570460946,False,0.0158016910670948,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_RFX1_RGR1,C16:1,0.8811417432068205,False,0.0280620954191572,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_RFX1_RGR1,C18:1,0.0271502796538072,True,-0.8840193198396253,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_RFX1_RGR1,Total Titer,0.3313892270074576,False,-0.1173531617323,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RGR1_SPT3,C14:0,0.0006198623718776,True,2.760069066977935,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_RGR1_SPT3,C16:0,0.0014212283837617,True,-1.5497098246826746,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_RGR1_SPT3,C18:0,0.0424294686457644,True,-0.6989889387211861,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_RGR1_SPT3,C16:1,0.1656163019020571,False,-0.3680388665376917,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_RGR1_SPT3,C18:1,0.0019705528071847,True,-5.328150587510858,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_RGR1_SPT3,Total Titer,0.0023303970429582,True,-1.3657890779797723,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_OPI1_YAP6,C14:0,0.0006911525886823,True,1.941368214161069,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_OPI1_YAP6,C16:0,0.0019984709311664,True,-1.6303421988458502,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_OPI1_YAP6,C18:0,0.0011942349613638,True,-1.0388240820480703,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_OPI1_YAP6,C16:1,0.5089287690010398,False,-0.3001579831707754,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_OPI1_YAP6,C18:1,0.0886276995658383,False,-4.95199948076871,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_OPI1_YAP6,Total Titer,0.0054147181111949,True,-1.4617374320381904,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_OPI1_SPT3,C14:0,4.123721657056656e-05,True,1.9256160670898188,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_OPI1_SPT3,C16:0,0.0020642190312898,True,-1.581887097804561,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_OPI1_SPT3,C18:0,0.0037193777987596,True,-0.9399290914988088,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_OPI1_SPT3,C16:1,0.2737519713657286,False,-0.2901903161671666,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_OPI1_SPT3,C18:1,0.0038808034660984,True,-5.135501102224966,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_OPI1_SPT3,Total Titer,8.699263656097855e-06,True,-1.4304506256497396,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_RFX1_YAP6,C14:0,0.3995356493707487,False,0.3011627499210974,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,False,False,False
+GCN5_RFX1_YAP6,C16:0,0.2919972452113502,False,-0.1973876031338606,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,False,False,False
+GCN5_RFX1_YAP6,C18:0,0.791744046192024,False,0.0468685620337545,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,False,False,False
+GCN5_RFX1_YAP6,C16:1,0.2071502135366369,False,-0.3661042421159042,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,False,False,False
+GCN5_RFX1_YAP6,C18:1,0.0135280545493179,True,-1.0192418897018367,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,False,False,False
+GCN5_RFX1_YAP6,Total Titer,0.1235258842154574,False,-0.2313430724827463,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,False,False,False
+FKH1_SPT3_TFC7,C14:0,0.0040155766138767,True,2.3193880158105937,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_SPT3_TFC7,C16:0,0.0038968039620352,True,-1.7171204256232255,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_SPT3_TFC7,C18:0,0.0005380445515246,True,-0.9823925467783612,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_SPT3_TFC7,C16:1,0.590381292700243,False,-0.1489292623658649,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_SPT3_TFC7,C18:1,0.0124320305153409,True,-4.041010791987531,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_SPT3_TFC7,Total Titer,8.223034119847483e-06,True,-1.352349681840812,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_RFX1_TFC7,C14:0,0.312982093863638,False,0.6067089818799367,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_RFX1_TFC7,C16:0,0.107352838180313,False,-0.8618956318909472,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_RFX1_TFC7,C18:0,0.170966494029777,False,-0.3577321023140327,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_RFX1_TFC7,C16:1,0.0168858023159279,True,-0.8623621831132064,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_RFX1_TFC7,C18:1,0.0007430722904189,True,-4.152947534483056,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5_RFX1_TFC7,Total Titer,0.0306958104269718,True,-1.0147365041753824,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_RPD3_YAP6,C14:0,0.0006025945433796,True,2.260951608028201,False,False,True,True,False,True,False,True,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1_RPD3_YAP6,C16:0,0.0015381098676847,True,-1.587324506587299,False,False,True,True,False,True,False,True,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1_RPD3_YAP6,C18:0,0.0016055253967841,True,-0.9912225565087064,False,False,True,True,False,True,False,True,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1_RPD3_YAP6,C16:1,0.5629881136922292,False,-0.249601694971985,False,False,True,True,False,True,False,True,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1_RPD3_YAP6,C18:1,0.0893094426958605,False,-5.058443852083009,False,False,True,True,False,True,False,True,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1_RPD3_YAP6,Total Titer,0.0032255136890366,True,-1.4254298713365738,False,False,True,True,False,True,False,True,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1_TFC7_YAP6,C14:0,0.0025999448974314,True,2.243327505389595,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_TFC7_YAP6,C16:0,5.726989187326836e-07,True,-1.9468839118548449,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_TFC7_YAP6,C18:0,0.000247744339785,True,-1.2745087293509751,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_TFC7_YAP6,C16:1,0.8901785785902512,False,-0.0619648822155136,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_TFC7_YAP6,C18:1,0.1564468354623449,False,-3.749068433183707,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_TFC7_YAP6,Total Titer,0.0043694793630801,True,-1.4838162474396088,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_RPD3_YAP6,C14:0,0.53966764181525,False,0.2853104089747003,False,True,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RPD3_YAP6,C16:0,0.0571050172155929,False,-0.3125232394147028,False,True,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RPD3_YAP6,C18:0,0.0260661800205188,True,-0.3578197872744963,False,True,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RPD3_YAP6,C16:1,0.3773564677625698,False,0.2972108606735704,False,True,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RPD3_YAP6,C18:1,0.9088760031670264,False,-0.0342386069989901,False,True,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RPD3_YAP6,Total Titer,0.2779632683598962,False,-0.1680143086382826,False,True,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_SPT3,C14:0,0.8958435055111207,False,0.0524915711902513,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_SPT3,C16:0,0.0330105732801975,True,-0.4597739040414876,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_SPT3,C18:0,0.0633356207900721,False,-0.4870579123374081,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_SPT3,C16:1,0.0319826431147494,True,0.5517411619796095,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_SPT3,C18:1,0.1229866815005107,False,0.6155728292006282,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_OPI1_SPT3,Total Titer,0.3001356764571015,False,-0.154360857764835,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RFX1_RPD3,C14:0,0.2881908807972324,False,0.3740304155206981,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RFX1_RPD3,C16:0,0.0251153992578467,True,-0.4371209006491481,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RFX1_RPD3,C18:0,0.0240417836763624,True,-0.4371628211293912,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RFX1_RPD3,C16:1,0.1197559588912566,False,0.360861008280728,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RFX1_RPD3,C18:1,0.0443538164206382,True,-0.6775971593612806,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RFX1_RPD3,Total Titer,0.0752160657351317,False,-0.290447316261567,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RGR1_YAP6,C14:0,0.0686122917076292,False,1.0177226266158357,False,False,False,False,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_RGR1_YAP6,C16:0,0.9792434685442072,False,-0.0067621577970586,False,False,False,False,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_RGR1_YAP6,C18:0,0.7985459275670972,False,0.0703054993233496,False,False,False,False,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_RGR1_YAP6,C16:1,0.1987349090040666,False,-0.4584306781896199,False,False,False,False,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_RGR1_YAP6,C18:1,0.1439881041145434,False,-0.5799232959706413,False,False,False,False,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_RGR1_YAP6,Total Titer,0.5652168876478139,False,-0.1091825453969137,False,False,False,False,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RPD3_TFC7,C14:0,0.0095426871183446,True,2.221186328879716,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RPD3_TFC7,C16:0,0.0036268485204589,True,-1.3728830633602678,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RPD3_TFC7,C18:0,0.0065562973726558,True,-0.6578172708056058,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RPD3_TFC7,C16:1,0.8115349318478602,False,0.0535000635949205,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RPD3_TFC7,C18:1,0.0043888681622974,True,-3.617004629051317,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_RPD3_TFC7,Total Titer,0.0051316168295267,True,-1.0420025987953043,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RPD3_TFC7,C14:0,0.2470211683643257,False,-0.7258779070835413,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RPD3_TFC7,C16:0,0.1601005642023723,False,-0.6990796782272688,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RPD3_TFC7,C18:0,0.4385094613927005,False,-0.1810042947735741,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RPD3_TFC7,C16:1,0.011533908693831,True,-0.9582265050239992,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RPD3_TFC7,C18:1,0.0013017248056419,True,-3.477644190235646,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5_RPD3_TFC7,Total Titer,0.0428881941419299,True,-0.8761317928927075,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_OPI1_RPD3,C14:0,2.3385980841617027e-05,True,2.14687086178422,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_OPI1_RPD3,C16:0,0.0035064791984307,True,-1.427410306096876,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_OPI1_RPD3,C18:0,0.0082464657040575,True,-0.8311438189931888,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_OPI1_RPD3,C16:1,0.0581764588218896,False,-0.4653658716185909,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_OPI1_RPD3,C18:1,0.0023048641212004,True,-5.05554828965148,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_OPI1_RPD3,Total Titer,0.0028277118278863,True,-1.3593359009508892,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_OPI1_RFX1,C14:0,1.136128801992875e-05,True,2.490086651003024,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_OPI1_RFX1,C16:0,0.0013750578013926,True,-1.5636370933000046,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_OPI1_RFX1,C18:0,0.0022591773307669,True,-0.9067072284170856,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_OPI1_RFX1,C16:1,0.0677718636347328,False,-0.4461602056458895,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_OPI1_RFX1,C18:1,0.0025813278249362,True,-5.286165258403997,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_OPI1_RFX1,Total Titer,7.932434866964044e-06,True,-1.4478588518339175,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_SPT3_YAP6,C14:0,0.0013459162255842,True,2.3480384544092825,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_SPT3_YAP6,C16:0,0.0013732936574961,True,-1.7400453404052123,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_SPT3_YAP6,C18:0,0.0263366394251736,True,-1.0753587366207735,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_SPT3_YAP6,C16:1,0.4172358701088199,False,-0.3760752562205876,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_SPT3_YAP6,C18:1,0.0668624343768895,False,-5.52973561277609,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_SPT3_YAP6,Total Titer,0.0023957467043309,True,-1.5801998883446855,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5_RFX1_SPT3,C14:0,0.7955013820758161,False,0.0701056544413436,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_RFX1_SPT3,C16:0,0.1784484199400364,False,-0.2241176393504922,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_RFX1_SPT3,C18:0,0.953146320012787,False,-0.008275659594457,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_RFX1_SPT3,C16:1,0.6721856793952656,False,-0.0778836949318195,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_RFX1_SPT3,C18:1,0.0565006031786667,False,-0.7410881874555413,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5_RFX1_SPT3,Total Titer,0.1767534409820954,False,-0.1788195097363889,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_RGR1_YAP6,C14:0,0.0022425488321575,True,3.5474743628921965,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RGR1_YAP6,C16:0,0.0018124858331907,True,-1.4560232467857943,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RGR1_YAP6,C18:0,0.0484313110676601,True,-0.7575958215432101,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RGR1_YAP6,C16:1,0.8346593988744082,False,-0.089660470066875,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RGR1_YAP6,C18:1,0.0874333882484339,False,-5.01116673423414,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_RGR1_YAP6,Total Titer,0.0061027098297987,True,-1.2447572503693425,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_OPI1_RGR1,C14:0,0.0009871758457233,True,3.1866578496056537,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_OPI1_RGR1,C16:0,0.0116329230042817,True,-1.048546830184785,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_OPI1_RGR1,C18:0,0.0653105865075709,False,-0.4195367460379597,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_OPI1_RGR1,C16:1,0.8414969634113882,False,0.0427659104449635,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_OPI1_RGR1,C18:1,0.0056514513693217,True,-4.298438294481766,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_OPI1_RGR1,Total Titer,0.0009206196340716,True,-0.8953603936710466,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_SPT3,C14:0,5.8594254054966655e-05,True,1.769124923393434,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_SPT3,C16:0,0.0309287737926797,True,-0.761491941758546,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_SPT3,C18:0,0.0154606728018382,True,-0.4716697050698459,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_SPT3,C16:1,0.7275982598512725,False,-0.077451918893046,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_SPT3,C18:1,0.066475005063189,False,-2.2409735456223947,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_SPT3,Total Titer,9.766601466321134e-05,True,-0.6426941927220091,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_RGR1,C14:0,0.0017875880039732,True,2.7813268674885907,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_MED4_RGR1,C16:0,0.0327829121965963,True,-0.6330858830486186,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_MED4_RGR1,C18:0,0.0376236837029575,True,-0.4072917202581338,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_MED4_RGR1,C16:1,0.0851403594968138,False,0.3453237650870582,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_MED4_RGR1,C18:1,0.0471915782332852,True,-2.025143253368888,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_MED4_RGR1,Total Titer,0.0227417324417924,True,-0.4498615350689592,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+RFX1_RGR1_SPT3,C14:0,0.0184034279964846,True,1.4072947820699708,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1_RGR1_SPT3,C16:0,0.8765091630979243,False,-0.0325253524610442,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1_RGR1_SPT3,C18:0,0.0220061230097101,True,-0.6183478542908594,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1_RGR1_SPT3,C16:1,0.0132604785937711,True,0.5480911482564956,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1_RGR1_SPT3,C18:1,0.0652701172161656,False,1.3499814583550087,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1_RGR1_SPT3,Total Titer,0.6694437399046782,False,0.07570548588736,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RGR1_YAP6,C14:0,0.0674919324221479,False,0.9705630394813972,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RGR1_YAP6,C16:0,0.8122075294295312,False,-0.0454698088266367,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RGR1_YAP6,C18:0,0.0502233510482654,False,-0.4235452013734326,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RGR1_YAP6,C16:1,0.0143563564766187,True,0.966709732700508,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RGR1_YAP6,C18:1,0.0126998615858628,True,3.373221950828928,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RGR1_YAP6,Total Titer,0.0119779251939362,True,0.4013488598524446,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_RFX1,C14:0,1.9216821190326527e-05,True,2.4701898172964687,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_MED4_RFX1,C16:0,0.0445569133374585,True,-0.4036237925741988,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_MED4_RFX1,C18:0,0.3567878626118808,False,-0.1370844750645898,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_MED4_RFX1,C16:1,0.7621125296760218,False,-0.0490467456136238,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_MED4_RFX1,C18:1,0.0058850238634353,True,-2.8878395183934096,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_MED4_RFX1,Total Titer,0.0033925867392861,True,-0.4488953171345431,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_MED4_YAP6,C14:0,0.0007630494890216,True,1.9973214837376991,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_MED4_YAP6,C16:0,0.0042864023081976,True,-0.6017333532079809,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_MED4_YAP6,C18:0,0.0229477983125971,True,-0.5287812461553951,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_MED4_YAP6,C16:1,0.6025810542834729,False,0.2307056358487917,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_MED4_YAP6,C18:1,0.4647866945652392,False,-1.5637622220750926,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1_MED4_YAP6,Total Titer,0.0951631217397062,False,-0.4642548079499362,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RFX1_RPD3_SPT3,C14:0,0.0131033400294584,True,0.5194501360131851,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RFX1_RPD3_SPT3,C16:0,0.2159832469573945,False,-0.2510331813796391,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RFX1_RPD3_SPT3,C18:0,0.0010405078765576,True,-0.84484906778808,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RFX1_RPD3_SPT3,C16:1,0.2625282909367614,False,0.2598220681068135,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RFX1_RPD3_SPT3,C18:1,0.1323432140521991,False,1.823875246202713,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RFX1_RPD3_SPT3,Total Titer,0.6386228597735837,False,-0.1027320477058533,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RGR1_SPT3,C14:0,0.1480810584405467,False,0.6990994240522075,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RGR1_SPT3,C16:0,0.8702787813865758,False,0.0531660477679514,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RGR1_SPT3,C18:0,0.1886038914438288,False,-0.3581494446991979,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RGR1_SPT3,C16:1,0.0097199208993932,True,0.7852416272266594,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RGR1_SPT3,C18:1,0.0383946841051987,True,2.695100341772908,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RGR1_SPT3,Total Titer,0.0935929497967924,False,0.3514312697885338,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_TFC7,C14:0,0.0074739775173842,True,2.08273843219964,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_TFC7,C16:0,0.0040100077080293,True,-0.4850039230589051,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_TFC7,C18:0,0.0208813061414654,True,-0.3113393206652428,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_TFC7,C16:1,0.1076741601768986,False,0.4539355214448766,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_TFC7,C18:1,0.8992711381870642,False,-0.0581568398122547,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_TFC7,Total Titer,0.1846864150094647,False,-0.159923146848173,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RPD3_YAP6,C14:0,0.6608654282864328,False,-0.174554429487725,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RPD3_YAP6,C16:0,0.1670438881294158,False,-0.4418658362995156,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RPD3_YAP6,C18:0,0.0219956465150124,True,-0.7367225509165538,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RPD3_YAP6,C16:1,0.2600682885797005,False,0.6470013321462282,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RPD3_YAP6,C18:1,0.2403493882840084,False,3.162220966181147,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RPD3_YAP6,Total Titer,0.789338541903255,False,0.0478992205237929,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RFX1_RGR1_RPD3,C14:0,0.0097032385477671,True,1.7676704423058616,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RFX1_RGR1_RPD3,C16:0,0.4420052656661317,False,-0.1308475281452856,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RFX1_RGR1_RPD3,C18:0,0.001852497319027,True,-0.8307277628032343,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RFX1_RGR1_RPD3,C16:1,0.0410276054968368,True,0.5638225233125598,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RFX1_RGR1_RPD3,C18:1,0.077094650448557,False,1.5800381008789426,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RFX1_RGR1_RPD3,Total Titer,0.961092106993782,False,0.0080162215231045,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+OPI1_RGR1_TFC7,C14:0,0.2876803917908075,False,0.5590751437364632,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RGR1_TFC7,C16:0,0.8833228229497787,False,0.0316031469648303,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RGR1_TFC7,C18:0,0.01459323381233,True,-0.3926205947814025,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RGR1_TFC7,C16:1,0.0280225317853086,True,0.7406682822007855,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RGR1_TFC7,C18:1,0.0164861947616024,True,3.0183410625520413,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RGR1_TFC7,Total Titer,0.0001101395456799,True,0.3536850638120838,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RPD3_SPT3,C14:0,0.7574999968153913,False,-0.1030677694672537,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RPD3_SPT3,C16:0,0.135896619391163,False,-0.4754198655840445,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RPD3_SPT3,C18:0,0.009679910927379,True,-0.7978548500743756,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RPD3_SPT3,C16:1,0.02819186293601,True,0.6039910833227344,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RPD3_SPT3,C18:1,0.0172634606219337,True,3.693596462704224,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RPD3_SPT3,Total Titer,0.7966922466578661,False,0.0627984173395046,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RFX1_RGR1,C14:0,0.0333043600698064,True,1.1817116119691593,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RFX1_RGR1,C16:0,0.8580254926088662,False,-0.0484362638064641,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RFX1_RGR1,C18:0,0.0593291973258813,False,-0.4474639585733295,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RFX1_RGR1,C16:1,0.0001878649940405,True,1.0087392809088058,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RFX1_RGR1,C18:1,0.0062621158884399,True,3.3865618245630973,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RFX1_RGR1,Total Titer,0.0260229088632126,True,0.4068181190788664,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_RPD3,C14:0,0.0001168126592578,True,1.7622649827416057,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_MED4_RPD3,C16:0,0.6789676886978038,False,-0.0934449698849948,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_MED4_RPD3,C18:0,0.3157458538212301,False,-0.1618118576014136,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_MED4_RPD3,C16:1,0.3563877255571213,False,0.1484071145980463,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_MED4_RPD3,C18:1,0.0254196169506975,True,-2.1633168312149325,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1_MED4_RPD3,Total Titer,0.2660702488752609,False,-0.2363830693130073,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RFX1_RGR1_YAP6,C14:0,0.0106774570181182,True,1.6883703299217316,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,False,False,False
+RFX1_RGR1_YAP6,C16:0,0.3245064935706867,False,0.1945771695989966,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,False,False,False
+RFX1_RGR1_YAP6,C18:0,0.0264137485302922,True,-0.4961783225777583,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,False,False,False
+RFX1_RGR1_YAP6,C16:1,0.0328244279478997,True,0.7805004585528481,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,False,False,False
+RFX1_RGR1_YAP6,C18:1,0.007589021203161,True,2.704525433364068,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,False,False,False
+RFX1_RGR1_YAP6,Total Titer,0.0144535979091278,True,0.3866836260631694,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,False,False,False
+OPI1_RFX1_TFC7,C14:0,0.4114981288526913,False,0.3536726899884614,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RFX1_TFC7,C16:0,0.1294519264833344,False,-0.2835904752388645,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RFX1_TFC7,C18:0,0.0142339881315014,True,-0.5331614678283432,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RFX1_TFC7,C16:1,0.013375732009478,True,0.9152714833682556,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RFX1_TFC7,C18:1,0.005361273468442,True,4.105712163873569,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RFX1_TFC7,Total Titer,0.0300893745833319,True,0.3260539134733016,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1_RGR1_TFC7,C14:0,0.0235062906439511,True,1.5857903376366598,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1_RGR1_TFC7,C16:0,0.8238659669090438,False,-0.057195578000075,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1_RGR1_TFC7,C18:0,0.0052640869476772,True,-0.6709420541096729,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1_RGR1_TFC7,C16:1,0.2345752156036309,False,0.8288844781534717,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1_RGR1_TFC7,C18:1,0.3653984603527542,False,2.483480323841164,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1_RGR1_TFC7,Total Titer,0.626400248646571,False,0.2214821869502283,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_GCN5_MED4,C14:0,0.4589020537717361,False,0.7560387683500904,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_MED4,C16:0,0.8932043867138106,False,-0.0268229938754416,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_MED4,C18:0,0.0799206662967775,False,-0.1940028072608517,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_MED4,C16:1,0.0184692331254523,True,0.9108825970826668,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_MED4,C18:1,0.0925357407035911,False,0.9014867887925616,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1_GCN5_MED4,Total Titer,0.2812355713936838,False,0.214265168056188,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+OPI1_SPT3_TFC7,C14:0,0.4581499594139278,False,-0.3281599895798379,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_SPT3_TFC7,C16:0,0.7949417924342645,False,-0.1178506551262668,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_SPT3_TFC7,C18:0,0.0385665559682948,True,-0.6731677310398054,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_SPT3_TFC7,C16:1,0.0705441022193329,False,0.5329957224048256,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_SPT3_TFC7,C18:1,0.0001538870569164,True,3.41243500232056,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_SPT3_TFC7,Total Titer,0.4050234791485076,False,0.1946424610416162,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1_RPD3_TFC7,C14:0,0.1204804779693153,False,0.7869226954156288,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RFX1_RPD3_TFC7,C16:0,0.7769215640661136,False,0.0410070221935385,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RFX1_RPD3_TFC7,C18:0,0.0042128274077763,True,-0.6735446421581237,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RFX1_RPD3_TFC7,C16:1,0.0800346220510779,False,0.5528908911991326,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RFX1_RPD3_TFC7,C18:1,0.0033224402510505,True,2.3092067991902336,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RFX1_RPD3_TFC7,Total Titer,0.1513876344370752,False,0.1732181185592376,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+OPI1_TFC7_YAP6,C14:0,0.4225341806631739,False,-0.3892064478098449,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_TFC7_YAP6,C16:0,0.5417162905836739,False,-0.2657647180229745,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_TFC7_YAP6,C18:0,0.0131391259784088,True,-0.8116025992327569,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_TFC7_YAP6,C16:1,0.0554141489774813,False,0.7227144320304177,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_TFC7_YAP6,C18:1,0.0207405857146236,True,3.6201790499959055,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_TFC7_YAP6,Total Titer,0.3861424726437574,False,0.1521063005359655,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RPD3_TFC7,C14:0,0.498770933179653,False,-0.2766870561202603,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RPD3_TFC7,C16:0,0.9389696973206332,False,-0.0319020856914,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RPD3_TFC7,C18:0,0.1077958689573364,False,-0.4474997483531109,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RPD3_TFC7,C16:1,0.0770155630721627,False,0.701756558644558,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RPD3_TFC7,C18:1,0.0710891022511104,False,3.46693145722979,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1_RPD3_TFC7,Total Titer,0.1033111935694286,False,0.3334306663691788,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RFX1_SPT3_TFC7,C14:0,0.0792553068859494,False,0.9183803994061832,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1_SPT3_TFC7,C16:0,0.4448416085721363,False,0.1191356821454137,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1_SPT3_TFC7,C18:0,0.0045271399781623,True,-0.6576349666148462,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1_SPT3_TFC7,C16:1,0.082339242669333,False,0.5119290682340025,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1_SPT3_TFC7,C18:1,0.0003043138114435,True,2.663702177803449,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1_SPT3_TFC7,Total Titer,0.048101491374255,True,0.2387258173523017,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1_SPT3_YAP6,C14:0,0.0630012333346909,False,0.7024408897884062,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+RFX1_SPT3_YAP6,C16:0,0.6897106518397687,False,0.0801352349658393,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+RFX1_SPT3_YAP6,C18:0,0.0055806622662191,True,-0.6791669928755972,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+RFX1_SPT3_YAP6,C16:1,0.0672355427136131,False,0.568930199554166,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+RFX1_SPT3_YAP6,C18:1,0.0016849646389089,True,2.9343156110866317,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+RFX1_SPT3_YAP6,Total Titer,0.0898904218280469,False,0.2508168407911482,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+OPI1_SPT3_YAP6,C14:0,0.6413116356098287,False,-0.1683415742795642,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_SPT3_YAP6,C16:0,0.1214299343145153,False,-0.3709440566886111,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_SPT3_YAP6,C18:0,0.0026109190769401,True,-0.9364742593193228,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_SPT3_YAP6,C16:1,0.0223717437039325,True,0.9720885241292524,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_SPT3_YAP6,C18:1,0.0578181520568472,False,4.536594553746473,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_SPT3_YAP6,Total Titer,0.3751092485106926,False,0.2180807724547184,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RFX1_YAP6,C14:0,0.163571070494692,False,0.5154824585573081,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+OPI1_RFX1_YAP6,C16:0,0.1068385553130881,False,-0.3716922225152459,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+OPI1_RFX1_YAP6,C18:0,0.0102070103304519,True,-0.6600250528458469,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+OPI1_RFX1_YAP6,C16:1,0.0093220576048884,True,1.164822971824103,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+OPI1_RFX1_YAP6,C18:1,1.1137339495093102e-08,True,5.069669945673144,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+OPI1_RFX1_YAP6,Total Titer,0.023791540563101,True,0.4018418580119827,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+OPI1_RFX1_SPT3,C14:0,0.1501096533447035,False,0.4041871020424521,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RFX1_SPT3,C16:0,0.0269485421953468,True,-0.5659311408976029,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RFX1_SPT3,C18:0,0.0044864576009315,True,-0.8705729720056823,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RFX1_SPT3,C16:1,0.0003606930070174,True,1.247226926758735,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RFX1_SPT3,C18:1,0.0030358256120748,True,5.474539239306592,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1_RFX1_SPT3,Total Titer,0.1324434404532615,False,0.3178223706196477,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_OPI1,C14:0,0.0002077169695675,True,2.328605852324248,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_OPI1,C16:0,0.0573541092727065,False,-0.6417149746188735,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_OPI1,C18:0,0.0567435311569426,False,-0.4127172271868116,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_OPI1,C16:1,0.1985001414376517,False,0.7007557754229072,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_OPI1,C18:1,0.996827154598263,False,0.0078168444240209,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1_MED4_OPI1,Total Titer,0.5322927485427615,False,-0.1922539856368001,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1_RPD3_YAP6,C14:0,0.0241968187022287,True,1.1018737924550672,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RFX1_RPD3_YAP6,C16:0,0.5696609567917008,False,-0.1421465929994283,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RFX1_RPD3_YAP6,C18:0,0.0029459804159899,True,-0.7581170102112711,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RFX1_RPD3_YAP6,C16:1,0.1539864303042581,False,1.1436207600597124,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RFX1_RPD3_YAP6,C18:1,0.1335312281196836,False,4.761834282376371,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RFX1_RPD3_YAP6,Total Titer,0.1728832921024237,False,0.4410182587941551,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False

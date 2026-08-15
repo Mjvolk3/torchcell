@@ -1,0 +1,492 @@
+gene_set,ffa_type,p_value,significant_p05,interaction_score,physical_triangle,physical_connected,regulatory_triangle,regulatory_connected,genetic_triangle,genetic_connected,tflink_triangle,tflink_connected,string12_0_neighborhood_triangle,string12_0_neighborhood_connected,string12_0_fusion_triangle,string12_0_fusion_connected,string12_0_cooccurence_triangle,string12_0_cooccurence_connected,string12_0_coexpression_triangle,string12_0_coexpression_connected,string12_0_experimental_triangle,string12_0_experimental_connected,string12_0_database_triangle,string12_0_database_connected
+GCN5:RPD3:SPT3,C14:0,0.6330980401598767,False,-0.1319301140777399,False,True,False,False,True,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+GCN5:RPD3:TFC7,C14:0,0.1526118388714469,False,-0.3953077757578287,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:SPT3:YAP6,C14:0,0.7695732669652948,False,-0.0809573893783139,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+OPI1:RPD3:SPT3,C14:0,0.9339443380697744,False,-0.0222184888463061,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1:RPD3:YAP6,C14:0,0.6670902551268134,False,-0.1153087526931271,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1:RPD3:TFC7,C14:0,0.5372029223603187,False,-0.1654118500370892,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1:SPT3:YAP6,C14:0,0.8458567732331252,False,-0.0537280587690526,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:SPT3:TFC7,C14:0,0.4941245485280501,False,-0.1832961742832505,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:YAP6:TFC7,C14:0,0.4128552210734465,False,-0.2195166496643045,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:GCN5:MED4,C16:0,0.5502540794970467,False,-0.1662897775548186,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:OPI1,C16:0,4.070945976005138e-08,True,-1.4840841030829266,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:GCN5:RFX1,C16:0,2.370404796788156e-13,True,-1.981226871698206,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:RGR1,C16:0,2.3211678117909376e-09,True,-1.6154684354185702,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:RPD3,C16:0,2.0259367020536388e-14,True,-2.068557156764101,False,True,False,True,False,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+FKH1:GCN5:SPT3,C16:0,2.92193284700599e-16,True,-2.2112215350307447,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:YAP6,C16:0,6.108700551461181e-15,True,-2.1098558999778936,False,False,False,False,False,True,False,True,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:TFC7,C16:0,2.5842931318731803e-19,True,-2.429902526933108,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:MED4:OPI1,C16:0,0.0012107195392577,True,-0.8489429562142483,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:MED4:RFX1,C16:0,0.0458153318284213,True,-0.5238679144564788,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:MED4:RGR1,C16:0,0.0043769128294656,True,-0.7475040992802555,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:MED4:RPD3,C16:0,0.0190584944897191,True,-0.6149685675772929,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:MED4:SPT3,C16:0,0.0019114311092343,True,-0.8141381293902332,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:MED4:YAP6,C16:0,0.0067549189684905,True,-0.7105317676704148,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:MED4:TFC7,C16:0,0.0068809066057101,True,-0.7089218240941153,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:OPI1:RFX1,C16:0,2.4233697629204763e-08,True,-1.4633769984810605,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:OPI1:RGR1,C16:0,0.0002780987561176,True,-0.9534882413641314,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:OPI1:RPD3,C16:0,3.294235493025622e-10,True,-1.6994856603930188,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:OPI1:SPT3,C16:0,8.464144766531045e-09,True,-1.510660650277089,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:OPI1:YAP6,C16:0,4.938081349146989e-09,True,-1.5343479361142531,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:OPI1:TFC7,C16:0,2.7769354024892322e-08,True,-1.4571493037877974,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:RFX1:RGR1,C16:0,5.5511346521465846e-08,True,-1.4250785228206784,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:RFX1:RPD3,C16:0,3.5569616052181977e-13,True,-1.907409604735424,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1:RFX1:SPT3,C16:0,1.6886014990617938e-07,True,-1.372096517935539,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:RFX1:YAP6,C16:0,1.91783022866318e-07,True,-1.4081902175715693,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:RFX1:TFC7,C16:0,6.823155640029935e-09,True,-1.5201763155365695,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:RGR1:RPD3,C16:0,2.1278784669193903e-09,True,-1.5706750162331953,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:RGR1:SPT3,C16:0,5.20489326323479e-08,True,-1.4280890796754653,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:RGR1:YAP6,C16:0,4.356030126785688e-07,True,-1.3254022597809425,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:RGR1:TFC7,C16:0,5.988755023157646e-11,True,-1.7165976082590788,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:RPD3:SPT3,C16:0,5.380017568851293e-10,True,-1.6283496875711705,False,False,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:RPD3:YAP6,C16:0,1.6755343499230876e-11,True,-1.76586106211594,False,False,True,True,False,True,False,True,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1:RPD3:TFC7,C16:0,4.5455340598668835e-10,True,-1.6352858595788924,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:SPT3:YAP6,C16:0,1.749543346689404e-09,True,-1.57900892956829,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:SPT3:TFC7,C16:0,3.261389731597769e-10,True,-1.6488668236632456,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:YAP6:TFC7,C16:0,1.991439077008854e-12,True,-1.8454112918726968,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:MED4:OPI1,C16:0,0.0007288658834391,True,-0.940453205752938,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:MED4:RFX1,C16:0,0.0012508126924903,True,-0.8982942448941307,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:MED4:RGR1,C16:0,0.0002585142316442,True,-1.0170565585675888,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,True
+GCN5:MED4:RPD3,C16:0,0.0029649438752524,True,-0.8271208826898379,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:MED4:SPT3,C16:0,0.0002180208062061,True,-1.0291628337943075,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:MED4:YAP6,C16:0,0.0013555254976736,True,-0.8918709353314771,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:MED4:TFC7,C16:0,6.635279175894709e-11,True,-1.817358148493896,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:OPI1:RFX1,C16:0,0.0315342917275557,True,-0.5815089523383354,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:OPI1:RGR1,C16:0,0.8994315682693386,False,-0.034177552810678,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:OPI1:RPD3,C16:0,0.0490443669672935,True,-0.5322736930079813,False,True,False,False,False,True,False,False,False,False,False,False,False,False,True,True,True,True,False,False
+GCN5:OPI1:SPT3,C16:0,0.0892928846683517,False,-0.4595085136768009,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:OPI1:YAP6,C16:0,0.0249082922979078,True,-0.606539820451782,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:OPI1:TFC7,C16:0,3.521732272303105e-08,True,-1.6584754931185568,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:RFX1:RGR1,C16:0,0.7372273432207261,False,-0.0907386646689998,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:RFX1:RPD3,C16:0,0.0523047576068423,False,-0.5248126814016127,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:RFX1:SPT3,C16:0,0.4008231823960941,False,-0.2272073382639701,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:RFX1:YAP6,C16:0,0.4782909188049836,False,-0.1917537479662243,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,False,False,False
+GCN5:RFX1:TFC7,C16:0,0.0003642148500699,True,-0.964034451888956,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5:RGR1:RPD3,C16:0,0.3958233864339441,False,-0.2296283072069485,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:RGR1:SPT3,C16:0,0.3080934304902757,False,-0.2756366866514842,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:RGR1:TFC7,C16:0,5.645572818111623e-05,True,-1.1212067621338797,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:RPD3:SPT3,C16:0,0.0183634488069101,True,-0.6377440719294137,False,True,False,False,True,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+GCN5:RPD3:YAP6,C16:0,0.1510614141293949,False,-0.3882899606126533,False,True,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:RPD3:TFC7,C16:0,0.0014352734060143,True,-0.8620044570986205,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:SPT3:YAP6,C16:0,0.0037778124093858,True,-0.7832210936539348,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:SPT3:TFC7,C16:0,5.341739106769189e-09,True,-1.5783079383816316,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:YAP6:TFC7,C16:0,2.2045650042010663e-09,True,-1.6177397100951376,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:OPI1:RFX1,C16:0,8.63998555255502e-15,True,-2.034997402981475,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:OPI1:RGR1,C16:0,9.312753582526339e-11,True,-1.6992029383463432,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4:OPI1:RPD3,C16:0,9.001898351332472e-19,True,-2.320667913949525,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4:OPI1:SPT3,C16:0,1.0426344891450937e-18,True,-2.316361962358669,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:OPI1:YAP6,C16:0,1.7069387494580336e-14,True,-2.074507776223545,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:OPI1:TFC7,C16:0,1.2162189157798776e-14,True,-2.0862318400922795,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:RFX1:RGR1,C16:0,1.636242446465095e-15,True,-2.089658771901047,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4:RFX1:RPD3,C16:0,5.865884760890958e-19,True,-2.405399804354293,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4:RFX1:SPT3,C16:0,4.156208772771784e-14,True,-1.9820588938731984,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:RFX1:YAP6,C16:0,2.979383586915135e-18,True,-2.2853548743157908,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+MED4:RFX1:TFC7,C16:0,9.231592942212417e-19,True,-2.319929917243148,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:RGR1:RPD3,C16:0,4.841994871874205e-21,True,-2.469060602773732,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4:RGR1:SPT3,C16:0,3.4995593541227085e-22,True,-2.540468652223631,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4:RGR1:YAP6,C16:0,1.1809804920422016e-20,True,-2.444363396098823,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4:RGR1:TFC7,C16:0,7.597939170368344e-23,True,-2.5810914219912937,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4:RPD3:SPT3,C16:0,2.345931351935777e-22,True,-2.551167497842824,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4:RPD3:YAP6,C16:0,1.1964034124293472e-23,True,-2.6294343350973137,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4:RPD3:TFC7,C16:0,4.832809644004763e-22,True,-2.531801647389928,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:SPT3:YAP6,C16:0,2.376971245830505e-22,True,-2.5508165765062274,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:SPT3:TFC7,C16:0,1.3628051653140202e-24,True,-2.6851537336822657,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:YAP6:TFC7,C16:0,1.1462751692892004e-27,True,-2.859370107410132,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:RFX1:RGR1,C16:0,0.5703403987926583,False,-0.1488772468972117,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:RFX1:RPD3,C16:0,5.1518938192791155e-09,True,-1.5324972487555226,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1:RFX1:SPT3,C16:0,0.0094915592188462,True,-0.6803998266750066,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:RFX1:YAP6,C16:0,0.0540897064323145,False,-0.5052505382644417,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+OPI1:RFX1:TFC7,C16:0,0.1064103721149911,False,-0.4235188953178775,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:RGR1:RPD3,C16:0,0.000270742796806,True,-0.955299615526913,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1:RGR1:SPT3,C16:0,0.7059884551801153,False,-0.0989583136171785,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:RGR1:YAP6,C16:0,0.602182804687803,False,-0.1367356720434922,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:RGR1:TFC7,C16:0,0.6443376915997017,False,-0.1210960069410846,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:RPD3:SPT3,C16:0,0.0008444337495866,True,-0.8755577723384032,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1:RPD3:YAP6,C16:0,0.0011970447561369,True,-0.8497930406853813,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1:RPD3:TFC7,C16:0,0.0462589115339645,True,-0.5228009363815955,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1:SPT3:YAP6,C16:0,0.0342195271803043,True,-0.5726415553776285,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:SPT3:TFC7,C16:0,0.1360470332537169,False,-0.3910270206609407,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:YAP6:TFC7,C16:0,0.0593418825553871,False,-0.4946357802646552,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1:RGR1:RPD3,C16:0,0.0271799403559051,True,-0.579435033662242,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RFX1:RGR1:SPT3,C16:0,0.3976290327553047,False,-0.2218830728441446,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1:RGR1:YAP6,C16:0,0.8909572397260843,False,-0.0359616388710275,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,False,False,False
+RFX1:RGR1:TFC7,C16:0,0.233385543192964,False,-0.3125969797467967,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1:RPD3:SPT3,C16:0,0.0091644401435657,True,-0.68355708086944,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RFX1:RPD3:YAP6,C16:0,0.0198768262280574,True,-0.6108449739847113,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RFX1:RPD3:TFC7,C16:0,0.0486908259207477,True,-0.5170997363436098,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RFX1:SPT3:YAP6,C16:0,0.4625295283876797,False,-0.1927200769222234,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+RFX1:SPT3:TFC7,C16:0,0.4117952784410694,False,-0.2152924395636639,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1:YAP6:TFC7,C16:0,5.875900761692285e-07,True,-1.3103321873926357,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+RGR1:RPD3:SPT3,C16:0,1.6252590410740551e-06,True,-1.2578511544640925,False,False,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RGR1:RPD3:YAP6,C16:0,7.426716133683005e-08,True,-1.4550888090064489,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RGR1:RPD3:TFC7,C16:0,3.7658323710794e-09,True,-1.5461307608040549,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1:SPT3:YAP6,C16:0,5.436838678637129e-07,True,-1.3142580415474296,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1:SPT3:TFC7,C16:0,1.1063485118615427e-09,True,-1.5983564947951592,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1:YAP6:TFC7,C16:0,6.770452300847276e-10,True,-1.6188439357807909,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RPD3:SPT3:YAP6,C16:0,1.5977312433813134e-16,True,-2.163831493176485,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RPD3:SPT3:TFC7,C16:0,3.784589899944683e-17,True,-2.2085360341899745,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RPD3:YAP6:TFC7,C16:0,4.289222004506459e-18,True,-2.2744975625827704,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+SPT3:YAP6:TFC7,C16:0,2.935270692092907e-13,True,-1.914203889757636,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:GCN5:MED4,C18:0,0.3298783084141391,False,-0.2788159172682767,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:OPI1,C18:0,1.9828260760910203e-05,True,-1.1861829619423832,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:GCN5:RFX1,C18:0,5.309313709146275e-06,True,-1.2655144274210235,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:RGR1,C18:0,5.322275877651288e-07,True,-1.3939890950084457,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:RPD3,C18:0,5.0182104611403755e-14,True,-2.0937558706482324,False,True,False,True,False,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+FKH1:GCN5:SPT3,C18:0,5.708846602958896e-12,True,-1.9145247238133565,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:YAP6,C18:0,1.2816667283758781e-09,True,-1.6873821473948385,False,False,False,False,False,True,False,True,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:TFC7,C18:0,3.091376471225805e-10,True,-1.749778877958223,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:MED4:OPI1,C18:0,0.024108024338904,True,-0.6081791084843404,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:MED4:RFX1,C18:0,0.3890998362347961,False,-0.2322399893216918,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:MED4:RGR1,C18:0,0.0489626405013627,True,-0.5309268106922594,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:MED4:RPD3,C18:0,0.1300764087163252,False,-0.4082027892015154,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:MED4:SPT3,C18:0,0.0275875274088264,True,-0.5940759597236611,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:MED4:YAP6,C18:0,0.0264366644530316,True,-0.5985613785656954,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:MED4:TFC7,C18:0,0.0972936978885344,False,-0.4471185160223636,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:OPI1:RFX1,C18:0,0.0003052307912336,True,-0.973672907814487,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:OPI1:RGR1,C18:0,0.0862388554259989,False,-0.4626135779812068,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:OPI1:RPD3,C18:0,2.8995943908389123e-05,True,-1.1623822204835914,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:OPI1:SPT3,C18:0,0.0001456473376388,True,-1.0242482256548444,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:OPI1:YAP6,C18:0,5.0523643526751903e-05,True,-1.0929603045321048,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:OPI1:TFC7,C18:0,0.0031274045509302,True,-0.7968093340541909,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:RFX1:RGR1,C18:0,0.0034699287884989,True,-0.7881228063172535,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:RFX1:RPD3,C18:0,1.214885836614659e-05,True,-1.179710205196701,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1:RFX1:SPT3,C18:0,0.0131361665269446,True,-0.6687577212411775,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:RFX1:YAP6,C18:0,0.0021842265611797,True,-0.8517855438537318,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:RFX1:TFC7,C18:0,0.004840797934195,True,-0.7597350114987702,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:RGR1:RPD3,C18:0,0.000117195432984,True,-1.0386865599789017,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:RGR1:SPT3,C18:0,0.0060645679161064,True,-0.7400040248931525,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:RGR1:YAP6,C18:0,0.0033161347426789,True,-0.7919217385157071,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:RGR1:TFC7,C18:0,6.907190499080651e-05,True,-1.0730784010432848,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:RPD3:SPT3,C18:0,0.0002630677800099,True,-0.9840198056972296,False,False,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:RPD3:YAP6,C18:0,4.714537364857043e-06,True,-1.234235984153918,False,False,True,True,False,True,False,True,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1:RPD3:TFC7,C18:0,0.0003612639921639,True,-0.961822972015073,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:SPT3:YAP6,C18:0,0.0001180400253864,True,-1.038212406778573,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:SPT3:TFC7,C18:0,0.000174911142732,True,-1.011942742666263,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:YAP6:TFC7,C18:0,2.8845897681380986e-06,True,-1.2616774604924883,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:MED4:OPI1,C18:0,7.110846090725062e-05,True,-1.1367566442422867,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:MED4:RFX1,C18:0,0.0018325716257253,True,-0.8916832347534911,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:MED4:RGR1,C18:0,0.0022329711737168,True,-0.8748727790427793,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,True
+GCN5:MED4:RPD3,C18:0,6.118599286277047e-05,True,-1.146956134303043,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:MED4:SPT3,C18:0,0.0003501132005311,True,-1.023022083865671,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:MED4:YAP6,C18:0,0.0086733238154276,True,-0.7510573392615751,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:MED4:TFC7,C18:0,1.179734142197035e-10,True,-1.84337507409482,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:OPI1:RFX1,C18:0,0.005845543984807,True,-0.7662627343787036,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:OPI1:RGR1,C18:0,0.1623361761435588,False,-0.3884402234182903,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:OPI1:RPD3,C18:0,0.0003218108462443,True,-0.999994795979626,False,True,False,False,False,True,False,False,False,False,False,False,False,False,True,True,True,True,False,False
+GCN5:OPI1:SPT3,C18:0,0.0546074108469258,False,-0.5343160087541244,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:OPI1:YAP6,C18:0,0.001090938523447,True,-0.907942960953648,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:OPI1:TFC7,C18:0,9.750331256402097e-09,True,-1.773436130671089,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:RFX1:RPD3,C18:0,0.1252046341678876,False,-0.4262572959288782,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:RFX1:TFC7,C18:0,0.0457999433741767,True,-0.555234410388219,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5:RGR1:RPD3,C18:0,0.2677287933141368,False,-0.3081117533463522,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:RGR1:TFC7,C18:0,0.0023498654052241,True,-0.8706316247341612,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:RPD3:SPT3,C18:0,0.0556861478607481,False,-0.5319521359803948,False,True,False,False,True,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+GCN5:RPD3:YAP6,C18:0,0.2552697260343938,False,-0.3162668261627295,False,True,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:RPD3:TFC7,C18:0,0.03626579061836,True,-0.5821178569989636,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:SPT3:YAP6,C18:0,0.1007362207382012,False,-0.4562830998358764,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:SPT3:TFC7,C18:0,6.246662760863114e-07,True,-1.3854032829191547,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:YAP6:TFC7,C18:0,3.439457921074235e-06,True,-1.2906693757416794,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:OPI1:RFX1,C18:0,6.7481044991139585e-09,True,-1.5632062715326636,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:OPI1:RGR1,C18:0,1.5026155568924348e-05,True,-1.167145765280029,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4:OPI1:RPD3,C18:0,5.793943187559579e-11,True,-1.7659547475399866,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4:OPI1:SPT3,C18:0,2.1012518778248545e-12,True,-1.8950206527461084,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:OPI1:YAP6,C18:0,3.815045589613131e-09,True,-1.6379925940106168,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:OPI1:TFC7,C18:0,1.5008094638076227e-08,True,-1.5738996983806637,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:RFX1:RGR1,C18:0,8.859397584396668e-09,True,-1.550844946680581,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4:RFX1:RPD3,C18:0,3.642447136933405e-11,True,-1.8397950456065504,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4:RFX1:SPT3,C18:0,2.1366568592282434e-07,True,-1.3987067533678414,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:RFX1:YAP6,C18:0,4.42341996119422e-10,True,-1.6821850807966303,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+MED4:RFX1:TFC7,C18:0,2.9518577223241046e-10,True,-1.699168648603243,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:RGR1:RPD3,C18:0,1.8287888179583688e-14,True,-2.066125124708681,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4:RGR1:SPT3,C18:0,9.05662405895022e-16,True,-2.167753618962591,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4:RGR1:YAP6,C18:0,9.18198316407419e-14,True,-2.009508389430779,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4:RGR1:TFC7,C18:0,2.4422120034837217e-15,True,-2.13472734151612,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4:RPD3:SPT3,C18:0,2.737386884067157e-15,True,-2.130896787155233,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4:RPD3:YAP6,C18:0,3.010895881555835e-16,True,-2.2038544650131784,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4:RPD3:TFC7,C18:0,4.879013347165018e-13,True,-1.9492300541824763,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:SPT3:YAP6,C18:0,8.75235398089488e-15,True,-2.0914878318039354,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:SPT3:TFC7,C18:0,5.713550363490467e-16,True,-2.182925153717834,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:YAP6:TFC7,C18:0,1.3150016925467469e-17,True,-2.303485593113828,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:RFX1:RGR1,C18:0,0.079790467588992,False,-0.4724081356284113,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:RFX1:RPD3,C18:0,3.258870628499199e-11,True,-1.7889866482569934,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1:RFX1:SPT3,C18:0,0.0004727742302021,True,-0.9426373487599704,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:RFX1:YAP6,C18:0,0.0056482601022931,True,-0.7462766295046805,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+OPI1:RFX1:TFC7,C18:0,0.022339586201388,True,-0.6160369865052471,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:RGR1:RPD3,C18:0,3.772606449876252e-06,True,-1.2467550684982966,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1:RGR1:SPT3,C18:0,0.1294027345017263,False,-0.40892026119316,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:RGR1:YAP6,C18:0,0.0789389917105844,False,-0.4737490229474068,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:RGR1:TFC7,C18:0,0.115425555701585,False,-0.4245080088159823,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:RPD3:SPT3,C18:0,2.9699233863319424e-05,True,-1.126011561144889,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1:RPD3:YAP6,C18:0,6.297285070028739e-05,True,-1.0789904487383473,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1:RPD3:TFC7,C18:0,0.0040458382691761,True,-0.7751388286743168,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1:SPT3:YAP6,C18:0,0.0003354151245395,True,-0.996995627213908,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:SPT3:TFC7,C18:0,0.0052578465832132,True,-0.7525502452280338,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:YAP6:TFC7,C18:0,0.001218446035964,True,-0.8722038475728193,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1:RGR1:RPD3,C18:0,3.808491366053724e-05,True,-1.110652180159998,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RFX1:RGR1:SPT3,C18:0,0.0164760781943442,True,-0.6466835713155329,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1:RGR1:YAP6,C18:0,0.0437709244764845,True,-0.5436979201435381,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,False,False,False
+RFX1:RGR1:TFC7,C18:0,0.0064064309828234,True,-0.7351367910766422,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1:RPD3:SPT3,C18:0,4.1151575020245794e-05,True,-1.1058297897473015,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RFX1:RPD3:YAP6,C18:0,0.0001180031423102,True,-1.0382330459926596,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RFX1:RPD3:TFC7,C18:0,0.000307712872106,True,-0.9731064011392968,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RFX1:SPT3:YAP6,C18:0,0.01286105743331,True,-0.6707902284374377,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+RFX1:SPT3:TFC7,C18:0,0.0096089082867964,True,-0.6982951457050024,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1:YAP6:TFC7,C18:0,1.226557713089017e-05,True,-1.1791476472486309,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+RGR1:RPD3:SPT3,C18:0,5.902324912834169e-06,True,-1.221495585793119,False,False,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RGR1:RPD3:YAP6,C18:0,1.1982167786419724e-07,True,-1.471677481595541,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RGR1:RPD3:TFC7,C18:0,1.1665297480705572e-08,True,-1.5382553577232116,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1:SPT3:YAP6,C18:0,6.635898310210902e-07,True,-1.3406474489638178,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1:SPT3:TFC7,C18:0,3.5099344156213392e-09,True,-1.592517284827626,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1:YAP6:TFC7,C18:0,1.8629246908446006e-09,True,-1.6204412125981589,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RPD3:SPT3:YAP6,C18:0,1.0451445524496781e-16,True,-2.238006547819754,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RPD3:SPT3:TFC7,C18:0,3.519334976068801e-16,True,-2.1987744611939712,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RPD3:YAP6:TFC7,C18:0,1.6088871219199388e-17,True,-2.297193962184816,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+SPT3:YAP6:TFC7,C18:0,5.614298496032661e-13,True,-1.9440819911499077,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:GCN5:RFX1,C16:1,0.0361663753441836,True,-0.4499640357784331,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:SPT3,C16:1,0.2110961966927494,False,-0.268587905714341,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:YAP6,C16:1,0.4069576320946952,False,-0.1781038954778675,False,False,False,False,False,True,False,True,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:TFC7,C16:1,0.2836775171475143,False,-0.2302587492887657,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:MED4:RFX1,C16:1,0.7722020174732714,False,-0.0603093626534909,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:MED4:SPT3,C16:1,0.6912648945341346,False,-0.0827342160970132,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:OPI1:RFX1,C16:1,0.0720368729765182,False,-0.3747536921629946,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:OPI1:RPD3,C16:1,0.0342722640735363,True,-0.4546454649976272,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:OPI1:SPT3,C16:1,0.2308455986014694,False,-0.2496122200269811,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:OPI1:YAP6,C16:1,0.1742185441859707,False,-0.2830671121953907,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:OPI1:TFC7,C16:1,0.7911681986310335,False,-0.0551633426912649,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:RFX1:RGR1,C16:1,0.0694295879624418,False,-0.3782387914789666,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:RFX1:RPD3,C16:1,0.0001042111369427,True,-0.8084222381406283,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1:RFX1:SPT3,C16:1,0.0026243359277083,True,-0.6267732446505385,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:RFX1:YAP6,C16:1,0.0180681654191572,True,-0.5077721939256075,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:RFX1:TFC7,C16:1,0.0827219312793733,False,-0.3614670145555825,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:RGR1:RPD3,C16:1,0.2070909628699663,False,-0.2628245403886137,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:RGR1:SPT3,C16:1,0.0612174534037839,False,-0.3899690763088496,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:RGR1:YAP6,C16:1,0.6515829106463445,False,-0.0940723721277024,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:RPD3:SPT3,C16:1,0.0136611875585559,True,-0.5137414123265401,False,False,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:RPD3:YAP6,C16:1,0.2817574466069086,False,-0.2242373977816664,False,False,True,True,False,True,False,True,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1:SPT3:YAP6,C16:1,0.1243273483205698,False,-0.3201674023267472,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:SPT3:TFC7,C16:1,0.5763923838691025,False,-0.1163835738533121,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:YAP6:TFC7,C16:1,0.8067354777256923,False,-0.0509646828175728,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:MED4:RFX1,C16:1,0.1811929518686004,False,-0.2955934034501697,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:MED4:RPD3,C16:1,0.7457579554788725,False,-0.0716799219070297,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:MED4:SPT3,C16:1,0.5964948664384382,False,-0.1170460910345982,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:MED4:YAP6,C16:1,0.0459332842311021,True,-0.4412610591055381,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:MED4:TFC7,C16:1,0.0484613282591354,True,-0.4362415527599173,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:OPI1:TFC7,C16:1,0.4642558508002976,False,-0.1748406498951681,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:RFX1:YAP6,C16:1,0.6215808419703108,False,-0.1060151539498395,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,False,False,False
+GCN5:RFX1:TFC7,C16:1,0.1520633109727333,False,-0.3076177230461741,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5:RGR1:SPT3,C16:1,0.6346259520129374,False,-0.1020664785821687,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:RGR1:YAP6,C16:1,0.7238626961717256,False,-0.0758801251994578,False,False,False,False,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:RGR1:TFC7,C16:1,0.30233736526921,False,-0.2280590196452065,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:RPD3:SPT3,C16:1,0.419655512883538,False,-0.1733272275800842,False,True,False,False,True,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+GCN5:RPD3:TFC7,C16:1,0.0441041964126661,True,-0.4323626605701265,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:SPT3:YAP6,C16:1,0.591381060071182,False,-0.1152987118897106,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:SPT3:TFC7,C16:1,0.0767783081050553,False,-0.3800851698939875,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:YAP6:TFC7,C16:1,0.1460948597754952,False,-0.3121672974928069,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:OPI1:RFX1,C16:1,0.5317899750999461,False,-0.1302609463700972,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:OPI1:RPD3,C16:1,0.2513588690173302,False,-0.238960864376773,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4:OPI1:TFC7,C16:1,0.748114798577897,False,-0.0689697533810198,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:RPD3:YAP6,C16:1,0.3794841517468197,False,-0.1830863102458906,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+OPI1:RFX1:RPD3,C16:1,0.2595703373721258,False,-0.234867724328573,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1:RGR1:RPD3,C16:1,0.829491348990112,False,-0.0448637338337303,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:GCN5:OPI1,C18:1,7.941739281902667e-08,True,-1.995866569386162,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:GCN5:RFX1,C18:1,3.619727755254218e-17,True,-3.1320760554187563,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:RGR1,C18:1,9.857042240915932e-09,True,-2.131462382100514,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:RPD3,C18:1,2.97842332954204e-12,True,-2.5945361929273427,False,True,False,True,False,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+FKH1:GCN5:SPT3,C18:1,6.92533350931112e-13,True,-2.6696957365611347,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:YAP6,C18:1,1.6945560608937517e-12,True,-2.6238390267081133,False,False,False,False,False,True,False,True,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:TFC7,C18:1,1.9417507850755248e-19,True,-3.352133630059336,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:MED4:OPI1,C18:1,0.0040275174297416,True,-1.037124662138694,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:MED4:RFX1,C18:1,2.67929209548072e-08,True,-2.0054445935570584,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:MED4:RGR1,C18:1,3.6595958100413233e-05,True,-1.4886074656325543,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:MED4:RPD3,C18:1,1.5505103292035575e-09,True,-2.177754588824941,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:MED4:SPT3,C18:1,6.327814434451164e-05,True,-1.4425418516540274,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:MED4:YAP6,C18:1,0.0002349156959669,True,-1.3263978839218944,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:MED4:TFC7,C18:1,0.0276050983377854,True,-0.7943792166325259,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:OPI1:RFX1,C18:1,1.232039052519356e-14,True,-2.7812982633985266,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:OPI1:RGR1,C18:1,1.0374861981174731e-09,True,-2.201018403058932,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:OPI1:RPD3,C18:1,4.409145614634102e-19,True,-3.3185484806428627,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:OPI1:SPT3,C18:1,8.210573380173495e-13,True,-2.581126772899009,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:OPI1:YAP6,C18:1,8.767601137253935e-14,True,-2.689549460332831,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:OPI1:TFC7,C18:1,2.075586206196419e-11,True,-2.4163304516428514,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:RFX1:RGR1,C18:1,4.50647208059553e-24,True,-3.6493933277207375,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:RFX1:RPD3,C18:1,1.80775131348441e-37,True,-4.613120032282777,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1:RFX1:SPT3,C18:1,7.0888042155307835e-28,True,-3.946607343718326,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:RFX1:YAP6,C18:1,8.540831655997782e-21,True,-3.477121616053516,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:RFX1:TFC7,C18:1,5.151680701045142e-19,True,-3.21269118346668,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:RGR1:RPD3,C18:1,3.122103211296926e-26,True,-3.820932492178802,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:RGR1:SPT3,C18:1,1.3725749682424556e-17,True,-3.078709623095487,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:RGR1:YAP6,C18:1,9.596936066798682e-17,True,-2.9965811751566216,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:RGR1:TFC7,C18:1,1.7267842040232856e-13,True,-2.6571492546930413,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:RPD3:SPT3,C18:1,5.157239986314373e-24,True,-3.6446293424612017,False,False,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:RPD3:YAP6,C18:1,1.6287198578193741e-19,True,-3.2584183087805085,False,False,True,True,False,True,False,True,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1:RPD3:TFC7,C18:1,9.705467676989882e-13,True,-2.5728424191074226,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:SPT3:YAP6,C18:1,1.6738012153685338e-17,True,-3.07042868851826,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:SPT3:TFC7,C18:1,5.150485726998456e-12,True,-2.4887276768983444,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:YAP6:TFC7,C18:1,1.3838019871610135e-11,True,-2.437602286402416,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:MED4:OPI1,C18:1,1.4045777699519306e-05,True,-1.6620261608722815,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:MED4:RFX1,C18:1,7.834460784017664e-11,True,-2.488840715408505,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:MED4:RGR1,C18:1,5.868220791388071e-05,True,-1.537618968980699,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,True
+GCN5:MED4:RPD3,C18:1,2.0223468932794737e-08,True,-2.1468541494831124,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:MED4:SPT3,C18:1,4.807372467393757e-05,True,-1.555509771684353,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:MED4:YAP6,C18:1,1.3327241025318452e-08,True,-2.174306260833577,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:MED4:TFC7,C18:1,3.4002454283332217e-15,True,-3.0136908824163227,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:OPI1:RFX1,C18:1,0.5905612159670597,False,-0.2000246864155875,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:OPI1:RPD3,C18:1,0.914663482808766,False,-0.0398389776808173,False,True,False,False,False,True,False,False,False,False,False,False,False,False,True,True,True,True,False,False
+GCN5:OPI1:TFC7,C18:1,0.0001410824636502,True,-1.574036328456185,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:RFX1:RGR1,C18:1,0.0036041508413472,True,-1.082198098189577,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:RFX1:RPD3,C18:1,0.0009938813276874,True,-1.2239847922132687,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:RFX1:SPT3,C18:1,0.0170377594652934,True,-0.8870203196904412,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:RFX1:YAP6,C18:1,0.0035693647577878,True,-1.0833242478975302,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,False,False,False
+GCN5:RFX1:TFC7,C18:1,1.02975530240357e-09,True,-2.2695991966721083,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5:RGR1:RPD3,C18:1,0.0241430710586949,True,-0.8383000045556834,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:RGR1:SPT3,C18:1,0.0139133231581923,True,-0.9143837150550642,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:RGR1:YAP6,C18:1,0.097159086675744,False,-0.6166985939255785,False,False,False,False,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:RGR1:TFC7,C18:1,1.7661500360776345e-08,True,-2.15616472475989,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:RPD3:SPT3,C18:1,0.0695328477785655,False,-0.6747540856178498,False,True,False,False,True,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+GCN5:RPD3:YAP6,C18:1,0.3773739148101313,False,-0.3281846100728739,False,True,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:RPD3:TFC7,C18:1,3.438871765870486e-06,True,-1.7260498607920898,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:SPT3:YAP6,C18:1,0.0327935510934471,True,-0.7935963827226737,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:SPT3:TFC7,C18:1,1.150125197013145e-07,True,-1.970884112007848,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:YAP6:TFC7,C18:1,6.079934616818539e-08,True,-2.013707014980456,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:OPI1:RFX1,C18:1,2.919613891416731e-13,True,-2.63177853296679,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:OPI1:RGR1,C18:1,6.008097518637671e-09,True,-2.097521671454823,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4:OPI1:RPD3,C18:1,3.0984960435053324e-19,True,-3.232957827988262,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4:OPI1:SPT3,C18:1,4.194359554126679e-07,True,-1.824676306572268,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:OPI1:YAP6,C18:1,9.505746444411181e-09,True,-2.1337485987938623,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:OPI1:TFC7,C18:1,4.934710166079942e-09,True,-2.174658597987613,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:RFX1:RGR1,C18:1,1.0250947032910486e-18,True,-3.1850630660751262,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4:RFX1:RPD3,C18:1,9.214019563070756e-28,True,-4.059928340836944,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4:RFX1:SPT3,C18:1,2.719242323397029e-15,True,-2.8499877454796687,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:RFX1:YAP6,C18:1,2.088714395307842e-18,True,-3.156234336111371,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+MED4:RFX1:TFC7,C18:1,1.6001952110407765e-17,True,-3.0723075621754594,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:RGR1:RPD3,C18:1,5.886417291147529e-20,True,-3.298316734882667,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4:RGR1:SPT3,C18:1,1.0202634604419246e-09,True,-2.2019825806837097,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4:RGR1:YAP6,C18:1,9.957929182489897e-13,True,-2.571568279379113,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4:RGR1:TFC7,C18:1,7.083720345974341e-12,True,-2.472352202902729,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4:RPD3:SPT3,C18:1,2.211639850915109e-14,True,-2.7542540821013195,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4:RPD3:YAP6,C18:1,3.0079563400853635e-14,True,-2.73993524097474,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4:RPD3:TFC7,C18:1,2.32376499793814e-13,True,-2.6428342678879715,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:SPT3:YAP6,C18:1,6.181708677109452e-10,True,-2.2306582423412493,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:SPT3:TFC7,C18:1,3.142715716895811e-09,True,-2.136263195005568,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:YAP6:TFC7,C18:1,1.3626829832620822e-11,True,-2.438405727915603,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:RFX1:RPD3,C18:1,0.6701436301925027,False,-0.153603761933259,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RFX1:RGR1:RPD3,C18:1,0.5615485921757268,False,-0.2093517563241377,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RFX1:YAP6:TFC7,C18:1,0.0018988309548127,True,-1.1199279476557886,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+RGR1:RPD3:SPT3,C18:1,0.0063851932146551,True,-0.98350759821304,False,False,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RGR1:RPD3:YAP6,C18:1,0.0132659016702376,True,-0.9207249733361786,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RGR1:RPD3:TFC7,C18:1,0.0440102813717306,True,-0.7262735875920192,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1:SPT3:YAP6,C18:1,0.0361184454632174,True,-0.7556991693416057,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1:SPT3:TFC7,C18:1,0.0202491101808947,True,-0.8372369150998729,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1:YAP6:TFC7,C18:1,0.0151420807602023,True,-0.8759175051829662,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RPD3:SPT3:YAP6,C18:1,0.0007603302216184,True,-1.214131215968085,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RPD3:SPT3:TFC7,C18:1,0.0122003608015579,True,-0.9038046998449872,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RPD3:YAP6:TFC7,C18:1,0.006161759800078,True,-0.987738031646244,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+SPT3:YAP6:TFC7,C18:1,0.1202654448886559,False,-0.560271350491231,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:GCN5:OPI1,Total Titer,2.021650757099758e-06,True,-0.9069159229393672,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:GCN5:RFX1,Total Titer,2.042511505374977e-12,True,-1.3421789535621826,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:RGR1,Total Titer,1.174831043977567e-06,True,-0.9276431403920118,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:RPD3,Total Titer,3.410905849989625e-11,True,-1.2650811967278024,False,True,False,True,False,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+FKH1:GCN5:SPT3,Total Titer,5.704375481215928e-13,True,-1.3757389157760165,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:YAP6,Total Titer,7.980096404347365e-13,True,-1.36698304373044,False,False,False,False,False,True,False,True,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:GCN5:TFC7,Total Titer,2.3032871504810556e-18,True,-1.668545861977594,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:MED4:OPI1,Total Titer,0.0512213072376002,False,-0.3609682806977048,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:MED4:RFX1,Total Titer,0.0233059194664744,True,-0.419986259664401,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:MED4:RGR1,Total Titer,0.0202569230521106,True,-0.4298310391538895,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+FKH1:MED4:RPD3,Total Titer,0.0030327885224937,True,-0.5488515525353823,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:MED4:SPT3,Total Titer,0.0024413092338851,True,-0.5610949631131292,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:MED4:YAP6,Total Titer,0.0152028217924393,True,-0.4494486373681647,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:MED4:TFC7,Total Titer,0.1293521279054404,False,-0.2808067569477543,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:OPI1:RFX1,Total Titer,2.2086644819444528e-11,True,-1.2389207670052775,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:OPI1:RGR1,Total Titer,9.15109787461502e-05,True,-0.7243103641444463,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:OPI1:RPD3,Total Titer,1.0124883478078436e-13,True,-1.4199996343010723,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:OPI1:SPT3,Total Titer,1.6895716871084093e-11,True,-1.246157839104957,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:OPI1:YAP6,Total Titer,9.745718628852308e-12,True,-1.260896015883604,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:OPI1:TFC7,Total Titer,9.897735720508045e-09,True,-1.061355290787,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:RFX1:RGR1,Total Titer,2.301493343592024e-11,True,-1.2378050472701316,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:RFX1:RPD3,Total Titer,1.1100935867957714e-20,True,-1.726499823883202,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1:RFX1:SPT3,Total Titer,1.4017347645841002e-12,True,-1.311565636242756,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:RFX1:YAP6,Total Titer,1.712188488451098e-11,True,-1.2843607282392346,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:RFX1:TFC7,Total Titer,5.02100110656285e-11,True,-1.2164795820532524,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:RGR1:RPD3,Total Titer,1.507614550458111e-12,True,-1.3096970019777467,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:RGR1:SPT3,Total Titer,2.3709018354593203e-10,True,-1.1729423077769792,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:RGR1:YAP6,Total Titer,1.6348473712848854e-08,True,-1.0454888239558515,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:RGR1:TFC7,Total Titer,6.989439105410568e-11,True,-1.207328062397082,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:RPD3:SPT3,Total Titer,1.835342379960692e-14,True,-1.4185418325175911,False,False,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:RPD3:YAP6,Total Titer,1.5172663945714792e-14,True,-1.423059408144394,False,False,True,True,False,True,False,True,False,False,False,False,False,False,False,True,True,True,False,False
+FKH1:RPD3:TFC7,Total Titer,6.773097056179368e-10,True,-1.1426032895595406,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+FKH1:SPT3:YAP6,Total Titer,5.538019790233236e-13,True,-1.335175418823161,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+FKH1:SPT3:TFC7,Total Titer,2.4026137067882324e-11,True,-1.236638734641599,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+FKH1:YAP6:TFC7,Total Titer,4.195730201304289e-13,True,-1.3421544354616326,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:MED4:OPI1,Total Titer,5.064370450356485e-05,True,-0.7962468804657381,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:MED4:RFX1,Total Titer,6.75230552456932e-06,True,-0.884408575425487,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:MED4:RGR1,Total Titer,0.0002397748870741,True,-0.7216457596504331,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,True,True,False,True
+GCN5:MED4:RPD3,Total Titer,1.071289244870088e-05,True,-0.8649397021735982,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:MED4:SPT3,Total Titer,6.350993343698536e-05,True,-0.7857823363864234,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:MED4:YAP6,Total Titer,1.4161732897002083e-06,True,-0.947549055919172,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:MED4:TFC7,Total Titer,2.968494678976658e-14,True,-1.4931580527840105,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:OPI1:RFX1,Total Titer,0.0914717261797648,False,-0.3221444894192657,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:OPI1:RPD3,Total Titer,0.1795949629081735,False,-0.2561609238913291,False,True,False,False,False,True,False,False,False,False,False,False,False,False,True,True,True,True,False,False
+GCN5:OPI1:SPT3,Total Titer,0.3933233489226395,False,-0.1629358980908333,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:OPI1:YAP6,Total Titer,0.1354215926906491,False,-0.2849944953594838,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:OPI1:TFC7,Total Titer,2.715497334043216e-07,True,-1.0917944663806602,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:RFX1:RGR1,Total Titer,0.5134156053755803,False,-0.124745211378251,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:RFX1:RPD3,Total Titer,0.0264348978559381,True,-0.4237071890290205,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:RFX1:SPT3,Total Titer,0.3083660085681236,False,-0.194440688867314,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:RFX1:YAP6,Total Titer,0.1997843952753858,False,-0.2447392444133873,False,False,False,False,False,False,False,True,False,False,False,False,False,False,False,True,False,False,False,False
+GCN5:RFX1:TFC7,Total Titer,1.1863397514044567e-05,True,-0.8360681891463138,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+GCN5:RGR1:RPD3,Total Titer,0.2386613828570484,False,-0.2249208320477593,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:RGR1:SPT3,Total Titer,0.102807271232775,False,-0.3113996484140495,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:RGR1:YAP6,Total Titer,0.520908911216742,False,-0.122534148635572,False,False,False,False,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:RGR1:TFC7,Total Titer,3.862391289650427e-07,True,-0.9974038960557376,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+GCN5:RPD3:SPT3,Total Titer,0.0063739231283371,True,-0.5206999425476591,False,True,False,False,True,True,False,False,False,False,False,False,False,False,True,True,True,True,False,True
+GCN5:RPD3:YAP6,Total Titer,0.12219988434992,False,-0.2950244263563137,False,True,False,True,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:RPD3:TFC7,Total Titer,3.728035886435805e-05,True,-0.7871335124373982,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+GCN5:SPT3:YAP6,Total Titer,0.0010309487650032,True,-0.6264554782312721,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:SPT3:TFC7,Total Titer,5.4521644178761125e-11,True,-1.251794453410839,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+GCN5:YAP6:TFC7,Total Titer,1.585776319185677e-11,True,-1.286494539845056,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:OPI1:RFX1,Total Titer,1.988552079045408e-14,True,-1.416634553105508,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:OPI1:RGR1,Total Titer,2.3802882101525386e-08,True,-1.0334604614153418,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4:OPI1:RPD3,Total Titer,3.43095728452835e-20,True,-1.70420389878471,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4:OPI1:SPT3,Total Titer,1.2112426974007776e-14,True,-1.428388518063128,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:OPI1:YAP6,Total Titer,1.2769161979669938e-12,True,-1.3546310904132517,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:OPI1:TFC7,Total Titer,1.859705310375524e-12,True,-1.3446733685306618,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:RFX1:RGR1,Total Titer,2.9220657085899845e-11,True,-1.2313162286719157,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4:RFX1:RPD3,Total Titer,3.6918916328590976e-19,True,-1.7075704431891428,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4:RFX1:SPT3,Total Titer,3.0115792230110207e-10,True,-1.1660952079966638,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:RFX1:YAP6,Total Titer,1.3261773541908066e-13,True,-1.3707469882522765,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+MED4:RFX1:TFC7,Total Titer,4.335123181782345e-14,True,-1.397963734772672,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:RGR1:RPD3,Total Titer,2.649618625901492e-15,True,-1.4638515429158054,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4:RGR1:SPT3,Total Titer,1.0053719025302632e-10,True,-1.1971925990672785,False,True,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4:RGR1:YAP6,Total Titer,2.882796407751237e-12,True,-1.2929476533464443,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4:RGR1:TFC7,Total Titer,9.299559871706445e-14,True,-1.379442378409342,False,True,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,True
+MED4:RPD3:SPT3,Total Titer,1.5379989836042574e-14,True,-1.422737716462922,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+MED4:RPD3:YAP6,Total Titer,9.758150379080182e-22,True,-1.7736116608276822,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+MED4:RPD3:TFC7,Total Titer,3.0024536288126926e-14,True,-1.406793554212781,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:SPT3:YAP6,Total Titer,2.682448041524985e-13,True,-1.3533288582075995,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:SPT3:TFC7,Total Titer,1.7224358424678645e-14,True,-1.4200504565092484,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+MED4:YAP6:TFC7,Total Titer,9.75247594686667e-18,True,-1.587982005189609,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:RFX1:RPD3,Total Titer,3.0556684887706773e-08,True,-1.025389338565222,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1:RGR1:RPD3,Total Titer,0.0007641649810355,True,-0.6231076934057683,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1:RPD3:SPT3,Total Titer,0.1619380009571629,False,-0.2589447783627383,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1:RPD3:YAP6,Total Titer,0.1693034865031799,False,-0.2544756891653555,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1:RPD3:TFC7,Total Titer,0.9072865810119488,False,-0.0215626552824454,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+OPI1:SPT3:YAP6,Total Titer,0.9014520240219388,False,-0.0236360936323156,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:SPT3:TFC7,Total Titer,0.9088155618655858,False,-0.0212054831595103,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+OPI1:YAP6:TFC7,Total Titer,0.7505227940897135,False,-0.0588677992775643,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1:RGR1:RPD3,Total Titer,0.1272512756488169,False,-0.2823563889531593,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RFX1:RGR1:SPT3,Total Titer,0.8704746716960053,False,-0.0301894024271798,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1:RPD3:SPT3,Total Titer,0.0366027547398069,True,-0.3869901736187588,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RFX1:RPD3:YAP6,Total Titer,0.7544463542494906,False,-0.0579109223811769,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RFX1:RPD3:TFC7,Total Titer,0.3514841012532431,False,-0.172505000741451,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RFX1:SPT3:TFC7,Total Titer,0.9691967695531374,False,-0.0071496201981411,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RFX1:YAP6:TFC7,Total Titer,5.08156095442642e-06,True,-0.844532256055234,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,True,False,False,False,False
+RGR1:RPD3:SPT3,Total Titer,0.0001841535146422,True,-0.6924195420387365,False,False,False,False,True,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RGR1:RPD3:YAP6,Total Titer,3.230612174746924e-05,True,-0.7934040867656583,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+RGR1:RPD3:TFC7,Total Titer,9.268220196558985e-06,True,-0.8208676514451012,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1:SPT3:YAP6,Total Titer,3.1837714514963994e-05,True,-0.7701981488067313,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1:SPT3:TFC7,Total Titer,1.3259099054127037e-07,True,-0.9766975446098968,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RGR1:YAP6:TFC7,Total Titer,1.2166175181444485e-07,True,-0.9796142133734048,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False
+RPD3:SPT3:YAP6,Total Titer,6.957943488984705e-16,True,-1.494376031068235,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RPD3:SPT3:TFC7,Total Titer,3.497723289041324e-14,True,-1.4031298316186742,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,True,False,True,False,False
+RPD3:YAP6:TFC7,Total Titer,1.5943281441422944e-15,True,-1.4755198342678688,False,False,False,False,False,True,False,False,False,False,False,False,False,False,False,False,False,True,False,False
+SPT3:YAP6:TFC7,Total Titer,1.4948597949260618e-11,True,-1.2494519541157691,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False

@@ -152,3 +152,50 @@ The root cause is still live in `free_fatty_acid_interactions.py` and affects ev
 that script writes. Fixing it is a one-line change (`header=None`) but invalidates the
 committed CSVs and network figures, so it is left flagged rather than done here. See
 [[experiments.008-xue-ffa.scripts.free_fatty_acid_interactions]].
+
+## 2026.08.15 - Correction: the FDR Family Was the Wrong One
+
+The claim recorded above that **zero** trigenic interactions survive FDR is arithmetically
+right but answers the wrong question, and stated bare it is misleading. Corrected here.
+
+**The stored `significant_fdr05` pools all six FFA readouts.**
+`free_fatty_acid_interactions.py::apply_fdr_correction` flattens the entire trigenic
+p-value dict before calling `multipletests`, so Benjamini-Hochberg runs over **all 714
+testable triple x readout combinations at once**. That is the correct family for a claim
+spanning every readout, and under it nothing survives (reproduced exactly).
+
+But this figure plots **one** readout. Its testing family is the 119 testable total-titer
+triples, and correcting over 6x more tests than the figure makes understates significance.
+Corrected within the readout:
+
+| Correction family | n tests | FDR<0.05 | of those, positive |
+| --- | --- | --- | --- |
+| Total Titer only (what this figure asks) | 119 | **21** | **0** |
+| pooled over all 6 readouts (stored column) | 714 | 0 | 0 |
+
+Per readout, total titer is the *only* one with anything surviving a within-readout
+correction (C14:0, C16:0, C16:1, C18:0, C18:1 all give 0), which is expected: summing the
+five species averages down the per-species noise.
+
+**What does not change is the answer to the original question.** All six highest-titer
+triples are positive and none is significant, and **no positive total-titer trigenic
+interaction survives FDR under either family** (only 7 are even raw-P significant). The 21
+that do survive are all negative. So the caution against reading positive three-way
+epistasis off the top panels stands; what was wrong was implying nothing at all is
+detectable.
+
+`load_significance` now computes BH within the readout and badges on that, keeping the
+pooled flag in the CSV as `significant_fdr05` alongside `significant_fdr05_within`.
+
+### Two further scope limits, now explicit
+
+- **This is the multiplicative model only.** 008 defines four: multiplicative, additive
+  (`additive_free_fatty_acid_interactions.py`), GLM log-link
+  (`glm_log_link_epistatic_interactions.py`), and log-OLS WT-differencing
+  (`log_ols_wt_differencing_epistatic_interactions.py`). Only the multiplicative outputs
+  exist on disk; the other three still carry hardcoded `/Users/michaelvolk` paths and have
+  never been run on GilaHyper, so **no cross-model statement is supported yet**. The badge
+  legend and the printed summary now name the model.
+- **One triple is untestable, not null.** GCN5-OPI1-TFC7 is the `G-O-T 6d` strain released
+  with a single replicate, so it has a tau but no SD and no p-value. It is badged
+  "no test (n=1)" rather than silently shown as non-significant.

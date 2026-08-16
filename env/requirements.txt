@@ -136,6 +136,9 @@
     # Literature / Zotero capture pipeline (MinerU OCR runs in the separate
     # swanki-mineru env, so mineru is NOT listed here)
     pyzotero>=1.5.0
+    # Read/write the Dendron bibliography (torchcell/literature/bib.py). pyzotero
+    # already pulls it in for format="bibtex", but we import it directly.
+    bibtexparser>=1.4,<2
 
     # Keyed read-only endpoint serving the OCR literature mirror (issue #20)
     fastapi>=0.115

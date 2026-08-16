@@ -5,10 +5,11 @@
 
 """Sync the on-disk library mirror against a Zotero collection.
 
-The TorchCell Zotero group holds two collections we mirror + OCR:
+The TorchCell Zotero group holds three collections we mirror + OCR:
 
 * ``database`` -- the authoritative set of papers backing the knowledge graph.
 * ``paper`` -- papers cited by / relevant to the manuscript.
+* ``microbe-perturb-seq`` -- single-cell / pooled perturbation-screen methods papers.
 
 This module diffs a named collection against the citation-key directories already
 present under ``<DATA_ROOT>/torchcell-library/`` and captures any paper that is
@@ -45,8 +46,13 @@ log = logging.getLogger(__name__)
 
 DATABASE_COLLECTION = "database"
 PAPER_COLLECTION = "paper"
+MICROBE_PERTURB_SEQ_COLLECTION = "microbe-perturb-seq"
 # Collections the nightly sync mirrors by default. Order is cosmetic (report order).
-DEFAULT_COLLECTIONS: tuple[str, ...] = (DATABASE_COLLECTION, PAPER_COLLECTION)
+DEFAULT_COLLECTIONS: tuple[str, ...] = (
+    DATABASE_COLLECTION,
+    PAPER_COLLECTION,
+    MICROBE_PERTURB_SEQ_COLLECTION,
+)
 MANIFEST_FILENAME = "manifest.json"
 
 

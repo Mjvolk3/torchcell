@@ -77,3 +77,67 @@ in `paper` are suffixed-key twins of the already-mirrored `...2018` / `...2016`
 (from the `database` build). They capture into separate `...a` dirs -- duplicate
 OCR of the same DOI. Merge the twin entries in Zotero so the sync stops mirroring
 both. Same class of issue noted in [[lit-sync-database-nightly]].
+
+## 2026.08.15 - microbe-perturb-seq collection added to the literature sync
+
+A third Zotero collection, **`microbe-perturb-seq`** (key `FE8DQKUH`) -- single-cell
+and pooled perturbation-screen *methods* papers -- was added to the TorchCell group
+and is now mirrored + OCR'd like `database` and `paper`.
+
+`DEFAULT_COLLECTIONS` in [[torchcell.literature.sync]] is now
+`('database', 'paper', 'microbe-perturb-seq')`, so the nightly cron picks up new
+drops into the collection with no further change. The mirror stays flat and
+collection-agnostic, so the keyed endpoint ([[torchcell.literature.server]]) serves
+them with no restart.
+
+### Capture run (2026.08.16 UTC)
+
+```bash
+python scripts/lit_sync.py --collection microbe-perturb-seq
+```
+
+`microbe-perturb-seq: 15 items | captured=14 present=1` -- **zero failures, zero
+unsupported**: every item carried both a DOI and a stored PDF attachment, so the
+whole collection was scriptable on the first pass (contrast the `paper` collection,
+which surfaced a no-DOI textbook and the `domenzain` no-bytes attachment).
+
+The 14 newly captured keys, all `provenance_complete=True`:
+
+| citation key | DOI |
+| --- | --- |
+| `nadal-ribellesRiseSinglecellTranscriptomics2024` | 10.1002/yea.3934 |
+| `yaoScalableGeneticScreening2024` | 10.1038/s41587-023-01964-9 |
+| `dixitPerturbSeqDissectingMolecular2016` | 10.1016/j.cell.2016.11.038 |
+| `jarianiNewProtocolSinglecell2020` | 10.7554/eLife.55320 |
+| `urbonaiteYeastoptimizedSinglecellTranscriptomics2021` | 10.1038/s42003-021-02320-w |
+| `fulcherParallelMeasurementTranscriptomes2024` | 10.1038/s41467-024-54099-z |
+| `gaisserHighthroughputSinglecellTranscriptomics2024` | 10.1038/s41596-024-01007-w |
+| `brettnerUltraHighthroughputMassively2024` | 10.1002/yea.3927 |
+| `leonavicieneRNACytometrySinglecells2023` | 10.1093/nar/gkac918 |
+| `leonavicieneMultistepProcessingSingle2020` | 10.1039/d0lc00660b |
+| `baronasHighthroughputSinglecellOmics2026` | 10.1126/science.ady7227 |
+| `brandnerPooledSinglecellCRISPRa2025` | 10.64898/2025.12.20.695731 |
+| `larsonCRISPRInterferenceCRISPRi2013` | 10.1038/nprot.2013.132 |
+| `sunGenomescaleCRISPRiScreening2023` | 10.1016/j.engmic.2023.100089 |
+
+OCR markdown ranges 44--191 KB per paper (MinerU on `cuda`); only
+`yaoScalableGeneticScreening2024` carried SI PDFs (5), the rest had a single PDF
+attachment in Zotero. Mirror went 83 -> 97 citation-key directories; the endpoint's
+unauthenticated `/health` reports `n_keys` 98 (97 keys + `_sync_reports`) with **no
+restart**, confirming the read-through path.
+
+### Refreshed the one already-present key
+
+`nadal-ribellesSinglecellResolvedGenotypephenotype2025` was already mirrored from the
+`database` sync, so the pass classified it `present` and left it alone -- but its
+manifest still recorded `collections: ['database']`, which is now stale (the item sits
+in both collections). Refreshed in place with
+`backfill_key(..., force=True)` ([[torchcell.literature.backfill]]) ->
+`collections: ['microbe-perturb-seq', 'database']`, same 10 files, still
+`provenance_complete=True`.
+
+**General lesson:** `sync_collection` short-circuits on `manifest.json` existing, so a
+paper that gains a *new* collection membership after capture keeps a stale
+`collections` list. The mirror is collection-agnostic, so nothing about serving or
+retrieval breaks -- only that provenance field drifts. A `force` backfill is the fix;
+worth a periodic sweep if collection membership is ever used to select papers.

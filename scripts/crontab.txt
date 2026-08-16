@@ -15,8 +15,9 @@
 */2 * * * * bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && /home/michaelvolk/miniconda3/envs/torchcell/bin/python scripts/drain_merge_queue.py >> /tmp/torchcell-drain-merge-queue.log 2>&1'
 
 # literature sync: nightly mirror + MinerU OCR of new papers in the Zotero
-# `database` + `paper` collections (diff vs $DATA_ROOT/torchcell-library; captures
-# only the new keys, and a key present in both collections is captured once). The
+# `database` + `paper` + `microbe-perturb-seq` collections (diff vs
+# $DATA_ROOT/torchcell-library; captures only the new keys, and a key present in
+# more than one collection is captured once). The
 # mirror is served read-through by the tc-lit endpoint, so captured papers appear
 # there with no restart. Self-flocks against on-demand runs. Runs at 03:30 on the
 # GPU host so MinerU has the GPUs to itself. `--limit 10` bounds a big-backlog

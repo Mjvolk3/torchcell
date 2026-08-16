@@ -5,12 +5,13 @@
 
 """Nightly sync: mirror + OCR new papers in the Zotero collections we track.
 
-Diffs each named Zotero collection (default: ``database`` + ``paper``) against
-``<DATA_ROOT>/torchcell-library/`` and captures (download PDF -> MinerU OCR ->
-manifest) any paper present in Zotero but missing from the mirror. Idempotent:
-already-mirrored papers are skipped, so re-running only picks up what is new. A
-key that appears in both collections is captured once (the second pass sees it as
-``present``), so ordering the collections never double-downloads a paper.
+Diffs each named Zotero collection (default: ``database`` + ``paper`` +
+``microbe-perturb-seq``) against ``<DATA_ROOT>/torchcell-library/`` and captures
+(download PDF -> MinerU OCR -> manifest) any paper present in Zotero but missing
+from the mirror. Idempotent: already-mirrored papers are skipped, so re-running only
+picks up what is new. A key that appears in several collections is captured once
+(later passes see it as ``present``), so ordering the collections never
+double-downloads a paper.
 
 Supersedes ``scripts/lit_sync_database.py`` (database-only). Designed to run from
 cron on GilaHyper (GPU host for MinerU). Self-flocks so a nightly run never
@@ -20,7 +21,7 @@ the log.
 
 Usage::
 
-    python scripts/lit_sync.py                       # sync database + paper (+ OCR)
+    python scripts/lit_sync.py                        # sync all default collections (+ OCR)
     python scripts/lit_sync.py --collection paper     # just the paper collection
     python scripts/lit_sync.py --dry-run              # report the gap, capture nothing
     python scripts/lit_sync.py --limit 5              # cap captures per collection

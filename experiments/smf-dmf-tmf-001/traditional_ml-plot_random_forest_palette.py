@@ -12,6 +12,7 @@ import os
 from torchcell.utils import (
     format_scientific_notation,
     savefig_true_size_svg,
+    display_label,
     PLOT_PALETTE,
     PLOT_PALETTE_FILL,
 )
@@ -28,7 +29,7 @@ plt.rcParams.update({
     "xtick.labelsize": 6, "ytick.labelsize": 6, "legend.fontsize": 6,
     "legend.title_fontsize": 6, "svg.fonttype": "none", "pdf.fonttype": 42,
     "axes.linewidth": 0.5, "lines.linewidth": 0.7, "patch.linewidth": 0.4,
-    "savefig.bbox": "standard", "savefig.pad_inches": 0.01,
+    "savefig.bbox": "standard", "savefig.pad_inches": 0.01, "hatch.linewidth": 0.55,
 })
 
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
@@ -159,10 +160,10 @@ def create_plots(
                 # Mutually distinct mark types so the four representations stay
                 # separable on thin bars (diagonals / dots / plus / cross).
                 hatch = {
-                    "pert_sum": "///",
-                    "pert_mean": "...",
-                    "intact_sum": "+++",
-                    "intact_mean": "xxx",
+                    "pert_sum": "",
+                    "pert_mean": "////",
+                    "intact_sum": "||||",
+                    "intact_mean": r"\\\\",
                 }[rep_type]
                 line = line_dict.get(str(feature), default_color)
                 fill = fill_dict.get(str(feature), "#DDDDDD")
@@ -218,13 +219,13 @@ def create_plots(
 
                 y += bar_height * 2
 
-            yticks.append(str(feature[2:-2]))
+            yticks.append(display_label(str(feature[2:-2])))
             ytick_positions.append(group_start_y + bar_height * 3.5)
-            header_labels.append((str(feature[2:-2]), group_start_y + bar_height * 8))
+            header_labels.append((display_label(str(feature[2:-2])), group_start_y + bar_height * 8))
             y += bar_height * 3.6
 
         ax_limit = (
-            1.05
+            1.0
             if metric in ["r2", "pearson", "spearman"]
             else max(max_bar_value, 0.1) * 1.1
         )
@@ -338,7 +339,7 @@ def create_plots(
                 1,
                 facecolor="white",
                 edgecolor="black",
-                hatch="///",
+                hatch="",
                 label="Pert Sum",
             ),
             plt.Rectangle(
@@ -347,7 +348,7 @@ def create_plots(
                 1,
                 facecolor="white",
                 edgecolor="black",
-                hatch="...",
+                hatch="////",
                 label="Pert Mean",
             ),
             plt.Rectangle(
@@ -356,7 +357,7 @@ def create_plots(
                 1,
                 facecolor="white",
                 edgecolor="black",
-                hatch="+++",
+                hatch="||||",
                 label="Intact Sum",
             ),
             plt.Rectangle(
@@ -365,7 +366,7 @@ def create_plots(
                 1,
                 facecolor="white",
                 edgecolor="black",
-                hatch="xxx",
+                hatch=r"\\\\",
                 label="Intact Mean",
             ),
         ]

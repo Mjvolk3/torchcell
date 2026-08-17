@@ -13,7 +13,7 @@ plt.rcParams.update({
 import numpy as np
 import os
 from dotenv import load_dotenv
-from torchcell.utils import savefig_true_size_svg, PLOT_PALETTE
+from torchcell.utils import savefig_true_size_svg, display_label, PLOT_PALETTE
 
 load_dotenv()
 
@@ -21,6 +21,14 @@ load_dotenv()
 RESULTS_DIR = "experiments/002-dmi-tmi/results/random_forest"
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
 MAX_SIZES = [1000, 10000, 100000]
+
+# Limit of experimental reproducibility = ceiling on test Pearson (DCell idiom). 002 is a
+# ~50/50 digenic+trigenic mix; the variance-weighted pooled ceiling is 0.811-0.863 (line),
+# per-type band [0.74 trigenic .. 0.87 digenic]. Sourced from Baryshnikova 2010 (Fig 2c,3a)
+# + Kuzmin 2018 SI (Fig S5B); see [[experiments.002-dmi-tmi.reproducibility-ceiling]] and
+# interaction_reproducibility_ceiling.py. Black dashed line + gray band.
+REPRO_LINE = 0.837
+REPRO_BAND = (0.74, 0.87)
 
 # Define color list (reversed order)
 color_list = PLOT_PALETTE
@@ -93,7 +101,7 @@ def create_plot(data_dict, metric="val_r2", ylim=None, name_suffix="", show_lege
             y = [p[metric] for p in points]
             color = color_dict[node_embedding]
             plt.plot(
-                x, y, "-o", color=color, label=node_embedding, linewidth=0.9, markersize=2
+                x, y, "-o", color=color, label=display_label(node_embedding), linewidth=0.9, markersize=2
             )
 
     plt.xscale("log")
@@ -106,6 +114,16 @@ def create_plot(data_dict, metric="val_r2", ylim=None, name_suffix="", show_lege
     # Fixed y-scale (shared across experiments) when requested, else autoscale.
     if ylim is not None:
         plt.ylim(ylim)
+
+    # Limit of experimental reproducibility (ceiling on test Pearson): dashed black line
+    # + gray per-type band, on test-Pearson panels only.
+    if metric == "test_pearson":
+        if REPRO_BAND is not None:
+            plt.axhspan(*REPRO_BAND, color="#888888", alpha=0.15, lw=0, zorder=0)
+        plt.axhline(REPRO_LINE, color="#000000", ls=(0, (4, 2)), lw=0.8, zorder=1)
+        plt.text(MAX_SIZES[0], REPRO_LINE + 0.012,
+                 "limit of experimental reproducibility", fontsize=6, style="italic",
+                 color="#000000", va="bottom", ha="left")
 
     if show_legend:
         # Encoding-color legend to the right, single column in node_embedding_order.
@@ -158,7 +176,7 @@ def create_legend():
     ax = fig.add_subplot(111)
     handles = [
         plt.Line2D(
-            [0], [0], color=color_dict[e], marker="o", markersize=2, linewidth=0.9, label=e
+            [0], [0], color=color_dict[e], marker="o", markersize=2, linewidth=0.9, label=display_label(e)
         )
         for e in node_embedding_order
     ]

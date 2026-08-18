@@ -62,7 +62,7 @@ def split_count(size, split):
 
 
 def main():
-    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), 2.0))
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["third"]), 2.0))
     x = np.arange(len(SIZES))
     width = 0.26
     for i, split in enumerate(SPLITS):
@@ -98,10 +98,10 @@ def main():
         title="Split (80/10/10, stratified)",
         loc="upper left",
         ncol=3,
-        handlelength=1.0,
-        handletextpad=0.4,
-        columnspacing=0.8,
-        borderpad=0.3,
+        handlelength=0.8,
+        handletextpad=0.3,
+        columnspacing=0.5,
+        borderpad=0.25,
         framealpha=0.5,
         fontsize=6,
     )
@@ -112,8 +112,9 @@ def main():
         spine.set_edgecolor("black")
     ax.tick_params(width=0.5, length=2)
     ax.grid(axis="y", which="major", ls="--", alpha=0.4)
+    ax.set_axisbelow(True)  # gridlines behind the bars
 
-    plt.subplots_adjust(left=0.14, right=0.97, top=0.95, bottom=0.16)
+    plt.subplots_adjust(left=0.21, right=0.97, top=0.95, bottom=0.16)
     savefig_true_size_svg(
         fig, osp.join(ASSET_IMAGES_DIR, "traditional-ml_dataset-sampling_palette.svg")
     )

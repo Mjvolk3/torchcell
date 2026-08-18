@@ -13,7 +13,7 @@ plt.rcParams.update({
 import numpy as np
 import os
 from dotenv import load_dotenv
-from torchcell.utils import savefig_true_size_svg, display_label, PLOT_PALETTE
+from torchcell.utils import savefig_true_size_svg, display_label, PLOT_PALETTE, PANEL_WIDTHS_MM, mm_to_in
 
 load_dotenv()
 
@@ -88,7 +88,7 @@ def create_plot(data_dict, metric="val_r2", ylim=None, name_suffix="", show_lege
     # Wider canvas when the legend is drawn inline; tighter plot-only canvas when not
     # (the legend is emitted separately by create_legend() so one shared legend can
     # label side-by-side no-legend panels).
-    plt.figure(figsize=(4.6, 2.4) if show_legend else (2.6, 2.2))
+    plt.figure(figsize=(4.6, 2.4) if show_legend else (mm_to_in(PANEL_WIDTHS_MM["third"]), 2.2))
 
     color_dict = {
         embedding: color for embedding, color in zip(node_embedding_order, color_list)
@@ -106,7 +106,7 @@ def create_plot(data_dict, metric="val_r2", ylim=None, name_suffix="", show_lege
 
     plt.xscale("log")
     plt.xticks(MAX_SIZES, ["$10^3$", "$10^4$", "$10^5$"])
-    plt.xlabel("Dataset Size", fontsize=6)
+    plt.xlabel("Dataset size", fontsize=6)
 
     humanized_metric = humanize_metric(metric)
     plt.ylabel(humanized_metric, fontsize=6)

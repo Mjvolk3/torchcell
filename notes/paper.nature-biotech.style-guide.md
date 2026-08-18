@@ -66,6 +66,23 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
   export vector PDF into `paper/nature-biotech/figures/` (auto via `make fig`/`make paper`).
   The size gate allows `+2` mm grace and requires `\tcfig` (never `\tcfigfit`). See
   `paper/nature-biotech/figures/README.md` and [[paper.nature-biotech.figures]].
+- **Nature's official figure specs** (verified 2026.08.17 from
+  `https://www.nature.com/documents/nature-final-artwork.pdf` "Guide to preparing final
+  artwork" and `https://research-figure-guide.nature.com/figures/preparing-figures-our-specifications/`):
+  standard widths **89 mm (single column)** and **183 mm (double column)**; 1.5-column
+  figures **120 or 136 mm**; full page depth **247 mm**; "The maximum height for a
+  *Nature* figure is 170 mm, to allow space for the figure legend to fit underneath."
+  Text: sans-serif (Helvetica/Arial), max 7 pt, min 5 pt; panel letters "8-pt bold,
+  upright (not italic) and lowercase a, b, c"; do not outline text. **Our stance:
+  WIDTH is enforced strictly** (panels on the `PANEL_WIDTHS_MM` grid); height warnings
+  are advisory for now and resolved before submission.
+- **Axis-label style: sentence case, first word capitalized, proper nouns/initialisms
+  keep their capitals.** Nature's spec gives the exemplar "All axes to be labelled with
+  units in parentheses, e.g. Data (unit)" -- sentence case; unitless metrics omit the
+  parenthetical. House forms: `Dataset size` (never `Dataset Size`), `Percent of
+  dataset`, `Samples`, `Test Pearson`, `Pearson`, `Spearman`, `MSE` (never lowercase
+  `pearson`/`spearman`/`mse`). Applied 2026.08.17 across the traditional-ML plot
+  scripts (`{"mse": "MSE"}.get(metric, metric.capitalize())` for metric axes).
 
 ## Tables
 
@@ -75,6 +92,13 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
   - Classical-ML tables: `experiments/smf-dmf-tmf-001/traditional_ml-summary_table.py --write-tables`.
   - Entity-corpora table: `.../persistent_entity_corpus_sizes.py --from-csv --write-table`
     (offline re-render from the frozen snapshot; never re-hammer the archives for a format fix).
+- **Compressed sizes are reported in BITS, everywhere.** Both corpora in the information
+  accounting are measured the same way -- a `gzip` byte count -- and both are reported as the
+  codelength $L_C(D) = 8\lvert C(s(D))\rvert$ in bits, because bits is the unit the
+  Proposition, Eqs. (24)/(25), Fig. 1c, and every ratio are stated in. This covers the
+  persistent-entity table (`Bits`) and the supported-datasets table (`Signal (gzip, bits)`);
+  the two columns are meant to be read against each other, so they must not differ in unit.
+  Keep the x8 in the generating script, never in the `.tex`.
 
 ## Proofs & formal claims
 

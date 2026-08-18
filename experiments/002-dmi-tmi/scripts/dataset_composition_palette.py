@@ -73,7 +73,7 @@ def load_perturbation_counts(one_hot_root, size):
 
 
 def main():
-    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), 1.7))
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["third"]), 1.7))
     ypos = list(range(len(EXPERIMENTS)))[::-1]  # first experiment on top
     for y, (label, root) in zip(ypos, EXPERIMENTS):
         counts = load_perturbation_counts(root, SIZE)
@@ -117,12 +117,14 @@ def main():
         [ORDER_LABELS[o] for o in (1, 2, 3)],
         title="Genes perturbed",
         loc="lower center",
-        bbox_to_anchor=(0.5, 1.02),
+        # center on the FIGURE, not the axes: figure x=0.5 in axes fraction,
+        # given subplots_adjust(left=0.37, right=0.97)
+        bbox_to_anchor=((0.5 - 0.37) / (0.97 - 0.37), 1.02),
         ncol=3,
-        handlelength=1.0,
-        handletextpad=0.4,
-        columnspacing=1.0,
-        borderpad=0.3,
+        handlelength=0.8,
+        handletextpad=0.3,
+        columnspacing=0.6,
+        borderpad=0.25,
         framealpha=0.5,
         fontsize=6,
     )
@@ -133,7 +135,7 @@ def main():
         spine.set_edgecolor("black")
     ax.tick_params(width=0.5, length=2)
 
-    plt.subplots_adjust(left=0.24, right=0.95, top=0.70, bottom=0.22)
+    plt.subplots_adjust(left=0.37, right=0.97, top=0.70, bottom=0.22)
     savefig_true_size_svg(
         fig,
         osp.join(ASSET_IMAGES_DIR, "traditional-ml_dataset-composition_palette.svg"),

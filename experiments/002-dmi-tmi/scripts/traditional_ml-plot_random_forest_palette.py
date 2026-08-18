@@ -325,7 +325,7 @@ def create_plots(
         # Top headroom holds the legends (drawn below) clear of the bars; the
         # add_cv Dataset legend has two extra rows (NaN markers), so it needs more.
         ax.set_ylim(-bar_height, y + bar_height * (25 if add_cv else 20))
-        ax.set_xlabel(metric, fontname="Arial", fontsize=6)
+        ax.set_xlabel({"mse": "MSE"}.get(metric, metric.capitalize()), fontname="Arial", fontsize=6)  # sentence case per Nature axis-label style
         ax.set_xlim(0, ax_limit)
         if metric in ["r2", "pearson", "spearman"]:
             # Tenth (0.1) gridlines, labelled only every 0.2 to avoid crowding.

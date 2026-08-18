@@ -703,13 +703,13 @@ downloaded: the sizes come from HTTP \texttt{Content-Length}, from NCBI BLAST me
 wwPDB directory index, so every entry is re-derivable by a reader with a network connection. Nucleotide
 sequence dominates, and the total is
 \begin{equation}
-L_C(\mathcal{U}) \;\approx\; 9.6\times10^{12} \;\approx\; 10^{13}\ \text{bits},
+L_C(\mathcal{U}) \;\approx\; 9.8\times10^{12} \;\approx\; 10^{13}\ \text{bits},
 \label{eq:entity-total}
 \end{equation}
-falling only to $9.0\times10^{12}$ if RefSeq transcripts are dropped as already contained in
+falling only to $9.2\times10^{12}$ if RefSeq transcripts are dropped as already contained in
 \texttt{nt}. An independent count corroborates the compressor. NCBI \texttt{nt} holds
-$4.06\times10^{12}$ nucleotides, which a four-letter alphabet cannot write in fewer than
-$8.1\times10^{12}$ bits, and the archive is distributed in $7.1\times10^{12}$: the compressed size
+$4.15\times10^{12}$ nucleotides, which a four-letter alphabet cannot write in fewer than
+$8.3\times10^{12}$ bits, and the archive is distributed in $7.2\times10^{12}$: the compressed size
 recovers $87\%$ of a counting bound derived without reference to any compressor. The two routes agree,
 so \eqref{eq:entity-total} measures sequence content rather than an artifact of file formatting.
 
@@ -869,31 +869,44 @@ baseline, and it is meant to be one.
 % --- Classical-ML baselines (sits with [note:classical-ml]) ---
 %% Figure source: notes/assets/drawio/Fig7-Traditional-ML-justification-of-CGT.drawio.svg
 %%   -> figures/Fig7-Traditional-ML-justification-of-CGT.pdf (auto-exported by `make fig`/`make paper`).
-%% STATUS (2026-07-14): panel (a) featurization schematic and (c) representation legend are composed;
-%% the quantitative panels (b, d, f-j) are still EMPTY in the draw.io source and are to be filled from
-%% the committed palette plot scripts (compose the exported SVGs into the draw.io grid):
-%%   experiments/smf-dmf-tmf-001/traditional_ml-plot_{random_forest,svr,elastic_net}_palette.py
-%%   experiments/smf-dmf-tmf-001/traditional_ml-plot_random_forest-best_performance_vs_dataset_size_palette.py
-%%   experiments/002-dmi-tmi/scripts/traditional_ml-plot_*_palette.py   (interaction dataset)
-%% Exported PDF is 181 mm wide (within the +2 mm size-gate grace); resize the draw.io grid to <=180 mm
-%% when the panels are finalized so it can stay true-size (\tcfig).
+%% STATUS (2026-08-17): all panels composed at true size (57.8 mm third-width). Sources:
+%%   (a) draw.io-native featurization schematic; (b) legend crop from create_legend() in
+%%       traditional_ml-plot_random_forest-best_performance_vs_dataset_size_palette.py;
+%%   (c) experiments/002-dmi-tmi/scripts/dataset_composition_palette.py
+%%   (d,e) traditional_ml-plot_random_forest_palette.py (both experiments), the
+%%       *_Random_Forest_1e05_mse_pearson_no_cv_palette.svg grids (val-MSE-selected);
+%%   (f) experiments/002-dmi-tmi/scripts/dataset_sampling_palette.py
+%%   (g,h) traditional_ml-plot_random_forest-best_performance_vs_dataset_size_palette.py
+%%       (both experiments), *_node_embedding_performance_test_pearson_shared_0_1_no_legend;
+%%       reproducibility ceilings from experiments/002-dmi-tmi/scripts/interaction_reproducibility_ceiling.py
+%%       (results/reproducibility_ceiling.json: fitness 0.89, interactions 0.811-0.863).
+%% Exported PDF is 181.0 x 214.1 mm: width within the +2 mm size-gate grace, but HEIGHT exceeds the
+%% <=170 mm Nature guideline -- the stacked d/e grids (165 mm tall) drive it; needs an author layout
+%% decision (split the figure or shorten the grids) before submission.
 \begin{figure*}[t]
 \centering
 \tcfig{figures/Fig7-Traditional-ML-justification-of-CGT.pdf}{\textbf{Classical machine-learning
 baselines: fitness is saturable, interactions are not.} (a)~Featurization. Each strain is reduced
 to a single fixed-length vector by mapping its genes through a per-gene encoder and pooling: the
 bag is taken over either the perturbed (deleted) genes or the intact genome and aggregated by sum
-or mean. (c)~The seventeen gene representations, grouped as identity (one-hot), random projections
+or mean. (b)~The seventeen gene representations, grouped as identity (one-hot), random projections
 ($d{=}1$--$1000$), hand-crafted (codon frequency, chromosome/pathway features), and pretrained
 biological encoders (CaLM, a species-aware DNA language
 model~\cite{karollusSpeciesawareDNALanguage2024}, nucleotide-transformer windows, ProtT5, ESM2).
-Remaining panels report held-out test performance (Spearman~$\rho$, Pearson~$r$, MSE) for random
-forest and support-vector regression across all representations and dataset sizes
-$n{=}10^{3}$--$10^{5}$, for knockout fitness ($smf/dmf/tmf$) and for the digenic/trigenic
-interaction mixture. Fitness is saturated by gene identity -- one-hot reaches Pearson
-${\approx}\,0.90$ at $n{=}10^{5}$ and no pretrained embedding surpasses it -- whereas interactions
-plateau near Pearson ${\approx}\,0.4$ regardless of representation or scale, the empirical backing
-for the information-accounting cut of \suppnoteref{note:info-accounting}.}{fig:classical-ml}
+(c)~Perturbation composition of the two datasets: knockout fitness (001; single/double/triple
+deletions) and the digenic/trigenic interaction mixture (002). (d,e)~Validation and test
+Pearson~$r$ at $n{=}10^{5}$ for random forest across all representations and the four pooling
+variants (perturbed/intact $\times$ sum/mean), hyperparameters selected on validation MSE;
+Spearman and MSE views, and the support-vector and elastic-net baselines, are tabulated in
+\supptab{tab:classical-ml-results}--\ref{tab:classical-ml-pearson}. (f)~Stratified 80/10/10
+train/validation/test splits at each dataset size. (g,h)~Best test Pearson per representation as
+dataset size grows $n{=}10^{3}$--$10^{5}$; the dashed line and shaded band mark the limit of
+experimental reproducibility (fitness $r{\approx}0.89$; interactions $r{\approx}0.81$--$0.86$).
+Fitness is saturated by gene identity -- one-hot reaches Pearson ${\approx}\,0.87$ at
+$n{=}10^{5}$, approaching the reproducibility limit, and no pretrained embedding surpasses it --
+whereas interactions plateau near Pearson ${\approx}\,0.4$ regardless of representation or scale,
+the empirical backing for the information-accounting cut of
+\suppnoteref{note:info-accounting}.}{fig:classical-ml}
 \end{figure*}
 
 % --- Tables: dataset scale + integrated graphs; fills the old fig:data-scale slot ---

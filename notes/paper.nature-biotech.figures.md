@@ -169,3 +169,51 @@ syncs to gilahyper via `git pull origin paper/figures-fig1`.
 `torchcell.utils.display_label` / `REPRESENTATION_DISPLAY_NAMES` -- code keeps internal names;
 plots relabel, e.g. `fudt_upstream/downstream` -> `species_lm_five_prime/three_prime`
 (the Gagneur-lab SpeciesLM).
+
+## 2026.08.16 - True-size SVG placement into draw.io (scripted, never drag)
+
+The SVGs' declared size is already exact -- `savefig_true_size_svg` writes draw.io units
+(100/inch), so a `third` panel is 227 units = 57.8 mm in the header. What breaks WYSIWYG
+is draw.io's GUI importer: it guesses dpi and clamps large images (`maxImageSize` 520, and
+grid panels are 650 tall), so drag-and-drop can land at the wrong scale. There is no dpi
+to fix in the files; the fix is to bypass the importer. One tool, two modes
+(`notes/assets/publish/scripts/drawio_true_size_import.py`):
+
+**Update panels in an existing figure (the canonical, fully-reproducible path).**
+Replaces the image payload of cells whose geometry matches each SVG's true size, in
+document order, leaving geometry untouched -- re-renders can never drift the layout:
+
+```bash
+python notes/assets/publish/scripts/drawio_true_size_import.py \
+  notes/assets/images/<left-panel>.svg notes/assets/images/<right-panel>.svg \
+  --into notes/assets/drawio/FigN.drawio.svg
+```
+
+Refuses on a count mismatch between matching cells and given SVGs. The `.drawio.svg`
+outer preview is stale until draw.io next saves the file, a headless
+`draw.io -x -f svg --embed-diagram` re-export, or `make fig` (PDF only).
+
+**Audit a figure's panels** (`--identify`, added 2026.08.17): lists every embedded
+image cell with its geometry and whether the payload is byte-identical to a current
+file under `notes/assets/images/` (CURRENT) or stale/unknown (with text-label hints).
+Caveat: panels the author drag-imported never hash-match (draw.io re-encodes on
+import); only script-placed panels verify byte-exact.
+
+```bash
+python .../drawio_true_size_import.py --identify notes/assets/drawio/FigN.drawio.svg
+```
+
+The full workflow (preconditions, swap, rebuild chain, verification) is the
+**`/fig-swap` skill** (`.claude/skills/fig-swap/SKILL.md`).
+
+**First placement of a new panel (paste XML).** Emits an mxGraphModel fragment with
+geometry from the SVG header:
+
+```bash
+python .../drawio_true_size_import.py <panel1>.svg [<panel2>.svg ...] | pbcopy
+# in draw.io: click the canvas, Cmd+V -> lands at exact physical size
+```
+
+Slot checks (stderr prints each panel's units + mm): third = 227.6, half_plus = 348.4,
+full = 706.7 units. Unitless SVG numbers pass through as draw.io units; pt/mm/cm/in/px
+are converted.

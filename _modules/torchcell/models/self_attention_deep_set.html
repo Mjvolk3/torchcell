@@ -79,7 +79,7 @@
 <span class="c1"># [[torchcell.models.self_attention_deep_set]]</span>
 <span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/self_attention_deep_set</span>
 <span class="c1"># Test file: tests/torchcell/models/test_self_attention_deep_set.py</span>
-<span class="sd">&quot;&quot;&quot;Self-attention Deep Sets model for permutation-invariant set encoding.&quot;&quot;&quot;</span>
+<span class="sd">"""Self-attention Deep Sets model for permutation-invariant set encoding."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
@@ -90,10 +90,10 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">SelfAttention</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Multi-head self-attention returning outputs and per-graph weights.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Multi-head self-attention returning outputs and per-graph weights."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim_in</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dim_out</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">num_heads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create the query/key/value projections for ``num_heads`` heads.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Create the query/key/value projections for ``num_heads`` heads."""</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">dim_in</span><span class="p">,</span> <span class="n">dim_out</span> <span class="o">*</span> <span class="n">num_heads</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">dim_in</span><span class="p">,</span> <span class="n">dim_out</span> <span class="o">*</span> <span class="n">num_heads</span><span class="p">)</span>
@@ -104,7 +104,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Attend over node features, returning outputs and per-graph weights.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Attend over node features, returning outputs and per-graph weights."""</span>
         <span class="n">Q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">V</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -131,7 +131,7 @@
 <div class="viewcode-block" id="SelfAttentionDeepSet">
 <a class="viewcode-back" href="../../../generated/torchcell.models.SelfAttentionDeepSet.html#torchcell.models.SelfAttentionDeepSet">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SelfAttentionDeepSet</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deep Sets encoder with self-attention between node and set layers.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Deep Sets encoder with self-attention between node and set layers."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -142,16 +142,16 @@
         <span class="n">num_set_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">num_heads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
-        <span class="n">norm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;batch&quot;</span><span class="p">,</span>
-        <span class="n">activation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;relu&quot;</span><span class="p">,</span>
+        <span class="n">norm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"batch"</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"relu"</span><span class="p">,</span>
         <span class="n">skip_node</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">skip_set</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build the node and set MLP stacks and the shared attention module.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Build the node and set MLP stacks and the shared attention module."""</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
-        <span class="k">assert</span> <span class="n">norm</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;batch&quot;</span><span class="p">,</span> <span class="s2">&quot;instance&quot;</span><span class="p">,</span> <span class="s2">&quot;layer&quot;</span><span class="p">],</span> <span class="s2">&quot;Invalid norm type&quot;</span>
-        <span class="k">assert</span> <span class="n">activation</span> <span class="ow">in</span> <span class="n">act_register</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="s2">&quot;Invalid activation type&quot;</span>
+        <span class="k">assert</span> <span class="n">norm</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"batch"</span><span class="p">,</span> <span class="s2">"instance"</span><span class="p">,</span> <span class="s2">"layer"</span><span class="p">],</span> <span class="s2">"Invalid norm type"</span>
+        <span class="k">assert</span> <span class="n">activation</span> <span class="ow">in</span> <span class="n">act_register</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="s2">"Invalid activation type"</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">skip_node</span> <span class="o">=</span> <span class="n">skip_node</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">skip_set</span> <span class="o">=</span> <span class="n">skip_set</span>
@@ -161,11 +161,11 @@
             <span class="n">in_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">out_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">norm</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">activation</span><span class="p">:</span> <span class="nb">str</span>
         <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">:</span>
             <span class="n">block</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">in_dim</span><span class="p">,</span> <span class="n">out_dim</span><span class="p">)]</span>
-            <span class="k">if</span> <span class="n">norm</span> <span class="o">==</span> <span class="s2">&quot;batch&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">norm</span> <span class="o">==</span> <span class="s2">"batch"</span><span class="p">:</span>
                 <span class="n">block</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm1d</span><span class="p">(</span><span class="n">out_dim</span><span class="p">))</span>
-            <span class="k">elif</span> <span class="n">norm</span> <span class="o">==</span> <span class="s2">&quot;instance&quot;</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">norm</span> <span class="o">==</span> <span class="s2">"instance"</span><span class="p">:</span>
                 <span class="n">block</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">InstanceNorm1d</span><span class="p">(</span><span class="n">out_dim</span><span class="p">,</span> <span class="n">affine</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-            <span class="k">elif</span> <span class="n">norm</span> <span class="o">==</span> <span class="s2">&quot;layer&quot;</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">norm</span> <span class="o">==</span> <span class="s2">"layer"</span><span class="p">:</span>
                 <span class="n">block</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">(</span><span class="n">out_dim</span><span class="p">))</span>
             <span class="n">block</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">act_register</span><span class="p">[</span><span class="n">activation</span><span class="p">])</span>
             <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="o">*</span><span class="n">block</span><span class="p">)</span>
@@ -216,7 +216,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">node_layers_forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process node features through node layers.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Process node features through node layers."""</span>
         <span class="n">x_node</span> <span class="o">=</span> <span class="n">x</span>
         <span class="n">attn_weights_list</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># List to store attention weights from each layer</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node_layers</span><span class="p">):</span>
@@ -233,7 +233,7 @@
 <div class="viewcode-block" id="SelfAttentionDeepSet.set_layers_forward">
 <a class="viewcode-back" href="../../../generated/torchcell.models.SelfAttentionDeepSet.html#torchcell.models.SelfAttentionDeepSet.set_layers_forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_layers_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_summed</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process aggregated features through set layers.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Process aggregated features through set layers."""</span>
         <span class="n">x_set</span> <span class="o">=</span> <span class="n">x_summed</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">set_layers</span><span class="p">):</span>
             <span class="n">out_set</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">x_set</span><span class="p">)</span>
@@ -252,7 +252,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Encode nodes, sum per graph, and return node, set, and attention.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Encode nodes, sum per graph, and return node, set, and attention."""</span>
         <span class="n">x_node</span><span class="p">,</span> <span class="n">attn_weights_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_layers_forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
         <span class="n">x_summed</span> <span class="o">=</span> <span class="n">scatter_add</span><span class="p">(</span><span class="n">x_node</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">x_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_layers_forward</span><span class="p">(</span><span class="n">x_summed</span><span class="p">)</span>
@@ -262,7 +262,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a forward/backward smoke test on random data.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Run a forward/backward smoke test on random data."""</span>
     <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">set_detect_anomaly</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># Model configuration</span>
@@ -280,51 +280,51 @@
         <span class="n">num_node_layers</span><span class="p">,</span>
         <span class="n">num_set_layers</span><span class="p">,</span>
         <span class="n">num_heads</span><span class="p">,</span>
-        <span class="n">norm</span><span class="o">=</span><span class="s2">&quot;layer&quot;</span><span class="p">,</span>
-        <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;tanh&quot;</span><span class="p">,</span>
+        <span class="n">norm</span><span class="o">=</span><span class="s2">"layer"</span><span class="p">,</span>
+        <span class="n">activation</span><span class="o">=</span><span class="s2">"tanh"</span><span class="p">,</span>
         <span class="n">skip_node</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">skip_set</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Print the number of parameters in the model</span>
     <span class="n">num_params</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of parameters: </span><span class="si">{</span><span class="n">num_params</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Number of parameters: </span><span class="si">{</span><span class="n">num_params</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="c1"># Dummy data</span>
     <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;x shape:&quot;</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"x shape:"</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
     <span class="n">batch</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="mi">20</span><span class="p">,),</span> <span class="n">i</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)])</span>
 
     <span class="c1"># Forward pass</span>
     <span class="n">x_nodes</span><span class="p">,</span> <span class="n">x_set</span><span class="p">,</span> <span class="n">attn_weights_list</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;x_set shape:&quot;</span><span class="p">,</span> <span class="n">x_set</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;x_nodes shape:&quot;</span><span class="p">,</span> <span class="n">x_nodes</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of attention weights:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">attn_weights_list</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"x_set shape:"</span><span class="p">,</span> <span class="n">x_set</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"x_nodes shape:"</span><span class="p">,</span> <span class="n">x_nodes</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Number of attention weights:"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">attn_weights_list</span><span class="p">))</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">graph_attn_weights</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">attn_weights_list</span><span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of graphs at layer </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">graph_attn_weights</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Number of graphs at layer </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">:"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">graph_attn_weights</span><span class="p">))</span>
         <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">attn_weights</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">graph_attn_weights</span><span class="p">):</span>
             <span class="nb">print</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Attention weights shape for graph </span><span class="si">{</span><span class="n">j</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> at layer </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"Attention weights shape for graph </span><span class="si">{</span><span class="n">j</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> at layer </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">:"</span><span class="p">,</span>
                 <span class="n">attn_weights</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
             <span class="p">)</span>
 
-    <span class="c1"># Let&#39;s assume you want to predict some values for each set.</span>
-    <span class="c1"># So, we&#39;ll create a dummy target tensor for demonstration purposes.</span>
+    <span class="c1"># Let's assume you want to predict some values for each set.</span>
+    <span class="c1"># So, we'll create a dummy target tensor for demonstration purposes.</span>
     <span class="n">target</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">)</span>
 
     <span class="c1"># Simple mean squared error loss</span>
     <span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">()</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">x_set</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">target</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
     <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">x_set</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loss:&quot;</span><span class="p">,</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Loss:"</span><span class="p">,</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
 
     <span class="c1"># Backpropagation</span>
     <span class="n">model</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
     <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Gradients computed successfully!&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Gradients computed successfully!"</span><span class="p">)</span>
 
 
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
 </pre></div>
 

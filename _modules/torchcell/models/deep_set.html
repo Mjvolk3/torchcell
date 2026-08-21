@@ -75,7 +75,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for torchcell.models.deep_set</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;DeepSet model with permutation-invariant set aggregation over node features.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""DeepSet model with permutation-invariant set aggregation over node features."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
@@ -87,7 +87,7 @@
 <div class="viewcode-block" id="DeepSet">
 <a class="viewcode-back" href="../../../generated/torchcell.models.DeepSet.html#torchcell.models.DeepSet">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DeepSet</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Permutation-invariant network applying per-node MLPs then set aggregation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Permutation-invariant network applying per-node MLPs then set aggregation."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -97,13 +97,13 @@
         <span class="n">num_node_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">num_set_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
-        <span class="n">norm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;batch&quot;</span><span class="p">,</span>
-        <span class="n">activation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;relu&quot;</span><span class="p">,</span>
+        <span class="n">norm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"batch"</span><span class="p">,</span>
+        <span class="n">activation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"relu"</span><span class="p">,</span>
         <span class="n">skip_node</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># Parameter to add skip connections in node_layers</span>
         <span class="n">skip_set</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># Parameter to add skip connections in set_layers</span>
-        <span class="n">aggregation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sum&quot;</span><span class="p">,</span>  <span class="c1"># Aggregation method: &quot;sum&quot; or &quot;mean&quot;</span>
+        <span class="n">aggregation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"sum"</span><span class="p">,</span>  <span class="c1"># Aggregation method: "sum" or "mean"</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build the node and set MLP stacks.</span>
+<span class="w">        </span><span class="sd">"""Build the node and set MLP stacks.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            in_channels: Input feature dimension per node.</span>
@@ -112,17 +112,17 @@
 <span class="sd">            num_node_layers: Number of per-node MLP blocks.</span>
 <span class="sd">            num_set_layers: Number of post-aggregation set MLP blocks.</span>
 <span class="sd">            dropout_prob: Dropout probability in the final set block.</span>
-<span class="sd">            norm: Normalization type (&quot;batch&quot;, &quot;instance&quot;, or &quot;layer&quot;).</span>
+<span class="sd">            norm: Normalization type ("batch", "instance", or "layer").</span>
 <span class="sd">            activation: Activation key registered in ``act_register``.</span>
 <span class="sd">            skip_node: Whether to add residual connections in node layers.</span>
 <span class="sd">            skip_set: Whether to add residual connections in set layers.</span>
-<span class="sd">            aggregation: Set aggregation method (&quot;sum&quot; or &quot;mean&quot;).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">            aggregation: Set aggregation method ("sum" or "mean").</span>
+<span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
-        <span class="k">assert</span> <span class="n">norm</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;batch&quot;</span><span class="p">,</span> <span class="s2">&quot;instance&quot;</span><span class="p">,</span> <span class="s2">&quot;layer&quot;</span><span class="p">],</span> <span class="s2">&quot;Invalid norm type&quot;</span>
-        <span class="k">assert</span> <span class="n">activation</span> <span class="ow">in</span> <span class="n">act_register</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="s2">&quot;Invalid activation type&quot;</span>
-        <span class="k">assert</span> <span class="n">aggregation</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;sum&quot;</span><span class="p">,</span> <span class="s2">&quot;mean&quot;</span><span class="p">],</span> <span class="s2">&quot;Invalid aggregation method&quot;</span>
+        <span class="k">assert</span> <span class="n">norm</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"batch"</span><span class="p">,</span> <span class="s2">"instance"</span><span class="p">,</span> <span class="s2">"layer"</span><span class="p">],</span> <span class="s2">"Invalid norm type"</span>
+        <span class="k">assert</span> <span class="n">activation</span> <span class="ow">in</span> <span class="n">act_register</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="s2">"Invalid activation type"</span>
+        <span class="k">assert</span> <span class="n">aggregation</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"sum"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">],</span> <span class="s2">"Invalid aggregation method"</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">skip_node</span> <span class="o">=</span> <span class="n">skip_node</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">skip_set</span> <span class="o">=</span> <span class="n">skip_set</span>
@@ -132,11 +132,11 @@
             <span class="n">in_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">out_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">norm</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">activation</span><span class="p">:</span> <span class="nb">str</span>
         <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">:</span>
             <span class="n">block</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">in_dim</span><span class="p">,</span> <span class="n">out_dim</span><span class="p">)]</span>
-            <span class="k">if</span> <span class="n">norm</span> <span class="o">==</span> <span class="s2">&quot;batch&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">norm</span> <span class="o">==</span> <span class="s2">"batch"</span><span class="p">:</span>
                 <span class="n">block</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm1d</span><span class="p">(</span><span class="n">out_dim</span><span class="p">))</span>
-            <span class="k">elif</span> <span class="n">norm</span> <span class="o">==</span> <span class="s2">&quot;instance&quot;</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">norm</span> <span class="o">==</span> <span class="s2">"instance"</span><span class="p">:</span>
                 <span class="n">block</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">InstanceNorm1d</span><span class="p">(</span><span class="n">out_dim</span><span class="p">,</span> <span class="n">affine</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-            <span class="k">elif</span> <span class="n">norm</span> <span class="o">==</span> <span class="s2">&quot;layer&quot;</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">norm</span> <span class="o">==</span> <span class="s2">"layer"</span><span class="p">:</span>
                 <span class="n">block</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">(</span><span class="n">out_dim</span><span class="p">))</span>
             <span class="n">block</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">act_register</span><span class="p">[</span><span class="n">activation</span><span class="p">])</span>
             <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="o">*</span><span class="n">block</span><span class="p">)</span>
@@ -182,7 +182,7 @@
 <div class="viewcode-block" id="DeepSet.node_layers_forward">
 <a class="viewcode-back" href="../../../generated/torchcell.models.DeepSet.html#torchcell.models.DeepSet.node_layers_forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">node_layers_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process node features through node layers.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Process node features through node layers."""</span>
         <span class="n">x_node</span> <span class="o">=</span> <span class="n">x</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node_layers</span><span class="p">):</span>
             <span class="n">out_node</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">x_node</span><span class="p">)</span>
@@ -195,7 +195,7 @@
 <div class="viewcode-block" id="DeepSet.set_layers_forward">
 <a class="viewcode-back" href="../../../generated/torchcell.models.DeepSet.html#torchcell.models.DeepSet.set_layers_forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_layers_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_aggregated</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process aggregated features through set layers.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Process aggregated features through set layers."""</span>
         <span class="n">x_set</span> <span class="o">=</span> <span class="n">x_aggregated</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">set_layers</span><span class="p">):</span>
             <span class="n">out_set</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">x_set</span><span class="p">)</span>
@@ -214,7 +214,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply node layers, aggregate per set, then apply set layers.</span>
+<span class="w">        </span><span class="sd">"""Apply node layers, aggregate per set, then apply set layers.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x: Node feature tensor of shape ``(num_nodes, in_channels)``.</span>
@@ -222,15 +222,15 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A tuple of per-node features and per-set output features.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node_layers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">x_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_layers_forward</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">x_node</span> <span class="o">=</span> <span class="n">x</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span> <span class="o">==</span> <span class="s2">&quot;sum&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span> <span class="o">==</span> <span class="s2">"sum"</span><span class="p">:</span>
             <span class="n">x_aggregated</span> <span class="o">=</span> <span class="n">scatter_add</span><span class="p">(</span><span class="n">x_node</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span> <span class="o">==</span> <span class="s2">&quot;mean&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
             <span class="n">x_aggregated</span> <span class="o">=</span> <span class="n">scatter_mean</span><span class="p">(</span><span class="n">x_node</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
         <span class="n">x_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_layers_forward</span><span class="p">(</span><span class="n">x_aggregated</span><span class="p">)</span>
@@ -240,7 +240,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a small DeepSet forward/backward pass on dummy data.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Run a small DeepSet forward/backward pass on dummy data."""</span>
     <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">set_detect_anomaly</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># Model configuration</span>
@@ -256,42 +256,42 @@
         <span class="n">out_channels</span><span class="p">,</span>
         <span class="n">num_node_layers</span><span class="p">,</span>
         <span class="n">num_set_layers</span><span class="p">,</span>
-        <span class="n">norm</span><span class="o">=</span><span class="s2">&quot;layer&quot;</span><span class="p">,</span>
-        <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;tanh&quot;</span><span class="p">,</span>
+        <span class="n">norm</span><span class="o">=</span><span class="s2">"layer"</span><span class="p">,</span>
+        <span class="n">activation</span><span class="o">=</span><span class="s2">"tanh"</span><span class="p">,</span>
         <span class="n">skip_node</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">skip_set</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">aggregation</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span>  <span class="c1"># Use &quot;sum&quot; or &quot;mean&quot; for aggregation</span>
+        <span class="n">aggregation</span><span class="o">=</span><span class="s2">"mean"</span><span class="p">,</span>  <span class="c1"># Use "sum" or "mean" for aggregation</span>
     <span class="p">)</span>
 
     <span class="c1"># Dummy data</span>
     <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;x shape:&quot;</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"x shape:"</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
     <span class="n">batch</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="mi">20</span><span class="p">,),</span> <span class="n">i</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)])</span>
 
     <span class="c1"># Forward pass</span>
     <span class="n">x_nodes</span><span class="p">,</span> <span class="n">x_set</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;x_set shape:&quot;</span><span class="p">,</span> <span class="n">x_set</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;batch shape:&quot;</span><span class="p">,</span> <span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;batch unique:&quot;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">batch</span><span class="p">))</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;x_nodes shape:&quot;</span><span class="p">,</span> <span class="n">x_nodes</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"x_set shape:"</span><span class="p">,</span> <span class="n">x_set</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"batch shape:"</span><span class="p">,</span> <span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"batch unique:"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">batch</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"x_nodes shape:"</span><span class="p">,</span> <span class="n">x_nodes</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 
-    <span class="c1"># Let&#39;s assume you want to predict some values for each set.</span>
-    <span class="c1"># So, we&#39;ll create a dummy target tensor for demonstration purposes.</span>
+    <span class="c1"># Let's assume you want to predict some values for each set.</span>
+    <span class="c1"># So, we'll create a dummy target tensor for demonstration purposes.</span>
     <span class="n">target</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">)</span>
 
     <span class="c1"># Simple mean squared error loss</span>
     <span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">()</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">x_set</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">target</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
     <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">x_set</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loss:&quot;</span><span class="p">,</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Loss:"</span><span class="p">,</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
 
     <span class="c1"># Backpropagation</span>
     <span class="n">model</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
     <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Gradients computed successfully!&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Gradients computed successfully!"</span><span class="p">)</span>
 
 
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
 </pre></div>
 

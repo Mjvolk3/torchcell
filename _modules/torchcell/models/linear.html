@@ -75,7 +75,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for torchcell.models.linear</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Simple set-aggregation linear model over scatter-pooled node features.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Simple set-aggregation linear model over scatter-pooled node features."""</span>
 
 <span class="c1"># torchcell/models/deep_set.py</span>
 <span class="c1"># [[torchcell.models.deep_set]]</span>
@@ -90,16 +90,16 @@
 <div class="viewcode-block" id="SimpleLinearModel">
 <a class="viewcode-back" href="../../../generated/torchcell.models.SimpleLinearModel.html#torchcell.models.SimpleLinearModel">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SimpleLinearModel</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Scatter-aggregate node features per set, then apply a linear layer.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Scatter-aggregate node features per set, then apply a linear layer."""</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">scatter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;add&quot;</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set up the linear layer and the scatter aggregation mode.</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">scatter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"add"</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Set up the linear layer and the scatter aggregation mode.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            input_dim: Dimension of each input node feature.</span>
 <span class="sd">            output_dim: Dimension of the per-set output.</span>
-<span class="sd">            scatter: Aggregation mode, one of &quot;add&quot;, &quot;mean&quot;, or &quot;max&quot;.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">            scatter: Aggregation mode, one of "add", "mean", or "max".</span>
+<span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">scatter</span> <span class="o">=</span> <span class="n">scatter</span>
         <span class="c1"># The main linear layer for the aggregated data</span>
@@ -108,13 +108,13 @@
 <div class="viewcode-block" id="SimpleLinearModel.forward">
 <a class="viewcode-back" href="../../../generated/torchcell.models.SimpleLinearModel.html#torchcell.models.SimpleLinearModel.forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Aggregate node features by batch and project to the output dimension.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Aggregate node features by batch and project to the output dimension."""</span>
         <span class="c1"># Aggregate the data</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scatter</span> <span class="o">==</span> <span class="s2">&quot;add&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scatter</span> <span class="o">==</span> <span class="s2">"add"</span><span class="p">:</span>
             <span class="n">x</span> <span class="o">=</span> <span class="n">scatter_add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">scatter</span> <span class="o">==</span> <span class="s2">&quot;mean&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">scatter</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
             <span class="n">x</span> <span class="o">=</span> <span class="n">scatter_mean</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">scatter</span> <span class="o">==</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">scatter</span> <span class="o">==</span> <span class="s2">"max"</span><span class="p">:</span>
             <span class="n">x</span> <span class="o">=</span> <span class="n">scatter_max</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
         <span class="c1"># Process aggregated data through the linear layer</span>
@@ -126,7 +126,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a small forward/backward pass to sanity-check the model.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Run a small forward/backward pass to sanity-check the model."""</span>
     <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">set_detect_anomaly</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># Model configuration</span>
@@ -143,22 +143,22 @@
     <span class="n">x_set</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">x_set</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 
-    <span class="c1"># Let&#39;s assume you want to predict some values for each set.</span>
-    <span class="c1"># So, we&#39;ll create a dummy target tensor for demonstration purposes.</span>
+    <span class="c1"># Let's assume you want to predict some values for each set.</span>
+    <span class="c1"># So, we'll create a dummy target tensor for demonstration purposes.</span>
     <span class="n">target</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">)</span>
 
     <span class="c1"># Simple mean squared error loss</span>
     <span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">()</span>
     <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">x_set</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loss:&quot;</span><span class="p">,</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Loss:"</span><span class="p">,</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
 
     <span class="c1"># Backpropagation</span>
     <span class="n">model</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
     <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Gradients computed successfully!&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Gradients computed successfully!"</span><span class="p">)</span>
 
 
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
 </pre></div>
 

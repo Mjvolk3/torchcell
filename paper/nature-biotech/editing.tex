@@ -50,7 +50,44 @@
 \newcommand{\tcsttodo}{{\normalfont\footnotesize\textcolor{stred}{\ding{55}}}}% red X = not done
 \newcommand{\status}[1]{\csname tcst#1\endcsname}
 \newcommand{\secstatus}[1]{\ \status{#1}}% inline on the heading line (place INSIDE the heading braces)
-\newcommand{\paperoutline}{\clearpage\input{sections/outline}\clearpage}
+% \paperoutline = the status board, then a real clickable table of contents.
+% The board carries the paragraph-level plan the TOC cannot; the TOC carries the
+% section status chips (they sit inside the headings, so they propagate here for
+% free) plus page numbers and links. Both are editing-only.
+% Links are rendered in BLACK: sn-jnl.cls sets linkcolor=blue globally, which
+% turns an entire contents page into one blue block and buries the status chips.
+% Scoped in a group so citations and cross-references keep the class's colours.
+\RequirePackage{tocloft}
+\setlength{\cftbeforesecskip}{1.2pt}
+\setlength{\cftbeforesubsecskip}{0.6pt}
+\renewcommand{\cftsecfont}{\normalsize\bfseries}
+\renewcommand{\cftsecpagefont}{\normalsize\bfseries}
+\renewcommand{\cftsubsecfont}{\small}
+\renewcommand{\cftsubsecpagefont}{\small}
+% Nature house style makes every Methods subhead and every Supplementary Note a
+% STARRED \subsection*, and LaTeX routes starred headings down a path that never
+% calls \addcontentsline -- so ~30 real headings are invisible to the TOC and the
+% contents page collapses to the four numbered \section's. Intercept the star and
+% add the line back, with \phantomsection so hyperref anchors on the heading
+% rather than the previous page. Editing view only: submission.tex / twocolumn.tex
+% never see this, so the submitted PDF keeps the unnumbered, TOC-free Nature look.
+\makeatletter
+\let\tc@orig@subsection\subsection
+\renewcommand{\subsection}{\@ifstar\tc@star@subsection\tc@orig@subsection}
+\newcommand{\tc@star@subsection}[1]{%
+  \tc@orig@subsection*{#1}%
+  \phantomsection\addcontentsline{toc}{subsection}{#1}}
+\makeatother
+\newcommand{\papertoc}{%
+  \begingroup
+  \hypersetup{linkcolor=black}%
+  {\scriptsize\color{gray}%
+   \status{final}\,ready \enspace \status{tent}\,author-reviewed, keep stable
+   \enspace \status{todo}\,not done, agents may edit freely\par}%
+  \vspace{2pt}%
+  {\small\tableofcontents}%
+  \endgroup}
+\newcommand{\paperoutline}{\clearpage\input{sections/outline}\clearpage\papertoc\clearpage}
 % Drafting view only: block paragraphs -- no first-line indent, vertical gap between paras.
 % submission.tex / twocolumn.tex keep the class's indented Nature default.
 \setlength{\parindent}{0pt}

@@ -103,8 +103,22 @@ class BibFileSyncReport(BaseModel):
         )
 
 
+# Characters permitted in a citation key. A key outside this set (e.g. a literal
+# `$` from a maths-laden title) makes the whole file unparseable to pandoc -- it
+# aborts on the entry, so ONE bad key silently costs every citation in the file.
+_INVALID_KEY_CHARS = re.compile(r"[^A-Za-z0-9_:.\-]")
+
+
+def sanitize_citation_key(key: str) -> str:
+    """Strip characters that would make a citation key unparseable to pandoc."""
+    return _INVALID_KEY_CHARS.sub("", key)
+
+
 def citable_citation_keys(
-    lib: ZoteroLibrary, collection: str | None = None
+    lib: ZoteroLibrary,
+    collection: str | None = None,
+    *,
+    collection_key: str | None = None,
 ) -> set[str]:
     """Citation keys of the real works in a library/collection (no attachments).
 
@@ -112,10 +126,12 @@ def citable_citation_keys(
     artifact directories in the mirror -- so the bibliography and the OCR mirror are
     keyed identically by construction.
     """
-    if collection is None:
+    if collection_key is not None:
         items: list[dict[str, Any]] = with_zotero_retry(
-            lambda: lib.zot.everything(lib.zot.items())
+            lambda: lib.zot.everything(lib.zot.collection_items(collection_key))
         )
+    elif collection is None:
+        items = with_zotero_retry(lambda: lib.zot.everything(lib.zot.items()))
     else:
         coll_key = lib.collection_key(collection)
         items = with_zotero_retry(
@@ -128,8 +144,87 @@ def citable_citation_keys(
     }
 
 
+def fetch_union_bibtex_entries(
+    group: ZoteroLibrary,
+    user: ZoteroLibrary | None = None,
+    *,
+    user_root_collection: str | None = None,
+) -> list[dict[str, Any]]:
+    """BibTeX for the group UNION the personal ``torchcell/*`` tree.
+
+    The notes bibliography cites more widely than the manuscript does, and new
+    reading lands in the personal library first -- a group-only pull therefore
+    cannot see it. (The manuscript's ``references.bib`` is deliberately group-only,
+    so every published citation is recoverable from the shared library.)
+
+    Personal takes precedence on a shared citation key: it is where the entry is
+    curated first, and it is the library the mirror is keyed from, so preferring it
+    keeps ``@key`` and the artifact directory in agreement.
+
+    Args:
+        group: The torchcell group library.
+        user: The personal library; ``None`` pulls group only.
+        user_root_collection: Personal collection tree to scope to (recursively).
+            Required when ``user`` is given -- the personal library holds thousands
+            of items that are not torchcell work.
+
+    Returns:
+        Deduplicated bibtexparser entries, personal winning on a key collision.
+    """
+    entries = fetch_bibtex_entries(group)
+    if user is None:
+        return entries
+    if user_root_collection is None:
+        raise ValueError(
+            "user_root_collection is required when a user library is given"
+        )
+
+    by_key = {e[_ID]: e for e in entries if e.get(_ID)}
+    n_group = len(by_key)
+    for sub in _collection_tree(user, user_root_collection):
+        for entry in fetch_bibtex_entries(user, collection_key=sub):
+            key = entry.get(_ID)
+            if key:
+                by_key[key] = entry  # personal wins
+    log.info(
+        "bib: union -> %d entries (%d group, %d added or overridden from personal)",
+        len(by_key),
+        n_group,
+        len(by_key) - n_group,
+    )
+    return list(by_key.values())
+
+
+def _collection_tree(lib: ZoteroLibrary, root_collection: str) -> list[str]:
+    """Keys of a collection and every collection nested beneath it.
+
+    ``collection_items`` returns only direct members, so a nested collection such as
+    ``torchcell/torchcell-topics/microbe-perturb-seq`` is invisible without walking
+    the tree -- which is exactly where new reading is filed.
+    """
+    from collections import defaultdict
+
+    root_key = lib.collection_key(root_collection)
+    children: dict[str, list[str]] = defaultdict(list)
+    for c in lib.zot.everything(lib.zot.collections()):
+        children[c["data"].get("parentCollection") or ""].append(c["key"])
+
+    def walk(key: str) -> list[str]:
+        out = [key]
+        for kid in children.get(key, []):
+            out += walk(kid)
+        return out
+
+    tree = walk(root_key)
+    log.info("bib: personal tree '%s' -> %d collections", root_collection, len(tree))
+    return tree
+
+
 def fetch_bibtex_entries(
-    lib: ZoteroLibrary, collection: str | None = None
+    lib: ZoteroLibrary,
+    collection: str | None = None,
+    *,
+    collection_key: str | None = None,
 ) -> list[dict[str, Any]]:
     """Pull BibTeX entries for the citable works of a library or collection.
 
@@ -137,6 +232,9 @@ def fetch_bibtex_entries(
         lib: Connected Zotero library.
         collection: Restrict to one collection by name; ``None`` pulls the whole
             library (every citable work, across all collections).
+        collection_key: Restrict to one collection by *key*, skipping the
+            name lookup. Used when walking a collection tree, where the children
+            are already known by key and may share names across libraries.
 
     Returns:
         bibtexparser entry dicts keyed by Zotero's native ``citationKey``, filtered
@@ -144,8 +242,14 @@ def fetch_bibtex_entries(
         (``@misc{noauthor_notitle_nodate...}``) are dropped, never written to a
         bibliography.
     """
-    if collection is None:
+    if collection_key is not None:
         db: BibDatabase = with_zotero_retry(
+            lambda: lib.zot.everything(
+                lib.zot.collection_items(collection_key, format="bibtex")
+            )
+        )
+    elif collection is None:
+        db = with_zotero_retry(
             lambda: lib.zot.everything(lib.zot.items(format="bibtex"))
         )
     else:
@@ -155,26 +259,35 @@ def fetch_bibtex_entries(
                 lib.zot.collection_items(coll_key, format="bibtex")
             )
         )
-    citable = citable_citation_keys(lib, collection=collection)
-    entries = [e for e in db.entries if e.get(_ID) in citable]
+    citable = citable_citation_keys(
+        lib, collection=collection, collection_key=collection_key
+    )
+    # An EMPTY collection comes back as a plain (empty) list rather than a
+    # BibDatabase -- pyzotero only parses BibTeX when there is a body to parse.
+    # Several collections in the personal tree hold only sub-collections, so this
+    # is the normal case, not an error.
+    raw = db.entries if hasattr(db, "entries") else list(db)
+    entries = [e for e in raw if e.get(_ID) in citable]
+    # Sanitize INCOMING keys too, not just ones read off disk: a citation key is
+    # free text in Zotero, and a single `$` makes the whole .bib unparseable to
+    # pandoc -- which silently kills every citation in the file, not just this one.
+    for entry in entries:
+        key = entry.get(_ID)
+        if key and (clean := sanitize_citation_key(key)) != key:
+            log.warning(
+                "bib: Zotero citation key %r is not a valid BibTeX key; writing %r "
+                "(fix it in Zotero so the two agree)",
+                key,
+                clean,
+            )
+            entry[_ID] = clean
     log.info(
         "bib: pulled %d citable entries from Zotero (%s; %d non-citable dropped)",
         len(entries),
         collection or "whole library",
-        len(db.entries) - len(entries),
+        len(raw) - len(entries),
     )
     return entries
-
-
-# Characters permitted in a citation key. A key outside this set (e.g. a literal
-# `$` from a maths-laden title) makes the whole file unparseable to pandoc -- it
-# aborts on the entry, so ONE bad key silently costs every citation in the file.
-_INVALID_KEY_CHARS = re.compile(r"[^A-Za-z0-9_:.\-]")
-
-
-def sanitize_citation_key(key: str) -> str:
-    """Strip characters that would make a citation key unparseable to pandoc."""
-    return _INVALID_KEY_CHARS.sub("", key)
 
 
 def read_bib_entries(path: str | Path) -> list[dict[str, Any]]:

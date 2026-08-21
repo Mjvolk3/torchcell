@@ -31,10 +31,12 @@ Usage::
 
 import argparse
 import logging
+import os
 import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
+from pydantic import SecretStr
 
 # Resolve project root from this file so cron's cwd does not matter.
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -44,9 +46,12 @@ from torchcell.literature.bib import (  # noqa: E402
     BIB_RELPATHS,
     BibFileSyncReport,
     fetch_bibtex_entries,
+    fetch_union_bibtex_entries,
     sync_bib_file,
 )
-from torchcell.literature.zotero import ZoteroLibrary  # noqa: E402
+from torchcell.literature.zotero import ZoteroConfig, ZoteroLibrary  # noqa: E402
+
+DEFAULT_ROOT_COLLECTION = "torchcell"
 
 log = logging.getLogger("lit_bib")
 
@@ -77,6 +82,16 @@ def main() -> None:
         help="Report what would change; write nothing.",
     )
     parser.add_argument(
+        "--group-only",
+        action="store_true",
+        help="Pull the group library only (skip the personal torchcell tree).",
+    )
+    parser.add_argument(
+        "--root-collection",
+        default=os.environ.get("ZOTERO_USER_ROOT_COLLECTION", DEFAULT_ROOT_COLLECTION),
+        help="Personal collection tree to union in (default: $ZOTERO_USER_ROOT_COLLECTION).",
+    )
+    parser.add_argument(
         "--update-existing",
         action="store_true",
         help=(
@@ -85,14 +100,26 @@ def main() -> None:
         ),
     )
     parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="List every added/updated citation key.",
+        "--verbose", action="store_true", help="List every added/updated citation key."
     )
     args = parser.parse_args()
 
-    lib = ZoteroLibrary.from_env()
-    incoming = fetch_bibtex_entries(lib, collection=args.collection)
+    group = ZoteroLibrary.from_env()
+    if args.collection is not None:
+        incoming = fetch_bibtex_entries(group, collection=args.collection)
+    else:
+        user = None
+        if not args.group_only:
+            user = ZoteroLibrary(
+                ZoteroConfig(
+                    library_id=os.environ["ZOTERO_USER_ID"],
+                    library_type="user",
+                    api_key=SecretStr(os.environ["ZOTERO_API_KEY"]),
+                )
+            )
+        incoming = fetch_union_bibtex_entries(
+            group, user, user_root_collection=args.root_collection
+        )
     if not incoming:
         sys.exit(
             "Zotero returned 0 entries -- refusing to touch the bibliography. "

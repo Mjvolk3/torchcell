@@ -1,0 +1,8 @@
+cross,dataset_type,n_cells,median_umi_per_cell,n_transcripts_per_cell
+A*,eQTL,7124,1514,4995
+A,eQTL,27744,4017,5435
+B,eQTL,44784,2130,5556
+C,eQTL,6595,1982,4696
+B,ASE,2864,2480,3531
+C,ASE,5219,6559,4983
+A,ASE,5890,1605,2662

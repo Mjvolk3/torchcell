@@ -1,0 +1,422 @@
+<mxfile host="app.diagrams.net" agent="claude-code" version="24.7.17">
+  <diagram name="split-seq-barcoding" id="splitSeqBarcoding">
+    <mxGraphModel dx="1400" dy="1000" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="703" pageHeight="639" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ================================================================
+             TRUE-SIZE CANVAS. draw.io units = 1/100 inch (100 units = 1 in).
+             Content occupies 0..702 x 0..630 units
+               = 178.2 mm wide  (cap 179.4 mm; PANEL_WIDTHS_MM["full"] = 179)
+               = 159.9 mm tall  (cap 170 mm; MAX_HEIGHT_MM)
+             Reference: notes/assets/drawio/figure-sizing-template.drawio.svg
+             Type: Arial throughout. 8.5 units = 6.1 pt (Nature 6 pt minimum);
+             12 units = 8.6 pt, matching Fig1-torchcell-overview (707 x 446).
+             Palette: PLOT_PALETTE / PLOT_PALETTE_FILL slots 1-6 only.
+
+             Column grid (shared by every row so segments align vertically):
+               biotin 135..151 | handle R1 154..220 | UMI 220..262
+               BC3 262..300 | BC2 300..338 | BC1 338..376 | dT15 376..414
+               cDNA 414..564 | handle R2 564..630 | i7 index 630..686
+             ================================================================ -->
+
+        <mxCell id="title" value="Split-pool barcoding (SPLiT-seq): what happens to the sequence at each step" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=12;fontStyle=1;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="702" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="Yeast-optimised SPLiT-seq (Brettner 2024); notes-tex/microbe-perturb-seq &#167;3.1. The tracked strand runs 5&#8242; to 3&#8242; left to right, so a partner strand runs antiparallel beside it. Steps 1 and 2 are drawn as duplexes because that is where the chemistry acts on two strands." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="18" width="702" height="24"  as="geometry" />
+        </mxCell>
+
+        <!-- ============================ STEP 0 ============================ -->
+        <mxCell id="t0" value="0. Fixed,&#10;permeabilised cell" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="50" width="108" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s0e5" value="3&#8242;" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="358" y="50" width="16" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s0polya" value="poly(A)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="376" y="50" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s0mrna" value="mRNA transcript" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="414" y="50" width="150" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s0e3" value="5&#8242;" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="566" y="50" width="16" height="22"  as="geometry" />
+        </mxCell>
+
+        <mxCell id="a01" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="131" y="76" as="sourcePoint" />
+            <mxPoint x="131" y="106" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n01" value="&lt;b&gt;Fix, then digest.&lt;/b&gt; 4% formaldehyde (~18 h, 4 &#176;C) freezes the transcriptome and stiffens the cell; only then does zymolyase open the &#946;-glucan wall and Triton X-100 permeabilise the membrane. Digesting first would measure its own stress response." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="154" y="76" width="548" height="24"  as="geometry" />
+        </mxCell>
+
+        <!-- ===================== STEP 1 (DUPLEX) ========================== -->
+        <mxCell id="t1" value="1. Round 1&#10;barcoded RT, 48 wells" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="130" width="108" height="22"  as="geometry" />
+        </mxCell>
+
+        <!-- template strand (mRNA), antiparallel: 3' left, 5' right -->
+        <mxCell id="s1te3" value="3&#8242;" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="358" y="112" width="16" height="13"  as="geometry" />
+        </mxCell>
+        <mxCell id="s1tpolya" value="poly(A)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="376" y="112" width="38" height="13"  as="geometry" />
+        </mxCell>
+        <mxCell id="s1tmrna" value="mRNA template" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="414" y="112" width="150" height="13"  as="geometry" />
+        </mxCell>
+        <mxCell id="s1te5" value="5&#8242;" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="566" y="112" width="16" height="13"  as="geometry" />
+        </mxCell>
+
+        <!-- base-pairing rungs: only across the annealed region 376..564 -->
+        <mxCell id="k1a" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="382" y="125" as="sourcePoint" /><mxPoint x="382" y="130" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k1b" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="394" y="125" as="sourcePoint" /><mxPoint x="394" y="130" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k1c" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="406" y="125" as="sourcePoint" /><mxPoint x="406" y="130" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k1d" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="418" y="125" as="sourcePoint" /><mxPoint x="418" y="130" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k1e" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="430" y="125" as="sourcePoint" /><mxPoint x="430" y="130" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k1f" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="442" y="125" as="sourcePoint" /><mxPoint x="442" y="130" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k1g" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="454" y="125" as="sourcePoint" /><mxPoint x="454" y="130" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k1h" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="466" y="125" as="sourcePoint" /><mxPoint x="466" y="130" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k1i" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="478" y="125" as="sourcePoint" /><mxPoint x="478" y="130" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k1j" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="490" y="125" as="sourcePoint" /><mxPoint x="490" y="130" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k1k" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="502" y="125" as="sourcePoint" /><mxPoint x="502" y="130" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k1l" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="514" y="125" as="sourcePoint" /><mxPoint x="514" y="130" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k1m" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="526" y="125" as="sourcePoint" /><mxPoint x="526" y="130" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k1n" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="538" y="125" as="sourcePoint" /><mxPoint x="538" y="130" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k1o" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="550" y="125" as="sourcePoint" /><mxPoint x="550" y="130" as="targetPoint" /></mxGeometry></mxCell>
+
+        <!-- tracked strand: barcoded primer + new cDNA -->
+        <mxCell id="s1e5" value="5&#8242;" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="320" y="130" width="16" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s1bc1" value="BC1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="338" y="130" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s1dt" value="dT15" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="376" y="130" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s1cdna" value="new cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="414" y="130" width="150" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s1e3" value="3&#8242;" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="566" y="130" width="16" height="22"  as="geometry" />
+        </mxCell>
+
+        <mxCell id="s1tail" value="BC1 is an unpaired 5&#8242; overhang" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="212" y="154" width="162" height="11"  as="geometry" />
+        </mxCell>
+        <mxCell id="s1rt" value="RT extends from the primer 3&#8242; end &#8594;" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="414" y="154" width="150" height="11"  as="geometry" />
+        </mxCell>
+
+        <mxCell id="a12" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="131" y="169" as="sourcePoint" />
+            <mxPoint x="131" y="210" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n12" value="&lt;b&gt;The barcode arrives on the primer, so cDNA is born barcoded.&lt;/b&gt; 48 wells, ~5,000 cells each; every well holds a barcoded 15-dT primer &lt;i&gt;and&lt;/i&gt; a barcoded random hexamer. Only the dT tract anneals, so BC1 hangs off as a 5&#8242; overhang and RT copies rightward from the primer 3&#8242; end. The hexamer needs no poly(A), so it, not the dT primer, is the arm that transfers to a bacterium -- and it is why 93.7% of recovered transcripts are rRNA." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="154" y="169" width="548" height="35"  as="geometry" />
+        </mxCell>
+
+        <!-- ===================== STEP 2 (DUPLEX) ========================== -->
+        <mxCell id="t2" value="2. Round 2&#10;ligation, 96 wells" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="226" width="108" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s2nicklab" value="nick" style="text;html=1;align=right;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="286" y="206" width="48" height="11"  as="geometry" />
+        </mxCell>
+        <mxCell id="s2nick" style="endArrow=none;html=1;strokeWidth=1.5;strokeColor=#000000;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="338" y="216" as="sourcePoint" />
+            <mxPoint x="338" y="226" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="s2e5" value="5&#8242;" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="282" y="226" width="16" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s2bc2" value="BC2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="300" y="226" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s2bc1" value="BC1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="338" y="226" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s2dt" value="dT15" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="376" y="226" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s2cdna" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="414" y="226" width="150" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s2e3" value="3&#8242;" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="566" y="226" width="16" height="22"  as="geometry" />
+        </mxCell>
+
+        <!-- base-pairing rungs to the splint, spanning the junction -->
+        <mxCell id="k2a" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="312" y="248" as="sourcePoint" /><mxPoint x="312" y="253" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k2b" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="325" y="248" as="sourcePoint" /><mxPoint x="325" y="253" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k2c" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="338" y="248" as="sourcePoint" /><mxPoint x="338" y="253" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k2d" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="351" y="248" as="sourcePoint" /><mxPoint x="351" y="253" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k2e" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="364" y="248" as="sourcePoint" /><mxPoint x="364" y="253" as="targetPoint" /></mxGeometry></mxCell>
+
+        <mxCell id="s2splint" value="linker" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="300" y="253" width="76" height="13"  as="geometry" />
+        </mxCell>
+        <mxCell id="s2splintlab" value="(splint strand) holds the two ends abutted so T4 DNA ligase can seal the nick; a blocking strand then displaces it" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="386" y="253" width="316" height="24"  as="geometry" />
+        </mxCell>
+
+        <mxCell id="a23" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="131" y="283" as="sourcePoint" />
+            <mxPoint x="131" y="313" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n23" value="&lt;b&gt;Pool, redistribute, ligate.&lt;/b&gt; The linker splints the incoming barcode against the 5&#8242; end of the existing cDNA so T4 ligase can seal the nick (30 min, 37 &#176;C); a blocking strand then retires that well's oligo. Round 3 repeats this chemistry, drawn single-stranded below." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="154" y="283" width="548" height="24"  as="geometry" />
+        </mxCell>
+
+        <!-- ============================ STEP 3 ============================ -->
+        <mxCell id="t3" value="3. Round 3&#10;ligation + UMI + biotin" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="317" width="108" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s3e5" value="5&#8242;" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="115" y="317" width="16" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s3bio" value="B" style="ellipse;whiteSpace=wrap;html=1;fillColor=#666666;strokeColor=#333333;fontFamily=Arial;fontSize=8.5;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="135" y="317" width="16" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s3h1" value="PCR handle&#10;(R1)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="154" y="317" width="66" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s3umi" value="UMI&#10;10 nt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="220" y="317" width="42" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s3bc3" value="BC3" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="262" y="317" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s3bc2" value="BC2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="300" y="317" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s3bc1" value="BC1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="338" y="317" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s3dt" value="dT15" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="376" y="317" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s3cdna" value="cDNA (first strand)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="414" y="317" width="150" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s3e3" value="3&#8242;" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="566" y="317" width="16" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s3cellid" value="cell identity = the plate path BC3 &#183; BC2 &#183; BC1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="219" y="340" width="200" height="11"  as="geometry" />
+        </mxCell>
+
+        <mxCell id="a34" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="131" y="355" as="sourcePoint" />
+            <mxPoint x="131" y="385" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n34" value="&lt;b&gt;Same chemistry, richer oligo:&lt;/b&gt; BC3 plus a 10 nt UMI plus a 5&#8242; biotin, then EDTA terminates. Three rounds of 96 give 96&#179; = 884,736 distinct paths; the UMI (4^10 &#8776; 10&#8310; states) turns read counts into molecule counts." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="154" y="355" width="548" height="24"  as="geometry" />
+        </mxCell>
+
+        <!-- ============================ STEP 4 ============================ -->
+        <mxCell id="t4" value="4. Sublibraries, lysis&#10;streptavidin capture" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="389" width="108" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s4bead" value="SA" style="ellipse;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="112" y="389" width="20" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s4bio" value="B" style="ellipse;whiteSpace=wrap;html=1;fillColor=#666666;strokeColor=#333333;strokeWidth=2;fontFamily=Arial;fontSize=8.5;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="135" y="389" width="16" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s4h1" value="PCR handle&#10;(R1)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="154" y="389" width="66" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s4umi" value="UMI&#10;10 nt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="220" y="389" width="42" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s4bc3" value="BC3" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="262" y="389" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s4bc2" value="BC2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="300" y="389" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s4bc1" value="BC1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="338" y="389" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s4dt" value="dT15" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="376" y="389" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s4cdna" value="cDNA (first strand)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="414" y="389" width="150" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s4e3" value="3&#8242;" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="566" y="389" width="16" height="22"  as="geometry" />
+        </mxCell>
+
+        <mxCell id="a45" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="131" y="415" as="sourcePoint" />
+            <mxPoint x="131" y="445" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n45" value="&lt;b&gt;No sequence change -- this is a selection.&lt;/b&gt; Split into sublibraries of 5,000-20,000 cells, then lyse (SDS plus proteinase K, 55 &#176;C, 2 h); streptavidin beads keep only molecules that received the round-3 oligo, so anything outside the barcoding scheme is never sequenced." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="154" y="415" width="548" height="24"  as="geometry" />
+        </mxCell>
+
+        <!-- ============================ STEP 5 ============================ -->
+        <mxCell id="t5" value="5. Template switch&#10;second PCR handle" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="449" width="108" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s5e5" value="5&#8242;" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="115" y="449" width="16" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s5bio" value="B" style="ellipse;whiteSpace=wrap;html=1;fillColor=#666666;strokeColor=#333333;fontFamily=Arial;fontSize=8.5;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="135" y="449" width="16" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s5h1" value="PCR handle&#10;(R1)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="154" y="449" width="66" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s5umi" value="UMI&#10;10 nt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="220" y="449" width="42" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s5bc3" value="BC3" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="262" y="449" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s5bc2" value="BC2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="300" y="449" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s5bc1" value="BC1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="338" y="449" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s5dt" value="dT15" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="376" y="449" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s5cdna" value="cDNA (first strand)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="414" y="449" width="150" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s5h2" value="PCR handle&#10;(R2)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;strokeWidth=2;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="564" y="449" width="66" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s5e3" value="3&#8242;" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="632" y="449" width="16" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s5new" value="new" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="564" y="472" width="66" height="11"  as="geometry" />
+        </mxCell>
+
+        <mxCell id="a56" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="131" y="487" as="sourcePoint" />
+            <mxPoint x="131" y="517" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n56" value="&lt;b&gt;A template switch on the beads adds a common handle to the far 3&#8242; end,&lt;/b&gt; giving the molecule a PCR primer site at both ends. Everything downstream is conventional Illumina library prep." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="154" y="487" width="548" height="24"  as="geometry" />
+        </mxCell>
+
+        <!-- ============================ STEP 6 ============================ -->
+        <mxCell id="t6" value="6. Amplify, fragment,&#10;adapter-ligate, index" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="521" width="108" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s6e5" value="5&#8242;" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="136" y="521" width="16" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s6h1" value="PCR handle&#10;(R1)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="154" y="521" width="66" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s6umi" value="UMI&#10;10 nt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="220" y="521" width="42" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s6bc3" value="BC3" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="262" y="521" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s6bc2" value="BC2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="300" y="521" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s6bc1" value="BC1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="338" y="521" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s6dt" value="dT15" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="376" y="521" width="38" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s6cdna" value="cDNA fragment" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;dashed=1;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="414" y="521" width="150" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s6h2" value="PCR handle&#10;(R2)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="564" y="521" width="66" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s6idx" value="i7 index&#10;(BC 4)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#666666;strokeWidth=2;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="630" y="521" width="56" height="22"  as="geometry" />
+        </mxCell>
+        <mxCell id="s6e3" value="3&#8242;" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="687" y="521" width="15" height="22"  as="geometry" />
+        </mxCell>
+
+        <mxCell id="s6r2" value="Read 2, 86 nt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.5;fontColor=#666666;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="220" y="545" width="156" height="12"  as="geometry" />
+        </mxCell>
+        <mxCell id="s6r1" value="Read 1, 74 nt cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.5;fontColor=#666666;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="414" y="545" width="150" height="12"  as="geometry" />
+        </mxCell>
+        <mxCell id="s6ri" value="index read" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.5;fontColor=#666666;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="630" y="545" width="56" height="12"  as="geometry" />
+        </mxCell>
+
+        <mxCell id="n6" value="&lt;b&gt;The Illumina index is barcode round 4 in all but name.&lt;/b&gt; The library is amplified from the two handles, fragmented, adapter-ligated and index-PCR'd; the biotin stays behind on the bead. Because cells were split into sublibraries &lt;i&gt;after&lt;/i&gt; in-cell barcoding, two cells that took identical plate paths are still resolved if they landed in different sublibraries, which is why unique dual indices are mandatory. Three rounds &#215; 24 sublibraries give 21.2 M distinct labels, against 884,736 for the plates alone." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="0" y="565" width="702" height="35"  as="geometry" />
+        </mxCell>
+
+        <!-- ============================ LEGEND ============================ -->
+        <mxCell id="legbox" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="608" width="702" height="30"  as="geometry" />
+        </mxCell>
+        <mxCell id="legt" value="Segments" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="6" y="614" width="40" height="18"  as="geometry" />
+        </mxCell>
+        <mxCell id="leg1" value="transcript / cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="50" y="614" width="78" height="18"  as="geometry" />
+        </mxCell>
+        <mxCell id="leg2" value="BC1 (round 1)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="132" y="614" width="70" height="18"  as="geometry" />
+        </mxCell>
+        <mxCell id="leg3" value="BC2 (round 2)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="206" y="614" width="70" height="18"  as="geometry" />
+        </mxCell>
+        <mxCell id="leg4" value="BC3 (round 3)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="280" y="614" width="70" height="18"  as="geometry" />
+        </mxCell>
+        <mxCell id="leg5" value="UMI" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="354" y="614" width="42" height="18"  as="geometry" />
+        </mxCell>
+        <mxCell id="leg6" value="handle / adapter" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="400" y="614" width="78" height="18"  as="geometry" />
+        </mxCell>
+        <mxCell id="leg7" value="i7 index (round 4)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#666666;strokeWidth=2;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="482" y="614" width="86" height="18"  as="geometry" />
+        </mxCell>
+        <mxCell id="leg8" value="B" style="ellipse;whiteSpace=wrap;html=1;fillColor=#666666;strokeColor=#333333;fontFamily=Arial;fontSize=8.5;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="572" y="614" width="16" height="18"  as="geometry" />
+        </mxCell>
+        <mxCell id="leg8t" value="biotin" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="592" y="614" width="40" height="18"  as="geometry" />
+        </mxCell>
+        <mxCell id="leg9" value="&#8214; base pairing" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="632" y="614" width="66" height="18"  as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

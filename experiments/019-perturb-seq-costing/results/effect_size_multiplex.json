@@ -1,0 +1,81 @@
+{
+  "thresholds_fold": [
+    1.25,
+    1.5,
+    2.0,
+    4.0
+  ],
+  "within_sameith_slopes": {
+    "1.25x": {
+      "mean_responders_by_nperts": {
+        "1": 294.0731707317073,
+        "2": 615.6666666666666
+      },
+      "slope_responders_per_perturbation": 321.5934959349592,
+      "n_levels_observed": 2,
+      "linearity_tested": false
+    },
+    "1.5x": {
+      "mean_responders_by_nperts": {
+        "1": 77.36585365853658,
+        "2": 188.56944444444446
+      },
+      "slope_responders_per_perturbation": 111.20359078590782,
+      "n_levels_observed": 2,
+      "linearity_tested": false
+    },
+    "2.0x": {
+      "mean_responders_by_nperts": {
+        "1": 23.25609756097561,
+        "2": 62.388888888888886
+      },
+      "slope_responders_per_perturbation": 39.13279132791326,
+      "n_levels_observed": 2,
+      "linearity_tested": false
+    },
+    "4.0x": {
+      "mean_responders_by_nperts": {
+        "1": 4.2073170731707314,
+        "2": 11.5
+      },
+      "slope_responders_per_perturbation": 7.292682926829265,
+      "n_levels_observed": 2,
+      "linearity_tested": false
+    }
+  },
+  "linear_extrapolation_responders": {
+    "1.25x": {
+      "1": 294.0731707317073,
+      "2": 615.6666666666665,
+      "3": 937.2601626016258,
+      "5": 1580.447154471544,
+      "8": 2545.2276422764216,
+      "10": 3188.41463414634
+    },
+    "1.5x": {
+      "1": 77.36585365853658,
+      "2": 188.5694444444444,
+      "3": 299.7730352303522,
+      "5": 522.1802168021678,
+      "8": 855.7909891598913,
+      "10": 1078.198170731707
+    },
+    "2.0x": {
+      "1": 23.25609756097561,
+      "2": 62.38888888888887,
+      "3": 101.52168021680214,
+      "5": 179.78726287262865,
+      "8": 297.18563685636843,
+      "10": 375.45121951219494
+    },
+    "4.0x": {
+      "1": 4.2073170731707314,
+      "2": 11.499999999999996,
+      "3": 18.79268292682926,
+      "5": 33.37804878048779,
+      "8": 55.25609756097559,
+      "10": 69.8414634146341
+    }
+  },
+  "caveat": "Only n_perturbations in {1,2} is observed, so the slope is a difference extrapolated linearly, not a fitted trend. Treat the 8-10 perturbation numbers as an upper bound on transcriptome volatility: saturation would make high-plex screens easier to read, not harder."
+}

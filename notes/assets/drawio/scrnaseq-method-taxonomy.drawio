@@ -1,0 +1,310 @@
+<mxfile host="app.diagrams.net" agent="claude-code" version="24.7.17">
+  <diagram name="scrnaseq-method-taxonomy" id="scrnaseqMethodTaxonomy">
+    <mxGraphModel dx="1400" dy="1000" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="703" pageHeight="512" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ================================================================
+             TRUE-SIZE CANVAS. 100 draw.io units = 1 inch. 0..702 x 0..~470.
+             Arial; 8.5 units = 6.1 pt (Nature 6 pt min); title 12.
+             Palette = PLOT_PALETTE / PLOT_PALETTE_FILL slots 1-6; segment
+             colours match Figs 1 and 2 (splitseq-barcoding, droplet-10x).
+             A clearer redraw of Fig. 1 of Nadal-Ribelles 2024. Reorganised
+             around the question that figure hides: WHICH MOLECULE CARRIES
+             THE CELL BARCODE; and with one fixed 5'->3' orientation
+             throughout (the original mirrors its 3' panel).
+             Panel c column grid, shared by all three rows:
+               P5 136..176 | R1 176..236 | CB 236..286 | UMI 286..330
+               cDNA 330..520 | R2 520..580 | index 580..624 | P7 624..664
+             ================================================================ -->
+
+        <mxCell id="title" value="Yeast scRNA-seq methods: what separates the cells, and which molecule carries the cell barcode" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="698" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="A redrawing of Fig. 1 of Nadal-Ribelles 2024, reorganised around the one question that separates the library types. Every molecule is drawn in a single fixed orientation, 5&#8242; left to 3&#8242; right with P5 always on the left, and colours are those of Figs. 1 and 2." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="17" width="698" height="24" as="geometry" />
+        </mxCell>
+
+        <!-- ============================= PANEL a ============================= -->
+        <mxCell id="pa" value="a" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="48" width="10" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="pah" value="What keeps one cell's molecules separate from another's" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="13" y="48" width="500" height="12" as="geometry" />
+        </mxCell>
+
+        <mxCell id="paNote" value="Six options, ordered by throughput. The last one is not an isolation method at all." style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="70" width="112" height="46" as="geometry" />
+        </mxCell>
+
+        <mxCell id="thr" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#666666;endSize=4;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="118" y="70" as="sourcePoint" /><mxPoint x="692" y="70" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="thrl" value="cells profiled per experiment" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=bottom;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="118" y="58" width="200" height="11" as="geometry" />
+        </mxCell>
+
+        <mxCell id="a1" value="Microfluidic&#10;chip (C1)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="118" y="76" width="88" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" value="FACS into&#10;plates" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="217" y="76" width="88" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" value="Micro-&#10;dissection" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="316" y="76" width="88" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="a4" value="Droplet&#10;(10x, Drop-seq)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="415" y="76" width="88" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="a5" value="Microwell&#10;array" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="514" y="76" width="88" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="a6" value="Combinatorial&#10;indexing" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;dashed=1;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="613" y="76" width="88" height="24" as="geometry" />
+        </mxCell>
+
+        <mxCell id="a1n" value="~160 cells&#10;one chamber per cell" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="118" y="102" width="88" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="a2n" value="~300 cells&#10;one well per cell" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="217" y="102" width="88" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="a3n" value="~2,000 cells&#10;one well per cell" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="316" y="102" width="88" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="a4n" value="6,000-100,000&#10;an oil-walled droplet" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="415" y="102" width="88" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="a5n" value="~75,000 cells&#10;a printed microwell" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="514" y="102" width="88" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="a6n" value="40,000-1,000,000&#10;&lt;b&gt;nothing: the fixed cell is its own container&lt;/b&gt;" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="605" y="102" width="93" height="34" as="geometry" />
+        </mxCell>
+
+        <mxCell id="phen" value="per-cell phenotype recorded (imaging, reporters, sorting gates)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="118" y="140" width="286" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="nophen" value="no per-cell phenotype; cells are pooled and read out only by sequence" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="415" y="140" width="283" height="14" as="geometry" />
+        </mxCell>
+
+        <!-- ============================= PANEL b ============================= -->
+        <mxCell id="pb" value="b" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="168" width="10" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="pbh" value="The question that separates the library types: which molecule carries the cell barcode?" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="13" y="168" width="560" height="12" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pbNote" value="Four answers. The original figure draws the products; this draws the choice that produces them." style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="190" width="112" height="56" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b1h" value="the oligo-dT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="118" y="190" width="138" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="b2h" value="the TSO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="266" y="190" width="138" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="b3h" value="the Tn5 adapter" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="414" y="190" width="138" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="b4h" value="nothing in the molecule" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="562" y="190" width="138" height="14" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b1cb" value="CB" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="128" y="210" width="42" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="b1umi" value="UMI" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="170" y="210" width="40" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="b1dt" value="dT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="210" y="210" width="36" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="b2cb" value="CB" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="276" y="210" width="42" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="b2umi" value="UMI" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="318" y="210" width="40" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="b2gg" value="rGrGrG" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="358" y="210" width="42" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="b3tn" value="Tn5" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="440" y="210" width="30" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="b3cb" value="CB" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="472" y="210" width="42" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="b4none" value="the well &lt;i&gt;is&lt;/i&gt; the barcode" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#B85450;dashed=1;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="580" y="210" width="102" height="18" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b1n" value="&lt;b&gt;3&#8242; end libraries.&lt;/b&gt; Barcode is on the primer, so it lands next to the poly(A) end. Droplet, microwell, combinatorial indexing." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="118" y="234" width="138" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="b2n" value="&lt;b&gt;5&#8242; end libraries.&lt;/b&gt; Mirror of the above: barcode rides the template-switch oligo, so it lands at the transcript's 5&#8242; end. Commercial droplet." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="266" y="234" width="138" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="b3n" value="&lt;b&gt;5&#8242; end, plate route.&lt;/b&gt; Neither oligo is barcoded; identity is added later, at tagmentation. yscRNA-seq, the only 5&#8242; method run in yeast." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="414" y="234" width="138" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="b4n" value="&lt;b&gt;Full-length.&lt;/b&gt; Tn5 carries universal adapters; the cell is identified by which well the library came from. SMART-seq2, plate only." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="562" y="234" width="138" height="46" as="geometry" />
+        </mxCell>
+
+        <!-- ============================= PANEL c ============================= -->
+        <mxCell id="pc" value="c" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="300" width="10" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="pch" value="Where the tags end up -- all three drawn in one orientation, on one column grid, so they can be compared" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="13" y="300" width="620" height="12" as="geometry" />
+        </mxCell>
+
+        <mxCell id="r1l" value="3&#8242; end" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="320" width="112" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r1a" value="5&#8242;" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="118" y="320" width="16" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r1p5" value="P5" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="136" y="320" width="40" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r1r1" value="Read 1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="176" y="320" width="60" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r1cb" value="CB" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="236" y="320" width="50" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r1umi" value="UMI" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="286" y="320" width="44" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r1cdna" value="cDNA -- the 3&#8242; end of the transcript" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="330" y="320" width="190" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r1r2" value="Read 2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="520" y="320" width="60" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r1ix" value="index" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#666666;strokeWidth=2;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="580" y="320" width="44" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r1p7" value="P7" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="624" y="320" width="40" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r1b" value="3&#8242;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="666" y="320" width="16" height="22" as="geometry" />
+        </mxCell>
+
+        <mxCell id="r2l" value="5&#8242; end" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="350" width="112" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r2a" value="5&#8242;" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="118" y="350" width="16" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r2p5" value="P5" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="136" y="350" width="40" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r2r1" value="Read 1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="176" y="350" width="60" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r2cb" value="CB" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="236" y="350" width="50" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r2umi" value="UMI" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="286" y="350" width="44" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r2cdna" value="cDNA -- the 5&#8242; end of the transcript" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="330" y="350" width="190" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r2r2" value="Read 2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="520" y="350" width="60" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r2ix" value="index" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#666666;strokeWidth=2;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="580" y="350" width="44" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r2p7" value="P7" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="624" y="350" width="40" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r2b" value="3&#8242;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="666" y="350" width="16" height="22" as="geometry" />
+        </mxCell>
+
+        <mxCell id="r3l" value="full-length" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="380" width="112" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r3a" value="5&#8242;" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="118" y="380" width="16" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r3p5" value="P5" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="136" y="380" width="40" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r3r1" value="Read 1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="176" y="380" width="60" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r3gap" value="no cell barcode" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#B85450;dashed=1;fontFamily=Arial;fontSize=8.5;fontColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="236" y="380" width="94" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r3cdna" value="cDNA fragment -- tiles the whole transcript" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;dashed=1;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="330" y="380" width="190" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r3r2" value="Read 2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="520" y="380" width="60" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r3ix" value="index" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#B85450;strokeWidth=2;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="580" y="380" width="44" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r3p7" value="P7" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="624" y="380" width="40" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r3b" value="3&#8242;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="666" y="380" width="16" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="r3ptr" value="this index &lt;i&gt;is&lt;/i&gt; the cell identity" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="546" y="404" width="112" height="11" as="geometry" />
+        </mxCell>
+        <mxCell id="cread" value="in 3&#8242; and 5&#8242; libraries Read 1 carries the cell barcode" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="176" y="404" width="220" height="11" as="geometry" />
+        </mxCell>
+
+        <!-- ============================ BOTTOM NOTE ========================== -->
+        <mxCell id="note" value="&lt;b&gt;Read panel b and panel c together and the taxonomy collapses to one rule: a cell barcode is only needed where cells are pooled before sequencing.&lt;/b&gt; Droplet, microwell and combinatorial methods pool early, so identity has to be written into the molecule, and it goes wherever the barcoded oligo sits -- the poly-dT end for 3&#8242; libraries, the template-switch end for 5&#8242;. Plate methods never pool until the very end, so the molecule needs no barcode at all and the Illumina sample index does the work, one index per well. That is the same accounting split-pool uses when its sublibrary index becomes barcode round 4." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="0" y="424" width="698" height="46" as="geometry" />
+        </mxCell>
+
+        <!-- ============================== LEGEND ============================= -->
+        <mxCell id="legbox" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="476" width="698" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legt" value="Segments" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="6" y="482" width="40" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg1" value="transcript / cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="50" y="482" width="78" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg2" value="cell barcode (CB)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="132" y="482" width="78" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg3" value="UMI" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="214" y="482" width="40" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg4" value="TSO rGrGrG" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="258" y="482" width="66" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg5" value="container / enzyme" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="328" y="482" width="82" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg6" value="handle / adapter" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="414" y="482" width="76" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg7" value="Illumina sample index" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#666666;strokeWidth=2;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="494" y="482" width="94" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg8" value="red dashed = absent, or doing an unexpected job" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="594" y="482" width="100" height="18" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

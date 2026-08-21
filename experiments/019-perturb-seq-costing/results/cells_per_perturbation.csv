@@ -1,0 +1,28 @@
+method,organism,isolation,mrna_umis_per_cell,tier,target_pseudobulk_umis,cells_per_perturbation,binding_constraint,cells_for_6000_genes
+Nadal-Ribelles 2019,S. cerevisiae,plate,11760.0,screen (strong coherent effects only),50000.0,100,biological floor,600000
+Nadal-Ribelles 2019,S. cerevisiae,plate,11760.0,standard (Brettner's own 500-cell heuristic),200000.0,100,biological floor,600000
+Nadal-Ribelles 2019,S. cerevisiae,plate,11760.0,deep (reaches low-abundance regulators),1000000.0,100,biological floor,600000
+Jackson 2020,S. cerevisiae,droplet,2250.0,screen (strong coherent effects only),50000.0,100,biological floor,600000
+Jackson 2020,S. cerevisiae,droplet,2250.0,standard (Brettner's own 500-cell heuristic),200000.0,100,biological floor,600000
+Jackson 2020,S. cerevisiae,droplet,2250.0,deep (reaches low-abundance regulators),1000000.0,445,sequencing depth,2670000
+Jariani 2020,S. cerevisiae,droplet,894.0,screen (strong coherent effects only),50000.0,100,biological floor,600000
+Jariani 2020,S. cerevisiae,droplet,894.0,standard (Brettner's own 500-cell heuristic),200000.0,224,sequencing depth,1344000
+Jariani 2020,S. cerevisiae,droplet,894.0,deep (reaches low-abundance regulators),1000000.0,1119,sequencing depth,6714000
+Urbonaite 2021,S. cerevisiae,droplet,1088.0,screen (strong coherent effects only),50000.0,100,biological floor,600000
+Urbonaite 2021,S. cerevisiae,droplet,1088.0,standard (Brettner's own 500-cell heuristic),200000.0,184,sequencing depth,1104000
+Urbonaite 2021,S. cerevisiae,droplet,1088.0,deep (reaches low-abundance regulators),1000000.0,920,sequencing depth,5520000
+Boocock 2025,S. cerevisiae,droplet,2809.0,screen (strong coherent effects only),50000.0,100,biological floor,600000
+Boocock 2025,S. cerevisiae,droplet,2809.0,standard (Brettner's own 500-cell heuristic),200000.0,100,biological floor,600000
+Boocock 2025,S. cerevisiae,droplet,2809.0,deep (reaches low-abundance regulators),1000000.0,356,sequencing depth,2136000
+Brettner 2024 (SPLiT-seq),S. cerevisiae + C. albicans,split_pool,410.0,screen (strong coherent effects only),50000.0,122,sequencing depth,732000
+Brettner 2024 (SPLiT-seq),S. cerevisiae + C. albicans,split_pool,410.0,standard (Brettner's own 500-cell heuristic),200000.0,488,sequencing depth,2928000
+Brettner 2024 (SPLiT-seq),S. cerevisiae + C. albicans,split_pool,410.0,deep (reaches low-abundance regulators),1000000.0,2440,sequencing depth,14640000
+microSPLiT (B. subtilis),B. subtilis,split_pool,397.0,screen (strong coherent effects only),50000.0,126,sequencing depth,756000
+microSPLiT (B. subtilis),B. subtilis,split_pool,397.0,standard (Brettner's own 500-cell heuristic),200000.0,504,sequencing depth,3024000
+microSPLiT (B. subtilis),B. subtilis,split_pool,397.0,deep (reaches low-abundance regulators),1000000.0,2519,sequencing depth,15114000
+ProBac-seq (B. subtilis),B. subtilis,droplet,325.0,screen (strong coherent effects only),50000.0,154,sequencing depth,924000
+ProBac-seq (B. subtilis),B. subtilis,droplet,325.0,standard (Brettner's own 500-cell heuristic),200000.0,616,sequencing depth,3696000
+ProBac-seq (B. subtilis),B. subtilis,droplet,325.0,deep (reaches low-abundance regulators),1000000.0,3077,sequencing depth,18462000
+"mapSPLiT (E. coli, CRISPRi/a)",E. coli,split_pool,325.0,screen (strong coherent effects only),50000.0,154,sequencing depth,924000
+"mapSPLiT (E. coli, CRISPRi/a)",E. coli,split_pool,325.0,standard (Brettner's own 500-cell heuristic),200000.0,616,sequencing depth,3696000
+"mapSPLiT (E. coli, CRISPRi/a)",E. coli,split_pool,325.0,deep (reaches low-abundance regulators),1000000.0,3077,sequencing depth,18462000

@@ -1,0 +1,4 @@
+dataset,n_perturbations,n_strains,median_n_measured,median_technical_sd,median_n_resp_1.25x,median_n_resp_1.5x,median_n_resp_2.0x,median_n_resp_4.0x,median_abs_log2fc_responders,p90_abs_log2fc_responders
+kemmeren2014_single,1,1484,6169.0,,269.0,55.0,15.0,4.0,0.42186609992961355,0.8254600721369751
+sameith2015_double,2,72,6169.0,,459.5,112.5,30.0,5.0,0.44053625549204783,0.9311584763245486
+sameith2015_single,1,82,6169.0,,220.0,42.0,10.0,1.0,0.42367173802328695,0.7888129878067608

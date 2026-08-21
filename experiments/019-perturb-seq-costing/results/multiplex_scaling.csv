@@ -1,0 +1,6 @@
+plex,cells_total_for_main_effects,cells_per_named_pair,named_pairs_in_design_space,cells_per_named_pair_200gene_sublibrary
+1,1500000,0.0,17997000,0.0
+2,750000,0.0417,17997000,37.69
+3,500000,0.0833,17997000,75.38
+5,300000,0.1667,17997000,150.75
+10,150000,0.3751,17997000,339.2

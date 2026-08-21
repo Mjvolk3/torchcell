@@ -1,0 +1,261 @@
+%% notes-tex/microbe-perturb-seq/sections/5-application.tex
+%% SOURCE: experiments/019-perturb-seq-costing/scripts/cost_model.py
+%%         experiments/019-perturb-seq-costing/scripts/cost_data.py      (Brettner et al. + Gaisser line items)
+%%         experiments/019-perturb-seq-costing/scripts/uiuc_core_data.py (UIUC published rates)
+%% Tables under tables/ are emitted by render_tables.py -- do not hand-edit them.
+
+\section{Application: Genome-Scale Screen Design at UIUC\secstatus{todo}}
+\label{sec:application}
+
+Applying Sec.~\ref{sec:limits} to our actual instruments and rates. Design target:
+6{,}000 genes, six guides per gene in the MAGIC style, one environment.
+
+\subsection{Start-Up Cost Composition\secstatus{todo}}
+\label{sec:startup}
+
+Brettner et al.\ quote a start-up cost of $\sim$\$10{,}000 and a per-protocol cost of
+\$1{,}300--1{,}700. The composition matters more than the totals, because the two
+scale completely differently.
+
+\input{tables/t5-brettner-items}
+
+The start-up cost is a single purchase order: three 96-well plates of custom
+barcoded oligos from IDT, \$7{,}699.40, which is 77\% of it.
+
+\notesec{What ``215 uses'' actually means} The plates are \emph{reagent stocks},
+not devices that get reused. IDT ships them pre-diluted --- 300\,\textmu L of
+100\,\textmu M oligo in each of 96 wells --- and a single pass through the
+protocol withdraws roughly one microlitre from every well. Nothing is recovered
+afterwards and no barcode is ever read twice; the plate simply has enough volume
+in it for about 215 withdrawals. Brettner et al.\ state the capacity per plate
+directly: ``enough volume to complete 300 RT, 250 r2, and 215 r3 ligations with
+careful pipetting.'' The round-3 plate is the binding constraint at 215, so 215
+is the honest number rather than the 300 the RT plate would allow.
+
+Two practical points follow from the pre-diluted format, and they answer the
+obvious worry about committing a whole plate at once. Because the oligos arrive
+already in solution, there is no rehydration event --- you are drawing from a
+reservoir, not reconstituting a plate that must then be consumed. What does
+degrade them is freeze--thaw, which is why the working practice is to aliquot
+each source plate into several \emph{working plates} and cycle only those.
+Gaisser et al.'s troubleshooting guide treats ``remake fresh working plates'' as
+the standard response to a barcoding failure, which tells you the source plates
+are expected to outlive many working copies.
+
+\notesec{And what counts as one ``run''} One run is one complete pass through the
+barcoding workflow of Sec.~\ref{sec:brettner}: fix and permeabilise a batch of
+cells, distribute them across the round-1 plate, two ligation rounds with pooling
+and re-splitting between, then split into sublibraries and prepare libraries. It
+consumes one withdrawal from each barcode plate, one tube of reverse
+transcriptase, one tube of ligase, and about a fifth of the RNase inhibitors ---
+and it can carry up to 96 samples and, at Brettner et al.'s loading,
+$\sim$480{,}000 cells. It is a unit of \emph{bench work}, not a unit of
+sequencing: the sublibraries a run produces are sequenced separately and are
+priced separately.
+
+So the plate set is a capital asset. At a realistic five to ten runs per year, 215
+withdrawals is a twenty-year supply, and it will be retired by degradation long
+before depletion. Two consequences: we are over-buying by roughly an order of
+magnitude and should ask IDT for a smaller synthesis scale or volume, and one
+plate set can serve an entire department. The genuinely recurring items are the
+reverse transcriptase (\$840) and the ligase (\$270), repurchased every run.
+
+\notesec{Independently replicated} Gaisser et al.\ \citep{gaisserHighthroughputSinglecellTranscriptomics2024}
+costed the same chemistry for bacteria and put the identical item at \$7{,}844.52
+against Brettner et al.'s \$7{,}699.40 --- two labs, two organisms, two years apart,
+1.9\% apart. Their barcode cost per run is flat regardless of sample count, which
+is the split-pool economics in one number.
+
+\subsection{Loaded Cost per Usable Cell\secstatus{todo}}
+\label{sec:cost-per-cell}
+
+The figure the literature quotes is library preparation only.
+
+\input{tables/t3-cost-per-cell}
+
+That spread --- about four orders of magnitude --- is real but misleading, because
+every row excludes sequencing and every row counts cells \emph{processed} rather
+than cells that survive QC and carry an identified guide. Costing the same
+platforms end to end:
+
+\input{tables/t4-cost-per-cell-loaded}
+
+\begin{keybox}
+\textbf{The headline inverts.} On reagents, split-pool beats droplet by
+$\sim$22$\times$. End to end it is $2.3\times$. The gap is rRNA and discarded
+cells --- 94\% of split-pool reads are ribosomal and $\sim$75\% of sequenced cells
+are thrown away. With rRNA depletion the advantage returns to $6.3\times$, which
+makes depletion the single highest-leverage change available to us.
+\end{keybox}
+
+\subsection{UIUC Core Sequencing Capacity\secstatus{todo}}
+\label{sec:sequencing}
+
+Rates from the UIUC Roy J.\ Carver Biotechnology Center DNA Services, effective
+2026-08-01, retrieved 2026-08-18. Listed rates are the on-campus rate; external
+users pay $+30.8\%$.
+
+\input{tables/t9-sequencing}
+
+%% TODO(library sweep) -- instrument specs here are vendor/core numbers, not
+%% literature, so the Zotero sweep that applies to Figs 1 and 3 does not apply in
+%% the same way. What DOES need re-checking is the core's rate card: it is dated
+%% (effective 2026-08-01) and will move. Re-pull it and re-date uiuc_core_data.py
+%% before any budget in this document is quoted externally.
+%% TODO(quote provenance) -- each SeqOption/FlowCell row should carry the verbatim
+%% rate-card line and its retrieval date, same discipline as the paper-derived
+%% numbers, so a price change is visible as a diff rather than a silent edit.
+\tcfigfit[1.0]{figures/sequencers.pdf}{%
+  \textbf{The instruments on campus leave a 30-fold hole exactly where a pilot
+  screen wants to sit, and the largest flow cell is also the cheapest per read.}
+  (a) Output per flow cell, with lanes and reads-per-lane drawn separately, since
+  a platform gets large by either route and the two are not interchangeable for a
+  screen: lanes partition a library, reads-per-lane deepen it. Filled bars are
+  available at the UIUC Roy J.\ Carver Biotechnology Center; open bars are
+  manufacturer specifications for instruments the core does not have, shown for
+  comparison and therefore unpriced. The gap between the MiSeq i100 at 50\,M read
+  pairs and the NovaSeq X 1.5B at 1.6\,billion is the practical constraint --- a
+  pilot sized at a few hundred million reads has to either waste most of a NovaSeq
+  lane or be redesigned down to a MiSeq, and the microSPLiT protocol's own
+  NextSeq 2000 P2 configuration falls squarely in the hole. (b) Price per million
+  read pairs, on-campus rate, for the configurations the core sells. Cost per read
+  falls monotonically with flow-cell size, so the NovaSeq X 25B at 8+ lanes is
+  simultaneously the largest and the cheapest option (\$0.99 per million read
+  pairs); there is no economy-of-scale penalty to buying the biggest flow cell,
+  which is why every sequencing figure in this document is priced on it. A
+  consequence worth noting for submission: the 25B is paired-end only, so the
+  paired-end reads both method families require (Table~\ref{tab:read-structure})
+  cost nothing extra here --- a conclusion that would reverse at a core whose
+  cheapest configuration is single-read. Generated by
+  \file{experiments/019-perturb-seq-costing/scripts/plot_sequencers.py}.}{fig:sequencers}
+
+\notesec{The available instruments} The core runs the NovaSeq X Plus and the
+MiSeq i100, plus PacBio Revio and Nanopore GridION. It has no NextSeq and no
+NovaSeq 6000. The microSPLiT protocol is written against a NextSeq 2000 P2, so
+that configuration is not available here; the choice is a $\sim$25\,M-read MiSeq
+run or a $\ge$800\,M-read NovaSeq X lane, with a 30-fold gap between them
+(\cref{fig:sequencers}a). The NovaSeq X 25B is the highest-throughput
+configuration on campus at 3.2\,billion read pairs per lane and 25.6\,billion per
+flow cell, and at the 8+ lane rate it is also the cheapest per read, which is why
+every sequencing figure in this document is priced on it.
+
+\notesec{Both methods need paired-end reads, and it costs nothing} Neither family
+can use a single-read flow cell --- with one read you get barcodes and no
+transcript, or transcript and no cell identity. They put the barcode on
+\emph{opposite} reads, which is the thing to get right at submission:
+
+\input{tables/t11-read-structure}
+
+Paired-end is free here because the largest flow cell is paired-end only and still
+wins on price per read: 25B PE150 at 8+ lanes is \$0.99 per million read pairs
+against \$1.06 for 10B SR100. That would not hold at a core whose cheapest option
+is single-read.
+
+Three split-pool-specific hazards. PhiX at $\ge$10\% is a protocol requirement, not
+hygiene --- read 2 carries fixed linker sequence at defined cycles, so base
+diversity collapses and patterned flow cells mis-register clusters; combined with
+70--90\% valid-barcode rates only $\sim$72\% of purchased reads become usable data,
+which is in the model. Unique dual indices are mandatory, because the sublibrary
+index \emph{is} barcode round 4, so an index hop moves a cell into another
+sublibrary's namespace and manufactures a barcode collision rather than mere sample
+bleed. And a 2$\times$150 kit gives 300 cycles when only 160 are needed, so read 1
+should be set to 150\,nt --- free, and it helps with the whole-genome-duplication
+paralogs that forced Brettner et al.\ to keep multi-mapping reads.
+
+\subsection{Barcode Space and Collision Rates\secstatus{todo}}
+\label{sec:collisions}
+
+\input{tables/t6-barcode}
+
+\notesec{What a fourth round buys, concretely} Each barcoding round multiplies the
+space by the number of wells, so three rounds of 96 give $96^{3}=8.8\times10^{5}$
+trajectories and four give $96^{4}=8.5\times10^{7}$ --- a \textbf{96-fold}
+increase, two orders of magnitude. Multiplied by 24 sublibrary indices that is
+$2.0\times10^{9}$ distinct labels against the $\sim$12\,M cells a genome-scale
+screen needs.
+
+The practical consequence is the sublibrary count. At 480{,}000 cells per run and
+a 1\% collision target, three rounds need 54 sublibraries at \$55 each in beads
+and library prep (\$2{,}970 per run); four rounds clear 1\% at a single
+sublibrary, so the count falls to whatever PCR complexity dictates --- about 11 at
+Gaisser et al.'s 45{,}000-cells-per-sublibrary working limit, or \$605 per run.
+A fourth plate costs $\sim$\$2{,}566 once and $\sim$\$150 per run, so it repays
+itself inside the first run.
+
+Against that sits the one real argument: every split-pool ligation loses material,
+and the yield cost of a fourth round must be measured in the pilot before it is
+committed to.
+
+\subsection{Genome-Scale Budget\secstatus{todo}}
+\label{sec:budget}
+
+\input{tables/t8-budgets}
+
+%% TODO(library sweep) -- the per-cell and per-run costs behind panel b come from
+%% the two protocol papers we happen to hold (Brettner, Gaisser) plus the UIUC
+%% rate card. Sweep the whole Zotero library (group `torchcell` + personal
+%% `torchcell > torchcell topics > microbe-perturb-seq`) for other published
+%% cost-per-cell figures and reconcile them here; a single cheaper published
+%% protocol would move the split-pool bar and could change the recommendation.
+%% TODO(quote provenance) -- every line item in cost_data.py needs a verbatim
+%% quote + line number naming the catalogue number and pack size it was priced
+%% from, and every derived per-cell number needs its divisor stated, so we can
+%% confirm we are tracking list price vs quoted price vs per-run amortised cost
+%% rather than silently mixing the three.
+%% TODO(effect size) -- panel a's depth constraint still rests on a NOMINAL
+%% two-fold threshold. Replace with the measured yeast response distribution once
+%% effect_size_analysis.py has run on gilahyper (see the session-handoff note),
+%% then regenerate: the bar heights in panel a and the tier in the keybox below
+%% both move with it.
+\tcfigfit[1.0]{figures/economics.pdf}{%
+  \textbf{Cells per perturbation are set by biology rather than by sequencing at
+  useful depths, the dominant cost term is different for the two platforms, and
+  multiplexing makes main effects cheap without making pairwise interactions
+  reachable.} (a) Cells needed per perturbation under the two independent
+  constraints of \cref{sec:cells-per-pert}: the depth requirement, i.e.\ how many
+  cells it takes to accumulate 200{,}000 pseudobulk UMIs at each method's measured
+  per-cell yield, and the 100-cell biological floor below which cell-cycle and
+  metabolic state are not averaged out. The taller bar binds. The floor is the
+  binding constraint for every deeper method and is within a factor of two of
+  binding even for split-pool as published, so past a few hundred UMIs per cell
+  the design is limited by how many cells must be observed, not by how deeply each
+  is read --- deeper chemistry stops buying anything, which is the argument for
+  spending the improvement on cells instead. (b) Where the recurring money goes
+  for a 6{,}000-gene screen at 250 cells per gene. The dominant term moves between
+  platforms: sequencing is 81\% of split-pool spend, while for 10x it is 19\% and
+  library preparation is 81\%, because a genome-scale screen consumes 137 channels
+  at \$2{,}143 each. These are different cost structures, and an optimisation that
+  helps one (rRNA depletion, worth $\sim$\$99{,}000 here) does nothing for the
+  other. The three-fold spread between the cheapest and dearest column, \$58\,k
+  against \$364\,k, is a platform decision, not a procurement one. (c) What
+  multiplexing buys as guides per cell $k$ rises. Left axis: total cells needed to
+  hold main-effect precision across 6{,}000 genes falls as $1/k$, from 1.5\,M
+  cells at $k=1$ to 0.15\,M at $k=10$, because every cell reports on $k$ genes at
+  once. Right axis: what that same cell budget delivers for one \emph{named} gene
+  pair if the library is restricted to a 200-gene panel, which grows roughly
+  linearly in $k$ and crosses the 100-cell floor near $k=4$. The two curves are the
+  whole design argument. Multiplexing alone does not open up epistasis --- run the
+  same calculation over all 6{,}000 genes and coverage per pair falls by
+  $(200/6000)^2\approx1/900$, to well under one cell per pair at any $k$, because
+  the pairs to be covered grow quadratically while the pairs a cell reports grow
+  only as $k^2$. Restricting the panel is what makes pairs measurable, and
+  multiplexing is what then makes it affordable; neither substitutes for the
+  other. Generated by
+  \file{experiments/019-perturb-seq-costing/scripts/plot_economics.py}.}{fig:economics}
+
+Reading the table: the dominant term \emph{moves}. For split-pool as published,
+sequencing is 81\% of spend; for 10x it is 19\% and library preparation is 81\%,
+because a genome-scale screen needs 137 channels at \$2{,}143 each. These are
+different businesses and the optimisations do not transfer between them. rRNA
+depletion is worth $\sim$\$99{,}000 at the 250-cells-per-gene tier. And the 13
+protocol runs behind the split-pool row are $\sim$13 weeks of skilled bench work
+with 13 chances to fail, against 137 channels the core runs for us --- a real
+argument for droplet that the dollar column conceals.
+
+\begin{keybox}
+\textbf{Recommended entry point.} 100 cells per gene, split-pool with rRNA
+depletion: $\sim$\$25\,k recurring plus $\sim$\$10\,k one-time. That is a genuine
+genome-scale yeast Perturb-seq for under \$40\,k of consumables and sequencing,
+and it is defensible because 100 cells per perturbation is the published field
+standard.
+\end{keybox}

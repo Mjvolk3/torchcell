@@ -1,0 +1,401 @@
+%% notes-tex/microbe-perturb-seq/sections/3-method-explainers.tex
+%% SOURCE: hand-authored prose. Protocol steps transcribed from the mirrored
+%% papers' Methods sections; every performance number carries its paper.md line
+%% in the surrounding text or in experiments/019-perturb-seq-costing/scripts/method_data.py.
+
+\section{Method Descriptions\secstatus{todo}}
+\label{sec:methods}
+
+Two families are live options for us. Split-pool is the one we currently prefer,
+because it is instrument-free, its cost does not scale with cells, and it has a
+credible path to bacteria. Droplet is the incumbent, is available as a service at
+UIUC, and recovers roughly five times more mRNA per cell.
+
+\subsection{Yeast-Optimised SPLiT-seq (Brettner et al., 2024)\secstatus{todo}}
+\label{sec:brettner}
+
+Brettner et al.\ \citep{brettnerUltraHighthroughputMassively2024} adapted Split-Pool Ligation-based
+Transcriptome sequencing to yeast, profiling 43{,}388 cells of \org{S.\ cerevisiae}
+(haploid and diploid) and \org{C.\ albicans}. It is the reference protocol for the
+split-pool arm, so it is worth walking element by element --- each step exists to
+solve a specific failure, and the reasons are what transfer to a new organism.
+
+\notesec{1. Fix before you digest} Cells are fixed in 4\% formaldehyde for
+$\sim$18\,h at 4\,\textdegree C, then quenched into 100\,mM Tris with RNase
+inhibitor. Formaldehyde crosslinks protein and nucleic acid, which does two jobs
+at once: it freezes the transcriptome, and it makes the cell rigid enough to
+survive as a reaction vessel through the later handling. The ordering is not
+arbitrary. Cell-wall digestion itself triggers the cell-wall-integrity and HOG
+stress pathways and induces stress-responsive genes within
+minutes~\citep{nadal-ribellesRiseSinglecellTranscriptomics2024}, so a protocol
+that digested first would measure its own sample preparation. Fixation first is
+what makes the measurement about the perturbation.
+
+\notesec{2. Open the wall, then the membrane, separately} Zymolyase at
+0.005\,U/\textmu L in 1\,M sorbitol with 0.1\,M Na$_2$EDTA, 37\,\textdegree C for
+15\,min, digests the $\beta$-glucan layer; the sorbitol is osmotic support, since
+a wall-less spheroplast bursts in a normal buffer. Then 0.4\% Triton X-100 on
+ice for 3\,min permeabilises the membrane. The two steps are tuned against
+opposite failures: too little and reagents cannot get in, too much and the cell
+stops retaining its own cDNA and the whole single-cell premise collapses. Brettner et al.\ arrived at these values by screening 16 fixation/permeabilisation combinations in
+parallel --- itself an argument for the method, since multiplexing let them test
+the parameter space in one run rather than 16.
+
+\notesec{3. Round 1 --- barcoded reverse transcription} Cells are counted, diluted,
+and distributed into 48 wells of a 96-well plate at $\sim$5{,}000 cells per well.
+Each well contains a well-specific barcoded primer pair: a barcoded 15-dT primer
+and a barcoded random hexamer, both at 3\,\textmu M, with Maxima H Minus reverse
+transcriptase and 7.5\% PEG-6000 as a crowding agent to drive the reaction at low
+concentration. The dual priming is a deliberate trade and the single biggest lever
+on cost. Oligo-dT captures polyadenylated mRNA specifically; random hexamers give
+better 5$'$ coverage but prime on anything, including rRNA. The consequence is
+measured: recovered transcripts are 93.7\% rRNA and only 5.75\% mRNA. For a
+3$'$-counting screen the 5$'$ coverage buys us nothing, which makes the
+hexamer:dT ratio the first thing to retune (Sec.~\ref{sec:bottlenecks}).
+
+\notesec{4. Rounds 2 and 3 --- split-pool ligation} Cells are pooled, filtered,
+and redistributed into a fresh 96-well plate. Each well holds a barcode oligo
+pre-annealed to a \term{linker strand}, a splint that positions the barcode
+against the 5$'$ end of the existing cDNA so T4 DNA ligase can seal the nick.
+After 30\,min at 37\,\textdegree C a \term{blocking strand} is added, which
+outcompetes the linker and retires that well's barcode so it cannot participate
+in any later round --- without it, leftover oligos would scramble the barcode
+sequence. Pool, split, repeat for round 3, then terminate with EDTA. Three rounds
+of 96 give $96^3=884{,}736$ distinct paths; the round-3 oligo also carries the
+10\,nt UMI and a 5$'$ biotin.
+
+\notesec{5. Sublibraries, lysis, and a selection step} Cells are pooled and split
+into sublibraries of 5{,}000--20{,}000, which can be frozen. Lysis is SDS plus
+proteinase K at 55\,\textdegree C for 2\,h. The biotin now earns its place:
+streptavidin beads capture only molecules that received the round-3 oligo, so
+anything that fell out of the barcoding scheme is washed away rather than
+sequenced. A template-switch reaction on the beads adds a common handle to the
+other end, giving both PCR primer sites, and the library is amplified, fragmented,
+adapter-ligated, and indexed. That final index is barcode round 4 in all but name
+(Sec.~\ref{sec:collisions}).
+
+\begin{keybox}
+\textbf{What it delivers.} 100--600 genes and 120--700 mRNA UMIs per cell; 25--50\%
+of input cells recovered; barcode collisions well under 5\%. Reagent cost is about
+\$0.005 per cell, but 94\% of reads are rRNA and $\sim$75\% of sequenced cells are
+discarded --- so the cost that matters is 20$\times$ higher
+(Sec.~\ref{sec:application}).
+\end{keybox}
+
+%% TODO(library sweep) -- the chemistry drawn here is Brettner's yeast adaptation
+%% cross-read against Gaisser's microSPLiT protocol. Sweep the library for the
+%% original SPLiT-seq paper (Rosenberg 2018) and Parse's current commercial
+%% chemistry, and reconcile: if the commercial kit has moved the UMI or added a
+%% round, this schematic silently goes stale.
+%% TODO(quote provenance) -- every element of the assembled strand needs a
+%% verbatim quote in read_structure.py naming its length and position. The read-2
+%% ORDER is the one that already bit us (see the note below the figure); the
+%% linker lengths (30 nt and 22 nt, inferred from the STARsolo gaps rather than
+%% stated) are the next thing to source directly.
+\tcfigfit[0.92]{figures/splitseq-barcoding.pdf}{%
+  \textbf{Cell identity in split-pool barcoding is assembled onto the transcript
+  itself, which is what removes the need to ever physically isolate a cell.}
+  Seven strand states in the yeast-optimised SPLiT-seq workflow of
+  \cref{sec:brettner}~\citep{brettnerUltraHighthroughputMassively2024}, each arrow
+  annotated with the chemistry that produces the
+  next. Strands are drawn 5$'$ left to 3$'$ right, so the barcode block grows
+  leftward with each round while the cDNA body stays fixed --- the visual point
+  being that a cell's address is written in three instalments, and a cell is
+  identified by the \emph{path} it took through three 96-well plates rather than
+  by ever having been alone in a well. That is the whole economic argument for the
+  method: $96^{3}$ distinct paths cost three plates, not $10^{6}$ containers.
+  Two states are drawn double-stranded because that is where the mechanism is
+  easy to get wrong. At round 1 the mRNA template lies antiparallel above the
+  tracked strand, showing BC1 as an unpaired 5$'$ overhang, and showing that the
+  random hexamer rather than the poly-dT primer is the arm that carries the method
+  to transcripts without a poly(A) tail --- the single change that lets the same
+  chemistry work in
+  bacteria~\citep{kuchinaMicrobialSinglecellRNA2021,gaisserHighthroughputSinglecellTranscriptomics2024}.
+  At round 2 the linker strand base-pairs underneath
+  and a tick marks the nick T4 ligase seals; ligation is templated by that splint,
+  which is why an unretired barcode from a previous well would scramble the
+  address and why a blocking strand follows every round. The 5$'$ biotin added in
+  round 3 is not a label but a selection handle: streptavidin capture at the next
+  step discards every molecule that fell out of the scheme, so incompletely
+  barcoded material is removed before it can consume sequencing.
+  Composed from the protocol as described in \cref{sec:brettner}, not traced from
+  any published figure; every parameter shown is sourced there. Drawn at true
+  Nature print size in
+  \file{notes/assets/drawio/splitseq-barcoding.drawio}.}{fig:splitseq}
+
+\notesec{Reading order follows assembly order} Because each round adds its
+barcode outboard of the last, the assembled strand runs UMI, BC3, BC2, BC1, cDNA
+from the round-3 end inward, and read 2 reads them in exactly that order. The
+STARsolo offsets in Gaisser et al.'s protocol pin it precisely --- UMI at
+0--9, BC3 at 10--17, BC2 at 48--55, BC1 at 78--85, linkers filling the gaps ---
+which is worth stating because the reverse order is the intuitive guess and it is
+impossible: BC1 arrives on the round-1 RT primer, so it can never sit further from
+the cDNA than a barcode added later (\cref{tab:read-structure}).
+
+\subsection{Droplet Capture: 10x Chromium with In-Droplet Spheroplasting\secstatus{todo}}
+\label{sec:jariani}
+
+Jariani et al.\ \citep{jarianiNewProtocolSinglecell2020} made the 10x Chromium platform work for
+yeast with a one-line change, and the reasoning behind it is more interesting than
+the change itself.
+
+The obstacle is that the standard 10x workflow lyses cells inside the droplet on a
+thermal schedule tuned for a membrane, and a yeast cell wall does not cooperate.
+The obvious fix --- spheroplast the cells first, then load them --- is what
+Jackson and colleagues did, but it means feeding fragile wall-less cells through a
+microfluidic chip, where premature lysis releases mRNA into the shared buffer and
+contaminates every droplet downstream. Jariani et al.\ instead put zymolyase \emph{into the
+reverse-transcription master mix}, replacing 1\,\textmu L of water with
+100$\times$ enzyme, so cells enter the chip walled and intact and are digested only
+after they are already isolated. They verified the timing directly: cell counts
+hold on ice and through the 6\,min of droplet generation, then drop 200-fold within
+20\,min at 53\,\textdegree C. Wall digestion, lysis, and reverse transcription all
+happen in the same droplet, in that order, without the cell ever being vulnerable
+outside one.
+
+The result was 6{,}118 cells across five conditions with median transcripts per
+cell of 528--1{,}261 --- roughly triple Brettner et al.'s per-cell recovery, because
+oligo-dT-only capture on a bead is far more mRNA-selective than dT-plus-hexamer in
+situ. Library preparation cost fell to \$0.30 per cell against \$4.15 for the
+plate-based methods it replaced. Sequencing saturation was only 70--89\%, meaning
+deeper sequencing would still have recovered more.
+
+\notesec{The chemistry has moved since} That work used 3$'$ v2. Version 3 roughly
+doubles UMI yield on 10x's own matched datasets, and the current generation at the
+UIUC core is GEM-X v3.1 on a Chromium X, quoted at $\sim$8\% doublets at 20{,}000
+cells recovered with CRISPR guide capture available as a catalogue add-on. Any
+comparison drawn from the 2020 paper therefore understates droplet performance
+today, and Sec.~\ref{sec:application} uses the newer figures.
+
+%% TODO(quote provenance) -- the 10x row in read_structure.py is the only one with
+%% no citation_key/quote: 16 nt CB + 12 nt UMI + dual 10 nt is a vendor spec, not a
+%% paper claim. Either mirror the 10x GEM-X user guide and pin a page, or mark the
+%% numbers \external{} here. Panel c inherits whatever we decide.
+\tcfigfit[0.92]{figures/droplet-10x-barcoding.pdf}{%
+  \textbf{Droplet methods buy cell identity with a physical container, which is what
+  lets the whole barcode arrive at once --- and what turns the yeast cell wall into a
+  scheduling problem rather than a chemistry one.}
+  The yeast-adapted 10x Chromium workflow of
+  \cref{sec:jariani}~\citep{jarianiNewProtocolSinglecell2020}.
+  \textbf{(a)} Cells, beads and oil meet at a junction and partition into droplets.
+  Identity here is positional rather than sequential: every molecule tagged inside a
+  droplet carries that droplet's bead barcode because the oil wall keeps it that way.
+  Loading follows Poisson statistics, so occupancy is kept deliberately low --- most
+  droplets are empty, and the doublets that survive that choice are two cells reported
+  as one. The container is bought per channel of reagent and its cost scales linearly
+  with cells, which is precisely the economics \cref{fig:splitseq} avoids by never
+  isolating anything.
+  \textbf{(b)} Jariani et al.'s change is one line of the protocol and is entirely
+  about \emph{ordering}: 1\,\textmu L of water in the reverse-transcription master mix
+  is replaced with 100$\times$ zymolyase, so cells enter the chip walled and are
+  digested only once they are already alone. The timing was verified rather than
+  assumed --- counts hold on ice and through the 6\,min of droplet generation, then
+  fall 200-fold within 20\,min at 53\,\textdegree C, by which point every cell is
+  sealed in its own container. The alternative of spheroplasting before loading feeds
+  wall-less cells through a microfluidic chip, and mRNA leaking from the ones that
+  shear contaminates every droplet downstream, which is a whole-run failure rather
+  than a per-cell one.
+  \textbf{(c)} The resulting molecule, drawn in the notation of \cref{fig:splitseq}
+  so the two can be read against each other. The bead oligo \emph{is} the
+  reverse-transcription primer, so as in split-pool the barcode arrives on the primer
+  and only the poly-dT tract anneals --- but the entire address, a 16\,nt bead barcode
+  plus a 12\,nt UMI, is delivered in one piece instead of over three ligation rounds.
+  Once the emulsion is broken the chemistry is bulk, and the read layout that results
+  needs 118 cycles against split-pool's 160
+  (\file{experiments/019-perturb-seq-costing/scripts/read_structure.py}). That layout
+  is the current GEM-X/v3.1 chemistry priced in \cref{sec:application}; Jariani et
+  al.\ demonstrated on 3$'$ v2, whose Read 1 is 26\,nt.
+  Composed from the protocol as described in \cref{sec:jariani}, not traced from any
+  published figure. Drawn at true Nature print size in
+  \file{notes/assets/drawio/droplet-10x-barcoding.drawio}.}{fig:droplet}
+
+\subsection{Compressed Perturb-seq (Yao et al., 2024)\secstatus{todo}}
+\label{sec:yao}
+
+Yao et al.\ \citep{yaoScalableGeneticScreening2024} is the direct precedent for deliberately
+putting \emph{many} perturbations in one cell and recovering individual effects
+computationally, rather than treating multi-guide cells as a defect to be filtered
+out. It inverts the assumption underneath Sec.~\ref{sec:multiplex}, so it is worth
+stating precisely what is compressed and what is assumed.
+
+\notesec{What is compressed} Not the library --- the \emph{samples}. Their framing:
+``if the perturbation effects are sparse \dots\ then we can measure a small number
+of random composite samples (comprising `linear combinations' of individual sample
+phenotypes) and decompress those measurements to infer the effects of individual
+perturbations.'' Two routes generate composites: \term{cell-pooling}, deliberately
+overloading droplets with several singly-perturbed cells, and \term{guide-pooling},
+infecting at high MOI so each cell carries a random set of guides. Guide-pooling is
+the one relevant to us. They ran it at MOI 10 in human THP1 cells over 598 target
+genes, achieving 2.50 guides per cell, and analysed the 8{,}448 cells carrying
+three or more.
+
+\notesec{The decoding} \term{FR-Perturb} factorises the expression matrix by sparse
+PCA, runs LASSO on the resulting matrix of perturbations by factors, then multiplies
+back out to per-gene effects. The sparsity that makes this work is structural
+rather than incidental: regulatory effects are modular, so the effect matrix has
+low rank $r$ and few non-zeros $q$ per module, and the required number of composite
+samples is $O\!\left((q+r)\log n\right)$ rather than $O(n)$.
+
+\notesec{The assumption, exactly} Guide-pooling ``requires the non-trivial
+assumption that the effect sizes of guides tend to combine additively in log
+expression space when multiple guides are present in the same cell.'' Interactions
+are not modelled in the first-order fit; they are argued to \emph{cancel}, because
+each cell gets a random combination, so individual interaction effects average out
+``so long as there are an equal number of positive and negative interactions'' ---
+a condition they justify by citing genome-wide second-order fitness interactions in
+yeast. That is our own data domain, which makes the assumption more checkable for
+us than for them.
+
+\notesec{What it delivers, and what it does not} A stated 10-fold cost reduction
+for guide-pooling, with performance \emph{increasing} in guides per cell and the
+best results in cells carrying four or more --- they found no ceiling within the
+range tested and expect further gains from ``even higher efficiency with a greater
+degree of overloading.'' The honest limits are equally clear. Pairwise interactions
+were not recovered at all: ``none of these effects was significant in either screen
+due to insufficient power \dots\ even with a lax significance threshold
+$(q<0.5)$.'' And higher-order additivity is essentially untested --- ``very little
+is known about the structure of higher-order interaction effects and how they
+systematically combine within a cell.''
+
+\begin{keybox}
+\textbf{Why this matters here.} It converts multiplexing from a defect into a
+design variable, and supplies the constant that Sec.~\ref{sec:multiplex} needs:
+$\sim$400 cells per pairwise interaction, four times the 100-cell first-order
+floor. But it recovers \emph{main effects} efficiently by assuming interactions
+cancel --- and interactions are what metabolic engineering needs. The two goals
+pull in opposite directions, which is the tension Sec.~\ref{sec:multiplex}
+resolves.
+\end{keybox}
+
+\subsection{Ribosomal RNA Depletion\secstatus{todo}}
+\label{sec:rrna}
+
+Roughly 85\% of a yeast cell's RNA is ribosomal, and Brettner et al.\ recover
+93.7\% rRNA against 5.75\% mRNA. Ninety-four of every hundred reads therefore
+buy ribosomal sequence. Since sequencing is 81\% of the split-pool budget
+(Sec.~\ref{sec:budget}), this single fraction is the largest cost lever in the
+document --- worth about \$99{,}000 at genome scale --- and it is the reason
+depletion is treated here as a method component rather than an optimisation.
+
+\notesec{Where it happens in the workflow} This is worth stating precisely,
+because there are three plausible points and only one is right. Depletion is
+\emph{not} performed on the cell before capture, and \emph{not} after Illumina
+indexing. It acts on the \textbf{amplified cDNA library}, after reverse
+transcription and the in-cell barcoding rounds, and before fragmentation and
+index PCR:
+
+\begin{center}\footnotesize
+capture $\rightarrow$ barcode $\rightarrow$ lyse $\rightarrow$ cDNA
+$\rightarrow$ \textbf{deplete} $\rightarrow$ fragment $\rightarrow$ index
+$\rightarrow$ sequence
+\end{center}
+
+Two constraints force that position. Ribosomal RNA cannot be removed before
+capture without also stripping the ribosomes whose footprint the in-situ
+chemistry depends on, and the cell barcode must already be attached or depletion
+would discard cell identity along with the rRNA. Equally it must precede
+indexing, because the entire point is to avoid paying to sequence those
+molecules. Brandner et al.\ \citep{brandnerPooledSinglecellCRISPRa2025} do exactly this: the
+purified cDNA library is incubated with recombinant Cas9 and a pool of guides
+targeting rRNA, cleaving rRNA-derived cDNA so it no longer amplifies. Wang et
+al.'s M3-seq \citep{wangSinglecellMassivelyparallelMultiplexed2023} places the
+same operation at the same point and builds a whole platform around it, which is
+the strongest evidence that this position in the workflow is the right one rather
+than merely a convenient one.
+
+\notesec{Two independent levers, and they compose} The first is free. Brettner
+et al.\ prime with both oligo-dT and random hexamers, and it is the hexamers that
+recover rRNA; the 5$'$ coverage they buy is worthless for a 3$'$-counting screen,
+so shifting the hexamer:dT ratio costs nothing but a titration. The second is the
+Cas9 depletion above, which adds reagents but little labour.
+
+\notesec{How much it is worth, and the caveat} Brandner et al.\ took
+\org{E.\ coli} from 4.6\% to 60.2\% mRNA, a 13-fold improvement, and median mRNA
+transcripts per cell more than doubled from 54 to 115. But the same protocol in
+\org{P.\ putida} moved only 2.2\% to 10.4\%. Depletion efficiency clearly does
+not transfer between organisms for free, since the guide pool is designed against
+one species' rRNA and against the coverage non-uniformity of one protocol. Yeast
+should be better than either bacterium --- it starts at $\sim$85\% rRNA rather
+than $>$95\%, and its rRNA genes are fewer and better annotated --- but the
+achieved figure has to be measured, and it is the single most valuable number the
+pilot can return (Sec.~\ref{sec:bottlenecks}).
+
+\begin{keybox}
+\textbf{Treat depletion as mandatory, not optional.} Without it the genome-scale
+screen costs \$157\,k and sequencing dominates; with it, \$58\,k and the budget
+becomes balanced. No other change in this document moves the total by as much.
+\end{keybox}
+
+\subsection{Perturbation Identity Capture\secstatus{todo}}
+\label{sec:guide-capture}
+
+Both families above assume the guide can be read out of the cell. In yeast, as our
+library stands, it cannot.
+
+Guide RNAs are transcribed from RNA polymerase III promoters --- \gene{SNR52}
+upstream, \gene{SUP4} terminator --- so they are neither capped nor polyadenylated
+and terminate on a T-tract. A 3$'$ poly(A) capture assay, which is what both
+Brettner et al.'s oligo-dT priming and 10x's bead oligo are, sees nothing. Our own MAGIC
+library uses exactly this architecture and reads out by plasmid amplicon
+sequencing, not RNA~\citep{lianMultifunctionalGenomewideCRISPR2019}; our
+reprocessing of it is \file{experiments/016-lian-magic-reprocess}.
+
+The mammalian workarounds do not transfer. 10x direct capture requires a modified
+sgRNA scaffold carrying a capture sequence; CROP-seq \citep{datlingerPooledCRISPRScreening2017} relies on the guide cassette
+being duplicated into a lentiviral 3$'$ LTR, which is a retroviral trick with no
+yeast equivalent.
+
+\notesec{The gap has closed for deletions, and that changes the risk} The 2024
+review states plainly that no genome-scale system in yeast lets a genetic
+perturbation be traced during
+scRNA-seq~\citep{nadal-ribellesRiseSinglecellTranscriptomics2024}. That was true
+when written and is no longer, because the same group built one the following
+year~\citep{nadal-ribellesSinglecellResolvedGenotypephenotype2025}. The
+construction is worth following closely, because it is the design this section
+was going to propose.
+
+They rebuilt the yeast knockout collection so its genotype tag is
+\emph{transcribed}. In the classical YKOC a \gene{TEF1} promoter drives KanMX and
+two 20\,bp barcodes sit outside the transcript, which --- in their words ---
+``renders the genotype identity invisible to transcriptomic readouts.'' They
+replaced the KanMX marker with \gene{URA3} and shortened the heterologous
+terminator from 262\,nt to 43\,nt, which brings the Downtag barcode inside the
+\gene{URA3} 3$'$UTR, and added a 5\,nt clone barcode after the stop codon. The
+tag is now a polyadenylated Pol II transcript, so an oligo-dT assay sees it. That
+is exactly the architecture proposed below, executed at genome scale: 4{,}162
+barcoded genotypes, of which more than 3{,}500 were recovered across 1{,}061{,}865
+profiled cells, 710{,}952 of them passing QC with a genotype assigned.
+
+Two numbers from it matter more than the rest. Genotype identity was assigned for
+\textbf{more than 71\% of cells} --- against the 21--25\% Brandner et al.\ reach
+in bacteria --- which is the parameter $q$ that governs everything in
+\cref{sec:multiplex}, and it is three-fold better than the figure this document
+has been budgeting with. And it was not free: the assignment combines the
+transcriptome with a \emph{separate} one-step PCR amplicon library off the
+\gene{URA3} 3$'$UTR. Targeted enrichment is doing the work in both systems, so it
+should be costed as a second library, not as a primer.
+
+\notesec{What is still open for us} Their perturbation is a chromosomal deletion
+with the tag built into the deletion cassette. Ours is a plasmid-borne CRISPRi
+guide, so the tag has to ride on the plasmid, and the construct does not exist.
+The architecture transfers directly, and its bacterial counterpart is also
+precedented: Brandner et
+al.\ \citep{brandnerPooledSinglecellCRISPRa2025} built a 316\,bp non-coding
+transcript carrying a 12\,bp barcode at its 5$'$ end, a poly(A) tail and a
+dedicated enrichment primer site, using an inert gene body as filler, and raised
+correct assignment from 5.5\% to 21--25\% by adding the enrichment primer at cDNA
+amplification. A design choice worth taking: make the barcode \emph{be} the
+guide's own 20\,nt spacer, placed in the 3$'$UTR of a Pol II reporter, so the
+guide-to-barcode mapping is known by construction --- that removes a linkage
+sequencing run and a whole class of bookkeeping error.
+
+\begin{keybox}
+\textbf{Still the critical path, but no longer the risky one.} Every cost in
+Sec.~\ref{sec:application} assumes guide identity is recoverable, and for a
+plasmid-borne CRISPRi guide it is still unbuilt. What changed is that the same
+thing has now been done in yeast at genome scale with a published construct and a
+71\% assignment rate, so this is a construction and validation task against a
+working template rather than an open research question. The number to reproduce
+in the pilot is $q$, because \cref{sec:multiplex} shows it enters the multiplex
+ceiling as $q^k$.
+\end{keybox}

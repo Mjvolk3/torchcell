@@ -1,0 +1,19 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/019-perturb-seq-costing/scripts/render_tex_tables.py
+\begin{table}[htbp]\centering
+\footnotesize
+\caption[]{Inputs to the design equation. Three of the seven are assumed rather than measured, and those three are what separate a structure from a predictor. \textbf{Status}: \emph{measured} = from data we hold; \emph{quoted} = stated by a source; \emph{derived} = computed from measured values; \textbf{assumed} = a placeholder, and every number downstream of it inherits that status.}\label{tab:design-params}
+\begin{tabular}{llrll}
+\toprule
+Symbol & Quantity & Value & Status & Source \\
+\midrule
+$A(\Delta)$ & power coefficient, Eq.~(\ref{eq:design}) & 16.3 & \textbf{assumed} & $\Delta$ nominal two-fold; scales as $\Delta^{-2}$ \\
+$\Delta$ & log$_2$ fold change to resolve & 1.0 & \textbf{assumed} & measured by \cref{sec:effect-size} \\
+$p_j$ & transcriptome share of target gene & 1.2$\times10^{-4}$ & derived & 3.5 molecules / 30{,}000 mRNA, \cref{tab:transcript-content} \\
+$\varphi_j$ & biological overdispersion between cells & 0.5--10 & \textbf{assumed} & swept; sets the floor. Not yet measured \\
+$d$ & sequencing depth, mRNA UMIs per cell & 410--2{,}000 & measured & per platform, \cref{tab:landscape} \\
+$\rho_2$ & variance inflation, second order & 4 & quoted & Yao et al.; the 400-cells-per-pair constant \\
+$q$ & per-guide detection probability & -- & \textbf{assumed} & needs the construct of \cref{sec:guide-capture} \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -212,3 +212,23 @@ experiments/019-echo-crispr-array/artifacts/
 # deploy -- silently dropping ontology/index.html from gh-pages while the build log
 # still reports it rendered.
 docs/source/_extra/ontology/index.html
+# notes-tex: per-document symlink to the shared style file, recreated by any build
+notes-tex/*/tcdoc.sty
+# ...but NOT the canonical file the symlinks point at. `notes-tex/*/tcdoc.sty`
+# matches notes-tex/common/tcdoc.sty just as happily as notes-tex/<doc>/tcdoc.sty,
+# so without this negation the one real copy of the shared style is excluded from
+# the repo. Every notes-tex document then fails to build on a fresh clone with a
+# missing-file error that points at the symlink rather than at the cause.
+!notes-tex/common/tcdoc.sty
+# tectonic build artifacts
+notes-tex/*/*.aux
+notes-tex/*/*.log
+notes-tex/*/*.out
+notes-tex/*/*.toc
+notes-tex/*/*.bbl
+notes-tex/*/*.blg
+notes-tex/*/*.synctex.gz
+notes-tex/*/*-clean.pdf
+
+# notes-tex: bibliography style symlinked from the manuscript
+notes-tex/*/sn-nature.bst

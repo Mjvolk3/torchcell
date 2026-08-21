@@ -1,0 +1,174 @@
+%% notes-tex/microbe-perturb-seq/sections/2-what-perturb-seq-measures.tex
+%% SOURCE: hand-authored prose (jargon primer). Per-cell recovery figures are
+%% cross-referenced to Sec. 4, which derives them from experiments/019-perturb-seq-costing/.
+
+\section{Measurement Principles and Terminology\secstatus{todo}}
+\label{sec:primer}
+
+This section fixes the vocabulary. Everything after it assumes these terms.
+
+\subsection{Molecular Identifiers\secstatus{todo}}
+\label{sec:identifiers}
+
+% \Cref, not \cref: cleveref lowercases the type name, so the sentence-initial
+% form has to be the capitalising variant or the page opens with "table 1 is...".
+\Cref{tab:glossary} is the reference: every term the document uses in a
+technical sense, with a link to the section that treats it. It is worth a first
+pass rather than only being consulted, because the naming is genuinely
+treacherous --- four distinct things in this document are called a ``barcode'',
+two different things are called an ``index'', and the difference between cells
+per \emph{target gene} and cells per \emph{guide} is a factor of six that changes
+every budget in \cref{sec:application}. The prose below then develops the four
+identifiers properly.
+
+% \medskip either side: the glossary is a longtable, not a float, so it sits
+% exactly here and gets no float separation of its own.
+\medskip
+\input{tables/t0-glossary}
+\medskip
+
+A single-cell RNA-seq read is only useful if you can answer three questions about
+it: which cell did it come from, was it a distinct original molecule or a PCR
+copy, and which gene is it. Different chemistries answer these differently, but
+all of them attach the same four classes of tag.
+
+\notesec{Cell barcode (CB)} A sequence shared by every cDNA molecule from one
+cell and, ideally, unique to that cell. It is what makes the data
+\emph{single-cell} rather than bulk. In droplet methods the CB is delivered
+pre-synthesised on a bead; in split-pool methods it is \emph{built up} across
+several rounds of well-specific ligation, so the barcode records the trajectory
+a cell took through a series of plates (Sec.~\ref{sec:brettner}).
+
+\notesec{Unique molecular identifier (UMI)} A short random sequence --- 10--12 nt
+in the methods here --- added to each cDNA molecule \emph{before} any
+amplification. Two reads sharing a CB, a gene, and a UMI are copies of one
+original mRNA; two reads sharing CB and gene but differing in UMI are two
+molecules. Collapsing on the UMI converts read counts, which are distorted by
+PCR efficiency, into molecule counts, which are the actual measurement. The
+count of distinct UMIs recovered from a cell is the single most important
+quality number in this document: it is the denominator of every statistical
+argument in Sec.~\ref{sec:limits}. \term{UMI collision} --- two distinct
+molecules of the same gene drawing the same UMI --- is negligible at yeast
+expression levels, since a 10 nt UMI has $4^{10}\approx10^{6}$ states against at
+most a few thousand molecules of any one gene.
+
+\notesec{Sample or sublibrary index} An Illumina index read added during the
+final PCR. In a conventional experiment it separates samples sharing a flow
+cell. In split-pool it does more than that, and the difference matters: because
+cells are divided into sublibraries \emph{after} the last in-cell barcoding
+round, the index is effectively an additional barcode dimension, so two cells
+that took identical paths through the plates are still resolved if they landed
+in different sublibraries (Sec.~\ref{sec:collisions}).
+
+\notesec{Perturbation identifier} What makes the experiment a screen rather than
+a survey. This is the hard part in yeast and is treated separately in
+Sec.~\ref{sec:guide-capture}; the short version is that the guide RNA itself is
+usually invisible to the assay, so a proxy has to be engineered.
+
+\subsection{Cell Isolation Strategies\secstatus{todo}}
+\label{sec:isolation}
+
+\notesec{Physical isolation (droplet)} A microfluidic device co-encapsulates one
+cell with one barcoded bead in an emulsion droplet. Every molecule tagged inside
+that droplet shares a barcode because the droplet wall keeps it that way. Cell
+loading follows Poisson statistics, so a low occupancy is used to keep
+\term{doublets} --- two cells in one droplet, reported as one --- acceptably
+rare; 10x quote about 8\% at 20{,}000 cells recovered. The cost of physical
+isolation is that you pay per channel of reagent, and it scales linearly with
+cells.
+
+\notesec{Combinatorial split-pool barcoding} No isolation at all. Cells are
+fixed and permeabilised so they become their own reaction vessels: their
+membranes retain the cDNA while enzymes diffuse in. The population is
+distributed across a 96-well plate, a well-specific barcode is attached in situ,
+the cells are pooled, redistributed, and barcoded again. After $R$ rounds a cell
+carries an ordered barcode $\mathrm{BC}_1\Vert\dots\Vert\mathrm{BC}_R$, and with
+$96$ wells per round there are $96^R$ possible paths. Cells sharing round~1 are
+overwhelmingly likely to differ by round~3. The consequence for cost is the
+important one: \emph{you pay per well, not per cell}, so a plate costs the same
+whether it holds ten thousand cells or a million.
+
+\notesec{The landscape between the two poles} Those are the extremes;
+\cref{fig:methods-map} places the six approaches actually used in yeast between
+them and pairs each with the library chemistry it can support. The organising fact
+is that the isolation choice and the barcode choice are not independent. A method
+that pools cells before sequencing has to write identity into the molecule, and
+where it lands is fixed by which oligo carries it. A method that keeps one cell per
+well until the very end needs no cell barcode at all, because the Illumina sample
+index already identifies the well, and the well already identifies the cell.
+
+\tcfigfit[0.96]{figures/scrnaseq-method-taxonomy.pdf}{%
+  \textbf{A cell barcode is only needed where cells are pooled before sequencing,
+  and most of the method landscape follows from that one fact.}
+  The yeast scRNA-seq landscape, reorganised from the review
+  of~\citep{nadal-ribellesRiseSinglecellTranscriptomics2024}.
+  \textbf{(a)} What keeps one cell's molecules separate, ordered by throughput and
+  each labelled with the container that does the work. Combinatorial indexing is
+  set apart because it is not an isolation method at all: the fixed cell is its own
+  vessel. The band beneath splits the six by whether a per-cell phenotype is
+  recorded, which is what decides whether a method can be paired with a reporter or
+  a sorting gate.
+  \textbf{(b)} The question that actually separates the library types, which is
+  which molecule carries the cell barcode. There are four answers: the oligo-dT
+  gives $3'$ libraries, the template-switch oligo gives $5'$, a barcode loaded into
+  Tn5 gives the plate route used by the only $5'$ method yet run in yeast, and in
+  full-length libraries nothing in the molecule carries it.
+  \textbf{(c)} Where the tags end up, with all three library types drawn on one
+  column grid in one orientation so they can be compared: $3'$ and $5'$ differ only
+  in which end of the transcript sits beside the barcode, while full-length carries
+  no barcode anywhere and is resolved instead by the sample index, one per well ---
+  the same accounting that makes split-pool's sublibrary index barcode round~4
+  (Sec.~\ref{sec:collisions}).
+  Redrawn and reorganised from the text and Table~1 of that review rather than
+  reproduced from its figure, and with the orientation fixed $5'$ to $3'$
+  throughout, where the original mirrors its $3'$ panel. Drawn at true Nature print
+  size in \file{notes/assets/drawio/scrnaseq-method-taxonomy.drawio}.}{fig:methods-map}
+
+\subsection{Microbial Constraints on Single-Cell Chemistry\secstatus{todo}}
+\label{sec:why-hard}
+
+Every commercial single-cell chemistry was developed on mammalian cells, and
+three properties of a yeast cell break its assumptions.
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+  \item \textbf{A cell wall.} Reagents cannot diffuse in and the cell cannot lyse
+    on the mammalian schedule. Both method families solve this with zymolyase, a
+    $\beta$-glucanase, but at different points in the workflow --- and \emph{when}
+    you digest turns out to matter more than whether (Sec.~\ref{sec:jariani}).
+  \item \textbf{Roughly a fifth the mRNA.} A yeast cell holds on the order of
+    $10^{4}$ mRNA molecules against $10^{5}$ for a mammalian cell
+    (Sec.~\ref{sec:transcript-content}). Less input means fewer UMIs recovered,
+    which is why per-cell yeast data always looks poor next to a mammalian
+    benchmark and why pooling cells is the measurement strategy rather than a
+    convenience.
+  \item \textbf{An overwhelming rRNA background.} About 85\% of a yeast cell's
+    RNA is ribosomal. Any capture chemistry that is not strictly poly(A)-selective
+    spends most of its reads on rRNA, and as Sec.~\ref{sec:application} shows,
+    that single fraction dominates the sequencing bill.
+\end{itemize}
+
+\subsection{The Count Matrix and Estimand\secstatus{todo}}
+\label{sec:output-object}
+
+What comes out is a count matrix $\mathbf{Y}\in\mathbb{Z}_{\ge0}^{N\times G}$ over
+$N$ cells and $G$ genes, plus an assignment $\mathbf{Z}\in\{0,1\}^{N\times L}$ of
+cells to the $L$ library elements. Because per-cell depth is low, the analysis
+does not treat a single cell as an observation of a perturbation's effect.
+Instead cells sharing a guide are pooled into a \term{pseudobulk} profile, and
+the estimand is
+
+\begin{equation}
+  \theta_{\ell j} \;=\; \log_2\frac{\mu_{\ell j}}{\mu_{\mathrm{ctrl},\,j}},
+  \qquad \boldsymbol{\Theta}\in\mathbb{R}^{L\times G},
+  \label{eq:theta}
+\end{equation}
+
+the log fold change of gene $j$ under element $\ell$ against non-targeting
+controls. Two things follow, and they shape every later section. Single-cell
+resolution is used for \emph{assignment and quality control}, not for the effect
+estimate --- so the relevant precision question is how many cells share a guide,
+not how deep any one cell was read. And $\boldsymbol{\Theta}$ is dense: a
+genome-scale screen in one condition produces of order $6000\times6000$
+coefficients, a directed map from every perturbation to every transcriptional
+consequence. That object, not a hit list, is what makes the screen worth running
+for model training.

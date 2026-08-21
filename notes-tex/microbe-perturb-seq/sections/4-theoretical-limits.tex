@@ -1,0 +1,662 @@
+%% notes-tex/microbe-perturb-seq/sections/4-theoretical-limits.tex
+%% SOURCE: experiments/019-perturb-seq-costing/scripts/cost_model.py
+%%         experiments/019-perturb-seq-costing/scripts/method_data.py
+%% Tables under tables/ are emitted by render_tables.py -- do not hand-edit them.
+
+\section{Theoretical Limits\secstatus{todo}}
+\label{sec:limits}
+
+The question this section answers: given how much mRNA a yeast cell contains and
+how little of it any method recovers, how many cells must share a perturbation
+before its mean effect is measurable --- and how does that change when a cell
+carries more than one perturbation?
+
+\notesec{Two sources of noise, and only one of them is fixable by sequencing}
+Every argument below turns on a distinction worth making once, plainly.
+\term{Shot noise} --- also called counting or sampling noise --- is the
+irreducible randomness of \emph{counting}. Sequencing a library samples molecules
+at random, so a gene present at a true rate $\mu$ is observed as a count that
+fluctuates Poisson-like around $\mu$, with variance equal to $\mu$ and therefore
+a relative error $1/\sqrt{\mu}$. It is a property of the measurement, not of the
+cell, and it is the one kind of noise that buying more reads removes.
+\term{Biological overdispersion} is the rest: two genetically identical cells in
+the same flask genuinely differ in how much of a gene they are expressing,
+because of cell-cycle phase, metabolic state and transcriptional bursting.
+Sequencing each cell to infinite depth measures each cell perfectly and leaves
+this variation completely untouched; only counting \emph{more cells} averages it
+down. Keeping the two apart is what \cref{sec:design-equation} is for --- the
+whole design reduces to which of them is currently binding.
+
+\subsection{Transcript Content per Cell\secstatus{todo}}
+\label{sec:transcript-content}
+
+Every capture-efficiency claim needs this denominator, and the literature does
+not agree on it.
+
+\input{tables/t1-transcript-content}
+
+The disagreement is real and is left visible rather than averaged away: the
+$3{,}000$ genes at $3.5$ molecules each implied by the review works out to
+$\sim$10{,}500 mRNA per cell, materially below the 20{,}000 floor of the range
+Jariani et al.\ cites and well below the 40{,}000--60{,}000 Jackson et al.\ give.
+
+\notesec{This choice is not harmless, and the working value mixes two sources}
+It is tempting to treat the spread as a detail, and it is not. The design
+equation reaches this quantity through $p_j$, the transcriptome share of the
+target gene, and $p_j$ enters only the shot-noise term --- where both candidate
+platforms sit (\cref{sec:design-equation}), so $n^{*}$ scales with it almost
+directly. Taking $3.5$ molecules per gene against each candidate denominator, at
+$d=410$ and $\varphi=1.1$, gives
+%% SOURCE: eq. (5) evaluated at A=16.3, d=410, phi=1.1; inputs from table 3.
+137 cells per perturbation at 10{,}500 total mRNA, 359 at 30{,}000, and 699 at
+60{,}000. That is a five-fold spread in the number the whole budget is built on,
+and it is larger than most of the effects this document argues about.
+
+Worse, the working value is not internally consistent. The document uses
+$p_j = 3.5/30{,}000$, which pairs the review's per-gene figure with Brettner's
+total --- but the $3.5$ was derived \emph{against} the review's own
+$\sim$10{,}500, so used self-consistently it would give $p_j=3.3\times10^{-4}$
+and cut every cells-per-perturbation figure by a factor of $2.9$. The 30{,}000
+pairing is the conservative one, which is why it is kept, but it is a choice and
+not a measurement, and \cref{tab:design-params} accordingly marks $p_j$ derived.
+Measuring the transcriptome share of a few representative target genes directly
+in our own pilot data is cheap and would retire the single largest unforced
+uncertainty in \cref{sec:application}.
+
+The comparison that does matter is across organisms --- a yeast cell
+holds roughly four times the mRNA of an \org{E.\ coli} cell in rich medium over
+$\sim$1.4$\times$ the gene count, which is why the same split-pool chemistry
+recovers $\sim$410 mRNA UMIs per cell in yeast and 235--397 in bacteria.
+
+\subsection{The Cells-Versus-Depth Frontier\secstatus{todo}}
+\label{sec:landscape}
+
+Plotting every published yeast and microbial run on one pair of axes --- cells
+profiled against mRNA UMIs recovered per cell --- shows that the field has not
+found a method that is good at both (\cref{fig:landscape}; per-study values in
+\cref{tab:landscape}).%
+\footnote{Plotted studies, in order of cells profiled:
+Nadal-Ribelles et al.\ 2019 \citep{nadal-ribellesSensitiveHighthroughputSinglecell2019},
+Urbonaite et al.\ \citep{urbonaiteYeastoptimizedSinglecellTranscriptomics2021},
+McNulty et al.\ \citep{mcnultyProbebasedBacterialSinglecell2023},
+Jariani et al.\ \citep{jarianiNewProtocolSinglecell2020},
+Kuchina et al.\ \citep{kuchinaMicrobialSinglecellRNA2021},
+Jackson et al.\ \citep{jacksonGeneRegulatoryNetwork2020},
+Brettner et al.\ \citep{brettnerUltraHighthroughputMassively2024},
+Brandner et al.\ \citep{brandnerPooledSinglecellCRISPRa2025},
+Boocock et al.\ \citep{boocockSinglecellEQTLMapping2025} and
+Nadal-Ribelles et al.\ 2025 \citep{nadal-ribellesSinglecellResolvedGenotypephenotype2025}.
+Tabulated but not plotted, for want of a per-cell molecule count:
+Gasch et al.\ \citep{gaschSinglecellRNASequencing2017},
+Ma et al.\ \citep{maBacterialDropletbasedSinglecell2023} and Dohn et al.} Depth does fall as cell count rises, so there is a
+trade-off, but it is a much weaker one than the picture suggests at a glance.
+%% SOURCE: plot_method_landscape.py prints all four spans on every run.
+Cells profiled span 3.6 orders of magnitude across these ten studies and depth
+only 1.6, and moving from the smallest study to the largest multiplies cells by
+3{,}726 while dividing depth by just 9.8. Both endpoints happen to be
+Nadal-Ribelles et al., six years apart
+\citep{nadal-ribellesSensitiveHighthroughputSinglecell2019,
+nadal-ribellesSinglecellResolvedGenotypephenotype2025}.
+
+The consequence is worth stating plainly, because the figure's diagonals invite
+the opposite reading. \emph{Total} UMIs is not conserved along this cloud: it
+spans 3.2 orders of magnitude, which is nearly all of the variation in cell
+count. Larger studies do not redistribute a fixed amount of signal over more
+cells; they collect more signal. The published record is therefore not a frontier
+of equal-value points, and no method here has been shown to be a better bargain
+than another by sitting further out along a diagonal.
+
+What the diagonals do encode is a statistical fact about \emph{design}, not a
+summary of what has been published. In the shot-noise limit the precision of a
+perturbation's estimated mean depends on how many molecules were counted in
+total, not on how they were distributed over cells, so for a fixed sequencing
+spend, moving along a diagonal is free and should be decided on other grounds ---
+instrument access, cost structure, whether a perturbation can be read out at all.
+That is the lever \cref{sec:application} pulls. It is a claim about the arithmetic
+in \cref{eq:design}, and the studies plotted here neither support nor contradict
+it, because none of them was designed against a common budget.
+
+Two features carry into the rest of this document, and the second has changed
+recently. Published runs span $9\times10^{5}$ to $1.3\times10^{9}$ total UMIs.
+At the low end that is three orders of magnitude inside what a single modern flow
+cell delivers (\cref{sec:sequencing}), so those studies were bounded by protocol
+throughput and budget rather than by sequencing capacity --- which is why platform
+choice, not sequencer choice, is what a small screen design turns on. That is no
+longer true at the top end. Nadal-Ribelles et al.'s
+$1.06$-million-cell atlas needs $1.3\times10^{9}$ UMIs, within a factor of three
+of the 3.2 billion read pairs in one NovaSeq X 25B lane \emph{before} counting
+duplication or the rRNA fraction, so at genome scale in yeast the sequencer has
+started to bind. \cref{sec:application} prices exactly that regime.
+
+Second, four methods now carry a perturbation readout, and they no longer sit at
+one end of anything: they run from Jackson et al.'s 38{,}225 cells to
+Nadal-Ribelles et al.'s $1.06$ million, and from 325\,UMIs per cell to 2{,}809.
+The largest genetic screen in this figure is a yeast one, and it used neither of
+the two chemistries this document has been comparing --- it used a microwell
+array (\cref{sec:guide-capture}). Split-pool versus droplet is therefore
+not a throughput question at the scales anyone has run; it is a question of depth
+and of cost per \emph{usable} cell, which is \cref{sec:application}.
+
+%% DONE(library sweep, 2026-08-21) -- swept the personal+group microbe-perturb-seq
+%% collections. Added Kuchina 2021 (microSPLiT primary), McNulty 2023 (ProBac-seq)
+%% and Ma 2023 (BacDrop); the bacterial droplet corner was missing entirely.
+%% DONE(quote provenance, 2026-08-21) -- and the trap this TODO named was real, in
+%% three of the nine rows. Every second-hand row is now replaced by its primary:
+%%   Gasch      "735-5,437 mRNAs (median 2,351)" counts GENES, not molecules. The
+%%              primary pairs it with "5,667 of the 5,888 yeast transcripts" and
+%%              reports 1.4M de-duplicated fragments per cell, which 2,351
+%%              molecules cannot produce; Nadal-Ribelles 2019 names the same
+%%              quantity "genes per cell (3,399 versus 2,392)". C1/SMART-Seq
+%%              carries no UMI, so the row has no depth value at all now.
+%%   Nadal-Rib. same error, plus a transposition: the 3,339 in circulation is
+%%              3,399, and it is genes. Depth is derived as 3,399 x 3.46.
+%%   Gaisser    1,000,000 was a protocol CAPACITY claim ("enables ... up to"),
+%%              plotted on an axis reading "cells profiled in the published
+%%              study", and its 397 UMIs/cell was quoted from Kuchina anyway.
+%%              Replaced by Kuchina 2021, the study that measured both.
+%% Remaining second-hand row: Dohn 2021 (genes only, not plotted).
+\tcfigfit[0.86]{figures/method_landscape.pdf}{%
+  \textbf{Published microbial single-cell RNA-seq trades cells against depth, but
+  far more weakly than the diagonals suggest.} Cells profiled in each published
+  study (\emph{x}) against mRNA UMIs recovered per cell (\emph{y}), organism in
+  italic beneath each label; marker colour is the isolation principle and filled
+  markers denote a method with a perturbation readout. Across these ten studies
+  cells span 3.6 orders of magnitude and depth only 1.6, and the largest study
+  holds 3{,}726 times the cells of the smallest at just 9.8 times less depth ---
+  so \emph{total} UMIs is not conserved along the cloud, but spans 3.2 orders of
+  magnitude, nearly all of the variation in cell count. Bigger studies collect
+  more signal rather than spreading a fixed amount of it thinner.
+  \textbf{The dotted diagonals are therefore a design tool, not a summary of this
+  data.} They are iso-lines of constant total UMIs, and that product is what sets
+  the shot-noise floor on a perturbation's estimated mean, so at a \emph{fixed
+  budget} sliding along one is free and only moving up-and-right buys precision.
+  None of these studies was designed against a common budget, so none of them
+  tests that.
+  \textbf{The vertical bars are not error bars.} No plotted study reports a
+  dispersion statistic over cells. Each bar is the min--max range of the
+  \emph{per-condition summary values} a study reports --- medians or means across
+  its own treatment conditions --- so it describes how far the assay moved between
+  conditions, not how much cells vary within one; $\ddagger$ marks a bar that
+  spans separate experiments of deliberately differing depth, which is weaker
+  still. Studies reporting a single value have no bar.
+  \textbf{Two methods are absent from the depth axis by design.} Gasch et al.\
+  used Fluidigm C1 with SMART-Seq, which carries no UMI, and Ma et al.\ report
+  only genes per cell; neither has a molecule count, so neither is given one.
+  Their measured quantities appear under Genes/cell in \cref{tab:landscape}. This
+  matters because the quantity most easily confused with depth here is the gene
+  count, and reading one as the other moves a method bodily along the frontier.
+  Published runs span $9\times10^{5}$ to $1.3\times10^{9}$ total UMIs. The smaller
+  ones sit three orders of magnitude short of the 3.2 billion read pairs a single
+  NovaSeq X 25B lane delivers (\cref{fig:sequencers}) and were limited by protocol
+  throughput and budget rather than by the instrument; the largest is within a
+  factor of three of one lane before duplication and rRNA are counted, so at that
+  scale the sequencer does bind. Plate methods buy depth by giving up cell number,
+  bottoming out at a few hundred cells; droplet methods run deeper than split-pool
+  at comparable cell counts, the largest being the $\sim$100{,}000-cell eQTL run
+  of Boocock et al.\ \citep{boocockSinglecellEQTLMapping2025}; split-pool
+  (Brettner et al., microSPLiT, mapSPLiT) sits at $10^{4}$--$10^{5}$ cells and
+  $\sim$300--400\,UMIs, on the order of 1\% of the 20{,}000--60{,}000 mRNA
+  molecules a yeast cell carries; and the microwell array of Nadal-Ribelles et
+  al.\ \citep{nadal-ribellesSinglecellResolvedGenotypephenotype2025} reaches
+  $1.06$ million cells at 1{,}200\,UMIs. That last point is a genome-scale yeast
+  Perturb-seq --- 3{,}500 barcoded deletion mutants read out in one atlas --- and
+  it is the largest genetic screen here (\cref{sec:guide-capture}).
+  $\ddagger$ Boocock et al.'s seven datasets were sequenced to deliberately
+  different depths, so the bar spans the per-dataset medians
+  (1{,}514--6{,}559) and the marker is placed at their cell-weighted mean,
+  2{,}809\,UMIs, from Supplementary file~1 Table~S4 --- weighting by cells is what
+  keeps the point describing the same 100{,}220 cells its \emph{x}-coordinate
+  claims. Nadal-Ribelles et al.'s depth is the one derived value
+  ($3{,}399$ genes per cell $\times$ $3.46$ UMIs per detected gene $= 11{,}760$);
+  the source states both factors but never their product. Generated by
+  \file{experiments/019-perturb-seq-costing/scripts/plot_method_landscape.py}.}{fig:landscape}
+
+\input{tables/t2-method-landscape}
+
+\subsection{Cells per Perturbation\secstatus{todo}}
+\label{sec:cells-per-pert}
+
+Two requirements act independently, and the larger of the two binds.
+
+\pfstep{Constraint 1 --- a biological floor} Averaging out cell-cycle phase and
+metabolic state takes cells, and no amount of sequencing depth substitutes for
+them. The field standard is stated explicitly by
+Brandner et al.\ \citep{brandnerPooledSinglecellCRISPRa2025}: perturbations are retained only with
+at least 100 cells. Brettner et al.'s own heuristic is 500 cells per condition.
+The strongest corroboration is a design choice rather than a rule: the
+genome-scale yeast screen of Nadal-Ribelles et
+al.\ \citep{nadal-ribellesSinglecellResolvedGenotypephenotype2025} landed at an
+average of 93 and 108 cells per genotype in its two conditions (medians 77 and
+87). A million-cell budget spread over 3{,}500 mutants converges on the same
+hundred-cell scale that the convention asserts, arrived at independently.
+
+\pfstep{Constraint 2 --- pseudobulk depth} Pooling $n$ cells at depth $d$ gives
+$K\approx n d p_j$ UMIs of gene $j$. For counts, $\mathrm{Var}(\log K)\approx1/K$,
+so resolving a log$_2$ fold change $\Delta$ at power $1-\beta$ and level $\alpha$
+requires
+\begin{equation}
+  K \;\ge\; \left(\frac{z}{\Delta\ln 2}\right)^{2},
+  \qquad z = z_{1-\alpha/2}+z_{1-\beta} = 2.80,
+  \label{eq:power}
+\end{equation}
+which is $\sim$16 UMIs of that gene for a two-fold change, $\sim$65 for 1.4-fold,
+$\sim$159 for 1.25-fold. This is a floor, not an estimate: it counts only
+sampling noise and ignores biological variance between cells, which is exactly
+why the 100-cell floor is a separate and independent requirement.
+
+\input{tables/t7-cells-per-perturbation}
+
+Two things follow. The 488 cells that the depth constraint demands of Brettner et al.'s
+chemistry reproduces his own 500-cell heuristic from an independent derivation,
+which is reassurance that the framework is calibrated. And depth buys you out of
+cells only until the 100-cell floor binds --- past 10x v3 chemistry, extra depth
+is wasted on this question and should be spent on more perturbations instead.
+
+\subsection{Effect Size of a Single Knockdown\secstatus{todo}}
+\label{sec:effect-size}
+
+Equation~\ref{eq:power} takes the fold change $\Delta$ as given, but $\Delta$ is
+an empirical property of yeast regulatory biology, and it is the parameter the
+whole design is most sensitive to. It is measured here rather than assumed, from
+two datasets already in the library mirror: Kemmeren et al.'s single-deletion
+expression compendium \citep{kemmerenLargeScaleGeneticPerturbations2014} and
+Sameith et al.'s double-deletion compendium
+\citep{sameithHighresolutionGeneExpression2015}, both built locally and analysed
+below.
+
+%% SOURCE: experiments/019-perturb-seq-costing/scripts/effect_size_analysis.py
+%% RUN 2026-08-20 on the M1 against the LMDBs rsynced from gilahyper. The script
+%% reads the LMDB directly and no longer imports torchcell, so it is portable.
+\input{tables/t14-effect-size}
+
+\tcfigfit[1.0]{figures/effect_size.pdf}{%
+  \textbf{What differential expression after a gene deletion actually looks like,
+  and why a two-fold design target is the wrong one for this biology.}
+  All three panels are the Kemmeren and Sameith compendia, singles and doubles
+  shown separately. (a) Distribution of response magnitude over every
+  gene-in-every-strain pair. It is a steep decay: the mass sits below
+  $|\Delta|=0.5$, and the two thresholds the document argues about fall far out on
+  a thinning tail, so the threshold chosen decides how much of the response is
+  visible at all rather than merely how it is filtered. The double-deletion curve
+  sits above the singles across the whole range, but the shape is the same ---
+  more perturbation moves more genes, it does not change the character of the
+  response. (b) Responders per strain at 1.25$\times$, as a full distribution.
+  Violin width is a kernel density over $\log_{10}$ counts --- these
+  distributions are strongly right-skewed as counts (skew 1.3--3.3) but nearly
+  symmetric once logged (0.08--0.56), so log space is where a density is a fair
+  summary; the black bar is the interquartile range, the thin line the observed
+  full range, and the white dot the median. The interquartile spread \emph{within}
+  each group is wider than the gap between singles and doubles, and the range runs
+  from 22 genes to 4{,}810 --- a factor of 18 above the median at the top end,
+  with 12\% of Kemmeren's strains moving more than a thousand genes. A screen is
+  not designed for the median deletion, because the median deletion is not a
+  typical one, and cells-per-perturbation has to be set for the quiet end. (c) The design curve --- median responders against the
+  threshold, shaded to the interquartile range. Between 1.25$\times$ and
+  2$\times$ the count falls by roughly 15--20-fold in every dataset. That collapse
+  is the cost of a two-fold target stated in the currency that matters: choosing
+  it discards about 95\% of the genes that actually responded. (d) Extrapolating
+  past two perturbations. Sameith gives only $k=1$ and $k=2$, and any two points
+  are fitted exactly by a line, a power law or a saturating curve, so a fit to
+  them cannot choose a model. Instead each of Kemmeren's 1{,}484 single-deletion
+  responder \emph{sets} is known, so drawing $k$ at random and taking their union
+  measures directly what $k$ combined perturbations would move if their effects
+  did not interact --- with the real overlap structure, which matters because
+  stress and ribosomal genes respond to almost anything. Shading is the
+  interquartile range over 2{,}000 draws. The saturating form
+  $R(k)=G_{\mathrm{eff}}(1-(1-p)^{k})$ fits with $G_{\mathrm{eff}}=5{,}264$ and
+  $p=0.063$; a purely linear extrapolation is shown for comparison and the two
+  are indistinguishable to $k\approx8$, diverging only as the ceiling begins to
+  bind. Sameith's observed doubles (diamond) sit $8\%$ above the same null built
+  from Sameith's own singles, which is the size of the epistatic correction at
+  $k=2$. Generated by
+  \file{experiments/019-perturb-seq-costing/scripts/plot_effect_size.py}.}{fig:effect-size}
+
+Three findings, and the first two change the arithmetic of the whole document.
+
+\pfstep{A deletion moves hundreds of genes, but almost none of them by two-fold}
+The median single deletion moves 220--269 genes by more than 1.25$\times$, but
+only 10--15 by more than 2$\times$ (\cref{tab:effect-size}). Designing a screen at
+a two-fold threshold therefore targets a few percent of the transcriptional
+response and discards the rest. Kemmeren's 1{,}484 single deletions and Sameith's
+82 agree closely, which is reassurance that this is a property of yeast rather
+than of one platform.
+
+\pfstep{The median responding gene moves 1.34-fold, not 2-fold} Among genes that
+do respond, the median $|\Delta|$ is $0.42$ in log$_2$ units, and the three
+compendia agree to within $0.02$ despite differing in size by a factor of
+eighteen. This is the number Eq.~\ref{eq:power} wants. Because the power
+coefficient scales as $|\Delta|^{-2}$, replacing the nominal two-fold with the
+measured value multiplies every cells-per-perturbation figure in this document by
+$\sim$5.6. It is the single largest correction in the analysis, and it moves in
+the expensive direction.
+
+\pfstep{More perturbations make a cell noisier, not its effects larger} Sameith's
+doubles move roughly twice as many genes as its singles at 1.25$\times$ (460
+against 220) and three times as many at 2$\times$ (30 against 10), while the
+median response among responders is unchanged (0.44 against 0.42). A second
+deletion recruits additional genes into the response rather than amplifying the
+existing ones.
+
+One caveat on which way this is likely to be biased. Sameith et al.\ did not
+sample gene pairs at random: the double-deletion panel is built from genes with
+regulatory roles, chosen because they were expected to interact. Its responses
+should therefore sit \emph{above} what a random pair of genes would produce, and
+its singles above a random single. Kemmeren's 1{,}484 deletions are the closer
+thing to an unbiased draw, and its median response, $0.42$, is essentially
+identical to Sameith's $0.42$ --- so the bias does not appear to move the median
+\emph{effect size} much. Where it should be assumed to matter is the responder
+\emph{counts}, and the doubles in particular: 460 responding genes per double
+deletion is an upper estimate for a randomly chosen pair, not a typical one. That is the favourable reading for multiplexing: the per-gene
+effect a screen must resolve does not shrink as $k$ rises, so
+\cref{eq:design-total} may treat $|\Delta|$ as fixed in $k$. The comparison is
+made \emph{within} Sameith --- same lab, platform and noise floor --- because
+comparing Kemmeren's singles against Sameith's doubles would confound perturbation
+count with study.
+
+\begin{keybox}
+\textbf{The design target is 1.34-fold, and it is expensive.} Every
+cells-per-perturbation number derived under a two-fold assumption understates the
+requirement by $\sim$5.6$\times$. What this does \emph{not} do is invalidate the
+100-cell convention --- the opposite, as \cref{sec:design-equation} shows: at the
+measured effect size that convention corresponds to an ordinary biological
+overdispersion rather than an implausible one.
+\end{keybox}
+
+\notesec{What is still missing} These compendia are bulk microarray, so they
+measure the \emph{effect size} $|\Delta|$ and say nothing about $\varphi_j$, the
+between-cell variance, which needs single-cell data. Of the three unmeasured
+inputs to \cref{eq:design}, this settles one.
+
+\subsection{Multiplexing and Interaction Coverage\secstatus{todo}}
+\label{sec:multiplex}
+
+The end goal is multiplexed screens, because engineered strains carry stacked
+perturbations. The arithmetic splits cleanly into a part that helps and a part
+that does not.
+
+\pfstep{Main effects get $k$ times cheaper} Under an additive model with random
+$k$-subsets of $T$ genes and $N$ cells total, the cells informing gene $g$'s main
+effect number $Nk/T$ --- independent of how many distinct combinations the library
+contains. Every cell carrying $g$ contributes, whatever else it carries. So
+$k$-plexing divides the cell requirement by $k$.
+
+\pfstep{Named interactions scale far worse} The probability that a specific pair
+$\{g,h\}$ both appear in a random $k$-subset is $k(k-1)/\left(T(T-1)\right)$.
+Requiring $c$ cells on every pair among $T$ targets therefore needs
+\begin{equation}
+  N \;=\; c\,\binom{T}{2}\Big/\binom{k}{2},
+  \label{eq:pairs}
+\end{equation}
+pairs needed over pairs delivered per cell. Yao et al.\ \citep{yaoScalableGeneticScreening2024}
+derive the same expression and, importantly, supply the constant: $c=400$, being
+``the number of cells needed to learn a single second-order interaction effect with
+the same power as our conventional screens had to learn first-order effects
+($\sim$100 cells/perturbations), assuming that four times as many cells are needed
+to estimate a second-order interaction effect as a first-order effect.'' Our
+implementation of Eq.~\ref{eq:pairs} reproduces their published worked cases to
+within rounding --- 100{,}000 cells at $k=3$ powers all pairs among 39.2 targets
+against their stated $\sim$39, and $10^{6}$ cells at $k=8$ gives 374.7 against
+their 374 --- which is the check that the constant and the combinatorics are being
+applied correctly.
+
+\input{tables/t10-multiplex}
+
+\begin{keybox}
+\textbf{The design that follows.} Genome-wide pairwise epistasis is out of reach at
+any plex: $2.6\times10^{9}$ cells at $k=3$, still $2.6\times10^{8}$ at $k=8$. But a
+\emph{focused} library inverts the picture, because Eq.~\ref{eq:pairs} is quadratic
+in $T$ and quadratic in $k$. A 200-gene metabolic sub-library at $k=8$ needs
+$\sim$284{,}000 cells for \emph{every} one of its 19{,}900 pairs --- one
+genome-scale-sized run. That is the single most useful number in this document for
+the multiplexed screening goal.
+\end{keybox}
+
+So the programme splits cleanly: run genome-wide at $k\approx3$ for main effects,
+where compressed decoding applies and interactions are assumed to cancel; and run a
+focused metabolic sub-library at high plex for named epistasis, where they are the
+signal.
+
+\pfstep{Three costs the cell arithmetic hides} Guide detection compounds:
+assigning $k$ guides at per-guide detection $q$ succeeds at $q^{k}$, and the two
+published rates bracket a very wide range. At Brandner et al.'s 25\% in bacteria,
+even after enrichment, a 3-plex assigns 1.6\% of cells and an 8-plex is
+arithmetically hopeless; at the $>$71\% Nadal-Ribelles et al.\ reach in yeast, the
+same figures are 36\% and 6\%. This --- not sequencing --- is what actually caps
+plex for us, and which end of that range applies is the single most valuable thing
+the pilot can measure (Sec.~\ref{sec:guide-capture}). Barcode collisions change
+character: in a singles screen a collision attenuates a main effect slightly, but in
+a multiplex screen it \emph{manufactures a gene pair that was never constructed},
+and pairs are precisely what is being measured. And Yao et al.'s own screens, despite
+being designed for this, recovered no significant pairwise interaction even at
+$q<0.5$ --- a caution that the 400-cell constant is a power calculation, not a
+demonstration.
+
+\subsection{Library Construction Limits\secstatus{todo}}
+\label{sec:library-ceiling}
+
+Multiplexing is limited by cloning and transformation before it is limited by
+sequencing, and the binding number comes from our own library's paper.
+
+%% SOURCE: experiments/019-perturb-seq-costing/scripts/method_data.py
+%%   YEAST_TRANSFORMATION_CLONES_{LOW,HIGH}, LIBRARY_REDUNDANCY_FOLD,
+%%   clones_required(); pair counts from cost_model.py.
+Lian et al.\ \citep{lianMultifunctionalGenomewideCRISPR2019} put yeast
+transformation at $10^{6}$--$10^{7}$ independent clones and set their own
+construction standard at $>10^{6}$ clones with \emph{at least 30-fold
+redundancy}. Those two numbers decide the question. A dual-guide library over
+6{,}000 genes has $\binom{6000}{2}=1.8\times10^{7}$ pairs, which at 30-fold
+redundancy needs $5.4\times10^{8}$ independent clones --- 54 to 540 times beyond
+the ceiling. Genome-scale pairwise coverage is not merely expensive to construct;
+it is unreachable by about two orders of magnitude, and no sequencing budget
+changes that.
+
+\notesec{The precedent already ran this experiment} sMAGIC is the combinatorial
+version of our own library, and it hit exactly this wall: ``due to the
+limitations in transformation efficiency ($\sim10^{6}$--$10^{7}$ for yeast
+transformation), only $\sim$0.01\% to $\sim$0.1\% of the total combinations
+($\sim10^{5}\times10^{5}=10^{10}$) were covered.'' That is the same arithmetic
+seen from the other side, and it carries a design lesson: they reached those
+combinations by \emph{co-transforming} single-guide libraries rather than by
+cloning pairs. Co-transformation converts a construction problem into a Poisson
+sampling problem --- diversity becomes free, but which pairs you get is random,
+so coverage of a \emph{named} pair is governed by \cref{eq:pairs} rather than by
+the library design. Assembly is not the obstacle either way: Golden-Gate
+efficiency is ``nearly 100\%''.
+
+\notesec{Restricting the panel is what makes it constructible} The same
+arithmetic that rules out the genome-scale library admits the focused one.
+A 200-gene metabolic sub-library has $\binom{200}{2}=19{,}900$ pairs, needing
+597{,}000 clones at 30-fold redundancy --- comfortably inside a single
+transformation. This is the same conclusion \cref{sec:multiplex} reaches from
+cell counts, arrived at independently from cloning: panel size, not plex, is the
+variable that decides whether named epistasis is reachable, and it binds in both
+the wet lab and the budget.
+
+%% TODO: two construct-level questions remain, and both need bench input rather
+%% than literature:
+%%   - single plasmid carrying k guides vs k separate plasmids, and whether the
+%%     permeabilisation/split-pool readout can resolve both cases
+%%   - the KanMX promoter-swap idea for raising copy number
+
+\subsection{A Unified Design Equation\secstatus{todo}}
+\label{sec:design-equation}
+
+The preceding subsections give three rules that look independent: a shot-noise
+requirement (\cref{eq:power}), a 100-cell biological floor, and a combinatorial
+penalty for multiplexing. Sections~\ref{sec:cells-per-pert} and \ref{sec:multiplex}
+combine the first two by taking whichever is larger. They are not independent, and
+the max is an artefact of having modelled the count as Poisson.
+
+%% DONE(zotero, 2026-08-21) -- all eight works are now in the microbe-perturb-seq
+%% collection and carry numbered citations, so tables/t13-external-refs.tex and
+%% scripts/external_refs.py are retired. The standing debt this paragraph used to
+%% record is paid; do not reintroduce a DOI table for works we hold.
+This is not a new result. It is the standard negative-binomial sample-size
+calculation from the bulk RNA-seq literature, applied to a pseudobulk pool.
+\cref{eq:design} appears in essentially this form in Hart et
+al.\ \citep{hartCalculatingSampleSize2013}: a sum of a sampling term and a
+dispersion term over the squared log fold change. The parameter $\varphi_j$ is
+the negative-binomial dispersion of McCarthy et
+al.\ \citep{mccarthyDifferentialExpressionAnalysis2012}, whose biological
+coefficient of variation is $\sqrt{\varphi_j}$ --- so published BCV values
+transfer directly as priors for the one input we cannot measure --- and the
+variance parameterisation itself is that of Robinson and
+Smyth \citep{robinsonSmallsampleEstimationNegative2008}. The decomposition into
+Poisson sampling on top of biological variation is the single-cell UMI noise model
+of Gr\"un et al.\ \citep{grunValidationNoiseModels2014}, and using a plain
+negative binomial rather than a zero-inflated one follows
+Svensson \citep{svenssonDropletScRNAseqNot2020}. Treating the estimand as a
+pseudobulk profile rather than a per-cell test follows Squair et
+al.\ \citep{squairConfrontingFalseDiscoveries2021}; the cells-versus-depth optimum
+that \cref{fig:design}a traces under a fixed budget is the subject of Zhang et
+al.\ \citep{zhangDeterminingSequencingDepth2020}; and the largest published
+Perturb-seq screen, whose empirical cells-per-perturbation choice
+\cref{sec:cells-per-pert} is measured against, is Replogle et
+al.\ \citep{replogleMappingInformationrichGenotypephenotype2022}. What is specific
+to this document is the multiplexing term of \cref{eq:design-total} and the
+reading of the 100-cell convention below.
+
+\pfstep{Setup} Pool $n$ cells carrying one perturbation, each read to depth $d$
+mRNA UMIs, and consider gene $j$ with transcriptome share $p_j$. The pseudobulk
+count is $K=n d p_j$. Treating it as negative binomial, with $\varphi_j$ the
+gene's biological overdispersion between cells --- the variance in excess of
+sampling ---
+\begin{equation}
+  \mathrm{Var}(\log K)\;\approx\;\underbrace{\frac{1}{n d p_j}}_{\text{shot noise}}
+  \;+\;\underbrace{\frac{\varphi_j}{n}}_{\text{biology}} .
+  \label{eq:nbvar}
+\end{equation}
+
+\pfstep{Claim} Requiring a log$_2$ fold change $\Delta$ to be resolvable against
+controls at level $\alpha$ and power $1-\beta$ gives one requirement,
+\begin{equation}
+  n^{*} \;=\; A(\Delta)\left[\frac{1}{d\,p_j}+\varphi_j\right],
+  \qquad
+  A(\Delta)=\frac{\kappa\,(z_{1-\alpha/2}+z_{1-\beta})^{2}}{(\Delta\ln 2)^{2}},
+  \label{eq:design}
+\end{equation}
+where $\kappa=1$ when the non-targeting control pool is large enough that its own
+variance is negligible --- the usual case, since controls are pooled over many
+guides --- and $\kappa=2$ for a control of the same size as the perturbation.
+and with $k$ guides per cell over a panel of $T$ targets the total cells for an
+order-$r$ effect are
+\begin{equation}
+  N^{*} \;=\; \rho_r\, n^{*}\,\frac{\binom{T}{r}}{\binom{k}{r}}
+  \cdot\frac{1}{s\,q^{r}} ,
+  \label{eq:design-total}
+\end{equation}
+with $\rho_r$ the contrast variance inflation, $s$ the QC survival fraction and
+$q$ the per-guide detection probability. $\rho_1{=}1$ by definition. $\rho_2{=}4$
+is \emph{quoted} from Yao et al.\ rather than derived: it is the variance of a
+full $2\times2$ factorial contrast over four equally sized groups. Under the same
+large-control assumption used for main effects the exact factor is 3, so Yao's 4
+is conservative by about a third; it is kept because the 400-cells-per-pair
+constant of \cref{sec:multiplex} is built on it and the two must not disagree.
+
+\pfstep{Consequence} \cref{eq:design} contains both earlier rules as limits.
+Setting $\varphi_j\to0$ leaves $n^{*}=A/(d\,p_j)$, that is a required pseudobulk
+count $K=n^{*}d\,p_j=A$; at $\kappa=1$ this is \emph{identically}
+\cref{eq:power}, so \cref{sec:cells-per-pert} is the shot-noise corner of this
+equation rather than a separate rule. Letting $d\,p_j\to\infty$ gives
+$n^{*}\to A\varphi_j$, a floor no amount of sequencing can cross --- which
+\emph{is} the biological floor, now with a number attached. At two-fold and
+80\% power $A=16.3$ at two-fold and $A=90.9$ at the measured 1.34-fold, so a
+100-cell floor is precisely the claim $\varphi_j\approx6.1$ or
+$\varphi_j\approx1.1$ respectively.
+
+That number depends on $\Delta$, and this is where measuring the effect size pays
+off. At the nominal two-fold the 100-cell floor implies $\varphi_j\approx6.1$, a
+between-cell coefficient of variation of $2.5$ --- bursty even by single-cell
+standards, and grounds for suspecting the convention was really guarding against
+something other than sampling variance. At the \emph{measured} 1.34-fold
+(\cref{sec:effect-size}) the same floor implies $\varphi_j\approx1.1$, a
+coefficient of variation of about one, which is an entirely ordinary
+single-cell overdispersion. The tension dissolves: the 100-cell convention is
+consistent with unremarkable yeast biology once it is evaluated at the effect
+size screens are actually built to detect. The convention was right; the two-fold
+assumption was wrong.
+
+\input{tables/t12-design-parameters}
+
+\tcfigfit[1.0]{figures/design_equation.pdf}{%
+  \textbf{One equation reproduces both design rules, and turns a lane of
+  sequencing into a statement about the smallest effect a screen can see.}
+  Top row, the structure of \cref{eq:design}. (a) Cells per perturbation against
+  depth, swept over biological overdispersion $\varphi$. Every $\varphi$ implies a
+  cell floor, $n^{*}\to A\varphi$ as depth grows without bound, and those are the
+  dotted horizontals --- each labelled with the cell count it corresponds to, so
+  the swept parameter can be read directly as the quantity a screen is designed
+  in. The marked point on each curve is the depth-sufficiency threshold
+  $d^{*}=1/(\varphi p_j)$, where shot noise and biology contribute equally. Past $d^{*}$ the requirement is within a factor of
+  two of its floor, so further depth is close to wasted. Curves are evaluated at the \emph{measured} effect size of
+  \cref{sec:effect-size}, $|\Delta|=0.42$, not at a nominal two-fold; the middle
+  curve is the $\varphi=1.1$ that the field's 100-cell rule implies at that effect
+  size, and its floor is accordingly 100 cells. At $\varphi=1.1$,
+  $d^{*}\approx7{,}800$ UMIs per cell --- roughly four times deeper than the best
+  platform on offer --- so \emph{both} candidate chemistries are firmly
+  shot-noise limited, and depth still buys precision for both. That is the
+  argument for rRNA depletion in one number: it is the cheapest available way to
+  move right along this axis. (b) The same curve against the piecewise
+  rule the earlier subsections use. They agree exactly in both limits and differ
+  near the knee, where the piecewise form \emph{under}-estimates the requirement
+  --- the regime both candidate platforms occupy. (c) \cref{eq:design-total}
+  against plex, coloured by panel size and dashed for pairwise. Raising $k$ moves
+  every curve down by a similar factor; shrinking the panel from 6{,}000 targets
+  to 200 moves the pairwise curve by $\sim$900$\times$. Restricting the panel, not
+  multiplexing harder, is what brings interactions into reach.
+  Bottom row, \cref{eq:design} inverted --- the smallest resolvable $|\Delta|$ ---
+  for the two sequencing configurations the core actually sells: one NovaSeq X 25B
+  lane (3.2\,billion read pairs, \$3{,}380) and a full eight-lane flow cell
+  (25.6\,billion, \$25{,}440 at the volume rate). (d) Resolution against cells per
+  perturbation, by platform. (e) Against panel size, at split-pool with rRNA
+  depletion. This is the panel to design from: one lane yields
+  $\sim$192{,}000 usable cells and resolves two-fold across a few hundred
+  targets, whereas a full flow cell yields $\sim$1.5\,million and reaches two-fold
+  across all 6{,}000 genes. One lane is a focused panel; a flow cell is a genome.
+  (f) Against plex at genome scale --- multiplexing to $k\approx8$ buys a single
+  lane roughly what eight lanes deliver unmultiplexed, which is the cheapest lever
+  in the document. Note that the volume discount itself is minor (\$0.99 against
+  \$1.06 per million read pairs, $\sim$6\%); the reason to fill a flow cell is
+  what it buys, not what it saves. Generated by
+  \file{experiments/019-perturb-seq-costing/scripts/design_equation.py}.}{fig:design}
+
+\pfstep{Interpretation --- what would make this predictive} As a structure
+\crefrange{eq:nbvar}{eq:design-total} are complete, and every design question in
+\cref{sec:application} is a substitution into them. As a \emph{predictor} they are
+not usable yet, because three inputs are assumed rather than measured, and they
+are the honest answer to what a real design equation would take:
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=1pt,topsep=2pt]
+  \item \textbf{$\varphi_j$, gene-level biological overdispersion in yeast.} The
+    critical one: it alone sets the floor, and the whole 100-cell convention rests
+    on it. Estimable from any existing yeast scRNA-seq count matrix, and it is
+    the reason the figure sweeps $\varphi$ instead of fixing it.
+  \item \textbf{The distribution of $\Delta$ --- now measured.} Median
+    $|\Delta|=0.42$ among responding genes, a $1.34\times$ change
+    (\cref{sec:effect-size}, \cref{tab:effect-size}). $A(\Delta)$ goes as
+    $\Delta^{-2}$, so this was the most violent term in the equation; pinning it
+    multiplied every cell requirement by $\sim$5.6 and resolved the $\varphi$
+    puzzle above. Two of the three remain open.
+  \item \textbf{$q$, per-guide detection probability.} Enters as $q^{r}$, so it
+    is forgiving for main effects and punishing for interactions. It cannot be
+    measured until the guide-barcode construct of \cref{sec:guide-capture}
+    exists.
+\end{enumerate}
+
+Of the three, one is now measured and two remain. The curves here therefore rest
+on one measured parameter and one swept one, which is why $\varphi$ is drawn as a
+family rather than a line, and why no number from this subsection is yet used in
+the budgets of \cref{sec:application} --- those still assume two-fold and are
+consequently optimistic by $\sim$5.6$\times$ in cells.
+
+Two limitations of the derivation itself, for completeness. The delta-method step
+behind \cref{eq:nbvar} degrades when counts are small, and $A\approx16$ counts is
+small --- near the shot-noise limit \cref{eq:design} should be read as an
+order-of-magnitude statement, with an exact negative-binomial test the right tool
+in that corner. And \cref{eq:design} assumes equal per-cell depth; real libraries
+vary and are handled with size factors, so $d$ should be read as a mean depth,
+correct to first order. Neither affects the structural conclusions, both of which
+concern the $\varphi$ term. The published treatment of the cells-versus-depth
+optimum that panel~(a) rediscovers is Zhang et
+al.\ \citep{zhangDeterminingSequencingDepth2020}, and the case for pseudobulk as
+the estimand is Squair et al.\ \citep{squairConfrontingFalseDiscoveries2021}.

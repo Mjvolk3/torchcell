@@ -1,0 +1,27 @@
+%% notes-tex/microbe-perturb-seq/sections/1-introduction.tex
+%% SOURCE: hand-authored prose. No generating script, and there should not be one.
+%% Numbers quoted here are cross-referenced to the sections that derive them.
+
+\section{Introduction\secstatus{todo}}
+\label{sec:intro}
+
+Metabolic engineering builds strains by stacking perturbations, but the design
+decisions are made from data on single perturbations measured one at a time.
+Pooled CRISPR interference screens read out by single-cell RNA sequencing
+(\term{Perturb-seq}) collapse that gap: a library of guide RNAs is transformed
+into a population, every cell is sequenced, and each cell's guide identity is
+recovered from its own transcriptome, so one experiment yields a matrix from
+perturbation to full transcriptional response rather than a list of fitness
+hits~\citep{dixitPerturbSeqDissectingMolecular2016}. For a group whose goal is a
+predictive model of cell state, this is the highest-density source of
+genotype-to-expression training data available, and unlike a growth screen it
+reports on perturbations that are fitness-neutral but transcriptionally loud.
+Two developments make the yeast version tractable now: a split-pool barcoding
+chemistry that removes the instrument from the cell-isolation
+step~\citep{brettnerUltraHighthroughputMassively2024}, and the first
+demonstration that pooled CRISPRi and single-cell transcriptomics can be joined
+in a microbe at all~\citep{brandnerPooledSinglecellCRISPRa2025}. This document
+asks what such a screen costs in \org{S.\ cerevisiae}, how many genes can be
+perturbed simultaneously before the measurement stops being interpretable, and
+which parameter is actually binding --- because the answer is not the one the
+published per-cell costs suggest.

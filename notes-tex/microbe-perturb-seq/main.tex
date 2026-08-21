@@ -1,0 +1,65 @@
+%% notes-tex/microbe-perturb-seq/main.tex
+%% [[microbe-perturb-seq.method-review-and-costing]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/microbe-perturb-seq/main.tex
+%%
+%% Typeset counterpart of the dendron hierarchy notes/microbe-perturb-seq.*.md.
+%% Pairing is by NAME: notes-tex/<slug>/ <-> notes/<slug>.*.md, the same rule that
+%% pairs experiments/.../foo.py with notes/experiments....foo.md.
+%%
+%% Build:  make          -> main.pdf        (draft: status chips + provenance flags)
+%%         make clean-view -> main-clean.pdf  (share view)
+%%         make check    -> formatting / provenance / citation gate
+%%         make bib      -> re-export references.bib from Zotero
+%%
+%% EVERY number in this document comes from a committed script under
+%% experiments/019-perturb-seq-costing/ and is marked with a `%% SOURCE:` comment.
+%% Anything not backed by the torchcell-library mirror carries a visible
+%% \external{} or \secondhand{} flag that survives into the share view.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+
+\title{\vspace{-1.5em}Multiplexed CRISPRi Perturb-seq in Yeast\\
+  {\large Methods, Theoretical Limits, and Genome-Scale Cost}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+Pooled genetic screens read out by single-cell RNA sequencing turn a library of
+perturbations into a dense map from each perturbation to its transcriptional
+consequence. This document works out what that costs in \org{S.\ cerevisiae},
+what sets the ceiling on how many genes can be perturbed in one cell, and which
+parameter is actually binding. It is a planning document for method selection,
+not a manuscript: the intended readers are collaborators deciding what to build.
+Numbers are regenerated from committed scripts rather than transcribed, and
+every claim that is not backed by a hash-pinned artifact in our library mirror
+is flagged in the text.
+\end{abstract}
+
+\vspace{0.5em}
+{\small\color{tcgray}
+Working notes: \file{notes/microbe-perturb-seq.*.md}\quad$\cdot$\quad
+Generating scripts: \file{experiments/019-perturb-seq-costing/}\quad$\cdot$\quad
+References: Zotero group \file{torchcell/microbe-perturb-seq}\par}
+
+\vspace{1em}
+\tccontents
+
+\clearpage
+\input{sections/1-introduction}
+\input{sections/2-what-perturb-seq-measures}
+\input{sections/3-method-explainers}
+\input{sections/4-theoretical-limits}
+\input{sections/5-application}
+\input{sections/6-bottlenecks}
+
+\clearpage
+\small
+\bibliography{references}
+
+\end{document}

@@ -1,0 +1,61 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/019-perturb-seq-costing/scripts/render_tex_tables.py
+\begingroup\footnotesize
+\setlength{\LTleft}{0pt}\setlength{\LTright}{0pt}
+\begingroup\captionsetup{type=table}
+\captionof{table}[]{Controlled vocabulary. Terms are grouped by what they are \emph{about} rather than alphabetised, so related ones read together; the last column links to the section that treats each in depth. Generated from \file{experiments/019-perturb-seq-costing/scripts/glossary.py}.}\label{tab:glossary}
+\endgroup
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.21\textwidth}>{\raggedright\arraybackslash}p{0.62\textwidth}>{\raggedright\arraybackslash}p{0.11\textwidth}@{}}
+\toprule
+Term & Definition & See \\
+\midrule
+\endfirsthead
+\multicolumn{3}{@{}l}{\footnotesize\itshape Table~\ref{tab:glossary}, continued}\\
+\toprule
+Term & Definition & See \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+\multicolumn{1}{@{}>{\raggedright\arraybackslash}p{0.21\textwidth}@{}}{\bfseries Tags on a molecule} & & \\*[1pt]
+\textbf{Cell barcode}\newline {\color{tcgray}(CB)} & A sequence shared by every cDNA molecule from one cell and ideally unique to it; what makes the data single-cell rather than bulk. Delivered pre-synthesised on a bead in droplet methods, built up across rounds of well-specific ligation in split-pool. & \cref{sec:identifiers} \\
+\textbf{Unique molecular identifier}\newline {\color{tcgray}(UMI)} & A short random sequence attached to each cDNA molecule \emph{before} amplification. Reads sharing CB, gene and UMI are PCR copies of one original mRNA, so collapsing on the UMI turns read counts into molecule counts. 10\,nt in the split-pool protocols here, 10--12\,nt in droplet. & \cref{sec:identifiers} \\
+\textbf{Sublibrary index} & The Illumina index read added at final PCR. In split-pool it is not merely a sample tag: cells are divided into sublibraries \emph{after} the last in-cell barcoding round, so the index is a further barcode dimension and two cells that took identical plate paths are still resolved if they landed in different sublibraries. This is why unique dual indices are mandatory -- an index hop manufactures a barcode collision. & \cref{sec:collisions} \\
+\textbf{Guide barcode}\newline {\color{tcgray}(GBC)} & An expressed, polyadenylated sequence that stands in for the guide RNA itself. A Pol\,III guide cassette carries no poly(A) tail and is therefore invisible to 3$'$ capture, so the perturbation identity has to be re-encoded in something the assay can see. & \cref{sec:guide-capture} \\
+\textbf{Barcode collision} & Two distinct cells receiving the same full barcode and being merged into one apparent cell. Rate is $1-((B-1)/B)^{C-1}$ for $C$ cells in a barcode space of size $B$, so it is controlled by adding rounds or sublibraries, not by sequencing harder. & \cref{sec:collisions} \\
+\textbf{UMI collision} & Two distinct molecules of the same gene in the same cell drawing the same UMI, and being counted once. Negligible at yeast expression levels: a 10\,nt UMI has $4^{10}\approx10^{6}$ states against at most a few thousand molecules of any one gene. Not to be confused with barcode collision, which is a cell-level error. & \cref{sec:identifiers} \\
+\addlinespace[3pt]
+\multicolumn{1}{@{}>{\raggedright\arraybackslash}p{0.21\textwidth}@{}}{\bfseries Cell isolation} & & \\*[1pt]
+\textbf{Droplet isolation} & One cell co-encapsulated with one barcoded bead in an emulsion droplet; the droplet wall is what keeps a cell's molecules together. Reagent cost scales linearly with cells, because you pay per channel. & \cref{sec:isolation} \\
+\textbf{Combinatorial split-pool barcoding} & No isolation at all. Fixed, permeabilised cells act as their own reaction vessels; the population is split across a plate, barcoded in situ, pooled, and re-split. After $R$ rounds of 96 wells there are $96^{R}$ possible paths. Cost scales per well, not per cell, so a plate costs the same for ten thousand cells or a million. & \cref{sec:isolation} \\
+\textbf{Doublet} & Two cells reported as one. In droplet methods it is two cells in one partition, governed by Poisson loading (10x quote $\sim$8\% at 20{,}000 cells recovered); in split-pool the analogous failure is a barcode collision, which has a different and controllable cause. & \cref{sec:isolation} \\
+\textbf{Spheroplast} & A yeast cell whose $\beta$-glucan wall has been digested away, here with zymolyase under osmotic support. Required because no commercial chemistry can get reagents through an intact fungal wall; the trade is that a wall-less cell bursts in a normal buffer. & \cref{sec:why-hard} \\
+\addlinespace[3pt]
+\multicolumn{1}{@{}>{\raggedright\arraybackslash}p{0.21\textwidth}@{}}{\bfseries Split-pool chemistry} & & \\*[1pt]
+\textbf{Linker strand} & A splint oligo pre-annealed to a barcode, positioning it against the 5$'$ end of the growing strand so T4 DNA ligase can seal the nick. Ligation is templated by the linker, which is why a stray barcode from an earlier well would corrupt the address. & \cref{sec:brettner} \\
+\textbf{Blocking strand} & Added after each ligation round to outcompete the linker and retire that well's barcode, so it cannot participate in a later round. Without it, leftover oligos scramble the barcode sequence. & \cref{sec:brettner} \\
+\textbf{Template switch} & A bead-borne reaction adding a common handle to the far end of the cDNA, giving the molecule PCR primer sites at both ends. Everything after it is conventional Illumina library prep. & \cref{sec:brettner} \\
+\textbf{Source plate / working plate} & A source plate is the pre-diluted barcode-oligo stock as shipped; working plates are aliquots cycled in daily use. The distinction is economic: source plates are retired by freeze--thaw damage rather than by depletion, so they behave as a capital asset. & \cref{sec:startup} \\
+\textbf{Protocol run} & One complete pass through the barcoding workflow -- fix, permeabilise, three rounds, split into sublibraries. Consumes one withdrawal from each barcode plate and carries up to $\sim$480{,}000 cells. A unit of \emph{bench work}, not of sequencing: the sublibraries it yields are sequenced and priced separately. & \cref{sec:startup} \\
+\textbf{Sublibrary} & An aliquot of barcoded cells (5{,}000--20{,}000) split off after the last in-cell round, lysed and prepared as one Illumina library. Sublibrary count is set jointly by barcode-collision targets and by PCR complexity limits. & \cref{sec:startup} \\
+\textbf{rRNA depletion} & Removal of ribosomal cDNA from the amplified library, after barcoding and before fragmentation and indexing. It does not improve capture; it stops $\sim$94\% of purchased reads being spent on rRNA, and is the single highest-leverage change available to a split-pool screen. & \cref{sec:rrna} \\
+\addlinespace[3pt]
+\multicolumn{1}{@{}>{\raggedright\arraybackslash}p{0.21\textwidth}@{}}{\bfseries Screen design} & & \\*[1pt]
+\textbf{Perturb-seq} & A pooled genetic screen read out by single-cell RNA-seq, so each cell yields both a perturbation identity and a whole-transcriptome phenotype. The transcriptome, not a growth rate, is the phenotype. & \cref{sec:primer} \\
+\textbf{Plex}\newline {\color{tcgray}($k$)} & Guide RNAs delivered per cell, so $k$ genes are perturbed in that cell at once. Raising $k$ divides the cell requirement for main effects by $k$; it does not make genome-wide pairwise interactions reachable. & \cref{sec:multiplex} \\
+\textbf{Main effect} & The average effect of perturbing one gene, pooled over every cell carrying a guide against it regardless of what else that cell carries. Well defined only under an additive (log-additive) model. & \cref{sec:multiplex} \\
+\textbf{Guide-pooling vs cell-pooling} & Two ways to compress a screen. Guide-pooling puts several guides in one cell; cell-pooling combines separately perturbed cells before sequencing. Both rely on the perturbations composing additively, and both are decoded rather than read directly. & \cref{sec:yao} \\
+\textbf{FR-Perturb} & The decoder for a compressed screen: factorises the observed expression matrix by sparse PCA, then recovers per-perturbation effects by LASSO against the pooling design. The recovered effects are estimates, so power depends on the design matrix as much as on cell count. & \cref{sec:yao} \\
+\textbf{Cells per target gene} & Cells carrying a guide against that gene, pooled over all of its guides. \emph{Not} cells per guide and \emph{not} cells per plasmid -- the distinction is a factor of six here and is the most common way a screen budget is misread. & \cref{sec:cells-per-pert} \\
+\addlinespace[3pt]
+\multicolumn{1}{@{}>{\raggedright\arraybackslash}p{0.21\textwidth}@{}}{\bfseries Counting and cost} & & \\*[1pt]
+\textbf{Shot noise} & The irreducible randomness of counting. Sequencing samples molecules at random, so a gene at true rate $\mu$ is observed with variance $\mu$ and relative error $1/\sqrt{\mu}$. A property of the measurement, not of the cell -- and the only noise that buying more reads removes. Also called counting or sampling noise. & \cref{sec:limits} \\
+\textbf{Biological overdispersion}\newline {\color{tcgray}($\varphi_j$)} & Variance in a gene's expression between genetically identical cells in excess of shot noise, from cell-cycle phase, metabolic state and transcriptional bursting. Reading each cell more deeply does not reduce it; only more cells do. Equal to the negative-binomial dispersion, so $\sqrt{\varphi_j}$ is the biological coefficient of variation reported in the RNA-seq literature. & \cref{sec:design-equation} \\
+\textbf{Depth sufficiency}\newline {\color{tcgray}($d^{*}$)} & The per-cell depth $1/(\varphi_j p_j)$ at which shot noise and biological overdispersion contribute equally. Below it a screen is measurement-limited and deeper reads help; above it the requirement is within a factor of two of a floor no sequencing can cross. & \cref{sec:design-equation} \\
+\textbf{Pseudobulk} & Summing UMIs across all cells sharing a perturbation, to estimate that perturbation's mean expression. It is what the whole design is powered on: single cells are too shallow individually, so the quantity that matters is cells $\times$ depth. & \cref{sec:cells-per-pert} \\
+\textbf{Biological floor} & The minimum cells a perturbation needs before its mean is interpretable, independent of sequencing. Cell-cycle phase and metabolic state must be averaged out, and depth cannot substitute. The published field standard is 100 cells. & \cref{sec:cells-per-pert} \\
+\textbf{Usable vs sequenced cell} & A usable cell survives QC \emph{and} carries an identified perturbation; a sequenced cell is one whose reads were paid for. The two differ by $\sim$4$\times$ in split-pool, which is why a quoted cost per cell understates the real one. & \cref{sec:cost-per-cell} \\
+\textbf{Read pair} & One paired-end fragment, the unit sequencing is priced in here. Both method families need paired-end runs -- one read carries the cDNA and the other the barcodes -- but they put the barcode on opposite reads. & \cref{sec:sequencing} \\
+\textbf{PhiX spike-in} & A fraction of the loaded library that is control phage DNA. At $\ge$10\% it is a split-pool protocol requirement rather than hygiene: read 2 carries fixed linker sequence at defined cycles, so base diversity collapses and patterned flow cells mis-register clusters without it. Budget it as a tax on usable reads. & \cref{sec:sequencing} \\
+\end{longtable}
+\endgroup

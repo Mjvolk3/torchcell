@@ -1,0 +1,261 @@
+%% notes-tex/common/tcdoc.sty
+%% [[notes-tex.common.tcdoc]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/common/tcdoc.sty
+%%
+%% Shared machinery for typeset long-form documents in notes-tex/.
+%%
+%% This is the reusable extraction of what paper/nature-biotech/editing.tex does
+%% inline: the status stoplight, the true-size figure macro, print-approximate
+%% geometry, and the provenance markers. It lives here rather than in the paper
+%% so a second document costs nothing and the two cannot drift.
+%%
+%% Deliberately NOT sn-jnl.cls. That class carries Nature front-matter semantics
+%% and fights numbered sections + \tableofcontents, which is exactly what a
+%% planning document and a thesis chapter need. The *look* people actually want
+%% from editing.pdf -- print-approximate margins, real tables, true-size figure
+%% captions, status chips -- is all reproduced here on top of `article`.
+%%
+%% Package options:
+%%   draft  (default) -- show status chips, provenance markers, the status legend
+%%   clean            -- hide all of the above, for sharing outside the group
+%%
+%% Usage:
+%%   \documentclass[11pt,a4paper]{article}
+%%   \usepackage[draft]{tcdoc}
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{tcdoc}[2026/08/20 torchcell notes-tex document conventions]
+
+\newif\iftcdraft\tcdrafttrue
+\DeclareOption{draft}{\tcdrafttrue}
+\DeclareOption{clean}{\tcdraftfalse}
+\ProcessOptions\relax
+
+\RequirePackage[T1]{fontenc}
+\RequirePackage{textcomp}
+\RequirePackage{amsmath,amssymb}
+% Latin Modern -- the same family editing.pdf embeds (verified with pdffonts).
+% sn-jnl.cls loads no font package, so it inherits the LaTeX default; matching it
+% here is what actually makes the two documents look the same size, since a Times
+% clone at 10 pt has a far larger x-height than Latin Modern at 10 pt.
+\RequirePackage{lmodern}
+\RequirePackage{graphicx}
+\RequirePackage{xcolor}
+\RequirePackage{pifont}
+\RequirePackage{booktabs}
+\RequirePackage{array}
+\RequirePackage{longtable}
+\RequirePackage{multirow}
+\RequirePackage{caption}
+\RequirePackage{enumitem}
+\RequirePackage{microtype}
+\RequirePackage[normalem]{ulem}
+%% [section] makes every \section an implicit \FloatBarrier, so a figure can
+%% never be deferred past the end of the section that introduces it. Without it
+%% LaTeX is free to push a late figure into the next section, where its caption
+%% describes something the surrounding page is no longer discussing -- the
+%% failure is silent and only shows up on a read-through of the built PDF.
+%% Deliberately NOT [above,below] (subsection-level): these documents put several
+%% figures in one section on purpose, and barriering every subsection forces them
+%% out early and opens half-page gaps.
+\RequirePackage[section]{placeins}
+
+%% ---------------------------------------------------------------------------
+%% Geometry. Matches editing.tex's print-approximate text block (A4 minus 14 mm
+%% side margins = 182 mm), so a draw.io figure drawn at Nature's 180 mm full
+%% width sits flush at 1:1 and 6 pt type in the SVG prints as 6 pt here.
+%% twoside=false so margins do not alternate -- this is read on screen, not bound.
+%% ---------------------------------------------------------------------------
+\RequirePackage[a4paper,left=14mm,right=14mm,top=16mm,bottom=20mm,
+                twoside=false,bindingoffset=0mm,
+                marginparwidth=0pt,marginparsep=0pt]{geometry}
+
+%% Block paragraphs -- no first-line indent, vertical gap between. Same drafting
+%% choice as editing.tex; it makes a dense technical document scannable.
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5\baselineskip plus 0.1\baselineskip}
+
+%% Tables: booktabs rules need air, and \parskip must not leak into table rows.
+\renewcommand{\arraystretch}{1.08}
+\setlength{\tabcolsep}{4pt}
+\captionsetup{font=small,labelfont=bf,skip=4pt,justification=raggedright,
+              singlelinecheck=false}
+\captionsetup[table]{position=top}
+
+%% ---------------------------------------------------------------------------
+%% Status stoplight. Shared notation with paper/nature-biotech + CLAUDE.md:
+%%   todo  = red X       -- not done; coding agents may edit freely
+%%   tent  = amber square -- author-reviewed, keep stable; discuss before editing
+%%   final = green check  -- ready
+%%
+%% \secstatus goes INSIDE the heading braces, e.g.
+%%   \section{Theoretical limits\secstatus{todo}}
+%% which makes it appear in the heading AND, for free, in \tableofcontents.
+%% That is the whole trick: the TOC *is* the status board, so there is no second
+%% hand-maintained list to drift out of sync with the sections.
+%% \DeclareRobustCommand is required -- a fragile command breaks the TOC write.
+%% ---------------------------------------------------------------------------
+\definecolor{stgrn}{HTML}{43A047}
+\definecolor{styel}{HTML}{E0A020}
+\definecolor{stred}{HTML}{E53935}
+\definecolor{tclink}{HTML}{1A4E8A}
+\definecolor{tcgray}{HTML}{6E6E6E}
+
+\DeclareRobustCommand{\tcstfinal}{{\normalfont\footnotesize\textcolor{stgrn}{\ding{51}}}}
+\DeclareRobustCommand{\tcsttent}{{\normalfont\footnotesize\textcolor{styel}{\ding{110}}}}
+\DeclareRobustCommand{\tcsttodo}{{\normalfont\footnotesize\textcolor{stred}{\ding{55}}}}
+\DeclareRobustCommand{\status}[1]{\csname tcst#1\endcsname}
+\iftcdraft
+  \DeclareRobustCommand{\secstatus}[1]{\,\status{#1}}
+\else
+  \DeclareRobustCommand{\secstatus}[1]{}
+\fi
+
+%% Legend + contents as one block. The legend goes ABOVE the contents so the
+%% chips are explained before they are first met, and the TOC is compressed to
+%% the density of the manuscript's outline board -- it is a status board that
+%% happens to be clickable, not a chapter listing.
+\RequirePackage{tocloft}
+\setlength{\cftbeforesecskip}{1.2pt}
+\setlength{\cftbeforesubsecskip}{0.6pt}
+\renewcommand{\cftsecfont}{\normalsize\bfseries}
+\renewcommand{\cftsecpagefont}{\normalsize\bfseries}
+\renewcommand{\cftsubsecfont}{\small}
+\renewcommand{\cftsubsecpagefont}{\small}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftsecdotsep}}
+\renewcommand{\cftsecdotsep}{\cftdotsep}
+\setlength{\cftsubsecindent}{1.2em}
+\setlength{\cftsecnumwidth}{1.6em}
+\setlength{\cftsubsecnumwidth}{2.4em}
+
+\newcommand{\tcstatuslegend}{%
+  \iftcdraft
+    {\footnotesize\color{tcgray}%
+     \status{final}~ready \quad
+     \status{tent}~author-reviewed, keep stable \quad
+     \status{todo}~not done, agents may edit freely\par}%
+    \vspace{0.35\baselineskip}%
+  \fi}
+
+%% \tccontents -- legend, then the compact clickable contents. Use this instead
+%% of a bare \tableofcontents so every document in notes-tex/ opens the same way.
+%% Contents in BLACK but still clickable. Colouring every TOC entry made the
+%% whole page read as one undifferentiated blue block and buried the status
+%% chips, which are the point of it. The links are unchanged -- only the ink is.
+%% Scoped with \begingroup so citations and cross-references keep their colour.
+\newcommand{\tccontents}{%
+  \tcstatuslegend
+  \begingroup
+  \hypersetup{linkcolor=black}%
+  {\small\tableofcontents}%
+  \endgroup
+  \vspace{0.5\baselineskip}}
+
+%% ---------------------------------------------------------------------------
+%% Provenance markers. The repo rule is that every number traces to a
+%% sha256-pinned artifact plus a verbatim quote. In a .tex file that lives in two
+%% places: a `%% SOURCE:` comment above generated content (invisible, for whoever
+%% edits the file) and these VISIBLE markers for the reader.
+%%
+%%   \mirror{key}   -- cited work IS in the torchcell-library mirror
+%%   \external{...} -- fact is NOT mirror-backed; renders a visible flag
+%%   \secondhand{}  -- value taken from a review's table, not the primary paper
+%%
+%% \external and \secondhand deliberately render even in `clean` builds, in a
+%% muted colour. An unverified number that silently loses its flag when shared is
+%% precisely the failure this whole convention exists to prevent.
+%% ---------------------------------------------------------------------------
+\newcommand{\mirror}[1]{\citep{#1}}
+\newcommand{\external}[1]{{\footnotesize\color{tcgray}[external: #1]}}
+\newcommand{\secondhand}[1]{{\footnotesize\color{tcgray}[via #1, not primary]}}
+
+%% \src{...} -- an inline pointer to the generating script, draft view only.
+\newcommand{\src}[1]{\iftcdraft{\footnotesize\color{tcgray}\textsc{src:}~\texttt{#1}}\par\fi}
+
+%% ---------------------------------------------------------------------------
+%% Figures. \tcfig places the PDF at TRUE SIZE (no scaling) and sets the caption
+%% to the figure's own width, so a panel authored at 88 mm stays 88 mm and its
+%% caption does not run the full text block. This is the WYSIWYG contract that
+%% makes the draw.io + savefig_true_size_svg pipeline meaningful.
+%% \tcfigfit scales to a fraction of \textwidth -- convenient, NOT WYSIWYG; use
+%% it only until the source is redrawn to its real print box.
+%% ---------------------------------------------------------------------------
+\newsavebox{\tcfigbox}
+\newcommand{\tcfig}[3]{%
+  \begin{figure}[htbp]\centering
+  \sbox{\tcfigbox}{\includegraphics{#1}}%
+  \begin{minipage}{\wd\tcfigbox}%
+    \usebox{\tcfigbox}\par\vspace{2pt}
+    \caption[]{#2}\label{#3}%
+  \end{minipage}
+  \end{figure}}
+\newcommand{\tcfigfit}[4][0.98]{%
+  \begin{figure}[htbp]\centering
+  \includegraphics[width=#1\textwidth]{#2}\par\vspace{2pt}
+  \caption[]{#3}\label{#4}
+  \end{figure}}
+%% Placeholder box for a figure that does not exist yet -- keeps the layout and
+%% the \ref working so a todo section still compiles and still reads correctly.
+\newcommand{\figph}[2]{%
+  \begin{figure}[htbp]\centering
+  \fbox{\parbox[c][#1][c]{0.97\linewidth}{\centering\color{tcgray}#2}}
+  \end{figure}}
+
+%% ---------------------------------------------------------------------------
+%% Prose helpers, same spelling as paper/nature-biotech/preamble.tex so text
+%% moves between the two without a rewrite.
+%% ---------------------------------------------------------------------------
+\newcommand{\pfstep}[1]{\par\smallskip\noindent\textbf{#1.}\enspace}
+\newcommand{\notesec}[1]{\par\smallskip\noindent\textbf{#1.}\enspace}
+\newcommand{\term}[1]{\textbf{#1}}          % first use of a jargon term
+\newcommand{\gene}[1]{\textit{#1}}          % gene names in italic, SGD style
+\newcommand{\org}[1]{\textit{#1}}           % organism names
+
+%% A boxed "key result" callout -- the claim a section exists to establish.
+\RequirePackage[most]{tcolorbox}
+\newtcolorbox{keybox}[1][]{colback=black!3,colframe=black!45,boxrule=0.4pt,
+  arc=1pt,left=6pt,right=6pt,top=4pt,bottom=4pt,#1}
+
+%% Citations exactly as the manuscript does them: natbib with numeric,
+%% sort-and-compress, rendered by sn-nature.bst (Nature Portfolio style). Same
+%% package options and same .bst as sn-jnl.cls selects for the sn-nature option,
+%% so a citation looks identical in both documents and text moves between them
+%% without a restyle.
+%%
+%% Only CITED entries reach the reference list -- that is BibTeX's behaviour with
+%% \bibliography{}, not something we have to police. `make check` additionally
+%% reports any bib entry that is never cited, so an over-full collection is
+%% visible even though it cannot leak into the PDF.
+\RequirePackage[numbers,sort&compress]{natbib}
+\bibliographystyle{sn-nature}
+%% sn-nature.bst is generated from merlin.mbs and emits these support macros in
+%% the .bbl. sn-jnl.cls supplies them; `article` does not, so a bare port of the
+%% style fails with "Undefined control sequence" on the first \bibitem. Defining
+%% them here is what lets the manuscript's exact citation style work outside the
+%% Springer class. \doiprefix as a real URL makes every DOI clickable through
+%% hyperref, which the journal build deliberately suppresses but we want.
+\providecommand{\bibinfo}[2]{#2}
+\providecommand{\eprint}[2][]{\url{#2}}
+\providecommand{\urlprefix}{}
+\providecommand{\doiprefix}{https://doi.org/}
+\providecommand{\selectlanguage}[1]{}
+\providecommand{\BIBentryALTinterwordspacing}{}
+\providecommand{\BIBentrySTDinterwordspacing}{}
+%% sn-jnl.cls emits a "comment head" hook at the top of the bibliography; the
+%% .bbl calls it unconditionally, so it must exist even though we want nothing
+%% printed. This is the macro that was failing at main.bbl:8.
+\providecommand{\bibcommenthead}{}
+
+\RequirePackage[hidelinks,colorlinks=true,linkcolor=tclink,citecolor=tclink,
+                urlcolor=tclink]{hyperref}
+\RequirePackage{cleveref}
+
+%% \file{experiments/.../foo.py} -- a repo path that MAY BREAK across lines.
+%% These documents cite generating-script paths constantly, and \texttt{} refuses
+%% to break at a slash, so a long path silently runs off the page. That is not a
+%% cosmetic issue: it is the same overfull-hbox defect the build gate exists to
+%% catch, and it fires on nearly every path long enough to matter. Use \file for
+%% any path or filename; keep \texttt{} for short identifiers and code fragments.
+\DeclareUrlCommand\file{\urlstyle{tt}}
+
+\endinput

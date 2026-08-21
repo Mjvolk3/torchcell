@@ -1,0 +1,18 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/019-perturb-seq-costing/scripts/render_tex_tables.py
+\begin{table}[htbp]\centering
+\footnotesize
+\caption[]{Barcode collision rate, $100(1-((B-1)/B)^{C-1})$ with $B=96^{R}\times S$. The sublibrary index $S$ is a real barcode dimension: cells are split into sublibraries \emph{after} the last in-cell ligation.}\label{tab:barcode}
+\begin{tabular}{rrrrrrr}
+\toprule
+Rounds & Sublib. & Barcode space & @45k & @480k & @3M & @12M cells \\
+\midrule
+3 & 1 & 884{,}736 & 4.96\% & 41.87\% & 96.63\% & 100.00\% \\
+3 & 24 & 21{,}233{,}664 & 0.21\% & 2.24\% & 13.18\% & 43.17\% \\
+3 & 96 & 84{,}934{,}656 & 0.05\% & 0.56\% & 3.47\% & 13.18\% \\
+4 & 1 & 84{,}934{,}656 & 0.05\% & 0.56\% & 3.47\% & 13.18\% \\
+\textbf{4} & \textbf{24} & \textbf{2{,}038{,}431{,}744} & 0.00\% & 0.02\% & 0.15\% & 0.59\% \\
+4 & 96 & 8{,}153{,}726{,}976 & 0.00\% & 0.01\% & 0.04\% & 0.15\% \\
+\bottomrule
+\end{tabular}
+\end{table}

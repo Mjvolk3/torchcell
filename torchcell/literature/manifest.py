@@ -29,6 +29,9 @@ ROLE_SI_DATA = "si_data"
 ROLE_RAW_DATA = "raw_data"
 ROLE_OCR_IMAGE = "ocr_image"
 ROLE_OCR_LAYOUT = "ocr_layout"
+# Our own reading notes pulled from Zotero -- the only role not derived from the
+# paper's own bytes, so it is sourced to Zotero rather than to a retrieval URL.
+ROLE_ANNOTATIONS = "annotations"
 
 
 def sha256_file(path: Path, chunk_size: int = 1 << 20) -> str:
@@ -174,6 +177,8 @@ def _role_for(rel_path: str) -> str:
         return ROLE_PAPER_PDF
     if rel_path == "paper.md":
         return ROLE_PAPER_OCR
+    if rel_path in ("annotations.json", "annotations.md"):
+        return ROLE_ANNOTATIONS
     if rel_path.startswith("si/si_data/"):
         return ROLE_SI_DATA
     if rel_path.startswith("si/") and rel_path.endswith(".pdf"):

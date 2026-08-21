@@ -13,12 +13,21 @@ you can tell which build it was made against.
 Layout, which is DERIVED from the repo path rather than invented::
 
     repo    notes-tex/<doc>/main.pdf
-    zotero  torchcell / notes-tex / <doc>
+    zotero  torchcell / notes-tex          <- every document, one flat index
+            torchcell / notes-tex / <doc>  <- that document and its versions
 
 so there is never a question of which Zotero collection a document belongs in.
 The topic collections (``torchcell / torchcell-topics / *``) hold OTHER people's
 papers; this tree holds ours. Keeping the two apart is what stops a draft from
 being mistaken for literature when the bibliography is rebuilt.
+
+The document is filed in BOTH collections, deliberately. Zotero does not show a
+sub-collection's items in its parent unless the reader has turned on View ->
+Show Items from Subcollections, so filing only into ``notes-tex/<doc>`` makes
+``notes-tex`` look empty -- which is exactly what happened the first time this
+ran. An item may belong to any number of collections and its file is stored once,
+so the cost is nil and the top level becomes a usable index of every typeset
+note.
 
 Versioning. Each publish creates one child attachment named::
 
@@ -287,6 +296,14 @@ def main() -> None:
     # its versions underneath.
     if parent:
         print(f"  parent item exists: {parent['key']}")
+        # Backfill for items created before the top-level filing existed, and a
+        # cheap self-heal if someone drags the item out of one collection.
+        item = parent if parent.get("data") else zot.item(parent["key"])
+        cols = set(item["data"].get("collections") or [])
+        if not {coll, docs} <= cols and not args.dry_run:
+            item["data"]["collections"] = sorted(cols | {coll, docs})
+            zot.update_item(item)
+            print(f"  filed into torchcell/{DOCS_COLLECTION} as well")
     elif args.dry_run:
         print("  [dry-run] would create parent report item")
     else:
@@ -303,7 +320,8 @@ def main() -> None:
         tmpl["institution"] = "University of Illinois Urbana-Champaign"
         tmpl["date"] = built.built_at[:10]
         tmpl["extra"] = built.extra_field()
-        tmpl["collections"] = [coll]
+        # Both: the per-document collection AND the flat notes-tex index.
+        tmpl["collections"] = [coll, docs]
         resp = zot.create_items([tmpl])
         parent = {"key": resp["successful"]["0"]["key"]}
         print(f"  created parent item {parent['key']}")

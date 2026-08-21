@@ -180,15 +180,17 @@ def t0() -> None:
     #
     # \addlinespace between EVERY row, not just at group boundaries: at 36 rows
     # of wrapped text the entries ran together and the eye could not find where
-    # one definition ended. 2.5 pt is about a third of a line at \footnotesize --
-    # enough to separate, not enough to noticeably lengthen the table.
+    # one definition ended. 5 pt, not the 2.5 pt tried first -- the ask was "1.5
+    # space", i.e. half a line ADDED, and at \footnotesize the baseline is about
+    # 9.5 pt. 2.5 pt is a quarter line and reads as no gap at all between rows
+    # that are themselves several lines of wrapped text.
     for t in GL.alphabetical():
         name = rf"\textbf{{{esc(t.term)}}}"
         if t.abbrev:
             # Abbreviation is NOT escaped: some are math ($k$).
             name += rf"\newline {{\color{{tcgray}}({t.abbrev})}}"
         lines.append(rf"{name} & {t.definition} & \cref{{{t.where}}} \\")
-        lines.append(r"\addlinespace[2.5pt]")
+        lines.append(r"\addlinespace[5pt]")
     lines += [r"\end{longtable}", r"\endgroup"]
     emit("t0-glossary", "\n".join(lines))
 

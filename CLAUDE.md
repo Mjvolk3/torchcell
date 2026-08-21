@@ -183,6 +183,28 @@ quote + `sha256` + section/line, and never guessed.
   (back-solve + conservative both -> 4) in
   `[[torchcell.datasets.scerevisiae.costanzo2016.noise-computation]]`.
 
+## Writing Style -- Read Before Any Prose
+
+**Canonical prose standard: [[writing-style-guide]]** (`notes/writing-style-guide.md`).
+Read it before writing or revising any prose meant for a human reader -- the Nature
+Biotech manuscript, `notes-tex/` documents, figure captions, table notes. Record every
+new preference there, under its topical heading, rather than in a conversation.
+
+The rules that get broken most often, in short:
+
+- **No trailing restatement.** A clause appended to a sentence that re-says what the
+  sentence already said (`... shares a barcode because the droplet wall keeps it that
+  way`) reads as emphasis and adds nothing. Cut it. A trailing clause that adds a
+  consequence or a number is fine; one that is already entailed is not.
+- **Do not narrate the document** ("This document asks...") and **do not be
+  self-referential about the group** ("for a group whose goal is...", "the one we
+  prefer"). State the finding or the property.
+- **American spelling**, and **never em-dashes** -- ` -- ` or a comma.
+- **Verbatim quotes stay verbatim.** A style sweep must skip `quote=` fields and
+  ``...'' spans; Americanizing a source quote falsifies it.
+- **Define before use.** A technical term appears in the controlled vocabulary before
+  it appears in prose or a figure label. Order such tables alphabetically, not by theme.
+
 ## Paper / Manuscript Workflow
 
 The Nature Biotechnology manuscript lives in `paper/nature-biotech/`. It uses the

@@ -355,7 +355,7 @@ def t8_budgets() -> str:
         "## Table 8. Genome-scale CRISPRi perturb-seq budget",
         "",
         "6,000 genes, MAGIC-style 6 guides/gene, one environment. UIUC Carver "
-        "rates effective 2026-08-01. Excludes labour, oligo pool synthesis, "
+        "rates effective 2026-08-01. Excludes labor, oligo pool synthesis, "
         "strain construction, and the ~$10,000 one-time split-pool start-up.",
         "",
         "| Cells/gene | Platform | Usable cells | Sequenced | Runs | Read pairs | Reagents | Sequencing | Total |",

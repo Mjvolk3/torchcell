@@ -175,7 +175,7 @@ def main() -> None:
         "right": (8, 0, "left", "center"),
         "above": (0, 5, "center", "bottom"),
         "below": (0, -5, "center", "top"),
-        # Corner anchors exist for points close to an axis edge. A centred
+        # Corner anchors exist for points close to an axis edge. A centered
         # ("above"/"below") label on the leftmost point runs off the frame, and a
         # "right" label on it collides with the next point up; anchoring at the
         # marker and growing down-and-right clears both.
@@ -189,7 +189,7 @@ def main() -> None:
         "Nadal-Ribelles 2019": "below-right",
         "Jackson 2020": "left",
         # Left, not below: Brettner's two-species organism line is wide and
-        # centred, and it reaches back across this point.
+        # centered, and it reaches back across this point.
         "Jariani 2020": "left",
         "McNulty 2023": "below",
         # Above, so its second line does not drop into the legend block below it.
@@ -239,7 +239,7 @@ def main() -> None:
         # The three branches below anchor different edges, so a single "line
         # pitch" constant does not give a single visual gap: for the top/bottom
         # branches the pitch is baseline-to-baseline (gap = pitch - height), but
-        # for the centred branch offsetting each line by pitch/2 from the marker
+        # for the centered branch offsetting each line by pitch/2 from the marker
         # opens a gap of the FULL pitch. That is why the side-anchored labels
         # (Nadal-Ribelles, Jackson, Boocock, Brettner) read looser than the rest.
         # Work in the gap directly instead, and derive the pitch from it.
@@ -254,7 +254,7 @@ def main() -> None:
             ax.annotate(label, pt, xytext=(dx, dy + PITCH), va="bottom", **common)
             ax.annotate(ORG.get(m.organism, m.organism), pt,
                         xytext=(dx, dy), va="bottom", style="italic", **common)
-        else:  # centred on the marker: split the pair about it by half the GAP,
+        else:  # centered on the marker: split the pair about it by half the GAP,
                # not half the pitch, so the two lines end up GAP apart as above
             ax.annotate(label, pt, xytext=(dx, dy + GAP / 2), va="bottom", **common)
             ax.annotate(ORG.get(m.organism, m.organism), pt,

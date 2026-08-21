@@ -30,22 +30,22 @@
 
 \begin{abstract}
 \noindent
-Pooled genetic screens read out by single-cell RNA sequencing turn a library of
-perturbations into a dense map from each perturbation to its transcriptional
-consequence. This document works out what that costs in \org{S.\ cerevisiae},
-what sets the ceiling on how many genes can be perturbed in one cell, and which
-parameter is actually binding. It is a planning document for method selection,
-not a manuscript: the intended readers are collaborators deciding what to build.
-Numbers are regenerated from committed scripts rather than transcribed, and
-every claim that is not backed by a hash-pinned artifact in our library mirror
-is flagged in the text.
+Pooled genetic screens read out by single-cell RNA sequencing map perturbations
+to their transcriptional consequences at dense, transcriptome-wide resolution.
+This work establishes what such a screen costs in \org{S.\ cerevisiae}, what sets
+the ceiling on how many genes can be perturbed in one cell, and which parameter
+is binding. It serves two purposes: selecting a method, and explaining the
+chemistry and the statistics well enough that the relevant passages can be reused
+in a methods write-up. Numbers are regenerated from committed scripts rather than
+transcribed, and every claim not backed by a hash-pinned artifact in the library
+mirror carries a visible flag, listed in the key below.
 \end{abstract}
 
 \vspace{0.5em}
 {\small\color{tcgray}
-Working notes: \file{notes/microbe-perturb-seq.*.md}\quad$\cdot$\quad
-Generating scripts: \file{experiments/019-perturb-seq-costing/}\quad$\cdot$\quad
-References: Zotero group \file{torchcell/microbe-perturb-seq}\par}
+Working notes: \file{notes/microbe-perturb-seq.*.md}\par
+Generating scripts: \file{experiments/019-perturb-seq-costing/}\par
+References: Zotero \file{torchcell/microbe-perturb-seq} (group $\cup$ personal)\par}
 
 \vspace{1em}
 \tccontents

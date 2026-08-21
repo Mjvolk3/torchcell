@@ -11,7 +11,7 @@
              (caps: 179.4 mm wide, 170 mm tall)
              Arial throughout; 8.5 units = 6.1 pt (Nature 6 pt min), title 12.
              Palette = PLOT_PALETTE / PLOT_PALETTE_FILL slots 1-6, and the
-             segment colours MATCH Fig 1 (splitseq-barcoding.drawio) so the two
+             segment colors MATCH Fig 1 (splitseq-barcoding.drawio) so the two
              figures can be read against each other:
                orange transcript/cDNA | red cell barcode | blue UMI
                purple gel bead | yellow droplet/oil | gray handle/adapter
@@ -24,7 +24,7 @@
         <mxCell id="title" value="Droplet barcoding (10x Chromium): cell identity is bought with a container, not built into the sequence" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="0" width="702" height="15" as="geometry" />
         </mxCell>
-        <mxCell id="subtitle" value="Yeast-adapted 10x Chromium of Jariani 2020; notes-tex/microbe-perturb-seq &#167;3.2. Panels read a to c: the container is made, the wall comes off inside it, and a barcoded molecule comes out. Segment colours and the 5&#8242;-to-3&#8242; convention are those of Fig. 1, so the two methods can be compared directly." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+        <mxCell id="subtitle" value="Yeast-adapted 10x Chromium of Jariani 2020 Panels read a to c: the container is made, the wall comes off inside it, and a barcoded molecule comes out. Segment colors and the 5&#8242;-to-3&#8242; convention are those of Fig. 1, so the two methods can be compared directly." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="17" width="702" height="24" as="geometry" />
         </mxCell>
 
@@ -36,7 +36,7 @@
           <mxGeometry x="13" y="48" width="500" height="12" as="geometry" />
         </mxCell>
 
-        <mxCell id="paNote" value="Cells enter the chip &lt;b&gt;walled and intact&lt;/b&gt; -- the wall is what lets them survive the journey." style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+        <mxCell id="paNote" value="Cells enter the chip &lt;b&gt;walled and intact&lt;/b&gt; &#8211; the wall is what lets them survive the journey." style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="68" width="112" height="48" as="geometry" />
         </mxCell>
 
@@ -150,7 +150,7 @@
         <mxCell id="pc" value="c" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="268" width="10" height="12" as="geometry" />
         </mxCell>
-        <mxCell id="pch" value="One bead delivers the whole address at once -- compare Fig. 1, where it arrives in three instalments" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="pch" value="One bead delivers the whole address at once &#8211; compare Fig. 1, where it arrives in three instalments" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="13" y="268" width="600" height="12" as="geometry" />
         </mxCell>
 
@@ -226,7 +226,7 @@
             <mxPoint x="131" y="368" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="ctranst" value="Break the emulsion and pool -- from here on it is bulk chemistry: template switch, PCR, fragment, adapter-ligate, dual index." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+        <mxCell id="ctranst" value="Break the emulsion and pool &#8211; from here on it is bulk chemistry: template switch, PCR, fragment, adapter-ligate, dual index." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
           <mxGeometry x="150" y="350" width="552" height="11" as="geometry" />
         </mxCell>
 

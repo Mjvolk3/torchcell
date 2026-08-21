@@ -24,12 +24,12 @@
         <mxCell id="title" value="Split-pool barcoding (SPLiT-seq): what happens to the sequence at each step" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=12;fontStyle=1;fontColor=#000000;" vertex="1" parent="1">
           <mxGeometry x="0" y="0" width="702" height="15" as="geometry" />
         </mxCell>
-        <mxCell id="subtitle" value="Yeast-optimised SPLiT-seq (Brettner 2024); notes-tex/microbe-perturb-seq &#167;3.1. The tracked strand runs 5&#8242; to 3&#8242; left to right, so a partner strand runs antiparallel beside it. Steps 1 and 2 are drawn as duplexes because that is where the chemistry acts on two strands." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+        <mxCell id="subtitle" value="Yeast-optimized SPLiT-seq (Brettner 2024) The tracked strand runs 5&#8242; to 3&#8242; left to right, so a partner strand runs antiparallel beside it. Steps 1 and 2 are drawn as duplexes because that is where the chemistry acts on two strands." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="18" width="702" height="24"  as="geometry" />
         </mxCell>
 
         <!-- ============================ STEP 0 ============================ -->
-        <mxCell id="t0" value="0. Fixed,&#10;permeabilised cell" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="t0" value="0. Fixed,&#10;permeabilized cell" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="50" width="108" height="22"  as="geometry" />
         </mxCell>
         <mxCell id="s0e5" value="3&#8242;" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
@@ -121,7 +121,7 @@
             <mxPoint x="131" y="210" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="n12" value="&lt;b&gt;The barcode arrives on the primer, so cDNA is born barcoded.&lt;/b&gt; 48 wells, ~5,000 cells each; every well holds a barcoded 15-dT primer &lt;i&gt;and&lt;/i&gt; a barcoded random hexamer. Only the dT tract anneals, so BC1 hangs off as a 5&#8242; overhang and RT copies rightward from the primer 3&#8242; end. The hexamer needs no poly(A), so it, not the dT primer, is the arm that transfers to a bacterium -- and it is why 93.7% of recovered transcripts are rRNA." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+        <mxCell id="n12" value="&lt;b&gt;The barcode arrives on the primer, so cDNA is born barcoded.&lt;/b&gt; 48 wells, ~5,000 cells each; every well holds a barcoded 15-dT primer &lt;i&gt;and&lt;/i&gt; a barcoded random hexamer. Only the dT tract anneals, so BC1 hangs off as a 5&#8242; overhang and RT copies rightward from the primer 3&#8242; end. The hexamer needs no poly(A), so it, not the dT primer, is the arm that transfers to a bacterium &#8211; and it is why 93.7% of recovered transcripts are rRNA." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
           <mxGeometry x="154" y="169" width="548" height="35"  as="geometry" />
         </mxCell>
 
@@ -226,7 +226,7 @@
             <mxPoint x="131" y="385" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="n34" value="&lt;b&gt;Same chemistry, richer oligo:&lt;/b&gt; BC3 plus a 10 nt UMI plus a 5&#8242; biotin, then EDTA terminates. Three rounds of 96 give 96&#179; = 884,736 distinct paths; the UMI (4^10 &#8776; 10&#8310; states) turns read counts into molecule counts." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+        <mxCell id="n34" value="&lt;b&gt;Same chemistry, richer oligo:&lt;/b&gt; BC3 plus a 10 nt UMI plus a 5&#8242; biotin, then EDTA terminates. Three rounds of 96 give 96&#179; = 884,736 distinct paths; the UMI (4&#185;&#8304; &#8776; 10&#8310; states) turns read counts into molecule counts." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
           <mxGeometry x="154" y="355" width="548" height="24"  as="geometry" />
         </mxCell>
 
@@ -271,7 +271,7 @@
             <mxPoint x="131" y="445" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="n45" value="&lt;b&gt;No sequence change -- this is a selection.&lt;/b&gt; Split into sublibraries of 5,000-20,000 cells, then lyse (SDS plus proteinase K, 55 &#176;C, 2 h); streptavidin beads keep only molecules that received the round-3 oligo, so anything outside the barcoding scheme is never sequenced." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+        <mxCell id="n45" value="&lt;b&gt;No sequence change &#8211; this is a selection.&lt;/b&gt; Split into sublibraries of 5,000-20,000 cells, then lyse (SDS plus proteinase K, 55 &#176;C, 2 h); streptavidin beads keep only molecules that received the round-3 oligo, so anything outside the barcoding scheme is never sequenced." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
           <mxGeometry x="154" y="415" width="548" height="24"  as="geometry" />
         </mxCell>
 

@@ -7,7 +7,7 @@ Sections 4.3 and 4.5 currently carry three separate rules of thumb -- a shot-noi
 requirement, a 100-cell biological floor taken as an independent constraint, and a
 combinatorial factor for multiplexing -- and combine the first two with a max().
 They are not independent. All three fall out of one expression once the pseudobulk
-count is modelled as negative binomial rather than Poisson.
+count is modeled as negative binomial rather than Poisson.
 
 THE EQUATION
 ------------
@@ -63,7 +63,7 @@ from the bulk RNA-seq literature, applied to a pseudobulk pool:
     the biological coefficient of variation, BCV = sqrt(phi). Our phi_j IS the
     edgeR NB dispersion, so published BCV values transfer directly.
   * Robinson & Smyth 2008, Biostatistics 9:321, doi:10.1093/biostatistics/kxm030
-    -- NB dispersion estimation, the Var = mu + phi mu^2 parameterisation.
+    -- NB dispersion estimation, the Var = mu + phi mu^2 parameterization.
   * Grun, Kester & van Oudenaarden 2014, Nat Methods 11:637, doi:10.1038/nmeth.2930
     -- the single-cell UMI noise model: Poisson sampling on top of biological
     variation, which is the decomposition Eq. (1) rests on.
@@ -423,7 +423,7 @@ def panel_c(ax) -> None:
 
     series = [
         # Colour by panel size, linestyle by interaction order. Four distinct
-        # colours put two yellows side by side; two colours x two dash patterns
+        # colors put two yellows side by side; two colors x two dash patterns
         # reads at a glance and spends less of the palette.
         (6000, 1, PLOT_PALETTE[0], "-", "main effects, $T=6{,}000$"),
         (6000, 2, PLOT_PALETTE[0], "--", "all pairs, $T=6{,}000$"),

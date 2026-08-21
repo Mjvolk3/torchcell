@@ -620,7 +620,7 @@ METHODS: list[Method] = [
     Method(
         # This row was "Gaisser 2024, 1,000,000 cells" and it was the rightmost
         # point in the landscape figure -- the anchor for "split-pool reaches a
-        # million cells". It does not belong on an axis labelled "cells profiled
+        # million cells". It does not belong on an axis labeled "cells profiled
         # in the published study", for two reasons found on re-reading the source.
         #
         # First, Gaisser et al. is a Nature Protocols article, and every one of

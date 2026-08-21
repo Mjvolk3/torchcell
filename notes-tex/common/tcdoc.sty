@@ -128,14 +128,21 @@
 \setlength{\cftsecnumwidth}{1.6em}
 \setlength{\cftsubsecnumwidth}{2.4em}
 
+%% Two rows, because they answer different questions. Row 1 is how finished a
+%% section is; row 2 is how well-sourced a claim is. Row 2 prints in the share
+%% view as well -- the provenance flags themselves do, so a key that explained
+%% them only in the draft view would leave a reader outside the group looking at
+%% an unexplained symbol.
 \newcommand{\tcstatuslegend}{%
-  \iftcdraft
-    {\footnotesize\color{tcgray}%
+  {\footnotesize\color{tcgray}%
+   \iftcdraft
      \status{final}~ready \quad
      \status{tent}~author-reviewed, keep stable \quad
-     \status{todo}~not done, agents may edit freely\par}%
-    \vspace{0.35\baselineskip}%
-  \fi}
+     \status{todo}~not done, agents may edit freely\par
+   \fi
+   \tcflagext~number not in our library mirror; verify at the linked source \quad
+   \tcflagsecond~taken from a review's summary table, not the primary paper\par}%
+  \vspace{0.35\baselineskip}}
 
 %% \tccontents -- legend, then the compact clickable contents. Use this instead
 %% of a bare \tableofcontents so every document in notes-tex/ opens the same way.
@@ -166,8 +173,17 @@
 %% precisely the failure this whole convention exists to prevent.
 %% ---------------------------------------------------------------------------
 \newcommand{\mirror}[1]{\citep{#1}}
-\newcommand{\external}[1]{{\footnotesize\color{tcgray}[external: #1]}}
-\newcommand{\secondhand}[1]{{\footnotesize\color{tcgray}[via #1, not primary]}}
+%% Provenance flags. These carry a COLOURED SYMBOL, matching the section
+%% stoplight, because a reader asked the fair question "specifically how is a
+%% claim flagged?" -- a grey bracket in running text answers that badly. The
+%% symbol is what makes a flag findable by scanning, and both appear in
+%% \tcstatuslegend so the key on page 1 covers provenance as well as status.
+%% Unlike \secstatus these render in BOTH views: an unverified number must not
+%% lose its flag just because the document left the group.
+\DeclareRobustCommand{\tcflagext}{{\normalfont\footnotesize\textcolor{styel}{\ding{115}}}}
+\DeclareRobustCommand{\tcflagsecond}{{\normalfont\footnotesize\textcolor{tcgray}{\ding{108}}}}
+\newcommand{\external}[1]{\tcflagext{\footnotesize\color{tcgray}\,[external: #1]}}
+\newcommand{\secondhand}[1]{\tcflagsecond{\footnotesize\color{tcgray}\,[via #1, not primary]}}
 
 %% \src{...} -- an inline pointer to the generating script, draft view only.
 \newcommand{\src}[1]{\iftcdraft{\footnotesize\color{tcgray}\textsc{src:}~\texttt{#1}}\par\fi}

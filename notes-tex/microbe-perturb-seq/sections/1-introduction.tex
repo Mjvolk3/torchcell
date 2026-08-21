@@ -12,16 +12,23 @@ Pooled CRISPR interference screens read out by single-cell RNA sequencing
 into a population, every cell is sequenced, and each cell's guide identity is
 recovered from its own transcriptome, so one experiment yields a matrix from
 perturbation to full transcriptional response rather than a list of fitness
-hits~\citep{dixitPerturbSeqDissectingMolecular2016}. For a group whose goal is a
-predictive model of cell state, this is the highest-density source of
-genotype-to-expression training data available, and unlike a growth screen it
-reports on perturbations that are fitness-neutral but transcriptionally loud.
-Two developments make the yeast version tractable now: a split-pool barcoding
-chemistry that removes the instrument from the cell-isolation
-step~\citep{brettnerUltraHighthroughputMassively2024}, and the first
-demonstration that pooled CRISPRi and single-cell transcriptomics can be joined
-in a microbe at all~\citep{brandnerPooledSinglecellCRISPRa2025}. This document
-asks what such a screen costs in \org{S.\ cerevisiae}, how many genes can be
-perturbed simultaneously before the measurement stops being interpretable, and
+hits~\citep{dixitPerturbSeqDissectingMolecular2016}. It is the highest-density
+source of genotype-to-expression training data available. A growth screen scores
+only perturbations that change fitness; a transcriptional readout also scores
+those that are fitness-neutral but transcriptionally loud --- though that
+advantage is a property of the \emph{single-cell} measurement, and it weakens to
+the extent that a design falls back on clonal populations to accumulate enough
+transcripts per genotype (\cref{sec:cells-per-pert}).
+
+Three developments have made the yeast version tractable. A split-pool barcoding
+chemistry removes the instrument from the cell-isolation
+step~\citep{brettnerUltraHighthroughputMassively2024}; pooled CRISPRi and
+single-cell transcriptomics have been joined in bacteria, the first demonstration
+in any microbe~\citep{brandnerPooledSinglecellCRISPRa2025}; and a genome-scale
+yeast deletion collection has been rebuilt so its genotype tag is transcribed and
+therefore visible to the
+assay~\citep{nadal-ribellesSinglecellResolvedGenotypephenotype2025}. What follows
+establishes what such a screen costs in \org{S.\ cerevisiae}, how many genes can
+be perturbed simultaneously before the measurement stops being interpretable, and
 which parameter is actually binding --- because the answer is not the one the
 published per-cell costs suggest.

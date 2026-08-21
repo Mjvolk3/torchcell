@@ -69,45 +69,65 @@ usually invisible to the assay, so a proxy has to be engineered.
 \label{sec:isolation}
 
 \notesec{Physical isolation (droplet)} A microfluidic device co-encapsulates one
-cell with one barcoded bead in an emulsion droplet. Every molecule tagged inside
-that droplet shares a barcode because the droplet wall keeps it that way. Cell
-loading follows Poisson statistics, so a low occupancy is used to keep
-\term{doublets} --- two cells in one droplet, reported as one --- acceptably
-rare; 10x quote about 8\% at 20{,}000 cells recovered. The cost of physical
-isolation is that you pay per channel of reagent, and it scales linearly with
-cells.
+cell with one barcoded bead in an emulsion droplet, which isolates every molecule
+that cell releases. Cell loading follows Poisson statistics, so a low occupancy
+is used to keep \term{doublets} --- two cells in one droplet, reported as one ---
+acceptably rare; 10x quote about 8\% at 20{,}000 cells recovered.
+
+Cost scales with cells, and the unit is worth being concrete about because it
+drives every droplet figure in \cref{sec:application}. Reagent is sold per
+\term{channel}: a Chromium chip carries several channels, each loaded and priced
+separately, and each recovers up to $\sim$20{,}000 cells. Two 20{,}000-cell
+recoveries are therefore two channels and twice the reagent cost --- there is no
+per-cell dial, only a count of channels. At the UIUC rate a genome-scale screen
+at 250 cells per target gene needs 137 channels at \$2{,}143 each
+(\cref{sec:budget}), which is why library preparation, not sequencing, dominates
+the droplet column of the budget.
 
 \notesec{Combinatorial split-pool barcoding} No isolation at all. Cells are
-fixed and permeabilised so they become their own reaction vessels: their
+fixed and permeabilized so they become their own reaction vessels: their
 membranes retain the cDNA while enzymes diffuse in. The population is
 distributed across a 96-well plate, a well-specific barcode is attached in situ,
 the cells are pooled, redistributed, and barcoded again. After $R$ rounds a cell
 carries an ordered barcode $\mathrm{BC}_1\Vert\dots\Vert\mathrm{BC}_R$, and with
 $96$ wells per round there are $96^R$ possible paths. Cells sharing round~1 are
-overwhelmingly likely to differ by round~3. The consequence for cost is the
-important one: \emph{you pay per well, not per cell}, so a plate costs the same
-whether it holds ten thousand cells or a million.
+overwhelmingly likely to differ by round~3.
+
+The cost consequence is the important one: \emph{you pay per well, not per cell}.
+A round of barcoding consumes one 96-well plate of oligo and one tube of enzyme
+whether ten thousand cells or a million pass through it, so the reagent line is
+flat in cell number and the only per-cell costs left are sequencing and the
+per-sublibrary prep. Brettner et al.'s barcoding reagent works out to
+\$0.005 per cell and Gaisser et al.'s per-run barcode cost is flat by
+construction (\cref{sec:startup}); the entire economic case for split-pool is
+this one line, and \cref{sec:cost-per-cell} tests whether it survives contact
+with rRNA waste and discarded cells.
 
 \notesec{The landscape between the two poles} Those are the extremes;
 \cref{fig:methods-map} places the six approaches actually used in yeast between
-them and pairs each with the library chemistry it can support. The organising fact
+them and pairs each with the library chemistry it can support. The organizing fact
 is that the isolation choice and the barcode choice are not independent. A method
 that pools cells before sequencing has to write identity into the molecule, and
-where it lands is fixed by which oligo carries it. A method that keeps one cell per
-well until the very end needs no cell barcode at all, because the Illumina sample
-index already identifies the well, and the well already identifies the cell.
+\emph{which} oligo carries the barcode fixes \emph{where on the transcript} it
+ends up --- an oligo-dT primer puts it at the 3$'$ end, a
+\term{template-switching oligo} at the 5$'$ end, Tn5 wherever it cuts. Plate
+methods keep one cell per well until the very end and need no cell barcode at
+all: the Illumina sample index identifies the well and the well identifies the
+cell. That index is a sample tag, not a \term{unique molecular identifier} --- it
+names which library a read came from, whereas a UMI distinguishes two molecules
+\emph{within} one cell, and a plate method still needs its own UMI to do that.
 
 \tcfigfit[0.96]{figures/scrnaseq-method-taxonomy.pdf}{%
   \textbf{A cell barcode is only needed where cells are pooled before sequencing,
   and most of the method landscape follows from that one fact.}
-  The yeast scRNA-seq landscape, reorganised from the review
+  The yeast scRNA-seq landscape, reorganized from the review
   of~\citep{nadal-ribellesRiseSinglecellTranscriptomics2024}.
   \textbf{(a)} What keeps one cell's molecules separate, ordered by throughput and
-  each labelled with the container that does the work. Combinatorial indexing is
+  each labeled with the container that does the work. Combinatorial indexing is
   set apart because it is not an isolation method at all: the fixed cell is its own
-  vessel. The band beneath splits the six by whether a per-cell phenotype is
-  recorded, which is what decides whether a method can be paired with a reporter or
-  a sorting gate.
+  vessel. The two dashed boxes beneath the row split the six by whether a per-cell
+  phenotype is recorded, which is what decides whether a method can be paired with
+  a reporter or a sorting gate.
   \textbf{(b)} The question that actually separates the library types, which is
   which molecule carries the cell barcode. There are four answers: the oligo-dT
   gives $3'$ libraries, the template-switch oligo gives $5'$, a barcode loaded into
@@ -119,10 +139,9 @@ index already identifies the well, and the well already identifies the cell.
   no barcode anywhere and is resolved instead by the sample index, one per well ---
   the same accounting that makes split-pool's sublibrary index barcode round~4
   (Sec.~\ref{sec:collisions}).
-  Redrawn and reorganised from the text and Table~1 of that review rather than
+  Redrawn and reorganized from the text and Table~1 of that review rather than
   reproduced from its figure, and with the orientation fixed $5'$ to $3'$
-  throughout, where the original mirrors its $3'$ panel. Drawn at true Nature print
-  size in \file{notes/assets/drawio/scrnaseq-method-taxonomy.drawio}.}{fig:methods-map}
+  throughout, where the original mirrors its $3'$ panel. Every number drawn by hand in this figure is sourced in \cref{tab:figure-provenance}.}{fig:methods-map}
 
 \subsection{Microbial Constraints on Single-Cell Chemistry\secstatus{todo}}
 \label{sec:why-hard}
@@ -133,18 +152,36 @@ three properties of a yeast cell break its assumptions.
 \begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
   \item \textbf{A cell wall.} Reagents cannot diffuse in and the cell cannot lyse
     on the mammalian schedule. Both method families solve this with zymolyase, a
-    $\beta$-glucanase, but at different points in the workflow --- and \emph{when}
-    you digest turns out to matter more than whether (Sec.~\ref{sec:jariani}).
+    $\beta$-glucanase. Digestion is not optional --- without it no reagent reaches
+    the transcriptome --- but \emph{when} it happens decides whether the cell
+    survives to be isolated, because a wall-less spheroplast is fragile and lyses
+    in a normal buffer. That timing is the whole of Jariani et al.'s contribution
+    (Sec.~\ref{sec:jariani}).
   \item \textbf{Roughly a fifth the mRNA.} A yeast cell holds on the order of
     $10^{4}$ mRNA molecules against $10^{5}$ for a mammalian cell
     (Sec.~\ref{sec:transcript-content}). Less input means fewer UMIs recovered,
     which is why per-cell yeast data always looks poor next to a mammalian
-    benchmark and why pooling cells is the measurement strategy rather than a
-    convenience.
+    benchmark. It is also why cells are pooled rather than read individually: at
+    a few hundred UMIs a single cell cannot estimate any gene's expression, but
+    the cells carrying one perturbation are biological replicates of the same
+    genotype, so summing their counts recovers that genotype's mean profile. The
+    single-cell step is doing \emph{assignment} --- which cell carries which
+    perturbation --- and the pooling is doing the measurement
+    (Sec.~\ref{sec:output-object}).
   \item \textbf{An overwhelming rRNA background.} About 85\% of a yeast cell's
-    RNA is ribosomal. Any capture chemistry that is not strictly poly(A)-selective
-    spends most of its reads on rRNA, and as Sec.~\ref{sec:application} shows,
-    that single fraction dominates the sequencing bill.
+    RNA is ribosomal. This is a property of the RNA pool, not an unavoidable
+    property of the library: ribosomal RNA is not polyadenylated, so an
+    oligo-dT primer does not prime on it and no separate depletion step is
+    needed. A strictly poly(A)-selective chemistry --- 10x's bead oligo, for
+    instance --- therefore never sees most of that 85\%. The problem arises only
+    when a protocol deliberately adds a non-selective primer. Brettner et al.\
+    prime with oligo-dT \emph{and} random hexamers, and hexamers anneal to
+    anything including rRNA, which is why their recovered transcripts are 93.7\%
+    rRNA while Jariani et al.'s oligo-dT-only droplet run is not
+    (Sec.~\ref{sec:rrna}). The hexamer is there to reach transcripts without a
+    poly(A) tail, which is what carries the method to bacteria; in yeast it is
+    largely a tax, and as Sec.~\ref{sec:application} shows that single fraction
+    dominates the sequencing bill.
 \end{itemize}
 
 \subsection{The Count Matrix and Estimand\secstatus{todo}}
@@ -152,7 +189,12 @@ three properties of a yeast cell break its assumptions.
 
 What comes out is a count matrix $\mathbf{Y}\in\mathbb{Z}_{\ge0}^{N\times G}$ over
 $N$ cells and $G$ genes, plus an assignment $\mathbf{Z}\in\{0,1\}^{N\times L}$ of
-cells to the $L$ library elements. Because per-cell depth is low, the analysis
+cells to the $L$ \emph{library elements} --- the $L$ distinct perturbations the
+library contains, one per guide RNA in a CRISPRi screen or one per barcoded
+deletion strain in a knockout collection. $Z_{i\ell}=1$ means cell $i$ was found
+to carry element $\ell$, and recovering $\mathbf{Z}$ at all is the problem
+Sec.~\ref{sec:guide-capture} is about; a cell whose element cannot be read is a
+row of zeros and is discarded. Because per-cell depth is low, the analysis
 does not treat a single cell as an observation of a perturbation's effect.
 Instead cells sharing a guide are pooled into a \term{pseudobulk} profile, and
 the estimand is

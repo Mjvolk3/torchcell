@@ -159,7 +159,7 @@ and of cost per \emph{usable} cell, which is \cref{sec:application}.
   \textbf{Published microbial single-cell RNA-seq trades cells against depth, but
   far more weakly than the diagonals suggest.} Cells profiled in each published
   study (\emph{x}) against mRNA UMIs recovered per cell (\emph{y}), organism in
-  italic beneath each label; marker colour is the isolation principle and filled
+  italic beneath each label; marker color is the isolation principle and filled
   markers denote a method with a perturbation readout. Across these ten studies
   cells span 3.6 orders of magnitude and depth only 1.6, and the largest study
   holds 3{,}726 times the cells of the smallest at just 9.8 times less depth ---
@@ -261,7 +261,7 @@ whole design is most sensitive to. It is measured here rather than assumed, from
 two datasets already in the library mirror: Kemmeren et al.'s single-deletion
 expression compendium \citep{kemmerenLargeScaleGeneticPerturbations2014} and
 Sameith et al.'s double-deletion compendium
-\citep{sameithHighresolutionGeneExpression2015}, both built locally and analysed
+\citep{sameithHighresolutionGeneExpression2015}, both built locally and analyzed
 below.
 
 %% SOURCE: experiments/019-perturb-seq-costing/scripts/effect_size_analysis.py
@@ -475,7 +475,7 @@ the wet lab and the budget.
 %% TODO: two construct-level questions remain, and both need bench input rather
 %% than literature:
 %%   - single plasmid carrying k guides vs k separate plasmids, and whether the
-%%     permeabilisation/split-pool readout can resolve both cases
+%%     permeabilization/split-pool readout can resolve both cases
 %%   - the KanMX promoter-swap idea for raising copy number
 
 \subsection{A Unified Design Equation\secstatus{todo}}
@@ -485,7 +485,7 @@ The preceding subsections give three rules that look independent: a shot-noise
 requirement (\cref{eq:power}), a 100-cell biological floor, and a combinatorial
 penalty for multiplexing. Sections~\ref{sec:cells-per-pert} and \ref{sec:multiplex}
 combine the first two by taking whichever is larger. They are not independent, and
-the max is an artefact of having modelled the count as Poisson.
+the max is an artefact of having modeled the count as Poisson.
 
 %% DONE(zotero, 2026-08-21) -- all eight works are now in the microbe-perturb-seq
 %% collection and carry numbered citations, so tables/t13-external-refs.tex and
@@ -500,7 +500,7 @@ the negative-binomial dispersion of McCarthy et
 al.\ \citep{mccarthyDifferentialExpressionAnalysis2012}, whose biological
 coefficient of variation is $\sqrt{\varphi_j}$ --- so published BCV values
 transfer directly as priors for the one input we cannot measure --- and the
-variance parameterisation itself is that of Robinson and
+variance parameterization itself is that of Robinson and
 Smyth \citep{robinsonSmallsampleEstimationNegative2008}. The decomposition into
 Poisson sampling on top of biological variation is the single-cell UMI noise model
 of Gr\"un et al.\ \citep{grunValidationNoiseModels2014}, and using a plain
@@ -584,7 +584,7 @@ assumption was wrong.
   Top row, the structure of \cref{eq:design}. (a) Cells per perturbation against
   depth, swept over biological overdispersion $\varphi$. Every $\varphi$ implies a
   cell floor, $n^{*}\to A\varphi$ as depth grows without bound, and those are the
-  dotted horizontals --- each labelled with the cell count it corresponds to, so
+  dotted horizontals --- each labeled with the cell count it corresponds to, so
   the swept parameter can be read directly as the quantity a screen is designed
   in. The marked point on each curve is the depth-sufficiency threshold
   $d^{*}=1/(\varphi p_j)$, where shot noise and biology contribute equally. Past $d^{*}$ the requirement is within a factor of
@@ -600,7 +600,7 @@ assumption was wrong.
   rule the earlier subsections use. They agree exactly in both limits and differ
   near the knee, where the piecewise form \emph{under}-estimates the requirement
   --- the regime both candidate platforms occupy. (c) \cref{eq:design-total}
-  against plex, coloured by panel size and dashed for pairwise. Raising $k$ moves
+  against plex, colored by panel size and dashed for pairwise. Raising $k$ moves
   every curve down by a similar factor; shrinking the panel from 6{,}000 targets
   to 200 moves the pairwise curve by $\sim$900$\times$. Restricting the panel, not
   multiplexing harder, is what brings interactions into reach.

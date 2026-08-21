@@ -25,6 +25,7 @@ from dotenv import load_dotenv
 import cost_data as CD
 import cost_model as CM
 import design_equation as DE
+import figure_sources as FS
 import glossary as GL
 import method_data as MD
 import read_structure as RS
@@ -144,10 +145,9 @@ def t0() -> None:
         # moving argument (written to the .lot), so the unoptioned form halts with
         # "\url used in a moving argument". Same fix as \tcfig in tcdoc.sty.
         r"\begingroup\captionsetup{type=table}",
-        r"\captionof{table}[]{Controlled vocabulary. Terms are grouped by what "
-        r"they are \emph{about} rather than alphabetised, so related ones read "
-        r"together; the last column links to the section that treats each in "
-        r"depth. Generated from "
+        r"\captionof{table}[]{Controlled vocabulary, alphabetical. The last column "
+        r"links to the section that treats each term in depth, so an entry is a "
+        r"pointer rather than a replacement for the argument. Generated from "
         r"\file{experiments/019-perturb-seq-costing/scripts/glossary.py}.}"
         r"\label{tab:glossary}",
         r"\endgroup",
@@ -173,38 +173,22 @@ def t0() -> None:
         r"\bottomrule",
         r"\endlastfoot",
     ]
-    first = True
-    for group, terms in GL.grouped():
-        # Group heading row. \addlinespace above (not below) so the heading
-        # binds visually to the block it introduces.
-        if not first:
-            lines.append(r"\addlinespace[3pt]")
-        first = False
-        # The group heading spans all three columns ON PURPOSE -- it introduces a
-        # block, it is not a Term cell. Two details make that read as deliberate
-        # rather than as text bleeding out of column one:
-        #   * p{} rather than l, so it is a bounded box that wraps, instead of a
-        #     natural-width line that merely happens to fit today;
-        #   * \\* rather than \\, which forbids a page break immediately after.
-        #     Without it longtable will happily leave a group heading stranded at
-        #     the foot of a page with its terms overleaf, which for a reference
-        #     table is worse than a slightly short page.
-        # Confined to the TERM column, not spanning all three. A banner across
-        # the full width reads as text bleeding out of column one and into the
-        # definitions; a heading sitting over the terms it introduces does not.
-        # Group names are kept short enough to fit on one line at this width.
-        lines.append(
-            r"\multicolumn{1}{@{}>{\raggedright\arraybackslash}p{0.21\textwidth}@{}}"
-            rf"{{\bfseries {esc(group)}}} & & \\*[1pt]"
-        )
-        for t in terms:
-            name = rf"\textbf{{{esc(t.term)}}}"
-            if t.abbrev:
-                # Abbreviation is NOT escaped: some are math ($k$).
-                name += rf"\newline {{\color{{tcgray}}({t.abbrev})}}"
-            lines.append(
-                rf"{name} & {t.definition} & \cref{{{t.where}}} \\"
-            )
+    # One flat alphabetical run, no group headings. A heading row leaves the
+    # Definition column empty, and the first entry under it then reads as though
+    # its definition has slipped a line -- flagged twice in review. See the
+    # ordering note in glossary.py for why teaching-order lost to lookup-order.
+    #
+    # \addlinespace between EVERY row, not just at group boundaries: at 36 rows
+    # of wrapped text the entries ran together and the eye could not find where
+    # one definition ended. 2.5 pt is about a third of a line at \footnotesize --
+    # enough to separate, not enough to noticeably lengthen the table.
+    for t in GL.alphabetical():
+        name = rf"\textbf{{{esc(t.term)}}}"
+        if t.abbrev:
+            # Abbreviation is NOT escaped: some are math ($k$).
+            name += rf"\newline {{\color{{tcgray}}({t.abbrev})}}"
+        lines.append(rf"{name} & {t.definition} & \cref{{{t.where}}} \\")
+        lines.append(r"\addlinespace[2.5pt]")
     lines += [r"\end{longtable}", r"\endgroup"]
     emit("t0-glossary", "\n".join(lines))
 
@@ -570,7 +554,7 @@ def t8() -> None:
         r"sequencing. \textbf{Protocol runs} is a count of wet-lab repetitions of "
         r"the barcoding workflow (split-pool) or of 10x channels, \emph{not} a cost. "
         r"All sequencing is priced on NovaSeq X 25B PE150 at the 8+ lane rate, the "
-        r"cheapest per-read option the core offers. Excludes labour, oligo pool "
+        r"cheapest per-read option the core offers. Excludes labor, oligo pool "
         r"synthesis, strain construction, and the $\sim$\$10{,}000 one-time "
         r"split-pool start-up."
     )
@@ -581,7 +565,7 @@ def t8() -> None:
             r"Cells per & Platform & Cells & Cells & Protocol & Read pairs & "
             r"Reagents & Sequencing & Total \\"
             "\n"
-            r"target gene & & analysed & sequenced & runs & (billions) & & &",
+            r"target gene & & analyzed & sequenced & runs & (billions) & & &",
             rows,
             r"Genome-scale CRISPRi Perturb-seq budget: 6{,}000 target genes, six "
             r"guides per gene, one environment, UIUC rates effective 2026-08-01.",
@@ -824,9 +808,72 @@ def t14() -> None:
 # it was invented to expose.
 
 
+
+# --- t15 (figure provenance) -------------------------------------------------
+def t15() -> None:
+    """Where every number drawn by hand in Figs. 1--3 comes from.
+
+    A matplotlib panel needs no such table: its script read the data. A draw.io
+    canvas has numbers typed into it, and nothing in the exported PDF connects
+    them to a source. This is that connection, and it is rendered rather than
+    kept in a comment so a reader can check a figure without our library.
+    """
+    lines = [
+        r"\begingroup\scriptsize",
+        r"\setlength{\LTleft}{0pt}\setlength{\LTright}{0pt}",
+        r"\begingroup\captionsetup{type=table}",
+        r"\captionof{table}[]{Provenance for every number drawn by hand in "
+        r"Figs.~\ref{fig:methods-map}--\ref{fig:droplet}. The matplotlib figures "
+        r"are omitted because their generating scripts read the data directly. A "
+        r"\textbf{note} marks a number that needed a judgement call or that was "
+        r"corrected in review; an entry with no citation key is not backed by the "
+        r"library mirror and should not be quoted. Generated from "
+        r"\file{experiments/019-perturb-seq-costing/scripts/figure_sources.py}.}"
+        r"\label{tab:figure-provenance}",
+        r"\endgroup",
+        r"\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.20\textwidth}"
+        r">{\raggedright\arraybackslash}p{0.15\textwidth}"
+        r">{\raggedright\arraybackslash}p{0.60\textwidth}@{}}",
+        r"\toprule",
+        r"Element & As drawn & Source \\",
+        r"\midrule",
+        r"\endfirsthead",
+        r"\multicolumn{3}{@{}l}{\scriptsize\itshape "
+        r"Table~\ref{tab:figure-provenance}, continued}\\",
+        r"\toprule",
+        r"Element & As drawn & Source \\",
+        r"\midrule",
+        r"\endhead",
+        r"\bottomrule",
+        r"\endlastfoot",
+    ]
+    cur = None
+    for r in FS.RECORDS:
+        if r.figure != cur:
+            cur = r.figure
+            lines.append(
+                r"\multicolumn{3}{@{}l}{\bfseries "
+                rf"{esc(cur)}.drawio}} \\*[1pt]"
+            )
+        src = rf"``{esc(r.quote)}''"
+        if r.citation_key:
+            loc = rf"\,\texttt{{(md:{r.line})}}" if r.line else ""
+            src += rf" \citep{{{r.citation_key}}}{loc}"
+        else:
+            src += r" \tcflagext"
+        if r.note:
+            src += rf" {{\color{{tcgray}}\emph{{Note:}} {esc(r.note)}}}"
+        lines.append(
+            rf"{esc(r.element)} & \texttt{{{esc(r.value)}}} & {src} \\"
+        )
+        lines.append(r"\addlinespace[2.5pt]")
+    lines += [r"\end{longtable}", r"\endgroup"]
+    emit("t15-figure-provenance", "\n".join(lines))
+
+
 def main() -> None:
     print(f"writing LaTeX tables -> {OUT}")
-    for fn in (t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t14):
+    for fn in (t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t14, t15):
         fn()
     print("done")
 

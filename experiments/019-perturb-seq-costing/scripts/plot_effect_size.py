@@ -42,7 +42,7 @@ RESULTS = osp.join(
     os.environ["EXPERIMENT_ROOT"], "019-perturb-seq-costing", "results"
 )
 
-# Display order and colour. Singles first, double last, so the eye reads
+# Display order and color. Singles first, double last, so the eye reads
 # "one perturbation, one perturbation, two" rather than by study.
 SERIES = [
     ("kemmeren2014_single", "Kemmeren, single", PLOT_PALETTE[0]),
@@ -94,10 +94,10 @@ def place_panel_letters(fig, axes, letters) -> None:
 def panel_a(ax) -> None:
     """Distribution of |log2 FC| over every gene in every strain."""
     h = pd.read_csv(osp.join(RESULTS, "effect_size_histogram.csv"))
-    for key, lab, colour in SERIES:
+    for key, lab, color in SERIES:
         d = h[h.dataset == key]
         mid = (d.lo + d.hi) / 2
-        ax.plot(mid, d.frac, lw=0.9, color=colour, label=lab)
+        ax.plot(mid, d.frac, lw=0.9, color=color, label=lab)
     for fold, lab in MARKS:
         x = math.log2(fold)
         ax.axvline(x, color="#666666", lw=0.4, ls=":")
@@ -134,17 +134,17 @@ def panel_b(ax) -> None:
     0.08--0.56 logged), so it is where a KDE is a fair summary at all.
     """
     df = pd.read_csv(osp.join(RESULTS, "effect_size_per_strain.csv"))
-    data, labels, colours = [], [], []
-    for key, lab, colour in SERIES:
+    data, labels, colors = [], [], []
+    for key, lab, color in SERIES:
         v = df[df.dataset == key]["n_resp_1.25x"].to_numpy(dtype=float)
         data.append(np.log10(np.clip(v, 1, None)))
         labels.append(lab.replace(", ", "\n"))
-        colours.append(colour)
+        colors.append(color)
 
     parts = ax.violinplot(data, positions=range(1, len(data) + 1), widths=0.72,
                           showextrema=False, showmedians=False)
-    for body, colour in zip(parts["bodies"], colours):
-        body.set_facecolor(colour)
+    for body, color in zip(parts["bodies"], colors):
+        body.set_facecolor(color)
         body.set_edgecolor("black")
         body.set_linewidth(0.5)
         body.set_alpha(1.0)
@@ -171,12 +171,12 @@ def panel_b(ax) -> None:
 def panel_c(ax) -> None:
     """The design curve: responders against the threshold you choose."""
     lad = pd.read_csv(osp.join(RESULTS, "effect_size_threshold_ladder.csv"))
-    for key, lab, colour in SERIES:
+    for key, lab, color in SERIES:
         d = lad[lad.dataset == key].sort_values("fold")
-        ax.plot(d.fold, d.median_responders, lw=0.9, color=colour, marker="o",
+        ax.plot(d.fold, d.median_responders, lw=0.9, color=color, marker="o",
                 ms=2.2, markeredgecolor="black", markeredgewidth=0.3, label=lab)
         ax.fill_between(d.fold, d.q25_responders, d.q75_responders,
-                        color=colour, alpha=0.18, linewidth=0)
+                        color=color, alpha=0.18, linewidth=0)
     for fold, lab in MARKS:
         ax.axvline(fold, color="#666666", lw=0.4, ls=":")
     ax.set_xscale("log")

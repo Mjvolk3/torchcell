@@ -20,11 +20,18 @@ Two rules that keep the glossary honest and are enforced by the emitter:
    plate size, the collision formula) name where the number comes from, same as
    every other number in this experiment folder.
 
-Ordering is by ``group`` then insertion order, so related terms read together
-rather than being scattered by alphabetisation. Alphabetical order is worse for
-a vocabulary section whose job is to teach the scheme -- the reader wants the
-four identifiers side by side, not "barcode collision" filed under B between
-"amplification" and "blocking strand".
+Ordering is ALPHABETICAL, and this reversed after the first review round. The
+table was grouped by theme on the theory that a vocabulary section should teach
+the scheme, with the four identifiers side by side. Two things went wrong.
+Grouping needs subheading rows, and a subheading leaves the Definition column
+blank, so the first entry under each heading reads as though its definition has
+slipped a line -- flagged twice in review. And a reader who meets "tagmentation"
+in a figure arrives here knowing the word and nothing else; they need lookup, not
+pedagogy. Teaching the scheme is what Sec. 2.1's prose is for. So: one flat
+alphabetical list, no subheadings, no blank Definition cells.
+
+``group`` is kept on each Term because it still records what a term is about,
+but it no longer drives rendering.
 """
 
 from __future__ import annotations
@@ -401,6 +408,75 @@ TERMS: list[Term] = [
         line=1012,
         quote="Use >=10% of PhiX spike-in.",
     ),
+    # --- added after the first review round. Every one of these appeared in a
+    # figure or in prose before it was defined anywhere, which is the specific
+    # failure a controlled vocabulary exists to prevent.
+    Term(
+        term="Template-switching oligo",
+        abbrev="TSO",
+        definition=(
+            "The oligo that adds the second PCR handle in 5$'$ chemistries, and "
+            "\\emph{not} the same mechanism as a linker. Reverse transcriptase, on "
+            "reaching the 5$'$ end of an mRNA, adds two or three non-templated C "
+            "residues; the TSO ends in rGrGrG, base-pairs with them, and the "
+            "enzyme switches template and copies the TSO onto the cDNA. The handle "
+            "is therefore written by the polymerase starting from the RNA's own "
+            "5$'$ end, which is why a TSO-delivered barcode marks the 5$'$ end of "
+            "the transcript while an oligo-dT-delivered one marks the 3$'$ end."
+        ),
+        where="sec:identifiers",
+    ),
+    Term(
+        term="Splint",
+        definition=(
+            "The same molecule as the linker strand, named for what it does: "
+            "bridge two DNA ends so ligase can seal the nick between them. "
+            "Ligation, not polymerization -- which is the whole difference from a "
+            "template-switching oligo, where a polymerase copies the oligo rather "
+            "than a ligase joining to it. Split-pool uses splints; droplet 5$'$ "
+            "chemistry uses template switching."
+        ),
+        where="sec:brettner",
+    ),
+    Term(
+        term="Tagmentation",
+        definition=(
+            "Fragmentation and adapter addition in one step, performed by the Tn5 "
+            "transposase. Tn5 is loaded with adapter duplexes, cuts double-stranded "
+            "DNA and ligates an adapter to each cut end in the same reaction, so it "
+            "replaces a separate shear-then-ligate workflow. Figures draw it as an "
+            "enzyme body rather than a sequence block, because it is a protein "
+            "acting on the molecule, not a piece of the molecule."
+        ),
+        where="sec:identifiers",
+    ),
+    Term(
+        term="Channel",
+        definition=(
+            "One microfluidic lane of a droplet chip, and the unit droplet reagent "
+            "is sold in. A Chromium chip runs several channels side by side; each "
+            "is loaded and priced independently and recovers up to $\\sim$20{,}000 "
+            "cells, so more cells means proportionally more channels and "
+            "proportionally more money. That is what ``cost scales with cells'' "
+            "means concretely. A split-pool plate has no equivalent -- it is priced "
+            "per plate however many cells pass through it."
+        ),
+        where="sec:jariani",
+    ),
+    Term(
+        term="Semipermeable capsule",
+        abbrev="SPC",
+        definition=(
+            "A hydrogel shell, pore cutoff around 30\\,nm, that confines cells and "
+            "their nucleic acids while letting enzymes diffuse in. A fourth "
+            "isolation principle alongside droplet, plate and split-pool: like a "
+            "droplet it is a physical container, but unlike a droplet it survives "
+            "buffer exchange, so a capsule can be washed, sorted and carried "
+            "through multi-step chemistry. Small molecules leak, which is what "
+            "rules it out for a metabolomic readout."
+        ),
+        where="sec:vision",
+    ),
 ]
 
 # Which group each term belongs to, by position in TERMS. Kept as explicit
@@ -416,22 +492,25 @@ GROUP_BOUNDS: dict[str, tuple[int, int]] = {
 }
 
 
-def grouped() -> list[tuple[str, list[Term]]]:
-    """TERMS split into (group, terms) in GROUPS order, validated."""
-    out = []
-    for g in GROUPS:
-        lo, hi = GROUP_BOUNDS[g]
-        out.append((g, TERMS[lo:hi]))
-    covered = sum(len(t) for _, t in out)
-    if covered != len(TERMS):
-        raise ValueError(
-            f"GROUP_BOUNDS covers {covered} terms but TERMS has {len(TERMS)} -- "
-            "a term was added without extending the bounds"
-        )
-    return out
+def alphabetical() -> list[Term]:
+    """TERMS sorted by term name, case- and markup-insensitively.
+
+    Sorting on the raw string would let a leading backslash or brace in some
+    future entry jump it to the top, so the key strips non-alphanumerics first.
+    Abbreviations are deliberately NOT sort keys: a reader looking up UMI finds
+    it under "Unique molecular identifier", which is what the See column and the
+    prose both call it.
+    """
+    def key(t: Term) -> str:
+        return "".join(ch for ch in t.term.lower() if ch.isalnum())
+
+    return sorted(TERMS, key=key)
 
 
 if __name__ == "__main__":
+    for _t in alphabetical():
+        print(f"  {_t.term}" + (f" ({_t.abbrev})" if _t.abbrev else ""))
+    raise SystemExit(0)
     for g, terms in grouped():
         print(f"\n{g}")
         for t in terms:

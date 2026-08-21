@@ -281,3 +281,115 @@ handling pending — confirm before counting them in this build.
 - Non-native products themselves (citramalate, 3-HP, TAL) are absent from *S. cerevisiae*
   data by construction — the strategy is native-precursor-pool prediction + heterologous
   conversion downstream, never predicting the non-native product directly.
+
+## 2026.08.06 — Zelezniak precursor coverage is RAGGED, and a future-work host paper
+
+The precursor/intermediate list itself, its provenance, Yeast9 ids, and the full coverage
+table now live in [[metabolism.central-carbon-precursors]]. This section keeps only what
+changes the plans written above.
+
+### The Zelezniak metabolome is not 95 × 50 — correct any claim that says so
+
+Earlier text in this note describes Zelezniak 2018 as "~95 kinase/phosphatase KO strains ×
+50-metabolite SRM panel" and credits it with "11 of the 12 central-carbon precursor nodes
+(all but succinyl-CoA)". The **metabolite identities are right**; the **implied
+strain × metabolite rectangle is not.** The released matrix
+(`metabolites_dataset.data_prep.tsv`) carries a `dataset` column splitting it into three
+sub-panels with very different strain coverage:
+
+| sub-panel | strains | metabolites |
+| --- | --: | --: |
+| 1 | 96 | 17 central-carbon |
+| 2 | 19 | 21 central-carbon (**the only one with acetyl-CoA**) |
+| 3 | 17 | 22 amino acids |
+
+Per-node strain counts for the 12 Domenzain precursors, measured directly off the raw file:
+
+| strains | precursor nodes |
+| --: | --- |
+| 96 | F6P, R5P, GAP, 3PG, PEP, pyruvate |
+| 55 | E4P |
+| 19 | **G6P, acetyl-CoA, 2-oxoglutarate, oxaloacetate** |
+| 0 | **succinyl-CoA** (and malonyl-CoA, never in the panel) |
+
+Two consequences that change plans already written above:
+
+- **Acetyl-CoA — the node the lipid/polyketide/TAL story depends on — has n = 19, not 95.**
+  Any epistasis or pool-prediction claim anchored on acetyl-CoA is being made on a fifth of
+  the panel.
+- **Arm A's own targets are in that same n = 19 tier.** Succinate 19, malate 19, citrate 19,
+  fumarate 18, AKG 19, OAA 19 — measured, but on 19 of the 96 strains. "Rank gene pairs with
+  positive epistasis on the succinate pool" therefore has 19 single-KO anchors to learn
+  from, not 95. This does not kill Arm A, but the power calculation has to be redone against
+  19 before any pair ranking is trusted, and the arm's framing in this note should be
+  corrected.
+- **Arm B's amino-acid pools get essentially nothing from Zelezniak (n = 17).** Valine and
+  tyrosine coverage is carried by **Mülleder 2016** (4,678 strains × 19 AAs); Zelezniak
+  should not be cited as a second source for those pools without the n attached.
+
+**The build is CORRECT and the amino acids ARE in it.** Scanning all 95 records of
+`metabolite_zelezniak2018`: **50 distinct metabolite keys** appear across the build —
+matching the 50 in the raw file — including all 20 amino-acid keys (`val-L`, `tyr-L`,
+`phe-L`, `orn`, `citr-L`, …). The loader is right not to branch on the `dataset` column;
+each strain simply carries whatever was measured for it.
+
+What the build actually is, is **RAGGED**, faithfully mirroring the ragged raw design.
+Metabolites per strain:
+
+| metabolites in record | strains |
+| --: | --: |
+| 13 | 9 |
+| 14 | 19 |
+| 16 | 23 |
+| 17 | 23 |
+| 24-25 | 5 |
+| 35-39 | 3 |
+| 46-50 | 13 |
+
+**Consequence for the canonical datasets table: `Zelezniak 2018 (metabolome) | vector (25)`
+is wrong.** 25 is neither the max (50), the min (13), nor the mode (16/17) — it is simply
+**the first record's length**. `build_supported_datasets_table.py:171` derives the Shape
+column as `phenotype_descriptor(read_first_record(d))`, which is only valid for rectangular
+datasets. Any ragged dataset gets whatever its first record happens to hold. Fix is either
+to report a range/mode for ragged phenotypes or to flag raggedness explicitly; either way
+the table's current entry should not be quoted as the panel size.
+
+Isomer caveat: `3PG` and `G6P` are reported as co-eluting channels
+(`3-Phospho-D-glycerate;D-Glycerate 2-phosphate`, `D-Glucose 6-phosphate;beta-D-glucose
+6-phosphate`, and a combined `G6P;F6P` channel), so those nodes are measured but not always
+resolved from their isomers. This matters for any per-node scoring.
+
+### Future work in OTHER HOSTS — compartmentalization as a lever we do not model
+
+**Ma Y, Shang Y, Stephanopoulos G. "Engineering peroxisomal biosynthetic pathways for
+maximization of triterpene production in *Yarrowia lipolytica*." *PNAS* 2024;121(5):
+e2314798121. doi:10.1073/pnas.2314798121**
+
+Relevant on three counts:
+
+1. **Host.** *Y. lipolytica* is the canonical oleaginous bioproduction host, so this sits on
+   the declared generalization axis (single-cell bioproduction hosts) rather than the
+   yeast → other-eukaryote axis we explicitly do not pursue.
+2. **The lever is SPATIAL, not stoichiometric.** They rebuild squalene biosynthesis in the
+   **peroxisome** instead of the cytosol, reporting a ~1,300-fold squalene increase, then
+   feed the peroxisomal acetyl-CoA pool two ways — converting cellular lipids to
+   peroxisomal acetyl-CoA, and installing an orthogonal acetyl-CoA route. Crucially this
+   lets triterpenoid production run **without** collapsing essential sterol biosynthesis,
+   because the competing pathways are in different compartments.
+3. **It is orthogonal to everything Domenzain's ecFactory can express.** ecFactory rewires
+   flux magnitudes through a fixed compartmentalization; relocating a pathway changes the
+   compartment topology itself. Our metabolic layer already carries compartment-resolved
+   species (Yeast9 `s_NNNN` ids are compartment-specific), so representing a
+   relocation is *possible* for us in a way flux-magnitude rewiring alone is not — but
+   nothing in the current model or datasets exercises it.
+
+Also the natural counter-argument to the acetyl-CoA/malonyl-CoA pool gap above: if the
+control point for TAL-like polyketides is *which compartment* the acetyl-CoA pool sits in,
+a single whole-cell pool measurement is the wrong observable regardless of how many strains
+it covers.
+
+**NOT yet mirrored or cited.** It is absent from `$DATA_ROOT/torchcell-library/`, from
+`notes/assets/bib/bib.bib`, and from `paper/nature-biotech/references.bib`. The
+bibliographic details above were resolved from a Google Scholar citation page, and the
+summary is a paraphrase of that page — **not** a verbatim abstract read from the PDF. Run
+it through the MinerU OCR/mirror pipeline and add the bib entry before citing it anywhere.

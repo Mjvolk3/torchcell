@@ -2,7 +2,7 @@
 id: n605e42sy6d1gov8or11uw7
 title: Experimental Plans
 desc: ''
-updated: 1784755927010
+updated: 1784765500106
 created: 1784755927010
 ---
 
@@ -22,7 +22,7 @@ vehicle is Fig-3 expression (YKO), but the framing generalizes.
 - Experiment root: `/home/michaelvolk/Documents/projects/torchcell/experiments/019-simb-multimodal/`
   - Harness: `scripts/train_cgt_multitask.py` (Hydra + Lightning + wandb; heads, masked loss, per-strain/per-gene Pearson, per-gene target standardization, EarlyStopping, scale+param logging)
   - Grid: `scripts/generate_expr_grid.py` → `conf/gh_expr_grid_000..287.yaml` + `results/grid_manifest.json`
-  - Launchers: `scripts/gh_cgt_multitask_array.slurm` (GilaHyper single-GPU array, `%4`); `scripts/gh_cgt_multitask.slurm` (4-GPU DDP, superseded for sniffing); IGB/Delta configs `conf/{igb_mmli,igb_cabbi,delta}_train_cgt_multitask_000.yaml`
+  - Launchers: `scripts/gh_cgt_multitask_array.slurm` (GilaHypefr single-GPU array, `%4`); `scripts/gh_cgt_multitask.slurm` (4-GPU DDP, superseded for sniffing); IGB/Delta configs `conf/{igb_mmli,igb_cabbi,delta}_train_cgt_multitask_000.yaml`
   - Builds: `queries/fig3_build.cql` · `fig3_core.cql` · `fig6_build.cql`; `scripts/query_fig3.py` / `query_fig6.py`
   - Outputs: `slurm/output/019-expr-grid_<jobid>_<task>.out`; `results/*.json`
 - Model (current): `/home/michaelvolk/Documents/projects/torchcell/torchcell/models/equivariant_cell_graph_transformer.py`

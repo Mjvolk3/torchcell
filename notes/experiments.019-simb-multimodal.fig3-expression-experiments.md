@@ -2,7 +2,7 @@
 id: 1s5o1u9a6fr5mcvmmtlxgo9
 title: Fig3 Expression Experiments
 desc: ''
-updated: 1784755626513
+updated: 1784791770263
 created: 1784755626513
 ---
 
@@ -119,7 +119,7 @@ PRIMARY levers, FULLY crossed (5 factors, 48 combos):
 - `num_transformer_layers` {2, 3}
 - target: raw vs per-gene-standardized
 - dataset: Kemmeren-only vs Kemmeren+Sameith
-- `graph_reg_lambda` {0.0, 0.001}
+[[- `graph_reg_lambda` {0.0, 0.001}|scratch.2026.07.23.022925.temp]]
 
 SECONDARY hyperparameter profiles (2, bundled - a screen, not a clean factorial):
 

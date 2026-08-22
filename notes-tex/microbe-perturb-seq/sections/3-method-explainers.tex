@@ -12,15 +12,15 @@ established option, is available as a service at UIUC, and recovers roughly five
 times more mRNA per cell.
 
 That depth gap sounds decisive and is not, because what sets precision is total
-UMIs per perturbation --- cells $\times$ depth --- not depth alone
+UMIs per perturbation -- cells $\times$ depth -- not depth alone
 (\cref{sec:landscape}). Five-fold less depth is exactly offset by five-fold more
 cells, and split-pool buys cells far more cheaply than droplet buys depth. Two
 things break the symmetry. Below roughly 100 cells per perturbation the
 biological floor binds and no amount of depth substitutes
 (\cref{sec:cells-per-pert}), so the trade is only available above that floor. And
 depth is not free of cells either: at split-pool's 410 UMIs per cell the
-measurement is firmly shot-noise limited, so rRNA depletion --- which raises
-usable depth without touching cell count --- is worth more than either
+measurement is firmly shot-noise limited, so rRNA depletion -- which raises
+usable depth without touching cell count -- is worth more than either
 (\cref{sec:rrna}). The comparison that settles it is cost per \emph{usable} cell,
 \cref{sec:cost-per-cell}, not depth.
 
@@ -36,7 +36,7 @@ $\sim$240{,}000 cells entered the chemistry; those were split into ten
 sublibraries, and the two that were sequenced returned $\sim$5{,}500 and
 $\sim$10{,}000 cells passing filter. Read that way the comparison with droplet is
 direct: one split-pool run barcodes an order of magnitude more cells than one
-Chromium channel's $\sim$20{,}000, and the sublibrary --- not the run --- is the
+Chromium channel's $\sim$20{,}000, and the sublibrary -- not the run -- is the
 unit that gets sequenced and priced. It is the reference protocol for the
 split-pool arm, so it is worth walking element by element: each step exists to
 solve a specific failure, and the reasons are what transfer to a new organism.
@@ -61,15 +61,15 @@ opposite failures: too little and reagents cannot get in, too much and the cell
 stops retaining its own cDNA and the whole single-cell premise collapses. Brettner et al.\ arrived at these values by screening 16 fixation/permeabilization combinations in
 parallel. That is itself an argument for the method: because a well's barcode is
 just another round-1 barcode, sixteen conditions are sixteen wells of one run,
-not sixteen runs. A droplet method has no equivalent --- cell and reagent meet
+not sixteen runs. A droplet method has no equivalent -- cell and reagent meet
 inside a droplet, so each condition needs its own channel, and the same screen is
 sixteen channels of reagent and sixteen library preps.
 
-\notesec{3. Round 1 --- barcoded reverse transcription} Cells are counted, diluted,
+\notesec{3. Round 1 -- barcoded reverse transcription} Cells are counted, diluted,
 and distributed into 48 wells of a 96-well plate at $\sim$5{,}000 cells per well.
 Neither number is a tuned optimum. The 5{,}000 falls out of the recipe: a
 25\,\textmu L reaction at the stated 200{,}000 cells/mL. The 48 is half the plate,
-and the paper gives no reason --- but it has a consequence worth carrying, because
+and the paper gives no reason -- but it has a consequence worth carrying, because
 round 1 then contributes 48 addresses rather than 96 and the realized barcode
 space for that run is $48\times96\times96=442{,}368$, half the $96^3$ the protocol
 can deliver. Collision rates in \cref{sec:collisions} are computed at the full
@@ -78,14 +78,13 @@ $96^3$; a run that loads half a plate doubles them.
 Each well contains a well-specific barcoded primer pair: a barcoded 15-dT primer
 and a barcoded random hexamer, both at 3\,\textmu M, with Maxima H Minus reverse
 transcriptase and 7.5\% PEG-6000. Both primers carry the same well barcode,
-$\mathrm{BC}_1$ --- neither is a \term{unique molecular identifier}. The random
+$\mathrm{BC}_1$ -- neither is a \term{unique molecular identifier}. The random
 hexamer is six random bases used to \emph{prime} anywhere on a transcript, not to
 label a molecule; the UMI arrives three rounds later, on the round-3 oligo, which
 is the only point at which molecules within a cell become distinguishable.
 
 PEG-6000 is a molecular crowder. It occupies volume that enzyme and template
-cannot, so their effective local concentration rises and the bimolecular steps
---- reverse transcription here, ligation later --- run faster than the absolute
+cannot, so their effective local concentration rises and the bimolecular steps -- reverse transcription here, ligation later -- run faster than the absolute
 concentrations would suggest. The trade is viscosity, and mixing does get worse;
 the protocol inherits the 7.5\% figure from mammalian SPLiT-seq and does not
 justify it, so it is a candidate for titration rather than a settled value.
@@ -93,8 +92,8 @@ justify it, so it is a candidate for titration rather than a settled value.
 The dual priming is a deliberate trade, and it is a \emph{lever} because it is a
 ratio rather than a fixed requirement. Oligo-dT captures polyadenylated mRNA
 specifically; random hexamers prime on anything, including rRNA, and buy better
-5$'$ coverage in exchange. Brettner et al.\ measure the consequence --- recovered
-transcripts are 93.7\% rRNA and only 5.75\% mRNA --- and say plainly what to do
+5$'$ coverage in exchange. Brettner et al.\ measure the consequence -- recovered
+transcripts are 93.7\% rRNA and only 5.75\% mRNA -- and say plainly what to do
 about it: ``Users who prefer to study mRNA should lower the percentage of rRNA
 recovered by decreasing the ratio of random hexamer''. The hexamer is not
 optional in general, since it is what carries the chemistry to transcripts with no
@@ -102,7 +101,7 @@ poly(A) tail and therefore to bacteria; but for a 3$'$-counting screen in yeast
 the 5$'$ coverage it buys is unused, which makes this ratio the first thing to
 retune (Sec.~\ref{sec:bottlenecks}).
 
-\notesec{4. Rounds 2 and 3 --- split-pool ligation} Cells are pooled, filtered
+\notesec{4. Rounds 2 and 3 -- split-pool ligation} Cells are pooled, filtered
 through a 15\,\textmu m strainer, and redistributed into a fresh 96-well plate.
 The filtration removes clumps, not contaminants: two cells stuck together take
 one path through the plates, receive one barcode and are read as a single cell,
@@ -112,7 +111,7 @@ pre-annealed to a \term{linker strand}, a splint that positions the barcode
 against the 5$'$ end of the existing cDNA so T4 DNA ligase can seal the nick.
 After 30\,min at 37\,\textdegree C a \term{blocking strand} is added, which
 outcompetes the linker and retires that well's barcode so it cannot participate
-in any later round --- without it, leftover oligos would scramble the barcode
+in any later round -- without it, leftover oligos would scramble the barcode
 sequence. Pool, split, repeat for round 3, then terminate with EDTA. Three rounds
 of 96 give $96^3=884{,}736$ distinct paths available to the protocol; the
 round-3 oligo also carries the
@@ -123,7 +122,7 @@ into sublibraries of 5{,}000--20{,}000, which can be frozen.
 
 \notesec{What a sublibrary is for} Two independent reasons, and the first is the
 one that is easy to miss. \emph{It is a fourth barcode.} Three rounds of 96 give
-884{,}736 addresses, and a run puts $\sim$240{,}000 cells through them --- enough
+884{,}736 addresses, and a run puts $\sim$240{,}000 cells through them -- enough
 that by the birthday argument of \cref{sec:collisions} a substantial fraction
 collide. Splitting into ten sublibraries does not change any cell's
 BC1--BC2--BC3 path, but it does mean two cells sharing a path are still told apart
@@ -133,7 +132,7 @@ space by ten, and \cref{tab:barcode} prices that trade directly against adding a
 fourth ligation round. \emph{And it is the unit of sequencing.} A sublibrary is
 what gets lysed, prepped, indexed and loaded, so it is the granularity at which
 cells are converted into reads and into money. Brettner et al.\ sequenced two of
-their ten and froze the rest --- which is how you match cells sequenced to the
+their ten and froze the rest -- which is how you match cells sequenced to the
 budget and the flow cell, and how a failed prep costs one tenth of a run instead
 of all of it.
 
@@ -147,13 +146,13 @@ round-3 oligo, so anything that fell out of the barcoding scheme is washed away
 rather than sequenced.
 
 \notesec{How the second handle is added} At this point the molecule has a PCR
-handle at one end only --- the one delivered on the round-3 oligo. The other end
+handle at one end only -- the one delivered on the round-3 oligo. The other end
 is the far end of the cDNA and carries nothing, so the molecule cannot yet be
 amplified. A \term{template-switching oligo} supplies the missing handle: when
 reverse transcriptase runs off the end of its template it adds two or three
 non-templated C residues, the TSO ends in rGrGrG and base-pairs with them, and the
 enzyme then copies the TSO. The handle is therefore \emph{written by the
-polymerase}, not ligated on --- which is what distinguishes it from every earlier
+polymerase}, not ligated on -- which is what distinguishes it from every earlier
 step in this protocol, where a splint held two ends together for a ligase. With
 both handles present the library is amplified, fragmented, adapter-ligated and
 index-PCRed; the i7 index is added at that last step and is a separate sequence
@@ -164,7 +163,7 @@ round 4 in all but name (Sec.~\ref{sec:collisions}).
 \textbf{What it delivers.} 100--600 genes and 120--700 mRNA UMIs per cell; 25--50\%
 of input cells recovered; barcode collisions well under 5\%. Reagent cost is about
 \$0.005 per cell, but 94\% of reads are rRNA and $\sim$75\% of sequenced cells are
-discarded --- so the cost that matters is 20$\times$ higher
+discarded -- so the cost that matters is 20$\times$ higher
 (Sec.~\ref{sec:application}).
 \end{keybox}
 
@@ -185,7 +184,7 @@ discarded --- so the cost that matters is 20$\times$ higher
   \cref{sec:brettner}~\citep{brettnerUltraHighthroughputMassively2024}, each arrow
   annotated with the chemistry that produces the
   next. Strands are drawn 5$'$ left to 3$'$ right, so the barcode block grows
-  leftward with each round while the cDNA body stays fixed --- the visual point
+  leftward with each round while the cDNA body stays fixed -- the visual point
   being that a cell's address is written in three installments, and a cell is
   identified by the \emph{path} it took through three 96-well plates rather than
   by ever having been alone in a well. That is the whole economic argument for the
@@ -194,7 +193,7 @@ discarded --- so the cost that matters is 20$\times$ higher
   easy to get wrong. At round 1 the mRNA template lies antiparallel above the
   tracked strand, showing BC1 as an unpaired 5$'$ overhang, and showing that the
   random hexamer rather than the poly-dT primer is the arm that carries the method
-  to transcripts without a poly(A) tail --- the single change that lets the same
+  to transcripts without a poly(A) tail -- the single change that lets the same
   chemistry work in
   bacteria~\citep{kuchinaMicrobialSinglecellRNA2021,gaisserHighthroughputSinglecellTranscriptomics2024}.
   At round 2 the linker strand base-pairs underneath
@@ -212,7 +211,7 @@ discarded --- so the cost that matters is 20$\times$ higher
 \notesec{Reading order follows assembly order} Each round ligates its barcode onto
 the free 5$'$ end of the growing strand, so later barcodes end up further from the
 cDNA. Read 2 therefore meets them newest-first: UMI, BC3, BC2, BC1, then cDNA. The
-reverse order is the intuitive guess and it is impossible --- BC1 arrives on the
+reverse order is the intuitive guess and it is impossible -- BC1 arrives on the
 round-1 RT primer, so it cannot sit further out than a barcode added afterwards.
 Gaisser et al.'s STARsolo
 offsets~\citep{gaisserHighthroughputSinglecellTranscriptomics2024} pin the layout
@@ -227,7 +226,7 @@ the change itself.
 
 The obstacle is that the standard 10x workflow lyses cells inside the droplet on a
 thermal schedule tuned for a membrane, and a yeast cell wall does not cooperate.
-The obvious fix --- spheroplast the cells first, then load them --- is what
+The obvious fix -- spheroplast the cells first, then load them -- is what
 Jackson and colleagues did, but it means feeding fragile wall-less cells through a
 microfluidic chip, where premature lysis releases mRNA into the shared buffer and
 contaminates every droplet downstream. Jariani et al.\ instead put zymolyase \emph{into the
@@ -240,7 +239,7 @@ happen in the same droplet, in that order, without the cell ever being vulnerabl
 outside one.
 
 The result was 6{,}118 cells across five conditions with median transcripts per
-cell of 528--1{,}261 --- roughly triple Brettner et al.'s per-cell recovery, because
+cell of 528--1{,}261 -- roughly triple Brettner et al.'s per-cell recovery, because
 oligo-dT-only capture on a bead is far more mRNA-selective than dT-plus-hexamer in
 situ. Library preparation cost fell to \$0.30 per cell against \$4.15 for the
 plate-based methods it replaced. Sequencing saturation was only 70--89\%, meaning
@@ -259,14 +258,14 @@ today, and Sec.~\ref{sec:application} uses the newer figures.
 %% numbers \external{} here. Panel c inherits whatever we decide.
 \tcfigfit[0.92]{figures/droplet-10x-barcoding.pdf}{%
   \textbf{Droplet methods buy cell identity with a physical container, which is what
-  lets the whole barcode arrive at once --- and what turns the yeast cell wall into a
+  lets the whole barcode arrive at once -- and what turns the yeast cell wall into a
   scheduling problem rather than a chemistry one.}
   The yeast-adapted 10x Chromium workflow of
   \cref{sec:jariani}~\citep{jarianiNewProtocolSinglecell2020}.
   \textbf{(a)} Cells, beads and oil meet at a junction and partition into droplets.
   Identity here is positional rather than sequential: every molecule tagged inside a
   droplet carries that droplet's bead barcode because the oil wall keeps it that way.
-  Loading follows Poisson statistics, so occupancy is kept deliberately low --- most
+  Loading follows Poisson statistics, so occupancy is kept deliberately low -- most
   droplets are empty, and the doublets that survive that choice are two cells reported
   as one. The container is bought per channel of reagent and its cost scales linearly
   with cells, which is precisely the economics \cref{fig:splitseq} avoids by never
@@ -275,7 +274,7 @@ today, and Sec.~\ref{sec:application} uses the newer figures.
   about \emph{ordering}: 1\,\textmu L of water in the reverse-transcription master mix
   is replaced with 100$\times$ zymolyase, so cells enter the chip walled and are
   digested only once they are already alone. The timing was verified rather than
-  assumed --- counts hold on ice and through the 6\,min of droplet generation, then
+  assumed -- counts hold on ice and through the 6\,min of droplet generation, then
   fall 200-fold within 20\,min at 53\,\textdegree C, by which point every cell is
   sealed in its own container. The alternative of spheroplasting before loading feeds
   wall-less cells through a microfluidic chip, and mRNA leaking from the ones that
@@ -284,7 +283,7 @@ today, and Sec.~\ref{sec:application} uses the newer figures.
   \textbf{(c)} The resulting molecule, drawn in the notation of \cref{fig:splitseq}
   so the two can be read against each other. The bead oligo \emph{is} the
   reverse-transcription primer, so as in split-pool the barcode arrives on the primer
-  and only the poly-dT tract anneals --- but the entire address, a 16\,nt bead barcode
+  and only the poly-dT tract anneals -- but the entire address, a 16\,nt bead barcode
   plus a 12\,nt UMI, is delivered in one piece instead of over three ligation rounds.
   Once the emulsion is broken the chemistry is bulk, and the read layout that results
   needs 118 cycles against split-pool's 160
@@ -309,7 +308,7 @@ computationally, rather than treating multi-guide cells as a defect to be filter
 out. It inverts the assumption underneath Sec.~\ref{sec:multiplex}, so it is worth
 stating precisely what is compressed and what is assumed.
 
-\notesec{What is compressed} Not the library --- the \emph{samples}. Their framing:
+\notesec{What is compressed} Not the library -- the \emph{samples}. Their framing:
 ``if the perturbation effects are sparse \dots\ then we can measure a small number
 of random composite samples (comprising `linear combinations' of individual sample
 phenotypes) and decompress those measurements to infer the effects of individual
@@ -332,19 +331,18 @@ assumption that the effect sizes of guides tend to combine additively in log
 expression space when multiple guides are present in the same cell.'' Interactions
 are not modeled in the first-order fit; they are argued to \emph{cancel}, because
 each cell gets a random combination, so individual interaction effects average out
-``so long as there are an equal number of positive and negative interactions'' ---
-a condition they justify by citing genome-wide second-order fitness interactions in
+``so long as there are an equal number of positive and negative interactions'' -- a condition they justify by citing genome-wide second-order fitness interactions in
 yeast. That is our own data domain, which makes the assumption more checkable for
 us than for them.
 
 \notesec{What it delivers, and what it does not} A stated 10-fold cost reduction
 for guide-pooling, with performance \emph{increasing} in guides per cell and the
-best results in cells carrying four or more --- they found no ceiling within the
+best results in cells carrying four or more -- they found no ceiling within the
 range tested and expect further gains from ``even higher efficiency with a greater
 degree of overloading.'' The honest limits are equally clear. Pairwise interactions
 were not recovered at all: ``none of these effects was significant in either screen
 due to insufficient power \dots\ even with a lax significance threshold
-$(q<0.5)$.'' And higher-order additivity is essentially untested --- ``very little
+$(q<0.5)$.'' And higher-order additivity is essentially untested -- ``very little
 is known about the structure of higher-order interaction effects and how they
 systematically combine within a cell.''
 
@@ -353,7 +351,7 @@ systematically combine within a cell.''
 design variable, and supplies the constant that Sec.~\ref{sec:multiplex} needs:
 $\sim$400 cells per pairwise interaction, four times the 100-cell first-order
 floor. But it recovers \emph{main effects} efficiently by assuming interactions
-cancel --- and interactions are what metabolic engineering needs. The two goals
+cancel -- and interactions are what metabolic engineering needs. The two goals
 pull in opposite directions, which is the tension Sec.~\ref{sec:multiplex}
 resolves.
 \end{keybox}
@@ -365,7 +363,7 @@ Roughly 85\% of a yeast cell's RNA is ribosomal, and Brettner et al.\ recover
 93.7\% rRNA against 5.75\% mRNA. Ninety-four of every hundred reads therefore
 buy ribosomal sequence. Since sequencing is 81\% of the split-pool budget
 (Sec.~\ref{sec:budget}), this single fraction is the largest cost lever in the
-document --- worth about \$99{,}000 at genome scale --- and it is the reason
+document -- worth about \$99{,}000 at genome scale -- and it is the reason
 depletion is treated here as a method component rather than an optimization.
 
 \notesec{Where it happens in the workflow} This is worth stating precisely,
@@ -406,8 +404,8 @@ transcripts per cell more than doubled from 54 to 115. But the same protocol in
 \org{P.\ putida} moved only 2.2\% to 10.4\%. Depletion efficiency clearly does
 not transfer between organisms for free, since the guide pool is designed against
 one species' rRNA and against the coverage non-uniformity of one protocol. Yeast
-should be better than either bacterium --- it starts at $\sim$85\% rRNA rather
-than $>$95\%, and its rRNA genes are fewer and better annotated --- but the
+should be better than either bacterium -- it starts at $\sim$85\% rRNA rather
+than $>$95\%, and its rRNA genes are fewer and better annotated -- but the
 achieved figure has to be measured, and it is the single most valuable number the
 pilot can return (Sec.~\ref{sec:bottlenecks}).
 
@@ -423,8 +421,8 @@ becomes balanced. No other change in this document moves the total by as much.
 Both families above assume the guide can be read out of the cell. In yeast, as our
 library stands, it cannot.
 
-Guide RNAs are transcribed from RNA polymerase III promoters --- \gene{SNR52}
-upstream, \gene{SUP4} terminator --- so they are neither capped nor polyadenylated
+Guide RNAs are transcribed from RNA polymerase III promoters -- \gene{SNR52}
+upstream, \gene{SUP4} terminator -- so they are neither capped nor polyadenylated
 and terminate on a T-tract. A 3$'$ poly(A) capture assay, which is what both
 Brettner et al.'s oligo-dT priming and 10x's bead oligo are, sees nothing. Our own MAGIC
 library uses exactly this architecture and reads out by plasmid amplicon
@@ -447,8 +445,7 @@ was going to propose.
 
 They rebuilt the yeast knockout collection so its genotype tag is
 \emph{transcribed}. In the classical YKOC a \gene{TEF1} promoter drives KanMX and
-two 20\,bp barcodes sit outside the transcript, which --- in their words ---
-``renders the genotype identity invisible to transcriptomic readouts.'' They
+two 20\,bp barcodes sit outside the transcript, which -- in their words -- ``renders the genotype identity invisible to transcriptomic readouts.'' They
 replaced the KanMX marker with \gene{URA3} and shortened the heterologous
 terminator from 262\,nt to 43\,nt, which brings the Downtag barcode inside the
 \gene{URA3} 3$'$UTR, and added a 5\,nt clone barcode after the stop codon. The
@@ -458,15 +455,15 @@ barcoded genotypes, of which more than 3{,}500 were recovered across 1{,}061{,}8
 profiled cells, 710{,}952 of them passing QC with a genotype assigned.
 
 Two numbers from it matter more than the rest. Genotype identity was assigned for
-\textbf{more than 71\% of cells} --- against the 21--25\% Brandner et al.\ reach
-in bacteria --- which is the parameter $q$ that governs everything in
+\textbf{more than 71\% of cells} -- against the 21--25\% Brandner et al.\ reach
+in bacteria -- which is the parameter $q$ that governs everything in
 \cref{sec:multiplex}, and it is three-fold better than the figure this document
 has been budgeting with. And it was not free: the assignment combines the
 transcriptome with a \emph{separate} one-step PCR amplicon library off the
 \gene{URA3} 3$'$UTR. Targeted enrichment is doing the work in both systems, so it
 should be costed as a second library, not as a primer.
 
-\notesec{What is still open for us} Their perturbation is a chromosomal deletion
+\notesec{What is still open} Their perturbation is a chromosomal deletion
 with the tag built into the deletion cassette. Ours is a plasmid-borne CRISPRi
 guide, so the tag has to ride on the plasmid, and the construct does not exist.
 The architecture transfers directly, and its bacterial counterpart is also
@@ -477,7 +474,7 @@ dedicated enrichment primer site, using an inert gene body as filler, and raised
 correct assignment from 5.5\% to 21--25\% by adding the enrichment primer at cDNA
 amplification. A design choice worth taking: make the barcode \emph{be} the
 guide's own 20\,nt spacer, placed in the 3$'$UTR of a Pol II reporter, so the
-guide-to-barcode mapping is known by construction --- that removes a linkage
+guide-to-barcode mapping is known by construction -- that removes a linkage
 sequencing run and a whole class of bookkeeping error.
 
 \begin{keybox}

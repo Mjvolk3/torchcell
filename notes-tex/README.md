@@ -7,6 +7,27 @@ plan, a thesis chapter draft.
 This is **not** `docs/` (Sphinx API documentation for the package) and **not**
 `paper/` (the Nature Biotechnology manuscript, which syncs to Overleaf).
 
+## Prose standard -- read before writing
+
+**[[writing-style-guide]]** (`notes/writing-style-guide.md`) is the canonical prose
+standard, and it applies here more than anywhere: these documents are the ones
+colleagues actually read end to end, and they were where every rule in it was
+learned. `make check` enforces the mechanical half -- American spelling, no
+em-dashes -- and fails the build on a violation. The half it cannot check is the
+one that matters most:
+
+> **Trailing restatement.** A clause appended to a sentence that re-says what the
+> sentence already said. *"Every molecule tagged inside that droplet shares a
+> barcode **because the droplet wall keeps it that way**."* The droplet already
+> did the work.
+
+A gate that tried to detect this ran at about one true positive in ten and was
+removed; see the note in `common/check_doc.py`. It is a manual read.
+
+Also enforced by eye, not by the gate: do not narrate the document ("This document
+asks..."), do not be self-referential about the group, and define every technical
+term in the controlled vocabulary before it appears in prose or a figure label.
+
 ## Pairing is by name
 
 ```

@@ -241,6 +241,83 @@ def check_figure_widths(srcs: dict[str, str]) -> list[tuple[str, str]]:
     return findings
 
 
+
+# --- style ------------------------------------------------------------------
+# The prose rules from notes/writing-style-guide.md that are mechanically
+# checkable. A rule that only lives in a guide gets broken; a rule the build
+# checks does not. Everything here EXCLUDES verbatim quotes (``...'') and %%
+# comments, because a source quote keeps its own spelling and a comment is not
+# prose -- Americanizing a quote would falsify it.
+
+BRITISH = [
+    "alphabetised", "permeabilised", "permeabilisation", "organising",
+    "organised", "colours", "colour", "instalment", "instalments", "optimised",
+    "optimisation", "optimisations", "optimise", "reorganised", "amortised",
+    "analysed", "labour", "catalogue", "normalised", "summarised",
+    "characterised", "centred", "behaviour", "modelled", "labelled",
+    "labelling", "parameterisation", "polymerisation",
+]
+
+# Narrating the document, and being self-referential about the group. Both were
+# flagged repeatedly in review; both are phrase-level and unambiguous.
+NARRATION = [
+    r"[Tt]his document (asks|works out|establishes|is a)",
+    r"[Tt]his (section|note) asks",
+    r"the intended readers?",
+]
+SELF_REF = [
+    r"\bfor us\b", r"\bwe (currently )?prefer\b", r"\bour goal\b",
+    r"for a group whose", r"\bwe like\b",
+]
+
+
+def _prose_only(t: str) -> str:
+    """Blank out %% comments and ``...'' quotes, preserving offsets."""
+    t = re.sub(r"(?m)^%%.*$", lambda m: " " * len(m.group(0)), t)
+    t = re.sub(r"``.*?''", lambda m: " " * len(m.group(0)), t, flags=re.S)
+    return t
+
+
+def check_style(srcs: dict[str, str]) -> list[tuple[str, str]]:
+    """Enforce notes/writing-style-guide.md where it is machine-checkable."""
+    out: list[tuple[str, str]] = []
+    n_brit = n_dash = 0
+    for name, raw in srcs.items():
+        t = _prose_only(raw)
+        for m in re.finditer(r"---", t):
+            # LaTeX em dash. House style is a spaced en dash or a comma.
+            ln = t[: m.start()].count("\n") + 1
+            out.append(("ERROR", f"em-dash in {name}:{ln} -- use ` -- ` or a comma"))
+            n_dash += 1
+        for w in BRITISH:
+            for m in re.finditer(rf"\b{w}\b", t):
+                ln = t[: m.start()].count("\n") + 1
+                out.append(("ERROR", f"British spelling {w!r} in {name}:{ln}"))
+                n_brit += 1
+        for pat in NARRATION:
+            for m in re.finditer(pat, t):
+                ln = t[: m.start()].count("\n") + 1
+                out.append(("WARN", f"document narration in {name}:{ln}: "
+                                    f"{m.group(0)!r} -- state the finding instead"))
+        for pat in SELF_REF:
+            for m in re.finditer(pat, t):
+                ln = t[: m.start()].count("\n") + 1
+                out.append(("WARN", f"self-reference in {name}:{ln}: {m.group(0)!r}"))
+        # Trailing restatement is NOT checked mechanically, and the attempt is
+        # worth recording so nobody retries it. The shape is a sentence-final
+        # clause that re-says the main clause, and the obvious discriminator --
+        # "adds no number and no cross-reference" -- flags ordinary causal
+        # explanation instead ("...bursting, because of cell-cycle phase"). It
+        # ran at roughly one true positive in ten, and a gate that cries wolf
+        # gets ignored, which costs more than the rule it was enforcing. It is a
+        # judgement call; the guide teaches the test, a human applies it.
+    tot = n_brit + n_dash
+    print(f"{GRY}STYLE{RST}      {tot} hard violation(s) "
+          f"(spelling, em-dash); trailing restatement is a manual read -- "
+          f"see notes/writing-style-guide.md")
+    return out
+
+
 def main() -> int:
     doc = sys.argv[1] if len(sys.argv) > 1 else "main"
     log = _read(f"{doc}.log")
@@ -254,6 +331,7 @@ def main() -> int:
     findings += check_figure_widths(srcs)
     findings += check_citations(srcs)
     findings += check_provenance(srcs)
+    findings += check_style(srcs)
     findings += check_formatting(log)
     findings += check_refs(log)
 

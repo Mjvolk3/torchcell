@@ -15,7 +15,7 @@ This section fixes the vocabulary. Everything after it assumes these terms.
 \Cref{tab:glossary} is the reference: every term the document uses in a
 technical sense, with a link to the section that treats it. It is worth a first
 pass rather than only being consulted, because the naming is genuinely
-treacherous --- four distinct things in this document are called a ``barcode'',
+treacherous -- four distinct things in this document are called a ``barcode'',
 two different things are called an ``index'', and the difference between cells
 per \emph{target gene} and cells per \emph{guide} is a factor of six that changes
 every budget in \cref{sec:application}. The prose below then develops the four
@@ -39,16 +39,16 @@ pre-synthesised on a bead; in split-pool methods it is \emph{built up} across
 several rounds of well-specific ligation, so the barcode records the trajectory
 a cell took through a series of plates (Sec.~\ref{sec:brettner}).
 
-\notesec{Unique molecular identifier (UMI)} A short random sequence --- 10--12 nt
-in the methods here --- added to each cDNA molecule \emph{before} any
+\notesec{Unique molecular identifier (UMI)} A short random sequence -- 10--12 nt
+in the methods here -- added to each cDNA molecule \emph{before} any
 amplification. Two reads sharing a CB, a gene, and a UMI are copies of one
 original mRNA; two reads sharing CB and gene but differing in UMI are two
 molecules. Collapsing on the UMI converts read counts, which are distorted by
 PCR efficiency, into molecule counts, which are the actual measurement. The
 count of distinct UMIs recovered from a cell is the single most important
 quality number in this document: it is the denominator of every statistical
-argument in Sec.~\ref{sec:limits}. \term{UMI collision} --- two distinct
-molecules of the same gene drawing the same UMI --- is negligible at yeast
+argument in Sec.~\ref{sec:limits}. \term{UMI collision} -- two distinct
+molecules of the same gene drawing the same UMI -- is negligible at yeast
 expression levels, since a 10 nt UMI has $4^{10}\approx10^{6}$ states against at
 most a few thousand molecules of any one gene.
 
@@ -71,14 +71,13 @@ usually invisible to the assay, so a proxy has to be engineered.
 \notesec{Physical isolation (droplet)} A microfluidic device co-encapsulates one
 cell with one barcoded bead in an emulsion droplet, which isolates every molecule
 that cell releases. Cell loading follows Poisson statistics, so a low occupancy
-is used to keep \term{doublets} --- two cells in one droplet, reported as one ---
-acceptably rare; 10x quote about 8\% at 20{,}000 cells recovered.
+is used to keep \term{doublets} -- two cells in one droplet, reported as one -- acceptably rare; 10x quote about 8\% at 20{,}000 cells recovered.
 
 Cost scales with cells, and the unit is worth being concrete about because it
 drives every droplet figure in \cref{sec:application}. Reagent is sold per
 \term{channel}: a Chromium chip carries several channels, each loaded and priced
 separately, and each recovers up to $\sim$20{,}000 cells. Two 20{,}000-cell
-recoveries are therefore two channels and twice the reagent cost --- there is no
+recoveries are therefore two channels and twice the reagent cost -- there is no
 per-cell dial, only a count of channels. At the UIUC rate a genome-scale screen
 at 250 cells per target gene needs 137 channels at \$2{,}143 each
 (\cref{sec:budget}), which is why library preparation, not sequencing, dominates
@@ -109,11 +108,11 @@ them and pairs each with the library chemistry it can support. The organizing fa
 is that the isolation choice and the barcode choice are not independent. A method
 that pools cells before sequencing has to write identity into the molecule, and
 \emph{which} oligo carries the barcode fixes \emph{where on the transcript} it
-ends up --- an oligo-dT primer puts it at the 3$'$ end, a
+ends up -- an oligo-dT primer puts it at the 3$'$ end, a
 \term{template-switching oligo} at the 5$'$ end, Tn5 wherever it cuts. Plate
 methods keep one cell per well until the very end and need no cell barcode at
 all: the Illumina sample index identifies the well and the well identifies the
-cell. That index is a sample tag, not a \term{unique molecular identifier} --- it
+cell. That index is a sample tag, not a \term{unique molecular identifier} -- it
 names which library a read came from, whereas a UMI distinguishes two molecules
 \emph{within} one cell, and a plate method still needs its own UMI to do that.
 
@@ -136,8 +135,7 @@ names which library a read came from, whereas a UMI distinguishes two molecules
   \textbf{(c)} Where the tags end up, with all three library types drawn on one
   column grid in one orientation so they can be compared: $3'$ and $5'$ differ only
   in which end of the transcript sits beside the barcode, while full-length carries
-  no barcode anywhere and is resolved instead by the sample index, one per well ---
-  the same accounting that makes split-pool's sublibrary index barcode round~4
+  no barcode anywhere and is resolved instead by the sample index, one per well -- the same accounting that makes split-pool's sublibrary index barcode round~4
   (Sec.~\ref{sec:collisions}).
   Redrawn and reorganized from the text and Table~1 of that review rather than
   reproduced from its figure, and with the orientation fixed $5'$ to $3'$
@@ -152,8 +150,8 @@ three properties of a yeast cell break its assumptions.
 \begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
   \item \textbf{A cell wall.} Reagents cannot diffuse in and the cell cannot lyse
     on the mammalian schedule. Both method families solve this with zymolyase, a
-    $\beta$-glucanase. Digestion is not optional --- without it no reagent reaches
-    the transcriptome --- but \emph{when} it happens decides whether the cell
+    $\beta$-glucanase. Digestion is not optional -- without it no reagent reaches
+    the transcriptome -- but \emph{when} it happens decides whether the cell
     survives to be isolated, because a wall-less spheroplast is fragile and lyses
     in a normal buffer. That timing is the whole of Jariani et al.'s contribution
     (Sec.~\ref{sec:jariani}).
@@ -165,15 +163,15 @@ three properties of a yeast cell break its assumptions.
     a few hundred UMIs a single cell cannot estimate any gene's expression, but
     the cells carrying one perturbation are biological replicates of the same
     genotype, so summing their counts recovers that genotype's mean profile. The
-    single-cell step is doing \emph{assignment} --- which cell carries which
-    perturbation --- and the pooling is doing the measurement
+    single-cell step is doing \emph{assignment} -- which cell carries which
+    perturbation -- and the pooling is doing the measurement
     (Sec.~\ref{sec:output-object}).
   \item \textbf{An overwhelming rRNA background.} About 85\% of a yeast cell's
     RNA is ribosomal. This is a property of the RNA pool, not an unavoidable
     property of the library: ribosomal RNA is not polyadenylated, so an
     oligo-dT primer does not prime on it and no separate depletion step is
-    needed. A strictly poly(A)-selective chemistry --- 10x's bead oligo, for
-    instance --- therefore never sees most of that 85\%. The problem arises only
+    needed. A strictly poly(A)-selective chemistry -- 10x's bead oligo, for
+    instance -- therefore never sees most of that 85\%. The problem arises only
     when a protocol deliberately adds a non-selective primer. Brettner et al.\
     prime with oligo-dT \emph{and} random hexamers, and hexamers anneal to
     anything including rRNA, which is why their recovered transcripts are 93.7\%
@@ -189,7 +187,7 @@ three properties of a yeast cell break its assumptions.
 
 What comes out is a count matrix $\mathbf{Y}\in\mathbb{Z}_{\ge0}^{N\times G}$ over
 $N$ cells and $G$ genes, plus an assignment $\mathbf{Z}\in\{0,1\}^{N\times L}$ of
-cells to the $L$ \emph{library elements} --- the $L$ distinct perturbations the
+cells to the $L$ \emph{library elements} -- the $L$ distinct perturbations the
 library contains, one per guide RNA in a CRISPRi screen or one per barcoded
 deletion strain in a knockout collection. $Z_{i\ell}=1$ means cell $i$ was found
 to carry element $\ell$, and recovering $\mathbf{Z}$ at all is the problem
@@ -208,7 +206,7 @@ the estimand is
 the log fold change of gene $j$ under element $\ell$ against non-targeting
 controls. Two things follow, and they shape every later section. Single-cell
 resolution is used for \emph{assignment and quality control}, not for the effect
-estimate --- so the relevant precision question is how many cells share a guide,
+estimate -- so the relevant precision question is how many cells share a guide,
 not how deep any one cell was read. And $\boldsymbol{\Theta}$ is dense: a
 genome-scale screen in one condition produces of order $6000\times6000$
 coefficients, a directed map from every perturbation to every transcriptional

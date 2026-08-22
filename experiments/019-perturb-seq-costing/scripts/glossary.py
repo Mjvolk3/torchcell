@@ -156,7 +156,7 @@ TERMS: list[Term] = [
     Term(
         term="Combinatorial split-pool barcoding",
         definition=(
-            "No isolation at all. Fixed, permeabilised cells act as their own "
+            "No isolation at all. Fixed, permeabilized cells act as their own "
             "reaction vessels; the population is split across a plate, barcoded "
             "in situ, pooled, and re-split. After $R$ rounds of 96 wells there "
             "are $96^{R}$ possible paths. Cost scales per well, not per cell, "

@@ -451,7 +451,7 @@ def t5() -> None:
             r"Item & Cost & Scaling",
             rows,
             r"Brettner 2024 SPLiT-seq line items \texttt{(paper.md:183)}. The "
-            r"start-up cost is one purchase order --- three plates of custom IDT "
+            r"start-up cost is one purchase order -- three plates of custom IDT "
             r"oligos, good for 215 runs.",
             "tab:brettner-items",
         ),
@@ -796,7 +796,7 @@ def t14() -> None:
                  r"$\sim$5.6 relative to the two-fold assumption. Doubling the "
                  r"perturbation count roughly doubles the responder count at "
                  r"1.25$\times$ and trebles it at 2$\times$, without shifting the "
-                 r"median response --- more perturbations make a cell noisier, not "
+                 r"median response -- more perturbations make a cell noisier, not "
                  r"its individual effects larger. Generated from "
                  r"\file{experiments/019-perturb-seq-costing/scripts/effect_size_analysis.py}.",
         ),

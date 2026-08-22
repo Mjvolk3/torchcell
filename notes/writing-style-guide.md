@@ -6,10 +6,27 @@ updated: 1787355864950
 created: 1787355864950
 ---
 
-Prose standards for everything written for a human reader: the Nature Biotech
-manuscript, `notes-tex/` documents, figure captions, and table notes. Read this
-before writing or revising prose. Record every new preference here, under its
-topical heading, so the rule outlives the conversation that produced it.
+Prose standards for anything written to be read. Record every new preference here,
+under its topical heading, so the rule outlives the conversation that produced it.
+
+## Scope -- two tiers, on purpose
+
+Applying every rule everywhere would be wrong. A working note IS for the group, so
+"we decided X" is correct in one and a violation in the other.
+
+**Mechanical tier -- everywhere.** Dendron notes in `notes/*.md`, commit messages,
+code comments, docstrings, the manuscript, `notes-tex/`. No em-dashes, American
+spelling, verbatim quotes unaltered. No audience-dependent exception exists for
+these, and `make check` fails a `notes-tex/` build on them.
+
+**Audience tier -- anything a colleague reads end to end.** The manuscript,
+`notes-tex/` documents, figure captions, table notes, and any Dendron note written
+for someone else. Adds: no trailing restatement, no narrating the document, no
+self-reference about the group, define-before-use. These relax for scratch
+thinking, where getting the idea down beats phrasing it well.
+
+The mechanical tier is checked. The audience tier is a read -- see the note on why
+the trailing-restatement detector was removed.
 
 ## 2026.08.21 - Established from the first review round of microbe-perturb-seq
 

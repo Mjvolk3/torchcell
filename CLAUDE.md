@@ -186,9 +186,22 @@ quote + `sha256` + section/line, and never guessed.
 ## Writing Style -- Read Before Any Prose
 
 **Canonical prose standard: [[writing-style-guide]]** (`notes/writing-style-guide.md`).
-Read it before writing or revising any prose meant for a human reader -- the Nature
-Biotech manuscript, `notes-tex/` documents, figure captions, table notes. Record every
-new preference there, under its topical heading, rather than in a conversation.
+Read it before writing or revising prose. Record every new preference there, under its
+topical heading, rather than in a conversation.
+
+**Scope, and it is deliberately two-tier.** Blanket-applying every rule to working
+notes would be wrong, because a working note IS for the group and "we decided X" is
+correct there rather than a violation.
+
+- **Everywhere, including Dendron notes in `notes/*.md`, commit messages and code
+  comments:** no em-dashes, American spelling, and verbatim quotes stay verbatim.
+  These are mechanical and have no audience-dependent exception.
+- **Anything a colleague reads end to end** -- the manuscript, `notes-tex/` documents,
+  figure captions, table notes: additionally no trailing restatement, no narrating the
+  document, no self-reference about the group, and define-before-use.
+
+`make check` enforces the mechanical tier for `notes-tex/` documents and fails the
+build on a violation. Nothing enforces it for `notes/*.md`; that is on you and me.
 
 The rules that get broken most often, in short:
 
@@ -319,6 +332,12 @@ Do not `git add` a `scratch.*` note; if one is already tracked, flag it rather t
 committing it.
 
 ### Creating New Dendron Notes
+
+**Prose in a note still follows [[writing-style-guide]]'s mechanical tier:
+no em-dashes, American spelling, verbatim quotes unaltered.** The audience-facing
+rules (no trailing restatement, no document narration) apply when the note is
+written to be read by someone else, and relax for scratch thinking.
+
 
 **For NEW notes in `notes/` directory, use `dendron-cli` instead of Write tool to ensure proper frontmatter:**
 

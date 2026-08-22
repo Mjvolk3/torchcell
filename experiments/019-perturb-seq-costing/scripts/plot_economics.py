@@ -142,7 +142,10 @@ def panel_b(ax) -> None:
     """Cost stack at 250 cells/gene, 6,000 genes, one environment."""
     design = CM.ScreenDesign(cells_per_gene=250)
     budgets = [CM.budget_for(design, p) for p in CM.PLATFORMS]
-    labels = ["SPLiT-seq\npublished", "SPLiT-seq\n+rRNA depl.", "10x\nChromium X"]
+    # The asterisk is the same marker the budget tables use for a projected row,
+    # and it has to be IN the panel: a screenshotted figure loses the caption.
+    labels = ["SPLiT-seq\npublished", "SPLiT-seq\n+rRNA depl.", "10x\nChromium X",
+              "10x + scifi\npreindex.*"]
     x = np.arange(len(budgets))
     w = 0.55
 

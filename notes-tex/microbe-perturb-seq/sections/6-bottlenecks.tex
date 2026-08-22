@@ -46,7 +46,10 @@ runs at Brettner et al.'s loading; at 20{,}000 cells per well the same screen is
 four runs, because a run would barcode $\sim$1.9\,M cells instead of
 $\sim$480{,}000. That is $\sim$13 weeks of skilled bench work reduced to
 $\sim$4, which is most of the labor argument for droplet
-(Sec.~\ref{sec:budget}). It is also the cheapest experiment on this list.
+(Sec.~\ref{sec:budget}). It is also the cheapest experiment on this list. The
+comparison it is measured against has moved: the droplet alternative is 18
+preindexed channels rather than 137 plain ones, so the bench-time gap this
+number closes is against 18, not 137.
 
 \pfstep{4. Barcode space} A fourth ligation round is necessary at genome scale and
 pays for itself within one run (Sec.~\ref{sec:collisions}). Its only cost is
@@ -62,6 +65,19 @@ combinatorial cloning problem into a Poisson loading problem.
 
 \pfstep{6. Effect size} Sec.~\ref{sec:effect-size} is unresolved and everything in
 Sec.~\ref{sec:cells-per-pert} inherits its uncertainty.
+
+\pfstep{7. Preindexed droplet, as a hedge rather than a plan} The item that would
+most change the ranking above is the one nothing on this list depends on.
+Preindexing takes the droplet route from $6.3\times$ the cost of depleted
+split-pool to $1.9\times$ (Sec.~\ref{sec:budget}), which converts droplet from a
+platform we have ruled out on price into a live fallback if items 1 or 3 fail.
+It ranks last because it is the least evidenced: items 1--6 are quantities to be
+measured on a chemistry that has been run in yeast, whereas this is a chemistry
+that has never been run in any microbe, and the same in-cell reverse
+transcription it needs is what item 3 is already testing. That ordering is worth
+stating rather than leaving implicit, because the cost figure is attractive
+enough to invite reordering it, and the figure and the evidence run opposite
+ways.
 
 \subsection{Staged Execution Plan\secstatus{todo}}
 \label{sec:staging}
@@ -82,6 +98,14 @@ Sec.~\ref{sec:cells-per-pert} inherits its uncertainty.
     \$3{,}180 NovaSeq lane, and there is no earlier checkpoint -- Brettner et al. is
     explicit that cDNA traces and library concentration do not predict barcoding
     success.
+  \item \textbf{Answer the preindexing question from data step 2 already
+    produces}, at no additional cost. Whether a fixed, wall-digested yeast cell
+    reverse transcribes in situ and then survives handling is measured by the
+    round-1 step of the split-pool pilot; what step 2 does not answer is whether
+    such a cell survives the pressures of a microfluidic chip, which is one
+    channel to test and is the only part of Sec.~\ref{sec:scifi} with no yeast
+    precedent at all. Worth running only if step 1 or step 3 goes badly, because
+    it buys a fallback rather than advancing the main route.
   \item \textbf{Single-guide pilot} on a focused sub-library, at the 100-cell
     floor.
   \item \textbf{Two-guide screen} on the focused metabolic sub-library, where

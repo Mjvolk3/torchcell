@@ -477,6 +477,68 @@ TERMS: list[Term] = [
         ),
         where="sec:vision",
     ),
+    Term(
+        term="Preindexing",
+        definition=(
+            "Writing a cell barcode into a cell's transcripts \\emph{before} the "
+            "cell reaches an isolation step, by reverse transcribing in situ with "
+            "a well-specific barcoded primer. It is the split-pool move performed "
+            "once, and its consequence is that cell identity no longer has to be "
+            "established by the container, so several preindexed cells can share "
+            "one droplet and still be told apart."
+        ),
+        where="sec:scifi",
+    ),
+    Term(
+        term="Combinatorial fluidic indexing",
+        abbrev="scifi",
+        definition=(
+            "Preindexing on a plate followed by droplet capture, so a cell's "
+            "identity is the pair (round1 well, round2 droplet). Neither round "
+            "identifies a cell on its own. It composes the two isolation "
+            "principles rather than choosing between them, and it is what removes "
+            "the Poisson loading limit from droplet throughput."
+        ),
+        where="sec:scifi",
+    ),
+    Term(
+        term="Droplet overloading",
+        definition=(
+            "Deliberately loading a droplet generator far above the "
+            "doublet-avoiding concentration. Ruinous without preindexing, since "
+            "every multiply-occupied droplet becomes an unresolvable doublet; the "
+            "operating point with it, since those droplets resolve into several "
+            "usable cells. Measured at 95.5\\% droplet occupancy and 9.6 nuclei "
+            "per droplet at 100-fold overloading."
+        ),
+        where="sec:scifi",
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+        line=26,
+        quote=(
+            "up to a droplet fill rate of 95.5% and an average of 9.6 nuclei per "
+            "droplet (1.53 million nuclei per channel)"
+        ),
+    ),
+    Term(
+        term="Uninformative sequencing cycle",
+        definition=(
+            "A sequencing cycle spent reading constant sequence -- a ligation "
+            "overhang, a primer binding site, a Tn5 mosaic end -- rather than "
+            "barcode or transcript. Paid for at the same rate as an informative "
+            "one, so it is a direct multiplier on the sequencing bill. Two thirds "
+            "of SPLiT-seq's composite-barcode cycles are of this kind."
+        ),
+        where="sec:sequencing",
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+        line=51,
+        quote=(
+            "the presence of constant ligation overhangs, primer binding sites "
+            "and/or Tn5 mosaic ends in multiround combinatorial indexing renders "
+            "a substantial proportion of sequencing cycles uninformative "
+            "(sci-RNA-seq v.1: 42% uninformative; sci-RNA-seq v.3 and sci-Plex: "
+            "13% uninformative; SPLiT-seq: 67% uninformative)"
+        ),
+    ),
 ]
 
 # Which group each term belongs to, by position in TERMS. Kept as explicit

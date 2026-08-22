@@ -24,6 +24,13 @@ usable depth without touching cell count -- is worth more than either
 (\cref{sec:rrna}). The comparison that settles it is cost per \emph{usable} cell,
 \cref{sec:cost-per-cell}, not depth.
 
+A third option removes the choice. Preindexing writes a split-pool barcode into
+the cell on one plate and then loads it into a droplet, so the two families
+compose and the droplet's cost structure changes rather than its chemistry
+(\cref{sec:scifi}). It is treated here as a candidate on the same footing as the
+other two in every respect except evidence: it has never been run in a microbe,
+so every figure that carries it marks it as a projection.
+
 \subsection{Yeast-Optimized SPLiT-seq (Brettner et al., 2024)\secstatus{todo}}
 \label{sec:brettner}
 
@@ -293,8 +300,111 @@ today, and Sec.~\ref{sec:application} uses the newer figures.
   Composed from the protocol as described in \cref{sec:jariani}, not traced from any
   published figure. Every number drawn by hand in this figure is sourced in \cref{tab:figure-provenance}.}{fig:droplet}
 
-%% The provenance table for the three hand-drawn figures sits here, after the
-%% last of them, so all three captions can point back at one place.
+\subsection{Combinatorial Fluidic Indexing (Datlinger et al., 2021)\secstatus{todo}}
+\label{sec:scifi}
+
+scifi-RNA-seq \citep{datlingerUltrahighthroughputSinglecellRNA2021} composes the two
+families above rather than choosing between them, and the composition removes the
+constraint that sets droplet throughput.
+
+\notesec{Why Poisson stops binding} A droplet run holds occupancy low so that
+doublets stay rare, which leaves most droplets empty and most of the reagent in a
+channel unused: at the maximum recommended load of 15{,}300 nuclei per channel,
+16.4\% of droplets held one or more nuclei, an average of 0.2 each. That accounting
+holds only while a droplet has to establish cell identity by itself. If the cells
+arriving at the chip already carry distinct barcodes, several can share a droplet and
+still be resolved. Datlinger et al.\ loaded 100-fold over the recommendation,
+1.53 million nuclei in a single channel, and measured a 95.5\% fill rate at an average
+of 9.6 nuclei per droplet, with the emulsion still monodisperse and the device
+unclogged.
+
+\notesec{Two rounds, in two different places} Permeabilized cells or nuclei are
+preindexed on one 384-well plate, where a well-specific barcoded oligo-dT primer
+reverse transcribes in situ and writes the round1 barcode, a UMI and a sequencing
+primer site into the cDNA while it is still inside the cell. The cells are then pooled
+and overloaded into the Chromium system, where a gel bead delivers the round2 barcode.
+The join is a ligation onto the 5$'$-phosphate of the reverse-transcription primer,
+directed by a bridge oligonucleotide: the splint chemistry of
+Sec.~\ref{sec:brettner}, performed inside a droplet rather than in a well. Round1 is
+shared by every cell from one well and round2 by every cell in one droplet, so only
+the pair identifies a cell.
+
+\notesec{What was actually recovered} Occupancy is not yield, and the two are
+easy to conflate. The yield figure is a separate experiment: 383{,}000 preindexed
+nuclei into one channel returned \textbf{151{,}788} single-cell transcriptomes
+through quality control, a 15-fold increase over a standard Chromium run. That is
+a recovery, not a capacity claim, which is the distinction that demoted the
+Gaisser row from \cref{fig:landscape}. Depth did not pay for it: UMI counts and
+unique-read fractions showed no downward trend in droplets holding up to 15
+nuclei, so the reagent in one droplet is not the limiting factor over the range
+that matters.
+
+\notesec{What is modeled, and is not a measurement} The barcode-space argument is
+of a different kind. With the 737{,}280 round2 barcodes supplied by the Chromium
+ATAC reagents, a zero-inflated Poisson analysis plus Monte Carlo simulation put 1
+million resolvable transcriptomes within reach of 96 round1 wells. Nothing was
+recovered at that scale. The figure is a modeled bound and is drawn as one in
+\cref{fig:scifi}, and only the 151{,}788 is carried into the budget.
+
+\notesec{Two rounds beat three, on sequencing cost} The comparison against
+multiround combinatorial indexing is not only about handling. Because the round1
+barcode is placed by the reverse-transcription primer and round2 by a single
+ligation, every cycle spent on the composite cell barcode reads barcode. Multiround
+protocols interleave constant sequence -- ligation overhangs, primer binding sites,
+Tn5 mosaic ends -- between their barcode blocks, so a measured 42\% of those cycles
+are \term{uninformative} in sci-RNA-seq v1, 13\% in sci-RNA-seq v3 and sci-Plex,
+and \textbf{67\% in SPLiT-seq}. Those cycles are bought at the same price as
+informative ones. This is a charge against the chemistry of
+Sec.~\ref{sec:brettner}, and \cref{sec:sequencing} works out what it is worth.
+
+\notesec{What it changes in the budget, and the step nobody has run} Reagent is
+sold per \term{channel}, and per-channel reagent is 81\% of the droplet column of
+\cref{tab:budgets}. Preindexing divides that charge across 7.6 times as many
+cells at the UIUC baseline of 20{,}000 recovered per channel, which is the only
+lever available that reduces droplet cost without touching sequencing. Carried
+through the model, a 250-cells-per-gene screen falls from 137 channels and
+\$364\,k to 18 channels and \$109\,k (\cref{sec:budget}).
+
+Two cautions come before that number is used. Every demonstration is human or
+mouse -- cell lines, primary T cells, isolated nuclei -- and no yeast or bacterial
+run is reported. Preindexing also requires reagents to reach the transcriptome in
+situ, which in yeast means the fixation and wall digestion of
+Sec.~\ref{sec:brettner} rather than the in-droplet spheroplasting of
+Sec.~\ref{sec:jariani}. \textbf{Hypothesis (untested):} the two halves compose,
+since in-cell reverse transcription on fixed yeast and droplet capture of yeast
+are each established separately. No measurement of scifi-RNA-seq in any microbe
+exists in the literature held here, which is why the row is marked as a
+projection everywhere it appears and why \cref{sec:staging} adds a checkpoint for
+it rather than assuming it.
+
+\tcfigfit[0.96]{figures/scifi-fluidic-indexing.pdf}{%
+  \textbf{Pre-indexing the cells before they reach the chip converts droplet
+  overloading from the dominant failure mode into the operating point.}
+  Combinatorial fluidic indexing of
+  \cref{sec:scifi}~\citep{datlingerUltrahighthroughputSinglecellRNA2021}.
+  \textbf{(a)} The two loading regimes, counted under a light microscope. At the
+  recommended load most droplets are empty, so most of a channel's reagent is spent on
+  nothing; at 100-fold overloading almost every droplet is occupied and holds several
+  nuclei. In an ordinary droplet run every one of those right-hand droplets is a
+  discarded doublet, and pre-indexing is the single change that converts them into
+  usable cells. The droplet cartoons are schematic; the percentages and means are the
+  measured values.
+  \textbf{(b)} Where the two barcode rounds are written. The plate writes round1 into
+  the cell by reverse transcription; the droplet ligates round2 on top, by the same
+  splint chemistry SPLiT-seq uses in \cref{fig:splitseq}. Neither round identifies a
+  cell alone, and the barcode-space figure beside them is a modeled bound rather than
+  a measurement.
+  \textbf{(c)} The assembled molecule in the notation of \cref{fig:splitseq} and
+  \cref{fig:droplet}. Everything left of the ligation junction was written in the
+  plate, before the cells met a droplet, which is what makes the grammar identical to
+  split-pool while the second barcode is supplied by a container.
+  Composed from the protocol as described in \cref{sec:scifi}, not traced from any
+  published figure. Every number drawn by hand in this figure is sourced in
+  \cref{tab:figure-provenance}. Drawn at true Nature print size in
+  \file{notes/assets/drawio/scifi-fluidic-indexing.drawio}.}{fig:scifi}
+
+%% The provenance table for the four hand-drawn figures sits here, after the
+%% last of them, so all four captions can point back at one place.
 \medskip
 \input{tables/t15-figure-provenance}
 \medskip

@@ -84,6 +84,7 @@ def loaded_table(cells_per_gene: int = 250) -> pd.DataFrame:
         rows.append(
             {
                 "platform": plat.name,
+                "projected": plat.projected,
                 "usable_cells": b.usable_cells,
                 "sequenced_cells": b.sequenced_cells,
                 "usable_fraction": plat.usable_fraction,

@@ -100,6 +100,11 @@ class Platform(BaseModel):
     # the barcode tax.
     phix_fraction: float = 0.0
     valid_barcode_fraction: float = 0.80
+    # True when at least one parameter is a projection rather than a measurement
+    # in yeast. A field rather than a naming convention, because every table that
+    # renders this platform has to mark it, and a marker derived from the name
+    # would be lost the moment a label is shortened for a caption.
+    projected: bool = False
     notes: str = ""
 
     @property
@@ -171,7 +176,52 @@ TENX = Platform(
     notes="No instrument purchase; core runs it. CRISPR screening is a $263 add-on.",
 )
 
-PLATFORMS = [SPLITSEQ_PUBLISHED, SPLITSEQ_DEPLETED, TENX]
+# ---- 10x Chromium with scifi preindexing, PROJECTED --------------------------
+# A single-variable counterfactual, and it is built that way on purpose. Every
+# parameter is copied verbatim from TENX except `cells_per_batch`, which becomes
+# Datlinger et al.'s MEASURED recovery of 151,788 transcriptomes from one
+# overloaded channel. So the row answers exactly one question -- what does the
+# droplet budget look like if a channel goes further, and nothing else changes --
+# rather than blending a throughput measurement with guesses about yeast depth.
+#
+# Three assumptions are carried, and none of them is measured in yeast:
+#   1. DEPTH IS HELD AT THE 10x VALUE. scifi's own comparison says it "did not
+#      reach the performance of the Chromium workflow on fresh cells", so 2,000
+#      UMIs per cell is the optimistic end. What supports holding it rather than
+#      discounting it by a guessed factor is that complexity did NOT fall as
+#      droplets filled: no trend down to 15 nuclei per droplet. The overloading
+#      itself is therefore not what would cost depth; in-cell RT on a fixed,
+#      wall-digested yeast cell might be, and that is unmeasured.
+#   2. THE CHANNEL PRICE IS THE RNA-LIBRARY PRICE. scifi runs on Chromium ATAC
+#      reagents, which are not on the UIUC rate card at all, so the 3' RNA
+#      channel rate stands in for them. Substituted, not sourced.
+#   3. NO YEAST RUN EXISTS. Every scifi number is from human or mouse material.
+#      Preindexing needs reagents to reach the transcriptome in situ, which in
+#      yeast means the fixation and wall digestion of Sec. 3.1.
+# The startup term is the one addition: a 96-well plate of barcoded oligo-dT RT
+# primers, priced at Brettner et al.'s three-plate purchase divided evenly, the
+# same per-plate figure Sec. 5.4 already uses to cost a fourth ligation round.
+SCIFI_ROUND1_PLATE_USD = CD.BRETTNER_ITEMS[0].usd / 3.0
+
+TENX_SCIFI_PROJECTED = Platform(
+    name="10x + scifi preindexing (projected)",
+    mrna_umis_per_cell=TENX.mrna_umis_per_cell,
+    mrna_read_fraction=TENX.mrna_read_fraction,
+    usable_fraction=TENX.usable_fraction,
+    reads_per_cell=TENX.reads_per_cell,
+    cells_per_batch=MD.SCIFI_RECOVERED_LARGE_RUN,
+    cost_per_batch_usd=TENX.cost_per_batch_usd,
+    cells_per_sublibrary=None,
+    startup_usd=SCIFI_ROUND1_PLATE_USD,
+    projected=True,
+    notes=(
+        "PROJECTED, not measured in yeast. Only cells_per_batch differs from the "
+        "10x row: 151,788 recovered per overloaded channel (Datlinger 2021) "
+        "against 20,000 at the UIUC baseline."
+    ),
+)
+
+PLATFORMS = [SPLITSEQ_PUBLISHED, SPLITSEQ_DEPLETED, TENX, TENX_SCIFI_PROJECTED]
 
 
 # =============================================================================
@@ -446,6 +496,7 @@ def main() -> None:
                 {
                     "cells_per_gene": cells_per_gene,
                     "platform": b.platform,
+                    "projected": plat.projected,
                     "usable_cells": b.usable_cells,
                     "sequenced_cells": b.sequenced_cells,
                     "n_batches": b.n_batches,

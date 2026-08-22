@@ -1,0 +1,258 @@
+<mxfile host="app.diagrams.net" agent="claude-code" version="24.7.17">
+  <diagram name="scifi-fluidic-indexing" id="scifiFluidicIndexing">
+    <mxGraphModel dx="1400" dy="1000" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="703" pageHeight="510" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ================================================================
+             TRUE-SIZE CANVAS. 100 draw.io units = 1 inch. 0..698 x 0..~490.
+             Arial; 8.5 units = 6.1 pt (Nature 6 pt min); title 12.
+             Palette = PLOT_PALETTE / PLOT_PALETTE_FILL slots 1..6; segment
+             colors match Figs. 1..3: orange transcript/cDNA, red round1
+             barcode, purple round2 / gel bead, blue UMI, yellow droplet/oil,
+             gray handle/adapter.
+             En dashes are the real character (&#8211;), never a double hyphen:
+             a canvas does not typeset "&#45;&#45;" the way LaTeX does.
+             Every drawn number has a record in
+             experiments/019-perturb-seq-costing/scripts/figure_sources.py
+             Panel c column grid:
+               round2 150..212 | PBS 212..272 | round1 272..322 | UMI 322..366
+               dT 366..400 | cDNA 400..556 | i7+library 556..624
+             ================================================================ -->
+
+        <mxCell id="title" value="scifi-RNA-seq: pre-index the cells and droplet overloading stops being a failure mode" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="698" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="Combinatorial fluidic indexing of Datlinger et al. 2021. Poisson loading limits a droplet run only while each droplet must hold exactly one cell. Barcoding the cells first removes that requirement, so the same Chromium channel can be loaded a hundredfold harder. Colors and the 5&#8242;-to-3&#8242; convention follow Figs. 2 and 3." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="17" width="698" height="24" as="geometry" />
+        </mxCell>
+
+        <!-- ============================= PANEL a ============================= -->
+        <mxCell id="pa" value="a" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="48" width="10" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="pah" value="What overloading a Chromium channel actually does, counted under a microscope" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="13" y="48" width="520" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="paNote" value="Both regimes ran without clogging the device. The droplets are drawn schematically; the counts are the measured means. In the separate yield run, 383,000 loaded nuclei returned 151,788 transcriptomes from one channel." style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="62" width="112" height="76" as="geometry" />
+        </mxCell>
+
+        <mxCell id="r1h" value="maximum recommended load &#8211; 15,300 nuclei per channel" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="118" y="68" width="284" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="r2h" value="100&#215; overloaded &#8211; 1.53 million nuclei per channel" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="414" y="68" width="284" height="14" as="geometry" />
+        </mxCell>
+
+        <mxCell id="dA" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;" vertex="1" parent="1">
+          <mxGeometry x="132" y="90" width="42" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="dB" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;" vertex="1" parent="1">
+          <mxGeometry x="182" y="90" width="42" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="dBn" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="196" y="104" width="13" height="13" as="geometry" />
+        </mxCell>
+        <mxCell id="dC" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;" vertex="1" parent="1">
+          <mxGeometry x="232" y="90" width="42" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="dD" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;" vertex="1" parent="1">
+          <mxGeometry x="282" y="90" width="42" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="aStat1" value="16.4% occupied; mean 0.2 nuclei per droplet." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="332" y="90" width="70" height="46" as="geometry" />
+        </mxCell>
+
+        <mxCell id="eA" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;" vertex="1" parent="1">
+          <mxGeometry x="428" y="90" width="42" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="eA1" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="436" y="98" width="12" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="eA2" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;" vertex="1" parent="1">
+          <mxGeometry x="450" y="100" width="12" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="eA3" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1">
+          <mxGeometry x="442" y="112" width="12" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="eB" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;" vertex="1" parent="1">
+          <mxGeometry x="478" y="90" width="42" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="eB1" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" vertex="1" parent="1">
+          <mxGeometry x="486" y="98" width="12" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="eB2" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="500" y="102" width="12" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="eB3" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1">
+          <mxGeometry x="492" y="114" width="12" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="eC" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;" vertex="1" parent="1">
+          <mxGeometry x="528" y="90" width="42" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="eC1" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;" vertex="1" parent="1">
+          <mxGeometry x="536" y="98" width="12" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="eC2" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" vertex="1" parent="1">
+          <mxGeometry x="550" y="100" width="12" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="eC3" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="542" y="112" width="12" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="eD" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;" vertex="1" parent="1">
+          <mxGeometry x="578" y="90" width="42" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="eD1" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1">
+          <mxGeometry x="586" y="98" width="12" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="eD2" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="600" y="102" width="12" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="eD3" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;" vertex="1" parent="1">
+          <mxGeometry x="592" y="114" width="12" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="aStat2" value="95.5% fill; mean 9.6 nuclei per droplet." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="628" y="90" width="70" height="46" as="geometry" />
+        </mxCell>
+
+        <mxCell id="aKey" value="In an ordinary droplet run every one of the right-hand droplets is a discarded doublet. Pre-indexing is what converts them into usable cells." style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#B85450;dashed=1;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="118" y="142" width="580" height="16" as="geometry" />
+        </mxCell>
+
+        <!-- ============================= PANEL b ============================= -->
+        <mxCell id="pb" value="b" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="176" width="10" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="pbh" value="Two rounds, two places: the plate writes round1 into the cell, the droplet ligates round2 on top" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="13" y="176" width="560" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="pbNote" value="Round1 is shared by every cell from one well, round2 by every cell in one droplet. Neither alone identifies a cell." style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="198" width="112" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s1" value="&lt;b&gt;1. Pre-index in a plate.&lt;/b&gt; Permeabilized cells or nuclei get a well-specific barcoded oligo-dT primer and reverse transcription happens in situ, on one 384-well plate. The primer also carries the UMI and the sequencing primer site." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;align=left;verticalAlign=top;spacingLeft=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="118" y="196" width="176" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ab1" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="298" y="227" as="sourcePoint" /><mxPoint x="316" y="227" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="s2" value="&lt;b&gt;2. Pool and overload.&lt;/b&gt; Cells from every well are mixed and loaded so that most droplets receive several of them. Because the cells already differ by round1, a shared droplet is no longer a collision." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;align=left;verticalAlign=top;spacingLeft=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="320" y="196" width="176" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ab2" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="500" y="227" as="sourcePoint" /><mxPoint x="518" y="227" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="s3" value="&lt;b&gt;3. Ligate round2 in the droplet.&lt;/b&gt; A Chromium gel bead delivers the droplet-specific barcode, joined to the 5&#8242;-phosphate of the RT primer by a thermostable ligase over a bridge oligonucleotide." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;align=left;verticalAlign=top;spacingLeft=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="522" y="196" width="176" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="idb" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="118" y="272" width="580" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="idr1" value="round1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="128" y="280" width="52" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="idx" value="&#215;" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="182" y="280" width="14" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="idr2" value="round2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="198" y="280" width="52" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="ideq" value="identifies one cell." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="256" y="280" width="96" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="idnote" value="Chromium supplies 737,280 round2 barcodes, so modeling put 1 million resolvable transcriptomes within reach of only 96 round1 wells &#8211; a modeled bound, not a measurement." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="356" y="276" width="336" height="26" as="geometry" />
+        </mxCell>
+
+        <!-- ============================= PANEL c ============================= -->
+        <mxCell id="pc" value="c" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="318" width="10" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="pch" value="The molecule, in the notation of Figs. 2 and 3: round2 prepends to round1 by the same splint ligation split-pool uses" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="13" y="318" width="620" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="pcNote" value="Read the molecule against Fig. 2: identical grammar, but the second barcode is delivered by a droplet rather than by a second plate." style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="348" width="112" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ce5" value="5&#8242;" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="130" y="348" width="16" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="cr2" value="round2 BC&#10;(ligated)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="150" y="348" width="62" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="cpbs" value="primer site" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="212" y="348" width="60" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="cr1" value="round1 BC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="272" y="348" width="50" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="cumi" value="UMI" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="322" y="348" width="44" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="cdt" value="dT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="366" y="348" width="34" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="ccdna" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="400" y="348" width="156" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="ci7" value="i7 + library barcode" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#666666;strokeWidth=2;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="556" y="348" width="68" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="ce3" value="3&#8242;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="626" y="348" width="16" height="22" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cj" style="endArrow=none;html=1;strokeWidth=1.5;strokeColor=#000000;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="212" y="338" as="sourcePoint" /><mxPoint x="212" y="348" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="cjl" value="ligation junction, in the droplet" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="216" y="330" width="160" height="11" as="geometry" />
+        </mxCell>
+        <mxCell id="cplate" value="everything from here leftward was written in the plate, before the cells ever met a droplet" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="212" y="372" width="344" height="11" as="geometry" />
+        </mxCell>
+        <mxCell id="cbulk" value="added in bulk after the emulsion is broken: template switch, amplification, tagmentation with an i7-only transposome" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="400" y="386" width="298" height="22" as="geometry" />
+        </mxCell>
+
+        <!-- ============================ BOTTOM NOTE ========================== -->
+        <mxCell id="note" value="&lt;b&gt;scifi-RNA-seq is the split-pool trick and the droplet trick composed, and the composition is what removes the Poisson tax.&lt;/b&gt; Split-pool writes a cell's address over successive plate rounds and never isolates anything (Fig. 2); droplet buys one container per cell and pays Poisson for it, keeping occupancy low (Fig. 3). Pre-indexing supplies the first half of the address in a plate, which leaves the droplet responsible only for the second half, so several cells per droplet becomes the operating point rather than the failure. The cost consequence: the per-channel reagent charge that dominates the droplet budget divides across 7.6&#215; more cells, so 137 channels become 18 (Sec. 5.5)." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="0" y="420" width="698" height="46" as="geometry" />
+        </mxCell>
+
+        <!-- ============================== LEGEND ============================= -->
+        <mxCell id="legbox" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="472" width="698" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legt" value="Segments" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="6" y="478" width="40" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg1" value="transcript / cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="50" y="478" width="78" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg2" value="round1 (plate) barcode" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="132" y="478" width="98" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg3" value="round2 (droplet) barcode" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="234" y="478" width="106" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg4" value="UMI" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="344" y="478" width="40" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg5" value="droplet / oil" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="388" y="478" width="62" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg6" value="handle / adapter" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="454" y="478" width="76" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg7" value="Illumina index" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#666666;strokeWidth=2;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="534" y="478" width="72" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg8" value="red dashed = the reading that changes" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="612" y="478" width="82" height="18" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

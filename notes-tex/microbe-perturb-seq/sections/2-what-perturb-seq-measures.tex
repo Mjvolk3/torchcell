@@ -71,7 +71,10 @@ usually invisible to the assay, so a proxy has to be engineered.
 \notesec{Physical isolation (droplet)} A microfluidic device co-encapsulates one
 cell with one barcoded bead in an emulsion droplet, which isolates every molecule
 that cell releases. Cell loading follows Poisson statistics, so a low occupancy
-is used to keep \term{doublets} -- two cells in one droplet, reported as one -- acceptably rare; 10x quote about 8\% at 20{,}000 cells recovered.
+is used to keep \term{doublets} -- two cells in one droplet, reported as one -- acceptably rare; 10x quote about 8\% at 20{,}000 cells recovered. Holding
+occupancy low is what makes the droplet the sole source of cell identity, and it
+is also what wastes the channel: most droplets are fully reagented and never
+receive a cell.
 
 Cost scales with cells, and the unit is worth being concrete about because it
 drives every droplet figure in \cref{sec:application}. Reagent is sold per
@@ -101,6 +104,20 @@ per-sublibrary prep. Brettner et al.'s barcoding reagent works out to
 construction (\cref{sec:startup}); the entire economic case for split-pool is
 this one line, and \cref{sec:cost-per-cell} tests whether it survives contact
 with rRNA waste and discarded cells.
+
+\notesec{The two composed (\term{preindexing})} The two paragraphs above are
+usually read as alternatives, and they are not. Barcode a cell in situ once, on a
+plate, and then load it into a droplet: identity is now the \emph{pair} (well,
+droplet), so several cells can share a droplet and still be resolved. The Poisson
+argument that forces low occupancy is an argument about the droplet being the
+only label, and it stops applying as soon as the cell carries one of its own.
+Datlinger et al.\ measured the consequence, loading 100-fold over the
+manufacturer's recommendation with a stable emulsion and 95.5\% of droplets
+occupied~\citep{datlingerUltrahighthroughputSinglecellRNA2021}. The cost
+consequence follows directly from the pricing unit named above: reagent is sold
+per channel, so putting more cells through one channel divides the dominant term
+of the droplet budget without touching sequencing (\cref{sec:scifi},
+\cref{sec:budget}).
 
 \notesec{The landscape between the two poles} Those are the extremes;
 \cref{fig:methods-map} places the six approaches actually used in yeast between

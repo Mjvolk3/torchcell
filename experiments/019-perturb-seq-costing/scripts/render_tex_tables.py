@@ -406,11 +406,13 @@ def t4() -> None:
         "SPLiT-seq (Brettner, as published)": "SPLiT-seq, as published",
         "SPLiT-seq + rRNA depletion": "SPLiT-seq + rRNA depl.",
         "10x Chromium X (GEM-X 3')": "10x Chromium X",
+        "10x + scifi preindexing (projected)": "10x + scifi preindex.",
     }
     rows = [
         " & ".join(
             [
-                esc(short.get(r["platform"], r["platform"])),
+                esc(short.get(r["platform"], r["platform"]))
+                + (r"$^{\ast}$" if r["projected"] else ""),
                 f"\\${r['reagent_usd_per_cell_processed']:.4f}",
                 f"\\textbf{{\\${r['loaded_usd_per_usable_cell']:.4f}}}",
                 f"{r['hidden_multiplier']}$\\times$",
@@ -426,7 +428,10 @@ def t4() -> None:
             r"Platform & Reagents \$/cell proc. & Loaded \$/usable cell & Hidden mult. & Seq.\ share",
             rows,
             "Cost per cell end to end: 6{,}000 genes at 250 cells/gene, per cell "
-            "that survives QC \\emph{and} carries an identified guide.",
+            "that survives QC \\emph{and} carries an identified guide. "
+            "$\\ast$ projected rather than measured: the scifi row changes one "
+            "parameter of the 10x row, cells recovered per channel, and is "
+            "unmeasured in yeast (\\cref{sec:scifi}).",
             "tab:cost-loaded",
         ),
     )
@@ -462,28 +467,51 @@ def t5() -> None:
 def t6() -> None:
     rows = []
     cells = [45_000, 480_000, 3_000_000, 12_000_000]
+
+    def rate_cells(B: int) -> str:
+        return " & ".join(f"{100 * MD.collision_rate(c, B):.2f}\\%" for c in cells)
+
     for rounds in (3, 4):
         for sub in (1, 24, 96):
             B = MD.barcode_space(rounds=rounds, sublibraries=sub)
-            rates = " & ".join(f"{100 * MD.collision_rate(c, B):.2f}\\%" for c in cells)
             bold = rounds == 4 and sub == 24
             fmt = (lambda s: rf"\textbf{{{s}}}") if bold else (lambda s: s)
             rows.append(
                 " & ".join(
-                    [fmt(str(rounds)), fmt(str(sub)),
-                     fmt(f"{B:,}".replace(",", "{,}")), rates]
+                    [fmt(f"split-pool, {rounds} rounds"), fmt(str(sub)),
+                     fmt(f"{B:,}".replace(",", "{,}")), rate_cells(B)]
                 )
             )
+    # The preindexed-droplet scheme, for comparison on the same axis. Its space
+    # is a PRODUCT of a plate dimension and a droplet dimension, so it does not
+    # fit the 96^R x S form above and gets its own row rather than being forced
+    # into those columns. Sublibraries are "--" because there is no post-ligation
+    # split: the second dimension is the droplet itself.
+    B_scifi = MD.SCIFI_ROUND1_WELLS_USED * MD.SCIFI_ROUND2_BARCODES
+    rows.append(
+        " & ".join(
+            [r"scifi, $384\times$droplet", "--",
+             f"{B_scifi:,}".replace(",", "{,}"), rate_cells(B_scifi)]
+        )
+    )
     emit(
         "t6-barcode",
         table(
-            "rrrrrrr",
-            r"Rounds & Sublib. & Barcode space & @45k & @480k & @3M & @12M cells",
+            "lrrrrrr",
+            r"Scheme & Sublib. & Barcode space & @45k & @480k & @3M & @12M cells",
             rows,
-            r"Barcode collision rate, $100(1-((B-1)/B)^{C-1})$ with "
-            r"$B=96^{R}\times S$. The sublibrary index $S$ is a real barcode "
-            r"dimension: cells are split into sublibraries \emph{after} the last "
-            r"in-cell ligation.",
+            r"Barcode collision rate, $100(1-((B-1)/B)^{C-1})$. For split-pool "
+            r"$B=96^{R}\times S$; the sublibrary index $S$ is a real barcode "
+            r"dimension, because cells are split into sublibraries \emph{after} "
+            r"the last in-cell ligation. The final row is the preindexed-droplet "
+            r"scheme of \cref{sec:scifi}, where $B$ is the 384 round1 wells times "
+            r"the 737{,}280 round2 barcodes the Chromium ATAC reagents supply. "
+            r"\textbf{That row is an upper bound on its own performance.} The "
+            r"formula assumes cells are spread uniformly over the space, which is "
+            r"true of plate wells and not of droplets; Datlinger et al.\ replace "
+            r"the uniform assumption with a zero-inflated Poisson fit for exactly "
+            r"this reason, so read the row as ``the space is not the binding "
+            r"constraint'' rather than as a predicted collision rate.",
             "tab:barcode",
         ),
     )
@@ -529,6 +557,7 @@ def t8() -> None:
         "SPLiT-seq (Brettner, as published)": "SPLiT-seq",
         "SPLiT-seq + rRNA depletion": "SPLiT-seq + depl.",
         "10x Chromium X (GEM-X 3')": "10x Chromium X",
+        "10x + scifi preindexing (projected)": "10x + scifi preindex.",
     }
     rows = []
     for _, r in df.iterrows():
@@ -536,7 +565,7 @@ def t8() -> None:
             " & ".join(
                 [
                     str(r["cells_per_gene"]),
-                    short[r["platform"]],
+                    short[r["platform"]] + (r"$^{\ast}$" if r["projected"] else ""),
                     f"{r['usable_cells']:,}".replace(",", "{,}"),
                     f"{r['sequenced_cells']:,}".replace(",", "{,}"),
                     str(r["n_batches"]),
@@ -558,7 +587,15 @@ def t8() -> None:
         r"All sequencing is priced on NovaSeq X 25B PE150 at the 8+ lane rate, the "
         r"cheapest per-read option the core offers. Excludes labor, oligo pool "
         r"synthesis, strain construction, and the $\sim$\$10{,}000 one-time "
-        r"split-pool start-up."
+        r"split-pool start-up. "
+        r"$\ast$ \textbf{The scifi row is a projection, not a measurement.} It "
+        r"holds every 10x parameter fixed and changes one: cells recovered per "
+        r"channel becomes Datlinger et al.'s measured 151{,}788 in place of the "
+        r"UIUC baseline of 20{,}000. So it answers what the droplet budget looks "
+        r"like if a channel goes 7.6 times further and nothing else changes. "
+        r"Per-cell depth in yeast is unmeasured for this chemistry and is held "
+        r"optimistically at the 10x value; no scifi run in any microbe has been "
+        r"published (\cref{sec:scifi})."
     )
     emit(
         "t8-budgets",
@@ -813,7 +850,7 @@ def t14() -> None:
 
 # --- t15 (figure provenance) -------------------------------------------------
 def t15() -> None:
-    """Where every number drawn by hand in Figs. 1--3 comes from.
+    """Where every number drawn by hand in Figs. 1--4 comes from.
 
     A matplotlib panel needs no such table: its script read the data. A draw.io
     canvas has numbers typed into it, and nothing in the exported PDF connects
@@ -825,7 +862,7 @@ def t15() -> None:
         r"\setlength{\LTleft}{0pt}\setlength{\LTright}{0pt}",
         r"\begingroup\captionsetup{type=table}",
         r"\captionof{table}[]{Provenance for every number drawn by hand in "
-        r"Figs.~\ref{fig:methods-map}--\ref{fig:droplet}. The matplotlib figures "
+        r"Figs.~\ref{fig:methods-map}--\ref{fig:scifi}. The matplotlib figures "
         r"are omitted because their generating scripts read the data directly. A "
         r"\textbf{note} marks a number that needed a judgement call or that was "
         r"corrected in review; an entry with no citation key is not backed by the "

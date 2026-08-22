@@ -705,3 +705,64 @@ python experiments/019-perturb-seq-costing/scripts/plot_economics.py
 
 Outputs land in `experiments/019-perturb-seq-costing/results/` (CSVs) and
 `$ASSET_IMAGES_DIR/019-perturb-seq-costing/` (SVGs).
+
+## 2026.08.21 - Folding scifi-RNA-seq (Datlinger 2021) into the review
+
+Added §3.3 to the typeset review and revised §§2, 4.2, 5.2--5.5 and 6 around it.
+The paper is `datlingerUltrahighthroughputSinglecellRNA2021`, verified against the
+tc-lit mirror (`paper.md`, sha256 `be7068d5...5c7665d`).
+
+### Why it changes the costing rather than the chemistry
+
+Preindexing writes the round-1 barcode into the cell by in-cell reverse
+transcription on a plate, then loads the cells into a Chromium channel where a gel
+bead ligates round 2. Cell identity is the pair, so the droplet no longer has to
+hold exactly one cell, and the Poisson argument that forces low occupancy stops
+applying. Measured consequence: 383,000 nuclei into one channel returned 151,788
+transcriptomes, against ~20,000 at the UIUC baseline.
+
+That single number is the only one carried into the model. `TENX_SCIFI_PROJECTED`
+in `cost_model.py` copies every 10x parameter and changes `cells_per_batch` alone,
+so the row is a one-variable counterfactual rather than a blend of a measurement
+with guesses about yeast depth. It carries `projected=True`, which is what puts the
+asterisk on it in every table and in the economics panel.
+
+### Results
+
+At 250 cells per target gene, 6,000 genes: 137 channels and $364k become 18
+channels and $109k. Cost per usable cell goes $0.2424 -> $0.0724, which undercuts
+split-pool as published ($0.1044) and leaves depleted split-pool cheapest
+($0.0383). The split-pool-versus-droplet gap narrows from 6.3x to 1.9x.
+
+The cost *structure* also flips: reagents fall to 36% of the preindexed droplet
+column and sequencing rises to 64%. A preindexed droplet screen is
+sequencing-limited the way split-pool already is, but it cannot use split-pool's
+fix, since an oligo-dT droplet library is already ~85% mRNA.
+
+### Two things worth keeping
+
+Datlinger's benchmark says 67% of SPLiT-seq's composite-barcode sequencing cycles
+read constant sequence rather than barcode. That reconciles exactly against our own
+`t11-read-structure`: read 2 is 86 nt, minus a 10 nt UMI leaves 76 barcode cycles,
+of which three 8 nt barcodes are 24 and the other 52 are linker, 52/76 = 68%. On
+the PE150 kit this document prices everything on it costs nothing, because
+split-pool uses 160 of 300 available cycles; it would bite on a cycle-limited kit.
+
+The row is deliberately NOT in `METHODS`. That list is the x-axis of the microbial
+landscape figure and scifi is human/mouse only, so its constants live in a separate
+`SCIFI_*` block in `method_data.py` instead.
+
+### What is unmeasured
+
+No scifi run exists in any microbe. Per-cell depth in yeast is held at the 10x
+value, which is the optimistic end -- the paper says scifi "did not reach the
+performance of the Chromium workflow on fresh cells". What supports holding it
+rather than discounting by a guess is that complexity did not fall as droplets
+filled (no trend down to 15 nuclei per droplet), so overloading itself is not what
+would cost depth. The Chromium ATAC reagents scifi needs are not on the UIUC rate
+card at all, so the 3' RNA channel price stands in for them.
+
+Ranked last in §6.1 for that reason, and §6.2 adds a checkpoint rather than a
+stage: the split-pool pilot's round-1 step already answers whether fixed,
+wall-digested yeast reverse transcribes in situ, which leaves one channel to test
+whether such a cell survives a microfluidic chip.

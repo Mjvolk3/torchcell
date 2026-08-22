@@ -80,11 +80,17 @@ platforms end to end:
 \input{tables/t4-cost-per-cell-loaded}
 
 \begin{keybox}
-\textbf{The headline inverts.} On reagents, split-pool beats droplet by
-$\sim$22$\times$. End to end it is $2.3\times$. The gap is rRNA and discarded
-cells -- 94\% of split-pool reads are ribosomal and $\sim$75\% of sequenced cells
-are thrown away. With rRNA depletion the advantage returns to $6.3\times$, which
-makes depletion the single highest-leverage change available to us.
+\textbf{The headline inverts, and then the ordering does.} On reagents alone,
+split-pool beats droplet by $\sim$22$\times$. End to end it is $2.3\times$: the
+gap closes because 94\% of split-pool reads are ribosomal and $\sim$75\% of its
+sequenced cells are thrown away. rRNA depletion reopens it to $6.3\times$, which
+is what makes depletion the highest-leverage change available to the split-pool
+route, worth $2.7\times$ on cost per usable cell. The droplet column has a lever
+that is slightly larger. Preindexing puts 7.6 times as many cells through a
+priced channel and is worth $3.3\times$, from \$0.2424 to \$0.0724, which
+undercuts split-pool \emph{as published} (\$0.1044) and still leaves depleted
+split-pool cheapest at \$0.0383. So each route has one change worth about a
+factor of three, the two are independent, and neither has been measured in yeast.
 \end{keybox}
 
 \subsection{UIUC Core Sequencing Capacity\secstatus{todo}}
@@ -150,6 +156,33 @@ wins on price per read: 25B PE150 at 8+ lanes is \$0.99 per million read pairs
 against \$1.06 for 10B SR100. That would not hold at a core whose cheapest option
 is single-read.
 
+\notesec{Split-pool also spends cycles on nothing, and it is measured} Two thirds
+of the cycles SPLiT-seq uses to read its composite cell barcode are
+\term{uninformative}: they read ligation overhangs, primer binding sites and Tn5
+mosaic ends rather than barcode. Datlinger et al.\ measured this across four
+protocols and it is a property of the read structure rather than of any one run
+-- 67\% for SPLiT-seq, 42\% for sci-RNA-seq v1, 13\% for sci-RNA-seq v3 and
+sci-Plex, and none for a two-round design where the barcode is placed once by the
+RT primer and once by
+ligation~\citep{datlingerUltrahighthroughputSinglecellRNA2021}.
+
+The figure reconciles against \cref{tab:read-structure} exactly, which is worth
+checking because it is the only place this document can audit an outside claim
+against its own numbers. Read 2 is 86\,nt of UMI plus BC3, BC2 and BC1. Take off
+the 10\,nt UMI and 76 cycles remain for the composite barcode, of which three
+8\,nt barcodes are 24; the other 52 are linker, and $52/76 = 68\%$.
+
+The size of the charge then depends on the kit, and here it is small, which is
+worth saying because 67\% invites a larger conclusion than it supports. The waste
+falls on barcode cycles, not on the whole read, and split-pool uses 160 of the 300
+cycles a 2$\times$150 kit delivers. The 52 wasted cycles come out of 140 spare
+ones, so recovering them buys transcript length rather than money. They become a
+cost only on a cycle-limited kit, which is the NovaSeq X 100-cycle configuration
+and not the PE150 everything here is priced on. So the 67\% is a real
+inefficiency of the chemistry that this particular rate card absorbs, and it is
+an order of magnitude smaller than the 94\% rRNA fraction of
+Sec.~\ref{sec:rrna}, which the same rate card does not absorb at all.
+
 Three split-pool-specific hazards. PhiX at $\ge$10\% is a protocol requirement, not
 hygiene -- read 2 carries fixed linker sequence at defined cycles, so base
 diversity collapses and patterned flow cells mis-register clusters; combined with
@@ -184,6 +217,18 @@ itself inside the first run.
 Against that sits the one real argument: every split-pool ligation loses material,
 and the yield cost of a fourth round must be measured in the pilot before it is
 committed to.
+
+\notesec{The preindexed scheme buys the same space with one plate} A round1 plate
+of 384 wells against the 737{,}280 round2 barcodes in the Chromium ATAC reagents
+is $2.8\times10^{8}$ labels from a single in-cell reaction
+(\cref{tab:barcode}) -- more than three rounds of 384 would give, and between
+what four rounds of 96 deliver at one and at 24 sublibraries. The barcode space
+is not what distinguishes the two routes. What distinguishes them is where the
+space comes from: split-pool builds it from repeated ligations, each of which
+costs yield, and the preindexed scheme buys most of it from a bead the vendor
+already sells. That is the same argument as the fourth-round one above with the
+ligation-yield term removed, and it is why the yield question the pilot has to
+answer is different for the two routes rather than merely smaller.
 
 \subsection{Genome-Scale Budget\secstatus{todo}}
 \label{sec:budget}
@@ -225,8 +270,19 @@ committed to.
   library preparation is 81\%, because a genome-scale screen consumes 137 channels
   at \$2{,}143 each. These are different cost structures, and an optimization that
   helps one (rRNA depletion, worth $\sim$\$99{,}000 here) does nothing for the
-  other. The three-fold spread between the cheapest and dearest column, \$58\,k
-  against \$364\,k, is a platform decision, not a procurement one. (c) What
+  other. The six-fold spread between the cheapest and dearest column, \$58\,k
+  against \$364\,k, is a platform decision, not a procurement one.
+  \textbf{The fourth column is a projection, and the asterisk marks it as one
+  inside the panel.} It changes exactly one parameter of the third: cells
+  recovered per channel becomes the 151{,}788 Datlinger et al.\ measured rather
+  than the UIUC baseline of 20{,}000, so 137 channels become 18 and the column
+  falls to \$109\,k, closing that six-fold spread to $1.9\times$. Per-cell depth
+  in yeast is unmeasured for this chemistry and is held at the 10x value, the
+  optimistic end; no scifi run in any microbe has been published
+  (\cref{sec:scifi}). What it does to the cost \emph{structure} matters as much
+  as the total: reagents fall to 36\% and sequencing rises to 64\%, so a
+  preindexed droplet screen is sequencing-limited in the way split-pool already
+  is, but with no rRNA left to deplete. (c) What
   multiplexing buys as guides per cell $k$ rises. Left axis: total cells needed to
   hold main-effect precision across 6{,}000 genes falls as $1/k$, from 1.5\,M
   cells at $k=1$ to 0.15\,M at $k=10$, because every cell reports on $k$ genes at
@@ -251,10 +307,43 @@ protocol runs behind the split-pool row are $\sim$13 weeks of skilled bench work
 with 13 chances to fail, against 137 channels run by the core -- a real
 argument for droplet that the dollar column conceals.
 
+\notesec{What preindexing does to that reading} The 137 channels are what makes
+the droplet row expensive, and they are a consequence of one number: 20{,}000
+cells recovered per channel. Replace it with the 151{,}788 Datlinger et al.\
+measured and hold everything else fixed, and the same screen is 18 channels and
+\$109\,k against \$364\,k. Three things follow.
+
+The dominant term moves again, and it moves onto the axis this document has been
+optimizing all along. At 18 channels, reagents are 36\% of the preindexed droplet
+column and sequencing is 64\%, so a preindexed droplet screen is a
+sequencing-limited experiment in the same way split-pool already is. It does not
+inherit split-pool's fix: an oligo-dT-primed droplet library is already
+$\sim$85\% mRNA, so there is no rRNA to deplete and the lever there is reads per
+cell, not library chemistry.
+
+The labor argument reverses direction. Eighteen core-run channels against 13
+protocol runs is not the 137-against-13 comparison that made droplet attractive
+on bench time, and the preindexing plate is itself a wet-lab step, so the two
+routes converge on effort as well as on price.
+
+And the ordering does not change. Depleted split-pool stays cheapest at \$57.5\,k
+against \$109\,k. What changes is the size of the gap, from $6.3\times$ to
+$1.9\times$, and a factor of two is small enough to be settled by considerations
+the dollar column does not hold: instrument access, whether the guide readout
+works, and which of the two unmeasured assumptions turns out to be true.
+
 \begin{keybox}
-\textbf{Recommended entry point.} 100 cells per gene, split-pool with rRNA
-depletion: $\sim$\$25\,k recurring plus $\sim$\$10\,k one-time. That is a genuine
-genome-scale yeast Perturb-seq for under \$40\,k of consumables and sequencing,
-and it is defensible because 100 cells per perturbation is the published field
-standard.
+\textbf{Recommended entry point, unchanged.} 100 cells per gene, split-pool with
+rRNA depletion: $\sim$\$25\,k recurring plus $\sim$\$10\,k one-time. That is a
+genuine genome-scale yeast Perturb-seq for under \$40\,k of consumables and
+sequencing, and 100 cells per perturbation is the published field standard.
+
+\textbf{What preindexing changes is the fallback, not the plan.} The same screen
+on preindexed droplet is $\sim$\$46\,k, so if the split-pool guide readout or the
+cells-per-RT-well number fails in the pilot, the droplet route is no longer
+nearly six times the price -- it is under twice, on a platform the core already
+runs. That
+is worth one measurement in the pilot rather than a change of direction now:
+both figures rest on assumptions that have never been tested in yeast, and
+split-pool's rest on fewer of them.
 \end{keybox}

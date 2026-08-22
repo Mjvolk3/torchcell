@@ -3,7 +3,7 @@
 \begingroup\scriptsize
 \setlength{\LTleft}{0pt}\setlength{\LTright}{0pt}
 \begingroup\captionsetup{type=table}
-\captionof{table}[]{Provenance for every number drawn by hand in Figs.~\ref{fig:methods-map}--\ref{fig:droplet}. The matplotlib figures are omitted because their generating scripts read the data directly. A \textbf{note} marks a number that needed a judgement call or that was corrected in review; an entry with no citation key is not backed by the library mirror and should not be quoted. Generated from \file{experiments/019-perturb-seq-costing/scripts/figure_sources.py}.}\label{tab:figure-provenance}
+\captionof{table}[]{Provenance for every number drawn by hand in Figs.~\ref{fig:methods-map}--\ref{fig:scifi}. The matplotlib figures are omitted because their generating scripts read the data directly. A \textbf{note} marks a number that needed a judgement call or that was corrected in review; an entry with no citation key is not backed by the library mirror and should not be quoted. Generated from \file{experiments/019-perturb-seq-costing/scripts/figure_sources.py}.}\label{tab:figure-provenance}
 \endgroup
 \begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.20\textwidth}>{\raggedright\arraybackslash}p{0.15\textwidth}>{\raggedright\arraybackslash}p{0.60\textwidth}@{}}
 \toprule
@@ -45,6 +45,27 @@ doublet rate at 20,000 cells & \texttt{\textasciitilde{}8\% at 20,000 recovered}
 digestion timing and cell-count drop & \texttt{6 min hold, 200-fold drop within 20 min at 53 C} & ``cell counts hold on ice and through the 6 min of droplet generation, then drop 200-fold within 20 min at 53 C'' \citep{jarianiNewProtocolSinglecell2020} \\
 \addlinespace[2.5pt]
 bead barcode and UMI lengths & \texttt{16 nt CB, 12 nt UMI, 118 cycles} & ``[10x 3' v3/GEM-X read layout; cycle count derived in experiments/019-perturb-seq-costing/scripts/read\_structure.py]'' \citep{jarianiNewProtocolSinglecell2020} {\color{tcgray}\emph{Note:} Layout is the current GEM-X/v3.1 chemistry, not the v2 Jariani ran.} \\
+\addlinespace[2.5pt]
+\multicolumn{3}{@{}l}{\bfseries scifi-fluidic-indexing.drawio} \\*[1pt]
+maximum recommended load & \texttt{15,300 nuclei per channel} & ``We first assessed the maximum recommended loading concentration (15,300 nuclei per microfluidic channel).'' \citep{datlingerUltrahighthroughputSinglecellRNA2021}\,\texttt{(md:26)} \\
+\addlinespace[2.5pt]
+occupancy at recommended load & \texttt{16.4\% occupied; mean 0.2 nuclei per droplet} & ``Counting 609 droplet images, we found that only 16.4\% of droplets contained one or more nuclei (mean number of nuclei per droplet: 0.2).'' \citep{datlingerUltrahighthroughputSinglecellRNA2021}\,\texttt{(md:26)} {\color{tcgray}\emph{Note:} Measured by counting 609 droplet images, not inferred from Poisson.} \\
+\addlinespace[2.5pt]
+overloaded condition & \texttt{100x overloaded, 1.53 million nuclei per channel} & ``Remarkably, even 100-fold overloading (1.53 million nuclei per channel) resulted in a stable droplet emulsion and did not clog the microfluidic system'' \citep{datlingerUltrahighthroughputSinglecellRNA2021}\,\texttt{(md:26)} \\
+\addlinespace[2.5pt]
+occupancy when overloaded & \texttt{95.5\% fill; mean 9.6 nuclei per droplet} & ``up to a droplet fill rate of 95.5\% and an average of 9.6 nuclei per droplet (1.53 million nuclei per channel), with highly consistent droplet diameter'' \citep{datlingerUltrahighthroughputSinglecellRNA2021}\,\texttt{(md:26)} {\color{tcgray}\emph{Note:} The droplet cartoons in panel a show three nuclei, not 9.6; they are schematic and the canvas says so. The number is the measured mean.} \\
+\addlinespace[2.5pt]
+round1 plate format & \texttt{one 384-well plate} & ``permeabilized cells or nuclei are first preindexed with barcoded oligo-dT primers by reverse transcription on multiwell plates (we use one 384-well plate with well-specific primers)'' \citep{datlingerUltrahighthroughputSinglecellRNA2021}\,\texttt{(md:34)} \\
+\addlinespace[2.5pt]
+round2 barcode space & \texttt{737,280 round2 barcodes} & ``Using the 737,280 distinct microfluidic (round2) barcodes provided by the Chromium ATAC reagents'' \citep{datlingerUltrahighthroughputSinglecellRNA2021}\,\texttt{(md:30)} \\
+\addlinespace[2.5pt]
+resolvable transcriptomes at 96 round1 wells & \texttt{1 million from 96 round1 wells} & ``our analyses indicated that scifi-RNA-seq can resolve 1 million single-cell transcriptomes already with 96 round1 indices'' \citep{datlingerUltrahighthroughputSinglecellRNA2021}\,\texttt{(md:30)} {\color{tcgray}\emph{Note:} MODELED, not observed: it comes from a zero-inflated Poisson model plus Monte Carlo simulation of barcode collisions. The canvas says 'a modeled bound, not a measurement' for exactly this reason.} \\
+\addlinespace[2.5pt]
+large-run yield, left caption & \texttt{383,000 loaded returned 151,788 transcriptomes from one channel} & ``we performed a large-scale scifi-RNA-seq experiment with 383,000 nuclei loaded into a single microfluidic channel of the Chromium system ... This experiment resulted in 151,788 single-cell transcriptomes passing quality control'' \citep{datlingerUltrahighthroughputSinglecellRNA2021}\,\texttt{(md:57)} {\color{tcgray}\emph{Note:} Deliberately separated from the occupancy numbers beside it. Those were counted under a microscope at a different loading concentration; this is a sequencing yield, and it is the only scifi number the cost model consumes.} \\
+\addlinespace[2.5pt]
+channel saving carried into the budget & \texttt{7.6x more cells, so 137 channels become 18} & ``[DERIVED HERE, no source sentence: 151,788 recovered per channel / 20,000 at the UIUC baseline = 7.6x; channel counts from cost\_model.py, ScreenDesign(cells\_per\_gene=250)]'' \tcflagext {\color{tcgray}\emph{Note:} OURS, not the paper's. 151,788 recovered per channel over the UIUC baseline of 20,000 is 7.6x; the channel counts come straight from cost\_model.py at 250 cells per target gene. Datlinger et al.'s own headline is 15-fold, against a \textasciitilde{}10,000-cell standard Chromium run rather than against UIUC's more generous 20,000, so the figure drawn here is the conservative one. Recompute if the rate card's cells-per-channel changes.} \\
+\addlinespace[2.5pt]
+round2 attaches by ligation, not RT & \texttt{round2 BC (ligated)} & ``oligonucleotides carrying the microfluidic (round2) barcode (delivered via Chromium gel beads) are ligated to the cDNA via the 5'-phosphate group of the reverse transcription primer, directed by a complementary 3'-blocked bridge oligonucleotide'' \citep{datlingerUltrahighthroughputSinglecellRNA2021}\,\texttt{(md:34)} \\
 \addlinespace[2.5pt]
 \end{longtable}
 \endgroup

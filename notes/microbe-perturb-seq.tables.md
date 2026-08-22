@@ -29,15 +29,18 @@ The denominator for every capture-efficiency claim. **Rows marked (external) are
 
 | Study | Platform | Isolation | Cells | mRNA UMIs/cell | Genes/cell | Perturbation readout |
 | --- | --- | --- | ---: | ---: | ---: | :---: |
-| Gasch 2017 | Fluidigm C1 / SMART-Seq v4 | plate | 163 | 735--5,437 | -- | -- |
-| Nadal-Ribelles 2019 | FACS + STRT-seq (5' end) | plate | 285 | 3,339 | -- | -- |
-| Jackson 2020 | 10x Chromium 3' v2 | droplet | 38,225 | 2,000 | 684 | yes |
+| Gasch 2017 | Fluidigm C1 / SMART-Seq v4 | plate | 163 | -- | 735--5,437 | -- |
+| Nadal-Ribelles 2019 | FACS + STRT-seq (5' end) | plate | 285 | 11,760 | 3,399 | -- |
+| Jackson 2020 | 10x Chromium 3' v2 | droplet | 38,225 | 2,250 | 695 | yes |
 | Jariani 2020 | 10x Chromium 3' v2 + in-droplet zymolyase | droplet | 6,118 | 528--1,261 | -- | -- |
 | Urbonaite 2021 | yeastDrop-Seq (table-top) | droplet | 844 | 840--1,336 | 443--619 | -- |
 | Dohn 2021 (mDrop-seq) | mDrop-seq | droplet | 74,814 | -- | 193--967 | -- |
-| Boocock 2023 | 10x Chromium 3' v2 + v3 | droplet | 100,220 | 1,514--6,559 | -- | yes |
+| Boocock 2025 | 10x Chromium 3' v2 + v3 | droplet | 100,220 | 1,514--6,559 | -- | yes |
+| Nadal-Ribelles 2025 | Singleron GEXSCOPE HD (microwell) | microwell | 1,061,865 | 1,200 | 550 | yes |
 | Brettner 2024 (SPLiT-seq) | yeast-optimized SPLiT-seq | split-pool | 43,388 | 120--700 | 100--600 | -- |
-| microSPLiT (B. subtilis) | microSPLiT | split-pool | 1,000,000 | 397 | 230 | -- |
+| microSPLiT (B. subtilis) | microSPLiT | split-pool | 25,214 | 397 | 230 | -- |
+| ProBac-seq (B. subtilis) | ProBac-seq (probe-based, 10x) | droplet | 2,784 | 325 | 241 | -- |
+| BacDrop (K. pneumoniae) | BacDrop (pre-indexed droplet) | droplet | 44,140 | -- | 30--127 | -- |
 | mapSPLiT (E. coli, CRISPRi/a) | mapSPLiT (microSPLiT + GBC) | split-pool | 76,068 | 325 | 161 | yes |
 
 ## Table 3. Cost per cell, library preparation only
@@ -66,6 +69,7 @@ The denominator for every capture-efficiency claim. **Rows marked (external) are
 | SPLiT-seq (Brettner, as published) | $0.0049 | **$0.1044** | 21.3x | 81.2% |
 | SPLiT-seq + rRNA depletion | $0.0053 | **$0.0383** | 7.2x | 44.2% |
 | 10x Chromium X (GEM-X 3') | $0.1076 | **$0.2424** | 2.3x | 19.2% |
+| 10x + scifi preindexing (projected) | $0.0141 | **$0.0724** | 5.1x | 64.5% |
 
 > The reagents-only comparison says split-pool beats droplet by ~22x. End to end it is **2.3x**, and **6.3x** with rRNA depletion.
 
@@ -134,19 +138,22 @@ Two independent constraints: a biological floor of **100 cells** (field standard
 
 ## Table 8. Genome-scale CRISPRi perturb-seq budget
 
-6,000 genes, MAGIC-style 6 guides/gene, one environment. UIUC Carver rates effective 2026-08-01. Excludes labour, oligo pool synthesis, strain construction, and the ~$10,000 one-time split-pool start-up.
+6,000 genes, MAGIC-style 6 guides/gene, one environment. UIUC Carver rates effective 2026-08-01. Excludes labor, oligo pool synthesis, strain construction, and the ~$10,000 one-time split-pool start-up.
 
 | Cells/gene | Platform | Usable cells | Sequenced | Runs | Read pairs | Reagents | Sequencing | Total |
 | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | 100 | SPLiT-seq | 600,000 | 2,400,000 | 5 | 50.0e9 | $11,470 | $50,880 | **$62,350** |
 | 100 | SPLiT-seq + rRNA depl. | 600,000 | 2,400,000 | 5 | 10.0e9 | $12,470 | $12,720 | **$25,190** |
 | 100 | 10x Chromium X | 600,000 | 1,090,910 | 55 | 27.3e9 | $117,865 | $28,620 | **$146,485** |
+| 100 | 10x + scifi preindex.* | 600,000 | 1,090,910 | 8 | 27.3e9 | $17,144 | $28,620 | **$45,764** |
 | 250 | SPLiT-seq | 1,500,000 | 6,000,000 | 13 | 125.0e9 | $29,470 | $127,200 | **$156,670** |
 | 250 | SPLiT-seq + rRNA depl. | 1,500,000 | 6,000,000 | 13 | 25.0e9 | $32,070 | $25,440 | **$57,510** |
 | 250 | 10x Chromium X | 1,500,000 | 2,727,273 | 137 | 68.2e9 | $293,591 | $69,960 | **$363,551** |
+| 250 | 10x + scifi preindex.* | 1,500,000 | 2,727,273 | 18 | 68.2e9 | $38,574 | $69,960 | **$108,534** |
 | 500 | SPLiT-seq | 3,000,000 | 12,000,000 | 25 | 250.0e9 | $57,185 | $251,220 | **$308,405** |
 | 500 | SPLiT-seq + rRNA depl. | 3,000,000 | 12,000,000 | 25 | 50.0e9 | $62,185 | $50,880 | **$113,065** |
 | 500 | 10x Chromium X | 3,000,000 | 5,454,546 | 273 | 136.4e9 | $585,039 | $136,740 | **$721,779** |
+| 500 | 10x + scifi preindex.* | 3,000,000 | 5,454,546 | 36 | 136.4e9 | $77,148 | $136,740 | **$213,888** |
 
 ## Table 9. UIUC Carver Biotechnology Center sequencing rates
 

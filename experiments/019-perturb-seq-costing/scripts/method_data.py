@@ -779,6 +779,148 @@ METHODS: list[Method] = [
 ]
 
 
+# --- Combinatorial fluidic indexing (Datlinger et al., 2021) ------------------
+# NOT a row in METHODS, deliberately. That list is "published single-cell RNA-seq
+# runs in yeast and other microbes", and it is the x-axis of the landscape
+# figure; scifi-RNA-seq was run on human and mouse material, so a row would put a
+# mammalian point on a microbial axis. The numbers still matter here, because
+# scifi changes the ONE quantity that dominates the droplet column of the budget
+# -- cells recovered per Chromium channel -- so they are carried as named
+# constants with the same provenance discipline instead.
+#
+# Every value below is a measurement except SCIFI_MODELED_RESOLVABLE, which is
+# the output of a zero-inflated Poisson model plus Monte Carlo simulation. That
+# one is named "MODELED" so it cannot be quoted as an observation.
+
+SCIFI_RECOMMENDED_LOAD_PER_CHANNEL = 15_300
+SCIFI_RECOMMENDED_FILL_RATE = 0.164
+SCIFI_RECOMMENDED_NUCLEI_PER_DROPLET = 0.2
+SCIFI_MAX_LOAD_PER_CHANNEL = 1_530_000
+SCIFI_MAX_FILL_RATE = 0.955
+SCIFI_MAX_NUCLEI_PER_DROPLET = 9.6
+# The large-scale run: what was loaded, and what came back through QC. These two
+# are the pair the cost model needs -- a recovery, not a capacity claim, which is
+# the distinction the Gaisser row above was demoted for getting wrong.
+SCIFI_LOADED_LARGE_RUN = 383_000
+SCIFI_RECOVERED_LARGE_RUN = 151_788
+SCIFI_THROUGHPUT_FOLD = 15
+# Complexity did not fall as droplets filled up, which is what makes the extra
+# cells usable rather than merely present.
+SCIFI_NUCLEI_PER_DROPLET_NO_COMPLEXITY_LOSS = 15
+SCIFI_ROUND2_BARCODES = 737_280
+SCIFI_ROUND1_WELLS_MODELED = 96
+SCIFI_ROUND1_WELLS_USED = 384
+SCIFI_MODELED_RESOLVABLE = 1_000_000
+SCIFI_NUCLEI_RECOVERY_CELL_LINES = 0.533
+SCIFI_NUCLEI_RECOVERY_PRIMARY = 0.411
+
+# Fraction of the composite-cell-barcode sequencing cycles that read constant
+# sequence -- ligation overhangs, primer binding sites, Tn5 mosaic ends -- rather
+# than barcode. This is a direct charge against the sequencing term, and it is
+# the one number here that indicts the method this document currently recommends:
+# SPLiT-seq spends two thirds of those cycles on nothing.
+SCIFI_UNINFORMATIVE_BARCODE_CYCLES = {
+    "scifi-RNA-seq": 0.0,
+    "sci-RNA-seq v1": 0.42,
+    "sci-RNA-seq v3 / sci-Plex": 0.13,
+    "SPLiT-seq": 0.67,
+}
+
+SCIFI_PROVENANCE = [
+    Provenance(
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+        line=26,
+        quote=(
+            "We first assessed the maximum recommended loading concentration "
+            "(15,300 nuclei per microfluidic channel). Counting 609 droplet "
+            "images, we found that only 16.4% of droplets contained one or more "
+            "nuclei (mean number of nuclei per droplet: 0.2). Remarkably, even "
+            "100-fold overloading (1.53 million nuclei per channel) resulted in a "
+            "stable droplet emulsion and did not clog the microfluidic system "
+            "... up to a droplet fill rate of 95.5% and an average of 9.6 nuclei "
+            "per droplet"
+        ),
+    ),
+    Provenance(
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+        line=57,
+        quote=(
+            "we performed a large-scale scifi-RNA-seq experiment with 383,000 "
+            "nuclei loaded into a single microfluidic channel of the Chromium "
+            "system ... This experiment resulted in 151,788 single-cell "
+            "transcriptomes passing quality control (Fig. 2i,j), constituting a "
+            "15-fold increase over the output of standard scRNA-seq on the "
+            "Chromium system."
+        ),
+    ),
+    Provenance(
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+        line=49,
+        quote=(
+            "When plotting UMI counts and fractions of unique reads per cell "
+            "against the number of nuclei per droplet (Fig. 2d), we observed no "
+            "trend toward lower transcriptome complexity in droplets containing "
+            "up to 15 individual nuclei"
+        ),
+    ),
+    Provenance(
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+        line=30,
+        quote=(
+            "Using the 737,280 distinct microfluidic (round2) barcodes provided "
+            "by the Chromium ATAC reagents, our analyses indicated that "
+            "scifi-RNA-seq can resolve 1 million single-cell transcriptomes "
+            "already with 96 round1 indices [MODELED: zero-inflated Poisson plus "
+            "Monte Carlo, not an observed recovery]"
+        ),
+    ),
+    Provenance(
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+        line=36,
+        quote=(
+            "preindexing inside permeabilized nuclei was only minimally damaging, "
+            "with nuclei recovery rates of 53.3% (cell lines) and 41.1% (human "
+            "primary material) before loading the samples on the droplet "
+            "microfluidics chip"
+        ),
+    ),
+    Provenance(
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+        line=51,
+        quote=(
+            "the presence of constant ligation overhangs, primer binding sites "
+            "and/or Tn5 mosaic ends in multiround combinatorial indexing renders "
+            "a substantial proportion of sequencing cycles uninformative "
+            "(sci-RNA-seq v.1: 42% uninformative; sci-RNA-seq v.3 and sci-Plex: "
+            "13% uninformative; SPLiT-seq: 67% uninformative)"
+        ),
+    ),
+    # The organism caveat, on the record next to the numbers rather than only in
+    # the prose, so a value cannot be lifted out of this module without it.
+    Provenance(
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+        line=20,
+        quote=(
+            "We achieved high transcriptome complexity per cell, and successfully "
+            "validated our method on various cell lines and on human primary "
+            "material [no yeast or bacterial run is reported anywhere in this "
+            "paper; every scifi value here is mammalian]"
+        ),
+    ),
+]
+
+
+def scifi_channel_gain(baseline_cells_per_channel: int) -> float:
+    """How much further one Chromium channel goes with preindexing.
+
+    Measured recovery over a stated baseline, so the caller has to supply the
+    baseline it is actually paying for -- the UIUC 20,000-cell channel is not the
+    same as the 10,000-cell standard run scifi's own 15-fold is quoted against,
+    and dividing by the wrong one silently inflates the saving.
+    """
+    return SCIFI_RECOVERED_LARGE_RUN / baseline_cells_per_channel
+
+
 # --- Library construction ceiling (Lian et al., MAGIC/sMAGIC) -----------------
 # What caps multiplexing before sequencing does. Sourced from our own library's
 # paper, which is also the only published yeast precedent for a COMBINATORIAL

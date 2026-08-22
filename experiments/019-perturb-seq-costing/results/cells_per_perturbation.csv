@@ -14,6 +14,9 @@ Urbonaite 2021,S. cerevisiae,droplet,1088.0,deep (reaches low-abundance regulato
 Boocock 2025,S. cerevisiae,droplet,2809.0,screen (strong coherent effects only),50000.0,100,biological floor,600000
 Boocock 2025,S. cerevisiae,droplet,2809.0,standard (Brettner's own 500-cell heuristic),200000.0,100,biological floor,600000
 Boocock 2025,S. cerevisiae,droplet,2809.0,deep (reaches low-abundance regulators),1000000.0,356,sequencing depth,2136000
+Nadal-Ribelles 2025,S. cerevisiae,microwell,1200.0,screen (strong coherent effects only),50000.0,100,biological floor,600000
+Nadal-Ribelles 2025,S. cerevisiae,microwell,1200.0,standard (Brettner's own 500-cell heuristic),200000.0,167,sequencing depth,1002000
+Nadal-Ribelles 2025,S. cerevisiae,microwell,1200.0,deep (reaches low-abundance regulators),1000000.0,834,sequencing depth,5004000
 Brettner 2024 (SPLiT-seq),S. cerevisiae + C. albicans,split_pool,410.0,screen (strong coherent effects only),50000.0,122,sequencing depth,732000
 Brettner 2024 (SPLiT-seq),S. cerevisiae + C. albicans,split_pool,410.0,standard (Brettner's own 500-cell heuristic),200000.0,488,sequencing depth,2928000
 Brettner 2024 (SPLiT-seq),S. cerevisiae + C. albicans,split_pool,410.0,deep (reaches low-abundance regulators),1000000.0,2440,sequencing depth,14640000

@@ -350,6 +350,7 @@ def t8_budgets() -> str:
         "SPLiT-seq (Brettner, as published)": "SPLiT-seq",
         "SPLiT-seq + rRNA depletion": "SPLiT-seq + rRNA depl.",
         "10x Chromium X (GEM-X 3')": "10x Chromium X",
+        "10x + scifi preindexing (projected)": "10x + scifi preindex.*",
     }
     out = [
         "## Table 8. Genome-scale CRISPRi perturb-seq budget",

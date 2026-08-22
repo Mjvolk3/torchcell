@@ -36,6 +36,7 @@ from figure_provenance import FigureNumber, check  # noqa: E402
 TAXONOMY = "scrnaseq-method-taxonomy"
 SPLITSEQ = "splitseq-barcoding"
 DROPLET = "droplet-10x-barcoding"
+SCIFI = "scifi-fluidic-indexing"
 
 RECORDS: list[FigureNumber] = [
     # --- Fig. 1a, the throughput band ---------------------------------------
@@ -190,11 +191,141 @@ RECORDS: list[FigureNumber] = [
         ),
         note="Layout is the current GEM-X/v3.1 chemistry, not the v2 Jariani ran.",
     ),
+
+    # --- Fig. 4 (scifi-RNA-seq), Datlinger et al. 2021 -----------------------
+    # Panel a is the measured droplet-imaging series; panel b's barcode-space
+    # figure is a MODELED bound and is labeled as such on the canvas, which is
+    # the distinction the first review found missing elsewhere.
+    FigureNumber(
+        figure=SCIFI, panel="a", element="maximum recommended load",
+        value="15,300 nuclei per channel",
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=26,
+        quote=(
+            "We first assessed the maximum recommended loading concentration "
+            "(15,300 nuclei per microfluidic channel)."
+        ),
+    ),
+    FigureNumber(
+        figure=SCIFI, panel="a", element="occupancy at recommended load",
+        value="16.4% occupied; mean 0.2 nuclei per droplet",
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=26,
+        quote=(
+            "Counting 609 droplet images, we found that only 16.4% of droplets "
+            "contained one or more nuclei (mean number of nuclei per droplet: 0.2)."
+        ),
+        note="Measured by counting 609 droplet images, not inferred from Poisson.",
+    ),
+    FigureNumber(
+        figure=SCIFI, panel="a", element="overloaded condition",
+        value="100x overloaded, 1.53 million nuclei per channel",
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=26,
+        quote=(
+            "Remarkably, even 100-fold overloading (1.53 million nuclei per "
+            "channel) resulted in a stable droplet emulsion and did not clog the "
+            "microfluidic system"
+        ),
+    ),
+    FigureNumber(
+        figure=SCIFI, panel="a", element="occupancy when overloaded",
+        value="95.5% fill; mean 9.6 nuclei per droplet",
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=26,
+        quote=(
+            "up to a droplet fill rate of 95.5% and an average of 9.6 nuclei per "
+            "droplet (1.53 million nuclei per channel), with highly consistent "
+            "droplet diameter"
+        ),
+        note=(
+            "The droplet cartoons in panel a show three nuclei, not 9.6; they are "
+            "schematic and the canvas says so. The number is the measured mean."
+        ),
+    ),
+    FigureNumber(
+        figure=SCIFI, panel="b", element="round1 plate format",
+        value="one 384-well plate",
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=34,
+        quote=(
+            "permeabilized cells or nuclei are first preindexed with barcoded "
+            "oligo-dT primers by reverse transcription on multiwell plates (we use "
+            "one 384-well plate with well-specific primers)"
+        ),
+    ),
+    FigureNumber(
+        figure=SCIFI, panel="b", element="round2 barcode space",
+        value="737,280 round2 barcodes",
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=30,
+        quote=(
+            "Using the 737,280 distinct microfluidic (round2) barcodes provided by "
+            "the Chromium ATAC reagents"
+        ),
+    ),
+    FigureNumber(
+        figure=SCIFI, panel="b", element="resolvable transcriptomes at 96 round1 wells",
+        value="1 million from 96 round1 wells",
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=30,
+        quote=(
+            "our analyses indicated that scifi-RNA-seq can resolve 1 million "
+            "single-cell transcriptomes already with 96 round1 indices"
+        ),
+        note=(
+            "MODELED, not observed: it comes from a zero-inflated Poisson model "
+            "plus Monte Carlo simulation of barcode collisions. The canvas says "
+            "'a modeled bound, not a measurement' for exactly this reason."
+        ),
+    ),
+    FigureNumber(
+        figure=SCIFI, panel="a", element="large-run yield, left caption",
+        value="383,000 loaded returned 151,788 transcriptomes from one channel",
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=57,
+        quote=(
+            "we performed a large-scale scifi-RNA-seq experiment with 383,000 "
+            "nuclei loaded into a single microfluidic channel of the Chromium "
+            "system ... This experiment resulted in 151,788 single-cell "
+            "transcriptomes passing quality control"
+        ),
+        note=(
+            "Deliberately separated from the occupancy numbers beside it. Those "
+            "were counted under a microscope at a different loading "
+            "concentration; this is a sequencing yield, and it is the only scifi "
+            "number the cost model consumes."
+        ),
+    ),
+    FigureNumber(
+        figure=SCIFI, panel="bottom note",
+        element="channel saving carried into the budget",
+        value="7.6x more cells, so 137 channels become 18",
+        citation_key=None,
+        quote=(
+            "[DERIVED HERE, no source sentence: 151,788 recovered per channel / "
+            "20,000 at the UIUC baseline = 7.6x; channel counts from "
+            "cost_model.py, ScreenDesign(cells_per_gene=250)]"
+        ),
+        note=(
+            "OURS, not the paper's. 151,788 recovered per channel over the UIUC "
+            "baseline of 20,000 is 7.6x; the channel counts come straight from "
+            "cost_model.py at 250 cells per target gene. Datlinger et al.'s own "
+            "headline is 15-fold, against a ~10,000-cell standard Chromium run "
+            "rather than against UIUC's more generous 20,000, so the figure "
+            "drawn here is the conservative one. Recompute if the rate card's "
+            "cells-per-channel changes."
+        ),
+    ),
+    FigureNumber(
+        figure=SCIFI, panel="c", element="round2 attaches by ligation, not RT",
+        value="round2 BC (ligated)",
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=34,
+        quote=(
+            "oligonucleotides carrying the microfluidic (round2) barcode (delivered "
+            "via Chromium gel beads) are ligated to the cDNA via the 5'-phosphate "
+            "group of the reverse transcription primer, directed by a complementary "
+            "3'-blocked bridge oligonucleotide"
+        ),
+    ),
 ]
 
 
 def main() -> None:
-    figures = [f"{TAXONOMY}.pdf", f"{SPLITSEQ}.pdf", f"{DROPLET}.pdf"]
+    figures = [f"{TAXONOMY}.pdf", f"{SPLITSEQ}.pdf", f"{DROPLET}.pdf",
+               f"{SCIFI}.pdf"]
     problems = check(RECORDS, figures)
     n_src = sum(1 for r in RECORDS if r.sourced)
     print(f"{len(RECORDS)} drawn numbers, {n_src} tied to a mirrored source, "

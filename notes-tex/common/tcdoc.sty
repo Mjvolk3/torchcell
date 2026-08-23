@@ -98,6 +98,15 @@
 \definecolor{stgrn}{HTML}{43A047}
 \definecolor{styel}{HTML}{E0A020}
 \definecolor{stred}{HTML}{E53935}
+%% Provenance ink, and it must NOT be one of the three above. The external-source
+%% flag was drawn in styel, the same amber as the author-reviewed status chip, so
+%% the front-page key showed an amber square and an amber triangle two lines
+%% apart meaning entirely unrelated things -- one about how finished a section
+%% is, one about how well-sourced a number is. Reported as confusing, and it is:
+%% same colour is the strongest "same family" signal a key can send.
+%% 9673A6 is the locked repo palette's purple, so the flag is drawn in an ink
+%% the rest of the project already uses and no status colour is reachable from it.
+\definecolor{tcprov}{HTML}{9673A6}
 \definecolor{tclink}{HTML}{1A4E8A}
 \definecolor{tcgray}{HTML}{6E6E6E}
 
@@ -134,14 +143,22 @@
 %% them only in the draft view would leave a reader outside the group looking at
 %% an unexplained symbol.
 \newcommand{\tcstatuslegend}{%
+  %% Each row NAMES its axis. Two unlabelled rows of coloured glyphs read as one
+  %% six-symbol key, which is what let a triangle and a square be compared in the
+  %% first place; the labels make it two keys answering two questions, and they
+  %% cost one word each.
   {\footnotesize\color{tcgray}%
    \iftcdraft
+     \textit{Section status:}~
      \status{final}~ready \quad
      \status{tent}~author-reviewed, keep stable \quad
      \status{todo}~not done, agents may edit freely\par
    \fi
-   \tcflagext~number not in our library mirror; verify at the linked source \quad
-   \tcflagsecond~taken from a review's summary table, not the primary paper\par}%
+   \textit{Provenance:}~
+   %% Both entries trimmed to keep the row on ONE line. With the axis label
+   %% added it wrapped, and a key that wraps stops looking like a key.
+   \tcflagext~not in the library mirror; verify at the linked source \quad
+   \tcflagsecond~from a review's summary table, not the primary paper\par}%
   \vspace{0.35\baselineskip}}
 
 %% \tccontents -- legend, then the compact clickable contents. Use this instead
@@ -180,7 +197,7 @@
 %% \tcstatuslegend so the key on page 1 covers provenance as well as status.
 %% Unlike \secstatus these render in BOTH views: an unverified number must not
 %% lose its flag just because the document left the group.
-\DeclareRobustCommand{\tcflagext}{{\normalfont\footnotesize\textcolor{styel}{\ding{115}}}}
+\DeclareRobustCommand{\tcflagext}{{\normalfont\footnotesize\textcolor{tcprov}{\ding{115}}}}
 \DeclareRobustCommand{\tcflagsecond}{{\normalfont\footnotesize\textcolor{tcgray}{\ding{108}}}}
 \newcommand{\external}[1]{\tcflagext{\footnotesize\color{tcgray}\,[external: #1]}}
 \newcommand{\secondhand}[1]{\tcflagsecond{\footnotesize\color{tcgray}\,[via #1, not primary]}}

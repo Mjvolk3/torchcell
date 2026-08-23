@@ -59,10 +59,21 @@ RESULTS = osp.join(os.environ["EXPERIMENT_ROOT"], "019-perturb-seq-costing", "re
 
 # One color per DESIGN, held across every panel that distinguishes them, the
 # same discipline the economics figure uses for platforms.
+#
+# Slots 0, 1, 2 -- the FIRST THREE, which is the palette rule for a series of
+# three and needs no deviation here. An earlier version took 0, 1, 4, copying
+# the economics figure's documented skip to blue; that skip exists because that
+# figure has FOUR series and slots 0 and 3 (amber and wheat) are not separable
+# at 0.9 pt. With three series the fourth slot is never reached, so there is
+# nothing to avoid and the deviation was inherited rather than justified.
+#
+# The reference grey is PLOT_PALETTE[5], not a typed "#666666". Same value,
+# but a typed hex is a color that has left the palette: nothing updates it if
+# the palette moves, and nothing flags it if someone types a near-miss.
 C_CONV = PLOT_PALETTE[0]   # conventional, m = 1
 C_POOL = PLOT_PALETTE[1]   # guide-pooled, averaged
-C_COMP = PLOT_PALETTE[4]   # compressed, sparse recovery
-C_REF = "#666666"
+C_COMP = PLOT_PALETTE[2]   # compressed, sparse recovery
+C_REF = PLOT_PALETTE[5]    # reference lines, annotations, non-series marks
 
 # Library sizes the document actually contemplates: the focused metabolic panel
 # of Sec. 4.5 and the yeast genome.

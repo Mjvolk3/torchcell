@@ -1031,3 +1031,38 @@ compendium can measure the second and says nothing about the first.
 - (b) Total back above each bar, and the reagent subtotal now sits on the line
   dividing the two segments -- so the bar states its own decomposition instead of
   having to be measured against the axis.
+
+## 2026.08.23 - Front-page key colours, and a palette audit of Fig 7
+
+### The key had two amber symbols meaning unrelated things
+
+`\tcflagext` (number not in the mirror) was drawn in `styel`, the same amber as
+the `tent` status chip (author-reviewed). Two lines apart in the front-page key,
+an amber square and an amber triangle, one about how finished a section is and
+one about how well-sourced a number is. Same colour is the strongest "same
+family" signal a key can send, so it was reading as one six-symbol key.
+
+Two changes. The provenance flag gets its own ink, `tcprov` = `#9673A6`, the
+locked repo palette's purple -- an ink the project already uses and one no
+status colour is reachable from. And each row now NAMES its axis (*Section
+status:* / *Provenance:*), which is what stops the two being compared at all.
+Both entries trimmed so the provenance row stays on one line; a key that wraps
+stops looking like a key.
+
+### Fig 7 palette: two real violations
+
+- **Series colours were slots 0, 1, 4.** The rule is that a series of N takes the
+  first N, so three designs should be 0, 1, 2. The skip to blue was copied from
+  the economics figure, where it IS justified -- four series, and slots 0 and 3
+  (amber and wheat) are not separable at 0.9 pt. With three series slot 3 is
+  never reached, so there was nothing to avoid and the deviation had been
+  inherited rather than earned. Now amber / red / purple.
+- **`C_REF = "#666666"` was typed.** That value IS `PLOT_PALETTE[5]`. Same ink,
+  but a typed hex has left the palette: nothing updates it if the palette moves
+  and nothing flags a near-miss. Now imported, in both figures.
+
+Kept outside the palette on purpose, and now named rather than inline:
+`KEY_DARK` / `KEY_PALE` in the economics figure, the swatches for the reagents
+and filled/open legends. Those key a TREATMENT, not a platform, and drawn in any
+palette colour they would read as a fifth platform -- the one thing that figure's
+single colour key must not allow.

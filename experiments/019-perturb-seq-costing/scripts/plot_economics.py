@@ -70,6 +70,20 @@ PLATFORM_COLOR = {p.name: PLOT_PALETTE[i] for p, i in zip(CM.PLATFORMS, _SLOTS)}
 # reserves PLOT_PALETTE_FILL for. Never as a primary plot color.
 PLATFORM_FILL = {p.name: PLOT_PALETTE_FILL[i] for p, i in zip(CM.PLATFORMS, _SLOTS)}
 
+# Non-series ink, from the palette rather than typed: reference lines, grey
+# annotations and the near-black used for a value printed on a bar.
+C_REF = PLOT_PALETTE[5]
+C_INK = "#333333"
+
+# Legend swatches for a TREATMENT rather than a platform -- the reagents and
+# sequencing key in panel (b), and the filled/open marker key in (e).
+# Deliberately OUTSIDE the palette and deliberately neutral: drawn in any
+# palette color they would read as a fifth platform, which is the one thing the
+# figure's single color key must not allow. They hold the same dark/pale
+# relation the bars do, so the key still teaches the encoding.
+KEY_DARK = "#8C8C8C"
+KEY_PALE = "#E8E8E8"
+
 # Two-line labels for a 57 mm panel. The asterisk on the projected row is the
 # same marker the budget tables use, and it has to be IN the panel: a
 # screenshotted figure loses the caption.
@@ -187,7 +201,7 @@ def panel_a(ax) -> None:
                 fontsize=4.5, ha="right", va="bottom")
     ax.annotate("bars: cells to reach 200,000 pseudobulk UMIs",
                 (-0.45, 3200), fontsize=4.5, ha="left", va="top",
-                color="#666666")
+                color=C_REF)
 
     ax.set_xticks(x)
     ax.set_xticklabels([PLATFORM_LABEL[p.name] for p in CM.PLATFORMS], fontsize=4.5)
@@ -257,7 +271,7 @@ def panel_b(ax) -> None:
         ax.text(xi, b.recurring_usd / 1e3 + 10, f"${b.recurring_usd/1e3:.0f}k",
                 ha="center", va="bottom", fontsize=5, fontweight="bold")
         ax.text(xi, rg + 6, f"${rg:.0f}k", ha="center", va="bottom",
-                fontsize=4.5, color="#333333")
+                fontsize=4.5, color=C_INK)
 
     ax.set_xticks(x)
     ax.set_xticklabels([PLATFORM_LABEL[b.platform] for b in budgets], fontsize=4.5)
@@ -273,9 +287,9 @@ def panel_b(ax) -> None:
             # wide enough to reach the third bar and be drawn across its top.
             # What each term contains belongs in the caption, which has room for
             # it; the legend only has to distinguish two things.
-            Patch(facecolor="#8C8C8C", edgecolor="black", lw=0.5,
+            Patch(facecolor=KEY_DARK, edgecolor="black", lw=0.5,
                   label="reagents"),
-            Patch(facecolor="#E8E8E8", edgecolor="black", lw=0.5,
+            Patch(facecolor=KEY_PALE, edgecolor="black", lw=0.5,
                   label="sequencing"),
         ],
         frameon=False, loc="upper left", fontsize=4.5, handlelength=1.0,
@@ -320,8 +334,8 @@ def panel_c(ax) -> None:
     ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"${v/1e3:,.0f}k"))
     # The field-standard entry point, marked because it is the design the
     # recommendation in Sec. 5.5 actually names.
-    ax.axvline(100, color="#666666", lw=0.4, ls=":")
-    ax.text(104, 1.1e4, "field standard", fontsize=4.5, color="#666666",
+    ax.axvline(100, color=C_REF, lw=0.4, ls=":")
+    ax.text(104, 1.1e4, "field standard", fontsize=4.5, color=C_REF,
             ha="left", va="bottom")
     ax.legend(frameon=False, loc="upper left", fontsize=4.5, handlelength=1.3,
               handletextpad=0.4, labelspacing=0.3, borderaxespad=0.2)
@@ -501,7 +515,7 @@ def panel_e(ax) -> None:
     # at (2e4, 3.6e5), which is on the purple curve and beside its marker --
     # exactly where a note about a line must not be.
     ax.annotate("10x and scifi are one curve;\npreindexing moves along it",
-                (5.2e3, 8.5e4), fontsize=4.5, color="#666666",
+                (5.2e3, 8.5e4), fontsize=4.5, color=C_REF,
                 ha="left", va="bottom")
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -515,11 +529,11 @@ def panel_e(ax) -> None:
     # decoded. Grey swatches so it cannot be mistaken for a fifth platform.
     ax.legend(
         handles=[
-            Line2D([], [], marker="o", ls="", ms=3.4, color="#8C8C8C",
+            Line2D([], [], marker="o", ls="", ms=3.4, color=KEY_DARK,
                    markeredgecolor="black", markeredgewidth=0.4,
                    label="published"),
             Line2D([], [], marker="o", ls="", ms=3.4, markerfacecolor="none",
-                   color="#8C8C8C", markeredgecolor="#8C8C8C",
+                   color=KEY_DARK, markeredgecolor=KEY_DARK,
                    markeredgewidth=0.8, label="projected"),
         ],
         frameon=False, loc="lower left", fontsize=4.5, handlelength=1.0,
@@ -559,9 +573,9 @@ def panel_f(ax) -> None:
              label="cells per gene pair, 200-gene panel (right)")
     # The 100-cell floor is the minimum a perturbation needs to be callable at
     # all; a pair below it is not measurable however many cells the screen has.
-    ax2.axhline(CM.CELLS_FLOOR, color="#666666", lw=0.5, ls=":")
+    ax2.axhline(CM.CELLS_FLOOR, color=C_REF, lw=0.5, ls=":")
     ax2.text(10.5, CM.CELLS_FLOOR * 1.12, "100-cell floor", fontsize=4.5,
-             color="#666666", ha="right")
+             color=C_REF, ha="right")
     ax2.set_ylabel("Cells per gene pair")
     ax2.set_ylim(0, 400)
     ax2.spines["right"].set_visible(True)

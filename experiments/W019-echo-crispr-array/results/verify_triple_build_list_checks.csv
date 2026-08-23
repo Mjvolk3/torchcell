@@ -1,0 +1,53 @@
+group,pass,claim,observed
+inventory,True,12 singles built,12
+inventory,True,13 doubles built,13
+inventory,True,0 triples built,0
+inventory,True,all 11 prediction genes are built singles,none missing
+inventory,True,the one built non-node single is YLR313C (SPH1),['YLR313C']
+inventory,True,the blocked pair YKL033W-A x YJR060W is not built,absent
+inventory,True,YLR104W (LCL2) has zero built doubles,0
+inventory,True,every built double has both parent singles built,all 13
+basis,True,39 in-basis targets,39
+basis,True,ranks 1-10 all touch a zero-trigenic-data gene,10 of 10
+basis,True,"targets with no built parent are 26, 32, 37","[26, 32, 37]"
+basis,True,every no-parent target contains YLR104W,3 of 3
+basis,True,set-cover guarantee: 31 of 31 within-TEN targets have a built parent,31
+basis,True,16 of 39 targets are clean,16
+basis,True,14 clean targets have a built parent,14
+selection,True,20 distinct triples,20
+selection,True,every selected triple is one of the 39 targets,20 of 20
+selection,True,exactly 6 triples touch a zero-data gene (the cap),6
+selection,True,"every triple has >=1 built parent double, so the wave is parallel",20 of 20
+selection,True,15 triples have exactly one parent route (build these first),15
+doubles,True,25 new doubles,25
+doubles,True,8 of the 13 existing doubles are re-measured,8
+doubles,True,33 distinct doubles on plate,33
+doubles,True,the blocked pair is not among the new doubles,absent
+doubles,True,every new double has both parent singles built,25 of 25
+tau,True,after the build every triple has all 3 doubles and all 3 singles measured,20 of 20 scorable
+tau,True,the 11 plate singles are exactly the 11 basis genes,11
+tau,True,plate = 11 singles + 33 doubles + 20 triples + WT = 65,65
+tau,True,to construct = 45,45
+tau,True,5 wells per strain,5
+contingency,True,14 triples survive,14
+contingency,True,17 new doubles are still needed,17
+contingency,True,18 new doubles contain neither flagged gene,18
+contingency,True,YLR104W + YPL081W is the one clean double orphaned by the drop,"[['YLR104W', 'YPL081W']]"
+contingency,True,7 of 25 new doubles touch a zero-data gene,7
+notes,True,build-list has 25 D-rows,25
+notes,True,build-list D-rows equal the computed new doubles,identical sets
+notes,True,build-list has 20 T-rows,20
+notes,True,build-list T-rows equal the capped selection,identical sets
+notes,True,"every T-row build-from, third single and route label is correct",20 of 20
+notes,True,"stars mark exactly T01-T06, the zero-data triples","['T01', 'T02', 'T03', 'T04', 'T05', 'T06']"
+notes,True,rationale 20-triple table has 20 rows,20
+notes,True,"every rank, prediction and new-double count is correct",20 of 20
+notes,True,rationale 25-double table has 25 rows,25
+notes,True,every new double's serves-triples list is correct,25 of 25
+notes,True,gene-participation line matches,"{'YPL081W': 7, 'YLR312C-B': 6, 'YKL033W-A': 4, 'YER079W': 2, 'YLL012W': 7, 'YLR104W': 4, 'YBR203W': 8, 'YGL087C': 5, 'YDR057W': 6, 'YJR060W': 3, 'YPL046C': 8}"
+notes,True,"all 11 genes covered, range 2-8","11 genes, 2-8"
+notes,True,summary CSV capped row matches the note,"45 construct, 0.5300 mean pred"
+notes,True,"construction-check CSV agrees: 20 rows, all with a parent, 15 single-route","20 rows, 15 single-route"
+kuzmin,True,YER079W and YLR312C-B are exactly the zero-trigenic-record genes,"['YER079W', 'YLR312C-B']"
+kuzmin,True,the same two genes are also absent from Kuzmin digenic,"['YER079W', 'YLR312C-B']"
+kuzmin,True,the note's trigenic column matches the LMDBs,23 rows compared

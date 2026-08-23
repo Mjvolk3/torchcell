@@ -391,6 +391,9 @@ def fitness_vs_reference_scatter(fit, ref, cfg):
     )
     lims = [0, max(1.2, float(np.nanmax(d[[ref_col, our_col]].values)) * 1.1)]
     ax.plot(lims, lims, ls="--", color=PLOT_PALETTE[5], lw=0.6)
+    # WT crosshair -- both axes are fitness with WT = 1.
+    ax.axhline(1.0, ls="--", color=PLOT_PALETTE[5], lw=0.4)
+    ax.axvline(1.0, ls="--", color=PLOT_PALETTE[5], lw=0.4)
     if len(d) >= 3:
         r = float(np.corrcoef(d[ref_col], d[our_col])[0, 1])
         ax.text(

@@ -1,0 +1,7 @@
+strategy,triples,new_doubles,construct_total,measure_plus_wt,wells_per_strain,tubes_1pick,tubes_2pick,gene_min,gene_max,imbalance,ylr_share,median_rank,mean_prediction,top10_captured
+rank,20,20,40,62,5,62,129,3,13,10,10,10.5,0.60052490234375,10
+count,20,15,35,56,6,56,117,0,11,11,8,18.5,0.52205810546875,5
+balanced,21,15,36,57,6,57,119,0,10,10,9,18.0,0.5328892299107143,6
+uniform,20,22,42,65,5,65,135,4,7,3,7,17.0,0.54034423828125,6
+capped,20,25,45,65,5,65,135,2,8,6,6,22.5,0.5300048828125,6
+no_ylr,20,20,40,59,6,59,123,0,11,11,0,21.5,0.474267578125,0

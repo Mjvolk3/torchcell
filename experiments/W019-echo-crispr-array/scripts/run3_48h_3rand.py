@@ -351,6 +351,9 @@ def fig_correlation(m: pd.DataFrame, used: list) -> None:
     fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half_plus"]), mm_to_in(88)))
     lim = (0.4, 1.3)
     ax.plot(lim, lim, ls="--", lw=0.5, color=C_GRAY, zorder=1)
+    # WT crosshair -- both axes are fitness with WT = 1.
+    ax.axhline(1.0, ls="--", lw=0.4, color=C_GRAY, zorder=1)
+    ax.axvline(1.0, ls="--", lw=0.4, color=C_GRAY, zorder=1)
     cst = m.dropna(subset=["costanzo_smf"])
     ax.errorbar(
         cst["costanzo_smf"], cst["boot_fitness"], yerr=cst["boot_se"],

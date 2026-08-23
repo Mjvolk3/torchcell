@@ -85,6 +85,9 @@ def main():
     )
     lims = [min(0.3, cmp.min().min() * 0.95), max(1.15, cmp.max().max() * 1.05)]
     ax.plot(lims, lims, ls="--", color=PLOT_PALETTE[5], lw=0.6)
+    # WT crosshair -- both axes are fitness with WT = 1.
+    ax.axhline(1.0, ls="--", color=PLOT_PALETTE[5], lw=0.4)
+    ax.axvline(1.0, ls="--", color=PLOT_PALETTE[5], lw=0.4)
     for s in cmp.index:
         ax.annotate(
             s,

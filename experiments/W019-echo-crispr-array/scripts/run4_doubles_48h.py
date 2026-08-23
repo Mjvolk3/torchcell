@@ -510,6 +510,10 @@ def plot_singles_vs_reference(boot: pd.DataFrame) -> pd.DataFrame:
         max(m["costanzo_smf"].max(), m["fitness"].max()) + 0.08,
     ]
     ax.plot(lim, lim, ls="--", lw=0.5, color=C_GRAY, zorder=0)
+    # wild-type crosshair: both axes are fitness with WT = 1, so (1,1) splits the panel
+    # into fitter/sicker-than-WT quadrants for ours (y) and the reference (x).
+    ax.axhline(1.0, ls="--", lw=0.4, color=C_GRAY, zorder=0)
+    ax.axvline(1.0, ls="--", lw=0.4, color=C_GRAY, zorder=0)
     ax.errorbar(
         m["costanzo_smf"],
         m["fitness"],
@@ -593,6 +597,8 @@ def plot_doubles_vs_reference(boot: pd.DataFrame, inter: pd.DataFrame) -> pd.Dat
             max(d["ref_dmf"].max(), d["dmf"].max()) + 0.08,
         ]
         ax.plot(lim, lim, ls="--", lw=0.5, color=C_GRAY, zorder=0)
+        ax.axhline(1.0, ls="--", lw=0.4, color=C_GRAY, zorder=0)
+        ax.axvline(1.0, ls="--", lw=0.4, color=C_GRAY, zorder=0)
         ax.errorbar(
             d["ref_dmf"],
             d["dmf"],
@@ -722,6 +728,8 @@ def plot_smf_dmf_combined(boot: pd.DataFrame, doubles_m: pd.DataFrame) -> None:
         + 0.08
     )
     ax.plot([lo, hi], [lo, hi], ls="--", lw=0.5, color=C_GRAY, zorder=0)
+    ax.axhline(1.0, ls="--", lw=0.4, color=C_GRAY, zorder=0)
+    ax.axvline(1.0, ls="--", lw=0.4, color=C_GRAY, zorder=0)
     ax.errorbar(
         s["costanzo_smf"],
         s["fitness"],

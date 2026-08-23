@@ -46,7 +46,8 @@ from matplotlib.ticker import FuncFormatter
 
 import cost_model as CM
 from figure_checks import assert_legible
-from torchcell.utils import PANEL_WIDTHS_MM, PLOT_PALETTE, mm_to_in, savefig_true_size_svg
+from torchcell.utils import (PANEL_WIDTHS_MM, PLOT_PALETTE, PLOT_PALETTE_FILL,
+                            mm_to_in, savefig_true_size_svg)
 
 load_dotenv()
 OUT_DIR = osp.join(os.environ["ASSET_IMAGES_DIR"], "019-perturb-seq-costing")
@@ -60,9 +61,12 @@ OUT_DIR = osp.join(os.environ["ASSET_IMAGES_DIR"], "019-perturb-seq-costing")
 # and this figure asks one key to hold across six panels, so it has to hold in
 # the worst of them. Skipping to blue is the documented deviation; it costs one
 # warm primary and buys a key a reader can actually use.
-PLATFORM_COLOR = {
-    p.name: PLOT_PALETTE[i] for p, i in zip(CM.PLATFORMS, (0, 1, 2, 4))
-}
+_SLOTS = (0, 1, 2, 4)
+PLATFORM_COLOR = {p.name: PLOT_PALETTE[i] for p, i in zip(CM.PLATFORMS, _SLOTS)}
+# The matched pale companion of each platform color, used only as the lighter
+# member of a two-level bar in panel (b) -- which is the one job the standard
+# reserves PLOT_PALETTE_FILL for. Never as a primary plot color.
+PLATFORM_FILL = {p.name: PLOT_PALETTE_FILL[i] for p, i in zip(CM.PLATFORMS, _SLOTS)}
 
 # Two-line labels for a 57 mm panel. The asterisk on the projected row is the
 # same marker the budget tables use, and it has to be IN the panel: a
@@ -190,28 +194,38 @@ def panel_a(ax) -> None:
 
 
 def panel_b(ax) -> None:
-    """Cost stack at the base design.
+    """Cost stack at the base design: reagents against sequencing.
 
-    Bar color is the platform, as everywhere else in this figure; the three cost
-    categories are separated by hatch instead of by three more colors. That is
-    the repo rule (a second categorical dimension goes to pattern) and it is
-    also what lets a reader carry one key across all six panels.
+    TWO segments, separated by tone rather than by hatch, and both changes were
+    forced by the same measurement. The stack used to carry three categories
+    distinguished by ``xxx`` and ``...`` hatching, and neither worked at this
+    size for a reason arithmetic rather than aesthetic: sublibrary prep is
+    $2,970 of a $156,670 screen, so its band is under 2% of the bar -- about
+    four points tall. No pattern is legible in four points, and a pattern that
+    cannot be read is worse than no category at all, because it still costs the
+    reader an entry in the key. Folding it into reagents also makes this panel
+    agree with \\cref{tab:budgets}, whose Reagents column has always been
+    protocol plus sublibrary; the exact split is stated in the caption, which is
+    a more precise place for it than a four-point band.
+
+    With two categories the strongest available separation is lightness, and the
+    repo palette already supplies it as a matched pair: PLOT_PALETTE is the line
+    color and PLOT_PALETTE_FILL its pale companion, which is exactly the
+    "lighter member of a two-level bar" the standard reserves fills for. Dark to
+    pale bottom to top also happens to run bench to sequencer.
     """
     design = CM.ScreenDesign(cells_per_gene=BASE_CELLS_PER_GENE)
     budgets = [CM.budget_for(design, p) for p in CM.PLATFORMS]
     x = np.arange(len(budgets))
     w = 0.6
 
-    protocol = np.array([b.protocol_usd for b in budgets]) / 1e3
-    sublib = np.array([b.sublibrary_usd for b in budgets]) / 1e3
+    reagents = np.array([b.protocol_usd + b.sublibrary_usd for b in budgets]) / 1e3
     seq = np.array([b.sequencing_usd for b in budgets]) / 1e3
-    colors = [PLATFORM_COLOR[b.platform] for b in budgets]
+    dark = [PLATFORM_COLOR[b.platform] for b in budgets]
+    pale = [PLATFORM_FILL[b.platform] for b in budgets]
 
-    ax.bar(x, protocol, w, color=colors, edgecolor="black", lw=0.5)
-    ax.bar(x, sublib, w, bottom=protocol, color=colors, edgecolor="black",
-           lw=0.5, hatch="xxx")
-    ax.bar(x, seq, w, bottom=protocol + sublib, color=colors,
-           edgecolor="black", lw=0.5, hatch="...")
+    ax.bar(x, reagents, w, color=dark, edgecolor="black", lw=0.5)
+    ax.bar(x, seq, w, bottom=reagents, color=pale, edgecolor="black", lw=0.5)
 
     for xi, b in zip(x, budgets):
         ax.text(xi, b.recurring_usd / 1e3 + 14, f"${b.recurring_usd/1e3:.0f}k",
@@ -223,15 +237,13 @@ def panel_b(ax) -> None:
     ax.set_ylim(0, 470)
     # Category key only -- the color key is the x-axis, which names the platform
     # under every bar. Grey swatches so the legend cannot be read as a fifth
-    # platform.
+    # platform, and the same dark/pale relation the bars use.
     ax.legend(
         handles=[
-            Patch(facecolor="#DDDDDD", edgecolor="black", lw=0.5,
-                  label="barcoding / library prep"),
-            Patch(facecolor="#DDDDDD", edgecolor="black", lw=0.5, hatch="xxx",
-                  label="sublibrary prep"),
-            Patch(facecolor="#DDDDDD", edgecolor="black", lw=0.5, hatch="...",
-                  label="sequencing"),
+            Patch(facecolor="#8C8C8C", edgecolor="black", lw=0.5,
+                  label="reagents (barcoding, library, sublibrary)"),
+            Patch(facecolor="#E8E8E8", edgecolor="black", lw=0.5,
+                  label="sequencing (NovaSeq X 25B)"),
         ],
         frameon=False, loc="upper left", fontsize=4.5, handlelength=1.0,
         handletextpad=0.4, labelspacing=0.3, borderaxespad=0.2,

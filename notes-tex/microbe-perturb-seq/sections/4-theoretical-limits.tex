@@ -172,6 +172,14 @@ separates those two properties, and \cref{sec:budget} prices the separation.
 %%              study", and its 397 UMIs/cell was quoted from Kuchina anyway.
 %%              Replaced by Kuchina 2021, the study that measured both.
 %% Remaining second-hand row: Dohn 2021 (genes only, not plotted).
+%% TODO(manual retrieval) -- Datlinger et al.'s Supplementary Table 2 holds the
+%% per-cell performance metrics this figure would need to give scifi-RNA-seq a
+%% depth coordinate. It is NOT scriptable: PMC7612019 is outside the open-access
+%% subset, so the Europe PMC supplementary endpoint answers "not open access
+%% one", and nature.com needs auth. Manual-once download -> deposit in the
+%% mirror -> then this row can carry a measured depth and the arrow can become a
+%% point. Until then the absence is a retrieval gap, not a gap in the record,
+%% and the caption says which.
 \tcfigfit[0.86]{figures/method_landscape.pdf}{%
   \textbf{Published microbial single-cell RNA-seq trades cells against depth, but
   far more weakly than the diagonals suggest.} Cells profiled in each published
@@ -197,9 +205,12 @@ separates those two properties, and \cref{sec:budget} prices the separation.
   still. Studies reporting a single value have no bar.
   \textbf{Three methods are absent from the depth axis by design.} Gasch et al.\
   used Fluidigm C1 with SMART-Seq, which carries no UMI; Ma et al.\ report only
-  genes per cell; and Datlinger et al.\ reference UMIs per cell seven times, every
-  one of them as a plot axis, never printing a per-cell figure. None of the three
-  has a molecule count, so none is given one. Their measured quantities appear in
+  genes per cell; and Datlinger et al.\ measured a per-cell depth but published
+  it out of reach, deferring the performance metrics to a supplementary table
+  that sits behind the journal's paywall and is not in the mirror -- every
+  UMI-per-cell reference in the article itself is a plot axis. So for two of
+  the three no molecule count exists, and for the third it exists and is not in
+  hand; in neither case is one invented. Their measured quantities appear in
   \cref{tab:landscape}. This matters because the quantity most easily confused
   with depth here is the gene count, and reading one as the other moves a method
   bodily along the frontier.

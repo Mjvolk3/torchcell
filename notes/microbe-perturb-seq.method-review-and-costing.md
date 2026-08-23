@@ -854,3 +854,65 @@ flattens at once; (f) multiplexing.
 Palette deviation, documented in the script: platforms take slots 0,1,2,4 rather
 than 0..3. Orange and yellow at 0.9 pt on a 57 mm panel are not separable, and
 this figure asks one key to hold across six panels.
+
+## 2026.08.23 - Review round: Fig 9b tones, Fig 6 labels, and a corrected claim
+
+### Fig 9b: two tones, not three hatches
+
+The stack carried three cost categories separated by `xxx` and `...` hatching and
+neither was distinguishable, for a reason that is arithmetic rather than
+aesthetic: sublibrary prep is $2,970 of a $156,670 screen, so its band is under
+2% of the bar, about four points tall. No pattern is legible in four points.
+
+Folded sublibrary into reagents, which also makes the panel agree with Table 15,
+whose Reagents column has always been protocol + sublibrary. Two categories left,
+so the strongest available separation is lightness, and the palette already
+supplies it as a matched pair: `PLOT_PALETTE` dark for reagents,
+`PLOT_PALETTE_FILL` pale for sequencing. That is the one job the standard
+reserves fills for. The exact split now lives in the caption, which is a more
+precise place for it than a four-point band.
+
+### Fig 6 label fixes
+
+- (d) The 5,264 ceiling rule ran straight through four legend rows. ylim raised
+  to 6,600 and the legend anchored at 0.80 of the axes height, which is empty:
+  the union curve does not reach 2,500 until k = 10.
+- (c) "threshold itself" -> "threshold". The dotted line IS y = threshold.
+- (c) The "median responder (right axis)" block grew downward from its anchor and
+  lay along the dashed series it names. Now grows upward into the empty corner.
+
+### Datlinger's per-cell depth: corrected claim
+
+The document said scifi-RNA-seq "never prints a per-cell figure". That was wrong
+in a way worth recording, because it stated a gap in the RECORD when what exists
+is a gap in our RETRIEVAL.
+
+Re-checked properly. Every UMI-per-cell mention in the article is a plot axis,
+but md:36 defers explicitly: "performance metrics for sequencing on the NovaSeq
+platform are summarized in Extended Data Fig. 3f,g and detailed in
+**Supplementary Table 2**". So the value was measured and published.
+
+Tried to retrieve it. The mirror holds only `paper.md`, `paper.pdf` and the two
+OCR layout JSONs -- no `si/`. The OCR content list has two table blocks, both
+from the Nature reporting summary. The article is PMC7612019, and Europe PMC
+answers the supplementary-files endpoint with "Article with id PMC7612019 is not
+open access one"; nature.com needs auth. So it is a **manual-once retrieval**,
+now flagged as a `TODO(manual retrieval)` beside Fig 5 and carried as a
+Provenance record on the Datlinger row.
+
+Wording corrected in four places: the `method_data.py` row comment, the plot's
+own arrow label ("depth in an unretrieved supplement"), the Fig 5 caption, and
+the Table 6 note. The distinction it now draws: Gasch and Ma have no molecule
+count because their protocols produce none; Datlinger has one and we do not hold
+it.
+
+### Provenance table moved after the references
+
+Table 16 (was Table 3) now sits in an appendix after the bibliography. Four pages
+of verbatim quotes between Sec. 3 and Sec. 4 interrupted the argument for every
+reader in order to serve the one checking a number. Main body drops from 37 pages
+to 33; `\cref{tab:figure-provenance}` still resolves from every figure caption.
+
+Deliberately NOT gated on the draft build. The share view keeps `\external` and
+`\secondhand` flags for the same reason it should keep this: a document whose
+numbers are checkable only in-house is asking to be trusted rather than read.

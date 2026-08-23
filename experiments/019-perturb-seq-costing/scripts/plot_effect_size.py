@@ -228,10 +228,18 @@ def panel_c(ax) -> None:
     # Anchored to the last point of the dashed series and grown down-and-left
     # into the empty top-right corner. Anything nearer the middle of the panel
     # lands on the shaded interquartile bands, where grey-on-grey is unreadable.
+    # ABOVE the last point, not below it. Anchored with va="top" the block grew
+    # downward from (6, 13) and lay along the dashed series it names, which is
+    # the one place a label for a line must not be. Growing upward puts it in
+    # the empty top-right corner instead.
     ax2.annotate("median responder\n(right axis)", (6.0, 13.0),
-                 xytext=(-4, -2), textcoords="offset points", fontsize=4.5,
-                 ha="right", va="top", color="#666666")
-    ax2.annotate("threshold itself", (3.0, 3.0), xytext=(4, -3),
+                 xytext=(-2, 4), textcoords="offset points", fontsize=4.5,
+                 ha="right", va="bottom", color="#666666")
+    # "threshold", not "threshold itself". The dotted line IS y = the threshold,
+    # so the word "itself" was doing the work of a comparison the reader has to
+    # make anyway -- the dashed series sits above this line, and that gap is the
+    # whole point. Naming the line for what it plots is enough.
+    ax2.annotate("threshold", (3.0, 3.0), xytext=(4, -3),
                  textcoords="offset points", fontsize=4.5, ha="left",
                  va="top", color="#BBBBBB")
 
@@ -275,12 +283,20 @@ def panel_d(ax) -> None:
 
     ax.set_xticks(range(1, 11))
     ax.set_xlim(0.6, 10.6)
-    ax.set_ylim(0, 5800)
+    # Headroom above the ceiling, and the legend pushed below it. At ylim 5800
+    # the 5,264 rule sat a whisker under the frame and the legend, anchored to
+    # the top-left corner, was drawn straight through it -- a dotted red line
+    # crossing four legend rows. Raising the limit opens a clear band for the
+    # "ceiling" label, and anchoring the legend at 0.80 of the axes height puts
+    # its top under the rule rather than across it. The region it now occupies
+    # is empty: the union curve does not reach 2,500 until k = 10.
+    ax.set_ylim(0, 6600)
     ax.set_xlabel("Perturbations per cell, $k$")
     ax.set_ylabel("Genes responding at 1.25$\\times$")
     ax.set_title("Extrapolating past two perturbations", loc="left", fontsize=6)
-    ax.legend(frameon=False, loc="upper left", fontsize=5, handlelength=1.4,
-              handletextpad=0.4, borderaxespad=0.2, labelspacing=0.3)
+    ax.legend(frameon=False, loc="upper left", bbox_to_anchor=(0.0, 0.80),
+              fontsize=5, handlelength=1.4, handletextpad=0.4,
+              borderaxespad=0.2, labelspacing=0.3)
     box(ax)
 
 

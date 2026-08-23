@@ -62,4 +62,25 @@ References: Zotero \file{torchcell/microbe-perturb-seq} (group $\cup$ personal)\
 \small
 \bibliography{references}
 
+%% --- Appendix, after the references on purpose -------------------------------
+%% Provenance tables are reference material, not argument. A reader checking
+%% whether "up to 96 per chip" is really what the source says needs this; every
+%% other reader needs it out of the way. After the bibliography is where a
+%% document conventionally puts material of exactly that kind, and every figure
+%% caption still cross-references it by number.
+%%
+%% It is NOT gated on the draft build. The share view (`make clean-view`) keeps
+%% \external and \secondhand flags for the same reason it keeps this: a
+%% document whose numbers are checkable only in-house is asking to be trusted
+%% rather than read, and that is the opposite of what the table is for.
+\clearpage
+\normalsize
+%% Carries a status chip like every other heading, and it is left at `todo`
+%% rather than promoted: the table is generated, but nobody has read it end to
+%% end against the sources since the last two figures were added.
+\section*{Appendix: Provenance of Hand-Drawn Figure Numbers\secstatus{todo}}
+\addcontentsline{toc}{section}{Appendix: Provenance of Hand-Drawn Figure Numbers}
+\small
+\input{tables/t15-figure-provenance}
+
 \end{document}

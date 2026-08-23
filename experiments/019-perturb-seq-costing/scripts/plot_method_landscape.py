@@ -280,10 +280,13 @@ def main() -> None:
                         xytext=(dx, dy - GAP / 2), va="top", style="italic", **common)
 
     # --- the preindexing move, drawn as a vector rather than a point ---------
-    # scifi-RNA-seq has no place on the depth axis: Datlinger et al. reference
-    # UMIs per cell only as a plot axis and never print a per-cell figure, so
-    # there is no y-coordinate to give it and none is invented (the same rule
-    # that keeps Gasch and Ma off this axis).
+    # scifi-RNA-seq has no place on the depth axis, and NOT because the depth
+    # was never measured -- it was. The article defers its performance metrics
+    # to Supplementary Table 2, which is behind Nature's paywall and is not in
+    # the mirror, while every UMI-per-cell mention in the article itself is a
+    # plot axis. So there is no y-coordinate in hand and none is invented, which
+    # is the same outcome as the rule that keeps Gasch and Ma off this axis but
+    # a different reason. See the note on the Datlinger row in method_data.py.
     #
     # But the throughput move IS measurable and IS the point, so it is drawn as
     # a horizontal arrow at a height that carries no claim: well above every
@@ -310,7 +313,10 @@ def main() -> None:
         ha="center", va="bottom", fontsize=5, color="#333333",
     )
     ax.annotate(
-        "Datlinger 2021, human/mouse; no per-cell UMI published",
+        # "not retrieved", NOT "not published". The paper defers its performance
+        # metrics to Supplementary Table 2, which is behind Nature's paywall and
+        # is not in the mirror -- so a depth value exists and we do not hold it.
+        "Datlinger 2021, human/mouse; depth in an unretrieved supplement",
         (np.sqrt(UC_TENX_BASELINE * MD.SCIFI_RECOVERED_LARGE_RUN), y_arrow / 1.7),
         ha="center", va="top", fontsize=5, color="#666666", style="italic",
     )

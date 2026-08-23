@@ -790,13 +790,23 @@ METHODS: list[Method] = [
         # Sec. 3.3 and the budget both turn on. It is mammalian, so `microbial`
         # is False and it renders below a rule.
         #
-        # NO UMI VALUE, and this was checked rather than assumed: the paper
-        # references UMIs per cell seven times and every one of them is a plot
-        # axis (Fig. 2a, 2d, 2j; Extended Data Figs. 4a, 5b, 6b-c, 9b). It never
-        # prints a median or mean per cell in the text, and Supplementary
-        # Table 2 is not in the mirror. So this row is treated exactly like Gasch
-        # and Ma: tabulated, and absent from the depth axis rather than given an
-        # invented value.
+        # NO UMI VALUE, and the reason is NOT that the paper never measured one.
+        # It did. The distinction matters and was got wrong on the first pass.
+        #
+        # Every UMI-per-cell reference in the text is a plot axis (Fig. 2a, 2d,
+        # 2j; Extended Data Figs. 4a, 5b, 6b-c, 9b), and the one place a number
+        # would be is deferred: "performance metrics for sequencing on the
+        # NovaSeq platform are summarized in Extended Data Fig. 3f,g and detailed
+        # in SUPPLEMENTARY TABLE 2" (md:36). Supplementary Table 2 is not in the
+        # mirror, and it is not retrievable by script -- the article is
+        # PMC7612019, which Europe PMC serves as "not open access one", so the
+        # supplementary-files endpoint refuses it and nature.com needs auth. It
+        # is therefore a manual-once retrieval, flagged in the note.
+        #
+        # So the honest state is "measured by the authors, not held here", which
+        # is weaker than "not published" and stronger than a guess. Treated like
+        # Gasch and Ma either way: tabulated, absent from the depth axis, and no
+        # value invented for it.
         #
         # cells_profiled is the large-scale run, which is a RECOVERY through
         # quality control -- not the 1.53 million loading demonstration, which is
@@ -823,6 +833,21 @@ METHODS: list[Method] = [
                     "383,000 nuclei loaded into a single microfluidic channel of "
                     "the Chromium system ... This experiment resulted in 151,788 "
                     "single-cell transcriptomes passing quality control"
+                ),
+            ),
+            # The deferral itself, recorded so the chain "this row has no depth
+            # -> because the source put it in Supplementary Table 2 -> which we
+            # have not retrieved" is on the record rather than in a comment.
+            Provenance(
+                citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+                line=36,
+                quote=(
+                    "performance metrics for sequencing on the NovaSeq platform "
+                    "are summarized in Extended Data Fig. 3f,g and detailed in "
+                    "Supplementary Table 2 [NOT RETRIEVED: PMC7612019 is not in "
+                    "the open-access subset, so the Europe PMC supplementary "
+                    "endpoint refuses it; manual-once retrieval from nature.com "
+                    "is required before any depth value is quoted for this row]"
                 ),
             ),
             Provenance(

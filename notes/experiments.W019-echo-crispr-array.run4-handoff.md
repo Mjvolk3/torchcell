@@ -75,13 +75,25 @@ Contrast, sourced:
 
 - **Costanzo SMF** = average of ~350 replicate control screens (array) / ~17 (query).
   The "4 colonies" applies to the double-mutant screens, NOT to SMF.
-- **Kuzmin 2018 Fig. S5A**: replicate-to-replicate colony size **r = 0.90** (inset: n=172
-  screens, distribution peaks ~0.9-0.95). Fig. S5B: digenic eps **r = 0.88**, raw trigenic
-  0.88, adjusted trigenic tau 0.59.
+- **Kuzmin 2018 replicate reproducibility** -- digenic eps and raw trigenic scores
+  **r = 0.90--0.91**; adjusted trigenic tau **r = 0.74--0.81**. Verbatim, from the SI
+  section "Evaluation of reproducibility of genetic interactions": ``The screen noise was
+  similar for double mutants (Fig. S5B left) compared to raw triple mutant scores (Fig. S5B
+  middle) with the correlation between independent replicates of 0.9-0.91. However, the
+  adjusted trigenic interaction scores showed more variability with the correlation
+  coefficient between replicates decreasing to 0.74-0.81 (Fig. S5B right).'' Fig. S5A is
+  triple-mutant FITNESS replicate correlation for one representative screen, with an inset
+  distribution over n = 172 screens; the SI text gives no single r for it.
+  Source: `$DATA_ROOT/torchcell-library/kuzminSystematicAnalysisComplex2018/si/si1.md`,
+  sha256 `2ec80d05d823976e12add17699ad759bcd983768d2f53e7eb6c0185b963b8291`.
+  **Corrected 2026.08.23.** This entry previously read "digenic eps r = 0.88, raw trigenic
+  0.88, adjusted trigenic tau 0.59", read off Fig. S5B rather than from the SI text. The
+  adjusted-tau figure was the material error: 0.59 understates their reproducibility by
+  0.15--0.22, which makes our own tau precision look closer to theirs than it is.
 - **Their replicates are NOT clonal.** SGA regenerates the genotype each replicate: query
   lawn -> mate to array -> sporulate -> haploid selection. Final colonies of two replicates
-  are independent meiotic segregants. So r=0.90 is across independent CONSTRUCTIONS -- a
-  harder bar than our technical replication, and they still hit 0.90.
+  are independent meiotic segregants. So r = 0.90--0.91 is across independent
+  CONSTRUCTIONS -- a harder bar than our technical replication, and they still hit it.
 
 Discriminating experiment: **independent pickings** -- 2+ colonies per strain carried as
 separate lineages through the round.

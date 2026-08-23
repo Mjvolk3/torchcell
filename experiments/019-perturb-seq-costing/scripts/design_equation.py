@@ -122,6 +122,7 @@ import os.path as osp
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from figure_checks import assert_legible
 from dotenv import load_dotenv
 from matplotlib.ticker import LogLocator
 
@@ -257,7 +258,7 @@ PLATFORM_DEPTH = {
 PLATFORM_SHORT = {
     "SPLiT-seq (Brettner, as published)": "SPLiT-seq",
     "SPLiT-seq + rRNA depletion": "SPLiT-seq + depl.",
-    "10x Chromium X (GEM-X 3')": "10x Chromium X",
+    "10x Chromium X (GEM-X 3')": "10x Chromium X (and + scifi)",
 }
 
 # --- figure ------------------------------------------------------------------
@@ -445,6 +446,13 @@ def panel_c(ax) -> None:
     # markers.
     ax.text(5.9, 1.4e5, "one protocol run", fontsize=5, color="#666666",
             ha="left", va="center")
+    # The droplet unit of batch, for comparison on the same axis. Without it
+    # this panel implicitly prices feasibility in split-pool runs only, and the
+    # two units are a factor of three apart rather than the order of magnitude
+    # the un-preindexed 20,000-cell channel would suggest.
+    ax.axhline(MD.SCIFI_RECOVERED_LARGE_RUN, color="#666666", lw=0.5, ls=":")
+    ax.text(5.9, 4.4e4, "one preindexed channel", fontsize=5, color="#666666",
+            ha="left", va="center")
 
     ax.set_yscale("log")
     ax.set_xticks(ks)
@@ -486,6 +494,11 @@ def panel_d(ax) -> None:
     for i, (plat, depth) in enumerate(PLATFORM_DEPTH.items()):
         y = [min_detectable_delta(x, depth, phi) for x in n]
         ax.plot(n, y, lw=0.9, color=PLOT_PALETTE[i], label=PLATFORM_SHORT[plat])
+    # No fourth line for the preindexed droplet, and its absence is the finding
+    # rather than an omission: preindexing changes cells per priced channel, not
+    # UMIs per cell, so it lies exactly on top of the 10x curve here. Every
+    # statistical panel of this figure is blind to it. What it changes is the
+    # cost of reaching a given n, which is Fig. 9.
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlim(1e1, 1e4)
@@ -574,6 +587,15 @@ def main() -> None:
         fn(ax)
     fig.tight_layout(pad=0.4, w_pad=2.6, h_pad=2.4, rect=(0.012, 0.0, 1.0, 0.955))
     place_panel_letters(fig, flat, ["a", "b", "c", "d", "e", "f"])
+    # Legibility gate; see figure_checks.py. Six panels, and every reference
+    # line in them is labelled by hand at a position that depends on the axis
+    # limits, so a limit change is exactly what this catches.
+    assert_legible(
+        fig, axes=list(flat),
+        exempt={"one protocol run", "one preindexed channel", "genome scale",
+                "2-fold", "1.25-fold"},
+    )
+
     out = osp.join(OUT_DIR, "design_equation.svg")
     savefig_true_size_svg(fig, out)
     print(f"wrote {out}")

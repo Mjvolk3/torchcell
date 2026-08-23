@@ -42,6 +42,7 @@ The denominator for every capture-efficiency claim. **Rows marked (external) are
 | ProBac-seq (B. subtilis) | ProBac-seq (probe-based, 10x) | droplet | 2,784 | 325 | 241 | -- |
 | BacDrop (K. pneumoniae) | BacDrop (pre-indexed droplet) | droplet | 44,140 | -- | 30--127 | -- |
 | mapSPLiT (E. coli, CRISPRi/a) | mapSPLiT (microSPLiT + GBC) | split-pool | 76,068 | 325 | 161 | yes |
+| scifi-RNA-seq (preindexed droplet) | 10x Chromium ATAC + plate preindexing | preindexed-droplet | 151,788 | -- | -- | yes |
 
 ## Table 3. Cost per cell, library preparation only
 

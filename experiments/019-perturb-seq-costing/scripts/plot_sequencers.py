@@ -30,6 +30,7 @@ import numpy as np
 from dotenv import load_dotenv
 
 import cost_model as CM
+from figure_checks import assert_legible
 import uiuc_core_data as UC
 from torchcell.utils import PANEL_WIDTHS_MM, PLOT_PALETTE, mm_to_in, savefig_true_size_svg
 
@@ -147,6 +148,9 @@ def main() -> None:
     panel_b(axes[1])
     fig.tight_layout(pad=0.4, w_pad=2.0, rect=(0.010, 0.0, 1.0, 0.945))
     place_panel_letters(fig, axes, ["a", "b"])
+    # Legibility gate; see figure_checks.py.
+    assert_legible(fig, axes=list(axes))
+
     out = osp.join(OUT_DIR, "sequencers.svg")
     savefig_true_size_svg(fig, out)
     print(f"wrote {out}")

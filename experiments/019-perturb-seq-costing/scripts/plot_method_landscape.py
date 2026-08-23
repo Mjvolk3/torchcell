@@ -26,9 +26,16 @@ from dotenv import load_dotenv
 from matplotlib.lines import Line2D
 
 import method_data as MD
+import uiuc_core_data as UC
+from figure_checks import assert_legible
 from torchcell.utils import PANEL_WIDTHS_MM, PLOT_PALETTE, mm_to_in, savefig_true_size_svg
 
 load_dotenv()
+
+# The channel baseline the arrow is measured against. From the rate card, not
+# from Datlinger's own 15-fold, which is quoted against a ~10,000-cell standard
+# run and would overstate the saving available here.
+UC_TENX_BASELINE = UC.TENX_CELLS_PER_CHANNEL
 OUT_DIR = osp.join(os.environ["ASSET_IMAGES_DIR"], "019-perturb-seq-costing")
 
 # Isolation principle -> palette slot. Order follows the repo palette rule:
@@ -38,12 +45,14 @@ ISOLATION_COLOR = {
     "droplet": PLOT_PALETTE[1],  # brick
     "split_pool": PLOT_PALETTE[2],  # lilac
     "microwell": PLOT_PALETTE[3],  # wheat
+    "preindexed_droplet": PLOT_PALETTE[4],  # blue
 }
 ISOLATION_LABEL = {
     "plate": "plate / FACS",
     "droplet": "droplet",
     "split_pool": "split-pool",
     "microwell": "microwell array",
+    "preindexed_droplet": "preindexed droplet",
 }
 
 
@@ -76,8 +85,13 @@ def main() -> None:
     os.makedirs(OUT_DIR, exist_ok=True)
     style()
 
+    # FULL width, not half_plus. Thirteen studies each carrying a two-line
+    # label do not fit in 88.5 mm without either colliding or dropping below
+    # Nature's 5 pt type floor, and the floor is not negotiable. Widening is the
+    # only lever left: the same 5 pt text occupies half the fraction of the
+    # panel, which is what the eye reads as "smaller labels".
     fig, ax = plt.subplots(
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["half_plus"]), mm_to_in(72.0))
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(88.0))
     )
 
     # --- iso-lines of constant total mRNA UMIs -------------------------------
@@ -112,7 +126,12 @@ def main() -> None:
     # The 10^6 line now runs straight through the shallow-and-few corner where
     # Urbonaite and McNulty sit, so its label is pushed to the very top-left end
     # of the visible segment rather than a quarter of the way along it.
-    for total, frac in [(1e6, 0.04), (1e8, 0.25), (1e10, 0.50)]:
+    # `frac` is how far along the line's VISIBLE segment the label sits. The
+    # 10^6 value used to be 0.04, which put the text on the y-axis spine: that
+    # line only clips the bottom-left corner, so 4% along it is barely inside
+    # the frame. These three values are held honest by `assert_legible` at the
+    # end of main(), which fails the build if a label leaves the axes.
+    for total, frac in [(1e6, 0.34), (1e8, 0.20), (1e10, 0.46)]:
         ax.plot(xs, total / xs, color="#BBBBBB", lw=0.4, ls=":", zorder=1)
         lo = max(XLIM[0], total / YLIM[1])
         hi = min(XLIM[1], total / YLIM[0])
@@ -260,6 +279,42 @@ def main() -> None:
             ax.annotate(ORG.get(m.organism, m.organism), pt,
                         xytext=(dx, dy - GAP / 2), va="top", style="italic", **common)
 
+    # --- the preindexing move, drawn as a vector rather than a point ---------
+    # scifi-RNA-seq has no place on the depth axis: Datlinger et al. reference
+    # UMIs per cell only as a plot axis and never print a per-cell figure, so
+    # there is no y-coordinate to give it and none is invented (the same rule
+    # that keeps Gasch and Ma off this axis).
+    #
+    # But the throughput move IS measurable and IS the point, so it is drawn as
+    # a horizontal arrow at a height that carries no claim: well above every
+    # data point, in the empty band between the top marker (11,760) and the
+    # frame. Grey, no marker, and labelled with what it is -- the caption
+    # repeats it. A filled circle here would assert a depth we do not have.
+    y_arrow = 4.6e4
+    ax.annotate(
+        "", xy=(MD.SCIFI_RECOVERED_LARGE_RUN, y_arrow),
+        xytext=(UC_TENX_BASELINE, y_arrow),
+        arrowprops=dict(arrowstyle="-|>", lw=0.7, color="#666666",
+                        shrinkA=0, shrinkB=0, mutation_scale=6),
+        zorder=4,
+    )
+    for x in (UC_TENX_BASELINE, MD.SCIFI_RECOVERED_LARGE_RUN):
+        ax.plot([x, x], [y_arrow / 1.35, y_arrow * 1.35], color="#666666",
+                lw=0.7, zorder=4)
+    ax.annotate(
+        # Plain words, not "$\\rightarrow$": 5 pt mathtext does not survive
+        # Arial + svg.fonttype:none through rsvg-convert and renders as a
+        # broken glyph. Same failure as the economics panel's superscript.
+        "preindexing: 20k to 152k cells per channel",
+        (np.sqrt(UC_TENX_BASELINE * MD.SCIFI_RECOVERED_LARGE_RUN), y_arrow * 1.6),
+        ha="center", va="bottom", fontsize=5, color="#333333",
+    )
+    ax.annotate(
+        "Datlinger 2021, human/mouse; no per-cell UMI published",
+        (np.sqrt(UC_TENX_BASELINE * MD.SCIFI_RECOVERED_LARGE_RUN), y_arrow / 1.7),
+        ha="center", va="top", fontsize=5, color="#666666", style="italic",
+    )
+
     ax.set_xlabel("Cells profiled in the published study")
     ax.set_ylabel("mRNA UMIs recovered per cell")
 
@@ -303,6 +358,21 @@ def main() -> None:
               ncol=3, frameon=False, handletextpad=0.3, columnspacing=1.4)
 
     fig.tight_layout(pad=0.3)
+
+    # Legibility gate. Every label position in this panel is a considered
+    # choice, and every one of them is invalidated by a data change several
+    # files away -- a new study, a corrected UMI count. Checking here means a
+    # collision stops the SVG being written rather than surfacing three steps
+    # later in a rendered PDF that nobody re-opens.
+    #
+    # The exemptions are the legend rows, which sit under the axes on purpose.
+    assert_legible(
+        fig,
+        axes=[ax],
+        exempt={ISOLATION_LABEL[k] for k in ISOLATION_LABEL}
+        | {"has perturbation readout"},
+    )
+
     out = osp.join(OUT_DIR, "method_landscape.svg")
     savefig_true_size_svg(fig, out)
     print(f"wrote {out}")

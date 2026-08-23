@@ -197,11 +197,25 @@ def distributions(per_gene: dict[str, list], out_dir: str) -> None:
         for f in FOLD_LADDER:
             t = log2_thresh(f)
             per_strain = np.array([float((np.abs(v) > t).sum()) for v in vals])
+            # Median |log2 FC| among the genes that clear THIS threshold, pooled
+            # over strains. Recorded per rung because the headline "the median
+            # responding gene moves 1.34x" is not a property of the biology: the
+            # distribution falls off monotonically, so the median of its upper
+            # tail sits just above wherever the cut is put, and it moves with the
+            # cut. Sec. 4.4 has to be able to show that rather than assert one
+            # number, and the power calculation has to be able to be redone at a
+            # different definition of responding.
+            pooled = np.concatenate([np.abs(v) for v in vals])
+            resp = pooled[pooled > t]
             rows.append({
                 "dataset": name, "fold": f,
                 "median_responders": float(np.median(per_strain)),
                 "q25_responders": float(np.percentile(per_strain, 25)),
                 "q75_responders": float(np.percentile(per_strain, 75)),
+                "median_abs_log2fc_responders": (
+                    float(np.median(resp)) if resp.size else np.nan),
+                "median_fold_responders": (
+                    float(2 ** np.median(resp)) if resp.size else np.nan),
                 "n_strains": n_strains,
             })
     pd.DataFrame(rows).to_csv(

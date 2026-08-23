@@ -277,6 +277,7 @@ SHORT_PLATFORM = {
     "yeastDrop-Seq (table-top)": "yeastDrop-Seq",
     "mDrop-seq": "mDrop-seq",
     "10x Chromium 3' v2 + v3": "10x 3$'$ v2\\,+\\,v3",
+    "10x Chromium ATAC + plate preindexing": "10x ATAC + preindex.",
     "yeast-optimized SPLiT-seq": "SPLiT-seq (yeast)",
     "microSPLiT": "microSPLiT",
     "mapSPLiT (microSPLiT + GBC)": "mapSPLiT",
@@ -293,9 +294,27 @@ SHORT_STUDY = {
 }
 
 
+# The separator that opens the non-microbial block of the landscape table. The
+# `table()` helper appends the row terminator, so this is written as a rule
+# followed by a spanning italic label and nothing else -- a break a reader
+# cannot skim past, which a blank line would be.
+_COMPARATOR_RULE = (
+    r"\midrule \multicolumn{8}{@{}l}{\itshape "
+    r"For comparison, not a microbial study:}"
+)
+
+
 def t2() -> None:
+    # Microbial rows first, then a rule, then the comparators. Sorting them into
+    # one block would let a mammalian cell count be read as microbial evidence,
+    # which is the whole reason `Method.microbial` exists.
     rows = []
-    for m in MD.METHODS:
+    ordered = [m for m in MD.METHODS if m.microbial] + [
+        m for m in MD.METHODS if not m.microbial
+    ]
+    for m in ordered:
+        if not m.microbial and rows and rows[-1] != _COMPARATOR_RULE:
+            rows.append(_COMPARATOR_RULE)
         umi = "--"
         if m.mrna_umis_per_cell is not None:
             umi = f"{m.mrna_umis_per_cell:,.0f}"
@@ -336,9 +355,20 @@ def t2() -> None:
         r"\textbf{No range in the UMI column is a dispersion statistic over "
         r"cells}; all are min--max ranges of per-condition or per-experiment "
         r"summaries. \textbf{A dash in the UMI column is deliberate}: Gasch et "
-        r"al.\ used a protocol that carries no UMI, and Ma et al.\ report only "
-        r"genes, so neither has a molecule count to state and none is invented "
-        r"for them -- their measured quantity appears under Genes/cell instead. "
+        r"al.\ used a protocol that carries no UMI, Ma et al.\ report only "
+        r"genes, and Datlinger et al.\ reference UMIs per cell only as a plot "
+        r"axis and never print a per-cell figure, so none of the three has a "
+        r"molecule count to state and none is invented for them -- where a "
+        r"measured gene count exists it appears under Genes/cell instead. "
+        r"\textbf{The row below the rule is not microbial.} scifi-RNA-seq was "
+        r"run on human and mouse material only; it is tabulated because "
+        r"\cref{sec:scifi} and the budget both turn on it, and it is separated "
+        r"because a mammalian cell count is not evidence about microbes. Its "
+        r"151{,}788 is a recovery through quality control from one Chromium "
+        r"channel, not the 1.53-million-nuclei loading demonstration, which is a "
+        r"feasibility ceiling. It is absent from \cref{fig:landscape} for want of "
+        r"a depth coordinate; the throughput move it demonstrates is drawn there "
+        r"as an arrow instead. "
         r"\textbf{Basis} states how the single plotted value was obtained: "
         r"\emph{reported} = stated by the source; \emph{midpoint} = midpoint of a "
         r"reported range, a declared convention where no per-condition value "
@@ -357,7 +387,8 @@ def t2() -> None:
             r"lllrrrcl",
             r"Study & Platform & Isolation & Cells & mRNA UMIs/cell & Genes/cell & Pert. & Basis",
             rows,
-            "Published single-cell RNA-seq runs in yeast and other microbes.",
+            "Published single-cell RNA-seq runs in yeast and other microbes, "
+            "plus one non-microbial comparator below the rule.",
             "tab:landscape",
             size=r"\scriptsize",
             note=note,
@@ -752,18 +783,28 @@ def t12() -> None:
     between a structure and a predictor -- so the table has to make "measured"
     and "assumed" impossible to confuse.
     """
-    A = DE.power_coefficient(1.0)
+    # Delta is no longer assumed, and this table said it was long after
+    # effect_size_analysis.py had measured it -- the figure of Sec. 4.7 was
+    # already drawn at the measured value while this table still printed the
+    # nominal two-fold beside the word "assumed". Both now read from the same
+    # constant, so the two cannot drift apart again.
+    delta = DE.DELTA_MEASURED
+    A = DE.power_coefficient(delta)
     rows = [
         (r"$A(\Delta)$", "power coefficient, Eq.~(\\ref{eq:design})",
-         f"{A:.1f}", r"\textbf{assumed}",
-         r"$\Delta$ nominal two-fold; scales as $\Delta^{-2}$"),
-        (r"$\Delta$", "log$_2$ fold change to resolve", "1.0",
-         r"\textbf{assumed}", r"measured by \cref{sec:effect-size}"),
+         f"{A:.1f}", "derived",
+         r"at the measured $\Delta$; scales as $\Delta^{-2}$"),
+        (r"$\Delta$", "log$_2$ fold change to resolve", f"{delta:.2f}",
+         "measured", r"median responder at a 1.25$\times$ cut, "
+                     r"\cref{tab:effect-size}"),
         (r"$p_j$", "transcriptome share of target gene",
          f"{DE.P_TYPICAL:.1e}".replace("e-0", r"$\times10^{-") + r"}$",
          "derived", r"3.5 molecules / 30{,}000 mRNA, \cref{tab:transcript-content}"),
         (r"$\varphi_j$", "biological overdispersion between cells", "0.5--10",
          r"\textbf{assumed}", "swept; sets the floor. Not yet measured"),
+        # Source cells are set in an `l` column, so they must fit on one line.
+        # The preindexed caveat lives in the caption note instead; spelling it
+        # out here pushed the table 92 pt past the text block.
         (r"$d$", "sequencing depth, mRNA UMIs per cell", "410--2{,}000",
          "measured", r"per platform, \cref{tab:landscape}"),
         (r"$\rho_2$", "variance inflation, second order", "4",
@@ -777,14 +818,19 @@ def t12() -> None:
             "llrll",
             r"Symbol & Quantity & Value & Status & Source",
             [" & ".join(r) for r in rows],
-            "Inputs to the design equation. Three of the seven are assumed rather "
-            "than measured, and those three are what separate a structure from a "
+            "Inputs to the design equation. Two of the seven are assumed rather "
+            "than measured, and those two are what separate a structure from a "
             "predictor.",
             "tab:design-params",
             note=r"\textbf{Status}: \emph{measured} = from data we hold; "
                  r"\emph{quoted} = stated by a source; \emph{derived} = computed "
                  r"from measured values; \textbf{assumed} = a placeholder, and "
-                 r"every number downstream of it inherits that status.",
+                 r"every number downstream of it inherits that status. "
+                 r"One qualification on $d$: the 410--2{,}000 range is measured "
+                 r"per platform, but the preindexed droplet of \cref{sec:scifi} "
+                 r"has no published per-cell depth in any microbe and is held at "
+                 r"the 10x value throughout, so for that platform alone $d$ is "
+                 r"\textbf{assumed}.",
         ),
     )
 
@@ -825,16 +871,33 @@ def t14() -> None:
             rows,
             "Measured response of the transcriptome to a gene deletion.",
             "tab:effect-size",
-            note=r"A single deletion moves a few hundred genes by 1.25$\times$ but "
-                 r"only $\sim$10--15 by 2$\times$, so designing at two-fold targets "
-                 r"a few percent of the response. The median responding gene moves "
-                 r"$\sim$1.34$\times$, and because the power coefficient $A$ scales "
-                 r"as $|\Delta|^{-2}$ this multiplies every cell requirement by "
-                 r"$\sim$5.6 relative to the two-fold assumption. Doubling the "
-                 r"perturbation count roughly doubles the responder count at "
-                 r"1.25$\times$ and trebles it at 2$\times$, without shifting the "
-                 r"median response -- more perturbations make a cell noisier, not "
-                 r"its individual effects larger. Generated from "
+            note=r"\textbf{``Responding'' means $|\log_2$ FC$| > \log_2 1.25$}, "
+                 r"that is, a gene whose expression moved by more than 1.25-fold "
+                 r"in either direction relative to wild type, on the array "
+                 r"platform of the source compendium. There is no significance "
+                 r"test behind it and none is available per gene per strain: the "
+                 r"criterion is a magnitude cut on the reported log ratio, applied "
+                 r"identically to all three datasets. "
+                 r"A single deletion moves a few hundred genes by that criterion "
+                 r"but only $\sim$10--15 by 2$\times$, so designing at two-fold "
+                 r"targets a few percent of the response. "
+                 r"\textbf{The 1.34$\times$ in the last column is conditioned on "
+                 r"that cut and is not independent of it.} The $|\Delta|$ "
+                 r"distribution falls off monotonically (\cref{fig:effect-size}a), so "
+                 r"the median of whatever upper tail is selected sits just above "
+                 r"the cut that selected it: the same statistic is 1.16$\times$ at "
+                 r"a 1.1$\times$ cut, 1.36$\times$ at 1.25$\times$, 1.73$\times$ "
+                 r"at 1.5$\times$ and 2.57$\times$ at 2$\times$ "
+                 r"(\cref{fig:effect-size}c, right axis). What the column establishes "
+                 r"is therefore not a natural effect size but a consequence of "
+                 r"choosing 1.25$\times$, and the choice is what to argue with. "
+                 r"It matters because the power coefficient $A$ scales as "
+                 r"$|\Delta|^{-2}$, so at 1.34$\times$ every cell requirement is "
+                 r"$\sim$5.6 times the two-fold figure. "
+                 r"Doubling the perturbation count roughly doubles the responder "
+                 r"count at 1.25$\times$ and trebles it at 2$\times$, without "
+                 r"shifting the median response -- more perturbations make a cell "
+                 r"noisier, not its individual effects larger. Generated from "
                  r"\file{experiments/019-perturb-seq-costing/scripts/effect_size_analysis.py}.",
         ),
     )
@@ -870,9 +933,17 @@ def t15() -> None:
         r"\file{experiments/019-perturb-seq-costing/scripts/figure_sources.py}.}"
         r"\label{tab:figure-provenance}",
         r"\endgroup",
-        r"\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.20\textwidth}"
-        r">{\raggedright\arraybackslash}p{0.15\textwidth}"
-        r">{\raggedright\arraybackslash}p{0.60\textwidth}@{}}",
+        # Column boundaries are EXPLICIT @{\hspace{...}} rather than the
+        # default \tabcolsep, and the widths are unbalanced on purpose. With
+        # 0.20/0.15/0.60 the Element column was exactly filled by its longest
+        # entries ("FACS into plates throughput") while the As-drawn column ran
+        # half empty, so column 1 read as though it were touching column 2 while
+        # column 2 floated in whitespace. Moving width from 2 to 1 and setting a
+        # real gutter fixes both; the gutter is stated in \textwidth so it
+        # survives a geometry change, which \tabcolsep does not.
+        r"\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.235\textwidth}"
+        r"@{\hspace{0.025\textwidth}}>{\raggedright\arraybackslash}p{0.145\textwidth}"
+        r"@{\hspace{0.025\textwidth}}>{\raggedright\arraybackslash}p{0.57\textwidth}@{}}",
         r"\toprule",
         r"Element & As drawn & Source \\",
         r"\midrule",

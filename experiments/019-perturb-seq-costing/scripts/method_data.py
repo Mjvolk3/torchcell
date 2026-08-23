@@ -95,6 +95,14 @@ class Method(BaseModel):
     # this field the moment the paper enters the library and gets a citekey.
     url: str | None = None
     pmid: str | None = None
+    # False for a row included as a comparator rather than as part of the
+    # microbial record. The landscape figure and its table are about yeast and
+    # other microbes; a mammalian row belongs in the table (a reader looking for
+    # a method should find it) but must never be mistaken for evidence about
+    # microbes, so it is rendered in its own block below a rule rather than
+    # sorted in among them. A field rather than a comment, because both the
+    # table renderer and the plot have to honour it.
+    microbial: bool = True
     provenance: list[Provenance] = Field(default_factory=list)
 
 
@@ -772,6 +780,59 @@ METHODS: list[Method] = [
                     "With rRNA depletion, the mRNA fraction increased from 4.6% "
                     "to 60.2% ... and median mRNA transcripts per cell more than "
                     "doubled, from 54 to 115"
+                ),
+            ),
+        ],
+    ),
+    # --- the preindexed-droplet comparator, NOT microbial -------------------
+    Method(
+        # Included so a reader of the landscape table finds the method that
+        # Sec. 3.3 and the budget both turn on. It is mammalian, so `microbial`
+        # is False and it renders below a rule.
+        #
+        # NO UMI VALUE, and this was checked rather than assumed: the paper
+        # references UMIs per cell seven times and every one of them is a plot
+        # axis (Fig. 2a, 2d, 2j; Extended Data Figs. 4a, 5b, 6b-c, 9b). It never
+        # prints a median or mean per cell in the text, and Supplementary
+        # Table 2 is not in the mirror. So this row is treated exactly like Gasch
+        # and Ma: tabulated, and absent from the depth axis rather than given an
+        # invented value.
+        #
+        # cells_profiled is the large-scale run, which is a RECOVERY through
+        # quality control -- not the 1.53 million loading demonstration, which is
+        # a feasibility ceiling and would be the same category error the Gaisser
+        # row was demoted for.
+        label="scifi-RNA-seq (preindexed droplet)",
+        study="Datlinger 2021",
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+        year=2021,
+        organism="H. sapiens",
+        platform="10x Chromium ATAC + plate preindexing",
+        isolation="preindexed_droplet",
+        cells_profiled=151_788,
+        mrna_umis_per_cell=None,
+        genes_per_cell=None,
+        microbial=False,
+        has_perturbation_readout=True,  # arrayed CRISPR screen, 48 knockouts
+        provenance=[
+            Provenance(
+                citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+                line=57,
+                quote=(
+                    "we performed a large-scale scifi-RNA-seq experiment with "
+                    "383,000 nuclei loaded into a single microfluidic channel of "
+                    "the Chromium system ... This experiment resulted in 151,788 "
+                    "single-cell transcriptomes passing quality control"
+                ),
+            ),
+            Provenance(
+                citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
+                line=68,
+                quote=(
+                    "The resulting 96 experimental conditions were marked with "
+                    "different preindexing (round1) barcodes and processed in a "
+                    "single scifi-RNA-seq experiment ... we first aggregated all "
+                    "20,710 single-cell transcriptome profiles"
                 ),
             ),
         ],

@@ -246,57 +246,85 @@ answer is different for the two routes rather than merely smaller.
 %% from, and every derived per-cell number needs its divisor stated, so we can
 %% confirm we are tracking list price vs quoted price vs per-run amortized cost
 %% rather than silently mixing the three.
-%% TODO(effect size) -- panel a's depth constraint still rests on a NOMINAL
-%% two-fold threshold. Replace with the measured yeast response distribution once
-%% effect_size_analysis.py has run on gilahyper (see the session-handoff note),
-%% then regenerate: the bar heights in panel a and the tier in the keybox below
-%% both move with it.
+%% DONE(effect size, 2026.08.22) -- effect_size_analysis.py has run on the M1
+%% against the local LMDBs, and Sec. 4.4 now carries the measured distribution.
+%% Panel a here is unaffected on purpose: its depth constraint is a PSEUDOBULK
+%% UMI TARGET (2e5), not a fold-change threshold, so the measured effect size
+%% enters through design_equation.py (Fig. 7) rather than through this panel.
+%% What the measurement did change is Fig. 7's curves and the multiplier in the
+%% Sec. 4.4 keybox. Do not "fix" panel a to use 1.34x -- the two are different
+%% quantities and conflating them is what this note exists to prevent.
 \tcfigfit[1.0]{figures/economics.pdf}{%
-  \textbf{Cells per perturbation are set by biology rather than by sequencing at
-  useful depths, the dominant cost term is different for the two platforms, and
-  multiplexing makes main effects cheap without making pairwise interactions
-  reachable.} (a) Cells needed per perturbation under the two independent
-  constraints of \cref{sec:cells-per-pert}: the depth requirement, i.e.\ how many
-  cells it takes to accumulate 200{,}000 pseudobulk UMIs at each method's measured
-  per-cell yield, and the 100-cell biological floor below which cell-cycle and
-  metabolic state are not averaged out. The taller bar binds. The floor is the
-  binding constraint for every deeper method and is within a factor of two of
-  binding even for split-pool as published, so past a few hundred UMIs per cell
-  the design is limited by how many cells must be observed, not by how deeply each
-  is read -- deeper chemistry stops buying anything, which is the argument for
-  spending the improvement on cells instead. (b) Where the recurring money goes
-  for a 6{,}000-gene screen at 250 cells per gene. The dominant term moves between
-  platforms: sequencing is 81\% of split-pool spend, while for 10x it is 19\% and
-  library preparation is 81\%, because a genome-scale screen consumes 137 channels
-  at \$2{,}143 each. These are different cost structures, and an optimization that
+  \textbf{Six views of one decision: which platform to run.} Color is the
+  platform in every panel and only ever the platform, so the key is learned once;
+  where a panel needs a second categorical dimension it uses hatching. The
+  asterisk marks the projected row, drawn inside the panels because a screenshot
+  loses a caption. All four columns are 6{,}000 target genes in one environment
+  at UIUC rates; panels (a), (b), (d) and (e) are priced at 250 cells per target
+  gene.
+  \textbf{(a) Cells per perturbation, under two independent constraints}
+  (\cref{sec:cells-per-pert}): the depth requirement, i.e.\ how many cells it
+  takes to accumulate 200{,}000 pseudobulk UMIs at each platform's per-cell
+  yield, against the 100-cell biological floor below which cell-cycle and
+  metabolic state are not averaged out. The taller bar binds, and the floor binds
+  for every deeper platform, so past a few hundred UMIs per cell the design is
+  limited by how many cells must be observed rather than by how deeply each is
+  read. The preindexed column is identical to the 10x column here, which is the
+  point of showing it: preindexing buys cells per dollar, not UMIs per cell, and
+  is invisible to every statistical panel in this document
+  (\cref{fig:design}d).
+  \textbf{(b) Where the recurring money goes.} The dominant term \emph{moves}:
+  sequencing is 81\% of split-pool spend, while for 10x it is 19\% and library
+  preparation 81\%, because a genome-scale screen consumes 137 channels at
+  \$2{,}143 each. These are different cost structures, and an optimization that
   helps one (rRNA depletion, worth $\sim$\$99{,}000 here) does nothing for the
-  other. The six-fold spread between the cheapest and dearest column, \$58\,k
-  against \$364\,k, is a platform decision, not a procurement one.
-  \textbf{The fourth column is a projection, and the asterisk marks it as one
-  inside the panel.} It changes exactly one parameter of the third: cells
-  recovered per channel becomes the 151{,}788 Datlinger et al.\ measured rather
-  than the UIUC baseline of 20{,}000, so 137 channels become 18 and the column
-  falls to \$109\,k, closing that six-fold spread to $1.9\times$. Per-cell depth
-  in yeast is unmeasured for this chemistry and is held at the 10x value, the
-  optimistic end; no scifi run in any microbe has been published
-  (\cref{sec:scifi}). What it does to the cost \emph{structure} matters as much
-  as the total: reagents fall to 36\% and sequencing rises to 64\%, so a
-  preindexed droplet screen is sequencing-limited in the way split-pool already
-  is, but with no rRNA left to deplete. (c) What
-  multiplexing buys as guides per cell $k$ rises. Left axis: total cells needed to
-  hold main-effect precision across 6{,}000 genes falls as $1/k$, from 1.5\,M
-  cells at $k=1$ to 0.15\,M at $k=10$, because every cell reports on $k$ genes at
-  once. Right axis: what that same cell budget delivers for one \emph{named} gene
-  pair if the library is restricted to a 200-gene panel, which grows roughly
-  linearly in $k$ and crosses the 100-cell floor near $k=4$. The two curves are the
-  whole design argument. Multiplexing alone does not open up epistasis -- run the
-  same calculation over all 6{,}000 genes and coverage per pair falls by
-  $(200/6000)^2\approx1/900$, to well under one cell per pair at any $k$, because
-  the pairs to be covered grow quadratically while the pairs a cell reports grow
-  only as $k^2$. Restricting the panel is what makes pairs measurable, and
-  multiplexing is what then makes it affordable; neither substitutes for the
-  other. Generated by
-  \file{experiments/019-perturb-seq-costing/scripts/plot_economics.py}.}{fig:economics}
+  other. Preindexing takes the 137 channels to 18 and the column to \$109\,k,
+  and in doing so moves that platform's dominant term onto sequencing as well --
+  reagents 36\%, sequencing 64\% -- but with no rRNA left to deplete.
+  \textbf{(c) Whether the ordering survives a change of target.} Panel (b) prices
+  one design; this sweeps 50 to 1{,}000 cells per target gene. The ordering is
+  stable across the whole range, so the platform choice is not an artifact of the
+  250-cell point, and the vertical rule marks the 100-cell field standard the
+  recommendation is actually made at.
+  \textbf{(d) What happens to a purchased read}, stage by stage, and this is
+  where the reagent comparison and the cost comparison part company. Split-pool
+  reagents are $\sim$22$\times$ cheaper per cell than droplet and it still loses
+  end to end; the reversal is entirely here. Of 100 reads bought for a split-pool
+  run, 10 are PhiX spike or unresolvable barcode, 94 of the remainder are
+  ribosomal, and three quarters of the cells they came from are then discarded --
+  1.0 read in 100 survives all four tolls. Depletion takes that to 10.8, and both
+  droplet columns reach 37.4. \textbf{The two droplet lines coincide exactly at
+  every stage}, which is worth seeing: preindexing touches no term in this panel.
+  \textbf{(e) What is worth measuring next.} Every platform here has exactly one
+  number that is both uncertain and load-bearing, and for all of them it is the
+  same field -- cells barcoded per protocol run, or cells recovered per channel --
+  so they share an axis. The two are not equally worth measuring. Droplet cost is
+  reagents and reagents are per batch, so its curve falls steeply and keeps
+  falling; split-pool cost is sequencing, which does not depend on this number at
+  all, so its curve flattens almost at once and learning that yeast tolerates a
+  denser RT well buys little past a few hundred thousand cells per run. 10x and
+  scifi are one curve, and preindexing is a move along it rather than a move to a
+  different one.
+  \textbf{(f) What multiplexing buys as guides per cell $k$ rises.} Left axis:
+  total cells needed to hold main-effect precision across 6{,}000 genes falls as
+  $1/k$, from 1.5\,M cells at $k=1$ to 0.15\,M at $k=10$, because every cell
+  reports on $k$ genes at once. Right axis: what that same cell budget delivers
+  for one \emph{named} gene pair if the library is restricted to a 200-gene panel,
+  which grows roughly linearly in $k$ and crosses the 100-cell floor near $k=4$.
+  Multiplexing alone does not open up epistasis -- run the same calculation over
+  all 6{,}000 genes and coverage per pair falls by $(200/6000)^2\approx1/900$, to
+  well under one cell per pair at any $k$, because the pairs to be covered grow
+  quadratically while the pairs a cell reports grow only as $k^2$. Restricting
+  the panel is what makes pairs measurable and multiplexing is what then makes it
+  affordable; neither substitutes for the other.
+  \textbf{The scifi column is a projection throughout.} It changes exactly one
+  parameter of the 10x column -- cells recovered per channel becomes Datlinger et
+  al.'s measured 151{,}788 rather than the UIUC baseline of 20{,}000 -- and
+  per-cell depth in yeast is unmeasured for that chemistry and held at the 10x
+  value, the optimistic end. No scifi run in any microbe has been published
+  (\cref{sec:scifi}). Every panel is generated by
+  \file{experiments/019-perturb-seq-costing/scripts/plot_economics.py}, which
+  fails rather than writing the figure if any two labels in it collide.}{fig:economics}
 
 Reading the table: the dominant term \emph{moves}. For split-pool as published,
 sequencing is 81\% of spend; for 10x it is 19\% and library preparation is 81\%,

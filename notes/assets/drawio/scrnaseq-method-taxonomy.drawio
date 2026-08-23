@@ -71,8 +71,8 @@
         <mxCell id="a3n" value="~2,000 cells&#10;one well per cell" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="316" y="102" width="88" height="24" as="geometry" />
         </mxCell>
-        <mxCell id="a4n" value="6,000&#8211;100,000&#10;an oil-walled droplet" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="415" y="102" width="88" height="24" as="geometry" />
+        <mxCell id="a4n" value="6,000&#8211;100,000&#10;an oil-walled droplet&#10;152,000 preindexed&#10;(human; Fig. 4)" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="415" y="102" width="88" height="46" as="geometry" />
         </mxCell>
         <mxCell id="a5n" value="up to 1,061,865&#10;a printed microwell" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="514" y="102" width="88" height="24" as="geometry" />
@@ -82,10 +82,10 @@
         </mxCell>
 
         <mxCell id="phen" value="per-cell phenotype recorded (imaging, reporters, sorting gates)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="118" y="140" width="286" height="14" as="geometry" />
+          <mxGeometry x="118" y="152" width="286" height="14" as="geometry" />
         </mxCell>
         <mxCell id="nophen" value="no per-cell phenotype; cells are pooled and read out only by sequence" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="415" y="140" width="283" height="14" as="geometry" />
+          <mxGeometry x="415" y="152" width="283" height="14" as="geometry" />
         </mxCell>
 
         <!-- ============================= PANEL b ============================= -->

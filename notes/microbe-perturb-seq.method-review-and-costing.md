@@ -766,3 +766,91 @@ Ranked last in §6.1 for that reason, and §6.2 adds a checkpoint rather than a
 stage: the split-pool pilot's round-1 step already answers whether fixed,
 wall-digested yeast reverse transcribes in situ, which leaves one channel to test
 whether such a cell survives a microfluidic chip.
+
+## 2026.08.22 - Review round: legibility gate, Fig 9 as a 2x3 decision grid
+
+Second pass over the scifi integration, driven by a read of the built PDF.
+
+### Figures now fail rather than ship unreadable
+
+New `experiments/019-perturb-seq-costing/scripts/figure_checks.py`. Every
+matplotlib figure calls `assert_legible(fig, ...)` before saving, which raises on
+overlapping label boxes or labels outside the axes, so a collision stops the SVG
+being written. Rationale: what moves a label is almost always a DATA change in
+another file, and nobody re-opens the PDF after editing a constant.
+
+It earned its keep twice on the first run. It caught the 10x and scifi endpoint
+labels in the new Fig 9d printing on top of each other (they are identical at
+every stage, so the fix was one label reading "37.4% (both)"). It reported the
+figure clean while five two-line tick labels visibly ran together, because the
+first version skipped tick labels on the reasoning that matplotlib lays them out
+-- true of numeric ticks, false of categorical ones. X ticks are now checked.
+
+### Fixes from the read
+
+- **Table 3 column bleed.** Element column at `p{0.20}` was exactly filled by its
+  longest entries while As-drawn floated half empty. Rebalanced to 0.235/0.145/
+  0.57 with explicit `@{\hspace{0.025\textwidth}}` gutters rather than relying on
+  `\tabcolsep`.
+- **Fig 5.** The `10^6 UMIs` iso-line label sat on the y-axis (`frac=0.04` on a
+  line that only clips the corner). Panel widened from half_plus to full, which
+  is the only way to shrink labels proportionally without going under Nature's
+  5 pt floor.
+- **Fig 6b.** The blunt tops on the two Sameith violins are not caps: a violin is
+  clipped at the observed extremes, and at n=72-82 the KDE is still appreciable
+  at the maximum, so it stops flat. Kemmeren at n=1,484 tapers. Now labelled with
+  n under each violin and explained in the caption.
+- **Fig 6c** gained a right axis: median fold change among responders vs the
+  threshold. See below.
+- **Table 12** listed `Delta` as assumed at the nominal two-fold long after
+  `effect_size_analysis.py` measured it, while Fig 7 was already drawn at 0.42.
+  Both now read `DE.DELTA_MEASURED`.
+
+### Where 1.34x actually comes from
+
+A responder is `|log2 FC| > log2(1.25)`, a magnitude cut with no significance
+test behind it (none is available per gene per strain). Stated explicitly now,
+before the number is used.
+
+The 1.34x is NOT independent of that cut. The |Delta| distribution decays
+monotonically, so the median of whatever upper tail you select sits just above
+the cut that selected it: 1.16x at a 1.1x cut, 1.36x at 1.25x, 1.73x at 1.5x,
+2.57x at 2x. `effect_size_analysis.py` now emits `median_fold_responders` at
+every rung of the ladder and Fig 6c plots it against the identity line. The
+defensible content is the PAIR -- at a 1.25x definition a deletion moves a few
+hundred genes and the typical one moves 1.34-fold -- not either number alone.
+
+### Datlinger, worked through the rest of the document
+
+- **Table 6** gains a Datlinger row below a `\midrule` labelled "For comparison,
+  not a microbial study". New `Method.microbial` flag drives the split. No UMI
+  value: checked, and all seven of the paper's UMI-per-cell references are plot
+  axes, so it gets the same dash Gasch and Ma get.
+- **Fig 5** gains a grey arrow from 20k to 152k cells per channel at a height that
+  carries no depth claim, since it has no depth coordinate.
+- **Fig 1** gains the preindexed throughput under the droplet column, marked
+  "(human; Fig. 4)" in the label itself so a screenshot keeps the caveat.
+- **Fig 7c** gains a "one preindexed channel" reference line beside "one protocol
+  run"; the two batch units are a factor of three apart, not the order of
+  magnitude a plain 20,000-cell channel would suggest. **Fig 7d** deliberately has
+  no fourth curve, and the caption says why: scifi shares 10x's depth exactly, so
+  every statistical panel in the document is blind to it.
+
+### Fig 9 rebuilt as a 2x3 decision grid
+
+Was three panels; now six, all four platforms in every one, color = platform
+everywhere with hatching for the second dimension.
+
+(a) two constraints, now indexed by platform so the scifi/10x identity is visible
+rather than hidden; (b) cost stack; (c) NEW total cost vs cells per target gene,
+50-1,000, which shows the ordering is stable and not an artifact of the 250-cell
+point; (d) NEW fate of a purchased read across four multiplicative tolls, where
+the whole reagents-vs-loaded inversion lives (1.0% of split-pool reads survive,
+10.8% depleted, 37.4% both droplet columns); (e) NEW cost vs cells per batch,
+which shows the two platforms are not equally worth measuring -- droplet cost is
+reagents so its curve keeps falling, split-pool cost is sequencing so its curve
+flattens at once; (f) multiplexing.
+
+Palette deviation, documented in the script: platforms take slots 0,1,2,4 rather
+than 0..3. Orange and yellow at 0.9 pt on a 57 mm panel are not separable, and
+this figure asks one key to hold across six panels.

@@ -114,6 +114,26 @@ RECORDS: list[FigureNumber] = [
             "count. Same correction as Fig. 4."
         ),
     ),
+    FigureNumber(
+        figure=TAXONOMY, panel="a", element="preindexed droplet throughput",
+        value="152,000 preindexed (human; Fig. 4)",
+        citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=57,
+        quote=(
+            "we performed a large-scale scifi-RNA-seq experiment with 383,000 "
+            "nuclei loaded into a single microfluidic channel of the Chromium "
+            "system ... This experiment resulted in 151,788 single-cell "
+            "transcriptomes passing quality control"
+        ),
+        note=(
+            "Sits under the droplet column rather than in a seventh box, because "
+            "preindexing is a modifier of droplet capture and not a separate way "
+            "of keeping cells apart. Rounded to 152,000 on the canvas, where "
+            "every other entry is rounded too. The organism caveat is IN the "
+            "label rather than in a footnote: this is a figure of yeast methods "
+            "and the one number in it that is not from a microbe has to say so "
+            "even when the panel is screenshotted out of the document."
+        ),
+    ),
     # --- Fig. 2, split-pool barcoding ---------------------------------------
     FigureNumber(
         figure=SPLITSEQ, panel="1", element="round-1 wells and cells per well",
@@ -274,7 +294,7 @@ RECORDS: list[FigureNumber] = [
     ),
     FigureNumber(
         figure=SCIFI, panel="a", element="large-run yield, left caption",
-        value="383,000 loaded returned 151,788 transcriptomes from one channel",
+        value="383,000 loaded; 151,788 recovered",
         citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=57,
         quote=(
             "we performed a large-scale scifi-RNA-seq experiment with 383,000 "

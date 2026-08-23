@@ -2,13 +2,13 @@
 %% SOURCE: experiments/019-perturb-seq-costing/scripts/render_tex_tables.py
 \begin{table}[htbp]\centering
 \footnotesize
-\caption[]{Inputs to the design equation. Three of the seven are assumed rather than measured, and those three are what separate a structure from a predictor. \textbf{Status}: \emph{measured} = from data we hold; \emph{quoted} = stated by a source; \emph{derived} = computed from measured values; \textbf{assumed} = a placeholder, and every number downstream of it inherits that status.}\label{tab:design-params}
+\caption[]{Inputs to the design equation. Two of the seven are assumed rather than measured, and those two are what separate a structure from a predictor. \textbf{Status}: \emph{measured} = from data we hold; \emph{quoted} = stated by a source; \emph{derived} = computed from measured values; \textbf{assumed} = a placeholder, and every number downstream of it inherits that status. One qualification on $d$: the 410--2{,}000 range is measured per platform, but the preindexed droplet of \cref{sec:scifi} has no published per-cell depth in any microbe and is held at the 10x value throughout, so for that platform alone $d$ is \textbf{assumed}.}\label{tab:design-params}
 \begin{tabular}{llrll}
 \toprule
 Symbol & Quantity & Value & Status & Source \\
 \midrule
-$A(\Delta)$ & power coefficient, Eq.~(\ref{eq:design}) & 16.3 & \textbf{assumed} & $\Delta$ nominal two-fold; scales as $\Delta^{-2}$ \\
-$\Delta$ & log$_2$ fold change to resolve & 1.0 & \textbf{assumed} & measured by \cref{sec:effect-size} \\
+$A(\Delta)$ & power coefficient, Eq.~(\ref{eq:design}) & 90.9 & derived & at the measured $\Delta$; scales as $\Delta^{-2}$ \\
+$\Delta$ & log$_2$ fold change to resolve & 0.42 & measured & median responder at a 1.25$\times$ cut, \cref{tab:effect-size} \\
 $p_j$ & transcriptome share of target gene & 1.2$\times10^{-4}$ & derived & 3.5 molecules / 30{,}000 mRNA, \cref{tab:transcript-content} \\
 $\varphi_j$ & biological overdispersion between cells & 0.5--10 & \textbf{assumed} & swept; sets the floor. Not yet measured \\
 $d$ & sequencing depth, mRNA UMIs per cell & 410--2{,}000 & measured & per platform, \cref{tab:landscape} \\

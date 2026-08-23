@@ -32,6 +32,7 @@ import os.path as osp
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from figure_checks import assert_legible
 from dotenv import load_dotenv
 
 from torchcell.utils import PANEL_WIDTHS_MM, PLOT_PALETTE, mm_to_in, savefig_true_size_svg
@@ -158,6 +159,18 @@ def panel_b(ax) -> None:
         ax.plot([i], [med], marker="o", ms=2.2, color="white",
                 markeredgecolor="black", markeredgewidth=0.4, zorder=5)
 
+    # Sample size under each violin. Without it the two Sameith violins read as
+    # though their upper values were CAPPED: both end in a blunt horizontal cut
+    # rather than tapering. They are not capped. A violin body is clipped at the
+    # observed extremes, and with 72-82 strains the kernel density is still
+    # appreciable when it reaches the largest strain, so it stops flat; Kemmeren
+    # has 1,484, so its density has decayed to nothing by its maximum and comes
+    # to a point. The flat edge is where the data stops, not where it was cut,
+    # and n is what makes that legible without reading a caption.
+    for i, v in enumerate(data, start=1):
+        ax.text(i, 0.78, f"n = {len(v):,}", ha="center", va="bottom",
+                fontsize=4.5, color="#666666")
+
     ax.set_xticks(range(1, len(data) + 1))
     ax.set_xticklabels(labels, fontsize=5)
     ax.set_ylim(0.7, 3.9)
@@ -188,8 +201,45 @@ def panel_c(ax) -> None:
     ax.set_xlabel("Fold-change threshold")
     ax.set_ylabel("Genes responding (median)")
     ax.set_title("The threshold decides the screen", loc="left", fontsize=6)
-    ax.legend(frameon=False, loc="upper right", fontsize=5, handlelength=1.2,
-              handletextpad=0.4, borderaxespad=0.2)
+
+    # The second reading of this panel, and the reason it exists in this form.
+    # Sec. 4.4 quotes "the median responding gene moves 1.34x" and feeds that
+    # into the power calculation, where it costs a factor of 5.6 in cells. It is
+    # worth seeing that 1.34 is not a measured property of a yeast deletion: the
+    # |log2 FC| distribution falls off monotonically, so the median of whatever
+    # upper tail you select sits just above the cut that selected it. Plotted
+    # against the cut, the relation is close to a straight line through the
+    # identity -- which is what "the threshold decides the screen" means
+    # quantitatively, and what makes the 1.25x choice, not the biology, the thing
+    # to argue about.
+    ax2 = ax.twinx()
+    ref = lad[lad.dataset == "kemmeren2014_single"].sort_values("fold")
+    ax2.plot(ref.fold, ref.median_fold_responders, lw=0.9, ls="--",
+             color="#666666", marker="s", ms=2.0, markeredgecolor="black",
+             markeredgewidth=0.3, zorder=1)
+    ax2.plot(ref.fold, ref.fold, lw=0.5, ls=":", color="#BBBBBB", zorder=0)
+    ax2.set_yscale("log")
+    ax2.set_ylim(1.05, 20)
+    ax2.set_yticks([1.25, 2, 5, 10])
+    ax2.set_yticklabels(["1.25", "2", "5", "10"], fontsize=5)
+    ax2.set_ylabel("Median fold change among responders", fontsize=5,
+                   color="#666666")
+    ax2.tick_params(axis="y", colors="#666666")
+    # Anchored to the last point of the dashed series and grown down-and-left
+    # into the empty top-right corner. Anything nearer the middle of the panel
+    # lands on the shaded interquartile bands, where grey-on-grey is unreadable.
+    ax2.annotate("median responder\n(right axis)", (6.0, 13.0),
+                 xytext=(-4, -2), textcoords="offset points", fontsize=4.5,
+                 ha="right", va="top", color="#666666")
+    ax2.annotate("threshold itself", (3.0, 3.0), xytext=(4, -3),
+                 textcoords="offset points", fontsize=4.5, ha="left",
+                 va="top", color="#BBBBBB")
+
+    # NO legend on this panel. The three colored series are the same three as
+    # panel a, which carries the key; repeating it here costs the only clear
+    # corner left, and the dashed grey series is named by its annotation.
+    ax.set_zorder(ax2.get_zorder() + 1)
+    ax.patch.set_visible(False)
     box(ax)
 
 
@@ -245,6 +295,11 @@ def main() -> None:
         fn(ax)
     fig.tight_layout(pad=0.4, w_pad=2.6, h_pad=2.4, rect=(0.012, 0.0, 1.0, 0.962))
     place_panel_letters(fig, flat, ["a", "b", "c", "d"])
+    # Legibility gate; see figure_checks.py. Panel c is the risky one -- it
+    # carries two y-axes, three shaded bands and two grey annotations, and its
+    # label positions were chosen against one version of the ladder.
+    assert_legible(fig, axes=list(flat), exempt={"threshold itself"})
+
     out = osp.join(OUT_DIR, "effect_size.svg")
     savefig_true_size_svg(fig, out)
     print(f"wrote {out}")

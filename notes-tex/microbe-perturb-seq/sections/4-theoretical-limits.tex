@@ -88,7 +88,9 @@ Boocock et al.\ \citep{boocockSinglecellEQTLMapping2025} and
 Nadal-Ribelles et al.\ 2025 \citep{nadal-ribellesSinglecellResolvedGenotypephenotype2025}.
 Tabulated but not plotted, for want of a per-cell molecule count:
 Gasch et al.\ \citep{gaschSinglecellRNASequencing2017},
-Ma et al.\ \citep{maBacterialDropletbasedSinglecell2023} and Dohn et al.} Depth does fall as cell count rises, so there is a
+Ma et al.\ \citep{maBacterialDropletbasedSinglecell2023}, Dohn et al., and --
+below the rule, because it is not a microbial study -- Datlinger et al.\
+\citep{datlingerUltrahighthroughputSinglecellRNA2021}.} Depth does fall as cell count rises, so there is a
 trade-off, but it is a much weaker one than the picture suggests at a glance.
 %% SOURCE: plot_method_landscape.py prints all four spans on every run.
 Cells profiled span 3.6 orders of magnitude across these ten studies and depth
@@ -193,12 +195,24 @@ separates those two properties, and \cref{sec:budget} prices the separation.
   conditions, not how much cells vary within one; $\ddagger$ marks a bar that
   spans separate experiments of deliberately differing depth, which is weaker
   still. Studies reporting a single value have no bar.
-  \textbf{Two methods are absent from the depth axis by design.} Gasch et al.\
-  used Fluidigm C1 with SMART-Seq, which carries no UMI, and Ma et al.\ report
-  only genes per cell; neither has a molecule count, so neither is given one.
-  Their measured quantities appear under Genes/cell in \cref{tab:landscape}. This
-  matters because the quantity most easily confused with depth here is the gene
-  count, and reading one as the other moves a method bodily along the frontier.
+  \textbf{Three methods are absent from the depth axis by design.} Gasch et al.\
+  used Fluidigm C1 with SMART-Seq, which carries no UMI; Ma et al.\ report only
+  genes per cell; and Datlinger et al.\ reference UMIs per cell seven times, every
+  one of them as a plot axis, never printing a per-cell figure. None of the three
+  has a molecule count, so none is given one. Their measured quantities appear in
+  \cref{tab:landscape}. This matters because the quantity most easily confused
+  with depth here is the gene count, and reading one as the other moves a method
+  bodily along the frontier.
+  \textbf{The grey arrow is not a data point.} It is the throughput move
+  preindexing produces, drawn at a height chosen to carry no claim -- above every
+  marker, in the empty band below the frame -- because scifi-RNA-seq has no
+  coordinate on the depth axis and is not a microbial study. Its two ends are the
+  UIUC baseline of 20{,}000 cells recovered per Chromium channel and the 151{,}788
+  Datlinger et al.\ recovered from one overloaded channel
+  \citep{datlingerUltrahighthroughputSinglecellRNA2021}. It is here because it is
+  the only published experiment that moves a method to the right without moving it
+  down: UMIs per cell showed no downward trend in droplets holding up to 15 nuclei
+  (\cref{sec:scifi}).
   Published runs span $9\times10^{5}$ to $1.3\times10^{9}$ total UMIs. The smaller
   ones sit three orders of magnitude short of the 3.2 billion read pairs a single
   NovaSeq X 25B lane delivers (\cref{fig:sequencers}) and were limited by protocol
@@ -278,6 +292,15 @@ Sameith et al.'s double-deletion compendium
 \citep{sameithHighresolutionGeneExpression2015}, both built locally and analyzed
 below.
 
+\notesec{What counts as a responding gene, stated before it is used} A gene is
+called \emph{responding} to a deletion when $|\log_2 \mathrm{FC}| > \log_2 1.25$
+against wild type, that is, when its expression moved by more than 1.25-fold in
+either direction. No significance test sits behind that, and none is available:
+the compendia report a log ratio per gene per strain, so the criterion is a
+magnitude cut, applied identically to all three datasets. The cut is a choice, it
+is the one this document argues from, and \cref{fig:effect-size}c shows what
+every alternative choice would have given.
+
 %% SOURCE: experiments/019-perturb-seq-costing/scripts/effect_size_analysis.py
 %% RUN 2026-08-20 on the M1 against the LMDBs rsynced from gilahyper. The script
 %% reads the LMDB directly and no longer imports torchcell, so it is portable.
@@ -286,7 +309,7 @@ below.
 \tcfigfit[1.0]{figures/effect_size.pdf}{%
   \textbf{What differential expression after a gene deletion actually looks like,
   and why a two-fold design target is the wrong one for this biology.}
-  All three panels are the Kemmeren and Sameith compendia, singles and doubles
+  All four panels are the Kemmeren and Sameith compendia, singles and doubles
   shown separately. (a) Distribution of response magnitude over every
   gene-in-every-strain pair. It is a steep decay: the mass sits below
   $|\Delta|=0.5$, and the two thresholds the document argues about fall far out on
@@ -303,11 +326,26 @@ below.
   from 22 genes to 4{,}810 -- a factor of 18 above the median at the top end,
   with 12\% of Kemmeren's strains moving more than a thousand genes. A screen is
   not designed for the median deletion, because the median deletion is not a
-  typical one, and cells-per-perturbation has to be set for the quiet end. (c) The design curve -- median responders against the
+  typical one, and cells-per-perturbation has to be set for the quiet end.
+  \textbf{The two Sameith violins end in a blunt horizontal edge and are not
+  capped}; $n$ is printed under each for that reason. A violin body is clipped at
+  the observed extremes, and with 72--82 strains the kernel density is still
+  appreciable when it reaches the largest one, so it stops flat. Kemmeren has
+  1{,}484, so its density has decayed to nothing by its maximum and comes to a
+  point. The flat edge is where the data stops, not where it was cut.
+  (c) The design curve -- median responders against the
   threshold, shaded to the interquartile range. Between 1.25$\times$ and
   2$\times$ the count falls by roughly 15--20-fold in every dataset. That collapse
   is the cost of a two-fold target stated in the currency that matters: choosing
-  it discards about 95\% of the genes that actually responded. (d) Extrapolating
+  it discards about 95\% of the genes that actually responded.
+  \textbf{The dashed grey series on the right axis is the other half of the same
+  choice}: the median fold change \emph{among} the genes that clear each
+  threshold. It rises with the threshold, close to a straight line above the
+  dotted identity, which is what makes the headline 1.34$\times$ a consequence of
+  the 1.25$\times$ cut rather than an independent measurement of yeast biology
+  (\cref{sec:effect-size}). Read the two series together: moving the cut right
+  buys larger effects and fewer of them, and the design pays for the first and is
+  paid by the second. (d) Extrapolating
   past two perturbations. Sameith gives only $k=1$ and $k=2$, and any two points
   are fitted exactly by a line, a power law or a saturating curve, so a fit to
   them cannot choose a model. Instead each of Kemmeren's 1{,}484 single-deletion
@@ -334,14 +372,34 @@ response and discards the rest. Kemmeren's 1{,}484 single deletions and Sameith'
 82 agree closely, which is reassurance that this is a property of yeast rather
 than of one platform.
 
-\pfstep{The median responding gene moves 1.34-fold, not 2-fold} Among genes that
-do respond, the median $|\Delta|$ is $0.42$ in log$_2$ units, and the three
-compendia agree to within $0.02$ despite differing in size by a factor of
-eighteen. This is the number Eq.~\ref{eq:power} wants. Because the power
-coefficient scales as $|\Delta|^{-2}$, replacing the nominal two-fold with the
-measured value multiplies every cells-per-perturbation figure in this document by
-$\sim$5.6. It is the single largest correction in the analysis, and it moves in
-the expensive direction.
+\pfstep{The median responding gene moves 1.34-fold, and that number inherits the
+1.25 cut} Among genes clearing the 1.25$\times$ criterion, the median $|\Delta|$
+is $0.42$ in log$_2$ units, i.e.\ 1.34-fold, and the three compendia agree to
+within $0.02$ despite differing in size by a factor of eighteen. This is the
+number Eq.~\ref{eq:power} wants.
+
+Where it comes from is worth being exact about, because 1.34 looks like a
+measured property of a yeast deletion and is not one. The $|\Delta|$ distribution
+decays monotonically from zero (\cref{fig:effect-size}a), so selecting its upper
+tail at any cut returns a median sitting just above that cut. Recomputed across
+the ladder, the same statistic reads 1.16$\times$ at a 1.1$\times$ cut,
+1.36$\times$ at 1.25$\times$, 1.73$\times$ at 1.5$\times$ and 2.57$\times$ at
+2$\times$ (\cref{fig:effect-size}c, right axis) -- close to a straight line
+against the cut itself. So 1.34 is the arithmetic consequence of calling
+1.25$\times$ a response, and the defensible content of this subsection is not
+the value but the pair: at a 1.25$\times$ definition, a deletion moves a few
+hundred genes and the typical one of them moves 1.34-fold.
+
+That pair is what a design has to be built on, and both halves matter, because
+the two move in opposite directions. A stricter cut raises $|\Delta|$, which
+makes each surviving gene cheaper to resolve, and cuts the responder count, which
+makes the screen see less. Because the power coefficient scales as
+$|\Delta|^{-2}$, adopting the 1.25$\times$ pairing multiplies every
+cells-per-perturbation figure in this document by $\sim$5.6 against the nominal
+two-fold. It is the single largest correction in the analysis, it moves in the
+expensive direction, and a reader who prefers a different definition of
+responding can read its consequence off the same panel rather than having to
+redo the work.
 
 \pfstep{More perturbations make a cell noisier, not its effects larger} Sameith's
 doubles move roughly twice as many genes as its singles at 1.25$\times$ (460
@@ -614,11 +672,20 @@ assumption was wrong.
   against plex, colored by panel size and dashed for pairwise. Raising $k$ moves
   every curve down by a similar factor; shrinking the panel from 6{,}000 targets
   to 200 moves the pairwise curve by $\sim$900$\times$. Restricting the panel, not
-  multiplexing harder, is what brings interactions into reach.
+  multiplexing harder, is what brings interactions into reach. The two dotted
+  horizontals are the batch units the two platform families come in -- one
+  split-pool protocol run at $\sim$480{,}000 cells, one preindexed Chromium
+  channel at 151{,}788 -- so a curve above them is a feasibility question rather
+  than a budget one. They are a factor of three apart, not the order of magnitude
+  the un-preindexed 20{,}000-cell channel would put there.
   Bottom row, \cref{eq:design} inverted -- the smallest resolvable $|\Delta|$ -- for the two sequencing configurations the core actually sells: one NovaSeq X 25B
   lane (3.2\,billion read pairs, \$3{,}380) and a full eight-lane flow cell
   (25.6\,billion, \$25{,}440 at the volume rate). (d) Resolution against cells per
-  perturbation, by platform. (e) Against panel size, at split-pool with rRNA
+  perturbation, by platform. \textbf{There is no fourth curve for the preindexed
+  droplet, and its absence is the finding rather than an omission}: preindexing
+  changes cells per priced channel and not UMIs per cell, so it lies exactly on
+  the 10x curve here and on every other statistical panel of this figure. What it
+  changes is the cost of reaching a given $n$, which is \cref{fig:economics}. (e) Against panel size, at split-pool with rRNA
   depletion. This is the panel to design from: one lane yields
   $\sim$192{,}000 usable cells and resolves two-fold across a few hundred
   targets, whereas a full flow cell yields $\sim$1.5\,million and reaches two-fold
@@ -633,8 +700,9 @@ assumption was wrong.
 \pfstep{Interpretation -- what would make this predictive} As a structure
 \crefrange{eq:nbvar}{eq:design-total} are complete, and every design question in
 \cref{sec:application} is a substitution into them. As a \emph{predictor} they are
-not usable yet, because three inputs are assumed rather than measured, and they
-are the honest answer to what a real design equation would take:
+not usable yet, because two of their inputs are still assumed rather than
+measured. Three were, and the list below is kept at three so the one that has
+since been pinned can be read against the two that have not:
 
 \begin{enumerate}[leftmargin=1.4em,itemsep=1pt,topsep=2pt]
   \item \textbf{$\varphi_j$, gene-level biological overdispersion in yeast.} The
@@ -646,7 +714,8 @@ are the honest answer to what a real design equation would take:
     (\cref{sec:effect-size}, \cref{tab:effect-size}). $A(\Delta)$ goes as
     $\Delta^{-2}$, so this was the most violent term in the equation; pinning it
     multiplied every cell requirement by $\sim$5.6 and resolved the $\varphi$
-    puzzle above. Two of the three remain open.
+    puzzle above. \cref{tab:design-params} now carries it as measured, and
+    $A(\Delta)$ with it as derived rather than assumed.
   \item \textbf{$q$, per-guide detection probability.} Enters as $q^{r}$, so it
     is forgiving for main effects and punishing for interactions. It cannot be
     measured until the guide-barcode construct of \cref{sec:guide-capture}

@@ -264,26 +264,13 @@ def fetch_union_bibtex_entries(
 def _collection_tree(lib: ZoteroLibrary, root_collection: str) -> list[str]:
     """Keys of a collection and every collection nested beneath it.
 
-    ``collection_items`` returns only direct members, so a nested collection such as
-    ``torchcell/torchcell-topics/microbe-perturb-seq`` is invisible without walking
-    the tree -- which is exactly where new reading is filed.
+    Thin wrapper over :meth:`ZoteroLibrary.collection_tree`, which the nightly sync
+    walks too -- one implementation keeps the bibliography and the OCR mirror
+    covering the same collections.
     """
-    from collections import defaultdict
-
-    root_key = lib.collection_key(root_collection)
-    children: dict[str, list[str]] = defaultdict(list)
-    for c in lib.zot.everything(lib.zot.collections()):
-        children[c["data"].get("parentCollection") or ""].append(c["key"])
-
-    def walk(key: str) -> list[str]:
-        out = [key]
-        for kid in children.get(key, []):
-            out += walk(kid)
-        return out
-
-    tree = walk(root_key)
+    tree = lib.collection_tree(root_collection)
     log.info("bib: personal tree '%s' -> %d collections", root_collection, len(tree))
-    return tree
+    return [node.key for node in tree]
 
 
 def fetch_bibtex_entries(

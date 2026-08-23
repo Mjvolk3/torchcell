@@ -95,9 +95,16 @@ class SyncReport(BaseModel):
         return f"{self.collection}: {self.n_collection_items} items | {tally}"
 
 
-def _collection_items(lib: ZoteroLibrary, collection: str) -> list[dict[str, Any]]:
-    """Top-level (non-attachment/note) items of a named Zotero collection."""
-    coll_key = lib.collection_key(collection)
+def _collection_items(
+    lib: ZoteroLibrary, collection: str, *, collection_key: str | None = None
+) -> list[dict[str, Any]]:
+    """Top-level (non-attachment/note) items of a Zotero collection.
+
+    ``collection_key`` addresses a collection directly, which is required for a
+    nested one: a name lookup is ambiguous once the same name appears in more than
+    one branch of the tree.
+    """
+    coll_key = collection_key or lib.collection_key(collection)
     items: list[dict[str, Any]] = lib.zot.everything(lib.zot.collection_items(coll_key))
     return [
         it for it in items if it["data"].get("itemType") not in ("attachment", "note")
@@ -115,7 +122,11 @@ def _is_mirrored(root: Path, citation_key: str) -> bool:
 
 
 def plan_collection_sync(
-    lib: ZoteroLibrary, collection: str, data_root: str | Path | None = None
+    lib: ZoteroLibrary,
+    collection: str,
+    data_root: str | Path | None = None,
+    *,
+    collection_key: str | None = None,
 ) -> SyncReport:
     """Diff a Zotero collection against the mirror, capturing nothing.
 
@@ -124,7 +135,7 @@ def plan_collection_sync(
     and missing). This is the read-only view the ``--dry-run`` job prints.
     """
     root = library_root(data_root or os.environ["DATA_ROOT"])
-    items = _collection_items(lib, collection)
+    items = _collection_items(lib, collection, collection_key=collection_key)
     results: list[KeySyncResult] = []
     for item in items:
         key = _resolve_citation_key(item)
@@ -154,27 +165,33 @@ def sync_collection(
     do_ocr: bool = True,
     dry_run: bool = False,
     limit: int | None = None,
+    collection_key: str | None = None,
 ) -> SyncReport:
     """Mirror + OCR every collection paper missing from the mirror.
 
     Args:
         lib: Connected Zotero library.
-        collection: Zotero collection name (e.g. ``"database"`` or ``"paper"``).
+        collection: Zotero collection name (e.g. ``"database"`` or ``"paper"``),
+            or, when ``collection_key`` is given, the label to report it under.
         data_root: Mirror root; defaults to ``$DATA_ROOT``.
         do_ocr: Run MinerU OCR on captured PDFs (the "minor OCR processing").
         dry_run: Classify only; capture nothing (equivalent to
             :func:`plan_collection_sync`).
         limit: Cap the number of papers captured this pass (``None`` = no cap).
             Bounds a nightly run's GPU time when a large backlog appears at once.
+        collection_key: Address the collection by key instead of by name, which a
+            nested collection requires.
 
     Returns:
         A :class:`SyncReport` with a per-paper outcome for the whole collection.
     """
     if dry_run:
-        return plan_collection_sync(lib, collection, data_root=data_root)
+        return plan_collection_sync(
+            lib, collection, data_root=data_root, collection_key=collection_key
+        )
 
     root = library_root(data_root or os.environ["DATA_ROOT"])
-    items = _collection_items(lib, collection)
+    items = _collection_items(lib, collection, collection_key=collection_key)
     results: list[KeySyncResult] = []
     captured = 0
     for item in items:
@@ -240,6 +257,54 @@ def sync_collections(
         )
         for collection in collections
     ]
+
+
+def sync_collection_tree(
+    lib: ZoteroLibrary,
+    root_collection: str,
+    *,
+    data_root: str | Path | None = None,
+    do_ocr: bool = True,
+    dry_run: bool = False,
+    limit: int | None = None,
+    label_prefix: str = "",
+) -> list[SyncReport]:
+    """Sync a collection and every collection nested beneath it, one report each.
+
+    Used for the personal ``torchcell`` tree, where new reading is filed into nested
+    topic and queue collections that a flat name-based sync cannot see.
+
+    Unlike :func:`sync_collections`, ``limit`` is a **budget shared across the whole
+    tree**, not a per-collection cap. A tree of 25 collections under a per-collection
+    cap of 10 would authorize 250 captures in one pass, which is far more MinerU time
+    than a nightly run should take. Papers filed in several collections are captured
+    once and read ``present`` on later passes, so the budget is not spent twice.
+    """
+    tree = lib.collection_tree(root_collection)
+    log.info("sync: tree '%s' -> %d collections", root_collection, len(tree))
+    reports: list[SyncReport] = []
+    remaining = limit
+    for node in tree:
+        report = sync_collection(
+            lib,
+            f"{label_prefix}{node.path}",
+            data_root=data_root,
+            do_ocr=do_ocr,
+            dry_run=dry_run,
+            limit=remaining,
+            collection_key=node.key,
+        )
+        reports.append(report)
+        if remaining is not None:
+            remaining -= len(report.by_mode(SyncMode.CAPTURED))
+            if remaining <= 0:
+                log.info(
+                    "sync: capture budget exhausted at '%s'; %d collections not visited",
+                    node.path,
+                    len(tree) - len(reports),
+                )
+                break
+    return reports
 
 
 def plan_database_sync(

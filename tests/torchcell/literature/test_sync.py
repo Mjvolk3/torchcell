@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from pydantic import SecretStr
 
 from torchcell.literature.backfill import library_root
 from torchcell.literature.sync import (
@@ -11,9 +12,11 @@ from torchcell.literature.sync import (
     plan_collection_sync,
     plan_database_sync,
     sync_collection,
+    sync_collection_tree,
     sync_collections,
     sync_database,
 )
+from torchcell.literature.zotero import ZoteroConfig, ZoteroLibrary
 
 
 def _item(key: str, doi: str | None, citation_key: str) -> dict[str, Any]:
@@ -200,3 +203,135 @@ def test_sync_collection_limit_bounds_captures(
 
     assert len(report.by_mode(SyncMode.CAPTURED)) == 2
     assert len(report.by_mode(SyncMode.WOULD_CAPTURE)) == 1
+
+
+class _FakeTreeZot:
+    """Client whose collections form a tree and whose items differ per collection."""
+
+    def __init__(
+        self, tree: list[dict[str, Any]], items: dict[str, list[dict[str, Any]]]
+    ) -> None:
+        self._tree = tree
+        self._items = items
+
+    def everything(self, x: Any) -> Any:
+        return x
+
+    def collections(self) -> list[dict[str, Any]]:
+        return self._tree
+
+    def collection_items(self, coll_key: str) -> list[dict[str, Any]]:
+        return self._items.get(coll_key, [])
+
+    def children(self, _item_key: str) -> list[dict[str, Any]]:
+        return [{"data": {"contentType": "application/pdf", "filename": "p.pdf"}}]
+
+
+def _tree_lib(
+    tree: list[dict[str, Any]], items: dict[str, list[dict[str, Any]]]
+) -> ZoteroLibrary:
+    """A real ZoteroLibrary with its client swapped for a tree-shaped fake."""
+    lib = ZoteroLibrary(ZoteroConfig(library_id="1", api_key=SecretStr("k")))
+    lib.zot = _FakeTreeZot(tree, items)  # type: ignore[assignment]
+    return lib
+
+
+def _coll(key: str, name: str, parent: str | bool) -> dict[str, Any]:
+    """A Zotero collection dict; ``parent`` is False for a top-level collection."""
+    return {"key": key, "data": {"name": name, "parentCollection": parent}}
+
+
+_TREE = [
+    _coll("ROOT", "torchcell", False),
+    _coll("TOPICS", "torchcell-topics", "ROOT"),
+    _coll("MPS", "microbe-perturb-seq", "TOPICS"),
+    _coll("OTHER", "unrelated", False),
+]
+
+
+def test_collection_tree_walks_nested_and_builds_paths() -> None:
+    """A nested collection is reachable and identified by its slash-joined path."""
+    lib = _tree_lib(_TREE, {})
+
+    nodes = lib.collection_tree("torchcell")
+
+    assert [n.path for n in nodes] == [
+        "torchcell",
+        "torchcell/torchcell-topics",
+        "torchcell/torchcell-topics/microbe-perturb-seq",
+    ]
+    # A collection outside the walked root is not visited.
+    assert all(n.name != "unrelated" for n in nodes)
+
+
+def test_sync_collection_addresses_by_key_and_labels_independently(
+    tmp_path: Path,
+) -> None:
+    """``collection_key`` selects the collection; ``collection`` is only the label."""
+    lib_root = tmp_path / "torchcell-library"
+    lib_root.mkdir()
+    lib = _tree_lib(_TREE, {"MPS": [_item("K1", "10.1/a", "paperA2021")]})
+
+    report = plan_collection_sync(
+        lib, "personal:torchcell/x", data_root=tmp_path, collection_key="MPS"
+    )
+
+    assert report.collection == "personal:torchcell/x"
+    assert report.n_collection_items == 1
+    assert len(report.by_mode(SyncMode.WOULD_CAPTURE)) == 1
+
+
+def test_sync_collection_tree_reports_every_node_by_path(tmp_path: Path) -> None:
+    """One report per collection in the tree, labeled with the prefixed path."""
+    lib_root = tmp_path / "torchcell-library"
+    lib_root.mkdir()
+    lib = _tree_lib(_TREE, {"MPS": [_item("K1", "10.1/a", "paperA2021")]})
+
+    reports = sync_collection_tree(
+        lib, "torchcell", data_root=tmp_path, dry_run=True, label_prefix="personal:"
+    )
+
+    assert [r.collection for r in reports] == [
+        "personal:torchcell",
+        "personal:torchcell/torchcell-topics",
+        "personal:torchcell/torchcell-topics/microbe-perturb-seq",
+    ]
+
+
+def test_sync_collection_tree_limit_is_shared_across_collections(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The tree budget is shared, not per collection.
+
+    Two sibling collections each hold one capturable paper. Under a per-collection
+    cap of 1 both would be captured; under a shared budget of 1 only the first is,
+    and the walk stops rather than spending more MinerU time than authorized.
+    """
+    lib_root = tmp_path / "torchcell-library"
+    lib_root.mkdir()
+    tree = [
+        _coll("ROOT", "torchcell", False),
+        _coll("A", "a", "ROOT"),
+        _coll("B", "b", "ROOT"),
+    ]
+    lib = _tree_lib(
+        tree,
+        {
+            "A": [_item("K1", "10.1/a", "paperA2021")],
+            "B": [_item("K2", "10.2/b", "paperB2021")],
+        },
+    )
+    doi_to_key = {"10.1/a": "paperA2021", "10.2/b": "paperB2021"}
+
+    def fake_capture(_lib: Any, doi: str, *, do_ocr: bool, data_root: Any) -> Path:
+        key = doi_to_key[doi]
+        _mirror_key(library_root(data_root), key)
+        return library_root(data_root) / key
+
+    monkeypatch.setattr("torchcell.literature.sync.capture_by_doi", fake_capture)
+
+    reports = sync_collection_tree(lib, "torchcell", data_root=tmp_path, limit=1)
+
+    captured = [r for rep in reports for r in rep.by_mode(SyncMode.CAPTURED)]
+    assert len(captured) == 1
+    assert not (lib_root / "paperB2021").exists()

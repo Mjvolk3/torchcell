@@ -171,6 +171,21 @@ def _resolve_citation_key(item: dict[str, Any]) -> str:
     return generate_citation_key(creators, data.get("date", ""), data.get("title", ""))
 
 
+class CollectionNode(BaseModel):
+    """One Zotero collection within a walked tree.
+
+    ``path`` is the slash-joined ancestor chain (e.g.
+    ``torchcell/torchcell-topics/deep-set``), which is what identifies a nested
+    collection to a human; ``name`` alone is ambiguous across branches.
+    """
+
+    model_config = {"frozen": True}
+
+    key: str = Field(description="Zotero collection key.")
+    name: str = Field(description="Collection name, without ancestors.")
+    path: str = Field(description="Slash-joined path from the walked root.")
+
+
 class ZoteroLibrary:
     """Synchronous handle to one Zotero library.
 
@@ -226,6 +241,44 @@ class ZoteroLibrary:
         raise ValueError(
             f"Zotero collection '{name}' not found. Available: {available}."
         )
+
+    def collection_tree(self, root_collection: str) -> list["CollectionNode"]:
+        """A collection and every collection nested beneath it, with display paths.
+
+        ``collection_items`` returns only direct members, so a nested collection such
+        as ``torchcell/torchcell-topics/microbe-perturb-seq`` is invisible without
+        walking the tree, which is exactly where new reading is filed. Returned in
+        depth-first order with the root first.
+        """
+        collections = with_zotero_retry(
+            lambda: self.zot.everything(self.zot.collections())
+        )
+        by_key = {c["key"]: c for c in collections}
+        children: dict[str, list[str]] = {}
+        for c in collections:
+            children.setdefault(c["data"].get("parentCollection") or "", []).append(
+                c["key"]
+            )
+
+        def path_of(key: str) -> str:
+            parts: list[str] = []
+            cur = key
+            while cur in by_key:
+                parts.append(by_key[cur]["data"]["name"])
+                cur = by_key[cur]["data"].get("parentCollection") or ""
+            return "/".join(reversed(parts))
+
+        def walk(key: str) -> list[CollectionNode]:
+            out = [
+                CollectionNode(
+                    key=key, name=by_key[key]["data"]["name"], path=path_of(key)
+                )
+            ]
+            for kid in sorted(children.get(key, [])):
+                out += walk(kid)
+            return out
+
+        return walk(self.collection_key(root_collection))
 
     # -- items by DOI --------------------------------------------------------
 

@@ -916,3 +916,43 @@ to 33; `\cref{tab:figure-provenance}` still resolves from every figure caption.
 Deliberately NOT gated on the draft build. The share view keeps `\external` and
 `\secondhand` flags for the same reason it should keep this: a document whose
 numbers are checkable only in-house is asking to be trusted rather than read.
+
+## 2026.08.23 - Fig 9 label pass, and a third legibility check
+
+- **9b**: totals moved INSIDE the bars, at 92% of bar height. That fraction lands
+  in the pale sequencing segment for all four platforms (the reagent share peaks
+  at 81%, for 10x), so a label always has light ground under it and never
+  straddles the boundary. Returning that headroom let ylim drop 470 -> 400, so
+  the tallest bar fills the panel instead of floating in it.
+- **9d**: endpoint percentages moved inside the frame and BELOW their markers.
+  Above-left was the obvious spot and the wrong one -- every curve descends left
+  to right into its endpoint, so above-left is occupied by the curve's own final
+  segment, and the labels were printed along the lines they name.
+- **9d**: 10x and scifi coincide at every stage, and blue was hiding purple.
+  Three changes: the projected dash pattern is now gap-dominant `(0, (2, 3.5))`
+  rather than `--`, whose gaps are narrower than the line is wide; the projected
+  marker is open, so purple shows through at every stage and not just between
+  dashes; and the panel gains a legend whose third entry is a TUPLE handle --
+  purple solid and blue open drawn side by side under one label reading "10x and
+  10x + scifi (identical)".
+- **9e**: the coincidence note sat on the purple curve beside its marker. Moved
+  to the bottom-left wedge, which is the only large empty region on a panel where
+  every curve enters top-left and falls right. "filled = published; open =
+  projected" became a real legend with two marker handles.
+- Both floating notes and all three endpoint labels are now genuinely inside
+  their axes, so the exempt set in `assert_legible` drops from six entries to
+  two, both of them labels deliberately set against a reference line.
+
+### `check_legend_clear`
+
+A two-row legend in 9b was drawn across the top of the tallest bar and nothing
+caught it: legend text does not live in `ax.texts`, and the thing it collided
+with is not text at all. New check tests each legend's bbox against the filled
+rectangles in its axes. **Bars only** -- a line's bbox is a coarse envelope, so
+testing legends against lines would fire on every figure and the check would get
+turned off. It caught 9b on the first run; the fix was two-word labels, with what
+each term contains moved to the caption where there is room for it.
+
+Not using `loc="best"`, which solves the same problem by moving the legend, for
+the reason the module exists: a position that changes with the data is a position
+nobody can review.

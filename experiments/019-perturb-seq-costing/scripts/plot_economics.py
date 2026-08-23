@@ -41,6 +41,8 @@ import os.path as osp
 import matplotlib.pyplot as plt
 import numpy as np
 from dotenv import load_dotenv
+from matplotlib.legend_handler import HandlerTuple
+from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 from matplotlib.ticker import FuncFormatter
 
@@ -78,6 +80,14 @@ PLATFORM_LABEL = {
     "10x + scifi preindexing (projected)": "10x + scifi\npreindex.*",
 }
 PLATFORM_SHORT = {k: v.replace("\n", " ") for k, v in PLATFORM_LABEL.items()}
+
+# The line style that means "projected". Coarse on purpose: at matplotlib's
+# default "--" and 0.9 pt, a dashed line laid exactly over a solid one of another
+# color reads as a single solid line, because the gaps are narrower than the line
+# is wide. Panel (d) is where that matters -- the 10x and scifi curves coincide
+# at every stage, so the only thing telling a reader both are there is purple
+# showing through blue.
+PROJECTED_LS = (0, (2.0, 3.5))
 
 # The design every panel that needs one is priced at. Named once so panels
 # cannot drift apart, which they did when 250 was typed into three of them.
@@ -227,23 +237,35 @@ def panel_b(ax) -> None:
     ax.bar(x, reagents, w, color=dark, edgecolor="black", lw=0.5)
     ax.bar(x, seq, w, bottom=reagents, color=pale, edgecolor="black", lw=0.5)
 
+    # Totals INSIDE the bars, at 92% of each bar's height. That fraction lands
+    # in the pale sequencing segment for all four platforms -- checked, not
+    # assumed: the reagent fraction is at most 81% (10x) -- so the label always
+    # has a light ground under it and never straddles the boundary between the
+    # two segments. Putting them inside also returns the headroom the old
+    # above-bar placement needed, which is why ylim drops from 470 to 400 and
+    # the tallest bar now fills the panel instead of floating in it.
     for xi, b in zip(x, budgets):
-        ax.text(xi, b.recurring_usd / 1e3 + 14, f"${b.recurring_usd/1e3:.0f}k",
-                ha="center", fontsize=5, fontweight="bold")
+        ax.text(xi, b.recurring_usd / 1e3 * 0.92, f"${b.recurring_usd/1e3:.0f}k",
+                ha="center", va="center", fontsize=5, fontweight="bold")
 
     ax.set_xticks(x)
     ax.set_xticklabels([PLATFORM_LABEL[b.platform] for b in budgets], fontsize=4.5)
     ax.set_ylabel("Recurring cost per screen ($ thousands)")
-    ax.set_ylim(0, 470)
+    ax.set_ylim(0, 400)
     # Category key only -- the color key is the x-axis, which names the platform
     # under every bar. Grey swatches so the legend cannot be read as a fifth
     # platform, and the same dark/pale relation the bars use.
     ax.legend(
         handles=[
+            # Two words each. The long forms -- "reagents (barcoding, library,
+            # sublibrary)" and "sequencing (NovaSeq X 25B)" -- made the legend
+            # wide enough to reach the third bar and be drawn across its top.
+            # What each term contains belongs in the caption, which has room for
+            # it; the legend only has to distinguish two things.
             Patch(facecolor="#8C8C8C", edgecolor="black", lw=0.5,
-                  label="reagents (barcoding, library, sublibrary)"),
+                  label="reagents"),
             Patch(facecolor="#E8E8E8", edgecolor="black", lw=0.5,
-                  label="sequencing (NovaSeq X 25B)"),
+                  label="sequencing"),
         ],
         frameon=False, loc="upper left", fontsize=4.5, handlelength=1.0,
         handletextpad=0.4, labelspacing=0.3, borderaxespad=0.2,
@@ -274,7 +296,7 @@ def panel_c(ax) -> None:
               for t in tiers]
         ax.plot(tiers, ys, lw=0.9, color=PLATFORM_COLOR[p.name], marker="o",
                 ms=2.2, markeredgecolor="black", markeredgewidth=0.3,
-                ls="--" if p.projected else "-",
+                ls=PROJECTED_LS if p.projected else "-",
                 label=PLATFORM_SHORT[p.name])
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -333,20 +355,62 @@ def panel_d(ax) -> None:
         for _, f in READ_STAGES:
             acc *= f(p)
             y.append(acc)
-        ax.plot(xs, y, lw=0.9, color=PLATFORM_COLOR[p.name], marker="o", ms=2.2,
+        # Open markers for the projected platform, filled for the rest -- the
+        # same convention panel (e) uses, and here it does double duty: an open
+        # marker lets the coincident purple show through at every stage, not
+        # just in the gaps between dashes.
+        ax.plot(xs, y, lw=0.9, color=PLATFORM_COLOR[p.name], marker="o", ms=2.4,
                 markeredgecolor="black", markeredgewidth=0.3,
-                ls="--" if p.projected else "-")
+                markerfacecolor="none" if p.projected else PLATFORM_COLOR[p.name],
+                ls=PROJECTED_LS if p.projected else "-")
         finals.setdefault(f"{y[-1]*100:.1f}%", []).append((p, y[-1]))
-    # ONE label per distinct endpoint, not one per platform. The 10x and scifi
-    # curves are not merely close, they are identical at every stage:
-    # preindexing changes cells per priced channel and touches no term in this
-    # panel. Two labels printed on top of each other said that badly; one label
-    # naming both says it, and the coincident dashed line over solid shows it.
+    # ONE label per distinct endpoint, not one per platform, and INSIDE the axes.
+    # The 10x and scifi curves are not merely close, they are identical at every
+    # stage: preindexing changes cells per priced channel and touches no term in
+    # this panel. Two labels printed on top of each other said that badly.
+    #
+    # Anchored above-left of each endpoint rather than to its right. To the right
+    # is outside the frame -- the last stage sits on the axis edge by
+    # construction, so any label there needs an exemption from the legibility
+    # check, which is a way of saying it is outside.
     for txt, group in finals.items():
-        note = txt if len(group) == 1 else f"{txt} (both)"
-        ax.annotate(note, (xs[-1], group[0][1]), xytext=(3, 0),
-                    textcoords="offset points", fontsize=4.5, va="center",
-                    color=PLATFORM_COLOR[group[0][0].name])
+        # BELOW-left, not above-left. Every curve descends left to right into
+        # its endpoint, so the space above and to the left of the last marker is
+        # occupied by the curve's own final segment -- which is where the labels
+        # landed, printed along the lines they name. Below-left is clear on all
+        # three, and the endpoints are far enough apart on a log axis that no
+        # label reaches the curve beneath it.
+        ax.annotate(txt, (xs[-1], group[0][1]), xytext=(0, -6),
+                    textcoords="offset points", fontsize=4.5, ha="center",
+                    va="top", color=PLATFORM_COLOR[group[0][0].name])
+
+    # Legend, because coincident curves cannot name themselves. The third entry
+    # is a TUPLE handle -- purple solid and blue dashed drawn side by side under
+    # one label -- which is the honest rendering of two platforms that share a
+    # curve: neither is hidden, and the label says they are identical rather
+    # than leaving a reader to wonder which color won.
+    coincident = [p for p in CM.PLATFORMS
+                  if p.name.startswith("10x")]
+    handles = [
+        Line2D([], [], color=PLATFORM_COLOR[p.name], lw=0.9,
+               label=PLATFORM_SHORT[p.name])
+        for p in CM.PLATFORMS if not p.name.startswith("10x")
+    ]
+    handles.append(
+        tuple(
+            Line2D([], [], color=PLATFORM_COLOR[p.name], lw=0.9,
+                   ls=PROJECTED_LS if p.projected else "-", marker="o", ms=2.4,
+                   markeredgecolor="black", markeredgewidth=0.3,
+                   markerfacecolor="none" if p.projected
+                   else PLATFORM_COLOR[p.name])
+            for p in coincident
+        )
+    )
+    labels = [h.get_label() for h in handles[:-1]] + ["10x and 10x + scifi (identical)"]
+    ax.legend(handles, labels, frameon=False, loc="lower left", fontsize=4.5,
+              handlelength=1.8, handletextpad=0.4, labelspacing=0.3,
+              borderaxespad=0.2,
+              handler_map={tuple: HandlerTuple(ndivide=None, pad=0.0)})
     ax.set_yscale("log")
     ax.set_xticks(xs)
     # Short forms, because five two-line category names do not fit across
@@ -355,7 +419,7 @@ def panel_d(ax) -> None:
     ax.set_xticklabels(["bought", "not\nPhiX", "barcode\nok", "mRNA\nnot rRNA",
                         "cell\npasses"], fontsize=4.5)
     ax.set_xlim(-0.35, len(READ_STAGES) - 0.25)
-    ax.set_ylim(5e-3, 2.0)
+    ax.set_ylim(3.5e-3, 2.0)
     ax.set_ylabel("Fraction of purchased reads surviving")
     ax.set_title("Where a purchased read goes", loc="left", fontsize=6)
     box(ax)
@@ -420,9 +484,14 @@ def panel_e(ax) -> None:
                 color=PLATFORM_COLOR[p.name], markeredgecolor="black",
                 markeredgewidth=0.4, zorder=4,
                 fillstyle="none" if p.projected else "full")
+    # Both notes go to the BOTTOM-LEFT, which is the only large empty region on
+    # this panel: every curve enters at the top-left and falls to the right, so
+    # the wedge under them at small x is clear. The coincidence note used to sit
+    # at (2e4, 3.6e5), which is on the purple curve and beside its marker --
+    # exactly where a note about a line must not be.
     ax.annotate("10x and scifi are one curve;\npreindexing moves along it",
-                (2.0e4, 3.6e5), xytext=(4, 6), textcoords="offset points",
-                fontsize=4.5, color="#666666", ha="left", va="bottom")
+                (5.2e3, 8.5e4), fontsize=4.5, color="#666666",
+                ha="left", va="bottom")
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlim(4e3, 2e6)
@@ -430,8 +499,21 @@ def panel_e(ax) -> None:
     ax.set_xlabel("Cells per batch (run, or channel)")
     ax.set_ylabel("Recurring cost per screen")
     ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"${v/1e3:,.0f}k"))
-    ax.annotate("filled = published; open = projected", (5.2e3, 4.2e4),
-                fontsize=4.5, color="#666666", ha="left", va="bottom")
+    # A legend rather than a sentence: the marker convention is a key, and a key
+    # drawn as its own marks is read at a glance where a sentence has to be
+    # decoded. Grey swatches so it cannot be mistaken for a fifth platform.
+    ax.legend(
+        handles=[
+            Line2D([], [], marker="o", ls="", ms=3.4, color="#8C8C8C",
+                   markeredgecolor="black", markeredgewidth=0.4,
+                   label="published"),
+            Line2D([], [], marker="o", ls="", ms=3.4, markerfacecolor="none",
+                   color="#8C8C8C", markeredgecolor="#8C8C8C",
+                   markeredgewidth=0.8, label="projected"),
+        ],
+        frameon=False, loc="lower left", fontsize=4.5, handlelength=1.0,
+        handletextpad=0.3, labelspacing=0.25, borderaxespad=0.2,
+    )
     ax.set_title("What is worth measuring next", loc="left", fontsize=6)
     box(ax)
 
@@ -503,9 +585,10 @@ def main() -> None:
     assert_legible(
         fig,
         axes=flat,
-        exempt={"field standard", "100-cell floor",
-                "filled = published; open = projected"}
-        | {"1.0%", "10.8%", "37.4% (both)"},
+        # Only two exemptions left, both labels deliberately set against a
+        # reference line at the panel edge. Every endpoint label and every note
+        # that used to be exempt is now genuinely inside its axes.
+        exempt={"field standard", "100-cell floor"},
     )
 
     out = osp.join(OUT_DIR, "economics.svg")

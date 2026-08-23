@@ -135,6 +135,58 @@ def check_inside_axes(
     return problems
 
 
+def check_legend_clear(
+    fig: Figure,
+    axes: list[Axes] | None = None,
+    pad: float = 0.5,
+) -> list[str]:
+    """Return legends that sit on top of a filled bar.
+
+    Added after a two-row legend in the cost panel was drawn across the top of
+    the tallest bar. Nothing caught it: the legend's text does not live in
+    ``ax.texts``, and the thing it collided with is not text at all. So the
+    text-versus-text check reported the figure clean while a reader could not
+    read either the legend or the bar.
+
+    BARS ONLY, deliberately. A line is thin and its bounding box is a coarse
+    envelope -- a diagonal line across a panel has a bbox covering most of it,
+    so testing legends against lines would fire on every figure and the check
+    would be turned off. A filled rectangle is opaque and its bbox is its actual
+    extent, which makes the test both meaningful and precise. matplotlib's
+    ``loc="best"`` solves the same problem by moving the legend, and is not used
+    here for the reason the rest of this module exists: a position that changes
+    with the data is a position nobody can review.
+    """
+    from matplotlib.patches import Rectangle
+
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    problems: list[str] = []
+    for ax in axes or fig.axes:
+        leg = ax.get_legend()
+        if leg is None:
+            continue
+        lb = _shrink(leg.get_window_extent(renderer), pad)
+        for patch in ax.patches:
+            if not isinstance(patch, Rectangle) or not patch.get_visible():
+                continue
+            pb = _shrink(patch.get_window_extent(renderer), pad)
+            if pb.width <= 0 or pb.height <= 0:
+                continue
+            if lb.overlaps(pb):
+                # Name the panel by whichever title loc it actually used --
+                # these panels set titles with loc="left", and get_title()
+                # defaults to "center", so the obvious call returns "".
+                name = next(
+                    (t for t in (ax.get_title(loc=l)
+                                 for l in ("left", "center", "right")) if t),
+                    "an untitled axes",
+                )
+                problems.append(f"legend overlaps a bar in {name!r}")
+                break
+    return problems
+
+
 def assert_legible(
     fig: Figure,
     axes: list[Axes] | None = None,
@@ -150,8 +202,10 @@ def assert_legible(
     placement is iterative and being told about one collision per run turns a
     five-minute edit into twenty.
     """
-    problems = check_overlaps(fig, axes, pad, ignore, ticks) + check_inside_axes(
-        fig, axes, slack, exempt
+    problems = (
+        check_overlaps(fig, axes, pad, ignore, ticks)
+        + check_inside_axes(fig, axes, slack, exempt)
+        + check_legend_clear(fig, axes, pad)
     )
     if problems:
         raise FigureLegibilityError(

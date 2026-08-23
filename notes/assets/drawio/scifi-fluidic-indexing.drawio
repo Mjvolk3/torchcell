@@ -208,11 +208,50 @@
         <mxCell id="cjl" value="ligation junction, in the droplet" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="216" y="330" width="160" height="11" as="geometry" />
         </mxCell>
-        <mxCell id="cplate" value="everything from here leftward was written in the plate, before the cells ever met a droplet" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="212" y="372" width="344" height="11" as="geometry" />
+        <mxCell id="csph" style="endArrow=none;html=1;strokeWidth=0.8;strokeColor=#666666;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="212" y="374" as="sourcePoint" />
+            <mxPoint x="551" y="374" as="targetPoint" />
+          </mxGeometry>
         </mxCell>
-        <mxCell id="cbulk" value="added in bulk after the emulsion is broken: template switch, amplification, tagmentation with an i7-only transposome" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="400" y="386" width="298" height="22" as="geometry" />
+        <mxCell id="cspa" style="endArrow=none;html=1;strokeWidth=0.8;strokeColor=#666666;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="212" y="371" as="sourcePoint" />
+            <mxPoint x="212" y="375" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cspb" style="endArrow=none;html=1;strokeWidth=0.8;strokeColor=#666666;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="551" y="371" as="sourcePoint" />
+            <mxPoint x="551" y="375" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="csbh" style="endArrow=none;html=1;strokeWidth=0.8;strokeColor=#666666;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="561" y="374" as="sourcePoint" />
+            <mxPoint x="624" y="374" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="csba" style="endArrow=none;html=1;strokeWidth=0.8;strokeColor=#666666;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="561" y="371" as="sourcePoint" />
+            <mxPoint x="561" y="375" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="csbb" style="endArrow=none;html=1;strokeWidth=0.8;strokeColor=#666666;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="624" y="371" as="sourcePoint" />
+            <mxPoint x="624" y="375" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cbulklab" value="added in bulk" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="546" y="378" width="88" height="11" as="geometry" />
+        </mxCell>
+        <mxCell id="cplate" value="written in the plate, before the cells ever met a droplet" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="212" y="378" width="344" height="11" as="geometry" />
+        </mxCell>
+        <mxCell id="cbulk" value="after the emulsion is broken: template switch, amplification, tagmentation with an i7-only transposome" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="452" y="392" width="238" height="22" as="geometry" />
         </mxCell>
 
         <!-- ============================ BOTTOM NOTE ========================== -->

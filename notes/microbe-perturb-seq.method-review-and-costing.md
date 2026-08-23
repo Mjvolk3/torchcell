@@ -1066,3 +1066,28 @@ Kept outside the palette on purpose, and now named rather than inline:
 and filled/open legends. Those key a TREATMENT, not a platform, and drawn in any
 palette colour they would read as a fifth platform -- the one thing that figure's
 single colour key must not allow.
+
+## 2026.08.23 - Fig 4c: "from here leftward" was unanchored AND backwards
+
+Flagged as unclear; checking the geometry showed it was also wrong.
+
+The molecule reads 5' to 3': round2 BC | primer site | round1 BC | UMI | dT |
+cDNA | i7 + library barcode. Round2 is ligated onto the 5'-phosphate of the RT
+primer, so it sits LEFT of everything the plate wrote. "Everything from here
+leftward was written in the plate" therefore pointed at the one block the plate
+did not write -- the droplet's contribution. The plate span is to the RIGHT of
+the ligation junction and to the left of the i7. The LaTeX caption repeated the
+same inversion ("Everything left of the ligation junction was written in the
+plate").
+
+Fixed by removing the direction word rather than reversing it. Two bracketed
+span bars now sit under the molecule, one under primer-site-through-cDNA labelled
+"written in the plate, before the cells ever met a droplet" and a separate one
+under the i7 labelled "added in bulk", with a visible gap between them so they do
+not read as one continuous bar. A span that draws its own extent needs no "from
+here", which is what made the original sentence both ambiguous and reversible in
+the first place.
+
+Caption rewritten to name all three provenances in order -- droplet contributes
+round2 only, plate wrote the middle span, i7 arrives last in bulk -- rather than
+asserting a direction the reader has to resolve against the drawing.

@@ -44,7 +44,7 @@ notes,True,rationale 20-triple table has 20 rows,20
 notes,True,"every rank, prediction and new-double count is correct",20 of 20
 notes,True,rationale 25-double table has 25 rows,25
 notes,True,every new double's serves-triples list is correct,25 of 25
-notes,True,gene-participation line matches,"{'YPL081W': 7, 'YLR312C-B': 6, 'YKL033W-A': 4, 'YER079W': 2, 'YLL012W': 7, 'YLR104W': 4, 'YBR203W': 8, 'YGL087C': 5, 'YDR057W': 6, 'YJR060W': 3, 'YPL046C': 8}"
+notes,True,gene-participation line matches,"{'YBR203W': 8, 'YPL046C': 8, 'YLL012W': 7, 'YPL081W': 7, 'YDR057W': 6, 'YLR312C-B': 6, 'YGL087C': 5, 'YKL033W-A': 4, 'YLR104W': 4, 'YJR060W': 3, 'YER079W': 2}"
 notes,True,"all 11 genes covered, range 2-8","11 genes, 2-8"
 notes,True,summary CSV capped row matches the note,"45 construct, 0.5300 mean pred"
 notes,True,"construction-check CSV agrees: 20 rows, all with a parent, 15 single-route","20 rows, 15 single-route"

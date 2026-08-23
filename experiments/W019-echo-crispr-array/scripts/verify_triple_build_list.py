@@ -314,10 +314,12 @@ def main() -> None:
     check("notes", not bad, "every new double's serves-triples list is correct",
           bad or "25 of 25")
 
+    # sorted so the CSV report is byte-stable: set iteration order is not
     freq = {}
     for t in sel:
-        for g in t:
+        for g in sorted(t):
             freq[g] = freq.get(g, 0) + 1
+    freq = dict(sorted(freq.items(), key=lambda kv: (-kv[1], kv[0])))
     line = re.search(r"\n(YBR203W \d+ .*?YER079W \d+)\n", rt).group(1)
     noted = {k: int(v) for k, v in re.findall(r"([A-Z0-9\-]+) (\d+)", line)}
     check("notes", noted == freq, "gene-participation line matches", freq)

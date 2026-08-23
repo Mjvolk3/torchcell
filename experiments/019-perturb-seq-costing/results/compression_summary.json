@@ -1,0 +1,29 @@
+{
+  "n_strains": 1484,
+  "n_genes": 6169,
+  "rank_50pct": 4,
+  "rank_80pct": 47,
+  "rank_90pct": 177,
+  "rank_95pct": 451,
+  "effective_rank_participation_ratio": 8.37558395447181,
+  "responder_fold": 1.25,
+  "q_median_genes_moved_per_perturbation": 269.0,
+  "q_iqr": [
+    169.0,
+    504.0
+  ],
+  "svd_support_median_by_mass": {
+    "0.5": 352.0,
+    "0.75": 1080.0,
+    "0.9": 2155.0
+  },
+  "additivity_n_testable_doubles": 72,
+  "additivity_median_pearson_r": 0.8672520731305812,
+  "additivity_median_relative_residual": 0.5496984422206879,
+  "additivity_median_slope": 0.6158617734909058,
+  "samples_needed_genome_scale": {
+    "200": 2363.049545480424,
+    "1000": 3080.858854426033,
+    "6000": 3879.983577701745
+  }
+}

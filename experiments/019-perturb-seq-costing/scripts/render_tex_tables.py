@@ -15,6 +15,7 @@ Run:  python experiments/019-perturb-seq-costing/scripts/render_tex_tables.py
 
 from __future__ import annotations
 
+import json
 import math
 import os
 import os.path as osp
@@ -914,6 +915,67 @@ def t14() -> None:
 
 
 
+# --- t16 (compression parameters) --------------------------------------------
+def t16() -> None:
+    """n, q and r for compressed Perturb-seq, and how well each is known.
+
+    The companion to t12. That table asks what the design equation needs and
+    which of its inputs are assumed; this one asks the same of the compressed
+    screen, and the answer is different in an instructive way -- two of the three
+    are measured here for the first time, and the one that is not is a choice
+    rather than a gap.
+    """
+    with open(osp.join(RESULTS, "compression_summary.json")) as fh:
+        c = json.load(fh)
+    q_lo, q_hi = c["q_iqr"]
+    rows = [
+        (r"$n$", "targets in the library", "200--6{,}000",
+         r"\textbf{a choice}",
+         r"the panel of \cref{sec:multiplex}, or the genome"),
+        (r"$q$", "genes moved per perturbation",
+         f"{c['q_median_genes_moved_per_perturbation']:.0f}",
+         "measured",
+         rf"IQR {q_lo:.0f}--{q_hi:.0f} over {c['n_strains']:,} deletions"
+         .replace(",", "{,}")),
+        (r"$r$", "components in the effect matrix",
+         f"{c['rank_90pct']}", "measured",
+         rf"{c['rank_50pct']} at 50\% of variance, "
+         rf"{c['rank_95pct']} at 95\%; no knee"),
+        (r"$(q{+}r)\log n$", "composite samples, unit constant",
+         f"{(c['q_median_genes_moved_per_perturbation'] + c['rank_90pct']) * math.log(6000):,.0f}"
+         .replace(",", "{,}"),
+         "derived", r"at $n=6{,}000$; $0.65n$, so compression barely pays"),
+        ("slope", "observed / additive, double deletions",
+         f"{c['additivity_median_slope']:.2f}", "measured",
+         rf"median over {c['additivity_n_testable_doubles']} Sameith doubles"),
+    ]
+    emit(
+        "t16-compression-parameters",
+        table(
+            "llrll",
+            r"Symbol & Quantity & Value & Status & Basis",
+            [" & ".join(r) for r in rows],
+            "Parameters of the compressed-screen bound, measured from the "
+            "expression compendia.",
+            "tab:compression-params",
+            note=r"Yao et al.\ give the sample requirement as "
+                 r"$O((q+r)\log n)$ without a constant, so the fourth row is a "
+                 r"\emph{shape} evaluated at unit constant and not a budget; what "
+                 r"survives the unknown constant is that the requirement is "
+                 r"nearly flat in $n$ while the conventional one is linear. "
+                 r"\textbf{The last row is the assumption, not a parameter.} "
+                 r"Guide-pooling requires effects to combine additively and "
+                 r"argues that interactions cancel; in yeast they do not cancel, "
+                 r"they buffer, and a double produces about 60\% of the sum of "
+                 r"its singles. Sameith et al.'s pairs were chosen because they "
+                 r"were expected to interact, so 0.62 is a lower bound on "
+                 r"additivity rather than an estimate of it "
+                 r"(\cref{sec:compression}). Generated from "
+                 r"\file{experiments/019-perturb-seq-costing/scripts/compression_analysis.py}.",
+        ),
+    )
+
+
 # --- t15 (figure provenance) -------------------------------------------------
 def t15() -> None:
     """Where every number drawn by hand in Figs. 1--4 comes from.
@@ -986,7 +1048,8 @@ def t15() -> None:
 
 def main() -> None:
     print(f"writing LaTeX tables -> {OUT}")
-    for fn in (t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t14, t15):
+    for fn in (t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t14,
+               t15, t16):
         fn()
     print("done")
 

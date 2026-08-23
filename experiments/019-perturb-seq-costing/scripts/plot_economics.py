@@ -167,34 +167,37 @@ def panel_a(ax) -> None:
     depth_req = [target / p.mrna_umis_per_cell for p in CM.PLATFORMS]
     floor = [CM.CELLS_FLOOR] * len(CM.PLATFORMS)
 
-    # Plain text in the labels, not mathtext: a 5 pt mathtext superscript does
-    # not survive Arial + svg.fonttype:none through rsvg-convert and renders as
-    # garbage in the PDF, even though a rasterised preview looks fine.
-    ax.bar(x - w / 2, depth_req, w,
+    # ONE bar per platform, and the floor drawn ONCE as a rule.
+    #
+    # It used to be a paired bar chart: a depth bar and a hatched floor bar for
+    # every platform. The floor is 100 cells for all four, because it is a
+    # property of yeast biology and not of any chemistry, so that drew the same
+    # number four times and invited the reader to look for a difference between
+    # the hatched bars that does not exist. A constant is a reference line.
+    #
+    # The reading also gets sharper: a bar above the rule is depth-limited, a
+    # bar at it is floor-limited, and the two platforms whose bars sit exactly on
+    # the rule are the ones where extra depth has stopped buying anything.
+    ax.bar(x, depth_req, w * 1.5,
            color=[PLATFORM_COLOR[p.name] for p in CM.PLATFORMS],
            edgecolor="black", linewidth=0.5)
-    ax.bar(x + w / 2, floor, w, color="white", edgecolor="black",
-           linewidth=0.5, hatch="///")
-    # Grey swatch for the depth entry, because the depth bars are FOUR colors --
-    # one per platform, as everywhere else in this figure. A legend key drawn in
-    # one of those four would read as "the orange platform is the depth bar".
-    ax.legend(
-        handles=[
-            Patch(facecolor="#DDDDDD", edgecolor="black", lw=0.5,
-                  label="depth: 200,000 pseudobulk UMIs"),
-            Patch(facecolor="white", edgecolor="black", lw=0.5, hatch="///",
-                  label="biology: 100-cell floor"),
-        ],
-        frameon=False, loc="upper center", fontsize=4.5, handlelength=1.0,
-        handletextpad=0.35, borderaxespad=0.2, labelspacing=0.3,
-    )
+    ax.axhline(CM.CELLS_FLOOR, color="black", lw=0.7, ls=":")
+    ax.annotate("100-cell biological floor", (len(CM.PLATFORMS) - 0.55,
+                                              CM.CELLS_FLOOR * 1.12),
+                fontsize=4.5, ha="right", va="bottom")
+    ax.annotate("bars: cells to reach 200,000 pseudobulk UMIs",
+                (-0.45, 3200), fontsize=4.5, ha="left", va="top",
+                color="#666666")
 
     ax.set_xticks(x)
     ax.set_xticklabels([PLATFORM_LABEL[p.name] for p in CM.PLATFORMS], fontsize=4.5)
     ax.set_ylabel("Cells per perturbation")
     ax.set_yscale("log")
     ax.set_ylim(30, 4000)
-    ax.set_title("Two constraints; the taller binds", loc="left", fontsize=6)
+    # "Higher", not "taller": one constraint is a bar and the other is now
+    # a rule, so they are compared by height on the axis rather than as two
+    # bars side by side.
+    ax.set_title("Two constraints; the higher binds", loc="left", fontsize=6)
     box(ax)
 
 
@@ -244,14 +247,22 @@ def panel_b(ax) -> None:
     # two segments. Putting them inside also returns the headroom the old
     # above-bar placement needed, which is why ylim drops from 470 to 400 and
     # the tallest bar now fills the panel instead of floating in it.
-    for xi, b in zip(x, budgets):
-        ax.text(xi, b.recurring_usd / 1e3 * 0.92, f"${b.recurring_usd/1e3:.0f}k",
-                ha="center", va="center", fontsize=5, fontweight="bold")
+    # Two numbers per bar, and they are the two a reader wants: the TOTAL above
+    # the bar, and the REAGENT subtotal sitting on the line that divides the two
+    # segments. The divider is where the split actually is, so a label there
+    # needs no legend entry to be understood, and it turns a stacked bar from
+    # something to be measured against the axis into something that states its
+    # own decomposition.
+    for xi, b, rg in zip(x, budgets, reagents):
+        ax.text(xi, b.recurring_usd / 1e3 + 10, f"${b.recurring_usd/1e3:.0f}k",
+                ha="center", va="bottom", fontsize=5, fontweight="bold")
+        ax.text(xi, rg + 6, f"${rg:.0f}k", ha="center", va="bottom",
+                fontsize=4.5, color="#333333")
 
     ax.set_xticks(x)
     ax.set_xticklabels([PLATFORM_LABEL[b.platform] for b in budgets], fontsize=4.5)
     ax.set_ylabel("Recurring cost per screen ($ thousands)")
-    ax.set_ylim(0, 400)
+    ax.set_ylim(0, 430)
     # Category key only -- the color key is the x-axis, which names the platform
     # under every bar. Grey swatches so the legend cannot be read as a fifth
     # platform, and the same dark/pale relation the bars use.

@@ -956,3 +956,78 @@ each term contains moved to the caption where there is room for it.
 Not using `loc="best"`, which solves the same problem by moving the legend, for
 the reason the module exists: a position that changes with the data is a position
 nobody can review.
+
+## 2026.08.23 - Conventional vs pooled vs compressed, with n, q and r measured
+
+New Sec. 4.6, Fig. 7 and Table 9. `compression_analysis.py` +
+`plot_compression.py`.
+
+### The idea
+
+Sec. 3.4 states compressed Perturb-seq's premise -- samples scale as
+`(q+r) log n` rather than n -- and leaves all three symbols unplannable. Two are
+measurable from data already in the mirror, because **Kemmeren's 1,484
+single-deletion profiles ARE a perturbation-by-gene effect matrix for yeast**:
+the same object a compressed screen would be recovering, in our organism instead
+of THP1 cells.
+
+### Measured
+
+- **r is small.** 4 components carry half the variance, 47 carry 80%, 177 carry
+  90%, against 1,484 rows. Participation ratio 8.4. A deletion screen is not
+  6,000 independent experiments; it is a few dozen recurring programs sampled
+  1,484 times.
+- **q = 269** genes moved per deletion at the 1.25x criterion, IQR 169-504, of
+  6,169. Genuinely sparse at 4%.
+- **But not in the SVD basis.** A singular component needs 2,155 genes for 90% of
+  its loading mass. Sparsity lives in the ROWS, not the singular basis, which is
+  why FR-Perturb factorizes by *sparse* PCA -- a design choice Sec. 3.4 reports
+  without saying what it buys.
+- **(q+r) log n crosses n near n = 3,600.** At genome scale it is 0.65n; at the
+  200-gene panel it is 11.8n, so on a panel compression costs an order of
+  magnitude MORE samples than measuring each target directly. Plain guide-pooling
+  (divide by m, assume nothing about sparsity) sits below both everywhere.
+
+### The finding that matters
+
+**The additivity assumption fails in a systematic direction.** Yao et al. do not
+claim interactions are absent; they claim interactions CANCEL over random
+combinations. That is a claim about a mean, and Sameith's doubles test it:
+over the 72 doubles whose two singles were profiled by the same lab, the observed
+response correlates well with the additive prediction (median Pearson r = 0.87)
+but is systematically smaller -- **median slope 0.62**. Two deletions produce
+about 60% of the sum of their singles. In yeast interactions do not cancel, they
+buffer.
+
+Three reasons not to over-read it, all in the section: Sameith chose pairs
+expected to interact, so 0.62 is a lower bound on additivity rather than an
+estimate; n = 72; and m = 2 is the only multiplicity anyone has measured. Whether
+attenuation compounds at m = 10 is a second reason to run the two-guide pilot.
+
+### Deliberate restraint
+
+Every constant in the sample-complexity panels is 1. Yao states an ORDER, and a
+compressed-sensing constant depends on the measurement ensemble and the recovery
+guarantee wanted. So the panels compare SHAPES -- flat in n against linear in n --
+and the crossing, whose location moves with the constant but whose existence does
+not. Panel f was going to price the three designs side by side and that was
+dropped: the pooled and compressed sample counts are not commensurable (one is
+per-perturbation coverage, the other is a recovery bound), so f became the
+parameter-range summary instead, which is what was actually asked for.
+
+### Naming collision, flagged not renamed
+
+`q` is now two things: Yao's non-zeros per module (here) and the per-guide
+detection probability (Secs. 3.6, 6). Both are the sources' names. Called out in
+the section, the glossary and the analysis module docstring. An expression
+compendium can measure the second and says nothing about the first.
+
+### Fig 10 (economics) follow-ups
+
+- (a) The 100-cell floor was drawn as four identical hatched bars, one per
+  platform. It is a property of yeast biology, not of any chemistry, so it is now
+  ONE reference rule. The reading sharpens: a bar above the rule is depth-limited,
+  a bar sitting on it is floor-limited.
+- (b) Total back above each bar, and the reagent subtotal now sits on the line
+  dividing the two segments -- so the bar states its own decomposition instead of
+  having to be measured against the axis.

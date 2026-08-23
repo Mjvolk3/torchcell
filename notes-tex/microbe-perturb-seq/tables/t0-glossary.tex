@@ -17,6 +17,8 @@ Term & Definition & See \\
 \endhead
 \bottomrule
 \endlastfoot
+\textbf{Additivity assumption} & That two perturbations in one cell move a gene by the sum of what each moves it alone, in log space. Every pooled decoding needs it. Yao et al.\ do not claim interactions are absent but that they cancel over random combinations; measured in yeast doubles the observed response is 0.62 of the additive prediction, so they do not cancel -- they buffer. & \cref{sec:compression} \\
+\addlinespace[5pt]
 \textbf{Barcode collision} & Two distinct cells receiving the same full barcode and being merged into one apparent cell. Rate is $1-((B-1)/B)^{C-1}$ for $C$ cells in a barcode space of size $B$, so it is controlled by adding rounds or sublibraries, not by sequencing harder. & \cref{sec:collisions} \\
 \addlinespace[5pt]
 \textbf{Biological floor} & The minimum cells a perturbation needs before its mean is interpretable, independent of sequencing. Cell-cycle phase and metabolic state must be averaged out, and depth cannot substitute. The published field standard is 100 cells. & \cref{sec:cells-per-pert} \\
@@ -35,6 +37,8 @@ Term & Definition & See \\
 \addlinespace[5pt]
 \textbf{Combinatorial split-pool barcoding} & No isolation at all. Fixed, permeabilized cells act as their own reaction vessels; the population is split across a plate, barcoded in situ, pooled, and re-split. After $R$ rounds of 96 wells there are $96^{R}$ possible paths. Cost scales per well, not per cell, so a plate costs the same for ten thousand cells or a million. & \cref{sec:isolation} \\
 \addlinespace[5pt]
+\textbf{Composite sample} & One measurement of a linear combination of perturbation effects rather than of a single perturbation: a cell carrying $m$ guides, or a droplet holding $m$ singly-perturbed cells. Conventional screening is the case $m=1$. The unit compressed sensing counts, and the reason its sample requirement can be smaller than the number of perturbations. & \cref{sec:compression} \\
+\addlinespace[5pt]
 \textbf{Depth sufficiency}\newline {\color{tcgray}($d^{*}$)} & The per-cell depth $1/(\varphi_j p_j)$ at which shot noise and biological overdispersion contribute equally. Below it a screen is measurement-limited and deeper reads help; above it the requirement is within a factor of two of a floor no sequencing can cross. & \cref{sec:design-equation} \\
 \addlinespace[5pt]
 \textbf{Doublet} & Two cells reported as one. In droplet methods it is two cells in one partition, governed by Poisson loading (10x quote $\sim$8\% at 20{,}000 cells recovered); in split-pool the analogous failure is a barcode collision, which has a different and controllable cause. & \cref{sec:isolation} \\
@@ -42,6 +46,8 @@ Term & Definition & See \\
 \textbf{Droplet isolation} & One cell co-encapsulated with one barcoded bead in an emulsion droplet; the droplet wall is what keeps a cell's molecules together. Reagent cost scales linearly with cells, because you pay per channel. & \cref{sec:isolation} \\
 \addlinespace[5pt]
 \textbf{Droplet overloading} & Deliberately loading a droplet generator far above the doublet-avoiding concentration. Ruinous without preindexing, since every multiply-occupied droplet becomes an unresolvable doublet; the operating point with it, since those droplets resolve into several usable cells. Measured at 95.5\% droplet occupancy and 9.6 nuclei per droplet at 100-fold overloading. & \cref{sec:scifi} \\
+\addlinespace[5pt]
+\textbf{Effect matrix} & Perturbations by genes, each entry the log fold change that perturbation causes in that gene. It is the object a screen estimates, the $\boldsymbol{\Theta}$ of \cref{eq:theta}, and an expression compendium of single deletions already is one -- which is what makes its rank and sparsity measurable before any screen is run. & \cref{sec:compression} \\
 \addlinespace[5pt]
 \textbf{FR-Perturb} & The decoder for a compressed screen: factorises the observed expression matrix by sparse PCA, then recovers per-perturbation effects by LASSO against the pooling design. The recovered effects are estimates, so power depends on the design matrix as much as on cell count. & \cref{sec:yao} \\
 \addlinespace[5pt]
@@ -64,6 +70,8 @@ Term & Definition & See \\
 \textbf{Protocol run} & One complete pass through the barcoding workflow -- fix, permeabilise, three rounds, split into sublibraries. Consumes one withdrawal from each barcode plate and carries up to $\sim$480{,}000 cells. A unit of \emph{bench work}, not of sequencing: the sublibraries it yields are sequenced and priced separately. & \cref{sec:startup} \\
 \addlinespace[5pt]
 \textbf{Pseudobulk} & Summing UMIs across all cells sharing a perturbation, to estimate that perturbation's mean expression. It is what the whole design is powered on: single cells are too shallow individually, so the quantity that matters is cells $\times$ depth. & \cref{sec:cells-per-pert} \\
+\addlinespace[5pt]
+\textbf{Rank and sparsity}\newline {\color{tcgray}(r, q)} & The two properties that decide whether an effect matrix can be recovered from fewer samples than it has columns: $r$ how many components carry its variance, $q$ how many genes one perturbation moves. Measured in yeast as $r\approx177$ at 90\% of variance and $q\approx269$ of 6{,}169 genes. \textbf{This $q$ is not the $q$ of \cref{sec:guide-capture}}, which is a per-guide detection probability; both names are the sources' and neither is renamed here. & \cref{sec:compression} \\
 \addlinespace[5pt]
 \textbf{Read pair} & One paired-end fragment, the unit sequencing is priced in here. Both method families need paired-end runs -- one read carries the cDNA and the other the barcodes -- but they put the barcode on opposite reads. & \cref{sec:sequencing} \\
 \addlinespace[5pt]

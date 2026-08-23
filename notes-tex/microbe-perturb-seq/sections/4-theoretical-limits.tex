@@ -513,6 +513,135 @@ being designed for this, recovered no significant pairwise interaction even at
 $q<0.5$ -- a caution that the 400-cell constant is a power calculation, not a
 demonstration.
 
+\subsection{Is the Response Matrix Compressible?\secstatus{todo}}
+\label{sec:compression}
+
+Sec.~\ref{sec:yao} states compressed Perturb-seq's premise -- that the number of
+composite samples needed scales as $(q+r)\log n$ rather than $n$, for a library
+of $n$ targets, an effect matrix of rank $r$ and $q$ non-zeros per module -- and
+leaves all three unplannable. Two of them are measurable from compendia already
+in the mirror, because Kemmeren et al.'s 1{,}484 single-deletion profiles
+\emph{are} a perturbation-by-gene effect matrix for yeast: the same object a
+compressed screen would be recovering, in our organism rather than in THP1 cells.
+
+%% SOURCE: experiments/019-perturb-seq-costing/scripts/compression_analysis.py
+%% RUN 2026-08-23 on the M1 against the same LMDBs Sec. 4.4 uses.
+\input{tables/t16-compression-parameters}
+
+\notesec{A warning about the letter $q$} This document now uses $q$ for two
+unrelated things, and the collision is worth naming rather than leaving for a
+reader to trip over. In \cref{sec:guide-capture} and \cref{sec:bottlenecks} $q$
+is the \emph{per-guide detection probability}, the chance a guide present in a
+cell is seen in that cell's reads. Here it is Yao et al.'s \emph{non-zeros per
+module}. Both are theirs, not ours, which is why neither is renamed. An
+expression compendium can measure the second and says nothing whatever about the
+first, since it contains no guides.
+
+\pfstep{The matrix is strongly low rank} Four components carry half the variance
+of the whole compendium and 177 carry 90\%, against 1{,}484 rows; the
+participation ratio, which needs no cut-off, is 8.4
+(\cref{fig:compression}a). A deletion screen in yeast is not 6{,}000 independent
+experiments, it is a few dozen recurring programs sampled 1{,}484 times, which is
+the property compression exists to exploit and it is present.
+
+\pfstep{The sparsity is real per perturbation and absent per component} One
+deletion moves a median of 269 genes of 6{,}169 at the 1.25$\times$ criterion of
+\cref{sec:effect-size} -- 4\% of the transcriptome, genuinely sparse. A singular
+component is not sparse at all: it takes 2{,}155 genes to carry 90\% of one's
+loading mass (\cref{fig:compression}b). That gap is not a defect in the
+measurement, it is the reason FR-Perturb factorises by \emph{sparse} PCA rather
+than by PCA, which \cref{sec:yao} reports as a design choice without saying what
+it buys. Sparsity is in the rows of this matrix, not in its singular basis, and a
+method has to go looking for it.
+
+\pfstep{Compression pays only above a library size, and the panel is below it}
+Evaluated at $q=269$ and $r=177$, $(q+r)\log n$ crosses $n$ near
+$n\approx3{,}600$ (\cref{fig:compression}d). At genome scale it is $0.65n$; for
+the 200-gene focused panel of \cref{sec:multiplex} it is $11.8n$, so on a panel
+compression costs an order of magnitude \emph{more} samples than measuring each
+target directly. The constant is unknown and shifts the crossing, but not the
+existence of one: the compressed requirement is nearly flat in $n$ and the
+conventional one is linear, so they must cross, and the only question is where.
+Plain guide-pooling, which divides samples by $m$ and assumes nothing about
+sparsity, sits below both across the whole range this document contemplates
+(\cref{fig:compression}e).
+
+\pfstep{And the assumption underneath it does not hold in the additive direction}
+Guide-pooling requires that effects combine additively in log expression space,
+and Yao et al.\ do not claim interactions are absent -- they claim interactions
+\emph{cancel}, because each cell draws a random combination and positive and
+negative average out. That is a claim about a mean, and Sameith et al.'s doubles
+test it directly. Over the 72 doubles whose two singles were profiled by the same
+lab on the same platform, the observed response correlates well with the additive
+prediction (median Pearson $r=0.87$) but is systematically \emph{smaller}: the
+median slope of observed on predicted is 0.62 (\cref{fig:compression}c). Two
+deletions produce about 60\% of the sum of their singles. Interactions in yeast
+do not cancel here; they buffer.
+
+\begin{keybox}
+\textbf{Compression is a poor fit for the screen this document is designing, and
+the data says so in three independent ways.} The library size that makes it pay
+($n\gtrsim3{,}600$) is above the focused panel where interactions are actually
+reachable; plain guide-pooling beats it at every $n$ considered; and the
+additivity its decoding assumes is violated in yeast in a systematic direction,
+with doubles at 0.62 of additive rather than scattering around 1. What the
+measurement \emph{does} support is the simpler half of the same idea: the matrix
+is low rank, so pooling and averaging recovers main effects efficiently, which is
+what \cref{fig:economics}f already prices.
+\end{keybox}
+
+\notesec{Three reasons not to over-read the 0.62} Sameith et al.\ did not sample
+gene pairs at random -- the panel is built from regulatory genes chosen because
+they were expected to interact, so its deviation from additivity should sit
+\emph{above} what a random pair would show, and 0.62 is therefore a lower bound
+on additivity rather than an estimate of it. Seventy-two pairs is a small sample.
+And $m=2$ is the only multiplicity anyone has measured: whether attenuation
+compounds, saturates or reverses at $m=10$ is exactly the question
+\cref{sec:effect-size} could not answer for responder counts either. \textbf{
+Hypothesis (untested):} buffering at $m=2$ predicts a shortfall at higher $m$,
+which would make pooled main effects weaker than the $1/m$ scaling of
+\cref{fig:economics}f assumes. The two-guide pilot of \cref{sec:staging} is what
+would settle it, and this is a second reason to run it.
+
+\tcfigfit[1.0]{figures/compression.pdf}{%
+  \textbf{The yeast response matrix is compressible, and compression is still the
+  wrong tool for a focused screen.} All panels are Kemmeren et al.'s 1{,}484
+  single deletions \citep{kemmerenLargeScaleGeneticPerturbations2014} and Sameith
+  et al.'s doubles \citep{sameithHighresolutionGeneExpression2015}, the same
+  compendia as \cref{fig:effect-size}. Color is the design throughout: amber
+  conventional, red pooled-and-averaged, blue compressed.
+  \textbf{(a)} Singular spectrum of the effect matrix (left axis) and cumulative
+  variance (right). Four components carry half the variance and 177 carry 90\%;
+  the participation ratio, a cut-off-free reading of the same spectrum, is 8.4.
+  \textbf{(b)} Two sparsities, and only the first is the one the bound uses. One
+  perturbation moves 269 genes of 6{,}169 (bar, with interquartile range); a
+  singular component needs 2{,}155 to carry 90\% of its mass, because an SVD
+  component is dense by construction. The grey bars are an upper bound on what a
+  sparse factorization would need, not a measurement of it.
+  \textbf{(c)} The additivity assumption, tested. For each double deletion whose
+  two singles were profiled by the same lab, the slope of observed response on
+  additively predicted response, over genes either vector moves. Additive is 1;
+  the median is 0.62. Restricting to moved genes matters -- a correlation over
+  all 6{,}000 would be dominated by the $\sim$5{,}700 sitting at zero in both
+  vectors and would report near-perfect additivity for any pair of sparse
+  vectors.
+  \textbf{(d)} Composite samples needed against library size, at the measured $q$
+  and $r$. \textbf{Every constant here is 1}: Yao et al.\ state an order, and a
+  compressed-sensing constant depends on the measurement ensemble and the
+  recovery guarantee wanted, so the panel compares shapes -- flat in $n$ against
+  linear in $n$ -- and the crossing, whose location moves with the constant but
+  whose existence does not.
+  \textbf{(e)} The same quantity against perturbations per composite. The
+  compressed curves are horizontal because sparse recovery's requirement does not
+  depend on $m$ at all, only on what is being recovered; that is the whole
+  difference between the two decodings.
+  \textbf{(f)} What each parameter rests on. $n$ is a design choice; $q$ is an
+  interquartile range over 1{,}484 measured deletions; $r$ has no single value
+  because the spectrum has no knee, so the bar spans the 50\% and 95\% variance
+  cuts and the tick marks the participation ratio. Generated by
+  \file{experiments/019-perturb-seq-costing/scripts/plot_compression.py}, from
+  \file{compression_analysis.py}.}{fig:compression}
+
 \subsection{Library Construction Limits\secstatus{todo}}
 \label{sec:library-ceiling}
 

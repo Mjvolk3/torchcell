@@ -539,6 +539,57 @@ TERMS: list[Term] = [
             "13% uninformative; SPLiT-seq: 67% uninformative)"
         ),
     ),
+    Term(
+        term="Effect matrix",
+        definition=(
+            "Perturbations by genes, each entry the log fold change that "
+            "perturbation causes in that gene. It is the object a screen "
+            "estimates, the $\\boldsymbol{\\Theta}$ of \\cref{eq:theta}, and "
+            "an expression compendium of single deletions already is one -- "
+            "which is what makes its rank and sparsity measurable before any "
+            "screen is run."
+        ),
+        where="sec:compression",
+    ),
+    Term(
+        term="Composite sample",
+        definition=(
+            "One measurement of a linear combination of perturbation effects "
+            "rather than of a single perturbation: a cell carrying $m$ guides, "
+            "or a droplet holding $m$ singly-perturbed cells. Conventional "
+            "screening is the case $m=1$. The unit compressed sensing counts, "
+            "and the reason its sample requirement can be smaller than the "
+            "number of perturbations."
+        ),
+        where="sec:compression",
+    ),
+    Term(
+        term="Rank and sparsity",
+        abbrev="r, q",
+        definition=(
+            "The two properties that decide whether an effect matrix can be "
+            "recovered from fewer samples than it has columns: $r$ how many "
+            "components carry its variance, $q$ how many genes one perturbation "
+            "moves. Measured in yeast as $r\\approx177$ at 90\\% of variance "
+            "and $q\\approx269$ of 6{,}169 genes. \\textbf{This $q$ is not the "
+            "$q$ of \\cref{sec:guide-capture}}, which is a per-guide detection "
+            "probability; both names are the sources' and neither is renamed "
+            "here."
+        ),
+        where="sec:compression",
+    ),
+    Term(
+        term="Additivity assumption",
+        definition=(
+            "That two perturbations in one cell move a gene by the sum of what "
+            "each moves it alone, in log space. Every pooled decoding needs it. "
+            "Yao et al.\\ do not claim interactions are absent but that they "
+            "cancel over random combinations; measured in yeast doubles the "
+            "observed response is 0.62 of the additive prediction, so they do "
+            "not cancel -- they buffer."
+        ),
+        where="sec:compression",
+    ),
 ]
 
 # Which group each term belongs to, by position in TERMS. Kept as explicit

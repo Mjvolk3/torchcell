@@ -7,6 +7,8 @@ inventory,True,the one built non-node single is YLR313C (SPH1),['YLR313C']
 inventory,True,the blocked pair YKL033W-A x YJR060W is not built,absent
 inventory,True,YLR104W (LCL2) has zero built doubles,0
 inventory,True,every built double has both parent singles built,all 13
+inventory,True,"the blocked pair is exactly the one designed double that was never built, derived from the design and the order sheet rather than asserted","[['YJR060W', 'YKL033W-A']]"
+inventory,True,"14 doubles designed, 13 built","14 designed, 13 built"
 basis,True,39 in-basis targets,39
 basis,True,ranks 1-11 all touch a zero-trigenic-data gene,11 of 11
 basis,True,"the first clean target is rank 12, so the flagged block is the whole top of the ranking",12

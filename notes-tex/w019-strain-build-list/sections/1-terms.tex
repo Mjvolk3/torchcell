@@ -1,0 +1,37 @@
+%% notes-tex/w019-strain-build-list/sections/1-terms.tex
+%% [[experiments.W019-echo-crispr-array.build-list]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/w019-strain-build-list/sections/1-terms.tex
+%%
+%% SOURCE: hand-authored. Definitions only, no data. The column names defined
+%% here are produced by build_list_tables.py; the numbers they describe are not
+%% repeated in this section.
+
+\section{Terms\secstatus{todo}}\label{sec:terms}
+
+\begin{description}[leftmargin=1.2em,itemsep=2pt,topsep=2pt]
+
+\item[boot SE] The standard error of a strain's mean fitness, from resampling
+  the replicate plates that strain was measured on. It is smaller than
+  \emph{plate SD} because it is the error on a mean rather than the spread of
+  the values that mean was taken over.
+
+\item[fitness] Colony growth relative to the wild type on the same plate, so 1
+  is wild-type growth.
+
+\item[plate SD] The standard deviation of a strain's fitness across the
+  replicate plates it was measured on.
+
+\item[routes] How many different ways the bench can make a triple from strains
+  that already exist. Every triple is built by crossing one existing double with
+  the remaining single. \emph{routes} 1 means only one of the triple's three
+  pairs is in the freezer, so there is a single way in, and a failed cross
+  blocks that triple until the matching new double from
+  Table~\ref{tab:new-doubles} is done. \emph{routes} 2 means two of its pairs
+  exist, so a failed cross has an immediate second path.
+
+\item[tier] How a double was classed when run 4 was designed.
+  \texttt{validation} reproduces a measurement someone has already published,
+  \texttt{coverage} was added so that later triples would have a parent to be
+  built from, and \texttt{novel} had not been measured by anyone.
+
+\end{description}

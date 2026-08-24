@@ -48,7 +48,7 @@ STRAINS = osp.join(
 COMMON = {"YBR203W": "COS111", "YDR057W": "YOS9", "YGL087C": "MMS2", "YJR060W": "CBF1",
           "YLL012W": "YEH1", "YLR104W": "LCL2", "YLR313C": "SPH1", "YPL046C": "ELC1",
           "YPL081W": "RPS9A"}
-BLOCKED = ("YKL033W-A", "YJR060W")   # the 14th designed double; never built
+MEASURED_ROUND = "run 4"
 
 
 def orf(cell: object) -> str:
@@ -105,6 +105,14 @@ def main() -> None:
             "across_plate_sd": round(float(m.across_plate_sd), 4),
             "tier": r.tier,
             "costanzo_dmf": None if pd.isna(ref) else round(float(ref), 4),
+            # Costanzo's own uncertainty on the double, carried alongside the value so a
+            # reader is never left comparing our error bar against a bare number. This is
+            # their colony-level sample SD (`DmfCostanzo2016_std`), NOT the `se` column of
+            # the same file, which is that SD divided by the colony count and is what
+            # their epsilon p-values are built on. Different statistics, so the column is
+            # named for the one it actually holds.
+            "costanzo_dmf_sd": (None if pd.isna(r.DmfCostanzo2016_std)
+                                else round(float(r.DmfCostanzo2016_std), 4)),
         })
         if pd.isna(ref):
             gaps.append({
@@ -114,11 +122,23 @@ def main() -> None:
                           "compare against",
             })
 
+    # Which double failed to construct is DERIVED, not recorded. The designed set is the
+    # tiered rows of construction_validation_doubles.csv, the pairs picked to enable
+    # triples; the built set is the d-rows of the run-4 order sheet. Exactly one pair is
+    # in the first and not the second, and nothing was built that was not designed, so the
+    # two lists pin the failure between them without anyone having to write it down.
+    designed = {frozenset((r.gene1, r.gene2))
+                for r in pd.read_csv(DOUBLES_REF).itertuples() if not pd.isna(r.tier)}
+    built = {frozenset((a, b)) for _, a, b in doubles}
+    never_built = designed - built
+    assert not built - designed, f"built but never designed: {sorted(built - designed)}"
+    assert len(never_built) == 1, f"expected 1 unbuilt design, got {sorted(never_built)}"
+    blocked = sorted(next(iter(never_built)))
     gaps.append({
-        "kind": "double, designed but never built", "strain": " + ".join(sorted(BLOCKED)),
-        "reason": "reported failed to construct at the 2026-08-11 handover; neither the "
-                  "attempt date nor a cause was recorded. Both parent singles exist and "
-                  "were measured. It blocks 0 of the 39 target triples",
+        "kind": "double, designed but never built", "strain": " + ".join(blocked),
+        "reason": f"the only pair in the {len(designed)}-double design that is absent from "
+                  f"the {len(built)} measured in {MEASURED_ROUND}. The transformation gave "
+                  "no colonies. Both parent singles exist and were measured",
     })
     gaps.append({
         "kind": "triples, none exist", "strain": "--",
@@ -152,13 +172,17 @@ def main() -> None:
     def fmt(v):
         return "--" if pd.isna(v) or v is None or v == "" else str(v)
 
+    # Every column is prefixed with whose number it is. Reporting a Costanzo value next
+    # to an unlabeled `boot SE` invites the SE to be read as theirs; it is ours.
     print(md(s, ["id", "orf", "common", "fitness", "boot_se", "across_plate_sd",
-                 "costanzo_smf"],
-             ["id", "ORF", "common", "fitness", "boot SE", "plate SD", "Costanzo SMF"]))
+                 "costanzo_smf", "costanzo_se"],
+             ["id", "ORF", "common", "ours: fitness", "ours: boot SE", "ours: plate SD",
+              "Costanzo SMF", "Costanzo SE"]))
     print()
     print(md(d, ["id", "pair", "fitness", "boot_se", "across_plate_sd", "costanzo_dmf",
-                 "tier"],
-             ["id", "pair", "fitness", "boot SE", "plate SD", "Costanzo DMF", "tier"]))
+                 "costanzo_dmf_sd", "tier"],
+             ["id", "pair", "ours: fitness", "ours: boot SE", "ours: plate SD",
+              "Costanzo DMF", "Costanzo SD", "tier"]))
     print()
     print(g.to_string(index=False))
     print(f"\nwrote -> {RESULTS}/run4_measured_summary_*.csv")

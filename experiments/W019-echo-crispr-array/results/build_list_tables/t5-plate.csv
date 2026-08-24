@@ -1,0 +1,10 @@
+category,kind,label,strains,wells
+singles_existing,strain_group,"singles, already built",11,55
+doubles_existing,strain_group,"doubles, already built",13,65
+doubles_new,strain_group,"doubles, to construct",25,125
+triples_new,strain_group,"triples, to construct",20,100
+wild_type,strain_group,"wild type, BY4741",1,20
+total_strains,subtotal,total,70,365
+orientation_blanks,reserved,orientation blanks,,6
+spare,reserved,spare,,13
+plate,total,plate,,384

@@ -61,6 +61,9 @@ TARGETS = osp.join(
 SELECTION = osp.join(RESULTS, "triple_design_rank_sampling_selection.csv")
 SUMMARY = osp.join(RESULTS, "triple_design_rank_sampling_summary.csv")
 CONSTRUCTION = osp.join(RESULTS, "triple_build_construction_check.csv")
+DOUBLES_REF = osp.join(
+    REPO, "experiments/010-kuzmin-tmi/results/construction_validation_doubles.csv"
+)
 MEAS_SINGLES = osp.join(RESULTS, "run4_measured_summary_singles.csv")
 MEAS_DOUBLES = osp.join(RESULTS, "run4_measured_summary_doubles.csv")
 MEAS_GAPS = osp.join(RESULTS, "run4_measured_summary_gaps.csv")
@@ -233,6 +236,19 @@ def main() -> None:
           "YLR104W (LCL2) has zero built doubles", 0)
     check("inventory", not [p for p in built if not set(p) <= singles],
           "every built double has both parent singles built", "all 13")
+    # BLOCKED is a hardcoded constant in this file and in the design script, but it is a
+    # FACT about the data: the designed doubles are the tiered rows of
+    # construction_validation_doubles.csv, the built ones are the order sheet's d-rows,
+    # and the pair that failed to construct is the difference. Deriving it here is what
+    # stops the constant from drifting away from what the two lists actually say.
+    designed = {frozenset((r.gene1, r.gene2))
+                for r in pd.read_csv(DOUBLES_REF).itertuples() if not pd.isna(r.tier)}
+    check("inventory", not (built - designed) and designed - built == {BLOCKED},
+          "the blocked pair is exactly the one designed double that was never built, "
+          "derived from the design and the order sheet rather than asserted",
+          [sorted(p) for p in designed - built])
+    check("inventory", len(designed) == 14 and len(built) == 13,
+          "14 doubles designed, 13 built", f"{len(designed)} designed, {len(built)} built")
 
     # ---- 2. target basis --------------------------------------------------------------
     print("\n2. TARGET BASIS")

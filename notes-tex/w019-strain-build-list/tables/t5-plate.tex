@@ -1,0 +1,23 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/W019-echo-crispr-array/scripts/build_list_tables.py
+\begin{table}[H]\centering
+\small
+\caption[]{What goes on the measurement plate. 70 strains at 5 wells each, one 384-well layout, one pick per strain. Wells per strain is the whole number of times 70 strains divide the 358 wells left after 6 are kept empty to fix the plate's orientation and 20 are given to the wild-type reference, which gives 5. Every existing double is re-measured alongside the new strains, at no cost in construction work or in wells per strain.}\label{tab:plate}
+\begin{tabular}{lrr}
+\toprule
+on the plate & strains & wells \\
+\midrule
+singles, already built & 11 & 55 \\
+doubles, already built~(Table~\ref{tab:existing-doubles}) & 13 & 65 \\
+doubles, to construct~(Table~\ref{tab:new-doubles}) & 25 & 125 \\
+triples, to construct~(Table~\ref{tab:new-triples}) & 20 & 100 \\
+wild type, BY4741 & 1 & 20 \\
+\midrule
+\textbf{total} & \textbf{70} & 365 \\
+orientation blanks & -- & 6 \\
+spare & -- & 13 \\
+\midrule
+\textbf{plate} &  & \textbf{384} \\
+\bottomrule
+\end{tabular}
+\end{table}

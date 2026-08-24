@@ -1,0 +1,19 @@
+%% notes-tex/w019-strain-build-list/sections/4-triples-to-construct.tex
+%% [[experiments.W019-echo-crispr-array.build-list]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/w019-strain-build-list/sections/4-triples-to-construct.tex
+%%
+%% SOURCE: experiments/W019-echo-crispr-array/scripts/build_list_tables.py
+%% T01-T20 are the capped selection, ordered by `routes` ascending then by the
+%% design ranking. `build from` is the lexicographically first already-built pair
+%% of the triple; `third single` is the gene that pair is missing.
+
+\section{The 20 triples to construct\secstatus{todo}}\label{sec:triples}
+
+Cross the existing double in \emph{build from} with the single in \emph{third
+single}. Start with T01 through T15, which have one route each: a failed cross
+there blocks the triple until the matching double from
+Table~\ref{tab:new-doubles} is finished, so those failures are worth surfacing
+early. T16 through T20 each have a second route already in hand and can absorb a
+failed cross without waiting on anything.
+
+\input{tables/t4-new-triples}

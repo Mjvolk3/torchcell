@@ -36,10 +36,11 @@ contingency,True,YLR104W + YPL081W is the one clean double orphaned by the drop,
 contingency,True,7 of 25 new doubles touch a zero-data gene,7
 notes,True,build-list has 25 D-rows,25
 notes,True,build-list D-rows equal the computed new doubles,identical sets
+notes,True,D stars mark exactly the 7 zero-data doubles,"['D07', 'D10', 'D11', 'D13', 'D19', 'D22', 'D23']"
 notes,True,build-list has 20 T-rows,20
 notes,True,build-list T-rows equal the capped selection,identical sets
-notes,True,"every T-row build-from, third single and route label is correct",20 of 20
-notes,True,"stars mark exactly T01-T06, the zero-data triples","['T01', 'T02', 'T03', 'T04', 'T05', 'T06']"
+notes,True,"every T-row build-from, third single and routes count is correct",20 of 20
+notes,True,"T stars mark exactly T01-T06, the zero-data triples","['T01', 'T02', 'T03', 'T04', 'T05', 'T06']"
 notes,True,rationale 20-triple table has 20 rows,20
 notes,True,"every rank, prediction and new-double count is correct",20 of 20
 notes,True,rationale 25-double table has 25 rows,25

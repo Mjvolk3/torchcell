@@ -258,38 +258,63 @@ def main() -> None:
     bl = open(BUILD_LIST).read()
     rt = open(RATIONALE).read()
 
-    d_rows = re.findall(r"\| D\d\d \| ([^|]+?) \| ([^|]+?) \|", bl)
-    check("notes", len(d_rows) == 25, "build-list has 25 D-rows", len(d_rows))
-    check("notes", {frozenset((orf(a), orf(b))) for a, b in d_rows} == new_doubles,
-          "build-list D-rows equal the computed new doubles", "identical sets")
+    # Tables are parsed by splitting rows on the pipe, not by regex over the whole file:
+    # the D table is two ID blocks per row and both tables carry the zero-data flag as a
+    # `*` suffix on the ID, neither of which a single-pass regex reads reliably.
+    def table_rows(text):
+        rows = []
+        for line in text.split("\n"):
+            s = line.strip()
+            if s.startswith("|") and s.endswith("|") and set(s) - set("|:- "):
+                rows.append([c.strip() for c in s[1:-1].split("|")])
+        return rows
 
-    t_rows = re.findall(
-        r"\| T\d\d \| ([^|]+?) \| ([^|]+?) \| ([^|]+?) \| ([^|]+?) \| ([^|]+?) \| (\w+) \|", bl)
+    def split_id(cell):
+        return (cell[:-1], True) if cell.endswith("*") else (cell, False)
+
+    d_rows, t_rows = [], []
+    for c in table_rows(bl):
+        if len(c) == 6:
+            for blk in (c[0:3], c[3:6]):
+                if re.fullmatch(r"D\d\d\*?", blk[0]):
+                    did, star = split_id(blk[0])
+                    d_rows.append((did, star, frozenset((orf(blk[1]), orf(blk[2])))))
+        elif len(c) == 7 and re.fullmatch(r"T\d\d\*?", c[0]):
+            tid, star = split_id(c[0])
+            t_rows.append((tid, star, c[1], c[2], c[3], c[4], c[5], c[6]))
+
+    check("notes", len(d_rows) == 25, "build-list has 25 D-rows", len(d_rows))
+    check("notes", {p for _, _, p in d_rows} == new_doubles,
+          "build-list D-rows equal the computed new doubles", "identical sets")
+    d_marked = {i for i, s, _ in d_rows if s}
+    d_truly = {i for i, _, p in d_rows if p & NO_TRIGENIC_DATA}
+    check("notes", d_marked == d_truly
+          and d_marked == {"D07", "D10", "D11", "D13", "D19", "D22", "D23"},
+          "D stars mark exactly the 7 zero-data doubles", sorted(d_marked))
+
     check("notes", len(t_rows) == 20, "build-list has 20 T-rows", len(t_rows))
-    check("notes", {frozenset((orf(a), orf(b), orf(c))) for a, b, c, _, _, _ in t_rows} == set(sel),
+    check("notes",
+          {frozenset((orf(a), orf(b), orf(c))) for _, _, a, b, c, _, _, _ in t_rows} == set(sel),
           "build-list T-rows equal the capped selection", "identical sets")
-    route_word = {1: "single", 2: "two", 3: "three"}
     bad = []
-    for a, b, c, bfrom, third, routes in t_rows:
+    for tid, _, a, b, c, bfrom, third, routes in t_rows:
         t = frozenset((orf(a), orf(b), orf(c)))
         parent = frozenset(orf(x) for x in bfrom.split(" + "))
-        n_routes = len([p for p in pairs(t) if p in built])
         if parent not in built or not parent < t:
-            bad.append(("parent", sorted(t)))
+            bad.append(("parent", tid))
         if orf(third) != sorted(t - parent)[0]:
-            bad.append(("third", sorted(t)))
-        if routes != route_word[n_routes]:
-            bad.append(("routes", sorted(t)))
+            bad.append(("third", tid))
+        if routes != str(len([p for p in pairs(t) if p in built])):
+            bad.append(("routes", tid))
     check("notes", not bad,
-          "every T-row build-from, third single and route label is correct", bad or "20 of 20")
+          "every T-row build-from, third single and routes count is correct",
+          bad or "20 of 20")
 
-    starred = re.findall(
-        r"\| (T\d\d) \| ([^|]+?) \| ([^|]+?) \| ([^|]+?) \|[^|]*\|[^|]*\|[^|]*\| (\*?) \|", bl)
-    marked = {tid for tid, *_, s in starred if s == "*"}
-    truly = {tid for tid, a, b, c, _ in starred
-             if frozenset((orf(a), orf(b), orf(c))) & NO_TRIGENIC_DATA}
-    check("notes", marked == truly == {f"T0{i}" for i in range(1, 7)},
-          "stars mark exactly T01-T06, the zero-data triples", sorted(marked))
+    t_marked = {i for i, s, *_ in t_rows if s}
+    t_truly = {i for i, _, a, b, c, *_ in t_rows
+               if frozenset((orf(a), orf(b), orf(c))) & NO_TRIGENIC_DATA}
+    check("notes", t_marked == t_truly == {f"T0{i}" for i in range(1, 7)},
+          "T stars mark exactly T01-T06, the zero-data triples", sorted(t_marked))
 
     tri_tbl = re.findall(r"\| (\d+) \| (0\.\d+) \| ([A-Z0-9\- +]+?) \| (\d) \|", rt)
     check("notes", len(tri_tbl) == 20, "rationale 20-triple table has 20 rows", len(tri_tbl))

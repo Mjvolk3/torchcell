@@ -69,6 +69,15 @@ a survey. This is the hard part in yeast and is treated separately in
 Sec.~\ref{sec:guide-capture}; the short version is that the guide RNA itself is
 usually invisible to the assay, so a proxy has to be engineered.
 
+\begin{keybox}
+\textbf{Four tags, and only one of them is hard here.} A read is useful only if
+you can say which cell it came from, whether it is an original molecule or a PCR
+copy, and which gene it is. Cell barcode, UMI and sample index are solved by
+every chemistry on offer. The perturbation identifier is not: a yeast guide RNA
+is invisible to a poly(A) assay, so a proxy has to be engineered or a different
+capture chemistry used (\cref{sec:guide-capture}).
+\end{keybox}
+
 \subsection{Cell Isolation Strategies\secstatus{todo}}
 \label{sec:isolation}
 
@@ -166,6 +175,15 @@ names which library a read came from, whereas a UMI distinguishes two molecules
   Redrawn and reorganized from the text and Table~1 of that review rather than
   reproduced from its figure, and with the orientation fixed $5'$ to $3'$
   throughout, where the original mirrors its $3'$ panel. Every number drawn by hand in this figure is sourced in \cref{tab:prov-scrnaseq-method-taxonomy}.}{fig:methods-map}
+
+\begin{keybox}
+\textbf{The whole cost comparison reduces to one line: split-pool pays per well,
+droplet pays per cell.} A barcoding round consumes one plate of oligo whether
+ten thousand cells or a million pass through it, so its reagent term is flat in
+cell number. Droplet reagent is sold per channel at $\sim$20{,}000 cells, so a
+genome-scale screen needs 137 of them. Preindexing is what lets the two compose,
+and it attacks exactly the term that makes droplet expensive.
+\end{keybox}
 
 \subsection{Microbial Constraints on Single-Cell Chemistry\secstatus{todo}}
 \label{sec:why-hard}
@@ -339,3 +357,12 @@ genome-scale screen in one condition produces of order $6000\times6000$
 coefficients, a directed map from every perturbation to every transcriptional
 consequence. That object, not a hit list, is what makes the screen worth running
 for model training.
+
+\begin{keybox}
+\textbf{The output is a dense map, not a hit list, and that is the reason to run
+it.} A genome-scale screen in one condition produces of order
+$6{,}000\times6{,}000$ coefficients: a directed map from every perturbation to
+every transcriptional consequence. Single-cell resolution is used for assignment
+and quality control rather than for the effect estimate, so the precision
+question is how many cells share a guide, not how deeply any one was read.
+\end{keybox}

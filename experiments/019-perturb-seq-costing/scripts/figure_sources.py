@@ -427,17 +427,18 @@ RECORDS: list[FigureNumber] = [
     ),
     FigureNumber(
         figure=WORKFLOW, panel="c", element="reads lost to spike-in and barcode",
-        value="10 are PhiX or an unresolvable barcode",
+        value="28 lost to the PhiX spike and to unresolved barcodes",
         citation_key=None,
         quote=(
             "[DERIVED HERE: cost_model.py, phix_fraction=0.10 and "
             "valid_barcode_fraction=0.80, i.e. usable_read_fraction=0.72]"
         ),
         note=(
-            "OURS, and the canvas ROUNDS two tolls into one. The model applies a "
-            "10% PhiX spike and a separate 80% valid-barcode rate, so 28% of "
-            "reads are lost here, not 10%. The 1-in-100 survival figure is "
-            "computed from 0.72 and is correct; the '10' is the spike alone."
+            "OURS. The canvas used to say 10, which was the PhiX spike alone; the "
+            "model applies a 10% spike AND a separate 80% valid-barcode rate, so "
+            "usable_read_fraction is 0.72 and 28 reads in 100 are lost at this "
+            "stage. The 1-in-100 survival figure was always computed from 0.72 "
+            "and was right; only the drawn breakdown was wrong."
         ),
     ),
     FigureNumber(

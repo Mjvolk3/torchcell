@@ -46,11 +46,29 @@ equation reaches this quantity through $p_j$, the transcriptome share of the
 target gene, and $p_j$ enters only the shot-noise term -- where both candidate
 platforms sit (\cref{sec:design-equation}), so $n^{*}$ scales with it almost
 directly. Taking $3.5$ molecules per gene against each candidate denominator, at
-$d=410$ and $\varphi=1.1$, gives
-%% SOURCE: eq. (5) evaluated at A=16.3, d=410, phi=1.1; inputs from table 3.
-137 cells per perturbation at 10{,}500 total mRNA, 359 at 30{,}000, and 699 at
-60{,}000. That is a five-fold spread in the number the whole budget is built on,
-and it is larger than most of the effects this document argues about.
+$d=410$ and the measured effect size, gives
+%% SOURCE: experiments/019-perturb-seq-costing/scripts/derived_values.py,
+%% transcript_sensitivity(). A and phi are NOT independent: phi is pinned by
+%% A*phi = 100, so each effect size implies its own phi and they must be used in
+%% pairs. An earlier version printed 137/359/699, which mixed A=16.3 from the
+%% two-fold pair with phi=1.1 from the measured pair -- a combination whose
+%% implied floor is 18 cells, not the 100 this section relies on.
+765 cells per perturbation at 10{,}500 total mRNA, 2{,}001 at 30{,}000, and
+3{,}901 at 60{,}000. That is a five-fold spread, and it is larger than most of
+the effects this document argues about.
+
+\pfstep{Read the spread, not the level} The level here is not what
+\cref{sec:application} budgets against, and the two must not be confused.
+\cref{eq:design} pairs an effect size with an overdispersion, because
+$\varphi$ is pinned by requiring the 100-cell convention to fall out of the
+equation's floor: at the measured 1.34-fold, $A=90.9$ and $\varphi=1.1$; at a
+nominal two-fold, $A=16.3$ and $\varphi=6.1$. Both give a 100-cell floor, and
+the second pairing gives 219, 441 and 782 for the same three denominators. So
+the absolute number moves by a factor of three with the effect-size assumption,
+while the \emph{spread} across denominators stays at five-fold either way. The
+spread is the finding; it is a property of the unresolved $p_j$, and it is why
+measuring $p_j$ in our own pilot data retires more uncertainty than any other
+cheap measurement in this document.
 
 Worse, the working value is not internally consistent. The document uses
 $p_j = 3.5/30{,}000$, which pairs the review's per-gene figure with Brettner's
@@ -59,14 +77,19 @@ $\sim$10{,}500, so used self-consistently it would give $p_j=3.3\times10^{-4}$
 and cut every cells-per-perturbation figure by a factor of $2.9$. The 30{,}000
 pairing is the conservative one, which is why it is kept, but it is a choice and
 not a measurement, and \cref{tab:design-params} accordingly marks $p_j$ derived.
-Measuring the transcriptome share of a few representative target genes directly
-in our own pilot data is cheap and would retire the single largest unforced
-uncertainty in \cref{sec:application}.
 
 The comparison that does matter is across organisms -- a yeast cell
 holds roughly four times the mRNA of an \org{E.\ coli} cell in rich medium over
 $\sim$1.4$\times$ the gene count, which is why the same split-pool chemistry
 recovers $\sim$410 mRNA UMIs per cell in yeast and 235--397 in bacteria.
+
+\begin{keybox}
+\textbf{A denominator nobody has measured moves the whole budget five-fold.}
+How much total mRNA a yeast cell holds is disputed by a factor of six across
+three sources, and cells per perturbation moves with it. Nothing else in the budget is uncertain by that much for so cheap a
+reason: measuring the transcriptome share of a few representative target genes
+in our own pilot data retires it at no extra cost.
+\end{keybox}
 
 \subsection{The Cells-Versus-Depth Frontier\secstatus{todo}}
 \label{sec:landscape}
@@ -252,6 +275,15 @@ separates those two properties, and \cref{sec:budget} prices the separation.
 
 \input{tables/t2-method-landscape}
 
+\begin{keybox}
+\textbf{The published cloud is not a frontier, because total UMIs is not
+conserved along it.} Bigger studies collect more signal rather than spreading a
+fixed amount of it thinner. What the diagonals encode is a fact about design
+rather than a summary of the literature: at a fixed sequencing spend, trading
+cells against depth is free, so the choice should be made on instrument access,
+cost structure, and whether the perturbation can be read out at all.
+\end{keybox}
+
 \subsection{Cells per Perturbation\secstatus{todo}}
 \label{sec:cells-per-pert}
 
@@ -290,6 +322,14 @@ chemistry reproduces his own 500-cell heuristic from an independent derivation,
 which is reassurance that the framework is calibrated. And depth buys you out of
 cells only until the 100-cell floor binds -- past 10x v3 chemistry, extra depth
 is wasted on this question and should be spent on more perturbations instead.
+
+\begin{keybox}
+\textbf{Two independent constraints, and the larger one binds.} A perturbation
+needs enough cells to average out cell-cycle phase and metabolic state, and
+enough total molecules to beat counting noise. Depth buys you out of cells only
+until the 100-cell biological floor binds, so past roughly 10x v3 depth extra
+reads are wasted on this question and belong on more perturbations instead.
+\end{keybox}
 
 \subsection{Effect Size of a Single Knockdown\secstatus{todo}}
 \label{sec:effect-size}
@@ -689,6 +729,15 @@ the wet lab and the budget.
 %%     permeabilization/split-pool readout can resolve both cases
 %%   - the KanMX promoter-swap idea for raising copy number
 
+\begin{keybox}
+\textbf{Genome-scale pairwise coverage fails at the cloning bench, not in the
+budget.} A dual-guide library over 6{,}000 genes needs $5.4\times10^{8}$
+independent clones at the 30-fold redundancy our own library's standard demands,
+which is 54 to 540 times beyond what yeast transformation delivers. A 200-gene
+panel needs 597{,}000 and sits comfortably inside a single transformation. Panel
+size, not sequencing money, is what makes named epistasis constructible.
+\end{keybox}
+
 \subsection{A Unified Design Equation\secstatus{todo}}
 \label{sec:design-equation}
 
@@ -884,3 +933,13 @@ concern the $\varphi$ term. The published treatment of the cells-versus-depth
 optimum that panel~(a) rediscovers is Zhang et
 al.\ \citep{zhangDeterminingSequencingDepth2020}, and the case for pseudobulk as
 the estimand is Squair et al.\ \citep{squairConfrontingFalseDiscoveries2021}.
+
+\begin{keybox}
+\textbf{One equation contains both design rules, and they were never
+independent.} Setting biological overdispersion to zero recovers the shot-noise
+requirement exactly; letting depth run to infinity recovers the biological
+floor. The apparent tension in the 100-cell convention dissolves once the effect
+size is measured rather than assumed: at the measured 1.34-fold it corresponds
+to an entirely ordinary yeast overdispersion, not an implausibly bursty one. The
+convention was right and the two-fold assumption was wrong.
+\end{keybox}

@@ -68,6 +68,16 @@ against Brettner et al.'s \$7{,}699.40 -- two labs, two organisms, two years apa
 1.9\% apart. Their barcode cost per run is flat regardless of sample count, which
 is the split-pool economics in one number.
 
+\begin{keybox}
+\textbf{The split-pool start-up cost is a capital asset, and we are over-buying
+it by an order of magnitude.} 77\% of the \$10{,}000 is three plates of custom
+barcoded oligo, and their capacity is 215 protocol runs. At five to ten runs a
+year that is a twenty-year supply that will be retired by freeze--thaw long
+before depletion, so ask IDT for a smaller synthesis scale, and expect one plate
+set to serve a department. The genuinely recurring items are the reverse
+transcriptase and the ligase, about \$1{,}100 per run.
+\end{keybox}
+
 \subsection{Loaded Cost per Usable Cell\secstatus{todo}}
 \label{sec:cost-per-cell}
 
@@ -198,6 +208,16 @@ bleed. And a 2$\times$150 kit gives 300 cycles when only 160 are needed, so read
 should be set to 150\,nt -- free, and it helps with the whole-genome-duplication
 paralogs that forced Brettner et al.\ to keep multi-mapping reads.
 
+\begin{keybox}
+\textbf{The largest flow cell is also the cheapest per read, and there is
+nothing between it and a MiSeq.} NovaSeq X 25B at 8+ lanes is \$0.99 per million
+read pairs, so there is no economy-of-scale penalty for buying the biggest
+option, and paired-end costs nothing because the largest flow cell is
+paired-end only. The problem is the hole underneath it: a pilot sized at a few
+hundred million reads either wastes most of a NovaSeq lane or gets redesigned
+down to a MiSeq.
+\end{keybox}
+
 \subsection{Barcode Space and Collision Rates\secstatus{todo}}
 \label{sec:collisions}
 
@@ -215,8 +235,12 @@ a 1\% collision target, three rounds need 54 sublibraries at \$55 each in beads
 and library prep (\$2{,}970 per run); four rounds clear 1\% at a single
 sublibrary, so the count falls to whatever PCR complexity dictates -- about 11 at
 Gaisser et al.'s 45{,}000-cells-per-sublibrary working limit, or \$605 per run.
-A fourth plate costs $\sim$\$2{,}566 once and $\sim$\$150 per run, so it repays
-itself inside the first run.
+%% SOURCE: derived_values.py, sublibrary_counts() and fourth_plate().
+A fourth plate costs \$2{,}566 once, being the three-plate purchase divided
+evenly, and \$147 per run. That per-run figure is worth unpacking, because a
+fourth BARCODE round is a third LIGATION round: \$135 of it is the ligase line
+growing by half, and only \$12 is the extra plate being drawn down. Either way
+it repays itself inside the first run.
 
 Against that sits the one real argument: every split-pool ligation loses material,
 and the yield cost of a fourth round must be measured in the pilot before it is
@@ -233,6 +257,15 @@ costs yield, and the preindexed scheme buys most of it from a bead the vendor
 already sells. That is the same argument as the fourth-round one above with the
 ligation-yield term removed, and it is why the yield question the pilot has to
 answer is different for the two routes rather than merely smaller.
+
+\begin{keybox}
+\textbf{A fourth barcode round pays for itself inside one run.} At 480{,}000
+cells and a 1\% collision target, three rounds force 54 sublibraries at
+\$2{,}970 per run. Four rounds clear 1\% in a single sublibrary, so the count
+falls to whatever PCR complexity dictates, about 11, or \$605. The plate costs
+\$2{,}566 once and \$147 per run. The one cost that is not on this ledger is
+molecular yield through an extra ligation, and the pilot has to measure it.
+\end{keybox}
 
 \subsection{Genome-Scale Budget\secstatus{todo}}
 \label{sec:budget}
@@ -498,6 +531,18 @@ above are exactly the ones \cref{sec:budget} said a factor of two is small enoug
 to be settled by. Preindexed droplet has moved from fallback to co-equal
 candidate, and the pilot should be designed to discriminate between them rather
 than to confirm the cheaper one.
+
+\begin{keybox}
+\textbf{Preindexed droplet has moved from fallback to co-equal candidate.}
+Depleted split-pool is still cheapest, \$57.5\,k against \$109\,k, and the
+arithmetic has not changed. What changed is everything the dollar column does
+not hold, and it all moved the same way: the core runs the droplet platform as a
+service and will own quality control on it, they already accept the zymolyase
+modification, the kit they run is the 5$'$ one that might read our guides
+unmodified, and counting accuracy binds far less under preindexed overloading.
+Design the pilot to discriminate between the two rather than to confirm the
+cheaper one.
+\end{keybox}
 
 \subsection{Ultima Sequencing, and Whether Genotypes Survive It\secstatus{todo}}
 \label{sec:ultima}

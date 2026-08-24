@@ -349,8 +349,9 @@ def t2() -> None:
             )
         )
     note = (
-        r"$\dagger$ values taken from the Nadal-Ribelles review's summary table "
-        r"because the primary paper is not in our mirror, so they are second-hand "
+        r"$\dagger$\secondhand{the Nadal-Ribelles review} values taken from that "
+        r"review's summary table because the primary paper is not in our mirror, "
+        r"so they are second-hand "
         r"and should be verified before being cited. "
         r"$\ddagger$ the quoted UMI range spans separate \emph{experiments} of "
         r"deliberately differing depth rather than conditions within one run. "
@@ -1075,12 +1076,12 @@ def t17() -> None:
     point a substantial minority of selected cells carry exactly one guide, so
     `k` in a design equation is an average over a spread, not a setting.
     """
-    targets = [1.5, 2.0, 3.0, 5.0, 8.0]
+    targets = SA.TARGET_PLASMIDS_PER_CELL
     pts = SA.delivery_table(6000, targets)
     rows = []
     for t, p in zip(targets, pts):
         rows.append(" & ".join([
-            f"{t:.1f}",
+            f"{t:d}",
             f"{p.lam:.2f}",
             f"{p.mean_distinct:.3f}",
             f"{100 * p.p_exactly_1:.1f}\\%",
@@ -1088,9 +1089,9 @@ def t17() -> None:
         ]))
     emit("t17-delivery", table(
         spec="rrrrr",
-        header=(r"Target mean & Poisson & Distinct guides & Cells with & "
+        header=(r"Plasmids per cell & Poisson & Distinct guides & Cells with & "
                 r"Cells with \\" "\n"
-                r"$\bar m$ & $\lambda$ & per cell & exactly 1 & $\ge 2$"),
+                r"(target average) & $\lambda$ & per cell & 1 guide & $\ge 2$ guides"),
         rows=rows,
         caption=(
             "Delivering several guides per cell by multiple plasmids rather than "
@@ -1100,10 +1101,13 @@ def t17() -> None:
             "$\\bar m = \\lambda/(1-e^{-\\lambda})$."),
         label="tab:delivery",
         note=(
-            r"\textbf{Target mean $\bar m$} is the average number of plasmids in a "
-            r"cell that survived selection, which is the quantity a marker "
-            r"attenuation actually sets; $\lambda$ is the underlying uptake rate "
-            r"before selection. \textbf{Distinct guides} is lower than $\bar m$ "
+            r"\textbf{Plasmids per cell} is the average number of plasmid "
+            r"molecules carried by a cell that survived selection, written "
+            r"$\bar m$ in the text. It is a copy number, not a count of genes or "
+            r"of library members, and it is the quantity a marker attenuation "
+            r"actually sets. $\lambda$ is the underlying uptake rate "
+            r"before selection, which is lower because selection discards the "
+            r"cells that took up nothing. \textbf{Distinct guides} is lower than $\bar m$ "
             r"because two plasmids can carry the same guide, and the gap is "
             r"negligible at this library size (6{,}000 guides). The last two "
             r"columns are the reason $k$ cannot be treated as a constant: even at "

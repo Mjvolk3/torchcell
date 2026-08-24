@@ -40,6 +40,12 @@ RESULTS = osp.join(
     os.environ["EXPERIMENT_ROOT"], "019-perturb-seq-costing", "results"
 )
 
+# Whole numbers on purpose. The dial a marker attenuation actually sets is "how
+# many plasmid molecules does a surviving cell carry on average", and a reader
+# asked, reasonably, what a target of 1.5 was supposed to mean. Integers make the
+# column read as what it is: copy number per cell.
+TARGET_PLASMIDS_PER_CELL = [2, 3, 4, 5, 8]
+
 # Cells needed to power one second-order interaction to the precision a
 # first-order effect gets at 100 cells. Yao et al.'s constant; Sec. 4.5 quotes
 # the sentence. Repeated here rather than imported so this file reads standalone.
@@ -157,12 +163,12 @@ def main() -> None:
     # Delivery, evaluated on the two library sizes the review uses.
     delivery = {}
     for n_lib in (200, 6000):
-        pts = delivery_table(n_lib, [1.5, 2.0, 3.0, 5.0, 8.0])
+        pts = delivery_table(n_lib, TARGET_PLASMIDS_PER_CELL)
         delivery[str(n_lib)] = [p.model_dump() for p in pts]
         print(f"\n--- delivery, library of {n_lib} guides ---")
         print(f"{'target m':>9} {'lambda':>8} {'E[m|m>=1]':>10} "
               f"{'E[distinct]':>12} {'P(>=2)':>8}")
-        for t, p in zip([1.5, 2.0, 3.0, 5.0, 8.0], pts):
+        for t, p in zip(TARGET_PLASMIDS_PER_CELL, pts):
             print(f"{t:>9.1f} {p.lam:>8.3f} {p.mean_plasmids:>10.3f} "
                   f"{p.mean_distinct:>12.3f} {p.p_at_least_2:>8.3f}")
 

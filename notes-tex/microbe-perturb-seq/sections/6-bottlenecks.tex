@@ -136,15 +136,37 @@ settled in \org{S.\ cerevisiae}, where the library already exists, in parallel
 rather than in sequence.
 \end{keybox}
 
-\notesec{A MiSeq is enough for it, and that is unusual here} \Cref{sec:sequencing}
-argued that the core's instruments leave a hole exactly where a pilot wants to
-sit, and that a small run either wastes a NovaSeq lane or gets redesigned down.
-A no-perturbation feasibility run is the case that fits in the small half. One
-MiSeq i100 25\,M paired-end run supports roughly 1{,}250 cells at 10x's
-recommended 20{,}000 read pairs per cell, or about 5{,}000 cells at a quarter of
-that depth. Neither is a dataset worth analysing biologically, and both answer
-the three questions above. It is the one point in this document where the cheap
-instrument is the right one rather than a compromise.
+\notesec{Two runs, not one: a MiSeq to check, a NovaSeq lane to profile} The
+core's own advice is to use the MiSeq for quality control rather than for
+production, and that maps cleanly onto this experiment because the two things
+being asked are different questions.
+
+The check is whether the chemistry worked at all: did the wall yield, did cells
+barcode, what fraction of reads is ribosomal. All three are proportions, so they
+are answerable at almost any depth. A MiSeq i100 25\,M paired-end run
+(\$1{,}450) carries $\sim$1{,}250 cells at 10x's recommended 20{,}000 read pairs
+per cell, and the \$398 titration run answers the barcode question alone. Either
+is cheap enough to repeat if the first attempt fails, which is the property that
+matters at this stage: \cref{sec:staging} notes that cDNA traces and library
+concentration do not predict barcoding success, so there is no earlier
+checkpoint than sequencing something.
+
+The profiling run is a different job. A first transcriptome atlas of this
+organism is a dataset we would want to keep and analyze, and 1{,}250 cells is
+not one. \Cref{sec:sequencing} showed that the core's gap sits exactly here, but
+the split-lane row is the way through it: a NovaSeq X 10B split lane gives
+600\,M read pairs for \$1{,}160, which is $\sim$30{,}000 cells at full depth,
+for less than the MiSeq run costs. So the sequencing is not what constrains this
+experiment; the 10x channel is, at 20{,}000 cells recovered.
+
+\begin{keybox}
+\textbf{Sequence the pilot twice, and the second time is cheaper than the first.}
+Run the MiSeq to confirm the chemistry, then a NovaSeq X 10B split lane
+(\$1{,}160 for 600\,M read pairs) for the actual profile. The split lane costs
+less than the 25\,M MiSeq run and delivers 24 times the reads, so the only
+reason to sequence shallowly here is turnaround, not money. Depth is not the
+binding constraint on this experiment and neither is cost.
+\end{keybox}
 
 \subsection{Staged Execution Plan\secstatus{todo}}
 \label{sec:staging}
@@ -153,11 +175,12 @@ instrument is the right one rather than a compromise.
 %% guide-capture construct is chosen. Sketch only.
 
 \begin{enumerate}[leftmargin=1.4em,itemsep=2pt,topsep=2pt]
-  \item \textbf{Unperturbed \org{P.\ kudriavzevii} on one MiSeq run}
-    (\cref{sec:host}). No library, no guides, no dependence on genetics that do
-    not exist in this host yet. It returns the wall-digestion verdict, the mRNA
-    UMIs per cell, and the ribosomal fraction, which is the largest cost lever in
-    the document. This is the current first experiment.
+  \item \textbf{Unperturbed \org{P.\ kudriavzevii}} (\cref{sec:host}). No
+    library, no guides, no dependence on genetics that do not exist in this host
+    yet. It returns the wall-digestion verdict, the mRNA UMIs per cell, and the
+    ribosomal fraction, which is the largest cost lever in the document. Sequence
+    it twice: a MiSeq run to confirm the chemistry, then a NovaSeq X 10B split
+    lane for a profile worth keeping. This is the current first experiment.
   \item \textbf{Test 5$'$ guide capture on the existing
     \org{S.\ cerevisiae} library}, in parallel with step 1 rather than after it,
     because it uses a different organism and a library that already exists. One

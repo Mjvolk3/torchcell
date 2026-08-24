@@ -291,7 +291,7 @@ TURNAROUND = {
 }
 
 
-# --- Meeting with the core, 2026-08-23 ---------------------------------------
+# --- Meeting with the core, 2026-08-18 ---------------------------------------
 # Alvaro Hernandez and Chris Wright, UIUC Roy J. Carver Biotechnology Center.
 #
 # A VERBAL source, and it is kept separate from the rate-card constants above
@@ -303,7 +303,7 @@ TURNAROUND = {
 #
 # Anything here that a budget consumes must be confirmed in writing first.
 
-MEETING_DATE = "2026-08-23"
+MEETING_DATE = "2026-08-18"
 MEETING_WITH = ["Alvaro Hernandez", "Chris Wright"]
 
 

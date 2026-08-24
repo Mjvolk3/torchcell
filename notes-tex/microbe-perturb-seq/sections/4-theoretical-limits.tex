@@ -83,12 +83,31 @@ holds roughly four times the mRNA of an \org{E.\ coli} cell in rich medium over
 $\sim$1.4$\times$ the gene count, which is why the same split-pool chemistry
 recovers $\sim$410 mRNA UMIs per cell in yeast and 235--397 in bacteria.
 
+\notesec{What would settle it, concretely} The equation does not need total mRNA
+per cell. It needs $p_j$, the fraction of a cell's mRNA belonging to the target
+gene, and the three-way disagreement above exists only because $p_j$ is
+currently being \emph{assembled} from two sources that do not belong together: a
+per-gene molecule count from one paper over a per-cell total from another.
+
+A pilot measures $p_j$ directly and skips the assembly. Any run that yields a
+count matrix gives it: take the UMIs assigned to a gene, divide by the total mRNA
+UMIs in that cell, and average over cells. That is one line of analysis on data
+the first experiment produces anyway (\cref{sec:host}), it needs no extra
+sequencing and no extra sample, and it replaces a derived quantity with a
+measured one for the genes we actually intend to target. Two caveats keep it
+honest: $p_j$ is per-gene, so it should be reported for a handful of
+representative targets rather than as one number, and it is condition-dependent,
+so it belongs to the environment it was measured in.
+
 \begin{keybox}
 \textbf{A denominator nobody has measured moves the whole budget five-fold.}
 How much total mRNA a yeast cell holds is disputed by a factor of six across
-three sources, and cells per perturbation moves with it. Nothing else in the budget is uncertain by that much for so cheap a
-reason: measuring the transcriptome share of a few representative target genes
-in our own pilot data retires it at no extra cost.
+three sources, and cells per perturbation moves with it. The design equation
+does not actually need that total: it needs $p_j$, the target gene's share of
+the transcriptome, which any count matrix yields directly as gene UMIs over
+total mRNA UMIs per cell. The first pilot produces one, so this is a line of
+analysis rather than an experiment, and it replaces the largest derived quantity
+in the budget with a measured one.
 \end{keybox}
 
 \subsection{The Cells-Versus-Depth Frontier\secstatus{todo}}
@@ -723,11 +742,51 @@ cell counts, arrived at independently from cloning: panel size, not plex, is the
 variable that decides whether named epistasis is reachable, and it binds in both
 the wet lab and the budget.
 
+\Cref{fig:ceiling} sweeps both variables rather than evaluating the two points
+above, and the crossing is sharper than the genome-scale conclusion suggests.
+Cloning pairs caps the panel at 258 genes at $10^{6}$ clones and 816 at
+$10^{7}$; cloning triples caps it at 59 and 126. So the reachable panel is not
+somewhat smaller than the genome, it is two orders of magnitude smaller, and it
+shrinks by roughly another order for each additional guide cloned onto the
+plasmid.
+
+\pfstep{Which is the argument for co-transformation, stated as a picture}
+Panel (b) is the one worth looking at twice. Co-transforming single-guide
+libraries needs $30T$ clones \emph{whatever $k$ is}, because the clone count
+scales with the number of guides rather than with the number of combinations.
+That is 180{,}000 clones to cover all 6{,}000 genes, inside one transformation,
+at any plex. The combinations then come from Poisson uptake
+(\cref{sec:delivery}) instead of from cloning. Nothing about this makes a
+\emph{named} pair cheaper to observe -- \cref{eq:pairs} still governs that, and
+\cref{sec:recovery} shows what it costs -- but it removes construction from the
+list of reasons multiplexing is hard, and leaves only the measurement.
+
 %% TODO: two construct-level questions remain, and both need bench input rather
 %% than literature:
 %%   - single plasmid carrying k guides vs k separate plasmids, and whether the
 %%     permeabilization/split-pool readout can resolve both cases
 %%   - the KanMX promoter-swap idea for raising copy number
+
+%% SOURCE: experiments/019-perturb-seq-costing/scripts/plot_library_ceiling.py
+\tcfigfit[1.0]{figures/library_ceiling.pdf}{%
+  \textbf{Cloning combinations caps the panel two orders of magnitude below the
+  genome; co-transforming singles does not.} \textbf{(a)} Independent clones
+  needed to cover every $k$-combination of a $T$-gene panel at the 30-fold
+  redundancy our own library's standard
+  demands~\citep{lianMultifunctionalGenomewideCRISPR2019}. The band is what one
+  yeast transformation delivers, $10^{6}$ to $10^{7}$ clones. Each additional
+  cloned guide costs roughly another order of magnitude of panel size.
+  \textbf{(b)} The same question for co-transformed single-guide libraries,
+  where one clone is needed per \emph{guide} rather than per combination, so the
+  requirement is $30T$ and does not depend on $k$ at all: 180{,}000 clones cover
+  all 6{,}000 genes, inside one transformation, at any plex. Combinations then
+  arise from Poisson uptake (\cref{sec:delivery}) rather than from cloning.
+  \textbf{(c)} The direct answer: the largest panel whose $k$-combinations fit
+  in one transformation. Solid bars are the optimistic $10^{7}$ ceiling, hatched
+  the conservative $10^{6}$. Pairs reach 816 genes at best and triples 126, so
+  the 200-gene panel of \cref{sec:multiplex} is constructible at $k=2$ and not
+  at $k=3$ unless the guides are co-transformed. Generated by
+  \file{experiments/019-perturb-seq-costing/scripts/plot_library_ceiling.py}.}{fig:ceiling}
 
 \begin{keybox}
 \textbf{Genome-scale pairwise coverage fails at the cloning bench, not in the

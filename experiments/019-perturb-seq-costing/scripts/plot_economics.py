@@ -441,12 +441,21 @@ def panel_d(ax) -> None:
     # Short forms, because five two-line category names do not fit across
     # 57 mm -- "mRNA, not rRNA" and "cell survives QC" ran into each other. The
     # full meaning of each stage is in the caption and in READ_STAGES.
-    ax.set_xticklabels(["bought", "not\nPhiX", "barcode\nok", "mRNA\nnot rRNA",
-                        "cell\npasses"], fontsize=4.5)
+    #
+    # NUMBERED, and with an axis label naming what the axis is. A reviewer read
+    # the bare labels ("bought / not PhiX / barcode ok / ...") as five separate
+    # categories rather than as one read passing through four successive
+    # filters, which inverts the whole point of the panel: the curve is
+    # CUMULATIVE, so each position is what is left, not what that stage costs.
+    ax.set_xticklabels(["1\nbought", "2\nnot PhiX", "3\nbarcode\nreads",
+                        "4\nmRNA\nnot rRNA", "5\ncell kept"], fontsize=4.5)
+    ax.set_xlabel("One read, through four successive tolls (cumulative)",
+                  fontsize=5)
     ax.set_xlim(-0.35, len(READ_STAGES) - 0.25)
     ax.set_ylim(3.5e-3, 2.0)
     ax.set_ylabel("Fraction of purchased reads surviving")
-    ax.set_title("Where a purchased read goes", loc="left", fontsize=6)
+    ax.set_title("What is left of a purchased read, toll by toll",
+                 loc="left", fontsize=6)
     box(ax)
 
 

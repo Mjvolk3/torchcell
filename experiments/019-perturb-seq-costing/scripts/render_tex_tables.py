@@ -556,6 +556,13 @@ def t6() -> None:
 
 # --- t7 ----------------------------------------------------------------------
 def t7() -> None:
+    """Cells per perturbation, and what multiplexing does to the total.
+
+    Reviewer asked for this broken out by plex. The per-perturbation column is
+    unaffected by k -- a perturbation needs the cells it needs -- but the total
+    for a 6,000-gene library divides by k, because a cell carrying k guides
+    informs k different main effects.
+    """
     target = CM.PSEUDOBULK_TIERS["standard (Brettner's own 500-cell heuristic)"]
     depths = [
         ("SPLiT-seq as published", 410),
@@ -563,30 +570,50 @@ def t7() -> None:
         ("10x v2 (Jariani)", 894),
         ("10x v3 (Jackson)", 2000),
     ]
+    plexes = [1, 2, 3, 5, 8]
     rows = []
     for name, d in depths:
         n = CM.cells_per_perturbation(d, target)
-        binding = "biological floor" if n == CM.CELLS_FLOOR else "sequencing depth"
+        binding = "biological floor" if n == CM.CELLS_FLOOR else "depth"
+        totals = " & ".join(f"{n * 6000 / k / 1e6:.2f}" for k in plexes)
         rows.append(
-            f"{esc(name)} & {d:,} & \\textbf{{{n}}} & {binding} & {n * 6000:,}".replace(
+            f"{esc(name)} & {d:,} & \\textbf{{{n}}} & {binding} & {totals}".replace(
                 ",", "{,}"
             )
         )
+    header = (
+        r"& & & & \multicolumn{5}{c}{Millions of cells for 6{,}000 genes, "
+        r"at $k$ guides per cell} \\" "\n"
+        r"\cmidrule(l){5-9}" "\n"
+        r"Method & mRNA UMIs/cell & Cells/pert. & Binds on & "
+        + " & ".join(f"$k={k}$" for k in plexes)
+    )
     emit(
         "t7-cells-per-perturbation",
         table(
-            "lrrlr",
-            r"Method & mRNA UMIs/cell & Cells/pert. & Binding constraint & Cells for 6{,}000 genes",
+            "lrrlrrrrr",
+            header,
             rows,
             r"Cells per perturbation at the standard pseudobulk tier "
-            r"($2\times10^{5}$ mRNA UMIs). The 100-cell biological floor and the "
-            r"depth requirement are independent; the larger binds.",
+            r"($2\times10^{5}$ mRNA UMIs), and what multiplexing does to the "
+            r"total. The 100-cell biological floor and the depth requirement are "
+            r"independent; the larger binds.",
             "tab:cells-per-pert",
+            note=(
+                r"\textbf{Cells/pert.} does not depend on $k$: a perturbation "
+                r"needs the cells it needs, whatever else those cells carry. What "
+                r"$k$ changes is the \emph{total}, because a cell carrying $k$ "
+                r"guides informs $k$ different main effects, so the library total "
+                r"divides by $k$ (\cref{sec:multiplex}). \textbf{$k$ is guides "
+                r"per cell}, each against a different gene -- not the six guides "
+                r"per gene the library carries. These totals are main effects "
+                r"only; named gene pairs scale quite differently and are "
+                r"\cref{tab:recovery}."
+            ),
         ),
     )
 
 
-# --- t8 ----------------------------------------------------------------------
 def t8() -> None:
     df = pd.read_csv(osp.join(RESULTS, "genome_scale_budgets.csv"))
     df["reagents"] = df.protocol_usd + df.sublibrary_usd
@@ -703,8 +730,9 @@ def t10() -> None:
             )
         )
     note = (
-        r"\textbf{Plex $k$} = guide RNAs delivered per cell, so $k$ target genes are "
-        r"knocked down in that cell. \textbf{Main effects} = the average effect of "
+        r"\textbf{Plex $k$} = guide RNAs delivered per cell, each against a "
+        r"different gene, so $k$ target genes are knocked down in that cell. It is "
+        r"not the six guides per gene the library carries. \textbf{Main effects} = the average effect of "
         r"one gene, pooling every cell that carries a guide against it whatever else "
         r"it carries. \textbf{Pairs} are pairs of \emph{target genes}, not plasmids: "
         r"a cell informs a pair only if it happens to carry guides against both. "
@@ -1138,9 +1166,9 @@ def t18() -> None:
             ]))
     emit("t18-recovery", table(
         spec="rrrrr",
-        header=(r"Targets & Guides & Cells for & Cells for & Times a given \\"
+        header=(r"Genes in & Guides per & Cells for & Cells for & Times a given \\"
                 "\n"
-                r"$T$ & $k$ & main effects & all pairs & pair is seen"),
+                r"panel, $T$ & cell, $k$ & main effects & all pairs & pair is seen"),
         rows=rows,
         caption=(
             "Main effects never require a combination to recur; a named "
@@ -1149,8 +1177,12 @@ def t18() -> None:
             "pair."),
         label="tab:recovery",
         note=(
-            r"\textbf{Cells for main effects} is $100\,T/k$, since a cell carrying "
-            r"$k$ guides informs $k$ genes. \textbf{Cells for all pairs} is "
+            r"\textbf{$k$ is guides per cell}, each against a different gene, so "
+            r"$k$ is also how many genes are knocked down in one cell. It is not "
+            r"the six guides per gene the library carries, and it is not a count "
+            r"of library members. \textbf{$T$} is how many genes the panel "
+            r"targets. \textbf{Cells for main effects} is $100\,T/k$, since a "
+            r"cell carrying $k$ guides informs $k$ genes. \textbf{Cells for all pairs} is "
             r"Eq.~\ref{eq:pairs}. \textbf{Times a given pair is seen} is the last "
             r"column of the first divided over the pair space, that is, how often "
             r"one specific gene pair appears while running only the main-effect "

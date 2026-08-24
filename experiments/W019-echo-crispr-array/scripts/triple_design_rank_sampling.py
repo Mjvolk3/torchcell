@@ -82,16 +82,23 @@ WANT = 20
 # Genes with ZERO Kuzmin trigenic records. The model was trained on TmiKuzmin2018 +
 # TmiKuzmin2020 ONLY (see queries/001_small_build.cql -- every other dataset block is
 # commented out), so for these two it has no labelled example of any kind and its
-# predictions are extrapolation. They carry ranks 1-10 of the 39 targets.
+# predictions are extrapolation. They carry ranks 1-11 of the 39 targets: the entire top
+# of the ranking is flagged, and the first clean target is rank 12.
 NO_TRIGENIC_DATA = frozenset(("YER079W", "YLR312C-B"))
 CAP_FLAGGED = 6      # max triples in `capped` that may touch a NO_TRIGENIC_DATA gene
-CAP_N = 20           # `capped` size. Only 16 of 39 targets are clean, so 20 under a cap of
-                     # 5 consumes 15/16 of them and reaches rank 39. That costs 7 more
-                     # doubles than a 15-triple version and lowers mean predicted
-                     # interaction (0.547 -> 0.516) because the extra clean triples are
-                     # the bottom of the ranking and share few doubles. Chosen anyway:
-                     # 20 triples is the target for the round.
+CAP_N = 20           # `capped` size. 16 of 39 targets are clean but only 14 of those have
+                     # an already-built parent double, so a one-wave selection can draw at
+                     # most 14 clean triples. Cap 6 is therefore the SMALLEST cap that
+                     # reaches 20 in a single wave (6 flagged + 14 clean); cap 5 tops out
+                     # at 19. The cap is set by that construction constraint, not by a
+                     # risk budget chosen in advance.
 MODES = ("rank", "count", "balanced", "uniform", "capped", "no_ylr")
+
+# Plate arithmetic, every term sourced rather than folded into one magic number.
+PLATE_WELLS = 384
+ORIENTATION_BLANKS = 6    # generate_picklist.py
+WT_WELLS_MIN = 20         # next_round_layout.py:186, "keep >= 20 WT wells"
+STRAIN_WELLS = PLATE_WELLS - ORIENTATION_BLANKS - WT_WELLS_MIN
 
 
 def pairs(t):
@@ -107,7 +114,13 @@ def read_built():
 
 
 def read_targets():
-    df = pd.read_csv(TARGETS_CSV).sort_values("prediction", ascending=False)
+    # mergesort (stable) is load-bearing, not stylistic: the 39 in-basis targets contain
+    # exactly one tied prediction, 0.42041015625, shared by ranks 34 and 35. Rank 34 is
+    # clean and selected; rank 35 touches YLR312C-B and would consume cap budget. Under
+    # pandas' default quicksort that tie can resolve either way between runs, so the
+    # selection itself is not reproducible. A stable sort pins it to input order.
+    df = pd.read_csv(TARGETS_CSV).sort_values(
+        "prediction", ascending=False, kind="mergesort")
     out = []
     for r in df.itertuples():
         t = frozenset((r.gene1, r.gene2, r.gene3))
@@ -200,9 +213,10 @@ def capped_select(targets, built, want=CAP_N, cap=CAP_FLAGGED):
     """Take the `cap` best-predicted triples that touch a NO_TRIGENIC_DATA gene, then fill
     with 'clean' triples chosen to add the FEWEST new doubles (ties by prediction).
 
-    Filling by double-cost rather than by rank matters: the clean targets are scattered
-    down the ranking and share few doubles, so a naive rank-order fill costs 27 new
-    doubles where this costs 24 at the same size.
+    At the committed configuration the fill rule has no effect: exactly 14 clean targets
+    have a built parent and the fill needs exactly 14, so cheapest-first and rank-order
+    return the same 20 triples at the same 25 new doubles. The rule is kept because it
+    binds at any other cap or size, but it is not what produces this round's selection.
     """
     touches = lambda t: bool(t & NO_TRIGENIC_DATA)  # noqa: E731
     # A triple with NO already-built double cannot be made in the same wave as the new
@@ -255,8 +269,14 @@ def main() -> None:
         rows.append({
             "strategy": m, "triples": len(s), "new_doubles": len(nd),
             "construct_total": len(nd) + len(s), "measure_plus_wt": measure + 1,
-            "wells_per_strain": (378 - 28) // measure,
-            "tubes_1pick": measure + 1, "tubes_2pick": measure * 2 + 7,
+            "wells_per_strain": STRAIN_WELLS // measure,
+            "tubes_1pick": measure + 1, "tubes_2pick": (measure + 1) * 2,
+            # A triple with no already-built parent double cannot be made in the same
+            # wave as the new doubles. `no_ylr` is the one strategy that selects such a
+            # triple (rank 26), so its build is not a single wave.
+            "one_wave": all(any(p in built for p in pairs(d["triple"])) for d in s),
+            "zero_data_triples": sum(1 for d in s
+                                     if d["triple"] & NO_TRIGENIC_DATA),
             "gene_min": min(c.values()), "gene_max": max(c.values()),
             "imbalance": max(c.values()) - min(c.values()), "ylr_share": c[FLAGGED],
             "median_rank": float(np.median([d["rank"] for d in s])),

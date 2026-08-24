@@ -80,24 +80,16 @@ def main() -> None:
     srows = []
     for sid, g in singles:
         m = boot.loc[g]
-        has_ref = g in sref.index
+        # Every run-4 single has a published Costanzo SMF; build_reference_smf.py asserts
+        # the panel covers the plate, so a KeyError here means they have diverged again.
         srows.append({
             "id": sid, "orf": g, "common": COMMON.get(g, ""),
             "n_plates": int(m.n_plates), "fitness": round(float(m.fitness), 4),
             "boot_se": round(float(m.boot_se), 4),
             "across_plate_sd": round(float(m.across_plate_sd), 4),
-            "costanzo_smf": (round(float(sref.loc[g, "costanzo_smf"]), 4)
-                             if has_ref else None),
-            "costanzo_se": (round(float(sref.loc[g, "costanzo_se"]), 4)
-                            if has_ref else None),
+            "costanzo_smf": round(float(sref.loc[g, "costanzo_smf"]), 4),
+            "costanzo_se": round(float(sref.loc[g, "costanzo_se"]), 4),
         })
-        if not has_ref:
-            gaps.append({
-                "kind": "single, no published reference", "strain": g,
-                "reason": "the SMF reference panel was assembled for the earlier plate "
-                          "design, which carried LCL1 (YPL056C) in this slot; run 4 kept "
-                          "LCL2 (YLR104W), so no published SMF was pulled for it",
-            })
 
     drows = []
     for did, a, b in doubles:

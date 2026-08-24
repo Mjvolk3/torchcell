@@ -3,8 +3,11 @@ standards (ordered palette, Nature panel widths, true-size SVG export).
 """
 
 import math
+import os.path as osp
 import re
 from typing import TYPE_CHECKING, Any
+
+import matplotlib
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
@@ -148,7 +151,17 @@ def savefig_true_size_svg(
     tight crop (e.g. a legend-only image); the rescale still yields a correct
     physical size for whatever tight box matplotlib emits.
     """
-    fig.savefig(path, **savefig_kwargs)
+    # Byte-stable output, so an SVG can be hash-checked the way a result CSV is.
+    # matplotlib leaves ``svg.hashsalt`` unset, in which case it seeds the clip-path and
+    # glyph element ids from a fresh random salt on every process, and it stamps a
+    # ``<dc:date>`` with the wall-clock save time. Two identical runs then produce files
+    # with identical vector content but different hashes. Salting with the output
+    # basename makes the ids a pure function of the figure while keeping distinct
+    # figures distinct, and ``metadata={"Date": None}`` omits the date stamp. A caller
+    # that passes its own ``metadata`` keeps it.
+    savefig_kwargs.setdefault("metadata", {"Date": None})
+    with matplotlib.rc_context({"svg.hashsalt": osp.basename(path)}):
+        fig.savefig(path, **savefig_kwargs)
     with open(path, encoding="utf-8") as f:
         svg = f.read()
     # matplotlib always emits an <svg> root tagged with width/height in pt. If any of

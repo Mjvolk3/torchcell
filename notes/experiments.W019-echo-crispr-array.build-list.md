@@ -44,8 +44,10 @@ YLR313C (SPH1) was built but was never a node in the inference panel, so it is i
 predicted triple and is not on this plate.
 
 `fitness`, `boot SE`, `plate SD`: **run 4 measured**, 3 plates, relative to on-plate WT
-(`run4_strain_bootstrap.csv`). All twelve were measured; one has no published value to
-compare against, see "[What is missing, and why](#what-is-missing-and-why)".
+(`run4_strain_bootstrap.csv`). All twelve were measured and all twelve now have a published
+value to compare against. `YLR104W` (LCL2) previously showed `--`; Costanzo does publish it,
+and the blank came from `build_reference_smf.py` still listing LCL1 (`YPL056C`) in the s7
+slot from the pre-run-4 design. Corrected 2026.08.24.
 
 | id  | ORF       | common | fitness | boot SE | plate SD | Costanzo SMF |
 |:----|:----------|:-------|:--------|:--------|:---------|:-------------|
@@ -55,7 +57,7 @@ compare against, see "[What is missing, and why](#what-is-missing-and-why)".
 | s4  | YPL046C   | ELC1   | 1.2066  | 0.0495  | 0.1052   | 1.0433       |
 | s5  | YBR203W   | COS111 | 1.1292  | 0.0679  | 0.1426   | 1.0370       |
 | s6  | YGL087C   | MMS2   | 1.1628  | 0.0329  | 0.0706   | 0.9960       |
-| s7  | YLR104W   | LCL2   | 1.1748  | 0.0564  | 0.1187   | --           |
+| s7  | YLR104W   | LCL2   | 1.1748  | 0.0564  | 0.1187   | 1.0322       |
 | s8  | YLL012W   | YEH1   | 1.2604  | 0.0659  | 0.1402   | 0.9925       |
 | s9  | YER079W   | --     | 1.3333  | 0.1504  | 0.3162   | 1.0387       |
 | s10 | YKL033W-A | --     | 0.9251  | 0.0445  | 0.0954   | 1.0327       |
@@ -93,11 +95,17 @@ The 14th designed double, `YKL033W-A x YJR060W`, failed to construct and does no
 
 ### What is missing, and why
 
-Four gaps, and none of them is a measurement that failed.
+Three gaps, and none of them is a measurement that failed.
+
+A fourth was listed here until 2026.08.24: `YLR104W` (LCL2) as "a single with no published
+SMF". That was wrong. Costanzo publishes it at 1.0322, and the blank came from our own
+reference panel, which was assembled for the earlier plate design carrying LCL1
+(`YPL056C`) in that slot. Run 4 kept LCL2 and the panel was never rebuilt, so the gap was
+in our artifact, not in the literature. Same root cause as the 10-gene / 31-target basis
+being wrong: LCL2 is on the plate, and everything frozen before run 4 assumed it was not.
 
 | what | which | why |
 |:-----|:------|:----|
-| a single with no published SMF | `YLR104W` (LCL2) | The reference panel was assembled for the earlier plate design, which carried LCL1 (`YPL056C`) in that slot. Run 4 kept LCL2, so no published SMF was pulled for it. Same root cause as the 10-gene / 31-target basis being wrong: LCL2 is on the plate, and everything frozen before run 4 assumed it was not. It was measured normally, at 1.1748. |
 | a double with no published DMF | `YPL046C + YPL081W` (d2) | Tier `novel`: the only one of the 45 candidate pairs with no measurement in Costanzo 2016, Kuzmin 2018 or Kuzmin 2020. There is nothing to compare against because nobody has made it before. It was measured normally, at 0.9335. |
 | a double that was designed but never built | `YKL033W-A x YJR060W` | Reported failed to construct at the 2026-08-11 handover. **Neither the attempt date nor a cause was recorded**, so no reason can be given here beyond that. Both parent singles exist and were measured. It blocks 0 of the 39 target triples, so it costs no trigenic score. |
 | no triples at all | -- | Run 4 carried singles and doubles only, and no triple has been constructed in any round. The 20 in Part 2 are the first. |
@@ -201,8 +209,10 @@ across all eleven genes, range 2 to 8, rather than concentrating on a few.
 - **Do not attempt `YKL033W-A x YJR060W`.** It failed to construct previously and is
   deliberately not in this list. If anyone retries it, please record the attempt date and
   outcome -- we have no record of when the original attempt happened.
-- **`YLR104W` (LCL2) has no doubles in the current panel.** Six of the new doubles pair
-  with it (D06, D11, D13, D17, D24, D25); those are the first coverage this gene has had.
+- **`YLR104W` (LCL2) and `YKL033W-A` both have no doubles in the current panel.** Six of
+  the new doubles pair with YLR104W (D06, D11, D17, D23, D24, D25) and six with YKL033W-A
+  (D04, D09, D18, D19, D20, D21); those are the first coverage either gene has had.
+  YKL033W-A is at zero only because its one designed double is the pair that failed.
 - **`YLR312C-B`** is a merged/deprecated ORF; there is an open question about whether to
   use it or the adjacent real gene SPH1 (YLR313C). It appears in D07, D13, D19, D22, D23
   and among the starred triples.

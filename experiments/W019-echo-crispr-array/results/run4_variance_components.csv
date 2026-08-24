@@ -1,0 +1,2 @@
+n_strains,n_strain_plate_cells,colonies_per_strain_plate,sigma_colony,rms_across_plate_sd,sigma_plate,sigma_plate_common,sigma_plate_interaction,common_share_of_plate_var,sigma_day,sigma_day_flagged_plate,sigma_pick
+25.0,75.0,12.413333333333334,0.18482612068935897,0.14108839651141097,0.1309732795331323,0.051469808315184946,0.12043611909913955,0.15443285388052622,0.0196083177733756,run3_P2,

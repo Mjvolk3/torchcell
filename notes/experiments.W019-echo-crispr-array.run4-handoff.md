@@ -36,7 +36,7 @@ script that produced it) or explicitly labelled a hypothesis.
 
 | quantity | value | source |
 |---|---|---|
-| run 4 QC | P1/P2/P3 pass; occupancy 320/345/369; 6/6 blanks empty; WT CV 0.153/0.158/0.122 | `run4_plate_qc.csv` |
+| run 4 QC | P1/P2/P3 pass the WT-CV gate; occupancy 320/345/369; 6/6 blanks empty; WT CV 0.153/0.158/0.122. All three FAIL the later frac-above-WT gate (0.40/0.32/0.24 of deletions above WT, limit 0.20) | `run4_plate_qc.csv`, `run4_strain_scores_by_plate.csv` |
 | singles vs Costanzo SMF | r=0.706, p=0.015, n=11 | `run4_singles_vs_reference.csv` |
 | run 4 vs run 3 singles | r=0.685, p=0.020, n=11; run 4 is 1.26x higher (median ratio) | `run4_doubles_48h.py` |
 | doubles vs Costanzo DMF | r=0.255, p=0.42, n=12 | `run4_doubles_vs_reference.csv` |

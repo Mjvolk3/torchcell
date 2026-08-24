@@ -102,10 +102,13 @@ If YER079W and YLR312C-B are later dropped, **14 triples and 18 doubles survive*
 1. **`YLR312C-B` in or out.** SGD "ORF, Merged", no discrete protein, zero trigenic
    training data, 0/10 significant in-panel digenics. Swap to SPH1 recommended in
    `[[experiments.010-kuzmin-tmi.inference-dataset-3]]` and never actioned.
-2. **tau is not callable at this precision.** SE(tau) ~ sqrt(7)*s = 2.65s; at 2 picks /
-   3 plates s ~ 0.121 so the smallest callable |tau| is **0.63**. Kuzmin's thresholds are
-   0.08 / 0.12 / 0.20 and their median SE(tau) is 0.031. **0 of 39** targets clear our
-   floor. Needs ~9x more replication.
+2. **Callability turns on plate count.** The delta-method multiplier is 2.98--3.94
+   (mean 3.44) at the measured run-4 fitnesses, not sqrt(7); per-strain SE at ONE pick is
+   0.092 at 3 plates and 0.066 at 6, so the smallest callable |tau| is **0.617** and
+   **0.446**. Of the 39 targets, 10 and 25 clear those floors on the raw predictions, 18
+   and 39 once calibrated. Kuzmin's magnitude thresholds are 0.08 and 0.12 (0.20 is a
+   negative-only cutoff) and their median SE(tau) is 0.0785, an SE on tau not on a
+   strain. See [[experiments.W019-echo-crispr-array.next-strains-to-construct]].
 3. **Calibration assumes an unbiased mean.** The 0.43 slope assumes mu_pred ~ mu_y. One
    read of the existing inference parquet would settle it.
 4. **`run4-handoff.md` contains WRONG Kuzmin reproducibility numbers** -- it says digenic

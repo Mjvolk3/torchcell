@@ -8,7 +8,9 @@ inventory,True,the blocked pair YKL033W-A x YJR060W is not built,absent
 inventory,True,YLR104W (LCL2) has zero built doubles,0
 inventory,True,every built double has both parent singles built,all 13
 basis,True,39 in-basis targets,39
-basis,True,ranks 1-10 all touch a zero-trigenic-data gene,10 of 10
+basis,True,ranks 1-11 all touch a zero-trigenic-data gene,11 of 11
+basis,True,"the first clean target is rank 12, so the flagged block is the whole top of the ranking",12
+basis,True,"exactly one predicted value is tied, so the ranking needs a stable sort to be reproducible",[0.42041015625]
 basis,True,"targets with no built parent are 26, 32, 37","[26, 32, 37]"
 basis,True,every no-parent target contains YLR104W,3 of 3
 basis,True,set-cover guarantee: 31 of 31 within-TEN targets have a built parent,31
@@ -52,11 +54,183 @@ measured,True,build-list singles table has 12 rows,12
 measured,True,"every single's fitness, SE, plate SD and published SMF match the CSV",12 of 12
 measured,True,build-list doubles table has 13 rows,13
 measured,True,"every double's fitness, SE, plate SD, published DMF and tier match the CSV",13 of 13
-measured,True,"exactly one single lacks a published SMF, and it is YLR104W",['YLR104W']
+measured,True,every one of the 12 singles has a published Costanzo SMF,12 of 12
 measured,True,"exactly one double lacks a published DMF, and its tier is novel",['YPL046C + YPL081W']
-measured,True,"four gaps recorded: one single, one double, one failed build, no triples",4
+measured,True,"three gaps recorded: one double with no published DMF, one failed build, no triples",3
 measured,True,the measured tables cover every built strain,"12 singles, 13 doubles"
+measured,True,every existing double's used flag and serves-ranks list matches the selection,13 of 13
+measured,True,existing and new doubles together cover all 60 pair-slots the 20 triples need,60
 notes,True,"construction-check CSV agrees: 20 rows, all with a parent, 15 single-route","20 rows, 15 single-route"
 kuzmin,True,YER079W and YLR312C-B are exactly the zero-trigenic-record genes,"['YER079W', 'YLR312C-B']"
 kuzmin,True,the same two genes are also absent from Kuzmin digenic,"['YER079W', 'YLR312C-B']"
-kuzmin,True,the note's trigenic column matches the LMDBs,23 rows compared
+kuzmin,True,"the note's per-gene table has a row for all 11 panel genes, so the comparison below cannot pass vacuously",11
+kuzmin,True,the note's trigenic column matches the LMDBs,11 of 11 rows
+kuzmin,True,the note's digenic column matches the LMDBs,11 of 11 rows
+kuzmin,True,per-dataset record totals are unchanged,"{'tmi_kuzmin2018': 91111, 'tmi_kuzmin2020': 301798, 'dmi_kuzmin2018': 410399, 'dmi_kuzmin2020': 632797}"
+calibration,True,the stats CSV pins the inference parquet by path and sha256,806ef0440835f9b8...
+calibration,True,39 in-basis targets carry a prediction,39
+calibration,True,raw in-basis prediction range is 0.4092 to 0.7114,0.409180..0.711426
+calibration,True,"the in-basis predictions lie inside the streamed min and max of the parquet, so the CSV describes the file the selection read","[-0.643555,0.730957] contains [0.409180,0.711426]"
+calibration,True,the parquet maximum is the top row of the pinned top-k CSV,0.730957
+calibration,True,16 / 17 / 6 targets carry 0 / 1 / 2 zero-trigenic-data genes,"[16, 17, 6]"
+calibration,True,mean prediction by zero-data-gene count is 0.4531 / 0.5300 / 0.6676,"['0.4531', '0.5300', '0.6676']"
+calibration,True,"Spearman rho of prediction against zero-data count, n=39, two-sided, is 0.6343 at p = 1.45e-05",rho=0.634288 p=1.4521e-05
+calibration,True,"010 label set is 376,732 records split 301,386 / 37,673 / 37,673 at seed 42","(376732, 301386, 37673, 37673)"
+calibration,True,"val-split label SD is 0.0629 and mean is -0.0091, not 0.0535 and -0.048",sigma_y=0.062914 mu_y=-0.009139 n=37673
+calibration,True,"the whole-build label SD and mean recomputed from the parquet equal what the runs logged as normalization/gene_interaction/{std,mean}: two independent sources agree",0.063263549 vs 0.063263549
+calibration,True,the superseded sigma_y = 0.0535 is not the label SD of any 010 split,"{'all': 0.063264, 'train': 0.063186, 'val': 0.062914, 'test': 0.064187}"
+calibration,True,the eval log's val RMSE and MSE are mutually consistent,0.056244664^2 vs 0.003163462
+calibration,True,"for all three runs the best-pearson checkpoint scores above the last epoch, so the note's last-epoch table understates the model that was used","{'M01': (0.4428, 0.452), 'M02': (0.4312, 0.4472), 'M03': (0.4572, 0.4619)}"
+calibration,True,the checkpoint whose val metrics drive the calibration is the one that produced the predictions,c7671wgj
+calibration,True,"for the checkpoint used the identity leaves TWO positive sigma_pred roots, so sigma_pred is not determined by r, RMSE and sigma_y alone",0.022005 / 0.036112
+calibration,True,the superseded slope 0.43 lies outside the admissible slope interval,"0.43 vs [0.8047,1.3205]"
+calibration,True,"every admissible slope exceeds 0.5, so the model is under-dispersed, not over-dispersed 2.3x",min slope 0.8047
+calibration,True,the identity bounds the val mean bias below a tenth of sigma_y,|mu_p - mu_y| <= 0.007054 = 0.112 sigma_y
+calibration,True,"the inference-set prediction mean sits further from mu_y than that bound, so it is the inference population's mean and not the val bias",|-0.016357 - -0.009139| = 0.007218 > 0.007054
+calibration,True,the measured prediction SD is below the label SD: the model is under-dispersed,"0.023179 < 0.062914, ratio 0.3684, over n=465735532"
+calibration,True,"the measured prediction SD sits nearer the LOWER sigma_pred root than the upper by more than 4x, and within 6% of it, which resolves the two-root ambiguity empirically in favor of the lower root",measured 0.023179; lower 0.022005 (off by 5.34%); upper 0.036112 (off by 35.81%); separation 11.0x
+calibration,True,"against the measured prediction SD the 39 in-basis targets sit 18 to 32 SD above the prediction mean, so any calibration is being read far outside the range it was fitted on",18.36 to 31.40 SD
+calibration,True,"under every admissible calibration all 39 in-basis predictions exceed 0.20, not 15 of 39",[39]
+calibration,True,"the admissible shrunk range clears 0.20 at its worst end and stays below 1.0 at its best, so it is not 0.148 to 0.278",0.3272..0.9425
+calibration,True,"the superseded sigma_pred column 0.0563 / 0.0572 / 0.0553 is exactly what the identity gives under sigma_y = 0.0535, which is why it looked self-consistent",3 of 3 reproduced
+calibration,True,no row of the superseded sigma_pred column survives with the correct sigma_y,0 of 3 survive
+calibration,True,"the note table's three r and RMSE pairs are the W&B last-epoch summaries, now carried in the CSV rather than only online",3 of 3 match
+calibration,True,"the run the note calls failed has negative val r, no train signal, and a val RMSE equal to sigma_y, which is what predicting the mean gives","val r -0.0314, train r 0.0007, val RMSE 0.0629 vs sigma_y 0.0629"
+calibration,True,the rationale note no longer claims over-dispersion of 2.3x,absent
+calibration,True,the rationale note no longer states the 0.148 to 0.278 shrunk range,absent
+calibration,True,"the rationale note states the corrected direction, under-dispersed",present
+calibration,True,the rationale note carries the corrected label statistics 0.0629 and 0.0091,present
+calibration,True,the rationale note names the checkpoint that produced every prediction,c7671wgj best-pearson epoch 24
+calibration,True,the failed W&B group is named in full with its rank-0 run id,vjfp4d83
+precision,True,SE(tau) = sqrt(7) s holds exactly and only when all seven fitnesses are 1,2.645751 vs sqrt(7) = 2.645751
+precision,True,"under a multiplicative null at f = 0.85 the multiplier is 2.18, BELOW sqrt(7)",2.1757
+precision,True,run 4 measured all six parents for exactly 4 gene triples,"['YDR057W+YER079W+YLR312C-B', 'YDR057W+YER079W+YPL081W', 'YDR057W+YLR312C-B+YPL081W', 'YER079W+YLR312C-B+YPL081W']"
+precision,True,"at the measured run-4 fitnesses the multiplier is 2.98-3.94, mean 3.44, all ABOVE sqrt(7)",min 2.983 max 3.943 mean 3.437
+precision,True,delta-method SE(eps) reproduces the committed plate-bootstrap eps_se in the mean over 13 doubles,delta 0.1370 vs committed 0.1354
+precision,True,"run-4 colony SD = 0.185 (rms within-plate SD over 75 strain-plate cells, 25 strains x 3 plates)","sigma_colony 0.1848, n_bar 12.41"
+precision,True,run-4 plate SD = 0.131 after removing the colony share from the across-plate spread,sigma_plate 0.1310 from rms across-plate SD 0.1411
+precision,True,"WT normalization removed most but not all of the common plate offset: it is 0.051, 15% of the plate variance, the rest being strain-by-plate interaction","sigma_common 0.0515, share 15.4%"
+precision,True,"day SD = 0.020 from the run-2 vs run-3 contrast on clean plates, 1 df; the single flagged plate is run3_P2","sigma_day 0.0196, flagged run3_P2"
+precision,True,"at ONE pick (the structure actually run) and 5 wells/strain the per-strain SE is 0.092 at 3 plates and 0.066 at 6, both LOWER bounds because the pick term is set to zero","s3 0.0915, s6 0.0662"
+precision,True,"measured per-strain SE over 3 plates: run-4 bootstrap rms 0.067 (n=25), run-3 benchmark median 0.057 (n=12)","run4 rms 0.0669, run3 median 0.0570"
+precision,True,no committed precision statistic equals 0.121 and the note no longer states it,nearest is run4 across-plate SD mean = 0.1195
+precision,True,"reaching s = 0.121 at 2 picks / 3 plates would require an ASSUMED colony-pick SD of 0.112, as large as the whole plate term; no 2-pick SE is quotable until the pick-replication round measures that term",implied sigma_pick 0.1119 vs sigma_plate 0.1310
+precision,True,"callable is |tau| > 1.96 SE(tau), two-sided 95%; the floor is 0.617 at 3 plates and 0.446 at 6","floor3 0.617, floor6 0.446"
+precision,True,on the RAW predictions 10 of 39 in-basis targets clear the 3-plate floor and 25 of 39 clear the 6-plate floor,"39 targets, 10 above 0.617, 25 above 0.446"
+precision,True,"calibrated at the DERIVED slope a = r sd(y)/sd(pred) = 1.254 the counts rise to 18 of 39 and 39 of 39; a > 1, so the model is under-dispersed and calibration expands rather than shrinks","slope 1.2536, intercept +0.0114, calibrated range 0.5243-0.9032, 18 and 39 above the floors"
+precision,True,"the 39 targets sit 18 to 31 prediction-SDs above the prediction mean, so any calibrated point estimate is an extrapolation and is calibration-dependent",18.4 to 31.4 SD
+precision,True,"sweeping the slope alone across the admissible interval [0.805, 1.321] gives 0 to 22 above the 3-plate floor and 12 to 39 above the 6-plate floor","{0.805: (0, 12), 1.321: (22, 39)}"
+precision,True,"computing tau per plate instead of from strain means lowers the floor to 0.598 and 0.433, a 3% gap, because the plate-common offset is only 15% of the plate variance; the question is closed, not an open modeling choice","per-plate 0.598 / 0.433 vs strain-mean 0.617 / 0.446, gap -3.0%"
+precision,True,"the 3% gap still moves the 6-plate raw count from 25 to 31, because the predictions cluster near that floor",per-plate raw counts 10 and 31
+precision,True,"per-strain SE 0.04 takes about 20 plates, 6.6x the current 3, not 9x",19.7 plates
+precision,True,"per-strain SE 0.04 gives SE(tau) 0.138, 1.75x Kuzmin's median SE(tau) of 0.0785 (their p column is one-sided; the earlier 0.031 read it as two-sided)","SE(tau) 0.1375, ratio 1.75x"
+precision,True,"matching Kuzmin's SE(tau) needs per-strain SE 0.023, which is ABOVE the one-day floor, so it is reachable within a single day at about 175 plates, 58x the current 3, not the 9x the note claimed","needed s 0.0228 vs sigma_day 0.0196, 175 plates = 58x"
+precision,True,"our SE(tau) is 4.0x Kuzmin's at 3 plates and 2.9x at 6, not the 10x the 0.031 figure implied",4.01x and 2.90x
+precision,True,"the seven terms do NOT share one SE: run-4 singles carry 2.0x the bootstrap SE of the doubles, and singles carry the largest tau coefficients","singles 0.0759 (n=12) vs doubles 0.0385 (n=13), ratio 1.97x"
+precision,True,"all three run-4 plates exceed the 0.20 frac-above-WT gate, so the run-4 QC pass is a WT-CV gate only and the fitness scale is inflated","{'P1': 0.4, 'P2': 0.32, 'P3': 0.24}"
+precision,True,"the rationale note states the corrected precision numbers, the 1.96 convention, both multipliers, both tau routes, the sweep method, the one-pick caveat and the plate-QC failure",all present
+precision,True,"the rationale note no longer states the untraceable s, the sqrt(7)-only multiplier, the 0.63 / 0.55 / 9x figures, the retracted 0 of 39, the shrunk range it rested on, or the one-sided 0.031",none
+published,True,Kuzmin 2018 si1.md sha256 matches the value quoted in the notes,2ec80d05d823976e
+published,True,Costanzo 2016 si1.md sha256 matches,1828703b0ff739fd
+published,True,the r = 0.9-0.91 / 0.74-0.81 sentence is verbatim in the Kuzmin SI,found in 'Evaluation of reproducibility of genetic interactions'
+published,True,"run4-handoff quotes that sentence verbatim, whitespace aside",quoted
+published,True,"the retracted Fig. S5B read-offs (0.88, 0.59) are gone from the live text",absent
+published,True,"Kuzmin states intermediate |score| > 0.08 and stringent |score| > 0.12, and the caption covers the adjusted trigenic panel",Fig. S5B caption
+published,True,"0.20 appears only as the NEGATIVE cut-off tau < -0.2, never as a magnitude",Fig. S15 caption
+published,True,"the rationale note labels 0.20 as a negative cut-off, not a magnitude one",labelled
+published,True,Costanzo states the intermediate threshold P<0.05 and |eps|>0.08 used for in-panel significance,data-release section
+published,True,"the released Kuzmin P-value tops out at exactly 0.5, so it is one-sided",0.5
+published,True,median back-solved SE(tau) is 0.0785 over the invertible records,0.0785 over n=392817
+published,True,the superseded 0.031 is exactly what a two-sided reading of the same p gives,0.0308
+published,True,"one-sided beats two-sided on Kuzmin's own digenic SD column, so the one-sidedness is measured rather than assumed",spearman 0.98017 vs 0.411098
+published,True,"the rationale note states 0.0785, not 0.031",corrected
+published,True,YER079W has 4 smf_costanzo2016 records and YLR312C-B has 2,4 / 2
+published,True,"those records are 2 distinct strains for YER079W and 1 for YLR312C-B, each stored twice",2 / 1
+published,True,"YLR312C-B has exactly 3,544 Costanzo digenic partners, 99 significant",3544 / 99
+published,True,"YER079W has 5,232 Costanzo digenic partners, 386 significant, so 3,544 belongs to YLR312C-B alone",5232 / 386
+published,True,the rationale note attributes each partner count to its own gene,both stated
+published,True,all 55 pairs of the eleven-gene basis are enumerated,55
+published,True,"YLR312C-B: 10 in-panel pairs, all 10 MEASURED in Costanzo, 0 significant, so this is measured and null and not unmeasured","10 measured, 0 significant"
+published,True,no YLR312C-B in-panel pair even reaches either half of the threshold,"max |eps| 0.0466, min p 0.1190"
+published,True,"only two in-panel pairs are unmeasured by Costanzo, and neither involves YLR312C-B","['YLL012W + YLR104W', 'YPL046C + YPL081W']"
+published,True,"the audit brief states 0 of 10, not 0 of 9 (which counted the TEN set)",corrected
+published,True,"R64-4-1 carries YLR312C-B once, as an alias on the YLR313C (SPH1) gene line, with no feature of its own",1
+published,True,every other panel gene is a first-class R64-4-1 feature,10 of 11
+published,True,the SMF reference panel covers all 12 run-4 strains with a published Costanzo value,"12 rows, 0 blank"
+published,True,"the panel carries YLR104W (LCL2, the strain on the run-4 plate) and not YPL056C (LCL1, the earlier design)","LCL2 in, LCL1 out"
+published,True,"the panel's YLR104W value equals smf_costanzo2016 read from the LMDB, so it is sourced rather than transcribed",1.0322 +/- 0.0453
+published,True,"no run-4 single is recorded as lacking a published SMF, and 3 gaps remain","['double, no published reference', 'double, designed but never built', 'triples, none exist']"
+published,True,the build-list s7 row carries the published SMF instead of --,| s7  | YLR104W   | LCL2   | 1.1748  | 0.0564  | 0.1187   | 1.0322       |
+published,True,YER079W x YLR104W is significant and is the largest-magnitude in-panel digenic of all 53 measured pairs,"eps -0.5672, P 0.000183"
+published,True,"the rationale note records that digenic, its P, and the reciprocal screen that does not reproduce it",recorded
+provenance,True,top_k_constructible_panel12_k200.csv sha256 unchanged since 2026-08-24,3bfd68b3d2d89b3c
+provenance,True,run4_strain_bootstrap.csv sha256 unchanged since 2026-08-24,31c941ff86e5f404
+provenance,True,reference_smf_12panel.csv sha256 unchanged since 2026-08-24,484fa3502e898f23
+provenance,True,construction_validation_doubles.csv sha256 unchanged since 2026-08-24,d70cc9c361804c87
+provenance,True,Single-and-Double-KO-Strains-List-Order.csv sha256 unchanged since 2026-08-24,cc0f07a7e7123aa0
+provenance,True,top_k_constructible_panel12_k200.csv is 52 rows x 4 columns,"(52, 4)"
+provenance,True,run4_strain_bootstrap.csv is 26 rows x 5 columns,"(26, 5)"
+provenance,True,reference_smf_12panel.csv is 12 rows x 7 columns,"(12, 7)"
+provenance,True,construction_validation_doubles.csv is 45 rows x 15 columns,"(45, 15)"
+provenance,True,Single-and-Double-KO-Strains-List-Order.csv is 26 rows x 3 columns,"(26, 3)"
+provenance,True,the hand-maintained bench sheet matches its own SHA256SUMS.txt entry,cc0f07a7e7123aa0
+provenance,True,the k200 file carries exactly the four columns the design reads,"['gene1', 'gene2', 'gene3', 'prediction']"
+provenance,True,every k200 row is a distinct 3-gene triple,52 distinct
+provenance,True,the k200 file spans a 12-gene panel that strictly contains the 11-gene basis,['YIL174W']
+provenance,True,39 of the 52 k200 triples lie inside the 11-gene basis,39
+provenance,True,YLR104W contributes 8 of the 39; the frozen TEN set accounts for the other 31,8 + 31
+provenance,True,the k200 file is already sorted by descending prediction,0.7310 .. 0.4092
+provenance,True,"the 122-row triples table is the SAME panel and a strict superset of k200, not a different panel","122 rows, 12 genes, k200 subset=True"
+provenance,True,"results/constructible_triples_panel12_k200.parquet is a DIFFERENT gene panel, sharing one gene with the design basis",['YPL046C']
+provenance,True,every run-4 strain was scored on all 3 plates,[3]
+provenance,True,"boot_se/across_plate_sd sits at sqrt(n-1)/n = 0.4714, so boot_se is a bootstrap SE of the plate mean and across_plate_sd a sample SD",0.4627 .. 0.4771 over 25 strains
+provenance,True,"WT is the within-plate normalizer, so its fitness is exactly 1",1.0
+provenance,True,"the SMF reference covers 12 of 12 and carries YLR104W (LCL2), the gene run 4 actually plated, not LCL1","12/12 Costanzo, YLR104W present=True, YPL056C present=False"
+provenance,True,"the doubles reference covers exactly the 45 within-TEN pairs, C(10,2)",45 pairs
+rederive,True,the k200 target file holds 52 prediction rows,52
+rederive,True,the only out-of-panel gene in the prediction file is YIL174W,['YIL174W']
+rederive,True,39 rows are subsets of the eleven genes and 13 are dropped for YIL174W,"39 kept, 13 dropped"
+rederive,True,no two prediction rows collapse to the same gene SET,52
+rederive,True,every prediction row names three distinct genes,[3]
+rederive,True,every prediction row is already in lexicographic gene order,52 of 52
+rederive,True,"the blocked-pair filter removes 0 rows, so it blocks 0 of the 39 targets",0
+rederive,True,"exactly one prediction tie inside the basis, and it decides ranks 34 and 35","[34, 35]"
+rederive,True,the 39 basis targets carry 38 distinct prediction values,38
+rederive,True,"a STABLE sort puts YBR203W + YGL087C + YPL046C at rank 34, as the notes print",34
+rederive,True,"the tie cannot change the selection: its clean member is always in, its flagged member always out",selection invariant to the tie
+rederive,True,ranks 1-11 ALL touch a zero-data gene; the first clean target is rank 12,first clean rank 12
+rederive,True,the rationale no longer understates the flagged block as ranks 1-10,corrected to 1-11
+rederive,True,"the order sheet carries a WT row, the reference every fitness is divided by",WT present
+rederive,True,every KO cell parses to a well-formed systematic ORF,38 cells
+rederive,True,no duplicated single ORF and no duplicated double pair in the sheet,"12 single rows, 13 double rows"
+rederive,True,no built double names the same ORF twice,13 of 13 distinct pairs
+rederive,True,TWO panel genes have zero built doubles: YKL033W-A and YLR104W,"['YKL033W-A', 'YLR104W']"
+rederive,True,"exactly 14 constructible clean targets exist, so the 14-triple fill is forced",14
+rederive,True,"the 6 capped flagged slots are ranks 1-6, all distinct in prediction","[1, 2, 3, 4, 5, 6]"
+rederive,True,"rank-order fill and fewest-new-doubles fill give the IDENTICAL 20, so `capped` is order-independent here",3-way identical
+rederive,True,both fills cost the same 25 new doubles,"rank fill 25, shipped 25"
+rederive,True,cap 5 tops out at 19 parallel triples; cap 6 reaches exactly 20,"cap5=19, cap6=20"
+rederive,True,"zero-data triple counts per strategy are rank 17, count 15, balanced 15, uniform 11, capped 6, no_ylr 9","{'balanced': 15, 'capped': 6, 'count': 15, 'no_ylr': 9, 'rank': 17, 'uniform': 11}"
+rederive,True,"no_ylr eliminates YLR312C-B but still puts 9 of 20 triples on YER079W, so it is NOT a zero-extrapolation design",9
+rederive,True,"no_ylr alone selects a triple with no built parent (rank 26), so its 40-strain cost is not a one-wave build","{'balanced': [], 'capped': [], 'count': [], 'no_ylr': [26], 'rank': [], 'uniform': []}"
+rederive,True,the rationale strategy table parses to six strategy rows,"['balanced', 'capped', 'count', 'no_ylr', 'rank', 'uniform']"
+rederive,True,every strategy row's tri / new-dbl / construct / measure recomputes,6 of 6
+rederive,True,the strategy table's zero-data column carries a real number for all six rows,6 of 6
+rederive,True,the strategy table's one-wave column marks no_ylr as the only non-parallel build,6 of 6
+rederive,True,"the YKL033W-A bullet names exactly the six new doubles that contain it, the second panel gene with no built double","note ['D04', 'D09', 'D18', 'D19', 'D20', 'D21'] vs computed ['D04', 'D09', 'D18', 'D19', 'D20', 'D21']"
+rederive,True,the YLR104W bullet names exactly the six new doubles that contain YLR104W,"note ['D06', 'D11', 'D17', 'D23', 'D24', 'D25'] vs computed ['D06', 'D11', 'D17', 'D23', 'D24', 'D25']"
+rederive,True,"YKL033W-A likewise gains six new doubles, its first coverage after the failed cross","['D04', 'D09', 'D18', 'D19', 'D20', 'D21']"
+rederive,True,the YLR312C-B bullet names exactly its five new doubles,"['D07', 'D13', 'D19', 'D22', 'D23']"
+rederive,True,"the CLEAN shortfall is 2 targets, ranks 32 and 37; rank 26 is flagged, not clean","[32, 37]"
+rederive,True,the rationale no longer lists rank 26 among the clean-16 shortfall,corrected
+rederive,True,5 wells per strain is FORCED: 65 x 6 = 390 exceeds 384 with any reserve,390 > 384
+rederive,True,64 non-WT strains at 5 wells plus the 6 orientation blanks fit on one plate,"326 of 384 wells, 58 left for WT"
+rederive,True,"the note allocates 5 wells to each of the 64 non-WT strains and is silent on the remaining 58, which are the WT block",58
+rederive,True,one pick per strain is 65 tubes,65
+rederive,True,"two picks per strain is 2 x 65 = 130 tubes, not 135",130
+rederive,True,"the closure of the 20 taus is exactly 64 strains, plus WT = 65",65
+rederive,True,5 of the 13 existing doubles serve no selected tau and are correctly OFF plate,"[['YDR057W', 'YER079W'], ['YDR057W', 'YLR312C-B'], ['YER079W', 'YJR060W'], ['YER079W', 'YPL081W'], ['YPL046C', 'YPL081W']]"
+rederive,True,"YLR313C is on no plate strain, so the 12th built single is correctly excluded",excluded
+rederive,True,all 6 supporting terms of every tau are drawn from the SAME 65-strain plate,20 of 20
+rederive,True,"the drop-the-two contingency needs 9 singles, not 11",9
+rederive,True,"the contingency plate is 9 singles + 23 doubles + 14 triples + WT = 47, not the 65 the note's plate table implies",47

@@ -32,6 +32,7 @@ Run from repo root:
 
 from __future__ import annotations
 
+import importlib
 import itertools
 import os
 import os.path as osp
@@ -79,6 +80,15 @@ KUZMIN_ORDER = [
 
 CHECKS: list[dict] = []
 
+# The 2026.08.24 audit added five check groups. They live in `audit_checks/` rather than
+# inline, because together they are three times the length of this file and each is the
+# work of one auditor, which is worth keeping traceable. They are NOT parallel checkers:
+# this script is still the single entry point, they share `check()`, they land in the one
+# report CSV, and they gate the same exit code. Each module exposes `run(check)` and reads
+# the constants below, which this file injects so there is exactly one definition of the
+# gene panel, the pinned input paths and the note paths.
+AUDIT_GROUPS = ("calibration", "precision", "published", "provenance", "rederive")
+
 
 def check(group: str, ok: bool, claim: str, observed: object) -> None:
     CHECKS.append({"group": group, "pass": bool(ok), "claim": claim,
@@ -120,7 +130,13 @@ def read_order_sheet():
 
 
 def read_targets():
-    df = pd.read_csv(TARGETS).sort_values("prediction", ascending=False)
+    # mergesort, matching the design script. The 39 in-basis targets contain one tied
+    # prediction (0.42041015625, ranks 34 and 35), so under an unstable sort the ranking
+    # is not reproducible. This file previously copied the design script's default
+    # quicksort, which meant it could not have detected the problem: both sides would have
+    # drifted together.
+    df = pd.read_csv(TARGETS).sort_values(
+        "prediction", ascending=False, kind="mergesort")
     out = []
     for r in df.itertuples():
         t = frozenset((r.gene1, r.gene2, r.gene3))
@@ -152,6 +168,40 @@ def kuzmin_counts():
         totals[name] = n
         print(f"    {name}: {n} records")
     return counts, totals
+
+
+def table_rows(text):
+    """Markdown table rows as lists of cells.
+
+    Split on the pipe rather than regex over the whole file: the D table is two ID blocks
+    per row and both tables carry the zero-data flag as a `*` suffix on the ID, neither of
+    which a single-pass regex reads reliably.
+    """
+    rows = []
+    for line in text.split("\n"):
+        s = line.strip()
+        if s.startswith("|") and s.endswith("|") and set(s) - set("|:- "):
+            rows.append([c.strip() for c in s[1:-1].split("|")])
+    return rows
+
+
+def run_audit_groups() -> None:
+    """Import each audit module, inject this file's constants, run its checks.
+
+    Injection is deliberately an overwrite rather than a default. A module that defined
+    its own GENES or its own path to the bench sheet could drift from this file and both
+    would still be green, which is the failure mode the audit was called to remove. One
+    definition, here, wins.
+    """
+    sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
+    shared = {k: v for k, v in globals().items() if k.isupper() and k != "CHECKS"}
+    shared.update({"orf": orf, "pairs": pairs, "table_rows": table_rows})
+    for group in AUDIT_GROUPS:
+        print(f"\n9.{group.upper()}")
+        mod = importlib.import_module(f"audit_checks.{group}")
+        for key, value in shared.items():
+            setattr(mod, key, value)
+        mod.run(check)
 
 
 def main() -> None:
@@ -187,8 +237,17 @@ def main() -> None:
     # ---- 2. target basis --------------------------------------------------------------
     print("\n2. TARGET BASIS")
     check("basis", len(targets) == 39, "39 in-basis targets", len(targets))
-    check("basis", all(d["triple"] & NO_TRIGENIC_DATA for d in targets if d["rank"] <= 10),
-          "ranks 1-10 all touch a zero-trigenic-data gene", "10 of 10")
+    check("basis", all(d["triple"] & NO_TRIGENIC_DATA for d in targets if d["rank"] <= 11),
+          "ranks 1-11 all touch a zero-trigenic-data gene", "11 of 11")
+    first_clean = min(d["rank"] for d in targets if not (d["triple"] & NO_TRIGENIC_DATA))
+    check("basis", first_clean == 12,
+          "the first clean target is rank 12, so the flagged block is the whole top of "
+          "the ranking", first_clean)
+    ties = [p for p in {d["prediction"] for d in targets}
+            if sum(1 for d in targets if d["prediction"] == p) > 1]
+    check("basis", ties == [0.42041015625],
+          "exactly one predicted value is tied, so the ranking needs a stable sort to be "
+          "reproducible", ties)
     orphan = sorted(d["rank"] for d in targets
                     if not any(p in built for p in pairs(d["triple"])))
     check("basis", orphan == [26, 32, 37], "targets with no built parent are 26, 32, 37",
@@ -274,17 +333,6 @@ def main() -> None:
     print("\n7. NOTE TABLES vs COMPUTED")
     bl = open(BUILD_LIST).read()
     rt = open(RATIONALE).read()
-
-    # Tables are parsed by splitting rows on the pipe, not by regex over the whole file:
-    # the D table is two ID blocks per row and both tables carry the zero-data flag as a
-    # `*` suffix on the ID, neither of which a single-pass regex reads reliably.
-    def table_rows(text):
-        rows = []
-        for line in text.split("\n"):
-            s = line.strip()
-            if s.startswith("|") and s.endswith("|") and set(s) - set("|:- "):
-                rows.append([c.strip() for c in s[1:-1].split("|")])
-        return rows
 
     def split_id(cell):
         return (cell[:-1], True) if cell.endswith("*") else (cell, False)
@@ -403,22 +451,44 @@ def main() -> None:
           "every double's fitness, SE, plate SD, published DMF and tier match the CSV",
           bad or "13 of 13")
 
-    check("measured",
-          int(ms.costanzo_smf.isna().sum()) == 1
-          and ms[ms.costanzo_smf.isna()].orf.iloc[0] == "YLR104W",
-          "exactly one single lacks a published SMF, and it is YLR104W",
-          ms[ms.costanzo_smf.isna()].orf.tolist())
+    # Was "exactly one single lacks a published SMF, and it is YLR104W" until 2026.08.24.
+    # Costanzo publishes YLR104W at 1.0322; the blank came from build_reference_smf.py
+    # still carrying LCL1 (YPL056C) in the s7 slot from the pre-run-4 design. The check
+    # was gating a false characterization of the literature, so it now asserts the fix.
+    check("measured", int(ms.costanzo_smf.isna().sum()) == 0,
+          "every one of the 12 singles has a published Costanzo SMF",
+          ms[ms.costanzo_smf.isna()].orf.tolist() or "12 of 12")
     check("measured",
           int(md_.costanzo_dmf.isna().sum()) == 1
           and md_[md_.costanzo_dmf.isna()].tier.iloc[0] == "novel",
           "exactly one double lacks a published DMF, and its tier is novel",
           md_[md_.costanzo_dmf.isna()].pair.tolist())
-    check("measured", len(gaps) == 4,
-          "four gaps recorded: one single, one double, one failed build, no triples",
-          len(gaps))
+    check("measured", len(gaps) == 3,
+          "three gaps recorded: one double with no published DMF, one failed build, "
+          "no triples", len(gaps))
     check("measured", ms.orf.tolist() == [g for _, g in read_order_sheet()[0]]
           and len(md_) == 13,
           "the measured tables cover every built strain", f"{len(ms)} singles, {len(md_)} doubles")
+
+    # The `used` and `serves (rank)` columns of the existing-doubles table were ungated
+    # until the 2026.08.24 audit: the measured pass checked columns 4 to 8 and skipped
+    # 2 and 3. They state which of the 13 built doubles are parents for the selection.
+    bad = []
+    for c in d_note.values():
+        p = frozenset(orf(x) for x in c[1].split(" + "))
+        served = sorted(rank_of[t] for t in sel if p in pairs(t))
+        want_serves = ", ".join(str(x) for x in served) if served else "--"
+        if c[2] != ("yes" if served else "no") or c[3] != want_serves:
+            bad.append(c[0])
+    check("measured", not bad,
+          "every existing double's used flag and serves-ranks list matches the selection",
+          bad or f"{len(d_note)} of {len(d_note)}")
+    check("measured",
+          sum(len([t for t in sel if frozenset(orf(x) for x in c[1].split(" + ")) in pairs(t)])
+              for c in d_note.values()) + sum(
+              len([t for t in sel if p in pairs(t)]) for p in new_doubles) == 60,
+          "existing and new doubles together cover all 60 pair-slots the 20 triples need",
+          60)
 
     cc = pd.read_csv(CONSTRUCTION)
     cc = cc[cc.strategy == "capped"]
@@ -441,11 +511,36 @@ def main() -> None:
     check("kuzmin", {g for g in KUZMIN_ORDER if counts[g]["digenic"] == 0} == set(NO_TRIGENIC_DATA),
           "the same two genes are also absent from Kuzmin digenic",
           sorted({g for g in KUZMIN_ORDER if counts[g]["digenic"] == 0}))
-    noted_tbl = dict(re.findall(r"\| (?:\*\*)?([A-Z0-9\-]+)(?:\*\*)?(?: \([A-Z0-9]+\))? \| (?:\*\*)?(\d+)(?:\*\*)? \|", rt))
-    check("kuzmin",
-          all(int(noted_tbl[g]) == counts[g]["trigenic"] for g in KUZMIN_ORDER if g in noted_tbl),
-          "the note's trigenic column matches the LMDBs",
-          f"{len(noted_tbl)} rows compared")
+    # Parse the gene table as a table. The previous regex over the whole note also matched
+    # 12 rows of the strategy and plate tables (keys like "56" and "WT"), so its reported
+    # row count was wrong, and it guarded the comparison with `if g in noted_tbl`, which
+    # made the check vacuously passable: deleting a gene row left it green.
+    # 4 cells and a numeric second cell: the 25-double table also opens rows with a panel
+    # gene name ("YDR057W + YKL033W-A"), so matching on the leading token alone picks it up.
+    gene_rows = {c[0].replace("**", "").split(" ")[0]: [x.replace("**", "") for x in c]
+                 for c in table_rows(rt)
+                 if len(c) == 4 and c[1].replace("**", "").isdigit()
+                 and c[0].replace("**", "").split(" ")[0] in set(KUZMIN_ORDER)}
+    check("kuzmin", len(gene_rows) == 11,
+          "the note's per-gene table has a row for all 11 panel genes, so the comparison "
+          "below cannot pass vacuously", len(gene_rows))
+    bad = [g for g in KUZMIN_ORDER
+           if int(gene_rows[g][1]) != counts[g]["trigenic"]]
+    check("kuzmin", not bad, "the note's trigenic column matches the LMDBs",
+          bad or f"{len(gene_rows)} of {len(gene_rows)} rows")
+    bad = [g for g in KUZMIN_ORDER
+           if int(gene_rows[g][2]) != counts[g]["digenic"]]
+    check("kuzmin", not bad, "the note's digenic column matches the LMDBs",
+          bad or f"{len(gene_rows)} of {len(gene_rows)} rows")
+    # Identical totals are a coincidence, not a name collision: YJR060W and YGL087C both
+    # sum to 319 trigenic but split 92/227 against 89/230, and no record holds both. The
+    # summed count is the statistic that collides, so assert the split, which does not.
+    check("kuzmin", totals == {"tmi_kuzmin2018": 91111, "tmi_kuzmin2020": 301798,
+                               "dmi_kuzmin2018": 410399, "dmi_kuzmin2020": 632797},
+          "per-dataset record totals are unchanged", totals)
+
+    # ---- 9. audit groups (2026.08.24) -------------------------------------------------
+    run_audit_groups()
 
     # ---- report -----------------------------------------------------------------------
     rep = pd.DataFrame(CHECKS)

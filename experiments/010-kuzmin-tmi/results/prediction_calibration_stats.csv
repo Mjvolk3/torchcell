@@ -1,0 +1,65 @@
+quantity,value,source
+inference_parquet_path,/scratch/projects/torchcell-scratch/data/torchcell/experiments/010-kuzmin-tmi/inference_3/inferred/models-checkpoints-compute-3-3-2036902_bd9e6c666ea1c0e7d1bbb6321fbc4d3bd5f60f100d6dc0e0288cd97e366fc15e-c7671wgj-best-pearson-epoch=24-val-gene_interaction-Pearson=0.4619.parquet,pinned input
+inference_parquet_sha256,806ef0440835f9b8d344b5b2f0949a79efc782797350fc33581a18b498513550,sha256 of the file above
+inference_parquet_bytes,3987420695,os.path.getsize
+inference_parquet_row_groups,445,parquet metadata
+inference_checkpoint,c7671wgj,checkpoint whose predictions the panel-12 selection consumed
+pred_n,465735532,"inference parquet, streamed by row group"
+pred_mean,-0.016356575,"inference parquet, streamed by row group"
+pred_sd_pop,0.023179214,"inference parquet, streamed by row group, population SD, ddof=0"
+pred_min,-0.643554688,"inference parquet, streamed by row group"
+pred_max,0.730957031,"inference parquet, streamed by row group"
+label_build_path,/scratch/projects/torchcell-scratch/data/torchcell/experiments/010-kuzmin-tmi/001-small-build,010 training build
+label_all_n,376732,"label_df.parquet + index_seed_42.json, split=all"
+label_all_mean,-0.008024324,"label_df.parquet + index_seed_42.json, split=all"
+label_all_sd_pop,0.063263549,"label_df.parquet + index_seed_42.json, split=all, population SD, ddof=0"
+label_train_n,301386,"label_df.parquet + index_seed_42.json, split=train"
+label_train_mean,-0.007688739,"label_df.parquet + index_seed_42.json, split=train"
+label_train_sd_pop,0.063186255,"label_df.parquet + index_seed_42.json, split=train, population SD, ddof=0"
+label_val_n,37673,"label_df.parquet + index_seed_42.json, split=val"
+label_val_mean,-0.009138648,"label_df.parquet + index_seed_42.json, split=val"
+label_val_sd_pop,0.062913504,"label_df.parquet + index_seed_42.json, split=val, population SD, ddof=0"
+label_test_n,37673,"label_df.parquet + index_seed_42.json, split=test"
+label_test_mean,-0.009594696,"label_df.parquet + index_seed_42.json, split=test"
+label_test_sd_pop,0.064187425,"label_df.parquet + index_seed_42.json, split=test, population SD, ddof=0"
+ckpt_M01_run_id,lzs9pcj3,"010-eval-m00_759.out, re-evaluation of the best-pearson checkpoint"
+ckpt_M01_val_pearson,0.451962620,"010-eval-m00_759.out, re-evaluation of the best-pearson checkpoint"
+ckpt_M01_val_mse,0.003244141,"010-eval-m00_759.out, re-evaluation of the best-pearson checkpoint"
+ckpt_M01_val_rmse,0.056957364,"010-eval-m00_759.out, re-evaluation of the best-pearson checkpoint"
+ckpt_M01_eval_log_sha256,08086f289b58b90e721168cc3906ccced53604928f9a8e4d283d1f472870f3ca,sha256 of 010-eval-m00_759.out
+ckpt_M02_run_id,yv4r30bi,"010-eval-m01_769.out, re-evaluation of the best-pearson checkpoint"
+ckpt_M02_val_pearson,0.447154701,"010-eval-m01_769.out, re-evaluation of the best-pearson checkpoint"
+ckpt_M02_val_mse,0.003258721,"010-eval-m01_769.out, re-evaluation of the best-pearson checkpoint"
+ckpt_M02_val_rmse,0.057085212,"010-eval-m01_769.out, re-evaluation of the best-pearson checkpoint"
+ckpt_M02_eval_log_sha256,b7a1886dc3a7a369149f28f8dc9f5af4b1c2af1f7aef025e53ca40a3a6691d5f,sha256 of 010-eval-m01_769.out
+ckpt_M03_run_id,c7671wgj,"010-eval-m02_761.out, re-evaluation of the best-pearson checkpoint"
+ckpt_M03_val_pearson,0.461881280,"010-eval-m02_761.out, re-evaluation of the best-pearson checkpoint"
+ckpt_M03_val_mse,0.003163462,"010-eval-m02_761.out, re-evaluation of the best-pearson checkpoint"
+ckpt_M03_val_rmse,0.056244664,"010-eval-m02_761.out, re-evaluation of the best-pearson checkpoint"
+ckpt_M03_eval_log_sha256,b005a5f4c984ad12590333803c79a6dbbc3181d188432737354284c8c4da1bf9,sha256 of 010-eval-m02_761.out
+last_M01_val_pearson,0.442807376,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/lzs9pcj3 summary, last logged epoch"
+last_M01_val_rmse,0.058031991,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/lzs9pcj3 summary, last logged epoch"
+last_M01_val_epoch,63,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/lzs9pcj3 summary, last logged epoch, epoch of the last logged val metric"
+last_M01_n_val_epochs,64,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/lzs9pcj3 summary, last logged epoch, val epochs logged"
+last_M01_group,compute-3-3-2027905_a1260b50c3d74b6b7acea919b89416feb6fc957b3023c9ac866f90378df82625,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/lzs9pcj3 summary, last logged epoch"
+last_M01_norm_std,0.063263549,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/lzs9pcj3 summary, last logged epoch, normalization/gene_interaction/std"
+last_M01_norm_mean,-0.008024324,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/lzs9pcj3 summary, last logged epoch, normalization/gene_interaction/mean"
+last_M02_val_pearson,0.431247056,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/yv4r30bi summary, last logged epoch"
+last_M02_val_rmse,0.059130128,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/yv4r30bi summary, last logged epoch"
+last_M02_val_epoch,63,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/yv4r30bi summary, last logged epoch, epoch of the last logged val metric"
+last_M02_n_val_epochs,64,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/yv4r30bi summary, last logged epoch, val epochs logged"
+last_M02_group,compute-3-3-2027907_a1260b50c3d74b6b7acea919b89416feb6fc957b3023c9ac866f90378df82625,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/yv4r30bi summary, last logged epoch"
+last_M02_norm_std,0.063263549,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/yv4r30bi summary, last logged epoch, normalization/gene_interaction/std"
+last_M02_norm_mean,-0.008024324,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/yv4r30bi summary, last logged epoch, normalization/gene_interaction/mean"
+last_M03_val_pearson,0.457188010,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/c7671wgj summary, last logged epoch"
+last_M03_val_rmse,0.056731179,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/c7671wgj summary, last logged epoch"
+last_M03_val_epoch,48,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/c7671wgj summary, last logged epoch, epoch of the last logged val metric"
+last_M03_n_val_epochs,49,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/c7671wgj summary, last logged epoch, val epochs logged"
+last_M03_group,compute-3-3-2036902_bd9e6c666ea1c0e7d1bbb6321fbc4d3bd5f60f100d6dc0e0288cd97e366fc15e,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/c7671wgj summary, last logged epoch"
+last_M03_norm_std,0.063263549,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/c7671wgj summary, last logged epoch, normalization/gene_interaction/std"
+last_M03_norm_mean,-0.008024324,"W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/c7671wgj summary, last logged epoch, normalization/gene_interaction/mean"
+failed_run_id,vjfp4d83,W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/vjfp4d83 summary
+failed_run_group,compute-3-3-2059267_f83395661f9a37aec8c2fbb4b577c1f5bcca6e00e6f64f2772f606e02c6de5e3,W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/vjfp4d83 summary
+failed_run_val_pearson,-0.031397548,W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/vjfp4d83 summary
+failed_run_val_rmse,0.062926203,W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/vjfp4d83 summary
+failed_run_train_pearson,0.000653316,W&B zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer/vjfp4d83 summary

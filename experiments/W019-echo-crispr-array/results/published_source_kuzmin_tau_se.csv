@@ -1,0 +1,4 @@
+dataset,n_records,n_usable,n_p_zero,n_p_half,p_max,median_abs_tau,se_one_sided_p25,se_one_sided_median,se_one_sided_p75,se_two_sided_median
+tmi_kuzmin2018,91111,91088,8,15,0.5,0.033477,0.029527,0.075089,0.182877,0.031475
+tmi_kuzmin2020,301798,301729,17,52,0.5,0.030573,0.032278,0.079486,0.192083,0.030614
+both,392909,392817,25,67,0.5,0.031221,0.031635,0.078502,0.189878,0.030805

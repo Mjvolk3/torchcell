@@ -1,0 +1,3 @@
+reference_distribution,n,median_se_over_sd,relative_iqr,spearman_se_vs_sd
+one_sided_normal,410295,1.260152,0.198441,0.98017
+two_sided_normal,410295,0.47545,0.964532,0.411098

@@ -106,6 +106,7 @@ class BuiltDoc(BaseModel):
     git_commit: str
     git_branch: str
     built_at: str  # YYYY-MM-DD-HH-MM-SS, local
+    view: str = "draft"  # "draft" = main.pdf, "clean" = main-clean.pdf
 
     @property
     def doc_key(self) -> str:
@@ -113,7 +114,12 @@ class BuiltDoc(BaseModel):
 
     @property
     def filename(self) -> str:
-        return f"{self.doc}_{self.built_at}_{self.sha256[:8]}.pdf"
+        # The view is part of the name. A draft and a share build of the same
+        # sources are different bytes and different sha256, so without it the
+        # two sort together and a reviewer cannot tell which one carries the
+        # status chips.
+        view = "" if self.view == "draft" else f"-{self.view}"
+        return f"{self.doc}{view}_{self.built_at}_{self.sha256[:8]}.pdf"
 
     @property
     def full_title(self) -> str:
@@ -165,12 +171,17 @@ def _parse_title(tex_path: str) -> tuple[str, str | None, str]:
     return title, subtitle, (a.group(1).strip() if a else "")
 
 
-def load_built_doc(notes_tex_dir: str, doc: str) -> BuiltDoc:
+def load_built_doc(notes_tex_dir: str, doc: str, view: str = "draft") -> BuiltDoc:
     doc_dir = osp.join(notes_tex_dir, doc)
-    pdf = osp.join(doc_dir, "main.pdf")
+    # The draft view carries the status chips and provenance flags and is the
+    # right thing to review in-group. The clean view is what leaves the group,
+    # so it is what to publish when the question is "what will they see".
+    name = "main.pdf" if view == "draft" else "main-clean.pdf"
+    pdf = osp.join(doc_dir, name)
     tex = osp.join(doc_dir, "main.tex")
     if not osp.exists(pdf):
-        sys.exit(f"{pdf} does not exist -- run `make` in {doc_dir} first.")
+        target = "make" if view == "draft" else "make clean-view"
+        sys.exit(f"{pdf} does not exist -- run `{target}` in {doc_dir} first.")
 
     raw = open(pdf, "rb").read()
     title, subtitle, author = _parse_title(tex)
@@ -197,6 +208,7 @@ def load_built_doc(notes_tex_dir: str, doc: str) -> BuiltDoc:
         built_at=datetime.datetime.fromtimestamp(osp.getmtime(pdf)).strftime(
             "%Y-%m-%d-%H-%M-%S"
         ),
+        view=view,
     )
 
 
@@ -256,6 +268,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("doc", help="directory name under notes-tex/, e.g. microbe-perturb-seq")
     ap.add_argument("--dry-run", action="store_true", help="preview, upload nothing")
+    ap.add_argument("--clean", action="store_true",
+                    help="publish main-clean.pdf, the share view, instead of main.pdf")
     ap.add_argument("--list", action="store_true", help="list published versions and exit")
     args = ap.parse_args()
 
@@ -268,7 +282,8 @@ def main() -> None:
         sys.exit("Set ZOTERO_USER_ID and ZOTERO_API_KEY in repo-root .env.")
     zot = zotero.Zotero(user_id, "user", api_key)
 
-    built = load_built_doc(notes_tex_dir, args.doc)
+    built = load_built_doc(notes_tex_dir, args.doc,
+                           "clean" if args.clean else "draft")
     print(f"{built.full_title}")
     print(f"  {built.pdf_path}")
     print(f"  {built.n_bytes:,} bytes  sha256 {built.sha256}")

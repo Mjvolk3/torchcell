@@ -90,8 +90,8 @@ def panel_b(ax) -> None:
     ax.axvline(TARGET_MEAN, color=ACTION, lw=0.8, ls="--")
     ax.annotate("", xy=(TARGET_MEAN, 0.47), xytext=(LAM, 0.47),
                 arrowprops=dict(arrowstyle="->", color=ACTION, lw=0.9))
-    ax.text(TARGET_MEAN + 0.18, 0.505, f"mean $\\to$ {TARGET_MEAN:.0f}",
-            fontsize=5, color=ACTION, va="top", ha="left")
+    ax.text(7.45, 0.515, f"mean $\\to$ {TARGET_MEAN:.0f}",
+            fontsize=5, color=ACTION, va="top", ha="right")
     ax.set_xlabel("Plasmids a surviving cell carries")
     ax.set_ylabel("Fraction of cells")
     ax.set_ylim(0, 0.54)
@@ -109,9 +109,9 @@ def panel_c(ax) -> None:
     p1 = (np.exp(-lams) * lams) / denom
     ax.plot(lams, p1, color=KEEP, lw=1.1)
     ax.plot(lams, 1.0 - p1, color=ACTION, lw=1.1)
-    ax.text(4.4, 0.68, "2 or more guides", fontsize=5, color=ACTION,
-            ha="center", va="center")
-    ax.text(4.4, 0.30, "exactly 1", fontsize=5, color=KEEP, ha="center")
+    ax.text(5.85, 0.66, "2 or more guides", fontsize=5, color=ACTION,
+            ha="right", va="center")
+    ax.text(5.85, 0.26, "exactly 1", fontsize=5, color=KEEP, ha="right")
     for lam, lab in ((lam_for_target_mean(2.0), "2"),
                      (lam_for_target_mean(3.0), "3"),
                      (lam_for_target_mean(5.0), "5")):

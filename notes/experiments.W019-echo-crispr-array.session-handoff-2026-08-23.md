@@ -227,10 +227,17 @@ orphan.
   **r = 0.74-0.81**, sourced to
   `kuzminSystematicAnalysisComplex2018/si/si1.md` sha256 `2ec80d05...b963b8291`, with the
   superseded 0.88 / 0.59 recorded as corrected.
-- **Item 6 (stale artefacts) is HANDLED, not deleted.** `next_doubles_selection.py` and
-  `triple_coverage_from_built_doubles.py` now open with a SUPERSEDED banner naming the
-  wrong basis, the live replacement, and their own stale outputs. Deleting them is the
-  author's call.
+- **Item 6 (stale artefacts) is CLOSED.** The two superseded scripts, their nine result
+  CSVs, their six images and their two note stubs -- 19 files on the 10-gene / 31-target
+  basis -- were moved out of the repo into the graveyard
+  `/scratch/projects/torchcell-deprecated/2026-08-24_104110__*/`, each with its own
+  `DEPRECATION.txt` recording the original absolute path, git HEAD and the reason. Moved,
+  not deleted; purging the graveyard is a manual chore. The BUILDABLE-vs-SCORABLE
+  distinction those scripts introduced survives in
+  [[experiments.W019-echo-crispr-array.scripts.verify_triple_build_list]] and in the
+  "Why all 65 and not just the 20 triples" section of
+  [[experiments.W019-echo-crispr-array.build-list]], so nothing of substance was lost.
+  The paths cited under "Files" and item 6 in the section above are therefore historical.
 - **Items 1, 2, 3, 5 stand as written** -- YLR312C-B in or out, tau not callable at this
   precision, the unbiased-mean assumption behind the 0.43 slope, and the plate contention
   with the replication round.

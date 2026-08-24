@@ -14,9 +14,23 @@ created: 1787062303235
 > **Recommendation:** once the tex has been reviewed, shrink the prose below to a
 > summary paragraph so there is only one copy of each number.
 
+## 2026.08.24 - Where this note came from
+
+The precursor is [[microbe-perturb-seq.spc-capseq-design-sketch]], written on
+2026.08.14 as a design sketch for reading a pooled CRISPRi screen out of
+semipermeable capsules. It was graduated out of `scratch.*` on 2026.08.24 and
+kept as written, because it records what was believed before any costing existed.
+
+The review reaches a different conclusion, and the difference is the point.
+The sketch assumed capsules; the review costs the two chemistries that have
+actually been run in a microbe, split-pool and droplet, and demotes SPC to the
+Outlook section because a capsule cannot be aliquoted and small molecules leak
+through a 30 nm pore. What survived unchanged is the framing: the estimand is a
+perturbation-by-gene matrix rather than a hit list.
+
 ## 2026.08.18 - Method Review and Costing for Microbial Perturb-seq
 
-Companion design sketch: [[scratch.2026.08.14.132048-spc-perturb-seq]] (Atrandi SPC +
+Companion design sketch: [[microbe-perturb-seq.spc-capseq-design-sketch]] (Atrandi SPC +
 CapSeq route). This note covers the **commodity, benchtop route** -- split-pool and
 droplet -- and prices it end to end.
 

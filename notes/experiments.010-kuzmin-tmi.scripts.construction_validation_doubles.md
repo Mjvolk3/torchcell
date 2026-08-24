@@ -19,7 +19,7 @@ size:
 
 - **Source:** `paper/notes/experiments.010-kuzmin-tmi.scripts.construction_validation_doubles.tex`
   (sections under `paper/notes/sections/construction-validation-doubles/`)
-- **PDF:** `paper/notes/experiments.010-kuzmin-tmi.scripts.construction_validation_doubles.pdf`
+- **PDF:** `notes/assets/pdf-output/experiments.010-kuzmin-tmi.scripts.construction_validation_doubles.pdf`
 - **Build:** `make -C paper/notes`
 
 It uses the manuscript's editing styling (`sn-jnl`, the `editing.pdf` page geometry), inherited

@@ -238,6 +238,11 @@ orphan.
   "Why all 65 and not just the 20 triples" section of
   [[experiments.W019-echo-crispr-array.build-list]], so nothing of substance was lost.
   The paths cited under "Files" and item 6 in the section above are therefore historical.
+- **Correction to item 1.** It says "0/10 significant in-panel digenics" for
+  `YLR312C-B`. The gene has **9** in-panel pairs, not 10, since the panel it was scored
+  against is the TEN set and a gene does not pair with itself. None of the 9 is
+  significant, so the substance is unchanged and only the denominator was wrong. Counted
+  from `experiments/010-kuzmin-tmi/results/construction_validation_doubles.csv`.
 - **Items 1, 2, 3, 5 stand as written** -- YLR312C-B in or out, tau not callable at this
   precision, the unbiased-mean assumption behind the 0.43 slope, and the plate contention
   with the replication round.

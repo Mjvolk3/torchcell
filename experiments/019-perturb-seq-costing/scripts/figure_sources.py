@@ -40,6 +40,10 @@ SCIFI = "scifi-fluidic-indexing"
 WORKFLOW = "perturb-seq-workflow"
 RRNA = "rrna-depletion-options"
 
+# ONLY draw.io figures appear here. The matplotlib figures (including the
+# library-ceiling and Poisson-primer panels added in review) carry their own
+# provenance: their scripts read the data, and the caption names the script.
+#
 # Every hand-drawn figure gets its own provenance table, keyed to the figure's
 # own \label so the table caption and the figure caption cross-reference by
 # NUMBER in both directions. Adding a figure means adding a row here and its

@@ -266,12 +266,32 @@ to undo a bias that uniform random cutting \emph{creates}.
 
 A 3$'$-counting single-cell assay is immune, and not because the cutting is
 uniform. It is immune because \emph{only one fragment per molecule can ever be
-sequenced}. A finished library molecule needs both flanking adapters to amplify
-and to cluster, and in these protocols the cell barcode and one handle sit at
-the same end. Cut a long cDNA into six pieces and five lose that handle; cut a
-short one into two and one loses it. Exactly one usable fragment survives per
-amplified copy, whatever the length, and UMI collapse then reduces all copies of
-one original molecule to a single count. Length drops out by construction.
+sequenced}. That is worth spelling out step by step, because ``the others are
+lost'' is the part that sounds arbitrary and is not.
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=1pt,topsep=2pt]
+\item Before fragmentation the cDNA carries the cell barcode and a PCR handle at
+  \emph{one} end only, the end built during barcoding. The far end carries
+  nothing at all.
+\item Fragmentation cuts it. A long molecule might give six pieces; exactly one
+  of them contains that barcoded end.
+\item Adapter ligation then puts a universal adapter on every freshly cut end,
+  so now every piece has an adapter. This is the step that makes the loss look
+  puzzling: at this moment all six pieces are adapter-flanked.
+\item The final PCR is what discriminates. It primes on the
+  \emph{barcode-side handle} at one end and the ligated adapter at the other, so
+  a fragment amplifies only if it has \emph{both}. The five pieces that lost the
+  barcoded end carry ligated adapter on both ends and no barcode handle, so that
+  PCR never amplifies them and they never reach the flow cell.
+\end{enumerate}
+
+So the surviving fragment is not the one that happened to be cut well. It is the
+one that still carries the cell's identity, and it is unique by construction
+because the barcode was only ever attached once. Cut a long cDNA into six pieces
+and five lose that end; cut a short one into two and one loses it. Exactly one
+usable fragment survives per amplified copy, whatever the length, and UMI
+collapse then reduces all copies of one original molecule to a single count.
+Length drops out by construction.
 
 Formally, if cuts fall as a Poisson process at rate $\lambda$, the distance from
 the barcode to the first cut is $\mathrm{Exponential}(\lambda)$, so the chance

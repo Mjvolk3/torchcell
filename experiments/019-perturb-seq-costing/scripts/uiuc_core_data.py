@@ -291,6 +291,126 @@ TURNAROUND = {
 }
 
 
+# --- Meeting with the core, 2026-08-23 ---------------------------------------
+# Alvaro Hernandez and Chris Wright, UIUC Roy J. Carver Biotechnology Center.
+#
+# A VERBAL source, and it is kept separate from the rate-card constants above
+# for that reason. The published page is a citable artifact with a retrieval
+# date; a meeting is a recollection, and several of these numbers disagree with
+# the page or are internally ambiguous. Every one is recorded as heard, with the
+# disagreement stated rather than silently reconciled -- a quietly "corrected"
+# number is exactly the failure the provenance rules exist to stop.
+#
+# Anything here that a budget consumes must be confirmed in writing first.
+
+MEETING_DATE = "2026-08-23"
+MEETING_WITH = ["Alvaro Hernandez", "Chris Wright"]
+
+
+class MeetingClaim(BaseModel):
+    """One thing the core said, and how far it can be trusted."""
+
+    topic: str
+    claim: str
+    status: str  # confirmed | conflicts-with-rate-card | ambiguous | unpriced
+    note: str = ""
+
+
+MEETING_CLAIMS: list[MeetingClaim] = [
+    MeetingClaim(
+        topic="quality control",
+        claim="Rely on the core for QC rather than doing it upstream.",
+        status="confirmed",
+        note="Consistent with the published page, which offers Qubit, Fragment "
+             "Analyzer and qPCR, and charges nothing for 10x test counts.",
+    ),
+    MeetingClaim(
+        topic="10x kit",
+        claim="The current kit is GEM-X Universal 5' Gene Expression.",
+        status="confirmed",
+        note="10x Genomics product, not Illumina. The rate card's depth "
+             "guidance names the 3' V3.1 GEM-X kit, so the core runs both "
+             "chemistries; which one a project uses is a per-project choice.",
+    ),
+    MeetingClaim(
+        topic="cell wall",
+        claim="About 1 uL of zymolyase can be added into the 10x system.",
+        status="confirmed",
+        note="This is the Jariani et al. in-droplet spheroplasting change "
+             "(Sec. 3.2), and the core volunteering it means the protocol does "
+             "not have to be argued for.",
+    ),
+    MeetingClaim(
+        topic="chip loading",
+        claim="The 10x chip takes three inputs per lane.",
+        status="confirmed",
+        note="Heard as 'oil, emulsion, master mix'. The three loaded rows are "
+             "the cell-containing master mix, the barcoded gel beads and the "
+             "partitioning oil; the emulsion is the product, not an input.",
+    ),
+    MeetingClaim(
+        topic="instrument purchase",
+        claim="Buy a 10x Chromium eventually if 10x is used heavily, rather "
+              "than paying the core per run.",
+        status="unpriced",
+        note="No instrument price was quoted. Sec. 5.5 shows library "
+             "preparation is 81% of the droplet budget, so this is the term it "
+             "would attack. Revisit after a first profiling run, not before.",
+    ),
+    MeetingClaim(
+        topic="cell counting",
+        claim="Getting the cell count right is the single most critical step; "
+              "use a dedicated cell counter.",
+        status="confirmed",
+        note="Heard as 'the Madigan lab's cell counter'; the exact instrument "
+             "was not written down and needs confirming. The published page "
+             "names the core's own counter as a Nexcelom Cellometer K2.",
+    ),
+    MeetingClaim(
+        topic="cell counting price",
+        claim="Test counts are about $153, and a few are not charged.",
+        status="conflicts-with-rate-card",
+        note="The published page says test counts are free without "
+             "qualification: 'There is no charge to run test counts ... None.' "
+             "The $153 may be a different service. Not used in any budget.",
+    ),
+    MeetingClaim(
+        topic="sequencing yield",
+        claim="A lane gives 3.82 billion.",
+        status="conflicts-with-rate-card",
+        note="The instruments page gives 3.2 billion READ PAIRS per NovaSeq X "
+             "25B lane, which is what every figure in this document is priced "
+             "on and what the 25B flow-cell naming implies (3.2B x 8 = 25.6B). "
+             "3.82 billion may be single reads, a different flow cell, or a "
+             "newer spec. The conservative 3.2B is retained.",
+    ),
+    MeetingClaim(
+        topic="Ultima",
+        claim="The core can run Ultima 'wafer' sequencing, which is not listed "
+              "on the public rate page.",
+        status="unpriced",
+        note="See ULTIMA_* below. Quoted at roughly $1,990 per lane, with a "
+             "figure of $3,310 mentioned for three lanes; the two cannot both "
+             "be per-lane rates and the discount structure was not written "
+             "down. No Ultima number is used in a budget.",
+    ),
+]
+
+# Ultima Genomics UG 100. Recorded because the core offers it, NOT because this
+# document prices anything on it. The read-structure facts come from the
+# published method paper, not from the meeting.
+ULTIMA_QUOTED_PER_LANE_USD = 1990.0
+ULTIMA_QUOTED_THREE_LANE_USD = 3310.0
+ULTIMA_PAIRED_END_AVAILABLE = False
+ULTIMA_READ_STRUCTURE_NOTE = (
+    "Single-end only on the UG 100; paired-end is announced for the UG200 "
+    "series. The '20 nt read 1, 90 nt read 2' heard in the meeting is not an "
+    "instrument limit: the machine emits one ~200-300 nt read and the pipeline "
+    "SPLITS it into a synthetic read 1 (cell barcode + UMI) and read 2, then "
+    "trims the cDNA to 90 bases."
+)
+
+
 def cost_for_read_pairs(n_read_pairs: float, option: SeqOption | None = None) -> float:
     """Cost of n read pairs, billed in whole lanes.
 

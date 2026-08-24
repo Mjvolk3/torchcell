@@ -213,7 +213,9 @@ discarded -- so the cost that matters is 20$\times$ higher
   Composed from the protocol as described in \cref{sec:brettner}, not traced from
   any published figure; every parameter shown is sourced there. Drawn at true
   Nature print size in
-  \file{notes/assets/drawio/splitseq-barcoding.drawio}.}{fig:splitseq}
+  \file{notes/assets/drawio/splitseq-barcoding.drawio}. Every number drawn by
+  hand in this figure is sourced in
+  \cref{tab:prov-splitseq-barcoding}.}{fig:splitseq}
 
 \notesec{Reading order follows assembly order} Each round ligates its barcode onto
 the free 5$'$ end of the growing strand, so later barcodes end up further from the
@@ -298,7 +300,7 @@ today, and Sec.~\ref{sec:application} uses the newer figures.
   is the current GEM-X/v3.1 chemistry priced in \cref{sec:application}; Jariani et
   al.\ demonstrated on 3$'$ v2, whose Read 1 is 26\,nt.
   Composed from the protocol as described in \cref{sec:jariani}, not traced from any
-  published figure. Every number drawn by hand in this figure is sourced in \cref{tab:figure-provenance}.}{fig:droplet}
+  published figure. Every number drawn by hand in this figure is sourced in \cref{tab:prov-droplet-10x-barcoding}.}{fig:droplet}
 
 \subsection{Combinatorial Fluidic Indexing (Datlinger et al., 2021)\secstatus{todo}}
 \label{sec:scifi}
@@ -332,7 +334,10 @@ the pair identifies a cell.
 \notesec{What was actually recovered} Occupancy is not yield, and the two are
 easy to conflate. The yield figure is a separate experiment: 383{,}000 preindexed
 nuclei into one channel returned \textbf{151{,}788} single-cell transcriptomes
-through quality control, a 15-fold increase over a standard Chromium run. That is
+through quality control, a 15-fold increase over a standard Chromium run. Their
+baseline for that ratio is a $\sim$10{,}000-cell run; against the 20{,}000 cells
+per channel the UIUC rate card quotes, the same recovery is 7.6-fold, and 7.6 is
+what every budget in this document uses. That is
 a recovery, not a capacity claim, which is the distinction that demoted the
 Gaisser row from \cref{fig:landscape}. Depth did not pay for it: UMI counts and
 unique-read fractions showed no downward trend in droplets holding up to 15
@@ -404,14 +409,15 @@ it rather than assuming it.
   to split-pool while the second barcode is supplied by a container.
   Composed from the protocol as described in \cref{sec:scifi}, not traced from any
   published figure. Every number drawn by hand in this figure is sourced in
-  \cref{tab:figure-provenance}. Drawn at true Nature print size in
+  \cref{tab:prov-scifi-fluidic-indexing}. Drawn at true Nature print size in
   \file{notes/assets/drawio/scifi-fluidic-indexing.drawio}.}{fig:scifi}
 
 %% The provenance table used to sit here, after the last hand-drawn figure. It
 %% now lives in the appendix AFTER the references (main.tex), because it is a
 %% thing to dig into rather than a thing to read: four pages of verbatim quotes
 %% between Sec. 3 and Sec. 4 interrupted the argument for every reader, in order
-%% to serve the one who is checking a number. \cref{tab:figure-provenance} still
+%% to serve the one who is checking a number. Each figure now has its OWN table
+%% (tab:prov-<slug>), which still
 %% resolves from every figure caption, so nothing is harder to find -- it is just
 %% no longer in the way.
 
@@ -472,6 +478,34 @@ pull in opposite directions, which is the tension Sec.~\ref{sec:multiplex}
 resolves.
 \end{keybox}
 
+%% The orienting figure. It is placed HERE, after the three method figures and
+%% before rRNA depletion, for a numbering reason as much as a narrative one: the
+%% draw.io canvases of Figs. 2-4 carry hardcoded cross-references to each other
+%% ("colors follow Figs. 2 and 3"), so inserting a figure earlier would silently
+%% falsify text baked into exported PDFs. Sec. 2.4 forward-references it.
+\tcfigfit[1.0]{figures/perturb-seq-workflow.pdf}{%
+  \textbf{The whole experiment, and where each stage costs you cells, molecules
+  or identity.} \textbf{(a)} The stages. Everything outside the shaded block is
+  common to both method families; only the way cell identity gets written
+  differs, which is the argument \cref{sec:brettner,sec:jariani,sec:scifi} make
+  in detail. Fragmentation is drawn as its own stage because its position
+  relative to rRNA depletion is what \cref{sec:rrna} corrects, and because it
+  determines what a count means. \textbf{(b)} The same physical cutting, with
+  opposite consequences. In bulk RNA-seq every piece of a molecule can be
+  sequenced, so a long transcript yields proportionally more reads and the
+  length has to be divided back out, which is what FPKM and TPM are for. In a
+  3$'$-counting single-cell assay only the barcode-proximal piece keeps the
+  outer handle, so exactly one fragment survives per amplified copy whatever the
+  length, and UMI collapse reduces the copies to one count. Length drops out by
+  construction; see \cref{sec:fragmentation}. \textbf{(c)} The funnel. A budget
+  is made of these fractions rather than of the chemistry: cells are lost at
+  recovery, at QC and at guide assignment, and reads are lost separately to
+  spike-in, to ribosomal sequence and to cells that are later discarded. Drawn
+  at true Nature print size in
+  \file{notes/assets/drawio/perturb-seq-workflow.drawio}. Every number drawn by
+  hand in this figure is sourced in
+  \cref{tab:prov-perturb-seq-workflow}.}{fig:workflow}
+
 \subsection{Ribosomal RNA Depletion\secstatus{todo}}
 \label{sec:rrna}
 
@@ -482,48 +516,174 @@ buy ribosomal sequence. Since sequencing is 81\% of the split-pool budget
 document -- worth about \$99{,}000 at genome scale -- and it is the reason
 depletion is treated here as a method component rather than an optimization.
 
-\notesec{Where it happens in the workflow} This is worth stating precisely,
-because there are three plausible points and only one is right. Depletion is
-\emph{not} performed on the cell before capture, and \emph{not} after Illumina
-indexing. It acts on the \textbf{amplified cDNA library}, after reverse
-transcription and the in-cell barcoding rounds, and before fragmentation and
-index PCR:
+\tcfigfit[1.0]{figures/rrna-depletion-options.pdf}{%
+  \textbf{Four rRNA-depletion chemistries, four places in the workflow, and one
+  head-to-head that went against the obvious choice.} \textbf{(a)} Where each
+  route acts. The step numbers are the microSPLiT
+  protocol's~\citep{gaisserHighthroughputSinglecellTranscriptomics2024}, and the
+  ordering is the correction this subsection makes: Cas9 depletion acts
+  \emph{after} fragmentation and \emph{after} indexing, on a sequencing-ready
+  library, not before either. \textbf{(b)} What each route does to the molecule
+  and what it measured. The four differ in what they act on, which is why they
+  cannot be compared as variants of one recipe. \textbf{(c)} Why a cut destroys
+  a finished library molecule: both flanking adapters are needed to amplify and
+  to cluster, so each half of a cut molecule retains only one and neither
+  survives the P5/P7 re-amplification. This is what makes depleting so late
+  coherent, and it is the same mechanism \cref{sec:fragmentation} uses to
+  explain why a mid-barcode cut causes loss rather than corruption. Drawn at
+  true Nature print size in
+  \file{notes/assets/drawio/rrna-depletion-options.drawio}. Every number drawn by
+  hand in this figure is sourced in
+  \cref{tab:prov-rrna-depletion-options}.}{fig:rrna}
+
+\notesec{Four chemistries, not one} The literature this document draws on uses
+four distinct operations, and they differ in what they act on, when they act,
+and what they cost. Treating them as one recipe is the mistake this subsection
+used to make, and it hid a head-to-head result that argues against the obvious
+choice. \Cref{fig:rrna} draws all four on one workflow axis.
+
+\begin{enumerate}
+\item \textbf{Cas9 cleavage of rRNA-derived cDNA}, in the finished library.
+  Brandner et al.\ \citep{brandnerPooledSinglecellCRISPRa2025} designed 253 sgRNA
+  spacers -- selected from 824 candidates mapping to rRNA -- against the 5S, 16S
+  and 23S sequences of \org{E.\ coli} and \org{P.\ putida}, ``weighted
+  proportionally to the regions in the rRNA that appeared more frequently during
+  NGS after microSPLiT.'' That weighting is the ``sequencing-guided'' part of
+  their name, and it exists because in-situ reverse transcription gives
+  non-uniform rRNA coverage. 100\,pmol of transcribed sgRNA is pre-incubated
+  with 10\,pmol spCas9, then 30\,ng of library is added and digested at
+  37\,\textdegree C for 2\,h. The lineage is DASH~\citep{guDepletionAbundantSequences2016}
+  and its bacterial adaptation~\citep{prezzaImprovedBacterialRNAseq2020}.
+\item \textbf{RNase H digestion of rRNA:DNA hybrids}, after a round trip through
+  RNA. Wang et al.'s M3-seq \citep{wangSinglecellMassivelyparallelMultiplexed2023}
+  appends a T7 promoter by PCR, transcribes the library to single-stranded RNA,
+  anneals rRNA-complementary DNA probes, and cleaves the RNA strand of each
+  hybrid with thermostable RNase H; DNase I then removes the probes and a second
+  reverse transcription returns the survivors to cDNA.
+\item \textbf{In-situ enzymatic depletion}, on the cell, before amplification.
+  BacDrop does this. M3-seq describes it as acting ``on unamplified transcripts
+  before indexing'' and judges that it ``risks digesting non-rRNA transcripts.''
+\item \textbf{Not depleting, but priming differently.} Brettner et al.\ prime
+  with both oligo-dT and random hexamers, and it is the hexamers that pick up
+  rRNA, since rRNA is not polyadenylated. Shifting the hexamer:dT ratio is
+  enrichment rather than depletion -- nothing is destroyed, the assay simply
+  stops reaching for it.
+\end{enumerate}
+
+\notesec{Where it happens in the workflow, corrected} An earlier version of this
+subsection placed depletion before fragmentation and before indexing, and argued
+that it had to be there. Both halves were wrong, and the correction matters
+because it changes what a protocol has to look like. Brandner et al.\ state their
+input exactly: ``the mapSPLiT cDNA library (from after the final double-sided
+size selection, step 171 in Gaisser et al.).'' In the microSPLiT
+protocol~\citep{gaisserHighthroughputSinglecellTranscriptomics2024} fragmentation
+is steps 134--139, adapter ligation 152--154, index PCR 156--157, and the final
+double-sided size selection 158--170, with step 171 the QC that follows it. So
+the material entering the Cas9 reaction is a fully fragmented, adapter-ligated,
+indexed, size-selected, sequencing-ready library:
 
 \begin{center}\footnotesize
-capture $\rightarrow$ barcode $\rightarrow$ lyse $\rightarrow$ cDNA
-$\rightarrow$ \textbf{deplete} $\rightarrow$ fragment $\rightarrow$ index
+cDNA $\rightarrow$ fragment $\rightarrow$ ligate adapters $\rightarrow$ index
+$\rightarrow$ \textbf{deplete (Cas9)} $\rightarrow$ re-amplify P5/P7
 $\rightarrow$ sequence
 \end{center}
 
-Two constraints force that position. Ribosomal RNA cannot be removed before
-capture without also stripping the ribosomes whose footprint the in-situ
-chemistry depends on, and the cell barcode must already be attached or depletion
-would discard cell identity along with the rRNA. Equally it must precede
-indexing, because the entire point is to avoid paying to sequence those
-molecules. Brandner et al.\ \citep{brandnerPooledSinglecellCRISPRa2025} do exactly this: the
-purified cDNA library is incubated with recombinant Cas9 and a pool of guides
-targeting rRNA, cleaving rRNA-derived cDNA so it no longer amplifies. Wang et
-al.'s M3-seq \citep{wangSinglecellMassivelyparallelMultiplexed2023} places the
-same operation at the same point and builds a whole platform around it, which is
-the strongest evidence that this position in the workflow is the right one rather
-than merely a convenient one.
+\pfstep{Why depleting that late works at all} A finished Illumina molecule needs
+both flanking adapters: P5 at one end, P7 at the other. Cut it anywhere in the
+middle and each half retains only one, so neither half amplifies exponentially
+and neither clusters. Cas9 does not remove rRNA from the tube -- the mass is
+still there -- it makes those molecules un-amplifiable, and the P5/P7 qPCR that
+follows selectively re-amplifies the survivors. Depletion here is a
+\emph{selection}, not a purification, and it is coherent only because the
+molecules are already adapter-flanked. That is the same mechanism
+\cref{sec:fragmentation} describes for why a mid-barcode cut causes loss rather
+than corruption.
 
-\notesec{Two independent levers, and they compose} The first is free. Brettner
-et al.\ prime with both oligo-dT and random hexamers, and it is the hexamers that
-recover rRNA; the 5$'$ coverage they buy is worthless for a 3$'$-counting screen,
-so shifting the hexamer:dT ratio costs nothing but a titration. The second is the
-Cas9 depletion above, which adds reagents but little labor.
+M3-seq reaches the same end by a different road, and cannot use the
+cut-the-adapters trick because it converts the library to RNA first. There the
+rRNA is digested into pieces and the subsequent reverse transcription off a P5
+primer simply never regenerates them.
 
-\notesec{How much it is worth, and the caveat} Brandner et al.\ took
+\notesec{The head-to-head, which argues against the obvious choice} This
+subsection previously cited M3-seq as corroborating the Cas9 route. It does the
+opposite. Wang et al.\ tested both and chose RNase H: ``after testing two
+approaches for depleting ribosomal sequences from bulk libraries (Extended Data
+Fig.~3a--c), we chose an RNase H-based approach to complete our pipeline.'' Their
+Cas9 arm left 75--80\% rRNA in the final library. The two published Cas9 results
+are therefore not consistent with each other -- Brandner et al.\ reach 60.2\%
+mRNA in \org{E.\ coli}, Wang et al.\ reach 20--25\% -- and the difference is
+plausibly the guide pool, since Brandner's is coverage-weighted against their own
+sequencing and Wang's is not described as being. That is a reason to treat guide
+design as the active ingredient rather than the enzyme.
+
+\notesec{The in-situ options were tested and lost, on a different axis} Kuchina
+et al.\ tried three before settling: polyadenylation with \org{E.\ coli} poly(A)
+polymerase, a 5$'$-phosphate-dependent exonuclease (``Terminator''), and RT with
+rRNA-specific probes followed by RNase H. PAP won, ``about 2.5-fold, or about
+7\% of total RNA'' enrichment of mRNA reads. Note what that means: the best
+in-situ result in the microbial literature is a 2.5-fold enrichment, against the
+13-fold Brandner et al.\ get post-hoc. M3-seq's stated reason for avoiding
+in-situ work is that ``depletion of rRNA in situ can decrease mRNA capture
+efficiency.'' In-situ depletion is not impossible -- BacDrop does it -- it is a
+trade of capture efficiency for read economy, and the published trade is
+unfavourable.
+
+\notesec{How much it is worth, and the transfer risk} Brandner et al.\ took
 \org{E.\ coli} from 4.6\% to 60.2\% mRNA, a 13-fold improvement, and median mRNA
 transcripts per cell more than doubled from 54 to 115. But the same protocol in
 \org{P.\ putida} moved only 2.2\% to 10.4\%. Depletion efficiency clearly does
 not transfer between organisms for free, since the guide pool is designed against
 one species' rRNA and against the coverage non-uniformity of one protocol. Yeast
 should be better than either bacterium -- it starts at $\sim$85\% rRNA rather
-than $>$95\%, and its rRNA genes are fewer and better annotated -- but the
-achieved figure has to be measured, and it is the single most valuable number the
-pilot can return (Sec.~\ref{sec:bottlenecks}).
+than $>$95\% -- but the achieved figure has to be measured, and it is the single
+most valuable number the pilot can return (Sec.~\ref{sec:bottlenecks}).
+
+\notesec{A reporting convention sits underneath the headline number, and the
+cost argument survives it} The 93.7\% is not purely a biochemical fact. Gaisser
+et al.\ warn that comparing mRNA against rRNA fractions across methods ``will
+depend on whether non-uniquely-aligned UMIs were retained during the analysis,''
+because rRNA operons are multi-copy and most aligners discard multi-mappers by
+default. The swing is enormous: discarding them moves Kuchina et al.'s apparent
+mRNA fraction from 9.5\% to 90.5\% in \org{B.\ subtilis} and from 3.7\% to
+28.2\% in \org{E.\ coli}. Yeast is if anything more exposed, since the rDNA
+repeat at \gene{RDN1} is a tandem array of order a hundred copies, so nearly
+every rRNA read is a multi-mapper.
+
+Two things keep the cost argument intact. Brettner et al.\ retained multi-mappers
+-- their aligner is STARsolo and they state they ``used the most basic uniform
+multi-mapping algorithm'' -- which is the same convention microSPLiT uses, so the
+yeast and bacterial figures are on the same side of it and are comparable. More
+importantly the confound is a \emph{denominator} choice made after sequencing,
+and the budget question is about \emph{reads purchased}. A read off an rRNA
+molecule was paid for whether the aligner assigns it uniquely, splits it, or
+throws it away; discarding multi-mappers removes rRNA from the count matrix, not
+from the invoice. Kuchina et al.\ say as much in passing, noting that when they
+discarded multiply aligned reads ``mRNA UMI counts per cell were not strongly
+affected'' even as the ratio moved by an order of magnitude.
+
+The read-level number exists and it corroborates the lever: Gaisser et al.\ state
+that the uniquely aligned fraction in a STAR log ``typically corresponds to the
+mRNA proportion in the library'' and ``usually falls between 3\% and 12\%,''
+with 11.9\% to 12.0\% measured on their own \org{B.\ subtilis} data under both
+counting policies. Brettner et al.'s 5.75\% sits inside that band, and the
+invariance across policies is exactly what the argument above predicts.
+
+\notesec{Which route to try first in yeast} The RNase H route is the better
+starting point, for a construction reason rather than a performance one.
+Brandner et al.'s Cas9 pool is species-specific \emph{and} protocol-specific: its
+253 spacers are weighted by the rRNA coverage their own runs produced, so porting
+it to yeast means redesigning the pool and then re-titrating it against yeast
+coverage that does not exist yet. A probe set against 18S, 25S, 5.8S and 5S is by
+contrast a design problem with a known answer -- yeast rRNA is a small, well
+annotated set of sequences -- and the same probes work regardless of which
+priming chemistry produced the coverage. The counter-argument is real and worth
+stating: RNase H costs an IVT and two extra enzymatic steps against Cas9's single
+2\,h incubation, and Brandner et al.'s route has been run on a split-pool library
+of exactly the kind proposed here while M3-seq's has not. \textbf{Hypothesis
+(untested):} in yeast the probe route reaches a higher mRNA fraction than a
+first-pass Cas9 pool, because the yeast rDNA repeat gives fewer distinct target
+sequences to cover. Nothing measures this yet, and \cref{sec:bottlenecks} ranks
+it accordingly.
 
 \begin{keybox}
 \textbf{Treat depletion as mandatory, not optional.} Without it the genome-scale
@@ -534,8 +694,10 @@ becomes balanced. No other change in this document moves the total by as much.
 \subsection{Perturbation Identity Capture\secstatus{todo}}
 \label{sec:guide-capture}
 
-Both families above assume the guide can be read out of the cell. In yeast, as our
-library stands, it cannot.
+Both families above assume the guide can be read out of the cell. In yeast that
+has been the hardest assumption in the document to satisfy, and this subsection
+reaches a different conclusion from the one it used to: the obstacle is real for
+a 3$'$ assay and may not exist at all for a 5$'$ one.
 
 Guide RNAs are transcribed from RNA polymerase III promoters -- \gene{SNR52}
 upstream, \gene{SUP4} terminator -- so they are neither capped nor polyadenylated
@@ -545,10 +707,57 @@ library uses exactly this architecture and reads out by plasmid amplicon
 sequencing, not RNA~\citep{lianMultifunctionalGenomewideCRISPR2019}; our
 reprocessing of it is \file{experiments/016-lian-magic-reprocess}.
 
-The mammalian workarounds do not transfer. 10x direct capture requires a modified
-sgRNA scaffold carrying a capture sequence; CROP-seq \citep{datlingerPooledCRISPRScreening2017} relies on the guide cassette
-being duplicated into a lentiviral 3$'$ LTR, which is a retroviral trick with no
-yeast equivalent.
+One mammalian workaround has no yeast equivalent at all: CROP-seq
+\citep{datlingerPooledCRISPRScreening2017} relies on the guide cassette being
+duplicated into a lentiviral 3$'$ LTR, which is a retroviral trick. The other,
+10x's direct capture, turns out to depend on which assay is meant, and that
+distinction was missed in an earlier version of this subsection.
+
+\notesec{The 3$'$ and 5$'$ assays capture guides by different mechanisms, and
+only one of them requires rebuilding the library} On the 3$'$ assay the guide is
+caught by a capture sequence on the gel-bead oligo, so 10x require that
+``sgRNAs should be engineered containing either Capture Sequence 1 or Capture
+Sequence 2''\external{10x CG000316}. For an existing genome-scale yeast library
+that means resynthesising every guide, which is the reading this document has
+been working from.
+
+The 5$'$ assay does something else. Capture is by a primer against the sgRNA
+scaffold, carried in the reverse-transcription mix alongside the poly-dT primer:
+``For CRISPR screening, a PCR-based approach is used to capture the single-guide
+RNA (sgRNA), which is reverse transcribed''\external{10x CG000735}. The stated
+requirement is architectural rather than a modification: ``sgRNAs should be
+engineered for use with standard Cas9 systems with a protospacer on the 5$'$
+end,'' and the capture-sequence route is offered as an additional option rather
+than a prerequisite. A conventional Pol III sgRNA cassette, including ours, has
+exactly that architecture. The cell barcode reaches the guide the same way it
+reaches any transcript on a 5$'$ assay, by template switching at the 5$'$ end,
+which puts the protospacer immediately downstream of the barcode and UMI where
+read 2 can see it.
+
+\begin{keybox}
+\textbf{This is the most consequential thing in this document that we did not
+previously know, and the core already runs the kit.} If the 5$'$ scaffold primer
+reverse transcribes a yeast Pol III guide, then perturbation identity is
+readable from an \emph{unmodified} library, and \cref{sec:guide-capture}'s
+construction project collapses into a pilot measurement. Two things have to be
+true and neither is established. The primer set is proprietary and validated
+against the standard \gene{SpCas9} scaffold, and 10x say plainly that
+``alternate sgRNA structures \dots\ have not been tested''\external{10x
+CG000735}, so our scaffold has to match theirs. And a yeast Pol III transcript
+is not polyadenylated, so the poly-dT half of that primer mix contributes
+nothing and capture rests entirely on the scaffold primer.
+\textbf{Hypothesis (untested):} it works, because the guide is an ordinary RNA
+with the right 5$'$ architecture and the assay never needed the poly(A) tail for
+this molecule. Testing it needs one channel and an existing library, which makes
+it the cheapest high-value experiment named anywhere in this document.
+\end{keybox}
+
+Two practical numbers follow if it does work. The guide library is sequenced far
+more shallowly than the transcriptome, at a minimum of 5{,}000 read pairs per
+cell against 20{,}000 for gene expression, and 10x warn against sequencing it on
+its own\external{10x CG000735}, so it is pooled with the expression library
+rather than being a separate submission. The reads are cheap; the risk is
+entirely in whether the chemistry engages.
 
 \notesec{The gap has closed for deletions, and that changes the risk} The 2024
 review states plainly that no genome-scale system in yeast lets a genetic

@@ -22,7 +22,7 @@
         <mxCell id="title" value="Yeast scRNA-seq methods: what separates the cells, and which molecule carries the cell barcode" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="0" width="698" height="15" as="geometry" />
         </mxCell>
-        <mxCell id="subtitle" value="A redrawing of Fig. 1 of Nadal-Ribelles 2024, reorganized around the one question that separates the library types. Every molecule is drawn in a single fixed orientation, 5&#8242; left to 3&#8242; right with P5 always on the left, and colors are those of Figs. 1 and 2." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+        <mxCell id="subtitle" value="A redrawing of Fig. 1 of Nadal-Ribelles 2024, reorganized around the one question that separates the library types. Every molecule is drawn in a single fixed orientation, 5&#8242; left to 3&#8242; right with P5 always on the left, and colors are those of Figs. 2 and 3." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="17" width="698" height="24" as="geometry" />
         </mxCell>
 

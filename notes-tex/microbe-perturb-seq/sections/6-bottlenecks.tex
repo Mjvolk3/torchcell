@@ -13,9 +13,13 @@ two.
 \label{sec:ranked}
 
 \pfstep{1. Guide capture (blocking)} Nothing else matters until guide identity is
-recoverable from a poly(A) readout (Sec.~\ref{sec:guide-capture}). It is a
-construction problem rather than a cost problem, and it now has a published yeast
-template. Let $q$ be the \emph{per-guide detection rate} -- the probability that
+recoverable from the RNA (Sec.~\ref{sec:guide-capture}). It has been treated here
+as a construction problem rather than a cost problem, with a published yeast
+template, and it may turn out not to be one: the 5$'$ assay captures guides with
+a primer against the sgRNA scaffold rather than with an engineered capture
+sequence, so an unmodified library might already be readable. Test that first,
+because it costs one channel and it decides whether anything has to be built at
+all. Let $q$ be the \emph{per-guide detection rate} -- the probability that
 one guide present in a cell is actually seen in that cell's reads. A $k$-plex cell
 is only usable if all $k$ of its guides are detected, so the usable fraction is
 $q^{k}$, and the whole feasibility of multiplexing turns on which $q$ we inherit.
@@ -79,6 +83,69 @@ stating rather than leaving implicit, because the cost figure is attractive
 enough to invite reordering it, and the figure and the evidence run opposite
 ways.
 
+\subsection{The Host Organism, and Why the First Experiment Carries No
+Perturbations\secstatus{todo}}
+\label{sec:host}
+
+Everything above is written for \org{S.\ cerevisiae}. The intended production
+host is \org{Pichia kudriavzevii}, the same species as \org{Issatchenkia
+orientalis} and as the clinical isolate \org{Candida krusei}, whose genomes are
+``collinear \dots\ 99.6\% identical in DNA
+sequence''~\citep{douglassPopulationGenomicsCandida2018}. Moving there changes
+the risk profile sharply, and in a direction that decides what to run first.
+
+\notesec{What exists} A complete reference genome, five chromosomes and
+10.8\,Mb with 5{,}139 protein-coding genes annotated, so read alignment and
+guide design are not obstacles. Catalytic Cas9 works well: an \gene{ADE2}
+disruption efficiency of 97.0\% using an \gene{RPR1}$'$-tRNA$^{\text{Leu}}$
+promoter for the sgRNA, and multiplexed deletions at 72.8\% to 89.9\% for pairs
+and 46.7\% for a triple~\citep{tranDevelopmentCRISPRCas9Based2019}. A landing-pad
+system reaches greater than 80\% integration efficiency at 27 characterized loci
+and supports simultaneous integration of two to five
+genes~\citep{fatmaLandingPadSystem2023}.
+
+\notesec{What does not exist, and it is most of what this document assumes}
+There is no published dCas9 CRISPRi or CRISPRa system in this organism: every
+CRISPR result above is catalytic knockout or integration. Episomal plasmids are
+mitotically unstable, with about 55\% of cells still expressing a plasmid-borne
+reporter after five days~\citep{tranDevelopmentCRISPRCas9Based2019}, which is a
+problem for the delivery route of \cref{sec:delivery} specifically; a
+centromere-like sequence found in the same organism improves plasmid stability
+and is the obvious thing to build
+on~\citep{caoGeneticToolboxMetabolic2020}. And the only
+transformation-efficiency anchor available, roughly $10^{3}$ colony-forming
+units per microgram, is three to five orders of magnitude below what
+\org{S.\ cerevisiae} achieves. \Cref{sec:library-ceiling} showed that library
+scale is set by transformation; if that figure is representative, pooled
+library-scale screening in this host is not currently reachable and the gap is
+not one a budget closes. The published strain used by the bioproduction
+community is also diploid, which changes what a single guide does and what a
+knockout means.
+
+\begin{keybox}
+\textbf{Which is exactly why the first experiment should carry no perturbations.}
+A plain single-cell RNA-seq run on \org{P.\ kudriavzevii}, with no library and no
+guides, depends on none of the missing genetics. It tests the three things that
+are genuinely uncertain about moving host: whether the cell wall yields to the
+in-droplet zymolyase of \cref{sec:jariani} in this species, how many mRNA UMIs
+per cell are recovered, and what fraction of reads is ribosomal. The third is the
+number \cref{sec:rrna} identifies as the largest cost lever in the document, and
+it is a proportion, so it is answerable at any sequencing depth. Running this
+first also means the guide-capture question of \cref{sec:guide-capture} can be
+settled in \org{S.\ cerevisiae}, where the library already exists, in parallel
+rather than in sequence.
+\end{keybox}
+
+\notesec{A MiSeq is enough for it, and that is unusual here} \Cref{sec:sequencing}
+argued that the core's instruments leave a hole exactly where a pilot wants to
+sit, and that a small run either wastes a NovaSeq lane or gets redesigned down.
+A no-perturbation feasibility run is the case that fits in the small half. One
+MiSeq i100 25\,M paired-end run supports roughly 1{,}250 cells at 10x's
+recommended 20{,}000 read pairs per cell, or about 5{,}000 cells at a quarter of
+that depth. Neither is a dataset worth analysing biologically, and both answer
+the three questions above. It is the one point in this document where the cheap
+instrument is the right one rather than a compromise.
+
 \subsection{Staged Execution Plan\secstatus{todo}}
 \label{sec:staging}
 
@@ -86,10 +153,22 @@ ways.
 %% guide-capture construct is chosen. Sketch only.
 
 \begin{enumerate}[leftmargin=1.4em,itemsep=2pt,topsep=2pt]
-  \item \textbf{Construct and validate the poly(A) guide barcode} in an arrayed
-    set of $\sim$10 strains with known knockdown phenotypes, scored against bulk
-    RNA-seq from the same strains. Ground truth is only available while the design
-    is arrayed; a pool cannot tell you what was in a given cell.
+  \item \textbf{Unperturbed \org{P.\ kudriavzevii} on one MiSeq run}
+    (\cref{sec:host}). No library, no guides, no dependence on genetics that do
+    not exist in this host yet. It returns the wall-digestion verdict, the mRNA
+    UMIs per cell, and the ribosomal fraction, which is the largest cost lever in
+    the document. This is the current first experiment.
+  \item \textbf{Test 5$'$ guide capture on the existing
+    \org{S.\ cerevisiae} library}, in parallel with step 1 rather than after it,
+    because it uses a different organism and a library that already exists. One
+    channel on the core's GEM-X 5$'$ kit answers whether the scaffold primer
+    reverse transcribes an unmodified Pol III guide (\cref{sec:guide-capture}).
+    If it does, the construction project below is not needed.
+  \item \textbf{Construct and validate the poly(A) guide barcode}, \emph{only if
+    step 2 fails}, in an arrayed set of $\sim$10 strains with known knockdown
+    phenotypes, scored against bulk RNA-seq from the same strains. Ground truth
+    is only available while the design is arrayed; a pool cannot tell you what
+    was in a given cell.
   \item \textbf{Establish the chemistry numbers} the model is most sensitive to:
     mRNA fraction after depletion, cells per RT well, guide-assignment rate $q$,
     the read-depth saturation curve, and -- from the same data, at no extra cost -- the transcriptome share $p_j$ of a few representative target genes, which
@@ -98,10 +177,10 @@ ways.
     \$3{,}180 NovaSeq lane, and there is no earlier checkpoint -- Brettner et al. is
     explicit that cDNA traces and library concentration do not predict barcoding
     success.
-  \item \textbf{Answer the preindexing question from data step 2 already
+  \item \textbf{Answer the preindexing question from data step 4 already
     produces}, at no additional cost. Whether a fixed, wall-digested yeast cell
     reverse transcribes in situ and then survives handling is measured by the
-    round-1 step of the split-pool pilot; what step 2 does not answer is whether
+    round-1 step of the split-pool pilot; what step 4 does not answer is whether
     such a cell survives the pressures of a microfluidic chip, which is one
     channel to test and is the only part of Sec.~\ref{sec:scifi} with no yeast
     precedent at all. Worth running only if step 1 or step 3 goes badly, because
@@ -163,9 +242,7 @@ physically arraying sorted capsules into wells so that position encodes identity
 before this becomes a plan. Isotope labeling for flux sits downstream of solving
 that.
 
-\notesec{Environments as a second axis} The perturbation and environment axes are
-independent, so a screen is really a choice of subset of $\mathcal{L}\times
-\mathcal{E}$, and environments multiply cell demand linearly. Since split-pool
-uses the round-1 barcode for sample identity and a pooled screen needs only one
-sample, that plate's multiplexing capacity is free for environments -- which is
-the axis that most enlarges the design space for model training.
+\notesec{Environments as a second axis} Treated in full in
+\cref{sec:environments}, which is where the arithmetic sits: environments
+multiply cell demand linearly where named gene combinations grow quadratically,
+and split-pool's round-1 plate already has the barcode capacity to carry them.

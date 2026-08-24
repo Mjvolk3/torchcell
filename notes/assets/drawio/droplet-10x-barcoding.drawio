@@ -24,7 +24,7 @@
         <mxCell id="title" value="Droplet barcoding (10x Chromium): cell identity is bought with a container, not built into the sequence" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="0" width="702" height="15" as="geometry" />
         </mxCell>
-        <mxCell id="subtitle" value="Yeast-adapted 10x Chromium of Jariani 2020 Panels read a to c: the container is made, the wall comes off inside it, and a barcoded molecule comes out. Segment colors and the 5&#8242;-to-3&#8242; convention are those of Fig. 1, so the two methods can be compared directly." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+        <mxCell id="subtitle" value="Yeast-adapted 10x Chromium of Jariani 2020 Panels read a to c: the container is made, the wall comes off inside it, and a barcoded molecule comes out. Segment colors and the 5&#8242;-to-3&#8242; convention are those of Fig. 2, so the two methods can be compared directly." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="17" width="702" height="24" as="geometry" />
         </mxCell>
 
@@ -150,7 +150,7 @@
         <mxCell id="pc" value="c" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="268" width="10" height="12" as="geometry" />
         </mxCell>
-        <mxCell id="pch" value="One bead delivers the whole address at once &#8211; compare Fig. 1, where it arrives in three instalments" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="pch" value="One bead delivers the whole address at once &#8211; compare Fig. 2, where it arrives in three instalments" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="13" y="268" width="600" height="12" as="geometry" />
         </mxCell>
 
@@ -276,7 +276,7 @@
         </mxCell>
 
         <!-- ============================ BOTTOM NOTE ========================== -->
-        <mxCell id="note" value="&lt;b&gt;Both families put the barcode on the reverse-transcription primer; what differs is the thing that holds one cell's molecules together.&lt;/b&gt; Split-pool uses the fixed cell as the vessel and writes the address over three ligation rounds (Fig. 1); droplet rents an oil-walled container and delivers a 16 nt bead barcode plus a 12 nt UMI in one step, which is why its run needs 118 cycles against 160. The container is also the constraint: it must exist before the wall comes off, and it is paid for per channel." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+        <mxCell id="note" value="&lt;b&gt;Both families put the barcode on the reverse-transcription primer; what differs is the thing that holds one cell's molecules together.&lt;/b&gt; Split-pool uses the fixed cell as the vessel and writes the address over three ligation rounds (Fig. 2); droplet rents an oil-walled container and delivers a 16 nt bead barcode plus a 12 nt UMI in one step, which is why its run needs 118 cycles against 160. The container is also the constraint: it must exist before the wall comes off, and it is paid for per channel." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
           <mxGeometry x="0" y="416" width="702" height="35" as="geometry" />
         </mxCell>
 

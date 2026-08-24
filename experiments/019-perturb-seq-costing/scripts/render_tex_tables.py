@@ -30,6 +30,7 @@ import figure_sources as FS
 import glossary as GL
 import method_data as MD
 import read_structure as RS
+import scaling_analysis as SA
 import uiuc_core_data as UC
 from cost_per_cell_table import CITE, library_prep_table, loaded_table
 
@@ -978,25 +979,50 @@ def t16() -> None:
 
 # --- t15 (figure provenance) -------------------------------------------------
 def t15() -> None:
-    """Where every number drawn by hand in Figs. 1--4 comes from.
+    """Where every number drawn by hand in each draw.io figure comes from.
 
     A matplotlib panel needs no such table: its script read the data. A draw.io
     canvas has numbers typed into it, and nothing in the exported PDF connects
     them to a source. This is that connection, and it is rendered rather than
     kept in a comment so a reader can check a figure without our library.
+
+    ONE TABLE PER FIGURE. It used to be a single table covering Figs. 1-4, and
+    that was worse in a specific way: the caption could only name a *range*, so
+    a reader arriving from Fig. 3's caption landed on a table about four
+    figures and had to hunt for the right block. Per-figure tables let the
+    figure caption and the table caption cross-reference each other by number.
+    Adding a figure means adding a row to FS.FIGURES; this function loops.
     """
+    by_fig: dict[str, list] = {}
+    for r in FS.RECORDS:
+        by_fig.setdefault(r.figure, []).append(r)
+
+    lines: list[str] = []
+    for spec in FS.FIGURES:
+        recs = by_fig.get(spec.slug)
+        if not recs:
+            # Registered but not yet drawn. figure_sources.check() reports this
+            # as a problem; emitting an empty table here would only make the
+            # appendix look complete when it is not.
+            continue
+        lines += _provenance_table(spec, recs)
+    emit("t15-figure-provenance", "\n".join(lines))
+
+
+def _provenance_table(spec, recs: list) -> list[str]:
+    """One longtable for one hand-drawn figure."""
     lines = [
         r"\begingroup\scriptsize",
         r"\setlength{\LTleft}{0pt}\setlength{\LTright}{0pt}",
         r"\begingroup\captionsetup{type=table}",
-        r"\captionof{table}[]{Provenance for every number drawn by hand in "
-        r"Figs.~\ref{fig:methods-map}--\ref{fig:scifi}. The matplotlib figures "
-        r"are omitted because their generating scripts read the data directly. A "
-        r"\textbf{note} marks a number that needed a judgement call or that was "
-        r"corrected in review; an entry with no citation key is not backed by the "
-        r"library mirror and should not be quoted. Generated from "
+        rf"\captionof{{table}}[]{{Provenance for Fig.~\ref{{{spec.tex_label}}}, "
+        rf"{esc(spec.title)}: every number drawn by hand on that canvas, and the "
+        r"sentence it comes from. A \textbf{note} marks a number that needed a "
+        r"judgement call or that was corrected in review; an entry with no "
+        r"citation key is not backed by the library mirror and should not be "
+        r"quoted. Generated from "
         r"\file{experiments/019-perturb-seq-costing/scripts/figure_sources.py}.}"
-        r"\label{tab:figure-provenance}",
+        rf"\label{{tab:prov-{spec.slug}}}",
         r"\endgroup",
         # Column boundaries are EXPLICIT @{\hspace{...}} rather than the
         # default \tabcolsep, and the widths are unbalanced on purpose. With
@@ -1014,22 +1040,17 @@ def t15() -> None:
         r"\midrule",
         r"\endfirsthead",
         r"\multicolumn{3}{@{}l}{\scriptsize\itshape "
-        r"Table~\ref{tab:figure-provenance}, continued}\\",
+        rf"Table~\ref{{tab:prov-{spec.slug}}}, continued}}\\",
         r"\toprule",
         r"Element & As drawn & Source \\",
         r"\midrule",
         r"\endhead",
         r"\bottomrule",
         r"\endlastfoot",
+        r"\multicolumn{3}{@{}l}{\bfseries "
+        rf"{esc(spec.slug)}.drawio}} \\*[1pt]",
     ]
-    cur = None
-    for r in FS.RECORDS:
-        if r.figure != cur:
-            cur = r.figure
-            lines.append(
-                r"\multicolumn{3}{@{}l}{\bfseries "
-                rf"{esc(cur)}.drawio}} \\*[1pt]"
-            )
+    for r in recs:
         src = rf"``{esc(r.quote)}''"
         if r.citation_key:
             loc = rf"\,\texttt{{(md:{r.line})}}" if r.line else ""
@@ -1042,14 +1063,105 @@ def t15() -> None:
             rf"{esc(r.element)} & \texttt{{{esc(r.value)}}} & {src} \\"
         )
         lines.append(r"\addlinespace[2.5pt]")
-    lines += [r"\end{longtable}", r"\endgroup"]
-    emit("t15-figure-provenance", "\n".join(lines))
+    lines += [r"\end{longtable}", r"\endgroup", r"\vspace{0.6em}"]
+    return lines
+
+
+# --- t17 (route-B delivery) --------------------------------------------------
+def t17() -> None:
+    """Zero-truncated Poisson operating points for multi-plasmid guide delivery.
+
+    The column that carries the argument is the last one: at every operating
+    point a substantial minority of selected cells carry exactly one guide, so
+    `k` in a design equation is an average over a spread, not a setting.
+    """
+    targets = [1.5, 2.0, 3.0, 5.0, 8.0]
+    pts = SA.delivery_table(6000, targets)
+    rows = []
+    for t, p in zip(targets, pts):
+        rows.append(" & ".join([
+            f"{t:.1f}",
+            f"{p.lam:.2f}",
+            f"{p.mean_distinct:.3f}",
+            f"{100 * p.p_exactly_1:.1f}\\%",
+            f"{100 * p.p_at_least_2:.1f}\\%",
+        ]))
+    emit("t17-delivery", table(
+        spec="rrrrr",
+        header=(r"Target mean & Poisson & Distinct guides & Cells with & "
+                r"Cells with \\" "\n"
+                r"$\bar m$ & $\lambda$ & per cell & exactly 1 & $\ge 2$"),
+        rows=rows,
+        caption=(
+            "Delivering several guides per cell by multiple plasmids rather than "
+            "by an array (route B of \\cref{sec:delivery}). Selection for the "
+            "marker conditions on carrying at least one plasmid, so the count per "
+            "surviving cell is a zero-truncated Poisson with mean "
+            "$\\bar m = \\lambda/(1-e^{-\\lambda})$."),
+        label="tab:delivery",
+        note=(
+            r"\textbf{Target mean $\bar m$} is the average number of plasmids in a "
+            r"cell that survived selection, which is the quantity a marker "
+            r"attenuation actually sets; $\lambda$ is the underlying uptake rate "
+            r"before selection. \textbf{Distinct guides} is lower than $\bar m$ "
+            r"because two plasmids can carry the same guide, and the gap is "
+            r"negligible at this library size (6{,}000 guides). The last two "
+            r"columns are the reason $k$ cannot be treated as a constant: even at "
+            r"$\bar m = 3$ nearly a fifth of cells carry a single guide. "
+            r"Generated from "
+            r"\file{experiments/019-perturb-seq-costing/scripts/scaling\_analysis.py}."),
+    ))
+
+
+# --- t18 (combination recovery) ----------------------------------------------
+def t18() -> None:
+    """Main effects against named pairs, at the two library sizes that matter.
+
+    The last column is the document's answer to "do I have to see a combination
+    twice": it is how many times a GIVEN pair is observed while running the
+    budget that powers main effects. Below 1 means most pairs are never seen.
+    """
+    rows = []
+    for T in (200, 6000):
+        for k in (2, 3, 5, 8):
+            r = SA.recovery(T, k)
+            rows.append(" & ".join([
+                f"{T:,}".replace(",", "{,}"),
+                str(k),
+                f"{r.cells_for_main_effects:,.0f}".replace(",", "{,}"),
+                f"{r.cells_for_all_pairs:,.0f}".replace(",", "{,}"),
+                f"{r.expected_repeats_per_pair:.2f}",
+            ]))
+    emit("t18-recovery", table(
+        spec="rrrrr",
+        header=(r"Targets & Guides & Cells for & Cells for & Times a given \\"
+                "\n"
+                r"$T$ & $k$ & main effects & all pairs & pair is seen"),
+        rows=rows,
+        caption=(
+            "Main effects never require a combination to recur; a named "
+            "combination's joint transcriptome does. Both requirements evaluated "
+            "at the 100-cell first-order floor and Yao et al.'s 400 cells per "
+            "pair."),
+        label="tab:recovery",
+        note=(
+            r"\textbf{Cells for main effects} is $100\,T/k$, since a cell carrying "
+            r"$k$ guides informs $k$ genes. \textbf{Cells for all pairs} is "
+            r"Eq.~\ref{eq:pairs}. \textbf{Times a given pair is seen} is the last "
+            r"column of the first divided over the pair space, that is, how often "
+            r"one specific gene pair appears while running only the main-effect "
+            r"budget: below 1 means most pairs never appear at all. It falls by a "
+            r"factor of about 30 between the 200-gene panel and the genome, "
+            r"because the pair space grows quadratically in $T$ while the cell "
+            r"budget grows linearly. Generated from "
+            r"\file{experiments/019-perturb-seq-costing/scripts/scaling\_analysis.py}."),
+    ))
 
 
 def main() -> None:
     print(f"writing LaTeX tables -> {OUT}")
     for fn in (t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t14,
-               t15, t16):
+               t15, t16, t17, t18):
         fn()
     print("done")
 

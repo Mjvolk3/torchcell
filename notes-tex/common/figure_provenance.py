@@ -38,6 +38,23 @@ import os.path as osp
 from pydantic import BaseModel
 
 
+class HandDrawnFigure(BaseModel):
+    """A draw.io figure that needs a provenance table of its own.
+
+    One table per figure rather than one table for all of them. A single
+    combined table forces the reader to hold "which block am I in" while
+    scanning, and its caption can only name a RANGE of figures -- so a reader
+    arriving from Fig. 3's caption lands on a table about Figs. 1--4 and has to
+    find their way to the right block. Per-figure tables cross-reference in both
+    directions by number, which is what makes the appendix usable rather than
+    merely present.
+    """
+
+    slug: str  # drawio basename, matches FigureNumber.figure
+    tex_label: str  # the \label{} on the figure itself, e.g. "fig:scifi"
+    title: str  # short human name, used in the table caption
+
+
 class FigureNumber(BaseModel):
     """One number drawn in a figure, and where it came from."""
 
@@ -58,7 +75,11 @@ class FigureNumber(BaseModel):
         return self.citation_key is not None
 
 
-def check(records: list[FigureNumber], figures: list[str]) -> list[str]:
+def check(
+    records: list[FigureNumber],
+    figures: list[str],
+    registry: list[HandDrawnFigure] | None = None,
+) -> list[str]:
     """Return a list of problems: figures with no records, records with no source."""
     problems = []
     have = {r.figure for r in records}
@@ -71,4 +92,16 @@ def check(records: list[FigureNumber], figures: list[str]) -> list[str]:
             problems.append(
                 f"{r.figure}/{r.element}: no citation_key and no note explaining why"
             )
+    if registry is not None:
+        # A record whose figure is not in the registry would be silently dropped
+        # from the rendered appendix -- it has provenance that nobody can read.
+        known = {f.slug for f in registry}
+        for slug in sorted(have - known):
+            problems.append(
+                f"records exist for {slug} but it is not in the figure registry, "
+                f"so no provenance table would be rendered for it"
+            )
+        for f in registry:
+            if f.slug not in have:
+                problems.append(f"registry lists {f.slug} but it has no records")
     return problems

@@ -1,0 +1,160 @@
+<mxfile host="app.diagrams.net" agent="claude-code" version="24.7.17">
+  <diagram name="rrna-depletion-options" id="rrnaDepletionOptions">
+    <mxGraphModel dx="1400" dy="1000" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="703" pageHeight="648" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ================================================================
+             TRUE-SIZE CANVAS. 100 draw.io units = 1 inch. 703 units = 178.6 mm,
+             which is the Nature full-page width used by Figs. 1-4.
+             Arial; body 8.5 units = 6.1 pt (Nature 6 pt minimum); title 12.
+             Palette = PLOT_PALETTE / PLOT_PALETTE_FILL slots 1..6, and the
+             assignment is consistent across this whole document:
+               orange  #D79B00/#FFE6CC  mRNA / cDNA, the thing we want
+               red     #B85450/#F8CECC  rRNA, the thing being removed
+               purple  #9673A6/#E1D5E7  the acting enzyme or probe
+               blue    #6C8EBF/#DAE8FC  UMI
+               yellow  #D6B656/#FFF2CC  droplet / container
+               gray    #666666/#F5F5F5  handle / adapter / workflow chrome
+             Every number drawn here is sourced in the provenance table for this
+             figure; see experiments/019-perturb-seq-costing/scripts/figure_sources.py.
+             ================================================================ -->
+
+        <mxCell id="title" value="Ribosomal RNA depletion: four chemistries, four places in the workflow" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="8" y="6" width="687" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="About 85% of a yeast cell&#8217;s RNA is ribosomal and an undepleted split-pool library spends roughly 94 of every 100 reads on it, so this is the largest single cost lever in the document. The four routes are not variants of one recipe: they act on different molecules at different points, and the one head-to-head comparison in the literature went against the most obvious of them. Colors and the 5&#8242;-to-3&#8242; convention follow Figs. 2 to 4." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="8" y="26" width="687" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ============================ PANEL A ============================ -->
+        <mxCell id="pah" value="a&#160;&#160;Where each route acts. The library is only adapter-flanked, and therefore destroyable by a cut, after indexing." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="8" y="60" width="687" height="12" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s1" value="fix,&#10;permeabilize" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="8" y="78" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s2" value="capture +&#10;barcode (RT)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="94" y="78" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" value="lyse" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="180" y="78" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s4" value="amplify cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="266" y="78" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s5" value="fragment&#10;(steps 134&#8211;139)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="352" y="78" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s6" value="ligate adapters&#10;(152&#8211;154)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="438" y="78" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s7" value="index PCR&#10;(156&#8211;157)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="524" y="78" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s8" value="sequence" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="610" y="78" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="a1" style="endArrow=classic;html=1;strokeColor=#666666;strokeWidth=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="88" y="93" as="sourcePoint" /><mxPoint x="94" y="93" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a2" style="endArrow=classic;html=1;strokeColor=#666666;strokeWidth=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="174" y="93" as="sourcePoint" /><mxPoint x="180" y="93" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a3" style="endArrow=classic;html=1;strokeColor=#666666;strokeWidth=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="260" y="93" as="sourcePoint" /><mxPoint x="266" y="93" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a4" style="endArrow=classic;html=1;strokeColor=#666666;strokeWidth=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="346" y="93" as="sourcePoint" /><mxPoint x="352" y="93" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a5" style="endArrow=classic;html=1;strokeColor=#666666;strokeWidth=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="432" y="93" as="sourcePoint" /><mxPoint x="438" y="93" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a6" style="endArrow=classic;html=1;strokeColor=#666666;strokeWidth=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="518" y="93" as="sourcePoint" /><mxPoint x="524" y="93" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a7" style="endArrow=classic;html=1;strokeColor=#666666;strokeWidth=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="604" y="93" as="sourcePoint" /><mxPoint x="610" y="93" as="targetPoint" /></mxGeometry></mxCell>
+
+        <!-- intervention markers -->
+        <mxCell id="m3" value="&#9650; 3&#160;in situ (BacDrop; microSPLiT tested and rejected)" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#9673A6;" vertex="1" parent="1">
+          <mxGeometry x="8" y="110" width="250" height="11" as="geometry" />
+        </mxCell>
+        <mxCell id="m4" value="&#9650; 4&#160;priming ratio &#8211; enrichment, not depletion" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#D79B00;" vertex="1" parent="1">
+          <mxGeometry x="94" y="122" width="250" height="11" as="geometry" />
+        </mxCell>
+        <mxCell id="m2" value="&#9650; 2&#160;RNase H, after a T7/IVT round trip (M3-seq)" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="366" y="110" width="250" height="11" as="geometry" />
+        </mxCell>
+        <mxCell id="m1" value="&#9650; 1&#160;Cas9 on the finished library (Brandner)" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="440" y="122" width="250" height="11" as="geometry" />
+        </mxCell>
+
+        <!-- ============================ PANEL B ============================ -->
+        <mxCell id="pbh" value="b&#160;&#160;What each route does to the molecule, and what it measured" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="8" y="142" width="687" height="12" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hdr1" value="route" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="8" y="158" width="104" height="10" as="geometry" /></mxCell>
+        <mxCell id="hdr2" value="acts on" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="118" y="158" width="84" height="10" as="geometry" /></mxCell>
+        <mxCell id="hdr3" value="mechanism" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="210" y="158" width="268" height="10" as="geometry" /></mxCell>
+        <mxCell id="hdr4" value="measured outcome" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="486" y="158" width="209" height="10" as="geometry" /></mxCell>
+        <mxCell id="rule0" style="line;strokeWidth=1;html=1;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="8" y="168" width="687" height="2" as="geometry" /></mxCell>
+
+        <!-- row 1: Cas9 -->
+        <mxCell id="r1n" value="1&#160;&#160;Cas9 cleavage&#10;Brandner, mapSPLiT&#10;lineage: DASH, Prezza" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="8" y="176" width="104" height="46" as="geometry" /></mxCell>
+        <mxCell id="r1a" value="finished library&#10;(post-index)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="118" y="176" width="84" height="30" as="geometry" /></mxCell>
+        <mxCell id="r1m" value="253 sgRNAs against 5S/16S/23S, weighted by the rRNA coverage their own runs produced, cut the rRNA cDNA. The mass stays in the tube; the cut molecules simply lose one flanking adapter and can no longer amplify or cluster. Depletion here is a selection." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="210" y="176" width="268" height="64" as="geometry" /></mxCell>
+        <mxCell id="r1r" value="E. coli 4.6% &#8594; 60.2% mRNA; median transcripts per cell 54 &#8594; 115. P. putida 2.2% &#8594; 10.4% with the SAME protocol, which is the transfer risk in one number." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="486" y="176" width="209" height="64" as="geometry" /></mxCell>
+        <mxCell id="rule1" style="line;strokeWidth=1;html=1;strokeColor=#CCCCCC;" vertex="1" parent="1"><mxGeometry x="8" y="246" width="687" height="2" as="geometry" /></mxCell>
+
+        <!-- row 2: RNase H -->
+        <mxCell id="r2n" value="2&#160;&#160;RNase H digestion&#10;Wang, M3-seq" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="8" y="254" width="104" height="46" as="geometry" /></mxCell>
+        <mxCell id="r2a" value="library, converted&#10;back to RNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="118" y="254" width="84" height="30" as="geometry" /></mxCell>
+        <mxCell id="r2m" value="A T7 promoter is added by PCR and the library transcribed to ssRNA. DNA probes complementary to rRNA anneal, and thermostable RNase H cuts the RNA strand of each hybrid. DNase I removes the probes; a second RT returns the survivors to cDNA. The cut-the-adapters trick is unavailable here, because the molecule is RNA." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="210" y="254" width="268" height="72" as="geometry" /></mxCell>
+        <mxCell id="r2r" value="Chosen over Cas9 in the only head-to-head: &#8220;after testing two approaches &#8230; we chose an RNase H-based approach&#8221;. Their Cas9 arm left 75&#8211;80% rRNA in the final library." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="486" y="254" width="209" height="72" as="geometry" /></mxCell>
+        <mxCell id="rule2" style="line;strokeWidth=1;html=1;strokeColor=#CCCCCC;" vertex="1" parent="1"><mxGeometry x="8" y="332" width="687" height="2" as="geometry" /></mxCell>
+
+        <!-- row 3: in situ -->
+        <mxCell id="r3n" value="3&#160;&#160;In situ, on the cell&#10;BacDrop; microSPLiT&#10;tested three" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="8" y="340" width="104" height="46" as="geometry" /></mxCell>
+        <mxCell id="r3a" value="unamplified RNA,&#10;inside the cell" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="118" y="340" width="84" height="30" as="geometry" /></mxCell>
+        <mxCell id="r3m" value="microSPLiT tried three and kept the weakest-sounding one: poly(A) polymerase, which tags mRNA rather than removing rRNA; a 5&#8242;-phosphate-dependent exonuclease; and probes plus RNase H. PAP won. BacDrop instead digests enzymatically before indexing, which M3-seq notes &#8220;risks digesting non-rRNA transcripts&#8221;." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="210" y="340" width="268" height="72" as="geometry" /></mxCell>
+        <mxCell id="r3r" value="PAP gave &#8220;about 2.5-fold, or about 7% of total RNA&#8221; enrichment &#8211; the best in-situ result published, against 13-fold post hoc. M3-seq avoids the route because in-situ depletion &#8220;can decrease mRNA capture efficiency&#8221;." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="486" y="340" width="209" height="72" as="geometry" /></mxCell>
+        <mxCell id="rule3" style="line;strokeWidth=1;html=1;strokeColor=#CCCCCC;" vertex="1" parent="1"><mxGeometry x="8" y="418" width="687" height="2" as="geometry" /></mxCell>
+
+        <!-- row 4: priming -->
+        <mxCell id="r4n" value="4&#160;&#160;Prime differently&#10;Brettner, yeast&#10;(not depletion)" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="8" y="426" width="104" height="46" as="geometry" /></mxCell>
+        <mxCell id="r4a" value="the RT primer mix" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="118" y="426" width="84" height="30" as="geometry" /></mxCell>
+        <mxCell id="r4m" value="rRNA is not polyadenylated, so an oligo-dT primer does not reach it and the random hexamers do. Lowering the hexamer:dT ratio simply stops the assay reaching for rRNA. Nothing is destroyed, so this is enrichment, and it is free apart from a titration." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="210" y="426" width="268" height="64" as="geometry" /></mxCell>
+        <mxCell id="r4r" value="Not measured. Brettner et al. recommend it and do not run it, recovering 93.7% rRNA against 5.75% mRNA. It also shifts transcript-length bias, since hexamer priming scales with length (Sec. 2.4)." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="486" y="426" width="209" height="64" as="geometry" /></mxCell>
+        <mxCell id="rule4" style="line;strokeWidth=1;html=1;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="8" y="496" width="687" height="2" as="geometry" /></mxCell>
+
+        <!-- ============================ PANEL C ============================ -->
+        <mxCell id="pch" value="c&#160;&#160;Why cutting a finished library molecule destroys it, which is what makes route 1 coherent so late" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="8" y="508" width="687" height="12" as="geometry" />
+        </mxCell>
+
+        <mxCell id="mol1lab" value="intact rRNA-derived library molecule &#8211; amplifies, clusters, and is paid for" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="8" y="524" width="340" height="10" as="geometry" /></mxCell>
+        <mxCell id="p5a" value="P5" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="8" y="538" width="34" height="18" as="geometry" /></mxCell>
+        <mxCell id="cba" value="CB" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="42" y="538" width="30" height="18" as="geometry" /></mxCell>
+        <mxCell id="umia" value="UMI" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="72" y="538" width="32" height="18" as="geometry" /></mxCell>
+        <mxCell id="rrnaa" value="rRNA-derived cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="104" y="538" width="170" height="18" as="geometry" /></mxCell>
+        <mxCell id="idxa" value="index" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="274" y="538" width="34" height="18" as="geometry" /></mxCell>
+        <mxCell id="p7a" value="P7" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="308" y="538" width="30" height="18" as="geometry" /></mxCell>
+
+        <mxCell id="cutmark" value="Cas9 cut" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#9673A6;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="152" y="558" width="74" height="10" as="geometry" /></mxCell>
+        <mxCell id="cutline" style="endArrow=none;html=1;strokeColor=#9673A6;strokeWidth=1.5;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="189" y="534" as="sourcePoint" /><mxPoint x="189" y="560" as="targetPoint" /></mxGeometry></mxCell>
+
+        <mxCell id="mol2lab" value="after the cut &#8211; two halves, each with ONE handle. Neither amplifies and neither clusters, so the P5/P7 qPCR re-amplifies only survivors." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="360" y="512" width="335" height="24" as="geometry" /></mxCell>
+        <mxCell id="p5b" value="P5" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="360" y="538" width="30" height="18" as="geometry" /></mxCell>
+        <mxCell id="cbb" value="CB" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="390" y="538" width="26" height="18" as="geometry" /></mxCell>
+        <mxCell id="halfa" value="rRNA cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;dashed=1;" vertex="1" parent="1"><mxGeometry x="416" y="538" width="76" height="18" as="geometry" /></mxCell>
+        <mxCell id="nox1" value="&#10008; no P7" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#B85450;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="494" y="538" width="48" height="18" as="geometry" /></mxCell>
+
+        <mxCell id="halfb" value="rRNA cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;dashed=1;" vertex="1" parent="1"><mxGeometry x="556" y="538" width="66" height="18" as="geometry" /></mxCell>
+        <mxCell id="idxb" value="index" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="622" y="538" width="30" height="18" as="geometry" /></mxCell>
+        <mxCell id="p7b" value="P7" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="652" y="538" width="28" height="18" as="geometry" /></mxCell>
+        <mxCell id="nox2" value="&#10008; no P5" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#B85450;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="556" y="558" width="60" height="12" as="geometry" /></mxCell>
+
+        <!-- ============================ FOOTER ============================ -->
+        <mxCell id="legend" value="Segments&#160;&#160;&#160;mRNA / cDNA&#160;&#160;&#160;rRNA&#160;&#160;&#160;enzyme or probe&#160;&#160;&#160;UMI&#160;&#160;&#160;handle / adapter&#160;&#160;&#160;dashed = destroyed or absent" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.5;align=left;verticalAlign=middle;spacingLeft=4;" vertex="1" parent="1">
+          <mxGeometry x="8" y="578" width="687" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="foot" value="The ordering that matters: route 1 acts AFTER fragmentation and AFTER indexing, not before, which an earlier version of this document had backwards. Brandner et al. state their input as the library &#8220;from after the final double-sided size selection&#8221;; in the microSPLiT protocol that is step 170, with fragmentation at 134&#8211;139 and index PCR at 156&#8211;157. Composed from the protocols as described in Secs. 3.1 and 3.5, not traced from any published figure. Every number drawn by hand here is sourced in the provenance table for this figure." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="8" y="600" width="687" height="42" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

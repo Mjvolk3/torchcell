@@ -7,9 +7,10 @@
 The analogue of the manuscript's `make checkfigs` / `wordcount.py`, but aimed at
 the three things that actually go wrong in these documents:
 
-1. **Formatting.** Overfull boxes mean a table or figure is running off the page.
-   Our pandoc-built PDFs had exactly this and it was invisible until someone
-   looked at page 8. LaTeX reports it; nobody reads the log; so read it here.
+1. **Formatting.** Overfull boxes mean a table or figure is running off the page,
+   and an oversized float means a caption is being cut off entirely. Our
+   pandoc-built PDFs had exactly this and it was invisible until someone looked
+   at page 8. LaTeX reports it; nobody reads the log; so read it here.
 2. **Provenance.** A number in the document that has no `%% SOURCE:` line and no
    visible `\\external{}` flag is an unsourced claim. That is the specific defect
    the repo's whole provenance rule exists to prevent, and it is mechanically
@@ -133,6 +134,19 @@ def check_formatting(log: str) -> list[tuple[str, str]]:
         )
     if re.search(r"Overfull \\vbox", log):
         findings.append(("WARN", "overfull vbox -- content pushed past the bottom margin"))
+    # A float that does not fit is a different message from an overfull box, and
+    # it is the worse failure: the overflow is dropped rather than printed past
+    # the margin, so a long caption loses its last sentences and the page looks
+    # merely full. Nothing else in this gate reads that line.
+    for pts in re.findall(r"Float too large for page by ([\d.]+)pt", log):
+        findings.append(
+            (
+                "ERROR",
+                f"float too large for page by {float(pts):.1f}pt "
+                f"({float(pts) * MM_PER_PT:.1f} mm) -- figure and caption do not fit "
+                f"together, so the end of the caption is silently dropped",
+            )
+        )
     return findings
 
 

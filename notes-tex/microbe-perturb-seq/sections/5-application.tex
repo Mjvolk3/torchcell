@@ -47,8 +47,11 @@ barcoding workflow of Sec.~\ref{sec:brettner}: fix and permeabilize a batch of
 cells, distribute them across the round-1 plate, two ligation rounds with pooling
 and re-splitting between, then split into sublibraries and prepare libraries. It
 consumes one withdrawal from each barcode plate, one tube of reverse
-transcriptase, one tube of ligase, and about a fifth of the RNase inhibitors -- and it can carry up to 96 samples and, at Brettner et al.'s loading,
-$\sim$480{,}000 cells. It is a unit of \emph{bench work}, not a unit of
+transcriptase, one tube of ligase, and about a fifth of the RNase inhibitors -- and it can carry up to 96 samples and, on a full round-1 plate at Brettner et
+al.'s stated density, $\sim$480{,}000 cells. Note that this is the plate's
+capacity, not what their published run did: they loaded 48 of the 96 wells, so
+the run described in \cref{sec:brettner} put $\sim$240{,}000 cells through the
+chemistry. Every budget here assumes the full plate. It is a unit of \emph{bench work}, not a unit of
 sequencing: the sublibraries a run produces are sequenced separately and are
 priced separately.
 
@@ -137,7 +140,7 @@ users pay $+30.8\%$.
 \notesec{The available instruments} The core runs the NovaSeq X Plus and the
 MiSeq i100, plus PacBio Revio and Nanopore GridION. It has no NextSeq and no
 NovaSeq 6000. The microSPLiT protocol is written against a NextSeq 2000 P2, so
-that configuration is not available here; the choice is a $\sim$25\,M-read MiSeq
+that configuration is not available here; the choice is a 25 to 50\,M-read MiSeq
 run or a $\ge$800\,M-read NovaSeq X lane, with a 30-fold gap between them
 (\cref{fig:sequencers}a). The NovaSeq X 25B is the highest-throughput
 configuration on campus at 3.2\,billion read pairs per lane and 25.6\,billion per
@@ -152,9 +155,10 @@ transcript, or transcript and no cell identity. They put the barcode on
 \input{tables/t11-read-structure}
 
 Paired-end is free here because the largest flow cell is paired-end only and still
-wins on price per read: 25B PE150 at 8+ lanes is \$0.99 per million read pairs
-against \$1.06 for 10B SR100. That would not hold at a core whose cheapest option
-is single-read.
+wins on price per read: 25B PE150 at 8+ lanes is \$0.99 per million read pairs,
+against \$1.70 for the only single-read configuration the core sells, the 1.5B
+SR100. Choosing paired-end is not a compromise here, it is the cheaper option.
+That would not hold at a core whose cheapest configuration were single-read.
 
 \notesec{Split-pool also spends cycles on nothing, and it is measured} Two thirds
 of the cycles SPLiT-seq uses to read its composite cell barcode are
@@ -166,7 +170,7 @@ sci-Plex, and none for a two-round design where the barcode is placed once by th
 RT primer and once by
 ligation~\citep{datlingerUltrahighthroughputSinglecellRNA2021}.
 
-The figure reconciles against \cref{tab:read-structure} exactly, which is worth
+The figure reconciles against \cref{tab:read-structure} to within a point, which is worth
 checking because it is the only place this document can audit an outside claim
 against its own numbers. Read 2 is 86\,nt of UMI plus BC3, BC2 and BC1. Take off
 the 10\,nt UMI and 76 cycles remain for the composite barcode, of which three
@@ -250,8 +254,8 @@ answer is different for the two routes rather than merely smaller.
 %% against the local LMDBs, and Sec. 4.4 now carries the measured distribution.
 %% Panel a here is unaffected on purpose: its depth constraint is a PSEUDOBULK
 %% UMI TARGET (2e5), not a fold-change threshold, so the measured effect size
-%% enters through design_equation.py (Fig. 7) rather than through this panel.
-%% What the measurement did change is Fig. 7's curves and the multiplier in the
+%% enters through design_equation.py (fig:design) rather than through this panel.
+%% What the measurement did change is fig:design's curves and the multiplier in the
 %% Sec. 4.4 keybox. Do not "fix" panel a to use 1.34x -- the two are different
 %% quantities and conflating them is what this note exists to prevent.
 \tcfigfit[1.0]{figures/economics.pdf}{%
@@ -298,19 +302,16 @@ answer is different for the two routes rather than merely smaller.
   where the reagent comparison and the cost comparison part company. Split-pool
   reagents are $\sim$22$\times$ cheaper per cell than droplet and it still loses
   end to end; the reversal is entirely here. Of 100 reads bought for a split-pool
-  run, 10 are PhiX spike or unresolvable barcode, 94 of the remainder are
-  ribosomal, and three quarters of the cells they came from are then discarded --
-  1.0 read in 100 survives all four tolls. Depletion takes that to 10.8, and both
+  run, 28 are lost to the PhiX spike (10\%) and to barcodes that do not resolve
+  (a further 20\% of what remains), 94 of the remainder are ribosomal, and three
+  quarters of the cells they came from are then discarded -- 1.0 read in 100
+  survives all four tolls. Depletion takes that to 10.8, and both
   droplet columns reach 37.4. \textbf{The two droplet lines coincide exactly at
   every stage}, which is worth seeing: preindexing touches no term in this panel.
   \textbf{(e) What is worth measuring next.} Every platform here has exactly one
   number that is both uncertain and load-bearing, and for all of them it is the
   same field -- cells barcoded per protocol run, or cells recovered per channel --
-  so they share an axis. The two are not equally worth measuring. Droplet cost is
-  reagents and reagents are per batch, so its curve falls steeply and keeps
-  falling; split-pool cost is sequencing, which does not depend on this number at
-  all, so its curve flattens almost at once and learning that yeast tolerates a
-  denser RT well buys little past a few hundred thousand cells per run. 10x and
+  so they share an axis. 10x and
   scifi are one curve, and preindexing is a move along it rather than a move to a
   different one.
   \textbf{(f) What multiplexing buys as guides per cell $k$ rises.} Left axis:
@@ -319,20 +320,38 @@ answer is different for the two routes rather than merely smaller.
   reports on $k$ genes at once. Right axis: what that same cell budget delivers
   for one \emph{named} gene pair if the library is restricted to a 200-gene panel,
   which grows roughly linearly in $k$ and crosses the 100-cell floor near $k=4$.
-  Multiplexing alone does not open up epistasis -- run the same calculation over
-  all 6{,}000 genes and coverage per pair falls by $(200/6000)^2\approx1/900$, to
-  well under one cell per pair at any $k$, because the pairs to be covered grow
-  quadratically while the pairs a cell reports grow only as $k^2$. Restricting
-  the panel is what makes pairs measurable and multiplexing is what then makes it
-  affordable; neither substitutes for the other.
-  \textbf{The scifi column is a projection throughout.} It changes exactly one
-  parameter of the 10x column -- cells recovered per channel becomes Datlinger et
-  al.'s measured 151{,}788 rather than the UIUC baseline of 20{,}000 -- and
-  per-cell depth in yeast is unmeasured for that chemistry and held at the 10x
-  value, the optimistic end. No scifi run in any microbe has been published
-  (\cref{sec:scifi}). Every panel is generated by
+  Generated by
   \file{experiments/019-perturb-seq-costing/scripts/plot_economics.py}, which
   fails rather than writing the figure if any two labels in it collide.}{fig:economics}
+
+%% This paragraph was the last block of the caption above until the caption grew
+%% past the page: LaTeX reported "Float too large for page by 88.7pt" and DROPPED
+%% these sentences rather than printing them, so the projection caveat on the one
+%% column that is not a measurement was invisible in the built PDF. Body text is
+%% the right home for it anyway -- it is argument, not a legend. The gate now
+%% fails on that warning (notes-tex/common/check_doc.py, check_formatting).
+\notesec{The two platforms are not equally worth measuring} Panel (e) of
+Fig.~\ref{fig:economics} puts both on one axis, cells per batch, but the curves
+say different things about it. Droplet cost is reagents and reagents are per
+batch, so its curve falls steeply and keeps falling; split-pool cost is
+sequencing, which does not depend on this number at all, so its curve flattens
+almost at once and learning that yeast tolerates a denser RT well buys little
+past a few hundred thousand cells per run.
+
+\notesec{Multiplexing alone does not open up epistasis} Panel (f) of
+Fig.~\ref{fig:economics} prices a 200-gene panel. Run the same calculation over
+all 6{,}000 genes and coverage per pair falls by $(200/6000)^2\approx1/900$, to
+well under one cell per pair at any $k$, because the pairs to be covered grow
+quadratically while the pairs a cell reports grow only as $k^{2}$. Restricting
+the panel is what makes pairs measurable and multiplexing is what then makes it
+affordable; neither substitutes for the other.
+
+\notesec{The scifi column of Fig.~\ref{fig:economics} is a projection throughout}
+It changes exactly one parameter of the 10x column -- cells recovered per channel
+becomes Datlinger et al.'s measured 151{,}788 rather than the UIUC baseline of
+20{,}000 -- and per-cell depth in yeast is unmeasured for that chemistry and held
+at the 10x value, the optimistic end. No scifi-RNA-seq run in any microbe has
+been published (\cref{sec:scifi}).
 
 Reading the table: the dominant term \emph{moves}. For split-pool as published,
 sequencing is 81\% of spend; for 10x it is 19\% and library preparation is 81\%,
@@ -374,7 +393,7 @@ rRNA depletion: $\sim$\$25\,k recurring plus $\sim$\$10\,k one-time. That is a
 genuine genome-scale yeast Perturb-seq for under \$40\,k of consumables and
 sequencing, and 100 cells per perturbation is the published field standard.
 
-\textbf{What preindexing changes is the fallback, not the plan.} The same screen
+\textbf{What preindexing changes is the fallback, and \cref{sec:core-meeting} promotes it further.} The same screen
 on preindexed droplet is $\sim$\$46\,k, so if the split-pool guide readout or the
 cells-per-RT-well number fails in the pilot, the droplet route is no longer
 nearly six times the price -- it is under twice, on a platform the core already
@@ -383,3 +402,169 @@ is worth one measurement in the pilot rather than a change of direction now:
 both figures rest on assumptions that have never been tested in yeast, and
 split-pool's rest on fewer of them.
 \end{keybox}
+
+\subsection{What the Core Said, and What It Changes\secstatus{todo}}
+\label{sec:core-meeting}
+
+%% SOURCE: experiments/019-perturb-seq-costing/scripts/uiuc_core_data.py
+%% (MEETING_CLAIMS, ULTIMA_*). A meeting is a recollection, not a citable
+%% artifact, so every claim carries its status and the disagreements with the
+%% published rate card are stated rather than reconciled.
+
+A meeting with the Carver Biotechnology Center on 2026-08-23 (Alvaro Hernandez
+and Chris Wright) settled several open items in \cref{sec:sequencing} and opened
+one new option. The claims are recorded with the status of each in
+\file{uiuc_core_data.py}, because a verbal source is not a rate card and three of
+these numbers disagree with the published page. None is used in a budget here.
+
+\notesec{What is settled} Three things stop being open questions. The core runs
+the GEM-X Universal 5$'$ Gene Expression kit, a 10x Genomics product. Roughly one
+microlitre of zymolyase can go into the 10x reaction, which is the Jariani et
+al.\ in-droplet spheroplasting change of \cref{sec:jariani}, so the yeast
+adaptation that section describes is one the core already accepts rather than one
+we would have to argue for. And quality control is theirs: they asked to be
+relied on for it, which is consistent with a page that charges nothing for 10x
+test counts.
+
+\notesec{Cell counting, and where it matters less than it sounds} Their strongest
+advice was that getting the cell count right is the single most critical step.
+That is exactly right for ordinary droplet loading, where the count sets the
+Poisson loading rate and therefore the doublet rate, and a count that is wrong by
+a factor of two moves the doublet rate by roughly the same factor. It matters
+much less under the preindexed regime of \cref{sec:scifi}: at 100-fold
+overloading the droplets are 95.5\% occupied, the operating point is deliberately
+saturated, and cell identity comes from the round1--round2 pair rather than from
+one-cell-per-droplet. Counting accuracy is a first-order requirement for the
+plain droplet route and a second-order one for the preindexed route, which is a
+point in the latter's favor that the cost tables do not show.
+
+\notesec{Which counter, since the advice was to buy one} Yeast is the awkward
+case for automated counting: \org{S.\ cerevisiae} runs about 3.5 to
+5\,\textmu m\external{vendor sizing notes; no primary in the mirror}
+across, at or below the stated floor of most brightfield instruments, and 10x's
+own guidance is that cells under 10\,\textmu m ``may be difficult to distinguish
+from debris'' and that a fluorescent viability stain rather than trypan blue is
+``strongly recommended''\external{10x CG00053}. Two instruments are validated on
+this organism by their makers: the Logos LUNA-FX7, which has a
+\org{S.\ cerevisiae} application note reporting $R^{2}>0.99$ against a
+hemocytometer on both concentration and viability, and the ChemoMetec
+NC-203\external{Logos and ChemoMetec application notes}.
+Both appear on 10x's evaluated list. Worth knowing before buying anything: the
+Bio-Rad TC20 specifies a 6\,\textmu m floor\external{Bio-Rad TC20 brochure},
+which excludes yeast, and it is the
+counter Jariani et al.\ used. No published yeast single-cell RNA-seq run has
+loaded inside 10x's recommended 700--1{,}200 cells per microlitre
+window\external{10x CG000127}, which
+is a small, real gap our protocol could close.
+
+\notesec{The Illumina kit, and a resolved mishearing} ``Preserve Seek'' is
+\emph{Perturb-seq}: Illumina has a page of that name, which is where a search of
+their site lands. There is no Illumina product called PreserveSeq and no branded
+preservation reagent. What Illumina does sell is the Single Cell 3$'$ RNA Prep,
+the PIPseq chemistry acquired from Fluent BioSciences, which partitions cells on
+templated particles with a vortexer instead of a microfluidic chip. It is
+genuinely cheaper per cell at scale, and its guide-enrichment kit ships today.
+It is also unusable here without method development: it has never been run on a
+walled organism, and Illumina state their own nuclei-isolation reagents are
+``not recommended for use with non-mammalian sample types''\external{Illumina
+support}. It belongs on the watch list, not in the plan.
+
+\notesec{Three numbers that do not agree with the published page} A lane was
+quoted as 3.82 billion; the instruments page gives 3.2 billion read pairs per
+NovaSeq X 25B lane, which is what every figure in this document is priced on and
+what the flow-cell naming implies. Test counts were quoted at about \$153 with a
+few not charged; the page says there is no charge, without qualification. The
+Ultima rate was given as roughly \$1{,}990 per lane alongside a figure of
+\$3{,}310 for three lanes, and those cannot both be per-lane rates. The
+conservative reading is retained in each case, and all three need confirming in
+writing before anything is built on them.
+
+\notesec{Which way this pushes the recommendation} \cref{sec:budget} recommends
+split-pool with rRNA depletion on price, and nothing in the meeting changes the
+arithmetic. What it changes is the weight on the things the dollar column does
+not hold, and all of them moved the same way. The core runs the droplet platform
+as a service and will own quality control on it, so 137 or 18 channels are their
+bench time rather than ours, against the 13 protocol runs of skilled in-house
+work the split-pool row implies. The zymolyase modification is one they already
+accept. The kit they run is the 5$'$ one, which is the assay that might read our
+guides without a new construct (\cref{sec:guide-capture}). And counting accuracy,
+their strongest warning, is a much weaker constraint under preindexed
+overloading than under ordinary droplet loading.
+
+None of that is a costing argument and it should not be presented as one:
+depleted split-pool is still cheapest, at \$57.5\,k against \$109\,k for the
+preindexed droplet route. But the gap is a factor of 1.9, and the considerations
+above are exactly the ones \cref{sec:budget} said a factor of two is small enough
+to be settled by. Preindexed droplet has moved from fallback to co-equal
+candidate, and the pilot should be designed to discriminate between them rather
+than to confirm the cheaper one.
+
+\subsection{Ultima Sequencing, and Whether Genotypes Survive It\secstatus{todo}}
+\label{sec:ultima}
+
+The core also offers Ultima Genomics ``wafer'' sequencing, which is not on the
+public rate page. At the quoted rate it is several times cheaper per read than
+the NovaSeq X lane that \cref{sec:budget} prices everything on, and since
+sequencing is 81\% of the split-pool budget, a cheap read is the largest
+imaginable lever. The question is whether the assay still works, and for the
+perturbation readout specifically the published answer is no.
+
+\notesec{What the instrument actually is} The UG 100 is single-end. It emits one
+read of roughly 200 to 300 bases, and paired-end is announced for the successor
+series rather than available now~\citep{simmonsMostlyNaturalSequencing2023}. The
+core's remark that it has no $2\times150$ configuration is therefore a property
+of the platform, not of their menu. The ``20\,nt read 1, 90\,nt read 2'' heard in
+the meeting is not a read-length limit either: the pipeline splits the single
+long read into a synthetic read 1 carrying the cell barcode and UMI and a read 2
+carrying the cDNA, then trims the cDNA to 90 bases. So cDNA length is not the
+constraint.
+
+Its chemistry has no terminators, so homopolymer run length is inferred from
+signal intensity, and indels in homopolymers are its characteristic error mode.
+That is the reason the core described it as suited to work with a well-assembled
+reference: counting reads against a known genome tolerates the error mode, and
+calling variants does not.
+
+\notesec{Cell barcodes survive; UMIs are shortened} On matched libraries the two
+platforms called almost the same cells, 7{,}916 against 7{,}926, with expression
+correlated at $r=0.98$~\citep{simmonsMostlyNaturalSequencing2023}. The 16\,nt
+cell barcode is an error-correctable whitelist, which absorbs indel errors well.
+The UMI does not fare as well on a 3$'$ assay: the poly(T) stretch adjacent to it
+degrades the bases flanking it, and the standard mitigation is to mask the last
+three, leaving an effective 9\,nt UMI. That is still $\sim$2.6$\times10^{5}$
+labels, comfortably above the few thousand molecules of any one gene in a yeast
+cell (\cref{sec:transcript-content}), so UMI collision remains negligible. A
+5$'$ assay avoids the problem, which is a second reason the core's 5$'$ kit is
+the relevant one.
+
+\begin{keybox}
+\textbf{The guide readout is the part that does not survive, and this is
+published.} The paper that validates Ultima for single-cell RNA-seq ran a
+Perturb-seq case study and put the transcriptome on Ultima while sequencing the
+guide-detection libraries on Illumina, ``because the read length was not
+sufficient for guide
+detection''~\citep{simmonsMostlyNaturalSequencing2023}. Guide-to-cell assignment
+matched Illumina in that study because it \emph{came from} Illumina. No published
+workflow reads CRISPR guides on this platform, and guide capture does not appear
+among the 10x library types verified as Ultima-compatible. So the answer to
+whether genotypes can be resolved on cheap sequencing is: not on this platform
+alone, on present evidence.
+\end{keybox}
+
+\notesec{The hybrid, and why it is still interesting} Nothing above rules out
+running the transcriptome on Ultima and the guide library on a MiSeq or a
+fraction of a NovaSeq lane. The guide library is small, since it carries one
+short amplicon per cell rather than a whole transcriptome, so its sequencing cost
+is a minor term while the transcriptome is the term Ultima would attack. Against
+that: 10x libraries require a PCR adapter conversion before they can run on
+Ultima, so the hybrid is two library-preparation paths and two submissions. That
+is a real complication for a first experiment and a reasonable trade later.
+
+\notesec{What would have to be measured} Ultima enters this document as an option
+with one published negative result attached, so the honest ranking puts it behind
+the items in \cref{sec:bottlenecks}. \textbf{Hypothesis (untested):} a
+polyadenylated guide-barcode transcript of the kind \cref{sec:guide-capture}
+proposes would read on Ultima, because it is an ordinary mRNA-like molecule
+rather than the short targeted amplicon that defeated guide detection in the
+published study. If that held, the whole readout could run on one cheap platform.
+It has not been tried, and the construct does not exist yet.

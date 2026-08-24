@@ -34,11 +34,14 @@ Pooled genetic screens read out by single-cell RNA sequencing map perturbations
 to their transcriptional consequences at dense, transcriptome-wide resolution.
 This work establishes what such a screen costs in \org{S.\ cerevisiae}, what sets
 the ceiling on how many genes can be perturbed in one cell, and which parameter
-is binding. It serves two purposes: selecting a method, and explaining the
-chemistry and the statistics well enough that the relevant passages can be reused
-in a methods write-up. Numbers are regenerated from committed scripts rather than
-transcribed, and every claim not backed by a hash-pinned artifact in the library
-mirror carries a visible flag, listed in the key below.
+is binding. It then asks how the design scales along its two real axes,
+perturbations per cell and environments per experiment, and what changes when the
+host is \org{P.\ kudriavzevii} rather than \org{S.\ cerevisiae}. It serves two
+purposes: selecting a method, and explaining the chemistry and the statistics
+well enough that the relevant passages can be reused in a methods write-up.
+Numbers are regenerated from committed scripts rather than transcribed, and every
+claim not backed by a hash-pinned artifact in the library mirror carries a
+visible flag, listed in the key below.
 \end{abstract}
 
 \vspace{0.5em}
@@ -57,6 +60,7 @@ References: Zotero \file{torchcell/microbe-perturb-seq} (group $\cup$ personal)\
 \input{sections/4-theoretical-limits}
 \input{sections/5-application}
 \input{sections/6-bottlenecks}
+\input{sections/7-scaling}
 
 \clearpage
 \small

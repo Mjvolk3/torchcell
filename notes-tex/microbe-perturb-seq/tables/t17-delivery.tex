@@ -1,0 +1,18 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/019-perturb-seq-costing/scripts/render_tex_tables.py
+\begin{table}[htbp]\centering
+\footnotesize
+\caption[]{Delivering several guides per cell by multiple plasmids rather than by an array (route B of \cref{sec:delivery}). Selection for the marker conditions on carrying at least one plasmid, so the count per surviving cell is a zero-truncated Poisson with mean $\bar m = \lambda/(1-e^{-\lambda})$. \textbf{Target mean $\bar m$} is the average number of plasmids in a cell that survived selection, which is the quantity a marker attenuation actually sets; $\lambda$ is the underlying uptake rate before selection. \textbf{Distinct guides} is lower than $\bar m$ because two plasmids can carry the same guide, and the gap is negligible at this library size (6{,}000 guides). The last two columns are the reason $k$ cannot be treated as a constant: even at $\bar m = 3$ nearly a fifth of cells carry a single guide. Generated from \file{experiments/019-perturb-seq-costing/scripts/scaling\_analysis.py}.}\label{tab:delivery}
+\begin{tabular}{rrrrr}
+\toprule
+Target mean & Poisson & Distinct guides & Cells with & Cells with \\
+$\bar m$ & $\lambda$ & per cell & exactly 1 & $\ge 2$ \\
+\midrule
+1.5 & 0.87 & 1.500 & 62.6\% & 37.4\% \\
+2.0 & 1.59 & 2.000 & 40.6\% & 59.4\% \\
+3.0 & 2.82 & 2.999 & 17.9\% & 82.1\% \\
+5.0 & 4.97 & 4.998 & 3.5\% & 96.5\% \\
+8.0 & 8.00 & 7.995 & 0.3\% & 99.7\% \\
+\bottomrule
+\end{tabular}
+\end{table}

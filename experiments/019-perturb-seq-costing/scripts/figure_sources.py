@@ -5,7 +5,7 @@
 
 Companion to ``notes-tex/common/figure_provenance.py``, which defines the model
 and the check; this file holds the records. The matplotlib figures need nothing
-here -- their scripts read the data -- so this covers Figs. 1--3 only.
+here -- their scripts read the data -- so this covers the draw.io figures only.
 
 The throughput band of Fig. 1 is the reason this file exists. Reviewing it
 against the primaries turned up three separate errors of the same family, all of
@@ -31,12 +31,33 @@ sys.path.insert(
         osp.abspath(__file__))))), "notes-tex", "common")
 )
 
-from figure_provenance import FigureNumber, check  # noqa: E402
+from figure_provenance import FigureNumber, HandDrawnFigure, check  # noqa: E402
 
 TAXONOMY = "scrnaseq-method-taxonomy"
 SPLITSEQ = "splitseq-barcoding"
 DROPLET = "droplet-10x-barcoding"
 SCIFI = "scifi-fluidic-indexing"
+WORKFLOW = "perturb-seq-workflow"
+RRNA = "rrna-depletion-options"
+
+# Every hand-drawn figure gets its own provenance table, keyed to the figure's
+# own \label so the table caption and the figure caption cross-reference by
+# NUMBER in both directions. Adding a figure means adding a row here and its
+# records below; render_tex_tables.t15 loops over this and needs no edit.
+FIGURES: list[HandDrawnFigure] = [
+    HandDrawnFigure(slug=TAXONOMY, tex_label="fig:methods-map",
+                    title="the yeast scRNA-seq method taxonomy"),
+    HandDrawnFigure(slug=SPLITSEQ, tex_label="fig:splitseq",
+                    title="split-pool barcoding"),
+    HandDrawnFigure(slug=DROPLET, tex_label="fig:droplet",
+                    title="droplet barcoding"),
+    HandDrawnFigure(slug=SCIFI, tex_label="fig:scifi",
+                    title="combinatorial fluidic indexing"),
+    HandDrawnFigure(slug=WORKFLOW, tex_label="fig:workflow",
+                    title="the end-to-end workflow"),
+    HandDrawnFigure(slug=RRNA, tex_label="fig:rrna",
+                    title="ribosomal RNA depletion options"),
+]
 
 RECORDS: list[FigureNumber] = [
     # --- Fig. 1a, the throughput band ---------------------------------------
@@ -340,13 +361,264 @@ RECORDS: list[FigureNumber] = [
             "3'-blocked bridge oligonucleotide"
         ),
     ),
+    # --- Fig. 5, the end-to-end workflow ------------------------------------
+    # Panels a and b are structural rather than numeric; the numbers all live in
+    # the funnel of panel c, and every one of them is already load-bearing
+    # somewhere else in the document.
+    FigureNumber(
+        figure=WORKFLOW, panel="c", element="cells recovered from those loaded",
+        value="25-50% recovered",
+        citation_key="brettnerUltraHighthroughputMassively2024", line=68,
+        quote=(
+            "The two sequenced sublibraries returned ~5,500 and 10,000 barcoded "
+            "cells that passed computational filtering. Given we started the "
+            "experiment with between 200,000 and 300,000 cells, this estimates a "
+            "capturing efficiency between 25% and 50%."
+        ),
+        note=(
+            "A CELL-level efficiency, not a read-level one, and it is the "
+            "authors' own back-calculation from a starting count rather than a "
+            "directly measured recovery."
+        ),
+    ),
+    FigureNumber(
+        figure=WORKFLOW, panel="c", element="sequenced cells discarded at QC",
+        value="~75% of sequenced cells discarded",
+        citation_key=None,
+        quote=(
+            "[DERIVED HERE: cost_per_cell_table.py, the ratio of cells passing "
+            "QC with an identified guide to cells whose reads were paid for]"
+        ),
+        note=(
+            "OURS, not a published figure. It is the gap between 'sequenced' "
+            "and 'usable' that Sec. 5.2 is built on, and it is the reason a "
+            "quoted cost per cell understates the real one by ~4x in split-pool."
+        ),
+    ),
+    FigureNumber(
+        figure=WORKFLOW, panel="c", element="guide assignment rate q",
+        value="21-25% in bacteria, >71% in yeast",
+        citation_key="nadal-ribellesSinglecellResolvedGenotypephenotype2025",
+        quote=(
+            "[Yeast end: genotype identity assigned for more than 71% of cells. "
+            "Bacterial end: Brandner et al. raise correct assignment from 5.5% "
+            "to 21-25% by adding an enrichment primer at cDNA amplification.]"
+        ),
+        note=(
+            "TWO SOURCES IN ONE ROW, deliberately: the range is the span between "
+            "two different organisms and two different constructs, not a "
+            "measurement with an uncertainty. Sec. 4.5 shows it enters the "
+            "multiplex ceiling as q^k, which is why the span matters so much."
+        ),
+    ),
+    FigureNumber(
+        figure=WORKFLOW, panel="c", element="reads surviving all four tolls",
+        value="~1 read in 100; ~11 with depletion",
+        citation_key=None,
+        quote=(
+            "[DERIVED HERE: plot_economics.py panel d, composing the PhiX/"
+            "barcode, rRNA and cell-QC fractions]"
+        ),
+        note=(
+            "OURS. The rRNA term is Brettner et al.'s 93.7%; the cell-QC term is "
+            "the row above. Composing them is this document's arithmetic, and it "
+            "is the number that makes depletion the largest single lever."
+        ),
+    ),
+    FigureNumber(
+        figure=WORKFLOW, panel="c", element="reads lost to spike-in and barcode",
+        value="10 are PhiX or an unresolvable barcode",
+        citation_key=None,
+        quote=(
+            "[DERIVED HERE: cost_model.py, phix_fraction=0.10 and "
+            "valid_barcode_fraction=0.80, i.e. usable_read_fraction=0.72]"
+        ),
+        note=(
+            "OURS, and the canvas ROUNDS two tolls into one. The model applies a "
+            "10% PhiX spike and a separate 80% valid-barcode rate, so 28% of "
+            "reads are lost here, not 10%. The 1-in-100 survival figure is "
+            "computed from 0.72 and is correct; the '10' is the spike alone."
+        ),
+    ),
+    FigureNumber(
+        figure=WORKFLOW, panel="c", element="ribosomal share of remaining reads",
+        value="94 of the remainder are ribosomal",
+        citation_key="brettnerUltraHighthroughputMassively2024", line=70,
+        quote=(
+            "On average, the transcript proportions we recover are 93.7% rRNA, "
+            "0.005% tRNA, 0.04% ncRNA, and 5.75% mRNA."
+        ),
+        note="Drawn rounded to 94 from the sourced 93.7%.",
+    ),
+    FigureNumber(
+        figure=WORKFLOW, panel="b", element="usable fragments, bulk vs single cell",
+        value="6 and 2 usable in bulk; 1 and 1 in single cell",
+        citation_key=None,
+        quote=(
+            "[SCHEMATIC, not measured: the cut positions are drawn to illustrate "
+            "that reads scale with length in bulk and do not in a 3' assay]"
+        ),
+        note=(
+            "The only numbers on this canvas that are illustrative rather than "
+            "sourced. The RATIO is the claim -- six against two is the 3 kb "
+            "against 1 kb case in Sec. 2.4 -- and the cut count itself is not a "
+            "measurement of anything."
+        ),
+    ),
+    FigureNumber(
+        figure=WORKFLOW, panel="a", element="value of rRNA depletion, drawn on canvas",
+        value="worth ~$99k (Fig. 6)",
+        citation_key=None,
+        quote=(
+            "[DERIVED HERE: tables/t8-budgets.tex, the 250-cells-per-gene "
+            "split-pool rows, $156,670 undepleted less $57,510 depleted = $99,160]"
+        ),
+        note=(
+            "OURS. A difference of two budget rows rather than a figure any "
+            "source states, and it is the number the whole rRNA argument turns "
+            "on, so it is recorded here as well as in the text."
+        ),
+    ),
+
+    # --- Fig. 6, rRNA depletion options -------------------------------------
+    FigureNumber(
+        figure=RRNA, panel="a", element="workflow step numbers",
+        value="fragment 134-139, ligate 152-154, index 156-157",
+        citation_key="gaisserHighthroughputSinglecellTranscriptomics2024",
+        line=82,
+        quote=(
+            "The library then undergoes fragmentation and adapter ligation "
+            "(Part 2, Steps 134-139 and 152-154). ... Illumina P5 and P7 "
+            "sequence adapters and a final sub-library index are also appended "
+            "at this final PCR step (Part 2, Step 157). e, A 0.5-0.7x double "
+            "size selection then selects out unwanted fragments"
+        ),
+        note=(
+            "This is the correction. An earlier version of Sec. 3.5 placed "
+            "depletion BEFORE fragmentation and indexing and argued it had to "
+            "be there; the protocol says otherwise, and Brandner et al.'s stated "
+            "input is the post-size-selection library. One precision caveat: the "
+            "quote names step 157 for the index PCR, and 156 comes from the "
+            "numbered protocol body rather than from this sentence."
+        ),
+    ),
+    FigureNumber(
+        figure=RRNA, panel="b", element="Cas9 route, guide pool and conditions",
+        value="253 sgRNAs",
+        citation_key="brandnerPooledSinglecellCRISPRa2025", line=151,
+        quote=(
+            "We designed 253 sgRNA spacer sequences to target the 5S, 16S, and "
+            "23S rRNA sequences in E. coli and P. putida, weighted "
+            "proportionally to the regions in the rRNA that appeared more "
+            "frequently during NGS after microSPLiT. ... 100 pmoles of the "
+            "transcribed, column-purified sgRNA molecules were pre-incubated "
+            "with 10 pmoles spCas9 (NEB) ... then incubated at 37 C for 2 hours."
+        ),
+    ),
+    FigureNumber(
+        figure=RRNA, panel="b", element="Cas9 route, measured outcome",
+        value="4.6% -> 60.2%; 2.2% -> 10.4%",
+        citation_key="brandnerPooledSinglecellCRISPRa2025", line=71,
+        quote=(
+            "With rRNA depletion, the mRNA fraction increased from 4.6% to 60.2% "
+            "(Fig. 2B) and median mRNA transcripts per cell more than doubled, "
+            "from 54 to 115 [E. coli]; ... the mRNA fraction increased from 2.2% "
+            "to 10.4% [P. putida, md:119]"
+        ),
+        note=(
+            "Two organisms, one protocol, and the gap between them is the "
+            "transfer risk the figure is drawing attention to. Both figures are "
+            "proportions of ALIGNED transcripts computed before single-cell "
+            "filtering, not of reads purchased."
+        ),
+    ),
+    FigureNumber(
+        figure=RRNA, panel="b", element="RNase H chosen over Cas9",
+        value="75-80% rRNA left by the Cas9 arm",
+        citation_key="wangSinglecellMassivelyparallelMultiplexed2023", line=23,
+        quote=(
+            "after testing two approaches for depleting ribosomal sequences from "
+            "bulk libraries (Extended Data Fig. 3a-c), we chose an RNase H-based "
+            "approach to complete our pipeline [and, md:92:] this is consistent "
+            "with our trial runs using Cas9-based rRNA depletion (75-80% rRNA in "
+            "the final library, Extended Data Fig. 3a)"
+        ),
+        note=(
+            "The head-to-head. An earlier version of Sec. 3.5 cited M3-seq as "
+            "corroborating the Cas9 route; it tested both and chose the other one."
+        ),
+    ),
+    FigureNumber(
+        figure=RRNA, panel="b", element="in-situ route, best published result",
+        value="~2.5-fold, ~7% of total RNA",
+        citation_key="kuchinaMicrobialSinglecellRNA2021", line=36,
+        quote=(
+            "we then tested polyadenylation with E. coli poly(A) polymerase I "
+            "(PAP) ...; 5'-phosphate-dependent exonuclease (\"Terminator\", "
+            "Epicentre); and RT with ribosomal RNA-specific probes followed by "
+            "RNaseH mediated degradation ... We found that the treatment of "
+            "fixed and permeabilized cells with PAP resulted in the highest "
+            "(about 2.5-fold, or about 7% of total RNA) enrichment of mRNA reads"
+        ),
+    ),
+    FigureNumber(
+        figure=RRNA, panel="b", element="why M3-seq avoids in-situ depletion",
+        value="in situ can decrease mRNA capture",
+        citation_key="wangSinglecellMassivelyparallelMultiplexed2023", line=23,
+        quote=(
+            "we noted that depletion of rRNA in situ can decrease mRNA capture "
+            "efficiency and thus focused on depleting rRNAs after amplification"
+        ),
+    ),
+    FigureNumber(
+        figure=RRNA, panel="b", element="undepleted yeast transcript proportions",
+        value="93.7% rRNA, 5.75% mRNA",
+        citation_key="brettnerUltraHighthroughputMassively2024", line=70,
+        quote=(
+            "On average, the transcript proportions we recover are 93.7% rRNA, "
+            "0.005% tRNA, 0.04% ncRNA, and 5.75% mRNA."
+        ),
+        note=(
+            "Computed with multi-mapping reads RETAINED (STARsolo, 'the most "
+            "basic uniform multi-mapping algorithm', md:195), which is the "
+            "convention that inflates apparent rRNA. That makes it comparable to "
+            "microSPLiT's numbers and NOT to any unique-only figure -- see the "
+            "reporting-convention paragraph in Sec. 3.5."
+        ),
+    ),
+    FigureNumber(
+        figure=RRNA, panel="a", element="reads spent on rRNA, drawn on canvas",
+        value="roughly 94 of every 100 reads",
+        citation_key="brettnerUltraHighthroughputMassively2024", line=70,
+        quote=(
+            "On average, the transcript proportions we recover are 93.7% rRNA, "
+            "0.005% tRNA, 0.04% ncRNA, and 5.75% mRNA."
+        ),
+        note="Drawn rounded to 94 from the sourced 93.7%.",
+    ),
+    FigureNumber(
+        figure=RRNA, panel="b", element="post-hoc against in-situ enrichment",
+        value="against 13-fold post hoc",
+        citation_key="brandnerPooledSinglecellCRISPRa2025", line=71,
+        quote="the mRNA fraction increased from 4.6% to 60.2%",
+        note=(
+            "13-fold is 60.2/4.6, computed here rather than stated by the "
+            "source, and it is set against microSPLiT's 2.5-fold in-situ result "
+            "to make the point that the two routes are not close."
+        ),
+    ),
+    FigureNumber(
+        figure=RRNA, panel="a", element="rRNA share of yeast RNA",
+        value="about 85%",
+        citation_key="nadal-ribellesRiseSinglecellTranscriptomics2024", line=49,
+        quote="Total RNA per cell (~85% rRNA) 0.7-1 pg",
+    ),
 ]
 
 
 def main() -> None:
-    figures = [f"{TAXONOMY}.pdf", f"{SPLITSEQ}.pdf", f"{DROPLET}.pdf",
-               f"{SCIFI}.pdf"]
-    problems = check(RECORDS, figures)
+    figures = [f"{f.slug}.pdf" for f in FIGURES]
+    problems = check(RECORDS, figures, FIGURES)
     n_src = sum(1 for r in RECORDS if r.sourced)
     print(f"{len(RECORDS)} drawn numbers, {n_src} tied to a mirrored source, "
           f"{len(RECORDS) - n_src} flagged")

@@ -1,0 +1,138 @@
+<mxfile host="app.diagrams.net" agent="claude-code" version="24.7.17">
+  <diagram name="perturb-seq-workflow" id="perturbSeqWorkflow">
+    <mxGraphModel dx="1400" dy="1000" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="703" pageHeight="524" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ================================================================
+             TRUE-SIZE CANVAS. 100 draw.io units = 1 inch; 703 = 178.6 mm.
+             Arial; body 8.5 units = 6.1 pt (Nature 6 pt min); title 12.
+             Palette slots 1..6 of PLOT_PALETTE / PLOT_PALETTE_FILL, assigned as
+             in Figs. 1-5: orange transcript/cDNA, red barcode/rRNA, purple
+             enzyme, blue UMI, yellow container, gray handle/adapter/chrome.
+             This is the ORIENTING figure: it is the only one that shows the
+             whole experiment, from the strain library to the count matrix, and
+             it is where fragmentation is placed relative to everything else.
+             ================================================================ -->
+
+        <mxCell id="title" value="The whole experiment, and where each stage can lose you cells, molecules or identity" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="8" y="6" width="687" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="Read left to right. The wet-lab stages are the same for both method families; what differs is only how cells are kept apart while their barcodes are written (Figs. 2 to 4). Fragmentation is drawn explicitly because it is the step that decides whether a count means &#8220;molecules&#8221; or &#8220;molecules times length&#8221;, and because ribosomal RNA depletion is placed relative to it (Fig. 6)." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="8" y="26" width="687" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ============================ PANEL A ============================ -->
+        <mxCell id="pah" value="a&#160;&#160;The stages. Only the shaded block differs between split-pool and droplet." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="8" y="60" width="687" height="12" as="geometry" />
+        </mxCell>
+
+        <mxCell id="grpBio" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#CCCCCC;dashed=1;" vertex="1" parent="1"><mxGeometry x="8" y="76" width="216" height="58" as="geometry" /></mxCell>
+        <mxCell id="grpBioL" value="biology and sample prep" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="8" y="140" width="216" height="12" as="geometry" /></mxCell>
+
+        <mxCell id="grpId" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;" vertex="1" parent="1"><mxGeometry x="230" y="76" width="150" height="58" as="geometry" /></mxCell>
+        <mxCell id="grpIdL" value="where cell identity is written &#8211; the only step that differs" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="230" y="140" width="150" height="22" as="geometry" /></mxCell>
+
+        <mxCell id="grpLib" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#CCCCCC;dashed=1;" vertex="1" parent="1"><mxGeometry x="386" y="76" width="216" height="58" as="geometry" /></mxCell>
+        <mxCell id="grpLibL" value="bulk library chemistry &#8211; nothing here knows about cells" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="386" y="140" width="216" height="22" as="geometry" /></mxCell>
+
+        <mxCell id="grpSeq" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#CCCCCC;dashed=1;" vertex="1" parent="1"><mxGeometry x="608" y="76" width="87" height="58" as="geometry" /></mxCell>
+        <mxCell id="grpSeqL" value="readout" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="608" y="140" width="87" height="12" as="geometry" /></mxCell>
+
+        <mxCell id="w1" value="guide library&#10;in cells" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="14" y="84" width="64" height="26" as="geometry" /></mxCell>
+        <mxCell id="w2" value="grow in an&#10;environment" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="84" y="84" width="64" height="26" as="geometry" /></mxCell>
+        <mxCell id="w3" value="fix,&#10;permeabilize" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="154" y="84" width="64" height="26" as="geometry" /></mxCell>
+        <mxCell id="w4" value="capture +&#10;barcode (RT)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="236" y="84" width="66" height="26" as="geometry" /></mxCell>
+        <mxCell id="w5" value="lyse,&#10;pool" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="308" y="84" width="66" height="26" as="geometry" /></mxCell>
+        <mxCell id="w6" value="amplify&#10;cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="392" y="84" width="48" height="26" as="geometry" /></mxCell>
+        <mxCell id="w7" value="FRAGMENT&#10;+ size select" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="446" y="84" width="58" height="26" as="geometry" /></mxCell>
+        <mxCell id="w8" value="adapters&#10;+ index" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="510" y="84" width="48" height="26" as="geometry" /></mxCell>
+        <mxCell id="w9" value="deplete&#10;rRNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;dashed=1;" vertex="1" parent="1"><mxGeometry x="564" y="84" width="32" height="26" as="geometry" /></mxCell>
+        <mxCell id="w10" value="sequence" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="614" y="84" width="36" height="26" as="geometry" /></mxCell>
+        <mxCell id="w11" value="count&#10;matrix" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="654" y="84" width="36" height="26" as="geometry" /></mxCell>
+
+        <mxCell id="w9n" value="worth ~$99k (Fig. 6)" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#9673A6;" vertex="1" parent="1"><mxGeometry x="510" y="112" width="92" height="20" as="geometry" /></mxCell>
+        <mxCell id="w4n" value="split-pool: 3 plate rounds. droplet: 1 bead per cell." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="236" y="112" width="138" height="20" as="geometry" /></mxCell>
+
+        <!-- ============================ PANEL B ============================ -->
+        <mxCell id="pbh" value="b&#160;&#160;Fragmentation in bulk RNA-seq and in a 3&#8242;-counting single-cell assay. Same cutting, opposite consequence." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="8" y="168" width="687" height="12" as="geometry" />
+        </mxCell>
+
+        <!-- bulk side -->
+        <mxCell id="bulkBox" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#CCCCCC;" vertex="1" parent="1"><mxGeometry x="8" y="184" width="338" height="150" as="geometry" /></mxCell>
+        <mxCell id="bulkH" value="BULK &#8211; every piece is sequenceable" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="16" y="190" width="322" height="10" as="geometry" /></mxCell>
+
+        <mxCell id="bl1" value="long transcript" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="16" y="204" width="80" height="10" as="geometry" /></mxCell>
+        <mxCell id="bm1" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1"><mxGeometry x="100" y="202" width="234" height="14" as="geometry" /></mxCell>
+        <mxCell id="bc1" style="endArrow=none;html=1;strokeColor=#9673A6;strokeWidth=1;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="139" y="200" as="sourcePoint" /><mxPoint x="139" y="218" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bc2" style="endArrow=none;html=1;strokeColor=#9673A6;strokeWidth=1;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="178" y="200" as="sourcePoint" /><mxPoint x="178" y="218" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bc3" style="endArrow=none;html=1;strokeColor=#9673A6;strokeWidth=1;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="217" y="200" as="sourcePoint" /><mxPoint x="217" y="218" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bc4" style="endArrow=none;html=1;strokeColor=#9673A6;strokeWidth=1;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="256" y="200" as="sourcePoint" /><mxPoint x="256" y="218" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bc5" style="endArrow=none;html=1;strokeColor=#9673A6;strokeWidth=1;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="295" y="200" as="sourcePoint" /><mxPoint x="295" y="218" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bl1r" value="6 usable fragments" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#D79B00;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="16" y="220" width="120" height="10" as="geometry" /></mxCell>
+
+        <mxCell id="bl2" value="short transcript" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="16" y="242" width="80" height="10" as="geometry" /></mxCell>
+        <mxCell id="bm2" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1"><mxGeometry x="100" y="240" width="78" height="14" as="geometry" /></mxCell>
+        <mxCell id="bc6" style="endArrow=none;html=1;strokeColor=#9673A6;strokeWidth=1;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="139" y="238" as="sourcePoint" /><mxPoint x="139" y="256" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bl2r" value="2 usable fragments" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#D79B00;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="16" y="258" width="120" height="10" as="geometry" /></mxCell>
+
+        <mxCell id="bconc" value="Reads scale as length &#215; abundance, so a 3&#160;kb transcript yields about three times the reads of a 1&#160;kb one at equal abundance. THIS is why bulk units divide length back out: FPKM and TPM exist to undo a bias that uniform random cutting creates." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="16" y="278" width="322" height="48" as="geometry" /></mxCell>
+
+        <!-- single-cell side -->
+        <mxCell id="scBox" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;strokeWidth=1.5;" vertex="1" parent="1"><mxGeometry x="357" y="184" width="338" height="150" as="geometry" /></mxCell>
+        <mxCell id="scH" value="3&#8242;-COUNTING SINGLE CELL &#8211; only the barcode-proximal piece survives" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="365" y="190" width="322" height="10" as="geometry" /></mxCell>
+
+        <mxCell id="sl1" value="long" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="365" y="204" width="30" height="10" as="geometry" /></mxCell>
+        <mxCell id="sh1" value="H" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="397" y="202" width="14" height="14" as="geometry" /></mxCell>
+        <mxCell id="sb1" value="CB" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="411" y="202" width="20" height="14" as="geometry" /></mxCell>
+        <mxCell id="sk1" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1"><mxGeometry x="431" y="202" width="52" height="14" as="geometry" /></mxCell>
+        <mxCell id="sk1b" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;dashed=1;opacity=40;" vertex="1" parent="1"><mxGeometry x="483" y="202" width="200" height="14" as="geometry" /></mxCell>
+        <mxCell id="scut1" style="endArrow=none;html=1;strokeColor=#9673A6;strokeWidth=1;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="483" y="200" as="sourcePoint" /><mxPoint x="483" y="218" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="scut2" style="endArrow=none;html=1;strokeColor=#9673A6;strokeWidth=1;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="533" y="200" as="sourcePoint" /><mxPoint x="533" y="218" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="scut3" style="endArrow=none;html=1;strokeColor=#9673A6;strokeWidth=1;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="583" y="200" as="sourcePoint" /><mxPoint x="583" y="218" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="scut4" style="endArrow=none;html=1;strokeColor=#9673A6;strokeWidth=1;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="633" y="200" as="sourcePoint" /><mxPoint x="633" y="218" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="sl1r" value="1 usable &#8211; the rest have no handle and die" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#B85450;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="365" y="220" width="250" height="10" as="geometry" /></mxCell>
+
+        <mxCell id="sl2" value="short" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="365" y="242" width="30" height="10" as="geometry" /></mxCell>
+        <mxCell id="sh2" value="H" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="397" y="240" width="14" height="14" as="geometry" /></mxCell>
+        <mxCell id="sb2" value="CB" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="411" y="240" width="20" height="14" as="geometry" /></mxCell>
+        <mxCell id="sk2" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1"><mxGeometry x="431" y="240" width="52" height="14" as="geometry" /></mxCell>
+        <mxCell id="sk2b" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;dashed=1;opacity=40;" vertex="1" parent="1"><mxGeometry x="483" y="240" width="46" height="14" as="geometry" /></mxCell>
+        <mxCell id="scut5" style="endArrow=none;html=1;strokeColor=#9673A6;strokeWidth=1;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="483" y="238" as="sourcePoint" /><mxPoint x="483" y="256" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="sl2r" value="1 usable &#8211; the SAME as the long one" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#B85450;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="365" y="258" width="250" height="10" as="geometry" /></mxCell>
+
+        <mxCell id="sconc" value="Exactly one usable fragment per amplified copy, whatever the length, because a molecule needs BOTH flanking handles and only the barcode-proximal piece keeps the outer one. UMI collapse then reduces all copies of one original molecule to one count. Length drops out by construction." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="365" y="278" width="322" height="48" as="geometry" /></mxCell>
+
+        <!-- ============================ PANEL C ============================ -->
+        <mxCell id="pch" value="c&#160;&#160;What each stage costs you. The funnel, not the chemistry, is what a budget is made of." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="8" y="346" width="687" height="12" as="geometry" />
+        </mxCell>
+
+        <mxCell id="f1" value="cells loaded" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="8" y="364" width="132" height="22" as="geometry" /></mxCell>
+        <mxCell id="f2" value="barcoded" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="148" y="364" width="112" height="22" as="geometry" /></mxCell>
+        <mxCell id="f3" value="passes QC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="268" y="364" width="86" height="22" as="geometry" /></mxCell>
+        <mxCell id="f4" value="guide assigned" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="362" y="364" width="62" height="22" as="geometry" /></mxCell>
+        <mxCell id="f5" value="usable" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="432" y="364" width="40" height="22" as="geometry" /></mxCell>
+
+        <mxCell id="fn1" value="25&#8211;50% recovered&#10;(Sec. 3.1)" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="148" y="388" width="112" height="22" as="geometry" /></mxCell>
+        <mxCell id="fn2" value="~75% of sequenced&#10;cells discarded" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="268" y="388" width="90" height="22" as="geometry" /></mxCell>
+        <mxCell id="fn3" value="q, the parameter that&#10;governs multiplexing:&#10;21&#8211;25% in bacteria,&#10;&gt;71% in yeast" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#B85450;" vertex="1" parent="1"><mxGeometry x="362" y="388" width="110" height="44" as="geometry" /></mxCell>
+
+        <mxCell id="rdBox" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#CCCCCC;dashed=1;" vertex="1" parent="1"><mxGeometry x="490" y="360" width="205" height="76" as="geometry" /></mxCell>
+        <mxCell id="rdH" value="and separately, what happens to a READ" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="496" y="364" width="193" height="10" as="geometry" /></mxCell>
+        <mxCell id="rd1" value="Of 100 reads bought for an undepleted split-pool run, about 10 are PhiX or an unresolvable barcode, 94 of the remainder are ribosomal, and three quarters of the cells they came from are discarded. Roughly 1 read in 100 survives all four tolls; depletion takes it to about 11." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="496" y="376" width="193" height="56" as="geometry" /></mxCell>
+
+        <!-- ============================ FOOTER ============================ -->
+        <mxCell id="legend" value="Segments&#160;&#160;&#160;transcript / cDNA&#160;&#160;&#160;cell barcode (CB) or rRNA&#160;&#160;&#160;enzyme, probe or cut&#160;&#160;&#160;UMI / output&#160;&#160;&#160;H = handle, adapter&#160;&#160;&#160;container&#160;&#160;&#160;faded + dashed = discarded" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.5;align=left;verticalAlign=middle;spacingLeft=4;" vertex="1" parent="1">
+          <mxGeometry x="8" y="446" width="687" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="foot" value="Panel b is the reason this figure exists. Bulk and single-cell protocols perform the SAME physical cutting, and the consequence inverts because of what happens afterwards: in bulk every piece can be sequenced, so reads scale with length; in a 3&#8242;-counting assay only the piece carrying the outer handle can be, so exactly one survives per molecule regardless of length. Applying TPM or FPKM to a 10x or SPLiT-seq count matrix is therefore an error, not a stylistic choice. Composed from the protocols as described in Secs. 2.4, 3.1 and 3.2, not traced from any published figure. Every number drawn by hand here is sourced in the provenance table for this figure." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="8" y="468" width="687" height="46" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

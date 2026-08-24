@@ -44,7 +44,11 @@ in the methods here -- added to each cDNA molecule \emph{before} any
 amplification. Two reads sharing a CB, a gene, and a UMI are copies of one
 original mRNA; two reads sharing CB and gene but differing in UMI are two
 molecules. Collapsing on the UMI converts read counts, which are distorted by
-PCR efficiency, into molecule counts, which are the actual measurement. The
+PCR efficiency \emph{and by where fragmentation happened to cut}
+(\cref{sec:fragmentation}), into molecule counts, which are the actual
+measurement. That identity is exact for a pure oligo-dT assay and only
+approximate for one primed with random hexamers, for the reason
+\cref{sec:fragmentation} gives. The
 count of distinct UMIs recovered from a cell is the single most important
 quality number in this document: it is the denominator of every statistical
 argument in Sec.~\ref{sec:limits}. \term{UMI collision} -- two distinct
@@ -161,7 +165,7 @@ names which library a read came from, whereas a UMI distinguishes two molecules
   (Sec.~\ref{sec:collisions}).
   Redrawn and reorganized from the text and Table~1 of that review rather than
   reproduced from its figure, and with the orientation fixed $5'$ to $3'$
-  throughout, where the original mirrors its $3'$ panel. Every number drawn by hand in this figure is sourced in \cref{tab:figure-provenance}.}{fig:methods-map}
+  throughout, where the original mirrors its $3'$ panel. Every number drawn by hand in this figure is sourced in \cref{tab:prov-scrnaseq-method-taxonomy}.}{fig:methods-map}
 
 \subsection{Microbial Constraints on Single-Cell Chemistry\secstatus{todo}}
 \label{sec:why-hard}
@@ -203,6 +207,107 @@ three properties of a yeast cell break its assumptions.
     largely a tax, and as Sec.~\ref{sec:application} shows that single fraction
     dominates the sequencing bill.
 \end{itemize}
+
+\subsection{Fragmentation, and Why Single-Cell Counts Are Not Length-Normalized\secstatus{todo}}
+\label{sec:fragmentation}
+
+Every protocol here ends by cutting long cDNA into short pieces. It is easy to
+read past as plumbing, and it is not: it is the step that decides whether a
+count means ``molecules'' or ``molecules times length'', and it is what makes
+the late rRNA depletion of \cref{sec:rrna} mechanically possible.
+\Cref{fig:workflow} places it in the whole workflow and draws the bulk against
+single-cell contrast developed below.
+
+\notesec{What it is for} After reverse transcription and barcoding, a cDNA copy
+runs from a few hundred bases to several kilobases. An Illumina sequencer reads
+roughly 150 bases in from each end and stops, and the bridge amplification that
+turns one molecule into a readable cluster loses efficiency as molecules
+lengthen, so long fragments are under-represented or lost. Everything is
+therefore cut to a size the instrument likes: in the microSPLiT
+protocol~\citep{gaisserHighthroughputSinglecellTranscriptomics2024}, ``a tight
+smear around 450--500\,bp.''
+
+Two chemistries do it. \term{Enzymatic fragmentation} uses a fragmentation
+buffer and a WGS fragmentation mix at 32\,\textdegree C for 10\,min, then
+65\,\textdegree C for 30\,min; the first temperature cuts, the second repairs
+the ragged ends and adds the single A overhang that lets adapters ligate
+cleanly. \term{Tagmentation} instead uses a Tn5 transposase preloaded with
+adapter duplexes, which cuts and inserts the adapter in one reaction -- M3-seq
+fragments ``with Tn5 transposase loaded with Nextera read 2 primers.'' Fewer
+steps and less input, at the cost of more sequence bias in where the cuts land.
+Either way a double-sided SPRI size selection follows, discarding both the
+too-long and the too-short; the too-short are mostly adapter dimers, which is
+why the protocol tells you to check for ``no band at 180--200\,bp.''
+
+\notesec{The difference from bulk RNA-seq, which is the whole point} In bulk
+RNA-seq every fragment of a molecule is sequenceable. Cutting a 3\,kb transcript
+uniformly at random yields about three times as many usable fragments as a
+1\,kb transcript at equal abundance, so reads scale as length times abundance.
+That is why bulk expression units divide the length back out: FPKM and TPM exist
+to undo a bias that uniform random cutting \emph{creates}.
+
+A 3$'$-counting single-cell assay is immune, and not because the cutting is
+uniform. It is immune because \emph{only one fragment per molecule can ever be
+sequenced}. A finished library molecule needs both flanking adapters to amplify
+and to cluster, and in these protocols the cell barcode and one handle sit at
+the same end. Cut a long cDNA into six pieces and five lose that handle; cut a
+short one into two and one loses it. Exactly one usable fragment survives per
+amplified copy, whatever the length, and UMI collapse then reduces all copies of
+one original molecule to a single count. Length drops out by construction.
+
+Formally, if cuts fall as a Poisson process at rate $\lambda$, the distance from
+the barcode to the first cut is $\mathrm{Exponential}(\lambda)$, so the chance
+that the surviving fragment lands inside the size-selection window $[a,b]$ is
+$e^{-\lambda a}-e^{-\lambda b}$: a function of the window, not of the
+transcript's total length. Every transcript longer than the window has the same
+capture probability.
+
+\begin{keybox}
+\textbf{Single-cell count matrices are never length-normalized, and this is why.}
+It is a structural consequence of one-usable-fragment-per-molecule plus UMI
+collapse, not a convention or an approximation that happened to work. Applying
+TPM or FPKM to a 10x or SPLiT-seq count matrix is an error, not a stylistic
+choice.
+\end{keybox}
+
+\notesec{Where a cut does hurt, and where it does not} A cut landing inside the
+barcode block produces \emph{loss, not corruption}. The piece carrying the cDNA
+has lost its outer handle and cannot amplify; the piece carrying the handle has
+no insert and is removed by the size selection as a dimer. No molecule is ever
+reassigned to a different but valid cell, which is the difference between an
+assay that under-counts and one that lies. A cut leaving too little transcript
+is caught twice, physically by the size selection and computationally by the
+aligner's minimum matched length. And because amplification precedes
+fragmentation, each original molecule exists as many copies cut at different
+positions, all sharing one UMI, so a badly cut copy costs nothing.
+
+What genuinely survives is \emph{mapping ambiguity}: short reads against
+repeated sequence map to several places equally well, which is why Gaisser et
+al.\ note that ``a longer cDNA read (read 1) will improve the mapping quality
+given the large number of repeats in the bacterial genome.'' In these organisms
+that ambiguity is dominated by rRNA, whose operons are multi-copy -- a fact with
+consequences for how rRNA fractions are reported, developed in \cref{sec:rrna}.
+
+\notesec{The length bias that does not cancel, and it is upstream} Brettner et
+al.\ and microSPLiT both prime with random hexamers as well as oligo-dT, and
+Kuchina et al.\ measured that hexamers dominate: ``most of the rRNA and mRNA
+molecules were captured by random hexamer primers, whereas tRNA molecules were
+predominantly retrieved by poly-T primers.'' Every hexamer priming event starts
+its own cDNA and collects its own UMI, and the number of priming sites on a
+molecule scales with its length. So one long mRNA can yield several distinct
+UMIs. That is genuine length bias, it arises \emph{before} fragmentation, and
+UMI collapse cannot remove it -- those are not PCR copies of one molecule, they
+are independent priming events with genuinely different UMIs.
+
+Two consequences, pulling opposite ways. It is harmless for perturb-seq, because
+the estimand of \cref{sec:output-object} is differential -- the same gene,
+perturbed against control -- so a per-gene length factor divides out. It is not
+harmless for absolute within-cell composition, and it couples to the one free
+rRNA lever: shifting the hexamer:dT ratio to suppress rRNA (\cref{sec:rrna})
+simultaneously shifts the length bias of the mRNA counts. \textbf{Hypothesis
+(untested):} that shift is small relative to shot noise at the depths in
+\cref{sec:transcript-content}, but it has not been measured here and the
+titration should report it.
 
 \subsection{The Count Matrix and Estimand\secstatus{todo}}
 \label{sec:output-object}

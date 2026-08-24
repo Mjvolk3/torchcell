@@ -127,7 +127,7 @@ longer true at the top end. Nadal-Ribelles et al.'s
 $1.06$-million-cell atlas needs $1.3\times10^{9}$ UMIs, within a factor of three
 of the 3.2 billion read pairs in one NovaSeq X 25B lane \emph{before} counting
 duplication or the rRNA fraction, so at genome scale in yeast the sequencer has
-started to bind. \cref{sec:application} prices exactly that regime.
+started to bind. \Cref{sec:application} prices exactly that regime.
 
 Second, four methods now carry a perturbation readout, and they no longer sit at
 one end of anything: they run from Jackson et al.'s 38{,}225 cells to
@@ -278,8 +278,8 @@ requires
   \qquad z = z_{1-\alpha/2}+z_{1-\beta} = 2.80,
   \label{eq:power}
 \end{equation}
-which is $\sim$16 UMIs of that gene for a two-fold change, $\sim$65 for 1.4-fold,
-$\sim$159 for 1.25-fold. This is a floor, not an estimate: it counts only
+which is $\sim$16 UMIs of that gene for a two-fold change, $\sim$69 for 1.4-fold,
+$\sim$158 for 1.25-fold. This is a floor, not an estimate: it counts only
 sampling noise and ignores biological variance between cells, which is exactly
 why the 100-cell floor is a separate and independent requirement.
 
@@ -393,7 +393,7 @@ Where it comes from is worth being exact about, because 1.34 looks like a
 measured property of a yeast deletion and is not one. The $|\Delta|$ distribution
 decays monotonically from zero (\cref{fig:effect-size}a), so selecting its upper
 tail at any cut returns a median sitting just above that cut. Recomputed across
-the ladder, the same statistic reads 1.16$\times$ at a 1.1$\times$ cut,
+the ladder, the median response among responders reads 1.16$\times$ at a 1.1$\times$ cut,
 1.36$\times$ at 1.25$\times$, 1.73$\times$ at 1.5$\times$ and 2.57$\times$ at
 2$\times$ (\cref{fig:effect-size}c, right axis) -- close to a straight line
 against the cut itself. So 1.34 is the arithmetic consequence of calling
@@ -485,7 +485,7 @@ applied correctly.
 
 \begin{keybox}
 \textbf{The design that follows.} Genome-wide pairwise epistasis is out of reach at
-any plex: $2.6\times10^{9}$ cells at $k=3$, still $2.6\times10^{8}$ at $k=8$. But a
+any plex: $2.4\times10^{9}$ cells at $k=3$, still $2.6\times10^{8}$ at $k=8$. But a
 \emph{focused} library inverts the picture, because Eq.~\ref{eq:pairs} is quadratic
 in $T$ and quadratic in $k$. A 200-gene metabolic sub-library at $k=8$ needs
 $\sim$284{,}000 cells for \emph{every} one of its 19{,}900 pairs -- one
@@ -704,7 +704,7 @@ the max is an artefact of having modeled the count as Poisson.
 %% record is paid; do not reintroduce a DOI table for works we hold.
 This is not a new result. It is the standard negative-binomial sample-size
 calculation from the bulk RNA-seq literature, applied to a pseudobulk pool.
-\cref{eq:design} appears in essentially this form in Hart et
+\Cref{eq:design} appears in essentially this form in Hart et
 al.\ \citep{hartCalculatingSampleSize2013}: a sum of a sampling term and a
 dispersion term over the squared log fold change. The parameter $\varphi_j$ is
 the negative-binomial dispersion of McCarthy et
@@ -763,13 +763,13 @@ large-control assumption used for main effects the exact factor is 3, so Yao's 4
 is conservative by about a third; it is kept because the 400-cells-per-pair
 constant of \cref{sec:multiplex} is built on it and the two must not disagree.
 
-\pfstep{Consequence} \cref{eq:design} contains both earlier rules as limits.
+\pfstep{Consequence} \Cref{eq:design} contains both earlier rules as limits.
 Setting $\varphi_j\to0$ leaves $n^{*}=A/(d\,p_j)$, that is a required pseudobulk
 count $K=n^{*}d\,p_j=A$; at $\kappa=1$ this is \emph{identically}
 \cref{eq:power}, so \cref{sec:cells-per-pert} is the shot-noise corner of this
 equation rather than a separate rule. Letting $d\,p_j\to\infty$ gives
 $n^{*}\to A\varphi_j$, a floor no amount of sequencing can cross -- which
-\emph{is} the biological floor, now with a number attached. At two-fold and
+\emph{is} the biological floor, now with a number attached. At
 80\% power $A=16.3$ at two-fold and $A=90.9$ at the measured 1.34-fold, so a
 100-cell floor is precisely the claim $\varphi_j\approx6.1$ or
 $\varphi_j\approx1.1$ respectively.
@@ -854,7 +854,7 @@ since been pinned can be read against the two that have not:
     (\cref{sec:effect-size}, \cref{tab:effect-size}). $A(\Delta)$ goes as
     $\Delta^{-2}$, so this was the most violent term in the equation; pinning it
     multiplied every cell requirement by $\sim$5.6 and resolved the $\varphi$
-    puzzle above. \cref{tab:design-params} now carries it as measured, and
+    puzzle above. \Cref{tab:design-params} now carries it as measured, and
     $A(\Delta)$ with it as derived rather than assumed.
   \item \textbf{$q$, per-guide detection probability.} Enters as $q^{r}$, so it
     is forgiving for main effects and punishing for interactions. It cannot be
@@ -865,8 +865,13 @@ since been pinned can be read against the two that have not:
 Of the three, one is now measured and two remain. The curves here therefore rest
 on one measured parameter and one swept one, which is why $\varphi$ is drawn as a
 family rather than a line, and why no number from this subsection is yet used in
-the budgets of \cref{sec:application} -- those still assume two-fold and are
-consequently optimistic by $\sim$5.6$\times$ in cells.
+the budgets of \cref{sec:application}. Those budgets are built on the 100, 250 and
+500 cells-per-gene tiers, which come from the biological floor rather than from a
+fold-change target, so they are NOT understated by the 5.6$\times$ that
+\cref{sec:effect-size} applies to a depth-derived requirement. The
+5.6$\times$ bites only where a number was derived from the two-fold assumption,
+and \cref{sec:design-equation} shows the convention itself survives the measured
+effect size intact.
 
 Two limitations of the derivation itself, for completeness. The delta-method step
 behind \cref{eq:nbvar} degrades when counts are small, and $A\approx16$ counts is

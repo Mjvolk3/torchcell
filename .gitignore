@@ -232,3 +232,12 @@ notes-tex/*/*-clean.pdf
 
 # notes-tex: bibliography style symlinked from the manuscript
 notes-tex/*/sn-nature.bst
+
+# Merge-queue runtime state (SQLite DB + flock + heartbeat).
+# scripts/merge_queue.py puts this at $DATA_ROOT/dev/merge_queue/. On GilaHyper
+# DATA_ROOT is /scratch/projects/torchcell-scratch, so it lands outside the repo
+# and is never seen here. On the M1 Mac DATA_ROOT *is* the repo root, so the
+# same path resolves inside the working tree and showed up as permanent
+# untracked clutter. It is machine-local runtime state and must never be
+# committed on any machine.
+dev/merge_queue/

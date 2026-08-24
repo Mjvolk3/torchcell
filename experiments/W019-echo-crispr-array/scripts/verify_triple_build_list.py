@@ -60,6 +60,9 @@ TARGETS = osp.join(
 SELECTION = osp.join(RESULTS, "triple_design_rank_sampling_selection.csv")
 SUMMARY = osp.join(RESULTS, "triple_design_rank_sampling_summary.csv")
 CONSTRUCTION = osp.join(RESULTS, "triple_build_construction_check.csv")
+MEAS_SINGLES = osp.join(RESULTS, "run4_measured_summary_singles.csv")
+MEAS_DOUBLES = osp.join(RESULTS, "run4_measured_summary_doubles.csv")
+MEAS_GAPS = osp.join(RESULTS, "run4_measured_summary_gaps.csv")
 BUILD_LIST = osp.join(NOTES, "experiments.W019-echo-crispr-array.build-list.md")
 RATIONALE = osp.join(NOTES, "experiments.W019-echo-crispr-array.next-strains-to-construct.md")
 
@@ -100,6 +103,20 @@ def read_inventory():
                for r, m in zip(sheet.itertuples(), kind.str.match(r"d\d"), strict=True) if m}
     triples = [r for r, m in zip(sheet.itertuples(), kind.str.match(r"t\d"), strict=True) if m]
     return singles, doubles, triples
+
+
+def read_order_sheet():
+    """(singles, doubles) as the run-4 order sheet lists them, in sheet order."""
+    sheet = pd.read_csv(STRAINS)
+    kind = sheet["#"].astype(str)
+    singles, doubles = [], []
+    for r, is_s, is_d in zip(sheet.itertuples(), kind.str.match(r"s\d"),
+                             kind.str.match(r"d\d"), strict=True):
+        if is_s:
+            singles.append((str(r[1]), orf(r.KO1)))
+        if is_d:
+            doubles.append((str(r[1]), orf(r.KO1), orf(r.KO2)))
+    return singles, doubles
 
 
 def read_targets():
@@ -359,6 +376,49 @@ def main() -> None:
           and abs(float(summ.mean_prediction) - 0.5300) < 5e-5,
           "summary CSV capped row matches the note",
           f"{int(summ.construct_total)} construct, {float(summ.mean_prediction):.4f} mean pred")
+
+    # the run-4 measured columns pasted into the two inventory tables
+    ms = pd.read_csv(MEAS_SINGLES)
+    md_ = pd.read_csv(MEAS_DOUBLES)
+    gaps = pd.read_csv(MEAS_GAPS)
+    fmt = lambda v: "--" if pd.isna(v) else f"{v:.4f}"  # noqa: E731
+
+    s_note = {c[0]: c for c in table_rows(bl) if re.fullmatch(r"s\d+", c[0])}
+    check("measured", len(s_note) == 12, "build-list singles table has 12 rows", len(s_note))
+    bad = [r.id for r in ms.itertuples()
+           if [s_note[r.id][3], s_note[r.id][4], s_note[r.id][5], s_note[r.id][6]]
+           != [fmt(r.fitness), fmt(r.boot_se), fmt(r.across_plate_sd), fmt(r.costanzo_smf)]]
+    check("measured", not bad,
+          "every single's fitness, SE, plate SD and published SMF match the CSV",
+          bad or "12 of 12")
+
+    d_note = {c[0]: c for c in table_rows(bl) if re.fullmatch(r"d\d+", c[0])}
+    check("measured", len(d_note) == 13, "build-list doubles table has 13 rows", len(d_note))
+    bad = [r.id for r in md_.itertuples()
+           if [d_note[r.id][4], d_note[r.id][5], d_note[r.id][6], d_note[r.id][7],
+               d_note[r.id][8]]
+           != [fmt(r.fitness), fmt(r.boot_se), fmt(r.across_plate_sd),
+               fmt(r.costanzo_dmf), r.tier]]
+    check("measured", not bad,
+          "every double's fitness, SE, plate SD, published DMF and tier match the CSV",
+          bad or "13 of 13")
+
+    check("measured",
+          int(ms.costanzo_smf.isna().sum()) == 1
+          and ms[ms.costanzo_smf.isna()].orf.iloc[0] == "YLR104W",
+          "exactly one single lacks a published SMF, and it is YLR104W",
+          ms[ms.costanzo_smf.isna()].orf.tolist())
+    check("measured",
+          int(md_.costanzo_dmf.isna().sum()) == 1
+          and md_[md_.costanzo_dmf.isna()].tier.iloc[0] == "novel",
+          "exactly one double lacks a published DMF, and its tier is novel",
+          md_[md_.costanzo_dmf.isna()].pair.tolist())
+    check("measured", len(gaps) == 4,
+          "four gaps recorded: one single, one double, one failed build, no triples",
+          len(gaps))
+    check("measured", ms.orf.tolist() == [g for _, g in read_order_sheet()[0]]
+          and len(md_) == 13,
+          "the measured tables cover every built strain", f"{len(ms)} singles, {len(md_)} doubles")
 
     cc = pd.read_csv(CONSTRUCTION)
     cc = cc[cc.strategy == "capped"]

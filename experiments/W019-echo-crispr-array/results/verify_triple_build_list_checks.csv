@@ -48,6 +48,14 @@ notes,True,every new double's serves-triples list is correct,25 of 25
 notes,True,gene-participation line matches,"{'YBR203W': 8, 'YPL046C': 8, 'YLL012W': 7, 'YPL081W': 7, 'YDR057W': 6, 'YLR312C-B': 6, 'YGL087C': 5, 'YKL033W-A': 4, 'YLR104W': 4, 'YJR060W': 3, 'YER079W': 2}"
 notes,True,"all 11 genes covered, range 2-8","11 genes, 2-8"
 notes,True,summary CSV capped row matches the note,"45 construct, 0.5300 mean pred"
+measured,True,build-list singles table has 12 rows,12
+measured,True,"every single's fitness, SE, plate SD and published SMF match the CSV",12 of 12
+measured,True,build-list doubles table has 13 rows,13
+measured,True,"every double's fitness, SE, plate SD, published DMF and tier match the CSV",13 of 13
+measured,True,"exactly one single lacks a published SMF, and it is YLR104W",['YLR104W']
+measured,True,"exactly one double lacks a published DMF, and its tier is novel",['YPL046C + YPL081W']
+measured,True,"four gaps recorded: one single, one double, one failed build, no triples",4
+measured,True,the measured tables cover every built strain,"12 singles, 13 doubles"
 notes,True,"construction-check CSV agrees: 20 rows, all with a parent, 15 single-route","20 rows, 15 single-route"
 kuzmin,True,YER079W and YLR312C-B are exactly the zero-trigenic-record genes,"['YER079W', 'YLR312C-B']"
 kuzmin,True,the same two genes are also absent from Kuzmin digenic,"['YER079W', 'YLR312C-B']"

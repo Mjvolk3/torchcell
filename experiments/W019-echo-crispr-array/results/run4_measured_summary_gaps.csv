@@ -1,0 +1,5 @@
+kind,strain,reason
+"single, no published reference",YLR104W,"the SMF reference panel was assembled for the earlier plate design, which carried LCL1 (YPL056C) in this slot; run 4 kept LCL2 (YLR104W), so no published SMF was pulled for it"
+"double, no published reference",YPL046C + YPL081W,"tier 'novel': the pair has no measurement in Costanzo 2016, Kuzmin 2018 or Kuzmin 2020, so there is nothing to compare against"
+"double, designed but never built",YJR060W + YKL033W-A,reported failed to construct at the 2026-08-11 handover; neither the attempt date nor a cause was recorded. Both parent singles exist and were measured. It blocks 0 of the 39 target triples
+"triples, none exist",--,run 4 carried singles and doubles only; no triple has been constructed in any round. The 20 in the build list are the first

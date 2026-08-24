@@ -43,35 +43,79 @@ experiments/W019-echo-crispr-array/data/run4_doubles_2026-08-06/
 YLR313C (SPH1) was built but was never a node in the inference panel, so it is in no
 predicted triple and is not on this plate.
 
-| id  | ORF        | common   | id  | ORF        | common                  |
-|:----|:-----------|:---------|:----|:-----------|:------------------------|
-| s1  | YJR060W    | CBF1     | s7  | YLR104W    | LCL2                    |
-| s2  | YPL081W    | RPS9A    | s8  | YLL012W    | YEH1                    |
-| s3  | YDR057W    | YOS9     | s9  | YER079W    | --                      |
-| s4  | YPL046C    | ELC1     | s10 | YKL033W-A  | --                      |
-| s5  | YBR203W    | COS111   | s11 | YLR313C    | SPH1 (not a panel node) |
-| s6  | YGL087C    | MMS2     | s12 | YLR312C-B  | --                      |
+`fitness`, `boot SE`, `plate SD`: **run 4 measured**, 3 plates, relative to on-plate WT
+(`run4_strain_bootstrap.csv`). All twelve were measured; one has no published value to
+compare against, see "[What is missing, and why](#what-is-missing-and-why)".
+
+| id  | ORF       | common | fitness | boot SE | plate SD | Costanzo SMF |
+|:----|:----------|:-------|:--------|:--------|:---------|:-------------|
+| s1  | YJR060W   | CBF1   | 0.5348  | 0.0506  | 0.1076   | 0.5900       |
+| s2  | YPL081W   | RPS9A  | 0.9007  | 0.0515  | 0.1105   | 0.9550       |
+| s3  | YDR057W   | YOS9   | 1.2430  | 0.1282  | 0.2690   | 1.0435       |
+| s4  | YPL046C   | ELC1   | 1.2066  | 0.0495  | 0.1052   | 1.0433       |
+| s5  | YBR203W   | COS111 | 1.1292  | 0.0679  | 0.1426   | 1.0370       |
+| s6  | YGL087C   | MMS2   | 1.1628  | 0.0329  | 0.0706   | 0.9960       |
+| s7  | YLR104W   | LCL2   | 1.1748  | 0.0564  | 0.1187   | --           |
+| s8  | YLL012W   | YEH1   | 1.2604  | 0.0659  | 0.1402   | 0.9925       |
+| s9  | YER079W   | --     | 1.3333  | 0.1504  | 0.3162   | 1.0387       |
+| s10 | YKL033W-A | --     | 0.9251  | 0.0445  | 0.0954   | 1.0327       |
+| s11 | YLR313C   | SPH1   | 1.0882  | 0.1471  | 0.3083   | 0.9843       |
+| s12 | YLR312C-B | --     | 0.8390  | 0.0661  | 0.1397   | 1.0845       |
 
 **Doubles d1--d13.** Eight are parents for the triples below and must be re-measured on
-this plate; five are not used by any selected triple.
+this plate; five are not used by any selected triple. `tier` is how the pair was classed
+when the round was designed: `validation` reproduces a published interaction, `coverage`
+buys triples, `novel` had never been measured by anyone.
 
-| id | pair | used | serves triples (rank) |
-|---|---|---|---|
-| d1 | YDR057W + YPL081W | yes | 12, 13, 16 |
-| d2 | YPL046C + YPL081W | no | -- |
-| d3 | YER079W + YPL081W | no | -- |
-| d4 | YLR312C-B + YPL081W | yes | 1, 3, 4, 6 |
-| d5 | YDR057W + YGL087C | yes | 16, 39 |
-| d6 | YDR057W + YER079W | no | -- |
-| d7 | YDR057W + YLR312C-B | no | -- |
-| d8 | YJR060W + YPL046C | yes | 21, 31, 33 |
-| d9 | YBR203W + YPL046C | yes | 24, 28, 29, 31, 34 |
-| d10 | YDR057W + YLL012W | yes | 25, 38, 39 |
-| d11 | YLL012W + YPL046C | yes | 21, 24, 27 |
-| d12 | YER079W + YJR060W | no | -- |
-| d13 | YER079W + YLR312C-B | yes | 2, 5 |
+**Fitness only, no epsilon.** Run 4's epsilon is **not reportable**: the round's
+denominator rests on a single WT colony and the measured double/single ratio is 0.758
+where a multiplicative model wants ~1.07, which no choice of reference can produce. The
+numbers below are fitness; the diagnosis is in
+[[experiments.W019-echo-crispr-array.run4-handoff]].
+
+| id  | pair                | used | serves (rank)      | fitness | boot SE | plate SD | Costanzo DMF | tier       |
+|:----|:--------------------|:-----|:-------------------|:--------|:--------|:---------|:-------------|:-----------|
+| d1  | YDR057W + YPL081W   | yes  | 12, 13, 16         | 0.6071  | 0.0479  | 0.1029   | 1.0351       | coverage   |
+| d2  | YPL046C + YPL081W   | no   | --                 | 0.9335  | 0.0040  | 0.0084   | --           | novel      |
+| d3  | YER079W + YPL081W   | no   | --                 | 0.9496  | 0.0556  | 0.1195   | 0.8625       | validation |
+| d4  | YLR312C-B + YPL081W | yes  | 1, 3, 4, 6         | 0.6480  | 0.0454  | 0.0968   | 1.0165       | coverage   |
+| d5  | YDR057W + YGL087C   | yes  | 16, 39             | 0.7884  | 0.0007  | 0.0015   | 1.1372       | validation |
+| d6  | YDR057W + YER079W   | no   | --                 | 0.9403  | 0.0472  | 0.0991   | 1.0963       | coverage   |
+| d7  | YDR057W + YLR312C-B | no   | --                 | 0.8895  | 0.0543  | 0.1150   | 1.1783       | validation |
+| d8  | YJR060W + YPL046C   | yes  | 21, 31, 33         | 0.5649  | 0.0435  | 0.0930   | 0.9663       | coverage   |
+| d9  | YBR203W + YPL046C   | yes  | 24, 28, 29, 31, 34 | 0.8882  | 0.0232  | 0.0501   | 1.1179       | coverage   |
+| d10 | YDR057W + YLL012W   | yes  | 25, 38, 39         | 0.9315  | 0.0269  | 0.0572   | 0.9995       | coverage   |
+| d11 | YLL012W + YPL046C   | yes  | 21, 24, 27         | 0.9087  | 0.0348  | 0.0744   | 1.0251       | coverage   |
+| d12 | YER079W + YJR060W   | no   | --                 | 0.6886  | 0.0650  | 0.1365   | 0.6100       | validation |
+| d13 | YER079W + YLR312C-B | yes  | 2, 5               | 0.7728  | 0.0514  | 0.1084   | 1.0994       | coverage   |
 
 The 14th designed double, `YKL033W-A x YJR060W`, failed to construct and does not exist.
+
+### What is missing, and why
+
+Four gaps, and none of them is a measurement that failed.
+
+| what | which | why |
+|:-----|:------|:----|
+| a single with no published SMF | `YLR104W` (LCL2) | The reference panel was assembled for the earlier plate design, which carried LCL1 (`YPL056C`) in that slot. Run 4 kept LCL2, so no published SMF was pulled for it. Same root cause as the 10-gene / 31-target basis being wrong: LCL2 is on the plate, and everything frozen before run 4 assumed it was not. It was measured normally, at 1.1748. |
+| a double with no published DMF | `YPL046C + YPL081W` (d2) | Tier `novel`: the only one of the 45 candidate pairs with no measurement in Costanzo 2016, Kuzmin 2018 or Kuzmin 2020. There is nothing to compare against because nobody has made it before. It was measured normally, at 0.9335. |
+| a double that was designed but never built | `YKL033W-A x YJR060W` | Reported failed to construct at the 2026-08-11 handover. **Neither the attempt date nor a cause was recorded**, so no reason can be given here beyond that. Both parent singles exist and were measured. It blocks 0 of the 39 target triples, so it costs no trigenic score. |
+| no triples at all | -- | Run 4 carried singles and doubles only, and no triple has been constructed in any round. The 20 in Part 2 are the first. |
+
+*Hypothesis (untested)* on the failed cross: `YJR060W` (CBF1) is by a wide margin the
+sickest single in the panel, 0.5348 against 0.8390 for the next lowest, and it was already
+the weakest before this round. A cross into a background that slow is a plausible reason
+for a failure, but nothing was recorded and nothing has been tested. Do not re-propose the
+pair until an attempt is run and its outcome written down.
+
+Tables and gap rows are generated, not transcribed:
+
+```text
+experiments/W019-echo-crispr-array/scripts/run4_measured_summary.py
+  -> results/run4_measured_summary_singles.csv
+  -> results/run4_measured_summary_doubles.csv
+  -> results/run4_measured_summary_gaps.csv
+```
 
 ### Part 1 -- 25 double knockouts
 

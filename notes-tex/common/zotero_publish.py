@@ -175,7 +175,13 @@ def load_built_doc(notes_tex_dir: str, doc: str) -> BuiltDoc:
     raw = open(pdf, "rb").read()
     title, subtitle, author = _parse_title(tex)
     repo = _git(doc_dir, "rev-parse", "--show-toplevel")
-    dirty = _git(repo, "status", "--porcelain") != ""
+    # --untracked-files=no on purpose. `scratch.*` notes and their rendered
+    # PDFs are untracked BY RULE and never committable, so counting untracked
+    # files here marked every build from the primary checkout "-dirty" and the
+    # flag stopped meaning anything. What the provenance stamp needs to say is
+    # "were there uncommitted TRACKED changes in the build inputs", which is
+    # this.
+    dirty = _git(repo, "status", "--porcelain", "--untracked-files=no") != ""
     commit = _git(repo, "rev-parse", "HEAD")[:12] + ("-dirty" if dirty else "")
 
     return BuiltDoc(

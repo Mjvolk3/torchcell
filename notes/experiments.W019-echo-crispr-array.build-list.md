@@ -18,9 +18,12 @@ have a second route.
 
 ### What already exists
 
-From the run-4 order sheet
-`experiments/W019-echo-crispr-array/data/run4_doubles_2026-08-06/Single-and-Double-KO-Strains-List-Order.csv`:
-**12 singles, 13 doubles, 0 triples.**
+From the run-4 order sheet, **12 singles, 13 doubles, 0 triples**:
+
+```text
+experiments/W019-echo-crispr-array/data/run4_doubles_2026-08-06/
+  Single-and-Double-KO-Strains-List-Order.csv
+```
 
 **Singles s1--s12.** Eleven are prediction nodes and all eleven are used below. `s11`
 YLR313C (SPH1) was built but was never a node in the inference panel, so it is in no
@@ -121,12 +124,12 @@ would pick, strongest-predicted at the top. **`capped` is the design used here**
 takes the six best-predicted triples that involve a starred gene, then fills the rest from
 further down the list to hold the starred genes to six.
 
-![Which of the 39 candidate triples each design selects](assets/images/W019-echo-crispr-array/triple_design_rank_sampling.png)
+![Which of the 39 candidate triples each design selects](assets/images/W019-echo-crispr-array/triple_design_rank_sampling.svg)
 
 How often each gene ends up in a triple. `capped` spreads across all eleven genes rather
 than concentrating on a few.
 
-![How often each gene appears](assets/images/W019-echo-crispr-array/triple_design_gene_frequency.png)
+![How often each gene appears](assets/images/W019-echo-crispr-array/triple_design_gene_frequency.svg)
 
 ### Notes for the bench
 

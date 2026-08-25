@@ -364,6 +364,23 @@ def objective(trial: optuna.Trial) -> float | tuple[float, float]:
     trial.set_user_attr("lr", lr)
     trial.set_user_attr("weight_decay", weight_decay)
     trial.set_user_attr("dropout", dropout)
+    # THE SCORING-RULE VALUE ITSELF. For `dist=energy`, `val/loss` IS the energy score, and it
+    # is the ONLY recorded quantity that can see what the joint covariance does.
+    #
+    # Why this matters, and why the round nearly missed it: the ranked objective is
+    # `pearson_per_feature`, computed from `DistHead.point()` = mu. The energy head's global
+    # factor V enters ONLY through Sigma = diag(sigma^2) + V V^T -- it does not touch mu. So
+    # the `energy_rank in {0, 32}` ablation is STRUCTURALLY INVISIBLE to the ranked metric: a
+    # null there is what the mathematics predicts, not evidence that modelling the joint fails.
+    # Judging it needs a proper scoring rule, i.e. this value, compared within `dist=energy`
+    # at matched rank.
+    #
+    # `_at_peak` (not `_max`) because a LOSS is minimized -- a max over epochs would report the
+    # single worst epoch. Reading it at the ranked peak also keeps it paired with the point
+    # estimate it accompanied. Recorded for every dist so cross-arm loss curves stay available,
+    # but it is only COMPARABLE within a dist (different scoring rules are different units).
+    trial.set_user_attr("val_loss", metrics.get("val/loss_at_peak"))
+    trial.set_user_attr("val_loss_last", metrics.get("val/loss"))
     # CALIBRATION. Logged to W&B every val epoch by the training script; mirrored into the
     # trial so the sweep can be ranked on the point metric and READ on calibration in one
     # table. `_at_peak`, NOT `_max`: coverage has a TARGET (0.5 / 0.8) rather than a

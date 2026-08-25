@@ -119,7 +119,16 @@ A worktree branch from `/wt-implement` usually has an **open PR**. We already la
      --comment "Landed on \`main\` via rebase + ff-only (linear history; commits applied verbatim). Intentionally not merged through GitHub. The change is on main as of the latest push."
    ```
 2. Remove the worktree: `git -C "$MAIN" worktree remove --force "$WT"`
-3. Delete the local branch: `git -C "$MAIN" branch -d <branch>` (use `-D` if `-d` fails after a confirmed merge).
+3. Delete the local branch: `git -C "$MAIN" branch -d <branch>`.
+
+   If `-d` refuses with *"not yet merged to `refs/remotes/origin/<branch>`, even though it is merged to HEAD"*, do **not** reach for `-D`. For a branch with an upstream, `-d` requires merged-into-**upstream**, and that check is failing on a **stale local tracking ref** -- the branch moved (or the remote ref was already deleted) after the last fetch. Prune first, which drops the stale ref and leaves the meaningful merged-into-HEAD check intact:
+
+   ```bash
+   git -C "$MAIN" fetch --prune origin --quiet
+   git -C "$MAIN" branch -d <branch>
+   ```
+
+   `-D` skips the safety check entirely, so it would also delete a branch carrying genuinely unlanded commits. Only use it if `-d` still refuses after a prune, and only once you have confirmed the tip is an ancestor of `main` (`git -C "$MAIN" merge-base --is-ancestor <branch> main`).
 4. Delete the remote branch (if pushed): `gh api repos/Mjvolk3/torchcell/git/refs/heads/<branch> --method DELETE` (a `422 Reference does not exist` is harmless). This also auto-closes any PR that slipped past step 1.
 
 ## Step 7: Restore stashed changes

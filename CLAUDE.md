@@ -51,13 +51,27 @@ worktree by default -- code AND notes (roadmap/plan/weekly/dendron/`.claude/*`).
   rebased onto the *old* `main` can no longer fast-forward -- the normal
   `rebase wt onto main -> ff-merge` flow breaks. Keeping the primary tree clean on
   `main` is what keeps ff-landings unblocked.
+- **Open a PR for EVERY branch, before landing it.** `gh pr create` (`/wt-implement`
+  does this automatically). The PR is the public, reviewable record of the change, and
+  it **cannot be added afterwards**: once the commits are ancestors of `main`, a PR for
+  that branch opens with zero commits and the visibility is lost permanently.
+  `/enqueue-merge` enforces this as a hard gate and refuses a branch with no open PR.
 - **Land via `git rebase` + ff-only, NEVER `gh pr merge` / the GitHub "Merge pull
   request" button.** A merge commit diverges `main` from the rebased branch and blocks
-  the next worktree's ff-land; it also buries the individual commits. Use
-  `/merge-worktree` (rebase the branch onto `main`, then `git merge --ff-only` + push)
-  or `/enqueue-merge` (the single-writer merge queue). If a PR is open, close it with a
-  comment that the branch landed via rebase+ff. Result: linear history, every commit
-  lands verbatim.
+  the next worktree's ff-land; it also buries the individual commits. The PR is for
+  visibility and audit, NOT the merge vehicle: land the commits by rebase + ff, then
+  **close** the PR with a comment saying it landed that way. Result: linear history,
+  every commit lands verbatim.
+- **Use the skills; do NOT hand-roll the landing.** `/enqueue-merge` when the merge-queue
+  loop is live (`python scripts/merge_queue.py loop-status`, exit 0 = live),
+  `/merge-worktree` when it is not. Running `git rebase` + `git merge --ff-only` +
+  `git push` by hand does land the commits, but it silently skips every gate and every
+  cleanup step: no PR is opened, no PR is closed, and the worktree, local branch, and
+  remote branch are all left behind. That is how orphan worktrees accumulate, and the
+  lost PR cannot be recovered.
+- **A landing is not finished until the worktree is gone.** The skills end by closing the
+  PR, then `worktree remove` + `branch -d` + deleting the remote ref. If the commits are
+  on `main` but the worktree still exists, the landing is half-done, not done.
 - **Shared `.git` hazard.** All worktrees share one object store + stash list, and
   pre-commit stashes/rolls back -- so parallel landings corrupt each other. Land one at
   a time (the merge queue serializes this). `MEMORY.md` is shared via symlink; keep

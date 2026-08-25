@@ -289,3 +289,31 @@ Two changes outside the sheet:
   microbe-perturb-seq lost its key on the first build.
 - `build_list_tables.py` captions name their statistic, so the tables carry the
   distinction and not only the Terms section.
+
+## 2026.08.25b - Comments 4 and 6 were only half addressed, and what that changed
+
+Version 2 went back for review with two of the eight comments incomplete, both in the
+same way: the point was answered somewhere in the document rather than at the place the
+comment pointed to.
+
+- **[4] was about the column header.** The highlight sat on Table 1's `SE`, and version 2
+  answered it in the caption and Terms while leaving the header reading `boot SE` against
+  `SE`, so the table went on asserting a difference in kind that does not exist. Both
+  columns now read **`boot SE`** with a unit row underneath, `over 3 plates` against
+  `over 17 screens`. The doubles column is renamed **`colony SD`**, a spread over the
+  colonies of one screen, which compares to `plate SD` and not to either `boot SE`.
+- **[6] was a phrase, and phrases recur.** "At no cost in construction work" was cut from
+  the sentence under Table 2 and left standing in the Table 5 caption, which is generated,
+  so a reader would have met it anyway.
+
+The seventeen screens is sourced rather than inferred: the panel's Costanzo records carry
+`_sn` strain ids, `sn` is the NatMX query strain
+(`torchcell/datasets/scerevisiae/costanzo2016.py:213`), and the SI puts query-strain SMF
+at 17 replicate control screens with colonies averaged within a screen before resampling
+(`costanzo2016.py:64-74`, verbatim quote).
+
+**Close-out procedure changed.** A review round is now closed by grepping the rendered
+`main-clean.pdf` per comment, a string that must appear and, for a removal, one that must
+not, before the publish rather than after it. Nine present and four absent for this round,
+listed in the dispositions ledger. Published as
+`w019-strain-build-list-clean_2026-08-25-11-30-04_c4661e05.pdf`.

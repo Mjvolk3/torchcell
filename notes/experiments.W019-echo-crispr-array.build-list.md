@@ -245,3 +245,47 @@ are exactly the closure of that requirement -- no extra, none missing. What is b
 
 Full rationale and measurement caveats:
 [[experiments.W019-echo-crispr-array.next-strains-to-construct]]
+
+## 2026.08.25 - Review round 1 on the bench sheet, and what it changed
+
+Eight comments on `w019-strain-build-list-clean_2026-08-24-21-18-44_c482d47d.pdf`,
+all addressed. Per-comment ledger:
+`notes-tex/w019-strain-build-list/review/round-1-dispositions.md`. Revision published
+to Zotero as `w019-strain-build-list-clean_2026-08-25-11-13-26_bf6e40ea.pdf`
+(commit `335f0ee9`).
+
+Three of the eight were factual and were checked against the pinned files rather than
+argued:
+
+- **Eleven usable panel genes, not twelve.** The design panel
+  (`experiments/010-kuzmin-tmi/results/inference_3/singles_table_panel12_k200_queried.csv`)
+  holds `YIL174W`, which was never built, and does not hold `YLR313C` (SPH1), which was.
+  So eleven of the twelve built singles carry a prediction. Setting `YLR312C-B` aside
+  would leave **ten**, and it is in **six of the twenty triples** (T01, T02 and four
+  others), so that decision has a cost and is still open.
+- **SPH1 is in zero of the twenty triples**, counted from
+  `results/triple_design_rank_sampling_selection.csv` at `strategy == "capped"`: the
+  twenty use eleven distinct genes and `YLR313C` is not among them. The sheet now says
+  that rather than the broader "is part of no triple".
+- **The Costanzo single-mutant uncertainty is a bootstrap SE, not a sample SD.** The
+  column is published as a standard deviation but is the spread of bootstrapped means
+  across replicate screens, settled in
+  [[torchcell.datasets.scerevisiae.costanzo2016.noise-computation]] and consumed by the
+  loader as `bootstrap_se`. The double-mutant column is the different statistic, a
+  sample SD over four to eight colonies of one screen. Ours resamples three replicate
+  plates against their seventeen screens, so a strain-by-strain SE comparison is not
+  like for like.
+
+One correction to the record in this note: the failed double `YKL033W-A x YJR060W` now
+has a reported cause, **zero colonies after transformation**, given at review. The
+attempt date is still unrecorded and no retry is on record, so the open item stands.
+
+Two changes outside the sheet:
+
+- `notes-tex/common/tcdoc.sty` prints the provenance key only in a document that
+  actually uses `\external` or `\secondhand`, detected through the `.aux`. The switch
+  has to be written with `\global`: `\newif` assigns locally and the `.aux` is read
+  inside a group, so without it the key silently never comes back. Caught because
+  microbe-perturb-seq lost its key on the first build.
+- `build_list_tables.py` captions name their statistic, so the tables carry the
+  distinction and not only the Terms section.

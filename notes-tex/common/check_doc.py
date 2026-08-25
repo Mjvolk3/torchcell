@@ -263,13 +263,52 @@ def check_figure_widths(srcs: dict[str, str]) -> list[tuple[str, str]]:
 # comments, because a source quote keeps its own spelling and a comment is not
 # prose -- Americanizing a quote would falsify it.
 
-BRITISH = [
-    "alphabetised", "permeabilised", "permeabilisation", "organising",
-    "organised", "colours", "colour", "instalment", "instalments", "optimised",
-    "optimisation", "optimisations", "optimise", "reorganised", "amortised",
-    "analysed", "labour", "catalogue", "normalised", "summarised",
-    "characterised", "centred", "behaviour", "modelled", "labelled",
-    "labelling", "parameterisation", "polymerisation",
+# American spelling is the default EVERYWHERE, so this checks the CLASS rather
+# than the instances a reviewer happened to notice. The previous version was a
+# flat word list and leaked exactly where you would expect: it held
+# "permeabilised" but not "permeabilises", "optimise" but not "factorise". Every
+# word below was live in the document at some point.
+#
+# -ise/-yse are matched by STEM plus a set of endings, so conjugations cannot
+# escape. The leading \b is what keeps the innocent -ise words out: "noise",
+# "premise", "compromise", "pairwise" and "raise" only contain "ise" mid-word, and
+# no stem here is a prefix of any of them.
+BRITISH_ISE_STEMS = [
+    "alphabet", "amort", "author", "capital", "categor", "character", "colon",
+    "critic", "emphas", "factor", "familiar", "final", "formal", "general",
+    "harmon", "hybrid", "immun", "initial", "ion", "item", "linear", "local",
+    "maxim", "minim", "mobil", "modern", "normal", "optim", "organ", "oxid",
+    "parameter", "permeabil", "polymer", "prior", "random", "real", "recogn",
+    "regular", "resynthes", "sensit", "serial", "solubil", "special", "stabil",
+    "standard", "steril", "summar", "synchron", "synthes", "token", "util",
+    "visual",
+]
+_ISE_ENDINGS = r"(?:e|es|ed|ing|ation|ations|er|ers)"
+
+# -yse. "analyses" is deliberately absent: it is also the plural of "analysis"
+# and correct American English, so flagging it would be a false positive.
+BRITISH_YSE = [
+    "analyse", "analysed", "analysing", "catalyse", "catalysed", "catalysing",
+    "paralyse", "paralysed", "paralysing", "hydrolyse", "hydrolysed",
+    "hydrolysing",
+]
+
+# Everything that is not a productive suffix: -our, -re, doubled-l, and the
+# one-offs. Listed as whole words because each has its own irregular family.
+BRITISH_WORDS = [
+    "behaviour", "behaviours", "colour", "colours", "coloured", "colouring",
+    "endeavour", "favour", "favours", "favoured", "favourable", "favourably",
+    "unfavourable", "unfavourably", "flavour", "flavours", "honour", "humour",
+    "labour", "neighbour", "neighbours", "neighbouring", "odour", "rumour",
+    "vapour",
+    "centre", "centres", "centred", "centring", "fibre", "fibres", "litre",
+    "litres", "calibre",
+    "labelled", "labelling", "modelled", "modelling", "cancelled", "cancelling",
+    "signalled", "signalling", "levelled", "travelled", "fuelled",
+    "grey", "greyed", "catalogue", "catalogued", "programme", "programmes",
+    "defence", "practise", "practised", "instalment", "instalments",
+    "enrolment", "fulfil", "fulfilled", "skilful", "judgement", "ageing",
+    "sulphur", "aluminium", "mould", "storey", "tyre", "analogue",
 ]
 
 # Narrating the document, and being self-referential about the group. Both were
@@ -303,10 +342,13 @@ def check_style(srcs: dict[str, str]) -> list[tuple[str, str]]:
             ln = t[: m.start()].count("\n") + 1
             out.append(("ERROR", f"em-dash in {name}:{ln} -- use ` -- ` or a comma"))
             n_dash += 1
-        for w in BRITISH:
-            for m in re.finditer(rf"\b{w}\b", t):
+        pats = [rf"\b{s}is{_ISE_ENDINGS}\b" for s in BRITISH_ISE_STEMS]
+        pats += [rf"\b{w}\b" for w in BRITISH_YSE + BRITISH_WORDS]
+        for pat in pats:
+            for m in re.finditer(pat, t, flags=re.I):
                 ln = t[: m.start()].count("\n") + 1
-                out.append(("ERROR", f"British spelling {w!r} in {name}:{ln}"))
+                out.append(("ERROR",
+                            f"British spelling {m.group(0)!r} in {name}:{ln}"))
                 n_brit += 1
         for pat in NARRATION:
             for m in re.finditer(pat, t):
@@ -324,7 +366,7 @@ def check_style(srcs: dict[str, str]) -> list[tuple[str, str]]:
         # explanation instead ("...bursting, because of cell-cycle phase"). It
         # ran at roughly one true positive in ten, and a gate that cries wolf
         # gets ignored, which costs more than the rule it was enforcing. It is a
-        # judgement call; the guide teaches the test, a human applies it.
+        # judgment call; the guide teaches the test, a human applies it.
     tot = n_brit + n_dash
     print(f"{GRY}STYLE{RST}      {tot} hard violation(s) "
           f"(spelling, em-dash); trailing restatement is a manual read -- "

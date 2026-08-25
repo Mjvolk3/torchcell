@@ -65,7 +65,7 @@ class FigureNumber(BaseModel):
     quote: str  # verbatim source sentence
     citation_key: str | None = None  # None => not in the mirror; see `note`
     line: int | None = None
-    # Set when the drawn number needed a judgement call, or when the source says
+    # Set when the drawn number needed a judgment call, or when the source says
     # something subtly different from what the figure shows. A populated note is
     # a standing invitation to re-check, and it is rendered.
     note: str | None = None

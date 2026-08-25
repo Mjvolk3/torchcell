@@ -1,7 +1,7 @@
 %% notes-tex/microbe-perturb-seq/sections/3-method-explainers.tex
 %% SOURCE: hand-authored prose. Protocol steps transcribed from the mirrored
 %% papers' Methods sections; every performance number carries its paper.md line
-%% in the surrounding text or in experiments/019-perturb-seq-costing/scripts/method_data.py.
+%% in the surrounding text or in experiments/024-perturb-seq-costing/scripts/method_data.py.
 
 \section{Method Descriptions\secstatus{todo}}
 \label{sec:methods}
@@ -31,15 +31,9 @@ compose and the droplet's cost structure changes rather than its chemistry
 other two in every respect except evidence: it has never been run in a microbe,
 so every figure that carries it marks it as a projection.
 
-\begin{keybox}
-\textbf{Three properties of a yeast cell break every commercial single-cell
-chemistry, and only the third is a real cost.} The wall means reagents cannot
-get in and the cell will not lyse on schedule, which is a timing problem both
-families solve with zymolyase. A fifth the mRNA of a mammalian cell means
-per-cell yields look poor and cells must be pooled to estimate anything. And
-$\sim$85\% of the RNA is ribosomal, which is the one that shows up in the
-sequencing bill rather than in the protocol.
-\end{keybox}
+%% The keybox that used to sit here summarized Sec. 2.3, not this section, and it
+%% is now at the end of Sec. 2.3 where its evidence is. It was the only keybox in
+%% the document whose claim was established four pages earlier.
 
 \subsection{Yeast-Optimized SPLiT-seq (Brettner et al., 2024)\secstatus{todo}}
 \label{sec:brettner}
@@ -73,7 +67,7 @@ Fixing first is what isolates the perturbation's signal from the handling.
 0.005\,U/\textmu L in 1\,M sorbitol with 0.1\,M Na$_2$EDTA, 37\,\textdegree C for
 15\,min, digests the $\beta$-glucan layer; the sorbitol is osmotic support, since
 a wall-less spheroplast bursts in a normal buffer. Then 0.4\% Triton X-100 on
-ice for 3\,min permeabilises the membrane. The two steps are tuned against
+ice for 3\,min permeabilizes the membrane. The two steps are tuned against
 opposite failures: too little and reagents cannot get in, too much and the cell
 stops retaining its own cDNA and the whole single-cell premise collapses. Brettner et al.\ arrived at these values by screening 16 fixation/permeabilization combinations in
 parallel. That is itself an argument for the method: because a well's barcode is
@@ -310,7 +304,7 @@ today, and Sec.~\ref{sec:application} uses the newer figures.
   in one piece instead of over three ligation rounds.
   Once the emulsion is broken the chemistry is bulk, and the read layout that results
   needs 118 cycles against split-pool's 160
-  (\file{experiments/019-perturb-seq-costing/scripts/read_structure.py}). That layout
+  (\file{experiments/024-perturb-seq-costing/scripts/read_structure.py}). That layout
   is the current GEM-X/v3.1 chemistry priced in \cref{sec:application}; Jariani et
   al.\ demonstrated on 3$'$ v2, whose Read 1 is 26\,nt.
   Composed from the protocol as described in \cref{sec:jariani}, not traced from any
@@ -320,7 +314,7 @@ today, and Sec.~\ref{sec:application} uses the newer figures.
 \textbf{The yeast fix is a scheduling change, not a chemistry one.} Zymolyase
 goes into the reverse-transcription master mix, so the wall comes off only after
 the cell is already sealed inside a droplet and can no longer contaminate its
-neighbours. Cell counts hold on ice and through droplet generation, then drop
+neighbors. Cell counts hold on ice and through droplet generation, then drop
 200-fold within 20 minutes at 53\,\textdegree C. That ordering is the whole
 adaptation, and the core has said they will run it.
 \end{keybox}
@@ -474,7 +468,7 @@ the one relevant to us. They ran it at MOI 10 in human THP1 cells over 598 targe
 genes, achieving 2.50 guides per cell, and analyzed the 8{,}448 cells carrying
 three or more.
 
-\notesec{The decoding} \term{FR-Perturb} factorises the expression matrix by sparse
+\notesec{The decoding} \term{FR-Perturb} factorizes the expression matrix by sparse
 PCA, runs LASSO on the resulting matrix of perturbations by factors, then multiplies
 back out to per-gene effects. The sparsity that makes this work is structural
 rather than incidental: regulatory effects are modular, so the effect matrix has
@@ -661,7 +655,7 @@ in-situ result in the microbial literature is a 2.5-fold enrichment, against the
 in-situ work is that ``depletion of rRNA in situ can decrease mRNA capture
 efficiency.'' In-situ depletion is not impossible -- BacDrop does it -- it is a
 trade of capture efficiency for read economy, and the published trade is
-unfavourable.
+unfavorable.
 
 \notesec{How much it is worth, and the transfer risk} Brandner et al.\ took
 \org{E.\ coli} from 4.6\% to 60.2\% mRNA, a 13-fold improvement, and median mRNA
@@ -734,7 +728,7 @@ has been the hardest assumption in the document to satisfy, and this subsection
 reaches a different conclusion from the one it used to: the obstacle is real for
 a 3$'$ assay and may not exist at all for a 5$'$ one.
 
-Guide RNAs are transcribed from RNA polymerase III promoters -- \gene{SNR52}
+gRNAs are transcribed from RNA polymerase III promoters -- \gene{SNR52}
 upstream, \gene{SUP4} terminator -- so they are neither capped nor polyadenylated
 and terminate on a T-tract. A 3$'$ poly(A) capture assay, which is what both
 Brettner et al.'s oligo-dT priming and 10x's bead oligo are, sees nothing. Our own MAGIC
@@ -753,7 +747,7 @@ only one of them requires rebuilding the library} On the 3$'$ assay the guide is
 caught by a capture sequence on the gel-bead oligo, so 10x require that
 ``sgRNAs should be engineered containing either Capture Sequence 1 or Capture
 Sequence 2''\external{10x CG000316}. For an existing genome-scale yeast library
-that means resynthesising every guide, which is the reading this document has
+that means resynthesizing every guide, which is the reading this document has
 been working from.
 
 The 5$'$ assay does something else. Capture is by a primer against the sgRNA

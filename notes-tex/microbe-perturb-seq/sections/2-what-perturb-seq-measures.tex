@@ -1,6 +1,6 @@
 %% notes-tex/microbe-perturb-seq/sections/2-what-perturb-seq-measures.tex
 %% SOURCE: hand-authored prose (jargon primer). Per-cell recovery figures are
-%% cross-referenced to Sec. 4, which derives them from experiments/019-perturb-seq-costing/.
+%% cross-referenced to Sec. 4, which derives them from experiments/024-perturb-seq-costing/.
 
 \section{Measurement Principles and Terminology\secstatus{todo}}
 \label{sec:primer}
@@ -11,15 +11,28 @@ This section fixes the vocabulary. Everything after it assumes these terms.
 \label{sec:identifiers}
 
 % \Cref, not \cref: cleveref lowercases the type name, so the sentence-initial
-% form has to be the capitalising variant or the page opens with "table 1 is...".
+% form has to be the capitalizing variant or the page opens with "table 1 is...".
 \Cref{tab:glossary} is the reference: every term the document uses in a
-technical sense, with a link to the section that treats it. It is worth a first
-pass rather than only being consulted, because the naming is genuinely
-treacherous -- four distinct things in this document are called a ``barcode'',
-two different things are called an ``index'', and the difference between cells
-per \emph{target gene} and cells per \emph{guide} is a factor of six that changes
-every budget in \cref{sec:application}. The prose below then develops the four
-identifiers properly.
+technical sense, with a link to the section that treats it and, where an entry
+asserts a number, the source of that number. It is worth a first pass rather
+than only being consulted, because the field's naming is genuinely treacherous
+and three conventions are adopted here to keep it from spreading.
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+  \item \textbf{One thing is called an index}: the Illumina index read added at
+    the final PCR. Anything written into a cell is a \emph{barcode}, of which
+    there are four kinds. The field's method name ``combinatorial indexing''
+    is the one place the word means barcode, and it is flagged where it appears.
+  \item \textbf{Screen budgets are quoted in cells per \emph{target gene}},
+    never cells per guide. At six guides per gene the two differ by a factor of
+    six, and reading one as the other is the most common way a budget here gets
+    misread.
+  \item \textbf{$q$ is the per-guide detection probability} and nothing else.
+    Where a source uses $q$ for something else, its symbol is displaced and the
+    original recorded at the point of definition.
+\end{itemize}
+
+The prose below then develops the four identifiers properly.
 
 % \medskip either side: the glossary is a longtable, not a float, so it sits
 % exactly here and gets no float separation of its own.
@@ -35,7 +48,7 @@ all of them attach the same four classes of tag.
 \notesec{Cell barcode (CB)} A sequence shared by every cDNA molecule from one
 cell and, ideally, unique to that cell. It is what makes the data
 \emph{single-cell} rather than bulk. In droplet methods the CB is delivered
-pre-synthesised on a bead; in split-pool methods it is \emph{built up} across
+pre-synthesized on a bead; in split-pool methods it is \emph{built up} across
 several rounds of well-specific ligation, so the barcode records the trajectory
 a cell took through a series of plates (Sec.~\ref{sec:brettner}).
 
@@ -56,25 +69,36 @@ molecules of the same gene drawing the same UMI -- is negligible at yeast
 expression levels, since a 10 nt UMI has $4^{10}\approx10^{6}$ states against at
 most a few thousand molecules of any one gene.
 
-\notesec{Sample or sublibrary index} An Illumina index read added during the
-final PCR. In a conventional experiment it separates samples sharing a flow
-cell. In split-pool it does more than that, and the difference matters: because
-cells are divided into sublibraries \emph{after} the last in-cell barcoding
-round, the index is effectively an additional barcode dimension, so two cells
-that took identical paths through the plates are still resolved if they landed
-in different sublibraries (Sec.~\ref{sec:collisions}).
+\notesec{Sample index} An Illumina index read added during the final PCR. Its
+ordinary job is divisibility. A flow cell delivers far more reads than any one
+library needs, so several libraries are tagged, pooled, sequenced together and
+separated computationally afterwards by their tags; without that, buying a lane
+would mean buying it for a single sample.
 
-\notesec{Perturbation identifier} What makes the experiment a screen rather than
-a survey. This is the hard part in yeast and is treated separately in
-Sec.~\ref{sec:guide-capture}; the short version is that the guide RNA itself is
+In split-pool the same read does a second job, and it is the one that is easy to
+miss. Cells are divided into sublibraries \emph{after} the last in-cell
+barcoding round, so two cells that happened to take identical paths through the
+three plates carry identical BC1--BC2--BC3 and are indistinguishable by their
+in-cell barcode alone. If they landed in different sublibraries they are still
+resolved, because the sample index separates them. The index is therefore a
+fourth barcode dimension and multiplies the addressable space by the sublibrary
+count, which is why splitting a run into sublibraries is a barcode decision and
+not only a handling one (Sec.~\ref{sec:collisions}). It is also why unique dual
+indices are mandatory here: an index hop does not merely leak a read between
+samples, it moves a cell into another sublibrary's namespace and fabricates a
+barcode collision.
+
+\notesec{Perturbation identifier} Which perturbation the cell was carrying. This
+is the hard part in yeast and is treated separately in
+Sec.~\ref{sec:guide-capture}; the short version is that the gRNA itself is
 usually invisible to the assay, so a proxy has to be engineered.
 
 \begin{keybox}
 \textbf{Four tags, and only one of them is hard here.} A read is useful only if
 you can say which cell it came from, whether it is an original molecule or a PCR
 copy, and which gene it is. Cell barcode, UMI and sample index are solved by
-every chemistry on offer. The perturbation identifier is not: a yeast guide RNA
-is invisible to a poly(A) assay, so a proxy has to be engineered or a different
+every chemistry on offer. The perturbation identifier is not: a yeast gRNA is
+invisible to a poly(A) assay, so a proxy has to be engineered or a different
 capture chemistry used (\cref{sec:guide-capture}).
 \end{keybox}
 
@@ -83,11 +107,13 @@ capture chemistry used (\cref{sec:guide-capture}).
 
 \notesec{Physical isolation (droplet)} A microfluidic device co-encapsulates one
 cell with one barcoded bead in an emulsion droplet, which isolates every molecule
-that cell releases. Cell loading follows Poisson statistics, so a low occupancy
-is used to keep \term{doublets} -- two cells in one droplet, reported as one -- acceptably rare; 10x quote about 8\% at 20{,}000 cells recovered. Holding
-occupancy low is what makes the droplet the sole source of cell identity, and it
-is also what wastes the channel: most droplets are fully reagented and never
-receive a cell.
+that cell releases. How many cells a droplet receives is not something the
+machine sets; only the average is, and the count around it is Poisson
+(\cref{sec:poisson}). A low average occupancy is therefore used to keep
+\term{doublets} -- two cells in one droplet, reported as one -- acceptably rare;
+10x quote about 8\% at 20{,}000 cells recovered. Holding occupancy low is what
+makes the droplet the sole source of cell identity, and it is also what wastes
+the channel: most droplets are fully reagented and never receive a cell.
 
 Cost scales with cells, and the unit is worth being concrete about because it
 drives every droplet figure in \cref{sec:application}. Reagent is sold per
@@ -117,6 +143,15 @@ per-sublibrary prep. Brettner et al.'s barcoding reagent works out to
 construction (\cref{sec:startup}); the entire economic case for split-pool is
 this one line, and \cref{sec:cost-per-cell} tests whether it survives contact
 with rRNA waste and discarded cells.
+
+That is a cost property and not a throughput one, and the two are easy to run
+together. Flat pricing does not mean a plate carries unlimited cells: what caps a
+run is how many cells a reverse-transcription well tolerates, $\sim$5{,}000 in
+the only yeast measurement (\cref{sec:brettner}), and how many distinct barcodes
+the rounds supply before collisions bind (\cref{sec:collisions}). What flat
+pricing does mean is that raising either cap is free at the till, which is why
+cells per RT well is ranked as the cheapest experiment on the list
+(\cref{sec:ranked}) and why a droplet run has no equivalent lever.
 
 \notesec{The two composed (\term{preindexing})} The two paragraphs above are
 usually read as alternatives, and they are not. Barcode a cell in situ once, on a
@@ -225,6 +260,16 @@ three properties of a yeast cell break its assumptions.
     largely a tax, and as Sec.~\ref{sec:application} shows that single fraction
     dominates the sequencing bill.
 \end{itemize}
+
+\begin{keybox}
+\textbf{Three properties of a yeast cell break every commercial single-cell
+chemistry, and only the third is a real cost.} The wall means reagents cannot
+get in and the cell will not lyse on schedule, which is a timing problem both
+families solve with zymolyase. A fifth the mRNA of a mammalian cell means
+per-cell yields look poor and cells must be pooled to estimate anything. And
+$\sim$85\% of the RNA is ribosomal, which is the one that shows up in the
+sequencing bill rather than in the protocol.
+\end{keybox}
 
 \subsection{Fragmentation, and Why Single-Cell Counts Are Not Length-Normalized\secstatus{todo}}
 \label{sec:fragmentation}
@@ -353,7 +398,7 @@ titration should report it.
 What comes out is a count matrix $\mathbf{Y}\in\mathbb{Z}_{\ge0}^{N\times G}$ over
 $N$ cells and $G$ genes, plus an assignment $\mathbf{Z}\in\{0,1\}^{N\times L}$ of
 cells to the $L$ \emph{library elements} -- the $L$ distinct perturbations the
-library contains, one per guide RNA in a CRISPRi screen or one per barcoded
+library contains, one per gRNA in a CRISPRi screen or one per barcoded
 deletion strain in a knockout collection. $Z_{i\ell}=1$ means cell $i$ was found
 to carry element $\ell$, and recovering $\mathbf{Z}$ at all is the problem
 Sec.~\ref{sec:guide-capture} is about; a cell whose element cannot be read is a

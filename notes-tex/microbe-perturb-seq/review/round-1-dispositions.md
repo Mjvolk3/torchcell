@@ -37,7 +37,7 @@ here so none is lost.
 | 23 | `YGP6ZSP8` | 4 | **done** | Now states explicitly that the sample index is a sample tag, NOT a UMI, and that a plate method still needs its own UMI. |
 | 24 | `5H39TZXX` | 5 | **done** | Spelling, including inside the draw.io sources. |
 | 25 | `ZLDZV4NT` | 5 | **noop** | Highlight with no comment. |
-| 26 | `V6HK2TF7` | 5 | **done** | Built the mechanism you asked for: notes-tex/common/figure_provenance.py (reusable model + check) and experiments/019-perturb-seq-costing/scripts/figure_sources.py (the records), rendered as Table 15 with citekey, quote and line for all 13 hand-drawn numbers. It immediately caught three bad numbers in the Fig. 1 throughput band -- see [27]. |
+| 26 | `V6HK2TF7` | 5 | **done** | Built the mechanism you asked for: notes-tex/common/figure_provenance.py (reusable model + check) and experiments/024-perturb-seq-costing/scripts/figure_sources.py (the records), rendered as Table 15 with citekey, quote and line for all 13 hand-drawn numbers. It immediately caught three bad numbers in the Fig. 1 throughput band -- see [27]. |
 | 27 | `T243EKL5` | 5 | **partial** | SPC added to the controlled vocabulary as a fourth isolation principle. Adding it to the figure as a column is a redraw and is deferred to the next round; no yeast SPC study exists yet, so it would enter as a capability, not a data point. |
 | 28 | `WGAYNQ29` | 5 | **noop** | Highlight with no comment. |
 | 29 | `9M8A9E2M` | 5 | **deferred** | Panel b needs a lead-in on the central challenge. Deferred -- it is a redraw, and it should be done together with [35] and [33]. |

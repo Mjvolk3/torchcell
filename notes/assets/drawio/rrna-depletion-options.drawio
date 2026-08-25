@@ -18,7 +18,7 @@
                yellow  #D6B656/#FFF2CC  droplet / container
                gray    #666666/#F5F5F5  handle / adapter / workflow chrome
              Every number drawn here is sourced in the provenance table for this
-             figure; see experiments/019-perturb-seq-costing/scripts/figure_sources.py.
+             figure; see experiments/024-perturb-seq-costing/scripts/figure_sources.py.
              ================================================================ -->
 
         <mxCell id="title" value="Ribosomal RNA depletion: four chemistries, four places in the workflow" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=12;fontStyle=1;" vertex="1" parent="1">

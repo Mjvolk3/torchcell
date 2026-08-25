@@ -104,9 +104,16 @@ system reaches greater than 80\% integration efficiency at 27 characterized loci
 and supports simultaneous integration of two to five
 genes~\citep{fatmaLandingPadSystem2023}.
 
-\notesec{What does not exist, and it is most of what this document assumes}
-There is no published dCas9 CRISPRi or CRISPRa system in this organism: every
-CRISPR result above is catalytic knockout or integration. Episomal plasmids are
+\notesec{What is not published, which is not the same as what does not exist}
+Two of the gaps below are closed in house and the distinction matters, because a
+capability that exists but is unpublished is a validation task rather than a
+research project. There is no published dCas9 CRISPRi or CRISPRa system in this
+organism -- every CRISPR result above is catalytic knockout or integration --
+but a working CRISPRi system and an assembled genome from JGI are both held
+here\external{in-house, unpublished}. Read against that, the missing piece is not
+the perturbation tool; it is everything downstream of it.
+
+What remains genuinely open is delivery and scale. Episomal plasmids are
 mitotically unstable, with about 55\% of cells still expressing a plasmid-borne
 reporter after five days~\citep{tranDevelopmentCRISPRCas9Based2019}, which is a
 problem for the delivery route of \cref{sec:delivery} specifically; a
@@ -123,15 +130,20 @@ community is also diploid, which changes what a single guide does and what a
 knockout means.
 
 \begin{keybox}
-\textbf{Which is exactly why the first experiment should carry no perturbations.}
-A plain single-cell RNA-seq run on \org{P.\ kudriavzevii}, with no library and no
-guides, depends on none of the missing genetics. It tests the three things that
-are genuinely uncertain about moving host: whether the cell wall yields to the
-in-droplet zymolyase of \cref{sec:jariani} in this species, how many mRNA UMIs
-per cell are recovered, and what fraction of reads is ribosomal. The third is the
-number \cref{sec:rrna} identifies as the largest cost lever in the document, and
-it is a proportion, so it is answerable at any sequencing depth. Running this
-first also means the guide-capture question of \cref{sec:guide-capture} can be
+\textbf{The first experiment carries no perturbations, and the reason is footing
+rather than a missing tool.} Nobody on this project has run single-cell RNA-seq
+on a walled microbe, so the first run is worth spending on learning the assay:
+whether the cell wall yields to the in-droplet zymolyase of \cref{sec:jariani} in
+this species, how many mRNA UMIs per cell are recovered, and what fraction of
+reads is ribosomal. That is the collaborator's recommendation and it is also what
+the arithmetic supports, since the third of those is the largest cost lever in
+the document (\cref{sec:rrna}) and is a proportion, answerable at any sequencing
+depth. None of the three needs a library, so none of them waits on the delivery
+and scale questions above. If a run with no perturbations looks like a thin
+return for a channel, the way to thicken it is to spread the same run across
+several environments (\cref{sec:environments}), which costs barcode capacity that
+is otherwise idle rather than costing genetics that do not exist. Running this
+first also frees the guide-capture question of \cref{sec:guide-capture} to be
 settled in \org{S.\ cerevisiae}, where the library already exists, in parallel
 rather than in sequence.
 \end{keybox}
@@ -176,11 +188,14 @@ binding constraint on this experiment and neither is cost.
 
 \begin{enumerate}[leftmargin=1.4em,itemsep=2pt,topsep=2pt]
   \item \textbf{Unperturbed \org{P.\ kudriavzevii}} (\cref{sec:host}). No
-    library, no guides, no dependence on genetics that do not exist in this host
-    yet. It returns the wall-digestion verdict, the mRNA UMIs per cell, and the
-    ribosomal fraction, which is the largest cost lever in the document. Sequence
-    it twice: a MiSeq run to confirm the chemistry, then a NovaSeq X 10B split
-    lane for a profile worth keeping. This is the current first experiment.
+    library and no guides, so it depends on none of the delivery and scale
+    questions still open in this host, and it is where the assay itself gets
+    learned. It returns the wall-digestion verdict, the mRNA UMIs per cell, and
+    the ribosomal fraction, which is the largest cost lever in the document.
+    Sequence it twice: a MiSeq run to confirm the chemistry, then a NovaSeq X 10B
+    split lane for a profile worth keeping. If the channel looks under-used
+    carrying one condition, run it across several environments instead of adding
+    guides. This is the current first experiment.
   \item \textbf{Test 5$'$ guide capture on the existing
     \org{S.\ cerevisiae} library}, in parallel with step 1 rather than after it,
     because it uses a different organism and a library that already exists. One

@@ -85,8 +85,19 @@ Colleagues have to want to read it. Concision is what buys that.
 
 ### Spelling and typography
 
-- **American spelling.** organize, optimize, permeabilize, color, labor, catalog,
-  analyze, installment, centered, alphabetize.
+- **American spelling, by default and without exception.** organize, optimize,
+  permeabilize, factorize, color, favor, neighbor, labor, catalog, analyze,
+  installment, centered, gray, program, judgment, alphabetize. This holds even
+  where a target journal is British and even where a neighboring source quote
+  uses the other form: the quote keeps its spelling, the prose around it does
+  not. It is not a per-document preference and should never be relitigated per
+  document.
+  - **It is checked as a class, not as a word list.**
+    `notes-tex/common/check_doc.py` matches `-ise`/`-yse` by stem plus endings,
+    so a conjugation cannot slip through the way `permeabilises` did while
+    `permeabilised` was caught, plus explicit words for `-our`, `-re`,
+    doubled-l and the one-offs. A new British form that gets past it is a bug in
+    that list, so fix the list rather than only the sentence.
 - **Never em-dashes** (`---`). Use a spaced en dash ` -- ` or a comma. Keep `--`
   for numeric ranges and markdown table rules.
 - **In draw.io, `--` is literal.** LaTeX turns `--` into an en dash; a canvas does
@@ -94,7 +105,7 @@ Colleagues have to want to read it. Concision is what buys that.
 - **Nature sets `in vivo`, `in vitro`, `in situ` ROMAN**, not italic. Organism
   names stay italic (`\org{}`).
 - **Superscripts in figures** use real characters, not carets: `4^10` must be
-  drawn as 4 with superscript 10, matching neighbouring exponents.
+  drawn as 4 with superscript 10, matching neighboring exponents.
 
 ### Verbatim quotes are verbatim
 
@@ -112,6 +123,23 @@ Order a vocabulary table ALPHABETICALLY, not by theme. Thematic grouping needs
 subheading rows, a subheading leaves the definition column blank, and the first
 entry under each heading then reads as though it has slipped a line. Teaching the
 scheme is what the surrounding prose is for; the table is for lookup.
+
+A lookup entry still has to explain. An entry that names a thing without saying
+why it is that way sends the reader to the section anyway, which is the one job
+the table was meant to save them. Say what the term is, then the one property
+that makes it behave surprisingly. And an entry that asserts a NUMBER carries its
+citation in the table, not only in the generating script: a reader checking "the
+field standard is 100 cells" has nowhere else to go.
+
+### One symbol, one meaning, and rename rather than warn
+
+Where two sources use the same letter for different quantities, rename one and
+record the displaced source's notation at the point of definition. Carrying both
+means warning about the collision at every use, and a warning that has to be
+repeated is a naming decision that was not made. The same holds for words: if two
+things in a document are called an "index", pick one and call the other something
+else. Standardizing costs one sentence of attribution; not standardizing costs a
+sentence every time either term appears.
 
 ### Answer the question that was asked
 

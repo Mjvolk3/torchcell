@@ -87,7 +87,7 @@ have. Options are noted at the end of `notes-tex/README.md`.
 
 ### The job that can only run on gilahyper
 
-`experiments/019-perturb-seq-costing/scripts/effect_size_analysis.py`
+`experiments/024-perturb-seq-costing/scripts/effect_size_analysis.py`
 
 It measures how loud a single yeast knockdown actually is, from the Kemmeren and
 Sameith expression compendia, and whether the response grows with a second
@@ -102,10 +102,10 @@ synthetic data, per the repo rule. On the Mac they do not exist, which is why it
 not been run.
 
 ```bash
-python experiments/019-perturb-seq-costing/scripts/effect_size_analysis.py
+python experiments/024-perturb-seq-costing/scripts/effect_size_analysis.py
 ```
 
-Writes three files to `experiments/019-perturb-seq-costing/results/`:
+Writes three files to `experiments/024-perturb-seq-costing/results/`:
 `effect_size_per_strain.csv`, `effect_size_summary.csv`, `effect_size_multiplex.json`.
 
 **Why it matters.** Every cells-per-perturbation number in the document currently

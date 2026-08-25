@@ -18,7 +18,7 @@ ZOTERO_PERSONAL_COLLECTION := AC8MFJXK
 # Where `make plots` looks for the matplotlib SVGs. The document is named for its
 # subject; the plots are named for the EXPERIMENT that generates them, and the two
 # do not have to match, so it is stated rather than inferred from the directory.
-PLOT_SLUG := 019-perturb-seq-costing
+PLOT_SLUG := 024-perturb-seq-costing
 
 PYTHON ?= /Users/michaelvolk/miniconda3/bin/python
 

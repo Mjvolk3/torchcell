@@ -1,0 +1,92 @@
+{
+  "transcript_sensitivity": {
+    "measured": {
+      "label": "measured 1.34-fold",
+      "delta_log2": 0.4236717380232869,
+      "fold": 1.3413369905700943,
+      "A": 90.90884746325814,
+      "phi": 1.1000029457024647,
+      "floor_cells": 99.99999999999999,
+      "cells_per_perturbation": {
+        "review (10,500)": 765.1866887555474,
+        "Brettner (30,000)": 2000.5333964444212,
+        "Jackson (60,000)": 3901.0667928888424
+      }
+    },
+    "nominal_two_fold": {
+      "label": "nominal two-fold",
+      "delta_log2": 1.0,
+      "fold": 2.0,
+      "A": 16.317932811083963,
+      "phi": 6.128227218344406,
+      "floor_cells": 100.0,
+      "cells_per_perturbation": {
+        "review (10,500)": 219.3995083737851,
+        "Brettner (30,000)": 441.14145249652887,
+        "Jackson (60,000)": 782.2829049930577
+      }
+    },
+    "spread_measured": 5.09818956630479,
+    "spread_nominal": 3.5655636185852484,
+    "superseded_incoherent_pairing": {
+      "note": "A from the two-fold pair with phi from the measured pair; implied floor is only 18 cells",
+      "values": {
+        "review (10,500)": 137.34928253375236,
+        "Brettner (30,000)": 359.09122665649613,
+        "Jackson (60,000)": 700.2326791530251
+      }
+    }
+  },
+  "depletion_lever": {
+    "cells_per_gene": 250,
+    "splitpool_total_usd": 156670.0,
+    "splitpool_depleted_total_usd": 57510.0,
+    "saving_usd": 99160.0
+  },
+  "sublibrary_counts": {
+    "3_rounds": {
+      "barcode_space": 884736,
+      "cells_per_sublibrary_at_target": 8892.888916643973,
+      "sublibraries_needed": 54,
+      "cost_usd": 2970.0
+    },
+    "4_rounds": {
+      "barcode_space": 84934656,
+      "cells_per_sublibrary_at_target": 853622.8150658126,
+      "sublibraries_needed": 1,
+      "cost_usd": 55.0
+    },
+    "four_rounds_pcr_limited": {
+      "cells_per_sublibrary": 45000,
+      "sublibraries_needed": 11,
+      "cost_usd": 605.0
+    }
+  },
+  "fourth_plate": {
+    "one_time_usd": 2566.4666666666667,
+    "per_run_oligo_usd": 12.0,
+    "per_run_ligase_usd": 135.0,
+    "per_run_usd": 147.0,
+    "plate_uses": 215
+  },
+  "plate_set_lifetime": {
+    "plate_uses": 215,
+    "cells_per_run": 480000.0,
+    "cells_over_plate_life": 103200000.0,
+    "runs_per_genome_screen_250": 13,
+    "genome_screens_per_plate_set": 16.53846153846154,
+    "working_plates_needed": {
+      "tolerance_5_cycles": 43,
+      "tolerance_10_cycles": 22,
+      "tolerance_25_cycles": 9,
+      "tolerance_100_cycles": 3
+    },
+    "freeze_thaw_tolerance_measured": false
+  },
+  "sublibrary_item_reconciliation": {
+    "itemized_usd": 53.0,
+    "quoted_usd": 55.0,
+    "leeway_usd": 2.0,
+    "quote": "This gives a start-up cost of approximately $10,000, a per-protocol cost of approximately $1300-1700 including added leeway for the unpriced consumables, and an additional $55 per sublibrary."
+  }
+}

@@ -15,7 +15,7 @@
              En dashes are the real character (&#8211;), never a double hyphen:
              a canvas does not typeset "&#45;&#45;" the way LaTeX does.
              Every drawn number has a record in
-             experiments/019-perturb-seq-costing/scripts/figure_sources.py
+             experiments/024-perturb-seq-costing/scripts/figure_sources.py
              Panel c column grid:
                round2 150..212 | PBS 212..272 | round1 272..322 | UMI 322..366
                dT 366..400 | cDNA 400..556 | i7+library 556..624

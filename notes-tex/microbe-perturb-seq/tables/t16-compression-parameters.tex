@@ -1,16 +1,16 @@
 %% GENERATED FILE -- do not hand-edit.
-%% SOURCE: experiments/019-perturb-seq-costing/scripts/render_tex_tables.py
+%% SOURCE: experiments/024-perturb-seq-costing/scripts/render_tex_tables.py
 \begin{table}[htbp]\centering
 \footnotesize
-\caption[]{Parameters of the compressed-screen bound, measured from the expression compendia. Yao et al.\ give the sample requirement as $O((q+r)\log n)$ without a constant, so the fourth row is a \emph{shape} evaluated at unit constant and not a budget; what survives the unknown constant is that the requirement is nearly flat in $n$ while the conventional one is linear. \textbf{The last row is the assumption, not a parameter.} Guide-pooling requires effects to combine additively and argues that interactions cancel; in yeast they do not cancel, they buffer, and a double produces about 60\% of the sum of its singles. Sameith et al.'s pairs were chosen because they were expected to interact, so 0.62 is a lower bound on additivity rather than an estimate of it (\cref{sec:compression}). Generated from \file{experiments/019-perturb-seq-costing/scripts/compression_analysis.py}.}\label{tab:compression-params}
+\caption[]{Parameters of the compressed-screen bound, measured from the expression compendia. Yao et al.\ give the sample requirement as $O((\nu+r)\log n)$ without a constant, writing $\nu$ as $q$; it is renamed here because $q$ is the per-guide detection probability throughout (\cref{tab:design-params}). The fourth row is a \emph{shape} evaluated at unit constant and not a budget; what survives the unknown constant is that the requirement is nearly flat in $n$ while the conventional one is linear. \textbf{The last row is the assumption, not a parameter.} Guide-pooling requires effects to combine additively and argues that interactions cancel; in yeast they do not cancel, they buffer, and a double produces about 60\% of the sum of its singles. Sameith et al.'s pairs were chosen because they were expected to interact, so 0.62 is a lower bound on additivity rather than an estimate of it (\cref{sec:compression}). Generated from \file{experiments/024-perturb-seq-costing/scripts/compression_analysis.py}.}\label{tab:compression-params}
 \begin{tabular}{llrll}
 \toprule
 Symbol & Quantity & Value & Status & Basis \\
 \midrule
 $n$ & targets in the library & 200--6{,}000 & \textbf{a choice} & the panel of \cref{sec:multiplex}, or the genome \\
-$q$ & genes moved per perturbation & 269 & measured & IQR 169--504 over 1{,}484 deletions \\
+$\nu$ & genes moved per perturbation & 269 & measured & IQR 169--504 over 1{,}484 deletions \\
 $r$ & components in the effect matrix & 177 & measured & 4 at 50\% of variance, 451 at 95\%; no knee \\
-$(q{+}r)\log n$ & composite samples, unit constant & 3{,}880 & derived & at $n=6{,}000$; $0.65n$, so compression barely pays \\
+$(\nu{+}r)\log n$ & composite samples, unit constant & 3{,}880 & derived & at $n=6{,}000$; $0.65n$, so compression barely pays \\
 slope & observed / additive, double deletions & 0.62 & measured & median over 72 Sameith doubles \\
 \bottomrule
 \end{tabular}

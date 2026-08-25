@@ -15,7 +15,7 @@
              figures can be read against each other:
                orange transcript/cDNA | red cell barcode | blue UMI
                purple gel bead | yellow droplet/oil | gray handle/adapter
-             Read layout from experiments/019-perturb-seq-costing/scripts/read_structure.py
+             Read layout from experiments/024-perturb-seq-costing/scripts/read_structure.py
              Panel c column grid (c1 and c2 share it):
                handle 200..264 | CB 264..314 | UMI 314..358 | dT 358..394
                cDNA 394..540 | R2 handle 540..604 | i7 604..648

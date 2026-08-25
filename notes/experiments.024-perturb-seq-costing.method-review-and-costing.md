@@ -1454,3 +1454,26 @@ why `dendron-cli note move` refused it until the frontmatter was backfilled. The
 id is now baked into the generator's template, so regenerating cannot strip it
 and make the note unmovable again. No `created`/`updated` timestamps went in with
 it: they would churn the file on every run for no information.
+
+### 2026.08.25 - Follow-up: the rename left 18 duplicate tables behind
+
+The rename commit added `notes-tex/024-perturb-seq-costing/tables/*.tex` but
+never deleted `notes-tex/microbe-perturb-seq/tables/*.tex`, so 18 byte-identical
+`.tex` files were tracked at two paths at once, one of them under a directory
+nothing referenced any more.
+
+**The cause is not established and is not worth guessing at.** `git mv` was run
+on the whole directory and moved everything else correctly; the table files are
+not gitignored at either path, so the obvious explanation does not hold. What is
+certain is the state: `diff -rq` reported the two directories identical, the
+document builds from the new path, and nothing referenced the old one.
+
+Removed with `git rm -r`, which is safe precisely because the copies were
+verified identical first rather than assumed to be.
+
+**Worth noticing for its own sake:** `make check` passed on the branch that
+introduced this. The gate reads the document, and the document was correct.
+Nothing in it looks at whether a path that no longer exists is still tracked, so
+a duplicate tree is exactly the kind of drift a green build does not rule out.
+It surfaced only from listing `notes-tex/` after landing and seeing a directory
+that should have been gone.

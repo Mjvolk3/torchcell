@@ -2,12 +2,12 @@
 %% SOURCE: experiments/W019-echo-crispr-array/scripts/build_list_tables.py
 \begin{table}[H]\centering
 \footnotesize
-\caption[]{Double knockouts that already exist, all thirteen measured in run 4. Column attribution is as in Table~\ref{tab:existing-singles}, with the published double-mutant fitness and its standard deviation under \emph{Costanzo 2016} -- a sample standard deviation over the replicate colonies of one screen, not the standard error of the singles table. \emph{parent} says whether the pair is the starting strain for one of the triples in Table~\ref{tab:new-triples}. A dash in the Costanzo columns means no one has published the pair.}\label{tab:existing-doubles}
+\caption[]{Double knockouts that already exist, all thirteen measured in run 4. Column attribution is as in Table~\ref{tab:existing-singles}. \emph{colony SD} is the published spread over the four to eight replicate colonies of one screen, which the authors warn underestimates because adjacent colonies are not independent. It is a spread and not an error on a mean, so it compares to our \emph{plate SD} and not to either \emph{boot SE}; Costanzo publishes no bootstrap SE for a double. \emph{parent} says whether the pair is the starting strain for one of the triples in Table~\ref{tab:new-triples}. A dash in the Costanzo columns means no one has published the pair.}\label{tab:existing-doubles}
 \begin{tabular}{llrrrrrll}
 \toprule
 & & \multicolumn{3}{c}{Ours, run 4} & \multicolumn{2}{c}{Costanzo 2016} & & \\
 \cmidrule(lr){3-5}\cmidrule(lr){6-7}
-id & pair & fitness & boot SE & plate SD & DMF & SD & tier & parent \\
+id & pair & fitness & boot SE & plate SD & DMF & colony SD & tier & parent \\
 \midrule
 d1 & YDR057W + YPL081W & 0.6071 & 0.0479 & 0.1029 & 1.0351 & 0.0447 & coverage & yes \\
 d2 & YPL046C + YPL081W & 0.9335 & 0.0040 & 0.0084 & -- & -- & novel & no \\

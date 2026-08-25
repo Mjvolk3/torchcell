@@ -257,32 +257,42 @@ def t1(singles: pd.DataFrame) -> None:
             "ours_boot_se": val(r.boot_se),
             "ours_plate_sd": val(r.across_plate_sd),
             "costanzo_smf": val(r.costanzo_smf),
-            "costanzo_se": val(r.costanzo_se),
+            "costanzo_boot_se": val(r.costanzo_se),
         }
         for r in singles.itertuples()
     ]
+    # Both SE columns carry the SAME header because they are the same statistic --
+    # a bootstrapped mean's spread -- and only the resampling unit differs. Heading
+    # ours `boot SE` and theirs `SE` asserted a distinction in kind that does not
+    # exist, which is what review round 1 caught. The unit row carries the real
+    # difference, so the table answers the question without the caption.
     head = [
         r"& & & \multicolumn{3}{c}{Ours, run 4} & \multicolumn{2}{c}{Costanzo 2016} \\",
         r"\cmidrule(lr){4-6}\cmidrule(lr){7-8}",
-        r"id & ORF & common & fitness & boot SE & plate SD & SMF & SE \\",
+        r"id & ORF & common & fitness & boot SE & plate SD & SMF & boot SE \\",
+        r" & & & & \multicolumn{2}{c}{\scriptsize over 3 plates} & "
+        r"& {\scriptsize over 17 screens} \\",
     ]
     rows = [
         " & ".join([
             rec["id"], rec["orf"], rec["common"] or "--",
             tex_num(rec["ours_fitness"]), tex_num(rec["ours_boot_se"]),
             tex_num(rec["ours_plate_sd"]), tex_num(rec["costanzo_smf"]),
-            tex_num(rec["costanzo_se"]),
+            tex_num(rec["costanzo_boot_se"]),
         ])
         for rec in records
     ]
     caption = (
         "Single knockouts that already exist, all twelve measured in run 4. "
-        "The three columns under \\emph{Ours, run 4} are this lab's measurement; "
-        "the two under \\emph{Costanzo 2016} are the published single-mutant "
-        "fitness and its standard error. That column is labeled a standard "
-        "deviation, but it is the spread of bootstrapped means across replicate "
-        "screens, so it is a standard error; Sec.~\\ref{sec:terms} says what it "
-        "shares with our \\emph{boot SE} and what it does not."
+        "The two \\emph{boot SE} columns are the same statistic, the spread of a "
+        "bootstrapped mean, and differ only in what is resampled: our three "
+        "replicate plates against the seventeen control screens behind a "
+        "query-strain published value, whose colonies are averaged within a screen "
+        "first. Costanzo publishes that column under the name standard deviation; "
+        "it is a standard error and is used as one here. \\emph{plate SD} is the "
+        "other kind of number, the spread across our plates rather than the error "
+        "on their mean, and the singles table has no published counterpart to it. "
+        "Sec.~\\ref{sec:terms} carries the comparison."
     )
     emit("t1-existing-singles", records, "lllrrrrr", head, rows, caption,
          "tab:existing-singles")
@@ -303,32 +313,38 @@ def t2(doubles: pd.DataFrame, triples: list[dict],
             "ours_boot_se": val(r.boot_se),
             "ours_plate_sd": val(r.across_plate_sd),
             "costanzo_dmf": val(r.costanzo_dmf),
-            "costanzo_sd": val(r.costanzo_dmf_sd),
+            "costanzo_colony_sd": val(r.costanzo_dmf_sd),
             "tier": r.tier,
             "is_parent": r.id in parent_ids,
         })
+    # `colony SD`, not `SD`: the published doubles column is a spread over colonies
+    # within one screen, so it is the counterpart of our `plate SD` and not of
+    # either `boot SE`. Naming the resampling unit in the header is what keeps the
+    # two kinds apart at a glance.
     head = [
         r"& & \multicolumn{3}{c}{Ours, run 4} & \multicolumn{2}{c}{Costanzo 2016} "
         r"& & \\",
         r"\cmidrule(lr){3-5}\cmidrule(lr){6-7}",
-        r"id & pair & fitness & boot SE & plate SD & DMF & SD & tier & parent \\",
+        r"id & pair & fitness & boot SE & plate SD & DMF & colony SD & tier & parent \\",
     ]
     rows = [
         " & ".join([
             rec["id"], f"{rec['gene1']} + {rec['gene2']}",
             tex_num(rec["ours_fitness"]), tex_num(rec["ours_boot_se"]),
             tex_num(rec["ours_plate_sd"]), tex_num(rec["costanzo_dmf"]),
-            tex_num(rec["costanzo_sd"]), rec["tier"],
+            tex_num(rec["costanzo_colony_sd"]), rec["tier"],
             "yes" if rec["is_parent"] else "no",
         ])
         for rec in records
     ]
     caption = (
         "Double knockouts that already exist, all thirteen measured in run 4. "
-        "Column attribution is as in Table~\\ref{tab:existing-singles}, with the "
-        "published double-mutant fitness and its standard deviation under "
-        "\\emph{Costanzo 2016} -- a sample standard deviation over the replicate "
-        "colonies of one screen, not the standard error of the singles table. "
+        "Column attribution is as in Table~\\ref{tab:existing-singles}. "
+        "\\emph{colony SD} is the published spread over the four to eight replicate "
+        "colonies of one screen, which the authors warn underestimates because "
+        "adjacent colonies are not independent. It is a spread and not an error on a "
+        "mean, so it compares to our \\emph{plate SD} and not to either \\emph{boot "
+        "SE}; Costanzo publishes no bootstrap SE for a double. "
         "\\emph{parent} says whether the pair is the "
         "starting strain for one of the triples in "
         "Table~\\ref{tab:new-triples}. A dash in the Costanzo columns means no one "
@@ -470,7 +486,7 @@ def t5(budget: dict, n_singles: int, n_built: int, n_new: int,
         f"a working figure rather than a fixed allocation, and {budget['spare']} "
         f"wells stay spare, so these are strain counts and not a well assignment; "
         f"the picklist decides that. Every existing double is re-measured alongside "
-        f"the new strains, at no cost in construction work or in wells per strain."
+        f"the new strains, which gives a second reading on each of those pairs."
     )
     emit("t5-plate", records, "lrr", head, rows, caption, "tab:plate",
          size=r"\small", dtypes={"strains": "Int64", "wells": "int64"})

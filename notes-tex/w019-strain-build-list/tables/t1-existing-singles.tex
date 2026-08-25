@@ -2,12 +2,13 @@
 %% SOURCE: experiments/W019-echo-crispr-array/scripts/build_list_tables.py
 \begin{table}[H]\centering
 \footnotesize
-\caption[]{Single knockouts that already exist, all twelve measured in run 4. The three columns under \emph{Ours, run 4} are this lab's measurement; the two under \emph{Costanzo 2016} are the published single-mutant fitness and its standard error. That column is labeled a standard deviation, but it is the spread of bootstrapped means across replicate screens, so it is a standard error; Sec.~\ref{sec:terms} says what it shares with our \emph{boot SE} and what it does not.}\label{tab:existing-singles}
+\caption[]{Single knockouts that already exist, all twelve measured in run 4. The two \emph{boot SE} columns are the same statistic, the spread of a bootstrapped mean, and differ only in what is resampled: our three replicate plates against the seventeen control screens behind a query-strain published value, whose colonies are averaged within a screen first. Costanzo publishes that column under the name standard deviation; it is a standard error and is used as one here. \emph{plate SD} is the other kind of number, the spread across our plates rather than the error on their mean, and the singles table has no published counterpart to it. Sec.~\ref{sec:terms} carries the comparison.}\label{tab:existing-singles}
 \begin{tabular}{lllrrrrr}
 \toprule
 & & & \multicolumn{3}{c}{Ours, run 4} & \multicolumn{2}{c}{Costanzo 2016} \\
 \cmidrule(lr){4-6}\cmidrule(lr){7-8}
-id & ORF & common & fitness & boot SE & plate SD & SMF & SE \\
+id & ORF & common & fitness & boot SE & plate SD & SMF & boot SE \\
+ & & & & \multicolumn{2}{c}{\scriptsize over 3 plates} & & {\scriptsize over 17 screens} \\
 \midrule
 s1 & YJR060W & CBF1 & 0.5348 & 0.0506 & 0.1076 & 0.5900 & 0.1138 \\
 s2 & YPL081W & RPS9A & 0.9007 & 0.0515 & 0.1105 & 0.9550 & 0.1553 \\

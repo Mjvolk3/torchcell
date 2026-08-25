@@ -1,4 +1,4 @@
-id,orf,common,ours_fitness,ours_boot_se,ours_plate_sd,costanzo_smf,costanzo_se
+id,orf,common,ours_fitness,ours_boot_se,ours_plate_sd,costanzo_smf,costanzo_boot_se
 s1,YJR060W,CBF1,0.5348,0.0506,0.1076,0.59,0.1138
 s2,YPL081W,RPS9A,0.9007,0.0515,0.1105,0.955,0.1553
 s3,YDR057W,YOS9,1.243,0.1282,0.269,1.0435,0.0535

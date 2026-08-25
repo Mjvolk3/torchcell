@@ -1,4 +1,4 @@
-id,gene1,gene2,ours_fitness,ours_boot_se,ours_plate_sd,costanzo_dmf,costanzo_sd,tier,is_parent
+id,gene1,gene2,ours_fitness,ours_boot_se,ours_plate_sd,costanzo_dmf,costanzo_colony_sd,tier,is_parent
 d1,YDR057W,YPL081W,0.6071,0.0479,0.1029,1.0351,0.0447,coverage,True
 d2,YPL046C,YPL081W,0.9335,0.004,0.0084,,,novel,False
 d3,YER079W,YPL081W,0.9496,0.0556,0.1195,0.8625,0.0975,validation,False

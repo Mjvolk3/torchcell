@@ -10,30 +10,34 @@
 
 \begin{description}[leftmargin=1.2em,itemsep=2pt,topsep=2pt]
 
-\item[boot SE] The standard error of a strain's mean fitness, from resampling
-  the replicate plates that strain was measured on. It is smaller than
-  \emph{plate SD} because it is the error on a mean rather than the spread of
-  the values that mean was taken over.
+\item[boot SE] The standard error of a strain's mean fitness: resample the units
+  the mean was taken over, take the mean of each resample, and report the spread
+  of those means. Both \emph{boot SE} columns of
+  Table~\ref{tab:existing-singles} are this same statistic, and what differs is
+  the unit resampled. Ours resamples the three replicate plates. Costanzo's
+  resamples the seventeen replicate control screens standing behind a query-strain
+  value, with the colonies of a screen averaged before the resampling, so their
+  unit is a whole screen and there are seventeen of them against our three. Two
+  consequences worth stating: their number is the tighter one for the same
+  underlying spread, and a strain-by-strain comparison of the two is therefore not
+  like for like. Costanzo publishes the column under the name standard deviation.
+  It is the spread of bootstrapped means, which makes it a standard error, and it
+  enters our loaders as one, typed \texttt{bootstrap\_se}.
 
-\item[published SE, published SD] The two Costanzo 2016 columns are different
-  statistics, which is why they carry different names. The single-mutant column
-  (Table~\ref{tab:existing-singles}) is published as a standard deviation, but it
-  is the spread of \emph{bootstrapped means} across the replicate control screens
-  a strain was measured in, so it is a standard error and is used here as one. Our
-  \emph{boot SE} is the same kind of quantity, resampled over three replicate
-  plates against their seventeen screens for a query strain, so theirs is the
-  tighter number for the same underlying spread and a strain-by-strain comparison
-  of the two is not like for like. The double-mutant column
-  (Table~\ref{tab:existing-doubles}) is not a standard error at all: it is a
-  sample standard deviation over the four to eight replicate colonies of one
-  screen, which the authors warn underestimates the true variance because adjacent
-  colonies are not independent. It is comparable in kind to our \emph{plate SD}.
+\item[colony SD] The published uncertainty on a double
+  (Table~\ref{tab:existing-doubles}), and a different kind of number from either
+  \emph{boot SE}: a sample standard deviation over the four to eight replicate
+  colonies within one screen, which the authors warn underestimates the true
+  variance because adjacent colonies are not independent. Being a spread rather
+  than an error on a mean, it compares to our \emph{plate SD}. Costanzo publishes
+  no bootstrap standard error for a double.
 
 \item[fitness] Colony growth relative to the wild type on the same plate, so 1
   is wild-type growth.
 
 \item[plate SD] The standard deviation of a strain's fitness across the
-  replicate plates it was measured on.
+  replicate plates it was measured on. It is larger than that strain's
+  \emph{boot SE}, which is the error on the mean of those same plates.
 
 \item[routes] How many different ways the bench can make a triple from strains
   that already exist. Every triple is built by crossing one existing double with

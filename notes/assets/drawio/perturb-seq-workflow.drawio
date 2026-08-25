@@ -82,7 +82,7 @@
 
         <!-- single-cell side -->
         <mxCell id="scBox" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;strokeWidth=1.5;" vertex="1" parent="1"><mxGeometry x="357" y="184" width="338" height="150" as="geometry" /></mxCell>
-        <mxCell id="scH" value="3&#8242;-COUNTING SINGLE CELL &#8211; only the piece carrying H survives" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="365" y="190" width="322" height="10" as="geometry" /></mxCell>
+        <mxCell id="scH" value="3&#8242;-COUNTING SINGLE CELL &#8211; only the piece carrying the handle H survives" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="365" y="190" width="322" height="10" as="geometry" /></mxCell>
 
         <mxCell id="sl1" value="long" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="365" y="204" width="30" height="10" as="geometry" /></mxCell>
         <mxCell id="sh1" value="H" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="397" y="202" width="14" height="14" as="geometry" /></mxCell>

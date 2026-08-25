@@ -249,12 +249,14 @@ TERMS: list[Term] = [
         definition=(
             "The reaction that adds a common handle to the far end of the cDNA, "
             "giving the molecule PCR primer sites at both ends; everything after "
-            "it is conventional Illumina library prep. \\emph{Where} it happens "
-            "differs by method and it is not always on a bead: in droplet 5$'$ "
-            "chemistry the oligo is bead-borne and delivers the cell barcode with "
-            "it, while in split-pool it is added in bulk after lysis and carries "
-            "no barcode at all, since the barcode was written in the cell three "
-            "rounds earlier."
+            "it is conventional Illumina library prep. \\textbf{A 3$'$ library "
+            "does this too} -- it is how the second handle gets on, and a molecule "
+            "handled at one end only cannot be amplified. What 3$'$ and 5$'$ name "
+            "is which oligo carries the cell barcode: in 3$'$ the barcode is on "
+            "the oligo-dT and the TSO is free and carries only the handle; in "
+            "5$'$ they swap, which is what puts the barcode beside the "
+            "protospacer and makes a Pol\\,III guide readable "
+            "(\\cref{sec:guide-capture})."
         ),
         where="sec:brettner",
     ),
@@ -513,7 +515,8 @@ TERMS: list[Term] = [
         term="Template-switching oligo",
         abbrev="TSO",
         definition=(
-            "The oligo that adds the second PCR handle in 5$'$ chemistries, and "
+            "The oligo that adds the second PCR handle, in 3$'$ and 5$'$ "
+            "chemistries alike, and "
             "\\emph{not} the same mechanism as a linker. It happens \\emph{within "
             "the single reverse-transcription reaction}, with no melting, "
             "re-annealing or second primer extension, which is what distinguishes "
@@ -533,10 +536,13 @@ TERMS: list[Term] = [
         definition=(
             "The same molecule as the linker strand, named for what it does: "
             "bridge two DNA ends so ligase can seal the nick between them. "
-            "Ligation, not polymerization -- which is the whole difference from a "
+            "Ligation, not polymerization, which is the whole difference from a "
             "template-switching oligo, where a polymerase copies the oligo rather "
-            "than a ligase joining to it. Split-pool uses splints; droplet 5$'$ "
-            "chemistry uses template switching."
+            "than a ligase joining to it. The two are not rival chemistries and "
+            "not a split-pool against droplet split: split-pool ligates its "
+            "barcodes on and template-switches its second handle on, in the same "
+            "protocol (\\cref{fig:chemistry}). Sources call the jig a linker "
+            "strand or a bridge oligonucleotide; splint is the general name."
         ),
         where="sec:brettner",
     ),

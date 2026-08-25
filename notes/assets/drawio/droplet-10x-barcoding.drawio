@@ -137,13 +137,13 @@
         </mxCell>
 
         <mxCell id="warn" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#B85450;dashed=1;" vertex="1" parent="1">
-          <mxGeometry x="572" y="176" width="130" height="78" as="geometry" />
+          <mxGeometry x="572" y="178" width="130" height="64" as="geometry" />
         </mxCell>
         <mxCell id="warnt" value="What this avoids" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontStyle=1;fontColor=#B85450;" vertex="1" parent="1">
-          <mxGeometry x="578" y="181" width="118" height="11" as="geometry" />
+          <mxGeometry x="578" y="179" width="118" height="11" as="geometry" />
         </mxCell>
-        <mxCell id="warnb" value="Spheroplast &lt;i&gt;before&lt;/i&gt; loading and wall-less cells shear in the chip; the mRNA they release contaminates every droplet downstream." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="578" y="194" width="118" height="56" as="geometry" />
+        <mxCell id="warnb" value="Spheroplasting &lt;i&gt;before&lt;/i&gt; loading shears wall-less cells in the chip, and the mRNA released contaminates every droplet." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="578" y="191" width="118" height="46" as="geometry" />
         </mxCell>
 
         <!-- ============================= PANEL c ============================= -->

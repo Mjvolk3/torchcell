@@ -1188,3 +1188,79 @@ is restated as footing rather than absence. Nobody on the project has run the
 assay on a walled microbe, so the first run is spent learning it; if one
 unperturbed condition looks like thin return for a channel, the fix is to spread
 it across environments rather than to add guides.
+
+## 2026.08.25 - Fig 7, and the 3' library that does template-switch after all
+
+Prompted by a question on Fig. 2: what is the difference between a linker and
+template switching, and why is there no TSO in Brettner 2024. Checking it turned
+up an error of ours and a genuine subtlety.
+
+### There IS a TSO in Brettner 2024, and the glossary said otherwise
+
+Fig. 2 has always drawn it, as step 5. What sent the reader the other way was the
+`Splint` glossary entry, which ended "Split-pool uses splints; droplet 5' chemistry
+uses template switching." That sentence is wrong twice. Split-pool template
+switches for its second handle, and scifi-RNA-seq is a droplet method whose
+barcode arrives by *ligation*, so neither half of the split holds. Rewritten, and
+the `Template switch` and `TSO` entries with it.
+
+### The bigger confusion, and it is a fair one: 3' libraries template-switch too
+
+Template switching is not a 5'-chemistry feature. It is how nearly every
+short-read single-cell library gets a PCR handle onto its **second** end, and a
+molecule handled at one end only cannot be amplified at all. What 3' and 5'
+actually name is *which oligo carries the cell barcode*:
+
+- **3'** (10x 3', and the split-pool chemistry here): barcode on the oligo-dT
+  that primes reverse transcription; the TSO is free in solution and carries
+  nothing but the handle.
+- **5'**: the two swap. The TSO is on the gel bead carrying barcode and UMI, and
+  the oligo-dT is the free primer.
+
+Both template-switch. Only the second puts the barcode at the transcript's 5' end
+next to the protospacer, which is the whole reason the 5' kit might read a Pol III
+guide unmodified (`nadal-ribellesRiseSinglecellTranscriptomics2024` md:85, md:89).
+
+### Two corrections to what I wrote yesterday
+
+Verified against the mirror, and both of yesterday's glossary edits were off:
+
+- **The step is bead-bound, not bulk.** After lysis the biotinylated barcoded cDNA
+  is captured on streptavidin beads and the TSO mix is added to the beads
+  (`brettnerUltraHighthroughputMassively2024` md:161--167, section headed
+  "Bead-bound template switch reaction"). I had written "added in bulk after
+  lysis".
+- **It is not a pure template switch.** It is a second reverse-transcriptase pass
+  in which the barcoded cDNA primes its own elongation, needed because
+  formaldehyde crosslinking hobbled the in-cell reaction; the TSO rides along on a
+  step the protocol has to run anyway
+  (`gaisserHighthroughputSinglecellTranscriptomics2024` md:53). That is the real
+  answer to "why is the TSO where it is".
+
+Also: barcode 1 is not ligated, it arrives on the round-1 RT primer, so ligation
+is rounds 2 and 3 only. And no source in the mirror says "splint" -- SPLiT-seq
+says linker strand, scifi says bridge oligonucleotide. Splint is our word for what
+they do, and the figure now says so.
+
+### Fig 7 and the numbering constraint
+
+New figure `notes/assets/drawio/splint-vs-template-switch.drawio`, placed at the
+end of Sec. 3.7 rather than beside Fig. 2 where the question arises. That is a
+numbering constraint, not a preference: the draw.io canvases of Figs. 1--6 carry
+hardcoded cross-references to each other, so a figure inserted earlier silently
+falsifies text baked into exported PDFs. Placed after Fig. 6 it becomes Fig. 7,
+Figs. 1--6 are untouched, and Sec. 3.1 forward-references it.
+
+Encoding worth keeping: **yellow marks sequence written by a polymerase during
+the step drawn.** Panel (a) has no yellow anywhere, and that absence is the
+contrast rather than a caption asserting it.
+
+### Two smaller fixes from the same read
+
+- **Fig. 5, what is H.** It was defined only in the color key at the foot of the
+  figure, three uses after it first appears. The panel title now says "the handle
+  H" and the caption defines H and CB before panel (b) is read. Putting the full
+  definition in the title was tried and reverted: at 322 units it wrapped to two
+  lines and landed on the strand row below.
+- **Fig. 3, the "What this avoids" box.** Too much space above the title and a box
+  taller than its content. Text shortened to four lines and the box tightened.

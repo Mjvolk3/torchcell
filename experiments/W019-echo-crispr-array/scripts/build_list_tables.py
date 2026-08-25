@@ -456,14 +456,16 @@ def t5(budget: dict, n_singles: int, n_built: int, n_new: int,
             wells = str(rec["wells"])
         rows.append(f"{name} & {strains} & {wells}")
     caption = (
-        f"What goes on the measurement plate. {budget['n_strains']} strains at "
-        f"{per} wells each, one 384-well layout, one pick per strain. Wells per "
-        f"strain is the whole number of times {budget['n_strains']} strains divide "
-        f"the {budget['free']} wells left after {ORIENTATION_BLANKS} are kept empty "
-        f"to fix the plate's orientation and {WT_WELLS} are given to the wild-type "
-        f"reference, which gives {per}. Every existing double is re-measured "
-        f"alongside the new strains, at no cost in construction work or in wells "
-        f"per strain."
+        f"What goes on the measurement plate, approximately. {budget['n_strains']} "
+        f"strains at {per} wells each, one 384-well layout, one pick per strain. "
+        f"Wells per strain is the whole number of times {budget['n_strains']} strains "
+        f"divide the {budget['free']} wells left after {ORIENTATION_BLANKS} are kept "
+        f"empty to fix the plate's orientation and {WT_WELLS} are given to the "
+        f"wild-type reference, which gives {per}. The {WT_WELLS} wild-type wells are "
+        f"a working figure rather than a fixed allocation, and {budget['spare']} "
+        f"wells stay spare, so these are strain counts and not a well assignment; "
+        f"the picklist decides that. Every existing double is re-measured alongside "
+        f"the new strains, at no cost in construction work or in wells per strain."
     )
     emit("t5-plate", records, "lrr", head, rows, caption, "tab:plate",
          size=r"\small", dtypes={"strains": "Int64", "wells": "int64"})

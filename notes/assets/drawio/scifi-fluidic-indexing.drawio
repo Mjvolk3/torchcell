@@ -9,7 +9,7 @@
              TRUE-SIZE CANVAS. 100 draw.io units = 1 inch. 0..698 x 0..~490.
              Arial; 8.5 units = 6.1 pt (Nature 6 pt min); title 12.
              Palette = PLOT_PALETTE / PLOT_PALETTE_FILL slots 1..6; segment
-             colors match Figs. 1..3: orange transcript/cDNA, red round1
+             colors match Figs. 1, 2 and 4: orange transcript/cDNA, red round1
              barcode, purple round2 / gel bead, blue UMI, yellow droplet/oil,
              gray handle/adapter.
              En dashes are the real character (&#8211;), never a double hyphen:
@@ -24,7 +24,7 @@
         <mxCell id="title" value="scifi-RNA-seq: pre-index the cells and droplet overloading stops being a failure mode" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="0" width="698" height="15" as="geometry" />
         </mxCell>
-        <mxCell id="subtitle" value="Combinatorial fluidic indexing of Datlinger et al. 2021. Poisson loading limits a droplet run only while each droplet must hold exactly one cell. Barcoding the cells first removes that requirement, so the same Chromium channel can be loaded a hundredfold harder. Colors and the 5&#8242;-to-3&#8242; convention follow Figs. 2 and 3." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+        <mxCell id="subtitle" value="Combinatorial fluidic indexing of Datlinger et al. 2021. Poisson loading limits a droplet run only while each droplet must hold exactly one cell. Barcoding the cells first removes that requirement, so the same Chromium channel can be loaded a hundredfold harder. Colors and the 5&#8242;-to-3&#8242; convention follow Figs. 2 and 4." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="17" width="698" height="24" as="geometry" />
         </mxCell>
 
@@ -167,7 +167,7 @@
         <mxCell id="pc" value="c" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="318" width="10" height="12" as="geometry" />
         </mxCell>
-        <mxCell id="pch" value="The molecule, in the notation of Figs. 2 and 3: round2 prepends to round1 by the same splint ligation split-pool uses" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="pch" value="The molecule, in the notation of Figs. 2 and 4: round2 prepends to round1 by the same splint ligation split-pool uses" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="13" y="318" width="620" height="12" as="geometry" />
         </mxCell>
         <mxCell id="pcNote" value="Read the molecule against Fig. 2: identical grammar, but the second barcode is delivered by a droplet rather than by a second plate." style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
@@ -255,7 +255,7 @@
         </mxCell>
 
         <!-- ============================ BOTTOM NOTE ========================== -->
-        <mxCell id="note" value="&lt;b&gt;scifi-RNA-seq is the split-pool trick and the droplet trick composed, and the composition is what removes the Poisson tax.&lt;/b&gt; Split-pool writes a cell's address over successive plate rounds and never isolates anything (Fig. 2); droplet buys one container per cell and pays Poisson for it, keeping occupancy low (Fig. 3). Pre-indexing supplies the first half of the address in a plate, which leaves the droplet responsible only for the second half, so several cells per droplet becomes the operating point rather than the failure. The cost consequence: the per-channel reagent charge that dominates the droplet budget divides across 7.6&#215; more cells, so 137 channels become 18 (Sec. 5.5)." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+        <mxCell id="note" value="&lt;b&gt;scifi-RNA-seq is the split-pool trick and the droplet trick composed, and the composition is what removes the Poisson tax.&lt;/b&gt; Split-pool writes a cell's address over successive plate rounds and never isolates anything (Fig. 2); droplet buys one container per cell and pays Poisson for it, keeping occupancy low (Fig. 4). Pre-indexing supplies the first half of the address in a plate, which leaves the droplet responsible only for the second half, so several cells per droplet becomes the operating point rather than the failure. The cost consequence: the per-channel reagent charge that dominates the droplet budget divides across 7.6&#215; more cells, so 137 channels become 18 (Sec. 5.5)." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
           <mxGeometry x="0" y="420" width="698" height="46" as="geometry" />
         </mxCell>
 

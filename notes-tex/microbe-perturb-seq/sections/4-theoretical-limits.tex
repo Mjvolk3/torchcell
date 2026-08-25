@@ -112,8 +112,9 @@ reduces to which of them is currently binding.
 
 \begin{keybox}
 \textbf{One distribution, three design parameters, and two of the three want it
-pushed the opposite way from the third.} Sequencing wants a large $\lambda$
-because shot noise falls as $1/\sqrt{\mu}$; plasmid uptake wants a large one
+pushed the opposite way from the third.} Sequencing wants a large mean $\lambda$
+because shot noise falls as $1/\sqrt{\mu}$ in the mean count $\mu$; plasmid
+uptake wants a large one
 because that is what puts several guides in a cell; droplet loading wants a small
 one so that two cells rarely share a partition, and preindexing is the change
 that lets it want a large one instead. The property none of them escapes is that
@@ -655,9 +656,10 @@ applied correctly.
 
 \begin{keybox}
 \textbf{The design that follows.} Genome-wide pairwise epistasis is out of reach at
-any plex: $2.4\times10^{9}$ cells at $k=3$, still $2.6\times10^{8}$ at $k=8$. But a
-\emph{focused} library inverts the picture, because Eq.~\ref{eq:pairs} is quadratic
-in $T$ and quadratic in $k$. A 200-gene metabolic sub-library at $k=8$ needs
+any plex: $2.4\times10^{9}$ cells at plex $k=3$, still $2.6\times10^{8}$ at
+$k=8$. But a \emph{focused} library inverts the picture, because
+Eq.~\ref{eq:pairs} is quadratic in the panel size $T$ and quadratic in the
+guides per cell $k$. A 200-gene metabolic sub-library at $k=8$ needs
 $\sim$284{,}000 cells for \emph{every} one of its 19{,}900 pairs -- one
 genome-scale-sized run. That is the single most useful number in this document for
 the multiplexed screening goal.

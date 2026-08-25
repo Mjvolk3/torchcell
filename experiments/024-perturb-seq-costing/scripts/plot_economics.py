@@ -578,7 +578,7 @@ def panel_f(ax) -> None:
 
     ax2 = ax.twinx()
     ax2.plot(plexes, pair_focus, marker="s", ms=2.6, lw=0.8, ls="--",
-             color=PLOT_PALETTE[4], markeredgecolor="black", markeredgewidth=0.4,
+             color=PLOT_PALETTE[2], markeredgecolor="black", markeredgewidth=0.4,
              label="cells per gene pair, 200-gene panel (right)")
     # The 100-cell floor is the minimum a perturbation needs to be callable at
     # all; a pair below it is not measurable however many cells the screen has.

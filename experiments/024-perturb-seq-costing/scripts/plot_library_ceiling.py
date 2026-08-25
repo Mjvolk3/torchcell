@@ -35,9 +35,15 @@ import os.path as osp
 import matplotlib.pyplot as plt
 import numpy as np
 from dotenv import load_dotenv
+from matplotlib.patches import Patch
 
 from design_equation import box, place_panel_letters, style
-from torchcell.utils import PANEL_WIDTHS_MM, mm_to_in, savefig_true_size_svg
+from torchcell.utils import (
+    PANEL_WIDTHS_MM,
+    PLOT_PALETTE_FILL,
+    mm_to_in,
+    savefig_true_size_svg,
+)
 
 load_dotenv()
 ASSET_IMAGES_DIR = os.environ["ASSET_IMAGES_DIR"]
@@ -55,6 +61,16 @@ PLEXES = [1, 2, 3, 4]
 
 # Palette slots 1..4, the document's order: orange, red, purple, yellow.
 PLEX_COLOR = {1: "#D79B00", 2: "#B85450", 3: "#9673A6", 4: "#D6B656"}
+# The pale companion of each plex color, same palette slot. Panel (c) needs two
+# levels within one bar (the 1e7 ceiling and the conservative 1e6 one), which is
+# the single job the standard reserves PLOT_PALETTE_FILL for.
+PLEX_FILL = {k: PLOT_PALETTE_FILL[k - 1] for k in PLEXES}
+
+# Legend swatches for the two ceilings, gray so the key reads as a treatment
+# rather than a fifth plex. Same pair plot_economics.py uses for its stacked-bar
+# key, so the two figures state a dark/pale relation the same way.
+KEY_DARK = "#8C8C8C"
+KEY_PALE = "#E8E8E8"
 
 
 def clones_needed(n_targets: float, k: int, redundancy: int = REDUNDANCY) -> float:
@@ -135,8 +151,8 @@ def panel_c(ax) -> None:
     xs = np.arange(len(PLEXES))
     ax.bar(xs, hi, width=0.62, color=[PLEX_COLOR[k] for k in PLEXES],
            edgecolor="black", lw=0.5, zorder=2)
-    ax.bar(xs, lo, width=0.62, color="white", edgecolor="black", lw=0.5,
-           hatch="////", zorder=3)
+    ax.bar(xs, lo, width=0.62, color=[PLEX_FILL[k] for k in PLEXES],
+           edgecolor="black", lw=0.5, zorder=3)
     for x, l, h in zip(xs, lo, hi):
         ax.text(x, h * 1.25, f"{h:,.0f}", ha="center", fontsize=4.5, zorder=4)
     ax.axhline(6000, color="#666666", lw=0.6, ls="--", zorder=1)
@@ -149,6 +165,20 @@ def panel_c(ax) -> None:
     ax.set_ylabel("Largest panel that fits")
     ax.set_ylim(1, 4e4)
     ax.set_title("What one transformation buys", loc="left", fontsize=6)
+    # Without this key nothing in the panel says which shade is which ceiling.
+    # Anchored at 0.78 of the axes height so it clears the genome rule and its
+    # label, and sits over the empty right-hand side where the bars are short.
+    ax.legend(
+        handles=[
+            Patch(facecolor=KEY_DARK, edgecolor="black", lw=0.5,
+                  label="10⁷ clones"),
+            Patch(facecolor=KEY_PALE, edgecolor="black", lw=0.5,
+                  label="10⁶ clones"),
+        ],
+        frameon=False, loc="upper right", bbox_to_anchor=(1.0, 0.78),
+        fontsize=4.5, handlelength=1.0, handletextpad=0.4, labelspacing=0.3,
+        borderaxespad=0.2,
+    )
     box(ax)
 
 

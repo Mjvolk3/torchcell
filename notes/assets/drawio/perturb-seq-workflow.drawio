@@ -19,7 +19,7 @@
         <mxCell id="title" value="The whole experiment, and where each stage can lose you cells, molecules or identity" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="8" y="6" width="687" height="18" as="geometry" />
         </mxCell>
-        <mxCell id="subtitle" value="Read left to right. The wet-lab stages are the same for both method families; what differs is only how cells are kept apart while their barcodes are written (Figs. 2 to 4). Fragmentation is drawn explicitly because it is the step that decides whether a count means &#8220;molecules&#8221; or &#8220;molecules times length&#8221;, and because ribosomal RNA depletion is placed relative to it (Fig. 6)." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+        <mxCell id="subtitle" value="Read left to right. The wet-lab stages are the same for both method families; what differs is only how cells are kept apart while their barcodes are written (Figs. 2, 4 and 5). Fragmentation is drawn explicitly because it is the step that decides whether a count means &#8220;molecules&#8221; or &#8220;molecules times length&#8221;, and because ribosomal RNA depletion is placed relative to it (Fig. 7)." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="8" y="26" width="687" height="30" as="geometry" />
         </mxCell>
 
@@ -52,7 +52,7 @@
         <mxCell id="w10" value="sequence" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="614" y="84" width="36" height="26" as="geometry" /></mxCell>
         <mxCell id="w11" value="count&#10;matrix" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="654" y="84" width="36" height="26" as="geometry" /></mxCell>
 
-        <mxCell id="w9n" value="worth ~$99k (Fig. 6)" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#9673A6;" vertex="1" parent="1"><mxGeometry x="510" y="112" width="92" height="20" as="geometry" /></mxCell>
+        <mxCell id="w9n" value="worth ~$99k (Fig. 7)" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#9673A6;" vertex="1" parent="1"><mxGeometry x="510" y="112" width="92" height="20" as="geometry" /></mxCell>
         <mxCell id="w4n" value="split-pool: 3 plate rounds&#10;droplet: 1 bead per cell" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="234" y="110" width="142" height="24" as="geometry" /></mxCell>
 
         <!-- ============================ PANEL B ============================ -->

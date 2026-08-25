@@ -9,7 +9,7 @@
              TRUE-SIZE CANVAS. 100 draw.io units = 1 inch. 0..702 x 0..~470.
              Arial; 8.5 units = 6.1 pt (Nature 6 pt min); title 12.
              Palette = PLOT_PALETTE / PLOT_PALETTE_FILL slots 1-6; segment
-             colors match Figs 1 and 2 (splitseq-barcoding, droplet-10x).
+             colors match Figs. 2 and 4 (splitseq-barcoding, droplet-10x).
              A clearer redraw of Fig. 1 of Nadal-Ribelles 2024. Reorganized
              around the question that figure hides: WHICH MOLECULE CARRIES
              THE CELL BARCODE; and with one fixed 5'->3' orientation
@@ -22,7 +22,7 @@
         <mxCell id="title" value="Yeast scRNA-seq methods: what separates the cells, and which molecule carries the cell barcode" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="0" width="698" height="15" as="geometry" />
         </mxCell>
-        <mxCell id="subtitle" value="A redrawing of Fig. 1 of Nadal-Ribelles 2024, reorganized around the one question that separates the library types. Every molecule is drawn in a single fixed orientation, 5&#8242; left to 3&#8242; right with P5 always on the left, and colors are those of Figs. 2 and 3." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+        <mxCell id="subtitle" value="A redrawing of Fig. 1 of Nadal-Ribelles 2024, reorganized around the one question that separates the library types. Every molecule is drawn in a single fixed orientation, 5&#8242; left to 3&#8242; right with P5 always on the left, and colors are those of Figs. 2 and 4." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="17" width="698" height="24" as="geometry" />
         </mxCell>
 
@@ -71,7 +71,7 @@
         <mxCell id="a3n" value="~2,000 cells&#10;one well per cell" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="316" y="102" width="88" height="24" as="geometry" />
         </mxCell>
-        <mxCell id="a4n" value="6,000&#8211;100,000&#10;an oil-walled droplet&#10;152,000 preindexed&#10;(human; Fig. 4)" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+        <mxCell id="a4n" value="6,000&#8211;100,000&#10;an oil-walled droplet&#10;152,000 preindexed&#10;(human; Fig. 5)" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="415" y="102" width="88" height="46" as="geometry" />
         </mxCell>
         <mxCell id="a5n" value="up to 1,061,865&#10;a printed microwell" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">

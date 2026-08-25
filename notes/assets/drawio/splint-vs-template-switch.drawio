@@ -7,7 +7,7 @@
 
         <!-- ================================================================
              TRUE-SIZE CANVAS. draw.io units = 1/100 inch (100 units = 1 in).
-             Content occupies 0..702 units wide = 178.2 mm (cap 179.4 mm).
+             Content occupies 0..702 units wide = 178.3 mm (cap 179.4 mm).
              Type: Arial throughout; 8.5 units = 6.1 pt (Nature 6 pt minimum).
              Palette: PLOT_PALETTE / PLOT_PALETTE_FILL slots 1..6 only.
 
@@ -19,235 +19,374 @@
              Panel (a) has no yellow anywhere. That absence is the contrast:
              ligation joins two ends that already exist and copies nothing.
 
+             THREE THINGS THIS DRAWING IS CAREFUL ABOUT, each of which an
+             earlier version got wrong or left out:
+
+             1. STRAND COUNT IS CARRIED BY BRACKETS, not by the blocks. A row
+                of abutting blocks reads as one molecule whatever the caption
+                says, so every band brackets its molecules above and gives each
+                one its own 5' and 3' terminus. Panel (a) runs two brackets in
+                bands 1 and 2 and ONE in band 3, so the ligation event is
+                visible as two-brackets-become-one rather than being asserted.
+
+             2. THE POLY(A) TAIL IS DRAWN, and the oligo-dT is base-paired to
+                it. Without the tail there is nothing to explain why the dT
+                primer sits at that end, and therefore nothing to explain why
+                the non-templated C residues land at the OTHER end. The dT15
+                block and the poly(A) block occupy the same x-span on purpose.
+
+             3. THE TSO IS ANTIPARALLEL AND OVERHANGS TO THE RIGHT. Its rGrGrG
+                is at its 3' end, that 3' end pairs with the cDNA's 3'-CCC, and
+                so the TSO's 5' handle must hang PAST the cDNA terminus, where
+                it becomes the next stretch of template. An earlier version drew
+                the TSO extending leftward under the cDNA body, which makes it
+                parallel to the strand it is templating and is not a structure
+                that can exist.
+
              Column grid:
-               col A label 0..16 | blocks 18..316 | col A ends 330
-               divider x=347
-               col B label 364..380 | blocks 382..690
+               col A label 0..14 | blocks 30..338 | col A ends 344
+               divider x=351
+               col B label 358..372 | blocks 388..699
         ================================================================= -->
 
         <!-- ======================= HEADERS ============================== -->
-        <mxCell id="hdrA" value="&lt;b&gt;(a) Splint ligation&lt;/b&gt; &#8212; a ligase JOINS two ends" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="0" y="0" width="330" height="16" as="geometry" />
+        <mxCell id="hdrA" value="&lt;b&gt;(a) Splint ligation:&lt;/b&gt; a ligase JOINS two ends" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="344" height="16" as="geometry" />
         </mxCell>
-        <mxCell id="hdrB" value="&lt;b&gt;(b) Template switching&lt;/b&gt; &#8212; a polymerase COPIES an oligo" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="364" y="0" width="338" height="16" as="geometry" />
+        <mxCell id="hdrB" value="&lt;b&gt;(b) Template switching:&lt;/b&gt; a polymerase COPIES an oligo" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="358" y="0" width="344" height="16" as="geometry" />
         </mxCell>
 
-        <mxCell id="subA" value="Rounds 2 and 3 of split-pool barcoding, and only those: barcode 1 arrives on the round-1 RT primer. A barcode is a sequence the protocol chose, so it must be delivered as a physical oligo." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="20" width="330" height="34" as="geometry" />
+        <mxCell id="subA" value="Rounds 2 and 3 of split-pool barcoding, and only those: barcode 1 arrives on the round-1 RT primer. A barcode is a sequence the protocol chose, so no template for it exists anywhere in the cell and it has to be delivered as a physical oligo." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="20" width="344" height="34" as="geometry" />
         </mxCell>
         <mxCell id="subB" value="How the second PCR handle is added. After lysis the barcoded cDNA is captured on streptavidin beads and given a fresh reverse-transcriptase reaction, with the TSO supplied free in the mix." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="364" y="20" width="338" height="34" as="geometry" />
+          <mxGeometry x="358" y="20" width="344" height="34" as="geometry" />
         </mxCell>
 
         <mxCell id="divider" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#CCCCCC;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="347" y="20" as="sourcePoint" />
-            <mxPoint x="347" y="330" as="targetPoint" />
+            <mxPoint x="351" y="20" as="sourcePoint" />
+            <mxPoint x="351" y="380" as="targetPoint" />
           </mxGeometry>
         </mxCell>
 
         <!-- ==================== BAND 1: the starting state =============== -->
+        <!-- ==== (a) two separate molecules, each with its own two ends ==== -->
         <mxCell id="a1lab" value="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
           <mxGeometry x="0" y="84" width="14" height="14" as="geometry" />
         </mxCell>
+
+        <mxCell id="a1brk1lab" value="incoming barcode oligo" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#9673A6;" vertex="1" parent="1">
+          <mxGeometry x="8" y="58" width="98" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="a1brk1h" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#9673A6;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="30" y="72" as="sourcePoint" /><mxPoint x="84" y="72" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a1brk1l" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#9673A6;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="30" y="72" as="sourcePoint" /><mxPoint x="30" y="77" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a1brk1r" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#9673A6;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="84" y="72" as="sourcePoint" /><mxPoint x="84" y="77" as="targetPoint" /></mxGeometry></mxCell>
+
+        <mxCell id="a1brk2lab" value="growing cDNA strand" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#D79B00;" vertex="1" parent="1">
+          <mxGeometry x="176" y="58" width="94" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="a1brk2h" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#D79B00;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="121" y="72" as="sourcePoint" /><mxPoint x="325" y="72" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a1brk2l" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#D79B00;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="121" y="72" as="sourcePoint" /><mxPoint x="121" y="77" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a1brk2r" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#D79B00;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="325" y="72" as="sourcePoint" /><mxPoint x="325" y="77" as="targetPoint" /></mxGeometry></mxCell>
+
         <mxCell id="a1e5" value="5&#8242;" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="18" y="80" width="14" height="22" as="geometry" />
+          <mxGeometry x="14" y="80" width="14" height="22" as="geometry" />
         </mxCell>
         <mxCell id="a1bc2" value="BC2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="34" y="80" width="46" height="22" as="geometry" />
+          <mxGeometry x="30" y="80" width="54" height="22" as="geometry" />
         </mxCell>
-        <mxCell id="a1gap" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;" vertex="1" parent="1">
-          <mxGeometry x="80" y="80" width="16" height="22" as="geometry" />
+        <mxCell id="a1e3a" value="3&#8242;" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="85" y="80" width="12" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a1e5b" value="5&#8242;" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="107" y="80" width="12" height="22" as="geometry" />
         </mxCell>
         <mxCell id="a1bc1" value="BC1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="96" y="80" width="46" height="22" as="geometry" />
+          <mxGeometry x="121" y="80" width="54" height="22" as="geometry" />
         </mxCell>
         <mxCell id="a1dt" value="dT15" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="142" y="80" width="42" height="22" as="geometry" />
+          <mxGeometry x="175" y="80" width="42" height="22" as="geometry" />
         </mxCell>
         <mxCell id="a1cdna" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="184" y="80" width="112" height="22" as="geometry" />
+          <mxGeometry x="217" y="80" width="108" height="22" as="geometry" />
         </mxCell>
         <mxCell id="a1e3" value="3&#8242;" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="298" y="80" width="14" height="22" as="geometry" />
+          <mxGeometry x="326" y="80" width="14" height="22" as="geometry" />
         </mxCell>
-        <mxCell id="a1gaplab" value="gap" style="text;html=1;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#B85450;" vertex="1" parent="1">
-          <mxGeometry x="72" y="102" width="32" height="11" as="geometry" />
+        <mxCell id="a1gaplab" value="not joined" style="text;html=1;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="62" y="103" width="80" height="11" as="geometry" />
         </mxCell>
-        <mxCell id="a1note" value="Two separate molecules. The incoming barcode oligo sits beside the growing strand and is not attached to it. Both ends already exist as DNA." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="18" y="117" width="312" height="34" as="geometry" />
+        <mxCell id="a1note" value="Two separate molecules, and the brackets above say so: each carries its own 5&#8242; and 3&#8242; terminus. Both ends already exist as DNA, which is what makes this a job for a ligase rather than a polymerase." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="14" y="120" width="330" height="34" as="geometry" />
         </mxCell>
 
+        <!-- ==== (b) the mRNA drawn properly: poly(A) tail, body, 5' cap ==== -->
         <mxCell id="b1lab" value="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="350" y="84" width="14" height="14" as="geometry" />
+          <mxGeometry x="358" y="88" width="14" height="14" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b1talab" value="poly(A) tail" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#D79B00;" vertex="1" parent="1">
+          <mxGeometry x="370" y="58" width="78" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="b1caplab" value="5&#8242; cap" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#D79B00;" vertex="1" parent="1">
+          <mxGeometry x="546" y="58" width="54" height="12" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b1m3" value="3&#8242;" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="372" y="74" width="14" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="b1polya" value="AAAAAA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;dashed=1;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="388" y="74" width="42" height="14" as="geometry" />
         </mxCell>
         <mxCell id="b1mrna" value="mRNA template" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;dashed=1;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="424" y="62" width="188" height="14" as="geometry" />
+          <mxGeometry x="430" y="74" width="136" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="b1cap" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#D79B00;strokeColor=#D79B00;" vertex="1" parent="1">
+          <mxGeometry x="568" y="76" width="10" height="10" as="geometry" />
         </mxCell>
         <mxCell id="b1m5" value="5&#8242;" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;fontColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="614" y="62" width="14" height="14" as="geometry" />
+          <mxGeometry x="581" y="74" width="14" height="14" as="geometry" />
         </mxCell>
-        <mxCell id="b1r1" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="450" y="76" as="sourcePoint" /><mxPoint x="450" y="80" as="targetPoint" /></mxGeometry></mxCell>
-        <mxCell id="b1r2" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="490" y="76" as="sourcePoint" /><mxPoint x="490" y="80" as="targetPoint" /></mxGeometry></mxCell>
-        <mxCell id="b1r3" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="530" y="76" as="sourcePoint" /><mxPoint x="530" y="80" as="targetPoint" /></mxGeometry></mxCell>
-        <mxCell id="b1r4" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="570" y="76" as="sourcePoint" /><mxPoint x="570" y="80" as="targetPoint" /></mxGeometry></mxCell>
+
+        <!-- oligo-dT annealed to the tail: THE detail the panel was missing -->
+        <mxCell id="b1ra1" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#D79B00;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="396" y="88" as="sourcePoint" /><mxPoint x="396" y="94" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="b1ra2" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#D79B00;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="409" y="88" as="sourcePoint" /><mxPoint x="409" y="94" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="b1ra3" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#D79B00;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="422" y="88" as="sourcePoint" /><mxPoint x="422" y="94" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="b1r1" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="452" y="88" as="sourcePoint" /><mxPoint x="452" y="94" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="b1r2" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="482" y="88" as="sourcePoint" /><mxPoint x="482" y="94" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="b1r3" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="512" y="88" as="sourcePoint" /><mxPoint x="512" y="94" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="b1r4" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="542" y="88" as="sourcePoint" /><mxPoint x="542" y="94" as="targetPoint" /></mxGeometry></mxCell>
+
         <mxCell id="b1e5" value="5&#8242;" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="368" y="80" width="14" height="22" as="geometry" />
+          <mxGeometry x="372" y="94" width="14" height="22" as="geometry" />
         </mxCell>
         <mxCell id="b1dt" value="dT15" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="382" y="80" width="42" height="22" as="geometry" />
+          <mxGeometry x="388" y="94" width="42" height="22" as="geometry" />
         </mxCell>
         <mxCell id="b1cdna" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="424" y="80" width="188" height="22" as="geometry" />
+          <mxGeometry x="430" y="94" width="150" height="22" as="geometry" />
         </mxCell>
         <mxCell id="b1ccc" value="CCC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="612" y="80" width="34" height="22" as="geometry" />
+          <mxGeometry x="580" y="94" width="34" height="22" as="geometry" />
         </mxCell>
         <mxCell id="b1e3" value="3&#8242;" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="648" y="80" width="14" height="22" as="geometry" />
+          <mxGeometry x="615" y="94" width="14" height="22" as="geometry" />
         </mxCell>
-        <mxCell id="b1ccclab" value="non-templated" style="text;html=1;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#D6B656;" vertex="1" parent="1">
-          <mxGeometry x="596" y="102" width="66" height="11" as="geometry" />
+        <mxCell id="b1ccclab" value="non-templated" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#D6B656;" vertex="1" parent="1">
+          <mxGeometry x="631" y="94" width="70" height="22" as="geometry" />
         </mxCell>
-        <mxCell id="b1note" value="One molecule, and the enzyme is still on it. Reverse transcriptase has copied the mRNA, reached its 5&#8242; end, and added two or three C residues that no template asked for." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="382" y="117" width="320" height="34" as="geometry" />
+        <mxCell id="b1note" value="One molecule, and the enzyme is still on it. The dT15 primer is annealed to the poly(A) tail, so reverse transcriptase runs from the tail toward the cap and stops at the 5&#8242; end. That is why the two or three C residues it adds with no template land at the OTHER end of the cDNA." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="372" y="120" width="330" height="34" as="geometry" />
         </mxCell>
 
         <!-- ============ BAND 2: the oligo arrives and pairs ============== -->
+        <!-- ==== (a) THREE strands: two abutted above, splint below ======== -->
         <mxCell id="a2lab" value="2" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="0" y="169" width="14" height="14" as="geometry" />
+          <mxGeometry x="0" y="199" width="14" height="14" as="geometry" />
         </mxCell>
-        <mxCell id="a2nicklab" value="nick" style="text;html=1;align=center;verticalAlign=bottom;fontFamily=Arial;fontSize=8.5;fontColor=#B85450;" vertex="1" parent="1">
-          <mxGeometry x="72" y="152" width="32" height="11" as="geometry" />
+
+        <mxCell id="a2brk1lab" value="still two molecules" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#9673A6;" vertex="1" parent="1">
+          <mxGeometry x="8" y="162" width="98" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="a2brk1h" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#9673A6;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="30" y="176" as="sourcePoint" /><mxPoint x="80" y="176" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a2brk1l" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#9673A6;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="30" y="176" as="sourcePoint" /><mxPoint x="30" y="181" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a2brk1r" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#9673A6;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="80" y="176" as="sourcePoint" /><mxPoint x="80" y="181" as="targetPoint" /></mxGeometry></mxCell>
+
+        <mxCell id="a2brk2h" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#D79B00;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="88" y="176" as="sourcePoint" /><mxPoint x="288" y="176" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a2brk2l" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#D79B00;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="88" y="176" as="sourcePoint" /><mxPoint x="88" y="181" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a2brk2r" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#D79B00;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="288" y="176" as="sourcePoint" /><mxPoint x="288" y="181" as="targetPoint" /></mxGeometry></mxCell>
+
+        <mxCell id="a2ohlab" value="3&#8242;-OH" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="34" y="184" width="48" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="a2plab" value="5&#8242;-P" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="86" y="184" width="48" height="12" as="geometry" />
+        </mxCell>
+
+        <mxCell id="a2e5" value="5&#8242;" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="14" y="199" width="14" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a2bc2" value="BC2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="30" y="199" width="54" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a2bc1" value="BC1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="84" y="199" width="54" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a2dt" value="dT15" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="138" y="199" width="42" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a2cdna" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="180" y="199" width="108" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a2e3" value="3&#8242;" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="289" y="199" width="14" height="22" as="geometry" />
         </mxCell>
         <mxCell id="a2nick" style="endArrow=none;html=1;strokeWidth=1.5;strokeColor=#B85450;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="88" y="163" as="sourcePoint" />
-            <mxPoint x="88" y="170" as="targetPoint" />
+            <mxPoint x="84" y="197" as="sourcePoint" />
+            <mxPoint x="84" y="223" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="a2e5" value="5&#8242;" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="18" y="170" width="14" height="22" as="geometry" />
+
+        <mxCell id="k1" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="54" y="221" as="sourcePoint" /><mxPoint x="54" y="227" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k2" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="68" y="221" as="sourcePoint" /><mxPoint x="68" y="227" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k3" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="100" y="221" as="sourcePoint" /><mxPoint x="100" y="227" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="k4" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="114" y="221" as="sourcePoint" /><mxPoint x="114" y="227" as="targetPoint" /></mxGeometry></mxCell>
+
+        <mxCell id="a2sp3" value="3&#8242;" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="28" y="227" width="14" height="14" as="geometry" />
         </mxCell>
-        <mxCell id="a2bc2" value="BC2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="34" y="170" width="54" height="22" as="geometry" />
-        </mxCell>
-        <mxCell id="a2bc1" value="BC1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="88" y="170" width="54" height="22" as="geometry" />
-        </mxCell>
-        <mxCell id="a2dt" value="dT15" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="142" y="170" width="42" height="22" as="geometry" />
-        </mxCell>
-        <mxCell id="a2cdna" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="184" y="170" width="112" height="22" as="geometry" />
-        </mxCell>
-        <mxCell id="a2e3" value="3&#8242;" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="298" y="170" width="14" height="22" as="geometry" />
-        </mxCell>
-        <mxCell id="k1" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="52" y="192" as="sourcePoint" /><mxPoint x="52" y="197" as="targetPoint" /></mxGeometry></mxCell>
-        <mxCell id="k2" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="70" y="192" as="sourcePoint" /><mxPoint x="70" y="197" as="targetPoint" /></mxGeometry></mxCell>
-        <mxCell id="k3" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="88" y="192" as="sourcePoint" /><mxPoint x="88" y="197" as="targetPoint" /></mxGeometry></mxCell>
-        <mxCell id="k4" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="106" y="192" as="sourcePoint" /><mxPoint x="106" y="197" as="targetPoint" /></mxGeometry></mxCell>
-        <mxCell id="k5" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="124" y="192" as="sourcePoint" /><mxPoint x="124" y="197" as="targetPoint" /></mxGeometry></mxCell>
         <mxCell id="a2splint" value="linker strand" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="42" y="197" width="92" height="14" as="geometry" />
+          <mxGeometry x="44" y="227" width="80" height="14" as="geometry" />
         </mxCell>
-        <mxCell id="a2note" value="The linker base-pairs across the junction and holds the two ends abutted. It is a jig, not a template: T4 DNA ligase seals the nick, and the linker itself is never copied into anything." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="18" y="216" width="312" height="34" as="geometry" />
+        <mxCell id="a2sp5" value="5&#8242;" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="126" y="227" width="14" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="a2note" value="Three single strands, not one double one. The two above are still separate, abutted end to end; the linker lies antiparallel beneath and base-pairs to BOTH of them across the junction, holding them in register. It is a jig, not a template: T4 DNA ligase seals the 3&#8242;-OH to the 5&#8242;-phosphate, and the linker is never copied into anything." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="14" y="252" width="330" height="46" as="geometry" />
         </mxCell>
 
+        <!-- ==== (b) TSO anneals to the CCC, antiparallel, overhanging ===== -->
         <mxCell id="b2lab" value="2" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="350" y="169" width="14" height="14" as="geometry" />
+          <mxGeometry x="358" y="199" width="14" height="14" as="geometry" />
         </mxCell>
+
+        <mxCell id="b2m3" value="3&#8242;" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="372" y="179" width="14" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="b2polya" value="AAAAAA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;dashed=1;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="388" y="179" width="42" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="b2mrna" value="mRNA template, still annealed" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;dashed=1;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="430" y="179" width="136" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="b2cap" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#D79B00;strokeColor=#D79B00;" vertex="1" parent="1">
+          <mxGeometry x="568" y="181" width="10" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="b2m5" value="5&#8242;" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="581" y="179" width="14" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="b2ra1" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#D79B00;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="396" y="193" as="sourcePoint" /><mxPoint x="396" y="199" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="b2ra2" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#D79B00;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="409" y="193" as="sourcePoint" /><mxPoint x="409" y="199" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="b2ra3" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#D79B00;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="422" y="193" as="sourcePoint" /><mxPoint x="422" y="199" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="b2r1" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="452" y="193" as="sourcePoint" /><mxPoint x="452" y="199" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="b2r2" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="482" y="193" as="sourcePoint" /><mxPoint x="482" y="199" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="b2r3" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="512" y="193" as="sourcePoint" /><mxPoint x="512" y="199" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="b2r4" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="542" y="193" as="sourcePoint" /><mxPoint x="542" y="199" as="targetPoint" /></mxGeometry></mxCell>
+
         <mxCell id="b2e5" value="5&#8242;" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="368" y="170" width="14" height="22" as="geometry" />
+          <mxGeometry x="372" y="199" width="14" height="22" as="geometry" />
         </mxCell>
         <mxCell id="b2dt" value="dT15" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="382" y="170" width="42" height="22" as="geometry" />
+          <mxGeometry x="388" y="199" width="42" height="22" as="geometry" />
         </mxCell>
         <mxCell id="b2cdna" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="424" y="170" width="188" height="22" as="geometry" />
+          <mxGeometry x="430" y="199" width="150" height="22" as="geometry" />
         </mxCell>
         <mxCell id="b2ccc" value="CCC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="612" y="170" width="34" height="22" as="geometry" />
+          <mxGeometry x="580" y="199" width="34" height="22" as="geometry" />
         </mxCell>
         <mxCell id="b2e3" value="3&#8242;" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="648" y="170" width="14" height="22" as="geometry" />
+          <mxGeometry x="615" y="199" width="14" height="22" as="geometry" />
         </mxCell>
-        <mxCell id="bk1" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="620" y="192" as="sourcePoint" /><mxPoint x="620" y="197" as="targetPoint" /></mxGeometry></mxCell>
-        <mxCell id="bk2" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="629" y="192" as="sourcePoint" /><mxPoint x="629" y="197" as="targetPoint" /></mxGeometry></mxCell>
-        <mxCell id="bk3" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="638" y="192" as="sourcePoint" /><mxPoint x="638" y="197" as="targetPoint" /></mxGeometry></mxCell>
-        <mxCell id="b2tso" value="TSO &#8212; rGrGrG at its 3&#8242; end" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;align=right;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="514" y="197" width="132" height="14" as="geometry" />
+
+        <mxCell id="bk1" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="588" y="221" as="sourcePoint" /><mxPoint x="588" y="227" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bk2" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="597" y="221" as="sourcePoint" /><mxPoint x="597" y="227" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="bk3" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="606" y="221" as="sourcePoint" /><mxPoint x="606" y="227" as="targetPoint" /></mxGeometry></mxCell>
+
+        <mxCell id="b2tso3" value="3&#8242;" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="564" y="227" width="14" height="14" as="geometry" />
         </mxCell>
-        <mxCell id="b2note" value="The TSO base-pairs with those C residues while the enzyme is still engaged. No melting, no re-annealing, no second primer: this is the same reaction, still running." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="382" y="216" width="320" height="34" as="geometry" />
+        <mxCell id="b2tsog" value="rGrGrG" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="580" y="227" width="34" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="b2tsoh" value="handle (R2)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="614" y="227" width="72" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="b2tso5" value="5&#8242;" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="687" y="227" width="14" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="b2note" value="The TSO base-pairs with those C residues while the enzyme is still engaged. Its rGrGrG is at its 3&#8242; end, so it lies antiparallel and its handle overhangs the cDNA terminus, which is what puts fresh template in front of an enzyme that had run out. No melting, no re-annealing, no second primer: the same reaction, still running." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="372" y="252" width="330" height="46" as="geometry" />
         </mxCell>
 
         <!-- ==================== BAND 3: the result ======================= -->
         <mxCell id="a3lab" value="3" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="0" y="263" width="14" height="14" as="geometry" />
+          <mxGeometry x="0" y="325" width="14" height="14" as="geometry" />
         </mxCell>
+        <mxCell id="a3brklab" value="&lt;b&gt;one continuous strand&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#D79B00;" vertex="1" parent="1">
+          <mxGeometry x="60" y="304" width="200" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="a3brkh" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#D79B00;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="30" y="318" as="sourcePoint" /><mxPoint x="288" y="318" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a3brkl" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#D79B00;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="30" y="318" as="sourcePoint" /><mxPoint x="30" y="323" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a3brkr" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#D79B00;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="288" y="318" as="sourcePoint" /><mxPoint x="288" y="323" as="targetPoint" /></mxGeometry></mxCell>
         <mxCell id="a3e5" value="5&#8242;" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="18" y="260" width="14" height="22" as="geometry" />
+          <mxGeometry x="14" y="325" width="14" height="22" as="geometry" />
         </mxCell>
         <mxCell id="a3bc2" value="BC2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="34" y="260" width="54" height="22" as="geometry" />
+          <mxGeometry x="30" y="325" width="54" height="22" as="geometry" />
         </mxCell>
         <mxCell id="a3bc1" value="BC1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="88" y="260" width="54" height="22" as="geometry" />
+          <mxGeometry x="84" y="325" width="54" height="22" as="geometry" />
         </mxCell>
         <mxCell id="a3dt" value="dT15" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="142" y="260" width="42" height="22" as="geometry" />
+          <mxGeometry x="138" y="325" width="42" height="22" as="geometry" />
         </mxCell>
         <mxCell id="a3cdna" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="184" y="260" width="112" height="22" as="geometry" />
+          <mxGeometry x="180" y="325" width="108" height="22" as="geometry" />
         </mxCell>
         <mxCell id="a3e3" value="3&#8242;" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="298" y="260" width="14" height="22" as="geometry" />
+          <mxGeometry x="289" y="325" width="14" height="22" as="geometry" />
         </mxCell>
-        <mxCell id="a3note" value="One continuous strand, one nucleotide bond longer than the two pieces were. The linker is displaced by a blocking strand and discarded. &lt;b&gt;Nothing was synthesized.&lt;/b&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="18" y="290" width="312" height="34" as="geometry" />
+        <mxCell id="a3note" value="Two brackets have become one: the nick is sealed and the product is a single strand, one nucleotide bond longer than the two pieces were. A blocking strand displaces the linker, which is discarded. &lt;b&gt;Nothing was synthesized.&lt;/b&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="14" y="352" width="330" height="46" as="geometry" />
         </mxCell>
 
         <mxCell id="b3lab" value="3" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="350" y="263" width="14" height="14" as="geometry" />
+          <mxGeometry x="358" y="325" width="14" height="14" as="geometry" />
         </mxCell>
+        <mxCell id="b3brklab" value="&lt;b&gt;one strand, extended by copying&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#D6B656;" vertex="1" parent="1">
+          <mxGeometry x="420" y="304" width="234" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="b3brkh" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#D6B656;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="388" y="318" as="sourcePoint" /><mxPoint x="686" y="318" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="b3brkl" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#D6B656;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="388" y="318" as="sourcePoint" /><mxPoint x="388" y="323" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="b3brkr" style="endArrow=none;html=1;strokeWidth=0.5;strokeColor=#D6B656;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="686" y="318" as="sourcePoint" /><mxPoint x="686" y="323" as="targetPoint" /></mxGeometry></mxCell>
         <mxCell id="b3e5" value="5&#8242;" style="text;html=1;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="368" y="260" width="14" height="22" as="geometry" />
+          <mxGeometry x="372" y="325" width="14" height="22" as="geometry" />
         </mxCell>
         <mxCell id="b3dt" value="dT15" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="382" y="260" width="42" height="22" as="geometry" />
+          <mxGeometry x="388" y="325" width="42" height="22" as="geometry" />
         </mxCell>
         <mxCell id="b3cdna" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="424" y="260" width="150" height="22" as="geometry" />
+          <mxGeometry x="430" y="325" width="150" height="22" as="geometry" />
         </mxCell>
-        <mxCell id="b3new" value="handle (R2)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="574" y="260" width="112" height="22" as="geometry" />
+        <mxCell id="b3new" value="handle (R2), written in" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="580" y="325" width="106" height="22" as="geometry" />
         </mxCell>
         <mxCell id="b3e3" value="3&#8242;" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="688" y="260" width="14" height="22" as="geometry" />
+          <mxGeometry x="687" y="325" width="14" height="22" as="geometry" />
         </mxCell>
-        <mxCell id="b3note" value="The enzyme switches template and carries on, so the handle is &lt;i&gt;written into&lt;/i&gt; the cDNA rather than joined to it. The TSO stays a template and is not part of the product. &lt;b&gt;New sequence was synthesized.&lt;/b&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="382" y="290" width="320" height="34" as="geometry" />
+        <mxCell id="b3note" value="Still one bracket, but it now spans more sequence than it did: the enzyme switched template and carried on, so the handle is &lt;i&gt;written into&lt;/i&gt; the cDNA rather than joined to it. The TSO stays a template and is not part of the product. &lt;b&gt;New sequence was synthesized.&lt;/b&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="372" y="352" width="330" height="46" as="geometry" />
         </mxCell>
 
         <!-- =================== THE CONTRAST, STATED ====================== -->
         <mxCell id="cmpbox" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="338" width="702" height="188" as="geometry" />
+          <mxGeometry x="0" y="410" width="702" height="176" as="geometry" />
         </mxCell>
         <mxCell id="cmpA" value="&lt;b&gt;Ligase.&lt;/b&gt; Joins two existing ends. The oligo that guides it is a jig and is thrown away; what ends up in the product is the &lt;i&gt;barcode&lt;/i&gt; oligo, which was already DNA. SPLiT-seq calls the jig a linker strand, scifi-RNA-seq a bridge oligonucleotide; splint is the general name for what it does." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="10" y="346" width="320" height="34" as="geometry" />
+          <mxGeometry x="10" y="418" width="330" height="46" as="geometry" />
         </mxCell>
-        <mxCell id="cmpB" value="&lt;b&gt;Polymerase.&lt;/b&gt; Extends one end by copying. The oligo that guides it (the TSO) is a &lt;i&gt;template&lt;/i&gt; and is also thrown away. What ends up in the product is a fresh copy of it." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="372" y="346" width="320" height="34" as="geometry" />
-        </mxCell>
-        <mxCell id="cmp3p" value="&lt;b&gt;A 3&#8242; library still template-switches, and this is the point most easily got wrong.&lt;/b&gt; Template switching is not a 5&#8242;-chemistry feature: it is how nearly every short-read single-cell library gets a PCR handle onto its second end, and a molecule with a handle at one end only cannot be amplified. What 3&#8242; and 5&#8242; actually name is &lt;i&gt;which oligo carries the cell barcode&lt;/i&gt;. In a 3&#8242; library (10x 3&#8242;, and the split-pool chemistry here) the barcode rides on the oligo-dT that primes reverse transcription, and the TSO is supplied free and carries nothing but the handle. In a 5&#8242; library the two swap: the TSO is on the gel bead and carries the barcode and UMI, and the oligo-dT is the free primer. Both template-switch. Only one of them puts the barcode at the transcript&#8217;s 5&#8242; end, which is what makes the 5&#8242; kit able to read a guide by its scaffold." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="10" y="452" width="682" height="68" as="geometry" />
+        <mxCell id="cmpB" value="&lt;b&gt;Polymerase.&lt;/b&gt; Extends one end by copying. The oligo that guides it (the TSO) is a &lt;i&gt;template&lt;/i&gt; and is also thrown away. What ends up in the product is a fresh copy of it, which is why panel (b) gains yellow and panel (a) never does." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="362" y="418" width="330" height="46" as="geometry" />
         </mxCell>
         <mxCell id="cmpwhy" value="&lt;b&gt;Both appear in the same protocol, and the reason is what each end looks like when its step begins.&lt;/b&gt; A barcode is an arbitrary sequence the protocol picked, so no template for it exists anywhere in the cell and it has to be delivered as an oligo and joined on. The second handle sits at the far end of the cDNA, where reverse transcriptase stopped. Brettner et al.&#8217;s bead step is not run for the handle alone: the in-cell reaction is hobbled by formaldehyde crosslinking, so a second reverse-transcriptase pass is needed anyway, with the barcoded cDNA priming its own elongation. The TSO rides along on a step the protocol already had to run." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="10" y="398" width="682" height="46" as="geometry" />
+          <mxGeometry x="10" y="470" width="682" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="cmp3p" value="&lt;b&gt;A 3&#8242; library still template-switches, and this is the point most easily got wrong.&lt;/b&gt; Template switching is not a 5&#8242;-chemistry feature: it is how nearly every short-read single-cell library gets a PCR handle onto its second end, and a molecule with a handle at one end only cannot be amplified. What 3&#8242; and 5&#8242; actually name is &lt;i&gt;which oligo carries the cell barcode&lt;/i&gt;. In a 3&#8242; library (10x 3&#8242;, and the split-pool chemistry here) the barcode rides on the oligo-dT that primes reverse transcription, and the TSO is supplied free and carries nothing but the handle. In a 5&#8242; library the two swap: the TSO is on the gel bead and carries the barcode and UMI, and the oligo-dT is the free primer. Both template-switch. Only one of them puts the barcode at the transcript&#8217;s 5&#8242; end, which is what makes the 5&#8242; kit able to read a guide by its scaffold." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="10" y="522" width="682" height="58" as="geometry" />
         </mxCell>
 
       </root>

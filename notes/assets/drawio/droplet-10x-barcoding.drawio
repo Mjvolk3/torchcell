@@ -11,7 +11,7 @@
              (caps: 179.4 mm wide, 170 mm tall)
              Arial throughout; 8.5 units = 6.1 pt (Nature 6 pt min), title 12.
              Palette = PLOT_PALETTE / PLOT_PALETTE_FILL slots 1-6, and the
-             segment colors MATCH Fig 1 (splitseq-barcoding.drawio) so the two
+             segment colors MATCH Fig. 2 (splitseq-barcoding.drawio) so the two
              figures can be read against each other:
                orange transcript/cDNA | red cell barcode | blue UMI
                purple gel bead | yellow droplet/oil | gray handle/adapter

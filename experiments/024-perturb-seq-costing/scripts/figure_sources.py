@@ -141,7 +141,7 @@ RECORDS: list[FigureNumber] = [
     ),
     FigureNumber(
         figure=TAXONOMY, panel="a", element="preindexed droplet throughput",
-        value="152,000 preindexed (human; Fig. 4)",
+        value="152,000 preindexed (human; Fig. 5)",
         citation_key="datlingerUltrahighthroughputSinglecellRNA2021", line=57,
         quote=(
             "we performed a large-scale scifi-RNA-seq experiment with 383,000 "
@@ -472,7 +472,7 @@ RECORDS: list[FigureNumber] = [
     ),
     FigureNumber(
         figure=WORKFLOW, panel="a", element="value of rRNA depletion, drawn on canvas",
-        value="worth ~$99k (Fig. 6)",
+        value="worth ~$99k (Fig. 7)",
         citation_key=None,
         quote=(
             "[DERIVED HERE: tables/t8-budgets.tex, the 250-cells-per-gene "

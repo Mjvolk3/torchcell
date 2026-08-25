@@ -167,7 +167,13 @@ reverse transcriptase runs off the end of its template it adds two or three
 non-templated C residues, the TSO ends in rGrGrG and base-pairs with them, and the
 enzyme then copies the TSO. The handle is therefore \emph{written by the
 polymerase}, not ligated on -- which is what distinguishes it from every earlier
-step in this protocol, where a splint held two ends together for a ligase. With
+step in this protocol, where a linker held two ends together for a ligase.
+\Cref{fig:chemistry} draws the two mechanisms against each other, since a
+protocol that uses both is where the distinction is easiest to lose. The step is
+also not run for the handle alone: it is a second reverse-transcriptase pass on
+bead-captured cDNA, needed because formaldehyde crosslinking hobbles the in-cell
+reaction, and the TSO rides along on
+it~\citep{gaisserHighthroughputSinglecellTranscriptomics2024}. With
 both handles present the library is amplified, fragmented, adapter-ligated and
 index-PCRed; the i7 index is added at that last step and is a separate sequence
 from either PCR handle, read on its own index read. That final index is barcode
@@ -512,7 +518,10 @@ resolves.
 %% falsify text baked into exported PDFs. Sec. 2.4 forward-references it.
 \tcfigfit[1.0]{figures/perturb-seq-workflow.pdf}{%
   \textbf{The whole experiment, and where each stage costs you cells, molecules
-  or identity.} \textbf{(a)} The stages. Everything outside the shaded block is
+  or identity.} Two symbols recur in panel (b) and are worth having before
+  reading it: \textbf{H} is the PCR handle, attached at one end only during
+  barcoding, and \textbf{CB} is the cell barcode. The full color key is repeated
+  at the foot of the figure. \textbf{(a)} The stages. Everything outside the shaded block is
   common to both method families; only the way cell identity gets written
   differs, which is the argument \cref{sec:brettner,sec:jariani,sec:scifi} make
   in detail. Fragmentation is drawn as its own stage because its position
@@ -787,6 +796,67 @@ cell against 20{,}000 for gene expression, and 10x warn against sequencing it on
 its own\external{10x CG000735}, so it is pooled with the expression library
 rather than being a separate submission. The reads are cheap; the risk is
 entirely in whether the chemistry engages.
+
+\notesec{What 3$'$ and 5$'$ actually name, since the whole argument above turns
+on it} A 3$'$ and a 5$'$ library differ in \emph{which oligo carries the cell
+barcode}, and in nothing else that matters here. Both are built by the same two
+operations, and \cref{fig:chemistry} draws them against each other because the
+distinction between them is the one piece of chemistry in this document that is
+easiest to get backwards.
+
+Template switching is not a 5$'$ feature. It is how nearly every short-read
+single-cell library gets a PCR handle onto its second end, and a molecule
+carrying a handle at one end only cannot be amplified at all, so a 3$'$ library
+template-switches exactly as a 5$'$ one does. What differs is the payload. In a
+3$'$ library the barcode rides on the oligo-dT that primes reverse transcription
+and the \term{template-switching oligo} is supplied free, carrying nothing but
+the handle; in a 5$'$ library the two swap, and the TSO arrives on the gel bead
+carrying the barcode and the UMI while the oligo-dT is the free
+primer~\citep{nadal-ribellesRiseSinglecellTranscriptomics2024}. That swap is the
+entire reason the 5$'$ kit might read a Pol\,III guide: it puts the barcode at
+the transcript's 5$'$ end, next to the protospacer, where read 2 can reach both.
+
+The split-pool route is a 3$'$ library and template-switches too, which is worth
+saying because the two operations sit side by side in it. Barcodes 2 and 3 are
+\emph{ligated} on with a linker strand; the second handle is \emph{copied} on
+from a TSO, in a bead-bound reverse-transcriptase step after lysis that the
+protocol has to run anyway, since formaldehyde crosslinking hobbles the in-cell
+reaction and the barcoded cDNA primes its own
+elongation~\citep{gaisserHighthroughputSinglecellTranscriptomics2024,brettnerUltraHighthroughputMassively2024}.
+
+%% SOURCE: hand-composed from the Methods of the cited protocols; every claim
+%% drawn is quoted in the surrounding prose or in tab:prov-splint-vs-template-switch.
+%% Placed HERE rather than beside Fig. 2, where the question arises, for a
+%% numbering reason: the draw.io canvases of Figs. 1-6 carry hardcoded references
+%% to each other, so a figure inserted earlier would silently falsify text baked
+%% into exported PDFs. Sec. 3.1 forward-references it instead.
+\tcfigfit[1.0]{figures/splint-vs-template-switch.pdf}{%
+  \textbf{Ligation joins two ends that already exist; template switching copies
+  an oligo into a new one. Both appear in the same protocol, for different
+  ends of the same molecule.} Color marks provenance rather than identity:
+  orange is nucleic acid that already existed, gray is an oligo the protocol
+  supplied, and \textbf{yellow is sequence written by a polymerase during the
+  step drawn}. Panel (a) contains no yellow, and that absence is the point.
+  \textbf{(a)} Rounds 2 and 3 of split-pool barcoding
+  \citep{brettnerUltraHighthroughputMassively2024}. A linker strand base-pairs
+  across the junction and holds the two ends abutted so T4 DNA ligase can seal
+  the nick. The linker is a jig: it positions, it is never copied, and a blocking
+  strand displaces it afterwards. What ends up in the product is the barcode
+  oligo, which was already DNA. Round 1 is not drawn because barcode 1 is not
+  ligated at all, arriving instead on the reverse-transcription primer.
+  \textbf{(b)} How the second PCR handle is added
+  \citep{gaisserHighthroughputSinglecellTranscriptomics2024}. Reverse
+  transcriptase reaches the 5$'$ end of the mRNA and adds two or three
+  non-templated C residues; the TSO, whose 3$'$ end is rGrGrG, base-pairs with
+  them while the enzyme is still engaged; the enzyme switches template and
+  carries on, so the handle is written into the cDNA rather than joined to it.
+  There is no melting and no re-annealing, which is the detail that separates it
+  from overlap extension: it is one reaction, still running.
+  \textbf{The summary panel states the 3$'$ against 5$'$ point} that this
+  subsection turns on. Composed from the protocols as described in
+  \cref{sec:brettner} and here, not traced from any published figure. Drawn at
+  true Nature print size in
+  \file{notes/assets/drawio/splint-vs-template-switch.drawio}.}{fig:chemistry}
 
 \notesec{The gap has closed for deletions, and that changes the risk} The 2024
 review states plainly that no genome-scale system in yeast lets a genetic

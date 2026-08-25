@@ -202,6 +202,12 @@ experiments/W019-echo-crispr-array/quant/
 # scripts/plate_artifacts.py (fresh Cellpose off the sha256-pinned source images).
 experiments/W019-echo-crispr-array/artifacts/
 
+# The handoff zip. Every byte in it is already tracked (the share-view PDF plus the
+# build_list_tables CSVs), so committing the archive too would keep a second, binary
+# copy of the same content that goes stale the moment either half changes. Rebuild it
+# with scripts/build_list_bundle.py, which is deterministic and stamps its own sha256.
+experiments/W019-echo-crispr-array/results/*.zip
+
 # The ontology explorer is rendered fresh by CI on every docs build (see
 # .github/workflows/docs.yaml) so the published map can never lag
 # torchcell.datamodels; a committed copy would silently go stale.

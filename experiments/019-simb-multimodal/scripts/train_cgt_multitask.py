@@ -3084,12 +3084,38 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         ),
     ]
 
-    # EarlyStopping: cut the marathon. The prior 373-epoch/5.4h run overfit long after the
-    # metric peaked, so stop when val/loss stops improving. Configurable via
-    # trainer.early_stopping (default on, monitor val/loss, patience 20).
-    es_cfg = _as_dict(cfg.trainer.get("early_stopping", {"enabled": True}))
-    if es_cfg.get("enabled", True):
-        es_monitor = str(es_cfg.get("monitor", "val/loss"))
+    # EarlyStopping: OFF unless a config asks for it, and it must name its own monitor.
+    #
+    # It used to default ON, monitoring `val/loss` with patience 20. Both halves of that
+    # default are now measured to be wrong on this task. `val/expression/loss` bottoms at
+    # epoch ~103-136 and RISES thereafter while val Pearson climbs the whole way to a
+    # project-best 0.1980 at epoch 1367 -- the loss and the metric move in OPPOSITE
+    # directions, so patience on the loss stops the run in the dip, roughly 1,200 epochs
+    # before the good model. The `_007` expression round is what that costs: 295 runs at a
+    # median final epoch of 67, and a retrospective that had to void every arm comparison in
+    # the round rather than report it as a null.
+    #
+    # A default that is wrong fails SILENTLY -- a config that simply says nothing about
+    # stopping inherits it. Defaulting to off makes early stopping a decision a config has to
+    # state, which is what every active config now does explicitly (see
+    # `delta_grid_bx_pair.yaml`, where disabling it is a correctness requirement for the
+    # paired arms rather than a preference). The callback is KEPT, not deleted: it is still
+    # the right tool for a cheap screening pass, and the ~300 historical configs that carry an
+    # `early_stopping` block must stay runnable to reproduce the numbers they recorded.
+    #
+    # `monitor` has NO default for the same reason -- the old fallback was the one series
+    # measured to point the wrong way, so a config that opts in has to say what it is watching.
+    es_cfg = _as_dict(cfg.trainer.get("early_stopping", {"enabled": False}))
+    if es_cfg.get("enabled", False):
+        es_monitor = es_cfg.get("monitor")
+        if not es_monitor:
+            raise ValueError(
+                "trainer.early_stopping.enabled is true but no monitor is set. Name the "
+                "series explicitly -- there is deliberately no default, because the former "
+                "default (val/loss) is measured to move opposite the ranked metric on this "
+                "task (loss bottoms ~epoch 103-136, pearson peaks ~epoch 1367)."
+            )
+        es_monitor = str(es_monitor)
         es_patience = int(es_cfg.get("patience", 20))
         checkpoint_callbacks.append(
             EarlyStopping(
@@ -3100,7 +3126,13 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
                 verbose=True,
             )
         )
-        print(f"[early-stopping] monitor={es_monitor} patience={es_patience}")
+        print(
+            f"[early-stopping] ON monitor={es_monitor} patience={es_patience} -- this is a "
+            f"DATA-DEPENDENT stopping rule: paired/ablation arms may stop at different "
+            f"epochs, which confounds the comparison between them."
+        )
+    else:
+        print("[early-stopping] off (training runs to max_epochs / max_time_s)")
 
     # WALL-CLOCK BUDGET. `trainer.max_time_s` stops training GRACEFULLY after a duration:
     # `fit` returns normally, so the metric snapshot, the test pass and the prediction dump

@@ -1,0 +1,18 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/024-perturb-seq-costing/scripts/render_tex_tables.py
+\begin{table}[htbp]\centering
+\footnotesize
+\caption[]{Cells per perturbation at the standard pseudobulk tier ($2\times10^{5}$ mRNA UMIs), and what multiplexing does to the total. The 100-cell biological floor and the depth requirement are independent; the larger binds. \textbf{Cells/pert.} does not depend on $k$: a perturbation needs the cells it needs, whatever else those cells carry. What $k$ changes is the \emph{total}, because a cell carrying $k$ guides informs $k$ different main effects, so the library total divides by $k$ (\cref{sec:multiplex}). \textbf{$k$ is guides per cell}, each against a different gene -- not the six guides per gene the library carries. These totals are main effects only; named gene pairs scale quite differently and are \cref{tab:recovery}.}\label{tab:cells-per-pert}
+\begin{tabular}{lrrlrrrrr}
+\toprule
+& & & & \multicolumn{5}{c}{Millions of cells for 6{,}000 genes, at $k$ guides per cell} \\
+\cmidrule(l){5-9}
+Method & mRNA UMIs/cell & Cells/pert. & Binds on & $k=1$ & $k=2$ & $k=3$ & $k=5$ & $k=8$ \\
+\midrule
+SPLiT-seq as published & 410 & \textbf{488} & depth & 2.93 & 1.46 & 0.98 & 0.59 & 0.37 \\
+SPLiT-seq + rRNA depletion & 861 & \textbf{233} & depth & 1.40 & 0.70 & 0.47 & 0.28 & 0.17 \\
+10x v2 (Jariani) & 894 & \textbf{224} & depth & 1.34 & 0.67 & 0.45 & 0.27 & 0.17 \\
+10x v3 (Jackson) & 2{,}000 & \textbf{100} & biological floor & 0.60 & 0.30 & 0.20 & 0.12 & 0.07 \\
+\bottomrule
+\end{tabular}
+\end{table}

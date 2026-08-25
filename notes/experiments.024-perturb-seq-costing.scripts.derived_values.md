@@ -10,7 +10,7 @@ created: 1787625563294
 
 `experiments/024-perturb-seq-costing/scripts/derived_values.py`
 
-Written after an audit found several numbers in `notes-tex/microbe-perturb-seq`
+Written after an audit found several numbers in `notes-tex/024-perturb-seq-costing`
 that were hand arithmetic in the `.tex` rather than script output, which the repo
 artifact rule forbids. Each was individually defensible and none was
 reproducible.

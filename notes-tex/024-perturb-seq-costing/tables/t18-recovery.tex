@@ -1,0 +1,21 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/024-perturb-seq-costing/scripts/render_tex_tables.py
+\begin{table}[htbp]\centering
+\footnotesize
+\caption[]{Main effects never require a combination to recur; a named combination's joint transcriptome does. Both requirements evaluated at the 100-cell first-order floor and Yao et al.'s 400 cells per pair. \textbf{$k$ is guides per cell}, each against a different gene, so $k$ is also how many genes are knocked down in one cell. It is not the six guides per gene the library carries, and it is not a count of library members. \textbf{$T$} is how many genes the panel targets. \textbf{Cells for main effects} is $100\,T/k$, since a cell carrying $k$ guides informs $k$ genes. \textbf{Cells for all pairs} is Eq.~\ref{eq:pairs}. \textbf{Times a given pair is seen} is the last column of the first divided over the pair space, that is, how often one specific gene pair appears while running only the main-effect budget: below 1 means most pairs never appear at all. It falls by a factor of about 30 between the 200-gene panel and the genome, because the pair space grows quadratically in $T$ while the cell budget grows linearly. Generated from \file{experiments/024-perturb-seq-costing/scripts/scaling\_analysis.py}.}\label{tab:recovery}
+\begin{tabular}{rrrrr}
+\toprule
+Genes in & Guides per & Cells for & Cells for & Times a given \\
+panel, $T$ & cell, $k$ & main effects & all pairs & pair is seen \\
+\midrule
+200 & 2 & 10{,}000 & 7{,}960{,}000 & 0.50 \\
+200 & 3 & 6{,}667 & 2{,}653{,}333 & 1.01 \\
+200 & 5 & 4{,}000 & 796{,}000 & 2.01 \\
+200 & 8 & 2{,}500 & 284{,}286 & 3.52 \\
+6{,}000 & 2 & 300{,}000 & 7{,}198{,}800{,}000 & 0.02 \\
+6{,}000 & 3 & 200{,}000 & 2{,}399{,}600{,}000 & 0.03 \\
+6{,}000 & 5 & 120{,}000 & 719{,}880{,}000 & 0.07 \\
+6{,}000 & 8 & 75{,}000 & 257{,}100{,}000 & 0.12 \\
+\bottomrule
+\end{tabular}
+\end{table}

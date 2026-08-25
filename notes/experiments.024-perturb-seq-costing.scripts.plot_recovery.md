@@ -8,7 +8,7 @@ created: 1787676657829
 
 ## 2026.08.25 - Fig. 16, whether a combination has to be seen twice
 
-Draws Sec. 7.2 of [[microbe-perturb-seq.method-review-and-costing]], which has
+Draws Sec. 7.2 of [[experiments.024-perturb-seq-costing.method-review-and-costing]], which has
 two opposite answers depending on which quantity is wanted. One row, three
 panels, full Nature width.
 

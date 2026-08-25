@@ -172,3 +172,31 @@ honoured inconsistently), which flattened the parent/child structure.
 | `torchcell-ontology-explorer.html` | 277 kB, self-contained |
 
 ![](assets/images/schema-ontology/torchcell-ontology-schematic.svg)
+
+## 2026.08.25 - CI now fails when the committed SVGs go stale
+
+The 07.30 work left an asymmetry that was backwards from what matters most. The
+**explorer** is regenerated on every docs build, so it can never lag the schema. The
+three **SVGs** under `notes/assets/images/schema-ontology/` are committed repo files,
+and nothing regenerated them, so they drifted silently as `torchcell.datamodels`
+changed. One of them, `torchcell-ontology-schematic.svg`, is the paper figure.
+
+CI cannot close this by regenerating and committing back, but it can refuse to stay
+quiet. `.github/workflows/docs.yaml` gains a step that renders the full set into
+`$RUNNER_TEMP` and byte-compares all three against what is committed. On a mismatch it
+emits a `::error file=` annotation naming the stale file and the command that fixes it,
+and fails the build. It runs on pull requests as well as pushes to `main`, so drift is
+caught before a merge rather than after.
+
+A byte comparison is only defensible because the render is deterministic. These SVGs are
+built by plain string concatenation: no matplotlib, and no font measurement (label widths
+come from a fixed character-ratio in `_text_w`), so the only inputs are the schema and
+the palette constants. Verified before wiring it up: two consecutive renders are
+byte-identical, and a fresh render matched all three committed files. The failure path
+was verified too, by perturbing a copy and confirming the step exits 1 and names the
+right file.
+
+What this does NOT do: it will not tell you the figure is ugly, only that it no longer
+matches the schema. Regenerating is still `python
+paper/nature-biotech/scripts/generate_ontology_diagram.py` by hand, and the panel still
+needs a human to look at it when the schema grows enough to change the layout.

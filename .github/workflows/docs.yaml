@@ -43,6 +43,32 @@ jobs:
           python paper/nature-biotech/scripts/generate_ontology_diagram.py \
             --explorer-only docs/source/_extra/ontology/index.html
 
+      - name: Check the committed ontology SVGs have not drifted
+        run: |
+          # The explorer rendered above is regenerated every build, so it can never lag
+          # the schema. The three SVGs under notes/assets/images/schema-ontology are
+          # committed repo files, one of them is the paper figure, and nothing
+          # regenerates them, so they go stale silently as torchcell.datamodels changes.
+          # CI cannot fix that by committing back, but it can refuse to stay quiet.
+          #
+          # A byte comparison is safe here: these SVGs are built by string concatenation
+          # with no matplotlib and no font measurement (label widths come from a fixed
+          # character-ratio), so the render is deterministic given the schema.
+          ASSET_IMAGES_DIR="$RUNNER_TEMP/ontology-drift" \
+            python paper/nature-biotech/scripts/generate_ontology_diagram.py
+          fresh="$RUNNER_TEMP/ontology-drift/schema-ontology"
+          committed="notes/assets/images/schema-ontology"
+          drift=0
+          for f in torchcell-ontology-schematic torchcell-ontology-overview torchcell-ontology; do
+            if cmp -s "$fresh/$f.svg" "$committed/$f.svg"; then
+              echo "ok: $f.svg matches the current schema"
+            else
+              echo "::error file=$committed/$f.svg::$f.svg no longer matches a render of the current schema. Run 'python paper/nature-biotech/scripts/generate_ontology_diagram.py' and commit the result."
+              drift=1
+            fi
+          done
+          exit $drift
+
       - name: Build the documentation
         run: |
           sphinx-build -b html docs/source build/docs

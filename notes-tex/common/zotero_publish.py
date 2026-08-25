@@ -212,6 +212,24 @@ def load_built_doc(notes_tex_dir: str, doc: str, view: str = "draft") -> BuiltDo
     )
 
 
+def refresh_provenance(zot: zotero.Zotero, parent: dict, built: BuiltDoc) -> None:
+    """Point the parent item at the build the top attachment came from.
+
+    Both the upload path and the identical-bytes path call this: the stamp is a
+    property of the SOURCE, not of the file, so it can go stale even when nothing
+    was uploaded.
+    """
+    item = parent if parent.get("data") else zot.item(parent["key"])
+    was = item["data"].get("extra", "")
+    item["data"]["extra"] = built.extra_field()
+    item["data"]["date"] = built.built_at[:10]
+    if item["data"]["extra"] == was:
+        print(f"  parent provenance already current -> {built.git_branch} @ {built.git_commit}")
+        return
+    zot.update_item(item)
+    print(f"  parent provenance updated -> {built.git_branch} @ {built.git_commit}")
+
+
 def find_collection(zot: zotero.Zotero, name: str, parent: str | None) -> str | None:
     """Find a collection by name under a given parent (None = top level)."""
     for c in zot.everything(zot.collections()):
@@ -354,7 +372,12 @@ def main() -> None:
     # --- version attachment --------------------------------------------------
     have = existing_hashes(zot, parent["key"])
     if built.sha256[:8] in have:
-        print(f"\nalready published as {have[built.sha256[:8]]} -- identical bytes, nothing to do.")
+        print(f"\nalready published as {have[built.sha256[:8]]} -- identical bytes.")
+        # Same bytes, but not necessarily the same provenance. Publishing from a
+        # dirty tree and then committing leaves the PDF identical while the commit
+        # it can be traced to changes, and returning here used to strand the parent
+        # on the older stamp for good. Refresh it, then stop.
+        refresh_provenance(zot, parent, built)
         return
 
     # Upload from a temp copy so the versioned name is what lands in Zotero
@@ -383,16 +406,7 @@ def main() -> None:
         sys.exit(f"upload failed: {resp}")
     print(f"\nuploaded {built.filename}")
 
-    # Keep the parent's provenance pointing at the newest build, so the item a
-    # reviewer opens names the commit the top attachment came from.
-    if parent.get("data"):
-        item = parent
-    else:
-        item = zot.item(parent["key"])
-    item["data"]["extra"] = built.extra_field()
-    item["data"]["date"] = built.built_at[:10]
-    zot.update_item(item)
-    print(f"  parent provenance updated -> {built.git_branch} @ {built.git_commit}")
+    refresh_provenance(zot, parent, built)
     print(f"  {len(have) + 1} version(s) now in the collection")
 
 

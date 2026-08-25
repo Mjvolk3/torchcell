@@ -16,6 +16,9 @@ three are arithmetic rather than opinion:
    transcriptome requires `c` cells carrying exactly it.
 3. **Environments.** The other scaling axis. It is linear in cell demand where
    named combinations are quadratic, which is the whole reason it is attractive.
+   The cost side of that axis -- what a multi-environment screen costs on
+   split-pool against droplet -- reuses the Sec. 5 cost model
+   (``cost_model.budget_for``) rather than introducing a new one.
 
 Nothing here is a new statistical result: (2) reuses Eq. 3 of the review, which
 is Yao et al.'s expression. What is new is applying it to the delivery routes
@@ -34,6 +37,9 @@ import os.path as osp
 
 from dotenv import load_dotenv
 from pydantic import BaseModel
+
+import cost_model as CM
+import uiuc_core_data as UC
 
 load_dotenv()
 RESULTS = osp.join(
@@ -151,10 +157,111 @@ def recovery(n_targets: int, k: int, floor: int = FIRST_ORDER_FLOOR) -> Recovery
     )
 
 
+def max_panel_for_one_observation(
+    k: int, floor: int = FIRST_ORDER_FLOOR, t_hi: int = 1_000_000
+) -> int:
+    """Largest panel T at which a named pair is still seen once, on average.
+
+    The main-effect budget buys a fixed number of cells; how often a NAMED pair
+    turns up in them falls as the panel grows. This back-solves the panel size
+    at which that expectation is still 1, which is the threshold separating "the
+    joint transcriptome of this pair is in the dataset" from "it is not".
+
+    Bisection on ``recovery(...).expected_repeats_per_pair`` rather than an
+    inverted closed form, so the arithmetic has exactly one definition and this
+    cannot drift away from the table.
+    """
+    if k < 2:
+        raise ValueError("a pair needs k >= 2")
+    lo, hi = 2, t_hi
+    while lo < hi:
+        mid = (lo + hi + 1) // 2
+        if recovery(mid, k, floor).expected_repeats_per_pair >= 1.0:
+            lo = mid
+        else:
+            hi = mid - 1
+    return lo
+
+
 # --- 3. Environments: the linear axis ----------------------------------------
 def environment_scaling(cells_per_condition: float, n_env: list[int]) -> dict:
     """Environments multiply cell demand linearly. That is the entire point."""
     return {str(e): cells_per_condition * e for e in n_env}
+
+
+class EnvironmentCostPoint(BaseModel):
+    """Recurring cost of one multi-environment screen, on each platform."""
+
+    n_env: int
+    splitpool_usd: float
+    splitpool_runs: int
+    splitpool_sublibraries: int
+    splitpool_sequencing_usd: float
+    droplet_usd: float
+    droplet_channels: int
+    droplet_sequencing_usd: float
+    droplet_preindexed_usd: float
+    droplet_preindexed_channels: int
+
+
+def environment_cost(
+    n_env_values: list[int], cells_per_gene: int = 100
+) -> list[EnvironmentCostPoint]:
+    """Recurring cost against environments, split-pool vs droplet.
+
+    Every dollar figure comes from the Sec. 5 cost model: ``cost_model``'s
+    platforms (Brettner's per-run and per-sublibrary rates for split-pool, the
+    UIUC per-channel rate for 10x) and ``uiuc_core_data``'s lane pricing. This
+    function only composes them along the environment axis, and the composition
+    is where the two platforms differ:
+
+    * **Split-pool** carries sample identity in the round-1 plate, so cells from
+      every condition are pooled into the same protocol runs and sublibraries.
+      The multi-environment design is therefore costed directly with
+      ``budget_for`` -- batch and sublibrary counts round up over the POOLED
+      cell total, exactly as a real run would.
+    * **Droplet** cannot pool: a channel holds one condition, so channel count
+      is rounded up PER CONDITION and summed. The indexed libraries still share
+      sequencing lanes, so the sequencing term is priced on the pooled read
+      total.
+
+    ``cells_per_gene=100`` puts the single-condition screen at 600,000 usable
+    cells (100 x 6,000 genes), the per-condition figure ``environment_scaling``
+    and Sec. 7.3 use. The split-pool platform is SPLiT-seq + rRNA depletion and
+    the droplet platform is the 10x Chromium X at UIUC rates, the same pair
+    Sec. 5's budget comparison resolves to.
+    """
+    single = CM.ScreenDesign(cells_per_gene=cells_per_gene, n_environments=1)
+    droplet_one = CM.budget_for(single, CM.TENX)
+    # Preindexed droplet is carried as its own series because Sec. 5 promotes it
+    # to a co-equal candidate, and showing only the un-preindexed platform would
+    # overstate the environment penalty by the factor preindexing removes. It
+    # does not escape the per-condition rounding -- a channel still holds one
+    # condition -- so it changes the SLOPE and not the shape.
+    droplet_pi_one = CM.budget_for(single, CM.TENX_SCIFI_PROJECTED)
+    out = []
+    for e in n_env_values:
+        design = CM.ScreenDesign(cells_per_gene=cells_per_gene, n_environments=e)
+        sp = CM.budget_for(design, CM.SPLITSEQ_DEPLETED)
+        droplet_protocol = e * droplet_one.protocol_usd
+        droplet_seq = UC.cost_for_read_pairs(e * droplet_one.read_pairs)
+        droplet_pi_protocol = e * droplet_pi_one.protocol_usd
+        droplet_pi_seq = UC.cost_for_read_pairs(e * droplet_pi_one.read_pairs)
+        out.append(
+            EnvironmentCostPoint(
+                n_env=e,
+                splitpool_usd=sp.recurring_usd,
+                splitpool_runs=sp.n_batches,
+                splitpool_sublibraries=sp.n_sublibraries,
+                splitpool_sequencing_usd=sp.sequencing_usd,
+                droplet_usd=droplet_protocol + droplet_seq,
+                droplet_channels=e * droplet_one.n_batches,
+                droplet_sequencing_usd=droplet_seq,
+                droplet_preindexed_usd=droplet_pi_protocol + droplet_pi_seq,
+                droplet_preindexed_channels=e * droplet_pi_one.n_batches,
+            )
+        )
+    return out
 
 
 def main() -> None:
@@ -186,15 +293,62 @@ def main() -> None:
                   f"{r.cells_for_all_pairs:>18,.0f} "
                   f"{r.expected_repeats_per_pair:>13.2e}")
 
+    ceilings = {str(k): max_panel_for_one_observation(k) for k in (2, 3, 4, 5, 8)}
+    print("\n--- largest panel at which a named pair is still seen once ---")
+    for k, t in ceilings.items():
+        print(f"  k = {k:>2}: T = {t:>6,}")
+
     envs = environment_scaling(600_000, [1, 4, 12, 96])
     print("\n--- environments (linear), at 600k cells per condition ---")
     for e, c in envs.items():
         print(f"  {e:>3} environments: {c:>12,.0f} cells")
 
+    # Environment cost, every integer 1..96 so the plotted staircase is real.
+    env_cost = environment_cost(list(range(1, 97)))
+    by_env = {p.n_env: p for p in env_cost}
+    print("\n--- environment cost: split-pool vs droplet, Sec. 5 model at "
+          "600k usable cells per condition ---")
+    print(f"{'envs':>5} {'split-pool $':>13} {'runs':>5} {'sublibs':>8} "
+          f"{'droplet $':>12} {'channels':>9} {'preindexed $':>13} {'chan':>6}")
+    for e in (1, 4, 12, 24, 48, 96):
+        p = by_env[e]
+        print(f"{e:>5} {p.splitpool_usd:>13,.0f} {p.splitpool_runs:>5} "
+              f"{p.splitpool_sublibraries:>8} {p.droplet_usd:>12,.0f} "
+              f"{p.droplet_channels:>9} {p.droplet_preindexed_usd:>13,.0f} "
+              f"{p.droplet_preindexed_channels:>6}")
+    marginal_sp = (by_env[96].splitpool_usd - by_env[1].splitpool_usd) / 95
+    marginal_dr = (by_env[96].droplet_usd - by_env[1].droplet_usd) / 95
+    marginal_pi = (
+        by_env[96].droplet_preindexed_usd - by_env[1].droplet_preindexed_usd
+    ) / 95
+    print(f"  marginal cost per added environment: split-pool "
+          f"${marginal_sp:,.0f}, droplet ${marginal_dr:,.0f}, "
+          f"preindexed droplet ${marginal_pi:,.0f}")
+    env_cost_summary = {
+        "cells_per_gene": 100,
+        "usable_cells_per_condition": CM.ScreenDesign(
+            cells_per_gene=100, n_environments=1
+        ).usable_cells_needed,
+        "splitpool_platform": CM.SPLITSEQ_DEPLETED.name,
+        "droplet_platform": CM.TENX.name,
+        "droplet_channel_usd": CM.TENX.cost_per_batch_usd,
+        "droplet_channels_per_condition": by_env[1].droplet_channels,
+        "droplet_preindexed_platform": CM.TENX_SCIFI_PROJECTED.name,
+        "droplet_preindexed_channels_per_condition": (
+            by_env[1].droplet_preindexed_channels
+        ),
+        "marginal_usd_per_env_splitpool": marginal_sp,
+        "marginal_usd_per_env_droplet": marginal_dr,
+        "marginal_usd_per_env_droplet_preindexed": marginal_pi,
+    }
+
     out = {
         "delivery": delivery,
         "recovery": rec,
+        "max_panel_for_one_observation": ceilings,
         "environments": envs,
+        "environment_costs": [p.model_dump() for p in env_cost],
+        "environment_cost_summary": env_cost_summary,
         "constants": {
             "cells_per_pair": CELLS_PER_PAIR,
             "first_order_floor": FIRST_ORDER_FLOOR,

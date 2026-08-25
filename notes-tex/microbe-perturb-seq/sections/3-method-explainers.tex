@@ -239,6 +239,52 @@ Gaisser et al.'s STARsolo
 offsets~\citep{gaisserHighthroughputSinglecellTranscriptomics2024} pin the layout
 to the base (\cref{tab:read-structure}).
 
+%% SOURCE: hand-composed from the Methods of the cited protocols; every claim
+%% drawn is quoted in the surrounding prose or in tab:prov-splint-vs-template-switch.
+%% Placed at the END of Sec. 3.1 because this is the first subsection in which
+%% BOTH operations appear: ligation in the barcoding rounds above, template
+%% switching in "How the second handle is added". The figure previously sat in
+%% Sec. 3.7 to avoid renumbering; the draw.io canvases of the surrounding figures
+%% carry hardcoded cross-references to each other, and those were updated by hand
+%% when this moved. If it moves again, re-check them with:
+%%   for f in notes/assets/drawio/*.drawio; do grep -oE 'Fig(s)?\.? [0-9]+' $f; done
+\tcfigfit[1.0]{figures/splint-vs-template-switch.pdf}{%
+  \textbf{Ligation joins two ends that already exist; template switching copies
+  an oligo into a new one. Both appear in the same protocol, for different
+  ends of the same molecule.} Color marks provenance rather than identity:
+  orange is nucleic acid that already existed, gray is an oligo the protocol
+  supplied, and \textbf{yellow is sequence written by a polymerase during the
+  step drawn}. Panel (a) contains no yellow, and that absence is the point.
+  Brackets above each strand carry the molecule count, because a row of abutting
+  blocks reads as one molecule however the caption is worded: panel (a) runs two
+  brackets until the ligase acts and one afterwards.
+  \textbf{(a)} Rounds 2 and 3 of split-pool barcoding
+  \citep{brettnerUltraHighthroughputMassively2024}. Three single strands are
+  involved, not one double one. The incoming barcode oligo and the growing cDNA
+  strand are both single-stranded and are abutted end to end; the linker lies
+  antiparallel beneath and base-pairs to \emph{both} of them across the junction,
+  holding them in register so T4 DNA ligase can seal the 3$'$-OH to the
+  5$'$-phosphate. The linker is a jig: it positions, it is never copied, and a
+  blocking strand displaces it afterwards. What ends up in the product is the
+  barcode oligo, which was already DNA. Round 1 is not drawn because barcode 1 is
+  not ligated at all, arriving instead on the reverse-transcription primer.
+  \textbf{(b)} How the second PCR handle is added
+  \citep{gaisserHighthroughputSinglecellTranscriptomics2024}. The oligo-dT primer
+  is drawn annealed to the poly(A) tail, which is what fixes the direction of
+  everything else: reverse transcriptase runs from the tail toward the cap,
+  reaches the 5$'$ end of the mRNA and adds two or three non-templated C residues
+  at the \emph{far} end of the cDNA. The TSO carries its rGrGrG at its 3$'$ end,
+  so it lies antiparallel and its handle overhangs the cDNA terminus, putting
+  fresh template in front of an enzyme that had run out; the enzyme switches
+  template and carries on, so the handle is written into the cDNA rather than
+  joined to it. There is no melting and no re-annealing, which is the detail that
+  separates it from overlap extension: it is one reaction, still running.
+  \textbf{The summary panel states the 3$'$ against 5$'$ point} that
+  \cref{sec:guide-capture} turns on. Composed from the protocols as described in
+  \cref{sec:brettner}, not traced from any published figure. Drawn at
+  true Nature print size in
+  \file{notes/assets/drawio/splint-vs-template-switch.drawio}.}{fig:chemistry}
+
 \subsection{Droplet Capture: 10x Chromium with In-Droplet Spheroplasting\secstatus{todo}}
 \label{sec:jariani}
 
@@ -824,40 +870,6 @@ protocol has to run anyway, since formaldehyde crosslinking hobbles the in-cell
 reaction and the barcoded cDNA primes its own
 elongation~\citep{gaisserHighthroughputSinglecellTranscriptomics2024,brettnerUltraHighthroughputMassively2024}.
 
-%% SOURCE: hand-composed from the Methods of the cited protocols; every claim
-%% drawn is quoted in the surrounding prose or in tab:prov-splint-vs-template-switch.
-%% Placed HERE rather than beside Fig. 2, where the question arises, for a
-%% numbering reason: the draw.io canvases of Figs. 1-6 carry hardcoded references
-%% to each other, so a figure inserted earlier would silently falsify text baked
-%% into exported PDFs. Sec. 3.1 forward-references it instead.
-\tcfigfit[1.0]{figures/splint-vs-template-switch.pdf}{%
-  \textbf{Ligation joins two ends that already exist; template switching copies
-  an oligo into a new one. Both appear in the same protocol, for different
-  ends of the same molecule.} Color marks provenance rather than identity:
-  orange is nucleic acid that already existed, gray is an oligo the protocol
-  supplied, and \textbf{yellow is sequence written by a polymerase during the
-  step drawn}. Panel (a) contains no yellow, and that absence is the point.
-  \textbf{(a)} Rounds 2 and 3 of split-pool barcoding
-  \citep{brettnerUltraHighthroughputMassively2024}. A linker strand base-pairs
-  across the junction and holds the two ends abutted so T4 DNA ligase can seal
-  the nick. The linker is a jig: it positions, it is never copied, and a blocking
-  strand displaces it afterwards. What ends up in the product is the barcode
-  oligo, which was already DNA. Round 1 is not drawn because barcode 1 is not
-  ligated at all, arriving instead on the reverse-transcription primer.
-  \textbf{(b)} How the second PCR handle is added
-  \citep{gaisserHighthroughputSinglecellTranscriptomics2024}. Reverse
-  transcriptase reaches the 5$'$ end of the mRNA and adds two or three
-  non-templated C residues; the TSO, whose 3$'$ end is rGrGrG, base-pairs with
-  them while the enzyme is still engaged; the enzyme switches template and
-  carries on, so the handle is written into the cDNA rather than joined to it.
-  There is no melting and no re-annealing, which is the detail that separates it
-  from overlap extension: it is one reaction, still running.
-  \textbf{The summary panel states the 3$'$ against 5$'$ point} that this
-  subsection turns on. Composed from the protocols as described in
-  \cref{sec:brettner} and here, not traced from any published figure. Drawn at
-  true Nature print size in
-  \file{notes/assets/drawio/splint-vs-template-switch.drawio}.}{fig:chemistry}
-
 \notesec{The gap has closed for deletions, and that changes the risk} The 2024
 review states plainly that no genome-scale system in yeast lets a genetic
 perturbation be traced during
@@ -908,6 +920,7 @@ plasmid-borne CRISPRi guide it is still unbuilt. What changed is that the same
 thing has now been done in yeast at genome scale with a published construct and a
 71\% assignment rate, so this is a construction and validation task against a
 working template rather than an open research question. The number to reproduce
-in the pilot is $q$, because \cref{sec:multiplex} shows it enters the multiplex
-ceiling as $q^k$.
+in the pilot is $q$, the fraction of cells whose guide identity is correctly
+assigned, because \cref{sec:multiplex} shows it enters the multiplex ceiling as
+$q^{k}$ in the guides per cell $k$.
 \end{keybox}

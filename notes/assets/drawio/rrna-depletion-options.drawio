@@ -24,7 +24,7 @@
         <mxCell id="title" value="Ribosomal RNA depletion: four chemistries, four places in the workflow" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=12;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="8" y="6" width="687" height="18" as="geometry" />
         </mxCell>
-        <mxCell id="subtitle" value="About 85% of a yeast cell&#8217;s RNA is ribosomal and an undepleted split-pool library spends roughly 94 of every 100 reads on it, so this is the largest single cost lever in the document. The four routes are not variants of one recipe: they act on different molecules at different points, and the one head-to-head comparison in the literature went against the most obvious of them. Colors and the 5&#8242;-to-3&#8242; convention follow Figs. 2 to 4." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+        <mxCell id="subtitle" value="About 85% of a yeast cell&#8217;s RNA is ribosomal and an undepleted split-pool library spends roughly 94 of every 100 reads on it, so this is the largest single cost lever in the document. The four routes are not variants of one recipe: they act on different molecules at different points, and the one head-to-head comparison in the literature went against the most obvious of them. Colors and the 5&#8242;-to-3&#8242; convention follow Figs. 2, 4 and 5." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="8" y="26" width="687" height="30" as="geometry" />
         </mxCell>
 

@@ -439,20 +439,22 @@ def panel_c(ax) -> None:
     # One split-pool run is ~480,000 cells; anything above a few runs is not a
     # budget question but a feasibility one.
     ax.axhline(4.8e5, color="#666666", lw=0.5, ls=":")
-    # Clear of both the rule it annotates and the k=1 end of the nearest
-    # curve; on an eight-decade axis a "just above" offset is invisible.
-    # Sits in the empty band between the T=200 main-effects curve below and
-    # the rule it annotates above, clear of the left spine and of the k=1
-    # markers.
-    ax.text(5.9, 1.4e5, "one protocol run", fontsize=5, color="#666666",
-            ha="left", va="center")
+    # Just above its rule, flush left: the yaxis transform takes x in axes
+    # fraction and y in data coords, so the label hugs the left spine with a
+    # small inset pad and a small multiplicative lift above the line.
+    ax.text(0.02, 4.8e5 * 1.1, "one protocol run", fontsize=5,
+            color="#666666", ha="left", va="bottom",
+            transform=ax.get_yaxis_transform())
     # The droplet unit of batch, for comparison on the same axis. Without it
     # this panel implicitly prices feasibility in split-pool runs only, and the
     # two units are a factor of three apart rather than the order of magnitude
     # the un-preindexed 20,000-cell channel would suggest.
     ax.axhline(MD.SCIFI_RECOVERED_LARGE_RUN, color="#666666", lw=0.5, ls=":")
-    ax.text(5.9, 4.4e4, "one preindexed channel", fontsize=5, color="#666666",
-            ha="left", va="center")
+    # Just above its rule, flush right: the two rules are a factor of ~3
+    # apart, so opposite ends keep the two labels clear of each other.
+    ax.text(0.98, MD.SCIFI_RECOVERED_LARGE_RUN * 1.1, "one preindexed channel",
+            fontsize=5, color="#666666", ha="right", va="bottom",
+            transform=ax.get_yaxis_transform())
 
     ax.set_yscale("log")
     ax.set_xticks(ks)

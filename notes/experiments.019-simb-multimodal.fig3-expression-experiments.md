@@ -119,7 +119,7 @@ PRIMARY levers, FULLY crossed (5 factors, 48 combos):
 - `num_transformer_layers` {2, 3}
 - target: raw vs per-gene-standardized
 - dataset: Kemmeren-only vs Kemmeren+Sameith
-[[- `graph_reg_lambda` {0.0, 0.001}|scratch.2026.07.23.022925.temp]]
+- `graph_reg_lambda` {0.0, 0.001}
 
 SECONDARY hyperparameter profiles (2, bundled - a screen, not a clean factorial):
 

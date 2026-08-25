@@ -8,12 +8,12 @@ created: 1785093686225
 
 ## 2026.07.26 — Why this note exists
 
-The model math for the metabolism layer lives in **two untracked scratch notes** and in no commit:
+The model math for the metabolism layer came from two scratch notes, both since graduated:
 
-- `scratch.2026.07.25.010919-adding-metabolism` §2026.07.25b/c — the first pass.
-- `scratch.2026.07.25.172340-adding-metabolism-explainer` — the **authoritative** version: derivations
-  from definitions up (Parts 0–7) plus the Q1–Q15 read-through, and a consolidated decisions table
-  that **supersedes the first pass on the central architectural choice**.
+- [[plan.cgt-metabolism.2026.07.25]] consolidates the first pass (dataset substrate + defects).
+- [[plan.cgt-metabolism-flux-layer.explainer]] is the **authoritative** version: derivations
+  from definitions up (Parts 0 to 7) plus the Q1 to Q15 read-through, and a consolidated decisions
+  table that **supersedes the first pass on the central architectural choice**.
 
 Where they disagree, the explainer wins. The most important reversal: **the enzyme node layer is
 dropped.** The first pass proposed +1,065 enzyme nodes so $k_{\mathrm{cat}}$ and MW would have

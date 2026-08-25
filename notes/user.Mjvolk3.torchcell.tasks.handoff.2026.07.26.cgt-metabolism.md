@@ -9,8 +9,8 @@ created: 1785094150992
 ## 2026.07.26 - Handoff: CGT-Metabolism Track A
 
 **Read first:** [[plan.cgt-metabolism.2026.07.25]] (the plan + all dated run logs).
-Math/derivations: [[scratch.2026.07.25.172340-adding-metabolism-explainer]] (Q1-Q15).
-Dataset substrate + defects: [[scratch.2026.07.25.010919-adding-metabolism]].
+Math/derivations: [[plan.cgt-metabolism-flux-layer.explainer]] (Q1 to Q15).
+Dataset substrate + defects: [[plan.cgt-metabolism.2026.07.25]].
 
 ### Where the work lives
 

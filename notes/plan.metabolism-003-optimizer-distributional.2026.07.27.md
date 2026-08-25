@@ -431,3 +431,262 @@ export ARM=betaxanthin STAGE=screen OPTUNA_N_TRIALS=1 WANDB_MODE=offline \
 Reaching a `val/betaxanthin/...` line means green for all four sbatch jobs. A cold LMDB build
 may exceed the 1 h interactive limit -- if so, rerun on the non-interactive `gpuA40x4` with a
 2 h limit rather than assuming failure.
+
+## 2026.07.31 - Four Delta jobs: max out betaxanthin, metabolome, the joint pair, beta-carotene
+
+**Both branches are landed on `main`** -- `8b918333` (scaffolding + the two defect fixes) and
+`e9351938` (the long-run redesign). The Delta launch mechanics that ran alongside this design are
+not carried over; what follows is the design and what it rests on.
+
+### The finding that changed the design -- read this first
+
+You asked for 8 runs × 2 days per experiment and said "we have to see saturation". My first
+cut treated 2 days as a *replication* budget (8 settings × many seeds, ~30 min each). Then I
+read [[experiments.019-simb-multimodal.wave6-design]], and your instinct is backed by a measurement I
+had not weighted:
+
+> Smoothed val Pearson peaks ≈0.14 at epoch 85-136, falls to 0.08-0.11 by epoch 200-300, then
+> rises to a project-best **0.1980 at epoch 1367**. *Every arm ever scored at 300-400 epochs
+> was scored in the dip.* Nothing had converged at 1,500 epochs. Val **loss** and val
+> **Pearson** move in opposite directions.
+
+Now put the metabolism history next to it. Every `_002`/`_003`/`_004` run early-stopped on a
+patience of 40-50 and finished at a **median of ~71-135 epochs** -- i.e. at or before the first
+bump. Same model, same trainer, same loss family.
+
+**So the 0.4301 we keep quoting may not be this model's ceiling; it may be its first local
+maximum.** That is a hypothesis, not a fact -- nobody has run metabolism past ~200 epochs. It
+is also the cheapest possible thing to test, and it is exactly what a 2-day A40 node buys.
+
+Hence: **8 settings, each trained for the whole 48 h.** Not 8 settings × 12 seeds.
+
+| | old cut (wrong) | what ships |
+|---|---|---|
+| per-run length | ~30-90 min, early-stopped at patience 50 | the full window, ES **off** |
+| epoch cap | 400 | 10,000 (a ceiling; the clock decides) |
+| what stops a run | `EarlyStopping` | `trainer.max_time_s` → Lightning `Timer` |
+| runs in flight | 4 (1/GPU) | 8 (2/GPU) -- all eight settings share the window |
+| what round 0 answers | "which setting wins" | **"where does this target saturate"** |
+
+Round 0 is 8 long runs at **one seed**, so it does *not* resolve a 0.02 gap between settings
+(σ = 0.030 is still the floor). Read round 0 as **curves**, not a leaderboard. Rounds 1-2 are
+replicate seeds and only run if a setting converges early enough to free a worker.
+
+The `Timer` is what makes this runnable: it stops training *gracefully*, so `fit` returns and
+the metric snapshot, the test pass and the prediction dump all still happen. A slurm kill
+mid-`fit` loses all three and leaves the Optuna trial `RUNNING` instead of `COMPLETE`.
+
+### Two defects that would have made the jobs worthless
+
+1. **`num_workers=0` was still unconstructible.** `2cca6d83` guarded `prefetch_factor` but not
+   `timeout`, so torch asserts `_SingleProcessDataLoaderIter requires timeout == 0` from
+   `iter(dataloader)` -- *after* the dataset and embeddings load. That is how Delta job
+   20556837 lost 119 trials while exiting `COMPLETED 0:0`. `NUM_WORKERS=0` is the Delta
+   default (spawn re-imports the stack off the parallel filesystem: a 38-minute sanity check),
+   so this gated **every** Delta run. Fixed in `torchcell/datamodules/cell.py`.
+2. **The pinned Merzbacher split was never scored.** `run_training` called `fit` and stopped,
+   so `pinned_test_split_file` held their 639 genes out of training and then nothing looked at
+   them. Added `trainer.run_test` (on the **best** checkpoint -- these runs mean-collapse, so
+   the last model reports ~0 for a run that worked) + `trainer.dump_test_predictions`.
+
+### The four jobs
+
+| # | question | experiment | arms | settings |
+|---|---|---|---|---|
+| 1 | max out betaxanthin, beat Merzbacher **on their split** | `020-cachera-betaxanthin` | `betaxanthin` | 8 |
+| 2 | max out the 19-AA metabolome | `022-mulleder-metabolome` | `mulleder19` | 8 |
+| 3 | does the metabolome help betaxanthin? | `023-metabolome-betaxanthin-joint` *(new)* | `bx_ctrl` + `bx_m19` | 4 × 2 arms |
+| 4 | max out beta-carotene | `021-ozaydin-beta-carotene` | `beta_carotene` | 8 |
+
+**The 8 settings are a 2×2×2 factorial**, fully crossed, defined in
+`experiments/019-simb-multimodal/scripts/metabolism_grid_runner.py`:
+
+- **dropout {0.1, 0.3}** -- and it goes *up*. 019 paired: dropout 0 → train 0.72 / val 0.14-0.16;
+  dropout 0.1 → train 0.64 / val 0.178-0.198. At 10,000 epochs over-fitting is the binding
+  constraint, and metabolism has never swept dropout above 0.2.
+- **L {2, 6}** -- a direct disagreement. 019 wave-6 fixes L=6; metabolism `_002` measured a
+  monotone preference for L=2 (2→0.288, 4→0.197, 6→0.124). Both can't be right, and the
+  metabolism reading came from ~100-epoch runs, exactly where a deeper model is still behind.
+- **graph_reg λ, per arm** -- decades bracketing each arm's own measured parity (ratio = 1 at
+  1.6e-4 / 3.4e-4 / 2.2e-4). A shared λ is not a shared prior strength.
+
+**Frozen, deliberately:** `dist` (019 `_007` at n≈60/mode: the distributional axis is *not*
+the lever -- each arm takes its own measured best), `target_norm` = zscore, `prot_T5_all`,
+`learnable_embedding=false`, `perturbation_head.num_heads=6`.
+
+Exceptions: **mulleder19** swaps depth for `dist {quantile, energy}` -- it is the only arm with
+a joint distribution to model (F=19; at F=1 the energy score degenerates to a noisy CRPS), and
+019's finding was about *marginals*. **Experiment 3** runs 4 settings × 2 arms instead of 8 ×
+1, because the pairing *is* the experiment: both arms share every (setting, seed) cell, hence
+the same split and the same init, so `bx_m19 − bx_ctrl` is a **paired** difference.
+
+**One deliberate revert on experiment 1:** `perturbation_head.num_heads` back to 6. `_004`
+rebound it to 9 *in the same round* it introduced the pinned split, and that round's best fell
+to 0.2469 from `_003`'s 0.4050. Two changes, one drop, no attribution. The pinned split is
+required by the question; the operator change is not.
+
+### Read-out
+
+W&B is **online** (Delta compute nodes have internet), projects
+`torchcell_{020_betaxanthin,021_beta_carotene,022_mulleder19,023_bx_m19}_delta_grid`.
+
+**The primary artifact is the val-Pearson-vs-epoch curve, not the final number.** The question
+is whether metabolism shows the 019 dip-then-climb. Log `val/<pheno>/pearson_per_feature`
+against epoch for all 8 settings; if any is still climbing at 48 h, the follow-up is more
+time, not more settings.
+
+Per-arm summary from the study (worker 0 prints it, or read it yourself):
+
+```bash
+$PY -c "
+import optuna
+s = optuna.load_study(study_name='betaxanthin_grid_000',
+      storage='sqlite:///experiments/020-cachera-betaxanthin/optuna/optuna_020-cachera-betaxanthin_betaxanthin_grid.db')
+for t in sorted((t for t in s.trials if t.values), key=lambda t: -t.values[0]):
+    print(round(t.values[0],4), t.params['setting'], 'peak_ep', t.user_attrs.get('peak_epoch'),
+          'n_ep', t.user_attrs.get('n_val_epochs'))"
+```
+
+**Experiment 1 → the Merzbacher head-to-head** (back on GilaHyper, after rsyncing the dumps
+from `$DATA_ROOT/test-predictions/`):
+
+```bash
+python experiments/020-cachera-betaxanthin/scripts/evaluate_merzbacher_head_to_head.py
+```
+
+Their released labels as truth, bin scale fitted on the train pool only, MCC + top-k
+high-producer enrichment next to accuracy, aggregated over runs. Their bar
+(`RandomForestClassifier_Resampled`, from their own shipped predictions): accuracy 0.700 vs a
+majority rate of 0.673, MCC 0.205, high-producer recall 0.18, **94.8 % of genes called
+medium**. If ours is also ~95 % medium we reproduced their failure mode and must say so.
+
+**Experiment 3 → the paired difference:** per (setting, seed) cell, `bx_m19 − bx_ctrl`, then
+the mean paired difference with its SE. Report `aux_mulleder19_pearson` beside it -- an
+auxiliary head at r≈0 that still moves the primary metric means the gain was regularization,
+not shared metabolic signal.
+
+### Open, flagged not resolved
+
+- **Throughput is unmeasured on A40.** 019 §8 wants ≤17.3 s/epoch for 5,000 epochs in 24 h and
+  measures 32 s/epoch on mmli. If Delta lands near 32 s/epoch we get ~5,000 epochs in 46 h,
+  which clears the 1,367-epoch peak with room -- but nobody has timed this model on an A40.
+  Check the first log for epoch wall time.
+- **019 §8's throughput levers are not implemented here** (host-RAM record cache, `batch_size`
+  8→32, `train_eval_every`). Metabolism already runs at batch 128, so the largest lever is
+  spent; the RAM cache is the remaining one and is out of scope for tonight.
+- **Experiment 4's second half is unspecified** -- you wrote "same for beta carotene - for this
+  we plan to see" and it trails off. I built it as max-out only. If you meant "does the
+  metabolome/betaxanthin help beta-carotene", that is a fifth job (or a 023-style pair), say
+  the word.
+- **The Cachera build is stale w.r.t. the name resolver** (issue #195). The split is built from
+  the raw screen so it is unaffected, but **training data still inherits it**.
+
+## 2026.07.31b - REVISED after the 019 expression work landed (`3bf3dbe4`)
+
+Three things changed. The first two are bugs that would have killed all four jobs.
+
+### Metabolism was BROKEN on main
+
+The masked-label objective (v9) added `observed_values` / `observed_mask` to
+`CellGraphTransformer.forward` and the trainer passes them unconditionally, but
+`CellGraphTransformerMetabolism.forward` still named the old arguments -- so every metabolism
+run died with `TypeError: forward() got an unexpected keyword argument 'observed_values'`, at
+the **first training batch**, ~20 min in, after the dataset and embeddings had loaded. The 7
+existing tests all call `model(cell_graph, batch)` positionally while the trainer calls by
+keyword, which is exactly why none caught it. Now a `*args/**kwargs` pass-through, with a
+regression test that derives its argument set from the *parent's* signature.
+
+Second: two `ModelCheckpoint`s on the same monitor share a `state_key` and Lightning refuses
+to build the Trainer. `metric_monitor` is now the arm's *other* correlation -- also what the
+Merzbacher recipe reports.
+
+### λ was the wrong knob (and expensive)
+
+`graph_reg_lambda` is the **KL penalty to the adjacency matrices**. `cgt_expr_010` already
+replaced it with **hard graph masking** (`attention_mask.enabled: true`, nine relations, one
+per head) and set λ to 0. Measured under identical packing:
+
+| | s/epoch |
+|---|--:|
+| `D2_mask` (mask on, λ=0) | **28.0** |
+| the seven KL runs | 42.3 - 48.7 |
+
+The KL needs attention *weights*, so it must materialize a `[1, 9, 6608, 6608]` matmul and
+cannot use the fused kernel. **1.5-1.7×** -- in a round whose question is where the curve
+saturates, that is a third of the epochs. λ is not frozen, it is *gone*.
+
+### The grid now matches the current best
+
+| | before | now |
+|---|---|---|
+| graph prior | KL, λ swept | **hard mask**, λ = 0 |
+| L | {2, 6} swept | **6** (`_012`) |
+| dropout | {0.1, 0.3} | **0.1** frozen |
+| seed | init **and** split | **init only** (`split_seed: 0`) |
+| factor 1 | dropout | **`hadamard {off, replace}`** |
+| factor 2 | λ | **mask depth `{[1],[1,3]}`** (mulleder19: `dist {quantile, energy}`) |
+| runs | 8 settings × 1 seed | **4 settings × 2 init seeds** (023: 2 × 2 arms × 2 seeds) |
+| -- | -- | `train_eval_every: 25`, best-by-metric checkpoint |
+
+**Why `hadamard` is the right spend:** 019 proved the additive operator has *no* pair-(p,i)
+term at |S_b| = 1 -- re-drawing `W_Q`, `W_K` at std 10 changes the output by **exactly 0.0**,
+leaving 16,200 of 32,760 attention parameters dead. Every metabolism strain is a single
+deletion, so this holds on all four arms. `replace` swaps in `h_i ⊙ (1 + γ(c_b))`, a genuine
+rank-90 interaction, identity at init.
+
+**Why replication is affordable now:** pinning the split makes `seed` vary init only. 019
+measured between-seed sd 0.0444 against across-arm 0.0058 when one knob drove both -- the
+nuisance axis was 7.7× the signal axis. Cost, stated plainly: the absolute level now belongs
+to one validation draw; rankings transfer, the number does not.
+
+### Still open
+
+- **Beta-carotene inference on the CIT2 double-KO panel.** `CIT2` appears only as prose in
+  the 021 configs -- **there is no dataset and no loader in the repo**. Where is that panel?
+  Until it exists, experiment 4 is max-out only and the inference step cannot be written.
+- **Throughput on A40 is still unmeasured.** Indicative only (contended GPU, GilaHyper, L=6,
+  masking on): the smoke ran ~30 s/epoch, which over 46 h would be ~5,500 epochs -- clearing
+  019's 1367-epoch peak with room. Confirm from the first Delta log rather than trusting it.
+- **`GRID_WORKERS_PER_GPU=2` at L=6 is untested for memory.** Masking *reduces* memory
+  (~35 vs ~40 GB per GPU pair, per `_010`), but if the log shows CUDA OOM, resubmit with
+  `--export=ALL,GRID_WORKERS_PER_GPU=1` -- the queue is unchanged, runs just serialize.
+
+## 2026.08.01 - FINAL: the 24-run grid, ready to launch (`f0a22be7`)
+
+Superseded everything above after reviewing 019 wave 6 + the full 020 betaxanthin W&B history.
+
+### What the review killed
+
+| axis | verdict | evidence |
+|---|---|---|
+| pair term (`hadamard`) | **null** -- frozen `off` | wave 6 ran ranks 0/9/16/32/64/90 across six mechanisms at ~2,425 epochs. **Rank-0 baseline placed 2nd of 12** (0.2107). `replace` = 0.1965, *below* baseline. |
+| dropout up | **negative** -- frozen 0.1 | 0.2 → 0.1881; **0.3 → collapsed to exactly 0** (peak 0.1262 @ ep 225, then nmse 1.002 / pred_sd_ratio 0) |
+| mask depth | **null** -- frozen `[1]` | wave 5, 4 seeds each: `[3]` 0.1609 vs `[1,3]` 0.1597 |
+| `graph_reg_lambda` (KL) | **gone** | `_010` replaced it with hard masking; KL blocks the fused kernel (28.0 vs 42-49 s/epoch) |
+
+### The grid: `L{2,6,4} × mask{on,off} × lr{1e-4,1e-3} × target_norm{zs,yj}` = 24
+
+Three waves of eight, depth-major, ordered **2 → 6 → 4**. Each wave is a complete 2×2×2 at one
+depth; all cells cost the same, so a slow node squeezes the *last* wave -- losing the
+interpolation point, keeping both contrast blocks. Main effects on 12-vs-12, SE ≈ 0.012.
+
+Per-arm: **022** swaps `target_norm` → `dist {quantile, energy}`; **023** swaps it → `{bx_ctrl,
+bx_m19}` (12 per arm), giving a paired control-vs-joint at every (depth, mask, lr).
+
+Frozen: `prot_T5_all` · hidden 90 · 9 heads · hadamard off · dropout 0.1 · wd 1e-8 · batch 128 ·
+seed 42 · `split_seed=0` · **`max_epochs: 1000`** · no early stopping · **ckpt on best val
+pearson** · Merzbacher's 639 genes pinned to test on 020.
+
+W&B: `torchcell_020_betaxanthin_v4`, `torchcell_021_beta_carotene_v4`,
+`torchcell_022_mulleder19_v4`, **`torchcell_023_bx_m19_v1`** (new).
+
+### Budget
+
+```
+measured 18.5 s/epoch (GilaHyper, CONTENDED; L=2 and L=6 alike -- depth is nearly free)
+x1.4 A40 derate -> ~25 s/epoch -> 1000 ep + startup = ~7.2 GPU-h/run
+24 runs x 7.2 = 174 GPU-h / 4 GPUs = 43.4 h = 1.81 d   (48 h wall)
+```
+
+Caveat: the derate is unmeasured on Delta. Protection is that an over-running run is
+**Timer-stopped gracefully** -- checkpoint, metrics and the 020 test dump all still land.

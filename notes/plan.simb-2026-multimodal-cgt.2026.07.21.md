@@ -681,7 +681,7 @@ subtelomere), BLAST+ in run env, wire SCerevisiaeGenome reference-fallback.
 
 *(Numbered 16, skipping 15, because WS15 is already taken by the env-chemogenomic roadmap
 [[plan.schematization-ingestion-roadmap.2026.06.23]] — the two are unrelated.)*
-Working detail for the metabolism dataset prep: [[scratch.2026.07.25.010919-adding-metabolism]].
+Working detail for the metabolism dataset prep: [[plan.cgt-metabolism.2026.07.25]].
 
 **Why this enters the roadmap.** Fig 6 and the abstract commit us to *recommending deletions for
 a production target*, but the roadmap so far only names the products we happen to hold screens

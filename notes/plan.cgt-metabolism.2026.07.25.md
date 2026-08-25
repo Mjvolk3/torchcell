@@ -6,9 +6,9 @@ updated: 1785037045821
 created: 1785037045821
 ---
 
-Consolidation of [[scratch.2026.07.25.010919-adding-metabolism]] (dataset substrate + defects),
-[[scratch.2026.07.25.172340-adding-metabolism-explainer]] (**the mathematics — Q1–Q15 answer every
-design question; this note does not repeat the derivations**), and
+Consolidation of the 2026.07.25 metabolism-prep scratch note (dataset substrate + defects, now
+retired into the graveyard), [[plan.cgt-metabolism-flux-layer.explainer]] (**the mathematics,
+Q1 to Q15 answer every design question; this note does not repeat the derivations**), and
 [[plan.simb-2026-multimodal-cgt.2026.07.21]] WS4/WS8/WS11b/WS12/WS16.
 
 **Two tracks, deliberately separated by deadline.**
@@ -302,7 +302,7 @@ collapses to the mean. Same metric, two different mechanisms, one shared cause.
 **The fix is a readout change, not a hyperparameter.** For a single-KO strain the perturbed gene's
 representation *is* the genotype, so the head should **gather `H_genes_pert` at
 `perturbation_indices`** (pool over the handful of perturbed genes) instead of averaging all 6,607.
-That is the S0 argument from [[scratch.2026.07.25.172340-adding-metabolism-explainer]] applied to a
+That is the S0 argument from [[plan.cgt-metabolism-flux-layer.explainer]] applied to a
 scalar target, and it is the same pool-dilution finding the decoder note reached for morphology:
 *"a mean over ~6,000 genes averages the perturbation of a handful of genes into noise before the
 decoder sees it."* Concatenating `h_CLS` is still worthwhile as a whole-cell context term, but it
@@ -355,7 +355,7 @@ amortized flux sampler, the objective term by term, the FCL comparison protocol 
 doubles-scaling argument — is now a real note: **[[plan.cgt-metabolism-flux-layer.2026.07.26]]**.
 
 Derivations from definitions up (Parts 0–7, Q1–Q15) remain in
-[[scratch.2026.07.25.172340-adding-metabolism-explainer]], which is UNTRACKED and authoritative
+[[plan.cgt-metabolism-flux-layer.explainer]], which is authoritative
 where the two disagree. Settled decisions, with the reasons recorded there:
 
 | decision | resolution |

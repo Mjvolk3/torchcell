@@ -14,8 +14,8 @@ carries more than one perturbation?
 \subsection{Counting Is Poisson, and It Appears Three Times\secstatus{todo}}
 \label{sec:poisson}
 
-One distribution runs underneath most of the arithmetic in this document, and
-meeting it once here is cheaper than meeting it three times in three disguises.
+One distribution has already appeared four times in passing and is about to start
+carrying weight, so it is worth making precise once rather than in four disguises.
 A Poisson distribution is what you get whenever many independent things each have
 a small chance of landing in the same place and you count how many did. Its
 defining property is that its variance equals its mean, so the only parameter is
@@ -24,11 +24,12 @@ it. \textbf{You cannot set an outcome, only an average, and the outcomes arrange
 themselves around it.} That is the whole of the idea and it is the part people
 find counterintuitive.
 
-It appears three times here, in two directions.
+Three of its appearances set a design parameter, and they pull in two directions.
 
 \begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
   \item \textbf{Molecules sampled by a sequencer} (\term{shot noise}), where the
-    Poisson is over reads and the design goal is to make $\lambda$ large.
+    Poisson is over reads and the design goal is to make $\lambda$ large. This is
+    the one the rest of \cref{sec:limits} runs on.
   \item \textbf{Cells loaded into droplets} (\cref{sec:isolation}), where the
     Poisson is over cells per partition and the goal is a \emph{small} $\lambda$,
     so that two cells rarely share a droplet. Preindexing (\cref{sec:scifi}) is
@@ -38,11 +39,16 @@ It appears three times here, in two directions.
     wanted, because plasmids per cell is what puts several guides in one cell.
 \end{itemize}
 
-\Cref{fig:poisson} builds the distribution on the third of these, because it is
-the one where the counterintuitive property does real work: selection kills the
-cells that took up nothing, and deleting the smallest value from a distribution
-\emph{raises} the mean of what is left. \Cref{sec:delivery} then uses that
-arithmetic directly, and everything below uses the first.
+The fourth appearance is not a design parameter and is worth naming so it is not
+mistaken for one: cuts falling along a cDNA molecule during fragmentation are
+Poisson too (\cref{sec:fragmentation}), which is what makes capture probability a
+function of the size-selection window rather than of transcript length.
+
+\Cref{fig:poisson} builds the distribution on the third of the three, because it
+is the one where the counterintuitive property does real work: selection kills
+the cells that took up nothing, and deleting the smallest value from a
+distribution \emph{raises} the mean of what is left. That arithmetic is used in
+full in \cref{sec:delivery}; everything between here and there uses the first.
 
 %% SOURCE: experiments/024-perturb-seq-costing/scripts/plot_poisson_primer.py
 %% Moved here from Sec. 7.1 in review round 2. The primer belongs with the first
@@ -50,9 +56,13 @@ arithmetic directly, and everything below uses the first.
 %% loading (Sec. 2.2) and plasmid uptake (Sec. 7.1) are the same mathematics, and
 %% a reader who meets it here has met it before all three.
 \tcfigfit[1.0]{figures/poisson_primer.pdf}{%
-  \textbf{Poisson sampling, built on the problem \cref{sec:delivery} uses it
-  for.} The mechanism is worth meeting before any of the arithmetic, because one
-  property of it is genuinely counterintuitive.
+  \textbf{Poisson sampling, built on plasmid uptake at transformation.} The
+  setting, since it is developed in full much later: a guide library is
+  transformed into a population, each cell takes up some number of plasmid
+  molecules, and cells that took up none die on the selection marker. That is the
+  mechanism \cref{sec:delivery} uses to put several guides in one cell, and it is
+  drawn here rather than the sequencing case because one property of it is
+  genuinely counterintuitive.
   \textbf{(a)} A plasmid cannot be handed to a cell. Raising the DNA
   concentration raises an \emph{average} uptake rate $\lambda$, and cells sort
   themselves around it: at $\lambda=1.59$ about a fifth of cells take up nothing
@@ -61,9 +71,10 @@ arithmetic directly, and everything below uses the first.
   \textbf{(b)} Selection deletes that zero class, and deleting the smallest
   value \emph{raises} the average of what remains, here from $\lambda=1.59$ to
   2.0 plasmids per surviving cell. This is the ``zero-truncated'' part, and it is
-  why every $\lambda$ in \cref{tab:delivery} is lower than the plasmids-per-cell
-  figure beside it. Gray outlines are the distribution before selection, filled
-  bars after.
+  why the $\lambda$ a protocol is set to is always lower than the
+  plasmids-per-cell figure it delivers (\cref{tab:delivery} gives the operating
+  points). Gray outlines are the distribution before selection, filled bars
+  after.
   \textbf{(c)} What that means for a design. Vertical rules mark the $\lambda$
   giving 2, 3 and 5 plasmids per surviving cell. Turning $\lambda$ up to get
   more multiply-loaded cells necessarily produces triples and quadruples nobody
@@ -98,6 +109,18 @@ cell to infinite depth measures each cell perfectly and leaves this variation
 completely untouched; only counting \emph{more cells} averages it down. Keeping
 the two apart is what \cref{sec:design-equation} is for, since the whole design
 reduces to which of them is currently binding.
+
+\begin{keybox}
+\textbf{One distribution, three design parameters, and two of the three want it
+pushed the opposite way from the third.} Sequencing wants a large $\lambda$
+because shot noise falls as $1/\sqrt{\mu}$; plasmid uptake wants a large one
+because that is what puts several guides in a cell; droplet loading wants a small
+one so that two cells rarely share a partition, and preindexing is the change
+that lets it want a large one instead. The property none of them escapes is that
+only the average is set, never the outcome. \textbf{And only the first of the
+three is noise that money removes}: reading a cell more deeply measures that cell
+better and leaves the differences between cells exactly where they were.
+\end{keybox}
 
 \subsection{Transcript Content per Cell\secstatus{todo}}
 \label{sec:transcript-content}
@@ -679,7 +702,7 @@ collision at every use. The two are unrelated: an expression compendium measures
 $\nu$ and says nothing whatever about $q$, since it contains no guides.
 
 %% SOURCE: experiments/024-perturb-seq-costing/scripts/compression_analysis.py
-%% RUN 2026-08-23 on the M1 against the same LMDBs Sec. 4.4 uses.
+%% RUN 2026-08-23 on the M1 against the same LMDBs the effect-size subsection uses.
 \input{tables/t16-compression-parameters}
 
 \pfstep{The matrix is strongly low rank} Four components carry half the variance

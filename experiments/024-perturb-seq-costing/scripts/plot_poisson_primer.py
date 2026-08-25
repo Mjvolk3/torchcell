@@ -65,6 +65,17 @@ LAM = lam_for_target_mean(TARGET_MEAN)
 MS = np.arange(0, 8)
 
 
+# NO MATHTEXT WHERE A SPACE ADJOINS IT. savefig_true_size_svg writes
+# svg.fonttype="none", so text stays as real <text> elements, and matplotlib
+# positions each mathtext run separately: the space between a $...$ run and the
+# plain text beside it is dropped by rsvg-convert on the way to PDF. It renders
+# correctly in the PNG and wrongly in the document, which is the worst way for
+# this to fail. "mean 1.59 -> 2.00" arrived as "mean1.59->2.00" and "$k$ is a
+# spread" as "kis a spread". Unicode in a plain string keeps its spaces.
+LAMBDA = "\u03bb"
+ARROW = "\u2192"
+
+
 def pois(m, lam: float) -> np.ndarray:
     return np.exp(-lam) * lam**m / np.array([math.factorial(int(i)) for i in np.atleast_1d(m)])
 
@@ -75,7 +86,7 @@ def panel_a(ax) -> None:
     colors = [LOST] + [KEEP] * (len(MS) - 1)
     ax.bar(MS, p, width=0.7, color=colors, edgecolor="black", lw=0.5)
     ax.axvline(LAM, color=ACTION, lw=0.8, ls="--", zorder=3)
-    ax.text(LAM + 0.2, 0.545, f"$\\lambda={LAM:.2f}$", fontsize=5,
+    ax.text(LAM + 0.2, 0.545, f"{LAMBDA} = {LAM:.2f}", fontsize=5,
             color=ACTION, va="center", ha="left")
     # Label over the empty tail, elbow leader back to the zero bar. The elbow is
     # not decoration: the label is ~3.4 x-units wide at this panel width, so over
@@ -111,11 +122,9 @@ def panel_b(ax) -> None:
     ax.annotate("", xy=(TARGET_MEAN, 0.485), xytext=(LAM, 0.485),
                 arrowprops=dict(arrowstyle="-|>", color=ACTION, lw=0.8,
                                 mutation_scale=6))
-    # Set as ONE mathtext run. Built as text-arrow-text, matplotlib laid the
-    # arrow glyph hard against the following digit and it read as a strikethrough
-    # over "2.00"; \,\to\, inside a single $...$ carries its own thin spaces.
+    # Plain text with a unicode arrow, per the note above the pois() helper.
     ax.text(TARGET_MEAN + 0.35, 0.485,
-            f"$\\mathrm{{mean}}\\;{LAM:.2f}\\,\\to\\,{TARGET_MEAN:.2f}$",
+            f"mean {LAM:.2f} {ARROW} {TARGET_MEAN:.2f}",
             fontsize=5, color=ACTION, va="center", ha="left")
     ax.set_xlabel("Plasmids a surviving cell carries")
     ax.set_ylabel("Fraction of cells")
@@ -147,11 +156,11 @@ def panel_c(ax) -> None:
         ax.axvline(lam, color=GHOST, lw=0.5, zorder=0)
         ax.text(lam, 0.035, lab, fontsize=4.6, color=MUTED, ha="center",
                 va="bottom")
-    ax.set_xlabel("Uptake rate $\\lambda$")
+    ax.set_xlabel(f"Uptake rate {LAMBDA}")
     ax.set_ylabel("Fraction of surviving cells")
     ax.set_ylim(0, 1.0)
     ax.set_xlim(0, 6.0)
-    ax.set_title("$k$ is a spread, not a setting", loc="left", fontsize=6)
+    ax.set_title("k is a spread, not a setting", loc="left", fontsize=6)
     box(ax)
 
 

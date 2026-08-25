@@ -44,21 +44,29 @@ which parameter is actually binding.
 Two further questions decide what gets run first, and a cost table answers
 neither. \Cref{sec:scaling} asks how the design grows along the two axes a
 metabolic engineering campaign cares about, more perturbations per cell and more
-environments per experiment. Cell demand grows quadratically in the first and
-linearly in the second, which is an argument for spending on environments rather
-than a verdict: a gene combination and a growth condition are different kinds of
-information, and a model that proposes edits needs both.
-\Cref{sec:host} asks what changes when the host is \org{P.\ kudriavzevii}. Almost
-none of the genetics assumed here is published for that organism, which is not
-the same as unavailable: an assembled genome and a working CRISPRi system exist
-in house and are not in the
-literature\external{in-house, unpublished; genome from JGI}.
+environments per experiment. They do not cost alike: the cells needed to observe
+a \emph{named} gene combination grow quadratically in the size of the panel,
+while environments cost linearly, so an environment is by far the cheaper way to
+enlarge a dataset. That is an argument for spending on environments rather than a
+verdict, because a gene combination and a growth condition are different kinds of
+information and a model that proposes edits needs both.
 
-The first experiment therefore carries no perturbations at all, and that is a
-deliberate choice rather than a forced one. Nobody on this project has run the
-technology before, so an unperturbed run buys footing: it answers the three
-things that are genuinely uncertain about moving host, wall digestion, UMIs
-recovered per cell and ribosomal fraction, while depending on no genetics at all
-(\cref{sec:host}). If one unperturbed run looks wasteful for the cells it
-consumes, the way to spend it better is across several environments, not by
-adding guides to it.
+\Cref{sec:host} asks what changes when the host is \org{P.\ kudriavzevii}, and
+splits the answer in two. The perturbation tool is close to hand: a reference
+genome and catalytic Cas9 are published for this organism, and a working CRISPRi
+system, along with a strain assembly from JGI, is held in house and
+unpublished\external{in-house, unpublished}, which makes it a validation task
+rather than a research project. Delivery and scale are not close to hand.
+Transformation efficiency is three to five orders of magnitude below
+\org{S.\ cerevisiae}, and \cref{sec:library-ceiling} shows library scale is set by
+transformation, so a pooled library-scale screen in this host is out of reach
+until that moves.
+
+The first experiment therefore carries no perturbations at all. Part of that is
+forced by the paragraph above, and the more useful part is chosen: nobody on this
+project has run the technology before, so an unperturbed run buys footing. It
+answers the three things that are genuinely uncertain about moving host, wall
+digestion, UMIs recovered per cell and ribosomal fraction, while depending on no
+genetics at all (\cref{sec:host}). If one unperturbed run looks wasteful for the
+cells it consumes, the way to spend it better is across several environments, not
+by adding guides to it.

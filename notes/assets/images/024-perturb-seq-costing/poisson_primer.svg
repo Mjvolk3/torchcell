@@ -292,13 +292,7 @@ L 65.64177 23.5008
 " clip-path="url(#pfcaab08d0a)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #9673a6; stroke-width: 0.8"/>
    </g>
    <g id="text_17">
-    <!-- $\lambda=1.59$ -->
-    <g style="fill: #9673a6" transform="translate(68.580433 30.55462)">
-     <text>
-      <tspan style="font: oblique 5px 'DejaVu Sans'" x="0" y="-0.203125">λ</tspan>
-      <tspan style="font: 5px 'DejaVu Sans'" x="3.933105 9.09668 12.277832 13.867188 16.79834" y="-0.203125">=1.59</tspan>
-     </text>
-    </g>
+    <text style="fill: #9673a6; font: 5px 'Arial'; text-anchor: start" x="68.580433" y="30.55462" transform="rotate(-0 68.580433 30.55462)">λ = 1.59</text>
    </g>
    <g id="text_18">
     <text style="fill: #b85450; font: 4.6px 'Arial'" transform="translate(87.040758 42.888514)">take up nothing,</text>
@@ -644,12 +638,7 @@ z
 " style="fill: #9673a6; stroke: #9673a6; stroke-width: 0.8; stroke-linecap: round"/>
    </g>
    <g id="text_36">
-    <!-- $\mathrm{mean}\;1.59\,\to\,2.00$ -->
-    <g style="fill: #9673a6" transform="translate(250.988768 40.431033)">
-     <text>
-      <tspan style="font: 5px 'DejaVu Sans'" x="0 4.870605 7.946777 11.010742 15.532644 18.713797 20.303152 23.234304 28.201362 34.17672 37.357872 38.947228 42.12838" y="-0.28125">mean1.59→2.00</tspan>
-     </text>
-    </g>
+    <text style="fill: #9673a6; font: 5px 'Arial'; text-anchor: start" x="250.988768" y="40.431033" transform="rotate(-0 250.988768 40.431033)">mean 1.59 → 2.00</text>
    </g>
    <g id="text_37">
     <text style="font: 6px 'Arial'; text-anchor: start" x="205.659891" y="17.5008" transform="rotate(-0 205.659891 17.5008)">Selection lifts the mean</text>
@@ -776,13 +765,7 @@ L 482.879934 23.5008
      </g>
     </g>
     <g id="text_47">
-     <!-- Uptake rate $\lambda$ -->
-     <g transform="translate(423.999411 140.019987)">
-      <text>
-       <tspan style="font: 6px 'Arial'" x="0 4.333008 7.669922 9.336914 12.673828 15.673828 19.010742 20.677734 22.675781 26.012695 27.679688 31.016602" y="-0.4375">Uptake rate </tspan>
-       <tspan style="font: oblique 6px 'DejaVu Sans'" x="32.683594" y="-0.4375">λ</tspan>
-      </text>
-     </g>
+     <text style="font: 6px 'Arial'; text-anchor: middle" x="442.119411" y="139.754675" transform="rotate(-0 442.119411 139.754675)">Uptake rate λ</text>
     </g>
    </g>
    <g id="matplotlib.axis_6">
@@ -953,13 +936,7 @@ L 504.3456 23.5008
     <text style="fill: #666666; font: 4.6px 'Arial'; text-anchor: middle" x="482.879934" y="114.71703" transform="rotate(-0 482.879934 114.71703)">5</text>
    </g>
    <g id="text_60">
-    <!-- $k$ is a spread, not a setting -->
-    <g transform="translate(379.893221 17.5008)">
-     <text>
-      <tspan style="font: oblique 6px 'DejaVu Sans'" x="0" y="-0.4375">k</tspan>
-      <tspan style="font: 6px 'Arial'" x="3.474609 5.141602 6.474609 9.474609 11.141602 14.478516 16.145508 19.145508 22.482422 24.480469 27.817383 31.154297 34.491211 36.158203 37.825195 41.162109 44.499023 46.166016 47.833008 51.169922 52.836914 55.836914 59.173828 60.84082 62.507812 63.84082 67.177734" y="-0.4375"> is a spread, not a setting</tspan>
-     </text>
-    </g>
+    <text style="font: 6px 'Arial'; text-anchor: start" x="379.893221" y="17.5008" transform="rotate(-0 379.893221 17.5008)">k is a spread, not a setting</text>
    </g>
   </g>
   <g id="text_61">
@@ -969,7 +946,7 @@ L 504.3456 23.5008
    <text style="font: 700 8px 'Arial'; text-anchor: start" x="175.797331" y="9.38445" transform="rotate(-0 175.797331 9.38445)">b</text>
   </g>
   <g id="text_63">
-   <text style="font: 700 8px 'Arial'; text-anchor: start" x="349.771911" y="7.17945" transform="rotate(-0 349.771911 7.17945)">c</text>
+   <text style="font: 700 8px 'Arial'; text-anchor: start" x="349.771911" y="9.1257" transform="rotate(-0 349.771911 9.1257)">c</text>
   </g>
  </g>
  <defs>

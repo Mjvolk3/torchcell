@@ -106,6 +106,17 @@ Colleagues have to want to read it. Concision is what buys that.
   names stay italic (`\org{}`).
 - **Superscripts in figures** use real characters, not carets: `4^10` must be
   drawn as 4 with superscript 10, matching neighboring exponents.
+- **No matplotlib mathtext where a space adjoins it.** `savefig_true_size_svg`
+  sets `svg.fonttype: "none"`, so text stays as real `<text>` elements and each
+  `$...$` run is positioned separately from the plain text beside it. The space
+  between them survives the PNG and is **dropped by `rsvg-convert` on the way to
+  PDF**, so the label is correct everywhere you would check it and wrong in the
+  built document. Real cases: `"mean 1.59 $\to$ 2.00"` arrived as
+  `mean1.59→2.00`, `"$k$ is a spread"` as `kis a spread`, `"$10^{6}$ UMIs"` as
+  `10⁶UMIs`. Use unicode in a plain string (`λ`, `→`, `⁶`) and the spaces hold.
+  Mathtext is still fine when nothing adjoins it, as in an axis label that is
+  only a symbol. **Check labels in the built PDF, not in the PNG** -- this class
+  of defect is invisible in the raster preview.
 
 ### Verbatim quotes are verbatim
 

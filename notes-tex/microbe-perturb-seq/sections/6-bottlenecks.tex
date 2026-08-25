@@ -85,7 +85,13 @@ this list and is why they are ranked here rather than as an experiment.
 most change the ranking above is the one nothing on this list depends on.
 Preindexing takes the droplet route from $6.3\times$ the cost of depleted
 split-pool to $1.9\times$ (Sec.~\ref{sec:budget}), which converts droplet from a
-platform we have ruled out on price into a live fallback if items 1 or 3 fail.
+platform ruled out on price at \emph{genome scale} into a live fallback there if
+items 1 or 3 fail. The qualifier matters, because the first two experiments in
+\cref{sec:staging} are both droplet channels and neither contradicts this: a
+single channel is cheap however it prices per cell at six thousand genes, the
+core runs the platform as a service, and one of the two exists precisely to test
+their 5$'$ kit. Price rules droplet out as a way to buy twelve million cells, not
+as a way to buy twenty thousand.
 It ranks last because it is the least evidenced: items 1--6 are quantities to be
 measured on a chemistry that has been run in yeast, whereas this is a chemistry
 that has never been run in any microbe, and the same in-cell reverse
@@ -116,13 +122,17 @@ and supports simultaneous integration of two to five
 genes~\citep{fatmaLandingPadSystem2023}.
 
 \notesec{What is not published, which is not the same as what does not exist}
-Two of the gaps below are closed in house and the distinction matters, because a
+One of the gaps below is closed in house and the distinction matters, because a
 capability that exists but is unpublished is a validation task rather than a
 research project. There is no published dCas9 CRISPRi or CRISPRa system in this
 organism -- every CRISPR result above is catalytic knockout or integration --
-but a working CRISPRi system and an assembled genome from JGI are both held
-here\external{in-house, unpublished}. Read against that, the missing piece is not
-the perturbation tool; it is everything downstream of it.
+but a working one is held here\external{in-house, unpublished}, as is a JGI
+assembly of the strain actually in use\external{in-house, unpublished}. The
+assembly is not what the published reference genome above already provides: read
+alignment and guide design were never the obstacle, and a strain-level assembly
+matters because the production strain is not the reference strain and is diploid.
+Read against that, the missing piece is not the perturbation tool; it is
+everything downstream of it.
 
 What remains genuinely open is delivery and scale. Episomal plasmids are
 mitotically unstable, with about 55\% of cells still expressing a plasmid-borne
@@ -141,9 +151,11 @@ community is also diploid, which changes what a single guide does and what a
 knockout means.
 
 \begin{keybox}
-\textbf{The first experiment carries no perturbations, and the reason is footing
-rather than a missing tool.} Nobody on this project has run single-cell RNA-seq
-on a walled microbe, so the first run is worth spending on learning the assay:
+\textbf{The first experiment carries no perturbations, and only part of that is
+forced.} A pooled library-scale screen in this host waits on transformation
+efficiency whatever anyone decides. What is chosen, and is the reason to run
+now rather than wait, is spending the first run on learning the assay: nobody on
+this project has run single-cell RNA-seq on a walled microbe, so it answers
 whether the cell wall yields to the in-droplet zymolyase of \cref{sec:jariani} in
 this species, how many mRNA UMIs per cell are recovered, and what fraction of
 reads is ribosomal. That is the collaborator's recommendation and it is also what
@@ -218,7 +230,10 @@ binding constraint on this experiment and neither is cost.
     phenotypes, scored against bulk RNA-seq from the same strains. Ground truth
     is only available while the design is arrayed; a pool cannot tell you what
     was in a given cell.
-  \item \textbf{Establish the chemistry numbers} the model is most sensitive to:
+  \item \textbf{A split-pool run in \org{S.\ cerevisiae}}, which is the first
+    step on this list to use that chemistry: steps 1 and 2 are droplet channels
+    at the core, and everything the split-pool route needs measured is measured
+    here. Establish the chemistry numbers the model is most sensitive to:
     mRNA fraction after depletion, cells per RT well, guide-assignment rate $q$,
     the read-depth saturation curve, and -- from the same data, at no extra cost -- the transcriptome share $p_j$ of a few representative target genes, which
     \cref{sec:transcript-content} shows is currently worth a five-fold spread in
@@ -229,7 +244,7 @@ binding constraint on this experiment and neither is cost.
   \item \textbf{Answer the preindexing question from data step 4 already
     produces}, at no additional cost. Whether a fixed, wall-digested yeast cell
     reverse transcribes in situ and then survives handling is measured by the
-    round-1 step of the split-pool pilot; what step 4 does not answer is whether
+    round-1 step of step 4's split-pool run; what step 4 does not answer is whether
     such a cell survives the pressures of a microfluidic chip, which is one
     channel to test and is the only part of Sec.~\ref{sec:scifi} with no yeast
     precedent at all. Worth running only if step 1 or step 3 goes badly, because

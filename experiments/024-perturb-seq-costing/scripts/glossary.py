@@ -114,13 +114,11 @@ TERMS: list[Term] = [
     Term(
         term="Sample index",
         definition=(
-            "The Illumina index read added at final PCR, and the only thing this "
-            "document calls an \\emph{index}; anything written into a cell is a "
-            "barcode. Its ordinary job is to let several libraries share one "
-            "flow cell: each is tagged, sequenced together, and separated "
-            "computationally afterwards, which is what makes a lane divisible "
-            "between experiments. See \\emph{sublibrary index} for the extra job "
-            "it does in split-pool."
+            "The Illumina index read added at final PCR. Its ordinary job is to "
+            "let several libraries share one flow cell: each is tagged, sequenced "
+            "together, and separated computationally afterwards, which is what "
+            "makes a lane divisible between experiments. See \\emph{sublibrary "
+            "index} for the extra job it does in split-pool."
         ),
         where="sec:sequencing",
     ),
@@ -376,11 +374,9 @@ TERMS: list[Term] = [
         term="Cells per target gene",
         definition=(
             "Cells carrying a guide against that gene, pooled over all of its "
-            "guides. This is the design unit throughout, and every budget here is "
-            "quoted in it. \\emph{Not} cells per guide and \\emph{not} cells per "
-            "plasmid: at the six guides per gene of a MAGIC-style library, cells "
-            "per guide is six times smaller, and reading one figure as the other "
-            "is the most common way a screen budget is misread."
+            "guides, and the unit every budget here is quoted in. \\emph{Not} "
+            "cells per guide and \\emph{not} cells per plasmid: at six guides per "
+            "gene the two differ by a factor of six."
         ),
         where="sec:cells-per-pert",
     ),
@@ -388,16 +384,13 @@ TERMS: list[Term] = [
     Term(
         term="Shot noise",
         definition=(
-            "The irreducible randomness of \\emph{counting}. A library holds far "
-            "more molecules than a run reads, so sequencing draws a random sample "
-            "of them and a gene whose true expected count is $\\mu$ UMIs comes "
-            "back as a count scattered around $\\mu$ with variance also $\\mu$, "
-            "hence a relative error $1/\\sqrt{\\mu}$: at 16 expected UMIs the "
-            "count is good to $\\sim$25\\%, at 400 to 5\\%. $\\mu$ is a count of "
-            "molecules of one gene pooled over the cells sharing a perturbation, "
-            "not a per-cell quantity. This is the only noise that buying more "
-            "reads removes, because more reads is a larger draw. Also called "
-            "counting or sampling noise."
+            "The irreducible randomness of \\emph{counting}: a run reads a random "
+            "sample of the library, so a gene whose expected count is $\\mu$ UMIs "
+            "comes back scattered around $\\mu$ with variance also $\\mu$, hence "
+            "relative error $1/\\sqrt{\\mu}$. Note that $\\mu$ counts molecules "
+            "of one gene pooled over every cell sharing a perturbation, not "
+            "molecules in one cell. The only noise buying more reads removes. "
+            "Also called counting or sampling noise."
         ),
         where="sec:poisson",
     ),
@@ -420,17 +413,15 @@ TERMS: list[Term] = [
         abbrev="$\\varphi_j$",
         definition=(
             "Variance in a gene's expression between genetically identical cells "
-            "over and above what counting alone would produce. \\emph{Over}"
-            "-dispersion names the comparison, not the quantity: pure counting "
-            "fixes the variance at $\\mu$, so a gene whose counts vary more than "
-            "that across cells is dispersed more than the counting model allows, "
-            "and $\\varphi_j$ measures the excess. It comes from cell-cycle "
-            "phase, metabolic state and transcriptional bursting, so reading each "
-            "cell more deeply does not reduce it and only more cells do. Equal to "
-            "the negative-binomial dispersion, so $\\sqrt{\\varphi_j}$ is the "
+            "over and above what counting alone would produce. The \\emph{over} "
+            "is the comparison against shot noise, which fixes the variance at "
+            "$\\mu$; $\\varphi_j$ measures the excess. From cell-cycle phase, "
+            "metabolic state and transcriptional bursting, so reading each cell "
+            "more deeply does not reduce it and only more cells do. Equal to the "
+            "negative-binomial dispersion, so $\\sqrt{\\varphi_j}$ is the "
             "biological coefficient of variation of the RNA-seq literature."
         ),
-        where="sec:design-equation",
+        where="sec:poisson",
     ),
     Term(
         term="Depth sufficiency",
@@ -640,11 +631,10 @@ TERMS: list[Term] = [
             "overhang, a primer binding site, a Tn5 mosaic end -- rather than "
             "barcode or transcript. Paid for at the same rate as an informative "
             "one. Two thirds of SPLiT-seq's composite-barcode cycles are of this "
-            "kind, and the arithmetic is just the read layout: read 2 spends 76 "
-            "cycles on the composite barcode, of which three 8\\,nt barcodes are "
-            "24 and the linkers between them are the other 52, so $52/76=68\\%$. "
-            "The linkers are read because they sit between the barcodes on the "
-            "molecule, and the sequencer reads straight through in order."
+            "kind, and the reason is the read layout rather than any inefficiency "
+            "in the run: the linkers sit between the barcodes on the molecule and "
+            "the sequencer reads straight through in order, so 52 of read 2's 76 "
+            "barcode cycles are linker. Worked out in \\cref{sec:sequencing}."
         ),
         where="sec:sequencing",
         citation_key="datlingerUltrahighthroughputSinglecellRNA2021",
@@ -703,10 +693,10 @@ TERMS: list[Term] = [
             "The chance that one gRNA present in a cell is actually seen in that "
             "cell's reads. A $k$-plex cell is usable only if all $k$ are seen, so "
             "the usable fraction is $q^{k}$ and $q$ is the one parameter that "
-            "enters the multiplex ceiling exponentially. The published range is "
-            "very wide -- 21--25\\% in bacteria against $>$71\\% in the "
-            "genome-scale yeast screen -- and which end applies here is the "
-            "single most valuable thing the pilot can measure."
+            "enters the multiplex ceiling exponentially rather than linearly. The "
+            "published range is very wide, 21--25\\% in bacteria against "
+            "$>$71\\% in the genome-scale yeast screen, and which end applies "
+            "here is the single most valuable thing the pilot can measure."
         ),
         where="sec:guide-capture",
         citation_key="nadal-ribellesSinglecellResolvedGenotypephenotype2025",

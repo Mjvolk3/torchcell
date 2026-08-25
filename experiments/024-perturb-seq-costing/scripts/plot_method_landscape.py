@@ -137,10 +137,18 @@ def main() -> None:
         hi = min(XLIM[1], total / YLIM[0])
         label_x = lo * (hi / lo) ** frac
         exp = int(np.log10(total))
+        # Unicode superscript, not mathtext. savefig_true_size_svg sets
+        # svg.fonttype="none", so a $...$ run is positioned separately from the
+        # text beside it and the space between them is dropped by rsvg-convert on
+        # the way to PDF -- this label was reaching the document as "10^6UMIs".
+        # It renders correctly in the PNG, so it is only visible in the built PDF.
+        sup = str(exp).translate(str.maketrans("0123456789", "⁰¹²"
+                                               "³⁴⁵⁶⁷"
+                                               "⁸⁹"))
         ax.text(
             label_x,
             total / label_x * 1.35,
-            f"$10^{{{exp}}}$ UMIs",
+            f"10{sup} UMIs",
             fontsize=5,
             color="#888888",
             rotation=-31,

@@ -56,11 +56,13 @@ sequencing: the sublibraries a run produces are sequenced separately and are
 priced separately.
 
 So the plate set is a capital asset. At a realistic five to ten runs per year, 215
-withdrawals is a twenty-year supply, and it will be retired by degradation long
-before depletion. Two consequences: we are over-buying by roughly an order of
-magnitude and should ask IDT for a smaller synthesis scale or volume, and one
-plate set can serve an entire department. The genuinely recurring items are the
-reverse transcriptase (\$840) and the ligase (\$270), repurchased every run.
+withdrawals is a twenty-year supply, and a plate on the bench for twenty years
+will not survive that long. Two consequences: we are over-buying by roughly an
+order of magnitude and should ask IDT for a smaller synthesis scale or volume,
+and one plate set can serve an entire department. The genuinely recurring items
+are the reverse transcriptase (\$840) and the ligase (\$270), repurchased every
+run. Whether the degradation actually costs capacity is the next question, and
+the answer turns out to be no.
 
 \notesec{What one plate set buys, and whether freeze--thaw invalidates the
 amortization} The start-up cost is amortized over those 215 runs, and the
@@ -101,10 +103,12 @@ is the split-pool economics in one number.
 \begin{keybox}
 \textbf{The split-pool start-up cost is a capital asset, and we are over-buying
 it by an order of magnitude.} 77\% of the \$10{,}000 is three plates of custom
-barcoded oligo, and their capacity is 215 protocol runs. At five to ten runs a
-year that is a twenty-year supply that will be retired by freeze--thaw long
-before depletion, so ask IDT for a smaller synthesis scale, and expect one plate
-set to serve a department. The genuinely recurring items are the reverse
+barcoded oligo, and their capacity is 215 protocol runs, which is 103 million
+cells or about 16 genome-scale screens. At five to ten runs a year that is a
+twenty-year supply, so ask IDT for a smaller synthesis scale and expect one plate
+set to serve a department. Freeze--thaw does not eat into that capacity, it just
+decides how many working plates the aliquoting has to make, since $w$ of them
+each see $215/w$ cycles. The genuinely recurring items are the reverse
 transcriptase and the ligase, about \$1{,}100 per run.
 \end{keybox}
 
@@ -314,12 +318,12 @@ molecular yield through an extra ligation, and the pilot has to measure it.
 %% confirm we are tracking list price vs quoted price vs per-run amortized cost
 %% rather than silently mixing the three.
 %% DONE(effect size, 2026.08.22) -- effect_size_analysis.py has run on the M1
-%% against the local LMDBs, and Sec. 4.4 now carries the measured distribution.
+%% against the local LMDBs, and sec:effect-size now carries the measured distribution.
 %% Panel a here is unaffected on purpose: its depth constraint is a PSEUDOBULK
 %% UMI TARGET (2e5), not a fold-change threshold, so the measured effect size
 %% enters through design_equation.py (fig:design) rather than through this panel.
 %% What the measurement did change is fig:design's curves and the multiplier in the
-%% Sec. 4.4 keybox. Do not "fix" panel a to use 1.34x -- the two are different
+%% sec:effect-size keybox. Do not "fix" panel a to use 1.34x -- the two are different
 %% quantities and conflating them is what this note exists to prevent.
 \tcfigfit[1.0]{figures/economics.pdf}{%
   \textbf{Six views of one decision: which platform to run.} Color is the

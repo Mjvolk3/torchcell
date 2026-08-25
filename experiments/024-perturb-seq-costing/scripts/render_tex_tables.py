@@ -151,10 +151,7 @@ def t0() -> None:
         r"links to the section that treats each term in depth, so an entry is a "
         r"pointer rather than a replacement for the argument. An entry that "
         r"asserts a \emph{number} ends in the citation that number comes from; "
-        r"entries with no citation are definitional. Three naming conventions "
-        r"hold throughout and are stated in \cref{sec:identifiers}: one thing is "
-        r"called an index, budgets are quoted in cells per target gene, and $q$ "
-        r"is the per-guide detection probability. Generated from "
+        r"entries with no citation are definitional. Generated from "
         r"\file{experiments/024-perturb-seq-costing/scripts/glossary.py}.}"
         r"\label{tab:glossary}",
         r"\endgroup",

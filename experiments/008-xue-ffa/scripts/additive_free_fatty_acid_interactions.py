@@ -260,7 +260,7 @@ def welch_satterthwaite_df(terms):
     return num ** 2 / den
 
 
-def compute_se_pvalue(observed_interaction, se_interaction, df=2):
+def compute_se_pvalue(observed_interaction, se_interaction, df):
     """
     Compute p-value using standard error and t-distribution.
 
@@ -270,8 +270,15 @@ def compute_se_pvalue(observed_interaction, se_interaction, df=2):
         The observed interaction value
     se_interaction : float
         Standard error of the interaction
-    df : int
-        Degrees of freedom (default 2 for 3 replicates - 1)
+    df : float
+        Degrees of freedom of the reference t distribution. REQUIRED, and it must be
+        the Welch-Satterthwaite effective df of the propagated combination (see
+        welch_satterthwaite_df), not the df of any single input. There is deliberately
+        no default: the old ``df=2`` default treated an interaction built from seven
+        independently measured strains as if it came from one 3-replicate sample,
+        which made the reference distribution far too heavy-tailed and suppressed
+        nearly every interaction. A caller that omits df now fails loudly instead of
+        silently reproducing that bug.
 
     Returns:
     --------

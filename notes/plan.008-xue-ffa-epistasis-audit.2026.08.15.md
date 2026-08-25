@@ -165,3 +165,40 @@ too. Worth unifying at the writer.
   SE partials are all correct; normalization to the base production strain is right.
 - The independent tau in `ffa_epistatic_path_panels.py` still agrees with the pipeline's
   `interaction_score` to 0.0 after the re-run.
+
+## 2026.08.25 - Repo-Wide Sweep for the Same df Pattern: 008 Was the Only Site
+
+The df defect suppressed nearly every interaction in 008, so the obvious question is
+whether the same `min(n) - 1` reasoning appears anywhere else that propagates error across
+several independently measured quantities. Swept every t and z significance test in
+`experiments/` and `torchcell/`. **Result: measured and null. 008 was the only affected
+site.** Each other test is correct for the quantity it actually tests.
+
+| Site | What it tests | df used | Verdict |
+| --- | --- | --- | --- |
+| `010.../inference_dataset_2_setting_fitness_thresholds.py` | DMF vs SMF, a two-sample difference | `compute_welch_df(...)` | Correct, already Welch-Satterthwaite |
+| `012.../kemmeren_volcano.py` | one released log2 ratio against zero | `n - 1` from the released `n_samples` | Correct. The script consumes a released estimate with its released SE, it does not form a combination |
+| `019.../score_decoder_arms.py`, `019.../wave4b_convergence.py` | mean of n paired seed deltas | `len(deltas) - 1` | Correct by construction for a one-sample mean |
+| `W019.../run4_doubles_48h.py` | mean of 3 independent plate-level estimates | `e.size - 1` = 2 | Correct, and the script already documents that three plates is low power and a null there is weak evidence of absence |
+
+One related pattern, deliberately left alone:
+`010.../inference_dataset_2_setting_fitness_thresholds_simplest_assumptions.py` uses a
+normal approximation rather than a t distribution. On small n that is anti-conservative,
+the opposite direction from the 008 bug, but the script's docstring declares it a
+simplified analysis ("For simplicity: SD = SE") and it exists as the naive companion to
+the rigorous Welch-based sibling above. Changing it would defeat its purpose.
+
+### The one residual, now fixed
+
+`compute_se_pvalue` still carried `df=2` as a default in both 008 scripts. Every call site
+passes an explicit Welch df, so the default was unreachable, but it was a trap for the next
+caller. `df` is now required with no default. Re-running both models reproduces the landed
+numbers exactly (456 and 549 FDR-significant; result CSVs byte-identical), confirming the
+change is behavior-preserving.
+
+### The generalizable rule
+
+When almost nothing clears significance in a replicate-poor, propagated-error setting,
+check the reference distribution before believing the null. Two independent suppressors bit
+this analysis: a df that treated ~21 measurements as 3, and an FDR family that corrected
+over six readouts when the claim concerned one.

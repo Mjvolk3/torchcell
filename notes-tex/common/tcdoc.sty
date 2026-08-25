@@ -17,7 +17,10 @@
 %%
 %% Package options:
 %%   draft  (default) -- show status chips, provenance markers, the status legend
-%%   clean            -- hide all of the above, for sharing outside the group
+%%   clean            -- hide the status chips and src pointers, for sharing
+%%                       outside the group. Provenance FLAGS still render, and
+%%                       their key with them, but only in a document that uses
+%%                       at least one.
 %%
 %% Usage:
 %%   \documentclass[11pt,a4paper]{article}
@@ -142,11 +145,31 @@
 %% view as well -- the provenance flags themselves do, so a key that explained
 %% them only in the draft view would leave a reader outside the group looking at
 %% an unexplained symbol.
+%% The provenance row prints only in a document that actually carries a flag.
+%% A key is a promise that its symbols appear somewhere below, and a document
+%% whose numbers are all mirror-backed was opening on two definitions a reader
+%% then never met. Detected rather than declared: \external and \secondhand
+%% record themselves in the .aux, which is read back before page 1 is typeset,
+%% so the key appears on the run after a flag is added and vanishes on the run
+%% after the last one is removed. Nothing per-document to maintain.
+\newif\iftcflagseen
+\newif\iftcflagwritten
+\newcommand{\tcnoteflag}{%
+  \iftcflagwritten\else
+    %% \global: \newif's switches assign locally, and the .aux is read inside a
+    %% group, so a bare \tcflagseentrue is undone before page 1 is typeset.
+    \immediate\write\@auxout{\string\global\string\tcflagseentrue}%
+    \global\tcflagwrittentrue
+  \fi}
+
 \newcommand{\tcstatuslegend}{%
   %% Each row NAMES its axis. Two unlabelled rows of coloured glyphs read as one
   %% six-symbol key, which is what let a triangle and a square be compared in the
   %% first place; the labels make it two keys answering two questions, and they
   %% cost one word each.
+  \iftcdraft\tcprintlegend\else\iftcflagseen\tcprintlegend\fi\fi}
+
+\newcommand{\tcprintlegend}{%
   {\footnotesize\color{tcgray}%
    \iftcdraft
      \textit{Section status:}~
@@ -154,11 +177,13 @@
      \status{tent}~author-reviewed, keep stable \quad
      \status{todo}~not done, agents may edit freely\par
    \fi
-   \textit{Provenance:}~
-   %% Both entries trimmed to keep the row on ONE line. With the axis label
-   %% added it wrapped, and a key that wraps stops looking like a key.
-   \tcflagext~not in the library mirror; verify at the linked source \quad
-   \tcflagsecond~from a review's summary table, not the primary paper\par}%
+   \iftcflagseen
+     \textit{Provenance:}~
+     %% Both entries trimmed to keep the row on ONE line. With the axis label
+     %% added it wrapped, and a key that wraps stops looking like a key.
+     \tcflagext~not in the library mirror; verify at the linked source \quad
+     \tcflagsecond~from a review's summary table, not the primary paper\par
+   \fi}%
   \vspace{0.35\baselineskip}}
 
 %% \tccontents -- legend, then the compact clickable contents. Use this instead
@@ -199,8 +224,8 @@
 %% lose its flag just because the document left the group.
 \DeclareRobustCommand{\tcflagext}{{\normalfont\footnotesize\textcolor{tcprov}{\ding{115}}}}
 \DeclareRobustCommand{\tcflagsecond}{{\normalfont\footnotesize\textcolor{tcgray}{\ding{108}}}}
-\newcommand{\external}[1]{\tcflagext{\footnotesize\color{tcgray}\,[external: #1]}}
-\newcommand{\secondhand}[1]{\tcflagsecond{\footnotesize\color{tcgray}\,[via #1, not primary]}}
+\newcommand{\external}[1]{\tcnoteflag\tcflagext{\footnotesize\color{tcgray}\,[external: #1]}}
+\newcommand{\secondhand}[1]{\tcnoteflag\tcflagsecond{\footnotesize\color{tcgray}\,[via #1, not primary]}}
 
 %% \src{...} -- an inline pointer to the generating script, draft view only.
 \newcommand{\src}[1]{\iftcdraft{\footnotesize\color{tcgray}\textsc{src:}~\texttt{#1}}\par\fi}

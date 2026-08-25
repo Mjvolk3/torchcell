@@ -279,7 +279,10 @@ def t1(singles: pd.DataFrame) -> None:
         "Single knockouts that already exist, all twelve measured in run 4. "
         "The three columns under \\emph{Ours, run 4} are this lab's measurement; "
         "the two under \\emph{Costanzo 2016} are the published single-mutant "
-        "fitness and its standard error."
+        "fitness and its standard error. That column is labeled a standard "
+        "deviation, but it is the spread of bootstrapped means across replicate "
+        "screens, so it is a standard error; Sec.~\\ref{sec:terms} says what it "
+        "shares with our \\emph{boot SE} and what it does not."
     )
     emit("t1-existing-singles", records, "lllrrrrr", head, rows, caption,
          "tab:existing-singles")
@@ -324,7 +327,9 @@ def t2(doubles: pd.DataFrame, triples: list[dict],
         "Double knockouts that already exist, all thirteen measured in run 4. "
         "Column attribution is as in Table~\\ref{tab:existing-singles}, with the "
         "published double-mutant fitness and its standard deviation under "
-        "\\emph{Costanzo 2016}. \\emph{parent} says whether the pair is the "
+        "\\emph{Costanzo 2016} -- a sample standard deviation over the replicate "
+        "colonies of one screen, not the standard error of the singles table. "
+        "\\emph{parent} says whether the pair is the "
         "starting strain for one of the triples in "
         "Table~\\ref{tab:new-triples}. A dash in the Costanzo columns means no one "
         "has published the pair."

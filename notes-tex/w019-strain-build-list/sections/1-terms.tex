@@ -15,6 +15,20 @@
   \emph{plate SD} because it is the error on a mean rather than the spread of
   the values that mean was taken over.
 
+\item[published SE, published SD] The two Costanzo 2016 columns are different
+  statistics, which is why they carry different names. The single-mutant column
+  (Table~\ref{tab:existing-singles}) is published as a standard deviation, but it
+  is the spread of \emph{bootstrapped means} across the replicate control screens
+  a strain was measured in, so it is a standard error and is used here as one. Our
+  \emph{boot SE} is the same kind of quantity, resampled over three replicate
+  plates against their seventeen screens for a query strain, so theirs is the
+  tighter number for the same underlying spread and a strain-by-strain comparison
+  of the two is not like for like. The double-mutant column
+  (Table~\ref{tab:existing-doubles}) is not a standard error at all: it is a
+  sample standard deviation over the four to eight replicate colonies of one
+  screen, which the authors warn underestimates the true variance because adjacent
+  colonies are not independent. It is comparable in kind to our \emph{plate SD}.
+
 \item[fitness] Colony growth relative to the wild type on the same plate, so 1
   is wild-type growth.
 

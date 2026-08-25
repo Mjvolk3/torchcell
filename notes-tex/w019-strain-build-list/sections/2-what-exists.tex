@@ -15,22 +15,38 @@ has been constructed in any round.
 
 \input{tables/t1-existing-singles}
 
+\notesec{Eleven of the twelve singles carry a prediction, not twelve}
+The panel the interaction predictions were made over holds \gene{YIL174W}, which
+has not been built, and does not hold SPH1 (\gene{YLR313C}), which has. So of the
+twelve singles in Table~\ref{tab:existing-singles}, eleven are panel genes with a
+prediction attached and one is not, and every triple in this build list is drawn
+from those eleven.
+
+One of the eleven is itself unsettled. \gene{YLR312C-B} (\texttt{s12}) is an SGD
+\emph{ORF, Merged} feature with no discrete protein, it carries zero trigenic
+training records, and SPH1 was the recommended replacement for it, a swap that has
+not been made. It is in six of the twenty triples. Setting it aside would leave ten
+usable panel genes and would change those six, so the decision is worth making
+before the crosses start rather than after.
+
 \notesec{SPH1 is an open question}
-\texttt{s11}, SPH1 (\gene{YLR313C}), is a built single that is part of no
-triple, at a measured fitness of 1.0882 (Table~\ref{tab:existing-singles}). It
-can ride along on the measurement plate as a near-wild-type control, or it can
-be dropped. If it rides along, the plate carries 71 strains rather than 70, at
-the same five wells each.
+\texttt{s11}, SPH1 (\gene{YLR313C}), is in none of the twenty triples in
+Table~\ref{tab:new-triples}, at a measured fitness of 1.0882
+(Table~\ref{tab:existing-singles}). It can ride along on the measurement plate as a
+near-wild-type control, or it can be dropped. If it rides along, the plate carries
+71 strains rather than 70, at the same five wells each.
 
 \input{tables/t2-existing-doubles}
 
 All thirteen doubles go on the measurement plate. The pairs marked
 \texttt{yes} under \emph{parent} are the starting strains for
-Table~\ref{tab:new-triples}; the rest are re-measured alongside them, at no cost
-in construction work and for a second reading on each of those pairs.
+Table~\ref{tab:new-triples}; the rest are re-measured alongside them, which gives
+a second reading on each of those pairs.
 
-\notesec{One designed double was never built}
-\gene{YJR060W} $\times$ \gene{YKL033W-A} does not exist: the transformation
-produced no colonies. Both parent singles exist and were measured. The pair is
-not part of the build list, and nothing in
+\notesec{One designed double failed to construct: no colonies after
+transformation}
+\gene{YJR060W} $\times$ \gene{YKL033W-A} was designed into run 4 and is the one
+pair of the fourteen that did not come through: the transformation gave zero
+colonies. No attempt date was recorded and no retry is on record. Both parent
+singles exist and were measured. The pair is not part of the build list, and nothing in
 Tables~\ref{tab:new-doubles} or~\ref{tab:new-triples} depends on it.

@@ -1,0 +1,25 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/024-perturb-seq-costing/scripts/render_tex_tables.py
+\begin{table}[htbp]\centering
+\footnotesize
+\caption[]{Genome-scale CRISPRi Perturb-seq budget: 6{,}000 target genes, six guides per gene, one environment, UIUC rates effective 2026-08-01. \textbf{Cells per target gene} = cells carrying a guide against that gene, pooled over all six of its guides -- not cells per guide and not cells per plasmid. \textbf{Analyzed} = cells surviving QC \emph{and} assigned to a guide; \textbf{sequenced} = cells whose reads were paid for, which is larger because $\sim$75\% of split-pool cells are discarded after sequencing. \textbf{Protocol runs} is a count of wet-lab repetitions of the barcoding workflow (split-pool) or of 10x channels, \emph{not} a cost. All sequencing is priced on NovaSeq X 25B PE150 at the 8+ lane rate, the cheapest per-read option the core offers. Excludes labor, oligo pool synthesis, strain construction, and the $\sim$\$10{,}000 one-time split-pool start-up. $\ast$ \textbf{The scifi row is a projection, not a measurement.} It holds every 10x parameter fixed and changes one: cells recovered per channel becomes Datlinger et al.'s measured 151{,}788 in place of the UIUC baseline of 20{,}000. So it answers what the droplet budget looks like if a channel goes 7.6 times further and nothing else changes. Per-cell depth in yeast is unmeasured for this chemistry and is held optimistically at the 10x value; no scifi run in any microbe has been published (\cref{sec:scifi}).}\label{tab:budgets}
+\begin{tabular}{rlrrrrrrr}
+\toprule
+Cells per & Platform & Cells & Cells & Protocol & Read pairs & Reagents & Sequencing & Total \\
+target gene & & analyzed & sequenced & runs & (billions) & & & \\
+\midrule
+100 & SPLiT-seq & 600{,}000 & 2{,}400{,}000 & 5 & 50.0 & \$11{,}470 & \$50{,}880 & \textbf{\$62{,}350} \\
+100 & SPLiT-seq + depl. & 600{,}000 & 2{,}400{,}000 & 5 & 10.0 & \$12{,}470 & \$12{,}720 & \textbf{\$25{,}190} \\
+100 & 10x Chromium X & 600{,}000 & 1{,}090{,}910 & 55 & 27.3 & \$117{,}865 & \$28{,}620 & \textbf{\$146{,}485} \\
+100 & 10x + scifi preindex.$^{\ast}$ & 600{,}000 & 1{,}090{,}910 & 8 & 27.3 & \$17{,}144 & \$28{,}620 & \textbf{\$45{,}764} \\
+250 & SPLiT-seq & 1{,}500{,}000 & 6{,}000{,}000 & 13 & 125.0 & \$29{,}470 & \$127{,}200 & \textbf{\$156{,}670} \\
+250 & SPLiT-seq + depl. & 1{,}500{,}000 & 6{,}000{,}000 & 13 & 25.0 & \$32{,}070 & \$25{,}440 & \textbf{\$57{,}510} \\
+250 & 10x Chromium X & 1{,}500{,}000 & 2{,}727{,}273 & 137 & 68.2 & \$293{,}591 & \$69{,}960 & \textbf{\$363{,}551} \\
+250 & 10x + scifi preindex.$^{\ast}$ & 1{,}500{,}000 & 2{,}727{,}273 & 18 & 68.2 & \$38{,}574 & \$69{,}960 & \textbf{\$108{,}534} \\
+500 & SPLiT-seq & 3{,}000{,}000 & 12{,}000{,}000 & 25 & 250.0 & \$57{,}185 & \$251{,}220 & \textbf{\$308{,}405} \\
+500 & SPLiT-seq + depl. & 3{,}000{,}000 & 12{,}000{,}000 & 25 & 50.0 & \$62{,}185 & \$50{,}880 & \textbf{\$113{,}065} \\
+500 & 10x Chromium X & 3{,}000{,}000 & 5{,}454{,}546 & 273 & 136.4 & \$585{,}039 & \$136{,}740 & \textbf{\$721{,}779} \\
+500 & 10x + scifi preindex.$^{\ast}$ & 3{,}000{,}000 & 5{,}454{,}546 & 36 & 136.4 & \$77{,}148 & \$136{,}740 & \textbf{\$213{,}888} \\
+\bottomrule
+\end{tabular}
+\end{table}

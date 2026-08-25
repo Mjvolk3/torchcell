@@ -8,7 +8,7 @@ created: 1787676660678
 
 ## 2026.08.25 - Fig. 17, environments as the other scaling axis
 
-Draws Sec. 7.3 of [[microbe-perturb-seq.method-review-and-costing]]. One row,
+Draws Sec. 7.3 of [[experiments.024-perturb-seq-costing.method-review-and-costing]]. One row,
 three panels, full Nature width.
 
 - **(a) Environments are the linear axis.** Log axes, so the exponent is the

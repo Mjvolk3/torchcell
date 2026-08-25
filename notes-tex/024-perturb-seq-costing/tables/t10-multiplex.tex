@@ -1,0 +1,19 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/024-perturb-seq-costing/scripts/render_tex_tables.py
+\begin{table}[htbp]\centering
+\footnotesize
+\caption[]{What multiplexing buys, and what it does not. \textbf{Plex $k$} = gRNAs delivered per cell, each against a different gene, so $k$ target genes are knocked down in that cell. It is not the six guides per gene the library carries. \textbf{Main effects} = the average effect of one gene, pooling every cell that carries a guide against it whatever else it carries. \textbf{Pairs} are pairs of \emph{target genes}, not plasmids: a cell informs a pair only if it happens to carry guides against both. Column 2 targets 250-cells-per-gene precision over 6{,}000 genes; columns 3--4 apply Eq.~\ref{eq:pairs} at Yao's 400 cells per pair; column 5 inverts it -- how many target genes can have \emph{all} their pairs powered inside one 300{,}000-cell run.}\label{tab:multiplex}
+\begin{tabular}{rrrrr}
+\toprule
+Guides per & Cells for & Cells for all pairs & Cells for all pairs & Genes fully paired \\
+cell ($k$) & main effects & among 6{,}000 genes & among 200 genes & in 300k cells \\
+\midrule
+1 & 1{,}500{,}000 & -- & -- & -- \\
+2 & 750{,}000 & 7{,}198{,}800{,}000 & 7{,}960{,}000 & 39 \\
+3 & 500{,}000 & 2{,}399{,}600{,}000 & 2{,}653{,}333 & 68 \\
+5 & 300{,}000 & 719{,}880{,}000 & 796{,}000 & 123 \\
+8 & 187{,}500 & 257{,}100{,}000 & 284{,}286 & 205 \\
+10 & 150{,}000 & 159{,}973{,}333 & 176{,}889 & 260 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -31,9 +31,9 @@ term in the controlled vocabulary before it appears in prose or a figure label.
 ## Pairing is by name
 
 ```
-notes/microbe-perturb-seq.method-review-and-costing.md   <- dendron working notes
-notes/microbe-perturb-seq.tables.md
-notes-tex/microbe-perturb-seq/                            <- the typeset document
+notes/experiments.024-perturb-seq-costing.method-review-and-costing.md   <- dendron working notes
+notes/experiments.024-perturb-seq-costing.tables.md
+notes-tex/024-perturb-seq-costing/                            <- the typeset document
 ```
 
 `notes-tex/<slug>/` pairs with the `notes/<slug>.*.md` hierarchy, and with the
@@ -46,9 +46,9 @@ Every `.tex` file opens with the three-line header the repo already uses for
 Python, in `%%` comments:
 
 ```latex
-%% notes-tex/microbe-perturb-seq/main.tex
-%% [[microbe-perturb-seq.method-review-and-costing]]
-%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/microbe-perturb-seq/main.tex
+%% notes-tex/024-perturb-seq-costing/main.tex
+%% [[experiments.024-perturb-seq-costing.method-review-and-costing]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/024-perturb-seq-costing/main.tex
 ```
 
 ## Layout

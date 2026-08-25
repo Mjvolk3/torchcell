@@ -1,0 +1,19 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/024-perturb-seq-costing/scripts/render_tex_tables.py
+\begin{table}[htbp]\centering
+\footnotesize
+\caption[]{Barcode collision rate, $100(1-((B-1)/B)^{C-1})$. For split-pool $B=96^{R}\times S$; the sublibrary index $S$ is a real barcode dimension, because cells are split into sublibraries \emph{after} the last in-cell ligation. The final row is the preindexed-droplet scheme of \cref{sec:scifi}, where $B$ is the 384 round1 wells times the 737{,}280 round2 barcodes the Chromium ATAC reagents supply. \textbf{That row is an upper bound on its own performance.} The formula assumes cells are spread uniformly over the space, which is true of plate wells and not of droplets; Datlinger et al.\ replace the uniform assumption with a zero-inflated Poisson fit for exactly this reason, so read the row as ``the space is not the binding constraint'' rather than as a predicted collision rate.}\label{tab:barcode}
+\begin{tabular}{lrrrrrr}
+\toprule
+Scheme & Sublib. & Barcode space & @45k & @480k & @3M & @12M cells \\
+\midrule
+split-pool, 3 rounds & 1 & 884{,}736 & 4.96\% & 41.87\% & 96.63\% & 100.00\% \\
+split-pool, 3 rounds & 24 & 21{,}233{,}664 & 0.21\% & 2.24\% & 13.18\% & 43.17\% \\
+split-pool, 3 rounds & 96 & 84{,}934{,}656 & 0.05\% & 0.56\% & 3.47\% & 13.18\% \\
+split-pool, 4 rounds & 1 & 84{,}934{,}656 & 0.05\% & 0.56\% & 3.47\% & 13.18\% \\
+\textbf{split-pool, 4 rounds} & \textbf{24} & \textbf{2{,}038{,}431{,}744} & 0.00\% & 0.02\% & 0.15\% & 0.59\% \\
+split-pool, 4 rounds & 96 & 8{,}153{,}726{,}976 & 0.00\% & 0.01\% & 0.04\% & 0.15\% \\
+scifi, $384\times$droplet & -- & 283{,}115{,}520 & 0.02\% & 0.17\% & 1.05\% & 4.15\% \\
+\bottomrule
+\end{tabular}
+\end{table}

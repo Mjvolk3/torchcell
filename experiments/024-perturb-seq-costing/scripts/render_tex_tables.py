@@ -1,7 +1,7 @@
 # experiments/024-perturb-seq-costing/scripts/render_tex_tables.py
 # [[experiments.024-perturb-seq-costing.scripts.render_tex_tables]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/024-perturb-seq-costing/scripts/render_tex_tables
-"""Emit the review's tables as LaTeX fragments for notes-tex/microbe-perturb-seq/.
+"""Emit the review's tables as LaTeX fragments for notes-tex/024-perturb-seq-costing/.
 
 Companion to ``render_tables.py`` (which emits the markdown/landscape-PDF form).
 Both read the same constants, so the typeset document and the note cannot

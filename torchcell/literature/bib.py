@@ -114,6 +114,20 @@ def sanitize_citation_key(key: str) -> str:
     return _INVALID_KEY_CHARS.sub("", key)
 
 
+def _is_citable_entry(entry: dict[str, Any]) -> bool:
+    """True for a real work, False for an attachment stub.
+
+    Zotero exports an entry for every item it is handed, including PDF
+    **attachments**, which arrive as `@misc{noauthor_notitle_nodate...}` carrying no
+    author, title, or year. Judging by content rather than by matching that magic
+    key means the rule survives Zotero changing the placeholder, and it does not
+    discard a real paper whose exported key happens to differ from its stored one.
+    """
+    return bool(
+        (entry.get("title") or "").strip() or (entry.get("author") or "").strip()
+    )
+
+
 def citable_citation_keys(
     lib: ZoteroLibrary,
     collection: str | None = None,
@@ -142,6 +156,58 @@ def citable_citation_keys(
         for item in items
         if item["data"].get("itemType") not in NON_CITABLE_ITEM_TYPES
     }
+
+
+def fetch_paired_collection_entries(
+    group: ZoteroLibrary,
+    user: ZoteroLibrary,
+    *,
+    group_collection: str,
+    user_collection: str,
+) -> list[dict[str, Any]]:
+    """Union ONE group collection with ONE personal collection.
+
+    This is the per-document bibliography: a ``notes-tex/<slug>/references.bib``
+    cites the reading for that slug, which lives in a same-named collection in each
+    library (e.g. group ``microbe-perturb-seq`` and personal
+    ``torchcell/torchcell-topics/microbe-perturb-seq``). The whole-tree union
+    (:func:`fetch_union_bibtex_entries`) is far too wide for that -- it would drag
+    every torchcell paper into a single document's bibliography.
+
+    Personal wins on a shared key, matching the whole-tree union.
+
+    Args:
+        group: The torchcell group library.
+        user: The personal library.
+        group_collection: Collection name or key in the group.
+        user_collection: Collection name or key in the personal library.
+
+    Returns:
+        Deduplicated entries from the two collections.
+    """
+    by_key: dict[str, dict[str, Any]] = {}
+    for lib, name, label in (
+        (group, group_collection, "group"),
+        (user, user_collection, "personal"),
+    ):
+        entries = fetch_bibtex_entries(lib, **_collection_selector(lib, name))
+        for entry in entries:
+            if key := entry.get(_ID):
+                by_key[key] = entry  # personal is applied second, so it wins
+        log.info("bib: %s/%s -> %d entries", label, name, len(entries))
+    log.info("bib: paired-collection union -> %d entries", len(by_key))
+    return list(by_key.values())
+
+
+def _collection_selector(lib: ZoteroLibrary, name_or_key: str) -> dict[str, str]:
+    """Address a collection by key when it looks like one, else by name.
+
+    Zotero collection keys are 8 uppercase alphanumerics. Accepting either means a
+    caller can pin the stable key (safe across renames) or use the readable name.
+    """
+    if re.fullmatch(r"[A-Z0-9]{8}", name_or_key):
+        return {"collection_key": name_or_key}
+    return {"collection": name_or_key}
 
 
 def fetch_union_bibtex_entries(
@@ -259,15 +325,31 @@ def fetch_bibtex_entries(
                 lib.zot.collection_items(coll_key, format="bibtex")
             )
         )
-    citable = citable_citation_keys(
-        lib, collection=collection, collection_key=collection_key
-    )
     # An EMPTY collection comes back as a plain (empty) list rather than a
     # BibDatabase -- pyzotero only parses BibTeX when there is a body to parse.
     # Several collections in the personal tree hold only sub-collections, so this
     # is the normal case, not an error.
     raw = db.entries if hasattr(db, "entries") else list(db)
-    entries = [e for e in raw if e.get(_ID) in citable]
+    entries = [e for e in raw if _is_citable_entry(e)]
+
+    # Zotero's BibTeX export does NOT always reproduce an item's stored
+    # `citationKey`: it may regenerate the key from the title, or drop a
+    # disambiguating suffix. Measured: identical on all 102 group items, but
+    # 4 of 53 disagree in personal `microbe-perturb-seq`. Filtering on key
+    # membership therefore DROPS those papers silently, so the filter above is
+    # content-based instead. The disagreement is still worth surfacing, because
+    # a note citing the stored key will not resolve against the exported one.
+    stored = citable_citation_keys(
+        lib, collection=collection, collection_key=collection_key
+    )
+    exported = {e.get(_ID) for e in entries}
+    if drifted := stored - exported:
+        log.warning(
+            "bib: %d stored citationKey(s) differ from the BibTeX export and will "
+            "not resolve if cited by the stored key: %s",
+            len(drifted),
+            ", ".join(sorted(drifted)),
+        )
     # Sanitize INCOMING keys too, not just ones read off disk: a citation key is
     # free text in Zotero, and a single `$` makes the whole .bib unparseable to
     # pandoc -- which silently kills every citation in the file, not just this one.
@@ -284,7 +366,7 @@ def fetch_bibtex_entries(
     log.info(
         "bib: pulled %d citable entries from Zotero (%s; %d non-citable dropped)",
         len(entries),
-        collection or "whole library",
+        collection or collection_key or "whole library",
         len(raw) - len(entries),
     )
     return entries

@@ -3,7 +3,7 @@
 # [[scripts.lit_bib]]
 # https://github.com/Mjvolk3/torchcell/tree/main/scripts/lit_bib.py
 
-"""Regenerate the Dendron bibliography from Zotero -- do not hand-edit ``bib.bib``.
+r"""Regenerate the Dendron bibliography from Zotero -- do not hand-edit ``bib.bib``.
 
 Pulls BibTeX over the Zotero **Web API** (pyzotero) and merges it into
 ``notes/assets/bib/bib.bib`` and its publish twin. Runs headless: no Zotero desktop,
@@ -27,6 +27,18 @@ Usage::
     python scripts/lit_bib.py --collection microbe-perturb-seq   # one collection only
     python scripts/lit_bib.py --update-existing            # also refresh shared entries
     python scripts/lit_bib.py --verbose                    # list every added/updated key
+
+Per-document bibliography (one group collection unioned with one personal
+collection, written wherever you point it)::
+
+    python scripts/lit_bib.py \
+        --collection FE8DQKUH --user-collection AC8MFJXK \
+        --out notes-tex/microbe-perturb-seq/references.bib
+
+Cadence: this is an EXPLICIT step, never part of a document build. A build that
+pulls from a live API is not reproducible, since the same commit yields a
+different PDF once Zotero changes. Regenerate when papers are added, commit the
+result, and let builds consume the committed file.
 """
 
 import argparse
@@ -46,6 +58,7 @@ from torchcell.literature.bib import (  # noqa: E402
     BIB_RELPATHS,
     BibFileSyncReport,
     fetch_bibtex_entries,
+    fetch_paired_collection_entries,
     fetch_union_bibtex_entries,
     sync_bib_file,
 )
@@ -92,6 +105,25 @@ def main() -> None:
         help="Personal collection tree to union in (default: $ZOTERO_USER_ROOT_COLLECTION).",
     )
     parser.add_argument(
+        "--user-collection",
+        default=None,
+        metavar="NAME_OR_KEY",
+        help=(
+            "Pair with --collection to build a per-document bibliography from ONE "
+            "group collection unioned with ONE personal collection. Accepts a "
+            "collection key (stable across renames) or a name."
+        ),
+    )
+    parser.add_argument(
+        "--out",
+        action="append",
+        metavar="PATH",
+        help=(
+            "Write to this path instead of the two managed bibliographies; "
+            "repeatable. Used for notes-tex/<slug>/references.bib."
+        ),
+    )
+    parser.add_argument(
         "--update-existing",
         action="store_true",
         help=(
@@ -105,18 +137,30 @@ def main() -> None:
     args = parser.parse_args()
 
     group = ZoteroLibrary.from_env()
-    if args.collection is not None:
+    user = None
+    if not args.group_only:
+        user = ZoteroLibrary(
+            ZoteroConfig(
+                library_id=os.environ["ZOTERO_USER_ID"],
+                library_type="user",
+                api_key=SecretStr(os.environ["ZOTERO_API_KEY"]),
+            )
+        )
+
+    if args.user_collection is not None:
+        if args.collection is None:
+            parser.error("--user-collection requires --collection (the group side)")
+        if user is None:
+            parser.error("--user-collection cannot be combined with --group-only")
+        incoming = fetch_paired_collection_entries(
+            group,
+            user,
+            group_collection=args.collection,
+            user_collection=args.user_collection,
+        )
+    elif args.collection is not None:
         incoming = fetch_bibtex_entries(group, collection=args.collection)
     else:
-        user = None
-        if not args.group_only:
-            user = ZoteroLibrary(
-                ZoteroConfig(
-                    library_id=os.environ["ZOTERO_USER_ID"],
-                    library_type="user",
-                    api_key=SecretStr(os.environ["ZOTERO_API_KEY"]),
-                )
-            )
         incoming = fetch_union_bibtex_entries(
             group, user, user_root_collection=args.root_collection
         )
@@ -126,9 +170,14 @@ def main() -> None:
             "Check ZOTERO_* credentials or the --collection name."
         )
 
-    for relpath in BIB_RELPATHS:
+    targets = (
+        [Path(p) for p in args.out]
+        if args.out
+        else [_PROJECT_ROOT / rel for rel in BIB_RELPATHS]
+    )
+    for relpath in targets:
         report = sync_bib_file(
-            _PROJECT_ROOT / relpath,
+            relpath,
             incoming,
             dry_run=args.dry_run,
             update_existing=args.update_existing,

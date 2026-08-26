@@ -1,31 +1,97 @@
 %% GENERATED FILE -- do not hand-edit.
 %% SOURCE: experiments/database/scripts/build_candidate_datasets_table.py
-\begin{table}[H]\centering
+\begingroup
 \footnotesize
-\setlength{\tabcolsep}{3pt}
-\caption[]{Rows bearing on a yeast Perturb-seq, listed regardless of rank. \emph{Rank}
-is the row's position in Table~\ref{tab:candidates}.}
-\label{tab:perturbseq}
-\begin{tabular}{@{}r@{\hspace{4pt}} L{46mm} L{100mm}@{}}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{@{}r@{\hspace{4pt}} L{46mm} L{112mm}@{}}
+\caption[]{Rows bearing on a yeast Perturb-seq, grouped by axis rather than by rank.
+\emph{Rank} is the row's position in Table~\ref{tab:candidates}. A large library of
+single perturbations read out by fitness is not high-dimensional input: it is one edit per
+cell, sampled widely.}
+\label{tab:perturbseq}\\
 \toprule
-Rank & Dataset & What it settles \\
+\textbf{Rank} & \textbf{Dataset} & \textbf{What it supplies} \\
 \midrule
-4 & \textbf{Hale 2024 (CRISPRi x natural variation)} & Directly measures how a genetic perturbation's effect changes with genetic background. The single best dataset for asking whether a model trained on one background transfers to another. \\
-\addlinespace[5pt]
-21 & \textbf{N'Guessan 2025 (segregant scRNA-seq eQTL)} & Single-cell transcriptomes indexed by recombinant natural genotype rather than by an engineered knockout. The closest existing analog to the proposed Perturb-seq design, and the only one that already pairs per-cell expression with sequenced genotypes at scale. \\
-\addlinespace[5pt]
-26 & \textbf{Chong 2015 / CYCLoPs (single-cell proteome dynamics)} & Per-cell rather than per-strain-mean labels, over 20 million cells. The distributional readout a Perturb-seq design has to be scored against. \\
-\addlinespace[5pt]
-28 & \textbf{Momen-Roknabadi 2020 (inducible CRISPRi library)} & A second CRISPRi library on a different vector and guide-design rule. Whether a model trained on one library transfers to the other is a cheap, decisive test of guide-level overfitting. \\
-\addlinespace[5pt]
-30 & \textbf{McGlincy 2021 (genome-scale CRISPRi library)} & Ten guides per gene gives a graded knockdown axis instead of a binary null, and it covers essential genes. This is the library a yeast Perturb-seq would most plausibly be built on. \\
-\addlinespace[5pt]
-59 & \textbf{Nadal-Ribelles 2019 (sensitive yeast scRNA-seq)} & Establishes within-clone transcript correlation, which is the noise floor any per-strain Perturb-seq mean has to clear. Directly sizes the cells-per-guide question. \\
-\addlinespace[5pt]
-60 & \textbf{Gasch 2017 (single-cell stress heterogeneity)} & Separates intrinsic from extrinsic expression heterogeneity under stress. Sets what fraction of Perturb-seq variance is recoverable signal rather than cell-state noise. \\
-\addlinespace[5pt]
-69 & \textbf{Brettner 2024 (ultra-high-throughput yeast scRNA-seq)} & The platform the costing model in experiments/024 is built on. Not a dataset to ingest; the reason it is here is that a yeast Perturb-seq proposal has to name its chemistry. \\
-\addlinespace[5pt]
+\endfirsthead
+\toprule
+\textbf{Rank} & \textbf{Dataset} & \textbf{What it supplies} \\
+\midrule
+\endhead
 \bottomrule
-\end{tabular}
-\end{table}
+\endfoot
+\multicolumn{3}{@{}l}{\textbf{High on BOTH axes: combinatorial or background-crossed perturbation AND a transcriptome-scale readout}}\\
+\addlinespace[2pt]
+1 & \textbf{Boocock 2025 (single-cell eQTL mapping)} & Single-cell transcriptomes across tens of thousands of sequenced recombinants in two carbon sources. High-dimensional on both axes at once, which almost nothing in yeast is, and the closest existing template for the proposed design. \\
+\addlinespace[5pt]
+5 & \textbf{Albert 2018 (eQTL in 1,012 segregants)} & Transcriptomes on a thousand sequenced recombinants, so genotype maps to a genome-wide expression vector rather than one trait. The single best existing analog to a Perturb-seq readout on a high-dimensional genotype axis. \\
+\addlinespace[5pt]
+29 & \textbf{N'Guessan 2025 (segregant scRNA-seq eQTL)} & Single-cell transcriptomes indexed by recombinant natural genotype rather than by an engineered knockout. The closest existing analog to the proposed Perturb-seq design, and the only one that already pairs per-cell expression with sequenced genotypes at scale. \\
+\addlinespace[5pt]
+\addlinespace[4pt]
+\multicolumn{3}{@{}l}{\textbf{High-dimensional perturbation space, scalar readout}}\\
+\addlinespace[2pt]
+2 & \textbf{de Boer 2020 (100M random promoters)} & The largest sequence-to-phenotype dataset in yeast by orders of magnitude, and every genotype is an exactly known 80mer. The perturbation space is continuous rather than a gene list, which is what a model of regulatory grammar needs and no deletion collection can supply. \\
+\addlinespace[5pt]
+3 & \textbf{Vaishnav 2022 (regulatory DNA fitness landscape)} & Extends de Boer from measurement to a fitness landscape, and tests native and natural-isolate promoter variants against the random library. The bridge between synthetic sequence space and the natural variation the isolate panels carry. \\
+\addlinespace[5pt]
+8 & \textbf{Hale 2024 (CRISPRi x natural variation)} & Directly measures how a genetic perturbation's effect changes with genetic background. The single best dataset for asking whether a model trained on one background transfers to another. \\
+\addlinespace[5pt]
+10 & \textbf{Nguyen Ba 2022 (barcoded bulk QTL, 100k segregants)} & The largest genotyped recombinant panel in yeast, each segregant barcoded and low-coverage sequenced against known parents. Two orders of magnitude more genotypes than Bloom 2013 on the same kind of cross, which is what makes small-effect and epistatic loci detectable. \\
+\addlinespace[5pt]
+16 & \textbf{Li 2016 (tRNA fitness landscape)} & A near-complete fitness landscape of one native yeast gene. Every genotype is a known sequence and the sampling is exhaustive rather than one allele per gene, which is the opposite of what a deletion collection provides. \\
+\addlinespace[5pt]
+19 & \textbf{Domingo 2018 (tRNA double-mutant landscape)} & Pairwise epistasis at nucleotide resolution inside one gene. The higher-order structure Costanzo and Kuzmin map between genes, measured within a gene, which is the resolution inverse design actually needs. \\
+\addlinespace[5pt]
+33 & \textbf{Bloom 2025 (global epistasis in a yeast cross)} & Reports that many natural variants have effects that scale with background fitness, which is a specific, testable claim about how genotype effects compose. Directly relevant to whether a model trained on one background transfers. \\
+\addlinespace[5pt]
+38 & \textbf{Faure 2022 (doubledeepPCA)} & Separates a variant's effect on folding from its effect on binding by measuring both in the same library. That decomposition is what turns a fitness landscape into a mechanistic one. \\
+\addlinespace[5pt]
+42 & \textbf{Diss 2018 (Fos-Jun interaction double mutants)} & Exhaustive pairwise mutation of an interaction interface, read out in yeast. The genotype is a heterologous domain rather than a yeast gene, so it enters as an engineered chassis, but the epistasis structure is the deepest in the table. \\
+\addlinespace[5pt]
+48 & \textbf{McGlincy 2021 (genome-scale CRISPRi library)} & Ten guides per gene gives a graded knockdown axis instead of a binary null, and it covers essential genes. This is the library a yeast Perturb-seq would most plausibly be built on. \\
+\addlinespace[5pt]
+50 & \textbf{Puchta 2016 (snoRNA U3 landscape)} & The companion landscape on a non-coding RNA, published alongside Li 2016. Two exhaustive landscapes on different molecule classes is a stronger test of a sequence model than either alone. \\
+\addlinespace[5pt]
+76 & \textbf{Renganaath 2020 (natural promoter-variant MPRA)} & Native promoter variation measured allele by allele rather than sampled randomly, with 451 variants called causal. The row that joins the synthetic MPRA libraries to the natural-isolate panels: same readout, real alleles. \\
+\addlinespace[5pt]
+84 & \textbf{Zhang 2022 (GCE-SCRaMbLE recombination outcomes)} & Each cell carries tens of simultaneous structural edits, sequenced afterwards. The deepest per-cell perturbation in the table: a genotype here is a rearranged chromosome, not an allele, which is what inverse strain design eventually has to predict on. \\
+\addlinespace[5pt]
+99 & \textbf{Guo 2018 (CRISPR-Cas9 tiling of essential genes)} & Tiles guides across genes rather than sampling a few per gene, so the readout resolves within-gene functional regions. A finer input axis than a gene-level library. \\
+\addlinespace[5pt]
+110 & \textbf{Jaffe 2019 (multiplexed CRISPR interference epistasis)} & Two guides per cell, so the perturbation space is combinatorial rather than one edit at a time. This is the shape a Perturb-seq input axis should have, measured here against fitness only. \\
+\addlinespace[5pt]
+\addlinespace[4pt]
+\multicolumn{3}{@{}l}{\textbf{Transcriptome-scale or per-cell readout, low-dimensional perturbation}}\\
+\addlinespace[2pt]
+9 & \textbf{Jackson 2020 (TF-deletion single-cell atlas)} & Single-cell transcriptomes across a panel of regulator deletions in two media, used to learn a regulatory network. Few genotypes, but it is one of the only yeast datasets crossing a genetic perturbation with a per-cell transcriptome, which is the quadrant the Perturb-seq proposal targets. \\
+\addlinespace[5pt]
+32 & \textbf{Hu 2007 (TF deletion expression compendium)} & Transcriptomes for the regulators specifically, predating and complementing the already-built Kemmeren compendium. Deleting a transcription factor is the perturbation whose transcriptome response is most interpretable. \\
+\addlinespace[5pt]
+39 & \textbf{Chong 2015 / CYCLoPs (single-cell proteome dynamics)} & Per-cell rather than per-strain-mean labels, over 20 million cells. The distributional readout a Perturb-seq design has to be scored against. \\
+\addlinespace[5pt]
+67 & \textbf{Newman 2006 (protein noise, GFP library)} & Measures the distribution rather than the mean, per protein, in two media. Noise is the quantity a per-cell readout recovers and a bulk one destroys, so this sets what a single-cell design should expect to see. \\
+\addlinespace[5pt]
+87 & \textbf{Smith 2008 (gene-environment interaction eQTL)} & Transcriptomes on the same segregants in two carbon sources, so an expression QTL can be shown to be condition-dependent. Small, and it is the design Boocock 2025 scales up. \\
+\addlinespace[5pt]
+88 & \textbf{Lenstra 2011 (chromatin regulator deletion expression)} & Transcriptomes for the chromatin machinery specifically, from the group behind the built Kemmeren compendium and in the same format. Chromatin regulators are the class whose deletion most reshapes the expression landscape. \\
+\addlinespace[5pt]
+90 & \textbf{Breker 2013 (GFP library under stress)} & The GFP collection re-imaged under stress rather than at baseline, so relocalization is measured as a response. Feeds LoQAtE, and adds the condition axis Huh 2003 lacks. \\
+\addlinespace[5pt]
+91 & \textbf{Tkach 2012 (protein relocalization under DNA damage)} & The GFP collection imaged under damage, giving a second condition axis on the imaging layer alongside Breker's stress panel. Relocalization is a response no abundance measurement captures. \\
+\addlinespace[5pt]
+94 & \textbf{Denervaud 2013 (microfluidic GFP dynamics)} & Single-cell protein dynamics under controlled environmental switches, rather than endpoint snapshots. The temporal axis every other imaging row lacks. \\
+\addlinespace[5pt]
+100 & \textbf{Yvert 2013 (single-cell trait variation across isolates)} & CalMorph morphology on natural isolates rather than deletion strains, in the same feature space as the already-built Ohya and Ohnuki datasets. Joins the morphology layer to the natural-variation axis without harmonization. \\
+\addlinespace[5pt]
+104 & \textbf{Nadal-Ribelles 2019 (sensitive yeast scRNA-seq)} & Establishes within-clone transcript correlation, which is the noise floor any per-strain Perturb-seq mean has to clear. Directly sizes the cells-per-guide question. \\
+\addlinespace[5pt]
+105 & \textbf{Gasch 2017 (single-cell stress heterogeneity)} & Separates intrinsic from extrinsic expression heterogeneity under stress. Sets what fraction of Perturb-seq variance is recoverable signal rather than cell-state noise. \\
+\addlinespace[5pt]
+133 & \textbf{Brettner 2024 (ultra-high-throughput yeast scRNA-seq)} & The platform the costing model in experiments/024 is built on. Not a dataset to ingest; the reason it is here is that a yeast Perturb-seq proposal has to name its chemistry. \\
+\addlinespace[5pt]
+137 & \textbf{Levy 2008 (morphology and phenotypic capacitance)} & Scores how much a deletion increases cell-to-cell variability rather than shifting the mean, identifying capacitor genes. Variance as the phenotype is a readout only per-cell data supports, which is the argument the Perturb-seq proposal rests on. \\
+\addlinespace[5pt]
+\addlinespace[4pt]
+\end{longtable}
+\endgroup

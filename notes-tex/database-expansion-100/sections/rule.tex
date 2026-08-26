@@ -10,11 +10,11 @@
 
 A phenotype is only trainable against a genotype that can be written down. Every row in
 Table~\ref{tab:candidates} therefore names a \term{sequence basis}: the route by which the
-total genomic content of one strain would be reconstructed. The nine bases in use are
+total genomic content of one strain would be reconstructed. The eleven bases in use are
 
 \begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
   \item \term{S288C-KO} -- the reference genome minus one cataloged ORF (BY4741, BY4742,
-    BY4743). Twenty-one of the recommended 51 sit here.
+    BY4743). Thirty-six of the recommended 151 sit here, the largest single group.
   \item \term{S288C-KO/het} -- a heterozygous diploid deletion, so a dosage edit rather
     than a null.
   \item \term{S288C+guide} -- the genome is unedited and the perturbation is a designed
@@ -23,6 +23,8 @@ total genomic content of one strain would be reconstructed. The nine bases in us
     Designed, and not verified per strain.
   \item \term{S288C+tag} -- the reference plus a designed tag, degron or promoter cassette.
   \item \term{S288C+ORF-plasmid} -- the reference plus a barcoded ORF on a known plasmid.
+  \item \term{S288C+reporter-locus} -- the reference plus a designed regulatory sequence
+    driving a reporter, which is what every massively parallel reporter assay perturbs.
   \item \term{isolate-WGS} -- a published assembly or variant call set per isolate.
   \item \term{segregant-WGS} -- genotype calls or whole-genome sequence per progeny.
   \item \term{engineered-chassis} -- a named production strain plus heterologous cassettes.
@@ -47,7 +49,7 @@ Tier is assigned from stated bars rather than judgment:
 
 \begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
   \item \textbf{Tier 1} clears all three of $\geq$$10^3$ genotypes, $\geq$$10^4$ instances,
-    and a clean sequence basis, and lands in one of the six requested classes.
+    and a clean sequence basis, and lands in one of the nine classes.
   \item \textbf{Tier 2} clears two of the three, or is the only dataset covering a
     requested class, or directly de-risks the Perturb-seq proposal.
   \item \textbf{Tier 3} is a modality or reference backbone the substrate needs without
@@ -70,14 +72,13 @@ normalization the supported-datasets table already applies through its gzip-sign
 
 \subsection{Where the cut falls, and what it cost\secstatus{todo}}
 
-The cut at 51 is arithmetic, $100-49$, not a quality threshold. Rows on both sides of it
+The cut at 151 is arithmetic, $200-49$, not a quality threshold. Rows on both sides of it
 are close, so it should be read as a budget rather than a verdict.
 
 A dataset named explicitly in the scoping request is pinned into the recommended set even
 if it ranks below the cut, and the pin is reported rather than folded into the score, so
-the set stays auditable. No pin is currently in force. One was, until Wildenhain 2016 came
-out of the table as already built (Sec.~\ref{sec:status}); that freed a slot, Chang 2012
-returned from the reserve, and Trikka 2015 now reaches row 51 on its own measurements.
+the set stays auditable. No pin is currently in force: at 151 rows the recommended set is
+wide enough that every requested dataset ranks inside it unaided.
 
 Displacement, when a pin does bind, picks the weakest non-requested row by tier first and
 measurements second. The tier term is load-bearing rather than decorative: ranking on

@@ -133,6 +133,53 @@ accession.** Accession is the strongest key and the one that would have caught W
 so it is running on ~11% of the table. Recording each row's deposit identifier is the
 highest-value edit left.
 
+### 2026.08.26 - expanded to 155 candidates, target now 200
+
+Scope changed: 49 built + 151 = 200, so CUT=151 and the list is 155 (4 in reserve).
+
+**Perturb-seq criterion rewritten.** The old boolean flagged any library. The real criterion
+is two axes: **input dimensionality** (combinatorial or background-crossed perturbation --
+a big single-perturbation library is NOT this, it is one edit per cell sampled widely) and
+**output dimensionality** (transcriptome or per-cell distribution, not a scalar). Field is
+now `PertSeq = none|input|output|both`. Momen-Roknabadi de-flagged accordingly.
+
+**The key finding: the both-axes quadrant is nearly empty.** Of 155 rows, 15 input, 15
+output, **3 both** (Boocock 2025, Albert 2018, N'Guessan 2025) -- and all three get there via
+recombinant natural genotypes x transcriptome, none by designed perturbation. The largest
+genotype-indexed transcriptome with designed perturbations is the built Kemmeren 2014: 1,484
+SINGLE deletions. Sameith 2015 adds 72 doubles. **That gap is the argument for running the
+experiment, and also its spec: combinatorial perturbation per cell + transcriptome readout.**
+
+**Three new classes for depth** (the "deep not shallow" ask): Regulatory DNA (8), Deep
+mutational scan (9), Combinatorial genome (3). All sequence-exact per genotype.
+
+**Promoter datasets** (the one half-remembered): de Boer 2020 (>1e8 random promoters,
+largest sequence-to-phenotype dataset in yeast), Vaishnav 2022 (fitness landscape + natural
+isolate variants), Renganaath 2020 (5,832 REAL promoter alleles from natural variation, 451
+causal). Keren 2013 measures ~900 native promoters directly across conditions. The most
+likely referent is Renganaath or Vaishnav; both are in.
+
+**Acetic acid.** Tolerance is now covered by four perturbation types (Mira 2010 deletion,
+Mukherjee 2021 CRISPRi-essential, Sousa 2013 overexpression, built Mormino 2022 biosensor).
+Production: **Peeters 2021 measures acetate titer across 1,125 sequenced segregants** -- the
+only quantitative genotype-to-acetate map at scale -- plus Chang 2012 (ordinal halo, whole
+collection). **No genome-wide screen with a quantitative per-strain acetate titer was found.**
+
+**Table 1 caption now shows the glyph** rather than the word "bullet".
+
+**New `confidence` field.** 73 `sourced` / 82 `recall`. Recall rows are real datasets with
+sound descriptions but unverified citation details, counts and accessions. Ranking puts
+several recall rows at the very top (de Boer, Boocock) because they genuinely are the
+largest -- correct ranking, wrong reading if the flag is ignored.
+
+**The checker found its first duplicate before I did:** O'Duibhir 2014 expression. Its DOI is
+cited in `oduibhir2014.py`, whose docstring says the paper's expression data IS the Kemmeren
+compendium (already built) and only the growth readout was new. Removed. That is 4 duplicate/
+blocked finds total, and the first one a script caught rather than the user.
+
+**Overlap coverage got relatively worse:** 56/155 rows resolve a PMID, 9/155 a parseable
+accession. Accession is the strongest key and now runs on ~1 row in 17.
+
 ### Corrections to the 2026.07 triage pass
 
 - **Its top ten is stale.** Nine of ten have been built since (Vanacloig-Pedros, Messner

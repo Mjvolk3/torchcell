@@ -6,7 +6,7 @@
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.15}
 \begin{longtable}{@{}r@{\hspace{4pt}} L{42mm} L{21mm} L{26mm} L{20mm} r@{\hspace{5pt}} r@{\hspace{5pt}} L{30mm} L{23mm} L{34mm}@{}}
-\caption[]{Ranked candidates to take the database from 49 supported datasets to 100.
+\caption[]{Ranked candidates to take the database from 49 supported datasets to 200.
 \emph{Genotypes} and \emph{Env} are the perturbation and condition axes. \emph{Instances}
 is the number of genotype$\times$environment records, marked $\dagger$ where it is the
 product of the two axes rather than a figure the paper reports, and $\ddagger$ where it is
@@ -14,13 +14,13 @@ an order-of-magnitude estimate. \emph{Meas.} is instances times phenotype dimens
 which is what a vector-valued panel actually contributes and what rows are ranked on.
 \emph{Sequence basis} is how the total genomic content of one strain would be
 reconstructed; a row with no such route is excluded rather than ranked
-(Table~\ref{tab:excluded}). Tier is defined in Sec.~\ref{sec:rule}. A bullet marks a row
-that bears directly on the Perturb-seq proposal (Table~\ref{tab:perturbseq}).
+(Table~\ref{tab:excluded}). Tier is defined in Sec.~\ref{sec:rule}.
 \emph{Link} resolves to the source and is clickable; the full citation and the data
-location are in Table~\ref{tab:sources}. A superscript \textbf{B} marks a row already
+location are in Table~\ref{tab:sources}. A $\bullet$ marks a row bearing on the
+Perturb-seq proposal (Table~\ref{tab:perturbseq}). A superscript \textbf{B} marks a row already
 attempted and blocked on data access, and \textbf{L} one that already has a loader in
 flight; neither is an untouched candidate. Rows
-1--51 are the recommended set.}
+1--151 are the recommended set.}
 \label{tab:candidates}\\
 \toprule
 \textbf{\#} & \textbf{Dataset} & \textbf{Class} & \textbf{Genotypes} & \textbf{Env} & \textbf{Instances} & \textbf{Meas.} & \textbf{Phenotype} & \textbf{Sequence basis} & \textbf{Link} \\
@@ -33,152 +33,316 @@ flight; neither is an untouched candidate. Rows
 \endhead
 \bottomrule
 \endfoot
-1 & \textbf{Lee 2014 (HIP-HOP fitness signatures)}\,\textsuperscript{\textbf{B}} & Tolerance / robustness & ~11,000 (het + hom) & 3,356 compounds & $1.3\times 10^{7}$ & $1.3\times 10^{7}$ & chemogenomic fitness score & S288C-\allowbreak KO & \href{https://doi.org/10.1126/science.1250217}{doi:10.1126/\allowbreak science.1250217} \\
+1 & \textbf{Boocock 2025 (single-cell eQTL mapping)}\,$\bullet$ & Expression / single cell & ~2.7e4 profiled segregants & glucose / galactose & $5.4\times 10^{4}$$\ddagger$ & $3.2\times 10^{8}$ & single-cell transcriptome + eQTL & segregant-\allowbreak WGS & \href{https://doi.org/10.1038/s41586-025-09628-1}{doi:10.1038/\allowbreak s41586-025-09628-1} \\
 \addlinespace[5pt]
-2 & \textbf{Jakobson 2025 (genome-to-proteome map)} & Natural variation & 800 F6 segregants & 1 & 800 & $1.6\times 10^{6}$ & protein abundance, >6,400 pQTL & segregant-\allowbreak WGS & \href{https://doi.org/10.1126/science.adu3198}{doi:10.1126/\allowbreak science.adu3198} \\
+2 & \textbf{de Boer 2020 (100M random promoters)}\,$\bullet$ & Regulatory DNA & >100M random promoters & complex + defined & $1.0\times 10^{8}$ & $1.0\times 10^{8}$ & expression driven (YFP sort-seq) & S288C+\allowbreak reporter-\allowbreak locus & \href{https://doi.org/10.1038/s41587-019-0315-8}{doi:10.1038/\allowbreak s41587-019-0315-8} \\
 \addlinespace[5pt]
-3 & \textbf{Muenzner 2024 (natural-isolate proteome)} & Natural variation & 796 natural isolates & 1 & 796 & $1.6\times 10^{6}$ & protein abundance (DIA-MS) & isolate-\allowbreak WGS & \href{https://doi.org/10.1038/s41586-024-07442-9}{doi:10.1038/\allowbreak s41586-024-07442-9} \\
+3 & \textbf{Vaishnav 2022 (regulatory DNA fitness landscape)}\,$\bullet$ & Regulatory DNA & ~2e7 promoter variants & 1 & $2.0\times 10^{7}$$\ddagger$ & $2.0\times 10^{7}$ & expression + inferred fitness & S288C+\allowbreak reporter-\allowbreak locus & \href{https://doi.org/10.1038/s41586-022-04506-6}{doi:10.1038/\allowbreak s41586-022-04506-6} \\
 \addlinespace[5pt]
-4 & \textbf{Hale 2024 (CRISPRi x natural variation)}\,$\bullet$ & Natural variation & 169 segregants x 1,721 genes & 2 induced & $1.4\times 10^{6}$$\dagger$ & $1.4\times 10^{6}$ & relative fitness (double-barcode seq) & segregant-\allowbreak WGS & \href{https://doi.org/10.1038/s41467-024-48626-1}{doi:10.1038/\allowbreak s41467-024-48626-1} \\
+4 & \textbf{Lee 2014 (HIP-HOP fitness signatures)}\,\textsuperscript{\textbf{B}} & Tolerance / robustness & ~11,000 (het + hom) & 3,356 compounds & $1.3\times 10^{7}$ & $1.3\times 10^{7}$ & chemogenomic fitness score & S288C-\allowbreak KO & \href{https://doi.org/10.1126/science.1250217}{doi:10.1126/\allowbreak science.1250217} \\
 \addlinespace[5pt]
-5 & \textbf{Galardini 2019 (four backgrounds x 38 conditions)} & Natural variation & 3,786 KOs x 4 backgrounds & 38 conditions & $5.8\times 10^{5}$$\dagger$ & $5.8\times 10^{5}$ & colony-size fitness (S-score) & isolate-\allowbreak WGS & \href{https://doi.org/10.15252/msb.20198831}{doi:10.15252/\allowbreak msb.20198831} \\
+5 & \textbf{Albert 2018 (eQTL in 1,012 segregants)}\,$\bullet$ & Natural variation & 1,012 sequenced segregants & 1 & $1.0\times 10^{3}$ & $5.8\times 10^{6}$ & mRNA abundance (RNA-seq) & segregant-\allowbreak WGS & \href{https://doi.org/10.7554/eLife.35471}{doi:10.7554/\allowbreak eLife.35471} \\
 \addlinespace[5pt]
-6 & \textbf{Bloom 2019 (16-parent cross)} & Natural variation & ~14,000 segregants & 38 traits & $5.3\times 10^{5}$$\dagger$ & $5.3\times 10^{5}$ & quantitative growth traits & segregant-\allowbreak WGS & \href{https://doi.org/10.7554/eLife.49212}{doi:10.7554/\allowbreak eLife.49212} \\
+6 & \textbf{Jakobson 2025 (genome-to-proteome map)} & Natural variation & 800 F6 segregants & 1 & 800 & $1.6\times 10^{6}$ & protein abundance, >6,400 pQTL & segregant-\allowbreak WGS & \href{https://doi.org/10.1126/science.adu3198}{doi:10.1126/\allowbreak science.adu3198} \\
 \addlinespace[5pt]
-7 & \textbf{Parsons 2006 (bioactive-compound profiling)} & Tolerance / robustness & ~5,000 viable YKO & 82 compounds & $4.1\times 10^{5}$$\dagger$ & $4.1\times 10^{5}$ & hypersensitivity score & S288C-\allowbreak KO & \href{https://doi.org/10.1016/j.cell.2006.06.040}{doi:10.1016/\allowbreak j.cell.2006.06.040} \\
+7 & \textbf{Muenzner 2024 (natural-isolate proteome)} & Natural variation & 796 natural isolates & 1 & 796 & $1.6\times 10^{6}$ & protein abundance (DIA-MS) & isolate-\allowbreak WGS & \href{https://doi.org/10.1038/s41586-024-07442-9}{doi:10.1038/\allowbreak s41586-024-07442-9} \\
 \addlinespace[5pt]
-8 & \textbf{Dutta 2026 (barcoded natural-isolate chemical response)} & Natural variation & 520 natural isolates & >600 compounds & $3.1\times 10^{5}$$\dagger$ & $3.1\times 10^{5}$ & pooled-barcode fitness & isolate-\allowbreak WGS & \href{https://doi.org/10.1038/s41467-026-73532-z}{doi:10.1038/\allowbreak s41467-026-73532-z} \\
+8 & \textbf{Hale 2024 (CRISPRi x natural variation)}\,$\bullet$ & Natural variation & 169 segregants x 1,721 genes & 2 induced & $1.4\times 10^{6}$$\dagger$ & $1.4\times 10^{6}$ & relative fitness (double-barcode seq) & segregant-\allowbreak WGS & \href{https://doi.org/10.1038/s41467-024-48626-1}{doi:10.1038/\allowbreak s41467-024-48626-1} \\
 \addlinespace[5pt]
-9 & \textbf{Cooper 2010 (CE-MS amino-acid metabolome)} & Metabolite / precursor & ~4,700 YKO & 1 & $4.7\times 10^{3}$ & $9.4\times 10^{4}$ & free amino-acid pools (capillary electrophoresis) & S288C-\allowbreak KO & \href{https://doi.org/10.1101/gr.105825.110}{doi:10.1101/\allowbreak gr.105825.110} \\
+9 & \textbf{Jackson 2020 (TF-deletion single-cell atlas)}\,$\bullet$ & Expression / single cell & 72 TF deletions + wild type & YPD / minimal & 144$\dagger$ & $8.6\times 10^{5}$ & single-cell transcriptome & S288C-\allowbreak KO & \href{https://doi.org/10.7554/eLife.51254}{doi:10.7554/\allowbreak eLife.51254} \\
 \addlinespace[5pt]
-10 & \textbf{Aulakh 2025 (genome-scale ionome)} & Metabolite / precursor & ~4,800 YKO & 1 & $4.8\times 10^{3}$ & $4.8\times 10^{4}$ & intracellular metal-ion content (ICP-MS) & S288C-\allowbreak KO & \href{https://doi.org/10.1016/j.cels.2025.101319}{doi:10.1016/\allowbreak j.cels.2025.101319} \\
+10 & \textbf{Nguyen Ba 2022 (barcoded bulk QTL, 100k segregants)}\,$\bullet$ & Natural variation & ~100,000 barcoded segregants & 8 conditions & $8.0\times 10^{5}$$\dagger$ & $8.0\times 10^{5}$ & fitness (Bar-seq) & segregant-\allowbreak WGS & \href{https://doi.org/10.7554/eLife.73983}{doi:10.7554/\allowbreak eLife.73983} \\
 \addlinespace[5pt]
-11 & \textbf{Peter 2018 (1,011 isolate genomes + phenome)} & Natural variation & 1,011 isolates (971 phenotyped) & 36 conditions & $3.5\times 10^{4}$$\dagger$ & $3.5\times 10^{4}$ & growth fitness per condition & isolate-\allowbreak WGS & \href{https://doi.org/10.1038/s41586-018-0030-5}{doi:10.1038/\allowbreak s41586-018-0030-5} \\
+11 & \textbf{Galardini 2019 (four backgrounds x 38 conditions)} & Natural variation & 3,786 KOs x 4 backgrounds & 38 conditions & $5.8\times 10^{5}$$\dagger$ & $5.8\times 10^{5}$ & colony-size fitness (S-score) & isolate-\allowbreak WGS & \href{https://doi.org/10.15252/msb.20198831}{doi:10.15252/\allowbreak msb.20198831} \\
 \addlinespace[5pt]
-12 & \textbf{Zhang 2021 (YETI titratable overexpression)} & Metabolite / precursor & 1,022 essential + 4,668 non-essential & beta-estradiol dose series & $2.3\times 10^{4}$$\ddagger$ & $2.3\times 10^{4}$ & fitness across an induction gradient & S288C+\allowbreak tag & \href{https://doi.org/10.15252/msb.202010321}{doi:10.15252/\allowbreak msb.202010321} \\
+12 & \textbf{Bloom 2019 (16-parent cross)} & Natural variation & ~14,000 segregants & 38 traits & $5.3\times 10^{5}$$\dagger$ & $5.3\times 10^{5}$ & quantitative growth traits & segregant-\allowbreak WGS & \href{https://doi.org/10.7554/eLife.49212}{doi:10.7554/\allowbreak eLife.49212} \\
 \addlinespace[5pt]
-13 & \textbf{Peeters 2021 (fermentation-trait QTL atlas)} & Natural variation & 1,125 sequenced segregants & 18 traits & $2.0\times 10^{4}$$\dagger$ & $2.0\times 10^{4}$ & ethanol / glycerol / isobutanol titer, stress resistance, aroma & segregant-\allowbreak WGS & \href{https://pubmed.ncbi.nlm.nih.gov/34727964/}{PMID 34727964} \\
+13 & \textbf{Parsons 2006 (bioactive-compound profiling)} & Tolerance / robustness & ~5,000 viable YKO & 82 compounds & $4.1\times 10^{5}$$\dagger$ & $4.1\times 10^{5}$ & hypersensitivity score & S288C-\allowbreak KO & \href{https://doi.org/10.1016/j.cell.2006.06.040}{doi:10.1016/\allowbreak j.cell.2006.06.040} \\
 \addlinespace[5pt]
-14 & \textbf{Van Leeuwen 2024 (short-chain organic acids)} & Tolerance / robustness & ~4,800 YKO & acetic, butyric, octanoic & $1.4\times 10^{4}$$\dagger$ & $1.4\times 10^{4}$ & fitness per acid & S288C-\allowbreak KO & \href{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10903034/}{PMC10903034} \\
+14 & \textbf{Dutta 2026 (barcoded natural-isolate chemical response)} & Natural variation & 520 natural isolates & >600 compounds & $3.1\times 10^{5}$$\dagger$ & $3.1\times 10^{5}$ & pooled-barcode fitness & isolate-\allowbreak WGS & \href{https://doi.org/10.1038/s41467-026-73532-z}{doi:10.1038/\allowbreak s41467-026-73532-z} \\
 \addlinespace[5pt]
-15 & \textbf{Chica 2026 (AutoDRY autophagy screen)} & Modality / backbone & 4,760 KO + 1,159 DAmP & 2 (nitrogen starvation, replete) & $1.2\times 10^{4}$$\dagger$ & $1.2\times 10^{4}$ & autophagy flux (deep-learning image classifier) & S288C-\allowbreak KO & \href{https://doi.org/10.1038/s41556-025-01837-0}{doi:10.1038/\allowbreak s41556-025-01837-0} \\
+15 & \textbf{Cooper 2010 (CE-MS amino-acid metabolome)} & Metabolite / precursor & ~4,700 YKO & 1 & $4.7\times 10^{3}$ & $9.4\times 10^{4}$ & free amino-acid pools (capillary electrophoresis) & S288C-\allowbreak KO & \href{https://doi.org/10.1101/gr.105825.110}{doi:10.1101/\allowbreak gr.105825.110} \\
 \addlinespace[5pt]
-16 & \textbf{Sopko 2006 (genome-scale overexpression toxicity)} & Metabolite / precursor & ~5,280 ORFs & GAL induced vs glucose & $1.1\times 10^{4}$$\dagger$ & $1.1\times 10^{4}$ & growth-rate reduction on induction & S288C+\allowbreak ORF-\allowbreak plasmid & \href{https://doi.org/10.1016/j.molcel.2005.12.011}{doi:10.1016/\allowbreak j.molcel.2005.12.011} \\
+16 & \textbf{Li 2016 (tRNA fitness landscape)}\,$\bullet$ & Deep mutational scan & ~65,000 tRNA variants & 1 & $6.5\times 10^{4}$$\ddagger$ & $6.5\times 10^{4}$ & fitness & S288C+\allowbreak designed-\allowbreak edit & \href{https://doi.org/10.1126/science.aae0568}{doi:10.1126/\allowbreak science.aae0568} \\
 \addlinespace[5pt]
-17 & \textbf{Liu 2021 (tryptophan / isobutanol tolerance)} & Tolerance / robustness & 5,006 YKO & +/- isobutanol & $1.0\times 10^{4}$$\dagger$ & $1.0\times 10^{4}$ & colony-size fitness (ScreenMill imaging) & S288C-\allowbreak KO & \href{https://doi.org/10.1186/s13068-021-02048-z}{doi:10.1186/\allowbreak s13068-021-02048-z} \\
+17 & \textbf{Aulakh 2025 (genome-scale ionome)} & Metabolite / precursor & ~4,800 YKO & 1 & $4.8\times 10^{3}$ & $4.8\times 10^{4}$ & intracellular metal-ion content (ICP-MS) & S288C-\allowbreak KO & \href{https://doi.org/10.1016/j.cels.2025.101319}{doi:10.1016/\allowbreak j.cels.2025.101319} \\
 \addlinespace[5pt]
-18 & \textbf{Kuroda 2019 (isobutanol-specific tolerance)} & Tolerance / robustness & ~4,800 YKO & isobutanol vs ethanol & $9.6\times 10^{3}$$\dagger$ & $9.6\times 10^{3}$ & isobutanol-specific fitness & S288C-\allowbreak KO & \href{https://doi.org/10.1016/j.cels.2019.10.006}{doi:10.1016/\allowbreak j.cels.2019.10.006} \\
+18 & \textbf{Peter 2018 (1,011 isolate genomes + phenome)} & Natural variation & 1,011 isolates (971 phenotyped) & 36 conditions & $3.5\times 10^{4}$$\dagger$ & $3.5\times 10^{4}$ & growth fitness per condition & isolate-\allowbreak WGS & \href{https://doi.org/10.1038/s41586-018-0030-5}{doi:10.1038/\allowbreak s41586-018-0030-5} \\
 \addlinespace[5pt]
-19 & \textbf{Puddu 2019 (WGS of the deletion collection)} & Modality / backbone & ~4,800 deletion strains & 1 & $4.8\times 10^{3}$ & $4.8\times 10^{3}$ & structural variants, CNV, aneuploidy & S288C-\allowbreak KO & \href{https://doi.org/10.1038/s41586-019-1549-9}{doi:10.1038/\allowbreak s41586-019-1549-9} \\
+19 & \textbf{Domingo 2018 (tRNA double-mutant landscape)}\,$\bullet$ & Deep mutational scan & ~23,000 single + double mutants & 1 & $2.3\times 10^{4}$$\ddagger$ & $2.3\times 10^{4}$ & fitness & S288C+\allowbreak designed-\allowbreak edit & \href{https://doi.org/10.1038/s41586-018-0170-7}{doi:10.1038/\allowbreak s41586-018-0170-7} \\
 \addlinespace[5pt]
-20 & \textbf{Turco 2023 (Yeast Phenome)}\,\textsuperscript{\textbf{L}} & Tolerance / robustness & ~5,000 & 7,536 environments & $3.8\times 10^{7}$$\dagger$ & $3.8\times 10^{7}$ & growth / fitness per environment & S288C-\allowbreak KO & \href{https://doi.org/10.1126/sciadv.adg5702}{doi:10.1126/\allowbreak sciadv.adg5702} \\
+20 & \textbf{Zhang 2021 (YETI titratable overexpression)} & Metabolite / precursor & 1,022 essential + 4,668 non-essential & beta-estradiol dose series & $2.3\times 10^{4}$$\ddagger$ & $2.3\times 10^{4}$ & fitness across an induction gradient & S288C+\allowbreak tag & \href{https://doi.org/10.15252/msb.202010321}{doi:10.15252/\allowbreak msb.202010321} \\
 \addlinespace[5pt]
-21 & \textbf{N'Guessan 2025 (segregant scRNA-seq eQTL)}\,$\bullet$ & Expression / single cell & ~4,500 profiled segregants & 1 & $4.5\times 10^{3}$ & $2.7\times 10^{7}$ & single-cell transcriptome + eQTL & segregant-\allowbreak WGS & \href{https://pmc.ncbi.nlm.nih.gov/articles/PMC12303567/}{PMC12303567} \\
+21 & \textbf{Peeters 2021 (fermentation-trait QTL atlas)} & Natural variation & 1,125 sequenced segregants & 18 traits & $2.0\times 10^{4}$$\dagger$ & $2.0\times 10^{4}$ & ethanol / glycerol / isobutanol titer, stress resistance, aroma & segregant-\allowbreak WGS & \href{https://pubmed.ncbi.nlm.nih.gov/34727964/}{PMID 34727964} \\
 \addlinespace[5pt]
-22 & \textbf{Piotrowski 2017 (MOSAIC diagnostic panel)} & Tolerance / robustness & ~157 diagnostic & 13,524 compounds & $2.1\times 10^{6}$$\dagger$ & $2.1\times 10^{6}$ & chemogenomic fitness score & S288C-\allowbreak KO & \href{https://doi.org/10.1038/nchembio.2436}{doi:10.1038/\allowbreak nchembio.2436} \\
+22 & \textbf{Van Leeuwen 2024 (short-chain organic acids)} & Tolerance / robustness & ~4,800 YKO & acetic, butyric, octanoic & $1.4\times 10^{4}$$\dagger$ & $1.4\times 10^{4}$ & fitness per acid & S288C-\allowbreak KO & \href{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10903034/}{PMC10903034} \\
 \addlinespace[5pt]
-23 & \textbf{Gasch 2000 (environmental stress response)} & Expression / single cell & wild type & ~9 stress series, multi-timepoint & 150$\ddagger$ & $9.0\times 10^{5}$ & mRNA abundance time course & reference-\allowbreak only & \href{https://doi.org/10.1091/mbc.11.12.4241}{doi:10.1091/\allowbreak mbc.11.12.4241} \\
+23 & \textbf{Chica 2026 (AutoDRY autophagy screen)} & Modality / backbone & 4,760 KO + 1,159 DAmP & 2 (nitrogen starvation, replete) & $1.2\times 10^{4}$$\dagger$ & $1.2\times 10^{4}$ & autophagy flux (deep-learning image classifier) & S288C-\allowbreak KO & \href{https://doi.org/10.1038/s41556-025-01837-0}{doi:10.1038/\allowbreak s41556-025-01837-0} \\
 \addlinespace[5pt]
-24 & \textbf{Decourty 2021 (RNA-metabolism genetic interactions)} & Modality / backbone & ~700,000 double mutants & 1 & $7.0\times 10^{5}$ & $7.0\times 10^{5}$ & genetic-interaction score & S288C-\allowbreak KO & \href{https://doi.org/10.1093/nar/gkab680}{doi:10.1093/\allowbreak nar/\allowbreak gkab680} \\
+24 & \textbf{Sopko 2006 (genome-scale overexpression toxicity)} & Metabolite / precursor & ~5,280 ORFs & GAL induced vs glucose & $1.1\times 10^{4}$$\dagger$ & $1.1\times 10^{4}$ & growth-rate reduction on induction & S288C+\allowbreak ORF-\allowbreak plasmid & \href{https://doi.org/10.1016/j.molcel.2005.12.011}{doi:10.1016/\allowbreak j.molcel.2005.12.011} \\
 \addlinespace[5pt]
-25 & \textbf{Leutert 2023 (phosphoproteome x 101 conditions)} & Expression / single cell & wild type & 101 conditions & 101 & $5.0\times 10^{5}$ & phosphosite abundance & reference-\allowbreak only & \href{https://doi.org/10.1038/s41594-023-01115-3}{doi:10.1038/\allowbreak s41594-023-01115-3} \\
+25 & \textbf{Liu 2021 (tryptophan / isobutanol tolerance)} & Tolerance / robustness & 5,006 YKO & +/- isobutanol & $1.0\times 10^{4}$$\dagger$ & $1.0\times 10^{4}$ & colony-size fitness (ScreenMill imaging) & S288C-\allowbreak KO & \href{https://doi.org/10.1186/s13068-021-02048-z}{doi:10.1186/\allowbreak s13068-021-02048-z} \\
 \addlinespace[5pt]
-26 & \textbf{Chong 2015 / CYCLoPs (single-cell proteome dynamics)}\,$\bullet$ & Modality / backbone & ~4,100 GFP-tagged ORFs & cell-cycle / stress & $2.5\times 10^{4}$$\ddagger$ & $4.2\times 10^{5}$ & abundance + localization class & S288C+\allowbreak tag & \href{https://doi.org/10.1016/j.cell.2015.04.051}{doi:10.1016/\allowbreak j.cell.2015.04.051} \\
+26 & \textbf{Kuroda 2019 (isobutanol-specific tolerance)} & Tolerance / robustness & ~4,800 YKO & isobutanol vs ethanol & $9.6\times 10^{3}$$\dagger$ & $9.6\times 10^{3}$ & isobutanol-specific fitness & S288C-\allowbreak KO & \href{https://doi.org/10.1016/j.cels.2019.10.006}{doi:10.1016/\allowbreak j.cels.2019.10.006} \\
 \addlinespace[5pt]
-27 & \textbf{Dong 2021 (MAGIC + SAM biosensor)} & CRISPR library screen & ~100,000 guides (a/i/d) & 1 & $1.0\times 10^{5}$$\ddagger$ & $1.0\times 10^{5}$ & SAM biosensor fluorescence (FACS) & S288C+\allowbreak guide & \href{https://doi.org/10.1016/j.ymben.2021.03.005}{doi:10.1016/\allowbreak j.ymben.2021.03.005} \\
+27 & \textbf{Puddu 2019 (WGS of the deletion collection)} & Modality / backbone & ~4,800 deletion strains & 1 & $4.8\times 10^{3}$ & $4.8\times 10^{3}$ & structural variants, CNV, aneuploidy & S288C-\allowbreak KO & \href{https://doi.org/10.1038/s41586-019-1549-9}{doi:10.1038/\allowbreak s41586-019-1549-9} \\
 \addlinespace[5pt]
-28 & \textbf{Momen-Roknabadi 2020 (inducible CRISPRi library)}\,$\bullet$ & CRISPR library screen & genome-wide guide library & nutrient limitations & $9.0\times 10^{4}$$\ddagger$ & $9.0\times 10^{4}$ & per-guide fitness under induction & S288C+\allowbreak guide & \href{https://doi.org/10.1038/s42003-020-01452-9}{doi:10.1038/\allowbreak s42003-020-01452-9} \\
+28 & \textbf{Turco 2023 (Yeast Phenome)}\,\textsuperscript{\textbf{L}} & Tolerance / robustness & ~5,000 & 7,536 environments & $3.8\times 10^{7}$$\dagger$ & $3.8\times 10^{7}$ & growth / fitness per environment & S288C-\allowbreak KO & \href{https://doi.org/10.1126/sciadv.adg5702}{doi:10.1126/\allowbreak sciadv.adg5702} \\
 \addlinespace[5pt]
-29 & \textbf{Hackett 2016 (SIMMER multi-omic flux)} & Expression / single cell & wild type & 25 chemostat states & 25 & $7.5\times 10^{4}$ & paired metabolome + proteome + flux & reference-\allowbreak only & \href{https://doi.org/10.1126/science.aaf2786}{doi:10.1126/\allowbreak science.aaf2786} \\
+29 & \textbf{N'Guessan 2025 (segregant scRNA-seq eQTL)}\,$\bullet$ & Expression / single cell & ~4,500 profiled segregants & 1 & $4.5\times 10^{3}$ & $2.7\times 10^{7}$ & single-cell transcriptome + eQTL & segregant-\allowbreak WGS & \href{https://pmc.ncbi.nlm.nih.gov/articles/PMC12303567/}{PMC12303567} \\
 \addlinespace[5pt]
-30 & \textbf{McGlincy 2021 (genome-scale CRISPRi library)}\,$\bullet$ & CRISPR library screen & 61,094 guides, ~10/gene & continuous culture & $6.1\times 10^{4}$ & $6.1\times 10^{4}$ & per-guide fitness & S288C+\allowbreak guide & \href{https://doi.org/10.1186/s12864-021-07518-0}{doi:10.1186/\allowbreak s12864-021-07518-0} \\
+30 & \textbf{Rossi 2021 (ChIP-exo protein architecture)} & Modality / backbone & ~400 tagged proteins & 1 & 400 & $2.4\times 10^{6}$ & genome-wide binding location, near-bp resolution & S288C+\allowbreak tag & \href{https://doi.org/10.1038/s41586-021-03314-8}{doi:10.1038/\allowbreak s41586-021-03314-8} \\
 \addlinespace[5pt]
-31 & \textbf{Bao 2018 (CHAnGE single-nucleotide library)} & CRISPR library screen & tens of thousands of designed variants & inhibitor selection & $6.0\times 10^{4}$$\ddagger$ & $6.0\times 10^{4}$ & variant fitness (pooled barcode seq) & S288C+\allowbreak designed-\allowbreak edit & \href{https://doi.org/10.1038/nbt.4132}{doi:10.1038/\allowbreak nbt.4132} \\
+31 & \textbf{Piotrowski 2017 (MOSAIC diagnostic panel)} & Tolerance / robustness & ~157 diagnostic & 13,524 compounds & $2.1\times 10^{6}$$\dagger$ & $2.1\times 10^{6}$ & chemogenomic fitness score & S288C-\allowbreak KO & \href{https://doi.org/10.1038/nchembio.2436}{doi:10.1038/\allowbreak nchembio.2436} \\
 \addlinespace[5pt]
-32 & \textbf{Yoshikawa 2011 (deletion + overexpression phenome)} & Tolerance / robustness & ~4,800 KO + matched overexpression & carbon sources / stress & $5.8\times 10^{4}$$\ddagger$ & $5.8\times 10^{4}$ & growth-rate fitness & S288C-\allowbreak KO & \href{https://doi.org/10.1534/g3.111.000695}{doi:10.1534/\allowbreak g3.111.000695} \\
+32 & \textbf{Hu 2007 (TF deletion expression compendium)}\,$\bullet$ & Expression / single cell & 269 TF deletion strains & 1 & 269 & $1.6\times 10^{6}$ & mRNA abundance & S288C-\allowbreak KO & \href{https://doi.org/10.1038/ng2012}{doi:10.1038/\allowbreak ng2012} \\
 \addlinespace[5pt]
-33 & \textbf{Ho 2009 (MoBY-ORF barcoded overexpression)} & Metabolite / precursor & ~5,100 barcoded ORFs & compound panel & $5.1\times 10^{4}$$\ddagger$ & $5.1\times 10^{4}$ & fitness per compound & S288C+\allowbreak ORF-\allowbreak plasmid & \href{https://doi.org/10.1038/nbt.1534}{doi:10.1038/\allowbreak nbt.1534} \\
+33 & \textbf{Bloom 2025 (global epistasis in a yeast cross)}\,$\bullet$ & Natural variation & large sequenced segregant panel & conditions & $1.0\times 10^{6}$$\ddagger$ & $1.0\times 10^{6}$ & fitness & segregant-\allowbreak WGS & \href{https://pubmed.ncbi.nlm.nih.gov/40679398/}{PMID 40679398} \\
 \addlinespace[5pt]
-34 & \textbf{Zhu 2014 (kinase / phosphatase lipidomics)} & Metabolite / precursor & 129 kinase + phosphatase KOs & 1 & 129 & $2.6\times 10^{4}$ & lipid class and species abundance & S288C-\allowbreak KO & \href{https://pmc.ncbi.nlm.nih.gov/articles/PMC4196872/}{PMC4196872} \\
+34 & \textbf{Gasch 2000 (environmental stress response)} & Expression / single cell & wild type & ~9 stress series, multi-timepoint & 150$\ddagger$ & $9.0\times 10^{5}$ & mRNA abundance time course & reference-\allowbreak only & \href{https://doi.org/10.1091/mbc.11.12.4241}{doi:10.1091/\allowbreak mbc.11.12.4241} \\
 \addlinespace[5pt]
-35 & \textbf{Xiao 2014 (genome-wide RNAi furfural tolerance)} & Tolerance / robustness & genome-scale RNAi library & furfural vs control & $2.0\times 10^{4}$$\ddagger$ & $2.0\times 10^{4}$ & knockdown enrichment under furfural & S288C+\allowbreak guide & \href{https://doi.org/10.1186/1754-6834-7-78}{doi:10.1186/\allowbreak 1754-6834-7-78} \\
+35 & \textbf{Decourty 2021 (RNA-metabolism genetic interactions)} & Modality / backbone & ~700,000 double mutants & 1 & $7.0\times 10^{5}$ & $7.0\times 10^{5}$ & genetic-interaction score & S288C-\allowbreak KO & \href{https://doi.org/10.1093/nar/gkab680}{doi:10.1093/\allowbreak nar/\allowbreak gkab680} \\
 \addlinespace[5pt]
-36 & \textbf{Crook 2016 (tunable RNAi, isobutanol + 1-butanol)} & Tolerance / robustness & genome-scale tunable RNAi & isobutanol, 1-butanol & $2.0\times 10^{4}$$\ddagger$ & $2.0\times 10^{4}$ & dose-graded knockdown fitness under alcohol stress & S288C+\allowbreak guide & \href{https://pubmed.ncbi.nlm.nih.gov/27654654/}{PMID 27654654} \\
+36 & \textbf{Leutert 2023 (phosphoproteome x 101 conditions)} & Expression / single cell & wild type & 101 conditions & 101 & $5.0\times 10^{5}$ & phosphosite abundance & reference-\allowbreak only & \href{https://doi.org/10.1038/s41594-023-01115-3}{doi:10.1038/\allowbreak s41594-023-01115-3} \\
 \addlinespace[5pt]
-37 & \textbf{Douglas 2012 (barcoded overexpression fitness)} & Metabolite / precursor & genome-scale barcoded ORFs & baseline + stress & $2.0\times 10^{4}$$\ddagger$ & $2.0\times 10^{4}$ & pooled competitive fitness on induction & S288C+\allowbreak ORF-\allowbreak plasmid & \href{https://doi.org/10.1534/g3.112.003400}{doi:10.1534/\allowbreak g3.112.003400} \\
+37 & \textbf{Cuperus 2017 (random 5' UTR library)} & Regulatory DNA & ~500,000 random 5' UTRs & 1 & $5.0\times 10^{5}$$\ddagger$ & $5.0\times 10^{5}$ & protein output (translation) & S288C+\allowbreak reporter-\allowbreak locus & \href{https://doi.org/10.1101/gr.224964.117}{doi:10.1101/\allowbreak gr.224964.117} \\
 \addlinespace[5pt]
-38 & \textbf{Costello 2020 (bioreactor Bar-seq)} & Tolerance / robustness & pooled YKO library & feed schemes / pH & $1.9\times 10^{4}$$\ddagger$ & $1.9\times 10^{4}$ & fitness under fed-batch cultivation & S288C-\allowbreak KO & \href{https://doi.org/10.1186/s12934-020-01423-z}{doi:10.1186/\allowbreak s12934-020-01423-z} \\
+38 & \textbf{Faure 2022 (doubledeepPCA)}\,$\bullet$ & Deep mutational scan & ~5e5 double mutants, 2 domains & 1 & $5.0\times 10^{5}$$\ddagger$ & $5.0\times 10^{5}$ & binding and abundance & engineered-\allowbreak chassis & \href{https://doi.org/10.1038/s41586-022-04586-4}{doi:10.1038/\allowbreak s41586-022-04586-4} \\
 \addlinespace[5pt]
-39 & \textbf{Roy 2018 (multiplexed precision editing)} & CRISPR library screen & thousands of designed edits & 1 & $1.6\times 10^{4}$$\ddagger$ & $1.6\times 10^{4}$ & variant fitness & S288C+\allowbreak designed-\allowbreak edit & \href{https://doi.org/10.1038/nbt.4137}{doi:10.1038/\allowbreak nbt.4137} \\
+39 & \textbf{Chong 2015 / CYCLoPs (single-cell proteome dynamics)}\,$\bullet$ & Modality / backbone & ~4,100 GFP-tagged ORFs & cell-cycle / stress & $2.5\times 10^{4}$$\ddagger$ & $4.2\times 10^{5}$ & abundance + localization class & S288C+\allowbreak tag & \href{https://doi.org/10.1016/j.cell.2015.04.051}{doi:10.1016/\allowbreak j.cell.2015.04.051} \\
 \addlinespace[5pt]
-40 & \textbf{Gerke 2017 (urea-cycle mQTL)} & Natural variation & 147 diploid segregants & 1 & 147 & $1.5\times 10^{4}$ & untargeted metabolite abundance & segregant-\allowbreak WGS & \href{https://doi.org/10.1534/genetics.117.201107}{doi:10.1534/\allowbreak genetics.117.201107} \\
+40 & \textbf{Brauer 2008 (growth-rate-controlled chemostat transcriptome)} & Expression / single cell & wild type & 36 chemostats, 6 limitations & 36 & $2.2\times 10^{5}$ & mRNA abundance & reference-\allowbreak only & \href{https://doi.org/10.1091/mbc.e07-08-0779}{doi:10.1091/\allowbreak mbc.e07-08-0779} \\
 \addlinespace[5pt]
-41 & \textbf{Gurvitz (fatty-acid utilization screen)} & Metabolite / precursor & ~4,800 viable YKO & oleate, myristate, acetate & $1.4\times 10^{4}$$\dagger$ & $1.4\times 10^{4}$ & fatty-acid utilization competence & S288C-\allowbreak KO & \href{https://www.embopress.org/doi/pdf/10.1038/msb4100051}{embopress.org/\allowbreak doi/\allowbreak pdf/\allowbreak 10.1038/\allowbreak msb4100051} \\
+41 & \textbf{Teyssonniere 2024 (species-wide trait survey)} & Natural variation & 1,011 isolates & ~200 traits & $2.0\times 10^{5}$$\ddagger$ & $2.0\times 10^{5}$ & growth traits, expressivity and complexity & isolate-\allowbreak WGS & \href{https://doi.org/10.1371/journal.pgen.1011119}{doi:10.1371/\allowbreak journal.pgen.1011119} \\
 \addlinespace[5pt]
-42 & \textbf{Gameiro 2025 (AID2 degron libraries)} & Modality / backbone & >5,600 tagged ORFs & baseline + hydroxyurea & $1.1\times 10^{4}$$\dagger$ & $1.1\times 10^{4}$ & degradation efficiency; fitness under stress & S288C+\allowbreak tag & \href{https://doi.org/10.1083/jcb.202409007}{doi:10.1083/\allowbreak jcb.202409007} \\
+42 & \textbf{Diss 2018 (Fos-Jun interaction double mutants)}\,$\bullet$ & Deep mutational scan & ~120,000 double mutants & 1 & $1.2\times 10^{5}$$\ddagger$ & $1.2\times 10^{5}$ & protein-protein interaction strength & engineered-\allowbreak chassis & \href{https://doi.org/10.7554/eLife.32472}{doi:10.7554/\allowbreak eLife.32472} \\
 \addlinespace[5pt]
-43 & \textbf{Si 2017 (RAGE RNAi, isobutanol titer)} & CRISPR library screen & genome-scale RNAi, iterative rounds & isobutanol selection & $1.0\times 10^{4}$$\ddagger$ & $1.0\times 10^{4}$ & construct enrichment; isobutanol titer for top strains & S288C+\allowbreak guide & \href{https://doi.org/10.1038/ncomms15187}{doi:10.1038/\allowbreak ncomms15187} \\
+43 & \textbf{Warringer 2011 (trait variation across the SGRP panel)} & Natural variation & ~200 sequenced isolates & ~200 conditions & $4.0\times 10^{4}$$\ddagger$ & $1.2\times 10^{5}$ & growth-curve parameters & isolate-\allowbreak WGS & \href{https://doi.org/10.1371/journal.pgen.1002111}{doi:10.1371/\allowbreak journal.pgen.1002111} \\
 \addlinespace[5pt]
-44 & \textbf{HamediRad 2018 (RAGE xylose utilization)} & CRISPR library screen & genome-scale RNAi & xylose-limited & $1.0\times 10^{4}$$\ddagger$ & $1.0\times 10^{4}$ & enrichment; xylose consumption rate & S288C+\allowbreak guide & \href{https://doi.org/10.1002/bit.26570}{doi:10.1002/\allowbreak bit.26570} \\
+44 & \textbf{Dong 2021 (MAGIC + SAM biosensor)} & CRISPR library screen & ~100,000 guides (a/i/d) & 1 & $1.0\times 10^{5}$$\ddagger$ & $1.0\times 10^{5}$ & SAM biosensor fluorescence (FACS) & S288C+\allowbreak guide & \href{https://doi.org/10.1016/j.ymben.2021.03.005}{doi:10.1016/\allowbreak j.ymben.2021.03.005} \\
 \addlinespace[5pt]
-45 & \textbf{Pereira 2014 (wheat-straw hydrolysate)} & Tolerance / robustness & EUROSCARF deletion collection & hydrolysate vs control & $9.6\times 10^{3}$$\dagger$ & $9.6\times 10^{3}$ & tolerance to industrial hydrolysate & S288C-\allowbreak KO & \href{https://doi.org/10.1007/s10295-014-1519-z}{doi:10.1007/\allowbreak s10295-014-1519-z} \\
+45 & \textbf{Momen-Roknabadi 2020 (inducible CRISPRi library)} & CRISPR library screen & genome-wide guide library & nutrient limitations & $9.0\times 10^{4}$$\ddagger$ & $9.0\times 10^{4}$ & per-guide fitness under induction & S288C+\allowbreak guide & \href{https://doi.org/10.1038/s42003-020-01452-9}{doi:10.1038/\allowbreak s42003-020-01452-9} \\
 \addlinespace[5pt]
-46 & \textbf{Endo 2008 (vanillin tolerance)} & Tolerance / robustness & diploid deletion collection & vanillin vs control & $9.6\times 10^{3}$$\dagger$ & $9.6\times 10^{3}$ & vanillin sensitivity & S288C-\allowbreak KO & \href{https://doi.org/10.1128/AEM.01541-08}{doi:10.1128/\allowbreak AEM.01541-08} \\
+46 & \textbf{Keren 2013 (promoter activity across conditions)} & Regulatory DNA & ~900 native promoter reporters & 10 conditions & $9.0\times 10^{3}$$\dagger$ & $9.0\times 10^{4}$ & promoter activity, time-resolved & S288C+\allowbreak reporter-\allowbreak locus & \href{https://doi.org/10.1038/msb.2013.59}{doi:10.1038/\allowbreak msb.2013.59} \\
 \addlinespace[5pt]
-47 & \textbf{Sharifpoor 2012 (kinome synthetic dosage lethality)} & Modality / backbone & 92 kinase queries, genome-wide array & 1 & $8.7\times 10^{3}$ & $8.7\times 10^{3}$ & genetic interaction / SDL score & S288C-\allowbreak KO & \href{https://doi.org/10.1101/gr.129213.111}{doi:10.1101/\allowbreak gr.129213.111} \\
+47 & \textbf{Hackett 2016 (SIMMER multi-omic flux)} & Expression / single cell & wild type & 25 chemostat states & 25 & $7.5\times 10^{4}$ & paired metabolome + proteome + flux & reference-\allowbreak only & \href{https://doi.org/10.1126/science.aaf2786}{doi:10.1126/\allowbreak science.aaf2786} \\
 \addlinespace[5pt]
-48 & \textbf{Ambroset 2014 (metabolite QTL)} & Natural variation & ~100 segregants & 1 & 100 & $7.4\times 10^{3}$ & 74 metabolite concentrations (LC-MS/MS) & segregant-\allowbreak WGS & \href{https://doi.org/10.1371/journal.pgen.1004142}{doi:10.1371/\allowbreak journal.pgen.1004142} \\
+48 & \textbf{McGlincy 2021 (genome-scale CRISPRi library)}\,$\bullet$ & CRISPR library screen & 61,094 guides, ~10/gene & continuous culture & $6.1\times 10^{4}$ & $6.1\times 10^{4}$ & per-guide fitness & S288C+\allowbreak guide & \href{https://doi.org/10.1186/s12864-021-07518-0}{doi:10.1186/\allowbreak s12864-021-07518-0} \\
 \addlinespace[5pt]
-49 & \textbf{Blank 2005 (13C metabolic flux)} & Metabolite / precursor & ~200 viable null mutants & glucose minimal & 200$\ddagger$ & $6.0\times 10^{3}$ & intracellular flux distribution (13C-MFA) & S288C-\allowbreak KO & \href{https://doi.org/10.1186/gb-2005-6-6-r49}{doi:10.1186/\allowbreak gb-2005-6-6-r49} \\
+49 & \textbf{Bao 2018 (CHAnGE single-nucleotide library)} & CRISPR library screen & tens of thousands of designed variants & inhibitor selection & $6.0\times 10^{4}$$\ddagger$ & $6.0\times 10^{4}$ & variant fitness (pooled barcode seq) & S288C+\allowbreak designed-\allowbreak edit & \href{https://doi.org/10.1038/nbt.4132}{doi:10.1038/\allowbreak nbt.4132} \\
 \addlinespace[5pt]
-50 & \textbf{Chang 2012 (organic-acid production screen)} & Metabolite / precursor & ~4,800 YKO & 1 & $4.8\times 10^{3}$ & $4.8\times 10^{3}$ & acetate / pyruvate / succinate halo (pH indicator) & S288C-\allowbreak KO & \href{https://pubmed.ncbi.nlm.nih.gov/22277779/}{PMID 22277779} \\
+50 & \textbf{Puchta 2016 (snoRNA U3 landscape)}\,$\bullet$ & Deep mutational scan & ~60,000 U3 variants & 1 & $6.0\times 10^{4}$$\ddagger$ & $6.0\times 10^{4}$ & fitness & S288C+\allowbreak designed-\allowbreak edit & \href{https://doi.org/10.1126/science.aaf0965}{doi:10.1126/\allowbreak science.aaf0965} \\
 \addlinespace[5pt]
-51 & \textbf{Trikka 2015 (carotenogenic heterozygous screen)} & Metabolite / precursor & 4,700 heterozygous deletions & 1 & $4.7\times 10^{3}$ & $4.7\times 10^{3}$ & carotenoid color; sclareol titer for top strains & S288C-\allowbreak KO/het & \href{https://doi.org/10.1186/s12934-015-0246-0}{doi:10.1186/\allowbreak s12934-015-0246-0} \\
+51 & \textbf{Yoshikawa 2011 (deletion + overexpression phenome)} & Tolerance / robustness & ~4,800 KO + matched overexpression & carbon sources / stress & $5.8\times 10^{4}$$\ddagger$ & $5.8\times 10^{4}$ & growth-rate fitness & S288C-\allowbreak KO & \href{https://doi.org/10.1534/g3.111.000695}{doi:10.1534/\allowbreak g3.111.000695} \\
 \addlinespace[5pt]
-\midrule \multicolumn{10}{@{}l}{\textbf{Cut line. Rows above are the 51 that reach 100; rows below are the ranked reserve.}}\\ \midrule
-52 & \textbf{Mukherjee 2021 (CRISPRi essential genes x acetic acid)} & Tolerance / robustness & ~1,100 essential genes & acetic acid vs control & $2.2\times 10^{3}$$\dagger$ & $2.2\times 10^{3}$ & fitness under acid stress & S288C+\allowbreak guide & \href{https://doi.org/10.1128/mSystems.00410-21}{doi:10.1128/\allowbreak mSystems.00410-21} \\
+52 & \textbf{Ho 2009 (MoBY-ORF barcoded overexpression)} & Metabolite / precursor & ~5,100 barcoded ORFs & compound panel & $5.1\times 10^{4}$$\ddagger$ & $5.1\times 10^{4}$ & fitness per compound & S288C+\allowbreak ORF-\allowbreak plasmid & \href{https://doi.org/10.1038/nbt.1534}{doi:10.1038/\allowbreak nbt.1534} \\
 \addlinespace[5pt]
-53 & \textbf{Breslow 2008 (DAmP hypomorphic collection)} & Modality / backbone & 842 haploid + 970 diploid essential & 1 & $1.8\times 10^{3}$ & $1.8\times 10^{3}$ & competitive fitness & S288C+\allowbreak tag & \href{https://doi.org/10.1038/nmeth.1234}{doi:10.1038/\allowbreak nmeth.1234} \\
+53 & \textbf{Bloom 2013 (1,008 BYxRM segregants)} & Natural variation & 1,008 segregants, 11,623 markers & 46 traits & $4.6\times 10^{4}$$\dagger$ & $4.6\times 10^{4}$ & quantitative growth traits & segregant-\allowbreak WGS & \href{https://doi.org/10.1038/nature11867}{doi:10.1038/\allowbreak nature11867} \\
 \addlinespace[5pt]
-54 & \textbf{Kofoed 2015 (barcoded ts alleles)} & Modality / backbone & 600+ barcoded ts alleles & permissive / restrictive & $1.2\times 10^{3}$$\dagger$ & $1.2\times 10^{3}$ & ts severity (growth ratio) & S288C+\allowbreak designed-\allowbreak edit & \href{https://doi.org/10.1534/g3.115.019174}{doi:10.1534/\allowbreak g3.115.019174} \\
+54 & \textbf{Zhu 2014 (kinase / phosphatase lipidomics)} & Metabolite / precursor & 129 kinase + phosphatase KOs & 1 & 129 & $2.6\times 10^{4}$ & lipid class and species abundance & S288C-\allowbreak KO & \href{https://pmc.ncbi.nlm.nih.gov/articles/PMC4196872/}{PMC4196872} \\
 \addlinespace[5pt]
-55 & \textbf{Lian 2017 (CRISPR-AID, beta-carotene)} & CRISPR library screen & combinatorial a/i/d triples & 1 & 200$\ddagger$ & 200 & beta-carotene titer & engineered-\allowbreak chassis & \href{https://doi.org/10.1038/s41467-017-01695-x}{doi:10.1038/\allowbreak s41467-017-01695-x} \\
+55 & \textbf{Xiao 2014 (genome-wide RNAi furfural tolerance)} & Tolerance / robustness & genome-scale RNAi library & furfural vs control & $2.0\times 10^{4}$$\ddagger$ & $2.0\times 10^{4}$ & knockdown enrichment under furfural & S288C+\allowbreak guide & \href{https://doi.org/10.1186/1754-6834-7-78}{doi:10.1186/\allowbreak 1754-6834-7-78} \\
 \addlinespace[5pt]
-56 & \textbf{Cubillos 2017 (nitrogen-consumption QTL)} & Natural variation & 165 sequenced F12 segregants & nitrogen-limited fermentation & 165 & 165 & nitrogen consumption & segregant-\allowbreak WGS & \href{https://doi.org/10.1534/g3.117.042127}{doi:10.1534/\allowbreak g3.117.042127} \\
+56 & \textbf{Crook 2016 (tunable RNAi, isobutanol + 1-butanol)} & Tolerance / robustness & genome-scale tunable RNAi & isobutanol, 1-butanol & $2.0\times 10^{4}$$\ddagger$ & $2.0\times 10^{4}$ & dose-graded knockdown fitness under alcohol stress & S288C+\allowbreak guide & \href{https://pubmed.ncbi.nlm.nih.gov/27654654/}{PMID 27654654} \\
 \addlinespace[5pt]
-57 & \textbf{Braberg 2020 (point-mutant E-MAP)} & Modality / backbone & 350 point mutants x genome-wide array & 1 & $5.0\times 10^{5}$ & $5.0\times 10^{5}$ & residue-level genetic interaction & S288C+\allowbreak designed-\allowbreak edit & \href{https://doi.org/10.1126/science.aaz4910}{doi:10.1126/\allowbreak science.aaz4910} \\
+57 & \textbf{Douglas 2012 (barcoded overexpression fitness)} & Metabolite / precursor & genome-scale barcoded ORFs & baseline + stress & $2.0\times 10^{4}$$\ddagger$ & $2.0\times 10^{4}$ & pooled competitive fitness on induction & S288C+\allowbreak ORF-\allowbreak plasmid & \href{https://doi.org/10.1534/g3.112.003400}{doi:10.1534/\allowbreak g3.112.003400} \\
 \addlinespace[5pt]
-58 & \textbf{Weill 2018 (SWAT libraries)} & Modality / backbone & ~5,500 acceptor-tagged strains & 1 & $5.5\times 10^{3}$ & $1.6\times 10^{4}$ & abundance, localization, topology & S288C+\allowbreak tag & \href{https://doi.org/10.1038/s41592-018-0044-9}{doi:10.1038/\allowbreak s41592-018-0044-9} \\
+58 & \textbf{She 2018 (natural variant effects across a large isolate panel)} & Natural variation & ~500 isolates & ~40 conditions & $2.0\times 10^{4}$$\ddagger$ & $2.0\times 10^{4}$ & growth traits & isolate-\allowbreak WGS & \href{https://doi.org/10.1016/j.cell.2017.12.015}{doi:10.1016/\allowbreak j.cell.2017.12.015} \\
 \addlinespace[5pt]
-59 & \textbf{Nadal-Ribelles 2019 (sensitive yeast scRNA-seq)}\,$\bullet$ & Expression / single cell & clonal wild type & baseline + stress & 2$\ddagger$ & $1.2\times 10^{4}$ & single-cell transcriptome & reference-\allowbreak only & \href{https://doi.org/10.1038/s41564-018-0346-9}{doi:10.1038/\allowbreak s41564-018-0346-9} \\
+59 & \textbf{Costello 2020 (bioreactor Bar-seq)} & Tolerance / robustness & pooled YKO library & feed schemes / pH & $1.9\times 10^{4}$$\ddagger$ & $1.9\times 10^{4}$ & fitness under fed-batch cultivation & S288C-\allowbreak KO & \href{https://doi.org/10.1186/s12934-020-01423-z}{doi:10.1186/\allowbreak s12934-020-01423-z} \\
 \addlinespace[5pt]
-60 & \textbf{Gasch 2017 (single-cell stress heterogeneity)}\,$\bullet$ & Expression / single cell & wild type & stress vs unstressed & 2$\ddagger$ & $1.2\times 10^{4}$ & single-cell transcriptome & reference-\allowbreak only & \href{https://doi.org/10.1371/journal.pbio.2004050}{doi:10.1371/\allowbreak journal.pbio.2004050} \\
+60 & \textbf{Roy 2018 (multiplexed precision editing)} & CRISPR library screen & thousands of designed edits & 1 & $1.6\times 10^{4}$$\ddagger$ & $1.6\times 10^{4}$ & variant fitness & S288C+\allowbreak designed-\allowbreak edit & \href{https://doi.org/10.1038/nbt.4137}{doi:10.1038/\allowbreak nbt.4137} \\
 \addlinespace[5pt]
-61 & \textbf{Valenti 2025 (SWAT degron + GFP collection)} & Modality / backbone & proteome-wide SWAT library & depleted / not & $1.0\times 10^{4}$$\ddagger$ & $1.0\times 10^{4}$ & depletion efficiency + abundance/localization & S288C+\allowbreak tag & \href{https://doi.org/10.1083/jcb.202409050}{doi:10.1083/\allowbreak jcb.202409050} \\
+61 & \textbf{Gerke 2017 (urea-cycle mQTL)} & Natural variation & 147 diploid segregants & 1 & 147 & $1.5\times 10^{4}$ & untargeted metabolite abundance & segregant-\allowbreak WGS & \href{https://doi.org/10.1534/genetics.117.201107}{doi:10.1534/\allowbreak genetics.117.201107} \\
 \addlinespace[5pt]
-62 & \textbf{Ghaemmaghami 2003 (absolute protein abundance)} & Modality / backbone & ~4,251 TAP-tagged ORFs & 1 & $4.3\times 10^{3}$ & $4.3\times 10^{3}$ & absolute abundance (molecules/cell) & S288C+\allowbreak tag & \href{https://doi.org/10.1038/nature02046}{doi:10.1038/\allowbreak nature02046} \\
+62 & \textbf{Gurvitz (fatty-acid utilization screen)} & Metabolite / precursor & ~4,800 viable YKO & oleate, myristate, acetate & $1.4\times 10^{4}$$\dagger$ & $1.4\times 10^{4}$ & fatty-acid utilization competence & S288C-\allowbreak KO & \href{https://www.embopress.org/doi/pdf/10.1038/msb4100051}{embopress.org/\allowbreak doi/\allowbreak pdf/\allowbreak 10.1038/\allowbreak msb4100051} \\
 \addlinespace[5pt]
-63 & \textbf{Huh 2003 (GFP localization atlas)} & Modality / backbone & ~4,156 GFP-tagged ORFs & 1 & $4.2\times 10^{3}$ & $4.2\times 10^{3}$ & subcellular localization (22 classes) & S288C+\allowbreak tag & \href{https://doi.org/10.1038/nature02026}{doi:10.1038/\allowbreak nature02026} \\
+63 & \textbf{Mira 2010 (acetic acid tolerance, full collection)} & Tolerance / robustness & EUROSCARF collection & 70-110 mM acetic acid, pH 4.5 & $1.4\times 10^{4}$$\dagger$ & $1.4\times 10^{4}$ & acetic-acid tolerance & S288C-\allowbreak KO & \href{https://doi.org/10.1186/1475-2859-9-79}{doi:10.1186/\allowbreak 1475-2859-9-79} \\
 \addlinespace[5pt]
-64 & \textbf{Michaelis 2023 (protein interactome)} & Modality / backbone & proteome-scale AP-MS baits & 1 & $4.0\times 10^{3}$$\ddagger$ & $4.0\times 10^{3}$ & protein-protein interaction + interface & S288C+\allowbreak tag & \href{https://doi.org/10.1038/s41586-023-06739-5}{doi:10.1038/\allowbreak s41586-023-06739-5} \\
+64 & \textbf{Gameiro 2025 (AID2 degron libraries)} & Modality / backbone & >5,600 tagged ORFs & baseline + hydroxyurea & $1.1\times 10^{4}$$\dagger$ & $1.1\times 10^{4}$ & degradation efficiency; fitness under stress & S288C+\allowbreak tag & \href{https://doi.org/10.1083/jcb.202409007}{doi:10.1083/\allowbreak jcb.202409007} \\
 \addlinespace[5pt]
-65 & \textbf{Tengolics 2024 (domestication metabolome)} & Natural variation & 17 S. cerevisiae populations & 1 & 17 & $1.6\times 10^{3}$ & 19 amino acids + 78 other metabolites & isolate-\allowbreak WGS & \href{https://doi.org/10.1073/pnas.2313354121}{doi:10.1073/\allowbreak pnas.2313354121} \\
+65 & \textbf{Si 2017 (RAGE RNAi, isobutanol titer)} & CRISPR library screen & genome-scale RNAi, iterative rounds & isobutanol selection & $1.0\times 10^{4}$$\ddagger$ & $1.0\times 10^{4}$ & construct enrichment; isobutanol titer for top strains & S288C+\allowbreak guide & \href{https://doi.org/10.1038/ncomms15187}{doi:10.1038/\allowbreak ncomms15187} \\
 \addlinespace[5pt]
-66 & \textbf{Schulte 2023 (mitochondrial complexome)} & Modality / backbone & ~900 mitochondrial proteins & 1 & 900 & 900 & complex assembly profile & reference-\allowbreak only & \href{https://doi.org/10.1038/s41586-022-05641-w}{doi:10.1038/\allowbreak s41586-022-05641-w} \\
+66 & \textbf{HamediRad 2018 (RAGE xylose utilization)} & CRISPR library screen & genome-scale RNAi & xylose-limited & $1.0\times 10^{4}$$\ddagger$ & $1.0\times 10^{4}$ & enrichment; xylose consumption rate & S288C+\allowbreak guide & \href{https://doi.org/10.1002/bit.26570}{doi:10.1002/\allowbreak bit.26570} \\
 \addlinespace[5pt]
-67 & \textbf{Eder 2020 (flux QTL)} & Natural variation & segregant panel (n unconfirmed) & wine fermentation & 100$\ddagger$ & 100 & modeled intracellular flux & segregant-\allowbreak WGS & \href{https://pubmed.ncbi.nlm.nih.gov/32034164/}{PMID 32034164} \\
+67 & \textbf{Newman 2006 (protein noise, GFP library)}\,$\bullet$ & Modality / backbone & ~2,500 GFP-tagged strains & rich / minimal & $5.0\times 10^{3}$$\dagger$ & $1.0\times 10^{4}$ & protein abundance and cell-to-cell noise & S288C+\allowbreak tag & \href{https://doi.org/10.1038/nature04785}{doi:10.1038/\allowbreak nature04785} \\
 \addlinespace[5pt]
-68 & \textbf{Yue 2017 (wild vs domesticated assemblies)} & Natural variation & 12 long-read assemblies & n/a & 12 & 12 & genome structure, TE and subtelomere dynamics & isolate-\allowbreak WGS & \href{https://doi.org/10.1038/ng.3847}{doi:10.1038/\allowbreak ng.3847} \\
+68 & \textbf{Pereira 2014 (wheat-straw hydrolysate)} & Tolerance / robustness & EUROSCARF deletion collection & hydrolysate vs control & $9.6\times 10^{3}$$\dagger$ & $9.6\times 10^{3}$ & tolerance to industrial hydrolysate & S288C-\allowbreak KO & \href{https://doi.org/10.1007/s10295-014-1519-z}{doi:10.1007/\allowbreak s10295-014-1519-z} \\
 \addlinespace[5pt]
-69 & \textbf{Brettner 2024 (ultra-high-throughput yeast scRNA-seq)}\,$\bullet$ & Expression / single cell & method & method & --$\ddagger$ & -- & single-cell transcriptome & reference-\allowbreak only & \href{https://doi.org/10.1002/yea.3927}{doi:10.1002/\allowbreak yea.3927} \\
+69 & \textbf{Endo 2008 (vanillin tolerance)} & Tolerance / robustness & diploid deletion collection & vanillin vs control & $9.6\times 10^{3}$$\dagger$ & $9.6\times 10^{3}$ & vanillin sensitivity & S288C-\allowbreak KO & \href{https://doi.org/10.1128/AEM.01541-08}{doi:10.1128/\allowbreak AEM.01541-08} \\
 \addlinespace[5pt]
-70 & \textbf{Mulleder 2012 (prototrophic deletion collection)} & Modality / backbone & 5,185 prototrophic + 839 titratable essential & 1 & --$\ddagger$ & -- & strain resource (no phenotype) & S288C-\allowbreak KO & \href{https://doi.org/10.1038/nbt.2442}{doi:10.1038/\allowbreak nbt.2442} \\
+70 & \textbf{Sharifpoor 2012 (kinome synthetic dosage lethality)} & Modality / backbone & 92 kinase queries, genome-wide array & 1 & $8.7\times 10^{3}$ & $8.7\times 10^{3}$ & genetic interaction / SDL score & S288C-\allowbreak KO & \href{https://doi.org/10.1101/gr.129213.111}{doi:10.1101/\allowbreak gr.129213.111} \\
 \addlinespace[5pt]
-71 & \textbf{Zackrisson 2016 (Scan-o-matic growth curves)} & Modality / backbone & YKO-compatible platform & panel-dependent & --$\ddagger$ & -- & full growth curve (rate, lag, yield) & S288C-\allowbreak KO & \href{https://doi.org/10.1534/g3.116.032342}{doi:10.1534/\allowbreak g3.116.032342} \\
+71 & \textbf{Ambroset 2014 (metabolite QTL)} & Natural variation & ~100 segregants & 1 & 100 & $7.4\times 10^{3}$ & 74 metabolite concentrations (LC-MS/MS) & segregant-\allowbreak WGS & \href{https://doi.org/10.1371/journal.pgen.1004142}{doi:10.1371/\allowbreak journal.pgen.1004142} \\
 \addlinespace[5pt]
-72 & \textbf{Bennett 2001 (ionizing-radiation resistance)} & Tolerance / robustness & ~4,800 YKO & irradiated vs control & $9.6\times 10^{3}$$\dagger$ & $9.6\times 10^{3}$ & radiation sensitivity & S288C-\allowbreak KO & \href{https://doi.org/10.1038/ng778}{doi:10.1038/\allowbreak ng778} \\
+72 & \textbf{Mavor 2016 (ubiquitin DMS across conditions)} & Deep mutational scan & ~1,400 ubiquitin variants & chemical stresses & $7.0\times 10^{3}$$\dagger$ & $7.0\times 10^{3}$ & fitness & S288C+\allowbreak designed-\allowbreak edit & \href{https://doi.org/10.7554/eLife.15802}{doi:10.7554/\allowbreak eLife.15802} \\
 \addlinespace[5pt]
-73 & \textbf{Sugiyama (lactic-acid tolerance)} & Tolerance / robustness & ~4,800 YKO & 4 percent lactic acid vs control & $9.6\times 10^{3}$$\dagger$ & $9.6\times 10^{3}$ & acid tolerance & S288C-\allowbreak KO & \href{https://www.nisr.or.jp/wp-content/uploads/NISR06sugiyama.pdf}{nisr.or.jp/\allowbreak wp-content/\allowbreak uploads/\allowbreak NISR06sugiyama.pdf} \\
+73 & \textbf{Blank 2005 (13C metabolic flux)} & Metabolite / precursor & ~200 viable null mutants & glucose minimal & 200$\ddagger$ & $6.0\times 10^{3}$ & intracellular flux distribution (13C-MFA) & S288C-\allowbreak KO & \href{https://doi.org/10.1186/gb-2005-6-6-r49}{doi:10.1186/\allowbreak gb-2005-6-6-r49} \\
+\addlinespace[5pt]
+74 & \textbf{Flynn 2020 (Hsp90 DMS across environments)} & Deep mutational scan & ~1,000 Hsp90 variants & stress conditions & $6.0\times 10^{3}$$\dagger$ & $6.0\times 10^{3}$ & fitness & S288C+\allowbreak designed-\allowbreak edit & \href{https://doi.org/10.7554/eLife.53810}{doi:10.7554/\allowbreak eLife.53810} \\
+\addlinespace[5pt]
+75 & \textbf{Ho 2018 (unified absolute protein abundance)} & Modality / backbone & wild type & 1 & $5.9\times 10^{3}$ & $5.9\times 10^{3}$ & absolute abundance, molecules/cell & reference-\allowbreak only & \href{https://doi.org/10.1016/j.cels.2017.12.004}{doi:10.1016/\allowbreak j.cels.2017.12.004} \\
+\addlinespace[5pt]
+76 & \textbf{Renganaath 2020 (natural promoter-variant MPRA)}\,$\bullet$ & Regulatory DNA & 5,832 natural variants, 2,503 promoters & 1 & $5.8\times 10^{3}$ & $5.8\times 10^{3}$ & allele-specific promoter activity & S288C+\allowbreak reporter-\allowbreak locus & \href{https://doi.org/10.7554/eLife.62669}{doi:10.7554/\allowbreak eLife.62669} \\
+\addlinespace[5pt]
+77 & \textbf{Chang 2012 (organic-acid production screen)} & Metabolite / precursor & ~4,800 YKO & 1 & $4.8\times 10^{3}$ & $4.8\times 10^{3}$ & acetate / pyruvate / succinate halo (pH indicator) & S288C-\allowbreak KO & \href{https://pubmed.ncbi.nlm.nih.gov/22277779/}{PMID 22277779} \\
+\addlinespace[5pt]
+78 & \textbf{Trikka 2015 (carotenogenic heterozygous screen)} & Metabolite / precursor & 4,700 heterozygous deletions & 1 & $4.7\times 10^{3}$ & $4.7\times 10^{3}$ & carotenoid color; sclareol titer for top strains & S288C-\allowbreak KO/het & \href{https://doi.org/10.1186/s12934-015-0246-0}{doi:10.1186/\allowbreak s12934-015-0246-0} \\
+\addlinespace[5pt]
+79 & \textbf{Mukherjee 2021 (CRISPRi essential genes x acetic acid)} & Tolerance / robustness & ~1,100 essential genes & acetic acid vs control & $2.2\times 10^{3}$$\dagger$ & $2.2\times 10^{3}$ & fitness under acid stress & S288C+\allowbreak guide & \href{https://doi.org/10.1128/mSystems.00410-21}{doi:10.1128/\allowbreak mSystems.00410-21} \\
+\addlinespace[5pt]
+80 & \textbf{Sardi 2018 (natural variation in hydrolysate tolerance)} & Tolerance / robustness & sequenced isolate / segregant panel & hydrolysate toxins & $2.0\times 10^{3}$$\ddagger$ & $2.0\times 10^{3}$ & tolerance & isolate-\allowbreak WGS & \href{https://doi.org/10.1371/journal.pgen.1007217}{doi:10.1371/\allowbreak journal.pgen.1007217} \\
+\addlinespace[5pt]
+81 & \textbf{Breslow 2008 (DAmP hypomorphic collection)} & Modality / backbone & 842 haploid + 970 diploid essential & 1 & $1.8\times 10^{3}$ & $1.8\times 10^{3}$ & competitive fitness & S288C+\allowbreak tag & \href{https://doi.org/10.1038/nmeth.1234}{doi:10.1038/\allowbreak nmeth.1234} \\
+\addlinespace[5pt]
+82 & \textbf{Kofoed 2015 (barcoded ts alleles)} & Modality / backbone & 600+ barcoded ts alleles & permissive / restrictive & $1.2\times 10^{3}$$\dagger$ & $1.2\times 10^{3}$ & ts severity (growth ratio) & S288C+\allowbreak designed-\allowbreak edit & \href{https://doi.org/10.1534/g3.115.019174}{doi:10.1534/\allowbreak g3.115.019174} \\
+\addlinespace[5pt]
+83 & \textbf{Lian 2017 (CRISPR-AID, beta-carotene)} & CRISPR library screen & combinatorial a/i/d triples & 1 & 200$\ddagger$ & 200 & beta-carotene titer & engineered-\allowbreak chassis & \href{https://doi.org/10.1038/s41467-017-01695-x}{doi:10.1038/\allowbreak s41467-017-01695-x} \\
+\addlinespace[5pt]
+84 & \textbf{Zhang 2022 (GCE-SCRaMbLE recombination outcomes)}\,$\bullet$ & Combinatorial genome & ~200 sequenced SCRaMbLE genomes & 1 & 200$\ddagger$ & 200 & rearrangement structure + fitness & isolate-\allowbreak WGS & \href{https://doi.org/10.1038/s41467-022-33606-0}{doi:10.1038/\allowbreak s41467-022-33606-0} \\
+\addlinespace[5pt]
+85 & \textbf{Cubillos 2017 (nitrogen-consumption QTL)} & Natural variation & 165 sequenced F12 segregants & nitrogen-limited fermentation & 165 & 165 & nitrogen consumption & segregant-\allowbreak WGS & \href{https://doi.org/10.1534/g3.117.042127}{doi:10.1534/\allowbreak g3.117.042127} \\
+\addlinespace[5pt]
+86 & \textbf{Hillenmeyer 2010 (systematic fitness reanalysis)} & Tolerance / robustness & het + hom collections & ~400 conditions & $2.4\times 10^{6}$$\ddagger$ & $2.4\times 10^{6}$ & fitness-defect score & S288C-\allowbreak KO & \href{https://doi.org/10.1186/gb-2010-11-3-r30}{doi:10.1186/\allowbreak gb-2010-11-3-r30} \\
+\addlinespace[5pt]
+87 & \textbf{Smith 2008 (gene-environment interaction eQTL)}\,$\bullet$ & Natural variation & 109 segregants & glucose / ethanol & 218$\dagger$ & $1.3\times 10^{6}$ & mRNA abundance & segregant-\allowbreak WGS & \href{https://doi.org/10.1371/journal.pbio.0060083}{doi:10.1371/\allowbreak journal.pbio.0060083} \\
+\addlinespace[5pt]
+88 & \textbf{Lenstra 2011 (chromatin regulator deletion expression)}\,$\bullet$ & Expression / single cell & 165 chromatin-regulator deletions & 1 & 165 & $9.9\times 10^{5}$ & mRNA abundance & S288C-\allowbreak KO & \href{https://doi.org/10.1016/j.molcel.2011.03.026}{doi:10.1016/\allowbreak j.molcel.2011.03.026} \\
+\addlinespace[5pt]
+89 & \textbf{Braberg 2020 (point-mutant E-MAP)} & Modality / backbone & 350 point mutants x genome-wide array & 1 & $5.0\times 10^{5}$ & $5.0\times 10^{5}$ & residue-level genetic interaction & S288C+\allowbreak designed-\allowbreak edit & \href{https://doi.org/10.1126/science.aaz4910}{doi:10.1126/\allowbreak science.aaz4910} \\
+\addlinespace[5pt]
+90 & \textbf{Breker 2013 (GFP library under stress)}\,$\bullet$ & Modality / backbone & ~4,159 GFP-tagged strains & stress conditions & $1.2\times 10^{4}$$\dagger$ & $2.1\times 10^{5}$ & abundance + localization, per cell & S288C+\allowbreak tag & \href{https://doi.org/10.1083/jcb.201301120}{doi:10.1083/\allowbreak jcb.201301120} \\
+\addlinespace[5pt]
+91 & \textbf{Tkach 2012 (protein relocalization under DNA damage)}\,$\bullet$ & Modality / backbone & GFP collection & DNA-damaging agents & $1.2\times 10^{4}$$\dagger$ & $2.0\times 10^{5}$ & localization and abundance change & S288C+\allowbreak tag & \href{https://doi.org/10.1038/ncb2549}{doi:10.1038/\allowbreak ncb2549} \\
+\addlinespace[5pt]
+92 & \textbf{Ehrenreich 2010 (X-QTL bulk segregant mapping)} & Natural variation & ~1e6 pooled segregants & 17 selective conditions & 17 & $1.9\times 10^{5}$ & allele-frequency shift (pooled) & segregant-\allowbreak WGS & \href{https://doi.org/10.1038/nature08923}{doi:10.1038/\allowbreak nature08923} \\
+\addlinespace[5pt]
+93 & \textbf{Skelly 2013 (expression variation across isolates)} & Natural variation & 22 sequenced isolates & 1 & 22 & $1.8\times 10^{5}$ & transcriptome + proteome & isolate-\allowbreak WGS & \href{https://doi.org/10.1101/gr.155762.113}{doi:10.1101/\allowbreak gr.155762.113} \\
+\addlinespace[5pt]
+94 & \textbf{Denervaud 2013 (microfluidic GFP dynamics)}\,$\bullet$ & Modality / backbone & ~1,000 GFP strains & dynamic environments & $4.0\times 10^{3}$$\dagger$ & $6.8\times 10^{4}$ & time-resolved single-cell abundance & S288C+\allowbreak tag & \href{https://doi.org/10.1073/pnas.1308265110}{doi:10.1073/\allowbreak pnas.1308265110} \\
+\addlinespace[5pt]
+95 & \textbf{Brogaard 2012 (chemical nucleosome map)} & Modality / backbone & wild type & 1 & 1 & $6.7\times 10^{4}$ & nucleosome center positions, bp resolution & reference-\allowbreak only & \href{https://doi.org/10.1038/nature11142}{doi:10.1038/\allowbreak nature11142} \\
+\addlinespace[5pt]
+96 & \textbf{Xia 2022 (proteome allocation across conditions)} & Modality / backbone & wild type & chemostat conditions & 30$\ddagger$ & $6.0\times 10^{4}$ & absolute proteome, resource allocation & reference-\allowbreak only & \href{https://doi.org/10.1038/s41467-022-30513-2}{doi:10.1038/\allowbreak s41467-022-30513-2} \\
+\addlinespace[5pt]
+97 & \textbf{Melamed 2013 (PAB1 RRM domain scan)} & Deep mutational scan & ~40,000 PAB1 variants & 1 & $4.0\times 10^{4}$$\ddagger$ & $4.0\times 10^{4}$ & fitness & S288C+\allowbreak designed-\allowbreak edit & \href{https://doi.org/10.1261/rna.040709.113}{doi:10.1261/\allowbreak rna.040709.113} \\
+\addlinespace[5pt]
+98 & \textbf{De Chiara 2022 (domestication and genome instability)} & Natural variation & 1,011-isolate panel, reanalyzed & conditions & $3.6\times 10^{4}$$\ddagger$ & $3.6\times 10^{4}$ & growth, aneuploidy, instability & isolate-\allowbreak WGS & \href{https://doi.org/10.1038/s41559-022-01671-9}{doi:10.1038/\allowbreak s41559-022-01671-9} \\
+\addlinespace[5pt]
+99 & \textbf{Guo 2018 (CRISPR-Cas9 tiling of essential genes)}\,$\bullet$ & CRISPR library screen & ~3e4 tiling guides & 1 & $3.0\times 10^{4}$$\ddagger$ & $3.0\times 10^{4}$ & per-guide fitness & S288C+\allowbreak guide & \href{https://doi.org/10.1038/nbt.4147}{doi:10.1038/\allowbreak nbt.4147} \\
+\addlinespace[5pt]
+100 & \textbf{Yvert 2013 (single-cell trait variation across isolates)}\,$\bullet$ & Natural variation & 37 isolates & 1 & 37 & $1.9\times 10^{4}$ & single-cell morphology (CalMorph) & isolate-\allowbreak WGS & \href{https://doi.org/10.1186/1752-0509-7-54}{doi:10.1186/\allowbreak 1752-0509-7-54} \\
+\addlinespace[5pt]
+101 & \textbf{Lahtvee 2017 (absolute proteome across conditions)} & Modality / backbone & wild type & 9 growth conditions & 9 & $1.8\times 10^{4}$ & absolute protein abundance + turnover & reference-\allowbreak only & \href{https://doi.org/10.1016/j.cels.2017.03.003}{doi:10.1016/\allowbreak j.cels.2017.03.003} \\
+\addlinespace[5pt]
+102 & \textbf{Weill 2018 (SWAT libraries)} & Modality / backbone & ~5,500 acceptor-tagged strains & 1 & $5.5\times 10^{3}$ & $1.6\times 10^{4}$ & abundance, localization, topology & S288C+\allowbreak tag & \href{https://doi.org/10.1038/s41592-018-0044-9}{doi:10.1038/\allowbreak s41592-018-0044-9} \\
+\addlinespace[5pt]
+103 & \textbf{Kinsler 2020 (barcoded pleiotropy across environments)} & Natural variation & ~300 sequenced adaptive clones & 45 environments & $1.4\times 10^{4}$$\dagger$ & $1.4\times 10^{4}$ & fitness & isolate-\allowbreak WGS & \href{https://doi.org/10.7554/eLife.61271}{doi:10.7554/\allowbreak eLife.61271} \\
+\addlinespace[5pt]
+104 & \textbf{Nadal-Ribelles 2019 (sensitive yeast scRNA-seq)}\,$\bullet$ & Expression / single cell & clonal wild type & baseline + stress & 2$\ddagger$ & $1.2\times 10^{4}$ & single-cell transcriptome & reference-\allowbreak only & \href{https://doi.org/10.1038/s41564-018-0346-9}{doi:10.1038/\allowbreak s41564-018-0346-9} \\
+\addlinespace[5pt]
+105 & \textbf{Gasch 2017 (single-cell stress heterogeneity)}\,$\bullet$ & Expression / single cell & wild type & stress vs unstressed & 2$\ddagger$ & $1.2\times 10^{4}$ & single-cell transcriptome & reference-\allowbreak only & \href{https://doi.org/10.1371/journal.pbio.2004050}{doi:10.1371/\allowbreak journal.pbio.2004050} \\
+\addlinespace[5pt]
+106 & \textbf{Pelechano 2013 (transcript isoform landscape)} & Modality / backbone & wild type & glucose / galactose & 2 & $1.2\times 10^{4}$ & transcript isoform boundaries and abundance & reference-\allowbreak only & \href{https://doi.org/10.1038/nature12121}{doi:10.1038/\allowbreak nature12121} \\
+\addlinespace[5pt]
+107 & \textbf{Deutschbauer 2005 (haploinsufficiency, genome-wide)} & Tolerance / robustness & heterozygous diploid collection & rich / minimal & $1.2\times 10^{4}$$\dagger$ & $1.2\times 10^{4}$ & haploinsufficiency fitness & S288C-\allowbreak KO/het & \href{https://doi.org/10.1534/genetics.104.036871}{doi:10.1534/\allowbreak genetics.104.036871} \\
+\addlinespace[5pt]
+108 & \textbf{Valenti 2025 (SWAT degron + GFP collection)} & Modality / backbone & proteome-wide SWAT library & depleted / not & $1.0\times 10^{4}$$\ddagger$ & $1.0\times 10^{4}$ & depletion efficiency + abundance/localization & S288C+\allowbreak tag & \href{https://doi.org/10.1083/jcb.202409050}{doi:10.1083/\allowbreak jcb.202409050} \\
+\addlinespace[5pt]
+109 & \textbf{Sousa 2013 (acetate resistance overexpression screen)} & Tolerance / robustness & genome-wide overexpression library & sodium acetate vs control & $1.0\times 10^{4}$$\dagger$ & $1.0\times 10^{4}$ & acetate resistance & S288C+\allowbreak ORF-\allowbreak plasmid & \href{https://pubmed.ncbi.nlm.nih.gov/23262128/}{PMID 23262128} \\
+\addlinespace[5pt]
+110 & \textbf{Jaffe 2019 (multiplexed CRISPR interference epistasis)}\,$\bullet$ & CRISPR library screen & ~1e4 guide pairs & 1 & $1.0\times 10^{4}$$\ddagger$ & $1.0\times 10^{4}$ & fitness / genetic interaction & S288C+\allowbreak guide & \href{https://doi.org/10.1534/g3.119.400323}{doi:10.1534/\allowbreak g3.119.400323} \\
+\addlinespace[5pt]
+111 & \textbf{Sadhu 2016 (CRISPR-directed causal variant mapping)} & Natural variation & ~1,000 targeted recombinants & conditions & $1.0\times 10^{4}$$\ddagger$ & $1.0\times 10^{4}$ & fitness & segregant-\allowbreak WGS & \href{https://doi.org/10.1126/science.aaf5124}{doi:10.1126/\allowbreak science.aaf5124} \\
+\addlinespace[5pt]
+112 & \textbf{Weinberg 2016 (ribosome profiling, improved)} & Modality / backbone & wild type & 1 & 1 & $6.0\times 10^{3}$ & ribosome occupancy, translation efficiency & reference-\allowbreak only & \href{https://doi.org/10.1016/j.celrep.2016.01.043}{doi:10.1016/\allowbreak j.celrep.2016.01.043} \\
+\addlinespace[5pt]
+113 & \textbf{Ghaemmaghami 2003 (absolute protein abundance)} & Modality / backbone & ~4,251 TAP-tagged ORFs & 1 & $4.3\times 10^{3}$ & $4.3\times 10^{3}$ & absolute abundance (molecules/cell) & S288C+\allowbreak tag & \href{https://doi.org/10.1038/nature02046}{doi:10.1038/\allowbreak nature02046} \\
+\addlinespace[5pt]
+114 & \textbf{Huh 2003 (GFP localization atlas)} & Modality / backbone & ~4,156 GFP-tagged ORFs & 1 & $4.2\times 10^{3}$ & $4.2\times 10^{3}$ & subcellular localization (22 classes) & S288C+\allowbreak tag & \href{https://doi.org/10.1038/nature02026}{doi:10.1038/\allowbreak nature02026} \\
+\addlinespace[5pt]
+115 & \textbf{Michaelis 2023 (protein interactome)} & Modality / backbone & proteome-scale AP-MS baits & 1 & $4.0\times 10^{3}$$\ddagger$ & $4.0\times 10^{3}$ & protein-protein interaction + interface & S288C+\allowbreak tag & \href{https://doi.org/10.1038/s41586-023-06739-5}{doi:10.1038/\allowbreak s41586-023-06739-5} \\
+\addlinespace[5pt]
+116 & \textbf{Christiano 2014 (protein turnover)} & Modality / backbone & wild type & 1 & $3.9\times 10^{3}$$\ddagger$ & $3.9\times 10^{3}$ & protein half-life & reference-\allowbreak only & \href{https://doi.org/10.1016/j.celrep.2014.10.065}{doi:10.1016/\allowbreak j.celrep.2014.10.065} \\
+\addlinespace[5pt]
+117 & \textbf{Boer 2010 (metabolome across nutrient limitations)} & Metabolite / precursor & wild type & nutrient limitations x growth rates & 25 & $2.5\times 10^{3}$ & intracellular metabolite concentrations & reference-\allowbreak only & \href{https://doi.org/10.1091/mbc.e09-07-0597}{doi:10.1091/\allowbreak mbc.e09-07-0597} \\
+\addlinespace[5pt]
+118 & \textbf{Kitzman 2015 (GAL4 DMS)} & Deep mutational scan & ~1,200 GAL4 variants & selective / permissive & $2.4\times 10^{3}$$\dagger$ & $2.4\times 10^{3}$ & transcription-factor activity & S288C+\allowbreak designed-\allowbreak edit & \href{https://doi.org/10.1038/nmeth.3223}{doi:10.1038/\allowbreak nmeth.3223} \\
+\addlinespace[5pt]
+119 & \textbf{Sharon 2012 (designed promoter library)} & Regulatory DNA & ~2,000 designed promoters & 1 & $2.0\times 10^{3}$$\ddagger$ & $2.0\times 10^{3}$ & expression (fluorescence) & S288C+\allowbreak reporter-\allowbreak locus & \href{https://doi.org/10.1038/nbt.2205}{doi:10.1038/\allowbreak nbt.2205} \\
+\addlinespace[5pt]
+120 & \textbf{Tengolics 2024 (domestication metabolome)} & Natural variation & 17 S. cerevisiae populations & 1 & 17 & $1.6\times 10^{3}$ & 19 amino acids + 78 other metabolites & isolate-\allowbreak WGS & \href{https://doi.org/10.1073/pnas.2313354121}{doi:10.1073/\allowbreak pnas.2313354121} \\
+\addlinespace[5pt]
+121 & \textbf{Sadhu 2018 (CRISPR-directed mitotic recombination)} & CRISPR library screen & ~1,500 recombinant genotypes & 1 & $1.5\times 10^{3}$$\ddagger$ & $1.5\times 10^{3}$ & fitness / trait & segregant-\allowbreak WGS & \href{https://doi.org/10.7554/eLife.41090}{doi:10.7554/\allowbreak eLife.41090} \\
+\addlinespace[5pt]
+122 & \textbf{Duveau 2021 (TDH3 promoter allele series)} & Regulatory DNA & ~250 promoter alleles & carbon sources & $1.0\times 10^{3}$$\ddagger$ & $1.0\times 10^{3}$ & expression level, noise, fitness & S288C+\allowbreak designed-\allowbreak edit & \href{https://doi.org/10.7554/eLife.67806}{doi:10.7554/\allowbreak eLife.67806} \\
+\addlinespace[5pt]
+123 & \textbf{Strope 2015 (100 clinical and natural genomes)} & Natural variation & 100 sequenced isolates & phenotype panel & $1.0\times 10^{3}$$\ddagger$ & $1.0\times 10^{3}$ & growth and clinical-relevant traits & isolate-\allowbreak WGS & \href{https://doi.org/10.1101/gr.185538.114}{doi:10.1101/\allowbreak gr.185538.114} \\
+\addlinespace[5pt]
+124 & \textbf{Schulte 2023 (mitochondrial complexome)} & Modality / backbone & ~900 mitochondrial proteins & 1 & 900 & 900 & complex assembly profile & reference-\allowbreak only & \href{https://doi.org/10.1038/s41586-022-05641-w}{doi:10.1038/\allowbreak s41586-022-05641-w} \\
+\addlinespace[5pt]
+125 & \textbf{Metzger 2015 (promoter mutation effects on expression and noise)} & Regulatory DNA & ~235 promoter mutants & 1 & 235$\ddagger$ & 470 & expression mean and noise & S288C+\allowbreak designed-\allowbreak edit & \href{https://doi.org/10.1038/nature14424}{doi:10.1038/\allowbreak nature14424} \\
+\addlinespace[5pt]
+126 & \textbf{Venkataram 2016 (barcoded adaptive lineages, sequenced)} & Natural variation & ~400 sequenced adaptive clones & glucose-limited & 400$\ddagger$ & 400 & fitness & isolate-\allowbreak WGS & \href{https://doi.org/10.1016/j.cell.2016.08.002}{doi:10.1016/\allowbreak j.cell.2016.08.002} \\
+\addlinespace[5pt]
+127 & \textbf{Jakociunas 2021 (degron-tuned terpene flux)} & Metabolite / precursor & ~30 degron strains & induction levels & 90$\ddagger$ & 270 & farnesol / geraniol / nerolidol titer & engineered-\allowbreak chassis & \href{https://doi.org/10.1002/bit.27735}{doi:10.1002/\allowbreak bit.27735} \\
+\addlinespace[5pt]
+128 & \textbf{Shen 2016 (SCRaMbLE genome minimization)} & Combinatorial genome & ~100 SCRaMbLEd genomes & selective / permissive & 200$\ddagger$ & 200 & viability and fitness & isolate-\allowbreak WGS & \href{https://doi.org/10.1101/gr.193433.115}{doi:10.1101/\allowbreak gr.193433.115} \\
+\addlinespace[5pt]
+129 & \textbf{Blount 2018 (SCRaMbLE for phenotype improvement)} & Combinatorial genome & ~100 rearranged genomes & selection conditions & 200$\ddagger$ & 200 & growth and product phenotype & isolate-\allowbreak WGS & \href{https://doi.org/10.1038/s41467-018-03143-w}{doi:10.1038/\allowbreak s41467-018-03143-w} \\
+\addlinespace[5pt]
+130 & \textbf{Eder 2020 (flux QTL)} & Natural variation & segregant panel (n unconfirmed) & wine fermentation & 100$\ddagger$ & 100 & modeled intracellular flux & segregant-\allowbreak WGS & \href{https://pubmed.ncbi.nlm.nih.gov/32034164/}{PMID 32034164} \\
+\addlinespace[5pt]
+131 & \textbf{Liti 2009 (population genomics of S. cerevisiae and S. paradoxus)} & Natural variation & ~70 sequenced isolates & 1 & 70$\ddagger$ & 70 & genome sequence and population structure & isolate-\allowbreak WGS & \href{https://doi.org/10.1038/nature07743}{doi:10.1038/\allowbreak nature07743} \\
+\addlinespace[5pt]
+132 & \textbf{Yue 2017 (wild vs domesticated assemblies)} & Natural variation & 12 long-read assemblies & n/a & 12 & 12 & genome structure, TE and subtelomere dynamics & isolate-\allowbreak WGS & \href{https://doi.org/10.1038/ng.3847}{doi:10.1038/\allowbreak ng.3847} \\
+\addlinespace[5pt]
+133 & \textbf{Brettner 2024 (ultra-high-throughput yeast scRNA-seq)}\,$\bullet$ & Expression / single cell & method & method & --$\ddagger$ & -- & single-cell transcriptome & reference-\allowbreak only & \href{https://doi.org/10.1002/yea.3927}{doi:10.1002/\allowbreak yea.3927} \\
+\addlinespace[5pt]
+134 & \textbf{Mulleder 2012 (prototrophic deletion collection)} & Modality / backbone & 5,185 prototrophic + 839 titratable essential & 1 & --$\ddagger$ & -- & strain resource (no phenotype) & S288C-\allowbreak KO & \href{https://doi.org/10.1038/nbt.2442}{doi:10.1038/\allowbreak nbt.2442} \\
+\addlinespace[5pt]
+135 & \textbf{Zackrisson 2016 (Scan-o-matic growth curves)} & Modality / backbone & YKO-compatible platform & panel-dependent & --$\ddagger$ & -- & full growth curve (rate, lag, yield) & S288C-\allowbreak KO & \href{https://doi.org/10.1534/g3.116.032342}{doi:10.1534/\allowbreak g3.116.032342} \\
+\addlinespace[5pt]
+136 & \textbf{Spellman 1998 (cell-cycle transcriptome)} & Expression / single cell & wild type, synchronized & 4 synchronization methods & 77 & $4.6\times 10^{5}$ & mRNA abundance time course & reference-\allowbreak only & \href{https://doi.org/10.1091/mbc.9.12.3273}{doi:10.1091/\allowbreak mbc.9.12.3273} \\
+\addlinespace[5pt]
+137 & \textbf{Levy 2008 (morphology and phenotypic capacitance)}\,$\bullet$ & Modality / backbone & ~1,700 deletion strains & 1 & $1.7\times 10^{3}$$\ddagger$ & $3.4\times 10^{5}$ & single-cell morphology variability & S288C-\allowbreak KO & \href{https://doi.org/10.1371/journal.pbio.0060264}{doi:10.1371/\allowbreak journal.pbio.0060264} \\
+\addlinespace[5pt]
+138 & \textbf{Causton 2001 (environmental change transcriptome)} & Expression / single cell & wild type & environmental changes & 40$\ddagger$ & $2.4\times 10^{5}$ & mRNA abundance & reference-\allowbreak only & \href{https://doi.org/10.1091/mbc.12.2.323}{doi:10.1091/\allowbreak mbc.12.2.323} \\
+\addlinespace[5pt]
+139 & \textbf{Gasch 2001 (DNA damage response transcriptome)} & Expression / single cell & wild type + checkpoint mutants & damaging agents & 24$\ddagger$ & $1.4\times 10^{5}$ & mRNA abundance & S288C-\allowbreak KO & \href{https://doi.org/10.1091/mbc.12.10.2987}{doi:10.1091/\allowbreak mbc.12.10.2987} \\
+\addlinespace[5pt]
+140 & \textbf{Handfield 2013 (image-based localization change)} & Modality / backbone & GFP collection & baseline / perturbed & $8.0\times 10^{3}$$\ddagger$ & $1.4\times 10^{5}$ & localization change score & S288C+\allowbreak tag & \href{https://doi.org/10.1371/journal.pcbi.1003085}{doi:10.1371/\allowbreak journal.pcbi.1003085} \\
+\addlinespace[5pt]
+141 & \textbf{Kaplan 2009 (nucleosome sequence preferences)} & Modality / backbone & wild type (in vitro + in vivo) & in vitro / in vivo & 2 & $1.3\times 10^{5}$ & nucleosome occupancy & reference-\allowbreak only & \href{https://doi.org/10.1038/nature07667}{doi:10.1038/\allowbreak nature07667} \\
+\addlinespace[5pt]
+142 & \textbf{Giaever 2004 (chemogenomic drug-target profiling)} & Tolerance / robustness & het + hom collections & ~10 compounds & $5.9\times 10^{4}$$\ddagger$ & $5.9\times 10^{4}$ & fitness & S288C-\allowbreak KO & \href{https://doi.org/10.1073/pnas.0307490100}{doi:10.1073/\allowbreak pnas.0307490100} \\
+\addlinespace[5pt]
+143 & \textbf{Yu 2021 (proteome and metabolome under nitrogen limitation)} & Metabolite / precursor & wild type & nitrogen-limited chemostats & 10$\ddagger$ & $2.5\times 10^{4}$ & proteome + metabolome & reference-\allowbreak only & \href{https://doi.org/10.7554/eLife.65722}{doi:10.7554/\allowbreak eLife.65722} \\
+\addlinespace[5pt]
+144 & \textbf{Paulo 2016 (TMT proteome across carbon sources)} & Modality / backbone & wild type & carbon sources & 9 & $2.2\times 10^{4}$ & protein abundance & reference-\allowbreak only & \href{https://doi.org/10.1091/mbc.E16-03-0184}{doi:10.1091/\allowbreak mbc.E16-03-0184} \\
+\addlinespace[5pt]
+145 & \textbf{Gibney 2013 (osmotic and glucose stress fitness)} & Tolerance / robustness & YKO collection & osmotic / glucose & $1.9\times 10^{4}$$\dagger$ & $1.9\times 10^{4}$ & fitness & S288C-\allowbreak KO & \href{https://doi.org/10.1073/pnas.1318100110}{doi:10.1073/\allowbreak pnas.1318100110} \\
+\addlinespace[5pt]
+146 & \textbf{Meurer 2018 (genome-wide GFP library, rebuilt)} & Modality / backbone & ~4,000 tagged strains & 1 & $4.0\times 10^{3}$$\ddagger$ & $1.2\times 10^{4}$ & abundance and localization & S288C+\allowbreak tag & \href{https://doi.org/10.1038/s41592-018-0044-9}{doi:10.1038/\allowbreak s41592-018-0044-9} \\
+\addlinespace[5pt]
+147 & \textbf{Bennett 2001 (ionizing-radiation resistance)} & Tolerance / robustness & ~4,800 YKO & irradiated vs control & $9.6\times 10^{3}$$\dagger$ & $9.6\times 10^{3}$ & radiation sensitivity & S288C-\allowbreak KO & \href{https://doi.org/10.1038/ng778}{doi:10.1038/\allowbreak ng778} \\
+\addlinespace[5pt]
+148 & \textbf{Sugiyama (lactic-acid tolerance)} & Tolerance / robustness & ~4,800 YKO & 4 percent lactic acid vs control & $9.6\times 10^{3}$$\dagger$ & $9.6\times 10^{3}$ & acid tolerance & S288C-\allowbreak KO & \href{https://www.nisr.or.jp/wp-content/uploads/NISR06sugiyama.pdf}{nisr.or.jp/\allowbreak wp-content/\allowbreak uploads/\allowbreak NISR06sugiyama.pdf} \\
+\addlinespace[5pt]
+149 & \textbf{Sousa 2013 (acetic-acid programmed cell death screen)} & Tolerance / robustness & YKO haploid collection & acetic acid vs control & $9.6\times 10^{3}$$\dagger$ & $9.6\times 10^{3}$ & death / survival (regulated cell death) & S288C-\allowbreak KO & \href{https://pubmed.ncbi.nlm.nih.gov/24286259/}{PMID 24286259} \\
+\addlinespace[5pt]
+150 & \textbf{Nagalakshmi 2008 (RNA-seq transcriptome annotation)} & Modality / backbone & wild type & 1 & 1 & $6.0\times 10^{3}$ & transcript structure and abundance & reference-\allowbreak only & \href{https://doi.org/10.1126/science.1158441}{doi:10.1126/\allowbreak science.1158441} \\
+\addlinespace[5pt]
+151 & \textbf{Yofe 2016 (SWAT N-terminal library)} & Modality / backbone & ~1,800 N-terminally tagged strains & 1 & $1.8\times 10^{3}$$\ddagger$ & $5.4\times 10^{3}$ & localization and abundance & S288C+\allowbreak tag & \href{https://doi.org/10.1038/nmeth.3795}{doi:10.1038/\allowbreak nmeth.3795} \\
+\addlinespace[5pt]
+\midrule \multicolumn{10}{@{}l}{\textbf{Cut line. Rows above are the 151 that reach 200; rows below are the ranked reserve.}}\\ \midrule
+152 & \textbf{Hénault 2023 (hybrid and introgression panel)} & Natural variation & hybrids and introgression lines & conditions & $5.0\times 10^{3}$$\ddagger$ & $5.0\times 10^{3}$ & fitness & isolate-\allowbreak WGS & \href{https://doi.org/10.1038/s41467-024-46155-5}{doi:10.1038/\allowbreak s41467-024-46155-5} \\
+\addlinespace[5pt]
+153 & \textbf{Cubillos 2013 (F12 recombinant panel construction)} & Natural variation & 192 sequenced F12 segregants & conditions & $3.8\times 10^{3}$$\ddagger$ & $3.8\times 10^{3}$ & growth traits & segregant-\allowbreak WGS & \href{https://doi.org/10.1534/genetics.113.155515}{doi:10.1534/\allowbreak genetics.113.155515} \\
+\addlinespace[5pt]
+154 & \textbf{Kessi-Perez 2019 (nitrogen-consumption QTL panel)} & Natural variation & sequenced segregants / isolates & nitrogen conditions & 200$\ddagger$ & 200 & nitrogen consumption, fermentation rate & segregant-\allowbreak WGS & \href{https://doi.org/10.1186/s13068-019-1440-9}{doi:10.1186/\allowbreak s13068-019-1440-9} \\
+\addlinespace[5pt]
+155 & \textbf{Lian 2016 (combinatorial xylose pathway optimization)} & Metabolite / precursor & combinatorial pathway variants & xylose & 100$\ddagger$ & 100 & ethanol titer and rate on xylose & engineered-\allowbreak chassis & \href{https://doi.org/10.1016/j.ymben.2015.11.001}{doi:10.1016/\allowbreak j.ymben.2015.11.001} \\
 \addlinespace[5pt]
 \end{longtable}
 \endgroup

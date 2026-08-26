@@ -6,34 +6,72 @@
 
 \section{Rows that bear on a yeast Perturb-seq\secstatus{todo}}\label{sec:perturbseq}
 
-Eight rows bear on whether to run a genome-scale Perturb-seq in yeast, five of them inside
-the recommended 51. Scale ranking buries three of the eight, which is the correct ranking
-and the wrong emphasis: a method paper that measures the within-clone transcript noise
-floor has an instance count of two and settles whether the experiment is worth running at
-all.
+A Perturb-seq is defined by two dimensionalities, and a dataset earns a place here only by
+being high on at least one of them.
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+  \item \term{Input dimensionality} is the size of the perturbation space per cell:
+    combinatorial edits, or a perturbation crossed with genetic background. A large library
+    of single perturbations is not high-dimensional input. It is one edit per cell, sampled
+    widely, and a model fit to it never sees two edits interact.
+  \item \term{Output dimensionality} is the readout: a transcriptome or a per-cell
+    distribution rather than a scalar fitness or titer.
+\end{itemize}
+
+That distinction removes a row this table previously carried. Momen-Roknabadi 2020 is a
+genome-wide CRISPRi library, which is large, but it delivers one guide per cell and reads
+out competitive fitness. It is low-dimensional on both axes and is no longer flagged; its
+value is as a second library for testing guide-design transfer, not as Perturb-seq evidence.
 
 \input{tables/perturbseq}
 
-Three of these answer distinct design questions rather than supplying training data.
-Brettner 2024 is the chemistry the costing model in
-\file{experiments/024-perturb-seq-costing/} is built on. Nadal-Ribelles 2019 measures
-within-clone transcript correlation, which is the floor any per-guide mean has to clear and
-therefore what sizes the cells-per-guide budget. Gasch 2017 separates intrinsic from
-extrinsic expression heterogeneity under stress, which sets what fraction of the variance
-in a pooled screen is recoverable signal rather than cell state.
+\subsection{The quadrant that matters is nearly empty\secstatus{todo}}\label{sec:quadrant}
 
-The two that would most change the design are already ranked high. McGlincy 2021 (row 31)
-is the most plausible library to build on, since ten guides per gene gives a graded rather
-than binary knockdown and it reaches essential genes. N'Guessan 2025 (row 21) is the
-closest existing analog to the proposed experiment, pairing per-cell expression with
-sequenced genotypes at scale, though its genotypes are recombinant natural variants rather
-than engineered knockdowns.
+Of 156 candidates, 15 are high on the input axis, 15 on the output axis, and \textbf{three}
+on both: Boocock 2025, Albert 2018 and N'Guessan 2025. All three reach the both-axes
+quadrant the same way, by crossing recombinant natural genotypes with a transcriptome, and
+none of them perturbs a gene deliberately.
+
+So the gap is specific rather than general. Yeast has deep genotype-to-fitness data and deep
+wild-type transcriptome data, and where the two meet it is through natural variation, not
+through designed perturbation. The largest genotype-indexed transcriptome with designed
+perturbations is Kemmeren 2014, already built, and it is 1,484 single deletions read out one
+gene at a time, which is exactly the shallow case: one knockout, one profile, no interaction
+measured. Sameith 2015, also built, adds double mutants but only 72 of them.
+
+That is the argument for running the experiment, and it is also the specification. To land
+in the empty quadrant a design needs a combinatorial perturbation per cell, not a larger
+single-perturbation library, and a transcriptome readout rather than a growth score.
+
+\subsection{Depth rather than breadth\secstatus{todo}}\label{sec:depth}
+
+Three classes were added to this pass specifically because they go deep on one locus instead
+of shallow across many, and every one of them carries an exactly known sequence per genotype.
+
+\notesec{Deep mutational scans, 9 rows} Li 2016 and Puchta 2016 are near-complete fitness
+landscapes of a single native yeast gene at roughly 65,000 and 60,000 variants. Domingo 2018
+and Diss 2018 go further and measure pairwise mutations, so epistasis is resolved inside a
+gene rather than between genes. Faure 2022 separates a variant's effect on folding from its
+effect on binding by measuring both in the same library, which is what turns a landscape
+mechanistic. These supply the input dimensionality the fitness screens lack.
+
+\notesec{Regulatory DNA, 8 rows} de Boer 2020 is above 100 million exactly known promoter
+sequences with a measured expression level each, which is the largest sequence-to-phenotype
+dataset in yeast by orders of magnitude. Vaishnav 2022 extends it to a fitness landscape and
+tests natural-isolate promoter variants against the random library, and Renganaath 2020
+measures 5,832 real promoter alleles from natural variation. This is the answer to whether
+promoter strength has been measured at scale: it has, both for random sequence and for
+native alleles, and the two are on the same readout.
+
+\notesec{Combinatorial genomes, 3 rows} SCRaMbLE genotypes carry tens of simultaneous
+structural edits and are sequenced afterwards. A genotype there is a rearranged chromosome
+rather than an allele, which is the deepest per-cell perturbation available and the hardest
+thing a genotype-to-phenotype model will eventually be asked to predict on.
 
 \subsection{The synergy question is answerable, and not yet answered\secstatus{todo}}
 
-Whether one dataset predicts another is the question that decides how much new data is
-worth collecting, and this list contains the pairs needed to test it before any is
-collected:
+Whether one dataset predicts another decides how much new data is worth collecting, and the
+list contains the pairs to test it before any is collected:
 
 \begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
   \item \textbf{Same phenotype, different platform.} Cooper 2010 against the built
@@ -41,16 +79,18 @@ collected:
     overlapping genotype axis.
   \item \textbf{Same phenotype, different method.} Liu 2021 against Kuroda 2019, isobutanol
     tolerance on the same collection by colony imaging against competitive fitness.
-  \item \textbf{Same perturbation, different background.} Hale 2024 and Galardini 2019,
-    both of which vary the background while holding the perturbation fixed.
+  \item \textbf{Same perturbation, different background.} Hale 2024, Galardini 2019 and
+    She 2018, all of which vary the background while holding the perturbation fixed.
   \item \textbf{Different library, same modality.} McGlincy 2021 against
-    Momen-Roknabadi 2020, two CRISPRi libraries with different vectors and guide-design
-    rules.
+    Momen-Roknabadi 2020, two CRISPRi libraries with different vectors and design rules.
   \item \textbf{Cheap layer against expensive layer.} Caudal 2024 transcriptomes against
-    Muenzner 2024 proteomes, on overlapping isolates from the 1,011 panel.
+    Muenzner 2024 proteomes on overlapping isolates, and Skelly 2013, which measures both on
+    the same 22 strains rather than joining across studies.
+  \item \textbf{Synthetic sequence against natural allele.} de Boer 2020 and Vaishnav 2022
+    against Renganaath 2020: whether a model trained on random promoters predicts the effect
+    of a real one.
 \end{itemize}
 
 None of these transfers has been measured. Each is a hypothesis about what a model could
-learn, and each becomes a run once both halves of the pair are ingested. The last pair is
-the one that bears most directly on the Perturb-seq costing, since it asks whether a cheap
-expression readout carries the information an expensive one would.
+learn, and each becomes a run once both halves are ingested. The last pair is the cheapest
+and the most immediately decisive.

@@ -11,14 +11,17 @@
 The \term{already-built} row in that table is the largest single correction this pass
 makes. A July 2026 triage pass named a top ten for immediate ingestion; nine of those ten
 have since been built, along with roughly a dozen other rows it ranked highly. Only Lee 2014
-remains outstanding, and it is row 1 here. Any list that still treats that top ten as
+remains outstanding, and it is row 4 here. Any list that still treats that top ten as
 outstanding work is stale.
 
-\subsection{Three rows were not what their names said\secstatus{todo}}\label{sec:status}
+\subsection{Four rows were not what their names said\secstatus{todo}}\label{sec:status}
 
 Checking a name against the built list is not sufficient. A dataset can carry a loader, a
-failed retrieval attempt, or an already-ingested deposit under a different paper's name,
-and one row did each.
+failed retrieval attempt, or an already-ingested deposit under a different paper's name.
+Three rows did one of those each, and a fourth was caught by the script in
+Sec.~\ref{sec:overlap}: O'Duibhir 2014's expression data is the Kemmeren compendium plus
+PCA transforms, already built, as that loader's own docstring states. It is the first
+duplicate here found mechanically rather than by a reader, which is the point of the check.
 
 \notesec{Wildenhain 2016 was already built, under the 2015 name} It is a data descriptor
 rather than a second experiment, and its own Data Citation 1 is NCBI PubChem BioAssay AID
@@ -35,23 +38,23 @@ rather than the 195-strain panel it quotes. Under the sourcing rule that a value
 citation it was actually read from, the released matrix should cite the 2016 descriptor, with
 2015 as the original subset.
 
-\notesec{Lee 2014, row 1, is blocked rather than available} WS15 already attempted this
+\notesec{Lee 2014, row 4, is blocked rather than available} WS15 already attempted this
 ingestion. The roadmap records it as awaiting author matrices, which means the Science
 supplementary tables and the Nislow and Giaever lab portal did not yield per-strain values.
 Its rank is still earned: 3,356 compounds against the full heterozygous and homozygous
 collections really is the largest chemical-genetic matrix in existence, and it really is on
 the YKO genotype axis the built set already uses. What changes is the nature of the work.
-Row 1 is an author request, not a loader, and the $1.3\times10^7$ instances it contributes
+Row 4 is an author request, not a loader, and the $1.3\times10^7$ instances it contributes
 to the totals in Sec.~\ref{sec:counts} should not be counted as reachable until that
 request succeeds.
 
-\notesec{Turco 2023, row 20, already has a loader} \file{torchcell/datasets/scerevisiae/yeastphenome.py}
+\notesec{Turco 2023, row 28, already has a loader} \file{torchcell/datasets/scerevisiae/yeastphenome.py}
 consumes the curated YeastPhenome release and retains 49 growth screens, so this row is in
 flight rather than net new. It is not in the built set, which is why it appears here at all.
 Two consequences follow. Its de-duplication problem is partly solved already, since the
 loader excludes the primaries built directly, along with heterozygous-diploid and
 expression screens. And Lee 2014 is not among its 49 screens, so ingesting YeastPhenome
-does not backfill row 1.
+does not backfill row 4.
 
 \subsection{Overlap is now checked by script, and the check is not yet strong\secstatus{todo}}\label{sec:overlap}
 
@@ -62,18 +65,33 @@ built loader, an accession token shared with one, and the candidate PMID appeari
 aggregator's source-PMID column.
 
 It currently reports one overlap, Turco 2023, which Sec.~\ref{sec:status} already records
-as a loader in flight. It reports no overlap with SynLethDB across 3,307 source PMIDs
+as a loader in flight; a second, O'Duibhir 2014's expression compendium, was found and
+removed during this pass. It reports no overlap with SynLethDB across 3,307 source PMIDs
 spanning both the lethality and rescue layers. That covers the question of whether the
 genetic-interaction rows are already re-served: Sharifpoor 2012, Decourty 2021 and
 Braberg 2020 are all absent. For Sharifpoor the absence is structural rather than a curation
 gap, since SynLethDB models synthetic lethality and synthetic rescue, both two-loss-of-function
 events, and synthetic dosage lethality pairs an overexpression with a deletion.
 
-The honest limit is coverage. The script resolves a PMID for 52 of 73 rows and finds a
-parseable accession in only 8. Accession is the strongest key and the one that would have
-caught Wildenhain 2016, so 8 of 73 means the strongest check is running on roughly a tenth
-of the table. Recording each row's deposit identifier is the single highest-value edit
-available to this list.
+The honest limit is coverage, and the expansion made it worse in relative terms. The script
+resolves a PMID for 56 of 155 rows and finds a parseable accession in 9. Accession is the
+strongest key and the one that would have caught Wildenhain 2016, so it is running on about
+one row in seventeen. Recording each row's deposit identifier is the single highest-value
+edit available to this list, and it now matters more than it did at 73 rows.
+
+\subsection{The expansion tranche is less checked than the first 73\secstatus{todo}}\label{sec:confidence}
+
+Rows carry a confidence value in the generated JSON. \emph{sourced} means the figures trace
+to something read this session or to the sourced triage note, and covers 73 rows.
+\emph{recall} means the row was written from domain knowledge, and covers 82. For a recall
+row the dataset is real and the description is sound, but the citation details, the exact
+counts and the accession all need confirming before a loader is written, and a few carry an
+explicit warning in the accession column where a collision or a species question is open.
+
+The two tranches are not interleaved by accident: ranking put several recall rows at the very
+top, because de Boer 2020 and Boocock 2025 genuinely are the largest things here. That is the
+right ranking and the wrong reading if the confidence flag is ignored. Treat the top of the
+table as a claim to verify first, not a queue to start work from.
 
 \section{Before a loader is written\secstatus{todo}}\label{sec:caveats}
 
@@ -103,7 +121,7 @@ Everything else is a claim from a publication, and the pattern is well establish
 data-availability statement and a reachable file are different things.
 
 Four rows carry a risk specific enough to name. Trikka 2015 is recorded as figure-only, so
-whether Additional file 1 holds per-strain scores decides whether row 51 is ingestible at
+whether Additional file 1 holds per-strain scores decides whether Trikka is ingestible at
 all. Chang 2012 and the Gurvitz fatty-acid screen are PDF-table-only and need manual
 transcription. Sugiyama is a non-peer-reviewed technical report and has the lowest
 provenance confidence of anything listed; it belongs in the reserve as a source of candidate

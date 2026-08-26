@@ -26,6 +26,7 @@ import os.path as osp
 from pathlib import Path
 from dotenv import load_dotenv
 import json
+import pickle
 from torchcell.timestamp import timestamp
 
 warnings.filterwarnings('ignore')
@@ -273,6 +274,21 @@ def glm_log_link(df: pd.DataFrame, trait_col: str) -> Dict:
 
 def save_results(results: Dict, output_dir: Path = RESULTS_DIR):
     """Save results to files including CSV format matching multiplicative model."""
+
+    # The *_visualization.py companions load this pickle. Without it they print
+    # "Results file not found", exit 0, and produce NOTHING -- which is how the
+    # log-scale models ended up with no interaction figures while the linear-scale
+    # models had a full set. The fitted model object is dropped: it is large, it is
+    # the only entry that risks a pickling failure, and the plots never use it.
+    slim = {}
+    for trait, res in results.items():
+        if not res:
+            slim[trait] = res
+            continue
+        slim[trait] = {k: v for k, v in res.items() if k != 'model'}
+    with open(output_dir / 'glm_log_link_results.pkl', 'wb') as f:
+        pickle.dump(slim, f)
+    print(f"Saved {output_dir / 'glm_log_link_results.pkl'}")
     # Build comprehensive summary JSON matching standardized format
     summary = {}
 

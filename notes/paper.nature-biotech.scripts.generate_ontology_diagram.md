@@ -200,3 +200,43 @@ What this does NOT do: it will not tell you the figure is ugly, only that it no 
 matches the schema. Regenerating is still `python
 paper/nature-biotech/scripts/generate_ontology_diagram.py` by hand, and the panel still
 needs a human to look at it when the schema grows enough to change the layout.
+
+## 2026.08.25 - Fix: the provenance lane was stealing the whole phenotype lane
+
+The published overview and full map drew **PHENOTYPE as an empty purple frame** while
+PROVENANCE reported 20 classes instead of 4. The graph was never wrong: it reported 14
+phenotype members throughout. The layout was.
+
+`_place_tree()` recursed through `graph.children_of(name)` without filtering by lane, and
+stamped every descendant with the lane it was called with. Inheritance crosses lanes here:
+`Phenotype`, `Compound` and `Environment` all derive from `ProvenanceGapMixin`, which sits
+in the provenance lane. Every lane writes into one shared `out` dict and `LANE_ORDER` lays
+provenance out after phenotype, so the provenance pass walked down into `Phenotype` and its
+13 subtypes and overwrote all 14 cards. Last writer wins.
+
+The arithmetic on the broken panel confirms it: provenance's own 4, plus phenotype's 14,
+plus `Compound` and `Environment`, is exactly the 20 its header showed. The phenotype frame
+is sized from `lane_members`, so it still reserved space for 14 and drew nothing inside.
+Environment was raided too, it just kept 11 of 13 and so looked plausible.
+
+Fix: stop the recursion at the lane boundary.
+
+```python
+children = [c for c in graph.children_of(name) if graph.classes[c].lane == lane]
+```
+
+The cross-lane parent link is not lost. `_inheritance_svg` resolves cards by name
+regardless of lane, so the `ProvenanceGapMixin -> Phenotype` arrow still draws.
+
+Verified: zero misplaced cards in both the compact and full layouts, and every lane's card
+count now equals `len(graph.lane_members(lane))`.
+
+Two things this exposes about the guards added earlier:
+
+- **The schematic panel was never affected**, because `_lane_body_lines()` already filtered
+  with `in_lane(...)`. Only the overview, the full map, and the explorer that wraps it were
+  wrong, which is why the printed figure looked correct while the interactive map did not.
+- **The drift check did not catch this and could not.** It compares the committed SVG to a
+  fresh render, so it detects staleness, not incorrectness. A consistently wrong render
+  matches a consistently wrong commit. Worth remembering before trusting a green build as
+  evidence the figure is right.

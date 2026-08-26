@@ -201,9 +201,18 @@ def _place_tree(
     which start at ``x + CARD_W + GAP_X``. This is the classic horizontal tree: it
     keeps sibling classes aligned in a readable column and makes depth in the
     ontology map directly onto horizontal distance.
+
+    Recursion stops at the lane boundary. Inheritance crosses lanes -- ``Phenotype``,
+    ``Compound`` and ``Environment`` all derive from ``ProvenanceGapMixin``, which
+    lives in the provenance lane -- so walking the unfiltered child list would place
+    those subtrees inside whichever lane happened to reach them first. Every lane
+    writes into one shared ``out`` dict, and provenance is laid out after phenotype,
+    so the provenance pass silently overwrote all fourteen phenotype cards and left
+    the phenotype frame drawing empty. The cross-lane parent link is not lost; it is
+    drawn by :func:`_inheritance_svg`, which resolves cards by name regardless of lane.
     """
     own_h = _card_height(graph, name, compact)
-    children = graph.children_of(name)
+    children = [c for c in graph.children_of(name) if graph.classes[c].lane == lane]
     if not children:
         out[name] = Card(name=name, lane=lane, x=x, y=y, h=own_h)
         return own_h, x + CARD_W

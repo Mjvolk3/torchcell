@@ -35,7 +35,7 @@ Supplementary Note~\ref{note:graph-attention} & Graph-regularized attention cont
 Supplementary Note~\ref{note:static-graph}    & The static-graph assumption and learning the perturbation (with \supptab{tab:compute})\\
 Supplementary Note~\ref{note:gi-from-fitness} & Gene interactions as a learned function of fitness (with \suppfig{fig:fit-gi-emergent})\\
 Supplementary Note~\ref{note:info-accounting} & Persistent entities and contingent observations (with \supptab{tab:entity-corpora})\\
-Supplementary Note~\ref{note:classical-ml}    & Classical-ML case study on gene representation and pooling (with \suppfig{fig:classical-ml} and \supptab{tab:classical-ml-results}--\ref{tab:classical-ml-pearson})\\[4pt]
+Supplementary Note~\ref{note:classical-ml}    & Classical-ML case study on gene representation and pooling (with \suppfig{fig:classical-ml}--\ref{fig:rep-pooling} and \supptab{tab:classical-ml-results}--\ref{tab:classical-ml-pearson})\\[4pt]
 Supplementary Figs.\  & A figure supporting a Note sits with that Note; the remainder follow all the Notes\\
 Supplementary Tables & \supptab{tab:compute} (per-batch compute), \supptab{tab:entity-corpora} (persistent-entity corpora), \supptab{tab:classical-ml-results}--\ref{tab:classical-ml-pearson} (classical-ML benchmark: Spearman, MSE, Pearson), \supptab{tab:datasets} (phenotype datasets), \supptab{tab:databases} (integrated graphs)\\
 \end{tabular}
@@ -907,6 +907,44 @@ $n{=}10^{5}$, approaching the reproducibility limit, and no pretrained embedding
 whereas interactions plateau near Pearson ${\approx}\,0.4$ regardless of representation or scale,
 the empirical backing for the information-accounting cut of
 \suppnoteref{note:info-accounting}.}{fig:classical-ml}
+\end{figure*}
+
+% --- Representation-type comparison (sits with [note:classical-ml]) ---
+%% Figure source: notes/assets/drawio/Fig8-Traditional-ML-representation-comparison.drawio
+%%   -> figures/Fig8-Traditional-ML-representation-comparison.pdf (auto-exported by `make fig`).
+%% Panels (all read the combined_df_spearman_{size}.csv sweeps of both experiments):
+%%   (a) experiments/002-dmi-tmi/scripts/traditional_ml-plot_variance_decomposition_palette.py
+%%       (by-task variant; eta^2 tables committed at
+%%       experiments/002-dmi-tmi/results/traditional_ml_variance_decomposition{,_by_task}.csv)
+%%   (b) experiments/002-dmi-tmi/scripts/traditional_ml-plot_representation_rank_summary_palette.py
+%%   (c) experiments/002-dmi-tmi/scripts/traditional_ml-plot_representation_comparison_palette.py
+\begin{figure*}[t]
+\centering
+\tcfig{figures/Fig8-Traditional-ML-representation-comparison.pdf}{\textbf{Representation
+type -- perturbed vs intact gene bag, sum vs mean pooling -- is a consistent, second-order
+design choice.} Every record is the best run by validation $R^{2}$ for one (task, model,
+dataset size, embedding, representation type) combination, scored as held-out test
+Pearson~$r$ (the same selection rule as \suppfig{fig:classical-ml}).
+(a)~Variance decomposition, computed separately for fitness ($n{=}384$ records) and gene
+interactions ($n{=}350$): type-II ANOVA over main effects, reporting
+$\eta^{2}=\mathrm{SS}_{\mathrm{factor}}/\mathrm{SS}_{\mathrm{total}}$; parenthetical
+counts are each factor's number of levels, and the residual absorbs factor interactions
+and run-to-run noise. For interactions, representation type (11.3\%) explains more
+variance than embedding identity (7.3\%), whereas the large fitness embedding share
+(36.8\%) restates the one-hot saturation of \suppfig{fig:classical-ml}.
+(b)~Average rank of the four representation types across the 11 complete
+task$\times$model$\times$scale configurations (dot = one configuration's rank, colored by
+task; diamond = mean rank; 1 = best). Friedman omnibus $p{=}0.016$; the ruler is the
+Nemenyi critical difference (CD${=}1.41$, $\alpha{=}0.05$), which formally separates only
+the extremes, intact\_sum (mean rank 1.82) vs intact\_mean (3.36).
+(c)~Gene-interaction detail: test Pearson by representation type for random forest and
+SVR at each dataset size; faint line = one embedding (17 total), diamond = mean with
+95\% bootstrap CI. Letters are a compact letter display -- types sharing a letter are not
+significantly different (pairwise Wilcoxon, BH-FDR corrected), shown only when that
+panel's Friedman omnibus is significant (p above each panel). intact\_sum sits in the top
+letter group in every complete panel and pert\_mean is significantly worse beyond
+$n{=}10^{3}$; the missing points at SVR $10^{3}$ reflect an incomplete
+sweep.}{fig:rep-pooling}
 \end{figure*}
 
 % --- Tables: dataset scale + integrated graphs; fills the old fig:data-scale slot ---

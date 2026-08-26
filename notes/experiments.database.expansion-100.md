@@ -21,7 +21,7 @@ deliverable; this note holds the decisions behind it and the follow-ups it gener
 
 ### What was decided
 
-**Scope.** *S. cerevisiae* only. 74 candidates, none of them among the 49 already built.
+**Scope.** *S. cerevisiae* only. 73 candidates, none of them among the 49 already built.
 The top 51 is the recommended set because 49 + 51 = 100.
 
 **The hard gate is sequence reconstruction.** Every row names a `sequence_basis` saying how
@@ -68,9 +68,39 @@ cannot recur, rendered as a superscript B or L in the table.
   built directly, plus heterozygous-diploid and expression screens.
 - **YeastPhenome does not backfill Lee 2014** -- PMID 24723613 is not among its 49 screens.
 
-Consequence for the headline number: of the 5.8e7 instances in the recommended 51, Turco
+Consequence for the headline number: of the 5.7e7 instances in the recommended 51, Turco
 contributes 3.8e7 (not net new) and Lee 1.3e7 (not reachable). **Net new and in hand is
-about 7.3e6.**
+about 6.8e6** (figure updated after the Wildenhain removal below).
+
+### 2026.08.26 - Wildenhain 2016 was already built, under the 2015 name
+
+Third instance of the same failure mode, and the one that broke my de-dup check. Caught by
+the user asking "pretty sure we have already listed wildenhain 2016".
+
+**It is a data descriptor, not a second experiment.** Its own Data Citation 1 (paper.md
+line 176 of the mirror) is **NCBI PubChem BioAssay AID 1159580** -- exactly what
+`torchcell/datasets/scerevisiae/wildenhain2015.py` already ingests. Both report 242 strains
+and 492,126 interaction tests. Row removed; list is now 73.
+
+**Why my automated cross-check missed it:** I grepped candidate DOIs and accession tokens
+against the built loaders. Wildenhain 2016's DOI is not cited in the loader, and I had
+written its accession as "ChemGRID + PubChem BioAssay" WITHOUT the AID number, so there was
+nothing to match on. The loader is named for a *different paper* than the deposit it loads.
+A name-vs-built-list check cannot catch that; only comparing **accessions** can.
+
+**Knock-on:** freeing the slot let Chang 2012 back in, so Trikka 2015 now reaches row 51 on
+merit and NO pin is in force. The pin machinery stays for when one binds again.
+
+**Separate defect to fix in the built dataset (not this branch).** `wildenhain2015.py`
+ingests the EXTENDED matrix (242 strains, 5,518 compounds) but is filed under the 2015 paper,
+which reports 195 sentinels and 4,915 compounds. The loader half-flags this itself. Per the
+sourcing rule that a value carries the citation it was read from, the released matrix should
+cite the 2016 Sci Data descriptor with 2015 as the original subset.
+
+Also checked and NOT duplicates: **Lian 2017** (lian2019.py names CRISPR-AID only as the
+MAGIC chassis, it does not load the 2017 beta-carotene data) and **Mulleder 2012**
+(mulleder2016.py already cites it for the prototrophic background; kept in the reserve
+because that loader records the prototrophy-restoring markers as an unmodeled GeneAddition).
 
 ### Corrections to the 2026.07 triage pass
 
@@ -100,6 +130,11 @@ about 7.3e6.**
 
 ### Open items, in priority order
 
+0. **Record every candidate's ACCESSION, not just its DOI, and de-dup on that.** Three of
+   three duplicate/blocked finds this pass were invisible to a name check and two were
+   invisible to a DOI check. The only reliable key is the deposit a loader actually reads
+   (PubChem AID, GEO, PRIDE, SRA). Worth a small checker over the built loaders before the
+   next triage pass.
 1. **Trikka 2015 is row 51 and may not be ingestible.** Recorded as figure-only. Confirm
    Additional file 1 carries per-strain scores before committing the slot; if it does not,
    Chang 2012 comes back off the reserve.

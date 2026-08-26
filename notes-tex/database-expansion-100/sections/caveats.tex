@@ -14,10 +14,26 @@ have since been built, along with roughly a dozen other rows it ranked highly. O
 remains outstanding, and it is row 1 here. Any list that still treats that top ten as
 outstanding work is stale.
 
-\subsection{Two rows are not untouched candidates\secstatus{todo}}\label{sec:status}
+\subsection{Three rows were not what their names said\secstatus{todo}}\label{sec:status}
 
-Checking a name against the built list is not sufficient, because a dataset can carry a
-loader, or a failed retrieval attempt, without appearing there. Two rows do.
+Checking a name against the built list is not sufficient. A dataset can carry a loader, a
+failed retrieval attempt, or an already-ingested deposit under a different paper's name,
+and one row did each.
+
+\notesec{Wildenhain 2016 was already built, under the 2015 name} It is a data descriptor
+rather than a second experiment, and its own Data Citation 1 is NCBI PubChem BioAssay AID
+1159580, which is exactly the accession \file{torchcell/datasets/scerevisiae/wildenhain2015.py}
+already ingests. The identity is not a judgment call: the 2016 paper reports 242 sentinel
+strains, 5,518 compounds and 492,126 interaction tests, and the loader's own docstring
+records 242 systematic ORFs and 492,126 datapoints from that AID. The row is removed.
+
+That leaves a citation-fidelity defect in the built dataset worth fixing separately. The
+data it ingests is the \emph{extended} matrix described by the 2016 release, but it is filed
+under the 2015 paper, which reports a strictly smaller experiment: 195 sentinels and 4,915
+compounds. The loader already half-flags this, noting that the released data covers 242 ORFs
+rather than the 195-strain panel it quotes. Under the sourcing rule that a value carries the
+citation it was actually read from, the released matrix should cite the 2016 descriptor, with
+2015 as the original subset.
 
 \notesec{Lee 2014, row 1, is blocked rather than available} WS15 already attempted this
 ingestion. The roadmap records it as awaiting author matrices, which means the Science

@@ -71,14 +71,15 @@ normalization the supported-datasets table already applies through its gzip-sign
 \subsection{Where the cut falls, and what it cost\secstatus{todo}}
 
 The cut at 51 is arithmetic, $100-49$, not a quality threshold. Rows on both sides of it
-are close, so it should be read as a budget rather than a verdict. One row was pinned into
-the recommended set because it was named explicitly in the scoping request rather than
-because it ranked there: Table~\ref{tab:swaps} names the pin and the row it displaced, so
-the recommended set stays auditable.
+are close, so it should be read as a budget rather than a verdict.
 
-\input{tables/swaps}
+A dataset named explicitly in the scoping request is pinned into the recommended set even
+if it ranks below the cut, and the pin is reported rather than folded into the score, so
+the set stays auditable. No pin is currently in force. One was, until Wildenhain 2016 came
+out of the table as already built (Sec.~\ref{sec:status}); that freed a slot, Chang 2012
+returned from the reserve, and Trikka 2015 now reaches row 51 on its own measurements.
 
-Displacement picks the weakest non-requested row by tier first and measurements second. The
-tier term is load-bearing rather than decorative: ranking on measurements alone selected
-Puddu 2019 for eviction, and that row is the whole-collection sequencing on which every
-\term{S288C-KO} sequence basis in this table rests.
+Displacement, when a pin does bind, picks the weakest non-requested row by tier first and
+measurements second. The tier term is load-bearing rather than decorative: ranking on
+measurements alone selected Puddu 2019 for eviction, and that row is the whole-collection
+sequencing on which every \term{S288C-KO} sequence basis in this table rests.

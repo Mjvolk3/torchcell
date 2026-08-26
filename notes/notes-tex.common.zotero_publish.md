@@ -66,3 +66,27 @@ provenance stamp reads `publish-paper-zotero @ 77c90f25d05e-dirty`. That is
 honest rather than wrong, and re-running `make publish` after landing takes the
 identical-bytes path and refreshes the stamp to the landed commit without
 uploading a second copy.
+
+### 2026.08.25 - Follow-up: the paper build was not reproducible, so dedupe never fired
+
+Publishing the manuscript exposed a gap the notes-tex documents do not have.
+`SOURCE_DATE_EPOCH` lives in `notes-tex/common/Makefile.common` and the paper has
+its own Makefile, which never set it. hyperref therefore wrote a wall-clock
+`/CreationDate` into a compressed object stream and every build of identical
+sources produced different bytes.
+
+**Measured, not assumed.** Two rebuilds of untouched sources gave `42522d69...`
+and `0c3521b8...`. That is exactly the failure this script's docstring warns
+about: versioning is by content hash, so the "already published, identical bytes"
+path could never fire and every `make publish` would pile up a fresh
+near-identical PDF. It had already happened twice before anyone looked.
+
+Fixed by mirroring the `Makefile.common` block into the paper's Makefile, with
+the epoch taken from the newest mtime among `$(SHARED)` and the view wrappers so
+`\date{\today}` still reads as the date the document was last edited. Three
+forced rebuilds now agree at `b33bdcba...`.
+
+**The first test of the fix was wrong and said it had failed.** Touching a source
+to force the rebuild changes the mtime the epoch is derived from, so the PDF
+legitimately changes and the test proves nothing. The rebuild has to be forced
+without touching any input.

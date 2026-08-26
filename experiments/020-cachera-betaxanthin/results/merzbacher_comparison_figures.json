@@ -1,0 +1,274 @@
+{
+  "fig1_scatter": {
+    "CGT vs FCL RF": {
+      "n": 639,
+      "pearson": 0.10784237678591217,
+      "spearman": -0.12765359724726325,
+      "y_p10_p90_width": 0.3337206140160561
+    },
+    "CGT vs measured": {
+      "n": 639,
+      "pearson": 0.294278818687916,
+      "spearman": 0.10528203628933717,
+      "y_p10_p90_width": 0.3337206140160561
+    },
+    "FCL RF vs measured": {
+      "n": 639,
+      "pearson": 0.24346648662626325,
+      "spearman": 0.039064257838781265,
+      "y_p10_p90_width": 0.22272580645161333
+    }
+  },
+  "fig3_precision_at_k": {
+    "base_rate": 0.1564945226917058,
+    "models": {
+      "CGT": {
+        "k=10": {
+          "enrichment": 5.7509999999999994,
+          "hits": 9,
+          "p_hypergeom": 3.5777872282943874e-07,
+          "precision": 0.9
+        },
+        "k=25": {
+          "enrichment": 4.6008,
+          "hits": 18,
+          "p_hypergeom": 1.4895469261397942e-10,
+          "precision": 0.72
+        },
+        "k=50": {
+          "enrichment": 3.0671999999999997,
+          "hits": 24,
+          "p_hypergeom": 1.5336716288183e-08,
+          "precision": 0.48
+        }
+      },
+      "FCL RF": {
+        "k=10": {
+          "enrichment": 5.112,
+          "hits": 8,
+          "p_hypergeom": 9.616487725785668e-06,
+          "precision": 0.8
+        },
+        "k=25": {
+          "enrichment": 4.8564,
+          "hits": 19,
+          "p_hypergeom": 8.345674667817774e-12,
+          "precision": 0.76
+        },
+        "k=50": {
+          "enrichment": 2.556,
+          "hits": 20,
+          "p_hypergeom": 1.1647501016439877e-05,
+          "precision": 0.4
+        }
+      }
+    },
+    "n_genes": 639,
+    "n_high": 100,
+    "other_cells_precision_at_50": {
+      "s00_L2_maskon_lr0.0001_zs": 0.1,
+      "s01_L2_maskon_lr0.0001_yj": 0.52,
+      "s02_L2_maskon_lr0.001_zs": 0.12,
+      "s03_L2_maskon_lr0.001_yj": 0.12,
+      "s04_L2_maskoff_lr0.0001_zs": 0.56,
+      "s05_L2_maskoff_lr0.0001_yj": 0.58,
+      "s06_L2_maskoff_lr0.001_zs": 0.3,
+      "s07_L2_maskoff_lr0.001_yj": 0.22,
+      "s08_L6_maskon_lr0.0001_zs": 0.54
+    }
+  },
+  "fig4_score_by_class": {
+    "median_percentile_rank": {
+      "CGT": {
+        "high": 52.425665101721435,
+        "low": 47.652582159624416,
+        "medium": 50.54773082942097
+      },
+      "FCL RF": {
+        "high": 56.455399061032864,
+        "low": 54.26447574334898,
+        "medium": 48.74804381846635
+      }
+    },
+    "n_per_class": {
+      "high": 100,
+      "low": 108,
+      "medium": 431
+    }
+  },
+  "fig5_roc": {
+    "cell_auc": {
+      "s00_L2_maskon_lr0.0001_zs": 0.4064471243042671,
+      "s01_L2_maskon_lr0.0001_yj": 0.6182467532467533,
+      "s02_L2_maskon_lr0.001_zs": 0.5322356215213357,
+      "s03_L2_maskon_lr0.001_yj": 0.5022541743970315,
+      "s04_L2_maskoff_lr0.0001_zs": 0.5709183673469387,
+      "s05_L2_maskoff_lr0.0001_yj": 0.6200649350649351,
+      "s06_L2_maskoff_lr0.001_zs": 0.5566141001855287,
+      "s07_L2_maskoff_lr0.001_yj": 0.5074768089053804,
+      "s08_L6_maskon_lr0.0001_zs": 0.6951020408163264,
+      "s09_L6_maskon_lr0.0001_yj": 0.5568552875695733
+    },
+    "cells_above_fcl": {
+      "s01_L2_maskon_lr0.0001_yj": {
+        "auc": 0.6182467532467533,
+        "margin": 0.04869202226345082
+      },
+      "s04_L2_maskoff_lr0.0001_zs": {
+        "auc": 0.5709183673469387,
+        "margin": 0.0013636363636362336
+      },
+      "s05_L2_maskoff_lr0.0001_yj": {
+        "auc": 0.6200649350649351,
+        "margin": 0.05051020408163265
+      },
+      "s08_L6_maskon_lr0.0001_zs": {
+        "auc": 0.6951020408163264,
+        "margin": 0.12554730983302398
+      }
+    },
+    "cgt_val_selected": "s09_L6_maskon_lr0.0001_yj",
+    "cgt_val_selected_auc": 0.5568552875695733,
+    "fcl_rf_auc": 0.5695547309833024,
+    "n_cells_above_fcl": 4
+  },
+  "fig6_cell_spread": {
+    "ROC AUC, high producers": {
+      "fcl_rf": 0.5695547309833024,
+      "max": 0.6951020408163264,
+      "min": 0.4064471243042671,
+      "n_cells_above_fcl": 4,
+      "per_cell": {
+        "s00_L2_maskon_lr0.0001_zs": 0.4064471243042671,
+        "s01_L2_maskon_lr0.0001_yj": 0.6182467532467533,
+        "s02_L2_maskon_lr0.001_zs": 0.5322356215213357,
+        "s03_L2_maskon_lr0.001_yj": 0.5022541743970315,
+        "s04_L2_maskoff_lr0.0001_zs": 0.5709183673469387,
+        "s05_L2_maskoff_lr0.0001_yj": 0.6200649350649351,
+        "s06_L2_maskoff_lr0.001_zs": 0.5566141001855287,
+        "s07_L2_maskoff_lr0.001_yj": 0.5074768089053804,
+        "s08_L6_maskon_lr0.0001_zs": 0.6951020408163264,
+        "s09_L6_maskon_lr0.0001_yj": 0.5568552875695733
+      },
+      "val_selected": 0.5568552875695733
+    },
+    "Spearman vs measured": {
+      "fcl_rf": 0.039064257838781265,
+      "max": 0.15828612415099086,
+      "min": 0.012763699741107023,
+      "n_cells_above_fcl": 8,
+      "per_cell": {
+        "s00_L2_maskon_lr0.0001_zs": 0.017634217865052655,
+        "s01_L2_maskon_lr0.0001_yj": 0.15296998663675812,
+        "s02_L2_maskon_lr0.001_zs": 0.062424350783555835,
+        "s03_L2_maskon_lr0.001_yj": 0.07688171350049565,
+        "s04_L2_maskoff_lr0.0001_zs": 0.0737141870883072,
+        "s05_L2_maskoff_lr0.0001_yj": 0.06763343658054988,
+        "s06_L2_maskoff_lr0.001_zs": 0.051378019379177346,
+        "s07_L2_maskoff_lr0.001_yj": 0.012763699741107023,
+        "s08_L6_maskon_lr0.0001_zs": 0.15828612415099086,
+        "s09_L6_maskon_lr0.0001_yj": 0.10528203628933717
+      },
+      "val_selected": 0.10528203628933717
+    }
+  },
+  "fig7_label_provenance": {
+    "fraction_of_ceiling": 0.8833925020365699,
+    "fraction_of_genes_in_a_different_bin": 0.18779342723004694,
+    "spearman_ceiling_perfect_3way_split": 0.8273384008547514,
+    "spearman_labels_vs_our_measurement": 0.7308645399620135
+  },
+  "fig8_screen_coverage": {
+    "_scale": {
+      "max": 2.7043779620586794,
+      "metabolic_enrichment_among_highs": 1.388223186061898,
+      "min": -2.600495426201653,
+      "rule": "full-screen min-max, thresholds [0.4, 0.65]",
+      "yeast_gem_genes": 1161
+    },
+    "all HIGH producers (their 0.65 cut)": {
+      "fraction_in_gem": 0.26905829596412556,
+      "in_yeast_gem": 60,
+      "n": 223,
+      "outside_yeast_gem": 163
+    },
+    "every deletion in the screen": {
+      "fraction_in_gem": 0.1938148697309892,
+      "in_yeast_gem": 915,
+      "n": 4721,
+      "outside_yeast_gem": 3806
+    },
+    "top 100 measured producers": {
+      "fraction_in_gem": 0.32,
+      "in_yeast_gem": 32,
+      "n": 100,
+      "outside_yeast_gem": 68
+    }
+  },
+  "fig9_metabolic_vs_nonmetabolic": {
+    "_difference_test": {
+      "delta_spearman": 0.14622359398232412,
+      "method": "Fisher r-to-z, two independent samples",
+      "p_two_sided": 0.03894445601485086,
+      "z": 2.0647732924007975
+    },
+    "_population": {
+      "other_in_gem": 21,
+      "other_test_genes": 294,
+      "pinned_fcl_genes": 639,
+      "pinned_in_gem": 638,
+      "test_records": 933,
+      "with_a_raw_screen_value": 915
+    },
+    "in_gem": {
+      "base_rate": 0.0730593607305936,
+      "enrichment": 9.307500000000001,
+      "n": 657,
+      "n_high_derived": 48,
+      "p_hypergeom": 1.743917376473613e-15,
+      "spearman_vs_measured": 0.12360680624351542,
+      "top25_high_found": 17
+    },
+    "not_in_gem": {
+      "base_rate": 0.08139534883720931,
+      "enrichment": 4.422857142857143,
+      "n": 258,
+      "n_high_derived": 21,
+      "p_hypergeom": 2.394144642573363e-05,
+      "spearman_vs_measured": 0.26983040022583954,
+      "top25_high_found": 9
+    }
+  },
+  "provenance": {
+    "bin_scale": {
+      "max": 2.7043779620586794,
+      "min": -2.600495426201653,
+      "source": "train_val_pool min-max"
+    },
+    "cgt_cells": [
+      "s00_L2_maskon_lr0.0001_zs",
+      "s01_L2_maskon_lr0.0001_yj",
+      "s02_L2_maskon_lr0.001_zs",
+      "s03_L2_maskon_lr0.001_yj",
+      "s04_L2_maskoff_lr0.0001_zs",
+      "s05_L2_maskoff_lr0.0001_yj",
+      "s06_L2_maskoff_lr0.001_zs",
+      "s07_L2_maskoff_lr0.001_yj",
+      "s08_L6_maskon_lr0.0001_zs",
+      "s09_L6_maskon_lr0.0001_yj"
+    ],
+    "cgt_val_selected_cell": "s09_L6_maskon_lr0.0001_yj",
+    "fcl_model": "RandomForestClassifier_Resampled",
+    "n_cgt_cells": 10,
+    "n_genes_scored": 639,
+    "note": "[[experiments.020-cachera-betaxanthin.merzbacher-comparison]]",
+    "our_rederivation_of_it": 0.701095461658842,
+    "their_published_rf_accuracy": 0.7,
+    "timestamp": "2026-08-15-14-39-38",
+    "truth_counts_low_med_high": [
+      108,
+      431,
+      100
+    ]
+  }
+}

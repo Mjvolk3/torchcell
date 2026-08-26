@@ -263,14 +263,29 @@ class CellAdapter:
         """
         memory_reduction_factor = self.get_memory_reduction_factor(method_name, is_edge)
         chunk_size = int(self.chunk_size * memory_reduction_factor)
-        starts = iter(range(0, len(self.dataset), chunk_size))
+
+        # Every chunk view is built BEFORE the first submission, and the dataset's LMDB
+        # environment is closed once afterwards, so that no chunk is ever built while
+        # submissions are in flight. Dataset.__getitem__ routes through len(), which
+        # opens that environment and closes it again, and executor.submit() hands the
+        # call item to a feeder THREAD that pickles it asynchronously -- the call item
+        # holds a bound adapter method, hence the dataset. Interleaving the two lets the
+        # feeder pickle a dataset whose env is transiently open, which raises
+        # "TypeError: cannot pickle 'Environment' object" (job 1544, four minutes into
+        # DmfCostanzo2016Adapter's environment method, after three methods had passed).
+        data_chunks = iter(
+            [
+                self.dataset[i : i + chunk_size]
+                for i in range(0, len(self.dataset), chunk_size)
+            ]
+        )
+        self.dataset.close_lmdb()
 
         def submit_next(executor: ProcessPoolExecutor) -> Future[Any] | None:
             """Submit the next chunk, or return None once every chunk is submitted."""
-            start = next(starts, None)
-            if start is None:
+            chunk = next(data_chunks, None)
+            if chunk is None:
                 return None
-            chunk = self.dataset[start : start + chunk_size]
             return executor.submit(chunk_processing_func, chunk, method_name)
 
         with ProcessPoolExecutor(max_workers=self.process_workers) as executor:

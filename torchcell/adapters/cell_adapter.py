@@ -8,8 +8,9 @@
 import hashlib
 import json
 import logging
+from collections import deque
 from collections.abc import Callable, Iterator
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import Future, ProcessPoolExecutor
 from datetime import datetime
 from functools import wraps
 from typing import Any, cast
@@ -247,20 +248,43 @@ class CellAdapter:
         method_name: str,
         is_edge: bool = False,
     ) -> Iterator[Any]:
-        """Yield processed data by chunking the dataset and mapping over processes."""
+        """Yield processed data by chunking the dataset and mapping over processes.
+
+        Submission is windowed: at most ``process_workers + 2`` chunks are in flight,
+        and a new one is submitted only as an earlier result is consumed. Results are
+        still yielded in submission order, so callers see no behavioral change.
+
+        The window is what keeps peak memory a function of chunk size rather than
+        dataset size. Submitting every chunk up front lets workers run arbitrarily far
+        ahead of the consumer, and because results are yielded in order, each finished
+        chunk is held in this process until its turn -- for a 20.7M-record dataset at
+        chunk_size 1e5 that is 207 results of ~1 GB each. Job 1543 died that way, with
+        a worker's fork for its loader failing ENOMEM against the container's limit.
+        """
         memory_reduction_factor = self.get_memory_reduction_factor(method_name, is_edge)
         chunk_size = int(self.chunk_size * memory_reduction_factor)
-        data_chunks = [
-            self.dataset[i : i + chunk_size]
-            for i in range(0, len(self.dataset), chunk_size)
-        ]
+        starts = iter(range(0, len(self.dataset), chunk_size))
+
+        def submit_next(executor: ProcessPoolExecutor) -> Future[Any] | None:
+            """Submit the next chunk, or return None once every chunk is submitted."""
+            start = next(starts, None)
+            if start is None:
+                return None
+            chunk = self.dataset[start : start + chunk_size]
+            return executor.submit(chunk_processing_func, chunk, method_name)
+
         with ProcessPoolExecutor(max_workers=self.process_workers) as executor:
-            futures = [
-                executor.submit(chunk_processing_func, chunk, method_name)
-                for chunk in data_chunks
-            ]
-            for future in futures:
-                yield from future.result()
+            in_flight: deque[Future[Any]] = deque()
+            for _ in range(self.process_workers + 2):
+                future = submit_next(executor)
+                if future is None:
+                    break
+                in_flight.append(future)
+            while in_flight:
+                yield from in_flight.popleft().result()
+                future = submit_next(executor)
+                if future is not None:
+                    in_flight.append(future)
 
     def data_chunker(  # type: ignore[misc]  # in-class decorator factory; first arg is the wrapped method, not self
         data_creation_logic: Callable[..., Any],

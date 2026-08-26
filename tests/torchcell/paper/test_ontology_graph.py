@@ -22,7 +22,7 @@ from torchcell.paper.ontology_graph import (
     _lane_for,
     build_ontology_graph,
 )
-from torchcell.paper.ontology_svg import _lane_body_lines
+from torchcell.paper.ontology_svg import _lane_body_lines, build_layout
 
 # CamelCase runs are how a class name looks on the panel; the derived lines otherwise
 # contain only counts and lowercase connective words.
@@ -94,3 +94,34 @@ def test_compound_identity_is_introspected(graph):
     assert "CompoundIdentityRecord" in graph.classes
     assert graph.classes["CompoundIdentityRecord"].lane == "environment"
     assert graph.classes["CompoundResolutionStatus"].lane == "enum"
+
+
+def test_layout_never_moves_a_card_out_of_its_lane(graph):
+    """A laid-out card must stay in the lane the graph assigned it.
+
+    Inheritance crosses lane boundaries: Phenotype, Compound and Environment all
+    derive from ProvenanceGapMixin, which lives in the provenance lane. _place_tree
+    once recursed through the unfiltered child list and stamped every descendant with
+    the lane it was called with, so the provenance pass overwrote all fourteen
+    phenotype cards and the phenotype frame rendered empty. The drift check cannot
+    catch that, because a consistently wrong render matches a consistently wrong
+    commit, so the invariant is pinned here instead.
+    """
+    for compact in (True, False):
+        layout = build_layout(graph, compact=compact)
+        misplaced = {
+            name: (graph.classes[name].lane, card.lane)
+            for name, card in layout.cards.items()
+            if card.lane != graph.classes[name].lane
+        }
+        assert not misplaced, f"compact={compact}: cards moved lane: {misplaced}"
+
+
+def test_every_lane_frame_holds_its_full_membership(graph):
+    """Each lane's laid-out cards are exactly its graph members, no more, no fewer."""
+    for compact in (True, False):
+        layout = build_layout(graph, compact=compact)
+        for lane in LANE_ORDER:
+            assert sorted(layout.lanes[lane].card_names) == graph.lane_members(lane), (
+                f"compact={compact}: lane {lane} membership diverged from the graph"
+            )

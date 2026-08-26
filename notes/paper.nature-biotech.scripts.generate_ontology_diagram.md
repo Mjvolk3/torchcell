@@ -240,3 +240,48 @@ Two things this exposes about the guards added earlier:
   fresh render, so it detects staleness, not incorrectness. A consistently wrong render
   matches a consistently wrong commit. Worth remembering before trusting a green build as
   evidence the figure is right.
+
+## 2026.08.25 - The SVGs are now maintained by a pre-commit hook, not by memory
+
+Before this, keeping the committed SVGs current meant remembering to run the generator.
+CI told you only after a push, and only that the artifact was stale. The artifacts are a
+pure function of the schema, the generator, and the palette, so nothing about them should
+have required remembering anything.
+
+`.pre-commit-config.yaml` gains an `ontology-figure` hook
+(`scripts/run-ontology-figure.sh`) shaped like the existing `schema-impact` gate:
+`language: system`, `pass_filenames: false`, `require_serial: true`. It fires only when a
+real input is staged:
+
+- `torchcell/datamodels/{schema,media,pydant,compound_identity}.py`, the introspected modules
+- `torchcell/paper/ontology_graph.py` and `ontology_svg.py`, the graph builder and renderer
+- `paper/nature-biotech/scripts/generate_ontology_diagram.py`, the driver
+- `torchcell/utils/utils.py`, which holds `PLOT_PALETTE` and `PANEL_WIDTHS_MM`
+
+Trigger rate over the last 90 days would have been about 51 commits, dominated by
+`schema.py` at 36. Generation costs about 0.4 s wall, so a spurious fire is cheap. The
+hook hashes the four artifacts before and after regenerating, which answers exactly "do
+the staged artifacts match the staged inputs", since pre-commit stashes unstaged changes
+and the working tree is therefore the staged state.
+
+**It stages the regenerated files and then exits non-zero.** That is deliberate and
+mirrors `ruff-format`. Re-running `git commit` succeeds, but the failure is what tells you
+the figure moved. The schematic is a paper figure, and a layout that has stopped reading
+well as the schema grows is a judgment only a person can make, so silent regeneration
+would be worse than a stop.
+
+### The bug that nearly shipped inside the hook
+
+The first working version reported "already matches the schema" for a commit that added a
+phenotype class. `python path/to/script.py` puts the SCRIPT'S directory on `sys.path`, not
+the cwd, so from a worktree the generator imported the PRIMARY checkout's `torchcell` and
+regenerated the figure from whatever is on `main`. Since all work goes through worktrees,
+this would have been wrong nearly every time, and silent. The wrapper now exports
+`PYTHONPATH="$(git rev-parse --show-toplevel)"`.
+
+Worth noting the diagnosis was nearly missed: `python -c "import torchcell"` from the same
+directory reports the worktree copy, because `-c` puts the cwd on `sys.path`. Checking it
+that way confirms the wrong thing.
+
+CI keeps the drift check as the backstop for a commit made with `--no-verify` or from a
+machine without hooks installed.

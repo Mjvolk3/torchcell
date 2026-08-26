@@ -14,6 +14,29 @@ have since been built, along with roughly a dozen other rows it ranked highly. O
 remains outstanding, and it is row 1 here. Any list that still treats that top ten as
 outstanding work is stale.
 
+\subsection{Two rows are not untouched candidates\secstatus{todo}}\label{sec:status}
+
+Checking a name against the built list is not sufficient, because a dataset can carry a
+loader, or a failed retrieval attempt, without appearing there. Two rows do.
+
+\notesec{Lee 2014, row 1, is blocked rather than available} WS15 already attempted this
+ingestion. The roadmap records it as awaiting author matrices, which means the Science
+supplementary tables and the Nislow and Giaever lab portal did not yield per-strain values.
+Its rank is still earned: 3,356 compounds against the full heterozygous and homozygous
+collections really is the largest chemical-genetic matrix in existence, and it really is on
+the YKO genotype axis the built set already uses. What changes is the nature of the work.
+Row 1 is an author request, not a loader, and the $1.3\times10^7$ instances it contributes
+to the totals in Sec.~\ref{sec:counts} should not be counted as reachable until that
+request succeeds.
+
+\notesec{Turco 2023, row 20, already has a loader} \file{torchcell/datasets/scerevisiae/yeastphenome.py}
+consumes the curated YeastPhenome release and retains 49 growth screens, so this row is in
+flight rather than net new. It is not in the built set, which is why it appears here at all.
+Two consequences follow. Its de-duplication problem is partly solved already, since the
+loader excludes the primaries built directly, along with heterozygous-diploid and
+expression screens. And Lee 2014 is not among its 49 screens, so ingesting YeastPhenome
+does not backfill row 1.
+
 \section{Before a loader is written\secstatus{todo}}\label{sec:caveats}
 
 Every figure in Table~\ref{tab:candidates} is an axis count, not a verified record count,

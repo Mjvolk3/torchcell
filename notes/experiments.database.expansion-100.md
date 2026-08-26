@@ -49,6 +49,29 @@ Both were caught by reading the emitted order rather than by a test:
    -- the whole-collection WGS that every `S288C-KO` sequence basis in the table rests on.
    Fixed by displacing on `(-tier, measurements)`.
 
+### 2026.08.25 later - two rows are not untouched candidates
+
+Caught by asking whether Lee 2014 was already held. Checking a name against the built 49 is
+NOT sufficient: a dataset can carry a loader, or a failed retrieval attempt, without showing
+up there. Added a `status` field (`candidate` / `blocked` / `loader-in-flight`) so this
+cannot recur, rendered as a superscript B or L in the table.
+
+- **Lee 2014 (row 1) is BLOCKED, not available.** WS15 already attempted it;
+  [[plan.schematization-ingestion-roadmap.2026.06.23]] line 42 records "Remaining: Lee 2014
+  (awaiting author matrices)". The Science SI and the Nislow/Giaever portal did not yield
+  per-strain values. The rank is still earned on scale, but row 1 is an **author request,
+  not a loader**, and its 1.3e7 instances are not reachable work.
+- **Turco 2023 (row 20) already has a loader.** `torchcell/datasets/scerevisiae/yeastphenome.py`
+  (commits `cc72795e`, `80f51193`) consumes the curated YeastPhenome release and retains 49
+  growth screens. Not in the built 49, so it belongs in this list, but as in-flight rather
+  than net-new. Its de-dup problem is partly solved already: the loader excludes primaries
+  built directly, plus heterozygous-diploid and expression screens.
+- **YeastPhenome does not backfill Lee 2014** -- PMID 24723613 is not among its 49 screens.
+
+Consequence for the headline number: of the 5.8e7 instances in the recommended 51, Turco
+contributes 3.8e7 (not net new) and Lee 1.3e7 (not reachable). **Net new and in hand is
+about 7.3e6.**
+
 ### Corrections to the 2026.07 triage pass
 
 - **Its top ten is stale.** Nine of ten have been built since (Vanacloig-Pedros, Messner

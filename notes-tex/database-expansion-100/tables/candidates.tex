@@ -17,7 +17,9 @@ reconstructed; a row with no such route is excluded rather than ranked
 (Table~\ref{tab:excluded}). Tier is defined in Sec.~\ref{sec:rule}. A bullet marks a row
 that bears directly on the Perturb-seq proposal (Table~\ref{tab:perturbseq}).
 \emph{Link} resolves to the source and is clickable; the full citation and the data
-location are in Table~\ref{tab:sources}. Rows
+location are in Table~\ref{tab:sources}. A superscript \textbf{B} marks a row already
+attempted and blocked on data access, and \textbf{L} one that already has a loader in
+flight; neither is an untouched candidate. Rows
 1--51 are the recommended set.}
 \label{tab:candidates}\\
 \toprule
@@ -31,7 +33,7 @@ location are in Table~\ref{tab:sources}. Rows
 \endhead
 \bottomrule
 \endfoot
-1 & \textbf{Lee 2014 (HIP-HOP fitness signatures)} & Tolerance / robustness & ~11,000 (het + hom) & 3,356 compounds & $1.3\times 10^{7}$ & $1.3\times 10^{7}$ & chemogenomic fitness score & S288C-\allowbreak KO & \href{https://doi.org/10.1126/science.1250217}{doi:10.1126/\allowbreak science.1250217} \\
+1 & \textbf{Lee 2014 (HIP-HOP fitness signatures)}\,\textsuperscript{\textbf{B}} & Tolerance / robustness & ~11,000 (het + hom) & 3,356 compounds & $1.3\times 10^{7}$ & $1.3\times 10^{7}$ & chemogenomic fitness score & S288C-\allowbreak KO & \href{https://doi.org/10.1126/science.1250217}{doi:10.1126/\allowbreak science.1250217} \\
 \addlinespace[5pt]
 2 & \textbf{Jakobson 2025 (genome-to-proteome map)} & Natural variation & 800 F6 segregants & 1 & 800 & $1.6\times 10^{6}$ & protein abundance, >6,400 pQTL & segregant-\allowbreak WGS & \href{https://doi.org/10.1126/science.adu3198}{doi:10.1126/\allowbreak science.adu3198} \\
 \addlinespace[5pt]
@@ -69,7 +71,7 @@ location are in Table~\ref{tab:sources}. Rows
 \addlinespace[5pt]
 19 & \textbf{Puddu 2019 (WGS of the deletion collection)} & Modality / backbone & ~4,800 deletion strains & 1 & $4.8\times 10^{3}$ & $4.8\times 10^{3}$ & structural variants, CNV, aneuploidy & S288C-\allowbreak KO & \href{https://doi.org/10.1038/s41586-019-1549-9}{doi:10.1038/\allowbreak s41586-019-1549-9} \\
 \addlinespace[5pt]
-20 & \textbf{Turco 2023 (Yeast Phenome)} & Tolerance / robustness & ~5,000 & 7,536 environments & $3.8\times 10^{7}$$\dagger$ & $3.8\times 10^{7}$ & growth / fitness per environment & S288C-\allowbreak KO & \href{https://doi.org/10.1126/sciadv.adg5702}{doi:10.1126/\allowbreak sciadv.adg5702} \\
+20 & \textbf{Turco 2023 (Yeast Phenome)}\,\textsuperscript{\textbf{L}} & Tolerance / robustness & ~5,000 & 7,536 environments & $3.8\times 10^{7}$$\dagger$ & $3.8\times 10^{7}$ & growth / fitness per environment & S288C-\allowbreak KO & \href{https://doi.org/10.1126/sciadv.adg5702}{doi:10.1126/\allowbreak sciadv.adg5702} \\
 \addlinespace[5pt]
 21 & \textbf{N'Guessan 2025 (segregant scRNA-seq eQTL)}\,$\bullet$ & Expression / single cell & ~4,500 profiled segregants & 1 & $4.5\times 10^{3}$ & $2.7\times 10^{7}$ & single-cell transcriptome + eQTL & segregant-\allowbreak WGS & \href{https://pmc.ncbi.nlm.nih.gov/articles/PMC12303567/}{PMC12303567} \\
 \addlinespace[5pt]

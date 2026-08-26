@@ -79,6 +79,12 @@ SeqBasis = Literal[
 
 Basis = Literal["reported", "product", "estimate"]
 
+# Ingestion state. "candidate" means untouched. The other two exist because this
+# pass initially ranked a blocked dataset first and a half-built one twentieth:
+# scanning the built list is not enough, since a dataset can have a loader, or a
+# failed retrieval attempt behind it, without appearing there.
+Status = Literal["candidate", "blocked", "loader-in-flight"]
+
 
 class Candidate(BaseModel):
     """One dataset proposed for ingestion."""
@@ -102,6 +108,7 @@ class Candidate(BaseModel):
     accession: str
     perturbseq: bool = False  # supports the yeast Perturb-seq proposal specifically
     requested: bool = False  # named explicitly in the scoping request; pinned above the cut
+    status: Status = "candidate"
 
     @property
     def measurements(self) -> int | None:
@@ -162,8 +169,9 @@ CANDIDATES: list[Candidate] = [
         phenotype="chemogenomic fitness score",
         shape="scalar",
         seq_basis="S288C-KO",
-        why="Largest chemical-genetic matrix in existence, on the exact YKO genotype axis Costanzo and Kuzmin already use. Biggest single instance-count gain available.",
-        accession="Science SI + Nislow/Giaever chemogenomics portal",
+        why="Largest chemical-genetic matrix in existence, on the exact YKO genotype axis Costanzo and Kuzmin already use. Biggest single instance-count gain available. BLOCKED: WS15 already attempted it and it stands as awaiting author matrices, so the Science SI and the lab portal did not yield per-strain values. Unblocking is an author request, not a loader.",
+        accession="Science SI + Nislow/Giaever portal, neither of which yielded per-strain matrices; awaiting author matrices per the WS15 roadmap",
+        status="blocked",
     ),
     Candidate(
         name="Turco 2023 (Yeast Phenome)",
@@ -180,8 +188,9 @@ CANDIDATES: list[Candidate] = [
         phenotype="growth / fitness per environment",
         shape="scalar",
         seq_basis="S288C-KO",
-        why="The widest environment axis in yeast, 96 percent chemical. Held out of tier 1 because it is a meta-aggregation: its instance count re-serves primary screens, several already built, so the net-new fraction is unknown until it is de-duplicated against the rest of this table.",
-        accession="yeastphenome.org structured downloads",
+        why="The widest environment axis in yeast, 96 percent chemical. Held out of tier 1 because it is a meta-aggregation: its instance count re-serves primary screens, several already built, so the net-new fraction is unknown until it is de-duplicated against the rest of this table. A loader already exists and retains 49 growth screens, so this is in flight rather than net-new work; Lee 2014 is not among those screens, so YeastPhenome does not backfill row 1.",
+        accession="yeastphenome.org (Zenodo 10.5281/zenodo.7714347); loader torchcell/datasets/scerevisiae/yeastphenome.py, 49 screens, not yet in the built set",
+        status="loader-in-flight",
     ),
     Candidate(
         name="Piotrowski 2017 (MOSAIC diagnostic panel)",
@@ -1617,6 +1626,15 @@ def link_tex(url: str) -> str:
     return r"\href{" + url + r"}{" + body + r"}"
 
 
+def status_tex(status: str) -> str:
+    """Marker for a row that is not an untouched candidate."""
+    return {
+        "candidate": "",
+        "blocked": r"\,\textsuperscript{\textbf{B}}",
+        "loader-in-flight": r"\,\textsuperscript{\textbf{L}}",
+    }[status]
+
+
 def seq_tex(basis: str) -> str:
     """Sequence-basis label with break points at + and -.
 
@@ -1714,7 +1732,9 @@ reconstructed; a row with no such route is excluded rather than ranked
 (Table~\ref{tab:excluded}). Tier is defined in Sec.~\ref{sec:rule}. A bullet marks a row
 that bears directly on the Perturb-seq proposal (Table~\ref{tab:perturbseq}).
 \emph{Link} resolves to the source and is clickable; the full citation and the data
-location are in Table~\ref{tab:sources}. Rows
+location are in Table~\ref{tab:sources}. A superscript \textbf{B} marks a row already
+attempted and blocked on data access, and \textbf{L} one that already has a loader in
+flight; neither is an untouched candidate. Rows
 1--"""
         + str(CUT)
         + r""" are the recommended set.}
@@ -1754,7 +1774,7 @@ location are in Table~\ref{tab:sources}. Rows
             " & ".join(
                 [
                     str(i),
-                    r"\textbf{" + tex_escape(c.name) + r"}" + star,
+                    r"\textbf{" + tex_escape(c.name) + r"}" + star + status_tex(c.status),
                     tex_escape(c.klass),
                     tex_escape(c.genotypes),
                     tex_escape(c.env),

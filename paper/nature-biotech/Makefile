@@ -48,7 +48,7 @@ DRAWIO_FIGS := $(shell for f in $$(grep -rhE 'figures/[A-Za-z0-9._-]+\.pdf' $(SH
                  fi; \
                done)
 
-.PHONY: paper all submission editing twocolumn figproto figlimits figures fig checkfigs wordcount flat clean
+.PHONY: paper all submission editing twocolumn figproto figlimits figures fig checkfigs wordcount flat clean publish publish-dry publish-list publish-submission
 # `make paper` builds the three views, then prints the word-count report (non-fatal: the
 # leading '-' means a bad/absent report never fails the build).
 paper: $(addsuffix .pdf,$(VIEWS))
@@ -67,6 +67,29 @@ figlimits: figure-limits.pdf
 PYTHON ?= python3
 wordcount:
 	@$(PYTHON) wordcount.py
+
+# Publish a review copy into the personal Zotero library, where comments attach to
+# the exact build they were made on. Same script and same versioning the notes-tex
+# documents use; the collection path is DERIVED from this directory, so this lands
+# in torchcell/paper/nature-biotech and cannot drift from where the files live.
+#
+# --tex is needed because \title is declared in sections/frontmatter.tex, and the
+# stock sn-article.tex sample carries a placeholder title, so "find the file with
+# \title" would have two answers here.
+#
+# editing.pdf on purpose: it is the view with the status chips and the \cb word
+# budgets, which is what a reviewer is commenting against. `make publish-submission`
+# is the same thing for the clean submission view.
+ZOTERO_PUBLISH := ../../notes-tex/common/zotero_publish.py
+ZOTERO_PUBLISH_ARGS := paper/nature-biotech --tex sections/frontmatter.tex
+publish: editing.pdf
+	@$(PYTHON) $(ZOTERO_PUBLISH) $(ZOTERO_PUBLISH_ARGS) --pdf editing
+publish-dry: editing.pdf
+	@$(PYTHON) $(ZOTERO_PUBLISH) $(ZOTERO_PUBLISH_ARGS) --pdf editing --dry-run
+publish-list:
+	@$(PYTHON) $(ZOTERO_PUBLISH) $(ZOTERO_PUBLISH_ARGS) --pdf editing --list
+publish-submission: submission.pdf
+	@$(PYTHON) $(ZOTERO_PUBLISH) $(ZOTERO_PUBLISH_ARGS) --pdf submission
 
 # The EDITING view embeds a per-section word-budget table on a final page. wordcount.tex is
 # regenerated from the sources whenever they (or the script) change, and editing.pdf depends

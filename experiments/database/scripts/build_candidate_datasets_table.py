@@ -1592,6 +1592,31 @@ def tex_escape(s: str) -> str:
     return s
 
 
+def link_tex(url: str) -> str:
+    """A clickable, short display form of a source URL.
+
+    The full URL is too wide for a table column and mostly boilerplate, so the
+    common prefixes collapse to a label while the href keeps the real target.
+    Break points go after every slash, since a bare host path is one unbreakable
+    token to TeX.
+    """
+    shown = url
+    for prefix, label in (
+        ("https://doi.org/", "doi:"),
+        ("https://pubmed.ncbi.nlm.nih.gov/", "PMID "),
+        ("https://pmc.ncbi.nlm.nih.gov/articles/", ""),
+        ("https://www.ncbi.nlm.nih.gov/pmc/articles/", ""),
+        ("https://www.", ""),
+        ("https://", ""),
+    ):
+        if shown.startswith(prefix):
+            shown = label + shown[len(prefix) :]
+            break
+    shown = shown.rstrip("/")
+    body = tex_escape(shown).replace("/", r"/\allowbreak ")
+    return r"\href{" + url + r"}{" + body + r"}"
+
+
 def seq_tex(basis: str) -> str:
     """Sequence-basis label with break points at + and -.
 
@@ -1650,22 +1675,27 @@ def write(path: Path, body: str) -> None:
 
 
 def render_candidates(rows: list[Candidate]) -> str:
-    # Every free-text field is a p{} column: Genotypes carries strings like
-    # "1,022 essential + 4,668 non-essential", and in an r column that cannot wrap
-    # it ran the table 65 mm off the text block. Widths sum with tabcolsep to just
-    # under the 182 mm block set in tcdoc.sty.
+    # Landscape. Portrait gives 182 mm, which forced nine columns so narrow that
+    # every free-text cell hyphenated two or three times and the table stopped
+    # being scannable. lscape swaps \textwidth for \textheight, so the block is
+    # 261 mm here, and every free-text column is ragged-right (L) rather than
+    # justified: justification in a 30 mm column is what produced the stretched,
+    # over-hyphenated lines.
     cols = (
-        r"@{}r@{\hspace{3pt}} p{31mm} p{16mm} p{21mm} p{14mm} r@{\hspace{4pt}} "
-        r"r@{\hspace{4pt}} p{24mm} p{17mm}@{}"
+        r"@{}r@{\hspace{4pt}} L{42mm} L{21mm} L{26mm} L{20mm} r@{\hspace{5pt}} "
+        r"r@{\hspace{5pt}} L{30mm} L{23mm} L{34mm}@{}"
     )
     hdr = (
-        r"\# & Dataset & Class & Genotypes & Env & Instances & Meas. & Phenotype "
-        r"& Sequence basis \\"
+        r"\textbf{\#} & \textbf{Dataset} & \textbf{Class} & \textbf{Genotypes} & "
+        r"\textbf{Env} & \textbf{Instances} & \textbf{Meas.} & \textbf{Phenotype} "
+        r"& \textbf{Sequence basis} & \textbf{Link} \\"
     )
     head = (
-        r"""\begingroup
+        r"""\begin{landscape}
+\begingroup
 \footnotesize
-\setlength{\tabcolsep}{3pt}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
 \begin{longtable}{"""
         + cols
         + r"""}
@@ -1682,7 +1712,9 @@ which is what a vector-valued panel actually contributes and what rows are ranke
 \emph{Sequence basis} is how the total genomic content of one strain would be
 reconstructed; a row with no such route is excluded rather than ranked
 (Table~\ref{tab:excluded}). Tier is defined in Sec.~\ref{sec:rule}. A bullet marks a row
-that bears directly on the Perturb-seq proposal (Table~\ref{tab:perturbseq}). Rows
+that bears directly on the Perturb-seq proposal (Table~\ref{tab:perturbseq}).
+\emph{Link} resolves to the source and is clickable; the full citation and the data
+location are in Table~\ref{tab:sources}. Rows
 1--"""
         + str(CUT)
         + r""" are the recommended set.}
@@ -1693,7 +1725,7 @@ that bears directly on the Perturb-seq proposal (Table~\ref{tab:perturbseq}). Ro
         + r"""
 \midrule
 \endfirsthead
-\multicolumn{9}{@{}l}{\footnotesize\emph{Table~\ref{tab:candidates}, continued}}\\
+\multicolumn{10}{@{}l}{\footnotesize\emph{Table~\ref{tab:candidates}, continued}}\\
 \toprule
 """
         + hdr
@@ -1708,7 +1740,7 @@ that bears directly on the Perturb-seq proposal (Table~\ref{tab:perturbseq}). Ro
     for i, c in enumerate(rows, start=1):
         if i == CUT + 1:
             lines.append(
-                r"\midrule \multicolumn{9}{@{}l}{\textbf{Cut line. Rows above are the "
+                r"\midrule \multicolumn{10}{@{}l}{\textbf{Cut line. Rows above are the "
                 + str(CUT)
                 + r" that reach "
                 + str(TARGET_COUNT)
@@ -1722,7 +1754,7 @@ that bears directly on the Perturb-seq proposal (Table~\ref{tab:perturbseq}). Ro
             " & ".join(
                 [
                     str(i),
-                    tex_escape(c.name) + star,
+                    r"\textbf{" + tex_escape(c.name) + r"}" + star,
                     tex_escape(c.klass),
                     tex_escape(c.genotypes),
                     tex_escape(c.env),
@@ -1730,11 +1762,20 @@ that bears directly on the Perturb-seq proposal (Table~\ref{tab:perturbseq}). Ro
                     sci(c.measurements),
                     tex_escape(c.phenotype),
                     seq_tex(c.seq_basis),
+                    link_tex(c.url),
                 ]
             )
             + r" \\"
         )
-    return head + "\n".join(lines) + "\n\\end{longtable}\n\\endgroup\n"
+        # Same 5 pt gap the perturb-seq glossary uses, and for the same reason:
+        # every row here is several lines of wrapped text, so without it adjacent
+        # rows run together and the eye cannot find where one ends.
+        lines.append(r"\addlinespace[5pt]")
+    return (
+        head
+        + "\n".join(lines)
+        + "\n\\end{longtable}\n\\endgroup\n\\end{landscape}\n"
+    )
 
 
 def render_perturbseq(rows: list[Candidate]) -> str:
@@ -1750,7 +1791,7 @@ def render_perturbseq(rows: list[Candidate]) -> str:
 \caption[]{Rows bearing on a yeast Perturb-seq, listed regardless of rank. \emph{Rank}
 is the row's position in Table~\ref{tab:candidates}.}
 \label{tab:perturbseq}
-\begin{tabular}{@{}r p{46mm} p{100mm}@{}}
+\begin{tabular}{@{}r@{\hspace{4pt}} L{46mm} L{100mm}@{}}
 \toprule
 Rank & Dataset & What it settles \\
 \midrule
@@ -1759,54 +1800,73 @@ Rank & Dataset & What it settles \\
     for i, c in enumerate(rows, start=1):
         if not c.perturbseq:
             continue
-        lines.append(f"{i} & {tex_escape(c.name)} & {tex_escape(c.why)} \\\\")
+        lines.append(
+            f"{i} & \\textbf{{{tex_escape(c.name)}}} & {tex_escape(c.why)} \\\\"
+        )
+        lines.append(r"\addlinespace[5pt]")
     return head + "\n".join(lines) + "\n\\bottomrule\n\\end{tabular}\n\\end{table}\n"
 
 
 def render_sources(rows: list[Candidate]) -> str:
-    head = r"""\begingroup
+    hdr = (
+        r"\textbf{\#} & \textbf{Dataset, citation and link} & \textbf{Why} & "
+        r"\textbf{Data} \\"
+    )
+    head = (
+        r"""\begin{landscape}
+\begingroup
 \footnotesize
-\setlength{\tabcolsep}{3pt}
-\begin{longtable}{@{}r p{62mm} p{52mm} p{45mm}@{}}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{@{}r@{\hspace{4pt}} L{86mm} L{92mm} L{62mm}@{}}
 \caption[]{Sources for Table~\ref{tab:candidates}, in the same order. \emph{Why} states
 what the row buys that the built set does not. \emph{Data} is where the per-record values
 live; entries marked unconfirmed were not fetched live and must be checked before a loader
-is written.}
+is written. Every link is clickable.}
 \label{tab:sources}\\
 \toprule
-\# & Dataset, citation and link & Why & Data \\
+"""
+        + hdr
+        + r"""
 \midrule
 \endfirsthead
 \multicolumn{4}{@{}l}{\footnotesize\emph{Table~\ref{tab:sources}, continued}}\\
 \toprule
-\# & Dataset, citation and link & Why & Data \\
+"""
+        + hdr
+        + r"""
 \midrule
 \endhead
 \bottomrule
 \endfoot
 """
+    )
     lines = []
     for i, c in enumerate(rows, start=1):
         cite = (
             r"\textbf{"
             + tex_escape(c.name)
-            + r"} "
+            + r"}\newline "
             + tex_escape(c.citation)
-            + r" \file{"
-            + c.url
-            + r"}"
+            + r"\newline "
+            + link_tex(c.url)
         )
         # Accessions carry bare host paths, which TeX treats as one unbreakable
         # token; allow a break after each slash so the column can wrap.
         acc = tex_escape(c.accession).replace("/", r"/\allowbreak ")
         lines.append(" & ".join([str(i), cite, tex_escape(c.why), acc]) + r" \\")
-    return head + "\n".join(lines) + "\n\\end{longtable}\n\\endgroup\n"
+        lines.append(r"\addlinespace[5pt]")
+    return (
+        head
+        + "\n".join(lines)
+        + "\n\\end{longtable}\n\\endgroup\n\\end{landscape}\n"
+    )
 
 
 def render_excluded() -> str:
     head = r"""\begingroup
 \footnotesize
-\begin{longtable}{@{}p{62mm} p{22mm} p{85mm}@{}}
+\begin{longtable}{@{}L{62mm} L{22mm} L{85mm}@{}}
 \caption[]{Considered and dropped. \emph{no-sequence} is the hard gate: without a route to
 the strain's genomic content there is no genotype to map a phenotype from.}
 \label{tab:excluded}\\
@@ -1821,10 +1881,13 @@ Dataset or group & Rule & Reason \\
 \bottomrule
 \endfoot
 """
-    lines = [
-        " & ".join([tex_escape(e.name), tex_escape(e.rule), tex_escape(e.reason)]) + r" \\"
-        for e in EXCLUDED
-    ]
+    lines = []
+    for e in EXCLUDED:
+        lines.append(
+            " & ".join([tex_escape(e.name), tex_escape(e.rule), tex_escape(e.reason)])
+            + r" \\"
+        )
+        lines.append(r"\addlinespace[5pt]")
     return head + "\n".join(lines) + "\n\\end{longtable}\n\\endgroup\n"
 
 
@@ -1839,7 +1902,7 @@ the scoping request, and the row each displaced. Displacement picks the weakest
 non-requested row by tier first and measurement count second, so a pin costs the least
 it can and cannot evict a tier-1 row to make room for a lower one.}
 \label{tab:swaps}
-\begin{tabular}{@{}p{78mm} p{78mm}@{}}
+\begin{tabular}{@{}L{78mm} L{78mm}@{}}
 \toprule
 Pinned in & Displaced to the reserve \\
 \midrule

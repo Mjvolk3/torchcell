@@ -17,6 +17,18 @@
 %% Tables are placed with [H] so each sits under the prose that explains it.
 \usepackage{float}
 
+%% The two wide tables run in landscape. pdflscape rather than lscape so the PDF
+%% carries a /Rotate on those pages and a viewer shows them the right way up
+%% without the reader turning their head. Inside the environment \textwidth
+%% becomes the portrait \textheight, so the block goes from 182 mm to 261 mm --
+%% which is what makes a ten-column table legible instead of a hyphenation stack.
+\usepackage{pdflscape}
+
+%% Ragged-right p column. Justifying a 25 mm column stretches interword space and
+%% forces two or three hyphenations per line; ragged right is what a dense table
+%% actually wants. \arraybackslash restores \\ after the > directive eats it.
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
 \title{\vspace{-1.5em}Seventy-four Candidates for Datasets 50--100}
 \author{Michael Volk}
 \date{\today}

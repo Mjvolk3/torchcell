@@ -2,7 +2,7 @@
 #SBATCH --job-name=build_database
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=32
-#SBATCH --mem=480G
+#SBATCH --mem=400G
 #SBATCH --time=10-00:00:00
 #SBATCH --output=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --error=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
@@ -20,17 +20,16 @@
 #         projection charges dmf Costanzo a rate measured while its loader root still
 #         pointed at the smf LMDB; at the dmi rate the projection is ~108 h. Bulk
 #         import follows generation. 10 days covers the spread with margin.
-#   cpus  32, matching job 970 (the last capped kg_full build) exactly. More workers
-#         would generate faster -- CellAdapter.get_data_by_type maps chunks over a
-#         ProcessPoolExecutor -- but it submits EVERY chunk up front and yields results
-#         in submission order, so finished-but-unyielded chunk results accumulate in
-#         the parent. At 100k records each Costanzo adapter was a single chunk and
-#         never buffered; at 20.7M it is ~52 chunks (~104 at the 0.5 memory-reduction
-#         methods), and faster workers mean a deeper buffer. Raising this trades
-#         wall time against a memory profile nothing has yet measured at this scale.
-#         To take that trade: sbatch --cpus-per-task=64 <this script>.
-#   mem   480 G, up from job 970's 256 G. Pure headroom for the buffering above; it
-#         costs nothing to reserve on an otherwise idle node.
+#   cpus  32, matching jobs 970 and 990 exactly, and leaving 96 of the node's CPUs for
+#         other work. More workers would generate faster -- CellAdapter.get_data_by_type
+#         maps chunks over a ProcessPoolExecutor -- but it submits EVERY chunk up front
+#         and yields results in submission order, so finished-but-unyielded chunk
+#         results accumulate in the parent, and faster workers mean a deeper buffer.
+#         Raising this trades wall time against a memory profile nothing has yet
+#         measured at this scale: sbatch --cpus-per-task=64 <this script>.
+#   mem   400 G, leaving ~113 G of the node for other jobs. That is only 1.5x job 990's
+#         256 G for 14x its record count, which is affordable because kg_uncapped also
+#         quarters chunk_size to 1e5: peak memory tracks chunk size, not dataset size.
 #
 # DISK. Job 970 wrote 50.3 GB of CSV with the doubles capped at 100k, of which their
 # Experiment nodes were ~10.2 KB per record. Scaling that to 41.2M more records puts

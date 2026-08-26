@@ -29,9 +29,16 @@ wandb:
   mode: online # disabled, offline, online
   project: tcdb
 
+# chunk_size is 1e5 here, a quarter of what kg_full and kg_selected_costanzo_doubles
+# use. Chunk size sets both a worker's working set and the size of one buffered result:
+# CellAdapter.get_data_by_type submits every chunk to a ProcessPoolExecutor up front and
+# yields results in submission order, so finished-but-unyielded chunks are held in the
+# parent. At 100k records a Costanzo adapter was a single chunk and neither cost showed
+# up; at 20.7M it is 207 chunks. Smaller chunks buy the peak back, which is what lets
+# this build reserve 400 G and leave the rest of the node usable.
 adapters:
   io_to_total_worker_ratio: 0.1
-  chunk_size: 4e5
+  chunk_size: 1e5
   loader_batch_size: 1e3
 
 subset:

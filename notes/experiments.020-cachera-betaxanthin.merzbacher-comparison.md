@@ -135,7 +135,10 @@ not "us vs Cachera".
 All figures regenerate from
 `experiments/020-cachera-betaxanthin/scripts/plot_merzbacher_comparison.py`, built from the
 10 finished Delta `020_v4` cells (`$DATA_ROOT/test-predictions/`) and the FCL paper's shipped
-`figures/fig4/fig4c_*.csv`.
+`figures/fig4/fig4c_*.csv`. **Every number quoted below is written to
+`results/merzbacher_comparison_figures.json`** by that same run, so a re-render's movement
+shows up as a diff on that file rather than silently changing what this note claims -- which
+matters here, because the source directory grows as Delta cells land.
 
 - **639 genes** carry their label, a CGT prediction and a raw screen value. Their 640th
   (IPP1/YBR011C) is essential -- no deletion strain exists, so no screen could measure it.
@@ -143,6 +146,13 @@ All figures regenerate from
   gene-level against RF's 0.700).
 - **CGT = ONE cell, selected by VALIDATION** (`s09_L6_maskon_lr0.0001_yj`, val 0.3639), never
   by its score on their test genes.
+- **THE SELECTION IS ASYMMETRIC, AND IT FAVOURS THEM.** Ours is the val-selected cell, which
+  Fig 5 and Fig 6 show costs us real ground (four cells beat FCL on AUC; the val-selected one
+  does not). Theirs is the best of four models, and the justification above -- "the others read
+  0.56-0.64 against RF's 0.700" -- is a TEST-set number. Their own folds compound it: the
+  earlier section flags that their validation folds appear drawn from the same 640 genes as
+  their test list. So wherever the two land level, we are level with an opponent picked with
+  more information than we allowed ourselves.
 - **Provenance asserted:** our re-derivation of their deployed gene-level vote reproduces
   their published accuracy (0.7011 vs 0.700) or the script exits.
 
@@ -151,7 +161,7 @@ All figures regenerate from
 1. **The published accuracy comparison is empty.** 0.701 vs a 0.674 majority rate, achieved
    by calling 95 % of genes medium. Rank-matched, both models fall to ~0.55. (Fig 2)
 2. **Both models DO have real signal, concentrated at the top of the ranking.** ~5x enrichment
-   in the top 10-25 genes, p < 1e-06 -- and essentially nothing across the bulk. (Fig 3, 4)
+   in the top 10-25 genes, p <= 1e-05 -- and essentially nothing across the bulk. (Fig 3, 4)
 3. **CGT and their RF are roughly tied where both can be measured**, and disagree about which
    genes (rank correlation -0.128). (Fig 1, 3, 5)
 4. **The real difference is COVERAGE, not accuracy.** yeast-GEM covers only **915 of the
@@ -163,26 +173,95 @@ All figures regenerate from
 
 ### Fig 1 -- per-gene spread (639 points)
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig1_scatter_spread_2026-08-02-19-52-45.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig1_scatter_spread_2026-08-02-23-43-08.svg)
 
 **Fig 1. Both models emit a nearly constant value; the two disagree about which genes.** 80 %
-of FCL's genes fall inside an $\mathbb{E}$[class] band of 0.22 on a 0-2 scale, 80 % of CGT's inside 0.33
+of FCL's genes fall inside an E[class] band of 0.22 on a 0-2 scale, 80 % of CGT's inside 0.33
 z-units. CGT's prediction is drawn on the MEASUREMENT's own scale (both are z-scored
-betaxanthin), so the middle panel shows the compression directly: the cloud is a flat band far
-below the `y = x` perfect-prediction line rather than tracking it. Colour is the FCL paper's released class label, x is OUR copy of the same screen.
+betaxanthin), so the middle panel shows the compression directly: the cloud is a flat
+horizontal band rather than rising with the measurement. Colour is the FCL paper's released
+class label, x is OUR copy of the same screen. "80 % of y within 0.22" is the WIDTH of the
+shaded band -- how far apart the 10th and 90th percentiles of that panel's y-axis model are,
+in that axis's own units.
+
+**Why the blue (true high) points sit at E[class] ~ 1, which is the MEDIUM class value.** This
+is the finding, not a mislabelling. FCL's deployed call is medium for **606 of 639 genes
+(94.8 %)**, and of the 100 true-high genes it calls **82 medium, 18 high, 0 low**; 74 of those
+100 sit below E[class] 1.1. So the median true-high gene receives an essentially medium
+expectation, which is what puts the blue cloud at 1.
+
+| released label | n | mean E[class] | median | p90 |
+| --- | --: | --: | --: | --: |
+| low | 108 | 0.965 | 0.952 | 1.074 |
+| medium | 431 | 0.972 | 0.932 | 1.102 |
+| **high** | 100 | **1.095** | **0.958** | **1.410** |
+
+What the medians hide is that true-high does carry a longer upper TAIL (p90 1.410 against
+1.074 / 1.102) -- the same tail signal Fig 3's precision@k picks up. The signal is real, it is
+confined to the tail, and it does not move the bulk.
+
+No `y = x` reference line is drawn. It previously appeared on the middle panel only, that
+being the one panel whose axes are the same quantity in the same units; it was removed because
+a reference line on one panel of three reads as an inconsistency, and the compression it
+pointed at is already carried by the shaded band and the title.
 
 | pair | Pearson | Spearman |
 | --- | --: | --: |
-| measured vs FCL RF | +0.244 | **+0.039** |
+| measured vs FCL RF | +0.243 | **+0.039** |
 | measured vs CGT | +0.294 | **+0.105** |
 | FCL RF vs CGT | +0.108 | **-0.128** |
 
 Pearson exceeds Spearman on both model rows because each gets a few extreme genes right and is
-otherwise flat. In RANK the two models are slightly ANTI-correlated.
+otherwise flat. In RANK the two models are ANTI-correlated -- and by more than "slightly":
+with n=639 the null SE on a rank correlation is 0.040, so **-0.128 is z = -3.2**. It is also
+not what shared signal would produce: two models correlating with the truth at +0.105 and
++0.039 would, through the truth alone, correlate with each other at about **+0.004**. So the
+sign is not noise around zero, and something orders the two rankings in systematic opposition.
+**No mechanism is claimed** -- we have not tested one, and the disagreement itself is
+independently visible in panel c, where the two methods recover 29 high producers each and
+share only 9.
+
+**Panel c -- of the 100 TRUE high producers, which does each method actually find?** Both
+sides are rank-matched into the same 100 high slots, so "called high" is a like-for-like set on
+each axis; the dashed lines are the two cutoffs. Counts on the panel are over the BLUE
+(true-high) set, with the quadrant's all-gene total in parentheses as the denominator.
+
+| quadrant | true high | all genes |
+| --- | --: | --: |
+| both find it | **9** | 15 |
+| CGT only | **20** | 85 |
+| FCL RF only | **20** | 85 |
+| neither | 51 | 454 |
+
+| | true high found |
+| --- | --: |
+| FCL RF alone | 29 / 100 |
+| CGT alone | 29 / 100 |
+| **shared** | **9** |
+| **union of both** | **49 / 100** |
+
+**The two methods are COMPLEMENTARY, not interchangeable.** Each recovers 29 of the 100 high
+producers -- identical recall, 0.290, which is why every aggregate in this note has them tied
+-- but they share only 9, so their union reaches 49. Recall is near-additive because the two
+are finding largely DIFFERENT genes. That is an argument for running both, and it is invisible
+in any summary statistic; it is the same fact the -0.128 rank correlation reports, made
+concrete at the level of the decision someone would actually act on.
+
+The 51 that neither finds is the honest ceiling on this comparison: **half the high producers
+are missed by both methods.**
+
+Rings mark the 49 recovered genes. Names are not printed on the panel -- they would bury the
+cloud -- and instead go to `results/merzbacher_high_call_disagreement_<ts>.csv` (columns
+`gene`, `released_label`, `call` in {`both`, `only_rf`, `only_cgt`}, `fcl_rf_e_class`,
+`cgt_predicted_z`); filter `released_label == 2` for the true-high rows.
+
+Caveat carried from `rank_bins`: the 108/431/100 marginal is ORACLE information handed to both
+sides. It is imposed identically on each, so this disagreement comparison is sound as a
+RELATIVE statement; the absolute membership of either top-100 is not a deployable call.
 
 ### Fig 2 -- why the accuracy comparison is degenerate
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig2_accuracy_artifact_2026-08-02-19-52-45.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig2_accuracy_artifact_2026-08-02-23-43-08.svg)
 
 **Fig 2. Accuracy above the majority line is the conservative-majority strategy, not
 discrimination -- for both models.** RF's 0.701 clears the 0.674 majority rate by 0.027 by
@@ -191,7 +270,7 @@ the true class marginal, RF drops to 0.556 and CGT to 0.549. Evidence, not a res
 
 ### Fig 3 -- precision@k for high producers
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig3_precision_at_k_2026-08-02-19-52-45.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig3_precision_at_k_2026-08-02-23-43-08.svg)
 
 **Fig 3. Both models are strongly enriched at the top of their ranking.** Of the top k genes
 each nominates, the fraction truly high; random is 0.156.
@@ -207,7 +286,7 @@ cell choice matters more than the CGT-vs-RF gap.
 
 ### Fig 4 -- score by class, as percentile rank
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig4_score_by_class_2026-08-02-19-52-45.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig4_score_by_class_2026-08-02-23-43-08.svg)
 
 **Fig 4. Neither model orders the classes across the bulk of the population.** Percentile rank
 puts two models with incomparable units on one axis; a separating model shows three stepping
@@ -224,7 +303,7 @@ and confined to the tail -- not that there is none.
 
 ### Fig 5 -- ROC for high-producer detection
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig5_roc_high_producers_2026-08-02-19-52-45.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig5_roc_high_producers_2026-08-02-23-43-08.svg)
 
 **Fig 5. Threshold-free, and on the val-selected cell it goes marginally to FCL: AUC 0.570 vs
 CGT's 0.557.** Both near the 0.500 chance line, because AUC integrates over the whole ranking
@@ -250,17 +329,18 @@ is that this metric does not separate the two methods at the resolution we have.
 
 ### Fig 6 -- how much is cell selection?
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig6_cell_spread_2026-08-02-19-52-45.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig6_cell_spread_2026-08-02-23-43-08.svg)
 
 **Fig 6. The spread across grid cells is wider than the gap between models.** CGT cells span
-0.013-0.158 Spearman (8 of 10 beat RF's 0.039) and 0.406-0.695 AUC (only 3 of 10 beat RF's
-0.570, and the val-selected cell is not among them). Four low points are the lr=1e-3 cells
+0.013-0.158 Spearman (8 of 10 beat RF's 0.039) and 0.406-0.695 AUC (4 of 10 beat RF's 0.570,
+and the val-selected cell is not among them -- though the 4th, `s04`, clears it by 0.0014,
+0.5709 against 0.5696, so read it as 3 clearly plus a tie). Four low points are the lr=1e-3 cells
 that collapsed to a constant predictor. Any single-number claim is dominated by which cell is
 quoted, which is why the cell is fixed by validation in advance.
 
 ### Fig 7 -- do their labels track our copy of the screen?
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig7_label_provenance_2026-08-02-19-52-45.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig7_label_provenance_2026-08-02-23-43-08.svg)
 
 **Fig 7. This is a HEADROOM bound on the scoring, not a claim that the FCL paper binned
 anything wrongly.** Their labels are a correct application of their own rule; the rule
@@ -278,7 +358,7 @@ every number in this note sits under.
 
 ### Fig 8 -- how little of the screen a flux-based method can reach
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig8_screen_coverage_2026-08-02-19-52-45.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig8_screen_coverage_2026-08-02-23-43-08.svg)
 
 **Fig 8. yeast-GEM covers 19 % of the screen and misses 73 % of its high producers.** Measured
 data only -- no model, no prediction. yeast-GEM contains 1,161 genes, of which **915 appear in
@@ -302,9 +382,9 @@ whether CGT actually delivers on that reach.
 
 ### Fig 9 -- the capability gap: metabolic vs non-metabolic genes
 
-![](assets/images/020-cachera-betaxanthin/merzbacher_fig9_metabolic_vs_nonmetabolic_2026-08-02-19-52-45.svg)
+![](assets/images/020-cachera-betaxanthin/merzbacher_fig9_metabolic_vs_nonmetabolic_2026-08-02-23-43-08.svg)
 
-**Fig 8. CGT predicts high betaxanthin producers among deletions the flux-based method cannot
+**Fig 9. CGT predicts high betaxanthin producers among deletions the flux-based method cannot
 represent.** Held-out test genes split by yeast-GEM membership, identical derived labels on
 both sides (their 0.40/0.65 cuts on a train-pool min-max scale). Circled = CGT's top 25.
 
@@ -322,8 +402,15 @@ the FCL paper's test set is **639/640 (99.8 %) inside yeast-GEM**; of our other 
 yields no feature for a deletion the metabolic model does not contain, so FCL's output for
 those genes is not poor, it is undefined.
 
-CGT's rank correlation is *higher* on the non-metabolic set (+0.270 vs +0.124). Both
-enrichments are strongly significant.
+CGT's rank correlation reads *higher* on the non-metabolic set (+0.270 vs +0.124), but that
+particular comparison is **marginal and should not be leaned on**: the two are measured on
+different, non-overlapping gene sets, and a Fisher r-to-z on two independent samples gives
+**z = 2.07, p = 0.039**. Read it as "CGT is at least as good outside the metabolic model as
+inside it", not as evidence that it is better there.
+
+What does NOT depend on that test is the claim the figure exists to make: on genes FCL has no
+features for, CGT's top 25 is enriched for true high producers **4.4x over the base rate
+(p = 2e-05)**. Both panels' enrichments are strongly significant on their own.
 
 **Caveats, and they matter for how hard this can be pushed.** (i) Labels for the non-GEM genes
 are DERIVED by us -- the FCL paper never labelled them -- so both panels use our derivation and
@@ -369,6 +456,50 @@ published a gene-level MCC. Accuracy and high-producer recall are gene-level on 
 **Status.** 10 of 24 Delta `020_v4` cells finished; wave C (L=4) just started. Re-running the
 rsync and the scripts picks up the rest, and the CGT points can move.
 
-**Slide set:** Fig 8 is the argument (coverage, not accuracy). Fig 2 + Fig 3 set it up -- the
-published metric is empty, but both models do find high producers at the top. Fig 4 and Fig 6
-are the qualifiers.
+**Slide set:** Fig 8 **and Fig 9** are the argument (coverage, not accuracy) -- Fig 8 is the
+gap, Fig 9 is CGT delivering inside it; neither carries it alone. Fig 2 + Fig 3 set it up --
+the published metric is empty, but both models do find high producers at the top. Fig 4 and
+Fig 6 are the qualifiers.
+
+## 2026.08.15 - Audit of the comparison, and a results file for every quoted number
+
+The 2026.08.02 section was re-derived from the source data independently of the script that
+drew it -- every figure recomputed from `$DATA_ROOT/test-predictions/` and their
+`fig4c_*.csv`. **The numbers hold.** The 639-gene population and its 108/431/100 marginal, all
+six Fig 1 correlations, every precision@k and its hypergeometric p, Fig 9's 657/258 split with
+48/21 derived highs and 17/9 in the top 25, and the 915/4,721 coverage all reproduce exactly.
+
+**The leakage question is the one that mattered, and it is clean.** Fig 9's right panel is 258
+genes, essentially all of them from the 294 test records OUTSIDE the pinned FCL 639 -- so had
+those come from the training pool, the note's strongest claim would have been measured on
+training data. They do not. `merzbacher_nested_split.json` has zero overlap between `test` and
+`train_val_pool`, and `CellDataModule` (`torchcell/datamodules/cell.py`, the
+`pinned_test_indices` block) removes the pinned records from train and val before the ratio
+split assigns the remainder. The extra 294 are ordinary held-out test genes.
+
+Corrected in place above, with what was wrong:
+
+| where | was | now |
+| --- | --- | --- |
+| TL;DR 2 | `p < 1e-06` | `p <= 1e-05` -- FCL at k=10 is 1e-05, shown in Fig 3's own table |
+| Fig 6 | "only 3 of 10 beat RF's 0.570" | 4 of 10, contradicting Fig 5's "four"; the 4th clears by 0.0014 and is called a tie |
+| Fig 9 caption | bolded "**Fig 8.**" | "**Fig 9.**" -- it duplicated Fig 8's label |
+| Fig 1 table | Pearson +0.244 | +0.243 (0.24347) |
+| Fig 9 | "+0.270 vs +0.124, *higher*" | qualified: Fisher r-to-z gives z=2.07, p=0.039, marginal |
+| Fig 1 | "slightly ANTI-correlated" | z = -3.2, and shared signal predicts only +0.004 |
+| setup | -- | the selection asymmetry, which favours FCL, now stated where the models are introduced |
+
+**Every quoted number now lands in `results/merzbacher_comparison_figures.json`**, written by
+`plot_merzbacher_comparison.py` on the same run that draws the figures, recording what each
+figure DREW rather than recomputing it elsewhere. Two of the note's columns had no source in
+the script at all before this -- Fig 1's Pearson column and Fig 3's hypergeometric p-values
+were side calculations. The file also carries the Fig 9 difference test, the per-cell AUC
+margins, and the population reconciliation (933 test records = 639 pinned + 294 other, of
+which 21 are in yeast-GEM). It is deliberately unstamped: `git diff` on it is how a re-render
+with more Delta cells becomes visible instead of silently moving what this note claims.
+
+One latent fragility, recorded but not a present error: Fig 8 derives "high" from the
+FULL-SCREEN min-max while Fig 9 uses the TRAIN-POOL min-max. Today they coincide exactly
+(both -2.600/2.704 -- the screen's extreme genes both sit in the pool), so the two figures
+agree. A future split that moved an extreme gene into test would separate them silently, so
+the scale is now recorded in the JSON under `fig8_screen_coverage._scale`.

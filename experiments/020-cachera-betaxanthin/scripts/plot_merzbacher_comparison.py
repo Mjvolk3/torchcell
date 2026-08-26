@@ -47,7 +47,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-from scipy.stats import hypergeom, rankdata, spearmanr
+from scipy.stats import hypergeom, norm, pearsonr, rankdata, spearmanr
 from sklearn.metrics import roc_auc_score, roc_curve
 
 from torchcell.timestamp import timestamp
@@ -112,6 +112,13 @@ RF_MODEL = "RandomForestClassifier_Resampled"
 #: the comparison is CGT vs FCL, both evaluated on the Cachera screen.
 RF_LABEL = "FCL RF"
 CGT_LABEL = "CGT"
+#: Axis label for their gene-level score, E[class] = 0*p_low + 1*p_med + 2*p_high.
+#: DELIBERATELY NOT mathtext. `$\mathbb{E}$` renders U+1D53C (double-struck capital E),
+#: which Arial does not contain -- and because the repo standard sets
+#: ``svg.fonttype: "none"`` the SVG keeps it as a text run in Arial rather than as a path,
+#: so the glyph is missing by the time the note is rendered to PDF. A plain "E" is in every
+#: font we use and survives the whole matplotlib -> SVG -> PDF chain.
+FCL_AXIS_LABEL = "FCL RF   E[class]"
 
 #: A sequential map built from the palette orange, replacing matplotlib's built-in `Oranges`
 #: -- which is close to our hue but is NOT our color, and a figure that mixes the two reads as
@@ -120,6 +127,20 @@ CGT_CMAP = mpl.colors.LinearSegmentedColormap.from_list(
     "tc_orange", ["#FFFFFF", PLOT_PALETTE_FILL[0], PLOT_PALETTE[0], PLOT_PALETTE[6]]
 )
 _SETTING_TAG = re.compile(r"^s\d+_")
+
+#: EVERY NUMBER THE NOTE QUOTES, written to a results file next to the figures.
+#:
+#: The note's nine tables used to be transcribed from stdout, which has two costs. The
+#: figures are built from `$DATA_ROOT/test-predictions/`, a directory that GROWS as Delta
+#: cells finish -- so a re-render silently moves the numbers and nothing on disk records
+#: what they were. And several quoted values (Fig 1's Pearson column, Fig 3's hypergeometric
+#: p-values) were never computed by this script at all; they came from a side calculation
+#: with no artifact. Both are the STRICT RULE in CLAUDE.md: a number in a note comes from a
+#: committed script reading real result files.
+#:
+#: Each fig_* function records what it DRAWS, at the point it draws it, so the JSON cannot
+#: drift from the figure the way a recomputation in a second place would.
+STATS: dict[str, Any] = {}
 
 #: THE CELL PANELS b/c/d FOCUS ON, and it is SELECTED BY VALIDATION, never by its test score.
 #: `s09_L6_maskon_lr0.0001_yj` holds the highest `val/betaxanthin/pearson_per_feature` (0.3639)
@@ -352,6 +373,19 @@ def main() -> None:
             f"re-derived {RF_MODEL} accuracy {recomputed:.4f} != published {published:.4f}"
         )
     print(f"  their published RF acc {published:.4f}; re-derived {recomputed:.4f} OK")
+    STATS["provenance"] = {
+        "note": "[[experiments.020-cachera-betaxanthin.merzbacher-comparison]]",
+        "timestamp": ts,
+        "n_cgt_cells": len(dumps),
+        "cgt_cells": sorted(ours),
+        "cgt_val_selected_cell": best,
+        "fcl_model": RF_MODEL,
+        "n_genes_scored": len(genes),
+        "truth_counts_low_med_high": list(counts),
+        "their_published_rf_accuracy": published,
+        "our_rederivation_of_it": recomputed,
+        "bin_scale": {"source": "train_val_pool min-max", "min": lo, "max": hi},
+    }
 
     obs = np.array([raw[g] for g in genes], dtype=float)
     # TWO FIGURES BY DEFAULT. Fig 1 is the scatter because it is the only one that shows why
@@ -376,6 +410,17 @@ def main() -> None:
         fig_distribution(cgt, rf, t, best, ts)
         fig_recall(cgt, rf, t, best, ts)
         fig_confusion(cgt, rf, t, best, ts)
+
+    # EVERY QUOTED NUMBER, ON DISK. Written LAST so it holds what the figures actually drew.
+    # Unstamped on purpose: it is the current state of the comparison, and a stamped copy per
+    # render would leave the note pointing at whichever one someone happened to open. The
+    # render timestamp is inside, and `git diff` on this file is how a re-render's movement
+    # becomes visible instead of silent.
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    stats_path = osp.join(RESULTS_DIR, "merzbacher_comparison_figures.json")
+    with open(stats_path, "w") as fh:
+        json.dump(STATS, fh, indent=2, sort_keys=True)
+    print(f"  wrote {stats_path}")
 
 
 # ---------------------------------------------------------------------------------- panels
@@ -579,6 +624,48 @@ def draw_confusion(axes, cgt: dict, rf: dict, t: np.ndarray) -> None:
     axes[0].set_ylabel("true")
 
 
+def write_high_disagreement(
+    genes: list,
+    t: np.ndarray,
+    rf_hi: np.ndarray,
+    cgt_hi: np.ndarray,
+    rf_score: np.ndarray,
+    cgt_score: np.ndarray,
+    ts: str,
+) -> None:
+    """The per-gene backing for panel 1c's rings -- names the figure cannot hold.
+
+    `call` is which model(s) put the gene in their rank-matched top 100. The rows that
+    matter for follow-up are `only_cgt` / `only_rf` with `released_label == 2`: genes the
+    FCL paper calls high that exactly one of the two methods recovers.
+    """
+    call = np.where(
+        rf_hi & cgt_hi,
+        "both",
+        np.where(rf_hi, "only_rf", np.where(cgt_hi, "only_cgt", "neither")),
+    )
+    keep = call != "neither"
+    df = pd.DataFrame(
+        {
+            "gene": np.asarray(genes)[keep],
+            "released_label": t[keep],
+            "call": call[keep],
+            "fcl_rf_e_class": rf_score[keep],
+            "cgt_predicted_z": cgt_score[keep],
+        }
+    ).sort_values(["call", "released_label", "gene"])
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    path = osp.join(RESULTS_DIR, f"merzbacher_high_call_disagreement_{ts}.csv")
+    df.to_csv(path, index=False)
+    n_tru = int(((call != "both") & keep & (t == 2)).sum())
+    print(
+        f"  high-call sets: both {int((call == 'both').sum())}, "
+        f"only_rf {int((call == 'only_rf').sum())}, only_cgt {int((call == 'only_cgt').sum())}; "
+        f"{n_tru} true-high genes recovered by exactly one model"
+    )
+    print(f"  wrote {path}")
+
+
 def fig_scatter(
     cgt: dict,
     rf: dict,
@@ -614,7 +701,7 @@ def fig_scatter(
             obs,
             rf_score,
             "measured betaxanthin, Cachera screen (z)",
-            "FCL RF   $\\mathbb{E}$[class]",
+            FCL_AXIS_LABEL,
         ),
         (
             f"{CGT_LABEL} vs measured",
@@ -627,7 +714,7 @@ def fig_scatter(
             f"{CGT_LABEL} vs {RF_LABEL}",
             rf_score,
             cgt["raw"],
-            "FCL RF   $\\mathbb{E}$[class]",
+            FCL_AXIS_LABEL,
             "CGT   predicted (z)",
         ),
     ]
@@ -661,7 +748,7 @@ def fig_scatter(
     }
     var_of = {
         "measured betaxanthin, Cachera screen (z)": "measured",
-        "FCL RF   $\\mathbb{E}$[class]": "fcl",
+        FCL_AXIS_LABEL: "fcl",
         "CGT   predicted (z)": "cgt",
     }
     fig, axes = plt.subplots(
@@ -679,15 +766,70 @@ def fig_scatter(
                 label=f"{CLASS_NAMES[c]} (n={int(m.sum())})",
                 zorder=3,
             )
-        # y = x, drawn ONLY where both axes carry the same quantity in the same units. It is
-        # the perfect-prediction line, and the gap between it and the point cloud is the
-        # compression stated numerically in the title.
-        if var_of[xlab] == "measured" and var_of[ylab] == "cgt":
-            lims = axis_spec["measured"][0]
-            ax.plot(lims, lims, ls="--", lw=0.6, color=TRUTH_C, zorder=2)
-            ax.text(
-                2.45, 2.30, "y = x", ha="right", va="top", fontsize=4.5, color=TRUTH_C
+        # NO y = x LINE. It was drawn on panel 2 only -- the one panel where both axes are the
+        # same quantity in the same units (z-scored betaxanthin), so it was the honest
+        # perfect-prediction reference and could not be drawn on panels 1 or 3, whose axes are
+        # not commensurable. Removed anyway (author call, 2026.08.02): a reference line on one
+        # panel of three reads as an inconsistency rather than as a statement about units, and
+        # the compression it pointed at is already carried by the shaded band and the title.
+        # PANEL 3 ONLY: OF THE 100 TRUE HIGH PRODUCERS, WHICH DOES EACH METHOD RECOVER?
+        # Both sides are rank-matched into the same 100 high slots, so "called high" is a
+        # like-for-like set on each axis and the two cut lines partition the panel into
+        # agreement / disagreement quadrants.
+        #
+        # THE COUNTS ARE OVER THE BLUE (TRUE HIGH) SET, not over all 639 genes -- that is the
+        # question the panel exists to answer, and the all-gene count is only the quadrant's
+        # denominator. Reporting the all-gene numbers as the headline (an earlier version did)
+        # answered a question nobody asked: 85 CGT-only genes is uninformative when most of
+        # them are not high producers in the first place.
+        #
+        # The pattern is COMPLEMENTARITY: each method recovers 29 of 100, they share 9, and
+        # their union is 49 -- close to additive. Two methods that tie on recall (0.290 each)
+        # are finding largely DIFFERENT high producers, which is an argument for running both
+        # rather than for picking one. Names go to the CSV written alongside this figure.
+        if var_of[xlab] == "fcl" and var_of[ylab] == "cgt":
+            rf_hi, cgt_hi = rf["rank"] == 2, cgt["rank"] == 2
+            x_cut, y_cut = float(x[rf_hi].min()), float(y[cgt_hi].min())
+            for setline, cut in ((ax.axvline, x_cut), (ax.axhline, y_cut)):
+                setline(cut, ls=(0, (4, 2)), lw=0.5, color="0.35", zorder=2)
+            tru_hi = t == 2
+            recovered = (rf_hi | cgt_hi) & tru_hi
+            # Ring every true high producer at least one method recovers. Blue already marks
+            # the true-high set, but panel 3's cloud is dense enough that the ring is what
+            # makes the recovered ones findable inside it.
+            ax.scatter(
+                x[recovered],
+                y[recovered],
+                s=16,
+                facecolors="none",
+                edgecolors="black",
+                linewidths=0.45,
+                zorder=4,
             )
+            xl, yl = axis_spec["fcl"][0], axis_spec["cgt"][0]
+            # Counts sit in the corner of the quadrant they describe: true-high first
+            # (the answer), all-genes in parentheses (the denominator).
+            for qx, qy, ha, va, mask, txt in (
+                (xl[1], yl[1], "right", "top", rf_hi & cgt_hi, "both"),
+                (xl[0], yl[1], "left", "top", cgt_hi & ~rf_hi, "CGT only"),
+                (xl[1], yl[0], "right", "bottom", rf_hi & ~cgt_hi, "FCL RF only"),
+                (xl[0], yl[0], "left", "bottom", ~rf_hi & ~cgt_hi, "neither"),
+            ):
+                ax.text(
+                    qx - 0.04 * (1 if ha == "right" else -1) * (xl[1] - xl[0]),
+                    qy - 0.04 * (1 if va == "top" else -1) * (yl[1] - yl[0]),
+                    f"{txt}\n{int((mask & tru_hi).sum())} high\n({int(mask.sum())} genes)",
+                    ha=ha,
+                    va=va,
+                    fontsize=4.5,
+                    color="0.25",
+                    linespacing=1.2,
+                    zorder=5,
+                )
+            # NO in-axes legend for the rings. All four corners now carry a quadrant count,
+            # so there is nowhere inside the panel a legend can sit without landing on one;
+            # the ring is explained in the figure-level caption instead.
+            write_high_disagreement(genes, t, rf_hi, cgt_hi, x, y, ts)
         rho = float(spearmanr(y, x).statistic)
         # THE BAND IS THE MIDDLE 80 % OF THE Y-AXIS MODEL'S OUTPUT (10th-90th percentile),
         # and it is labelled in-axes because an unlabelled grey box explains nothing. It is
@@ -699,8 +841,21 @@ def fig_scatter(
         # The span goes in the TITLE and the band is explained ONCE in a figure caption.
         # An in-axes annotation was tried and landed on top of the point cloud, where it was
         # unreadable and hid the data it was describing.
+        # "spans" was ambiguous on its own -- it is the WIDTH of the shaded band, i.e. how
+        # far apart the 10th and 90th percentiles of the y-axis model's own output are, in
+        # that axis's units. Spelled out here so the number is readable without the caption.
+        # PEARSON IS RECORDED THOUGH IT IS NOT DRAWN. The note's Fig 1 table carries a
+        # Pearson column next to the Spearman one -- the two disagreeing is the evidence for
+        # "each model gets a few extreme genes right and is otherwise flat" -- so the number
+        # has to come from here rather than from a side calculation.
+        STATS.setdefault("fig1_scatter", {})[name] = {
+            "pearson": float(pearsonr(y, x).statistic),
+            "spearman": rho,
+            "y_p10_p90_width": float(p90 - p10),
+            "n": int(len(x)),
+        }
         ax.set_title(
-            f"{name}\nSpearman {rho:+.3f}    middle 80% spans {p90 - p10:.2f}",
+            f"{name}\nSpearman {rho:+.3f}    80% of y within {p90 - p10:.2f} (10-90 pct)",
             fontsize=5.5,
             pad=3,
         )
@@ -748,6 +903,9 @@ def fig_scatter(
         0.020,
         "shaded band = middle 80% (10th-90th percentile) of the y-axis model's own output; a "
         "narrow band means the model returns nearly the same value for every gene.\n"
+        "Panel 3 quadrants are cut at each model's rank-matched high threshold; counts are "
+        "TRUE HIGH producers (blue) with the quadrant's all-gene total in parentheses. Rings "
+        "= the 49 of 100 true highs found by at least one method (FCL 29, CGT 29, shared 9).\n"
         "Color is the FCL paper's RELEASED class label; x is our copy of the Cachera screen. "
         "They agree at Spearman 0.73 (88% of attainable) and 18.8% of genes fall in a "
         "different bin, which is why the colors overlap along x -- see Fig 7.",
@@ -888,6 +1046,35 @@ def fig_topk(ours: dict, rf_sc: np.ndarray, t: np.ndarray, best: str, ts: str) -
     ax.set_ylim(0, 1.0)
     tenth_grid(ax)
     ax.legend(frameon=False, fontsize=5, loc="upper right", handletextpad=0.5)
+    # THE p-VALUES THE NOTE QUOTES ARE COMPUTED HERE, not drawn. The curve shows enrichment;
+    # whether a given k clears chance is a hypergeometric question (N genes, K true highs,
+    # k drawn), one-sided because only ENRICHMENT is a claim. Recorded for every k the note
+    # tabulates, plus the spread across the unselected cells at k=50.
+    n_all, k_hi = len(is_high), int(is_high.sum())
+
+    def topk_row(score: np.ndarray, k: int) -> dict[str, float]:
+        hits = int(is_high[np.argsort(-score)][:k].sum())
+        return {
+            "hits": hits,
+            "precision": hits / k,
+            "enrichment": (hits / k) / (k_hi / n_all),
+            "p_hypergeom": float(hypergeom.sf(hits - 1, n_all, k_hi, k)),
+        }
+
+    STATS["fig3_precision_at_k"] = {
+        "n_genes": n_all,
+        "n_high": k_hi,
+        "base_rate": k_hi / n_all,
+        "models": {
+            lab: {f"k={k}": topk_row(sc, k) for k in (10, 25, 50)}
+            for lab, sc in ((RF_LABEL, rf_sc), (CGT_LABEL, ours[best]["raw"]))
+        },
+        "other_cells_precision_at_50": {
+            n: float(is_high[np.argsort(-d["raw"])][:50].mean())
+            for n, d in sorted(ours.items())
+            if n != best
+        },
+    }
     fig.tight_layout(pad=0.4)
     save(fig, "merzbacher_fig3_precision_at_k", ts)
 
@@ -949,6 +1136,13 @@ def fig_score_by_class(
     ax.grid(axis="y", lw=0.3, color="0.9", zorder=0)
     ax.set_axisbelow(True)
     ax.legend(frameon=False, fontsize=5, loc="lower right", handlelength=1.2)
+    STATS["fig4_score_by_class"] = {
+        "median_percentile_rank": {
+            name: {CLASS_NAMES[c]: float(np.median(pr[t == c])) for c in range(3)}
+            for name, _, pr in series
+        },
+        "n_per_class": {CLASS_NAMES[c]: int((t == c).sum()) for c in range(3)},
+    }
     fig.tight_layout(pad=0.4)
     save(fig, "merzbacher_fig4_score_by_class", ts)
 
@@ -988,6 +1182,25 @@ def fig_roc(ours: dict, rf_sc: np.ndarray, t: np.ndarray, best: str, ts: str) ->
     ax.set_ylim(0, 1)
     tenth_grid(ax)
     ax.legend(frameon=False, fontsize=5, loc="lower right", handletextpad=0.5)
+    # HOW MANY CELLS BEAT FCL IS COMPUTED, NEVER COUNTED BY EYE. The note once said 3 in one
+    # place and 4 in another, because the 4th clears FCL by 0.0013 (0.5709 vs 0.5696) and the
+    # displayed values both round to 0.57. The margin is recorded next to the count so a
+    # near-tie can never again be read off the rendered figure as a clean win.
+    rf_auc = float(roc_auc_score(is_high, rf_sc))
+    cell_auc = {
+        n: float(roc_auc_score(is_high, d["raw"])) for n, d in sorted(ours.items())
+    }
+    above = {n: v for n, v in cell_auc.items() if v > rf_auc}
+    STATS["fig5_roc"] = {
+        "fcl_rf_auc": rf_auc,
+        "cgt_val_selected": best,
+        "cgt_val_selected_auc": cell_auc[best],
+        "cell_auc": cell_auc,
+        "n_cells_above_fcl": len(above),
+        "cells_above_fcl": {
+            n: {"auc": v, "margin": v - rf_auc} for n, v in above.items()
+        },
+    }
     fig.tight_layout(pad=0.4)
     save(fig, "merzbacher_fig5_roc_high_producers", ts)
 
@@ -1054,6 +1267,17 @@ def fig_cell_spread(
         ax.grid(axis="y", lw=0.3, color="0.9", zorder=0)
         ax.set_axisbelow(True)
         ax.legend(frameon=False, fontsize=5, loc="lower right", handletextpad=0.3)
+    STATS["fig6_cell_spread"] = {
+        lab: {
+            "per_cell": dict(zip(names, [float(v) for v in vals])),
+            "min": float(min(vals)),
+            "max": float(max(vals)),
+            "fcl_rf": float(rf_val),
+            "n_cells_above_fcl": int(sum(v > rf_val for v in vals)),
+            "val_selected": float(vals[names.index(best)]),
+        }
+        for lab, vals, rf_val in metrics
+    }
     fig.tight_layout(pad=0.4)
     save(fig, "merzbacher_fig6_cell_spread", ts)
 
@@ -1114,6 +1338,12 @@ def fig_label_provenance(t: np.ndarray, obs: np.ndarray, ts: str) -> None:
         fontsize=5,
         pad=3,
     )
+    STATS["fig7_label_provenance"] = {
+        "spearman_labels_vs_our_measurement": rho_obs,
+        "spearman_ceiling_perfect_3way_split": rho_max,
+        "fraction_of_ceiling": rho_obs / rho_max,
+        "fraction_of_genes_in_a_different_bin": disagree,
+    }
     ax.grid(axis="x", lw=0.3, color="0.9", zorder=0)
     ax.set_axisbelow(True)
     fig.tight_layout(pad=0.4)
@@ -1167,6 +1397,12 @@ def fig_screen_coverage(raw: dict, ts: str) -> None:
         n = int(mask.sum())
         n_gem = int((mask & in_gem).sum())
         n_out = n - n_gem
+        STATS.setdefault("fig8_screen_coverage", {})[name.replace("\n", " ")] = {
+            "n": n,
+            "in_yeast_gem": n_gem,
+            "outside_yeast_gem": n_out,
+            "fraction_in_gem": n_gem / n,
+        }
         ax.barh(
             i,
             n_gem / n,
@@ -1220,6 +1456,20 @@ def fig_screen_coverage(raw: dict, ts: str) -> None:
         handletextpad=0.4,
         columnspacing=1.0,
     )
+    # THE SCALE IS RECORDED, because this figure derives "high" from the FULL-SCREEN min-max
+    # while Fig 9 derives it from the TRAIN-POOL min-max. Today those coincide exactly -- the
+    # screen's extreme genes both sit in the pool -- so the two figures' labels agree. That is
+    # a property of the current split, not a guarantee, and if a future split moves an extreme
+    # gene into test the two "high" definitions would silently diverge.
+    STATS["fig8_screen_coverage"]["_scale"] = {
+        "rule": "full-screen min-max, thresholds " + str(list(MERZBACHER_THRESHOLDS)),
+        "min": lo,
+        "max": hi,
+        "yeast_gem_genes": len(gem),
+        "metabolic_enrichment_among_highs": float(
+            (in_gem & is_hi).sum() / is_hi.sum() / (in_gem.sum() / len(g))
+        ),
+    }
     fig.tight_layout(pad=0.4)
     save(fig, "merzbacher_fig8_screen_coverage", ts)
 
@@ -1253,6 +1503,22 @@ def fig_nonmetabolic(dumps: list, raw: dict, split: dict, best: str, ts: str) ->
     )
     lo, hi = float(np.nanmin(pool)), float(np.nanmax(pool))
     d = [x for x in dumps if x["_setting"] == best][0]
+
+    # THE COVERAGE RECONCILIATION THE NOTE QUOTES IN PROSE. Our test split is the pinned FCL
+    # genes PLUS the ratio-driven remainder, and the two halves sit on opposite sides of the
+    # metabolic model -- which is the whole reason the right panel has anything in it. Counted
+    # over ALL test records here (the panels below drop the few with no raw screen value, so
+    # their denominators are smaller).
+    pinned = set(split["split"]["test"])
+    other = [x for x in d["_genes"] if x not in pinned]
+    STATS.setdefault("fig9_metabolic_vs_nonmetabolic", {})["_population"] = {
+        "test_records": len(d["_genes"]),
+        "pinned_fcl_genes": len(set(d["_genes"]) & pinned),
+        "pinned_in_gem": sum(1 for x in d["_genes"] if x in pinned and x in gem),
+        "other_test_genes": len(other),
+        "other_in_gem": sum(1 for x in other if x in gem),
+        "with_a_raw_screen_value": sum(1 for x in d["_genes"] if x in raw),
+    }
 
     # SHARED LIMITS ACROSS THE TWO PANELS. They exist to be compared with each other, and
     # independent autoscaling drew the two gene sets at different zooms -- which would make a
@@ -1305,6 +1571,17 @@ def fig_nonmetabolic(dumps: list, raw: dict, split: dict, best: str, ts: str) ->
             label="CGT top 25",
         )
         rho = float(spearmanr(pred, obs).statistic)
+        STATS.setdefault("fig9_metabolic_vs_nonmetabolic", {})[
+            "in_gem" if title.startswith("in yeast-GEM") else "not_in_gem"
+        ] = {
+            "n": n,
+            "n_high_derived": k_hi,
+            "base_rate": k_hi / n,
+            "spearman_vs_measured": rho,
+            "top25_high_found": hits,
+            "enrichment": hits / (25 * k_hi / n),
+            "p_hypergeom": float(pv),
+        }
         ax.set_title(
             f"{title}\nn={n}, {k_hi} high ({k_hi / n:.1%})   Spearman {rho:+.3f}\n"
             f"CGT top 25: {hits} high = {hits / 25:.0%} vs {k_hi / n:.0%} expected "
@@ -1328,6 +1605,24 @@ def fig_nonmetabolic(dumps: list, raw: dict, split: dict, best: str, ts: str) ->
             handletextpad=0.2,
             markerscale=1.4,
         )
+    # IS THE RIGHT PANEL'S HIGHER CORRELATION A REAL DIFFERENCE? The two rho's are measured on
+    # DIFFERENT, non-overlapping gene sets, so the comparison needs an explicit test rather
+    # than an eyeball -- a Fisher r-to-z on two independent samples. It comes out marginal
+    # (~2 sigma), which is why the note states the difference WITH its p-value. The claim that
+    # does not depend on this test is the one that carries the figure: CGT finds high
+    # producers outside the metabolic model at all, where FCL has no features.
+    panel = STATS["fig9_metabolic_vs_nonmetabolic"]
+    z_in, z_out = (
+        np.arctanh(panel[k]["spearman_vs_measured"]) for k in ("in_gem", "not_in_gem")
+    )
+    se = np.sqrt(1 / (panel["in_gem"]["n"] - 3) + 1 / (panel["not_in_gem"]["n"] - 3))
+    panel["_difference_test"] = {
+        "method": "Fisher r-to-z, two independent samples",
+        "delta_spearman": panel["not_in_gem"]["spearman_vs_measured"]
+        - panel["in_gem"]["spearman_vs_measured"],
+        "z": float((z_out - z_in) / se),
+        "p_two_sided": float(2 * norm.sf(abs((z_out - z_in) / se))),
+    }
     fig.tight_layout(pad=0.4, rect=(0.0, 0.09, 1.0, 1.0))
     fig.text(
         0.5,

@@ -243,6 +243,17 @@ body (`content.tex`) compiled by thin wrappers, and builds via Tectonic.
   char-budget tags, draft scaffolding). `~/Documents/projects/torchcell-overleaf` is
   the **shared** copy: an Overleaf-backed git repo holding a curated subset that
   collaborators see. Edit in the workshop only.
+- **Publish a review copy to Zotero:** `make -C paper/nature-biotech publish` uploads
+  `editing.pdf` as a new version under **`torchcell / paper / nature-biotech`** in the
+  personal library, so comments attach to the exact build they were made on. Same script
+  and same hash-based versioning the `notes-tex/` documents use
+  (`notes-tex/common/zotero_publish.py`), and **the collection path is derived from the
+  repo directory**, never configured: `paper/nature-biotech/` -> `torchcell/paper/nature-biotech`.
+  `publish-dry` previews, `publish-list` lists versions, `publish-submission` does the
+  clean submission view instead. **Do not confuse this with the GROUP library's `paper`
+  collection** (`W46ATS7B`), which holds the papers the manuscript CITES and is what
+  `zotero_export_bib.py` exports; ours holds our output. That same name collision on
+  `microbe-perturb-seq` nearly broke a bibliography.
 - **Publish to collaborators:** `bash paper/nature-biotech/sync-overleaf.sh` copies
   the curated `SHARE_FILES` (submission.tex -> `main.tex`, plus content/preamble/
   cls/bst/bib, figures, and the figure guide), pulls collaborator changes first,

@@ -2,7 +2,7 @@
 # notes-tex/common/zotero_publish.py
 # [[notes-tex.common.zotero_publish]]
 # https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/common/zotero_publish.py
-"""Publish a built notes-tex PDF into the personal Zotero library for review.
+"""Publish a built LaTeX PDF into the personal Zotero library for review.
 
 Why Zotero and not a shared folder: the point is *annotation*. Zotero's reader
 keeps highlights and comments attached to a specific PDF attachment, so a comment
@@ -12,22 +12,32 @@ you can tell which build it was made against.
 
 Layout, which is DERIVED from the repo path rather than invented::
 
-    repo    notes-tex/<doc>/main.pdf
-    zotero  torchcell / notes-tex          <- every document, one flat index
-            torchcell / notes-tex / <doc>  <- that document and its versions
+    repo    <dir>/<pdf>.pdf
+    zotero  torchcell / <dir parent>          <- one flat index per document kind
+            torchcell / <dir leaf>            <- that document and its versions
+
+    notes-tex/024-perturb-seq-costing/main.pdf
+      -> torchcell / notes-tex / 024-perturb-seq-costing
+    paper/nature-biotech/editing.pdf
+      -> torchcell / paper / nature-biotech
 
 so there is never a question of which Zotero collection a document belongs in.
 The topic collections (``torchcell / torchcell-topics / *``) hold OTHER people's
-papers; this tree holds ours. Keeping the two apart is what stops a draft from
+papers; these trees hold ours. Keeping the two apart is what stops a draft from
 being mistaken for literature when the bibliography is rebuilt.
+
+That separation has already been load-bearing once. Two Zotero collections were
+named ``microbe-perturb-seq``: this script's publication collection, and the
+topic collection that feeds ``make bib``. Renaming the wrong one would have
+broken the bibliography. Derive the path from the repo, never from a name that
+happens to match.
 
 The document is filed in BOTH collections, deliberately. Zotero does not show a
 sub-collection's items in its parent unless the reader has turned on View ->
-Show Items from Subcollections, so filing only into ``notes-tex/<doc>`` makes
-``notes-tex`` look empty -- which is exactly what happened the first time this
-ran. An item may belong to any number of collections and its file is stored once,
-so the cost is nil and the top level becomes a usable index of every typeset
-note.
+Show Items from Subcollections, so filing only into the leaf makes the parent
+look empty -- which is exactly what happened the first time this ran. An item may
+belong to any number of collections and its file is stored once, so the cost is
+nil and the parent becomes a usable index of every document of that kind.
 
 Versioning. Each publish creates one child attachment named::
 
@@ -60,9 +70,20 @@ read.
 
 Usage::
 
-    python notes-tex/common/zotero_publish.py microbe-perturb-seq --dry-run
-    python notes-tex/common/zotero_publish.py microbe-perturb-seq
-    python notes-tex/common/zotero_publish.py microbe-perturb-seq --list
+    # a notes-tex document: a bare name still means notes-tex/<name>
+    python notes-tex/common/zotero_publish.py 024-perturb-seq-costing --dry-run
+    python notes-tex/common/zotero_publish.py 024-perturb-seq-costing
+    python notes-tex/common/zotero_publish.py 024-perturb-seq-costing --list
+
+    # the manuscript: a repo-relative directory, a named PDF, and the tex that
+    # actually declares the title
+    python notes-tex/common/zotero_publish.py paper/nature-biotech \\
+        --pdf editing --tex sections/frontmatter.tex
+
+``--tex`` is explicit rather than discovered. Searching the directory for the one
+file containing ``\\title`` finds two in paper/nature-biotech, because the stock
+``sn-article.tex`` sample carries a placeholder title, and a rule that silently
+picks one of two is worse than a flag that has to be written down.
 """
 
 from __future__ import annotations
@@ -83,9 +104,16 @@ from pydantic import BaseModel
 from pyzotero import zotero
 from pyzotero.zotero import Zupload
 
-# The document tree lives beside the topic tree, under the same `torchcell` root.
+# The document trees live beside the topic tree, under the same `torchcell` root.
 ROOT_COLLECTION = "torchcell"
-DOCS_COLLECTION = "notes-tex"
+
+# A bare name with no slash is a notes-tex document. That is where every document
+# lived when this script was written, and keeping the short form working means the
+# published Doc Key markers of the existing collections stay correct: the key IS
+# the repo-relative directory, so `024-perturb-seq-costing` and
+# `notes-tex/024-perturb-seq-costing` resolve to the same key and the same parent
+# item. Without that, generalizing this script would have orphaned 19 versions.
+DEFAULT_PARENT_DIR = "notes-tex"
 
 # Marker written into the parent item's `extra`, and the key this script matches
 # on when deciding whether a parent already exists. Matching on the title would
@@ -94,32 +122,44 @@ DOC_KEY_PREFIX = "Doc Key:"
 
 
 class BuiltDoc(BaseModel):
-    """A built notes-tex PDF and everything needed to identify it later."""
+    """A built PDF and everything needed to identify it later."""
 
-    doc: str  # directory name under notes-tex/, e.g. "microbe-perturb-seq"
+    doc_dir: str  # repo-relative, e.g. "notes-tex/024-..." or "paper/nature-biotech"
+    pdf_stem: str  # "main", "main-clean", "editing", "submission", ...
     pdf_path: str
     title: str
     subtitle: str | None
-    author: str
+    authors: list[tuple[str, str]]  # (first, last), in document order
     sha256: str
     n_bytes: int
     git_commit: str
     git_branch: str
     built_at: str  # YYYY-MM-DD-HH-MM-SS, local
-    view: str = "draft"  # "draft" = main.pdf, "clean" = main-clean.pdf
+
+    @property
+    def doc(self) -> str:
+        """Leaf directory name, which is also the Zotero collection name."""
+        return self.doc_dir.rsplit("/", 1)[-1]
+
+    @property
+    def collection_path(self) -> list[str]:
+        """Collection names from the root down, derived from the repo path."""
+        return self.doc_dir.split("/")
 
     @property
     def doc_key(self) -> str:
-        return f"notes-tex/{self.doc}"
+        return self.doc_dir
 
     @property
     def filename(self) -> str:
-        # The view is part of the name. A draft and a share build of the same
-        # sources are different bytes and different sha256, so without it the
-        # two sort together and a reviewer cannot tell which one carries the
-        # status chips.
-        view = "" if self.view == "draft" else f"-{self.view}"
-        return f"{self.doc}{view}_{self.built_at}_{self.sha256[:8]}.pdf"
+        # The PDF stem is part of the name whenever it is not the plain `main`
+        # build. A draft and a share build, or an editing and a submission build,
+        # are different bytes and different sha256, so without it the two sort
+        # together and a reviewer cannot tell which one they are commenting on.
+        # `main` contributes nothing, which keeps every already-published
+        # notes-tex filename byte-identical to what it was.
+        stem = "" if self.pdf_stem == "main" else f"-{self.pdf_stem}"
+        return f"{self.doc}{stem}_{self.built_at}_{self.sha256[:8]}.pdf"
 
     @property
     def full_title(self) -> str:
@@ -141,51 +181,97 @@ def _git(repo: str, *args: str) -> str:
     ).stdout.strip()
 
 
-def _parse_title(tex_path: str) -> tuple[str, str | None, str]:
-    """Pull title / subtitle / author out of main.tex.
+def _braced(src: str, open_idx: int) -> str:
+    """Contents of the balanced {...} group starting at ``open_idx``.
+
+    A regex cannot do this: the manuscript's title carries a nested macro
+    (``\\cb{14/15 words}``), so a non-greedy match stops at the inner brace and a
+    greedy one runs to the end of the file.
+    """
+    depth, out = 0, []
+    for i in range(open_idx, len(src)):
+        c = src[i]
+        if c == "{":
+            depth += 1
+            if depth == 1:
+                continue
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                return "".join(out)
+        out.append(c)
+    sys.exit(f"unbalanced {{}} after position {open_idx}")
+
+
+def _parse_title(tex_path: str) -> tuple[str, str | None, list[tuple[str, str]]]:
+    """Pull title / subtitle / author out of the tex that declares them.
 
     Read from the source rather than passed on the command line: a title typed
     into a flag drifts from the one on the page, and then the Zotero item names a
     document that no longer exists under that name.
+
+    Two dialects are supported, dispatched on what the file actually contains
+    rather than tried in turn:
+
+    * ``notes-tex`` documents, which use plain ``\\title{Title\\\\ {\\large Sub}}``
+      and ``\\author{Name}``.
+    * the ``sn-jnl`` manuscript, which uses ``\\title[short]{long}`` and one
+      ``\\author*[affils]{\\fnm{First} \\sur{Last}}`` per author.
     """
     src = open(tex_path, encoding="utf-8").read()
 
-    def _strip(s: str) -> str:
-        s = re.sub(r"\\vspace\{[^}]*\}", "", s)
-        s = re.sub(r"\{\\large\s*", "", s)
-        s = s.replace("\\\\", "\x00").replace("}", "").replace("{", "")
-        # Collapse whitespace PER LINE. Doing it across the whole string eats the
-        # title/subtitle break and silently yields one run-on title.
-        return "\n".join(" ".join(part.split()) for part in s.split("\x00"))
+    m = re.search(r"\\title\s*(\[[^\]]*\])?\s*\{", src)
+    if not m:
+        sys.exit(f"no \\title found in {tex_path}")
+    raw = _braced(src, m.end() - 1)
 
-    m = re.search(r"\\title\{(.+?)\n?\}\s*\n\\author", src, re.S)
-    if not m:
-        m = re.search(r"\\title\{(.+?)\}\s*$", src, re.M | re.S)
-    if not m:
-        sys.exit(f"no \\title{{}} found in {tex_path}")
-    lines = [ln.strip() for ln in _strip(m.group(1)).split("\n") if ln.strip()]
+    # Editing-only annotation macros never belong in a bibliographic title.
+    raw = re.sub(r"\\cb\{[^}]*\}", "", raw)
+    raw = re.sub(r"\\vspace\{[^}]*\}", "", raw)
+    raw = re.sub(r"\{\\large\s*", "", raw)
+    raw = raw.replace("\\\\", "\x00").replace("}", "").replace("{", "")
+    # Collapse whitespace PER LINE. Doing it across the whole string eats the
+    # title/subtitle break and silently yields one run-on title.
+    parts = [" ".join(p.split()) for p in raw.split("\x00")]
+    lines = [p for p in parts if p]
     title = lines[0]
     subtitle = lines[1] if len(lines) > 1 else None
 
-    a = re.search(r"\\author\{([^}]*)\}", src)
-    return title, subtitle, (a.group(1).strip() if a else "")
+    # Returned as (first, last) pairs rather than one joined string. Joining and
+    # re-splitting on whitespace is what the single-author version did, and on a
+    # three-author manuscript it yields the first author's given name beside the
+    # last author's surname.
+    if "\\fnm{" in src:
+        authors = [
+            (f.strip(), l.strip())
+            for f, l in re.findall(r"\\fnm\{([^}]*)\}\s*\\sur\{([^}]*)\}", src)
+        ]
+    else:
+        a = re.search(r"\\author\{([^}]*)\}", src)
+        parts = a.group(1).split() if a else []
+        authors = [(" ".join(parts[:-1]), parts[-1])] if parts else []
+    return title, subtitle, authors
 
 
-def load_built_doc(notes_tex_dir: str, doc: str, view: str = "draft") -> BuiltDoc:
-    doc_dir = osp.join(notes_tex_dir, doc)
-    # The draft view carries the status chips and provenance flags and is the
-    # right thing to review in-group. The clean view is what leaves the group,
-    # so it is what to publish when the question is "what will they see".
-    name = "main.pdf" if view == "draft" else "main-clean.pdf"
-    pdf = osp.join(doc_dir, name)
-    tex = osp.join(doc_dir, "main.tex")
+def load_built_doc(repo: str, rel_dir: str, pdf_stem: str, tex_rel: str) -> BuiltDoc:
+    """Load a built PDF given a repo-relative directory and a PDF stem.
+
+    ``main.pdf`` carries the status chips and provenance flags and is the right
+    thing to review in-group; ``main-clean.pdf`` is what leaves the group. For the
+    manuscript the same distinction is ``editing`` against ``submission``.
+    """
+    doc_dir = osp.join(repo, rel_dir)
+    if not osp.isdir(doc_dir):
+        sys.exit(f"{doc_dir} is not a directory.")
+    pdf = osp.join(doc_dir, f"{pdf_stem}.pdf")
+    tex = osp.join(doc_dir, tex_rel)
     if not osp.exists(pdf):
-        target = "make" if view == "draft" else "make clean-view"
-        sys.exit(f"{pdf} does not exist -- run `{target}` in {doc_dir} first.")
+        sys.exit(f"{pdf} does not exist -- build it first.")
+    if not osp.exists(tex):
+        sys.exit(f"{tex} does not exist -- pass --tex with the file declaring \\title.")
 
     raw = open(pdf, "rb").read()
-    title, subtitle, author = _parse_title(tex)
-    repo = _git(doc_dir, "rev-parse", "--show-toplevel")
+    title, subtitle, authors = _parse_title(tex)
     # --untracked-files=no on purpose. `scratch.*` notes and their rendered
     # PDFs are untracked BY RULE and never committable, so counting untracked
     # files here marked every build from the primary checkout "-dirty" and the
@@ -196,11 +282,12 @@ def load_built_doc(notes_tex_dir: str, doc: str, view: str = "draft") -> BuiltDo
     commit = _git(repo, "rev-parse", "HEAD")[:12] + ("-dirty" if dirty else "")
 
     return BuiltDoc(
-        doc=doc,
+        doc_dir=rel_dir,
+        pdf_stem=pdf_stem,
         pdf_path=pdf,
         title=title,
         subtitle=subtitle,
-        author=author,
+        authors=authors,
         sha256=hashlib.sha256(raw).hexdigest(),
         n_bytes=len(raw),
         git_commit=commit,
@@ -208,7 +295,6 @@ def load_built_doc(notes_tex_dir: str, doc: str, view: str = "draft") -> BuiltDo
         built_at=datetime.datetime.fromtimestamp(osp.getmtime(pdf)).strftime(
             "%Y-%m-%d-%H-%M-%S"
         ),
-        view=view,
     )
 
 
@@ -284,15 +370,23 @@ def existing_hashes(zot: zotero.Zotero, parent_key: str) -> dict[str, str]:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("doc", help="directory name under notes-tex/, e.g. microbe-perturb-seq")
+    ap.add_argument("doc", help="repo-relative document directory, e.g. "
+                                "paper/nature-biotech; a bare name means "
+                                "notes-tex/<name>")
+    ap.add_argument("--pdf", default=None, metavar="STEM",
+                    help="PDF stem to publish (default: main). e.g. editing")
+    ap.add_argument("--tex", default=None, metavar="PATH",
+                    help="document-relative tex declaring \\title (default: "
+                         "<STEM>.tex). e.g. sections/frontmatter.tex")
     ap.add_argument("--dry-run", action="store_true", help="preview, upload nothing")
     ap.add_argument("--clean", action="store_true",
-                    help="publish main-clean.pdf, the share view, instead of main.pdf")
+                    help="shorthand for --pdf main-clean, the share view")
     ap.add_argument("--list", action="store_true", help="list published versions and exit")
     args = ap.parse_args()
 
-    notes_tex_dir = osp.dirname(osp.dirname(osp.abspath(__file__)))
-    load_dotenv(osp.join(osp.dirname(notes_tex_dir), ".env"))
+    common_dir = osp.dirname(osp.abspath(__file__))
+    repo = _git(common_dir, "rev-parse", "--show-toplevel")
+    load_dotenv(osp.join(repo, ".env"))
     load_dotenv()
 
     user_id, api_key = os.getenv("ZOTERO_USER_ID"), os.getenv("ZOTERO_API_KEY")
@@ -300,8 +394,15 @@ def main() -> None:
         sys.exit("Set ZOTERO_USER_ID and ZOTERO_API_KEY in repo-root .env.")
     zot = zotero.Zotero(user_id, "user", api_key)
 
-    built = load_built_doc(notes_tex_dir, args.doc,
-                           "clean" if args.clean else "draft")
+    if args.clean and args.pdf:
+        sys.exit("--clean and --pdf say the same thing; pass only one.")
+    rel_dir = args.doc.strip("/")
+    if "/" not in rel_dir:
+        rel_dir = f"{DEFAULT_PARENT_DIR}/{rel_dir}"
+    pdf_stem = args.pdf or ("main-clean" if args.clean else "main")
+    tex_rel = args.tex or f"{pdf_stem}.tex"
+
+    built = load_built_doc(repo, rel_dir, pdf_stem, tex_rel)
     print(f"{built.full_title}")
     print(f"  {built.pdf_path}")
     print(f"  {built.n_bytes:,} bytes  sha256 {built.sha256}")
@@ -311,10 +412,16 @@ def main() -> None:
     root = find_collection(zot, ROOT_COLLECTION, None)
     if not root:
         sys.exit(f"no top-level {ROOT_COLLECTION!r} collection in the personal library.")
-    docs = ensure_collection(zot, DOCS_COLLECTION, root, args.dry_run)
-    coll = ensure_collection(zot, built.doc, docs, args.dry_run) if docs else None
+    # Walk the repo path down, creating what is missing. `docs` ends up as the
+    # immediate parent so the item can be filed into the index as well as the leaf.
+    docs, coll = root, root
+    for name in built.collection_path:
+        docs = coll
+        coll = ensure_collection(zot, name, coll, args.dry_run)
+        if not coll:
+            break
     if coll:
-        print(f"  collection {ROOT_COLLECTION}/{DOCS_COLLECTION}/{built.doc} = {coll}")
+        print(f"  collection {ROOT_COLLECTION}/{'/'.join(built.collection_path)} = {coll}")
 
     parent = find_parent_item(zot, coll, built.doc_key) if coll else None
 
@@ -342,24 +449,21 @@ def main() -> None:
         if not {coll, docs} <= cols and not args.dry_run:
             item["data"]["collections"] = sorted(cols | {coll, docs})
             zot.update_item(item)
-            print(f"  filed into torchcell/{DOCS_COLLECTION} as well")
+            print(f"  filed into the {built.collection_path[-2]} index as well")
     elif args.dry_run:
         print("  [dry-run] would create parent report item")
     else:
         tmpl = zot.item_template("report")
         tmpl["title"] = built.full_title
         tmpl["creators"] = [
-            {
-                "creatorType": "author",
-                "firstName": built.author.split()[0],
-                "lastName": built.author.split()[-1],
-            }
+            {"creatorType": "author", "firstName": first, "lastName": last}
+            for first, last in built.authors
         ]
         tmpl["reportType"] = "Internal document"
         tmpl["institution"] = "University of Illinois Urbana-Champaign"
         tmpl["date"] = built.built_at[:10]
         tmpl["extra"] = built.extra_field()
-        # Both: the per-document collection AND the flat notes-tex index.
+        # Both: the per-document collection AND the flat index above it.
         tmpl["collections"] = [coll, docs]
         resp = zot.create_items([tmpl])
         parent = {"key": resp["successful"]["0"]["key"]}

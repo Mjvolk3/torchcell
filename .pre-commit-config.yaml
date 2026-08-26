@@ -44,3 +44,21 @@ repos:
         pass_filenames: false
         files: ^torchcell/datamodels/(schema|pydant)\.py$
         require_serial: true
+
+      # Ontology-figure gate: the schema-ontology artifacts are generated from the live
+      # pydantic models, so they are never hand-maintained. When one of their inputs is
+      # staged, regenerate, stage the result, and fail so the author sees that the figure
+      # moved (the schematic is a paper figure; a layout that stops reading well is a
+      # human call). `files` lists every input that can change the output: the four
+      # introspected schema modules, the graph builder, the renderer, the driver, and the
+      # palette/panel constants. CI re-checks the same thing in .github/workflows/docs.yaml
+      # as a backstop for a commit made without hooks. See scripts/run-ontology-figure.sh.
+      - id: ontology-figure
+        name: ontology figure (regenerate from the schema)
+        entry: bash scripts/run-ontology-figure.sh
+        language: system
+        pass_filenames: false
+        # One line on purpose: a YAML folded scalar would join these with spaces and
+        # silently break the alternation.
+        files: ^(torchcell/datamodels/(schema|media|pydant|compound_identity)\.py|torchcell/paper/ontology_(graph|svg)\.py|torchcell/utils/utils\.py|paper/nature-biotech/scripts/generate_ontology_diagram\.py)$
+        require_serial: true

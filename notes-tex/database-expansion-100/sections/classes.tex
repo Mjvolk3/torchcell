@@ -1,0 +1,122 @@
+%% notes-tex/database-expansion-100/sections/classes.tex
+%% [[experiments.database.expansion-100]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database-expansion-100/sections/classes.tex
+%% SOURCE: hand-authored prose; row numbers and counts come from
+%% experiments/database/scripts/build_candidate_datasets_table.py
+
+\section{The six classes\secstatus{todo}}\label{sec:classes}
+
+\subsection{Natural isolates, and where sequence diversity crosses over\secstatus{todo}}
+
+Ten of the recommended 51 are natural-variation rows, and the crossover the class was asked
+for is concentrated in three of them.
+
+Dutta 2026 (row 8) barcodes 520 natural isolates and profiles them against more than 600
+compounds. Those isolates are drawn from the sequenced 1,011 panel, which is the same panel
+behind the already-built Caudal 2024 pan-transcriptome and behind Muenzner 2024 (row 3).
+One genotype axis therefore carries a genome, a transcriptome, a proteome, and now a
+chemogenomic response surface, which is the join that makes a transfer question askable at
+all.
+
+Hale 2024 (row 4) is the sharpest instrument for that question. It crosses 8,046 CRISPRi
+guides over 1,721 genes into 169 sequenced segregants, so it measures directly how much a
+perturbation's effect depends on the background it is made in. Galardini 2019 (row 5)
+asks the same question with deletions instead of knockdowns, building 3,786 knockouts
+independently in four sequenced backgrounds across 38 conditions, and reports that about
+18.5 percent of deletion phenotypes change between backgrounds.
+
+That 18.5 percent is the reason this class matters beyond breadth. Nearly every fitness and
+metabolite dataset in the built set is S288C, and a model trained only there has no way to
+know which of its predictions survive a change of chassis.
+
+\subsection{Tolerance on recalcitrant biomass, and product tolerance\secstatus{todo}}
+
+Fourteen recommended rows, the largest class. Lignocellulosic inhibitor coverage in the
+built set currently runs through broad compound panels rather than dedicated screens, so
+three rows close named gaps: Pereira 2014 (row 46) screens the deletion collection against
+real industrial wheat-straw hydrolysate rather than reconstituted single toxins, Endo 2008
+(row 47) covers vanillin, and Xiao 2014 (row 36) covers furfural through a knockdown axis
+that reaches essential genes a deletion collection cannot.
+
+Product tolerance is answered mainly on isobutanol, and the earlier assumption that no
+genome-wide isobutanol screen exists is wrong. Kuroda 2019 (row 18) screens the deletion
+collection for isobutanol-specific fitness against an ethanol comparator, so the
+alcohol-general stress response subtracts out; its \gene{GLN3} hit raised production
+4.9-fold, which is a rare case of a tolerance screen translating into a titer. Liu 2021
+(row 17) is an independent full-collection screen of the same phenotype with a different
+readout, giving a same-genotype, same-phenotype, different-method replicate. Crook 2016
+(row 37) adds a dose-graded knockdown axis over isobutanol and 1-butanol together, and
+Peeters 2021 (row 13) supplies isobutanol titer as a mapped trait across 1,125 sequenced
+segregants.
+
+Van Leeuwen 2024 (row 14) runs acetic, butyric and octanoic acid on one strain panel, which
+is what lets shared and acid-specific mechanisms separate inside a single study instead of
+across screens that cannot be compared.
+
+\subsection{CRISPR library screens\secstatus{todo}}
+
+Seven recommended rows. The already-built Lian 2019 MAGIC screen reads out furfural
+tolerance by growth selection; Dong 2021 (row 28) is the sibling that swaps the growth
+selection for an S-adenosyl-methionine biosensor and sorts by fluorescence, so the label
+becomes product concentration rather than fitness. That is the pattern worth copying for
+every precursor in Sec.~\ref{sec:precursors}, and it is the biosensor MAGIC screen the
+scoping request asked after.
+
+Bao 2018 (row 32) and Roy 2018 (row 40) both move the genotype axis below the ORF, to
+designed single-nucleotide and small-indel variants. Both are designed rather than
+per-strain-verified, so both would enter as designed genotypes with a verification status.
+McGlincy 2021 (row 31) and Momen-Roknabadi 2020 (row 29) are two independently designed
+CRISPRi libraries; ingesting both makes library-to-library transfer a cheap and decisive
+test of whether a model has learned gene function or guide-design idiosyncrasy.
+
+\subsection{Expression across conditions\secstatus{todo}}
+
+Four recommended rows, and the class is genuinely thin in a way worth stating rather than
+papering over. Nadal-Ribelles 2025 is the largest genotype-indexed expression dataset in
+yeast at roughly 3,500 knockouts under osmotic stress, and it is already built. The
+candidates here supply what it lacks rather than more of it: Gasch 2000 (row 23) is the
+canonical wild-type stress-response baseline that any genotype-indexed transcriptome has to
+be read against, N'Guessan 2025 (row 21) profiles roughly 4,500 sequenced segregants by
+single-cell RNA-seq, and Leutert 2023 (row 25) covers 101 conditions at the phosphosite
+level, where enzyme regulation acts faster than transcription.
+
+The initial reading was that datasets in the microbe-perturb-seq collection carry little
+data over large genotype numbers. That holds. Nothing found in this pass changes it, and
+the gap it points to is addressed in Sec.~\ref{sec:perturbseq} rather than by another row.
+
+\subsection{Metabolite and precursor coverage\secstatus{todo}}\label{sec:precursors}
+
+Ten recommended rows. The precursor accounting in
+\file{notes/metabolism.central-carbon-precursors.md} sets the target: of the twelve central
+carbon precursors, acetyl-CoA is measured on 19 strains and succinyl-CoA and malonyl-CoA on
+none, so identity coverage is good and statistical power is not.
+
+Blank 2005 (row 50) is the only dataset in this table that measures flux rather than a
+concentration or a titer, across roughly 200 deletion mutants, and it is the only real
+handle on acetyl-CoA turnover under genetic perturbation. Malonyl-CoA still has no direct
+measurement anywhere; the nearest handles remain its dominant sinks, which the already-built
+Xue 2025 free fatty acids and da Silveira 2014 lipidomics supply, and Zhu 2014 (row 35)
+extends with a lipidome across 129 kinase and phosphatase deletions.
+
+Cooper 2010 (row 9) is the highest-value row in the class for a reason unrelated to
+novelty. It measures the same amino-acid pools as the already-built Mulleder 2016, on an
+overlapping genotype axis, by capillary electrophoresis instead of mass spectrometry. Two
+independent platforms measuring one trait class is the cleanest available test of whether a
+model has learned biology or a batch effect, and nothing else in the built set offers it.
+
+On carotenoids, Ozaydin 2013 is built. Trikka 2015 (row 51) is the other high-throughput
+carotenoid screen: 4,700 heterozygous deletions scored by color, then carried through
+iterative rounds to a sclareol titer. Halving gene dosage rather than deleting outright is
+what finds the isoprenoid flux control points a null would kill, and no other row in this
+table uses that design. It is currently recorded as figure-only, so confirming that
+Additional file 1 carries per-strain scores is a precondition, not a formality.
+
+\subsection{Perturbation modality and reference backbone\secstatus{todo}}
+
+Six recommended rows, none of which is a headline dataset and one of which is load-bearing.
+Puddu 2019 (row 19) is whole-genome sequence for every strain in the deletion collection.
+Twenty-one recommended rows declare an \term{S288C-KO} sequence basis, and without Puddu
+that basis is an assumption that each strain differs from the reference at exactly the
+intended locus. Puddu shows it frequently does not. Ingesting it converts a shared
+assumption across half this table into a measurement, which is worth more than its own
+4,800 instances suggest.

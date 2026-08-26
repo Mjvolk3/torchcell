@@ -1,0 +1,23 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_candidate_datasets_table.py
+\begin{table}[H]\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption[]{Rows bearing on a yeast Perturb-seq, listed regardless of rank. \emph{Rank}
+is the row's position in Table~\ref{tab:candidates}.}
+\label{tab:perturbseq}
+\begin{tabular}{@{}r p{46mm} p{100mm}@{}}
+\toprule
+Rank & Dataset & What it settles \\
+\midrule
+4 & Hale 2024 (CRISPRi x natural variation) & Directly measures how a genetic perturbation's effect changes with genetic background. The single best dataset for asking whether a model trained on one background transfers to another. \\
+21 & N'Guessan 2025 (segregant scRNA-seq eQTL) & Single-cell transcriptomes indexed by recombinant natural genotype rather than by an engineered knockout. The closest existing analog to the proposed Perturb-seq design, and the only one that already pairs per-cell expression with sequenced genotypes at scale. \\
+27 & Chong 2015 / CYCLoPs (single-cell proteome dynamics) & Per-cell rather than per-strain-mean labels, over 20 million cells. The distributional readout a Perturb-seq design has to be scored against. \\
+29 & Momen-Roknabadi 2020 (inducible CRISPRi library) & A second CRISPRi library on a different vector and guide-design rule. Whether a model trained on one library transfers to the other is a cheap, decisive test of guide-level overfitting. \\
+31 & McGlincy 2021 (genome-scale CRISPRi library) & Ten guides per gene gives a graded knockdown axis instead of a binary null, and it covers essential genes. This is the library a yeast Perturb-seq would most plausibly be built on. \\
+60 & Nadal-Ribelles 2019 (sensitive yeast scRNA-seq) & Establishes within-clone transcript correlation, which is the noise floor any per-strain Perturb-seq mean has to clear. Directly sizes the cells-per-guide question. \\
+61 & Gasch 2017 (single-cell stress heterogeneity) & Separates intrinsic from extrinsic expression heterogeneity under stress. Sets what fraction of Perturb-seq variance is recoverable signal rather than cell-state noise. \\
+70 & Brettner 2024 (ultra-high-throughput yeast scRNA-seq) & The platform the costing model in experiments/024 is built on. Not a dataset to ingest; the reason it is here is that a yeast Perturb-seq proposal has to name its chemistry. \\
+\bottomrule
+\end{tabular}
+\end{table}

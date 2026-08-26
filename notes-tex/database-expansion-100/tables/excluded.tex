@@ -1,0 +1,32 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_candidate_datasets_table.py
+\begingroup
+\footnotesize
+\begin{longtable}{@{}p{62mm} p{22mm} p{85mm}@{}}
+\caption[]{Considered and dropped. \emph{no-sequence} is the hard gate: without a route to
+the strain's genomic content there is no genotype to map a phenotype from.}
+\label{tab:excluded}\\
+\toprule
+Dataset or group & Rule & Reason \\
+\midrule
+\endfirsthead
+\toprule
+Dataset or group & Rule & Reason \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Snoek 2015 robot-assisted genome shuffling (ethanol tolerance) & no-sequence & Shuffled progeny are recombinants of unrecorded parental segments with no per-strain sequencing, so the genotype cannot be reconstructed. \\
+Adaptive laboratory evolution / EMS mutagenesis tolerance panels (e.g. farnesol-FPP selection) & no-sequence & Mutations are unmapped, so a strain's genome is unknown even in principle without whole-genome resequencing the study did not do. \\
+Avalos lab isobutanol-biosensor deletion screen & not-a-dataset & Described only in a PhD thesis and a DOE report. Track for publication; not citable as a dataset. \\
+Kitamoto/Kaneko ester and higher-alcohol screen & not-a-dataset & Citation could not be pinned to a specific paper. A placeholder, not a located dataset. \\
+Fuhrer/Zamboni flow-injection metabolomics & off-species & The validated genome-scale application is in E. coli. No yeast deletion-collection version was located. \\
+Anglada-Girotto 2022 (CRISPRi + metabolomics) & off-species & 352 CRISPRi genes against 1,342 drug-induced metabolic changes, but in E. coli. Verified from the mirrored PDF. \\
+Ozturk 2022 proteome-effects screen & off-species & 3,308 deletions in S. pombe. Out of species scope. \\
+Chen 2024 K. phaffii CRISPR fitness screen; Y1000+ multi-species panel & off-species & Not S. cerevisiae. Revisit if the generalization axis widens to other hosts. \\
+iIsor850 genome-scale model (Issatchenkia orientalis) & not-a-dataset & A reconstruction, not an experiment, and off species. No genome-wide I. orientalis phenotype screen was located; the CABBI knockout library is unpublished. \\
+CABBI 13C-MFA kinetic-model repository & not-a-dataset & 16 knockout strains total, and the released fluxes are K-FIT model fits recapitulating 75-77 percent of measurements, not raw measurement. Blank 2005 supersedes it on both counts. \\
+Sc2.0 / Sc3.0 synthetic-genome design & not-a-dataset & Genome-engineering programs, not gene-indexed perturbation-phenotype data. \\
+Lee 2014 / Hoepfner 2014 / Vanacloig-Pedros 2022 / Messner 2023 / Mulleder 2016 / Lian 2019 / Mormino 2022 / Nadal-Ribelles 2025 and 12 others & already-built & Named as top candidates by the 2026-07 triage pass and BUILT since. Only Lee 2014 remains outstanding and is kept as row 1. \\
+\end{longtable}
+\endgroup

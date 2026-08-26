@@ -1,0 +1,84 @@
+%% notes-tex/database-expansion-100/sections/rule.tex
+%% [[experiments.database.expansion-100]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database-expansion-100/sections/rule.tex
+%% SOURCE: hand-authored prose; every number quoted here comes from
+%% experiments/database/scripts/build_candidate_datasets_table.py
+
+\section{The selection rule\secstatus{todo}}\label{sec:rule}
+
+\subsection{Sequence reconstruction is the gate, not a preference\secstatus{todo}}
+
+A phenotype is only trainable against a genotype that can be written down. Every row in
+Table~\ref{tab:candidates} therefore names a \term{sequence basis}: the route by which the
+total genomic content of one strain would be reconstructed. The nine bases in use are
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+  \item \term{S288C-KO} -- the reference genome minus one cataloged ORF (BY4741, BY4742,
+    BY4743). Twenty-one of the recommended 51 sit here.
+  \item \term{S288C-KO/het} -- a heterozygous diploid deletion, so a dosage edit rather
+    than a null.
+  \item \term{S288C+guide} -- the genome is unedited and the perturbation is a designed
+    cassette plus a guide target. Regulatory, not sequence-level.
+  \item \term{S288C+designed-edit} -- a designed single-nucleotide or small-indel library.
+    Designed, and not verified per strain.
+  \item \term{S288C+tag} -- the reference plus a designed tag, degron or promoter cassette.
+  \item \term{S288C+ORF-plasmid} -- the reference plus a barcoded ORF on a known plasmid.
+  \item \term{isolate-WGS} -- a published assembly or variant call set per isolate.
+  \item \term{segregant-WGS} -- genotype calls or whole-genome sequence per progeny.
+  \item \term{engineered-chassis} -- a named production strain plus heterologous cassettes.
+  \item \term{reference-only} -- wild type, where the environment carries the perturbation.
+\end{itemize}
+
+What fails the gate is a strain whose genome is unknown even in principle. Genome shuffling
+and adaptive laboratory evolution without resequencing both land there: the selected
+progeny differ from their parents at unmapped positions, so there is no genotype to map a
+phenotype from. Those are dropped in Table~\ref{tab:excluded} rather than ranked low, since
+no amount of phenotypic value substitutes for a missing genotype.
+
+The \term{S288C+designed-edit} and \term{S288C+guide} bases carry a weaker claim than the
+others and the distinction is worth holding. A designed variant library states what each
+member was built to be, not what it turned out to be, so its genotypes are designed rather
+than realized. Ingesting one commits to storing the design and a verification status, not a
+verified sequence.
+
+\subsection{Tier, and what rows are ranked on\secstatus{todo}}
+
+Tier is assigned from stated bars rather than judgment:
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+  \item \textbf{Tier 1} clears all three of $\geq$$10^3$ genotypes, $\geq$$10^4$ instances,
+    and a clean sequence basis, and lands in one of the six requested classes.
+  \item \textbf{Tier 2} clears two of the three, or is the only dataset covering a
+    requested class, or directly de-risks the Perturb-seq proposal.
+  \item \textbf{Tier 3} is a modality or reference backbone the substrate needs without
+    itself carrying a large genotype axis.
+  \item \textbf{Tier 4} is real but small, coarsely labeled, or expensive to extract.
+\end{itemize}
+
+The bars apply to what a row contains rather than to its reputation. Piotrowski 2017 has
+the largest compound library in yeast at 13,524 compounds and still fails Tier 1, because
+157 strains is not a genotype axis. Turco 2023 has the widest environment axis at 7,536 and
+fails for a different reason: it is a meta-aggregation, so its instance count re-serves
+primary screens, several of them already built, and the net-new fraction is unknown until
+it is de-duplicated against the rest of this table.
+
+Within a tier, rows sort by \term{measurements}, meaning instances times phenotype
+dimensionality. Instances alone is the wrong statistic and gets the order visibly wrong:
+Muenzner 2024 is 796 instances, which ranks it below a mid-sized fitness screen, but each
+instance is a proteome, so it is roughly $1.6\times10^6$ numbers. This is the same
+normalization the supported-datasets table already applies through its gzip-signal column.
+
+\subsection{Where the cut falls, and what it cost\secstatus{todo}}
+
+The cut at 51 is arithmetic, $100-49$, not a quality threshold. Rows on both sides of it
+are close, so it should be read as a budget rather than a verdict. One row was pinned into
+the recommended set because it was named explicitly in the scoping request rather than
+because it ranked there: Table~\ref{tab:swaps} names the pin and the row it displaced, so
+the recommended set stays auditable.
+
+\input{tables/swaps}
+
+Displacement picks the weakest non-requested row by tier first and measurements second. The
+tier term is load-bearing rather than decorative: ranking on measurements alone selected
+Puddu 2019 for eviction, and that row is the whole-collection sequencing on which every
+\term{S288C-KO} sequence basis in this table rests.

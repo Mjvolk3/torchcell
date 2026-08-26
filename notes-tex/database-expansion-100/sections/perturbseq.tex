@@ -1,0 +1,56 @@
+%% notes-tex/database-expansion-100/sections/perturbseq.tex
+%% [[experiments.database.expansion-100]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database-expansion-100/sections/perturbseq.tex
+%% SOURCE: experiments/database/scripts/build_candidate_datasets_table.py for the table;
+%% surrounding prose is hand-authored
+
+\section{Rows that bear on a yeast Perturb-seq\secstatus{todo}}\label{sec:perturbseq}
+
+Eight rows bear on whether to run a genome-scale Perturb-seq in yeast, five of them inside
+the recommended 51. Scale ranking buries three of the eight, which is the correct ranking
+and the wrong emphasis: a method paper that measures the within-clone transcript noise
+floor has an instance count of two and settles whether the experiment is worth running at
+all.
+
+\input{tables/perturbseq}
+
+Three of these answer distinct design questions rather than supplying training data.
+Brettner 2024 is the chemistry the costing model in
+\file{experiments/024-perturb-seq-costing/} is built on. Nadal-Ribelles 2019 measures
+within-clone transcript correlation, which is the floor any per-guide mean has to clear and
+therefore what sizes the cells-per-guide budget. Gasch 2017 separates intrinsic from
+extrinsic expression heterogeneity under stress, which sets what fraction of the variance
+in a pooled screen is recoverable signal rather than cell state.
+
+The two that would most change the design are already ranked high. McGlincy 2021 (row 31)
+is the most plausible library to build on, since ten guides per gene gives a graded rather
+than binary knockdown and it reaches essential genes. N'Guessan 2025 (row 21) is the
+closest existing analog to the proposed experiment, pairing per-cell expression with
+sequenced genotypes at scale, though its genotypes are recombinant natural variants rather
+than engineered knockdowns.
+
+\subsection{The synergy question is answerable, and not yet answered\secstatus{todo}}
+
+Whether one dataset predicts another is the question that decides how much new data is
+worth collecting, and this list contains the pairs needed to test it before any is
+collected:
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+  \item \textbf{Same phenotype, different platform.} Cooper 2010 against the built
+    Mulleder 2016, amino acids by capillary electrophoresis against mass spectrometry on an
+    overlapping genotype axis.
+  \item \textbf{Same phenotype, different method.} Liu 2021 against Kuroda 2019, isobutanol
+    tolerance on the same collection by colony imaging against competitive fitness.
+  \item \textbf{Same perturbation, different background.} Hale 2024 and Galardini 2019,
+    both of which vary the background while holding the perturbation fixed.
+  \item \textbf{Different library, same modality.} McGlincy 2021 against
+    Momen-Roknabadi 2020, two CRISPRi libraries with different vectors and guide-design
+    rules.
+  \item \textbf{Cheap layer against expensive layer.} Caudal 2024 transcriptomes against
+    Muenzner 2024 proteomes, on overlapping isolates from the 1,011 panel.
+\end{itemize}
+
+None of these transfers has been measured. Each is a hypothesis about what a model could
+learn, and each becomes a run once both halves of the pair are ingested. The last pair is
+the one that bears most directly on the Perturb-seq costing, since it asks whether a cheap
+expression readout carries the information an expensive one would.

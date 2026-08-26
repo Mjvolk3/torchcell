@@ -1,0 +1,54 @@
+%% notes-tex/database-expansion-100/sections/caveats.tex
+%% [[experiments.database.expansion-100]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database-expansion-100/sections/caveats.tex
+%% SOURCE: excluded table from
+%% experiments/database/scripts/build_candidate_datasets_table.py; prose hand-authored
+
+\section{What was dropped\secstatus{todo}}\label{sec:excluded}
+
+\input{tables/excluded}
+
+The \term{already-built} row in that table is the largest single correction this pass
+makes. A July 2026 triage pass named a top ten for immediate ingestion; nine of those ten
+have since been built, along with roughly a dozen other rows it ranked highly. Only Lee 2014
+remains outstanding, and it is row 1 here. Any list that still treats that top ten as
+outstanding work is stale.
+
+\section{Before a loader is written\secstatus{todo}}\label{sec:caveats}
+
+Every figure in Table~\ref{tab:candidates} is an axis count, not a verified record count,
+and several are weaker than that. Three qualifications apply, in decreasing order of how
+much damage they would do if ignored.
+
+\notesec{Instance counts marked $\dagger$ are products, not counts} A screen reported as
+4,800 strains against 3 conditions is entered as 14,400 instances. Real screens drop
+strains per condition, so each such figure is an upper bound. The ones marked $\ddagger$
+are weaker still: order-of-magnitude estimates for libraries whose exact size was not
+confirmed this pass. Neither should be quoted as a dataset size without opening the source.
+
+\notesec{Phenotype dimensionality is estimated where no fixed panel is published} Ranking
+uses instances times dimensionality, and dimensionality is exact for a stated panel such as
+Ambroset 2014 at 74 metabolites, but estimated for open-ended ones. Proteome rows are
+entered at 2,000 proteins per strain and transcriptome rows at 6,000 genes. Those estimates
+move rank order, so a row whose position looks surprising should have its dimensionality
+checked first.
+
+\notesec{Accessions marked unconfirmed were not fetched} The accession column separates
+locations verified live this pass from those taken from a paper's data-availability
+statement. Confirmed live: GEO GSE123118 with its companion GitHub release for
+Galardini 2019, SRA PRJNA986287 for Hale 2024, PRIDE PXD048219 for Muenzner 2024, Dryad for
+Chica 2026, ChemGRID for Wildenhain 2016, and BioProject PRJNA379146 for Cubillos 2017.
+Everything else is a claim from a publication, and the pattern is well established that a
+data-availability statement and a reachable file are different things.
+
+Four rows carry a risk specific enough to name. Trikka 2015 is recorded as figure-only, so
+whether Additional file 1 holds per-strain scores decides whether row 51 is ingestible at
+all. Chang 2012 and the Gurvitz fatty-acid screen are PDF-table-only and need manual
+transcription. Sugiyama is a non-peer-reviewed technical report and has the lowest
+provenance confidence of anything listed; it belongs in the reserve as a source of candidate
+genes rather than as training data.
+
+\notesec{Two rows are not single datasets} Turco 2023 is a meta-aggregation and Zackrisson
+2016 is a platform. Neither reduces to one loader: Turco needs a de-duplication pass against
+the rest of this table before its net-new content is known, and Scan-o-matic needs a
+specific released condition panel chosen before it becomes a row rather than a plan.

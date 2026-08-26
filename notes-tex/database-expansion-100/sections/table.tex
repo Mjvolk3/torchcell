@@ -1,0 +1,27 @@
+%% notes-tex/database-expansion-100/sections/table.tex
+%% [[experiments.database.expansion-100]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database-expansion-100/sections/table.tex
+%% SOURCE: experiments/database/scripts/build_candidate_datasets_table.py
+
+\section{The ranked list\secstatus{todo}}\label{sec:list}
+
+\input{tables/candidates}
+
+\clearpage
+\input{tables/sources}
+
+\clearpage
+\section{What the recommended 51 add up to\secstatus{todo}}\label{sec:counts}
+
+\input{tables/counts}
+
+The recommended set carries roughly $5.8\times10^7$ genotype-by-environment instances and
+$9.0\times10^7$ individual measurements. Both are lower bounds: rows whose axes could not
+be pinned down contribute nothing to either total, and the instance figures marked
+$\dagger$ are products of the two axes rather than counts the papers report.
+
+Two numbers in that total deserve a discount before they are quoted anywhere. Turco 2023
+supplies $3.8\times10^7$ of the instances and is a meta-aggregation of screens this table
+lists separately, so its net-new contribution is smaller than its row and currently
+unmeasured. Lee 2014 supplies $1.3\times10^7$ and is a single primary experiment, so that
+one stands.

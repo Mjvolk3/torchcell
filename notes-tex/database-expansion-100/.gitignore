@@ -1,0 +1,10 @@
+# Symlinked in at build time by ../common/Makefile.common; see notes-tex/README.md.
+tcdoc.sty
+sn-nature.bst
+# Build artifacts.
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+main-clean.tex

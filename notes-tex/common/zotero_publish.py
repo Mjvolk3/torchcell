@@ -317,9 +317,25 @@ def refresh_provenance(zot: zotero.Zotero, parent: dict, built: BuiltDoc) -> Non
 
 
 def find_collection(zot: zotero.Zotero, name: str, parent: str | None) -> str | None:
-    """Find a collection by name under a given parent (None = top level)."""
+    """Find a LIVE collection by name under a given parent (None = top level).
+
+    Trashed collections are skipped, and that is not a detail. `zot.collections()`
+    returns collections that are in the Zotero trash, carrying `deleted: True` in
+    their data, while the Zotero client hides them. Without this filter the script
+    happily files a document into a deleted collection: the API reports success,
+    every lookup afterwards resolves, and the document is invisible in the client
+    with no error anywhere to explain why.
+
+    That is exactly what happened on 2026.08.25. `torchcell/paper` had been trashed
+    at some earlier point, this function found it, `ensure_collection` reused it
+    rather than creating a live one, and the manuscript was published into a
+    subtree nobody could see. It read as a sync failure for some time, which is the
+    expensive part: the symptom points at the client, and the cause is here.
+    """
     for c in zot.everything(zot.collections()):
         d = c["data"]
+        if d.get("deleted"):
+            continue
         if d["name"] == name and (d.get("parentCollection") or None) == parent:
             return c["key"]
     return None

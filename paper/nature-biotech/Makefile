@@ -30,6 +30,29 @@ endif
 SHARED := content.tex preamble.tex references.bib sn-jnl.cls sn-nature.bst $(wildcard sections/*.tex)
 VIEWS  := submission editing twocolumn
 
+# Reproducible builds, mirroring notes-tex/common/Makefile.common. Without this,
+# hyperref writes a wall-clock /CreationDate into a compressed object stream, so
+# two builds of IDENTICAL sources differ in their bytes and therefore in their
+# sha256. That defeats `zotero_publish.py`, which versions a review copy BY
+# content hash: every `make publish` uploaded a fresh near-identical PDF and the
+# "already published, identical bytes" path could never fire.
+#
+# Measured, not assumed: before this, two rebuilds of untouched sources gave
+# 42522d69... and 0c3521b8...; after it they agree.
+#
+# The epoch is the newest mtime among the build inputs, not a constant, so
+# \date{\today} still reads as the date the document was last EDITED. Rebuilding
+# an untouched document tomorrow should not claim tomorrow as its date.
+#
+# `stat` is not portable: BSD/macOS spells the mtime `-f %m`, GNU coreutils
+# spells it `-c %Y` and reads `-f` as "filesystem status". Probe once, then call
+# unguarded -- a swallowed error exports an EMPTY SOURCE_DATE_EPOCH and Tectonic
+# aborts with a bare ParseIntError that says nothing about mtimes.
+REPRO_DEPS := $(SHARED) $(addsuffix .tex,$(VIEWS))
+STAT_MTIME := $(shell /usr/bin/stat -c %Y $(firstword $(REPRO_DEPS)) >/dev/null 2>&1 \
+                && echo "-c %Y" || echo "-f %m")
+export SOURCE_DATE_EPOCH := $(shell /usr/bin/stat $(STAT_MTIME) $(REPRO_DEPS) | sort -n | tail -1)
+
 # Figure PDFs the manuscript references that have a draw.io source in any form -- .drawio.svg
 # (preferred, embedded-XML SVG), .drawio.png (embedded-XML PNG), or plain .drawio. The gate
 # depends on these so `make paper` re-exports

@@ -90,3 +90,32 @@ forced rebuilds now agree at `b33bdcba...`.
 to force the rebuild changes the mtime the epoch is derived from, so the PDF
 legitimately changes and the test proves nothing. The rebuild has to be forced
 without touching any input.
+
+### 2026.08.25 - Publishing into a TRASHED collection, which reads as a sync failure
+
+`find_collection` returned collections that are in the Zotero trash, so
+`ensure_collection` reused one instead of creating a live one. The API reports
+success, every later lookup resolves, and the document is invisible in the Zotero
+client with no error anywhere.
+
+**What it cost.** `torchcell/paper` had been trashed at some earlier point
+(`deleted: True` since collection version 63086, well before today). The
+manuscript was published into it, `--dry-run` and `--list` both resolved happily,
+and the collection reported 0 items, which read as "empty and available" rather
+than "deleted". The symptom was "I do not see `paper` under `torchcell`", which
+points at the client, and it survived a round of sync-hypothesis debugging before
+anyone checked the `deleted` flag. What ruled sync out was the observation that
+other PDFs were syncing fine.
+
+Fixed by skipping any collection carrying `deleted` in `find_collection`. The
+collection itself was restored with a `PATCH {"deleted": false}`.
+
+**One more is still trashed:** `torchcell/database/torchcell-swanki`
+(`DFRSS7SY`). Left alone, since it is deliberate as far as anyone knows, but it
+would have hit the same bug had a document ever been named `torchcell-swanki`.
+
+**The general shape, worth remembering.** The Zotero API exposes trashed objects
+and the client hides them, so any lookup that does not filter `deleted` sees a
+different library than the person does. That is true of items as well as
+collections: the same asymmetry is what made three same-titled manuscript items
+confusing earlier in the day.

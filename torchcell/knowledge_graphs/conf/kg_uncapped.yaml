@@ -1,0 +1,41 @@
+# torchcell/knowledge_graphs/conf/kg_uncapped.yaml
+# [[torchcell.knowledge_graphs.conf.kg_uncapped.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/conf/kg_uncapped.yaml
+#
+# The complete build: EVERY dataset in full, including both Costanzo 2016 double-mutant
+# sets at their full 20,705,612 records each. No `size`, no `per_dataset` cap, no
+# `prefilter` -- this config exists precisely so nothing is sampled away.
+#
+#   sbatch database/slurm/scripts/gilahyper_uncapped_build-slurm_docker.slurm
+#
+# HOW THIS DIFFERS from the two neighbouring configs, both of which narrow Costanzo:
+#   kg_full.yaml                      dmf/dmi Costanzo randomly capped to 100k each
+#   kg_selected_costanzo_doubles.yaml dmf/dmi Costanzo prefiltered to the Sameith pairs
+# Everything else in all three is identical, so the Costanzo doubles are the only axis.
+#
+# COST. The doubles are 41.4M of the ~44.5M records in this build and dominate both
+# wall time and disk. Projected CSV-generation time is 66.9 h from
+# `experiments/database/scripts/project_build_time.py`, but that projection carries the
+# job-966 dmf rate (0.00147 s/rec), which was measured while the dmf loader's default
+# root still pointed at the smf LMDB, so it is a lower bound. Charging dmf at the dmi
+# rate (0.00861 s/rec) instead gives ~108 h. Expect 3-5 days of generation, then the
+# neo4j-admin bulk import on top. The slurm script's 10-day limit covers that spread.
+
+defaults:
+  - default
+  - _self_ # append to end for overriding duplicate configs in default
+
+wandb:
+  mode: online # disabled, offline, online
+  project: tcdb
+
+adapters:
+  io_to_total_worker_ratio: 0.1
+  chunk_size: 4e5
+  loader_batch_size: 1e3
+
+subset:
+  size: null # null => full dataset
+  seed: 42
+  per_dataset: {} # no caps -- the Costanzo doubles build in full
+  prefilter: {} # no record prefilters

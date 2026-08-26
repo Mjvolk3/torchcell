@@ -53,6 +53,28 @@ loader excludes the primaries built directly, along with heterozygous-diploid an
 expression screens. And Lee 2014 is not among its 49 screens, so ingesting YeastPhenome
 does not backfill row 1.
 
+\subsection{Overlap is now checked by script, and the check is not yet strong\secstatus{todo}}\label{sec:overlap}
+
+Three rows turned out to be already held and none was caught by inspection, so the check is
+now \file{experiments/database/scripts/check_candidate_overlap.py}, run against the
+candidate JSON. It applies three keys of increasing strength: the candidate DOI cited in a
+built loader, an accession token shared with one, and the candidate PMID appearing in an
+aggregator's source-PMID column.
+
+It currently reports one overlap, Turco 2023, which Sec.~\ref{sec:status} already records
+as a loader in flight. It reports no overlap with SynLethDB across 3,307 source PMIDs
+spanning both the lethality and rescue layers. That covers the question of whether the
+genetic-interaction rows are already re-served: Sharifpoor 2012, Decourty 2021 and
+Braberg 2020 are all absent. For Sharifpoor the absence is structural rather than a curation
+gap, since SynLethDB models synthetic lethality and synthetic rescue, both two-loss-of-function
+events, and synthetic dosage lethality pairs an overexpression with a deletion.
+
+The honest limit is coverage. The script resolves a PMID for 52 of 73 rows and finds a
+parseable accession in only 8. Accession is the strongest key and the one that would have
+caught Wildenhain 2016, so 8 of 73 means the strongest check is running on roughly a tenth
+of the table. Recording each row's deposit identifier is the single highest-value edit
+available to this list.
+
 \section{Before a loader is written\secstatus{todo}}\label{sec:caveats}
 
 Every figure in Table~\ref{tab:candidates} is an axis count, not a verified record count,

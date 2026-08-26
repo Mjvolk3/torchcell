@@ -102,6 +102,37 @@ MAGIC chassis, it does not load the 2017 beta-carotene data) and **Mulleder 2012
 (mulleder2016.py already cites it for the prototrophic background; kept in the reserve
 because that loader records the prototrophy-restoring markers as an unmodeled GeneAddition).
 
+### 2026.08.26 - row 47 vs SynLethDB, and the overlap checker
+
+User asked whether row 47 (Sharifpoor 2012, kinome SDL) is already inside SynLethDB.
+**It is not**, and the absence is structural.
+
+- PMID 22282571 is in NEITHER SynLethDB layer (SL 13,999 rows / 1,740 source PMIDs; SR
+  1,918 source PMIDs). Checked against the raw CSVs at
+  `$DATA_ROOT/data/torchcell/syn_leth_db_yeast/raw/Yeast_SL.csv` and the SR sibling.
+- **Why it cannot be there:** SynLethDB models synthetic LETHALITY and synthetic RESCUE,
+  both two-loss-of-function. Sharifpoor's contribution is synthetic DOSAGE lethality --
+  overexpression of one gene in a deletion background of another. That pairs a
+  gain-of-function with a loss, which is outside the DB's scope by construction. Confirmed
+  from the schema: our loader emits only `SyntheticLethalityPhenotype` and
+  `SyntheticRescuePhenotype`, and the raw CSV has no interaction-type column.
+- This strengthens rather than weakens the row: the overexpression x deletion axis is
+  carried by neither SynLethDB nor Costanzo/Kuzmin. `why` updated to say so.
+- Also checked and absent: Decourty 2021 (34358317), Braberg 2020 (33303586).
+
+**Built the checker** promised after the Wildenhain miss:
+`experiments/database/scripts/check_candidate_overlap.py`. Three keys of increasing
+strength -- DOI in a built loader, accession token shared with one, PMID re-served by an
+aggregator. DOI->PMID via the NCBI ID converter, cached to
+`results/candidates/doi2pmid.json` so `--offline` re-runs cost nothing. Exits non-zero on
+a finding.
+
+Current run: 1 overlap (Turco, already known), 0 SynLethDB overlaps.
+**Coverage is the weak point: 52/73 rows resolve a PMID and only 8/73 carry a parseable
+accession.** Accession is the strongest key and the one that would have caught Wildenhain,
+so it is running on ~11% of the table. Recording each row's deposit identifier is the
+highest-value edit left.
+
 ### Corrections to the 2026.07 triage pass
 
 - **Its top ten is stale.** Nine of ten have been built since (Vanacloig-Pedros, Messner

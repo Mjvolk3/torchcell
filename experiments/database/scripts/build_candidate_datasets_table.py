@@ -1162,7 +1162,7 @@ CANDIDATES: list[Candidate] = [
         phenotype="genetic interaction / SDL score",
         shape="scalar (edge)",
         seq_basis="S288C-KO",
-        why="Extends the interaction paradigm into overexpression-based dosage lethality on kinases, which are the regulatory nodes flux redirection actually targets.",
+        why="The overexpression-by-deletion axis, which neither the built SynLethDB nor Costanzo and Kuzmin carries: SynLethDB models only synthetic lethality and synthetic rescue, both two-loss-of-function, so synthetic dosage lethality is out of its scope by construction and this paper's PMID is absent from both its layers. Kinases are also the regulatory nodes flux redirection actually targets.",
         accession="Genome Research SI",
     ),
     # -- Tier 3 -------------------------------------------------------------

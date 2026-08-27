@@ -1,0 +1,131 @@
+%% notes-tex/019-simb-multimodal/sections/7-common.tex
+%% SOURCE: the ceiling column is assembled from
+%% experiments/019-simb-multimodal/results/{expression_ceiling_replicate,
+%% morphology_noise_ceiling,pigment_noise_ceiling}.json; the score column from
+%% results/round_leaderboards.csv. Both are written by committed scripts.
+
+\section{What the strands have in common\secstatus{todo}}
+\label{sec:common}
+
+\subsection{One table, read the same way\secstatus{todo}}
+
+\input{tables/t-strand-summary}
+
+\tcfigfit[0.72]{figures/retrospective_achieved_vs_ceiling.pdf}{Achieved score against
+measured ceiling, best run per strand. The dashed outline is the ceiling and the gap is the
+headroom; amino acid and the expression-morphology joint arm carry no outline because no
+single ceiling applies to them. A bare correlation is not comparable across these rows,
+which is the reason the panel exists.}{fig:achieved-vs-ceiling}
+
+\tcfigfit[0.72]{figures/retrospective_peak_position.pdf}{Where the best run's peak sits
+inside its own budget. Points near the top were still improving when the run stopped, so
+their scores are lower bounds set by compute. Points in the lower band peaked early and
+spent the rest of the budget overfitting.}{fig:peak-position}
+
+Three things are visible only when the strands sit together. The ceilings differ by more
+than a factor of two, so an unqualified $r$ is uninterpretable across rows. The epoch
+budgets differ by more than a factor of a hundred, so the score column is partly a record of
+how long each strand was allowed to run. And the two strands closest to their ceilings,
+betaxanthin and amino acid, are the two with a scalar or low-dimensional target.
+
+\subsection{Two opposite convergence failures, and neither was diagnosed from a curve\secstatus{todo}}
+
+\begin{itemize}
+\item \textbf{Expression never peaks.} At every budget tried, up to 10,000 epochs, the
+  validation Pearson peaks in the last tenth of the run. Raising the budget from 1,600 to
+  10,000 raised the score from $0.204$ to $0.241$ and moved the peak with it.
+\item \textbf{The metabolite strands peak early and then overfit.} Amino-acid runs peak at
+  epochs 48 to 134 with validation slope turning negative while training slope stays
+  positive. The best betaxanthin run peaks at epoch 254 of 999.
+\item \textbf{Morphology was never run long enough to tell which it does.} Longest run,
+  121 epochs.
+\end{itemize}
+
+Same encoder, same optimizer family, opposite behavior. The difference is in the target: a
+6,127-dimensional vector of $\log_2$ ratios against a scalar or a 19-vector. Any single
+epoch budget applied across strands is wrong for at least two of them, which is what
+produced the truncated expression waves and would produce overfit metabolite runs if the
+budget were set from expression.
+
+\subsection{Loss and metric point in different directions on expression alone\secstatus{todo}}
+
+Validation loss bottoms 40 to 250 epochs before validation Pearson peaks in wave 4b, and
+$\approx 1{,}200$ epochs before it in the long runs, while the prediction
+standard-deviation ratio climbs from $0.001$ to $0.52$. The 010 fitness and interaction task
+does not do this: there both losses fall monotonically and the validation-loss minimum is at
+the last epoch. The consequence already cost the project every checkpoint the expression
+strand saved before best-by-metric checkpointing landed.
+
+\notesec{What this suggests, unverified} A quantile loss on a $\log_2$ ratio can be
+minimized by a narrow, well-calibrated predictive distribution that gets the ordering
+wrong, and Pearson is invariant to the global rescale that the loss is not. Reporting
+\texttt{nmse} alongside, defined so that $\texttt{nmse} = 1$ is exactly ``predict each
+gene's mean'', separates right-ordering from right-magnitude. That instrument exists; the
+experiment that would test whether a different loss closes the gap does not.
+
+\subsection{Configuration choice moves results more than method choice\secstatus{todo}}
+
+On betaxanthin the ten grid cells span Spearman $0.013$ to $0.158$ and AUC $0.406$ to
+$0.695$, against a between-method gap of $0.0014$ on AUC. Four low points are the
+$\mathrm{lr} = 10^{-3}$ cells, which collapsed to a constant predictor. On the amino-acid
+strand the best run is $0.211$ and the median is $0.0498$.
+
+Any single-number claim about a method is dominated by which cell is quoted, which is why
+the cell must be fixed by validation in advance, and why the leaderboard records the median
+alongside the maximum. It also means an arm difference smaller than the cell spread is not
+measurable without pinning the cell and replicating seeds inside it.
+
+\subsection{Cross-modality overlap is real and small\secstatus{todo}}
+
+Before spending compute on joint proteome and expression training, the linear overlap
+between the two was measured on the 1,350 strains they share. Per-gene correlation across
+strains has median $r = 0.08$, with $1.7\,\%$ of genes above $0.3$ and $8.9\,\%$ negative.
+A ridge map recovers held-out $R^2$ of $0.035$ in one direction and $0.024$ in the other,
+above a trivial baseline of $-0.004$ but far from redundancy.
+\src{experiments/019-simb-multimodal/results/proteome_expression_eda.json}
+
+\tcfigfit{figures/proteome_expression_per_gene_corr_hist_2026-07-22-17-15-26.pdf}{Per-gene
+correlation across strains between the Messner proteome and the Kemmeren expression
+compendium, over the 1,832 genes and 1,350 strains they share. A narrow lump barely off
+zero. The few high-$r$ genes are dominated by the strain in which that gene is itself
+deleted, which drives both its transcript and its protein toward zero.}{fig:prot-expr}
+
+The two modalities were measured in different media, synthetic minimal for the proteome and
+synthetic complete for the expression, which attenuates every number above. The overlap is
+therefore certified as non-redundant and not certified as cleanly complementary. That
+distinction is what bounds how hard a ``the proteome helps expression'' claim can be pushed
+until a same-media pair exists.
+
+\subsection{The graph prior has never been checked\secstatus{todo}}
+
+The nine interaction graphs enter the model as a hard additive attention mask, so composing
+$L$ layers makes the influence of gene $X$ on gene $Y$ approximately the $L$-step
+random-walk reachability of $Y$ from $X$ on that graph. That is a falsifiable assumption
+about the data: \emph{deleting $X$ perturbs the genes near $X$ on graph $k$}. If it is
+false, pulling attention toward the graph pushes the model toward the wrong prior and no
+setting of the regularization weight rescues it.
+
+The probe that would test it is specified and unbuilt. It costs minutes of CPU: for each
+deleted gene, the across-reporter rank correlation between graph proximity and response
+magnitude, reported per graph as an AUC against degree-preserving rewiring and a matched
+random graph, where $0.5$ means the graph says nothing.
+\src{notes/experiments.019-simb-multimodal.graph-prior-probe.md}
+
+Nine graphs consume nine attention heads. If three carry signal, the other six are
+constrained toward noise and are worse than free heads. This is the cheapest unrun
+experiment in the project.
+
+\subsection{The perturbation axis is the binding resource\secstatus{todo}}
+
+\Cref{tab:label-accounting} makes the point for expression: 9.2 million scalar labels
+across 1,484 perturbations, each gene deleted exactly once. Morphology is the same shape,
+1.3 million labels across 4,718 perturbations, each once. The trigenic interaction data is
+the opposite shape, 91 thousand labels across 91 thousand records in which a given gene
+recurs with many partners.
+
+The strands that work in this project are the ones where the supervision constrains a gene
+repeatedly. \textbf{Hypothesis, untested:} the reason multi-task training is attractive here
+is not that the labels are informative about each other, but that a second phenotype gives
+a second, differently-shaped constraint on the same perturbation. That predicts the gain
+should be larger where the two phenotypes share strains and smaller where they merely share
+genes, which is a testable statement and has not been tested.

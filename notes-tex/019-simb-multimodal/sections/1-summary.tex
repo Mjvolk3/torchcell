@@ -1,0 +1,88 @@
+%% notes-tex/019-simb-multimodal/sections/1-summary.tex
+%% SOURCE: every number here is carried from a later section and cited there. Nothing
+%% originates in this section.
+
+\section{Summary\secstatus{todo}}
+\label{sec:summary}
+
+\subsection{Where each strand stands\secstatus{todo}}
+
+\input{tables/t-strand-summary}
+
+Read the epoch column with the score column. Expression and beta-carotene peak in the last
+tenth of their best run, so those numbers are lower bounds set by the compute budget.
+Morphology and the expression-morphology joint arm peak at epochs 27 and 28 of runs that
+stopped at 65 and 70, which is not a result of any kind. Betaxanthin and amino acid peak in
+the first half of a 999-epoch run and then overfit.
+
+The two betaxanthin rows are not comparable to each other: the joint row trains on 3,832
+strains against the plain row's 3,698, because the joint configuration restricts to
+genotypes carrying both phenotypes. The within-grid paired comparison in
+\cref{tab:bx-aa-paired} is the valid form of that contrast, and it comes out negative.
+
+\subsection{Eight findings\secstatus{todo}}
+
+\begin{enumerate}
+\item \textbf{The expression strand contains no valid comparison between mechanisms.} All
+  67 scored arms stopped at or below 300 epochs, against a validation curve that dips at
+  200 to 300 and then climbs past its early peak. No peak has been observed at any budget
+  up to 10,000 epochs. Every per-arm delta on record measures early-training transients.
+
+\item \textbf{Loss and metric point in opposite directions on expression, and only there.}
+  Validation loss bottoms roughly 1,200 epochs before validation Pearson peaks. Every
+  checkpoint the strand saved by loss was the wrong model. The 010 fitness and interaction
+  task does not do this, so it is a property of this target or its objective.
+
+\item \textbf{The perturbation operator provably cannot express a pair term.} At one
+  perturbed gene the cross-attention softmax runs over a one-element key set, so the model
+  reduces to $g(h_i + c_b)$ and nothing depends on which reporter is predicted given which
+  gene was deleted. 16,200 of 32,760 attention parameters are dead. Capacity is not the
+  binding constraint: a rank-32 reconstruction of the target reaches $0.727$.
+
+\item \textbf{Morphology has never been trained on its own data.} The Ohya screen holds
+  4,718 deletions; every morphology run used the 1,440 that also carry expression, giving
+  $n_{\mathrm{train}} = 1{,}161$. Its ceiling, measured here for the first time, is
+  $\mathbf{0.611}$ over 278 features, with 201 of them individually above $0.5$. For a
+  second-label experiment, fitness shares 4,220 strains with morphology against
+  expression's 1,440.
+
+\item \textbf{The free amino-acid profile predicts betaxanthin; the precursor does not.}
+  Over the 4,432 deletions the two screens share, the 19-dimensional pool predicts
+  betaxanthin at out-of-fold $r = \mathbf{0.298}$, while tyrosine alone, the chromophore
+  precursor, predicts it at $\mathbf{0.064}$ and correlates marginally at $-0.076$. Roughly
+  three quarters of the profile's power survives regressing out single-mutant fitness. On
+  the 724 deletions with no Costanzo fitness record, which carry twice the betaxanthin
+  spread, the profile predicts at $0.455$.
+
+\item \textbf{The metabolome auxiliary head currently costs betaxanthin performance.}
+  Paired within grid cell, joint minus control is $-0.0265 \pm 0.0159$ over the five
+  comparable cells where the control learned the task, with 2 of 5 positive. The
+  $+0.0203$ that motivated the replication reproduces, at $+0.0192$, in the one cell it came
+  from. So the coupling exists in the data and the current head does not use it.
+
+\item \textbf{Betaxanthin is the strongest case, and its strength is coverage.} yeast-GEM
+  reaches $19\,\%$ of the screen and misses $73\,\%$ of its high producers. On genes a
+  flux-based method has no features for, CGT's top 25 is enriched $4.4\times$ over base
+  rate. Where both methods can be scored they are tied, they find largely different genes
+  (9 shared of 29 each), and their union reaches 49 of 100.
+
+\item \textbf{Configuration choice moves results more than method choice.} Betaxanthin grid
+  cells span Spearman $0.013$ to $0.158$ against a between-method gap of $0.0014$ on AUC.
+  The amino-acid strand's best run is $0.211$ and its median is $0.0498$.
+\end{enumerate}
+
+\subsection{The decision\secstatus{todo}}
+
+\begin{itemize}
+\item \textbf{Figure 6 is ready to be argued} on coverage rather than on accuracy, and the
+  amino-acid material belongs in it as a coupling measurement, not as a joint-training
+  result.
+\item \textbf{Figure 3 is not ready, and its placeholder numbers are far from the measured
+  ones.} A per-gene Pearson of $0.24$ against a ceiling of $0.775$ is not a headline. The
+  cheapest path to a better one is not another architecture ladder: it is training
+  morphology on its full dataset, finding where the expression curve actually turns, and
+  checking whether the graph prior is the right prior at all.
+\item \textbf{Three cheap experiments are unrun and each would change what to do next}: the
+  graph-prior probe, morphology at full scale, and one expression run trained until the
+  validation curve turns.
+\end{itemize}

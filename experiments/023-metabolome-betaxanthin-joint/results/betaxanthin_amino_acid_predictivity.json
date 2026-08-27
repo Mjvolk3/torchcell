@@ -1,0 +1,138 @@
+{
+  "n_shared_deletions": 4432,
+  "n_with_fitness_record": 3708,
+  "betaxanthin_reliability": 0.8355892220682738,
+  "marginals_reproduce": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/experiments/019-simb-multimodal/results/pigment_noise_ceiling.json",
+  "marginal_tyrosine": {
+    "amino_acid": "tyrosine",
+    "n": 4432,
+    "pearson": -0.07615889329445091,
+    "pearson_p": 3.8528202304448866e-07,
+    "spearman": -0.0792050920019647,
+    "spearman_p": 1.2936001642199125e-07,
+    "pearson_bx_disattenuated": -0.08331519395527145
+  },
+  "marginal_strongest_abs": [
+    {
+      "amino_acid": "methionine",
+      "n": 4432,
+      "pearson": 0.1401263713662263,
+      "pearson_p": 7.095978696650031e-21,
+      "spearman": 0.12690457626536458,
+      "spearman_p": 2.2446870601405512e-17,
+      "pearson_bx_disattenuated": 0.1532934015137032
+    },
+    {
+      "amino_acid": "aspartate",
+      "n": 4432,
+      "pearson": 0.12668341118681353,
+      "pearson_p": 2.5510937135239224e-17,
+      "spearman": 0.0873404978585946,
+      "spearman_p": 5.7443812102309064e-09,
+      "pearson_bx_disattenuated": 0.1385872682411183
+    },
+    {
+      "amino_acid": "arginine",
+      "n": 4432,
+      "pearson": -0.11753393173559257,
+      "pearson_p": 4.172648528256808e-15,
+      "spearman": -0.07715132950705958,
+      "spearman_p": 2.712029453281738e-07,
+      "pearson_bx_disattenuated": -0.12857805431883845
+    }
+  ],
+  "cross_validated": {
+    "all_genes": {
+      "nineteen_amino_acids": {
+        "pearson": 0.2979852699262465,
+        "pearson_sd": 0.0029034260245014024,
+        "spearman": 0.2175272416152353,
+        "spearman_sd": 0.004426915919180224,
+        "n": 4432,
+        "n_features": 19
+      },
+      "tyrosine_only": {
+        "pearson": 0.06405993816767701,
+        "pearson_sd": 0.0038513277611330306,
+        "spearman": 0.07615680894766709,
+        "spearman_sd": 0.0010305058324990397,
+        "n": 4432,
+        "n_features": 1
+      }
+    },
+    "with_fitness_record": {
+      "nineteen_amino_acids": {
+        "pearson": 0.17629021144747892,
+        "pearson_sd": 0.0024770579125390677,
+        "spearman": 0.1667893345342014,
+        "spearman_sd": 0.0002991262323530973,
+        "n": 3708,
+        "n_features": 19
+      },
+      "fitness_only": {
+        "pearson": 0.15077878297688843,
+        "pearson_sd": 0.0027810371079937004,
+        "spearman": 0.09491528412016874,
+        "spearman_sd": 0.0016320849320404414,
+        "n": 3708,
+        "n_features": 1
+      },
+      "nineteen_plus_fitness": {
+        "pearson": 0.20007816638879997,
+        "pearson_sd": 0.0009769731229885808,
+        "spearman": 0.16997839239523047,
+        "spearman_sd": 0.001910801400314363,
+        "n": 3708,
+        "n_features": 20
+      },
+      "nineteen_given_fitness": {
+        "pearson": 0.1325718164998094,
+        "pearson_sd": 0.002568841619618646,
+        "spearman": 0.13436794689002235,
+        "spearman_sd": 0.003148221781161467,
+        "n": 3708,
+        "n_features": 19
+      },
+      "betaxanthin_vs_fitness_pearson": 0.15493516947640684,
+      "tyrosine_vs_fitness_pearson": -0.2040637313508226,
+      "betaxanthin_sd": 0.46405940807960877
+    },
+    "without_fitness_record": {
+      "nineteen_amino_acids": {
+        "pearson": 0.4547259479984042,
+        "pearson_sd": 0.021936610749912395,
+        "spearman": 0.4536550069340745,
+        "spearman_sd": 0.004153244212210057,
+        "n": 724,
+        "n_features": 19
+      },
+      "betaxanthin_sd": 0.9143136229616698
+    }
+  },
+  "high_producer_tyrosine_shift": {
+    "quantile": 0.95,
+    "cut": 0.7677184118378608,
+    "n_top": 222,
+    "tyrosine_median_top": 2.96812239924152,
+    "tyrosine_median_rest": 2.731610575231,
+    "mannwhitneyu_u": 567905.0,
+    "mannwhitneyu_p": 6.169523697713117e-08,
+    "tyrosine_median_by_betaxanthin_decile": [
+      2.88749084853744,
+      2.7580081172173,
+      2.75336124120392,
+      2.72884996819062,
+      2.65949400667223,
+      2.70638753274451,
+      2.74841156886419,
+      2.69598452263942,
+      2.64814215603359,
+      2.7875738034074997
+    ]
+  },
+  "figure": {
+    "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/023-metabolome-betaxanthin-joint/betaxanthin_amino_acid_predictivity.png",
+    "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/023-metabolome-betaxanthin-joint/betaxanthin_amino_acid_predictivity.svg",
+    "written_at": "2026-08-26-20-34-03"
+  }
+}

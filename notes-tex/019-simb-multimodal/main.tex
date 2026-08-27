@@ -1,0 +1,76 @@
+%% notes-tex/019-simb-multimodal/main.tex
+%% [[experiments.019-simb-multimodal.phenotype-strand-retrospective]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/019-simb-multimodal/main.tex
+%%
+%% Typeset counterpart of the dendron hierarchy notes/experiments.019-simb-multimodal.*.md,
+%% plus the 012 / 020 / 021 / 022 / 023 experiment notes it draws on. Pairing is by NAME:
+%% notes-tex/<slug>/ <-> notes/<slug>.*.md.
+%%
+%% Build:  make            -> main.pdf         (draft: status chips + provenance flags)
+%%         make clean-view -> main-clean.pdf   (share view)
+%%         make check      -> formatting / provenance gate
+%%         make plots-all  -> refresh figures/ from the plot scripts' true-size SVGs
+%%         make figures    -> refresh figures/ from draw.io sources
+%%
+%% EVERY number in this document comes from a committed script under experiments/ or
+%% from a named W&B run id, and is marked with a `%% SOURCE:` comment.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+
+\title{\vspace{-1.5em}Phenotype Strands After SIMB\\
+  {\large Expression, Morphology, and Metabolite Production:
+   What Was Measured and What to Run Next}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+Six phenotype strands were run against one shared cell embedding: knockout expression,
+knockout expression jointly with a second knockout, morphology, betaxanthin production,
+free amino-acid pools, and beta-carotene production. Two of them were presented at SIMB
+2026. This is the record of what each measured, against what ceiling, and with what
+scoring rule. The headline is that most of the strands are further from their ceilings
+than the manuscript's placeholder text assumes, that the expression strand contains no
+valid comparison between mechanisms because no run in it was ever trained to saturation,
+and that the metabolite strands converge and then overfit within a few hundred epochs,
+which is the opposite failure. One new measurement is reported: the free amino-acid
+profile of a deletion predicts that deletion's betaxanthin production at an
+out-of-fold Pearson $r$ of $0.298$, while tyrosine, the chromophore precursor, predicts
+it at $0.064$. The closing section ranks what to run next and states what each option
+would settle.
+\end{abstract}
+
+\vspace{0.5em}
+{\small\color{tcgray}
+\textbf{How to read this.} \cref{sec:summary} is the whole argument and every number a
+decision turns on. \crefrange{sec:expression}{sec:carotene} are one section per strand,
+each ending in what it established and what it cannot say. \cref{sec:common} collects the
+failures the strands share, which is where the leverage is. \cref{sec:directions} ranks
+the options.\par\smallskip
+
+Working notes: \file{notes/experiments.019-simb-multimodal.*.md},
+\file{notes/experiments.020-cachera-betaxanthin.*.md}\par
+Generating scripts: the \file{scripts/} directory of\\
+\file{experiments/019-simb-multimodal/}, \file{experiments/020-cachera-betaxanthin/}, and\\
+\file{experiments/023-metabolome-betaxanthin-joint/}\par
+Leaderboard: \file{experiments/019-simb-multimodal/results/round_leaderboards.csv}\par}
+
+\vspace{1em}
+\tccontents
+
+\clearpage
+\input{sections/1-summary}
+\input{sections/2-expression}
+\input{sections/3-morphology}
+\input{sections/4-betaxanthin}
+\input{sections/5-amino-acid}
+\input{sections/6-carotene}
+\input{sections/7-common}
+\input{sections/8-directions}
+
+\end{document}

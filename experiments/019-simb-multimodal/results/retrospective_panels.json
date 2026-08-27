@@ -1,0 +1,107 @@
+{
+  "achieved_vs_ceiling": [
+    {
+      "strand": "expression_morphology_joint",
+      "score": 0.0505357511341571,
+      "ceiling": null,
+      "run_id": "n7qqgsra"
+    },
+    {
+      "strand": "morphology",
+      "score": 0.0824373379349708,
+      "ceiling": 0.6107766497713332,
+      "run_id": "vsceij2v"
+    },
+    {
+      "strand": "beta_carotene",
+      "score": 0.1324992761015892,
+      "ceiling": 0.5435281992608196,
+      "run_id": "o0aadmot"
+    },
+    {
+      "strand": "amino_acid",
+      "score": 0.2106217294931411,
+      "ceiling": null,
+      "run_id": "24vlgope"
+    },
+    {
+      "strand": "expression",
+      "score": 0.2292724668979645,
+      "ceiling": 0.7746269669017283,
+      "run_id": "b50f93ju"
+    },
+    {
+      "strand": "expression_masked",
+      "score": 0.2407375007867813,
+      "ceiling": 0.7746269669017283,
+      "run_id": "hx8pxdic"
+    },
+    {
+      "strand": "betaxanthin",
+      "score": 0.3723988175392151,
+      "ceiling": 0.9141056952389444,
+      "run_id": "azh3tstz"
+    },
+    {
+      "strand": "betaxanthin_amino_acid_joint",
+      "score": 0.4297337532043457,
+      "ceiling": 0.9141056952389444,
+      "run_id": "ag3pl3ex"
+    }
+  ],
+  "peak_position": [
+    {
+      "strand": "expression_morphology_joint",
+      "last_epoch": 70.0,
+      "peak_epoch": 28.0,
+      "peak_fraction": 0.4
+    },
+    {
+      "strand": "morphology",
+      "last_epoch": 65.0,
+      "peak_epoch": 27.0,
+      "peak_fraction": 0.4153846153846154
+    },
+    {
+      "strand": "beta_carotene",
+      "last_epoch": 999.0,
+      "peak_epoch": 799.0,
+      "peak_fraction": 0.7997997997997998
+    },
+    {
+      "strand": "amino_acid",
+      "last_epoch": 999.0,
+      "peak_epoch": 402.0,
+      "peak_fraction": 0.4024024024024024
+    },
+    {
+      "strand": "expression",
+      "last_epoch": 4105.0,
+      "peak_epoch": 4007.0,
+      "peak_fraction": 0.9761266747868453
+    },
+    {
+      "strand": "expression_masked",
+      "last_epoch": 9997.0,
+      "peak_epoch": 9188.0,
+      "peak_fraction": 0.919075722716815
+    },
+    {
+      "strand": "betaxanthin",
+      "last_epoch": 999.0,
+      "peak_epoch": 254.0,
+      "peak_fraction": 0.25425425425425424
+    },
+    {
+      "strand": "betaxanthin_amino_acid_joint",
+      "last_epoch": 496.0,
+      "peak_epoch": 176.0,
+      "peak_fraction": 0.3548387096774194
+    }
+  ],
+  "written_at": "2026-08-26-20-42-05",
+  "figures": [
+    "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/019-simb-multimodal/retrospective_achieved_vs_ceiling.svg",
+    "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/019-simb-multimodal/retrospective_peak_position.svg"
+  ]
+}

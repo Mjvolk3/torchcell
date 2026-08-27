@@ -228,7 +228,12 @@
 \newcommand{\secondhand}[1]{\tcnoteflag\tcflagsecond{\footnotesize\color{tcgray}\,[via #1, not primary]}}
 
 %% \src{...} -- an inline pointer to the generating script, draft view only.
-\newcommand{\src}[1]{\iftcdraft{\footnotesize\color{tcgray}\textsc{src:}~\texttt{#1}}\par\fi}
+%% The argument is ALWAYS a repo path, so it is set with \file rather than \texttt: a
+%% path in \texttt refuses to break at a slash and runs off the page, which is the exact
+%% overfull-hbox defect check_doc.py flags. \file is defined at the end of this file, so
+%% the body is expanded late via \csname rather than at definition time.
+\newcommand{\src}[1]{%
+  \iftcdraft{\footnotesize\color{tcgray}\textsc{src:}~\csname file\endcsname{#1}}\par\fi}
 
 %% ---------------------------------------------------------------------------
 %% Figures. \tcfig places the PDF at TRUE SIZE (no scaling) and sets the caption

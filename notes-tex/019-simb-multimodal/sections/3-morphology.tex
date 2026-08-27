@@ -1,0 +1,172 @@
+%% notes-tex/019-simb-multimodal/sections/3-morphology.tex
+%% [[experiments.019-simb-multimodal.scripts.calmorph_variance_analysis]]
+%% SOURCE: ceiling + shortlist from
+%% experiments/019-simb-multimodal/scripts/morphology_noise_ceiling.py ->
+%% results/morphology_noise_ceiling.json and results/morphology_feature_ceiling.csv.
+%% Scores from results/round_leaderboards.csv.
+
+\section{Morphology\secstatus{todo}}
+\label{sec:morphology}
+
+\subsection{The target\secstatus{todo}}
+
+The \term{morphology strand} predicts the CalMorph phenotype vector of a single-deletion
+strain. CalMorph's nominal vocabulary is 501 parameters, which resolve into 281 base
+parameters and 220 coefficient-of-variation statistics; the served target is the 281 base
+parameters, of which the model scores 278 after three near-degenerate features are dropped.
+Source is Ohya 2005 (doi:10.1073/pnas.0509436102), 4,718 deletion mutants plus 122
+independent \gene{his3} wild-type replicates.
+
+Raw CalMorph values span about eight orders of magnitude, from $6.7\times10^{-5}$ to
+$1.49\times10^{4}$ in absolute mean, so an unnormalized mean-squared-error loss is
+dominated by whole-cell size and actin-region size and read $\approx 4.7$ million. The
+training path now applies a per-feature $z$-score fit on the training split only, which
+brings the loss to order 1 and makes ``predict each feature's mean'' score zero rather than
+win. Ohya's own normalization is a per-parameter Box-Cox fit on wild-type data followed by
+standardization, and it discards 247 of 501 parameters on a Shapiro-Wilk normality test at
+$p \ge 0.5$. That verdict is a normality test over base and CV parameters together, not a
+variance floor on the 278 modeled here, so it was not imported.
+
+\subsection{The ceiling was never measured until now, and it is high\secstatus{todo}}
+
+Ohya gives one biological sample per mutant but 122 wild-type replicates, so per-feature
+reliability is estimable as $1 - \sigma^2_{\mathrm{WT}} / \sigma^2_{\mathrm{mutants}}$ and
+the achievable Pearson is its square root.
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: experiments/019-simb-multimodal/results/morphology_noise_ceiling.json
+\begin{tabular}{lr}
+\toprule
+quantity & value \\
+\midrule
+mutants & 4{,}718 \\
+wild-type replicates & 122 \\
+modeled features & 278 \\
+mean reliability & 0.444 \\
+\textbf{mean ceiling over modeled features} & \textbf{0.611} \\
+median ceiling & 0.647 \\
+features with ceiling $> 0.5$ & 201 of 278 ($72\,\%$) \\
+\midrule
+best observed (\texttt{vsceij2v}, peak epoch 27 of 65) & \textbf{0.0824} \\
+fraction of ceiling realized & $\mathbf{13.5\,\%}$ \\
+\bottomrule
+\end{tabular}
+\caption[]{Morphology has the second-highest ceiling of any strand here and the lowest
+fraction of it realized. Nearly three quarters of the modeled features are individually
+measurable to $r > 0.5$.}
+\label{tab:morph-ceiling}
+\end{table}
+
+\subsection{The strand was never really run, on two counts\secstatus{todo}}
+
+Twenty-three runs exist in \file{torchcell_019_morph_v5}, spanning 11 to 121 epochs,
+one of them a collapsed constant predictor. The best peaks at epoch 27 of 65. The joint
+expression-plus-morphology project is thinner still: 32 runs, none past 87 epochs, best
+\file{val/mean/pearson_per_feature} of $0.0505$.
+
+Set against \cref{sec:expression}, where the same architecture on a related target was
+still improving at epoch 9,188, a 65-epoch morphology run carries no information about
+whether morphology is learnable. The morphology result is not a null. It is an absence of
+measurement, and the two must not be recorded the same way.
+
+\notesec{And the training set was a quarter of what exists} Every morphology run in the
+project reports $n_{\mathrm{train}} = 1{,}161$ and $n_{\mathrm{val}} = 132$. The Ohya
+screen holds 4,718 deletions, and only 1,440 of them also carry expression. The morphology
+configs set \file{require_modalities: [expression_log2_ratio, calmorph]}, which pins
+every arm to that intersection.
+\src{experiments/019-simb-multimodal/conf/delta_joint_expr_morph_000.yaml}
+
+That restriction is correct \emph{for the auxiliary-task question}, since comparing a joint
+model against a morphology-only model on different instance sets would confound the
+auxiliary head with a data-quantity difference. It is wrong for the question ``how well can
+morphology be predicted'', and the same configs were used for both. \textbf{Morphology has
+never been trained on its own full dataset.}
+
+\subsection{Which second label should morphology be paired with\secstatus{todo}}
+
+The overlap census answers this directly, and the answer is not expression.
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: experiments/019-simb-multimodal/results/fig3_overlap_census.json, db_overlap_census
+\begin{tabular}{lr}
+\toprule
+genotypes carrying & count \\
+\midrule
+morphology (Ohya, total) & 4{,}718 \\
+morphology and fitness & \textbf{4{,}220} \\
+morphology and expression & 1{,}440 \\
+morphology, fitness and expression & 1{,}326 \\
+\bottomrule
+\end{tabular}
+\caption[]{Fitness shares nearly three times as many strains with morphology as expression
+does, and covers $89\,\%$ of the morphology screen against expression's $31\,\%$.}
+\label{tab:morph-overlap}
+\end{table}
+
+Pairing morphology with fitness keeps 4,220 of the 4,718 strains, so the joint arm and the
+morphology-only arm can be run on a large common instance set without the restriction above
+costing three quarters of the data. Pairing it with expression caps both arms at 1,440.
+
+\notesec{This does not retire the expression-helps-morphology question} That question is
+what \file{delta_joint_expr_morph_000.yaml} was built to answer, its control is right,
+and its three conditions (\texttt{expr}, \texttt{morph}, \file{expr_morph}) are the
+correct decomposition. It has simply never been run past 87 epochs. What the census changes
+is the order: the fitness pairing is where the statistical power is, and it can be run at
+full scale first.
+
+\notesec{What the earlier ``0.05 to 0.14 rise'' was} A flatten-Pearson computed over the
+$[B, 281]$ matrix before per-feature normalization, which is dominated by between-feature
+scale: large features are large in both prediction and target. After $z$-scoring, the same
+smoke run reports $\approx 0$ on that metric. The honest metric is the per-feature
+correlation across strains, averaged over features, which is what
+\cref{tab:morph-ceiling} scores.
+
+\subsection{A scalar target is a reasonable next step, and this is which scalar\secstatus{todo}}
+
+Ranking single features on reliability alone selects ones that are precisely measured and
+nearly constant across mutants. The rank key below is ceiling multiplied by robust
+coefficient of variation, IQR over absolute median across the 4,718 mutants, so a feature
+has to be both measurable and moved by deletions.
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: experiments/019-simb-multimodal/results/morphology_noise_ceiling.json, scalar_shortlist
+\begin{tabular}{llrrr}
+\toprule
+feature & CalMorph label & ceiling & robust CV & score \\
+\midrule
+\texttt{A113}     & actin\_n\_ratio      & 0.873 & 2.369 & 2.068 \\
+\file{C124_C}  & Medium\_bud\_ratio   & 0.698 & 0.886 & 0.618 \\
+\file{A110_A1B}& Actin\_f\_ratio      & 0.637 & 0.939 & 0.598 \\
+\file{C125_A1B}& Large\_bud\_ratio    & 0.784 & 0.630 & 0.494 \\
+\texttt{A105}     & actin\_a\_ratio      & 0.655 & 0.617 & 0.404 \\
+\texttt{D212}     & nuclear\_B\_ratio\_to\_nuclear\_AA1BC\_cells & 0.604 & 0.642 & 0.387 \\
+\bottomrule
+\end{tabular}
+\caption[]{Top of the scalar-target shortlist. The list is dominated by bounded ratios
+(actin localization class, bud-size class, nuclear-stage class), which is what a
+deletion actually moves. Size features are the opposite trade: \file{C115_A}
+whole-cell axis ratio has a ceiling of $0.972$ and almost no spread across mutants.}
+\label{tab:morph-scalar}
+\end{table}
+
+\notesec{On ``predict colony size first''} Colony size is fitness, and fitness is already
+the strongest strand in the project, trained on the Costanzo and Kuzmin single-mutant
+fitness data. Using it as the morphology warm-up would test the pipeline rather than the
+phenotype. Within CalMorph the equivalent of a colony-size scalar is a cell-size feature,
+and those are exactly the features deletions barely move. \textbf{Recommendation: run the
+scalar warm-up on \texttt{A113} or \file{C124_C}}, both of which are reliable and
+genuinely variable, and treat the run as a convergence-budget calibration for the vector
+target rather than as a result.
+
+\notesec{Established} Morphology has a mean ceiling of $0.611$ over 278 features with 201
+of them individually above $0.5$, and the best score achieved is $0.0824$, at $13.5\,\%$ of
+it. That score comes from a 1,161-strain training set drawn from a 4,718-strain screen.
+Target normalization is settled and the earlier apparent rise was a scale artifact.
+
+\notesec{Cannot say} Anything about whether morphology is learnable from genotype, because
+no morphology run has passed 121 epochs or seen more than a quarter of the data. Anything
+about whether expression and morphology share structure, because the joint project's
+longest run is 87 epochs.

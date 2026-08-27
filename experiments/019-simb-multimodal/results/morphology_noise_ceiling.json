@@ -1,0 +1,176 @@
+{
+  "n_mutants": 4718,
+  "n_wt_replicates": 122,
+  "n_base_features": 281,
+  "n_model_features": 278,
+  "dropped_features": [
+    "A113_A",
+    "D203",
+    "D205"
+  ],
+  "ceiling_mean_model_features": 0.6107766497713332,
+  "ceiling_median_model_features": 0.647035273481054,
+  "reliability_mean_model_features": 0.44371530060550085,
+  "n_model_features_ceiling_above_0p5": 201,
+  "ceiling_mean_all_501": 0.5619101863969078,
+  "observed_best": {
+    "source": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/experiments/019-simb-multimodal/results/round_leaderboards.csv",
+    "run_id": "vsceij2v",
+    "roll_max": 0.0824373379349708,
+    "epochs": 65.0,
+    "epoch_at_roll_max": 27.0
+  },
+  "fraction_of_ceiling_realized": 0.13497133193587912,
+  "scalar_shortlist": [
+    {
+      "feature": "A113",
+      "noise_var": 2.3513744993347676e-05,
+      "total_var": 9.883336905030344e-05,
+      "reliability": 0.7620869831789319,
+      "ceiling": 0.8729759350514377,
+      "robust_cv": 2.3685667992931583,
+      "label": "actin_n_ratio",
+      "score": 2.067701816344736
+    },
+    {
+      "feature": "C124_C",
+      "noise_var": 0.002593337994524526,
+      "total_var": 0.005051121784862734,
+      "reliability": 0.4865817723309951,
+      "ceiling": 0.697554135770834,
+      "robust_cv": 0.8856107453581544,
+      "label": "Medium_bud_ratio",
+      "score": 0.6177614381076716
+    },
+    {
+      "feature": "A110_A1B",
+      "noise_var": 0.00041536578969123656,
+      "total_var": 0.0006984281940413104,
+      "reliability": 0.40528490511271,
+      "ceiling": 0.6366199063120082,
+      "robust_cv": 0.9394874341894874,
+      "label": "Actin_f_ratio",
+      "score": 0.5980964023350204
+    },
+    {
+      "feature": "C125_A1B",
+      "noise_var": 0.0011134379993980655,
+      "total_var": 0.0028843669045754555,
+      "reliability": 0.6139749081048513,
+      "ceiling": 0.783565509772381,
+      "robust_cv": 0.6303784885215139,
+      "label": "Large_bud_ratio",
+      "score": 0.4939428417079031
+    },
+    {
+      "feature": "A105",
+      "noise_var": 0.002881820849063266,
+      "total_var": 0.005041520469596384,
+      "reliability": 0.4283825948059713,
+      "ceiling": 0.6545094306470849,
+      "robust_cv": 0.6172825144573004,
+      "label": "actin_a_ratio",
+      "score": 0.40401722708584864
+    },
+    {
+      "feature": "D212",
+      "noise_var": 0.000153941282150578,
+      "total_var": 0.00024214998539468663,
+      "reliability": 0.3642730066670661,
+      "ceiling": 0.6035503348247485,
+      "robust_cv": 0.6417060905693128,
+      "label": "nuclear_B_ratio_to_nuclear_AA1BC_cells",
+      "score": 0.38730192582218914
+    },
+    {
+      "feature": "D201",
+      "noise_var": 0.00015229084682585767,
+      "total_var": 0.00022376925001555513,
+      "reliability": 0.31942906893922507,
+      "ceiling": 0.565180563129364,
+      "robust_cv": 0.6406206763124479,
+      "label": "nuclear_B_ratio",
+      "score": 0.36206635459058334
+    },
+    {
+      "feature": "A109_A1B",
+      "noise_var": 0.0020788922232699335,
+      "total_var": 0.002688245092860939,
+      "reliability": 0.22667310774945293,
+      "ceiling": 0.476101993011427,
+      "robust_cv": 0.7555454501592728,
+      "label": "Actin_e_ratio",
+      "score": 0.3597166946315456
+    },
+    {
+      "feature": "A103_A1B",
+      "noise_var": 0.00015449223020951584,
+      "total_var": 0.0004526861444101308,
+      "reliability": 0.6587210982328038,
+      "ceiling": 0.8116163491655425,
+      "robust_cv": 0.43091655912535953,
+      "label": "Relative_distance_of_actin_patch_center_from_neck_in_mother",
+      "score": 0.34973892451230193
+    },
+    {
+      "feature": "A103_C",
+      "noise_var": 0.0004735033279850119,
+      "total_var": 0.0006628579983075187,
+      "reliability": 0.28566400466764796,
+      "ceiling": 0.5344754481429881,
+      "robust_cv": 0.6393367281754263,
+      "label": "Relative_distance_of_actin_patch_center_from_neck_in_mother",
+      "score": 0.3417097843058327
+    },
+    {
+      "feature": "A110",
+      "noise_var": 0.0004487955530339864,
+      "total_var": 0.000880417873333425,
+      "reliability": 0.4902471126185076,
+      "ceiling": 0.7001764867649496,
+      "robust_cv": 0.46822388419710137,
+      "label": "actin_f_ratio",
+      "score": 0.327839354256565
+    },
+    {
+      "feature": "D215",
+      "noise_var": 0.0004046817667179355,
+      "total_var": 0.0005258187760804129,
+      "reliability": 0.23037786947332595,
+      "ceiling": 0.4799769468144548,
+      "robust_cv": 0.5780076807800768,
+      "label": "nuclear_B_ratio_to_nuclear_A1BC_cells",
+      "score": 0.2774303618561253
+    },
+    {
+      "feature": "A8-2_C",
+      "noise_var": 19304647.861215584,
+      "total_var": 29818680.24270658,
+      "reliability": 0.35259885065042895,
+      "ceiling": 0.5938003457816684,
+      "robust_cv": 0.4492947643375925,
+      "label": "Total_brightness_of_actin_region_in_bud",
+      "score": 0.26679138642155564
+    },
+    {
+      "feature": "A8-2_A1B",
+      "noise_var": 14166548.711285956,
+      "total_var": 21915124.45190426,
+      "reliability": 0.353572061962213,
+      "ceiling": 0.5946192579812842,
+      "robust_cv": 0.4361913943137415,
+      "label": "Total_brightness_of_actin_region_in_bud",
+      "score": 0.25936780322465874
+    },
+    {
+      "feature": "A121_A",
+      "noise_var": 20.900557326973328,
+      "total_var": 27.559898846404398,
+      "reliability": 0.24163156608609548,
+      "ceiling": 0.4915603381947078,
+      "robust_cv": 0.516719689112279,
+      "label": "Maximal_distance_between_patches",
+      "score": 0.2539989051318961
+    }
+  ]
+}

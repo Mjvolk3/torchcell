@@ -30,6 +30,7 @@ Run from repo root:  python experiments/019-simb-multimodal/scripts/morphology_n
 
 from __future__ import annotations
 
+import json
 import os
 import os.path as osp
 
@@ -81,8 +82,57 @@ def _summary(name: str, df: pd.DataFrame) -> None:
         )
 
 
+def _scalar_shortlist(rel: pd.DataFrame, mt: pd.DataFrame, n: int = 15) -> pd.DataFrame:
+    """Rank single features as candidate SCALAR morphology targets.
+
+    A scalar target is only worth training on if two things hold at once: the measurement
+    is reliable (high ceiling), and deletions actually move it (high spread relative to
+    its own scale). Ranking on ceiling alone selects features that are precisely measured
+    and nearly constant across mutants, which is the wrong end of the trade. The rank key
+    is `ceiling * robust_cv`, where robust_cv = IQR / |median| across the 4,718 mutants,
+    so a feature has to clear both bars.
+    """
+    feats = list(rel.index)
+    q75 = mt[feats].quantile(0.75)
+    q25 = mt[feats].quantile(0.25)
+    median = mt[feats].median().abs()
+    robust_cv = ((q75 - q25) / median.replace(0.0, np.nan)).replace(
+        [np.inf, -np.inf], np.nan
+    )
+    out = rel.assign(
+        robust_cv=robust_cv,
+        label=[CALMORPH_LABELS.get(k, "") for k in feats],
+        score=rel["ceiling"] * robust_cv,
+    )
+    return out.sort_values("score", ascending=False).head(n)
+
+
+def _observed_best(experiment_root: str) -> dict[str, float | str | None]:
+    """Best morphology score on the committed leaderboard, or nothing if it is absent.
+
+    Read rather than hardcoded: the earlier fixed 0.040 was the morph_002 control run and
+    silently stopped being the best score once morph_v5 landed.
+    """
+    path = osp.join(
+        experiment_root, "019-simb-multimodal", "results", "round_leaderboards.csv"
+    )
+    if not osp.exists(path):
+        return {"source": None}
+    board = pd.read_csv(path)
+    morph = board[board["strand"] == "morphology"]
+    morph = morph[~morph["is_collapsed"].fillna(False)]
+    row = morph.loc[morph["primary_roll_max"].idxmax()]
+    return {
+        "source": path,
+        "run_id": str(row["run_id"]),
+        "roll_max": float(row["primary_roll_max"]),
+        "epochs": float(row["epochs"]),
+        "epoch_at_roll_max": float(row["primary_epoch_at_roll_max"]),
+    }
+
+
 def main() -> None:
-    load_dotenv("/home/michaelvolk/Documents/projects/torchcell/.env")
+    load_dotenv()
     data_dir = osp.join(
         os.environ["DATA_ROOT"],
         "torchcell-library/ohyaHighdimensionalLargescalePhenotyping2005a/data",
@@ -102,13 +152,21 @@ def main() -> None:
     _summary("MODEL 278 base features (what pearson_per_gene scores)", rel_model)
     _summary("CV 220 statistics (not modeled)", rel_all.loc[cv])
 
-    obs = 0.040  # observed best morph_002 val/global/pearson_per_gene (controlled _002 run)
     ceil = rel_model["ceiling"].mean()
+    observed = _observed_best(os.environ["EXPERIMENT_ROOT"])
+    obs = observed.get("roll_max")
     print("\n" + "=" * 64)
-    print(f"OBSERVED morph per-gene (morph_002, 1,161 control): {obs:.3f}")
+    if obs is None:
+        print("OBSERVED morph per-gene: no leaderboard; run pull_round_leaderboards.py")
+    else:
+        print(
+            f"OBSERVED morph per-feature (run {observed['run_id']}, peak epoch "
+            f"{observed['epoch_at_roll_max']:.0f} of {observed['epochs']:.0f}): {obs:.4f}"
+        )
     print(f"CEILING  morph per-gene (278 feats, target noise) : {ceil:.3f}")
-    print(f"fraction of ceiling realized: {obs / ceil:.1%}")
-    print(f"headroom (ceiling - observed): {ceil - obs:.3f}")
+    if obs is not None:
+        print(f"fraction of ceiling realized: {obs / ceil:.1%}")
+        print(f"headroom (ceiling - observed): {ceil - obs:.3f}")
     print("=" * 64)
     # top predictable features (where signal is real)
     top = rel_model.sort_values("ceiling", ascending=False).head(12)
@@ -117,6 +175,42 @@ def main() -> None:
         print(
             f"  {k:10s} {row['ceiling']:.3f} | {row['reliability']:.3f} | {CALMORPH_LABELS.get(k, '')[:52]}"
         )
+
+    shortlist = _scalar_shortlist(rel_model, mt)
+    print("\nScalar-target shortlist (ceiling x robust CV | ceiling | robust CV | label):")
+    for k, row in shortlist.iterrows():
+        print(
+            f"  {k:10s} {row['score']:.3f} | {row['ceiling']:.3f} | {row['robust_cv']:.3f} | "
+            f"{str(row['label'])[:44]}"
+        )
+
+    results_dir = osp.join(
+        os.environ["EXPERIMENT_ROOT"], "019-simb-multimodal", "results"
+    )
+    os.makedirs(results_dir, exist_ok=True)
+    rel_model.assign(label=[CALMORPH_LABELS.get(k, "") for k in rel_model.index]).to_csv(
+        osp.join(results_dir, "morphology_feature_ceiling.csv")
+    )
+    payload = {
+        "n_mutants": int(len(mt)),
+        "n_wt_replicates": int(len(wt)),
+        "n_base_features": len(base),
+        "n_model_features": len(model_feats),
+        "dropped_features": DROPPED,
+        "ceiling_mean_model_features": float(ceil),
+        "ceiling_median_model_features": float(rel_model["ceiling"].median()),
+        "reliability_mean_model_features": float(rel_model["reliability"].mean()),
+        "n_model_features_ceiling_above_0p5": int((rel_model["ceiling"] > 0.5).sum()),
+        "ceiling_mean_all_501": float(rel_all["ceiling"].mean()),
+        "observed_best": observed,
+        "fraction_of_ceiling_realized": (None if obs is None else float(obs / ceil)),
+        "scalar_shortlist": shortlist.reset_index()
+        .rename(columns={"index": "feature"})
+        .to_dict("records"),
+    }
+    with open(osp.join(results_dir, "morphology_noise_ceiling.json"), "w") as fh:
+        json.dump(payload, fh, indent=2)
+    print(f"\n-> {osp.join(results_dir, 'morphology_noise_ceiling.json')}")
 
 
 if __name__ == "__main__":

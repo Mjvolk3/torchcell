@@ -170,3 +170,43 @@ logged triggers a full unsampled scan (skip via `run.summary`); `wandb.Api(timeo
 not cover history pagination (added a SIGALRM hard timeout); and per-project caching plus
 smallest-first ordering makes an interrupted pull resume instead of restarting. Coverage and
 the two sampling resolutions (2,000 vs 500 points) are stated in the document.
+
+## 2026.08.27 - mse/nmse added to the leaderboard, and the calibration split across strands
+
+`pull_round_leaderboards.py` now records, per run, each error metric's minimum AND its value
+at the epoch the correlation peaked (`nmse_at_primary_peak`). The second is the load-bearing
+one: a minimum reached at epoch 200 says nothing about the model anyone would actually ship.
+
+### The finding: two strands beat the mean, two do not, and it tracks the correlation
+
+`nmse = 1` is exactly "predict each feature's training mean".
+
+| strand | runs | nmse > 1 | best r | nmse at peak | 1 - r^2 |
+|---|--:|--:|--:|--:|--:|
+| betaxanthin + metabolome | 13 | 5 | 0.4275 | **0.8094** | 0.8172 |
+| betaxanthin | 13 | 5 | 0.3724 | **0.9316** | 0.8613 |
+| amino acid | 12 | 6 | 0.2106 | **0.9607** | 0.9556 |
+| expression (masked) | 8 | **8** | 0.2407 | **1.0111** | 0.9420 |
+| beta-carotene | 12 | **12** | 0.1325 | **1.2881** | 0.9824 |
+
+**This corrects an over-general reading.** The earlier note framed "never beats the mean in
+squared error" as an expression finding. It is expression AND beta-carotene; betaxanthin and
+amino acid are below 1. The split tracks the achievable correlation, not the phenotype: the
+lower r is, the further predictions drift above the spread that r justifies. Beta-carotene,
+whose target is a hand-scored ordinal with a 0.544 ceiling, is worst at 1.288 in all 12 runs.
+
+`1 - r^2` is where nmse lands after the free post-hoc rescale by r/s. A strand already BELOW
+it (betaxanthin + metabolome, 0.8094 vs 0.8172) is not a contradiction: its predictions carry
+structure beyond a single global scaling, so the rescale would not help there.
+
+**Operational consequence:** every strand above 1 can be taken below it by post-processing,
+with no retraining and no change to any correlation.
+
+### Pull tooling
+
+Three more fixes: `list_runs()` bounds the run-listing pass with a timeout and shrinking page
+size (the 496-run project wedged there, which the history timeout did not cover);
+`CACHE_SCHEMA` invalidates caches when a row gains fields; and `load_board` now merges
+duplicate run ids PER COLUMN via groupby-first instead of dropping whole rows, so the CSV's
+finer roll_max and the cache's newer mse/nmse both survive. That last one was silently
+discarding every error metric for runs present in both sources.

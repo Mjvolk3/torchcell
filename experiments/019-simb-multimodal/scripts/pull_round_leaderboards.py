@@ -161,6 +161,11 @@ HISTORY_SAMPLES = 500
 # clearing the cache, and the header comment says so.
 CACHE_DIR = "_leaderboard_cache"
 
+# Bumped whenever a row gains a field, so a cache written by an older version is refetched
+# instead of silently producing a table with a column full of blanks. v2 added the mse and
+# nmse columns.
+CACHE_SCHEMA = 2
+
 # HISTORY IS FETCHED FOR A BOUNDED CANDIDATE SET, NOT FOR EVERY RUN, and this is a real
 # limitation rather than a detail. Every run's SUMMARY is read (that is one paginated query
 # per project and is free), but one history request per run over 2,187 runs does not
@@ -187,6 +192,29 @@ CACHE_DIR = "_leaderboard_cache"
 # A skipped run is reported and simply has no roll_max, which is already how a
 # summary-only run is represented.
 HISTORY_TIMEOUT_S = 120
+
+# Bound on materializing a project's run list. Generous, because 496 runs of summaries is a
+# real amount of data; the point is that it terminates.
+RUNS_TIMEOUT_S = 300
+
+# ERROR METRICS ARE PULLED ALONGSIDE THE CORRELATION, and the reason is a finding rather
+# than completeness. The expression diagnosis showed the best run reaching r = 0.236 while
+# its `nmse` sat ABOVE 1, meaning it was worse than predicting each feature's training mean
+# in squared error the whole time. A leaderboard that records only the correlation cannot
+# distinguish an arm that fixed the ordering from one that fixed the ordering AND the
+# magnitudes, which is exactly the distinction the next campaign has to make.
+#
+# What is recorded per run, derived from the primary metric's head (`val/<head>/...`):
+#   <m>_min                  the best that error metric ever reached
+#   <m>_at_primary_peak      its value AT the epoch the correlation peaked
+# The second is the load-bearing one. A minimum reached at epoch 200 says nothing about the
+# model that is actually selected, which is the one at the correlation peak.
+#
+# `nmse` is normalized so 1.0 is exactly "predict each feature's training mean", so
+# `nmse_at_primary_peak > 1` is the precise statement that the selected model loses to the
+# mean on squared error. These were added to the training path during the v8 round, so
+# earlier projects simply do not log them and the absent-key skip handles it.
+ERROR_METRICS = ("mse", "nmse")
 
 CANDIDATES_BY_LAST = 8
 CANDIDATES_BY_LENGTH = 5
@@ -266,10 +294,69 @@ def _candidates(runs: list, primaries: list[str]) -> set[str]:
     return {r.id for r in by_last} | {r.id for r in by_length}
 
 
+def _attach_error_metrics(run, primary: str, peak_epoch: float | None, row: dict) -> None:
+    """Record each ERROR_METRIC's minimum and its value at the correlation peak.
+
+    The head is taken from the primary key (`val/<head>/<stat>`), so this follows the
+    metric rename automatically rather than hardcoding either generation of names. Older
+    projects predate `mse`/`nmse` entirely, and the `in run.summary` check skips them
+    without a request.
+    """
+    parts = primary.split("/")
+    if len(parts) < 3:
+        return
+    head = parts[1]
+    for name in ERROR_METRICS:
+        key = f"val/{head}/{name}"
+        if key not in run.summary:
+            continue
+        hist = fetch_history(run, key, HISTORY_SAMPLES)
+        if hist is None or hist.empty or key not in hist:
+            continue
+        values = hist[key].to_numpy(dtype=float)
+        finite = np.isfinite(values)
+        if not finite.any():
+            continue
+        row[f"{name}_min"] = float(np.nanmin(values))
+        row[f"{name}_last"] = float(values[finite][-1])
+        if peak_epoch is not None and "epoch" in hist:
+            epochs = hist["epoch"].to_numpy(dtype=float)
+            # Nearest logged epoch, because validation metrics and error metrics can be
+            # logged on different cadences and an exact match is not guaranteed.
+            pos = int(np.nanargmin(np.abs(epochs - peak_epoch)))
+            if np.isfinite(values[pos]):
+                row[f"{name}_at_primary_peak"] = float(values[pos])
+
+
+def list_runs(api: wandb.Api, project: str) -> list:
+    """Materialize a project's runs, with a timeout and shrinking page size.
+
+    `list(api.runs(..., per_page=500))` asks the server for one enormous page, and on the
+    496-run project that request never returned: the pull sat idle for over an hour with
+    the process alive. The history timeout does not cover this, because no history call has
+    been made yet. Smaller pages are more requests but each one is small enough to come
+    back, and the whole pass is bounded so a wedged page costs one project rather than the
+    run.
+    """
+    for per_page in (500, 100, 25):
+        signal.signal(signal.SIGALRM, _timeout_handler)
+        signal.alarm(RUNS_TIMEOUT_S)
+        try:
+            return list(api.runs(f"{ENTITY}/{project}", per_page=per_page))
+        except _HistoryTimeout:
+            print(
+                f"    run listing timed out at per_page={per_page}, retrying smaller",
+                flush=True,
+            )
+        finally:
+            signal.alarm(0)
+    raise TimeoutError(f"could not list runs for {project}")
+
+
 def pull(api: wandb.Api, strand: str, project: str, primaries: list[str], extras: list[str]):
     rows = []
     n_missing_history = 0
-    all_runs = list(api.runs(f"{ENTITY}/{project}", per_page=500))
+    all_runs = list_runs(api, project)
     wanted = _candidates(all_runs, primaries)
     for run in all_runs:
         # The primary metric is whichever ALIAS this run actually logged. Summary keys are
@@ -353,6 +440,8 @@ def pull(api: wandb.Api, strand: str, project: str, primaries: list[str], extras
                 # A run whose validation metric never leaves zero is a collapsed
                 # constant predictor, not a weak model. Flagged, never dropped.
                 row["is_collapsed"] = bool(np.nanmax(np.abs(values)) < 1e-6)
+                peak_epoch = float(epochs[idx]) if 0 <= idx < len(epochs) else None
+                _attach_error_metrics(run, primary, peak_epoch, row)
         rows.append(row)
     n_fetched = sum(1 for r in rows if r.get("history_fetched"))
     print(f"    history fetched for {n_fetched} of {len(rows)} runs"
@@ -423,14 +512,19 @@ def main() -> None:
     rows: list[dict[str, object]] = []
     for strand, project, primaries, extras in ordered:
         cache_path = osp.join(cache_dir, f"{project}.json")
+        got = None
         if osp.exists(cache_path):
             with open(cache_path) as fh:
-                got = json.load(fh)
-            print(f"cached  {strand:30s} <- {project:44s} {len(got):4d} runs", flush=True)
-        else:
+                blob = json.load(fh)
+            if isinstance(blob, dict) and blob.get("schema") == CACHE_SCHEMA:
+                got = blob["rows"]
+                print(f"cached  {strand:30s} <- {project:44s} {len(got):4d} runs", flush=True)
+            else:
+                print(f"stale   {strand:30s} <- {project:44s} refetching", flush=True)
+        if got is None:
             got = pull(api, strand, project, primaries, extras)
             with open(cache_path, "w") as fh:
-                json.dump(got, fh)
+                json.dump({"schema": CACHE_SCHEMA, "rows": got}, fh)
             print(f"pulled  {strand:30s} <- {project:44s} {len(got):4d} runs", flush=True)
         rows.extend(got)
     df = pd.DataFrame(rows)

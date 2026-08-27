@@ -116,6 +116,24 @@ the multitask setup, and the metabolite strands, which peak early and overfit, a
 by something else. Any campaign that sets a stopping rule or a checkpoint criterion from one
 strand and applies it to another will be wrong for at least one of them.
 
+\notesec{And the calibration failure is not expression's alone} Reading \file{nmse} at each
+strand's correlation peak, across every round that logs it:
+
+\input{tables/t-calibration}
+
+Two strands beat the mean predictor and two do not, and the split tracks the correlation
+rather than the phenotype: betaxanthin at $r = 0.43$ reaches \file{nmse} $0.81$, amino acid
+at $0.21$ reaches $0.96$, expression at $0.24$ sits at $1.01$, and beta-carotene at $0.13$
+sits at $1.29$ in every one of its twelve runs. The lower the achievable correlation, the
+further predictions drift above the spread that correlation justifies, which is what
+under-shrinkage looks like when most of the target is noise.
+
+\textbf{The consequence is operational and free.} The rescale is a post-processing step, so
+every strand above 1 can be taken below it without retraining and without moving any
+correlation. Reporting a correlation next to an \file{nmse} above 1 is reporting a model
+that loses to the mean on a squared-error scoreboard, and that is avoidable before the
+figure is drawn rather than after a reviewer asks.
+
 \subsection{Configuration choice moves results more than method choice\secstatus{todo}}
 
 On betaxanthin the ten grid cells span Spearman $0.013$ to $0.158$ and AUC $0.406$ to

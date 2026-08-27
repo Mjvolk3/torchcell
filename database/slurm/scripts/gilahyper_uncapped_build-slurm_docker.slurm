@@ -2,7 +2,7 @@
 #SBATCH --job-name=build_database
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=32
-#SBATCH --mem=400G
+#SBATCH --mem=320G
 #SBATCH --time=10-00:00:00
 #SBATCH --output=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --error=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
@@ -27,9 +27,17 @@
 #         results accumulate in the parent, and faster workers mean a deeper buffer.
 #         Raising this trades wall time against a memory profile nothing has yet
 #         measured at this scale: sbatch --cpus-per-task=64 <this script>.
-#   mem   400 G, leaving ~113 G of the node for other jobs. That is only 1.5x job 990's
-#         256 G for 14x its record count, which is affordable because kg_uncapped also
-#         quarters chunk_size to 1e5: peak memory tracks chunk size, not dataset size.
+#   mem   320 G. Peak is bounded by chunk size and by CHUNKS_PER_WORKER (the pool is
+#         rebuilt every group of chunks so worker heaps cannot ratchet), not by dataset
+#         size, so ~200 G is the working estimate and this leaves margin.
+#
+#         320 is also the largest request that still shares the node. The scheduler runs
+#         CR_CPU_MEMORY with MaxMemPerCPU=4100, so a memory request silently sets a CPU
+#         floor of ceil(mem_mb / 4100) regardless of --cpus-per-task: 400 G implies 100
+#         CPUs and will not start while anything else holds more than 28 of the node's
+#         128, which is how job 1551 landed in PENDING (Resources) behind two 16-CPU
+#         jobs. 320 G implies 80, leaving 16 CPUs and ~97 G for another job to schedule
+#         alongside. Raise this only after checking `sinfo -o "%C %e"`.
 #
 # DISK. Job 970 wrote 50.3 GB of CSV with the doubles capped at 100k, of which their
 # Experiment nodes were ~10.2 KB per record. Scaling that to 41.2M more records puts

@@ -44,6 +44,27 @@ deletion's free amino-acid pool carries information about how much betaxanthin t
 deletion makes. Both screens are keyed by systematic ORF and share 4,432 deletions, so the
 prediction is directly testable with no model in the loop.
 
+\notesec{What the prediction actually is, since it is easy to read as a model result and
+is not one} No neural network appears anywhere in this subsection. The procedure is:
+
+\begin{enumerate}
+\item Join the two screens on systematic ORF. One row per deletion: 19 measured amino-acid
+  concentrations from Mulleder, and one betaxanthin value from Cachera.
+\item Take $\log$ of each concentration (they are skewed positive quantities) and
+  $z$-score each of the 19 columns.
+\item Fit \textbf{ridge regression} from those 19 numbers to the betaxanthin value, with
+  the penalty chosen by inner cross-validation.
+\item Score \textbf{out of fold}: five-fold cross-validation, so every prediction is made
+  by a model that never saw that deletion, then correlate the held-out predictions against
+  the measurements. Repeat over three fold shuffles and report the mean.
+\end{enumerate}
+
+So $r = 0.298$ means: \emph{knowing a deletion's 19 amino-acid concentrations lets you
+predict its betaxanthin at $r = 0.298$ on deletions you did not fit on}. The comparison row
+``tyrosine alone'' is the same procedure with one column instead of nineteen. It is a
+statement about the two measurements, and it puts a floor under what any model sharing a
+representation between these phenotypes could hope to exploit.
+
 \begin{table}[htbp]
 \centering\small
 %% SOURCE: results/betaxanthin_amino_acid_predictivity.json
@@ -83,11 +104,23 @@ out-of-fold $r = 0.298$, roughly $4.7\times$ the precursor alone. For scale, the
 genotype-to-betaxanthin validation Pearson is $0.372$ to $0.430$, so a linear map from 19
 measured metabolite concentrations recovers most of what the model recovers from genotype.
 
-\notesec{It is not all growth} Single-mutant fitness alone predicts betaxanthin at $0.151$,
-so a shared growth component is real and substantial. Regressing fitness out of both sides
-leaves the amino-acid profile at $0.133$, so roughly three quarters of its predictive power
-on that gene set survives the control. Combining the two reaches $0.200$, above either
-alone.
+\notesec{Why fitness enters at all, since it is a third dataset and looks like a detour}
+Both screens are deletion phenotypes and both respond to how well the strain grows. A slow
+deletion can have a distorted amino-acid pool \emph{and} a distorted pigment readout with
+no metabolic relationship between the two, which would produce exactly the correlation
+above for an uninteresting reason. Costanzo single-mutant fitness (KanMX deletions, 30 C)
+is the standard measurement of that shared nuisance, so it is regressed out of both sides
+and the fit recomputed on the residuals. It is a control, not a third phenotype in the
+story.
+
+Single-mutant fitness alone predicts betaxanthin at $0.151$, so the shared growth component
+is real and substantial. Regressing it out of both sides leaves the amino-acid profile at
+$0.133$ against $0.176$ without the control on the same genes, so roughly three quarters of
+its predictive power survives. Combining the two reaches $0.200$, above either alone.
+
+The control also shrinks the gene set, from 4,432 to the 3,708 deletions that carry a
+Costanzo record, which is why both the controlled and uncontrolled fits are reported on
+that same 3,708 rather than compared across different populations.
 
 \notesec{And most of the signal is where fitness is unavailable} The 724 deletions with no
 Costanzo KanMX record have a betaxanthin standard deviation of $0.914$ against $0.464$ for

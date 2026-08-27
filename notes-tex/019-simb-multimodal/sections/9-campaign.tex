@@ -1,0 +1,180 @@
+%% notes-tex/019-simb-multimodal/sections/9-campaign.tex
+%% SOURCE: cost figures from experiments/019-simb-multimodal/results/
+%% expression_objective_diagnosis.json (measured _runtime and epoch counts) and
+%% round_leaderboards.csv. The design is proposed, not measured, and says so.
+
+\section{The expression and morphology campaign\secstatus{todo}}
+\label{sec:campaign}
+
+The next campaign is expression plus morphology, for Figure 3. What follows is sized in
+GPU-days rather than in arms, because the measured cost per run is what makes most possible
+designs unaffordable.
+
+\subsection{The budget arithmetic, measured\secstatus{todo}}
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: results/expression_objective_diagnosis.json (_runtime, epoch)
+\begin{tabular}{lrrrr}
+\toprule
+run & epochs & s/epoch & wall clock & peak at \\
+\midrule
+v9 \file{M_fine} (masked)  & 9{,}999 & 32.9 & \textbf{91.4 h = 3.81 d} & epoch 9{,}674 ($97\,\%$) \\
+v8 \file{V_basis64}        & 4{,}106 & 42.0 & 47.9 h = 2.00 d & epoch 3{,}921 ($95\,\%$) \\
+\bottomrule
+\end{tabular}
+\caption[]{One expression run is a multi-day object. Both runs peaked in their last few
+percent, so neither bracketed its own maximum.}
+\label{tab:campaign-cost}
+\end{table}
+
+At $\approx 35$ s/epoch, one GPU delivers $\approx 2{,}500$ epochs per day. So with $G$
+GPUs for $D$ days the campaign has
+
+$$\text{arm-slots} \;=\; \frac{G \cdot D \cdot 2{,}500}{E}$$
+
+runs, where $E$ is the per-arm epoch budget. \textbf{Every design decision below is a
+consequence of that fraction}, so it should be evaluated with the real $G$ and $D$ before
+anything is launched.
+
+\subsection{Set the epoch budget at 4,000, and the reason is measurable\secstatus{todo}}
+
+The previous round's failure was scoring arms at 300 epochs against a curve that had not
+turned. The opposite failure is affordable only once: 10,000 epochs is 3.8 days per arm,
+which at four GPUs for four days buys four runs and no replicates.
+
+$E = 4{,}000$ is the defensible middle, and not by taste. The v8 run \textbf{peaked at
+epoch 3,921} of 4,106, so a pair-rank arm has been observed to reach its maximum inside
+that budget. It costs $\approx 1.6$ days per run, so four GPUs for four days buys
+$\approx 10$ slots.
+
+\notesec{What $E = 4{,}000$ gives up, stated plainly} The v9 masked run was still climbing
+at 9,674 and reached $0.2362$; truncating it at 4,000 would have scored it near $0.21$.
+So a 4,000-epoch comparison is fair between arms and \textbf{understates} the absolute
+number by roughly $0.02$ to $0.03$. That is the right trade for an arm comparison and the
+wrong one for a headline figure, which is why the winning arm gets one long run afterward.
+
+\subsection{Seeds: two per arm, and the noise floor is already known\secstatus{todo}}
+
+Expression's across-initialization spread was measured at $\approx 0.006$ ($n = 8$, fixed
+split) in wave 5, an order of magnitude below the betaxanthin strand's $0.030$
+(\cref{tab:replicate-noise}), because the split is pinned so \file{seed} varies weights
+only. At $\sigma = 0.006$, two seeds give a paired standard error of $\approx 0.004$, so a
+$0.015$ effect is nearly $4\sigma$. \textbf{Two seeds per arm is enough}; three would buy
+precision the mechanism differences do not need.
+
+\subsection{Phase A, the objective, and why it goes first\secstatus{todo}}
+
+\cref{sec:objective} found that the quantile loss reaches its minimum at epoch 463 and
+rises for the next 9,500 while Pearson climbs, and that the model never gets \file{nmse}
+below 1. A mechanism arm evaluated under an objective that is optimizing something else
+cannot separate ``the mechanism does not help'' from ``the objective does not reward it'',
+so the objective is settled first.
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabular}{llp{62mm}}
+\toprule
+arm & objective & what a win means \\
+\midrule
+\texttt{O\_ref}   & quantile (current) & reference \\
+\texttt{O\_zmse}  & MSE on per-gene $z$-scored targets & ``predict the mean'' scores 0 rather than winning; already implemented as \file{standardize_per_feature_target} \\
+\texttt{O\_corr}  & correlation objective & optimizing the quantity actually scored \\
+\bottomrule
+\end{tabular}
+\caption[]{Phase A. Three arms, two seeds, $E = 4{,}000$: six slots, $\approx 10$ GPU-days.}
+\label{tab:phase-a}
+\end{table}
+
+\notesec{Report \file{nmse} and the SD ratio on every arm, not just Pearson} The
+calibration identity in \cref{sec:objective} means an arm can raise Pearson while leaving
+\file{nmse} above 1, and that is a different result from one that fixes both. Both numbers
+are already logged.
+
+\notesec{Free, and worth doing on day one} Apply the post-hoc rescale by $r/s$ to the
+existing best checkpoint. It changes no correlation and moves \file{nmse} from $1.010$ to
+$0.944$. It is an evening's work and it removes the ``loses to the mean'' objection from
+the figure regardless of what the campaign finds.
+
+\subsection{Phase B, the pair term, under the winning objective\secstatus{todo}}
+
+The reference operator provably cannot express any dependence on the pair (deleted gene,
+reporter gene), and masked unmasking does not supply one at $k = 0$. The ladder is the
+mechanism axis.
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabular}{llp{54mm}}
+\toprule
+arm & pair rank & note \\
+\midrule
+\texttt{P\_ref}      & 0  & additive reference \\
+\texttt{P\_basis64}  & 64 & the current best-per-compute: $0.2274$ in 2.0 days \\
+\texttt{P\_film}     & 90 & diagonal multiplicative, identity at init \\
+\texttt{P\_graph}    & -- & masked graph attention applied \textbf{after} the perturbation operator, so the pair term is a function of network distance. \textbf{Not built.} \\
+\bottomrule
+\end{tabular}
+\caption[]{Phase B. Four arms, two seeds: eight slots, $\approx 13$ GPU-days. \texttt{P\_graph}
+requires new code and is gated on the graph-prior probe below.}
+\label{tab:phase-b}
+\end{table}
+
+\notesec{Gate \texttt{P\_graph} on the probe, and run the probe this week} The probe
+(\cref{sec:common}) costs minutes of CPU and asks whether deleting gene $X$ actually
+perturbs $X$'s neighbors on each of the nine graphs. If the answer is no, \texttt{P\_graph}
+is building a mechanism on a false premise and the nine attention heads currently spent
+enforcing that premise should be freed instead. \textbf{Nothing in the campaign is more
+decision-relevant per CPU-minute}, and it has been specified and unbuilt since 2026.07.26.
+
+\subsection{Morphology runs alongside, and it is a different problem\secstatus{todo}}
+
+Morphology is not a smaller copy of expression. Its target is 278-dimensional rather than
+6,127, no morphology run has ever passed 121 epochs, and every one of the 397 runs across
+eight projects trained on 1,161 strains (\cref{tab:morph-ntrain}) out of a 4,718-strain
+screen.
+
+\begin{enumerate}
+\item \textbf{Drop \file{require_modalities} for the morphology-only arm} and rebuild the
+  dataset on all 4,718 Ohya deletions. This is a query and config change, and it is the only
+  way the $0.0824$ becomes a statement about morphology rather than about a quarter of it.
+  \textbf{Do this first}; it is the largest single change available to the figure.
+\item \textbf{Measure the per-epoch cost on the first run.} It is not known: the only
+  figure on record is a tiny-model smoke at $\approx 47$ s/epoch against expression's
+  $\approx 15$ in the same smoke, which would make morphology the more expensive of the two
+  despite the smaller target. Until it is measured, the slot arithmetic above does not
+  apply to morphology.
+\item \textbf{Run the scalar warm-up in parallel}, on \file{A113} (actin\_n\_ratio, ceiling
+  $0.873$, robust CV $2.37$) or \file{C124_C}. It calibrates the epoch budget for the
+  278-feature target for a fraction of the cost.
+\end{enumerate}
+
+\subsection{The joint question, which is the one Figure 3 is about\secstatus{todo}}
+
+Does expression help morphology. The control already exists and is correct:
+\file{delta_joint_expr_morph_000.yaml} pins all three conditions to the 1,440 genotypes
+carrying both phenotypes, so \texttt{expr\_morph} minus \texttt{morph} isolates the
+auxiliary head from a data-quantity difference. It has never been run past 87 epochs.
+
+\notesec{Run it at two scales, and do not conflate them} On the 1,440 shared strains it is
+the mechanism test it was designed to be. Paired with \textbf{fitness} instead of
+expression it keeps 4,220 of the 4,718 strains, three times the instance count, which is
+where the statistical power is. The two answer different questions and both are worth a
+slot; the fitness pairing is the one likely to produce a detectable effect.
+
+\notesec{The prior from the metabolite strands is not encouraging, and should be said out
+loud} The one auxiliary-head experiment run to completion anywhere in this project is the
+metabolome head on betaxanthin, and it reads $-0.0265 \pm 0.0159$
+(\cref{tab:bx-aa-paired}). A second phenotype sharing an encoder has not yet been shown to
+help any first phenotype here. The expression-morphology pairing has a better prior than
+that one, because the two phenotypes share strains rather than merely genes, but the
+campaign should be designed to \textbf{measure} the effect rather than to confirm it, which
+means the control arm matters more than the joint arm.
+
+\subsection{What the campaign cannot fix\secstatus{todo}}
+
+Expression sits at $0.241$ against a ceiling of $0.775$, and the perturbation axis has 1,484
+points with each gene deleted exactly once (\cref{tab:label-accounting}). No objective and
+no pair term changes that. If Phase A and Phase B both come back inside the noise floor,
+the honest reading is that the binding constraint is the data rather than the model, and
+the figure's expression panel should be built around the ceiling-relative statement and the
+imputation capability rather than around a genotype-to-expression number.

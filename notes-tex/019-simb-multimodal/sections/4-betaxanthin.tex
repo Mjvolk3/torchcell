@@ -25,11 +25,39 @@ per-strain standard error over a median of 15 colonies, giving a reliability of 
 a Pearson ceiling of $\mathbf{0.914}$.
 \src{experiments/019-simb-multimodal/results/pigment_noise_ceiling.json}
 
-The best validation Pearson recorded on this target is $0.430$ in study
-\file{betaxanthin_002}, at $47\,\%$ of that ceiling, with the top five configurations in
-close agreement rather than one lucky trial. The cell carried forward for the head-to-head
-below is \file{s09_L6_maskon_lr0.0001_yj}, selected by validation at $0.3639$ and
-never by its score on the held-out comparison genes.
+\subsection{Two betaxanthin numbers, and why the comparison uses the lower one\secstatus{todo}}
+\label{sec:bx-two-numbers}
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: results/analysis_002_noise_and_lambda.json; results/round_leaderboards.csv
+\begin{tabular}{lrrl}
+\toprule
+round & $n_{\mathrm{train}}$ & best val $r$ & split \\
+\midrule
+\file{betaxanthin_002} (in \file{torchcell_020_betaxanthin}, \file{_v3}) & 4{,}235 & \textbf{0.4301} & ordinary ratio split \\
+\file{020_v4} (\file{torchcell_020_betaxanthin_v4}) & 3{,}698 & 0.372 & Merzbacher test genes pinned out \\
+\bottomrule
+\end{tabular}
+\caption[]{The highest betaxanthin score is $0.4301$, $47\,\%$ of the $0.914$ ceiling. Its
+top five trials span $0.0206$, which is $0.68\sigma$ against a measured replicate $\sigma$
+of $0.0302$, so it is a plateau rather than one lucky trial; it is nonetheless a maximum
+over 37 trials, and de-selecting that inflation ($0.064$) puts the floor for a
+configuration chosen without hindsight at $\approx 0.366$.}
+\label{tab:bx-two-numbers}
+\end{table}
+
+\notesec{The comparison number is lower than the best number on purpose} The head-to-head
+below runs on \file{020_v4}, whose split \textbf{pins the 640 Merzbacher test genes out of
+training}. That costs 537 training strains, and it costs score. Using the $0.4301$ model
+instead would mean scoring on genes it had trained on, which is the one thing that would
+void the comparison. The cell carried forward is \file{s09_L6_maskon_lr0.0001_yj},
+selected by validation at $0.3639$ and never by its score on the comparison genes.
+
+Both numbers are real and they answer different questions: $0.4301$ is what the model does
+on this screen, $0.372$ is what it does with a competitor's test set held out. Quoting the
+first in a sentence about the comparison would be the error; quoting the second as ``our
+betaxanthin result'' understates it.
 
 \subsection{The published accuracy comparison is empty for both methods\secstatus{todo}}
 

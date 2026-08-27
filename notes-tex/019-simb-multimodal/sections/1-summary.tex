@@ -5,6 +5,38 @@
 \section{Summary\secstatus{todo}}
 \label{sec:summary}
 
+\subsection{Terms used throughout\secstatus{todo}}
+\label{sec:terms}
+
+\begin{description}
+\item[Head] The output module for one phenotype. The encoder and the perturbation operator
+  are shared; a head is the last few layers that turn the shared representation into one
+  phenotype's values. A run declares which heads are active, so \emph{betaxanthin head} and
+  \emph{morphology head} name output modules, not models.
+\item[Metabolome head] The head that predicts the 19 Mulleder amino-acid concentrations.
+  It appears in two roles. As the \textbf{only} active head it is the amino-acid strand
+  (\cref{sec:amino-acid}). Added \textbf{alongside} the betaxanthin head it is an
+  \term{auxiliary head}: it is trained and scored, but the number being reported is still
+  betaxanthin, and the question is whether sharing an encoder with it helps.
+\item[Auxiliary head] Any head added to a run for its effect on a different head's score.
+  Adding one changes two things at once, the gradient signal and the population of strains
+  the run can use, which is why every comparison here pins the instance set.
+\item[Strand] One phenotype prosecuted across a series of W\&B projects.
+\item[\file{pearson_per_feature}] For each output feature (a reporter gene, a CalMorph
+  parameter, one amino acid), the correlation across strains between prediction and
+  measurement; then averaged over features. It goes to zero when a model predicts each
+  feature's mean. The companion \file{pearson_per_instance} correlates across features
+  within one strain and stays high under exactly that collapse, so it is never the
+  objective here.
+\item[\file{nmse}] Mean squared error divided by the variance of the target about each
+  feature's mean, so $\texttt{nmse} = 1$ is exactly ``predict each gene's training mean''.
+\item[\file{roll_max}] The scoring rule: the maximum of a centered five-point rolling mean
+  of a validation curve. An upward-biased order statistic whose bias grows with the number
+  of epochs run, so every score here travels with its epoch count.
+\item[Ceiling] The highest correlation any predictor could reach against a target carrying
+  measurement noise, estimated per strand from replicate structure.
+\end{description}
+
 \subsection{Where each strand stands\secstatus{todo}}
 
 \input{tables/t-strand-summary}
@@ -28,16 +60,34 @@ genotypes carrying both phenotypes. The within-grid paired comparison in
   200 to 300 and then climbs past its early peak. No peak has been observed at any budget
   up to 10,000 epochs. Every per-arm delta on record measures early-training transients.
 
-\item \textbf{Loss and metric point in opposite directions on expression, and only there.}
-  Validation loss bottoms roughly 1,200 epochs before validation Pearson peaks. Every
-  checkpoint the strand saved by loss was the wrong model. The 010 fitness and interaction
-  task does not do this, so it is a property of this target or its objective.
+\item \textbf{The expression objective is fighting itself, and it is the quantile loss
+  rather than squared error.} On the longest run the quantile loss bottoms at epoch 463 and
+  rises for the next 9,500 while Pearson climbs, but squared error bottoms at epoch 9,175,
+  alongside the Pearson peak at 9,674; on the second-longest run the two are one epoch
+  apart. \file{nmse} never returns below 1 after about epoch 400, so the model reaches
+  $r = 0.236$ while being \emph{no better than predicting each gene's mean} in squared
+  error. The cause is calibration, not capability: at the peak its predictions are
+  $1.95\times$ more spread out than its own correlation justifies, and a post-hoc rescale
+  by $r/s$ moves \file{nmse} from $1.010$ to $0.944$ while changing no correlation at all.
+  Best-by-\file{mse} checkpointing would have picked within 500 epochs of the right model,
+  so checkpointing is a narrower problem than previously recorded and is not what holds the
+  strand at $0.24$.
 
-\item \textbf{The perturbation operator provably cannot express a pair term.} At one
-  perturbed gene the cross-attention softmax runs over a one-element key set, so the model
-  reduces to $g(h_i + c_b)$ and nothing depends on which reporter is predicted given which
-  gene was deleted. 16,200 of 32,760 attention parameters are dead. Capacity is not the
-  binding constraint: a rank-32 reconstruction of the target reaches $0.727$.
+\item \textbf{One expression run is a multi-day object, and this sets the campaign.} The
+  best run took \textbf{91.4 hours, 3.81 days}, for 9,999 epochs at 32.9 s/epoch, and still
+  peaked at $97\,\%$ of the way through. One GPU delivers $\approx 2{,}500$ epochs per day,
+  so the number of arms a campaign can afford is fixed before any of them are chosen.
+
+\item \textbf{The perturbation operator provably cannot express a pair term, and masked
+  unmasking does not supply one.} At one perturbed gene the cross-attention softmax runs
+  over a one-element key set, so the model reduces to $g(h_i + c_b)$ and nothing depends on
+  which reporter is predicted given which gene was deleted. 16,200 of 32,760 attention
+  parameters are dead. The scGPT-style scheme conditions on \emph{other genes' measured
+  values}, and at $k = 0$, which is where scoring happens, every one of those features is
+  exactly zero and the forward pass is identical to the unconditioned model. The two are
+  different axes. Capacity is not the binding constraint either: a rank-32 reconstruction
+  of the target reaches $0.727$. A rank-64 pair term already reaches $0.2274$ in 2.0 days
+  against the masked objective's $0.2362$ in 3.8.
 
 \item \textbf{Morphology has never been trained on its own data.} The Ohya screen holds
   4,718 deletions; every morphology run used the 1,440 that also carry expression, giving

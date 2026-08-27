@@ -70,12 +70,42 @@ still improving at epoch 9,188, a 65-epoch morphology run carries no information
 whether morphology is learnable. The morphology result is not a null. It is an absence of
 measurement, and the two must not be recorded the same way.
 
-\notesec{And the training set was a quarter of what exists} Every morphology run in the
-project reports $n_{\mathrm{train}} = 1{,}161$ and $n_{\mathrm{val}} = 132$. The Ohya
-screen holds 4,718 deletions, and only 1,440 of them also carry expression. The morphology
-configs set \file{require_modalities: [expression_log2_ratio, calmorph]}, which pins
-every arm to that intersection.
+\notesec{And the training set was a quarter of what exists, in every project} This was
+checked against all eight projects that carry a morphology head rather than against one,
+because the first version of this claim rested on \file{torchcell_019_morph_v5} alone and
+the natural objection is that some other round did train on the full screen. None did.
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: results/round_leaderboards.csv, n_train_supervised per project
+\begin{tabular}{lrrr}
+\toprule
+group & projects & runs & $n_{\mathrm{train}}$ observed \\
+\midrule
+morphology alone (\file{morph_v2}, \file{_v3}, \file{_v5}) & 3 & 183 & 1{,}161 \\
+morphology with expression (\file{expr_morph} .. \file{_v5}) & 5 & 214 & 1{,}161 \\
+\midrule
+\textbf{total} & \textbf{8} & \textbf{397} & \textbf{1{,}161, no other value} \\
+\bottomrule
+\end{tabular}
+\caption[]{Every morphology run ever launched, across all eight projects that carry a
+morphology head, trained on the same 1,161 strains. The Ohya screen holds 4,718 deletions
+and 1,440 of them also carry expression; the configs set
+\file{require_modalities: [expression_log2_ratio, calmorph]}, which pins every arm to that
+intersection, and the 80/20 split takes it to 1,161. For contrast, the same census shows the
+expression strand's training set growing across rounds (1,125 to 1,253) and the betaxanthin
+rounds differing (3,694 to 4,235), so a constant is a finding here rather than an artifact
+of how the census reads.}
+\label{tab:morph-ntrain}
+\end{table}
+\src{experiments/019-simb-multimodal/results/project_census.json}
 \src{experiments/019-simb-multimodal/conf/delta_joint_expr_morph_000.yaml}
+\src{experiments/019-simb-multimodal/results/fig3_overlap_census.json}
+
+The claim does not rest on the table alone. \file{require_modalities} is set in the config
+that every morphology arm inherits, and the overlap census independently gives
+\file{ohya_with_expression} $= 1{,}440$ against \file{ohya_unique} $= 4{,}718$. The W\&B
+column is corroboration of a restriction that is visible in the configuration.
 
 That restriction is correct \emph{for the auxiliary-task question}, since comparing a joint
 model against a morphology-only model on different instance sets would confound the

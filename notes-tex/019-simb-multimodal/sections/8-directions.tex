@@ -29,65 +29,76 @@ running them is the expensive choice.
   colony size is fitness, which is already the project's strongest strand, and the CalMorph
   size features are the ones deletions barely move.
 
-\item \textbf{Dump the missing convergence curves.} The expression strand has never
-  observed a peak at any budget up to 10,000 epochs. Before another arm comparison is run
-  on that target, one configuration should be trained until the validation curve turns,
-  and the epoch at which it turns should set every subsequent budget. Any arm scored before
-  that number is known is not a measurement.
+\item \textbf{Apply the post-hoc rescale to the existing best checkpoint.} Multiplying
+  predictions by $r/s$ changes no correlation and moves \file{nmse} from $1.010$ to
+  $0.944$, taking the model from worse-than-the-mean to better-than-the-mean in squared
+  error (\cref{sec:objective}). An evening's work, no training, and it removes an objection
+  the figure would otherwise have to answer.
+
+\item \textbf{Bracket the expression peak, by resuming rather than restarting.} No run has
+  observed a maximum at any budget up to 10,000 epochs, and a fresh 10,000-epoch run costs
+  3.8 days. Resuming the existing best checkpoint is the cheap form of the same experiment,
+  and the epoch at which the curve turns is what sets every arm budget afterward.
+  \cref{sec:campaign} proposes $E = 4{,}000$ in the meantime, justified by an arm that has
+  been observed to peak at 3,921.
 \end{enumerate}
 
 \subsection{Tier 1, the two questions worth GPU\secstatus{todo}}
 
-\notesec{A. Does a second phenotype help a first one, tested where the power is} The 023
-result says the metabolome head costs betaxanthin $-0.0265 \pm 0.0159$ over five cells at
-$n = 1$ each, so the question is open and currently answered in the wrong direction. Two
-changes make the next attempt readable.
+Both are laid out with their epoch budgets, seed counts and slot costs in
+\cref{sec:campaign}, which is the operational version of this subsection. In summary:
 
 \begin{itemize}
-\item \textbf{Pin the cell and replicate seeds inside it}, which is what
-  \file{igb_bx_aa.yaml} already specifies and what none of the existing data does. Without
-  a within-cell noise floor, a $\pm 0.016$ difference cannot be distinguished from
-  initialization.
-\item \textbf{Pair morphology with fitness rather than expression} for the first
-  full-scale test. Fitness shares 4,220 strains with morphology against expression's 1,440,
-  so both arms can run at three times the instance count. Then run the expression pairing on
-  the 1,440 as the mechanism test it was designed to be.
+\item \textbf{Settle the objective first} (\cref{tab:phase-a}). The quantile loss reaches
+  its minimum at epoch 463 and rises for the next 9,500 while Pearson climbs, and the model
+  never gets \file{nmse} below 1. A mechanism arm evaluated under an objective that is
+  optimizing something else cannot separate ``the mechanism does not help'' from ``the
+  objective does not reward it''.
+\item \textbf{Then the pair term} (\cref{tab:phase-b}). The reference operator provably
+  cannot express a dependence on the pair (deleted gene, reporter gene), and masked
+  unmasking does not supply one at the point the score is taken. A rank-64 pair term
+  already reaches $0.2274$ in 2.0 days against the masked objective's $0.2362$ in 3.8.
+\item \textbf{Pair morphology with fitness for the first full-scale joint test}, since
+  fitness shares 4,220 strains with morphology against expression's 1,440. Then run the
+  expression pairing on the 1,440 as the mechanism test it was designed to be.
 \end{itemize}
 
 Substituting tyrosine for the 19 amino acids, as \file{igb_bx_aa.yaml} proposes, is now
 predicted to be the \emph{null} arm rather than the live one, since tyrosine alone predicts
-betaxanthin at $0.064$ against the profile's $0.298$. That prediction is worth keeping in the
-design as a negative control, not as the headline contrast.
-
-\notesec{B. Is the expression objective the problem} Loss and metric point in opposite
-directions on expression and on nothing else in the project. Three arms, at a budget set by
-Tier 0 item 4:
-
-\begin{itemize}
-\item the current quantile loss, as reference;
-\item a loss computed on per-gene $z$-scored targets, so that ``predict each gene's mean''
-  scores zero rather than winning, which is already implemented as
-  \file{standardize_per_feature_target};
-\item a correlation-based objective, which optimizes the quantity being scored.
-\end{itemize}
-
-The reason to run this before another mechanism ladder: a mechanism arm evaluated under an
-objective that is optimizing something else cannot separate ``the mechanism does not help''
-from ``the objective does not reward it''.
+betaxanthin at $0.064$ against the profile's $0.298$. Keep it as a negative control, not as
+the headline contrast.
 
 \subsection{Tier 2, the structural options\secstatus{todo}}
 
-\notesec{Constraint-based coupling, and what it would actually buy} Adding a
-constraint-based metabolic layer, in the physics-informed sense of penalizing predictions
-that violate a stoichiometric or flux constraint, is attractive for expression on the
-argument that metabolism constrains it. Two facts bear on the cost side. First, yeast-GEM
-covers $19.4\,\%$ of the deletions in the betaxanthin screen and $27\,\%$ of its high
-producers (\cref{tab:gem-coverage}), so a metabolic constraint is silent on most of the
-genome. Second, the strand where a metabolic constraint would be most directly testable,
-betaxanthin, is already the strand closest to its ceiling. \textbf{Recommendation: treat
-the constraint layer as a Fig-6 mechanism, not as an expression rescue}, and gate it on
-whether the coupling it assumes is visible in the data the way \cref{tab:aa-predictivity}
-made the amino-acid coupling visible.
+\notesec{Constraint-based coupling is the mechanism Figure 6 needs} The 023 result is that
+the coupling between amino-acid pools and betaxanthin is present in the data at $r = 0.298$
+and that a plain auxiliary head does not use it, costing $-0.0265 \pm 0.0159$
+(\cref{tab:bx-aa-paired}). That is a structural gap, and an unstructured second head is the
+wrong instrument to close it: it asks the encoder to discover a stoichiometric relationship
+from 19 noisy concentrations and one pigment readout, with nothing in the architecture
+saying the two are connected through a pathway.
+
+A constraint-based layer says it. Penalizing predictions that violate a stoichiometric or
+flux balance over yeast-GEM makes the tyrosine-to-betalamic-acid route a property of the
+model rather than something it must infer, and it turns the metabolome head from an
+auxiliary target into a set of intermediates the constraint actually references.
+\textbf{This is the Figure 6 mechanism, and it is what makes the amino-acid panel a step in
+an argument instead of a negative result.}
+
+Two facts size it rather than block it. yeast-GEM covers $19.4\,\%$ of the deletions in
+the screen and $27\,\%$ of its high producers (\cref{tab:gem-coverage}), so the constraint
+is silent on most of the genome and must be a term that switches off outside the model
+rather than a hard requirement. And betaxanthin is already the strand closest to its
+ceiling, so the headroom the constraint is competing for is the smallest of any strand:
+$0.430$ against $0.914$. Expect it to earn its place by making the mechanism legible and by
+extending to targets with no screen at all, rather than by moving betaxanthin's number a
+lot.
+
+\notesec{Not an expression rescue} The same layer is attractive for expression on the
+argument that metabolism constrains transcription. \cref{tab:label-accounting} is the
+reason to be cautious: expression's binding constraint is 1,484 perturbations each seen
+once, and a metabolic prior does not add perturbations. Gate it on the same evidence
+standard the amino-acid coupling met, a measurable relationship in the data first.
 
 \notesec{Reifying the gene node into mRNA and protein} Not yet. The measured case for it is
 thin: per-gene mRNA-to-protein correlation across strains has a median of $0.08$, a ridge
@@ -110,16 +121,32 @@ whether to ship it as a separate thing is a decision, not an experiment.
 for morphology inside a paragraph marked \texttt{[FILLER -- R3.]}. The measured values are
 $0.241$ and $0.082$. Neither placeholder should survive into a draft anyone reads. The
 honest version of the panel is the ceiling-relative one: expression at $31\,\%$ of a
-measured $0.775$, morphology at $13\,\%$ of a measured $0.611$ on a quarter of its data,
-with the fitness panel carrying the strong result. \textbf{A $0.20$ per-gene Pearson is not
-a Figure 3 headline}, and the two Tier 0 morphology items are the cheapest route to finding
-out whether a better one exists.
+measured $0.775$, morphology at $13\,\%$ of a measured $0.611$ \emph{on a quarter of its
+data}, with the fitness panel carrying the strong result. \textbf{A $0.24$ per-gene Pearson
+is not a Figure 3 headline.}
+
+Two of the three cheapest routes to a better one are not modeling work at all. Morphology
+has never seen more than 1,161 of its 4,718 strains in any of 397 runs, so the
+full-scale run is a query change and is the largest single change available to the figure.
+And the graph-prior probe decides whether nine attention heads are enforcing a premise
+nobody has checked. Both land before any arm ladder is worth launching;
+\cref{sec:campaign} sizes what follows.
 
 \notesec{Figure 6} The betaxanthin case is the strongest thing in this document and it does
 not depend on beating anyone on accuracy. The argument is coverage: yeast-GEM reaches
 $19\,\%$ of the screen and misses $73\,\%$ of its high producers, and CGT finds high
-producers in the part a flux method cannot represent at $4.4\times$ over base rate. Panel
-order that carries it: setup diagram, betaxanthin performance against its $0.914$ ceiling,
-the coverage gap, the capability gap, and the FCL comparison last, framed as a tie on the
-genes both can score. The amino-acid panel is currently a negative and should be shown as
-the coupling measurement (\cref{fig:aa-coupling}) rather than as a joint-training result.
+producers in the part a flux method cannot represent at $4.4\times$ over base rate.
+
+The last panel is where the figure either becomes an argument or stays a list, and getting
+its \emph{structure} right is the open work. The sequence that carries it: setup diagram;
+betaxanthin performance against its $0.914$ ceiling; the coverage gap; the capability gap;
+the Flux Cone Learning comparison, framed as a tie on the genes both can score; and then
+the structural panel. That last one is the constraint-based layer above: the amino-acid
+coupling is real in the data and unused by a plain auxiliary head, and a stoichiometric
+constraint over yeast-GEM is what would close it. Shown that way the amino-acid material is
+the \emph{motivation} for the mechanism rather than a failed joint-training result, which
+is the only framing in which a negative belongs in a figure.
+
+Keep the option text in the draw.io boxes. Several of those panels name alternatives that
+have not been run, and a composition that still reads when one of them does not arrive is
+worth more than a tidier one that does not.

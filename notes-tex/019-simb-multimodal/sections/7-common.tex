@@ -7,6 +7,80 @@
 \section{What the strands have in common\secstatus{todo}}
 \label{sec:common}
 
+\subsection{What the leaderboard covers, and what it does not\secstatus{todo}}
+\label{sec:coverage}
+
+The strands span \textbf{28 W\&B projects and 2,187 runs}. Every one of them is enumerated,
+with its run count, its metric names and its training-set size, by a census that reads
+summaries only and therefore covers everything.
+\src{experiments/019-simb-multimodal/scripts/project_census.py}
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: experiments/019-simb-multimodal/results/project_census.json, by_strand
+\begin{tabular}{lrrl}
+\toprule
+strand & projects & runs & $n_{\mathrm{train}}$ values seen \\
+\midrule
+expression                   & 9 & 1{,}369 & 1{,}125 -- 1{,}253 \\
+expression + morphology joint & 5 &   214 & 1{,}161 \\
+morphology                   & 3 &   183 & 1{,}161 \\
+betaxanthin                  & 4 &   142 & 3{,}694 -- 4{,}235 \\
+beta-carotene                & 3 &   136 & 3{,}846, 3{,}849 \\
+amino acid                   & 3 &    97 & 4{,}234, 4{,}235 \\
+betaxanthin + metabolome     & 1 &    46 & 3{,}832 \\
+\midrule
+\textbf{total}               & \textbf{28} & \textbf{2{,}187} & \\
+\bottomrule
+\end{tabular}
+\caption[]{The whole account. Two columns carry findings on their own. Morphology is the
+only strand whose training-set size never varies, and the value it never varies from is a
+quarter of its screen. The betaxanthin range is why its two headline numbers are not
+comparable (\cref{tab:bx-two-numbers}).}
+\label{tab:project-census}
+\end{table}
+
+Scoring is a different matter. Finding a run's \emph{best} value needs its full validation
+history, which is one request per run, and the leaderboard below has read
+\textbf{13 of the 28 projects} that way. This is a real limitation rather than a detail, so
+it is stated before the table rather than after it.
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: results/round_leaderboards.csv and results/_leaderboard_cache/*.json (read);
+%% remaining projects enumerated by results/project_census.json.
+\begin{tabular}{lp{86mm}}
+\toprule
+status & projects \\
+\midrule
+history read & \file{expr_v8}, \file{expr_v9}, \file{morph_v5}, \file{expr_morph},
+  \file{expr_morph_v4}, \file{expr_morph_v5}, \file{betaxanthin_v4},
+  \file{beta_carotene_v4}, \file{mulleder19_v3}, \file{mulleder19_v4},
+  \file{metabolism}, \file{bx_m19_v1}, \file{expr} \\
+history pending & \file{cgt_multitask}, \file{expr_v2}, \file{expr_v3}, \file{expr_v5},
+  \file{expr_v6}, \file{expr_v7}, \file{morph_v2}, \file{morph_v3},
+  \file{expr_morph_v2}, \file{expr_morph_v3}, \file{betaxanthin},
+  \file{betaxanthin_v3}, \file{beta_carotene}, \file{beta_carotene_v3},
+  \file{mulleder19} \\
+\bottomrule
+\end{tabular}
+\caption[]{Finding a run's best score needs its full validation history, one request per
+run. Against a rate-limited API that does not complete over 2,187 runs in a sitting, so the
+pull is cached per project and resumable, and the remaining projects are queued rather than
+dropped. Two claims that would otherwise have depended on those projects are established from
+artifacts that do not need per-run history: the betaxanthin split difference from
+\file{project_census.json} and \file{analysis_002_noise_and_lambda.json}, and the
+morphology restriction from \file{project_census.json} plus the configs.}
+\label{tab:coverage}
+\end{table}
+
+\notesec{What this does and does not put at risk} A strand maximum can only move
+\emph{upward} when the pending projects land, never down, so every ``$X$ of ceiling''
+figure below is a lower bound. The medians are the vulnerable statistic, since they are
+computed over the projects read. The one number already known to change is betaxanthin:
+\cref{tab:bx-two-numbers} carries $0.4301$ from \file{betaxanthin_002}, which sits in a
+pending project and is read from that study's committed analysis instead.
+
 \subsection{One table, read the same way\secstatus{todo}}
 
 \input{tables/t-strand-summary}
@@ -47,21 +121,21 @@ epoch budget applied across strands is wrong for at least two of them, which is 
 produced the truncated expression waves and would produce overfit metabolite runs if the
 budget were set from expression.
 
-\subsection{Loss and metric point in different directions on expression alone\secstatus{todo}}
+\subsection{The training objective diverges from the metric on expression alone\secstatus{todo}}
 
-Validation loss bottoms 40 to 250 epochs before validation Pearson peaks in wave 4b, and
-$\approx 1{,}200$ epochs before it in the long runs, while the prediction
-standard-deviation ratio climbs from $0.001$ to $0.52$. The 010 fitness and interaction task
-does not do this: there both losses fall monotonically and the validation-loss minimum is at
-the last epoch. The consequence already cost the project every checkpoint the expression
-strand saved before best-by-metric checkpointing landed.
+The full measurement is \cref{sec:objective}; what belongs here is the cross-strand
+statement. On expression the \emph{quantile loss} bottoms at epoch 463 and rises for the
+next 9,500 while Pearson climbs, and \file{nmse} never returns below 1, so the model is no
+better than predicting each gene's mean in squared error while ordering genes at
+$r = 0.236$. \emph{Squared error itself does not diverge}: its minimum lands alongside the
+Pearson peak on both long runs. The 010 fitness and interaction task shows neither
+behavior, with both losses falling monotonically and the validation-loss minimum at the
+last epoch.
 
-\notesec{What this suggests, unverified} A quantile loss on a $\log_2$ ratio can be
-minimized by a narrow, well-calibrated predictive distribution that gets the ordering
-wrong, and Pearson is invariant to the global rescale that the loss is not. Reporting
-\texttt{nmse} alongside, defined so that $\texttt{nmse} = 1$ is exactly ``predict each
-gene's mean'', separates right-ordering from right-magnitude. That instrument exists; the
-experiment that would test whether a different loss closes the gap does not.
+So the divergence is a property of one objective on one target, not a general feature of
+the multitask setup, and the metabolite strands, which peak early and overfit, are governed
+by something else. Any campaign that sets a stopping rule or a checkpoint criterion from one
+strand and applies it to another will be wrong for at least one of them.
 
 \subsection{Configuration choice moves results more than method choice\secstatus{todo}}
 
@@ -74,6 +148,45 @@ Any single-number claim about a method is dominated by which cell is quoted, whi
 the cell must be fixed by validation in advance, and why the leaderboard records the median
 alongside the maximum. It also means an arm difference smaller than the cell spread is not
 measurable without pinning the cell and replicating seeds inside it.
+
+\notesec{Is the spread just the dataset split} No, and this one has been measured rather
+than argued. The betaxanthin Optuna study repeated some hyperparameter configurations
+exactly, which gives a direct estimate of the floor:
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: experiments/020-cachera-betaxanthin/results/analysis_002_noise_and_lambda.json
+\begin{tabular}{llr}
+\toprule
+repeated configuration & objective values & range \\
+\midrule
+trials 3, 10, 11 & 0.4216, 0.4095, 0.3584 & 0.0632 \\
+trials 19, 31    & 0.4211, 0.3896         & 0.0315 \\
+\midrule
+\multicolumn{2}{l}{pooled replicate $\sigma$ (3 d.o.f.)} & \textbf{0.0302} \\
+\bottomrule
+\end{tabular}
+\caption[]{Re-running an identical configuration moves the objective by
+$\sigma \approx 0.030$. The observed spread across configurations is several times that, so
+configuration choice is doing real work; but any single difference under $\approx 0.03$ is
+inside this floor.}
+\label{tab:replicate-noise}
+\end{table}
+
+Three components are separable in what has been run. \textbf{Collapsed configurations}: on
+betaxanthin and on the 023 grid every $\mathrm{lr} = 10^{-3}$ cell fell to a near-constant
+predictor, and those account for the bottom of the range. \textbf{Genuine configuration
+effects}: depth and the graph mask move the 023 result by more than $0.05$
+(\cref{tab:bx-aa-paired}), well outside the floor. \textbf{Run-to-run noise}: the
+$\sigma = 0.030$ above, which in rounds that pin \file{data_module.split_seed} is
+initialization only, since the partition is held fixed precisely so that varying \file{seed}
+varies weights and nothing else.
+
+There is a fourth term that is not noise and is often mistaken for a result:
+\textbf{selection inflation}. Taking the maximum over 37 trials inflates it by an estimated
+$0.064$, so the study's headline $0.4301$ corresponds to a floor of $\approx 0.366$ for a
+configuration chosen without hindsight. Its top five trials span $0.0206$, which is $0.68
+\sigma$, so they are indistinguishable from each other.
 
 \subsection{Cross-modality overlap is real and small\secstatus{todo}}
 

@@ -26,10 +26,10 @@ correlation across the paired strains. The estimate is $\mathbf{0.7746}$.
 \src{experiments/019-simb-multimodal/results/expression_ceiling_replicate.json}
 
 The best validation score observed on this task is
-\file{pearson_per_feature} $= \mathbf{0.2407}$, from run \texttt{hx8pxdic} in project
-\file{torchcell_019_expr_v9}, whose peak sits at epoch 9,188 of the 9,997 it reached.
-The best in \file{torchcell_019_expr_v8} is $0.2293$, run \texttt{b50f93ju}, peaking at
-epoch 4,007 of 4,105. Both are $\approx 30\,\%$ of the ceiling, and both peak in the last
+\file{pearson_per_feature} $= \mathbf{0.2382}$, from run \texttt{hx8pxdic} in project
+\file{torchcell_019_expr_v9}, whose peak sits at epoch 9,697 of the 9,900 it reached.
+The best in \file{torchcell_019_expr_v8} is $0.2276$, run \texttt{b50f93ju}, peaking at
+epoch 4,002 of 4,105. Both are $\approx 30\,\%$ of the ceiling, and both peak in the last
 tenth of their run.
 \src{experiments/019-simb-multimodal/results/round_leaderboards.csv}
 
@@ -78,8 +78,8 @@ and their validation peaks sit at 93 to $99\,\%$ of the way through the run. Eva
 training Pearson reached $0.652$ to $0.725$ and was still climbing when they were killed.
 
 Longer runs have since been allowed. The picture did not change: the best v8 run peaks at
-epoch 4,007 of 4,105 and the best v9 run at epoch 9,188 of 9,997. Raising the epoch budget
-from 1,600 to 10,000 moved the score from $0.204$ to $0.241$ and moved the peak with it, so
+epoch 4,002 of 4,105 and the best v9 run at epoch 9,697 of 9,900. Raising the epoch budget
+from 1,600 to 10,000 moved the score from $0.204$ to $0.238$ and moved the peak with it, so
 the curve is still rising where it was cut off. \textbf{No peak has ever been observed on
 this task}, at any budget tried, and the saturation epoch remains unknown.
 
@@ -144,7 +144,7 @@ within one epoch on v8. Both runs replicate the pattern, and they use different 
 and different epoch budgets. \textbf{Why the Pearson values differ slightly from
 \cref{tab:strand-summary}}: this table smooths over 25 logged points to \emph{locate}
 turning points, the leaderboard over 5 to \emph{score} them, so v9 reads $0.2362$ at epoch
-9,674 here and $0.2407$ at 9,188 there. The leaderboard value is the one quoted as a score;
+9,674 there and $0.2382$ at 9,697 on the leaderboard. The leaderboard value is the score;
 these are locators.}
 \label{tab:expr-divergence}
 \end{table}
@@ -219,7 +219,7 @@ reporter is being predicted given which gene was deleted.}
 \end{table}
 
 Capacity is not what binds. A rank-$r$ reconstruction of the target matrix reaches $0.7265$
-at $r = 32$ and $0.7799$ at $r = 64$, against a best model score of $0.241$, so a null on
+at $r = 32$ and $0.7799$ at $r = 64$, against a best model score of $0.238$, so a null on
 this axis is a statement about the mechanism.
 \src{experiments/019-simb-multimodal/results/lowrank_output_ceiling.json}
 
@@ -341,7 +341,7 @@ readouts of a single perturbation event, correlated with each other at the level
 residual covariance above measures, so they are worth far less than 6,169 independent
 constraints on the deletion.
 
-\notesec{Established} The expression strand sits at $0.241$ against a ceiling of $0.775$.
+\notesec{Established} The expression strand sits at $0.238$ against a ceiling of $0.775$.
 The round produced no valid comparison between mechanisms, because every arm was scored
 before saturation. It produced three things that hold: the additive operator provably
 cannot express a pair term; loss and metric diverge on this target and not on 010; and the

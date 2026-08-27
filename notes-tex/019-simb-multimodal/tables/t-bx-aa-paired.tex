@@ -6,21 +6,21 @@
 \toprule
 grid cell & control & joint & $\Delta$ & aux $r$ & epochs (ctrl/joint) \\
 \midrule
-\texttt{s00\_L2\_maskon\_lr0.0001} & 0.3927 & 0.3473 & -0.0455 & 0.149 & 999/999 \\
-\texttt{s02\_L2\_maskoff\_lr0.0001} & 0.3570 & 0.3078 & -0.0492 & 0.053 & 999/999 \\
-\texttt{s04\_L6\_maskon\_lr0.0001} & 0.3769 & 0.3960 & \textbf{+0.0192} & 0.113 & 999/999 \\
-\texttt{s06\_L6\_maskoff\_lr0.0001} & 0.4216 & 0.3609 & -0.0608 & 0.061 & 999/999 \\
-\texttt{s08\_L4\_maskon\_lr0.0001}$^{\dagger}$ & 0.4105 & 0.4199 & \textbf{+0.0094} & 0.120 & 999/747 \\
-\texttt{s10\_L4\_maskoff\_lr0.0001} & 0.3705 & 0.3745 & \textbf{+0.0039} & 0.054 & 999/999 \\
-\texttt{s01\_L2\_maskon\_lr0.001}$^{\ast}$ & 0.0553 & 0.0399 & -0.0155 & 0.029 & 999/999 \\
-\texttt{s03\_L2\_maskoff\_lr0.001}$^{\dagger}$$^{\ast}$ & 0.0400 & 0.0474 & \textbf{+0.0074} & 0.013 & 490/999 \\
-\texttt{s05\_L6\_maskon\_lr0.001}$^{\ast}$ & 0.0674 & 0.0126 & -0.0548 & 0.012 & 999/999 \\
-\texttt{s07\_L6\_maskoff\_lr0.001}$^{\ast}$ & 0.0699 & 0.0587 & -0.0112 & 0.009 & 999/999 \\
-\texttt{s09\_L4\_maskon\_lr0.001}$^{\ast}$ & 0.0461 & 0.0529 & \textbf{+0.0068} & 0.009 & 999/999 \\
-\texttt{s11\_L4\_maskoff\_lr0.001}$^{\ast}$ & 0.0611 & 0.0478 & -0.0133 & 0.010 & 999/999 \\
+\texttt{s00\_L2\_maskon\_lr0.0001} & nan & nan & +nan & -- & nan/nan \\
+\texttt{s02\_L2\_maskoff\_lr0.0001} & nan & nan & +nan & -- & nan/nan \\
+\texttt{s04\_L6\_maskon\_lr0.0001} & nan & nan & +nan & -- & nan/nan \\
+\texttt{s05\_L6\_maskon\_lr0.001} & nan & nan & +nan & -- & nan/nan \\
+\texttt{s06\_L6\_maskoff\_lr0.0001} & 0.4261 & nan & +nan & -- & 998/nan \\
+\texttt{s07\_L6\_maskoff\_lr0.001} & nan & nan & +nan & -- & nan/nan \\
+\texttt{s08\_L4\_maskon\_lr0.0001}$^{\dagger}$ & 0.4149 & 0.4193 & \textbf{+0.0043} & 0.114 & 998/704 \\
+\texttt{s09\_L4\_maskon\_lr0.001} & nan & nan & +nan & -- & nan/nan \\
+\texttt{s10\_L4\_maskoff\_lr0.0001} & nan & nan & +nan & -- & nan/nan \\
+\texttt{s11\_L4\_maskoff\_lr0.001} & nan & nan & +nan & -- & nan/nan \\
+\texttt{s01\_L2\_maskon\_lr0.001}$^{\ast}$ & 0.0287 & 0.0413 & \textbf{+0.0125} & 0.026 & 998/998 \\
+\texttt{s03\_L2\_maskoff\_lr0.001}$^{\ast}$ & 0.0200 & nan & +nan & -- & 998/nan \\
 \midrule
-mean, cells where the control learned (5 cells) & & & -0.0265 $\pm$ 0.0159 & & 2 of 5 positive \\
-mean, all matched-exposure cells (10 cells) & & & -0.0220 $\pm$ 0.0090 & & 3 of 10 positive \\
+mean, cells where the control learned (9 cells) & & & +nan $\pm$ nan & & 0 of 9 positive \\
+mean, all matched-exposure cells (11 cells) & & & +0.0125 $\pm$ nan & & 1 of 11 positive \\
 \bottomrule
 \end{tabular}
 \caption[]{Betaxanthin score with and without a 19-amino-acid auxiliary head, paired within grid cell, on \texttt{val/betaxanthin/pearson\_per\_feature}. $\Delta$ is joint minus control. \emph{aux} is the auxiliary head's own score, carried because an auxiliary head at $r \approx 0$ that still moved the primary metric would mean the gain came from regularization rather than from shared metabolic signal, and those are different findings. $^{\dagger}$ marks a cell whose two arms ran epoch counts differing by more than 50; since the score is a running maximum, such a difference is part effect and part unequal exposure, and those rows are excluded from both means. $^{\ast}$ marks a cell whose control arm scored below 0.10, meaning neither arm learned the task; every one of them is an $\mathrm{lr} = 10^{-3}$ cell, and a difference between two failed runs measures nothing about the auxiliary head.}

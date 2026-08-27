@@ -53,12 +53,14 @@ worst failure mode for a table whose job is to state a limitation.
 figure below is a lower bound. The medians are the vulnerable statistic, since they are
 computed over the projects read.
 
-\notesec{One resolution caveat, because it is a real inconsistency} History is sampled, and
-two passes used different sample counts: the runs read first at 2,000 points per curve, the
-rest at 500. Coarser sampling can only lower a \file{roll_max}, by a few thousandths in
-practice (the best expression run reads $0.2407$ at 2,000 points and $0.2382$ at 500). Where
-a run appears in both passes the finer one is kept, so the effect is confined to runs read
-only in the second pass and is downward.
+\notesec{One resolution caveat, because it explains small disagreements} History is
+sampled, and the leaderboard now reads every project in ONE uniform pass at 500 points per
+curve with a bounded candidate set per project. \cref{sec:objective}'s diagnosis samples the
+same two runs at 4,000 points and smooths more heavily, because it is locating turning
+points rather than scoring. The same run therefore reads $0.2382$ here and $0.2362$ there.
+The leaderboard value is the one quoted as a score; the diagnosis values are locators.
+Coarser sampling can only lower a \file{roll_max}, so the scores below are lower bounds in
+that direction as well as in the coverage direction.
 
 \subsection{One table, read the same way\secstatus{todo}}
 
@@ -86,7 +88,7 @@ betaxanthin and amino acid, are the two with a scalar or low-dimensional target.
 \begin{itemize}
 \item \textbf{Expression never peaks.} At every budget tried, up to 10,000 epochs, the
   validation Pearson peaks in the last tenth of the run. Raising the budget from 1,600 to
-  10,000 raised the score from $0.204$ to $0.241$ and moved the peak with it.
+  10,000 raised the score from $0.204$ to $0.238$ and moved the peak with it.
 \item \textbf{The metabolite strands peak early and then overfit.} Amino-acid runs peak at
   epochs 48 to 134 with validation slope turning negative while training slope stays
   positive. The best betaxanthin run peaks at epoch 254 of 999.

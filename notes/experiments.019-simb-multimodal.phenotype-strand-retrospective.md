@@ -210,3 +210,50 @@ size (the 496-run project wedged there, which the history timeout did not cover)
 duplicate run ids PER COLUMN via groupby-first instead of dropping whole rows, so the CSV's
 finer roll_max and the cache's newer mse/nmse both survive. That last one was silently
 discarding every error metric for runs present in both sources.
+
+## 2026.08.27 - Pull COMPLETE: 28 of 28 projects, 2,187 runs
+
+`cgt_multitask` (496 runs) is in. Coverage table now reads "All projects are now read".
+
+**A crash was hiding at the finish line.** All 28 projects had been fetched and cached, but
+`summarize()` then died with `KeyError: nan`: `idxmax()` on an all-NaN `primary_roll_max`
+returns NaN and `.loc[nan]` raises. `cgt_multitask` is exactly that case, since none of its
+candidate runs log the metric under the alias the project uses, so nothing in it has history.
+Guarded by dropping NaNs before `idxmax` and skipping empty groups. The cache meant the fix
+cost one replay rather than another pass.
+
+### Numbers shifted slightly, and the reason is now uniform rather than mixed
+
+The CSV was rewritten by the schema-2 pass, so every project is read the SAME way (500
+history points, candidate set 8-by-last + 5-by-length). Previously the CSV held 8 projects at
+2,000 points and the cache the rest at 500. Uniform is better, and the small moves are all in
+the documented direction (coarser sampling can only LOWER a roll_max):
+
+| strand | was | now |
+|---|--:|--:|
+| expression (masked) | 0.2407 | **0.2382** |
+| expression | 0.229 | 0.228 |
+| betaxanthin + metabolome | 0.430 | 0.428 |
+| amino acid | 0.211 | 0.209 |
+| beta-carotene | 0.132 | **0.118** |
+| expr+morph joint | 0.059 | 0.062 |
+| morphology | 0.082 | 0.082 |
+| betaxanthin | 0.401 | 0.401 |
+
+All prose updated to match. Three values now exist for run `hx8pxdic` and the document says
+why: 0.2382 (leaderboard, 500 points, the SCORE), 0.2362 (objective diagnosis, 4,000 points
+with heavier smoothing, a LOCATOR), 0.2407 (the old mixed-resolution pass, retired).
+
+### Calibration, final
+
+| strand | runs | nmse>1 | best r | nmse@peak | 1-r^2 |
+|---|--:|--:|--:|--:|--:|
+| betaxanthin + metabolome | 13 | 5 | 0.4275 | **0.8094** | 0.8172 |
+| betaxanthin | 13 | 5 | 0.3705 | **0.9316** | 0.8627 |
+| amino acid | 12 | 6 | 0.2085 | **0.9607** | 0.9565 |
+| expression | 9 | 8 | 0.2276 | **1.0348** | 0.9482 |
+| expression (masked) | 8 | 8 | 0.2382 | **1.0111** | 0.9432 |
+| beta-carotene | 12 | 12 | 0.1184 | **1.2881** | 0.9860 |
+
+Six strands. Both expression rounds and beta-carotene lose to the mean; betaxanthin and
+amino acid beat it. The split tracks r, not the phenotype.

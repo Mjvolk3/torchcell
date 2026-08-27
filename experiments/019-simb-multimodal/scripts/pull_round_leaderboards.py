@@ -453,11 +453,18 @@ def pull(api: wandb.Api, strand: str, project: str, primaries: list[str], extras
 def summarize(df: pd.DataFrame) -> dict[str, object]:
     out: dict[str, object] = {}
     for strand, group in df.groupby("strand"):
+        # `primary_roll_max` is NaN for every summary-only run, and a project can consist
+        # entirely of those: `cgt_multitask` logs the metric under a name none of its
+        # candidate runs carry, so nothing in it has history. `idxmax()` on an all-NaN
+        # column returns NaN and `.loc[nan]` raises, which is how the whole pull crashed
+        # after every project had been fetched. Drop the NaNs first and skip an empty group.
         live = group[~group["is_collapsed"].fillna(False).astype(bool)]
+        live = live[live["primary_roll_max"].notna()]
         best = live.loc[live["primary_roll_max"].idxmax()] if len(live) else None
         by_project = {}
         for proj, sub in group.groupby("project"):
             sub_live = sub[~sub["is_collapsed"].fillna(False).astype(bool)]
+            sub_live = sub_live[sub_live["primary_roll_max"].notna()]
             if not len(sub_live):
                 continue
             top = sub_live.loc[sub_live["primary_roll_max"].idxmax()]

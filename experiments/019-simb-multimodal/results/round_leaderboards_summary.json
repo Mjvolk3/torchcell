@@ -1,106 +1,346 @@
 {
   "amino_acid": {
-    "project": "torchcell_022_mulleder19_v4",
+    "by_project": {
+      "torchcell_020_mulleder19": {
+        "n_runs": 36,
+        "best_roll_max": 0.15143865644931792,
+        "best_run_id": "j63dbied",
+        "n_train_supervised": 4235.0,
+        "epochs": 141.0,
+        "runtime_h": 0.9502777777777778
+      },
+      "torchcell_020_mulleder19_v3": {
+        "n_runs": 30,
+        "best_roll_max": 0.15184018909931182,
+        "best_run_id": "sje2e3pk",
+        "n_train_supervised": 4235.0,
+        "epochs": 174.0,
+        "runtime_h": 1.2427777777777778
+      },
+      "torchcell_022_mulleder19_v4": {
+        "n_runs": 31,
+        "best_roll_max": 0.20852306485176086,
+        "best_run_id": "24vlgope",
+        "n_train_supervised": 4234.0,
+        "epochs": 998.0,
+        "runtime_h": 9.976944444444445
+      }
+    },
+    "n_projects": 3,
+    "project": "torchcell_020_mulleder19_v3",
     "metric": "val/mulleder19/pearson_per_feature",
-    "n_runs": 31,
+    "n_runs": 97,
     "n_collapsed": 0,
-    "epochs_min": 367.0,
-    "epochs_max": 999.0,
-    "best_roll_max": 0.21062172949314117,
+    "epochs_min": 75.0,
+    "epochs_max": 998.0,
+    "best_roll_max": 0.20852306485176086,
     "best_run_id": "24vlgope",
-    "best_run_epochs": 999.0,
-    "best_epoch_at_roll_max": 402.0,
-    "median_roll_max": 0.0497645802795887
+    "best_run_epochs": 998.0,
+    "best_epoch_at_roll_max": 354.0,
+    "median_roll_max": 0.13100402653217316
   },
   "beta_carotene": {
+    "by_project": {
+      "torchcell_020_beta_carotene": {
+        "n_runs": 47,
+        "best_roll_max": 0.10196433663368225,
+        "best_run_id": "d4eef6d1",
+        "n_train_supervised": 3846.0,
+        "epochs": 88.0,
+        "runtime_h": 0.5113888888888889
+      },
+      "torchcell_020_beta_carotene_v3": {
+        "n_runs": 50,
+        "best_roll_max": 0.10881585478782654,
+        "best_run_id": "c6cmm2i3",
+        "n_train_supervised": 3846.0,
+        "epochs": 103.0,
+        "runtime_h": 0.4486111111111111
+      },
+      "torchcell_021_beta_carotene_v4": {
+        "n_runs": 39,
+        "best_roll_max": 0.11843749284744262,
+        "best_run_id": "o0aadmot",
+        "n_train_supervised": 3849.0,
+        "epochs": 998.0,
+        "runtime_h": 9.404444444444444
+      }
+    },
+    "n_projects": 3,
     "project": "torchcell_021_beta_carotene_v4",
     "metric": "val/beta_carotene/spearman_per_feature",
-    "n_runs": 39,
+    "n_runs": 136,
     "n_collapsed": 0,
-    "epochs_min": 134.0,
-    "epochs_max": 999.0,
-    "best_roll_max": 0.1324992761015892,
+    "epochs_min": 41.0,
+    "epochs_max": 998.0,
+    "best_roll_max": 0.11843749284744262,
     "best_run_id": "o0aadmot",
-    "best_run_epochs": 999.0,
-    "best_epoch_at_roll_max": 799.0,
-    "median_roll_max": 0.07221939340233803
+    "best_run_epochs": 998.0,
+    "best_epoch_at_roll_max": 791.0,
+    "median_roll_max": 0.0711512672714889
   },
   "betaxanthin": {
-    "project": "torchcell_020_betaxanthin_v4",
+    "by_project": {
+      "torchcell_020_betaxanthin": {
+        "n_runs": 42,
+        "best_roll_max": 0.4014525592327118,
+        "best_run_id": "bxtccwlx",
+        "n_train_supervised": 4235.0,
+        "epochs": 124.0,
+        "runtime_h": 0.7758333333333334
+      },
+      "torchcell_020_betaxanthin_v3": {
+        "n_runs": 53,
+        "best_roll_max": 0.3829387605190277,
+        "best_run_id": "0u8971ve",
+        "n_train_supervised": 4235.0,
+        "epochs": 199.0,
+        "runtime_h": 1.2125
+      },
+      "torchcell_020_betaxanthin_v4": {
+        "n_runs": 44,
+        "best_roll_max": 0.3704786717891693,
+        "best_run_id": "azh3tstz",
+        "n_train_supervised": 3698.0,
+        "epochs": 998.0,
+        "runtime_h": 8.085833333333333
+      },
+      "torchcell_020_metabolism": {
+        "n_runs": 3,
+        "best_roll_max": 0.2919567624727885,
+        "best_run_id": "byfl5kxt",
+        "n_train_supervised": 4235.0,
+        "epochs": 36.0,
+        "runtime_h": 0.24394948773583333
+      }
+    },
+    "n_projects": 4,
+    "project": "torchcell_020_metabolism",
     "metric": "val/betaxanthin/pearson_per_feature",
-    "n_runs": 44,
+    "n_runs": 142,
     "n_collapsed": 0,
-    "epochs_min": 209.0,
-    "epochs_max": 999.0,
-    "best_roll_max": 0.3723988175392151,
-    "best_run_id": "azh3tstz",
-    "best_run_epochs": 999.0,
-    "best_epoch_at_roll_max": 254.0,
-    "median_roll_max": 0.23406216452519096
+    "epochs_min": 36.0,
+    "epochs_max": 998.0,
+    "best_roll_max": 0.4014525592327118,
+    "best_run_id": "bxtccwlx",
+    "best_run_epochs": 124.0,
+    "best_epoch_at_roll_max": 74.0,
+    "median_roll_max": 0.31728622913360593
   },
   "betaxanthin_amino_acid_joint": {
+    "by_project": {
+      "torchcell_023_bx_m19_v1": {
+        "n_runs": 46,
+        "best_roll_max": 0.4275081753730774,
+        "best_run_id": "wmgxp95k",
+        "n_train_supervised": 3832.0,
+        "epochs": 372.0,
+        "runtime_h": 4.176666666666667
+      }
+    },
+    "n_projects": 1,
     "project": "torchcell_023_bx_m19_v1",
     "metric": "val/betaxanthin/pearson_per_feature",
     "n_runs": 46,
     "n_collapsed": 0,
-    "epochs_min": 355.0,
-    "epochs_max": 999.0,
-    "best_roll_max": 0.4297337532043457,
-    "best_run_id": "ag3pl3ex",
-    "best_run_epochs": 496.0,
-    "best_epoch_at_roll_max": 176.0,
-    "median_roll_max": 0.3724997192621231
+    "epochs_min": 372.0,
+    "epochs_max": 998.0,
+    "best_roll_max": 0.4275081753730774,
+    "best_run_id": "wmgxp95k",
+    "best_run_epochs": 372.0,
+    "best_epoch_at_roll_max": 181.0,
+    "median_roll_max": 0.4149376630783081
   },
   "expression": {
-    "project": "torchcell_019_expr_v8",
-    "metric": "val/expression/pearson_per_feature",
-    "n_runs": 163,
+    "by_project": {
+      "torchcell_019-simb-multimodal_cgt_multitask": {
+        "n_runs": 496,
+        "best_roll_max": 0.12971773147583007,
+        "best_run_id": "21d8zyak",
+        "n_train_supervised": 1137.0,
+        "epochs": 25.0,
+        "runtime_h": 0.1938888888888889
+      },
+      "torchcell_019_expr": {
+        "n_runs": 26,
+        "best_roll_max": 0.08223686516284942,
+        "best_run_id": "23cgqnxo",
+        "n_train_supervised": 1126.0,
+        "epochs": 19.0,
+        "runtime_h": 0.41194444444444445
+      },
+      "torchcell_019_expr_v2": {
+        "n_runs": 120,
+        "best_roll_max": 0.09962495714426041,
+        "best_run_id": "4lf7g1kf",
+        "n_train_supervised": 1161.0,
+        "epochs": 25.0,
+        "runtime_h": 0.32861111111111113
+      },
+      "torchcell_019_expr_v3": {
+        "n_runs": 60,
+        "best_roll_max": 0.08743716776371002,
+        "best_run_id": "4h056x87",
+        "n_train_supervised": 1161.0,
+        "epochs": 20.0,
+        "runtime_h": 0.4147222222222222
+      },
+      "torchcell_019_expr_v5": {
+        "n_runs": 35,
+        "best_roll_max": 0.0719077542424202,
+        "best_run_id": "n5vy2y59",
+        "n_train_supervised": 1161.0,
+        "epochs": 27.0,
+        "runtime_h": 0.4926603708044444
+      },
+      "torchcell_019_expr_v6": {
+        "n_runs": 158,
+        "best_roll_max": 0.1627615988254547,
+        "best_run_id": "kwhbusl0",
+        "n_train_supervised": 1244.0,
+        "epochs": 124.0,
+        "runtime_h": 1.4316666666666666
+      },
+      "torchcell_019_expr_v7": {
+        "n_runs": 295,
+        "best_roll_max": 0.16314967572689057,
+        "best_run_id": "nrurev80",
+        "n_train_supervised": 1244.0,
+        "epochs": 152.0,
+        "runtime_h": 1.7419444444444445
+      },
+      "torchcell_019_expr_v8": {
+        "n_runs": 163,
+        "best_roll_max": 0.22760272026062012,
+        "best_run_id": "b50f93ju",
+        "n_train_supervised": 1244.0,
+        "epochs": 4105.0,
+        "runtime_h": 47.89731943686444
+      }
+    },
+    "n_projects": 8,
+    "project": "torchcell_019_expr",
+    "metric": "val/per_gene/pearson_per_gene",
+    "n_runs": 1353,
     "n_collapsed": 0,
-    "epochs_min": 0.0,
-    "epochs_max": 4374.0,
-    "best_roll_max": 0.2292724668979645,
+    "epochs_min": 8.0,
+    "epochs_max": 4372.0,
+    "best_roll_max": 0.22760272026062012,
     "best_run_id": "b50f93ju",
     "best_run_epochs": 4105.0,
-    "best_epoch_at_roll_max": 4007.0,
-    "median_roll_max": 0.14132119715213776
+    "best_epoch_at_roll_max": 4002.0,
+    "median_roll_max": 0.09353106245398521
   },
   "expression_masked": {
+    "by_project": {
+      "torchcell_019_expr_v9": {
+        "n_runs": 16,
+        "best_roll_max": 0.23824749290943145,
+        "best_run_id": "hx8pxdic",
+        "n_train_supervised": 1244.0,
+        "epochs": 9900.0,
+        "runtime_h": 91.38361111111111
+      }
+    },
+    "n_projects": 1,
     "project": "torchcell_019_expr_v9",
     "metric": "val/expression/pearson_per_feature",
     "n_runs": 16,
     "n_collapsed": 0,
-    "epochs_min": 22.0,
-    "epochs_max": 9997.0,
-    "best_roll_max": 0.2407375007867813,
+    "epochs_min": 9900.0,
+    "epochs_max": 9900.0,
+    "best_roll_max": 0.23824749290943145,
     "best_run_id": "hx8pxdic",
-    "best_run_epochs": 9997.0,
-    "best_epoch_at_roll_max": 9188.0,
-    "median_roll_max": 0.1901681214570999
+    "best_run_epochs": 9900.0,
+    "best_epoch_at_roll_max": 9697.0,
+    "median_roll_max": 0.19475513249635695
   },
   "expression_morphology_joint": {
-    "project": "torchcell_019_expr_morph_v5",
-    "metric": "val/mean/pearson_per_feature",
-    "n_runs": 32,
+    "by_project": {
+      "torchcell_019_expr_morph": {
+        "n_runs": 21,
+        "best_roll_max": 0.05904607772827149,
+        "best_run_id": "4o4xbrky",
+        "n_train_supervised": 1161.0,
+        "epochs": 27.0,
+        "runtime_h": 0.8161111111111111
+      },
+      "torchcell_019_expr_morph_v2": {
+        "n_runs": 80,
+        "best_roll_max": 0.04202783312648535,
+        "best_run_id": "mxnnf41q",
+        "n_train_supervised": 1161.0,
+        "epochs": 21.0,
+        "runtime_h": 0.6319444444444444
+      },
+      "torchcell_019_expr_morph_v3": {
+        "n_runs": 77,
+        "best_roll_max": 0.05712057054042816,
+        "best_run_id": "8n6glbcy",
+        "n_train_supervised": 1161.0,
+        "epochs": 21.0,
+        "runtime_h": 0.3397222222222222
+      },
+      "torchcell_019_expr_morph_v5": {
+        "n_runs": 32,
+        "best_roll_max": 0.062054742872714994,
+        "best_run_id": "n7qqgsra",
+        "n_train_supervised": 1161.0,
+        "epochs": 70.0,
+        "runtime_h": 2.5813888888888887
+      }
+    },
+    "n_projects": 5,
+    "project": "torchcell_019_expr_morph_v4",
+    "metric": "val/morphology/pearson_per_feature",
+    "n_runs": 214,
     "n_collapsed": 0,
     "epochs_min": 0.0,
     "epochs_max": 87.0,
-    "best_roll_max": 0.05053575113415718,
+    "best_roll_max": 0.062054742872714994,
     "best_run_id": "n7qqgsra",
     "best_run_epochs": 70.0,
-    "best_epoch_at_roll_max": 28.0,
-    "median_roll_max": 0.009329826664179563
+    "best_epoch_at_roll_max": 26.0,
+    "median_roll_max": 0.0330865861227115
   },
   "morphology": {
+    "by_project": {
+      "torchcell_019_morph_v2": {
+        "n_runs": 71,
+        "best_roll_max": 0.03137366225322088,
+        "best_run_id": "kfdh82xp",
+        "n_train_supervised": 1161.0,
+        "epochs": 24.0,
+        "runtime_h": 0.6291666666666667
+      },
+      "torchcell_019_morph_v3": {
+        "n_runs": 89,
+        "best_roll_max": 0.06258938536047935,
+        "best_run_id": "e3xmrxpq",
+        "n_train_supervised": 1161.0,
+        "epochs": 20.0,
+        "runtime_h": 0.535
+      },
+      "torchcell_019_morph_v5": {
+        "n_runs": 23,
+        "best_roll_max": 0.08243733793497085,
+        "best_run_id": "vsceij2v",
+        "n_train_supervised": 1161.0,
+        "epochs": 65.0,
+        "runtime_h": 2.9391666666666665
+      }
+    },
+    "n_projects": 3,
     "project": "torchcell_019_morph_v5",
     "metric": "val/morphology/pearson_per_feature",
-    "n_runs": 23,
-    "n_collapsed": 1,
-    "epochs_min": 11.0,
+    "n_runs": 183,
+    "n_collapsed": 0,
+    "epochs_min": 13.0,
     "epochs_max": 121.0,
     "best_roll_max": 0.08243733793497085,
     "best_run_id": "vsceij2v",
     "best_run_epochs": 65.0,
     "best_epoch_at_roll_max": 27.0,
-    "median_roll_max": 0.021175366081297397
+    "median_roll_max": 0.028835594654083252
   }
 }

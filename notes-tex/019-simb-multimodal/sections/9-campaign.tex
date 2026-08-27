@@ -111,20 +111,29 @@ arm & pair rank & note \\
 \texttt{P\_ref}      & 0  & additive reference \\
 \texttt{P\_basis64}  & 64 & the current best-per-compute: $0.2274$ in 2.0 days \\
 \texttt{P\_film}     & 90 & diagonal multiplicative, identity at init \\
-\texttt{P\_graph}    & -- & masked graph attention applied \textbf{after} the perturbation operator, so the pair term is a function of network distance. \textbf{Not built.} \\
+\texttt{P\_free}     & -- & the nine masked heads freed, since the probe found the mask constrains them toward a target that does not predict response \\
 \bottomrule
 \end{tabular}
-\caption[]{Phase B. Four arms, two seeds: eight slots, $\approx 13$ GPU-days. \texttt{P\_graph}
-requires new code and is gated on the graph-prior probe below.}
+\caption[]{Phase B. Four arms, two seeds: eight slots, $\approx 13$ GPU-days. The
+originally planned \texttt{P\_graph} arm, which would have made the pair term a function of
+network distance, is dropped: the probe found the network does not carry that relationship
+(\cref{sec:graph-probe}). \texttt{P\_free} replaces it and costs nothing to build.}
 \label{tab:phase-b}
 \end{table}
 
-\notesec{Gate \texttt{P\_graph} on the probe, and run the probe this week} The probe
-(\cref{sec:common}) costs minutes of CPU and asks whether deleting gene $X$ actually
-perturbs $X$'s neighbors on each of the nine graphs. If the answer is no, \texttt{P\_graph}
-is building a mechanism on a false premise and the nine attention heads currently spent
-enforcing that premise should be freed instead. \textbf{Nothing in the campaign is more
-decision-relevant per CPU-minute}, and it has been specified and unbuilt since 2026.07.26.
+\notesec{The gate on \texttt{P\_graph} has been resolved, and it closes}
+The probe has run (\cref{sec:graph-probe}). Graph proximity does not predict which reporters
+respond, on any of the nine graphs, in the orientation the model uses: AUC $0.4961$ to
+$0.5057$ against degree-preserving controls, and longer walks make it worse.
+\textbf{Do not build \texttt{P\_graph}}, which would have made the pair term a function of
+network distance on a network that does not carry the relationship. Drop it from Phase B,
+which takes that phase to three arms and six slots.
+
+Two cheaper things replace it. \textbf{Free the nine masked heads} and let them learn
+unconstrained, as an arm in Phase B. And \textbf{stop symmetrizing the two directed
+relations} in \file{_build_attention_mask}: TF $\to$ target reaches $0.5508$ on tflink
+against a $0.5017$ control, and the mask currently averages that against its uninformative
+reverse. Neither costs a new mechanism.
 
 \subsection{Morphology runs alongside, and it is a different problem\secstatus{todo}}
 

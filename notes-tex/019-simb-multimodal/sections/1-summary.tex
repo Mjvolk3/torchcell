@@ -52,7 +52,7 @@ strains against the plain row's 3,698, because the joint configuration restricts
 genotypes carrying both phenotypes. The within-grid paired comparison in
 \cref{tab:bx-aa-paired} is the valid form of that contrast, and it comes out negative.
 
-\subsection{Eight findings\secstatus{todo}}
+\subsection{Nine findings\secstatus{todo}}
 
 \begin{enumerate}
 \item \textbf{The expression strand contains no valid comparison between mechanisms.} All
@@ -110,6 +110,16 @@ genotypes carrying both phenotypes. The within-grid paired comparison in
   $+0.0203$ that motivated the replication reproduces, at $+0.0192$, in the one cell it came
   from. So the coupling exists in the data and the current head does not use it.
 
+\item \textbf{The graph prior is at chance, and the mask deletes the one signal that
+  exists.} Graph proximity does not predict which reporters respond to a deletion, on any of
+  the nine graphs, in the orientation the model uses: AUC $0.4961$ to $0.5057$, at most
+  $+0.0046$ over a degree-preserving control, and longer walks make it worse. Three of the
+  nine graphs are also silent on most deletions, scoring only $29$ to $75\,\%$ of them. But
+  \emph{direction} carries real signal: following tflink edges TF $\to$ target gives
+  $0.5508$ and regulatory interaction $0.5239$, against controls near $0.501$. The mask
+  builder symmetrizes, which averages that away. Nine attention heads are currently spent
+  enforcing a target that does not predict response.
+
 \item \textbf{Betaxanthin is the strongest case, and its strength is coverage.} yeast-GEM
   reaches $19\,\%$ of the screen and misses $73\,\%$ of its high producers. On genes a
   flux-based method has no features for, CGT's top 25 is enriched $4.4\times$ over base
@@ -132,7 +142,9 @@ genotypes carrying both phenotypes. The within-grid paired comparison in
   cheapest path to a better one is not another architecture ladder: it is training
   morphology on its full dataset, finding where the expression curve actually turns, and
   checking whether the graph prior is the right prior at all.
-\item \textbf{Three cheap experiments are unrun and each would change what to do next}: the
-  graph-prior probe, morphology at full scale, and one expression run trained until the
+\item \textbf{The graph-prior probe has run and it closed a planned arm.} The
+  network-distance pair term is not worth building, the nine masked heads should be freed,
+  and the mask should stop symmetrizing its two directed relations. Two cheap experiments
+  remain unrun: morphology at full scale, and one expression run trained until the
   validation curve turns.
 \end{itemize}

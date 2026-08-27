@@ -257,3 +257,23 @@ with heavier smoothing, a LOCATOR), 0.2407 (the old mixed-resolution pass, retir
 
 Six strands. Both expression rounds and beta-carotene lose to the mean; betaxanthin and
 amino acid beat it. The split tracks r, not the phenotype.
+
+## 2026.08.27 - Graph-prior probe BUILT and run: the prior is at chance
+
+Tier-0 item 1 is done. See
+[[experiments.019-simb-multimodal.scripts.graph_prior_probe]] for the full table.
+
+**Graph proximity does not predict which reporters respond to a deletion**, on any of the
+nine graphs, in the orientation the model uses. AUC 0.4961-0.5057 against degree-preserving
+controls; largest excess **+0.0046**. Longer walks make it worse. Three graphs are silent on
+most deletions (29-75% of deleted genes have any edge).
+
+**But direction carries real signal, and the mask deletes it.** tflink TF→target = **0.5508**
+(control 0.5017); regulatory_interaction = **0.5239** (control 0.5009).
+`_build_attention_mask` sets both `head_mask[i,j]` and `head_mask[j,i]`, so symmetrizing
+averages the informative direction with the uninformative one back to chance.
+
+**Campaign consequences (§9 updated):** `P_graph` is DROPPED - it would have built a
+network-distance pair term on a network that does not carry the relationship. Phase B goes
+from four arms to three, plus a new free-the-heads arm `P_free`. The evidence-backed repair
+is to stop symmetrizing the two directed relations, which is a mask-builder change.

@@ -208,24 +208,73 @@ therefore certified as non-redundant and not certified as cleanly complementary.
 distinction is what bounds how hard a ``the proteome helps expression'' claim can be pushed
 until a same-media pair exists.
 
-\subsection{The graph prior has never been checked\secstatus{todo}}
+\subsection{The graph prior has now been checked, and it is at chance\secstatus{todo}}
+\label{sec:graph-probe}
 
-The nine interaction graphs enter the model as a hard additive attention mask, so composing
-$L$ layers makes the influence of gene $X$ on gene $Y$ approximately the $L$-step
-random-walk reachability of $Y$ from $X$ on that graph. That is a falsifiable assumption
-about the data: \emph{deleting $X$ perturbs the genes near $X$ on graph $k$}. If it is
-false, pulling attention toward the graph pushes the model toward the wrong prior and no
-setting of the regularization weight rescues it.
+The nine interaction graphs do not inject features. They enter as a hard additive attention
+mask, so composing $L$ layers makes the influence of gene $X$ on gene $Y$ approximately the
+$L$-step random-walk reachability of $Y$ from $X$. The whole content of the graph channel is
+therefore one falsifiable claim: \emph{deleting $X$ perturbs the genes near $X$ on graph
+$k$}. It had been specified and unbuilt since 2026.07.26 and is now measured.
+\src{experiments/019-simb-multimodal/scripts/graph\_prior\_probe.py}
 
-The probe that would test it is specified and unbuilt. It costs minutes of CPU: for each
-deleted gene, the across-reporter rank correlation between graph proximity and response
-magnitude, reported per graph as an AUC against degree-preserving rewiring and a matched
-random graph, where $0.5$ means the graph says nothing.
-\src{notes/experiments.019-simb-multimodal.graph-prior-probe.md}
+For each deleted gene, responders are the top $1\,\%$ of reporters by $|\log_2$ ratio$|$,
+and the statistic is the probability that a random responder is closer to the deleted gene
+than a random non-responder. $0.5$ is ``the graph says nothing''. Two controls: a
+configuration-model redraw holding every node's degree, and a matched-density random graph.
 
-Nine graphs consume nine attention heads. If three carry signal, the other six are
-constrained toward noise and are worse than free heads. This is the cheapest unrun
-experiment in the project.
+\tcfigfit{figures/graph_prior_probe.pdf}{(a) All nine graphs in the orientation the model
+actually uses. (b) The two directed graphs, by orientation. (c) Longer walks do not
+recover anything; several graphs fall below chance by $t = 3$.}{fig:graph-probe}
+
+\notesec{The deployed prior carries no signal on any of the nine} Every AUC lands between
+$0.4961$ and $0.5057$, and the largest excess over the degree-preserving control is
+$\mathbf{+0.0046}$ (tflink, $0.5057$ against $0.5017$). Repeating with responders defined as
+the top $5\,\%$ rather than the top $1\,\%$ moves nothing. Longer walks make it worse, not
+better: physical interaction, STRING experimental and STRING coexpression all drop below
+$0.5$ by $t = 3$.
+
+\notesec{Coverage is a second problem, separate from signal} Many deleted genes have no edge
+at all on a given graph, so it makes no prediction for them: STRING neighborhood scores only
+$29\,\%$ of deleted genes, fusion and co-occurrence $46\,\%$, database $75\,\%$. Three of
+the nine heads are constrained by a graph that is silent on most of the perturbations.
+
+\notesec{Direction is the one place signal exists, and the mask deletes it} Two graphs are
+directed. On tflink, following edges TF $\to$ target gives $\mathbf{0.5508}$ against a
+rewired control of $0.5017$; on regulatory interaction, $\mathbf{0.5239}$ against $0.5009$.
+Both are unambiguous. But \file{_build_attention_mask} sets \file{head_mask[i, j]} and
+\file{head_mask[j, i]} together, so the mask is symmetric, and averaging the informative
+direction with the uninformative one returns both to chance: $0.5057$ and $0.5055$.
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: experiments/019-simb-multimodal/results/graph_prior_probe.json
+\begin{tabular}{lrrrr}
+\toprule
+graph & TF $\to$ target & deployed (symmetric) & target $\to$ TF & rewired \\
+\midrule
+\file{tflink}                 & \textbf{0.5508} & 0.5057 & 0.5002 & 0.5017 \\
+\file{regulatory_interaction} & \textbf{0.5239} & 0.5055 & 0.5002 & 0.5009 \\
+\bottomrule
+\end{tabular}
+\caption[]{The two directed graphs, AUC at $t = 1$. The signal is real and it is
+directional. Symmetrizing is not a neutral convenience here: it averages a genuine
+prior with its uninformative reverse. For the seven undirected graphs all three columns
+coincide, which is what makes this table's machinery self-checking.}
+\label{tab:graph-direction}
+\end{table}
+
+\notesec{What follows} Nine attention heads are currently constrained toward a target that
+does not predict response. Freeing them costs nothing to try. The one repair with evidence
+behind it is to stop symmetrizing the two directed relations, which is a change to the mask
+builder rather than to the model, and which \cref{tab:graph-direction} sizes at
+$+0.04$ to $+0.05$ AUC over the degree control on the graphs it touches.
+
+\notesec{What this does not establish} A data-side probe rules out, it does not confirm. An
+AUC at chance means no amount of training recovers the structure, which is the decisive
+direction here. It does not follow that a directed mask WILL help the model: that the
+information exists is necessary, not sufficient, and the kNN probe already showed the
+perturbed side failing to use structure that was present.
 
 \subsection{The perturbation axis is the binding resource\secstatus{todo}}
 

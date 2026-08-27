@@ -11,11 +11,14 @@ running them is the expensive choice.
 \subsection{Tier 0, cheap and decisive\secstatus{todo}}
 
 \begin{enumerate}
-\item \textbf{The graph-prior probe} (\cref{sec:common}). Minutes of CPU, no GPU, no
-  training. It asks whether deleting gene $X$ actually perturbs $X$'s neighbors on each of
-  the nine graphs, which is the assumption the entire graph channel rests on and which has
-  never been checked. Nine attention heads are currently spent enforcing it. If three
-  graphs carry signal, regularize those three and free the other six.
+\item \textbf{The graph-prior probe is DONE, and it came back at chance}
+  (\cref{sec:graph-probe}). All nine graphs land between $0.4961$ and $0.5057$ AUC, at most
+  $+0.0046$ over a degree-preserving control. \textbf{Free the nine masked heads}; they are
+  constrained toward a target that does not predict which reporters respond. The one repair
+  with evidence is to stop symmetrizing the two directed relations: TF $\to$ target reaches
+  $0.5508$ on tflink and $0.5239$ on regulatory interaction, and
+  \file{_build_attention_mask} currently averages that away against its uninformative
+  reverse. That is a change to the mask builder, not to the model.
 
 \item \textbf{Morphology at full scale.} Drop \file{require_modalities} for the
   morphology-only arm and train on all 4,718 Ohya deletions instead of the 1,440 that also

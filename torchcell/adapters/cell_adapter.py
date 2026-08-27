@@ -5,6 +5,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/cell_adapter
 # Test file: tests/torchcell/adapters/test_cell_adapter.py
 
+import gc
 import hashlib
 import json
 import logging
@@ -303,6 +304,23 @@ class CellAdapter:
         # method rebuilds the pool ~7 times rather than paying a fork storm.
         group_size = self.process_workers * CHUNKS_PER_WORKER
         for group_start in range(0, len(data_chunks), group_size):
+            # Move everything currently reachable into the GC's permanent generation
+            # before forking this group's pool. Workers inherit the parent's heap
+            # copy-on-write, but one collection inside a worker traverses every tracked
+            # object and writes to its header, so those pages turn private per worker.
+            # Measured with a 3.05 GB parent heap: one trivial worker privatized 1.08 GB
+            # and six privatized 6.50 GB; with gc.freeze() first, every worker stayed at
+            # 0.00 GB. On the real genotype method with a ballasted parent, peak private
+            # across 41 processes went 46.2 GB -> 3.4 GB, which extrapolates to 168 GB ->
+            # 12 GB at 29 workers. That gap is what killed jobs 1545, 1552 and 1553.
+            #
+            # This runs per group, not once: the parent keeps allocating (BioCypher's
+            # write buffers above all), and each group forks a fresh pool, so anything
+            # allocated since the last freeze would otherwise be privatized by the next
+            # group's workers.
+            gc.collect()
+            gc.freeze()
+
             group = iter(data_chunks[group_start : group_start + group_size])
 
             def submit_next(

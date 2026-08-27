@@ -29,23 +29,23 @@ wandb:
   mode: online # disabled, offline, online
   project: tcdb
 
-# chunk_size is 1e4, a fortieth of what kg_full and kg_selected_costanzo_doubles use,
-# because at this dataset size chunk_size is the one knob every memory term scales with.
+# chunk_size is back to 1e5, matching kg_full and kg_selected_costanzo_doubles, because
+# chunk size was never what drove this build's memory. Copy-on-write was.
 #
-# Measured on one worker over a real 100k-record chunk of DmfCostanzo2016Dataset: peak
-# RSS 2.08 GB, of which the experiment method holds 10.4 KB per record, matching the CSV
-# row. So a chunk is ~1 GB of held nodes, and that number appears three times over:
-#   1. the parent holds up to process_workers + 2 finished results at once (the window),
-#      which at 1e5 is ~31 GB;
-#   2. every pool worker is forked from that parent, and CHUNKS_PER_WORKER rebuilds the
-#      pool mid-method, so workers fork when the parent is at its fullest;
-#   3. each worker forks io_workers loader children on top of that.
-# Job 1552's workers were OOM-killed at 48.9 GB anon-rss apiece with the cgroup at
-# 261 GB, which is that stack, not any single allocation. At 1e4 the window is ~3 GB and
-# every term above shrinks with it.
+# Shrinking it to 1e4 did buy time (job 1553 reached 1h12m against 1552's 39m) at about
+# 2.5x the wall clock, but both still died. Profiled on the real genotype method with a
+# ballasted parent, 8 workers and 4 io workers, peak private across all processes:
+#
+#   chunk   without gc.freeze   with gc.freeze   implied at 29 workers
+#   1e4          46.2 GB            3.0 GB          168 GB -> 11 GB
+#   1e5              --            11.2 GB                    41 GB
+#
+# So the freeze is worth ~14x and the chunk size ~4x, and with the freeze in place 1e5
+# lands near 41 GB against a 320 G reservation. Taking the faster setting back is worth
+# roughly twelve hours on this build.
 adapters:
   io_to_total_worker_ratio: 0.1
-  chunk_size: 1e4
+  chunk_size: 1e5
   loader_batch_size: 1e3
 
 subset:

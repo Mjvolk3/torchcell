@@ -6,6 +6,7 @@
 # Test file: tests/torchcell/loader/test_cpu_experiment_loader.py
 
 import ctypes
+import gc
 import os
 import queue
 import signal
@@ -55,6 +56,13 @@ class CpuExperimentLoaderMultiprocessing:
         # Flag to track if close has been called
         # make close idempotent
         self.is_closed = False
+
+        # Same copy-on-write guard the adapter applies before its pool: these children
+        # are forked from a chunk worker, so without it each one privatizes a share of
+        # whatever that worker inherited. There are io_workers of them per chunk worker,
+        # which is where the multiplier gets large.
+        gc.collect()
+        gc.freeze()
 
         for _ in range(num_workers):
             worker = Process(

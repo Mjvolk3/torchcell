@@ -18,19 +18,26 @@ The perturbation is therefore not applied to a strain. It is inherited, and it i
 everywhere in the genome at once.
 
 \tcfigfit[1.0]{figures/eqtl-experiment-and-genotype-inference.pdf}{%
-  \textbf{An eQTL study, and where inference enters it.}
-  \textbf{a}, The cross. Both parents are deep-sequenced, so the full variant catalog is
-  known before any segregant is examined; the segregants are then assayed twice, sparsely
-  for genotype and densely for expression.
-  \textbf{b}, One chromosome at three levels. True variant sites are dense, observed
-  markers are sparse, and the mosaic between them is an HMM posterior rather than a
-  reading. Crossover positions are localized only to the marker interval, and a
-  non-crossover gene conversion tract falling between markers is missed entirely.
-  \textbf{c}, What is measured against what is derived. The genotype matrix and the
-  expression matrix are measurements; the QTL table is an estimate conditional on the
-  mapping method, the significance threshold and the marker density.
-  Composed from the sources in Sec.~\ref{sec:what} rather than redrawn from a published
-  figure; source \file{notes/assets/drawio/eqtl-experiment-and-genotype-inference.drawio}.}
+  \textbf{An eQTL study, where inference enters it, and what it costs.}
+  \textbf{a}, The cross. Both parents are deep-sequenced, so every variant and both its
+  alleles are known before any segregant is examined. The segregants are then assayed
+  twice, sparsely for genotype and densely for expression, and that asymmetry drives
+  everything else.
+  \textbf{b}, One segregant along one chromosome, at four levels. True variant sites are
+  dense and none is read directly; marker calls are sparse and are read counts rather than
+  certainties; the HMM output is a posterior whose ramps are the uncertainty, since a
+  crossover is placed only to within one marker interval; the inferred blocks follow. A
+  non-crossover gene conversion tract sitting between markers produces no ramp at all,
+  because no read reports it.
+  \textbf{c}, The two matrices. $X$ shows haplotype blocks rather than noise, so its columns
+  are linked; $Y$ is a vector per strain rather than a scalar.
+  \textbf{d}, The map that results. Cis effects fall on the diagonal, each variant acting on
+  its own gene and usually through its promoter; trans hotspots appear as vertical bands
+  where one regulatory variant moves hundreds of transcripts.
+  \textbf{e}, The consequence for a record, developed in Sec.~\ref{sec:ontology}.
+  Panels \textbf{b} and \textbf{d} are schematic rather than plotted from data. Composed
+  from the sources in Sec.~\ref{sec:what} rather than redrawn from a published figure;
+  source \file{notes/assets/drawio/eqtl-experiment-and-genotype-inference.drawio}.}
   {fig:eqtl}
 
 \subsection{Two measurements and one inference\secstatus{todo}}

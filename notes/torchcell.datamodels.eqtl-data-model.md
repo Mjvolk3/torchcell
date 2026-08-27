@@ -88,6 +88,25 @@ apart cleanly here. The `segregant-WGS` basis assigned in the candidate list is 
 `<mxGraphModel>` makes drawio fail with "input file/directory not found"** -- put layout
 comments in the prolog above `<mxfile>`.
 
+### 2026.08.27 - figure revised to five panels
+
+First version was too thin. Now generated rather than hand-typed, so the repetitive cells
+are exact: `scratchpad/gen_eqtl_fig.py` emits the `.drawio`, which is committed as the
+artifact. Panels:
+
+- **a** cross and the two assays, ending in X and Y, with the asymmetry called out
+- **b** one chromosome at FOUR levels: true variants, marker calls (with A/B shown),
+  **the HMM posterior as a trace whose ramps ARE the uncertainty**, inferred blocks. Gene
+  conversion tract drawn between markers producing no ramp.
+- **c** both matrices drawn as grids: X shows haplotype BLOCKS (runs of 5-11 columns, short
+  runs read as noise and defeated the caption), Y as a graded heatmap
+- **d** the canonical eQTL map: cis on the diagonal, trans hotspots as vertical bands
+- **e** what is stored vs not, and the intergenic gap
+
+175.2 x 168.1 mm, just inside the 170 mm cap. Layout gotchas hit: a hard-coded panel-title
+width overhung to 965 units (title widths must be passed per panel), and text cells wrap
+at render time so legends need measured heights, not estimated ones.
+
 Related: [[experiments.database.expansion-100]] ·
 [[torchcell.datasets.scerevisiae.caudal2024]] ·
 [[torchcell.sequence.plasmid-and-genomic-content-design]] · [[paper.north-star]]

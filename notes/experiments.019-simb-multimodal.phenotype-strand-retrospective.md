@@ -117,3 +117,56 @@ Comments pulled with `python notes-tex/common/zotero_comments.py 019-simb-multim
 
 `pull_round_leaderboards.py` on the 15 remaining projects. It is resumable; delete
 `results/_leaderboard_cache/<project>.json` to refresh one.
+
+## 2026.08.27 - Leaderboard pull completed to 27 of 28 projects
+
+`pull_round_leaderboards.py` now covers **27 of 28 projects, 1,691 runs** (was 8 / 396).
+Only `torchcell_019-simb-multimodal_cgt_multitask` (496 runs) is outstanding; it is the
+original sniff sweep of 100-epoch small models whose best was ~0.044 under mean-collapse,
+so it cannot move a maximum.
+
+**No strand maximum moved except betaxanthin, which moved UP as expected**: 0.372 -> 0.401
+(44% of ceiling) once `torchcell_020_betaxanthin` (n_train 4,235) was read. Everything else
+held: expression 0.229 / masked 0.241, morphology 0.082, joint 0.059, amino acid 0.211,
+beta-carotene 0.132.
+
+### The new finding: expression score is a function of the EPOCH BUDGET
+
+All nine expression rounds, read the same way and sorted by score, come out in almost
+exactly the order of their epoch budgets:
+
+| project | runs | best | epochs of that run |
+|---|--:|--:|--:|
+| expr_v9 | 16 | 0.2407 | 9,997 |
+| expr_v8 | 163 | 0.2293 | 4,105 |
+| expr_v7 | 295 | 0.1631 | 152 |
+| expr_v6 | 158 | 0.1628 | 124 |
+| expr_v2 | 120 | 0.0996 | 25 |
+| expr_v3 | 60 | 0.0874 | 20 |
+| expr | 26 | 0.0822 | 19 |
+| expr_v5 | 35 | 0.0719 | 27 |
+
+Those rounds varied capacity, target normalization, which compendium was included, graph
+regularization, decoder family, distributional head and objective. **None of that orders the
+column; the epoch budget does**, across a factor of 526 in budget and 3.35 in score. v7 and
+v6, at 152 and 124 epochs, land within 0.0003 of each other. n_train moved only 10% over the
+same span and does not order it.
+
+Caveat kept in the document: `roll_max` is upward-biased with epochs run, so the scoring
+rule contributes a sliver of the ordering (a few thousandths against a 0.07-0.24 spread).
+
+**This is the strongest evidence that the binding constraint on expression has been compute,
+not mechanism**, and it is what the campaign's E = 4,000 epoch budget is set against.
+
+### Morphology confirmed across all 8 projects
+
+Best = 0.0824 (`morph_v5`); every other morphology project is lower (0.031 to 0.063), and
+every one peaked at epoch 6-27 of a run that stopped by 70.
+
+### Tooling
+
+Three defects found and fixed while doing this: a history request for a key a run never
+logged triggers a full unsampled scan (skip via `run.summary`); `wandb.Api(timeout=)` does
+not cover history pagination (added a SIGALRM hard timeout); and per-project caching plus
+smallest-first ordering makes an interrupted pull resume instead of restarting. Coverage and
+the two sampling resolutions (2,000 vs 500 points) are stated in the document.

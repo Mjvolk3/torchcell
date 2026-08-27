@@ -41,6 +41,7 @@ from __future__ import annotations
 import json
 import os
 import os.path as osp
+import signal
 
 import numpy as np
 import pandas as pd
@@ -177,6 +178,16 @@ CACHE_DIR = "_leaderboard_cache"
 # maxima this table reports, so the risk is to a median rather than to a maximum. Every row
 # carries `n_runs` and `n_history_fetched` so the sampling is visible wherever the number
 # is quoted, and a project at or below the limit is exhaustive.
+# HARD TIMEOUT PER HISTORY REQUEST. `wandb.Api(timeout=...)` covers the HTTP call, not the
+# pagination loop underneath `run.history()`, so a single run can wedge the whole pull
+# indefinitely; this happened twice, each time stalling for 40+ minutes on one project with
+# the process alive and idle. SIGALRM is the right instrument here because the script is
+# single-threaded and the goal is to ABANDON a stuck request rather than to wait it out: a
+# thread-pool timeout would leave the request running and the interpreter would not exit.
+# A skipped run is reported and simply has no roll_max, which is already how a
+# summary-only run is represented.
+HISTORY_TIMEOUT_S = 120
+
 CANDIDATES_BY_LAST = 8
 CANDIDATES_BY_LENGTH = 5
 
@@ -210,6 +221,26 @@ def _roll_max(values: np.ndarray, window: int = ROLL_WINDOW) -> tuple[float, int
     series = pd.Series(values).rolling(window, center=True, min_periods=1).mean()
     idx = int(series.idxmax())
     return float(series.iloc[idx]), idx
+
+
+class _HistoryTimeout(Exception):
+    """Raised by the SIGALRM handler when one history request overruns."""
+
+
+def _timeout_handler(signum, frame):  # noqa: ARG001
+    raise _HistoryTimeout
+
+
+def fetch_history(run, key: str, samples: int):
+    """`run.history` for one key, abandoned after HISTORY_TIMEOUT_S. None if it overran."""
+    signal.signal(signal.SIGALRM, _timeout_handler)
+    signal.alarm(HISTORY_TIMEOUT_S)
+    try:
+        return run.history(keys=["epoch", key], samples=samples)
+    except _HistoryTimeout:
+        return None
+    finally:
+        signal.alarm(0)
 
 
 def _candidates(runs: list, primaries: list[str]) -> set[str]:
@@ -292,7 +323,10 @@ def pull(api: wandb.Api, strand: str, project: str, primaries: list[str], extras
             if key not in run.summary:
                 n_missing_history += 1
                 continue
-            history = run.history(keys=["epoch", key], samples=HISTORY_SAMPLES)
+            history = fetch_history(run, key, HISTORY_SAMPLES)
+            if history is None:
+                print(f"    TIMEOUT after {HISTORY_TIMEOUT_S}s: {run.id} {key}", flush=True)
+                continue
             if history.empty or key not in history:
                 continue
             epochs = (

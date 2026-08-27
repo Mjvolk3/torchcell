@@ -41,45 +41,24 @@ comparable (\cref{tab:bx-two-numbers}).}
 \end{table}
 
 Scoring is a different matter. Finding a run's \emph{best} value needs its full validation
-history, which is one request per run, and the leaderboard below has read
-\textbf{13 of the 28 projects} that way. This is a real limitation rather than a detail, so
-it is stated before the table rather than after it.
+history, which is one request per run. Coverage there is not automatically complete, so it
+is stated before the table rather than after it, and the split below is generated from the
+data rather than written by hand: a hand-kept list would go stale silently, which is the
+worst failure mode for a table whose job is to state a limitation.
 
-\begin{table}[htbp]
-\centering\small
-%% SOURCE: results/round_leaderboards.csv and results/_leaderboard_cache/*.json (read);
-%% remaining projects enumerated by results/project_census.json.
-\begin{tabular}{lp{86mm}}
-\toprule
-status & projects \\
-\midrule
-history read & \file{expr_v8}, \file{expr_v9}, \file{morph_v5}, \file{expr_morph},
-  \file{expr_morph_v4}, \file{expr_morph_v5}, \file{betaxanthin_v4},
-  \file{beta_carotene_v4}, \file{mulleder19_v3}, \file{mulleder19_v4},
-  \file{metabolism}, \file{bx_m19_v1}, \file{expr} \\
-history pending & \file{cgt_multitask}, \file{expr_v2}, \file{expr_v3}, \file{expr_v5},
-  \file{expr_v6}, \file{expr_v7}, \file{morph_v2}, \file{morph_v3},
-  \file{expr_morph_v2}, \file{expr_morph_v3}, \file{betaxanthin},
-  \file{betaxanthin_v3}, \file{beta_carotene}, \file{beta_carotene_v3},
-  \file{mulleder19} \\
-\bottomrule
-\end{tabular}
-\caption[]{Finding a run's best score needs its full validation history, one request per
-run. Against a rate-limited API that does not complete over 2,187 runs in a sitting, so the
-pull is cached per project and resumable, and the remaining projects are queued rather than
-dropped. Two claims that would otherwise have depended on those projects are established from
-artifacts that do not need per-run history: the betaxanthin split difference from
-\file{project_census.json} and \file{analysis_002_noise_and_lambda.json}, and the
-morphology restriction from \file{project_census.json} plus the configs.}
-\label{tab:coverage}
-\end{table}
+\input{tables/t-coverage}
 
 \notesec{What this does and does not put at risk} A strand maximum can only move
 \emph{upward} when the pending projects land, never down, so every ``$X$ of ceiling''
 figure below is a lower bound. The medians are the vulnerable statistic, since they are
-computed over the projects read. The one number already known to change is betaxanthin:
-\cref{tab:bx-two-numbers} carries $0.4301$ from \file{betaxanthin_002}, which sits in a
-pending project and is read from that study's committed analysis instead.
+computed over the projects read.
+
+\notesec{One resolution caveat, because it is a real inconsistency} History is sampled, and
+two passes used different sample counts: the runs read first at 2,000 points per curve, the
+rest at 500. Coarser sampling can only lower a \file{roll_max}, by a few thousandths in
+practice (the best expression run reads $0.2407$ at 2,000 points and $0.2382$ at 500). Where
+a run appears in both passes the finer one is kept, so the effect is confined to runs read
+only in the second pass and is downward.
 
 \subsection{One table, read the same way\secstatus{todo}}
 

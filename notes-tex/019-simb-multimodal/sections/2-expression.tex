@@ -83,6 +83,25 @@ from 1,600 to 10,000 moved the score from $0.204$ to $0.241$ and moved the peak 
 the curve is still rising where it was cut off. \textbf{No peak has ever been observed on
 this task}, at any budget tried, and the saturation epoch remains unknown.
 
+\notesec{Read across all nine expression rounds, the score is a function of the budget}
+Every expression project, read the same way and sorted by score, comes out in almost
+exactly the order of its epoch budget.
+
+\input{tables/t-expr-epoch-budget}
+
+These rounds were not varying the same thing. They varied capacity, target normalization,
+which compendium was included, graph regularization, decoder family, distributional head
+and objective. None of that orders the column; the epoch budget does, across a factor of
+500 in budget and a factor of 3.3 in score. Training-set size moved by ten percent over the
+same span and does not order it either.
+
+\textbf{This is the strongest available evidence that the binding constraint on this strand
+has been compute rather than mechanism}, and it is only visible with every round in one
+table. It is also a caution about reading it too hard: \file{roll_max} is an upward-biased
+order statistic whose bias grows with epochs run, so part of the ordering is the scoring
+rule rewarding longer runs. That bias is a few thousandths at these lengths and the spread
+here is $0.07$ to $0.24$, so it explains a sliver rather than the trend.
+
 \notesec{Consequence} An arm comparison at 300 epochs is not a small effect measured
 noisily. Both arms were stopped before either had the chance to separate, so the difference
 between them reflects early-training transients. The null sink arm reads

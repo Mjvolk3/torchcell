@@ -5,10 +5,35 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/loader/cpu_experiment_loader
 # Test file: tests/torchcell/loader/test_cpu_experiment_loader.py
 
+import ctypes
+import os
 import queue
+import signal
 from collections.abc import Iterator, Sequence
 from multiprocessing import Process, Queue
 from typing import Any
+
+PR_SET_PDEATHSIG = 1
+"""prctl option: deliver a signal to this process when its parent dies."""
+
+
+def _die_with_parent() -> None:
+    """Ask the kernel to SIGKILL this process the moment its parent dies.
+
+    ``close()`` cannot help when the parent is SIGKILLed, because no ``finally``
+    runs: the children survive, park on ``load_queue.get()`` forever, and keep the
+    parent pool's queue file descriptors open, so ``ProcessPoolExecutor.shutdown``
+    waits on an EOF that never comes. Job 1545 hung exactly that way for six hours
+    after the container OOM-killed six workers, leaving 77 orphans and 28 zombies.
+    PR_SET_PDEATHSIG is the only mechanism that survives SIGKILL of the parent.
+
+    The parent can die between the caller's fork and this call, in which case the
+    signal is already missed, so re-check parentage and exit if it has been reparented.
+    """
+    libc = ctypes.CDLL("libc.so.6", use_errno=True)
+    libc.prctl(PR_SET_PDEATHSIG, signal.SIGKILL, 0, 0, 0)
+    if os.getppid() == 1:
+        os._exit(0)
 
 
 class CpuExperimentLoaderMultiprocessing:
@@ -51,6 +76,7 @@ class CpuExperimentLoaderMultiprocessing:
         batch_size: int,
     ) -> None:
         """Pull batch indices, slice the dataset, and push batches until stopped."""
+        _die_with_parent()
         # An LMDB environment must never be shared across fork(): the child
         # inherits the parent's memory map + reader-table slot, so once the file
         # has grown past that mapping a read in the child raises MDB_MAP_RESIZED

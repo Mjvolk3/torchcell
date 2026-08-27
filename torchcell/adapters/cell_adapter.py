@@ -26,6 +26,15 @@ from torchcell.loader import CpuExperimentLoaderMultiprocessing
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
+CHUNKS_PER_WORKER = 2
+"""Chunks a pool worker may handle before the pool is rebuilt with fresh workers.
+
+Bounds a worker's heap, which ratchets up across chunks because CPython does not
+return freed arenas to the OS. ``max_tasks_per_child`` would express this directly
+but raises ValueError under the fork start method, and fork is what lets a worker
+inherit the built dataset instead of re-importing and re-opening it.
+"""
+
 
 class CellAdapter:
     """Convert a cell experiment dataset into BioCypher nodes and edges for import."""
@@ -260,6 +269,10 @@ class CellAdapter:
         chunk is held in this process until its turn -- for a 20.7M-record dataset at
         chunk_size 1e5 that is 207 results of ~1 GB each. Job 1543 died that way, with
         a worker's fork for its loader failing ENOMEM against the container's limit.
+
+        The window bounds what THIS process holds; ``CHUNKS_PER_WORKER`` bounds what a
+        worker holds, by rebuilding the pool every group of chunks. Job 1545 needed both:
+        windowed but long-lived workers still ratcheted to 38-50 GB of heap apiece.
         """
         memory_reduction_factor = self.get_memory_reduction_factor(method_name, is_edge)
         chunk_size = int(self.chunk_size * memory_reduction_factor)
@@ -273,33 +286,46 @@ class CellAdapter:
         # feeder pickle a dataset whose env is transiently open, which raises
         # "TypeError: cannot pickle 'Environment' object" (job 1544, four minutes into
         # DmfCostanzo2016Adapter's environment method, after three methods had passed).
-        data_chunks = iter(
-            [
-                self.dataset[i : i + chunk_size]
-                for i in range(0, len(self.dataset), chunk_size)
-            ]
-        )
+        data_chunks = [
+            self.dataset[i : i + chunk_size]
+            for i in range(0, len(self.dataset), chunk_size)
+        ]
         self.dataset.close_lmdb()
 
-        def submit_next(executor: ProcessPoolExecutor) -> Future[Any] | None:
-            """Submit the next chunk, or return None once every chunk is submitted."""
-            chunk = next(data_chunks, None)
-            if chunk is None:
-                return None
-            return executor.submit(chunk_processing_func, chunk, method_name)
+        # Chunks are handed out in groups, one pool per group, so that no worker
+        # outlives CHUNKS_PER_WORKER tasks. Pool workers are otherwise reused for the
+        # method's whole traversal, and CPython does not return freed arenas to the OS,
+        # so a worker's heap ratchets up across the chunks it handles. Job 1545 was
+        # measured mid-hang with worker heaps at 38-50 GB each (read off the
+        # Shared_Dirty of their forked loader children) against a 400 GB container, six
+        # OOM kills, and 316 GB of anon memory. Recycling caps that at roughly one
+        # group's working set. The group is a multiple of the pool size, so a 414-chunk
+        # method rebuilds the pool ~7 times rather than paying a fork storm.
+        group_size = self.process_workers * CHUNKS_PER_WORKER
+        for group_start in range(0, len(data_chunks), group_size):
+            group = iter(data_chunks[group_start : group_start + group_size])
 
-        with ProcessPoolExecutor(max_workers=self.process_workers) as executor:
-            in_flight: deque[Future[Any]] = deque()
-            for _ in range(self.process_workers + 2):
-                future = submit_next(executor)
-                if future is None:
-                    break
-                in_flight.append(future)
-            while in_flight:
-                yield from in_flight.popleft().result()
-                future = submit_next(executor)
-                if future is not None:
+            def submit_next(
+                executor: ProcessPoolExecutor, group: Iterator[Any] = group
+            ) -> Future[Any] | None:
+                """Submit the next chunk, or None once the group is fully submitted."""
+                chunk = next(group, None)
+                if chunk is None:
+                    return None
+                return executor.submit(chunk_processing_func, chunk, method_name)
+
+            with ProcessPoolExecutor(max_workers=self.process_workers) as executor:
+                in_flight: deque[Future[Any]] = deque()
+                for _ in range(self.process_workers + 2):
+                    future = submit_next(executor)
+                    if future is None:
+                        break
                     in_flight.append(future)
+                while in_flight:
+                    yield from in_flight.popleft().result()
+                    future = submit_next(executor)
+                    if future is not None:
+                        in_flight.append(future)
 
     def data_chunker(  # type: ignore[misc]  # in-class decorator factory; first arg is the wrapped method, not self
         data_creation_logic: Callable[..., Any],

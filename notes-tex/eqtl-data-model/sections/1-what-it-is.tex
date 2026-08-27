@@ -1,0 +1,100 @@
+%% notes-tex/eqtl-data-model/sections/1-what-it-is.tex
+%% [[torchcell.datamodels.eqtl-data-model]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/eqtl-data-model/sections/1-what-it-is.tex
+%% SOURCE: hand-authored. Figure from notes/assets/drawio/eqtl-experiment-and-genotype-inference.drawio.
+%% Boocock numbers quoted from the mirrored paper.md; schema names read from schema.py.
+
+\section{The experiment and its three tables\secstatus{todo}}\label{sec:what}
+
+Two strains that differ genetically are crossed, classically BY, a laboratory strain
+near-isogenic to S288C, against RM, a vineyard isolate. The F1 hybrid is sporulated and
+$n$ haploid progeny are collected. Each progeny strain, a \term{segregant}, is a
+\term{meiotic mosaic}: at every locus it carries either the BY or the RM allele, in linked
+blocks whose boundaries are set by crossover positions. Every segregant's transcriptome is
+measured, and the question asked per gene is which loci in the mosaic predict its
+expression.
+
+The perturbation is therefore not applied to a strain. It is inherited, and it is present
+everywhere in the genome at once.
+
+\tcfigfit[1.0]{figures/eqtl-experiment-and-genotype-inference.pdf}{%
+  \textbf{An eQTL study, and where inference enters it.}
+  \textbf{a}, The cross. Both parents are deep-sequenced, so the full variant catalog is
+  known before any segregant is examined; the segregants are then assayed twice, sparsely
+  for genotype and densely for expression.
+  \textbf{b}, One chromosome at three levels. True variant sites are dense, observed
+  markers are sparse, and the mosaic between them is an HMM posterior rather than a
+  reading. Crossover positions are localized only to the marker interval, and a
+  non-crossover gene conversion tract falling between markers is missed entirely.
+  \textbf{c}, What is measured against what is derived. The genotype matrix and the
+  expression matrix are measurements; the QTL table is an estimate conditional on the
+  mapping method, the significance threshold and the marker density.
+  Composed from the sources in Sec.~\ref{sec:what} rather than redrawn from a published
+  figure; source \file{notes/assets/drawio/eqtl-experiment-and-genotype-inference.drawio}.}
+  {fig:eqtl}
+
+\subsection{Two measurements and one inference\secstatus{todo}}
+
+\notesec{Genotype matrix} $X$, segregants by marker positions. Entries encode
+\emph{parental origin} rather than base identity, so the natural form looks binary. Bloom
+2013 used 11,623 markers for 1,008 segregants. BY and RM segregate at roughly
+$4.5\times10^{4}$ sites, so the marker set is a thinned representation of the real variant
+set, and long runs of constant value along the position axis are what recombination blocks
+look like. Sec.~\ref{sec:observed} corrects the binary reading.
+
+\notesec{Expression matrix} $Y \in \mathbb{R}^{n \times p}$, segregants by genes, with
+$p \approx 5{,}000$ to $6{,}000$. This is the phenotype, and it is a vector per strain
+rather than a scalar.
+
+\notesec{QTL table} The derived output. For gene $g$ and marker $j$ the standard model is
+
+$$
+y_{ig} \;=\; \mu_g \;+\; \beta_{gj}\,X_{ij} \;+\; \varepsilon_{ig},
+\qquad \varepsilon_{ig} \sim \mathcal{N}(0,\sigma_g^2)
+$$
+
+fit marker by marker, with significance from a LOD score and a permutation threshold. A
+row of the table is a gene, a marker interval, an effect size, a LOD and a variance
+explained.
+
+The first two are measurements. The third is an inference over them, and it changes if the
+mapping method, the threshold or the marker density changes while the measurement does not.
+Sec.~\ref{sec:ontology} returns to what that means for storage.
+
+\subsection{Structure worth knowing before modeling it\secstatus{todo}}
+
+\notesec{Cis against trans} A \term{cis} eQTL sits at or near the gene's own locus and is
+usually a promoter variant changing that gene's own transcription. A \term{trans} eQTL sits
+elsewhere, typically in a regulator. Cis effects are strong, sparse and roughly one per
+affected gene; trans effects are weak and numerous.
+
+\notesec{Hotspots} Trans effects are not spread evenly across loci. A small number of loci
+each affect hundreds to thousands of transcripts, one regulatory variant propagating
+outward. The columns of $Y$ are therefore strongly dependent, a few latent factors explain
+much of the variance, and treating genes as independent is wrong.
+
+\subsection{The four candidates, and why they rank where they do\secstatus{todo}}
+
+\begin{table}[H]\centering
+\small
+\caption[]{The eQTL rows in the candidate list. \emph{Both axes} marks a dataset that is
+high-dimensional in perturbation and in readout at once, which in that list is true of
+three datasets in total.}
+\label{tab:eqtl-rows}
+\begin{tabular}{@{}l r l l@{}}
+\toprule
+Dataset & Segregants & Readout & Both axes \\
+\midrule
+Albert 2018 & 1,012 & bulk RNA-seq, 1 condition & yes \\
+Boocock 2025 & 393 & one-pot single cell, 2 carbon sources & yes \\
+N'Guessan 2025 & $\sim$4,500 profiled & single cell & yes \\
+Smith 2008 & 109 & bulk, glucose and ethanol & no \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Boocock 2025 draws 27,744 single cells from those 393 segregants, a median of 17 cells per
+segregant. The extra axis is cells \emph{within} a genotype, which is what allows eQTLs to
+be mapped for expression noise and for cell-cycle occupancy rather than only for the mean.
+Smith 2008 is small, and it is the design that demonstrates an eQTL present in one carbon
+source and absent in the other.

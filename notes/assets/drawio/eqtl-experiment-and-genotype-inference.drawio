@@ -1,0 +1,241 @@
+    <!--
+      Column grid (units; 100 units = 1 inch; full width 702):
+        C1=8  C2=150  C3=292  C4=430  C5=566   box width 128 unless noted
+      Row bands:
+        a. experiment            y 16..150
+        b. observed vs inferred  y 172..372
+        c. matrices to QTL       y 394..556
+      Palette: slots 1..6 of PLOT_PALETTE only. Parent A orange, Parent B red,
+      inferred purple, measured yellow, derived gray, emphasis blue.
+    -->
+<mxfile host="app.diagrams.net" agent="claude-code">
+  <diagram name="eqtl-experiment" id="eqtl-experiment">
+    <mxGraphModel dx="1400" dy="1000" grid="0" page="1" pageWidth="702" pageHeight="604" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ============ panel a ============ -->
+        <mxCell id="ta" value="&lt;b&gt;a&lt;/b&gt;&#160;&#160;The experiment" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="8" y="2" width="300" height="14" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pa" value="Parent A (BY)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="8" y="24" width="128" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="pb" value="Parent B (RM)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="8" y="54" width="128" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="pnote" value="deep WGS, &gt;100&#215;&#10;full variant catalog V known&#10;(&#8776;4.5&#215;10&#8308; SNPs, BY&#215;RM)" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="8" y="84" width="128" height="36" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ea1" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="136" y="51" as="sourcePoint" />
+            <mxPoint x="150" y="51" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="f1" value="F1 hybrid diploid" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="150" y="39" width="128" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="f1n" value="one chromosome copy&#10;from each parent" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="150" y="66" width="128" height="24" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ea2" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="278" y="51" as="sourcePoint" />
+            <mxPoint x="292" y="51" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="seg" value="Sporulate &#8594; n segregants" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="292" y="39" width="128" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="segn" value="each a meiotic MOSAIC&#10;of the two parents" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="292" y="66" width="128" height="24" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ea3" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="420" y="42" as="sourcePoint" />
+            <mxPoint x="430" y="30" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ea4" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="420" y="60" as="sourcePoint" />
+            <mxPoint x="430" y="96" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="gass" value="Genotype assay" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="430" y="18" width="120" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="gassn" value="SPARSE: markers, or only&#10;the SNPs that are expressed" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="430" y="42" width="130" height="24" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pass" value="Transcriptome" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="430" y="86" width="120" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="passn" value="DENSE: every gene measured&#10;in every segregant" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="430" y="110" width="130" height="24" as="geometry" />
+        </mxCell>
+
+        <mxCell id="asym" value="The asymmetry that&#10;drives everything below:&#10;the PHENOTYPE is observed&#10;directly, the GENOTYPE is&#10;not." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;align=left;verticalAlign=top;spacingLeft=4;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="574" y="18" width="120" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- ============ panel b ============ -->
+        <mxCell id="tb" value="&lt;b&gt;b&lt;/b&gt;&#160;&#160;What is observed, and what is inferred, along one chromosome" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="8" y="156" width="500" height="14" as="geometry" />
+        </mxCell>
+
+        <mxCell id="l1" value="TRUE variant sites in V&#10;(&#8776;1 per 260 bp)" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="8" y="176" width="112" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="truebar" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;dashPattern=1 2;strokeWidth=1;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="128" y="180" width="566" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="truetx" value="dense: every 260 bp" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="128" y="180" width="566" height="14" as="geometry" />
+        </mxCell>
+
+        <mxCell id="l2" value="OBSERVED markers&#10;(&#8776;1 per 1 kb)" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="8" y="204" width="112" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="m1" value="" style="rounded=0;html=1;fillColor=#6C8EBF;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="140" y="208" width="3" height="14" as="geometry" /></mxCell>
+        <mxCell id="m2" value="" style="rounded=0;html=1;fillColor=#6C8EBF;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="188" y="208" width="3" height="14" as="geometry" /></mxCell>
+        <mxCell id="m3" value="" style="rounded=0;html=1;fillColor=#6C8EBF;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="236" y="208" width="3" height="14" as="geometry" /></mxCell>
+        <mxCell id="m4" value="" style="rounded=0;html=1;fillColor=#6C8EBF;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="284" y="208" width="3" height="14" as="geometry" /></mxCell>
+        <mxCell id="m5" value="" style="rounded=0;html=1;fillColor=#6C8EBF;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="332" y="208" width="3" height="14" as="geometry" /></mxCell>
+        <mxCell id="m6" value="" style="rounded=0;html=1;fillColor=#6C8EBF;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="380" y="208" width="3" height="14" as="geometry" /></mxCell>
+        <mxCell id="m7" value="" style="rounded=0;html=1;fillColor=#6C8EBF;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="428" y="208" width="3" height="14" as="geometry" /></mxCell>
+        <mxCell id="m8" value="" style="rounded=0;html=1;fillColor=#6C8EBF;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="476" y="208" width="3" height="14" as="geometry" /></mxCell>
+        <mxCell id="m9" value="" style="rounded=0;html=1;fillColor=#6C8EBF;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="524" y="208" width="3" height="14" as="geometry" /></mxCell>
+        <mxCell id="m10" value="" style="rounded=0;html=1;fillColor=#6C8EBF;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="572" y="208" width="3" height="14" as="geometry" /></mxCell>
+        <mxCell id="m11" value="" style="rounded=0;html=1;fillColor=#6C8EBF;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="620" y="208" width="3" height="14" as="geometry" /></mxCell>
+        <mxCell id="m12" value="" style="rounded=0;html=1;fillColor=#6C8EBF;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="668" y="208" width="3" height="14" as="geometry" /></mxCell>
+
+        <mxCell id="l3" value="INFERRED mosaic&#10;(HMM posterior)" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="8" y="234" width="112" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="b1" value="A" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="128" y="234" width="132" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="b2" value="B" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="266" y="234" width="106" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="b3" value="A" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="378" y="234" width="140" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="b4" value="B" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="524" y="234" width="170" height="22" as="geometry" />
+        </mxCell>
+
+        <mxCell id="u1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="258" y="230" width="14" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="u2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="366" y="230" width="14" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="u3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="516" y="230" width="14" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="gc" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;dashed=1;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="432" y="234" width="18" height="22" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ann1" value="crossover position known only to the marker interval" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="196" y="264" width="150" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="ann1e" style="endArrow=none;html=1;strokeWidth=1;strokeColor=#666666;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="265" y="262" as="sourcePoint" />
+            <mxPoint x="265" y="264" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="ann2" value="a gene conversion tract falls BETWEEN markers and is missed entirely" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#B85450;" vertex="1" parent="1">
+          <mxGeometry x="370" y="264" width="150" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="ann2e" style="endArrow=classic;html=1;strokeWidth=1;strokeColor=#B85450;endSize=3;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="441" y="264" as="sourcePoint" />
+            <mxPoint x="441" y="257" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="why" value="&lt;b&gt;Why sparse markers are enough.&lt;/b&gt; The segregant is not sequenced de novo. It is ASSIGNED to one of two known genomes at each locus. Meiosis makes &#8776;90 crossovers, so a genome is &#8776;10&#178; blocks, and one marker fixes every cataloged variant in its block. Reconstruction means locating &#8776;10&#178; boundaries, not determining &#8776;10&#8308; values." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;align=left;verticalAlign=top;spacingLeft=5;spacingTop=3;spacingRight=5;" vertex="1" parent="1">
+          <mxGeometry x="8" y="306" width="340" height="66" as="geometry" />
+        </mxCell>
+        <mxCell id="cost" value="&lt;b&gt;What it still cannot give you.&lt;/b&gt; Boundary intervals leave &#8776;0.8% of cataloged sites ambiguous. Non-crossover gene conversion (&#8776;46 per meiosis, &#8776;2 kb tracts) is the larger error source and is invisible to sparse markers. De novo mutation, aneuploidy and non-reference sequence are outside the mosaic model altogether." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;align=left;verticalAlign=top;spacingLeft=5;spacingTop=3;spacingRight=5;" vertex="1" parent="1">
+          <mxGeometry x="358" y="306" width="336" height="66" as="geometry" />
+        </mxCell>
+
+        <!-- ============ panel c ============ -->
+        <mxCell id="tc" value="&lt;b&gt;c&lt;/b&gt;&#160;&#160;Two matrices are measured; the QTL table is derived from them" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="8" y="384" width="520" height="14" as="geometry" />
+        </mxCell>
+
+        <mxCell id="mx" value="X&#160;&#160;n &#215; m&#10;genotype posterior" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="8" y="406" width="130" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="mxn" value="entries in [0,1], NOT {0,1}:&#10;a probability the cell or strain&#10;carries the B allele" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="8" y="443" width="130" height="36" as="geometry" />
+        </mxCell>
+
+        <mxCell id="my" value="Y&#160;&#160;n &#215; p&#10;expression" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="8" y="488" width="130" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="myn" value="p &#8776; 5,000 to 6,000 genes;&#10;a VECTOR per strain" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="8" y="525" width="130" height="24" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ec1" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="138" y="423" as="sourcePoint" />
+            <mxPoint x="164" y="450" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ec2" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="138" y="505" as="sourcePoint" />
+            <mxPoint x="164" y="478" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="fit" value="fit per gene g, per marker j&#10;y(i,g) = &#956;(g) + &#946;(g,j)&#183;X(i,j) + &#949;(i,g)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="164" y="447" width="150" height="34" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ec3" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="314" y="464" as="sourcePoint" />
+            <mxPoint x="340" y="464" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="qtl" value="QTL table&#10;(gene, marker, effect, LOD, var. expl.)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="340" y="447" width="150" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="qtln" value="DERIVED, not measured: changes with the method, the threshold and the marker density. Not a Phenotype." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="340" y="484" width="150" height="46" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ident" value="&lt;b&gt;The limit no sample size removes.&lt;/b&gt; Within a block every variant is perfectly collinear, so the effect is identifiable only up to the BLOCK, never to a base. Pruning markers at r &gt; 0.999 concedes this. A cross localizes to an interval; only an assay that tests alleles one at a time, such as an MPRA, reaches a base." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;align=left;verticalAlign=top;spacingLeft=5;spacingTop=3;spacingRight=5;" vertex="1" parent="1">
+          <mxGeometry x="512" y="406" width="182" height="116" as="geometry" />
+        </mxCell>
+
+        <mxCell id="verdict" value="&lt;b&gt;Verdict.&lt;/b&gt; Which-allele reconstruction succeeds at &#8776;99%. Which-variant-is-causal never does. Our gate asks the first, so these panels PASS." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;align=left;verticalAlign=top;spacingLeft=5;spacingTop=3;spacingRight=5;" vertex="1" parent="1">
+          <mxGeometry x="512" y="534" width="182" height="56" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

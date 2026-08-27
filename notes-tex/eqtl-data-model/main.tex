@@ -1,0 +1,50 @@
+%% notes-tex/eqtl-data-model/main.tex
+%% [[torchcell.datamodels.eqtl-data-model]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/eqtl-data-model/main.tex
+%%
+%% Typeset counterpart of notes/torchcell.datamodels.eqtl-data-model.md.
+%%
+%% Build:  make            -> main.pdf        (draft: status chips + provenance flags)
+%%         make clean-view -> main-clean.pdf  (share view)
+%%         make check      -> formatting / provenance / style gate
+%%         make figures    -> re-export the draw.io figure
+%%
+%% Schema class names are read from torchcell/datamodels/schema.py, not recalled.
+%% Quantitative claims about Boocock 2025 are quoted from the mirrored paper at
+%% $DATA_ROOT/torchcell-library/boocockSinglecellEQTLMapping2025/paper.md.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+
+\title{\vspace{-1.5em}What eQTL Data Is\\
+  {\large And how a meiotic mosaic fits an ontology built for gene edits}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+Expression quantitative trait locus studies cross two strains, collect recombinant
+progeny, and measure a transcriptome in every one. Four of them rank among the strongest
+candidates for ingestion, and three are the only datasets in that list that are
+high-dimensional in both perturbation and readout. They also break an assumption the
+current schema rests on: the genotype is never observed directly. It is inferred from
+sparse markers as a mosaic of two parental genomes. This sets out what the records
+contain, establishes that the strain genotype is nevertheless recoverable to roughly one
+percent while the causal variant is not recoverable at all, and states what the schema
+needs before a loader is written.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-what-it-is}
+\input{sections/2-observed-vs-inferred}
+\input{sections/3-ontology}
+
+\end{document}

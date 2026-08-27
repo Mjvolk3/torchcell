@@ -1,0 +1,149 @@
+%% notes-tex/eqtl-data-model/sections/2-observed-vs-inferred.tex
+%% [[torchcell.datamodels.eqtl-data-model]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/eqtl-data-model/sections/2-observed-vs-inferred.tex
+%% SOURCE: hand-authored; quotes are verbatim from the mirrored
+%% $DATA_ROOT/torchcell-library/boocockSinglecellEQTLMapping2025/paper.md (lines 50, 71, 208, 212, 228).
+%% The error-budget arithmetic is derived from published parameters and is labeled as such.
+
+\section{The genotype is inferred, not observed\secstatus{todo}}\label{sec:observed}
+
+\subsection{What the methods actually say\secstatus{todo}}
+
+Verbatim from the mirrored Boocock 2025 paper:
+
+\begin{quote}
+\small
+``We used a hidden Markov model (HMM) to reconstruct the patterns of inheritance of
+parental alleles in each cell based on the observed genotypes at expressed SNPs.''
+\end{quote}
+
+\begin{quote}
+\small
+``We defined prior genotype probabilities as 0.5 for each parental variant. Emission
+probabilities were calculated as previously described for low coverage sequencing data.''
+\end{quote}
+
+\begin{quote}
+\small
+``Genotype probabilities were standardized, and markers in very high LD ($r > 0.999$) were
+pruned. This LD pruning is approximately equivalent to using markers spaced 4 centimorgans
+(cm) apart.''
+\end{quote}
+
+So the genotype matrix is not binary. It is
+
+$$
+X \in [0,1]^{n \times m}, \qquad
+X_{ij} \;=\; \Pr\!\big(\text{segregant } i \text{ carries the RM allele at } j \,\big|\, \text{reads}\big)
+$$
+
+and the eQTL model is fit on the standardized posterior directly. Binarizing at $0.5$ is
+done only to compare cell identities.
+
+\subsection{Three levels of partial observation\secstatus{todo}}
+
+\begin{table}[H]\centering
+\small
+\caption[]{What is actually observed, by study. The single-cell design is the most severely
+partial: genotype coverage is conditioned on the transcript being expressed, so the
+genotype observation and the phenotype measurement come from the same reads.}
+\label{tab:levels}
+\begin{tabular}{@{}l l l@{}}
+\toprule
+Study & Observed & Genotype is \\
+\midrule
+Bloom 2013 & low-coverage WGS of each segregant & calls at $\sim$11,623 markers \\
+Nguyen Ba 2022 & low-coverage WGS plus barcode & calls at markers, $n \sim 10^5$ \\
+Boocock 2025 & only SNPs that happen to be expressed & an HMM posterior per marker \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A gene that is switched off in a cell contributes no genotype information about its own
+locus. That coupling has no analog in any other dataset in the collection.
+
+\subsection{Why sparse observation is nevertheless enough\secstatus{todo}}\label{sec:enough}
+
+The segregant is not being sequenced de novo. It is being \emph{assigned} to one of two
+known genomes at each locus, which is a far easier problem:
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=1pt,topsep=2pt]
+  \item The parents are deep-sequenced, ``deep ($>100\times$) paired-end sequenced data for
+    our parental strains,'' so the complete variant catalog and both alleles at every site
+    are known before any segregant is looked at.
+  \item Meiosis produces few boundaries. In \org{S.\ cerevisiae} roughly 90 crossovers per
+    meiosis, so across 16 chromosomes a segregant genome is on the order of $10^2$
+    contiguous blocks.
+  \item Within a block, parental origin is constant, so one marker fixes every cataloged
+    variant in its block.
+\end{enumerate}
+
+Reconstruction reduces to locating $\sim\!10^2$ boundaries rather than determining
+$\sim\!10^4$ independent values.
+
+\notesec{Error budget, derived from published parameters rather than measured} BY and RM
+segregate at $\sim\!4.5\times10^4$ SNPs over 12 Mb, about 1 per 260 bp. Bloom 2013's 11,623
+markers give $\sim\!1$ kb spacing, so a crossover is localized to about 4 variants:
+
+$$
+\underbrace{90}_{\text{crossovers}} \times \underbrace{4}_{\text{variants per interval}}
+\;\approx\; 360 \;\text{ of } 4.5\times10^4 \;\approx\; 0.8\%\ \text{ambiguous}
+$$
+
+leaving roughly $99\%$ of cataloged variant sites assignable. \external{arithmetic from
+published crossover and variant-density figures, not a measured concordance}
+
+\notesec{The larger error source is not crossovers} Yeast meiosis also produces $\sim\!46$
+non-crossover gene conversion events per meiosis with tracts of order 2 kb. Those are
+short, they do not shift the surrounding haplotype, and sparse markers miss them entirely,
+so they affect more base pairs than boundary uncertainty and are harder to detect.
+
+\subsection{What reconstruction cannot give you at any marker density\secstatus{todo}}
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+  \item \textbf{De novo mutations.} A segregant is a mosaic plus whatever arose since the
+    cross. Few per strain, invisible to a parental-assignment method, so the genome is
+    never exactly a mosaic.
+  \item \textbf{Aneuploidy and copy number.} These need coverage, not markers, and yeast
+    segregants do acquire them.
+  \item \textbf{Non-reference sequence.} A variant call file is not an assembly.
+    Reconstructing total genomic content needs the parents' assemblies, including sequence
+    absent from S288C.
+\end{itemize}
+
+\subsection{Per cell the answer flips\secstatus{todo}}
+
+Boocock reports \emph{median genotype agreement of 92.5\%} between the single-cell HMM
+genotypes and whole-genome sequencing of the same strains, improving with UMI count. About
+1 marker in 13 wrong is entirely acceptable for an association fit across 27,744 cells,
+where the posterior enters as a standardized covariate and the error averages out. It is
+nowhere near sufficient to write down a genome. What rescues the strain-level genotype is
+pooling: a median of 17 cells per segregant, against 393 segregants that had already been
+whole-genome sequenced in Bloom 2013 and against which the cells were matched.
+
+\notesec{Do not conflate reconstruction resolution with mapping resolution} The HMM used
+all expressed SNPs. The 4 cM LD-pruned marker set was used for the association, because
+markers above $r>0.999$ carry no independent information. Coarse mapping resolution says
+nothing about how well the genome can be reconstructed.
+
+\subsection{Reconstruction and attribution come apart\secstatus{todo}}\label{sec:verdict}
+
+$$
+\text{which allele is at a site} \;\checkmark
+\qquad\text{against}\qquad
+\text{which variant causes the effect} \;\times
+$$
+
+The first is a two-way assignment with strong priors and succeeds at $\sim\!99\%$. The
+second is blocked by collinearity: within a haplotype block every variant is perfectly
+correlated with every other, so an effect is identifiable only up to the block, and no
+number of additional segregants changes that. Pruning markers above $r>0.999$ concedes
+exactly this point.
+
+The consequence for the candidate list is favorable. The sequence gate asks whether the
+total genomic content of a strain can be estimated, not whether a causal variant can be
+identified, so \textbf{segregant panels pass}, conditional on holding the parent
+assemblies. The consequence for modeling is that a cross localizes an effect to an
+interval and nothing more. Only an assay that tests alleles one at a time, such as a
+massively parallel reporter assay, gets from an interval to a base, which is why those
+datasets belong in the same ingestion wave rather than a later one.

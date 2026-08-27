@@ -1,0 +1,120 @@
+%% notes-tex/eqtl-data-model/sections/3-ontology.tex
+%% [[torchcell.datamodels.eqtl-data-model]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/eqtl-data-model/sections/3-ontology.tex
+%% SOURCE: hand-authored. Every class name and the systematic-gene-name pattern are read
+%% from torchcell/datamodels/schema.py, not recalled.
+
+\section{How it fits the ontology\secstatus{todo}}\label{sec:ontology}
+
+\subsection{What already exists\secstatus{todo}}
+
+The primary record is a genotype and an environment mapped to a phenotype, which is exactly
+\file{Experiment}. Nothing conceptual is missing, and four pieces are already built.
+
+\begin{itemize}[leftmargin=1.2em,itemsep=2pt,topsep=2pt]
+  \item \file{RNASeqExpressionPhenotype} is the bulk readout, and it was written for this
+    situation. Its docstring describes a survey ``where each isolate's transcriptome is
+    measured on its OWN genome,'' with ``no common reference to ratio against,'' storing
+    absolute TPM. Albert 2018 and Smith 2008 fit unchanged.
+  \item \file{PseudobulkExpressionPhenotype} is the single-cell readout, built for
+    Nadal-Ribelles 2025. It carries \file{dispersion} and \file{n\_cells} per genotype,
+    which is the right shape for Boocock's noise eQTLs: heterogeneity survives as a
+    per-genotype scalar rather than being averaged away.
+  \item \file{SequenceVariantPerturbation} states the intent outright. Together with
+    \file{CopyNumberVariantPerturbation} it ``lets a NATURAL ISOLATE be modeled as a
+    perturbation set off S288C ($\sim$4,500 sequence variants per isolate).''
+  \item The off-graph pointer pattern on that class, \file{sequence\_source},
+    \file{sequence\_uri} and \file{sequence\_sha256}, means variant sequences are never
+    inlined.
+\end{itemize}
+
+\subsection{Where the obvious mapping fails\secstatus{todo}}\label{sec:fails}
+
+Reusing \file{SequenceVariantPerturbation} for a segregant is the obvious move and it is
+wrong. \textbf{A natural isolate and a segregant are not the same kind of object.} Caudal's
+isolates are each individually sequenced, so the variant set is observed and every allele
+dereferences to a real sequence with a hash. A segregant is never sequenced to that
+standard; the \emph{parents} are, and the segregant is imputed as a mosaic of them. That
+class promises a dereferenceable, hash-verified sequence, and for a segregant no such
+artifact exists. Using it would encode an inference as an observation, which is the precise
+failure the verification levels exist to prevent.
+
+\subsection{Four gaps, in order of how much they matter\secstatus{todo}}
+
+\notesec{Intergenic variants have no representation} \file{GenePerturbation} requires
+\file{systematic\_gene\_name} and validates it against
+
+\begin{quote}\small
+\file{^(Y[A-P][LR]\\d{3}[WC](-[A-Z])?|Q\\d{4}|YNC[A-Q]\\d{4}[WC])\$}
+\end{quote}
+
+so every perturbation must attach to a real gene. A promoter SNP 300 bp upstream of an ORF
+has no gene to attach to, and assigning it to the downstream gene is an interpretation,
+wrong whenever the variant acts on a divergent neighbor. This is the sharpest gap and it is
+not incidental: the promoter is where the strongest and most interpretable cis signal lives.
+It is also the same gap that blocks every massively parallel reporter assay, which perturbs
+regulatory sequence exclusively.
+
+\notesec{Cardinality} An SGA record carries at most three perturbations. A segregant carries
+$\sim\!10^4$. For $n \sim 10^3$ segregants that is $\sim\!10^7$ perturbation objects for one
+dataset, and \file{Genotype} sorts and set-compares its perturbation list on every equality
+check while the L1 key hashes the genotype signature.
+
+\notesec{Reference asymmetry} A segregant's natural reference is one of its two parents,
+but the convention expresses everything off S288C. BY is near-isogenic to S288C, so
+BY-derived blocks are nearly empty perturbation sets while RM-derived blocks carry the full
+variant load. Keeping S288C is still right, since it is what makes these records comparable
+to everything else, but the lopsidedness reflects the reference choice rather than the
+biology and should be documented rather than discovered.
+
+\notesec{Linkage is destroyed by a set} Variants arrive in blocks and co-segregate.
+Representing a genotype as an unordered set discards exactly the structure that makes
+mapping possible and that limits attribution.
+
+\subsection{The representation that follows\secstatus{todo}}\label{sec:proposal}
+
+Store what was actually determined, a \term{haplotype mosaic} rather than a variant set:
+
+$$
+G_i \;=\; \big\{ (\text{chr},\, \text{start},\, \text{end},\, \text{parent},\, p) \big\},
+\qquad |G_i| \sim 10^1\text{--}10^2
+$$
+
+against two hash-pinned parent assemblies, with a per-interval posterior $p$ and the marker
+spacing recorded as the resolution. This is better on four counts at once.
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=1pt,topsep=2pt]
+  \item \textbf{Honest.} It stores the inference as an inference, with its uncertainty,
+    rather than promising sequence that was never read.
+  \item \textbf{Compact.} Tens of intervals per strain instead of $\sim\!10^4$ variants,
+    which dissolves the cardinality problem rather than solving it.
+  \item \textbf{Lossless.} The full variant set is recoverable exactly from the two parent
+    assemblies plus the intervals, so it becomes a derived view and nothing is given up.
+  \item \textbf{Linkage-preserving.} The interval is the unit, so co-segregation is
+    explicit.
+\end{enumerate}
+
+The cost is a genuinely new perturbation type, keyed on a genomic interval and a parent
+rather than on a gene, carrying a probability. That is the same non-gene-keyed requirement
+the promoter-variant gap already imposes, so the two should be resolved together.
+
+\subsection{What to do\secstatus{todo}}\label{sec:todo}
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=2pt,topsep=2pt]
+  \item \textbf{Ingest the two matrices, not the QTL table.} One
+    \file{RNASeqExpressionExperiment} per segregant per condition, or
+    \file{PseudobulkExpressionExperiment} for the single-cell studies. The QTL table is an
+    estimate conditional on method and threshold, it has no source value to check against
+    at any verification level, and storing it as a \file{Phenotype} would be ingesting
+    somebody's analysis as data.
+  \item \textbf{Decide the intergenic question deliberately}, because it gates both this
+    class and the regulatory-DNA class. Either a non-gene-keyed perturbation leaf on a
+    genomic interval, or gene-keying with the attribution recorded as a
+    \file{ProvenanceGap}, or restriction to coding variants. The third is the honest
+    short-term option and the worst long-term one.
+  \item \textbf{Treat the parent assemblies as an ingestion dependency.} A segregant record
+    means nothing without them, so they are part of the artifact rather than context, and
+    each needs a hash-pinned assembly rather than a variant call file.
+  \item \textbf{Measure the cardinality cost} on a single Albert 2018 segregant before
+    building anything.
+\end{enumerate}

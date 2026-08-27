@@ -29,16 +29,23 @@ wandb:
   mode: online # disabled, offline, online
   project: tcdb
 
-# chunk_size is 1e5 here, a quarter of what kg_full and kg_selected_costanzo_doubles
-# use. Chunk size sets both a worker's working set and the size of one buffered result:
-# CellAdapter.get_data_by_type submits every chunk to a ProcessPoolExecutor up front and
-# yields results in submission order, so finished-but-unyielded chunks are held in the
-# parent. At 100k records a Costanzo adapter was a single chunk and neither cost showed
-# up; at 20.7M it is 207 chunks. Smaller chunks buy the peak back, which is what lets
-# this build reserve 400 G and leave the rest of the node usable.
+# chunk_size is 1e4, a fortieth of what kg_full and kg_selected_costanzo_doubles use,
+# because at this dataset size chunk_size is the one knob every memory term scales with.
+#
+# Measured on one worker over a real 100k-record chunk of DmfCostanzo2016Dataset: peak
+# RSS 2.08 GB, of which the experiment method holds 10.4 KB per record, matching the CSV
+# row. So a chunk is ~1 GB of held nodes, and that number appears three times over:
+#   1. the parent holds up to process_workers + 2 finished results at once (the window),
+#      which at 1e5 is ~31 GB;
+#   2. every pool worker is forked from that parent, and CHUNKS_PER_WORKER rebuilds the
+#      pool mid-method, so workers fork when the parent is at its fullest;
+#   3. each worker forks io_workers loader children on top of that.
+# Job 1552's workers were OOM-killed at 48.9 GB anon-rss apiece with the cgroup at
+# 261 GB, which is that stack, not any single allocation. At 1e4 the window is ~3 GB and
+# every term above shrinks with it.
 adapters:
   io_to_total_worker_ratio: 0.1
-  chunk_size: 1e5
+  chunk_size: 1e4
   loader_batch_size: 1e3
 
 subset:

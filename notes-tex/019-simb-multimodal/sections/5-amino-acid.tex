@@ -1,0 +1,215 @@
+%% notes-tex/019-simb-multimodal/sections/5-amino-acid.tex
+%% [[experiments.023-metabolome-betaxanthin-joint.scripts.betaxanthin_amino_acid_predictivity]]
+%% SOURCE: coupling numbers from
+%% experiments/023-metabolome-betaxanthin-joint/scripts/betaxanthin_amino_acid_predictivity.py
+%% -> results/betaxanthin_amino_acid_predictivity.json. Scores from
+%% experiments/019-simb-multimodal/results/round_leaderboards.csv. Convergence behavior from
+%% experiments/022-mulleder-metabolome/results/training_length_analysis.json.
+
+\section{Amino-acid pools, and whether they help production\secstatus{todo}}
+\label{sec:amino-acid}
+
+\subsection{The target\secstatus{todo}}
+
+Mulleder 2016 (doi:10.1016/j.cell.2016.09.007) measured the intracellular concentration of
+19 amino acids in 4,678 single-deletion strains. There is one replicate per strain and no
+released standard error, so the dataset admits \textbf{no within-dataset reproducibility
+ceiling}. Every correlation involving it is attenuated by an unmeasured amount, and that
+qualification travels with every number below.
+
+The best validation \file{pearson_per_feature} is $\mathbf{0.211}$, run
+\texttt{24vlgope} in \file{torchcell_022_mulleder19_v4}, peaking at epoch 402 of 999.
+The median across the 31 runs is $0.0498$, so the leaderboard is a long tail under one good
+configuration rather than a plateau. Earlier rounds read $\le 0.025$, then $0.171$, so the
+trajectory is upward across rounds.
+
+\subsection{These runs converge, which the expression runs never do\secstatus{todo}}
+
+Twenty-four runs in the preceding round were scored for their convergence shape. The
+typical run peaks at epoch 48 to 134, continues for another 41 epochs with validation slope
+turning negative while training slope stays positive, and is classified converged then
+overfitting. None of them hit the epoch cap.
+\src{experiments/022-mulleder-metabolome/results/training_length_analysis.json}
+
+This is the opposite failure to \cref{sec:expression}, where nothing peaked at any budget
+up to 10,000 epochs. The two strands run the same architecture on the same encoder, so
+whatever makes expression climb for thousands of epochs is a property of the expression
+target or its loss, not of the model.
+
+\subsection{The precursor hypothesis is wrong, and the profile hypothesis is right\secstatus{todo}}
+
+Betalains derive from L-tyrosine (tyrosine to L-DOPA to betalamic acid), and a betaxanthin
+is betalamic acid condensed with an amino acid. The mechanistic prediction is that a
+deletion's free amino-acid pool carries information about how much betaxanthin that same
+deletion makes. Both screens are keyed by systematic ORF and share 4,432 deletions, so the
+prediction is directly testable with no model in the loop.
+
+\notesec{What the prediction actually is, since it is easy to read as a model result and
+is not one} No neural network appears anywhere in this subsection. The procedure is:
+
+\begin{enumerate}
+\item Join the two screens on systematic ORF. One row per deletion: 19 measured amino-acid
+  concentrations from Mulleder, and one betaxanthin value from Cachera.
+\item Take $\log$ of each concentration (they are skewed positive quantities) and
+  $z$-score each of the 19 columns.
+\item Fit \textbf{ridge regression} from those 19 numbers to the betaxanthin value, with
+  the penalty chosen by inner cross-validation.
+\item Score \textbf{out of fold}: five-fold cross-validation, so every prediction is made
+  by a model that never saw that deletion, then correlate the held-out predictions against
+  the measurements. Repeat over three fold shuffles and report the mean.
+\end{enumerate}
+
+So $r = 0.298$ means: \emph{knowing a deletion's 19 amino-acid concentrations lets you
+predict its betaxanthin at $r = 0.298$ on deletions you did not fit on}. The comparison row
+``tyrosine alone'' is the same procedure with one column instead of nineteen. It is a
+statement about the two measurements, and it puts a floor under what any model sharing a
+representation between these phenotypes could hope to exploit.
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: results/betaxanthin_amino_acid_predictivity.json
+\begin{tabular}{lrr}
+\toprule
+predictor of betaxanthin & out-of-fold Pearson $r$ & $n$ \\
+\midrule
+tyrosine alone (the precursor)         & 0.064 & 4{,}432 \\
+\textbf{19 amino acids jointly}        & \textbf{0.298} & 4{,}432 \\
+\midrule
+\multicolumn{3}{l}{\emph{on the 3{,}708 deletions with a Costanzo fitness record}} \\
+single-mutant fitness alone            & 0.151 & 3{,}708 \\
+19 amino acids                         & 0.176 & 3{,}708 \\
+19 amino acids and fitness             & 0.200 & 3{,}708 \\
+19 amino acids, fitness regressed out of both & 0.133 & 3{,}708 \\
+\midrule
+\multicolumn{3}{l}{\emph{on the 724 with no Costanzo record}} \\
+19 amino acids                         & \textbf{0.455} & 724 \\
+\bottomrule
+\end{tabular}
+\caption[]{Cross-validated ridge, five folds, three shuffles; the spread across shuffles is
+$\le 0.022$ everywhere and $\le 0.004$ on the large sets. Amino acids enter as
+$\log$ concentration, $z$-scored.}
+\label{tab:aa-predictivity}
+\end{table}
+
+\notesec{Tyrosine is not the axis} Its marginal correlation with betaxanthin is
+$r = -0.076$ ($p = 3.9\times10^{-7}$), which is negative, and it ranks sixth of nineteen by
+absolute correlation. The strongest is methionine at $+0.140$, followed by aspartate
+$+0.127$ and arginine $-0.118$. No amino acid exceeds $|r| = 0.15$. Correcting for the
+betaxanthin side's known reliability of $0.836$ raises these by a factor of $1.094$, which
+does not change the reading; the Mulleder side's correction is unmeasurable and would raise
+them further by an unknown amount.
+
+\notesec{The profile is the axis} The 19-dimensional pool predicts betaxanthin at
+out-of-fold $r = 0.298$, roughly $4.7\times$ the precursor alone. For scale, the CGT's own
+genotype-to-betaxanthin validation Pearson is $0.372$ to $0.430$, so a linear map from 19
+measured metabolite concentrations recovers most of what the model recovers from genotype.
+
+\notesec{Why fitness enters at all, since it is a third dataset and looks like a detour}
+Both screens are deletion phenotypes and both respond to how well the strain grows. A slow
+deletion can have a distorted amino-acid pool \emph{and} a distorted pigment readout with
+no metabolic relationship between the two, which would produce exactly the correlation
+above for an uninteresting reason. Costanzo single-mutant fitness (KanMX deletions, 30 C)
+is the standard measurement of that shared nuisance, so it is regressed out of both sides
+and the fit recomputed on the residuals. It is a control, not a third phenotype in the
+story.
+
+Single-mutant fitness alone predicts betaxanthin at $0.151$, so the shared growth component
+is real and substantial. Regressing it out of both sides leaves the amino-acid profile at
+$0.133$ against $0.176$ without the control on the same genes, so roughly three quarters of
+its predictive power survives. Combining the two reaches $0.200$, above either alone.
+
+The control also shrinks the gene set, from 4,432 to the 3,708 deletions that carry a
+Costanzo record, which is why both the controlled and uncontrolled fits are reported on
+that same 3,708 rather than compared across different populations.
+
+\notesec{And most of the signal is where fitness is unavailable} The 724 deletions with no
+Costanzo KanMX record have a betaxanthin standard deviation of $0.914$ against $0.464$ for
+the rest, and on them the amino-acid profile predicts at $0.455$. This is the population
+that carries the extremes, and it is the population a fitness-based control cannot reach.
+
+\tcfigfit{figures/betaxanthin_amino_acid_predictivity.pdf}{(a) Marginal correlation of each
+amino acid with betaxanthin over the 4,432 shared deletions; tyrosine highlighted. These
+reproduce \file{experiments/019-simb-multimodal/results/pigment_noise_ceiling.json}
+exactly, which the generating script asserts rather than assumes. (b) Cross-validated ridge
+fits from \cref{tab:aa-predictivity}. (c) Median tyrosine by betaxanthin decile. The
+relationship is non-monotone: tyrosine is highest in the lowest-production decile, falls
+through the middle, and rises again at the top, which is why a linear correlation reads
+near zero. The axis spans $2.65$ to $2.89$ mM, so the swing is about $9\,\%$ of the
+median.}{fig:aa-coupling}
+
+\notesec{A mechanism, labeled as unverified} The Cachera background carries
+\gene{ARO4}$^{\mathrm{K229L}}$ and \gene{ARO7}$^{\mathrm{G141S}}$, feedback-resistant
+alleles that release the shikimate pathway from the control that shapes the pools Mulleder
+measured in the plain deletion collection. A plausible reading is that free tyrosine in an
+unengineered strain is not the quantity that limits flux in an engineered one. This has not
+been tested and no experiment here can test it.
+
+\subsection{Does the metabolome head actually help the betaxanthin head\secstatus{todo}}
+
+%% PLACEHOLDER-023: paired arm analysis, filled from round_leaderboards.csv
+The claim under test is narrow and was stated before the round: in Delta grid cell
+\file{s04_L6_maskon_lr0.0001}, the joint arm read $+0.0203$ over the control on
+\file{val/betaxanthin/pearson_per_feature} at a matched budget of 333 epochs. That was
+one paired difference at one seed with no estimate of the noise floor on it. The same grid
+read $-0.049$ and $-0.060$ in the two $L = 2$ cells, both run to 1,000 epochs, so the sign
+flips with depth.
+
+\input{tables/t-bx-aa-paired}
+
+Scored uniformly across the whole grid, the effect is \textbf{negative}. Over the five
+matched-exposure cells whose control arm learned the task at all, the mean difference is
+$\mathbf{-0.0265 \pm 0.0159}$ (standard error, $n = 5$), with 2 of 5 positive. Over all ten
+matched-exposure cells including the collapsed ones it is $-0.0220 \pm 0.0090$, with 3 of
+10 positive.
+
+Three readings the table supports, in decreasing confidence.
+
+\begin{enumerate}
+\item \textbf{The original $+0.0203$ reproduces, and it is one cell.} Cell
+  \file{s04_L6_maskon_lr0.0001} reads $+0.0192$ here under a different scoring rule
+  and a different epoch budget, which is close agreement. It is also the only clearly
+  positive live cell, against two large negatives at $L = 2$ and one at $L = 6$ with the
+  graph mask off.
+\item \textbf{Depth and the graph mask both matter more than the auxiliary head.} The two
+  $L = 2$ cells read $-0.0455$ and $-0.0492$; the two $L = 6$ cells read $+0.0192$ with the
+  mask on and $-0.0608$ with it off. Any single-cell claim about the metabolome head is
+  smaller than the spread across the cells it could have been made in.
+\item \textbf{The auxiliary head is weak wherever the primary is good.} Its own score runs
+  $0.053$ to $0.149$ across the live cells, well under the $0.211$ the amino-acid strand
+  reaches when it is the only head. So the joint arm is paying capacity for a head that is
+  itself underperforming, which is a different problem from the coupling being absent.
+\end{enumerate}
+
+\notesec{The measurement this still lacks} Every number in the table is $n = 1$ per arm
+per cell except \texttt{s08}, so the spread across cells mixes the effect with
+initialization noise, and no within-cell noise floor exists. That is exactly the gap the
+replication config was written to close.
+
+The designed replication, \file{experiments/023-metabolome-betaxanthin-joint/conf/igb_bx_aa.yaml},
+adds a third setting: an auxiliary head restricted to \textbf{tyrosine only}, against a
+common control, on a gene set pinned by \file{require_head_targets} so no arm can win
+by seeing more rows. \textbf{It has not been run}; no W\&B project
+\file{torchcell_023_bx_aa_v1} exists. Given \cref{tab:aa-predictivity}, its tyrosine
+arm is now predicted to be the null one and its 19-amino-acid arm the live one, which is a
+sharper prediction than the config was written against.
+
+\notesec{Established} The free amino-acid profile of a deletion predicts that deletion's
+betaxanthin production at $r = 0.298$ out of fold, tyrosine alone predicts it at $0.064$,
+and about three quarters of the profile's power survives regressing out single-mutant
+fitness. The amino-acid strand itself reaches $0.211$ and converges rather than
+under-trains.
+
+Scored across the whole 023 grid, adding the metabolome head \emph{lowers} betaxanthin by
+$-0.0265 \pm 0.0159$ over five comparable cells. The one positive cell is the one the
+original claim came from.
+
+\notesec{Cannot say} How much of the $0.298$ is attenuated by Mulleder's unmeasurable
+noise, so it is a floor rather than an estimate. Whether a shared encoder can exploit the
+coupling: the data says the coupling is there, the joint training says the current head
+does not use it, and at $n = 1$ per cell those two are not yet in contradiction.
+
+\notesec{The gap this exposes} A linear map on 19 measured metabolite concentrations
+reaches $0.298$ on betaxanthin, and the auxiliary head that is supposed to inject the same
+information reaches $0.053$ to $0.149$ on those metabolites and then costs the primary task
+$0.027$. The coupling is not the bottleneck. The route by which a second head's
+representation reaches the first head's readout is.

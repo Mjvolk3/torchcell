@@ -104,9 +104,17 @@ wrapper, so unused head params never trip this — the sweep avoids the bug for 
    sync from a `biologin` login node after the run:
 
    ```bash
-   cd /home/a-m/mjvolk3/scratch/torchcell/experiments/019-simb-multimodal
-   wandb sync wandb/offline-run-*
+   bash experiments/019-simb-multimodal/scripts/igb_login_wandb_sync.sh \
+     /home/a-m/mjvolk3/scratch/torchcell/experiments/019-simb-multimodal
    ```
+
+   **Do NOT use the bare glob** `wandb sync wandb/offline-run-*`. It hands every offline
+   run to ONE python process, and that is what produces the Biocluster resource warning
+   (`Process: python ... Mem%: 6.9  Limits: %mem: 5.0`). The activity is allowed on a login
+   node; that shape of the command is not. The wrapper syncs one run per process, nices
+   itself, skips runs already marked synced so it is resumable, and pauses between runs so
+   the average CPU stays under the 15% cap.
+   See [[experiments.019-simb-multimodal.scripts.igb_login_wandb_sync]].
 
 ### Open / next
 

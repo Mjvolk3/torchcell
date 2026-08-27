@@ -1,0 +1,70 @@
+%% notes-tex/019-simb-multimodal/sections/6-carotene.tex
+%% [[experiments.019-simb-multimodal.scripts.pigment_noise_ceiling]]
+%% SOURCE: ceiling from experiments/019-simb-multimodal/results/pigment_noise_ceiling.json;
+%% scores from experiments/019-simb-multimodal/results/round_leaderboards.csv.
+
+\section{Beta-carotene production\secstatus{todo}}
+\label{sec:carotene}
+
+\subsection{Why this target is different from the other pigment\secstatus{todo}}
+
+Ozaydin 2013 (doi:10.1016/j.ymben.2012.07.010) screened the deletion collection carrying a
+beta-carotene pathway and scored each colony's color \textbf{by eye on an ordinal scale
+from $-5$ to $+5$}. The dataset holds 4,474 records, of which 4,344 have a single replicate
+and 130 have two or three. That is a different kind of measurement from the Cachera
+fluorescence readout, and it needs a different ceiling: a Pearson ceiling on a subjective
+ordinal is the wrong object, so rank agreement is used.
+
+Two estimates exist, and they disagree by a factor of seven.
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: experiments/019-simb-multimodal/results/pigment_noise_ceiling.json, beta_carotene
+\begin{tabular}{llrr}
+\toprule
+estimate & basis & $n$ & Spearman \\
+\midrule
+replicate max against min & 130 replicated rows & 130 & \textbf{0.544} \\
+independent re-screen & \texttt{2ndRoundOfTransformations} sheet & 119 & 0.075 \\
+\quad range-restriction corrected & Thorndike case 2, Pearson & 119 & 0.105 \\
+\bottomrule
+\end{tabular}
+\caption[]{Reliability of the beta-carotene score. Neither estimate is clean. The
+max-against-min comparison is biased in both directions at once: the two are drawn from one
+replicate set, which inflates agreement, and they are the widest possible split of that
+set, which deflates it. The re-screen is a genuine test-retest but was run on selected top
+hits, so its 1st-screen scores sit almost entirely in $3\ldots5$ of a $-5\ldots+5$ scale.}
+\label{tab:carotene-ceiling}
+\end{table}
+
+The reported ceiling is $0.544$, from the replicate comparison. Read the $0.075$ as what a
+re-screen of selected winners looks like under range restriction, not as evidence that the
+score is worthless.
+
+\tcfigfit{figures/pigment_noise_ceiling.pdf}{Reliability of both pigment targets. The
+betaxanthin panel uses the per-record standard error over a median of 15 colonies; the
+beta-carotene panels use rank agreement, because the target is a hand-scored
+ordinal.}{fig:pigment-ceiling}
+
+\subsection{What was measured\secstatus{todo}}
+
+Thirty-nine runs in \file{torchcell_021_beta_carotene_v4}, spanning 134 to 999
+epochs. The best validation \file{spearman_per_feature} is $\mathbf{0.118}$, run
+\texttt{o0aadmot}, peaking at epoch 799 of 999. Median across live runs is $0.072$. Against
+the $0.544$ ceiling that is $24\,\%$ realized.
+
+\notesec{Established} Beta-carotene is the weakest pigment target and the reason is
+visible in the measurement rather than in the model: a hand-scored ordinal with one
+replicate per strain has a reliability that no architecture recovers. The strand does carry
+signal, at $0.118$ against a chance level of zero, and its best run peaks late (epoch 791 of
+999), so it shares the expression strand's under-training rather than the metabolite
+strands' early overfitting.
+
+\notesec{Cannot say} Which of the two ceiling estimates is right, and therefore whether
+$0.118$ is a quarter of achievable or most of it. That gap is resolvable only with a
+replicate design the source data does not contain.
+
+\notesec{Recommendation} Keep beta-carotene as a second production target for the coverage
+argument in \cref{sec:betaxanthin}, where the claim is about which genes a flux model can
+represent and does not depend on the absolute score. Do not spend a sweep on lifting its
+number.

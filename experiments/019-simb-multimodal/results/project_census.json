@@ -1,0 +1,625 @@
+{
+  "n_projects": 28,
+  "n_runs_total": 2187,
+  "by_strand": {
+    "amino_acid": {
+      "n_projects": 3,
+      "n_runs": 97,
+      "n_train_values_seen": [
+        4234,
+        4235
+      ],
+      "projects": [
+        "torchcell_020_mulleder19",
+        "torchcell_020_mulleder19_v3",
+        "torchcell_022_mulleder19_v4"
+      ]
+    },
+    "beta_carotene": {
+      "n_projects": 3,
+      "n_runs": 136,
+      "n_train_values_seen": [
+        3846,
+        3849
+      ],
+      "projects": [
+        "torchcell_020_beta_carotene",
+        "torchcell_020_beta_carotene_v3",
+        "torchcell_021_beta_carotene_v4"
+      ]
+    },
+    "betaxanthin": {
+      "n_projects": 4,
+      "n_runs": 142,
+      "n_train_values_seen": [
+        3694,
+        3698,
+        3846,
+        4235
+      ],
+      "projects": [
+        "torchcell_020_betaxanthin",
+        "torchcell_020_betaxanthin_v3",
+        "torchcell_020_betaxanthin_v4",
+        "torchcell_020_metabolism"
+      ]
+    },
+    "betaxanthin_amino_acid_joint": {
+      "n_projects": 1,
+      "n_runs": 46,
+      "n_train_values_seen": [
+        3832
+      ],
+      "projects": [
+        "torchcell_023_bx_m19_v1"
+      ]
+    },
+    "expression": {
+      "n_projects": 9,
+      "n_runs": 1369,
+      "n_train_values_seen": [
+        1125,
+        1126,
+        1137,
+        1161,
+        1244,
+        1253
+      ],
+      "projects": [
+        "torchcell_019-simb-multimodal_cgt_multitask",
+        "torchcell_019_expr",
+        "torchcell_019_expr_v2",
+        "torchcell_019_expr_v3",
+        "torchcell_019_expr_v5",
+        "torchcell_019_expr_v6",
+        "torchcell_019_expr_v7",
+        "torchcell_019_expr_v8",
+        "torchcell_019_expr_v9"
+      ]
+    },
+    "expression_morphology_joint": {
+      "n_projects": 5,
+      "n_runs": 214,
+      "n_train_values_seen": [
+        1161
+      ],
+      "projects": [
+        "torchcell_019_expr_morph",
+        "torchcell_019_expr_morph_v2",
+        "torchcell_019_expr_morph_v3",
+        "torchcell_019_expr_morph_v4",
+        "torchcell_019_expr_morph_v5"
+      ]
+    },
+    "morphology": {
+      "n_projects": 3,
+      "n_runs": 183,
+      "n_train_values_seen": [
+        1161
+      ],
+      "projects": [
+        "torchcell_019_morph_v2",
+        "torchcell_019_morph_v3",
+        "torchcell_019_morph_v5"
+      ]
+    }
+  },
+  "per_project": [
+    {
+      "strand": "expression",
+      "project": "torchcell_019-simb-multimodal_cgt_multitask",
+      "n_runs": 496,
+      "states": {
+        "failed": 17,
+        "crashed": 5,
+        "finished": 474
+      },
+      "metric_keys": [
+        "val/per_gene/pearson_per_gene",
+        "val/per_gene/pearson_per_strain",
+        "val/per_gene/pearson"
+      ],
+      "n_train_observed": {
+        "1125": 4,
+        "1126": 4,
+        "1137": 4
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "expression",
+      "project": "torchcell_019_expr",
+      "n_runs": 26,
+      "states": {
+        "crashed": 6,
+        "finished": 20
+      },
+      "metric_keys": [
+        "val/per_gene/pearson_per_gene",
+        "val/per_gene/pearson_per_strain"
+      ],
+      "n_train_observed": {
+        "1126": 26
+      },
+      "n_train_sampled_from": 26
+    },
+    {
+      "strand": "expression_morphology_joint",
+      "project": "torchcell_019_expr_morph",
+      "n_runs": 21,
+      "states": {
+        "finished": 21
+      },
+      "metric_keys": [
+        "val/global/pearson_per_gene",
+        "val/global/pearson_per_strain",
+        "val/per_gene/pearson_per_gene",
+        "val/per_gene/pearson_per_strain"
+      ],
+      "n_train_observed": {
+        "1161": 21
+      },
+      "n_train_sampled_from": 21
+    },
+    {
+      "strand": "expression_morphology_joint",
+      "project": "torchcell_019_expr_morph_v2",
+      "n_runs": 80,
+      "states": {
+        "finished": 80
+      },
+      "metric_keys": [
+        "val/global/pearson_per_gene",
+        "val/global/pearson_per_strain",
+        "val/per_gene/pearson_per_gene",
+        "val/per_gene/pearson_per_strain"
+      ],
+      "n_train_observed": {
+        "1161": 30
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "expression_morphology_joint",
+      "project": "torchcell_019_expr_morph_v3",
+      "n_runs": 77,
+      "states": {
+        "crashed": 8,
+        "finished": 69
+      },
+      "metric_keys": [
+        "val/expression/pearson_per_feature",
+        "val/morphology/pearson_per_feature",
+        "val/expression/pearson_per_instance",
+        "val/morphology/pearson_per_instance"
+      ],
+      "n_train_observed": {
+        "1161": 30
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "expression_morphology_joint",
+      "project": "torchcell_019_expr_morph_v4",
+      "n_runs": 4,
+      "states": {
+        "crashed": 4
+      },
+      "metric_keys": [],
+      "n_train_observed": {
+        "1161": 4
+      },
+      "n_train_sampled_from": 4
+    },
+    {
+      "strand": "expression_morphology_joint",
+      "project": "torchcell_019_expr_morph_v5",
+      "n_runs": 32,
+      "states": {
+        "crashed": 12,
+        "finished": 20
+      },
+      "metric_keys": [
+        "val/mean/pearson_per_feature",
+        "val/expression/pearson_per_feature",
+        "val/morphology/pearson_per_feature",
+        "val/expression/pearson_per_instance",
+        "val/morphology/pearson_per_instance"
+      ],
+      "n_train_observed": {
+        "1161": 30
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "expression",
+      "project": "torchcell_019_expr_v2",
+      "n_runs": 120,
+      "states": {
+        "finished": 119,
+        "crashed": 1
+      },
+      "metric_keys": [
+        "val/per_gene/pearson_per_gene",
+        "val/per_gene/pearson_per_strain"
+      ],
+      "n_train_observed": {
+        "1161": 30
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "expression",
+      "project": "torchcell_019_expr_v3",
+      "n_runs": 60,
+      "states": {
+        "finished": 60
+      },
+      "metric_keys": [
+        "val/expression/pearson_per_feature",
+        "val/expression/pearson_per_instance"
+      ],
+      "n_train_observed": {
+        "1161": 30
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "expression",
+      "project": "torchcell_019_expr_v5",
+      "n_runs": 35,
+      "states": {
+        "finished": 32,
+        "crashed": 3
+      },
+      "metric_keys": [
+        "val/mean/pearson_per_feature",
+        "val/expression/pearson_per_feature",
+        "val/expression/pearson_per_instance"
+      ],
+      "n_train_observed": {
+        "1161": 30
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "expression",
+      "project": "torchcell_019_expr_v6",
+      "n_runs": 158,
+      "states": {
+        "finished": 158
+      },
+      "metric_keys": [
+        "val/mean/pearson_per_feature",
+        "val/expression/pearson_per_feature",
+        "val/expression/pearson_per_instance",
+        "val/expression/spearman_per_feature"
+      ],
+      "n_train_observed": {
+        "1244": 30
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "expression",
+      "project": "torchcell_019_expr_v7",
+      "n_runs": 295,
+      "states": {
+        "finished": 295
+      },
+      "metric_keys": [
+        "val/mean/pearson_per_feature",
+        "val/expression/pearson_per_feature",
+        "val/expression/pearson_per_instance",
+        "val/expression/spearman_per_feature"
+      ],
+      "n_train_observed": {
+        "1244": 30
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "expression",
+      "project": "torchcell_019_expr_v8",
+      "n_runs": 163,
+      "states": {
+        "finished": 119,
+        "failed": 3,
+        "crashed": 41
+      },
+      "metric_keys": [
+        "val/mean/pearson_per_feature",
+        "val/expression/pearson_per_feature",
+        "val/expression/pearson_per_instance",
+        "val/expression/spearman_per_feature"
+      ],
+      "n_train_observed": {
+        "1244": 22,
+        "1253": 7
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "expression",
+      "project": "torchcell_019_expr_v9",
+      "n_runs": 16,
+      "states": {
+        "failed": 7,
+        "crashed": 1,
+        "finished": 8
+      },
+      "metric_keys": [
+        "val/expression/pearson_per_feature@k0",
+        "val/expression/pearson_per_feature@k1",
+        "val/expression/pearson_per_feature@k2",
+        "val/expression/pearson_per_feature@k3",
+        "val/mean/pearson_per_feature",
+        "val/expression/pearson_per_feature",
+        "val/expression/pearson_per_instance",
+        "val/expression/spearman_per_feature"
+      ],
+      "n_train_observed": {
+        "1244": 16
+      },
+      "n_train_sampled_from": 16
+    },
+    {
+      "strand": "morphology",
+      "project": "torchcell_019_morph_v2",
+      "n_runs": 71,
+      "states": {
+        "finished": 71
+      },
+      "metric_keys": [
+        "val/global/pearson_per_gene",
+        "val/global/pearson_per_strain"
+      ],
+      "n_train_observed": {
+        "1161": 30
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "morphology",
+      "project": "torchcell_019_morph_v3",
+      "n_runs": 89,
+      "states": {
+        "finished": 89
+      },
+      "metric_keys": [
+        "val/morphology/pearson_per_feature",
+        "val/morphology/pearson_per_instance"
+      ],
+      "n_train_observed": {
+        "1161": 30
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "morphology",
+      "project": "torchcell_019_morph_v5",
+      "n_runs": 23,
+      "states": {
+        "finished": 23
+      },
+      "metric_keys": [
+        "val/mean/pearson_per_feature",
+        "val/morphology/pearson_per_feature",
+        "val/morphology/pearson_per_instance"
+      ],
+      "n_train_observed": {
+        "1161": 23
+      },
+      "n_train_sampled_from": 23
+    },
+    {
+      "strand": "beta_carotene",
+      "project": "torchcell_020_beta_carotene",
+      "n_runs": 47,
+      "states": {
+        "finished": 45,
+        "crashed": 2
+      },
+      "metric_keys": [
+        "val/mean/pearson_per_feature",
+        "val/beta_carotene/pearson_per_feature",
+        "val/beta_carotene/spearman_per_feature"
+      ],
+      "n_train_observed": {
+        "3846": 30
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "beta_carotene",
+      "project": "torchcell_020_beta_carotene_v3",
+      "n_runs": 50,
+      "states": {
+        "finished": 48,
+        "crashed": 2
+      },
+      "metric_keys": [
+        "val/mean/pearson_per_feature",
+        "val/beta_carotene/pearson_per_feature",
+        "val/beta_carotene/spearman_per_feature"
+      ],
+      "n_train_observed": {
+        "3846": 30
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "betaxanthin",
+      "project": "torchcell_020_betaxanthin",
+      "n_runs": 42,
+      "states": {
+        "failed": 1,
+        "finished": 39,
+        "crashed": 2
+      },
+      "metric_keys": [
+        "val/mean/pearson_per_feature",
+        "val/betaxanthin/pearson_per_feature",
+        "val/betaxanthin/spearman_per_feature"
+      ],
+      "n_train_observed": {
+        "4235": 30
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "betaxanthin",
+      "project": "torchcell_020_betaxanthin_v3",
+      "n_runs": 53,
+      "states": {
+        "finished": 51,
+        "crashed": 2
+      },
+      "metric_keys": [
+        "val/mean/pearson_per_feature",
+        "val/betaxanthin/pearson_per_feature",
+        "val/betaxanthin/spearman_per_feature"
+      ],
+      "n_train_observed": {
+        "4235": 29,
+        "3694": 1
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "betaxanthin",
+      "project": "torchcell_020_betaxanthin_v4",
+      "n_runs": 44,
+      "states": {
+        "finished": 37,
+        "crashed": 7
+      },
+      "metric_keys": [
+        "val/mean/pearson_per_feature",
+        "val/betaxanthin/pearson_per_feature",
+        "val/betaxanthin/spearman_per_feature"
+      ],
+      "n_train_observed": {
+        "3698": 30
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "betaxanthin",
+      "project": "torchcell_020_metabolism",
+      "n_runs": 3,
+      "states": {
+        "crashed": 3
+      },
+      "metric_keys": [
+        "val/mean/pearson_per_feature",
+        "val/betaxanthin/pearson_per_feature",
+        "val/betaxanthin/spearman_per_feature",
+        "val/beta_carotene/pearson_per_feature",
+        "val/beta_carotene/spearman_per_feature",
+        "val/mulleder19/pearson_per_feature",
+        "val/mulleder19/pearson_per_instance",
+        "val/mulleder19/spearman_per_feature"
+      ],
+      "n_train_observed": {
+        "4235": 2,
+        "3846": 1
+      },
+      "n_train_sampled_from": 3
+    },
+    {
+      "strand": "amino_acid",
+      "project": "torchcell_020_mulleder19",
+      "n_runs": 36,
+      "states": {
+        "failed": 1,
+        "finished": 33,
+        "crashed": 2
+      },
+      "metric_keys": [
+        "val/mean/pearson_per_feature",
+        "val/mulleder19/pearson_per_feature",
+        "val/mulleder19/pearson_per_instance",
+        "val/mulleder19/spearman_per_feature"
+      ],
+      "n_train_observed": {
+        "4235": 30
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "amino_acid",
+      "project": "torchcell_020_mulleder19_v3",
+      "n_runs": 30,
+      "states": {
+        "finished": 28,
+        "crashed": 2
+      },
+      "metric_keys": [
+        "val/mean/pearson_per_feature",
+        "val/mulleder19/pearson_per_feature",
+        "val/mulleder19/pearson_per_instance",
+        "val/mulleder19/spearman_per_feature"
+      ],
+      "n_train_observed": {
+        "4235": 30
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "beta_carotene",
+      "project": "torchcell_021_beta_carotene_v4",
+      "n_runs": 39,
+      "states": {
+        "finished": 39
+      },
+      "metric_keys": [
+        "val/mean/pearson_per_feature",
+        "val/beta_carotene/pearson_per_feature",
+        "val/beta_carotene/spearman_per_feature"
+      ],
+      "n_train_observed": {
+        "3849": 30
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "amino_acid",
+      "project": "torchcell_022_mulleder19_v4",
+      "n_runs": 31,
+      "states": {
+        "finished": 31
+      },
+      "metric_keys": [
+        "val/mean/pearson_per_feature",
+        "val/mulleder19/pearson_per_feature",
+        "val/mulleder19/pearson_per_instance",
+        "val/mulleder19/spearman_per_feature"
+      ],
+      "n_train_observed": {
+        "4234": 30
+      },
+      "n_train_sampled_from": 30
+    },
+    {
+      "strand": "betaxanthin_amino_acid_joint",
+      "project": "torchcell_023_bx_m19_v1",
+      "n_runs": 46,
+      "states": {
+        "finished": 46
+      },
+      "metric_keys": [
+        "val/mean/pearson_per_feature",
+        "val/betaxanthin/pearson_per_feature",
+        "val/betaxanthin/spearman_per_feature",
+        "val/mulleder19/pearson_per_feature",
+        "val/mulleder19/pearson_per_instance",
+        "val/mulleder19/spearman_per_feature"
+      ],
+      "n_train_observed": {
+        "3832": 30
+      },
+      "n_train_sampled_from": 30
+    }
+  ]
+}

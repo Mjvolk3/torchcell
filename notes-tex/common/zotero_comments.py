@@ -47,7 +47,7 @@ from pydantic import BaseModel
 from pyzotero import zotero
 
 from zotero_publish import (
-    DOCS_COLLECTION,
+    DEFAULT_PARENT_DIR,
     ROOT_COLLECTION,
     find_collection,
     find_parent_item,
@@ -84,14 +84,27 @@ def sort_key(ann: dict) -> list[int]:
 
 
 def fetch(zot: zotero.Zotero, doc: str, version: int | None) -> tuple[str, list[Comment]]:
-    root = find_collection(zot, ROOT_COLLECTION, None)
-    docs = find_collection(zot, DOCS_COLLECTION, root)
-    coll = find_collection(zot, doc, docs)
+    # The collection path is WALKED from the repo-relative directory, the same way
+    # zotero_publish.py builds it, rather than assumed to be two levels deep. A bare
+    # name still means a notes-tex document, so `019-simb-multimodal` and
+    # `notes-tex/019-simb-multimodal` resolve to one collection and one doc key; a
+    # document elsewhere in the repo (`paper/nature-biotech`) resolves under its own
+    # parent. The previous form hardcoded a `DOCS_COLLECTION` constant that
+    # zotero_publish stopped exporting when it was generalized, so this script had
+    # been failing at import.
+    rel_dir = doc.strip("/")
+    if "/" not in rel_dir:
+        rel_dir = f"{DEFAULT_PARENT_DIR}/{rel_dir}"
+    coll = find_collection(zot, ROOT_COLLECTION, None)
     if not coll:
-        sys.exit(f"no Zotero collection {ROOT_COLLECTION}/{DOCS_COLLECTION}/{doc}")
-    parent = find_parent_item(zot, coll, f"notes-tex/{doc}")
+        sys.exit(f"no top-level {ROOT_COLLECTION!r} collection in the personal library.")
+    for name in rel_dir.split("/"):
+        coll = find_collection(zot, name, coll)
+        if not coll:
+            sys.exit(f"no Zotero collection {ROOT_COLLECTION}/{rel_dir}")
+    parent = find_parent_item(zot, coll, rel_dir)
     if not parent:
-        sys.exit(f"nothing published for {doc} yet")
+        sys.exit(f"nothing published for {rel_dir} yet")
 
     # Attachments oldest-first, so --version 1 is the first build published.
     atts = sorted(

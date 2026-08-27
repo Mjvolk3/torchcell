@@ -1,0 +1,209 @@
+%% notes-tex/019-simb-multimodal/sections/4-betaxanthin.tex
+%% [[experiments.020-cachera-betaxanthin.merzbacher-comparison]]
+%% SOURCE: every number in this section is written by
+%% experiments/020-cachera-betaxanthin/scripts/plot_merzbacher_comparison.py into
+%% experiments/020-cachera-betaxanthin/results/merzbacher_comparison_figures.json, or by
+%% experiments/019-simb-multimodal/scripts/pigment_noise_ceiling.py.
+
+\section{Betaxanthin production\secstatus{todo}}
+\label{sec:betaxanthin}
+
+\subsection{The task, its ceiling, and the two names that get confused\secstatus{todo}}
+
+\term{Cachera} is a genome-wide betaxanthin deletion screen
+(doi:10.1093/nar/gkad656): the four-gene betalain cassette \gene{CYP76AD1}, \gene{DOD},
+\gene{ARO4}$^{\mathrm{K229L}}$ and \gene{ARO7}$^{\mathrm{G141S}}$ was transferred by CRI-SPA
+into each strain of the yeast knockout collection and per-colony fluorescence read as a
+production proxy. It supplies 4,735 single deletions and is the ground truth here.
+\term{Flux Cone Learning} (FCL) is Merzbacher et al.'s method, which learns from flux
+samples drawn through a genome-scale metabolic model;
+\file{RandomForestClassifier_Resampled} is its best variant. The comparison is CGT
+against FCL, both scored on the Cachera screen.
+
+Betaxanthin is the only phenotype in this document with a high ceiling. Its records carry a
+per-strain standard error over a median of 15 colonies, giving a reliability of $0.836$ and
+a Pearson ceiling of $\mathbf{0.914}$.
+\src{experiments/019-simb-multimodal/results/pigment_noise_ceiling.json}
+
+\subsection{Two betaxanthin numbers, and why the comparison uses the lower one\secstatus{todo}}
+\label{sec:bx-two-numbers}
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: results/analysis_002_noise_and_lambda.json; results/round_leaderboards.csv
+\begin{tabular}{lrrl}
+\toprule
+round & $n_{\mathrm{train}}$ & best val $r$ & split \\
+\midrule
+\file{betaxanthin_002} (in \file{torchcell_020_betaxanthin}, \file{_v3}) & 4{,}235 & \textbf{0.4301} & ordinary ratio split \\
+\file{020_v4} (\file{torchcell_020_betaxanthin_v4}) & 3{,}698 & 0.372 & Merzbacher test genes pinned out \\
+\bottomrule
+\end{tabular}
+\caption[]{The highest betaxanthin score is $0.4301$, $47\,\%$ of the $0.914$ ceiling. Its
+top five trials span $0.0206$, which is $0.68\sigma$ against a measured replicate $\sigma$
+of $0.0302$, so it is a plateau rather than one lucky trial; it is nonetheless a maximum
+over 37 trials, and de-selecting that inflation ($0.064$) puts the floor for a
+configuration chosen without hindsight at $\approx 0.366$.}
+\label{tab:bx-two-numbers}
+\end{table}
+
+\notesec{The comparison number is lower than the best number on purpose} The head-to-head
+below runs on \file{020_v4}, whose split \textbf{pins the 640 Merzbacher test genes out of
+training}. That costs 537 training strains, and it costs score. Using the $0.4301$ model
+instead would mean scoring on genes it had trained on, which is the one thing that would
+void the comparison. The cell carried forward is \file{s09_L6_maskon_lr0.0001_yj},
+selected by validation at $0.3639$ and never by its score on the comparison genes.
+
+Both numbers are real and they answer different questions: $0.4301$ is what the model does
+on this screen, $0.372$ is what it does with a competitor's test set held out. Quoting the
+first in a sentence about the comparison would be the error; quoting the second as ``our
+betaxanthin result'' understates it.
+
+\subsection{The published accuracy comparison is empty for both methods\secstatus{todo}}
+
+FCL reports gene-level accuracy $0.700$ against a majority-class rate of $0.673$, achieved
+by calling $607$ of $640$ genes medium, which is $94.8\,\%$. Our absolute binning sits at
+$0.681$ doing the same thing. Forced to the true class marginal, FCL drops to $0.556$ and
+CGT to $0.549$.
+
+\notesec{The structural point} Every model that finds more high producers has worse overall
+accuracy, because the only way to call more highs is to stop calling everything medium.
+Accuracy selects against the capability the task is about, so it should not be the primary
+metric in any writeup, including ours.
+
+\subsection{Both methods have real signal, and it lives in the tail\secstatus{todo}}
+
+Of the top $k$ genes each method nominates, the fraction that are truly high producers,
+against a base rate of $0.156$:
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: results/merzbacher_comparison_figures.json, fig3_precision_at_k
+\begin{tabular}{lccc}
+\toprule
+model & $k = 10$ & $k = 25$ & $k = 50$ \\
+\midrule
+FCL RF & 8 ($5.1\times$, $p = 10^{-5}$) & 19 ($4.9\times$, $p = 8\times10^{-12}$) & 20 ($2.6\times$, $p = 10^{-5}$) \\
+CGT    & \textbf{9} ($5.8\times$, $p = 4\times10^{-7}$) & 18 ($4.6\times$, $p = 10^{-10}$) & \textbf{24} ($3.1\times$, $p = 2\times10^{-8}$) \\
+\bottomrule
+\end{tabular}
+\caption[]{Precision at $k$ for high producers. Nine of CGT's top ten are genuine high
+producers. Both curves approach the base rate by $k = 150$.}
+\label{tab:precision-at-k}
+\end{table}
+
+Median percentile rank by true class is flat for both methods, at 54/49/56 for FCL and
+48/51/52 for CGT across low, medium and high. Read with the table above, that says the
+signal is real and confined to the tail, not that there is none.
+
+\tcfigfit{figures/merzbacher_fig3_precision_at_k_2026-08-02-23-43-08.pdf}{Precision at $k$
+for high producers, both methods, against the base rate of $0.156$. Nine of CGT's top ten
+are genuine high producers, and both curves reach the base rate by $k = 150$. The nine
+unselected CGT grid cells span $0.10$ to $0.65$ at $k = 50$, so cell choice matters more
+than the gap between methods.}{fig:precision-at-k}
+
+\tcfigfit{figures/merzbacher_fig1_scatter_spread_2026-08-02-23-43-08.pdf}{Per-gene spread
+over the 639 shared genes. Both models emit a nearly constant value: $80\,\%$ of FCL's
+genes fall inside an expected-class band of $0.22$ on a $0$ to $2$ scale, $80\,\%$ of CGT's
+inside $0.33$ $z$-units. Panel c shows the disagreement concretely, with each method
+recovering 29 of the 100 true high producers and sharing 9.}{fig:bx-spread}
+
+\subsection{The two methods find different genes\secstatus{todo}}
+
+Rank-matched into the same 100 high slots, FCL recovers 29 of the 100 true high producers
+and CGT recovers 29, and they share 9. The union reaches 49. Their rank correlation is
+$-0.128$, which at $n = 639$ is $z = -3.2$, where two models correlating with the truth at
+$+0.105$ and $+0.039$ would through the truth alone correlate with each other at about
+$+0.004$.
+
+\notesec{No mechanism is claimed} for the sign. What is claimed is the operational
+consequence: recall is near-additive because the two methods are finding largely different
+genes, which is an argument for running both, and which is invisible in every aggregate
+statistic. The 51 that neither finds is the honest ceiling on this comparison.
+
+\subsection{The real difference is coverage\secstatus{todo}}
+
+yeast-GEM contains 1,161 genes, of which 915 appear in the Cachera screen. That is
+$19.4\,\%$ of its 4,721 deletions. A flux-based method has features for those and for
+nothing else.
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: results/merzbacher_comparison_figures.json, fig8_screen_coverage
+\begin{tabular}{lrr}
+\toprule
+population & in yeast-GEM & outside \\
+\midrule
+every deletion in the screen & 915 (19\,\%) & \textbf{3{,}806 (81\,\%)} \\
+top 100 measured producers & 32 (32\,\%) & \textbf{68 (68\,\%)} \\
+all high producers & 60 (27\,\%) & \textbf{163 (73\,\%)} \\
+\bottomrule
+\end{tabular}
+\caption[]{Metabolic genes are enriched among high producers, at $26.9\,\%$ of the highs
+against $19.4\,\%$ of the screen, a $1.4\times$ enrichment that is exactly what the biology
+predicts. It is not enough to matter: restricting to metabolism buys that concentration and
+costs three quarters of the hits.}
+\label{tab:gem-coverage}
+\end{table}
+
+\tcfigfit{figures/merzbacher_fig8_screen_coverage_2026-08-02-23-43-08.pdf}{Measured data
+only, no model and no prediction: how little of the betaxanthin screen a flux-based method
+can reach.}{fig:gem-coverage}
+
+On held-out test genes split by yeast-GEM membership, with identical derived labels on both
+sides, CGT's top 25 recovers 17 of 48 true highs inside the model ($9.3\times$ over base
+rate, $p = 2\times10^{-15}$) and 9 of 21 outside it ($4.4\times$, $p = 2\times10^{-5}$).
+
+\tcfigfit{figures/merzbacher_fig9_metabolic_vs_nonmetabolic_2026-08-02-23-43-08.pdf}{CGT
+predicts high betaxanthin producers among deletions a flux-based method cannot represent.
+Held-out test genes split by yeast-GEM membership, identical derived labels on both sides,
+circled points are CGT's top 25. Flux Cone Learning has no prediction for the right
+panel.}{fig:capability-gap}
+FCL's prediction for the outside set is not poor, it is undefined: flux sampling yields no
+feature for a deletion the metabolic model does not contain. The FCL test set is $639$ of
+$640$ inside yeast-GEM; of our other test genes only $21$ of $294$ are.
+
+\notesec{Two qualifications that must travel with this claim} The rank correlation reads
+higher outside the model than inside ($+0.270$ against $+0.124$), but the two are measured
+on different, non-overlapping gene sets and a Fisher $r$-to-$z$ gives $z = 2.07$,
+$p = 0.039$. Read it as at least as good outside as inside. And labels for the non-GEM
+genes are derived by us, since the FCL paper never labeled them, so the comparison to make
+is panel against panel.
+
+\subsection{Where the comparison is soft\secstatus{todo}}
+
+\begin{itemize}
+\item \textbf{The selection is asymmetric, and it favors FCL.} Ours is the
+  validation-selected cell. Theirs is the best of four models, justified by a test-set
+  number, and their validation folds appear to be drawn from the same 640 genes as their
+  test list. Where the two land level, we are level with an opponent picked with more
+  information than we allowed ourselves.
+\item \textbf{Validation Pearson does not track test AUC.} Four of ten CGT cells beat FCL's
+  AUC of $0.570$ and the best reaches $0.695$, while the validation-selected cell reads
+  $0.557$. The runner-up on validation, $0.3528$ against $0.3639$, has an AUC $0.14$ higher.
+  Neither ``CGT's AUC is 0.695'' nor ``CGT's AUC is 0.557'' is safe; the metric does not
+  separate the two methods at this resolution.
+\item \textbf{Their labels are a headroom bound.} Their binning rule min-max scales
+  production and cuts at $0.40$ and $0.65$, so applied to our larger copy of the same screen
+  it gives $107/476/56$ against their $109/431/100$. $18.8\,\%$ of genes sit in a different
+  bin than our values would give, so a model predicting our measurement perfectly is marked
+  wrong on about a fifth of genes.
+\item \textbf{Regression against classification.} They tried regression and abandoned it,
+  in their words ``challenging with the limited number of knockouts at the high and low
+  ends.'' Our ceiling of $0.914$ makes regression available to us. The comparison is
+  therefore between a regressor and a three-class classifier, which is why every metric
+  above is either rank-based or computed after binning our predictions with thresholds fit
+  on the training split only.
+\item \textbf{The build is stale} with respect to the gene-name resolver (issue \#195),
+  which the split builder avoids by working from the raw screen, and which the training data
+  still inherits until a rebuild.
+\end{itemize}
+
+\notesec{Established} On this screen CGT and FCL are tied where both can be measured, both
+have tail-confined signal at roughly $5\times$ enrichment in the top 25, and they find
+different genes. CGT predicts the $81\,\%$ of the screen a flux-based method cannot
+represent, and finds high producers there at $4.4\times$ over base rate.
+
+\notesec{Cannot say} That CGT beats FCL on any single aggregate. That the rank
+anti-correlation means anything mechanistically. That the absolute top-100 membership is a
+deployable call, since the rank-matched comparison hands both sides the true class marginal.

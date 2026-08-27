@@ -1,0 +1,150 @@
+%% notes-tex/019-simb-multimodal/sections/1-summary.tex
+%% SOURCE: every number here is carried from a later section and cited there. Nothing
+%% originates in this section.
+
+\section{Summary\secstatus{todo}}
+\label{sec:summary}
+
+\subsection{Terms used throughout\secstatus{todo}}
+\label{sec:terms}
+
+\begin{description}
+\item[Head] The output module for one phenotype. The encoder and the perturbation operator
+  are shared; a head is the last few layers that turn the shared representation into one
+  phenotype's values. A run declares which heads are active, so \emph{betaxanthin head} and
+  \emph{morphology head} name output modules, not models.
+\item[Metabolome head] The head that predicts the 19 Mulleder amino-acid concentrations.
+  It appears in two roles. As the \textbf{only} active head it is the amino-acid strand
+  (\cref{sec:amino-acid}). Added \textbf{alongside} the betaxanthin head it is an
+  \term{auxiliary head}: it is trained and scored, but the number being reported is still
+  betaxanthin, and the question is whether sharing an encoder with it helps.
+\item[Auxiliary head] Any head added to a run for its effect on a different head's score.
+  Adding one changes two things at once, the gradient signal and the population of strains
+  the run can use, which is why every comparison here pins the instance set.
+\item[Strand] One phenotype prosecuted across a series of W\&B projects.
+\item[\file{pearson_per_feature}] For each output feature (a reporter gene, a CalMorph
+  parameter, one amino acid), the correlation across strains between prediction and
+  measurement; then averaged over features. It goes to zero when a model predicts each
+  feature's mean. The companion \file{pearson_per_instance} correlates across features
+  within one strain and stays high under exactly that collapse, so it is never the
+  objective here.
+\item[\file{nmse}] Mean squared error divided by the variance of the target about each
+  feature's mean, so $\texttt{nmse} = 1$ is exactly ``predict each gene's training mean''.
+\item[\file{roll_max}] The scoring rule: the maximum of a centered five-point rolling mean
+  of a validation curve. An upward-biased order statistic whose bias grows with the number
+  of epochs run, so every score here travels with its epoch count.
+\item[Ceiling] The highest correlation any predictor could reach against a target carrying
+  measurement noise, estimated per strand from replicate structure.
+\end{description}
+
+\subsection{Where each strand stands\secstatus{todo}}
+
+\input{tables/t-strand-summary}
+
+Read the epoch column with the score column. Expression and beta-carotene peak in the last
+tenth of their best run, so those numbers are lower bounds set by the compute budget.
+Morphology and the expression-morphology joint arm peak at epochs 27 and 28 of runs that
+stopped at 65 and 70, which is not a result of any kind. Betaxanthin and amino acid peak in
+the first half of a 999-epoch run and then overfit.
+
+The two betaxanthin rows are not comparable to each other: the joint row trains on 3,832
+strains against the plain row's 3,698, because the joint configuration restricts to
+genotypes carrying both phenotypes. The within-grid paired comparison in
+\cref{tab:bx-aa-paired} is the valid form of that contrast, and it comes out negative.
+
+\subsection{Nine findings\secstatus{todo}}
+
+\begin{enumerate}
+\item \textbf{The expression strand contains no valid comparison between mechanisms.} All
+  67 scored arms stopped at or below 300 epochs, against a validation curve that dips at
+  200 to 300 and then climbs past its early peak. No peak has been observed at any budget
+  up to 10,000 epochs. Every per-arm delta on record measures early-training transients.
+
+\item \textbf{The expression objective is fighting itself, and it is the quantile loss
+  rather than squared error.} On the longest run the quantile loss bottoms at epoch 463 and
+  rises for the next 9,500 while Pearson climbs, but squared error bottoms at epoch 9,175,
+  alongside the Pearson peak at 9,674; on the second-longest run the two are one epoch
+  apart. \file{nmse} never returns below 1 after about epoch 400, so the model reaches
+  $r = 0.236$ while being \emph{no better than predicting each gene's mean} in squared
+  error. The cause is calibration, not capability: at the peak its predictions are
+  $1.95\times$ more spread out than its own correlation justifies, and a post-hoc rescale
+  by $r/s$ moves \file{nmse} from $1.010$ to $0.944$ while changing no correlation at all.
+  Best-by-\file{mse} checkpointing would have picked within 500 epochs of the right model,
+  so checkpointing is a narrower problem than previously recorded and is not what holds the
+  strand at $0.24$.
+
+\item \textbf{One expression run is a multi-day object, and this sets the campaign.} The
+  best run took \textbf{91.4 hours, 3.81 days}, for 9,999 epochs at 32.9 s/epoch, and still
+  peaked at $97\,\%$ of the way through. One GPU delivers $\approx 2{,}500$ epochs per day,
+  so the number of arms a campaign can afford is fixed before any of them are chosen.
+
+\item \textbf{The perturbation operator provably cannot express a pair term, and masked
+  unmasking does not supply one.} At one perturbed gene the cross-attention softmax runs
+  over a one-element key set, so the model reduces to $g(h_i + c_b)$ and nothing depends on
+  which reporter is predicted given which gene was deleted. 16,200 of 32,760 attention
+  parameters are dead. The scGPT-style scheme conditions on \emph{other genes' measured
+  values}, and at $k = 0$, which is where scoring happens, every one of those features is
+  exactly zero and the forward pass is identical to the unconditioned model. The two are
+  different axes. Capacity is not the binding constraint either: a rank-32 reconstruction
+  of the target reaches $0.727$. A rank-64 pair term already reaches $0.2274$ in 2.0 days
+  against the masked objective's $0.2362$ in 3.8.
+
+\item \textbf{Morphology has never been trained on its own data.} The Ohya screen holds
+  4,718 deletions; every morphology run used the 1,440 that also carry expression, giving
+  $n_{\mathrm{train}} = 1{,}161$. Its ceiling, measured here for the first time, is
+  $\mathbf{0.611}$ over 278 features, with 201 of them individually above $0.5$. For a
+  second-label experiment, fitness shares 4,220 strains with morphology against
+  expression's 1,440.
+
+\item \textbf{The free amino-acid profile predicts betaxanthin; the precursor does not.}
+  Over the 4,432 deletions the two screens share, the 19-dimensional pool predicts
+  betaxanthin at out-of-fold $r = \mathbf{0.298}$, while tyrosine alone, the chromophore
+  precursor, predicts it at $\mathbf{0.064}$ and correlates marginally at $-0.076$. Roughly
+  three quarters of the profile's power survives regressing out single-mutant fitness. On
+  the 724 deletions with no Costanzo fitness record, which carry twice the betaxanthin
+  spread, the profile predicts at $0.455$.
+
+\item \textbf{The metabolome auxiliary head currently costs betaxanthin performance.}
+  Paired within grid cell, joint minus control is $-0.0265 \pm 0.0159$ over the five
+  comparable cells where the control learned the task, with 2 of 5 positive. The
+  $+0.0203$ that motivated the replication reproduces, at $+0.0192$, in the one cell it came
+  from. So the coupling exists in the data and the current head does not use it.
+
+\item \textbf{The graph prior is at chance, and the mask deletes the one signal that
+  exists.} Graph proximity does not predict which reporters respond to a deletion, on any of
+  the nine graphs, in the orientation the model uses: AUC $0.4961$ to $0.5057$, at most
+  $+0.0046$ over a degree-preserving control, and longer walks make it worse. Three of the
+  nine graphs are also silent on most deletions, scoring only $29$ to $75\,\%$ of them. But
+  \emph{direction} carries real signal: following tflink edges TF $\to$ target gives
+  $0.5508$ and regulatory interaction $0.5239$, against controls near $0.501$. The mask
+  builder symmetrizes, which averages that away. Nine attention heads are currently spent
+  enforcing a target that does not predict response.
+
+\item \textbf{Betaxanthin is the strongest case, and its strength is coverage.} yeast-GEM
+  reaches $19\,\%$ of the screen and misses $73\,\%$ of its high producers. On genes a
+  flux-based method has no features for, CGT's top 25 is enriched $4.4\times$ over base
+  rate. Where both methods can be scored they are tied, they find largely different genes
+  (9 shared of 29 each), and their union reaches 49 of 100.
+
+\item \textbf{Configuration choice moves results more than method choice.} Betaxanthin grid
+  cells span Spearman $0.013$ to $0.158$ against a between-method gap of $0.0014$ on AUC.
+  The amino-acid strand's best run is $0.211$ and its median is $0.0498$.
+\end{enumerate}
+
+\subsection{The decision\secstatus{todo}}
+
+\begin{itemize}
+\item \textbf{Figure 6 is ready to be argued} on coverage rather than on accuracy, and the
+  amino-acid material belongs in it as a coupling measurement, not as a joint-training
+  result.
+\item \textbf{Figure 3 is not ready, and its placeholder numbers are far from the measured
+  ones.} A per-gene Pearson of $0.24$ against a ceiling of $0.775$ is not a headline. The
+  cheapest path to a better one is not another architecture ladder: it is training
+  morphology on its full dataset, finding where the expression curve actually turns, and
+  checking whether the graph prior is the right prior at all.
+\item \textbf{The graph-prior probe has run and it closed a planned arm.} The
+  network-distance pair term is not worth building, the nine masked heads should be freed,
+  and the mask should stop symmetrizing its two directed relations. Two cheap experiments
+  remain unrun: morphology at full scale, and one expression run trained until the
+  validation curve turns.
+\end{itemize}

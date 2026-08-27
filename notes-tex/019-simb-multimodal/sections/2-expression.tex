@@ -1,0 +1,352 @@
+%% notes-tex/019-simb-multimodal/sections/2-expression.tex
+%% [[experiments.019-simb-multimodal.expression-round-retrospective]]
+%% SOURCE: numbers are from experiments/019-simb-multimodal/results/*.json (committed
+%% artifacts) and from named W&B run ids in project zhao-group/torchcell_019_expr_v8.
+%% Nothing here is hand-authored.
+
+\section{Expression\secstatus{todo}}
+\label{sec:expression}
+
+\subsection{The task and its ceiling\secstatus{todo}}
+
+The \term{expression strand} predicts, for a strain carrying one gene deletion, the
+$\log_2$ ratio of every measured gene's transcript abundance against wild type. Targets
+come from the Kemmeren 2014 knockout microarray compendium (doi:10.1016/j.cell.2014.02.054)
+and the Sameith 2015 double-deletion compendium (doi:10.1038/sdata.2015.15), fused in the
+\file{fig3_core} build. Of the 1,556 records in that build, 1,484 are single deletions and
+72 are Sameith doubles, so $95.4\,\%$ of the training signal carries exactly one perturbed
+gene.
+\src{experiments/019-simb-multimodal/results/fig3_overlap_census.json}
+
+The \term{reproducibility ceiling} is the highest correlation any predictor could reach
+against a target that carries measurement noise. It is estimated here from the 82 deletions
+measured independently in both compendia, as the mean over reporter genes of
+$\sqrt{\operatorname{clip}(\hat\rho_g, 0, 1)}$ where $\hat\rho_g$ is that gene's test-retest
+correlation across the paired strains. The estimate is $\mathbf{0.7746}$.
+\src{experiments/019-simb-multimodal/results/expression_ceiling_replicate.json}
+
+The best validation score observed on this task is
+\file{pearson_per_feature} $= \mathbf{0.2382}$, from run \texttt{hx8pxdic} in project
+\file{torchcell_019_expr_v9}, whose peak sits at epoch 9,697 of the 9,900 it reached.
+The best in \file{torchcell_019_expr_v8} is $0.2276$, run \texttt{b50f93ju}, peaking at
+epoch 4,002 of 4,105. Both are $\approx 30\,\%$ of the ceiling, and both peak in the last
+tenth of their run.
+\src{experiments/019-simb-multimodal/results/round_leaderboards.csv}
+
+The metric is the per-reporter correlation across strains, averaged over reporters, which
+is the quantity that goes to zero when a model predicts each gene's mean; the companion
+per-strain metric stays near $0.4$ under exactly that collapse and is not the objective.
+The scoring rule is \file{roll_max}, the maximum of a centered five-point rolling mean of
+the validation curve. It is an upward-biased order statistic whose bias grows with the
+number of epochs run, so it is comparable only between runs of similar length, which is why
+the epoch count travels with every number quoted from the leaderboard.
+
+The manuscript's Results section currently states $r = 0.543$ for expression. That string
+sits inside a paragraph marked \texttt{[FILLER -- R3.]} and is a placeholder, not a
+measurement.
+
+\subsection{The finding of the round: nothing was trained to saturation\secstatus{todo}}
+
+Sixty-seven runs across waves 1 to 4b were scored, and not one of them ran past 300 epochs.
+Against a validation curve that dips at epochs 200 to 300 and then climbs past its early
+peak, every one of those runs was stopped inside the dip.
+\src{experiments/019-simb-multimodal/results/decoder_arms_torchcell_019_expr_v8.csv}
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: recomputed in the round retrospective from decoder_arms_torchcell_019_expr_v8.csv
+\begin{tabular}{lrl}
+\toprule
+wave & runs & epoch range \\
+\midrule
+wave 1  & 10 & 70--140 \\
+wave 2  &  5 & 76--140 \\
+wave 3  & 36 & 18--276 \\
+wave 4a &  8 & 77--81 \\
+wave 4b &  8 & 300 \\
+\midrule
+\textbf{all} & \textbf{67} & \textbf{18--300, none above 300} \\
+\bottomrule
+\end{tabular}
+\caption[]{Every scored arm in the expression round stopped at or below 300 epochs.}
+\label{tab:expr-truncation}
+\end{table}
+
+Four long runs were later allowed to continue. All four died at 12.60 to 12.61 hours of
+wall clock at 1,620 to 1,625 epochs, which is a scheduler limit rather than convergence,
+and their validation peaks sit at 93 to $99\,\%$ of the way through the run. Eval-mode
+training Pearson reached $0.652$ to $0.725$ and was still climbing when they were killed.
+
+Longer runs have since been allowed. The picture did not change: the best v8 run peaks at
+epoch 4,002 of 4,105 and the best v9 run at epoch 9,697 of 9,900. Raising the epoch budget
+from 1,600 to 10,000 moved the score from $0.204$ to $0.238$ and moved the peak with it, so
+the curve is still rising where it was cut off. \textbf{No peak has ever been observed on
+this task}, at any budget tried, and the saturation epoch remains unknown.
+
+\notesec{Read across all nine expression rounds, the score is a function of the budget}
+Every expression project, read the same way and sorted by score, comes out in almost
+exactly the order of its epoch budget.
+
+\input{tables/t-expr-epoch-budget}
+
+These rounds were not varying the same thing. They varied capacity, target normalization,
+which compendium was included, graph regularization, decoder family, distributional head
+and objective. None of that orders the column; the epoch budget does, across a factor of
+500 in budget and a factor of 3.3 in score. Training-set size moved by ten percent over the
+same span and does not order it either.
+
+\textbf{This is the strongest available evidence that the binding constraint on this strand
+has been compute rather than mechanism}, and it is only visible with every round in one
+table. It is also a caution about reading it too hard: \file{roll_max} is an upward-biased
+order statistic whose bias grows with epochs run, so part of the ordering is the scoring
+rule rewarding longer runs. That bias is a few thousandths at these lengths and the spread
+here is $0.07$ to $0.24$, so it explains a sliver rather than the trend.
+
+\notesec{Consequence} An arm comparison at 300 epochs is not a small effect measured
+noisily. Both arms were stopped before either had the chance to separate, so the difference
+between them reflects early-training transients. The null sink arm reads
+$+0.0024 \pm 0.0090$ over four seed pairs and post-perturbation mixing reads
+$-0.0023 \pm 0.0076$, and neither number is evidence about its mechanism. More seeds do not
+repair this: replicates buy precision on the wrong estimand.
+
+\subsection{The quantile loss turns early; squared error does not\secstatus{todo}}
+\label{sec:objective}
+
+\notesec{Correction} An earlier version of this section said loss and metric ``move in
+opposite directions''. That is true of the \emph{quantile loss} and false of squared error,
+and collapsing the two hid the finding. The two longest runs ever trained were pulled and
+read directly.
+\src{experiments/019-simb-multimodal/scripts/expression\_objective\_diagnosis.py}
+
+\begin{table}[tbp]
+\centering\small
+%% SOURCE: experiments/019-simb-multimodal/results/expression_objective_diagnosis.json
+\begin{tabular}{lrrrr}
+\toprule
+ & \multicolumn{2}{c}{v9 \file{M_fine} (masked)} & \multicolumn{2}{c}{v8 \file{V_basis64}} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+quantity & value & epoch & value & epoch \\
+\midrule
+val \file{loss} minimum (quantile)   & 0.2376 & \textbf{463}   & 0.2610 & \textbf{141} \\
+val \file{mse} minimum               & 0.0391 & \textbf{9{,}175} & 0.0397 & \textbf{3{,}922} \\
+val Pearson maximum                  & 0.2362 & \textbf{9{,}674} & 0.2274 & \textbf{3{,}921} \\
+val \file{nmse} minimum              & 0.9981 & 213            & 0.9925 & 145 \\
+val \file{nmse} at the Pearson peak  & 1.0100 & --             & 1.0395 & -- \\
+\midrule
+run length (epochs)                  & \multicolumn{2}{c}{9{,}999} & \multicolumn{2}{c}{4{,}106} \\
+wall clock                           & \multicolumn{2}{c}{\textbf{91.4 h (3.81 days)}} & \multicolumn{2}{c}{47.9 h (2.00 days)} \\
+seconds per epoch                    & \multicolumn{2}{c}{32.9} & \multicolumn{2}{c}{42.0} \\
+\bottomrule
+\end{tabular}
+\caption[]{The quantile loss bottoms in the first few hundred epochs and rises for the rest
+of the run. Squared error bottoms alongside the Pearson peak, within 500 epochs on v9 and
+within one epoch on v8. Both runs replicate the pattern, and they use different mechanisms
+and different epoch budgets. \textbf{Why the Pearson values differ slightly from
+\cref{tab:strand-summary}}: this table smooths over 25 logged points to \emph{locate}
+turning points, the leaderboard over 5 to \emph{score} them, so v9 reads $0.2362$ at epoch
+9,674 there and $0.2382$ at 9,697 on the leaderboard. The leaderboard value is the score;
+these are locators.}
+\label{tab:expr-divergence}
+\end{table}
+
+\tcfigfit{figures/expression_objective_diagnosis.pdf}{The v9 run, 10,000 epochs. (a) The
+quantile loss reaches its minimum at epoch 463 and rises thereafter while Pearson climbs.
+(b) \file{nmse} dips just under 1 at epoch 213, rises to 1.073 near epoch 900, then falls
+back for the rest of the run without ever returning below 1; squared error's own minimum is
+at epoch 9,175. (c) The prediction standard-deviation ratio $s$ against the correlation
+$r$, with the \file{nmse}-optimal line $s = r$.}{fig:objective}
+
+\notesec{The sharper finding: the model never beats the mean in squared error}
+\file{nmse} is normalized so that $1$ is exactly ``predict each gene's training mean''. It
+dips barely below 1 at epoch 213 and is back above 1 from about epoch 400 onward, reading
+$1.010$ on v9 and $1.040$ on v8 at their Pearson peaks. So the model reaches $r = 0.236$
+while being no better than the mean predictor on a squared-error scoreboard.
+
+That is arithmetic rather than a mystery. Writing $s$ for the ratio of prediction
+standard deviation to target standard deviation and $r$ for the correlation, predictions
+that are a scaled version of a correlated signal give
+$$\texttt{nmse} = 1 + s^2 - 2rs,$$
+which is minimized at $s^\star = r$ with value $1 - r^2$. The identity reproduces the
+logged \file{nmse} to within $0.016$ on both runs. At its Pearson peak v9 sits at
+$s = 0.460$ against $r = 0.236$, so its predictions are $\mathbf{1.95\times}$ more spread
+out than its own correlation justifies; v8 is $2.21\times$.
+
+\notesec{Consequence, and it is free} Multiplying predictions by $r/s$ changes no
+correlation at all and moves \file{nmse} from $1.010$ to $1 - r^2 = 0.944$ on v9, and from
+$1.040$ to $0.949$ on v8. The ordering the model produces is already worth more than its
+magnitudes, and any report that quotes Pearson beside an \file{nmse} above 1 is quoting a
+model that would lose to the mean until it is rescaled.
+
+\notesec{What this does and does not say about checkpointing} Best-by-loss on the
+\emph{quantile} loss picks a model $\approx 9{,}200$ epochs early, which is the defect that
+motivated best-by-metric checkpointing. Best-by-\file{mse} would have picked within 500
+epochs of the right one on v9 and within one epoch on v8. So checkpointing is a narrower
+problem than it looked, and it is not what is holding the strand at $0.24$.
+
+\notesec{Still not measured} Whether training on a different objective, rather than
+rescaling after the fact, reaches a higher Pearson. \cref{sec:directions} sets that as an
+arm rather than an assumption.
+
+\subsection{The perturbation operator has no pair term\secstatus{todo}}
+
+At $|S_b| = 1$ the cross-attention that carries the perturbation runs its softmax over a
+one-element key set, so the attention weight is identically 1. Re-drawing $W_Q$ and $W_K$
+at standard deviation 10 changes the output by exactly $0.0$, and 16,200 of 32,760
+attention parameters are dead.
+\src{experiments/019-simb-multimodal/results/perturbation_selector_degeneracy.json}
+
+The model therefore reduces to $g(h_i + c_b)$: gene identity $i$ and strain identity $b$
+meet once, by addition, and no term depends on the pair $(p, i)$ of deleted gene and
+reporter gene. The rank of the pair term each candidate mechanism can express is what
+wave 6 was built to ladder.
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: experiments.019-simb-multimodal.multiplicative-perturbation-conditioning (derivation)
+\begin{tabular}{lll}
+\toprule
+mechanism & form & pair rank \\
+\midrule
+\file{V_ref} additive & $g(h_i + c_b)$ & \textbf{0} \\
+\file{V_sink} gated attention & one bounded scalar per head & 9 \\
+\file{V_basis}$\{16,32,64\}$ & $\sum_j b_{ij}(h_i)\,a_j(z_S)$ & $r$ \\
+\file{V_film}, \file{V_hadamard} & diagonal multiplicative & $d = 90$ \\
+\bottomrule
+\end{tabular}
+\caption[]{Pair-rank ladder. The reference arm cannot express any dependence on which
+reporter is being predicted given which gene was deleted.}
+\label{tab:pair-rank}
+\end{table}
+
+Capacity is not what binds. A rank-$r$ reconstruction of the target matrix reaches $0.7265$
+at $r = 32$ and $0.7799$ at $r = 64$, against a best model score of $0.238$, so a null on
+this axis is a statement about the mechanism.
+\src{experiments/019-simb-multimodal/results/lowrank_output_ceiling.json}
+
+\notesec{Masked unmasking does not supply the pair term, and this is provable rather than
+arguable} The scGPT-style scheme conditions gene $i$'s token on the measured values of
+other genes in the same strain:
+$$h^{\text{obs}}_{b,i} = h^{\text{pert}}_{b,i}
+  + g_{\text{obs}}\cdot\mathrm{MLP}\big(\big[\,y_{b,i}\,m_{b,i},\; m_{b,i}\,\big]\big),$$
+where $m_{b,i}$ marks gene $i$ as revealed. At $k = 0$ the revealed set is empty, every
+encoded feature is exactly zero, and the forward pass is \textbf{identical} to the
+unconditioned model. Scoring happens at $k = 0$. So the added term contributes nothing at
+the point the number is taken, and it cannot create a dependence on the pair (deleted gene,
+reporter gene) no matter how well the unmasking is trained.
+
+The two are different axes and the round conflated them:
+
+\begin{itemize}
+\item \textbf{Masked conditioning} answers \emph{given some of this strain's genes, what
+  are the rest}. Its channel is other genes' measured values, and
+  \cref{tab:oracle} shows that channel is worth a great deal and is measured to be
+  orthogonal to genotype.
+\item \textbf{The pair term} answers \emph{given which gene was deleted, which reporters
+  move}. Its channel is the deletion identity, which is present at $k = 0$.
+\end{itemize}
+
+What can carry a pair term at $k = 0$ is the \cref{tab:pair-rank} ladder: a multiplicative
+or FiLM conditioner ($h_i \odot (1 + \gamma(z_{S_b}))$, rank $d = 90$), a factored readout
+($\sum_j b_{ij}(h_i)\,a_j(z_{S_b})$, rank $r$), or masked graph attention applied
+\textbf{after} the perturbation operator so that gene $i$ learns about the deletion through
+its own neighbors. The last of these is the only one that makes the pair term a function of
+network distance, and it is the one that has never been built.
+
+\notesec{Read the two best runs together, carefully} The best masked run reaches $0.2362$
+at epoch 9,674 of 9,999; the best pair-rank-64 run reaches $0.2274$ at epoch 3,921 of
+4,106. That is a $0.009$ gap at a $2.4\times$ difference in epoch budget, so it is not an
+arm comparison. What it does establish is that a rank-64 pair term gets within $4\,\%$ of
+the masked objective for $40\,\%$ of the compute, which is the cheapest existing evidence
+that the pair axis is worth the next round.
+
+\subsection{The largest signal in the strand is imputation, and it is orthogonal\secstatus{todo}}
+
+A ridge oracle that observes $m$ randomly chosen genes of a held-out strain and predicts
+the rest reaches far past anything the model does.
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: experiments/019-simb-multimodal/results/masked_conditioning_oracle.json
+%% SOURCE: experiments/019-simb-multimodal/results/cross_study_conditioning_oracle.json
+\begin{tabular}{lrrrr}
+\toprule
+$m$ observed & within-Kemmeren & within-Sameith & Kem $\to$ Sam & Sam $\to$ Kem \\
+\midrule
+10   & 0.4562 & 0.3649 & 0.2335 & 0.2122 \\
+100  & 0.6693 & 0.6417 & 0.3815 & 0.3922 \\
+1000 & 0.7832 & 0.7779 & \textbf{0.4838} & \textbf{0.4803} \\
+\bottomrule
+\end{tabular}
+\caption[]{Masked-conditioning oracle, \file{pearson_per_feature} on validation
+strains. The within-study value at $m = 1000$ exceeds the $0.775$ reproducibility ceiling,
+which the cross-study column resolves: same-array conditioning was predicting the target's
+own measurement noise.}
+\label{tab:oracle}
+\end{table}
+
+The gain is not a better genotype-to-expression map. Removing a genotype predictor, a
+$k$-nearest-neighbor model on \file{prot_T5_all} with $k = 25$, leaves $97.5$ to
+$100.6\,\%$ of the conditioning gain intact, so the channel the objective optimizes is
+switched off at $m = 0$, which is where the strand is scored.
+\src{experiments/019-simb-multimodal/results/conditioning_gain_after_genotype.json}
+
+\tcfigfit{figures/residual_covariance_diagnostic.pdf}{Residual gene-gene structure in the
+expression compendium after removing each gene's mean. The pattern replicates on held-out
+strains and lives in about 33 effective components, which is what a per-gene independent
+readout discards.}{fig:residual-cov}
+
+What makes the oracle worth keeping is the structure it exploits. After removing each
+gene's mean, the residual gene-gene correlation pattern replicates on held-out strains at
+split-half $r = 0.8687$ against a permutation null of $8.45\times10^{-5}$, and it has an
+effective rank of $32.78$, with $59.1\,\%$ of variance inside the top 32 components. A
+per-gene independent readout emits 6,127 marginals and discards all of it.
+\src{experiments/019-simb-multimodal/results/residual_covariance_diagnostic.json}
+
+\subsection{Why the byte count is misleading\secstatus{todo}}
+
+The expression compendium holds more scalar labels than the trigenic interaction data the
+model does well on, which is the intuition that predicted this task would be easy. The
+label count is not the axis that matters.
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: row counts read from $DATA_ROOT/data/torchcell/<dataset>/preprocess/data.csv
+\begin{tabular}{lrrrp{40mm}}
+\toprule
+dataset & records & per record & scalars & perturbation axis \\
+\midrule
+Kuzmin 2018 trigenic interaction  & 91{,}111  & 1 & 91{,}111  & \\
+Kuzmin 2020 trigenic interaction  & 301{,}798 & 1 & 301{,}798 & \\
+\quad \textbf{both, as 010 queries them} & \textbf{392{,}909} & \textbf{1} & \textbf{392{,}909} & triples; a gene recurs with many partners \\
+\midrule
+Kemmeren 2014 knockout expression & 1{,}484  & 6{,}169 & 9{,}153{,}196 & 1{,}484 single deletions, each once \\
+Ohya 2005 morphology              & 4{,}718  & 281     & 1{,}325{,}758 & 4{,}718 single deletions, each once \\
+\bottomrule
+\end{tabular}
+\caption[]{Scalar labels are not the binding resource, and the trigenic comparison is with
+\textbf{both} Kuzmin papers: \file{experiments/010-kuzmin-tmi/queries/001_small_build.cql}
+selects \file{TmiKuzmin2018Dataset} and \file{TmiKuzmin2020Dataset}, 392,909 records
+between them. Expression still carries more scalars, $9.2$ million against $0.39$ million,
+but its perturbation axis has 1,484 points and no gene is deleted twice, so nothing in the
+data isolates the effect of a deletion from the effect of the one array it was measured on.
+Record counts are raw rows in each dataset's \file{preprocess/data.csv}, before the
+deduplication and aggregation the graph build applies.}
+\label{tab:label-accounting}
+\end{table}
+
+In the trigenic data a given gene appears in many records paired with different partners,
+so the supervision repeatedly constrains that gene's contribution. In the expression data a
+gene appears as the perturbation exactly once, and it appears in one array. The 6,169 labels attached to it are 6,169
+readouts of a single perturbation event, correlated with each other at the level the
+residual covariance above measures, so they are worth far less than 6,169 independent
+constraints on the deletion.
+
+\notesec{Established} The expression strand sits at $0.238$ against a ceiling of $0.775$.
+The round produced no valid comparison between mechanisms, because every arm was scored
+before saturation. It produced three things that hold: the additive operator provably
+cannot express a pair term; loss and metric diverge on this target and not on 010; and the
+one large available signal is imputation from other genes of the same strain, measured to
+be orthogonal to the genotype-only task.
+
+\notesec{Cannot say} Whether any of the pair-rank mechanisms help. Whether the graph prior
+is the right prior for this task. Whether a different objective closes the loss-metric gap.

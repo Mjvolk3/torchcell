@@ -1,0 +1,160 @@
+{
+  "smoothing_points": 25,
+  "runs": {
+    "v9 M_fine (masked)": {
+      "run_id": "hx8pxdic",
+      "project": "torchcell_019_expr_v9",
+      "tags": [
+        "M_fine",
+        "cgt_expr_v9_mask",
+        "mech-mask",
+        "sched-fine",
+        "seed0",
+        "stage-v9",
+        "xfer-yes"
+      ],
+      "state": "finished",
+      "runtime_s": 328981.0,
+      "last_epoch": 9999.0,
+      "runtime_h": 91.38361111111111,
+      "runtime_days": 3.807650462962963,
+      "seconds_per_epoch": 32.9013901390139,
+      "turning_points": {
+        "val/expression/pearson_per_feature": {
+          "min": -0.00492195875813195,
+          "epoch_at_min": 0.0,
+          "max": 0.23618797439595926,
+          "epoch_at_max": 9674.0,
+          "last": 0.23285293579101562
+        },
+        "val/expression/mse": {
+          "min": 0.03907023215045532,
+          "epoch_at_min": 9175.0,
+          "max": 0.04231167398393154,
+          "epoch_at_max": 1429.0,
+          "last": 0.03995826467871666
+        },
+        "val/expression/nmse": {
+          "min": 0.9980846270918846,
+          "epoch_at_min": 213.0,
+          "max": 1.0727100276947021,
+          "epoch_at_max": 886.0,
+          "last": 1.0280190706253052
+        },
+        "val/loss": {
+          "min": 0.23759719858998837,
+          "epoch_at_min": 463.0,
+          "max": 0.26312458515167236,
+          "epoch_at_max": 0.0,
+          "last": 0.2625608444213867
+        },
+        "val/expression/pred_sd_ratio": {
+          "min": 0.00040042118589075183,
+          "epoch_at_min": 20.0,
+          "max": 0.4662920171799867,
+          "epoch_at_max": 3284.0,
+          "last": 0.48734915256500244
+        },
+        "traineval/expression/pearson_per_feature": {
+          "min": 0.004299311025533825,
+          "epoch_at_min": 0.0,
+          "max": 0.7798981666564941,
+          "epoch_at_max": 9975.0,
+          "last": 0.7798981666564941
+        }
+      },
+      "calibration": {
+        "peak_epoch": 9674.0,
+        "pearson_at_peak": 0.2358231246471405,
+        "pred_sd_ratio_at_peak": 0.4602277874946594,
+        "nmse_logged": 1.0100115537643433,
+        "nmse_from_identity": 0.9947449065893679,
+        "identity_residual": 0.01526664717497539,
+        "optimal_sd_ratio": 0.2358231246471405,
+        "over_dispersion_factor": 1.9515803981619406,
+        "nmse_after_rescale": 0.9443874538816592,
+        "rescale_multiplier": 0.5124052285736377
+      }
+    },
+    "v8 V_basis64": {
+      "run_id": "b50f93ju",
+      "project": "torchcell_019_expr_v8",
+      "tags": [
+        "V_basis64",
+        "cgt_expr_012",
+        "mech-basis",
+        "pair-rank64",
+        "seed0",
+        "stage-wave6",
+        "xfer-yes"
+      ],
+      "state": "finished",
+      "runtime_s": 172430.349972712,
+      "last_epoch": 4106.0,
+      "runtime_h": 47.89731943686444,
+      "runtime_days": 1.9957216432026852,
+      "seconds_per_epoch": 41.99472722180029,
+      "turning_points": {
+        "val/expression/pearson_per_feature": {
+          "min": 0.0466287497144479,
+          "epoch_at_min": 0.0,
+          "max": 0.22737392365932466,
+          "epoch_at_max": 3921.0,
+          "last": 0.22313642501831055
+        },
+        "val/expression/mse": {
+          "min": 0.03966342926025391,
+          "epoch_at_min": 3922.0,
+          "max": 0.04122415915131569,
+          "epoch_at_max": 672.0,
+          "last": 0.040133364498615265
+        },
+        "val/expression/nmse": {
+          "min": 0.9924544072151185,
+          "epoch_at_min": 145.0,
+          "max": 1.0497394323348999,
+          "epoch_at_max": 4081.0,
+          "last": 1.0467358827590942
+        },
+        "val/loss": {
+          "min": 0.2610110771656036,
+          "epoch_at_min": 141.0,
+          "max": 0.27605050086975097,
+          "epoch_at_max": 4081.0,
+          "last": 0.2758585512638092
+        },
+        "val/expression/pred_sd_ratio": {
+          "min": 0.023312522993924525,
+          "epoch_at_min": 0.0,
+          "max": 0.5067670607566833,
+          "epoch_at_max": 4082.0,
+          "last": 0.5075612664222717
+        },
+        "traineval/expression/pearson_per_feature": {
+          "min": -0.03081197291612625,
+          "epoch_at_min": 0.0,
+          "max": 0.7229260802268982,
+          "epoch_at_max": 4088.0,
+          "last": 0.7229260802268982
+        }
+      },
+      "calibration": {
+        "peak_epoch": 3921.0,
+        "pearson_at_peak": 0.22610430419445038,
+        "pred_sd_ratio_at_peak": 0.49890875816345215,
+        "nmse_logged": 1.0395119190216064,
+        "nmse_from_identity": 1.0232991137300687,
+        "identity_residual": 0.01621280529153779,
+        "optimal_sd_ratio": 0.22610430419445038,
+        "over_dispersion_factor": 2.2065425067467497,
+        "nmse_after_rescale": 0.9488768436247434,
+        "rescale_multiplier": 0.4531977049807056
+      }
+    }
+  },
+  "figure": {
+    "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/019-simb-multimodal/expression_objective_diagnosis.png",
+    "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/019-simb-multimodal/expression_objective_diagnosis.svg",
+    "written_at": "2026-08-27-00-44-43"
+  }
+}

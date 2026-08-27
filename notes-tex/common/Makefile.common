@@ -148,8 +148,15 @@ figures:
 # out of date with the scripts -- which is exactly the class of error the rule
 # exists to prevent. `make figures` covers draw.io sources; this covers plots.
 #
-# rsvg-convert, not inkscape: it honours the physical mm dimensions that
-# savefig_true_size_svg writes, so a panel drawn 179 mm wide arrives 179 mm wide.
+# rsvg-convert, not inkscape. It needs a ZOOM, and the reason is specific:
+# `savefig_true_size_svg` deliberately rewrites the SVG root so the coordinate numbers
+# are draw.io's native 100 units per inch, and it strips the `pt` unit doing so. rsvg
+# reads a unitless root at 1 unit = 1 pt (72 per inch) when writing PDF, so a panel
+# authored 179 mm wide arrives 179 * 100/72 = 248.7 mm and runs 67 mm off an A4 text
+# block. PLOT_ZOOM = 72/100 undoes exactly that one rescale, so the PDF lands at the mm
+# the plot script asked for. Keep it equal to src_dpi/drawio_dpi in
+# torchcell/utils/utils.py; if that pair ever changes, this changes with it.
+PLOT_ZOOM ?= 0.72
 PLOT_SLUG ?= $(notdir $(CURDIR))
 PLOT_SRC  := $(REPO)/notes/assets/images/$(PLOT_SLUG)
 
@@ -157,7 +164,8 @@ plots:
 	@for f in $$(grep -rhoE 'figures/[A-Za-z0-9._-]+\.pdf' $(DEPS) 2>/dev/null | sort -u); do \
 	  n=$$(basename $$f .pdf); \
 	  s="$(PLOT_SRC)/$$n.svg"; \
-	  if [ -f "$$s" ]; then echo "  $$s -> $$f"; rsvg-convert -f pdf -o "$$f" "$$s"; fi; \
+	  if [ -f "$$s" ]; then echo "  $$s -> $$f"; \
+	    rsvg-convert --zoom $(PLOT_ZOOM) -f pdf -o "$$f" "$$s"; fi; \
 	done
 
 watch:

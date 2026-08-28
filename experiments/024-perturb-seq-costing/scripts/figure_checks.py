@@ -135,6 +135,32 @@ def check_inside_axes(
     return problems
 
 
+def check_inside_figure(fig: Figure, slack: float = 0.0) -> list[str]:
+    """Return figure-level text that runs off the canvas.
+
+    ``check_inside_axes`` cannot see this: a panel letter belongs to the FIGURE,
+    not to any axes, and it is placed deliberately outside every axes box. The
+    failure it catches is the one that shipped in Fig. 12, where the letters sat
+    a hair above the canvas and the top of every glyph was sliced off. Nothing
+    reported it, because that figure was the one plot script with no legibility
+    call at all.
+
+    A letter cropped at the top still reads as a letter at a glance, which is why
+    the eye misses it and a bounding-box test does not.
+    """
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    canvas = _shrink(fig.get_window_extent(renderer), -slack)
+    problems: list[str] = []
+    for t in fig.texts:
+        if not t.get_visible():
+            continue
+        bb = t.get_window_extent(renderer)
+        if not canvas.contains(bb.x0, bb.y0) or not canvas.contains(bb.x1, bb.y1):
+            problems.append(f"figure text outside the canvas: {t.get_text()!r}")
+    return problems
+
+
 def check_legend_clear(
     fig: Figure,
     axes: list[Axes] | None = None,
@@ -205,6 +231,7 @@ def assert_legible(
     problems = (
         check_overlaps(fig, axes, pad, ignore, ticks)
         + check_inside_axes(fig, axes, slack, exempt)
+        + check_inside_figure(fig)
         + check_legend_clear(fig, axes, pad)
     )
     if problems:

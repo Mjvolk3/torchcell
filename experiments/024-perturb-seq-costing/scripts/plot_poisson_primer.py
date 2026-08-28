@@ -46,6 +46,7 @@ import numpy as np
 from dotenv import load_dotenv
 
 from design_equation import box, place_panel_letters, style
+from figure_checks import assert_legible
 from scaling_analysis import lam_for_target_mean
 from torchcell.utils import PANEL_WIDTHS_MM, mm_to_in, savefig_true_size_svg
 
@@ -182,6 +183,11 @@ def main() -> None:
     fig.subplots_adjust(left=0.062, right=0.995, top=0.84, bottom=0.19,
                         wspace=0.40)
     place_panel_letters(fig, axes, "abc")
+
+    # The other script that had no legibility call. The cropped letter above was
+    # found and fixed by eye; check_inside_figure is what keeps it fixed.
+    assert_legible(fig, axes=list(axes))
+
     savefig_true_size_svg(fig, osp.join(OUT_DIR, "poisson_primer.svg"))
     fig.savefig(osp.join(OUT_DIR, "poisson_primer.png"), dpi=300)
     plt.close(fig)

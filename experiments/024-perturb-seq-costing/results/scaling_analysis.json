@@ -1345,7 +1345,10 @@
     "droplet_preindexed_channels_per_condition": 8,
     "marginal_usd_per_env_splitpool": 22341.157894736843,
     "marginal_usd_per_env_droplet": 144978.68421052632,
-    "marginal_usd_per_env_droplet_preindexed": 42498.16842105263
+    "marginal_usd_per_env_droplet_preindexed": 42498.16842105263,
+    "marginal_usd_per_usable_cell_splitpool": 0.03723526315789474,
+    "marginal_usd_per_usable_cell_droplet": 0.2416311403508772,
+    "marginal_usd_per_usable_cell_droplet_preindexed": 0.07083028070175439
   },
   "constants": {
     "cells_per_pair": 400,

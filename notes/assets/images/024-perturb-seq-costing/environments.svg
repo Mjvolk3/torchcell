@@ -878,16 +878,22 @@ z
 " clip-path="url(#pa7ae17a294)" style="fill: #d6b656; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_18">
-    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="273.284816" y="44.819124" transform="rotate(-0 273.284816 44.819124)">SPLiT-seq round 1</text>
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="273.284816" y="38.568458" transform="rotate(-0 273.284816 38.568458)">SPLiT-seq round 1</text>
    </g>
    <g id="text_19">
-    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start; fill: #b85450" x="273.284816" y="57.289988" transform="rotate(-0 273.284816 57.289988)">96 conditions</text>
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="273.284816" y="50.26541" transform="rotate(-0 273.284816 50.26541)">96-well plate</text>
    </g>
    <g id="text_20">
-    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="273.284816" y="88.739826" transform="rotate(-0 273.284816 88.739826)">scifi preindexing</text>
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start; fill: #b85450" x="273.284816" y="61.977988" transform="rotate(-0 273.284816 61.977988)">96 conditions</text>
    </g>
    <g id="text_21">
-    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start; fill: #d6b656" x="273.284816" y="101.239987" transform="rotate(-0 273.284816 101.239987)">384 conditions</text>
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="273.284816" y="82.489159" transform="rotate(-0 273.284816 82.489159)">scifi preindexing</text>
+   </g>
+   <g id="text_22">
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="273.284816" y="94.215409" transform="rotate(-0 273.284816 94.215409)">384-well plate</text>
+   </g>
+   <g id="text_23">
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start; fill: #d6b656" x="273.284816" y="105.927986" transform="rotate(-0 273.284816 105.927986)">384 conditions</text>
    </g>
    <g id="patch_14">
     <path d="M 209.801485 128.759074 
@@ -897,13 +903,13 @@ L 209.801485 118.992408
 z
 " clip-path="url(#pa7ae17a294)" style="fill: #9673a6; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
    </g>
-   <g id="text_22">
+   <g id="text_24">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="273.284816" y="122.726653" transform="rotate(-0 273.284816 122.726653)">10x channel, no round 1</text>
    </g>
-   <g id="text_23">
+   <g id="text_25">
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start; fill: #9673a6" x="273.284816" y="128.586652" transform="rotate(-0 273.284816 128.586652)">1 condition</text>
    </g>
-   <g id="text_24">
+   <g id="text_26">
     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="206.93523" y="17.767411" transform="rotate(-0 206.93523 17.767411)">A round-1 well is a free condition label</text>
    </g>
    <g id="line2d_87">
@@ -1203,7 +1209,7 @@ z
        <use xlink:href="#me1c8194a0c" x="380.881144" y="136.084074" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_25">
+     <g id="text_27">
       <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="380.881144" y="147.378761" transform="rotate(-0 380.881144 147.378761)">1</text>
      </g>
     </g>
@@ -1213,7 +1219,7 @@ z
        <use xlink:href="#me1c8194a0c" x="394.672303" y="136.084074" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_26">
+     <g id="text_28">
       <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="394.672303" y="147.378761" transform="rotate(-0 394.672303 147.378761)">12</text>
      </g>
     </g>
@@ -1223,7 +1229,7 @@ z
        <use xlink:href="#me1c8194a0c" x="409.717204" y="136.084074" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_27">
+     <g id="text_29">
       <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="409.717204" y="147.378761" transform="rotate(-0 409.717204 147.378761)">24</text>
      </g>
     </g>
@@ -1233,7 +1239,7 @@ z
        <use xlink:href="#me1c8194a0c" x="439.807005" y="136.084074" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_28">
+     <g id="text_30">
       <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="439.807005" y="147.378761" transform="rotate(-0 439.807005 147.378761)">48</text>
      </g>
     </g>
@@ -1243,11 +1249,11 @@ z
        <use xlink:href="#me1c8194a0c" x="499.986608" y="136.084074" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_29">
+     <g id="text_31">
       <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="499.986608" y="147.378761" transform="rotate(-0 499.986608 147.378761)">96</text>
      </g>
     </g>
-    <g id="text_30">
+    <g id="text_32">
      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="442.314489" y="156.865949" transform="rotate(-0 442.314489 156.865949)">Environments</text>
     </g>
    </g>
@@ -1258,7 +1264,7 @@ z
        <use xlink:href="#m5f05cde79d" x="379.627403" y="136.084074" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_31">
+     <g id="text_33">
       <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="372.627403" y="138.231418" transform="rotate(-0 372.627403 138.231418)">$0</text>
      </g>
     </g>
@@ -1268,7 +1274,7 @@ z
        <use xlink:href="#m5f05cde79d" x="379.627403" y="121.141409" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_32">
+     <g id="text_34">
       <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="372.627403" y="123.288753" transform="rotate(-0 372.627403 123.288753)">$2M</text>
      </g>
     </g>
@@ -1278,7 +1284,7 @@ z
        <use xlink:href="#m5f05cde79d" x="379.627403" y="106.198745" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_33">
+     <g id="text_35">
       <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="372.627403" y="108.346089" transform="rotate(-0 372.627403 108.346089)">$4M</text>
      </g>
     </g>
@@ -1288,7 +1294,7 @@ z
        <use xlink:href="#m5f05cde79d" x="379.627403" y="91.256081" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_34">
+     <g id="text_36">
       <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="372.627403" y="93.403424" transform="rotate(-0 372.627403 93.403424)">$6M</text>
      </g>
     </g>
@@ -1298,7 +1304,7 @@ z
        <use xlink:href="#m5f05cde79d" x="379.627403" y="76.313416" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_35">
+     <g id="text_37">
       <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="372.627403" y="78.46076" transform="rotate(-0 372.627403 78.46076)">$8M</text>
      </g>
     </g>
@@ -1308,7 +1314,7 @@ z
        <use xlink:href="#m5f05cde79d" x="379.627403" y="61.370752" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_36">
+     <g id="text_38">
       <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="372.627403" y="63.518096" transform="rotate(-0 372.627403 63.518096)">$10M</text>
      </g>
     </g>
@@ -1318,7 +1324,7 @@ z
        <use xlink:href="#m5f05cde79d" x="379.627403" y="46.428087" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_37">
+     <g id="text_39">
       <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="372.627403" y="48.575431" transform="rotate(-0 372.627403 48.575431)">$12M</text>
      </g>
     </g>
@@ -1328,11 +1334,11 @@ z
        <use xlink:href="#m5f05cde79d" x="379.627403" y="31.485423" style="stroke: #000000; stroke-width: 0.5"/>
       </g>
      </g>
-     <g id="text_38">
+     <g id="text_40">
       <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="372.627403" y="33.632767" transform="rotate(-0 372.627403 33.632767)">$14M</text>
      </g>
     </g>
-    <g id="text_39">
+    <g id="text_41">
      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="352.35709" y="79.925743" transform="rotate(-90 352.35709 79.925743)">Recurring cost</text>
     </g>
    </g>
@@ -1653,56 +1659,59 @@ L 505.001575 136.084074
 L 505.001575 23.767411 
 " style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
-   <g id="text_40">
+   <g id="text_42">
     <text style="font-size: 4.5px; font-family: 'Arial'; fill: #9673a6" transform="translate(410.569172 62.429067)">$144,979 per added</text>
     <text style="font-size: 4.5px; font-family: 'Arial'; fill: #9673a6" transform="translate(426.090656 67.18866)">environment</text>
    </g>
-   <g id="text_41">
+   <g id="text_43">
     <text style="font-size: 4.5px; font-family: 'Arial'; text-anchor: middle; fill: #d6b656" x="484.941707" y="105.507689" transform="rotate(-0 484.941707 105.507689)">$42,498</text>
    </g>
-   <g id="text_42">
+   <g id="text_44">
     <text style="font-size: 4.5px; font-family: 'Arial'; text-anchor: middle; fill: #b85450" x="454.851906" y="133.561533" transform="rotate(-0 454.851906 133.561533)">$22,341 per added environment</text>
    </g>
-   <g id="text_43">
+   <g id="text_45">
     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="379.627403" y="17.767411" transform="rotate(-0 379.627403 17.767411)">Unmodified droplet pays per condition</text>
    </g>
    <g id="legend_2">
     <g id="line2d_159">
-     <path d="M 382.327403 28.168271 
-L 385.252403 28.168271 
-L 388.177403 28.168271 
+     <path d="M 382.327403 31.145865 
+L 385.252403 31.145865 
+L 388.177403 31.145865 
 " style="fill: none; stroke: #9673a6; stroke-linecap: square"/>
     </g>
-    <g id="text_44">
-     <text style="font-size: 4.5px; font-family: 'Arial'; text-anchor: start" x="389.977403" y="29.743271" transform="rotate(-0 389.977403 29.743271)">10x Chromium X, one channel per condition</text>
+    <g id="text_46">
+     <text style="font-size: 4.5px; font-family: 'Arial'" transform="translate(389.977403 29.743271)">10x Chromium X, one channel per condition</text>
+     <text style="font-size: 4.5px; font-family: 'Arial'" transform="translate(389.977403 34.858927)">$0.242 per usable cell</text>
     </g>
     <g id="line2d_160">
-     <path d="M 382.327403 33.647021 
-L 385.252403 33.647021 
-L 388.177403 33.647021 
+     <path d="M 382.327403 41.78738 
+L 385.252403 41.78738 
+L 388.177403 41.78738 
 " style="fill: none; stroke-dasharray: 4,1.5; stroke-dashoffset: 0; stroke: #d6b656"/>
     </g>
-    <g id="text_45">
-     <text style="font-size: 4.5px; font-family: 'Arial'; text-anchor: start" x="389.977403" y="35.222021" transform="rotate(-0 389.977403 35.222021)">10x + preindexing, conditions share channels</text>
+    <g id="text_47">
+     <text style="font-size: 4.5px; font-family: 'Arial'" transform="translate(389.977403 40.337677)">10x + preindexing, conditions share channels</text>
+     <text style="font-size: 4.5px; font-family: 'Arial'" transform="translate(389.977403 45.506068)">$0.071 per usable cell</text>
     </g>
     <g id="line2d_161">
-     <path d="M 382.327403 39.21999 
-L 385.252403 39.21999 
-L 388.177403 39.21999 
+     <path d="M 382.327403 52.428896 
+L 385.252403 52.428896 
+L 388.177403 52.428896 
 " style="fill: none; stroke: #b85450; stroke-linecap: square"/>
     </g>
-    <g id="text_46">
-     <text style="font-size: 4.5px; font-family: 'Arial'; text-anchor: start" x="389.977403" y="40.79499" transform="rotate(-0 389.977403 40.79499)">SPLiT-seq + rRNA depletion, shared runs</text>
+    <g id="text_48">
+     <text style="font-size: 4.5px; font-family: 'Arial'" transform="translate(389.977403 51.026302)">SPLiT-seq + rRNA depletion, shared runs</text>
+     <text style="font-size: 4.5px; font-family: 'Arial'" transform="translate(389.977403 56.141958)">$0.037 per usable cell</text>
     </g>
    </g>
   </g>
-  <g id="text_47">
+  <g id="text_49">
    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="3.414803" y="10.615748" transform="rotate(-0 3.414803 10.615748)">a</text>
   </g>
-  <g id="text_48">
+  <g id="text_50">
    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="201.861214" y="10.615748" transform="rotate(-0 201.861214 10.615748)">b</text>
   </g>
-  <g id="text_49">
+  <g id="text_51">
    <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="343.854637" y="10.356998" transform="rotate(-0 343.854637 10.356998)">c</text>
   </g>
  </g>

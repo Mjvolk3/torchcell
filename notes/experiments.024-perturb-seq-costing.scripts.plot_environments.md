@@ -86,3 +86,38 @@ the remaining factor of two against split-pool's $22,341 is the per-cell gap of
 Sec. 5 rather than an environment effect.
 
 ![](./assets/images/024-perturb-seq-costing/environments.svg)
+
+## 2026.08.28 - 96 against 384 is a plate format, and why split-pool keeps the price advantage
+
+**Reviewer question: can scifi not preindex on 96 wells too?** It can, and
+split-pool can run a 384-well round 1. Panel (b) drawn as "96 vs 384" read as a
+property that separates the platforms, which it is not; the labels now name the
+format each protocol runs (`SPLiT-seq round 1 / 96-well plate / 96 conditions`)
+so the panel claims the weaker and true thing. What separates the two from
+unmodified droplet is having a round-1 plate at all.
+
+**The formats are still worth keeping apart, because the round-1 well does
+different work on the two.** In split-pool it is one of three or four barcode
+rounds multiplied by the sublibrary index, so its size barely moves the collision
+rate. In scifi it is the only thing separating cells that share a droplet, which
+is what permits the 100-fold overloading. On `tab:barcode`'s own formula,
+preindexing on 96 wells takes the barcode space from 2.8e8 to 7.1e7 and, at the
+12 million cells a genome-scale screen needs, the collision estimate from 4.15%
+to 15.59% -- and that formula already understates collisions in droplets, for the
+reason its caption gives. So the plate is a free choice in split-pool and a
+loaded one in scifi.
+
+**Why split-pool still wins per added environment, now stated in the figure.**
+An environment is the same 600,000 extra cells on every platform, so each slope
+in panel (c) is that count times what a cell costs on the platform.
+`scaling_analysis` now writes those per-cell marginals, and they land on
+`tab:cost-loaded`'s loaded figures: $0.037 split-pool, $0.071 preindexed droplet,
+$0.242 unmodified droplet. The environment ranking is the Sec. 5 per-cell ranking
+restated.
+
+The per-cell figures ride in the panel (c) key rather than beside each curve.
+Written into the annotations, both cheap curves' labels are wider than the axes
+on one line and taller than the gap to the axis on two, which `figure_checks`
+rejected twice before this landed on the legend.
+
+![](./assets/images/024-perturb-seq-costing/environments.svg)

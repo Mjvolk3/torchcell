@@ -229,6 +229,15 @@ def panel_b(ax) -> None:
     collide when they share a FULL barcode; pinning conditions to round-1 wells
     partitions that space without shrinking it, and with equal cells per
     condition it does not even change how uniformly the space is used.
+
+    96 AND 384 ARE PLATE FORMATS, NOT PLATFORM PROPERTIES. Each is what its
+    cited protocol runs, and either platform could run the other. The reason to
+    keep them at their published formats rather than equalizing them is that the
+    round-1 well does different work on the two: in split-pool it is one of three
+    or four barcode rounds plus the sublibrary index, so its size barely moves
+    the collision rate, while in scifi it is the ONLY thing separating cells that
+    share a droplet. Preindexing on 96 wells therefore quarters the space that
+    resolves an overloaded droplet, which the caption gives a number for.
     """
     # Stacked on a shared left edge with the labels to the right, rather than
     # side by side. Two plates on one baseline read as one wide strip in a panel
@@ -240,11 +249,19 @@ def panel_b(ax) -> None:
     _plate(ax, 0.0, y_sp, 12, 8, C_SPLIT)
     _plate(ax, 0.0, y_pi, 24, 16, C_PI)
 
+    # The well count is the plate each protocol RUNS, not a property that
+    # separates the platforms: preindexing on 96 wells and split-pool on 384
+    # both exist as designs. Labelled with the format so the panel claims the
+    # weaker and true thing; what actually separates the two from droplet is
+    # having a round-1 plate at all, and the reason 384 is not simply better is
+    # in the caption.
     for y, n, platform, color in ((y_sp, 96, "SPLiT-seq round 1", C_SPLIT),
                                   (y_pi, 384, "scifi preindexing", C_PI)):
-        ax.text(PLATE_W + 2.0, y + PLATE_H * 0.62, platform,
+        ax.text(PLATE_W + 2.0, y + PLATE_H * 0.78, platform,
                 fontsize=5, ha="left", va="center")
-        ax.text(PLATE_W + 2.0, y + PLATE_H * 0.30, f"{n} conditions",
+        ax.text(PLATE_W + 2.0, y + PLATE_H * 0.48, f"{n}-well plate",
+                fontsize=5, ha="left", va="center")
+        ax.text(PLATE_W + 2.0, y + PLATE_H * 0.18, f"{n} conditions",
                 fontsize=5, color=color, ha="left", va="center")
 
     # The droplet glyph is one channel, drawn small and on its own row so it
@@ -292,12 +309,25 @@ def panel_c(ax, data) -> None:
     dr = np.array([r["droplet_usd"] for r in rows])
     pi = np.array([r["droplet_preindexed_usd"] for r in rows])
 
+    # Cost per usable cell rides in the legend rather than beside each curve.
+    # It is the term that explains the ranking, but written into the annotations
+    # it makes both cheap labels wider or taller than the room between the two
+    # curves and the axis, which the legibility gate rejects. In the legend it
+    # costs a second line of an entry that is already the widest thing in the
+    # panel, and it sits next to the platform it belongs to.
+    c_dr = summ["marginal_usd_per_usable_cell_droplet"]
+    c_pi = summ["marginal_usd_per_usable_cell_droplet_preindexed"]
+    c_sp = summ["marginal_usd_per_usable_cell_splitpool"]
+
     ax.plot(e, dr, lw=1.0, color=C_DROP,
-            label="10x Chromium X, one channel per condition")
+            label=f"10x Chromium X, one channel per condition\n"
+                  f"${c_dr:.3f} per usable cell")
     ax.plot(e, pi, lw=1.0, color=C_PI, ls=(0, (4, 1.5)),
-            label="10x + preindexing, conditions share channels")
+            label=f"10x + preindexing, conditions share channels\n"
+                  f"${c_pi:.3f} per usable cell")
     ax.plot(e, sp, lw=1.0, color=C_SPLIT,
-            label="SPLiT-seq + rRNA depletion, shared runs")
+            label=f"SPLiT-seq + rRNA depletion, shared runs\n"
+                  f"${c_sp:.3f} per usable cell")
 
     m_dr = summ["marginal_usd_per_env_droplet"]
     m_pi = summ["marginal_usd_per_env_droplet_preindexed"]

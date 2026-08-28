@@ -325,9 +325,25 @@ def main() -> None:
     marginal_pi = (
         by_env[96].droplet_preindexed_usd - by_env[1].droplet_preindexed_usd
     ) / 95
+    # Divided through by the cells an environment adds, the marginal cost is just
+    # each platform's cost per usable cell. That is what makes the environment
+    # ranking a restatement of the Sec. 5 ranking rather than a new result: every
+    # platform buys the same 600,000 extra cells, and the only thing that differs
+    # is what a cell costs on it. These reproduce tab:cost-loaded's loaded
+    # $/usable cell to the run rounding (that table is evaluated at 250 cells per
+    # gene, this sweep at 100).
+    per_cell = CM.ScreenDesign(
+        cells_per_gene=100, n_environments=1
+    ).usable_cells_needed
+    marginal_cell_sp = marginal_sp / per_cell
+    marginal_cell_dr = marginal_dr / per_cell
+    marginal_cell_pi = marginal_pi / per_cell
     print(f"  marginal cost per added environment: split-pool "
           f"${marginal_sp:,.0f}, droplet ${marginal_dr:,.0f}, "
           f"preindexed droplet ${marginal_pi:,.0f}")
+    print(f"  the same per usable cell: split-pool ${marginal_cell_sp:.4f}, "
+          f"droplet ${marginal_cell_dr:.4f}, preindexed droplet "
+          f"${marginal_cell_pi:.4f}")
     env_cost_summary = {
         "cells_per_gene": 100,
         "usable_cells_per_condition": CM.ScreenDesign(
@@ -344,6 +360,9 @@ def main() -> None:
         "marginal_usd_per_env_splitpool": marginal_sp,
         "marginal_usd_per_env_droplet": marginal_dr,
         "marginal_usd_per_env_droplet_preindexed": marginal_pi,
+        "marginal_usd_per_usable_cell_splitpool": marginal_cell_sp,
+        "marginal_usd_per_usable_cell_droplet": marginal_cell_dr,
+        "marginal_usd_per_usable_cell_droplet_preindexed": marginal_cell_pi,
     }
 
     out = {

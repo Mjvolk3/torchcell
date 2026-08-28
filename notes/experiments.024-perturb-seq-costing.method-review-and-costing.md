@@ -1515,3 +1515,25 @@ publishes, which is the check that the two models agree.
 
 Scripts: [[experiments.024-perturb-seq-costing.scripts.plot_environments]],
 [[experiments.024-perturb-seq-costing.scripts.scaling_analysis]].
+
+## 2026.08.28 - Sec 7.3 follow-up: the plate format, and where the price advantage comes from
+
+Two points the previous pass left implicit.
+
+**The well counts are formats, not platform properties.** Preindexing on a
+96-well plate and split-pool on a 384-well one are both buildable, so drawing
+"96 against 384" as though it separated the platforms overstated the case. The
+asymmetry that is real: split-pool's round-1 well is one of three or four barcode
+rounds times the sublibrary index, while scifi's is the only thing separating
+cells that share a droplet. On `tab:barcode`'s formula, a 96-well scifi round 1
+takes the space from 2.8e8 to 7.1e7 and the collision estimate at 12 million
+cells from 4.2% to 15.6%, which that formula already understates for droplets.
+The plate is a free choice in split-pool and a loaded one in scifi.
+
+**Why split-pool is still half the price per added environment.** An environment
+is 600,000 more cells whatever runs it, so each slope in Fig 17c is that count
+times the platform's cost per usable cell: $0.037 depleted split-pool, $0.071
+preindexed droplet, $0.242 unmodified droplet, which reproduce
+`tab:cost-loaded`. The environment ranking carries no information beyond the
+Sec. 5 per-cell ranking, and the figure now says so in its key rather than
+leaving the reader to divide.

@@ -171,7 +171,12 @@ def panel_b(ax, rec) -> None:
         ax.plot(PLEXES_PAIR, y, lw=1.0, color=color, marker="o", ms=2.4,
                 markeredgecolor="black", markeredgewidth=0.3, label=label)
 
-    ax.axhline(1.0, color=C_REF, lw=0.6, ls="--")
+    # zorder below the series: a reference rule is the backdrop a curve is read
+    # against, so where the two cross it is the curve that has to survive. Drawn
+    # after the series, an axhline shares their default zorder of 2 and wins the
+    # tie, which put a grey dashed break straight through the panel curve at the
+    # one place the panel is about -- where it crosses one observation.
+    ax.axhline(1.0, color=C_REF, lw=0.6, ls="--", zorder=1)
     # Right end and above the rule: the panel curve passes through 1.0 on the
     # left half, so a label anchored there would sit on the data it explains.
     ax.annotate("seen once", (8.5, 1.0), xytext=(0, 2),
@@ -222,7 +227,7 @@ def panel_c(ax) -> None:
         y = [recovery(int(T), k).expected_repeats_per_pair for T in targets]
         ax.plot(targets, y, lw=1.0, color=color, label=label)
 
-    ax.axhline(1.0, color=C_REF, lw=0.6, ls="--")
+    ax.axhline(1.0, color=C_REF, lw=0.6, ls="--", zorder=1)
     ax.annotate("seen once", (5800, 1.0), xytext=(0, 2),
                 textcoords="offset points", fontsize=4.5, color=C_REF,
                 ha="right", va="bottom")
@@ -244,7 +249,7 @@ def panel_c(ax) -> None:
     # the panel size alone, and a marker sitting on the k = 2 line would read as
     # though it belonged to that plex.
     for x, lab, ha in ((N_PANEL, "panel", "left"), (N_GENOME, "genome", "right")):
-        ax.axvline(x, color=C_REF, lw=0.5, ls=":", zorder=0)
+        ax.axvline(x, color=C_REF, lw=0.5, ls=":", zorder=1)
         ax.annotate(lab, (x, 7e-3), xytext=(2 if ha == "left" else -2, 0),
                     textcoords="offset points", fontsize=4.5, color=C_REF,
                     ha=ha, va="bottom")

@@ -22,7 +22,7 @@ Contents, seven files:
 
 | in the zip | from | what it is |
 | --- | --- | --- |
-| `w019-strain-build-list.pdf` | `notes-tex/w019-strain-build-list/main-clean.pdf` | the bench sheet, share view |
+| `w019-strain-build-list.pdf` | `notes-tex/w019-strain-build-list/w019-strain-build-list-clean.pdf` | the bench sheet, share view |
 | `csv/t1-existing-singles.csv` | `results/build_list_tables/` | the 12 singles in hand, ours against Costanzo 2016 |
 | `csv/t2-existing-doubles.csv` | same | the 13 doubles in hand |
 | `csv/t3-new-doubles.csv` | same | D01 to D25, the doubles to construct |
@@ -32,7 +32,7 @@ Contents, seven files:
 
 Four decisions worth keeping:
 
-- **The clean view, not the draft.** `main.pdf` carries section-status chips, which are
+- **The clean view, not the draft.** The plain build carries section-status chips, which are
   an internal editing signal and say nothing to a reader outside the group.
 - **CSVs are copied, never re-derived.** `build_list_tables.py` renders each table once
   from one list of records into both `.tex` and `.csv`, which is what makes the typeset

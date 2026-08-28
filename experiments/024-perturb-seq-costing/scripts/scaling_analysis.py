@@ -220,10 +220,17 @@ def environment_cost(
       The multi-environment design is therefore costed directly with
       ``budget_for`` -- batch and sublibrary counts round up over the POOLED
       cell total, exactly as a real run would.
-    * **Droplet** cannot pool: a channel holds one condition, so channel count
-      is rounded up PER CONDITION and summed. The indexed libraries still share
-      sequencing lanes, so the sequencing term is priced on the pooled read
-      total.
+    * **Preindexed droplet** has a round-1 plate too, of 384 wells, so it pools
+      the same way: conditions preindexed into different wells are loaded into
+      shared channels and told apart afterwards by the well index. It is costed
+      with ``budget_for`` for that reason. The saving is only the rounding --
+      one condition already fills 8 channels, so 96 conditions need 690 pooled
+      channels against 768 rounded up per condition -- and the slope of the
+      curve is set by cells, not by the per-condition floor.
+    * **Unmodified droplet** cannot pool: nothing in a channel says which
+      condition a cell came from, so channel count is rounded up PER CONDITION
+      and summed. The indexed libraries still share sequencing lanes, so the
+      sequencing term is priced on the pooled read total.
 
     ``cells_per_gene=100`` puts the single-condition screen at 600,000 usable
     cells (100 x 6,000 genes), the per-condition figure ``environment_scaling``
@@ -233,20 +240,17 @@ def environment_cost(
     """
     single = CM.ScreenDesign(cells_per_gene=cells_per_gene, n_environments=1)
     droplet_one = CM.budget_for(single, CM.TENX)
-    # Preindexed droplet is carried as its own series because Sec. 5 promotes it
-    # to a co-equal candidate, and showing only the un-preindexed platform would
-    # overstate the environment penalty by the factor preindexing removes. It
-    # does not escape the per-condition rounding -- a channel still holds one
-    # condition -- so it changes the SLOPE and not the shape.
-    droplet_pi_one = CM.budget_for(single, CM.TENX_SCIFI_PROJECTED)
     out = []
     for e in n_env_values:
         design = CM.ScreenDesign(cells_per_gene=cells_per_gene, n_environments=e)
         sp = CM.budget_for(design, CM.SPLITSEQ_DEPLETED)
+        # Preindexed droplet is carried as its own series because Sec. 5 promotes
+        # it to a co-equal candidate, and showing only the un-preindexed platform
+        # would overstate the environment penalty by the factor preindexing
+        # removes.
+        pi = CM.budget_for(design, CM.TENX_SCIFI_PROJECTED)
         droplet_protocol = e * droplet_one.protocol_usd
         droplet_seq = UC.cost_for_read_pairs(e * droplet_one.read_pairs)
-        droplet_pi_protocol = e * droplet_pi_one.protocol_usd
-        droplet_pi_seq = UC.cost_for_read_pairs(e * droplet_pi_one.read_pairs)
         out.append(
             EnvironmentCostPoint(
                 n_env=e,
@@ -257,8 +261,8 @@ def environment_cost(
                 droplet_usd=droplet_protocol + droplet_seq,
                 droplet_channels=e * droplet_one.n_batches,
                 droplet_sequencing_usd=droplet_seq,
-                droplet_preindexed_usd=droplet_pi_protocol + droplet_pi_seq,
-                droplet_preindexed_channels=e * droplet_pi_one.n_batches,
+                droplet_preindexed_usd=pi.recurring_usd,
+                droplet_preindexed_channels=pi.n_batches,
             )
         )
     return out

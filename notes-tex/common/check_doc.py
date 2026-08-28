@@ -375,7 +375,9 @@ def check_style(srcs: dict[str, str]) -> list[tuple[str, str]]:
 
 
 def main() -> int:
-    doc = sys.argv[1] if len(sys.argv) > 1 else "main"
+    # Same default as Makefile.common's DOC: the document is named for its
+    # directory, so notes-tex/eqtl-data-model checks eqtl-data-model.log.
+    doc = sys.argv[1] if len(sys.argv) > 1 else osp.basename(os.getcwd())
     log = _read(f"{doc}.log")
     srcs = tex_sources()
     if not log:

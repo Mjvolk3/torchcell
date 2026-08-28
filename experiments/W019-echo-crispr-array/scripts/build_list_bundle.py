@@ -19,7 +19,7 @@ What is inside, and why exactly this:
     csv/t5-plate.csv             what goes on the measurement plate
     MANIFEST.txt                 per-file sha256, sizes, and the source commit
 
-The PDF is `main-clean.pdf` rather than `main.pdf` because the draft view carries
+The PDF is the `-clean` build rather than the plain one because the draft view carries
 section-status chips, which are an internal editing signal and say nothing to a
 reader outside the group.
 
@@ -68,7 +68,7 @@ EXP_DIR = osp.dirname(osp.dirname(osp.abspath(__file__)))
 REPO = osp.dirname(osp.dirname(EXP_DIR))
 CSV_DIR = osp.join(EXP_DIR, "results", "build_list_tables")
 DOC_DIR = osp.join(REPO, "notes-tex", "w019-strain-build-list")
-PDF = osp.join(DOC_DIR, "main-clean.pdf")
+PDF = osp.join(DOC_DIR, "w019-strain-build-list-clean.pdf")
 DEFAULT_OUT = osp.join(EXP_DIR, "results", "w019-strain-build-list.zip")
 
 # Zip entries carry a fixed timestamp so the archive hashes stably. 1980-01-01 is

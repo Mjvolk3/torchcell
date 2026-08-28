@@ -7,4 +7,4 @@ sn-nature.bst
 *.out
 *.toc
 *.synctex.gz
-main-clean.tex
+*-clean.tex

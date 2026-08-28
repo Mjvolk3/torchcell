@@ -279,7 +279,7 @@ def panel_d(ax, summ) -> None:
     # number a design has to clear.
     cross = n[np.argmin(np.abs(samples("compressed", n, q, r, m)
                                - samples("conventional", n, q, r, m)))]
-    ax.axvline(cross, color=C_REF, lw=0.5, ls=":")
+    ax.axvline(cross, color=C_REF, lw=0.5, ls=":", zorder=1)
     # LEFT of the rule and at the floor: to the right is the corner where the
     # conventional and compressed curves converge, and no mathtext -- a 4.5 pt
     # \approx does not survive Arial + svg.fonttype:none through rsvg-convert.

@@ -11,8 +11,6 @@
 # Regenerate the tables before rebuilding; never hand-edit anything under tables/:
 #   python experiments/database/scripts/build_candidate_datasets_table.py
 
-DOC := main
-
 PYTHON ?= /home/michaelvolk/miniconda3/envs/torchcell/bin/python
 
 include ../common/Makefile.common

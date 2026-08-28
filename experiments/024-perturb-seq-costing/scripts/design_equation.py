@@ -347,7 +347,7 @@ def panel_a(ax) -> None:
                 label=(f"$\\varphi={phi:g}$ (100-cell rule)" if i == 1
                        else f"$\\varphi={phi:g}$"))
         floor = power_coefficient(DELTA_MEASURED) * phi
-        ax.axhline(floor, color=PLOT_PALETTE[i], lw=0.4, ls=":")
+        ax.axhline(floor, color=PLOT_PALETTE[i], lw=0.4, ls=":", zorder=1)
         # Labelled at the LEFT edge: at this end of the axis every curve is far
         # above its own floor, so the three labels sit in clear space.
         # Left edge: at d=10 every curve is ~2 decades above its own floor, so
@@ -438,7 +438,7 @@ def panel_c(ax) -> None:
 
     # One split-pool run is ~480,000 cells; anything above a few runs is not a
     # budget question but a feasibility one.
-    ax.axhline(4.8e5, color="#666666", lw=0.5, ls=":")
+    ax.axhline(4.8e5, color="#666666", lw=0.5, ls=":", zorder=1)
     # Just above its rule, flush left: the yaxis transform takes x in axes
     # fraction and y in data coords, so the label hugs the left spine with a
     # small inset pad and a small multiplicative lift above the line.
@@ -449,7 +449,8 @@ def panel_c(ax) -> None:
     # this panel implicitly prices feasibility in split-pool runs only, and the
     # two units are a factor of three apart rather than the order of magnitude
     # the un-preindexed 20,000-cell channel would suggest.
-    ax.axhline(MD.SCIFI_RECOVERED_LARGE_RUN, color="#666666", lw=0.5, ls=":")
+    ax.axhline(MD.SCIFI_RECOVERED_LARGE_RUN, color="#666666", lw=0.5, ls=":",
+               zorder=1)
     # Just above its rule, flush right: the two rules are a factor of ~3
     # apart, so opposite ends keep the two labels clear of each other.
     ax.text(0.98, MD.SCIFI_RECOVERED_LARGE_RUN * 1.1, "one preindexed channel",
@@ -484,7 +485,7 @@ def _delta_axis(ax, label_x: float | None = None) -> None:
     """
     x = ax.get_xlim()[1] if label_x is None else label_x
     for dv, lab in DELTA_REFS:
-        ax.axhline(dv, color="#666666", lw=0.4, ls=":")
+        ax.axhline(dv, color="#666666", lw=0.4, ls=":", zorder=1)
         ax.text(x, dv * 1.06, lab, fontsize=5, color="#666666",
                 ha="right", va="bottom")
 
@@ -527,7 +528,7 @@ def panel_e(ax) -> None:
         y = [min_detectable_delta(cells / t, PLATFORM_DEPTH[plat], phi) for t in T]
         ax.plot(T, y, lw=0.9, color=PLOT_PALETTE[i],
                 label=f"{name.split(' (')[0]}, {cells/1e6:.2f}M cells")
-    ax.axvline(6000, color="#666666", lw=0.4, ls="--")
+    ax.axvline(6000, color="#666666", lw=0.4, ls="--", zorder=1)
     # Horizontal and at the top, not rotated at the right edge, where it
     # ran into the "1.25-fold" reference label.
     ax.text(5600, 6.0, "genome scale", fontsize=5, color="#666666",

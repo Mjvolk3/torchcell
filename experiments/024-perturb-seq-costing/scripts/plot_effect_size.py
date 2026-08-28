@@ -101,7 +101,7 @@ def panel_a(ax) -> None:
         ax.plot(mid, d.frac, lw=0.9, color=color, label=lab)
     for fold, lab in MARKS:
         x = math.log2(fold)
-        ax.axvline(x, color="#666666", lw=0.4, ls=":")
+        ax.axvline(x, color="#666666", lw=0.4, ls=":", zorder=1)
         ax.text(x + 0.03, 0.5, lab, fontsize=5, color="#666666",
                 rotation=90, va="top", ha="left")
     ax.set_yscale("log")
@@ -191,7 +191,7 @@ def panel_c(ax) -> None:
         ax.fill_between(d.fold, d.q25_responders, d.q75_responders,
                         color=color, alpha=0.18, linewidth=0)
     for fold, lab in MARKS:
-        ax.axvline(fold, color="#666666", lw=0.4, ls=":")
+        ax.axvline(fold, color="#666666", lw=0.4, ls=":", zorder=1)
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlim(1.08, 6.5)
@@ -272,7 +272,7 @@ def panel_d(ax) -> None:
             label="linear in k")
     # The asymptote is the model's substantive claim: a ceiling on how much of the
     # transcriptome any number of perturbations can move.
-    ax.axhline(g, color=PLOT_PALETTE[1], lw=0.4, ls=":")
+    ax.axhline(g, color=PLOT_PALETTE[1], lw=0.4, ls=":", zorder=1)
     ax.text(10.2, g * 1.04, f"ceiling {g:.0f}", fontsize=5,
             color=PLOT_PALETTE[1], ha="right", va="bottom")
 

@@ -105,7 +105,7 @@ def panel_a(ax) -> None:
         ax.plot(PANELS, y, color=PLEX_COLOR[k], lw=1.0, label=f"$k={k}$")
     ax.axhspan(TRANSFORMATION_LOW, TRANSFORMATION_HIGH, color="#666666",
                alpha=0.13, lw=0)
-    ax.axhline(TRANSFORMATION_HIGH, color="#666666", lw=0.6, ls="--")
+    ax.axhline(TRANSFORMATION_HIGH, color="#666666", lw=0.6, ls="--", zorder=1)
     ax.text(22, TRANSFORMATION_HIGH * 1.6, "one yeast transformation",
             fontsize=5, color="#666666")
     for t, lab in ((200, "200-gene\npanel"), (6000, "genome")):
@@ -132,7 +132,7 @@ def panel_b(ax) -> None:
             color=PLEX_COLOR[2], lw=1.0, ls=":", label="cloned pairs, $k=2$")
     ax.axhspan(TRANSFORMATION_LOW, TRANSFORMATION_HIGH, color="#666666",
                alpha=0.13, lw=0)
-    ax.axhline(TRANSFORMATION_HIGH, color="#666666", lw=0.6, ls="--")
+    ax.axhline(TRANSFORMATION_HIGH, color="#666666", lw=0.6, ls="--", zorder=1)
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlabel("Genes in the panel, $T$")

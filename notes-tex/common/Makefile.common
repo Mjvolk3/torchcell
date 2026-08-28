@@ -3,9 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/common/Makefile.common
 #
 # Shared build rules for every document in notes-tex/. A per-document Makefile
-# sets DOC (and optionally ZOTERO_COLLECTION) then includes this file:
+# sets its Zotero collections (if it has any) then includes this file:
 #
-#     DOC := main
 #     ZOTERO_COLLECTION := FE8DQKUH
 #     include ../common/Makefile.common
 #
@@ -22,8 +21,15 @@
 # Build engine is Tectonic, same as the manuscript: one binary, no TeX Live
 # install, deterministic package fetching.  conda install -c conda-forge tectonic
 
+# The document root is named for its directory, not `main`: notes-tex/eqtl-data-model
+# builds eqtl-data-model.pdf. Four documents named main.tex and main.pdf are four
+# files a fuzzy file-opener cannot tell apart, and the built PDF is the file that
+# gets opened most. The name is DERIVED rather than assigned, for the same reason
+# the Zotero collection is (see zotero_publish.py): a directory rename then carries
+# the document name with it and nothing has to be kept in sync by hand.
 TECTONIC ?= $(shell command -v tectonic 2>/dev/null || echo /tmp/tectonic)
 PYTHON   ?= python
+DOC      ?= $(notdir $(CURDIR))
 COMMON   := ../common
 REPO     := ../..
 
@@ -58,6 +64,15 @@ SECTIONS := $(wildcard sections/*.tex)
 TABLES   := $(wildcard tables/*.tex)
 DEPS     := $(DOC).tex $(SECTIONS) $(TABLES) $(COMMON)/tcdoc.sty references.bib
 
+# Figures are a prerequisite of the PDF but deliberately NOT part of DEPS: DEPS
+# is grepped for `figures/*.pdf` references by the `figures` and `plots` targets,
+# and it seeds SOURCE_DATE_EPOCH. Adding binaries to it would have those two
+# targets grep a PDF for its own name, and would move the document's date every
+# time a panel was re-exported. Kept separate, a re-exported panel rebuilds the
+# document (which it did not before) while \today still reads as the date the
+# TEXT was last edited.
+FIGURES  := $(wildcard figures/*.pdf)
+
 # Reproducible builds. Without this, hyperref writes a wall-clock /CreationDate
 # into a compressed object stream, so two builds of IDENTICAL sources differ in
 # their bytes and therefore in their sha256. That defeats any attempt to version
@@ -91,7 +106,7 @@ sn-nature.bst: $(REPO)/paper/nature-biotech/sn-nature.bst
 	@ln -sf ../../paper/nature-biotech/sn-nature.bst $@
 
 # --keep-logs so `make check` has a .log to read; --synctex for editor jump-to-source.
-$(DOC).pdf: $(DEPS) $(SHARED_STY)
+$(DOC).pdf: $(DEPS) $(FIGURES) $(SHARED_STY)
 	$(TECTONIC) -X compile $(DOC).tex --keep-logs --synctex --outdir .
 
 # The share view. Same body, `clean` option on tcdoc: status chips and src
@@ -148,16 +163,39 @@ figures:
 # out of date with the scripts -- which is exactly the class of error the rule
 # exists to prevent. `make figures` covers draw.io sources; this covers plots.
 #
-# rsvg-convert, not inkscape: it honours the physical mm dimensions that
-# savefig_true_size_svg writes, so a panel drawn 179 mm wide arrives 179 mm wide.
+# rsvg-convert, not inkscape, and it is driven at an explicitly measured zoom.
+#
+# savefig_true_size_svg writes a UNITLESS width, in draw.io's unit of 100 per
+# inch, because draw.io ignores the CSS meaning of `pt`. No renderer can know
+# that, and librsvg's guess has changed: 2.50 writes one PDF point per user
+# unit, later versions read the number as a CSS pixel at 96 dpi. Neither is the
+# 100-per-inch the file means, so the same 179 mm panel converts to a 249 mm PDF
+# on one machine and a 186 mm PDF on another, and figures/ has carried both.
+#
+# The document places every panel with \tcfigfit, which scales to \textwidth, so
+# this never showed in a rendering -- and check_doc only reads the MediaBox when
+# it lands inside the first 400 kB of the file, so it did not reliably show
+# there either. Correcting it at the source is what makes the committed PDF mean
+# what its name says.
+#
+# So the conversion measures rather than assumes: convert a 100-unit square,
+# read what came out, and zoom every real conversion by 72/that. Both librsvg
+# behaviours land on width * 72/100 points, which is the true size.
 PLOT_SLUG ?= $(notdir $(CURDIR))
 PLOT_SRC  := $(REPO)/notes/assets/images/$(PLOT_SLUG)
 
 plots:
-	@for f in $$(grep -rhoE 'figures/[A-Za-z0-9._-]+\.pdf' $(DEPS) 2>/dev/null | sort -u); do \
+	@t=$$(mktemp -d); \
+	printf '%s' '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100"/></svg>' > $$t/probe.svg; \
+	rsvg-convert -f pdf -o $$t/probe.pdf $$t/probe.svg; \
+	pt=$$(grep -a -m1 -o '/MediaBox \[[^]]*\]' $$t/probe.pdf | tr -dc '0-9. ' | awk '{print $$3}'); \
+	z=$$(awk -v p="$$pt" 'BEGIN{printf "%.6f", 72.0/p}'); \
+	rm -rf $$t; \
+	echo "  librsvg gives $$pt pt per 100 units; converting at zoom $$z"; \
+	for f in $$(grep -rhoE 'figures/[A-Za-z0-9._-]+\.pdf' $(DEPS) 2>/dev/null | sort -u); do \
 	  n=$$(basename $$f .pdf); \
 	  s="$(PLOT_SRC)/$$n.svg"; \
-	  if [ -f "$$s" ]; then echo "  $$s -> $$f"; rsvg-convert -f pdf -o "$$f" "$$s"; fi; \
+	  if [ -f "$$s" ]; then echo "  $$s -> $$f"; rsvg-convert -z $$z -f pdf -o "$$f" "$$s"; fi; \
 	done
 
 watch:

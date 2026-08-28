@@ -14,7 +14,7 @@ deliverable; this note holds the decisions behind it and the follow-ups it gener
 - Generator: `experiments/database/scripts/build_candidate_datasets_table.py` (the curated
   list lives in the script as pydantic records, since a curation cannot be recomputed from
   a store).
-- Document: `notes-tex/database-expansion-100/main.pdf`, published to Zotero under
+- Document: `notes-tex/database-expansion-100/database-expansion-100.pdf`, published to Zotero under
   `torchcell / notes-tex / database-expansion-100`.
 - Machine-readable dump: `experiments/database/results/candidates/candidate_datasets.json`
   (gitignored, regenerate with the script).

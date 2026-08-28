@@ -41,3 +41,23 @@ plex, so their two series are the library sizes and take slots 0 and 1. Panel
 and 4. No color means two things.
 
 ![](./assets/images/024-perturb-seq-costing/recovery.svg)
+
+## 2026.08.27 - Reference rules moved behind the data, here and across the figure set
+
+The "seen once" rule in panels (b) and (c) is drawn after the series and shared
+their default `zorder` of 2, so it won the tie and broke the panel curve at the
+one place panel (b) is about, where that curve crosses one observation. Reference
+rules now carry `zorder=1`: a rule is the backdrop a curve is read against, so
+where the two cross it is the curve that has to survive.
+
+Swept the rest of the figure set for the same pattern, with one distinction that
+decides each case. On a LINE panel the rule goes behind the data. On a BAR or
+histogram panel it stays on top, because a bar is opaque and a rule underneath it
+is simply invisible. So `plot_compression` panel (d), `plot_library_ceiling` (a)
+and (b), `plot_economics` (the cost-versus-depth and the twin-axis panels),
+`plot_effect_size` and `design_equation` moved their rules behind; the
+`n_genes` rule over the bars in `plot_compression` (a), the "additive" and median
+rules over its histogram, and the cell-floor rule over the bars in
+`plot_economics` (a) stayed where they were.
+
+![](./assets/images/024-perturb-seq-costing/recovery.svg)

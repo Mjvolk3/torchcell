@@ -16,7 +16,7 @@ Layout, which is DERIVED from the repo path rather than invented::
     zotero  torchcell / <dir parent>          <- one flat index per document kind
             torchcell / <dir leaf>            <- that document and its versions
 
-    notes-tex/024-perturb-seq-costing/main.pdf
+    notes-tex/024-perturb-seq-costing/024-perturb-seq-costing.pdf
       -> torchcell / notes-tex / 024-perturb-seq-costing
     paper/nature-biotech/editing.pdf
       -> torchcell / paper / nature-biotech
@@ -125,7 +125,7 @@ class BuiltDoc(BaseModel):
     """A built PDF and everything needed to identify it later."""
 
     doc_dir: str  # repo-relative, e.g. "notes-tex/024-..." or "paper/nature-biotech"
-    pdf_stem: str  # "main", "main-clean", "editing", "submission", ...
+    pdf_stem: str  # "<doc>", "<doc>-clean", "editing", "submission", ...
     pdf_path: str
     title: str
     subtitle: str | None
@@ -152,13 +152,26 @@ class BuiltDoc(BaseModel):
 
     @property
     def filename(self) -> str:
-        # The PDF stem is part of the name whenever it is not the plain `main`
-        # build. A draft and a share build, or an editing and a submission build,
-        # are different bytes and different sha256, so without it the two sort
-        # together and a reviewer cannot tell which one they are commenting on.
-        # `main` contributes nothing, which keeps every already-published
-        # notes-tex filename byte-identical to what it was.
-        stem = "" if self.pdf_stem == "main" else f"-{self.pdf_stem}"
+        # The PDF stem is part of the name whenever it is not the document's own
+        # default build. A draft and a share build, or an editing and a submission
+        # build, are different bytes and different sha256, so without it the two
+        # sort together and a reviewer cannot tell which one they are commenting
+        # on.
+        #
+        # Two spellings of "the default build" are stripped, and both have to be:
+        # notes-tex documents used to build `main.pdf` and now build
+        # `<doc>.pdf` (see Makefile.common). Stripping both keeps every
+        # already-published filename byte-identical across that rename, so the
+        # version history of a collection stays one sequence rather than
+        # splitting at the day the document was renamed.
+        stem = self.pdf_stem
+        for base in (self.doc, "main"):
+            if stem == base:
+                stem = ""
+                break
+            if stem.startswith(f"{base}-"):
+                stem = stem[len(base):]
+                break
         return f"{self.doc}{stem}_{self.built_at}_{self.sha256[:8]}.pdf"
 
     @property
@@ -256,8 +269,8 @@ def _parse_title(tex_path: str) -> tuple[str, str | None, list[tuple[str, str]]]
 def load_built_doc(repo: str, rel_dir: str, pdf_stem: str, tex_rel: str) -> BuiltDoc:
     """Load a built PDF given a repo-relative directory and a PDF stem.
 
-    ``main.pdf`` carries the status chips and provenance flags and is the right
-    thing to review in-group; ``main-clean.pdf`` is what leaves the group. For the
+    ``<doc>.pdf`` carries the status chips and provenance flags and is the right
+    thing to review in-group; ``<doc>-clean.pdf`` is what leaves the group. For the
     manuscript the same distinction is ``editing`` against ``submission``.
     """
     doc_dir = osp.join(repo, rel_dir)
@@ -390,13 +403,14 @@ def main() -> None:
                                 "paper/nature-biotech; a bare name means "
                                 "notes-tex/<name>")
     ap.add_argument("--pdf", default=None, metavar="STEM",
-                    help="PDF stem to publish (default: main). e.g. editing")
+                    help="PDF stem to publish (default: the document directory's "
+                         "own name, which is what its Makefile builds). e.g. editing")
     ap.add_argument("--tex", default=None, metavar="PATH",
                     help="document-relative tex declaring \\title (default: "
                          "<STEM>.tex). e.g. sections/frontmatter.tex")
     ap.add_argument("--dry-run", action="store_true", help="preview, upload nothing")
     ap.add_argument("--clean", action="store_true",
-                    help="shorthand for --pdf main-clean, the share view")
+                    help="shorthand for --pdf <doc>-clean, the share view")
     ap.add_argument("--list", action="store_true", help="list published versions and exit")
     args = ap.parse_args()
 
@@ -415,7 +429,11 @@ def main() -> None:
     rel_dir = args.doc.strip("/")
     if "/" not in rel_dir:
         rel_dir = f"{DEFAULT_PARENT_DIR}/{rel_dir}"
-    pdf_stem = args.pdf or ("main-clean" if args.clean else "main")
+    # The default stem is the document directory's own name, because that is what
+    # Makefile.common builds: notes-tex/eqtl-data-model -> eqtl-data-model.pdf.
+    # paper/nature-biotech has no such default build and always passes --pdf.
+    leaf = rel_dir.rsplit("/", 1)[-1]
+    pdf_stem = args.pdf or (f"{leaf}-clean" if args.clean else leaf)
     tex_rel = args.tex or f"{pdf_stem}.tex"
 
     built = load_built_doc(repo, rel_dir, pdf_stem, tex_rel)
@@ -501,7 +519,7 @@ def main() -> None:
         return
 
     # Upload from a temp copy so the versioned name is what lands in Zotero
-    # storage rather than a generic "main.pdf".
+    # storage rather than the plain build name.
     #
     # NOT pyzotero's attachment_simple: it puts the path it is handed into the
     # item's `filename` field, and the API rejects that outright --

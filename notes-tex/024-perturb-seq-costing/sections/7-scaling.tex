@@ -226,15 +226,26 @@ condition, 4 environments need 2.4 million cells and 12 need 7.2 million.
 Compare that to the quadratic growth of named pairs, and the environment axis is
 by far the cheaper way to enlarge a dataset.
 
-\notesec{It is nearly free in split-pool, and it is not in droplet} Split-pool
-uses the round-1 plate for sample identity, and a pooled single-condition screen
-uses one sample, so the round-1 barcode space is idle. Growing 96 conditions in a
-deep-well plate and barcoding them into the same run consumes capacity that is
-otherwise wasted, and sequencing is then shared across all of them. The same
-experiment on droplet needs one channel per condition, and channels are what
-\cref{sec:budget} shows dominates that platform's cost. This is the one design
-question on which the two platforms diverge for a reason unrelated to price per
-cell, and it argues for split-pool independently of the cost comparison.
+\notesec{Labeling a condition is free wherever round 1 is a plate} A cell can be
+assigned to a condition only if something in the protocol records which condition
+it came from. Split-pool records it for nothing: round 1 is a 96-well plate, its
+index is read out of every cell whether or not it has been given a meaning, and
+every cell from one well shares it. Growing 96 conditions in a deep-well plate
+and barcoding them into the same run therefore costs no barcode space at all.
+Two cells collide when they share a \emph{full} barcode, so pinning conditions to
+round-1 wells partitions the $96^{R}$ space rather than shrinking it, and with
+comparable cells per condition it does not change how uniformly the space is
+used. What a single-condition screen wastes is the sample label, not the wells;
+all 96 are loaded either way.
+
+The same is true of preindexed droplet, and its plate is four times larger. The
+scifi round-1 plate has 384 wells and round1 is shared by every cell from one
+well (\cref{sec:scifi}), so conditions preindexed into different wells can be
+pooled into shared channels and separated afterwards by the well index.
+
+Unmodified droplet is the one that does not. Nothing in a channel says which
+condition a cell came from, so each condition needs its own channels, and
+channels are what \cref{sec:budget} shows dominates that platform's cost.
 
 %% SOURCE: experiments/024-perturb-seq-costing/scripts/plot_environments.py.
 %% Panel (c) composes the Sec. 5 cost model along the environment axis via
@@ -244,26 +255,27 @@ cell, and it argues for split-pool independently of the cost comparison.
 %% preindexed droplet), which is the check that the two agree.
 \tcfigfit[1.0]{figures/environments.pdf}{%
   \textbf{Environments enlarge a dataset linearly where named combinations do so
-  quadratically, and in split-pool they consume barcode capacity that a
-  single-condition screen leaves idle.}
+  quadratically, and any platform whose round 1 is a plate of wells labels them
+  for nothing.}
   \textbf{(a)} Cell demand against the size of each axis, on log axes so the
   exponent is the slope. Environments cost 600{,}000 cells each and rise with
   slope one: 4 environments need 2.4 million cells and 12 need 7.2 million.
   Covering every named pair of a $T$-target panel rises with slope two, so a
   200-target panel already costs about as much as 12 environments and every
   further target costs more than the last.
-  \textbf{(b)} Round-1 barcode capacity. Split-pool spends the round-1 plate on
-  sample identity, so a pooled screen in one condition uses 1 of its 96 wells
-  and the other 95 are paid for and idle; 96 conditions grown in a deep-well
-  plate consume that capacity at no extra barcoding cost.
+  \textbf{(b)} Condition labels each platform already owns. The two plates are
+  drawn on one footprint because a 96-well and a 384-well plate have the same
+  one; every well is filled because a round-1 plate is loaded in full whatever
+  the experiment is, round 1 being a barcode round before it is a sample round.
+  What a single-condition screen leaves unused is the label the well index also
+  carries. An unmodified droplet channel carries no such index, so the only
+  thing that can separate two conditions is running them in separate channels.
   \textbf{(c)} Recurring cost against environments, on the
   \cref{sec:budget} cost model at 600{,}000 usable cells per condition. All
-  three are linear, so the claim is about slope. A droplet channel holds one
-  condition and cannot be pooled across conditions, so channel count is rounded
-  up per condition; preindexing cuts the number of channels each condition needs
-  but does not remove the per-condition floor, which is why it lowers the slope
-  without changing the shape. Split-pool adds a condition by occupying a round-1
-  well it has already bought and sharing runs and lanes.}{fig:environments}
+  three are linear, so the claim is about slope. Unmodified droplet buys one set
+  of channels per condition. The other two pool conditions through a round-1
+  well index, so their slopes differ only by cost per cell, which is a
+  \cref{sec:application} result rather than an environment one.}{fig:environments}
 
 \notesec{Why this is the axis that matters for model training} The purpose stated
 at the top of this section is a model that proposes edits. A model learns a map
@@ -286,13 +298,19 @@ environment are correctly assigned, so the assignment failures of
 axes is worth doing once each axis works alone.
 
 \begin{keybox}
-\textbf{Environments are the cheap axis, and in split-pool they are nearly
-free.} Cell demand grows linearly in environments and quadratically in named
-gene pairs, so for a fixed budget the environment axis enlarges a dataset far
-faster. A pooled single-condition screen also leaves the round-1 plate idle, so
-96 conditions grown in a deep-well plate consume barcode capacity that is
-otherwise wasted. The same experiment on droplet needs one channel per
-condition, which is the term that dominates that platform's cost.
+\textbf{Environments are the cheap axis, and both platforms with a round-1 plate
+label them for free.} Cell demand grows linearly in environments and
+quadratically in named gene pairs, so for a fixed budget the environment axis
+enlarges a dataset far faster. Split-pool carries 96 condition labels in its
+round-1 plate and scifi preindexing carries 384 in its own, and in neither case
+does using them cost barcode space: the well index is read out of every cell
+already, and assigning conditions to wells partitions that space rather than
+shrinking it. Unmodified droplet has no such index, so every condition buys its
+own channels, which is the term that dominates that platform's cost. What is
+\emph{not} free anywhere is the cells: at 600{,}000 per condition an added
+environment costs \$22{,}341 on depleted split-pool and \$42{,}498 on preindexed
+droplet, and that factor of two is the per-cell gap of \cref{sec:application},
+not an environment effect.
 \end{keybox}
 
 \subsection{What to Build First\secstatus{todo}}
@@ -312,5 +330,5 @@ host organism.
   \cref{tab:recovery} shows is the smallest design in which named pairs are
   observed at all.
 \item \textbf{Environments}, added to whichever perturbation design works, since
-  they are linear and the barcode capacity is already paid for.
+  they are linear and a round-1 plate already carries the labels they need.
 \end{enumerate}

@@ -2,8 +2,6 @@
 # [[experiments.024-perturb-seq-costing.method-review-and-costing]]
 # https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/024-perturb-seq-costing/Makefile
 
-DOC := main
-
 # Zotero group `torchcell`, collection `microbe-perturb-seq`. This collection is
 # the single source of truth for what this document may cite: `make check` fails
 # on any \cite key that is not in the exported bib, which is the mechanical form

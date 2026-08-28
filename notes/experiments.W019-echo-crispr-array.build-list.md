@@ -313,7 +313,7 @@ at 17 replicate control screens with colonies averaged within a screen before re
 (`costanzo2016.py:64-74`, verbatim quote).
 
 **Close-out procedure changed.** A review round is now closed by grepping the rendered
-`main-clean.pdf` per comment, a string that must appear and, for a removal, one that must
+the share-view PDF per comment, a string that must appear and, for a removal, one that must
 not, before the publish rather than after it. Nine present and four absent for this round,
 listed in the dispositions ledger. Published as
 `w019-strain-build-list-clean_2026-08-25-11-30-04_c4661e05.pdf`.

@@ -9,8 +9,6 @@
 #
 # The figure is exported from notes/assets/drawio/ by `make figures`.
 
-DOC := main
-
 PYTHON ?= /home/michaelvolk/miniconda3/envs/torchcell/bin/python
 DRAWIO ?= /tmp/drawio-exec.AppImage
 

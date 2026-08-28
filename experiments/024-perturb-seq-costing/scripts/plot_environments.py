@@ -1,7 +1,7 @@
 # experiments/024-perturb-seq-costing/scripts/plot_environments.py
 # [[experiments.024-perturb-seq-costing.scripts.plot_environments]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/024-perturb-seq-costing/scripts/plot_environments
-"""Environments as the other axis: linear, nearly free in split-pool, not in droplet.
+"""Environments as the other axis: linear, and labeled free wherever round 1 is a plate.
 
 Sec. 7.3 makes three claims about the environment axis, and each panel draws
 one of them:
@@ -10,13 +10,14 @@ one of them:
         condition, so 4 environments are 2.4 million cells and 12 are 7.2
         million -- where named gene pairs grow QUADRATICALLY at Yao et al.'s
         400 cells per pair.
-    (b) A pooled single-condition screen uses ONE round-1 well for sample
-        identity, so 95 of the 96 round-1 barcodes are idle. Growing 96
-        conditions in a deep-well plate consumes capacity that is otherwise
-        wasted.
-    (c) The same multi-environment screen on droplet needs one channel per
-        condition, and channels dominate that platform's cost; split-pool
-        pools every condition into shared runs and shared lanes.
+    (b) Labeling a condition is free on any platform whose round 1 is a plate
+        of wells, because the well index is read out of every cell whether or
+        not it is given a meaning. Split-pool has 96 such labels and scifi
+        preindexing has 384, on the same plate footprint. Unmodified droplet
+        has none.
+    (c) That difference is what the cost curves show: unmodified droplet buys
+        a channel per condition, while split-pool and preindexed droplet both
+        pool conditions and differ only in cost per cell.
 
 Two honesty constraints.
 
@@ -32,8 +33,9 @@ comes from ``scaling_analysis.environment_cost``, which composes
 ``cost_model.budget_for`` along the environment axis: the split-pool platform
 is SPLiT-seq + rRNA depletion, whose depth is a transfer from an E. coli
 result, and the droplet channel rate is a UIUC list price. What does NOT
-depend on any price is the structure -- a droplet channel holds one condition
-while the round-1 plate holds 96 -- and that structure is the panel's point.
+depend on any price is the structure -- a droplet channel carries no sample
+label while a round-1 plate carries 96 or 384 -- and that structure is the
+panel's point.
 
 Output: $ASSET_IMAGES_DIR/024-perturb-seq-costing/environments.svg
 """
@@ -64,12 +66,11 @@ RESULTS = osp.join(os.environ["EXPERIMENT_ROOT"], "024-perturb-seq-costing", "re
 # slot 0; named pairs take slot 4 rather than slot 3, because slots 0 and 3
 # (amber and wheat) are the pair plot_economics documented as inseparable at
 # line weight, and here they would share panel (a).
-C_ENV = PLOT_PALETTE[0]    # the environment axis: (a) line, (b) filled wells
+C_ENV = PLOT_PALETTE[0]    # the environment axis, (a)
 C_PAIRS = PLOT_PALETTE[4]  # named gene pairs, (a)
-C_SPLIT = PLOT_PALETTE[1]  # SPLiT-seq + rRNA depletion, (c), as in plot_economics
-C_DROP = PLOT_PALETTE[2]   # 10x Chromium X, (c), as in plot_economics
-C_PI = PLOT_PALETTE[3]     # 10x + preindexing, (c), as in plot_economics
-C_REF = PLOT_PALETTE[5]    # reference ink: grid lines on empty wells
+C_SPLIT = PLOT_PALETTE[1]  # SPLiT-seq + rRNA depletion, (b) and (c)
+C_DROP = PLOT_PALETTE[2]   # 10x Chromium X, (b) and (c)
+C_PI = PLOT_PALETTE[3]     # 10x + preindexing, (b) and (c)
 
 
 def style() -> None:
@@ -176,47 +177,91 @@ def panel_a(ax, data) -> None:
 # =============================================================================
 
 
-def _plate(ax, x0: int, filled: int) -> None:
-    """One 96-well round-1 plate as a 12 x 8 grid of unit squares.
+# Both plates are drawn on ONE footprint, 24 x 16 units, because a 96-well and a
+# 384-well plate have the same physical footprint and differ only in how finely it
+# is divided. That is the comparison the panel is making, so it has to be the
+# geometry too: 384 wells is the same piece of plastic cut into quarters, not a
+# bigger piece. 24 x 16 also divides exactly both ways -- 2-unit wells give 12 x 8
+# and 1-unit wells give 24 x 16.
+PLATE_W, PLATE_H = 24.0, 16.0
 
-    ``filled`` wells carry a condition and are drawn in the environment color;
-    the rest are the capacity split-pool has already paid for whether or not a
-    sample occupies it. Filling proceeds from the top-left, the way a plate is
-    loaded, so the one-condition plate shows a single occupied corner well.
+
+def _plate(ax, x0: float, y0: float, n_cols: int, n_rows: int, color: str) -> None:
+    """One round-1 plate: a filled footprint scored into ``n_cols`` x ``n_rows``.
+
+    Drawn as one rectangle plus its scoring lines rather than as one patch per
+    well. At 384 wells the individual patches are under a millimetre across and
+    their borders merge into a smear; two line collections stay crisp and carry
+    the same information, since every well is occupied in both plates.
+
+    Occupied is the honest state for both. A split-pool or scifi run loads its
+    whole round-1 plate whatever the experiment is, because round 1 is a barcode
+    round before it is anything else. What a single-condition screen leaves
+    unused is the sample LABEL the well index also carries, not the well.
     """
-    for i in range(96):
-        row, col = i // 12, i % 12
-        used = i < filled
-        ax.add_patch(Rectangle(
-            (x0 + col, 7 - row), 1.0, 1.0,
-            facecolor=C_ENV if used else "white",
-            edgecolor="black" if used else C_REF, lw=0.35, zorder=3 if used else 2,
-        ))
+    ax.add_patch(Rectangle((x0, y0), PLATE_W, PLATE_H, facecolor=color,
+                           edgecolor="black", lw=0.5, zorder=3))
+    lw = 0.35 if n_cols == 12 else 0.2
+    for c in range(1, n_cols):
+        x = x0 + c * PLATE_W / n_cols
+        ax.plot([x, x], [y0, y0 + PLATE_H], color="black", lw=lw, zorder=4)
+    for r in range(1, n_rows):
+        y = y0 + r * PLATE_H / n_rows
+        ax.plot([x0, x0 + PLATE_W], [y, y], color="black", lw=lw, zorder=4)
 
 
 def panel_b(ax) -> None:
-    """Round-1 barcode capacity used, at 1 condition and at 96.
+    """How many conditions each platform can label without buying anything.
 
-    Split-pool spends the round-1 96-well plate on sample identity. A pooled
-    single-condition screen is one sample, so it uses one well and idles the
-    other 95 -- the plate is bought, stamped, and mostly unread. The same
-    plate fully loaded is 96 conditions in one run, which is the capacity
-    Sec. 7.3 argues a deep-well plate of environments should consume. Drawn as
-    two capacity grids rather than a chart because the quantity is literal:
-    each square IS a round-1 well.
+    An environment is only free if something already in the protocol can say
+    which condition a cell came from. Two of the three platforms have exactly
+    that: round 1 is a plate of wells, its index is read out of every cell, and
+    a well is shared by every cell from that well -- so conditions are assigned
+    to wells and nothing else changes. Split-pool has 96 of them and the scifi
+    preindexing plate has 384, on the same footprint.
+
+    The third has none. A droplet carries no plate index, so on unmodified 10x
+    the only thing that can separate two conditions is running them in separate
+    channels, which is the term Sec. 5's budget shows dominates that platform.
+
+    Nothing here costs barcode space, which is the non-obvious part and the
+    reason the comparison is drawn as capacity rather than as cost. Two cells
+    collide when they share a FULL barcode; pinning conditions to round-1 wells
+    partitions that space without shrinking it, and with equal cells per
+    condition it does not even change how uniformly the space is used.
     """
-    _plate(ax, 0, filled=1)
-    _plate(ax, 15, filled=96)
-    ax.text(6, -0.9, "1 condition\n1 of 96 wells used", fontsize=5,
-            ha="center", va="top")
-    ax.text(21, -0.9, "96 conditions\ncapacity fully used", fontsize=5,
-            ha="center", va="top")
-    ax.set_xlim(-0.7, 27.7)
-    ax.set_ylim(-3.6, 9.0)
+    # Stacked on a shared left edge with the labels to the right, rather than
+    # side by side. Two plates on one baseline read as one wide strip in a panel
+    # that is close to square, so the equal aspect ratio leaves most of the
+    # height empty; stacked, the composition is about as tall as it is wide and
+    # the plates are drawn half as large again. Sharing the left edge is also
+    # what makes the identical footprint impossible to miss.
+    y_sp, y_pi, y_ch = 13.0, -5.0, -12.0
+    _plate(ax, 0.0, y_sp, 12, 8, C_SPLIT)
+    _plate(ax, 0.0, y_pi, 24, 16, C_PI)
+
+    for y, n, platform, color in ((y_sp, 96, "SPLiT-seq round 1", C_SPLIT),
+                                  (y_pi, 384, "scifi preindexing", C_PI)):
+        ax.text(PLATE_W + 2.0, y + PLATE_H * 0.62, platform,
+                fontsize=5, ha="left", va="center")
+        ax.text(PLATE_W + 2.0, y + PLATE_H * 0.30, f"{n} conditions",
+                fontsize=5, color=color, ha="left", va="center")
+
+    # The droplet glyph is one channel, drawn small and on its own row so it
+    # cannot be read as a third plate.
+    ax.add_patch(Rectangle((0.0, y_ch), 6.0, 4.0, facecolor=C_DROP,
+                           edgecolor="black", lw=0.5, zorder=3))
+    ax.text(PLATE_W + 2.0, y_ch + 3.0, "10x channel, no round 1",
+            fontsize=5, ha="left", va="center")
+    ax.text(PLATE_W + 2.0, y_ch + 0.6, "1 condition", fontsize=5,
+            color=C_DROP, ha="left", va="center")
+
+    ax.set_xlim(-2.0, 51.0)
+    ax.set_ylim(-15.0, 31.0)
     ax.set_aspect("equal", adjustable="datalim")
     ax.set_xticks([])
     ax.set_yticks([])
-    ax.set_title("A single condition idles the round-1 plate",
+    ax.set_title("A round-1 well is a free condition label",
                  loc="left", fontsize=6)
     box(ax)
 
@@ -229,14 +274,16 @@ def panel_b(ax) -> None:
 def panel_c(ax, data) -> None:
     """Recurring cost against environments, split-pool and droplet.
 
-    Both curves come straight from the "environment_costs" table
-    scaling_analysis writes with the Sec. 5 cost model. Both are linear -- runs,
-    sublibraries, channels and lanes all scale with cells -- so the story is
-    the slope: droplet pays one channel per condition and channels dominate
-    that platform's cost, where split-pool adds a condition by occupying a
-    round-1 well it has already paid for and sharing runs and lanes. The
-    marginal cost per added environment is annotated from the same file rather
-    than recomputed.
+    All three curves come straight from the "environment_costs" table
+    scaling_analysis writes with the Sec. 5 cost model, and all three are
+    linear -- runs, sublibraries, channels and lanes all scale with cells -- so
+    the story is the slope. Unmodified droplet is the outlier: nothing in a
+    channel says which condition a cell came from, so every condition buys its
+    own channels and channels dominate that platform's cost. The other two both
+    pool conditions through a round-1 well index (panel b) and their slopes then
+    differ only by cost per cell, which is a Sec. 5 result rather than an
+    environment one. The marginal cost per added environment is annotated from
+    the same file rather than recomputed.
     """
     rows = data["environment_costs"]
     summ = data["environment_cost_summary"]
@@ -248,7 +295,7 @@ def panel_c(ax, data) -> None:
     ax.plot(e, dr, lw=1.0, color=C_DROP,
             label="10x Chromium X, one channel per condition")
     ax.plot(e, pi, lw=1.0, color=C_PI, ls=(0, (4, 1.5)),
-            label="10x + preindexing, still one channel per condition")
+            label="10x + preindexing, conditions share channels")
     ax.plot(e, sp, lw=1.0, color=C_SPLIT,
             label="SPLiT-seq + rRNA depletion, shared runs")
 
@@ -278,7 +325,8 @@ def panel_c(ax, data) -> None:
     ax.set_ylabel("Recurring cost")
     ax.legend(frameon=False, loc="upper left", fontsize=4.5, handlelength=1.3,
               handletextpad=0.4, labelspacing=0.3, borderaxespad=0.2)
-    ax.set_title("Droplet pays per condition", loc="left", fontsize=6)
+    ax.set_title("Unmodified droplet pays per condition", loc="left",
+                 fontsize=6)
     box(ax)
 
 

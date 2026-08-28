@@ -10,7 +10,7 @@ created: 1787612264639
 
 **This is the precursor note to
 [[experiments.024-perturb-seq-costing.method-review-and-costing]]**, the typeset document at
-`notes-tex/024-perturb-seq-costing/main.pdf`. It was written first, as a design
+`notes-tex/024-perturb-seq-costing/024-perturb-seq-costing.pdf`. It was written first, as a design
 sketch for reading a pooled CRISPRi screen out of semipermeable capsules
 (Atrandi SPC + CapSeq) with clonal in-capsule expansion.
 

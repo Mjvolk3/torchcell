@@ -9,6 +9,4 @@
 # No PYTHON override either. The default `python` from ../common/Makefile.common
 # is only used by `make check`, which needs the standard library and nothing else.
 
-DOC := main
-
 include ../common/Makefile.common

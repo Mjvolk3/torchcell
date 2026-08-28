@@ -10,7 +10,7 @@ created: 1787062303235
 ---
 
 > **2026.08.20 — this content now lives in a typeset document.**
-> `notes-tex/024-perturb-seq-costing/` → `main.pdf` (build with `make` in that directory).
+> `notes-tex/024-perturb-seq-costing/` → `024-perturb-seq-costing.pdf` (build with `make` in that directory).
 > The tex version is restructured to the six-section plan, adds the Yao 2024
 > compressed-Perturb-seq analysis, and carries visible provenance flags. Treat the
 > tex as the deliverable; this note is retained below as the working record.
@@ -1477,3 +1477,41 @@ Nothing in it looks at whether a path that no longer exists is still tracked, so
 a duplicate tree is exactly the kind of drift a green build does not rule out.
 It surfaced only from listing `notes-tex/` after landing and seeing a directory
 that should have been gone.
+
+## 2026.08.27 - Sec 7.3 corrected: the round-1 plate is not idle, and scifi has one too
+
+Two claims in Sec 7.3 were wrong in the same way, and the correction makes the
+section's conclusion stronger rather than weaker.
+
+**"The round-1 barcode space is idle."** It is not. Round 1 is a barcode round
+before it is a sample round, and a split-pool run loads all 96 wells whatever the
+experiment is; those wells are one of the three factors in the `96^R` space that
+`tab:barcode` prices. What a single-condition screen leaves unused is the sample
+LABEL the well index also carries. Fig 17b drew the wrong version of this
+literally, as a plate with one well filled.
+
+**"It is nearly free in split-pool, and it is not in droplet."** True of
+unmodified droplet, and not of preindexed droplet, which has a 384-well round-1
+plate of its own. Since round1 is shared by every cell from one well, conditions
+preindexed into different wells pool into shared channels and are separated
+afterwards by the well index. Both platforms with a round-1 plate get the
+environment axis for free, and the one without it does not.
+
+**What the corrected version claims, and why it costs nothing.** Two cells
+collide when they share a FULL barcode, so assigning conditions to round-1 wells
+partitions the barcode space rather than shrinking it; with comparable cells per
+condition the marginal distribution over round-1 wells stays uniform and the
+collision rate is unchanged. That is the sense in which an environment is free,
+and it is a statement about labeling only.
+
+**The cells are not free anywhere, which the keybox now says.** At 600,000 cells
+per condition an added environment costs $22,341 on depleted split-pool and
+$42,498 on preindexed droplet. That factor of two is the per-cell gap of Sec 5,
+not an environment effect. `environment_cost` was also charging preindexed
+droplet a per-condition channel floor that the round-1 index removes; costing it
+with `budget_for` on the e-environment design gives 690 pooled channels against
+768 at 96 environments, and one environment still returns the $45,764 Sec 5
+publishes, which is the check that the two models agree.
+
+Scripts: [[experiments.024-perturb-seq-costing.scripts.plot_environments]],
+[[experiments.024-perturb-seq-costing.scripts.scaling_analysis]].

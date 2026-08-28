@@ -12,7 +12,7 @@ Working note for `notes-tex/eqtl-data-model/`. The typeset document is the deliv
 this holds the decisions and the follow-ups. Promoted from a scratch note written while
 triaging the eQTL rows in [[experiments.database.expansion-100]].
 
-- Document: `notes-tex/eqtl-data-model/main.pdf`, published to Zotero under
+- Document: `notes-tex/eqtl-data-model/eqtl-data-model.pdf`, published to Zotero under
   `torchcell / notes-tex / eqtl-data-model`.
 - Figure: `notes/assets/drawio/eqtl-experiment-and-genotype-inference.drawio`.
 - Schema class names were READ from `torchcell/datamodels/schema.py`, not recalled.

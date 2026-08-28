@@ -334,7 +334,7 @@ def panel_c(ax) -> None:
     ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"${v/1e3:,.0f}k"))
     # The field-standard entry point, marked because it is the design the
     # recommendation in Sec. 5.5 actually names.
-    ax.axvline(100, color=C_REF, lw=0.4, ls=":")
+    ax.axvline(100, color=C_REF, lw=0.4, ls=":", zorder=1)
     ax.text(104, 1.1e4, "field standard", fontsize=4.5, color=C_REF,
             ha="left", va="bottom")
     ax.legend(frameon=False, loc="upper left", fontsize=4.5, handlelength=1.3,
@@ -582,7 +582,7 @@ def panel_f(ax) -> None:
              label="cells per gene pair, 200-gene panel (right)")
     # The 100-cell floor is the minimum a perturbation needs to be callable at
     # all; a pair below it is not measurable however many cells the screen has.
-    ax2.axhline(CM.CELLS_FLOOR, color=C_REF, lw=0.5, ls=":")
+    ax2.axhline(CM.CELLS_FLOOR, color=C_REF, lw=0.5, ls=":", zorder=1)
     ax2.text(10.5, CM.CELLS_FLOOR * 1.12, "100-cell floor", fontsize=4.5,
              color=C_REF, ha="right")
     ax2.set_ylabel("Cells per gene pair")

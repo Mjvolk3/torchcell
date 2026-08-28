@@ -119,3 +119,20 @@ and the client hides them, so any lookup that does not filter `deleted` sees a
 different library than the person does. That is true of items as well as
 collections: the same asymmetry is what made three same-titled manuscript items
 confusing earlier in the day.
+
+## 2026.08.27 - Documents are named for their directory, not `main`
+
+`notes-tex/<slug>/main.tex` and `main.pdf` became `<slug>.tex` and `<slug>.pdf`
+in all four documents. Four files named `main.pdf` are four files a fuzzy
+file-opener cannot tell apart, and the built PDF is the one that gets opened
+most. `Makefile.common` derives the name with `DOC ?= $(notdir $(CURDIR))`, so a
+directory rename carries the document name with it, the same property the Zotero
+collection path already had; the per-document Makefiles no longer set `DOC`.
+
+**The one thing that had to not change is the published filename.** Attachments
+are named `<doc><stem>_<timestamp>_<sha256[:8]>.pdf` where the stem is empty for
+the plain build, and that emptiness used to be spelled `pdf_stem == "main"`. It
+now strips either `main` or the document's own name, so every already-published
+filename stays byte-identical and a collection's version history remains one
+sequence instead of splitting at the rename. The default stem is the document
+directory's leaf, and `--clean` means `<doc>-clean`.

@@ -170,8 +170,16 @@ class BuiltDoc(BaseModel):
                 stem = ""
                 break
             if stem.startswith(f"{base}-"):
+                # Slicing off only the base keeps the hyphen that followed it.
                 stem = stem[len(base):]
                 break
+        # A stem that is neither the default build nor prefixed by it survives
+        # whole and still needs its own separator. The manuscript is the case
+        # that exercises this: its stems are `editing` and `submission`, which
+        # match neither `nature-biotech` nor `main`, and without this the name
+        # ran together as `nature-biotechediting_...`.
+        if stem and not stem.startswith("-"):
+            stem = f"-{stem}"
         return f"{self.doc}{stem}_{self.built_at}_{self.sha256[:8]}.pdf"
 
     @property

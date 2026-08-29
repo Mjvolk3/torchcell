@@ -39,7 +39,14 @@ set -euo pipefail
 
 RAID_DEV="${RAID_DEV:-/dev/md0}"
 RAID_LEVEL="${RAID_LEVEL:-1}"
-RAID_MEMBERS=("${RAID_MEMBERS[@]:-/dev/sdb /dev/sdc}")
+# Override via a space-separated string: RAID_MEMBERS="/dev/sdx /dev/sdy". The default
+# must be assigned as a real array -- "${arr[@]:-a b}" collapses to ONE element "a b",
+# which then fails the block-device guard as a single bogus path.
+if [ -n "${RAID_MEMBERS:-}" ]; then
+    read -r -a RAID_MEMBERS <<<"$RAID_MEMBERS"
+else
+    RAID_MEMBERS=(/dev/sdb /dev/sdc)
+fi
 FAST_DEV="${FAST_DEV:-/dev/nvme1n1}"
 BULK_MNT="${BULK_MNT:-/bulk}"
 FAST_MNT="${FAST_MNT:-/db}"

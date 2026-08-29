@@ -21,7 +21,7 @@
                cDNA 414..564 | handle R2 564..630 | i7 index 630..686
              ================================================================ -->
 
-        <mxCell id="title" value="Split-pool barcoding (SPLiT-seq): what happens to the sequence at each step" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=12;fontStyle=1;fontColor=#000000;" vertex="1" parent="1">
+        <mxCell id="title" value="Split-pool barcoding (SPLiT-seq): what happens to the sequence at each step" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=9.3;fontStyle=1;fontColor=#000000;" vertex="1" parent="1">
           <mxGeometry x="0" y="0" width="702" height="15" as="geometry" />
         </mxCell>
         <mxCell id="subtitle" value="Yeast-optimized SPLiT-seq (Brettner 2024) The tracked strand runs 5&#8242; to 3&#8242; left to right, so a partner strand runs antiparallel beside it. Steps 1 and 2 are drawn as duplexes because that is where the chemistry acts on two strands." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
@@ -56,7 +56,7 @@
         </mxCell>
 
         <!-- ===================== STEP 1 (DUPLEX) ========================== -->
-        <mxCell id="t1" value="1. Round 1&#10;barcoded RT, 48 wells" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="t1" value="1. Round 1&#10;barcoded RT,&#10;48 of 96 wells" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="130" width="108" height="22"  as="geometry" />
         </mxCell>
 
@@ -121,7 +121,7 @@
             <mxPoint x="131" y="210" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="n12" value="&lt;b&gt;The barcode arrives on the primer, so cDNA is born barcoded.&lt;/b&gt; 48 wells, ~5,000 cells each; every well holds a barcoded 15-dT primer &lt;i&gt;and&lt;/i&gt; a barcoded random hexamer. Only the dT tract anneals, so BC1 hangs off as a 5&#8242; overhang and RT copies rightward from the primer 3&#8242; end. The hexamer needs no poly(A), so it, not the dT primer, is the arm that transfers to a bacterium &#8211; and it is why 93.7% of recovered transcripts are rRNA." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+        <mxCell id="n12" value="&lt;b&gt;The barcode arrives on the primer, so cDNA is born barcoded.&lt;/b&gt; Brettner ran 48 of the 96 wells, ~5,000 cells each; the barcode space below counts the full plate. Every well holds a barcoded 15-dT primer &lt;i&gt;and&lt;/i&gt; a barcoded random hexamer. Only the dT tract anneals, so BC1 hangs off as a 5&#8242; overhang and RT copies rightward from the primer 3&#8242; end. The hexamer needs no poly(A), so it, not the dT primer, is the arm that transfers to a bacterium &#8211; and it is why 93.7% of recovered transcripts are rRNA." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
           <mxGeometry x="154" y="169" width="548" height="35"  as="geometry" />
         </mxCell>
 
@@ -403,7 +403,7 @@
         <mxCell id="leg6" value="handle / adapter" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
           <mxGeometry x="400" y="614" width="78" height="18"  as="geometry" />
         </mxCell>
-        <mxCell id="leg7" value="i7 index (round 4)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#666666;strokeWidth=2;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+        <mxCell id="leg7" value="Illumina index" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#666666;strokeWidth=2;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
           <mxGeometry x="482" y="614" width="86" height="18"  as="geometry" />
         </mxCell>
         <mxCell id="leg8" value="B" style="ellipse;whiteSpace=wrap;html=1;fillColor=#666666;strokeColor=#333333;fontFamily=Arial;fontSize=8.5;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">

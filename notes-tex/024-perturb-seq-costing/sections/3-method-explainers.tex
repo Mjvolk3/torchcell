@@ -197,7 +197,7 @@ discarded -- so the cost that matters is 20$\times$ higher
 %% ORDER is the one that already bit us (see the note below the figure); the
 %% linker lengths (30 nt and 22 nt, inferred from the STARsolo gaps rather than
 %% stated) are the next thing to source directly.
-\tcfigfit[0.92]{figures/splitseq-barcoding.pdf}{%
+\tcfigfit[1.0]{figures/splitseq-barcoding.pdf}{%
   \textbf{Cell identity in split-pool barcoding is assembled onto the transcript
   itself, which is what removes the need to ever physically isolate a cell.}
   Seven strand states in the yeast-optimized SPLiT-seq workflow of
@@ -251,10 +251,11 @@ to the base (\cref{tab:read-structure}).
 \tcfigfit[1.0]{figures/splint-vs-template-switch.pdf}{%
   \textbf{Ligation joins two ends that already exist; template switching copies
   an oligo into a new one. Both appear in the same protocol, for different
-  ends of the same molecule.} Color marks provenance rather than identity:
-  orange is nucleic acid that already existed, gray is an oligo the protocol
-  supplied, and \textbf{yellow is sequence written by a polymerase during the
-  step drawn}. Panel (a) contains no yellow, and that absence is the point.
+  ends of the same molecule.} The segment colors of \cref{fig:splitseq} carry over,
+  and one is added: \textbf{yellow is sequence written by a polymerase during
+  the step drawn}, against gray for an oligo the protocol supplied and orange
+  for nucleic acid that already existed. Panel (a) contains no yellow, and that
+  absence is the point. The key at the foot of the figure gives both systems.
   Brackets above each strand carry the molecule count, because a row of abutting
   blocks reads as one molecule however the caption is worded: panel (a) runs two
   brackets until the ligase acts and one afterwards.
@@ -324,7 +325,7 @@ today, and Sec.~\ref{sec:application} uses the newer figures.
 %% read_structure.py is a VENDOR SPEC (16 nt CB + 12 nt UMI + dual 10 nt, 138
 %% cycles for GEM-X 5' v3), not a paper claim, and it is now marked \external{}
 %% wherever it is stated rather than being mirrored. Panel c inherits that.
-\tcfigfit[0.92]{figures/droplet-10x-barcoding.pdf}{%
+\tcfigfit[1.0]{figures/droplet-10x-barcoding.pdf}{%
   \textbf{Droplet methods buy cell identity with a physical container, which is what
   lets the whole barcode arrive at once -- and what turns the yeast cell wall into a
   scheduling problem rather than a chemistry one.}
@@ -451,7 +452,7 @@ exists in the literature held here, which is why the row is marked as a
 projection everywhere it appears and why \cref{sec:staging} adds a checkpoint for
 it rather than assuming it.
 
-\tcfigfit[0.96]{figures/scifi-fluidic-indexing.pdf}{%
+\tcfigfit[1.0]{figures/scifi-fluidic-indexing.pdf}{%
   \textbf{Pre-indexing the cells before they reach the chip converts droplet
   overloading from the dominant failure mode into the operating point.}
   Combinatorial fluidic indexing of
@@ -582,8 +583,8 @@ resolves.
   construction; see \cref{sec:fragmentation}. \textbf{(c)} The funnel. A budget
   is made of these fractions rather than of the chemistry: cells are lost at
   recovery, at QC and at guide assignment, and reads are lost separately to
-  spike-in, to ribosomal sequence and to cells that are later discarded. Drawn
-  at true Nature print size in
+  spike-in, to ribosomal sequence and to cells that are later discarded. Composed from the protocols as described in
+  \cref{sec:brettner,sec:jariani,sec:rrna}, not traced from any published figure. Drawn at true Nature print size in
   \file{notes/assets/drawio/perturb-seq-workflow.drawio}. Every number drawn by
   hand in this figure is sourced in
   \cref{tab:prov-perturb-seq-workflow}.}{fig:workflow}
@@ -614,8 +615,8 @@ depletion is treated here as a method component rather than an optimization.
   to cluster, so each half of a cut molecule retains only one and neither
   survives the P5/P7 re-amplification. This is what makes depleting so late
   coherent, and it is the same mechanism \cref{sec:fragmentation} uses to
-  explain why a mid-barcode cut causes loss rather than corruption. Drawn at
-  true Nature print size in
+  explain why a mid-barcode cut causes loss rather than corruption. Composed from the protocols as described in
+  \cref{sec:brettner,sec:rrna}, not traced from any published figure. Drawn at true Nature print size in
   \file{notes/assets/drawio/rrna-depletion-options.drawio}. Every number drawn by
   hand in this figure is sourced in
   \cref{tab:prov-rrna-depletion-options}.}{fig:rrna}

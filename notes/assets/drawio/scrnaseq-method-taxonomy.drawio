@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="claude-code" version="24.7.17">
   <diagram name="scrnaseq-method-taxonomy" id="scrnaseqMethodTaxonomy">
-    <mxGraphModel dx="1400" dy="1000" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="703" pageHeight="512" math="0" shadow="0">
+    <mxGraphModel dx="1400" dy="1000" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="703" pageHeight="526" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -19,7 +19,7 @@
                cDNA 330..520 | R2 520..580 | index 580..624 | P7 624..664
              ================================================================ -->
 
-        <mxCell id="title" value="Yeast scRNA-seq methods: what separates the cells, and which molecule carries the cell barcode" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="title" value="Yeast scRNA-seq methods: what separates the cells, and which molecule carries the cell barcode" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=9.3;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="0" width="698" height="15" as="geometry" />
         </mxCell>
         <mxCell id="subtitle" value="A redrawing of Fig. 1 of Nadal-Ribelles 2024, reorganized around the one question that separates the library types. Every molecule is drawn in a single fixed orientation, 5&#8242; left to 3&#8242; right with P5 always on the left, and colors are those of Figs. 2 and 4." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
@@ -27,7 +27,7 @@
         </mxCell>
 
         <!-- ============================= PANEL a ============================= -->
-        <mxCell id="pa" value="a" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="pa" value="a" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=10.9;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="48" width="10" height="12" as="geometry" />
         </mxCell>
         <mxCell id="pah" value="What keeps one cell's molecules separate from another's" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
@@ -89,7 +89,7 @@
         </mxCell>
 
         <!-- ============================= PANEL b ============================= -->
-        <mxCell id="pb" value="b" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="pb" value="b" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=10.9;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="168" width="10" height="12" as="geometry" />
         </mxCell>
         <mxCell id="pbh" value="The question that separates the library types: which molecule carries the cell barcode?" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
@@ -155,7 +155,7 @@
         </mxCell>
 
         <!-- ============================= PANEL c ============================= -->
-        <mxCell id="pc" value="c" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="pc" value="c" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=10.9;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="300" width="10" height="12" as="geometry" />
         </mxCell>
         <mxCell id="pch" value="Where the tags end up &#8211; all three drawn in one orientation, on one column grid, so they can be compared" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
@@ -263,45 +263,45 @@
         <mxCell id="r3ptr" value="this index &lt;i&gt;is&lt;/i&gt; the cell identity" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#B85450;" vertex="1" parent="1">
           <mxGeometry x="546" y="404" width="112" height="11" as="geometry" />
         </mxCell>
-        <mxCell id="cread" value="in 3&#8242; and 5&#8242; libraries Read 1 carries the cell barcode" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="176" y="404" width="220" height="11" as="geometry" />
+        <mxCell id="cread" value="in 3&#8242; and 5&#8242; libraries Read 1 carries the cell barcode&lt;br&gt;&lt;font color=&quot;#B85450&quot;&gt;split-pool is the exception: its barcodes are read on Read 2 (Fig. 2)&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="126" y="404" width="320" height="24" as="geometry" />
         </mxCell>
 
         <!-- ============================ BOTTOM NOTE ========================== -->
         <mxCell id="note" value="&lt;b&gt;Read panel b and panel c together and the taxonomy collapses to one rule: a cell barcode is only needed where cells are pooled before sequencing.&lt;/b&gt; Droplet, microwell and combinatorial methods pool early, so identity has to be written into the molecule, and it goes wherever the barcoded oligo sits &#8211; the poly-dT end for 3&#8242; libraries, the template-switch end for 5&#8242;. Plate methods never pool until the very end, so the molecule needs no barcode at all and the Illumina sample index does the work, one index per well. That is the same accounting split-pool uses when its sublibrary index becomes barcode round 4." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="0" y="424" width="698" height="46" as="geometry" />
+          <mxGeometry x="0" y="438" width="698" height="46" as="geometry" />
         </mxCell>
 
         <!-- ============================== LEGEND ============================= -->
         <mxCell id="legbox" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
-          <mxGeometry x="0" y="476" width="698" height="30" as="geometry" />
+          <mxGeometry x="0" y="490" width="698" height="30" as="geometry" />
         </mxCell>
         <mxCell id="legt" value="Segments" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="6" y="482" width="40" height="18" as="geometry" />
+          <mxGeometry x="6" y="496" width="40" height="18" as="geometry" />
         </mxCell>
         <mxCell id="lg1" value="transcript / cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="50" y="482" width="78" height="18" as="geometry" />
+          <mxGeometry x="50" y="496" width="78" height="18" as="geometry" />
         </mxCell>
         <mxCell id="lg2" value="cell barcode (CB)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="132" y="482" width="78" height="18" as="geometry" />
+          <mxGeometry x="132" y="496" width="78" height="18" as="geometry" />
         </mxCell>
         <mxCell id="lg3" value="UMI" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="214" y="482" width="40" height="18" as="geometry" />
+          <mxGeometry x="214" y="496" width="40" height="18" as="geometry" />
         </mxCell>
         <mxCell id="lg4" value="TSO rGrGrG" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="258" y="482" width="66" height="18" as="geometry" />
+          <mxGeometry x="258" y="496" width="66" height="18" as="geometry" />
         </mxCell>
         <mxCell id="lg5" value="container / enzyme" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="328" y="482" width="82" height="18" as="geometry" />
+          <mxGeometry x="328" y="496" width="82" height="18" as="geometry" />
         </mxCell>
         <mxCell id="lg6" value="handle / adapter" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="414" y="482" width="76" height="18" as="geometry" />
+          <mxGeometry x="414" y="496" width="76" height="18" as="geometry" />
         </mxCell>
-        <mxCell id="lg7" value="Illumina sample index" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#666666;strokeWidth=2;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
-          <mxGeometry x="494" y="482" width="94" height="18" as="geometry" />
+        <mxCell id="lg7" value="Illumina index" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#666666;strokeWidth=2;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="494" y="496" width="94" height="18" as="geometry" />
         </mxCell>
         <mxCell id="lg8" value="red dashed = absent, or doing an unexpected job" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="594" y="482" width="100" height="18" as="geometry" />
+          <mxGeometry x="594" y="496" width="100" height="18" as="geometry" />
         </mxCell>
 
       </root>

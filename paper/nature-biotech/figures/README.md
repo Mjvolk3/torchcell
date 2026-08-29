@@ -45,10 +45,53 @@ regardless of the draw.io canvas, so the only risk is fonts scaling out of the
 | Single column | 88 mm | ~347 units wide |
 | Max height | 170 mm | ~669 units tall |
 
-Draw a full-width figure to ~709 units wide, fonts 6-7 pt, then export
-crop-to-drawing -> PDF and include at `width=\textwidth` (scale ~1, fonts intact).
-Drawing much wider than 709 shrinks your text below 5 pt on import. Aspect ratio
-of the drawing sets the final height (must stay <= 170 mm at 180 mm wide).
+Draw a full-width figure to ~709 units wide, then export crop-to-drawing -> PDF
+and include at `width=\textwidth` (scale ~1, fonts intact). Drawing much wider
+than 709 shrinks your text further on import. Aspect ratio of the drawing sets
+the final height (must stay <= 170 mm at 180 mm wide).
+
+### Font size: the draw.io number is NOT points
+
+The same 100-units-per-inch canvas applies to the font-size field, which is why
+this is the easiest thing in the pipeline to get wrong. A point is 1/72 inch, so
+**the number you type is multiplied by 0.72 on the page**: a label set to `8`
+prints at 5.76 pt, not 8 pt.
+
+Measured rather than inferred: `Fig1-torchcell-overview` is 707 units wide and
+its exported PDF page is 509 pt, i.e. 0.7199 pt per unit, and `\tcfig` places it
+at natural size so nothing rescales it afterwards.
+
+    rendered pt = drawio number x (placed width in pt) / (canvas width in units)
+
+So type `target pt / 0.72`. Nature allows 5-7 pt for figure text, and 8 pt bold
+lowercase for panel letters only:
+
+| Want on the page | Type in draw.io | Nature |
+|------------------|-----------------|--------|
+| 5 pt   | 6.9  | minimum allowed |
+| 5.5 pt | 7.6  | allowed |
+| 6 pt   | 8.3  | allowed, matches the matplotlib panels |
+| 6.5 pt | 9.0  | allowed |
+| 7 pt   | 9.7  | maximum allowed |
+| 8 pt   | 11.1 | panel letters only (bold, upright, lowercase) |
+| 9 pt   | 12.5 | over the maximum |
+| 10 pt  | 13.9 | over |
+| 11 pt  | 15.3 | over |
+| 12 pt  | 16.7 | over |
+
+And in reverse, for a canvas you have already drawn:
+
+| On the canvas | Prints at | Verdict |
+|---------------|-----------|---------|
+| 6    | 4.32 pt | under the 5 pt minimum |
+| 8    | 5.76 pt | in band |
+| 10   | 7.20 pt | 0.2 pt over; use 9.7 for exactly 7 |
+| 11.1 | 8.00 pt | correct for panel letters, too big for anything else |
+| 12   | 8.65 pt | over |
+
+Matplotlib panels need no conversion: `fontsize=6` is 6 real points, and
+`savefig_true_size_svg` plus the true-size `make plots` conversion preserve it.
+Do not apply the 0.72 factor to those.
 
 Figure float *placement* on the page is automatic (LaTeX floats, `[t]/[b]/[p]`);
 only panel layout inside the figure is set in draw.io.

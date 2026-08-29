@@ -612,8 +612,16 @@ them to the best of the plot's ability (some plots legitimately deviate — say 
   must stay `<= MAX_HEIGHT_MM` (170 mm). Convert with `mm_to_in(...)` for `figsize`.
 - **Box the plot:** full black border — all four spines visible, ~0.5 pt (not the
   top/right-despined look).
-- **Type:** Arial, 6 pt everywhere (Nature minimum); set `svg.fonttype: "none"` so
-  text stays real/editable in the SVG.
+- **Type:** Arial, 6 pt everywhere; set `svg.fonttype: "none"` so text stays
+  real/editable in the SVG. Nature's band is **5 pt minimum, 7 pt maximum** for figure
+  text, plus **8 pt bold lowercase for panel letters only** — a maximum as well as a
+  minimum, because figure lettering must stay below the caption in the page hierarchy.
+- **In draw.io the font number is NOT points — multiply by 0.72.** Its canvas is 100
+  units per inch and the font-size field is in canvas units, so a label typed `8` prints
+  at 5.76 pt. Type `target pt / 0.72`: 6 pt → 8.3, 7 pt → 9.7, 8 pt (panel letters) →
+  11.1. Conversion tables both ways in `paper/nature-biotech/figures/README.md` and
+  [[paper.nature-biotech.style-guide]]. Matplotlib panels need no conversion —
+  `fontsize=6` is 6 real points and `savefig_true_size_svg` preserves it.
 - **Export true-size SVG** via `torchcell.utils.savefig_true_size_svg(fig, path)` so it
   imports at true mm in draw.io (it rescales matplotlib's 72-dpi points to draw.io's
   100-units/inch). Do NOT pass `bbox_inches="tight"` on a fixed-width panel — it

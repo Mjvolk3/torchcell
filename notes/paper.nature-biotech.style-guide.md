@@ -76,6 +76,41 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
   upright (not italic) and lowercase a, b, c"; do not outline text. **Our stance:
   WIDTH is enforced strictly** (panels on the `PANEL_WIDTHS_MM` grid); height warnings
   are advisory for now and resolved before submission.
+- **draw.io font numbers are NOT points. Multiply by 0.72.** draw.io's canvas is 100
+  units per inch and its font-size field is in those canvas units, the same unit as
+  every coordinate; a point is 1/72 inch. So `72/100 = 0.72` converts, and a label
+  typed as `8` prints at **5.76 pt**. Measured, not inferred: `Fig1-torchcell-overview`
+  is 707 units wide and its exported PDF page is 509 pt (0.7199 pt per unit), and
+  `\tcfig` places it at natural size so nothing scales afterward. The general form is
+  `rendered pt = drawio number x (placed width in pt) / (canvas width in units)`.
+
+  To hit a target, divide by 0.72 (equivalently, multiply by 1.3889):
+
+  | Want on the page | Type in draw.io | Nature |
+  |---|---|---|
+  | 5 pt | 6.9 | minimum allowed |
+  | 5.5 pt | 7.6 | allowed |
+  | 6 pt | 8.3 | allowed, matches our matplotlib panels |
+  | 6.5 pt | 9.0 | allowed |
+  | 7 pt | 9.7 | maximum allowed |
+  | 8 pt | 11.1 | **panel letters only** (bold, upright, lowercase) |
+  | 9 pt | 12.5 | over the maximum |
+  | 10 pt | 13.9 | over |
+  | 11 pt | 15.3 | over |
+  | 12 pt | 16.7 | over |
+
+  Read the other way, for numbers already on a canvas:
+
+  | On the canvas | Prints at | Verdict |
+  |---|---|---|
+  | 6 | 4.32 pt | under the 5 pt minimum |
+  | 8 | 5.76 pt | in band |
+  | 10 | 7.20 pt | 0.2 pt over; use 9.7 for exactly 7 |
+  | 11.1 | 8.00 pt | correct for panel letters, too big for anything else |
+  | 12 | 8.65 pt | over |
+
+  The matplotlib panels need no conversion: `fontsize=6` is 6 real points, and
+  `savefig_true_size_svg` plus the true-size `make plots` conversion preserve it.
 - **Axis-label style: sentence case, first word capitalized, proper nouns/initialisms
   keep their capitals.** Nature's spec gives the exemplar "All axes to be labelled with
   units in parentheses, e.g. Data (unit)" -- sentence case; unitless metrics omit the

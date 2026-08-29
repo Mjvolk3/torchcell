@@ -121,3 +121,13 @@ on one line and taller than the gap to the axis on two, which `figure_checks`
 rejected twice before this landed on the legend.
 
 ![](./assets/images/024-perturb-seq-costing/environments.svg)
+
+## 2026.08.28 - Panel (c) key cut from six lines to three
+
+Carrying both the mechanism and the price made the key six lines of 4.5 pt type
+in a panel that is 58 mm tall, and the mechanism half was already stated three
+other places: the panel title, panel (b), and the caption. The key is now
+platform and price on one line each, and the caption spells out the unit rather
+than repeating "per usable cell" three times inside the panel.
+
+![](./assets/images/024-perturb-seq-costing/environments.svg)

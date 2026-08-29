@@ -312,22 +312,23 @@ def panel_c(ax, data) -> None:
     # Cost per usable cell rides in the legend rather than beside each curve.
     # It is the term that explains the ranking, but written into the annotations
     # it makes both cheap labels wider or taller than the room between the two
-    # curves and the axis, which the legibility gate rejects. In the legend it
-    # costs a second line of an entry that is already the widest thing in the
-    # panel, and it sits next to the platform it belongs to.
+    # curves and the axis, which the legibility gate rejects.
+    #
+    # Platform and price, one line each, and nothing else. The first version of
+    # this key also carried how each platform treats a condition -- one channel
+    # per condition, conditions share channels, shared runs -- which is six lines
+    # of 4.5 pt type restating what the panel title, panel (b) and the caption all
+    # say. The unit is spelled out in the caption rather than three times here.
     c_dr = summ["marginal_usd_per_usable_cell_droplet"]
     c_pi = summ["marginal_usd_per_usable_cell_droplet_preindexed"]
     c_sp = summ["marginal_usd_per_usable_cell_splitpool"]
 
     ax.plot(e, dr, lw=1.0, color=C_DROP,
-            label=f"10x Chromium X, one channel per condition\n"
-                  f"${c_dr:.3f} per usable cell")
+            label=f"10x Chromium X, ${c_dr:.3f}/cell")
     ax.plot(e, pi, lw=1.0, color=C_PI, ls=(0, (4, 1.5)),
-            label=f"10x + preindexing, conditions share channels\n"
-                  f"${c_pi:.3f} per usable cell")
+            label=f"10x + preindexing, ${c_pi:.3f}/cell")
     ax.plot(e, sp, lw=1.0, color=C_SPLIT,
-            label=f"SPLiT-seq + rRNA depletion, shared runs\n"
-                  f"${c_sp:.3f} per usable cell")
+            label=f"SPLiT-seq + rRNA depletion, ${c_sp:.3f}/cell")
 
     m_dr = summ["marginal_usd_per_env_droplet"]
     m_pi = summ["marginal_usd_per_env_droplet_preindexed"]

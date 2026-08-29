@@ -1674,34 +1674,31 @@ L 505.001575 23.767411
    </g>
    <g id="legend_2">
     <g id="line2d_159">
-     <path d="M 382.327403 31.145865 
-L 385.252403 31.145865 
-L 388.177403 31.145865 
+     <path d="M 382.327403 28.152802 
+L 385.252403 28.152802 
+L 388.177403 28.152802 
 " style="fill: none; stroke: #9673a6; stroke-linecap: square"/>
     </g>
     <g id="text_46">
-     <text style="font-size: 4.5px; font-family: 'Arial'" transform="translate(389.977403 29.743271)">10x Chromium X, one channel per condition</text>
-     <text style="font-size: 4.5px; font-family: 'Arial'" transform="translate(389.977403 34.858927)">$0.242 per usable cell</text>
+     <text style="font-size: 4.5px; font-family: 'Arial'; text-anchor: start" x="389.977403" y="29.727802" transform="rotate(-0 389.977403 29.727802)">10x Chromium X, $0.242/cell</text>
     </g>
     <g id="line2d_160">
-     <path d="M 382.327403 41.78738 
-L 385.252403 41.78738 
-L 388.177403 41.78738 
+     <path d="M 382.327403 33.914911 
+L 385.252403 33.914911 
+L 388.177403 33.914911 
 " style="fill: none; stroke-dasharray: 4,1.5; stroke-dashoffset: 0; stroke: #d6b656"/>
     </g>
     <g id="text_47">
-     <text style="font-size: 4.5px; font-family: 'Arial'" transform="translate(389.977403 40.337677)">10x + preindexing, conditions share channels</text>
-     <text style="font-size: 4.5px; font-family: 'Arial'" transform="translate(389.977403 45.506068)">$0.071 per usable cell</text>
+     <text style="font-size: 4.5px; font-family: 'Arial'; text-anchor: start" x="389.977403" y="35.489911" transform="rotate(-0 389.977403 35.489911)">10x + preindexing, $0.071/cell</text>
     </g>
     <g id="line2d_161">
-     <path d="M 382.327403 52.428896 
-L 385.252403 52.428896 
-L 388.177403 52.428896 
+     <path d="M 382.327403 39.729755 
+L 385.252403 39.729755 
+L 388.177403 39.729755 
 " style="fill: none; stroke: #b85450; stroke-linecap: square"/>
     </g>
     <g id="text_48">
-     <text style="font-size: 4.5px; font-family: 'Arial'" transform="translate(389.977403 51.026302)">SPLiT-seq + rRNA depletion, shared runs</text>
-     <text style="font-size: 4.5px; font-family: 'Arial'" transform="translate(389.977403 56.141958)">$0.037 per usable cell</text>
+     <text style="font-size: 4.5px; font-family: 'Arial'; text-anchor: start" x="389.977403" y="41.304755" transform="rotate(-0 389.977403 41.304755)">SPLiT-seq + rRNA depletion, $0.037/cell</text>
     </g>
    </g>
   </g>

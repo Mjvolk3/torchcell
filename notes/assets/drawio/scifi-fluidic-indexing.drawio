@@ -21,7 +21,7 @@
                dT 366..400 | cDNA 400..556 | i7+library 556..624
              ================================================================ -->
 
-        <mxCell id="title" value="scifi-RNA-seq: pre-index the cells and droplet overloading stops being a failure mode" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="title" value="scifi-RNA-seq: pre-index the cells and droplet overloading stops being a failure mode" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=9.3;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="0" width="698" height="15" as="geometry" />
         </mxCell>
         <mxCell id="subtitle" value="Combinatorial fluidic indexing of Datlinger et al. 2021. Poisson loading limits a droplet run only while each droplet must hold exactly one cell. Barcoding the cells first removes that requirement, so the same Chromium channel can be loaded a hundredfold harder. Colors and the 5&#8242;-to-3&#8242; convention follow Figs. 2 and 4." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
@@ -29,7 +29,7 @@
         </mxCell>
 
         <!-- ============================= PANEL a ============================= -->
-        <mxCell id="pa" value="a" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="pa" value="a" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=10.9;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="48" width="10" height="12" as="geometry" />
         </mxCell>
         <mxCell id="pah" value="What overloading a Chromium channel actually does, counted under a microscope" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
@@ -122,7 +122,7 @@
         </mxCell>
 
         <!-- ============================= PANEL b ============================= -->
-        <mxCell id="pb" value="b" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="pb" value="b" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=10.9;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="176" width="10" height="12" as="geometry" />
         </mxCell>
         <mxCell id="pbh" value="Two rounds, two places: the plate writes round1 into the cell, the droplet ligates round2 on top" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
@@ -150,7 +150,7 @@
         <mxCell id="idr1" value="round1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
           <mxGeometry x="128" y="280" width="52" height="18" as="geometry" />
         </mxCell>
-        <mxCell id="idx" value="&#215;" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="idx" value="&#215;" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=10.9;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="182" y="280" width="14" height="18" as="geometry" />
         </mxCell>
         <mxCell id="idr2" value="round2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
@@ -164,7 +164,7 @@
         </mxCell>
 
         <!-- ============================= PANEL c ============================= -->
-        <mxCell id="pc" value="c" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="pc" value="c" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=10.9;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="318" width="10" height="12" as="geometry" />
         </mxCell>
         <mxCell id="pch" value="The molecule, in the notation of Figs. 2 and 4: round2 prepends to round1 by the same splint ligation split-pool uses" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">

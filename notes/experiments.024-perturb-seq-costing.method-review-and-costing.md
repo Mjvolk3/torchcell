@@ -1537,3 +1537,71 @@ preindexed droplet, $0.242 unmodified droplet, which reproduce
 `tab:cost-loaded`. The environment ranking carries no information beyond the
 Sec. 5 per-cell ranking, and the figure now says so in its key rather than
 leaving the reader to divide.
+
+## 2026.08.29 - Figs 1-7 coherence pass, and the export that had never been running
+
+### The toolchain was broken in two independent ways, both silent
+
+**`make figures` had not exported anything.** `/tmp/drawio.AppImage` had lost its
+executable bit, and the recipe ran the exporter under `>/dev/null 2>&1` and then
+printed the same `src -> dst` line whether or not a file was written. The tree
+looked clean because the previous PDFs were simply left in place. An entire
+editing pass was verified against stale artwork before this surfaced.
+
+**Argument order.** Even with the bit restored, every export failed with `Error:
+input file/directory not found`. drawio-desktop 24.7.17's own usage line reads
+`drawio [options] [input file/folder]`, but it cannot find an input placed after
+the options: a 379-byte file at an absolute path fails the same way. The input
+has to come immediately after the binary, ahead of the Electron flags as well.
+`APPIMAGE_EXTRACT_AND_RUN=1` also has to go, because it makes the AppImage print
+its extraction listing and never reach the export.
+
+`Makefile.common` now refuses to start without a runnable exporter and checks
+each output is newer than its source, so neither failure can be silent again.
+
+### Sizing
+
+One canvas number now means one printed size across the set. All seven are placed
+at `\tcfigfit[1.0]`; before, fractions of 0.92, 0.96 and 1.0 scaled three groups
+differently, so 8.5 on the canvas printed as 5.75, 6.00 or 6.25 pt depending on
+which figure it was in. Titles went 12 -> 9.3 (8.6-9.0 pt, over Nature's 7 pt
+cap, to 6.75) and panel letters 11 -> 10.9 (to exactly 8.00, Nature's one
+exception). Fig 6's four `cDNA` labels carried no `fontSize` at all and inherited
+draw.io's default of 12; they are pinned to 8.5 now. Measured after export:
+**7/7 in the 5-7 pt band, body 6.25 pt, titles 6.75 pt, letters 8.00 pt.**
+
+### Coherence
+
+**Fig 1 set up a rule Fig 2 breaks.** Panel b files combinatorial indexing under
+the oligo-dT column and panel c closed with "in 3' and 5' libraries Read 1
+carries the cell barcode", so a reader carried that into Fig 2, where split-pool
+puts the barcodes on Read 2. Panel c now names the exception in red.
+
+**Fig 3's colors are two systems, and it had no key.** It keeps Fig 2's segment
+identity colors AND adds yellow for what a polymerase writes in the step drawn.
+The caption had claimed color marks provenance "rather than identity", which is
+not what the figure does. It now has the swatch key the other six have, naming
+both systems, and the caption agrees with it.
+
+**Two key formats became one.** Figs 6 and 7 ended with a run-in text line where
+the other five use a labelled swatch row.
+
+**Four names for one thing became one.** "Illumina sample index", "i7 index
+(round 4)", "i5 / i7 index" and "Illumina index" are all "Illumina index" in the
+keys now; the blocks keep their i5/i7 specifics, so the key names the class and
+the block names the instance.
+
+**Fig 2's well count.** It labelled round 1 "48 wells" and three steps later
+taught 96^3. Both are true, since Brettner filled 48 of 96, but the figure never
+reconciled them. It reads "48 of 96 wells" now and says so in the step text.
+
+**Provenance moved to where the other five keep it.** Figs 6 and 7 carried
+"Composed from the protocols..., not traced from any published figure" inside the
+artwork; it is in their captions now.
+
+### Still outstanding
+
+`method_landscape` (Fig 9) is a matplotlib panel placed at `\tcfigfit[0.86]`, so
+its 6 pt type prints at 5.24 and its annotations at 3.93, under the floor. The
+matplotlib annotation size of 4.5 pt prints at 4.6 across the plot figures, also
+under. Neither was in scope here.

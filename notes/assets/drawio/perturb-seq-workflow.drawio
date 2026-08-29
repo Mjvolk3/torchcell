@@ -16,7 +16,7 @@
              it is where fragmentation is placed relative to everything else.
              ================================================================ -->
 
-        <mxCell id="title" value="The whole experiment, and where each stage can lose you cells, molecules or identity" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="title" value="The whole experiment, and where each stage can lose you cells, molecules or identity" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=9.3;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="8" y="6" width="687" height="18" as="geometry" />
         </mxCell>
         <mxCell id="subtitle" value="Read left to right. The wet-lab stages are the same for both method families; what differs is only how cells are kept apart while their barcodes are written (Figs. 2, 4 and 5). Fragmentation is drawn explicitly because it is the step that decides whether a count means &#8220;molecules&#8221; or &#8220;molecules times length&#8221;, and because ribosomal RNA depletion is placed relative to it (Fig. 7)." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
@@ -24,8 +24,11 @@
         </mxCell>
 
         <!-- ============================ PANEL A ============================ -->
-        <mxCell id="pah" value="a&#160;&#160;The stages. Only the shaded block differs between split-pool and droplet." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="8" y="60" width="687" height="12" as="geometry" />
+        <mxCell id="pahL" value="a" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=10.9;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0.0" y="60.0" width="10" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="pah" value="The stages. Only the shaded block differs between split-pool and droplet." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="21" y="60" width="674" height="12" as="geometry" />
         </mxCell>
 
         <mxCell id="grpBio" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#CCCCCC;dashed=1;" vertex="1" parent="1"><mxGeometry x="8" y="76" width="216" height="58" as="geometry" /></mxCell>
@@ -56,8 +59,11 @@
         <mxCell id="w4n" value="split-pool: 3 plate rounds&#10;droplet: 1 bead per cell" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="234" y="110" width="142" height="24" as="geometry" /></mxCell>
 
         <!-- ============================ PANEL B ============================ -->
-        <mxCell id="pbh" value="b&#160;&#160;Fragmentation in bulk RNA-seq and in a 3&#8242;-counting single-cell assay. Same cutting, opposite consequence." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="8" y="168" width="687" height="12" as="geometry" />
+        <mxCell id="pbhL" value="b" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=10.9;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0.0" y="168.0" width="10" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="pbh" value="Fragmentation in bulk RNA-seq and in a 3&#8242;-counting single-cell assay. Same cutting, opposite consequence." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="21" y="168" width="674" height="12" as="geometry" />
         </mxCell>
 
         <!-- bulk side -->
@@ -65,7 +71,7 @@
         <mxCell id="bulkH" value="BULK &#8211; every piece is sequenceable" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="16" y="190" width="322" height="10" as="geometry" /></mxCell>
 
         <mxCell id="bl1" value="long transcript" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="16" y="204" width="80" height="10" as="geometry" /></mxCell>
-        <mxCell id="bm1" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1"><mxGeometry x="100" y="202" width="234" height="14" as="geometry" /></mxCell>
+        <mxCell id="bm1" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="100" y="202" width="234" height="14" as="geometry" /></mxCell>
         <mxCell id="bc1" style="endArrow=none;html=1;strokeColor=#9673A6;strokeWidth=1;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="139" y="200" as="sourcePoint" /><mxPoint x="139" y="218" as="targetPoint" /></mxGeometry></mxCell>
         <mxCell id="bc2" style="endArrow=none;html=1;strokeColor=#9673A6;strokeWidth=1;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="178" y="200" as="sourcePoint" /><mxPoint x="178" y="218" as="targetPoint" /></mxGeometry></mxCell>
         <mxCell id="bc3" style="endArrow=none;html=1;strokeColor=#9673A6;strokeWidth=1;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="217" y="200" as="sourcePoint" /><mxPoint x="217" y="218" as="targetPoint" /></mxGeometry></mxCell>
@@ -74,7 +80,7 @@
         <mxCell id="bl1r" value="6 usable fragments" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#D79B00;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="16" y="220" width="120" height="10" as="geometry" /></mxCell>
 
         <mxCell id="bl2" value="short transcript" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="16" y="242" width="80" height="10" as="geometry" /></mxCell>
-        <mxCell id="bm2" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1"><mxGeometry x="100" y="240" width="78" height="14" as="geometry" /></mxCell>
+        <mxCell id="bm2" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="100" y="240" width="78" height="14" as="geometry" /></mxCell>
         <mxCell id="bc6" style="endArrow=none;html=1;strokeColor=#9673A6;strokeWidth=1;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="139" y="238" as="sourcePoint" /><mxPoint x="139" y="256" as="targetPoint" /></mxGeometry></mxCell>
         <mxCell id="bl2r" value="2 usable fragments" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#D79B00;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="16" y="258" width="120" height="10" as="geometry" /></mxCell>
 
@@ -87,7 +93,7 @@
         <mxCell id="sl1" value="long" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="365" y="204" width="30" height="10" as="geometry" /></mxCell>
         <mxCell id="sh1" value="H" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="397" y="202" width="14" height="14" as="geometry" /></mxCell>
         <mxCell id="sb1" value="CB" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="411" y="202" width="20" height="14" as="geometry" /></mxCell>
-        <mxCell id="sk1" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1"><mxGeometry x="431" y="202" width="52" height="14" as="geometry" /></mxCell>
+        <mxCell id="sk1" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="431" y="202" width="52" height="14" as="geometry" /></mxCell>
         <mxCell id="sk1b" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;dashed=1;opacity=40;" vertex="1" parent="1"><mxGeometry x="483" y="202" width="200" height="14" as="geometry" /></mxCell>
         <mxCell id="scut1" style="endArrow=none;html=1;strokeColor=#9673A6;strokeWidth=1;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="483" y="200" as="sourcePoint" /><mxPoint x="483" y="218" as="targetPoint" /></mxGeometry></mxCell>
         <mxCell id="scut2" style="endArrow=none;html=1;strokeColor=#9673A6;strokeWidth=1;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="533" y="200" as="sourcePoint" /><mxPoint x="533" y="218" as="targetPoint" /></mxGeometry></mxCell>
@@ -98,7 +104,7 @@
         <mxCell id="sl2" value="short" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="365" y="242" width="30" height="10" as="geometry" /></mxCell>
         <mxCell id="sh2" value="H" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="397" y="240" width="14" height="14" as="geometry" /></mxCell>
         <mxCell id="sb2" value="CB" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="411" y="240" width="20" height="14" as="geometry" /></mxCell>
-        <mxCell id="sk2" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;" vertex="1" parent="1"><mxGeometry x="431" y="240" width="52" height="14" as="geometry" /></mxCell>
+        <mxCell id="sk2" value="cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="431" y="240" width="52" height="14" as="geometry" /></mxCell>
         <mxCell id="sk2b" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;dashed=1;opacity=40;" vertex="1" parent="1"><mxGeometry x="483" y="240" width="46" height="14" as="geometry" /></mxCell>
         <mxCell id="scut5" style="endArrow=none;html=1;strokeColor=#9673A6;strokeWidth=1;dashed=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="483" y="238" as="sourcePoint" /><mxPoint x="483" y="256" as="targetPoint" /></mxGeometry></mxCell>
         <mxCell id="sl2r" value="1 usable &#8211; the SAME as the long one" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontColor=#B85450;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="365" y="258" width="250" height="10" as="geometry" /></mxCell>
@@ -106,8 +112,11 @@
         <mxCell id="sconc" value="Adapter ligation later puts an adapter on EVERY cut end, so all the pieces look flanked. What separates them is the final PCR: it primes on H at one end and the ligated adapter at the other, so only a piece carrying H amplifies. H was attached once, so exactly one piece per molecule has it, whatever the length." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="365" y="278" width="322" height="48" as="geometry" /></mxCell>
 
         <!-- ============================ PANEL C ============================ -->
-        <mxCell id="pch" value="c&#160;&#160;What each stage costs you. The funnel, not the chemistry, is what a budget is made of." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="8" y="346" width="687" height="12" as="geometry" />
+        <mxCell id="pchL" value="c" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=10.9;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0.0" y="346.0" width="10" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="pch" value="What each stage costs you. The funnel, not the chemistry, is what a budget is made of." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="21" y="346" width="674" height="12" as="geometry" />
         </mxCell>
 
         <mxCell id="f1" value="cells loaded" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="8" y="364" width="132" height="22" as="geometry" /></mxCell>
@@ -125,10 +134,31 @@
         <mxCell id="rd1" value="Of 100 reads bought for an undepleted split-pool run: 28 lost to the PhiX spike and to unresolved barcodes, 94% of the rest is ribosomal, and three quarters of those cells are then discarded. About 1 read in 100 survives. Depletion takes it to 11." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1"><mxGeometry x="496" y="374" width="193" height="62" as="geometry" /></mxCell>
 
         <!-- ============================ FOOTER ============================ -->
-        <mxCell id="legend" value="H = PCR handle, attached during barcoding at one end only&#160;&#160;&#160;CB = cell barcode&#160;&#160;&#160;orange = transcript or cDNA&#160;&#160;&#160;red = barcode, and losses&#160;&#160;&#160;purple = enzyme or action&#160;&#160;&#160;blue = what you get&#160;&#160;&#160;gray = adapter" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.5;align=left;verticalAlign=middle;spacingLeft=4;" vertex="1" parent="1">
-          <mxGeometry x="8" y="452" width="687" height="20" as="geometry" />
+        <mxCell id="legbox" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="452" width="702" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="foot" value="Panel b is the reason this figure exists. Bulk and single-cell protocols perform the SAME physical cutting, and the consequence inverts because of what happens afterwards: in bulk every piece can be sequenced, so reads scale with length; in a 3&#8242;-counting assay only the piece carrying the outer handle can be, so exactly one survives per molecule regardless of length. Applying TPM or FPKM to a 10x or SPLiT-seq count matrix is therefore an error, not a stylistic choice. Composed from the protocols as described in Secs. 2.4, 3.1 and 3.2, not traced from any published figure. Every number drawn by hand here is sourced in the provenance table for this figure." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
+        <mxCell id="legt" value="Segments" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="6" y="458" width="40" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg1" value="transcript / cDNA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="50" y="458" width="78" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg2" value="barcode, and losses" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="132" y="458" width="84" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg3" value="enzyme or action" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="220" y="458" width="76" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg4" value="what you get" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="300" y="458" width="62" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg5" value="handle / adapter" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="366" y="458" width="74" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg6" value="H = PCR handle, one end only&#160;&#160;&#160;&#160;CB = cell barcode" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+          <mxGeometry x="444" y="458" width="210" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="foot" value="Panel b is the reason this figure exists. Bulk and single-cell protocols perform the SAME physical cutting, and the consequence inverts because of what happens afterwards: in bulk every piece can be sequenced, so reads scale with length; in a 3&#8242;-counting assay only the piece carrying the outer handle can be, so exactly one survives per molecule regardless of length. Applying TPM or FPKM to a 10x or SPLiT-seq count matrix is therefore an error, not a stylistic choice." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="8" y="478" width="687" height="46" as="geometry" />
         </mxCell>
 

@@ -51,14 +51,30 @@ ZOTERO_COLLECTION          ?=
 ZOTERO_PERSONAL_COLLECTION ?=
 
 # draw.io headless export, platform-aware (same approach as the manuscript).
+#
+# THE INPUT FILE COMES FIRST. drawio-desktop's own usage line reads
+# `drawio [options] [input file/folder]`, but 24.7.17 cannot find an input that
+# follows `-o <out>`: it exits "input file/directory not found" for every file,
+# including a 379-byte one at an absolute path. Put the input ahead of the
+# options and the same binary exports fine. This was silent for as long as the
+# recipe discarded stderr.
+#
+# APPIMAGE_EXTRACT_AND_RUN is NOT set. It makes the AppImage print its extraction
+# listing and never reach the export, which is the behaviour
+# [[torchcell.datamodels.eqtl-data-model]] recorded as "does not work here".
 DRAWIO_SRC := $(REPO)/notes/assets/drawio
 ifeq ($(shell uname -s),Darwin)
-  DRAWIO        ?= /Applications/draw.io.app/Contents/MacOS/draw.io
-  DRAWIO_EXPORT  = "$(DRAWIO)" -x -f pdf --crop -o
+  DRAWIO      ?= /Applications/draw.io.app/Contents/MacOS/draw.io
+  DRAWIO_RUN   = "$(DRAWIO)"
+  DRAWIO_FLAGS =
 else
-  DRAWIO        ?= /tmp/drawio.AppImage
-  DRAWIO_EXPORT  = APPIMAGE_EXTRACT_AND_RUN=1 xvfb-run -a $(DRAWIO) --no-sandbox --disable-gpu -x -f pdf --crop -o
+  DRAWIO      ?= /tmp/drawio.AppImage
+  DRAWIO_RUN   = xvfb-run -a $(DRAWIO)
+  DRAWIO_FLAGS = --no-sandbox --disable-gpu
 endif
+# The input goes immediately after the binary, ahead of the Electron flags as
+# well: putting it after --no-sandbox is already late enough to fail.
+DRAWIO_OPTS    = $(DRAWIO_FLAGS) -x -f pdf --crop -o
 
 SECTIONS := $(wildcard sections/*.tex)
 TABLES   := $(wildcard tables/*.tex)
@@ -145,12 +161,31 @@ bibcheck:
 	  --check
 
 # Re-export every draw.io source this document references as figures/NAME.pdf.
+#
+# The export is checked, not assumed. It used to run under `>/dev/null 2>&1`, so
+# a failure printed the same "src -> dst" line as a success and left the previous
+# PDF in place: the tree then looked clean and the committed artwork silently
+# stopped matching its source. That is exactly how a whole editing pass got
+# verified against stale figures. `/tmp/drawio.AppImage` losing its executable bit
+# is enough to cause it, and /tmp is cleared on every reboot.
+#
+# So: refuse to start without a runnable exporter, and check that each output is
+# actually newer than its source afterwards.
 figures:
+	@test -x "$(DRAWIO)" || { \
+	  echo "draw.io exporter not runnable: $(DRAWIO)"; \
+	  echo "  /tmp is cleared on reboot and the AppImage needs +x. Restore it, or set DRAWIO=."; \
+	  exit 1; }
 	@for f in $$(grep -rhoE 'figures/[A-Za-z0-9._-]+\.pdf' $(DEPS) 2>/dev/null | sort -u); do \
 	  n=$$(basename $$f .pdf); \
 	  for ext in drawio.svg drawio.png drawio; do \
 	    s="$(DRAWIO_SRC)/$$n.$$ext"; \
-	    if [ -f "$$s" ]; then echo "  $$s -> $$f"; $(DRAWIO_EXPORT) "$$f" "$$s" >/dev/null 2>&1; break; fi; \
+	    if [ -f "$$s" ]; then \
+	      echo "  $$s -> $$f"; \
+	      $(DRAWIO_RUN) "$$s" $(DRAWIO_OPTS) "$$f" >/dev/null 2>&1 || { echo "    EXPORT FAILED"; exit 1; }; \
+	      [ "$$f" -nt "$$s" ] || { echo "    EXPORT PRODUCED NOTHING -- $$f is older than its source"; exit 1; }; \
+	      break; \
+	    fi; \
 	  done; \
 	done
 

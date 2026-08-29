@@ -21,7 +21,7 @@
                cDNA 394..540 | R2 handle 540..604 | i7 604..648
              ================================================================ -->
 
-        <mxCell id="title" value="Droplet barcoding (10x Chromium): cell identity is bought with a container, not built into the sequence" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="title" value="Droplet barcoding (10x Chromium): cell identity is bought with a container, not built into the sequence" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=9.3;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="0" width="702" height="15" as="geometry" />
         </mxCell>
         <mxCell id="subtitle" value="Yeast-adapted 10x Chromium of Jariani 2020 Panels read a to c: the container is made, the wall comes off inside it, and a barcoded molecule comes out. Segment colors and the 5&#8242;-to-3&#8242; convention are those of Fig. 2, so the two methods can be compared directly." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.5;fontColor=#666666;" vertex="1" parent="1">
@@ -29,7 +29,7 @@
         </mxCell>
 
         <!-- ============================= PANEL a ============================= -->
-        <mxCell id="pa" value="a" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="pa" value="a" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=10.9;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="48" width="10" height="12" as="geometry" />
         </mxCell>
         <mxCell id="pah" value="Co-encapsulation: one cell plus one barcoded bead in one droplet" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
@@ -93,7 +93,7 @@
         </mxCell>
 
         <!-- ============================= PANEL b ============================= -->
-        <mxCell id="pb" value="b" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="pb" value="b" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=10.9;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="158" width="10" height="12" as="geometry" />
         </mxCell>
         <mxCell id="pbh" value="Why the zymolyase rides in the RT mix: the wall comes off only after the cell is already isolated" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
@@ -147,7 +147,7 @@
         </mxCell>
 
         <!-- ============================= PANEL c ============================= -->
-        <mxCell id="pc" value="c" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="pc" value="c" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=10.9;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="0" y="268" width="10" height="12" as="geometry" />
         </mxCell>
         <mxCell id="pch" value="One bead delivers the whole address at once &#8211; compare Fig. 2, where it arrives in three instalments" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;fontStyle=1;" vertex="1" parent="1">
@@ -305,7 +305,7 @@
         <mxCell id="lg6" value="handle / adapter" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
           <mxGeometry x="370" y="470" width="76" height="18" as="geometry" />
         </mxCell>
-        <mxCell id="lg7" value="i5 / i7 index" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#666666;strokeWidth=2;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
+        <mxCell id="lg7" value="Illumina index" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#666666;strokeWidth=2;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">
           <mxGeometry x="450" y="470" width="64" height="18" as="geometry" />
         </mxCell>
         <mxCell id="lg8" value="&#8214; base pairing" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.5;" vertex="1" parent="1">

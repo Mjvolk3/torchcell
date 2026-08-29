@@ -11,7 +11,7 @@
 #
 # WHAT IT BUILDS
 #   /bulk   mdadm RAID1 over the two WD Gold 26 TB (sdb, sdc) -> 23.6 TiB usable, xfs
-#   /fast   the WD_BLACK SN850X 8 TB (nvme1n1), single device, xfs
+#   /db     the WD_BLACK SN850X 8 TB (nvme1n1), single device, xfs
 #
 # It formats and mounts only. It MOVES NO DATA -- migration is a separate, reviewable
 # step, because a half-finished move of a 3 TB dataset tree is far worse than a delay.
@@ -19,10 +19,12 @@
 # WHY THIS SHAPE
 #   Crash exposure, not speed, sets the split. The Micron 7400 behind /scratch is an
 #   enterprise drive with power-loss protection; the SN850X is a consumer drive without
-#   it. So /scratch keeps what must survive an unclean shutdown (the neo4j store, the
-#   dataset LMDBs, live ML experiment data) and /fast takes regenerable hot data
-#   (biocypher-out CSV, build intermediates, caches). /bulk takes cold bytes: archived
-#   experiments, raw mirrors, dumps, the deprecation graveyard.
+#   it. So /scratch becomes the ML tier (dataset LMDBs, training data, wandb), /db
+#   takes the neo4j store + serving container -- a TEMPORARY serving arrangement whose
+#   contents must stay REGENERABLE, since the SN850X cannot guarantee committed writes
+#   across power loss (the store re-imports from archived CSV in ~19 min). /bulk takes
+#   cold bytes: CSV archives, dumps, raw mirrors, the graveyard, archived experiments.
+#   Nothing irreplaceable ever lives on /db.
 #
 #   RAID1 rather than RAID0 or JBOD. Derived data is regenerable, but the raw mirrors
 #   and OCR artifacts at the root of the provenance chain are not: several sources are
@@ -40,7 +42,7 @@ RAID_LEVEL="${RAID_LEVEL:-1}"
 RAID_MEMBERS=("${RAID_MEMBERS[@]:-/dev/sdb /dev/sdc}")
 FAST_DEV="${FAST_DEV:-/dev/nvme1n1}"
 BULK_MNT="${BULK_MNT:-/bulk}"
-FAST_MNT="${FAST_MNT:-/fast}"
+FAST_MNT="${FAST_MNT:-/db}"
 OWNER="${OWNER:-michaelvolk:michaelvolk}"
 
 APPLY=0
@@ -118,7 +120,7 @@ run dracut --force
 
 echo "=== 3/5 make filesystems ==="
 run mkfs.xfs -f -L bulk "$RAID_DEV"
-run mkfs.xfs -f -L fast "$FAST_DEV"
+run mkfs.xfs -f -L db "$FAST_DEV"
 
 echo "=== 4/5 mount points + fstab (by UUID, nofail) ==="
 run mkdir -p "$BULK_MNT" "$FAST_MNT"

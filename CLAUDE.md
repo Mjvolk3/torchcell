@@ -618,10 +618,34 @@ them to the best of the plot's ability (some plots legitimately deviate — say 
   minimum, because figure lettering must stay below the caption in the page hierarchy.
 - **In draw.io the font number is NOT points — multiply by 0.72.** Its canvas is 100
   units per inch and the font-size field is in canvas units, so a label typed `8` prints
-  at 5.76 pt. Type `target pt / 0.72`: 6 pt → 8.3, 7 pt → 9.7, 8 pt (panel letters) →
-  11.1. Conversion tables both ways in `paper/nature-biotech/figures/README.md` and
+  at 5.76 pt. Conversion tables both ways in `paper/nature-biotech/figures/README.md` and
   [[paper.nature-biotech.style-guide]]. Matplotlib panels need no conversion —
   `fontsize=6` is 6 real points and `savefig_true_size_svg` preserves it.
+- **Use the LADDER, and only the ladder. Four values, tenths, nothing in between:**
+
+  | type in draw.io | prints at | use for |
+  |---|---|---|
+  | `7` | 5.04 pt | the floor; labels too cramped to grow further |
+  | `8.3` | 5.98 pt | **the default** for figure text; matches the matplotlib panels |
+  | `9.7` | 6.98 pt | the maximum for ordinary figure text |
+  | `11.1` | 7.99 pt | **panel letters only** (bold, upright, lowercase) |
+
+  A legal but off-ladder size is still wrong: Fig 1 carried labels at 5.76 pt beside
+  labels at 5.98 pt, a 0.2 pt difference no reader can see and no one chose. Tenths
+  are deliberate — a whole printed point needs a repeating decimal, since `0.72 = 18/25`
+  and only point values that are multiples of 18 come out whole, so exactness is not on
+  offer. Tenths land within 0.03 pt of target, well below what prints differently.
+- **Audit and retype with `paper/nature-biotech/scripts/drawio_font_band.py`**
+  (`--check` reports and exits non-zero when anything is off the ladder; `--fix` snaps).
+  It reads BOTH places a size hides: an mxCell's `fontSize=N` and the inline
+  `font-size: Npx` inside an HTML label, where **the inline rule wins**. Reading only
+  the style reports Fig 7's node numbers as too big when they are in fact too small.
+- **Growing a label can overflow its box silently.** draw.io does not reflow a shape when
+  its text grows, and nothing errors — the text just runs outside it in the exported PDF.
+  Raising Fig 1's labels once broke "CRISPR AID" across two lines and pushed a label onto
+  the "Ontology" heading. The tool widens a grown label in proportion, but only for cells
+  with no stroke and no fill, where a wider box is invisible. **Always re-render and look
+  after a size change; the audit passing is not evidence the figure is intact.**
 - **Export true-size SVG** via `torchcell.utils.savefig_true_size_svg(fig, path)` so it
   imports at true mm in draw.io (it rescales matplotlib's 72-dpi points to draw.io's
   100-units/inch). Do NOT pass `bbox_inches="tight"` on a fixed-width panel — it

@@ -64,14 +64,38 @@ at natural size so nothing rescales it afterwards.
     rendered pt = drawio number x (placed width in pt) / (canvas width in units)
 
 So type `target pt / 0.72`. Nature allows 5-7 pt for figure text, and 8 pt bold
-lowercase for panel letters only:
+lowercase for panel letters only.
+
+## The ladder: four values, and nothing in between
+
+Do not pick an arbitrary in-band number. Every label sits on one of these:
+
+| Type in draw.io | Prints at | Use for |
+|-----------------|-----------|---------|
+| `7`    | 5.04 pt | the floor; labels too cramped to grow further |
+| `8.3`  | 5.98 pt | **the default** for figure text; matches the matplotlib panels |
+| `9.7`  | 6.98 pt | the maximum for ordinary figure text |
+| `11.1` | 7.99 pt | **panel letters only** (bold, upright, lowercase) |
+
+A legal but off-ladder size is still wrong. Fig 1 carried labels at 5.76 pt
+beside labels at 5.98 pt: a 0.2 pt difference no reader can see and nobody chose.
+
+**Why tenths and not whole printed points.** A whole point needs a repeating
+decimal on the canvas, because `0.72 = 18/25` and only point values that are
+multiples of 18 come out whole, so exactness is not available at any sane
+precision. draw.io keeps two decimals (typing `6.944` stores `6.94`), and tenths
+already land within 0.03 pt of target, far below what prints differently. 5 pt
+rounds UP to `7`: the exact value is 6.944 and `6.9` prints at 4.97 pt, still
+under the floor.
+
+The full conversion, for reference:
 
 | Want on the page | Type in draw.io | Nature |
 |------------------|-----------------|--------|
-| 5 pt   | 6.9  | minimum allowed |
-| 5.5 pt | 7.6  | allowed |
+| 5 pt   | 7    | minimum allowed (6.9 falls just under) |
+| 5.5 pt | 7.6  | allowed, off-ladder |
 | 6 pt   | 8.3  | allowed, matches the matplotlib panels |
-| 6.5 pt | 9.0  | allowed |
+| 6.5 pt | 9.0  | allowed, off-ladder |
 | 7 pt   | 9.7  | maximum allowed |
 | 8 pt   | 11.1 | panel letters only (bold, upright, lowercase) |
 | 9 pt   | 12.5 | over the maximum |
@@ -84,7 +108,10 @@ And in reverse, for a canvas you have already drawn:
 | On the canvas | Prints at | Verdict |
 |---------------|-----------|---------|
 | 6    | 4.32 pt | under the 5 pt minimum |
-| 8    | 5.76 pt | in band |
+| 7    | 5.04 pt | on the ladder, the floor |
+| 8    | 5.76 pt | in band but OFF the ladder; snap to 8.3 |
+| 8.3  | 5.98 pt | on the ladder, the default |
+| 9.7  | 6.98 pt | on the ladder, the maximum |
 | 10   | 7.20 pt | 0.2 pt over; use 9.7 for exactly 7 |
 | 11.1 | 8.00 pt | correct for panel letters, too big for anything else |
 | 12   | 8.65 pt | over |
@@ -114,3 +141,28 @@ Exported PDFs **keep their draw.io source's name**: `figures/NAME.pdf` is built 
 - `figS1_classical_ml.pdf` ... `figS6_inference.pdf` -- Supplementary
 
 Keep panel text sans-serif, 5-7 pt at final size; line weights >= 0.25 pt.
+
+## Auditing a figure
+
+`paper/nature-biotech/scripts/drawio_font_band.py` reports every size in a
+draw.io source, converted to points, and flags anything off the ladder:
+
+```bash
+python paper/nature-biotech/scripts/drawio_font_band.py --check notes/assets/drawio/NAME.drawio.svg
+python paper/nature-biotech/scripts/drawio_font_band.py --fix   notes/assets/drawio/NAME.drawio.svg
+```
+
+`--check` exits non-zero when anything is out of band. Two things it handles that
+a hand audit misses:
+
+- **A size hides in two places.** An mxCell's style has `fontSize=N`, but a cell
+  whose value is HTML can also carry an inline `font-size: Npx`, and the inline
+  rule WINS. Fig 7's node numbers say `fontSize=12` (8.64 pt) and
+  `font-size: 6px` (4.32 pt); 4.32 pt is what prints.
+- **Growing a label can overflow its box silently.** draw.io does not reflow a
+  shape when its text grows, and nothing errors. `--fix` widens a grown label in
+  proportion, but only where the cell has no stroke and no fill and a wider box
+  is therefore invisible.
+
+**Re-render and look after any size change.** The audit passing is not evidence
+the figure is intact.

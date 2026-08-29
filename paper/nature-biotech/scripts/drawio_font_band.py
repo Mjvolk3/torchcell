@@ -47,7 +47,6 @@ import argparse
 import base64
 import collections
 import html
-import math
 import pathlib
 import re
 import sys
@@ -59,6 +58,26 @@ UNITS_TO_PT = 0.72
 NATURE_MIN_PT = 5.0
 NATURE_MAX_PT = 7.0
 PANEL_LETTER_PT = 8.0
+
+# THE LADDER. Every label lands on one of these four canvas values and nothing
+# in between, so a figure carries a handful of deliberate sizes rather than a
+# spread of near-identical ones that no reader can tell apart. Fig 1 had labels
+# at 5.76 pt beside labels at 5.98 pt, which is a 0.2 pt difference doing no work.
+#
+# Canvas values are kept to TENTHS. A whole printed point needs a repeating
+# decimal on the canvas, because 0.72 = 18/25 and only point values that are
+# multiples of 18 come out whole, so exactness is not on offer at any sane
+# precision. Tenths land within 0.03 pt of the target, which is far below what
+# prints differently, and they stay readable in the draw.io font field.
+#
+# 5 pt rounds UP to 7.0: the exact value is 6.944, and 6.9 prints at 4.97 pt,
+# still under the floor.
+LADDER_UNITS = {
+    5.0: 7.0,    # 5.04 pt -- the floor, for labels too cramped to grow further
+    6.0: 8.3,    # 5.98 pt -- the house size, matches the matplotlib panels
+    7.0: 9.7,    # 6.98 pt -- the maximum for ordinary figure text
+}
+PANEL_LETTER_UNITS = 11.1  # 7.99 pt -- panel letters ONLY, never body text
 
 
 def _decode_diagram(body: str) -> str:
@@ -142,29 +161,21 @@ def fix(xml: str, grow_pt: float, shrink_pt: float, letter_pt: float) -> tuple[s
     n = 0
 
     def size_for(cur_units: float, is_letter: bool) -> float | None:
+        """The ladder rung this size belongs on, or None if it is already there.
+
+        Out-of-band sizes move to the requested rung. IN-BAND sizes are snapped
+        to the nearest rung too, which is the whole point of a ladder: a legal
+        but off-ladder 5.76 pt sitting beside 5.98 pt is two sizes doing one job.
+        """
         pt = cur_units * UNITS_TO_PT
         if is_letter:
-            want = letter_pt
+            units = PANEL_LETTER_UNITS
         elif pt < NATURE_MIN_PT:
-            want = grow_pt
+            units = LADDER_UNITS[grow_pt]
         elif pt > NATURE_MAX_PT:
-            want = shrink_pt
+            units = LADDER_UNITS[shrink_pt]
         else:
-            return None
-        # draw.io keeps one decimal, and rounding the wrong way lands just
-        # outside the band it was supposed to reach: 5 pt is 6.944 units, and
-        # 6.9 prints at 4.97 pt, still under the floor. Round the direction of
-        # the correction, then confirm the result is actually in band.
-        exact = want / UNITS_TO_PT
-        if is_letter:
-            # 8 pt is a target, not a bound, so land nearest: 11.1 is 7.99 pt
-            # where 11.2 overshoots to 8.06.
-            units = round(exact, 1)
-        else:
-            units = math.ceil(exact * 10) / 10 if want >= pt else math.floor(exact * 10) / 10
-        got = units * UNITS_TO_PT
-        if not is_letter and not (NATURE_MIN_PT <= got <= NATURE_MAX_PT):
-            sys.exit(f"--grow-to/--shrink-to {want} pt lands at {got:.2f} pt, outside the band")
+            units = LADDER_UNITS[min(LADDER_UNITS, key=lambda t: abs(t - pt))]
         return None if abs(units - cur_units) < 0.05 else units
 
     def do_cell(m: re.Match) -> str:
@@ -197,7 +208,7 @@ def fix(xml: str, grow_pt: float, shrink_pt: float, letter_pt: float) -> tuple[s
         return re.sub(r"font-size:\s*([0-9.]+)px", sub_inline, tag)
 
     xml = re.sub(r"<mxCell\b[^>]*?>", do_cell, xml)
-    grow_units = round(math.ceil((grow_pt / UNITS_TO_PT) * 10) / 10, 1)
+    grow_units = LADDER_UNITS[grow_pt]
     return _widen_grown_labels(xml, grow_units), n
 
 
@@ -252,10 +263,12 @@ def main() -> None:
     ap.add_argument("--check", action="store_true", help="report only (default)")
     ap.add_argument("--fix", action="store_true", help="rewrite the sources in place")
     ap.add_argument("--grow-to", type=float, default=5.0, metavar="PT",
-                    help="target pt for labels under the floor (default 5, the "
-                         "minimum compliant size and so the smallest change)")
+                    choices=sorted(LADDER_UNITS),
+                    help="ladder rung for labels under the floor (default 5, the "
+                         "smallest change and so the least likely to overflow)")
     ap.add_argument("--shrink-to", type=float, default=6.0, metavar="PT",
-                    help="target pt for labels over the maximum (default 6)")
+                    choices=sorted(LADDER_UNITS),
+                    help="ladder rung for labels over the maximum (default 6)")
     ap.add_argument("--panel-letters", type=float, default=8.0, metavar="PT",
                     help="target pt for single lowercase-letter labels (default 8)")
     args = ap.parse_args()

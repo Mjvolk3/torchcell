@@ -11,7 +11,7 @@ import os
 import os.path as osp
 import random
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from typing import Any, cast
 
 import lightning as L
@@ -233,6 +233,7 @@ class CellDataModule(L.LightningDataModule):
         collate_fn: object | None = None,
         val_batch_size: int | None = None,
         pinned_test_indices: Iterable[int] | None = None,
+        pinned_split_indices: Mapping[str, Iterable[int]] | None = None,
     ) -> None:
         """Store dataloader/split configuration and compute the split indices.
 
@@ -242,6 +243,14 @@ class CellDataModule(L.LightningDataModule):
         same genes. The remaining records are split train/val/test by ``random_seed`` as
         usual, so sweeping the seed still re-rolls train/val while the pinned comparison set
         stays fixed.
+
+        ``pinned_split_indices`` generalizes that to ALL THREE splits: a mapping like
+        ``{"train": [...], "val": [...], "test": [...]}`` whose records are forced into
+        the named split. It reproduces a PRIOR experiment's full assignment inside a
+        larger dataset -- e.g. 010's tmi train/val/test carried into 025 by genotype
+        identity -- so a comparison across datasets is computed on identical splits of
+        the shared records while everything new is seed-assigned around them. A record
+        may appear in at most one pinned split; overlap raises at construction.
         """
         super().__init__()
         self.dataset = dataset
@@ -262,6 +271,19 @@ class CellDataModule(L.LightningDataModule):
         self.pinned_test_indices: set[int] = (
             set(pinned_test_indices) if pinned_test_indices is not None else set()
         )
+        self.pinned_split_indices: dict[str, set[int]] = {
+            split: set(indices)
+            for split, indices in (pinned_split_indices or {}).items()
+        }
+        unknown = set(self.pinned_split_indices) - {"train", "val", "test"}
+        assert not unknown, f"pinned_split_indices has unknown splits: {unknown}"
+        pinned_sets = list(self.pinned_split_indices.values())
+        for i, a in enumerate(pinned_sets):
+            for b in pinned_sets[i + 1 :]:
+                overlap = a & b
+                assert not overlap, (
+                    f"pinned_split_indices overlap across splits: {sorted(overlap)[:5]}..."
+                )
         self.split_indices = (
             split_indices
             if isinstance(split_indices, list)
@@ -303,10 +325,16 @@ class CellDataModule(L.LightningDataModule):
         split -- with no error, and with the pinned genes back in train. The tag hashes the
         pinned index set so any change to it (or removing the pin) selects a different file.
         """
-        if not self.pinned_test_indices:
+        if not self.pinned_test_indices and not self.pinned_split_indices:
             return ""
-        payload = ",".join(map(str, sorted(self.pinned_test_indices))).encode()
-        return f"_pin{len(self.pinned_test_indices)}-{hashlib.sha256(payload).hexdigest()[:8]}"
+        parts = [",".join(map(str, sorted(self.pinned_test_indices)))]
+        n_pinned = len(self.pinned_test_indices)
+        for split in ("train", "val", "test"):
+            indices = self.pinned_split_indices.get(split, set())
+            parts.append(f"{split}:" + ",".join(map(str, sorted(indices))))
+            n_pinned += len(indices)
+        payload = "|".join(parts).encode()
+        return f"_pin{n_pinned}-{hashlib.sha256(payload).hexdigest()[:8]}"
 
     def _load_or_compute_index(self) -> None:
         os.makedirs(self.cache_dir, exist_ok=True)
@@ -458,6 +486,27 @@ class CellDataModule(L.LightningDataModule):
                 f"Pinned {len(pinned)} records into test "
                 f"({missing} requested indices are outside the dataset). "
                 f"Splits: train={len(final_splits['train'])} "
+                f"val={len(final_splits['val'])} test={len(final_splits['test'])}"
+            )
+
+        # FULL PINNED SPLITS, applied last of all so they override both the ratio-driven
+        # assignment and the test-only pin above. Each pinned record is removed from every
+        # split and placed exactly where the mapping says, reproducing a prior experiment's
+        # complete train/val/test assignment (e.g. 010's tmi splits inside 025) while the
+        # unpinned remainder keeps its seed-driven assignment.
+        if self.pinned_split_indices:
+            for split_name, requested in self.pinned_split_indices.items():
+                pinned = requested & all_indices
+                for other in ("train", "val", "test"):
+                    final_splits[other] -= pinned
+                final_splits[split_name] |= pinned
+                log.info(
+                    f"Pinned {len(pinned)} records into {split_name} "
+                    f"({len(requested) - len(pinned)} requested indices are outside "
+                    "the dataset)."
+                )
+            log.info(
+                f"Splits after full pinning: train={len(final_splits['train'])} "
                 f"val={len(final_splits['val'])} test={len(final_splits['test'])}"
             )
 

@@ -212,3 +212,64 @@ def test_dataloaders_construct_at_any_worker_count(
         assert loader.num_workers == num_workers, name
         expected = 2 if num_workers > 0 else None
         assert loader.prefetch_factor == expected, name
+
+
+def _build_full_pin(
+    tmp_path: Any, pinned_splits: dict[str, set[int]] | None, seed: int = 42
+) -> CellDataModule:
+    return CellDataModule(
+        dataset=_FakeDataset(),
+        cache_dir=str(tmp_path / "cache"),
+        split_indices=["phenotype_label_index"],
+        random_seed=seed,
+        pinned_split_indices=pinned_splits,
+    )
+
+
+def test_full_pin_places_every_record_in_its_named_split(tmp_path: Any) -> None:
+    """pinned_split_indices forces records into train/val/test exactly as named."""
+    pinned = {"train": {0, 2, 4}, "val": {1, 3}, "test": {5, 7, 9}}
+    dm = _build_full_pin(tmp_path, pinned)
+    idx = dm.index
+    assert pinned["train"] <= set(idx.train)
+    assert pinned["val"] <= set(idx.val)
+    assert pinned["test"] <= set(idx.test)
+    # and absent from every other split
+    assert not pinned["train"] & (set(idx.val) | set(idx.test))
+    assert not pinned["val"] & (set(idx.train) | set(idx.test))
+    assert not pinned["test"] & (set(idx.train) | set(idx.val))
+    assert len(idx.train) + len(idx.val) + len(idx.test) == 200
+
+
+def test_full_pin_overrides_seed_assignment(tmp_path: Any) -> None:
+    """A record the seed puts in train stays in val when pinned there."""
+    baseline = _build_full_pin(tmp_path / "a", None)
+    seed_train = set(baseline.index.train)
+    moved = set(list(seed_train)[:4])
+    dm = _build_full_pin(tmp_path / "b", {"val": moved})
+    assert moved <= set(dm.index.val)
+    assert not moved & set(dm.index.train)
+
+
+def test_full_pin_overlap_refused(tmp_path: Any) -> None:
+    """The same record pinned into two splits is a construction-time error."""
+    with pytest.raises(AssertionError, match="overlap"):
+        _build_full_pin(tmp_path, {"train": {1, 2}, "test": {2, 3}})
+
+
+def test_full_pin_changes_cache_tag(tmp_path: Any) -> None:
+    """A pinned run never reuses the unpinned cache file (and vice versa)."""
+    dm_plain = _build_full_pin(tmp_path, None)
+    dm_pinned = _build_full_pin(tmp_path, {"val": {1, 2, 3}})
+    assert dm_plain._pin_tag() != dm_pinned._pin_tag()
+    cache = tmp_path / "cache"
+    assert (cache / "index_seed_42.json").exists()
+    assert any("_pin3-" in p.name for p in cache.iterdir())
+
+
+def test_full_pin_out_of_range_indices_ignored(tmp_path: Any) -> None:
+    """Indices outside the dataset are dropped, not crashed on."""
+    dm = _build_full_pin(tmp_path, {"test": {0, 1, 5000}})
+    idx = dm.index
+    assert {0, 1} <= set(idx.test)
+    assert 5000 not in set(idx.train) | set(idx.val) | set(idx.test)

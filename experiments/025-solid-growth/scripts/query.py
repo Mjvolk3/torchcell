@@ -39,7 +39,12 @@ def main() -> None:
     with open("experiments/025-solid-growth/queries/001_all_solid_growth.cql") as f:
         query = f.read()
 
-    genome = SCerevisiaeGenome(osp.join(data_root, "data/sgd/genome"))
+    # go_root must be explicit: the relative default resolves against cwd, misses the
+    # mirror, and falls into a live GO download that 403s (observed in the smoke run).
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(data_root, "data/sgd/genome"),
+        go_root=osp.join(data_root, "data/go"),
+    )
     print(f"gene_set: {len(genome.gene_set)} genes")
 
     dataset_root = osp.join(

@@ -40,7 +40,7 @@ WHERE p.systematic_gene_name IN $gene_set)
  AND SIZE([(g)<-[:PerturbationMemberOf]-(pert) | pert]) > 0
 WITH DISTINCT e, ref
  ORDER BY e.id
-RETURN e, ref
+RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized
 
 UNION ALL
 
@@ -59,7 +59,7 @@ WHERE p.systematic_gene_name IN $gene_set)
  AND SIZE([(g)<-[:PerturbationMemberOf]-(pert) | pert]) > 0
 WITH DISTINCT e, ref
  ORDER BY e.id
-RETURN e, ref
+RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized
 
 UNION ALL
 
@@ -78,7 +78,7 @@ WHERE p.systematic_gene_name IN $gene_set)
  AND SIZE([(g)<-[:PerturbationMemberOf]-(pert) | pert]) > 0
 WITH DISTINCT e, ref
  ORDER BY e.id
-RETURN e, ref
+RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized
 
 UNION ALL
 
@@ -97,7 +97,7 @@ WHERE p.systematic_gene_name IN $gene_set)
  AND SIZE([(g)<-[:PerturbationMemberOf]-(pert) | pert]) > 0
 WITH DISTINCT e, ref
  ORDER BY e.id
-RETURN e, ref
+RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized
 
 UNION ALL
 
@@ -116,7 +116,7 @@ WHERE p.systematic_gene_name IN $gene_set)
  AND SIZE([(g)<-[:PerturbationMemberOf]-(pert) | pert]) > 0
 WITH DISTINCT e, ref
  ORDER BY e.id
-RETURN e, ref
+RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized
 
 UNION ALL
 
@@ -135,7 +135,7 @@ WHERE p.systematic_gene_name IN $gene_set)
  AND SIZE([(g)<-[:PerturbationMemberOf]-(pert) | pert]) > 0
 WITH DISTINCT e, ref
  ORDER BY e.id
-RETURN e, ref
+RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized
 
 UNION ALL
 
@@ -154,7 +154,7 @@ WHERE p.systematic_gene_name IN $gene_set)
  AND SIZE([(g)<-[:PerturbationMemberOf]-(pert) | pert]) > 0
 WITH DISTINCT e, ref
  ORDER BY e.id
-RETURN e, ref
+RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized
 
 UNION ALL
 
@@ -173,7 +173,7 @@ WHERE p.systematic_gene_name IN $gene_set)
  AND SIZE([(g)<-[:PerturbationMemberOf]-(pert) | pert]) > 0
 WITH DISTINCT e, ref
  ORDER BY e.id
-RETURN e, ref
+RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized
 
 UNION ALL
 
@@ -192,7 +192,7 @@ WHERE p.systematic_gene_name IN $gene_set)
  AND SIZE([(g)<-[:PerturbationMemberOf]-(pert) | pert]) > 0
 WITH DISTINCT e, ref
  ORDER BY e.id
-RETURN e, ref
+RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized
 
 UNION ALL
 
@@ -211,7 +211,7 @@ WHERE p.systematic_gene_name IN $gene_set)
  AND SIZE([(g)<-[:PerturbationMemberOf]-(pert) | pert]) > 0
 WITH DISTINCT e, ref
  ORDER BY e.id
-RETURN e, ref
+RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized
 
 UNION ALL
 
@@ -230,7 +230,7 @@ WHERE p.systematic_gene_name IN $gene_set)
  AND SIZE([(g)<-[:PerturbationMemberOf]-(pert) | pert]) > 0
 WITH DISTINCT e, ref
  ORDER BY e.id
-RETURN e, ref
+RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized
 
 UNION ALL
 
@@ -249,7 +249,7 @@ WHERE p.systematic_gene_name IN $gene_set)
  AND SIZE([(g)<-[:PerturbationMemberOf]-(pert) | pert]) > 0
 WITH DISTINCT e, ref
  ORDER BY e.id
-RETURN e, ref
+RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized
 
 UNION ALL
 
@@ -268,7 +268,7 @@ WHERE p.systematic_gene_name IN $gene_set)
  AND SIZE([(g)<-[:PerturbationMemberOf]-(pert) | pert]) > 0
 WITH DISTINCT e, ref
  ORDER BY e.id
-RETURN e, ref
+RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized
 
 UNION ALL
 
@@ -287,7 +287,7 @@ WHERE p.systematic_gene_name IN $gene_set)
  AND SIZE([(g)<-[:PerturbationMemberOf]-(pert) | pert]) > 0
 WITH DISTINCT e, ref
  ORDER BY e.id
-RETURN e, ref
+RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized
 
 UNION ALL
 
@@ -307,4 +307,4 @@ WHERE p.systematic_gene_name IN $gene_set)
  AND SIZE([(g)<-[:PerturbationMemberOf]-(pert) | pert]) > 0
 WITH DISTINCT e, ref
  ORDER BY e.id
-RETURN e, ref
+RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized

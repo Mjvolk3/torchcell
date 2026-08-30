@@ -202,8 +202,19 @@ class Neo4jQueryRaw:
         log.info("Processing data...")
         i = -1
         for i, record in tqdm(enumerate(self.fetch_data())):
-            # Extract the serialized data from the 'e' node
-            e_node_data = json.loads(record["e"]["serialized_data"])
+            # Two record shapes, by what the query RETURNs. Property shape
+            # (e_serialized/ref_serialized strings) is REQUIRED at scale: returning
+            # whole nodes makes the driver register every hydrated Node in the
+            # result's Graph cache (neo4j/graph/__init__.py, graph._nodes) for the
+            # life of the result, retaining 13.6 KB/record -- measured on the 025
+            # build, which held 29 GB of heap at 2.2M records and projects past
+            # machine RAM at 44M. Returning the serialized_data property instead
+            # measures 3 B/record. Node shape (RETURN e, ref) stays supported for
+            # the existing experiment queries, which are historical records.
+            if "e_serialized" in record.keys():
+                e_node_data = json.loads(record["e_serialized"])
+            else:
+                e_node_data = json.loads(record["e"]["serialized_data"])
 
             # Create an instance of the FitnessExperiment model
             experiment_class = EXPERIMENT_TYPE_MAP[e_node_data["experiment_type"]]
@@ -214,8 +225,11 @@ class Neo4jQueryRaw:
                 phenotype=e_node_data["phenotype"],
             )
 
-            # Extract the serialized data from the 'ref' node
-            ref_node_data = json.loads(record["ref"]["serialized_data"])
+            # Extract the serialized data from the 'ref' node (same two shapes).
+            if "ref_serialized" in record.keys():
+                ref_node_data = json.loads(record["ref_serialized"])
+            else:
+                ref_node_data = json.loads(record["ref"]["serialized_data"])
 
             experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
                 ref_node_data["experiment_reference_type"]

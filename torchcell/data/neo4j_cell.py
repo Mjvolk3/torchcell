@@ -30,6 +30,7 @@ from torchcell.data.deduplicate import Deduplicator
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.data.graph_processor import GraphProcessor
 from torchcell.data.neo4j_query_raw import Neo4jQueryRaw
+from torchcell.database.connection import neo4j_connection_settings
 from torchcell.datamodels import (
     EXPERIMENT_REFERENCE_TYPE_MAP,
     EXPERIMENT_TYPE_MAP,
@@ -211,9 +212,9 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         deduplicator: type[Deduplicator] | None = None,
         aggregator: type[Aggregator] | None = None,
         overwrite_intermediates: bool = False,
-        uri: str = "bolt://localhost:7687",
-        username: str = "neo4j",
-        password: str = "torchcell",
+        uri: str | None = None,
+        username: str | None = None,
+        password: str | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         pre_filter: Callable[..., Any] | None = None,
@@ -250,10 +251,12 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         self.deduplicator: type[Deduplicator] | Deduplicator | None = deduplicator
         self.aggregator: type[Aggregator] | Aggregator | None = aggregator
 
-        # raw db deps
-        self.uri = uri
-        self.username = username
-        self.password = password
+        # raw db deps: explicit args win; otherwise NEO4J_URI/NEO4J_USER/NEO4J_PASSWORD
+        # from the environment, falling back to the local served instance.
+        settings = neo4j_connection_settings()
+        self.uri = uri if uri is not None else settings.uri
+        self.username = username if username is not None else settings.username
+        self.password = password if password is not None else settings.password
         self.query = query
 
         super().__init__(root, transform, pre_transform, pre_filter)

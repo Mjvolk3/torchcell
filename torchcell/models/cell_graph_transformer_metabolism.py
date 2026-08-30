@@ -362,11 +362,7 @@ class CellGraphTransformerMetabolism(CellGraphTransformer):
             self.metabolism_head_names.append(name)
 
     def forward(
-        self,
-        cell_graph: HeteroData,
-        batch: HeteroData,
-        *args: Any,
-        **kwargs: Any,
+        self, cell_graph: HeteroData, batch: HeteroData, *args: Any, **kwargs: Any
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """Run the inherited forward, then append the metabolism head outputs.
 
@@ -490,9 +486,9 @@ def main() -> None:
         ),
         query=query,
         gene_set=genome.gene_set,
-        uri="neo4j+s://torchcell-database.ncsa.illinois.edu:7687",
-        username="readonly",
-        password="ReadOnly",
+        # Connection comes from NEO4J_URI/NEO4J_USER/NEO4J_PASSWORD in the environment
+        # (defaulting to the locally served instance). The radiant host this previously
+        # hardcoded no longer serves the database.
         graphs=build_gene_multigraph(
             graph=graph, graph_names=["physical", "regulatory"]
         ),

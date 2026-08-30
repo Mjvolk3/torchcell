@@ -21,6 +21,7 @@ from neo4j import GraphDatabase
 from tqdm import tqdm
 
 from torchcell.data import Dataset  # type: ignore[attr-defined]
+from torchcell.database.connection import neo4j_connection_settings
 from torchcell.sequence import GeneSet
 
 log = logging.getLogger(__name__)
@@ -32,9 +33,11 @@ class BaseQuery:
     """Cypher query bound to a Neo4j connection, yielding records on demand."""
 
     query: str
-    uri: str = field(default="neo4j://localhost:7687")
-    username: str = field(default="neo4j")
-    password: str = field(default="neo4j")
+    # Defaults resolve from NEO4J_URI/NEO4J_USER/NEO4J_PASSWORD at construction time
+    # (factories, not literals), falling back to the local served instance.
+    uri: str = field(factory=lambda: neo4j_connection_settings().uri)
+    username: str = field(factory=lambda: neo4j_connection_settings().username)
+    password: str = field(factory=lambda: neo4j_connection_settings().password)
 
     def __attrs_post_init__(self) -> None:
         """Open the Neo4j driver using the configured URI and credentials."""

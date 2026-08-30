@@ -22,16 +22,23 @@ only from 0.8706 to 0.8687, i.e. by 0.2%. If conditioning on the perturbation ba
 the correlation pattern, the structure is close to gene-intrinsic (co-expression modules,
 array/batch effects) rather than perturbation-specific.
 
-PANELS
-  A  Split-half agreement -- C_A vs C_B off-diagonals (hexbin), observed vs shuffled null.
-     The headline: does the correlation pattern replicate on held-out strains?
-  B  Eigenspectrum -- cumulative variance vs rank, with the chosen k=32 and the
-     participation-ratio effective rank marked. Says how much of the structure rank-k can hold.
-  C  CONDITIONAL test (NEW) -- split strains by PERTURBED-GENE SIMILARITY rather than at
+PANELS. Each one states its own conclusion in its title, because a panel that needs the
+caption to be readable is not a panel the reader can check.
+  a  The residual matrix R the whole figure is computed from.
+  b  Split-half agreement -- C_A vs C_B off-diagonals (hexbin), observed against the
+     shuffled null. Does the correlation pattern replicate on held-out strains?
+  c  Cross-validated spectrum -- variance the components fit on half A explain in half B,
+     against the in-sample curve and a random-direction floor. How many components are real.
+  d  CONDITIONAL test -- split strains by PERTURBED-GENE SIMILARITY rather than at
      random, into two groups whose deleted genes are far apart in prot_T5 space. If residual
      covariance is perturbation-specific, the two groups' correlation matrices should agree
      LESS than two random halves do. If they agree just as well, the covariance is global and
      a single shared Sigma is already the right model -- there is nothing conditional to gain.
+  e  Construction of the shuffled null that is the third bar of d.
+
+A sixth panel drawing four individual strain profiles was REMOVED after review: it showed
+noise for four arbitrary deletions and supported none of the four claims above, so its space
+went to the panels that do.
 
 Run from repo root (CPU only, no GPU needed):
     python experiments/019-simb-multimodal/scripts/plot_residual_covariance.py
@@ -70,6 +77,7 @@ from torchcell.utils import (  # noqa: E402
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
     mm_to_in,
+    panel_label,
     savefig_true_size_svg,
 )
 from torchcell.utils.paths import asset_images_dir, experiment_results_dir  # noqa: E402
@@ -294,10 +302,12 @@ def main() -> None:
     _apply_plot_style()
     w = PANEL_WIDTHS_MM["full"]
     fig = plt.figure(figsize=(mm_to_in(w), mm_to_in(112)))
-    gs = fig.add_gridspec(2, 3, hspace=0.75, wspace=0.55)
-    axA, axB, axC = (fig.add_subplot(gs[0, i]) for i in range(3))
-    axD, axE = fig.add_subplot(gs[1, 0]), fig.add_subplot(gs[1, 1])
-    axF = fig.add_subplot(gs[1, 2])
+    gs = fig.add_gridspec(2, 3, hspace=0.80, wspace=0.55)
+    axA, axC, axD = (fig.add_subplot(gs[0, i]) for i in range(3))
+    axE = fig.add_subplot(gs[1, 0])
+    # The null-construction panel spans two columns: it carries the prose that explains
+    # what the third bar of panel d is, and that prose was unreadable in a third of a page.
+    axF = fig.add_subplot(gs[1, 1:])
 
     # Order genes by their loading on the leading residual component, so the shared
     # co-expression program is visible as a gradient rather than scrambled.
@@ -313,26 +323,17 @@ def main() -> None:
     im = axA.imshow(M, aspect="auto", cmap="RdBu_r", vmin=-v, vmax=v, interpolation="nearest")
     axA.set_xlabel(f"reporter genes ({n_g} of {F})")
     axA.set_ylabel(f"strains ({n_s} of {S})")
-    axA.set_title("A  the residual matrix R, log2 ratio\n(1 deletion strain per row)", fontsize=6)
+    axA.set_title(
+        "the data: residual log2 ratio matrix R\n"
+        "one deletion strain per row, gene mean\n"
+        "and a kNN conditional mean removed",
+        fontsize=6,
+    )
+    # No colorbar label: at this panel width it runs into panel b's y axis, and the title
+    # already names the units.
     cb = fig.colorbar(im, ax=axA, fraction=0.045, pad=0.03)
     cb.ax.tick_params(labelsize=5, width=0.4)
     cb.outline.set_linewidth(0.4)
-
-    # --- B: individual perturbations -- what one ROW looks like ---
-    for j, row in enumerate(si[:: max(1, n_s // 4)][:4]):
-        axB.plot(
-            R[row, gi], lw=0.35, color=PLOT_PALETTE[j], alpha=0.85,
-            label=f"$\\Delta${genes[row]}",
-        )
-    axB.axhline(0, color="black", lw=0.4)
-    # One strain can carry large excursions that flatten the rest; a robust limit
-    # keeps all four profiles legible (outliers clip rather than dominate).
-    blim = float(np.percentile(np.abs(R[np.ix_(si, gi)]), 99.5))
-    axB.set_ylim(-blim, blim)
-    axB.set_xlabel("reporter genes (same order as A)")
-    axB.set_ylabel("residual log2 ratio")
-    axB.set_title("B  four individual perturbations\n(each row of A)", fontsize=6)
-    axB.legend(frameon=False, fontsize=5, loc="upper right", handlelength=1.2, ncol=2)
 
     # --- C: split-half agreement, with the null made visible ---
     sub = rng.choice(oa.size, size=min(300_000, oa.size), replace=False)
@@ -347,15 +348,21 @@ def main() -> None:
     axC.plot([-1, 1], [-1, 1], color="black", lw=0.5, ls=(0, (4, 3)))
     axC.set_xlim(-1, 1)
     axC.set_ylim(-1, 1)
-    axC.set_xlabel("gene-gene corr, half A")
+    axC.set_xlabel("gene-gene corr, strain half A")
     axC.set_ylabel("gene-gene corr, half B")
-    axC.set_title(f"C  floor check: structure exists\nr={obs:.3f} vs null {null:.4f}", fontsize=6)
+    axC.set_title(
+        "the gene-gene pattern replicates\n"
+        "on strains it was not measured on:\n"
+        f"r = {obs:.3f}, shuffled null {null:.4f}",
+        fontsize=6,
+    )
     axC.xaxis.set_major_locator(MultipleLocator(0.5))
     axC.yaxis.set_major_locator(MultipleLocator(0.5))
     axC.legend(
         handles=[
-            Patch(facecolor=PLOT_PALETTE[0], label="observed pairs"),
-            Line2D([0], [0], color=PLOT_PALETTE[5], ls="--", lw=0.7, label="null (99%)"),
+            Patch(facecolor=PLOT_PALETTE[0], label="one gene pair"),
+            Line2D([0], [0], color=PLOT_PALETTE[5], ls="--", lw=0.7,
+                   label="shuffled null, 99%"),
             Line2D([0], [0], color="black", ls=(0, (4, 3)), lw=0.5, label="y = x"),
         ],
         frameon=False, fontsize=5, loc="upper left", handlelength=1.4,
@@ -372,7 +379,12 @@ def main() -> None:
     axD.set_xlabel("rank k")
     axD.set_ylabel("cumulative variance (%)")
     axD.set_ylim(0, 100)
-    axD.set_title("D  which components GENERALIZE\n(fit half A, score half B)", fontsize=6)
+    axD.set_title(
+        f"about {eff:.0f} components generalize:\n"
+        "the held-out curve is the honest one,\n"
+        "in-sample overstates the usable rank",
+        fontsize=6,
+    )
     axD.yaxis.set_major_locator(MultipleLocator(20))
     axD.yaxis.set_minor_locator(MultipleLocator(10))
     axD.tick_params(which="minor", length=0)
@@ -380,54 +392,96 @@ def main() -> None:
     axD.set_axisbelow(True)
     axD.legend(frameon=False, fontsize=5, loc="upper left", handlelength=1.4)
 
-    # --- E: the conditional test ---
-    labels = ["random\nsplit", "split by\nperturbed gene", "shuffled\nnull"]
+    # --- E: the conditional test -- the load-bearing panel ---
+    # The comparison is bar 1 against bar 2, and the reader has to be able to see that it is
+    # a NULL RESULT: grouping strains by which gene was deleted leaves the correlation
+    # pattern where random grouping leaves it. So the difference and its size in units of
+    # the random-split spread are drawn between the two bars rather than left to the caption.
+    labels = ["random\nsplit", "by deleted\ngene", "shuffled\nnull (e)"]
     vals = [float(np.mean(reps)), cond, null]
-    errs = [float(np.std(reps)), 0.0, 0.0]
+    spread = float(np.std(reps))
+    errs = [spread, 0.0, 0.0]
     axE.bar(
         range(3), vals, yerr=errs, color=[PLOT_PALETTE[0], PLOT_PALETTE[1], PLOT_PALETTE[5]],
         edgecolor="black", linewidth=0.5, capsize=2, error_kw={"lw": 0.5},
     )
     for i, val in enumerate(vals):
         axE.text(i, val + 0.03, f"{val:.3f}", ha="center", fontsize=5)
+    bracket = max(vals[0], vals[1]) + 0.14
+    axE.plot(
+        [0, 0, 1, 1],
+        [bracket - 0.03, bracket, bracket, bracket - 0.03],
+        color="black", lw=0.5,
+    )
+    axE.text(
+        0.5, bracket + 0.02,
+        f"{cond - vals[0]:+.3f}\n({(cond - vals[0]) / max(spread, 1e-9):+.1f} sd)",
+        ha="center", va="bottom", fontsize=5, linespacing=1.3,
+    )
     axE.set_xticks(range(3))
     axE.set_xticklabels(labels)
     axE.set_ylabel("split-half agreement r")
-    axE.set_ylim(0, 1.0)
-    axE.yaxis.set_major_locator(MultipleLocator(0.2))
+    # Ticks stop at 1.0, the largest value a correlation can take; the space above it is
+    # annotation room, not axis.
+    axE.set_ylim(0, 1.55)
+    axE.set_yticks(np.arange(0, 1.01, 0.2))
     axE.yaxis.set_minor_locator(MultipleLocator(0.1))
     axE.tick_params(which="minor", length=0)
     axE.grid(axis="y", which="both", lw=0.3, color="0.9")
     axE.set_axisbelow(True)
-    axE.set_title("E  THE RESULT: not conditional\non which gene was deleted", fontsize=6)
+    axE.set_title(
+        "THE RESULT: grouping strains by the\ndeleted gene barely changes the\n"
+        "pattern, so ONE global Sigma fits",
+        fontsize=6,
+    )
 
-    # --- F: what the null actually does, drawn small so the control is legible ---
+    # --- F: how the null of panel E is built ---
     axF.axis("off")
-    axF.set_title("F  what the null destroys", fontsize=6)
+    axF.set_title(
+        "how the shuffled null, the third bar of panel d, is built", fontsize=6
+    )
     demo = R[np.ix_(si[:14], gi[:14])]
     dv = float(np.percentile(np.abs(demo), 95))
-    a1 = axF.inset_axes((0.02, 0.52, 0.42, 0.40))
-    a2 = axF.inset_axes((0.56, 0.52, 0.42, 0.40))
+    a1 = axF.inset_axes((0.01, 0.50, 0.13, 0.44))
+    a2 = axF.inset_axes((0.21, 0.50, 0.13, 0.44))
     a1.imshow(demo, cmap="RdBu_r", vmin=-dv, vmax=dv, interpolation="nearest")
     shuf = demo.copy()
     for c in range(shuf.shape[1]):
         rng.shuffle(shuf[:, c])
     a2.imshow(shuf, cmap="RdBu_r", vmin=-dv, vmax=dv, interpolation="nearest")
-    for a, t in ((a1, "observed"), (a2, "null")):
+    for a, t in ((a1, "observed R"), (a2, "columns permuted")):
         a.set_xticks([])
         a.set_yticks([])
         a.set_title(t, fontsize=5, pad=2)
         for sp in a.spines.values():
             sp.set_linewidth(0.4)
+    axF.annotate(
+        "", xy=(0.20, 0.72), xytext=(0.15, 0.72), xycoords="axes fraction",
+        arrowprops={"arrowstyle": "->", "lw": 0.5, "color": "black"},
+    )
     axF.text(
-        0.0, 0.40,
-        "Each GENE COLUMN is permuted over strains\nINDEPENDENTLY. Every gene keeps its own\n"
-        "values (same column histogram), but the\npairing between columns is destroyed -- so\n"
-        "any gene-gene correlation is removed while\nper-gene properties are held fixed.\n\n"
-        "This is a FLOOR, not the interesting test:\nit only asks whether cross-gene structure\n"
-        "exists at all. Panel E is the real question.",
+        0.42, 0.94,
+        "Every GENE COLUMN is permuted over strains INDEPENDENTLY,\n"
+        "so each gene keeps its own values and its own column histogram\n"
+        "while the pairing between columns is destroyed. All gene-gene\n"
+        "correlation is removed; every per-gene property is held fixed.",
         fontsize=5, va="top", linespacing=1.5,
     )
+    axF.text(
+        0.01, 0.36,
+        f"Two halves of the permuted matrix agree at r = {null:.4f}. That is the floor the "
+        f"observed {obs:.3f} in panel b is measured\n"
+        "against, and it is the third bar of panel d. It answers only whether cross-gene "
+        "structure exists AT ALL; whether\n"
+        "that structure is CONDITIONAL on the perturbation is the first-against-second-bar "
+        "comparison in panel d.",
+        fontsize=5, va="top", linespacing=1.5,
+    )
+
+    # Reading order is left to right, top to bottom: a b c on the first row, d e on the
+    # second. The letters go on last so nothing drawn later can sit on top of them.
+    for letter, axis in zip("abcde", (axA, axC, axD, axE, axF)):
+        panel_label(axis, letter)
 
     out_dir = asset_images_dir(__file__, "019-simb-multimodal")
     stem = osp.join(out_dir, "residual_covariance_diagnostic")

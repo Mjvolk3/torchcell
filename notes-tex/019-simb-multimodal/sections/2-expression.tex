@@ -80,8 +80,17 @@ training Pearson reached $0.652$ to $0.725$ and was still climbing when they wer
 Longer runs have since been allowed. The picture did not change: the best v8 run peaks at
 epoch 4,002 of 4,105 and the best v9 run at epoch 9,697 of 9,900. Raising the epoch budget
 from 1,600 to 10,000 moved the score from $0.204$ to $0.238$ and moved the peak with it, so
-the curve is still rising where it was cut off. \textbf{No peak has ever been observed on
-this task}, at any budget tried, and the saturation epoch remains unknown.
+the curve is still rising where it was cut off. \textbf{No maximum of the validation
+correlation has ever been observed on this task}, at any budget tried, and the saturation
+epoch remains unknown.
+
+\notesec{That claim is about the correlation, and the squared-error curve is a separate
+question worth stating in the same breath} Validation \file{mse} falls steeply for the first
+few hundred epochs, rises to a local maximum near epoch 900, and then falls again for the
+remaining nine thousand to a \emph{late global} minimum at epoch 9,184, essentially where
+the correlation peaks. So the impression that squared error is minimized early and never
+returns is close but not right: it does return, and it goes lower. Both curves are in
+\cref{fig:objective}b.
 
 \notesec{Read across all nine expression rounds, the score is a function of the budget}
 Every expression project, read the same way and sorted by score, comes out in almost
@@ -156,26 +165,83 @@ back for the rest of the run without ever returning below 1; squared error's own
 at epoch 9,175. (c) The prediction standard-deviation ratio $s$ against the correlation
 $r$, with the \file{nmse}-optimal line $s = r$.}{fig:objective}
 
-\notesec{The sharper finding: the model never beats the mean in squared error}
-\file{nmse} is normalized so that $1$ is exactly ``predict each gene's training mean''. It
-dips barely below 1 at epoch 213 and is back above 1 from about epoch 400 onward, reading
-$1.010$ on v9 and $1.040$ on v8 at their Pearson peaks. So the model reaches $r = 0.236$
-while being no better than the mean predictor on a squared-error scoreboard.
+\notesec{Correction to revision 2: the model is at \emph{parity} with the mean predictor,
+not reliably worse than it} Revision 2 said \file{nmse} ``never returns below 1 after about
+epoch 400'', so the model was ``no better than predicting each gene's mean''. Reading the
+raw logged curve rather than the smoothed one, that is wrong, and it is wrong in the
+direction the last review suspected.
 
-That is arithmetic rather than a mystery. Writing $s$ for the ratio of prediction
-standard deviation to target standard deviation and $r$ for the correlation, predictions
-that are a scaled version of a correlated signal give
-$$\texttt{nmse} = 1 + s^2 - 2rs,$$
-which is minimized at $s^\star = r$ with value $1 - r^2$. The identity reproduces the
-logged \file{nmse} to within $0.016$ on both runs. At its Pearson peak v9 sits at
-$s = 0.460$ against $r = 0.236$, so its predictions are $\mathbf{1.95\times}$ more spread
-out than its own correlation justifies; v8 is $2.21\times$.
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: results/expression_curve_hx8pxdic.csv, expression_curve_b50f93ju.csv
+\begin{tabular}{lrrrr}
+\toprule
+run & scoring of the peak & peak $r$ & epoch & \file{nmse} there \\
+\midrule
+v9 \texttt{hx8pxdic} & raw per-epoch maximum      & 0.2463 & 9{,}177 & \textbf{0.9928} \\
+v9 \texttt{hx8pxdic} & 5-point smoothed maximum   & 0.2395 & 9{,}682 & \textbf{1.0070} \\
+\addlinespace
+v8 \texttt{b50f93ju} & raw per-epoch maximum      & 0.2370 & 3{,}913 & 1.0312 \\
+v8 \texttt{b50f93ju} & 5-point smoothed maximum   & 0.2304 & 3{,}914 & 1.0390 \\
+\bottomrule
+\end{tabular}
+\caption[]{Whether the model beats ``predict each gene's mean'' in squared error depends on
+which epoch you call the peak. On v9 the raw maximum sits at \file{nmse} $= 0.9928$, below
+1, and the smoothed maximum at $1.0070$, above it. The epoch-to-epoch standard deviation of
+\file{nmse} over the last 5,000 epochs is $0.0077$, so the two readings are about $1.8\sigma$
+apart and the sign of ``beats the mean'' is inside the logging noise. v8 sits above 1 on
+both readings.}
+\label{tab:nmse-parity}
+\end{table}
 
-\notesec{Consequence, and it is free} Multiplying predictions by $r/s$ changes no
-correlation at all and moves \file{nmse} from $1.010$ to $1 - r^2 = 0.944$ on v9, and from
-$1.040$ to $0.949$ on v8. The ordering the model produces is already worth more than its
-magnitudes, and any report that quotes Pearson beside an \file{nmse} above 1 is quoting a
-model that would lose to the mean until it is rescaled.
+\textbf{What is robust is parity, not defeat}: on v9 the model ends up level with the mean
+predictor in squared error while ordering genes at $r \approx 0.24$, and on v8 it is
+$3$ to $4\,\%$ worse. What is \emph{not} robust is the stronger sentence revision 2 carried,
+and any figure or manuscript line resting on ``worse than the mean'' should be rewritten to
+``level with the mean, and better than it once calibrated''.
+
+The calibration statement below is the robust one, and it is what the parity result is
+really about.
+
+That is arithmetic rather than a mystery, and the arithmetic is worth writing out because
+everything downstream, including \cref{tab:calibration}, is one instance of it. Write $s$
+for the ratio of prediction standard deviation to target standard deviation and $r$ for
+the correlation. For predictions that are a scaled copy of a correlated signal,
+$$\texttt{nmse} = 1 + s^2 - 2rs.$$
+This is a parabola in $s$. Differentiating, $2s - 2r = 0$, so it is minimized at
+$s^\star = r$ with value $1 - r^2$. The identity reproduces the logged \file{nmse} to
+within $0.016$ on both runs, so it describes these models rather than an idealization of
+them. At its raw Pearson peak v9 sits at $s = 0.4436$ against $r = 0.2463$, so its
+predictions are $\mathbf{1.80\times}$ more spread out than its own correlation justifies;
+v8 is $2.13\times$ ($s = 0.5055$ against $r = 0.2370$).
+
+That ratio, unlike the sign of $\texttt{nmse} - 1$, is not close to a boundary and does not
+move with the smoothing choice.
+
+\notesec{What the post-hoc rescale is, concretely} Take the trained model, change nothing
+inside it, and multiply every prediction by the scalar $r/s = 0.2463/0.4436 = 0.555$ before
+scoring. That is the whole operation. It is legitimate because $r$ and $s$ are estimated on
+the training split and applied to validation, so no validation label enters. Two properties
+make it free:
+
+\begin{itemize}
+\item \textbf{No correlation changes.} Pearson is invariant to multiplying one variable by
+  a positive constant, so every \file{pearson_per_feature}, every Spearman, and every
+  ranking is bit-identical afterward.
+\item \textbf{\file{nmse} moves to its optimum.} By the parabola above, scaling $s$ to $r$
+  takes \file{nmse} to $1 - r^2$, which is $0.939$ on v9 and $0.944$ on v8, both clearly
+  below 1 rather than at the boundary.
+\end{itemize}
+
+So the model sitting at parity with the mean and the model beating it are the same model
+with one multiplication applied. \textbf{The right way to state the result is: the model is
+level with the mean predictor as trained, and $6\,\%$ better than it once calibrated, while
+its ordering is unchanged throughout.} The uncalibrated \file{nmse} is a reporting defect
+rather than a capability limit.
+
+This is not scheduled as an experiment. It changes no correlation, so it cannot improve the
+strand's headline number, and it is worth doing at the point a figure is drawn rather than
+now (\cref{sec:directions}).
 
 \notesec{What this does and does not say about checkpointing} Best-by-loss on the
 \emph{quantile} loss picks a model $\approx 9{,}200$ epochs early, which is the defect that
@@ -218,9 +284,26 @@ reporter is being predicted given which gene was deleted.}
 \label{tab:pair-rank}
 \end{table}
 
-Capacity is not what binds. A rank-$r$ reconstruction of the target matrix reaches $0.7265$
-at $r = 32$ and $0.7799$ at $r = 64$, against a best model score of $0.238$, so a null on
-this axis is a statement about the mechanism.
+\notesec{Was the ladder actually run} No. \cref{tab:pair-rank} is a \emph{derivation}, not a
+result table: it states the rank of the pair term each mechanism is algebraically capable of
+expressing. Only two rungs have been trained, the additive reference and
+\file{V_basis64}, and they are not a clean comparison because their epoch budgets differ by
+$2.4\times$. The rest of the ladder is the Phase B proposal (\cref{sec:campaign}), and the
+zero in the top row is a proof about the reference operator rather than a measurement of it.
+
+\notesec{Capacity is not what binds, and here is what that check was} A pair term of rank
+$r$ can only help if the target matrix itself has structure at that rank. To check, take the
+$1{,}482 \times 6{,}169$ matrix of $\log_2$ ratios, compute its best rank-$r$ approximation
+by truncated SVD, and score that approximation with the same
+\file{pearson_per_feature}. This is an upper bound rather than a model: it is fit on the
+matrix it is scored on, so no held-out claim is being made. The question it answers is
+narrow and useful, whether $r$ numbers per strain are enough to describe the data at all.
+
+They are. A rank-32 reconstruction reaches $0.7265$ and rank-64 reaches $0.7799$, both near
+the $0.775$ reproducibility ceiling, against a best model score of $0.238$. \textbf{So a
+rank-64 pair term has enough expressive room by a wide margin}, and if such an arm comes back
+null, the null is about the mechanism or the optimization rather than about the rank being
+too small to matter.
 \src{experiments/019-simb-multimodal/results/lowrank_output_ceiling.json}
 
 \notesec{Masked unmasking does not supply the pair term, and this is provable rather than
@@ -228,11 +311,23 @@ arguable} The scGPT-style scheme conditions gene $i$'s token on the measured val
 other genes in the same strain:
 $$h^{\text{obs}}_{b,i} = h^{\text{pert}}_{b,i}
   + g_{\text{obs}}\cdot\mathrm{MLP}\big(\big[\,y_{b,i}\,m_{b,i},\; m_{b,i}\,\big]\big),$$
-where $m_{b,i}$ marks gene $i$ as revealed. At $k = 0$ the revealed set is empty, every
-encoded feature is exactly zero, and the forward pass is \textbf{identical} to the
-unconditioned model. Scoring happens at $k = 0$. So the added term contributes nothing at
-the point the number is taken, and it cannot create a dependence on the pair (deleted gene,
-reporter gene) no matter how well the unmasking is trained.
+where $m_{b,i}$ marks gene $i$ as revealed. At $k = 0$ nothing is revealed, so every
+$m_{b,i}$ is zero and both arguments to the MLP are zero \emph{as inputs}: the measured
+values $y_{b,i}$ are of course not zero, but they are multiplied by the reveal mask before
+they enter, so the branch that reads them is switched off rather than the data being absent.
+The forward pass is then \textbf{identical} to the unconditioned model. Scoring happens at
+$k = 0$. So the added term contributes nothing at the point the number is taken, and it
+cannot create a dependence on the pair (deleted gene, reporter gene) no matter how well the
+unmasking is trained.
+
+\notesec{Which suggests scoring at $k > 0$, and that is a real option with a caveat} If the
+conditioning branch is worth having, the natural response is to score where it is switched
+on. That changes the task: at $k > 0$ the model is doing imputation given some measured
+genes, which \cref{sec:oracle} shows is a far stronger and largely orthogonal capability, and
+it is no longer a genotype-to-expression number comparable to anything else in this
+document. \textbf{Worth reporting as a second, clearly-labeled metric} rather than as a
+replacement, and the gene-budget curve is the right way to report it, since it says what the
+capability costs to use.
 
 The two are different axes and the round conflated them:
 
@@ -260,6 +355,54 @@ the masked objective for $40\,\%$ of the compute, which is the cheapest existing
 that the pair axis is worth the next round.
 
 \subsection{The largest signal in the strand is imputation, and it is orthogonal\secstatus{todo}}
+\label{sec:oracle}
+
+\notesec{What the oracle is, step by step, since it is quoted throughout} It is a Gaussian
+conditional mean with a ridge loading, fit once and then applied. Nothing in it is learned
+by gradient descent and no network is involved.
+
+\begin{enumerate}
+\item Build $Y$, the $1{,}482 \times 6{,}169$ matrix of $\log_2$ ratios, and split it by
+  \emph{strain} into 1,172 train, 155 tune and 155 validation.
+\item Form residuals $R = Y - \mu$, where $\mu$ is each gene's mean over the training
+  strains only.
+\item Estimate the gene-gene covariance $\Sigma$ on the training strains only.
+\item For a held-out strain, choose a set $M$ of $m$ genes and \textbf{reveal their measured
+  values}. Predict the remaining $U = 6{,}169 - m$ genes as
+  $\mathbb{E}[R_U \mid R_M] = \Sigma_{UM}(\Sigma_{MM} + \lambda I)^{-1} R_M$.
+\item The ridge term $\lambda I$ is what makes $\Sigma_{MM}$ invertible once $m$ approaches
+  the number of training strains, and this is the only sense in which the estimator is a
+  ``ridge''. $\lambda$ is picked on the 155 \emph{tune} strains and then applied unchanged,
+  so the bound cannot be inflated by tuning on the strains it is scored on.
+\item Score the unrevealed genes with the same \file{pearson_per_feature} used everywhere
+  else.
+\end{enumerate}
+
+At $m = 0$ nothing is revealed, the prediction is the per-gene mean, and the score is
+exactly $0$ by construction. \textbf{That is why the oracle is not a rival model: the model
+is scored at $m = 0$, where the oracle has nothing.} The oracle exists to measure how much
+information sits in one strain's other genes.
+\src{experiments/019-simb-multimodal/scripts/masked\_conditioning\_oracle.py}
+
+\tcfigfit{figures/imputation_oracle_and_knn_probe.pdf}{(a) Within-study imputation against
+the number of revealed genes $m$, for three ways of choosing which genes to reveal, against
+the $0.775$ replicate ceiling. (b) The same across studies, observing Kemmeren and predicting
+Sameith, where the relevant ceiling is not 1 but the $0.611$ agreement between the two
+studies' own measurements of the same 82 deletions; the annotations mark that 10 revealed
+genes reach $46\,\%$ and 100 reach $77\,\%$ of the $m = 1000$ value. Note that a
+variance-chosen set beats a random one at the cheap end and loses at $m \ge 500$, while the
+theoretically tidier QR-leverage rule is below random almost everywhere. (c) The conditioning
+gain before and after replacing the per-gene mean with a genotype predictor: $97.5$ to
+$100.6\,\%$ of it survives, so the two channels are nearly non-overlapping. (d) The kNN
+embedding probe, a parameter-free readout that predicts a held-out deletion's phenotype as a
+similarity-weighted average of the nearest \emph{other} deleted genes' phenotypes, against
+the noise floor set by random embeddings of matched dimension. One-hot is undefined rather
+than poor: with orthogonal encodings every cosine similarity is zero and there is no
+neighbor to average. \textbf{Provenance caveat}: the two dashed ``swept CGT'' reference lines
+in (d) and the genotype-only reference in (a) are constants recorded in the plotting script
+and the working notes rather than values re-derived from a committed result file, so treat
+them as approximate orientation marks rather than as scored
+numbers.}{fig:oracle-knn}
 
 A ridge oracle that observes $m$ randomly chosen genes of a held-out strain and predicts
 the rest reaches far past anything the model does.
@@ -280,26 +423,133 @@ $m$ observed & within-Kemmeren & within-Sameith & Kem $\to$ Sam & Sam $\to$ Kem 
 \caption[]{Masked-conditioning oracle, \file{pearson_per_feature} on validation
 strains. The within-study value at $m = 1000$ exceeds the $0.775$ reproducibility ceiling,
 which the cross-study column resolves: same-array conditioning was predicting the target's
-own measurement noise.}
+own measurement noise. The honest ceiling for the cross-study columns is not 1 either; it is
+$0.611$, the agreement between the two studies' own measurements of the same 82 deletions.}
 \label{tab:oracle}
 \end{table}
 
-The gain is not a better genotype-to-expression map. Removing a genotype predictor, a
-$k$-nearest-neighbor model on \file{prot_T5_all} with $k = 25$, leaves $97.5$ to
-$100.6\,\%$ of the conditioning gain intact, so the channel the objective optimizes is
-switched off at $m = 0$, which is where the strand is scored.
+\notesec{The low end is already strong, which is easy to miss at this resolution} The
+$m = 10$ column deserves attention on its own: knowing ten measured genes of a held-out
+strain predicts the remaining 6,159 at $r = 0.4562$ within study and $0.2335$ across studies,
+which is roughly double the trained model's genotype-only score from ten numbers and no
+training. That is a striking amount of information for a very small measurement.
+
+\notesec{And $m = 1000$ is not the operating point} Measuring 1,000 transcripts to predict
+the rest is an expensive capability, and quoting the oracle at $m = 1000$ makes it sound like
+the requirement. It is not. Filling in the low end densely shows the curve is steep exactly
+where it is cheap.
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: experiments/019-simb-multimodal/results/conditioning_gene_budget.json
+\begin{tabular}{rrrrr}
+\toprule
+$m$ revealed & within-study & \% of its $m{=}1000$ & Kem $\to$ Sam & \% of its $m{=}1000$ \\
+\midrule
+1    & 0.1293 & 16\,\% & 0.0825 & 17\,\% \\
+2    & 0.2747 & 34\,\% & 0.1377 & 29\,\% \\
+5    & 0.3191 & 40\,\% & 0.1460 & 30\,\% \\
+10   & 0.4201 & 53\,\% & 0.2229 & 46\,\% \\
+20   & 0.5135 & 64\,\% & 0.2684 & 56\,\% \\
+50   & 0.6221 & 78\,\% & 0.3353 & 70\,\% \\
+\textbf{100}  & \textbf{0.6869} & \textbf{86\,\%} & \textbf{0.3668} & \textbf{77\,\%} \\
+200  & 0.7360 & 92\,\% & 0.4124 & 86\,\% \\
+500  & 0.7812 & 98\,\% & 0.4567 & 95\,\% \\
+1000 & 0.7977 & 100\,\% & 0.4793 & 100\,\% \\
+\bottomrule
+\end{tabular}
+\caption[]{Imputation against measurement budget, genes revealed at random.
+\textbf{One hundred genes reach $77\,\%$ of what a thousand genes reach across studies}, and
+ten genes reach $46\,\%$. The cross-study column is the one to read, since the within-study
+column is partly predicting the target array's own noise; against the $0.611$ cross-study
+agreement ceiling, $m = 100$ recovers $60\,\%$. The random arm reproduces both previously
+published runs on a different split, which is the check that this is the same estimator.}
+\label{tab:gene-budget}
+\end{table}
+
+\notesec{And which genes are revealed matters, at the cheap end and across studies} Two
+non-random selection rules were fit on training residuals only. Choosing the genes with the
+highest across-strain residual variance beats a random set on the cross-study arm by
+$+0.046$ at $m = 10$ and $+0.026$ at $m = 100$, which is 6.3 and 3.1 times the random arm's
+standard error over five draws. It loses at $m \ge 500$, where the budget is large enough
+that a random set spans the same structure. A column-pivoted QR leverage rule, the
+theoretically tidier choice, is \emph{below} random almost everywhere and much worse below
+$m = 20$.
+
+A variance-chosen set also transfers better: $0.76$ of its within-study score survives the
+study swap at $m = 10$, against $0.49$ for a random set. \textbf{Hypothesis, untested:}
+high-variance genes carry more biological amplitude relative to per-array technical
+amplitude. Nothing measured here tests that mechanism.
+
+Two comparison caveats travel with this. The two chosen rules are deterministic, so each is
+one set with no across-set spread, and the standard error quoted is the random arm's alone;
+this is not a paired test. And \textbf{selection by ease of measurement was not run}: no
+measurement-cost annotation exists in the repo, so any such ranking would have been invented
+rather than sourced. That is the version worth building, since it is the one that decides
+whether a fixed cheap panel could stand in for the transcriptome.
+\src{experiments/019-simb-multimodal/scripts/conditioning\_gene\_budget.py}
+
+\notesec{The gain is not a better genotype-to-expression map, which is what makes it a
+separate capability rather than a rival result} Replace the per-gene mean with a genuine
+genotype-only predictor, a $k$-nearest-neighbor model over \file{prot_T5_all} embeddings
+with $k = 25$, and re-run the whole oracle against \emph{its} residuals. If the conditioning
+gain were mostly the model failing to learn genotype, a good genotype predictor would absorb
+it and the gain would shrink. It does not shrink: $97.5$, $99.2$ and $100.6\,\%$ of it
+survives at $m = 10, 100, 1000$.
+
+So the two channels are close to non-overlapping. Knowing which gene was deleted and knowing
+some of this strain's other measured genes are almost separate sources of information about
+the rest, and the strand is scored where only the first is available.
 \src{experiments/019-simb-multimodal/results/conditioning_gain_after_genotype.json}
 
-\tcfigfit{figures/residual_covariance_diagnostic.pdf}{Residual gene-gene structure in the
-expression compendium after removing each gene's mean. The pattern replicates on held-out
-strains and lives in about 33 effective components, which is what a per-gene independent
-readout discards.}{fig:residual-cov}
+\notesec{The kNN probe, and why it belongs beside the oracle} The same question asked on the
+genotype side alone: predict a held-out deletion's phenotype as a similarity-weighted average
+of the phenotypes of the nearest \emph{other} deleted genes in some embedding space, with
+zero learned parameters. Best arms reach \file{pearson_per_feature} of $0.117$ on expression
+and $0.070$ on morphology with prot\_T5, against a noise floor of $0.033$ and $0.036$ set by
+random embeddings of matched dimension. On morphology the best arm is not a language model
+at all: \file{normalized_chrom_pathways}, a graph-derived 197-dimensional feature, reaches
+$0.100$. Every nucleotide-transformer arm sits at or below the floor.
 
-What makes the oracle worth keeping is the structure it exploits. After removing each
+Read against a trained model at $0.238$ on expression, a parameter-free neighbor average
+recovering $0.117$ says half the genotype-side signal the model finds is available from
+embedding proximity alone. \textbf{That is a statement about how little the training is
+adding on this axis}, and it is the second reason, beside the pair-term degeneracy, to
+suspect the operator rather than the data.
+\src{experiments/019-simb-multimodal/results/knn_embedding_probe.json}
+
+\tcfigfit{figures/residual_covariance_diagnostic.pdf}{Residual gene-gene structure in the
+expression compendium, after removing each gene's mean and a kNN conditional mean. (a) the
+residual matrix itself, a subsample of strains and reporters. (b) the load-bearing check: the
+gene-gene correlation pattern measured on one half of the strains against the same pattern
+measured on strains it never saw, agreeing at $r = 0.869$ where the permutation floor is
+$0.0001$. So the structure is real and it generalizes across strains. (c) how much of it
+survives being fit on one half and scored on the other; the held-out curve is the honest one
+and it flattens near rank 32, which is why the covariance factor is set there. (d) whether
+that structure depends on \emph{which} gene was deleted: splitting strains by deleted-gene
+similarity instead of at random changes the agreement by $-0.014$, which is $1.7$ standard
+deviations of the random-split spread, so one global covariance is close to sufficient and
+a perturbation-conditional one has little left to buy. (e) how the null in (d) is
+constructed, by permuting each gene column independently so every per-gene property is held
+fixed and only the cross-gene pairing is destroyed.}{fig:residual-cov}
+
+\notesec{What the oracle exploits, and why a per-gene readout cannot} After removing each
 gene's mean, the residual gene-gene correlation pattern replicates on held-out strains at
-split-half $r = 0.8687$ against a permutation null of $8.45\times10^{-5}$, and it has an
-effective rank of $32.78$, with $59.1\,\%$ of variance inside the top 32 components. A
-per-gene independent readout emits 6,127 marginals and discards all of it.
+split-half $r = 0.8687$ against a permutation null of $8.45 \times 10^{-5}$, with an
+effective rank of $32.78$ and $59.1\,\%$ of variance inside the top 32 components.
+
+That is the whole reason the oracle works. Genes do not move independently: about 33
+directions of coordinated variation run through the residuals, so once you have measured a
+handful of genes in a strain you have located that strain along those directions, and the
+rest follow. \textbf{A per-gene independent readout emits 6,169 separate marginals and
+discards every bit of it}, which is the structural difference between the model and the
+oracle and the reason the gap between them is not a matter of training harder.
+
+The conditional test in \cref{fig:residual-cov}d adds the caveat that this structure is
+largely \emph{global} rather than perturbation-specific, at $1.7$ standard deviations, just
+inside the threshold the script uses to call it unconditional. So a shared covariance is the
+right model for it, and making the covariance depend on the deletion is not where the
+headroom is.
 \src{experiments/019-simb-multimodal/results/residual_covariance_diagnostic.json}
 
 \subsection{Why the byte count is misleading\secstatus{todo}}
@@ -341,12 +591,23 @@ readouts of a single perturbation event, correlated with each other at the level
 residual covariance above measures, so they are worth far less than 6,169 independent
 constraints on the deletion.
 
-\notesec{Established} The expression strand sits at $0.238$ against a ceiling of $0.775$.
-The round produced no valid comparison between mechanisms, because every arm was scored
-before saturation. It produced three things that hold: the additive operator provably
-cannot express a pair term; loss and metric diverge on this target and not on 010; and the
-one large available signal is imputation from other genes of the same strain, measured to
-be orthogonal to the genotype-only task.
+\begin{keybox}
+\textbf{Expression is under-trained, structurally limited on the pair axis, and sitting
+beside a much larger capability it is not being scored on.} It reaches $0.238$ against a
+$0.775$ ceiling, and no run has ever peaked, at any budget up to 10,000 epochs, so that is a
+lower bound set by compute rather than an estimate. The round produced no valid comparison
+between mechanisms, since all 67 scored arms stopped at or below 300 epochs against a curve
+that had not turned. Three things do hold. The additive perturbation operator
+\emph{provably} cannot express a dependence on the pair (deleted gene, reporter gene), and
+masked unmasking does not supply one where the score is taken. Loss and metric diverge here
+and on 010, in opposite directions, so no single stopping rule is right for both. And the
+largest available signal is imputation from other genes of the same strain, which is
+measured to be nearly orthogonal to the genotype task and is a separate capability rather
+than a better version of this one.
+\end{keybox}
 
-\notesec{Cannot say} Whether any of the pair-rank mechanisms help. Whether the graph prior
-is the right prior for this task. Whether a different objective closes the loss-metric gap.
+\notesec{Cannot say} Whether any of the pair-rank mechanisms help, since only two rungs have
+been trained and not at matched budgets. Whether a different objective closes the
+loss-metric gap. Whether the graph prior is the right prior for this task
+(\cref{sec:graph-probe} measures the premise, not the model's use of it). And where the
+validation curve turns, which is the number every arm budget depends on.

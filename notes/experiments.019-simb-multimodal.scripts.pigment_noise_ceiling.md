@@ -85,3 +85,24 @@ tyrosine-betaxanthin relationship is weak and not distinguished from its 18 sibl
 does not refute the transfer hypothesis - a marginal correlation is not a conditional one,
 and a multitask model can exploit structure a scalar correlation misses - but it is the
 honest prior, recorded before the runs rather than after.
+
+## 2026.08.30 - Split into one figure per pigment
+
+Round-2 review comment [83]: the combined figure carried a betaxanthin panel while sitting
+in the beta-carotene section, so a reader met a target that section is not about. The
+script now writes three figures instead of one. The combined figure is unchanged in
+content and keeps its name, so nothing that references it breaks; the two new ones can be
+placed in the sections that argue from them. All three carry 8 pt bold lowercase panel
+letters at the top left, drawn with `torchcell.utils.panel_label`.
+
+Betaxanthin reliability, one panel, `betaxanthin_noise_ceiling`:
+
+![](./assets/images/019-simb-multimodal/betaxanthin_noise_ceiling.svg)
+
+Beta-carotene reliability, two panels, `beta_carotene_noise_ceiling`. Panel a is the
+primary ceiling (replicate max vs min, unrestricted strains). Panel b is the independent
+re-screen, and the shaded band is the middle 90 % of its 1st-screen scores, which is what
+makes the range restriction behind the low raw value visible rather than asserted: those
+strains carry sd 0.89 against 1.47 over the full screen.
+
+![](./assets/images/019-simb-multimodal/beta_carotene_noise_ceiling.svg)

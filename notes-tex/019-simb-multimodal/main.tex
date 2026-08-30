@@ -32,21 +32,37 @@
 \noindent
 Six phenotype strands were run against one shared cell embedding: knockout expression,
 morphology, the two jointly, betaxanthin production, free amino-acid pools, and
-beta-carotene production. Two of them were presented at SIMB 2026. This is the record of
-what each measured, against what ceiling, and with what scoring rule, read from all 28
-W\&B projects and 2,187 runs rather than from a selection. Most strands sit further from
-their ceilings than the manuscript's placeholder text assumes. Three findings drive the
-next campaign. The expression objective is fighting itself: the quantile loss reaches its
-minimum at epoch 463 and rises for the next 9,500 while Pearson climbs, squared error
-bottoms alongside the Pearson peak instead, and the model never gets normalized squared
-error below ``predict each gene's mean'' because its predictions are twice as spread out as
-its own correlation justifies, which a free post-hoc rescale fixes. Morphology has never
-been trained on more than a quarter of its screen, in any of 397 runs across eight
-projects, and its ceiling is measured here for the first time at $0.611$. And the free
-amino-acid profile of a deletion predicts that deletion's betaxanthin at an out-of-fold
-$r$ of $0.298$ while tyrosine, the chromophore precursor, predicts it at $0.064$, so the
-coupling is real and is not the precursor axis. The closing sections rank what to run next
-and size the expression-and-morphology campaign in GPU-days.
+beta-carotene production. Two were presented at SIMB 2026. Here is what each measured,
+against what ceiling, under what scoring rule, read from all 28 W\&B projects and 2,187
+runs rather than from a selection.
+
+Every strand sits further from its ceiling than the manuscript's placeholder text assumes,
+and the reason differs by strand. \textbf{Expression} is under-trained rather than
+saturated: no run has peaked at any budget up to 10,000 epochs, and the score tracks the
+epoch budget across a factor of 500 in budget. Its training loss and its metric come apart,
+and the culprit is specifically the \emph{quantile} loss, which bottoms at epoch 463 and
+rises for the next 9,500 while Pearson climbs; squared error does not diverge, bottoming
+alongside the Pearson peak. Separately, the model orders genes at $r \approx 0.24$ while
+sitting level with ``predict each gene's mean'' in squared error, because its predictions are
+$1.8\times$ more spread out than that correlation justifies; one free rescale takes it
+clearly past the mean predictor without changing any correlation.
+\textbf{Morphology} has never been trained on more than a quarter of its screen, in any of
+397 runs across eight projects, and its ceiling is measured here for the first time at
+$0.611$. \textbf{Betaxanthin} is the strongest strand, at $47\,\%$ of a $0.914$ ceiling, and
+its argument is coverage rather than accuracy: a flux-based method has features for
+$19\,\%$ of the screen and misses $73\,\%$ of its high producers. The \textbf{free
+amino-acid} profile of a deletion predicts that deletion's betaxanthin at out-of-fold
+$r = 0.298$ while tyrosine, the chromophore precursor, predicts it at $0.064$, so a real
+coupling exists on an axis that is not the precursor, and a plain auxiliary head does not
+use it. \textbf{Beta-carotene} is limited by its measurement, a hand-scored ordinal with one
+replicate per strain. And the \textbf{graph prior}, reported at chance in the previous
+revision, is not: asked the question that is defined for every phenotype rather than for
+expression alone, adjacency reaches AUC $0.66$ against a $0.50$ control, and which graph
+carries signal differs by phenotype.
+
+The campaign that follows is expression first, single-phenotype and at full budget, because
+it is the strand where the next experiment is cheapest to interpret and the diagnosis is
+furthest along. Morphology at full scale is deferred rather than dropped.
 \end{abstract}
 
 \vspace{0.5em}
@@ -59,9 +75,11 @@ share, which is where the leverage is. \cref{sec:directions} ranks the options, 
 \cref{sec:campaign} sizes the next campaign. \textbf{Going straight to the campaign:}
 \cref{sec:objective}, \cref{tab:morph-ntrain} and \cref{sec:campaign}.\par\smallskip
 
-Revision 2 answers twelve review comments on revision 1. The ledger is\\
-\file{notes-tex/019-simb-multimodal/review/round-1-dispositions.md}. Two claims in revision
-1 were wrong and are corrected in place, both in \cref{sec:objective}.\par\smallskip
+Revision 3 answers 127 review comments on revision 2, comment by comment. The ledgers are\\
+\file{notes-tex/019-simb-multimodal/review/round-2-dispositions.md} (this round) and\\
+\file{notes-tex/019-simb-multimodal/review/round-1-dispositions.md} (the previous one).
+Claims that revision 2 got wrong are corrected in place and named in the ledger, not
+argued away.\par\smallskip
 
 Working notes: \file{notes/experiments.019-simb-multimodal.*.md},
 \file{notes/experiments.020-cachera-betaxanthin.*.md}\par

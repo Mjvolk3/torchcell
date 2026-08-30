@@ -5,6 +5,7 @@ from .file_lock import FileLockHelper
 from .paths import asset_images_dir, experiment_results_dir, experiment_root, repo_root
 from .utils import (
     MAX_HEIGHT_MM,
+    PANEL_LABEL_PT,
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
     PLOT_PALETTE_FILL,
@@ -13,6 +14,7 @@ from .utils import (
     display_label,
     format_scientific_notation,
     mm_to_in,
+    panel_label,
     savefig_true_size_svg,
 )
 
@@ -27,6 +29,8 @@ __all__ = [
     "mm_to_in",
     "PANEL_WIDTHS_MM",
     "MAX_HEIGHT_MM",
+    "PANEL_LABEL_PT",
+    "panel_label",
     "PLOT_PALETTE",
     "PLOT_PALETTE_NAMES",
     "PLOT_PALETTE_FILL",

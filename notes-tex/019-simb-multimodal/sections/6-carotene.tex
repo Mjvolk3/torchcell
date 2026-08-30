@@ -25,8 +25,8 @@ Two estimates exist, and they disagree by a factor of seven.
 estimate & basis & $n$ & Spearman \\
 \midrule
 replicate max against min & 130 replicated rows & 130 & \textbf{0.544} \\
-independent re-screen & \texttt{2ndRoundOfTransformations} sheet & 119 & 0.075 \\
-\quad range-restriction corrected & Thorndike case 2, Pearson & 119 & 0.105 \\
+independent re-screen & \file{2ndRoundOfTransformations} sheet & 119 & 0.075 \\
+\quad range-restriction corrected & Thorndike case 2 & 119 & 0.105 \\
 \bottomrule
 \end{tabular}
 \caption[]{Reliability of the beta-carotene score. Neither estimate is clean. The
@@ -37,31 +37,69 @@ hits, so its 1st-screen scores sit almost entirely in $3\ldots5$ of a $-5\ldots+
 \label{tab:carotene-ceiling}
 \end{table}
 
-The reported ceiling is $0.544$, from the replicate comparison. Read the $0.075$ as what a
-re-screen of selected winners looks like under range restriction, not as evidence that the
-score is worthless.
+\notesec{Why the $0.075$ is not evidence that the score is worthless} The re-screen is the
+better \emph{design} of the two, a genuine independent test-retest rather than two draws
+from one replicate set. But it was run only on \textbf{selected top hits}, so its first-round
+scores sit almost entirely in $3 \ldots 5$ of a $-5 \ldots +5$ scale, with a standard
+deviation of $0.89$ against $1.47$ over the full screen (\cref{fig:carotene-ceiling}b).
 
-\tcfigfit{figures/pigment_noise_ceiling.pdf}{Reliability of both pigment targets. The
-betaxanthin panel uses the per-record standard error over a median of 15 colonies; the
-beta-carotene panels use rank agreement, because the target is a hand-scored
-ordinal.}{fig:pigment-ceiling}
+A correlation computed on a narrowed slice of a population is attenuated by the narrowing
+alone, independently of how good the measurement is. The intuition: if every strain
+re-screened is already known to be a high producer, the only variation left to correlate is
+the variation \emph{among} high producers, which is small and mostly noise. Thorndike's case
+2 formula corrects for exactly this, given the restricted and unrestricted standard
+deviations, and it takes the $0.075$ to $0.105$. That is still low, but it is a correction
+for one restriction, and the sampling is selected on more than range alone.
+
+The reported ceiling is therefore $0.544$, from the replicate comparison, with the caveat
+that neither estimate is clean and they disagree by a factor of five even after correction.
+
+\tcfigfit{figures/beta_carotene_noise_ceiling.pdf}{Reliability of the beta-carotene score,
+which is rank agreement rather than a Pearson because the target is a hand-scored ordinal.
+(a) The primary estimate, comparing the maximum against the minimum score among the 130
+strains with more than one replicate, over unrestricted strains: Spearman $0.544$. (b) The
+independent re-screen, which is a genuine test-retest but was run only on selected top hits;
+the shaded band marks the middle $90\,\%$ of its first-screen scores, which spans a standard
+deviation of $0.89$ against $1.47$ over the full screen. That narrowing is the range
+restriction responsible for its raw $0.075$, and it is visible here rather than
+asserted.}{fig:carotene-ceiling}
 
 \subsection{What was measured\secstatus{todo}}
 
-Thirty-nine runs in \file{torchcell_021_beta_carotene_v4}, spanning 134 to 999
-epochs. The best validation \file{spearman_per_feature} is $\mathbf{0.118}$, run
-\texttt{o0aadmot}, peaking at epoch 799 of 999. Median across live runs is $0.072$. Against
-the $0.544$ ceiling that is $24\,\%$ realized.
+The strand is 136 runs across three projects. The best validation
+\file{spearman_per_feature} is $\mathbf{0.1371}$, run \texttt{5cjpn6zj} in
+\file{beta_carotene_v3}, peaking at \textbf{epoch 9 of 49}. The median over all 136 is
+$0.0513$. Against the $0.544$ ceiling that is $25\,\%$ realized.
 
-\notesec{Established} Beta-carotene is the weakest pigment target and the reason is
-visible in the measurement rather than in the model: a hand-scored ordinal with one
-replicate per strain has a reliability that no architecture recovers. The strand does carry
-signal, at $0.118$ against a chance level of zero, and its best run peaks late (epoch 791 of
-999), so it shares the expression strand's under-training rather than the metabolite
-strands' early overfitting.
+\notesec{Correction, and it is a correction to the method rather than to a judgment call}
+Revision 2 reported the best as $0.118$ from run \texttt{o0aadmot} peaking at epoch 799 of
+999. That run is only the \emph{third} best in the strand. The leaderboard had fetched
+validation curves for a candidate subset of each project, chosen as the top runs by final
+logged value and by epoch count, and \texttt{5cjpn6zj} peaks at epoch 9, so it ranks low on
+\emph{both} keys at once and was invisible to the rule. \textbf{This is a structural blind
+spot, not bad luck}: a run that peaks very early and then decays is exactly what the
+candidate rule cannot see, and it falsifies the previous assumption that incomplete run
+coverage risked only medians and never maxima (\cref{sec:coverage}).
+
+\begin{keybox}
+\textbf{Beta-carotene is limited by its measurement, not by the model.} A hand-scored
+ordinal with one replicate per strain has a reliability no architecture recovers, and the
+$0.1371$ best \file{spearman_per_feature} sits at $25\,\%$ of a $0.544$ ceiling that is
+itself uncertain by a factor of five. The strand carries real signal and is worth keeping
+for the coverage argument in \cref{sec:betaxanthin}, where the claim is about which genes a
+flux model can represent and does not depend on the absolute score.
+\end{keybox}
+
+\notesec{Correction to revision 2 on convergence, which the coverage fix reverses} Revision 2
+said the best run ``peaks late (epoch 791 of 999), so it shares the expression strand's
+under-training rather than the metabolite strands' early overfitting''. With the true best
+run in hand, the opposite is the case: it peaks at \textbf{epoch 9 of 49} and decays. So
+beta-carotene groups with the \emph{metabolite} strands, which peak early and then overfit,
+not with expression. That is also what makes it a low-value target for more compute: extra
+epochs are not what it is short of.
 
 \notesec{Cannot say} Which of the two ceiling estimates is right, and therefore whether
-$0.118$ is a quarter of achievable or most of it. That gap is resolvable only with a
+$0.1371$ is a quarter of achievable or most of it. That gap is resolvable only with a
 replicate design the source data does not contain.
 
 \notesec{Recommendation} Keep beta-carotene as a second production target for the coverage

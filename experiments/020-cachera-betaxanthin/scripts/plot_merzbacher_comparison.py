@@ -56,6 +56,7 @@ from torchcell.utils import (
     PLOT_PALETTE,
     PLOT_PALETTE_FILL,
     mm_to_in,
+    panel_label,
     savefig_true_size_svg,
 )
 
@@ -152,6 +153,16 @@ STATS: dict[str, Any] = {}
 #: the grid (val 0.2158, top-50 precision 0.100). The panels rendered fine and understated our
 #: side by a wide margin, which is the failure mode a default should never have.
 FOCUS_SETTING = "s09_L6_maskon_lr0.0001_yj"
+
+#: THE FILENAME STAMP IS PINNED, and it is not the render time. Every figure here is
+#: written as `<name>_<stamp>.{png,svg}` and `notes-tex/019-simb-multimodal/` references
+#: those exact filenames, both in its `\tcfigfit` calls and through the Makefile rule that
+#: converts `<name>_<stamp>.svg` into `figures/<name>_<stamp>.pdf`. A fresh `timestamp()`
+#: on every run therefore wrote a NEW set of files that the document never saw, and left
+#: the referenced ones stale, silently. Re-rendering now OVERWRITES the referenced files.
+#: The actual render time is recorded in the results JSON instead, where a re-render shows
+#: up as a `git diff` rather than as a new orphan filename.
+FIGURE_STAMP = "2026-08-02-23-43-08"
 
 
 def style() -> None:
@@ -313,7 +324,8 @@ def load_their_gene_scores() -> dict[str, dict[str, Any]]:
 
 def main() -> None:
     style()
-    ts = timestamp()
+    ts = FIGURE_STAMP
+    rendered_at = timestamp()
     with open(SPLIT_PATH) as fh:
         split = json.load(fh)
     with open(BASELINE_PATH) as fh:
@@ -375,7 +387,10 @@ def main() -> None:
     print(f"  their published RF acc {published:.4f}; re-derived {recomputed:.4f} OK")
     STATS["provenance"] = {
         "note": "[[experiments.020-cachera-betaxanthin.merzbacher-comparison]]",
-        "timestamp": ts,
+        # `figure_stamp` is the pinned filename suffix the document references;
+        # `rendered_at` is when these numbers were actually computed.
+        "figure_stamp": ts,
+        "rendered_at": rendered_at,
         "n_cgt_cells": len(dumps),
         "cgt_cells": sorted(ours),
         "cgt_val_selected_cell": best,
@@ -893,6 +908,8 @@ def fig_scatter(
         title="released class label (FCL paper)",
         title_fontsize=4.5,
     )
+    for ax, letter in zip(axes, "abc"):
+        panel_label(ax, letter)
     # tight_layout FIRST (it computes label extents), then widen the gutters and reserve the
     # caption strip -- doing it in the other order lets tight_layout overwrite both, which is
     # how the x-labels got clipped off the bottom.
@@ -903,7 +920,7 @@ def fig_scatter(
         0.020,
         "shaded band = middle 80% (10th-90th percentile) of the y-axis model's own output; a "
         "narrow band means the model returns nearly the same value for every gene.\n"
-        "Panel 3 quadrants are cut at each model's rank-matched high threshold; counts are "
+        "Panel c quadrants are cut at each model's rank-matched high threshold; counts are "
         "TRUE HIGH producers (blue) with the quadrant's all-gene total in parentheses. Rings "
         "= the 49 of 100 true highs found by at least one method (FCL 29, CGT 29, shared 9).\n"
         "Color is the FCL paper's RELEASED class label; x is our copy of the Cachera screen. "
@@ -982,62 +999,117 @@ def _precision_at_k(score: np.ndarray, is_high: np.ndarray, kmax: int) -> np.nda
     return hits / np.arange(1, kmax + 1)
 
 
+def short_cell(name: str) -> str:
+    """`s09_L6_maskon_lr0.0001_yj` -> `s09 L6 mask-on 1e-4 yj`, for a legend that fits.
+
+    The grid tag is the only handle a reader has on an individual curve, so it has to be
+    IN the figure rather than in a caption -- but at full length ten of them will not fit
+    in a legend at 4.5 pt. Nothing is dropped, only re-spelled.
+    """
+    m = re.match(r"^(s\d+)_(L\d+)_(maskon|maskoff)_lr([\d.eE+-]+)_(\w+)$", name)
+    if m is None:
+        return name
+    cell, layers, mask, lr, target = m.groups()
+    return (
+        f"{cell} {layers} {'mask-on' if mask == 'maskon' else 'mask-off'} "
+        f"lr {float(lr):.0e} {target}"
+    )
+
+
+def _base_rate_line(
+    ax: plt.Axes, base: float, n_high: int, n_all: int, verbose: bool = True
+) -> None:
+    """The reference every precision@k curve is read against, drawn and NAMED.
+
+    It is the fraction of the scored genes that are true high producers, i.e. what
+    precision@k a random nomination of k genes returns in expectation. Curves BELOW it are
+    doing worse than picking at random, which is the question the reviewer asked of the
+    unselected cells, and an unlabeled dashed line cannot answer it.
+
+    The label carries an opaque white patch: in the panel that draws ten curves it has to
+    cross several of them, and a legible label over a curve beats a legible curve under an
+    illegible label.
+    """
+    ax.axhline(base, ls="--", lw=0.8, color=TRUTH_C, zorder=6)
+    text = (
+        f"base rate {base:.3f} = {n_high} true high producers of {n_all} genes; "
+        "a random pick of k lands here"
+        if verbose
+        else f"base rate {base:.3f}"
+    )
+    ax.text(
+        0.99,
+        base + 0.015,
+        text,
+        transform=mpl.transforms.blended_transform_factory(ax.transAxes, ax.transData),
+        ha="right",
+        va="bottom",
+        fontsize=4.5,
+        color=TRUTH_C,
+        zorder=7,
+        bbox={"facecolor": "white", "edgecolor": "none", "pad": 0.8},
+    )
+
+
 def fig_topk(ours: dict, rf_sc: np.ndarray, t: np.ndarray, best: str, ts: str) -> None:
     """Precision@k for high producers -- the decision-relevant, binning-free comparison.
 
     Every other comparison here has to choose a binning; this one does not. It answers the
     question a strain-design campaign actually asks: "if I take the k genes the model likes
-    most, what fraction are genuinely high producers?" The random baseline is the class rate.
+    most, what fraction are genuinely high producers?"
 
-    ALL TEN CGT CELLS ARE DRAWN, faintly, behind the val-selected one. A single curve would
-    hide that the grid spans a wide band and would invite reading the selected cell as "the"
-    CGT result rather than one draw from it.
+    TWO PANELS, because one panel was being asked to do two jobs and did neither.
+
+    (a) is the comparison: FCL's RF, the validation-selected CGT cell, and the base rate.
+    The nine unselected cells appear as a shaded ENVELOPE rather than as nine thin lines of
+    the same color as the selected one -- the previous drawing made the selected cell
+    indistinguishable from the spread it was supposed to stand out from, and invited
+    reading any dip in the spaghetti as a property of "CGT".
+
+    (b) is the spread, drawn so an individual curve can be NAMED. Every cell gets its own
+    color and its own legend row carrying its precision at k = 50, so a curve that dives
+    below the base rate can be identified rather than wondered about. Two facts the panel
+    is built to make readable: precision at small k is quantized in steps of 1/k, so at
+    k = 10 one gene moves a curve by 0.1 and crossings there mean very little; and the
+    cells genuinely differ, spanning 0.10 to 0.58 at k = 50 against the base rate of 0.157.
     """
     is_high = (t == 2).astype(float)
     kmax = 200
     ks = np.arange(1, kmax + 1)
-    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(58)))
-    for name, d in sorted(ours.items()):
-        if name == best:
-            continue
-        ax.plot(
-            ks,
-            _precision_at_k(d["raw"], is_high, kmax),
-            lw=0.5,
-            color=CGT_C,
-            alpha=0.30,
-            zorder=2,
-        )
+    n_all, k_hi = len(is_high), int(is_high.sum())
+    base = float(is_high.mean())
+    curves = {n: _precision_at_k(d["raw"], is_high, kmax) for n, d in ours.items()}
+    rf_curve = _precision_at_k(rf_sc, is_high, kmax)
+    others = [n for n in sorted(ours) if n != best]
+
+    fig, axes = plt.subplots(
+        1, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(64))
+    )
+
+    # ---- (a) the comparison, with the grid spread as an envelope.
+    ax = axes[0]
+    stack = np.vstack([curves[n] for n in others])
+    ax.fill_between(
+        ks,
+        stack.min(axis=0),
+        stack.max(axis=0),
+        color=PLOT_PALETTE_FILL[0],
+        edgecolor="none",
+        zorder=2,
+        label=f"CGT, {len(others)} unselected grid cells (full range, panel b)",
+    )
     ax.plot(
-        [], [], lw=0.5, color=CGT_C, alpha=0.30, label="CGT, other grid cells (n=9)"
+        ks, rf_curve, lw=1.4, color=RF_C, zorder=4, label=f"{RF_LABEL} (their best model)"
     )
     ax.plot(
         ks,
-        _precision_at_k(rf_sc, is_high, kmax),
-        lw=1.4,
-        color=RF_C,
-        zorder=4,
-        label=f"{RF_LABEL}",
-    )
-    ax.plot(
-        ks,
-        _precision_at_k(ours[best]["raw"], is_high, kmax),
-        lw=1.4,
+        curves[best],
+        lw=1.8,
         color=CGT_C,
         zorder=5,
-        label=f"{CGT_LABEL} (val-selected)",
+        label=f"{CGT_LABEL}, validation-selected cell ({short_cell(best)})",
     )
-    base = float(is_high.mean())
-    ax.axhline(base, ls="--", lw=0.7, color=TRUTH_C, zorder=3)
-    ax.text(
-        kmax,
-        base + 0.012,
-        f"random {base:.3f}",
-        ha="right",
-        va="bottom",
-        fontsize=5,
-        color=TRUTH_C,
-    )
+    _base_rate_line(ax, base, k_hi, n_all)
     ax.set_xlabel("k = number of genes nominated")
     ax.set_ylabel("precision@k  (fraction truly high)")
     ax.set_xlim(1, kmax)
@@ -1045,13 +1117,78 @@ def fig_topk(ours: dict, rf_sc: np.ndarray, t: np.ndarray, best: str, ts: str) -
     # sliced the top off the very region the figure is about.
     ax.set_ylim(0, 1.0)
     tenth_grid(ax)
-    ax.legend(frameon=False, fontsize=5, loc="upper right", handletextpad=0.5)
+    ax.set_title(
+        "the comparison: one CGT cell, chosen on validation, against FCL",
+        fontsize=5.5,
+        loc="left",
+        pad=3,
+    )
+    ax.legend(frameon=False, fontsize=4.5, loc="upper right", handletextpad=0.5)
+
+    # ---- (b) every cell, nameable.
+    ax = axes[1]
+    p50 = {n: float(curves[n][49]) for n in ours}
+    ranked = sorted(ours, key=lambda n: -p50[n])
+    # THE SELECTED CELL KEEPS CGT'S ORANGE, so panel a's thick orange curve and panel b's
+    # thick orange curve are visibly the same run. The other nine take the remaining
+    # palette entries in rank order.
+    spare = [c for i, c in enumerate(PLOT_PALETTE[:11]) if i != 0]
+    cell_color = {}
+    for name in ranked:
+        cell_color[name] = CGT_C if name == best else spare.pop(0)
+    for name in ranked:
+        sel = name == best
+        lr = re.search(r"_lr([\d.eE+-]+)_", name)
+        ax.plot(
+            ks,
+            curves[name],
+            lw=1.8 if sel else 0.8,
+            color=cell_color[name],
+            zorder=5 if sel else 3,
+            label=(
+                f"{name.split('_')[0]} lr {float(lr.group(1)):.0e}  {p50[name]:.2f}"
+                + ("  selected" if sel else "")
+            ),
+        )
+    ax.plot(ks, rf_curve, lw=1.2, color=RF_C, ls=(0, (3, 1.5)), zorder=4,
+            label=f"{RF_LABEL}  {float(rf_curve[49]):.2f}")
+    ax.axvline(50, lw=0.5, ls=":", color="0.45", zorder=2)
+    ax.text(52, 0.02, "k = 50", fontsize=4.5, color="0.45", va="bottom")
+    _base_rate_line(ax, base, k_hi, n_all, verbose=False)
+    below = {k: [n for n in ours if curves[n][k - 1] < base] for k in (10, 25, 50)}
+    ax.set_xlabel("k = number of genes nominated")
+    ax.set_ylabel("precision@k  (fraction truly high)")
+    ax.set_xlim(1, kmax)
+    ax.set_ylim(0, 1.0)
+    tenth_grid(ax)
+    ax.set_title(
+        f"the spread: all {len(ours)} CGT grid cells, legend gives precision at k = 50\n"
+        f"{len(below[50])} of {len(ours)} sit below the base rate at k = 50: "
+        f"{', '.join(sorted(n.split('_')[0] for n in below[50]))}\n"
+        "at k = 10 precision moves in steps of 0.1, so a crossing there is one gene",
+        fontsize=5,
+        loc="left",
+        pad=3,
+    )
+    # ONE COLUMN, far right: past k = 110 every curve is below 0.35, so a single-column
+    # legend in the upper-right corner sits over empty axes. Two columns spanned the panel
+    # and covered the peaked region the figure is about.
+    ax.legend(
+        frameon=False,
+        fontsize=4.2,
+        loc="upper right",
+        handletextpad=0.4,
+        labelspacing=0.28,
+        handlelength=1.6,
+    )
+
+    for ax, letter in zip(axes, "ab"):
+        panel_label(ax, letter)
+
     # THE p-VALUES THE NOTE QUOTES ARE COMPUTED HERE, not drawn. The curve shows enrichment;
     # whether a given k clears chance is a hypergeometric question (N genes, K true highs,
     # k drawn), one-sided because only ENRICHMENT is a claim. Recorded for every k the note
-    # tabulates, plus the spread across the unselected cells at k=50.
-    n_all, k_hi = len(is_high), int(is_high.sum())
-
+    # tabulates, plus the per-cell values panel b's legend shows.
     def topk_row(score: np.ndarray, k: int) -> dict[str, float]:
         hits = int(is_high[np.argsort(-score)][:k].sum())
         return {
@@ -1070,9 +1207,16 @@ def fig_topk(ours: dict, rf_sc: np.ndarray, t: np.ndarray, best: str, ts: str) -
             for lab, sc in ((RF_LABEL, rf_sc), (CGT_LABEL, ours[best]["raw"]))
         },
         "other_cells_precision_at_50": {
-            n: float(is_high[np.argsort(-d["raw"])][:50].mean())
-            for n, d in sorted(ours.items())
-            if n != best
+            n: p50[n] for n in sorted(ours) if n != best
+        },
+        # WHICH CELLS FALL BELOW CHANCE, AND WHERE. Asked of the figure directly, so the
+        # answer is a recorded list of cell names rather than a count read off the curves.
+        "cells_below_base_rate": {
+            f"k={k}": sorted(v) for k, v in below.items()
+        },
+        "all_cells_precision": {
+            n: {f"k={k}": float(curves[n][k - 1]) for k in (10, 25, 50)}
+            for n in sorted(ours)
         },
     }
     fig.tight_layout(pad=0.4)
@@ -1605,6 +1749,8 @@ def fig_nonmetabolic(dumps: list, raw: dict, split: dict, best: str, ts: str) ->
             handletextpad=0.2,
             markerscale=1.4,
         )
+    for ax, letter in zip(axes, "ab"):
+        panel_label(ax, letter)
     # IS THE RIGHT PANEL'S HIGHER CORRELATION A REAL DIFFERENCE? The two rho's are measured on
     # DIFFERENT, non-overlapping gene sets, so the comparison needs an explicit test rather
     # than an eyeball -- a Fisher r-to-z on two independent samples. It comes out marginal
@@ -1629,7 +1775,7 @@ def fig_nonmetabolic(dumps: list, raw: dict, split: dict, best: str, ts: str) ->
         0.015,
         "Both panels are HELD-OUT test genes for CGT, under the same derived labels (their "
         "0.40/0.65 cuts on a train-pool min-max scale).\n"
-        "The right panel is a question Flux Cone Learning cannot be asked: flux sampling gives "
+        "Panel b is a question Flux Cone Learning cannot be asked: flux sampling gives "
         "no feature for a deletion outside the metabolic model.",
         ha="center",
         fontsize=4.5,

@@ -21,6 +21,17 @@
     "epoch_at_roll_max": 27.0
   },
   "fraction_of_ceiling_realized": 0.13497133193587912,
+  "description_source": {
+    "citation_key": "ohyaHighdimensionalLargescalePhenotyping2005",
+    "doi": "10.1073/pnas.0509436102",
+    "artifact": "si/si6.pdf",
+    "table": "Table 2 \"parameter statistics\", column \"parameter description\"",
+    "sha256": "037a50927bc5b978ab38b207b264da87550feeeeaaf21bc311f65a5ef13e9638",
+    "retrieval": "pdftotext -layout (born-digital text layer)",
+    "n_rows_parsed": 500,
+    "n_model_features_not_sourced": 0
+  },
+  "n_features_with_rank": 275,
   "scalar_shortlist": [
     {
       "feature": "A113",
@@ -30,7 +41,9 @@
       "ceiling": 0.8729759350514377,
       "robust_cv": 2.3685667992931583,
       "label": "actin_n_ratio",
-      "score": 2.067701816344736
+      "description": "No actin patch found ratio",
+      "score": 2.067701816344736,
+      "rank": 1.0
     },
     {
       "feature": "C124_C",
@@ -40,7 +53,9 @@
       "ceiling": 0.697554135770834,
       "robust_cv": 0.8856107453581544,
       "label": "Medium_bud_ratio",
-      "score": 0.6177614381076716
+      "description": "Ratio of medium bud on stage C",
+      "score": 0.6177614381076716,
+      "rank": 2.0
     },
     {
       "feature": "A110_A1B",
@@ -50,7 +65,9 @@
       "ceiling": 0.6366199063120082,
       "robust_cv": 0.9394874341894874,
       "label": "Actin_f_ratio",
-      "score": 0.5980964023350204
+      "description": "Actin f ratio on stage A1B",
+      "score": 0.5980964023350204,
+      "rank": 3.0
     },
     {
       "feature": "C125_A1B",
@@ -60,7 +77,9 @@
       "ceiling": 0.783565509772381,
       "robust_cv": 0.6303784885215139,
       "label": "Large_bud_ratio",
-      "score": 0.4939428417079031
+      "description": "Ratio of large bud on stage A1B",
+      "score": 0.4939428417079031,
+      "rank": 4.0
     },
     {
       "feature": "A105",
@@ -70,7 +89,9 @@
       "ceiling": 0.6545094306470849,
       "robust_cv": 0.6172825144573004,
       "label": "actin_a_ratio",
-      "score": 0.40401722708584864
+      "description": "Actin a ratio",
+      "score": 0.40401722708584864,
+      "rank": 5.0
     },
     {
       "feature": "D212",
@@ -80,7 +101,9 @@
       "ceiling": 0.6035503348247485,
       "robust_cv": 0.6417060905693128,
       "label": "nuclear_B_ratio_to_nuclear_AA1BC_cells",
-      "score": 0.38730192582218914
+      "description": "Ratio of B (Nuclear) to A, A1, B and C cells",
+      "score": 0.38730192582218914,
+      "rank": 6.0
     },
     {
       "feature": "D201",
@@ -90,7 +113,9 @@
       "ceiling": 0.565180563129364,
       "robust_cv": 0.6406206763124479,
       "label": "nuclear_B_ratio",
-      "score": 0.36206635459058334
+      "description": "Ratio of B (Nuclear)",
+      "score": 0.36206635459058334,
+      "rank": 7.0
     },
     {
       "feature": "A109_A1B",
@@ -100,7 +125,9 @@
       "ceiling": 0.476101993011427,
       "robust_cv": 0.7555454501592728,
       "label": "Actin_e_ratio",
-      "score": 0.3597166946315456
+      "description": "Actin e ratio on stage A1B",
+      "score": 0.3597166946315456,
+      "rank": 8.0
     },
     {
       "feature": "A103_A1B",
@@ -110,7 +137,9 @@
       "ceiling": 0.8116163491655425,
       "robust_cv": 0.43091655912535953,
       "label": "Relative_distance_of_actin_patch_center_from_neck_in_mother",
-      "score": 0.34973892451230193
+      "description": "Relative Distance of actin patch center from neck in mother cell on stage A1B",
+      "score": 0.34973892451230193,
+      "rank": 9.0
     },
     {
       "feature": "A103_C",
@@ -120,7 +149,9 @@
       "ceiling": 0.5344754481429881,
       "robust_cv": 0.6393367281754263,
       "label": "Relative_distance_of_actin_patch_center_from_neck_in_mother",
-      "score": 0.3417097843058327
+      "description": "Relative Distance of actin patch center from neck in mother cell on stage C",
+      "score": 0.3417097843058327,
+      "rank": 10.0
     },
     {
       "feature": "A110",
@@ -130,7 +161,9 @@
       "ceiling": 0.7001764867649496,
       "robust_cv": 0.46822388419710137,
       "label": "actin_f_ratio",
-      "score": 0.327839354256565
+      "description": "Actin f ratio",
+      "score": 0.327839354256565,
+      "rank": 11.0
     },
     {
       "feature": "D215",
@@ -140,7 +173,9 @@
       "ceiling": 0.4799769468144548,
       "robust_cv": 0.5780076807800768,
       "label": "nuclear_B_ratio_to_nuclear_A1BC_cells",
-      "score": 0.2774303618561253
+      "description": "Ratio of B (Nuclear) to A1, B and C cells",
+      "score": 0.2774303618561253,
+      "rank": 12.0
     },
     {
       "feature": "A8-2_C",
@@ -150,7 +185,9 @@
       "ceiling": 0.5938003457816684,
       "robust_cv": 0.4492947643375925,
       "label": "Total_brightness_of_actin_region_in_bud",
-      "score": 0.26679138642155564
+      "description": "Actin region brightness in bud on stage C",
+      "score": 0.26679138642155564,
+      "rank": 13.0
     },
     {
       "feature": "A8-2_A1B",
@@ -160,7 +197,9 @@
       "ceiling": 0.5946192579812842,
       "robust_cv": 0.4361913943137415,
       "label": "Total_brightness_of_actin_region_in_bud",
-      "score": 0.25936780322465874
+      "description": "Actin region brightness in bud on stage A1B",
+      "score": 0.25936780322465874,
+      "rank": 14.0
     },
     {
       "feature": "A121_A",
@@ -170,7 +209,275 @@
       "ceiling": 0.4915603381947078,
       "robust_cv": 0.516719689112279,
       "label": "Maximal_distance_between_patches",
-      "score": 0.2539989051318961
+      "description": "Maximam actin patch length on stage A",
+      "score": 0.2539989051318961,
+      "rank": 15.0
+    },
+    {
+      "feature": "A8-1_A",
+      "noise_var": 15826335.795839237,
+      "total_var": 23119678.52175343,
+      "reliability": 0.315460386659436,
+      "ceiling": 0.5616586032986907,
+      "robust_cv": 0.4443127450717291,
+      "label": "Actin_region_brightness",
+      "description": "Actin region brightness in mother cell on stage A",
+      "score": 0.24955207582479455,
+      "rank": 16.0
+    },
+    {
+      "feature": "A120_A",
+      "noise_var": 213.31914512836502,
+      "total_var": 254.98199212805721,
+      "reliability": 0.16339525255088705,
+      "ceiling": 0.4042217863387463,
+      "robust_cv": 0.6132751873748297,
+      "label": "Total_length_of_actin_patch_link",
+      "description": "Total length of actin patch link on stage A",
+      "score": 0.247899191757883,
+      "rank": 17.0
+    },
+    {
+      "feature": "D208",
+      "noise_var": 0.0004004030745121407,
+      "total_var": 0.0004879464183781539,
+      "reliability": 0.17941179721534084,
+      "ceiling": 0.4235702978436293,
+      "robust_cv": 0.575127201584359,
+      "label": "nuclear_B_ratio_to_budded_cells",
+      "description": "Ratio of B (Nuclear) to budded cells",
+      "score": 0.24360680007306,
+      "rank": 18.0
+    },
+    {
+      "feature": "A108",
+      "noise_var": 0.0014355241743090911,
+      "total_var": 0.002438647421665892,
+      "reliability": 0.41134410757564366,
+      "ceiling": 0.6413611366271297,
+      "robust_cv": 0.3753111026668277,
+      "label": "actin_d_iso_ratio",
+      "description": "Actin d (iso) ratio",
+      "score": 0.24070995539517798,
+      "rank": 19.0
+    },
+    {
+      "feature": "C122",
+      "noise_var": 0.001809212527682312,
+      "total_var": 0.003484811912192346,
+      "reliability": 0.48082921739552076,
+      "ceiling": 0.6934185009036901,
+      "robust_cv": 0.34238242582587985,
+      "label": "large_bud_ratio",
+      "description": "Ratio of large bud",
+      "score": 0.23741430845195047,
+      "rank": 20.0
+    }
+  ],
+  "size_features": [
+    {
+      "feature": "C11-2_A1B",
+      "noise_var": 374.66156638432665,
+      "total_var": 1665.6189915537873,
+      "reliability": 0.775061662790708,
+      "ceiling": 0.8803758644980608,
+      "robust_cv": 0.12463599275704597,
+      "label": "Bud_cell_size",
+      "description": "Area of daughter cell on stage A1B",
+      "score": 0.10972651987105839,
+      "rank": 78.0
+    },
+    {
+      "feature": "C11-2_C",
+      "noise_var": 776.4721716676833,
+      "total_var": 4930.416428103206,
+      "reliability": 0.8425138762637131,
+      "ceiling": 0.9178855463856662,
+      "robust_cv": 0.09992278279770796,
+      "label": "Bud_cell_size",
+      "description": "Area of daughter cell on stage C",
+      "score": 0.09171767808465042,
+      "rank": 97.0
+    },
+    {
+      "feature": "C11-1_A",
+      "noise_var": 1177.5899825096258,
+      "total_var": 8440.80972061784,
+      "reliability": 0.8604885050739622,
+      "ceiling": 0.9276251964419479,
+      "robust_cv": 0.09708921144445996,
+      "label": "Whole_cell_size",
+      "description": "Mother cell size on stage A",
+      "score": 0.09006239883856099,
+      "rank": 101.0
+    },
+    {
+      "feature": "C118_A1B",
+      "noise_var": 0.00041317966441648646,
+      "total_var": 0.0008944533181146128,
+      "reliability": 0.5380645853185344,
+      "ceiling": 0.7335288578635024,
+      "robust_cv": 0.11663465919318067,
+      "label": "Cell_size_ratio",
+      "description": "Ratio of the cell sizes on stage A1B",
+      "score": 0.08555488834527267,
+      "rank": 110.0
+    },
+    {
+      "feature": "C11-1_C",
+      "noise_var": 1611.1875597706007,
+      "total_var": 10623.177189103952,
+      "reliability": 0.8483327980801098,
+      "ceiling": 0.9210498347430012,
+      "robust_cv": 0.09126498895470421,
+      "label": "Mother_cell_size",
+      "description": "Mother cell size on stage C",
+      "score": 0.08405960299455215,
+      "rank": 113.0
+    },
+    {
+      "feature": "C101_C",
+      "noise_var": 4126.380024614884,
+      "total_var": 28287.205808062125,
+      "reliability": 0.8541255699621337,
+      "ceiling": 0.9241891418763444,
+      "robust_cv": 0.09037085340706527,
+      "label": "Whole_cell_size",
+      "description": "Cell size on stage C",
+      "score": 0.08351976146090856,
+      "rank": 114.0
+    },
+    {
+      "feature": "C11-1_A1B",
+      "noise_var": 1472.6154272962178,
+      "total_var": 10016.252884941381,
+      "reliability": 0.8529774113920212,
+      "ceiling": 0.9235677622091523,
+      "robust_cv": 0.0897237819707656,
+      "label": "Mother_cell_size",
+      "description": "Mother cell size on stage A1B",
+      "score": 0.08286599253168186,
+      "rank": 115.0
+    },
+    {
+      "feature": "C101_A1B",
+      "noise_var": 2393.486096576041,
+      "total_var": 17217.12568379146,
+      "reliability": 0.8609822486903655,
+      "ceiling": 0.9278912914185398,
+      "robust_cv": 0.0879615712201894,
+      "label": "Whole_cell_size",
+      "description": "Cell size on stage A1B",
+      "score": 0.0816187759147054,
+      "rank": 118.0
+    },
+    {
+      "feature": "C118_C",
+      "noise_var": 0.0004049013860096056,
+      "total_var": 0.001239598826791615,
+      "reliability": 0.6733609477046785,
+      "ceiling": 0.8205857345242351,
+      "robust_cv": 0.06544701691172555,
+      "label": "Cell_size_ratio",
+      "description": "Ratio of the cell sizes on stage C",
+      "score": 0.05370488844492835,
+      "rank": 179.0
+    },
+    {
+      "feature": "C104_A",
+      "noise_var": 0.497520278004363,
+      "total_var": 2.2458347302214134,
+      "reliability": 0.7784697728156902,
+      "ceiling": 0.8823093407732291,
+      "robust_cv": 0.05400331752554127,
+      "label": "Short_axis_length_in_whole_cell",
+      "description": "Short axis length of mother cell on stage A",
+      "score": 0.04764763148552769,
+      "rank": 197.0
+    },
+    {
+      "feature": "C12-1_A",
+      "noise_var": 5.218734201879224,
+      "total_var": 34.48418846670103,
+      "reliability": 0.8486629834157591,
+      "ceiling": 0.9212290613174114,
+      "robust_cv": 0.04909941319458844,
+      "label": "Whole_cell_outline_length",
+      "description": "Contour length of mother cell on stage A",
+      "score": 0.04523180632848643,
+      "rank": 206.0
+    },
+    {
+      "feature": "C103_A",
+      "noise_var": 0.48669798714508794,
+      "total_var": 4.853808119727264,
+      "reliability": 0.8997286305639054,
+      "ceiling": 0.9485402630167606,
+      "robust_cv": 0.04707170154014508,
+      "label": "Long_axis_length_in_whole_cell",
+      "description": "Long axis length of mother cell on stage A",
+      "score": 0.04464940415953567,
+      "rank": 209.0
+    },
+    {
+      "feature": "C102_C",
+      "noise_var": 15.806440422952916,
+      "total_var": 103.38170780330562,
+      "reliability": 0.8471060233109488,
+      "ceiling": 0.9203836283370912,
+      "robust_cv": 0.047090362239716445,
+      "label": "Whole_cell_outline_length",
+      "description": "Contour length of cell on stage C",
+      "score": 0.043341198457898175,
+      "rank": 214.0
+    },
+    {
+      "feature": "C102_A1B",
+      "noise_var": 11.436609797970082,
+      "total_var": 71.59506367661433,
+      "reliability": 0.8402597998986665,
+      "ceiling": 0.9166568604983364,
+      "robust_cv": 0.04559841961215058,
+      "label": "Whole_cell_outline_length",
+      "description": "Contour length of cell on stage A1B",
+      "score": 0.04179810416535972,
+      "rank": 222.0
+    },
+    {
+      "feature": "C115_C",
+      "noise_var": 0.0002459155130237713,
+      "total_var": 0.002880835055720257,
+      "reliability": 0.9146374199607592,
+      "ceiling": 0.956366781083889,
+      "robust_cv": 0.028144077649713998,
+      "label": "Mother_axis_ratio",
+      "description": "Roundness of mother cell on stage C",
+      "score": 0.026916060948431998,
+      "rank": 241.0
+    },
+    {
+      "feature": "C115_A1B",
+      "noise_var": 0.00021873178776891556,
+      "total_var": 0.0027374654422852094,
+      "reliability": 0.9200969683890072,
+      "ceiling": 0.9592168515977016,
+      "robust_cv": 0.025852631243759704,
+      "label": "Mother_axis_ratio",
+      "description": "Roundness of mother cell on stage A1B",
+      "score": 0.024798279547155556,
+      "rank": 243.0
+    },
+    {
+      "feature": "C115_A",
+      "noise_var": 0.00014558998377331092,
+      "total_var": 0.002620367732318338,
+      "reliability": 0.9444391022001702,
+      "ceiling": 0.9718225672416597,
+      "robust_cv": 0.024119897132804543,
+      "label": "Whole_cell_axis_ratio",
+      "description": "Roundness of mother cell on stage A",
+      "score": 0.023440260353206857,
+      "rank": 245.0
     }
   ]
 }

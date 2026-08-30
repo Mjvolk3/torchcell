@@ -3,12 +3,13 @@
 %% expression_objective_diagnosis.json (measured _runtime and epoch counts) and
 %% round_leaderboards.csv. The design is proposed, not measured, and says so.
 
-\section{The expression and morphology campaign\secstatus{todo}}
+\section{The expression campaign\secstatus{todo}}
 \label{sec:campaign}
 
-The next campaign is expression plus morphology, for Figure 3. What follows is sized in
-GPU-days rather than in arms, because the measured cost per run is what makes most possible
-designs unaffordable.
+The next campaign is \textbf{expression}, for Figure 3, with morphology deferred until
+expression is understood (\cref{sec:directions}). What follows is sized in GPU-days rather
+than in arms, because the measured cost per run is what makes most possible designs
+unaffordable. The morphology sizing is kept at the end for when it comes off the shelf.
 
 \subsection{The budget arithmetic, measured\secstatus{todo}}
 
@@ -54,6 +55,20 @@ So a 4,000-epoch comparison is fair between arms and \textbf{understates} the ab
 number by roughly $0.02$ to $0.03$. That is the right trade for an arm comparison and the
 wrong one for a headline figure, which is why the winning arm gets one long run afterward.
 
+\notesec{But the first move is not a 4,000-epoch arm comparison, it is one resumed run}
+$E = 4{,}000$ is a budget chosen without knowing where the curve turns, and it is a guess
+until something has been trained past its own maximum. \textbf{Resume the best existing
+checkpoint and keep going until the validation curve turns.} That costs no fresh warm-up, it
+answers the question every arm budget depends on, and it is the difference between choosing
+$E$ from evidence and choosing it from an arm that happened to peak at 3,921.
+
+Two practical notes. Resuming from a checkpoint is strictly cheaper than the equivalent
+fresh run, so this is the low-cost form of the 10,000-epoch experiment rather than an
+additional one. And the wall clock is the binding constraint at 3.8 days for a single-GPU
+10,000-epoch run, so \textbf{multi-GPU DDP is what makes the answer arrive in useful time};
+check what the IGB \file{mmli} partition has free before sizing the rest of the campaign
+around a single-GPU rate.
+
 \subsection{Seeds: two per arm, and the noise floor is already known\secstatus{todo}}
 
 Expression's across-initialization spread was measured at $\approx 0.006$ ($n = 8$, fixed
@@ -66,8 +81,10 @@ precision the mechanism differences do not need.
 \subsection{Phase A, the objective, and why it goes first\secstatus{todo}}
 
 \cref{sec:objective} found that the quantile loss reaches its minimum at epoch 463 and
-rises for the next 9,500 while Pearson climbs, and that the model never gets \file{nmse}
-below 1. A mechanism arm evaluated under an objective that is optimizing something else
+rises for the next 9,500 while Pearson climbs, and that the model as trained sits only level
+with the mean predictor in squared error, at $\texttt{nmse} \approx 1.00$ to $1.04$, against
+a calibrated floor of $0.94$. A mechanism arm evaluated under an objective that is optimizing
+something else
 cannot separate ``the mechanism does not help'' from ``the objective does not reward it'',
 so the objective is settled first.
 
@@ -79,22 +96,39 @@ arm & objective & what a win means \\
 \midrule
 \texttt{O\_ref}   & quantile (current) & reference \\
 \texttt{O\_zmse}  & MSE on per-gene $z$-scored targets & ``predict the mean'' scores 0 rather than winning; already implemented as \file{standardize_per_feature_target} \\
-\texttt{O\_corr}  & correlation objective & optimizing the quantity actually scored \\
+\texttt{O\_corr}  & correlation objective & optimizing the quantity actually scored; see the caveat below \\
 \bottomrule
 \end{tabular}
 \caption[]{Phase A. Three arms, two seeds, $E = 4{,}000$: six slots, $\approx 10$ GPU-days.}
 \label{tab:phase-a}
 \end{table}
 
-\notesec{Report \file{nmse} and the SD ratio on every arm, not just Pearson} The
-calibration identity in \cref{sec:objective} means an arm can raise Pearson while leaving
-\file{nmse} above 1, and that is a different result from one that fixes both. Both numbers
-are already logged.
+\notesec{On \texttt{O\_corr}, and the fair objection that nobody optimizes correlation}
+Correlation is almost always a reporting metric rather than a training loss in the published
+literature, and that is a reason for caution rather than a reason to skip the arm. Why it is
+rarely done: a batch-level Pearson is not a sum over examples, so it is sensitive to batch
+composition and batch size in a way squared error is not, and it is invariant to scale, so it
+constrains only the ordering and leaves magnitudes free, which is exactly the under-shrinkage
+this document measures. \textbf{So \texttt{O\_corr} risks buying the calibration defect
+deliberately.}
 
-\notesec{Free, and worth doing on day one} Apply the post-hoc rescale by $r/s$ to the
-existing best checkpoint. It changes no correlation and moves \file{nmse} from $1.010$ to
-$0.944$. It is an evening's work and it removes the ``loses to the mean'' objection from
-the figure regardless of what the campaign finds.
+That makes \texttt{O\_zmse} the better-motivated arm of the two and the one to run first: it
+targets the same failure (``predict the mean'' scoring zero rather than winning), it is
+already implemented as \file{standardize_per_feature_target}, and it keeps a
+per-example loss. Keep \texttt{O\_corr} as the third arm, run it with the calibration
+diagnostics below, and read a Pearson gain from it as provisional until \file{nmse} is
+checked alongside.
+
+\notesec{Report \file{nmse} and the SD ratio on every arm, not just Pearson} The calibration
+identity in \cref{sec:objective} means an arm can raise Pearson while leaving \file{nmse}
+above 1, and that is a different result from one that fixes both. Both numbers are already
+logged, and \cref{tab:nmse-parity} shows why reading them together matters: which side of 1
+the current model lands on depends on the smoothing rule.
+
+\notesec{The post-hoc rescale is not part of this campaign} Applying $r/s$ to the best
+checkpoint changes no correlation, so it cannot move the strand's headline number and it
+settles nothing the campaign is asking. Do it when a figure is drawn, at which point it
+removes the ``loses to the mean'' objection for free.
 
 \subsection{Phase B, the pair term, under the winning objective\secstatus{todo}}
 
@@ -111,50 +145,66 @@ arm & pair rank & note \\
 \texttt{P\_ref}      & 0  & additive reference \\
 \texttt{P\_basis64}  & 64 & the current best-per-compute: $0.2274$ in 2.0 days \\
 \texttt{P\_film}     & 90 & diagonal multiplicative, identity at init \\
-\texttt{P\_free}     & -- & the nine masked heads freed, since the probe found the mask constrains them toward a target that does not predict response \\
+\texttt{P\_asym}     & -- & the two directed relations no longer symmetrized in the mask builder, plus unconstrained heads added beside the masked ones \\
 \bottomrule
 \end{tabular}
-\caption[]{Phase B. Four arms, two seeds: eight slots, $\approx 13$ GPU-days. The
-originally planned \texttt{P\_graph} arm, which would have made the pair term a function of
-network distance, is dropped: the probe found the network does not carry that relationship
-(\cref{sec:graph-probe}). \texttt{P\_free} replaces it and costs nothing to build.}
+\caption[]{Phase B. Four arms, two seeds: eight slots, $\approx 13$ GPU-days. The originally
+planned \texttt{P\_graph} arm, which would have made the pair term a function of network
+distance, is dropped: the probe found the network does not carry that relationship on
+expression (\cref{sec:graph-probe}). \texttt{P\_asym} replaces it, costs no new mechanism,
+and unlike freeing the masked heads it does not discard the graph channel on the strength of
+a single phenotype's null.}
 \label{tab:phase-b}
 \end{table}
 
-\notesec{The gate on \texttt{P\_graph} has been resolved, and it closes}
-The probe has run (\cref{sec:graph-probe}). Graph proximity does not predict which reporters
-respond, on any of the nine graphs, in the orientation the model uses: AUC $0.4961$ to
-$0.5057$ against degree-preserving controls, and longer walks make it worse.
-\textbf{Do not build \texttt{P\_graph}}, which would have made the pair term a function of
-network distance on a network that does not carry the relationship. Drop it from Phase B,
-which takes that phase to three arms and six slots.
+\notesec{The gate on \texttt{P\_graph} is narrower than it looked, and the graph channel
+stays} The probe has run on all six strands (\cref{sec:graph-probe}). Graph proximity does
+not predict which individual \emph{reporters} respond to a deletion, so
+\textbf{\texttt{P\_graph} as specified is still not worth building}: a pair term that is a
+function of network distance to the responding reporter rests on the one relationship
+measured to be absent. Drop it from Phase B.
 
-Two cheaper things replace it. \textbf{Free the nine masked heads} and let them learn
-unconstrained, as an arm in Phase B. And \textbf{stop symmetrizing the two directed
-relations} in \file{_build_attention_mask}: TF $\to$ target reaches $0.5508$ on tflink
-against a $0.5017$ control, and the mask currently averages that against its uninformative
-reverse. Neither costs a new mechanism.
+\textbf{But the graph channel itself carries information}, and revision 2's proposal to free
+the nine masked heads is withdrawn. Deletions of adjacent genes give measurably similar
+phenotypes, up to AUC $0.6579$ against a $0.4971$ control, and which graph carries that
+differs by phenotype (\cref{tab:graph-pair-form}). The Phase B arm is therefore
+\emph{additive}: keep the masked heads, \textbf{add unconstrained heads beside them}, and
+\textbf{stop symmetrizing the two directed relations} in \file{_build_attention_mask}, where
+TF $\to$ target reaches $0.5508$ on tflink against a $0.5017$ control and the builder
+currently averages that against its uninformative reverse.
 
-\subsection{Morphology runs alongside, and it is a different problem\secstatus{todo}}
+The one graph a removal could be justified on today is \file{tflink}, which is at the noise
+floor on all six strands in the pair form and carries only the directional reporter-form
+signal that the symmetric mask currently discards. \textbf{Fix the symmetrization before
+concluding anything about that head}, since the fix is precisely what would make it useful.
+
+\subsection{Morphology, deferred, sized for when it starts\secstatus{todo}}
 
 Morphology is not a smaller copy of expression. Its target is 278-dimensional rather than
 6,127, no morphology run has ever passed 121 epochs, and every one of the 397 runs across
 eight projects trained on 1,161 strains (\cref{tab:morph-ntrain}) out of a 4,718-strain
 screen.
 
+\textbf{Why it is deferred rather than run alongside.} It is close to four times the strains
+at a comparable architecture, its per-epoch cost has never been measured, and the only figure
+on record is a tiny-model smoke at $\approx 47$ s/epoch against expression's $\approx 15$ in
+the same smoke. If that ordering survives at full size, morphology is the \emph{more}
+expensive of the two despite the smaller target, and it would be bought with the hardware
+that is currently answering the better-posed question.
+
+When it starts, in this order:
+
 \begin{enumerate}
-\item \textbf{Drop \file{require_modalities} for the morphology-only arm} and rebuild the
-  dataset on all 4,718 Ohya deletions. This is a query and config change, and it is the only
-  way the $0.0824$ becomes a statement about morphology rather than about a quarter of it.
-  \textbf{Do this first}; it is the largest single change available to the figure.
-\item \textbf{Measure the per-epoch cost on the first run.} It is not known: the only
-  figure on record is a tiny-model smoke at $\approx 47$ s/epoch against expression's
-  $\approx 15$ in the same smoke, which would make morphology the more expensive of the two
-  despite the smaller target. Until it is measured, the slot arithmetic above does not
-  apply to morphology.
-\item \textbf{Run the scalar warm-up in parallel}, on \file{A113} (actin\_n\_ratio, ceiling
-  $0.873$, robust CV $2.37$) or \file{C124_C}. It calibrates the epoch budget for the
-  278-feature target for a fraction of the cost.
+\item \textbf{The scalar warm-up first}, on \file{A113} (actin\_n\_ratio, ceiling $0.873$,
+  robust CV $2.37$) or \file{C124_C}. It calibrates the epoch budget for the 278-feature
+  target at a fraction of the cost, and the budget is the one thing not knowable in advance.
+  Treat it as a calibration, not a result.
+\item \textbf{Measure the per-epoch cost on that first run}, so the slot arithmetic above
+  applies to morphology at all.
+\item \textbf{Then morphology at full scale}, either by dropping \file{require_modalities}
+  and rebuilding on all 4,718 Ohya deletions, or better by masking the loss over absent
+  outputs so no strain is discarded for lacking a second phenotype. This is what turns
+  $0.0824$ into a statement about morphology rather than about a quarter of it.
 \end{enumerate}
 
 \subsection{The joint question, which is the one Figure 3 is about\secstatus{todo}}
@@ -164,15 +214,23 @@ Does expression help morphology. The control already exists and is correct:
 carrying both phenotypes, so \texttt{expr\_morph} minus \texttt{morph} isolates the
 auxiliary head from a data-quantity difference. It has never been run past 87 epochs.
 
-\notesec{Run it at two scales, and do not conflate them} On the 1,440 shared strains it is
-the mechanism test it was designed to be. Paired with \textbf{fitness} instead of
-expression it keeps 4,220 of the 4,718 strains, three times the instance count, which is
-where the statistical power is. The two answer different questions and both are worth a
-slot; the fitness pairing is the one likely to produce a detectable effect.
+\notesec{Ask the fitness version of the question first, and ask it plainly} \textbf{Does
+adding fitness as a second label improve morphology prediction at all?} Paired with fitness
+rather than expression the joint arm keeps 4,220 of the 4,718 strains, three times the
+instance count, which is where the statistical power is. Report the answer per CalMorph
+feature as well as averaged over features: a second label that helps the 201 well-measured
+features and does nothing for the rest would be invisible in the mean, and that is a
+different finding from no effect.
+
+The expression pairing on the 1,440 shared strains remains the mechanism test
+\file{delta_joint_expr_morph_000.yaml} was designed for, and it stays worth a slot. The two
+answer different questions; the fitness pairing is the one likely to produce a detectable
+effect. Both come after single-phenotype morphology, since a joint result is
+uninterpretable without a morphology-only arm run to the same budget.
 
 \notesec{The prior from the metabolite strands is not encouraging, and should be said out
 loud} The one auxiliary-head experiment run to completion anywhere in this project is the
-metabolome head on betaxanthin, and it reads $-0.0265 \pm 0.0159$
+metabolome head on betaxanthin, and it reads $-0.0279 \pm 0.0169$
 (\cref{tab:bx-aa-paired}). A second phenotype sharing an encoder has not yet been shown to
 help any first phenotype here. The expression-morphology pairing has a better prior than
 that one, because the two phenotypes share strains rather than merely genes, but the
@@ -187,3 +245,13 @@ no pair term changes that. If Phase A and Phase B both come back inside the nois
 the honest reading is that the binding constraint is the data rather than the model, and
 the figure's expression panel should be built around the ceiling-relative statement and the
 imputation capability rather than around a genotype-to-expression number.
+
+\notesec{And if it does become an imputation figure, the question becomes how small the
+measured panel can be} That is a well-posed question with a partial answer already:
+\cref{tab:gene-budget} shows 100 randomly chosen genes reach $77\,\%$ of what 1,000 reach
+across studies, and choosing genes by across-strain residual variance beats random at the
+cheap end. The version that would matter is selection by \textbf{ease of measurement}, since
+a panel that is cheap to assay by mass spectrometry and still spans the residual structure is
+a deployable object rather than a curiosity. That was not run, because no measurement-cost
+annotation exists in the repository and inventing one would have been guessing. Building that
+annotation is the prerequisite, and it is a data task rather than a modeling one.

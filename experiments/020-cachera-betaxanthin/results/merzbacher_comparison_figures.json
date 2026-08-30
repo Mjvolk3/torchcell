@@ -20,7 +20,70 @@
     }
   },
   "fig3_precision_at_k": {
+    "all_cells_precision": {
+      "s00_L2_maskon_lr0.0001_zs": {
+        "k=10": 0.2,
+        "k=25": 0.16,
+        "k=50": 0.1
+      },
+      "s01_L2_maskon_lr0.0001_yj": {
+        "k=10": 0.9,
+        "k=25": 0.72,
+        "k=50": 0.52
+      },
+      "s02_L2_maskon_lr0.001_zs": {
+        "k=10": 0.3,
+        "k=25": 0.12,
+        "k=50": 0.12
+      },
+      "s03_L2_maskon_lr0.001_yj": {
+        "k=10": 0.2,
+        "k=25": 0.16,
+        "k=50": 0.12
+      },
+      "s04_L2_maskoff_lr0.0001_zs": {
+        "k=10": 0.7,
+        "k=25": 0.68,
+        "k=50": 0.56
+      },
+      "s05_L2_maskoff_lr0.0001_yj": {
+        "k=10": 0.8,
+        "k=25": 0.6,
+        "k=50": 0.58
+      },
+      "s06_L2_maskoff_lr0.001_zs": {
+        "k=10": 0.5,
+        "k=25": 0.28,
+        "k=50": 0.3
+      },
+      "s07_L2_maskoff_lr0.001_yj": {
+        "k=10": 0.4,
+        "k=25": 0.32,
+        "k=50": 0.22
+      },
+      "s08_L6_maskon_lr0.0001_zs": {
+        "k=10": 0.6,
+        "k=25": 0.6,
+        "k=50": 0.54
+      },
+      "s09_L6_maskon_lr0.0001_yj": {
+        "k=10": 0.9,
+        "k=25": 0.72,
+        "k=50": 0.48
+      }
+    },
     "base_rate": 0.1564945226917058,
+    "cells_below_base_rate": {
+      "k=10": [],
+      "k=25": [
+        "s02_L2_maskon_lr0.001_zs"
+      ],
+      "k=50": [
+        "s00_L2_maskon_lr0.0001_zs",
+        "s02_L2_maskon_lr0.001_zs",
+        "s03_L2_maskon_lr0.001_yj"
+      ]
+    },
     "models": {
       "CGT": {
         "k=10": {
@@ -259,12 +322,13 @@
     ],
     "cgt_val_selected_cell": "s09_L6_maskon_lr0.0001_yj",
     "fcl_model": "RandomForestClassifier_Resampled",
+    "figure_stamp": "2026-08-02-23-43-08",
     "n_cgt_cells": 10,
     "n_genes_scored": 639,
     "note": "[[experiments.020-cachera-betaxanthin.merzbacher-comparison]]",
     "our_rederivation_of_it": 0.701095461658842,
+    "rendered_at": "2026-08-30-14-36-06",
     "their_published_rf_accuracy": 0.7,
-    "timestamp": "2026-08-15-14-39-38",
     "truth_counts_low_med_high": [
       108,
       431,

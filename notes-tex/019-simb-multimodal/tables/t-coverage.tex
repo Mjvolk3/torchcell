@@ -2,15 +2,22 @@
 %% SOURCE: results/round_leaderboards.csv + _leaderboard_cache/ vs project_census.json.
 \begin{table}[htbp]
 \centering\small
-\begin{tabular}{lrp{76mm}}
+\begin{tabular}{lrrrr}
 \toprule
-status & projects & which \\
+strand & projects & runs & history read & with a usable curve \\
 \midrule
-history read & 28 & \file{019-simb-multimodal_cgt_multitask}, \file{expr}, \file{expr_morph}, \file{expr_morph_v2}, \file{expr_morph_v3}, \file{expr_morph_v4}, \file{expr_morph_v5}, \file{expr_v2}, \file{expr_v3}, \file{expr_v5}, \file{expr_v6}, \file{expr_v7}, \file{expr_v8}, \file{expr_v9}, \file{morph_v2}, \file{morph_v3}, \file{morph_v5}, \file{020_beta_carotene}, \file{020_beta_carotene_v3}, \file{020_betaxanthin}, \file{020_betaxanthin_v3}, \file{020_betaxanthin_v4}, \file{020_metabolism}, \file{020_mulleder19}, \file{020_mulleder19_v3}, \file{021_beta_carotene_v4}, \file{022_mulleder19_v4}, \file{023_bx_m19_v1} \\
-\addlinespace
-history pending & 0 & -- \\
+expression & 8 & 1353 & 1353 (100\%) & 1182 \\
+expression morphology joint & 5 & 214 & 214 (100\%) & 209 \\
+morphology & 3 & 183 & 183 (100\%) & 183 \\
+betaxanthin & 4 & 142 & 142 (100\%) & 135 \\
+beta carotene & 3 & 136 & 136 (100\%) & 136 \\
+amino acid & 3 & 97 & 97 (100\%) & 97 \\
+betaxanthin amino acid joint & 1 & 46 & 46 (100\%) & 46 \\
+expression masked & 1 & 16 & 16 (100\%) & 9 \\
+\midrule
+all & 28 & 2187 & 2187 (100\%) & 1997 \\
 \bottomrule
 \end{tabular}
-\caption[]{Finding a run's best score needs its full validation history, one request per run. Against a rate-limited API that does not complete over 2,187 runs in one sitting, so the pull caches per project and resumes, and the remaining projects are queued rather than dropped. A strand maximum can only move UPWARD as they land, so every \emph{of ceiling} figure is a lower bound. \textbf{All projects are now read.}}
+\caption[]{Coverage at two granularities, which are two different claims. All 28 projects have been read, meaning every project's run list and every run's final summary value is in hand. Reading a run's best score is a separate request per run. \textbf{Every run's history has now been read.} An earlier pass read only a bounded candidate set per project, the eight highest final values and the five longest runs unioned, at most thirteen per project, on the assumption that one request per run would not finish against a rate-limited API. It does finish: the full pass takes about twenty minutes. Until it was run, every strand maximum in this document was a maximum over at most thirteen runs per project rather than over the runs that were run. The \emph{history read} column is the runs whose curves were requested; \emph{with a usable curve} is the subset that also logged the strand's metric under a name the puller knows, and the gap between the two columns is runs that logged nothing under it. \textbf{Why the bounded rule was the wrong instrument.} It ranks by final value and by length, so it is built to find a maximum and is not a random sample: a mean or a median over it is conditioned on a high final value or a long run, and a paired difference computed over it selects on the very quantity being compared. \textbf{It can also miss a maximum, and did.} A run that peaks early and then stops short ranks low on final value and low on length, so it is invisible to both arms of the rule at once: reading beta-carotene at full per-run coverage raised that strand's best from $0.118$ to $0.137$, held by a run that peaked at epoch 9 of 49.}
 \label{tab:coverage}
 \end{table}

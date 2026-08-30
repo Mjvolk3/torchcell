@@ -3,11 +3,11 @@
     "by_project": {
       "torchcell_020_mulleder19": {
         "n_runs": 36,
-        "best_roll_max": 0.15143865644931792,
-        "best_run_id": "j63dbied",
+        "best_roll_max": 0.15756292045116424,
+        "best_run_id": "230t9ewf",
         "n_train_supervised": 4235.0,
-        "epochs": 141.0,
-        "runtime_h": 0.9502777777777778
+        "epochs": 139.0,
+        "runtime_h": 0.9363888888888889
       },
       "torchcell_020_mulleder19_v3": {
         "n_runs": 30,
@@ -31,31 +31,31 @@
     "metric": "val/mulleder19/pearson_per_feature",
     "n_runs": 97,
     "n_collapsed": 0,
-    "epochs_min": 75.0,
+    "epochs_min": 18.0,
     "epochs_max": 998.0,
     "best_roll_max": 0.20852306485176086,
     "best_run_id": "24vlgope",
     "best_run_epochs": 998.0,
     "best_epoch_at_roll_max": 354.0,
-    "median_roll_max": 0.13100402653217316
+    "median_roll_max": 0.05697644129395485
   },
   "beta_carotene": {
     "by_project": {
       "torchcell_020_beta_carotene": {
         "n_runs": 47,
-        "best_roll_max": 0.10196433663368225,
-        "best_run_id": "d4eef6d1",
+        "best_roll_max": 0.12372342348098755,
+        "best_run_id": "dlxh9x1f",
         "n_train_supervised": 3846.0,
-        "epochs": 88.0,
-        "runtime_h": 0.5113888888888889
+        "epochs": 59.0,
+        "runtime_h": 0.4388888888888889
       },
       "torchcell_020_beta_carotene_v3": {
         "n_runs": 50,
-        "best_roll_max": 0.10881585478782654,
-        "best_run_id": "c6cmm2i3",
+        "best_roll_max": 0.13707876354455947,
+        "best_run_id": "5cjpn6zj",
         "n_train_supervised": 3846.0,
-        "epochs": 103.0,
-        "runtime_h": 0.4486111111111111
+        "epochs": 49.0,
+        "runtime_h": 0.3672222222222222
       },
       "torchcell_021_beta_carotene_v4": {
         "n_runs": 39,
@@ -71,13 +71,13 @@
     "metric": "val/beta_carotene/spearman_per_feature",
     "n_runs": 136,
     "n_collapsed": 0,
-    "epochs_min": 41.0,
+    "epochs_min": 11.0,
     "epochs_max": 998.0,
-    "best_roll_max": 0.11843749284744262,
-    "best_run_id": "o0aadmot",
-    "best_run_epochs": 998.0,
-    "best_epoch_at_roll_max": 791.0,
-    "median_roll_max": 0.0711512672714889
+    "best_roll_max": 0.13707876354455947,
+    "best_run_id": "5cjpn6zj",
+    "best_run_epochs": 49.0,
+    "best_epoch_at_roll_max": 9.0,
+    "median_roll_max": 0.051337451487779615
   },
   "betaxanthin": {
     "by_project": {
@@ -119,23 +119,23 @@
     "metric": "val/betaxanthin/pearson_per_feature",
     "n_runs": 142,
     "n_collapsed": 0,
-    "epochs_min": 36.0,
+    "epochs_min": 14.0,
     "epochs_max": 998.0,
     "best_roll_max": 0.4014525592327118,
     "best_run_id": "bxtccwlx",
     "best_run_epochs": 124.0,
     "best_epoch_at_roll_max": 74.0,
-    "median_roll_max": 0.31728622913360593
+    "median_roll_max": 0.08764829188585281
   },
   "betaxanthin_amino_acid_joint": {
     "by_project": {
       "torchcell_023_bx_m19_v1": {
         "n_runs": 46,
-        "best_roll_max": 0.4275081753730774,
-        "best_run_id": "wmgxp95k",
+        "best_roll_max": 0.4297337532043457,
+        "best_run_id": "ag3pl3ex",
         "n_train_supervised": 3832.0,
-        "epochs": 372.0,
-        "runtime_h": 4.176666666666667
+        "epochs": 496.0,
+        "runtime_h": 5.588333333333333
       }
     },
     "n_projects": 1,
@@ -143,13 +143,13 @@
     "metric": "val/betaxanthin/pearson_per_feature",
     "n_runs": 46,
     "n_collapsed": 0,
-    "epochs_min": 372.0,
+    "epochs_min": 355.0,
     "epochs_max": 998.0,
-    "best_roll_max": 0.4275081753730774,
-    "best_run_id": "wmgxp95k",
-    "best_run_epochs": 372.0,
-    "best_epoch_at_roll_max": 181.0,
-    "median_roll_max": 0.4149376630783081
+    "best_roll_max": 0.4297337532043457,
+    "best_run_id": "ag3pl3ex",
+    "best_run_epochs": 496.0,
+    "best_epoch_at_roll_max": 176.0,
+    "median_roll_max": 0.3616825819015503
   },
   "expression": {
     "by_project": {
@@ -223,13 +223,13 @@
     "metric": "val/per_gene/pearson_per_gene",
     "n_runs": 1353,
     "n_collapsed": 0,
-    "epochs_min": 8.0,
+    "epochs_min": 0.0,
     "epochs_max": 4372.0,
     "best_roll_max": 0.22760272026062012,
     "best_run_id": "b50f93ju",
     "best_run_epochs": 4105.0,
     "best_epoch_at_roll_max": 4002.0,
-    "median_roll_max": 0.09353106245398521
+    "median_roll_max": 0.05760666156808535
   },
   "expression_masked": {
     "by_project": {
@@ -247,13 +247,13 @@
     "metric": "val/expression/pearson_per_feature",
     "n_runs": 16,
     "n_collapsed": 0,
-    "epochs_min": 9900.0,
+    "epochs_min": 22.0,
     "epochs_max": 9900.0,
     "best_roll_max": 0.23824749290943145,
     "best_run_id": "hx8pxdic",
     "best_run_epochs": 9900.0,
     "best_epoch_at_roll_max": 9697.0,
-    "median_roll_max": 0.19475513249635695
+    "median_roll_max": 0.18874267637729644
   },
   "expression_morphology_joint": {
     "by_project": {
@@ -267,11 +267,11 @@
       },
       "torchcell_019_expr_morph_v2": {
         "n_runs": 80,
-        "best_roll_max": 0.04202783312648535,
-        "best_run_id": "mxnnf41q",
+        "best_roll_max": 0.054403125494718554,
+        "best_run_id": "fmrvrn9w",
         "n_train_supervised": 1161.0,
         "epochs": 21.0,
-        "runtime_h": 0.6319444444444444
+        "runtime_h": 0.6716666666666666
       },
       "torchcell_019_expr_morph_v3": {
         "n_runs": 77,
@@ -301,7 +301,7 @@
     "best_run_id": "n7qqgsra",
     "best_run_epochs": 70.0,
     "best_epoch_at_roll_max": 26.0,
-    "median_roll_max": 0.0330865861227115
+    "median_roll_max": 0.020056463405489923
   },
   "morphology": {
     "by_project": {
@@ -315,11 +315,11 @@
       },
       "torchcell_019_morph_v3": {
         "n_runs": 89,
-        "best_roll_max": 0.06258938536047935,
-        "best_run_id": "e3xmrxpq",
+        "best_roll_max": 0.06328851953148842,
+        "best_run_id": "zdgcaiq9",
         "n_train_supervised": 1161.0,
-        "epochs": 20.0,
-        "runtime_h": 0.535
+        "epochs": 22.0,
+        "runtime_h": 0.32805555555555554
       },
       "torchcell_019_morph_v5": {
         "n_runs": 23,
@@ -334,13 +334,13 @@
     "project": "torchcell_019_morph_v5",
     "metric": "val/morphology/pearson_per_feature",
     "n_runs": 183,
-    "n_collapsed": 0,
-    "epochs_min": 13.0,
+    "n_collapsed": 8,
+    "epochs_min": 0.0,
     "epochs_max": 121.0,
     "best_roll_max": 0.08243733793497085,
     "best_run_id": "vsceij2v",
     "best_run_epochs": 65.0,
     "best_epoch_at_roll_max": 27.0,
-    "median_roll_max": 0.028835594654083252
+    "median_roll_max": 0.020163107477128506
   }
 }

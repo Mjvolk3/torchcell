@@ -1,0 +1,357 @@
+{
+  "n_shared_deletions": 4432,
+  "n_with_costanzo_kanmx_30c": 3708,
+  "n_costanzo_gaps": 724,
+  "coverage_by_source": [
+    {
+      "source": "costanzo2016_kanmx_30c",
+      "n_genes_in_source": 3893,
+      "n_of_4432_covered": 3708,
+      "n_of_724_gaps_filled": 0
+    },
+    {
+      "source": "costanzo2016_natmx_30c",
+      "n_genes_in_source": 3845,
+      "n_of_4432_covered": 3350,
+      "n_of_724_gaps_filled": 317
+    },
+    {
+      "source": "baryshnikova2010_kanmx",
+      "n_genes_in_source": 4574,
+      "n_of_4432_covered": 4047,
+      "n_of_724_gaps_filled": 375
+    },
+    {
+      "source": "kuzmin2018_dmf_array_smf",
+      "n_genes_in_source": 990,
+      "n_of_4432_covered": 952,
+      "n_of_724_gaps_filled": 4
+    },
+    {
+      "source": "kuzmin2020_dmf_array_smf",
+      "n_genes_in_source": 3775,
+      "n_of_4432_covered": 3597,
+      "n_of_724_gaps_filled": 7
+    },
+    {
+      "source": "kuzmin2018_smf",
+      "n_genes_in_source": 1170,
+      "n_of_4432_covered": 1113,
+      "n_of_724_gaps_filled": 21
+    },
+    {
+      "source": "kuzmin2020_smf",
+      "n_genes_in_source": 473,
+      "n_of_4432_covered": 454,
+      "n_of_724_gaps_filled": 32
+    },
+    {
+      "source": "oduibhir2014",
+      "n_genes_in_source": 1312,
+      "n_of_4432_covered": 1216,
+      "n_of_724_gaps_filled": 167
+    }
+  ],
+  "costanzo_plus_kuzmin": {
+    "n_of_4432_covered": 3764,
+    "n_of_724_gaps_filled": 56
+  },
+  "best_union": {
+    "sources_in_priority_order": [
+      "costanzo2016_kanmx_30c",
+      "costanzo2016_natmx_30c",
+      "baryshnikova2010_kanmx",
+      "kuzmin2018_dmf_array_smf",
+      "kuzmin2020_dmf_array_smf",
+      "kuzmin2018_smf",
+      "kuzmin2020_smf",
+      "oduibhir2014"
+    ],
+    "n_of_4432_covered": 4214,
+    "n_of_724_gaps_filled": 506,
+    "n_still_uncovered": 218,
+    "genes_per_source": {
+      "costanzo2016_kanmx_30c": 3708,
+      "costanzo2016_natmx_30c": 317,
+      "baryshnikova2010_kanmx": 98,
+      "oduibhir2014": 65,
+      "kuzmin2020_smf": 15,
+      "kuzmin2018_smf": 11
+    },
+    "scale_transfers": [
+      {
+        "source": "costanzo2016_natmx_30c",
+        "n_overlap_with_costanzo": 3157,
+        "slope_onto_costanzo": 0.882782845872235,
+        "intercept_onto_costanzo": 0.11577944211047238,
+        "pearson_on_overlap": 0.951964147819712,
+        "n_genes_contributed": 317
+      },
+      {
+        "source": "baryshnikova2010_kanmx",
+        "n_overlap_with_costanzo": 3811,
+        "slope_onto_costanzo": 0.826822964059711,
+        "intercept_onto_costanzo": 0.15977924275412242,
+        "pearson_on_overlap": 0.8906244710204604,
+        "n_genes_contributed": 98
+      },
+      {
+        "source": "kuzmin2018_dmf_array_smf",
+        "n_overlap_with_costanzo": 986,
+        "slope_onto_costanzo": 0.9903270788408007,
+        "intercept_onto_costanzo": 0.018573791116810845,
+        "pearson_on_overlap": 0.9954038383708846,
+        "n_genes_contributed": 0
+      },
+      {
+        "source": "kuzmin2020_dmf_array_smf",
+        "n_overlap_with_costanzo": 3752,
+        "slope_onto_costanzo": 0.9297798066832972,
+        "intercept_onto_costanzo": 0.0669028726427935,
+        "pearson_on_overlap": 0.9465602599392723,
+        "n_genes_contributed": 0
+      },
+      {
+        "source": "kuzmin2018_smf",
+        "n_overlap_with_costanzo": 1135,
+        "slope_onto_costanzo": 0.986315496687252,
+        "intercept_onto_costanzo": 0.024452778448974765,
+        "pearson_on_overlap": 0.9832269661618402,
+        "n_genes_contributed": 11
+      },
+      {
+        "source": "kuzmin2020_smf",
+        "n_overlap_with_costanzo": 434,
+        "slope_onto_costanzo": 0.3872374010797477,
+        "intercept_onto_costanzo": 0.6250102489568081,
+        "pearson_on_overlap": 0.5106349109722647,
+        "n_genes_contributed": 15
+      },
+      {
+        "source": "oduibhir2014",
+        "n_overlap_with_costanzo": 1080,
+        "slope_onto_costanzo": 0.7448600525836144,
+        "intercept_onto_costanzo": 0.24312523820839405,
+        "pearson_on_overlap": 0.6247301916372414,
+        "n_genes_contributed": 65
+      }
+    ]
+  },
+  "cross_validated": {
+    "incumbent_costanzo_kanmx_30c": {
+      "nineteen_amino_acids": {
+        "pearson": 0.17629021144747914,
+        "pearson_sd_across_shuffles": 0.00247705791253958,
+        "pearson_sd_across_folds": 0.02449366179341139,
+        "pearson_se_fisher": 0.015916925214855437,
+        "spearman": 0.1667893345342014,
+        "spearman_sd_across_shuffles": 0.0002991262323530973,
+        "n": 3708,
+        "n_features": 19,
+        "n_folds_scored": 15,
+        "alpha_min_selected": 316.22776601683796,
+        "alpha_max_selected": 1000.0,
+        "alpha_at_grid_edge": false
+      },
+      "fitness_only": {
+        "pearson": 0.15077878297688843,
+        "pearson_sd_across_shuffles": 0.0027810371079937004,
+        "pearson_sd_across_folds": 0.039652378200716334,
+        "pearson_se_fisher": 0.01605395976220457,
+        "spearman": 0.09491528412016874,
+        "spearman_sd_across_shuffles": 0.0016320849320404414,
+        "n": 3708,
+        "n_features": 1,
+        "n_folds_scored": 15,
+        "alpha_min_selected": 56.23413251903491,
+        "alpha_max_selected": 100.0,
+        "alpha_at_grid_edge": false
+      },
+      "nineteen_plus_fitness": {
+        "pearson": 0.20007816638879986,
+        "pearson_sd_across_shuffles": 0.0009769731229883874,
+        "pearson_sd_across_folds": 0.03075203341528332,
+        "pearson_se_fisher": 0.01576988769164929,
+        "spearman": 0.16997839239523047,
+        "spearman_sd_across_shuffles": 0.001910801400314363,
+        "n": 3708,
+        "n_features": 20,
+        "n_folds_scored": 15,
+        "alpha_min_selected": 316.22776601683796,
+        "alpha_max_selected": 1000.0,
+        "alpha_at_grid_edge": false
+      },
+      "nineteen_given_fitness": {
+        "pearson": 0.13257181649980943,
+        "pearson_sd_across_shuffles": 0.002568841619619229,
+        "pearson_sd_across_folds": 0.026204554286284213,
+        "pearson_se_fisher": 0.016138685637235334,
+        "spearman": 0.13436794689002235,
+        "spearman_sd_across_shuffles": 0.003148221781161467,
+        "n": 3708,
+        "n_features": 19,
+        "n_folds_scored": 15,
+        "alpha_min_selected": 316.22776601683796,
+        "alpha_max_selected": 1000.0,
+        "alpha_at_grid_edge": false
+      },
+      "betaxanthin_vs_fitness_pearson": 0.15493516947640684,
+      "betaxanthin_sd": 0.46405940807960877
+    },
+    "enlarged_union": {
+      "nineteen_amino_acids": {
+        "pearson": 0.288367980681902,
+        "pearson_sd_across_shuffles": 0.00139188762081685,
+        "pearson_sd_across_folds": 0.04240304749832455,
+        "pearson_se_fisher": 0.014127879492585788,
+        "spearman": 0.21645203528688586,
+        "spearman_sd_across_shuffles": 0.0023589141973699847,
+        "n": 4214,
+        "n_features": 19,
+        "n_folds_scored": 15,
+        "alpha_min_selected": 100.0,
+        "alpha_max_selected": 316.22776601683796,
+        "alpha_at_grid_edge": false
+      },
+      "fitness_only": {
+        "pearson": -0.01740610328294064,
+        "pearson_sd_across_shuffles": 0.00683478481597474,
+        "pearson_sd_across_folds": 0.05845361657133738,
+        "pearson_se_fisher": 0.015404281112818548,
+        "spearman": 0.033325893359226415,
+        "spearman_sd_across_shuffles": 0.010359210964097346,
+        "n": 4214,
+        "n_features": 1,
+        "n_folds_scored": 15,
+        "alpha_min_selected": 1000.0,
+        "alpha_max_selected": 100000000.0,
+        "alpha_at_grid_edge": true
+      },
+      "nineteen_plus_fitness": {
+        "pearson": 0.28754555277110155,
+        "pearson_sd_across_shuffles": 0.0018177172334534661,
+        "pearson_sd_across_folds": 0.04250736016513086,
+        "pearson_se_fisher": 0.014135176454842302,
+        "spearman": 0.21738393911786932,
+        "spearman_sd_across_shuffles": 0.0026095510175111023,
+        "n": 4214,
+        "n_features": 20,
+        "n_folds_scored": 15,
+        "alpha_min_selected": 100.0,
+        "alpha_max_selected": 316.22776601683796,
+        "alpha_at_grid_edge": false
+      },
+      "nineteen_given_fitness": {
+        "pearson": 0.28648501078491856,
+        "pearson_sd_across_shuffles": 0.0018043432114722268,
+        "pearson_sd_across_folds": 0.04154464349533709,
+        "pearson_se_fisher": 0.0141445553082232,
+        "spearman": 0.2045267412182863,
+        "spearman_sd_across_shuffles": 0.0027250194518907683,
+        "n": 4214,
+        "n_features": 19,
+        "n_folds_scored": 15,
+        "alpha_min_selected": 100.0,
+        "alpha_max_selected": 316.22776601683796,
+        "alpha_at_grid_edge": false
+      },
+      "betaxanthin_vs_fitness_pearson": 0.03675886234799837,
+      "betaxanthin_sd": 0.5543248416967306
+    },
+    "enlarged_union_within_source_z": {
+      "nineteen_amino_acids": {
+        "pearson": 0.288367980681902,
+        "pearson_sd_across_shuffles": 0.00139188762081685,
+        "pearson_sd_across_folds": 0.04240304749832455,
+        "pearson_se_fisher": 0.014127879492585788,
+        "spearman": 0.21645203528688586,
+        "spearman_sd_across_shuffles": 0.0023589141973699847,
+        "n": 4214,
+        "n_features": 19,
+        "n_folds_scored": 15,
+        "alpha_min_selected": 100.0,
+        "alpha_max_selected": 316.22776601683796,
+        "alpha_at_grid_edge": false
+      },
+      "fitness_only": {
+        "pearson": 0.13321175298160107,
+        "pearson_sd_across_shuffles": 0.001707504466234288,
+        "pearson_sd_across_folds": 0.053128437864832144,
+        "pearson_se_fisher": 0.015135574753537981,
+        "spearman": 0.0997076318055986,
+        "spearman_sd_across_shuffles": 0.0013822397596926206,
+        "n": 4214,
+        "n_features": 1,
+        "n_folds_scored": 15,
+        "alpha_min_selected": 56.23413251903491,
+        "alpha_max_selected": 100.0,
+        "alpha_at_grid_edge": false
+      },
+      "nineteen_plus_fitness": {
+        "pearson": 0.2999929308362717,
+        "pearson_sd_across_shuffles": 0.001322217293105968,
+        "pearson_sd_across_folds": 0.041583512889436416,
+        "pearson_se_fisher": 0.014022508119155841,
+        "spearman": 0.2253992665840805,
+        "spearman_sd_across_shuffles": 0.001881124044576888,
+        "n": 4214,
+        "n_features": 20,
+        "n_folds_scored": 15,
+        "alpha_min_selected": 100.0,
+        "alpha_max_selected": 316.22776601683796,
+        "alpha_at_grid_edge": false
+      },
+      "nineteen_given_fitness": {
+        "pearson": 0.2699077969396585,
+        "pearson_sd_across_shuffles": 0.0017179016559566828,
+        "pearson_sd_across_folds": 0.04337652224306475,
+        "pearson_se_fisher": 0.014286650341111984,
+        "spearman": 0.1855349422528171,
+        "spearman_sd_across_shuffles": 0.002312878390562083,
+        "n": 4214,
+        "n_features": 19,
+        "n_folds_scored": 15,
+        "alpha_min_selected": 100.0,
+        "alpha_max_selected": 316.22776601683796,
+        "alpha_at_grid_edge": false
+      },
+      "betaxanthin_vs_fitness_pearson": 0.14011538482106214,
+      "betaxanthin_sd": 0.5543248416967306
+    },
+    "all_4432_no_control": {
+      "nineteen_amino_acids": {
+        "pearson": 0.2979852699262465,
+        "pearson_sd_across_shuffles": 0.0029034260245014024,
+        "pearson_sd_across_folds": 0.031110312602316035,
+        "pearson_se_fisher": 0.013691126099403178,
+        "spearman": 0.2175272416152353,
+        "spearman_sd_across_shuffles": 0.004426915919180224,
+        "n": 4432,
+        "n_features": 19,
+        "n_folds_scored": 15,
+        "alpha_min_selected": 177.82794100389228,
+        "alpha_max_selected": 316.22776601683796,
+        "alpha_at_grid_edge": false
+      },
+      "betaxanthin_sd": 0.5636684527605479
+    },
+    "still_uncontrolled": {
+      "nineteen_amino_acids": {
+        "pearson": 0.3149981941620523,
+        "pearson_sd_across_shuffles": 0.031177954355945177,
+        "pearson_sd_across_folds": 0.1692510287247608,
+        "pearson_se_fisher": 0.0613655885245028,
+        "spearman": 0.245448510011666,
+        "spearman_sd_across_shuffles": 0.017619527564906756,
+        "n": 218,
+        "n_features": 19,
+        "n_folds_scored": 15,
+        "alpha_min_selected": 56.23413251903491,
+        "alpha_max_selected": 177.82794100389228,
+        "alpha_at_grid_edge": false
+      },
+      "betaxanthin_sd": 0.721984572112265
+    }
+  },
+  "written_at": "2026-08-30-14-31-56"
+}

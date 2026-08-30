@@ -45,53 +45,71 @@
     "all_genes": {
       "nineteen_amino_acids": {
         "pearson": 0.2979852699262465,
-        "pearson_sd": 0.0029034260245014024,
+        "pearson_sd_across_shuffles": 0.0029034260245014024,
+        "pearson_sd_across_folds": 0.031110312602316035,
+        "pearson_se_fisher": 0.013691126099403178,
         "spearman": 0.2175272416152353,
-        "spearman_sd": 0.004426915919180224,
+        "spearman_sd_across_shuffles": 0.004426915919180224,
         "n": 4432,
-        "n_features": 19
+        "n_features": 19,
+        "n_folds_scored": 15
       },
       "tyrosine_only": {
         "pearson": 0.06405993816767701,
-        "pearson_sd": 0.0038513277611330306,
+        "pearson_sd_across_shuffles": 0.0038513277611330306,
+        "pearson_sd_across_folds": 0.03292334349340902,
+        "pearson_se_fisher": 0.014963355970955019,
         "spearman": 0.07615680894766709,
-        "spearman_sd": 0.0010305058324990397,
+        "spearman_sd_across_shuffles": 0.0010305058324990397,
         "n": 4432,
-        "n_features": 1
+        "n_features": 1,
+        "n_folds_scored": 15
       }
     },
     "with_fitness_record": {
       "nineteen_amino_acids": {
         "pearson": 0.17629021144747892,
-        "pearson_sd": 0.0024770579125390677,
+        "pearson_sd_across_shuffles": 0.0024770579125390677,
+        "pearson_sd_across_folds": 0.024493661793411104,
+        "pearson_se_fisher": 0.015916925214855424,
         "spearman": 0.1667893345342014,
-        "spearman_sd": 0.0002991262323530973,
+        "spearman_sd_across_shuffles": 0.0002991262323530973,
         "n": 3708,
-        "n_features": 19
+        "n_features": 19,
+        "n_folds_scored": 15
       },
       "fitness_only": {
         "pearson": 0.15077878297688843,
-        "pearson_sd": 0.0027810371079937004,
+        "pearson_sd_across_shuffles": 0.0027810371079937004,
+        "pearson_sd_across_folds": 0.039652378200716334,
+        "pearson_se_fisher": 0.01605395976220457,
         "spearman": 0.09491528412016874,
-        "spearman_sd": 0.0016320849320404414,
+        "spearman_sd_across_shuffles": 0.0016320849320404414,
         "n": 3708,
-        "n_features": 1
+        "n_features": 1,
+        "n_folds_scored": 15
       },
       "nineteen_plus_fitness": {
         "pearson": 0.20007816638879997,
-        "pearson_sd": 0.0009769731229885808,
+        "pearson_sd_across_shuffles": 0.0009769731229885808,
+        "pearson_sd_across_folds": 0.030752033415283455,
+        "pearson_se_fisher": 0.01576988769164929,
         "spearman": 0.16997839239523047,
-        "spearman_sd": 0.001910801400314363,
+        "spearman_sd_across_shuffles": 0.001910801400314363,
         "n": 3708,
-        "n_features": 20
+        "n_features": 20,
+        "n_folds_scored": 15
       },
       "nineteen_given_fitness": {
         "pearson": 0.1325718164998094,
-        "pearson_sd": 0.002568841619618646,
+        "pearson_sd_across_shuffles": 0.002568841619618646,
+        "pearson_sd_across_folds": 0.02620455428628467,
+        "pearson_se_fisher": 0.016138685637235334,
         "spearman": 0.13436794689002235,
-        "spearman_sd": 0.003148221781161467,
+        "spearman_sd_across_shuffles": 0.003148221781161467,
         "n": 3708,
-        "n_features": 19
+        "n_features": 19,
+        "n_folds_scored": 15
       },
       "betaxanthin_vs_fitness_pearson": 0.15493516947640684,
       "tyrosine_vs_fitness_pearson": -0.2040637313508226,
@@ -100,14 +118,22 @@
     "without_fitness_record": {
       "nineteen_amino_acids": {
         "pearson": 0.4547259479984042,
-        "pearson_sd": 0.021936610749912395,
+        "pearson_sd_across_shuffles": 0.021936610749912395,
+        "pearson_sd_across_folds": 0.0637108114964895,
+        "pearson_se_fisher": 0.029536029977500544,
         "spearman": 0.4536550069340745,
-        "spearman_sd": 0.004153244212210057,
+        "spearman_sd_across_shuffles": 0.004153244212210057,
         "n": 724,
-        "n_features": 19
+        "n_features": 19,
+        "n_folds_scored": 15
       },
       "betaxanthin_sd": 0.9143136229616698
     }
+  },
+  "cross_validated_uncertainty_key": {
+    "pearson_sd_across_shuffles": "SD of the full-sample out-of-fold r over the 3 fold shuffles; fold-assignment noise only, on the same deletions. Smallest of the three, and it understates sampling uncertainty. Drawn as panel b's error bar.",
+    "pearson_sd_across_folds": "SD of the r computed within each held-out fold, over 5 folds x 3 shuffles. Each fold holds n/5 deletions, so this is larger than the sampling error of the reported full-sample estimate; an upper reference, not the SE.",
+    "pearson_se_fisher": "analytic SE of a correlation at this n, 1/sqrt(n-3) on the Fisher-z scale mapped back to r. Independent of the cross-validation, and the one to quote for 'how precisely is this measured at this n'."
   },
   "high_producer_tyrosine_shift": {
     "quantile": 0.95,
@@ -133,6 +159,6 @@
   "figure": {
     "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/023-metabolome-betaxanthin-joint/betaxanthin_amino_acid_predictivity.png",
     "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/023-metabolome-betaxanthin-joint/betaxanthin_amino_acid_predictivity.svg",
-    "written_at": "2026-08-26-20-34-03"
+    "written_at": "2026-08-30-14-28-32"
   }
 }

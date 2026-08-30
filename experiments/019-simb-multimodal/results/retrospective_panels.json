@@ -2,7 +2,7 @@
   "achieved_vs_ceiling": [
     {
       "strand": "expression_morphology_joint",
-      "score": 0.0505357511341571,
+      "score": 0.0620547428727149,
       "ceiling": null,
       "run_id": "n7qqgsra"
     },
@@ -14,47 +14,47 @@
     },
     {
       "strand": "beta_carotene",
-      "score": 0.1324992761015892,
+      "score": 0.1184374928474426,
       "ceiling": 0.5435281992608196,
       "run_id": "o0aadmot"
     },
     {
       "strand": "amino_acid",
-      "score": 0.2106217294931411,
+      "score": 0.2085230648517608,
       "ceiling": null,
       "run_id": "24vlgope"
     },
     {
       "strand": "expression",
-      "score": 0.2292724668979645,
+      "score": 0.2276027202606201,
       "ceiling": 0.7746269669017283,
       "run_id": "b50f93ju"
     },
     {
       "strand": "expression_masked",
-      "score": 0.2407375007867813,
+      "score": 0.2382474929094314,
       "ceiling": 0.7746269669017283,
       "run_id": "hx8pxdic"
     },
     {
       "strand": "betaxanthin",
-      "score": 0.3723988175392151,
+      "score": 0.4014525592327118,
       "ceiling": 0.9141056952389444,
-      "run_id": "azh3tstz"
+      "run_id": "bxtccwlx"
     },
     {
       "strand": "betaxanthin_amino_acid_joint",
-      "score": 0.4297337532043457,
+      "score": 0.4275081753730774,
       "ceiling": 0.9141056952389444,
-      "run_id": "ag3pl3ex"
+      "run_id": "wmgxp95k"
     }
   ],
   "peak_position": [
     {
       "strand": "expression_morphology_joint",
       "last_epoch": 70.0,
-      "peak_epoch": 28.0,
-      "peak_fraction": 0.4
+      "peak_epoch": 26.0,
+      "peak_fraction": 0.37142857142857144
     },
     {
       "strand": "morphology",
@@ -64,42 +64,42 @@
     },
     {
       "strand": "beta_carotene",
-      "last_epoch": 999.0,
-      "peak_epoch": 799.0,
-      "peak_fraction": 0.7997997997997998
+      "last_epoch": 998.0,
+      "peak_epoch": 791.0,
+      "peak_fraction": 0.7925851703406813
     },
     {
       "strand": "amino_acid",
-      "last_epoch": 999.0,
-      "peak_epoch": 402.0,
-      "peak_fraction": 0.4024024024024024
+      "last_epoch": 998.0,
+      "peak_epoch": 354.0,
+      "peak_fraction": 0.35470941883767537
     },
     {
       "strand": "expression",
       "last_epoch": 4105.0,
-      "peak_epoch": 4007.0,
-      "peak_fraction": 0.9761266747868453
+      "peak_epoch": 4002.0,
+      "peak_fraction": 0.9749086479902558
     },
     {
       "strand": "expression_masked",
-      "last_epoch": 9997.0,
-      "peak_epoch": 9188.0,
-      "peak_fraction": 0.919075722716815
+      "last_epoch": 9900.0,
+      "peak_epoch": 9697.0,
+      "peak_fraction": 0.9794949494949495
     },
     {
       "strand": "betaxanthin",
-      "last_epoch": 999.0,
-      "peak_epoch": 254.0,
-      "peak_fraction": 0.25425425425425424
+      "last_epoch": 124.0,
+      "peak_epoch": 74.0,
+      "peak_fraction": 0.5967741935483871
     },
     {
       "strand": "betaxanthin_amino_acid_joint",
-      "last_epoch": 496.0,
-      "peak_epoch": 176.0,
-      "peak_fraction": 0.3548387096774194
+      "last_epoch": 372.0,
+      "peak_epoch": 181.0,
+      "peak_fraction": 0.48655913978494625
     }
   ],
-  "written_at": "2026-08-26-20-42-05",
+  "written_at": "2026-08-30-14-25-54",
   "figures": [
     "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/019-simb-multimodal/retrospective_achieved_vs_ceiling.svg",
     "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/019-simb-multimodal/retrospective_peak_position.svg"

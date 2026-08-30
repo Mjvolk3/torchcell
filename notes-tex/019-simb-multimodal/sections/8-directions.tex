@@ -5,58 +5,84 @@
 \section{What to run next\secstatus{todo}}
 \label{sec:directions}
 
-Ordered by cost against what each would settle. The first four are cheap enough that not
-running them is the expensive choice.
+Ordered by what each would settle, under one governing decision: \textbf{expression is
+settled first, and morphology at full scale is deferred until it is}. Morphology is the
+larger change to Figure 3 and it is not research, but it is also close to four times the
+strains at a comparable architecture with an unmeasured epoch budget, so running it now
+would occupy the hardware for the strand whose diagnosis is least advanced.
 
-\subsection{Tier 0, cheap and decisive\secstatus{todo}}
+\subsection{Do now\secstatus{todo}}
 
 \begin{enumerate}
-\item \textbf{The graph-prior probe is DONE, and it came back at chance}
-  (\cref{sec:graph-probe}). All nine graphs land between $0.4961$ and $0.5057$ AUC, at most
-  $+0.0046$ over a degree-preserving control. \textbf{Free the nine masked heads}; they are
-  constrained toward a target that does not predict which reporters respond. The one repair
-  with evidence is to stop symmetrizing the two directed relations: TF $\to$ target reaches
-  $0.5508$ on tflink and $0.5239$ on regulatory interaction, and
-  \file{_build_attention_mask} currently averages that away against its uninformative
-  reverse. That is a change to the mask builder, not to the model.
+\item \textbf{Resume the best expression checkpoint and run until the curve turns.} No run
+  has observed a maximum at any budget up to 10,000 epochs, so the saturation epoch, which
+  sets every arm budget afterward, is still unknown. A fresh 10,000-epoch run costs 3.8
+  days; resuming the existing checkpoint is the cheap form of the same experiment.
+  \textbf{Resume rather than restart, and use multi-GPU DDP} to shorten the wall clock,
+  subject to what the IGB \file{mmli} partition has free. The known risk is that Pearson is
+  improving slowly enough near the peak that the turn may take a long time to become
+  unambiguous; that is a reason to start it immediately rather than a reason not to.
 
-\item \textbf{Morphology at full scale.} Drop \file{require_modalities} for the
-  morphology-only arm and train on all 4,718 Ohya deletions instead of the 1,440 that also
-  carry expression. This is a config change, and it is the only way the $0.0824$ becomes a
-  number about morphology rather than about a quarter of morphology. Run it long enough to
-  see a peak, which \cref{sec:common} says cannot be assumed from the expression budget.
+\item \textbf{Stop symmetrizing the two directed relations} in \file{_build_attention_mask}.
+  TF $\to$ target reaches $0.5508$ on tflink and $0.5239$ on regulatory interaction against
+  controls near $0.501$, and the builder currently averages that against its uninformative
+  reverse, returning both to chance. This is the one graph-side repair with evidence behind
+  it.
 
-\item \textbf{The scalar morphology warm-up}, on \file{A113} (ceiling $0.873$, robust CV
-  $2.37$) or \file{C124_C} (Medium bud ratio, $0.698$ and $0.886$).
-  Cheap, and it calibrates the epoch budget for the 278-feature target. Not colony size:
-  colony size is fitness, which is already the project's strongest strand, and the CalMorph
-  size features are the ones deletions barely move.
+  \emph{On the objection that attention is symmetric}: the attention \emph{mask} does not
+  have to be. \file{head_mask[i, j]} and \file{head_mask[j, i]} are set together today, and
+  writing them independently is a change to the mask builder rather than to the model. The
+  attention scores themselves are already asymmetric, since $QK^\top$ is not symmetric; only
+  the mask forces symmetry.
 
-\item \textbf{Apply the post-hoc rescale to the existing best checkpoint.} Multiplying
-  predictions by $r/s$ changes no correlation and moves \file{nmse} from $1.010$ to
-  $0.944$, taking the model from worse-than-the-mean to better-than-the-mean in squared
-  error (\cref{sec:objective}). An evening's work, no training, and it removes an objection
-  the figure would otherwise have to answer.
+\item \textbf{Add unconstrained heads beside the masked ones, rather than freeing the masked
+  ones.} The cross-phenotype probe found the graph channel does carry signal, unevenly by
+  graph and by phenotype (\cref{tab:graph-pair-form}), so the masks stay. Keeping them
+  preserves the guarantee that some heads attend along known biology; adding unconstrained
+  heads gives the model somewhere to learn structure the graphs do not carry. Removing any
+  particular masked head is a later decision, and \file{tflink} is the only current candidate
+  for it.
 
-\item \textbf{Bracket the expression peak, by resuming rather than restarting.} No run has
-  observed a maximum at any budget up to 10,000 epochs, and a fresh 10,000-epoch run costs
-  3.8 days. Resuming the existing best checkpoint is the cheap form of the same experiment,
-  and the epoch at which the curve turns is what sets every arm budget afterward.
-  \cref{sec:campaign} proposes $E = 4{,}000$ in the meantime, justified by an arm that has
-  been observed to peak at 3,921.
+\item \textbf{The small-target joint arms, betaxanthin and the amino-acid pool.} These train
+  in hours rather than days and carry few output features, so the second-label question can
+  be iterated there while an expression run occupies a GPU. Given
+  \cref{sec:aa-redundancy}, the sharpest single experiment is to run the joint arm with
+  replication and ask whether its held-out betaxanthin predictions absorb the $0.218$
+  residual that betaxanthin-only training leaves on the table. That is one number, it reuses
+  the existing residualization, and it is decisive where the unreplicated grid is not.
 \end{enumerate}
 
-\subsection{Tier 1, the two questions worth GPU\secstatus{todo}}
+\subsection{Deferred, and why\secstatus{todo}}
+
+\begin{enumerate}
+\item \textbf{Morphology at full scale.} Drop \file{require_modalities} for the
+  morphology-only arm and train on all 4,718 Ohya deletions instead of the 1,440 that also
+  carry expression, or better, mask the loss over absent outputs so no strain is discarded.
+  It remains the largest single change available to Figure 3, and it is a config change. It
+  waits on expression.
+
+\item \textbf{The scalar morphology warm-up}, on \file{A113} or \file{C124_C}. When
+  morphology comes off the shelf this goes first, since it calibrates the epoch budget for
+  the 278-feature target at a fraction of the cost. Not cell size and not colony size: the
+  size features are precisely measured and barely moved by deletions
+  (\cref{tab:morph-size}), and colony size is fitness.
+
+\item \textbf{The post-hoc rescale on the best checkpoint.} It changes no correlation, so it
+  cannot improve the strand's headline number, and the expression work is not finished. Do
+  it when a figure is drawn.
+\end{enumerate}
+
+\subsection{The two questions worth a GPU campaign\secstatus{todo}}
 
 Both are laid out with their epoch budgets, seed counts and slot costs in
 \cref{sec:campaign}, which is the operational version of this subsection. In summary:
 
 \begin{itemize}
-\item \textbf{Settle the objective first} (\cref{tab:phase-a}). The quantile loss reaches
-  its minimum at epoch 463 and rises for the next 9,500 while Pearson climbs, and the model
-  never gets \file{nmse} below 1. A mechanism arm evaluated under an objective that is
-  optimizing something else cannot separate ``the mechanism does not help'' from ``the
-  objective does not reward it''.
+\item \textbf{Settle the objective first} (\cref{tab:phase-a}). The quantile loss reaches its
+  minimum at epoch 463 and rises for the next 9,500 while Pearson climbs, and the model ends
+  up only level with the mean predictor in squared error until it is rescaled. A mechanism
+  arm evaluated under an objective that is optimizing something else cannot separate ``the
+  mechanism does not help'' from ``the objective does not reward it''.
 \item \textbf{Then the pair term} (\cref{tab:phase-b}). The reference operator provably
   cannot express a dependence on the pair (deleted gene, reporter gene), and masked
   unmasking does not supply one at the point the score is taken. A rank-64 pair term
@@ -71,11 +97,11 @@ predicted to be the \emph{null} arm rather than the live one, since tyrosine alo
 betaxanthin at $0.064$ against the profile's $0.298$. Keep it as a negative control, not as
 the headline contrast.
 
-\subsection{Tier 2, the structural options\secstatus{todo}}
+\subsection{Structural options, further out\secstatus{todo}}
 
 \notesec{Constraint-based coupling is the mechanism Figure 6 needs} The 023 result is that
 the coupling between amino-acid pools and betaxanthin is present in the data at $r = 0.298$
-and that a plain auxiliary head does not use it, costing $-0.0265 \pm 0.0159$
+and that a plain auxiliary head does not use it, costing $-0.0279 \pm 0.0169$
 (\cref{tab:bx-aa-paired}). That is a structural gap, and an unstructured second head is the
 wrong instrument to close it: it asks the encoder to discover a stoichiometric relationship
 from 19 noisy concentrations and one pigment readout, with nothing in the architecture
@@ -97,6 +123,20 @@ $0.430$ against $0.914$. Expect it to earn its place by making the mechanism leg
 extending to targets with no screen at all, rather than by moving betaxanthin's number a
 lot.
 
+\notesec{The wider reason a metabolic layer is worth more than its betaxanthin delta} Once
+metabolism is represented explicitly, most of the phenotypes this project cares about route
+through one object rather than through a separate head each: metabolite production is the
+constraint's own output; gene-state readouts such as expression and proteome attach to it as
+the state the fluxes act on; global phenotypes such as fitness read off a class token;
+interactions read off subsets of gene representations; and chemogenomic response becomes an
+interaction between a compound and the network. \textbf{That is an argument about
+convenience and coverage rather than about accuracy on any one strand}, and it is the
+strongest form of the case, since no single strand's headroom justifies the work.
+
+\emph{Labeled as a design argument, not a measurement.} Nothing here has been built or
+tested, and the one adjacent measurement (\cref{tab:aa-incremental}) says only that a real
+coupling exists for such a layer to exploit.
+
 \notesec{Not an expression rescue} The same layer is attractive for expression on the
 argument that metabolism constrains transcription. \cref{tab:label-accounting} is the
 reason to be cautious: expression's binding constraint is 1,484 perturbations each seen
@@ -112,11 +152,20 @@ does not yet resolve. The case changes when a same-media proteome and expression
 exists, or when perturbations become fine-grained enough that the central-dogma collapse is
 what breaks.
 
-\notesec{Masked-label imputation as its own deliverable} The masked-conditioning oracle
-reaches cross-study $0.4838$ at $m = 1000$ against the model's $0.238$, and $97.5$ to
-$100.6\,\%$ of that gain survives removing a genotype predictor. It is a real capability
-and a defensible product surface, and it is not a genotype-to-expression result. Deciding
-whether to ship it as a separate thing is a decision, not an experiment.
+\notesec{Masked-label imputation as its own deliverable} The oracle reaches cross-study
+$0.4838$ at $m = 1000$ against the model's $0.238$, and $97.5$ to $100.6\,\%$ of that gain
+survives removing a genotype predictor, so it is a genuinely separate capability rather than
+a better version of the genotype task. \textbf{Something the group could offer on its own
+terms}: measure a subset of a strain's transcripts and get the rest, which is useful to
+someone who has an assay budget and no interest in our genotype model.
+
+Two things make it more attractive than it looked. The expensive-sounding $m = 1000$ is not
+the operating point: 100 randomly chosen genes already reach $77\,\%$ of the $m = 1000$
+cross-study score, and 10 reach $46\,\%$ (\cref{tab:gene-budget}). And which genes are chosen
+matters at the cheap end, where a variance-selected panel beats a random one and transfers
+across studies better. Deciding whether to ship it is a decision, not an experiment; the
+experiment worth running first is the ease-of-measurement panel selection
+(\cref{sec:campaign}).
 
 \subsection{What to do about Figure 3 and Figure 6\secstatus{todo}}
 
@@ -128,12 +177,21 @@ measured $0.775$, morphology at $13\,\%$ of a measured $0.611$ \emph{on a quarte
 data}, with the fitness panel carrying the strong result. \textbf{A $0.24$ per-gene Pearson
 is not a Figure 3 headline.}
 
-Two of the three cheapest routes to a better one are not modeling work at all. Morphology
-has never seen more than 1,161 of its 4,718 strains in any of 397 runs, so the
-full-scale run is a query change and is the largest single change available to the figure.
-And the graph-prior probe decides whether nine attention heads are enforcing a premise
-nobody has checked. Both land before any arm ladder is worth launching;
-\cref{sec:campaign} sizes what follows.
+\textbf{Whatever the campaign finds, the placeholders come out of the manuscript now.} A
+number nobody measured, sitting in a Results paragraph, is the failure mode this whole
+document exists to prevent, and removing it does not depend on having a better number to put
+there.
+
+The cheapest route to a better panel is not an architecture ladder. Morphology at full scale
+is a query change and remains the largest single change available to the figure, though it
+is deferred behind expression. And expression's own number is a lower bound set by compute
+rather than an estimate, since no run has peaked: the resumed run is what turns $0.238$ into
+either a real ceiling-relative claim or a higher number.
+
+If the campaign comes back inside the noise floor, the panel should be built around what is
+solid rather than around a genotype-to-expression correlation: the ceiling-relative
+statement, the imputation capability with its measured gene budget, and the fitness panel
+that already works.
 
 \notesec{Figure 6} The betaxanthin case is the strongest thing in this document and it does
 not depend on beating anyone on accuracy. The argument is coverage: yeast-GEM reaches
@@ -153,3 +211,11 @@ is the only framing in which a negative belongs in a figure.
 Keep the option text in the draw.io boxes. Several of those panels name alternatives that
 have not been run, and a composition that still reads when one of them does not arrive is
 worth more than a tidier one that does not.
+
+\notesec{The Figure 3 panel most worth adding} \textbf{Does adding fitness as a second label
+improve morphology prediction at all?} It is a yes-or-no question with an existing correct
+control, it runs on 4,220 strains rather than 1,440, and either answer is publishable: a
+gain is the multi-task claim the figure wants, and a null is the honest counterweight to the
+one auxiliary-head experiment run to completion here, which came out negative. Draw the panel
+per CalMorph feature as well as averaged, since a second label that helps only the
+well-measured features would vanish in a mean.

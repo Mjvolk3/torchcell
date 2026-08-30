@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-22-17-15-26",
+  "generated": "2026-08-30-14-40-43",
   "sources": {
     "proteome": {
       "dataset": "ProteomeMessner2023Dataset",
@@ -8,7 +8,9 @@
     "expression": {
       "dataset": "MicroarrayKemmeren2014Dataset",
       "media": "SC"
-    }
+    },
+    "neo4j_uri": "bolt://localhost:7687",
+    "neo4j_database": "torchcell"
   },
   "overlap": {
     "proteome_unique_ko_strains": 4549,
@@ -24,27 +26,27 @@
   },
   "per_gene_correlation": {
     "n": 1832,
-    "median": 0.0799490365418052,
-    "mean": 0.09228046243523476,
-    "q25": 0.03680796705654638,
-    "q75": 0.13868496934250735,
-    "iqr": 0.10187700228596097,
-    "min": -0.12830119303457863,
-    "max": 0.5969275527734901,
-    "frac_gt_0.3": 0.017467248908296942,
-    "frac_lt_0": 0.08897379912663755
+    "median": 0.07946360937689165,
+    "mean": 0.0922192946041075,
+    "q25": 0.036424362494874275,
+    "q75": 0.13858515674359306,
+    "iqr": 0.1021607942487188,
+    "min": -0.12707847019845261,
+    "max": 0.6004868217799589,
+    "frac_gt_0.3": 0.016921397379912665,
+    "frac_lt_0": 0.09443231441048035
   },
   "per_strain_correlation": {
     "n": 1350,
-    "median": 0.03751969658102394,
-    "mean": 0.06130436323965672,
-    "q25": -0.020430043637382427,
-    "q75": 0.11637555568008967,
-    "iqr": 0.1368055993174721,
-    "min": -0.4421392143069194,
-    "max": 0.6266605162729991,
+    "median": 0.037928360387096224,
+    "mean": 0.06129075127327343,
+    "q25": -0.02023483992203729,
+    "q75": 0.11661919078590958,
+    "iqr": 0.13685403070794688,
+    "min": -0.4429952000644973,
+    "max": 0.6263974187510345,
     "frac_gt_0.3": 0.06814814814814815,
-    "frac_lt_0": 0.3348148148148148
+    "frac_lt_0": 0.3333333333333333
   },
   "linear_map": {
     "proteome_to_expression": {
@@ -54,11 +56,11 @@
       "n_features": 1630,
       "n_targets": 1630,
       "alpha": 10000.0,
-      "r2_uniform_average": 0.034864743367604555,
-      "r2_variance_weighted": 0.0353488987469441,
-      "r2_per_gene_median": 0.029205530970840776,
-      "r2_per_gene_frac_positive": 0.7380368098159509,
-      "baseline_r2_uniform_average": -0.004129300142208325
+      "r2_uniform_average": 0.03530483154582255,
+      "r2_variance_weighted": 0.035841073983853416,
+      "r2_per_gene_median": 0.029217848795580592,
+      "r2_per_gene_frac_positive": 0.7429447852760737,
+      "baseline_r2_uniform_average": -0.0041297433303728
     },
     "expression_to_proteome": {
       "name": "expression \u2192 proteome",
@@ -67,31 +69,31 @@
       "n_features": 1630,
       "n_targets": 1630,
       "alpha": 10000.0,
-      "r2_uniform_average": 0.02400274558976457,
-      "r2_variance_weighted": 0.027029594205760583,
-      "r2_per_gene_median": 0.01462208617837818,
-      "r2_per_gene_frac_positive": 0.6239263803680981,
-      "baseline_r2_uniform_average": -0.00397498403938776
+      "r2_uniform_average": 0.024845255818788728,
+      "r2_variance_weighted": 0.02787870884412257,
+      "r2_per_gene_median": 0.015815076340219614,
+      "r2_per_gene_frac_positive": 0.6337423312883436,
+      "baseline_r2_uniform_average": -0.003981338990855656
     }
   },
   "representative_genes": [
     "YJL026W",
-    "YOL097C",
-    "YCR009C",
+    "YLR106C",
+    "YPR149W",
     "YCL042W"
   ],
   "figures": {
     "per_gene_corr_hist": {
-      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/simb-proteome-expr-eda/notes/assets/images/019-simb-multimodal/proteome_expression_per_gene_corr_hist_2026-07-22-17-15-26.png",
-      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/simb-proteome-expr-eda/notes/assets/images/019-simb-multimodal/proteome_expression_per_gene_corr_hist_2026-07-22-17-15-26.svg"
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/019-simb-multimodal/proteome_expression_per_gene_corr_hist.png",
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/019-simb-multimodal/proteome_expression_per_gene_corr_hist.svg"
     },
     "representative_scatters": {
-      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/simb-proteome-expr-eda/notes/assets/images/019-simb-multimodal/proteome_expression_representative_scatters_2026-07-22-17-15-26.png",
-      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/simb-proteome-expr-eda/notes/assets/images/019-simb-multimodal/proteome_expression_representative_scatters_2026-07-22-17-15-26.svg"
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/019-simb-multimodal/proteome_expression_representative_scatters.png",
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/019-simb-multimodal/proteome_expression_representative_scatters.svg"
     },
     "linear_map_r2": {
-      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/simb-proteome-expr-eda/notes/assets/images/019-simb-multimodal/proteome_expression_linear_map_r2_2026-07-22-17-15-26.png",
-      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/simb-proteome-expr-eda/notes/assets/images/019-simb-multimodal/proteome_expression_linear_map_r2_2026-07-22-17-15-26.svg"
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/019-simb-multimodal/proteome_expression_linear_map_r2.png",
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/019-simb-multimodal/proteome_expression_linear_map_r2.svg"
     }
   }
 }

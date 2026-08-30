@@ -40,31 +40,59 @@ comparable (\cref{tab:bx-two-numbers}).}
 \label{tab:project-census}
 \end{table}
 
-Scoring is a different matter. Finding a run's \emph{best} value needs its full validation
-history, which is one request per run. Coverage there is not automatically complete, so it
-is stated before the table rather than after it, and the split below is generated from the
-data rather than written by hand: a hand-kept list would go stale silently, which is the
-worst failure mode for a table whose job is to state a limitation.
+\notesec{Enumerating a run and reading its curve are different things, and revision 2
+conflated them} All 28 projects were enumerated, and revision 2 reported that as complete
+coverage. But finding a run's \emph{best} value needs its full validation history, one
+request per run, and that had been fetched for only \textbf{306 of the 2,187 runs}. The
+fetch rule was a per-project candidate set: the top 8 runs by final logged value, plus the
+top 5 by epoch count, at most 13 per project.
 
 \input{tables/t-coverage}
 
-\notesec{What this does and does not put at risk} A strand maximum can only move
-\emph{upward} when the pending projects land, never down, so every ``$X$ of ceiling''
-figure below is a lower bound. The medians are the vulnerable statistic, since they are
-computed over the projects read.
+\notesec{That rule is biased in three ways, and one of them reached the document} It is a
+maximum-finder, so any \emph{mean or median} over the fetched subset is conditioned on a run
+having ended high or run long. The amino-acid median was reported as $0.0498$ ``across the
+31 runs'', and those 31 were exactly the candidate subset of 97; at full coverage the median
+is $0.0570$. It also ranks by the \emph{final} logged value, which this document elsewhere
+shows can sit thousands of epochs from the peak, so the ranking key is the statistic the
+document argues against. And it spends slots on runs that never logged the metric at all.
 
-\notesec{One resolution caveat, because it explains small disagreements} History is
-sampled, and the leaderboard now reads every project in ONE uniform pass at 500 points per
-curve with a bounded candidate set per project. \cref{sec:objective}'s diagnosis samples the
-same two runs at 4,000 points and smooths more heavily, because it is locating turning
-points rather than scoring. The same run therefore reads $0.2382$ here and $0.2362$ there.
-The leaderboard value is the one quoted as a score; the diagnosis values are locators.
-Coarser sampling can only lower a \file{roll_max}, so the scores below are lower bounds in
-that direction as well as in the coverage direction.
+\notesec{And the rule missed a maximum, which is worse than the bias it was known to have}
+The assumption written into the puller was that incomplete coverage risks a median but never
+a maximum, since a maximum can only move upward as more runs land. That assumption is now
+falsified. Beta-carotene's true best run peaks at \textbf{epoch 9 of 49}, which puts it low
+on final value \emph{and} low on epoch count, so it was invisible to both arms of the rule at
+once. The strand's best was reported as $0.118$ and is $0.1371$
+(\cref{sec:carotene}). A run that peaks very early and decays is a structural blind spot of
+this rule, not an unlucky draw.
+
+\notesec{Where coverage stands: complete} \textbf{All 2,187 runs across all 28 projects now
+have their validation curves read}, so every score quoted below is a maximum over the runs
+that were actually run. The pull took about 25 minutes at roughly $1.3$ seconds per run,
+which is worth recording because the previous revision treated full coverage as
+prohibitively expensive and it was not.
+
+Two things changed and one did not. Beta-carotene's best rose from $0.118$ to $0.1371$, as
+above. Reading everything also surfaced 8 collapsed morphology runs the candidate set never
+sampled, and moved the medians, which were the statistic most exposed to the old rule.
+\textbf{Every other strand maximum was already correct}: expression $0.238$, morphology
+$0.082$, betaxanthin $0.401$, amino acid $0.209$, and the expression-morphology joint arm
+$0.062$ are unchanged at full coverage. So the candidate rule was mostly doing its job, and
+its one failure is the instructive part rather than the typical case.
+
+\notesec{One resolution caveat, because it explains small disagreements} History is sampled,
+and the leaderboard reads every curve in one uniform pass at 500 points.
+\cref{sec:objective}'s diagnosis samples the same two runs at 4,000 points and smooths more
+heavily, because it is locating turning points rather than scoring. The same run therefore
+reads $0.2382$ here and $0.2362$ there. The leaderboard value is the one quoted as a score;
+the diagnosis values are locators. Coarser sampling can only lower a \file{roll_max}, so
+these scores are lower bounds in that direction too.
 
 \subsection{One table, read the same way\secstatus{todo}}
 
-\input{tables/t-strand-summary}
+\Cref{tab:strand-summary} is the whole account and sits in \cref{sec:summary}; it is not
+repeated here. What the two panels below add is what a table cannot show, the size of each
+gap and where inside its own budget each best run peaked.
 
 \tcfigfit[0.72]{figures/retrospective_achieved_vs_ceiling.pdf}{Achieved score against
 measured ceiling, best run per strand. The dashed outline is the ceiling and the gap is the
@@ -89,9 +117,10 @@ betaxanthin and amino acid, are the two with a scalar or low-dimensional target.
 \item \textbf{Expression never peaks.} At every budget tried, up to 10,000 epochs, the
   validation Pearson peaks in the last tenth of the run. Raising the budget from 1,600 to
   10,000 raised the score from $0.204$ to $0.238$ and moved the peak with it.
-\item \textbf{The metabolite strands peak early and then overfit.} Amino-acid runs peak at
-  epochs 48 to 134 with validation slope turning negative while training slope stays
-  positive. The best betaxanthin run peaks at epoch 254 of 999.
+\item \textbf{The metabolite and pigment strands peak early and then overfit.} Amino-acid
+  runs peak at epochs 48 to 134 with validation slope turning negative while training slope
+  stays positive. Beta-carotene's best run peaks at epoch 9 of 49, which is the most extreme
+  case in the project.
 \item \textbf{Morphology was never run long enough to tell which it does.} Longest run,
   121 epochs.
 \end{itemize}
@@ -106,12 +135,60 @@ budget were set from expression.
 
 The full measurement is \cref{sec:objective}; what belongs here is the cross-strand
 statement. On expression the \emph{quantile loss} bottoms at epoch 463 and rises for the
-next 9,500 while Pearson climbs, and \file{nmse} never returns below 1, so the model is no
-better than predicting each gene's mean in squared error while ordering genes at
-$r = 0.236$. \emph{Squared error itself does not diverge}: its minimum lands alongside the
-Pearson peak on both long runs. The 010 fitness and interaction task shows neither
-behavior, with both losses falling monotonically and the validation-loss minimum at the
-last epoch.
+next 9,500 while Pearson climbs. \emph{Squared error itself does not diverge}: its minimum
+lands alongside the Pearson peak on both long runs. Separately from the divergence, the
+model sits at parity with the mean predictor in squared error, at
+$\texttt{nmse} \approx 1.00$ to $1.04$ depending on which epoch is called the peak
+(\cref{tab:nmse-parity}), and goes clearly below 1 once rescaled.
+
+\notesec{Correction, and it reverses revision 2's claim about 010} Revision 2 said ``the 010
+fitness and interaction task shows neither behavior, with both losses falling monotonically
+and the validation-loss minimum at the last epoch'', citing no run and no script. It was
+pulled and read, 20 runs of which 16 carry a live gene-interaction metric. Every part of
+that sentence is wrong.
+
+\begin{itemize}
+\item \textbf{010 trains gene interaction only.} Its config normalizes
+  \file{gene_interaction} and nothing else, and no run logs a fitness key. The phrase
+  ``fitness and interaction'' should not appear.
+\item \textbf{Neither loss is monotone wherever monotonicity is testable.} Validation loss
+  is monotone in 11 of 16 runs, but every one of those 11 is capped at 20 or 30 epochs, too
+  short to have turned. Of the 5 runs that passed 40 epochs, \emph{zero} are monotone: they
+  carry 3 to 9 validation-loss increases over 41 to 63 steps.
+\item \textbf{010 shows the loss-metric divergence too, with the opposite sign.} The
+  gene-interaction Pearson peaks \emph{before} the validation-loss minimum in 13 of 16
+  scored runs, median gap 8 epochs and maximum 39, then falls by as much as $31\,\%$ while
+  the loss keeps improving. On \texttt{lzs9pcj3} the metric peaks at epoch 24 and the loss
+  bottoms at 63.
+\end{itemize}
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: experiments/019-simb-multimodal/results/check010_run_summary.csv
+\begin{tabular}{lrrrrr}
+\toprule
+run & val-loss min epoch & metric peak epoch & peak & final & relative fall \\
+\midrule
+\texttt{lzs9pcj3} & 63 & 24 & 0.4520 & 0.4428 & 2.0\,\% \\
+\texttt{yv4r30bi} & 61 & 25 & 0.4472 & 0.4312 & 3.6\,\% \\
+\texttt{c7671wgj} & 48 & 24 & 0.4619 & 0.4572 & 1.0\,\% \\
+\texttt{t34kenj1} & 29 & 13 & 0.3331 & 0.2414 & 27.5\,\% \\
+\texttt{g5gev0w2} & 19 & 11 & 0.3236 & 0.2230 & 31.1\,\% \\
+\bottomrule
+\end{tabular}
+\caption[]{On 010 the validation loss keeps falling after the metric has peaked, which is
+the mirror image of expression, where the quantile loss turns early and the metric keeps
+climbing. Both are loss-metric divergences, so 010 is not the clean counterexample revision
+2 used it as. 010 has also never approached its own budget: \file{trainer.max_epochs} is
+600 and no run passed 65.}
+\label{tab:010-divergence}
+\end{table}
+
+\textbf{What survives is the weaker and still useful statement}: the divergence takes a
+different form on each target, so no single stopping rule or checkpoint criterion is
+correct across them, and best-by-loss checkpointing is wrong on both, early on expression
+and late on 010.
+\src{experiments/019-simb-multimodal/scripts/check010\_loss\_metric\_curves.py}
 
 So the divergence is a property of one objective on one target, not a general feature of
 the multitask setup, and the metabolite strands, which peak early and overfit, are governed
@@ -141,7 +218,7 @@ figure is drawn rather than after a reviewer asks.
 On betaxanthin the ten grid cells span Spearman $0.013$ to $0.158$ and AUC $0.406$ to
 $0.695$, against a between-method gap of $0.0014$ on AUC. Four low points are the
 $\mathrm{lr} = 10^{-3}$ cells, which collapsed to a constant predictor. On the amino-acid
-strand the best run is $0.211$ and the median is $0.0498$.
+strand the best run is $0.209$ and the median over all 97 is $0.0570$.
 
 Any single-number claim about a method is dominated by which cell is quoted, which is why
 the cell must be fixed by validation in advance, and why the leaderboard records the median
@@ -189,62 +266,160 @@ configuration chosen without hindsight. Its top five trials span $0.0206$, which
 
 \subsection{Cross-modality overlap is real and small\secstatus{todo}}
 
-Before spending compute on joint proteome and expression training, the linear overlap
-between the two was measured on the 1,350 strains they share. Per-gene correlation across
-strains has median $r = 0.08$, with $1.7\,\%$ of genes above $0.3$ and $8.9\,\%$ negative.
-A ridge map recovers held-out $R^2$ of $0.035$ in one direction and $0.024$ in the other,
-above a trivial baseline of $-0.004$ but far from redundancy.
+\notesec{Which two datasets, and why this was measured at all} The \term{proteome} here is
+Messner 2023 (\file{doi:10.1038/s41586-023-06739-5}), a knockout-collection proteome
+measured in synthetic minimal medium at 30 C; the \term{expression} is the same Kemmeren
+2014 knockout compendium the expression strand predicts
+(\file{doi:10.1016/j.cell.2014.02.054}), measured in synthetic complete medium at 30 C. They share 1,832 genes and 1,350 deletion strains.
+Joint proteome-and-expression training is not on the near roadmap, so this is a gating
+measurement rather than a result: before spending compute on that pairing, how much does one
+modality already tell you about the other?
+
+Per-gene correlation across strains has median $r = 0.08$, with $1.7\,\%$ of genes above
+$0.3$ and $9.4\,\%$ negative. A ridge map recovers held-out $R^2$ of $0.035$ in one
+direction and $0.025$ in the other, above a trivial baseline of $-0.004$ but far from
+redundancy.
 \src{experiments/019-simb-multimodal/results/proteome_expression_eda.json}
 
-\tcfigfit{figures/proteome_expression_per_gene_corr_hist_2026-07-22-17-15-26.pdf}{Per-gene
-correlation across strains between the Messner proteome and the Kemmeren expression
-compendium, over the 1,832 genes and 1,350 strains they share. A narrow lump barely off
-zero. The few high-$r$ genes are dominated by the strain in which that gene is itself
-deleted, which drives both its transcript and its protein toward zero.}{fig:prot-expr}
+\tcfigfit{figures/proteome_expression_per_gene_corr_hist.pdf}{Per-gene correlation across
+strains between the Messner 2023 knockout proteome and the Kemmeren 2014 knockout expression
+compendium, over the 1,832 genes and 1,350 deletion strains they share. A narrow lump barely
+off zero: mRNA and protein levels for the same gene move largely independently across this
+panel. The few high-$r$ genes are dominated by the strain in which that gene is itself
+deleted, which drives both its transcript and its protein toward zero and manufactures a
+correlation from one point.}{fig:prot-expr}
 
-The two modalities were measured in different media, synthetic minimal for the proteome and
-synthetic complete for the expression, which attenuates every number above. The overlap is
-therefore certified as non-redundant and not certified as cleanly complementary. That
-distinction is what bounds how hard a ``the proteome helps expression'' claim can be pushed
-until a same-media pair exists.
+\notesec{One qualification that bounds every number above} The two modalities were measured
+in \textbf{different media}, synthetic minimal for the proteome and synthetic complete for
+the expression. Media differences move both transcript and protein abundance, so part of the
+observed decoupling is a condition artifact rather than biology, and every correlation here
+is attenuated by an unmeasured amount. The overlap is therefore certified as
+\emph{non-redundant} and not certified as cleanly \emph{complementary}, and that distinction
+bounds how hard a ``the proteome helps expression'' claim can be pushed until a same-media
+pair exists.
 
-\subsection{The graph prior has now been checked, and it is at chance\secstatus{todo}}
+\notesec{Provenance note on these figures} This query fails against the served NCSA database
+with the known cold-read \file{IOException}, so it was re-run against the local GilaHyper
+build, and the endpoint is now recorded in the results JSON. Most values reproduce exactly;
+two moved slightly, fraction negative $8.9 \to 9.4\,\%$ and the reverse-direction $R^2$
+$0.024 \to 0.025$, and the numbers above are the local build's.
+
+\subsection{The graph prior, checked on one phenotype and then on six\secstatus{todo}}
 \label{sec:graph-probe}
 
 The nine interaction graphs do not inject features. They enter as a hard additive attention
 mask, so composing $L$ layers makes the influence of gene $X$ on gene $Y$ approximately the
-$L$-step random-walk reachability of $Y$ from $X$. The whole content of the graph channel is
-therefore one falsifiable claim: \emph{deleting $X$ perturbs the genes near $X$ on graph
-$k$}. It had been specified and unbuilt since 2026.07.26 and is now measured.
+$L$-step random-walk reachability of $Y$ from $X$. The graph channel therefore rests on a
+falsifiable claim, and \textbf{the claim can be written two ways, which turn out to have
+different answers}.
+
+\begin{description}
+\item[The reporter form] \emph{Deleting $X$ perturbs the reporter genes near $X$ on graph
+  $k$.} Responders are the top $1\,\%$ of reporters by $|\log_2$ ratio$|$; the statistic is
+  the probability that a random responder sits closer to the deleted gene than a random
+  non-responder. This needs a readout indexed by gene, so it exists for expression only.
+\item[The pair form] \emph{Deletions of two genes adjacent on graph $k$ give more similar
+  phenotypes than deletions of two unrelated genes.} Adjacent pairs are drawn as $t$-step
+  random-walk endpoints, matching the reachability the composed attention implies;
+  background pairs are drawn uniformly from the same phenotyped gene pool. Similarity is the
+  across-feature correlation for a vector readout and the negative absolute difference for a
+  scalar one. \textbf{This form is defined for every strand}, which is what makes the
+  cross-phenotype comparison possible.
+\end{description}
+
+Both use the same two controls, a configuration-model redraw holding every node's degree and
+a matched-density random graph, and $0.5$ is ``the graph says nothing''. The pair form scores
+60,000 pairs per cell, giving a sampling standard error of about $0.0017$, so an excess over
+control beyond $\approx 0.005$ is real.
 \src{experiments/019-simb-multimodal/scripts/graph\_prior\_probe.py}
 
-For each deleted gene, responders are the top $1\,\%$ of reporters by $|\log_2$ ratio$|$,
-and the statistic is the probability that a random responder is closer to the deleted gene
-than a random non-responder. $0.5$ is ``the graph says nothing''. Two controls: a
-configuration-model redraw holding every node's degree, and a matched-density random graph.
+\tcfigfit{figures/graph_prior_probe.pdf}{The graph prior across every strand. (a) to (f) one
+panel per phenotype, showing each of the nine graphs against its degree-preserving and
+matched-density controls, bars anchored at the $0.5$ null so hundredth-scale deviations are
+visible. (g) the reporter form and the pair form on expression, the one strand where both
+are defined, which is what calibrates reading the pair form elsewhere. (h) the direction
+result on the two directed graphs. (i) how the excess over control changes with walk length.
+\textbf{Note the $x$ axes differ between panels a to f}, because expression's effects are an
+order of magnitude larger than morphology's and a shared scale would flatten five panels to
+show one; compare each bar against its own controls rather than across panels, and read
+\cref{tab:graph-pair-form} for the cross-panel comparison.}{fig:graph-probe}
 
-\tcfigfit{figures/graph_prior_probe.pdf}{(a) All nine graphs in the orientation the model
-actually uses. (b) The two directed graphs, by orientation. (c) Longer walks do not
-recover anything; several graphs fall below chance by $t = 3$.}{fig:graph-probe}
+\notesec{On expression the two forms disagree, and the pair form is the one with signal}
+The reporter form is at chance on all nine graphs: every AUC between $0.4961$ and $0.5057$,
+largest excess over the degree-preserving control $+0.0046$, unchanged when responders are
+defined at the top $5\,\%$ instead of the top $1\,\%$. That was the whole basis of revision
+2's ``the graph prior is at chance''.
 
-\notesec{The deployed prior carries no signal on any of the nine} Every AUC lands between
-$0.4961$ and $0.5057$, and the largest excess over the degree-preserving control is
-$\mathbf{+0.0046}$ (tflink, $0.5057$ against $0.5017$). Repeating with responders defined as
-the top $5\,\%$ rather than the top $1\,\%$ moves nothing. Longer walks make it worse, not
-better: physical interaction, STRING experimental and STRING coexpression all drop below
-$0.5$ by $t = 3$.
+The pair form, on the same strand and the same graphs, reaches
+\textbf{AUC $0.6579$ on STRING database} against a rewired control of $0.4971$, an excess of
+$+0.161$, and $0.6441$ on STRING co-occurrence against $0.5113$. \textbf{So the graph channel
+does carry information about this phenotype, and revision 2's headline was an artifact of
+asking the narrower question.} The two forms are not contradictory: knowing that two adjacent
+deletions produce similar transcriptome-wide responses is a different and weaker statement
+than knowing which individual reporters move, and it is the one the data supports.
+
+\notesec{Different graphs matter for different phenotypes, which is the finding that decides
+what to do with the masks} All six strands were probed in the pair form: expression,
+morphology, the 19 amino acids, betaxanthin, beta-carotene, and Costanzo single-mutant
+fitness. The table gives the excess over the degree-preserving control, where anything
+beyond $\pm 0.005$ is outside sampling noise.
+
+\begin{table}[htbp]
+\centering\footnotesize
+%% SOURCE: experiments/019-simb-multimodal/results/graph_prior_probe.json, pair_form
+\begin{tabular}{lrrrrrr}
+\toprule
+graph & expression & morphology & amino acid & betaxanthin & beta-carotene & fitness \\
+\midrule
+physical interaction    & $+0.032$ & $+0.004$ & $+0.013$ & $+0.015$ & $+0.012$ & $\mathbf{+0.046}$ \\
+regulatory interaction  & $+0.012$ & $-0.006$ & $+0.002$ & $\mathbf{-0.052}$ & $-0.008$ & $-0.002$ \\
+tflink                  & $-0.001$ & $\phantom{+}0.000$ & $+0.008$ & $-0.016$ & $+0.002$ & $-0.005$ \\
+STRING neighborhood     & $-0.002$ & $+0.007$ & $+0.005$ & $+0.020$ & $\phantom{+}0.000$ & $\mathbf{+0.034}$ \\
+STRING fusion           & $-0.026$ & $+0.001$ & $+0.014$ & $-0.001$ & $+0.009$ & $+0.016$ \\
+STRING co-occurrence    & $\mathbf{+0.133}$ & $\mathbf{+0.042}$ & $\mathbf{+0.043}$ & $+0.021$ & $-0.008$ & $\mathbf{+0.051}$ \\
+STRING coexpression     & $\mathbf{+0.051}$ & $+0.015$ & $+0.017$ & $+0.022$ & $+0.005$ & $\mathbf{+0.054}$ \\
+STRING experimental     & $\mathbf{+0.041}$ & $+0.008$ & $+0.009$ & $+0.007$ & $+0.002$ & $+0.025$ \\
+STRING database         & $\mathbf{+0.161}$ & $\mathbf{+0.032}$ & $\mathbf{+0.039}$ & $+0.009$ & $+0.014$ & $\mathbf{+0.034}$ \\
+\bottomrule
+\end{tabular}
+\caption[]{Pair-form AUC minus its degree-preserving control, per graph and per phenotype, at
+$t = 1$. Sampling standard error $\approx 0.0017$ over 60,000 pairs, so $\pm 0.005$ is the
+noise floor. \textbf{The answer is not uniform, which is what the previous revision assumed
+it was.} STRING database and co-occurrence carry signal on four strands; \file{tflink}
+carries essentially nothing anywhere. Physical interaction is the strongest graph for
+\emph{fitness} and second-strongest for expression, and sits at the noise floor for
+\emph{morphology}, so a graph that is worth keeping for one phenotype is not automatically
+worth keeping for another. Regulatory interaction on betaxanthin is the one clearly negative
+cell: TF-adjacent deletion pairs give \emph{less} similar betaxanthin than random pairs.
+Beta-carotene is the one strand where nothing exceeds $+0.014$, consistent with its coarse
+ordinal readout.}
+\label{tab:graph-pair-form}
+\end{table}
 
 \notesec{Coverage is a second problem, separate from signal} Many deleted genes have no edge
 at all on a given graph, so it makes no prediction for them: STRING neighborhood scores only
-$29\,\%$ of deleted genes, fusion and co-occurrence $46\,\%$, database $75\,\%$. Three of
-the nine heads are constrained by a graph that is silent on most of the perturbations.
+$29\,\%$ of deleted genes, fusion and co-occurrence $46\,\%$, database $75\,\%$. A head
+constrained by a graph that is silent on most perturbations is unconstrained on those
+perturbations, which is a different failure from being constrained toward the wrong thing.
 
-\notesec{Direction is the one place signal exists, and the mask deletes it} Two graphs are
-directed. On tflink, following edges TF $\to$ target gives $\mathbf{0.5508}$ against a
+\notesec{A namespace bug worth recording, because it would have produced a clean fake null}
+The Ohya CalMorph mirror stores systematic ORFs in lowercase. Joined naively against the
+genome's uppercase names, morphology would have had \emph{zero} graph overlap and every
+graph would have scored a tidy $0.5$, indistinguishable from an honest null. It is fixed, and
+the script now raises if fewer than half of a strand's genes resolve into the genome gene
+set, so this class of failure cannot pass silently again.
+
+\notesec{Direction carries signal in the reporter form, and the mask deletes it} Two graphs
+are directed. On tflink, following edges TF $\to$ target gives $\mathbf{0.5508}$ against a
 rewired control of $0.5017$; on regulatory interaction, $\mathbf{0.5239}$ against $0.5009$.
 Both are unambiguous. But \file{_build_attention_mask} sets \file{head_mask[i, j]} and
 \file{head_mask[j, i]} together, so the mask is symmetric, and averaging the informative
 direction with the uninformative one returns both to chance: $0.5057$ and $0.5055$.
+
+This finding lives in the \emph{reporter} form only, and necessarily so: pair-form
+similarity is a symmetric function of the two genes, so no orientation of the graph can
+change it. The two statistics are therefore complementary rather than redundant, and the
+direction result is not weakened by the pair form being unable to see it.
 
 \begin{table}[htbp]
 \centering\small
@@ -264,17 +439,27 @@ coincide, which is what makes this table's machinery self-checking.}
 \label{tab:graph-direction}
 \end{table}
 
-\notesec{What follows} Nine attention heads are currently constrained toward a target that
-does not predict response. Freeing them costs nothing to try. The one repair with evidence
-behind it is to stop symmetrizing the two directed relations, which is a change to the mask
-builder rather than to the model, and which \cref{tab:graph-direction} sizes at
-$+0.04$ to $+0.05$ AUC over the degree control on the graphs it touches.
+\begin{keybox}
+\textbf{The graph masks stay, and revision 2's recommendation to free them is withdrawn.}
+The evidence for freeing them was an expression-only null in the reporter form. On the same
+strand and the same graphs, the pair form reaches AUC $0.6579$ against a rewired control of
+$0.4971$, so the channel carries information and the null was an artifact of the narrower
+question. Across six phenotypes the answer is not uniform: STRING database and co-occurrence
+carry signal on four strands, physical interaction is strongest for fitness and null for
+morphology, \file{tflink} carries nothing anywhere, and regulatory interaction is negative on
+betaxanthin. \textbf{Two changes follow, and neither is a removal.} Stop symmetrizing the two
+directed relations, which is a mask-builder change worth $+0.04$ to $+0.05$ AUC on the graphs
+it touches. And add unconstrained heads beside the masked ones, so the model can learn
+structure the graphs do not carry without giving up the ones that do.
+\end{keybox}
 
-\notesec{What this does not establish} A data-side probe rules out, it does not confirm. An
-AUC at chance means no amount of training recovers the structure, which is the decisive
-direction here. It does not follow that a directed mask WILL help the model: that the
-information exists is necessary, not sufficient, and the kNN probe already showed the
-perturbed side failing to use structure that was present.
+\notesec{What this does not establish} A data-side probe bounds what is available; it does
+not show the model uses it. That the information exists is necessary and not sufficient, and
+the kNN probe already showed the perturbed side failing to exploit structure that was
+present. Nor does a per-phenotype excess tell you which \emph{head} should carry which graph:
+this measures the premise the mask encodes, not the architecture that consumes it. The one
+place the probe is genuinely decisive is negative, and \file{tflink} is that case, at the
+noise floor on all six strands in the pair form.
 
 \subsection{The perturbation axis is the binding resource\secstatus{todo}}
 
@@ -287,6 +472,18 @@ recurs with many partners.
 The strands that work in this project are the ones where the supervision constrains a gene
 repeatedly. \textbf{Hypothesis, untested:} the reason multi-task training is attractive here
 is not that the labels are informative about each other, but that a second phenotype gives
-a second, differently-shaped constraint on the same perturbation. That predicts the gain
-should be larger where the two phenotypes share strains and smaller where they merely share
-genes, which is a testable statement and has not been tested.
+a second, differently-shaped constraint on the same perturbation.
+
+\notesec{What ``share strains'' rather than ``share genes'' means, since the phrasing was
+opaque} Two phenotypes \term{share a strain} when the \emph{same physical deletion mutant}
+was measured for both, so the two labels constrain one perturbation jointly. They merely
+\term{share genes} when both screens cover the same gene but in different strain
+backgrounds or different experiments, so the two labels constrain the same gene through two
+separate perturbation events. Morphology and expression share 1,440 strains; morphology and
+fitness share 4,220. Betaxanthin and the amino-acid pool are the sharing-strains case too,
+since both were measured on deletions of the same collection.
+
+The prediction is that a second label helps more in the shared-strain case, because the
+model gets two views of one perturbation rather than two loosely-coupled views of one gene.
+\textbf{It has not been tested}, and the fitness-morphology pairing is the cheapest test of
+it available.

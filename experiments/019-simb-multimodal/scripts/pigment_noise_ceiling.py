@@ -76,6 +76,7 @@ from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
     mm_to_in,
+    panel_label,
     savefig_true_size_svg,
 )
 
@@ -300,20 +301,8 @@ def tyrosine_betaxanthin_check(data_root: str, bx: dict[str, Any]) -> dict[str, 
     }
 
 
-def make_figure(
-    bx: dict[str, Any], bc: dict[str, Any], tyr: dict[str, Any], out_dir: str
-) -> tuple[str, str]:
-    """Three-panel ceiling figure: betaxanthin SE, beta-carotene rank, tyrosine check."""
-    _apply_rc()
-    fig, axes = plt.subplots(
-        1,
-        3,
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(PANEL_H_MM)),
-        constrained_layout=True,
-    )
-
-    # (a) betaxanthin: per-record SE vs value; the SE cloud IS the noise floor.
-    ax = axes[0]
+def _draw_betaxanthin(ax: Any, bx: dict[str, Any]) -> None:
+    """Per-record SE against value: the SE cloud IS the noise floor for this target."""
     ok = np.isfinite(bx["_se"])
     ax.scatter(
         bx["_level"][ok],
@@ -322,21 +311,24 @@ def make_figure(
         c=PLOT_PALETTE[0],
         linewidths=0,
         rasterized=True,
+        label=f"one deletion strain (n = {bx['n_with_se']})",
     )
     ax.set_xlabel("betaxanthin (corrected fluorescence)")
-    ax.set_ylabel("per-strain SE")
+    ax.set_ylabel("per-strain SE over replicate colonies")
     ax.set_title(
-        f"a  betaxanthin  ceiling r = {bx['ceiling_pearson']:.2f}\n"
-        f"reliability {bx['reliability']:.2f}  (n = {bx['n_with_se']})",
+        f"betaxanthin, Cachera 2023: ceiling r = {bx['ceiling_pearson']:.2f}\n"
+        f"reliability {bx['reliability']:.2f}, median "
+        f"{int(bx['n_replicates_median'])} colonies per strain",
         loc="left",
+        fontsize=5.5,
     )
+    ax.legend(loc="upper right", frameon=False, fontsize=5, handletextpad=0.3,
+              markerscale=4)
     _box(ax)
 
-    # (b) beta-carotene rank agreement. Filled = the primary estimate (replicate max vs
-    # min, unrestricted strains); open = the independent re-screen, drawn on the same axes
-    # so its range restriction (1st-screen scores bunched at 3..5) is visible rather than
-    # buried in a caption.
-    ax = axes[1]
+
+def _draw_carotene_combined(ax: Any, bc: dict[str, Any]) -> None:
+    """Both rank-agreement estimates on one pair of axes, each named in the legend."""
     rng = np.random.default_rng(0)
     rep = bc["_rep"]
     x_rep = bc["_score"][rep]
@@ -360,43 +352,201 @@ def make_figure(
         label=f"re-screen, top hits (n={bc['independent_rescreen']['n']})",
     )
     lim = [-5.5, 5.5]
-    ax.plot(lim, lim, color=GRID, linewidth=0.5, linestyle=":")
+    ax.plot(lim, lim, color=GRID, linewidth=0.5, linestyle=":", label="perfect agreement")
     ax.set_xlim(lim)
     ax.set_ylim(lim)
-    ax.set_xlabel("score / 1st screen")
+    ax.set_xlabel("visual score / 1st screen")
     ax.set_ylabel("replicate min / 2nd screen")
     ax.set_title(
-        f"b  beta-carotene  ceiling rho = {bc['ceiling_spearman']:.2f}\n"
-        f"re-screen rho = {bc['independent_rescreen']['spearman']:.2f} "
-        "(range-restricted)",
+        f"beta-carotene, Ozaydin 2013: ceiling rho = {bc['ceiling_spearman']:.2f}\n"
+        f"re-screen rho = {bc['independent_rescreen']['spearman']:.2f}, "
+        "range-restricted",
         loc="left",
+        fontsize=5.5,
     )
     ax.legend(loc="lower right", frameon=False, fontsize=5, handletextpad=0.3)
     _box(ax)
 
-    # (c) the mechanistic premise: tyrosine vs betaxanthin on shared deletions.
-    ax = axes[2]
+
+def _draw_carotene_replicate(ax: Any, bc: dict[str, Any]) -> None:
+    """PRIMARY beta-carotene ceiling: replicate max vs min, unrestricted strains."""
+    rng = np.random.default_rng(0)
+    rep = bc["_rep"]
+    x_rep = bc["_score"][rep]
+    y_rep = bc["_score_min"][rep]
     ax.scatter(
-        tyr["_tyr"], tyr["_bx"], s=1.0, c=PLOT_PALETTE[2], linewidths=0, rasterized=True
+        x_rep + rng.normal(0, 0.08, size=x_rep.size),
+        y_rep + rng.normal(0, 0.08, size=y_rep.size),
+        s=4.0,
+        c=PLOT_PALETTE[1],
+        linewidths=0,
+        label=f"replicated strain (n = {int(rep.sum())})",
     )
-    r_tyr = tyr["per_amino_acid"]["tyrosine"]["pearson"]
-    ax.set_xlabel("tyrosine (mM)")
-    ax.set_ylabel("betaxanthin (corrected fluorescence)")
+    lim = [-5.5, 5.5]
+    ax.plot(lim, lim, color=GRID, linewidth=0.5, linestyle=":", label="perfect agreement")
+    ax.set_xlim(lim)
+    ax.set_ylim(lim)
+    ax.set_xlabel("visual score, replicate MAX")
+    ax.set_ylabel("visual score, replicate MIN")
     ax.set_title(
-        f"c  tyrosine vs betaxanthin  r = {r_tyr:.3f}\n"
-        f"shared deletions n = {tyr['n_shared_deletions']}  "
-        f"(rank {tyr['tyrosine_rank_by_abs_pearson']}/19)",
+        f"beta-carotene, Ozaydin 2013: ceiling rho = {bc['ceiling_spearman']:.2f}\n"
+        "max vs min over one strain's replicates, full -5..+5 range",
         loc="left",
+        fontsize=5.5,
     )
+    ax.legend(loc="lower right", frameon=False, fontsize=5, handletextpad=0.3)
     _box(ax)
 
+
+def _draw_carotene_rescreen(ax: Any, bc: dict[str, Any]) -> None:
+    """The independent re-screen, drawn so its RANGE RESTRICTION is the visible feature.
+
+    The raw re-screen correlation is low, and the reason is in the picture rather than in
+    the scorer: the re-screened strains are SELECTED TOP HITS, so their 1st-screen scores
+    occupy a narrow slice of a -5..+5 scale. A correlation computed inside a slice is
+    deflated for a reason that has nothing to do with reliability, which is what the
+    Thorndike correction estimates and what the shaded band shows.
+    """
+    rs = bc["independent_rescreen"]
+    rng = np.random.default_rng(0)
+    first, second = bc["_rescreen"]
+    lim = [-5.5, 5.5]
+    # MIDDLE 90 % of the 1st-screen scores, not their full min-to-max: a single strain
+    # scored 0 stretches the raw range across most of the scale and hides the very
+    # concentration the band exists to show.
+    p5, p95 = (float(v) for v in np.percentile(first, [5, 95]))
+    ax.axvspan(
+        p5,
+        p95,
+        color=PLOT_PALETTE[5],
+        alpha=0.14,
+        zorder=0,
+        label=(
+            f"middle 90% of the 1st-screen scores ({p5:.0f} to {p95:.0f})\n"
+            f"SD {rs['sd_rescreened_subset']:.2f} here against "
+            f"{rs['sd_full_screen']:.2f} over the full screen"
+        ),
+    )
+    ax.scatter(
+        first + rng.normal(0, 0.08, size=first.size),
+        second + rng.normal(0, 0.08, size=second.size),
+        s=5.0,
+        facecolors="none",
+        edgecolors=PLOT_PALETTE[5],
+        linewidths=0.5,
+        zorder=3,
+        label=f"re-transformed and re-scored strain (n = {rs['n']})",
+    )
+    ax.plot(lim, lim, color=GRID, linewidth=0.5, linestyle=":", zorder=2,
+            label="perfect agreement")
+    ax.set_xlim(lim)
+    ax.set_ylim(lim)
+    ax.set_xlabel("1st screen visual score")
+    ax.set_ylabel("2nd screen visual score")
+    ax.set_title(
+        f"independent re-screen: raw r = {rs['pearson']:.3f}, rho = {rs['spearman']:.2f}\n"
+        f"Thorndike case-2 corrected r = "
+        f"{rs['pearson_range_restriction_corrected']:.2f} for range restriction",
+        loc="left",
+        fontsize=5.5,
+    )
+    # UPPER LEFT: every re-screened strain sits at a high 1st-screen score, so the left of
+    # this panel is empty by construction, which is itself the point being made.
+    ax.legend(loc="upper left", frameon=False, fontsize=4.5, handletextpad=0.3,
+              labelspacing=0.4)
+    _box(ax)
+
+
+def _draw_tyrosine(ax: Any, tyr: dict[str, Any]) -> None:
+    """The mechanistic premise: measured tyrosine against measured betaxanthin."""
+    ax.scatter(
+        tyr["_tyr"],
+        tyr["_bx"],
+        s=1.0,
+        c=PLOT_PALETTE[2],
+        linewidths=0,
+        rasterized=True,
+        label=f"shared deletion (n = {tyr['n_shared_deletions']})",
+    )
+    r_tyr = tyr["per_amino_acid"]["tyrosine"]["pearson"]
+    ax.set_xlabel("tyrosine (mM), Mulleder 2016")
+    ax.set_ylabel("betaxanthin (corrected fluorescence)")
+    ax.set_title(
+        f"tyrosine vs betaxanthin: r = {r_tyr:.3f}\n"
+        f"rank {tyr['tyrosine_rank_by_abs_pearson']} of 19 amino acids by |r|",
+        loc="left",
+        fontsize=5.5,
+    )
+    ax.legend(loc="upper right", frameon=False, fontsize=5, handletextpad=0.3,
+              markerscale=4)
+    _box(ax)
+
+
+def _write(fig: Any, out_dir: str, name: str) -> tuple[str, str]:
     os.makedirs(out_dir, exist_ok=True)
-    png = osp.join(out_dir, "pigment_noise_ceiling.png")
-    svg = osp.join(out_dir, "pigment_noise_ceiling.svg")
+    png = osp.join(out_dir, f"{name}.png")
+    svg = osp.join(out_dir, f"{name}.svg")
     fig.savefig(png, dpi=300, facecolor="white")
     savefig_true_size_svg(fig, svg, facecolor="white")
     plt.close(fig)
     return png, svg
+
+
+def make_figure(
+    bx: dict[str, Any], bc: dict[str, Any], tyr: dict[str, Any], out_dir: str
+) -> dict[str, dict[str, str]]:
+    """Write THREE figures: the combined one, plus one per pigment.
+
+    The combined three-panel figure put a betaxanthin panel inside what the document reads
+    as the beta-carotene figure, so a reader in the beta-carotene section met a target that
+    section is not about. The two per-pigment figures are the same measurements, split so
+    each can sit in the section that argues from it. The combined figure is still written,
+    unchanged in content, so nothing that references it breaks.
+    """
+    _apply_rc()
+    out: dict[str, dict[str, str]] = {}
+
+    # COMBINED, as before: betaxanthin | beta-carotene | tyrosine check.
+    fig, axes = plt.subplots(
+        1,
+        3,
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(PANEL_H_MM)),
+        constrained_layout=True,
+    )
+    _draw_betaxanthin(axes[0], bx)
+    _draw_carotene_combined(axes[1], bc)
+    _draw_tyrosine(axes[2], tyr)
+    for ax, letter in zip(axes, "abc"):
+        panel_label(ax, letter)
+    png, svg = _write(fig, out_dir, "pigment_noise_ceiling")
+    out["pigment_noise_ceiling"] = {"png": png, "svg": svg}
+
+    # BETAXANTHIN ONLY. One panel, so no panel letter: a lone "a" names nothing.
+    fig, ax = plt.subplots(
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["half_plus"]), mm_to_in(PANEL_H_MM)),
+        constrained_layout=True,
+    )
+    _draw_betaxanthin(ax, bx)
+    png, svg = _write(fig, out_dir, "betaxanthin_noise_ceiling")
+    out["betaxanthin_noise_ceiling"] = {"png": png, "svg": svg}
+
+    # BETA-CAROTENE ONLY, and the two estimates get a panel each rather than sharing one
+    # pair of axes, because they are not the same measurement: (a) is the primary ceiling
+    # on unrestricted strains, (b) is the range-restricted re-screen whose raw value is
+    # low for a reason panel b now shows.
+    fig, axes = plt.subplots(
+        1,
+        2,
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(PANEL_H_MM + 6.0)),
+        constrained_layout=True,
+    )
+    _draw_carotene_replicate(axes[0], bc)
+    _draw_carotene_rescreen(axes[1], bc)
+    for ax, letter in zip(axes, "ab"):
+        panel_label(ax, letter)
+    png, svg = _write(fig, out_dir, "beta_carotene_noise_ceiling")
+    out["beta_carotene_noise_ceiling"] = {"png": png, "svg": svg}
+    return out
 
 
 def main() -> None:
@@ -468,8 +618,9 @@ def main() -> None:
         f"rho = {t['spearman']:+.4f}, rank {tyr['tyrosine_rank_by_abs_pearson']}/19 by |r|"
     )
 
-    png, svg = make_figure(bx, bc, tyr, osp.join(asset_dir, "019-simb-multimodal"))
-    print(f"\nwrote {png}\nwrote {svg}")
+    figures = make_figure(bx, bc, tyr, osp.join(asset_dir, "019-simb-multimodal"))
+    for paths in figures.values():
+        print(f"\nwrote {paths['png']}\nwrote {paths['svg']}")
 
     report = {
         "betaxanthin": {k: v for k, v in bx.items() if not k.startswith("_")},
@@ -477,7 +628,10 @@ def main() -> None:
         "mulleder_external_check": {
             k: v for k, v in tyr.items() if not k.startswith("_")
         },
-        "figure": {"png": png, "svg": svg},
+        # `figure` stays the combined three-panel figure so every existing reader of this
+        # JSON keeps resolving; the per-pigment splits are additive.
+        "figure": figures["pigment_noise_ceiling"],
+        "figures": figures,
     }
     out = osp.join(results_dir, "pigment_noise_ceiling.json")
     with open(out, "w") as f:

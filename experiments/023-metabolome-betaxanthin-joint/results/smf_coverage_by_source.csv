@@ -1,0 +1,9 @@
+source,n_genes_in_source,n_of_4432_covered,n_of_724_gaps_filled
+costanzo2016_kanmx_30c,3893,3708,0
+costanzo2016_natmx_30c,3845,3350,317
+baryshnikova2010_kanmx,4574,4047,375
+kuzmin2018_dmf_array_smf,990,952,4
+kuzmin2020_dmf_array_smf,3775,3597,7
+kuzmin2018_smf,1170,1113,21
+kuzmin2020_smf,473,454,32
+oduibhir2014,1312,1216,167

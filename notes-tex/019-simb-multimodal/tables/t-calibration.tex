@@ -6,14 +6,14 @@
 \toprule
 strand & runs & \file{nmse} $>1$ & best $r$ & \file{nmse} at peak & $1-r^2$ \\
 \midrule
-amino acid & 12 & 6 of 12 & 0.2085 & \textbf{0.9607} & 0.9565 \\
-beta carotene & 12 & 12 of 12 & 0.1184 & \textbf{1.2881} & 0.9860 \\
-betaxanthin & 13 & 5 of 13 & 0.3705 & \textbf{0.9316} & 0.8627 \\
-betaxanthin amino acid joint & 13 & 5 of 13 & 0.4275 & \textbf{0.8094} & 0.8172 \\
-expression & 9 & 8 of 9 & 0.2276 & \textbf{1.0348} & 0.9482 \\
-expression masked & 8 & 8 of 8 & 0.2382 & \textbf{1.0111} & 0.9432 \\
+amino acid & 31 & 25 of 31 & 0.2085 & \textbf{0.9607} & 0.9565 \\
+beta carotene & 39 & 38 of 39 & 0.1184 & \textbf{1.2881} & 0.9860 \\
+betaxanthin & 44 & 24 of 44 & 0.3705 & \textbf{0.9316} & 0.8627 \\
+betaxanthin amino acid joint & 46 & 18 of 46 & 0.4297 & \textbf{0.8161} & 0.8153 \\
+expression & 22 & 18 of 22 & 0.2276 & \textbf{1.0348} & 0.9482 \\
+expression masked & 9 & 9 of 9 & 0.2382 & \textbf{1.0111} & 0.9432 \\
 \bottomrule
 \end{tabular}
-\caption[]{Whether the selected model beats ``predict each feature's mean'' in squared error. \file{nmse} at peak is its value at the epoch the correlation peaked, which is the model anyone would ship. Above 1 means the model loses to the mean while still ordering features correctly, which is under-shrinkage rather than incapacity: the last column is where \file{nmse} lands after multiplying predictions by $r/s$, a post-hoc rescale that changes no correlation at all. $1-r^2$ is where \file{nmse} would land after multiplying predictions by $r/s$, a post-hoc rescale that changes no correlation at all, and is the optimum for a predictor that is a purely scaled version of a correlated signal. A strand already BELOW it is not a contradiction: it means its predictions carry structure beyond a single global scaling, so the rescale would not help there. Only rounds from the v8 era log these metrics; earlier ones are absent, not zero.}
+\caption[]{Whether the selected model beats ``predict each feature's mean'' in squared error. \file{nmse} at peak is its value at the epoch the correlation peaked, which is the model anyone would ship. Above 1 means the model loses to the mean while still ordering features correctly, which is under-shrinkage rather than incapacity. \textbf{The arithmetic behind the last column.} For predictions that are a scaled copy of a correlated signal, $\texttt{nmse} = 1 + s^2 - 2rs$, where $s$ is the ratio of prediction to target standard deviation. That is a parabola in $s$ with its minimum at $s^\star = r$ and value $1 - r^2$ there, so scaling every prediction by $r/s$ moves \file{nmse} to $1 - r^2$ and, being a positive rescale, leaves every correlation untouched. $1-r^2$ is therefore the floor this rescale can reach, and the gap between the two middle columns is what under-shrinkage costs. A strand already \emph{below} $1-r^2$ is not a contradiction: its predictions carry structure beyond one global scaling, so a single scalar is not the right correction there. Only rounds from the v8 era log these metrics; earlier ones are absent, not zero.}
 \label{tab:calibration}
 \end{table}

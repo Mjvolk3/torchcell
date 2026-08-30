@@ -29,9 +29,35 @@ variance floor on the 278 modeled here, so it was not imported.
 
 \subsection{The ceiling was never measured until now, and it is high\secstatus{todo}}
 
-Ohya gives one biological sample per mutant but 122 wild-type replicates, so per-feature
-reliability is estimable as $1 - \sigma^2_{\mathrm{WT}} / \sigma^2_{\mathrm{mutants}}$ and
-the achievable Pearson is its square root.
+Ohya measures each of the 4,718 deletion strains once and the \gene{his3} wild type 122
+independent times, which is exactly what makes reliability estimable without replicating the
+mutants. Each strain's value for feature $k$ is one noisy draw $T_k = S_k + E_k$: the
+strain's true value plus one sample's measurement noise. The wild-type replicates hold
+genotype fixed, so their spread is $E_k$ alone; the mutant panel holds nothing fixed, so its
+spread carries $S_k$ and $E_k$ together.
+
+\notesec{Reliability and ceiling are the same measurement on two scales, which is why both
+names exist} \term{Reliability} is the fraction of observed across-strain \emph{variance}
+that is real signal,
+$$\rho_k = \frac{\operatorname{Var}(S_k)}{\operatorname{Var}(T_k)}
+  = 1 - \frac{\sigma^2_{\mathrm{WT},k}}{\sigma^2_{\mathrm{mutants},k}},$$
+estimated with the sample variance over the 122 replicates and over the 4,718 mutants. The
+\term{ceiling} is what a \emph{correlation} can reach. A perfect predictor outputs $S_k$ and
+is still scored against the noisy $T_k$, so it correlates at
+$$\operatorname{corr}(S_k,\, S_k + E_k)
+  = \frac{\operatorname{Var}(S_k)}{\sqrt{\operatorname{Var}(S_k)}\sqrt{\operatorname{Var}(T_k)}}
+  = \sqrt{\rho_k} = c_k.$$
+The square root is the entire difference: correlation is a ratio of standard deviations
+where reliability is a ratio of variances. Since $\rho_k \le 1$ the ceiling always exceeds
+the reliability, so the two must never be quoted interchangeably. Over the 278 modeled
+features the means are $\rho = 0.444$ and $c = 0.611$, and those are one measurement stated
+twice. Compare the ceiling to a reported Pearson; compare the reliability to an $R^2$.
+
+The \term{robust CV} used alongside them is a different axis entirely, measuring how far
+deletions move a feature rather than how well it is measured:
+$\mathrm{rCV}_k = (Q_{75} - Q_{25}) / |\mathrm{med}|$ over the 4,718 mutants, using
+quartiles rather than a standard deviation because the CalMorph features are bounded ratios
+and counts with heavy tails.
 
 \begin{table}[htbp]
 \centering\small
@@ -139,12 +165,29 @@ Pairing morphology with fitness keeps 4,220 of the 4,718 strains, so the joint a
 morphology-only arm can be run on a large common instance set without the restriction above
 costing three quarters of the data. Pairing it with expression caps both arms at 1,440.
 
+\notesec{The cap is a consequence of \file{require_modalities}, not a fact about the data}
+Both caps come from dropping any genotype that is missing either phenotype. Masking the loss
+over absent outputs instead lets a strain with morphology and no expression still contribute
+morphology gradient, and a strain with both contribute both. That removes the cap on the
+\emph{training} side while leaving the controlled comparison available on the shared subset,
+and it is the documented way around this. No run here did it; \file{require_modalities} is
+set in the config every morphology arm inherits.
+
+\notesec{The question to ask, stated as one sentence} \textbf{Does adding fitness as a second
+label improve morphology prediction at all, on any CalMorph feature or on the average across
+them?} That is a yes-or-no question with a correct control (the same architecture, the same
+strains, morphology head only), and it is worth answering before any more elaborate
+multi-task claim. Report it per feature as well as averaged, because a second label that
+helps the 201 well-measured features and does nothing for the rest would be invisible in the
+mean.
+
 \notesec{This does not retire the expression-helps-morphology question} That question is
-what \file{delta_joint_expr_morph_000.yaml} was built to answer, its control is right,
-and its three conditions (\texttt{expr}, \texttt{morph}, \file{expr_morph}) are the
-correct decomposition. It has simply never been run past 87 epochs. What the census changes
-is the order: the fitness pairing is where the statistical power is, and it can be run at
-full scale first.
+what \file{delta_joint_expr_morph_000.yaml} was built to answer, its control is right, and
+its three conditions (\texttt{expr}, \texttt{morph}, \file{expr_morph}) are the correct
+decomposition. It has simply never been run past 87 epochs. The intended design is the
+broader one: train on all of morphology with masked outputs, then ask whether adding
+expression supervision on the 1,440 strains that carry it improves anything. That is a long
+and awkward run to tune, which is the practical reason expression is being settled first.
 
 \notesec{What the earlier ``0.05 to 0.14 rise'' was} A flatten-Pearson computed over the
 $[B, 281]$ matrix before per-feature normalization, which is dominated by between-feature
@@ -156,45 +199,66 @@ correlation across strains, averaged over features, which is what
 \subsection{A scalar target is a reasonable next step, and this is which scalar\secstatus{todo}}
 
 Ranking single features on reliability alone selects ones that are precisely measured and
-nearly constant across mutants. The rank key below is ceiling multiplied by robust
-coefficient of variation, IQR over absolute median across the 4,718 mutants, so a feature
-has to be both measurable and moved by deletions.
+nearly constant across mutants, which is the wrong end of the trade. The rank key is
+$s_k = c_k \cdot \mathrm{rCV}_k$, the ceiling multiplied by the robust coefficient of
+variation, so a feature has to be both measurable and actually moved by deletions.
+
+\input{tables/t-morph-scalar}
+
+\notesec{On ``predict cell size first'', which the data does not support} The idea is
+attractive because cell size is the CalMorph quantity closest to something intuitive, and it
+is the one place the panel gives a clean answer. Cell size is measured superbly and moved
+almost not at all.
 
 \begin{table}[htbp]
 \centering\small
-%% SOURCE: experiments/019-simb-multimodal/results/morphology_noise_ceiling.json, scalar_shortlist
+%% SOURCE: experiments/019-simb-multimodal/results/morphology_noise_ceiling.json, size_features
 \begin{tabular}{llrrr}
 \toprule
-feature & CalMorph label & ceiling & robust CV & score \\
+feature & CalMorph description & ceiling & robust CV & rank of 275 \\
 \midrule
-\texttt{A113}     & actin\_n\_ratio      & 0.873 & 2.369 & 2.068 \\
-\file{C124_C}  & Medium\_bud\_ratio   & 0.698 & 0.886 & 0.618 \\
-\file{A110_A1B}& Actin\_f\_ratio      & 0.637 & 0.939 & 0.598 \\
-\file{C125_A1B}& Large\_bud\_ratio    & 0.784 & 0.630 & 0.494 \\
-\texttt{A105}     & actin\_a\_ratio      & 0.655 & 0.617 & 0.404 \\
-\texttt{D212}     & nuclear\_B\_ratio\_to\_nuclear\_AA1BC\_cells & 0.604 & 0.642 & 0.387 \\
+\file{C11-2_A1B} & Area of daughter cell on stage A1B     & 0.880 & 0.125 & 78 \\
+\file{C11-1_A}   & Mother cell size on stage A            & 0.928 & 0.097 & 101 \\
+\file{C101_A1B}  & Cell size on stage A1B                 & 0.928 & 0.088 & 118 \\
+\file{C103_A}    & Long axis length of mother on stage A  & 0.949 & 0.047 & 209 \\
+\file{C115_A}    & Roundness of mother cell on stage A    & 0.972 & 0.024 & 245 \\
+\midrule
+\file{A113}      & (the shortlist leader, for contrast)   & 0.873 & 2.369 & 1 \\
 \bottomrule
 \end{tabular}
-\caption[]{Top of the scalar-target shortlist. The list is dominated by bounded ratios
-(actin localization class, bud-size class, nuclear-stage class), which is what a
-deletion actually moves. Size features are the opposite trade: \file{C115_A}
-whole-cell axis ratio has a ceiling of $0.972$ and almost no spread across mutants.}
-\label{tab:morph-scalar}
+\caption[]{Cell-size features are the opposite trade from the shortlist: near-perfect
+ceilings of $0.88$ to $0.97$, and among the least variable features in the panel. Whole-cell
+area at stage A has a robust CV of $0.097$ against a population median of $0.125$, so
+\textbf{173 of the 278 features have more spread than whole-cell area}, and its rank key is
+23 times smaller than \file{A113}'s. \emph{Correction to revision 2}, which called
+\file{C115_A} a whole-cell axis ratio: the CalMorph SI defines it as roundness of the mother
+cell, a shape parameter rather than a size one. The one size feature worth noting is bud
+area (\file{C11-2_A1B}), which carries $28\,\%$ more spread than mother area, plausibly
+because a deletion that stalls the cell cycle changes bud size at fixed nuclear stage.}
+\label{tab:morph-size}
 \end{table}
 
-\notesec{On ``predict colony size first''} Colony size is fitness, and fitness is already
-the strongest strand in the project, trained on the Costanzo and Kuzmin single-mutant
-fitness data. Using it as the morphology warm-up would test the pipeline rather than the
-phenotype. Within CalMorph the equivalent of a colony-size scalar is a cell-size feature,
-and those are exactly the features deletions barely move. \textbf{Recommendation: run the
-scalar warm-up on \texttt{A113} or \file{C124_C}}, both of which are reliable and
-genuinely variable, and treat the run as a convergence-budget calibration for the vector
-target rather than as a result.
+\notesec{And on ``predict colony size first''} Colony size is fitness, and fitness is already
+the strongest strand in the project, trained on the Costanzo and Kuzmin single-mutant fitness
+data. Using it as the morphology warm-up would test the pipeline rather than the phenotype.
 
-\notesec{Established} Morphology has a mean ceiling of $0.611$ over 278 features with 201
-of them individually above $0.5$, and the best score achieved is $0.0824$, at $13.5\,\%$ of
-it. That score comes from a 1,161-strain training set drawn from a 4,718-strain screen.
-Target normalization is settled and the earlier apparent rise was a scale artifact.
+\textbf{Recommendation: run the scalar warm-up on \file{A113} or \file{C124_C}}, both
+reliable and genuinely variable, and treat the run as a convergence-budget calibration for
+the 278-feature target rather than as a result. This is queued behind the expression work
+(\cref{sec:directions}) rather than proposed for now.
+
+\begin{keybox}
+\textbf{Morphology is the largest unexploited target here, and it has never been measured
+properly.} Its ceiling, estimated for the first time, is $0.611$ averaged over 278 features,
+with 201 of them individually above $0.5$, which is the second-highest ceiling of any strand.
+The best score achieved is $0.0824$, at $13.5\,\%$ of it. But that score comes from a
+1,161-strain training set drawn from a 4,718-strain screen, in a run that stopped at epoch
+65, and \textbf{every one of the 397 morphology runs across eight projects trained on the
+same 1,161 strains} because \file{require_modalities} pins them to the intersection with
+expression. \textbf{So $0.0824$ is not a null result about morphology; it is the absence of a
+measurement}, and the two must not be recorded the same way. For a second label, fitness
+shares 4,220 strains with morphology against expression's 1,440.
+\end{keybox}
 
 \notesec{Cannot say} Anything about whether morphology is learnable from genotype, because
 no morphology run has passed 121 epochs or seen more than a quarter of the data. Anything

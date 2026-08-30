@@ -8,33 +8,121 @@
 \subsection{Terms used throughout\secstatus{todo}}
 \label{sec:terms}
 
+Alphabetical, and every one of these is used later in a sentence a decision turns on. The
+four that caused the most trouble on the last read are \term{grid cell} (it is a
+hyperparameter configuration, never a data split), \term{regress out}, \term{reliability}
+against \term{ceiling}, and \term{under-shrinkage}.
+
 \begin{description}
+\item[Auxiliary head] Any head added to a run for its effect on a \emph{different} head's
+  score. Adding one changes two things at once, the gradient signal and the population of
+  strains the run can use, which is why every comparison here pins the instance set.
+
+\item[Ceiling] The highest Pearson correlation \emph{any} predictor could reach against a
+  target that carries measurement noise. It is $\sqrt{\text{reliability}}$, because a
+  prediction can at best recover the reproducible part of the signal and correlation scales
+  with the standard deviation rather than the variance. Estimated per strand from whatever
+  replicate structure that dataset released, so the estimator differs by strand and is
+  stated where each is used.
+
+\item[Configuration, grid cell, trial] Three names for the same object, and none of them
+  means a data split. A \term{configuration} is one setting of the hyperparameters (depth
+  $L$, learning rate, graph mask on or off, decoder family). A \term{grid cell} is one
+  configuration in a grid over those settings. A \term{trial} is one Optuna trial, which
+  evaluates one configuration. \textbf{The data split is held fixed across all of them}: the
+  rounds quoted here pin \file{data_module.split_seed}, so varying \file{seed} varies weight
+  initialization and nothing else, and two runs of the same grid cell differ only by
+  initialization. So ``the grid cells span Spearman 0.013 to 0.158'' is a statement about
+  hyperparameters, not about lucky splits.
+
 \item[Head] The output module for one phenotype. The encoder and the perturbation operator
   are shared; a head is the last few layers that turn the shared representation into one
   phenotype's values. A run declares which heads are active, so \emph{betaxanthin head} and
-  \emph{morphology head} name output modules, not models.
+  \emph{morphology head} name output modules, not models. A head is \textbf{not} a linear
+  probe: it is trained jointly with the encoder and carries its own nonlinear layers. Where
+  a number in this document \emph{does} come from a linear probe on frozen inputs, it says
+  so and names the estimator (\term{ridge oracle}, and the amino-acid to betaxanthin ridge
+  in \cref{sec:amino-acid}).
+
+\item[Marginal] Used in two senses in this document and disambiguated at every use. A
+  \term{marginal correlation} is the correlation of one variable with the target on its own,
+  with nothing else in the model, which is the sense in \cref{fig:aa-coupling}a. A
+  \term{marginal} prediction is a per-feature output that carries no joint structure across
+  features. The colloquial sense, ``small'', is not used here.
+
 \item[Metabolome head] The head that predicts the 19 Mulleder amino-acid concentrations.
   It appears in two roles. As the \textbf{only} active head it is the amino-acid strand
   (\cref{sec:amino-acid}). Added \textbf{alongside} the betaxanthin head it is an
   \term{auxiliary head}: it is trained and scored, but the number being reported is still
   betaxanthin, and the question is whether sharing an encoder with it helps.
-\item[Auxiliary head] Any head added to a run for its effect on a different head's score.
-  Adding one changes two things at once, the gradient signal and the population of strains
-  the run can use, which is why every comparison here pins the instance set.
-\item[Strand] One phenotype prosecuted across a series of W\&B projects.
-\item[\file{pearson_per_feature}] For each output feature (a reporter gene, a CalMorph
-  parameter, one amino acid), the correlation across strains between prediction and
-  measurement; then averaged over features. It goes to zero when a model predicts each
-  feature's mean. The companion \file{pearson_per_instance} correlates across features
-  within one strain and stays high under exactly that collapse, so it is never the
-  objective here.
+
 \item[\file{nmse}] Mean squared error divided by the variance of the target about each
   feature's mean, so $\texttt{nmse} = 1$ is exactly ``predict each gene's training mean''.
+  Below 1 beats the mean predictor; above 1 loses to it.
+
+\item[Oracle] A deliberately cheating estimator, run to bound what is available in the data
+  rather than to be deployed. The \term{ridge oracle} of \cref{sec:oracle} is given $m$
+  \emph{measured} expression values from the held-out strain itself and predicts the
+  remaining genes by ridge regression. No model in the project has that input at scoring
+  time, which is the point: the gap between the oracle and the model is a statement about
+  where the information is.
+
+\item[\file{pearson_per_feature}] For each output feature (a reporter gene, a CalMorph
+  parameter, one amino acid), the correlation \emph{across strains} between prediction and
+  measurement; then averaged over features. This is the objective everywhere in this
+  document. It goes to zero when a model predicts each feature's mean, which is exactly the
+  failure worth detecting.
+
+\item[\file{pearson_per_instance}] The companion metric, correlating \emph{across features
+  within one strain}. It answers a real question, whether the shape of one strain's profile
+  is right, but it is dominated by the profile shared by every strain: a model that predicts
+  each feature's training mean for every strain still scores near $0.4$ on it. So a high
+  \file{pearson_per_instance} is not evidence of strain-specific signal, and it is not the
+  objective here for that reason rather than because the question is uninteresting.
+
+\item[Range restriction, and the Thorndike correction] When a correlation is computed on a
+  \emph{selected} subpopulation, narrower than the population of interest, it is attenuated
+  by the narrowing alone. Thorndike's case 2 formula corrects an observed correlation back
+  to the full population given the two standard deviations. It appears once, on the
+  beta-carotene re-screen (\cref{sec:carotene}), which was run only on selected top hits and
+  therefore spans a fraction of the original scale.
+
+\item[Regress out] To remove a nuisance variable's linear contribution from both sides
+  before measuring their relationship. Concretely, for nuisance $f$ (single-mutant fitness),
+  predictor $X$ (the 19 amino acids) and target $y$ (betaxanthin): fit $y \sim f$ and
+  $X \sim f$ by least squares, keep the residuals $y - \hat y(f)$ and $X - \hat X(f)$, and
+  fit $X$-residual to $y$-residual. Whatever correlation survives is the part that is
+  \emph{not} explained by the two variables both responding to growth rate. It costs
+  statistical power and it can only ever remove the \emph{linear} part of the nuisance.
+
+\item[Reliability] The reproducible fraction of a target's variance,
+  $1 - \sigma^2_{\text{noise}} / \sigma^2_{\text{observed}}$. It is a variance ratio, and the
+  \term{ceiling} is its square root. Two names exist because they are on different scales
+  and get compared to different things: reliability sits beside $R^2$, the ceiling sits
+  beside a reported Pearson. Morphology's $0.444$ reliability and $0.611$ ceiling are the
+  same measurement stated twice.
+
 \item[\file{roll_max}] The scoring rule: the maximum of a centered five-point rolling mean
   of a validation curve. An upward-biased order statistic whose bias grows with the number
   of epochs run, so every score here travels with its epoch count.
-\item[Ceiling] The highest correlation any predictor could reach against a target carrying
-  measurement noise, estimated per strand from replicate structure.
+
+\item[Selection inflation] The upward bias in reporting the \emph{best} of many trials. The
+  maximum over $n$ noisy trials exceeds the value a configuration chosen in advance would
+  give, by an amount that grows with $n$ and with the noise. On betaxanthin, taking the
+  maximum over 37 trials is worth an estimated $0.064$, so the headline $0.4301$ corresponds
+  to $\approx 0.366$ for a configuration chosen without hindsight. It is not noise and it is
+  not a result; it is a property of how the number was selected.
+
+\item[Strand] One phenotype carried across a series of W\&B projects. Six of them here.
+
+\item[Under-shrinkage, and the calibration ratio $s$] Write $s$ for the ratio of the
+  prediction standard deviation to the target standard deviation, and $r$ for the
+  correlation. A well-calibrated predictor of a noisy target should be \emph{less} spread out
+  than the target, at $s = r$; shrinking toward the mean is the correct response to
+  uncertainty. \term{Under-shrinkage} is $s > r$: predictions swing more than the
+  correlation justifies. It is why a model can order genes correctly and still lose to the
+  mean on squared error, and it is fixed by scaling predictions by $r/s$, which changes no
+  correlation at all (\cref{sec:objective}).
 \end{description}
 
 \subsection{Where each strand stands\secstatus{todo}}
@@ -47,12 +135,34 @@ Morphology and the expression-morphology joint arm peak at epochs 27 and 28 of r
 stopped at 65 and 70, which is not a result of any kind. Betaxanthin and amino acid peak in
 the first half of a 999-epoch run and then overfit.
 
-The two betaxanthin rows are not comparable to each other: the joint row trains on 3,832
-strains against the plain row's 3,698, because the joint configuration restricts to
-genotypes carrying both phenotypes. The within-grid paired comparison in
-\cref{tab:bx-aa-paired} is the valid form of that contrast, and it comes out negative.
+\notesec{Three betaxanthin numbers circulate, and only two of them are comparable} They are
+$0.4301$, $0.4015$ and $0.3705$, and mixing them is the single most confusing thing in the
+previous revision.
 
-\subsection{Nine findings\secstatus{todo}}
+\begin{itemize}
+\item $\mathbf{0.4301}$ is the \emph{Optuna} objective for the best trial of study
+  \file{betaxanthin_002}. That objective is a raw running maximum over epochs, logged as
+  \file{val/betaxanthin/pearson_per_feature_max}.
+\item $\mathbf{0.4015}$ is \texttt{roll\_max} on the \emph{same} W\&B project, which first
+  averages five neighboring epochs. Smoothing can only lower a maximum, so this is the same
+  runs scored more conservatively, not a different or worse model.
+\item $\mathbf{0.3705}$ is \texttt{roll\_max} on \file{020_v4}, which pins the 640
+  Merzbacher test genes out of training and therefore trains on 3,698 strains instead of
+  4,235.
+\end{itemize}
+
+So the apples-to-apples cost of holding out a competitor's test set is $0.4015$ against
+$0.3705$, both \texttt{roll\_max}. \textbf{$0.4301$ must never be differenced against a
+\texttt{roll\_max} number}, and revision 2 did exactly that. Every score in
+\cref{tab:strand-summary} is \texttt{roll\_max}, which is what makes its rows comparable to
+each other.
+
+The two betaxanthin rows in that table are also not comparable to each other: the joint row
+trains on 3,832 strains against the plain row's population, because the joint configuration
+restricts to genotypes carrying both phenotypes. The within-grid paired comparison in
+\cref{tab:bx-aa-paired} is the valid form of that contrast.
+
+\subsection{What was established\secstatus{todo}}
 
 \begin{enumerate}
 \item \textbf{The expression strand contains no valid comparison between mechanisms.} All
@@ -60,18 +170,40 @@ genotypes carrying both phenotypes. The within-grid paired comparison in
   200 to 300 and then climbs past its early peak. No peak has been observed at any budget
   up to 10,000 epochs. Every per-arm delta on record measures early-training transients.
 
-\item \textbf{The expression objective is fighting itself, and it is the quantile loss
-  rather than squared error.} On the longest run the quantile loss bottoms at epoch 463 and
-  rises for the next 9,500 while Pearson climbs, but squared error bottoms at epoch 9,175,
-  alongside the Pearson peak at 9,674; on the second-longest run the two are one epoch
-  apart. \file{nmse} never returns below 1 after about epoch 400, so the model reaches
-  $r = 0.236$ while being \emph{no better than predicting each gene's mean} in squared
-  error. The cause is calibration, not capability: at the peak its predictions are
-  $1.95\times$ more spread out than its own correlation justifies, and a post-hoc rescale
-  by $r/s$ moves \file{nmse} from $1.010$ to $0.944$ while changing no correlation at all.
-  Best-by-\file{mse} checkpointing would have picked within 500 epochs of the right model,
-  so checkpointing is a narrower problem than previously recorded and is not what holds the
-  strand at $0.24$.
+\item \textbf{Two separate defects were being collapsed into one phrase, and only one of
+  them is a loss-versus-metric conflict.} Revision 2 said ``the objective is fighting
+  itself'', which invited the reading that squared error and Pearson are at odds. They are
+  not. Stated as the two things they are:
+
+  \begin{enumerate}
+  \item[(i)] \textbf{The \emph{quantile} loss is the only quantity that turns early.} It
+    bottoms at epoch 463 and rises for the next 9,500 while Pearson climbs. Squared error
+    does \emph{not} do this: its minimum is at epoch 9,175, alongside the Pearson peak at
+    9,674, and on the second-longest run the two are one epoch apart. So the loss that is
+    actually being minimized disagrees with the metric, while the loss that is not being
+    minimized agrees with it. The consequence is narrow and it is about checkpointing:
+    best-by-quantile-loss picks a model $\approx 9{,}200$ epochs too early, best-by-squared
+    error would have picked within 500 epochs of the right one.
+  \item[(ii)] \textbf{Separately, the model is under-shrunk.} At its peak it orders genes at
+    $r \approx 0.24$ while its \file{nmse} sits at about $1.00$, level with ``predict each
+    gene's mean'' on squared error. This is not a conflict between two metrics; it is one
+    number being mis-scaled. Its predictions are $1.80\times$ more spread out than the
+    correlation justifies, and multiplying them by $r/s$ moves \file{nmse} to $0.939$ while
+    changing no correlation at all.
+  \end{enumerate}
+
+  \emph{Correction to revision 2, which overstated (ii).} It said \file{nmse} ``never returns
+  below 1'', so the model was ``no better than the mean''. Read on the raw logged curve
+  rather than the smoothed one, \file{nmse} at the raw Pearson maximum is $0.9928$, just
+  \emph{below} 1, while at the smoothed maximum it is $1.0070$, just above. The two readings
+  are about $1.8\sigma$ apart in epoch-to-epoch noise (\cref{tab:nmse-parity}), so the sign
+  of ``beats the mean'' is not resolvable and the defensible word is \textbf{parity}. The
+  under-shrinkage ratio, unlike that sign, is nowhere near a boundary.
+
+  \emph{And on the objection that squared error ``looks minimized at the beginning'':} raw
+  \file{mse} falls steeply, rises to a local maximum near epoch 900, then falls again to a
+  \emph{late global} minimum at epoch 9,184, essentially at the Pearson peak. It does come
+  back, and it goes lower (\cref{fig:objective}b).
 
 \item \textbf{One expression run is a multi-day object, and this sets the campaign.} The
   best run took \textbf{91.4 hours, 3.81 days}, for 9,999 epochs at 32.9 s/epoch, and still
@@ -79,15 +211,33 @@ genotypes carrying both phenotypes. The within-grid paired comparison in
   so the number of arms a campaign can afford is fixed before any of them are chosen.
 
 \item \textbf{The perturbation operator provably cannot express a pair term, and masked
-  unmasking does not supply one.} At one perturbed gene the cross-attention softmax runs
-  over a one-element key set, so the model reduces to $g(h_i + c_b)$ and nothing depends on
-  which reporter is predicted given which gene was deleted. 16,200 of 32,760 attention
-  parameters are dead. The scGPT-style scheme conditions on \emph{other genes' measured
-  values}, and at $k = 0$, which is where scoring happens, every one of those features is
-  exactly zero and the forward pass is identical to the unconditioned model. The two are
-  different axes. Capacity is not the binding constraint either: a rank-32 reconstruction
-  of the target reaches $0.727$. A rank-64 pair term already reaches $0.2274$ in 2.0 days
-  against the masked objective's $0.2362$ in 3.8.
+  unmasking does not supply one. This is the most consequential structural finding here},
+  because the task is to predict how reporter gene $i$ moves when gene $p$ is deleted, which
+  is by construction a statement about the \emph{pair} $(p, i)$.
+
+  The mechanism is specific and it is not a claim that attention in general cannot do this.
+  It is that \emph{this} attention, at \emph{one} perturbed gene, cannot. The perturbation
+  enters through a cross-attention whose keys are the perturbed genes. With a single
+  deletion the key set has one element, a softmax over one element is identically 1
+  regardless of the query, and the attention has no remaining degree of freedom: redrawing
+  $W_Q$ and $W_K$ at standard deviation 10 changes the output by exactly $0.0$, and 16,200
+  of 32,760 attention parameters are dead. The model reduces to $g(h_i + c_b)$, in which
+  reporter identity $i$ and strain identity $b$ meet once, by addition. \textbf{So yes: this
+  operator only becomes expressive when more than one gene is perturbed}, which is why it
+  works on the trigenic task and degenerates here. Fixing it does not require abandoning
+  attention, it requires a term in which $i$ and $b$ multiply rather than add
+  (\cref{tab:pair-rank}).
+
+  The scGPT-style masked scheme is a different axis and does not repair this. It conditions
+  gene $i$'s token on \emph{other genes' measured expression values} in the same strain,
+  through features that are gated by a reveal mask. At $k = 0$ no gene is revealed, so those
+  input features are zero \emph{as inputs} and the whole conditioning branch contributes
+  nothing. The measurements themselves are of course not zero; what is zero is the branch
+  that reads them, because nothing has been revealed to it. Scoring happens at $k = 0$.
+
+  Capacity is not the binding constraint either: a rank-32 reconstruction of the target
+  matrix reaches $0.727$ against a best model score of $0.238$. A rank-64 pair term already
+  reaches $0.2274$ in 2.0 days against the masked objective's $0.2362$ in 3.8.
 
 \item \textbf{Morphology has never been trained on its own data.} The Ohya screen holds
   4,718 deletions; every morphology run used the 1,440 that also carry expression, giving
@@ -96,29 +246,58 @@ genotypes carrying both phenotypes. The within-grid paired comparison in
   second-label experiment, fitness shares 4,220 strains with morphology against
   expression's 1,440.
 
+  \emph{One qualification on the ``cap'' language.} Pairing two phenotypes caps both arms at
+  their intersection only because \file{require_modalities} drops any genotype missing
+  either one. Masking the loss over absent outputs instead would let a strain with
+  morphology and no expression still contribute morphology gradient, and that is the
+  standard way around the cap. It is a training-path change rather than a query change, and
+  it is not what any run here did.
+
 \item \textbf{The free amino-acid profile predicts betaxanthin; the precursor does not.}
   Over the 4,432 deletions the two screens share, the 19-dimensional pool predicts
   betaxanthin at out-of-fold $r = \mathbf{0.298}$, while tyrosine alone, the chromophore
-  precursor, predicts it at $\mathbf{0.064}$ and correlates marginally at $-0.076$. Roughly
-  three quarters of the profile's power survives regressing out single-mutant fitness. On
-  the 724 deletions with no Costanzo fitness record, which carry twice the betaxanthin
-  spread, the profile predicts at $0.455$.
+  precursor, predicts it at $\mathbf{0.064}$ and correlates marginally at $-0.076$. On the
+  724 deletions with no Costanzo fitness record, which carry twice the betaxanthin spread,
+  the profile predicts at $0.455$.
 
-\item \textbf{The metabolome auxiliary head currently costs betaxanthin performance.}
-  Paired within grid cell, joint minus control is $-0.0265 \pm 0.0159$ over the five
-  comparable cells where the control learned the task, with 2 of 5 positive. The
-  $+0.0203$ that motivated the replication reproduces, at $+0.0192$, in the one cell it came
-  from. So the coupling exists in the data and the current head does not use it.
+  This is a statement about two \emph{measurements}, with no network in the loop, and it is
+  not a claim that the pool is worth more than the betaxanthin labels themselves: a model
+  trained on betaxanthin reaches $0.40$ on the same phenotype, above the $0.298$ a ridge on
+  the pool reaches. The open question the number raises, and does not answer, is whether the
+  pool carries anything the betaxanthin labels do not already carry
+  (\cref{sec:aa-redundancy}).
 
-\item \textbf{The graph prior is at chance, and the mask deletes the one signal that
-  exists.} Graph proximity does not predict which reporters respond to a deletion, on any of
-  the nine graphs, in the orientation the model uses: AUC $0.4961$ to $0.5057$, at most
-  $+0.0046$ over a degree-preserving control, and longer walks make it worse. Three of the
-  nine graphs are also silent on most deletions, scoring only $29$ to $75\,\%$ of them. But
-  \emph{direction} carries real signal: following tflink edges TF $\to$ target gives
-  $0.5508$ and regulatory interaction $0.5239$, against controls near $0.501$. The mask
-  builder symmetrizes, which averages that away. Nine attention heads are currently spent
-  enforcing a target that does not predict response.
+\item \textbf{Adding a metabolome head to a betaxanthin run has not helped, and the
+  experiment was naive.} Paired within grid cell, joint minus control comes out negative
+  (\cref{tab:bx-aa-paired}). Read that as one crude attempt rather than as a verdict on the
+  coupling: a plain auxiliary head is the least structured way to inject a second
+  phenotype, most cells carry $n = 1$ per arm, and the auxiliary head's own score
+  ($0.05$ to $0.18$) is well below the $0.21$ the amino-acid strand reaches when it is the
+  only head, so the run is paying capacity for a head that is itself underperforming. The
+  coupling in the data and the failure of this particular head to exploit it are separate
+  facts and neither cancels the other.
+
+\item \textbf{The graph prior is not at chance, and revision 2's recommendation to free the
+  nine masked heads is withdrawn.} That recommendation rested on one statistic on one
+  phenotype: whether graph proximity predicts which \emph{reporters} respond to a deletion.
+  On that question the answer is still no, on all nine graphs, AUC $0.4961$ to $0.5057$
+  against a degree-preserving control.
+
+  But it is the narrower of two ways to state the premise the mask encodes. Ask instead
+  whether \emph{deletions of two adjacent genes give similar phenotypes}, which is defined
+  for every strand rather than expression alone, and the same graphs on the same strand reach
+  AUC $\mathbf{0.6579}$ on STRING database against a rewired control of $0.4971$. The channel
+  carries information and the null was an artifact of the question.
+
+  \textbf{And the answer differs by phenotype, which is the operational finding.} Across six
+  strands, STRING database and co-occurrence carry signal on four; physical interaction is
+  the strongest graph for \emph{fitness} and sits at the noise floor for \emph{morphology};
+  \file{tflink} carries nothing anywhere; and regulatory interaction is clearly \emph{negative}
+  on betaxanthin. So a graph worth keeping for one phenotype is not automatically worth
+  keeping for another, and removing masks on a single strand's evidence would have been the
+  wrong move. Separately, \emph{direction} carries real signal that the mask deletes: tflink
+  TF $\to$ target gives $0.5508$ and regulatory interaction $0.5239$ against controls near
+  $0.501$, and \file{_build_attention_mask} symmetrizes that away.
 
 \item \textbf{Betaxanthin is the strongest case, and its strength is coverage.} yeast-GEM
   reaches $19\,\%$ of the screen and misses $73\,\%$ of its high producers. On genes a
@@ -126,25 +305,54 @@ genotypes carrying both phenotypes. The within-grid paired comparison in
   rate. Where both methods can be scored they are tied, they find largely different genes
   (9 shared of 29 each), and their union reaches 49 of 100.
 
-\item \textbf{Configuration choice moves results more than method choice.} Betaxanthin grid
-  cells span Spearman $0.013$ to $0.158$ against a between-method gap of $0.0014$ on AUC.
-  The amino-acid strand's best run is $0.211$ and its median is $0.0498$.
+\item \textbf{Hyperparameter choice moves results more than method choice, and this is not a
+  statement about data splits.} The split is pinned across every cell quoted here, so
+  ``grid cell'' means one hyperparameter configuration and nothing else (\cref{sec:terms}).
+  Betaxanthin cells span Spearman $0.013$ to $0.158$ against a between-method gap of
+  $0.0014$ on AUC; the amino-acid strand's best run is $0.209$ against a median of $0.0570$
+  over all 97 of its runs.
+  Re-running an identical configuration moves the betaxanthin objective by
+  $\sigma \approx 0.030$, so the spread across configurations is several times the
+  run-to-run floor and is real. The operational consequence for the Merzbacher comparison is
+  the one that matters: as long as both methods are scored on the same split, the comparison
+  stands, and the configuration sensitivity is reported beside it rather than being the
+  reason to distrust it.
 \end{enumerate}
 
 \subsection{The decision\secstatus{todo}}
 
-\begin{itemize}
-\item \textbf{Figure 6 is ready to be argued} on coverage rather than on accuracy, and the
-  amino-acid material belongs in it as a coupling measurement, not as a joint-training
-  result.
-\item \textbf{Figure 3 is not ready, and its placeholder numbers are far from the measured
-  ones.} A per-gene Pearson of $0.24$ against a ceiling of $0.775$ is not a headline. The
-  cheapest path to a better one is not another architecture ladder: it is training
-  morphology on its full dataset, finding where the expression curve actually turns, and
-  checking whether the graph prior is the right prior at all.
-\item \textbf{The graph-prior probe has run and it closed a planned arm.} The
-  network-distance pair term is not worth building, the nine masked heads should be freed,
-  and the mask should stop symmetrizing its two directed relations. Two cheap experiments
-  remain unrun: morphology at full scale, and one expression run trained until the
-  validation curve turns.
-\end{itemize}
+\notesec{Expression first, and single-phenotype} It is the strand where the diagnosis is
+furthest along, where the next experiment is cheapest to interpret, and where the most
+effort is already sunk. Concretely: resume the best checkpoint rather than restarting, and
+run it until the validation curve turns, since no run has yet observed a maximum at any
+budget up to 10,000 epochs. Multi-GPU DDP on IGB is the lever that makes this affordable
+(\cref{sec:campaign}).
+
+\notesec{Then the small-target strands, because they are cheap} Betaxanthin and the
+amino-acid pool train in hours rather than days and carry few output features, so a joint or
+constraint-coupled arm can be iterated there while an expression run occupies a GPU. The
+question they answer, whether a second label helps at all, is the same question the
+expression-morphology pairing asks and is far cheaper to ask.
+
+\notesec{Morphology at full scale is deferred, not dropped} It is the single largest change
+available to Figure 3 and it is a config change rather than research. It is also a longer
+run than expression: nearly four times the strains at a comparable architecture, with the
+epoch budget unmeasured. Running it before expression is understood would occupy the
+hardware for the strand we understand least.
+
+\notesec{Keep the graph masks; add unconstrained heads beside them} The cross-phenotype probe
+settles this: the graph channel carries real information, unevenly across graphs and across
+phenotypes. Two changes follow, both cheap and neither a removal. Stop symmetrizing the two
+directed relations in the mask builder. And add unconstrained heads beside the masked ones,
+so the model can learn structure the graphs do not carry without giving up the ones that do.
+The one graph the probe is decisively negative on is \file{tflink}, at the noise floor on all
+six strands.
+
+\notesec{Figure 6 is ready to be argued} on coverage rather than on accuracy, with the
+amino-acid material entering as a coupling measurement and as the motivation for a
+constraint-based metabolic layer, not as a joint-training result.
+
+\notesec{Figure 3 is not ready} A per-gene Pearson of $0.24$ against a ceiling of $0.775$ is
+not a headline, and the manuscript's placeholder values of $0.543$ and $0.619$ are far from
+the measured $0.238$ and $0.082$. Those placeholders come out of the manuscript regardless
+of what the next campaign finds.

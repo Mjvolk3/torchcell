@@ -25,39 +25,118 @@ per-strain standard error over a median of 15 colonies, giving a reliability of 
 a Pearson ceiling of $\mathbf{0.914}$.
 \src{experiments/019-simb-multimodal/results/pigment_noise_ceiling.json}
 
-\subsection{Two betaxanthin numbers, and why the comparison uses the lower one\secstatus{todo}}
+\tcfigfit[0.62]{figures/betaxanthin_noise_ceiling.pdf}{Reliability of the betaxanthin
+target. Unlike every other phenotype here, Cachera releases a per-strain standard error over
+a median of 15 colonies, so the noise term is measured directly rather than inferred from
+replicate structure. That is what puts this ceiling at $0.914$ and makes betaxanthin the one
+strand where a regression target is clearly
+supportable.}{fig:bx-ceiling}
+
+\subsection{Three betaxanthin numbers, two scoring rules, and one honest comparison\secstatus{todo}}
 \label{sec:bx-two-numbers}
 
 \begin{table}[htbp]
 \centering\small
-%% SOURCE: results/analysis_002_noise_and_lambda.json; results/round_leaderboards.csv
-\begin{tabular}{lrrl}
+%% SOURCE: results/analysis_002_noise_and_lambda.json; results/round_leaderboards.csv;
+%% OBJECTIVE_METRIC in experiments/020-cachera-betaxanthin/scripts/optuna_metabolism_sweep.py
+\begin{tabular}{llrrl}
 \toprule
-round & $n_{\mathrm{train}}$ & best val $r$ & split \\
+number & where it comes from & scoring rule & $n_{\mathrm{train}}$ & split \\
 \midrule
-\file{betaxanthin_002} (in \file{torchcell_020_betaxanthin}, \file{_v3}) & 4{,}235 & \textbf{0.4301} & ordinary ratio split \\
-\file{020_v4} (\file{torchcell_020_betaxanthin_v4}) & 3{,}698 & 0.372 & Merzbacher test genes pinned out \\
+$\mathbf{0.4301}$ & Optuna study \file{betaxanthin_002} & raw per-epoch max & 4{,}235 & ordinary ratio split \\
+$\mathbf{0.4015}$ & the same runs, in W\&B & \texttt{roll\_max} & 4{,}235 & ordinary ratio split \\
+$\mathbf{0.3705}$ & \file{torchcell_020_betaxanthin_v4} & \texttt{roll\_max} & 3{,}698 & Merzbacher test genes pinned out \\
 \bottomrule
 \end{tabular}
-\caption[]{The highest betaxanthin score is $0.4301$, $47\,\%$ of the $0.914$ ceiling. Its
-top five trials span $0.0206$, which is $0.68\sigma$ against a measured replicate $\sigma$
-of $0.0302$, so it is a plateau rather than one lucky trial; it is nonetheless a maximum
-over 37 trials, and de-selecting that inflation ($0.064$) puts the floor for a
-configuration chosen without hindsight at $\approx 0.366$.}
+\caption[]{The first two rows are the \textbf{same runs under two scoring rules}, which is
+what made the previous revision confusing. The Optuna objective is
+\file{val/betaxanthin/pearson_per_feature_max}, a running maximum over epochs; the
+leaderboard's \texttt{roll\_max} first averages five neighboring epochs, and smoothing can
+only lower a maximum. Only rows two and three are comparable, and their difference,
+$0.4015$ against $0.3705$, is what holding out a competitor's test set costs. Against the
+$0.914$ ceiling the best is $47\,\%$ realized on the raw rule and $44\,\%$ on the smoothed
+one.}
 \label{tab:bx-two-numbers}
 \end{table}
 
+\notesec{On whether $0.4301$ is a plateau or one lucky trial, since the previous phrasing of
+this was unreadable} A \term{trial} here is one Optuna trial, meaning one hyperparameter
+configuration trained once. It is not a data split: the split is pinned across the whole
+study, so trials differ by hyperparameters and by weight initialization only. Study
+\file{betaxanthin_002} ran 37 of them. Two things follow, and they point in opposite
+directions.
+
+\begin{itemize}
+\item \textbf{The top is flat, so the winner is not a spike.} The best five trials read
+  $0.4301$, $0.4234$, $0.4216$, $0.4211$ and $0.4095$, a spread of $0.0206$. Re-running an
+  \emph{identical} configuration moves the objective by $\sigma = 0.0302$
+  (\cref{tab:replicate-noise}), so those five sit inside two thirds of one standard
+  deviation of each other. They are statistically indistinguishable, which means the winner
+  is one of five equivalent configurations rather than a single fortunate run.
+\item \textbf{But taking the maximum of 37 noisy trials is still biased upward.} That is
+  \term{selection inflation}, estimated at $0.064$ here. So a configuration chosen in
+  advance, without seeing the study, should be expected to score around $0.366$ rather than
+  $0.430$.
+\end{itemize}
+
+Both are true at once: the plateau says the number is not a fluke of one run, and the
+inflation says it is not what a fresh configuration would give.
+
 \notesec{The comparison number is lower than the best number on purpose} The head-to-head
 below runs on \file{020_v4}, whose split \textbf{pins the 640 Merzbacher test genes out of
-training}. That costs 537 training strains, and it costs score. Using the $0.4301$ model
-instead would mean scoring on genes it had trained on, which is the one thing that would
-void the comparison. The cell carried forward is \file{s09_L6_maskon_lr0.0001_yj},
+training}. That costs 537 training strains, and it costs score. Using the higher-scoring
+model instead would mean scoring on genes it had trained on, which is the one thing that
+would void the comparison. The cell carried forward is \file{s09_L6_maskon_lr0.0001_yj},
 selected by validation at $0.3639$ and never by its score on the comparison genes.
 
-Both numbers are real and they answer different questions: $0.4301$ is what the model does
-on this screen, $0.372$ is what it does with a competitor's test set held out. Quoting the
-first in a sentence about the comparison would be the error; quoting the second as ``our
-betaxanthin result'' understates it.
+\notesec{The 537 strains are not recoverable, and the fix is a reporting change that needs
+no retraining} The natural proposal is to train on everything outside the comparison list,
+carve validation and test from that same remainder, and evaluate twice. Sized against the
+data, that proposal is numerically the split \file{020_v4} already ran: it gives
+$3{,}682/299/295$ plus the 639 comparison genes, against \file{020_v4}'s actual
+$3{,}698/286/931$, where the 931 is 639 comparison genes plus 292 of our own. Holding the
+comparison genes out of training is what costs the 537, under any scheme, and no
+rearrangement returns them.
+
+\begin{table}[htbp]
+\centering\small
+%% SOURCE: experiments/020-cachera-betaxanthin/scripts/fcl_resplit_sizing_check.py
+\begin{tabular}{lrrr}
+\toprule
+arm & train & validation & test \\
+\midrule
+unpinned (\file{torchcell_020_betaxanthin}, \file{_v3}) & 4{,}235 & 340 & 340 \\
+pinned (\file{torchcell_020_betaxanthin_v4}) & 3{,}698 & 286 & 931 \\
+the proposed re-split, sized & 3{,}682 & 299 & 295 + 639 \\
+\bottomrule
+\end{tabular}
+\caption[]{Sizing the proposed re-split against what was run. The bookkeeping on the pinned
+arm closes exactly: train $-537$, validation $-54$, test $+591 = 537 + 54$, the other 48
+pinned genes having already been in the unpinned test set. The realized split ratio is
+$86/7/7$ rather than the nominal $80/10/10$, because assignment is per-key stratified; the
+config comment estimating ``roughly 511'' lost genes used the nominal ratio and understates
+the true 537 by 26.}
+\label{tab:bx-resplit}
+\end{table}
+
+\textbf{What the proposal does buy, and it is worth taking, is the second evaluation.} The
+existing 931-record test set is already 639 comparison genes plus 292 of our own. Splitting
+it and reporting both numbers separates ``how we do against FCL on their genes'' from ``how
+the model does on a clean held-out sample'', and it runs off the existing \file{020_v4}
+checkpoints with no retraining at all. Enlarging our own test set beyond those 292 is the
+only part that costs anything, at roughly a further 137 training strains for a 429-gene own
+test set.
+
+\notesec{One name-resolution hazard to check before the comparison is published} Of the 640
+comparison genes, 630 carry a betaxanthin measurement, and the pin file holds 639. The
+screen reports one gene as \gene{PPA1}, which is an ambiguous alias: it names both
+\gene{IPP1} (\gene{YBR011C}) and \gene{VMA16} (\gene{YHR026W}). The split builder resolves it
+to \gene{VMA16} on decisive evidence, that Cachera screened the non-essential deletion
+collection and \gene{IPP1} is essential, so an \gene{ipp1}$\Delta$ strain cannot be in it.
+The training data still inherits the stale resolver (issue \#195) and may carry the other
+assignment, which would attach one comparison gene's measurement to the wrong ORF.
+\textbf{Verify this specific gene against the training build before publishing the
+comparison}; it has not been confirmed either way here.
 
 \subsection{The published accuracy comparison is empty for both methods\secstatus{todo}}
 
@@ -94,13 +173,22 @@ producers. Both curves approach the base rate by $k = 150$.}
 
 Median percentile rank by true class is flat for both methods, at 54/49/56 for FCL and
 48/51/52 for CGT across low, medium and high. Read with the table above, that says the
-signal is real and confined to the tail, not that there is none.
+signal is real and confined to the tail, not that there is none: neither method separates a
+typical high producer from a typical low one, and both are far better than chance at the very
+top of their own ranking.
 
 \tcfigfit{figures/merzbacher_fig3_precision_at_k_2026-08-02-23-43-08.pdf}{Precision at $k$
-for high producers, both methods, against the base rate of $0.156$. Nine of CGT's top ten
-are genuine high producers, and both curves reach the base rate by $k = 150$. The nine
-unselected CGT grid cells span $0.10$ to $0.65$ at $k = 50$, so cell choice matters more
-than the gap between methods.}{fig:precision-at-k}
+for high producers. (a) the comparison: FCL against the CGT cell chosen by validation, with
+the nine unselected grid cells drawn as a shaded envelope rather than as nine competing
+lines. The base rate of $0.156$ is drawn and labeled, and it is what a random pick of $k$
+genes would return. Nine of CGT's top ten are genuine high producers, and both methods reach
+the base rate by $k \approx 150$, which is where the tail signal is exhausted. (b) the same
+ten cells drawn individually, one color each, which is what answers whether some cells sit
+below the base rate early: \textbf{three of the ten do at $k = 50$}. Read crossings at very
+small $k$ with care, since at $k = 10$ precision moves in steps of $0.1$ and a crossing is a
+single gene. The spread across cells is far larger than the gap between the two methods,
+which is the hyperparameter sensitivity of \cref{sec:terms} rather than a split
+effect.}{fig:precision-at-k}
 
 \tcfigfit{figures/merzbacher_fig1_scatter_spread_2026-08-02-23-43-08.pdf}{Per-gene spread
 over the 639 shared genes. Both models emit a nearly constant value: $80\,\%$ of FCL's
@@ -111,15 +199,26 @@ recovering 29 of the 100 true high producers and sharing 9.}{fig:bx-spread}
 \subsection{The two methods find different genes\secstatus{todo}}
 
 Rank-matched into the same 100 high slots, FCL recovers 29 of the 100 true high producers
-and CGT recovers 29, and they share 9. The union reaches 49. Their rank correlation is
-$-0.128$, which at $n = 639$ is $z = -3.2$, where two models correlating with the truth at
-$+0.105$ and $+0.039$ would through the truth alone correlate with each other at about
-$+0.004$.
+and CGT recovers 29, and they share 9. The union reaches 49, so running both finds $69\,\%$
+more high producers than running either.
 
-\notesec{No mechanism is claimed} for the sign. What is claimed is the operational
-consequence: recall is near-additive because the two methods are finding largely different
-genes, which is an argument for running both, and which is invisible in every aggregate
-statistic. The 51 that neither finds is the honest ceiling on this comparison.
+\notesec{The two methods' predictions are anti-correlated, and here is what that sentence
+means} Compare their predicted rankings over the 639 shared genes directly, ignoring the
+truth. Two methods that are each independently right about the same target should agree
+somewhat, and the amount is calculable: if one correlates with the truth at $+0.105$ and the
+other at $+0.039$, then agreeing only through the truth would put their mutual correlation
+at about $0.105 \times 0.039 = +0.004$, essentially zero. The observed correlation between
+them is $\mathbf{-0.128}$, which at $n = 639$ is $z = -3.2$: they disagree substantially
+more than two independent methods would.
+
+\notesec{No mechanism is claimed for the negative sign} It could be a genuine
+anti-relationship between what the two feature spaces encode, or an artifact of how each was
+fit; nothing here distinguishes those. What \emph{is} claimed is the operational
+consequence, which does not depend on the sign's explanation: because the two find largely
+different genes, their recall adds rather than overlaps, so running both is worth more than
+picking the better one. That fact is invisible in every aggregate statistic, all of which
+report the two as tied. The 51 high producers that neither finds is the honest ceiling on
+this comparison.
 
 \subsection{The real difference is coverage\secstatus{todo}}
 
@@ -150,9 +249,39 @@ costs three quarters of the hits.}
 only, no model and no prediction: how little of the betaxanthin screen a flux-based method
 can reach.}{fig:gem-coverage}
 
-On held-out test genes split by yeast-GEM membership, with identical derived labels on both
-sides, CGT's top 25 recovers 17 of 48 true highs inside the model ($9.3\times$ over base
-rate, $p = 2\times10^{-15}$) and 9 of 21 outside it ($4.4\times$, $p = 2\times10^{-5}$).
+\notesec{How the class labels are derived, since every metric below depends on it} The
+Cachera screen releases a continuous production value, and FCL's task is a three-class
+one, so a rule is needed to turn measurements into low, medium and high. FCL's rule:
+min-max scale production onto $[0, 1]$ over their gene set and cut at $0.40$ and $0.65$.
+\textbf{We apply their thresholds rather than inventing our own}, which is what makes the
+two panels comparable. Two consequences follow and both are stated rather than hidden.
+
+\begin{itemize}
+\item \textbf{Applying their rule to our larger copy of the same screen does not reproduce
+  their class counts.} It gives $107/476/56$ against their $109/431/100$, and $18.8\,\%$ of
+  genes land in a different bin than our measured values would give. A model predicting our
+  measurement \emph{perfectly} is therefore marked wrong on about a fifth of genes, so their
+  labels are a headroom bound on any accuracy-style metric, ours included.
+\item \textbf{They never labeled the non-GEM genes at all}, because those genes are outside
+  their method's reach. We derive labels there with the identical rule, which is the only
+  way that panel exists. The comparison to make is therefore panel against panel rather than
+  number against number, and \cref{fig:capability-gap} is drawn that way.
+\end{itemize}
+
+\notesec{Why every metric here is rank-based or re-binned} We produce a regression and they
+produce a three-class classifier, so nothing can be compared directly. Two repairs are used
+throughout, and the choice between them is not arbitrary. \textbf{Rank-based metrics}
+(Spearman, precision at $k$, AUC) need no thresholds at all and so cannot be affected by the
+binning disagreement above; they are preferred wherever available. Where a class metric is
+unavoidable, our continuous predictions are binned \textbf{with thresholds fit on the
+training split only}, never on the test genes, so the binning cannot borrow information from
+the evaluation. Neither repair fixes the $18.8\,\%$ label disagreement, which sits in the
+ground truth rather than in either model.
+
+On held-out test genes split by yeast-GEM membership, with labels derived the same way on
+both sides, CGT's top 25 recovers 17 of 48 true highs inside the model ($9.3\times$ over
+base rate, $p = 2\times10^{-15}$) and 9 of 21 outside it ($4.4\times$,
+$p = 2\times10^{-5}$).
 
 \tcfigfit{figures/merzbacher_fig9_metabolic_vs_nonmetabolic_2026-08-02-23-43-08.pdf}{CGT
 predicts high betaxanthin producers among deletions a flux-based method cannot represent.
@@ -163,31 +292,58 @@ FCL's prediction for the outside set is not poor, it is undefined: flux sampling
 feature for a deletion the metabolic model does not contain. The FCL test set is $639$ of
 $640$ inside yeast-GEM; of our other test genes only $21$ of $294$ are.
 
-\notesec{Two qualifications that must travel with this claim} The rank correlation reads
-higher outside the model than inside ($+0.270$ against $+0.124$), but the two are measured
-on different, non-overlapping gene sets and a Fisher $r$-to-$z$ gives $z = 2.07$,
-$p = 0.039$. Read it as at least as good outside as inside. And labels for the non-GEM
-genes are derived by us, since the FCL paper never labeled them, so the comparison to make
-is panel against panel.
+\notesec{One qualification that must travel with this claim} ``Inside'' and ``outside'' here
+mean inside or outside \textbf{yeast-GEM}, the genome-scale metabolic model, not inside or
+outside anyone's training set. CGT's rank correlation with measured production is
+\emph{higher} on the genes yeast-GEM does not contain, $+0.270$ against $+0.124$. That is the
+opposite of what one would expect if metabolic genes were the easy ones, so it is worth
+testing rather than asserting: the two correlations are measured on different,
+non-overlapping gene sets, and comparing two correlations requires first mapping each
+through Fisher's transform, which turns a correlation into a quantity whose sampling
+distribution is approximately normal with a known variance. Doing that gives $z = 2.07$,
+$p = 0.039$: a real difference, but marginal, and on populations that differ in more than
+their yeast-GEM membership. \textbf{The safe reading is that CGT is at least as good outside
+the metabolic model as inside it}, which is all the coverage argument needs.
 
 \subsection{Where the comparison is soft\secstatus{todo}}
 
 \begin{itemize}
-\item \textbf{The selection is asymmetric, and it favors FCL.} Ours is the
-  validation-selected cell. Theirs is the best of four models, justified by a test-set
-  number, and their validation folds appear to be drawn from the same 640 genes as their
-  test list. Where the two land level, we are level with an opponent picked with more
-  information than we allowed ourselves.
-\item \textbf{Validation Pearson does not track test AUC.} Four of ten CGT cells beat FCL's
-  AUC of $0.570$ and the best reaches $0.695$, while the validation-selected cell reads
-  $0.557$. The runner-up on validation, $0.3528$ against $0.3639$, has an AUC $0.14$ higher.
-  Neither ``CGT's AUC is 0.695'' nor ``CGT's AUC is 0.557'' is safe; the metric does not
-  separate the two methods at this resolution.
-\item \textbf{Their labels are a headroom bound.} Their binning rule min-max scales
-  production and cuts at $0.40$ and $0.65$, so applied to our larger copy of the same screen
-  it gives $107/476/56$ against their $109/431/100$. $18.8\,\%$ of genes sit in a different
-  bin than our values would give, so a model predicting our measurement perfectly is marked
-  wrong on about a fifth of genes.
+\item \textbf{The selection is asymmetric, and it favors FCL. This is now verified rather
+  than suspected, and it is stronger than the previous wording.} Revision 2 said their
+  validation folds ``appear to be drawn from the same 640 genes as their test list''. From
+  their Zenodo release: \file{yeast_production_validation_split.csv} assigns a fold to each
+  of \textbf{exactly the same 640 systematic ORFs} that
+  \file{yeast_production_test_split.csv} names. The intersection is 640 and both set
+  differences are empty, in five folds of 129/128/128/128/127. Their training loop then
+  computes \file{train_names = set(nontest_names) - set(val_names)}, which is a no-op
+  because those genes were never in the non-test pool, so every fold trained on the full
+  complement and validated on a 128-gene slice of the test set. Model selection across their
+  16 variants therefore ran on test data.
+
+  Their own CHO essentiality release does \emph{not} do this: there the validation genes are
+  exactly the 1,833 flagged as non-test, sharing nothing with the 457 test genes. So the
+  yeast leak is a deviation from their practice inside the same release rather than a naming
+  convention, which is what makes it worth stating as a fact. And the paper alone cannot
+  settle it: its Methods never mention a validation set and the test count is internally
+  inconsistent (659 in the main text, 649 in Table S6, 640 in the release), so only the
+  released files decide it.
+
+  Ours, by contrast, is the validation-selected cell with the comparison genes pinned out of
+  training. \textbf{So where the two land level, we are level with an opponent selected on
+  the test set.}
+\item \textbf{Validation Pearson does not track test AUC, and this is the hyperparameter
+  sensitivity again rather than a split effect.} Four of ten CGT cells beat FCL's AUC of
+  $0.570$ and the best reaches $0.695$, while the validation-selected cell reads $0.557$.
+  The runner-up on validation, $0.3528$ against $0.3639$, has an AUC $0.14$ higher. Every
+  one of those cells sees the same split; what differs is the hyperparameters
+  (\cref{sec:terms}). So the honest statement is that \textbf{our own model-selection
+  criterion does not rank cells the way the comparison metric does}, which makes neither
+  ``CGT's AUC is 0.695'' nor ``CGT's AUC is 0.557'' quotable on its own. Selecting on
+  validation and reporting whatever AUC follows is the defensible protocol, and it is what
+  was done; the spread is reported beside it rather than being selected from.
+\item \textbf{Their labels are a headroom bound}, as detailed above: $18.8\,\%$ of genes bin
+  differently under their rule than our measured values would give, so a model predicting
+  our measurement perfectly is marked wrong on about a fifth of genes.
 \item \textbf{Regression against classification.} They tried regression and abandoned it,
   in their words ``challenging with the limited number of knockouts at the high and low
   ends.'' Our ceiling of $0.914$ makes regression available to us. The comparison is
@@ -199,11 +355,23 @@ is panel against panel.
   still inherits until a rebuild.
 \end{itemize}
 
-\notesec{Established} On this screen CGT and FCL are tied where both can be measured, both
-have tail-confined signal at roughly $5\times$ enrichment in the top 25, and they find
-different genes. CGT predicts the $81\,\%$ of the screen a flux-based method cannot
-represent, and finds high producers there at $4.4\times$ over base rate.
+\begin{keybox}
+\textbf{The betaxanthin case is about coverage, and it does not need to beat anyone on
+accuracy.} Where both methods can be scored, CGT and Flux Cone Learning are tied, both with
+tail-confined signal at roughly $5\times$ enrichment in the top 25, and they find largely
+different genes, so their recall adds: 29 each of 100 true high producers, sharing 9,
+reaching 49 together. The asymmetry favors them, since their model was selected on its own
+test set and ours on validation. \textbf{The argument that carries is the other one}: a
+flux-based method has features for $19\,\%$ of the screen and misses $73\,\%$ of its high
+producers, while CGT predicts high producers in the $81\,\%$ it cannot represent at
+$4.4\times$ over base rate, and scores at least as well there as inside the metabolic model.
+\end{keybox}
 
 \notesec{Cannot say} That CGT beats FCL on any single aggregate. That the rank
 anti-correlation means anything mechanistically. That the absolute top-100 membership is a
-deployable call, since the rank-matched comparison hands both sides the true class marginal.
+deployable call: the rank-matched comparison works by handing \emph{both} methods the true
+number of high producers and asking which genes each puts in those 100 slots. That is the
+right way to compare two methods, because neither can win by predicting more or fewer highs
+than exist. But it is not available in deployment, where nobody knows how many high
+producers a screen contains, so the top-100 precision measured here is an upper bound on
+what the same model would deliver prospectively.

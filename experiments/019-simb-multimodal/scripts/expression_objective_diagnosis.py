@@ -51,6 +51,7 @@ import numpy as np
 import pandas as pd
 import wandb
 from dotenv import load_dotenv
+from matplotlib.lines import Line2D
 from matplotlib.ticker import MultipleLocator
 
 from torchcell.timestamp import timestamp
@@ -58,6 +59,7 @@ from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
     mm_to_in,
+    panel_label,
     savefig_true_size_svg,
 )
 
@@ -179,35 +181,63 @@ def make_figure(curves: dict, out_png: str, out_svg: str) -> None:
         return df[col].rolling(SMOOTH, center=True, min_periods=1).mean()
 
     # (a) the quantile loss turns early, Pearson does not.
+    #
+    # The two series live on two y axes, so the axis labels alone left the review asking
+    # "what are grey and yellow". Every drawn element is therefore named in ONE legend
+    # built by hand from explicit handles: matplotlib cannot merge an axes and its twin.
     ax = axes[0]
     ax.plot(df.index, smooth("val/expression/pearson_per_feature"),
-            color=PLOT_PALETTE[0], linewidth=0.9, label="val Pearson")
+            color=PLOT_PALETTE[0], linewidth=0.9)
     ax.set_xlabel("epoch")
     ax.set_ylabel("val Pearson (per feature)")
     ax.set_ylim(0, 0.3)
     twin = ax.twinx()
     twin.plot(df.index, smooth("val/loss"), color=PLOT_PALETTE[5],
-              linewidth=0.9, linestyle=(0, (3, 2)), label="val loss")
+              linewidth=0.9, linestyle=(0, (3, 2)))
     twin.set_ylabel("val loss (quantile)")
     loss_min = float(smooth("val/loss").idxmin())
     ax.axvline(loss_min, color=PLOT_PALETTE[5], linewidth=0.5, linestyle=(0, (1, 2)))
-    ax.text(loss_min, 0.29, f" loss min ep {loss_min:.0f}", fontsize=5, va="top")
-    ax.set_title("a  Quantile loss turns at ~500", loc="left", fontsize=6, fontweight="bold")
+    ax.legend(
+        handles=[
+            Line2D([0], [0], color=PLOT_PALETTE[0], lw=0.9,
+                   label="val Pearson per feature (left axis)"),
+            Line2D([0], [0], color=PLOT_PALETTE[5], lw=0.9, ls=(0, (3, 2)),
+                   label="val loss, quantile (right axis)"),
+            Line2D([0], [0], color=PLOT_PALETTE[5], lw=0.5, ls=(0, (1, 2)),
+                   label=f"val loss minimum, epoch {loss_min:.0f}"),
+        ],
+        title=label,
+        frameon=False, fontsize=5, title_fontsize=5, loc="lower right",
+        handlelength=2.0, borderpad=0.2, labelspacing=0.35,
+    )
+    ax.set_title("Quantile loss turns early, Pearson does not", loc="left", fontsize=6,
+                 fontweight="bold")
 
     # (b) squared error does NOT turn early; nmse never returns below 1.
     ax = axes[1]
     ax.plot(df.index, smooth("val/expression/nmse"), color=PLOT_PALETTE[1],
-            linewidth=0.9, label="val nmse")
+            linewidth=0.9)
     ax.axhline(1.0, color="black", linewidth=0.5, linestyle=(0, (3, 2)))
-    ax.text(df.index.max() * 0.02, 1.002, "nmse = 1 is predict each gene's mean",
-            fontsize=5, va="bottom")
     ax.set_xlabel("epoch")
     ax.set_ylabel("val nmse")
     mse_min = float(smooth("val/expression/mse").idxmin())
-    ax.axvline(mse_min, color=PLOT_PALETTE[2], linewidth=0.5, linestyle=(0, (1, 2)))
-    ax.text(mse_min, ax.get_ylim()[1], f" mse min ep {mse_min:.0f}", fontsize=5,
-            va="top", ha="right")
-    ax.set_title("b  Squared error turns LATE", loc="left", fontsize=6, fontweight="bold")
+    # The marker line stops at 55 % of the panel height so it does not run through the
+    # legend that names it; it still reaches well above the curve at that epoch.
+    ax.axvline(mse_min, ymax=0.55, color=PLOT_PALETTE[2], linewidth=0.5,
+               linestyle=(0, (1, 2)))
+    ax.legend(
+        handles=[
+            Line2D([0], [0], color=PLOT_PALETTE[1], lw=0.9, label="val nmse"),
+            Line2D([0], [0], color="black", lw=0.5, ls=(0, (3, 2)),
+                   label="nmse = 1, predict each gene's mean"),
+            Line2D([0], [0], color=PLOT_PALETTE[2], lw=0.5, ls=(0, (1, 2)),
+                   label=f"val mse minimum, epoch {mse_min:.0f}"),
+        ],
+        frameon=False, fontsize=5, loc="upper right",
+        handlelength=2.0, borderpad=0.2, labelspacing=0.35,
+    )
+    ax.set_title("Squared error turns late, nmse stays above 1", loc="left",
+                 fontsize=6, fontweight="bold")
 
     # (c) the calibration gap: where the run sits against s = r.
     ax = axes[2]
@@ -216,22 +246,42 @@ def make_figure(curves: dict, out_png: str, out_svg: str) -> None:
     ax.plot(r_series, s_series, color=PLOT_PALETTE[3], linewidth=0.9)
     lim = np.linspace(0, 0.3, 50)
     ax.plot(lim, lim, color="black", linewidth=0.6, linestyle=(0, (3, 2)))
-    ax.text(0.16, 0.17, "s = r (nmse-optimal)", fontsize=5, rotation=32)
-    ax.scatter([r_series.max()], [s_series.loc[r_series.idxmax()]], s=16,
-               color=PLOT_PALETTE[1], edgecolor="black", linewidth=0.4, zorder=3)
+    # The label sits ALONG the s = r line. `transform_rotates_text` interprets the angle in
+    # DATA space and converts it to the on-screen angle, so a slope-1 line is written as
+    # 45 degrees and comes out parallel to the drawn line whatever the axis aspect is;
+    # a hardcoded screen angle does not survive a change of x or y limits.
+    ax.text(0.205, 0.205, "s = r (nmse-optimal)", fontsize=5, rotation=45,
+            transform_rotates_text=True, rotation_mode="anchor", ha="center",
+            va="bottom")
+    peak_r = float(r_series.max())
+    peak_s = float(s_series.loc[r_series.idxmax()])
+    ax.scatter([peak_r], [peak_s], s=16, color=PLOT_PALETTE[1], edgecolor="black",
+               linewidth=0.4, zorder=3)
     ax.set_xlabel("val Pearson r")
     ax.set_ylabel("prediction SD ratio s")
     ax.set_xlim(0, 0.3)
     ax.set_ylim(0, 0.6)
     ax.xaxis.set_major_locator(MultipleLocator(0.1))
     ax.yaxis.set_major_locator(MultipleLocator(0.2))
-    ax.set_title("c  Predictions are over-dispersed", loc="left", fontsize=6,
+    ax.legend(
+        handles=[
+            Line2D([0], [0], color=PLOT_PALETTE[3], lw=0.9,
+                   label="(r, s) over training"),
+            Line2D([0], [0], color=PLOT_PALETTE[1], lw=0, marker="o", markersize=3,
+                   markeredgecolor="black", markeredgewidth=0.4,
+                   label=f"Pearson peak, s/r = {peak_s / peak_r:.1f}"),
+        ],
+        frameon=False, fontsize=5, loc="upper left",
+        handlelength=2.0, borderpad=0.2, labelspacing=0.35,
+    )
+    ax.set_title("Predictions are over-dispersed", loc="left", fontsize=6,
                  fontweight="bold")
 
-    for axis in axes:
+    for letter, axis in zip("abc", axes):
         for spine in axis.spines.values():
             spine.set_visible(True)
             spine.set_linewidth(0.5)
+        panel_label(axis, letter)
     fig.savefig(out_png, dpi=300)
     savefig_true_size_svg(fig, out_svg)
     plt.close(fig)

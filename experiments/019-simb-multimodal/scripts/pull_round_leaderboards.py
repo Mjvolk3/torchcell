@@ -34,14 +34,29 @@ approximate to that resolution. It is a locator, not a measurement.
 
 Run from repo root (needs network; W&B login):
   PYTHONPATH=. python experiments/019-simb-multimodal/scripts/pull_round_leaderboards.py
+
+COVERAGE IS PER RUN, NOT PER PROJECT, and the two are not the same claim. By default the
+history pass reads a bounded candidate set per project (see CANDIDATES_BY_LAST below), so a
+project can be fully "read" while most of its runs carry no curve at all. `--full-history`
+lifts that bound for named projects, which is what a PAIRED comparison needs: a candidate
+set chosen by final score is a selection on the very quantity being compared.
+
+  # every run of the 023 paired grid, refetched from scratch
+  PYTHONPATH=. python experiments/019-simb-multimodal/scripts/pull_round_leaderboards.py \
+      --projects torchcell_023_bx_m19_v1 --full-history --refresh
+
+Re-running with no arguments afterwards rewrites `round_leaderboards.csv` from the caches,
+so the CSV always agrees with what is on disk.
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import os.path as osp
 import signal
+import time
 
 import numpy as np
 import pandas as pd
@@ -178,11 +193,17 @@ CACHE_SCHEMA = 2
 # that ran long and peaked late. Both are covered.
 #
 # WHAT THIS CAN MISS: a run that peaked high EARLY and then collapsed to a low final value
-# in a short run. Those exist in the early rounds (the mean-collapse runs of
-# `cgt_multitask` and `expr_v2`), but they peaked at 0.04 to 0.14, far below the strand
-# maxima this table reports, so the risk is to a median rather than to a maximum. Every row
-# carries `n_runs` and `n_history_fetched` so the sampling is visible wherever the number
-# is quoted, and a project at or below the limit is exhaustive.
+# in a short run. An earlier version of this comment argued the risk was to a median rather
+# than to a maximum. THAT WAS WRONG, and reading beta-carotene at full per-run coverage is
+# what showed it. The strand maximum is `5cjpn6zj` in `beta_carotene_v3` at 0.1371, peaking
+# at epoch 9 of 49; the candidate rule reached neither it nor the 0.1237 run behind it, and
+# reported 0.1184 as the strand best. A run that peaks at epoch 9 ranks low on final value
+# AND low on length, so it is invisible to both arms of the rule at once, and that is the
+# case the rule is structurally blind to rather than merely unlucky about.
+#
+# Every row carries `n_runs` and `history_fetched` so the sampling is visible wherever the
+# number is quoted, and a project at or below the limit is exhaustive. `--full-history`
+# removes the bound entirely and is what any mean, median or paired difference requires.
 # HARD TIMEOUT PER HISTORY REQUEST. `wandb.Api(timeout=...)` covers the HTTP call, not the
 # pagination loop underneath `run.history()`, so a single run can wedge the whole pull
 # indefinitely; this happened twice, each time stalling for 40+ minutes on one project with
@@ -353,11 +374,22 @@ def list_runs(api: wandb.Api, project: str) -> list:
     raise TimeoutError(f"could not list runs for {project}")
 
 
-def pull(api: wandb.Api, strand: str, project: str, primaries: list[str], extras: list[str]):
+def pull(
+    api: wandb.Api,
+    strand: str,
+    project: str,
+    primaries: list[str],
+    extras: list[str],
+    full_history: bool = False,
+):
     rows = []
     n_missing_history = 0
     all_runs = list_runs(api, project)
-    wanted = _candidates(all_runs, primaries)
+    # `full_history` reads EVERY run's curve. It is the honest setting and the expensive
+    # one; the candidate set exists only because 2,187 runs of history do not finish in one
+    # sitting. Any comparison that pairs runs must use it, because ranking candidates by
+    # final score selects on the quantity the comparison measures.
+    wanted = {r.id for r in all_runs} if full_history else _candidates(all_runs, primaries)
     for run in all_runs:
         # The primary metric is whichever ALIAS this run actually logged. Summary keys are
         # already loaded, so this costs no extra request and avoids fetching history under
@@ -501,7 +533,37 @@ def summarize(df: pd.DataFrame) -> dict[str, object]:
     return out
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--projects",
+        default="",
+        help=(
+            "comma-separated W&B project names to (re)pull. Every other project is still "
+            "read from cache, so the CSV stays complete. Default: all of them."
+        ),
+    )
+    parser.add_argument(
+        "--full-history",
+        action="store_true",
+        help="fetch history for EVERY run of the named projects, not the candidate set.",
+    )
+    parser.add_argument(
+        "--refresh",
+        action="store_true",
+        help="ignore any cached rows for the named projects and refetch them.",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = parse_args()
+    selected = {p.strip() for p in args.projects.split(",") if p.strip()}
+    known = {s[1] for s in STRANDS}
+    unknown = selected - known
+    if unknown:
+        raise SystemExit(f"unknown project(s): {sorted(unknown)}")
+
     load_dotenv()
     experiment_root = os.environ["EXPERIMENT_ROOT"]
     results_dir = osp.join(experiment_root, EXPERIMENT, "results")
@@ -519,8 +581,11 @@ def main() -> None:
     rows: list[dict[str, object]] = []
     for strand, project, primaries, extras in ordered:
         cache_path = osp.join(cache_dir, f"{project}.json")
+        targeted = project in selected
         got = None
-        if osp.exists(cache_path):
+        if targeted and args.refresh:
+            print(f"refresh {strand:30s} <- {project:44s} ignoring cache", flush=True)
+        elif osp.exists(cache_path):
             with open(cache_path) as fh:
                 blob = json.load(fh)
             if isinstance(blob, dict) and blob.get("schema") == CACHE_SCHEMA:
@@ -529,10 +594,23 @@ def main() -> None:
             else:
                 print(f"stale   {strand:30s} <- {project:44s} refetching", flush=True)
         if got is None:
-            got = pull(api, strand, project, primaries, extras)
+            if selected and not targeted:
+                # Not asked for and not cached. Skipping keeps a targeted pull targeted;
+                # the project simply contributes nothing to this pass, and the CSV says so.
+                print(f"skipped {strand:30s} <- {project:44s} not selected", flush=True)
+                continue
+            started = time.time()
+            got = pull(
+                api, strand, project, primaries, extras,
+                full_history=args.full_history and targeted,
+            )
             with open(cache_path, "w") as fh:
                 json.dump({"schema": CACHE_SCHEMA, "rows": got}, fh)
-            print(f"pulled  {strand:30s} <- {project:44s} {len(got):4d} runs", flush=True)
+            print(
+                f"pulled  {strand:30s} <- {project:44s} {len(got):4d} runs "
+                f"in {time.time() - started:.0f}s",
+                flush=True,
+            )
         rows.extend(got)
     df = pd.DataFrame(rows)
     csv_path = osp.join(results_dir, "round_leaderboards.csv")

@@ -46,6 +46,7 @@ from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
     mm_to_in,
+    panel_label,
     savefig_true_size_svg,
 )
 
@@ -69,12 +70,12 @@ STRANDS = [
 LABEL_OFFSETS = {
     "expression_morphology_joint": (5, -9, "left"),
     "morphology": (-5, 4, "right"),
-    "beta_carotene": (6, 2, "left"),
-    "amino_acid": (6, 6, "left"),
-    "expression": (-5, 4, "right"),
-    "expression_masked": (0, 7, "center"),
-    "betaxanthin": (6, -8, "left"),
-    "betaxanthin_amino_acid_joint": (-6, 4, "right"),
+    "beta_carotene": (0, 7, "center"),
+    "amino_acid": (6, -8, "left"),
+    "expression": (-5, -16, "right"),
+    "expression_masked": (-6, 5, "right"),
+    "betaxanthin": (0, 7, "center"),
+    "betaxanthin_amino_acid_joint": (0, -10, "center"),
 }
 
 
@@ -182,6 +183,7 @@ def panel_ceiling(best: dict, ceilings: dict, png: str, svg: str) -> list[dict]:
     ax.grid(axis="x", which="both", linewidth=0.3, color="#DDDDDD")
     ax.set_axisbelow(True)
     _box(ax)
+    panel_label(ax, "a")
     fig.savefig(png, dpi=300)
     savefig_true_size_svg(fig, svg)
     plt.close(fig)
@@ -259,6 +261,7 @@ def panel_convergence(best: dict, png: str, svg: str) -> list[dict]:
     ax.grid(axis="both", which="major", linewidth=0.3, color="#DDDDDD")
     ax.set_axisbelow(True)
     _box(ax)
+    panel_label(ax, "a")
     fig.savefig(png, dpi=300)
     savefig_true_size_svg(fig, svg)
     plt.close(fig)

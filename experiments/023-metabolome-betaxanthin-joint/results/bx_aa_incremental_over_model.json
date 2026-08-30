@@ -1,0 +1,343 @@
+{
+  "n_dumps": 10,
+  "n_scored_runs": 10,
+  "genes_shared_cachera_mulleder": 4432,
+  "mean_n_scored": 816.0,
+  "mean_model_pearson": 0.1842029495808213,
+  "mean_aa_alone": 0.27195793900150667,
+  "sd_aa_alone": 5.851389114294502e-17,
+  "mean_aa_given_model": 0.2468258169834588,
+  "sd_aa_given_model": 0.024539874475125196,
+  "per_run": [
+    {
+      "path": "/scratch/projects/torchcell-scratch/test-predictions/gpub065.delta.ncsa.illinois.edu-20714232_1805fe9076940ca3ad5d5e70f3b5e3c462980a15fca4318d225ed6151a2c095c.json",
+      "tags": [
+        "delta",
+        "grid",
+        "betaxanthin",
+        "s04_L2_maskoff_lr0.0001_zs",
+        "seed-42"
+      ],
+      "seed": 42,
+      "n_test_records": 933,
+      "n_scored": 816,
+      "dump_target_vs_level_pearson": 0.9999999999999991,
+      "model_pearson_on_scored_genes": 0.2760728764610879,
+      "aa_pool_alone": {
+        "pearson": 0.2719579390015066,
+        "pearson_sd_across_shuffles": 0.011807409982860631,
+        "pearson_se_fisher": 0.032467243267554735,
+        "spearman": 0.1981328664708106,
+        "n": 816,
+        "n_features": 19
+      },
+      "aa_pool_given_model": {
+        "pearson": 0.237965763777766,
+        "pearson_sd_across_shuffles": 0.004897372828596594,
+        "pearson_se_fisher": 0.03307425418032754,
+        "spearman": 0.2036926796610167,
+        "n": 816,
+        "n_features": 19
+      },
+      "delta": 0.03399217522374062,
+      "model_pred_vs_pool_pearson": 0.16604891508013905
+    },
+    {
+      "path": "/scratch/projects/torchcell-scratch/test-predictions/gpub065.delta.ncsa.illinois.edu-20714232_18e790b185ba57be5ad844d42ebb96a64d3f6b66c5bff6ff957492984e2f2a98.json",
+      "tags": [
+        "delta",
+        "grid",
+        "betaxanthin",
+        "s08_L6_maskon_lr0.0001_zs",
+        "seed-42"
+      ],
+      "seed": 42,
+      "n_test_records": 933,
+      "n_scored": 816,
+      "dump_target_vs_level_pearson": 0.9999999999999991,
+      "model_pearson_on_scored_genes": 0.35641618979791473,
+      "aa_pool_alone": {
+        "pearson": 0.2719579390015066,
+        "pearson_sd_across_shuffles": 0.011807409982860631,
+        "pearson_se_fisher": 0.032467243267554735,
+        "spearman": 0.1981328664708106,
+        "n": 816,
+        "n_features": 19
+      },
+      "aa_pool_given_model": {
+        "pearson": 0.2178753425924107,
+        "pearson_sd_across_shuffles": 0.011082327093427005,
+        "pearson_se_fisher": 0.03339495548668865,
+        "spearman": 0.20504196948019512,
+        "n": 816,
+        "n_features": 19
+      },
+      "delta": 0.05408259640909591,
+      "model_pred_vs_pool_pearson": 0.21852578469105652
+    },
+    {
+      "path": "/scratch/projects/torchcell-scratch/test-predictions/gpub065.delta.ncsa.illinois.edu-20714232_341c48b55f7b4705d393adc835bf746257aa621e427d6e943da5d198336abd9d.json",
+      "tags": [
+        "delta",
+        "grid",
+        "betaxanthin",
+        "s07_L2_maskoff_lr0.001_yj",
+        "seed-42"
+      ],
+      "seed": 42,
+      "n_test_records": 933,
+      "n_scored": 816,
+      "dump_target_vs_level_pearson": 0.9999999999999991,
+      "model_pearson_on_scored_genes": 0.08161172420976696,
+      "aa_pool_alone": {
+        "pearson": 0.2719579390015066,
+        "pearson_sd_across_shuffles": 0.011807409982860631,
+        "pearson_se_fisher": 0.032467243267554735,
+        "spearman": 0.1981328664708106,
+        "n": 816,
+        "n_features": 19
+      },
+      "aa_pool_given_model": {
+        "pearson": 0.26481948946977657,
+        "pearson_sd_across_shuffles": 0.009330353970905711,
+        "pearson_se_fisher": 0.03260143250601799,
+        "spearman": 0.20537056807840018,
+        "n": 816,
+        "n_features": 19
+      },
+      "delta": 0.00713844953173004,
+      "model_pred_vs_pool_pearson": 0.04479191197058968
+    },
+    {
+      "path": "/scratch/projects/torchcell-scratch/test-predictions/gpub065.delta.ncsa.illinois.edu-20714232_407109627ee5607dd73c3d7217c970d0ab37229ca940e130924dafa7d1f6dd35.json",
+      "tags": [
+        "delta",
+        "grid",
+        "betaxanthin",
+        "s00_L2_maskon_lr0.0001_zs",
+        "seed-42"
+      ],
+      "seed": 42,
+      "n_test_records": 933,
+      "n_scored": 816,
+      "dump_target_vs_level_pearson": 0.9999999999999991,
+      "model_pearson_on_scored_genes": 0.01117981067038477,
+      "aa_pool_alone": {
+        "pearson": 0.2719579390015066,
+        "pearson_sd_across_shuffles": 0.011807409982860631,
+        "pearson_se_fisher": 0.032467243267554735,
+        "spearman": 0.1981328664708106,
+        "n": 816,
+        "n_features": 19
+      },
+      "aa_pool_given_model": {
+        "pearson": 0.2720102690478024,
+        "pearson_sd_across_shuffles": 0.011005384595465078,
+        "pearson_se_fisher": 0.03246624637983252,
+        "spearman": 0.1971297775630065,
+        "n": 816,
+        "n_features": 19
+      },
+      "delta": -5.2330046295789856e-05,
+      "model_pred_vs_pool_pearson": -0.0008880182196954432
+    },
+    {
+      "path": "/scratch/projects/torchcell-scratch/test-predictions/gpub065.delta.ncsa.illinois.edu-20714232_67d7785c20a51678d7f60525328e3b9614bd2dc571c74f07dd8e9ba5247f68f2.json",
+      "tags": [
+        "delta",
+        "grid",
+        "betaxanthin",
+        "s05_L2_maskoff_lr0.0001_yj",
+        "seed-42"
+      ],
+      "seed": 42,
+      "n_test_records": 933,
+      "n_scored": 816,
+      "dump_target_vs_level_pearson": 0.9999999999999991,
+      "model_pearson_on_scored_genes": 0.2912738393771336,
+      "aa_pool_alone": {
+        "pearson": 0.2719579390015066,
+        "pearson_sd_across_shuffles": 0.011807409982860631,
+        "pearson_se_fisher": 0.032467243267554735,
+        "spearman": 0.1981328664708106,
+        "n": 816,
+        "n_features": 19
+      },
+      "aa_pool_given_model": {
+        "pearson": 0.22590667943130058,
+        "pearson_sd_across_shuffles": 0.003701586308551667,
+        "pearson_se_fisher": 0.03327014451595674,
+        "spearman": 0.20400018640341677,
+        "n": 816,
+        "n_features": 19
+      },
+      "delta": 0.04605125957020603,
+      "model_pred_vs_pool_pearson": 0.17684538848561998
+    },
+    {
+      "path": "/scratch/projects/torchcell-scratch/test-predictions/gpub065.delta.ncsa.illinois.edu-20714232_73e4b91ef2b3c976392837372d676ee06e04ac9a0e51282862a1aff08111bd4c.json",
+      "tags": [
+        "delta",
+        "grid",
+        "betaxanthin",
+        "s03_L2_maskon_lr0.001_yj",
+        "seed-42"
+      ],
+      "seed": 42,
+      "n_test_records": 933,
+      "n_scored": 816,
+      "dump_target_vs_level_pearson": 0.9999999999999991,
+      "model_pearson_on_scored_genes": 0.07042635316329764,
+      "aa_pool_alone": {
+        "pearson": 0.2719579390015066,
+        "pearson_sd_across_shuffles": 0.011807409982860631,
+        "pearson_se_fisher": 0.032467243267554735,
+        "spearman": 0.1981328664708106,
+        "n": 816,
+        "n_features": 19
+      },
+      "aa_pool_given_model": {
+        "pearson": 0.2713787173934944,
+        "pearson_sd_across_shuffles": 0.012729300188625552,
+        "pearson_se_fisher": 0.03247826462753482,
+        "spearman": 0.1983395298481784,
+        "n": 816,
+        "n_features": 19
+      },
+      "delta": 0.0005792216080122148,
+      "model_pred_vs_pool_pearson": 0.014367222287018845
+    },
+    {
+      "path": "/scratch/projects/torchcell-scratch/test-predictions/gpub065.delta.ncsa.illinois.edu-20714232_7c56eb6dd16d431bfb93a2328f13f2fa794f90154baca6cd6d2eb91579e2bade.json",
+      "tags": [
+        "delta",
+        "grid",
+        "betaxanthin",
+        "s01_L2_maskon_lr0.0001_yj",
+        "seed-42"
+      ],
+      "seed": 42,
+      "n_test_records": 933,
+      "n_scored": 816,
+      "dump_target_vs_level_pearson": 0.9999999999999991,
+      "model_pearson_on_scored_genes": 0.3073662108439551,
+      "aa_pool_alone": {
+        "pearson": 0.2719579390015066,
+        "pearson_sd_across_shuffles": 0.011807409982860631,
+        "pearson_se_fisher": 0.032467243267554735,
+        "spearman": 0.1981328664708106,
+        "n": 816,
+        "n_features": 19
+      },
+      "aa_pool_given_model": {
+        "pearson": 0.2139422450014747,
+        "pearson_sd_across_shuffles": 0.002702246011763368,
+        "pearson_se_fisher": 0.033454429528779556,
+        "spearman": 0.2167509089375138,
+        "n": 816,
+        "n_features": 19
+      },
+      "delta": 0.0580156940000319,
+      "model_pred_vs_pool_pearson": 0.226261223957834
+    },
+    {
+      "path": "/scratch/projects/torchcell-scratch/test-predictions/gpub065.delta.ncsa.illinois.edu-20714232_a3b312aa512dfb1083f1cff0a1dcf36949763404599b41011cc1efc3a8a0d367.json",
+      "tags": [
+        "delta",
+        "grid",
+        "betaxanthin",
+        "s06_L2_maskoff_lr0.001_zs",
+        "seed-42"
+      ],
+      "seed": 42,
+      "n_test_records": 933,
+      "n_scored": 816,
+      "dump_target_vs_level_pearson": 0.9999999999999991,
+      "model_pearson_on_scored_genes": 0.02169582662766736,
+      "aa_pool_alone": {
+        "pearson": 0.2719579390015066,
+        "pearson_sd_across_shuffles": 0.011807409982860631,
+        "pearson_se_fisher": 0.032467243267554735,
+        "spearman": 0.1981328664708106,
+        "n": 816,
+        "n_features": 19
+      },
+      "aa_pool_given_model": {
+        "pearson": 0.2709571935202258,
+        "pearson_sd_across_shuffles": 0.012090449111160743,
+        "pearson_se_fisher": 0.03248627055544652,
+        "spearman": 0.20033685129291975,
+        "n": 816,
+        "n_features": 19
+      },
+      "delta": 0.001000745481280818,
+      "model_pred_vs_pool_pearson": 0.07948241374754819
+    },
+    {
+      "path": "/scratch/projects/torchcell-scratch/test-predictions/gpub065.delta.ncsa.illinois.edu-20714232_d130792439ecaf1a39d7b1d3e02481bee2a2b2558c8efe4188d3a2306e4ab3cd.json",
+      "tags": [
+        "delta",
+        "grid",
+        "betaxanthin",
+        "s09_L6_maskon_lr0.0001_yj",
+        "seed-42"
+      ],
+      "seed": 42,
+      "n_test_records": 933,
+      "n_scored": 816,
+      "dump_target_vs_level_pearson": 0.9999999999999991,
+      "model_pearson_on_scored_genes": 0.3304506909483397,
+      "aa_pool_alone": {
+        "pearson": 0.2719579390015066,
+        "pearson_sd_across_shuffles": 0.011807409982860631,
+        "pearson_se_fisher": 0.032467243267554735,
+        "spearman": 0.1981328664708106,
+        "n": 816,
+        "n_features": 19
+      },
+      "aa_pool_given_model": {
+        "pearson": 0.226194520632267,
+        "pearson_sd_across_shuffles": 0.005966219004671126,
+        "pearson_se_fisher": 0.03326558744484878,
+        "spearman": 0.1904240618835786,
+        "n": 816,
+        "n_features": 19
+      },
+      "delta": 0.04576341836923961,
+      "model_pred_vs_pool_pearson": 0.20499935828831897
+    },
+    {
+      "path": "/scratch/projects/torchcell-scratch/test-predictions/gpub065.delta.ncsa.illinois.edu-20714232_fe4ea9a9d3781a5d1ec015151f89cf03f5a9452af462da72ed537c3993888309.json",
+      "tags": [
+        "delta",
+        "grid",
+        "betaxanthin",
+        "s02_L2_maskon_lr0.001_zs",
+        "seed-42"
+      ],
+      "seed": 42,
+      "n_test_records": 933,
+      "n_scored": 816,
+      "dump_target_vs_level_pearson": 0.9999999999999991,
+      "model_pearson_on_scored_genes": 0.09553597370866537,
+      "aa_pool_alone": {
+        "pearson": 0.2719579390015066,
+        "pearson_sd_across_shuffles": 0.011807409982860631,
+        "pearson_se_fisher": 0.032467243267554735,
+        "spearman": 0.1981328664708106,
+        "n": 816,
+        "n_features": 19
+      },
+      "aa_pool_given_model": {
+        "pearson": 0.26720794896806926,
+        "pearson_sd_across_shuffles": 0.011780604656530427,
+        "pearson_se_fisher": 0.03255693147280499,
+        "spearman": 0.20360145830489798,
+        "n": 816,
+        "n_features": 19
+      },
+      "delta": 0.004749990033437346,
+      "model_pred_vs_pool_pearson": 0.05718771253424876
+    }
+  ]
+}

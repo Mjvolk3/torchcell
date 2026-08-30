@@ -169,7 +169,21 @@
     ]
   },
   "figure": {
-    "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/plan/cgt-metabolism/notes/assets/images/019-simb-multimodal/pigment_noise_ceiling.png",
-    "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/plan/cgt-metabolism/notes/assets/images/019-simb-multimodal/pigment_noise_ceiling.svg"
+    "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/019-simb-multimodal/pigment_noise_ceiling.png",
+    "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/019-simb-multimodal/pigment_noise_ceiling.svg"
+  },
+  "figures": {
+    "pigment_noise_ceiling": {
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/019-simb-multimodal/pigment_noise_ceiling.png",
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/019-simb-multimodal/pigment_noise_ceiling.svg"
+    },
+    "betaxanthin_noise_ceiling": {
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/019-simb-multimodal/betaxanthin_noise_ceiling.png",
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/019-simb-multimodal/betaxanthin_noise_ceiling.svg"
+    },
+    "beta_carotene_noise_ceiling": {
+      "png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/019-simb-multimodal/beta_carotene_noise_ceiling.png",
+      "svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/notes/assets/images/019-simb-multimodal/beta_carotene_noise_ceiling.svg"
+    }
   }
 }

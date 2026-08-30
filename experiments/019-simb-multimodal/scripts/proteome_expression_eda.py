@@ -32,8 +32,10 @@ genes, build two strains x genes matrices, then:
 3. Per-strain correlation across shared genes (z-scored per gene first).
 4. Linear map proteome->expression AND expression->proteome (ridge, held-out
    R^2, per-gene standardized) vs a predict-per-gene-mean baseline.
-5. Plots (ASSET_IMAGES_DIR, timestamped png+svg): per-gene correlation
-   histogram; representative-gene scatters; linear-map R^2 summary.
+5. Plots (ASSET_IMAGES_DIR, STABLE-named png+svg): per-gene correlation
+   histogram; representative-gene scatters; linear-map R^2 summary. Names carry
+   no timestamp because the notes-tex Makefile rule that converts them to PDF
+   targets them by basename; the write time is recorded in the results JSON.
 
 MEDIA CONFOUND: proteome is SM, expression is SC. The two modalities are
 measured under DIFFERENT nutrient conditions, so a KO can perturb protein and
@@ -63,12 +65,24 @@ from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
     mm_to_in,
+    panel_label,
     savefig_true_size_svg,
 )
 
-NEO4J_URI = "neo4j+s://torchcell-database.ncsa.illinois.edu:7687"
-NEO4J_AUTH = ("readonly", "ReadOnly")
-NEO4J_DB = "torchcell"
+# The served DB this was first run against. It is overridable from the environment
+# (TC_NEO4J_URI / TC_NEO4J_USER / TC_NEO4J_PASSWORD / TC_NEO4J_DB) because the NCSA
+# endpoint intermittently fails a cold read with `java.io.IOException`, and the same
+# query answers from a local build of the same graph. Whichever endpoint answered is
+# recorded in the results JSON, so a number can always be traced to the store it came
+# from rather than to "the database".
+NEO4J_URI = os.environ.get(
+    "TC_NEO4J_URI", "neo4j+s://torchcell-database.ncsa.illinois.edu:7687"
+)
+NEO4J_AUTH = (
+    os.environ.get("TC_NEO4J_USER", "readonly"),
+    os.environ.get("TC_NEO4J_PASSWORD", "ReadOnly"),
+)
+NEO4J_DB = os.environ.get("TC_NEO4J_DB", "torchcell")
 
 PROTEOME = (
     "ProteomeMessner2023Dataset",
@@ -91,6 +105,18 @@ CORR_STRONG = 0.3
 SEED = 42
 INK = "#000000"
 GRID = "#4A4A4A"
+
+# Every panel names BOTH modalities and BOTH media in-figure. The review could not tell
+# which expression data the figure used, and the media difference is what attenuates every
+# number on it, so neither fact may live only in the caption.
+PROTEOME_LABEL = "protein: Messner 2023 YKO proteome, synthetic minimal (SM), 30 C"
+EXPRESSION_LABEL = (
+    "mRNA: Kemmeren 2014 YKO expression compendium, synthetic complete (SC), 30 C"
+)
+MEDIA_CAVEAT = (
+    "The two modalities were measured in\nDIFFERENT MEDIA (SM vs SC), which\n"
+    "attenuates every correlation here."
+)
 
 load_dotenv()
 ASSET_IMAGES_DIR = os.environ["ASSET_IMAGES_DIR"]
@@ -295,46 +321,72 @@ def _box(ax: Any) -> None:
     ax.set_axisbelow(True)
 
 
-def _save(fig: Any, name: str, stamp: str) -> tuple[str, str]:
+def _save(fig: Any, name: str) -> tuple[str, str]:
+    """Write png + true-size svg under a STABLE basename (no timestamp).
+
+    A timestamped filename cannot be the target of the notes-tex Makefile rule that
+    converts these panels to PDF, so the write time lives in the results JSON instead.
+    """
     os.makedirs(IMG_DIR, exist_ok=True)
-    png = osp.join(IMG_DIR, f"{name}_{stamp}.png")
-    svg = osp.join(IMG_DIR, f"{name}_{stamp}.svg")
+    png = osp.join(IMG_DIR, f"{name}.png")
+    svg = osp.join(IMG_DIR, f"{name}.svg")
     fig.savefig(png, dpi=300, facecolor="white")
     savefig_true_size_svg(fig, svg, facecolor="white")
     plt.close(fig)
     return png, svg
 
 
-def plot_gene_hist(gene_corr: pd.DataFrame, stamp: str) -> tuple[str, str]:
+def plot_gene_hist(gene_corr: pd.DataFrame, n_strains: int) -> tuple[str, str]:
     """Histogram of the per-gene across-strain mRNA<->protein correlations."""
     r = gene_corr["r"].to_numpy(dtype=float)
-    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(55.0)))
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(62.0)))
     ax.hist(
         r,
         bins=np.arange(-0.6, 0.9001, 0.05).tolist(),
         color=PLOT_PALETTE[0],
         edgecolor=INK,
         linewidth=0.4,
+        label=f"{len(r)} genes, {n_strains} strains",
     )
     med = float(np.median(r))
-    ax.axvline(0.0, color=INK, linewidth=0.6, linestyle="--")
-    ax.axvline(med, color=PLOT_PALETTE[1], linewidth=0.8)
-    ax.set_xlabel("per-gene mRNA–protein correlation (across strains)")
-    ax.set_ylabel("number of genes")
-    ax.set_title(
-        f"n={len(r)} genes | median r={med:.2f} | "
-        f"{100 * np.mean(r > CORR_STRONG):.0f}% > {CORR_STRONG}"
+    ax.axvline(0.0, color=INK, linewidth=0.6, linestyle="--", label="r = 0")
+    ax.axvline(
+        med, color=PLOT_PALETTE[1], linewidth=0.8, label=f"median r = {med:.2f}"
     )
+    ax.set_xlabel("per-gene mRNA-protein correlation across strains")
+    ax.set_ylabel("number of genes")
+    # Naming both modalities AND both media in the panel is the whole point of the title
+    # here: the review could not tell which expression compendium the figure used, and the
+    # media difference is what attenuates every bar in it.
+    # `pad` leaves the panel letter its own line of clearance under the title block.
+    ax.set_title(
+        f"{PROTEOME_LABEL}\n{EXPRESSION_LABEL}", fontsize=5, loc="left", pad=9
+    )
+    # The empty tails carry no genes (observed range is -0.13 to 0.60) and cropping them
+    # frees the upper right for the annotation block instead of overprinting the bars.
+    ax.set_xlim(-0.3, 0.7)
     ax.xaxis.set_major_locator(MultipleLocator(0.2))
     ax.xaxis.set_minor_locator(MultipleLocator(0.1))
     ax.tick_params(which="minor", length=0)
+    ax.legend(frameon=False, fontsize=5, loc="upper right", handlelength=1.6)
+    ax.text(
+        0.55,
+        0.70,
+        f"{100 * np.mean(r > CORR_STRONG):.1f}% of genes exceed r = {CORR_STRONG}\n\n"
+        f"{MEDIA_CAVEAT}",
+        transform=ax.transAxes,
+        fontsize=5,
+        va="top",
+        linespacing=1.4,
+    )
     _box(ax)
     fig.tight_layout()
-    return _save(fig, "proteome_expression_per_gene_corr_hist", stamp)
+    panel_label(ax, "a")
+    return _save(fig, "proteome_expression_per_gene_corr_hist")
 
 
 def plot_representative_scatters(
-    p_z: pd.DataFrame, e_z: pd.DataFrame, gene_corr: pd.DataFrame, stamp: str
+    p_z: pd.DataFrame, e_z: pd.DataFrame, gene_corr: pd.DataFrame
 ) -> tuple[str, str, list[str]]:
     """Scatter z-scored mRNA vs protein across strains for representative genes."""
     ranked = gene_corr.sort_values("r")
@@ -344,9 +396,9 @@ def plot_representative_scatters(
     q75_gene = ranked.index[int(0.75 * len(ranked))]
     genes = [hi, q75_gene, med_gene, lo]
     fig, axes = plt.subplots(
-        1, 4, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(48.0))
+        1, 4, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(52.0))
     )
-    for ax, gene in zip(axes, genes):
+    for letter, ax, gene in zip("abcd", axes, genes):
         pair = pd.concat(
             [p_z[gene], e_z[gene]], axis=1, keys=["protein", "mrna"]
         ).dropna()
@@ -359,18 +411,19 @@ def plot_representative_scatters(
             alpha=0.6,
         )
         r = float(gene_corr.loc[gene, "r"])
-        ax.set_title(f"{gene}\nr={r:.2f} (n={len(pair)})")
-        ax.set_xlabel("protein (z)")
-        ax.set_ylabel("mRNA (z)")
+        ax.set_title(f"{gene}\nr={r:.2f} (n={len(pair)} strains)")
+        ax.set_xlabel("protein, z (Messner, SM)")
+        ax.set_ylabel("mRNA, z (Kemmeren, SC)")
         ax.axhline(0.0, color=GRID, linewidth=0.3)
         ax.axvline(0.0, color=GRID, linewidth=0.3)
         _box(ax)
+        panel_label(ax, letter)
     fig.tight_layout()
-    png, svg = _save(fig, "proteome_expression_representative_scatters", stamp)
+    png, svg = _save(fig, "proteome_expression_representative_scatters")
     return png, svg, list(genes)
 
 
-def plot_r2_summary(maps: list[dict[str, Any]], stamp: str) -> tuple[str, str]:
+def plot_r2_summary(maps: list[dict[str, Any]]) -> tuple[str, str]:
     """Bar chart of held-out R^2 for each linear map vs its baseline."""
     fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(55.0)))
     labels = [m["name"] for m in maps]
@@ -397,15 +450,22 @@ def plot_r2_summary(maps: list[dict[str, Any]], stamp: str) -> tuple[str, str]:
         label="baseline (per-gene mean)",
     )
     for xi, val in zip(x - width / 2, ridge):
-        ax.text(xi, val + 0.005, f"{val:.3f}", ha="center", va="bottom", fontsize=5)
+        ax.text(xi, val * 1.05, f"{val:.3f}", ha="center", va="bottom", fontsize=5)
+    # Headroom for the value labels AND the legend; without it both printed over the
+    # title and over each other.
+    ax.set_ylim(min(base) * 1.4, max(ridge) * 1.6)
     ax.set_xticks(x)
     ax.set_xticklabels(labels, rotation=10, ha="right")
     ax.set_ylabel("held-out $R^2$ (uniform avg over genes)")
+    ax.set_title(
+        f"{PROTEOME_LABEL}\n{EXPRESSION_LABEL}", fontsize=5, loc="left", pad=9
+    )
     ax.axhline(0.0, color=INK, linewidth=0.5)
-    ax.legend(frameon=False, loc="upper right")
+    ax.legend(frameon=False, fontsize=5, loc="upper right")
     _box(ax)
     fig.tight_layout()
-    return _save(fig, "proteome_expression_linear_map_r2", stamp)
+    panel_label(ax, "a")
+    return _save(fig, "proteome_expression_linear_map_r2")
 
 
 # ---------------------------------------------------------------------------- main
@@ -478,17 +538,17 @@ def main() -> None:
         )
 
     # plots
-    hist_png, hist_svg = plot_gene_hist(gene_corr, stamp)
-    scat_png, scat_svg, rep_genes = plot_representative_scatters(
-        p_z, e_z, gene_corr, stamp
-    )
-    r2_png, r2_svg = plot_r2_summary([map_p2e, map_e2p], stamp)
+    hist_png, hist_svg = plot_gene_hist(gene_corr, len(shared_strains))
+    scat_png, scat_svg, rep_genes = plot_representative_scatters(p_z, e_z, gene_corr)
+    r2_png, r2_svg = plot_r2_summary([map_p2e, map_e2p])
 
     report = {
         "generated": stamp,
         "sources": {
             "proteome": {"dataset": PROTEOME[0], "media": "SM"},
             "expression": {"dataset": EXPRESSION[0], "media": "SC"},
+            "neo4j_uri": NEO4J_URI,
+            "neo4j_database": NEO4J_DB,
         },
         "overlap": overlap,
         "per_gene_correlation": gene_dist,

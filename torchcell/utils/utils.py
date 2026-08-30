@@ -10,7 +10,9 @@ from typing import TYPE_CHECKING, Any
 import matplotlib
 
 if TYPE_CHECKING:
+    from matplotlib.axes import Axes
     from matplotlib.figure import Figure
+    from matplotlib.text import Text
 
 # --- Repo-wide figure/plotting standards. See CLAUDE.md "Figure & Plotting
 # Standards" and the palette notes/assets/images/color-palette.svg. -----------
@@ -122,6 +124,51 @@ REPRESENTATION_DISPLAY_NAMES: dict[str, str] = {
 def display_label(name: str) -> str:
     """Map an internal representation key to its plot-display label (identity if unmapped)."""
     return REPRESENTATION_DISPLAY_NAMES.get(name, name)
+
+
+PANEL_LABEL_PT = 8.0  # Nature: panel letters only, the one size above figure text
+PANEL_LABEL_PAD_PT = 1.5
+
+
+def panel_label(
+    ax: "Axes",
+    letter: str,
+    x: float = 0.0,
+    y: float = 1.0,
+    pad_pt: float = PANEL_LABEL_PAD_PT,
+    fontsize: float = PANEL_LABEL_PT,
+) -> "Text":
+    """Draw a panel letter at the panel's top-left corner, in the repo standard.
+
+    Nature's band for figure text is 5 to 7 pt, with 8 pt bold lowercase reserved for
+    panel letters. The letter sits OUTSIDE the axes box at its top-left and carries an
+    opaque white patch, so the letter survives being cropped out of a composed figure
+    with whatever sits behind it, and so a tick label never collides with it.
+
+    ``x``/``y`` are axes-fraction coordinates of the anchor; the letter is offset up and
+    left of that anchor by ``pad_pt`` points, which keeps the offset in print units
+    rather than in a fraction of a panel that varies with panel size.
+    """
+    from matplotlib.transforms import ScaledTranslation
+
+    # An Axes always belongs to a figure by the time it can be drawn on, but the
+    # accessor is typed as optional, so fail loudly rather than on an attribute.
+    fig = ax.get_figure()
+    if fig is None:
+        raise ValueError("panel_label: the axes is not attached to a figure")
+    offset = ScaledTranslation(-pad_pt / 72.0, pad_pt / 72.0, fig.dpi_scale_trans)
+    return ax.text(
+        x,
+        y,
+        letter.lower(),
+        transform=ax.transAxes + offset,
+        fontsize=fontsize,
+        fontweight="bold",
+        fontfamily="Arial",
+        ha="right",
+        va="bottom",
+        bbox={"facecolor": "white", "edgecolor": "none", "pad": 1.0},
+    )
 
 
 def savefig_true_size_svg(

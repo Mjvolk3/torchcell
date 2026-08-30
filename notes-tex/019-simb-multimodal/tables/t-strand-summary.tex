@@ -8,14 +8,14 @@ strand & ceiling & best & of ceiling & epochs (peak/last) & runs \\
 \midrule
 Expression (Kemmeren, Sameith) & 0.775 & \textbf{0.228} & 29\% & 4002/4105 & 1353 \\
 Expression, masked-label objective & 0.775 & \textbf{0.238} & 31\% & 9697/9900 & 16 \\
-Morphology (CalMorph, Ohya) & 0.611 & \textbf{0.082} & 13\% & 27/65 & 183 \\
+Morphology (CalMorph, Ohya) & 0.611 & \textbf{0.082} & 13\% & 27/65 & 183 (8 flat) \\
 Expression and morphology, joint & -- & \textbf{0.062} & -- & 26/70 & 214 \\
 Betaxanthin (Cachera) & 0.914 & \textbf{0.401} & 44\% & 74/124 & 142 \\
-Betaxanthin with metabolome head & 0.914 & \textbf{0.428} & 47\% & 181/372 & 46 \\
+Betaxanthin with metabolome head & 0.914 & \textbf{0.430} & 47\% & 176/496 & 46 \\
 Amino-acid pools (Mulleder) & -- & \textbf{0.209} & -- & 354/998 & 97 \\
-Beta-carotene (Ozaydin) & 0.544 & \textbf{0.118} & 22\% & 791/998 & 136 \\
+Beta-carotene (Ozaydin) & 0.544 & \textbf{0.137} & 25\% & 9/49 & 136 \\
 \bottomrule
 \end{tabular}
-\caption[]{Every strand, scored the same way. \emph{best} is \texttt{roll\_max}, the maximum of a centered five-point rolling mean of the validation curve, an upward-biased order statistic whose bias grows with epochs run, which is why the epoch column travels with it. \emph{epochs (peak/last)} gives where the best run peaked and where it stopped: a peak in the last tenth means the run was cut off while still improving. Ceilings are measured by three different estimators because the three measurement types require them; the amino-acid cell is empty because Mulleder has one replicate per strain, and no ceiling is estimable. \emph{flat} counts runs whose validation metric never left zero. \textbf{Coverage: 28 of 28 projects, 2187 runs.} The rest are queued (\cref{tab:coverage}); a strand maximum can only move upward when they land, so every \emph{of ceiling} figure is a lower bound. The betaxanthin row is known to be one such case: \cref{tab:bx-two-numbers} carries $0.4301$ from a study in a queued project.}
+\caption[]{Every strand, scored the same way. \emph{best} is \texttt{roll\_max}, the maximum of a centered five-point rolling mean of the validation curve, an upward-biased order statistic whose bias grows with epochs run, which is why the epoch column travels with it. \emph{epochs (peak/last)} gives where the best run peaked and where it stopped: a peak in the last tenth means the run was cut off while still improving. Ceilings are measured by three different estimators because the three measurement types require them; the amino-acid cell is empty because Mulleder has one replicate per strain, and no ceiling is estimable. \emph{flat} counts runs whose validation metric never left zero. \textbf{Coverage: complete. All 28 projects and all 2187 runs have had the validation curve needed to score them read} (\cref{tab:coverage}), so every \emph{best} here is a maximum over the runs that were actually run. \textbf{Every number in this column is \texttt{roll\_max}, and that is why the betaxanthin row reads $0.401$ rather than the $0.4301$ quoted elsewhere for the same study}: $0.4301$ is the Optuna objective \file{val/betaxanthin/pearson_per_feature_max}, a raw running maximum over epochs, while \texttt{roll\_max} first averages five neighboring epochs, which can only lower a maximum. The two are different scoring rules over the same runs, not different runs. \cref{sec:bx-two-numbers} does the reconciliation.}
 \label{tab:strand-summary}
 \end{table}

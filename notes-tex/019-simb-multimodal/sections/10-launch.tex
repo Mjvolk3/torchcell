@@ -115,7 +115,7 @@ Two runs per GPU is the chosen operating point: it doubles the replicate count, 
 $\approx 9{,}100$ rather than 9,900 epochs before the wall. The scoring rule below absorbs
 that shortfall.
 
-\subsection{The allocation: 20 slots\secstatus{todo}}
+\subsection{The allocation: 20 GPU slots and four CPU baselines\secstatus{todo}}
 
 \begin{table}[htbp]
 \centering\small
@@ -127,12 +127,47 @@ mmli (A100) & 4 & 1 & resume \texttt{hx8pxdic} from its 9,900-epoch checkpoint &
             &   & 7 & \file{dist=crps}, seeds 0--6 & 9{,}900 \\
 cabbi (Ada) & 6 & 6 & \file{dist=laplace_crps}, seeds 0--5 & 9{,}900 \\
             &   & 6 & \file{dist=point}, seeds 0--5 & 9{,}900 \\
+\midrule
+CPU, no GPU & -- & 4 & baselines \texttt{B0}--\texttt{B3} (\cref{tab:launch-baselines}) & -- \\
 \bottomrule
 \end{tabular}
 \caption[]{The launch: 20 runs on 10 GPUs, two per GPU, everything else pinned to the
 incumbent configuration. Nineteen fresh runs across three challenger heads, each scored
-against the existing $n = 8$ \file{quantile} baseline, plus the resumed incumbent.}
+against the existing $n = 8$ \file{quantile} baseline, plus the resumed incumbent. The four
+baselines take no GPU and \textbf{run first}, because one of them can invalidate the round.}
 \label{tab:launch-allocation}
+\end{table}
+
+\notesec{The baselines run before the arms, and one of them is a stop condition} After
+\cref{sec:related}, a deep-learning number reported without these is not interpretable.
+They are cheap, they need no GPU, and \textbf{they are a prerequisite rather than a
+companion}: if \texttt{B2} matches or beats the incumbent's $0.196 \pm 0.022$, the finding
+of this round is that a bilinear model suffices and the head comparison is the wrong
+question. That is exactly what Ahlmann-Eltze et al.\ found for GEARS, so it is a live
+possibility rather than a formality.
+
+\begin{table}[htbp]
+\centering\footnotesize
+\begin{tabular}{llp{50mm}l}
+\toprule
+ & prediction & what it isolates & \file{pearson_per_feature} \\
+\midrule
+\texttt{B0} & each gene's training mean & the definitional floor & $0$ by construction \\
+\texttt{B1} & no change, $\log_2$ ratio $= 0$ & ``nothing happened'' & $0$ by construction \\
+\texttt{B2} & $\mathbf{G}\mathbf{W}\mathbf{P}^{\top} + \pmb b$, swept over rank & a pair term without deep learning & \textbf{to measure} \\
+\texttt{B3} & mean of the $k$ nearest deleted genes in embedding space & genotype-side signal from proximity alone & $0.117$ measured \\
+\bottomrule
+\end{tabular}
+\caption[]{The four baselines, all evaluated on the same pinned split and the same
+\texttt{roll\_max} rule as the arms. \textbf{\texttt{B0} and \texttt{B1} are definitionally
+zero on \file{pearson_per_feature}}, because a prediction constant across strains has no
+variance to correlate; they are reported anyway as the \file{nmse} anchors, where
+\texttt{B0} is $1.0$ up to train-to-validation mean drift, since it is the quantity
+\file{nmse} divides by. \textbf{So \texttt{B2} is the baseline that can actually beat us},
+and it is the one the literature says beats GEARS. \texttt{B3} already exists at $0.117$
+(\cref{sec:expression}), which is over half the incumbent's $0.196$ from a parameter-free
+estimator, and is the reason \texttt{B2} is not expected to be a formality.}
+\label{tab:launch-baselines}
 \end{table}
 
 \notesec{Justification, arm by arm}
@@ -174,6 +209,10 @@ against the existing $n = 8$ \file{quantile} baseline, plus the resumed incumben
   \file{nmse}, the SD ratio $s$, and the coverage diagnostics are reported per arm as
   \cref{sec:campaign} requires, so a head that moves Pearson while leaving calibration
   broken is visible as such. No arm is compared on a raw per-epoch maximum.
+  \textbf{Every arm is additionally reported against \texttt{B0}--\texttt{B3}
+  (\cref{tab:launch-baselines}) and in \file{pearson_per_instance} as well as
+  \file{pearson_per_feature}}, the first so the round has a floor, the second so it has a
+  number commensurable with the published models (\cref{sec:related}).
 \item[Operational constraints honored] 5 days per job per the administrator email, with a
   continuation counted as a fresh 5-day job rather than a chain; six of eight cabbi GPUs,
   leaving two free; all compute on partition nodes with the login node used only for
@@ -416,12 +455,12 @@ also a concrete argument for replicate measurement in any future screen we desig
 
 \notesec{Consequences for the plan, in priority order}
 \begin{enumerate}
-\item \textbf{Add the baselines to the launch scoring, not to a later round.} Report every
-  arm against a per-gene mean baseline and against the $\mathbf{GWP}^{\top} + \pmb b$
-  bilinear linear model fit on our own training split. Both are cheap, neither needs a GPU,
-  and after these benchmarks an unbaselined deep-learning number is not publishable.
+\item \textbf{Add the baselines to the launch scoring, not to a later round.} \emph{Done}:
+  \texttt{B0}--\texttt{B3} are in \cref{tab:launch-baselines} and run before the arms, with
+  \texttt{B2} carrying a stop condition on the round.
 \item \textbf{Report \file{pearson_per_instance} beside \file{pearson_per_feature} on every
-  arm}, so the strand has a number that is commensurable with the literature.
+  arm}, so the strand has a number that is commensurable with the literature. \emph{Done}:
+  folded into the declared scoring rule above.
 \item \textbf{Promote the per-gene readout to the first mechanism arm}, ahead of the
   rank-64 basis term. It is what both published models have and we lack, and
   \cref{tab:related-operators} gives its cost.

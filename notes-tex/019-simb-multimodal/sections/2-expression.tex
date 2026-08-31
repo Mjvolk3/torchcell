@@ -118,11 +118,11 @@ $+0.0024 \pm 0.0090$ over four seed pairs and post-perturbation mixing reads
 $-0.0023 \pm 0.0076$, and neither number is evidence about its mechanism. More seeds do not
 repair this: replicates buy precision on the wrong estimand.
 
-\subsection{The quantile loss turns early; squared error does not\secstatus{todo}}
+\subsection{The pinball loss turns early; squared error does not\secstatus{todo}}
 \label{sec:objective}
 
 \notesec{Correction} An earlier version of this section said loss and metric ``move in
-opposite directions''. That is true of the \emph{quantile loss} and false of squared error,
+opposite directions''. That is true of the \emph{pinball loss} and false of squared error,
 and collapsing the two hid the finding. The two longest runs ever trained were pulled and
 read directly.
 \src{experiments/019-simb-multimodal/scripts/expression\_objective\_diagnosis.py}
@@ -136,7 +136,7 @@ read directly.
 \cmidrule(lr){2-3}\cmidrule(lr){4-5}
 quantity & value & epoch & value & epoch \\
 \midrule
-val \file{loss} minimum (quantile)   & 0.2376 & \textbf{463}   & 0.2610 & \textbf{141} \\
+val \file{loss} minimum (pinball)   & 0.2376 & \textbf{463}   & 0.2610 & \textbf{141} \\
 val \file{mse} minimum               & 0.0391 & \textbf{9{,}175} & 0.0397 & \textbf{3{,}922} \\
 val Pearson maximum                  & 0.2362 & \textbf{9{,}674} & 0.2274 & \textbf{3{,}921} \\
 val \file{nmse} minimum              & 0.9981 & 213            & 0.9925 & 145 \\
@@ -147,7 +147,7 @@ wall clock                           & \multicolumn{2}{c}{\textbf{91.4 h (3.81 d
 seconds per epoch                    & \multicolumn{2}{c}{32.9} & \multicolumn{2}{c}{42.0} \\
 \bottomrule
 \end{tabular}
-\caption[]{The quantile loss bottoms in the first few hundred epochs and rises for the rest
+\caption[]{The pinball loss bottoms in the first few hundred epochs and rises for the rest
 of the run. Squared error bottoms alongside the Pearson peak, within 500 epochs on v9 and
 within one epoch on v8. Both runs replicate the pattern, and they use different mechanisms
 and different epoch budgets. \textbf{Why the Pearson values differ slightly from
@@ -159,7 +159,7 @@ these are locators.}
 \end{table}
 
 \tcfigfit{figures/expression_objective_diagnosis.pdf}{The v9 run, 10,000 epochs. (a) The
-quantile loss reaches its minimum at epoch 463 and rises thereafter while Pearson climbs.
+pinball loss reaches its minimum at epoch 463 and rises thereafter while Pearson climbs.
 (b) \file{nmse} dips just under 1 at epoch 213, rises to 1.073 near epoch 900, then falls
 back for the rest of the run without ever returning below 1; squared error's own minimum is
 at epoch 9,175. (c) The prediction standard-deviation ratio $s$ against the correlation
@@ -244,7 +244,7 @@ strand's headline number, and it is worth doing at the point a figure is drawn r
 now (\cref{sec:directions}).
 
 \notesec{What this does and does not say about checkpointing} Best-by-loss on the
-\emph{quantile} loss picks a model $\approx 9{,}200$ epochs early, which is the defect that
+\emph{pinball} loss picks a model $\approx 9{,}200$ epochs early, which is the defect that
 motivated best-by-metric checkpointing. Best-by-\file{mse} would have picked within 500
 epochs of the right one on v9 and within one epoch on v8. So checkpointing is a narrower
 problem than it looked, and it is not what is holding the strand at $0.24$.

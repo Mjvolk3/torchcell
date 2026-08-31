@@ -60,6 +60,22 @@ against \term{ceiling}, and \term{under-shrinkage}.
   feature's mean, so $\texttt{nmse} = 1$ is exactly ``predict each gene's training mean''.
   Below 1 beats the mean predictor; above 1 loses to it.
 
+\item[Head, pinball, and \file{point()}: three different objects] These get conflated and
+  the conflation hides the argument, so they are separated here.
+  \textbf{\file{dist: quantile}} names the \emph{head}, meaning the output
+  parameterization: it emits $K = 19$ numbers per feature, the quantile knots at
+  $\tau = 0.05, 0.10, \ldots, 0.95$.
+  \textbf{Pinball} (the check loss) is the \emph{loss function},
+  $\max(\tau u,\, (\tau - 1)u)$ with $u = y - \hat y$, applied to each knot and then
+  averaged over $K$ and over features; the mean pinball over an even $\tau$ grid
+  approximates the empirical CRPS.
+  \textbf{\file{DistHead.point()}} is the \emph{point estimate the metric reads}, and for a
+  quantile head it is the median knot alone. So the head emits 19 numbers, pinball scores
+  all 19, and \file{pearson_per_feature} reads 1. Other heads set this differently:
+  \file{point} emits one number and is scored by MSE, \file{crps} and \file{nll} emit
+  $(\mu, \sigma)$ with \file{point()} $= \mu$, and \file{laplace_crps} emits $(\mu, b)$
+  whose \file{point()} is a \emph{median} like the quantile head's.
+
 \item[Oracle] A deliberately cheating estimator, run to bound what is available in the data
   rather than to be deployed. The \term{ridge oracle} of \cref{sec:oracle} is given $m$
   \emph{measured} expression values from the held-out strain itself and predicts the
@@ -176,13 +192,13 @@ restricts to genotypes carrying both phenotypes. The within-grid paired comparis
   not. Stated as the two things they are:
 
   \begin{enumerate}
-  \item[(i)] \textbf{The \emph{quantile} loss is the only quantity that turns early.} It
+  \item[(i)] \textbf{The \emph{pinball} loss is the only quantity that turns early.} It
     bottoms at epoch 463 and rises for the next 9,500 while Pearson climbs. Squared error
     does \emph{not} do this: its minimum is at epoch 9,175, alongside the Pearson peak at
     9,674, and on the second-longest run the two are one epoch apart. So the loss that is
     actually being minimized disagrees with the metric, while the loss that is not being
     minimized agrees with it. The consequence is narrow and it is about checkpointing:
-    best-by-quantile-loss picks a model $\approx 9{,}200$ epochs too early, best-by-squared
+    best-by-pinball-loss picks a model $\approx 9{,}200$ epochs too early, best-by-squared
     error would have picked within 500 epochs of the right one.
   \item[(ii)] \textbf{Separately, the model is under-shrunk.} At its peak it orders genes at
     $r \approx 0.24$ while its \file{nmse} sits at about $1.00$, level with ``predict each

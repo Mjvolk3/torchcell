@@ -134,7 +134,7 @@ budget were set from expression.
 \subsection{The training objective diverges from the metric on expression alone\secstatus{todo}}
 
 The full measurement is \cref{sec:objective}; what belongs here is the cross-strand
-statement. On expression the \emph{quantile loss} bottoms at epoch 463 and rises for the
+statement. On expression the \emph{pinball loss} bottoms at epoch 463 and rises for the
 next 9,500 while Pearson climbs. \emph{Squared error itself does not diverge}: its minimum
 lands alongside the Pearson peak on both long runs. Separately from the divergence, the
 model sits at parity with the mean predictor in squared error, at
@@ -177,7 +177,7 @@ run & val-loss min epoch & metric peak epoch & peak & final & relative fall \\
 \bottomrule
 \end{tabular}
 \caption[]{On 010 the validation loss keeps falling after the metric has peaked, which is
-the mirror image of expression, where the quantile loss turns early and the metric keeps
+the mirror image of expression, where the pinball loss turns early and the metric keeps
 climbing. Both are loss-metric divergences, so 010 is not the clean counterexample revision
 2 used it as. 010 has also never approached its own budget: \file{trainer.max_epochs} is
 600 and no run passed 65.}

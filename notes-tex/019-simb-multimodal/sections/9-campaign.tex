@@ -80,7 +80,7 @@ precision the mechanism differences do not need.
 
 \subsection{Phase A, the objective, and why it goes first\secstatus{todo}}
 
-\cref{sec:objective} found that the quantile loss reaches its minimum at epoch 463 and
+\cref{sec:objective} found that the pinball loss reaches its minimum at epoch 463 and
 rises for the next 9,500 while Pearson climbs, and that the model as trained sits only level
 with the mean predictor in squared error, at $\texttt{nmse} \approx 1.00$ to $1.04$, against
 a calibrated floor of $0.94$. A mechanism arm evaluated under an objective that is optimizing
@@ -88,20 +88,67 @@ something else
 cannot separate ``the mechanism does not help'' from ``the objective does not reward it'',
 so the objective is settled first.
 
+\notesec{The head comparison on record is confounded with budget, and that has to be said
+first} Six distributional heads are implemented (\file{point}, \file{crps}, \file{quantile},
+\file{laplace_crps}, \file{nll}, \file{energy}), and the incumbent choice rests on a
+comparison that is not one.
+
 \begin{table}[htbp]
 \centering\small
-\begin{tabular}{llp{62mm}}
+%% SOURCE: results/round_leaderboards.csv, expression + expression_masked strands
+\begin{tabular}{lrrrrr}
 \toprule
-arm & objective & what a win means \\
+ & \multicolumn{3}{c}{all runs} & \multicolumn{2}{c}{matched budget, 100--200 epochs} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-6}
+\file{dist} head & runs & best & max epochs & best & median \\
 \midrule
-\texttt{O\_ref}   & quantile (current) & reference \\
-\texttt{O\_zmse}  & MSE on per-gene $z$-scored targets & ``predict the mean'' scores 0 rather than winning; already implemented as \file{standardize_per_feature_target} \\
-\texttt{O\_corr}  & correlation objective & optimizing the quantity actually scored; see the caveat below \\
+\file{quantile}     & 344 & \textbf{0.2382} & \textbf{9{,}900} & \textbf{0.1751} & \textbf{0.1352} \\
+\file{crps}         & 158 & 0.1631 & 199 & 0.1631 & 0.1267 \\
+\file{energy}       &  50 & 0.1421 & 199 & 0.1421 & 0.0960 \\
+\file{laplace_crps} &  56 & 0.1411 & 199 & 0.1411 & 0.0775 \\
+\file{point}        &  34 & 0.1117 & \textbf{163} & 0.1117 & 0.1054 \\
+\file{nll}          &  59 & 0.0983 & 199 & 0.0845 & 0.0680 \\
 \bottomrule
 \end{tabular}
-\caption[]{Phase A. Three arms, two seeds, $E = 4{,}000$: six slots, $\approx 10$ GPU-days.}
-\label{tab:phase-a}
+\caption[]{\textbf{\file{quantile} is the only head ever trained past 200 epochs}, so the
+left block compares one head at 9,900 epochs against five at roughly 150. That is the same
+error this document indicts everywhere else. The right block is the honest comparison, on
+the window where all six ran: \file{quantile} still leads, but by $+0.0085$ on the median
+against a seed noise floor of $\approx 0.006$, and its maximum is drawn from 84 runs against
+\file{crps}'s 25, so more of its lead is selection inflation. It is also an ordering measured
+at 150 epochs, which \cref{sec:expression} shows is a regime of transients.}
+\label{tab:dist-confound}
 \end{table}
+
+\notesec{What the incumbent actually optimizes, and what the metric actually reads} The
+head emits 19 quantile knots per feature, pinball scores all 19, and
+\file{pearson_per_feature} reads the median knot alone (\cref{sec:terms}). So 18 of 19
+outputs per feature are optimized against a quantity the metric never inspects. The
+calibration diagnostics say that spend is not being recovered: at epoch 10,000 the run
+reads \file{coverage_80} $= 0.578$ against a target of $0.80$ and \file{coverage_50}
+$= 0.326$ against $0.50$, so the predictive intervals are far too narrow, while its point
+estimates are simultaneously \emph{over}-dispersed at $s/r = 1.92$. Two calibration failures
+in opposite directions.
+
+\textbf{Hypothesis, untested:} mean pinball over an even $\tau$ grid approximates CRPS,
+which is dominated by its spread term, so most of the gradient goes into distribution shape
+that the metric discards, and the validation pinball rising after epoch 463 while Pearson
+climbs is the model overfitting that shape.
+
+\notesec{Two heads are ruled out before spending a GPU} \file{nll} is the designed negative
+control for $\sigma$-collapse and is already last on both columns. \file{energy} is more
+interesting and still out: its covariance $\Sigma = D + VV^{\top}$ is \emph{global}, one
+matrix shared by every strain, so it changes the predictive distribution but does not enter
+$\mu$ and therefore \textbf{cannot move a point metric like \file{pearson_per_feature}}. Its
+rank-32 factor is tempting against the measured effective rank of $32.78$ in the residual
+covariance, but that structure lives in the spread, not the location.
+
+\notesec{Correction to an earlier version of this plan} It proposed an \texttt{O\_zmse} arm
+described as turning on \file{standardize_per_feature_target}. That lever is
+\textbf{already on}: it is set in \file{cgt_expr_008}, which the whole v9 chain inherits, and
+the incumbent run reports \file{target_norm} $=$ \texttt{zscore}. So the arm is not
+``z-score the targets'', which is done; it is \textbf{switch the head to \file{point}}, one
+flag, putting every output parameter on the location the metric reads.
 
 \notesec{On \texttt{O\_corr}, and the fair objection that nobody optimizes correlation}
 Correlation is almost always a reporting metric rather than a training loss in the published

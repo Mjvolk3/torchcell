@@ -365,10 +365,33 @@ class Neo4jQueryRaw:
                 ExperimentReferenceIndex.from_stored(item) for item in data
             ]
         elif self._experiment_reference_index is None:
-            log.info("Computing experiment reference index...")
-            self._experiment_reference_index = compute_experiment_reference_index(
-                [self[i] for i in range(len(self))]
-            )
+            # Stream the hash pass off LMDB instead of materializing the dataset.
+            # The previous `[self[i] for i in range(len(self))]` built every record
+            # as pydantic objects in one list -- at 43.8M records that is hundreds
+            # of GB, and it OOM-killed build 1559 six minutes after a clean 18 h
+            # fetch. Hashing the STORED reference dict is exact, not approximate:
+            # process() serialized it from model_dump(), so json.loads returns
+            # byte-identical structure to what the old path re-dumped and hashed.
+            log.info("Computing experiment reference index (streaming)...")
+            self._init_lmdb(readonly=True)
+            hash_to_indices: dict[str, list[int]] = {}
+            with self.env.begin() as txn:
+                cursor = txn.cursor()
+                for key, value in tqdm(cursor):
+                    # Cursor order is lexicographic (data_0, data_1, data_10, ...);
+                    # parse the true index from the key rather than counting.
+                    idx = int(key.decode().split("_")[1])
+                    ref_dict = json.loads(value.decode("utf-8"))["experiment_reference"]
+                    hash_val = compute_sha256_hash(json.dumps(ref_dict, sort_keys=True))
+                    hash_to_indices.setdefault(hash_val, []).append(idx)
+            self.close_lmdb()
+            self._experiment_reference_index = [
+                ExperimentReferenceIndex(
+                    reference=self[indices[0]]["experiment_reference"].model_dump(),
+                    member_indices=sorted(indices),
+                )
+                for indices in hash_to_indices.values()
+            ]
             # Serialize each ExperimentReferenceIndex object to dict and save the list of dicts
             with open(index_file_path, "w") as file:
                 json.dump(

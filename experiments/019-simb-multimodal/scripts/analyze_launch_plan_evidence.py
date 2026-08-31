@@ -16,7 +16,7 @@ Four measured inputs, one JSON output (results/launch_plan_evidence.json):
    eight runs, converted to epochs per 5-day partition cap.
 4. PACKING COST. Parsed from the raw logs of gh_packing_benchmark.sh (solo on one
    GilaHyper GPU vs two concurrent runs on another, same config resumed from the
-   1445 checkpoint, train_eval_every=0), stored under results/packing_benchmark/.
+   1445 checkpoint, train_eval_every=0), stored under results/packing_benchmark/ (.txt, since *.log is gitignored).
 
 Also: parameter count of the incumbent model, summed from the 1445-last.ckpt
 state dict and broken down by module prefix.
@@ -135,9 +135,9 @@ def packing(pack_dir: str) -> dict:
             raise ValueError(f"no epoch lines parsed from {path}")
         return [per_epoch[e] for e in sorted(per_epoch)]
 
-    solo = epoch_seconds(osp.join(pack_dir, "solo.log"))
+    solo = epoch_seconds(osp.join(pack_dir, "solo.txt"))
     packed = [
-        epoch_seconds(osp.join(pack_dir, f"packed_{i}.log")) for i in (1, 2)
+        epoch_seconds(osp.join(pack_dir, f"packed_{i}.txt")) for i in (1, 2)
     ]
     med = lambda v: float(pd.Series(v).median())  # noqa: E731
     solo_med = med(solo)

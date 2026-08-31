@@ -23,8 +23,16 @@
 #       experiments/019-simb-multimodal/scripts/igb_expr_wave5.slurm
 #
 # PACKING DIFFERS BY PARTITION BECAUSE VRAM DOES, and this is not a tuning choice.
-# One run measured 20,026 MiB. An A100 80GB therefore takes 3 (60 GB, ~20 GB headroom); a
-# cabbi RTX6000 has 24 GB and takes exactly ONE -- packing two there would OOM. Packing is
+# One run measured 20,026 MiB. An A100 80GB therefore takes 3 (60 GB, ~20 GB headroom).
+#
+# CORRECTION 2026-08-31: the cabbi cards are RTX 6000 **Ada**, 48 GB, not 24 GB -- read off
+# W&B device metadata on compute-3-3 ("memory_total": 48305799168). The earlier claim that
+# cabbi "takes exactly ONE -- packing two there would OOM" was wrong, and it halved the
+# usable throughput of the larger partition. Two runs fit at 20 GB each with 8 GB headroom.
+# Packing is still a per-stage decision rather than an automatic win: a campaign that needs
+# LONG individual runs (the expression curve does not turn before ~10,000 epochs) is better
+# served by one run per GPU, since packing shortens every run to raise aggregate throughput.
+# Packing is
 # uniform WITHIN a stage, which is what the protocol requires: a paired reference is only a
 # valid denominator for arms that ran beside it under identical conditions. It is NOT uniform
 # ACROSS stages, so an mmli arm is never compared to a cabbi arm. Each stage co-launches its
@@ -51,11 +59,23 @@ set -euo pipefail
 OUT_DIR=/home/a-m/mjvolk3/scratch/torchcell/experiments/019-simb-multimodal/slurm/output
 mkdir -p "$OUT_DIR"
 
-# The BRANCH worktree, not the main checkout. `torchcell` is pip-installed editable against
-# /home/a-m/mjvolk3/projects/torchcell/torchcell, so without PYTHONPATH pointing here the
-# import would silently resolve to the OTHER branch's source
-# (memory: worktree-build-needs-pythonpath).
-PROJECT_ROOT="${W5_PROJECT_ROOT:-/home/a-m/mjvolk3/projects/torchcell.worktrees/019-decoder-pair-routing}"
+# PROJECT_ROOT resolves from THIS SCRIPT'S OWN LOCATION, so the code that runs is always the
+# checkout the submitted script came from. It used to default to a named branch worktree,
+# which meant submitting the script from anywhere else silently trained a different branch's
+# source -- an un-attributable run that looks completely normal in the log.
+#
+# `torchcell` is pip-installed editable against /home/a-m/mjvolk3/projects/torchcell/torchcell,
+# so PYTHONPATH must still point at PROJECT_ROOT or the import resolves to whatever branch
+# that checkout happens to be on (memory: worktree-build-needs-pythonpath).
+# W5_PROJECT_ROOT still overrides, for the deliberate case of running one checkout's script
+# against another's source.
+_W5_SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="${W5_PROJECT_ROOT:-$(cd "$_W5_SELF/../../.." && pwd)}"
+if [ ! -d "$PROJECT_ROOT/torchcell" ]; then
+  echo "FATAL: PROJECT_ROOT=$PROJECT_ROOT has no torchcell/ package dir." >&2
+  echo "       Submit this script from inside a torchcell checkout, or set W5_PROJECT_ROOT." >&2
+  exit 1
+fi
 # The container lives in the main checkout and is untracked, so it is referenced by absolute
 # path rather than expected inside the worktree.
 SIF="${W5_SIF:-/home/a-m/mjvolk3/projects/torchcell/rockylinux_9.sif}"

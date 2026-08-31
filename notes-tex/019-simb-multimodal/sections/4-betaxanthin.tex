@@ -127,16 +127,69 @@ checkpoints with no retraining at all. Enlarging our own test set beyond those 2
 only part that costs anything, at roughly a further 137 training strains for a 429-gene own
 test set.
 
-\notesec{One name-resolution hazard to check before the comparison is published} Of the 640
-comparison genes, 630 carry a betaxanthin measurement, and the pin file holds 639. The
-screen reports one gene as \gene{PPA1}, which is an ambiguous alias: it names both
-\gene{IPP1} (\gene{YBR011C}) and \gene{VMA16} (\gene{YHR026W}). The split builder resolves it
-to \gene{VMA16} on decisive evidence, that Cachera screened the non-essential deletion
-collection and \gene{IPP1} is essential, so an \gene{ipp1}$\Delta$ strain cannot be in it.
-The training data still inherits the stale resolver (issue \#195) and may carry the other
-assignment, which would attach one comparison gene's measurement to the wrong ORF.
-\textbf{Verify this specific gene against the training build before publishing the
-comparison}; it has not been confirmed either way here.
+\notesec{One name-resolution defect, now triangulated and resolved} Of the 640 comparison
+genes, 630 carry a betaxanthin measurement, and the pin file holds 639. The screen reports
+one gene as \gene{PPA1}, an ambiguous alias naming both \gene{IPP1} (\gene{YBR011C}), which
+is essential, and \gene{VMA16} (\gene{YHR026W}), which is not. Neither owns \gene{PPA1} as
+its standard name, so the resolver's standard-name-before-alias rule cannot break the tie and
+correctly returns \texttt{AMBIGUOUS}. The raw screen does not settle it either: its 27
+columns carry a gene name and colony statistics, with no systematic ORF, plate, position or
+barcode.
+
+Five independent lines were run, and they agree.
+\src{experiments/020-cachera-betaxanthin/scripts/triangulate\_ppa1\_alias.py}
+
+\begin{itemize}
+\item \textbf{The strain is alive, which is decisive on its own.} The \gene{PPA1} row records
+  \textbf{15 colonies at 24 h and 15 at 48 h}, with mean areas of $106.5$ and $118.5$. A
+  haploid \gene{ipp1}$\Delta$ is inviable and yields no colonies, so no row for it can exist.
+  This is the strain's own growth data and does not depend on any claim about which
+  collection was screened. The colony is small, in the $1.6$th percentile of screen area,
+  which is what a severe but survivable defect looks like.
+\item \textbf{The screen contains essentially no essential genes}, on $1{,}140$
+  counterexamples rather than the six previously cited. It covers $4{,}704$ of $5{,}467$
+  non-essential genes ($86\,\%$) and $29$ of $1{,}140$ SGD inviable-null genes ($2.5\,\%$),
+  and those 29 are autophagy genes and paralogs whose inviability is conditional, all of
+  which grew.
+\item \textbf{The V-ATPase family has a \gene{VMA16}-shaped hole.} Thirteen of the fifteen
+  \gene{VMA} genes are in the screen; the only absentees are \gene{VMA9} and \gene{VMA16}.
+  The file names genes by alias constantly (\gene{VMA1} as \gene{TFP1}, \gene{VMA3} as
+  \gene{CUP5}), so an alias row for \gene{VMA16} is exactly what one expects.
+\item \textbf{Its value sits on top of the V-ATPase cluster.} Betaxanthin $-1.566$ against
+  \gene{VMA13} $-2.19$, \gene{VMA3} $-1.55$, \gene{VMA22} $-1.54$, \gene{VMA6} $-1.44$, on a
+  screen median of $-0.006$. Soft corroboration, carrying nothing alone.
+\item \textbf{Neighbor evidence is neutral here}, unlike the \gene{FEN1} case: neither
+  candidate appears elsewhere in the screen under another name, so the ``one row per gene''
+  argument that decides \gene{FEN1} does not apply.
+\end{itemize}
+
+\textbf{The \gene{PPA1} row is \gene{YHR026W} (\gene{VMA16}), and the split builder is
+right.} Nothing points to \gene{IPP1} except the build itself.
+
+\notesec{The training build has it wrong, and the head-to-head does not} The defect is real
+but narrower than feared. In both the loader LMDB and the \file{fig6_pigment_transfer}
+training build, \gene{YBR011C} carries the betaxanthin value $-1.5664$ and \gene{YHR026W}
+carries none. The cause is verified in code rather than inferred: the build predates the
+layered resolver, and the loader then took \file{candidates[0]} from the alias map, which
+returns \gene{YBR011C} for \gene{PPA1}. The same line got \gene{FEN1} right by luck.
+
+\textbf{The comparison is not corrupted}, because \file{build_merzbacher_split.py} applies
+the screen-local disambiguation when it reads the raw file, so the comparison's ground truth
+for \gene{YHR026W} is the \gene{PPA1} value and \gene{YBR011C} is the gene dropped from 640
+to 639. What remains is one false training label out of 4,735: the model was trained on a
+betaxanthin value attributed to a gene whose deletion strain cannot exist, and scored on the
+same measurement under its correct ORF.
+
+\textbf{A plain rebuild does not fix this, it loses the value.} The current loader rejects
+\texttt{AMBIGUOUS}, so it would drop the row and leave neither ORF labeled. The
+disambiguation table lives in the split builder and needs to reach the loader, which is
+issue \#195 territory and lands with the next full graph build.
+
+\notesec{And the same alias broke Merzbacher's pipeline too} Their released 640-gene test
+list contains \emph{both} \gene{YBR011C} and \gene{YHR026W}, each labeled low, so their code
+expanded the alias to both candidates rather than disambiguating. It is an independent
+instance of the same failure, and it is worth knowing that 5 of their 640 test genes are
+SGD inviable-null in what is otherwise a non-essential list.
 
 \subsection{The published accuracy comparison is empty for both methods\secstatus{todo}}
 

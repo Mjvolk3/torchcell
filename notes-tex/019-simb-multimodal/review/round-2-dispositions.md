@@ -158,7 +158,13 @@ These matter more than the rest, so they are listed first.
 
 - **Leaderboard run coverage was 306 of 2,187**, reported as complete. Now **2,187 of 2,187**, in about 25 minutes. The candidate rule and its three biases are documented in `sec:coverage`.
 - **A namespace bug in the graph probe**: the Ohya mirror stores ORFs lowercase, which would have given morphology zero graph overlap and a clean fabricated 0.5 on every graph. Fixed, with a hard guard that raises below 50 percent gene resolution.
-- **`YBR011C` / `PPA1`**: an ambiguous alias resolving two ways between the split builder and the training build. Flagged in `sec:betaxanthin` as **needing verification before the comparison is published**; not confirmed either way here.
+- **`YBR011C` / `PPA1`**: an ambiguous alias resolving two ways between the split builder and
+  the training build. **Now triangulated and resolved** (`triangulate_ppa1_alias.py`): the row
+  is `YHR026W` (VMA16), decided by the strain's own viability (15 colonies at both
+  timepoints, so it cannot be an inviable `ipp1`-delta). The split builder is right; the
+  training build carries the value on `YBR011C`, one false label of 4,735. The head-to-head
+  comparison is NOT affected. A plain rebuild would drop the row rather than fix it, since the
+  loader rejects AMBIGUOUS; the disambiguation table has to reach the loader (issue #195).
 - **The merzbacher figure filenames were orphaning themselves** on every render (a fresh timestamp each run while the `.tex` referenced an old one). Stamp pinned; the real render time moved into `provenance.rendered_at`.
 - `proteome_expression_eda.py` cannot reach the served NCSA database (the known cold-read `IOException`); it now takes an environment override and records which endpoint produced the numbers.
 

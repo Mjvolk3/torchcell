@@ -1,0 +1,535 @@
+{
+  "resolver": {
+    "PPA1": {
+      "status": "ambiguous",
+      "systematic_name": null,
+      "candidates": [
+        "YBR011C",
+        "YHR026W"
+      ]
+    },
+    "IPP1": {
+      "status": "renamed",
+      "systematic_name": "YBR011C",
+      "candidates": []
+    },
+    "VMA16": {
+      "status": "renamed",
+      "systematic_name": "YHR026W",
+      "candidates": []
+    },
+    "FEN1": {
+      "status": "ambiguous",
+      "systematic_name": null,
+      "candidates": [
+        "YCR034W",
+        "YKL113C"
+      ]
+    },
+    "RAD27": {
+      "status": "renamed",
+      "systematic_name": "YKL113C",
+      "candidates": []
+    },
+    "ELO2": {
+      "status": "renamed",
+      "systematic_name": "YCR034W",
+      "candidates": []
+    }
+  },
+  "gff_names": {
+    "YBR011C": {
+      "standard": [
+        "IPP1"
+      ],
+      "alias": [
+        "INORGANIC DIPHOSPHATASE IPP1",
+        "IPP1",
+        "PPA1"
+      ]
+    },
+    "YHR026W": {
+      "standard": [
+        "VMA16"
+      ],
+      "alias": [
+        "H(+)-TRANSPORTING V0 SECTOR ATPASE SUBUNIT C''",
+        "PPA1",
+        "VMA16"
+      ]
+    }
+  },
+  "raw_columns": [
+    "Unnamed: 0.1",
+    "Unnamed: 0",
+    "gene",
+    "area.24_mean",
+    "area.24_std",
+    "area.24_count",
+    "mean_intensity.24_mean",
+    "mean_intensity.24_std",
+    "mean_intensity.24_count",
+    "area.48_mean",
+    "area.48_std",
+    "area.48_count",
+    "mean_intensity.48_mean",
+    "mean_intensity.48_std",
+    "mean_intensity.48_count",
+    "corrected_area.24_mean",
+    "corrected_area.24_std",
+    "corrected_area.24_count",
+    "corrected_mean_intensity.24_mean",
+    "corrected_mean_intensity.24_std",
+    "corrected_mean_intensity.24_count",
+    "corrected_area.48_mean",
+    "corrected_area.48_std",
+    "corrected_area.48_count",
+    "corrected_mean_intensity.48_mean",
+    "corrected_mean_intensity.48_std",
+    "corrected_mean_intensity.48_count"
+  ],
+  "screen_ambiguous_names": {
+    "FEN1": [
+      "YCR034W",
+      "YKL113C"
+    ],
+    "PPA1": [
+      "YBR011C",
+      "YHR026W"
+    ]
+  },
+  "raw_rows": {
+    "PPA1": {
+      "n": 1,
+      "level": -1.566433582121832
+    },
+    "IPP1": {
+      "n": 0,
+      "level": null
+    },
+    "VMA16": {
+      "n": 0,
+      "level": null
+    },
+    "YBR011C": {
+      "n": 0,
+      "level": null
+    },
+    "YHR026W": {
+      "n": 0,
+      "level": null
+    },
+    "FEN1": {
+      "n": 1,
+      "level": -0.5007629172486389
+    },
+    "RAD27": {
+      "n": 1,
+      "level": -0.0866755657964046
+    },
+    "ELO2": {
+      "n": 0,
+      "level": null
+    }
+  },
+  "builds": {
+    "cachera loader LMDB": {
+      "n_orfs": 4735,
+      "IPP1_records": [
+        "2237:BetaxanthinCachera2023Dataset"
+      ],
+      "VMA16_records": [],
+      "path": "/scratch/projects/torchcell-scratch/data/torchcell/betaxanthin_cachera2023/processed/lmdb"
+    },
+    "fig6_pigment_transfer (what 020 trained on)": {
+      "n_orfs": 4930,
+      "IPP1_records": [
+        "4587:BetaxanthinCachera2023Dataset"
+      ],
+      "VMA16_records": [
+        "4916:CarotenoidOzaydin2013Dataset"
+      ],
+      "path": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/019-simb-multimodal/fig6_pigment_transfer/processed/lmdb"
+    }
+  },
+  "stored_vs_raw": {
+    "YBR011C": {
+      "common": "IPP1",
+      "stored": -1.566433582121832,
+      "raw_source_name": "PPA1",
+      "raw_value": -1.566433582121832
+    },
+    "YHR026W": {
+      "common": "VMA16",
+      "stored": null,
+      "raw_source_name": "PPA1",
+      "raw_value": -1.566433582121832
+    },
+    "YCR034W": {
+      "common": "ELO2",
+      "stored": -0.5007629172486389,
+      "raw_source_name": "FEN1",
+      "raw_value": -0.5007629172486389
+    },
+    "YKL113C": {
+      "common": "RAD27",
+      "stored": -0.0866755657964046,
+      "raw_source_name": "RAD27",
+      "raw_value": -0.0866755657964046
+    }
+  },
+  "preprocess": {
+    "YBR011C": [
+      {
+        "orf": "YBR011C",
+        "level": -1.566433582121832,
+        "se": 0.2483210451195251,
+        "n": 15
+      }
+    ],
+    "YHR026W": []
+  },
+  "essentiality": {
+    "n_essential_live": 1140,
+    "noness_coverage": 0.8604353393085787,
+    "ess_coverage": 0.02543859649122807,
+    "essential_in_screen": [
+      {
+        "orf": "YKL212W",
+        "sgd_name": "SAC1",
+        "screen_name": "SAC1",
+        "area.24_mean": 107.25
+      },
+      {
+        "orf": "YPL268W",
+        "sgd_name": "PLC1",
+        "screen_name": "PLC1",
+        "area.24_mean": 125.66666666666669
+      },
+      {
+        "orf": "YHR171W",
+        "sgd_name": "ATG7",
+        "screen_name": "ATG7",
+        "area.24_mean": 163.35714285714286
+      },
+      {
+        "orf": "YCR068W",
+        "sgd_name": "ATG15",
+        "screen_name": "ATG15",
+        "area.24_mean": 203.42857142857144
+      },
+      {
+        "orf": "YOR182C",
+        "sgd_name": "RPS30B",
+        "screen_name": "RPS30B",
+        "area.24_mean": 207.8
+      },
+      {
+        "orf": "YNL031C",
+        "sgd_name": "HHT2",
+        "screen_name": "HHT2",
+        "area.24_mean": 213.06666666666663
+      },
+      {
+        "orf": "YBL078C",
+        "sgd_name": "ATG8",
+        "screen_name": "ATG8",
+        "area.24_mean": 217.22222222222223
+      },
+      {
+        "orf": "YOR167C",
+        "sgd_name": "RPS28A",
+        "screen_name": "RPS28A",
+        "area.24_mean": 236.5625
+      },
+      {
+        "orf": "YBR121C",
+        "sgd_name": "GRS1",
+        "screen_name": "GRS1",
+        "area.24_mean": 238.5
+      },
+      {
+        "orf": "YNR007C",
+        "sgd_name": "ATG3",
+        "screen_name": "ATG3",
+        "area.24_mean": 241.5
+      },
+      {
+        "orf": "YMR159C",
+        "sgd_name": "ATG16",
+        "screen_name": "ATG16",
+        "area.24_mean": 241.66666666666663
+      },
+      {
+        "orf": "YBR128C",
+        "sgd_name": "ATG14",
+        "screen_name": "ATG14",
+        "area.24_mean": 243.07692307692307
+      },
+      {
+        "orf": "YDR050C",
+        "sgd_name": "TPI1",
+        "screen_name": "TPI1",
+        "area.24_mean": 244.9090909090909
+      },
+      {
+        "orf": "YPL120W",
+        "sgd_name": "VPS30",
+        "screen_name": "VPS30",
+        "area.24_mean": 250.5
+      },
+      {
+        "orf": "YNL242W",
+        "sgd_name": "ATG2",
+        "screen_name": "ATG2",
+        "area.24_mean": 254.3125
+      },
+      {
+        "orf": "YBR217W",
+        "sgd_name": "ATG12",
+        "screen_name": "ATG12",
+        "area.24_mean": 264.8666666666667
+      },
+      {
+        "orf": "YNL280C",
+        "sgd_name": "ERG24",
+        "screen_name": "ERG24",
+        "area.24_mean": 273.3125
+      },
+      {
+        "orf": "YGL180W",
+        "sgd_name": "ATG1",
+        "screen_name": "ATG1",
+        "area.24_mean": 274.7333333333333
+      },
+      {
+        "orf": "YFR021W",
+        "sgd_name": "ATG18",
+        "screen_name": "ATG18",
+        "area.24_mean": 284.625
+      },
+      {
+        "orf": "YJL012C",
+        "sgd_name": "VTC4",
+        "screen_name": "VTC4",
+        "area.24_mean": 284.6666666666667
+      },
+      {
+        "orf": "YPR185W",
+        "sgd_name": "ATG13",
+        "screen_name": "ATG13",
+        "area.24_mean": 290.07142857142856
+      },
+      {
+        "orf": "YNL223W",
+        "sgd_name": "ATG4",
+        "screen_name": "ATG4",
+        "area.24_mean": 290.3125
+      },
+      {
+        "orf": "YLL042C",
+        "sgd_name": "ATG10",
+        "screen_name": "ATG10",
+        "area.24_mean": 293.5
+      },
+      {
+        "orf": "YNL162W",
+        "sgd_name": "RPL42A",
+        "screen_name": "RPL42A",
+        "area.24_mean": 300.26666666666665
+      },
+      {
+        "orf": "YDL149W",
+        "sgd_name": "ATG9",
+        "screen_name": "ATG9",
+        "area.24_mean": 311.0
+      },
+      {
+        "orf": "YPL149W",
+        "sgd_name": "ATG5",
+        "screen_name": "ATG5",
+        "area.24_mean": 316.6875
+      },
+      {
+        "orf": "YMR091C",
+        "sgd_name": "NPL6",
+        "screen_name": "NPL6",
+        "area.24_mean": 357.0
+      },
+      {
+        "orf": "YLR423C",
+        "sgd_name": "ATG17",
+        "screen_name": "ATG17",
+        "area.24_mean": 359.7142857142857
+      },
+      {
+        "orf": "YAL047C",
+        "sgd_name": "SPC72",
+        "screen_name": "SPC72",
+        "area.24_mean": 368.4
+      }
+    ],
+    "IPP1_essential": true,
+    "VMA16_essential": false
+  },
+  "vma_family": [
+    {
+      "std": "VMA1",
+      "orf": "YDL185W",
+      "screen_name": "TFP1",
+      "area24": 265.0,
+      "bx24": -0.3619169445714327
+    },
+    {
+      "std": "VMA2",
+      "orf": "YBR127C",
+      "screen_name": "VMA2",
+      "area24": 130.6153846153846,
+      "bx24": -1.3640192685849577
+    },
+    {
+      "std": "VMA3",
+      "orf": "YEL027W",
+      "screen_name": "CUP5",
+      "area24": 112.875,
+      "bx24": -1.5475154358729315
+    },
+    {
+      "std": "VMA4",
+      "orf": "YOR332W",
+      "screen_name": "VMA4",
+      "area24": 221.66666666666663,
+      "bx24": -0.2225400271355769
+    },
+    {
+      "std": "VMA5",
+      "orf": "YKL080W",
+      "screen_name": "VMA5",
+      "area24": 110.4375,
+      "bx24": -1.4301449433707896
+    },
+    {
+      "std": "VMA6",
+      "orf": "YLR447C",
+      "screen_name": "VMA6",
+      "area24": 109.66666666666669,
+      "bx24": -1.4353093419318992
+    },
+    {
+      "std": "VMA7",
+      "orf": "YGR020C",
+      "screen_name": "VMA7",
+      "area24": 79.61538461538461,
+      "bx24": -1.1476781237337277
+    },
+    {
+      "std": "VMA8",
+      "orf": "YEL051W",
+      "screen_name": "VMA8",
+      "area24": 117.15384615384616,
+      "bx24": -1.330720299969754
+    },
+    {
+      "std": "VMA9",
+      "orf": "YCL005W-A",
+      "screen_name": null,
+      "area24": null,
+      "bx24": null
+    },
+    {
+      "std": "VMA10",
+      "orf": "YHR039C-A",
+      "screen_name": "YHR039C-B",
+      "area24": 102.73333333333332,
+      "bx24": -1.5028813656635356
+    },
+    {
+      "std": "VMA11",
+      "orf": "YPL234C",
+      "screen_name": "TFP3",
+      "area24": 355.06666666666666,
+      "bx24": 0.08425977967819
+    },
+    {
+      "std": "VMA13",
+      "orf": "YPR036W",
+      "screen_name": "VMA13",
+      "area24": 99.92307692307692,
+      "bx24": -2.190860345331563
+    },
+    {
+      "std": "VMA16",
+      "orf": "YHR026W",
+      "screen_name": null,
+      "area24": null,
+      "bx24": null
+    },
+    {
+      "std": "VMA21",
+      "orf": "YGR105W",
+      "screen_name": "VMA21",
+      "area24": 143.3125,
+      "bx24": -0.3417550399271482
+    },
+    {
+      "std": "VMA22",
+      "orf": "YHR060W",
+      "screen_name": "VMA22",
+      "area24": 107.5625,
+      "bx24": -1.540726779242469
+    }
+  ],
+  "viability": {
+    "area24": 106.53333333333332,
+    "n_colonies_24h": 15.0,
+    "area48": 118.46666666666668,
+    "n_colonies_48h": 15.0,
+    "area_percentile": 0.016166281755196306,
+    "screen_median_area": 250.125
+  },
+  "soft_phenotype": {
+    "ppa1_bx": -1.566433582121832,
+    "vma_median_bx": -1.3640192685849577,
+    "screen_median_bx": -0.0063563937575536,
+    "p_random_le_ppa1": 0.013022474270111321,
+    "vma_median_area": 112.875
+  },
+  "merzbacher": {
+    "YBR011C": {
+      "common": "IPP1",
+      "in_test_list": true,
+      "label": 0
+    },
+    "YHR026W": {
+      "common": "VMA16",
+      "in_test_list": true,
+      "label": 0
+    },
+    "YCR034W": {
+      "common": "ELO2",
+      "in_test_list": true,
+      "label": 0
+    },
+    "YKL113C": {
+      "common": "RAD27",
+      "in_test_list": false,
+      "label": null
+    }
+  },
+  "nested_split": {
+    "IPP1_in_test": false,
+    "VMA16_in_test": true,
+    "missing_from_build": [
+      "YEL024W",
+      "YHL011C",
+      "YHR026W",
+      "YKL148C",
+      "YML022W",
+      "YML100W",
+      "YMR205C",
+      "YNL129W",
+      "YPR047W",
+      "YPR128C"
+    ]
+  }
+}

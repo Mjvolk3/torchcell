@@ -305,3 +305,127 @@ descriptions, not measurements made here.
 The ordering stands as in \cref{sec:campaign}: objective first, with this launch; the
 mechanism tier second, under the winning objective, with the in-repo arms before any
 encoder restructuring.
+
+\subsection{What the perturbation-response literature says, and what it changes here
+\secstatus{todo}}
+\label{sec:related}
+
+Three papers were read in full against this plan, all mirrored and \file{sha256}-pinned.
+They are named inline with their DOI, following this document's convention. The reason to
+read them together is that they converge on one uncomfortable point.
+
+\notesec{Every published operator in this family is additive, including both of Roohani's}
+GEARS (Roohani et al.\ 2023, doi:10.1038/s41587-023-01905-6) combines a perturbation with a
+gene, and State (Adduri et al.\ 2025, doi:10.1101/2025.06.26.661135), by the same senior
+author two years later, forms its transformer input, as
+
+$$h_u^{\mathrm{post\text{-}pert}} = \mathrm{MLP}\big(h_u^{\mathrm{gene}} + h^{\mathcal P}\big),
+\qquad
+\mathbf H = \mathbf H_{\mathrm{cell}} + \mathbf H_{\mathrm{pert}} + \mathbf H_{\mathrm{batch}} .$$
+
+GEARS composes multiple perturbations by summing their embeddings before an MLP. Neither
+paper ablates addition against a multiplicative or cross-attentional alternative.
+\textbf{So the additive operator this document indicts is not a torchcell defect; it is the
+field's default.} That reframes \cref{sec:expression}'s structural finding from a bug report
+into a statement about the whole model class, which is a stronger result and should be
+written as one.
+
+\notesec{Where they differ from us is the readout, and that is the actionable gap} Both put
+gene identity in \emph{per-gene output parameters} applied to a shared nonlinear state.
+GEARS gives every gene its own linear layer, ``for every gene $u$, we apply a gene-specific
+linear layer parameterized by $w_u \in \mathbb R^d, b_u \in \mathbb R$''; State's readout is
+a single $\mathbf W_{\mathrm{recon}} \in \mathbb R^{d_h \times G}$, one column per gene.
+
+\begin{table}[htbp]
+\centering\footnotesize
+\begin{tabular}{llll}
+\toprule
+ & tokens & perturbation enters & per-gene readout \\
+\midrule
+GEARS         & genes & $\mathrm{MLP}(h_u + h^{\mathcal P})$ & \textbf{yes}, $w_u\in\mathbb R^{d}$ \\
+State         & \textbf{cells} & $\mathbf H_{\mathrm{cell}} + \mathbf H_{\mathrm{pert}}$ & \textbf{yes}, $\mathbf W_{\mathrm{recon}}\in\mathbb R^{d_h\times G}$ \\
+torchcell v9  & genes & $g(h_i + c_b)$ & \textbf{no}, one shared MLP \\
+\bottomrule
+\end{tabular}
+\caption[]{Where gene specificity lives. Ours composes to $F(h_i + c_b)$ with a single
+shared $F$, so reporter identity enters only through $h_i$, inside the same function the
+perturbation enters. A GEARS-style per-gene output weight would cost
+$6{,}127 \times 91 = 557{,}557$ parameters here, $+47\,\%$ on the current model, and is a
+mechanism rather than capacity. It is the best-supported new arm for the mechanism tier.}
+\label{tab:related-operators}
+\end{table}
+
+\notesec{The benchmark that should govern how this campaign is read} Ahlmann-Eltze, Huber
+and Anders 2025 (doi:10.1038/s41592-025-02772-6) benchmarked five foundation models and two
+purpose-built ones, GEARS and CPA, against deliberately simple baselines:
+``None outperformed the baselines.'' On unseen single perturbations, across the Replogle and
+Adamson data, ``None of the deep learning models was able to consistently outperform the
+mean prediction or the linear model.'' On double perturbations every model was
+substantially worse than an additive baseline that simply sums the two single-perturbation
+log fold changes, and on genetic-interaction calls ``None of the models was better than the
+`no change' baseline.'' Their linear model is
+
+$$\operatorname*{argmin}_{\mathbf W}\;\big\|\mathbf Y_{\mathrm{train}} -
+(\mathbf{G}\mathbf{W}\mathbf{P}^{\top} + \pmb b)\big\|_2^2 ,$$
+
+a rank-limited bilinear pair term plus a per-gene intercept, and it beat
+GEARS while \emph{using GEARS's own perturbation embeddings}. Several concurrent benchmarks
+are reported to agree.
+\secondhand{Ahlmann-Eltze et al.'s reference list} Kernfeld et al.\
+(doi:10.1101/2023.07.28.551039) and Csendes et al.\ 2025 (\emph{BMC Genomics} 26, 393) are
+named there as reaching the same conclusion; neither is in our mirror and neither was read.
+
+State reports the same thing about itself where its perturbations are genetic rather than
+chemical: ``On genetic perturbation datasets, State matched the performance of the
+perturbation mean baseline'', with a context-mean baseline beating it on fold-change
+prediction by $10\,\%$. That is a 600M-parameter encoder trained on 167 million cells,
+achieving parity with predicting a mean.
+
+\notesec{This is direct external support for two of this document's conclusions, and it
+should be said plainly} First, \textbf{scale is not the lever}. \cref{sec:launch} argues
+that from our own matched-budget evidence, where 145 runs spanning 0.12M to 4.7M parameters
+show \file{pearson(log10 params, score)} $= -0.129$; the literature reaches the same place
+from the opposite direction, at 500 times the scale and in a different organism. Second,
+\textbf{the mean-baseline failure mode is the field's central problem, not our local one}.
+Our \file{nmse} $\approx 1.00$ is precisely the ``no better than the mean'' result these
+benchmarks report, and it is now clear that reporting it was not a confession but the
+standard finding stated honestly.
+
+\notesec{One asymmetry in our favor, which the metric choice earns} A baseline predicting
+each gene's mean across strains scores \emph{zero} on \file{pearson_per_feature}, because a
+constant prediction has no variance across strains to correlate. The Pearson these papers
+report is computed the other way, across genes within one perturbation, where the enormous
+gene-to-gene variation is shared by every prediction and a mean baseline therefore scores
+high. \textbf{So our $0.196$ and their $0.556$ are not comparable, and ours is the harder
+statistic.} Any comparison drawn against GEARS or State must use
+\file{pearson_per_instance}, or it is not a comparison. This also resolves the apparent
+tension with \file{nmse} $\approx 1$: the model orders strains within a gene better than
+chance while its magnitudes are no better than the mean in squared error, which is the
+under-shrinkage of \cref{sec:objective} and not a contradiction.
+
+\notesec{What is not portable, checked rather than assumed} State's actual contribution is
+not its operator but its set machinery: bidirectional self-attention across sets of 256
+cells, trained with an MMD under the energy kernel $k(u,v) = -\|u - v\|_2$. Both require a
+\emph{population} of measurements per condition. We have one bulk profile per deletion
+strain, so at $S = 1$ that MMD reduces to $2\|\hat x - x\|_2$, an ordinary per-sample
+regression loss with no distributional content, and cross-cell attention has nothing to
+attend to. The expression ceiling reinforces this: it rests on 82 cross-study shared
+deletions, not on per-strain replicates. \textbf{This rules out the single most effective
+idea in that paper for our data, which is worth knowing before anyone proposes it.} It is
+also a concrete argument for replicate measurement in any future screen we design.
+
+\notesec{Consequences for the plan, in priority order}
+\begin{enumerate}
+\item \textbf{Add the baselines to the launch scoring, not to a later round.} Report every
+  arm against a per-gene mean baseline and against the $\mathbf{GWP}^{\top} + \pmb b$
+  bilinear linear model fit on our own training split. Both are cheap, neither needs a GPU,
+  and after these benchmarks an unbaselined deep-learning number is not publishable.
+\item \textbf{Report \file{pearson_per_instance} beside \file{pearson_per_feature} on every
+  arm}, so the strand has a number that is commensurable with the literature.
+\item \textbf{Promote the per-gene readout to the first mechanism arm}, ahead of the
+  rank-64 basis term. It is what both published models have and we lack, and
+  \cref{tab:related-operators} gives its cost.
+\item \textbf{Reframe the structural finding as a claim about the model class}, since the
+  additive collapse is shared by every published operator in this family.
+\end{enumerate}
+

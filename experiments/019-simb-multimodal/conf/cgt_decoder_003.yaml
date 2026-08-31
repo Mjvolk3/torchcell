@@ -61,6 +61,13 @@ trainer:
   precision: bf16-mixed
   log_every_n_steps: 10
   fast_dev_run: false
+  # Path to a Lightning checkpoint to CONTINUE from (weights + optimizer moments + epoch
+  # counter). Declared here at the root of the config chain so every descendant can set it
+  # with a plain `trainer.resume_ckpt_path=...` override rather than hydra's `+` append,
+  # which is easy to omit and then silently starts training from scratch.
+  # NOTE max_epochs is ABSOLUTE under resume, not additional; the training script refuses a
+  # resume whose max_epochs would train ~nothing.
+  resume_ckpt_path: null
   early_stopping:
     enabled: true
     monitor: val/loss

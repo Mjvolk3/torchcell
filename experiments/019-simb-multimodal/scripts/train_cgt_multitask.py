@@ -2384,6 +2384,15 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
     # @rank_zero_experiment). torchrun sets RANK before the DDP process group exists.
     is_rank_zero = int(os.environ.get("RANK", os.environ.get("LOCAL_RANK", "0"))) == 0
     run = None
+    # Continuing a run's W&B history across a resume. Without this a resumed segment is a
+    # NEW run whose epoch axis starts wherever the checkpoint left off, so one training
+    # trajectory is split across two run ids and every `_max` tracker restarts, which is
+    # exactly the peak-vs-budget bookkeeping the 019 retrospective depends on.
+    # `resume="allow"` rather than "must" so a mistyped id fails as a fresh run rather
+    # than aborting a job that has already claimed a GPU.
+    _resume_id = os.environ.get("WANDB_RESUME_ID") or wandb_cfg["wandb"].get(
+        "resume_id"
+    )
     if is_rank_zero:
         run = wandb.init(
             mode=cast(Any, WANDB_MODE),
@@ -2393,7 +2402,10 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
             tags=wandb_cfg["wandb"]["tags"],
             dir=experiment_dir,
             name=f"run_{group}",
+            **({"id": str(_resume_id), "resume": "allow"} if _resume_id else {}),
         )
+        if _resume_id:
+            print(f"[wandb] continuing run id {_resume_id} (resume=allow)")
     wandb_logger = WandbLogger(
         project=wandb_cfg["wandb"]["project"],
         # Default TRUE, so every existing arm keeps uploading its checkpoints. Turned OFF on
@@ -3146,8 +3158,55 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
     # either truncates in the dip or is a guess. A time budget is the honest cap: it spends
     # exactly the compute available and lets the curve decide where the peak is.
     max_time_s = cfg.trainer.get("max_time_s")
+    # RESUME. `trainer.resume_ckpt_path` continues a previous run from a Lightning
+    # checkpoint: model weights, optimizer moments, and the epoch/step counters.
+    #
+    # This is exact here, and that is a property of THIS task rather than a general
+    # promise. `configure_optimizers` returns a bare AdamW with `lr_scheduler.type: null`,
+    # so a resumed run has no schedule phase to get wrong -- the checkpoint's
+    # `lr_schedulers` list is empty and the learning rate is the same constant it was.
+    # If a scheduler is ever added, resuming becomes a different experiment from
+    # continuing and this comment stops being true.
+    resume_ckpt_path = cfg.trainer.get("resume_ckpt_path")
+    if resume_ckpt_path:
+        resume_ckpt_path = str(resume_ckpt_path)
+        if not osp.exists(resume_ckpt_path):
+            raise FileNotFoundError(
+                f"trainer.resume_ckpt_path does not exist: {resume_ckpt_path}"
+            )
+        _ck = torch.load(resume_ckpt_path, map_location="cpu", weights_only=False)
+        _ck_epoch = int(_ck.get("epoch", -1))
+        _n_sched = len(_ck.get("lr_schedulers", []))
+        del _ck
+        # `max_epochs` is ABSOLUTE in Lightning, not additional. Resuming a checkpoint at
+        # epoch 9,999 with `max_epochs: 10000` trains ONE epoch and exits looking like a
+        # successful run, which is the failure mode most likely to waste an allocation.
+        if int(cfg.trainer.max_epochs) <= _ck_epoch + 1:
+            raise ValueError(
+                f"trainer.max_epochs={cfg.trainer.max_epochs} but the checkpoint is at "
+                f"epoch {_ck_epoch}. max_epochs is ABSOLUTE in Lightning, so this would "
+                f"train {max(0, int(cfg.trainer.max_epochs) - _ck_epoch - 1)} epoch(s). "
+                f"Set max_epochs to the TOTAL epoch count you want to reach."
+            )
+        # Lightning's Timer persists elapsed time INTO the checkpoint, so a resumed run
+        # carrying a max_time_s budget inherits the previous segment's clock and can stop
+        # immediately. The slurm walltime is the honest cap for a resumed segment.
+        if max_time_s:
+            raise ValueError(
+                "trainer.max_time_s cannot be combined with trainer.resume_ckpt_path: "
+                "Lightning's Timer restores elapsed time from the checkpoint, so the "
+                "resumed segment would stop early or immediately. Bound the segment with "
+                "the scheduler walltime instead."
+            )
+        print(
+            f"[resume] {resume_ckpt_path}\n"
+            f"[resume] checkpoint at epoch {_ck_epoch}, {_n_sched} lr_scheduler(s); "
+            f"training to absolute max_epochs={cfg.trainer.max_epochs}"
+        )
     if max_time_s:
-        checkpoint_callbacks.append(Timer(duration=timedelta(seconds=float(max_time_s))))
+        checkpoint_callbacks.append(
+            Timer(duration=timedelta(seconds=float(max_time_s)))
+        )
         print(f"[max-time] stopping training after {float(max_time_s) / 3600:.2f} h")
 
     torch.set_float32_matmul_precision("medium")
@@ -3182,7 +3241,7 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         precision=cfg.trainer.get("precision", "32-true"),
         fast_dev_run=cfg.trainer.get("fast_dev_run", False),
     )
-    trainer.fit(model=task, datamodule=data_module)
+    trainer.fit(model=task, datamodule=data_module, ckpt_path=resume_ckpt_path)
     # Snapshot the final logged metrics BEFORE wandb.finish() so an external driver
     # (e.g. the Optuna sweep) can read the objective (e.g. val/global/pearson_per_gene).
     # main() ignores this return, so the plain training path is byte-for-byte unchanged.

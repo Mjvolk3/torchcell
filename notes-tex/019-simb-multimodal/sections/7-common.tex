@@ -75,7 +75,8 @@ prohibitively expensive and it was not.
 Two things changed and one did not. Beta-carotene's best rose from $0.118$ to $0.1371$, as
 above. Reading everything also surfaced 8 collapsed morphology runs the candidate set never
 sampled, and moved the medians, which were the statistic most exposed to the old rule.
-\textbf{Every other strand maximum was already correct}: expression $0.238$, morphology
+\textbf{Every other strand maximum was already correct}: expression $0.238$ (the maximum of
+eight identical-config replicates whose mean is $0.196$, \cref{sec:launch}), morphology
 $0.082$, betaxanthin $0.401$, amino acid $0.209$, and the expression-morphology joint arm
 $0.062$ are unchanged at full coverage. So the candidate rule was mostly doing its job, and
 its one failure is the instructive part rather than the typical case.
@@ -114,9 +115,12 @@ betaxanthin and amino acid, are the two with a scalar or low-dimensional target.
 \subsection{Two opposite convergence failures, and neither was diagnosed from a curve\secstatus{todo}}
 
 \begin{itemize}
-\item \textbf{Expression never peaks.} At every budget tried, up to 10,000 epochs, the
-  validation Pearson peaks in the last tenth of the run. Raising the budget from 1,600 to
-  10,000 raised the score from $0.204$ to $0.238$ and moved the peak with it.
+\item \textbf{Expression's best runs peak late, but ``never peaks'' did not survive the
+  replicates.} Raising the budget from 1,600 to 10,000 raised the best score from $0.204$
+  to $0.238$ and moved that run's peak with it, and the two best 9,900-epoch runs peaked in
+  their last $12\,\%$. But five of the eight identical-config runs at that budget peaked
+  between epochs 2,199 and 4,109 and never exceeded that value afterward
+  (\cref{sec:launch}), so more budget raises the maximum draw rather than every draw.
 \item \textbf{The metabolite and pigment strands peak early and then overfit.} Amino-acid
   runs peak at epochs 48 to 134 with validation slope turning negative while training slope
   stays positive. Beta-carotene's best run peaks at epoch 9 of 49, which is the most extreme

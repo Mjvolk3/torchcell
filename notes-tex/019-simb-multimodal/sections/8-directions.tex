@@ -153,7 +153,7 @@ exists, or when perturbations become fine-grained enough that the central-dogma 
 what breaks.
 
 \notesec{Masked-label imputation as its own deliverable} The oracle reaches cross-study
-$0.4838$ at $m = 1000$ against the model's $0.238$, and $97.5$ to $100.6\,\%$ of that gain
+$0.4838$ at $m = 1000$ against the model's best run of $0.238$, and $97.5$ to $100.6\,\%$ of that gain
 survives removing a genotype predictor, so it is a genuinely separate capability rather than
 a better version of the genotype task. \textbf{Something the group could offer on its own
 terms}: measure a subset of a strain's transcripts and get the rest, which is useful to
@@ -170,11 +170,13 @@ experiment worth running first is the ease-of-measurement panel selection
 \subsection{What to do about Figure 3 and Figure 6\secstatus{todo}}
 
 \notesec{Figure 3} The manuscript currently claims $r = 0.543$ for expression and $0.619$
-for morphology inside a paragraph marked \texttt{[FILLER -- R3.]}. The measured values are
-$0.238$ and $0.082$. Neither placeholder should survive into a draft anyone reads. The
-honest version of the panel is the ceiling-relative one: expression at $31\,\%$ of a
-measured $0.775$, morphology at $13\,\%$ of a measured $0.611$ \emph{on a quarter of its
-data}, with the fitness panel carrying the strong result. \textbf{A $0.24$ per-gene Pearson
+for morphology inside a paragraph marked \texttt{[FILLER -- R3.]}. The measured maxima are
+$0.238$ and $0.082$, and expression's replicate mean is $0.196 \pm 0.022$
+(\cref{sec:launch}). Neither placeholder should survive into a draft anyone reads. The
+honest version of the panel is the ceiling-relative one: expression at $25\,\%$ of a
+measured $0.775$ on average and $31\,\%$ at its best draw, morphology at $13\,\%$ of a
+measured $0.611$ \emph{on a quarter of its data}, with the fitness panel carrying the
+strong result. \textbf{A $0.24$ per-gene Pearson
 is not a Figure 3 headline.}
 
 \textbf{Whatever the campaign finds, the placeholders come out of the manuscript now.} A
@@ -184,9 +186,10 @@ there.
 
 The cheapest route to a better panel is not an architecture ladder. Morphology at full scale
 is a query change and remains the largest single change available to the figure, though it
-is deferred behind expression. And expression's own number is a lower bound set by compute
-rather than an estimate, since no run has peaked: the resumed run is what turns $0.238$ into
-either a real ceiling-relative claim or a higher number.
+is deferred behind expression. And expression's own number is not yet an estimate anyone
+can defend: it is the best of eight draws with spread $0.0222$, five of which peaked by
+epoch 4,109. The replicated arms and the resumed run in \cref{sec:launch} are what turn
+$0.238$ into either a defensible ceiling-relative claim or a higher number.
 
 If the campaign comes back inside the noise floor, the panel should be built around what is
 solid rather than around a genotype-to-expression correlation: the ceiling-relative

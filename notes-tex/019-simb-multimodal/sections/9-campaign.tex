@@ -62,6 +62,14 @@ checkpoint and keep going until the validation curve turns.} That costs no fresh
 answers the question every arm budget depends on, and it is the difference between choosing
 $E$ from evidence and choosing it from an arm that happened to peak at 3,921.
 
+\notesec{Superseded in part by the launch plan} This subsection predates two measurements
+that change its arithmetic: the wall clock for 9,900 epochs is 3.5 days on either IGB card,
+inside the 5-day partition cap, and the identical-config spread at that budget is $0.0222$,
+five of eight runs having already peaked by epoch 4,109. So the launch (\cref{sec:launch})
+runs every arm at the incumbent's full $E = 9{,}900$ rather than truncating to 4,000, buys
+its slots by packing two runs per GPU rather than by shortening runs, and reads the resumed
+run as one draw rather than as the answer.
+
 Two practical notes. Resuming from a checkpoint is strictly cheaper than the equivalent
 fresh run, so this is the low-cost form of the 10,000-epoch experiment rather than an
 additional one. And the wall clock is the binding constraint at 3.8 days for a single-GPU
@@ -69,14 +77,18 @@ additional one. And the wall clock is the binding constraint at 3.8 days for a s
 check what the IGB \file{mmli} partition has free before sizing the rest of the campaign
 around a single-GPU rate.
 
-\subsection{Seeds: two per arm, and the noise floor is already known\secstatus{todo}}
+\subsection{Seeds: the noise floor is budget-dependent, and the short-budget figure was the
+wrong one\secstatus{todo}}
 
 Expression's across-initialization spread was measured at $\approx 0.006$ ($n = 8$, fixed
 split) in wave 5, an order of magnitude below the betaxanthin strand's $0.030$
-(\cref{tab:replicate-noise}), because the split is pinned so \file{seed} varies weights
-only. At $\sigma = 0.006$, two seeds give a paired standard error of $\approx 0.004$, so a
-$0.015$ effect is nearly $4\sigma$. \textbf{Two seeds per arm is enough}; three would buy
-precision the mechanism differences do not need.
+(\cref{tab:replicate-noise}), and an earlier version of this plan concluded two seeds per
+arm from it. \textbf{That figure does not transfer to long budgets.} The eight
+identical-config runs at 9,900 epochs spread $0.1663$ to $0.2382$, a standard deviation of
+$\mathbf{0.0222}$ (\cref{sec:launch}), $3.7\times$ the short-budget floor, and they differ
+in nothing but nondeterminism, not even the seed label. At $\sigma = 0.0222$, two seeds
+resolve only a $\approx 0.05$ gap; the replicate arithmetic that sizes the launch is in
+\cref{tab:launch-power}.
 
 \subsection{Phase A, the objective, and why it goes first\secstatus{todo}}
 
@@ -114,7 +126,8 @@ comparison that is not one.
 left block compares one head at 9,900 epochs against five at roughly 150. That is the same
 error this document indicts everywhere else. The right block is the honest comparison, on
 the window where all six ran: \file{quantile} still leads, but by $+0.0085$ on the median
-against a seed noise floor of $\approx 0.006$, and its maximum is drawn from 84 runs against
+against a short-budget seed floor of $\approx 0.006$ and a long-budget replicate spread of
+$0.0222$ (\cref{sec:launch}), and its maximum is drawn from 84 runs against
 \file{crps}'s 25, so more of its lead is selection inflation. It is also an ordering measured
 at 150 epochs, which \cref{sec:expression} shows is a regime of transients.}
 \label{tab:dist-confound}
@@ -286,7 +299,8 @@ means the control arm matters more than the joint arm.
 
 \subsection{What the campaign cannot fix\secstatus{todo}}
 
-Expression sits at $0.238$ against a ceiling of $0.775$, and the perturbation axis has 1,484
+Expression sits at $0.196 \pm 0.022$, best run $0.238$, against a ceiling of $0.775$, and
+the perturbation axis has 1,484
 points with each gene deleted exactly once (\cref{tab:label-accounting}). No objective and
 no pair term changes that. If Phase A and Phase B both come back inside the noise floor,
 the honest reading is that the binding constraint is the data rather than the model, and

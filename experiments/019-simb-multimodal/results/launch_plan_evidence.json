@@ -1,0 +1,100 @@
+{
+  "generated_by": "experiments/019-simb-multimodal/scripts/analyze_launch_plan_evidence.py",
+  "replicate_spread_9900_epochs": {
+    "n": 8,
+    "run_ids": [
+      "8r5ewoaq",
+      "da5g4o9v",
+      "ebkzn1ao",
+      "f2wf23oy",
+      "hx8pxdic",
+      "rb3bhryq",
+      "tow1z48n",
+      "u1vuznme"
+    ],
+    "scores": [
+      0.1663,
+      0.1804,
+      0.1824,
+      0.1887,
+      0.2008,
+      0.2057,
+      0.2091,
+      0.2382
+    ],
+    "mean": 0.1965,
+    "sd": 0.0222,
+    "min": 0.1663,
+    "max": 0.2382,
+    "expected_max_blom": 0.2282,
+    "observed_max_z": 1.89,
+    "peak_epochs": [
+      2199,
+      3398,
+      3503,
+      3715,
+      4109,
+      8859,
+      9691,
+      9697
+    ],
+    "power_80pct_alpha05": {
+      "delta_0.02": 19.3,
+      "delta_0.03": 8.6,
+      "delta_0.04": 4.8,
+      "delta_0.05": 3.1
+    },
+    "detectable_vs_n8_baseline": {
+      "k_2": 0.0491,
+      "k_3": 0.042,
+      "k_4": 0.038,
+      "k_6": 0.0335,
+      "k_7": 0.0321
+    }
+  },
+  "wall_clock_by_card": {
+    "a100": {
+      "n_runs": 3,
+      "compute_s_per_epoch_median": 27.0,
+      "wall_s_per_epoch_median": 30.5,
+      "epochs_in_5_days_solo": 14175,
+      "days_for_9900_epochs_solo": 3.49
+    },
+    "ada": {
+      "n_runs": 5,
+      "compute_s_per_epoch_median": 17.2,
+      "wall_s_per_epoch_median": 31.0,
+      "epochs_in_5_days_solo": 13922,
+      "days_for_9900_epochs_solo": 3.56
+    }
+  },
+  "packing_benchmark": {
+    "solo_median_s_per_epoch": 17.0,
+    "packed_median_s_per_epoch": 26.0,
+    "n_epochs_measured": {
+      "solo": 10,
+      "packed_each": 10
+    },
+    "per_run_slowdown": 1.53,
+    "aggregate_speedup": 1.31,
+    "vram_mib_both_packed_runs": 19379,
+    "vram_gib_per_run": 9.5
+  },
+  "param_count": {
+    "checkpoint": "/scratch/projects/torchcell-scratch/models/checkpoints/gilahyper-1445_447aa95e06414b55667966ee1f9a489200ccd9d2a8782fc216a61a74c9baaafb/1445-last.ckpt",
+    "total_trainable": 1194509,
+    "matches_wandb_total_param_count": true,
+    "aliased_params_excluded": 98370,
+    "buffer_params_excluded": 12273,
+    "by_module": {
+      "model.transformer_layers": 590220,
+      "model.embedding_preprocessor": 369639,
+      "model.post_perturbation_mixing": 101430,
+      "model.perturbation_transform": 98370,
+      "model.perturbation_head": 16381,
+      "model.per_gene_head": 9919,
+      "model.observed_label_encoder": 8460,
+      "model.cls_token": 90
+    }
+  }
+}

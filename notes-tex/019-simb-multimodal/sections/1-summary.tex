@@ -183,8 +183,19 @@ restricts to genotypes carrying both phenotypes. The within-grid paired comparis
 \begin{enumerate}
 \item \textbf{The expression strand contains no valid comparison between mechanisms.} All
   67 scored arms stopped at or below 300 epochs, against a validation curve that dips at
-  200 to 300 and then climbs past its early peak. No peak has been observed at any budget
-  up to 10,000 epochs. Every per-arm delta on record measures early-training transients.
+  200 to 300 and then climbs past its early peak. Every per-arm delta on record measures
+  early-training transients.
+
+\item \textbf{The headline $0.2382$ is the maximum of eight identical-config replicates,
+  whose spread is $0.0222$.} The eight runs past 9,000 epochs share one configuration
+  (\file{quantile} head, lr $3 \times 10^{-4}$, $L = 6$, hidden 90, mask, \file{s1_pool},
+  seed 0) and score $0.1663$ to $0.2382$, mean $0.1965$. The expected maximum of eight such
+  draws is $0.2282$, so the config's central estimate is $\mathbf{0.196 \pm 0.022}$ and the
+  headline is an order statistic. The same eight runs revise ``never peaks'': five peaked
+  between epochs 2,199 and 4,109 and never exceeded that value afterward; only the best
+  draws peaked late. Both facts set the launch design (\cref{sec:launch}): a head gap under
+  $\approx 0.04$ cannot be resolved with one run per arm, so arms get replicates, not just
+  budget.
 
 \item \textbf{Two separate defects were being collapsed into one phrase, and only one of
   them is a loss-versus-metric conflict.} Revision 2 said ``the objective is fighting
@@ -252,7 +263,7 @@ restricts to genotypes carrying both phenotypes. The within-grid paired comparis
   that reads them, because nothing has been revealed to it. Scoring happens at $k = 0$.
 
   Capacity is not the binding constraint either: a rank-32 reconstruction of the target
-  matrix reaches $0.727$ against a best model score of $0.238$. A rank-64 pair term already
+  matrix reaches $0.727$ against a best model run of $0.238$. A rank-64 pair term already
   reaches $0.2274$ in 2.0 days against the masked objective's $0.2362$ in 3.8.
 
 \item \textbf{Morphology has never been trained on its own data.} The Ohya screen holds
@@ -370,5 +381,5 @@ constraint-based metabolic layer, not as a joint-training result.
 
 \notesec{Figure 3 is not ready} A per-gene Pearson of $0.24$ against a ceiling of $0.775$ is
 not a headline, and the manuscript's placeholder values of $0.543$ and $0.619$ are far from
-the measured $0.238$ and $0.082$. Those placeholders come out of the manuscript regardless
+the measured maxima of $0.238$ and $0.082$. Those placeholders come out of the manuscript regardless
 of what the next campaign finds.

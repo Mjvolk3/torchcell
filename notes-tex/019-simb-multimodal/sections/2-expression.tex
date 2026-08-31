@@ -29,8 +29,28 @@ The best validation score observed on this task is
 \file{pearson_per_feature} $= \mathbf{0.2382}$, from run \texttt{hx8pxdic} in project
 \file{torchcell_019_expr_v9}, whose peak sits at epoch 9,697 of the 9,900 it reached.
 The best in \file{torchcell_019_expr_v8} is $0.2276$, run \texttt{b50f93ju}, peaking at
-epoch 4,002 of 4,105. Both are $\approx 30\,\%$ of the ceiling, and both peak in the last
-tenth of their run.
+epoch 4,002 of 4,105.
+
+\notesec{That headline is the maximum of eight replicates, and the spread has now been
+measured} Every expression run past 9,000 epochs on the leaderboard, eight of them, shares
+one identical configuration: \file{quantile} head, lr $3 \times 10^{-4}$, dropout $0.1$,
+$L = 6$, hidden 90, mask prior, \file{s1_pool}, seed 0. They are replicates in everything
+but name, and they span $0.1663$ to $0.2382$: mean $\mathbf{0.1965}$, standard deviation
+$\mathbf{0.0222}$. Blom's expected maximum of eight normal draws at that mean and spread is
+$0.2282$, and the observed $0.2382$ sits at $z = 1.89$ above the replicate mean. \textbf{So
+$0.2382$ is the best of eight draws, an upward-biased order statistic, and the config's
+central estimate is $0.196 \pm 0.022$.} As a fraction of the $0.775$ ceiling that is
+$25\,\%$ on average and $31\,\%$ for the best draw. Every use of $0.238$ in this document
+should be read with that qualification, and the launch design in \cref{sec:launch} is built
+around the $0.0222$ figure.
+\src{experiments/019-simb-multimodal/results/launch_plan_evidence.json}
+
+The same eight runs settle where the peaks sit, and the answer is mixed rather than ``never
+turns'': three peaked in their last $12\,\%$ (epochs 8,859, 9,691, 9,697) but \textbf{five
+peaked between epochs 2,199 and 4,109 and never exceeded that value in the following six
+thousand}. The two best scores did peak late, so lateness and score are correlated in this
+small sample, but ``expression never peaks'' is falsified as a statement about the config;
+what survives is that the best draws peak late.
 \src{experiments/019-simb-multimodal/results/round_leaderboards.csv}
 
 The metric is the per-reporter correlation across strains, averaged over reporters, which
@@ -300,7 +320,8 @@ matrix it is scored on, so no held-out claim is being made. The question it answ
 narrow and useful, whether $r$ numbers per strain are enough to describe the data at all.
 
 They are. A rank-32 reconstruction reaches $0.7265$ and rank-64 reaches $0.7799$, both near
-the $0.775$ reproducibility ceiling, against a best model score of $0.238$. \textbf{So a
+the $0.775$ reproducibility ceiling, against a best model run of $0.238$ (replicate mean
+$0.196$). \textbf{So a
 rank-64 pair term has enough expressive room by a wide margin}, and if such an arm comes back
 null, the null is about the mechanism or the optimization rather than about the rank being
 too small to matter.
@@ -511,9 +532,9 @@ random embeddings of matched dimension. On morphology the best arm is not a lang
 at all: \file{normalized_chrom_pathways}, a graph-derived 197-dimensional feature, reaches
 $0.100$. Every nucleotide-transformer arm sits at or below the floor.
 
-Read against a trained model at $0.238$ on expression, a parameter-free neighbor average
-recovering $0.117$ says half the genotype-side signal the model finds is available from
-embedding proximity alone. \textbf{That is a statement about how little the training is
+Read against a trained model at $0.196 \pm 0.022$ on expression (best run $0.238$), a
+parameter-free neighbor average recovering $0.117$ says over half the genotype-side signal
+the model finds is available from embedding proximity alone. \textbf{That is a statement about how little the training is
 adding on this axis}, and it is the second reason, beside the pair-term degeneracy, to
 suspect the operator rather than the data.
 \src{experiments/019-simb-multimodal/results/knn_embedding_probe.json}
@@ -592,12 +613,14 @@ residual covariance above measures, so they are worth far less than 6,169 indepe
 constraints on the deletion.
 
 \begin{keybox}
-\textbf{Expression is under-trained, structurally limited on the pair axis, and sitting
-beside a much larger capability it is not being scored on.} It reaches $0.238$ against a
-$0.775$ ceiling, and no run has ever peaked, at any budget up to 10,000 epochs, so that is a
-lower bound set by compute rather than an estimate. The round produced no valid comparison
-between mechanisms, since all 67 scored arms stopped at or below 300 epochs against a curve
-that had not turned. Three things do hold. The additive perturbation operator
+\textbf{Expression sits at $0.196 \pm 0.022$ against a $0.775$ ceiling, is structurally
+limited on the pair axis, and is sitting beside a much larger capability it is not being
+scored on.} The quoted $0.238$ is the best of eight identical-config draws at 9,900 epochs,
+$z = 1.89$ above their mean, and five of those eight peaked by epoch 4,109, so neither
+``the score'' nor ``never peaks'' survives the replicates. The round produced no valid
+comparison between mechanisms, since all 67 scored arms stopped at or below 300 epochs
+against a curve that had not turned, and the $0.0222$ replicate spread means a single run
+per arm could not have resolved the gaps in question anyway. Three things do hold. The additive perturbation operator
 \emph{provably} cannot express a dependence on the pair (deleted gene, reporter gene), and
 masked unmasking does not supply one where the score is taken. Loss and metric diverge here
 and on 010, in opposite directions, so no single stopping rule is right for both. And the

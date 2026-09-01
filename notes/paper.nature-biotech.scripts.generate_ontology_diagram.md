@@ -326,3 +326,30 @@ The served page is rendered from the live pydantic models on every push and neve
 anything committed, so it cannot lag. The committed
 `torchcell-ontology-explorer.html` under `notes/assets/images/` is **never served**; it
 exists only because the generator writes all four artifacts to `ASSET_IMAGES_DIR`.
+
+## 2026.09.01 - Dropped the committed explorer HTML
+
+`notes/assets/images/schema-ontology/torchcell-ontology-explorer.html` is gone from the
+repo. It was a 277 kB versioned file that **nothing ever served**: the page at
+`/ontology/` is rendered by CI into `docs/source/_extra/ontology/index.html` on every push
+to `main`, and never read from the asset directory. The committed copy existed only
+because the default generator run wrote all four artifacts to `ASSET_IMAGES_DIR`, and the
+pre-commit hook then dutifully kept a redundant file in sync, re-committing a quarter of a
+megabyte whenever the schema moved.
+
+The two modes are now disjoint, which is the real fix:
+
+- **default run** writes the three committed figure SVGs, nothing else
+- **`--explorer-only PATH`** writes the explorer, and is the only way to produce it
+
+Earlier dated sections above still describe the explorer as an output of the default run.
+That was true when written; it is not now.
+
+Also updated: `scripts/run-ontology-figure.sh` drops the HTML from its `ARTIFACTS` list,
+so the hook no longer hashes or stages a file that is not produced. `_explorer_html()` is
+untouched and still called by `_write_explorer_only()`.
+
+Verified after the change: the default run writes exactly three files, `--explorer-only`
+still produces the 277 kB page, the hook's no-op path stays quiet, and the paper tests
+pass. The `ontology-drift` CI job already compared only the three SVGs, so it needed no
+change.

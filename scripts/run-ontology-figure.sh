@@ -45,11 +45,12 @@ print(osp.join(os.environ["ASSET_IMAGES_DIR"], "schema-ontology"))
 EOF
 )"
 
+# The explorer is deliberately absent: it is rendered by CI on every push and published,
+# never committed, so there is nothing here to keep in sync with it.
 ARTIFACTS=(
   torchcell-ontology.svg
   torchcell-ontology-overview.svg
   torchcell-ontology-schematic.svg
-  torchcell-ontology-explorer.html
 )
 
 # Hash before and after rather than diffing against HEAD: pre-commit runs with unstaged

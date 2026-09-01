@@ -110,3 +110,74 @@ at render time so legends need measured heights, not estimated ones.
 Related: [[experiments.database.expansion-100]] ·
 [[torchcell.datasets.scerevisiae.caudal2024]] ·
 [[torchcell.sequence.plasmid-and-genomic-content-design]] · [[paper.north-star]]
+
+## 2026.08.31 - Review round 1: comments pulled, revised, republished
+
+Pulled 31 annotations (25 with written comments) off the published v1 PDF
+(`eqtl-data-model_2026-08-27-17-50-23_49c19dc8.pdf`) with
+`notes-tex/common/zotero_comments.py` (whose `DOCS_COLLECTION` import had gone stale
+against the generalized `zotero_publish.py`; fixed to walk the repo-path collection
+route). Ledger, by annotation key:
+
+- `2DVTJH4H` (cite the cross + use the bib): the document now carries a real
+  `references.bib`. Eight items live in the personal `eqtl-data-model` collection
+  (`4VNJWJAW`, group twin `VNDH4NMX`), added by DOI via `zotero_add_ref.py` with PINNED
+  citekeys; entries emitted with `--emit-bibtex` (keyword `zotero-pending`) because
+  Better BibTeX is unreachable on GilaHyper. `make bib` on the Mac regenerates.
+  The BY x RM sentence cites Brem 2002.
+- `FYDGICYN` (Bloom 2013 vs the new eLife paper): the eLife 2025 paper IS Boocock 2025,
+  already central to the doc; Sec 1.1 now says Bloom 2013 is the deliberate reference
+  point because Boocock pooled "393 previously genotyped haploid segregants" from that
+  same cross, and both are cited.
+- `RQ4IVE3Y` (how well are boundaries defined / known a priori?): Sec 1 now states
+  boundaries are inferred per strain, not known ahead of time, and points at Sec 2.
+- `HX9R8PJC` (does "segregate" mean swaps?): Sec 1.1 defines Mendelian segregation and
+  states explicitly nothing is swapped or edited.
+- `3DXFXAEI` / `Z66Q24SU` / `AJ8PLK69` (LOD, LD, centimorgan undefined): all three now
+  defined at first use.
+- `36MKHU3J` (trans structure = engineering leverage): one sentence added to Hotspots.
+- `W4WUZCVU` (figure: conversion tract sat ON a marker): tract moved into the gap
+  between markers in panel b (was x=462 overlapping the marker at 464).
+- `Q3JJY965` (figure: panel d not matrix-like; how is the map derived?): panel d redrawn
+  square (90 x 90) with gridlines, an "each dot is one significant (gene, marker) pair:
+  a row of the QTL table" note, and the caption + Sec 1.1 both tie it to the QTL table.
+- `JR7TT52X` (aren't they haploid?): Sec 2.4 explains disomy in haploids; figure box
+  says "aneuploidy (a haploid can carry a disomy)".
+- `YYJNQIPS` (do the papers estimate aneuploidy?): checked the mirrored Boocock text
+  (grep aneuploid/ploid/copy number/disom: no hits); the doc now states no
+  aneuploidy/CNV screen is reported there, so it is an unmodeled error term. Bloom 2013
+  is not mirrored, so no claim is made about it.
+- `JWQJCW9D` (each study needs custom probabilistic-genotype extraction): stated after
+  the Sec 2.2 table: shared output representation, no shared recovery path.
+- `Y8RL5NT2` (coupling: nothing to be done): stated as inherent to the one-pot design,
+  carried not corrected.
+- `IFF7Q9FY` (what is a gene conversion event?): defined in Sec 2.3, and the ~90
+  crossovers / ~46 non-crossovers now cite Mancera 2008 (10.1038/nature07135).
+- `S3697X5E` (parents' reads suffice to attempt assemblies): added to the non-reference
+  bullet; attemptable with known residual error, not a new sequencing campaign.
+- `UN3GVIIM` (per-cell insufficiency vs how torchcell is built): Sec 2.5 now says the
+  record stores the strain-level mosaic, the same reference-plus-differences form the
+  schema already uses, so the ingestion pattern is not threatened.
+- `DYNPS52M` (Sec 2.6 confusing): rewritten as three run-in blocks (Reconstruction
+  succeeds / Attribution is blocked / What each answer decides).
+- `IHL4D6B3` (botched LaTeX regex): the `\\d` mangling replaced with a verbatim span;
+  renders as the actual schema.py pattern now. Also fixed `\file{...\_...}` literal
+  backslashes (\file is a url command; raw underscores are correct inside it).
+- `RSRX2SKH` (reference usually means phenotype baseline): the gap now opens by
+  separating genomic reference from phenotype baseline and closes noting expression is
+  stored absolute.
+- `DYMNBQCK` (aren't genotypes ordered sets?): answered precisely: `Genotype` sorts by
+  gene name/type for canonical equality, which is set semantics with stable iteration;
+  lexical order is not chromosomal order (verified in `schema.py:926-939`).
+- `2PE9MZIL` (new type accepted): recorded as a decision in Sec 3.4, and the what-to-do
+  item 2 now treats the interval-keyed leaf as existing regardless.
+- `FPK8BWWJ` (synthetic locus + flanking windows): added as a live option in Secs 3.3
+  and 3.5, tied to the existing 1,000 bp up / 300 bp down window convention
+  (`torchcell/datasets/fungal_up_down_transformer.py:30-31`), with the window
+  assignment flagged as an interpretation.
+- Highlights with no written comment (`HWK9EEM6`, `4EPSVR7Y`, `5DG79NHH`, `VU2HR3I4`,
+  `MBRZEZHU`, `U7HFHTFK`, `BXPGKWBB`): no action; `BXPGKWBB` ("Agreed") and
+  `36MKHU3J` were affirmations.
+
+`make check` clean (8 citations resolve, 0 style violations); v2 published to the same
+Zotero collection.

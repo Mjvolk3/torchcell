@@ -7,10 +7,14 @@
 \section{The experiment and its three tables\secstatus{todo}}\label{sec:what}
 
 Two strains that differ genetically are crossed, classically BY, a laboratory strain
-near-isogenic to S288C, against RM, a vineyard isolate. The F1 hybrid is sporulated and
+near-isogenic to S288C, against RM, a vineyard isolate
+\citep{bremGeneticDissectionTranscriptional2002}. The F1 hybrid is sporulated and
 $n$ haploid progeny are collected. Each progeny strain, a \term{segregant}, is a
 \term{meiotic mosaic}: at every locus it carries either the BY or the RM allele, in linked
-blocks whose boundaries are set by crossover positions. Every segregant's transcriptome is
+blocks whose boundaries are set by crossover positions. Those boundaries are not known
+ahead of time: every segregant draws its own crossover positions in meiosis, so they must
+be inferred per strain from the genotype data, and locating them is where the genotype
+error concentrates (Sec.~\ref{sec:observed}). Every segregant's transcriptome is
 measured, and the question asked per gene is which loci in the mosaic predict its
 expression.
 
@@ -31,23 +35,34 @@ everywhere in the genome at once.
   because no read reports it.
   \textbf{c}, The two matrices. $X$ shows haplotype blocks rather than noise, so its columns
   are linked; $Y$ is a vector per strain rather than a scalar.
-  \textbf{d}, The map that results. Cis effects fall on the diagonal, each variant acting on
-  its own gene and usually through its promoter; trans hotspots appear as vertical bands
-  where one regulatory variant moves hundreds of transcripts.
+  \textbf{d}, The map that results, and it is the QTL table of
+  Sec.~\ref{sec:tables} drawn as a matrix: each dot is one significant (gene, marker) row
+  of that table, plotted gene position against marker position. Cis effects fall on the
+  diagonal, each variant acting on its own gene and usually through its promoter; trans
+  hotspots appear as vertical bands where one regulatory variant moves hundreds of
+  transcripts.
   \textbf{e}, The consequence for a record, developed in Sec.~\ref{sec:ontology}.
   Panels \textbf{b} and \textbf{d} are schematic rather than plotted from data. Composed
   from the sources in Sec.~\ref{sec:what} rather than redrawn from a published figure;
   source \file{notes/assets/drawio/eqtl-experiment-and-genotype-inference.drawio}.}
   {fig:eqtl}
 
-\subsection{Two measurements and one inference\secstatus{todo}}
+\subsection{Two measurements and one inference\secstatus{todo}}\label{sec:tables}
 
 \notesec{Genotype matrix} $X$, segregants by marker positions. Entries encode
 \emph{parental origin} rather than base identity, so the natural form looks binary. Bloom
-2013 used 11,623 markers for 1,008 segregants. BY and RM segregate at roughly
-$4.5\times10^{4}$ sites, so the marker set is a thinned representation of the real variant
+2013 used 11,623 markers for 1,008 segregants \citep{bloomFindingSourcesMissing2013}, and
+that older panel is the deliberate reference point rather than a stale one: the
+single-cell study of Sec.~\ref{sec:observed} drew its strains from this same cross,
+pooling ``393 previously genotyped haploid segregants''
+\citep{boocockSinglecellEQTLMapping2025}. BY and RM segregate at roughly
+$4.5\times10^{4}$ sites: sites where the two parents carry different alleles, which
+therefore separate into different progeny at meiosis (Mendelian segregation) and vary
+across the panel. Nothing is swapped or edited at these sites; segregation is inheritance,
+not an applied change. The marker set is a thinned representation of that variant
 set, and long runs of constant value along the position axis are what recombination blocks
-look like. Sec.~\ref{sec:observed} corrects the binary reading.
+look like. Sec.~\ref{sec:observed} corrects the binary reading: the entries the mapping
+models actually consume are posterior probabilities, not calls.
 
 \notesec{Expression matrix} $Y \in \mathbb{R}^{n \times p}$, segregants by genes, with
 $p \approx 5{,}000$ to $6{,}000$. This is the phenotype, and it is a vector per strain
@@ -60,9 +75,11 @@ y_{ig} \;=\; \mu_g \;+\; \beta_{gj}\,X_{ij} \;+\; \varepsilon_{ig},
 \qquad \varepsilon_{ig} \sim \mathcal{N}(0,\sigma_g^2)
 $$
 
-fit marker by marker, with significance from a LOD score and a permutation threshold. A
-row of the table is a gene, a marker interval, an effect size, a LOD and a variance
-explained.
+fit marker by marker, with significance from a LOD score, the $\log_{10}$ odds of the
+data under linkage between marker and expression level against the null of no linkage,
+and a permutation threshold. A row of the table is a gene, a marker interval, an effect
+size, a LOD and a variance explained. Panel d of Fig.~\ref{fig:eqtl} is this table drawn
+as a matrix.
 
 The first two are measurements. The third is an inference over them, and it changes if the
 mapping method, the threshold or the marker density changes while the measurement does not.
@@ -78,7 +95,9 @@ affected gene; trans effects are weak and numerous.
 \notesec{Hotspots} Trans effects are not spread evenly across loci. A small number of loci
 each affect hundreds to thousands of transcripts, one regulatory variant propagating
 outward. The columns of $Y$ are therefore strongly dependent, a few latent factors explain
-much of the variance, and treating genes as independent is wrong.
+much of the variance, and treating genes as independent is wrong. This hotspot structure
+is also the leverage genome-scale engineering aims at: a single regulatory locus that
+moves hundreds of transcripts.
 
 \subsection{The four candidates, and why they rank where they do\secstatus{todo}}
 
@@ -92,10 +111,10 @@ three datasets in total.}
 \toprule
 Dataset & Segregants & Readout & Both axes \\
 \midrule
-Albert 2018 & 1,012 & bulk RNA-seq, 1 condition & yes \\
-Boocock 2025 & 393 & one-pot single cell, 2 carbon sources & yes \\
-N'Guessan 2025 & $\sim$4,500 profiled & single cell & yes \\
-Smith 2008 & 109 & bulk, glucose and ethanol & no \\
+Albert 2018 \citep{albertGeneticsTransRegulatory2018} & 1,012 & bulk RNA-seq, 1 condition & yes \\
+Boocock 2025 \citep{boocockSinglecellEQTLMapping2025} & 393 & one-pot single cell, 2 carbon sources & yes \\
+N'Guessan 2025 \citep{nguessanRefiningResolutionYeast2025} & $\sim$4,500 profiled & single cell & yes \\
+Smith 2008 \citep{smithGeneEnvironmentInteraction2008} & 109 & bulk, glucose and ethanol & no \\
 \bottomrule
 \end{tabular}
 \end{table}

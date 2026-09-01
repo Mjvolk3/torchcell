@@ -30,6 +30,12 @@ pruned. This LD pruning is approximately equivalent to using markers spaced 4 ce
 (cm) apart.''
 \end{quote}
 
+Two terms in that last quote: \term{LD}, linkage disequilibrium, is the statistical
+correlation between alleles at different sites, near-perfect for neighboring sites here
+because they are inherited together in blocks; a \term{centimorgan} (cM) is a unit of
+genetic map distance, two loci sitting 1 cM apart when 1\% of meioses place a crossover
+between them.
+
 So the genotype matrix is not binary. It is
 
 $$
@@ -52,15 +58,20 @@ genotype observation and the phenotype measurement come from the same reads.}
 \toprule
 Study & Observed & Genotype is \\
 \midrule
-Bloom 2013 & low-coverage WGS of each segregant & calls at $\sim$11,623 markers \\
-Nguyen Ba 2022 & low-coverage WGS plus barcode & calls at markers, $n \sim 10^5$ \\
-Boocock 2025 & only SNPs that happen to be expressed & an HMM posterior per marker \\
+Bloom 2013 \citep{bloomFindingSourcesMissing2013} & low-coverage WGS of each segregant & calls at $\sim$11,623 markers \\
+Nguyen Ba 2022 \citep{nguyenbaBarcodedBulkMapping2022} & low-coverage WGS plus barcode & calls at markers, $n \sim 10^5$ \\
+Boocock 2025 \citep{boocockSinglecellEQTLMapping2025} & only SNPs that happen to be expressed & an HMM posterior per marker \\
 \bottomrule
 \end{tabular}
 \end{table}
 
+The observation channel differs per study, so the probabilistic genotype has to be
+extracted differently per study: there is no shared genotype-recovery path for a loader
+to reuse, only a shared representation for its output.
+
 A gene that is switched off in a cell contributes no genotype information about its own
-locus. That coupling has no analog in any other dataset in the collection.
+locus. That coupling has no analog in any other dataset in the collection, it is inherent
+to the one-pot design, and the record can only carry it, not correct it.
 
 \subsection{Why sparse observation is nevertheless enough\secstatus{todo}}\label{sec:enough}
 
@@ -72,8 +83,8 @@ known genomes at each locus, which is a far easier problem:
     our parental strains,'' so the complete variant catalog and both alleles at every site
     are known before any segregant is looked at.
   \item Meiosis produces few boundaries. In \org{S.\ cerevisiae} roughly 90 crossovers per
-    meiosis, so across 16 chromosomes a segregant genome is on the order of $10^2$
-    contiguous blocks.
+    meiosis \citep{manceraHighResolutionMapping2008}, so across 16 chromosomes a segregant
+    genome is on the order of $10^2$ contiguous blocks.
   \item Within a block, parental origin is constant, so one marker fixes every cataloged
     variant in its block.
 \end{enumerate}
@@ -94,9 +105,14 @@ leaving roughly $99\%$ of cataloged variant sites assignable. \external{arithmet
 published crossover and variant-density figures, not a measured concordance}
 
 \notesec{The larger error source is not crossovers} Yeast meiosis also produces $\sim\!46$
-non-crossover gene conversion events per meiosis with tracts of order 2 kb. Those are
-short, they do not shift the surrounding haplotype, and sparse markers miss them entirely,
-so they affect more base pairs than boundary uncertainty and are harder to detect.
+non-crossover \term{gene conversion} events per meiosis with tracts of order 2 kb
+\citep{manceraHighResolutionMapping2008}. A gene conversion is a byproduct of meiotic
+recombination repair: a double-strand break is repaired by copying sequence from the
+homologous chromosome, so a short tract of one parent's sequence is overwritten with the
+other parent's, without exchanging the flanking arms. The result is a $\sim\!2$ kb patch
+of the ``wrong'' parent inside an otherwise intact block. Those patches are short, they do
+not shift the surrounding haplotype, and sparse markers miss them entirely, so they affect
+more base pairs than boundary uncertainty and are harder to detect.
 
 \subsection{What reconstruction cannot give you at any marker density\secstatus{todo}}
 
@@ -104,11 +120,17 @@ so they affect more base pairs than boundary uncertainty and are harder to detec
   \item \textbf{De novo mutations.} A segregant is a mosaic plus whatever arose since the
     cross. Few per strain, invisible to a parental-assignment method, so the genome is
     never exactly a mosaic.
-  \item \textbf{Aneuploidy and copy number.} These need coverage, not markers, and yeast
-    segregants do acquire them.
+  \item \textbf{Aneuploidy and copy number.} Haploidy does not preclude these: a haploid
+    segregant can carry a second copy of a whole chromosome (a disomy) or a segmental
+    amplification, and yeast segregants do acquire them. Detecting that needs read
+    coverage, not marker identity. The mirrored Boocock 2025 text reports no aneuploidy
+    or copy-number screen, so for that design it is an unmodeled error term rather than a
+    measured one.
   \item \textbf{Non-reference sequence.} A variant call file is not an assembly.
     Reconstructing total genomic content needs the parents' assemblies, including sequence
-    absent from S288C.
+    absent from S288C. The ingredients exist: the deep paired-end parental data supports
+    de novo assembly, with a known residual error rate, so holding pinned parent
+    assemblies is an attemptable requirement rather than a new sequencing campaign.
 \end{itemize}
 
 \subsection{Per cell the answer flips\secstatus{todo}}
@@ -119,7 +141,11 @@ genotypes and whole-genome sequencing of the same strains, improving with UMI co
 where the posterior enters as a standardized covariate and the error averages out. It is
 nowhere near sufficient to write down a genome. What rescues the strain-level genotype is
 pooling: a median of 17 cells per segregant, against 393 segregants that had already been
-whole-genome sequenced in Bloom 2013 and against which the cells were matched.
+whole-genome sequenced in Bloom 2013 and against which the cells were matched. The record
+never needs the per-cell genotype to be a genome; what it stores is the strain-level
+mosaic, and that is the same compositional form the schema already uses everywhere else,
+a pinned reference plus recorded differences, so the insufficiency of a single cell's
+genotype does not threaten the ingestion pattern.
 
 \notesec{Do not conflate reconstruction resolution with mapping resolution} The HMM used
 all expressed SNPs. The 4 cM LD-pruned marker set was used for the association, because
@@ -128,22 +154,26 @@ nothing about how well the genome can be reconstructed.
 
 \subsection{Reconstruction and attribution come apart\secstatus{todo}}\label{sec:verdict}
 
-$$
-\text{which allele is at a site} \;\checkmark
-\qquad\text{against}\qquad
-\text{which variant causes the effect} \;\times
-$$
+Two questions about the same data sound alike and have opposite answers.
 
-The first is a two-way assignment with strong priors and succeeds at $\sim\!99\%$. The
-second is blocked by collinearity: within a haplotype block every variant is perfectly
-correlated with every other, so an effect is identifiable only up to the block, and no
-number of additional segregants changes that. Pruning markers above $r>0.999$ concedes
-exactly this point.
+\notesec{Reconstruction succeeds} \emph{Which parent's allele does segregant $i$ carry at
+site $j$?} This is a two-way choice between two fully sequenced genomes, decided jointly
+for a whole block by every marker in it, and the arithmetic of
+Sec.~\ref{sec:enough} puts it at $\sim\!99\%$ of sites. More segregants, denser markers or
+deeper coverage all push it further toward certainty.
 
-The consequence for the candidate list is favorable. The sequence gate asks whether the
-total genomic content of a strain can be estimated, not whether a causal variant can be
-identified, so \textbf{segregant panels pass}, conditional on holding the parent
-assemblies. The consequence for modeling is that a cross localizes an effect to an
-interval and nothing more. Only an assay that tests alleles one at a time, such as a
-massively parallel reporter assay, gets from an interval to a base, which is why those
+\notesec{Attribution is blocked} \emph{Which variant causes the expression difference?}
+Within a haplotype block every variant is inherited with every other, so their columns in
+$X$ are identical and no fit can tell them apart. The effect is identifiable only up to
+the block. Collecting more segregants does not help, because the collinearity comes from
+the cross itself: the same meioses that made the panel made the blocks. Boocock's pruning
+of markers above $r>0.999$ concedes exactly this point; markers that co-segregate carry no
+separate information.
+
+\notesec{What each answer decides} Reconstruction is what the sequence gate on the
+candidate list asks about: can the total genomic content of the strain be estimated? It
+can, so \textbf{segregant panels pass}, conditional on holding the parent assemblies.
+Attribution is what modeling wants and does not get: a cross localizes an effect to an
+interval and nothing more. Getting from an interval to a base takes an assay that tests
+alleles one at a time, such as a massively parallel reporter assay, which is why those
 datasets belong in the same ingestion wave rather than a later one.

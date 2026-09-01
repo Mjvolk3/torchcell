@@ -47,7 +47,7 @@ from pydantic import BaseModel
 from pyzotero import zotero
 
 from zotero_publish import (
-    DOCS_COLLECTION,
+    DEFAULT_PARENT_DIR,
     ROOT_COLLECTION,
     find_collection,
     find_parent_item,
@@ -84,12 +84,18 @@ def sort_key(ann: dict) -> list[int]:
 
 
 def fetch(zot: zotero.Zotero, doc: str, version: int | None) -> tuple[str, list[Comment]]:
-    root = find_collection(zot, ROOT_COLLECTION, None)
-    docs = find_collection(zot, DOCS_COLLECTION, root)
-    coll = find_collection(zot, doc, docs)
-    if not coll:
-        sys.exit(f"no Zotero collection {ROOT_COLLECTION}/{DOCS_COLLECTION}/{doc}")
-    parent = find_parent_item(zot, coll, f"notes-tex/{doc}")
+    # Same resolution rule as zotero_publish.py since it generalized past
+    # notes-tex: the collection path IS the repo-relative directory, and a bare
+    # name is shorthand for notes-tex/<name>.
+    rel_dir = doc.strip("/")
+    if "/" not in rel_dir:
+        rel_dir = f"{DEFAULT_PARENT_DIR}/{rel_dir}"
+    coll = find_collection(zot, ROOT_COLLECTION, None)
+    for name in rel_dir.split("/"):
+        coll = find_collection(zot, name, coll)
+        if not coll:
+            sys.exit(f"no Zotero collection {ROOT_COLLECTION}/{rel_dir}")
+    parent = find_parent_item(zot, coll, rel_dir)
     if not parent:
         sys.exit(f"nothing published for {doc} yet")
 

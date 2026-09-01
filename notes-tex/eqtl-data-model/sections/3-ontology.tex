@@ -17,14 +17,14 @@ The primary record is a genotype and an environment mapped to a phenotype, which
     measured on its OWN genome,'' with ``no common reference to ratio against,'' storing
     absolute TPM. Albert 2018 and Smith 2008 fit unchanged.
   \item \file{PseudobulkExpressionPhenotype} is the single-cell readout, built for
-    Nadal-Ribelles 2025. It carries \file{dispersion} and \file{n\_cells} per genotype,
+    Nadal-Ribelles 2025. It carries \file{dispersion} and \file{n_cells} per genotype,
     which is the right shape for Boocock's noise eQTLs: heterogeneity survives as a
     per-genotype scalar rather than being averaged away.
   \item \file{SequenceVariantPerturbation} states the intent outright. Together with
     \file{CopyNumberVariantPerturbation} it ``lets a NATURAL ISOLATE be modeled as a
     perturbation set off S288C ($\sim$4,500 sequence variants per isolate).''
-  \item The off-graph pointer pattern on that class, \file{sequence\_source},
-    \file{sequence\_uri} and \file{sequence\_sha256}, means variant sequences are never
+  \item The off-graph pointer pattern on that class, \file{sequence_source},
+    \file{sequence_uri} and \file{sequence_sha256}, means variant sequences are never
     inlined.
 \end{itemize}
 
@@ -42,10 +42,10 @@ failure the verification levels exist to prevent.
 \subsection{Four gaps, in order of how much they matter\secstatus{todo}}
 
 \notesec{Intergenic variants have no representation} \file{GenePerturbation} requires
-\file{systematic\_gene\_name} and validates it against
+\file{systematic_gene_name} and validates it against
 
 \begin{quote}\small
-\file{^(Y[A-P][LR]\\d{3}[WC](-[A-Z])?|Q\\d{4}|YNC[A-Q]\\d{4}[WC])\$}
+\verb+^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4}|YNC[A-Q]\d{4}[WC])$+
 \end{quote}
 
 so every perturbation must attach to a real gene. A promoter SNP 300 bp upstream of an ORF
@@ -53,23 +53,36 @@ has no gene to attach to, and assigning it to the downstream gene is an interpre
 wrong whenever the variant acts on a divergent neighbor. This is the sharpest gap and it is
 not incidental: the promoter is where the strongest and most interpretable cis signal lives.
 It is also the same gap that blocks every massively parallel reporter assay, which perturbs
-regulatory sequence exclusively.
+regulatory sequence exclusively. A gene-anchored patch does exist: the genome machinery
+already carries a flanking-window convention for gene sequence (1,000 bp upstream, 300 bp
+downstream), which covers most promoter variants, and the anchor need not even be a
+natural gene, since a synthetic locus name tied to a sequence hash could stand in for an
+edited or renamed region. Either way the window assignment is an interpretation and would
+have to be recorded as one.
 
 \notesec{Cardinality} An SGA record carries at most three perturbations. A segregant carries
 $\sim\!10^4$. For $n \sim 10^3$ segregants that is $\sim\!10^7$ perturbation objects for one
 dataset, and \file{Genotype} sorts and set-compares its perturbation list on every equality
 check while the L1 key hashes the genotype signature.
 
-\notesec{Reference asymmetry} A segregant's natural reference is one of its two parents,
-but the convention expresses everything off S288C. BY is near-isogenic to S288C, so
-BY-derived blocks are nearly empty perturbation sets while RM-derived blocks carry the full
-variant load. Keeping S288C is still right, since it is what makes these records comparable
-to everything else, but the lopsidedness reflects the reference choice rather than the
-biology and should be documented rather than discovered.
+\notesec{Reference asymmetry} Reference here means the genome that variants are expressed
+against, not the baseline a phenotype is ratioed to; a record has both, and this gap
+concerns only the first. A segregant's natural genomic reference is one of its two
+parents, but the convention expresses every genotype off S288C. BY is near-isogenic to
+S288C, so BY-derived blocks are nearly empty perturbation sets while RM-derived blocks
+carry the full variant load. Keeping S288C is still right, since it is what makes these
+records comparable to everything else, but the lopsidedness reflects the reference choice
+rather than the biology and should be documented rather than discovered. The phenotype
+side is untouched by this: expression is stored absolute, with no wild-type ratio in
+these designs at all.
 
 \notesec{Linkage is destroyed by a set} Variants arrive in blocks and co-segregate.
-Representing a genotype as an unordered set discards exactly the structure that makes
-mapping possible and that limits attribution.
+\file{Genotype} does hold its perturbations in a stable order, but that order is a
+canonical sort by systematic gene name and perturbation type, imposed so that equality
+and hashing are well defined; it is set semantics with deterministic iteration, and
+lexical gene-name order is not chromosomal order. Nothing in the representation says two
+variants sit on the same block and travel together, which is exactly the structure that
+makes mapping possible and that limits attribution.
 
 \subsection{The representation that follows\secstatus{todo}}\label{sec:proposal}
 
@@ -95,8 +108,9 @@ spacing recorded as the resolution. This is better on four counts at once.
 \end{enumerate}
 
 The cost is a genuinely new perturbation type, keyed on a genomic interval and a parent
-rather than on a gene, carrying a probability. That is the same non-gene-keyed requirement
-the promoter-variant gap already imposes, so the two should be resolved together.
+rather than on a gene, carrying a probability. That cost is accepted: the type is judged
+necessary, not merely convenient. It is also the same non-gene-keyed requirement the
+promoter-variant gap already imposes, so the two should be resolved together.
 
 \subsection{What to do\secstatus{todo}}\label{sec:todo}
 
@@ -108,9 +122,12 @@ the promoter-variant gap already imposes, so the two should be resolved together
     at any verification level, and storing it as a \file{Phenotype} would be ingesting
     somebody's analysis as data.
   \item \textbf{Decide the intergenic question deliberately}, because it gates both this
-    class and the regulatory-DNA class. Either a non-gene-keyed perturbation leaf on a
-    genomic interval, or gene-keying with the attribution recorded as a
-    \file{ProvenanceGap}, or restriction to coding variants. The third is the honest
+    class and the regulatory-DNA class. With the mosaic type accepted, an interval-keyed
+    perturbation leaf exists regardless, so the live options are: attach promoter
+    variants to that same interval-keyed leaf; or keep gene-keying and assign each
+    variant to a gene via the existing flanking-window convention (1,000 bp upstream,
+    300 bp downstream), with the attribution recorded as an interpretation, e.g. a
+    \file{ProvenanceGap}; or restrict to coding variants. The third is the honest
     short-term option and the worst long-term one.
   \item \textbf{Treat the parent assemblies as an ingestion dependency.} A segregant record
     means nothing without them, so they are part of the artifact rather than context, and

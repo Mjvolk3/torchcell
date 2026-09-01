@@ -167,6 +167,27 @@ authors or trust a live URL. Model these records with pydantic.
   as HTTP 500 on `/files` + manifest-backed artifacts (vs a clean 404 for a genuinely
   absent OCR file) -- that is the honest no-fallback behavior, and it flags a key that
   needs re-OCR/re-backfill.
+- **NEVER put a paper into Zotero. The library is curated by hand, and an agent
+  writes to it in exactly one way: publishing OUR OWN built PDF.** Do not download,
+  fetch, or deposit a paper into Zotero; do not run
+  `notes-tex/common/zotero_add_ref.py`; do not hand-edit a `references.bib`. Papers
+  that agents retrieve go to the MIRROR (`$DATA_ROOT/torchcell-library/`) via the
+  literature subsystem, which reads Zotero and never writes to it. The one
+  sanctioned write is `zotero_publish.py`, which uploads a built `notes-tex/` or
+  `paper/` PDF into that document's own output collection.
+  - **Adding a reference is a curation decision, and it needs an explicit
+    instruction each time** -- "add X to the library", not "we should cite X".
+    Identifying a missing reference is useful and always allowed; adding it is a
+    separate act that waits for a go-ahead.
+  - **Why it is not recoverable by re-running something.** `make bib` regenerates
+    `references.bib` FROM the library through Better BibTeX, and `make check` fails
+    on any `\cite` key the export no longer contains, so a stray write or deletion
+    silently changes what a document is permitted to cite. `zotero_add_ref.py`
+    creates CrossRef-metadata items with NO PDF attached, which is what
+    metadata-only clutter in a topic collection looks like. Two collections are
+    also named `microbe-perturb-seq` (the notes-tex publication one, and the topic
+    one that feeds the bibliography), so a write aimed at the wrong one is easy and
+    has nearly broken a bibliography before.
 - **Rebuild guarantee:** retrieval code + OCR/extraction recipes + backed-up mirrors
   (Zotero PDFs, raw-data mirror) + manual recipes for un-scriptable files =
   full rebuild-from-scratch, with sha256 verifying every rebuilt file matches.

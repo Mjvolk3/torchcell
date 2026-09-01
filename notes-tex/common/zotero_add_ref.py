@@ -4,6 +4,19 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/common/zotero_add_ref.py
 """Add a journal article to a notes-tex document's PERSONAL Zotero collection, by DOI.
 
+DO NOT RUN THIS WITHOUT AN EXPLICIT, PER-INSTANCE INSTRUCTION FROM THE AUTHOR.
+This is the only script in the repo that creates items in the Zotero library, and
+the library is curated by hand. It is a tool for a person who has decided to cite
+something, not a step an agent takes on the way to answering a question about what
+is missing. Naming an absent reference is always fine; adding it is not.
+
+Two properties make an unrequested run expensive. The items it creates carry
+CrossRef metadata and NO PDF, so they read as clutter in the collection and are
+easy to delete in a sweep. And `make bib` regenerates references.bib FROM the
+library while `make check` fails on any \\cite key the export lacks, so both an
+unwanted addition and the deletion that follows it change what a document is
+allowed to cite. See the Zotero rule in CLAUDE.md.
+
 ``build_bib.py`` regenerates ``references.bib`` from Zotero, so hand-editing that
 file is pointless -- the next ``make bib`` overwrites it. The library is the
 source of truth, which means "cite a new paper" has to mean "put it in the

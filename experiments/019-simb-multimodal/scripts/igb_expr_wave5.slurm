@@ -69,8 +69,25 @@ mkdir -p "$OUT_DIR"
 # that checkout happens to be on (memory: worktree-build-needs-pythonpath).
 # W5_PROJECT_ROOT still overrides, for the deliberate case of running one checkout's script
 # against another's source.
+#
+# BASH_SOURCE DOES NOT WORK UNDER sbatch, and this cost a canary (2368284, all three tasks
+# FAILED at 27 s with "PROJECT_ROOT=/var has no torchcell/ package dir"). Slurm COPIES the
+# batch script into its spool directory before executing it, so ${BASH_SOURCE[0]} is
+# /var/spool/slurmd/job.../slurm_script and `../../..` resolves to /var -- never the
+# checkout. The self-resolution is still correct when the script is run directly (bash
+# path/to/script), which is how it was tested.
+#
+# SLURM_SUBMIT_DIR preserves the ORIGINAL intent exactly: it is the directory sbatch was
+# invoked from, i.e. the checkout whose script was submitted. It is preferred when set,
+# BASH_SOURCE is the fallback for a direct run, and W5_PROJECT_ROOT still overrides both.
 _W5_SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="${W5_PROJECT_ROOT:-$(cd "$_W5_SELF/../../.." && pwd)}"
+if [ -n "${W5_PROJECT_ROOT:-}" ]; then
+  PROJECT_ROOT="$W5_PROJECT_ROOT"
+elif [ -n "${SLURM_SUBMIT_DIR:-}" ] && [ -d "$SLURM_SUBMIT_DIR/torchcell" ]; then
+  PROJECT_ROOT="$SLURM_SUBMIT_DIR"
+else
+  PROJECT_ROOT="$(cd "$_W5_SELF/../../.." && pwd)"
+fi
 if [ ! -d "$PROJECT_ROOT/torchcell" ]; then
   echo "FATAL: PROJECT_ROOT=$PROJECT_ROOT has no torchcell/ package dir." >&2
   echo "       Submit this script from inside a torchcell checkout, or set W5_PROJECT_ROOT." >&2

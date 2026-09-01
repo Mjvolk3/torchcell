@@ -285,3 +285,44 @@ that way confirms the wrong thing.
 
 CI keeps the drift check as the backstop for a commit made with `--no-verify` or from a
 machine without hooks installed.
+
+## 2026.09.01 - The deploy is no longer hostage to the SVG drift check
+
+The drift check was a step inside the `build` job, sitting between the explorer render
+and the deploy. Steps run sequentially and a failure aborts the job, so a stale
+**committed SVG** stopped the **live page** from republishing, even though the explorer
+itself was fine and freshly rendered. That is backwards: the page is the artifact that
+must always be current, and the committed SVGs are a paper-figure concern.
+
+The check is now its own job, `ontology-drift`, with no `needs:`. It runs in parallel and
+cannot affect the deploy or the Read the Docs trigger. A stale SVG turns that one check
+red and nothing else.
+
+It does not pay for the heavy install. `pip install -e .` pulls torch through
+`env/requirements.txt` and is most of the `build` job's ~5 minutes, but the generator's
+import closure is small: `torchcell.datamodels.__init__` reaches `conversion.py` (lmdb,
+tqdm, sortedcontainers, filelock) and the renderer reaches `torchcell.utils` (matplotlib).
+So the job installs `pydantic python-dotenv matplotlib lmdb tqdm sortedcontainers
+filelock` and sets `PYTHONPATH` instead of installing the package.
+
+That dep list was derived empirically in a clean venv, not guessed, and the venv's render
+was confirmed **byte-identical** to all three committed SVGs. Had it not been, the check
+would have gone permanently red for an environment reason rather than a real drift.
+
+The one cost is that the list is pinned to an import closure that can grow. If someone
+adds an import to `conversion.py`, this job fails with `ModuleNotFoundError` naming the
+package to add. That is a self-diagnosing failure, and by construction it can only redden
+a check, never block the deploy.
+
+### The full picture of what keeps what fresh
+
+| Artifact | Kept current by | When |
+| --- | --- | --- |
+| the live page at `/ontology/` | `docs.yaml` `build` job, `--explorer-only` | every push to `main` |
+| the committed SVGs + explorer HTML | `ontology-figure` pre-commit hook | at `git commit`, when an input is staged |
+| (backstop) the committed SVGs | `docs.yaml` `ontology-drift` job | every push and PR |
+
+The served page is rendered from the live pydantic models on every push and never reads
+anything committed, so it cannot lag. The committed
+`torchcell-ontology-explorer.html` under `notes/assets/images/` is **never served**; it
+exists only because the generator writes all four artifacts to `ASSET_IMAGES_DIR`.

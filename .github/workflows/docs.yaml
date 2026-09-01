@@ -43,32 +43,6 @@ jobs:
           python paper/nature-biotech/scripts/generate_ontology_diagram.py \
             --explorer-only docs/source/_extra/ontology/index.html
 
-      - name: Check the committed ontology SVGs have not drifted
-        run: |
-          # The explorer rendered above is regenerated every build, so it can never lag
-          # the schema. The three SVGs under notes/assets/images/schema-ontology are
-          # committed repo files, one of them is the paper figure, and nothing
-          # regenerates them, so they go stale silently as torchcell.datamodels changes.
-          # CI cannot fix that by committing back, but it can refuse to stay quiet.
-          #
-          # A byte comparison is safe here: these SVGs are built by string concatenation
-          # with no matplotlib and no font measurement (label widths come from a fixed
-          # character-ratio), so the render is deterministic given the schema.
-          ASSET_IMAGES_DIR="$RUNNER_TEMP/ontology-drift" \
-            python paper/nature-biotech/scripts/generate_ontology_diagram.py
-          fresh="$RUNNER_TEMP/ontology-drift/schema-ontology"
-          committed="notes/assets/images/schema-ontology"
-          drift=0
-          for f in torchcell-ontology-schematic torchcell-ontology-overview torchcell-ontology; do
-            if cmp -s "$fresh/$f.svg" "$committed/$f.svg"; then
-              echo "ok: $f.svg matches the current schema"
-            else
-              echo "::error file=$committed/$f.svg::$f.svg no longer matches a render of the current schema. Run 'python paper/nature-biotech/scripts/generate_ontology_diagram.py' and commit the result."
-              drift=1
-            fi
-          done
-          exit $drift
-
       - name: Build the documentation
         run: |
           sphinx-build -b html docs/source build/docs
@@ -96,6 +70,65 @@ jobs:
           # read-only, so the gh-pages push 403s ("denied to github-actions[bot]").
           personal_token: ${{ secrets.TORCHCELL_SEMANTIC_RELEASE_TOKEN }}
           publish_dir: ./build/docs
+
+  # Deliberately a SEPARATE job with no relation to `build`, so it can never stop the page
+  # shipping. It used to be a step inside `build`, sitting before the deploy: a stale
+  # committed SVG then failed the job and the explorer never republished, even though the
+  # explorer itself was fine. The page is the thing that must always be fresh, and the
+  # committed SVGs are a paper-figure concern, so they no longer share a fate.
+  #
+  # The pre-commit hook (scripts/run-ontology-figure.sh) is what normally keeps these in
+  # sync; this job only catches a commit made with --no-verify or from a machine without
+  # hooks installed.
+  ontology-drift:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install the generator's imports only
+        run: |
+          # NOT `pip install -e .`, which pulls torch and costs the ~5 min that makes
+          # `build` slow. The ontology generator's import closure is small: the datamodels
+          # package __init__ reaches conversion.py (lmdb, tqdm, sortedcontainers,
+          # filelock), and the renderer reaches torchcell.utils (matplotlib). Verified in
+          # a clean venv to render byte-identical SVGs to the committed ones.
+          #
+          # If this ever fails with ModuleNotFoundError, the datamodels import closure
+          # grew: add the named package here. The failure names it exactly, and it can
+          # only redden this check, never the deploy.
+          python -m pip install --upgrade pip
+          pip install pydantic python-dotenv matplotlib lmdb tqdm sortedcontainers filelock
+
+      - name: Check the committed ontology SVGs have not drifted
+        run: |
+          # PYTHONPATH, not an install: `python path/to/script.py` puts the SCRIPT'S
+          # directory on sys.path, not the cwd, so without this the generator would import
+          # some other torchcell (or none at all).
+          #
+          # A byte comparison is safe because these SVGs are built by string concatenation
+          # with no font measurement (label widths come from a fixed character-ratio), so
+          # the render is deterministic given the schema.
+          ASSET_IMAGES_DIR="$RUNNER_TEMP/ontology-drift" PYTHONPATH="$PWD" \
+            python paper/nature-biotech/scripts/generate_ontology_diagram.py
+          fresh="$RUNNER_TEMP/ontology-drift/schema-ontology"
+          committed="notes/assets/images/schema-ontology"
+          drift=0
+          for f in torchcell-ontology-schematic torchcell-ontology-overview torchcell-ontology; do
+            if cmp -s "$fresh/$f.svg" "$committed/$f.svg"; then
+              echo "ok: $f.svg matches the current schema"
+            else
+              echo "::error file=$committed/$f.svg::$f.svg no longer matches a render of the current schema. Run 'python paper/nature-biotech/scripts/generate_ontology_diagram.py' and commit the result."
+              drift=1
+            fi
+          done
+          exit $drift
 
   readthedocs:
     runs-on: ubuntu-latest

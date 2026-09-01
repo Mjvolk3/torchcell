@@ -2,7 +2,7 @@
 
 import hashlib
 from collections.abc import Iterable
-from typing import cast
+from typing import Any, cast
 
 from torchcell.data import Aggregator
 from torchcell.datamodels import Experiment, ExperimentReferenceType, ExperimentType
@@ -65,6 +65,17 @@ class GenotypeAggregator(Aggregator):
             pert.systematic_gene_name for pert in _perturbations(data)
         )
 
+    def aggregate_key_raw(self, record: dict[str, Any]) -> str:
+        """Return the gene-set grouping key for one raw record dict.
+
+        Same hash as :meth:`aggregate_check`, read off the stored JSON so the
+        streaming ``process`` never builds pydantic objects to group.
+        """
+        return _hash_gene_set(
+            pert["systematic_gene_name"]
+            for pert in record["experiment"]["genotype"]["perturbations"]
+        )
+
 
 class DeletionKeyedGenotypeAggregator(GenotypeAggregator):
     """Aggregator keyed on the DELETION gene set only; other axes are background.
@@ -105,4 +116,12 @@ class DeletionKeyedGenotypeAggregator(GenotypeAggregator):
             pert.systematic_gene_name
             for pert in _perturbations(data)
             if pert.perturbation_type.endswith(DELETION_TYPE_SUFFIX)
+        )
+
+    def aggregate_key_raw(self, record: dict[str, Any]) -> str:
+        """Return the deletion-gene-set grouping key for one raw record dict."""
+        return _hash_gene_set(
+            pert["systematic_gene_name"]
+            for pert in record["experiment"]["genotype"]["perturbations"]
+            if pert["perturbation_type"].endswith(DELETION_TYPE_SUFFIX)
         )

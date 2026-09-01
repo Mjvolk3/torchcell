@@ -120,6 +120,21 @@ class MeanExperimentDeduplicator(Deduplicator):
             duplicate_check[hash_key].append(idx)
         return duplicate_check
 
+    def duplicate_key(self, record: dict[str, Any]) -> str:
+        """Return the duplicate-group hash for one raw record dict.
+
+        Identical key construction to :meth:`duplicate_check` -- experiment type
+        plus the sorted perturbed gene names -- read straight off the stored JSON
+        so the streaming ``process`` never builds pydantic objects to group.
+        """
+        experiment = record["experiment"]
+        sorted_gene_names = sorted(
+            pert["systematic_gene_name"]
+            for pert in experiment["genotype"]["perturbations"]
+        )
+        hash_input = f"{experiment['experiment_type']}:{str(sorted_gene_names)}"
+        return hashlib.sha256(hash_input.encode()).hexdigest()
+
     def create_deduplicate_entry(
         self, duplicate_experiments: list[dict[str, Any]]
     ) -> dict[str, Any]:

@@ -445,6 +445,18 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
             input_path = self._get_lmdb_path(current_step)
             output_path = self._get_lmdb_path(next_step)
 
+            # Resume marker: a stage that finished writes STAGE_COMPLETE beside its
+            # LMDB, and a restarted build skips it. The LMDB's existence alone is NOT
+            # completion -- stages create their output env before writing, so a build
+            # killed mid-stage (e.g. by the slurm memory cap) leaves a partial LMDB
+            # behind. Without this, resuming the 025 build after the dedup OOM would
+            # have re-run its completed 13.6 h conversion from scratch.
+            marker = osp.join(osp.dirname(output_path), "STAGE_COMPLETE")
+            if osp.exists(marker):
+                log.info(f"Skipping completed stage {next_step} ({marker} present)")
+                current_step = next_step
+                continue
+
             if next_step == ProcessingStep.CONVERSION:
                 cast(Converter, self.converter).process(input_path, output_path)
             elif next_step == ProcessingStep.DEDUPLICATION:
@@ -453,6 +465,9 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
                 cast(Aggregator, self.aggregator).process(input_path, output_path)
             elif next_step == ProcessingStep.PROCESSED:
                 self._copy_lmdb(input_path, output_path)
+
+            with open(marker, "w") as f:
+                f.write("")
 
             if self.overwrite_intermediates and next_step != ProcessingStep.PROCESSED:
                 os.remove(input_path)

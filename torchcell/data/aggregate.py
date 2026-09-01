@@ -45,6 +45,17 @@ class Aggregator(ABC):
         """
         pass
 
+    @abstractmethod
+    def aggregate_key_raw(self, record: dict[str, Any]) -> str:
+        """Return the grouping key for ONE raw record dict (pre-pydantic).
+
+        Streaming counterpart of :meth:`aggregate_check`: ``process`` calls this
+        per record straight off the stored JSON, so grouping never requires the
+        whole dataset in memory. Must produce the same key ``aggregate_check``
+        would for that record.
+        """
+        pass
+
     def create_aggregate_entry(
         self,
         experiments_to_aggregate: list[
@@ -106,52 +117,47 @@ class Aggregator(ABC):
             self.env = None
 
     def process(self, input_path: str, output_path: str) -> None:
-        """Read pairs from input LMDB, group by aggregate key, and write groups out."""
+        """Read pairs from input LMDB, group by aggregate key, and write groups out.
+
+        Two streaming passes, never the whole dataset in memory. The previous
+        implementation held every record as pydantic objects inside
+        ``aggregated_data`` -- its own comment conceded "can potentially be huge",
+        and at the 025 build's scale that is hundreds of GB.
+
+        Pass 1 groups input KEYS by ``aggregate_key_raw`` computed off the raw
+        JSON. Pass 2 assembles each output group as a JSON array by joining the
+        STORED record bytes -- they were written by upstream ``model_dump`` calls,
+        so a reconstruct-and-redump would be an identity round trip. Group order
+        is first-occurrence (dict insertion order), matching the old output.
+        """
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         self._init_lmdb(readonly=False)  # Initialize LMDB for writing
 
-        env_input = lmdb.open(input_path, readonly=True)
+        env_input = lmdb.open(input_path, readonly=True, readahead=False)
 
-        aggregated_data: dict[
-            str, list[dict[str, ExperimentType | ExperimentReferenceType]]
-        ] = {}
-
+        # Pass 1: group input keys by the raw-record aggregation hash.
+        key_groups: dict[str, list[bytes]] = {}
         with env_input.begin(write=False) as txn_input:
             cursor = txn_input.cursor()
-            for _, value in tqdm(cursor, desc="Aggregating data"):
-                exp_pair = json.loads(value.decode("utf-8"))
-                experiment_class = EXPERIMENT_TYPE_MAP[
-                    exp_pair["experiment"]["experiment_type"]
-                ]
-                experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
-                    exp_pair["experiment_reference"]["experiment_reference_type"]
-                ]
-                reconstructed_pair = {
-                    "experiment": experiment_class(**exp_pair["experiment"]),
-                    "experiment_reference": experiment_reference_class(
-                        **exp_pair["experiment_reference"]
-                    ),
-                }
+            for key, value in tqdm(cursor, desc="Aggregation pass 1: grouping"):
+                agg_key = self.aggregate_key_raw(json.loads(value.decode("utf-8")))
+                key_groups.setdefault(agg_key, []).append(bytes(key))
 
-                agg_key = self.aggregate_check(reconstructed_pair)
-                if agg_key not in aggregated_data:
-                    aggregated_data[agg_key] = []
-                aggregated_data[agg_key].append(reconstructed_pair)
-
-        # aggregated_data can potentially be huge since we have lists of objs.
-        # might just want in store index.
-        with self.env.begin(write=True) as txn_output:
-            for idx, (agg_key, experiments) in enumerate(aggregated_data.items()):
-                json_data = [
-                    {
-                        "experiment": exp["experiment"].model_dump(),
-                        "experiment_reference": exp[
-                            "experiment_reference"
-                        ].model_dump(),
-                    }
-                    for exp in experiments
-                ]
-                txn_output.put(f"{idx}".encode(), json.dumps(json_data).encode())
+        # Pass 2: write each group as a JSON array of the stored records.
+        total_groups = len(key_groups)
+        total_experiments = 0
+        with (
+            env_input.begin(write=False) as txn_input,
+            self.env.begin(write=True) as txn_output,
+        ):
+            for idx, input_keys in enumerate(
+                tqdm(key_groups.values(), total=total_groups, desc="Aggregating data")
+            ):
+                total_experiments += len(input_keys)
+                group_bytes = (
+                    b"[" + b",".join(txn_input.get(k) for k in input_keys) + b"]"
+                )
+                txn_output.put(f"{idx}".encode(), group_bytes)
 
         env_input.close()
         self.close_lmdb()
@@ -160,10 +166,8 @@ class Aggregator(ABC):
         self._experiment_info = None
 
         print(f"Aggregation complete. LMDB database written to {output_path}")
-        print(f"Total number of aggregated groups: {len(aggregated_data)}")
-        print(
-            f"Total number of experiments after aggregation: {sum(len(exps) for exps in aggregated_data.values())}"
-        )
+        print(f"Total number of aggregated groups: {total_groups}")
+        print(f"Total number of experiments after aggregation: {total_experiments}")
 
     def __getitem__(
         self, index: int | slice | list[int]

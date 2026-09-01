@@ -37,6 +37,17 @@ class Deduplicator(ABC):
         pass
 
     @abstractmethod
+    def duplicate_key(self, record: dict[str, Any]) -> str:
+        """Return the duplicate-group hash for ONE raw record dict (pre-pydantic).
+
+        Streaming counterpart of :meth:`duplicate_check`: ``process`` calls this
+        per record straight off the stored JSON, so grouping never requires the
+        whole dataset in memory. Must produce the same key the pydantic-based
+        ``duplicate_check`` would for that record.
+        """
+        pass
+
+    @abstractmethod
     def create_deduplicate_entry(
         self, duplicate_experiments: list[dict[str, Any]]
     ) -> dict[str, Any]:
@@ -68,70 +79,84 @@ class Deduplicator(ABC):
             self.env = None
 
     def process(self, input_path: str, output_path: str) -> None:
-        """Read records from ``input_path``, deduplicate, and write to the output LMDB."""
-        # Ensure the output directory exists
+        """Read records from ``input_path``, deduplicate, and write to the output LMDB.
+
+        Two streaming passes, never the whole dataset in memory. The previous
+        implementation materialized every record as pydantic objects in one list
+        (plus a second full list of outputs) -- at the 025 build's 43.8M records
+        that OOM-killed slurm job 1560 immediately after a completed conversion.
+
+        Pass 1 groups input KEYS by ``duplicate_key`` computed off the raw JSON.
+        Pass 2 writes groups in first-occurrence order (dict insertion order, the
+        same order the old code produced): singleton groups pass the stored bytes
+        through untouched -- they were written by the converter's ``model_dump``,
+        so a reconstruct-and-redump would be an identity round trip -- and only
+        genuine duplicate groups are reconstructed for ``create_deduplicate_entry``.
+        """
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         self._init_lmdb(readonly=False)  # Initialize LMDB for writing
 
-        env_input = lmdb.open(input_path, readonly=True)
+        env_input = lmdb.open(input_path, readonly=True, readahead=False)
 
-        # Read all data from input LMDB
-        data = []
+        # Pass 1: group input keys by the raw-record duplicate hash.
+        key_groups: dict[str, list[bytes]] = {}
         with env_input.begin() as txn_input:
             cursor = txn_input.cursor()
-            for _, value in cursor:
-                json_data = json.loads(value.decode("utf-8"))
-                # Reconstruct Pydantic objects
-                experiment_class = EXPERIMENT_TYPE_MAP[
-                    json_data["experiment"]["experiment_type"]
-                ]
-                experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
-                    json_data["experiment_reference"]["experiment_reference_type"]
-                ]
-                reconstructed_data = {
-                    "experiment": experiment_class(**json_data["experiment"]),
-                    "experiment_reference": experiment_reference_class(
-                        **json_data["experiment_reference"]
-                    ),
-                }
-                data.append(reconstructed_data)
+            for key, value in tqdm(cursor, desc="Deduplication pass 1: grouping"):
+                hash_key = self.duplicate_key(json.loads(value.decode("utf-8")))
+                key_groups.setdefault(hash_key, []).append(bytes(key))
 
-        # Perform deduplication
-        duplicate_check = self.duplicate_check(data)
-        deduplicated_data = []
+        # Pass 2: write one output record per group.
         deduplicated_count = 0
-
-        with self.env.begin(write=True) as txn_output:
-            for idx, (hash_key, indices) in enumerate(
-                tqdm(duplicate_check.items(), desc="Deduplicating and writing to LMDB")
+        total_groups = len(key_groups)
+        with env_input.begin() as txn_input, self.env.begin(write=True) as txn_output:
+            for idx, input_keys in enumerate(
+                tqdm(
+                    key_groups.values(),
+                    total=total_groups,
+                    desc="Deduplicating and writing to LMDB",
+                )
             ):
-                if len(indices) > 1:
-                    # Compute mean entry for duplicate experiments
-                    duplicate_experiments = [data[i] for i in indices]
-                    mean_entry = self.create_deduplicate_entry(duplicate_experiments)
-                    deduplicated_data.append(mean_entry)
-                    deduplicated_count += len(indices) - 1
-                else:
-                    # Keep non-duplicate experiments as is
-                    deduplicated_data.append(data[indices[0]])
-
-                # Serialize to JSON and write the deduplicated data to LMDB
-                json_data = {
-                    "experiment": deduplicated_data[-1]["experiment"].model_dump(),
-                    "experiment_reference": deduplicated_data[-1][
-                        "experiment_reference"
-                    ].model_dump(),
-                }
-                txn_output.put(f"{idx}".encode(), json.dumps(json_data).encode())
+                if len(input_keys) == 1:
+                    txn_output.put(f"{idx}".encode(), txn_input.get(input_keys[0]))
+                    continue
+                duplicate_experiments = []
+                for input_key in input_keys:
+                    json_data = json.loads(txn_input.get(input_key).decode("utf-8"))
+                    experiment_class = EXPERIMENT_TYPE_MAP[
+                        json_data["experiment"]["experiment_type"]
+                    ]
+                    experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
+                        json_data["experiment_reference"]["experiment_reference_type"]
+                    ]
+                    duplicate_experiments.append(
+                        {
+                            "experiment": experiment_class(**json_data["experiment"]),
+                            "experiment_reference": experiment_reference_class(
+                                **json_data["experiment_reference"]
+                            ),
+                        }
+                    )
+                mean_entry = self.create_deduplicate_entry(duplicate_experiments)
+                deduplicated_count += len(input_keys) - 1
+                txn_output.put(
+                    f"{idx}".encode(),
+                    json.dumps(
+                        {
+                            "experiment": mean_entry["experiment"].model_dump(),
+                            "experiment_reference": mean_entry[
+                                "experiment_reference"
+                            ].model_dump(),
+                        }
+                    ).encode(),
+                )
 
         env_input.close()
         self.close_lmdb()
 
         log.info(f"Deduplication complete. LMDB database written to {output_path}")
         log.info(f"Number of instances deduplicated: {deduplicated_count}")
-        log.info(
-            f"Total number of instances after deduplication: {len(deduplicated_data)}"
-        )
+        log.info(f"Total number of instances after deduplication: {total_groups}")
 
     def __getitem__(
         self, index: int | slice | list[int]

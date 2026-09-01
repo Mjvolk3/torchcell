@@ -382,6 +382,42 @@ case "$ARM" in
                                 model.perturbation_head.null_sink_trainable=true
                                 model.perturbation_head.null_sink_magnitude_match=true)
                      ARM_TAGS=(mech-nullsink xfer-yes stage-wave4b) ;;
+  # ============================ LAUNCH ROUND (2026.08.31), config cgt_expr_v9_mask
+  # THE OBJECTIVE QUESTION, DECONFOUNDED. `dist` is the one axis whose incumbent choice was
+  # never compared at a matched budget: quantile ran to 9,900 epochs and every other head
+  # stopped at or below 199 (notes-tex/019-simb-multimodal, sec:launch, tab:dist-confound).
+  # These arms re-run the surviving challengers at the incumbent's OWN budget and config, so
+  # the only difference from the eight existing quantile replicates is the head.
+  #
+  # WHY quantile IS NOT AN ARM HERE. Its baseline already exists at this exact budget and
+  # config: eight identical-config runs at 9,900 epochs, mean 0.1965, sd 0.0222. Re-running
+  # it would spend GPUs re-measuring a known quantity instead of tightening a challenger.
+  #
+  # WHY energy AND nll ARE NOT ARMS. nll is the designed sigma-collapse negative control and
+  # is already last at every budget. energy's covariance Sigma = D + VV^T is GLOBAL (one
+  # matrix shared by every strain, see torchcell/losses/distributional.py::energy_score), so
+  # it changes the predictive distribution without entering mu and therefore CANNOT move a
+  # point metric like pearson_per_feature. Both are excluded on argument, not on budget.
+  #
+  # THREE REPLICATES, NOT SEVEN. At sd 0.0222 the gap actually on the table (+0.0085 median,
+  # matched budget) would need ~50 replicates per arm. No affordable design resolves it, so
+  # the round can only detect a LARGE effect: 3 runs against the n=8 baseline detects 0.042,
+  # 7 detects 0.032, and that 0.010 is precision the question cannot use.
+  #
+  # laplace_crps is the structurally closest analogue to the incumbent -- its point() is a
+  # MEDIAN, like the quantile head's median knot -- so it separates "the median readout" from
+  # "the 19-knot parameterization". crps has a mean point(); Q_point puts every output
+  # parameter on the location the metric actually reads.
+  Q_crps)            OVERRIDES=(multitask.dist=crps)
+                     ARM_TAGS=(mech-objective dist-crps xfer-yes stage-launch) ;;
+  Q_laplace)         OVERRIDES=(multitask.dist=laplace_crps)
+                     ARM_TAGS=(mech-objective dist-laplace_crps xfer-yes stage-launch) ;;
+  # Q_point IS THE CORRECTED O_zmse ARM. An earlier plan described O_zmse as "turn on
+  # standardize_per_feature_target"; that lever is ALREADY ON (set at cgt_expr_008.yaml:97
+  # and inherited by the whole v9 chain -- the incumbent run reports target_norm=zscore). The
+  # arm is therefore the head switch alone.
+  Q_point)           OVERRIDES=(multitask.dist=point)
+                     ARM_TAGS=(mech-objective dist-point xfer-yes stage-launch) ;;
   *) echo "unknown arm '$ARM'" >&2; exit 1 ;;
 esac
 

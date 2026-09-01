@@ -146,12 +146,47 @@ case "$STAGE" in
                 V_drop2 V_drop3 V_wd1e4 V_wd1e2); SEEDS=(0)
           RUNS_PER_GPU=3; STAGE_CONFIG=cgt_expr_012
           EXTRA_OV="" ;;
+  # ---------------------------------------------------------------- LAUNCH (2026.08.31)
+  # The objective round. Three challenger heads x 3 replicates = 9 runs at 2/GPU = 5 tasks,
+  # scored against the eight existing quantile replicates rather than a co-launched
+  # reference. That is the ONE case where an out-of-wave reference is valid: those eight runs
+  # share this config, this budget and this hardware class, and they are the quantity whose
+  # spread (sd 0.0222) sizes the whole design.
+  #
+  # 9,900 IS THE TARGET, NOT THE EXPECTATION. Measured packed wall clock is ~46.7 s/epoch on
+  # A100 and ~47.4 on Ada, so a 5-day job reaches ~9,100-9,250 epochs and the runs are
+  # EXPECTED to hit the wall. That is fine and it is why the declared scoring window is
+  # roll_max over epochs <= 9,000, which every run clears: ModelCheckpoint retains
+  # best-by-loss, best-by-metric and last.
+  #
+  # train_eval_every=10 matches the incumbent's own long run, so the eval-mode train curve is
+  # comparable to it rather than to a differently-instrumented arm.
+  launch) ARMS=(Q_crps Q_laplace Q_point); SEEDS=(0 1 2)
+          RUNS_PER_GPU=2; STAGE_CONFIG=cgt_expr_v9_mask
+          EXTRA_OV="trainer.max_epochs=9900 trainer.train_eval_every=10" ;;
+  # RESUME -- the incumbent past its own 9,900. Not an arm: one run, one GPU pair, testing
+  # only whether THIS draw's curve turns. With sd 0.0222 a single continuation cannot
+  # establish saturation, and the plan says so.
+  #
+  # max_epochs IS ABSOLUTE IN LIGHTNING, so 19,000 means "9,100 more", and the train script
+  # raises if max_epochs <= the checkpoint's epoch rather than exiting instantly with a
+  # confusing success. W5_RESUME_CKPT must be an absolute path readable on the compute node.
+  resume) ARMS=(W_ref); SEEDS=(0)
+          RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v9_mask
+          EXTRA_OV="trainer.max_epochs=19000 trainer.train_eval_every=10 trainer.resume_ckpt_path=${W5_RESUME_CKPT:?set W5_RESUME_CKPT=/abs/path/to/last.ckpt for the resume stage}" ;;
   # CANARY -- one fast_dev_run to prove container + conda + PYTHONPATH + LMDB path before a
   # wave is committed to the queue. Exits in minutes.
   canary) ARMS=(X_mix); SEEDS=(0)
           RUNS_PER_GPU=1
           EXTRA_OV="trainer.fast_dev_run=true" ;;
-  *) echo "unknown W5_STAGE '$STAGE' (expected canary|h2|probe|long|wave6)" >&2; exit 1 ;;
+  # Canary for the launch round specifically: proves the three NEW dist heads construct and
+  # step, which the X_mix canary cannot, since a head that fails to build fails at model
+  # construction and would otherwise surface only after five days of queue.
+  canary_launch)
+          ARMS=(Q_crps Q_laplace Q_point); SEEDS=(0)
+          RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v9_mask
+          EXTRA_OV="trainer.fast_dev_run=true" ;;
+  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|h2|probe|long|wave6|launch|resume)" >&2; exit 1 ;;
 esac
 
 # SEED-MAJOR, so each task's co-resident runs are DIFFERENT arms rather than three copies of

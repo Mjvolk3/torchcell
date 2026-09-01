@@ -1,0 +1,112 @@
+{
+  "generated_by": "experiments/019-simb-multimodal/scripts/expression_baselines.py",
+  "dataset_tag": "019-simb-multimodal/fig3_core",
+  "split": {
+    "kind": "oracle-family seed-0 permutation",
+    "n_val": 155,
+    "n_fit": 1327,
+    "n_strain": 1482,
+    "n_gene": 6169
+  },
+  "B0_per_gene_mean": {
+    "pearson_per_feature": 0.0,
+    "nmse": 1.0
+  },
+  "B1_no_change": {
+    "pearson_per_feature": 0.0,
+    "nmse": 1.378361423704126
+  },
+  "panel": {
+    "n_distinct_deleted_genes": 1482,
+    "n_repeated_deletions_in_fit": 0,
+    "all_val_unseen_perturbations": true
+  },
+  "B2_bilinear": {
+    "by_embedding": {
+      "prot_T5_all": {
+        "best": {
+          "k_gene": 64,
+          "ridge": 100.0,
+          "emb_dim": 1024,
+          "pearson_per_feature": 0.10396622323862097,
+          "nmse": 1.192383638286617
+        },
+        "n_val_scored": 155
+      },
+      "calm": {
+        "best": {
+          "k_gene": 64,
+          "ridge": 100.0,
+          "emb_dim": 768,
+          "pearson_per_feature": 0.085154773347807,
+          "nmse": 1.1203440775577622
+        },
+        "n_val_scored": 155
+      },
+      "species_lm_5p_3p": {
+        "best": {
+          "k_gene": 16,
+          "ridge": 0.001,
+          "emb_dim": 1536,
+          "pearson_per_feature": 0.012865147086759355,
+          "nmse": 6.028135200486386
+        },
+        "n_val_scored": 155
+      },
+      "normalized_chrom_pathways": {
+        "best": {
+          "k_gene": 2,
+          "ridge": 0.001,
+          "emb_dim": 197,
+          "pearson_per_feature": 0.030235319307737783,
+          "nmse": 1.0052033689053788
+        },
+        "n_val_scored": 155
+      }
+    },
+    "best_embedding": {
+      "name": "prot_T5_all",
+      "pearson_per_feature": 0.10396622323862097
+    }
+  },
+  "B3_neighbor_average": {
+    "by_embedding": {
+      "prot_T5_all": {
+        "best": {
+          "k": 25,
+          "pearson_per_feature": 0.09076448456896422,
+          "nmse": 1.0029205947990627
+        },
+        "n_val_scored": 155
+      },
+      "calm": {
+        "best": {
+          "k": 25,
+          "pearson_per_feature": 0.09039653549542126,
+          "nmse": 1.0039682297430992
+        },
+        "n_val_scored": 155
+      },
+      "species_lm_5p_3p": {
+        "best": {
+          "k": 1,
+          "pearson_per_feature": 0.009389445137027332,
+          "nmse": 1.8586048535696897
+        },
+        "n_val_scored": 155
+      },
+      "normalized_chrom_pathways": {
+        "best": {
+          "k": 1,
+          "pearson_per_feature": 0.03528310540171365,
+          "nmse": 1.8903015854514436
+        },
+        "n_val_scored": 155
+      }
+    },
+    "best_embedding": {
+      "name": "prot_T5_all",
+      "pearson_per_feature": 0.09076448456896422
+    }
+  }
+}

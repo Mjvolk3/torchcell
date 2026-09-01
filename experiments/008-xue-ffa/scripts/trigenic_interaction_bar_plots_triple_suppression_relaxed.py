@@ -471,6 +471,9 @@ def main():
         double_se,
         triple_sd,
         triple_se,
+        # Star-unpack the tail so this caller survives the compute function gaining
+        # fields. It now also returns the per-interaction Welch-Satterthwaite df.
+        *_,
     ) = compute_interactions_with_error_propagation(
         normalized_df, normalized_replicates, abbreviations
     )

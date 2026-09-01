@@ -30,11 +30,11 @@ FFA_REACTIONS_DIR = RESULTS_DIR / "ffa_reactions"
 # Color scheme aligned with multigraph overlays (v19)
 # Uses colors from torchcell.mplstyle for consistency
 COLORS = {
-    'gene': '#4A9C60',  # Green (light enough for black text)
-    'reaction': '#E6A65D',  # Orange (changed from red to match multigraph)
-    'metabolite': '#6D666F',  # Grey
-    'core_gene': '#3D796E',  # Teal-green from mplstyle (readable with black text)
-    'target_ffa': '#3978B5',  # Blue (changed from dark red to match multigraph)
+    'gene': '#D79B00',  # Green (light enough for black text)
+    'reaction': '#D2AE7D',  # Orange (changed from red to match multigraph)
+    'metabolite': '#666666',  # Grey
+    'core_gene': '#D6B656',  # Teal-green from mplstyle (readable with black text)
+    'target_ffa': '#6C8EBF',  # Blue (changed from dark red to match multigraph)
 }
 
 
@@ -327,14 +327,14 @@ def visualize_ffa_network(G, pos, gene_nodes, reaction_nodes, metabolite_nodes):
 
     # Grey metabolic edges matching multigraph style
     if gene_rxn_edges:
-        nx.draw_networkx_edges(G, pos, edgelist=gene_rxn_edges, edge_color='#404040',
+        nx.draw_networkx_edges(G, pos, edgelist=gene_rxn_edges, edge_color='#4A4A4A',
                               width=0.8, alpha=0.3, arrows=False, ax=ax)
     if met_rxn_edges:
-        nx.draw_networkx_edges(G, pos, edgelist=met_rxn_edges, edge_color='#404040',
+        nx.draw_networkx_edges(G, pos, edgelist=met_rxn_edges, edge_color='#4A4A4A',
                               width=0.6, alpha=0.25, arrows=True, arrowsize=8,
                               arrowstyle='->', ax=ax)
     if rxn_met_edges:
-        nx.draw_networkx_edges(G, pos, edgelist=rxn_met_edges, edge_color='#404040',
+        nx.draw_networkx_edges(G, pos, edgelist=rxn_met_edges, edge_color='#4A4A4A',
                               width=0.6, alpha=0.25, arrows=True, arrowsize=8,
                               arrowstyle='->', ax=ax)
 
@@ -434,7 +434,7 @@ def visualize_ffa_network(G, pos, gene_nodes, reaction_nodes, metabolite_nodes):
                markersize=10, label='Target FFAs'),
         Line2D([0], [0], marker='o', color='w', markerfacecolor=COLORS['metabolite'],
                markersize=8, label='Other Metabolites'),
-        Line2D([0], [0], color='#404040', linewidth=1, label='Metabolic Reactions'),
+        Line2D([0], [0], color='#4A4A4A', linewidth=1, label='Metabolic Reactions'),
     ]
     ax.legend(handles=legend_elements, loc='upper left', fontsize=12, framealpha=0.95)
     ax.axis('off')
@@ -586,14 +586,14 @@ def create_subsystem_subgraphs(G, pos, reactions_df):
         # Grey edges matching multigraph style
         if gene_rxn_edges:
             nx.draw_networkx_edges(H, subgraph_pos, edgelist=gene_rxn_edges,
-                                  edge_color='#404040', width=0.8, alpha=0.3, arrows=False, ax=ax)
+                                  edge_color='#4A4A4A', width=0.8, alpha=0.3, arrows=False, ax=ax)
         if met_rxn_edges:
             nx.draw_networkx_edges(H, subgraph_pos, edgelist=met_rxn_edges,
-                                  edge_color='#404040', width=0.6, alpha=0.25, arrows=True, arrowsize=8,
+                                  edge_color='#4A4A4A', width=0.6, alpha=0.25, arrows=True, arrowsize=8,
                                   arrowstyle='->', ax=ax)
         if rxn_met_edges:
             nx.draw_networkx_edges(H, subgraph_pos, edgelist=rxn_met_edges,
-                                  edge_color='#404040', width=0.6, alpha=0.25, arrows=True, arrowsize=8,
+                                  edge_color='#4A4A4A', width=0.6, alpha=0.25, arrows=True, arrowsize=8,
                                   arrowstyle='->', ax=ax)
 
         # Draw nodes with consistent sizes matching individual FFA plots
@@ -905,14 +905,14 @@ def visualize_individual_ffa(H, pos, gene_nodes, reaction_nodes, metabolite_node
 
     # Grey edges matching multigraph style
     if gene_rxn_edges:
-        nx.draw_networkx_edges(H, pos, edgelist=gene_rxn_edges, edge_color='#404040',
+        nx.draw_networkx_edges(H, pos, edgelist=gene_rxn_edges, edge_color='#4A4A4A',
                               width=0.8, alpha=0.3, arrows=False, ax=ax)
     if met_rxn_edges:
-        nx.draw_networkx_edges(H, pos, edgelist=met_rxn_edges, edge_color='#404040',
+        nx.draw_networkx_edges(H, pos, edgelist=met_rxn_edges, edge_color='#4A4A4A',
                               width=0.6, alpha=0.25, arrows=True, arrowsize=8,
                               arrowstyle='->', ax=ax)
     if rxn_met_edges:
-        nx.draw_networkx_edges(H, pos, edgelist=rxn_met_edges, edge_color='#404040',
+        nx.draw_networkx_edges(H, pos, edgelist=rxn_met_edges, edge_color='#4A4A4A',
                               width=0.6, alpha=0.25, arrows=True, arrowsize=8,
                               arrowstyle='->', ax=ax)
 
@@ -1056,7 +1056,7 @@ def visualize_individual_ffa(H, pos, gene_nodes, reaction_nodes, metabolite_node
                markersize=10, label=f'{ffa_type} Metabolites'),
         Line2D([0], [0], marker='o', color='w', markerfacecolor=COLORS['metabolite'],
                markersize=8, label='Other Metabolites'),
-        Line2D([0], [0], color='#404040', linewidth=1, label='Metabolic Reactions'),
+        Line2D([0], [0], color='#4A4A4A', linewidth=1, label='Metabolic Reactions'),
     ]
     ax.legend(handles=legend_elements, loc='upper left', fontsize=11, framealpha=0.95)
     ax.axis('off')

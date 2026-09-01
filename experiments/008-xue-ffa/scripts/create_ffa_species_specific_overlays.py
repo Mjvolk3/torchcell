@@ -14,6 +14,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from pathlib import Path
 from dotenv import load_dotenv
+from torchcell.utils import MAX_HEIGHT_MM, PANEL_WIDTHS_MM
 from torchcell.graph.graph import SCerevisiaeGraph
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.timestamp import timestamp
@@ -38,15 +39,15 @@ GRAPH_ENRICHMENT_DIR = RESULTS_DIR / "graph_enrichment"
 # V21: Updated color scheme - lighter core_gene color for better text readability
 # V11: Using colors from torchcell.mplstyle
 COLORS = {
-    "gene": "#4A9C60",  # Green
-    "reaction": "#E6A65D",  # Orange (changed from red)
-    "metabolite": "#6D666F",  # Grey
-    "core_gene": "#3D796E",  # Teal-green from mplstyle (readable with black text)
-    "target_ffa": "#3978B5",  # Blue (changed from dark red)
-    "tf_gene": "#7A6DBF",  # Purple for TFs
-    "positive_interaction": "#4A9C60",  # Green for positive
-    "negative_interaction": "#B73C39",  # Red for negative
-    "induced_edge": "#6D666F",  # Grey for baseline connections
+    "gene": "#D79B00",  # Green
+    "reaction": "#D2AE7D",  # Orange (changed from red)
+    "metabolite": "#666666",  # Grey
+    "core_gene": "#D6B656",  # Teal-green from mplstyle (readable with black text)
+    "target_ffa": "#6C8EBF",  # Blue (changed from dark red)
+    "tf_gene": "#9673A6",  # Purple for TFs
+    "positive_interaction": "#D79B00",  # Green for positive
+    "negative_interaction": "#B85450",  # Red for negative
+    "induced_edge": "#666666",  # Grey for baseline connections
 }
 
 # TF genes from experiment (for consistent circle ordering)
@@ -70,6 +71,34 @@ FFA_ORDER = ["C14:0", "C16:0", "C16:1", "C18:0", "C18:1"]
 # FFA species for filtering - includes 'Total Titer' for all FFAs combined
 FFA_SPECIES = ["C14:0", "C16:0", "C16:1", "C18:0", "C18:1", "Total Titer"]
 
+
+
+def _rescale_svg_to_mm(svg_path, width_mm):
+    """Declare an SVG's printed size, capped so it fits the page, and report its type size.
+
+    An SVG carries no intrinsic size, so setting the root width reprints the identical
+    geometry at that width and scales every font with it. The panel is authored at
+    14 x 18 in, which is PORTRAIT, and that aspect is what creates a conflict with Nature:
+    at the full 179 mm column the panel would be 230 mm tall (page cap is 170), and at the
+    132 mm that does fit the height its 12 pt labels print at 4.5 pt, under the 5 pt floor.
+    Width is therefore capped by the height limit and the resulting type size is reported,
+    since only a layout change can satisfy both.
+    """
+    import re as _re
+
+    text = open(svg_path).read()
+    m = _re.search(r'viewBox="([\d.]+) ([\d.]+) ([\d.]+) ([\d.]+)"', text)
+    if not m:
+        raise ValueError(f"{svg_path}: no viewBox, cannot set a true physical size")
+    vb_w, vb_h = float(m.group(3)), float(m.group(4))
+    width_mm = min(width_mm, MAX_HEIGHT_MM * vb_w / vb_h)
+    height_mm = width_mm * vb_h / vb_w
+    text = _re.sub(r'(<svg[^>]*?)width="[^"]*"', rf'\1width="{width_mm:.2f}mm"', text, count=1)
+    text = _re.sub(r'(<svg[^>]*?)height="[^"]*"', rf'\1height="{height_mm:.2f}mm"', text, count=1)
+    open(svg_path, "w").write(text)
+    printed_pt = 12.0 * (width_mm / 25.4) / 14.0
+    flag = "" if printed_pt >= 5.0 else "  BELOW the 5 pt Nature floor, layout must change"
+    print(f"    svg {width_mm:.0f} x {height_mm:.0f} mm, labels ~{printed_pt:.1f} pt{flag}")
 
 def extract_all_ffa_types(metabolite_name):
     """
@@ -859,7 +888,7 @@ def create_multigraph_overlay(
             G,
             pos,
             edgelist=gene_rxn_edges,
-            edge_color="#404040",
+            edge_color="#4A4A4A",
             width=0.8,
             alpha=0.3,
             arrows=False,
@@ -871,7 +900,7 @@ def create_multigraph_overlay(
             G,
             pos,
             edgelist=met_rxn_edges,
-            edge_color="#404040",
+            edge_color="#4A4A4A",
             width=0.6,
             alpha=0.25,
             arrows=True,
@@ -885,7 +914,7 @@ def create_multigraph_overlay(
             G,
             pos,
             edgelist=rxn_met_edges,
-            edge_color="#404040",
+            edge_color="#4A4A4A",
             width=0.6,
             alpha=0.25,
             arrows=True,
@@ -915,7 +944,7 @@ def create_multigraph_overlay(
             G,
             pos,
             edgelist=tf_gene_edges_filtered,
-            edge_color="#606060",
+            edge_color="#666666",
             width=1.2,
             alpha=0.4,
             arrows=True,
@@ -930,7 +959,7 @@ def create_multigraph_overlay(
             G,
             pos,
             edgelist=induced_edges,
-            edge_color="#808080",
+            edge_color="#A29682",
             width=1.2,
             alpha=0.5,
             style="dashed",
@@ -1278,7 +1307,7 @@ def create_multigraph_overlay(
             Line2D(
                 [0],
                 [0],
-                color="#808080",
+                color="#A29682",
                 linewidth=2,
                 linestyle="--",
                 label="TF-TF Baseline",
@@ -1286,12 +1315,12 @@ def create_multigraph_overlay(
             Line2D(
                 [0],
                 [0],
-                color="#606060",
+                color="#666666",
                 linewidth=2,
                 linestyle=":",
                 label="TF→Gene Regulation",
             ),
-            Line2D([0], [0], color="#404040", linewidth=1, label="Metabolic Reactions"),
+            Line2D([0], [0], color="#4A4A4A", linewidth=1, label="Metabolic Reactions"),
         ]
     )
 
@@ -1331,6 +1360,13 @@ def create_multigraph_overlay(
     filename = f"{model}_{safe_ffa}_ffa_multigraph_{safe_name}{batch_suffix}.png"
     output_path = osp.join(model_dir, filename)
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
+
+    # Paper-grade companion, same contract as create_ffa_multigraph_overlays.py: the SVG
+    # carries the identical geometry with its printed size declared, so the panel can go
+    # straight into draw.io at a true width.
+    svg_path = output_path.replace(".png", ".svg")
+    plt.savefig(svg_path, bbox_inches="tight")
+    _rescale_svg_to_mm(svg_path, PANEL_WIDTHS_MM["full"])
     print(f"    Saved to: {output_path}")
     plt.close()
 

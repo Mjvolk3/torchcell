@@ -7,6 +7,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from pathlib import Path
 from dotenv import load_dotenv
+from torchcell.utils import MAX_HEIGHT_MM, PANEL_WIDTHS_MM
 from torchcell.graph.graph import SCerevisiaeGraph
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.timestamp import timestamp
@@ -29,15 +30,15 @@ GRAPH_ENRICHMENT_DIR = RESULTS_DIR / "graph_enrichment"
 # V21: Updated color scheme - lighter core_gene color for better text readability
 # V11: Using colors from torchcell.mplstyle
 COLORS = {
-    'gene': '#4A9C60',  # Green
-    'reaction': '#E6A65D',  # Orange (changed from red)
-    'metabolite': '#6D666F',  # Grey
-    'core_gene': '#3D796E',  # Teal-green from mplstyle (readable with black text)
-    'target_ffa': '#3978B5',  # Blue (changed from dark red)
-    'tf_gene': '#7A6DBF',  # Purple for TFs
-    'positive_interaction': '#4A9C60',  # Green for positive
-    'negative_interaction': '#B73C39',  # Red for negative
-    'induced_edge': '#6D666F',  # Grey for baseline connections
+    'gene': '#D79B00',  # Green
+    'reaction': '#D2AE7D',  # Orange (changed from red)
+    'metabolite': '#666666',  # Grey
+    'core_gene': '#D6B656',  # Teal-green from mplstyle (readable with black text)
+    'target_ffa': '#6C8EBF',  # Blue (changed from dark red)
+    'tf_gene': '#9673A6',  # Purple for TFs
+    'positive_interaction': '#D79B00',  # Green for positive
+    'negative_interaction': '#B85450',  # Red for negative
+    'induced_edge': '#666666',  # Grey for baseline connections
 }
 
 # TF genes from experiment (for consistent circle ordering)
@@ -646,6 +647,34 @@ def create_interaction_edges_with_deduplication(positive_interactions, negative_
     return positive_edges, negative_edges, n_positive_interactions, n_negative_interactions
 
 
+def _rescale_svg_to_mm(svg_path, width_mm):
+    """Declare an SVG's printed size, capped so it fits the page, and report its type size.
+
+    An SVG carries no intrinsic size, so setting the root width reprints the identical
+    geometry at that width and scales every font with it. The panel is authored at
+    14 x 18 in, which is PORTRAIT, and that aspect is what creates a conflict with Nature:
+    at the full 179 mm column the panel would be 230 mm tall (page cap is 170), and at the
+    132 mm that does fit the height its 12 pt labels print at 4.5 pt, under the 5 pt floor.
+    Width is therefore capped by the height limit and the resulting type size is reported,
+    since only a layout change can satisfy both.
+    """
+    import re as _re
+
+    text = open(svg_path).read()
+    m = _re.search(r'viewBox="([\d.]+) ([\d.]+) ([\d.]+) ([\d.]+)"', text)
+    if not m:
+        raise ValueError(f"{svg_path}: no viewBox, cannot set a true physical size")
+    vb_w, vb_h = float(m.group(3)), float(m.group(4))
+    width_mm = min(width_mm, MAX_HEIGHT_MM * vb_w / vb_h)
+    height_mm = width_mm * vb_h / vb_w
+    text = _re.sub(r'(<svg[^>]*?)width="[^"]*"', rf'\1width="{width_mm:.2f}mm"', text, count=1)
+    text = _re.sub(r'(<svg[^>]*?)height="[^"]*"', rf'\1height="{height_mm:.2f}mm"', text, count=1)
+    open(svg_path, "w").write(text)
+    printed_pt = 12.0 * (width_mm / 25.4) / 14.0
+    flag = "" if printed_pt >= 5.0 else "  BELOW the 5 pt Nature floor, layout must change"
+    print(f"    svg {width_mm:.0f} x {height_mm:.0f} mm, labels ~{printed_pt:.1f} pt{flag}")
+
+
 def create_multigraph_overlay(G_base, pos_base, tf_nodes, positive_interactions, negative_interactions,
                                induced_edges, tf_gene_edges, graph_type, graph_type_name, tf_pos, met_to_ffa,
                                interaction_type='digenic', sign='both', topology='edge', genome=None, batch_suffix='', filter_enrichment=False, model='multiplicative'):
@@ -709,16 +738,16 @@ def create_multigraph_overlay(G_base, pos_base, tf_nodes, positive_interactions,
 
     # Draw metabolic edges (all grey/black)
     if gene_rxn_edges:
-        nx.draw_networkx_edges(G, pos, edgelist=gene_rxn_edges, edge_color='#404040',
+        nx.draw_networkx_edges(G, pos, edgelist=gene_rxn_edges, edge_color='#4A4A4A',
                               width=0.8, alpha=0.3, arrows=False, ax=ax)
 
     if met_rxn_edges:
-        nx.draw_networkx_edges(G, pos, edgelist=met_rxn_edges, edge_color='#404040',
+        nx.draw_networkx_edges(G, pos, edgelist=met_rxn_edges, edge_color='#4A4A4A',
                               width=0.6, alpha=0.25, arrows=True, arrowsize=8,
                               arrowstyle='->', ax=ax)
 
     if rxn_met_edges:
-        nx.draw_networkx_edges(G, pos, edgelist=rxn_met_edges, edge_color='#404040',
+        nx.draw_networkx_edges(G, pos, edgelist=rxn_met_edges, edge_color='#4A4A4A',
                               width=0.6, alpha=0.25, arrows=True, arrowsize=8,
                               arrowstyle='->', ax=ax)
 
@@ -733,12 +762,12 @@ def create_multigraph_overlay(G_base, pos_base, tf_nodes, positive_interactions,
 
     # V26: Draw TF→gene regulatory connections - always directed (arrows=True) since they come from regulatory/tflink
     if tf_gene_edges_filtered:
-        nx.draw_networkx_edges(G, pos, edgelist=tf_gene_edges_filtered, edge_color='#606060',
+        nx.draw_networkx_edges(G, pos, edgelist=tf_gene_edges_filtered, edge_color='#666666',
                               width=1.2, alpha=0.4, arrows=True, arrowsize=10, style='dotted', ax=ax)
 
     # V26: Draw TF-TF baseline edges - only show arrows for regulatory/tflink graphs
     if induced_edges:
-        nx.draw_networkx_edges(G, pos, edgelist=induced_edges, edge_color='#808080',
+        nx.draw_networkx_edges(G, pos, edgelist=induced_edges, edge_color='#A29682',
                               width=1.2, alpha=0.5, style='dashed', arrows=show_arrows, arrowsize=10, ax=ax)
 
     # V25: Create interaction edges and get both edge counts and interaction counts
@@ -926,11 +955,11 @@ def create_multigraph_overlay(G_base, pos_base, tf_nodes, positive_interactions,
                label=f'Positive Epistatic Interactions ({n_pos_interactions})'),
         Line2D([0], [0], color=COLORS['negative_interaction'], linewidth=6,
                label=f'Negative Epistatic Interactions ({n_neg_interactions})'),
-        Line2D([0], [0], color='#808080', linewidth=2, linestyle='--',
+        Line2D([0], [0], color='#A29682', linewidth=2, linestyle='--',
                label='TF-TF Baseline'),
-        Line2D([0], [0], color='#606060', linewidth=2, linestyle=':',
+        Line2D([0], [0], color='#666666', linewidth=2, linestyle=':',
                label='TF→Gene Regulation'),
-        Line2D([0], [0], color='#404040', linewidth=1,
+        Line2D([0], [0], color='#4A4A4A', linewidth=1,
                label='Metabolic Reactions'),
     ]
 
@@ -957,6 +986,15 @@ def create_multigraph_overlay(G_base, pos_base, tf_nodes, positive_interactions,
     filename = f"{model}_ffa_multigraph_{safe_name}{batch_suffix}.png"
     output_path = osp.join(model_dir, filename)
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
+
+    # Paper-grade companion. The panel is authored at 14 x 18 in so the ~40 node labels
+    # stay separable while laying out; an SVG carries no intrinsic size, so declaring the
+    # root at the Nature full-column width reprints the identical geometry at 179 mm and
+    # scales every font with it. The 12 pt labels land near 6 pt, inside Nature's 5 to 7 pt
+    # band, without touching the layout code. PNG stays as the raster working copy.
+    svg_path = output_path.replace(".png", ".svg")
+    plt.savefig(svg_path, bbox_inches="tight")
+    _rescale_svg_to_mm(svg_path, PANEL_WIDTHS_MM["full"])
     print(f"    Saved to: {output_path}")
     plt.close()
 

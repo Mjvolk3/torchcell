@@ -40,6 +40,14 @@ from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, ConfigDict, Field
 
 from torchcell.literature.backfill import LIBRARY_SUBDIR
+from torchcell.literature.bib_store import (
+    BIB_STORE_MANIFEST,
+    BibRecord,
+    BibStoreManifest,
+    bib_store_dir,
+    load_bib_store,
+    validate_bib_name,
+)
 from torchcell.literature.manifest import MANIFEST_FILENAME, Manifest, _role_for
 
 logging.basicConfig(level=logging.INFO)
@@ -215,8 +223,46 @@ def _load_manifest(base: Path) -> Manifest | None:
 
 
 def _list_citation_keys(config: LiteratureServerConfig) -> list[str]:
-    """Directories directly under the mirror root (dynamic; reflects new papers)."""
-    return sorted(p.name for p in config.mirror_root.iterdir() if p.is_dir())
+    """Directories directly under the mirror root (dynamic; reflects new papers).
+
+    An underscore-prefixed directory is a service directory, not a paper:
+    ``_sync_reports`` (nightly capture reports) and ``_bib`` (the bibliography
+    store). Neither is a citation key, so neither is listed as one.
+    """
+    return sorted(
+        p.name
+        for p in config.mirror_root.iterdir()
+        if p.is_dir() and not p.name.startswith("_")
+    )
+
+
+def _bib_record(config: LiteratureServerConfig, name: str) -> tuple[BibRecord, Path]:
+    """Resolve a served bibliography name to its manifest record + file."""
+    try:
+        validate_bib_name(name)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    manifest = _bib_store(config)
+    record = manifest.get(name)
+    if record is None:
+        raise HTTPException(status_code=404, detail="unknown bibliography")
+    target = bib_store_dir(config.mirror_root) / record.path
+    if not target.is_file():
+        raise HTTPException(
+            status_code=500,
+            detail="bibliography listed in the store manifest but absent on disk",
+        )
+    return record, target
+
+
+def _bib_store(config: LiteratureServerConfig) -> BibStoreManifest:
+    """The store manifest, or 404 if no export has run on the host yet."""
+    if not (bib_store_dir(config.mirror_root) / BIB_STORE_MANIFEST).is_file():
+        raise HTTPException(
+            status_code=404,
+            detail="no bibliography store; run scripts/lit_bib_store.py on the host",
+        )
+    return load_bib_store(config.mirror_root)
 
 
 def create_app(config: LiteratureServerConfig) -> FastAPI:
@@ -224,16 +270,19 @@ def create_app(config: LiteratureServerConfig) -> FastAPI:
     app = FastAPI(
         title="torchcell literature endpoint",
         summary="Keyed read-only access to the OCR literature mirror.",
-        version="1.0.0",
+        version="1.1.0",
     )
     app.state.config = config
 
     @app.get("/health")
     def health() -> dict[str, object]:
         """Liveness + mirror summary (no auth)."""
+        store = bib_store_dir(config.mirror_root) / BIB_STORE_MANIFEST
+        n_bibs = len(load_bib_store(config.mirror_root).bibs) if store.is_file() else 0
         return {
             "status": "ok",
             "n_keys": len(_list_citation_keys(config)),
+            "n_bibs": n_bibs,
             "mirror_root": str(config.mirror_root),
         }
 
@@ -322,6 +371,27 @@ def create_app(config: LiteratureServerConfig) -> FastAPI:
                 log.info("search: capped at %d hits for %r", SEARCH_RESULT_CAP, q)
                 break
         return SearchResult(query=q, hits=hits, truncated=truncated)
+
+    @app.get("/bib")
+    def list_bibs(_: str = Depends(require_key)) -> BibStoreManifest:
+        """The bibliography store manifest: every served ``.bib`` with its sha256.
+
+        The store is written on the host by ``scripts/lit_bib_store.py`` (a
+        headless Zotero Web API export) and served read-through, like the rest of
+        the mirror; a new export shows up here with no restart.
+        """
+        return _bib_store(config)
+
+    @app.get("/bib/{name}")
+    def get_bib(name: str, _: str = Depends(require_key)) -> FileResponse:
+        """Stream one bibliography; ``X-Artifact-SHA256`` carries the manifest hash."""
+        record, target = _bib_record(config, name)
+        return FileResponse(
+            target,
+            media_type="application/x-bibtex",
+            filename=record.path,
+            headers={"X-Artifact-SHA256": record.sha256},
+        )
 
     return app
 

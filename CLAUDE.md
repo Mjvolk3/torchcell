@@ -159,7 +159,11 @@ authors or trust a live URL. Model these records with pydantic.
   `TC_LIT_API_KEY` (in repo-root `.env`); driven by the `/lit-pull` skill. Endpoints:
   `GET /keys` (list citation keys), `GET /keys/{ck}/files` (per-key artifact manifest:
   path, role, bytes, sha256), `GET /keys/{ck}/artifact/{rel_path}` (stream any file --
-  `paper.md`, `paper.pdf`, `si/...`, `images/...`, `data/...`). Every artifact response
+  `paper.md`, `paper.pdf`, `si/...`, `images/...`, `data/...`), `GET /bib` (the
+  bibliography-store manifest) and `GET /bib/{name}` (one served `.bib`: `paper`, a
+  notes-tex slug, or `library`; exported nightly from Zotero by `scripts/lit_bib_store.py`
+  into `$DATA_ROOT/torchcell-library/_bib/`, pulled with `make bib-pull` /
+  `scripts/lit_bib_pull.py`). Every artifact response
   carries an `X-Artifact-SHA256` header sourced from that key's `manifest.json`; ALWAYS
   verify downloaded bytes against it (`shasum -a 256` on macOS). Naming discipline: say
   "the mirror" for the on-disk files, "Zotero" for canonical PDFs, "`tc-lit`" for this

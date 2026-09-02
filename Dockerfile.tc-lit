@@ -11,6 +11,8 @@
 FROM python:3.13-slim
 
 # Runtime deps for torchcell.literature only (server + backfill import surface).
+# bibtexparser: the server imports torchcell.literature.bib_store for the /bib
+# manifest models, and that module imports the bib writer at module level.
 RUN pip install --no-cache-dir \
     "fastapi>=0.115" \
     "uvicorn[standard]>=0.30" \
@@ -18,7 +20,8 @@ RUN pip install --no-cache-dir \
     "python-dotenv>=1.0" \
     "pyzotero>=1.5" \
     "httpx>=0.27" \
-    "unidecode>=1.3"
+    "unidecode>=1.3" \
+    "bibtexparser>=1.4,<2"
 
 WORKDIR /app
 COPY torchcell/ /app/torchcell/

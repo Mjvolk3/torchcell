@@ -6,6 +6,8 @@
 #   make twocolumn   -> twocolumn.pdf   (published-like Nature double column)
 #   make figproto    -> figure-proto.pdf (true-scale figure-sizing canvas)
 #   make all         -> paper + figproto
+#   make bib-pull    -> pull the sha256-pinned group `paper` bibliography from tc-lit
+#                       (headless; zotero_export_bib.py is the Better BibTeX route)
 #   make clean       -> remove generated PDFs
 #
 # Uses an installed `tectonic` if on PATH, else the /tmp binary we fetched.
@@ -71,7 +73,16 @@ DRAWIO_FIGS := $(shell for f in $$(grep -rhE 'figures/[A-Za-z0-9._-]+\.pdf' $(SH
                  fi; \
                done)
 
-.PHONY: paper all submission editing twocolumn figproto figlimits figures fig checkfigs wordcount flat clean publish publish-dry publish-list publish-submission
+.PHONY: paper all submission editing twocolumn figproto figlimits figures fig checkfigs wordcount flat clean publish publish-dry publish-list publish-submission bib-pull
+
+# Pull references.bib from tc-lit's bibliography store (`/bib/paper`): the group
+# `paper` collection (W46ATS7B) exported headless over the Zotero Web API on
+# GilaHyper and pinned by sha256, so a machine without Zotero desktop gets the same
+# bytes the Mac would. zotero_export_bib.py stays the Better BibTeX route; the two
+# agree on entry keys (Zotero 7 native citationKey) but format fields differently,
+# so diff the result before committing it.
+bib-pull:
+	@$(PYTHON) ../../scripts/lit_bib_pull.py --name paper --out references.bib
 # `make paper` builds the three views, then prints the word-count report (non-fatal: the
 # leading '-' means a bad/absent report never fails the build).
 paper: $(addsuffix .pdf,$(VIEWS))

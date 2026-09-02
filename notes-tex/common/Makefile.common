@@ -13,6 +13,9 @@
 #   make clean-view -> $(DOC)-clean.pdf, for sharing outside the group
 #   make check      -> formatting + provenance + status report (does not build)
 #   make bib        -> re-export references.bib from the Zotero group collection
+#                      (Better BibTeX; needs Zotero desktop open on this machine)
+#   make bib-pull   -> pull the sha256-pinned references.bib for THIS document from
+#                      tc-lit (/bib/$(DOC)); works on any machine with a tc-lit key
 #   make figures    -> re-export any draw.io sources this doc references
 #   make plots      -> convert matplotlib SVGs from ASSET_IMAGES_DIR into figures/
 #   make watch      -> rebuild on save
@@ -112,7 +115,7 @@ STAT_MTIME := $(shell /usr/bin/stat -c %Y $(firstword $(DEPS)) >/dev/null 2>&1 \
                 && echo "-c %Y" || echo "-f %m")
 export SOURCE_DATE_EPOCH := $(shell /usr/bin/stat $(STAT_MTIME) $(DEPS) | sort -n | tail -1)
 
-.PHONY: all clean-view check bib bibcheck figures plots watch clean
+.PHONY: all clean-view check bib bib-pull bibcheck figures plots watch clean
 
 all: $(DOC).pdf
 
@@ -149,6 +152,17 @@ else
 	  --personal-collection "$(ZOTERO_PERSONAL_COLLECTION)" \
 	  --out references.bib
 endif
+
+# The headless route to the same file. tc-lit on GilaHyper serves a bibliography
+# per document, exported nightly from the SAME two collections declared above
+# (scripts/lit_bib_store.py reads ZOTERO_COLLECTION/ZOTERO_PERSONAL_COLLECTION
+# from this Makefile) and pinned by sha256. The name asked for is $(DOC), so the
+# document directory name is the join key, exactly as it is for zotero_publish.
+# Verified against the store manifest before it is written; needs TC_LIT_URL and
+# TC_LIT_API_KEY in the repo .env. Web-API export, so fields are formatted by
+# Zotero's translator rather than Better BibTeX; entry keys are the same.
+bib-pull:
+	@$(PYTHON) $(REPO)/scripts/lit_bib_pull.py --name $(DOC) --out references.bib
 
 # CI-able: report citekey conflicts and duplicate works without writing anything.
 # Exits non-zero on a key conflict (one key, two works), which is the failure that

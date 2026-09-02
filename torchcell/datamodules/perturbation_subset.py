@@ -22,6 +22,7 @@ from torchcell.datamodules import (
     DatasetSplit,
     IndexSplit,
 )
+from torchcell.datamodules.cell import _worker_init
 from torchcell.loader.dense_padding_data_loader import DensePaddingDataLoader
 from torchcell.sequence import GeneSet
 from torchcell.utils import format_scientific_notation
@@ -409,6 +410,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
                 follow_batch=self.follow_batch,
                 multiprocessing_context=("spawn" if self.num_workers > 0 else None),
                 prefetch_factor=self.prefetch_factor,
+                worker_init_fn=_worker_init,
             )
         else:
             dataloader_kwargs = {
@@ -421,6 +423,10 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
                 "pin_memory": self.pin_memory,
                 "follow_batch": self.follow_batch,
                 "multiprocessing_context": ("spawn" if self.num_workers > 0 else None),
+                # Same fd-sharing hook the CellDataModule applies; see `_worker_init`.
+                # Without it this datamodule reproduces the failure fixed in f1bfa95b,
+                # because the strategy is read in the worker that pickles the batch.
+                "worker_init_fn": _worker_init,
             }
 
             # Add collate_fn if provided

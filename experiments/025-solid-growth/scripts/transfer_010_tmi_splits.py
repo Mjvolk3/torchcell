@@ -6,8 +6,13 @@
 Split indices do not survive across datasets: 010's cached ``index_seed_42.json``
 stores RECORD INDICES, and adding smf/dmf/tmf/dmi/essentiality/synthleth data to the
 pool changes every index after deduplication and aggregation. The stable join key is
-the genotype identity -- the sorted (systematic_gene_name, perturbation_type) tuple of
-a record's perturbations -- which is unchanged by the added data.
+the genotype identity: the SORTED GENE-NAME SET of a record's perturbations -- the
+same key ``GenotypeAggregator`` groups by in BOTH datasets, so it is one-per-record
+by construction on each side. It deliberately excludes ``perturbation_type``: the
+perturbation-ontology refactor renamed the type vocabulary between the build 010 ran
+against and the served build (``deletion`` -> ``sga_kanmx_deletion`` /
+``mean_deletion`` / ...), and a type-bearing key matched only 682 of 376,732 records
+on the first transfer attempt while the gene-set population matched exactly.
 
 Phase 1 reads 010's split cache + processed LMDB and maps identity -> split.
 Phase 2 reads 025's processed LMDB (run AFTER query.py builds it) and emits
@@ -29,21 +34,19 @@ from tqdm import tqdm
 
 SPLITS = ("train", "val", "test")
 
-IdentityKey = tuple[tuple[str, str], ...]
+IdentityKey = tuple[str, ...]
 
 
 def record_identity(record: list[dict]) -> IdentityKey:
-    """Sorted (systematic_gene_name, perturbation_type) pairs of the record's genotype.
+    """Sorted, de-duplicated gene names of the record's genotype perturbations.
 
     A post-aggregation record is a list of {experiment, experiment_reference} entries
-    sharing one genotype by construction; the first entry's genotype is the record's.
+    sharing one aggregation key by construction; the first entry's genotype carries
+    the gene set. Gene names only -- see the module docstring for why
+    ``perturbation_type`` must stay out of the key.
     """
     perturbations = record[0]["experiment"]["genotype"]["perturbations"]
-    return tuple(
-        sorted(
-            (p["systematic_gene_name"], p["perturbation_type"]) for p in perturbations
-        )
-    )
+    return tuple(sorted({p["systematic_gene_name"] for p in perturbations}))
 
 
 def iter_lmdb_records(lmdb_dir: str):

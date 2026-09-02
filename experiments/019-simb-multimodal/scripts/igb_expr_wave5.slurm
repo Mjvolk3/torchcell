@@ -202,6 +202,38 @@ case "$STAGE" in
   resume) ARMS=("${W5_RESUME_ARM:-W_ref}"); SEEDS=("${W5_RESUME_SEED:-0}")
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v9_mask
           EXTRA_OV="trainer.max_epochs=${W5_RESUME_EPOCHS:-19000} trainer.train_eval_every=10 trainer.resume_ckpt_path=${W5_RESUME_CKPT:?set W5_RESUME_CKPT=/abs/path/to/last.ckpt for the resume stage}" ;;
+  # RESUME_MANY -- restart a whole PACKED round from per-run checkpoints. `resume` above
+  # carries ONE checkpoint and therefore one run per GPU, which cannot restore a round that
+  # was running two runs per card: mmli held 8 objective-round runs on 4 A100s, and
+  # relaunching those unpacked would have halved the round to two sequential rounds of four.
+  #
+  # The checkpoint is per RUN, not per stage, so it cannot ride in EXTRA_OV like every other
+  # override. It comes from a MAP FILE instead, one `arm seed ckpt_path` record per line,
+  # blank and #-comment lines ignored. A file rather than a packed env var on purpose: it is
+  # an artifact that can be read back later to say exactly which run resumed from which
+  # checkpoint, which is the only record of where a restarted round came from.
+  #
+  # Run order in the file IS the packing order, so lines 1-2 share the first GPU, 3-4 the
+  # second, and so on. Keep co-resident runs different arms, as the seed-major builder below
+  # does, rather than putting two replicates of one arm on the same card.
+  #
+  #   sbatch -p mmli --gres=gpu:1 --cpus-per-task=16 --mem=100g --time=5-00:00:00 \
+  #     --array=0-3 --export=ALL,W5_STAGE=resume_many,W5_RESUME_MAP=/abs/map.tsv,\
+  # W5_RESUME_EPOCHS=9900,... igb_expr_wave5.slurm
+  resume_many)
+          MAP="${W5_RESUME_MAP:?set W5_RESUME_MAP=/abs/path/to/map.tsv for resume_many}"
+          [[ -r "$MAP" ]] || { echo "W5_RESUME_MAP is not readable: $MAP" >&2; exit 1; }
+          RESUME_JOBS=(); RESUME_CKPTS=()
+          while read -r _arm _seed _ck _rest; do
+            [[ -z "${_arm:-}" || "${_arm:0:1}" == "#" ]] && continue
+            [[ -n "${_seed:-}" && -n "${_ck:-}" ]] || {
+              echo "malformed W5_RESUME_MAP line for arm '$_arm'" >&2; exit 1; }
+            RESUME_JOBS+=("$_arm:$_seed"); RESUME_CKPTS+=("$_ck")
+          done < "$MAP"
+          [[ "${#RESUME_JOBS[@]}" -gt 0 ]] || { echo "W5_RESUME_MAP has no records" >&2; exit 1; }
+          ARMS=(); SEEDS=()
+          RUNS_PER_GPU="${W5_RESUME_PACK:-2}"; STAGE_CONFIG=cgt_expr_v9_mask
+          EXTRA_OV="trainer.max_epochs=${W5_RESUME_EPOCHS:-9900} trainer.train_eval_every=10" ;;
   # ---------------------------------------------------------------- MECHANISM (2026.09.01)
   # Pair-term and READOUT mechanisms, replicated, on the four cabbi cards the objective
   # round left free. 4 arms x 2 seeds = 8 runs at 2/GPU = 4 tasks.
@@ -236,19 +268,28 @@ case "$STAGE" in
           ARMS=(Q_crps Q_laplace Q_point); SEEDS=(0)
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v9_mask
           EXTRA_OV="trainer.fast_dev_run=true" ;;
-  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|h2|probe|long|wave6|launch|resume|mech)" >&2; exit 1 ;;
+  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|h2|probe|long|wave6|launch|resume|resume_many|mech)" >&2; exit 1 ;;
 esac
 
 # SEED-MAJOR, so each task's co-resident runs are DIFFERENT arms rather than three copies of
 # one. The metric is unaffected either way (the budget is a fixed epoch count, so a slower
 # neighbour costs wall time, not score), but arm-blocked packing aligns "what you share a GPU
 # with" perfectly with the arm axis, and there is no reason to leave that correlation in.
-JOBS=()
-for seed in "${SEEDS[@]}"; do
-  for arm in "${ARMS[@]}"; do
-    JOBS+=("$arm:$seed")
+#
+# resume_many is the one stage that does NOT build its run list from an arm x seed product:
+# its runs, their order and their checkpoints all come from the map file, and reordering them
+# here would break the JOBS[i] <-> RESUME_CKPTS[i] pairing that assigns each run its own
+# checkpoint.
+if [[ "$STAGE" == "resume_many" ]]; then
+  JOBS=("${RESUME_JOBS[@]}")
+else
+  JOBS=()
+  for seed in "${SEEDS[@]}"; do
+    for arm in "${ARMS[@]}"; do
+      JOBS+=("$arm:$seed")
+    done
   done
-done
+fi
 
 TASK="${SLURM_ARRAY_TASK_ID:?this script must be submitted with --array}"
 START=$((TASK * RUNS_PER_GPU))
@@ -338,13 +379,20 @@ for k in $(seq 0 $((RUNS_PER_GPU - 1))); do
   ARM="${JOB%%:*}"
   SEED="${JOB##*:}"
   LOG="$OUT_DIR/019-wave5-igb_${SLURM_ARRAY_JOB_ID}_${TASK}_${ARM}_seed${SEED}.out"
+  # Per-RUN overrides. Only resume_many has any: its checkpoint differs between the two runs
+  # sharing this GPU, so it cannot travel in the stage-wide EXTRA_OV.
+  RUN_OV=""
+  if [[ "$STAGE" == "resume_many" ]]; then
+    RUN_OV=" trainer.resume_ckpt_path=${RESUME_CKPTS[$IDX]}"
+    echo "  resuming $ARM seed=$SEED from ${RESUME_CKPTS[$IDX]}"
+  fi
   echo "  launching $ARM seed=$SEED -> $LOG"
   singularity exec --nv "$SIF" bash -c "
     # -u omitted on purpose: conda's activate scripts reference unset variables, the same
     # class of failure as /etc/bashrc above. -e and pipefail still catch real errors.
     set -eo pipefail
     $CONTAINER_ENV
-    export TORCHCELL_EXTRA_OVERRIDES='$EXTRA_OV trainer.early_stopping.enabled=false data_module.num_workers=$NUM_WORKERS'
+    export TORCHCELL_EXTRA_OVERRIDES='$EXTRA_OV$RUN_OV trainer.early_stopping.enabled=false data_module.num_workers=$NUM_WORKERS'
     echo \"python: \$(which python)\"
     echo \"overrides: \$TORCHCELL_EXTRA_OVERRIDES\"
     bash '$ARM_SH' '$ARM' '$SEED'

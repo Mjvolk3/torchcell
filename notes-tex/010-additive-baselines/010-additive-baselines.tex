@@ -1,0 +1,75 @@
+%% notes-tex/010-additive-baselines/010-additive-baselines.tex
+%% [[experiments.010-kuzmin-tmi.additive-baseline-analysis]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/010-additive-baselines/010-additive-baselines.tex
+%%
+%% Typeset counterpart of notes/experiments.010-kuzmin-tmi.additive-baseline-analysis.md.
+%%
+%% Build:  make            -> 010-additive-baselines.pdf   (draft: status chips)
+%%         make clean-view -> ...-clean.pdf                (share view)
+%%         make check      -> formatting / provenance / style gate
+%%         make plots      -> re-convert the matplotlib panels from ASSET_IMAGES_DIR
+%%
+%% Every number is produced by a committed script under
+%% experiments/010-kuzmin-tmi/scripts/ and read back from
+%% experiments/010-kuzmin-tmi/results/. Architecture claims are read from
+%% torchcell/models/equivariant_cell_graph_transformer.py at the line numbers
+%% given, not recalled.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+%% Long \texttt paths in prose cannot hyphenate, so give TeX room to stretch a
+%% line rather than run it past the text block.
+\emergencystretch=3.5em
+
+\title{\vspace{-1.5em}What the 010 Trigenic Model Is Measured Against\\
+  {\large Additive nulls, what each model actually sees, and whether the
+   comparison is fair}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+A model that claims to learn genetic interaction has to beat a null that cannot
+represent interaction. Fitting that null on experiment 010 puts a per-gene
+additive ridge at 0.400 test Pearson against the cell graph transformer's 0.438
+to 0.455, and puts a model that sees only which recurring gene pair a triple
+contains, ignoring the third gene entirely, at 0.390. Reading the model code
+establishes what the comparison is between: the transformer's encoder never sees
+the strain, the nine interaction graphs never enter the forward pass, and the
+strain-dependent computation is a set function over the three perturbed gene
+identities, which is the same input and the same hypothesis-class shape the
+nulls have. Rebuilding the forward pass from that reading reproduces the
+recorded metrics to the fourth decimal and yields per-record predictions. Those
+show the transformer is not a relabeled additive model, correlating with it at
+0.73 to 0.76 rather than the 0.999 reported for MULTI-evolve, and that its gain
+over the null is $+0.04$ to $+0.055$ Pearson with bootstrap intervals excluding
+zero. They also show two training runs of the architecture agree with each other
+at 0.79 to 0.82, so the non-additive content is largely not reproducible across
+seeds. Separately, the transformer's predictions over the unmeasured design
+space do not agree between inference runs of one checkpoint, which is a defect
+in the runs that produced the panel selection rather than a fact about
+additivity.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-question}
+\input{sections/2-what-is-predicted}
+\input{sections/3-what-each-model-sees}
+\input{sections/4-models}
+\input{sections/5-comparability}
+\input{sections/6-results}
+\input{sections/7-design-space}
+\input{sections/8-limits}
+
+\end{document}

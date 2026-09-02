@@ -1,0 +1,8 @@
+tcdoc.sty
+sn-nature.bst
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*-clean.tex

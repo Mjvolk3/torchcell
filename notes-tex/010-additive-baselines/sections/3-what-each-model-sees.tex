@@ -1,0 +1,113 @@
+%% notes-tex/010-additive-baselines/sections/3-what-each-model-sees.tex
+
+\section{What each model actually sees\secstatus{todo}}
+\label{sec:sees}
+
+The comparison is only meaningful if the models are given the same information.
+Reading the 010 code settles that, and the answer is stronger than expected:
+every model in this document, the transformer included, receives exactly one
+thing per record, the set of three perturbed genes.
+
+\subsection{The transformer's per-sample input\secstatus{todo}}
+
+The 010 dataset is built with the \texttt{Perturbation} graph processor. That
+processor writes the perturbed gene names, their indices, a boolean mask and the
+label into each sample, and nothing else
+(\texttt{graph\_processor.py}, lines 1984 to 2058). There is no per-gene feature
+matrix: with an empty \texttt{node\_embeddings} list in the config, the gene
+feature tensor of the cell graph has shape $6607 \times 0$
+(\texttt{cell\_data.py}, line 53). Gene identity is carried by a free lookup
+table of 6{,}607 rows and 180 columns
+(\texttt{equivariant\_cell\_graph\_transformer.py}, line 1989), initialized
+randomly and fit by gradient descent.
+
+No sequence, expression, ontology or other precomputed representation enters.
+The model is given gene identities, the same as a one-hot design matrix, and
+learns its own 180-dimensional vector for each.
+
+\subsection{The encoder does not depend on the strain\secstatus{todo}}
+\label{sec:encoder}
+
+The forward pass builds its input as
+\texttt{gene\_embedding(torch.arange(N))}, prepends a CLS token, and unsqueezes
+to shape $[1, N{+}1, 180]$. That leading dimension is $1$, not the batch size.
+The eight transformer layers then run on this single tensor, which is assembled
+entirely from parameters and contains nothing from \texttt{batch}. Writing $E$
+for the embedding table and $T$ for the eight-layer encoder,
+%
+\begin{equation}
+  Z \;=\; T(E) \in \mathbb{R}^{N \times 180},
+  \qquad
+  h_{\mathrm{CLS}} \in \mathbb{R}^{180},
+  \label{eq:encoder}
+\end{equation}
+%
+and $Z$ and $h_{\mathrm{CLS}}$ are the same for every record in the dataset. The
+repository states this itself, in the docstring of
+\texttt{PerturbationGraphPropagation}: ``The encoder runs at batch 1 on the
+WILDTYPE graph, so \texttt{H\_genes} and \texttt{h\_CLS} are identical for every
+strain; the only strain-dependent step is
+\texttt{EquivariantPerturbationTransform}.''
+
+So the eight encoder layers, which hold 3{,}129{,}120 of the model's 4{,}774{,}861
+parameters, perform no per-sample computation. They map one free parameter block
+to another. Whatever role they play, it is not to process the strain.
+
+\subsection{The nine graphs do not enter the prediction\secstatus{todo}}
+\label{sec:graphs}
+
+The model has three places adjacency could act. In the 010 configuration all
+three are off. The attention-mask configuration is not passed, so the head mask
+is \texttt{None} and every layer receives no mask. The
+perturbation-propagation configuration is not passed either, so that block is
+skipped. The attention itself is ordinary softmax self-attention with no
+adjacency bias term.
+
+The nine adjacency matrices are used in one place only, a Kullback-Leibler
+penalty between each normalized adjacency and one attention head of layer 1,
+which is added to the \emph{loss}. Setting that penalty's weight to zero
+therefore cannot change any prediction. Section~\ref{sec:results} reports the
+measurement rather than resting on the reading.
+
+Two further facts about the 010-era code bear on how much the penalty could have
+shaped $Z$ even indirectly. The configuration names \texttt{physical} and
+\texttt{regulatory}, while the cell graph emits
+\texttt{physical\_interaction} and \texttt{regulatory\_interaction}, and the
+code of that period skipped any name it did not find, so two of the nine heads
+were silently unregularized. And the penalty weight was applied twice from the
+same configuration key, giving an effective weight of $10^{-6}$ rather than
+$10^{-3}$. Both were fixed in July 2026, after these runs.
+
+\subsection{The transformer is a set function on three genes\secstatus{todo}}
+\label{sec:setfunction}
+
+What remains after Eq.~\ref{eq:encoder} is the strain-dependent part. For a
+record with perturbed set $S$, $|S| = 3$, the perturbation transform performs
+cross-attention in which all $N$ genes query the $|S|$ rows $\{Z_p : p \in S\}$,
+followed by a residual, a layer norm and a feedforward block, giving
+$H^{\mathrm{pert}}_i = g(Z_i + c_S)$ where $c_S$ is the attended context. The
+head then pools over the perturbed genes and reads out,
+%
+\begin{equation}
+  z_S \;=\; \frac{1}{|S|}\sum_{i \in S} H^{\mathrm{pert}}_i ,
+  \qquad
+  \hat{y} \;=\; \mathrm{MLP}\!\left([\,h_{\mathrm{CLS}} \,\Vert\, z_S\,]\right),
+  \label{eq:cgt}
+\end{equation}
+%
+with the MLP being $\mathrm{Linear}(360, 180) \to \mathrm{ReLU} \to
+\mathrm{Linear}(180, 1)$.
+
+Since $h_{\mathrm{CLS}}$ is constant, Eq.~\ref{eq:cgt} is a function of $z_S$
+alone, and $z_S$ is a permutation-invariant pooling of quantities derived from
+$\{Z_p : p \in S\}$. The 010 transformer is therefore a set function on the
+three perturbed gene identities, built on a free per-gene vector. That is the
+same functional shape as the additive nulls, which are set functions on the same
+three identities built on a free per-gene scalar. The models differ in how
+expressive the set function is, not in what they are allowed to see.
+
+This is what makes the comparison in Section~\ref{sec:results} fair, and it also
+corrects a claim made in an earlier version of the working note, that the gap
+between the nonlinear baseline and the transformer was attributable to the nine
+interaction graphs. The graphs are not in the forward pass, so that gap cannot
+be attributed to them.

@@ -1,0 +1,137 @@
+%% notes-tex/010-additive-baselines/sections/5-comparability.tex
+
+\section{Is the comparison fair\secstatus{todo}}
+\label{sec:comparability}
+
+Six things have to match before a baseline number can sit in the same table as a
+transformer number. Five do. One does not, and it favors the transformer by a
+small amount.
+
+\subsection{Which split the reported numbers come from\secstatus{todo}}
+
+Both validation and test numbers are available for the transformer, and the
+table in Section~\ref{sec:results} reports \textbf{test}. The distinction
+matters because the three transformer checkpoints are \emph{best-Pearson}
+checkpoints, selected on validation across roughly 25 to 64 validation epochs.
+A validation Pearson chosen that way is the maximum of many draws and is
+upward-biased as an estimate of capability; its test Pearson is not, because
+test was not consulted during selection.
+
+The baselines follow the same discipline. B1, B2 and B4 select the ridge
+penalty on validation and report test. B5 early-stops on validation and reports
+test. So the test column compares like with like, and the validation column is
+biased in the same direction for every row.
+
+\subsection{What the transformer metrics are\secstatus{todo}}
+
+The metrics come from the three checkpoints' re-evaluation runs under
+\texttt{\$DATA\_ROOT/wandb-experiments}, read from
+\texttt{files/wandb-summary.json} rather than retyped. Two families of key exist
+and they are not interchangeable.
+
+\begin{itemize}
+\item \texttt{val/gene\_interaction/\{MSE,RMSE,Pearson\}} and the \texttt{test/}
+  equivalents are torchmetrics objects updated once per batch and computed at
+  epoch end, so they cover the \emph{full} 37{,}673 records of each split. They
+  are computed after the inverse transform, in raw $\tau$ units.
+\item \texttt{val\_sample/Spearman\_target\_0} and its test counterpart come
+  from a separate path that collects samples for plotting and is capped by
+  \texttt{plot\_sample\_ceiling}. In the evaluation configuration that ceiling
+  is $10^{6}$, above the split size, so no truncation fires and the Spearman is
+  also over the full split. In the \emph{training} configuration the same
+  ceiling is 10{,}000, so a Spearman quoted from a training run would be over a
+  random 10{,}000 of 37{,}673. The numbers here are from the evaluation runs.
+\item \texttt{val/transformed/gene\_interaction/*} are the same metrics in
+  standardized units and are not used here.
+\end{itemize}
+
+The baselines compute Pearson, Spearman and mean squared error over the same
+full splits in raw $\tau$ units, so the units and the denominators agree.
+
+\subsection{What each model sees\secstatus{todo}}
+
+Established in Section~\ref{sec:sees}: the perturbed gene set, and nothing else,
+for every model in the comparison. No baseline is handicapped by being denied a
+feature the transformer had, and the transformer is not credited with
+information it never received.
+
+\subsection{Where the comparison is not clean\secstatus{todo}}
+
+\notesec{Label normalization leaks}
+The transformer trains on standardized labels, and the standardization
+statistics are fit on \emph{all} 376{,}732 records rather than on the training
+split. The transform is constructed from \texttt{dataset.label\_df}, which
+iterates every record in the LMDB with no split filter, and it is constructed
+before the data module splits the data. The logged constants confirm it: mean
+$-0.008024324$ and standard deviation $0.063263549$ match the all-record
+statistics to nine digits and do not match the train-only values
+$-0.007688739$ and $0.063186255$.
+
+The leak is two global scalars, and the train and all-record values differ by
+about $3 \times 10^{-4}$ in the mean and $10^{-4}$ in the standard deviation, so
+the effect is small. It is nonetheless real, it runs in the transformer's favor,
+and the baselines do not have it: they use the training mean only. No correction
+is applied here, and no attempt is made to estimate the size of the advantage.
+
+\notesec{The loss functions differ, deliberately}
+The baselines minimize squared error. The transformer minimizes
+%
+\begin{equation}
+  \mathcal{L} \;=\; \lambda_p \mathcal{L}_{\mathrm{MSE}}
+  \;+\; \lambda_d\, S_{\epsilon}\!\left(
+    \tfrac{1}{B}\textstyle\sum_b \delta_{\hat{y}_b},\;
+    \tfrac{1}{B}\textstyle\sum_b \delta_{y_b}\right)
+  \;+\; \lambda_g \mathcal{L}_{\mathrm{graph}},
+  \label{eq:loss}
+\end{equation}
+%
+with $\lambda_p = 1$, $\lambda_d = 0.1$, $\lambda_g = 1$. The middle term is a
+debiased Sinkhorn divergence with $p = 2$ and blur $0.05$ between the empirical
+measure of the batch's predictions and that of the batch's targets, computed
+unpaired, which shapes the marginal distribution of the predictions rather than
+their per-record accuracy. The third term is the graph penalty of
+Section~\ref{sec:graphs}.
+
+This is a difference in training objective, not in the evaluation, and it is
+part of what the transformer is. It is noted because a distributional term can
+move Pearson and mean squared error in opposite directions, so the two metrics
+should be read together rather than either alone.
+
+\notesec{Paired residuals are not available from the recorded runs}
+The original evaluation runs wrote per-record prediction files to the cluster
+checkout, and those files are not on this machine. Recomputing them through the
+stock evaluation script fails, because the 010 LMDB predates the
+perturbation-ontology refactor: every record carries
+\texttt{perturbation\_type: "deletion"} where the current pydantic schema admits
+only \texttt{sga\_kanmx\_deletion} or \texttt{sga\_natmx\_deletion}, which is 204
+validation errors on the first batch. Section~\ref{sec:results} reports how far
+this was worked around.
+
+\subsection{Model size\secstatus{todo}}
+
+%% SOURCE: parameter counts read from
+%% torchcell/models/equivariant_cell_graph_transformer.py at the lines given
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lrl}
+\hline
+Component & Parameters & Role \\
+\hline
+Gene embedding table & 1{,}189{,}260 & the only place gene identity lives \\
+Encoder, 8 layers & 3{,}129{,}120 & strain-independent, see Sec.~\ref{sec:encoder} \\
+Perturbation transform & 391{,}140 & the strain-dependent step \\
+Readout head & 65{,}161 & pooling and MLP \\
+CLS token & 180 & constant \\
+\hline
+Total & 4{,}774{,}861 & \\
+\hline
+B1 additive ridge & 4{,}353 & one scalar per gene, plus intercept \\
+B5 embedding MLP & 623{,}745 & 128 per gene, plus a two-layer network \\
+\hline
+\end{tabular}
+\caption{Parameter budget. Two thirds of the transformer sits in the encoder,
+which does no per-sample work, and a quarter in the embedding table. The
+strain-dependent computation is 456{,}301 parameters, under a tenth of the
+model.}
+\label{tab:params}
+\end{table}

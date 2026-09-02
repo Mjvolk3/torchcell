@@ -201,3 +201,139 @@ extreme tail is therefore not reproducible even without the inference problem.
   structure, since B4 shows how much of the current metric is the latter.
 - Report an ensemble or a seed-averaged ranking rather than one checkpoint's
   tail for any future selection.
+
+## 2026.09.01 - Correction and Architecture Reading
+
+### Correction
+
+The section above attributed the gap between the nonlinear baseline B5 and the
+transformer to the nine interaction graphs. That is wrong. Reading the model
+shows the graphs never enter the forward pass in the 010 configuration, so no
+part of any performance difference can be attributed to them.
+
+### What the 010 transformer actually computes
+
+Verified by reading `torchcell/models/equivariant_cell_graph_transformer.py`.
+
+- **Per-sample input is the perturbed gene set and nothing else.** The
+  `Perturbation` graph processor writes `perturbation_indices`, `pert_mask` and
+  the label. With `node_embeddings: []`, `cell_graph["gene"].x` is a 6607 by 0
+  tensor. Gene identity lives only in a free `nn.Embedding(6607, 180)`.
+- **The encoder does not depend on the strain.** The forward pass builds its
+  input from `gene_embedding(torch.arange(N))`, prepends a CLS token and
+  unsqueezes to `[1, N+1, 180]`. That leading 1 is not the batch size. The eight
+  transformer layers run on this single tensor, which contains nothing from
+  `batch`. The repository states this itself in the `PerturbationGraphPropagation`
+  docstring: the encoder runs at batch 1 on the wildtype graph, so `H_genes` and
+  `h_CLS` are identical for every strain.
+- **The nine graphs are a loss term only.** `attention_mask_config` and
+  `perturbation_propagation_config` are not passed, so hard masking and graph
+  propagation are both off, and attention carries no adjacency bias. The
+  adjacency matrices are used only in a KL penalty added to the loss. In the
+  010-era code that penalty also covered 7 of 9 graphs, because the config names
+  `physical` and `regulatory` while the cell graph emits `physical_interaction`
+  and `regulatory_interaction` and the code skipped unmatched names, and its
+  weight was applied twice from one config key for an effective 1e-6.
+- **So the model is a set function on three gene identities.** With the encoder
+  output constant, prediction is `MLP([h_CLS || z_S])` where `z_S` is the mean
+  over the perturbed genes of `g(Z_i + c_S)` and `c_S` is attention over the
+  perturbed rows. That is the same construction as B5, with a richer pooling and
+  about eight times the parameters.
+
+Measured: setting the graph penalty weight from 1.0 to 0.0 changes test
+predictions by at most 4.0e-6 across the three checkpoints, against a prediction
+spread of about 0.02, which confirms the graphs do not affect the forward pass.
+Script: `experiments/010-kuzmin-tmi/scripts/score_010_checkpoints_directly.py`.
+
+### Parameter budget
+
+| component | parameters |
+|---|---|
+| gene embedding table | 1,189,260 |
+| encoder, 8 layers, strain-independent | 3,129,120 |
+| perturbation transform, the strain-dependent step | 391,140 |
+| readout head | 65,161 |
+| CLS token | 180 |
+| total | 4,774,861 |
+
+Two thirds of the model does no per-sample work. The strain-dependent
+computation is 456,301 parameters.
+
+### Comparability audit
+
+- **Reported numbers are test.** The transformer checkpoints are best-Pearson
+  selected on validation, so their val numbers are an upward-biased maximum over
+  epochs. The baselines select their ridge penalty or early-stopping epoch on
+  validation too, so the test column compares like with like.
+- **Transformer metrics come from the checkpoints' own re-evaluation runs.**
+  `val|test/gene_interaction/{MSE,RMSE,Pearson}` are torchmetrics over the full
+  37,673 records per split, in raw tau units.
+  `val_sample|test_sample/Spearman_target_0` come from a separate plotting path
+  capped by `plot_sample_ceiling`, which is 1e6 in the eval config so no
+  truncation fires. In training configs that ceiling is 10,000, so a Spearman
+  quoted from a training run would be over a random 10,000 of 37,673. CGT test
+  Spearman is 0.426408 (M01), 0.424106 (M02), 0.426226 (M03).
+- **One asymmetry, favoring the transformer.** The label standardization is fit
+  on all 376,732 records, not on train only. The logged constants match the
+  all-record mean and sd to nine digits and do not match the train-only values.
+  The leak is two global scalars and the values differ by about 3e-4 in the mean,
+  so the effect is small, but the baselines use train-only statistics and the
+  transformer does not.
+
+### Why per-record paired comparison is still missing
+
+The stock eval cannot run on this build: the 010 LMDB stores
+`perturbation_type: "deletion"` and the current pydantic schema admits only
+`sga_kanmx_deletion` or `sga_natmx_deletion`, giving 204 validation errors on the
+first batch. A checkpoint key rename was also needed, since
+`EquivariantPerturbationTransform` became a ModuleList after these runs
+(`experiments/010-kuzmin-tmi/scripts/remap_010_checkpoints.py`).
+
+Bypassing the loader by rebuilding the gene index from the genome did not
+reproduce the recorded metrics on the first attempt, so those predictions were
+rejected rather than used. The index space the training runs used has not yet
+been reproduced.
+
+### Per-record comparison, now measured
+
+The loader blocker was worked around by rebuilding the forward pass from the
+architecture reading, which also verified that reading. Scripts:
+[[experiments.010-kuzmin-tmi.scripts.score_010_checkpoints_directly]] and
+[[experiments.010-kuzmin-tmi.scripts.paired_prediction_agreement]].
+
+Prediction correlation on the 37,673 test records:
+
+| | CGT M01 | CGT M02 | CGT M03 |
+|---|---|---|---|
+| B1 additive ridge | 0.752 | 0.726 | 0.759 |
+| B2 additive plus pair | 0.759 | 0.734 | 0.765 |
+| B4 query pair only | 0.729 | 0.706 | 0.735 |
+| B5 embedding MLP | 0.788 | 0.784 | 0.810 |
+| CGT M01 | | 0.788 | 0.821 |
+| CGT M02 | 0.788 | | 0.804 |
+
+- **The 010 transformer is not a relabeled additive model.** DeWitt reported
+  r > 0.999 between the network and the additive fit; here it is 0.73 to 0.76.
+  That is the opposite of the preprint's finding and it is what the null was fit
+  to test.
+- **Its non-additive content is largely seed noise.** Two training runs of the
+  same architecture on the same split agree at 0.788 to 0.821, barely more than a
+  checkpoint agrees with the additive model and no more than it agrees with the
+  nonlinear baseline.
+- **The models are wrong in the same places.** B1-to-checkpoint residual
+  correlation is 0.907, 0.897, 0.918.
+- **The advantage is real and bounded.** Paired bootstrap over records, 2,000
+  resamples, Pearson gain over B1: M01 +0.043 [+0.023, +0.063], M02 +0.038
+  [+0.019, +0.058], M03 +0.055 [+0.034, +0.074], B5 +0.025 [+0.017, +0.033]. All
+  exclude zero.
+- **Rankings diverge in the tail.** Top-100 overlap on most-negative predictions:
+  B1 and M03 share 31, B5 and M03 share 45, B1 and B5 share 46. At K = 10,000
+  every pair exceeds 0.91.
+
+![](assets/images/010-kuzmin-tmi/paired_prediction_agreement.svg)
+
+### Typeset version
+
+Full write-up with the equations, the capacity table and the comparability
+audit: `notes-tex/010-additive-baselines/010-additive-baselines.pdf`, built by
+`make -C notes-tex/010-additive-baselines`.

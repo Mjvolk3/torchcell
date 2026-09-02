@@ -1,0 +1,145 @@
+%% notes-tex/010-additive-baselines/sections/4-models.tex
+
+\section{The models\secstatus{todo}}
+\label{sec:models}
+
+\subsection{Notation and the interaction operator\secstatus{todo}}
+
+Let $G$ be the 4{,}352 genes appearing in the build and let record $n$ have
+perturbed set $S_n \subset G$ with $|S_n| = 3$. Encode it as
+$x_n \in \{0,1\}^{|G|}$ with $x_{n,g} = 1$ exactly when $g \in S_n$, so that
+$\lVert x_n \rVert_1 = 3$ for every record. Write $y_n$ for the trigenic
+interaction score of Eq.~\ref{eq:tau}.
+
+A model is a set function $f : 2^{G} \to \mathbb{R}$. Its capacity to represent
+interaction is measured by finite differences. For distinct genes $g, h, k$ and
+any $S$ disjoint from them, define
+%
+\begin{align}
+  \Delta_g f(S) &= f(S \cup \{g\}) - f(S), \\
+  \Delta_{gh} f(S) &= f(S \cup \{g,h\}) - f(S \cup \{g\}) - f(S \cup \{h\}) + f(S),
+  \label{eq:delta2}\\
+  \Delta_{ghk} f(S) &= \sum_{U \subseteq \{g,h,k\}} (-1)^{3-|U|} f(S \cup U).
+  \label{eq:delta3}
+\end{align}
+%
+$\Delta_{gh} f \equiv 0$ says the model cannot express any pairwise interaction;
+$\Delta_{ghk} f \equiv 0$ says it cannot express any three-way interaction. These
+are the properties that make a model a null, and they are structural, holding for
+every parameter setting rather than for a fitted one.
+
+\subsection{B0, the train mean\secstatus{todo}}
+
+$\hat{y} = \bar{y}_{\mathrm{train}}$. Every finite difference vanishes. Its mean
+squared error is the label variance, and it fixes the zero point against which
+all reductions are read.
+
+\subsection{B1, the additive per-gene ridge\secstatus{todo}}
+
+%
+\begin{equation}
+  \hat{y}(S) \;=\; \beta_0 + \sum_{g \in S} \beta_g ,
+  \qquad
+  \hat{\beta} \;=\; \arg\min_{\beta} \sum_{n \in \mathrm{train}}
+  \bigl(y_n - \beta_0 - x_n^{\top}\beta\bigr)^2 + \alpha \lVert \beta \rVert_2^2 ,
+  \label{eq:b1}
+\end{equation}
+%
+with $\beta_0$ unpenalized and set to $\bar{y}_{\mathrm{train}}$. Substituting
+Eq.~\ref{eq:b1} into Eq.~\ref{eq:delta2} gives $\Delta_{gh}\hat{y} = 0$ and hence
+$\Delta_{ghk}\hat{y} = 0$ identically. B1 is the direct analog of the additive
+null in the DeWitt preprint.
+
+The design is well conditioned despite having 4{,}352 coefficients: with three
+ones per row and 301{,}386 training rows there are 904{,}158 gene observations,
+a median of 9 per gene in the training split with a maximum of 3{,}430. The
+ridge penalty is chosen on validation over
+$\alpha \in \{10^{-2}, 10^{-1}, 1, 3, 10, 30, 100, 300, 1000\}$ and the selected
+value is then reported on test.
+
+\subsection{B2, additive plus recurring gene pairs\secstatus{todo}}
+
+Let $P$ be the set of unordered gene pairs occurring at least five times in the
+training split, $|P| = 420$. Adding one coefficient per such pair,
+%
+\begin{equation}
+  \hat{y}(S) \;=\; \beta_0 + \sum_{g \in S} \beta_g
+  + \sum_{\{g,h\} \subseteq S,\; \{g,h\} \in P} \gamma_{gh} ,
+  \label{eq:b2}
+\end{equation}
+%
+gives $\Delta_{gh}\hat{y} = \gamma_{gh}$ for a pair in $P$ and zero otherwise.
+B2 therefore has second-order capacity on observed pairs. It still has
+\emph{no} third-order capacity: $\Delta_{ghk}\hat{y} = 0$ identically. Since the
+label is itself a third-order residual, B2 remains a null with respect to the
+quantity being predicted.
+
+\subsection{B3 and B4, the screen-structure baselines\secstatus{todo}}
+
+B4 drops the per-gene terms from Eq.~\ref{eq:b2} and keeps only the pair terms,
+%
+\begin{equation}
+  \hat{y}(S) \;=\; \beta_0 + \sum_{\{g,h\} \subseteq S,\; \{g,h\} \in P} \gamma_{gh} .
+  \label{eq:b4}
+\end{equation}
+%
+Because the recurring pairs are the Kuzmin query doubles, B4 is close to a
+per-query-batch offset. For a triple made of a query pair and an array gene, the
+array gene contributes nothing at all to Eq.~\ref{eq:b4}. Whatever B4 achieves is
+therefore an upper bound on how much of the metric is explained by knowing which
+screen a record came from.
+
+B3 is the unregularized empirical counterpart: predict the mean training label
+over triples sharing each recurring pair, backing off to the mean over triples
+containing each gene, and then to the global mean.
+
+\subsection{B5, nonlinearity on the same features\secstatus{todo}}
+
+Give each gene a free vector $e_g \in \mathbb{R}^{128}$, sum over the perturbed
+set and read out with a two-hidden-layer network $\phi$,
+%
+\begin{equation}
+  \hat{y}(S) \;=\; \phi\!\left(\sum_{g \in S} e_g\right),
+  \qquad
+  \phi : \mathbb{R}^{128} \to \mathbb{R}.
+  \label{eq:b5}
+\end{equation}
+%
+This is permutation invariant and uses precisely B1's feature space, the identity
+of the three genes and nothing more. Because $\phi$ is nonlinear,
+$\Delta_{gh}\hat{y}$ and $\Delta_{ghk}\hat{y}$ are not identically zero, so B5 is
+not a null. It is the smallest departure from B1 that has interaction capacity,
+and it isolates what capacity alone buys.
+
+Comparing Eq.~\ref{eq:b5} with Eq.~\ref{eq:cgt} shows they are the same
+construction. Both give every gene a free vector, pool over the three perturbed
+genes in a permutation-invariant way, and pass the pooled vector through a small
+network. The transformer's pooling is richer, since the context $c_S$ is
+produced by attention over the perturbed set rather than by a plain sum, and its
+per-gene vectors are $Z = T(E)$ rather than a raw table. Trained with three
+seeds, B5 reports a spread rather than a single number.
+
+\subsection{Summary of capacity\secstatus{todo}}
+
+%% SOURCE: structural, derived above from Eqs. 4-9; no data involved
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lllcc}
+\hline
+Model & Per-gene representation & Set aggregation & $\Delta_{gh} \not\equiv 0$ & $\Delta_{ghk} \not\equiv 0$ \\
+\hline
+B0 & none & none & no & no \\
+B4 & none & recurring pair indicators & yes & no \\
+B3 & scalar mean & pair mean, backing off & yes & no \\
+B1 & free scalar & sum & no & no \\
+B2 & free scalar & sum plus pair terms & yes & no \\
+B5 & free 128-vector & sum, then MLP & yes & yes \\
+CGT & free 180-vector via $T(E)$ & attention over $S$, mean, MLP & yes & yes \\
+\hline
+\end{tabular}
+\caption{What each model can represent. The last two columns are structural
+properties of the hypothesis class, not fitted results. Only B5 and the cell
+graph transformer can express a three-way interaction, which is what the label
+is.}
+\label{tab:capacity}
+\end{table}

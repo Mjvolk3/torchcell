@@ -1,0 +1,119 @@
+%% notes-tex/010-additive-baselines/sections/7-design-space.tex
+
+\section{The design space, and a defect found there\secstatus{todo}}
+\label{sec:design}
+
+Figure 1 of the DeWitt preprint is a scatter of network predictions against
+additive predictions across the whole combinatorial space, and its force comes
+from the near-identity of the two rankings: the variants selected for
+construction were recoverable without the network. The same comparison on 010
+gave a result that turned out not to be about additivity at all.
+
+\subsection{The comparison as run\secstatus{todo}}
+
+Checkpoint \texttt{c7671wgj} scored three separate 010 inference spaces:
+
+\begin{itemize}
+\item \texttt{inference\_1}, 4{,}370{,}595 triples over a 526-gene panel,
+\item \texttt{inference\_2}, 479{,}195 triples,
+\item \texttt{inference\_3}, 465{,}735{,}532 triples genome-wide, which is the
+  space the panel-12 and panel-24 selections consumed.
+\end{itemize}
+
+Scoring the same triples with B1 and streaming the 4~GB prediction file gives,
+over the 325{,}631{,}845 triples of \texttt{inference\_3} whose three genes all
+carry an additive coefficient, a Pearson correlation of $0.0018$ and a top-100
+overlap of zero. Stratifying by the training support of each triple's
+least-observed gene does not account for it: even where all three genes have 800
+or more training observations, $n = 867{,}669$, the correlation is $0.036$.
+
+On \texttt{inference\_1} the same comparison behaves completely differently. B1
+against the three checkpoints gives $0.548$, $0.579$ and $0.511$.
+
+\subsection{One checkpoint disagreeing with itself\secstatus{todo}}
+
+The model is a deterministic function of the perturbed gene set, so a triple
+scored twice by one checkpoint must receive the same number twice. It does not.
+
+%% SOURCE: experiments/010-kuzmin-tmi/scripts/inference_run_consistency.py,
+%% results/inference_run_consistency.csv
+\begin{table}[htbp]
+\centering
+\begin{tabular}{llr}
+\hline
+Comparison & $n$ & Pearson \\
+\hline
+Same triple, \texttt{inference\_2} vs \texttt{inference\_3} & 2{,}404 triples & 1.0000 \\
+Same triple, \texttt{inference\_1} vs \texttt{inference\_3} & 330 triples & 0.295 \\
+Per-gene mean, \texttt{inference\_2} vs \texttt{inference\_3} & 1{,}274 genes & 0.800 \\
+Per-gene mean, \texttt{inference\_1} vs \texttt{inference\_3} & 395 genes & 0.037 \\
+Per-gene mean, \texttt{inference\_1} vs \texttt{inference\_2} & 179 genes & 0.167 \\
+\hline
+\end{tabular}
+\caption{Agreement of checkpoint \texttt{c7671wgj} with itself across inference
+runs. Runs 2 and 3 are identical on shared triples, mean absolute difference
+$0.000000$, so they share a pipeline. Run 1 is unrelated to them. Per-gene means
+average over hundreds of triples each, so sampling noise cannot explain
+$0.037$.}
+\label{tab:runconsistency}
+\end{table}
+
+Deciding which run handles gene identity correctly needs a reference outside the
+transformer. The fitted coefficient vector $\hat{\beta}$ of Eq.~\ref{eq:b1} is
+one: it is estimated from measured training labels, keyed on systematic gene
+name, and independently validated at 0.400 test Pearson. If a run's predictions
+carry real gene identity, a gene's mean predicted effect should track
+$\hat{\beta}_g$.
+
+%% SOURCE: experiments/010-kuzmin-tmi/scripts/inference_run_consistency.py
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lrr}
+\hline
+Run & Own gene set & 167 common genes \\
+\hline
+\texttt{inference\_1} & 0.579 (383 genes) & 0.576 \\
+\texttt{inference\_2} & 0.048 (1{,}138 genes) & 0.231 \\
+\texttt{inference\_3} & $-0.008$ (3{,}180 genes) & 0.174 \\
+\hline
+\end{tabular}
+\caption{Pearson correlation between a run's per-gene mean prediction and the
+additive ridge coefficient for that gene. The right column restricts to the 167
+genes all three runs score with at least 200 observations, so the different gene
+coverage of the three runs cannot explain the gap.}
+\label{tab:anchor}
+\end{table}
+
+Restricted to identical genes, \texttt{inference\_1} tracks gene identity more
+than three times as strongly as the two runs that produced the selection.
+
+\tcfigfit[0.92]{figures/inference_run_consistency.pdf}{Per-gene mean prediction
+against the additive ridge coefficient, for each of the three inference runs of
+checkpoint \texttt{c7671wgj}. The additive coefficient is fit on measured
+training data and keyed on systematic gene name, so it anchors gene identity
+from outside the transformer.}{fig:anchor}
+
+\subsection{What is and is not established\secstatus{todo}}
+
+Established: the three runs do not agree; runs 2 and 3 are byte-identical on
+shared triples; run 1 tracks an external gene-identity anchor and runs 2 and 3
+largely do not; the selection consumed run 3.
+
+\notesec{Hypothesis (untested)} A gene index or embedding misalignment in the
+shared \texttt{inference\_2} and \texttt{inference\_3} dataset build would
+produce this signature, predictions that are self-consistent and stable yet
+detached from gene identity. The inference builds carry no
+\texttt{gene\_set.json} of their own while the training build has one of 6{,}579
+genes, so the index used at inference time is reconstructed rather than loaded.
+No cause has been confirmed and no fix has been attempted.
+
+\subsection{Seed instability in the selection tail, separately\secstatus{todo}}
+
+On \texttt{inference\_1}, where predictions do track gene identity, the three
+checkpoints still disagree substantially about which triples are extreme.
+Checkpoint-to-checkpoint Pearson is $0.524$ to $0.560$, no higher than each
+checkpoint's $0.511$ to $0.579$ agreement with the additive model, and top-100
+overlap between two checkpoints is $0.21$ to $0.35$. Two independent training
+runs of one architecture on one split nominate largely different top-100
+triples, so a selection taken from a single checkpoint's tail is not
+reproducible across seeds even where the inference pipeline is sound.

@@ -1,0 +1,90 @@
+%% notes-tex/010-additive-baselines/sections/2-what-is-predicted.tex
+
+\section{What is being predicted\secstatus{todo}}
+\label{sec:label}
+
+\subsection{The label\secstatus{todo}}
+
+Write $f_i$ for the fitness of the single mutant $\Delta i$, $f_{ij}$ for the
+double, $f_{ijk}$ for the triple, each relative to wild type. The
+\term{digenic interaction score} is the departure of the double from the
+multiplicative expectation,
+%
+\begin{equation}
+  \varepsilon_{ij} \;=\; f_{ij} - f_i f_j ,
+  \label{eq:epsilon}
+\end{equation}
+%
+and the \term{trigenic interaction score} is the departure of the triple from
+the expectation built out of the singles \emph{and} the doubles,
+%
+\begin{equation}
+  \tau_{ijk} \;=\; f_{ijk}
+  \;-\; f_i f_j f_k
+  \;-\; f_i\,\varepsilon_{jk}
+  \;-\; f_j\,\varepsilon_{ik}
+  \;-\; f_k\,\varepsilon_{ij} .
+  \label{eq:tau}
+\end{equation}
+%
+\external{Kuzmin et al.\ 2018, \texttt{10.1126/science.aao1729}; the published
+definition of the released adjusted score column, not re-derived here}
+
+Two properties of Eq.~\ref{eq:tau} matter for everything that follows. It is a
+\emph{residual}: the additive-on-the-log-scale, multiplicative-on-the-linear-scale
+part of fitness is subtracted before the number is reported. And it is a
+\emph{third-order} residual: the pairwise terms are subtracted too, so $\tau$ is
+by construction the part of the triple mutant phenotype that neither single nor
+double mutant measurements predict.
+
+The 010 loader consumes the column \texttt{Adjusted genetic interaction score
+(epsilon or tau)} from the Kuzmin releases, which for a trigenic record is
+$\tau$, and stores it under the label key \texttt{gene\_interaction}.
+
+\subsection{The build\secstatus{todo}}
+
+%% SOURCE: read from the pinned build by
+%% experiments/010-kuzmin-tmi/scripts/additive_baseline_gene_interaction.py
+\begin{table}[htbp]
+\centering
+\begin{tabular}{ll}
+\hline
+Records & 376{,}732 \\
+Perturbation count & 3 for every record \\
+Distinct perturbed genes & 4{,}352 \\
+Sources & \texttt{TmiKuzmin2018Dataset}, \texttt{TmiKuzmin2020Dataset} \\
+Label & \texttt{gene\_interaction} ($\tau$) \\
+Split, seed 42 & train 301{,}386 / val 37{,}673 / test 37{,}673 \\
+Train label SD & 0.063186 \\
+Val label SD & 0.062914 \\
+Test label SD & 0.064187 \\
+\hline
+\end{tabular}
+\caption{The 010 build. Every baseline and the transformer use these records,
+this split and this label. Read from
+\texttt{001-small-build/processed/label\_df.parquet},
+\texttt{is\_any\_perturbed\_gene\_index.json} and
+\texttt{data\_module\_cache/index\_seed\_42.json}.}
+\label{tab:build}
+\end{table}
+
+The build is triples only, so there are no singles or doubles in it. The
+MULTI-evolve experiment of training on low order and extrapolating to high order
+is therefore not available here, and the question is the narrower one: given a
+training set of triples, how much of the held-out $\tau$ is recoverable without
+representing interaction.
+
+\subsection{The screen design, which is the confounder\secstatus{todo}}
+
+Kuzmin's trigenic screen crosses a \term{query} double mutant against an array of
+single mutants, so a triple is a query pair plus one array gene, and the same
+query pair recurs across hundreds or thousands of triples. Counting unordered
+gene pairs in the training split finds 593{,}978 distinct pairs, of which only
+420 occur five or more times, the most frequent occurring 3{,}308 times. That
+concentration is the query-pair structure.
+
+The 010 split is random over records, so a query pair that appears in training
+also appears in validation and test. Any model that can represent a per-pair
+offset can absorb whatever is common to a query batch, and none of that is
+trigenic biology. Baseline B4 in Section~\ref{sec:models} is built to measure
+exactly this quantity.

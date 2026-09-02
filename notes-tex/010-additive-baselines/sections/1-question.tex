@@ -1,0 +1,46 @@
+%% notes-tex/010-additive-baselines/sections/1-question.tex
+
+\section{The question\secstatus{todo}}
+
+Tran et al.\ introduced MULTI-evolve in \emph{Science} in 2026
+(\texttt{10.1126/science.aea1820}), a protein engineering framework whose fully
+connected networks were said to ``learn the epistatic landscape'' from single
+and double mutants and to identify synergistic combinations at higher order.
+Visani, Verma and DeWitt replied in a preprint,
+\emph{Additive baselines furnish no evidence for epistasis learning by
+MULTI-evolve} (bioRxiv \texttt{2026.04.23.719915}), which does one thing: it
+fits the null that the original paper never fit.
+
+An \term{additive model} over mutations predicts a phenotype as a sum of
+per-mutation terms. By construction it assigns exactly zero to every
+interaction. It is therefore the natural null for any claim that a model has
+learned interaction, in the same way that an intercept-only model is the null
+for a claim that a model has learned anything.
+
+Their result is that the network's predictions across the combinatorial variant
+space correlate with a ridge-regularized additive model's at $r > 0.999$ for all
+three engineering campaigns, that the variants selected for construction are
+ranked nearly identically by both, and that on held-out test data the network
+does not significantly outperform either the additive model or a zero-hidden-layer
+version of its own architecture. The engineering result is real; the attribution
+to epistasis learning is not supported.
+
+The analogous question for experiment 010 is whether the equivariant cell graph
+transformer's held-out performance on the trigenic interaction score survives
+the same test. Traditional machine-learning baselines exist in this repository
+for the mixed digenic and trigenic set under \texttt{experiments/002-dmi-tmi}
+and for fitness under \texttt{experiments/smf-dmf-tmf-001}. None had been fit on
+the 010 build, which is triples only.
+
+\notesec{One difference in the setup, and it cuts against the null}
+In the protein setting the quantity predicted is the multimutant phenotype
+itself, which per-mutation effects explain directly. In 010 the quantity
+predicted is already a residual. The trigenic interaction score subtracts the
+expectation built from single and double mutant fitness before the model ever
+sees it, so the additive part of fitness has been removed by construction. An
+additive-in-single-gene-effects model is therefore a harder null here than it is
+there, and its performance is more surprising, not less.
+
+That argument has one loophole, and quantifying it turns out to matter more than
+anything else in this document. It is taken up in
+Section~\ref{sec:results} as baseline B4.

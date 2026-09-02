@@ -108,7 +108,9 @@ def main() -> None:
     arms = [a for a in ARM_ORDER if a in by_arm]
     print(f"loaded {len(runs)} runs across {len(arms)} arms")
 
-    plt.rcParams.update({"font.family": "Arial", "font.size": 6, "svg.fonttype": "none"})
+    plt.rcParams.update(
+        {"font.family": "Arial", "font.size": 6, "svg.fonttype": "none"}
+    )
     fig, axes = plt.subplots(
         1, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(54.0))
     )
@@ -172,7 +174,10 @@ def main() -> None:
         )
     ax.set_yscale("log")
     ax.set_xlabel("epoch")
-    ax.set_ylabel(r"median $|[Sv]_i| / \omega_i$")
+    ax.set_ylabel(
+        "mass-balance residual\n"
+        r"median$_i\;|[Sv]_i| / \omega_i$   (2 = worst)"
+    )
     ax.legend(fontsize=6, frameon=False)
     _style(ax)
 

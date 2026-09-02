@@ -46,6 +46,8 @@ So the design target is a layer that keeps the physics and drops the integers.
 Every hard constraint is either exact by construction or a smooth penalty. No binary
 variables anywhere.
 
+**Table 1. Every hard constraint, and how it is enforced here versus in a solver.** Thermo-Flux (Smith et al. 2026) realizes the second law with one binary indicator per reaction under a big-M pair, making the program mixed-integer. Two constraints are exact by construction here and cost nothing in the loss; the other four are smooth penalties and none needs an integer variable.
+
 | constraint | Thermo-Flux / GECKO form | here |
 | --- | --- | --- |
 | box and directionality | $lb_j \le \nu_j \le ub_j$ | **exact**, sigmoid |
@@ -172,6 +174,8 @@ gap, recorded rather than approximated. The covariance would enter as one matrix
 Exactness has to be spent on one constraint or the other, and which one matters is
 empirical:
 
+**Table 2. The exactness budget: which constraint each parameterization satisfies exactly.** Exactness can be spent on the bounds or on mass balance, never both. The null-space head is also 2.7 times narrower, since it emits a latent of dimension 1,538 rather than one value per reaction.
+
 | parameterization | $Sv=0$ | box and directionality | head width |
 | --- | --- | --- | --- |
 | box, $v=\bar v^{\ell}+(\bar v^{u}-\bar v^{\ell})\sigma(z)$ | soft, one weight | **exact** | 4,131 |
@@ -197,6 +201,8 @@ nothing in a loss curve distinguishes the two.
 
 **The network.** yeast-GEM 9.0.2, loaded through cobrapy from the sha256-pinned checkout at
 `$DATA_ROOT/data/torchcell/yeast-GEM/yeast-GEM-9.0.2`.
+
+**Table 3. yeast-GEM 9.0.2 as constraint tensors, measured by `gem_audit.py`.** The last row is the reason enzyme constraints are not optional: ten non-default bounds in 4,131 reactions means the stock model carries essentially no magnitude information, so turnover is the only quantity that can set a scale.
 
 | quantity | value |
 | --- | ---: |
@@ -229,6 +235,8 @@ sum: a reaction touching one gets a NaN standard energy, its hinge contributes N
 loss, and the run produces NaN gradients while the coverage number still reads a healthy
 87 %. Rejecting both reproduces the model's own curation counts.
 
+**Table 4. The two missing-value conventions in the shipped thermodynamic tables, and what filtering only one of them costs.** A sentinel-only filter leaves literal NaN values that propagate through every sum and produce NaN gradients, while the reported coverage still reads a healthy 87 percent. Rejecting both reproduces the model's own curation counts.
+
 | entity | sentinel-only filter | sentinel + NaN | the difference |
 | --- | ---: | ---: | --- |
 | metabolites | 2,440 (87.0 %) | **2,389 (85.1 %)** | 51 literal NaN |
@@ -244,10 +252,14 @@ routes and are not interchangeable.
 
 ![](./assets/images/026-metabolism-flux/delta_g_consistency.svg)
 
+**Figure 1. The two shipped thermodynamic tables do not agree, and the disagreement has structure.** Left, the standard reaction energy recomputed by summing formation energies over the stoichiometry against the value shipped in the reaction table, on the 3,204 reactions where both exist; the dashed line is equality. The horizontal arm, where the recomputed value is exactly zero, is entirely transport reactions. Right, the absolute residual, with the thermal energy $RT$ at 30 degrees Celsius marked; the median disagreement of 9.53 kJ/mol is about $3.8\,RT$, a factor of roughly 45 in equilibrium constant.
+
 **The disagreement is a cross, not a cloud, and one arm of it is the transport term.** The
 scatter has a horizontal arm where the recomputed value is exactly zero while the shipped
 value ranges over $\pm150$ kJ/mol, and a vertical arm with the opposite pattern. Testing the
 obvious hypothesis:
+
+**Table 5. The disagreement between the two shipped energy tables is a cross, and one arm of it is the transport term.** Summing formation energies over a transport reaction cancels exactly, because the same species appears on both sides, so a transport reaction's whole standard energy is its transport term. Every reaction in the first row is multi-compartment and none in the second is.
 
 | pattern | n | multi-compartment |
 | --- | ---: | ---: |
@@ -277,6 +289,8 @@ provenance question about the genome-scale model rather than about this layer.
 **Kinetics, and this is the headline gap.** Molecular weight resolves completely; turnover
 does not.
 
+**Table 6. What each parameter class rests on, measured against yeast-GEM 9.0.2.** Molecular weight resolves completely and turnover almost not at all. The 4.0 percent is the binding constraint on the entire enzyme layer, and it is measured in the best-curated eukaryote available.
+
 | parameter | source | coverage |
 | --- | --- | ---: |
 | molecular weight | SwissProt table shipped with the model | **1,161 / 1,161 (100 %)**, median 50.1 kDa |
@@ -285,6 +299,8 @@ does not.
 | $\Delta_f G'^{\circ}$ | model's own table | 2,389 / 2,806 (85.1 %) |
 
 ![](./assets/images/026-metabolism-flux/parameter_coverage.svg)
+
+**Figure 2. What each parameter class rests on: measurement, prediction, or an organism default.** Stoichiometry and molecular weight are complete and formation energies cover most metabolites, but turnover is resolved for only 4.0 percent of catalytic units from the Open Enzyme Database and nothing is predicted yet. A capacity constraint built on a default turnover is a uniform rescaling of the flux box rather than an enzyme constraint, and no loss curve distinguishes the two.
 
 **Four percent, in the best-curated eukaryote there is.** The entire Open Enzyme Database
 *S. cerevisiae* slice is 1,126 rows against 1,161 metabolic genes and 4,131 reactions. The
@@ -329,6 +345,8 @@ The constraint layer is a pure function of a genome-scale model. There is no yea
 in `torchcell/metabolism/constraints.py` or `flux_layer.py`; the organism-specific surface
 is a model, a compartment table, and two scalars.
 
+**Table 7. The organism-specific surface of the constraint layer.** Every row but the last is a lookup. Formation energies are chemistry and transfer unchanged; turnover and affinity do not, which is why the parameter layer is a resolution policy rather than a table.
+
 | ingredient | organism-specific? | where it comes from |
 | --- | --- | --- |
 | $S$, bounds, gene-protein-reaction rules | yes | the new organism's model |
@@ -353,6 +371,8 @@ agreement between the two.
 3. **organism default**: reported as coverage, never presented as a measurement.
 
 **The three predictors, registered by capability rather than hardcoded.**
+
+**Table 8. The three sequence-based kinetic predictors the parameter layer is built around.** RealKcat is the one that closes the affinity gap, which matters because promiscuity is a $K_M$ effect: Wu et al. (2026) measured underground reactions at roughly twice the $K_M$ with indistinguishable $k_{\mathrm{cat}}$, so a turnover-only model routes promiscuous flux at full native capacity for free.
 
 | predictor | inputs | emits |
 | --- | --- | --- |
@@ -386,6 +406,8 @@ The question of whether the forward pass should always output fluxes or be sampl
 needed turns out not to be a fork in the architecture. Both are the same layer with
 `FluxLayerConfig.stochastic` flipped, because the box is applied identically either way.
 
+**Table 9. Deterministic versus stochastic flux head.** Both are the same layer with one configuration flag flipped, because the box applies identically either way. The flux is always produced, since the phenotype heads read it; what the flag changes is whether repeated calls on one genotype vary.
+
 | | deterministic head | stochastic head |
 | --- | --- | --- |
 | $z_j$ | emitted by the reaction network | drawn from $q_\phi(z\mid H_{\mathrm{pert}})$ |
@@ -409,6 +431,8 @@ the same point Merzbacher reached from the other direction when their deep model
 **Flux variability analysis is the reference, and it is label-free.** Running it on the wild
 type at 90 % of optimum, by `scripts/fva_reference.py`:
 
+**Table 10. Wild-type flux variability analysis at 90 percent of optimum, the reference an amortized sampler is scored against.** The licensed set excludes reactions the constraints leave free over the full range, where narrowing would mean nothing. The count of 2,818 reproduces the specification note's independently derived figure exactly.
+
 | quantity | value |
 | --- | ---: |
 | wild-type growth | 0.0858 h$^{-1}$ |
@@ -426,19 +450,24 @@ $\mathrm{width}_{\mathrm{FVA}}(j) - \mathrm{width}_{\text{posterior}}(j)$ per li
 reaction, which needs no phenotype label and can therefore be run on double deletions where
 no production measurement exists.
 
-![](./assets/drawio/metabolism-flux-layer.drawio.png)
+![](./assets/drawio/metabolism-flux-layer.vector.svg)
 
-The raster is embedded rather than the SVG because draw.io writes its labels as HTML
-`foreignObject` elements, which `rsvg-convert` cannot draw: the note-to-PDF path renders
-that SVG with every label truncated and a "Text is not SVG, cannot display" overlay. The
-vector artifact is `notes/assets/drawio/metabolism-flux-layer.drawio.pdf`, and the
-matplotlib panels below are still embedded as true-size SVG, where the repo convention
-holds.
+**Figure 3. The flux layer, from gene tokens to a feasible flux vector and its residuals.** (a) A deletion sets gene availability to zero as a hard fact, not a learned gate; complexes take a softmin over subunits and isozymes sum, and enzyme capacity enters the bounds rather than the loss, so the box holds by construction and contributes no loss term. (b) Five residuals hang off the flux. One is exact and the other four are smooth penalties, none requiring a binary variable. The insets give the three-term decomposition of the reaction driving force and the fraction of each input that is measured rather than defaulted.
+
+The embedded file is `metabolism-flux-layer.vector.svg`, not draw.io's own SVG export.
+draw.io writes its labels as HTML `foreignObject` elements, which `rsvg-convert` cannot
+draw, so the note-to-PDF path renders that export with every label truncated and a "Text
+is not SVG, cannot display" overlay, and exits 0. Round-tripping draw.io's PDF export
+through `pdftocairo -svg` outlines the text into paths, which renders identically
+everywhere and stays zoomable. `notes/assets/publish/scripts/drawio_vector_svg.sh` does
+this and fails loudly if any `foreignObject` survives.
 
 ### The diagnostic experiment
 
 Two phenotypes, both single-deletion panels, both already built into the
 `fig6_pigment_transfer` dataset at 4,930 aggregated genotypes.
+
+**Table 11. The two phenotypes, both single-deletion panels already built into the `fig6_pigment_transfer` dataset.** Betaxanthin has a replicate-based ceiling and the amino-acid panel has none, since Mülleder reports one replicate per strain with no standard error.
 
 | phenotype | source | n | shape | ceiling |
 | --- | --- | ---: | --- | --- |
@@ -472,6 +501,8 @@ about metabolism. Reading the pooled arm alongside is what separates them.
 
 **Five arms, each changing one thing relative to the one above**, so a difference is
 attributable. Three seeds each, identical splits within a seed.
+
+**Table 12. The five arms, each changing exactly one thing relative to the arm above it.** `pooled` to `flux_off` asks whether routing a prediction through a stoichiometric network helps at all; `flux_free` to `flux_anchored` asks whether the measured energies add anything beyond the loop-freedom any potential gives; `flux_anchored` to `flux_nullspace` is the exactness budget.
 
 | arm | what it adds |
 | --- | --- |
@@ -516,6 +547,8 @@ negative values against weight decay.
 
 Measured by `scripts/box_zero_reachability.py` on the real network at initialization:
 
+**Table 13. Flux magnitude and mass balance under both parameterizations, at initialization on the real network.** Zero flux is an asymptote of a sigmoid box, so balanced solutions live where that parameterization cannot go. The null-space form is 70 times more likely to produce a near-zero flux without being asked.
+
 | quantity | box | null space |
 | --- | ---: | ---: |
 | median $\lvert[Sv]_i\rvert/\omega_i$ | 1.27 | **2.8e-08** |
@@ -526,6 +559,8 @@ Measured by `scripts/box_zero_reachability.py` on the real network at initializa
 | box violation fraction | **0 %** | 37.0 % |
 
 ![](./assets/images/026-metabolism-flux/box_vs_nullspace.svg)
+
+**Figure 4. Why a sigmoid box cannot produce a sparse, mass-balanced flux vector.** Left, the distribution of flux magnitudes at initialization; the null-space form reaches near-zero fluxes that the box does not, because zero flux is an asymptote of the sigmoid rather than a point in its range. Right, the mass-balance residual as a fraction of metabolite turnover. The box arm piles up against the dotted line at 2.0, which is the maximum the statistic can take and means the median metabolite is completely unbalanced, while the null-space arm sits eight orders of magnitude lower at float32 round-off.
 
 The right panel is the whole argument in one picture. The box arm's balance residuals pile
 up against the dotted line at 2.0, the maximum the statistic can take, while the null-space
@@ -565,6 +600,8 @@ annotations, and reports coverage rather than silently dropping anything.
 **The four recipes work.** All 271 exchange reactions are indexed, every component resolves,
 and every medium supports growth.
 
+**Table 14. The four media recipes mapped onto exchange bounds, with growth under each.** Every component of every medium resolves to an exchange reaction, and each medium supports growth. Pairwise differences confirm the four collapse to one real axis, the 20 amino acids, plus one or two nucleobases.
+
 | medium | components | resolved | unresolved | growth, h$^{-1}$ |
 | --- | ---: | ---: | ---: | ---: |
 | SM | 25 | 25 | 0 | 0.314 |
@@ -587,6 +624,8 @@ follows the source.
 **The ontology objects do not reach any of this, and that is the finding.** All four
 datasets emit a name-only `Media` with **zero components**, so each maps to zero bounds and
 an infeasible model with every exchange closed:
+
+**Table 15. What the four datasets actually emit for their growth medium.** Each is a name-only object with zero components, so it maps to zero bounds and an infeasible model with every exchange closed. The join from a dataset to a medium is currently a name string, not a component list.
 
 | loader | line | emitted |
 | --- | --- | --- |
@@ -623,6 +662,8 @@ which is why it is named that way.
 
 ### Literature captured for this work
 
+**Table 16. Literature captured for this work.** Nothing was written to Zotero. The closed-access GECKO 3.0 protocol is recorded as a provenance gap with every attempted retrieval route and its exact failure, plus a manual recipe.
+
 | key | status |
 | --- | --- |
 | `smithThermofluxGenerationAnalysis2026a` | already mirrored, read in full; the source for the second-law relaxation, the exemption set, the three-term decomposition, and the dissipation limit |
@@ -640,18 +681,27 @@ The 4.0 % coverage measured here is that bottleneck with a number on it.
 
 ### Reproducing everything
 
-All paths relative to the worktree root, with `PYTHONPATH=$PWD` and the torchcell
-environment interpreter.
+Every command runs from the worktree root with `PYTHONPATH=$PWD` and the torchcell
+environment interpreter. Scripts live in `experiments/026-metabolism-flux/scripts/` and
+outputs land in the sibling `results/`, so only the bare names vary:
 
-| step | command | writes |
+```bash
+PYTHONPATH=$PWD ~/miniconda3/envs/torchcell/bin/python \
+    experiments/026-metabolism-flux/scripts/<script>
+```
+
+**Table 20. Every artifact in this note and the committed script that regenerates it.** All commands run from the worktree root with `PYTHONPATH=$PWD` and the torchcell environment interpreter; script paths are relative to `experiments/026-metabolism-flux/`.
+
+| step | script | writes |
 | --- | --- | --- |
-| parameter audit | `python experiments/026-metabolism-flux/scripts/gem_audit.py` | `results/gem_audit.json`, coverage + delta-G figures |
-| media audit | `python experiments/026-metabolism-flux/scripts/media_schema_audit.py` | `results/media_schema_audit.json` |
-| FVA baseline | `python experiments/026-metabolism-flux/scripts/fva_reference.py` | `results/fva_wildtype.csv`, `results/fva_census.json` |
-| box reachability | `python experiments/026-metabolism-flux/scripts/box_zero_reachability.py` | `results/box_zero_reachability.json` |
-| the arm sweep | `python experiments/026-metabolism-flux/scripts/train_flux.py --arms ... --seeds 42,7,1234` | `results/flux_arms_gpu{0,1}.json` |
-| figures + summary | `python experiments/026-metabolism-flux/scripts/plot_flux_arms.py` | `results/flux_arms_summary.json`, arm-comparison figure |
-| flux sampling | `python experiments/026-metabolism-flux/scripts/flux_sampling_demo.py` | `results/flux_sampling_demo.json` |
+| parameter audit | `gem_audit.py` | `gem_audit.json`, Figure 2, Figure 1 |
+| media audit | `media_schema_audit.py` | `media_schema_audit.json` |
+| FVA baseline | `fva_reference.py` | `fva_wildtype.csv`, `fva_census.json` |
+| box reachability | `box_zero_reachability.py` | `box_zero_reachability.json`, Figure 4 |
+| the arm sweep | `train_flux.py --arms ... --seeds 42,7,1234` | `flux_arms_gpu{0,1}.json` |
+| figures + summary | `plot_flux_arms.py` | `flux_arms_summary.json`, Figure 5 |
+| flux sampling | `flux_sampling_demo.py` | `flux_sampling_demo.json` |
+| diagram vector | `drawio_vector_svg.sh` (in `notes/assets/publish/scripts/`) | Figure 3 |
 
 Tests: `pytest tests/torchcell/metabolism/test_flux_layer.py` (13 property tests, one
 requiring the yeast-GEM checkout). They assert the claims rather than the outputs: the box
@@ -665,6 +715,8 @@ Peak validation Pearson, identical splits within a seed. Betaxanthin's replicate
 noise ceiling is 0.914, so every number here is between 1 % and 12 % of what the
 measurement supports.
 
+**Table 17. Peak validation Pearson per arm, three seeds, identical splits within a seed.** Betaxanthin's noise ceiling is 0.914, so every value is between 1 and 12 percent of what the measurement supports. No between-arm mean difference clears the seed spread; the only comparison that separates is the variance, and that is post-hoc.
+
 | arm | betaxanthin per seed | mean | sd | amino acids, mean |
 | --- | --- | ---: | ---: | ---: |
 | `pooled` | 0.041, 0.077, 0.059 | 0.059 | 0.018 | +0.001 |
@@ -674,6 +726,8 @@ measurement supports.
 | `flux_nullspace` | 0.140, 0.100, 0.083 | **0.108** | 0.029 | +0.004 |
 
 ![](./assets/images/026-metabolism-flux/flux_arm_comparison.svg)
+
+**Figure 5. Five arms, three seeds, 20 epochs.** (a) Peak validation Pearson, with each seed drawn as a point rather than an error bar, because three seeds do not describe a distribution. No between-arm mean difference on betaxanthin clears the seed spread, and the amino-acid panel is null in every arm including the pooled baseline. (b) The mass-balance residual over training, where the three box arms overlie each other at the maximum and the null-space arm sits at round-off. (c) The exactness budget: the box arms occupy one corner and the null-space arm the other, and neither reaches the origin.
 
 **On betaxanthin, no arm-to-arm difference clears the noise.** The largest gap is
 `flux_nullspace` over `pooled` at +0.049 against a difference standard error of 0.020, so
@@ -710,6 +764,8 @@ is not losing to a readout with more capacity.
 **Feasibility behaved exactly as the parameterization analysis predicted**, which is the
 part of this experiment that did work as designed:
 
+**Table 18. Feasibility at the end of training, which behaved exactly as the parameterization analysis predicted.** The three box arms sit at one corner and the null-space arm at the other, and neither reaches the origin. The null-space arm's second-law violation near 0.5 shows that spending exactness on mass balance costs the thermodynamic term as well as the bounds.
+
 | arm | mass balance | box violation | second-law violation |
 | --- | ---: | ---: | ---: |
 | `flux_off` | 1.97 | 0 | term disabled |
@@ -737,6 +793,8 @@ not detect collapses.
 `scripts/flux_sampling_demo.py` trains the anchored arm with a stochastic head for 12
 epochs, then draws 128 flux vectors for each of 32 genotypes. Every draw is one forward
 pass and every draw lands inside its genotype's box, so no rejection step is involved.
+
+**Table 19. Amortized flux sampling against the flux-variability reference.** The narrowing is not evidence that data added information: a collapsed sampler emits zero-width intervals and would score 100 percent here. The missing half of the evaluation is coverage, the fraction of held-out observations falling inside the predicted interval.
 
 | quantity | value |
 | --- | ---: |
@@ -783,9 +841,19 @@ so it can be run on genotypes whose production has never been measured.
 4. **Give the loaders component-bearing `Media` objects.** The mapping works and the recipes
    grow; the join is a name string. Populating `Compound.chebi_id` alone would switch the
    annotation channel from 0 to 47 of 47 resolutions on SC.
-5. **Compare against Flux Cone Learning on its own 811 genes**, which is the comparison the
-   specification note argues is the real target, and report what it cannot: regression over
-   the full screen and the roughly 81 % of deletions outside the metabolic network.
+5. **Compare against Flux Cone Learning as a distribution over flux vectors, not as a
+   classification score.** The earlier plan was to reproduce their 3-class accuracy on
+   their 811 metabolic genes, and that is the wrong comparison: it scores a downstream
+   classifier rather than the flux, and their own reported margin over the majority class
+   is 2.6 points. The meaningful comparison uses the samples they already released.
+   Merzbacher's cones are mirrored at `databases/fcl/paper_merzbacher_2025/` from Zenodo
+   `10.5281/zenodo.15761895`: 1,159 single deletions, 124 samples per cone, 143,716 samples
+   by 4,130 fluxes. So fit one of our models, draw from the stochastic head on the same
+   deletions, and ask whether the two flux-vector distributions agree at all, per reaction
+   and per genotype. That is a direct comparison against an existing dataset and it needs
+   no phenotype label. **State the caveat every time:** their chains target a uniform
+   distribution over the feasible polytope and ours targets whatever the data and priors
+   induce, so agreement is informative and disagreement is not automatically a failure.
 
 ### What is not claimed
 

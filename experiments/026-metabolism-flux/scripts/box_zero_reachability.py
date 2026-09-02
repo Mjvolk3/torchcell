@@ -61,9 +61,7 @@ from torchcell.metabolism.yeast_GEM import YeastGEM
 load_dotenv()
 
 DATA_ROOT = os.environ["DATA_ROOT"]
-RESULTS_DIR = osp.join(
-    os.environ["EXPERIMENT_ROOT"], "026-metabolism-flux", "results"
-)
+RESULTS_DIR = osp.join(os.environ["EXPERIMENT_ROOT"], "026-metabolism-flux", "results")
 OED_MIRROR = osp.join(
     DATA_ROOT, "data/enzyme_kinetics/open_enzyme_database/scerevisiae"
 )
@@ -83,9 +81,7 @@ def _balance_stats(layer: FluxLayer, v: torch.Tensor) -> dict[str, float]:
     }
 
 
-def _figure(
-    fluxes: dict[str, np.ndarray], balances: dict[str, np.ndarray]
-) -> None:
+def _figure(fluxes: dict[str, np.ndarray], balances: dict[str, np.ndarray]) -> None:
     """Two panels: what magnitudes each parameterization reaches, and what it balances."""
     import matplotlib.pyplot as plt
 
@@ -98,7 +94,9 @@ def _figure(
 
     images_dir = osp.join(os.environ["ASSET_IMAGES_DIR"], "026-metabolism-flux")
     os.makedirs(images_dir, exist_ok=True)
-    plt.rcParams.update({"font.family": "Arial", "font.size": 6, "svg.fonttype": "none"})
+    plt.rcParams.update(
+        {"font.family": "Arial", "font.size": 6, "svg.fonttype": "none"}
+    )
     fig, axes = plt.subplots(
         1, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["half_plus"]), mm_to_in(48.0))
     )
@@ -137,7 +135,10 @@ def _figure(
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.axvline(2.0, color="black", linewidth=0.5, linestyle=":")
-    ax.set_xlabel(r"$|[Sv]_i| / \omega_i$")
+    ax.set_xlabel(
+        "mass-balance residual per metabolite\n"
+        r"$|[Sv]_i| / \omega_i$   (2 = worst possible)"
+    )
     ax.set_ylabel("metabolites")
     _style(ax)
 
@@ -174,9 +175,7 @@ def main() -> None:
         "n_irreversible_lower_bound_zero": int((gem.lb >= 0).sum()),
     }
 
-    common = dict(
-        kcat_per_s=kcat.values, molecular_weight_kda=mw.values
-    )
+    common = dict(kcat_per_s=kcat.values, molecular_weight_kda=mw.values)
     h = torch.randn(8, len(gene_ids), 32)
     ctx = torch.randn(8, 32)
     empty = torch.zeros(0, dtype=torch.long)
@@ -184,10 +183,7 @@ def main() -> None:
     balances: dict[str, np.ndarray] = {}
 
     for name, cfg in [
-        (
-            "box",
-            FluxLayerConfig(hidden_dim=32, thermo_mode=ThermoMode.ANCHORED),
-        ),
+        ("box", FluxLayerConfig(hidden_dim=32, thermo_mode=ThermoMode.ANCHORED)),
         (
             "nullspace",
             FluxLayerConfig(
@@ -214,24 +210,16 @@ def main() -> None:
         fluxes[name] = v.flatten().numpy()
         residual = layer._s_matmul(v)[:, layer.independent_rows]
         omega = layer.turnover(v)[:, layer.independent_rows]
-        balances[name] = (
-            (residual.abs() / (omega + 1e-6)).flatten().numpy()
-        )
+        balances[name] = (residual.abs() / (omega + 1e-6)).flatten().numpy()
         report[name] = {
             "balance": _balance_stats(layer, v),
             "flux_sparsity": {
                 # A real pFBA solution has ~88 % of reactions at exactly zero. These are
                 # the fractions the parameterization can actually reach.
                 "frac_exactly_zero": float((absv == 0).float().mean()),
-                "frac_below_1e-6_of_scale": float(
-                    (absv < 1e-6 * scale).float().mean()
-                ),
-                "frac_below_1e-3_of_scale": float(
-                    (absv < 1e-3 * scale).float().mean()
-                ),
-                "frac_below_1e-2_of_scale": float(
-                    (absv < 1e-2 * scale).float().mean()
-                ),
+                "frac_below_1e-6_of_scale": float((absv < 1e-6 * scale).float().mean()),
+                "frac_below_1e-3_of_scale": float((absv < 1e-3 * scale).float().mean()),
+                "frac_below_1e-2_of_scale": float((absv < 1e-2 * scale).float().mean()),
                 "median_abs_flux": float(absv.median()),
             },
             "box_violation_frac": float(out["feas_box_violation_frac"]),

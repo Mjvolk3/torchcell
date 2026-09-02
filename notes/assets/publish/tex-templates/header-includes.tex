@@ -30,3 +30,14 @@
   urlcolor=urlblue,    % applies to external URLs
   pdfborder={0 0 0}
 }
+
+% Table sizing. Pandoc emits longtable and sets column widths from the SOURCE markdown's
+% character counts, so a table whose cells hold long paths or commands is laid out to the
+% width of the widest literal and then overruns the text block. Shrinking the type inside
+% the table is the fix that does not require restructuring every table: \footnotesize buys
+% roughly 20 % more characters per line, and \setlength{\tabcolsep} recovers more by
+% tightening the inter-column padding. Applied to longtable so it hits every pandoc table
+% without touching inline math or code blocks.
+\usepackage{etoolbox}
+\AtBeginEnvironment{longtable}{\footnotesize\setlength{\tabcolsep}{4pt}}
+\AtBeginEnvironment{tabular}{\footnotesize\setlength{\tabcolsep}{4pt}}

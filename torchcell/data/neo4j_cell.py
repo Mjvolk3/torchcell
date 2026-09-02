@@ -716,11 +716,11 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
                     idx = int(key.decode())
                     data_list = json.loads(value.decode())
                     for data in data_list:
-                        experiment_class = EXPERIMENT_TYPE_MAP[
-                            data["experiment"]["experiment_type"]
-                        ]
-                        experiment = experiment_class(**data["experiment"])
-                        label_name = experiment.phenotype.label_name
+                        # Read the field off the stored dict. Validating a full
+                        # pydantic Experiment per record to reach one field cost
+                        # ~1 ms x 27M experiments = hours PER INDEX on the 025
+                        # build (job 1561 spent 8+ h in these three loops).
+                        label_name = data["experiment"]["phenotype"]["label_name"]
 
                         if label_name not in phenotype_label_index:
                             phenotype_label_index[label_name] = set()
@@ -772,11 +772,9 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
                     idx = int(key.decode())
                     data_list = json.loads(value.decode())
                     for data in data_list:
-                        experiment_class = EXPERIMENT_TYPE_MAP[
-                            data["experiment"]["experiment_type"]
-                        ]
-                        experiment = experiment_class(**data["experiment"])
-                        dataset_name = experiment.dataset_name
+                        # Dict read, not pydantic validation -- see
+                        # compute_phenotype_label_index for the cost measured.
+                        dataset_name = data["experiment"]["dataset_name"]
 
                         if dataset_name not in dataset_name_index:
                             dataset_name_index[dataset_name] = set()
@@ -828,11 +826,11 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
                     idx = int(key.decode())
                     data_list = json.loads(value.decode())
                     for data in data_list:
-                        experiment_class = EXPERIMENT_TYPE_MAP[
-                            data["experiment"]["experiment_type"]
-                        ]
-                        experiment = experiment_class(**data["experiment"])
-                        perturbation_count = len(experiment.genotype.perturbations)
+                        # Dict read, not pydantic validation -- see
+                        # compute_phenotype_label_index for the cost measured.
+                        perturbation_count = len(
+                            data["experiment"]["genotype"]["perturbations"]
+                        )
 
                         if perturbation_count not in perturbation_count_index:
                             perturbation_count_index[perturbation_count] = set()
@@ -887,26 +885,23 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         self._init_lmdb_read()
 
         try:
+            # Stream the cursor: materializing the entries first held the entire
+            # store's values in RAM (517 GB on the 025 build, over any cap).
             with self.env.begin() as txn:
-                cursor = txn.cursor()
-                # Convert cursor to list to avoid multiple LMDB transactions
-                entries = [(key, value) for key, value in cursor]
-
-            # Process entries outside of LMDB transaction
-            for key, value in entries:
-                try:
-                    idx = int(key.decode())
-                    # Parse JSON once per entry
-                    data_list = json.loads(value.decode())
-                    # Process all perturbations in one pass
-                    for data in data_list:
-                        for pert in data["experiment"]["genotype"]["perturbations"]:
-                            gene = pert["systematic_gene_name"]
-                            if gene not in is_any_perturbed_gene_index:
-                                is_any_perturbed_gene_index[gene] = set()
-                            is_any_perturbed_gene_index[gene].add(idx)
-                except (json.JSONDecodeError, ValueError, KeyError) as e:
-                    print(f"Error processing entry {key}: {e}")
+                for key, value in txn.cursor():
+                    try:
+                        idx = int(key.decode())
+                        # Parse JSON once per entry
+                        data_list = json.loads(value.decode())
+                        # Process all perturbations in one pass
+                        for data in data_list:
+                            for pert in data["experiment"]["genotype"]["perturbations"]:
+                                gene = pert["systematic_gene_name"]
+                                if gene not in is_any_perturbed_gene_index:
+                                    is_any_perturbed_gene_index[gene] = set()
+                                is_any_perturbed_gene_index[gene].add(idx)
+                    except (json.JSONDecodeError, ValueError, KeyError) as e:
+                        print(f"Error processing entry {key}: {e}")
 
         finally:
             self.close_lmdb()
@@ -966,15 +961,18 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
 
         self._init_lmdb_read()
         try:
+            # Stream the cursor: materializing the entries first held the entire
+            # store's values in RAM (517 GB on the 025 build, over any cap).
             with self.env.begin() as txn:
-                entries = [(key, value) for key, value in txn.cursor()]
-            for key, value in entries:
-                idx = int(key.decode())
-                for data in json.loads(value.decode()):
-                    for pert in data["experiment"]["genotype"]["perturbations"]:
-                        if not pert["perturbation_type"].endswith("deletion"):
-                            continue
-                        index.setdefault(pert["systematic_gene_name"], set()).add(idx)
+                for key, value in txn.cursor():
+                    idx = int(key.decode())
+                    for data in json.loads(value.decode()):
+                        for pert in data["experiment"]["genotype"]["perturbations"]:
+                            if not pert["perturbation_type"].endswith("deletion"):
+                                continue
+                            index.setdefault(pert["systematic_gene_name"], set()).add(
+                                idx
+                            )
         finally:
             self.close_lmdb()
 

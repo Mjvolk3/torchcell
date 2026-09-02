@@ -1,0 +1,162 @@
+{
+  "pooled": {
+    "n_seeds": 3,
+    "betaxanthin_mean": 0.05916498726422179,
+    "betaxanthin_sd": 0.018246574678993637,
+    "betaxanthin_per_seed": [
+      0.04083467098696475,
+      0.0773266511910931,
+      0.05933363961460755
+    ],
+    "mulleder19_mean": 0.0006793403249781907,
+    "mulleder19_per_seed": [
+      0.011781296673588876,
+      0.033165563804017514,
+      -0.04290883950267182
+    ],
+    "final_feasibility": {},
+    "wall_time_s_per_seed": [
+      937.4633853435516,
+      926.6668794155121,
+      922.9816403388977
+    ]
+  },
+  "flux_off": {
+    "n_seeds": 3,
+    "betaxanthin_mean": 0.006866788691683283,
+    "betaxanthin_sd": 0.0825545114013541,
+    "betaxanthin_per_seed": [
+      -0.0011357981080138387,
+      0.0931311740957915,
+      -0.0713950099127278
+    ],
+    "mulleder19_mean": -0.005868043053255711,
+    "mulleder19_per_seed": [
+      -0.011131988121451742,
+      -0.008050101182123652,
+      0.001577960143808262
+    ],
+    "final_feasibility": {
+      "c_box": 0.0,
+      "feas_box_violation_frac": 0.0,
+      "c_balance": 2.837226902737337,
+      "feas_balance_median": 1.971532958395341,
+      "c_thermo": 0.0,
+      "feas_thermo_violation_frac": 0.0,
+      "c_dissipation": 0.0,
+      "c_budget": 0.0,
+      "c_parsimony": 0.07487832952071638,
+      "c_thermo_prior": 0.0
+    },
+    "wall_time_s_per_seed": [
+      984.5990540981293,
+      928.0914342403412,
+      927.8918092250824
+    ]
+  },
+  "flux_free": {
+    "n_seeds": 3,
+    "betaxanthin_mean": 0.08325524540435626,
+    "betaxanthin_sd": 0.02671755265575642,
+    "betaxanthin_per_seed": [
+      0.10243668070557979,
+      0.0945901585626795,
+      0.05273889694480952
+    ],
+    "mulleder19_mean": 0.00819496716580155,
+    "mulleder19_per_seed": [
+      0.020781258718985052,
+      -0.000352392557331328,
+      0.004156035335750927
+    ],
+    "final_feasibility": {
+      "c_box": 0.0,
+      "feas_box_violation_frac": 0.0,
+      "c_balance": 2.7733106052174286,
+      "feas_balance_median": 1.9609746547306286,
+      "c_thermo": 0.25755003269980936,
+      "feas_thermo_violation_frac": 0.19906734894303715,
+      "c_dissipation": 0.0,
+      "c_budget": 0.0,
+      "c_parsimony": 0.07485523578875206,
+      "c_thermo_prior": 0.0
+    },
+    "wall_time_s_per_seed": [
+      1279.7533626556396,
+      932.6006710529327,
+      930.5509140491486
+    ]
+  },
+  "flux_anchored": {
+    "n_seeds": 3,
+    "betaxanthin_mean": 0.08673055699841803,
+    "betaxanthin_sd": 0.006514696591626441,
+    "betaxanthin_per_seed": [
+      0.07920963246699968,
+      0.09035669754033897,
+      0.09062534098791543
+    ],
+    "mulleder19_mean": 0.0017170932667783547,
+    "mulleder19_per_seed": [
+      -0.0008590768587662451,
+      0.008316298805647243,
+      -0.0023059421465459347
+    ],
+    "final_feasibility": {
+      "c_box": 0.0,
+      "feas_box_violation_frac": 0.0,
+      "c_balance": 2.9479450548396393,
+      "feas_balance_median": 1.9816059540299809,
+      "c_thermo": 0.3202099572209751,
+      "feas_thermo_violation_frac": 0.2662682130056269,
+      "g_diss": 553701.7794117647,
+      "c_dissipation": 148.64913446762984,
+      "protein_used": 0.0009067952187786646,
+      "c_budget": 0.0,
+      "feas_budget_ratio": 0.0025908434968989562,
+      "c_parsimony": 0.07725974325748051,
+      "c_thermo_prior": 0.0026514659334412392
+    },
+    "wall_time_s_per_seed": [
+      943.446567773819,
+      936.4559462070465,
+      930.2417938709259
+    ]
+  },
+  "flux_nullspace": {
+    "n_seeds": 3,
+    "betaxanthin_mean": 0.10775153626374595,
+    "betaxanthin_sd": 0.029466571261562224,
+    "betaxanthin_per_seed": [
+      0.14023903420740785,
+      0.10026567972863441,
+      0.08274989485519557
+    ],
+    "mulleder19_mean": 0.003973418883536416,
+    "mulleder19_per_seed": [
+      0.02856280331862815,
+      -0.006442309533648724,
+      -0.010200237134370179
+    ],
+    "final_feasibility": {
+      "c_box": 0.011511037810979521,
+      "feas_box_violation_frac": 0.27035269930082206,
+      "c_balance": 1.6943547395262555e-08,
+      "feas_balance_median": 1.4041131812803087e-08,
+      "c_thermo": 0.5029000955469468,
+      "feas_thermo_violation_frac": 0.45047925938578215,
+      "g_diss": 325.80558058794804,
+      "c_dissipation": 0.0,
+      "protein_used": 0.032730477369006944,
+      "c_budget": 0.0,
+      "feas_budget_ratio": 0.0935156507527127,
+      "c_parsimony": 0.03828852908576236,
+      "c_thermo_prior": 5.264928864455535e-05
+    },
+    "wall_time_s_per_seed": [
+      930.8232789039612,
+      932.9414837360382,
+      926.2746422290802
+    ]
+  }
+}

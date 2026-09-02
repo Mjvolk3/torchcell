@@ -1,0 +1,277 @@
+<mxfile host="app.diagrams.net" agent="claude-code" version="24.7.17">
+  <diagram name="metabolism-flux-layer" id="metabolismFluxLayer">
+    <mxGraphModel dx="1400" dy="1000" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="703" pageHeight="545" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ================================================================
+             TRUE-SIZE CANVAS. 100 draw.io units = 1 inch; 702 units = 178.2 mm.
+             Arial. Font ladder only: 8.3 body (5.98 pt), 9.7 title (6.98 pt),
+             11.1 panel letters (7.99 pt, bold lowercase).
+             Colour semantics (legend at the bottom):
+               blue   = exact / structural (holds by construction)
+               orange = soft penalty, squared and scale-relative
+               red    = soft penalty, one-sided hinge
+               purple = data-backed quantity
+               yellow = learned
+               gray dashed = default or gap
+             Column grid, panel a: x = 5, 123, 241, 359, 477, 595 (w 102, pitch 118)
+             Column grid, panel b: x = 1, 144, 287, 430, 573 (w 128, pitch 143);
+               centres 65, 208, 351, 494, 637.
+             ================================================================ -->
+
+        <mxCell id="title" value="A differentiable enzyme-constrained thermodynamic flux layer" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=9.7;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="8" y="4" width="687" height="14" as="geometry" />
+        </mxCell>
+
+        <!-- ============================ PANEL A ============================ -->
+        <mxCell id="pahL" value="a" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11.1;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="24" width="10" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="pah" value="Availability to box to flux. A deletion acts on the bounds, so the box is exact and enzyme capacity never needs a penalty." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.3;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="14" y="24" width="681" height="12" as="geometry" />
+        </mxCell>
+
+        <!-- reaction MLP row, sitting on the bypass line from gene tokens to flux -->
+        <mxCell id="mlp" value="&lt;b&gt;reaction MLP&lt;/b&gt;&lt;br&gt;z&lt;sub&gt;j&lt;/sub&gt; = MLP( pool(H&lt;sub&gt;pert&lt;/sub&gt;) &#8853; e&lt;sub&gt;j&lt;/sub&gt; )&lt;br&gt;e&lt;sub&gt;j&lt;/sub&gt; = learned reaction embedding [4131, d]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="250" y="42" width="200" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="bypassIn" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="56" y="90" as="sourcePoint" />
+            <mxPoint x="250" y="60" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="56" y="60" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="bypassInL" value="H&lt;sub&gt;pert&lt;/sub&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="62" y="46" width="60" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="bypassOut" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="60" as="sourcePoint" />
+            <mxPoint x="646" y="90" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="646" y="60" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="bypassOutL" value="z&lt;sub&gt;j&lt;/sub&gt; [B, 4131]" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="456" y="46" width="90" height="12" as="geometry" />
+        </mxCell>
+
+        <!-- the chain -->
+        <mxCell id="a1" value="&lt;b&gt;Gene tokens&lt;/b&gt;&lt;br&gt;H&lt;sub&gt;pert&lt;/sub&gt; [B, N = 6607, d]&lt;br&gt;from the perturbation operator" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="5" y="90" width="102" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" value="&lt;b&gt;Gene availability&lt;/b&gt;&lt;br&gt;&#947;&lt;sub&gt;g&lt;/sub&gt; &#8712; [0, 1]&lt;br&gt;N = 1161 GEM genes" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="123" y="90" width="102" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" value="&lt;b&gt;Catalytic unit&lt;/b&gt;&lt;br&gt;c&lt;sub&gt;u&lt;/sub&gt; = softmin&lt;sub&gt;g &#8712; u&lt;/sub&gt; &#947;&lt;sub&gt;g&lt;/sub&gt;&lt;br&gt;3728 units, 275 multi-gene" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="241" y="90" width="102" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="a4" value="&lt;b&gt;Reaction availability&lt;/b&gt;&lt;br&gt;c&lt;sub&gt;j&lt;/sub&gt; = min(1, &#931;&lt;sub&gt;u &#8712; j&lt;/sub&gt; c&lt;sub&gt;u&lt;/sub&gt;)&lt;br&gt;2709 of 4131 reactions have a GPR" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="359" y="90" width="102" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="a5" value="&lt;b&gt;Dynamic box&lt;/b&gt;&lt;br&gt;[ lb&lt;sub&gt;j&lt;/sub&gt; c&lt;sub&gt;j&lt;/sub&gt;, min(ub&lt;sub&gt;j&lt;/sub&gt;, k&lt;sub&gt;cat&lt;/sub&gt; capacity) c&lt;sub&gt;j&lt;/sub&gt; ]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="477" y="90" width="102" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="a6" value="&lt;b&gt;Flux&lt;/b&gt;&lt;br&gt;v&lt;sub&gt;j&lt;/sub&gt; = lb + (ub &#8722; lb) &#963;(z&lt;sub&gt;j&lt;/sub&gt;)&lt;br&gt;[B, 4131]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=1.5;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="595" y="90" width="102" height="52" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ar1" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="107" y="116" as="sourcePoint" /><mxPoint x="123" y="116" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="ar2" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="225" y="116" as="sourcePoint" /><mxPoint x="241" y="116" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="ar3" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="343" y="116" as="sourcePoint" /><mxPoint x="359" y="116" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="ar4" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="461" y="116" as="sourcePoint" /><mxPoint x="477" y="116" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="ar5" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="579" y="116" as="sourcePoint" /><mxPoint x="595" y="116" as="targetPoint" /></mxGeometry></mxCell>
+
+        <!-- annotations under the chain -->
+        <mxCell id="a1n" value="one token per gene; only the 1161 GEM genes are read by the layer" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="5" y="146" width="102" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="a2n" value="deletion sets &lt;font color=&quot;#6C8EBF&quot;&gt;&lt;b&gt;&#947; = 0 HARD&lt;/b&gt;&lt;/font&gt;; every other gene: &lt;font color=&quot;#D6B656&quot;&gt;&lt;b&gt;learned sigmoid&lt;/b&gt;&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="123" y="146" width="102" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="a3n" value="complex: &lt;b&gt;min&lt;/b&gt; (the scarcest subunit limits)" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="241" y="146" width="102" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="a4n" value="isozymes: &lt;b&gt;sum&lt;/b&gt;; reactions without a GPR keep c&lt;sub&gt;j&lt;/sub&gt; = 1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="359" y="146" width="102" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="a5n" value="enzyme capacity enters &lt;font color=&quot;#6C8EBF&quot;&gt;&lt;b&gt;HERE, exactly&lt;/b&gt;&lt;/font&gt;, not as a penalty" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="477" y="146" width="102" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="a6n" value="the box holds &lt;font color=&quot;#6C8EBF&quot;&gt;&lt;b&gt;by construction&lt;/b&gt;&lt;/font&gt;, so there is no C&lt;sub&gt;box&lt;/sub&gt; loss term" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="595" y="146" width="102" height="44" as="geometry" />
+        </mxCell>
+
+        <!-- ============================ PANEL B ============================ -->
+        <mxCell id="pbhL" value="b" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=11.1;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="202" width="10" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="pbh" value="The constraint residuals hanging off v. One is exact by construction; the other four are soft, and none needs a binary variable." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.3;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="14" y="202" width="681" height="12" as="geometry" />
+        </mxCell>
+
+        <mxCell id="vbox" value="&lt;b&gt;Flux&lt;/b&gt; v [B, 4131]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=1.5;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="291" y="218" width="120" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="vdrop" style="endArrow=none;html=1;strokeWidth=1.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="351" y="238" as="sourcePoint" /><mxPoint x="351" y="248" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="vbus" style="endArrow=none;html=1;strokeWidth=1.5;strokeColor=#666666;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="65" y="248" as="sourcePoint" /><mxPoint x="637" y="248" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="vd1" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="65" y="248" as="sourcePoint" /><mxPoint x="65" y="258" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="vd2" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="208" y="248" as="sourcePoint" /><mxPoint x="208" y="258" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="vd3" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="351" y="248" as="sourcePoint" /><mxPoint x="351" y="258" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="vd4" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="494" y="248" as="sourcePoint" /><mxPoint x="494" y="258" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="vd5" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#666666;endSize=4;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="637" y="248" as="sourcePoint" /><mxPoint x="637" y="258" as="targetPoint" /></mxGeometry></mxCell>
+
+        <!-- residual boxes -->
+        <mxCell id="b1" value="&lt;b&gt;Mass balance&lt;/b&gt;&lt;br&gt;C&lt;sub&gt;bal&lt;/sub&gt; = mean&lt;sub&gt;i&lt;/sub&gt; ([Sv]&lt;sub&gt;i&lt;/sub&gt; / sg(&#969;&lt;sub&gt;i&lt;/sub&gt;))&lt;sup&gt;2&lt;/sup&gt;&lt;br&gt;sg = stopgrad; i runs over the 2593 independent rows of S" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.3;verticalAlign=top;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="1" y="258" width="128" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="b2" value="&lt;b&gt;Second law&lt;/b&gt;&lt;br&gt;C&lt;sub&gt;th&lt;/sub&gt; = mean&lt;sub&gt;j&lt;/sub&gt; relu(v&lt;sub&gt;j&lt;/sub&gt; &#916;&lt;sub&gt;r&lt;/sub&gt;G&lt;sub&gt;j&lt;/sub&gt; + &#949;)&lt;br&gt;/ (|v&lt;sub&gt;j&lt;/sub&gt;| |&#916;&lt;sub&gt;r&lt;/sub&gt;G&lt;sub&gt;j&lt;/sub&gt;| + &#949;)&lt;br&gt;a flux against its &#916;&lt;sub&gt;r&lt;/sub&gt;G is penalized" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.3;verticalAlign=top;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="144" y="258" width="128" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="b3" value="&lt;b&gt;Enzyme capacity&lt;/b&gt;&lt;br&gt;folded into the box:&lt;br&gt;ub&lt;sub&gt;j&lt;/sub&gt; &#8592; min(ub&lt;sub&gt;j&lt;/sub&gt;, k&lt;sub&gt;cat&lt;/sub&gt; capacity) c&lt;sub&gt;j&lt;/sub&gt;&lt;br&gt;no residual exists for it" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.3;verticalAlign=top;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="287" y="258" width="128" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="b4" value="&lt;b&gt;Protein budget&lt;/b&gt;&lt;br&gt;C&lt;sub&gt;bud&lt;/sub&gt; = relu( P(v) / P&lt;sub&gt;avail&lt;/sub&gt; &#8722; 1 )&lt;br&gt;P(v) = &#931;&lt;sub&gt;g&lt;/sub&gt; MW&lt;sub&gt;g&lt;/sub&gt; E&lt;sub&gt;g&lt;/sub&gt;(v)&lt;br&gt;E&lt;sub&gt;g&lt;/sub&gt;(v) = &#931;&lt;sub&gt;j&lt;/sub&gt; &#8730;(v&lt;sub&gt;j&lt;/sub&gt;&lt;sup&gt;2&lt;/sup&gt; + &#948;) / k&lt;sub&gt;cat,gj&lt;/sub&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.3;verticalAlign=top;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="430" y="258" width="128" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="b5" value="&lt;b&gt;Gibbs dissipation&lt;/b&gt;&lt;br&gt;C&lt;sub&gt;diss&lt;/sub&gt; = relu( g&lt;sub&gt;diss&lt;/sub&gt; / g&lt;sub&gt;lim&lt;/sub&gt; &#8722; 1 )&lt;br&gt;g&lt;sub&gt;diss&lt;/sub&gt; = &#931;&lt;sub&gt;j &#8712; exchange&lt;/sub&gt; &#916;&lt;sub&gt;r&lt;/sub&gt;G&lt;sub&gt;j&lt;/sub&gt; v&lt;sub&gt;j&lt;/sub&gt;&lt;br&gt;g&lt;sub&gt;lim&lt;/sub&gt; = 3700 J gDW&lt;sup&gt;&#8722;1&lt;/sup&gt; h&lt;sup&gt;&#8722;1&lt;/sup&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.3;verticalAlign=top;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="573" y="258" width="128" height="72" as="geometry" />
+        </mxCell>
+
+        <!-- status chips -->
+        <mxCell id="b1s" value="SOFT, scale-relative, squared" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#D79B00;strokeColor=#D79B00;fontColor=#FFFFFF;fontFamily=Arial;fontSize=8.3;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1" y="333" width="128" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="b2s" value="SOFT hinge, no binaries" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#B85450;strokeColor=#B85450;fontColor=#FFFFFF;fontFamily=Arial;fontSize=8.3;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="144" y="333" width="128" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="b3s" value="EXACT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#6C8EBF;strokeColor=#6C8EBF;fontColor=#FFFFFF;fontFamily=Arial;fontSize=8.3;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="287" y="333" width="128" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="b4s" value="SOFT hinge, one-sided" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#B85450;strokeColor=#B85450;fontColor=#FFFFFF;fontFamily=Arial;fontSize=8.3;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="430" y="333" width="128" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="b5s" value="SOFT hinge, one-sided" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#B85450;strokeColor=#B85450;fontColor=#FFFFFF;fontFamily=Arial;fontSize=8.3;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="573" y="333" width="128" height="14" as="geometry" />
+        </mxCell>
+
+        <!-- notes under the chips -->
+        <mxCell id="b1n" value="213 of the 2806 rows of S are redundant; the mean skips them" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="1" y="350" width="128" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="b2n" value="Thermo-Flux uses one binary variable per reaction; the hinge uses none" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="144" y="350" width="128" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="b3n" value="a bound (panel a, dynamic box), so v cannot violate it" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="287" y="350" width="128" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="b4n" value="no reward for approaching P&lt;sub&gt;avail&lt;/sub&gt;; only exceeding it costs" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="430" y="350" width="128" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="b5n" value="g&lt;sub&gt;lim&lt;/sub&gt; from Niebel 2019" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="573" y="350" width="128" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- inset: thermodynamic decomposition -->
+        <mxCell id="insBox" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1" y="394" width="420" height="112" as="geometry" />
+        </mxCell>
+        <mxCell id="insH" value="Thermodynamic decomposition of &#916;&lt;sub&gt;r&lt;/sub&gt;G&lt;sub&gt;j&lt;/sub&gt;, the driving force used by the second law and by dissipation" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.3;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="7" y="398" width="408" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="insLhs" value="&#916;&lt;sub&gt;r&lt;/sub&gt;G&lt;sub&gt;j&lt;/sub&gt; =" style="text;html=1;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="7" y="416" width="50" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="insT1" value="&#916;&lt;sub&gt;r&lt;/sub&gt;G&#8242;&lt;sup&gt;0&lt;/sup&gt;&lt;sub&gt;j&lt;/sub&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="62" y="416" width="96" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="insP1" value="+" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="160" y="416" width="12" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="insT2" value="RT &#931;&lt;sub&gt;i&lt;/sub&gt; S&lt;sub&gt;ij&lt;/sub&gt; ln c&lt;sub&gt;i&lt;/sub&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="174" y="416" width="140" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="insP2" value="+" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="316" y="416" width="12" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="insT3" value="&#916;&lt;sub&gt;r&lt;/sub&gt;G&lt;sup&gt;t&lt;/sup&gt;&lt;sub&gt;j&lt;/sub&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="330" y="416" width="84" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="insT1n" value="&lt;font color=&quot;#9673A6&quot;&gt;&lt;b&gt;tabulated&lt;/b&gt;&lt;/font&gt;: &#916;&lt;sub&gt;f&lt;/sub&gt;G&#8242;&lt;sup&gt;0&lt;/sup&gt; known for 85.1% of metabolites" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="62" y="442" width="96" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="insT2n" value="&lt;font color=&quot;#D6B656&quot;&gt;&lt;b&gt;learned&lt;/b&gt;&lt;/font&gt; ln c&lt;sub&gt;i&lt;/sub&gt;, bounded to 1 &#181;M to 10 mM; anchored where a measurement exists" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="174" y="442" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="insT3n" value="transport term: &lt;b&gt;NOT AVAILABLE&lt;/b&gt;, set to 0" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="330" y="442" width="84" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- coverage strip: what rests on data -->
+        <mxCell id="covBox" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="432" y="394" width="269" height="112" as="geometry" />
+        </mxCell>
+        <mxCell id="covH" value="What rests on data, and how much of it is there" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.3;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="438" y="398" width="258" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="cov1c" value="S" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="438" y="414" width="60" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="cov1t" value="100%" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="502" y="414" width="194" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="cov2c" value="&#916;&lt;sub&gt;f&lt;/sub&gt;G&#8242;&lt;sup&gt;0&lt;/sup&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="438" y="430" width="60" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="cov2t" value="85.1% of metabolites" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="502" y="430" width="194" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="cov3c" value="MW" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="438" y="446" width="60" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="cov3t" value="100%" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="502" y="446" width="194" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="cov4c" value="k&lt;sub&gt;cat&lt;/sub&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="438" y="462" width="60" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="cov4t" value="4.0%: 148 of 3728 catalytic units resolved from the Open Enzyme Database" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="502" y="462" width="194" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="cov5c" value="conc. anchors" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="438" y="488" width="60" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="cov5t" value="6.8% of metabolites" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="502" y="488" width="194" height="14" as="geometry" />
+        </mxCell>
+
+        <!-- ============================ LEGEND ============================ -->
+        <mxCell id="lg1" value="exact / structural" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="4" y="516" width="110" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="lg2" value="soft, squared, scale-relative" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="121" y="516" width="110" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="lg3" value="soft, one-sided hinge" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="238" y="516" width="110" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="lg4" value="data-backed quantity" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="355" y="516" width="110" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="lg5" value="learned" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontFamily=Arial;fontSize=8.3;" vertex="1" parent="1">
+          <mxGeometry x="472" y="516" width="110" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="lg6" value="default, or a gap in the data" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;dashed=1;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="589" y="516" width="110" height="22" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

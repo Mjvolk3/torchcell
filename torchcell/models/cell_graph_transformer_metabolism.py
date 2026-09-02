@@ -83,10 +83,116 @@ import torch
 import torch.nn as nn
 from torch_geometric.data import HeteroData
 
+from torchcell.metabolism.flux_layer import FluxLayer
 from torchcell.models.equivariant_cell_graph_transformer import CellGraphTransformer
 
 #: heads_config keys handled by the parent class; everything else is a metabolism head.
 INHERITED_HEADS = frozenset({"global", "per_gene", "per_metabolite"})
+
+
+class FluxMetaboliteHead(nn.Module):
+    r"""Read a measured metabolite level off the predicted flux vector's turnover.
+
+    The mechanistic head. Instead of an MLP over pooled gene tokens, it reads
+
+    .. math::
+        \omega_i(v)=\tfrac12\sum_j\lvert S_{ij}v_j\rvert
+
+    at the metabolite indices that the measurement actually names, and maps each through
+    its own affine in log space:
+
+    .. math::
+        \hat y_k = a_k\,\log\!\big(1+\omega_{i_k}(v)\big) + b_k .
+
+    **Turnover is not concentration, and the affine is where that gap is admitted.** A
+    metabolite's pool size depends on its turnover and on its effective residence time,
+    and a steady-state flux model has no residence time in it. What the model can claim is
+    that a strain whose flux carries more mass through tyrosine should have more tyrosine,
+    monotonically -- which is exactly what a per-metabolite affine in :math:`\log\omega`
+    encodes, and it is why the metric to read is a correlation rather than an error in mM.
+
+    A per-metabolite affine, not a shared one, because the 19 amino acids differ by orders
+    of magnitude in both pool size and flux; one shared slope would make the largest pool
+    set the scale for all of them.
+    """
+
+    metabolite_indices: torch.Tensor
+
+    def __init__(self, metabolite_indices: torch.Tensor, param_dim: int = 1) -> None:
+        """Bind the head to fixed metabolite rows of ``S``.
+
+        Args:
+            metabolite_indices: ``[F]`` long, the GEM metabolite index of each measured
+                column, in the column order the target uses.
+            param_dim: Distributional parameters per column.
+        """
+        super().__init__()
+        self.register_buffer("metabolite_indices", metabolite_indices)
+        self.output_dim = int(metabolite_indices.numel())
+        self.param_dim = param_dim
+        self.scale = nn.Parameter(torch.ones(self.output_dim, param_dim))
+        self.bias = nn.Parameter(torch.zeros(self.output_dim, param_dim))
+
+    def forward(self, turnover: torch.Tensor) -> torch.Tensor:
+        """``[B, m] -> [B, F]`` (point) or ``[B, F, param_dim]``."""
+        omega = turnover[:, self.metabolite_indices]
+        h = torch.log1p(omega.clamp(min=0.0)).unsqueeze(-1)
+        out = h * self.scale + self.bias
+        return out if self.param_dim > 1 else out.squeeze(-1)
+
+
+class FluxScalarHead(nn.Module):
+    r"""Read a scalar production phenotype off the predicted flux vector.
+
+    A production phenotype is a flux the GEM does not contain -- betaxanthin's route is a
+    heterologous cassette, so no column of :math:`S` carries it. What the GEM does carry is
+    the **precursor supply**, and the readout is therefore a learned sparse combination of
+    the native fluxes plus the turnover of the named precursor metabolites:
+
+    .. math::
+        \hat y = w^\top v + u^\top \log\!\big(1+\omega_{\mathcal{P}}(v)\big) + b .
+
+    Naming the precursor metabolites is what makes the head a hypothesis rather than
+    another projection: for betaxanthin they are cytosolic tyrosine and its aromatic
+    precursors, and if the flux layer carries information about production it should be
+    visible there before it is visible anywhere else. The dense :math:`w^\top v` term is
+    kept alongside so that the precursor claim can be **ablated against** an unrestricted
+    read of the same flux vector, rather than assumed.
+    """
+
+    precursor_indices: torch.Tensor
+
+    def __init__(
+        self,
+        n_reactions: int,
+        precursor_indices: torch.Tensor,
+        use_dense_flux: bool = True,
+        param_dim: int = 1,
+    ) -> None:
+        """Build the readout.
+
+        Args:
+            n_reactions: Width of the flux vector.
+            precursor_indices: ``[P]`` GEM metabolite indices of the named precursors.
+            use_dense_flux: Include the unrestricted ``w^T v`` term.
+            param_dim: Distributional parameters.
+        """
+        super().__init__()
+        self.register_buffer("precursor_indices", precursor_indices)
+        self.output_dim = 1
+        self.param_dim = param_dim
+        self.use_dense_flux = use_dense_flux
+        self.precursor = nn.Linear(int(precursor_indices.numel()), param_dim)
+        if use_dense_flux:
+            self.dense = nn.Linear(n_reactions, param_dim)
+
+    def forward(self, v: torch.Tensor, turnover: torch.Tensor) -> torch.Tensor:
+        """``([B, r], [B, m]) -> [B, 1]`` or ``[B, 1, param_dim]``."""
+        omega = turnover[:, self.precursor_indices].clamp(min=0.0)
+        out: torch.Tensor = self.precursor(torch.log1p(omega))
+        if self.use_dense_flux:
+            out = out + self.dense(v)
+        return out.unsqueeze(1) if self.param_dim > 1 else out
 
 
 class ProductScalarHead(nn.Module):
@@ -315,14 +421,26 @@ class CellGraphTransformerMetabolism(CellGraphTransformer):
     * ``use_gene_pool`` / ``dropout`` / ``param_dim`` -- as for the inherited heads.
     """
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        """Build the inherited model, then the metabolism heads.
+    def __init__(
+        self, *args: Any, flux_layer: FluxLayer | None = None, **kwargs: Any
+    ) -> None:
+        """Build the inherited model, then the flux layer, then the metabolism heads.
 
         The metabolism heads are constructed strictly after ``super().__init__()`` so the
         encoder + PERT parameters consume the RNG stream in exactly the parent's order
         and are bit-identical to the parent's at the same seed (parity-tested).
+
+        Args:
+            *args: Positional arguments forwarded verbatim to the parent constructor.
+            **kwargs: Keyword arguments forwarded verbatim to the parent constructor.
+            flux_layer: An already-built :class:`~torchcell.metabolism.flux_layer.FluxLayer`,
+                or None for the pooled-readout baseline. It is passed in rather than
+                constructed here because building it loads a genome-scale model from disk
+                and runs a rank-revealing QR -- work that belongs to the experiment script,
+                once, not to every model instantiation.
         """
         super().__init__(*args, **kwargs)
+        self.flux_layer = flux_layer
         self.metabolism_head_names: list[str] = []
         for name, raw_spec in self.heads_config.items():
             if name in INHERITED_HEADS:
@@ -331,7 +449,32 @@ class CellGraphTransformerMetabolism(CellGraphTransformer):
             kind = spec.get("kind")
             output_dim = int(spec.get("output_dim", 1))
             head: nn.Module
-            if kind == "scalar":
+            if kind == "flux_metabolite":
+                if self.flux_layer is None:
+                    raise ValueError(
+                        f"head '{name}' is kind='flux_metabolite' but no flux_layer was "
+                        "supplied; a mechanistic head cannot read a flux vector that the "
+                        "model does not compute."
+                    )
+                head = FluxMetaboliteHead(
+                    torch.as_tensor(spec["metabolite_indices"], dtype=torch.long),
+                    param_dim=int(spec.get("param_dim", 1)),
+                )
+            elif kind == "flux_scalar":
+                if self.flux_layer is None:
+                    raise ValueError(
+                        f"head '{name}' is kind='flux_scalar' but no flux_layer was "
+                        "supplied."
+                    )
+                head = FluxScalarHead(
+                    n_reactions=self.flux_layer.n_reactions,
+                    precursor_indices=torch.as_tensor(
+                        spec["precursor_indices"], dtype=torch.long
+                    ),
+                    use_dense_flux=bool(spec.get("use_dense_flux", True)),
+                    param_dim=int(spec.get("param_dim", 1)),
+                )
+            elif kind == "scalar":
                 if output_dim != 1:
                     raise ValueError(
                         f"head '{name}' is kind='scalar' but output_dim={output_dim}; "
@@ -355,11 +498,19 @@ class CellGraphTransformerMetabolism(CellGraphTransformer):
                 )
             else:
                 raise ValueError(
-                    f"metabolism head '{name}' needs kind='scalar' or kind='vector' "
-                    f"in its heads_config spec, got {kind!r}."
+                    f"metabolism head '{name}' needs kind in "
+                    "{'scalar','vector','flux_scalar','flux_metabolite'} in its "
+                    f"heads_config spec, got {kind!r}."
                 )
             self.add_module(f"{name}_head", head)
             self.metabolism_head_names.append(name)
+        self.flux_head_names = [
+            n
+            for n in self.metabolism_head_names
+            if isinstance(
+                getattr(self, f"{n}_head"), (FluxScalarHead, FluxMetaboliteHead)
+            )
+        ]
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData, *args: Any, **kwargs: Any
@@ -396,7 +547,25 @@ class CellGraphTransformerMetabolism(CellGraphTransformer):
             batch["gene"].perturbation_indices,
             batch["gene"].perturbation_indices_batch,
         )
+        if self.flux_layer is not None and self.flux_head_names:
+            flux = self.flux_layer(
+                H_genes_pert,
+                pert_pool,
+                batch["gene"].perturbation_indices,
+                batch["gene"].perturbation_indices_batch,
+            )
+            reps["flux"] = flux
+            turnover = self.flux_layer.turnover(flux["v"])
+            for name in self.flux_head_names:
+                head = getattr(self, f"{name}_head")
+                head_outputs[name] = (
+                    head(turnover)
+                    if isinstance(head, FluxMetaboliteHead)
+                    else head(flux["v"], turnover)
+                )
         for name in self.metabolism_head_names:
+            if name in self.flux_head_names:
+                continue
             head = cast(nn.Module, getattr(self, f"{name}_head"))
             head_outputs[name] = head(h_CLS, H_genes_pert, pert_pool)
         return predictions, reps

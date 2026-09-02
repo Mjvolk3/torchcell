@@ -20,9 +20,11 @@ the question cannot use.
 \subsection{Evidence 1: the replicate spread at 9,900 epochs is $0.0222$\secstatus{todo}}
 
 Every expression run past 9,000 epochs on the leaderboard, eight of them, carries one
-identical configuration: \file{quantile} head, lr $3 \times 10^{-4}$, dropout $0.1$,
-$L = 6$, hidden 90, mask prior, \file{s1_pool}, seed 0. The script asserts this before
-computing anything, so the spread below is run-to-run nondeterminism and nothing else.
+identical configuration: \file{quantile} head trained by pinball loss (\cref{sec:terms}:
+the head is what emits the 19 knots, pinball is what scores them), lr $3 \times 10^{-4}$,
+dropout $0.1$, $L = 6$, hidden 90, mask prior, \file{s1_pool}, seed 0. The script asserts
+this before computing anything, so the spread below is run-to-run nondeterminism and
+nothing else.
 
 \begin{table}[htbp]
 \centering\small

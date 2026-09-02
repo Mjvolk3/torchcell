@@ -33,7 +33,8 @@ epoch 4,002 of 4,105.
 
 \notesec{That headline is the maximum of eight replicates, and the spread has now been
 measured} Every expression run past 9,000 epochs on the leaderboard, eight of them, shares
-one identical configuration: \file{quantile} head, lr $3 \times 10^{-4}$, dropout $0.1$,
+one identical configuration: \file{quantile} head trained by pinball loss, lr
+$3 \times 10^{-4}$, dropout $0.1$,
 $L = 6$, hidden 90, mask prior, \file{s1_pool}, seed 0. They are replicates in everything
 but name, and they span $0.1663$ to $0.2382$: mean $\mathbf{0.1965}$, standard deviation
 $\mathbf{0.0222}$. Blom's expected maximum of eight normal draws at that mean and spread is

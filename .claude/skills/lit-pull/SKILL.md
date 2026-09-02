@@ -70,6 +70,34 @@ GOT=$(shasum -a 256 "$REL" | awk '{print $1}')   # macOS: shasum; Linux: sha256s
 [ "$EXPECT" = "$GOT" ] && echo "OK sha256 verified" || echo "MISMATCH — do not trust bytes"
 ```
 
+## Step 5: Pull a bibliography (`.bib`)
+
+The server also holds a **bibliography store**: `GET /bib` is a manifest of every served
+`.bib` (name, entry count, sha256, scope, when it was exported), `GET /bib/<name>` streams
+one with `X-Artifact-SHA256`. Names are the repo's own: `paper` (the group `paper`
+collection the manuscript cites), one per `notes-tex/<slug>` that declares a
+`ZOTERO_COLLECTION` (e.g. `eqtl-data-model`), and `library` (group + personal `torchcell`
+tree, the Dendron scope). Exported nightly on GilaHyper by `scripts/lit_bib_store.py`.
+
+Preferred client, which checks the hash against the manifest before writing:
+
+```bash
+python scripts/lit_bib_pull.py --list                                   # what is served
+python scripts/lit_bib_pull.py --name paper --out paper/nature-biotech/references.bib
+make -C notes-tex/eqtl-data-model bib-pull                              # same, by document
+make -C paper/nature-biotech bib-pull
+```
+
+Raw curl, if needed:
+
+```bash
+curl -s -H "X-API-Key: $TC_LIT_API_KEY" "$TC_LIT_URL/bib"                 # manifest
+curl -s -D /tmp/hdr.txt -H "X-API-Key: $TC_LIT_API_KEY" "$TC_LIT_URL/bib/paper" -o references.bib
+```
+
+Then verify exactly as in Step 4. A `404 no bibliography store` means the nightly export
+has not run on the host yet: `python scripts/lit_bib_store.py` there.
+
 ## Notes
 
 - Read-only: the endpoint never mutates the mirror.

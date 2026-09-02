@@ -13,3 +13,8 @@ created: 1788221146558
 - [x] Figure re-composed per comments: the gene-conversion tract sat exactly ON marker bm7 while the caption said BETWEEN markers, moved into the inter-marker gap; panel d redrawn as a square gridded matrix with "each dot is one significant (gene, marker) pair: a row of the QTL table" and tied to Sec 1.1 in caption and prose
 - [x] Fixed `zotero_comments.py`, which broke when `zotero_publish.py` generalized past notes-tex (`DOCS_COLLECTION` gone); it now walks the repo-path collection route, so it also works for `paper/nature-biotech` [[notes-tex.common.zotero_comments]]
 - [x] Checked the mirrored Boocock text for an aneuploidy/CNV screen before answering the reviewer's "do the papers estimate these": no hits for aneuploid/ploid/copy number/disom, so the doc says unmodeled error term for that design and makes no claim about unmirrored Bloom 2013
+
+## 2026.09.02
+
+- [x] **tc-lit `/bib` endpoint built**: a bibliography store in the mirror (`_bib/`) exported nightly over the Zotero Web API and served with sha256 manifests, so a document's `references.bib` is pulled (`make bib-pull`) rather than regenerated per machine through Better BibTeX [[torchcell.literature.bib_store]] [[scripts.lit_bib_store]] [[scripts.lit_bib_pull]]; the flows table and the closed expectation gap in [[tectonic-builds-and-bibliographies]]
+- [ ] **Curation pass before any `bib-pull`**: every committed `references.bib` is behind Zotero and each build cites keys its collection no longer holds (paper 4 of 17, 024 costing 13 of 51, eqtl 7 of 8; the eqtl group collection is empty and its Makefile's personal collection is the publish one). Key-by-key table in [[tectonic-builds-and-bibliographies]]; nothing was pulled or written to Zotero

@@ -25,6 +25,14 @@
 # Writes one JSON report per collection under torchcell-library/_sync_reports/.
 30 3 * * * bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && /home/michaelvolk/miniconda3/envs/torchcell/bin/python scripts/lit_sync.py --limit 10 >> /tmp/torchcell-lit-sync.log 2>&1'
 
+# bibliography store: nightly headless Zotero Web API export of every repo-declared
+# bibliography (group `paper` collection, one per notes-tex document, the whole
+# torchcell union) into torchcell-library/_bib/ with a sha256 manifest, which tc-lit
+# serves at /bib and /bib/<name>. Writes nothing git-tracked, so cron cannot dirty a
+# checkout; consumers pull a pinned copy with `make bib-pull`. Runs after lit_sync so
+# a paper captured that night is citable the same morning.
+45 3 * * * bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && /home/michaelvolk/miniconda3/envs/torchcell/bin/python scripts/lit_bib_store.py >> /tmp/torchcell-lit-bib-store.log 2>&1'
+
 # deprecation-graveyard retention sweep: remove graveyard entries that have STAYED past the
 # retention window (14 days), keeping recent ones. The 14-day RETENTION is enforced by the
 # script's age gate (age read from each entry's moved-in timestamp), so this runs DAILY and

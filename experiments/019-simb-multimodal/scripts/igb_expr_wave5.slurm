@@ -188,9 +188,20 @@ case "$STAGE" in
   # max_epochs IS ABSOLUTE IN LIGHTNING, so 19,000 means "9,100 more", and the train script
   # raises if max_epochs <= the checkpoint's epoch rather than exiting instantly with a
   # confusing success. W5_RESUME_CKPT must be an absolute path readable on the compute node.
-  resume) ARMS=(W_ref); SEEDS=(0)
+  #
+  # PARAMETERIZED 2026.09.01, because restarting a casualty is now a routine operation rather
+  # than a one-off. The dataloader file-descriptor bug (commit f1bfa95b) killed two DIFFERENT
+  # runs on cabbi a day into their budgets: the incumbent continuation AND launch arm Q_point
+  # seed 2. Restarting the second from its checkpoint was impossible while this stage
+  # hardcoded W_ref/seed 0, so the arm and seed now default to the incumbent's and are
+  # overridable. Defaults reproduce the original invocation exactly.
+  #
+  #   sbatch -p cabbi --gres=gpu:1 --cpus-per-task=8 --mem=60g --time=5-00:00:00 --array=0 \
+  #     --export=ALL,W5_STAGE=resume,W5_RESUME_ARM=Q_point,W5_RESUME_SEED=2,\
+  # W5_RESUME_EPOCHS=9900,W5_RESUME_CKPT=/abs/path/last.ckpt,... igb_expr_wave5.slurm
+  resume) ARMS=("${W5_RESUME_ARM:-W_ref}"); SEEDS=("${W5_RESUME_SEED:-0}")
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v9_mask
-          EXTRA_OV="trainer.max_epochs=19000 trainer.train_eval_every=10 trainer.resume_ckpt_path=${W5_RESUME_CKPT:?set W5_RESUME_CKPT=/abs/path/to/last.ckpt for the resume stage}" ;;
+          EXTRA_OV="trainer.max_epochs=${W5_RESUME_EPOCHS:-19000} trainer.train_eval_every=10 trainer.resume_ckpt_path=${W5_RESUME_CKPT:?set W5_RESUME_CKPT=/abs/path/to/last.ckpt for the resume stage}" ;;
   # ---------------------------------------------------------------- MECHANISM (2026.09.01)
   # Pair-term and READOUT mechanisms, replicated, on the four cabbi cards the objective
   # round left free. 4 arms x 2 seeds = 8 runs at 2/GPU = 4 tasks.

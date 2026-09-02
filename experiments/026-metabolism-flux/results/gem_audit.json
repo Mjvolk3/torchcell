@@ -1,0 +1,65 @@
+{
+  "gem": {
+    "model_id": "yeastGEM_v9__46__0__46__2",
+    "version": "9.0.2",
+    "model_dir": "/scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2",
+    "n_metabolites": 2806,
+    "n_reactions": 4131,
+    "n_genes": 1161,
+    "s_nonzeros": 15567,
+    "s_density": 0.0013429568654367056,
+    "rank_s": 2593,
+    "nullity": 1538,
+    "n_redundant_balance_rows": 213,
+    "n_reversible": 1668,
+    "n_irreversible": 2463,
+    "n_exchange": 274,
+    "biomass_reaction": "r_2111",
+    "n_reactions_with_gpr": 2709,
+    "n_catalytic_units": 3728,
+    "n_multigene_units": 275,
+    "n_nondefault_bounds": 10
+  },
+  "thermo": {
+    "sha256": {
+      "met": "179a5aac4221ded673a5bba798870ca4cac9b9d19e955de6a0f25de65a3cee8f",
+      "rxn": "7a66ef5d7892bd65229e908e5eff4cd95e741d6c493ee8645d480a53e2da5796"
+    },
+    "source_paths": {
+      "met": "/scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/data/databases/model_metDeltaG.csv",
+      "rxn": "/scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/data/databases/model_rxnDeltaG.csv"
+    },
+    "sentinel": 10000000.0,
+    "n_metabolites_known": 2389,
+    "frac_metabolites_known": 0.8513898788310763,
+    "n_reactions_known": 3210,
+    "frac_reactions_known": 0.7770515613652869,
+    "n_reactions_all_participants_known": 3505,
+    "n_metabolites_concentration_measured": 191,
+    "frac_metabolites_concentration_measured": 0.06806842237710953,
+    "consistency": {
+      "n_reactions": 4131,
+      "n_shipped": 3210,
+      "n_recomputed_all_participants_known": 3505,
+      "n_both": 3204,
+      "abs_residual_median_kj_per_mol": 9.529988288879395,
+      "abs_residual_p95_kj_per_mol": 97.3499984741211,
+      "abs_residual_max_kj_per_mol": 396.1000061035156
+    }
+  },
+  "kinetics": {
+    "oed_mirror": "/scratch/projects/torchcell-scratch/data/enzyme_kinetics/open_enzyme_database/scerevisiae",
+    "n_catalytic_units": 3728,
+    "kcat_experimental_fraction": 0.03969957081545064,
+    "kcat_predicted_fraction": 0.0,
+    "kcat_default_fraction": 0.9603004455566406,
+    "kcat_provenance_counts": {
+      "open_enzyme_database": 148,
+      "organism_default": 3580
+    },
+    "kcat_median_per_s": 10.300000190734863,
+    "kcat_note": "Open Enzyme Database first (1126 organism rows), then registered sequence predictors, then the organism default 10.3 1/s = the median of the resolved values. A complex takes the min over its subunits.",
+    "mw_experimental_fraction": 1.0,
+    "mw_median_kda": 50.12580108642578
+  }
+}

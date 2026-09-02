@@ -1,0 +1,11 @@
+{
+  "fraction_of_optimum": 0.9,
+  "wild_type_growth_per_h": 0.08584396972646902,
+  "n_reactions": 4131,
+  "n_blocked_width_zero": 1286,
+  "n_width_le_1": 2818,
+  "n_width_le_10": 3671,
+  "n_width_ge_1000": 452,
+  "median_width": 0.11757873765419605,
+  "mean_width": 212.8040366009218
+}

@@ -1,0 +1,20 @@
+{
+  "n_samples_per_genotype": 128,
+  "n_genotypes": 32,
+  "n_reactions": 4131,
+  "epochs_trained": 12,
+  "best_val_betaxanthin": 0.035530177850332585,
+  "fva_licensed_reactions_width_le_1": 1532,
+  "n_model_interval_narrower_than_fva": 868,
+  "frac_model_interval_narrower": 0.566579634464752,
+  "median_model_width_licensed": 0.008133978582918644,
+  "median_fva_width_licensed": 0.11144682389812305,
+  "median_width_reduction": 0.04444732424222521,
+  "sample_feasibility": {
+    "feas_box_violation_frac": 0.0,
+    "feas_balance_median": 1.9759725192013908,
+    "feas_thermo_violation_frac": 0.3043428352650474,
+    "feas_budget_ratio": 0.004661584779729738
+  },
+  "note": "Classical sampling targets a uniform distribution over the polytope; this targets whatever the data and priors induce. Widths are comparable, the distributions are not the same object."
+}

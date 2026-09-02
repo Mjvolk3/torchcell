@@ -541,3 +541,65 @@ also a concrete argument for replicate measurement in any future screen we desig
   additive collapse is shared by every published operator in this family.
 \end{enumerate}
 
+
+\notesec{2026-09-01: the round was relaunched after a dataloader defect, and the job
+identifiers above no longer resolve}
+\cref{tab:launch-allocation} records the launch as submitted and is left unedited. Every
+job in it is gone. Two cabbi runs died roughly a day into their five-day budgets, from one
+defect wearing two disguises:
+\begin{quote}\ttfamily\small
+2368337, epoch 2{,}580: RuntimeError: received 0 items of ancdata\\
+2368339, epoch 12{,}230: DataLoader timed out after 10800 seconds
+\end{quote}
+The first was raised from inside the pin-memory loop; the second is the same exhaustion
+reaching the main thread as a stall.
+
+\pfstep{Cause.} Torch's default sharing strategy on Linux passes every shared tensor
+storage between a worker and its parent as a separate open file descriptor. A
+\file{HeteroData} batch is dozens of tensors and several batches are in flight at once, so
+the parent eventually cannot receive another handle. GilaHyper never saw this because its
+\file{RLIMIT_NOFILE} is 524{,}288, and no canary can see it because it takes a day of
+training to appear. Commit \texttt{f1bfa95b} switches to the \file{file_system} strategy in
+both the parent and a worker hook, and lifts the soft limit to the hard limit. The change
+moves batches between processes differently and touches no arithmetic.
+
+\pfstep{A raise in a non-main thread does not end the process.} \texttt{2368337} stayed
+\file{RUNNING} for three hours after its pin-memory thread died, holding a card and writing
+nothing. A job that is \file{RUNNING} with a stale log is dead, not slow.
+
+\pfstep{Relaunch.} The eight mmli runs sat at epoch $\approx 2{,}030$, inside the
+2{,}229--2{,}580 band where both cabbi runs died, so they were restarted from checkpoints
+written within ninety seconds of the cancellation rather than left to fail unattended. The
+mechanism round was at epoch 32 and was resubmitted from scratch, which puts all eight of
+its runs on one source version.
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabular}{llrrp{40mm}}
+\toprule
+partition & job & GPUs & runs & contents \\
+\midrule
+mmli (A100) & \texttt{2369693} 0--3 & 4 & 8 & objective round, resumed from epoch ${\approx}2{,}030$ \\
+gpu (A40)   & \texttt{2369691}      & 1 & 1 & \file{point} seed 2, from epoch 2{,}580 \\
+gpu (A40)   & \texttt{2369692}      & 1 & 1 & incumbent, from epoch ${\approx}12{,}230$ \\
+cabbi (Ada) & \texttt{2369697} 0--3 & 4 & 8 & mechanism round, from scratch \\
+\bottomrule
+\end{tabular}
+\caption[]{The round as relaunched, 2026-09-01, source \texttt{bebc5df3} with a clean
+worktree. The two casualties moved to the stock \file{gpu} partition, whose six A40s were
+idle, because cabbi was oversubscribed on CPUs and they would otherwise have waited four
+days behind the mechanism round. Scores are indexed by epoch rather than by wall clock, so
+the card change costs time and not comparability. Resuming a packed round needs a
+checkpoint per run rather than per stage, which \file{resume_many} reads from a map file
+that is itself the record of which run resumed from where.}
+\label{tab:relaunch-allocation}
+\end{table}
+
+\pfstep{Two consequences for reading the results.} Each restarted run's history is split
+across two W\&B runs, the first ending near epoch 2{,}030 and the second continuing from
+it, and the leaderboard puller reads one run at a time. The declared scoring window of
+epochs $\le 9{,}000$ falls entirely inside the second, so the split changes plotting rather
+than scoring. Separately, all three \file{point} replicates report
+\file{pred_sd_ratio} $= 0.000$ and \file{pearson_per_feature} $= 0.000$ at epoch
+$\approx 2{,}040$, meaning that head emits one constant for every strain. Whether it
+escapes that regime by epoch 9{,}900 is not yet measured.

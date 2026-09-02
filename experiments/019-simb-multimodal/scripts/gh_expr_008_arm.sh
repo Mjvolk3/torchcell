@@ -418,6 +418,34 @@ case "$ARM" in
   # arm is therefore the head switch alone.
   Q_point)           OVERRIDES=(multitask.dist=point)
                      ARM_TAGS=(mech-objective dist-point xfer-yes stage-launch) ;;
+  # ==================== MECHANISM ROUND (2026.09.01), config cgt_expr_v9_mask
+  # The pair-term ladder was already run in wave 6 (V_* above) at ~4,100 epochs, but at ONE
+  # seed per arm and on cgt_expr_012 / project v8. Its eight arms span 0.1925 to 0.2276, a
+  # range of 0.0351 = 1.6 sigma against the measured long-budget replicate sd of 0.0222, so
+  # NOTHING in that ordering is resolvable -- rank 0 (V_ref, 0.2100) sits mid-table, above
+  # rank 32 and rank 90. These arms re-run the survivors WITH replicates, on the v9 config
+  # the current objective round uses, so they are comparable to the n=8 quantile baseline.
+  #
+  # R_ref is the in-round paired reference and is NOT substitutable by the wave-6 V_ref: a
+  # different config, a different project and a different epoch budget.
+  R_ref)             OVERRIDES=()
+                     ARM_TAGS=(mech-baseline pair-rank0 xfer-yes stage-mech) ;;
+  R_basis64)         OVERRIDES=(multitask.response_basis_rank=64)
+                     ARM_TAGS=(mech-basis pair-rank64 xfer-yes stage-mech) ;;
+  # THE READOUT ARM. GEARS gives every gene its own linear layer (w_u in R^d, b_u in R) and
+  # State's readout is one W_recon column per gene; ours is a single shared MLP over gene
+  # tokens, so the readout composes to F(h_i + c_b) with one shared F. This adds a per-gene
+  # weight row applied to the shared hidden state -- 6,127 x 90 + 6,127 + 1 = 557,558
+  # parameters, +47% on the model -- gated at ZERO so it is the exact identity to R_ref at
+  # init (verified: max|diff| = 0.000e+00). It is the one mechanism both published models
+  # have that this one does not.
+  R_pergene)         OVERRIDES=(multitask.per_gene_weight=true)
+                     ARM_TAGS=(mech-pergene-readout xfer-yes stage-mech) ;;
+  # Composition: does the readout mechanism add anything ON TOP of a rank-64 pair term, or
+  # are they the same information arriving twice?
+  R_pergene_basis64) OVERRIDES=(multitask.per_gene_weight=true
+                                multitask.response_basis_rank=64)
+                     ARM_TAGS=(mech-pergene-readout mech-basis pair-rank64 xfer-yes stage-mech) ;;
   *) echo "unknown arm '$ARM'" >&2; exit 1 ;;
 esac
 

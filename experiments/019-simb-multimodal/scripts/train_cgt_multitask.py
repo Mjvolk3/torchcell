@@ -221,6 +221,14 @@ def build_heads_config(cfg: DictConfig) -> dict[str, Any] | None:
             # capacity-only decoder arm: it unties output-gene identity from h_k without
             # touching what information reaches the decoder.
             spec["free_gene_dim"] = int(cfg.multitask.get("free_gene_dim", 0))
+            # PER-GENE OUTPUT WEIGHT -- the readout mechanism GEARS and State both have and
+            # this model lacks (a gene-specific w_u applied to the shared hidden state,
+            # versus our one shared MLP). Distinct from free_gene_dim, which appends a
+            # per-gene row to the head's INPUT where it enters additively; this one
+            # multiplies. Zero-gated, so it is an exact identity at init.
+            spec["per_gene_weight"] = bool(
+                cfg.multitask.get("per_gene_weight", False)
+            )
             # CONCAT arm: feed the head [h_pert ; h_i ; c] instead of h_pert alone, so it
             # can learn arbitrary (h_i, c_b) interactions rather than only functions of
             # their sum. Equivariant (shared MLP per token) and graph-free.

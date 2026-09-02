@@ -1554,6 +1554,7 @@ class PerGeneHead(nn.Module):
         in_mult: int = 1,
         extra_dim: int = 0,
         film_dim: int = 0,
+        per_gene_weight: bool = False,
     ):
         """Build the shared MLP applied to every gene embedding.
 
@@ -1578,6 +1579,15 @@ class PerGeneHead(nn.Module):
                 emitting per-feature scale/shift, giving ``h_i * gamma(c) + beta(c)`` --
                 a genuine rank-``d`` pair term, which the purely additive form lacks.
                 ``0`` disables FiLM.
+            per_gene_weight: Give every gene its OWN readout row ``w_u`` (plus a scalar
+                bias) applied to the shared hidden state, summed in through a
+                zero-initialized gate. This is the readout mechanism GEARS
+                (``w_u in R^d, b_u in R`` per gene) and State (one ``W_recon`` column per
+                gene) both have and this model otherwise lacks: without it the whole
+                readout composes to ``F(h_i + c_b)`` with a single shared ``F``, so
+                reporter identity enters only through ``h_i``. Requires ``num_genes`` and
+                a scalar-per-gene head (``output_dim == 1``); costs
+                ``num_genes * (hidden_dim + 1) + 1`` parameters.
         """
         super().__init__()
         self.hidden_dim = hidden_dim
@@ -1626,6 +1636,62 @@ class PerGeneHead(nn.Module):
             nn.Linear(hidden_dim, output_dim * param_dim),
         )
 
+        # PER-GENE OUTPUT WEIGHT (``per_gene_weight=True``) -- the mechanism BOTH published
+        # models have and this one lacks.
+        #
+        # THE GAP. GEARS applies "a gene-specific linear layer parameterized by w_u in R^d,
+        # b_u in R" to every gene (doi:10.1038/s41587-023-01905-6); State's readout is a
+        # single W_recon in R^{d_h x G}, one column per gene (doi:10.1101/2025.06.26.661135).
+        # Ours is ONE SHARED MLP over all gene tokens, so the whole readout composes to
+        # F(h_i + c_b) with a single shared F: reporter identity enters only through h_i,
+        # inside the same function the perturbation enters.
+        #
+        # WHAT THIS ADDS. A per-gene weight row w_u and bias b_u applied to the LAST hidden
+        # state, so gene u's output is w_u . phi(h_u, c_b) + b_u. Because w_u differs by gene
+        # while its argument depends on the strain, the readout gains a genuine
+        # (perturbation, reporter) interaction that a shared map cannot express -- the
+        # published mechanism, not a re-parameterization of ours.
+        #
+        # WHY IT IS NOT free_gene_dim. That arm concatenates a per-gene ROW to the INPUT of
+        # the shared MLP, where it enters ADDITIVELY at the first layer; here the per-gene
+        # parameters MULTIPLY the state. Additive-then-shared-nonlinearity is a strictly
+        # weaker object, which is why free_gene_dim is described in this file as capacity
+        # rather than mechanism.
+        #
+        # ZERO-INIT ON THE RESIDUAL, so the block is the EXACT identity to the shared head at
+        # step 0 and any movement is attributable to the mechanism rather than to the
+        # 557,557 new parameters (6,127 x 91 at d = 90). Verified by construction: with
+        # `_pg_scale` initialized to 0 the returned tensor equals the shared-MLP output.
+        self.per_gene_weight = per_gene_weight
+        self.pg_w: nn.Parameter | None = None
+        self.pg_b: nn.Parameter | None = None
+        if per_gene_weight:
+            assert num_genes > 0, "per_gene_weight requires num_genes"
+            if output_dim != 1:
+                raise ValueError(
+                    "per_gene_weight is defined for a scalar-per-gene head "
+                    f"(output_dim=1); got output_dim={output_dim}"
+                )
+            # ONE [d] weight and ONE scalar bias per gene, producing a per-gene SCALAR that
+            # is added to every distributional parameter, NOT one weight per knot.
+            #
+            # This is the faithful analogue and also the affordable one. GEARS's w_u . h_u
+            # and State's W_recon column both emit a SCALAR per gene; neither model is
+            # distributional at the readout. Giving each of the 19 knots its own per-gene
+            # row instead costs 6,127 x 90 x 19 = 10.5M parameters, nine times the whole
+            # model (measured), which would make the arm a capacity change wearing a
+            # mechanism's name. Sharing the row across knots shifts that gene's predicted
+            # LOCATION -- moving the median the metric reads -- while leaving the spread to
+            # the shared head, so the arm is a location mechanism and nothing else.
+            # Cost: 6,127 x 90 + 6,127 + 1 = 557,558.
+            self.pg_w = nn.Parameter(torch.randn(num_genes, hidden_dim) * 0.02)
+            self.pg_b = nn.Parameter(torch.zeros(num_genes))
+            self.pg_scale = nn.Parameter(torch.zeros(1))
+            # The shared MLP's penultimate activation is what the per-gene row reads, so
+            # the trunk is split here rather than re-running it.
+            self.trunk = self.mlp[:-1]
+            self.readout = self.mlp[-1]
+
     def forward(
         self, H_genes_pert: torch.Tensor, film_cond: torch.Tensor | None = None
     ) -> torch.Tensor:
@@ -1653,7 +1719,22 @@ class PerGeneHead(nn.Module):
             # concat/bilinear/propagation are all additive or feature-appending.
             gamma, beta = self.film(film_cond).chunk(2, dim=-1)
             H_genes_pert = H_genes_pert * (1.0 + gamma.unsqueeze(1)) + beta.unsqueeze(1)
-        out = self.mlp(H_genes_pert)  # [batch, N, output_dim * param_dim]
+        if self.per_gene_weight:
+            # Shared trunk, then TWO readouts summed through a zero-initialized gate: the
+            # shared linear layer (the reference function) plus the per-gene row.
+            hidden = self.trunk(H_genes_pert)  # [batch, N, d]
+            shared = self.readout(hidden)  # [batch, N, output_dim * param_dim]
+            # einsum over the gene axis: each gene's own [d] row dotted with its own hidden
+            # state. `n` indexes genes, so the row is never shared between genes.
+            pg = torch.einsum("bnd,nd->bn", hidden, cast(torch.Tensor, self.pg_w))
+            pg = pg + cast(torch.Tensor, self.pg_b).unsqueeze(0)  # [batch, N]
+            # Broadcast the per-gene scalar across whatever trailing axes the head emits
+            # (none for a point head, param_dim knots for a distributional one).
+            out = shared + self.pg_scale * pg.reshape(
+                pg.shape + (1,) * (shared.ndim - pg.ndim)
+            )
+        else:
+            out = self.mlp(H_genes_pert)  # [batch, N, output_dim * param_dim]
         if self.output_dim == 1:
             # Scalar per gene: the trailing axis is the distributional param axis (or is
             # squeezed away entirely in the point case).
@@ -2226,6 +2307,7 @@ class CellGraphTransformer(nn.Module):
                 film_dim=hidden_channels
                 if pg_cfg.get("film_on_pert_set", False)
                 else 0,
+                per_gene_weight=bool(pg_cfg.get("per_gene_weight", False)),
             )
         pg_spec = self.heads_config.get("per_gene") or {}
         self.per_gene_concat_context = bool(pg_spec.get("concat_context", False))

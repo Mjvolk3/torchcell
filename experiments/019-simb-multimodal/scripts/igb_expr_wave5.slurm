@@ -191,6 +191,28 @@ case "$STAGE" in
   resume) ARMS=(W_ref); SEEDS=(0)
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v9_mask
           EXTRA_OV="trainer.max_epochs=19000 trainer.train_eval_every=10 trainer.resume_ckpt_path=${W5_RESUME_CKPT:?set W5_RESUME_CKPT=/abs/path/to/last.ckpt for the resume stage}" ;;
+  # ---------------------------------------------------------------- MECHANISM (2026.09.01)
+  # Pair-term and READOUT mechanisms, replicated, on the four cabbi cards the objective
+  # round left free. 4 arms x 2 seeds = 8 runs at 2/GPU = 4 tasks.
+  #
+  # BUDGET. Measured cabbi throughput is ~29.5 s/epoch solo (from point seed 2 in the
+  # objective round), so ~45 s/epoch packed at the measured 1.53x. 8,500 epochs is then
+  # ~4.4 days, inside a 5-day wall with margin, and the arms COMPLETE rather than being
+  # killed mid-run. Scored as roll_max over epochs <= 8,000, which every run clears.
+  #
+  # THIS IS A SCREEN, NOT A DECISION, and the arithmetic says so plainly: at sd 0.0222 a
+  # 2-versus-2 paired contrast against the in-round R_ref resolves only ~0.062. It can
+  # therefore find a LARGE readout effect and nothing subtler. Any arm that moves gets
+  # replicated before it is believed -- which is exactly what wave 6 failed to do.
+  mech)   ARMS=(R_ref R_basis64 R_pergene R_pergene_basis64); SEEDS=(0 1)
+          RUNS_PER_GPU=2; STAGE_CONFIG=cgt_expr_v9_mask
+          EXTRA_OV="trainer.max_epochs=8500 trainer.train_eval_every=10" ;;
+  # Canary for the mechanism round: R_pergene is NEW CODE (a per-gene output weight in
+  # PerGeneHead), so it must be proven to construct and step before four days are committed.
+  canary_mech)
+          ARMS=(R_pergene R_pergene_basis64); SEEDS=(0)
+          RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v9_mask
+          EXTRA_OV="trainer.fast_dev_run=true" ;;
   # CANARY -- one fast_dev_run to prove container + conda + PYTHONPATH + LMDB path before a
   # wave is committed to the queue. Exits in minutes.
   canary) ARMS=(X_mix); SEEDS=(0)
@@ -203,7 +225,7 @@ case "$STAGE" in
           ARMS=(Q_crps Q_laplace Q_point); SEEDS=(0)
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v9_mask
           EXTRA_OV="trainer.fast_dev_run=true" ;;
-  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|h2|probe|long|wave6|launch|resume)" >&2; exit 1 ;;
+  *) echo "unknown W5_STAGE '$STAGE' (expected canary|canary_launch|canary_mech|h2|probe|long|wave6|launch|resume|mech)" >&2; exit 1 ;;
 esac
 
 # SEED-MAJOR, so each task's co-resident runs are DIFFERENT arms rather than three copies of

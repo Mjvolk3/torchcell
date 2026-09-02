@@ -96,15 +96,63 @@ no ensembling, and **no temperature or pH conditioning is applied at all**. That
 is a real gap and our layer already does better, since `resolve_parameter` selects at the
 assay temperature nearest 30 C.
 
-#### 2. A second kinetics database: the Arnold group's
+#### 2. The Arnold-group database is the WRONG database, and this is now measured
 
-`longEnzymeEngineeringDatabase2026` is mirrored. A parallel agent was extracting its schema
-and access route when this session ended; **re-run that extraction first**. The goal is a
-`torchcell` source-code client class beside the existing Open Enzyme Database client, with
-the same mirror-plus-sha256 discipline, because 4.0 % coverage is not usable.
+`longEnzymeEngineeringDatabase2026` is **EnzEngDB** (Long et al., *Nucleic Acids Research*
+database issue, doi 10.1093/nar/gkaf1142). It was read in full, and its own repositories
+were queried read-only. **It cannot help the yeast-GEM coverage problem, and the answer to
+"how many Yeast9 gene enzymes exist in it" is zero.** That figure does not need to be
+plotted, because there is nothing to plot.
 
-Deliverable the author named explicitly: **query it and report how many of the Yeast9 gene
-enzymes actually exist in it.** That is a paper-quality figure.
+| what we needed | what EnzEngDB has |
+| --- | --- |
+| $k_{\mathrm{cat}}$, $K_M$ | **none.** Every assay output is flattened into one untyped `fitness_value` column, by explicit design |
+| EC number | no field |
+| organism / taxid | no field, 0 occurrences |
+| UniProt accession | 13 of 1,342 legacy rows, **9 unique, none yeast**; the field does not exist at all in the live schema |
+| *S. cerevisiae* content | **0 occurrences** of `yeast`, `cerevisiae` or `Saccharomyces` in the paper, in all 140 public experiment records, and in all 1,342 rows of the analysis table |
+
+It is a **directed-evolution sequence-function corpus**: 6,234 gold-standard entries, 1,846
+variants, 635 reactions, over six scaffolds that are bacterial and archaeal (P450-BM3 from
+*Bacillus megaterium*, *Aeropyrum pernix* protoglobin, *Rhodothermus marinus* cytochrome c,
+*Pyrococcus furiosus* tryptophan synthase) engineered for carbene and nitrene chemistry
+**that does not occur in yeast**. The only join it offers is sequence-to-sequence
+alignment, so any hit against a yeast-GEM gene would be a homology artifact rather than a
+catalytic-unit match. 93 % of its measurements are whole-cell rather than purified enzyme,
+and the authors explicitly disclaim cross-experiment comparison, so `fitness_value` is not
+on a common scale across the 140 experiments.
+
+**The paper hands us the right targets in its own literature review.** It names the two
+pipelines it deliberately does not duplicate, describing them as having assembled
+**"&gt;90,000 curated records"** of exactly $k_{\mathrm{cat}}$, $K_M$ and
+$k_{\mathrm{cat}}/K_M$ at precision 0.8 to 0.9:
+
+- **EnzyExtract**, Wei et al., *Protein Science* 2025;34:e70251
+- **Enzyme Co-Scientist**, Jiang et al., bioRxiv 2025.03.03.641178
+
+**These two are the next database extraction, and they should get the same treatment
+EnzEngDB just got** before any client is written: schema, access route, join identifiers,
+assay-condition metadata, and measured coverage against the 3,728 yeast-GEM catalytic
+units. Do not assume they are scriptable.
+
+**EnzEngDB is still worth having, on a different axis.** It is a clean, DOI-attributed,
+sha256-checksummed, sequence-level genotype-to-phenotype corpus of designed protein
+variants with reaction context, which fits the "perturbation as an edit to genomic content"
+and inverse-design framing directly. It is cheap to mirror: 46 MB, no authentication,
+CC-BY-4.0. Scope it as a bioproduction and enzyme-design dataset, never as an Open Enzyme
+Database replacement.
+
+Access, verified read-only, if it is ever wanted:
+
+- **Zenodo, the citable immutable route**, DOI `10.5281/zenodo.17310823`,
+  `Data.zip` 30,050,527 B md5 `c68ca58c1670ac57091bc5726b613510`.
+- **GitHub** `ssec-jhu/levseq-dash`, 140 experiments under `levseq_dash/app/data/<id>/`,
+  each a CSV plus a JSON carrying a `csv_checksum`, plus a CIF. Pin a commit, not `HEAD`.
+- **Analysis table** `fhalab/EnzymeEngineeringDB`, `data/protein-evolution-database_V6.csv`,
+  7,719,042 B, sha256 `abe6bd9f0c1dcc3487b6a2a595d427b70c6714b9a2bfd1c195e50b702ffe9245`.
+- **There is no REST API, and the site is a trap for a client.** It is a Plotly Dash
+  single-page app that returns the same 11,683-byte index page with **HTTP 200 for every
+  path**, including invented ones. A 200 there means "catch-all", not "endpoint exists".
 
 #### 3. Two paper-quality figures
 
@@ -115,7 +163,10 @@ enzymes actually exist in it.** That is a paper-quality figure.
   curve's median annotated with a leader line and a numeric label in the series color. All
   four spines, no other gridlines. Under our standards: `PLOT_PALETTE` warm primaries
   first, Arial 6 pt, boxed, `third` or `half` panel width.
-- **Yeast9 enzyme coverage in the Arnold database**, same standards.
+- **Yeast9 catalytic-unit coverage across every kinetics source**, same standards: Open
+  Enzyme Database at 4.0 %, EnzEngDB at 0 % and why, and whatever EnzyExtract and Enzyme
+  Co-Scientist turn out to give. The point of the figure is the gap that motivates the
+  predictors, so a source contributing nothing still belongs on it.
 
 Wu's medians, for a sanity check against ours: underground vs known, DLKcat 5.52/5.28,
 UniKP 3.43/4.19, EITLEM 4.58/3.64, TurNuP 10.09/11.01, DeepEnzyme 6.59/5.88 s^-1;

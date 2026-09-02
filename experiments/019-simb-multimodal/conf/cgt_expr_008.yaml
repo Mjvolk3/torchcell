@@ -72,6 +72,17 @@ multitask:
   # before the per-gene MLP. 0 = the original S0 head.
   free_gene_dim: 0
 
+  # R_pergene overrides to true. Gives every gene its OWN readout row w_u (+ scalar bias)
+  # applied to the shared hidden state, gated at zero so it is the exact identity at init.
+  # This is the readout GEARS (w_u in R^d per gene) and State (one W_recon column per gene)
+  # both have and this model otherwise lacks; without it the readout composes to
+  # F(h_i + c_b) with one shared F. 557,558 parameters, +47% on the model.
+  #
+  # DECLARED HERE for the same reason free_gene_dim and concat_context are: hydra struct
+  # mode rejects `=` on an undeclared key, and canary 2369676 died in 94 s on
+  # "Key 'per_gene_weight' is not in struct" before this line existed.
+  per_gene_weight: false
+
   # DECLARED so the runner can override with plain dotted syntax. Hydra struct mode
   # REJECTS `=` on a key the config never declares (and a `+` append would silently differ
   # between arms) -- the same trap cgt_expr_007 documents for `energy_rank`. C0/D1 both

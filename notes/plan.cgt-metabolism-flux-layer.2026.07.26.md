@@ -459,8 +459,41 @@ predicted":
 
 | parameter | 1. published | 2. database | 3. predicted (gaps only) |
 | --- | --- | --- | --- |
-| $k_{\mathrm{cat}}$ | **ecYeastGEM** (GECKO-curated) — not yet mirrored | Open Enzyme Database (`yuanOpenEnzymeDatabase2026`, **already in our mirror**) | DLKcat · TurNuP · KcatNet |
-| $K_M$ | **none — GECKO has no $K_M$** | Open Enzyme Database; BRENDA / SABIO-RK | Boost_KM · UniKP · EITLEM |
+| $k_{\mathrm{cat}}$ | **ecYeastGEM** (GECKO-curated) — not yet mirrored | Open Enzyme Database (`yuanOpenEnzymeDatabase2026`, **already in our mirror**) | KcatNet · RealKcat · DEKP · DLKcat · TurNuP |
+| $K_M$ | **none — GECKO has no $K_M$** | Open Enzyme Database; BRENDA / SABIO-RK | RealKcat · Boost_KM · UniKP · EITLEM |
+
+### 2026.09.01 - The three kinetic predictors we actually have wired
+
+**Why we need predictors at all**, restated because it is easy to read the sourcing order above
+as "prediction is optional": it is not. **4,129 of 4,131 Yeast9 bounds carry no $k_{\mathrm{cat}}$**,
+and $k_{\mathrm{cat}}$ is the only source of magnitude in the whole formulation, so without it the
+capacity constraint is vacuous and $\mathcal{F}_{\mathrm{ec}}=\mathcal{F}_{\mathrm{FBA}}$. GECKO
+carries no $K_M$ at all, and **promiscuous edges have no published value of either by
+definition** — prediction is the only possible source there. So the choice is not
+"published or predicted", it is "published where it exists, predicted in the gaps, with a
+per-value provenance tag so the ablation published-only vs published+predicted is available".
+
+| tool | predicts | inputs | distinguishing property |
+| --- | --- | --- | --- |
+| **KcatNet** | $k_{\mathrm{cat}}$ | protein sequence + substrate SMILES | the sequence-only default |
+| **RealKcat** | $k_{\mathrm{cat}}$ **and** $K_M$ | protein sequence + substrate SMILES | the only one giving both from one call, so the saturation term costs no second model |
+| **DEKP** | $k_{\mathrm{cat}}$ | sequence + **optional structure file** | structure-aware: GNNs over pretrained protein language models |
+
+**All three are database-first, and that is the point rather than an implementation detail.**
+Each returns the experimental **BRENDA** or **OpenEnzymeDB** value when one exists and only runs
+the GPU job on a genuine gap. That makes the tool boundary coincide with the sourcing order in the
+table above: a call cannot silently substitute a prediction for a measurement, so the provenance
+tag on each value is decided by the tool rather than by the caller remembering to check. It also
+means the marginal cost of the predicted tier is proportional to the size of the gap, not to the
+number of reactions.
+
+**How they compose with the uncertainty policy below.** The box takes a posterior *quantile*
+$\hat k^{(q)}_{\mathrm{cat}}$, not a point value, so a predictor is only usable here if it exposes
+a distribution or an interval. Confirm this per tool before wiring: a point-only predictor forces
+$q = 0.5$ and silently discards the conservatism dial that makes the constraint safe.
+**Hypothesis (untested):** RealKcat's joint $k_{\mathrm{cat}}$/$K_M$ output is the cheapest route
+to a promiscuity-enabled run, since promiscuity requires $K_M$ and every other option needs a
+second model for it.
 
 **Promiscuous edges have no published $k_{\mathrm{cat}}$ or $K_M$ by definition**, so if we want the
 model to *use* a promiscuous activity, prediction is the only possible source. Promiscuity and

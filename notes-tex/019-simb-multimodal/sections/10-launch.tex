@@ -167,6 +167,31 @@ head is either dramatically different from \file{quantile}, or the round reports
 heads are indistinguishable at the budget anyone can afford, which is itself the answer to
 whether the incumbent choice was ever load-bearing.
 
+\notesec{Everything in flight, on one page} Two rounds are running, plus the baselines that
+gated them. Each row states what varies and what a null result would mean, because an arm
+whose null is uninterpretable should not have been launched.
+
+\begin{table}[htbp]
+\centering\footnotesize
+\begin{tabular}{llp{34mm}p{34mm}}
+\toprule
+round & arms & what varies & what a null means \\
+\midrule
+\textbf{baselines} & \texttt{B0}--\texttt{B3} & no model: mean, no-change, bilinear, neighbor & \emph{ran first, cleared}: \texttt{B2} $0.1040$ vs $0.1965$ \\
+\addlinespace
+\textbf{objective} & \file{crps}, \file{laplace_crps}, \file{point} & the distributional HEAD, 3 replicates each, everything else pinned & the head choice was never load-bearing, and \file{quantile} can be kept without argument \\
+\addlinespace
+\textbf{mechanism} & \texttt{R\_ref}, \texttt{R\_basis64}, \texttt{R\_pergene}, \texttt{R\_pergene\_basis64} & the pair term and the READOUT, 2 replicates each, in-round reference & the additive collapse is not what binds, and the ceiling gap is data rather than architecture \\
+\bottomrule
+\end{tabular}
+\caption[]{The three rounds. \textbf{Only the objective round can settle its question};
+the mechanism round is a screen, resolving $\approx 0.062$ at two replicates against its own
+reference, so it can find a large readout effect and nothing subtler. Both are scored the same
+way and against the same $n = 8$ \file{quantile} baseline, so a positive result in either is
+directly comparable to the incumbent's $0.1965 \pm 0.0222$.}
+\label{tab:in-flight}
+\end{table}
+
 \notesec{The baselines run before the arms, and one of them is a stop condition} After
 \cref{sec:related}, a deep-learning number reported without these is not interpretable.
 They are cheap, they need no GPU, and \textbf{they are a prerequisite rather than a

@@ -1555,6 +1555,7 @@ class PerGeneHead(nn.Module):
         extra_dim: int = 0,
         film_dim: int = 0,
         per_gene_weight: bool = False,
+        linear_readout: bool = False,
     ):
         """Build the shared MLP applied to every gene embedding.
 
@@ -1588,6 +1589,10 @@ class PerGeneHead(nn.Module):
                 reporter identity enters only through ``h_i``. Requires ``num_genes`` and
                 a scalar-per-gene head (``output_dim == 1``); costs
                 ``num_genes * (hidden_dim + 1) + 1`` parameters.
+            linear_readout: Drop the hidden layer and the nonlinearity, leaving ONE affine
+                map per gene token. Tests whether the head's nonlinearity is load-bearing,
+                which the kNN and ridge baselines on this panel suggest it may not be. Not
+                a capacity lever: it removes 8,190 of 1,194,509 parameters.
         """
         super().__init__()
         self.hidden_dim = hidden_dim
@@ -1629,12 +1634,35 @@ class PerGeneHead(nn.Module):
             film_out = cast(nn.Linear, self.film[-1])
             nn.init.zeros_(film_out.weight)
             nn.init.zeros_(film_out.bias)
-        self.mlp = nn.Sequential(
-            nn.Linear(hidden_dim * in_mult + free_gene_dim + extra_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(hidden_dim, output_dim * param_dim),
-        )
+        # LINEAR READOUT (``linear_readout=True``) -- one affine map per gene token, no
+        # hidden layer and no nonlinearity.
+        #
+        # WHY IT IS A LEVER RATHER THAN A SIMPLIFICATION. On this panel a parameter-free
+        # cosine-kNN over prot_T5 embeddings scores 0.117 while the swept transformer scores
+        # 0.080 on the same split (results/knn_embedding_probe.json), so the shallower readout
+        # is not obviously the weaker one, and the published linear baselines make the same
+        # point. It also removes the only nonlinearity between the trunk and the prediction,
+        # which is what forces the trunk to emit linearly decodable features instead of
+        # deferring that work to the head.
+        #
+        # It is NOT a capacity lever. The two-layer head is 9,919 parameters of 1,194,509,
+        # and the linear one is 1,729; 80% of the model is the transformer and the embedding
+        # preprocessor. Anything that shrinks this model meaningfully has to shrink those.
+        in_width = hidden_dim * in_mult + free_gene_dim + extra_dim
+        self.linear_readout = linear_readout
+        if linear_readout:
+            self.mlp = nn.Sequential(nn.Linear(in_width, output_dim * param_dim))
+        else:
+            self.mlp = nn.Sequential(
+                nn.Linear(in_width, hidden_dim),
+                nn.ReLU(),
+                nn.Dropout(dropout),
+                nn.Linear(hidden_dim, output_dim * param_dim),
+            )
+        # Width the per-gene rows must match: whatever the LAST layer consumes. That is
+        # hidden_dim for the two-layer head and the full input width for the linear one,
+        # which is why this is derived rather than assumed to be hidden_dim.
+        self._pg_in_dim = in_width if linear_readout else hidden_dim
 
         # PER-GENE OUTPUT WEIGHT (``per_gene_weight=True``) -- the mechanism BOTH published
         # models have and this one lacks.
@@ -1684,11 +1712,18 @@ class PerGeneHead(nn.Module):
             # LOCATION -- moving the median the metric reads -- while leaving the spread to
             # the shared head, so the arm is a location mechanism and nothing else.
             # Cost: 6,127 x 90 + 6,127 + 1 = 557,558.
-            self.pg_w = nn.Parameter(torch.randn(num_genes, hidden_dim) * 0.02)
+            #
+            # The row width is ``_pg_in_dim``, which is hidden_dim for the two-layer head
+            # and the full input width when ``linear_readout`` removes that hidden layer.
+            # Hardcoding hidden_dim here would silently build the wrong shape whenever the
+            # two options are combined.
+            self.pg_w = nn.Parameter(torch.randn(num_genes, self._pg_in_dim) * 0.02)
             self.pg_b = nn.Parameter(torch.zeros(num_genes))
             self.pg_scale = nn.Parameter(torch.zeros(1))
-            # The shared MLP's penultimate activation is what the per-gene row reads, so
-            # the trunk is split here rather than re-running it.
+            # Whatever the final layer consumes is what the per-gene row reads, so the trunk
+            # is split here rather than re-running it. With a linear readout the trunk is an
+            # empty Sequential, which is the identity, and the row then reads the head's raw
+            # input. That is the correct analogue, not a degenerate case.
             self.trunk = self.mlp[:-1]
             self.readout = self.mlp[-1]
 

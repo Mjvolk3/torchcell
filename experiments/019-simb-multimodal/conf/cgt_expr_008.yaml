@@ -83,6 +83,10 @@ multitask:
   # "Key 'per_gene_weight' is not in struct" before this line existed.
   per_gene_weight: false
 
+  # Linear readout: one affine map per gene token, no hidden layer and no nonlinearity.
+  # Declared here for the same struct-mode reason as per_gene_weight above.
+  linear_readout: false
+
   # DECLARED so the runner can override with plain dotted syntax. Hydra struct mode
   # REJECTS `=` on a key the config never declares (and a `+` append would silently differ
   # between arms) -- the same trap cgt_expr_007 documents for `energy_rank`. C0/D1 both

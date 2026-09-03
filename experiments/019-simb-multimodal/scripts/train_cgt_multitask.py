@@ -229,6 +229,12 @@ def build_heads_config(cfg: DictConfig) -> dict[str, Any] | None:
             spec["per_gene_weight"] = bool(
                 cfg.multitask.get("per_gene_weight", False)
             )
+            # Linear readout: drop the head's hidden layer and nonlinearity, leaving one
+            # affine map per gene token. A readout-shape lever, not a capacity one -- it
+            # removes 8,190 of 1,194,509 parameters.
+            spec["linear_readout"] = bool(
+                cfg.multitask.get("linear_readout", False)
+            )
             # CONCAT arm: feed the head [h_pert ; h_i ; c] instead of h_pert alone, so it
             # can learn arbitrary (h_i, c_b) interactions rather than only functions of
             # their sum. Equivariant (shared MLP per token) and graph-free.

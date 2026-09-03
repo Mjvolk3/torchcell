@@ -1,0 +1,61 @@
+# experiments/019-simb-multimodal/conf/cgt_expr_v10_grid.yaml
+# THE GENERALIZATION-GAP ROUND -- project v10, a 2^4 factorial on Delta.
+#
+# WHY A NEW PROJECT. v9 asks which distributional head scores best at a long budget. This
+# asks a different question at a short one, and pooling the two leaderboards would compare
+# runs whose budgets differ by a factor of five. The scoring window here is epochs <= 2000
+# for every cell.
+#
+# WHAT THIS ROUND IS FOR. The model fits TRAIN to 0.786 against a replicate ceiling of 0.775
+# while validating at 0.240: it is memorizing measurement noise, not underfitting. The
+# generalization gap is ~0.55 and every architecture arm tested so far moves 0.01-0.05, so
+# the arms have been an order of magnitude smaller than the quantity that is actually large.
+# The four factors here are the ones that act on that gap rather than on capacity at the
+# readout.
+#
+# WHY 2000 EPOCHS AND NOT 9900. short_budget_spread.json: recomputing the eight identical
+# replicates at truncated budgets gives sd 0.0151 at 2000 against 0.0222 at 9900, while the
+# mean only falls from 0.1965 to 0.1745. A short budget therefore holds 89% of the score at
+# 68% of the noise. The late epochs buy the upper tail, which is what raises a headline
+# maximum and inflates the variance, and they buy nothing for a contrast between arms.
+#
+# THE FOUR FACTORS, each at two levels, set by the launcher rather than here:
+#   embedding     random_1000 | prot_T5_all
+#   trunk         L=6 h=90    | L=2 h=45
+#   readout       two-layer   | linear
+#   weight decay  1e-8        | 1e-2
+#
+# EVERYTHING ELSE IS PINNED to the v9 incumbent: quantile head trained by pinball loss, the
+# layer-1 attention mask over nine graphs one per head, dropout 0.1, lr 3e-4, batch 32,
+# split_seed 0. The graph KL regularizer stays off (graph_reg_lambda 0.0); the attention mask
+# and that regularizer are separate levers and only the mask is in use.
+#
+# WHY random_1000 AND NOT random_100 as the control. prot_T5 is 1024-dimensional. A 100-dim
+# control would change the embedding preprocessor's input width tenfold alongside the content,
+# confounding "does content help" with "does a wider preprocessor help". At 1000 dims the
+# preprocessor is nearly the same size and the factor isolates content. It is also the exact
+# control the kNN probe used to set its 0.033 noise floor.
+defaults:
+  - cgt_expr_v9_mask
+  - _self_
+
+wandb:
+  project: torchcell_019_expr_v10
+  tags: [generalization-gap, factorial-2x2x2x2, v10]
+
+multitask:
+  # DECLARED HERE, not inherited. `linear_readout` is declared in cgt_expr_008.yaml, but 008
+  # sits on the 006 branch and this config descends through v9_mask -> 012 -> 011 -> 010, so
+  # that declaration is not in this lineage. Hydra struct mode then rejects the override
+  # while composing, before any model is built. This is the same failure that killed canary
+  # 2369676 in 94 seconds, and a factor of this round is unreachable without the line.
+  linear_readout: false
+
+trainer:
+  # Absolute in Lightning. Every cell completes rather than being cut off by a wall, so all
+  # 64 runs are scored on the identical window and no arm is truncated harder than another.
+  max_epochs: 2000
+  # Matches the incumbent's own long run so the eval-mode train curve stays comparable, and
+  # it is what makes the train-versus-validation gap readable per cell, which is the
+  # quantity this round exists to move.
+  train_eval_every: 10

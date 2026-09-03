@@ -11,10 +11,13 @@ created: 1788409359480
 Companion to [[experiments.026-metabolism-flux.scripts.kinetics_input_audit]], which
 measures what is present. This fetches what was not.
 
-| asset | closes | size |
+| asset | closes | result |
 | --- | --- | --- |
-| MetaNetX `chem_prop.tsv` | substrate SMILES, 87.5 % to 95.3 % of catalytic units | 809,687,076 B |
-| AlphaFold, one PDB per GEM accession | protein 3D structure, consumed only by DeepEnzyme | ~150 MB per 500 |
+| MetaNetX `chem_prop.tsv` | substrate SMILES, 87.5 % to 95.3 % of catalytic units | 809,687,076 B, 1,434,118 MNXM ids carrying SMILES |
+| AlphaFold, one PDB per GEM accession | protein 3D structure, consumed only by DeepEnzyme | **1,161 / 1,161 mirrored, 0 absent, 364 MB** |
+
+AlphaFold coverage of the GEM's proteome is complete. Not one accession lacked a model,
+so DeepEnzyme's structure requirement is not a coverage constraint on this organism.
 
 Each file records source URL, retrieval method, the exact retrieval command, sha256, byte
 count and retrieval time into a manifest beside it, so the mirror rebuilds and verifies

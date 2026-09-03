@@ -63,7 +63,7 @@ The word "structure" covers two different things here, and only one of them is s
 | --- | --- | --- |
 | protein sequence | 1,161 / 1,161 | already complete, from `swissprot.tsv` and independently from the genome protein FASTA |
 | substrate SMILES, the small molecule | 3,552 / 3,728 units | MetaNetX |
-| protein 3D structure | mirroring in progress | AlphaFold, and only DeepEnzyme consumes it |
+| protein 3D structure | **1,161 / 1,161 accessions, 0 absent, 364 MB** | AlphaFold, and only DeepEnzyme consumes it |
 
 AlphaFold does not raise the substrate coverage. It unlocks one predictor. Both mirrors
 are fetched with per-file sha256 and retrieval command by

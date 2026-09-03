@@ -454,9 +454,22 @@ per-pair offset. Its gene-disjoint splits mitigate the leak only as a side
 effect, since removing a gene removes the query pairs containing it.
 
 DANGO does bear directly on whether unseen genes can be predicted at all. Its
-per-gene embeddings receive gradient from protein-interaction graph
-reconstruction across every gene, independent of whether that gene appears in any
-trigenic label, and a gene with no observed interactions is handled by a
-meta-embedding module. That is the same mechanism as giving genes an externally
+per-gene embeddings are pretrained to reconstruct six protein-interaction graphs,
+so every gene receives gradient from that objective whether or not it appears in
+any trigenic label. That is the same mechanism as giving genes an externally
 derived representation, with networks in place of sequence, and it carries fully
 unseen genes to about 0.15 rather than to zero.
+
+One distinction to keep, because it is easy to overstate the precedent. DANGO's
+meta-embedding module addresses a gene missing from ONE of the six networks, not
+a gene missing from the trigenic labels. Nothing in the architecture is a
+cold-start mechanism for the label-poor case; the pretraining objective is what
+covers it, and Gene Split 2 is what measures it. The paper also mentions a third
+prediction setting, two observed genes plus one unobserved gene, with no metric
+reported.
+
+A caution from the same mirror. Ahlmann-Eltze et al. 2025 trains on all single
+perturbations plus half the doubles, tests on the held-out doubles, and finds
+foundation models losing to additive and mean baselines. An externally derived
+representation buys coverage of genes with no label; it is not by itself evidence
+that a model has learned interaction.

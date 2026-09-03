@@ -37,19 +37,37 @@ every token is indexed.
 | --- | --- |
 | GEM genes with a protein sequence | **1,161 / 1,161 (100 %)** |
 | catalytic units where every member gene resolves | 3,728 / 3,728 |
-| catalytic units with at least one substrate SMILES | 3,262 / 3,728 |
-| **units ready for a (sequence, substrate SMILES) predictor** | **3,262 / 3,728 (87.5 %)** |
+| units with a substrate SMILES, shipped tables only | 3,262 / 3,728 (87.5 %) |
+| **units ready, once MetaNetX is joined** | **3,552 / 3,728 (95.3 %)** |
 | units with a measured k_cat, Open Enzyme Database | 148 / 3,728 (4.0 %) |
-| predictor input rows | 6,829 |
+| predictor input rows | 7,456 |
 
 A complex counts as ready only when every subunit resolves. Its turnover is the minimum
 over its members, so a missing member makes that minimum undefined rather than smaller.
 Substrates are the metabolites a reaction consumes, so products are never candidates.
 
-The loss is entirely in the SMILES join, 894 named compounds against 2,806 metabolites,
-and not in the sequences. Metabolites also carry ChEBI on 2,402 of 2,806 and MetaNetX on
-2,251, so the 466 unready units are reachable through a second identifier route rather
-than being structurally absent.
+The loss is entirely in the SMILES join and not in the sequences. Metabolites carry ChEBI
+on 2,402 of 2,806 and MetaNetX on 2,251, so a second identifier route was available, and
+mirroring MetaNetX `chem_prop.tsv` took unit coverage from 87.5 % to 95.3 %.
+
+The residual 176 units are dominated by acyl-chain-specific lipid species,
+`phosphatidylcholine (1-16:0, 2-16:1)` and its neighbors. Those are combinatorial names
+yeast-GEM enumerates rather than compounds missing from chemistry, so the tail is a naming
+problem and not a structural one.
+
+### Three inputs, not two, and they are easy to conflate
+
+The word "structure" covers two different things here, and only one of them is short.
+
+| input | state | closed by |
+| --- | --- | --- |
+| protein sequence | 1,161 / 1,161 | already complete, from `swissprot.tsv` and independently from the genome protein FASTA |
+| substrate SMILES, the small molecule | 3,552 / 3,728 units | MetaNetX |
+| protein 3D structure | mirroring in progress | AlphaFold, and only DeepEnzyme consumes it |
+
+AlphaFold does not raise the substrate coverage. It unlocks one predictor. Both mirrors
+are fetched with per-file sha256 and retrieval command by
+[[experiments.026-metabolism-flux.scripts.fetch_kinetics_assets]].
 
 ### What this changes
 

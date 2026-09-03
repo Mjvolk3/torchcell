@@ -48,6 +48,19 @@
 \usepackage{graphicx}
 \DeclareGraphicsExtensions{.png,.pdf,.jpg}
 
+% Figures are placed WHERE THEY ARE WRITTEN, not floated. Two reasons, and the second
+% one is a correctness bug rather than a preference. First, a note is read in source
+% order and a figure that drifts three pages from the sentence that introduces it stops
+% being an illustration. Second, longtable and LaTeX's float mechanism do not cooperate:
+% a float deferred onto a page that also starts a longtable makes longtable compute the
+% page height before the float is added, and the page then overflows. That failure is
+% SILENT and it LOSES CONTENT -- it dropped Table 19 of the 026 flux-layer note, caption
+% and body, off the bottom of page 13, and the build still exited 0. Forcing H placement
+% removes every float from the document and with it the collision. Loaded before caption
+% so the caption package sees the restyled float.
+\usepackage{float}
+\floatplacement{figure}{H}
+
 % Captions, matched to the paper's figure treatment: a bold run-in label followed by
 % justified detail, set SMALLER than the body so the caption reads as apparatus rather
 % than as text. labelformat=empty because the caption text already carries its own
@@ -98,8 +111,36 @@
 % roughly 20 % more characters per line, and \setlength{\tabcolsep} recovers more by
 % tightening the inter-column padding. Applied to longtable so it hits every pandoc table
 % without touching inline math or code blocks.
+% \makeatletter wraps the WHOLE conditional, not its body: \IfFileExists reads its
+% branches as arguments, so every token inside is catcoded at that moment. Switching @ on
+% inside the branch is too late and turns \z@ into \z followed by a printed "@", which
+% surfaces as "Missing \begin{document}".
+\makeatletter
 \IfFileExists{etoolbox.sty}{%
   \usepackage{etoolbox}%
   \AtBeginEnvironment{longtable}{\footnotesize\setlength{\tabcolsep}{4pt}}%
   \AtBeginEnvironment{tabular}{\footnotesize\setlength{\tabcolsep}{4pt}}%
+  % A table and its caption belong on ONE page. Pandoc emits every table as a longtable,
+  % and longtable's default inter-row breakpoint is free, so a six-row table sitting near
+  % a page bottom splits rather than moving down whole: TeX scores an underfull page as
+  % infinitely bad, so filling the page always beats leaving a gap, and a mere penalty of
+  % 9999 loses that comparison. Only \nobreak actually moves the table.
+  %
+  % \nobreak is also how a table gets SILENTLY TRUNCATED, so it is switched on per table
+  % rather than always. An unbreakable run longer than a page overflows the page and the
+  % overflow is dropped, with the build still exiting 0 -- exactly the failure this block
+  % exists to prevent. The switch is thrown by assets/publish/filters/keep-tables.lua,
+  % which sees the whole table and turns it on only for one small enough to fit. Default
+  % OFF, so a table nobody measured behaves as plain longtable always did.
+  % A plain \def flag rather than \newif: \newif inside the \IfFileExists branch leaves
+  % that conditional unbalanced and the build dies with "Extra \else".
+  \newcommand\tcltkeepon{\global\def\tcltkeepflag{1}}%
+  \newcommand\tcltkeepoff{\global\def\tcltkeepflag{0}}%
+  \tcltkeepoff%
+  \newcommand\tcltrowbreak{\if1\tcltkeepflag\nobreak\else\penalty9999 \fi}%
+  \patchcmd{\LT@tabularcr}%
+    {{\LT@t@bularcr}}%
+    {{\def\crcr{\LT@crcr\noalign{\tcltrowbreak}}\let\cr\crcr\LT@t@bularcr}}%
+    {}{\PackageWarning{header-includes}{longtable row-break patch did not apply}}%
 }{}
+\makeatother

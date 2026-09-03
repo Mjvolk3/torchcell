@@ -204,7 +204,7 @@ def test_learned_concentration_stays_physiological():
     layer = _layer(thermo_mode=ThermoMode.ANCHORED)
     out = layer(*_inputs())
     log_c = out["thermo_log_c"]
-    assert float(log_c.min()) >= math.log(1e-6) - 1e-4
+    assert float(log_c.min()) >= math.log(1e-7) - 1e-4
     assert float(log_c.max()) <= math.log(1e-2) + 1e-4
 
 

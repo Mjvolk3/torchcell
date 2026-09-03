@@ -206,10 +206,10 @@
         <mxCell id="insT1n" value="&lt;font color=&quot;#9673A6&quot;&gt;&lt;b&gt;tabulated&lt;/b&gt;&lt;/font&gt;: &#916;&lt;sub&gt;f&lt;/sub&gt;G&#8242;&lt;sup&gt;0&lt;/sup&gt; known for 85.1% of metabolites" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="62" y="442" width="96" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="insT2n" value="&lt;font color=&quot;#D6B656&quot;&gt;&lt;b&gt;learned&lt;/b&gt;&lt;/font&gt; ln c&lt;sub&gt;i&lt;/sub&gt;, bounded to 1 &#181;M to 10 mM; anchored where a measurement exists" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+        <mxCell id="insT2n" value="&lt;font color=&quot;#D6B656&quot;&gt;&lt;b&gt;learned&lt;/b&gt;&lt;/font&gt; ln c&lt;sub&gt;i&lt;/sub&gt;, bounded to 0.1 &#181;M to 10 mM; anchored where a measurement exists" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="174" y="442" width="140" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="insT3n" value="transport term: &lt;b&gt;NOT AVAILABLE&lt;/b&gt;, set to 0" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
+        <mxCell id="insT3n" value="transport term: recoverable for 441 transport reactions from the GEM's table; &lt;b&gt;off by default&lt;/b&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontFamily=Arial;fontSize=8.3;fontColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="330" y="442" width="84" height="60" as="geometry" />
         </mxCell>
 

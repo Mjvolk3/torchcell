@@ -14,6 +14,17 @@
 # .svg->.png anymore; reference the .svg in the note to get crisp zoom, keep .png for
 # rasters (photos/overlays). If rsvg-convert is ever missing, install librsvg2-tools.
 #
+# Dendron wikilinks are rendered by assets/publish/filters/dendron-links.lua. Pandoc has
+# no idea what `[[note.path]]` means and prints the brackets verbatim, which puts raw
+# markup where a reference belongs. The filter turns each one into the target note's title
+# plus its dendron path in typewriter, which is what a reader can act on in print. It runs
+# on the parsed AST, so brackets inside math, inline code and code fences are untouched.
+#
+# assets/publish/filters/keep-tables.lua marks each table that is small enough to sit on
+# one page, so it moves down whole instead of splitting away from its caption. It measures
+# the table because the header cannot: an unbreakable table taller than a page overflows
+# and loses rows without failing the build.
+#
 # The pandoc `-F mermaid-filter` path is intentionally NOT used (its bundled
 # puppeteer times out -- see CLAUDE.md); pre-render mermaid diagrams with
 # mermaid_pdf.sh and reference the produced image instead.
@@ -90,6 +101,8 @@ cd ./notes && pandoc \
   -V fontsize=10pt \
   -V geometry:'a4paper, left=14mm, right=14mm, top=15mm, bottom=22mm' \
   --number-sections \
+  --lua-filter=assets/publish/filters/dendron-links.lua \
+  --lua-filter=assets/publish/filters/keep-tables.lua \
   --shift-heading-level-by=-1 \
   --toc \
   --toc-depth=3 \

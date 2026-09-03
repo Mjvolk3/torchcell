@@ -103,6 +103,7 @@ cd ./notes && pandoc \
   --number-sections \
   --lua-filter=assets/publish/filters/dendron-links.lua \
   --lua-filter=assets/publish/filters/keep-tables.lua \
+  --lua-filter=assets/publish/filters/section-status.lua \
   --shift-heading-level-by=-1 \
   --toc \
   --toc-depth=3 \

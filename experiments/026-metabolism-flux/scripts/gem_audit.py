@@ -168,7 +168,20 @@ def delta_g_figure(recomputed: np.ndarray, shipped: np.ndarray, path_stem: str) 
     ax.set_xlabel(r"$|$residual$|$ (kJ mol$^{-1}$)")
     ax.set_ylabel("reactions")
     ax.axvline(2.52, color="black", linewidth=0.5, linestyle=":")
-    ax.text(2.8, ax.get_ylim()[1] * 0.4, "$RT$ at 30 °C", fontsize=6, rotation=90)
+    # Annotated in AXES coordinates, horizontally, in the panel's empty upper right.
+    # The previous version placed it in DATA coordinates on a LOG axis and rotated it
+    # 90 degrees, so `ylim[1] * 0.4` put its baseline near the top of the axes and the
+    # rotated string then ran off the panel and was clipped mid-word. A log axis makes
+    # a fraction of the upper limit a position near the top, not near the middle.
+    ax.text(
+        0.97,
+        0.95,
+        r"dotted: $RT$ at $30^{\circ}$C",
+        transform=ax.transAxes,
+        fontsize=6,
+        ha="right",
+        va="top",
+    )
     _apply_style(ax)
 
     fig.tight_layout()

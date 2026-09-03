@@ -107,6 +107,10 @@ explained, and that a large majority of all models' apparent skill on this split
 is screen structure that an additive model captures for free. A gene-disjoint or
 query-pair-disjoint split would test the biology and has not been run.
 
+> **Superseded 2026.09.02.** The query-pair-disjoint split has since been run,
+> and the claim above about capacity rather than graphs is withdrawn. See the
+> corrections section at the end of this note.
+
 ### The larger problem found while doing this
 
 Applying the additive model to the 010 design space, the analogue of the
@@ -199,6 +203,7 @@ extreme tail is therefore not reproducible even without the inference problem.
   `806ef044...3550`.
 - Run a query-pair-disjoint split to separate trigenic biology from screen
   structure, since B4 shows how much of the current metric is the latter.
+  **Done 2026.09.02; results in the corrections section at the end.**
 - Report an ensemble or a seed-averaged ranking rather than one checkpoint's
   tail for any future selection.
 
@@ -337,3 +342,121 @@ Prediction correlation on the 37,673 test records:
 Full write-up with the equations, the capacity table and the comparability
 audit: `notes-tex/010-additive-baselines/010-additive-baselines.pdf`, built by
 `make -C notes-tex/010-additive-baselines`.
+
+## 2026.09.02 - Corrections, and the disjoint split that had not been run
+
+Three claims made above are now wrong and are corrected here rather than edited
+in place. The next-step list above is also stale: items about the disjoint split
+and the index-misalignment hypothesis have been carried out.
+
+### Correction 1: the graphs are not absent, and capacity is not the explanation
+
+The note says "most of what is left after additivity is capacity, not biology
+from the graphs." That does not follow, and the evidence runs the other way.
+
+The Kullback-Leibler penalty between each normalized adjacency and one layer-1
+attention head is computed inside the same `forward()` call as the prediction,
+from the same pre-dropout attention tensor, and nothing detaches it. Its
+gradient reaches the layer-1 projections, layer 0 and the gene embedding table,
+so the trained weights are shaped by the graphs. Zeroing the coefficient on a
+trained checkpoint tests only that adjacency is not an input to the prediction
+function, which is a much weaker statement.
+
+Measured for these runs:
+
+- the graph term carried 99.99 percent of the training loss
+  (`norm_weighted_graph_reg` 0.99986, graph term 5,740 against a point loss of
+  0.81),
+- the regularized heads recover their graphs at 0.729 to 1.000 neighbor recall
+  at each gene's own degree,
+- the matched 30-epoch pair without the penalty (`cabbi_007`) does not train:
+  validation Pearson -0.007, -0.031, and one diverged run, against 0.464, 0.456
+  and 0.456 with it.
+
+The effective per-graph coefficient was 0.367, not the negligible value the
+earlier reading assumed: `len(A.nonzero()[0])` on a dense torch tensor is 2, not
+the edge count, so the intended division by mean degree multiplies by 367.
+
+What remains true: capacity and richer set aggregation are worth at most 0.03
+Pearson over B5. How much of that is the graphs is not separable from these runs,
+and the control that would separate it, a comparable penalty against
+degree-matched random graphs, has not been run.
+
+### Correction 2: the query-pair-disjoint split has now been run
+
+The note says a gene-disjoint or query-pair-disjoint split "would test the
+biology and has not been run." It has.
+
+Every one of the 376,732 records carries exactly one of 420 recurring gene
+pairs, which together cover 376,733 pair-instances, so the Kuzmin query doubles
+are recoverable exactly. That count is corroborated by the papers: Kuzmin 2018
+used 151 designed plus 31 additional double-mutant query strains and Kuzmin 2020
+used 240 whole-genome-duplication paralog pairs, 422 in total.
+
+Assigning whole query pairs to splits and cross-validating over five
+query-pair-grouped folds (`query_pair_disjoint_split.py`,
+`query_pair_disjoint_cv.py`):
+
+| model | random split, test $r$ | query-pair disjoint, 5-fold mean ± sd |
+|---|---|---|
+| B4 query pair only | 0.390 | 0.000 ± 0.000, by construction |
+| B3 hierarchical mean | 0.390 | 0.066 ± 0.039 |
+| B1 additive per-gene ridge | 0.400 | 0.127 ± 0.033 |
+| B2 additive plus pair ridge | 0.406 | 0.124 ± 0.034 |
+| B5 gene embedding MLP | 0.426 | 0.058 ± 0.037 |
+| CGT M01 / M02 / M03 | 0.443 / 0.438 / 0.455 | not refit |
+
+The ladder inverts: the only baseline that can represent a three-way interaction
+now scores below the additive one. The transformer has not been retrained on this
+split, so nothing here says whether its margin survives.
+
+The split holds out combinations, not genes. Only 14 of the 1,263 genes in the
+test part are unseen in training, and restricting to test records whose three
+genes were all seen in training moves B1 from 0.174 to 0.187 on the single split.
+So unseen genes account for roughly 0.013 of the drop from 0.400, and unseen
+combinations account for the rest.
+
+Why triples of one query double are not independent draws, read from the papers
+rather than assumed: the score is
+$\tau_{i,j,k} = \varepsilon_{ij,k} - \varepsilon_{i,k} f_j - \varepsilon_{j,k} f_i$,
+so every array gene $k$ of one query pair reuses the same two single-mutant
+fitness values and the same two entire measured digenic profiles from two
+specific control screens. Kuzmin 2018 reports that replicate correlation falls
+from 0.90 to 0.91 for raw triple-mutant scores to 0.74 to 0.81 after that
+adjustment. An earlier framing of mine attributed the sharing to "the query
+strain, the plate and the normalization"; plate normalization explicitly removes
+the query's growth offset, so that framing was wrong in its mechanism even though
+the conclusion about splitting holds.
+
+### Correction 3: the index-misalignment hypothesis is confirmed
+
+Two defects, both verified rather than hypothesized. A uniform 28-position gene
+index shift, since the genome gene set went from 6,607 to 6,579 and the 28
+missing mitochondrial ORFs sort first; and triples containing a gene outside the
+model's gene space silently scored as doubles or singles. Detail in
+[[experiments.010-kuzmin-tmi.scripts.rescore_panel_triples_corrected]] and
+[[experiments.010-kuzmin-tmi.scripts.rescore_wetlab_plate]].
+
+### How this compares to DANGO
+
+DANGO evaluates on the same Kuzmin trigenic data and reports Pearson about 0.47
+under 5-fold cross-validation partitioned at random over triples, against a
+stated replicate ceiling of about 0.59. It also runs two gene-disjoint splits,
+roughly 60 unseen genes giving about 0.31 and 400 fully unseen genes giving about
+0.15.
+
+Two things follow. DANGO's headline split is the same random-over-records split
+whose leakage B4 measures here, and DANGO fits no additive or no-interaction
+null, so its 0.47 has not been compared against one. And DANGO never discusses
+the query-double structure: the words query and array do not appear in the paper,
+and its bias audit is framed around single-gene memorization rather than a
+per-pair offset. Its gene-disjoint splits mitigate the leak only as a side
+effect, since removing a gene removes the query pairs containing it.
+
+DANGO does bear directly on whether unseen genes can be predicted at all. Its
+per-gene embeddings receive gradient from protein-interaction graph
+reconstruction across every gene, independent of whether that gene appears in any
+trigenic label, and a gene with no observed interactions is handled by a
+meta-embedding module. That is the same mechanism as giving genes an externally
+derived representation, with networks in place of sequence, and it carries fully
+unseen genes to about 0.15 rather than to zero.

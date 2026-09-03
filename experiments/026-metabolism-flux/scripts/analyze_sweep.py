@@ -233,8 +233,17 @@ def plot(summary: dict[str, Any], scores: list[RunScore], out_stem: str) -> None
 
     null = summary["null"]
     if np.isfinite(null["peak_p95"]):
+        # A NARROW band around the null mean, not a wash over the whole panel. Shading
+        # everything below the 95th percentile greys out the entire plot area, so the
+        # bars fight the background for attention and the figure reads as muddy. The
+        # reader needs two things: where the noise sits, and how far its tail reaches.
         ax.axhspan(
-            0.0, null["peak_p95"], color=PLOT_PALETTE[5], alpha=0.15, lw=0, zorder=0
+            null["peak_mean"] - null["peak_sd"],
+            null["peak_mean"] + null["peak_sd"],
+            color=PLOT_PALETTE[5],
+            alpha=0.13,
+            lw=0,
+            zorder=0,
         )
         ax.axhline(
             null["peak_mean"],
@@ -242,7 +251,7 @@ def plot(summary: dict[str, Any], scores: list[RunScore], out_stem: str) -> None
             lw=0.6,
             ls="--",
             zorder=1,
-            label=f"null mean ({null['n_draws']} permuted runs)",
+            label=f"null mean $\\pm$ s.d. ({null['n_draws']} permuted runs)",
         )
         ax.axhline(
             null["peak_p95"],
@@ -284,7 +293,14 @@ def plot(summary: dict[str, Any], scores: list[RunScore], out_stem: str) -> None
     ax.tick_params(which="minor", length=0)
     ax.grid(axis="y", which="both", lw=0.3, color="0.85", zorder=0)
     ax.set_axisbelow(True)
-    ax.legend(frameon=False, fontsize=5, loc="upper left", handlelength=1.6, borderpad=0.2)
+    # Headroom so the legend clears the 95th-percentile line rather than sitting on
+    # top of it. The extra space is above the tallest thing on the panel, so it
+    # costs nothing the reader needs.
+    top = max(null.get("peak_p95", 0.0) or 0.0, max(means) + max(sems)) * 1.32
+    ax.set_ylim(0.0, top)
+    ax.legend(
+        frameon=False, fontsize=5, loc="upper left", handlelength=1.6, borderpad=0.2
+    )
     for spine in ax.spines.values():
         spine.set_visible(True)
     fig.tight_layout(pad=0.3)

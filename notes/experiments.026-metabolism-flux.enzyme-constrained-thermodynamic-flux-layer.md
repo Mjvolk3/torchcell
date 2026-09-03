@@ -938,9 +938,9 @@ epoch-to-epoch correlation rather than assumed independence.
 
 : **Table 22. Five arms at ten fresh seeds each, scored three ways against the permuted null.** `peak` is the maximum over 30 epochs, the statistic used previously. `last-5 mean` is the mean of the final five epochs and is not an order statistic. `p vs null` is the fraction of the 24 null draws at or above that arm's mean peak, with the finite-sample correction. The null's own 95th percentile, 0.1545, exceeds every arm mean in the table.
 
-![](./assets/images/026-metabolism-flux/sweep_arms_vs_null_2026-09-03-13-21-46.svg)
+![](./assets/images/026-metabolism-flux/sweep_arms_vs_null_2026-09-03-13-32-33.svg)
 
-**Figure 6. Every arm sits inside the noise band.** Bars are the mean maximum validation Pearson for betaxanthin across ten seeds, error bars the standard error. The dashed line is the mean of 24 label-permutation runs and the dotted line their 95th percentile; the shaded region is everything below that percentile. No arm clears it, and the smallest p-value across all 22 configurations tested is 0.24.
+**Figure 6. Every arm sits inside the noise band.** Bars are the mean maximum validation Pearson for betaxanthin across ten seeds, error bars the standard error. The dashed line and shaded band are the mean and standard deviation of 24 label-permutation runs; the dotted line is their 95th percentile. No arm reaches that percentile, and the smallest p-value across all 22 configurations tested is 0.24.
 
 **The result is negative and it is clean.** The best arm reaches 0.1151 against a null
 whose 95th percentile is 0.1545. The smallest empirical p-value anywhere in the sweep,

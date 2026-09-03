@@ -948,113 +948,11 @@ $n{=}10^{3}$; the missing points at SVR $10^{3}$ reflect an incomplete
 sweep.}{fig:rep-pooling}
 \end{figure*}
 
-%% ---- Supplementary Note [note:graphs]: the gene--gene graphs used as attention priors ----
-%% Every number here is emitted by experiments/010-kuzmin-tmi/scripts/graph_statistics.py (graph
-%% sizes, overlap, STRING releases; also writes tab-graphs.tex + tab-string-versions.tex) and
-%% experiments/005-kuzmin2018-tmi/scripts/dango_string_version_sweep.py (wandb pull of the DANGO
-%% STRING-release sweep; writes tab-dango-string-versions.tex). The figures are composed by
-%% experiments/010-kuzmin-tmi/scripts/compose_graph_si_figures.py. Rerun those, not this file.
-\clearpage
-\suppnote{note:graphs}{gene--gene graphs used as attention priors\secstatus{todo}}
-
-Nine gene--gene graphs regularize the cell encoder's attention in the trigenic experiment,
-one head per graph, and every one of them enters the model only through the soft prior
-$\Omega_k$ of Eq.~\ref{eq:graphreg}: none is used for message passing and none is imposed as a
-hard mask. \supptab{tab:databases} and \suppfig{fig:graph-priors} report how large the graphs
-are and how much they overlap, \supptab{tab:string-versions} and \suppfig{fig:dango-string}a
-how the STRING channels have drifted across releases, and \supptab{tab:dango-string-versions}
-and \suppfig{fig:dango-string}b whether that drift moves the DANGO baseline.
-
-\notesec{Sources} Two graphs are curated from the \emph{Saccharomyces} Genome Database
-(SGD). \emph{Physical} holds the protein--protein interactions SGD records per gene.
-\emph{Regulatory} holds SGD's regulation annotations as directed regulator$\to$target edges;
-of its 39,636 records, 38,677 are transcriptional and 37,890 come from high-throughput
-assays (24,199 from chromatin immunoprecipitation), so 511 regulator genes reach 6,546 target
-genes and the graph touches 6,582 of the 6,607 genes in the reference. \emph{TFLink} is the
-transcription-factor--target compendium of the same name (v1.0), also directed. The remaining
-six are the evidence channels STRING v12.0 scores separately for \emph{S.\ cerevisiae}: gene
-neighborhood, gene fusion, phylogenetic co-occurrence, co-expression, experimental
-(protein-interaction assays), and curated database. A channel edge is any gene pair with a
-nonzero channel score; no score threshold is applied, matching the cut DANGO trains on. Every
-graph is restricted to the S288C reference gene set of 6,607 genes, and the directed graphs
-are treated as undirected gene pairs wherever graphs are compared below.
-
-\notesec{Size and coverage} The graphs differ by a factor of three in the genes they reach
-(2,191 for neighborhood, 6,474 for co-expression) and by two orders of magnitude in edges
-(11,085 for co-occurrence, 996,199 for co-expression), with mean degree from 7.7 (fusion) to
-308 (co-expression) (\suppfig{fig:graph-priors}a; \supptab{tab:databases}). Their degree
-distributions differ in shape as well as scale (\suppfig{fig:graph-priors}b): fusion and
-co-occurrence have no gene above degree 100, the two dense STRING channels fall off sharply
-past degree $10^{3}$, and TFLink carries the heaviest tail, with transcription factors
-reaching several thousand targets. Summed over the nine graphs the edges name 2,437,196 gene
-pairs, of which 1,515,940 are distinct, 6.9\% of the 21.8 million pairs the vocabulary
-allows.
-
-\notesec{Overlap} The graphs are complementary rather than redundant. The Jaccard index of
-edge sets exceeds 0.12 for a single pair, co-expression against experimental (0.44)
-(\suppfig{fig:graph-priors}c). Containment is strongly asymmetric
-(\suppfig{fig:graph-priors}d): 76\% of physical edges lie inside the experimental channel and
-51\% inside co-expression, 82\% of neighborhood edges lie inside co-expression, and 43\% of
-regulatory edges lie inside TFLink, whereas only 8\% of TFLink edges are regulatory. The two
-dense channels therefore absorb much of the sparse ones without the converse holding. Counting
-support per pair (\suppfig{fig:graph-priors}e), 52\% of the distinct pairs appear in exactly
-one graph, 37\% in two, and none in more than seven. TFLink (80\%) and regulatory (51\%)
-contribute the largest shares of edges found nowhere else; database (8\%) and neighborhood
-(10\%) the smallest (\supptab{tab:databases}, Unique). How much each graph contributes to
-held-out accuracy is not measured here.
-
-\notesec{STRING releases} DANGO was built on STRING v9.1 and set its per-channel weights from
-the change to v11.0; the CGT experiment uses v12.0. Across the three releases the channels
-grow by 2.2$\times$ (database) to 8.7$\times$ (fusion) in edges
-(\supptab{tab:string-versions}; \suppfig{fig:dango-string}a), and the releases are not nested:
-only 42\% (fusion) to 72\% (neighborhood) of a v9.1 channel's pairs persist in v11.0, the
-Jaccard index between consecutive releases is 0.12--0.35, and between v9.1 and v12.0 it is
-0.03--0.19. A model trained on one release therefore sees a substantially different prior from
-one trained on the next.
-
-\notesec{DANGO replication} The TorchCell reimplementation of DANGO was trained on the
-Kuzmin~2018 trigenic interactions~\cite{kuzminSystematicAnalysisComplex2018a} with the six
-channels taken from v9.1, v11.0, or v12.0, under each of three schedules for handing over
-from the pretraining reconstruction loss to the interaction loss (pretrain then main; linear
-to uniform; linear to flipped). The statistic is the maximum over epochs of validation
-Pearson~$r$, the checkpoint-selection rule, an upward-biased order statistic whose epoch count
-is reported beside it. Across the 19 runs the best validation Pearson lies between 0.415 and
-0.427, and no release or schedule separates from the others beyond the run-to-run spread
-(\supptab{tab:dango-string-versions}; \suppfig{fig:dango-string}b; SEM at most 0.003 where
-$n>1$). Swapping v9.1 for v12.0 neither helps nor hurts the baseline, even though the v12.0
-channels carry three to nine times as many edges. These are validation maxima on the DANGO
-split and are not the test-split baseline of Fig.~\ref{fig:ggi}.
-
-%% Figure source: notes/assets/drawio/FigS-graph-attention-priors.drawio (written by
-%%   experiments/010-kuzmin-tmi/scripts/compose_graph_si_figures.py from the panels of
-%%   experiments/010-kuzmin-tmi/scripts/graph_statistics.py)
-%%   -> figures/FigS-graph-attention-priors.pdf (auto-exported by `make fig`/`make paper`).
-\begin{figure*}[t]
-\tcfig{figures/FigS-graph-attention-priors.pdf}{\textbf{Gene--gene graphs used as attention
-priors in the trigenic experiment.} (a)~Genes with at least one edge (dotted line, the
-6,607-gene reference), distinct gene pairs, and the fraction of each graph's pairs found in no
-other graph. (b)~Complementary cumulative degree distribution over undirected gene pairs.
-(c)~Jaccard index of edge sets. (d)~Containment: the fraction of the row graph's pairs present
-in the column graph. (e)~Distinct gene pairs supported by exactly $n$ of the nine graphs. Source:
-\texttt{experiments/010-kuzmin-tmi/scripts/graph\_statistics.py}.}{fig:graph-priors}
-\end{figure*}
-
-%% Figure source: notes/assets/drawio/FigS-dango-string-versions.drawio (same composer; panel b
-%%   from experiments/005-kuzmin2018-tmi/scripts/dango_string_version_sweep.py)
-%%   -> figures/FigS-dango-string-versions.pdf (auto-exported by `make fig`/`make paper`).
-\begin{figure*}[t]
-\tcfig{figures/FigS-dango-string-versions.pdf}{\textbf{STRING releases and the DANGO
-replication.} (a)~Edges per STRING channel in v9.1, v11.0, and v12.0 (top) and the Jaccard
-index between releases of the same channel (bottom). (b)~DANGO replication on the Kuzmin~2018
-trigenic interactions: best validation Pearson~$r$ (maximum over epochs) by loss schedule and
-STRING release; bar, mean over runs; whisker, SEM where $n>1$; circle, one run (19 runs).
-Sources: \texttt{graph\_statistics.py} (a) and
-\texttt{experiments/005-kuzmin2018-tmi/scripts/dango\_string\_version\_sweep.py} (b).}{fig:dango-string}
-\end{figure*}
-
-\input{sections/tab-graphs}
-\input{sections/tab-string-versions}
-\input{sections/tab-dango-string-versions}
+\input{sections/si-note-graphs}
+\input{sections/si-note-dango-repro}
+\input{sections/si-note-dango-full}
+\input{sections/si-note-dcell-model}
+\input{sections/si-note-dcell-training}
 
 % --- Tables: dataset scale ---
 %% SOURCE: *** NO GENERATING SCRIPT *** -- transcribed from

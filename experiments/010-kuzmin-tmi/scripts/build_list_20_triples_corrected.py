@@ -36,9 +36,10 @@ sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
 
 import score_010_checkpoints_directly as S  # noqa: E402
 
-from torchcell.utils import (  # noqa: E402
+from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
+    apply_paper_style,  # noqa: E402
     mm_to_in,
     savefig_true_size_svg,
 )
@@ -196,14 +197,7 @@ def main() -> None:
 
 
 def style() -> None:
-    plt.rcParams.update(
-        {
-            "font.family": "Arial",
-            "font.size": 6,
-            "axes.linewidth": 0.5,
-            "svg.fonttype": "none",
-        }
-    )
+    apply_paper_style()
 
 
 def save(fig, stem: str) -> None:
@@ -291,7 +285,7 @@ def plot_ranked(df: pd.DataFrame) -> None:
     style()
     d = df.sort_values("corrected_mean", ascending=False).reset_index(drop=True)
     fig, ax = plt.subplots(
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["half_plus"]), mm_to_in(80.0))
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["half_plus"]), mm_to_in(105.0))
     )
     y = np.arange(len(d))[::-1]
     colors = [
@@ -312,12 +306,10 @@ def plot_ranked(df: pd.DataFrame) -> None:
     ax.axvline(0.0, color="black", linewidth=0.6)
     ax.set_yticks(y)
     ax.set_yticklabels([t.replace(" + ", "+") for t in d["triple"]], fontsize=5)
-    ax.set_xlabel(r"Corrected predicted $\tau$, bars span the 3 checkpoints")
+    ax.set_xlabel(r"Corrected predicted $\tau$")
     ax.set_title(
         "The 20 build-list triples, re-ranked\n"
-        f"red contains a gene with zero trigenic training records "
-        f"({int(d['has_untrained_gene'].sum())} of {len(d)}); "
-        "every gene here has a trained embedding row",
+        f"red = contains an untrained gene ({int(d['has_untrained_gene'].sum())})",
         fontsize=6,
     )
     for spine in ax.spines.values():

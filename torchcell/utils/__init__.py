@@ -6,10 +6,12 @@ from .paths import asset_images_dir, experiment_results_dir, experiment_root, re
 from .utils import (
     MAX_HEIGHT_MM,
     PANEL_WIDTHS_MM,
+    PAPER_RC,
     PLOT_PALETTE,
     PLOT_PALETTE_FILL,
     PLOT_PALETTE_NAMES,
     REPRESENTATION_DISPLAY_NAMES,
+    apply_paper_style,
     display_label,
     format_scientific_notation,
     mm_to_in,
@@ -31,5 +33,7 @@ __all__ = [
     "PLOT_PALETTE_NAMES",
     "PLOT_PALETTE_FILL",
     "REPRESENTATION_DISPLAY_NAMES",
+    "PAPER_RC",
+    "apply_paper_style",
     "display_label",
 ]

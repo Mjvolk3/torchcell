@@ -45,9 +45,10 @@ sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
 
 import score_010_checkpoints_directly as S  # noqa: E402
 
-from torchcell.utils import (  # noqa: E402
+from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
+    apply_paper_style,  # noqa: E402
     mm_to_in,
     savefig_true_size_svg,
 )
@@ -316,14 +317,7 @@ def main() -> None:
 
 
 def plot(triples: pd.DataFrame, doubles: pd.DataFrame, n_genes: int) -> None:
-    plt.rcParams.update(
-        {
-            "font.family": "Arial",
-            "font.size": 6,
-            "axes.linewidth": 0.5,
-            "svg.fonttype": "none",
-        }
-    )
+    apply_paper_style()
 
     # Panel 1: every triple ranked, with the spread across the three checkpoints.
     fig, ax = plt.subplots(

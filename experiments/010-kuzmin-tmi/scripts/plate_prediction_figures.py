@@ -32,6 +32,7 @@ from matplotlib.colors import TwoSlopeNorm
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
+    apply_paper_style,
     mm_to_in,
     savefig_true_size_svg,
 )
@@ -49,14 +50,7 @@ DUPLICATE_NOTE = "SPH1 and YLR312C-B are one locus (YLR313C)"
 
 
 def style() -> None:
-    plt.rcParams.update(
-        {
-            "font.family": "Arial",
-            "font.size": 6,
-            "axes.linewidth": 0.5,
-            "svg.fonttype": "none",
-        }
-    )
+    apply_paper_style()
 
 
 def save(fig, stem: str) -> None:

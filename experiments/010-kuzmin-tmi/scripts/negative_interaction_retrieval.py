@@ -42,6 +42,7 @@ from sklearn.metrics import average_precision_score
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
+    apply_paper_style,
     mm_to_in,
     savefig_true_size_svg,
 )
@@ -168,14 +169,7 @@ def main() -> None:
 
 
 def plot(out: pd.DataFrame) -> None:
-    plt.rcParams.update(
-        {
-            "font.family": "Arial",
-            "font.size": 6,
-            "axes.linewidth": 0.5,
-            "svg.fonttype": "none",
-        }
-    )
+    apply_paper_style()
     fig, axes = plt.subplots(
         1, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(62.0)), sharey=True
     )

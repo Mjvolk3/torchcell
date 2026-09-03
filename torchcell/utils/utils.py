@@ -124,6 +124,44 @@ def display_label(name: str) -> str:
     return REPRESENTATION_DISPLAY_NAMES.get(name, name)
 
 
+PAPER_RC: dict[str, object] = {
+    "font.family": "Arial",
+    "font.size": 6.0,
+    "axes.labelsize": 6.0,
+    "axes.titlesize": 6.0,
+    "xtick.labelsize": 6.0,
+    "ytick.labelsize": 6.0,
+    "legend.fontsize": 5.0,
+    "figure.titlesize": 6.5,
+    "axes.linewidth": 0.5,
+    "svg.fonttype": "none",
+    # A fixed-figsize panel must NOT be recropped, or the strict width in
+    # PANEL_WIDTHS_MM stops holding and panels no longer tile across the page.
+    "savefig.bbox": None,
+}
+
+
+def apply_paper_style() -> None:
+    """Set every rcParam the repo figure standard fixes, explicitly.
+
+    Setting ``font.size`` alone is not enough, and the reason is a trap worth
+    knowing. Importing :mod:`torchcell.graph` runs ``plt.style.use`` at module
+    import time, and that style file sets ``axes.labelsize`` 16,
+    ``xtick.labelsize`` 14 and ``savefig.bbox`` ``tight`` as absolute values.
+    Absolute sizes do not scale with ``font.size``, so a later
+    ``rcParams["font.size"] = 6`` leaves axis labels and ticks at 14 to 16 point
+    while titles set with an explicit ``fontsize`` come out correct. The result
+    is a figure with mismatched type whose canvas has silently been recropped
+    wider than its declared panel width.
+
+    Call this after every import, and it holds regardless of what an imported
+    module did to the global state.
+    """
+    import matplotlib.pyplot as plt
+
+    plt.rcParams.update(PAPER_RC)
+
+
 def savefig_true_size_svg(
     fig: "Figure",
     path: str,

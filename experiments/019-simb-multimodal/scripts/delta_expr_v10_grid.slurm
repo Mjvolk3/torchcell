@@ -18,10 +18,13 @@
 # directory must already exist or every task fails in 0 s with no log at all.
 #   mkdir -p /projects/bbub/mjvolk3/torchcell/experiments/019-simb-multimodal/slurm/output
 #
-# ACCOUNT. `bbtp-delta-gpu` (CHM230022) is what the older delta_joint_expr_morph.slurm names
-# and it is NO LONGER in this user's associations -- `sacctmgr show assoc` lists bbhh, bbub,
-# bfjt, bflt and bgcg only, so a job charging bbtp is rejected at submit. `bbub-delta-gpu` is
-# used here because storage already lives on bbub. bbhh was overdrawn when last checked.
+# ACCOUNT. `bbtp-delta-gpu` (CHM230022), which the older delta_joint_expr_morph.slurm names,
+# is NO LONGER in this user's associations, and a submit under it returns
+# "allocation failure: Invalid account or account/partition combination" -- verified, not
+# assumed. Balances as of 2026-09-03: bfjt 12,843 h, bflt 4,845, bgcg 4,760, bbub 3,851,
+# bbhh OVERDRAWN at -6,447. `bfjt-delta-gpu` is used because it has by far the most headroom
+# and this round wants ~1,000 GPU-hours. STORAGE stays on bbub regardless; only the charge
+# account differs, which is the same split the earlier Delta launchers used.
 #
 # RESOURCE SHAPE COPIED FROM WHAT DELTA HAS RECENTLY ACCEPTED, not chosen fresh. Jobs
 # 20714233-20714235 (020/021/022/023 grids) each COMPLETED at 1-23:53 with exactly
@@ -42,7 +45,7 @@
 #
 #SBATCH --job-name=019-expr-v10
 #SBATCH --partition=gpuA40x4
-#SBATCH --account=bbub-delta-gpu
+#SBATCH --account=bfjt-delta-gpu
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --gpus-per-node=4

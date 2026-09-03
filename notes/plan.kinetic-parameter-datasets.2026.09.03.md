@@ -150,6 +150,45 @@ a device argument. Running on CPU means all six can be brought up in parallel wi
 competing with a GPU sweep, and inference on 7,456 pairs is small enough that CPU is not
 a constraint.
 
+### The macromolecule row examined, and it is smaller and more fixable than first stated
+
+These are **not bad annotations**. Each reaction genuinely has a macromolecule
+participant, and that is the biology rather than a shortcut:
+
+| reaction | what it does | why a macromolecule is correct |
+| --- | --- | --- |
+| `r_4239` arginyltransferase | moves Arg from Arg-tRNA onto a protein N-terminus | the substrate IS a protein; post-translational modification has no single substrate |
+| `r_4152` cytochrome c heme lyase | attaches heme to apocytochrome c | protein in, protein out |
+| `r_2145` / `r_2148` fatty acid synthase | reduces and dehydrates a growing acyl chain | the chain is covalently tethered to acyl carrier protein by design |
+| `r_4325` Fe-S cluster assembly | forms a scaffold-desulfurase complex | a protein-protein complex |
+
+**But yeast-GEM already performs exactly the substitution in question, inconsistently.**
+`ferricytochrome c` and `ferrocytochrome c` both carry a SMILES in `smilesDB.tsv`, and
+that SMILES is the **heme b macrocycle with `[Fe+2]`**, 130 characters, the prosthetic
+group rather than the protein. The same file gives `Cytochrome c` nothing. That is an
+annotation gap with the precedent sitting two rows away, not a chemical impossibility.
+`r_4152` makes it starker: `ferroheme b` and `Apocytochrome c` both resolve, so two of
+its three participants already have structures and only the holo form does not.
+
+Revised verdict per species, with the units each blocks:
+
+| species | units | substitutable | with what |
+| --- | --- | --- | --- |
+| `Cytochrome c` | 2 | **yes**, and the model does it for the siblings | the heme prosthetic group |
+| `3-hydroxybutanoyl-ACP` | 1 | yes, chemically sound | the acyl-CoA analog; ACP and CoA share the phosphopantetheine thioester arm |
+| `Arg-tRNA(Arg)` | 1 | partially | aminoacyl-adenosine, since the 3'-terminal ester is the reactive part |
+| `generic protein` | 1 | **no** | deliberately generic, no structure exists |
+| Fe-S scaffold and desulfurase | 2 | **no** | protein-protein complex |
+
+No CoA analog of the ACP species is named in the model, so that proxy has to be
+constructed rather than looked up, which puts it firmly in `derived`.
+
+**Correction to the earlier framing.** Genuinely unrepresentable is roughly **3 units of
+3,728**, not the five metabolites previously implied to matter. The macromolecules
+together block under ten units. The 176 figure is overwhelmingly lipids, so the lipid
+derivation is where essentially all of the remaining coverage is, and the macromolecule
+tier matters for correctness of the gate rather than for coverage.
+
 ### Open, and deliberately not decided here
 
 Which predictor runs first. Wu reports no accuracy numbers for any of the eight, the

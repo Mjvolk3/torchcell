@@ -6,11 +6,13 @@
 # THE GENERALIZATION-GAP ROUND on Delta: a 2^4 factorial, 16 cells x 4 replicates = 64 runs,
 # two runs per A40 across 32 single-GPU array tasks, which Slurm packs onto 8 nodes.
 #
-#   # PRE-FLIGHT, four corner cells at fast_dev_run. Minutes of compute.
-#   # OVERRIDE THE WALLTIME DOWN. The #SBATCH block below asks for 2 days because the grid
-#   # needs it, and a 2-day request cannot be backfilled, so a canary inheriting it queues
-#   # behind full-size work for no reason. An hour backfills almost immediately.
-#   sbatch --array=0 --time=01:00:00 --export=ALL,V10_STAGE=canary \
+#   # PRE-FLIGHT, four corner cells at fast_dev_run. Minutes of COMPUTE, but see the wall.
+#   # OVERRIDE THE WALLTIME DOWN, BUT NOT TO AN HOUR. The #SBATCH block asks 2 days because
+#   # the grid needs it, and a 2-day request cannot be backfilled, so a canary inheriting it
+#   # queues behind full-size work. But STARTUP DOMINATES A CANARY HERE: dataset load plus
+#   # target normalization was measured at ~43 min on Delta once, and canary 21785783 hit a
+#   # 1 h wall with all four runs still inside startup. 3 h leaves room and still backfills.
+#   sbatch --array=0 --time=03:00:00 --export=ALL,V10_STAGE=canary \
 #       experiments/019-simb-multimodal/scripts/delta_expr_v10_grid.slurm
 #
 #   # THE ROUND.
@@ -228,6 +230,12 @@ export DATA_ROOT=/work/hdd/bbub/mjvolk3/torchcell
 export PYTHONPATH="$PROJECT_ROOT"
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export WANDB__SERVICE_WAIT=600
+# UNBUFFERED, and this is not cosmetic. Python FULLY buffers stdout when it is redirected to
+# a file, so a run that has printed less than one buffer's worth writes NOTHING. Canary
+# 21785783 hit its wall with all four per-run logs at exactly 0 bytes, which is
+# indistinguishable between "still loading the dataset" and "hung before the first line".
+# Unbuffered output makes startup visible and separates those two cases.
+export PYTHONUNBUFFERED=1
 cd "$PROJECT_ROOT" || exit 1
 
 # IMPORT PROVENANCE GATE. The Delta environment carries an EDITABLE install of torchcell,

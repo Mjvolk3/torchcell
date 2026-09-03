@@ -191,10 +191,27 @@ Without `--shift-heading-level-by=-1` pandoc numbers the first real heading `0.1
 phantom section zero. With it, the top level numbers 1, 2, 3 like the paper's sections. A
 note that instead starts at `#` still builds; pandoc promotes that heading to the title.
 
-**Every figure and table gets a NUMBERED caption with real detail.** Figures are captioned
-below, tables above. A caption states what the reader is looking at and what the point of
-it is, not just what the axes are. Pandoc here has no cross-reference filter, so the
-numbers are written by hand and must be kept in order when content moves.
+**Every figure and table gets a NUMBERED caption with real detail, written as a NATIVE
+pandoc caption.** Put the caption in the image's alt text, `![**Figure 1. Title.**
+Detail...](path)`, and a table's caption on a `: **Table 1. Title.** Detail...` line
+directly under the table. That is what produces the paper's treatment: a centered figure
+with the caption below, a table with the caption above, both set at `\footnotesize` with a
+bold run-in label.
+
+**Do not write the caption as a separate paragraph.** An `![](path)` with EMPTY alt text is
+an inline image to pandoc, so it is set left-aligned in a text paragraph rather than
+centered as a float, and an adjacent paragraph is then body-size text rather than a
+caption. Both defects are silent.
+
+`labelformat=empty` is set because the caption text already carries its own "Figure N." and
+pandoc has no cross-reference filter here; without it the output reads "Figure 1: Figure
+1.". The numbers are therefore written by hand and must be kept in order when content
+moves.
+
+**Figures are placed at TRUE SIZE, never stretched to the text block.** The repo's figure
+standard is that a panel designed at 88.5 mm carries 6 pt type that prints at 6 pt only if
+it is placed at 88.5 mm, so the header must not force `\setkeys{Gin}{width=\linewidth}`.
+Pandoc's own cap at the text block is the safety net.
 
 **A draw.io figure is embedded as its outlined-text vector SVG**, produced by
 `notes/assets/publish/scripts/drawio_vector_svg.sh`. draw.io's own SVG export writes labels

@@ -16,31 +16,42 @@ actually resolved to those inputs, and the ceiling on any predictor's coverage i
 how many units resolve, NOT by the predictor. Installing a model first and discovering
 afterwards that only part of the network can be fed is the expensive order to do this in.
 
-BOTH INPUTS ARE ALREADY MIRRORED, WHICH WAS NOT OBVIOUS
---------------------------------------------------------
-yeast-GEM ships them in ``data/databases/`` and neither needs the network:
-
-``swissprot.tsv``
+WHERE THE INPUTS COME FROM
+---------------------------
+``swissprot.tsv``, shipped inside yeast-GEM
     ``uniprot, name, gene_id, ec_code, MW, sequence``. The protein sequence for a GEM
-    gene, offline. This is the same table the molecular weights already come from, so
-    the sequence column was sitting next to a column the layer was reading.
-``smilesDB.tsv``
-    metabolite name to SMILES.
+    gene, offline. This is the same table the molecular weights already come from, so the
+    sequence column was sitting next to a column the layer was reading. It resolves
+    1,161 of 1,161 genes, and the genome's own protein FASTA independently resolves the
+    same 1,161, so **sequence is not a gap from either direction**.
+``smilesDB.tsv``, shipped inside yeast-GEM
+    metabolite name to SMILES, by exact name. Matches 1,800 of 2,806 metabolites.
+``chem_prop.tsv``, mirrored from MetaNetX by :mod:`fetch_kinetics_assets`
+    SMILES keyed by MNXM id, the second route for a metabolite the name table misses.
 
-So this audit runs entirely off hash-pinnable local files, and its output is the exact
-per-unit input table a predictor loop would iterate.
+Substrate SMILES is the binding gap and the only one worth optimizing. Protein 3D
+structure is a THIRD input, needed by DeepEnzyme alone, and AlphaFold covers it; it does
+not touch the numbers below.
 
 WHAT IT REPORTS
 ---------------
-Coverage at each join, because a single headline percentage hides which join is the
-lossy one:
+Coverage at each join, because a single headline percentage hides which join is lossy:
 
 1. units whose genes all resolve to a UniProt accession with a sequence;
-2. reactions whose substrates resolve to at least one SMILES;
+2. reactions whose substrates resolve to at least one SMILES, reported twice, from the
+   shipped name table alone and with the MetaNetX route added, so the value of the extra
+   mirror is visible rather than folded into one number;
 3. units that clear BOTH, which is the real ceiling on a
    ``(sequence, substrate SMILES)`` predictor;
 4. how much of the k_cat gap that ceiling could close, against the 4.0 % the Open Enzyme
    Database currently supplies.
+
+Measured 2026.09.02: 87.5 % of units from the shipped tables alone, 95.3 % once MetaNetX
+is joined, against 4.0 % with a measured turnover number. The residual 176 units are
+dominated by acyl-chain-specific lipid species such as
+``phosphatidylcholine (1-16:0, 2-16:1)``, which are combinatorial names yeast-GEM
+enumerates rather than compounds absent from chemistry, so that tail is a naming problem
+and not a structural one.
 
 Run from the worktree root::
 
@@ -85,6 +96,7 @@ class PredictorInput(BaseModel):
     substrate_met_id: str
     substrate_name: str
     smiles: str
+    smiles_source: str
 
 
 def read_swissprot(path: str) -> dict[str, tuple[str, str]]:
@@ -120,6 +132,36 @@ def read_smiles_db(path: str) -> dict[str, str]:
     return out
 
 
+def read_metanetx_smiles(path: str) -> dict[str, str]:
+    """MetaNetX MNXM id -> SMILES, from the mirrored ``chem_prop.tsv``.
+
+    The second identifier route for a metabolite the shipped name table misses. Column 0
+    is the MNXM id and column 8 the SMILES; rows are skipped rather than defaulted when
+    either is blank, since a metabolite with no structure has none rather than an empty
+    one. Returns an empty map when the mirror is absent, so the audit still runs and
+    reports the shipped-only coverage instead of failing.
+    """
+    out: dict[str, str] = {}
+    if not osp.exists(path):
+        return out
+    with open(path) as f:
+        for line in f:
+            if line.startswith("#"):
+                continue
+            cols = line.rstrip("\n").split("\t")
+            if len(cols) > 8 and cols[0] and cols[8].strip():
+                out[cols[0]] = cols[8].strip()
+    return out
+
+
+def metanetx_id(met: Any) -> str | None:
+    """The metabolite's MetaNetX id, which cobra may hold as a string or a list."""
+    ref = (met.annotation or {}).get("metanetx.chemical")
+    if isinstance(ref, list):
+        return ref[0] if ref else None
+    return ref
+
+
 def main() -> None:
     gem_source = YeastGEM()
     model = gem_source.model
@@ -127,8 +169,12 @@ def main() -> None:
     db_dir = osp.join(gem_source.model_dir, "data", "databases")
     swissprot = read_swissprot(osp.join(db_dir, "swissprot.tsv"))
     smiles_db = read_smiles_db(osp.join(db_dir, "smilesDB.tsv"))
+    mnx_smiles = read_metanetx_smiles(
+        osp.join(os.environ["DATA_ROOT"], "data/enzyme_kinetics/metanetx/chem_prop.tsv")
+    )
     print(f"swissprot: {len(swissprot)} gene tokens with a sequence")
     print(f"smilesDB:  {len(smiles_db)} metabolite names with SMILES")
+    print(f"metanetx:  {len(mnx_smiles)} MNXM ids with SMILES")
 
     gem = build_gem_tensors(model, model_dir=gem_source.model_dir)
     units = gem.catalytic_units
@@ -148,10 +194,22 @@ def main() -> None:
 
     met_name = {k: m.name for k, m in enumerate(model.metabolites)}
     met_id = {k: m.id for k, m in enumerate(model.metabolites)}
+    # SMILES per metabolite, shipped name table first and the MetaNetX id second, with
+    # the source recorded so the two routes stay separable in the output.
+    met_smiles: dict[int, tuple[str, str]] = {}
+    for k, met in enumerate(model.metabolites):
+        hit = smiles_db.get((met.name or "").lower())
+        if hit:
+            met_smiles[k] = (hit, "smilesDB")
+            continue
+        mnx = metanetx_id(met)
+        if mnx and mnx in mnx_smiles:
+            met_smiles[k] = (mnx_smiles[mnx], "metanetx")
 
     rows: list[PredictorInput] = []
     units_with_seq: set[int] = set()
     units_with_smiles: set[int] = set()
+    units_with_smiles_shipped_only: set[int] = set()
     genes_resolved: set[str] = set()
     genes_unresolved: set[str] = set()
 
@@ -173,15 +231,17 @@ def main() -> None:
 
         subs = []
         for i in rxn_substrates.get(j, []):
-            sm = smiles_db.get((met_name[i] or "").lower())
-            if sm:
-                subs.append((met_id[i], met_name[i], sm))
+            hit = met_smiles.get(i)
+            if hit:
+                subs.append((met_id[i], met_name[i], hit[0], hit[1]))
         if subs:
             units_with_smiles.add(u)
+        if any(src == "smilesDB" for *_, src in subs):
+            units_with_smiles_shipped_only.add(u)
 
         if u in units_with_seq and subs:
             for g, (acc, seq) in resolved:
-                for mid, mname, sm in subs:
+                for mid, mname, sm, sm_src in subs:
                     rows.append(
                         PredictorInput(
                             unit_id=u,
@@ -192,6 +252,7 @@ def main() -> None:
                             substrate_met_id=mid,
                             substrate_name=mname,
                             smiles=sm,
+                            smiles_source=sm_src,
                         )
                     )
 
@@ -203,9 +264,14 @@ def main() -> None:
         "genes_with_sequence": len(genes_resolved),
         "genes_without_sequence": len(genes_unresolved),
         "units_all_genes_have_sequence": len(units_with_seq),
+        "units_with_substrate_smiles_shipped_only": len(units_with_smiles_shipped_only),
         "units_with_any_substrate_smiles": len(units_with_smiles),
         "units_ready_for_seq_plus_smiles_predictor": len(both),
         "coverage_ready_frac": len(both) / n_units,
+        "coverage_ready_frac_shipped_only": len(
+            units_with_seq & units_with_smiles_shipped_only
+        )
+        / n_units,
         "oed_measured_coverage_frac": 148 / n_units,
         "predictor_input_rows": len(rows),
         "example_unresolved_genes": sorted(genes_unresolved)[:15],

@@ -1,0 +1,75 @@
+%% notes-tex/010-index-defect/sections/4-negatives.tex
+
+\section{What the model can still be used for\secstatus{todo}}
+\label{sec:negatives}
+
+Every confident prediction in Section~\ref{sec:panel} is negative. That suggests
+using the model to nominate negative trigenic interactions rather than positive
+ones, and it is worth testing rather than assuming, because the label is already
+skewed negative: 59.4 percent of the 376{,}732 records have $\tau$ below zero and
+the mean is $-0.0080$. A squared-error fit shrinks toward the mean, so a model
+that had learned nothing beyond it would also emit mostly negative predictions.
+That most predictions are negative is therefore not evidence of anything.
+
+\subsection{The measurement that is evidence\secstatus{todo}}
+
+Retrieval. Among the $K$ records a model calls most negative, what fraction truly
+are strong negatives, and does that beat both the base rate and the additive
+null.
+
+%% SOURCE: experiments/010-kuzmin-tmi/scripts/negative_interaction_retrieval.py
+%% -> results/negative_interaction_retrieval.csv, held-out test, 37,673 records
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lrrr}
+\hline
+Model & $\tau < -0.08$ & $\tau < -0.10$ & $\tau < -0.20$ \\
+ & base 8.3\% & base 5.1\% & base 0.88\% \\
+\hline
+B1 additive ridge & 0.560 & 0.520 & 0.240 \\
+B5 nonlinear MLP & 0.700 & 0.670 & 0.400 \\
+CGT M01 & 0.670 & 0.630 & 0.400 \\
+CGT M02 & 0.750 & 0.700 & 0.420 \\
+CGT M03 & 0.710 & 0.670 & 0.450 \\
+\hline
+\end{tabular}
+\caption{Precision at $K = 100$: the fraction of the 100 most negative
+predictions whose true $\tau$ clears each threshold. At the strictest threshold
+the transformer converts a 0.88 percent base rate into 42 to 45 percent, a 48 to
+51 fold enrichment.}
+\label{tab:retrieval}
+\end{table}
+
+The transformer's advantage over the additive null is proportionally larger here
+than on correlation. Average precision at $\tau < -0.20$ is $0.096$ for the ridge
+against $0.182$ to $0.191$ for the three checkpoints, whereas on Pearson the same
+comparison was $0.400$ against $0.438$ to $0.455$. Retrieving the extreme
+negative tail is what the extra capacity buys, and it is a better description of
+the model's competence than its correlation is.
+
+\subsection{It survives the disjoint split, several times weaker\secstatus{todo}}
+
+The same measurement was run on the query-pair-disjoint split, where the leak
+described in the companion document is removed. Only the baselines have been
+refit there, so the transformer has no row.
+
+At $\tau < -0.10$ the disjoint test base rate is 9.6 percent, and precision at
+100 is $0.26$ for the additive ridge and $0.33$ for the nonlinear baseline,
+enrichments of 2.7 and 3.4 fold against 10.1 and 13.1 on the random split.
+Absolute precisions are not comparable across the two splits because their base
+rates differ; enrichment is the quantity that is.
+
+\tcfigfit[0.98]{figures/negative_interaction_retrieval.pdf}{Precision at $K$ for
+retrieving records with true $\tau < -0.10$, on both splits, with the base rate
+marked.}{fig:retrieval}
+
+\subsection{What this supports\secstatus{todo}}
+
+Using the model to nominate candidate negative trigenic interactions is
+defensible on this evidence and fits what it can do better than nominating
+positives. On the build list 17 of 20 triples have all three checkpoints agreeing
+and every one is negative, while the single positive is not agreed.
+
+The enrichment a transformer would retain once query doubles are disjoint is not
+established, because it has not been refit there. The baselines' fall from
+roughly tenfold to threefold is the honest prior for what to expect.

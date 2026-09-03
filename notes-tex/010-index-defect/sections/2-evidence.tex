@@ -1,0 +1,76 @@
+%% notes-tex/010-index-defect/sections/2-evidence.tex
+
+\section{The evidence\secstatus{todo}}
+\label{sec:evidence}
+
+Both defects are confirmed rather than inferred. The confirmation matters because
+the first symptom, one checkpoint appearing to disagree with itself across runs,
+has an obvious wrong reading: that the model is nondeterministic. It is not.
+
+\subsection{The reference the test is anchored on\secstatus{todo}}
+
+A hand-built forward pass that computes the encoder once and feeds it only
+perturbed-gene indices reproduces the recorded validation metrics of all three
+checkpoints to the fourth decimal, for example $0.461917$ against a recorded
+$0.461881$. That agreement is what licenses the path as a reference: a wrong gene
+ordering or a mis-loaded weight would give a plausible but wrong number instead.
+
+\subsection{The decisive test\secstatus{todo}}
+
+Two independent 384-triple samples were taken from each stored prediction file,
+at different offsets, and re-scored through that reference under each candidate
+index map.
+
+%% SOURCE: results/offby28_index_verification.csv, written by the verification
+%% run described in experiments.010-kuzmin-tmi.scripts.rescore_panel_triples_corrected
+\begin{table}[htbp]
+\centering
+\begin{tabular}{llrr}
+\hline
+Run & sample & 6{,}607-gene map & 6{,}579-gene map \\
+\hline
+\texttt{inference\_1} & head & \textbf{0.999998} & 0.115 \\
+\texttt{inference\_1} & middle & \textbf{0.999999} & $-0.252$ \\
+\texttt{inference\_3} & head & 0.074 & \textbf{0.999999} \\
+\texttt{inference\_3} & middle & $-0.003$ & \textbf{0.999998} \\
+\hline
+\end{tabular}
+\caption{Pearson correlation between each run's stored predictions and the
+validated scoring path, under each candidate index space. Every run is
+reproducible under exactly one map and neither is reproducible under both. Mean
+absolute difference at the reproducing map is about $2 \times 10^{-5}$, which is
+the runs' half-precision autocast.}
+\label{tab:indextest}
+\end{table}
+
+Three things follow. The model is deterministic, since every stored prediction is
+exactly recoverable. \texttt{inference\_1} is correct and
+\texttt{inference\_2} and \texttt{inference\_3} are not. And the perfect agreement
+between runs 2 and 3 that first looked reassuring was evidence they shared the
+same wrong map, not evidence either was right.
+
+\subsection{What is invalid and what is not\secstatus{todo}}
+
+Invalid: everything derived from the \texttt{inference\_2} and
+\texttt{inference\_3} prediction files, which is the panel-12 and panel-24 gene
+selections and every table and figure built from them.
+
+Unaffected: \texttt{inference\_1}, whose 526-gene panel lies entirely inside the
+model's gene set, so it escaped both defects rather than only the first. Also
+unaffected is every number computed on the labeled split through the validated
+path, including the held-out metrics and the additive-null comparison.
+
+\subsection{The guard, and the fix it is not\secstatus{todo}}
+\label{sec:guard}
+
+The model now raises when the cell graph's gene node count differs from the
+\texttt{gene\_num} the checkpoint was built for. That converts a silent
+relabeling of the entire genome into a failure at the first forward pass.
+
+It is detection, not prevention. The condition it catches is a symptom of the
+design in Section~\ref{sec:rebuilt}, where the index space is recomputed from a
+live genome at every use. Pinning the ordering with the build and loading it
+would make the failure impossible instead of merely loud. A commit hash cannot
+substitute: the library was untouched between the two runs, and what moved was
+the genome underneath them, so two runs at the same commit scored different
+genes.

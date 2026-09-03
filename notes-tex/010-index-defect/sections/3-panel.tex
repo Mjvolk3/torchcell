@@ -1,0 +1,88 @@
+%% notes-tex/010-index-defect/sections/3-panel.tex
+
+\section{What the panel is actually predicted to do\secstatus{todo}}
+\label{sec:panel}
+
+Construction had already started when the defect was found, so the operative
+question is not which genes to pick but which combinations among the picked genes
+the model favors. Every combination was therefore rescored under the correct
+index space with all three checkpoints, rather than one, because two training
+runs share only 0.39 to 0.47 of their top 100.
+
+\subsection{The plate carries one locus twice\secstatus{todo}}
+
+The panel at the bench is not the model-selected panel-12. Read from the Echo
+transfer report of the plating run itself, it is twelve strain labels:
+\texttt{COS111}, \texttt{ELC1}, \texttt{LCL1}, \texttt{MMS2}, \texttt{SPH1},
+\texttt{YEH1}, \texttt{YER079W}, \texttt{YJR060W}, \texttt{YKL033W-A},
+\texttt{YLR312C-B}, \texttt{YOS9} and \texttt{YPL081W}.
+
+\texttt{SPH1} and \texttt{YLR312C-B} are separate wells and, by
+Section~\ref{sec:alias}, one gene. Twelve labels are eleven distinct loci. Either
+the same deletion is present twice under two names or one well is not the strain
+its label says, and only the bench can settle which.
+
+\subsection{The corrected ranking, and how far it can be read\secstatus{todo}}
+
+All 165 triples over the eleven loci fall between $-0.19$ and $+0.03$, against a
+training-label standard deviation of $0.063$. Nothing on this plate is predicted
+far from the mean.
+
+The three checkpoints agree on the sign of the interaction for 133 of the 165.
+That agreement is not evenly distributed. Among the top of the ranking most
+triples straddle zero and several have one checkpoint positive and another
+negative on the same triple; only \texttt{YER079W+MMS2+YEH1} has all three
+clearly on one side, at $+0.032$ with a spread of $0.0035$. The bottom is
+resolved: every one of the twelve most negative is negative in all three
+checkpoints, the strongest being \texttt{MMS2+YJR060W+YEH1} near $-0.19$.
+
+So the model has a reproducible opinion about which triples are strongly negative
+and almost none about which are positive.
+
+\subsection{The 20 triples on the build list\secstatus{todo}}
+\label{sec:buildlist}
+
+The instruction the bench is working from is 25 doubles plus 20 triples. Those 20
+were ranked by \texttt{inference\_3}, so the numbers that ordered them are not
+predictions of those triples.
+
+%% SOURCE: experiments/010-kuzmin-tmi/scripts/build_list_20_triples_corrected.py
+%% -> results/build_list_20_triples_corrected.csv
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lrr}
+\hline
+& as listed & corrected \\
+\hline
+range over the 20 & 0.4092 to 0.7114 & $-0.1336$ to $+0.0108$ \\
+predicted positive & 20 of 20 & 1 of 20 \\
+all three checkpoints agree on sign & not available & 17 of 20 \\
+\hline
+\end{tabular}
+\caption{The build list before and after the index correction. The training-label
+standard deviation is $0.0633$, so the listed values sat six to eleven of those
+above zero, where a shrunk squared-error fit does not put predictions.}
+\label{tab:buildlist}
+\end{table}
+
+\tcfigfit[0.80]{figures/build_list_20_triples_hist.pdf}{Predicted trigenic
+interaction for the 20 triples on the build list, both scorings on one axis. The
+shaded band is one training-label standard deviation.}{fig:hist}
+
+The single positive is not usable. \texttt{YGL087C+YLL012W+YPL046C} has a
+corrected mean of $+0.0108$ with a spread of $0.0607$ across the three
+checkpoints, and they do not agree on its sign. Every one of the 17 triples the
+checkpoints do agree on is negative, the strongest being
+\texttt{YJR060W+YLL012W+YPL046C} at $-0.1336$, which the original list ranked
+twenty-first and therefore excluded.
+
+\notesec{Why the top six were the top six}
+Ranks 1 through 6 all contain \texttt{YLR312C-B} and all scored between $0.683$
+and $0.711$. Each was scored as the double formed by its other two genes, by
+Section~\ref{sec:doubles}. Under the correct index the six land between $-0.007$
+and $-0.052$. Their rank was an artifact of the collapse, not a claim about them.
+
+\tcfigfit[0.80]{figures/build_list_20_triples_ranked.pdf}{The 20 build-list
+triples re-ranked, bars spanning the three checkpoints. Red marks a triple
+containing a gene with zero trigenic training records, which on this list is
+\texttt{YER079W} alone.}{fig:ranked}

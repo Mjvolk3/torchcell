@@ -1,0 +1,65 @@
+%% notes-tex/010-index-defect/sections/5-limits.tex
+
+\section{Established, and not\secstatus{todo}}
+\label{sec:limits}
+
+\subsection{Established\secstatus{todo}}
+
+Two independent defects invalidated the design-space predictions, and both are
+confirmed by reproduction rather than argued from symptoms. Every stored
+prediction is exactly recoverable under one index map and not the other, so the
+model is deterministic and the runs were scoring different genes.
+
+\texttt{inference\_1} is unaffected by either defect. The panel-12 and panel-24
+selections, which came from \texttt{inference\_3}, are invalid.
+
+The corrected panel predictions carry no confidently positive triple. The
+corrected values correlate with the ones the list was ordered by at $0.115$ over
+the shared combinations, so the old ranking cannot be reused.
+
+The model retrieves strong negatives well above base rate and better than an
+additive null, and by a proportionally wider margin than its correlation
+suggests.
+
+\subsection{Not established\secstatus{todo}}
+
+\notesec{Whether the model ranks novel combinations well}
+Every number here comes from checkpoints trained on a split that is random over
+records. On that split an additive null reaches $0.400$ and a model that ignores
+the third gene entirely reaches $0.390$, and on a query-pair-disjoint split the
+additive null falls to $0.127 \pm 0.033$. The transformer has not been refit on
+that split. These are the model's predictions computed correctly, which is a
+different claim from the model being right.
+
+\notesec{The retrieval enrichment under a disjoint split}
+Measured for the baselines only, where it falls several fold. Not measured for
+the transformer.
+
+\notesec{Whether the plate's duplicate is a duplicate}
+\texttt{SPH1} and \texttt{YLR312C-B} name one locus, which is a fact about the
+annotation. Whether the two wells hold the same deletion or one is mislabeled is
+a question for the bench.
+
+\notesec{How far the gene-set filter costs us}
+Our gene set is built from features of type \texttt{gene}, so 53 of the 5{,}493
+genes Costanzo measured, including two real loci on the original panel, cannot be
+represented at all. Whether that exclusion is right is a modeling decision that
+has not been revisited.
+
+\subsection{Next\secstatus{todo}}
+
+\begin{enumerate}
+\item Pin the gene index space with the build and load it, rather than
+  recomputing it from a live genome. The guard of Section~\ref{sec:guard} detects
+  the failure; this removes it.
+\item Intersect any candidate gene list with the model's gene space before
+  generating combinations, and fail loudly on a name the index cannot resolve
+  rather than dropping a perturbation.
+\item Resolve gene names through the shared resolver wherever a count or a lookup
+  is keyed on a systematic name, since the same alias miss has now produced both
+  a wrong index and a wrong training-support audit.
+\item Regenerate the panel selections from a correctly indexed run if a new
+  selection is wanted, rather than reordering the existing one.
+\item Retrain on the query-pair-disjoint split, which is the measurement every
+  claim here is currently waiting on.
+\end{enumerate}

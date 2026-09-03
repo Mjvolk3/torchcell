@@ -1,0 +1,100 @@
+%% notes-tex/010-index-defect/sections/1-what-broke.tex
+
+\section{What broke\secstatus{todo}}
+\label{sec:broke}
+
+Experiment 010 trained an equivariant cell graph transformer on 376{,}732 Kuzmin
+trigenic records and then scored three unmeasured design spaces with it. The
+largest, \texttt{inference\_3}, covered 465{,}735{,}532 triples genome-wide and
+is what the panel-12 and panel-24 gene selections were drawn from. Those
+selections went to the bench.
+
+Every prediction in that run is wrong, in two ways that compound.
+
+\subsection{The index space is rebuilt, not stored\secstatus{todo}}
+\label{sec:rebuilt}
+
+The model addresses genes by position. Its embedding table has 6{,}607 rows, read
+directly from the checkpoint, and a record's perturbed genes arrive as integer
+positions in the cell graph's sorted node list. Nothing ties the two together.
+The cell graph is constructed at run time from whatever gene set the genome
+object currently yields, and no assertion compares its node count against the
+\texttt{gene\_num} the checkpoint was built for.
+
+So the index space is a derived quantity recomputed at every use, not an artifact
+stored alongside the build. When the genome moves, every embedding row silently
+comes to mean a different gene.
+
+\subsection{Defect one, a uniform shift of 28\secstatus{todo}}
+
+Between January and February 2026 the genome gene set went from 6{,}607 entries
+to 6{,}579. The two \texttt{inference\_2} and \texttt{inference\_3} dataset builds
+logged the smaller number at build time. The 28 missing entries are the
+mitochondrial open reading frames \texttt{Q0010} through \texttt{Q0297}, and
+because they sort before every nuclear systematic name they occupy positions 0
+through 27.
+
+The consequence is not partial. Of the 6{,}579 genes present in both sets, not
+one keeps its index and every one shifts by exactly 28. \texttt{YAL001C} sits at
+row 28 in the space the checkpoint learned and was fed as row 0. Twenty-eight
+embedding rows were never addressed at all.
+
+\subsection{Defect two, triples scored as doubles\secstatus{todo}}
+\label{sec:doubles}
+
+The triple generator drew its candidate genes from the Costanzo single-mutant
+gene list and never intersected them with the model's gene space. Those are
+different universes: of the 5{,}493 genes Costanzo measured, 5{,}440 are inside
+the model's 6{,}607 and 53 are outside. By our own annotation 35 of the 53 are
+absent from the GFF entirely, 11 are typed \texttt{pseudogene}, 6
+\texttt{blocked\_reading\_frame} and 1 \texttt{transposable\_element\_gene}.
+
+A gene the index cannot resolve does not raise. The perturbation processor builds
+its index list with a set comprehension over node names, so an unmatched name
+contributes nothing and the list is simply shorter, and the readout pools by mean
+over however many indices arrive. A two-element list is a perfectly valid double.
+
+Among the 432 distinct panel combinations that were stored, 160 had all three
+genes indexable, 266 had two and 6 had one. They carry only 220 distinct
+prediction values. The collapse is visible without running anything:
+
+\begin{verbatim}
+YIL174W   + YKL033W-A + YPL081W  ->  0.711426
+YJL017W   + YKL033W-A + YPL081W  ->  0.711426
+YKL033W-A + YLR312C-B + YPL081W  ->  0.711426
+\end{verbatim}
+
+Three different triples, one value, because all three of \texttt{YIL174W},
+\texttt{YJL017W} and \texttt{YLR312C-B} were unresolvable and each triple
+collapsed onto the double \texttt{\{YKL033W-A, YPL081W\}}.
+
+\subsection{A name problem, not a missing gene\secstatus{todo}}
+\label{sec:alias}
+
+The distinction matters and is easy to state wrongly. Three of the five
+unresolvable panel names are simply outdated systematic names:
+\texttt{YJL017W} is now \texttt{YJL016W}, \texttt{YKL200C} is now
+\texttt{YKL201C}, and \texttt{YLR312C-B} is now \texttt{YLR313C}. R64 records
+\texttt{YLR313C} as one verified gene, SGD:S000004305, carrying
+\texttt{Alias: ['SPH1', 'YLR312C-B']}.
+
+That gene has a trained embedding row, number 4389, and always did. What the
+original run lacked was a lookup entry for the outdated string, because the gene
+set it indexed against stores current systematic names. Rescoring under the
+resolved name is therefore not inventing a prediction for a gene the model never
+saw; it is asking the model about the locus the strain actually deletes.
+
+The remaining two, \texttt{YIL174W} and \texttt{YLL017W}, are typed
+\texttt{pseudogene} in R64 and fall outside our gene set because that set is
+built from features of type \texttt{gene}. They are still real loci with SGD
+records, \texttt{YLL017W} being SDC25, and Costanzo built and measured deletion
+strains for both. Their absence is a property of how the gene set is
+constructed, not of the genes.
+
+\notesec{The same alias miss, a second time}
+The build list's own training-support audit reports \texttt{YLR312C-B} as having
+zero trigenic training records and labels it extrapolation. That count was taken
+under the outdated name. The perturbed-gene index is keyed on current systematic
+names, so the lookup returns nothing; under \texttt{YLR313C} the gene has 9
+records. The gene on that panel with genuinely zero trigenic training records is
+\texttt{YER079W}.

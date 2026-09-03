@@ -1,0 +1,73 @@
+%% notes-tex/010-index-defect/010-index-defect.tex
+%% [[experiments.010-kuzmin-tmi.index-defect-investigation]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/010-index-defect/010-index-defect.tex
+%%
+%% Build:  make            -> 010-index-defect.pdf   (draft: status chips)
+%%         make check      -> formatting / provenance / style gate
+%%         make plots      -> re-convert the matplotlib panels from ASSET_IMAGES_DIR
+%%
+%% Every number is produced by a committed script under
+%% experiments/010-kuzmin-tmi/scripts/ and read back from
+%% experiments/010-kuzmin-tmi/results/.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\emergencystretch=3.5em
+
+\title{\vspace{-1.5em}A Gene Index That Moved\\
+  {\large How the 010 design-space predictions became invalid, what the
+   construction panel is actually predicted to do, and what the model can still
+   be used for}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+The predictions that selected experiment 010's construction panel are invalid,
+for two independent reasons that compound. The genome gene set shrank from
+6{,}607 entries to 6{,}579 between inference runs, and the 28 absent entries are
+mitochondrial open reading frames that sort first, so every gene index shifted by
+exactly 28 and each triple was scored as a different triple. Separately, the
+candidate genes were drawn from a list that was never intersected with the
+model's gene space, and a gene the index cannot resolve contributes no
+perturbation at all, so those records were silently scored as doubles. Of 432
+stored panel combinations, 266 were scored as doubles and 6 as singles. Both
+defects are confirmed rather than inferred: re-scoring stored triples through a
+validated path reproduces each run under exactly one index map and not the other,
+at correlation $0.999998$.
+
+Rescoring the panel correctly changes what should be built. Across the 50
+combinations shared with the stored files the corrected values correlate with the
+recorded ones at $0.115$, and on the 20-triple build list the recorded values
+span $0.409$ to $0.711$ while the corrected ones span $-0.134$ to $+0.011$
+against a training-label standard deviation of $0.063$. Nineteen of the 20 are
+predicted negative and the single positive is not agreed across checkpoints, so
+the list contains no triple the model confidently calls positive.
+
+What the model can still do is retrieve strong negatives. Among the 100 records
+each checkpoint calls most negative, 42 to 45 percent truly have $\tau < -0.2$
+against a base rate of 0.88 percent, and the transformer's margin over an
+additive null is proportionally larger there than on correlation. That margin is
+measured on a split whose leakage is quantified in the companion document, and it
+falls several fold when query doubles are made disjoint.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-what-broke}
+\input{sections/2-evidence}
+\input{sections/3-panel}
+\input{sections/4-negatives}
+\input{sections/5-limits}
+
+\end{document}

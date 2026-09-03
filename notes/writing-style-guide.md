@@ -227,3 +227,41 @@ the styling, never take down the build.
 - [[paper.nature-biotech.figures]] -- figure sizing, palette, export
 - Provenance flags and the section stoplight: `notes-tex/common/tcdoc.sty`
 - Per-figure number provenance: `notes-tex/common/figure_provenance.py`
+
+## 2026.09.03 - Provenance chips on note sections
+
+The note PDF now carries the same three-symbol stoplight as
+`paper/nature-biotech/editing.pdf`, which was the last piece of that look still missing.
+The symbols and colors are shared with the paper so the two read as one family. **The
+meaning is different**, because the question a note has to answer is not "is this
+publication ready" but "did a person check this".
+
+| mark in markdown | symbol | meaning |
+| --- | --- | --- |
+| `{.read}` | green check | read and checked by the author |
+| `{.tent}` | amber square | read, provisional, expected to change |
+| `{.ai}` | red cross | written by an agent, not yet read |
+
+Written as a pandoc header attribute, which stays invisible in Dendron and in every
+markdown viewer:
+
+```markdown
+## 2026.09.03 - Something the author verified {.read}
+### A subsection still under discussion {.tent}
+```
+
+**An unmarked heading defaults to `ai`, and that default is the whole point.** A heading
+with no chip would be indistinguishable from a checked one, which is exactly the
+confusion these marks remove. A document can never silently imply review it has not had,
+and marking a section `read` is a positive act by the author rather than an absence.
+
+Chips appear on the heading and propagate to the contents page, because they sit inside
+the heading text. A legend sits directly under the contents.
+
+Applied by `notes/assets/publish/filters/section-status.lua`, with the macros in
+`notes/assets/publish/tex-templates/header-includes.tex`. Levels deeper than three are
+left unmarked; they are covered by their parent.
+
+**Do not self-promote a section.** An agent writing or revising a section leaves it `ai`,
+exactly as the paper's editing policy leaves a finished `todo` section for the author to
+promote. Only the author moves a section to `tent` or `read`.

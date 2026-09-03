@@ -88,6 +88,37 @@
 % net; natural size is the default.
 
 \usepackage{xcolor}
+
+% ---------------------------------------------------------------------------
+% PROVENANCE CHIPS, the note counterpart of editing.tex's section stoplight.
+% Same three symbols and the same colours as paper/nature-biotech/editing.tex, so a
+% note and the manuscript read as one family. The MEANING is note-specific: the paper
+% asks "is this publication ready", a note has to answer "did a person check this".
+%   ai   = red X      -- written by an agent, not yet read by the author
+%   tent = amber sq   -- read, provisional, expected to change
+%   read = green tick -- read and checked by the author
+% Applied by assets/publish/filters/section-status.lua, which defaults an UNMARKED
+% heading to `ai`. That default is deliberate: a blank heading is indistinguishable
+% from a checked one, so a note can never silently imply review it has not had.
+\usepackage{pifont}
+\definecolor{stgrn}{HTML}{43A047}
+\definecolor{styel}{HTML}{E0A020}
+\definecolor{stred}{HTML}{E53935}
+\newcommand{\tcstread}{{\normalfont\footnotesize\textcolor{stgrn}{\ding{51}}}}
+\newcommand{\tcsttent}{{\normalfont\footnotesize\textcolor{styel}{\ding{110}}}}
+\newcommand{\tcstai}{{\normalfont\footnotesize\textcolor{stred}{\ding{55}}}}
+% Robust: these expand inside \section{...}, which is a moving argument written to the
+% .toc file, so the chips propagate to the contents page. A fragile command there
+% breaks the build rather than degrading.
+\DeclareRobustCommand{\status}[1]{\csname tcst#1\endcsname}
+\DeclareRobustCommand{\secstatus}[1]{\ \status{#1}}
+\newcommand{\notestatuslegend}{%
+  {\scriptsize\color{gray}%
+   \status{read}\,read and checked \enspace
+   \status{tent}\,read, provisional \enspace
+   \status{ai}\,agent-written, not yet read\par}%
+  \vspace{0.4\baselineskip}}
+% ---------------------------------------------------------------------------
 \definecolor{linkred}{RGB}{205,92,92}      % Indian Red for citations and internal links
 \definecolor{urlblue}{RGB}{100,149,237}    % Cornflower Blue for URLs
 

@@ -98,10 +98,13 @@ def index_maps(
     a map from panel name to the systematic name that can be scored, and the
     panel names that cannot be scored at all with the reason.
 
-    Five panel genes are in neither index space. Three are simply outdated
-    systematic names and resolve to current genes. Two are pseudogenes, which
-    have no gene feature, so no embedding row was ever learned for them and no
-    correct prediction exists.
+    Five panel genes are in neither index space. Three are outdated systematic
+    names that resolve to current genes. Two are typed ``pseudogene`` in R64, and
+    ``gene_set`` is built from ``features_of_type("gene")``, so they fall outside
+    the model's index space and no embedding row was ever learned for them. They
+    are real loci with SGD records, Costanzo measured deletion strains for both,
+    and one of them is SDC25. Their absence here is a property of how we build
+    the gene set, not of the genes.
     """
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
@@ -128,7 +131,7 @@ def index_maps(
             print(f"  resolved {g} -> {r.systematic_name} ({r.status.value})")
         else:
             unscoreable[g] = f"{r.status.value}: {r.note}"
-            print(f"  UNSCOREABLE {g}: {unscoreable[g]}")
+            print(f"  OUTSIDE GENE SET {g}: {unscoreable[g]}")
 
     absent_shifted = [g for g in genes if g not in shifted]
     if absent_shifted:

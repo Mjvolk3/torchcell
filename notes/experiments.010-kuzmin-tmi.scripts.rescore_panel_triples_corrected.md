@@ -69,11 +69,24 @@ Three different triples, one value, because all three of `YIL174W`, `YJL017W` an
 | `YJL017W` | renamed, alias of `YJL016W` | scoreable under the current name |
 | `YKL200C` | renamed, alias of `YKL201C` | scoreable under the current name |
 | `YLR312C-B` | renamed, alias of `YLR313C` | scoreable, and this one is **constructed** |
-| `YIL174W` | R64 pseudogene, not a gene feature | no embedding row, never scoreable |
-| `YLL017W` | R64 pseudogene, not a gene feature | no embedding row, never scoreable |
+| `YIL174W` | R64 feature type `pseudogene` | outside our gene set, so no embedding row |
+| `YLL017W` | R64 feature type `pseudogene` | outside our gene set, so no embedding row |
 
-The three renamed genes were only ever a stale-name problem. The two pseudogenes
-should not have been deletion candidates.
+The three renamed genes were only ever a stale-name problem.
+
+**Correction to an earlier version of this note.** It said the last two have "no
+gene feature" and can "never be scored." Both statements were wrong. Both are
+real loci with SGD records, and `YLL017W` is SDC25, a named Ras guanine
+nucleotide exchange factor; R64 types it `pseudogene` only because S288C carries
+a premature stop, with the full-length gene including `YLL016W`. Costanzo built
+and measured deletion strains for both, which is how they entered the candidate
+list.
+
+What is actually true is a property of our code: `SCerevisiaeGenome.gene_set` is
+built from `db.features_of_type("gene")` (`s288c.py:654`), so any locus typed
+`pseudogene` is excluded from the 6,607-gene index space and the checkpoint has
+no embedding row for it. That is a limit of how we construct the gene set, and
+it is a gap worth closing rather than a fact about the genes.
 
 ### Corrected ranking
 
@@ -112,3 +125,11 @@ additive null on a query-pair-disjoint split drops it from 0.400 to 0.127 +/-
 ranks unseen triples well is a separate question and is not established.
 
 ![](./assets/images/010-kuzmin-tmi/panel_triples_rescored.svg)
+
+### Correction: the exposure is wider than this panel
+
+Of the 5,493 genes Costanzo measured, 5,440 are inside the model's 6,607-gene
+space and 53 are outside (35 absent from our GFF entirely, 11 `pseudogene`, 6
+`blocked_reading_frame`, 1 `transposable_element_gene`). 43 reached the
+inference_3 triple list. `inference_1` was unaffected because its 526-gene panel
+lies entirely inside the gene set.

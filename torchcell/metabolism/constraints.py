@@ -127,10 +127,24 @@ RT_KJ_PER_MOL = R_KJ_PER_MOL_K * DEFAULT_TEMPERATURE_K
 #: that arithmetic accepts without complaint. See the module docstring.
 DELTA_G_SENTINEL = 1.0e7
 
-#: Physiological bounds on intracellular metabolite concentration, molar. The usual
-#: thermodynamic-flux-analysis window; used to bound the learned log-concentration so an
-#: anchored delta_r G' cannot be satisfied by an absurd concentration.
-CONC_LOWER_M = 1.0e-6
+#: Physiological bounds on intracellular metabolite concentration, molar. Bounds the
+#: learned log-concentration so an anchored delta_r G' cannot be satisfied by an absurd
+#: concentration.
+#:
+#: SOURCED, because the lower bound was previously 1.0e-6 and that is one decade too high.
+#: Thermo-Flux (Smith et al. 2026, doi 10.1038/s44320-026-00227-4; mirrored `paper.md`
+#: sha256 496019ea07d9d95a63c1f0dbeada666d1e775a0dfcd50e53fe0235b87ead2593), Results,
+#: verbatim: "Typically, intracellular metabolite concentrations vary between $0 . 1 \mu
+#: \mathsf { M }$ and $1 0 \mathsf { m } M$ (Bennett et al, 2009; Kummel et al, $2 0 0 6 a
+#: ,$ ), and this range is chosen as the default concentration range." The Discussion
+#: repeats it: "users can define broad metabolite concentration ranges, e.g., from $0 . 1
+#: \mu \mathrm { M }$ to $1 0 \mathrm { m M }$".
+#:
+#: The decade matters rather than being cosmetic. At 303.15 K, RT ln(10) is 5.8 kJ/mol, so
+#: a floor set 10x too high removes that much per participating metabolite from the
+#: driving force an anchored reaction can reach, which is the quantity the second-law
+#: hinge and the dissipation limit are both computed from.
+CONC_LOWER_M = 1.0e-7
 CONC_UPPER_M = 1.0e-2
 
 

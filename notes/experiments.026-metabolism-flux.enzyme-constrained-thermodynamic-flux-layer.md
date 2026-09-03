@@ -8,9 +8,10 @@ created: 1788313541375
 
 ## 2026.09.01 - Build, reconstruction, and first diagnostic runs
 
-Branch `feat/metabolism-flux-module`. Companions: [[plan.cgt-metabolism-flux-layer.2026.07.26]]
-(the model specification this implements), [[plan.cgt-metabolism-flux-layer.explainer]]
-(derivations), [[plan.cgt-metabolism.2026.07.25]] (Track A run log and noise ceilings).
+Branch `feat/metabolism-flux-module`. The model specification this implements is
+[[plan.cgt-metabolism-flux-layer.2026.07.26]], its derivations are in
+[[plan.cgt-metabolism-flux-layer.explainer]], and the Track A run log and noise ceilings
+are in [[plan.cgt-metabolism.2026.07.25]].
 
 ### Why a flux layer at all, stated as a cost argument
 
@@ -193,8 +194,9 @@ than on per-reaction marginals.
 
 ### The reconstruction: what the layer actually rests on
 
-Everything below is measured by `experiments/026-metabolism-flux/scripts/gem_audit.py`,
-which writes `results/gem_audit.json` and both figures. The audit exists because the failure
+Everything below is measured by `experiments/026-metabolism-flux/scripts/gem_audit.py`
+([[experiments.026-metabolism-flux.scripts.gem_audit]]), which writes
+`results/gem_audit.json` and both figures. The audit exists because the failure
 mode of a constrained model is silent: a capacity constraint built on one organism-wide
 turnover number is a uniform rescaling of the flux box, not an enzyme constraint, and
 nothing in a loss curve distinguishes the two.
@@ -285,7 +287,9 @@ which is the more conservative of the two routes, and the residual disagreement 
 provenance question about the genome-scale model rather than about this layer.
 
 **Kinetics, and this is the headline gap.** Molecular weight resolves completely; turnover
-does not.
+does not. The resolution policy that produces these numbers, experimental before predicted
+before an organism default with a provenance tag on every value, is
+[[torchcell.metabolism.parameters]].
 
 | parameter | source | coverage |
 | --- | --- | ---: |
@@ -338,7 +342,8 @@ species that were measured.
 ### Porting to another organism, and why kinetics is the only real barrier
 
 The constraint layer is a pure function of a genome-scale model. There is no yeast constant
-in `torchcell/metabolism/constraints.py` or `flux_layer.py`; the organism-specific surface
+in `torchcell/metabolism/constraints.py` ([[torchcell.metabolism.constraints]]) or
+`flux_layer.py` ([[torchcell.metabolism.flux_layer]]); the organism-specific surface
 is a model, a compartment table, and two scalars.
 
 | ingredient | organism-specific? | where it comes from |
@@ -425,7 +430,8 @@ the same point Merzbacher reached from the other direction when their deep model
 "attributed to the fluxes being linearly correlated through $Sv=0$."
 
 **Flux variability analysis is the reference, and it is label-free.** Running it on the wild
-type at 90 % of optimum, by `scripts/fva_reference.py`:
+type at 90 % of optimum, by `scripts/fva_reference.py`
+([[experiments.026-metabolism-flux.scripts.fva_reference]]):
 
 | quantity | value |
 | --- | ---: |
@@ -469,7 +475,9 @@ Two phenotypes, both single-deletion panels, both already built into the
 : **Table 11. The two phenotypes, both single-deletion panels already built into the `fig6_pigment_transfer` dataset.** Betaxanthin has a replicate-based ceiling and the amino-acid panel has none, since Mülleder reports one replicate per strain with no standard error.
 
 **The heads are mechanistic in the flux arms and pooled in the baseline**, which is what
-makes the comparison mean anything.
+makes the comparison mean anything. They are built on `CellGraphTransformerMetabolism`
+([[torchcell.models.cell_graph_transformer_metabolism]]), which holds the flux layer and
+dispatches each head by kind.
 
 - `mulleder19` reads the model's own turnover at the 19 measured species:
   $\hat y_k = a_k\log(1+\omega_{i_k}(v)) + b_k$. Turnover is not concentration, and the
@@ -511,6 +519,13 @@ helps at all. `flux_free` to `flux_anchored` asks whether the measured energies 
 information beyond the structural loop-freedom any potential gives. `flux_anchored` to
 `flux_nullspace` is the exactness budget.
 
+The repo's earlier stoichiometric model, `StoichHypergraphConv`
+([[torchcell.nn.stoichiometric_hypergraph_conv]]), spends $S$ the other way: the signed
+coefficients weight messages passed over the metabolic hypergraph, so the network shapes
+the representation and constrains nothing. Here $S$ is a constraint on an emitted flux and
+never a message weight. That layer is not one of the five arms, so the two designs have not
+been compared.
+
 **Loss weighting had to be set from a measurement, not chosen.** At initialization on a real
 batch the unweighted constraint sum is about 255 against a data loss of about 2, so at
 weight 1 the model spends every parameter on feasibility and none on the phenotype. Two
@@ -539,7 +554,9 @@ solution is overwhelmingly sparse, so balanced solutions live exactly where a si
 cannot go, and the optimizer's only route there is to drive thousands of logits to large
 negative values against weight decay.
 
-Measured by `scripts/box_zero_reachability.py` on the real network at initialization:
+Measured by `scripts/box_zero_reachability.py`
+([[experiments.026-metabolism-flux.scripts.box_zero_reachability]]) on the real network at
+initialization:
 
 | quantity | box | null space |
 | --- | ---: | ---: |
@@ -585,7 +602,9 @@ diagnostic bought that a loss curve alone would not have.
 ### Media: the FBA layer works, the ontology objects do not reach it yet
 
 The question of whether the `Media` schema maps onto exchange bounds now has a measured
-answer, from `torchcell/metabolism/media.py` and `scripts/media_schema_audit.py`. The
+answer, from `torchcell/metabolism/media.py` ([[torchcell.metabolism.media]]) and
+`scripts/media_schema_audit.py`
+([[experiments.026-metabolism-flux.scripts.media_schema_audit]]). The
 mapping resolves each media component to an exchange reaction through the model's own
 annotations, and reports coverage rather than silently dropping anything.
 
@@ -703,6 +722,11 @@ gradient reaches the gene tokens.
 
 ### Results: five arms, three seeds, 20 epochs
 
+The sweep runs from `scripts/train_flux.py`
+([[experiments.026-metabolism-flux.scripts.train_flux]]) and every number and figure below
+is reduced from its output by `scripts/plot_flux_arms.py`
+([[experiments.026-metabolism-flux.scripts.plot_flux_arms]]).
+
 Peak validation Pearson, identical splits within a seed. Betaxanthin's replicate-based
 noise ceiling is 0.914, so every number here is between 1 % and 12 % of what the
 measurement supports.
@@ -780,7 +804,8 @@ not detect collapses.
 
 ### Amortized flux sampling, and what the width comparison does and does not show
 
-`scripts/flux_sampling_demo.py` trains the anchored arm with a stochastic head for 12
+`scripts/flux_sampling_demo.py` ([[experiments.026-metabolism-flux.scripts.flux_sampling_demo]])
+trains the anchored arm with a stochastic head for 12
 epochs, then draws 128 flux vectors for each of 32 genotypes. Every draw is one forward
 pass and every draw lands inside its genotype's box, so no rejection step is involved.
 

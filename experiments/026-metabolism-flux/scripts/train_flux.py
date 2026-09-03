@@ -53,6 +53,7 @@ import json
 import os
 import os.path as osp
 import time
+from collections.abc import Callable
 from typing import Any
 
 import numpy as np
@@ -178,7 +179,9 @@ def build_dataset() -> Neo4jCellDataset:
         root=DATASET_ROOT,
         query=query,
         gene_set=genome.gene_set,
-        graphs=build_gene_multigraph(graph=graph, graph_names=["physical", "regulatory"]),
+        graphs=build_gene_multigraph(
+            graph=graph, graph_names=["physical", "regulatory"]
+        ),
         incidence_graphs=None,
         node_embeddings={},
         converter=None,
@@ -382,6 +385,8 @@ def run_arm(
     args: argparse.Namespace,
     arm_override: dict[str, Any] | None = None,
     return_model: bool = False,
+    permute_train_targets: bool = False,
+    on_epoch: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Train one arm at one seed and return its metrics and feasibility trace.
 
@@ -395,6 +400,16 @@ def run_arm(
         return_model: Include the trained model under ``"model"``. The sampling demo needs
             a FITTED posterior; sampling an untrained prior would make its width comparison
             against flux variability analysis meaningless.
+        permute_train_targets: Permute each batch's training targets and their mask
+            together, leaving validation untouched, which turns the run into a
+            label-permutation null. An explicit parameter rather than an ``args``
+            attribute, so a caller that builds its own argument namespace cannot fail on
+            a missing field: ``flux_sampling_demo.py`` does exactly that.
+        on_epoch: Called with each epoch's metric row as it is produced. This is what
+            makes a run watchable while it is still running, and it takes the row rather
+            than a metric name so a caller logs the feasibility diagnostics on the same
+            step as the score. An unattended overnight sweep whose only output is a JSON
+            file written after each 24-minute cell is not observable in time to act on.
     """
     torch.manual_seed(seed)
     np.random.seed(seed)
@@ -499,6 +514,17 @@ def run_arm(
             for name in head_specs:
                 t, m = targets[name]
                 t, m = t.to(device), m.to(device)
+                if permute_train_targets:
+                    # THE NULL. Permuting rows of the target AND its mask together
+                    # destroys the genotype-to-phenotype association while leaving the
+                    # target distribution, the missingness rate and every other moving
+                    # part identical. Validation targets are NOT permuted, so
+                    # `val_betaxanthin` is still scored against real labels and its
+                    # maximum over epochs is a draw from the null distribution of the
+                    # exact statistic the arms are reported with. Permuting target
+                    # without mask would pair a value with another row's observed flag.
+                    perm = torch.randperm(t.shape[0], device=device)
+                    t, m = t[perm], m[perm]
                 mean, sd = stats[name]
                 z = (t - mean) / sd
                 pred = head_outputs[name]
@@ -548,16 +574,22 @@ def run_arm(
             "train_loss": train_loss / max(n_batches, 1),
         }
         for name in head_specs:
+            mask_all = np.concatenate(masks[name])
             score, nonfinite = masked_pearson(
-                np.concatenate(preds[name]),
-                np.concatenate(trues[name]),
-                np.concatenate(masks[name]),
+                np.concatenate(preds[name]), np.concatenate(trues[name]), mask_all
             )
             row[f"val_{name}"] = score
             row[f"nonfinite_{name}"] = nonfinite
+            # The sample size the correlation was computed on. Without it a Pearson
+            # cannot be compared against its own null width, which is 1/sqrt(n-3), and
+            # `extract_targets` sets the whole row's mask together so column 0 is the
+            # count of observed rows.
+            row[f"n_val_{name}"] = int(mask_all[:, 0].sum())
         for k, v in feas.items():
             row[k] = v / max(n_batches, 1)
         history.append(row)
+        if on_epoch is not None:
+            on_epoch(row)
         # `nan > x` is False, so a NaN epoch can never become the best. That is the
         # intended behavior: an epoch whose metric could not be computed is not a result.
         if row["val_betaxanthin"] > best["val_betaxanthin"]:
@@ -607,6 +639,14 @@ def main() -> None:
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--weight-decay", type=float, default=1e-4)
     parser.add_argument("--out", default="flux_arms.json")
+    parser.add_argument(
+        "--permute-train-targets",
+        action="store_true",
+        help=(
+            "Permute training targets within each batch, leaving validation untouched. "
+            "Turns the run into a label-permutation null for the reported statistic."
+        ),
+    )
     args = parser.parse_args()
 
     os.makedirs(RESULTS_DIR, exist_ok=True)
@@ -622,7 +662,15 @@ def main() -> None:
     # usable, balanced experiment and each further pass just adds a replicate.
     for seed in [int(s) for s in args.seeds.split(",")]:
         for arm_name in args.arms.split(","):
-            runs.append(run_arm(arm_name, seed, dataset, args))
+            runs.append(
+                run_arm(
+                    arm_name,
+                    seed,
+                    dataset,
+                    args,
+                    permute_train_targets=args.permute_train_targets,
+                )
+            )
             with open(out_path, "w") as f:
                 json.dump({"args": vars(args), "runs": runs}, f, indent=2, default=str)
             print(f"checkpointed {len(runs)} runs -> {out_path}", flush=True)

@@ -21,6 +21,7 @@ top six ranks: each was scored as the double formed by its other two genes.
 """
 
 import glob
+import json
 import os
 import os.path as osp
 import sys
@@ -152,7 +153,21 @@ def main() -> None:
     df["corrected_min"] = df[cols].min(axis=1)
     df["corrected_max"] = df[cols].max(axis=1)
     df["sign_agree"] = (df[cols] > 0).sum(axis=1).isin([0, 3])
-    df["contains_YLR312C-B"] = df["genes"].map(lambda g: "YLR312C-B" in g)
+    # Training support, counted under the RESOLVED name. Counting under the name
+    # the build list uses returns 0 for YLR312C-B, because the perturbed-gene
+    # index is keyed on current systematic names and that string is an alias.
+    # The same alias miss is what dropped the gene's index in inference_3.
+    with open(
+        osp.join(BUILD_DIR, "processed", "is_any_perturbed_gene_index.json")
+    ) as f:
+        gene_index = json.load(f)
+    support = {g: len(gene_index.get(resolved[g], [])) for g in resolved}
+    for g in sorted(support, key=lambda x: support[x]):
+        print(
+            f"  {g:12} -> {resolved[g]:10} trigenic training records {support[g]:>5d}"
+        )
+    df["min_train_records"] = df["genes"].map(lambda gs: min(support[g] for g in gs))
+    df["has_untrained_gene"] = df["min_train_records"] == 0
     df = df.rename(columns={"prediction": "as_listed"})
 
     sd = label_spread()
@@ -280,7 +295,7 @@ def plot_ranked(df: pd.DataFrame) -> None:
     )
     y = np.arange(len(d))[::-1]
     colors = [
-        PLOT_PALETTE[1] if flag else PLOT_PALETTE[0] for flag in d["contains_YLR312C-B"]
+        PLOT_PALETTE[1] if flag else PLOT_PALETTE[0] for flag in d["has_untrained_gene"]
     ]
     ax.barh(
         y,
@@ -300,7 +315,9 @@ def plot_ranked(df: pd.DataFrame) -> None:
     ax.set_xlabel(r"Corrected predicted $\tau$, bars span the 3 checkpoints")
     ax.set_title(
         "The 20 build-list triples, re-ranked\n"
-        "red contains YLR312C-B (= YLR313C), which had no index originally",
+        f"red contains a gene with zero trigenic training records "
+        f"({int(d['has_untrained_gene'].sum())} of {len(d)}); "
+        "every gene here has a trained embedding row",
         fontsize=6,
     )
     for spine in ax.spines.values():

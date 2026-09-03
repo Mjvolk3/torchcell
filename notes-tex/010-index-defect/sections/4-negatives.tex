@@ -13,9 +13,21 @@ That most predictions are negative is therefore not evidence of anything.
 
 \subsection{The measurement that is evidence\secstatus{todo}}
 
-Retrieval. Among the $K$ records a model calls most negative, what fraction truly
-are strong negatives, and does that beat both the base rate and the additive
-null.
+Retrieval, scored against the published call rather than a bare magnitude cut.
+Kuzmin 2018 defines a negative trigenic interaction as a conjunction, and the
+sidedness is deliberate: ``we used an established interaction magnitude cut-off
+for digenic interactions $(p < 0.05, |\varepsilon| > 0.08)$ and trigenic
+interactions $(p < 0.05, \tau < -0.08)$'', with positives excluded because
+``We focused exclusively on the analysis of deleterious negative trigenic
+interactions.'' The symmetric $|\tau| > 0.08$ belongs to Kuzmin 2020 and the 2021
+protocol, which do score positives.
+
+The conjunct is not cosmetic. On this build 29{,}712 records clear
+$\tau < -0.08$ and only 5{,}675 also clear $p < 0.05$, so magnitude alone is
+about five times more permissive than the published call. The p-value comes from
+the LMDB rather than the label table, and it is the significance of the
+unadjusted triple-mutant $\varepsilon$ computed at the digenic scoring stage,
+which makes it a usable filter and not a statistic about $\tau$.
 
 %% SOURCE: experiments/010-kuzmin-tmi/scripts/negative_interaction_retrieval.py
 %% -> results/negative_interaction_retrieval.csv, held-out test, 37,673 records
@@ -23,53 +35,52 @@ null.
 \centering
 \begin{tabular}{lrrr}
 \hline
-Model & $\tau < -0.08$ & $\tau < -0.10$ & $\tau < -0.20$ \\
- & base 8.3\% & base 5.1\% & base 0.88\% \\
+Model & P@100 & enrichment & average precision \\
 \hline
-B1 additive ridge & 0.560 & 0.520 & 0.240 \\
-B5 nonlinear MLP & 0.700 & 0.670 & 0.400 \\
-CGT M01 & 0.670 & 0.630 & 0.400 \\
-CGT M02 & 0.750 & 0.700 & 0.420 \\
-CGT M03 & 0.710 & 0.670 & 0.450 \\
+B1 additive ridge & 0.240 & 14.1$\times$ & 0.0731 \\
+B5 nonlinear MLP & 0.290 & 17.0$\times$ & 0.0920 \\
+CGT M01 & 0.320 & 18.7$\times$ & 0.1258 \\
+CGT M02 & 0.380 & 22.3$\times$ & 0.1362 \\
+CGT M03 & 0.340 & 19.9$\times$ & 0.1304 \\
 \hline
 \end{tabular}
-\caption{Precision at $K = 100$: the fraction of the 100 most negative
-predictions whose true $\tau$ clears each threshold. At the strictest threshold
-the transformer converts a 0.88 percent base rate into 42 to 45 percent, a 48 to
-51 fold enrichment.}
+\caption{Retrieving published negative trigenic interactions,
+$\tau < -0.08$ and $p < 0.05$, on the random-over-records test split. The base
+rate is 1.707 percent, so 38 of the best checkpoint's 100 most negative
+predictions are real calls.}
 \label{tab:retrieval}
 \end{table}
 
 The transformer's advantage over the additive null is proportionally larger here
-than on correlation. Average precision at $\tau < -0.20$ is $0.096$ for the ridge
-against $0.182$ to $0.191$ for the three checkpoints, whereas on Pearson the same
-comparison was $0.400$ against $0.438$ to $0.455$. Retrieving the extreme
-negative tail is what the extra capacity buys, and it is a better description of
-the model's competence than its correlation is.
+than on correlation: average precision $0.136$ against $0.073$, where on Pearson
+the same comparison was $0.438$ to $0.455$ against $0.400$. Retrieving the
+negative tail is what the extra capacity buys.
 
-\subsection{It survives the disjoint split, several times weaker\secstatus{todo}}
+\subsection{It does not survive the disjoint split\secstatus{todo}}
 
-The same measurement was run on the query-pair-disjoint split, where the leak
-described in the companion document is removed. Only the baselines have been
-refit there, so the transformer has no row.
+The same measurement on the query-pair-disjoint split, where only the baselines
+have been refit. The disjoint test base rate is 2.739 percent, and precision at
+100 is $0.050$ for the additive ridge and $0.040$ for the nonlinear baseline,
+enrichments of $1.8\times$ and $1.5\times$ against $14.1\times$ and $17.0\times$
+on the random split.
 
-At $\tau < -0.10$ the disjoint test base rate is 9.6 percent, and precision at
-100 is $0.26$ for the additive ridge and $0.33$ for the nonlinear baseline,
-enrichments of 2.7 and 3.4 fold against 10.1 and 13.1 on the random split.
-Absolute precisions are not comparable across the two splits because their base
-rates differ; enrichment is the quantity that is.
+That is close to chance. The stringent tier behaves the same way, $29.3\times$ on
+the random split for the best checkpoint against $1.7$ to $2.3\times$ for the
+baselines on the disjoint one.
 
 \tcfigfit[0.98]{figures/negative_interaction_retrieval.pdf}{Precision at $K$ for
-retrieving records with true $\tau < -0.10$, on both splits, with the base rate
-marked.}{fig:retrieval}
+retrieving published negative trigenic interactions, on both splits, with the
+base rate marked. On the right the curves sit on the base rate.}{fig:retrieval}
 
 \subsection{What this supports\secstatus{todo}}
 
-Using the model to nominate candidate negative trigenic interactions is
-defensible on this evidence and fits what it can do better than nominating
-positives. On the build list 17 of 20 triples have all three checkpoints agreeing
-and every one is negative, while the single positive is not agreed.
+Using the model to nominate negative interactions is defensible on the published
+split, and it fits what the model can do better than nominating positives. On the
+build list 17 of 20 triples have all three checkpoints agreeing and every one is
+negative, while the single positive is not agreed.
 
-The enrichment a transformer would retain once query doubles are disjoint is not
-established, because it has not been refit there. The baselines' fall from
-roughly tenfold to threefold is the honest prior for what to expect.
+The published split is not where panel selection lives. On combinations whose
+query double was never screened, the baselines retain almost nothing and the
+transformer has not been refit. An earlier version of this section reported the
+disjoint result as retrieval surviving several fold weaker; that reading came
+from a magnitude-only threshold and was too generous.

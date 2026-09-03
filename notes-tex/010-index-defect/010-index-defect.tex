@@ -52,12 +52,14 @@ against a training-label standard deviation of $0.063$. Nineteen of the 20 are
 predicted negative and the single positive is not agreed across checkpoints, so
 the list contains no triple the model confidently calls positive.
 
-What the model can still do is retrieve strong negatives. Among the 100 records
-each checkpoint calls most negative, 42 to 45 percent truly have $\tau < -0.2$
-against a base rate of 0.88 percent, and the transformer's margin over an
-additive null is proportionally larger there than on correlation. That margin is
-measured on a split whose leakage is quantified in the companion document, and it
-falls several fold when query doubles are made disjoint.
+What the model can still do is retrieve negative interactions, scored against the
+published call, $\tau < -0.08$ with $p < 0.05$. Among the 100 records each
+checkpoint calls most negative, 32 to 38 percent are real calls against a base
+rate of 1.7 percent, and the transformer's margin over an additive null is
+proportionally larger there than on correlation. That holds only on the split
+whose leakage the companion document quantifies. Once query doubles are made
+disjoint the baselines fall to 1.5 to 1.8 times the base rate, which is close to
+chance, and the transformer has not been refit there.
 \end{abstract}
 
 \vspace{0.5em}

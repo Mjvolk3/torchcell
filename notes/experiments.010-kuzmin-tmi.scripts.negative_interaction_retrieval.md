@@ -58,3 +58,76 @@ one of those is negative, while the single positive is not agreed.
 What is not established is the enrichment a transformer would retain on a
 query-pair-disjoint split, since it has not been refit there. The baseline drop
 from roughly 10x to 3x is the honest prior for what to expect.
+
+## 2026.09.03 - Correction: rerun at the published significance call
+
+The section above used bare magnitude cuts on tau. That is not how Kuzmin defines
+an interaction, and the difference is large enough to change the conclusion.
+
+### The published definition
+
+Kuzmin 2018 SI, both in the Materials and Methods preamble and in the Additional
+Data S2 description: "we used an established interaction magnitude cut-off for
+digenic interactions $(p < 0.05, |\varepsilon| > 0.08)$ and trigenic interactions
+$(p < 0.05, \tau < -0.08)$."
+
+Three things follow. It is a **conjunction**, magnitude and significance together.
+The trigenic form is **one-sided negative**, and deliberately so: "We focused
+exclusively on the analysis of deleterious negative trigenic interactions." And
+the symmetric $|\tau| > 0.08$ appears only in Kuzmin 2020 and the 2021 protocol,
+which do score positives. Baryshnikova 2010 adds a stringent tier, sign-asymmetric
+for digenic at $\varepsilon < -0.12$ and $\varepsilon > 0.16$.
+
+On this build the p-value conjunct is not cosmetic: 29,712 records have
+tau < -0.08 but only 5,675 also have p < 0.05, so the magnitude cut alone is
+about five times more permissive than the published call.
+
+The p-value is read from the LMDB, which stores `gene_interaction_p_value` on
+every phenotype; `label_df.parquet` carries only the score. One caveat from the
+protocol paper's output format: that p-value is the significance of the
+unadjusted triple-mutant epsilon computed at the digenic scoring stage, not a
+test on tau itself. It is usable as the published filter and is not a statistic
+about tau.
+
+### What changes
+
+Precision at K = 100, held-out test, published call, base rate 1.707 percent:
+
+| model | P@100 | enrichment | AP |
+|---|---|---|---|
+| B1 additive ridge | 0.240 | 14.1x | 0.0731 |
+| B5 nonlinear MLP | 0.290 | 17.0x | 0.0920 |
+| CGT M01 | 0.320 | 18.7x | 0.1258 |
+| CGT M02 | 0.380 | 22.3x | 0.1362 |
+| CGT M03 | 0.340 | 19.9x | 0.1304 |
+
+The qualitative claim survives on the published split. Retrieval works, and the
+transformer still beats the additive null by more in proportion than it does on
+correlation: average precision 0.136 against 0.073, against 0.438 to 0.455 versus
+0.400 on Pearson. The absolute precisions are lower than the magnitude-only
+version reported, 0.38 rather than 0.70, because the target is five times rarer.
+
+### What does not survive
+
+The disjoint-split result is much worse than the magnitude-only numbers implied.
+At the published call the disjoint test base rate is 2.739 percent and precision
+at 100 is 0.050 for the additive ridge and 0.040 for the nonlinear baseline,
+enrichments of 1.8 and 1.5. The earlier magnitude-only reading gave 2.7 and 3.4.
+
+So on the models measured there, retrieval of published negative interactions is
+close to gone once query doubles are disjoint. The earlier phrasing, that
+retrieval "survives the leak removal, several times weaker," was too generous.
+At the published definition it is barely above chance.
+
+The stringent tier behaves the same way: 29.3x on the random split for the best
+checkpoint, 1.7 to 2.3x for the baselines on the disjoint one.
+
+![](./assets/images/010-kuzmin-tmi/negative_interaction_retrieval.svg)
+
+### What this leaves
+
+Using the model to nominate negative interactions is defensible on the published
+split, where the panel-selection use case does not live. On combinations whose
+query double was never screened, which is the design case, the baselines retain
+almost nothing and the transformer is unmeasured. That measurement is the same
+one every other open claim here is waiting on.

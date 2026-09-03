@@ -24,9 +24,30 @@ It runs the same measurement on the query-pair-disjoint split for the baselines,
 which is where the random-split leak is removed. The transformer has not been
 retrained on that split, so it has no row there.
 
-Thresholds are on tau alone. Kuzmin classifies a negative trigenic interaction
-using a significance test as well, and the build stores no p-value, so a
-threshold here is a magnitude cut and not the published call.
+Thresholds follow the published call rather than a bare magnitude cut. Kuzmin
+2018 defines a negative trigenic interaction as a CONJUNCTION, and the sidedness
+is deliberate:
+
+    negative trigenic:  tau < -0.08  AND  p < 0.05     (one-sided)
+    negative digenic:   |eps| > 0.08 AND  p < 0.05     (two-sided)
+
+quoting the SI: "we used an established interaction magnitude cut-off for
+digenic interactions (p < 0.05, |epsilon| > 0.08) and trigenic interactions
+(p < 0.05, tau < -0.08)". Kuzmin 2018 scored NEGATIVES ONLY, by design, on the
+grounds that negative interactions carry a better signal-to-noise ratio. The
+symmetric form |tau| > 0.08 appears only in Kuzmin 2020 and the 2021 protocol,
+which do score positives. Baryshnikova 2010 adds a stringent tier, which for
+digenic is sign-asymmetric at eps < -0.12 for negatives and eps > 0.16 for
+positives.
+
+An earlier version of this script used the magnitude cut alone. On this build
+that is four times more permissive: 29,713 records have tau < -0.08 but only
+5,675 also have p < 0.05.
+
+One caveat about the stored p-value, from the protocol paper's output format:
+it is the significance of the UNADJUSTED triple-mutant epsilon, computed at the
+digenic scoring stage, not a significance test on tau itself. So it is usable as
+the published filter and is not a statistic about tau.
 """
 
 import json
@@ -59,18 +80,48 @@ BUILD_DIR = osp.join(
     DATA_ROOT, "data/torchcell/experiments/010-kuzmin-tmi/001-small-build"
 )
 
-THRESHOLDS = [-0.05, -0.08, -0.10, -0.20]
+# The published Kuzmin call, plus the stringent tier, plus a magnitude-only row
+# so the cost of dropping the p-value conjunct stays visible.
+P_VALUE_MAX = 0.05
+CRITERIA: list[tuple[str, float, bool]] = [
+    ("published tau<-0.08 & p<0.05", -0.08, True),
+    ("stringent tau<-0.12 & p<0.05", -0.12, True),
+    ("magnitude only tau<-0.08", -0.08, False),
+    ("magnitude only tau<-0.20", -0.20, False),
+]
 K_GRID = [10, 30, 100, 300, 1000, 3000, 10000]
-HEADLINE_TAU = -0.10
+HEADLINE = "published tau<-0.08 & p<0.05"
 
 
-def labels() -> tuple[np.ndarray, np.ndarray]:
-    """Test-split tau on the row order the saved prediction files use."""
-    label_df = pd.read_parquet(osp.join(BUILD_DIR, "processed", "label_df.parquet"))
-    record_ids = np.sort(label_df["index"].to_numpy())
-    y_all = label_df.set_index("index").loc[record_ids, "gene_interaction"].to_numpy()
+def tau_and_pvalue() -> tuple[np.ndarray, np.ndarray]:
+    """Tau and its p-value per record, in record-index order.
+
+    label_df carries only gene_interaction, so the p-value is read from the LMDB,
+    which stores gene_interaction_p_value on every phenotype.
+    """
+    import lmdb
+
+    path = osp.join(BUILD_DIR, "processed", "lmdb")
+    env = lmdb.open(path, readonly=True, lock=False, subdir=True)
+    n = int(env.stat()["entries"])
+    tau = np.empty(n)
+    pval = np.empty(n)
+    with env.begin() as txn:
+        for key, value in txn.cursor():
+            phen = json.loads(value.decode())[0]["experiment"]["phenotype"]
+            i = int(key.decode())
+            tau[i] = phen["gene_interaction"]
+            pval[i] = phen["gene_interaction_p_value"]
+    env.close()
+    assert not np.isnan(pval).any(), "every record must carry a p-value"
+    return tau, pval
+
+
+def labels() -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Test-split tau and p-value on the row order the prediction files use."""
+    tau, pval = tau_and_pvalue()
     rows = np.load(osp.join(RESULTS_DIR, "cgt_record_rows_test.npy"))
-    return y_all, rows
+    return tau, pval, rows
 
 
 def random_split_predictions(rows: np.ndarray) -> dict[str, np.ndarray]:
@@ -87,11 +138,10 @@ def random_split_predictions(rows: np.ndarray) -> dict[str, np.ndarray]:
     return preds
 
 
-def disjoint_split_predictions() -> tuple[np.ndarray, dict[str, np.ndarray]]:
-    """The same measurement where the query-pair leak is removed."""
+def disjoint_split_rows() -> tuple[np.ndarray, dict[str, np.ndarray]]:
+    """Test rows of the query-pair-disjoint split, plus the baseline predictions."""
     label_df = pd.read_parquet(osp.join(BUILD_DIR, "processed", "label_df.parquet"))
     record_ids = np.sort(label_df["index"].to_numpy())
-    y_all = label_df.set_index("index").loc[record_ids, "gene_interaction"].to_numpy()
     id_to_row = {int(r): i for i, r in enumerate(record_ids)}
     with open(osp.join(RESULTS_DIR, "index_query_pair_disjoint_seed_42.json")) as f:
         split = json.load(f)
@@ -110,32 +160,34 @@ def disjoint_split_predictions() -> tuple[np.ndarray, dict[str, np.ndarray]]:
             )
         )[te],
     }
-    return y_all[te], preds
+    return te, preds
 
 
 def retrieval(
-    y: np.ndarray, preds: dict[str, np.ndarray], split_name: str
+    tau: np.ndarray, pval: np.ndarray, preds: dict[str, np.ndarray], split_name: str
 ) -> pd.DataFrame:
     rows: list[dict[str, object]] = []
-    for tau in THRESHOLDS:
-        hit = y < tau
+    for label, cut, use_p in CRITERIA:
+        hit = (tau < cut) & (pval < P_VALUE_MAX) if use_p else (tau < cut)
         base = float(hit.mean())
         print(
-            f"\n[{split_name}] tau < {tau}: {int(hit.sum())} of {y.size} records, "
+            f"\n[{split_name}] {label}: {int(hit.sum())} of {tau.size} records, "
             f"base rate {base:.3%}"
         )
         for name, p in preds.items():
-            order = np.argsort(p)  # most negative prediction first
+            order = np.argsort(p)
             ap = float(average_precision_score(hit, -p))
             line = [f"  {name:<18} AP {ap:.4f}"]
             for k in K_GRID:
-                if k > y.size:
+                if k > tau.size:
                     continue
                 prec = float(hit[order[:k]].mean())
                 rows.append(
                     {
                         "split": split_name,
-                        "threshold": tau,
+                        "criterion": label,
+                        "tau_cut": cut,
+                        "uses_p_value": use_p,
                         "model": name,
                         "k": k,
                         "precision": prec,
@@ -152,14 +204,19 @@ def retrieval(
 
 def main() -> None:
     os.makedirs(RESULTS_DIR, exist_ok=True)
-    y_all, rows = labels()
-    y = y_all[rows]
-    print(f"random-split test: {y.size} records")
-    frames = [retrieval(y, random_split_predictions(rows), "random")]
+    tau_all, pval_all, rows = labels()
+    print(f"random-split test: {rows.size} records")
+    frames = [
+        retrieval(
+            tau_all[rows], pval_all[rows], random_split_predictions(rows), "random"
+        )
+    ]
 
-    y_d, preds_d = disjoint_split_predictions()
-    print(f"\nquery-pair-disjoint test: {y_d.size} records")
-    frames.append(retrieval(y_d, preds_d, "query_pair_disjoint"))
+    te_d, preds_d = disjoint_split_rows()
+    print(f"\nquery-pair-disjoint test: {te_d.size} records")
+    frames.append(
+        retrieval(tau_all[te_d], pval_all[te_d], preds_d, "query_pair_disjoint")
+    )
 
     out = pd.concat(frames, ignore_index=True)
     path = osp.join(RESULTS_DIR, "negative_interaction_retrieval.csv")
@@ -177,7 +234,7 @@ def plot(out: pd.DataFrame) -> None:
         (axes[0], "random", "Random over records (the published split)"),
         (axes[1], "query_pair_disjoint", "Query-pair disjoint"),
     ):
-        d = out[(out["split"] == split) & (out["threshold"] == HEADLINE_TAU)]
+        d = out[(out["split"] == split) & (out["criterion"] == HEADLINE)]
         if d.empty:
             continue
         for i, (name, g) in enumerate(d.groupby("model", sort=False)):
@@ -209,9 +266,9 @@ def plot(out: pd.DataFrame) -> None:
         ax.grid(which="both", linewidth=0.3, color="0.85")
         ax.set_axisbelow(True)
         ax.legend(frameon=False, fontsize=5, loc="upper right")
-    axes[0].set_ylabel(rf"Precision, fraction with true $\tau < {HEADLINE_TAU}$")
+    axes[0].set_ylabel(r"Precision: fraction that are true negative interactions")
     fig.suptitle(
-        "Retrieving strong negative trigenic interactions on held-out test data",
+        "Retrieving published negative trigenic interactions\n(Kuzmin 2018 call: $\\tau < -0.08$ and $p < 0.05$)",
         fontsize=6.5,
     )
     fig.tight_layout()

@@ -1,0 +1,26 @@
+%% SOURCE: experiments/005-kuzmin2018-tmi/scripts/dango_string_version_sweep.py -- AUTO-GENERATED from wandb zhao-group/torchcell_005-kuzmin2018-tmi_dango; do not hand-edit.
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{DANGO replication in TorchCell on the Kuzmin 2018 trigenic interactions: best
+validation Pearson $r$ (maximum over epochs of the logged validation Pearson, the
+checkpoint-selection rule) by STRING release and loss schedule. Mean $\pm$ SEM over $n$
+runs; a single run reports its value with no whisker. Epochs is the range of epochs logged
+across those runs.}
+\label{tab:dango-string-versions}
+\begin{tabular}{@{}l l r l l@{}}
+\toprule
+\textbf{STRING} & \textbf{Loss schedule} & $n$ & \textbf{Val.\ Pearson $r$} & \textbf{Epochs}\\
+\midrule
+v9.1 & pretrain then main & 1 & 0.420 & 1000\\
+v9.1 & linear to uniform & 1 & 0.422 & 575\\
+v9.1 & linear to flipped & 2 & 0.422 $\pm$ 0.001 & 500--540\\
+v11.0 & pretrain then main & 1 & 0.419 & 988\\
+v11.0 & linear to uniform & 2 & 0.424 $\pm$ 0.003 & 443--468\\
+v11.0 & linear to flipped & 2 & 0.422 $\pm$ 0.001 & 500\\
+v12.0 & pretrain then main & 4 & 0.423 $\pm$ 0.002 & 500\\
+v12.0 & linear to uniform & 5 & 0.420 $\pm$ 0.001 & 500\\
+v12.0 & linear to flipped & 1 & 0.422 & 500\\
+\bottomrule
+\end{tabular}
+\end{table}

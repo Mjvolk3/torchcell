@@ -373,7 +373,8 @@ prediction targets, and a head that keeps strong weight on a non-edge, where
 $A^{(k)}_{ij}=0$ yet $\alpha_{ij}$ stays large, flags a candidate interaction that the
 networks have not yet recorded. Only gene--gene graphs are regularized. In the trigenic
 experiment these are the $K=9$ physical, regulatory, and TFLink networks together with six
-STRING channels, one graph per head. Metabolism is bipartite and has no $N\times N$
+STRING channels, one graph per head (sizes, overlap, and sources in
+\suppnoteref{note:graphs}). Metabolism is bipartite and has no $N\times N$
 adjacency, so it enters as a representation annotation and is never used as an attention
 prior.
 

@@ -59,3 +59,9 @@ created: 1788221146558
 - [x] **Where they accumulate the ordering does generalize**: at top 100,000, 7.7% of held-out measured triples are real positive calls vs a 0.65% base rate, 11.9x, against train's 21.5x. So it finds real interactions it never trained on, at about half the rate it resurfaces ones it did
 - [x] **Magnitudes fail on held-out data too**: calibration slope 0.35 pooled / 0.24 held out; mean signed error in the top 1,000 is +0.452 train and +0.482 test; across a predicted range of -0.8 to +1.0 the mean measured tau moves -0.02 to +0.03. Verdict: **use the ordering, distrust the numbers**
 - [x] Report at 31 pages, `make check` clean; removed the earlier "the generator should have filtered" framing per the revised plan
+## 2026.09.03
+
+- [x] SI section on the nine graphs that regularize CGT attention (experiment 010) + STRING-release drift + DANGO replication by release: new Supplementary Note `note:graphs`, two composed SI figures, three script-generated tables. Scripts and notes: [[experiments.010-kuzmin-tmi.scripts.graph_statistics]], [[experiments.010-kuzmin-tmi.scripts.compose_graph_si_figures]], [[experiments.005-kuzmin2018-tmi.scripts.dango_string_version_sweep]]
+- [x] Found the SI graphs table was stale (regulatory 3,632/9,753 in the scratch-note transcription vs 6,582/39,636 in the build every 010 run logs at init); the table is now emitted by `graph_statistics.py` and the inline copy is gone
+- [x] DANGO STRING 9.1/11.0/12.0 sweep now pulled from wandb (19 runs, best val Pearson 0.415 to 0.427, no release or schedule separates) instead of chart-read values
+- [ ] References to add to the paper library when curating: STRING (Szklarczyk), TFLink (Liska 2022), SGD, DANGO (Zhang 2021); the Note currently cites only Kuzmin 2018

@@ -119,6 +119,11 @@
       \item \status{todo}\ \suppfig{fig:classical-ml} -- classical-ML baselines (compose from \texttt{*\_spearman\_spearman\_*\_palette} bars + \texttt{node\_embedding\_performance\_*\_palette}) · \supptab{tab:classical-ml-results}--\ref{tab:classical-ml-pearson} (Spearman, MSE, Pearson)
       \item \status{tent}\ Setup · Representation is identity · The barrier is pooling
     \end{itemize}
+  \item \status{todo}\ \textbf{Note~\ref{note:graphs} -- Gene--gene graphs used as attention priors} \emph{(the nine graphs of experiment 010; STRING releases; DANGO replication)}
+    \begin{itemize}\setlength{\itemsep}{0pt}
+      \item \status{todo}\ \suppfig{fig:graph-priors} -- sizes, degree, Jaccard, containment, multiplicity (\texttt{experiments/010-kuzmin-tmi/scripts/graph\_statistics.py}) · \suppfig{fig:dango-string} -- STRING v9.1/v11.0/v12.0 drift + DANGO replication by release (\texttt{experiments/005-kuzmin2018-tmi/scripts/dango\_string\_version\_sweep.py})
+      \item \status{todo}\ Sources · Size and coverage · Overlap · STRING releases · DANGO replication
+    \end{itemize}
 
   \item \status{tent}\ \textbf{General SI figures} (follow the Notes)
     \begin{itemize}\setlength{\itemsep}{0pt}
@@ -127,6 +132,6 @@
       \item \status{tent}\ \suppfig{fig:dna-tokenization} -- DNA tokenization \quad \status{todo}\ \suppfig{fig:expr-diag} -- expression \& multitask diagnostics
       \item \status{todo}\ \suppfig{fig:inference-scale} -- inference at scale \quad \status{tent}\ \suppfig{fig:profile-enrichment} -- guilt-by-association annotation
     \end{itemize}
-  \item \status{tent}\ \textbf{SI tables}: \status{tent}\,\supptab{tab:compute} compute \quad \status{todo}\,\supptab{tab:entity-corpora} entity corpora \quad \status{todo}\,\supptab{tab:classical-ml-results}--\ref{tab:classical-ml-pearson} classical-ML \quad \status{tent}\,\supptab{tab:datasets} datasets \quad \status{tent}\,\supptab{tab:databases} graphs
+  \item \status{tent}\ \textbf{SI tables}: \status{tent}\,\supptab{tab:compute} compute \quad \status{todo}\,\supptab{tab:entity-corpora} entity corpora \quad \status{todo}\,\supptab{tab:classical-ml-results}--\ref{tab:classical-ml-pearson} classical-ML \quad \status{tent}\,\supptab{tab:datasets} datasets \quad \status{todo}\,\supptab{tab:databases} graphs (now script-generated; counts changed) \quad \status{todo}\,\supptab{tab:string-versions} STRING releases \quad \status{todo}\,\supptab{tab:dango-string-versions} DANGO by release
 \end{itemize}
 \endgroup

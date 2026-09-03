@@ -582,7 +582,8 @@ partition & job & GPUs & runs & contents \\
 mmli (A100) & \texttt{2369693} 0--3 & 4 & 8 & objective round, resumed from epoch ${\approx}2{,}030$ \\
 gpu (A40)   & \texttt{2369691}      & 1 & 1 & \file{point} seed 2, from epoch 2{,}580 \\
 gpu (A40)   & \texttt{2369692}      & 1 & 1 & incumbent, from epoch ${\approx}12{,}230$ \\
-cabbi (Ada) & \texttt{2369697} 0--3 & 4 & 8 & mechanism round, from scratch \\
+cabbi (Ada) & \texttt{2369697} 0--1 & 2 & 4 & mechanism round, seed 0, from scratch \\
+gpu (A40)   & \texttt{2371531} 2--3 & 2 & 4 & mechanism round, seed 1, from scratch \\
 \bottomrule
 \end{tabular}
 \caption[]{The round as relaunched, 2026-09-01, source \texttt{bebc5df3} with a clean
@@ -603,3 +604,37 @@ than scoring. Separately, all three \file{point} replicates report
 \file{pred_sd_ratio} $= 0.000$ and \file{pearson_per_feature} $= 0.000$ at epoch
 $\approx 2{,}040$, meaning that head emits one constant for every strain. Whether it
 escapes that regime by epoch 9{,}900 is not yet measured.
+
+\notesec{2026-09-02: the mechanism round is split by seed across two GPU types, on purpose}
+Seed 1 was stuck. Another user held twelve of \file{compute-3-3}'s CPUs against a five-day
+wall, our three running tasks held the rest, and the pending task was the per-gene readout
+pair, which is the arm the round exists to test. It would have started three days after
+everything else. Two A40s were idle on \file{compute-0-2} with all 32 of its CPUs free,
+which is exactly two tasks at one card and 16 CPUs each.
+
+\pfstep{Placing only the per-gene pair there would have broken the contrast.} The
+comparison is \texttt{R\_pergene} against \texttt{R\_ref} within a seed, so putting one arm
+on an A40 and its reference on an Ada card puts hardware and arm in the same column. The
+whole seed-1 half moved instead, and it was restarted from scratch rather than resumed from
+its epoch-1{,}529 checkpoints, because a resumed reference would have carried 18\% of its
+history on the other card while its per-gene counterpart carried none. That costs 22 hours
+on two runs and makes GPU type a clean seed-level block: seed 0 entirely on Ada, seed 1
+entirely on one A40 node, and no pair straddling the two.
+
+\pfstep{The epoch budget does not fit the per-gene arms, on either card.} Measured
+throughput at two runs per GPU is 84 epochs per hour for the reference arms and 64 for the
+per-gene arms, which carry the extra output parameters. Against a five-day wall the
+reference arms reach the full 8{,}500 while the per-gene arms reach roughly 7{,}600, below
+the declared window of epochs $\le 8{,}000$. That applies to seed 0 as much as to seed 1
+and is not a consequence of the move. Either the window comes down to 7{,}500, which every
+arm clears, or the per-gene arms need a checkpoint resume for the tail.
+
+\pfstep{First indication, one replicate per arm, matched epochs.} Adding the per-gene
+readout to the rank-64 basis arm leads at every sampled epoch from 400 onward, by 0.03 to
+0.05. On the plain arm it led from epoch 400 to 1{,}200 and peaked at 0.194, then fell back
+to 0.174 where the reference also sits, so that pair is level at the last matched point and
+the peak is a biased order statistic rather than a result. The sharper difference is in the
+dynamics: the predicted-to-observed spread ratio reaches ${\approx}0.50$ by epoch 600 with
+the per-gene readout against ${\approx}1{,}200$ without it, which is what per-gene output
+parameters would do if the shared projection had been holding every gene to one scale.
+None of this is significant at one replicate against a screen that resolves ${\approx}0.062$.

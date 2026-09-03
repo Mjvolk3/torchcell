@@ -2671,6 +2671,27 @@ class CellGraphTransformer(nn.Module):
         )
         N = self.gene_num
 
+        # The perturbed-gene indices in a batch are positions in the CELL GRAPH's
+        # sorted node list, while the embedding table is indexed by this model's
+        # gene_num. Nothing else ties the two together: the cell graph is rebuilt
+        # at run time from whatever gene set the genome currently yields, so a
+        # genome that has gained or lost genes since training silently repoints
+        # every embedding row and the model answers for the wrong genes. That is
+        # not hypothetical. The 010 inference_2 and inference_3 runs were scored
+        # against a 6,579-gene genome by a checkpoint trained on 6,607 genes; the
+        # 28 missing mitochondrial ORFs sort first, so every index was shifted by
+        # 28 and every prediction was for a different triple, with no error
+        # raised and the runs agreeing perfectly with each other.
+        n_graph_genes = int(cell_graph["gene"].num_nodes)
+        if n_graph_genes != N:
+            raise ValueError(
+                f"cell graph has {n_graph_genes} gene nodes but this model was "
+                f"built for gene_num={N}. Perturbation indices address the cell "
+                "graph's sorted node list, so a mismatch silently scores the "
+                "wrong genes. Rebuild the cell graph from the gene set the "
+                "checkpoint was trained on."
+            )
+
         # 1. Create gene embeddings for all genes
         gene_idx = torch.arange(N, device=device)
 

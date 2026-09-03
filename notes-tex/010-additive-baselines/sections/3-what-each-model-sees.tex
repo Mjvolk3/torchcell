@@ -53,30 +53,84 @@ So the eight encoder layers, which hold 3{,}129{,}120 of the model's 4{,}774{,}8
 parameters, perform no per-sample computation. They map one free parameter block
 to another. Whatever role they play, it is not to process the strain.
 
-\subsection{The nine graphs do not enter the prediction\secstatus{todo}}
+\subsection{Where the nine graphs act, and where they do not\secstatus{todo}}
 \label{sec:graphs}
 
-The model has three places adjacency could act. In the 010 configuration all
-three are off. The attention-mask configuration is not passed, so the head mask
-is \texttt{None} and every layer receives no mask. The
-perturbation-propagation configuration is not passed either, so that block is
-skipped. The attention itself is ordinary softmax self-attention with no
-adjacency bias term.
+The model has three places adjacency could enter the computation that produces a
+number. In the 010 configuration all three are off. The attention-mask
+configuration is not passed, so the head mask is \texttt{None} and every layer
+receives no mask. The perturbation-propagation configuration is not passed
+either, so that block is skipped. The attention itself is ordinary softmax
+self-attention with no adjacency bias term. Given a trained checkpoint, then, no
+adjacency tensor is an input to any operation that yields $\hat{y}$.
 
-The nine adjacency matrices are used in one place only, a Kullback-Leibler
-penalty between each normalized adjacency and one attention head of layer 1,
-which is added to the \emph{loss}. Setting that penalty's weight to zero
-therefore cannot change any prediction. Section~\ref{sec:results} reports the
-measurement rather than resting on the reading.
+That is a much narrower statement than it first appears, and an earlier version
+of this document overstated it. The nine adjacency matrices are consumed by a
+Kullback-Leibler penalty between each row-normalized adjacency $\tilde{A}$ and
+one attention head of layer 1,
+%
+\begin{equation}
+  \mathcal{L}_{\mathrm{graph}} \;=\; \sum_{k=1}^{9} c_k
+  \sum_{i=1}^{N} \sum_{j=1}^{N}
+  \tilde{A}^{(k)}_{ij} \log \frac{\tilde{A}^{(k)}_{ij}}{\alpha^{(k)}_{ij}},
+  \qquad
+  \alpha^{(k)} = \mathrm{softmax}\!\left(\frac{QK^{\top}}{\sqrt{d}}\right)_{\!h_k},
+  \label{eq:graphreg}
+\end{equation}
+%
+and that penalty is computed \emph{inside} the same forward call as the
+prediction, from the same pre-dropout attention tensor. Nothing detaches it. Its
+gradient therefore reaches the layer-1 query and key projections, through them
+every layer-0 parameter, and through those the gene embedding table. The trained
+$Z = T(E)$ of Eq.~\ref{eq:encoder} is shaped by the nine graphs even though
+$Z$'s value at inference is read off fixed weights.
 
-Two further facts about the 010-era code bear on how much the penalty could have
-shaped $Z$ even indirectly. The configuration names \texttt{physical} and
-\texttt{regulatory}, while the cell graph emits
-\texttt{physical\_interaction} and \texttt{regulatory\_interaction}, and the
-code of that period skipped any name it did not find, so two of the nine heads
-were silently unregularized. And the penalty weight was applied twice from the
-same configuration key, giving an effective weight of $10^{-6}$ rather than
-$10^{-3}$. Both were fixed in July 2026, after these runs.
+So the correct statement is not that the graphs are absent. It is that they act
+on the model's \emph{parameters} during training and not on the \emph{function}
+from checkpoint to prediction. An ablation that zeroes the coefficient on a
+trained checkpoint tests only the second, and Section~\ref{sec:verify} reports it
+as such.
+
+\notesec{The penalty was not weak, it dominated}
+Reconstructing the coefficient matters because the earlier version of this
+document reported it as negligible on two counts, and both were wrong for these
+runs. The per-graph weight $c_k$ in Eq.~\ref{eq:graphreg} is a product of three
+factors: the per-head $\lambda_k = 10^{-3}$, a global scale of $1.0$ read from
+\texttt{regression\_task.loss.graph\_regularization.lambda}, and an edge
+normalization intended to divide by mean degree. That last factor is computed as
+\texttt{len(A.nonzero()[0])} summed over the nine matrices. On a dense
+\texttt{torch} tensor \texttt{A.nonzero()} has shape $[\mathrm{nnz}, 2]$, so
+\texttt{[0]} is a single index pair of length two, and the sum over nine graphs
+is $18$ rather than the 2.5 million edges intended. Dividing by $18/6607$
+multiplies by $367.06$, giving
+%
+\begin{equation}
+  c_k \;=\; 10^{-3} \times 1.0 \times \frac{6607}{18} \;=\; 0.367 ,
+  \label{eq:effcoef}
+\end{equation}
+%
+applied to a Kullback-Leibler divergence summed over all $6{,}607$ rows. The
+runs' own logs confirm the consequence. Against a point loss of $0.81$, the
+graph term is $5{,}740$, and the trainer's own diagnostic
+\texttt{norm\_weighted\_graph\_reg}, which is the graph term divided by the total
+loss, reads $0.99986$ for all three checkpoints. The graph penalty was 99.99
+percent of what the optimizer minimized.
+
+\notesec{Two claims withdrawn}
+The earlier version stated that the configuration named \texttt{physical} and
+\texttt{regulatory} while the cell graph emitted \texttt{physical\_interaction}
+and \texttt{regulatory\_interaction}, leaving two heads unregularized, and that
+the weight was applied twice from one configuration key for an effective
+$10^{-6}$. Both are false for the 010 runs. The suffixed edge names were
+introduced on 2026-06-27, six months after these runs, and at the December 2025
+commit the cell graph emitted the bare names the configuration used; the runs log
+\texttt{val\_edge\_recovery/physical\_L1\_H0} and
+\texttt{regulatory\_L1\_H1}, keys the trainer emits only for a graph it matched,
+so all nine heads were regularized. The squared-lambda defect is real but belongs
+to the 019 configuration, where both keys interpolate the same $10^{-3}$; the 010
+training script reads the global scale from a different key whose value is $1.0$.
+The July 2026 commits did fix both defects, but neither defect was operating
+here.
 
 \subsection{The transformer is a set function on three genes\secstatus{todo}}
 \label{sec:setfunction}
@@ -106,8 +160,10 @@ same functional shape as the additive nulls, which are set functions on the same
 three identities built on a free per-gene scalar. The models differ in how
 expressive the set function is, not in what they are allowed to see.
 
-This is what makes the comparison in Section~\ref{sec:results} fair, and it also
-corrects a claim made in an earlier version of the working note, that the gap
-between the nonlinear baseline and the transformer was attributable to the nine
-interaction graphs. The graphs are not in the forward pass, so that gap cannot
-be attributed to them.
+This is what makes the comparison in Section~\ref{sec:results} fair. It does not
+settle where the transformer's advantage over the nonlinear baseline comes from.
+An earlier version of the working note assigned that gap to the nine interaction
+graphs, and a later one assigned it to capacity on the grounds that the graphs
+are absent from the prediction. Both overreached. The graphs shaped the weights
+this set function is built from, and Section~\ref{sec:graphablation} measures how
+heavily.

@@ -1,0 +1,32 @@
+{
+  "build": "010-kuzmin-tmi/001-small-build-schema-v2",
+  "derived_from": {
+    "path": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/010-kuzmin-tmi/001-small-build",
+    "processed_lmdb_sha256": "9c17ce3edd50e6081ecf1b1f32d133d0cc400f0647f58b2898872a5c86fd17fe",
+    "note": "frozen December 2025 build; owned by the knowledge-graph build user and hardlinked into the graph tree, opened read-only here"
+  },
+  "migration": {
+    "reason": "the frozen build predates the perturbation-ontology refactor (933ee5ef3) and the required Media.is_synthetic field (1cf60cdc5), so it no longer validates",
+    "perturbation_type_map": {
+      "KanMX": "sga_kanmx_deletion",
+      "mean": "mean_deletion"
+    },
+    "media_is_synthetic": {
+      "YEPD": false
+    },
+    "fields_rewritten": {
+      "perturbation_type": 1047503,
+      "media_is_synthetic": 753464
+    },
+    "not_changed": [
+      "record order and LMDB keys",
+      "perturbed genes and labels at every position",
+      "environment name, state and temperature (YEPD, 30 C), which the current Kuzmin loaders would emit as SGA triple-mutant selection at 26 C; correcting that is a rebuild, not this"
+    ]
+  },
+  "records": 376732,
+  "records_validated": 376732,
+  "migrated_at": "2026-09-03T02:17:54.996554+00:00",
+  "hostname": "gilahyper",
+  "torchcell_commit": "aab16addb8979cdea1d9bc3c402f70aeb01aa1a4"
+}

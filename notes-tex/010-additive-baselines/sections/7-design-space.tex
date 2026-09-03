@@ -30,10 +30,13 @@ or more training observations, $n = 867{,}669$, the correlation is $0.036$.
 On \texttt{inference\_1} the same comparison behaves completely differently. B1
 against the three checkpoints gives $0.548$, $0.579$ and $0.511$.
 
-\subsection{One checkpoint disagreeing with itself\secstatus{todo}}
+\subsection{One checkpoint scoring one triple two ways\secstatus{todo}}
 
 The model is a deterministic function of the perturbed gene set, so a triple
 scored twice by one checkpoint must receive the same number twice. It does not.
+The determinism is not in question and the resolution is that the two runs were
+not scoring the same triple, which Section~\ref{sec:offby28} establishes. The
+symptoms are recorded first because they are what made the defect visible.
 
 %% SOURCE: experiments/010-kuzmin-tmi/scripts/inference_run_consistency.py,
 %% results/inference_run_consistency.csv
@@ -93,19 +96,72 @@ checkpoint \texttt{c7671wgj}. The additive coefficient is fit on measured
 training data and keyed on systematic gene name, so it anchors gene identity
 from outside the transformer.}{fig:anchor}
 
-\subsection{What is and is not established\secstatus{todo}}
+\subsection{The cause, confirmed\secstatus{todo}}
+\label{sec:offby28}
 
-Established: the three runs do not agree; runs 2 and 3 are byte-identical on
-shared triples; run 1 tracks an external gene-identity anchor and runs 2 and 3
-largely do not; the selection consumed run 3.
+The earlier version of this document labeled index misalignment a hypothesis. It
+has now been tested and it is the cause. The defect is a uniform shift of 28 in
+every gene index.
 
-\notesec{Hypothesis (untested)} A gene index or embedding misalignment in the
-shared \texttt{inference\_2} and \texttt{inference\_3} dataset build would
-produce this signature, predictions that are self-consistent and stable yet
-detached from gene identity. The inference builds carry no
-\texttt{gene\_set.json} of their own while the training build has one of 6{,}579
-genes, so the index used at inference time is reconstructed rather than loaded.
-No cause has been confirmed and no fix has been attempted.
+\notesec{The test}
+The direct-scoring path of Section~\ref{sec:verify} is validated: it reproduces
+checkpoint \texttt{c7671wgj}'s recorded validation Pearson to 0.461917 against
+0.461881. Re-scoring stored triples from each run through that path under two
+candidate index spaces identifies which space each run used.
+
+%% SOURCE: the decisive re-scoring test; 512 triples from the head and 512 from
+%% a middle row group of each run's stored prediction parquet.
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lrr}
+\hline
+Run & 6{,}607-gene genome set & 6{,}579-gene build set \\
+\hline
+\texttt{inference\_1} & \textbf{0.999998} & 0.13 \\
+\texttt{inference\_2} & 0.02 & \textbf{0.999998} \\
+\texttt{inference\_3} & 0.07 & \textbf{0.999999} \\
+\hline
+\end{tabular}
+\caption{Pearson between each run's stored predictions and the validated scoring
+path, under each candidate index space. Every stored prediction is exactly
+reproducible, with mean absolute difference around $2 \times 10^{-5}$, which is
+the runs' half-precision autocast. Nothing here is stochastic, which answers the
+question of how a deterministic model disagreed with itself: it did not.}
+\label{tab:indextest}
+\end{table}
+
+\notesec{The mechanism}
+The embedding table is indexed by the model's \texttt{gene\_num}, fixed at
+$6{,}607$ when the checkpoint was trained. The perturbed-gene indices in a batch
+are positions in the cell graph's sorted node list, and that graph is rebuilt at
+run time from whatever gene set the genome currently yields. Nothing asserts the
+two agree. Between January and February 2026 the genome gene set went from
+$6{,}607$ to $6{,}579$: the 28 missing entries are the mitochondrial open reading
+frames \texttt{Q0010} through \texttt{Q0297}, which sort first. Of the $6{,}579$
+genes present in both, not one keeps its index and every one shifts by exactly
+28. \texttt{YAL001C} sits at row 28 in the space the checkpoint learned and was
+fed as row 0. Every \texttt{inference\_2} and \texttt{inference\_3} prediction is
+the model's answer for a different triple of genes, and 28 embedding rows were
+never addressed at all.
+
+A second consequence of the same cause: a gene absent from the run-time gene set
+simply yields fewer matches, so a triple silently becomes a double or a single.
+That happened to 0.86 percent of \texttt{inference\_2} rows and 2.76 percent of
+\texttt{inference\_3} rows.
+
+\notesec{What this invalidates}
+Everything derived from the \texttt{inference\_2} and \texttt{inference\_3}
+prediction files, which is the panel-12 and panel-24 selections and the tables
+and figures built from them. The \texttt{inference\_1} artifacts are unaffected,
+as is every number in Sections~\ref{sec:results} and \ref{sec:paired}, which come
+from the labeled split through the validated scoring path.
+
+\notesec{The guard}
+The condition is now checked. The model raises if the cell graph's gene node
+count differs from the \texttt{gene\_num} the checkpoint was built for, which
+turns a silent relabeling of the entire genome into a failure at the first
+forward pass. The deeper fix is to pin the index space with the build rather than
+reconstruct it from a live genome, which Section~\ref{sec:modernize} takes up.
 
 \subsection{Seed instability in the selection tail, separately\secstatus{todo}}
 

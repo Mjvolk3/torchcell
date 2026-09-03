@@ -1,0 +1,91 @@
+%% notes-tex/010-additive-baselines/sections/8-limits.tex
+
+\section{What this establishes, and what it does not\secstatus{todo}}
+\label{sec:limits}
+
+\subsection{Established\secstatus{todo}}
+
+The additive null had never been fit on 010, and now it has, on the same
+records, split and label the transformer used, with the ridge penalty chosen on
+validation and reported on test.
+
+Every model in the comparison receives the same information, the identity of the
+three perturbed genes. That is a reading of the code rather than an assumption:
+the encoder is applied at batch size one to a strain-independent input, and the
+nine interaction graphs reach the prediction only through the weights that
+training left behind.
+
+The transformer's margin over a model that cannot represent interaction is real
+and small on the published split.
+
+The published split was measuring screen identity more than trigenic biology, and
+this is now measured rather than suspected. A model that never looks at the third
+gene reaches 97 percent of the additive null's score, and making query doubles
+disjoint drops the additive null from 0.400 to $0.127 \pm 0.033$ and inverts the
+ordering of the baselines.
+
+The graphs are load-bearing during training. They carried 99.99 percent of the
+loss, their heads recover their graphs, and the matched pair of runs without the
+penalty does not train.
+
+The design-space defect has a confirmed cause, a uniform 28-position gene index
+shift, and the artifacts it invalidates are enumerated.
+
+\subsection{Not established\secstatus{todo}}
+
+\notesec{The reproduction is faithful but not bit-exact}
+The hand-built forward pass matches the recorded metrics to the fourth decimal,
+not exactly. The original runs used mixed bf16 precision and this one runs in
+fp32, which is the likely source, but that has not been verified by rerunning in
+bf16. Conclusions in Section~\ref{sec:paired} rest on correlations at the second
+decimal and are not sensitive to a fourth-decimal shift.
+
+\notesec{One seed of the nonlinear baseline enters the paired analysis}
+Table~\ref{tab:paired} uses B5 seed 0. The three seeds agree closely on
+aggregate metrics, but their record-level agreement with each other was not
+measured, so the B5 column should be read as one draw.
+
+\notesec{The transformer has not been measured on the disjoint split}
+Table~\ref{tab:disjoint} has no transformer row. Its checkpoints trained on the
+random split, so scoring them on held-out query pairs would measure memorization.
+Whether the transformer's $+0.04$ margin survives a disjoint split is not
+measured, in either direction.
+
+\notesec{Whether the graphs carry information is separate from whether they are
+load-bearing}
+The runs without the graph penalty fail to train, and the penalty was almost the
+entire loss. Both facts are recorded. Neither separates the graphs supplying
+biological structure from a large auxiliary term supplying conditioning that the
+optimization needs. The control that would separate them, a comparable penalty
+against degree-matched random graphs, has not been run.
+
+\notesec{The graph ablation is short and unreplicated in one arm}
+The matched pair ran 30 epochs against the 49 to 64 of the reported checkpoints,
+and the arm without the penalty produced two numbers and one diverged run rather
+than three.
+
+\notesec{Nothing here bears on the architecture's merits elsewhere}
+The reduction in Section~\ref{sec:setfunction} is specific to the 010
+configuration, where the masking and propagation arms are off and the
+perturbation transform is one block. A configuration that switches those on
+would have a strain-dependent encoder path and would need its own reading.
+
+\subsection{Next\secstatus{todo}}
+
+\begin{enumerate}
+\item Train the transformer on the query-pair-disjoint split and fill the empty
+  row of Table~\ref{tab:disjoint}. The migrated build makes this runnable, and it
+  is the measurement the rest of this document is now waiting on.
+\item Regenerate the panel-12 and panel-24 selections from a correctly indexed
+  inference run. The current selections are invalid, not merely uncertain.
+\item Run the graph ablation against degree-matched random graphs, to separate
+  the graphs carrying structure from a large penalty carrying conditioning.
+\item Pin the gene index space with the build rather than reconstructing it from
+  a live genome, which is the fix that would have prevented the defect the guard
+  now only detects.
+\item Report an ensembled ranking for any future selection rather than one
+  checkpoint's tail, given that two training runs share 0.39 to 0.47 of their
+  top 100.
+\item Give experiment builds the manifest that dataset builds already get, so a
+  run can name its data version.
+\end{enumerate}

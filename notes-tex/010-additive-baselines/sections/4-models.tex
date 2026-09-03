@@ -3,6 +3,49 @@
 \section{The models\secstatus{todo}}
 \label{sec:models}
 
+\subsection{Where each baseline comes from\secstatus{todo}}
+\label{sec:provenance}
+
+Two of the six baselines are taken from the Visani preprint. The rest were built
+here for a confounder that the protein setting does not have. Naming which is which matters, because a baseline borrowed from a published
+critique carries that critique's authority and one invented here does not.
+
+%% SOURCE: structural; the two external rows cite the preprint by DOI.
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lll}
+\hline
+Model & Origin & Corresponds to \\
+\hline
+B0 & standard & intercept-only null \\
+B1 & Visani et al.\ 2026 & their ridge-regularized additive model \\
+B2 & this document & B1 extended to observed pairs \\
+B3 & this document & unregularized counterpart of B4 \\
+B4 & this document & the Kuzmin screen-structure confounder \\
+B5 & Visani et al.\ 2026 & their zero-hidden-layer control, run in reverse \\
+\hline
+\end{tabular}
+\caption{Provenance of the six baselines.}
+\label{tab:modelorigin}
+\end{table}
+
+The two external rows come from Visani, Verma and DeWitt, \emph{Additive
+baselines furnish no evidence for epistasis learning by MULTI-evolve}, bioRxiv
+\texttt{2026.04.23.719915}
+(\url{https://doi.org/10.1101/2026.04.23.719915}), which is itself a reply to
+Tran et al., \emph{Science} 2026, \texttt{10.1126/science.aea1820}
+(\url{https://doi.org/10.1126/science.aea1820}). B1 is their additive null
+transplanted onto gene deletions. B5 inverts their zero-hidden-layer control:
+where they removed nonlinearity from the published architecture, B5 adds the
+smallest amount of nonlinearity to the additive feature space, so the two
+bracket the same gap from opposite sides.
+
+B3 and B4 have no counterpart in the preprint because the confounder they measure
+is specific to a synthetic genetic array. A protein engineering campaign has no
+analog of a query double mutant recurring across thousands of measured
+variants. B4 turns out to carry the result that matters most here, so its being
+ours rather than theirs is worth stating plainly.
+
 \subsection{Notation and the interaction operator\secstatus{todo}}
 
 Let $G$ be the 4{,}352 genes appearing in the build and let record $n$ have

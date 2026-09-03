@@ -57,14 +57,20 @@ transformer's run-to-run spread is eight times the nonlinear baseline's and is
 roughly a fifth of its own margin over B1. A single checkpoint's number is not
 the capability.
 
-\notesec{Capacity, not the graphs, closes most of the remaining gap}
+\notesec{Capacity closes about half the gap, and the graphs cannot be ruled out}
 B5 sees exactly B1's features, has no graph and no attention, and reaches 0.426.
 That closes about half the distance from B1 to the transformer. On mean squared
-error B5's 0.003382 is better than two of the three checkpoints. Since
-Section~\ref{sec:graphs} establishes that the nine graphs do not enter the
-forward pass, none of the B5-to-transformer difference can be attributed to
-them; what is left is the richer set aggregation of Eq.~\ref{eq:cgt} and roughly
-eight times the parameters.
+error B5's 0.003382 is better than two of the three checkpoints.
+
+An earlier version of this document attributed the whole remaining
+B5-to-transformer difference to capacity, on the grounds that the graphs are not
+in the forward pass. That inference does not hold, and
+Section~\ref{sec:graphablation} gives the measurements that break it. The graphs
+shape the trained weights even though they are absent from the prediction
+function, and the evidence that they shaped these weights heavily is direct. What
+can be said from the ladder alone is that richer set aggregation and eight times
+the parameters are worth at most 0.03 Pearson over B5, and that how much of that
+0.03 is the graphs is not separable from these runs.
 
 \notesec{B4 is the result that changes what the metric means}
 B4 knows only which of 420 recurring gene pairs a triple contains. It never
@@ -91,17 +97,17 @@ decision-relevant number.
 \subsection{Verifying the architecture reading\secstatus{todo}}
 \label{sec:verify}
 
-Section~\ref{sec:sees} claims the encoder is strain-independent and the nine
-graphs do not enter the forward pass. Both are checkable rather than merely
-readable, and checking them also produces the per-record predictions that
+Section~\ref{sec:sees} claims the encoder is strain-independent and that no
+adjacency tensor is an input to the prediction. Both are checkable rather than
+merely readable, and checking them also produces the per-record predictions that
 Section~\ref{sec:limits} lists as missing.
 
-The stock evaluation path cannot run: the 010 LMDB stores
-\texttt{perturbation\_type: "deletion"}, which the current schema rejects. The
+The stock evaluation path cannot run against the frozen build, for the reasons
+Section~\ref{sec:modernize} sets out. The
 route around it follows from the architecture. If the encoder really does not
 see the strain, then scoring a record needs only the perturbed gene indices, and
-the index space is the sorted base-graph node list, which is rebuildable from
-the genome and the build's \texttt{gene\_set.json} without touching the LMDB.
+the index space is the sorted base-graph node list, rebuildable from the genome
+without touching the LMDB.
 \texttt{score\_010\_checkpoints\_directly.py} does that, loads each checkpoint
 into the model class, and recomputes the metrics.
 
@@ -144,11 +150,73 @@ encoder was evaluated exactly once, on a strain-independent input, and the
 recorded per-split metrics came back. If the encoder had needed the strain, this
 could not have happened.
 
-The graph ablation gives the other claim. Setting the graph penalty weight from
-$1.0$ to $0.0$ changes the maximum absolute test prediction by
-$9.0 \times 10^{-7}$, $1.2 \times 10^{-6}$ and $1.3 \times 10^{-6}$ for the three
-checkpoints, against a prediction spread of about $0.036$. The nine graphs do not
-enter the forward pass.
+The other claim needs a sharper statement than it was given. Setting the graph
+penalty weight from $1.0$ to $0.0$ on a trained checkpoint changes the maximum
+absolute test prediction by $9.0 \times 10^{-7}$, $1.2 \times 10^{-6}$ and
+$1.3 \times 10^{-6}$, against a prediction spread of about $0.036$. That
+establishes what it establishes: adjacency is not an input to the prediction
+function. It says nothing about whether the graphs shaped the weights being
+scored, and Section~\ref{sec:graphablation} shows they did.
+
+\subsection{What the graphs did during training\secstatus{todo}}
+\label{sec:graphablation}
+
+Three independent measurements, none of which the inference-time ablation can
+see.
+
+\notesec{The penalty was almost the whole objective}
+The trainer logs the graph term, the point term and their normalized shares.
+Against a validation point loss of $0.81$ the graph term is $5{,}740$, and the
+share \texttt{norm\_weighted\_graph\_reg} is $0.99986$ for all three checkpoints.
+Eq.~\ref{eq:effcoef} accounts for the size: the intended division by mean degree
+is a multiplication by $367$, and the resulting per-graph coefficient is $0.367$
+on a divergence summed over $6{,}607$ rows.
+
+\notesec{The regularized heads recover their graphs}
+The trainer scores each regularized head by asking, for every gene $i$ with
+degree $d_i$, what fraction of $i$'s true neighbors fall in that head's top $d_i$
+attention targets.
+
+%% SOURCE: val_edge_recovery/{graph}_L1_H{k}/recall_at_deg in the three
+%% checkpoints' re-evaluation runs under $DATA_ROOT/wandb-experiments.
+\begin{table}[htbp]
+\centering
+\begin{tabular}{llrrr}
+\hline
+Graph & Head & M01 & M02 & M03 \\
+\hline
+physical & 0 & 0.940 & 0.940 & 0.938 \\
+regulatory & 1 & 0.992 & 0.992 & 0.991 \\
+tflink & 2 & 0.979 & 0.979 & 0.979 \\
+string neighborhood & 3 & 0.952 & 0.951 & 0.950 \\
+string fusion & 4 & 0.999 & 1.000 & 1.000 \\
+string cooccurence & 5 & 1.000 & 1.000 & 1.000 \\
+string coexpression & 6 & 0.729 & 0.731 & 0.729 \\
+string experimental & 7 & 0.774 & 0.772 & 0.773 \\
+string database & 8 & 0.996 & 0.996 & 0.995 \\
+\hline
+\end{tabular}
+\caption{Neighbor recall at each gene's own degree, layer 1, one head per graph.
+Ordinary self-attention has no reason to place its top $d_i$ mass on a gene's
+true neighbors, so these values are attributable to the penalty of
+Eq.~\ref{eq:graphreg}.}
+\label{tab:edgerecovery}
+\end{table}
+
+\notesec{Removing the penalty stops the model training}
+A matched pair of 30-epoch configurations exists for exactly this test, identical
+but for the graph term's weight. With the weight at $1.0$, three replicates reach
+validation Pearson $0.464$, $0.456$ and $0.456$. With it at $0.0$, the three
+companion runs reach $-0.007$, $-0.031$ and a diverged run that returned no
+number, with training Pearson around $0.002$.
+
+That is a strong result and it needs a careful reading. It establishes that the
+graph term is load-bearing for optimization in this configuration. It does not
+establish that the graphs supply biological information the model uses, because a
+term carrying 99.99 percent of the loss is also doing whatever conditioning,
+scaling and implicit regularization that share implies. Separating the two would
+need a control with a comparable penalty against permuted or degree-matched
+random graphs, which has not been run.
 
 \subsection{Record-by-record agreement\secstatus{todo}}
 \label{sec:paired}
@@ -195,12 +263,27 @@ so the 010 transformer is genuinely computing something the additive model does
 not. That conclusion should be stated plainly, because it is the opposite of the
 preprint's finding and it is what the null was fit to test.
 
-\notesec{What that extra content is worth is a separate question}
-Seed-to-seed correlation between two transformer runs is $0.79$ to $0.82$. The
-part of the transformer's output that is not additive is therefore largely not
-reproducible across training runs: a checkpoint disagrees with the additive
-model about as much as it disagrees with another checkpoint of the same
-architecture on the same split.
+\notesec{How reproducible the extra content is, measured directly}
+Run-to-run correlation between two transformer checkpoints is $0.79$ to $0.82$.
+An earlier version read that against the $0.73$ to $0.76$ agreement with the
+additive model and concluded the non-additive content was largely irreproducible.
+That comparison is not sound, because both correlations are dominated by the
+additive part that every model reproduces, so neither number is about the
+non-additive content at all.
+
+The direct measurement regresses each model's predictions on B1's and correlates
+what is left. On that scale the non-additive component is 43.5, 47.3 and 42.4
+percent of each checkpoint's prediction variance, so it is a large share of what
+the model outputs. Between two checkpoints it correlates at $0.533$, $0.584$ and
+$0.564$. Against the part of the label B1 also fails to explain it correlates at
+$0.236$, $0.234$ and $0.253$, where B5's non-additive component manages $0.165$.
+
+So the non-additive content is neither noise nor stable. About half of it is
+shared between two training runs, and the shared part carries real signal about
+the residual label. The three runs are also not seed replicates in the strict
+sense: the training script fixes the seed at 42, M01 and M02 differ only in
+run-to-run nondeterminism, and M03 additionally changes the scheduler's first
+cycle length. A designed seed sweep has not been run.
 
 \notesec{The models are wrong in the same places}
 Correlating the residuals $y - \hat{y}$ of B1 and each checkpoint gives $0.907$,
@@ -223,8 +306,104 @@ B5 and M03 share 45, and B1 and B5 share 46. At $K = 10{,}000$ all pairs exceed
 0.91. The models agree about the bulk and disagree about the tail, which is the
 part a design-space selection reads.
 
+Between two transformer checkpoints the overlap rises monotonically with $K$:
+0.10 to 0.30 at $K = 10$, 0.39 to 0.47 at $K = 100$, 0.57 to 0.60 at
+$K = 1{,}000$, and 0.91 at $K = 10{,}000$. Reading the tail figure as a defect
+would be wrong. An extreme quantile is where the fitted surface is least
+constrained by data and where the label itself is noisiest, so two runs that
+agree about the bulk should be expected to disagree about the last hundred. The
+consequence for practice is unchanged, and it is a reason to ensemble rather than
+a reason to distrust the architecture.
+
 \notesec{Prediction spread}
 Test prediction standard deviations are 0.025 for B1, 0.029 for B5 and 0.036 to
 0.038 for the checkpoints, against a test label standard deviation of 0.064.
 Every model is heavily shrunk toward the mean, as a squared-error fit on a noisy
 target should be.
+
+\subsection{The query-pair-disjoint split\secstatus{todo}}
+\label{sec:disjoint}
+
+B4's 0.390 says most of Table~\ref{tab:heldout} could be screen structure. The
+measurement that settles it is a split in which no query double appears in more
+than one part, and it has now been run.
+
+\notesec{The screen structure is exact, not approximate}
+Counting unordered gene pairs over all 376{,}732 records finds 739{,}315
+distinct pairs, of which 420 occur five or more times. Those 420 cover 376{,}733
+pair-instances. That is one more than the record count, so every record contains
+exactly one of the 420 recurring pairs and a single record contains two. Every
+record's most frequent pair occurs at least 200 times. The 420 pairs are the
+Kuzmin query doubles, and grouping records by them recovers the screen exactly
+rather than by a threshold that has to be defended.
+
+\notesec{One disjoint split, and then five}
+Assigning whole query pairs gives 285 train, 67 validation and 68 test pairs, or
+80.03, 9.97 and 10.00 percent of records, with no query pair shared between any
+two parts. On that split the additive ridge reaches 0.174 test Pearson, against
+0.135 on its own validation part. A 4-hundredth gap between two parts of one
+split is a warning that 68 query pairs is a small sample of screens, so the
+reported numbers below are five-fold cross-validation with the query pair as the
+grouping unit.
+
+%% SOURCE: experiments/010-kuzmin-tmi/scripts/query_pair_disjoint_split.py and
+%% query_pair_disjoint_cv.py -> results/query_pair_disjoint_cv.csv and
+%% additive_baseline_gene_interaction_query_pair_disjoint.csv
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lrrr}
+\hline
+& \multicolumn{1}{c}{Random split} & \multicolumn{2}{c}{Query-pair disjoint} \\
+Model & test $r$ & one split & 5-fold mean $\pm$ sd \\
+\hline
+B0 train mean & 0.000 & 0.000 & $0.000 \pm 0.000$ \\
+B4 query pair only & 0.390 & 0.000 & $0.000 \pm 0.000$ \\
+B3 hierarchical mean & 0.390 & 0.173 & $0.066 \pm 0.039$ \\
+B1 additive per-gene ridge & 0.400 & 0.174 & $0.127 \pm 0.033$ \\
+B2 additive plus pair ridge & 0.406 & 0.170 & $0.124 \pm 0.034$ \\
+B5 embedding MLP & 0.426 & 0.150 & $0.058 \pm 0.037$ \\
+CGT & 0.438 to 0.455 & \multicolumn{2}{c}{not measured, needs retraining} \\
+\hline
+\end{tabular}
+\caption{Held-out Pearson under the published random-over-records split and
+under a split that never shares a Kuzmin query double. The cross-validated
+column is the mean over five folds, each holding out a disjoint set of query
+pairs, with B5 additionally averaged over three seeds. B4 is structurally zero
+once query pairs are disjoint, because no test record carries a pair that has a
+coefficient.}
+\label{tab:disjoint}
+\end{table}
+
+\tcfigfit[0.80]{figures/query_pair_disjoint_comparison.pdf}{Each baseline under
+the published random-over-records split and under query-pair-disjoint folds.
+Error bars are the standard deviation across five folds. The query-pair-only
+model is structurally zero on the right, and the nonlinear model crosses below
+the additive one.}{fig:disjoint}
+
+\notesec{Most of the additive null's score was screen identity}
+B1 falls from 0.400 to $0.127 \pm 0.033$. In explained variance that is $r^2$
+from 0.160 to 0.016, so roughly nine tenths of what the additive null appeared to
+explain was carried by query doubles it shared with the training split. The
+fold-to-fold spread, 0.088 to 0.151, is wide enough that any single
+query-pair-disjoint split would misreport the number by several hundredths, which
+is why the single split in the middle column reads high.
+
+\notesec{The ladder inverts}
+Under the random split, interaction capacity bought a monotone climb from 0.390
+to 0.455. Under the disjoint split the nonlinear baseline, which is the only
+baseline that can represent a three-way interaction, drops \emph{below} the
+additive one, $0.058 \pm 0.037$ against $0.127 \pm 0.033$. It also early-stops at
+epoch 3 to 7 rather than epoch 20 to 30, having reached training Pearson 0.43
+while held-out performance was already falling. Generalizing to an unseen query
+double is a different problem from generalizing to an unseen record of a seen
+query double, and the extra capacity that helped on the second hurts on the
+first.
+
+\notesec{What is not measured}
+The transformer has no row in Table~\ref{tab:disjoint}. Its checkpoints were
+trained on the random split, so every record of a disjoint test set was
+potentially in their training data, and scoring them there would measure
+memorization. A transformer number for this split requires retraining, which
+Section~\ref{sec:modernize} makes possible and which has not been run. Nothing
+here says the transformer's margin over B1 does or does not survive; it says the
+quantity all the random-split rows were competing on was mostly screen identity.

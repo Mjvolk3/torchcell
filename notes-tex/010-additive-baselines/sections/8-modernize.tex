@@ -1,0 +1,98 @@
+%% notes-tex/010-additive-baselines/sections/8-modernize.tex
+
+\section{Modernizing the 010 build\secstatus{todo}}
+\label{sec:modernize}
+
+Two of the obstacles in this document have the same root. Per-record predictions
+had to be rebuilt by hand rather than recomputed through the stock evaluation
+path, and the transformer has no row in Table~\ref{tab:disjoint}, because the
+December 2025 build no longer loads under the current code.
+
+\subsection{What actually broke\secstatus{todo}}
+
+Two later changes invalidated it, and neither is about what was measured.
+
+\begin{enumerate}
+\item The perturbation-ontology refactor of 2026-07-08 renamed the deletion
+  literals. Of the 1{,}130{,}196 stored perturbations, 1{,}008{,}761 carry
+  \texttt{perturbation\_type: "deletion"} with \texttt{deletion\_type: "KanMX"},
+  which is now \texttt{sga\_kanmx\_deletion}, and 38{,}742 carry
+  \texttt{deletion\_type: "mean"}, which is now \texttt{mean\_deletion}. The
+  remaining 82{,}693 are allele and temperature-sensitive-allele perturbations
+  and were not renamed. No record in this build is a \texttt{natMX} deletion.
+\item The component-based media change of 2026-07-14 made
+  \texttt{Media.is\_synthetic} required. Every record and every reference in the
+  build lacks it.
+\end{enumerate}
+
+An earlier version of this document named only the first, and named the wrong
+replacement vocabulary for it. Both are pure vocabulary changes: neither alters
+which gene was perturbed, what was measured, or what the label is.
+
+\subsection{The migration, and why it copies rather than rebuilds\secstatus{todo}}
+
+Every published 010 artifact addresses records by position. The split file, the
+label table, the perturbed-gene index and the saved per-record predictions are
+all position-keyed, and the transformer checkpoints were selected against that
+split. A rebuild from the served graph returns records in a different order, so
+it would preserve the science and destroy the correspondence. Precedent is on
+record: carrying 010's splits into experiment 025 by a key that included the
+perturbation type matched 682 records of 376{,}732, because the type strings had
+been renamed in between, while a gene-set key matched all of them.
+
+The migration is therefore a key-preserving copy. It rewrites the two vocabulary
+fields, writes a sibling build, and leaves the frozen original untouched, which
+it must, since the original's files are owned by the graph-build user and
+hardlinked into the graph tree. All 376{,}732 records migrate, all 376{,}732
+validate against the current schema, and the check that the copy is faithful is
+that every position still carries the same three systematic gene names and the
+same label.
+
+One thing the migration deliberately does not fix. The frozen build records YEPD
+at 30 degrees. The Kuzmin loaders now emit triple-mutant selection medium at 26
+degrees, which is the corrected reading of the screen. Applying that here would
+change the experimental content of the very records whose published results the
+migration exists to preserve. A build with the corrected environment is a
+different data version, and it is a rebuild.
+
+\subsection{Which experiment ran on which data\secstatus{todo}}
+\label{sec:versioning}
+
+The migration creates a second 010 build, so the question of recording which
+version an experiment used is now concrete rather than hypothetical.
+
+A commit hash does not answer it, for a reason this document supplies. The
+off-by-28 defect of Section~\ref{sec:offby28} happened with no code change at
+all: the library was untouched between the runs, and what moved was the genome
+gene set the cell graph is rebuilt from. Two runs at the same commit scored
+different genes. Identity has to be carried by the built artifact, not by the
+code that built it.
+
+What already exists is most of the machinery. Dataset builds get a
+\texttt{build\_manifest.json} recording a contract fingerprint for every schema
+symbol the loader depends on, plus build time, host and commit, and staleness is
+judged by refingerprinting rather than by comparing commits. The gap is that
+experiment builds are not produced by that class and get no manifest, so neither
+010 nor any later experiment build has one.
+
+Three things would close it, in order of how much they are worth.
+
+\begin{enumerate}
+\item \textbf{Pin the index space with the build.} The gene ordering a
+  checkpoint was trained against is the artifact whose drift caused the worst
+  defect here, and it is currently recomputed at every use. Writing it into the
+  build and loading it, rather than reconstructing it, makes the failure
+  impossible instead of merely detected. The guard added in
+  Section~\ref{sec:offby28} is the detection half.
+\item \textbf{Give experiment builds a manifest.} Extend the existing manifest to
+  the experiment-build class, so a build records the schema contract it was made
+  against and any run can name its data version.
+\item \textbf{Record the source graph's identity.} A build made by querying the
+  graph database stores the query but nothing about which database answered it.
+  A build identifier from the server, recorded alongside the query, would make
+  the chain complete.
+\end{enumerate}
+
+The migrated build carries a \texttt{build\_provenance.json} naming its source,
+that source's LMDB checksum, the exact field rewrites, and what was deliberately
+not changed. That is the first item's shape, written by hand for one build.

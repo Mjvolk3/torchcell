@@ -137,8 +137,53 @@ def main() -> None:
         rows.append({"pair": f"B1_additive|{tag}", "quantity": "delta_r_lo", "value": lo})
         rows.append({"pair": f"B1_additive|{tag}", "quantity": "delta_r_hi", "value": hi})
 
+    # The raw prediction correlation between two checkpoints mixes the additive
+    # part, which both reproduce, with the non-additive part, which is the thing
+    # in question. Regressing each model's prediction on B1's and correlating the
+    # residuals separates them: this is the correlation of the NON-ADDITIVE
+    # content across two training runs.
+    print("\nnon-additive content, prediction residualized on B1")
+    b1 = preds["B1_additive"]
+    b1c = b1 - b1.mean()
+
+    def residualize(v: np.ndarray) -> np.ndarray:
+        vc = v - v.mean()
+        return vc - b1c * (float(vc @ b1c) / float(b1c @ b1c))
+
+    nonadd = {k: residualize(preds[k]) for k in names if k != "B1_additive"}
+    share = {
+        k: float(nonadd[k].var() / preds[k].var()) for k in nonadd
+    }
+    for k in sorted(share):
+        print(f"  {k:<18} share of prediction variance not explained by B1 {share[k]:.4f}")
+        rows.append(
+            {"pair": k, "quantity": "nonadditive_variance_share", "value": share[k]}
+        )
+    cgt = [n for n in names if n.startswith("CGT")]
+    for a, b in combinations(cgt, 2):
+        r = float(pearsonr(nonadd[a], nonadd[b])[0])
+        print(f"  {a:<12} vs {b:<12} non-additive Pearson {r:.4f}")
+        rows.append({"pair": f"{a}|{b}", "quantity": "nonadditive_pearson", "value": r})
+    for a in cgt:
+        r = float(pearsonr(nonadd[a], nonadd["B5_mlp"])[0])
+        print(f"  {a:<12} vs {'B5_mlp':<12} non-additive Pearson {r:.4f}")
+        rows.append(
+            {"pair": f"{a}|B5_mlp", "quantity": "nonadditive_pearson", "value": r}
+        )
+    # Does the non-additive part carry signal? Correlate it with the part of the
+    # label that B1 also fails to explain.
+    y_res = residualize(y)
+    for a in cgt + ["B5_mlp"]:
+        r = float(pearsonr(nonadd[a], y_res)[0])
+        print(f"  {a:<12} non-additive vs residual label  Pearson {r:.4f}")
+        rows.append(
+            {"pair": a, "quantity": "nonadditive_vs_label_residual", "value": r}
+        )
+
     print("\ntop-K overlap on the most negative predicted interaction")
     order = {k: np.argsort(preds[k]) for k in names}
+    # A sweep rather than three points: the tail is where a selection reads, and
+    # the question is where agreement sets in, not whether it is low at K=100.
     for k in TOP_K:
         for a, b in combinations(["B1_additive", "B5_mlp", "CGT_M03"], 2):
             ov = np.intersect1d(order[a][:k], order[b][:k]).size / k
@@ -146,6 +191,18 @@ def main() -> None:
             rows.append(
                 {"pair": f"{a}|{b}", "quantity": f"bottom_{k}_overlap", "value": ov}
             )
+    print("\ntop-K overlap between transformer training runs, swept")
+    for k in (10, 30, 100, 300, 1_000, 3_000, 10_000, 30_000):
+        for a, b in combinations(cgt, 2):
+            ov = np.intersect1d(order[a][:k], order[b][:k]).size / k
+            rows.append(
+                {"pair": f"{a}|{b}", "quantity": f"bottom_{k}_overlap", "value": ov}
+            )
+        vals = [
+            np.intersect1d(order[a][:k], order[b][:k]).size / k
+            for a, b in combinations(cgt, 2)
+        ]
+        print(f"  K={k:>6} checkpoint pairs {min(vals):.3f} to {max(vals):.3f}")
 
     out = osp.join(RESULTS_DIR, "paired_prediction_agreement.csv")
     pd.DataFrame(rows).to_csv(out, index=False)

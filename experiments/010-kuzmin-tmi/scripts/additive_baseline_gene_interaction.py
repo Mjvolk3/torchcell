@@ -40,8 +40,12 @@ component of fitness is removed by construction before the model sees it.
 
 B5 is the analogue of DeWitt's zero-hidden-layer extension of the MULTI-evolve
 grid, run in the other direction: it holds the feature space fixed at B1's and
-asks what nonlinearity alone buys. The gap B5 -> transformer is then
-attributable to the nine interaction graphs, not to model capacity.
+asks what nonlinearity alone buys. The gap B5 -> transformer is what richer set
+aggregation and roughly eight times the parameters buy. It is NOT attributable
+to the nine interaction graphs: those act on the transformer only through a
+Kullback-Leibler penalty in the training loss, so they shape the weights that
+are learned but contribute no term to the forward pass that turns a fixed
+checkpoint into a prediction.
 
 Inputs are read from the pinned 010 build, not through the dataset loaders:
     processed/label_df.parquet                  index -> gene_interaction
@@ -50,8 +54,18 @@ Inputs are read from the pinned 010 build, not through the dataset loaders:
 
 Transformer reference numbers are read from the three checkpoints' own
 re-evaluation runs under ``$DATA_ROOT/wandb-experiments`` rather than retyped.
+
+The split is selectable. With no arguments the script reproduces the published
+random-over-records numbers. Passing ``--split-json`` with the output of
+``query_pair_disjoint_split.py`` refits every baseline on a split in which no
+Kuzmin query double appears in more than one part, which is the measurement
+that separates trigenic biology from screen batch. The transformer reference
+rows are read from wandb runs trained on the random split, so they are emitted
+only for that split; a transformer number on any other split has to come from
+retraining.
 """
 
+import argparse
 import json
 import os
 import os.path as osp
@@ -107,16 +121,19 @@ MLP_SEEDS = [0, 1, 2]
 ALPHA_GRID = [1e-2, 1e-1, 1.0, 3.0, 10.0, 30.0, 100.0, 300.0, 1000.0]
 
 
-def load_records() -> tuple[np.ndarray, np.ndarray, dict[str, np.ndarray], list[str]]:
+DEFAULT_SPLIT_JSON = osp.join(BUILD_DIR, "data_module_cache", "index_seed_42.json")
+
+
+def load_records(
+    split_json: str = DEFAULT_SPLIT_JSON,
+) -> tuple[np.ndarray, np.ndarray, dict[str, np.ndarray], list[str]]:
     """Return (row_genes, y, splits, gene_names) aligned on a dense row index."""
     label_df = pd.read_parquet(osp.join(BUILD_DIR, "processed", "label_df.parquet"))
     with open(
         osp.join(BUILD_DIR, "processed", "is_any_perturbed_gene_index.json")
     ) as f:
         gene_index = json.load(f)
-    with open(
-        osp.join(BUILD_DIR, "data_module_cache", "index_seed_42.json")
-    ) as f:
+    with open(split_json) as f:
         split_index = json.load(f)
 
     # Dense row numbering over the record indices that carry a label.
@@ -325,10 +342,28 @@ def embedding_mlp(
 
 
 def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument(
+        "--split-json",
+        default=DEFAULT_SPLIT_JSON,
+        help="split index file; defaults to the published random-over-records split",
+    )
+    ap.add_argument(
+        "--tag",
+        default="",
+        help="suffix for every output file, e.g. query_pair_disjoint",
+    )
+    args = ap.parse_args()
+    suffix = f"_{args.tag}" if args.tag else ""
+    # Transformer rows are wandb runs trained on the random split. Emitting them
+    # beside baselines fit on a different split would compare across splits.
+    include_cgt = args.split_json == DEFAULT_SPLIT_JSON
+
     os.makedirs(RESULTS_DIR, exist_ok=True)
-    row_genes, y, splits, gene_names = load_records()
+    row_genes, y, splits, gene_names = load_records(args.split_json)
     tr, va, te = splits["train"], splits["val"], splits["test"]
     n_genes = len(gene_names)
+    print(f"split file {args.split_json}")
 
     print(f"records {y.size}  genes {n_genes}")
     print(f"train {tr.size}  val {va.size}  test {te.size}")
@@ -387,13 +422,15 @@ def main() -> None:
                 {"model": tag, "alpha": alpha, "split": name}
                 | score(y[idx], pred[idx])
             )
-        np.save(osp.join(RESULTS_DIR, f"additive_baseline_pred_{tag}.npy"), pred)
+        np.save(
+            osp.join(RESULTS_DIR, f"additive_baseline_pred_{tag}{suffix}.npy"), pred
+        )
         if tag == "B1_additive_gene":
             # Persist the additive coefficients so the same model can be scored
             # over the 010 inference design space by a downstream script.
             beta, b0 = ridge_fit(xg[tr], y[tr], alpha)
             np.savez(
-                osp.join(RESULTS_DIR, "additive_baseline_B1_coefficients.npz"),
+                osp.join(RESULTS_DIR, f"additive_baseline_B1_coefficients{suffix}.npz"),
                 gene_names=np.array(gene_names),
                 beta=beta,
                 intercept=b0,
@@ -423,7 +460,8 @@ def main() -> None:
             )
         np.save(
             osp.join(
-                RESULTS_DIR, f"additive_baseline_pred_B5_gene_embedding_mlp_s{seed}.npy"
+                RESULTS_DIR,
+                f"additive_baseline_pred_B5_gene_embedding_mlp_s{seed}{suffix}.npy",
             ),
             pred,
         )
@@ -433,7 +471,7 @@ def main() -> None:
 
     # --- transformer reference, read from its own eval runs -------------
     cgt_rows = []
-    for tag, rel in CGT_EVAL_RUNS.items():
+    for tag, rel in (CGT_EVAL_RUNS.items() if include_cgt else ()):
         path = osp.join(WANDB_ROOT, rel, "files", "wandb-summary.json")
         with open(path) as f:
             summary = json.load(f)
@@ -450,17 +488,25 @@ def main() -> None:
                     "rmse": summary[f"{split}/gene_interaction/RMSE"],
                 }
             )
-    df = pd.concat([df, pd.DataFrame(cgt_rows)], ignore_index=True)
+    if cgt_rows:
+        df = pd.concat([df, pd.DataFrame(cgt_rows)], ignore_index=True)
+    else:
+        print(
+            "\ntransformer rows omitted: they were trained on the random split, "
+            "so a number for this split needs retraining"
+        )
 
-    out_csv = osp.join(RESULTS_DIR, "additive_baseline_gene_interaction.csv")
+    out_csv = osp.join(
+        RESULTS_DIR, f"additive_baseline_gene_interaction{suffix}.csv"
+    )
     df.to_csv(out_csv, index=False)
     print(f"\nwrote {out_csv}")
     print(df.to_string(index=False))
 
-    plot(df)
+    plot(df, suffix)
 
 
-def plot(df: pd.DataFrame) -> None:
+def plot(df: pd.DataFrame, suffix: str = "") -> None:
     val = df[df["split"] == "test"].copy()
     val = val.groupby("model", as_index=False).agg(
         pearson=("pearson", "mean"), sd=("pearson", "std")
@@ -477,6 +523,7 @@ def plot(df: pd.DataFrame) -> None:
         "CGT_M03_c7671wgj": "CGT M03",
     }
     val = val[val["model"].isin(labels)].copy()
+    labels = {k: v for k, v in labels.items() if k in set(val["model"])}
     val["order"] = val["model"].map({m: i for i, m in enumerate(labels)})
     val = val.sort_values("order")
     val["label"] = val["model"].map(labels)
@@ -527,7 +574,9 @@ def plot(df: pd.DataFrame) -> None:
     fig.tight_layout()
 
     stem = osp.join(
-        ASSET_IMAGES_DIR, "010-kuzmin-tmi", "additive_baseline_test_pearson"
+        ASSET_IMAGES_DIR,
+        "010-kuzmin-tmi",
+        f"additive_baseline_test_pearson{suffix}",
     )
     os.makedirs(osp.dirname(stem), exist_ok=True)
     fig.savefig(stem + ".png", dpi=300)

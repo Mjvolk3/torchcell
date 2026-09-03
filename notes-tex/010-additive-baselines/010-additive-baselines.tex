@@ -43,20 +43,33 @@ additive ridge at 0.400 test Pearson against the cell graph transformer's 0.438
 to 0.455, and puts a model that sees only which recurring gene pair a triple
 contains, ignoring the third gene entirely, at 0.390. Reading the model code
 establishes what the comparison is between: the transformer's encoder never sees
-the strain, the nine interaction graphs never enter the forward pass, and the
-strain-dependent computation is a set function over the three perturbed gene
-identities, which is the same input and the same hypothesis-class shape the
-nulls have. Rebuilding the forward pass from that reading reproduces the
+the strain, the nine interaction graphs enter training through a penalty on
+layer-1 attention rather than through the function that maps a checkpoint to a
+prediction, and the strain-dependent computation is a set function over the
+three perturbed gene identities, which is the same input and the same
+hypothesis-class shape the nulls have. That penalty was not incidental: it
+carried 99.99 percent of the training loss, the regularized heads recover their
+graphs at 0.83 to 1.00 recall, and a matched pair of runs with the penalty
+switched off fails to train at all. Rebuilding the forward pass reproduces the
 recorded metrics to the fourth decimal and yields per-record predictions. Those
 show the transformer is not a relabeled additive model, correlating with it at
 0.73 to 0.76 rather than the 0.999 reported for MULTI-evolve, and that its gain
 over the null is $+0.04$ to $+0.055$ Pearson with bootstrap intervals excluding
-zero. They also show two training runs of the architecture agree with each other
-at 0.79 to 0.82, so the non-additive content is largely not reproducible across
-seeds. Separately, the transformer's predictions over the unmeasured design
-space do not agree between inference runs of one checkpoint, which is a defect
-in the runs that produced the panel selection rather than a fact about
-additivity.
+zero. Residualizing each prediction on the additive model isolates the
+non-additive content, which is 42 to 47 percent of prediction variance, agrees
+between two training runs at 0.53 to 0.58, and tracks the part of the label the
+additive model misses at 0.23 to 0.25.
+
+The result that changes what the metric means is the split. Every record in this
+build carries one of 420 Kuzmin query doubles, and the published split is random
+over records, so the same query double appears in train and test. Refitting on a
+query-pair-disjoint split collapses the additive null from 0.400 to 0.127
+$\pm$ 0.033 across five folds and inverts the ladder, with the nonlinear
+baseline falling below the additive one. Separately, the predictions over the
+unmeasured design space that produced the panel selection are invalid: the
+genome gene set shrank from 6{,}607 to 6{,}579 between inference runs, and the
+28 missing mitochondrial open reading frames sort first, so every gene index was
+shifted by 28 and each triple was scored as a different triple.
 \end{abstract}
 
 \vspace{0.5em}
@@ -70,6 +83,7 @@ additivity.
 \input{sections/5-comparability}
 \input{sections/6-results}
 \input{sections/7-design-space}
-\input{sections/8-limits}
+\input{sections/8-modernize}
+\input{sections/9-limits}
 
 \end{document}

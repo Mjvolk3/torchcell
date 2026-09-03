@@ -4,8 +4,43 @@
 \label{sec:comparability}
 
 Six things have to match before a baseline number can sit in the same table as a
-transformer number. Five do. One does not, and it favors the transformer by a
-small amount.
+transformer number. Table~\ref{tab:comparability} names them and gives the
+verdict on each; the subsections that follow give the evidence.
+
+%% SOURCE: each row is established in the subsection it names; the
+%% normalization constants are read from the runs' logged transform config.
+\begin{table}[htbp]
+\centering
+\begin{tabular}{llp{0.42\textwidth}}
+\hline
+\# & Verdict & What has to match \\
+\hline
+1 & matches & \textbf{Records and split.} All models use the same 376{,}732
+    records and the same \texttt{index\_seed\_42.json} partition. \\
+2 & matches & \textbf{Label.} All predict \texttt{gene\_interaction}, the
+    published adjusted $\tau$ of Eq.~\ref{eq:tau}. \\
+3 & matches & \textbf{Reported split.} Test is reported for every row, and
+    validation is what every row selected on. \\
+4 & matches & \textbf{Metric definition and denominator.} Pearson, Spearman and
+    mean squared error over the full 37{,}673 test records in raw $\tau$ units
+    for every row. \\
+5 & matches & \textbf{Information available.} The identity of the three
+    perturbed genes, and nothing else, for every model
+    (Section~\ref{sec:sees}). \\
+6 & \textbf{does not} & \textbf{Label normalization.} The transformer's
+    standardization constants are fit on all 376{,}732 records rather than on
+    the training split. The baselines use the training mean only. \\
+\hline
+\end{tabular}
+\caption{What has to match for the comparison to be fair. Row 6 is the one
+mismatch, and it runs in the transformer's favor.}
+\label{tab:comparability}
+\end{table}
+
+The loss functions also differ between the baselines and the transformer, but
+that is a difference in what each model was trained to do rather than in how the
+comparison is scored, so it is not one of the six and is treated separately
+below.
 
 \subsection{Which split the reported numbers come from\secstatus{todo}}
 
@@ -97,15 +132,13 @@ part of what the transformer is. It is noted because a distributional term can
 move Pearson and mean squared error in opposite directions, so the two metrics
 should be read together rather than either alone.
 
-\notesec{Paired residuals are not available from the recorded runs}
+\notesec{Paired residuals had to be recomputed}
 The original evaluation runs wrote per-record prediction files to the cluster
 checkout, and those files are not on this machine. Recomputing them through the
-stock evaluation script fails, because the 010 LMDB predates the
-perturbation-ontology refactor: every record carries
-\texttt{perturbation\_type: "deletion"} where the current pydantic schema admits
-only \texttt{sga\_kanmx\_deletion} or \texttt{sga\_natmx\_deletion}, which is 204
-validation errors on the first batch. Section~\ref{sec:results} reports how far
-this was worked around.
+stock evaluation script fails on the frozen build, which no longer validates
+(Section~\ref{sec:modernize}). Section~\ref{sec:verify} gives the route around
+that, and Section~\ref{sec:modernize} gives the migration that removes the
+obstacle for future work.
 
 \subsection{Model size\secstatus{todo}}
 

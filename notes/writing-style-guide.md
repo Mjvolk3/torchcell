@@ -159,6 +159,52 @@ If a reviewer asks "why 48 of 96 wells?", the answer is either the reason or
 they were querying. Where a source genuinely does not justify a choice, say so
 and mark it as a candidate for measurement.
 
+## 2026.09.02 - The canonical look for a note PDF
+
+**A note rendered to PDF must look like `paper/nature-biotech/editing.pdf`.** The paper's
+drafting view is the house style for every `notes-tex` document, so a note and the
+manuscript read as one document family rather than as two unrelated PDFs. This is not a
+per-note choice, and it is not a matter of taste.
+
+The settings live in two shared files and are copied FROM `editing.tex`, never invented:
+
+| what | value | where |
+| --- | --- | --- |
+| page | A4 | `bib_tex_pdf.sh` |
+| margins | left 14 mm, right 14 mm, top 15 mm, bottom 22 mm | `bib_tex_pdf.sh` |
+| text block | 182 mm, so a true 180 mm figure sits flush at 1:1 | consequence of the above |
+| type | 10 pt on 12 pt, matching sn-jnl's `10bp/12bp` | `bib_tex_pdf.sh` |
+| sections | numbered, with a contents page | `bib_tex_pdf.sh` |
+| paragraphs | no first-line indent, half-line gap between | `header-includes.tex` |
+| headings | 12 bp bold section, 10 bp bold subsection, bold run-in below that | `header-includes.tex` |
+| contents and internal links | **black** | `header-includes.tex` |
+| citations, external URLs | red, blue | `header-includes.tex` |
+| tables | `\footnotesize`, 4 pt column padding | `header-includes.tex` |
+
+**Why the contents page is black.** `linkcolor` drives the contents page as well as
+internal cross-references, so a colored one renders as a single solid block in which
+nothing stands out. Citations and URLs keep their colors, where color carries meaning.
+
+**Why the heading level is shifted down by one.** A Dendron note carries its title in
+frontmatter and starts its body at `##`, which is the date-stamped section convention.
+Without `--shift-heading-level-by=-1` pandoc numbers the first real heading `0.1` under a
+phantom section zero. With it, the top level numbers 1, 2, 3 like the paper's sections. A
+note that instead starts at `#` still builds; pandoc promotes that heading to the title.
+
+**Every figure and table gets a NUMBERED caption with real detail.** Figures are captioned
+below, tables above. A caption states what the reader is looking at and what the point of
+it is, not just what the axes are. Pandoc here has no cross-reference filter, so the
+numbers are written by hand and must be kept in order when content moves.
+
+**A draw.io figure is embedded as its outlined-text vector SVG**, produced by
+`notes/assets/publish/scripts/drawio_vector_svg.sh`. draw.io's own SVG export writes labels
+as HTML `foreignObject` elements, which `rsvg-convert` cannot draw: the build then emits
+the figure with every label truncated and exits 0, so nothing warns you.
+
+**Optional LaTeX packages are guarded with `\IfFileExists`.** Notes build on more than one
+machine, and `tocloft` is not installed everywhere. A missing optional package must degrade
+the styling, never take down the build.
+
 ## Related
 
 - [[paper.nature-biotech.figures]] -- figure sizing, palette, export

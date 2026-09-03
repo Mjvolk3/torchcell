@@ -240,6 +240,17 @@ quote + `sha256` + section/line, and never guessed.
 Read it before writing or revising prose. Record every new preference there, under its
 topical heading, rather than in a conversation.
 
+**Canonical LOOK for a note PDF: `paper/nature-biotech/editing.pdf`.** When a note is
+rendered to PDF it must match the paper's drafting view, so a note and the manuscript read
+as one document family. A4, 14 mm side margins giving a 182 mm text block, 10 pt on 12 pt,
+numbered sections with a contents page, block paragraphs, black contents and internal
+links, and `\footnotesize` tables. Every figure and table carries a NUMBERED caption with
+real detail; figures captioned below, tables above. The settings live in
+`notes/assets/publish/scripts/bib_tex_pdf.sh` and
+`notes/assets/publish/tex-templates/header-includes.tex` and are copied FROM `editing.tex`,
+never invented -- if the paper's editing view changes, change these to match it. Full table
+of settings and the reasons in [[writing-style-guide]].
+
 **Scope, and it is deliberately two-tier.** Blanket-applying every rule to working
 notes would be wrong, because a working note IS for the group and "we decided X" is
 correct there rather than a violation.

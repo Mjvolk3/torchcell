@@ -18,6 +18,22 @@
 # puppeteer times out -- see CLAUDE.md); pre-render mermaid diagrams with
 # mermaid_pdf.sh and reference the produced image instead.
 #
+# CANONICAL STYLE: this build is matched to paper/nature-biotech/editing.pdf.
+# The paper's drafting view is the house look for every notes-tex document, so the
+# geometry, page size, type size, numbered sections and contents page below are copied
+# from editing.tex rather than chosen here:
+#   A4, left/right 14 mm, top 15 mm, bottom 22 mm  -> a 182 mm text block, so a true
+#   180 mm figure sits flush at 1:1, the same as in the paper.
+#   10 pt on 12 pt leading, matching sn-jnl's 10bp/12bp \normalsize.
+#   Numbered sections + a contents page, because a note long enough to need a PDF is
+#   long enough to need navigation.
+# --shift-heading-level-by=-1 is REQUIRED, not cosmetic. A Dendron note carries its title
+# in frontmatter and starts the body at `##` (the date-stamped section convention in
+# CLAUDE.md), so without the shift pandoc numbers the first real heading `0.1` under a
+# phantom section zero. With it, the top level numbers 1, 2, 3 like the paper's sections.
+# Do NOT change these to taste. If the paper's editing view changes, change these to
+# match it; the point is that a note and the manuscript read as one document family.
+#
 # Usage (see .vscode/tasks.json): bib_tex_pdf.sh <file.md> <fileDirname> <basenameNoExt>
 
 input_file="$1"
@@ -69,7 +85,14 @@ cd ./notes && pandoc \
   --citeproc \
   --bibliography assets/publish/bib/bib.bib \
   --metadata csl=assets/publish/bib/nature.csl \
-  -V geometry:'top=2cm, bottom=1.5cm, left=2cm, right=2cm' \
+  -V documentclass=article \
+  -V papersize=a4 \
+  -V fontsize=10pt \
+  -V geometry:'a4paper, left=14mm, right=14mm, top=15mm, bottom=22mm' \
+  --number-sections \
+  --shift-heading-level-by=-1 \
+  --toc \
+  --toc-depth=3 \
   --include-in-header="${header_includes_path}" \
   --strip-comments --dpi=600 && cd ..
 

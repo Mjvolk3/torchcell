@@ -1,7 +1,43 @@
-% Title and section spacing
+% ---------------------------------------------------------------------------
+% CANONICAL NOTE STYLE, matched to paper/nature-biotech/editing.pdf.
+% The paper's drafting view is the house look for notes-tex, so the heading shapes,
+% paragraph handling and contents styling below are copied from sn-jnl.cls +
+% editing.tex rather than invented. See bib_tex_pdf.sh for the page geometry half.
+% ---------------------------------------------------------------------------
+
+% Section headings. sn-jnl sets \section bold roman at 12bp and \subsection bold at
+% 10bp with tight leading; \subsubsection is a bold run-in. Reproduced with titlesec so
+% a pandoc note and a paper section have the same silhouette.
 \usepackage{titlesec}
-\titlespacing*{\section}{0pt}{1ex}{0.5ex} % # First level header - {left}{before}{after}
-\titlespacing*{\subsection}{0pt}{1.5ex}{1ex} % ## Second level header- {left}{before}{after}
+\titleformat{\section}{\normalfont\fontsize{12bp}{14bp}\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalfont\fontsize{10bp}{12bp}\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}[runin]%
+  {\normalfont\fontsize{10bp}{12bp}\bfseries}{\thesubsubsection}{0.5em}{}[.\enspace]
+\titlespacing*{\section}{0pt}{1.6ex plus .2ex}{0.8ex}
+\titlespacing*{\subsection}{0pt}{1.4ex plus .2ex}{0.6ex}
+\titlespacing*{\subsubsection}{0pt}{1.2ex plus .2ex}{0.5em}
+
+% Block paragraphs: no first-line indent, a real gap between paragraphs. This is
+% editing.tex's drafting choice, and it is what makes a dense note readable.
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5\baselineskip plus 0.1\baselineskip}
+
+% Contents page, styled as editing.tex styles the paper's. Links are BLACK here: a
+% contents page rendered in link-blue becomes one blue block and nothing stands out.
+% Scoped so citations and cross-references keep their colours in the body.
+% tocloft is GUARDED because it is not in every TeX installation, and notes are built
+% on more than one machine. Without it the contents page still renders, just with
+% LaTeX's default spacing; with it, it matches the paper. A missing optional package
+% must never take down a note build.
+\IfFileExists{tocloft.sty}{%
+  \usepackage{tocloft}%
+  \setlength{\cftbeforesecskip}{1.2pt}%
+  \setlength{\cftbeforesubsecskip}{0.6pt}%
+  \renewcommand{\cftsecfont}{\normalsize\bfseries}%
+  \renewcommand{\cftsecpagefont}{\normalsize\bfseries}%
+  \renewcommand{\cftsubsecfont}{\small}%
+  \renewcommand{\cftsubsecpagefont}{\small}%
+}{}
 
 % Title positioning
 \usepackage{titling}
@@ -24,10 +60,15 @@
 \definecolor{urlblue}{RGB}{100,149,237}    % Cornflower Blue for URLs
 
 \usepackage{hyperref}
+% linkcolor is BLACK on purpose, matching editing.tex. `linkcolor` drives the contents
+% page as well as internal cross-references, and a coloured contents page renders as one
+% solid block of colour in which nothing stands out. Citations and external URLs keep
+% their colours, where colour actually carries meaning.
 \hypersetup{
   colorlinks=true,
-  linkcolor=linkred,   % applies to citations + internal links
-  urlcolor=urlblue,    % applies to external URLs
+  linkcolor=black,     % internal links + the contents page
+  citecolor=linkred,   % citations
+  urlcolor=urlblue,    % external URLs
   pdfborder={0 0 0}
 }
 
@@ -38,6 +79,8 @@
 % roughly 20 % more characters per line, and \setlength{\tabcolsep} recovers more by
 % tightening the inter-column padding. Applied to longtable so it hits every pandoc table
 % without touching inline math or code blocks.
-\usepackage{etoolbox}
-\AtBeginEnvironment{longtable}{\footnotesize\setlength{\tabcolsep}{4pt}}
-\AtBeginEnvironment{tabular}{\footnotesize\setlength{\tabcolsep}{4pt}}
+\IfFileExists{etoolbox.sty}{%
+  \usepackage{etoolbox}%
+  \AtBeginEnvironment{longtable}{\footnotesize\setlength{\tabcolsep}{4pt}}%
+  \AtBeginEnvironment{tabular}{\footnotesize\setlength{\tabcolsep}{4pt}}%
+}{}

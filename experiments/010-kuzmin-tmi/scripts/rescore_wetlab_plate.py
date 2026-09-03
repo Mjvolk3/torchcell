@@ -58,6 +58,12 @@ DATA_ROOT = os.environ["DATA_ROOT"]
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 ASSET_IMAGES_DIR = os.environ["ASSET_IMAGES_DIR"]
 RESULTS_DIR = osp.join(EXPERIMENT_ROOT, "010-kuzmin-tmi", "results")
+# The 6,579-gene set inference_3 indexed against, kept so the figures can
+# show what the correction changed rather than asserting it.
+BUILD_GENE_SET = osp.join(
+    DATA_ROOT,
+    "data/torchcell/experiments/010-kuzmin-tmi/001-small-build/processed/gene_set.json",
+)
 
 TRANSFER_REPORT = osp.join(
     EXPERIMENT_ROOT,
@@ -91,7 +97,7 @@ def plate_strains() -> list[str]:
     return seen
 
 
-def resolve(labels: list[str]) -> tuple[dict[str, str], dict[str, list[str]]]:
+def resolve(labels: list[str]) -> tuple[dict[str, str], dict[str, list[str]], object]:
     """Map each plate label to a systematic name, and group labels per locus."""
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
@@ -124,7 +130,7 @@ def resolve(labels: list[str]) -> tuple[dict[str, str], dict[str, list[str]]]:
         for gene, ls in dups.items():
             print(f"  {gene}: {', '.join(sorted(ls))}")
     print(f"\n{len(labels)} strain labels resolve to {len(per_locus)} distinct loci")
-    return label_to_gene, per_locus
+    return label_to_gene, per_locus, genome
 
 
 @torch.no_grad()
@@ -156,6 +162,44 @@ def score_any_order(model, cell_graph, idx: np.ndarray, device) -> np.ndarray:
         preds, _ = model(cell_graph, batch, return_attention=False)
         out[start : start + n] = preds.squeeze(-1).float().cpu().numpy()
     return out * S.NORM_STD + S.NORM_MEAN
+
+
+def stored_by_systematic(genome) -> dict[str, float]:
+    """inference_3's recorded prediction for each combination, keyed systematically.
+
+    The stored files name genes as the triple generator did, so the same locus can
+    appear as ``YLR312C-B`` there and ``SPH1`` on the plate. Resolving both sides
+    to a systematic name is what makes them join. Every value in here is invalid
+    as a prediction, since inference_3 was indexed 28 positions off and scored any
+    triple containing an unindexable gene as a double; they are kept only to show
+    what the correction changed.
+    """
+    frames = []
+    for path in sorted(
+        glob.glob(
+            osp.join(RESULTS_DIR, "inference_3", "constructible_triples_*.parquet")
+        )
+    ):
+        frames.append(pd.read_parquet(path))
+    if not frames:
+        print("no stored inference_3 panel predictions found")
+        return {}
+    d = pd.concat(frames, ignore_index=True).drop_duplicates(
+        ["gene1", "gene2", "gene3"]
+    )
+    cache: dict[str, str] = {}
+
+    def systematic(name: str) -> str:
+        if name not in cache:
+            cache[name] = genome.resolve_gene_name(name).systematic_name
+        return cache[name]
+
+    out: dict[str, float] = {}
+    for row in d.itertuples():
+        key = "+".join(sorted(systematic(g) for g in (row.gene1, row.gene2, row.gene3)))
+        out.setdefault(key, float(row.prediction))
+    print(f"stored inference_3 panel predictions: {len(out)} distinct combinations")
+    return out
 
 
 def load_checkpoint(cell_graph, embeddings, path: str, device):
@@ -191,7 +235,7 @@ def label_for(gene: str, per_locus: dict[str, list[str]]) -> str:
 def main() -> None:
     os.makedirs(RESULTS_DIR, exist_ok=True)
     labels = plate_strains()
-    label_to_gene, per_locus = resolve(labels)
+    label_to_gene, per_locus, genome_resolver = resolve(labels)
     genes = sorted(per_locus)
 
     cell_graph, embeddings = S.build_cell_graph()
@@ -207,10 +251,18 @@ def main() -> None:
         assert matches, f"no checkpoint for {tag}"
         models[tag] = load_checkpoint(cell_graph, embeddings, matches[0], device)
 
+    # What inference_3 actually recorded for these combinations, keyed on
+    # systematic name so the YLR312C-B / SPH1 rename lines up. Reconstructing the
+    # old prediction from the shifted index map is possible but fragile, since it
+    # has to guess which string the original run addressed each locus by; the
+    # stored file is the historical record and needs no guessing.
+    stored = stored_by_systematic(genome_resolver)
+
     frames = {}
     for order, name in ((2, "doubles"), (3, "triples")):
         combos = [tuple(c) for c in combinations(genes, order)]
         idx = np.array([[node_to_idx[g] for g in c] for c in combos], dtype=np.int64)
+
         df = pd.DataFrame(
             {
                 "order": order,
@@ -222,6 +274,7 @@ def main() -> None:
         )
         for tag, model in models.items():
             df[tag] = score_any_order(model, cell_graph, idx, device)
+        df["stored_inference_3"] = df["systematic"].map(stored)
         cols = list(CHECKPOINT_GLOBS)
         df["mean"] = df[cols].mean(axis=1)
         df["sd"] = df[cols].std(axis=1)

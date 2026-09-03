@@ -29,17 +29,30 @@ GRAPH_ENRICHMENT_DIR = RESULTS_DIR / "graph_enrichment"
 
 # V21: Updated color scheme - lighter core_gene color for better text readability
 # V11: Using colors from torchcell.mplstyle
+# NODES take the PALE FILL palette, EDGES take the saturated line palette. That split is
+# the repo standard (PLOT_PALETTE_FILL is the object companion to PLOT_PALETTE) and here it
+# is load-bearing rather than cosmetic: the interaction edges are the data, and drawing the
+# core-gene nodes in saturated amber put them in the same ink as a positive interaction.
 COLORS = {
-    'gene': '#D79B00',  # Green
-    'reaction': '#D2AE7D',  # Orange (changed from red)
-    'metabolite': '#666666',  # Grey
-    'core_gene': '#D6B656',  # Teal-green from mplstyle (readable with black text)
-    'target_ffa': '#6C8EBF',  # Blue (changed from dark red)
-    'tf_gene': '#9673A6',  # Purple for TFs
-    'positive_interaction': '#D79B00',  # Green for positive
-    'negative_interaction': '#B85450',  # Red for negative
-    'induced_edge': '#666666',  # Grey for baseline connections
+    'gene': '#FFE6CC',  # pale orange -- non-core pathway gene
+    'reaction': '#EBD6BC',  # sand -- reaction node
+    'metabolite': '#CACACA',  # pale gray -- non-target metabolite
+    'core_gene': '#FFF2CC',  # pale yellow -- core FFA pathway gene
+    'target_ffa': '#DAE8FC',  # pale blue -- the five measured species
+    'tf_gene': '#E1D5E7',  # pale lilac -- the ten knocked-out TFs
+    'positive_interaction': '#D79B00',  # amber, saturated: positive epistasis
+    'negative_interaction': '#B85450',  # brick, saturated: negative epistasis
+    'induced_edge': '#666666',  # gray for baseline connections
 }
+# Every node gets a thin black outline, which is what makes a pale fill legible against the
+# white page and against the saturated edges crossing it.
+NODE_EDGE_COLOR = 'black'
+NODE_EDGE_WIDTH = 0.6
+
+# Horizontal gap opened between the core-gene column and the metabolite column. The
+# metabolite labels are RIGHT-aligned at their node, so they run leftward across whatever
+# is there; at the old 0.8 they landed on the gene labels (YER015W, YGL055W).
+MET_X_SHIFT = 2.6
 
 # TF genes from experiment (for consistent circle ordering)
 TF_GENES = ['FKH1', 'GCN5', 'MED4', 'OPI1', 'RFX1', 'RGR1', 'RPD3', 'SPT3', 'YAP6', 'TFC7']
@@ -429,7 +442,8 @@ def add_tf_nodes_to_network(G, pos, genome):
 
 
 def extract_significant_interactions(overlap_df, graph_type, interaction_type='digenic',
-                                       topology='edge', genome=None, sign_filter='both'):
+                                       topology='edge', genome=None, sign_filter='both',
+                                       readout=None, significance='p05'):
     """
     Extract significant interactions that have edges/topology in the specified graph type.
 
@@ -437,9 +451,30 @@ def extract_significant_interactions(overlap_df, graph_type, interaction_type='d
     V16: More debugging for edge count mismatches
     V15: Added debugging to track missing interactions
     V13: Added sign_filter parameter to support 'both', 'positive', 'negative'
+
+    readout: keep only one FFA readout (e.g. "Total Titer"). The overlap table pools all
+        six, so the default draws 249 interactions on ten nodes and the circle saturates
+        into a hairball. A figure that claims about titer should draw titer.
+    significance: 'p05' uses the stored per-test p < 0.05; 'fdr_within' recomputes
+        Benjamini-Hochberg over exactly the rows kept after the readout filter, which is
+        the family such a figure actually claims over.
     """
-    # Filter for significant interactions (p < 0.05)
-    sig_df = overlap_df[overlap_df['significant_p05'] == True].copy()
+    if readout is not None:
+        overlap_df = overlap_df[overlap_df['ffa_type'] == readout].copy()
+        if len(overlap_df) == 0:
+            raise ValueError(f"no rows for readout {readout!r}; "
+                             f"have {sorted(set(overlap_df['ffa_type']))}")
+
+    if significance == 'fdr_within':
+        from statsmodels.stats.multitest import multipletests
+        testable = overlap_df['p_value'].notna()
+        overlap_df = overlap_df[testable].copy()
+        reject, _, _, _ = multipletests(overlap_df['p_value'], method='fdr_bh', alpha=0.05)
+        sig_df = overlap_df[reject].copy()
+    elif significance == 'p05':
+        sig_df = overlap_df[overlap_df['significant_p05'] == True].copy()
+    else:
+        raise ValueError(f"unknown significance mode {significance!r}")
 
     if len(sig_df) == 0:
         return [], []
@@ -677,7 +712,8 @@ def _rescale_svg_to_mm(svg_path, width_mm):
 
 def create_multigraph_overlay(G_base, pos_base, tf_nodes, positive_interactions, negative_interactions,
                                induced_edges, tf_gene_edges, graph_type, graph_type_name, tf_pos, met_to_ffa,
-                               interaction_type='digenic', sign='both', topology='edge', genome=None, batch_suffix='', filter_enrichment=False, model='multiplicative'):
+                               interaction_type='digenic', sign='both', topology='edge', genome=None, batch_suffix='', filter_enrichment=False, model='multiplicative',
+                               show_title=True, met_x_shift=MET_X_SHIFT):
     """
     Create publication-quality visualization of FFA network with TF interaction overlays.
 
@@ -694,7 +730,7 @@ def create_multigraph_overlay(G_base, pos_base, tf_nodes, positive_interactions,
     # V14: Improve layout with better interleaving and reversed ordered FFAs
     # V32: Increased vertical spread from 4.0 to 7.0 for better readability
     pos = improve_pathway_layout_with_interleaving(pos_base, G, vertical_spread_multiplier=7.0,
-                                                   met_x_shift=0.8, met_to_ffa=met_to_ffa)
+                                                   met_x_shift=met_x_shift, met_to_ffa=met_to_ffa)
 
     # Merge TF positions
     pos.update(tf_pos)
@@ -787,16 +823,19 @@ def create_multigraph_overlay(G_base, pos_base, tf_nodes, positive_interactions,
     # V11: Make all metabolite nodes same size (100 for both)
     if other_metabolites:
         nx.draw_networkx_nodes(G, pos, nodelist=other_metabolites, node_color=COLORS['metabolite'],
-                              node_size=100, ax=ax, alpha=0.4)
+                              node_size=100, ax=ax, edgecolors=NODE_EDGE_COLOR,
+                              linewidths=NODE_EDGE_WIDTH * 0.6)
 
     if target_ffas:
         nx.draw_networkx_nodes(G, pos, nodelist=target_ffas, node_color=COLORS['target_ffa'],
-                              node_size=100, ax=ax, alpha=0.85)
+                              node_size=100, ax=ax, edgecolors=NODE_EDGE_COLOR,
+                              linewidths=NODE_EDGE_WIDTH)
 
     # V11: Updated color for reaction nodes
     if reaction_nodes:
         nx.draw_networkx_nodes(G, pos, nodelist=reaction_nodes, node_color=COLORS['reaction'],
-                              node_size=80, node_shape='s', ax=ax, alpha=0.6)
+                              node_size=80, node_shape='s', ax=ax,
+                              edgecolors=NODE_EDGE_COLOR, linewidths=NODE_EDGE_WIDTH * 0.6)
 
     # V6: HIDE non-core pathway genes (other_genes) to reduce clutter
     # These were the light green dots that didn't connect to FFA metabolites
@@ -806,12 +845,14 @@ def create_multigraph_overlay(G_base, pos_base, tf_nodes, positive_interactions,
 
     if core_genes:
         nx.draw_networkx_nodes(G, pos, nodelist=core_genes, node_color=COLORS['core_gene'],
-                              node_size=200, ax=ax, alpha=0.9)
+                              node_size=200, ax=ax, edgecolors=NODE_EDGE_COLOR,
+                              linewidths=NODE_EDGE_WIDTH)
 
     # LARGER TF nodes
     if tf_nodes_in_graph:
         nx.draw_networkx_nodes(G, pos, nodelist=tf_nodes_in_graph, node_color=COLORS['tf_gene'],
-                              node_size=400, ax=ax, alpha=0.95)
+                              node_size=400, ax=ax, edgecolors=NODE_EDGE_COLOR,
+                              linewidths=NODE_EDGE_WIDTH)
 
     # V16: BIGGER TF labels (12 instead of 10)
     tf_labels = {}
@@ -937,8 +978,12 @@ def create_multigraph_overlay(G_base, pos_base, tf_nodes, positive_interactions,
     title_line3 = f"{graph_type_name} — {interaction_type_str}{topology_str}"
     title_line4 = counts_str
 
-    ax.set_title(f"{title_line1}\n{title_line2}\n{title_line3}\n{title_line4}",
-                fontsize=14, pad=15, fontweight='bold')
+    # A journal figure carries no in-image title: the caption names the figure, states the
+    # model and the threshold, and gives the counts. Keep the title for the working sweep,
+    # where a directory of near-identical renders is unusable without one.
+    if show_title:
+        ax.set_title(f"{title_line1}\n{title_line2}\n{title_line3}\n{title_line4}",
+                    fontsize=14, pad=15, fontweight='bold')
 
     # V25: Simplified legend - always show both positive and negative since sign is always 'both'
     from matplotlib.lines import Line2D
@@ -1001,7 +1046,10 @@ def create_multigraph_overlay(G_base, pos_base, tf_nodes, positive_interactions,
     return output_path
 
 
-def create_ffa_multigraph_overlays_comprehensive(model='multiplicative', filter_enrichment=False):
+def create_ffa_multigraph_overlays_comprehensive(model='multiplicative', filter_enrichment=False,
+                                                 only_graphs=None, only_interactions=None,
+                                                 readout=None, significance='p05',
+                                                 show_title=True, met_x_shift=MET_X_SHIFT):
     """
     Create comprehensive FFA bipartite network visualizations with multigraph overlays.
 
@@ -1011,6 +1059,10 @@ def create_ffa_multigraph_overlays_comprehensive(model='multiplicative', filter_
     Args:
         model: Model type ('multiplicative', 'additive', 'log_ols', 'glm_log_link')
         filter_enrichment: If True, only create visualizations for significantly enriched graphs (green bars)
+        only_graphs: iterable of graph_type keys to restrict to (None = all seven)
+        only_interactions: iterable of (interaction_type, topology) pairs to restrict to
+            (None = all three). The full sweep is 671 renders totalling 3.9 GB, so a
+            figure build that needs one overlay asks for one overlay.
     """
     print("=" * 80)
     print(f"FFA MULTIGRAPH OVERLAYS COMPREHENSIVE (V25): {model.upper()}")
@@ -1020,6 +1072,14 @@ def create_ffa_multigraph_overlays_comprehensive(model='multiplicative', filter_
 
     # V26: Updated batch suffix naming - _unenriched instead of _all
     batch_suffix = '_enriched' if filter_enrichment else '_unenriched'
+    # The filename has to carry the readout and the significance rule, or two renders that
+    # draw different interaction sets land on the same path and the second silently
+    # replaces the first. That is what made the previously selected overlay unreproducible:
+    # its name said `_enriched` and nothing said which readout or which threshold.
+    if readout is not None:
+        batch_suffix += '_' + str(readout).replace(':', '').replace(' ', '_')
+    if significance != 'p05':
+        batch_suffix += '_' + significance
 
     # Load FFA network and layout
     G_base, pos = load_ffa_network_and_layout()
@@ -1077,6 +1137,19 @@ def create_ffa_multigraph_overlays_comprehensive(model='multiplicative', filter_
         ('trigenic', 'both', 'connected'),
     ]
 
+    if only_graphs is not None:
+        wanted = set(only_graphs)
+        graph_configs = [c for c in graph_configs if c[0] in wanted]
+        missing = wanted - {c[0] for c in graph_configs}
+        if missing:
+            raise ValueError(f"unknown graph_type(s): {sorted(missing)}")
+    if only_interactions is not None:
+        wanted_i = {tuple(p) for p in only_interactions}
+        interaction_configs = [c for c in interaction_configs
+                               if (c[0], c[2]) in wanted_i]
+        if not interaction_configs:
+            raise ValueError(f"no interaction config matches {sorted(wanted_i)}")
+
     output_paths = []
 
     for interaction_type, sign, topology in interaction_configs:
@@ -1129,7 +1202,8 @@ def create_ffa_multigraph_overlays_comprehensive(model='multiplicative', filter_
             # Extract significant interactions
             # V15: Pass correct sign_filter for 'both'
             positive_interactions, negative_interactions = extract_significant_interactions(
-                overlap_df, graph_type, interaction_type, topology, genome, sign_filter=sign
+                overlap_df, graph_type, interaction_type, topology, genome, sign_filter=sign,
+                readout=readout, significance=significance
             )
 
             # V19: REMOVED zero-interaction skip - always create visualization (shows base network)
@@ -1164,7 +1238,8 @@ def create_ffa_multigraph_overlays_comprehensive(model='multiplicative', filter_
                 G, pos, tf_systematic,
                 positive_interactions_sys, negative_interactions_sys,
                 induced_edges, tf_gene_edges, graph_type, display_name, tf_pos, met_to_ffa,
-                interaction_type, sign, topology, genome, batch_suffix, filter_enrichment, model
+                interaction_type, sign, topology, genome, batch_suffix, filter_enrichment, model,
+                show_title=show_title, met_x_shift=met_x_shift
             )
             output_paths.append(output_path)
 
@@ -1194,37 +1269,65 @@ def create_ffa_multigraph_overlays_comprehensive(model='multiplicative', filter_
     return output_paths
 
 
+def _cli():
+    """Render one overlay, or the full sweep.
+
+    NAMING, because the suffix is easy to misread: `_enriched` / `_unenriched` describes
+    whether the GRAPH passed a prefilter on enrichment among significant interactions, NOT
+    whether the interactions drawn on it are significant. Both files draw the same
+    significant interactions. A figure that overlays every significant interaction on a
+    named graph is the `_unenriched` one, and that is the right file for a figure whose
+    claim is about the interactions rather than about the graph.
+    """
+    import argparse
+
+    ap = argparse.ArgumentParser(description=_cli.__doc__)
+    ap.add_argument("--model", default=None,
+                    choices=['multiplicative', 'additive', 'log_ols', 'glm_log_link'])
+    ap.add_argument("--graph", default=None,
+                    help="graph_type key, e.g. genetic, physical, string12_0_database")
+    ap.add_argument("--interaction", default=None,
+                    help="<type>:<topology>, e.g. trigenic:connected")
+    ap.add_argument("--filter-enrichment", action="store_true",
+                    help="restrict to graphs that pass the enrichment prefilter")
+    ap.add_argument("--readout", default=None,
+                    help="draw one FFA readout only, e.g. 'Total Titer'")
+    ap.add_argument("--significance", default="p05", choices=["p05", "fdr_within"],
+                    help="p05 = stored per-test p < 0.05; fdr_within = BH over the rows "
+                         "kept after --readout")
+    ap.add_argument("--no-title", action="store_true",
+                    help="omit the in-image title, for a figure whose caption carries it")
+    ap.add_argument("--met-x-shift", type=float, default=MET_X_SHIFT,
+                    help="horizontal gap between the gene and metabolite columns")
+    args = ap.parse_args()
+
+    if args.model is None:
+        for model in ['multiplicative', 'additive', 'log_ols', 'glm_log_link']:
+            print("\n" + "=" * 80)
+            print(f"PROCESSING {model.upper()} MODEL")
+            print("=" * 80)
+            for flag in (False, True):
+                create_ffa_multigraph_overlays_comprehensive(
+                    model=model, filter_enrichment=flag)
+        return
+
+    only_i = None
+    if args.interaction:
+        itype, topology = args.interaction.split(":")
+        only_i = [(itype, topology)]
+    paths = create_ffa_multigraph_overlays_comprehensive(
+        model=args.model,
+        filter_enrichment=args.filter_enrichment,
+        only_graphs=[args.graph] if args.graph else None,
+        only_interactions=only_i,
+        readout=args.readout,
+        significance=args.significance,
+        show_title=not args.no_title,
+        met_x_shift=args.met_x_shift,
+    )
+    for p in paths:
+        print(f"  {p}")
+
+
 if __name__ == "__main__":
-    # Loop through all four models
-    for model in ['multiplicative', 'additive', 'log_ols', 'glm_log_link']:
-        print("\n" + "="*80)
-        print(f"PROCESSING {model.upper()} MODEL")
-        print("="*80)
-
-        # Set filter_enrichment=False for all interactions (original)
-        print("\n" + "="*80)
-        print(f"CREATING {model.upper()} VISUALIZATIONS WITHOUT ENRICHMENT FILTERING")
-        print("="*80)
-        output_paths_all = create_ffa_multigraph_overlays_comprehensive(
-            model=model,
-            filter_enrichment=False
-        )
-
-        # Set filter_enrichment=True for only significantly enriched interactions (stringent)
-        print("\n" + "="*80)
-        print(f"CREATING {model.upper()} VISUALIZATIONS WITH ENRICHMENT FILTERING (STRINGENT)")
-        print("="*80)
-        output_paths_enriched = create_ffa_multigraph_overlays_comprehensive(
-            model=model,
-            filter_enrichment=True
-        )
-
-        print("\n" + "="*80)
-        print(f"{model.upper()} MODEL DONE!")
-        print("="*80)
-        print(f"Created {len(output_paths_all)} visualizations (all significant interactions)")
-        print(f"Created {len(output_paths_enriched)} visualizations (enriched only)")
-
-    print("\n" + "="*80)
-    print("ALL MODELS COMPLETE!")
-    print("="*80)
+    _cli()

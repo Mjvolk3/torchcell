@@ -92,11 +92,23 @@ MODELS = {
     "glm_log_link": "glm_log_link/glm_log_link_trigenic_interactions.csv",
     "log_ols": "glm_models/log_ols_trigenic_interactions.csv",
 }
+# Display names. The dict keys above are the on-disk result-file keys and stay verbatim;
+# a figure label is prose and follows the paper's typography instead.
+MODEL_LABELS = {
+    "multiplicative": "multiplicative",
+    "additive": "additive",
+    "glm_log_link": "GLM log-link",
+    "log_ols": "log-OLS",
+}
 # The five individually measured free fatty acid species, plus their sum. "Total Titer" is
 # the sum formed per replicate before averaging; it is not a sixth measurement.
 SPECIES = ["C14:0", "C16:0", "C18:0", "C16:1", "C18:1"]
 TOTAL = "Total Titer"
 N_TOP = 8
+# Fraction of extra vertical range reserved above the tallest bar, and number of empty
+# rows reserved above the topmost dot row, so value labels and legends never overlap data.
+LABEL_HEADROOM = 1.30
+LEGEND_ROWS_TOP = 2.6
 
 C_POS = PLOT_PALETTE[0]
 C_NEG = PLOT_PALETTE[1]
@@ -176,6 +188,19 @@ def select_notable(cons):
     return gated.sort_values(["direction", "rank_in_sign"])
 
 
+def stacked_bar_headroom(ax, totals):
+    """Reserve an empty band above the tallest bar for its value label and the legend.
+
+    Every collision in the first version of these panels came from letting matplotlib pick
+    the top of the axes: the tallest bar's value label then landed outside the axes, on top
+    of the title, and any in-axes legend landed on a bar. Reserving the band up front is
+    what makes the placement deterministic instead of data-dependent.
+    """
+    ymax = max(totals) if len(totals) else 1
+    ax.set_ylim(0, ymax * LABEL_HEADROOM)
+    return ymax
+
+
 def panel_consensus(ax, cons):
     """How many models call each interaction, and in which direction."""
     counts = (
@@ -189,9 +214,11 @@ def panel_consensus(ax, cons):
            label="negative $\\tau$")
     ax.bar(x, counts["positive"], bottom=counts["negative"], color=C_POS,
            edgecolor="black", linewidth=0.4, label="positive $\\tau$")
-    for xi, (neg, pos) in enumerate(zip(counts["negative"], counts["positive"])):
-        if neg + pos:
-            ax.text(xi, neg + pos + 1.5, f"{int(neg + pos)}", ha="center", fontsize=5)
+    totals = [int(n + p) for n, p in zip(counts["negative"], counts["positive"])]
+    ymax = stacked_bar_headroom(ax, totals)
+    for xi, total in enumerate(totals):
+        if total:
+            ax.text(xi, total + ymax * 0.02, f"{total}", ha="center", fontsize=5)
     ax.set_xticks(x)
     ax.set_xticklabels([str(i) for i in counts.index])
     ax.set_xlabel("number of models calling FDR < 0.05")
@@ -203,7 +230,8 @@ def panel_consensus(ax, cons):
         f"{n_pos_cons} of them positive",
         fontsize=6, pad=3,
     )
-    ax.legend(loc="upper center", frameon=False, handlelength=1.2, fontsize=5)
+    ax.legend(loc="upper left", frameon=False, handlelength=1.2, fontsize=5,
+              borderaxespad=0.3, labelspacing=0.3)
 
 
 def panel_readouts(ax, per_readout):
@@ -222,32 +250,39 @@ def panel_readouts(ax, per_readout):
            label="negative $\\tau$")
     ax.bar(x, pos, bottom=neg, color=C_POS, edgecolor="black", linewidth=0.4,
            label="positive $\\tau$")
-    for xi, (n, p) in enumerate(zip(neg, pos)):
-        if n + p:
-            ax.text(xi, n + p + 1.6, f"{n + p}", ha="center", fontsize=5)
+    totals = [n + p for n, p in zip(neg, pos)]
+    ymax = stacked_bar_headroom(ax, totals)
+    for xi, total in enumerate(totals):
+        if total:
+            ax.text(xi, total + ymax * 0.02, f"{total}", ha="center", fontsize=5)
     ax.set_xticks(x)
     ax.set_xticklabels(["Total\ntiter"] + [s.replace(":", ":\n") for s in SPECIES])
-    ax.set_ylabel("consensus interactions (all four models)")
+    ax.set_ylabel("consensus interactions")
     n_pos_any = sum(v["cons_pos"] for v in per_readout.values())
     ax.set_title(
         f"{n_pos_any} positive consensus interactions\n"
         "exist, none on the summed total",
         fontsize=6, pad=3,
     )
-    # Parked over the C16:1 column, the only place with headroom.
-    ax.legend(loc="center", bbox_to_anchor=(0.80, 0.42), frameon=False,
-              handlelength=1.2, fontsize=5)
+    # Upper right: with the reserved headroom the tallest column (Total titer) is on the
+    # left, so the top-right band is the one place guaranteed clear at every readout count.
+    ax.legend(loc="upper right", frameon=False, handlelength=1.2, fontsize=5,
+              borderaxespad=0.3, labelspacing=0.3)
 
 
 def panel_top(ax, notable):
     """The selected interactions, with every model's tau shown for each."""
     sel = notable[notable["notable"]].sort_values("tau_multiplicative")
     y = np.arange(len(sel))
-    marks = [("multiplicative", "o"), ("additive", "s"), ("glm_log_link", "^"),
-             ("log_ols", "D")]
-    for (name, mk), color in zip(marks, [PLOT_PALETTE[i] for i in (0, 1, 2, 4)]):
-        ax.scatter(sel[f"tau_{name}"], y, s=9, marker=mk, facecolor=color,
-                   edgecolor="black", linewidth=0.25, label=name, zorder=3)
+    # Drawn largest first so the smaller markers stay visible where two models agree to
+    # within a marker width, which on these eight interactions is most of them.
+    marks = [("glm_log_link", "^", 16.0), ("multiplicative", "o", 11.0),
+             ("additive", "s", 8.0), ("log_ols", "D", 5.0)]
+    colors = {"glm_log_link": PLOT_PALETTE[2], "multiplicative": PLOT_PALETTE[0],
+              "additive": PLOT_PALETTE[1], "log_ols": PLOT_PALETTE[4]}
+    for name, mk, size in marks:
+        ax.scatter(sel[f"tau_{name}"], y, s=size, marker=mk, facecolor=colors[name],
+                   edgecolor="black", linewidth=0.25, label=MODEL_LABELS[name], zorder=3)
     for yi, (_, row) in enumerate(sel.iterrows()):
         vals = [row[f"tau_{m}"] for m in MODELS]
         ax.plot([min(vals), max(vals)], [yi, yi], color=C_GRAY, linewidth=0.5, zorder=2)
@@ -260,7 +295,13 @@ def panel_top(ax, notable):
         "each negative and sign-concordant",
         fontsize=6, pad=3,
     )
-    ax.legend(loc="lower right", frameon=False, handlelength=1.0, fontsize=5)
+    # Two empty rows above the topmost interaction hold the legend. Every horizontal
+    # placement collides with something here: the markers span the left, and the null
+    # line at tau = 0 sits at the right. Reserving rows is the only placement that cannot.
+    ax.set_ylim(-0.7, len(sel) - 1 + LEGEND_ROWS_TOP)
+    ax.legend(loc="upper left", frameon=False, handlelength=1.0, fontsize=5, ncol=2,
+              borderaxespad=0.3, labelspacing=0.3, columnspacing=0.8,
+              handletextpad=0.3)
 
 
 def main():

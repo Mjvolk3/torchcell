@@ -258,11 +258,20 @@ experiments/007-kuzmin-tm/results/fba_screen_medium/triples_matched_*.parquet
 # 008-xue-ffa network overlays: 762 renders, 3.6 GB, every one regenerable by
 # experiments/008-xue-ffa/scripts/create_ffa_multigraph_overlays.py and
 # create_ffa_species_specific_overlays.py. Committing them would permanently enlarge every
-# clone. Only the SELECTED panel set is tracked: Genetic_Interactions_connected_enriched,
-# which is the variant carrying real edges (17 positive, 28 negative over 79 interactions)
-# where TFLink and most others render empty. Selection rule:
-# experiments/008-xue-ffa/scripts/notable_interaction_selection.py
+# clone, so only the ONE figure the perspective document uses is tracked:
+#
+#   multiplicative_ffa_multigraph_Genetic_Interactions_connected_unenriched_Total_Titer_fdr_within
+#
+# Rebuild it with:
+#   python experiments/008-xue-ffa/scripts/create_ffa_multigraph_overlays.py \
+#       --model multiplicative --graph genetic --interaction trigenic:connected \
+#       --readout "Total Titer" --significance fdr_within --no-title
+#
+# The previously tracked `..._connected_enriched` renders are NOT kept. They were written
+# before the degrees-of-freedom fix, they pooled all six readouts, and their `_enriched`
+# suffix records only that the GRAPH passed an enrichment prefilter -- a prefilter that the
+# corrected numbers no longer pass, so nothing regenerates them.
 notes/assets/images/008-xue-ffa/ffa_multigraph_overlays/**/*.png
 notes/assets/images/008-xue-ffa/ffa_multigraph_overlays/**/*.svg
-!notes/assets/images/008-xue-ffa/ffa_multigraph_overlays/**/*Genetic_Interactions_connected_enriched.png
-!notes/assets/images/008-xue-ffa/ffa_multigraph_overlays/**/*Genetic_Interactions_connected_enriched.svg
+!notes/assets/images/008-xue-ffa/ffa_multigraph_overlays/**/*_Total_Titer_fdr_within.png
+!notes/assets/images/008-xue-ffa/ffa_multigraph_overlays/**/*_Total_Titer_fdr_within.svg

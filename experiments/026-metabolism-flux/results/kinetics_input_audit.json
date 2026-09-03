@@ -1,0 +1,13 @@
+{
+  "n_catalytic_units": 3728,
+  "n_gem_genes": 1161,
+  "genes_with_sequence": 1161,
+  "genes_without_sequence": 0,
+  "units_all_genes_have_sequence": 3728,
+  "units_with_any_substrate_smiles": 3262,
+  "units_ready_for_seq_plus_smiles_predictor": 3262,
+  "coverage_ready_frac": 0.875,
+  "oed_measured_coverage_frac": 0.03969957081545064,
+  "predictor_input_rows": 6829,
+  "example_unresolved_genes": []
+}

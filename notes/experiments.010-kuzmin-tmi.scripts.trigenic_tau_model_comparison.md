@@ -97,8 +97,15 @@ margin is about half the one the figure shows.
 010 checkpoints, measured on the **010 build**. `dango_vals = [0.36759, 0.36708,
 0.36637]` are max-over-epochs validation Pearson of DANGO runs in the
 **006 project**, measured on the **006 build**. Two of the three match wandb runs
-`014mprap` and `x3savllr` to five decimals; the third, 0.36637, did not match any
-006 DANGO run and its nearest siblings are 0.36583 and 0.36518.
+`014mprap`, `x3savllr` and `6q08iign` to five decimals. All three are STRING 9.1
+runs on the 006 build.
+
+All three source runs are wall-clock truncations in state failed or crashed, and
+in each the best epoch came early and then degraded: `014mprap` peaked at 0.36759
+on epoch 98 and ended epoch 999 at 0.29738, `x3savllr` peaked on epoch 109, and
+`6q08iign` peaked at 0.36637 on epoch 121 and stopped at epoch 448 with 0.35466.
+So the DANGO bar is the peak of a curve that was falling, from runs that did not
+finish.
 
 The two builds are not the same data. Their Cypher queries differ, verified by
 diff: 006 restricts the Kuzmin2020 arm to `perturbation_type = 'deletion'` and
@@ -167,11 +174,18 @@ quoted in the figure is a point on a curve that was never saved as a checkpoint
 and cannot be re-evaluated. The 010 transformer saves both a best-MSE and a
 best-Pearson checkpoint.
 
-**Three of the four best DANGO 006 runs are in state failed or crashed.** They hit
+**All three DANGO runs behind the figure are in state failed or crashed.** They hit
 a 48-hour wall clock, so they are truncated rather than converged. This is the one
 caveat that runs against our claim: DANGO may simply be undertrained in our hands,
 which would also help explain why our reproduction lands about 0.10 below the
 number the preprint reports.
+
+**Dataset choice moves the DANGO number by more than our margin.** DANGO scores
+0.4268 on the 005 build, 91,050 records of Kuzmin2018 only, against 0.3676 on the
+332,313-record 006 build. That is a swing of about 0.059 from changing the dataset
+alone, larger than the +0.051 we win by on matched 006 data. Which build a model
+is scored on is therefore the dominant term in the figure's headline gap, not
+model quality.
 
 A fourth thing worth knowing: on the 006 build, `hetero_cell_bipartite_dango_gi`
 essentially ties DANGO at 0.3691 against 0.3676, so the gap is specific to the

@@ -79,10 +79,22 @@ arrangements are settled. Once a figure is arranged by hand in draw.io, replace 
   The five `.drawio` files were verified structurally instead: the XML parses and every
   embedded payload decodes back to the panel SVG it came from. Open them in the VS Code
   draw.io extension to view.
-- **The network overlay is 131.6 x 170 mm**, capped by the print box, which puts its labels
-  near 4.4 pt against Nature's 5 pt floor. Reaching 5 pt needs about 190 mm of height. The
-  ways out are a landscape re-layout, dropping the compartment suffixes from the ~33
-  metabolite labels, or accepting it as a full-page supplementary figure.
+- **The network overlay needs a layout pass, and it is the only figure that does.** Three
+  separate problems, all in the same place and all pre-existing:
+  1. It is 131.6 x 170 mm, capped by the print box, which puts its labels near 4.4 pt
+     against Nature's 5 pt floor. Reaching 5 pt needs about 190 mm of height, which the
+     page does not have.
+  2. The metabolite labels are right-aligned at their node, so they run leftward **across
+     the reaction column**. Raising `MET_X_SHIFT` from 0.8 to 2.6 cleared them off the gene
+     labels; it did not clear them off the reactions, because the reactions sit between the
+     two columns.
+  3. At 131.6 mm in a 182 mm text block it is neither full width nor column width, so it
+     leaves a ragged margin.
+
+  The ways out are a landscape re-layout, dropping the `[peroxisome]` / `[ER membrane]` /
+  `[lipid particle]` suffixes from the ~33 metabolite labels (which is what drives both the
+  width and the height), or accepting it as a full-page supplementary figure. Deciding
+  between them is a design call, not a bug fix.
 - **`notes-tex/common/Makefile.common`'s `plots` rule oversizes every panel by 1.389.** It
   calls `rsvg-convert` directly, and rsvg reads a unitless SVG length as a pixel and writes
   one PDF point per pixel, so a panel written in draw.io's 100-units-per-inch canvas arrives

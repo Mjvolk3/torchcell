@@ -2258,6 +2258,355 @@
       },
       "wandb_run_id": "adcfdc1w",
       "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/adcfdc1w"
+    },
+    {
+      "arm": "pooled",
+      "seed": 303,
+      "best": {
+        "val_betaxanthin": 0.0708196352504629,
+        "val_mulleder19": -0.005848935485695949,
+        "epoch": 2
+      },
+      "final": {
+        "epoch": 29,
+        "train_loss": 2.000177918058453,
+        "val_betaxanthin": 0.006403036769287144,
+        "nonfinite_betaxanthin": 0.0,
+        "n_val_betaxanthin": 341,
+        "val_mulleder19": 0.001015590569835541,
+        "nonfinite_mulleder19": 0.0,
+        "n_val_mulleder19": 333
+      },
+      "history": [
+        {
+          "epoch": 0,
+          "train_loss": 2.0296754511919888,
+          "val_betaxanthin": 0.06048506791660789,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.008478531768061756,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 1,
+          "train_loss": 2.013027122526458,
+          "val_betaxanthin": 0.044227087907294765,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.005968096933654778,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 2,
+          "train_loss": 2.0145238601800166,
+          "val_betaxanthin": 0.0708196352504629,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.005848935485695949,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 3,
+          "train_loss": 2.0080658667015308,
+          "val_betaxanthin": -0.009108096737600591,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.010976955588191983,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 4,
+          "train_loss": 1.9989159901936848,
+          "val_betaxanthin": 0.01516177780526478,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.004472271470441498,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 5,
+          "train_loss": 2.0029571814970537,
+          "val_betaxanthin": 0.018195738703118806,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.0026946583151509465,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 6,
+          "train_loss": 1.9975840178402988,
+          "val_betaxanthin": 0.015045073073240513,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.0023571565302648286,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 7,
+          "train_loss": 2.003720001740889,
+          "val_betaxanthin": 0.011191452664640989,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.0018922557276033342,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 8,
+          "train_loss": 1.9998481490395286,
+          "val_betaxanthin": 0.00929110894687538,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.0018983192835044249,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 9,
+          "train_loss": 1.999116265412533,
+          "val_betaxanthin": 0.005783012511639842,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.0006096697640242373,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 10,
+          "train_loss": 1.9996807033365422,
+          "val_betaxanthin": 0.00787893729150878,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.00021526521386236417,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 11,
+          "train_loss": 2.0061658295718106,
+          "val_betaxanthin": 0.006483822134129089,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.0007704939055088594,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 12,
+          "train_loss": 1.9989388061292244,
+          "val_betaxanthin": 0.008030441795254062,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": 0.0006103885390768622,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 13,
+          "train_loss": 2.004259878938848,
+          "val_betaxanthin": 0.012098225546305727,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.0010218179858083251,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 14,
+          "train_loss": 2.000766468770576,
+          "val_betaxanthin": 0.017592818758013502,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": 0.0004368069635312907,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 15,
+          "train_loss": 2.00521212274378,
+          "val_betaxanthin": 0.013852806404343788,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": 0.000600832164130975,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 16,
+          "train_loss": 2.0023538560578316,
+          "val_betaxanthin": 0.013215397329265636,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": 0.00021006028953244246,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 17,
+          "train_loss": 1.9998811627879287,
+          "val_betaxanthin": 0.014646126388985933,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": 0.0004866763948396767,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 18,
+          "train_loss": 1.996066183754892,
+          "val_betaxanthin": 0.015497870488945438,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.0036574152216868453,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 19,
+          "train_loss": 2.002563057523785,
+          "val_betaxanthin": 0.01758903493888602,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.0033192548295109515,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 20,
+          "train_loss": 1.9966598171176333,
+          "val_betaxanthin": 0.014992665545168092,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.002728348163861625,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 21,
+          "train_loss": 1.9970773566852917,
+          "val_betaxanthin": 0.014276027011452178,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.0030821704900533993,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 22,
+          "train_loss": 1.9994214881550183,
+          "val_betaxanthin": 0.011776742575393573,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.0037661698881933307,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 23,
+          "train_loss": 1.9987500869866572,
+          "val_betaxanthin": 0.010179607161558205,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.003291366669814963,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 24,
+          "train_loss": 1.9983396385655259,
+          "val_betaxanthin": 0.0068010542190529355,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.0028367064852868303,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 25,
+          "train_loss": 1.9973793282653347,
+          "val_betaxanthin": 0.006924835093781215,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.0029862763863641637,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 26,
+          "train_loss": 2.001166155844024,
+          "val_betaxanthin": 0.00548005399663376,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.0025271195741467653,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 27,
+          "train_loss": 2.0034362727945503,
+          "val_betaxanthin": 0.004308296216496659,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.0019515882568701389,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 28,
+          "train_loss": 1.9990665298519712,
+          "val_betaxanthin": 0.0028849764851708866,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": -0.0011347258174202975,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        },
+        {
+          "epoch": 29,
+          "train_loss": 2.000177918058453,
+          "val_betaxanthin": 0.006403036769287144,
+          "nonfinite_betaxanthin": 0.0,
+          "n_val_betaxanthin": 341,
+          "val_mulleder19": 0.001015590569835541,
+          "nonfinite_mulleder19": 0.0,
+          "n_val_mulleder19": 333
+        }
+      ],
+      "flux_meta": {},
+      "n_parameters": {
+        "gene_embedding": 211424,
+        "embedding_preprocessor": 0,
+        "cls_token": 32,
+        "transformer_layers": 25408,
+        "perturbation_transform": 12704,
+        "perturbation_head": 2113,
+        "betaxanthin_head": 3137,
+        "mulleder19_head": 3731,
+        "total": 258549
+      },
+      "wall_time_s": 1530.7796659469604,
+      "cell": {
+        "label": "null-pooled",
+        "arm": "pooled",
+        "seed": 303,
+        "epochs": 30,
+        "hidden": 32,
+        "layers": 2,
+        "batch_size": 128,
+        "num_workers": 3,
+        "lr": 0.001,
+        "weight_decay": 0.0001,
+        "permute_train_targets": true
+      },
+      "wandb_run_id": "n994wqto",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/n994wqto"
     }
   ]
 }

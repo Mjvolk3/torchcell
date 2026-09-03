@@ -93,6 +93,63 @@ and it removes the dependency on a published ranking we do not hold.
 The macromolecule row is the reason a coverage gate has to distinguish "missing but
 obtainable" from "missing and unobtainable". Filed as issue #309.
 
+### SMILES provenance has to be tiered, not a single column
+
+A SMILES read out of a database is a fact. A SMILES assembled from a name is an
+assumption, and the two must never share a column. Three tiers:
+
+| tier | meaning | source |
+| --- | --- | --- |
+| `sourced` | read from a database keyed by name or id | `smilesDB.tsv`, MetaNetX `chem_prop.tsv` |
+| `derived` | **assumed.** constructed from the metabolite name plus a resolved sibling | acyl-chain substitution, see below |
+| `unrepresentable` | not a small molecule; no SMILES exists in principle | `generic protein`, cytochrome c, ACP- and tRNA-conjugates |
+
+`unrepresentable` is a declaration, not a gap. It must reach the coverage gate (issue #309)
+as a permanent incompatibility so those units are never silently filled with
+`FALLBACK_KCAT_PER_S`.
+
+### Deriving the lipid SMILES is tractable, and here is why
+
+Two measurements make the 68 lipid names a bounded problem rather than an open one:
+
+- **Only four acyl chains appear across every blocked lipid**: `16:0`, `16:1`, `18:0`,
+  `18:1`, with counts 28, 64, 11 and 53. Those are palmitoyl, palmitoleoyl, stearoyl and
+  oleoyl, the standard yeast set.
+- **Several head groups already have RESOLVED siblings** carrying other chain
+  combinations: diglyceride 44, phosphatidyl-L-serine 30, phosphatidylcholine 20,
+  phosphatidylethanolamine 6, 1-acyl-sn-glycerol 3-phosphate 5.
+
+So the missing combination is obtained by substituting an acyl chain into a real sibling
+structure rather than by hand-writing a template. `rdkit` installs cleanly on this Python
+(2026.3.5, cp313 wheel) and is what makes the substitution structural instead of textual.
+
+**The assumption being made, stated once:** the name gives chain length and degree of
+unsaturation but NOT double-bond position or geometry. `16:1` and `18:1` are taken as
+Δ9-cis, which is what yeast predominantly makes. That is why these rows are `derived`.
+
+Head groups with zero resolved siblings (phosphatidylglycerol, monolysocardiolipin,
+CDP-diacylglycerol) need a from-scratch template and are a heavier assumption. Do those
+second, and separately.
+
+### Predictor readiness, measured 2026.09.03
+
+All six cloned to `$DATA_ROOT/data/enzyme_kinetics/predictors/` (6.2 GB total).
+
+| predictor | size | ships weights | hardcodes cuda | notes |
+| --- | --- | --- | --- | --- |
+| Boost_KM (`KM_prediction`) | 5.7 GB | 18 files | **0** | CPU-clean as-is; the obvious first one |
+| UniKP | 68 MB | 2 files | 2 files | clean deps; also pulls ProtT5 from HuggingFace at runtime |
+| TurNuP (`kcat_prediction`) | 11 MB | none | -- | weights need a separate download |
+| DLKcat | 158 MB | none | -- | no requirements file; weights need a download |
+| EITLEM-Kinetics | 133 MB | none | -- | weights need a download |
+| DeepEnzyme | 181 MB | 2 files | 4 files | requires `apex` and pinned old numpy/rdkit; hardest |
+
+**CPU is the right call and the repos support it.** Boost_KM has no CUDA references at
+all. UniKP and DeepEnzyme touch `.cuda()` in a handful of files, which is a small patch to
+a device argument. Running on CPU means all six can be brought up in parallel without
+competing with a GPU sweep, and inference on 7,456 pairs is small enough that CPU is not
+a constraint.
+
 ### Open, and deliberately not decided here
 
 Which predictor runs first. Wu reports no accuracy numbers for any of the eight, the

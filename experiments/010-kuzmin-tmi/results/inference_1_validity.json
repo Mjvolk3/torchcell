@@ -1,0 +1,27 @@
+{
+  "n_triples": 4370595,
+  "n_genes": 526,
+  "unresolvable_genes": [],
+  "renamed_genes": [],
+  "index_space_check": {
+    "genome_n_genes": 6607.0,
+    "genome_missing_genes": 0.0,
+    "genome_pearson": 0.9999982835197099,
+    "genome_max_abs_diff": 0.00031899506740404315,
+    "build_n_genes": 6579.0,
+    "build_missing_genes": 0.0,
+    "build_refused_by_guard": "cell graph has 6579 gene nodes but this model was built for gene_num=6607"
+  },
+  "label_sd": 0.06326354851937385,
+  "calibration": {
+    "test_pred_sd": 0.034961388362938335,
+    "test_pred_min": -0.575901941668518,
+    "test_pred_max": 0.6304515842640999,
+    "inference_1_pred_sd": 0.013906865196608335,
+    "inference_1_pred_min": -0.3468424479166667,
+    "inference_1_pred_max": 0.6897786458333334,
+    "most_negative_in_test_sd": -9.920728671185879,
+    "most_positive_in_test_sd": 19.729726939692988,
+    "frac_beyond_test_range": 1.6016125950814478e-06
+  }
+}

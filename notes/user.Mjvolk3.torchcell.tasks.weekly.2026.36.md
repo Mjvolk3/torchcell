@@ -13,3 +13,10 @@ created: 1788221146558
 - [x] Figure re-composed per comments: the gene-conversion tract sat exactly ON marker bm7 while the caption said BETWEEN markers, moved into the inter-marker gap; panel d redrawn as a square gridded matrix with "each dot is one significant (gene, marker) pair: a row of the QTL table" and tied to Sec 1.1 in caption and prose
 - [x] Fixed `zotero_comments.py`, which broke when `zotero_publish.py` generalized past notes-tex (`DOCS_COLLECTION` gone); it now walks the repo-path collection route, so it also works for `paper/nature-biotech` [[notes-tex.common.zotero_comments]]
 - [x] Checked the mirrored Boocock text for an aneuploidy/CNV screen before answering the reviewer's "do the papers estimate these": no hits for aneuploid/ploid/copy number/disom, so the doc says unmodeled error term for that design and makes no claim about unmirrored Bloom 2013
+
+## 2026.09.03
+
+- [x] SI section on the nine graphs that regularize CGT attention (experiment 010) + STRING-release drift + DANGO replication by release: new Supplementary Note `note:graphs`, two composed SI figures, three script-generated tables. Scripts and notes: [[experiments.010-kuzmin-tmi.scripts.graph_statistics]], [[experiments.010-kuzmin-tmi.scripts.compose_graph_si_figures]], [[experiments.005-kuzmin2018-tmi.scripts.dango_string_version_sweep]]
+- [x] Found the SI graphs table was stale (regulatory 3,632/9,753 in the scratch-note transcription vs 6,582/39,636 in the build every 010 run logs at init); the table is now emitted by `graph_statistics.py` and the inline copy is gone
+- [x] DANGO STRING 9.1/11.0/12.0 sweep now pulled from wandb (19 runs, best val Pearson 0.415 to 0.427, no release or schedule separates) instead of chart-read values
+- [ ] References to add to the paper library when curating: STRING (Szklarczyk), TFLink (Liska 2022), SGD, DANGO (Zhang 2021); the Note currently cites only Kuzmin 2018

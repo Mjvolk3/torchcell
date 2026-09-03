@@ -1,0 +1,37 @@
+%% SOURCE: experiments/010-kuzmin-tmi/scripts/graph_statistics.py -- AUTO-GENERATED, do not hand-edit; rerun the script.
+%% Node = gene with at least one edge; Edges = native count (directed for regulatory and
+%% TFLink); Pairs = distinct unordered gene pairs; Unique = pairs found in no other graph.
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Gene--gene graphs that serve as attention priors in the trigenic experiment,
+over the shared S288C vocabulary of 6,607 genes. \textbf{Physical} and \textbf{Regulatory}
+are the curated SGD graphs; TFLink and the six STRING~v12.0 evidence channels add the
+remaining rows. \emph{Edges} is the native count (directed for Regulatory and TFLink),
+\emph{Pairs} the distinct unordered gene pairs used for overlap, \emph{Unique} the share of
+those pairs found in no other graph. The nine graphs together cover
+1,515,940 distinct gene pairs; relative to the SGD-native baseline (Physical\,$+$\,Regulatory),
+the sum over graphs is 3.39$\times$ in nodes and
+13.63$\times$ in edges.
+(STRING~v9.1 and v11.0, used in the DANGO replication, are in \supptab{tab:string-versions}.)}
+\label{tab:databases}
+\begin{tabular}{@{}l r r r r r@{}}
+\toprule
+\textbf{Graph} & \textbf{Nodes} & \textbf{Edges} & \textbf{Pairs} & \textbf{Mean degree} & \textbf{Unique}\\
+\midrule
+Physical (SGD) & 5,721 & 139,463 & 137,604 & 48.1 & 23\%\\
+Regulatory (SGD) & 6,582 & 39,636 & 39,546 & 12.0 & 51\%\\
+TFLink & 5,074 & 200,801 & 199,551 & 78.7 & 80\%\\
+STRING neighborhood & 2,191 & 146,713 & 146,713 & 133.9 & 10\%\\
+STRING fusion & 3,081 & 11,787 & 11,787 & 7.7 & 14\%\\
+STRING co-occurrence & 2,601 & 11,085 & 11,085 & 8.5 & 20\%\\
+STRING co-expression & 6,474 & 996,199 & 996,199 & 307.8 & 35\%\\
+STRING experimental & 6,016 & 822,094 & 822,094 & 273.3 & 25\%\\
+STRING database & 4,027 & 72,617 & 72,617 & 36.1 & 8\%\\
+\midrule
+Sum (all graphs) & 41,767 & 2,440,395 & 2,437,196 & & \\
+Union of pairs & & & 1,515,940 & & \\
+Sum (Physical, Regulatory) & 12,303 & 179,099 & 177,150 & & \\
+\bottomrule
+\end{tabular}
+\end{table}

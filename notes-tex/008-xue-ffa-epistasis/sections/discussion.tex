@@ -1,0 +1,81 @@
+%% notes-tex/008-xue-ffa-epistasis/sections/discussion.tex
+%% [[experiments.008-xue-ffa.perspective-epistasis-in-metabolic-engineering]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/008-xue-ffa-epistasis/sections/discussion.tex
+%%
+%% SOURCE: hand-authored. Numbers restated here are carried from the Results and are
+%% produced by the scripts named at the top of sections/results.tex.
+
+\section{Discussion\secstatus{todo}}
+
+The design space of a strain engineering campaign is usually described as too large to
+search. Ten deletable targets already give 1{,}023 combinations, and a genome-scale target
+list gives more combinations than there are strains anyone will ever build. That framing
+puts the difficulty in the size of the space and implies that the remedy is throughput or a
+better search.
+
+The measurements here point at a different difficulty, which throughput does not fix. In a
+space small enough to enumerate completely, with every combination and every construction
+order measured, the best strain is still unreachable by the procedure that campaigns
+actually use. The obstacle is not that the good combination is hard to find among many. It
+is that the good combination sits behind an intermediate that a screening rule would throw
+away. Of 51 improvements, 2 are reachable. Adding throughput multiplies the number of routes
+a campaign can try; it does not make a route monotone.
+
+Three consequences follow for how a campaign is designed.
+
+\notesec{Retain losses} A rule that keeps only strains better than their parent discards the
+approach to almost every improvement in this design. Carrying a fixed number of
+non-improving intermediates forward per round costs build capacity in proportion, and it is
+the only change to the procedure itself that addresses the reachability problem. How many to
+carry is set by the depth of the valleys, which here have a median of 31\% of the base
+titer.
+
+\notesec{Build combinations, not sequences} If the intermediates are uninformative about the
+endpoint, then building them is a cost with no return, and a campaign is better served by
+constructing the combinations it wants directly. That is a statement about what multiplexed
+editing buys: not speed at reaching a known target, but access to targets that no sequence
+of single edits reaches.
+
+\notesec{Predict the combination, not the parts} A model that predicts a combination's
+phenotype from its parts' phenotypes fails on exactly the combinations that matter here,
+because those are the combinations where the parts do not compose. A useful predictor has to
+be trained on combinations, and the enrichment result says the existing interaction graphs
+will not stand in for that training data: across 28 graph-by-model tests, the interacting
+triples are never enriched for connectivity in any graph, and are significantly depleted in
+five. Whatever determines which combinations interact is not recorded in physical,
+regulatory, genetic, TFLink or STRING connectivity among these ten genes.
+
+\subsection*{What this design can and cannot support}
+
+The design is complete, which is what licenses the reachability claim, and it is small, which
+bounds it. Ten transcription factors in one producing background, one medium and one
+harvest time do not establish a rate at which improvements are unreachable in general. They
+establish that the rate can be 2 in 51 in a real production campaign's target set, which is
+enough to make the assumption of composability something that has to be checked rather than
+assumed.
+
+Two features of the system may not transfer. The deleted genes are transcription factors
+rather than pathway enzymes, so a deletion acts on many pathway genes at once and the
+interactions may be denser than a comparable enzyme panel would give. And the phenotype is a
+titer under production conditions rather than growth rate, so the deletions are under no
+selection to be individually tolerable. Both cut toward more interaction here than a reader
+should expect elsewhere. A single-gene-per-step campaign on enzymes may well find a monotone
+route more often. What the design shows is that the question has an answer, and that the
+answer is measurable rather than assumable.
+
+\subsection*{What would settle it}
+
+Answering the general question needs more datasets of the same shape, and the shape is
+restrictive. A partial combinatorial screen cannot support a reachability claim at all,
+because an unbuilt intermediate is indistinguishable from a bad one. The requirement is a
+design in which every sub-combination of every reported combination was itself built and
+measured, in the same background and the same batch. Screens that report only the top
+performers, or only the combinations that a campaign happened to reach, do not qualify no
+matter how many strains they contain.
+
+The complementary route is theory. A production phenotype is the output of a metabolic
+network under constraints, and a network model that predicts where in a pathway deletions
+compose and where they do not would turn the reachability question into a calculation
+performed before the strains are built. That model does not exist yet for titer, and the
+enrichment result above says it will not be recovered from connectivity alone. Building it
+is the direction this line of work points.

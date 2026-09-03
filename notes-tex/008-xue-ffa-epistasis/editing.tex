@@ -1,0 +1,83 @@
+%% notes-tex/008-xue-ffa-epistasis/editing.tex
+%% [[experiments.008-xue-ffa.perspective-epistasis-in-metabolic-engineering]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/008-xue-ffa-epistasis/editing.tex
+%%
+%% INTENDED AS A SEPARATE PUBLICATION. This is not a working note that happens to be
+%% typeset. It is the draft of a standalone perspective, to be submitted after the Xue
+%% free-fatty-acid study it re-analyzes is published, and it therefore tracks the
+%% Nature Biotechnology manuscript's house style rather than the tcdoc notes style:
+%% same sn-jnl class, same sn-nature bibliography style, same print-approximate editing
+%% geometry, same status stoplight. Keep it that way. When a convention changes in
+%% paper/nature-biotech, change it here too.
+%%
+%% Build:  make            -> editing.pdf  (drafting view; status chips)
+%%         make plots      -> convert the true-size panel SVGs into figures/*.pdf
+%%         make check      -> formatting / status gate
+%%
+%% Every number in the body comes from a committed script under
+%% experiments/008-xue-ffa/ and is marked with a `%% SOURCE:` comment.
+
+\documentclass[pdflatex,sn-nature,Numbered]{sn-jnl}
+\input{preamble}
+
+%% Front-matter font tweaks, matching paper/nature-biotech/editing.tex: abstract and
+%% keywords at body size instead of the class's 9 bp / 8 bp, affiliations at 7.5 bp.
+\makeatletter
+\def\abstractfont{\reset@font\fontsize{10bp}{12bp}\selectfont\leftskip=24pt\rightskip=24pt\parfillskip=0pt plus 1fil}%
+\def\keywordfont{\reset@font\fontsize{10bp}{12bp}\selectfont\leftskip=24pt\rightskip=24pt plus0.5fill}%
+\def\addressfont{\reset@font\fontsize{7.5bp}{9.5bp}\selectfont\titraggedcenter}%
+\makeatother
+
+%% Print-approximate margins: a 182 mm text block on A4, so a 179 mm figure sits flush at
+%% 1:1 and a panel drawn at 6 pt prints at 6 pt. twoside=false keeps the margins from
+%% alternating, which the class would otherwise do.
+\geometry{a4paper,left=14mm,right=14mm,top=15mm,bottom=22mm,twoside=false,bindingoffset=0mm,marginparwidth=0pt,marginparsep=0pt}
+
+%% Editing-only status stoplight, same notation as the manuscript and CLAUDE.md:
+%%   todo  = red X      -- not done; coding agents may edit freely
+%%   tent  = amber box  -- author-reviewed, keep stable; discuss before editing
+%%   final = green tick -- publication-ready
+\definecolor{stgrn}{HTML}{43A047}
+\definecolor{styel}{HTML}{E0A020}
+\definecolor{stred}{HTML}{E53935}
+\newcommand{\tcstfinal}{{\normalfont\footnotesize\textcolor{stgrn}{\ding{51}}}}
+\newcommand{\tcsttent}{{\normalfont\footnotesize\textcolor{styel}{\ding{110}}}}
+\newcommand{\tcsttodo}{{\normalfont\footnotesize\textcolor{stred}{\ding{55}}}}
+\newcommand{\status}[1]{\csname tcst#1\endcsname}
+\newcommand{\secstatus}[1]{\ \status{#1}}
+\newcommand{\cb}[1]{\ {\normalfont\small\color{gray}(#1)}}
+
+%% Starred subsections are invisible to the TOC by default, and Nature house style makes
+%% every Methods subhead a starred subsection, so the contents page would collapse to the
+%% four numbered sections. Intercept the star and add the line back.
+\RequirePackage{tocloft}
+\setlength{\cftbeforesecskip}{1.2pt}
+\setlength{\cftbeforesubsecskip}{0.6pt}
+\renewcommand{\cftsecfont}{\normalsize\bfseries}
+\renewcommand{\cftsecpagefont}{\normalsize\bfseries}
+\renewcommand{\cftsubsecfont}{\small}
+\renewcommand{\cftsubsecpagefont}{\small}
+\makeatletter
+\let\tc@orig@subsection\subsection
+\renewcommand{\subsection}{\@ifstar\tc@star@subsection\tc@orig@subsection}
+\newcommand{\tc@star@subsection}[1]{%
+  \tc@orig@subsection*{#1}%
+  \phantomsection\addcontentsline{toc}{subsection}{#1}}
+\makeatother
+\newcommand{\papertoc}{%
+  \begingroup
+  \hypersetup{linkcolor=black}%
+  {\scriptsize\color{gray}%
+   \status{final}\,ready \enspace \status{tent}\,author-reviewed, keep stable
+   \enspace \status{todo}\,not done, agents may edit freely\par}%
+  \vspace{2pt}%
+  {\small\tableofcontents}%
+  \endgroup}
+
+%% Drafting view: block paragraphs, no first-line indent.
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5\baselineskip plus 0.1\baselineskip}
+
+\begin{document}
+\input{content}
+\end{document}

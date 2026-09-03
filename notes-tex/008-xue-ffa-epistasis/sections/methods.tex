@@ -1,0 +1,108 @@
+%% notes-tex/008-xue-ffa-epistasis/sections/methods.tex
+%% [[experiments.008-xue-ffa.perspective-epistasis-in-metabolic-engineering]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/008-xue-ffa-epistasis/sections/methods.tex
+%%
+%% SOURCE: this section describes the committed scripts by name; each named script is the
+%% authority for what it does. Nothing here restates a number that the Results did not
+%% already carry with its provenance.
+
+\section{Methods\secstatus{todo}}
+
+\subsection*{Data and normalization}
+
+Titers for five fatty acid species and their sum were taken from the source study's
+supplementary tables for the base strain and for all 175 deletion combinations. Every titer
+is divided by the base strain's titer for the same species in the same experiment, so all
+values below are ratios and the base strain is 1 by construction. The sum, referred to as
+total titer, is formed per replicate before averaging rather than by summing the five
+published species means, so it is a measured quantity and not a sixth derived one. Loading
+and normalization are in \file{experiments/008-xue-ffa/scripts/free_fatty_acid_interactions.py}.
+
+\subsection*{Epistasis models}
+
+Four nulls were fit on the same normalized strain means.
+
+\notesec{Multiplicative} The expected phenotype of a combination is the product of its
+parts. Digenic $\varepsilon_{ij} = f_{ij} - f_i f_j$; trigenic as in Eq.~\ref{eq:tau}. This
+is the form used by the yeast genetic interaction maps and is the model every figure uses
+unless it says otherwise
+(\file{free_fatty_acid_interactions.py}).
+
+\notesec{Additive} The same construction with sums in place of products
+(\file{additive_free_fatty_acid_interactions.py}).
+
+\notesec{GLM log-link} A generalized linear model with a Gamma family and a log link, whose
+three-way coefficient is the interaction
+(\file{glm_log_link_epistatic_interactions.py}).
+
+\notesec{Log-OLS} Ordinary least squares on $\log$ titer differenced against the base strain
+(\file{log_ols_wt_differencing_epistatic_interactions.py}).
+
+The equivalence used in Fig.~\ref{fig:models}c,d, that the saturated three-way interaction
+on log titer reproduces the shipped GLM and log-OLS coefficients, is asserted in code rather
+than assumed: \file{linear_vs_log_scale_sign_test.py} recomputes it from the strain means
+and raises unless it agrees with both fitted models to $r > 0.99$.
+
+\subsection*{Uncertainty and multiple testing}
+
+Standard errors propagate through the interaction expression by the delta method, using the
+per-strain standard errors of the replicate means. The resulting $t$ statistic is referred
+to the Welch-Satterthwaite effective degrees of freedom of the linear combination, computed
+from each term's contribution to the combined standard error. This matters more than it
+usually does. A trigenic score combines seven independently measured strains, and referring
+its $t$ statistic to the degrees of freedom of the smallest single input, as an earlier
+version of this analysis did, gives 1 or 2 rather than a median of 4.28, and suppresses
+nearly every call. Across the 990 multiplicative tests of the whole run, none was
+significant at a 5\% false discovery rate before the correction and 456 are after it
+(audit record: \file{notes/plan.008-xue-ffa-epistasis-audit.2026.08.15.md}).
+
+Benjamini-Hochberg controls the false discovery rate. The family matters and is stated
+wherever a count appears. Counts in Figs.~\ref{fig:landscape} and \ref{fig:models} correct
+over the tests of a single readout, since that is what those figures claim about. The
+enrichment analysis in Fig.~\ref{fig:models}b uses the stored per-test $P < 0.05$ over all
+six readouts pooled, which is the family the enrichment scripts were written against.
+
+\subsection*{Path enumeration and monotonicity}
+
+For each triple, all six orders of introducing its three deletions were expanded into a
+four-rung trajectory: base strain, one deletion, two deletions, three deletions, taking the
+measured strain at each rung. A route is monotone when every step is strictly positive, and
+monotone within one standard error when every step exceeds the negative of that step's
+propagated standard error. Valley depth is $1 - \min(\text{rungs})$ on a route, and a
+triple's valley depth is the minimum over its six routes, meaning its shallowest available
+approach. The greedy campaign in Fig.~\ref{fig:inaccessible}b starts at the base strain,
+evaluates every combination reachable by one further deletion, takes the highest if it
+exceeds the current strain, and stops otherwise. Enumeration and monotonicity are in
+\file{ffa_epistatic_path_panels.py}; the greedy simulation is in
+\file{perspective_figure_panels.py}.
+
+\subsection*{Interaction graph enrichment}
+
+Ten interaction graphs were queried for each triple: physical, regulatory and genetic
+interactions, TFLink, and the neighborhood, fusion, co-occurrence, coexpression,
+experimental and database channels of STRING 12.0. A triple counts as overlapping a graph
+when its three genes induce a connected subgraph of that graph. Fold enrichment is the ratio
+of the overlapping fraction among significant triples to the overlapping fraction among the
+rest, and significance is Fisher's exact test on the corresponding two-by-two table. Three
+of the ten graphs contain no connected triple among these ten genes at all and are omitted
+from Fig.~\ref{fig:models}b, which is a statement about those graphs' coverage of this gene
+set and not about epistasis
+(\file{interaction_graph_enrichment_analysis.py}).
+
+\subsection*{Figures}
+
+Every panel is produced by a committed script and written as a true-size SVG at one of the
+standard panel widths, then converted to PDF for this document. Panels come from
+\file{perspective_figure_panels.py}, \file{notable_interaction_selection.py} and
+\file{ffa_epistatic_path_panels.py}; the network overlay comes from
+\file{create_ffa_multigraph_overlays.py}. The multi-panel arrangements are assembled from
+the same SVGs by \file{build_perspective_drawio.py} into editable draw.io sources under
+\file{notes/assets/drawio/}.
+
+\subsection*{Code and data availability}
+
+All analysis scripts are in \file{experiments/008-xue-ffa/scripts/} and all derived tables
+in \file{experiments/008-xue-ffa/results/} of the torchcell repository. Selection of which
+interactions appear in a figure is itself a committed artifact rather than a post-hoc
+choice: \file{notable_interaction_selection.py} states the rule, applies it, and writes the
+selected set to \file{results/notable_interaction_selection.csv}.

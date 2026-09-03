@@ -240,8 +240,11 @@ notes-tex/*/*.blg
 notes-tex/*/*.synctex.gz
 notes-tex/*/*-clean.pdf
 
-# notes-tex: bibliography style symlinked from the manuscript
+# notes-tex: class and bibliography style symlinked from the manuscript at build time.
+# Tectonic does not honor TEXINPUTS, so each document gets its own symlink; any build
+# recreates them, so a fresh clone needs no setup.
 notes-tex/*/sn-nature.bst
+notes-tex/*/sn-jnl.cls
 
 # Merge-queue runtime state (SQLite DB + flock + heartbeat).
 # scripts/merge_queue.py puts this at $DATA_ROOT/dev/merge_queue/. On GilaHyper

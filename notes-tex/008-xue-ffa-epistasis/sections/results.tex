@@ -1,0 +1,239 @@
+%% notes-tex/008-xue-ffa-epistasis/sections/results.tex
+%% [[experiments.008-xue-ffa.perspective-epistasis-in-metabolic-engineering]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/008-xue-ffa-epistasis/sections/results.tex
+%%
+%% SOURCE: every number below is printed by one of
+%%   experiments/008-xue-ffa/scripts/perspective_figure_panels.py       (panels a-j)
+%%   experiments/008-xue-ffa/scripts/notable_interaction_selection.py   (consensus panels)
+%%   experiments/008-xue-ffa/scripts/ffa_epistatic_path_panels.py       (path enumeration)
+%% Re-run those three and the panels and the numbers move together. Nothing here is
+%% transcribed by hand from a figure.
+%%
+%% FIGURES. Each panel is a true-size PDF converted by `make plots` from the SVG its plot
+%% script wrote. The same SVGs are embedded in notes/assets/drawio/ffa-epistasis-fig*.drawio,
+%% which is where the arrangement is workshopped; \panelrow here is the layout that lets the
+%% document compile before that arrangement is settled. Replace a \panelrow block with a
+%% single \tcfig on the exported PDF once its figure is final in draw.io.
+
+\section{Results\secstatus{todo}}
+
+\subsection*{A complete three-factor design over ten transcription factors}
+
+The dataset is a combinatorial deletion series in a free-fatty-acid-producing
+\org{S.\ cerevisiae} strain. Ten transcription factors (FKH1, GCN5, MED4, OPI1, RFX1, RGR1,
+RPD3, SPT3, TFC7 and YAP6) were deleted in every combination of one, two and three genes,
+giving 10 single, 45 double and 120 triple deletion strains alongside the undeleted base
+strain. The base strain is itself an engineered chassis, an FFA-overproducing
+\org{S.\ cerevisiae} carrying pox1$\Delta$ faa1$\Delta$ faa4$\Delta$, and the ten
+transcription factor deletions are additional to those three. Every titer below is relative
+to that chassis, so a triple deletion strain carries six deletions in total. Six quantities
+were measured per strain: the titers of myristate (C14:0), palmitate
+(C16:0), stearate (C18:0), palmitoleate (C16:1) and oleate (C18:1), and their sum, which we
+refer to as total titer. All titers below are normalized to the base strain, so a value of
+1 is no change and 2 is a doubling.
+
+Completeness is what makes the design usable for the question at hand. Because every
+sub-combination of every triple was built, each triple can be reached by six distinct
+deletion orders, and the intermediate strain at each step of each order was measured rather
+than modeled. The design therefore contains 720 fully measured construction routes.
+
+Only one of the ten single deletions raises titer at all. Deleting GCN5 gives
+$1.06\times$; the other nine lose ground, and deleting RPD3 costs nearly half the titer at
+$0.52\times$ (Fig.~\ref{fig:inaccessible}a). Combinations behave very differently: 29 of the
+45 doubles and 51 of the 120 triples exceed the base strain, and the best strain in the
+design is a triple at $2.05\times$. The gap between what single deletions do and what
+combinations do is the first sign that the effects are not composing.
+
+\begin{figure*}[t]
+\panelrow{%
+  \panel{a}{figures/panel_interaction_distribution.pdf}\hfill
+  \panel{b}{figures/panel_volcano_total_titer.pdf}\hfill
+  \panel{c}{figures/panel_consensus_agreement.pdf}%
+}
+\caption{\textbf{Interaction is the rule on total fatty acid titer, and the third deletion
+is where it bites.} \textbf{a}, Interaction scores against the multiplicative null for all
+45 double (fill) and 120 triple (hatched) deletions. The median moves from $+0.40$ at two
+deletions to $-0.72$ at three. \textbf{b}, Trigenic interaction score $\tau$ against
+evidence for the 119 testable triples under the multiplicative model. The dashed line marks
+the largest $P$ that Benjamini-Hochberg rejects at a 5\% false discovery rate over the 119
+tests of this readout ($P = 0.036$); 86 triples clear it and 11 of those have $\tau > 0$.
+\textbf{c}, How many of the four epistasis models call each triple significant, split by
+the sign of $\tau$. Seventy-three triples are called by all four with the sign agreeing,
+and none of the 73 is positive.}
+\label{fig:landscape}
+\end{figure*}
+
+\subsection*{Interaction is the rule, and the third deletion is where it bites}
+
+We scored each combination against a multiplicative null, in which the expected phenotype of
+a combination is the product of its parts' phenotypes. For a double deletion the digenic
+score is $\varepsilon_{ij} = f_{ij} - f_i f_j$. For a triple, the trigenic score removes the
+digenic contributions before asking what remains:
+%
+\begin{equation}
+\tau_{ijk} = f_{ijk} - f_{ij} f_k - f_{ik} f_j - f_{jk} f_i + 2 f_i f_j f_k .
+\label{eq:tau}
+\end{equation}
+%
+This is the trigenic score of the yeast genetic interaction maps, applied to titer in place
+of fitness. Standard errors propagate through Eq.~\ref{eq:tau} by the delta method, and each
+$t$ statistic is referred to the Welch-Satterthwaite effective degrees of freedom of that
+linear combination, which has a median of 4.28 across the 714 testable trigenic scores.
+
+Deviations from the null are large and are mostly negative at three deletions. The median
+digenic score is $+0.40$ and the median trigenic score is $-0.72$
+(Fig.~\ref{fig:landscape}a), so adding a third deletion does not damp the interaction, it
+reverses its typical direction. Of the 119 triples with a testable standard error, 86 depart
+from the null at a 5\% false discovery rate computed over the 119 tests of this readout, and
+11 of those 86 depart upward (Fig.~\ref{fig:landscape}b).
+
+\begin{figure*}[t]
+\panelrow{%
+  \panel{a}{figures/panel_improving_by_order.pdf}\hfill
+  \panel{b}{figures/panel_greedy_walk.pdf}\hfill
+  \panel{c}{figures/panel_path_accessibility.pdf}%
+}
+\panelrow{\panel{d}{figures/ffa_epistatic_path_panels_top.pdf}}
+\caption{\textbf{Improving combinations exist, and almost none of them is reachable one
+deletion at a time.} \textbf{a}, Percentage of combinations exceeding the base strain at
+one, two and three deletions (bars, counts above), with the best titer at each order (amber
+line, right axis). One of ten single deletions improves titer; the best triple reaches
+$2.05\times$. \textbf{b}, A greedy campaign (brick) takes the best strictly improving single
+deletion each round and stops when none improves. It reaches $1.80\times$ after two
+deletions and halts. Gray lines are all six deletion orders of the highest-titer triple
+(RFX1, RPD3, YAP6; star), each of which passes through an intermediate below the base
+strain. \textbf{c}, The 120 triples classified by whether they beat the base strain and
+whether any of their six orders improves at every step. \textbf{d}, Trajectories for the
+six highest-titer triples, one colored line per deletion order, on a shared vertical scale.
+Rung 0 is the pox1$\Delta$ faa1$\Delta$ faa4$\Delta$ chassis and the three rungs after it
+add transcription factor deletions. Each panel gives that triple's final titer $f_{ijk}$ and
+its trigenic score $\tau_{ijk}$, and the badge marks the sign and significance of $\tau$.
+None of the six has a monotone route. Error bars are standard errors of the strain means.}
+\label{fig:inaccessible}
+\end{figure*}
+
+\subsection*{Improving combinations are not reachable one deletion at a time}
+
+An interaction score says a combination is surprising. It does not say whether a campaign
+could have found the combination, and that is the question a strain engineer is actually
+asking. We therefore scored each of the 720 measured routes for monotonicity: a route is
+monotone when every deletion in it leaves the strain strictly more productive than the
+strain before it, which is the condition under which a build-and-screen campaign that discards
+non-improving rounds would follow the route to its end.
+
+Two of the 720 routes are monotone. Relaxing the criterion to allow a step whose loss is
+within one standard error raises the count to 11 routes across 9 triples, so the result is
+not an artifact of measurement noise sitting just the wrong side of zero. Counting by
+destination rather than by route: 51 of the 120 triples beat the base strain, and 2 of those
+51 sit at the end of a monotone route (Fig.~\ref{fig:inaccessible}c). The other 49
+improvements exist in the design and are invisible to a stepwise campaign.
+
+The obstacle is a valley rather than a plateau. For each triple we took its shallowest
+route, meaning the one whose worst intermediate is highest, and measured how far that worst
+intermediate falls below the base strain. The median shallowest route dips 31\% below the
+starting titer, and the deepest dips 48\%. A campaign built to discard anything worse than
+its parent will discard the route at the first step.
+
+Simulating the campaign directly gives the same answer in one number. Starting from the base
+strain and taking the best strictly improving single deletion each round, with full
+visibility of every candidate at every round, the campaign deletes GCN5 ($1.06\times$), then
+TFC7 ($1.80\times$), and then stops, because all eight remaining third deletions lower the
+titer (Fig.~\ref{fig:inaccessible}b). The best strain in the design is $2.05\times$, and
+reaching it requires passing through an intermediate at $0.91\times$ on its most forgiving
+order and $0.52\times$ on its least. The simulated campaign is more capable than a real one
+in every respect that matters, and it still recovers 88\% of the achievable titer while
+stopping two rounds short of the answer.
+
+The greedy trap has a second form worth naming, because it is not the same failure. One of
+the two monotone routes ends at FKH1, GCN5, MED4 at $1.73\times$. A campaign following it
+would improve at every round and finish with a triple. The simulated campaign does not find
+it, because at the second round TFC7 ($1.80\times$) beat FKH1 ($1.53\times$) and the better
+local step led to a dead end. Being reachable is necessary for a stepwise campaign to find a
+combination, and it is not sufficient.
+
+\begin{figure*}[t]
+\panelrow{%
+  \panel{a}{figures/panel_model_agreement.pdf}\hfill
+  \panel{b}{figures/panel_graph_enrichment.pdf}%
+}
+\panelrow{%
+  \panel{c}{figures/panel_scale_scatter.pdf}\hfill
+  \panel{d}{figures/panel_scale_slope.pdf}\hfill
+  \panel{e}{figures/panel_readout_sign.pdf}%
+}
+\caption{\textbf{What counts as an interaction depends on the null, on the scale and on the
+readout.} \textbf{a}, Triples called significant at a 5\% false discovery rate by each
+combination of the four models. Ninety-seven triples are called by at least one model and 73
+by all four. \textbf{b}, Fold enrichment of seven interaction graphs among the significant
+trigenic triples, per model, over all six readouts pooled at $P < 0.05$. Asterisks mark
+$P < 0.05$ by Fisher's exact test; all five significant results are depletions.
+\textbf{c}, Trigenic score on the linear scale against the same quantity on the log scale.
+The upper-left quadrant is empty, so no combination that is negative on one scale is
+positive on the other. \textbf{d}, The 27 triples with a positive linear-scale score,
+carried onto the log scale; 15 lose the sign. \textbf{e}, Consensus interactions per
+readout, split by sign. Thirty-one positive consensus interactions exist across the five
+species, and none of them survives on their sum.}
+\label{fig:models}
+\end{figure*}
+
+\subsection*{What counts as an interaction depends on the null and on the scale}
+
+Equation~\ref{eq:tau} is one choice among several, and a claim that rests on it should say
+how much of the claim is the choice. We fit three alternatives on the same normalized strain
+means: an additive null, in which expected phenotypes add rather than multiply; a
+generalized linear model with a log link and a Gamma family; and ordinary least squares on
+log titer differenced against the base strain.
+
+The four models agree on which combinations interact far more than they agree on the sign.
+Ninety-seven triples are called by at least one model at a 5\% false discovery rate within
+the readout, 73 by all four, and every one of the 73 is negative (Fig.~\ref{fig:models}a).
+The disagreement falls almost entirely on the positive calls, and it falls along the scale:
+the multiplicative and additive models report 11 and 6 positive triples on total titer, and
+the two log-scale models report none.
+
+That split is not a difference of power, it is a difference of estimand. The log-scale
+three-way interaction $g_{ijk} - g_{ij} - g_{ik} - g_{jk} + g_i + g_j + g_k$, with
+$g = \log f$, agrees with the linear-scale score in magnitude ($r = 0.91$, Spearman
+$\rho = 0.84$) but not near zero. Of the 27 triples with a positive linear-scale score, 15
+are non-positive on the log scale, while no negative linear-scale score becomes positive
+(Fig.~\ref{fig:models}c,d). Positive three-way epistasis on fatty acid titer is a
+linear-scale statement, and reporting one without naming the scale is reporting the modeling
+choice as a result.
+
+The readout matters as much as the scale. Thirty-one triples clear all four models with the
+sign agreeing on at least one of the five individual species, and 20 of those are on C14:0,
+where every consensus interaction is positive. None survives on the summed total
+(Fig.~\ref{fig:models}e). Summing the five species is a modeling choice too, and it is the
+choice that removes the positive signal.
+
+\subsection*{No interaction network on hand predicts which combinations interact}
+
+If interactions were predictable from prior knowledge, a campaign could avoid the problem by
+choosing combinations it expects to be additive. We tested that directly by asking whether
+the interacting triples are enriched for connectivity in existing interaction graphs. Seven
+graphs cover these ten genes with at least one connected triple: physical interactions,
+regulatory interactions, genetic interactions, TFLink, and the coexpression, experimental
+and database channels of STRING 12.0. For each graph and each model we compared the fraction
+of significant triples whose three genes form a connected subgraph to the same fraction
+among the non-significant triples.
+
+Nothing is enriched. Across 28 graph-by-model tests, 5 reach $P < 0.05$ and every one of the
+5 is a depletion rather than an excess (Fig.~\ref{fig:models}b). The largest excess anywhere
+is the STRING database channel under the multiplicative model at 1.31-fold, which does not
+reach significance ($P = 0.13$). Drawing the significant interactions onto the pathway
+itself makes the same point visually: the interacting triples span the transcription factor
+set with no visible relation to which factors regulate which fatty acid genes
+(Fig.~\ref{fig:network}).
+
+\begin{figure*}[p]
+\tcfig{figures/ffa_network_overlay.pdf}{\textbf{Trigenic interactions on total fatty acid
+titer, drawn on the pathway they act through.} The ten deleted transcription factors are
+arranged in a circle at left; edges within the circle are the 44 negative and 3 positive
+trigenic interactions significant at a 5\% false discovery rate within the total-titer
+readout under the multiplicative model, restricted to triples whose three genes are
+connected in the yeast genetic interaction graph. A trigenic interaction is drawn as the
+three edges of its triangle, so an edge can carry more than one interaction. Dotted edges
+are transcription-factor-to-gene regulatory links; the remaining columns are the core fatty
+acid pathway genes, the reactions they catalyze, and the metabolites those reactions
+produce, with the five measured species and their compartments labeled.}{fig:network}
+\end{figure*}

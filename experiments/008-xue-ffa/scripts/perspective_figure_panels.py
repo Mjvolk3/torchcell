@@ -22,7 +22,7 @@
 # STATISTICS, stated once so no caption has to restate it:
 #   - tau is the Kuzmin tau-SGA trigenic score on the linear scale, epsilon the digenic one.
 #   - p-values come from a t test on the delta-method standard error, referred to the
-#     Welch-Satterthwaite effective df of the linear combination (median 4.31 here). The
+#     Welch-Satterthwaite effective df of the linear combination (median 4.28 here). The
 #     earlier df = min(n) - 1 was wrong and suppressed nearly every call.
 #   - FDR is Benjamini-Hochberg. The stored fdr_corrected_p pools all six readouts
 #     (714 tests); panels that claim over one readout recompute BH within that readout.
@@ -401,6 +401,146 @@ def panel_path_accessibility(ax):
             "n_reachable": int(reachable.sum())}
 
 
+def _combination_titers():
+    """Every measured strain's normalized titer, keyed by its frozenset of deletions.
+
+    The path table stores one row per (triple, order) with that order's rungs, so the same
+    single and double strains appear many times over. Collapsing on the gene set recovers
+    the 10 + 45 + 120 distinct strains the design actually contains.
+    """
+    p = pd.read_csv(osp.join(RESULTS_DIR, "ffa_epistatic_paths.csv"))
+    singles = {r.gene_1: r.f_single for r in p.drop_duplicates("gene_1").itertuples()}
+    doubles = {frozenset([r.gene_1, r.gene_2]): r.f_double for r in p.itertuples()}
+    triples = {frozenset(r.triple.split("-")): r.f_triple
+               for r in p.drop_duplicates("triple").itertuples()}
+    assert len(singles) == 10 and len(doubles) == 45 and len(triples) == 120, (
+        f"design is not complete: {len(singles)}/{len(doubles)}/{len(triples)}")
+    return singles, doubles, triples
+
+
+def _greedy_walk(singles, doubles, triples):
+    """The strain a stepwise campaign reaches, taking the best strictly improving step.
+
+    One deletion per round, always the best available, stopping when no remaining deletion
+    improves on the strain in hand. This is the mildest possible formalization of
+    build-and-screen: it is allowed to see every candidate at every round, which no real
+    campaign is, and it still stops early.
+    """
+    # `singles` is keyed by gene name, the other two by frozenset; key everything the same
+    # way so one lookup covers all three rounds.
+    by_set = {frozenset([g]): v for g, v in singles.items()}
+    by_set.update(doubles)
+    by_set.update(triples)
+    current, f = frozenset(), 1.0
+    trace = [(current, f)]
+    while len(current) < 3:
+        options = [(by_set[current | {g}], g) for g in singles
+                   if g not in current and (current | {g}) in by_set]
+        best_f, best_g = max(options)
+        if best_f <= f:
+            break
+        current, f = current | {best_g}, best_f
+        trace.append((current, f))
+    return trace
+
+
+def panel_improving_by_order(ax):
+    """What fraction of combinations beats the base strain, at one, two and three deletions.
+
+    The shape is the obstacle: single deletions almost all lose titer, so the first step of
+    a stepwise campaign is nearly always downhill even though half the doubles and 4 in 10
+    of the triples are improvements.
+    """
+    singles, doubles, triples = _combination_titers()
+    tables = [("1 deletion", singles), ("2 deletions", doubles), ("3 deletions", triples)]
+    x = np.arange(len(tables))
+    fracs, labels = [], []
+    for _, t in tables:
+        n_up = sum(v > 1.0 for v in t.values())
+        fracs.append(100.0 * n_up / len(t))
+        labels.append(f"{n_up}/{len(t)}")
+    ax.bar(x, fracs, color=C_NEG, edgecolor="black", linewidth=0.4, width=0.62)
+    ymax = bar_headroom(ax, fracs)
+    for xi, (fr, lab) in enumerate(zip(fracs, labels)):
+        ax.text(xi, fr + ymax * 0.03, lab, ha="center", fontsize=5)
+    best = [max(t.values()) for _, t in tables]
+    ax2 = ax.twinx()
+    ax2.plot(x, best, color=C_POS, marker="o", markersize=2.6, linewidth=0.7,
+             markeredgecolor="black", markeredgewidth=0.25, zorder=4,
+             label="best combination")
+    ax2.set_ylabel("best titer (rel. base strain)", color=C_POS)
+    ax2.tick_params(axis="y", colors=C_POS, labelsize=6)
+    ax2.set_ylim(0.9, max(best) * 1.30)
+    for spine in ax2.spines.values():
+        spine.set_visible(False)
+    ax.set_xticks(x)
+    ax.set_xticklabels([n for n, _ in tables])
+    ax.set_ylabel("combinations beating the base strain (%)")
+    ax.set_title(
+        f"{labels[0]} single deletions improve titer,\n"
+        f"but the best triple reaches {max(best):.2f}$\\times$",
+        fontsize=6, pad=3,
+    )
+    # Upper right: the reserved headroom leaves that band clear, while lower right sits
+    # inside the three-deletion bar.
+    ax2.legend(loc="upper right", frameon=False, handlelength=1.2, fontsize=5,
+               borderaxespad=0.3)
+    return {"fracs": [round(f, 1) for f in fracs], "labels": labels,
+            "best": [round(b, 3) for b in best]}
+
+
+def panel_greedy_walk(ax):
+    """Where a stepwise campaign stops, next to the best strain the design contains.
+
+    Gray lines are all six deletion orders of the highest-titer triple. Every one of them
+    passes through an intermediate below the base strain, so a campaign that keeps only
+    improvements can never take any of them.
+    """
+    singles, doubles, triples = _combination_titers()
+    trace = _greedy_walk(singles, doubles, triples)
+    paths = pd.read_csv(osp.join(RESULTS_DIR, "ffa_epistatic_paths.csv"))
+    best_set, best_f = max(triples.items(), key=lambda kv: kv[1])
+    best_name = "-".join(sorted(best_set))
+
+    rows = paths[paths["triple"] == best_name]
+    for i, r in enumerate(rows.itertuples()):
+        ax.plot([0, 1, 2, 3], [r.f_base, r.f_single, r.f_double, r.f_triple],
+                color=C_GRAY, linewidth=0.6, marker="o", markersize=2.2,
+                markerfacecolor="white", markeredgecolor=C_GRAY, markeredgewidth=0.4,
+                zorder=2, label="routes to the best triple" if i == 0 else None)
+
+    xs = [len(s) for s, _ in trace]
+    ys = [f for _, f in trace]
+    ax.plot(xs, ys, color=C_NEG, linewidth=1.1, marker="o", markersize=3.4,
+            markeredgecolor="black", markeredgewidth=0.3, zorder=4,
+            label="greedy campaign")
+    ax.scatter([xs[-1]], [ys[-1]], s=26, marker="X", color=C_NEG, edgecolor="black",
+               linewidth=0.3, zorder=5)
+    ax.annotate(" stops here", (xs[-1], ys[-1]), fontsize=5, va="center", ha="left",
+                xytext=(2, 0), textcoords="offset points")
+    ax.scatter([3], [best_f], s=20, marker="*", color=C_POS, edgecolor="black",
+               linewidth=0.3, zorder=5, label="best strain in the design")
+
+    ax.axhline(1.0, color="black", linewidth=0.5, linestyle="--", zorder=1)
+    ax.set_xticks([0, 1, 2, 3])
+    ax.set_xticklabels(["base", "1 KO", "2 KO", "3 KO"])
+    ax.set_xlim(-0.25, 3.55)
+    ax.set_ylabel("titer (rel. base strain)")
+    ymin, ymax = ax.get_ylim()
+    ax.set_ylim(ymin, ymax + (ymax - ymin) * 0.30)
+    ax.set_title(
+        f"greedy stops at {ys[-1]:.2f}$\\times$; the best strain\n"
+        f"reaches {best_f:.2f}$\\times$ only through a loss",
+        fontsize=6, pad=3,
+    )
+    ax.legend(loc="upper left", frameon=False, handlelength=1.2, fontsize=5,
+              labelspacing=0.25, borderaxespad=0.3)
+    return {"greedy_end": round(ys[-1], 3), "greedy_genes": sorted(trace[-1][0]),
+            "best_triple": best_name, "best_f": round(best_f, 3),
+            "worst_rung_on_best_routes": round(float(rows[["f_single", "f_double"]]
+                                                     .to_numpy().min()), 3)}
+
+
 def panel_path_valley(ax):
     """How deep the best available route has to dip before it comes back up.
 
@@ -530,6 +670,8 @@ def main():
          height_ratios=[2.1, 1.0])
     emit("scale_scatter", "third", 62.0, panel_scale_scatter)
     emit("scale_slope", "third", 62.0, panel_scale_slope)
+    emit("improving_by_order", "third", 62.0, panel_improving_by_order)
+    emit("greedy_walk", "third", 62.0, panel_greedy_walk)
     emit("path_accessibility", "third", 62.0, panel_path_accessibility)
     emit("path_valley", "third", 62.0, panel_path_valley)
     emit("graph_enrichment", "half_plus", 66.0, panel_graph_enrichment)

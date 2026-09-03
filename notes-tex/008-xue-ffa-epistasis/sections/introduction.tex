@@ -1,0 +1,51 @@
+%% notes-tex/008-xue-ffa-epistasis/sections/introduction.tex
+%% [[experiments.008-xue-ffa.perspective-epistasis-in-metabolic-engineering]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/008-xue-ffa-epistasis/sections/introduction.tex
+%%
+%% SOURCE: hand-authored argument. The two numbers it states (720 measured orders, ten
+%% transcription factors) are properties of the design and are restated with provenance in
+%% the Results.
+%%
+%% CITATIONS ARE NOT WIRED YET. This document has no Zotero collection, so prior work is
+%% named in prose rather than through \cite. `make check` fails on a \cite key absent from
+%% references.bib, and references.bib is generated from Zotero rather than hand-edited, so
+%% adding citations means creating the collection first. Do that before the document
+%% leaves the group.
+
+\section{Introduction\secstatus{todo}}
+
+A strain is improved by editing it, measuring it, keeping the edits that helped, and
+editing again. Every round of that loop is a decision made on the strain in hand, and a
+round that produced nothing better than its parent is a round whose output is discarded.
+The procedure is the design-build-test-learn cycle in its most common form, and its cost
+scales with the number of rounds rather than with the number of edits eventually carried.
+
+The procedure is efficient exactly when the effects of edits compose. If a deletion that
+raises titer on its own keeps raising titer in the presence of other deletions, then a
+greedy walk reaches a good combination, and the number of strains that must be built grows
+linearly with the number of edits rather than exponentially. The assumption is rarely
+stated because it is rarely testable: a campaign that builds a few hundred strains out of a
+combinatorial space of millions cannot see the combinations it did not build, and cannot
+tell a combination that is genuinely bad from one it never reached.
+
+Epistasis is the name for the failure of that assumption. In its quantitative form it is
+the deviation of a combination's phenotype from what the phenotypes of its parts predict,
+and it is measured against a stated null. Systematic genetic interaction mapping in
+\org{Saccharomyces cerevisiae} established both the scale of the phenomenon on
+growth rate and the estimator now used for it: a digenic interaction score defined as the
+departure of a double mutant's fitness from the product of the two single-mutant
+fitnesses, and a trigenic score that removes the digenic contributions before asking what
+the third deletion adds. Those maps were built on fitness in rich medium. Whether their
+conclusions transfer to a production phenotype is not obvious, because fitness and titer
+are under different selection, are measured on different instruments, and need not share a
+null.
+
+What has been missing for a production phenotype is a design in which every combination and
+every construction order is present. Without one, a claim that a combination was
+unreachable is indistinguishable from a claim that nobody happened to build it. The
+free-fatty-acid dataset re-analyzed here supplies exactly that: ten transcription factors
+deleted in every single, double and triple combination in one producing background, which
+makes all 720 orders of deleting three genes available as measurements rather than as
+inferences. The design permits a question that a partial screen cannot ask. Not how many
+combinations interact, which any screen can estimate, but how many good combinations a
+stepwise campaign could have found.

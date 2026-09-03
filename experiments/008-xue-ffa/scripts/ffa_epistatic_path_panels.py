@@ -339,7 +339,7 @@ def select_triples(summary, mode, n_panels):
     raise ValueError(f"unknown selection mode: {mode}")
 
 
-def plot_path_panels(path_df, selected, mode, out_stem, ncols=3):
+def plot_path_panels(path_df, selected, mode, out_stem, ncols=3, show_suptitle=True):
     """Grid of per-triple panels, one colored line per mutation ordering."""
     nrows = int(np.ceil(len(selected) / ncols))
     # Shared y across every panel: the panels are compared to each other, so an
@@ -348,7 +348,11 @@ def plot_path_panels(path_df, selected, mode, out_stem, ncols=3):
     fig, axes = plt.subplots(
         nrows,
         ncols,
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(55.0 * nrows)),
+        # 47 mm per row, not 55. At 55 a two-row grid is 110 mm tall, and stacking it
+        # under a 62 mm row of summary panels in the same figure exceeds Nature's 170 mm
+        # print box by 14 mm. 47 mm still leaves ~40 mm of axes, which at 6 pt type is
+        # comfortable for a four-rung trajectory.
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(47.0 * nrows)),
         squeeze=False,
         sharey=True,
     )
@@ -452,16 +456,20 @@ def plot_path_panels(path_df, selected, mode, out_stem, ncols=3):
         "top": "Highest-titer triples",
         "divergent": "Most route-dependent triples",
     }[mode]
-    fig.suptitle(
-        f"{title}: all 6 KO orders per triple. Total FFA titer relative to the base "
-        "production strain (pox1$\\Delta$ faa1$\\Delta$ faa4$\\Delta$); TF knockouts are "
-        "additional to it.\nBadge = trigenic interaction: "
-        "$\\blacktriangle$ positive $\\tau$, $\\blacktriangledown$ negative $\\tau$; "
-        "filled = FDR<0.05 (BH within this readout), half = P<0.05, open = not significant.",
-        fontsize=6,
-        y=0.997,
-    )
-    fig.tight_layout(rect=(0, 0, 1, 0.98))
+    # The suptitle explains the figure, so a journal figure moves it into the caption and
+    # a working render keeps it: a directory of near-identical trajectory grids is unusable
+    # without one.
+    if show_suptitle:
+        fig.suptitle(
+            f"{title}: all 6 KO orders per triple. Total FFA titer relative to the base "
+            "production strain (pox1$\\Delta$ faa1$\\Delta$ faa4$\\Delta$); TF knockouts are "
+            "additional to it.\nBadge = trigenic interaction: "
+            "$\\blacktriangle$ positive $\\tau$, $\\blacktriangledown$ negative $\\tau$; "
+            "filled = FDR<0.05 (BH within this readout), half = P<0.05, open = not significant.",
+            fontsize=6,
+            y=0.997,
+        )
+    fig.tight_layout(rect=(0, 0, 1, 0.98) if show_suptitle else None)
 
     fig.savefig(f"{out_stem}.png", dpi=300)
     savefig_true_size_svg(fig, f"{out_stem}.svg")
@@ -477,6 +485,11 @@ def main():
         help="panel selection: highest endpoint titer, widest path spread, or both",
     )
     parser.add_argument("--n-panels", type=int, default=6)
+    parser.add_argument(
+        "--no-suptitle",
+        action="store_true",
+        help="omit the explanatory suptitle, for a figure whose caption carries it",
+    )
     parser.add_argument(
         "--no-timestamp",
         action="store_true",
@@ -541,7 +554,8 @@ def main():
         selected = select_triples(summary, mode, args.n_panels)
         suffix = "" if args.no_timestamp else f"_{timestamp()}"
         out_stem = osp.join(IMAGES_DIR, f"ffa_epistatic_path_panels_{mode}{suffix}")
-        plot_path_panels(path_df, selected, mode, out_stem)
+        plot_path_panels(path_df, selected, mode, out_stem,
+                         show_suptitle=not args.no_suptitle)
         print(f"wrote {out_stem}.png / .svg")
 
 

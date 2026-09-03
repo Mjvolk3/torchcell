@@ -229,7 +229,7 @@ def plot(summary: dict[str, Any], scores: list[RunScore], out_stem: str) -> None
             "axes.linewidth": 0.5,
         }
     )
-    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(55.0)))
+    fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(62.0)))
 
     null = summary["null"]
     if np.isfinite(null["peak_p95"]):
@@ -278,13 +278,13 @@ def plot(summary: dict[str, Any], scores: list[RunScore], out_stem: str) -> None
 
     ax.set_xticks(x)
     ax.set_xticklabels(names, rotation=30, ha="right")
-    ax.set_ylabel(f"{HEAD} validation Pearson, peak over epochs")
+    ax.set_ylabel("Validation Pearson (peak over epochs)")
     ax.yaxis.set_major_locator(MultipleLocator(0.05))
     ax.yaxis.set_minor_locator(MultipleLocator(0.025))
     ax.tick_params(which="minor", length=0)
     ax.grid(axis="y", which="both", lw=0.3, color="0.85", zorder=0)
     ax.set_axisbelow(True)
-    ax.legend(frameon=False, fontsize=5, loc="upper left")
+    ax.legend(frameon=False, fontsize=5, loc="upper left", handlelength=1.6, borderpad=0.2)
     for spine in ax.spines.values():
         spine.set_visible(True)
     fig.tight_layout(pad=0.3)

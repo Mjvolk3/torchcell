@@ -221,13 +221,21 @@ every note PDF). The draw.io figure is now a **true-vector outlined-text SVG**, 
 through `pdftocairo -svg`; draw.io's own SVG uses HTML `foreignObject` labels that
 `rsvg-convert` silently fails to draw.
 
+**The canonical note-PDF style is now settled and enforced in the shared pipeline.** A
+note rendered to PDF must match `paper/nature-biotech/editing.pdf`: A4, 14 mm side
+margins, 182 mm text block, 10 pt on 12 pt, numbered sections with a contents page, block
+paragraphs, black contents and internal links, `\footnotesize` tables, and a numbered
+detailed caption on every figure and table. The settings live in
+`notes/assets/publish/scripts/bib_tex_pdf.sh` and
+`notes/assets/publish/tex-templates/header-includes.tex`, are copied FROM `editing.tex`,
+and are recorded in [[writing-style-guide]] with CLAUDE.md pointing at them. **Apply this
+to every future note PDF without being asked.**
+
 Still owed on the document:
 
-- the author flagged the mass-balance axis label as botched in typeset. It is
-  `median |[Sv]_i| / omega_i`, the median over metabolites of the mass-balance residual as
-  a fraction of that metabolite's turnover, and **2.0 is its maximum**, reached when a
-  metabolite is only produced and never consumed. Spell that out in the caption rather
-  than leaving the symbol bare.
+- DONE: the mass-balance axis is spelled out rather than left as a bare symbol. It is the
+  median over metabolites of the residual as a fraction of that metabolite's turnover, and
+  **2.0 is its maximum**, reached when a metabolite is only produced and never consumed.
 - Table 11 and its caption straddle a page break.
 
 ### Environment and conventions, so the next session does not rediscover them

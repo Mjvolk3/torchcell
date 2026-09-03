@@ -48,12 +48,31 @@
 \usepackage{graphicx}
 \DeclareGraphicsExtensions{.png,.pdf,.jpg}
 
+% Captions, matched to the paper's figure treatment: a bold run-in label followed by
+% justified detail, set SMALLER than the body so the caption reads as apparatus rather
+% than as text. labelformat=empty because the caption text already carries its own
+% "Figure N." / "Table N." -- pandoc has no cross-reference filter here, so the numbers
+% are written by hand and a second automatic "Figure 1:" in front of them would read
+% "Figure 1: Figure 1.".
+\usepackage{caption}
+\captionsetup{
+  labelformat=empty,
+  font=footnotesize,
+  justification=justified,
+  singlelinecheck=false,
+  skip=6pt
+}
+
 % Math strikethrough for cancelled terms
 \usepackage{cancel}
 
 % Default image settings
 \setkeys{Gin}{draft=false}
-\setkeys{Gin}{width=\linewidth} % Slightly reduced from full width for better appearance or 0.9\linewidth
+% NO forced width. The repo's figure standard is TRUE SIZE: a panel designed at 88.5 mm
+% carries 6 pt type that prints at 6 pt only if it is placed at 88.5 mm. Forcing
+% width=\linewidth stretches every figure to the 182 mm block and silently rescales that
+% type. Pandoc's own template already caps images at the text block, which is the safety
+% net; natural size is the default.
 
 \usepackage{xcolor}
 \definecolor{linkred}{RGB}{205,92,92}      % Indian Red for citations and internal links

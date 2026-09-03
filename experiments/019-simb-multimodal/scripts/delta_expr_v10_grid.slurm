@@ -6,8 +6,11 @@
 # THE GENERALIZATION-GAP ROUND on Delta: a 2^4 factorial, 16 cells x 4 replicates = 64 runs,
 # two runs per A40 across 32 single-GPU array tasks, which Slurm packs onto 8 nodes.
 #
-#   # PRE-FLIGHT, four corner cells at fast_dev_run. Minutes. Run this FIRST.
-#   sbatch --array=0-3 --export=ALL,V10_STAGE=canary \
+#   # PRE-FLIGHT, four corner cells at fast_dev_run. Minutes of compute.
+#   # OVERRIDE THE WALLTIME DOWN. The #SBATCH block below asks for 2 days because the grid
+#   # needs it, and a 2-day request cannot be backfilled, so a canary inheriting it queues
+#   # behind full-size work for no reason. An hour backfills almost immediately.
+#   sbatch --array=0 --time=01:00:00 --export=ALL,V10_STAGE=canary \
 #       experiments/019-simb-multimodal/scripts/delta_expr_v10_grid.slurm
 #
 #   # THE ROUND.
@@ -169,7 +172,12 @@ else
   done
 fi
 
-GPUS_PER_NODE=4
+# GPU COUNT COMES FROM THE ALLOCATION, not a constant. Slurm sets SLURM_GPUS_ON_NODE to
+# what this task actually got, so the same script is correct whether it is handed a whole
+# 4-GPU node for the grid or a single card for a short canary. Hardcoding 4 meant a canary
+# submitted with --gpus-per-node=1 would have tried to pin runs to cards 1-3 that it does
+# not own, and every one of those would have failed on an invalid device.
+GPUS_PER_NODE="${SLURM_GPUS_ON_NODE:-4}"
 PER_TASK=$((GPUS_PER_NODE * ROUNDS))
 
 TASK="${SLURM_ARRAY_TASK_ID:?this script must be submitted with --array}"
@@ -221,6 +229,22 @@ export PYTHONPATH="$PROJECT_ROOT"
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export WANDB__SERVICE_WAIT=600
 cd "$PROJECT_ROOT" || exit 1
+
+# IMPORT PROVENANCE GATE. The Delta environment carries an EDITABLE install of torchcell,
+# and an editable install works through a meta-path finder, which Python consults BEFORE
+# anything on sys.path -- including PYTHONPATH. So if that finder ever points somewhere
+# other than PROJECT_ROOT, every run here silently trains a different checkout's source
+# while the log still prints this checkout's git hash: an unattributable result that looks
+# completely normal. It points at PROJECT_ROOT today; this asserts it rather than trusting
+# it, and turns a silent wrong-code run into an immediate failure before any GPU is spent.
+RESOLVED="$("$ENV_PY" -c 'import torchcell, os; print(os.path.realpath(os.path.dirname(torchcell.__file__)))')"
+EXPECTED="$(cd "$PROJECT_ROOT" && pwd -P)/torchcell"
+if [[ "$RESOLVED" != "$EXPECTED" ]]; then
+  echo "FATAL: torchcell imports from $RESOLVED but PROJECT_ROOT is $EXPECTED." >&2
+  echo "       An editable install or a stale site-packages copy is shadowing the repo." >&2
+  exit 1
+fi
+echo "import check  : torchcell -> $RESOLVED (matches PROJECT_ROOT)"
 
 TRAIN=experiments/019-simb-multimodal/scripts/train_cgt_multitask.py
 RC=0

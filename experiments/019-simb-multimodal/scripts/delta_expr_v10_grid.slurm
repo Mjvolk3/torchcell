@@ -189,12 +189,26 @@ if [[ "$START" -ge "${#JOBS[@]}" ]]; then
   exit 1
 fi
 
-# Reserve 2 CPUs for overhead and split the rest across the four CONCURRENT runs, giving 7
-# workers each at 32 CPUs. This is the same worker count every healthy run in this campaign
-# has used, and staying at it is the whole reason for two sequential rounds rather than
-# eight concurrent runs on one node.
-NUM_WORKERS=$(((SLURM_CPUS_PER_TASK - 2) / GPUS_PER_NODE))
-[[ "$NUM_WORKERS" -lt 1 ]] && NUM_WORKERS=1
+# DATALOADER WORKERS ARE 0 ON DELTA, AND THAT IS A MEASUREMENT, NOT A FALLBACK.
+#
+# The datamodule uses multiprocessing_context="spawn", which is required because CUDA is
+# already initialized in the parent. Under spawn every worker is a FRESH interpreter that
+# re-imports torch, PyG and torchcell from the parallel filesystem. On GilaHyper's local
+# NVMe that costs seconds. On Delta's Lustre it does not: delta_grid_common.sh records an
+# interactive smoke test that sat in Sanity Checking for 38 MINUTES without reaching one
+# validation batch, same code and same dataset, and names the filesystem as the variable.
+#
+# THIS LAUNCHER ALREADY PAID FOR THAT LESSON TWICE. Canaries 21785783 and 21788244 both
+# stalled with 7 workers per run: four python processes, 11 seconds of CPU each across 35
+# minutes, every one blocked in `cl_sync_io_wait`, which is Lustre's client I/O wait. The
+# IGB reasoning that produced 7 workers is correct FOR IGB, where the worry is starvation
+# on a local filesystem, and exactly inverted here.
+#
+# 0 removes the mechanism: no spawn, load in the main process. The dataset is small enough
+# that this is a real option. It also needs the prefetch_factor guard from 2cca6d83, without
+# which num_workers=0 is not slow but UNCONSTRUCTIBLE -- that is what killed all 119 trials
+# of Delta job 20556837 in ~15 s apiece while the job still exited COMPLETED 0:0.
+NUM_WORKERS="${DELTA_NUM_WORKERS:-0}"
 
 echo "=========================================================="
 echo "host          : $(hostname)"
@@ -226,7 +240,19 @@ fi
 # job then runs system python3.9. Delta compute nodes have outbound network, so W&B is
 # ONLINE here and needs no login-node sync afterwards, unlike IGB.
 ENV_PY=/work/hdd/bbub/miniconda3/envs/torchcell/bin/python
-export DATA_ROOT=/work/hdd/bbub/mjvolk3/torchcell
+# DATA_ROOT is /scratch, NOT /work/hdd. Both currently hold a 13G fig3_core build, so this
+# is not what stalled the canaries, but delta_grid_common.sh calls the inconsistency "the
+# single most expensive thing here to get wrong": Neo4jCellDataset skips the database only
+# when processed/ exists, so a root without a build makes a compute node try to REBUILD with
+# no Neo4j. Following the confirmed root, and failing fast rather than discovering it twenty
+# minutes into a two-day job.
+export DATA_ROOT="${DELTA_DATA_ROOT:-/scratch/bbub/mjvolk3/torchcell}"
+if [ ! -d "$DATA_ROOT/data/torchcell/experiments/019-simb-multimodal/fig3_core/processed" ]; then
+  echo "FATAL: no built fig3_core under DATA_ROOT=$DATA_ROOT" >&2
+  echo "       Set DELTA_DATA_ROOT at submit time; do not let the loader try to rebuild." >&2
+  exit 1
+fi
+export PYTHONWARNINGS=ignore
 export PYTHONPATH="$PROJECT_ROOT"
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export WANDB__SERVICE_WAIT=600
@@ -284,6 +310,11 @@ for round in $(seq 0 $((ROUNDS - 1))); do
         > "$LOG" 2>&1 &
     PIDS+=("$!")
     LABELS+=("$NAME:$REP")
+    # STAGGER. Four interpreters importing the same multi-gigabyte stack off Lustre at the
+    # same instant is the worst case for that filesystem, and it is what the canaries hit.
+    # Once the first has read those files the node's client cache is warm and the rest are
+    # far cheaper, so a short offset costs a minute and can save many.
+    [[ "$gpu" -lt $((GPUS_PER_NODE - 1)) ]] && sleep "${DELTA_LAUNCH_STAGGER_S:-60}"
   done
 
   # Wait for the whole round before starting the next. A failure is RECORDED and the next

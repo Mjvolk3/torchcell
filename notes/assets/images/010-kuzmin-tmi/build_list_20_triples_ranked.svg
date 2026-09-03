@@ -118,8 +118,8 @@ L 224.36331 27.73425
      </g>
     </g>
     <g id="text_6">
-     <!-- Corrected predicted $\tau$ -->
-     <g transform="translate(142.843071 288.784983)">
+     <!-- Corrected predicted $\tau$  (bars: 3-checkpoint range) -->
+     <g transform="translate(106.153071 288.784983)">
       <text>
        <tspan x="0" y="-0.625" style="font-size: 6px; font-family: 'Arial'">C</tspan>
        <tspan x="4.333008" y="-0.625" style="font-size: 6px; font-family: 'Arial'">o</tspan>
@@ -141,6 +141,34 @@ L 224.36331 27.73425
        <tspan x="46.019531" y="-0.625" style="font-size: 6px; font-family: 'Arial'">e</tspan>
        <tspan x="49.356445" y="-0.625" style="font-size: 6px; font-family: 'Arial'">d</tspan>
        <tspan x="52.693359" y="-0.625" style="font-size: 6px; font-family: 'Arial'"> </tspan>
+       <tspan x="57.972656" y="-0.625" style="font-size: 6px; font-family: 'Arial'"> </tspan>
+       <tspan x="59.639648" y="-0.625" style="font-size: 6px; font-family: 'Arial'"> </tspan>
+       <tspan x="61.306641" y="-0.625" style="font-size: 6px; font-family: 'Arial'">(</tspan>
+       <tspan x="63.304688" y="-0.625" style="font-size: 6px; font-family: 'Arial'">b</tspan>
+       <tspan x="66.641602" y="-0.625" style="font-size: 6px; font-family: 'Arial'">a</tspan>
+       <tspan x="69.978516" y="-0.625" style="font-size: 6px; font-family: 'Arial'">r</tspan>
+       <tspan x="71.976562" y="-0.625" style="font-size: 6px; font-family: 'Arial'">s</tspan>
+       <tspan x="74.976562" y="-0.625" style="font-size: 6px; font-family: 'Arial'">:</tspan>
+       <tspan x="76.643555" y="-0.625" style="font-size: 6px; font-family: 'Arial'"> </tspan>
+       <tspan x="78.310547" y="-0.625" style="font-size: 6px; font-family: 'Arial'">3</tspan>
+       <tspan x="81.647461" y="-0.625" style="font-size: 6px; font-family: 'Arial'">-</tspan>
+       <tspan x="83.645508" y="-0.625" style="font-size: 6px; font-family: 'Arial'">c</tspan>
+       <tspan x="86.645508" y="-0.625" style="font-size: 6px; font-family: 'Arial'">h</tspan>
+       <tspan x="89.982422" y="-0.625" style="font-size: 6px; font-family: 'Arial'">e</tspan>
+       <tspan x="93.319336" y="-0.625" style="font-size: 6px; font-family: 'Arial'">c</tspan>
+       <tspan x="96.319336" y="-0.625" style="font-size: 6px; font-family: 'Arial'">k</tspan>
+       <tspan x="99.319336" y="-0.625" style="font-size: 6px; font-family: 'Arial'">p</tspan>
+       <tspan x="102.65625" y="-0.625" style="font-size: 6px; font-family: 'Arial'">o</tspan>
+       <tspan x="105.993164" y="-0.625" style="font-size: 6px; font-family: 'Arial'">i</tspan>
+       <tspan x="107.326172" y="-0.625" style="font-size: 6px; font-family: 'Arial'">n</tspan>
+       <tspan x="110.663086" y="-0.625" style="font-size: 6px; font-family: 'Arial'">t</tspan>
+       <tspan x="112.330078" y="-0.625" style="font-size: 6px; font-family: 'Arial'"> </tspan>
+       <tspan x="113.99707" y="-0.625" style="font-size: 6px; font-family: 'Arial'">r</tspan>
+       <tspan x="115.995117" y="-0.625" style="font-size: 6px; font-family: 'Arial'">a</tspan>
+       <tspan x="119.332031" y="-0.625" style="font-size: 6px; font-family: 'Arial'">n</tspan>
+       <tspan x="122.668945" y="-0.625" style="font-size: 6px; font-family: 'Arial'">g</tspan>
+       <tspan x="126.005859" y="-0.625" style="font-size: 6px; font-family: 'Arial'">e</tspan>
+       <tspan x="129.342773" y="-0.625" style="font-size: 6px; font-family: 'Arial'">)</tspan>
        <tspan x="54.360352" y="-0.625" style="font-style: oblique; font-size: 6px; font-family: 'DejaVu Sans'">τ</tspan>
       </text>
      </g>
@@ -655,7 +683,7 @@ L 244.386142 27.73425
    </g>
    <g id="text_27">
     <text style="font-size: 6px; font-family: 'Arial'" transform="translate(127.336821 9.300375)">The 20 build-list triples, re-ranked</text>
-    <text style="font-size: 6px; font-family: 'Arial'" transform="translate(123.40729 15.73425)">red = contains an untrained gene (2)</text>
+    <text style="font-size: 6px; font-family: 'Arial'" transform="translate(102.73354 15.73425)">red = a gene with no trigenic training labels (2 of 20)</text>
    </g>
   </g>
  </g>

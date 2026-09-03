@@ -168,7 +168,13 @@ def main() -> None:
             f"  {g:12} -> {resolved[g]:10} trigenic training records {support[g]:>5d}"
         )
     df["min_train_records"] = df["genes"].map(lambda gs: min(support[g] for g in gs))
-    df["has_untrained_gene"] = df["min_train_records"] == 0
+    # NOT "outside the gene set" and NOT "untrained". Every gene here has an
+    # embedding row, and that row did receive gradient, because the graph
+    # penalty acts on all 6,607 rows and carried 99.99 percent of the training
+    # loss. What is zero is the number of trigenic LABELS that ever involved the
+    # gene. 2,255 of the 6,607 rows are in that position, since only 4,352 genes
+    # appear in any training record.
+    df["no_trigenic_labels"] = df["min_train_records"] == 0
     df = df.rename(columns={"prediction": "as_listed"})
 
     sd = label_spread()
@@ -289,7 +295,7 @@ def plot_ranked(df: pd.DataFrame) -> None:
     )
     y = np.arange(len(d))[::-1]
     colors = [
-        PLOT_PALETTE[1] if flag else PLOT_PALETTE[0] for flag in d["has_untrained_gene"]
+        PLOT_PALETTE[1] if flag else PLOT_PALETTE[0] for flag in d["no_trigenic_labels"]
     ]
     ax.barh(
         y,
@@ -306,10 +312,13 @@ def plot_ranked(df: pd.DataFrame) -> None:
     ax.axvline(0.0, color="black", linewidth=0.6)
     ax.set_yticks(y)
     ax.set_yticklabels([t.replace(" + ", "+") for t in d["triple"]], fontsize=5)
-    ax.set_xlabel(r"Corrected predicted $\tau$")
+    # The bars are a range over three runs, not a confidence interval. Saying so
+    # in the caption rather than the axis keeps the label inside the panel.
+    ax.set_xlabel(r"Corrected predicted $\tau$  (bars: 3-checkpoint range)")
     ax.set_title(
         "The 20 build-list triples, re-ranked\n"
-        f"red = contains an untrained gene ({int(d['has_untrained_gene'].sum())})",
+        f"red = a gene with no trigenic training labels "
+        f"({int(d['no_trigenic_labels'].sum())} of {len(d)})",
         fontsize=6,
     )
     for spine in ax.spines.values():

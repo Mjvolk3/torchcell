@@ -28,6 +28,11 @@ class RandomEmbeddingDataset(BaseEmbeddingDataset):
     # We should remove this to make it more general
     MODEL_TO_WINDOW = {
         "random_6579": ("window", 6579, False),
+        # 1024 exists to be a WIDTH-MATCHED control for prot_T5, which is 1024-dimensional.
+        # A random control of a different width changes the embedding preprocessor's input
+        # size alongside the content, so "content helps" and "a wider preprocessor helps"
+        # cannot be separated. At equal width the contrast is content and nothing else.
+        "random_1024": ("window", 1024, False),
         "random_1000": ("window", 1000, False),
         "random_100": ("window", 100, False),
         "random_10": ("window", 10, False),

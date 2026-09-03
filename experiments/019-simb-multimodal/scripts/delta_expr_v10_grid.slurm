@@ -71,7 +71,7 @@ STAGE_CONFIG=cgt_expr_v10_grid
 # Sixteen cells, indexed by a 4-BIT NUMBER so the mapping is arithmetic rather than a table
 # that can drift out of sync with the arm list. Bit set means the second level.
 #
-#   bit 0  embedding     0 random_1000        1 prot_T5_all
+#   bit 0  embedding     0 random_1024        1 prot_T5_all
 #   bit 1  trunk         0 L=6  hidden=90     1 L=2  hidden=45
 #   bit 2  readout       0 two-layer MLP      1 linear
 #   bit 3  weight decay  0 1e-8               1 1e-2
@@ -82,17 +82,18 @@ STAGE_CONFIG=cgt_expr_v10_grid
 # act on the gap. Weight decay is currently 1e-8, which is numerically off, and has never
 # been measured on this model at any replicate count.
 #
-# WHY random_1000 AND NOT random_100. prot_T5 is 1024-dimensional; a 100-dim control would
-# change the preprocessor's input width tenfold alongside the content and confound "content
-# helps" with "a wider preprocessor helps". At 1000 dims the preprocessor is the same size,
-# so the factor isolates content. It is also the control that set the kNN probe's 0.033
-# noise floor.
+# WHY random_1024. prot_T5 is 1024-dimensional, so a control of any other width changes the
+# embedding preprocessor's input size alongside the content and leaves "content helps"
+# confounded with "a wider preprocessor helps". At 1024 the two levels feed an IDENTICALLY
+# SIZED preprocessor and the factor is content and nothing else. The name had to be added to
+# the embedding registry to be reachable from a config; a 1024-wide tensor was already built
+# on Delta but no config could name it. Both levels verified to load at 6,607 genes x 1024.
 #
 # HIDDEN 45, NOT 48, because the layer-1 attention mask assigns ONE GRAPH PER HEAD across
 # nine graphs, so the head count is pinned at 9 and the width must divide by it. 45 gives 5
 # per head against the incumbent's 10. Changing the head count instead would change the
 # graph prior and confound the trunk factor with it.
-EMB=(random_1000 prot_T5_all)
+EMB=(random_1024 prot_T5_all)
 TRUNK_L=(6 2)
 TRUNK_H=(90 45)
 READOUT=(false true)

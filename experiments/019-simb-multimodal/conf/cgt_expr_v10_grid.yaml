@@ -20,7 +20,7 @@
 # maximum and inflates the variance, and they buy nothing for a contrast between arms.
 #
 # THE FOUR FACTORS, each at two levels, set by the launcher rather than here:
-#   embedding     random_1000 | prot_T5_all
+#   embedding     random_1024 | prot_T5_all
 #   trunk         L=6 h=90    | L=2 h=45
 #   readout       two-layer   | linear
 #   weight decay  1e-8        | 1e-2
@@ -30,11 +30,10 @@
 # split_seed 0. The graph KL regularizer stays off (graph_reg_lambda 0.0); the attention mask
 # and that regularizer are separate levers and only the mask is in use.
 #
-# WHY random_1000 AND NOT random_100 as the control. prot_T5 is 1024-dimensional. A 100-dim
-# control would change the embedding preprocessor's input width tenfold alongside the content,
-# confounding "does content help" with "does a wider preprocessor help". At 1000 dims the
-# preprocessor is nearly the same size and the factor isolates content. It is also the exact
-# control the kNN probe used to set its 0.033 noise floor.
+# WHY random_1024 AS THE CONTROL. prot_T5 is 1024-dimensional, so a control of any other
+# width changes the embedding preprocessor's input size alongside the content and confounds
+# "does content help" with "does a wider preprocessor help". At 1024 both levels feed an
+# identically sized preprocessor, which makes the factor content and nothing else.
 defaults:
   - cgt_expr_v9_mask
   - _self_

@@ -146,6 +146,15 @@ class NodeEmbeddingBuilder:
             "model_name": "chrom_pathways",
         },
         # Random embeddings
+        # random_1024 is the WIDTH-MATCHED control for prot_T5_all (1024). Without a
+        # registry name it is unreachable from a config, which is why the v10 grid first
+        # had to settle for random_1000.
+        "random_1024": {
+            "class": RandomEmbeddingDataset,
+            "root_path": "data/scerevisiae/random_embedding",
+            "requires_genome": True,
+            "model_name": "random_1024",
+        },
         "random_1000": {
             "class": RandomEmbeddingDataset,
             "root_path": "data/scerevisiae/random_embedding",

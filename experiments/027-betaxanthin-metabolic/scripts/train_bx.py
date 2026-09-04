@@ -99,10 +99,24 @@ sys.path.insert(0, FLUX_SCRIPTS_DIR)
 from train_flux import (  # noqa: E402
     ARMS,
     BETAXANTHIN_PRECURSORS,
-    build_dataset,
     build_flux_layer,
     extract_targets,
 )
+
+# 026's `build_dataset` is deliberately NOT imported. It opens the dataset with two graphs
+# and no node embeddings, which is the configuration every weak betaxanthin run used
+# (0.04-0.16 val Pearson). The 0.43 runs used nine graphs and prot_T5. See README.md,
+# "Design review before launch".
+from torchcell.data import (  # noqa: E402
+    DeletionKeyedGenotypeAggregator,
+    MeanExperimentDeduplicator,
+)
+from torchcell.data.graph_processor import Perturbation  # noqa: E402
+from torchcell.data.neo4j_cell import Neo4jCellDataset  # noqa: E402
+from torchcell.datasets.node_embedding_builder import NodeEmbeddingBuilder  # noqa: E402
+from torchcell.graph import SCerevisiaeGraph, build_gene_multigraph  # noqa: E402
+from torchcell.losses.distributional import gaussian_crps  # noqa: E402
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome  # noqa: E402
 
 from torchcell.datamodules import CellDataModule  # noqa: E402
 from torchcell.models.cell_graph_transformer_metabolism import (  # noqa: E402
@@ -110,6 +124,62 @@ from torchcell.models.cell_graph_transformer_metabolism import (  # noqa: E402
 )
 
 HEAD = "betaxanthin"
+
+# 026's module globals came in with its `build_dataset`; this file defines its own, from
+# the same config fields the arms already declare.
+DATASET_ROOT = osp.join(DATA_ROOT, "data/torchcell/experiments/019-simb-multimodal/fig6_pigment_transfer")
+QUERY_PATH = osp.join(
+    os.environ["EXPERIMENT_ROOT"], "019-simb-multimodal/queries/fig6_pigment_transfer.cql"
+)
+
+# The nine graphs and the protein embedding that separate the 0.43 runs from the 0.13 ones.
+# Copied from experiments/019-simb-multimodal/conf/gh_metabolism_000.yaml rather than
+# retyped, so the backbone is the one that was actually measured.
+STRONG_GRAPHS: list[str] = [
+    "physical",
+    "regulatory",
+    "tflink",
+    "string12_0_neighborhood",
+    "string12_0_fusion",
+    "string12_0_cooccurence",
+    "string12_0_coexpression",
+    "string12_0_experimental",
+    "string12_0_database",
+]
+STRONG_NODE_EMBEDDINGS: tuple[str, ...] = ("prot_T5_all",)
+
+
+def build_dataset() -> "Neo4jCellDataset":
+    """Open the pigment dataset with the nine-graph, prot_T5 backbone. Never rebuilds."""
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        go_root=osp.join(DATA_ROOT, "data/go"),
+    )
+    graph = SCerevisiaeGraph(
+        sgd_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        string_root=osp.join(DATA_ROOT, "data/string"),
+        tflink_root=osp.join(DATA_ROOT, "data/tflink"),
+        genome=genome,
+    )
+    with open(QUERY_PATH) as handle:
+        query = handle.read()
+    return Neo4jCellDataset(
+        root=DATASET_ROOT,
+        query=query,
+        gene_set=genome.gene_set,
+        graphs=build_gene_multigraph(graph=graph, graph_names=STRONG_GRAPHS),
+        incidence_graphs=None,
+        node_embeddings=NodeEmbeddingBuilder.build(
+            embedding_names=list(STRONG_NODE_EMBEDDINGS),
+            data_root=DATA_ROOT,
+            genome=genome,
+            graph=graph,
+        ),
+        converter=None,
+        deduplicator=MeanExperimentDeduplicator,
+        aggregator=DeletionKeyedGenotypeAggregator,
+        graph_processor=Perturbation(),
+    )
 
 
 class ScoringConfig(BaseModel):
@@ -152,6 +222,7 @@ class ModelConfig(BaseModel):
 
     hidden: int
     layers: int
+    attention_heads: int
     batch_size: int
     lr: float
     weight_decay: float
@@ -214,6 +285,7 @@ class BxCell(BaseModel):
     epochs: int
     hidden: int
     layers: int
+    attention_heads: int
     batch_size: int
     num_workers: int
     lr: float
@@ -258,6 +330,7 @@ def build_cell(arm: str, seed: int, cfg: BxConfig, epochs: int | None = None) ->
         epochs=epochs if epochs is not None else cfg.train.epochs,
         hidden=cfg.model.hidden,
         layers=cfg.model.layers,
+        attention_heads=cfg.model.attention_heads,
         batch_size=cfg.model.batch_size,
         num_workers=int(os.getenv("NUM_WORKERS", str(cfg.train.num_workers))),
         lr=cfg.model.lr,
@@ -464,14 +537,24 @@ def run_cell(
         gene_num=len(gene_ids),
         hidden_channels=cell.hidden,
         num_transformer_layers=cell.layers,
-        num_attention_heads=4,
+        num_attention_heads=cell.attention_heads,
         dropout=0.1,
         heads_config=heads_config,
+        # OFF. With it on, the model learns a free per-gene vector and stops needing the
+        # protein embedding, which 020 measured at 0.279 (off) against 0.151 (on) and
+        # 019 recorded as making generalization impossible by construction.
         learnable_embedding_config={
-            "enabled": True,
+            "enabled": False,
             "size": cell.hidden,
             "preprocessor": {"num_layers": 2, "dropout": 0.1},
         },
+        # 6, from 019's conf. The default is 8, and 90 is not divisible by 8, so the
+        # perturbation head's cross-attention refuses to build at this width.
+        perturbation_head_config={"num_heads": 6, "dropout": 0.1},
+        # The model reads cell_graph["gene"].x only when it is TOLD it has precomputed
+        # embeddings; without this it looks for a learnable table that is now disabled and
+        # raises "No gene embeddings available".
+        node_embeddings={name: None for name in STRONG_NODE_EMBEDDINGS},
         flux_layer=flux_layer,
     ).to(device)
 
@@ -495,7 +578,14 @@ def run_cell(
     optimizer = torch.optim.AdamW(
         model.parameters(), lr=cell.lr, weight_decay=cell.weight_decay
     )
-    loss_fn = nn.MSELoss(reduction="none")
+    # CRPS, not MSE. The head emits (mu, log_sigma) and is scored as a distribution;
+    # 019 measured 0.413 -> 0.434 from this single change, and 020 measured crps 0.275
+    # against point 0.172 across its sweep.
+    def loss_fn(prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        if prediction.shape[-1] == 2:
+            mu, log_sigma = prediction[..., 0], prediction[..., 1]
+            return gaussian_crps(mu, log_sigma, target.squeeze(-1)).unsqueeze(-1)
+        return nn.functional.mse_loss(prediction, target, reduction="none")
 
     # Target standardization from the TRAIN split only. A metric computed against
     # test-informed statistics is not a held-out metric.

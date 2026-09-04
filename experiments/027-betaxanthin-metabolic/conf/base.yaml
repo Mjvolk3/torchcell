@@ -67,8 +67,14 @@ data:
   split_seed: 0
 
 model:
-  hidden: 32
+  # THE BACKBONE THAT ACTUALLY WORKS, from 019 conf/gh_metabolism_000.yaml, which is the
+  # lineage that measured 0.43 on this phenotype. The 026 incumbent (hidden 32, 4 heads,
+  # learnable embeddings, MSE, 2 graphs) belongs to the family that measured 0.04-0.16, so
+  # running the module against it compares a treatment to a broken control. See README.md,
+  # "Design review before launch: the backbone is wrong".
+  hidden: 90
   layers: 2
+  attention_heads: 9
   batch_size: 128
   lr: 1.0e-3
   weight_decay: 1.0e-4

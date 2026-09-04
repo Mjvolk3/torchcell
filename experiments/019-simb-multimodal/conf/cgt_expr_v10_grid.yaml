@@ -23,7 +23,7 @@
 #   embedding     random_1024 | prot_T5_all
 #   trunk         L=6 h=90    | L=2 h=45
 #   readout       two-layer   | linear
-#   weight decay  1e-8        | 1e-2
+#   weight decay  1e-8        | 1e-4
 #
 # EVERYTHING ELSE IS PINNED to the v9 incumbent: quantile head trained by pinball loss, the
 # layer-1 attention mask over nine graphs one per head, dropout 0.1, lr 3e-4, batch 32,

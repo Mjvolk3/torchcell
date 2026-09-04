@@ -82,13 +82,22 @@ STAGE_CONFIG=cgt_expr_v10_grid
 #   bit 0  embedding     0 random_1024        1 prot_T5_all
 #   bit 1  trunk         0 L=6  hidden=90     1 L=2  hidden=45
 #   bit 2  readout       0 two-layer MLP      1 linear
-#   bit 3  weight decay  0 1e-8               1 1e-2
+#   bit 3  weight decay  0 1e-8               1 1e-4
 #
 # WHY THESE FOUR. The model fits TRAIN to 0.786 against a 0.775 replicate ceiling while
 # validating at 0.240, so it is memorizing rather than underfitting, and the gap is ~0.55
 # while every architecture arm tried so far moves 0.01-0.05. These are the four levers that
-# act on the gap. Weight decay is currently 1e-8, which is numerically off, and has never
-# been measured on this model at any replicate count.
+# act on the gap. Weight decay is currently 1e-8, numerically off, never measured here.
+#
+# THE SECOND WEIGHT-DECAY LEVEL IS 1e-4, NOT 1e-2, AND THAT IS EVIDENCE-DRIVEN. Every 010
+# config pins weight_decay 1e-8 with the note "transformer embeddings are sensitive to L2",
+# and cgt_expr_007 records that 010's checkpointed model used 1e-8 against the naive
+# reading. 1e-4 is the value _007's alternative bundle carried, so it is a level this
+# architecture has actually seen. A jump to 1e-2 on an architecture documented as L2
+# sensitive risks driving cells to a CONSTANT prediction, and a collapsed run scores exactly
+# 0.000 and averages into its factor mean like a real value -- the v9 point head sat at
+# pred_sd_ratio 0.000 through epoch 7,730 and never recovered, so this is a measured failure
+# mode of this model, not a hypothetical.
 #
 # WHY random_1024. prot_T5 is 1024-dimensional, so a control of any other width changes the
 # embedding preprocessor's input size alongside the content and leaves "content helps"
@@ -105,7 +114,7 @@ EMB=(random_1024 prot_T5_all)
 TRUNK_L=(6 2)
 TRUNK_H=(90 45)
 READOUT=(false true)
-WD=(1e-8 1e-2)
+WD=(1e-8 1e-4)
 
 cell_overrides() {  # $1 = cell index 0..15
   local c=$1

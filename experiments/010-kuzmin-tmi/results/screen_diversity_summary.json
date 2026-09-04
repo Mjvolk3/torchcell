@@ -1,0 +1,25 @@
+{
+  "hub": "YER059W",
+  "hub_query_double": "YER059W + YIL050W",
+  "hub_records": 1097,
+  "hub_distinct_screens": 1,
+  "n_array_genes_in_hub_screen": 1097,
+  "n_inference_triples_with_both_partners_measured": 2730,
+  "pearson_pred_vs_partner_mean": 0.49481947884488175,
+  "pearson_pred_vs_partner_min": 0.5989519006346744,
+  "frac_one_screen_above_0.08": 0.5897435897435898,
+  "enrichment_above_0.08": 13.23344175616553,
+  "n_above_0.08": 39,
+  "frac_one_screen_above_0.16": 0.8666666666666667,
+  "enrichment_above_0.16": 19.44740571123456,
+  "n_above_0.16": 15,
+  "base_rate_one_screen": 0.04456464165634198,
+  "median_min_screens_whole_space": 10,
+  "min_distinct_screens_gate": 50,
+  "panel_genes_failing_gate": [
+    "YER059W",
+    "YDR423C",
+    "YLR258W"
+  ],
+  "genes_below_gate_overall": 3170
+}

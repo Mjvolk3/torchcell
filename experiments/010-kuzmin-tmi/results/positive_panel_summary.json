@@ -2,15 +2,15 @@
   "block_size": 5,
   "n_blocks": 2,
   "panel_genes": [
-    "YDR423C",
-    "YER059W",
+    "YBR028C",
+    "YCR073C",
+    "YDL095W",
+    "YFR015C",
     "YGL060W",
     "YGR121C",
-    "YHR003C",
-    "YHR204W",
-    "YJR082C",
+    "YGR202C",
+    "YIL124W",
     "YKR028W",
-    "YLR258W",
     "YPL181W"
   ],
   "n_genes": 10,
@@ -20,13 +20,15 @@
   "triples_per_gene_min": 6,
   "triples_per_gene_max": 6,
   "worst_checkpoint_range": [
-    0.010833740234375,
-    0.66162109375
+    -0.01541900634765625,
+    0.06890869140625
   ],
-  "median_spread": 0.0544891357421875,
-  "all_three_checkpoints_positive": 20,
-  "min_trigenic_train_records": 288,
+  "median_spread": 0.013247489929199219,
+  "all_three_checkpoints_positive": 15,
+  "min_trigenic_train_records": 276,
   "min_smf_mean": 0.9708,
   "max_smf_strain_spread": 0.0,
-  "gate_min_train_records": 200
+  "gate_min_train_records": 200,
+  "gate_min_distinct_screens": 50,
+  "min_distinct_screens_in_panel": 276
 }

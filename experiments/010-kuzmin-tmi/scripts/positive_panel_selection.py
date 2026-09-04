@@ -94,6 +94,14 @@ TAGS = list(CHECKPOINTS)
 BLOCK_SIZE = 5          # C(5,3) = 10 triples on C(5,2) = 10 doubles
 N_BLOCKS = 2            # 10 genes, 20 triples, 20 doubles
 MIN_TRAIN_RECORDS = 200  # the previous panel's cliff was 519 -> 10 -> 0
+# A record count is not support. Kuzmin groups records by the query double
+# they were measured under, so a gene with 1,097 records from ONE screen has
+# been measured once. 88 genes are in that position and their median record
+# count is 1,046, so the record floor cannot see them. The distinct-screen
+# distribution has a gap: 2,339 genes sit at 10 to 49 and 1,171 at 200 or
+# more, with only 11 in between, so any floor in that gap gives the same
+# answer. See screen_diversity_audit.py.
+MIN_DISTINCT_SCREENS = 50
 SEED_POOL = 60000        # rank cut on the positive tail used to seed block search
 MAX_SEED_TRIPLES = 4000  # how many seeds to expand into blocks
 N_CANDIDATES_KEPT = 5000  # millions qualify; only the head is committed
@@ -154,6 +162,43 @@ def load_space() -> tuple[np.ndarray, np.ndarray, list[str]]:
 # ---------------------------------------------------------------------------
 
 
+def distinct_screens(gene_index: dict[str, list]) -> dict[str, int]:
+    """How many distinct Kuzmin query doubles each gene was measured under.
+
+    Every record is a query double crossed against one array gene, so grouping a
+    gene's records by their query double gives the number of independent screens
+    its behavior was observed in. A gene seen under one screen has one
+    measurement of context, however many array genes that screen crossed.
+    """
+    label_df = pd.read_parquet(osp.join(BUILD_DIR, "processed", "label_df.parquet"))
+    label_df = label_df.sort_values("index")
+    row_of = {int(r): i for i, r in enumerate(label_df["index"].to_numpy())}
+    names = sorted(gene_index)
+    col = {g: j for j, g in enumerate(names)}
+    rows = np.full((len(row_of), 3), -1, dtype=np.int32)
+    fill = np.zeros(len(row_of), dtype=np.int8)
+    for g, ids in gene_index.items():
+        c = col[g]
+        for r in ids:
+            i = row_of[int(r)]
+            rows[i, fill[i]] = c
+            fill[i] += 1
+    rows = np.sort(rows, axis=1)
+    base = len(names) + 1
+    a, b, c = (rows[:, j].astype(np.int64) for j in range(3))
+    pairs = np.stack([a * base + b, a * base + c, b * base + c], axis=1)
+    keys, counts = np.unique(pairs.reshape(-1), return_counts=True)
+    recurring = set(keys[counts >= 5].tolist())
+    query = np.array(
+        [next(int(p) for p in r if int(p) in recurring) for r in pairs], dtype=np.int64
+    )
+    out: dict[str, int] = {}
+    for c_, g in enumerate(names):
+        m = (rows == c_).any(axis=1)
+        out[g] = len(set(query[m].tolist())) if m.any() else 0
+    return out
+
+
 def gene_gates(vocab: list[str]) -> tuple[dict[str, str], pd.DataFrame]:
     """Resolve every gene and record why each one passes or fails.
 
@@ -172,7 +217,9 @@ def gene_gates(vocab: list[str]) -> tuple[dict[str, str], pd.DataFrame]:
     gene_set = set(genome.gene_set)
 
     with open(osp.join(BUILD_DIR, "processed", "is_any_perturbed_gene_index.json")) as f:
-        support = {g: len(v) for g, v in json.load(f).items()}
+        gene_index = json.load(f)
+    support = {g: len(v) for g, v in gene_index.items()}
+    screens = distinct_screens(gene_index)
 
     rows: list[dict[str, object]] = []
     resolved: dict[str, str] = {}
@@ -193,6 +240,9 @@ def gene_gates(vocab: list[str]) -> tuple[dict[str, str], pd.DataFrame]:
             reasons.append(f"same locus as {collision}")
         if n_train < MIN_TRAIN_RECORDS:
             reasons.append(f"only {n_train} trigenic training records")
+        n_screens = screens.get(sysname, 0)
+        if n_screens < MIN_DISTINCT_SCREENS:
+            reasons.append(f"measured under only {n_screens} distinct screens")
         ok = not reasons
         if ok:
             resolved[g] = sysname
@@ -204,6 +254,7 @@ def gene_gates(vocab: list[str]) -> tuple[dict[str, str], pd.DataFrame]:
                 "status": r.status.value,
                 "in_gene_set": sysname in gene_set,
                 "trigenic_train_records": n_train,
+                "distinct_screens": n_screens,
                 "passes": ok,
                 "reasons": "; ".join(reasons),
             }
@@ -506,6 +557,10 @@ def main() -> None:
         "min_smf_mean": float(fit["smf_mean"].min()),
         "max_smf_strain_spread": float(fit["smf_strain_spread"].max()),
         "gate_min_train_records": MIN_TRAIN_RECORDS,
+        "gate_min_distinct_screens": MIN_DISTINCT_SCREENS,
+        "min_distinct_screens_in_panel": int(
+            gates.set_index("gene").loc[panel_names, "distinct_screens"].min()
+        ),
     }
     with open(osp.join(RESULTS_DIR, "positive_panel_summary.json"), "w") as f:
         json.dump(summary, f, indent=2)

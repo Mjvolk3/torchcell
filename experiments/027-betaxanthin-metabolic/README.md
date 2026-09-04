@@ -435,3 +435,61 @@ route to tyrosine, whose genes (`ARO1`, `ARO2`, `ARO3`, `ARO4`, `ARO7`, `TYR1`, 
 narrowly is what makes the experiment falsifiable: the hypothesis is that constraining
 native precursor flux improves prediction of a heterologous product's titer, not that the
 model simulates betaxanthin synthesis.
+
+## 2026.09.04 -- Launch record
+
+Submitted to Delta on `bbub-delta-gpu` (3,851 h available; `bbtp` no longer exists on this
+allocation and `bfjt` is wanted elsewhere).
+
+### What changed before launch
+
+The backbone, per the design review above. `conf/base.yaml` now carries the 019
+`gh_metabolism_000` lineage rather than the 026 incumbent, and three couplings had to move
+with it, each found by a local smoke run rather than by reading:
+
+1. **The perturbation head defaults to 8 heads and 90 is not divisible by 8.** Its
+   cross-attention refuses to build. 019 uses 6, which divides 90 into 15.
+2. **The model reads `cell_graph["gene"].x` only when it is told it has precomputed
+   embeddings.** With `learnable_embedding` off and `node_embeddings` unset it finds neither
+   and raises. It also indexes the embedding dataset to infer its width, so it needs the
+   objects themselves, not their names.
+3. **Dropping 026's `build_dataset` dropped its module globals with it.** `DATASET_ROOT` and
+   `QUERY_PATH` are defined here now.
+
+Local smoke, `pooled` seed 0, two epochs on one GPU: loss 1.0586 to 1.0088, val Pearson
+-0.0214 to +0.1055, pinned test Spearman +0.0261 on n = 629. Two epochs is not a result;
+what it establishes is that the nine-graph prot_T5 backbone builds, trains, and scores
+against the pinned Merzbacher split end to end.
+
+### Environment facts confirmed on Delta, not assumed
+
+| fact | value |
+| --- | --- |
+| repo | `/projects/bbub/mjvolk3/torchcell`, branch `feat/kinetics-equilibrator-datasets` |
+| `DATA_ROOT` | `/scratch/bbub/mjvolk3/torchcell` (the Delta `.env` still says `/work/hdd`, which is wrong) |
+| interpreter | `/work/hdd/bbub/miniconda3/envs/torchcell/bin/python` |
+| GPU | NVIDIA A40, 46,068 MiB, 4 per node |
+| `NUM_WORKERS` | 0, forced (spawn re-imports off Lustre and stalls in sanity check) |
+| W&B | online, authenticated via `~/.netrc`, project `torchcell_027_bxfx` |
+
+The Open Enzyme Database mirror was **absent on Delta** and was rsynced (516 KB). Without it
+`resolve_kcat_table` catches the missing file, returns an empty record list, and every
+measured kcat is silently replaced by the organism default, so the enzyme-constrained arm
+would have run with no enzyme constraints and reported a plausible number. The
+`min_kcat_experimental_fraction` gate exists to abort that, and it can only fire if the
+mirror is there to be measured.
+
+### Shape of the grid
+
+Nine nodes, 4 GPUs each, **2 runs per GPU** = 72 workers. Six arms divide 72 into 12
+seed-groups, so every arm gets 12 seeds. The shard rule assigns by whole seed and every
+worker owns its own Optuna database, which is what avoids the SQLite race that had multiple
+workers claiming one trial.
+
+### Known limitation carried into this run
+
+The predicted kcat and K_M tables are built but **not wired into the flux layer**, which
+still resolves kcat from the Open Enzyme Database (4.0 percent experimental, the rest
+default). K_M is not consumed at all. So this run tests the flux module's structure and
+thermodynamics, not the predicted kinetics. Wiring the predictor registry in, and adding the
+`flux_shuffled` control, are the next round.

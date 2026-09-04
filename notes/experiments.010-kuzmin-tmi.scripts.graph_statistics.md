@@ -70,3 +70,80 @@ cannot parse the package; the `torchcell` conda env rebuilt 2026.09.03 (Python 3
 ![](./assets/images/010-kuzmin-tmi/graphs_edge_multiplicity.svg)
 
 ![](./assets/images/010-kuzmin-tmi/graphs_string_versions.svg)
+
+## 2026.09.03 - Structure, hubs, transcription-factor overlap, chronological STRING releases
+
+Author feedback on the first pass: panel b sat low and far right of panel a, the bottom row was
+mostly empty, and the pairwise-Jaccard bars for STRING releases looped in time. The script now
+computes five more dimensions of the same nine graphs, all from the cached pickles (loads in about
+10 s on the Mac; the dense 6,607 x 6,607 matmuls add another 10 s), and lays every panel out with
+explicit mm margins so rows and columns align in the composed figure (shared `TOP_MM`, a
+`LABEL_LEFT_MM` axes-left for every panel with graph names, one height per row).
+
+New CSVs in `experiments/010-kuzmin-tmi/results/graphs/`:
+
+- `graph_structure.csv`: largest-component fraction, mean clustering (nx.average_clustering
+  semantics, via diag(A^3)/2), degree assortativity, mean and median two-hop reach.
+- `hub_genes.csv` (top-10 by undirected degree per graph), `hub_recurrence.csv` (how many genes are
+  top-10 / top-1% hubs of exactly n graphs), `hub_matrix.csv` (percentile rank of the recurring
+  hubs in every graph).
+- `tf_overlap.csv`, `tf_overlap_per_regulator.csv`: SGD regulatory vs TFLink as directed graphs.
+- `string_version_drift.csv` gained `consecutive`, `added`, `dropped`, `retained_frac_of_b`.
+
+Measured (this run):
+
+| graph | largest component | mean clustering | assortativity | two-hop reach (mean genes) | top hub (degree) |
+|---|---|---|---|---|---|
+| Physical (SGD) | 1.000 | 0.36 | -0.20 | 4,686 | DHH1 (3,606) |
+| Regulatory (SGD) | 1.000 | 0.26 | -0.37 | 3,365 | FKH1 (2,991) |
+| TFLink | 1.000 | 0.67 | -0.44 | 5,038 | GCN4 (4,908) |
+| STRING neighborhood | 1.000 | 0.27 | 0.04 | 1,646 | DUR12 (936) |
+| STRING fusion | 0.962 (43 components) | 0.03 | 0.24 | 78 | CDC28 (84) |
+| STRING co-occurrence | 0.432 (486 components) | 0.46 | 0.93 | 22 | SPS1 (97) |
+| STRING co-expression | 0.9997 | 0.31 | 0.21 | 4,682 | SSA1 (1,770) |
+| STRING experimental | 0.9997 | 0.28 | -0.01 | 4,895 | NAB2 (2,696) |
+| STRING database | 0.962 (46 components) | 0.54 | 0.33 | 404 | HFD1 (374) |
+
+Hub recurrence: the nine top-10 lists name 74 genes; 12 are in two lists, 2 (GDE1, ISW1) in three.
+At the top 1% (66 genes per graph): 353 genes are hubs of one graph, 79 of two, 22 of three, 3 of
+four, 1 (CDC28) of five.
+
+Transcription-factor graphs (directed, self-regulation kept): regulators 511 (regulatory) vs 317
+(TFLink), 200 shared; targets 6,546 vs 5,074, 4,963 shared; directed edges 39,636 vs 200,801, 16,817
+shared (Jaccard 0.075). Per shared regulator the Jaccard of the two target sets has median 0.03;
+FKH1 is the best case at 0.53 with 1,747 shared targets.
+
+Shared pairs (undirected): co-expression and experimental 556,106; neighborhood and co-expression
+119,758; physical and experimental 104,771; regulatory and TFLink 16,885.
+
+STRING releases, consecutive steps (retained of previous / added / dropped): neighborhood
+32,981 / 87,984 / 12,620 then 65,678 / 81,035 / 55,287; fusion 565 / 3,349 / 793 then
+2,001 / 9,786 / 1,913; co-occurrence 1,893 / 2,775 / 766 then 2,654 / 8,431 / 2,014; co-expression
+183,849 / 370,984 / 129,839 then 355,122 / 641,077 / 199,711; experimental
+121,984 / 270,788 / 97,466 then 295,506 / 526,588 / 97,266; database 19,776 / 27,040 / 13,710 then
+26,042 / 46,575 / 20,774. Of a v12.0 channel's pairs, 17% (fusion) to 45% (neighborhood) were
+already in v11.0 and 4% (fusion) to 21% (co-expression) in v9.1.
+
+`graphs_string_versions.svg` (pairwise Jaccard bars) is superseded by `graphs_string_releases.svg`
+and is no longer written; the DANGO release sweep panel moved to the DANGO note. Panels now
+written, in figure order:
+
+![](./assets/images/010-kuzmin-tmi/graphs_sizes.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_degree_ccdf.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_jaccard.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_containment.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_edge_multiplicity.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_structure.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_shared_pairs.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_hubs.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_tf_overlap.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_string_releases.svg)

@@ -1,0 +1,20 @@
+%% AUTO-GENERATED -- do not hand-edit.
+%% SOURCE: experiments/006-kuzmin-tmi/scripts/dcell_model_go_stats.py
+%%         reads experiments/006-kuzmin-tmi/results/dcell_model/go_filter_stages.csv
+\begin{table}[!htbp]
+\centering
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Stage & Terms & Edges & Annotations & Genes covered & Leaves \\
+\midrule
+SGD annotations on GO, three namespaces under \texttt{GO:ROOT} & 5,660 & 6,674 & 66,404 & 6,607 & 3,826 \\
+drop IGI-evidence annotations (empty terms removed) & 5,541 & 6,540 & 64,483 & 6,607 & 3,763 \\
+drop terms whose gene set equals a parent's & 5,435 & 6,433 & 64,324 & 6,607 & 3,763 \\
+drop terms containing $<4$ genes (the trigenic run) & 2,655 & 3,208 & 59,986 & 6,607 & 1,527 \\
+reference only: annotations dated $\le$ 2017-07-19, then the same three filters & 1,408 & 1,714 & 22,978 & 6,409 & 911 \\
+\bottomrule
+\end{tabular}
+\caption{The GO DAG at each filtering stage of the DCell baseline. Filters are applied in the order listed (\texttt{torchcell.graph.filter\_go\_IGI}, \texttt{filter\_redundant\_terms}, \texttt{filter\_by\_contained\_genes}), on GO release 2025-03-16 with SGD gene annotations; a removed term's children are reconnected to its parents. Annotations are direct (term, gene) pairs over the 6,607-gene reference; genes covered are those with at least one such pair; leaves are terms with no child term. The last row is not part of the trigenic run.}
+\label{tab:dcell-go-filter}
+\end{table}

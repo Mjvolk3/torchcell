@@ -1,0 +1,26 @@
+%% SOURCE: experiments/006-kuzmin-tmi/scripts/dcell_training_wandb.py -- AUTO-GENERATED, do not hand-edit; rerun the script.
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Training cost of the three learned models compared in Fig.~\ref{fig:ggi}d, from the
+wandb histories of the runs listed in \texttt{results/dcell\_training/runs.csv}. Samples per
+epoch is optimizer steps per epoch times the global batch. \emph{Best} is the epoch of the
+maximum validation Pearson~$r$ over the run; the wall-clock and GPU-hours to reach it are the
+logged run time at that epoch. CGT rows are the three replicate training jobs whose
+best-Pearson checkpoints give the Fig.~\ref{fig:ggi}d value; DANGO rows are the two 1{,}000-epoch training
+runs on the same build as DCell. DCell and DANGO trained on the experiment-006 build
+(332,313 records); the CGT replicates trained on the experiment-010 build (376,732 records).}
+\label{tab:dcell-training-cost}
+\begin{tabular}{@{}l l l r r r r r r r r@{}}
+\toprule
+\textbf{Model} & \textbf{Run} & \textbf{Build} & \textbf{GPUs} & \textbf{Samples/epoch} & \textbf{h/epoch} & \textbf{Samples/s} & \textbf{Best epoch} & \textbf{Best $r$} & \textbf{h to best} & \textbf{GPU-h to best}\\
+\midrule
+DCell & \texttt{eni948by} & 006 & 4 & 266,393 & 2.22 & 33 & 150 & 0.173 & 334.9 & 1,340\\
+CGT & \texttt{lzs9pcj3} & 010 & 4 & 302,064 & 0.94 & 90 & 24 & 0.452 & 24.3 & 97\\
+CGT & \texttt{yv4r30bi} & 010 & 4 & 302,064 & 0.94 & 89 & 25 & 0.447 & 25.3 & 101\\
+CGT & \texttt{c7671wgj} & 010 & 4 & 302,059 & 0.94 & 89 & 24 & 0.462 & 24.5 & 98\\
+DANGO & \texttt{014mprap} & 006 & 2 & 265,856 & 0.06 & 1,244 & 98 & 0.368 & 6.0 & 12\\
+DANGO & \texttt{9jpfy547} & 006 & 2 & 265,856 & 0.07 & 1,134 & 60 & 0.354 & 4.1 & 8\\
+\bottomrule
+\end{tabular}
+\end{table*}

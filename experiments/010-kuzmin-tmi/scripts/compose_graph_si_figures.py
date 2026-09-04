@@ -1,20 +1,24 @@
 # experiments/010-kuzmin-tmi/scripts/compose_graph_si_figures.py
 # [[experiments.010-kuzmin-tmi.scripts.compose_graph_si_figures]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/010-kuzmin-tmi/scripts/compose_graph_si_figures
-"""Compose the two graph SI figures as draw.io files from the true-size panel SVGs.
+"""Compose the two gene--gene graph SI figures as draw.io files from the true-size panel SVGs.
 
-Panels come from ``graph_statistics.py`` (this folder) and
-``experiments/005-kuzmin2018-tmi/scripts/dango_string_version_sweep.py``. Each panel SVG
-declares its size in draw.io units (100 per inch, via ``savefig_true_size_svg``), so the
-image cells below are placed at exact physical size and the figure is WYSIWYG when
-``make -C paper/nature-biotech fig`` exports it to ``figures/<name>.pdf``.
+Panels come from ``graph_statistics.py`` (this folder). Each panel SVG declares its size in
+draw.io units (100 per inch, via ``savefig_true_size_svg``), so the image cells below are
+placed at exact physical size and the figure is WYSIWYG when ``make -C paper/nature-biotech
+fig`` exports it to ``figures/<name>.pdf``.
 
 Figures written to notes/assets/drawio/:
-  FigS-graph-attention-priors.drawio   six panels, 180 mm x <=170 mm
-  FigS-dango-string-versions.drawio    two panels, 180 mm wide, one row
+  FigS-graph-attention-priors.drawio     sizes, degree, Jaccard, containment, multiplicity,
+                                         structure; 180 mm x <=170 mm, three rows
+  FigS-graph-attention-priors-2.drawio   shared pairs, hubs, TF-graph overlap, STRING releases;
+                                         two rows
 
-Panel letters are 8 pt bold lowercase (draw.io fontSize 11.1, the ladder value). Rerun after
-regenerating any panel; the draw.io file is overwritten, never edited by hand.
+Layout rules: two columns whose left edges are the same in every row (column 2 starts at the
+half-panel width plus COL_GAP), panels of one row share a height so their axes align, and the
+third row's right edge is flush with column 2's right edge. Panel letters are 8 pt bold
+lowercase (draw.io fontSize 11.1, the ladder value). Rerun after regenerating any panel; the
+draw.io file is overwritten, never edited by hand.
 
 Run from the repo root:
     python experiments/010-kuzmin-tmi/scripts/compose_graph_si_figures.py
@@ -33,7 +37,9 @@ ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
 DRAWIO_DIR = "notes/assets/drawio"
 
 FULL_WIDTH = 709  # 180 mm in draw.io units
-GAP = 6
+MAX_HEIGHT = 669  # 170 mm
+COL_GAP = 8  # 2 mm between the two columns
+ROW_GAP = 6  # 1.5 mm between rows
 LETTER_W, LETTER_H = 18, 14
 LETTER_STYLE = (
     "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;"
@@ -45,7 +51,6 @@ IMAGE_STYLE = (
 )
 
 P010 = osp.join(ASSET_IMAGES_DIR, "010-kuzmin-tmi")
-P005 = osp.join(ASSET_IMAGES_DIR, "005-kuzmin2018-tmi")
 
 
 def svg_size(path: str) -> tuple[float, float]:
@@ -92,38 +97,50 @@ def write_figure(name: str, layout: list[tuple[str, str, float, float]]):
     with open(out, "w", encoding="utf-8") as f:
         f.write(xml)
     print(f"wrote {out}: {extent_w:.0f} x {extent_h:.0f} units = {extent_w / 3.937:.1f} x {extent_h / 3.937:.1f} mm")
-    if extent_w > FULL_WIDTH + 2 or extent_h > 669 + 8:
-        raise SystemExit(f"{name} exceeds the Nature print box (709 x 669 units)")
+    if extent_w > FULL_WIDTH + 2 or extent_h > MAX_HEIGHT + 8:
+        raise SystemExit(f"{name} exceeds the Nature print box ({FULL_WIDTH} x {MAX_HEIGHT} units)")
+
+
+def rows(panel_rows: list[list[tuple[str, str]]]) -> list[tuple[str, str, float, float]]:
+    """Place rows of (letter, svg) pairs. The first panel of a row starts at x=0; the second
+    starts at column 2. A row whose panels do not fill the width is right-aligned to column
+    2's right edge when it has two panels of unequal width (the third row of figure 1)."""
+    half = svg_size(panel_rows[0][0][1])[0]
+    col2 = half + COL_GAP
+    right_edge = col2 + half
+    layout, y = [], 0.0
+    for r in panel_rows:
+        widths = [svg_size(p)[0] for _, p in r]
+        if len(r) == 2 and abs(widths[0] - widths[1]) > 1:
+            xs = [0.0, right_edge - widths[1]]
+        else:
+            xs = [0.0, col2][: len(r)]
+        for (letter, p), x in zip(r, xs):
+            layout.append((letter, p, x, y))
+        y += max(svg_size(p)[1] for _, p in r) + ROW_GAP
+    return layout
 
 
 def main():
-    sizes = osp.join(P010, "graphs_sizes.svg")
-    degree = osp.join(P010, "graphs_degree_ccdf.svg")
-    jaccard = osp.join(P010, "graphs_jaccard.svg")
-    contain = osp.join(P010, "graphs_containment.svg")
-    mult = osp.join(P010, "graphs_edge_multiplicity.svg")
-    strver = osp.join(P010, "graphs_string_versions.svg")
-    dango = osp.join(P005, "dango_string_version_sweep.svg")
-
-    half = svg_size(sizes)[0]
-    col2 = FULL_WIDTH - half  # right column flush with the 180 mm edge
-    row1_h = max(svg_size(sizes)[1], svg_size(degree)[1])
-    y2 = row1_h + GAP
-    row2_h = max(svg_size(jaccard)[1], svg_size(contain)[1])
-    y3 = y2 + row2_h + GAP
+    p = lambda n: osp.join(P010, f"{n}.svg")  # noqa: E731
     write_figure(
         "FigS-graph-attention-priors",
-        [
-            ("a", sizes, 0, 0),
-            ("b", degree, col2, 0),
-            ("c", jaccard, 0, y2),
-            ("d", contain, col2, y2),
-            ("e", mult, 0, y3),
-        ],
+        rows(
+            [
+                [("a", p("graphs_sizes")), ("b", p("graphs_degree_ccdf"))],
+                [("c", p("graphs_jaccard")), ("d", p("graphs_containment"))],
+                [("e", p("graphs_edge_multiplicity")), ("f", p("graphs_structure"))],
+            ]
+        ),
     )
     write_figure(
-        "FigS-dango-string-versions",
-        [("a", strver, 0, 0), ("b", dango, col2, 0)],
+        "FigS-graph-attention-priors-2",
+        rows(
+            [
+                [("a", p("graphs_shared_pairs")), ("b", p("graphs_hubs"))],
+                [("c", p("graphs_tf_overlap")), ("d", p("graphs_string_releases"))],
+            ]
+        ),
     )
 
 

@@ -1,0 +1,6 @@
+go_release,stage,terms,edges,annotations,genes_covered,leaves,roots,biological_process,molecular_function,cellular_component
+releases/2025-03-16,raw,5660,6674,66404,6607,3826,1,2830,2057,772
+releases/2025-03-16,drop IGI annotations,5541,6540,64483,6607,3763,1,2721,2047,772
+releases/2025-03-16,drop redundant terms,5435,6433,64324,6607,3763,1,2688,1977,769
+releases/2025-03-16,contained genes >= 4,2655,3208,59986,6607,1527,1,1490,674,490
+releases/2025-03-16,reference: date<=2017-07-19 then same filters,1408,1714,22978,6409,911,1,824,283,300

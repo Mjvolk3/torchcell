@@ -1,5 +1,126 @@
-%% ---- Supplementary Note [note:dcell-model] -- OWNED BY its section agent; fill in place. ----
+%% ---- Supplementary Note [note:dcell-model]: DCell in TorchCell -- the model and its GO DAG ----
+%% Every number here is emitted by experiments/006-kuzmin-tmi/scripts/dcell_model_go_stats.py
+%% (rebuilds the filtered GO DAG as experiments/006-kuzmin-tmi/scripts/dcell.py does; writes
+%% results/dcell_model/*.csv, the three panels, and tab-dcell-model-go-filter.tex; freezes the
+%% wandb model/params_* fields of the DCell runs to dcell_wandb_model_size.csv). The figure is
+%% composed by experiments/006-kuzmin-tmi/scripts/dcell_model_compose_figure.py (panel a is
+%% authored there as draw.io XML). Rerun those, not this file.
+%% MISSING BIB KEYS (not in references.bib; adding them is a curation decision): the DCell paper
+%% (mirror key maUsingDeepLearning2018: Ma et al., Nat. Methods 15, 290--298, 2018) and the Gene
+%% Ontology Consortium. Until they are added, DCell is named in prose without \citep.
 \clearpage
 \suppnote{note:dcell-model}{DCell in TorchCell: the ontology-structured model in the shared notation\secstatus{todo}}
 
-\textit{[FILLER: Supplementary Note on DCell in TorchCell: the ontology-structured model in the shared notation.]}
+DCell (Ma et al., 2018) is the visible-neural-network baseline of Fig.~\ref{fig:ggi}: hidden
+units grouped into subsystems, one per Gene Ontology (GO) term, wired to each other as the
+terms are wired in the ontology. It was reimplemented in TorchCell from the published
+description rather than run from the released Torch7 code, so that it reads the same
+experiment records and the same 6,607-gene S288C reference as every other model in the
+comparison, and so that its one structural commitment, the ontology as the model graph, can be
+stated in the notation of Table~\ref{tab:notation}. The published model was trained on single-
+and double-deletion growth; extending it to trigenic interaction changes nothing in the
+architecture, only which genes are zeroed. \suppfig{fig:dcell-model} draws the adaptation
+and reports the ontology it is built on; the cost of training it is the subject of
+\suppnoteref{note:dcell-training}.
+
+\notesec{The graph is the ontology} Where the cell encoder $F_\theta$ reads a graph
+$G=(N,E)$ over genes and takes the gene--gene relations $\{A^{(k)}\}$ only as soft priors on
+attention (Eq.~\ref{eq:graphreg}), DCell has no gene--gene graph. Its graph is the GO directed
+acyclic graph $G_{\mathrm{GO}}=(T,E_{\mathrm{GO}})$ whose nodes are terms $t\in T$ and whose
+edges run from a child term to each of its parents (\texttt{is\_child\_of}; a term may have
+several), together with the annotation relation $\mathrm{genes}(t)\subseteq[N]$ listing the
+genes annotated directly to $t$. The three GO namespaces are joined under one synthetic
+super-root \texttt{GO:ROOT}, as in the original. Each hierarchy edge is hard wiring, a block
+of a weight matrix, not a regularizer: the model cannot pass information across an edge the
+ontology does not contain, which is the sense in which it is visible.
+
+\notesec{The perturbation enters as data} A strain with deleted set $p$ is a binary
+gene-state vector $s\in\{0,1\}^{N}$ with $s_i=0$ if $g_i\in p$ and $1$ otherwise (the
+published encoding is the complement; the sign is absorbed by the first linear layer).
+TorchCell stores the reference's annotation relation as a table of 59,986 (term, gene) rows
+with a state column; the data loader (\texttt{DCellGraphProcessor}) copies the table per
+strain and zeros the rows of deleted genes. In the terms of \suppnoteref{note:equivalence}
+and \suppnoteref{note:static-graph}, DCell is the rebuild route: no shared encoding $H$ and
+no operator $\mathcal{T}_\psi$; each strain is a distinct input and the whole hierarchy is
+re-evaluated for it, the $\mathcal{O}(B\,L\lvert E\rvert d)$ column of \supptab{tab:compute}.
+A trigenic strain zeros three rows; that is the entire trigenic extension.
+
+\notesec{Subsystems, readout, and losses} Every term $t$ owns a subsystem that reads the
+outputs of its child subsystems $\mathrm{ch}(t)$ and the states of its own annotated genes,
+\begin{equation}
+I_t=\big[\,\Vert_{c\in\mathrm{ch}(t)}\,O_c\ \big\Vert\ s_{\mathrm{genes}(t)}\,\big],\qquad
+O_t=\tanh\!\big(\mathrm{BN}(W_tI_t+b_t)\big)\in[-1,1]^{L_t},\qquad
+L_t=\max\!\big(20,\lceil 0.3\,\lvert\mathrm{genes}(t)\rvert\rceil\big),
+\label{eq:dcell-subsystem}
+\end{equation}
+with $\mathrm{BN}$ batch normalization. Two details differ from the published
+$\mathrm{BatchNorm}(\mathrm{Tanh}(\mathrm{Linear}(I_t)))$: normalization precedes the
+$\tanh$, so states are bounded, and $\lvert\mathrm{genes}(t)\rvert$ counts direct annotations
+rather than the genes contained by $t$ and its descendants, the quantity the original sized
+subsystems by. Subsystems run by stratum, the length of the longest path from
+\texttt{GO:ROOT} to the term; every child has a strictly larger stratum than its parents, so
+running strata from the deepest to $0$ supplies each parent its children's outputs, and one
+stratum runs as one batch. The root readout $\hat y=w_r^{\top}O_{\mathrm{ROOT}}+b_r$ predicts
+the trigenic interaction $y_{\mathrm{int}}$ directly, with no fitness intermediate (contrast
+\suppnoteref{note:gi-from-fitness}). As in the original, every other subsystem carries a
+head $\hat y_t=w_t^{\top}O_t+b_t$, and the loss is
+\begin{equation}
+\mathcal{L}=\mathrm{MSE}(\hat y,y)+\alpha\,\operatorname*{mean}_{t\neq r}\mathrm{MSE}(\hat y_t,y),\qquad \alpha=0.3,
+\label{eq:dcell-loss}
+\end{equation}
+which averages the auxiliary terms where the original summed them over 2,526 subsystems. The
+published $\lambda\lVert W\rVert_2$ penalty is replaced by AdamW weight decay; weights are
+initialized uniformly in $[-0.001,0.001]$ as published. Whether the auxiliary term was
+enabled in the run of Fig.~\ref{fig:ggi}, with the batch size and schedule, is recorded in
+\suppnoteref{note:dcell-training}.
+
+\notesec{Building the ontology} The published 2,526 subsystems came from a 2017-era GO after
+three filters: terms with evidence code IGI (inferred from genetic interaction, a
+circularity), terms containing fewer than six of the genes disrupted in the training
+genotypes, and terms redundant with their children, a removed term's children being
+reconnected to its parents. TorchCell rebuilds that recipe from its own reference
+(\supptab{tab:dcell-go-filter}): GO release 2025-03-16 restricted to terms that annotate a
+reference gene, with annotations from the SGD gene records cached in TorchCell's SGD graph
+(dated 2000-12-07 through 2023-10-04), giving 5,660 terms, 6,674 edges, and 66,404 direct
+annotations that cover all 6,607 genes. The filters run in the order IGI, redundancy,
+containment, with four deviations. IGI removal acts on annotations, not terms: 1,921 IGI
+annotations are dropped and a term goes only when that empties it (119 terms). Redundancy is
+judged against parents: a term whose gene set equals a parent's is removed (106). Containment
+counts genes over the whole reference and the threshold is four, chosen so that the retained
+2,655 subsystems approximate the published 2,526; this is the largest cut (2,780 terms). No
+date cutoff is applied, so the ontology carries annotations that postdate the screens it is
+trained on; a 2017-07-19 cutoff is implemented and would leave 1,408 subsystems (last row of
+\supptab{tab:dcell-go-filter}), but it was not used in the trigenic run.
+
+\notesec{The ontology, measured} The trigenic DCell has 2,655 subsystems on 3,208 hierarchy
+edges in 13 strata, 1,527 of them leaves, with 59,986 annotations
+(\suppfig{fig:dcell-model}b--d). Coverage is complete for a specific reason: 5,487
+annotations with evidence code ND (no biological data) attach genes of unknown function
+directly to the three namespace roots, 675 genes are in the hierarchy through those alone,
+and every gene therefore sits in at least two subsystems (median 8, maximum 38). The same
+annotations make the namespace roots the widest subsystems (molecular function: 2,444 direct
+genes, $L_t=734$), while the median subsystem has 6 direct and 10 contained genes and the
+floor width 20. The network has 61,429 hidden units (97,181 in the published model) and
+20,613,037 parameters, 20,548,953 in subsystems and 64,084 in heads. That count follows from
+Eq.~\ref{eq:dcell-subsystem} on the rebuilt DAG and equals the \texttt{model/params\_total}
+logged by every DCell training run in both wandb projects (15 runs, one value), so the DAG
+measured here is the one the baseline was trained on.
+
+\begin{figure*}[t]
+\tcfig{figures/FigS-dcell-model.pdf}{DCell as implemented in TorchCell. (\textbf{a})~The
+perturbation enters as data: the reference's (term, gene) annotation table is copied per
+strain and the rows of deleted genes are zeroed (red), so each strain is a rebuilt input
+rather than an operator on a shared encoding. Subsystems (yellow) mirror the GO DAG under the
+super-root \texttt{GO:ROOT} (orange); solid edges are \texttt{is\_child\_of}, dashed edges
+carry gene states into the subsystems that annotate them. Right: the subsystem of
+Eq.~\ref{eq:dcell-subsystem}, the root readout, the per-term auxiliary heads (purple), and the
+loss of Eq.~\ref{eq:dcell-loss}. (\textbf{b})~Subsystems per stratum of the filtered DAG
+(stratum $0$ is \texttt{GO:ROOT}; stratum $1$ the three namespace roots). (\textbf{c})~Genes
+per subsystem: direct annotations, which set the width $L_t$, and genes contained by the term
+or its descendants, the quantity the published model sized subsystems by. (\textbf{d})~Number
+of subsystems each of the 6,607 genes is annotated to. Panels b--d are measured by
+\texttt{experiments/006-kuzmin-tmi/scripts/dcell\_model\_go\_stats.py}; the figure is
+composed by \texttt{dcell\_model\_compose\_figure.py}.}{fig:dcell-model}
+\end{figure*}
+
+\input{sections/tab-dcell-model-go-filter}

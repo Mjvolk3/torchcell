@@ -26,3 +26,35 @@ the others beyond the run-to-run spread. These are validation maxima, not the te
 the main text.
 
 ![](./assets/images/005-kuzmin2018-tmi/dango_string_version_sweep.svg)
+
+## 2026.09.03 - Training curves, train Pearson at the selected epoch, and a fresh pull
+
+Re-pulled for the Supplementary Note `note:dango-repro` (figure composed by
+[[experiments.005-kuzmin2018-tmi.scripts.compose_dango_si_figures]]). The project holds 21 runs; the
+two dropped are smoke tests of 9 and 6 epochs (`2yq5dedk`, `ikh3sj5f`), so the 19 kept runs and their
+best-validation values are unchanged from the first pull. Additions:
+
+- `results/dango_string_version_curves.csv` freezes the per-epoch history of every kept run (train and
+  validation Pearson and MSE, validation reconstruction and interaction loss, `alpha`, learning rate;
+  10,514 run-epochs). The trainer never called `trainer.test`, so no test-split metric exists for
+  these runs.
+- The run table gains `train_pearson_at_best` (training Pearson at the epoch of the validation
+  maximum), `final_train_pearson`, `params_total` (3,138,270 in every run, consistent with the
+  6,607-gene vocabulary: `454 N + 138,692`), batch size and learning rate; the LaTeX table gains the
+  train-at-best column.
+- The curves panel below (full width): train (left) and validation (right) Pearson per epoch, color
+  by release, line style by schedule.
+
+Measured: training Pearson at the selected epoch spans 0.488 to 0.553; validation Pearson reaches 0.4
+within the first 50 epochs, peaks between epochs 106 and 439, and then declines, most steeply for
+pretrain-then-main, to 0.32 at epoch 1,000 in the two runs that went that far (`ytkjmgvs`, `g34rn9ti`),
+while training Pearson keeps rising to 0.55 to 0.74 at the last logged epoch. The plateau is therefore a
+generalization limit rather than a failure to optimize.
+
+Found while writing the note: `dango.py` takes `lambda_values` from `determine_lambda_values()`, whose
+keys are `string9_1_<channel>`, and `DangoLoss.compute_reconstruction_loss` looks each run's edge type
+up with `.get(edge_type, 1.0)`. The v11.0 and v12.0 runs therefore trained with `lambda_k = 1.0` for
+every channel, not with the 0.1/1.0 assignment; only the v9.1 runs used it (code as of commit
+`af2406523`, the version the runs were launched from). Whether this matters is not measured.
+
+![](./assets/images/005-kuzmin2018-tmi/dango_string_version_curves.svg)

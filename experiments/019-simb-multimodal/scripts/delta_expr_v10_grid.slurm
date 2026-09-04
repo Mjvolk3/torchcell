@@ -72,7 +72,7 @@ if [ ! -d "$PROJECT_ROOT/torchcell" ]; then
   exit 1
 fi
 
-STAGE="${V10_STAGE:?set V10_STAGE=canary|grid via --export=ALL,V10_STAGE=...}"
+STAGE="${V10_STAGE:?set V10_STAGE=canary|timing|grid via --export=ALL,V10_STAGE=...}"
 STAGE_CONFIG=cgt_expr_v10_grid
 
 # ---------------------------------------------------------------- THE GRID
@@ -132,11 +132,26 @@ case "$STAGE" in
   # never builds the embedding preprocessor at all and cannot catch a width mismatch.
   canary) CELLS=(0 3 12 15); REPS=1; ROUNDS=1
           EXTRA_OV="trainer.fast_dev_run=true" ;;
+  # TIMING. The same four corner cells, but REAL training for a few dozen epochs, because
+  # fast_dev_run is one batch and says nothing about throughput.
+  #
+  # WHY THIS EXISTS AS ITS OWN STAGE. The grid's 2,000-epoch budget rests on ~128 epochs/h,
+  # measured on an IGB A40 with SEVEN dataloader workers. Delta runs with ZERO, so batches
+  # are assembled in the main process off Lustre rather than by seven prefetching workers on
+  # local NVMe. Transplanting the IGB rate across that change is a guess, and if it is wrong
+  # the round hits its wall mid-training, which is the exact failure the two-round structure
+  # was built to avoid. Corner cells span the trunk sizes, so the SLOWEST of them is what
+  # sizes the budget.
+  #
+  # train_eval_every matches the grid so the measured rate includes the eval-mode train pass
+  # the real runs pay for, rather than a clean number the round will never see.
+  timing) CELLS=(0 3 12 15); REPS=1; ROUNDS=1
+          EXTRA_OV="trainer.max_epochs=60 trainer.train_eval_every=10" ;;
   # THE ROUND. 16 cells x 4 replicates = 64 runs over 8 array tasks, each a whole node
   # running 8 runs as TWO sequential rounds of four, one run per GPU.
   grid)   CELLS=($(seq 0 15)); REPS=4; ROUNDS=2
           EXTRA_OV="" ;;
-  *) echo "unknown V10_STAGE '$STAGE' (expected canary|grid)" >&2; exit 1 ;;
+  *) echo "unknown V10_STAGE '$STAGE' (expected canary|timing|grid)" >&2; exit 1 ;;
 esac
 
 # RUN ORDER = NODE ASSIGNMENT, so it is chosen to keep every factor balanced WITHIN a node

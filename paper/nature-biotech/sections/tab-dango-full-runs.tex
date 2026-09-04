@@ -1,0 +1,37 @@
+%% SOURCE: experiments/010-kuzmin-tmi/scripts/dango_full_dataset_si.py -- AUTO-GENERATED from wandb zhao-group/torchcell_006-kuzmin2018-tmi_dango and zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer; do not hand-edit.
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Every DANGO run on the full trigenic dataset, and the three CGT replicates of
+Fig.~\ref{fig:ggi}d. Best is the maximum over epochs of validation Pearson $r$ (an
+upward-biased order statistic; the epoch it occurs at follows in parentheses). At min
+MSE is the validation Pearson $r$ at the epoch of minimum validation MSE, the checkpoint
+the trainer keeps. $r \ge 0.35$ is the first epoch at which the run reaches that
+validation Pearson. Epochs is the number of validation epochs logged; a 4-GPU Delta job
+stops at the 48 h queue limit. Runs marked $\bullet$ are the three DANGO values
+averaged in Fig.~\ref{fig:ggi}d.}
+\label{tab:dango-full-runs}
+\begin{tabular}{@{}l l l r r r l l r l@{}}
+\toprule
+\textbf{Model} & \textbf{STRING} & \textbf{Run} & \textbf{GPUs} & \textbf{Epochs} & \textbf{Wall (h)} & \textbf{Best $r$ (epoch)} & \textbf{At min MSE} & $\boldsymbol{r \ge 0.35}$ & \\
+\midrule
+DANGO & v9.1 & \texttt{6q08iign} & 4 & 448 & 47.9 & 0.3664 (121) & 0.366 (110) & 23 & $\bullet$\\
+DANGO & v9.1 & \texttt{x3savllr} & 4 & 446 & 47.9 & 0.3671 (109) & 0.367 (110) & 22 & $\bullet$\\
+DANGO & v9.1 & \texttt{014mprap} & 2 & 1000 & 59.5 & 0.3676 (98) & 0.367 (81) & 16 & $\bullet$\\
+DANGO & v9.1 & \texttt{cbi441o8} & 4 & 650 & 47.9 & 0.3658 (109) & 0.366 (112) & 21 & \\
+DANGO & v9.1 & \texttt{p6urax0a} & 4 & 655 & 47.9 & 0.3652 (140) & 0.364 (129) & 20 & \\
+DANGO & v11.0 & \texttt{ok8k5e6z} & 4 & 262 & 47.8 & 0.3536 (78) & 0.354 (67) & 29 & \\
+DANGO & v11.0 & \texttt{mj7paqg8} & 4 & 259 & 47.9 & 0.3544 (76) & 0.354 (67) & 27 & \\
+DANGO & v11.0 & \texttt{jo24cfpf} & 4 & 311 & 47.9 & 0.3555 (82) & 0.355 (90) & 30 & \\
+DANGO & v11.0 & \texttt{3f9sh91s} & 4 & 305 & 47.8 & 0.3592 (304) & 0.359 (304) & 27 & \\
+DANGO & v12.0 & \texttt{vqnrz2le} & 4 & 398 & 47.9 & 0.3582 (336) & 0.357 (326) & 25 & \\
+DANGO & v12.0 & \texttt{5akd0qwt} & 4 & 446 & 47.9 & 0.3602 (432) & 0.359 (398) & 25 & \\
+DANGO & v12.0 & \texttt{9jpfy547} & 2 & 1000 & 65.2 & 0.3545 (60) & 0.354 (53) & 28 & \\
+DANGO & v12.0 & \texttt{xxtxdu3y} & 4 & 634 & 47.9 & 0.3597 (450) & 0.359 (433) & 30 & \\
+DANGO & v12.0 & \texttt{jww4tblb} & 4 & 648 & 47.9 & 0.3577 (608) & 0.355 (90) & 28 & \\
+CGT & v12.0 & \texttt{lzs9pcj3} & 4 & 64 & 62.3 & 0.4520 (24) & 0.449 (21) & 2 & \\
+CGT & v12.0 & \texttt{yv4r30bi} & 4 & 64 & 62.6 & 0.4472 (25) & 0.444 (20) & 2 & \\
+CGT & v12.0 & \texttt{c7671wgj} & 4 & 49 & 47.8 & 0.4619 (24) & 0.462 (24) & 2 & \\
+\bottomrule
+\end{tabular}
+\end{table}

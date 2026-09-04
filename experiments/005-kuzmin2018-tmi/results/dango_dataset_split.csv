@@ -1,0 +1,2 @@
+records,train,val,test,perturbed_genes,vocabulary_genes,perturbation_sizes,labels_negative,labels_zero,labels_positive,label_min,label_max,label_mean,label_sd,random_seed,train_ratio,val_ratio
+91050,72841,9105,9104,1400,6607,3:91050,91049,1,0,-1.0816,0.0,-0.04801136222405272,0.053502217113435245,42,0.8,0.1

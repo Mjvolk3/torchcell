@@ -1,0 +1,10 @@
+stage,batch_size_per_gpu,num_workers,precision,compile_mode,devices,steps_done,steps_per_epoch,elapsed_s,s_per_step,samples_per_s
+Before Duplicate Forward,256,8,32-true,None,4,8,260,1024,128.0,8.0
+After Removing Duplicate Forward,256,8,32-true,None,4,8,260,654,81.75,12.525993883792049
+After Caching GO Strata,256,8,32-true,None,4,66,260,1525,23.106060606060606,44.31737704918033
+16-Mixed Precision,256,8,16-mixed,None,4,74,260,1666,22.513513513513512,45.483793517406966
+BF16-Mixed Precision,256,8,bf16-mixed,None,4,239,260,4899,20.497907949790793,49.95631761583997
+BF16-Mixed Precision Regress,256,8,bf16-mixed,None,4,15,260,1787,119.13333333333334,8.59541130386122
+BF16-Mixed Precison - 12 workers,256,12,bf16-mixed,default,4,34,260,3367,99.02941176470588,10.34036234036234
+BF16-Mixed Precison - 8 Workers - Compile - batch size 500,500,8,bf16-mixed,default,4,41,133,2015,49.146341463414636,40.69478908188585
+BF16-Mixed Precison - 8 Workers - Compile - batch size 600,600,8,bf16-mixed,default,4,34,111,2020,59.411764705882355,40.396039603960396

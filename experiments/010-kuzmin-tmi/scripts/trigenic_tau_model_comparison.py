@@ -35,8 +35,18 @@ plt.style.use(style_file_path)
 torchcell_vals = np.array([0.462, 0.452, 0.447])
 # DANGO (repro best): 3 replicate Pearson values.
 dango_vals = np.array([0.36759, 0.36708, 0.36637])
-# DCell: 3 replicate Pearson values.
-dcell_vals = np.array([0.17321017384529114, 0.1550033837556839, 0.14192065596580505])
+# DCell: NOT replicates. Three validation Pearson values logged at epochs 144, 148 and
+#   150 of the single DCell training run (wandb zhao-group/torchcell_006-kuzmin-tmi_dcell
+#   run eni948by, SLURM job 1922684; 30.8 days on 4 GPUs, run once). Frozen by
+#   experiments/006-kuzmin-tmi/scripts/dcell_training_wandb.py; the SEM below is
+#   checkpoint-to-checkpoint spread within one run, not replicate variance
+#   (Supplementary Note on DCell training cost).
+_DCELL_CKPT_CSV = osp.join(
+    osp.dirname(osp.abspath(__file__)),
+    "..", "..", "006-kuzmin-tmi", "results", "dcell_training", "checkpoints.csv",
+)
+dcell_vals = np.loadtxt(_DCELL_CKPT_CSV, delimiter=",", skiprows=1, usecols=1)
+assert dcell_vals.shape == (3,), f"expected 3 DCell checkpoint values, got {dcell_vals.shape}"
 # Yeast9 (GEM/FBA): deterministic modeling -> single value, no error by nature.
 gem_vals = np.array([0.0006])
 

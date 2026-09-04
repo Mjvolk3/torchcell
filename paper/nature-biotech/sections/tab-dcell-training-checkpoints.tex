@@ -1,0 +1,29 @@
+%% SOURCE: experiments/006-kuzmin-tmi/scripts/dcell_training_wandb.py -- AUTO-GENERATED, do not hand-edit; rerun the script.
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{The DCell value in Fig.~\ref{fig:ggi}d and the run it comes from. All values are
+the validation Pearson~$r$ logged by the single DCell training run (wandb
+\texttt{eni948by}, SLURM job 1922684, 333 epochs, 30.8 days on 4 GPUs). \emph{Rank} is the value's rank among
+the 333 per-epoch validation evaluations of that run. The three epochs are
+evaluations of one run, so their spread is checkpoint-to-checkpoint variation, not replicate
+variance, and the reported SEM is not a replicate SEM.}
+\label{tab:dcell-training-checkpoints}
+\begin{tabular}{@{}l r r r r@{}}
+\toprule
+\textbf{Evaluation} & \textbf{Epoch} & \textbf{Wall-clock (d)} & \textbf{Val.\ Pearson $r$} & \textbf{Rank}\\
+\midrule
+Fig.~\ref{fig:ggi}d checkpoint & 144 & 13.4 & 0.155 & 2\\
+Fig.~\ref{fig:ggi}d checkpoint & 148 & 13.8 & 0.142 & 4\\
+Fig.~\ref{fig:ggi}d checkpoint & 150 & 14.0 & 0.173 & 1\\
+\midrule
+Mean of the three (Fig.~\ref{fig:ggi}d) & & & 0.157 & \\
+SD over the three (ddof$=$1) & & & 0.016 & \\
+SEM $=$ SD$/\sqrt{3}$ (Fig.~\ref{fig:ggi}d error bar) & & & 0.0091 & \\
+\midrule
+Maximum over all epochs & 150 & 14.0 & 0.173 & 1\\
+Minimum validation MSE (the saved checkpoint) & 142 & 13.2 & 0.127 & 20\\
+Final epoch & 332 & 30.8 & 0.038 & 231\\
+\bottomrule
+\end{tabular}
+\end{table}

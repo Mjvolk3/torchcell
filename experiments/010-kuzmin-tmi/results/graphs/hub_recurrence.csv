@@ -1,0 +1,9 @@
+criterion,genes_per_graph,n_graphs,n_genes
+top_k,10,1,60
+top_k,10,2,12
+top_k,10,3,2
+top_1pct,66,1,353
+top_1pct,66,2,79
+top_1pct,66,3,22
+top_1pct,66,4,3
+top_1pct,66,5,1

@@ -1,5 +1,86 @@
-%% ---- Supplementary Note [note:dango-full] -- OWNED BY its section agent; fill in place. ----
+%% ---- Supplementary Note [note:dango-full]: DANGO on the full trigenic dataset ----
+%% Every number here is emitted by experiments/010-kuzmin-tmi/scripts/dango_full_dataset_si.py
+%% (wandb pull of zhao-group/torchcell_006-kuzmin2018-tmi_dango and the three CGT replicate
+%% training runs of zhao-group/torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer,
+%% frozen to experiments/010-kuzmin-tmi/results/dango_full_dataset_*.csv; also writes
+%% tab-dango-full-runs.tex). The figure is composed by
+%% experiments/010-kuzmin-tmi/scripts/dango_full_dataset_compose_figure.py. Rerun those, not this file.
+%% Dataset sizes: notes/experiments.011-kuzmin-tmi.scripts.query-comparison-006-009-010-011.md
+%% (006 = 332,313; 009 = 299,146; 010 = 376,732). CGT on 009 (0.396) and 010 (0.454):
+%% notes/experiments.010-kuzmin-tmi.performance-diff-010-009.md.
 \clearpage
 \suppnote{note:dango-full}{DANGO on the full trigenic dataset of the CGT experiment\secstatus{todo}}
 
-\textit{[FILLER: Supplementary Note on DANGO on the full trigenic dataset of the CGT experiment.]}
+The DANGO value in Fig.~\ref{fig:ggi}d, Pearson $r = 0.367$, is the mean of the three
+highest of five DANGO runs trained with STRING v9.1 graphs on the trigenic dataset of the
+Cell Graph Transformer (CGT) experiment; \supptab{tab:dango-full-runs} lists every run,
+including nine with STRING v11.0 and v12.0 graphs, and \suppfig{fig:dango-full} shows their
+training curves. Two facts qualify the comparison: the DANGO and CGT runs were trained on
+two different builds of the trigenic dataset, so their validation splits are not the same
+triple mutants, and every DANGO run on this dataset plateaus at $r = 0.354$ to $0.368$, well
+below the $0.42$ the same implementation reaches on the Kuzmin 2018 set alone
+(\suppnoteref{note:dango-repro}).
+
+\notesec{Dataset and training} The DANGO runs use the dataset of experiment 006, the
+Kuzmin 2018 trigenic interactions~\cite{kuzminSystematicAnalysisComplex2018a} with any
+perturbation type plus the Kuzmin 2020 trigenic interactions restricted to deletions,
+332,313 records; the CGT replicates use the dataset of experiment 010, every perturbation
+type from both screens, 376,732 records. Both are split into training, validation, and test
+(nominally 80/10/10) by the same seeded splitter, stratified on phenotype label and
+perturbation count, but the two validation splits differ in membership, and no DANGO run on
+the 010 build exists. DANGO is the implementation of \suppnoteref{note:dango-repro} (hidden
+width 64, four heads) trained with the DANGO loss under the linear-to-uniform schedule
+(transition at epoch 10), AdamW at learning rate $10^{-5}$, and a per-GPU batch of 64.
+Twelve runs are four-GPU distributed-data-parallel (DDP) jobs on Delta A40 nodes that stop at
+the 48 h queue limit after 259 to 655 epochs; two are two-GPU jobs on the IGB cluster that
+complete 1,000 epochs in 59.5 h (v9.1) and 65.2 h (v12.0). The split seed is fixed and the
+initialization is not, so runs of one configuration are replicates over initialization and
+DDP nondeterminism. Validation Pearson $r$ is computed over the whole validation split,
+synchronized across ranks; the trainer checkpoints on minimum validation MSE, and the
+Pearson at that epoch is within 0.0023 of the maximum for every DANGO run.
+
+\notesec{Results} Scored as the maximum over epochs of validation Pearson $r$, an
+upward-biased order statistic reported with its epoch, the five STRING v9.1 runs reach
+$0.3664 \pm 0.0004$ (mean $\pm$ SEM; range 0.3652 to 0.3676), the four v11.0 runs
+$0.3557 \pm 0.0012$, and the five v12.0 runs $0.3581 \pm 0.0010$
+(\suppfig{fig:dango-full}b). The three runs behind Fig.~\ref{fig:ggi}d are the v9.1 runs
+\texttt{014mprap} (0.3676 at epoch 98), \texttt{x3savllr} (0.3671 at epoch 109), and
+\texttt{6q08iign} (0.3664 at epoch 121); the two v9.1 runs launched later reach 0.3658 and
+0.3652, so the mean over all five sits 0.0006 below the reported 0.3670. The three CGT
+replicates reach $0.4537 \pm 0.0043$ at epochs 24 to 25 of 49 to 64.
+
+\notesec{Convergence by STRING release} Every DANGO run reaches $r \ge 0.35$ within 16 to 23
+epochs with v9.1, 27 to 30 with v11.0, and 25 to 30 with v12.0
+(\suppfig{fig:dango-full}a,\,c), so the release delays the rise by at most ten epochs; what
+it changes is the plateau. With v9.1 the maximum comes at epoch 98 to 140 and the curve then
+declines (the 1,000-epoch run ends at 0.297); with v12.0 the four-GPU runs creep from 0.354
+to 0.355 at epoch 100 to their maxima at epochs 336 to 608, a gain of 0.002 to 0.006, while
+the two-GPU v12.0 run peaks at epoch 60 and declines. The earlier observation that DANGO
+converges more slowly on v12.0 than on v9.1 holds only in this weak form, a later and lower
+maximum, not a slower initial rise.
+
+\notesec{Comparison with the Kuzmin 2018 replication} On the Kuzmin 2018 set alone (91,111
+records) the same implementation reaches validation $r = 0.420$ to $0.424$ across STRING
+releases (\supptab{tab:dango-string-versions}); on the 332,313-record union it reaches
+$0.354$ to $0.368$. Dataset size, the split, and the addition of the Kuzmin 2020 screen
+change at once, and the drop is not attributed to any one of them here. Hypothesis
+(untested): the Kuzmin 2020 triples, screened around duplicated gene pairs, are the harder
+part of the union, given that the CGT scores $0.396$ on the deletion-only 009 build and
+$0.454$ on the 010 build. Whether DANGO trained on the 010 build would close any of the gap
+to the CGT is likewise not measured; the like-for-like baseline requires that run.
+
+\begin{figure*}[t]
+\tcfig{figures/FigS-dango-full-dataset.pdf}{DANGO on the full trigenic dataset.
+(a) Validation Pearson $r$ against epoch for every DANGO run on the 006 dataset, colored by
+STRING release, and the three CGT replicates of Fig.~\ref{fig:ggi}d on the 010 dataset; the
+epoch axis is logarithmic. (b) Maximum over epochs of validation Pearson $r$ per run; bar
+and whisker are the mean and SEM over runs; filled markers are the runs averaged in
+Fig.~\ref{fig:ggi}d; the axis is zoomed to 0.30 to 0.50. (c) For each DANGO run, the first
+epoch at which validation Pearson reaches 0.35 (filled) and the epoch of its maximum (open);
+circles are four-GPU jobs, squares two-GPU jobs. (d)--(f) Reserved: predicted against
+measured interaction, absolute error against $|\tau|$, and per-channel meta-embedding
+weights need a trained checkpoint and inference on the validation split; each box states the
+checkpoint and script that fill it.}{fig:dango-full}
+\end{figure*}
+
+\input{sections/tab-dango-full-runs}

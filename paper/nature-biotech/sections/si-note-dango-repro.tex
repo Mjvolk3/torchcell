@@ -1,5 +1,123 @@
 %% ---- Supplementary Note [note:dango-repro] -- OWNED BY its section agent; fill in place. ----
+%% Every number here is emitted by experiments/005-kuzmin2018-tmi/scripts/dango_construction_si.py
+%% (decreased zeros, lambda, dataset and split sizes; results/dango_decreased_zeros.csv and
+%% results/dango_dataset_split.csv) and experiments/005-kuzmin2018-tmi/scripts/dango_string_version_sweep.py
+%% (wandb pull of zhao-group/torchcell_005-kuzmin2018-tmi_dango; results/dango_string_version_{sweep,curves}.csv;
+%% writes tab-dango-string-versions.tex). The figure is composed by
+%% experiments/005-kuzmin2018-tmi/scripts/compose_dango_si_figures.py. Rerun those, not this file.
+%% DANGO paper quotes are verbatim from the bioRxiv preprint (doi:10.1101/2020.11.26.400739), read from
+%% the Zotero PDF; the citation key is not yet in references.bib (see [ref to add] below).
 \clearpage
 \suppnote{note:dango-repro}{constructing DANGO in TorchCell and reproducing its published result\secstatus{todo}}
 
-\textit{[FILLER: Supplementary Note on constructing DANGO in TorchCell and reproducing its published result.]}
+DANGO predicts a trigenic interaction from six STRING evidence networks: one graph network per
+network learns gene embeddings by reconstructing that network, a learned average merges them,
+and a hypergraph self-attention head scores the three perturbed genes (Zhang et al.\ 2020;
+\textbf{[ref to add: zhangDANGOPredictingHigherorder2020]}). It is the published model the
+trigenic experiment must beat, so it was rebuilt inside TorchCell rather than run from its
+released code. On the Kuzmin~2018 trigenic screen
+alone~\cite{kuzminSystematicAnalysisComplex2018a} the rebuilt model reaches a validation
+Pearson $r$ of $0.42$ in every one of 19 runs, whichever STRING release supplies the networks
+and whichever schedule hands over from pretraining to the interaction loss
+(\suppfig{fig:dango-repro}; \supptab{tab:dango-string-versions}). That plateau is close to the
+value DANGO reports and cannot be equated with it, for the reasons of data, split, and protocol
+listed below; what it establishes is a stable, reproducible baseline, which
+\suppnoteref{note:dango-full} then retrains on the full trigenic dataset of the CGT experiment.
+
+\notesec{Model in the manuscript's notation} DANGO reads the six channels as relation
+adjacencies $A^{(k)}\in\{0,1\}^{N\times N}$ over the same $N=6607$ gene vocabulary as the CGT,
+an edge wherever the channel score is nonzero (\suppnoteref{note:graphs}), but as
+message-passing edges rather than attention priors (\suppfig{fig:dango-repro}a). A shared
+lookup $\mathbf{E}\in\mathbb{R}^{N\times d}$, $d=64$, feeds one two-layer GraphSAGE encoder
+per channel, $H^{(k)}=F^{(k)}(\mathbf{E},A^{(k)})$, and a linear head reconstructs each
+channel's adjacency, $\hat A^{(k)}=H^{(k)}W_k$, under a mean squared error whose zero entries
+are down-weighted by a per-channel $\lambda_k$,
+\begin{equation}
+\mathcal{L}_{\mathrm{rec}}=\frac{1}{6}\sum_{k=1}^{6}\frac{1}{N^{2}}\sum_{i,j}
+\big(\hat A^{(k)}_{ij}-A^{(k)}_{ij}\big)^{2}\Big[\mathbf{1}\big(A^{(k)}_{ij}\neq0\big)+\lambda_k\,\mathbf{1}\big(A^{(k)}_{ij}=0\big)\Big].
+\label{eq:dango-rec}
+\end{equation}
+A meta-embedding merges the channels per gene, $h_i=\sum_k a_{ik}h_i^{(k)}$ with
+$a_{i:}=\operatorname{softmax}_k\operatorname{MLP}(h_i^{(k)})$, into a cell representation
+$H$ that plays the role of Eq.~\ref{eq:encode}. There is no perturbation operator: a strain
+$p=\{g_i,g_j,g_k\}$ selects the rows $h_j$, $g_j\in p$, and the Hyper-SAGNN readout scores
+them from the difference of a static and an attention-derived dynamic embedding, trained with
+$\mathcal{L}_{\mathrm{int}}=\operatorname{mean}\log\cosh(\hat y_{\mathrm{int}}-y_{\mathrm{int}})$.
+DANGO pretrains on Eq.~\ref{eq:dango-rec} and then trains end to end; TorchCell folds both
+stages into one run, $\mathcal{L}=\alpha_e\mathcal{L}_{\mathrm{rec}}+(1-\alpha_e)\mathcal{L}_{\mathrm{int}}$,
+with $\alpha_e$ following one of three schedules over the first ten epochs
+(\suppfig{fig:dango-repro}a, strip).
+
+\notesec{Per-channel zero weights} The paper sets $\lambda_k$ from how many of a channel's
+zeros later became edges: ``we calculated the percentage of decreased zeroes from STRING
+database v9.1 to v11.0 for each network, ranging from 0.02\% (co-occurrence) to 2.42\%
+(co-expression)'', and ``if the decreased percentage of zeros is greater than 1\%, we set
+$\lambda=0.1$; otherwise, we set $\lambda=1.0$.'' The computation is not given, so TorchCell
+fixes one: over the genes present in both releases, the pairs that were non-edges in the
+older release and edges in the newer, divided by the older release's non-edge pairs. This
+puts neighborhood, co-expression, and experimental above 1\% for v9.1 to v11.0 (4.60\%,
+2.50\%, 1.58\%; $\lambda_k=0.1$) and fusion, co-occurrence, and database below it (0.20\%,
+0.35\%, 0.33\%; $\lambda_k=1$); co-expression lands near the paper's 2.42\% and co-occurrence
+does not match its 0.02\%. The same rule on v11.0 to v12.0 gives the same assignment
+(\suppfig{fig:dango-repro}b). The runs below applied it only for the v9.1 networks: the
+training script looked the weights up under v9.1 channel names, so the v11.0 and v12.0 runs
+fell back to $\lambda_k=1$ for every channel. Found while writing this note; whether it
+matters is not measured.
+
+\notesec{Dataset, training, and result} The screen was queried from the knowledge graph
+(YEPD, 30\,$^{\circ}$C, every perturbation type kept) into 91,050 triple-mutant instances over
+1,400 genes, all but one with a negative interaction, and split 72,841 / 9,105 / 9,104 by
+seed (train / validation / test). Runs used AdamW (learning rate $10^{-5}$, weight decay
+$10^{-6}$, batch 32), $d=64$, four attention heads, and 442 to 1,000 logged epochs. The
+statistic is the maximum over epochs of validation Pearson $r$, the checkpoint-selection rule
+and an upward-biased order statistic whose epoch count is reported beside it; no test-split
+metric was logged. Across the 19 runs it spans $0.415$ to $0.427$, with release-by-schedule
+means of $0.420$ to $0.424$ and SEM at most $0.003$ where $n>1$, while training $r$ at the
+selected epoch spans $0.49$ to $0.55$ (\suppfig{fig:dango-repro}c;
+\supptab{tab:dango-string-versions}). Validation $r$ reaches $0.4$ within 50 epochs, peaks
+between epochs 106 and 439, and then declines, to $0.32$ by epoch 1,000 in the two runs
+that went that far, while training $r$ climbs to $0.55$--$0.74$ (\suppfig{fig:dango-repro}d):
+the plateau is a generalization limit, not an optimization failure. No release or schedule
+separates from the others beyond the run-to-run spread, although the v12.0 channels carry
+three to nine times the edges of v9.1 (\suppnoteref{note:graphs}). DANGO reports about
+$r=0.47$ on this screen under a random split (its Fig.~2b, read from the bar), $0.46$ at the
+loosest replicate-consistency cutoff of its Fig.~2c, and a replicate ceiling for the labels:
+``The Pearson correlation between the trigenic interaction scores of two individual
+replicates is around 0.59''.
+
+\notesec{What the comparison does and does not match} The architecture, the six channels at
+the v9.1 release, the 1\% rule, the log-cosh loss, and the screen are the same. Five things
+are not. The data are the knowledge-graph build of the screen, 91,050 instances against
+``around 91,000 triplets among 1,400 genes'', not DANGO's released files; no run in TorchCell
+has loaded DANGO's processed data or its folds. The evaluation is one seeded 80/10/10 split
+scored on validation, not five-fold cross-validation scored on held-out folds, with no
+replicate-consistency filter. The vocabulary is the 6,607-gene reference rather than the
+1,395 screened genes, so the encoders reconstruct an adjacency about twenty times larger.
+Pretraining and fine-tuning are one scheduled run with the optimizer settings above rather
+than two stages with theirs. And the statistic is a maximum over epochs. Under these
+differences the rebuilt model's $0.42$ sits about $0.05$ below the published random-split
+value, a gap the split and the selection rule alone could account for; the record supports
+no stronger statement in either direction.
+
+%% Figure source: notes/assets/drawio/FigS-dango-reproduction.drawio (written by
+%%   experiments/005-kuzmin2018-tmi/scripts/compose_dango_si_figures.py; panel a is draw.io cells,
+%%   panel b from dango_construction_si.py, panels c and d from dango_string_version_sweep.py)
+%%   -> figures/FigS-dango-reproduction.pdf (auto-exported by `make fig`/`make paper`).
+\begin{figure*}[t]
+\tcfig{figures/FigS-dango-reproduction.pdf}{\textbf{DANGO rebuilt in TorchCell and trained on
+the Kuzmin~2018 trigenic screen.} (a)~The model in the manuscript's notation: the six STRING
+channels $A^{(k)}$ are message-passing edges for one GraphSAGE encoder each, a reconstruction
+head with zero weight $\lambda_k$ gives the pretraining loss, a meta-embedding merges the
+channels into $H$, the perturbation selects rows of $H$ with no operator, and the Hyper-SAGNN
+head scores the triple under a log-cosh loss; the strip gives the objective and the three
+pretraining-to-main schedules (transition epoch 10). (b)~Percentage of decreased zeros per
+channel for v9.1 to v11.0 and v11.0 to v12.0 with the resulting $\lambda_k$ printed over each
+bar; dashed line, the 1\% rule; open circles, the two values the DANGO paper prints. (c)~Best
+validation Pearson~$r$ (maximum over epochs) by loss schedule and STRING release; bar, mean
+over runs; whisker, SEM where $n>1$; circle, one run (19 runs). (d)~Training and validation
+Pearson~$r$ per epoch for the same runs; color, STRING release; line style, schedule. Sources:
+\texttt{experiments/005-kuzmin2018-tmi/scripts/dango\_construction\_si.py} (b) and
+\texttt{dango\_string\_version\_sweep.py} (c,~d).}{fig:dango-repro}
+\end{figure*}
+
+\input{sections/tab-dango-string-versions}

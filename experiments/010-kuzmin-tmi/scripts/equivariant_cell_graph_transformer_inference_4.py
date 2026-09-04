@@ -165,31 +165,32 @@ def aggressive_cleanup():
         torch.cuda.synchronize()
 
 
-def get_gene_names_from_lmdb(base_dataset, global_idx):
-    """Stream gene names from LMDB for one GLOBAL dataset index.
+def load_shard_gene_names(index_path, lo, hi):
+    """Gene names for LMDB rows [lo, hi), read once from the generator's index.
 
-    Two changes from the inference_1 version, both forced by sharding.
+    Replaces a per-record LMDB read that was the run's actual bottleneck. That
+    function called _init_lmdb_read() and close_lmdb() for EVERY record, and the env
+    it closed is the one the dataset itself is using, so each record paid two opens
+    of a 173 GB environment. Measured effect: the GPU sat near 0 percent utilization
+    with brief spikes, 4.0 s per batch of 2048, which projects to 5.7 h per shard.
 
-    The dataset handed to the loader is a ``Subset``, which has no ``_init_lmdb_read``,
-    so the underlying InferenceDataset is passed in explicitly. The index is the global
-    LMDB key, not the position within the shard.
-
-    The original swallowed every exception and returned an empty list. Under sharding
-    that failure is silent and total: an AttributeError on the Subset would have
-    produced a Parquet file with a gene column empty on every row, and nothing would
-    have said so. Errors propagate.
+    inference_4_generate_triples.py writes triple_index.parquet in the same loop that
+    writes the LMDB, with index == row number, so row i of the index holds the genes
+    of LMDB key i. That equality is asserted rather than assumed.
     """
-    base_dataset._init_lmdb_read()
-    try:
-        with base_dataset.env.begin() as txn:
-            value = txn.get(str(global_idx).encode())
-            if value is None:
-                raise KeyError(f"LMDB has no record at index {global_idx}")
-            data_list = json.loads(value.decode())
-            perturbations = data_list[0]["experiment"]["genotype"]["perturbations"]
-            return [pert["systematic_gene_name"] for pert in perturbations]
-    finally:
-        base_dataset.close_lmdb()
+    table = pq.read_table(index_path, columns=["index", "gene1", "gene2", "gene3"])
+    sl = table.slice(lo, hi - lo)
+    first, last = sl["index"][0].as_py(), sl["index"][-1].as_py()
+    if first != lo or last != hi - 1:
+        raise ValueError(
+            f"triple_index.parquet is not in LMDB key order: slice [{lo}, {hi}) "
+            f"starts at {first} and ends at {last}"
+        )
+    return (
+        sl["gene1"].to_numpy(zero_copy_only=False),
+        sl["gene2"].to_numpy(zero_copy_only=False),
+        sl["gene3"].to_numpy(zero_copy_only=False),
+    )
 
 
 def get_output_filename_from_checkpoint(checkpoint_path: str) -> str:
@@ -384,6 +385,10 @@ def main(cfg: DictConfig) -> None:
     # the Subset on purpose, since the loop bound wants the shard length.
     base_dataset = dataset
     dataset = torch.utils.data.Subset(dataset, range(lo, hi))
+    shard_genes = load_shard_gene_names(
+        osp.join(dataset_root, "triple_index.parquet"), lo, hi
+    )
+    print(f"Loaded gene names for {len(shard_genes[0]):,} rows from the triple index")
     print(f"Shard {shard_index + 1}/{n_shards}: rows [{lo:,}, {hi:,}) "
           f"= {hi - lo:,} of {total:,}")
 
@@ -645,9 +650,11 @@ def main(cfg: DictConfig) -> None:
                                 # concatenate back into dataset order.
                                 global_idx = shard_offset + exp_idx
                                 if mem_config.get("stream_gene_names", True):
-                                    genes = get_gene_names_from_lmdb(
-                                        base_dataset, global_idx
-                                    )
+                                    genes = [
+                                        str(shard_genes[0][exp_idx]),
+                                        str(shard_genes[1][exp_idx]),
+                                        str(shard_genes[2][exp_idx]),
+                                    ]
                                 else:
                                     genes = []
 

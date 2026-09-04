@@ -30,6 +30,6 @@ export PYTHONWARNINGS="ignore"
 ~/miniconda3/envs/torchcell/bin/python \
   experiments/010-kuzmin-tmi/scripts/equivariant_cell_graph_transformer_inference_4.py \
   --config-name equivariant_cell_graph_transformer_inference_4_m02 \
-  data_module.batch_size=4096 \
+  data_module.batch_size=2048 \
   inference.n_shards=4 \
   inference.shard_index=3

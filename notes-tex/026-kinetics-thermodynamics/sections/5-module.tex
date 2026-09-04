@@ -22,20 +22,35 @@ built and not yet enabled, for the reason Section~\ref{sec:limits} gives.
 
 Each table earns its place by removing a specific failure the stoichiometry alone cannot.
 
-\paragraph{$k_{cat}$ is what lets a genotype change a flux.} The capacity bound is
-\begin{equation}
-  |\nu_j| \;\le\; k_{cat,j}\,E_{g(j)},
-  \qquad
-  E_{g(j)} = f\big(H_{\mathrm{pert}}\big),
-  \label{eq:capacity}
-\end{equation}
-with $E$ the enzyme abundance folded up from the gene representation. Without it the only
-limits on $\nu_j$ are yeast-GEM's own bounds, and those carry no capacity at all:
-\textbf{4{,}129 of 4{,}131 reactions sit at $\pm1000$ or $0$}, which encodes direction and
-on-off and nothing else. A gene deletion would then have no route to change the
-\emph{magnitude} of any flux. Equation~\eqref{eq:capacity} is the unit conversion from an
-amount of enzyme to a ceiling on rate, and it is the only term through which the genotype
-reaches the network's capacity.
+\paragraph{$k_{cat}$ is what lets a genotype change a flux.} Capacity does not read the
+representation globally, and it does not bypass the gene-protein-reaction rule. Each GEM
+gene is gated on \emph{its own} embedding, the gate is folded up the GPR, and only then
+does $k_{cat}$ convert it to a bound:
+\begin{align}
+  \gamma_g &= \sigma\big(w^{\!\top} h_g\big), \quad g \in \mathcal{G}_{\mathrm{GEM}},
+    \qquad \gamma_g = 0 \ \text{if deleted},
+    \label{eq:gate}\\[2pt]
+  c_u &= -\tfrac{1}{\beta}\log\!\!\sum_{g \in C_u}\! e^{-\beta\gamma_g},
+    \qquad
+  c_j = \min\Big(1,\ \textstyle\sum_{u:\,\rho(u)=j} c_u\Big),
+    \label{eq:gpr}\\[2pt]
+  \bar v^{\,u}_j &= \min\Big(v^u_j,\ c_j \textstyle\sum_{u:\,\rho(u)=j} k_{cat,u}\,\bar E\Big).
+    \label{eq:capacity}
+\end{align}
+
+Equation~\eqref{eq:gate} is per gene, not a pooled function of $H_{\mathrm{pert}}$, and it
+runs only over the genes the GEM contains; a gene with no GEM entry never enters.
+Equation~\eqref{eq:gpr} \emph{is} the GPR: a softmin over the subunits of a catalytic unit,
+because a complex is limited by its scarcest member, then a sum over isozymes, because they
+substitute for one another. A reaction with no GPR keeps availability 1, since an
+unannotated reaction is one nobody has assigned a gene to rather than one no gene catalyzes.
+
+Without Equation~\eqref{eq:capacity} the only limits on $\nu_j$ are yeast-GEM's own bounds,
+and those carry no capacity at all: \textbf{4{,}129 of 4{,}131 reactions sit at $\pm1000$ or
+$0$}, which encodes direction and on-off and nothing else. A gene deletion would then have
+no route to change the \emph{magnitude} of any flux. $k_{cat}$ is the unit conversion from
+an amount of enzyme to a ceiling on rate, and this chain is the only path by which a
+genotype reaches the network's capacity.
 
 \paragraph{$\Delta_r G$ is what forbids loops without an integer variable.} The second-law
 constraint is

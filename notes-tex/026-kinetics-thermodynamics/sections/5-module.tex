@@ -22,52 +22,60 @@ built and not yet enabled, for the reason Section~\ref{sec:limits} gives.
 
 Each table earns its place by removing a specific failure the stoichiometry alone cannot.
 
-\paragraph{$k_{cat}$ is what lets a genotype change a flux.} Capacity does not read the
-representation globally, and it does not bypass the gene-protein-reaction rule. Each GEM
-gene is gated on \emph{its own} embedding, the gate is folded up the GPR, and only then
-does $k_{cat}$ convert it to a bound:
-\begin{align}
-  \gamma_g &= \sigma\big(w^{\!\top} h_g\big), \quad g \in \mathcal{G}_{\mathrm{GEM}},
-    \qquad \gamma_g = 0 \ \text{if deleted},
-    \label{eq:gate}\\[2pt]
-  c_u &= -\tfrac{1}{\beta}\log\!\!\sum_{g \in C_u}\! e^{-\beta\gamma_g},
-    \qquad
-  c_j = \min\Big(1,\ \textstyle\sum_{u:\,\rho(u)=j} c_u\Big),
-    \label{eq:gpr}\\[2pt]
-  \bar v^{\,u}_j &= \min\Big(v^u_j,\ c_j \textstyle\sum_{u:\,\rho(u)=j} k_{cat,u}\,\bar E\Big).
-    \label{eq:capacity}
-\end{align}
+\paragraph{$k_{cat}$ is what lets a genotype change a flux.} In one line, with the
+gene-protein-reaction fold abstracted into $c_j \in [0,1]$:
+\begin{equation}
+  |\nu_j| \;\le\; \underbrace{c_j\big(H_{\mathrm{pert}}\big)}_{\text{GPR availability}}
+  \cdot \underbrace{k_{cat,j}\,\bar E}_{\text{capacity}} .
+  \label{eq:capacity}
+\end{equation}
 
-Equation~\eqref{eq:gate} is per gene, not a pooled function of $H_{\mathrm{pert}}$, and it
-runs only over the genes the GEM contains; a gene with no GEM entry never enters.
-Equation~\eqref{eq:gpr} \emph{is} the GPR: a softmin over the subunits of a catalytic unit,
-because a complex is limited by its scarcest member, then a sum over isozymes, because they
-substitute for one another. A reaction with no GPR keeps availability 1, since an
-unannotated reaction is one nobody has assigned a gene to rather than one no gene catalyzes.
+$c_j$ is not a pooled function of every gene. Each GEM gene is gated on its own embedding,
+$\gamma_g = \sigma(w^{\!\top} h_g)$, with a deletion pinning $\gamma_g = 0$; those gates are
+folded to the reaction by a softmin over the subunits of a complex and a sum over isozymes.
+A reaction with no GPR keeps $c_j = 1$, since an unannotated reaction is one nobody assigned
+a gene to rather than one no gene catalyzes.
 
 Without Equation~\eqref{eq:capacity} the only limits on $\nu_j$ are yeast-GEM's own bounds,
 and those carry no capacity at all: \textbf{4{,}129 of 4{,}131 reactions sit at $\pm1000$ or
 $0$}, which encodes direction and on-off and nothing else. A gene deletion would then have
 no route to change the \emph{magnitude} of any flux. $k_{cat}$ is the unit conversion from
-an amount of enzyme to a ceiling on rate, and this chain is the only path by which a
+an amount of enzyme to a ceiling on rate, and this product is the only path by which a
 genotype reaches the network's capacity.
 
-\paragraph{$\Delta_r G$ is what forbids loops without an integer variable.} The second-law
-constraint is
+\paragraph{$\Delta_r G$ enters as a term in the loss, not as a constraint.} There is no
+solver and no binary variable, so the second law is imposed by making its violation
+expensive. The trained objective is
 \begin{equation}
-  \nu_j\,\Delta_r G_j \;\le\; 0,
+  \mathcal{L}
+  = \mathcal{L}_{\mathrm{data}}
+  \;+\; \lambda_{\mathrm{th}}\,
+  \underbrace{\frac{1}{|\mathcal{J}|}\sum_{j\in\mathcal{J}}
+    \frac{\big[\,\nu_j\,\Delta_r G_j + \epsilon\,\big]_{+}}
+         {|\nu_j|\,|\Delta_r G_j| + \epsilon}}_{C_{\mathrm{th}}},
   \qquad
   \Delta_r G_j = \Delta_r G'^{\circ}_j + RT\!\!\sum_{i \neq \mathrm{H}^+}\!\! S_{ij}\ln c_i,
   \label{eq:secondlaw}
 \end{equation}
-where the tabulated formation energies supply the first term. Because $\Delta_r G$ is a
-difference of potentials it sums to zero around any cycle, so no cycle can run downhill at
-every step, and Equation~\eqref{eq:secondlaw} therefore forbids internal loops. That
-matters because capacity does not: requiring growth at 90 percent of optimum narrows 2{,}316
-reactions, 56.1 percent of the network, and leaves \textbf{427 reactions still free to take
-any value in $\pm1000$}, all of them internal loops. Only the thermodynamic term removes
-those, and it does so with no binary variable, which is what a loopless flux balance program
-needs one for.
+where $[\,\cdot\,]_{+}$ is the hinge and $\mathcal{J}$ runs over reactions with a known
+$\Delta_r G$, excluding exchange, biomass and water transport. The tabulated formation
+energies supply $\Delta_r G'^{\circ}_j$, which is the one place this document's thermodynamic
+table reaches the model.
+
+\textbf{The normalization is load-bearing, not cosmetic.} The raw hinge
+$[\nu_j \Delta_r G_j]_+$ carries units and, measured at initialization on a real batch, is
+about \textbf{72 against a data loss of about 1}. An unnormalized term of that size does not
+regularize the model, it replaces it. Dividing by $|\nu_j||\Delta_r G_j|$ caps each
+reaction's contribution at 1 and turns $C_{\mathrm{th}}$ into the fraction of the available
+driving force running uphill, which is also the quantity worth reporting.
+
+Why it earns its place: because $\Delta_r G$ is a difference of potentials it sums to zero
+around any cycle, so no cycle can run downhill at every step, and
+Equation~\eqref{eq:secondlaw} therefore penalizes internal loops. Capacity does not do this.
+Requiring growth at 90 percent of optimum narrows 2{,}316 reactions, 56.1 percent of the
+network, and leaves \textbf{427 reactions still free to take any value in $\pm1000$}, all of
+them internal loops. Only the thermodynamic term removes those, and it does so with no
+binary variable, which is what a loopless flux balance program needs one for.
 
 The heterologous cassette enters as a typed perturbation on the genome-scale model, which
 is what puts a betaxanthin pathway and a gene deletion inside the same object rather than

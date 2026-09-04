@@ -217,23 +217,31 @@ def main() -> None:
     chemical = [k for k in both if k not in transport]
     moved_only = [k for k in both if k in transport]
 
-    for keys, color, label in (
-        (chemical, PLOT_PALETTE[4], "chemical"),
-        (moved_only, PLOT_PALETTE[5], "transport"),
-    ):
-        ax.scatter(
-            [shipped[k] for k in keys],
-            [ours[k] for k in keys],
-            s=1.5,
-            color=color,
-            alpha=0.5,
-            linewidths=0,
-            label=f"{label} ({len(keys)})",
-        )
-    lim = (-450, 450)
-    ax.plot(lim, lim, color="black", linewidth=0.5, linestyle="--")
+    # Transport first and paler: at a single uniform pH every transport reaction is exactly
+    # zero on our axis by construction, so it is a horizontal reference line rather than a
+    # cloud, and drawing it on top of the chemical points hides them.
+    ax.scatter(
+        [shipped[k] for k in moved_only],
+        [ours[k] for k in moved_only],
+        s=2.0, color=PLOT_PALETTE[5], alpha=0.30, linewidths=0, zorder=2,
+        label=f"transport ({len(moved_only)}), zero by construction",
+    )
+    ax.scatter(
+        [shipped[k] for k in chemical],
+        [ours[k] for k in chemical],
+        s=3.5, color=PLOT_PALETTE[4], alpha=0.65, linewidths=0, zorder=3,
+        label=f"chemical ({len(chemical)})",
+    )
+    # 96 percent of the chemical points fall inside +/-200, so the old +/-450 window spent
+    # most of its area on whitespace and compressed everything worth seeing into the middle.
+    lim = (-220, 220)
+    ax.plot(lim, lim, color="black", linewidth=0.6, linestyle="--", zorder=1)
+    ax.axhline(0, color=PLOT_PALETTE[5], linewidth=0.4, zorder=1)
     ax.set_xlim(*lim)
     ax.set_ylim(*lim)
+    outside = sum(
+        1 for k in both if abs(shipped[k]) > 220 or abs(ours[k]) > 220
+    )
     ax.set_xlabel(r"shipped $\Delta_r G'^\circ$ (kJ mol$^{-1}$)")
     ax.set_ylabel(r"eQuilibrator $\Delta_r G'^\circ$ (kJ mol$^{-1}$)")
     ax.set_aspect("equal")
@@ -243,12 +251,13 @@ def main() -> None:
     all_difference = np.abs(
         np.array([ours[k] for k in both]) - np.array([shipped[k] for k in both])
     )
-    ax.text(0.04, 0.96,
-            f"chemical median |diff|\n{np.median(chemical_difference):.2f}"
-            r" kJ mol$^{-1}$",
-            transform=ax.transAxes, fontsize=5, va="top")
-    ax.legend(loc="lower right", frameon=False, fontsize=5, markerscale=3,
-              handletextpad=0.2, borderpad=0.1)
+    ax.text(0.035, 0.965,
+            f"chemical median |diff| {np.median(chemical_difference):.2f}"
+            r" kJ mol$^{-1}$"
+            f"\n{outside} of {len(both)} outside this window",
+            transform=ax.transAxes, fontsize=5, va="top", linespacing=1.5)
+    ax.legend(loc="lower right", frameon=False, fontsize=5, markerscale=2.6,
+              handletextpad=0.2, borderpad=0.1, labelspacing=0.3)
     box(ax)
     fig.tight_layout()
     savefig_true_size_svg(fig, osp.join(OUT_DIR, f"thermo_d_vs_shipped{stamp}.svg"))
@@ -262,10 +271,21 @@ def main() -> None:
         np.median(chemical_difference)
     )
 
-    # --- e. what compartment pH does ------------------------------------------
-    fig, ax = plt.subplots(
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(42)), dpi=300
+    # --- e + f. the two diagnostics that decide whether the table is usable ----
+    # One figure, because the questions are the same question asked twice: is this table
+    # right (panel b), and is the compartment-resolved variant of it believable (panel a).
+    # They were two half-width figures on facing pages and read as unrelated.
+    validation_path = osp.join(RESULTS, "equilibrator_api_validation.json")
+    checks = None
+    if osp.exists(validation_path):
+        with open(validation_path) as handle:
+            checks = json.load(handle)
+
+    fig, axes = plt.subplots(
+        1, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(58)), dpi=300
     )
+
+    ax = axes[0]
     covered = rxn["all_participants_known"] & rxn_uniform["all_participants_known"]
     shift = (
         rxn.loc[covered, "drg_prime_kj_per_mol"].to_numpy()
@@ -274,48 +294,46 @@ def main() -> None:
     moved = np.abs(shift[np.abs(shift) >= 0.01])
     ax.hist(np.clip(moved, 0, 300), bins=50, color=PLOT_PALETTE[3],
             edgecolor="black", linewidth=0.3)
-    ax.axvline(float(np.median(moved)), color="black", linewidth=0.8, linestyle="--")
-    ax.set_xlabel(r"$|\Delta|$ from compartment pH (kJ mol$^{-1}$, clipped)")
+    ax.axvline(float(np.median(moved)), color="black", linewidth=0.9, linestyle="--")
+    ax.set_xlabel(r"$|\Delta|$ from compartment pH (kJ mol$^{-1}$, clipped at 300)")
     ax.set_ylabel("reactions")
-    ax.text(0.35, 0.9,
-            f"{len(moved)} of {int(covered.sum())} move\nmedian {np.median(moved):.1f}",
-            transform=ax.transAxes, fontsize=5, va="top")
+    ax.text(0.33, 0.94,
+            f"{len(moved)} of {int(covered.sum())} reactions move"
+            f"\nmedian {np.median(moved):.1f}" r" kJ mol$^{-1}$"
+            "\ntoo large to believe",
+            transform=ax.transAxes, fontsize=5, va="top", linespacing=1.5)
     box(ax)
-    fig.tight_layout()
-    savefig_true_size_svg(fig, osp.join(OUT_DIR, f"thermo_e_compartment_ph{stamp}.svg"))
-    fig.savefig(osp.join(OUT_DIR, f"thermo_e_compartment_ph{stamp}.png"), dpi=300)
-    plt.close(fig)
     summary["compartment_ph_n_moved"] = int(len(moved))
     summary["compartment_ph_median_shift"] = float(np.median(moved))
 
-    # --- f. the correctness check ---------------------------------------------
-    validation_path = osp.join(RESULTS, "equilibrator_api_validation.json")
-    if osp.exists(validation_path):
-        with open(validation_path) as handle:
-            checks = json.load(handle)
-        fig, ax = plt.subplots(
-            figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(58)), dpi=300
-        )
+    ax = axes[1]
+    if checks is not None:
         table = pd.DataFrame(checks["reactions"])
-        ax.scatter(table["api"], table["ours"], s=6, color=PLOT_PALETTE[1],
-                   edgecolors="black", linewidths=0.3)
+        ax.scatter(table["api"], table["ours"], s=7, color=PLOT_PALETTE[1],
+                   edgecolors="black", linewidths=0.3, zorder=3)
         span = (min(table["api"].min(), table["ours"].min()) - 20,
                 max(table["api"].max(), table["ours"].max()) + 20)
-        ax.plot(span, span, color="black", linewidth=0.5, linestyle="--")
+        ax.plot(span, span, color="black", linewidth=0.6, linestyle="--", zorder=1)
         ax.set_xlim(*span)
         ax.set_ylim(*span)
         ax.set_aspect("equal")
         ax.set_xlabel(r"eQuilibrator API $\Delta_r G'^\circ$ (kJ mol$^{-1}$)")
         ax.set_ylabel(r"our $\sum_i S_{ij}\,\Delta_f G'^\circ_i$ (kJ mol$^{-1}$)")
         ax.text(0.04, 0.95,
-                f"n = {len(table)}\nmax |diff| {checks['max_abs_diff']:.1e}",
-                transform=ax.transAxes, fontsize=5, va="top")
-        box(ax)
-        fig.tight_layout()
-        savefig_true_size_svg(fig, osp.join(OUT_DIR, f"thermo_f_validation{stamp}.svg"))
-        fig.savefig(osp.join(OUT_DIR, f"thermo_f_validation{stamp}.png"), dpi=300)
-        plt.close(fig)
+                f"n = {len(table)}"
+                f"\nmax |diff| {checks['max_abs_diff']:.1e}" r" kJ mol$^{-1}$",
+                transform=ax.transAxes, fontsize=5, va="top", linespacing=1.5)
         summary["validation_max_abs_diff"] = checks["max_abs_diff"]
+    box(ax)
+
+    for letter, ax in zip("ab", axes):
+        ax.text(-0.17, 1.06, letter, transform=ax.transAxes, fontsize=8,
+                fontweight="bold", va="top")
+
+    fig.tight_layout(w_pad=2.4)
+    savefig_true_size_svg(fig, osp.join(OUT_DIR, f"thermo_ef_diagnostics{stamp}.svg"))
+    fig.savefig(osp.join(OUT_DIR, f"thermo_ef_diagnostics{stamp}.png"), dpi=300)
+    plt.close(fig)
 
     with open(osp.join(RESULTS, "thermo_plot_summary.json"), "w") as handle:
         json.dump(summary, handle, indent=2)

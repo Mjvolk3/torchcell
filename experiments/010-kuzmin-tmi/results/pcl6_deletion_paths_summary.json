@@ -1,0 +1,30 @@
+{
+  "query_double": "YER059W+YIL050W",
+  "query_double_fitness": 0.9063,
+  "single_fitness_kuzmin2020": {
+    "YER059W": 0.9153,
+    "YIL050W": 0.89558
+  },
+  "single_fitness_costanzo2016": {
+    "YER059W": 1.0245,
+    "YIL050W": 0.995
+  },
+  "paralog_double_epsilon_on_kuzmin_singles": 0.0865756259999999,
+  "paralog_double_epsilon_on_costanzo_singles": -0.11307750000000005,
+  "n_trigenic_records": 1097,
+  "n_deletion_arrays": 919,
+  "n_ts_arrays": 178,
+  "n_triples_complete_lattice": 917,
+  "n_paths": 5502,
+  "n_paths_monotone": 3,
+  "n_paths_monotone_within_se": 228,
+  "n_paths_monotone_after_first": 428,
+  "n_triples_any_monotone": 3,
+  "n_triples_any_monotone_within_se": 188,
+  "n_triples_positive_call": 12,
+  "n_triples_above_wt": 43,
+  "max_triple_fitness": 1.0834,
+  "best_triple": "YER059W+YIL050W+YGL014W",
+  "median_triple_fitness": 0.8807,
+  "median_valley_depth": 0.10441999999999996
+}

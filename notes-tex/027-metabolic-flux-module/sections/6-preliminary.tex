@@ -77,21 +77,59 @@ validation Pearson $-0.0214$ to $+0.1055$, and computed the pinned test Spearman
 $+0.0261$ on $n = 629$. Two epochs is not a result. What it establishes is that the
 nine-graph \texttt{prot\_T5} backbone builds, trains and scores end to end.
 
-\subsection{Preliminary training results\secstatus{todo}}
+\subsection{Preliminary training results: none, and why\secstatus{todo}}
 
-\textbf{None yet.} At the time of writing, four of the nine array tasks are running and
-five are queued behind them on resources. No worker has emitted a training epoch, so there
-is no validation Pearson to compare and none is quoted here.
+\textbf{No arm has produced a training epoch, so there is no validation Pearson to compare
+and none is quoted.} At 6.5 hours into a 20-hour allocation, every GPU across every live
+node reads 0\,MiB and 0 percent utilization. Two separate defects account for it, and both
+are now fixed in the launcher.
 
-The delay is understood rather than mysterious. The launcher runs a sequential
-\texttt{--create-only} pass per worker before any GPU work, both to create each worker's
-Optuna database and to pay the cold-import cost once so the Lustre client cache is warm for
-the rest. That first import is reading at roughly 60\,kB\,s$^{-1}$: the process sits in
-\texttt{ptlrpc\_set\_wait}, the Lustre RPC wait, at about one percent CPU, having read
-90\,MB after twenty minutes. It is progressing, and a 20-hour allocation absorbs an hour of
-cache warming, but the observation is worth recording because the same cost has previously
-been mistaken for a hang and has killed canaries with short wall limits.
+\paragraph{The import is 50 minutes, not 15 seconds.} The launcher called
+\texttt{--create-only} once per worker to build each one's Optuna queue before any GPU work,
+on the stated reasoning that a process ``spends $>$15\,s importing torch before it would
+reach \texttt{create\_study}''. On Delta that import comes off Lustre, and the job's own log
+times it:
 
-This section will carry the arm comparison once the sweep produces one. The comparison that
-matters is not a single validation Pearson but the difference of differences against the
-permuted-label nulls, and that needs the seeds to finish.
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[Create-only timings]{Study-creation timestamps on one array task. Each entry is
+  one process whose entire work is writing an empty SQLite file.}
+  \label{tab:createonly}
+  %% SOURCE: slurm/output/027-bxfx_21797666_8.out, optuna "A new study created" lines.
+  \begin{tabular}{@{}lllllll@{}}
+    \hline
+    worker & w64 & w65 & w66 & w67 & w68 & w69 \\
+    created & 04:03 & 04:55 & 05:45 & 06:34 & 07:16 & 07:55 \\
+    \hline
+  \end{tabular}
+\end{table}
+
+Roughly 50 minutes each, and the interval does not shrink, so the Lustre client cache is not
+warming across processes the way the design assumed. Eight sequential calls is about 6.7
+hours per node spent producing nothing. The fix is one process creating every local study,
+which pays the import once; the DDL is still unraced because each study is a separate file
+written sequentially in-process.
+
+\paragraph{The preflight checked a directory where a file was needed.} It tested
+\texttt{[[ -d \$DATASET\_DIR ]]} and the genome tree passed, but
+\texttt{data/sgd/genome/data.db}, the gffutils database, was absent. \textbf{Three of the
+nine array tasks lost every worker} to
+\texttt{FileNotFoundError: .../data/sgd/genome/data.db} and exited. A worker hits this
+\emph{after} its full import, so each failure costs a complete Lustre import before anything
+reports. The preflight now tests the files and trees that have to be present rather than the
+directories that contain them.
+
+The database has since been rebuilt on Delta by a worker that reached it first, and it is
+valid: 28{,}322 features, matching the build host exactly. So that fault is self-healed for
+the surviving tasks and cannot recur once the preflight lands.
+
+\paragraph{What survives.} Six of nine array tasks are still running with roughly fourteen
+hours left, their workers past study creation and loading datasets. They may yet produce
+cells. Nothing here should be read as a result until they do, and the comparison that
+decides anything is the difference of differences of Section~\ref{sec:arms}, not a single
+validation Pearson.
+
+\paragraph{The honest accounting.} Of 72 planned cells, at least 24 are gone with the three
+dead tasks. A resubmit on the fixed launcher would reach its first training step in about an
+hour rather than seven, which is the only version of this run worth scoring.

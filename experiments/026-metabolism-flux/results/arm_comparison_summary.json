@@ -1,0 +1,58 @@
+{
+  "null": {
+    "n_draws": 24,
+    "peak_mean": 0.09621449491418875,
+    "peak_sd": 0.04413256472028222,
+    "peak_p95": 0.15450087644833796
+  },
+  "arms": {
+    "nullspace": {
+      "label": "arms:arms-flux_nullspace",
+      "n_runs": 10,
+      "peak_mean": 0.038124822468607156,
+      "peak_sem": 0.01136275355876296,
+      "peak_epoch_median": 0.5,
+      "last5_mean": 0.0,
+      "p_vs_null": 0.92
+    },
+    "pooled": {
+      "label": "arms:arms-pooled",
+      "n_runs": 10,
+      "peak_mean": 0.04163349750599637,
+      "peak_sem": 0.009840467487642356,
+      "peak_epoch_median": 3.5,
+      "last5_mean": -0.004137507199766711,
+      "p_vs_null": 0.92
+    },
+    "flux_off": {
+      "label": "arms:arms-flux_off",
+      "n_runs": 10,
+      "peak_mean": 0.08369551871430791,
+      "peak_sem": 0.01121326288131427,
+      "peak_epoch_median": 10.5,
+      "last5_mean": 0.004352477680929672,
+      "p_vs_null": 0.6
+    },
+    "flux_free": {
+      "label": "arms:arms-flux_free",
+      "n_runs": 10,
+      "peak_mean": 0.10201446357572586,
+      "peak_sem": 0.01154594672588699,
+      "peak_epoch_median": 11.5,
+      "last5_mean": 0.021152332851357265,
+      "p_vs_null": 0.44
+    },
+    "flux_anchored": {
+      "label": "arms:arms-flux_anchored",
+      "n_runs": 10,
+      "peak_mean": 0.11514661049945314,
+      "peak_sem": 0.009456841594518966,
+      "peak_epoch_median": 17.0,
+      "last5_mean": 0.0056558764728040795,
+      "p_vs_null": 0.28
+    }
+  },
+  "n_arms_above_null_p95": 0,
+  "weak_family_median": 0.1057,
+  "strong_family_median": 0.4135
+}

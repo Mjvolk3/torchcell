@@ -61,14 +61,19 @@ from train_bx import (  # noqa: E402
     RESULTS_DIR,
     arm_names,
     build_cell,
+    build_dataset,
     load_config,
     resolve_pinned_test,
     run_cell,
 )
 
-# From 026 directly rather than re-exported through `train_bx`: importing `train_bx` above is
-# what puts 026's scripts dir on `sys.path`, so this line must follow it.
-from train_flux import build_dataset  # noqa: E402
+# `build_dataset` comes from `train_bx`, NOT from 026's `train_flux`. This line used to read
+# `from train_flux import build_dataset`, and that single import silently undid the whole
+# point of the experiment: 026's builder opens the dataset with two graphs and
+# `node_embeddings={}`, which is the weak backbone 027 exists to replace. It also left
+# `train_bx._NODE_EMBEDDINGS` empty, so every worker that survived the import died on
+# `ValueError: No gene embeddings available (neither learnable nor pre-computed)` -- which is
+# what killed six of the nine array tasks of job 21797666.
 
 #: wandb's own accepted values. Read from the environment and CHECKED, so a typo in a launcher
 #: fails here instead of silently falling through to whatever wandb does with an unknown mode.

@@ -27,6 +27,7 @@ import os
 import os.path as osp
 import sys
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 from tqdm import tqdm
@@ -283,29 +284,36 @@ def main(cfg: DictConfig) -> None:
         print("\nInitializing transforms from original dataset...")
         transform_config = wandb.config.transforms.get("forward_transform", {})
 
-        # Load the original training dataset to get normalization statistics
+        # Normalization statistics come from the training build's label_df, read
+        # directly rather than by instantiating Neo4jCellDataset.
+        #
+        # Two reasons. First, correctness is unaffected: COOLabelNormalizationTransform
+        # touches exactly one attribute, `dataset.label_df`, and derives mean, std,
+        # min, max, q25 and q75 from it. Reading the same parquet gives the same
+        # numbers by the same code path.
+        #
+        # Second, the dataset path does not work here. Neo4jCellDataset WRITES
+        # gene_set.json under a file lock during __init__, even when only reading, and
+        # the 001-small-build files are hardlinks owned by the knowledge-graph build
+        # user (uid 7474) with mode 644. Opening `gene_set.json.lock` for write raises
+        # PermissionError for the dev user, so the whole run died before loading the
+        # model. Not writing to a read-only shared build is the correct behavior, and
+        # the statistics never needed the write.
         original_dataset_root = osp.join(
             DATA_ROOT, "data/torchcell/experiments/010-kuzmin-tmi/001-small-build"
         )
+        label_df_path = osp.join(original_dataset_root, "processed", "label_df.parquet")
+        print(f"Reading training label_df for transform statistics: {label_df_path}")
 
-        with open(
-            osp.join(EXPERIMENT_ROOT, "010-kuzmin-tmi/queries/001_small_build.cql"), "r"
-        ) as f:
-            query = f.read()
+        class _LabelDfOnly:
+            """The single attribute COOLabelNormalizationTransform reads."""
 
-        print("Loading original dataset to extract transform statistics...")
-        original_dataset = Neo4jCellDataset(
-            root=original_dataset_root,
-            query=query,
-            gene_set=genome.gene_set,
-            graphs=gene_multigraph,
-            node_embeddings=node_embeddings,
-            converter=None,
-            deduplicator=MeanExperimentDeduplicator,
-            aggregator=GenotypeAggregator,
-            graph_processor=graph_processor,
-            transform=None,
-        )
+            def __init__(self, df):
+                self.label_df = df
+
+        original_dataset = _LabelDfOnly(pd.read_parquet(label_df_path))
+        print(f"label_df rows: {len(original_dataset.label_df):,}, "
+              f"columns: {list(original_dataset.label_df.columns)}")
 
         transforms_list = []
         norm_transform = None
@@ -326,14 +334,25 @@ def main(cfg: DictConfig) -> None:
                     else:
                         print(f"  {key}: {value}")
 
+            # Predictions are inverse-transformed with these numbers, so record them
+            # next to the results rather than only in a job log that gets rotated.
+            stats_dir = osp.join(
+                EXPERIMENT_ROOT, "010-kuzmin-tmi", "results", "inference_4"
+            )
+            os.makedirs(stats_dir, exist_ok=True)
+            with open(osp.join(stats_dir, "normalization_stats.json"), "w") as f:
+                json.dump(
+                    {"source_label_df": label_df_path, "stats": norm_transform.stats},
+                    f,
+                    indent=2,
+                )
+
         if transforms_list:
             forward_transform = Compose(transforms_list)
             inverse_transform = COOInverseCompose(transforms_list)
             print("Transforms initialized successfully")
 
-        # Close the original dataset's LMDB
-        original_dataset.close_lmdb()
-        print("Closed original dataset")
+        # No LMDB was opened: the statistics came from the parquet alone.
 
     # Create InferenceDataset for predictions
     print("\nCreating InferenceDataset...")

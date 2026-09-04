@@ -298,9 +298,15 @@ def hub_tables(degrees: dict[str, pd.Series], std: dict[str, str], n_vocab: int)
     """Top-degree genes per graph, hub recurrence at TOP_K and at the top 1%, and the
     percentile-rank matrix of the hubs that recur in at least two graphs."""
     ranks = {k: s.rank(ascending=False, method="min").astype(int) for k, s in degrees.items()}
+
+    def by_degree(s: pd.Series) -> pd.Series:
+        # Degree descending, ties broken by systematic name so the ordering (and the
+        # written CSV) is identical run to run; a plain sort_values leaves ties arbitrary.
+        return s.sort_index().sort_values(ascending=False, kind="stable")
+
     hub_rows = []
     for k in KEYS:
-        s = degrees[k].sort_values(ascending=False)
+        s = by_degree(degrees[k])
         for r, (g, dv) in enumerate(s.iloc[:TOP_K].items(), start=1):
             hub_rows.append({"graph": k, "rank": r, "gene": g, "name": std.get(g, g), "degree": int(dv)})
     hubs = pd.DataFrame(hub_rows)
@@ -308,7 +314,7 @@ def hub_tables(degrees: dict[str, pd.Series], std: dict[str, str], n_vocab: int)
     n_top = int(round(TOP_FRAC * n_vocab))
     rec_rows = []
     for label, kk in (("top_k", TOP_K), ("top_1pct", n_top)):
-        cnt = pd.Series([g for k in KEYS for g in degrees[k].sort_values(ascending=False).index[:kk]]).value_counts()
+        cnt = pd.Series([g for k in KEYS for g in by_degree(degrees[k]).index[:kk]]).value_counts()
         hist = cnt.value_counts().sort_index()
         for n_graphs, n_genes in hist.items():
             rec_rows.append({"criterion": label, "genes_per_graph": kk, "n_graphs": int(n_graphs), "n_genes": int(n_genes)})
@@ -377,9 +383,11 @@ def tf_overlap_tables(graphs: dict[str, nx.Graph], std: dict[str, str]) -> tuple
                 "shared_targets": len(tr[g] & tt[g]),
                 "jaccard": len(tr[g] & tt[g]) / len(tr[g] | tt[g]),
             }
-            for g in shared
+            for g in sorted(shared)
         ]
-    ).sort_values("shared_targets", ascending=False)
+    ).sort_values(["shared_targets", "regulator"], ascending=[False, True], kind="stable")
+    # `shared` is a set, so without the sort the row order (and ties in shared_targets)
+    # would follow Python's per-process string hash seed.
     return overlap, per_tf
 
 
@@ -951,7 +959,9 @@ def main():
     pw.to_csv(osp.join(RESULTS_DIR, "pairwise_overlap.csv"), index=False)
     mult.to_csv(osp.join(RESULTS_DIR, "edge_multiplicity.csv"), index=False)
     deg.to_csv(osp.join(RESULTS_DIR, "degree_distribution.csv"), index=False)
-    struct.to_csv(osp.join(RESULTS_DIR, "graph_structure.csv"), index=False)
+    # 10 significant digits: the assortativity and two-hop means differ in the last
+    # floating-point digit between BLAS builds, which otherwise churns the committed CSV.
+    struct.to_csv(osp.join(RESULTS_DIR, "graph_structure.csv"), index=False, float_format="%.10g")
     hubs.to_csv(osp.join(RESULTS_DIR, "hub_genes.csv"), index=False)
     recurrence.to_csv(osp.join(RESULTS_DIR, "hub_recurrence.csv"), index=False)
     hub_matrix.to_csv(osp.join(RESULTS_DIR, "hub_matrix.csv"), index=False)

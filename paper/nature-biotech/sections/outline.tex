@@ -119,10 +119,30 @@
       \item \status{todo}\ \suppfig{fig:classical-ml} -- classical-ML baselines (compose from \texttt{*\_spearman\_spearman\_*\_palette} bars + \texttt{node\_embedding\_performance\_*\_palette}) · \supptab{tab:classical-ml-results}--\ref{tab:classical-ml-pearson} (Spearman, MSE, Pearson)
       \item \status{tent}\ Setup · Representation is identity · The barrier is pooling
     \end{itemize}
-  \item \status{todo}\ \textbf{Note~\ref{note:graphs} -- Gene--gene graphs used as attention priors} \emph{(the nine graphs of experiment 010; STRING releases; DANGO replication)}
+  \item \status{todo}\ \textbf{Note~\ref{note:graphs} -- Gene--gene graphs used as attention priors} \emph{(the nine graphs of experiment 010; STRING releases)}
     \begin{itemize}\setlength{\itemsep}{0pt}
-      \item \status{todo}\ \suppfig{fig:graph-priors} -- sizes, degree, Jaccard, containment, multiplicity (\texttt{experiments/010-kuzmin-tmi/scripts/graph\_statistics.py}) · \suppfig{fig:dango-string} -- STRING v9.1/v11.0/v12.0 drift + DANGO replication by release (\texttt{experiments/005-kuzmin2018-tmi/scripts/dango\_string\_version\_sweep.py})
-      \item \status{todo}\ Sources · Size and coverage · Overlap · STRING releases · DANGO replication
+      \item \status{todo}\ \suppfig{fig:graph-priors} -- sizes, degree, Jaccard, containment, multiplicity, structure · \suppfig{fig:graph-priors-2} -- shared pairs, hubs, regulatory vs TFLink, STRING v9.1/v11.0/v12.0 drift (\texttt{experiments/010-kuzmin-tmi/scripts/graph\_statistics.py}) · \supptab{tab:databases}--\ref{tab:string-versions}
+      \item \status{todo}\ Sources · Size, overlap, and structure · Hubs and the two transcription-factor graphs · STRING releases
+    \end{itemize}
+  \item \status{todo}\ \textbf{Note~\ref{note:dango-repro} -- Constructing DANGO in TorchCell and reproducing its published result} \emph{(Kuzmin 2018 screen alone; 19 runs at $r=0.42$; the lambda fall-through)}
+    \begin{itemize}\setlength{\itemsep}{0pt}
+      \item \status{todo}\ \suppfig{fig:dango-repro} -- model in the shared notation, decreased zeros, best $r$ by release and schedule, curves (\texttt{experiments/005-kuzmin2018-tmi/scripts/dango\_construction\_si.py}, \texttt{dango\_string\_version\_sweep.py}) · \supptab{tab:dango-string-versions}
+      \item \status{todo}\ Model in the manuscript's notation · Per-channel zero weights · Dataset, result, and what is not matched \quad \status{todo}\ \emph{Open:} DANGO reference key \texttt{zhangDANGOPredictingHigherorder2020} not yet in \texttt{references.bib}
+    \end{itemize}
+  \item \status{todo}\ \textbf{Note~\ref{note:dango-full} -- DANGO on the full trigenic dataset} \emph{(the Fig.~2d value; canonical statement of the 006-vs-010 build mismatch)}
+    \begin{itemize}\setlength{\itemsep}{0pt}
+      \item \status{todo}\ \suppfig{fig:dango-full} -- curves, best $r$ by release, epochs to $r\ge0.35$; panels d--f are placeholders needing a GPU run (\texttt{experiments/010-kuzmin-tmi/scripts/dango\_full\_dataset\_si.py}) · \supptab{tab:dango-full-runs}
+      \item \status{todo}\ Dataset builds · Training and result · Release and dataset effects \quad \status{todo}\ \emph{Open:} no DANGO or DCell run on the experiment-010 build (the like-for-like baseline)
+    \end{itemize}
+  \item \status{todo}\ \textbf{Note~\ref{note:dcell-model} -- DCell in TorchCell: the ontology-structured model} \emph{(GO DAG as the model graph; the rebuilt 2,655-subsystem ontology)}
+    \begin{itemize}\setlength{\itemsep}{0pt}
+      \item \status{todo}\ \suppfig{fig:dcell-model} -- schematic + subsystems per stratum, genes per subsystem, subsystems per gene (\texttt{experiments/006-kuzmin-tmi/scripts/dcell\_model\_go\_stats.py}) · \supptab{tab:dcell-go-filter}
+      \item \status{todo}\ The graph is the ontology · Building and measuring the ontology \quad \status{todo}\ \emph{Open:} DCell (\texttt{maUsingDeepLearning2018}) and Gene Ontology reference keys not yet in \texttt{references.bib}
+    \end{itemize}
+  \item \status{todo}\ \textbf{Note~\ref{note:dcell-training} -- DCell training cost, instability, and the checkpoint-based baseline} \emph{(one 30.8-day run; the Fig.~2d error bar is checkpoint spread, not replicates)}
+    \begin{itemize}\setlength{\itemsep}{0pt}
+      \item \status{todo}\ \suppfig{fig:dcell-training} -- validation curve with the three checkpoints, losses, GPU-hours and throughput vs DANGO and CGT, speed-up stages; panel e is a placeholder needing a profiler run (\texttt{experiments/006-kuzmin-tmi/scripts/dcell\_training\_wandb.py}) · \supptab{tab:dcell-training-checkpoints}--\ref{tab:dcell-training-cost}
+      \item \status{todo}\ Training run and checkpoint statistic · Cost and where the time goes
     \end{itemize}
 
   \item \status{tent}\ \textbf{General SI figures} (follow the Notes)
@@ -132,6 +152,6 @@
       \item \status{tent}\ \suppfig{fig:dna-tokenization} -- DNA tokenization \quad \status{todo}\ \suppfig{fig:expr-diag} -- expression \& multitask diagnostics
       \item \status{todo}\ \suppfig{fig:inference-scale} -- inference at scale \quad \status{tent}\ \suppfig{fig:profile-enrichment} -- guilt-by-association annotation
     \end{itemize}
-  \item \status{tent}\ \textbf{SI tables}: \status{tent}\,\supptab{tab:compute} compute \quad \status{todo}\,\supptab{tab:entity-corpora} entity corpora \quad \status{todo}\,\supptab{tab:classical-ml-results}--\ref{tab:classical-ml-pearson} classical-ML \quad \status{tent}\,\supptab{tab:datasets} datasets \quad \status{todo}\,\supptab{tab:databases} graphs (now script-generated; counts changed) \quad \status{todo}\,\supptab{tab:string-versions} STRING releases \quad \status{todo}\,\supptab{tab:dango-string-versions} DANGO by release
+  \item \status{tent}\ \textbf{SI tables}: \status{tent}\,\supptab{tab:compute} compute \quad \status{todo}\,\supptab{tab:entity-corpora} entity corpora \quad \status{todo}\,\supptab{tab:classical-ml-results}--\ref{tab:classical-ml-pearson} classical-ML \quad \status{tent}\,\supptab{tab:datasets} datasets \quad \status{todo}\,\supptab{tab:databases} graphs (now script-generated; counts changed) \quad \status{todo}\,\supptab{tab:string-versions} STRING releases \quad \status{todo}\,\supptab{tab:dango-string-versions} DANGO by release \quad \status{todo}\,\supptab{tab:dango-full-runs} DANGO full-dataset runs \quad \status{todo}\,\supptab{tab:dcell-go-filter} DCell GO filter \quad \status{todo}\,\supptab{tab:dcell-training-checkpoints} DCell checkpoints \quad \status{todo}\,\supptab{tab:dcell-training-cost} training cost
 \end{itemize}
 \endgroup

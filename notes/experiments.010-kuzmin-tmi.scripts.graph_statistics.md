@@ -69,7 +69,7 @@ cannot parse the package; the `torchcell` conda env rebuilt 2026.09.03 (Python 3
 
 ![](./assets/images/010-kuzmin-tmi/graphs_edge_multiplicity.svg)
 
-![](./assets/images/010-kuzmin-tmi/graphs_string_versions.svg)
+The sixth panel of this pass, `graphs_string_versions.svg` (pairwise Jaccard bars between STRING releases), was superseded by `graphs_string_releases.svg` in the section below and is no longer written or kept on disk.
 
 ## 2026.09.03 - Structure, hubs, transcription-factor overlap, chronological STRING releases
 
@@ -147,3 +147,19 @@ written, in figure order:
 ![](./assets/images/010-kuzmin-tmi/graphs_tf_overlap.svg)
 
 ![](./assets/images/010-kuzmin-tmi/graphs_string_releases.svg)
+
+## 2026.09.03 - Deterministic ordering of the hub and per-regulator tables
+
+Rerunning the script on the Mac changed three committed CSVs without any input change: `hub_genes.csv`
+(KSP1 and SPS1 are tied at degree 97 in co-occurrence, and `sort_values` left ties in arbitrary order),
+`tf_overlap_per_regulator.csv` (the 200 shared regulators were iterated from a Python `set`, so the row
+order among equal `shared_targets` followed the per-process string hash seed), and `graph_structure.csv`
+(assortativity and two-hop means differed in the last floating-point digit between BLAS builds). Fixes:
+degree sorts now break ties by systematic name (`by_degree`), the per-regulator table is built from
+`sorted(shared)` and sorted on `(shared_targets desc, regulator asc)`, and `graph_structure.csv` is written
+with `float_format="%.10g"`. Verified stable across two runs with different `PYTHONHASHSEED`. The SI
+figure caption now says SPS1 and KSP1 are tied in co-occurrence. No panel or table changed.
+
+The Supplementary Note `note:graphs` prose was compressed on the same day; the hub degrees, shared-pair
+counts, two-hop reach, assortativity values, and release growth factors that left the prose are now in
+the two figure captions, and everything else is in the sections above.

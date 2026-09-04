@@ -377,6 +377,11 @@ def main(cfg: DictConfig) -> None:
     edges = np.linspace(0, total, n_shards + 1).astype(np.int64)
     lo, hi = int(edges[shard_index]), int(edges[shard_index + 1])
     shard_offset = lo
+    # base_dataset is the unsharded InferenceDataset. Everything that needs a
+    # dataset ATTRIBUTE rather than indexing must go through it, because Subset
+    # forwards __len__ and __getitem__ and nothing else. Two call sites construct
+    # a model from cell_graph and both read it from here; len(dataset) is left on
+    # the Subset on purpose, since the loop bound wants the shard length.
     base_dataset = dataset
     dataset = torch.utils.data.Subset(dataset, range(lo, hi))
     print(f"Shard {shard_index + 1}/{n_shards}: rows [{lo:,}, {hi:,}) "
@@ -432,7 +437,7 @@ def main(cfg: DictConfig) -> None:
         hidden_channels=wandb.config["model"]["hidden_channels"],
         num_transformer_layers=wandb.config["model"]["num_transformer_layers"],
         num_attention_heads=wandb.config["model"]["num_attention_heads"],
-        cell_graph=dataset.dataset.cell_graph,
+        cell_graph=base_dataset.cell_graph,
         graph_regularization_config=wandb.config["model"]["graph_regularization"],
         perturbation_head_config=wandb.config["model"]["perturbation_head"],
         dropout=wandb.config["model"]["dropout"],
@@ -485,7 +490,7 @@ def main(cfg: DictConfig) -> None:
         checkpoint_path,
         map_location=device,
         model=model,
-        cell_graph=dataset.cell_graph,
+        cell_graph=base_dataset.cell_graph,
         loss_func=loss_func,
         device=device,
         optimizer_config=wandb.config.regression_task["optimizer"],

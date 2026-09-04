@@ -470,8 +470,9 @@ def panel_cost(cost: pd.DataFrame):
     ]:
         for i, m in enumerate(order):
             sub = cost[cost["model"] == m]
+            # House rule: bar = mean over runs, replicates as open circles (one DCell run, so no whisker).
             ax.bar(i, sub[col].mean(), width=0.6, color=MODEL_COLOR[m], edgecolor="black", lw=0.5, zorder=3)
-            ax.scatter([i] * len(sub), sub[col], s=6, color="black", zorder=4)
+            ax.scatter([i] * len(sub), sub[col], s=9, facecolor="white", edgecolor="black", lw=0.5, zorder=4)
             top = sub[col].max()
             ax.text(i, top * 1.25, f"{sub[col].mean():,.0f}", ha="center", va="bottom", fontsize=6)
         ax.set_yscale("log")
@@ -489,27 +490,29 @@ def panel_cost(cost: pd.DataFrame):
 def panel_stages(st: pd.DataFrame):
     w = mm_to_in(PANEL_WIDTHS_MM["half"])
     fig, ax = plt.subplots(figsize=(w, mm_to_in(52)))
-    fig.subplots_adjust(left=0.5, right=0.96, bottom=0.17, top=0.95)
-    short = {
-        "Before Duplicate Forward": "baseline (duplicate forward)",
-        "After Removing Duplicate Forward": "single forward",
-        "After Caching GO Strata": "+ cached GO strata",
-        "16-Mixed Precision": "+ fp16-mixed",
-        "BF16-Mixed Precision": "+ bf16-mixed",
-        "BF16-Mixed Precision Regress": "bf16-mixed, rerun",
-        "BF16-Mixed Precison - 12 workers": "bf16-mixed, 12 workers",
-        "BF16-Mixed Precison - 8 Workers - Compile - batch size 500": "+ torch.compile, batch 500",
-        "BF16-Mixed Precison - 8 Workers - Compile - batch size 600": "+ torch.compile, batch 600",
+    fig.subplots_adjust(left=0.56, right=0.97, bottom=0.17, top=0.95)
+    # Numbered stages; every label is the COMPLETE configuration of that run (stages 6-9
+    # keep stage 5's code and precision and change one thing). Spelled out in the caption.
+    stage_label = {
+        "Before Duplicate Forward": "1: fp32, duplicate forward",
+        "After Removing Duplicate Forward": "2: fp32, single forward",
+        "After Caching GO Strata": "3: fp32, single forward, cached strata",
+        "16-Mixed Precision": "4: fp16-mixed, single forward, cached strata",
+        "BF16-Mixed Precision": "5: bf16-mixed, single forward, cached strata",
+        "BF16-Mixed Precision Regress": "6: stage 5, rerun on a later day",
+        "BF16-Mixed Precison - 12 workers": "7: stage 5 with 12 loader workers",
+        "BF16-Mixed Precison - 8 Workers - Compile - batch size 500": "8: stage 5 with torch.compile, batch 500",
+        "BF16-Mixed Precison - 8 Workers - Compile - batch size 600": "9: stage 5 with torch.compile, batch 600",
     }
     y = np.arange(len(st))[::-1]
     ax.barh(y, st["samples_per_s"], color=PURPLE, edgecolor="black", lw=0.5, height=0.65, zorder=3)
     for yi, (_, r) in zip(y, st.iterrows()):
         ax.text(r["samples_per_s"] * 1.08, yi, f"{r['s_per_step']:.0f} s/step", va="center", fontsize=6)
     ax.set_yticks(y)
-    ax.set_yticklabels([short.get(s, s) for s in st["stage"]])
+    ax.set_yticklabels([stage_label[s] for s in st["stage"]])
     ax.set_xscale("log")
     ax.set_xlim(3, 300)
-    ax.set_xlabel("Training samples per second (4 GPUs, gilahyper)")
+    ax.set_xlabel("Training samples per second (4 GPUs)")
     ax.grid(axis="x", color="#D0D0D0", lw=0.4, which="major")
     ax.set_axisbelow(True)
     box(ax)

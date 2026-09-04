@@ -1,0 +1,9 @@
+{
+  "n_vocab": 6607,
+  "metabolic_frac_vocab": 0.17572271832904496,
+  "essential_frac_vocab": 0.172544271227486,
+  "n_kuzmin2018": 1400,
+  "n_kuzmin2020": 4308,
+  "n_subsystems": 107,
+  "n_go_terms": 1944
+}

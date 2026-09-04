@@ -17,19 +17,26 @@ Reported (CSV under results/dcell_model/):
   go_terms_final.csv          per-term: namespace, stratum, direct + contained genes, widths
   go_strata.csv               terms per stratum (the model's processing order)
   go_genes_final.csv          per-gene: number of terms it is annotated to (0 = uncovered)
+  go_edges_final.csv          the 3,208 hierarchy edges of the final DAG (child, parent)
+  go_annotations_final.csv    the 59,986 direct (term, gene) annotation rows of the final DAG
   go_evidence_codes.csv       annotation evidence codes retained in the final DAG
   dcell_model_size.csv        parameter count implied by the widths, vs the wandb-logged
                               ``model/params_*`` of the trigenic runs (frozen pull)
   dcell_wandb_model_size.csv  the frozen wandb pull (one row per run)
 
 Panels (true-size SVG + PNG under $ASSET_IMAGES_DIR/006-kuzmin-tmi/):
-  dcell_model_terms_per_stratum, dcell_model_genes_per_term, dcell_model_terms_per_gene
+  dcell_model_go_dag (the whole filtered DAG, strata as layers, one triple deletion
+  highlighted), dcell_model_terms_per_stratum, dcell_model_genes_per_term,
+  dcell_model_terms_per_gene
 
 Table: paper/nature-biotech/sections/tab-dcell-model-go-filter.tex
 
 Run from the repo root:
     python experiments/006-kuzmin-tmi/scripts/dcell_model_go_stats.py
     python experiments/006-kuzmin-tmi/scripts/dcell_model_go_stats.py --from-csv
+    python experiments/006-kuzmin-tmi/scripts/dcell_model_go_stats.py --dag-only
+        (rebuild the DAG without the wandb pull, check it against the frozen
+        go_terms_final.csv, and freeze go_edges_final.csv + go_annotations_final.csv)
 """
 
 import argparse
@@ -46,6 +53,8 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
+from matplotlib.collections import LineCollection
+from matplotlib.lines import Line2D
 from matplotlib.ticker import MaxNLocator
 
 from torchcell.data.cell_data import compute_strata
@@ -105,6 +114,23 @@ WANDB_FIELDS = [
 
 PANEL_W_MM = PANEL_WIDTHS_MM["third"]
 PANEL_H_MM = 44.0
+DAG_W_MM = PANEL_WIDTHS_MM["wide"]  # the DAG panel; the equations column fills the rest of 180 mm
+DAG_H_MM = 69.0  # matches the equations column beside it in FigS-dcell-model
+
+NAMESPACE_COLOR = {
+    "biological_process": PLOT_PALETTE[0],  # orange
+    "molecular_function": PLOT_PALETTE[2],  # purple
+    "cellular_component": PLOT_PALETTE[3],  # yellow
+    "super_root": PLOT_PALETTE[5],  # gray
+}
+NAMESPACE_LABEL = {
+    "biological_process": "Biological process",
+    "molecular_function": "Molecular function",
+    "cellular_component": "Cellular component",
+    "super_root": "GO:ROOT",
+}
+HIGHLIGHT = PLOT_PALETTE[1]  # red: the perturbation, as in every DCell panel
+NAMESPACE_ROOTS = ("GO:0008150", "GO:0003674", "GO:0005575")
 
 
 # --------------------------------------------------------------------------- graph stats
@@ -183,8 +209,8 @@ def implied_parameters(G: nx.DiGraph, direct: dict[str, int]) -> dict[str, int]:
     }, width
 
 
-def build_and_measure() -> None:
-    os.makedirs(RESULTS_DIR, exist_ok=True)
+def load_raw_go() -> tuple[nx.DiGraph, set[str], str]:
+    """The cached ``SCerevisiaeGraph.G_go`` over the 6,607-gene reference, plus the GO release."""
     genome = SCerevisiaeGenome(
         genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
         go_root=osp.join(DATA_ROOT, "data/go"),
@@ -198,9 +224,48 @@ def build_and_measure() -> None:
         tflink_root=osp.join(DATA_ROOT, "data/tflink"),
         genome=genome,
     )
-    G0 = graph.G_go.copy()
     release = go_release(osp.join(DATA_ROOT, "data/go"))
     print(f"go.obo release {release}; reference genes {len(gene_set)}")
+    return graph.G_go.copy(), gene_set, release
+
+
+def filter_dag(G0: nx.DiGraph, gene_set: set[str]) -> nx.DiGraph:
+    """The three filters in the order scripts/dcell.py applies them (no date cutoff)."""
+    G1 = filter_by_date(G0, DATE_FILTER) if DATE_FILTER else G0
+    return filter_by_contained_genes(filter_redundant_terms(filter_go_IGI(G1)), n=MIN_GENES, gene_set=gene_set)
+
+
+def freeze_structure(G4: nx.DiGraph, gene_set: set[str]) -> None:
+    """Freeze the final DAG's edges and direct annotation rows (what the DAG panel draws)."""
+    pd.DataFrame(list(G4.edges()), columns=["child", "parent"]).sort_values(["child", "parent"]).to_csv(
+        osp.join(RESULTS_DIR, "go_edges_final.csv"), index=False
+    )
+    pd.DataFrame(sorted(annotation_pairs(G4, gene_set)), columns=["term", "gene"]).to_csv(
+        osp.join(RESULTS_DIR, "go_annotations_final.csv"), index=False
+    )
+
+
+def build_dag_only() -> None:
+    """Rebuild the DAG without touching wandb, check it against the frozen term table, freeze edges."""
+    G0, gene_set, release = load_raw_go()
+    G4 = filter_dag(G0, gene_set)
+    terms = pd.read_csv(osp.join(RESULTS_DIR, "go_terms_final.csv"))
+    frozen = set(terms["term"])
+    if frozen != set(G4.nodes()):
+        raise SystemExit(f"rebuilt DAG differs from go_terms_final.csv: {len(frozen ^ set(G4.nodes()))} terms")
+    strata = compute_strata(G4)
+    mism = sum(1 for t, s in zip(terms["term"], terms["stratum"]) if strata[t] != s)
+    if mism:
+        raise SystemExit(f"rebuilt strata differ from go_terms_final.csv on {mism} terms")
+    if G4.number_of_edges() != terms["n_parents"].sum():
+        raise SystemExit("rebuilt edge count differs from go_terms_final.csv")
+    freeze_structure(G4, gene_set)
+    print(f"froze {G4.number_of_edges()} edges and {len(annotation_pairs(G4, gene_set))} annotation rows (GO {release})")
+
+
+def build_and_measure() -> None:
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    G0, gene_set, release = load_raw_go()
 
     # The pipeline, in the order scripts/dcell.py applies it.
     rows = [stage_row("raw", G0, gene_set)]
@@ -253,6 +318,7 @@ def build_and_measure() -> None:
     genes = pd.DataFrame({"gene": sorted(gene_set)})
     genes["n_terms"] = [per_gene.get(g, 0) for g in genes["gene"]]
     genes.to_csv(osp.join(RESULTS_DIR, "go_genes_final.csv"), index=False)
+    freeze_structure(G4, gene_set)
 
     ev = Counter()
     dates = []
@@ -352,6 +418,149 @@ def save(fig, name: str) -> None:
     plt.close(fig)
 
 
+def example_triple(genes: pd.DataFrame) -> list[str]:
+    """Three genes for the highlighted deletion, chosen by rule rather than by hand.
+
+    Among the genes annotated to exactly the median number of subsystems, sorted by
+    systematic name, take the first, the middle, and the last: three genes with a
+    typical number of subsystems, spread across the genome.
+    """
+    med = int(genes["n_terms"].median())
+    pool = sorted(genes.loc[genes["n_terms"] == med, "gene"])
+    return [pool[0], pool[len(pool) // 2], pool[-1]]
+
+
+def layout_dag(terms: pd.DataFrame, edges: pd.DataFrame) -> dict[str, tuple[float, float]]:
+    """Layered positions in [0, 1] x {stratum}: x by parent barycenter, strata as rows.
+
+    Strata are longest-path depths from GO:ROOT (``compute_strata``), so every parent of a
+    term sits in a shallower stratum and a single top-down pass fixes each term's x from
+    the mean x of its parents. Large strata are spread evenly in barycenter order (which
+    keeps each namespace's subtree together); small ones keep their barycenter x, pushed
+    apart only enough not to overlap.
+    """
+    parents: dict[str, list[str]] = {}
+    for c, p in zip(edges["child"], edges["parent"]):
+        parents.setdefault(c, []).append(p)
+    pos: dict[str, tuple[float, float]] = {}
+    ns_rank = {"super_root": 0, "biological_process": 1, "molecular_function": 2, "cellular_component": 3}
+    for s, grp in terms.groupby("stratum", sort=True):
+        names = list(grp["term"])
+        if s == 0:
+            pos[names[0]] = (0.5, 0)
+            continue
+        if s == 1:
+            # The three namespace roots, in a fixed order across the width.
+            ordered = sorted(names, key=lambda t: ns_rank[grp.set_index("term").loc[t, "namespace"]])
+            for i, t in enumerate(ordered):
+                pos[t] = ((i + 0.5) / len(ordered), s)
+            continue
+        bary = {t: float(np.mean([pos[p][0] for p in parents[t]])) for t in names}
+        ordered = sorted(names, key=lambda t: (bary[t], t))
+        n = len(ordered)
+        if n >= 40:
+            for i, t in enumerate(ordered):
+                pos[t] = ((i + 0.5) / n, s)
+        else:
+            xs = np.array([bary[t] for t in ordered])
+            gap = 0.012
+            for i in range(1, n):  # push right neighbours apart to the minimum gap
+                xs[i] = max(xs[i], xs[i - 1] + gap)
+            xs = np.clip(xs - max(0.0, xs[-1] - (1 - gap / 2)), gap / 2, 1 - gap / 2)
+            for t, x in zip(ordered, xs):
+                pos[t] = (float(x), s)
+    return pos
+
+
+def panel_go_dag(terms: pd.DataFrame, edges: pd.DataFrame, ann: pd.DataFrame, genes: pd.DataFrame) -> list[str]:
+    """The whole filtered DAG with one triple deletion propagating to the root. Returns the triple."""
+    pos = layout_dag(terms, edges)
+    ns = dict(zip(terms["term"], terms["namespace"]))
+    n_strata = int(terms["stratum"].max()) + 1
+    triple = example_triple(genes)
+    gene_index = {g: i for i, g in enumerate(sorted(genes["gene"]))}
+    hit_terms = sorted(set(ann.loc[ann["gene"].isin(triple), "term"]))
+    # Every hierarchy edge on a path from a hit term up to the root: what the zeroed rows
+    # touch, since each subsystem feeds all of its parents.
+    parents: dict[str, list[str]] = {}
+    for c, p in zip(edges["child"], edges["parent"]):
+        parents.setdefault(c, []).append(p)
+    hot_edges: set[tuple[str, str]] = set()
+    stack = list(hit_terms)
+    seen: set[str] = set()
+    while stack:
+        t = stack.pop()
+        if t in seen:
+            continue
+        seen.add(t)
+        for p in parents.get(t, []):
+            hot_edges.add((t, p))
+            stack.append(p)
+
+    fig, ax = plt.subplots(figsize=(mm_to_in(DAG_W_MM), mm_to_in(DAG_H_MM)))
+    fig.subplots_adjust(left=0.075, right=0.995, bottom=0.135, top=0.985)
+    gene_row = n_strata + 0.9  # the strain row sits one layer below the deepest stratum
+
+    def xy(t: str) -> tuple[float, float]:
+        x, s = pos[t]
+        return x, s
+
+    cold = [(xy(c), xy(p)) for c, p in zip(edges["child"], edges["parent"]) if (c, p) not in hot_edges]
+    ax.add_collection(LineCollection(cold, colors="#C8C8C8", linewidths=0.12, zorder=1))
+    hot = [(xy(c), xy(p)) for c, p in hot_edges]
+    ax.add_collection(LineCollection(hot, colors=HIGHLIGHT, linewidths=0.45, alpha=0.85, zorder=3))
+    # Gene states of the deleted genes entering the subsystems that annotate them.
+    feed = [((gene_index[g] / len(gene_index), gene_row), xy(t)) for t, g in zip(ann["term"], ann["gene"]) if g in triple]
+    ax.add_collection(LineCollection(feed, colors=HIGHLIGHT, linewidths=0.35, linestyles=(0, (2, 1.5)), alpha=0.85, zorder=3))
+
+    for space, color in NAMESPACE_COLOR.items():
+        sel = [t for t in terms["term"] if ns[t] == space and t not in hit_terms]
+        if not sel:
+            continue
+        xs, ys = zip(*(xy(t) for t in sel))
+        ax.scatter(xs, ys, s=1.6 if space != "super_root" else 9, color=color, linewidths=0, zorder=2)
+    xs, ys = zip(*(xy(t) for t in hit_terms))
+    ax.scatter(xs, ys, s=7, facecolor="white", edgecolor=HIGHLIGHT, linewidths=0.5, zorder=4)
+
+    # The strain row: 6,607 gene states, present in gray, the deleted three in red.
+    ax.plot([0, 1], [gene_row, gene_row], color="#9A9A9A", lw=2.2, solid_capstyle="butt", zorder=2)
+    for g in triple:
+        x = gene_index[g] / len(gene_index)
+        ax.plot([x, x], [gene_row - 0.32, gene_row + 0.32], color=HIGHLIGHT, lw=0.9, zorder=4)
+        ha = "left" if x < 0.08 else "right" if x > 0.92 else "center"
+        ax.text(x, gene_row + 0.42, f"{g} = 0", ha=ha, va="top", color=HIGHLIGHT, fontsize=6)
+    ax.text(0.5, gene_row + 1.0, "gene-state vector s over the 6,607 genes: present = 1, deleted = 0",
+            ha="center", va="top", fontsize=6)
+    for t, name in zip(NAMESPACE_ROOTS, ("BP", "MF", "CC")):
+        x, s = pos[t]
+        ax.text(x + 0.012, s, name, ha="left", va="center", fontsize=6)
+    ax.text(0.512, 0, "GO:ROOT", ha="left", va="center", fontsize=6)
+
+    ax.set_xlim(-0.005, 1.005)
+    ax.set_ylim(gene_row + 1.8, -0.7)  # root at the top, strain row at the bottom
+    ax.set_yticks(list(range(n_strata)) + [gene_row])
+    ax.set_yticklabels([str(s) for s in range(n_strata)] + ["s"])
+    ax.set_ylabel("Stratum")
+    ax.set_xticks([])
+    ax.tick_params(axis="y", width=0.5, length=2, pad=1.5)
+    handles = [
+        Line2D([], [], marker="o", ls="", ms=3, color=NAMESPACE_COLOR[k], label=NAMESPACE_LABEL[k])
+        for k in ("biological_process", "molecular_function", "cellular_component")
+    ] + [
+        Line2D([], [], marker="o", ls="", ms=3, markerfacecolor="white", markeredgecolor=HIGHLIGHT, label="Annotated to a deleted gene"),
+        Line2D([], [], color=HIGHLIGHT, lw=0.8, label="Path to GO:ROOT"),
+        Line2D([], [], color=HIGHLIGHT, lw=0.8, ls=(0, (2, 1.5)), label="Gene state into subsystem"),
+    ]
+    ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(-0.02, -0.005), frameon=False, ncol=3,
+              handlelength=1.4, handletextpad=0.5, borderpad=0.0, labelspacing=0.25, columnspacing=1.2)
+    ax.text(0.995, 0.985, f"{len(terms):,} subsystems, {len(edges):,} edges, {n_strata} strata",
+            transform=ax.transAxes, ha="right", va="top", fontsize=6)
+    for s in ax.spines.values():
+        s.set_linewidth(0.5)
+    save(fig, "dcell_model_go_dag")
+    return triple
+
+
 def panel_terms_per_stratum(strata_df: pd.DataFrame) -> None:
     fig, ax = new_panel()
     ax.bar(strata_df["stratum"], strata_df["terms"], color=PLOT_PALETTE[0], edgecolor="black", linewidth=0.4, width=0.8)
@@ -445,6 +654,10 @@ def render() -> None:
     terms = pd.read_csv(osp.join(RESULTS_DIR, "go_terms_final.csv"))
     strata_df = pd.read_csv(osp.join(RESULTS_DIR, "go_strata.csv"))
     genes = pd.read_csv(osp.join(RESULTS_DIR, "go_genes_final.csv"))
+    edges = pd.read_csv(osp.join(RESULTS_DIR, "go_edges_final.csv"))
+    ann = pd.read_csv(osp.join(RESULTS_DIR, "go_annotations_final.csv"))
+    triple = panel_go_dag(terms, edges, ann, genes)
+    print(f"highlighted triple deletion: {triple}")
     panel_terms_per_stratum(strata_df)
     panel_genes_per_term(terms)
     panel_terms_per_gene(genes)
@@ -454,9 +667,14 @@ def render() -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--from-csv", action="store_true", help="re-render panels and table from the frozen CSVs")
+    g = ap.add_mutually_exclusive_group()
+    g.add_argument("--from-csv", action="store_true", help="re-render panels and table from the frozen CSVs")
+    g.add_argument("--dag-only", action="store_true",
+                   help="rebuild the DAG (no wandb), verify it against go_terms_final.csv, freeze edges + annotations, render")
     args = ap.parse_args()
-    if not args.from_csv:
+    if args.dag_only:
+        build_dag_only()
+    elif not args.from_csv:
         build_and_measure()
     render()
 

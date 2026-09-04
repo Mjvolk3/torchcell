@@ -15,6 +15,11 @@ Figure written to notes/assets/drawio/FigS-dango-reproduction.drawio (<= 709 x 6
 180 x 170 mm). Rerun after regenerating any panel; the file is overwritten, never edited by
 hand.
 
+Layout convention shared by every composed SI figure (the "white cross"): COL_GAP = 12
+units (3 mm) between columns, ROW_GAP = 22 units (5.5 mm) between rows, a TOP_STRIP of 16
+units above every row, and each panel letter in that strip at the panel's top-left
+(x = panel_x, y = row_top), so no letter sits over an axis label or a neighbor's title.
+
 Run from the repo root:
     python experiments/005-kuzmin2018-tmi/scripts/compose_dango_si_figures.py
 """
@@ -32,9 +37,11 @@ ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
 DRAWIO_DIR = "notes/assets/drawio"
 OUT = osp.join(DRAWIO_DIR, "FigS-dango-reproduction.drawio")
 
-FULL_WIDTH = 706  # 179.4 mm; draw.io adds a 1-unit border per side on export
+FULL_WIDTH = 705  # two 88 mm columns + COL_GAP; draw.io adds a 1-unit border per side on export
 MAX_HEIGHT = 669
-GAP = 8
+COL_GAP = 12  # 3 mm between columns
+ROW_GAP = 22  # 5.5 mm between rows; the next row's TOP_STRIP is the lower part of it
+TOP_STRIP = 16  # the letter strip above every row
 LETTER_W, LETTER_H = 18, 14
 BODY = 8.3  # ladder value: prints at 5.98 pt
 LETTER = 11.1  # ladder value: prints at 7.99 pt, panel letters only
@@ -76,10 +83,11 @@ class Cells:
             f'<mxGeometry x="{x:.1f}" y="{y:.1f}" width="{w:.4f}" height="{h:.4f}" as="geometry"/></mxCell>'
         )
 
-    def letter(self, letter: str, x: float, y: float):
+    def letter(self, letter: str, x: float, row_top: float):
+        """Panel letter in the TOP_STRIP above the panel, flush with the panel's left edge."""
         self.cells.append(
             f'<mxCell id="{self._id()}" value="{letter}" style={quoteattr(LETTER_STYLE)} vertex="1" parent="1">'
-            f'<mxGeometry x="{x:.1f}" y="{y:.1f}" width="{LETTER_W}" height="{LETTER_H}" as="geometry"/></mxCell>'
+            f'<mxGeometry x="{x:.1f}" y="{row_top:.1f}" width="{LETTER_W}" height="{LETTER_H}" as="geometry"/></mxCell>'
         )
 
     def box(self, x, y, w, h, html: str, color=GRAY, align="center", dashed=False, bold_first=False):
@@ -163,7 +171,7 @@ def schematic(c: Cells, x0: float, y0: float) -> float:
         "gnn": (x0 + 132, 132),
         "meta": (x0 + 284, 118),
         "pert": (x0 + 422, 116),
-        "read": (x0 + 558, 148),
+        "read": (x0 + 558, 147),
     }
     ytop = y0 + 4
     channels = ["neighborhood", "fusion", "co-occurrence", "co-expression", "experimental", "database"]
@@ -236,7 +244,7 @@ def write_figure(cells: Cells, extent_w: float, extent_h: float):
     with open(OUT, "w", encoding="utf-8") as f:
         f.write(xml)
     print(f"wrote {OUT}: {extent_w:.0f} x {extent_h:.0f} units = {extent_w / 3.937:.1f} x {extent_h / 3.937:.1f} mm")
-    if extent_w > FULL_WIDTH + 2 or extent_h > MAX_HEIGHT:
+    if extent_w > 709 or extent_h > MAX_HEIGHT:
         raise SystemExit("FigS-dango-reproduction exceeds the Nature print box (709 x 669 units)")
 
 
@@ -245,24 +253,28 @@ def main():
     sweep = osp.join(P005, "dango_string_version_sweep.svg")
     curves = osp.join(P005, "dango_string_version_curves.svg")
     c = Cells()
-    # (a) schematic
-    c.letter("a", -2, -4)
-    ha = schematic(c, 0, 12)
-    # (b) decreased zeros (left) and (c) sweep (right), flush with the 180 mm edge; (d) the
-    # training curves, full width. Images first, letters after: later cells draw on top, and
-    # each panel SVG carries an opaque background that would hide a letter placed under it.
-    yb = 12 + ha + GAP
-    col2 = FULL_WIDTH - svg_size(sweep)[0]
+    # (a) schematic, below the letter strip.
+    row_top = 0
+    ya = row_top + TOP_STRIP
+    c.letter("a", 0, row_top)
+    ha = schematic(c, 0, ya)
+    # (b) decreased zeros (left) and (c) sweep (right), one COL_GAP apart; (d) the training
+    # curves, full width. Every letter sits in the strip above its row at the panel's left.
+    row_top = ya + ha + (ROW_GAP - TOP_STRIP)
+    yb = row_top + TOP_STRIP
+    col2 = svg_size(zeros)[0] + COL_GAP
     row2_h = max(svg_size(zeros)[1], svg_size(sweep)[1])
-    yd = yb + row2_h + GAP
     c.image(zeros, 0, yb)
     c.image(sweep, col2, yb)
+    c.letter("b", 0, row_top)
+    c.letter("c", col2, row_top)
+    row_top = yb + row2_h + (ROW_GAP - TOP_STRIP)
+    yd = row_top + TOP_STRIP
     c.image(curves, 0, yd)
-    c.letter("b", -2, yb - 4)
-    c.letter("c", col2 - 2, yb - 4)
-    c.letter("d", -2, yd - 4)
+    c.letter("d", 0, row_top)
+    extent_w = max(FULL_WIDTH, col2 + svg_size(sweep)[0], svg_size(curves)[0])
     extent_h = yd + svg_size(curves)[1]
-    write_figure(c, FULL_WIDTH, extent_h)
+    write_figure(c, extent_w, extent_h)
 
 
 if __name__ == "__main__":

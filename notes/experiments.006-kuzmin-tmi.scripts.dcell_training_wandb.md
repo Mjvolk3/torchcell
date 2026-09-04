@@ -72,3 +72,9 @@ The two reruns of the bf16 configuration (99-119 s/step vs 20 s/step) show day-t
 ![](./assets/images/006-kuzmin-tmi/dcell_training_cost.svg)
 
 ![](./assets/images/006-kuzmin-tmi/dcell_training_stages.svg)
+
+## 2026.09.03 - Stage labels as complete configurations; open-circle replicates
+
+Author review of `FigS-dcell-training`: the `+`-prefixed stage labels in panel d were inconsistent. Every bar is now a numbered stage whose label is the complete configuration of that run (`stage_label` in `panel_stages`; batch 256 per GPU and 8 loader workers unless stated): 1 fp32, duplicate forward; 2 fp32, single forward; 3 fp32, single forward, cached strata; 4 fp16-mixed, single forward, cached strata; 5 bf16-mixed, single forward, cached strata; 6 stage 5 rerun on a later day; 7 stage 5 with 12 loader workers; 8 and 9 stage 5 with `torch.compile` at batch 500 and 600. The caption spells out what each stage adds; the measured seconds per step are unchanged (`speedup_stages.csv` untouched). The label column takes 56% of the 88 mm panel; the x label is shortened to "Training samples per second (4 GPUs)".
+
+Panel c follows the house rule for bar charts with replicate points: bar = mean over runs, replicates as open circles (black edge, white face; previously filled dots); no whisker is drawn because DCell has one run, and the caption says so. No statistic changed. `--from-csv` re-rendered all four panels; `cost.csv` and `checkpoints.csv` were rewritten byte-identical.

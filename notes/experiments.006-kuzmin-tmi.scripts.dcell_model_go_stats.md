@@ -33,3 +33,14 @@ Measured (run 2026.09.03 on the M1, `go_filter_stages.csv` and `dcell_model_size
 ![](./assets/images/006-kuzmin-tmi/dcell_model_genes_per_term.svg)
 
 ![](./assets/images/006-kuzmin-tmi/dcell_model_terms_per_gene.svg)
+
+## 2026.09.03 - The whole DAG as a panel, and the frozen edges and annotations
+
+Author review asked for a real rendering of the filtered ontology in place of the toy seven-term sketch in `FigS-dcell-model` panel a. Changes:
+
+- `load_raw_go()` / `filter_dag()` are factored out of `build_and_measure()`, and a new `--dag-only` mode rebuilds the DAG without the wandb pull, checks that the node set, strata, and edge count equal the frozen `go_terms_final.csv` (it did: 2,655 terms, 3,208 edges, 13 strata), and freezes two new result files: `go_edges_final.csv` (child, parent; 3,208 rows) and `go_annotations_final.csv` (term, gene; 59,986 rows). A full run writes them too. `--from-csv` then renders every panel offline.
+- New panel `dcell_model_go_dag` (`wide` width, 118.9 x 69 mm): `layout_dag()` places strata as rows (root at the top) and orders terms within a stratum by the mean x of their parents (every parent is in a shallower stratum, since strata are longest-path depths from `GO:ROOT`); strata with 40+ terms are spread evenly in that order, smaller ones keep the barycenter x pushed apart to a minimum gap. Nodes are colored by namespace (BP orange, MF purple, CC yellow, root gray), edges are 0.12 pt gray. The bottom row is the gene-state vector `s` over the 6,607 genes.
+- The highlighted perturbation is a triple deletion chosen by rule (`example_triple()`): among genes annotated to exactly the median number of subsystems (8), sorted by systematic name, the first, middle, and last: `Q0140`, `YJL171C`, `YPR204W`. Dashed red lines carry their zeroed states into the subsystems that annotate them (open red circles); solid red marks every hierarchy edge from those subsystems up to the root. Red is reserved for the perturbation across the figure, which is why MF is purple rather than red.
+- Namespace counts in the final DAG: BP 1,490, MF 674, CC 490, plus `GO:ROOT`.
+
+![](./assets/images/006-kuzmin-tmi/dcell_model_go_dag.svg)

@@ -163,3 +163,84 @@ figure caption now says SPS1 and KSP1 are tied in co-occurrence. No panel or tab
 The Supplementary Note `note:graphs` prose was compressed on the same day; the hub degrees, shared-pair
 counts, two-hop reach, assortativity values, and release growth factors that left the prose are now in
 the two figure captions, and everything else is in the sections above.
+
+## 2026.09.03 - Author revision: uncovered genes, third-width matrices, other components, hub descriptions
+
+Author feedback on the second pass, and what changed in the script:
+
+- Panel a now stacks the uncovered remainder (white, hatched) onto the covered-gene bar up to the
+  6,607-gene reference and prints the uncovered count right of the dotted line (`uncovered` column
+  added to `graph_sizes.csv`, the only change to a previously committed CSV).
+- The Jaccard and containment heatmaps share a 0 to 1 colorbar (the diagonal is 1), are third-width
+  (57.8 mm) with `SHORT_LABEL` row and column names (STRING prefix dropped), and their cells print two
+  decimals without the leading zero at 5 pt. Multiplicity stops at the largest observed bin (7).
+- The structure panel (largest component, clustering, assortativity, two-hop reach) moved to figure 2
+  as a full-width panel e; its numbers are unchanged (table in the section above, `graph_structure.csv`).
+- Panel f is new: `graph_components.csv` + `graph_components_reference.json` from `load_components`,
+  `components_table`, and `random_pairs`.
+- Hub panel: the rank numbers are gone; each recurring hub gets the opening words of its SGD
+  `locus.description` (`hub_descriptions.csv`, source `$DATA_ROOT/data/sgd/genome/genes/<gene>.json`;
+  the full first clause is kept in the CSV). The rule in `short_description` keeps whole
+  preposition-delimited segments within 34 characters, so a few labels end early (PUF3 "Protein of the
+  mitochondrial outer"); hand-tune the rule, not the CSV.
+- Every number printed over gridlines (uncovered counts, multiplicity counts, the TF-panel median/FKH1
+  text) sits on an opaque white box (`TEXT_BBOX`); the TF-panel outside labels moved from |y| = 0.42 to
+  0.62 so "16,817" clears the bar edge.
+
+Sources for panel f, all read offline on the Mac:
+
+- Yeast9 = yeast-GEM 9.0.2 through `torchcell.metabolism.yeast_GEM.YeastGEM` (`$DATA_ROOT/data/torchcell/yeast-GEM`):
+  1,161 genes carry a gene-reaction rule (all in the vocabulary), 2,709 of 4,131 reactions have genes,
+  107 subsystems. Reaction pairs = gene pairs sharing at least one reaction (1,456 distinct pairs);
+  subsystem pairs = gene pairs whose genes appear in reactions of the same subsystem (22,921).
+- GO = `SCerevisiaeGraph.go_to_genes` (direct SGD annotations, any evidence code, not propagated) with
+  `genome.go_dag` namespaces: biological_process terms, the root excluded, 2 to 500 genes; 1,944 terms
+  qualify (only the root exceeds 500 direct genes; the largest term, protein transport, has 396) and
+  give 557,180 distinct co-annotated pairs.
+- Essential = the `GeneEssentialitySgdDataset` rule applied to `G_raw` phenotype records (null mutant,
+  strain S288C, phenotype `inviable`): 1,140 genes, the same count as
+  `$DATA_ROOT/data/torchcell/gene_essentiality_sgd/preprocess/gene_set.json`.
+- Trigenic panels: Kuzmin 2018 = the 1,400 perturbed genes of the 005 build experiment 010 trains on
+  (`experiments/005-kuzmin2018-tmi/001-small-build/processed/is_any_perturbed_gene_index.json`);
+  Kuzmin 2020 = `tmi_kuzmin2020/preprocess/gene_set.json`, 4,308 of its 4,367 genes in the vocabulary.
+- Random reference: per graph, stub matching on its own degree sequence (configuration model,
+  `numpy.random.default_rng(0)`), self-loops and duplicate pairs dropped, the three pair shares
+  recomputed on the result.
+
+Measured (this run; random reference in parentheses):
+
+| graph | metabolic genes | essential genes | Kuzmin 2018 covered | Kuzmin 2020 covered | pairs sharing a reaction | a subsystem | a GO process |
+|---|---|---|---|---|---|---|---|
+| Physical (SGD) | 20.3% | 18.8% | 99.9% | 91.4% | 0.30% (0.005%) | 0.55% (0.05%) | 21.2% (7.5%) |
+| Regulatory (SGD) | 17.2% | 16.8% | 98.0% | 95.8% | 0.0025% (0.003%) | 0.0025% (0.06%) | 6.4% (10.6%) |
+| TFLink | 22.1% | 21.0% | 96.0% | 81.7% | 0.0005% (0.009%) | 0.0095% (0.10%) | 6.6% (9.8%) |
+| STRING neighborhood | 39.4% | 18.9% | 33.6% | 34.6% | 0.10% (0.04%) | 2.8% (0.9%) | 14.9% (5.4%) |
+| STRING fusion | 32.7% | 23.2% | 53.4% | 48.9% | 0.27% (0.03%) | 3.1% (0.42%) | 16.1% (5.8%) |
+| STRING co-occurrence | 29.8% | 16.5% | 44.3% | 43.6% | 4.2% (0.03%) | 7.5% (0.13%) | 66.9% (17.7%) |
+| STRING co-expression | 17.8% | 17.6% | 99.9% | 99.4% | 0.10% (0.011%) | 1.0% (0.17%) | 16.4% (4.9%) |
+| STRING experimental | 19.2% | 18.4% | 100% | 95.8% | 0.10% (0.007%) | 0.59% (0.09%) | 16.1% (5.8%) |
+| STRING database | 26.1% | 24.0% | 77.4% | 64.7% | 0.88% (0.04%) | 5.5% (0.60%) | 34.6% (4.6%) |
+
+Reference shares over the 6,607 genes: metabolic 17.6%, essential 17.3%. The pair shares span four
+orders of magnitude, so panel f draws them on logarithmic axes (1e-6 to 1). Reaction enrichment over
+random: physical 62x, database 24x, co-occurrence 148x; GO-process enrichment 2.7x (neighborhood) to
+7.5x (database) for the STRING channels and physical, and below 1 for both transcription-factor graphs.
+
+Runtime on the Mac: about 90 s, of which `go_to_genes` takes 26 s and the cobra model load 7 s. A
+second run leaves `results/graphs/` unchanged (verified with `git status` after the rerun).
+
+![](./assets/images/010-kuzmin-tmi/graphs_sizes.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_jaccard.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_containment.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_edge_multiplicity.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_components.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_hubs.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_tf_overlap.svg)
+
+![](./assets/images/010-kuzmin-tmi/graphs_structure.svg)

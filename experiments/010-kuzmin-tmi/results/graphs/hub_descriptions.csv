@@ -1,0 +1,15 @@
+gene,name,short_description,sgd_description_first_clause,source
+YPL110C,GDE1,Glycerophosphocholine (GroPCho),Glycerophosphocholine (GroPCho) phosphodiesterase,$DATA_ROOT/data/sgd/genome/genes/YPL110C.json locus.description
+YBR245C,ISW1,ATPase subunit,ATPase subunit of imitation-switch (ISWI) class chromatin remodelers,$DATA_ROOT/data/sgd/genome/genes/YBR245C.json locus.description
+YFL039C,ACT1,"Actin, structural protein","Actin, structural protein in cytoskeleton",$DATA_ROOT/data/sgd/genome/genes/YFL039C.json locus.description
+YOR198C,BFR1,Component of mRNP complexes,Component of mRNP complexes associated with polyribosomes,$DATA_ROOT/data/sgd/genome/genes/YOR198C.json locus.description
+YBR160W,CDC28,Cyclin-dependent kinase (CDK),Cyclin-dependent kinase (CDK) catalytic subunit,$DATA_ROOT/data/sgd/genome/genes/YBR160W.json locus.description
+YDL160C,DHH1,Cytoplasmic DEAD-box helicase,Cytoplasmic DEAD-box helicase and mRNA decapping activator,$DATA_ROOT/data/sgd/genome/genes/YDL160C.json locus.description
+YEL009C,GCN4,bZIP transcriptional activator,bZIP transcriptional activator of amino acid biosynthetic genes,$DATA_ROOT/data/sgd/genome/genes/YEL009C.json locus.description
+YMR186W,HSC82,Cytoplasmic chaperone,Cytoplasmic chaperone of the Hsp90 family,$DATA_ROOT/data/sgd/genome/genes/YMR186W.json locus.description
+YGL122C,NAB2,Nuclear polyadenylated RNA-binding,Nuclear polyadenylated RNA-binding protein,$DATA_ROOT/data/sgd/genome/genes/YGL122C.json locus.description
+YLL013C,PUF3,Protein of the mitochondrial outer,Protein of the mitochondrial outer surface,$DATA_ROOT/data/sgd/genome/genes/YLL013C.json locus.description
+YAL005C,SSA1,ATPase involved in protein folding,ATPase involved in protein folding and NLS-directed nuclear transport,$DATA_ROOT/data/sgd/genome/genes/YAL005C.json locus.description
+YLL024C,SSA2,HSP70 family ATP-binding protein,HSP70 family ATP-binding protein,$DATA_ROOT/data/sgd/genome/genes/YLL024C.json locus.description
+YDL229W,SSB1,Cytoplasmic ATPase,Cytoplasmic ATPase that is a ribosome-associated molecular chaperone,$DATA_ROOT/data/sgd/genome/genes/YDL229W.json locus.description
+YNL209W,SSB2,Cytoplasmic ATPase,Cytoplasmic ATPase that is a ribosome-associated molecular chaperone,$DATA_ROOT/data/sgd/genome/genes/YNL209W.json locus.description

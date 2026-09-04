@@ -58,3 +58,16 @@ Panel deviations from the house rules, on purpose: (b) zooms the y-axis to 0.30 
 ![](./assets/images/010-kuzmin-tmi/dango_full_dataset_best.svg)
 
 ![](./assets/images/010-kuzmin-tmi/dango_full_dataset_convergence.svg)
+
+## 2026.09.03 - Table caption carries the run configuration
+
+During the SI reconciliation the `tab-dango-full-runs` caption absorbed the training configuration that
+left the Note prose (hidden width 64, four heads, linear-to-uniform schedule with transition at epoch 10,
+AdamW at learning rate 1e-5, per-GPU batch 64; 4-GPU Delta A40 jobs stopped at the 48 h queue limit,
+2-GPU IGB jobs ran to 1,000 epochs; DANGO on the experiment-006 build, CGT on the experiment-010 build)
+and the observation that the Pearson at the min-MSE checkpoint is within 0.0023 of the maximum for every
+DANGO run. `note:dango-full` is the canonical statement of the 006-vs-010 build mismatch; the lambda
+fall-through of `note:dango-repro` applies to the v11.0/v12.0 runs here too, read from
+`experiments/006-kuzmin-tmi/scripts/dango.py` (line ~258) + `torchcell/losses/dango.py`
+(`lambda_values.get(edge_type, 1.0)`) + the `string11_0_*`/`string12_0_*` graph names in the configs;
+not measured in training.

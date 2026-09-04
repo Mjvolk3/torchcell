@@ -2,79 +2,55 @@
 %% Every number below is produced by experiments/006-kuzmin-tmi/scripts/dcell_training_wandb.py
 %% from the frozen wandb histories in experiments/006-kuzmin-tmi/results/dcell_training/
 %% (runs.csv lists every run id). Figure: FigS-dcell-training.drawio, composed by
-%% experiments/006-kuzmin-tmi/scripts/dcell_training_compose_figure.py.
+%% experiments/006-kuzmin-tmi/scripts/dcell_training_compose_figure.py. Detail cut from the
+%% prose on 2026.09.03 (per-stage step times, the dcell_opt rewrite, the per-GPU batch, the
+%% partial no-auxiliary run, the epoch-100-to-332 statistics) lives in the figure caption, the
+%% two tables, and notes/experiments.006-kuzmin-tmi.scripts.dcell_training_wandb.md.
+%% The dataset-build mismatch is stated once, in note:dango-full; this note points there.
 \clearpage
 \suppnote{note:dcell-training}{DCell training cost, instability, and the checkpoint-based baseline\secstatus{todo}}
 
 The DCell value in Fig.~\ref{fig:ggi}d ($r=0.157\pm0.009$) comes from one training run,
-not from replicates. DCell in TorchCell (\suppnoteref{note:dcell-model}) took 30.8 days
-on four GPUs to reach epoch 333, passed its best validation epoch after 14 days, was
-unstable throughout, and was run to completion once within the compute available. The
-three values behind the mean and error bar are validation evaluations of that run at
-epochs 144, 148 and 150, so the baseline is the best DCell result obtainable here, with
-an error bar that is not a replicate error bar.
+not from replicates: the three values behind the mean and error bar are validation
+evaluations of that run at epochs 144, 148, and 150, so the error bar is not a replicate
+error bar. DCell in TorchCell (\suppnoteref{note:dcell-model}) took 30.8 days on four GPUs
+to reach epoch 333, passed its best validation epoch after 14 days, was unstable
+throughout, and was run to completion once within the compute available.
 
-\notesec{Training run} One full run (wandb \texttt{eni948by}, SLURM job 1922684) trained
-the 2,655-term, 20.6~M-parameter DCell on the trigenic interaction task with the DCell
-loss (auxiliary losses on, $\alpha=0.3$), AdamW at learning rate $10^{-3}$ and weight
-decay $10^{-6}$, batch 600 per GPU on four GPUs under DDP (global batch 2,400), bf16
-mixed precision, and gradient clipping at 10. The reduce-on-plateau schedule had its
-floor set equal to the initial rate, so the learning rate never changed
-(\suppfig{fig:dcell-training}b). Validation Pearson~$r$ was evaluated once per epoch
-over the full validation split, and the run was stopped after 333 of the configured
-1,000 epochs. By optimizer steps it iterated over 266,393 training records per epoch,
-the 80\% split of the experiment-006 build (332,313 records), whereas the CGT replicates
-in Fig.~\ref{fig:ggi}d trained on the experiment-010 build (376,732 records;
-\supptab{tab:dcell-training-cost}). A second configuration without auxiliary losses
-(job 1921740) was stopped after 10 epochs (23~h) at $r=0.009$ and is partial. The
-training script attaches no profiler, so no per-operation trace of the cluster run
-exists.
-
-\notesec{Checkpoint statistic and its caveat} The three values in Fig.~\ref{fig:ggi}d
-are the validation~$r$ at epochs 144, 148 and 150: 0.155, 0.142 and 0.173
-(\supptab{tab:dcell-training-checkpoints}). Epoch 150 is the maximum over all 333
-evaluations, so the mean of the three (0.157) is an upward-biased order statistic rather
-than an expected performance, and the SD over them (0.016; SEM 0.009) measures
+\notesec{Training run and checkpoint statistic} One full run (wandb \texttt{eni948by},
+SLURM job 1922684) trained the 2,655-term, 20.6~M-parameter DCell with the DCell loss
+(auxiliary losses on, $\alpha=0.3$), AdamW at learning rate $10^{-3}$ and weight decay
+$10^{-6}$, global batch 2,400 over four GPUs under DDP, bf16 mixed precision, and gradient
+clipping at 10, on the experiment-006 build (\suppnoteref{note:dango-full};
+\supptab{tab:dcell-training-cost}). The reduce-on-plateau floor equaled the initial rate,
+so the learning rate never changed (\suppfig{fig:dcell-training}b), and the run was stopped
+after 333 of the configured 1,000 epochs. The three values in Fig.~\ref{fig:ggi}d, 0.155,
+0.142, and 0.173, include the maximum over all 333 per-epoch evaluations
+(\supptab{tab:dcell-training-checkpoints}), so their mean (0.157) is an upward-biased order
+statistic rather than an expected performance, and their SD (0.016; SEM 0.009) measures
 epoch-to-epoch variation of one run, not replicate variance. The checkpoint the training
 script saved, the minimum validation MSE at epoch 142, scores $r=0.127$; the final epoch
-scores 0.038. As a curve (\suppfig{fig:dcell-training}a), validation~$r$ rose from zero
-over the first 100 epochs, fluctuated between 0.04 and 0.17 thereafter (mean 0.088, SD
-0.028 over epochs 100--332, consecutive epochs differing by up to 0.10), peaked at epoch
-150, and drifted down to 0.038 by epoch 332 while the training loss kept falling by an
-order of magnitude (\suppfig{fig:dcell-training}b), overfitting under a constant learning
-rate. Whether a decaying schedule would have stabilized the run is untested.
+scores 0.038. After epoch 100, validation~$r$ fluctuated between 0.04 and 0.17 and drifted
+down while the training loss kept falling by an order of magnitude
+(\suppfig{fig:dcell-training}a,\,b), overfitting under a constant learning rate; whether a
+decaying schedule would have stabilized the run is untested.
 
-\notesec{Cost} DCell reached its best validation epoch after 1,340 GPU-hours (335~h on
-four GPUs), against 97--101 GPU-hours for each CGT replicate (24--25~h on four GPUs,
-best at epoch 24--25) and 8--12 GPU-hours for the two DANGO runs on the same build as
-DCell (\supptab{tab:dcell-training-cost}, \suppfig{fig:dcell-training}c). Per epoch,
-DCell processed 33 training samples per second (2.22~h per epoch), CGT 89, and DANGO
-about 1,200; DCell also needed six times as many epochs as CGT to peak. Three replicate
-runs of the same length would cost about 8,900 GPU-hours at the observed rate, which is
-why one run is reported and labeled as such.
-
-\notesec{Where the time goes} The DCell forward pass visits the 2,655 GO-term subsystems
-one at a time in a Python loop ordered by stratum, each subsystem a linear layer, batch
-normalization and $\tanh$ of its own, so every step launches thousands of small kernels
-irrespective of batch size. The speed-up work recorded in
-\texttt{notes/experiments.006-kuzmin-tmi.dcell-speed-up.md} (four GPUs, batch 256 per
-GPU, a shared workstation; \suppfig{fig:dcell-training}d) measured 128~s per optimizer
-step for the first working implementation, 82~s after removing a duplicated forward pass,
-23~s after caching the GO strata tensors, and 20~s with bf16 mixed precision;
-\texttt{torch.compile} with the recompilation limit raised to 64 gave 49--59~s per step
-at batch 500--600, no gain in samples per second over the uncompiled bf16 run (40 versus
-50). Two reruns of the bf16 configuration on later days measured 99--119~s per step, so
-day-to-day variation on the shared machine is as large as several of the optimizations.
-A rewrite that spreads a stratum's per-term calls over four CUDA streams
-(\texttt{dcell\_opt}), still one module call per term, ran at 13\% GPU utilization and
-80--100~W of 300~W at 1~h~40~min per epoch, slower than the loop, and was not used. The
-cluster run's 72~s per step at global batch 2,400 (33 samples per second) sits in the
-range of the workstation measurements at batch 2,000--2,400 (40 samples per second).
-Hypotheses, untested: the step is bound by kernel launches in the per-term loop rather
-than by data loading, which the measurements above cannot separate; if so, one
-block-diagonal or grouped matrix multiply per stratum and CUDA graphs for the fixed
-per-stratum shapes would remove most of the launch overhead. The per-operation profile
-in \suppfig{fig:dcell-training}e requires a GPU run and is left as a placeholder.
+\notesec{Cost and where the time goes} DCell reached its best validation epoch after 1,340
+GPU-hours, against 97--101 GPU-hours for each CGT replicate (best at epoch 24--25) and 8--12
+for the two DANGO runs on the same build (\supptab{tab:dcell-training-cost};
+\suppfig{fig:dcell-training}c): 33 training samples per second (2.22~h per epoch) against 89
+for the CGT and about 1,200 for DANGO, and six times as many epochs as the CGT to peak. Three
+replicate runs of the same length would cost about 8,900 GPU-hours at the observed rate,
+which is why one run is reported and labeled as such. The forward pass visits the 2,655
+subsystems one at a time in a Python loop ordered by stratum, so every step launches
+thousands of small kernels irrespective of batch size; the speed-up work on a shared four-GPU
+workstation (\suppfig{fig:dcell-training}d) took a step from 128~s to 20~s, and day-to-day
+reruns of one configuration varied by as much as several of the optimizations. Hypothesis
+(untested): the step is bound by kernel launches in the per-term loop rather than by data
+loading, which these measurements cannot separate; if so, one grouped matrix multiply per
+stratum and CUDA graphs for the fixed per-stratum shapes would remove most of the launch
+overhead. The per-operation profile in \suppfig{fig:dcell-training}e requires a GPU run and
+is left as a placeholder.
 
 %% Figure: notes/assets/drawio/FigS-dcell-training.drawio (composed by
 %% experiments/006-kuzmin-tmi/scripts/dcell_training_compose_figure.py from the panels of
@@ -83,18 +59,29 @@ in \suppfig{fig:dcell-training}e requires a GPU run and is left as a placeholder
 \tcfig{figures/FigS-dcell-training.pdf}{\textbf{DCell training on the trigenic interaction
 task: one run, its checkpoint statistic, and its cost.} (a)~Validation Pearson~$r$ per epoch
 for the single full DCell run (wandb \texttt{eni948by}, job 1922684, four GPUs; top axis,
-wall-clock) and the stopped run without auxiliary losses (job 1921740). Open circles mark
-the three evaluations averaged in Fig.~\ref{fig:ggi}d; the dotted line is their mean.
-(b)~Training loss (every 10 optimizer steps) and validation loss (per epoch) of the same
-run on a log scale; dotted verticals mark the three evaluations. The learning rate was
-constant. (c)~GPU-hours from the start of training to the best validation epoch (left) and
-training samples per second (right) for DCell, DANGO (two runs on the same build) and CGT
-(three replicate runs); bars are the mean, points the runs
-(\supptab{tab:dcell-training-cost}). (d)~Samples per second at each stage of the DCell
-speed-up work on a four-GPU workstation, from the progress-bar logs (elapsed time divided
-by steps completed, an upper bound on the steady-state step time); labels give seconds
-per optimizer step. (e)~Placeholder for the per-operation profiler breakdown of a DCell
-training step, which requires a GPU run.}{fig:dcell-training}
+wall-clock) and the stopped run without auxiliary losses (job 1921740; 10 epochs, 23~h,
+$r=0.009$; partial, no result). Validation $r$ rose from zero over the first 100 epochs and
+then fluctuated (mean 0.088, SD 0.028 over epochs 100--332, consecutive epochs differing by
+up to 0.10), peaking at epoch 150. Open circles mark the three evaluations averaged in
+Fig.~\ref{fig:ggi}d; the dotted line is their mean. (b)~Training loss (every 10 optimizer
+steps) and validation loss (per epoch) of the same run on a log scale; dotted verticals mark
+the three evaluations. The learning rate was constant. (c)~GPU-hours from the start of
+training to the best validation epoch (left) and training samples per second (right) for
+DCell, DANGO (two runs on the same build) and CGT (three replicate runs); bars are the mean,
+points the runs (\supptab{tab:dcell-training-cost}). (d)~Samples per second at each stage of
+the DCell speed-up work on a four-GPU workstation (batch 256 per GPU unless labeled), from
+the progress-bar logs (elapsed time divided by steps completed, an upper bound on the
+steady-state step time); labels give seconds per optimizer step: 128~s for the first working
+implementation, 82~s after removing a duplicated forward pass, 23~s after caching the GO
+strata tensors, 20~s with bf16 mixed precision, 99--119~s for two reruns of the bf16
+configuration on later days, and 49--59~s with \texttt{torch.compile} (recompilation limit
+64) at batch 500--600, 40 versus 50 samples per second uncompiled. A rewrite that spreads a
+stratum's per-term calls over four CUDA streams (\texttt{dcell\_opt}), still one module call
+per term, ran at 13\% GPU utilization and 80--100~W of 300~W at 1~h~40~min per epoch, slower
+than the loop, and was not used. The cluster run's 72~s per step at global batch 2,400 sits
+in the range of the workstation measurements at batch 2,000--2,400 (40 samples per second).
+(e)~Placeholder for the per-operation profiler breakdown of a DCell training step, which
+requires a GPU run.}{fig:dcell-training}
 \end{figure*}
 
 \input{sections/tab-dcell-training-checkpoints}

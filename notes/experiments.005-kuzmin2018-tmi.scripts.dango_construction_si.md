@@ -50,3 +50,27 @@ seed-42 split 72,841 / 9,105 / 9,104 (train / val / test); labels 91,049 negativ
 positive, min -1.08, mean -0.048, SD 0.054.
 
 ![](./assets/images/005-kuzmin2018-tmi/dango_decreased_zeros.svg)
+
+## 2026.09.03 - Detail moved out of the SI prose during reconciliation
+
+The Supplementary Note `note:dango-repro` was compressed to about half a page; these facts left the
+prose and live here (and in the `tab-dango-string-versions` caption for the run hyperparameters).
+
+- Query conditions for the 005 build: YEPD, 30 C, every perturbation type kept. The DANGO paper
+  describes the same screen as "around 91,000 triplets among 1,400 genes"; the build holds 91,050
+  instances (query 91,111 before deduplication and aggregation), all but one with a negative
+  interaction.
+- The two verbatim lambda-rule sentences from the DANGO preprint (doi:10.1101/2020.11.26.400739):
+  "we calculated the percentage of decreased zeroes from STRING database v9.1 to v11.0 for each
+  network, ranging from 0.02% (co-occurrence) to 2.42% (co-expression)", and "if the decreased
+  percentage of zeros is greater than 1%, we set lambda = 0.1; otherwise, we set lambda = 1.0."
+- Run hyperparameters of the 19 replication runs: AdamW, learning rate 1e-5, weight decay 1e-6,
+  batch 32, hidden width 64, four attention heads, 442 to 1,000 logged epochs.
+- DANGO's own numbers used for comparison: about r = 0.47 under a random split (its Fig. 2b, read
+  from the bar), 0.46 at the loosest replicate-consistency cutoff of its Fig. 2c, and the replicate
+  ceiling "The Pearson correlation between the trigenic interaction scores of two individual
+  replicates is around 0.59".
+- The lambda fall-through (v11.0/v12.0 runs trained with lambda = 1.0 for every channel because
+  `determine_lambda_values()` keys are `string9_1_*` and `DangoLoss` uses `.get(edge_type, 1.0)`) is
+  read from the code, not measured; the same script (`experiments/006-kuzmin-tmi/scripts/dango.py`)
+  trained the full-dataset runs of `note:dango-full`, so it applies there too.

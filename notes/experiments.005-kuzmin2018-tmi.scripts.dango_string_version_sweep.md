@@ -58,3 +58,10 @@ every channel, not with the 0.1/1.0 assignment; only the v9.1 runs used it (code
 `af2406523`, the version the runs were launched from). Whether this matters is not measured.
 
 ![](./assets/images/005-kuzmin2018-tmi/dango_string_version_curves.svg)
+
+## 2026.09.03 - Table caption carries the run hyperparameters
+
+The `tab-dango-string-versions` caption now states the optimizer (AdamW, learning rate 1e-5, weight decay
+1e-6, batch 32), hidden width 64, four attention heads, and the 72,841 / 9,105 / 9,104 split, which left
+the Note prose during the SI reconciliation. Regenerated with `--from-csv`; every value in the table is
+unchanged.

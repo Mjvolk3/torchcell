@@ -1,0 +1,73 @@
+%% notes-tex/027-metabolic-flux-module/027-metabolic-flux-module.tex
+%% [[experiments.027-betaxanthin-metabolic]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/027-metabolic-flux-module/027-metabolic-flux-module.tex
+%%
+%% The consolidated account of the enzyme-constrained thermodynamic flux module: what it
+%% computes, which parameter tables it consumes, which of those are wired in, and what has
+%% been measured. Assembled from the 026 and 027 dendron notes plus the module source.
+%%
+%% Build:  make            -> 027-metabolic-flux-module.pdf
+%%         make check      -> formatting / provenance / style gate
+%%         make plots      -> re-convert the matplotlib panels from ASSET_IMAGES_DIR
+%%
+%% Every number is produced by a committed script under experiments/026-metabolism-flux/
+%% or experiments/027-betaxanthin-metabolic/ and read back from their results/ trees.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\emergencystretch=3.5em
+
+\title{\vspace{-1.5em}The Enzyme-Constrained Thermodynamic\\Flux Module\\
+  {\large What it computes, what it is fed,\\and what has been measured}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+The flux module is a differentiable layer that maps a perturbed gene representation to a
+flux vector over yeast-GEM 9.0.2, subject to stoichiometry, an enzyme-capacity bound and a
+thermodynamic sign constraint. It is neither a Type~I nor a Type~II virtual instrument as
+those were defined: its output is a latent physical state rather than a measured phenotype,
+and the phenotypes are read off that state.
+
+Its distinguishing property is that three of its inputs are not learned. The turnover
+numbers, the Michaelis constants and the formation energies are tabulated, hash-pinned, and
+attributable to the weights or model version that produced them. That is what makes the
+layer a reconstruction of a metabolic network rather than a parameterization fitted to one
+organism, and it is why the parameter tables were built across five independent predictors
+instead of one.
+
+This document consolidates what was scattered across the 026 and 027 notes: the
+formulation as implemented, the three parameter tables and the sharp distinction between
+those wired in and those merely built, the ablation registry, and every measured number.
+Two corrections to earlier claims are recorded rather than quietly folded in. The
+ChemAxon licensing blocker does not apply to the betaxanthin pathway, whose intermediates
+are already in the compound cache. And the reaction-coverage shortfall is not a
+mapping gap: an audit that recovers every identifier route available gains 0.58
+percentage points, because 375 metabolites match a cache record that carries no structure
+and are counted as resolved while returning no energy.
+
+The training runs that test whether the module helps are on Delta as this is written, and
+the preliminary section reports only what has actually been observed.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-what-it-is}
+\input{sections/2-parameters}
+\input{sections/3-coverage}
+\input{sections/4-arms}
+\input{sections/5-measured}
+\input{sections/6-preliminary}
+
+\end{document}

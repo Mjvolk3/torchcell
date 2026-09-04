@@ -1,0 +1,97 @@
+%% notes-tex/027-metabolic-flux-module/sections/6-preliminary.tex
+%% [[experiments.027-betaxanthin-metabolic]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/027-metabolic-flux-module/sections/6-preliminary.tex
+
+\section{The run now on Delta\secstatus{todo}}
+\label{sec:preliminary}
+
+\subsection{What was launched\secstatus{todo}}
+
+Job array \texttt{21797666\_[0-8]} on \texttt{bbub-delta-gpu}, partition
+\texttt{gpuA40x4}: nine nodes, four A40 per node, \textbf{two runs per GPU}, so 72 workers.
+Six arms divide 72 into twelve seed-groups, giving twelve seeds per arm, above the ten the
+noise floor requires. Each worker owns its own Optuna database, which is what avoids the
+race that previously had several workers claiming one trial and silently turning four Delta
+cells into duplicates.
+
+The primary endpoint is Spearman on the pinned Merzbacher 639-gene test split at an epoch
+selected on validation, so the selection set and the reporting set are disjoint. The
+decision rule is the difference of differences in Section~\ref{sec:arms}.
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[Delta environment]{Every environment fact confirmed on the node rather than
+  assumed, since the repository's own files disagree about several of them.}
+  \label{tab:delta-env}
+  %% SOURCE: the job's own preflight block, slurm/output/027-bxfx_21797666_0.out.
+  \begin{tabular}{@{}p{0.24\textwidth}p{0.68\textwidth}@{}}
+    \hline
+    Fact & Value \\
+    \hline
+    \texttt{DATA\_ROOT} & \texttt{/scratch/bbub/mjvolk3/torchcell}. The Delta
+      \texttt{.env} still says \texttt{/work/hdd}, which is wrong; pointing at a root with
+      no build makes the dataset attempt a Neo4j rebuild on a compute node \\
+    interpreter & \texttt{/work/hdd/bbub/miniconda3/envs/torchcell/bin/python}, called
+      directly, no \texttt{conda activate} and no container \\
+    GPU & NVIDIA A40, 46{,}068 MiB, four per node \\
+    \texttt{NUM\_WORKERS} & 0, forced. Spawned workers re-import off Lustre and stall \\
+    W\&B & online, entity \texttt{zhao-group}, project \texttt{torchcell\_027\_bxfx} \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\subsection{Three faults found and fixed before submitting\secstatus{todo}}
+
+\textbf{The Open Enzyme Database mirror was absent from Delta.}
+\texttt{resolve\_kcat\_table} catches the resulting \texttt{FileNotFoundError} and returns
+an empty record list, which replaces every measured $k_{cat}$ with the organism default. The
+enzyme-constrained arm would have run with no enzyme constraints and reported a plausible
+number. The mirror is 516\,kB and was synced; the coverage gate exists to abort exactly this
+case, and it can only fire if there is a mirror to measure.
+
+\textbf{\texttt{WANDB\_ENTITY} was unset}, so runs would have landed under whatever default
+entity the node carried while 026's are under \texttt{zhao-group}, leaving the arms
+unjoinable at analysis time.
+
+\textbf{\texttt{OMP\_NUM\_THREADS} was unset}, so eight workers on a 32-CPU allocation of a
+64-core node would each have defaulted to the node's core count.
+
+\subsection{Three couplings the backbone change forced\secstatus{todo}}
+
+Moving 027 onto the strong backbone broke three things, each found by running a smoke test
+rather than by reading the code, and each silent in a different way.
+
+\begin{enumerate}\setlength{\itemsep}{2pt}
+  \item The perturbation head defaults to eight attention heads and 90 is not divisible by
+    eight, so its cross-attention refuses to build. 019 uses six.
+  \item The model reads \texttt{cell\_graph["gene"].x} only when it is told it has
+    precomputed embeddings. With the learnable table disabled and \texttt{node\_embeddings}
+    unset it finds neither and raises. It also indexes the embedding dataset to infer its
+    width, so it needs the objects rather than their names.
+  \item Dropping 026's \texttt{build\_dataset} dropped its module globals with it.
+\end{enumerate}
+
+A two-epoch local smoke run on the corrected backbone moved loss 1.0586 to 1.0088 and
+validation Pearson $-0.0214$ to $+0.1055$, and computed the pinned test Spearman at
+$+0.0261$ on $n = 629$. Two epochs is not a result. What it establishes is that the
+nine-graph \texttt{prot\_T5} backbone builds, trains and scores end to end.
+
+\subsection{Preliminary training results\secstatus{todo}}
+
+\textbf{None yet.} At the time of writing, four of the nine array tasks are running and
+five are queued behind them on resources. No worker has emitted a training epoch, so there
+is no validation Pearson to compare and none is quoted here.
+
+The delay is understood rather than mysterious. The launcher runs a sequential
+\texttt{--create-only} pass per worker before any GPU work, both to create each worker's
+Optuna database and to pay the cold-import cost once so the Lustre client cache is warm for
+the rest. That first import is reading at roughly 60\,kB\,s$^{-1}$: the process sits in
+\texttt{ptlrpc\_set\_wait}, the Lustre RPC wait, at about one percent CPU, having read
+90\,MB after twenty minutes. It is progressing, and a 20-hour allocation absorbs an hour of
+cache warming, but the observation is worth recording because the same cost has previously
+been mistaken for a hang and has killed canaries with short wall limits.
+
+This section will carry the arm comparison once the sweep produces one. The comparison that
+matters is not a single validation Pearson but the difference of differences against the
+permuted-label nulls, and that needs the seeds to finish.

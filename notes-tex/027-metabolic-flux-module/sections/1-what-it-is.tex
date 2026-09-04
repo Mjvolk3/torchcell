@@ -1,0 +1,119 @@
+%% notes-tex/027-metabolic-flux-module/sections/1-what-it-is.tex
+%% [[experiments.027-betaxanthin-metabolic]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/027-metabolic-flux-module/sections/1-what-it-is.tex
+
+\section{What the module computes\secstatus{todo}}
+\label{sec:what}
+
+\subsection{Where it sits\secstatus{todo}}
+
+The Equivariant Cell Graph Transformer separates its instruments by what they map between.
+A \textbf{Type~I} instrument is representation to representation: the perturbation
+operators $T_\psi^{\mathrm{del}}$, $T_\psi^{\mathrm{OE}}$, $T_\psi^{\mathrm{KD}}$ act
+inside the gene embedding space and hand on $H_{\mathrm{pert}}$. A \textbf{Type~II}
+instrument is representation to output: a readout that emits a measured phenotype.
+
+The flux module is neither, and the reason is worth stating precisely rather than settling
+by convention. By the letter of the taxonomy it is Type~I, since its output feeds further
+computation rather than a loss. But every existing Type~I instrument acts \emph{within} the
+gene index space at dimension $d$ and preserves equivariance over genes, whereas this one
+leaves gene index space entirely for reaction space $\mathbb{R}^{4131}$ under a fixed,
+externally supplied stoichiometry, and its parameters are tabulated physical constants
+rather than learned weights. It is a physically identified decoder, and its output
+$\nu$ is a latent physical state rather than a phenotype: the phenotypes are read
+\emph{off} it.
+
+\subsection{A program cannot learn, which is the point\secstatus{todo}}
+
+The constraint-based tradition solves a linear program per condition. A linear program has
+no use for a phenotype measurement, so it cannot be improved by one. This layer inverts
+that: every constraint is either enforced exactly by the parameterization or relaxed to a
+smooth penalty, so the flux is \emph{conditioned} on roughly $10^7$ fitness records, 4,735
+betaxanthin measurements and 4,678 amino-acid profiles. \textbf{Nothing is enforced by a
+binary variable}, which is what keeps the whole object differentiable and lets a batch of
+perturbations cost the same forward pass as a single one.
+
+\subsection{The relaxation, term by term\secstatus{todo}}
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[The relaxation]{Each constraint of an enzyme-constrained thermodynamic model,
+  and how this layer realizes it. ``Exact'' means the parameterization cannot violate it;
+  ``soft'' means a penalty that the optimizer trades against the data term.}
+  \label{tab:relaxation}
+  %% SOURCE: torchcell/metabolism/flux_layer.py, module docstring table and forward().
+  \begin{tabular}{@{}p{0.26\textwidth}p{0.34\textwidth}p{0.32\textwidth}@{}}
+    \hline
+    Constraint & Conventional form & Here \\
+    \hline
+    box and directionality & $lb_j \le \nu_j \le ub_j$ & \textbf{exact}, via sigmoid \\
+    enzyme capacity & $\nu_j \le k_{cat} E$ & \textbf{exact}, folded into the box \\
+    mass balance & $S\nu = 0$ & soft, scale-relative \\
+    second law & $\Delta_r G_j \nu_j < 0$ plus a binary & soft hinge, no binary \\
+    Gibbs dissipation & $g_{\mathrm{diss}} \le g_{\mathrm{lim}}$ & soft hinge \\
+    protein budget & $\sum_g MW_g E_g \le P_{\mathrm{avail}}$ & soft hinge \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\paragraph{From representation to gene availability.} Each gene's embedding passes through
+a learned gate, $\gamma_g = \sigma(w^\top h_g)$, so a gene is not merely present or absent.
+A deletion pins $\gamma_g = 0$; everything else is free to take an intermediate value,
+which is what leaves room for dosage, hypomorphic alleles and overexpression rather than
+forcing the layer to treat every perturbation as a knockout.
+
+\paragraph{Folding up the gene-protein-reaction rule.} Availability is folded to the
+reaction through the GPR: a \textbf{softmin} over the subunits of a complex, since a
+complex is limited by its scarcest member, and a \textbf{sum} over isozymes, since they
+substitute for one another. The softmin temperature is a real parameter, not a detail: too
+soft and a complex behaves like a mean over its subunits, which loses exactly the
+limiting-subunit behavior the softmin was chosen for.
+
+\paragraph{The box, which is where capacity lives.} Flux is parameterized as
+\begin{equation}
+  \nu_j = lb_j + (ub_j - lb_j)\,\sigma(z_j),
+  \qquad
+  |\nu_j| \le k_{cat,j}\,E_{g(j)},
+\end{equation}
+so the bounds and the capacity bound hold by construction and cannot be violated no matter
+what the network does. Turnover enters in units of $\mathrm{h}^{-1}$
+($k_{cat}\,[\mathrm{s}^{-1}] \times 3600$), which is what fixes the units of the enzyme
+abundance $E$. The exactness budget is spent here rather than on $S\nu = 0$, and that is a
+deliberate choice: bounds are exact and mass balance is soft, not the reverse.
+
+\paragraph{The second law, which is the load-bearing relaxation.}
+\begin{equation}
+  C_{\mathrm{th}} = \frac{1}{|\mathcal{J}|}\sum_{j\in\mathcal{J}}
+    \operatorname{relu}\!\big(\nu_j\,\Delta_r G_j + \epsilon\big),
+\end{equation}
+with $\mathcal{J}$ excluding exchange reactions, the biomass reaction and water transport,
+which cross the system boundary or are lumped and so carry no meaningful reaction energy.
+The $\epsilon$ is not decoration. The conventional big-M pair admits
+$\nu_j = \Delta_r G_j = 0$ under either value of its binary, so the strict inequality is
+never actually realized, and a smooth version has to name its tolerance rather than inherit
+a fiction.
+
+\textbf{Loop-freedom comes free, and that is the trick.} Because $\Delta_r G$ is a
+difference of potentials it sums to zero around any cycle, so no cycle can run downhill at
+every step. Requiring $\nu_j \Delta_r G_j \le 0$ therefore forbids internal loops with no
+integer variable at all, which is precisely the property that makes loopless flux balance
+analysis a mixed-integer program.
+
+\subsection{Free against anchored thermodynamics\secstatus{todo}}
+
+The in-cell reaction energy decomposes into three terms,
+\begin{equation}
+  \Delta_r G_j
+  = \underbrace{\Delta_r G'^{\circ}_j}_{\text{tabulated}}
+  + \underbrace{RT\!\!\sum_{i \neq \mathrm{H}^+}\!\! S_{ij} \ln c_i}_{\text{concentration}}
+  + \underbrace{\Delta_r G^{t}_j}_{\text{transport}} .
+\end{equation}
+
+The distinction between the two thermodynamic arms is exactly which of these is supplied.
+In the \textbf{free} arm the potential is learned, so the layer gets loop-freedom and
+nothing else; the constraint is structural. In the \textbf{anchored} arm the standard term
+is read from the tabulated formation energies, so the sign of every reaction is pinned by
+measured chemistry rather than by whatever the optimizer finds convenient. That difference
+is the experiment: structural loop-freedom is a real constraint on its own, and the
+question is whether the chemistry adds anything to it.

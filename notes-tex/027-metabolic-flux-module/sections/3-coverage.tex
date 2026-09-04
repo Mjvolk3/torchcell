@@ -1,0 +1,100 @@
+%% notes-tex/027-metabolic-flux-module/sections/3-coverage.tex
+%% [[experiments.026-metabolism-flux.scripts.audit_unresolved_metabolites]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/027-metabolic-flux-module/sections/3-coverage.tex
+
+\section{Thermodynamic coverage, and two corrections\secstatus{todo}}
+\label{sec:coverage}
+
+\subsection{The recomputation\secstatus{todo}}
+
+Formation energies were recomputed from eQuilibrator's component contribution, which
+returns a covariance and applies to any organism because it works from structure rather
+than from a curated per-organism file. Summing the resulting table reproduces
+eQuilibrator's own reaction call to $9.1\times10^{-13}$\,kJ\,mol$^{-1}$, so the table is
+arithmetically correct. On the chemical reactions both tables cover it agrees with the
+shipped file to a median of 10.11\,kJ\,mol$^{-1}$.
+
+The gain is 785 reactions with a real standard error, median 2.30\,kJ\,mol$^{-1}$, and the
+rank-590 covariance factor the layer had recorded as unavailable. The cost is reaction
+coverage: 42.5 percent against the shipped file's 77.7.
+
+\subsection{Correction: the shortfall is not a mapping gap\secstatus{todo}}
+
+The obvious reading of that 42.5 percent is that identifiers are failing to resolve, and
+that better mapping would close it. An audit that implements every available recovery route
+measures otherwise.
+
+\textbf{There are two loss channels, and the summary reported only one.} The 332
+``unresolved'' metabolites are the accession-match failures. A further \textbf{375
+metabolites match a cache record that carries no structure and no group vector}, so
+\texttt{standard\_dg\_formation} returns nothing while the tier histogram counts them as
+resolved. Total unpriced is \textbf{707}, not 332. The baseline is 2{,}099 of 2{,}806
+metabolites, 74.80 percent, and 1{,}755 of 4{,}131 reactions, 42.48 percent.
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[Measured recovery]{Every identifier route available, applied in turn. Reaction
+  coverage is the binding number because a reaction needs every participant priced.}
+  \label{tab:recovery}
+  %% SOURCE: experiments/026-metabolism-flux/results/unresolved_metabolites.json
+  \begin{tabular}{@{}lrrr@{}}
+    \hline
+    Step & Metabolites priced & Reactions & $\Delta$ reactions \\
+    \hline
+    baseline & 2{,}099 (74.80\%) & 1{,}755 (42.48\%) & -- \\
+    extra identifier namespaces & 2{,}102 & 1{,}764 (42.70\%) & $+9$ \\
+    MetaNetX cross-reference table & 2{,}113 & 1{,}770 (42.85\%) & $+6$ \\
+    InChIKey structure lookup & 2{,}127 (75.80\%) & 1{,}779 (43.06\%) & $+9$ \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\textbf{Total recovery is 28 metabolites and 24 reactions, 0.58 percentage points.} The
+extra namespaces are worth exactly one chemical, hydrogen sulfide. The census explains why:
+the model carries chebi on 2{,}402 metabolites and metanetx on 2{,}251, but biocyc on 29,
+seed on 16, reactome on 2, and no hmdb, lipidmaps or swisslipid at all. Of the 332
+unmatched, \textbf{181 of the 192 distinct chemicals carry no chemical annotation
+whatsoever}, and the class breakdown is overwhelmingly lipid: phosphatidylinositol 135,
+cardiolipin 62, triacylglycerol 34, phosphatidate 25.
+
+Of the 679 still unpriced, 249 (36.7 percent) are a real ceiling: 185 carry a placeholder
+formula with an R, X or $*$ so no definite structure exists, and 64 are known to
+eQuilibrator but have no group decomposition. The other 430 (63.3 percent) have a definite
+formula and no usable structure anywhere, which is a structure-curation gap rather than a
+limit of the method.
+
+\subsection{A correctness bug in the shipped build, found by the same guard\secstatus{todo}}
+
+The InChIKey route initially reported a gain six times larger, and it was wrong. MetaNetX
+writes \texttt{[*]} dummy atoms for polymers and conjugates; RDKit returns an \emph{empty}
+InChIKey for these rather than failing; an empty key reaches the cache as \texttt{LIKE
+'\%'} and matches the entire compound table. \texttt{Ala-tRNA(Ala)} was being priced as
+water.
+
+The guard that fixes it, comparing heavy-atom composition against the GEM formula with
+hydrogen excluded because protonation state legitimately differs, then finds the same class
+of error in the build already in use: \textbf{31 metabolites currently carry a formation
+energy from a compound whose heavy-atom composition disagrees with the GEM formula}, and 14
+of the 1{,}755 covered reactions touch one. Every dolichol species is matched to a C25
+pentaprenyl against the GEM's C20 tetraprenyl; \texttt{glycogen} is matched to a C24
+tetramer against a C6 monomer; \texttt{protein}, \texttt{carbohydrate} and \texttt{sterols}
+are matched to concrete molecules.
+
+This does not raise coverage and it is worth more than coverage: it removes 31 wrong
+numbers. It is not yet applied to \texttt{resolve\_compound}, and it should be.
+
+\subsection{Correction: the ChemAxon blocker does not apply here\secstatus{todo}}
+
+An earlier account of this work stated that pricing a novel compound requires ChemAxon's
+\texttt{cxcalc} for pKa estimation, that no license is available, and that the betaxanthin
+intermediates therefore cannot be priced. The first two clauses are true and the conclusion
+is false: \textbf{all of the pathway's intermediates are already in the compound cache}, so
+nothing about betaxanthin needs a new compound created.
+
+For a genuinely novel compound the constraint has also loosened. Upstream
+\texttt{equilibrator-assets} merged support on 2026-08-15 for creating compounds without
+ChemAxon when pKa values are supplied, via \texttt{pkas\_provided\_externally} and
+\texttt{specified\_pkas}. That is master-only; the pinned release 0.6.0 does not contain it.
+What the interface needs is an unannotated list of macroscopic pKa floats, which is a
+weaker requirement than the site-annotated micro-pKa the harder tools produce.

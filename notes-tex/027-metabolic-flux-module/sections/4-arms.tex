@@ -1,0 +1,75 @@
+%% notes-tex/027-metabolic-flux-module/sections/4-arms.tex
+%% [[experiments.027-betaxanthin-metabolic]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/027-metabolic-flux-module/sections/4-arms.tex
+
+\section{The ablation registry\secstatus{todo}}
+\label{sec:arms}
+
+\subsection{What each arm turns on\secstatus{todo}}
+
+The registry is one dictionary, \texttt{ARMS} in
+\texttt{experiments/026-metabolism-flux/scripts/train\_flux.py}, and it is the single
+source of truth for what the layer does in any run. An experiment names an arm; it never
+redefines one. That is what keeps a difference between two arms attributable to the module
+rather than to a hyperparameter that moved alongside it.
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[The arms]{The registry as implemented. Each row is a strict addition to the one
+  above it except \texttt{nullspace}, which changes the parameterization rather than the
+  physics.}
+  \label{tab:arms}
+  %% SOURCE: experiments/026-metabolism-flux/scripts/train_flux.py, ARMS.
+  \begin{tabular}{@{}lllll@{}}
+    \hline
+    Arm & Flux & Thermo & Capacity, budget, dissipation & Isolates \\
+    \hline
+    \texttt{pooled} & off & -- & -- & the no-module control \\
+    \texttt{flux\_off} & on & \texttt{OFF} & off & routing through $S$ alone \\
+    \texttt{flux\_free} & on & \texttt{FREE} & off & structural loop-freedom \\
+    \texttt{flux\_anchored} & on & \texttt{ANCHORED} & on & \textbf{the treatment} \\
+    \texttt{flux\_nullspace} & on & \texttt{ANCHORED} & on & the exactness budget \\
+    \hline
+  \end{tabular}
+\end{table}
+
+The ladder is deliberate. \texttt{flux\_off} routes the representation through the
+stoichiometric network with nothing but mass balance and the GPR, so it asks whether the
+network's topology alone carries signal. \texttt{flux\_free} adds a learned potential,
+which buys loop-freedom and no chemistry. \texttt{flux\_anchored} replaces the learned
+potential with tabulated formation energies and switches on the enzyme capacity bound, the
+protein budget and the dissipation limit. \texttt{flux\_nullspace} keeps the anchored
+physics but spends the exactness budget on $S\nu = 0$ instead of on the box, which is the
+one arm that tests the parameterization choice rather than the model.
+
+\subsection{The control that is missing, and why it matters\secstatus{todo}}
+
+Every arm above changes the module's \emph{physics} together with its \emph{parameter
+count}. So a gap between \texttt{flux\_anchored} and \texttt{pooled} is consistent with two
+different explanations: the tabulated chemistry is informative, or the extra structure acts
+as a capacity constraint that would help with any numbers in it.
+
+The arm that separates those is \texttt{flux\_shuffled}: the full anchored module with
+$k_{cat}$ \textbf{permuted across reactions}, holding architecture, parameter count and
+optimization fixed and destroying only the correspondence between a reaction and its
+turnover number. If \texttt{flux\_anchored} and \texttt{flux\_shuffled} land together, the
+kinetic tables are decoration.
+
+It is \textbf{not in the registry and not in the current run.} Adding it is a code change
+that was not worth making untested, and it is the first item of the next round.
+
+\subsection{The permutation nulls\secstatus{todo}}
+
+Two arms exist only to be compared against: \texttt{null\_pooled} and
+\texttt{null\_anchored} train on \textbf{permuted labels} while validating on real ones.
+They matter because of what 026 measured. Against zero, its flux-versus-pooled gap of
+$+0.0735$ is 7.7 standard errors. Against its own permuted-label gap of $+0.0302$, the
+excess is $+0.0433$ at 1.9 standard errors. More than 40 percent of ``the flux module
+helps'' survived destroying the labels.
+
+So the decision rule is a difference of differences,
+\begin{equation}
+  \big(\text{flux} - \text{pooled}\big) - \big(\text{null flux} - \text{null pooled}\big),
+\end{equation}
+and a gap measured against zero is not evidence.

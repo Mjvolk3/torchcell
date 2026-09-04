@@ -35,6 +35,21 @@ layer (first 14 characters). The shipped ``inchi`` tier uses ``get_compound_by_i
 is an exact full-string match on a protonation-state-specific InChI, and that is why it hit
 twice in the entire model.
 
+THE COMPOSITION GUARD, AND WHY IT IS NOT OPTIONAL
+--------------------------------------------------
+Every candidate compound, in every step, must carry the GEM metabolite's heavy-atom
+composition before it is accepted. Hydrogen is excluded because the cache stores one
+protonation state and the GEM writes another; nothing else is negotiable. A metabolite whose
+GEM formula carries a placeholder element (``R``, ``X``, ``*``) has no composition to check
+against, so it is refused a structural match outright rather than matched on a partial
+structure.
+
+Both halves were written after an unguarded version of this script priced ``Ala-tRNA(Ala)``
+as water: MetaNetX gives that species a SMILES containing a dummy atom, RDKit returns an
+EMPTY InChIKey for it rather than failing, the empty key reaches the cache as ``LIKE '%'``,
+and the first row of the entire compound table comes back as a hit. A structural search
+without a composition check does not fail loudly, it succeeds wrongly.
+
 NO FALLBACKS. Every lookup that fails is recorded with the reason it failed; nothing is
 silently substituted, and a metabolite that no step recovers stays unpriced in the report.
 
@@ -50,7 +65,9 @@ import importlib.util
 import json
 import os
 import os.path as osp
+import pickle
 import re
+import sqlite3
 from datetime import UTC, datetime
 
 import cobra
@@ -160,10 +177,7 @@ CLASS_PATTERNS: list[tuple[str, str]] = [
         r"^\[|\]\s*$|\[.*\]|carrier\)|\bACP\b|scaffold protein|desulfurase",
     ),
     ("glycan", r"^G\d{5}$|glycosyl|dolichol|chitobiosyl|sugar acceptor|glucan|Starch"),
-    (
-        "fatty_acid_acyl_chain",
-        r"\bchain\b|fatty acid|acyl|acylglycerone|\bC\d+:\d+\b",
-    ),
+    ("fatty_acid_acyl_chain", r"\bchain\b|fatty acid|acyl|acylglycerone|\bC\d+:\d+\b"),
     (
         "generic_pseudo_metabolite",
         r"^biomass$|^RNA$|^DNA$|^protein$|^lipid$|^cofactor$|^ion$|backbone$",
@@ -200,10 +214,12 @@ class MetaboliteAudit(BaseModel):
     baseline_compound_id: int | None
     baseline_has_structure: bool
     baseline_priceable: bool
+    baseline_composition_matches: bool
     diagnosis: str = "unassigned"
     recovered_by: str | None = None
     recovered_compound_id: int | None = None
     recovered_priceable: bool = False
+    final_blocker: str | None = None
     attempts: list[RecoveryAttempt] = Field(default_factory=list)
 
 
@@ -220,9 +236,86 @@ class StepCoverage(BaseModel):
     delta_reactions_vs_previous: int
 
 
+def group_decomposition_by_mass(ccache) -> list[dict]:
+    """Per mass band, how many cache compounds carry a group vector at all.
+
+    The lipid species this model is short of are large, so the question of whether
+    recovering their structures would even help is answerable directly: read the cache and
+    ask what fraction of compounds AT THAT SIZE component contribution can decompose. This
+    is a property of the method, measured, not an expectation.
+    """
+    path = ccache.session.get_bind().url.database
+    connection = sqlite3.connect(path)
+    rows = connection.execute(
+        """
+        SELECT
+          CASE
+            WHEN mass IS NULL THEN 'unknown'
+            WHEN mass < 200 THEN 'a_lt_200'
+            WHEN mass < 400 THEN 'b_200_400'
+            WHEN mass < 600 THEN 'c_400_600'
+            WHEN mass < 800 THEN 'd_600_800'
+            WHEN mass < 1000 THEN 'e_800_1000'
+            ELSE 'f_ge_1000'
+          END AS band,
+          COUNT(*),
+          SUM(CASE WHEN group_vector IS NOT NULL THEN 1 ELSE 0 END)
+        FROM compounds
+        GROUP BY band
+        ORDER BY band
+        """
+    ).fetchall()
+    connection.close()
+    return [
+        {
+            "mass_band_da": band,
+            "n_compounds": total,
+            "n_with_group_vector": decomposed,
+            "frac_with_group_vector": decomposed / total if total else 0.0,
+        }
+        for band, total, decomposed in rows
+    ]
+
+
+def compositions_present_in_cache(
+    ccache, wanted: set[tuple[tuple[str, int], ...]]
+) -> dict[tuple[tuple[str, int], ...], int]:
+    """Which of these heavy-atom compositions the cache holds WITH a group vector.
+
+    Answers the question the structure gap raises: if we built the missing lipid structures
+    ourselves, would eQuilibrator have anything to decompose? A composition present here is
+    a compound eQuilibrator can already price, so the only thing missing for that metabolite
+    is a structure to hand it. One streaming pass over the compound table, because there is
+    no index on composition. ``atom_bag`` and ``group_vector`` are SQLAlchemy ``PickleType``
+    columns, so a raw row holds a pickle rather than JSON.
+    """
+    path = ccache.session.get_bind().url.database
+    connection = sqlite3.connect(path)
+    found: dict[tuple[tuple[str, int], ...], int] = {}
+    for atom_bag_blob, group_vector in connection.execute(
+        "SELECT atom_bag, group_vector FROM compounds WHERE atom_bag IS NOT NULL"
+    ):
+        if group_vector is None:
+            continue
+        bag = pickle.loads(atom_bag_blob)
+        key = tuple(
+            sorted(
+                (element, count)
+                for element, count in bag.items()
+                if element not in ("H", "e-")
+            )
+        )
+        if key in wanted:
+            found[key] = found.get(key, 0) + 1
+    connection.close()
+    return found
+
+
 def load_build_module():
     """Import the shipped build script by path so the audit uses its exact tier logic."""
-    spec = importlib.util.spec_from_file_location("build_equilibrator_thermo", BUILD_SCRIPT)
+    spec = importlib.util.spec_from_file_location(
+        "build_equilibrator_thermo", BUILD_SCRIPT
+    )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -246,7 +339,7 @@ def has_placeholder_formula(formula: str | None) -> bool:
 
 
 def normalize_annotations(annotation: dict) -> dict[str, list[str]]:
-    """cobra gives a str or a list per key; make every value a list of str."""
+    """Make every annotation value a list of str, since cobra gives a str or a list."""
     out: dict[str, list[str]] = {}
     for key, value in annotation.items():
         values = value if isinstance(value, list) else [value]
@@ -257,7 +350,11 @@ def normalize_annotations(annotation: dict) -> dict[str, list[str]]:
 def cache_query(registry: str, accession: str) -> str:
     """The string CompoundCache.get_compound expects for this registry."""
     if registry == "chebi":
-        return accession if accession.upper().startswith("CHEBI:") else f"CHEBI:{accession}"
+        return (
+            accession
+            if accession.upper().startswith("CHEBI:")
+            else f"CHEBI:{accession}"
+        )
     return f"{registry}:{accession}"
 
 
@@ -304,19 +401,82 @@ def load_chem_prop(wanted: set[str]) -> dict[str, tuple[str, str, str]]:
     return out
 
 
+def parse_formula(formula: str | None) -> dict[str, int] | None:
+    """Element -> count, or None when the formula is missing or has a placeholder.
+
+    Hydrogen is dropped. A cache compound is stored at one protonation state and the GEM
+    writes another, so comparing H would reject correct matches; every other element is a
+    hard constraint on identity.
+    """
+    if not formula:
+        return None
+    tokens = re.findall(r"([A-Z][a-z]?|\*)(\d*)", formula)
+    counts: dict[str, int] = {}
+    for element, digits in tokens:
+        if element in PLACEHOLDER_TOKENS:
+            return None
+        if element == "H":
+            continue
+        counts[element] = counts.get(element, 0) + (int(digits) if digits else 1)
+    return counts
+
+
+def compound_composition(compound) -> dict[str, int] | None:
+    """Element -> count for a cache compound, from its atom bag, hydrogen dropped."""
+    if not compound.atom_bag:
+        return None
+    return {
+        element: count
+        for element, count in compound.atom_bag.items()
+        if element not in ("H", "e-")
+    }
+
+
+def composition_matches(gem_formula: str | None, compound) -> bool:
+    """True when a candidate compound has the GEM metabolite's heavy-atom composition.
+
+    This is the guard that separates a resolution from a substitution. Without it a
+    structure search on a metabolite whose formula carries a placeholder happily returns
+    an unrelated molecule, and the pipeline prices the wrong compound with no error.
+    """
+    wanted = parse_formula(gem_formula)
+    if wanted is None:
+        return False
+    found = compound_composition(compound)
+    if found is None:
+        return False
+    return wanted == found
+
+
 def inchi_key_from_structure(inchi: str, smiles: str) -> str | None:
-    """InChIKey from an InChI when there is one, else from a SMILES via RDKit."""
+    """A full 27-character InChIKey from an InChI or a SMILES, else None.
+
+    RDKit returns an EMPTY string rather than failing for a structure carrying a dummy
+    atom (the ``[*]`` MetaNetX writes for a polymer or a protein conjugate). An empty key
+    fed to the cache search becomes ``LIKE '%'``, which matches every compound in the
+    database, so the caller would price the metabolite as whatever sorts first. Reject
+    anything that is not a well-formed key, and reject the dummy atom outright.
+    """
     from rdkit import Chem, RDLogger
 
     RDLogger.DisableLog("rdApp.*")
-    if inchi:
-        mol = Chem.MolFromInchi(inchi)
-        if mol is not None:
-            return Chem.MolToInchiKey(mol)
-    if smiles:
-        mol = Chem.MolFromSmiles(smiles)
-        if mol is not None:
-            return Chem.MolToInchiKey(mol)
+    for source in (inchi, smiles):
+        if not source:
+            continue
+        if "*" in source:
+            continue  # a dummy atom means there is no definite structure to match
+        mol = (
+            Chem.MolFromInchi(source)
+            if source.startswith("InChI=")
+            else Chem.MolFromSmiles(source)
+        )
+        if mol is None:
+            continue
+        if any(atom.GetAtomicNum() == 0 for atom in mol.GetAtoms()):
+            continue
+        key = Chem.MolToInchiKey(mol)
+        if key and len(key) == 27:
+            return key
     return None
 
 
@@ -343,7 +503,9 @@ def main() -> None:
             print(f"  {index}/{len(model.metabolites)}", flush=True)
         key = (metabolite.name or metabolite.id).lower()
         if key not in chemical_cache:
-            compound, tier, _accession = build.resolve_compound(cc, metabolite, smiles_db)
+            compound, tier, _accession = build.resolve_compound(
+                cc, metabolite, smiles_db
+            )
             priceable = False
             if compound is not None:
                 mu, _fin, _inf = cc.standard_dg_formation(compound)
@@ -370,10 +532,13 @@ def main() -> None:
                     compound is not None and compound.inchi_key is not None
                 ),
                 baseline_priceable=priceable,
+                baseline_composition_matches=(
+                    compound is not None
+                    and composition_matches(metabolite.formula, compound)
+                ),
             )
         )
 
-    by_id = {a.met_id: a for a in audits}
     priceable_ids = {a.met_id for a in audits if a.baseline_priceable}
     coverage_steps: list[StepCoverage] = [
         StepCoverage(
@@ -383,7 +548,9 @@ def main() -> None:
             ),
             n_metabolites_priceable=len(priceable_ids),
             frac_metabolites_priceable=len(priceable_ids) / len(audits),
-            n_reactions_all_participants_priceable=reaction_coverage(model, priceable_ids),
+            n_reactions_all_participants_priceable=reaction_coverage(
+                model, priceable_ids
+            ),
             frac_reactions_all_participants_priceable=(
                 reaction_coverage(model, priceable_ids) / len(model.reactions)
             ),
@@ -400,7 +567,9 @@ def main() -> None:
     for audit in audits:
         if audit.baseline_priceable:
             audit.diagnosis = "priceable_baseline"
-        elif audit.baseline_compound_id is not None and not audit.baseline_has_structure:
+        elif (
+            audit.baseline_compound_id is not None and not audit.baseline_has_structure
+        ):
             audit.diagnosis = "cache_record_without_structure"
         elif audit.baseline_compound_id is not None:
             audit.diagnosis = "cache_structure_without_group_decomposition"
@@ -410,6 +579,41 @@ def main() -> None:
             audit.diagnosis = "unannotated_definite_formula"
         else:
             audit.diagnosis = "annotated_but_unmatched"
+
+    # Every candidate compound goes through one acceptance test, so the guard cannot be
+    # applied in one step and forgotten in another.
+    def consider(audit: MetaboliteAudit, step: str, label: str, compound, source: str):
+        """Accept a candidate only if it is priceable AND has the GEM's composition."""
+        if not composition_matches(audit.formula, compound):
+            audit.attempts.append(
+                RecoveryAttempt(
+                    step=step,
+                    query=label,
+                    outcome="composition_mismatch",
+                    compound_id=compound.id,
+                )
+            )
+            return False
+        mu, _fin, _inf = cc.standard_dg_formation(compound)
+        if mu is None:
+            audit.attempts.append(
+                RecoveryAttempt(
+                    step=step,
+                    query=label,
+                    outcome="matched_but_no_group_decomposition",
+                    compound_id=compound.id,
+                )
+            )
+            return False
+        audit.attempts.append(
+            RecoveryAttempt(
+                step=step, query=label, outcome="priceable", compound_id=compound.id
+            )
+        )
+        audit.recovered_by = source
+        audit.recovered_compound_id = compound.id
+        audit.recovered_priceable = True
+        return True
 
     # ------------------------------------------------------- R1: extra namespaces
     print("R1 extra namespaces", flush=True)
@@ -437,26 +641,8 @@ def main() -> None:
                         RecoveryAttempt(step="R1", query=query, outcome="not_in_cache")
                     )
                     continue
-                mu, _fin, _inf = cc.standard_dg_formation(compound)
-                if mu is None:
-                    audit.attempts.append(
-                        RecoveryAttempt(
-                            step="R1",
-                            query=query,
-                            outcome="matched_but_no_group_decomposition",
-                            compound_id=compound.id,
-                        )
-                    )
-                    continue
-                audit.attempts.append(
-                    RecoveryAttempt(
-                        step="R1", query=query, outcome="priceable", compound_id=compound.id
-                    )
-                )
-                audit.recovered_by = "R1_extra_namespace"
-                audit.recovered_compound_id = compound.id
-                audit.recovered_priceable = True
-                break
+                if consider(audit, "R1", query, compound, "R1_extra_namespace"):
+                    break
             if audit.recovered_priceable:
                 break
 
@@ -519,7 +705,9 @@ def main() -> None:
                 bare = accession.split(":", 1)[-1] if key == "chebi" else accession
                 candidates = [f"{p}:{bare}" for p in XREF_PREFIX_FOR_KEY[key]]
                 if key == "chebi":
-                    candidates += [f"{p}:CHEBI:{bare}" for p in XREF_PREFIX_FOR_KEY[key]]
+                    candidates += [
+                        f"{p}:CHEBI:{bare}" for p in XREF_PREFIX_FOR_KEY[key]
+                    ]
                 for candidate in candidates:
                     mnx_id = xref_index.get(candidate)
                     if mnx_id is None:
@@ -535,29 +723,14 @@ def main() -> None:
                             )
                         )
                         continue
-                    mu, _fin, _inf = cc.standard_dg_formation(compound)
-                    if mu is None:
-                        audit.attempts.append(
-                            RecoveryAttempt(
-                                step="R2",
-                                query=f"{candidate} -> {query}",
-                                outcome="matched_but_no_group_decomposition",
-                                compound_id=compound.id,
-                            )
-                        )
-                        continue
-                    audit.attempts.append(
-                        RecoveryAttempt(
-                            step="R2",
-                            query=f"{candidate} -> {query}",
-                            outcome="priceable",
-                            compound_id=compound.id,
-                        )
-                    )
-                    audit.recovered_by = "R2_metanetx_xref"
-                    audit.recovered_compound_id = compound.id
-                    audit.recovered_priceable = True
-                    break
+                    if consider(
+                        audit,
+                        "R2",
+                        f"{candidate} -> {query}",
+                        compound,
+                        "R2_metanetx_xref",
+                    ):
+                        break
                 if audit.recovered_priceable:
                     break
             if audit.recovered_priceable:
@@ -588,9 +761,27 @@ def main() -> None:
     chem_prop = load_chem_prop(wanted_mnx)
     print(f"  chem_prop ids found: {len(chem_prop)}", flush=True)
 
+    # The same connectivity block is asked for by every compartment copy of a chemical, and
+    # the ORM query that answers it is the slowest call in this script, so cache it.
+    hits_cache: dict[str, list] = {}
+
     for audit in audits:
         if audit.baseline_priceable or audit.recovered_priceable:
             continue
+        # A metabolite whose GEM formula carries a placeholder has no definite composition
+        # to check a structural match against, so a match cannot be verified and must not
+        # be made. This is the guard that stops a tRNA conjugate being priced as its free
+        # amino acid.
+        if parse_formula(audit.formula) is None:
+            audit.attempts.append(
+                RecoveryAttempt(
+                    step="R3",
+                    query=audit.formula or "no formula",
+                    outcome="placeholder_formula_not_structurally_identifiable",
+                )
+            )
+            continue
+
         structures: list[tuple[str, str, str]] = []  # (source, inchi, smiles)
         for accession in audit.annotations.get("metanetx.chemical", []):
             if accession in chem_prop:
@@ -612,7 +803,9 @@ def main() -> None:
 
         if not structures:
             audit.attempts.append(
-                RecoveryAttempt(step="R3", query=audit.name, outcome="no_structure_source")
+                RecoveryAttempt(
+                    step="R3", query=audit.name, outcome="no_structure_source"
+                )
             )
             continue
 
@@ -625,47 +818,97 @@ def main() -> None:
                     )
                 )
                 continue
-            hits = ccache.search_compound_by_inchi_key(inchi_key[:14])
+            block = inchi_key[:14]
+            if block not in hits_cache:
+                hits_cache[block] = ccache.search_compound_by_inchi_key(block)
+            hits = hits_cache[block]
             if not hits:
                 audit.attempts.append(
                     RecoveryAttempt(
                         step="R3",
-                        query=f"{source} -> {inchi_key[:14]}",
+                        query=f"{source} -> {block}",
                         outcome="inchikey_not_in_cache",
                     )
                 )
                 continue
             for compound in hits:
-                mu, _fin, _inf = cc.standard_dg_formation(compound)
-                if mu is None:
-                    audit.attempts.append(
-                        RecoveryAttempt(
-                            step="R3",
-                            query=f"{source} -> {inchi_key[:14]}",
-                            outcome="matched_but_no_group_decomposition",
-                            compound_id=compound.id,
-                        )
-                    )
-                    continue
-                audit.attempts.append(
-                    RecoveryAttempt(
-                        step="R3",
-                        query=f"{source} -> {inchi_key[:14]}",
-                        outcome="priceable",
-                        compound_id=compound.id,
-                    )
-                )
-                audit.recovered_by = "R3_inchikey_structure"
-                audit.recovered_compound_id = compound.id
-                audit.recovered_priceable = True
-                break
+                if consider(
+                    audit,
+                    "R3",
+                    f"{source} -> {block}",
+                    compound,
+                    "R3_inchikey_structure",
+                ):
+                    break
             if audit.recovered_priceable:
                 break
 
     record_step("R3_inchikey_structure")
 
+    # ------------------------------------------------- one blocker per metabolite
+    # Which of the three things stopped this metabolite, after every step has run.
+    # Precedence runs from the hardest limit to the softest, so a metabolite is reported
+    # under the reason that would still hold if every softer one were repaired:
+    #   1. no definite structure exists at all (the model wrote a placeholder element)
+    #   2. eQuilibrator HAS the molecule and still cannot decompose it into groups
+    #   3. the molecule is outside eQuilibrator's structure space
+    #   4. only wrong-composition candidates came back
+    print("blockers", flush=True)
+    for audit in audits:
+        if audit.baseline_priceable or audit.recovered_priceable:
+            continue
+        outcomes = {t.outcome for t in audit.attempts}
+        if parse_formula(audit.formula) is None:
+            audit.final_blocker = "placeholder_formula_no_definite_structure"
+        elif "matched_but_no_group_decomposition" in outcomes:
+            audit.final_blocker = "structure_known_but_no_group_decomposition"
+        elif "no_structure_source" in outcomes or "structure_not_parseable" in outcomes:
+            audit.final_blocker = "no_usable_structure_available"
+        elif "inchikey_not_in_cache" in outcomes:
+            audit.final_blocker = "structure_absent_from_cache"
+        elif "composition_mismatch" in outcomes:
+            audit.final_blocker = "only_composition_mismatched_candidates"
+        else:
+            audit.final_blocker = "no_candidate_found"
+
+    # ------------------------- is a missing structure the ONLY thing missing?
+    # For every still-unpriced metabolite that has a definite formula, ask whether the
+    # cache already holds a decomposable compound of exactly that composition. Where it
+    # does, building the structure is the whole remaining task; where it does not, the
+    # compound is outside eQuilibrator's coverage entirely.
+    print("composition probe", flush=True)
+    probe_targets: dict[str, tuple[tuple[str, int], ...]] = {}
+    for audit in audits:
+        if audit.baseline_priceable or audit.recovered_priceable:
+            continue
+        composition = parse_formula(audit.formula)
+        if composition is not None:
+            probe_targets[audit.met_id] = tuple(sorted(composition.items()))
+    present = compositions_present_in_cache(ccache, set(probe_targets.values()))
+    composition_probe = {
+        "n_unpriced_with_definite_formula": len(probe_targets),
+        "n_distinct_compositions": len(set(probe_targets.values())),
+        "n_metabolites_whose_composition_is_decomposable_in_cache": sum(
+            1 for key in probe_targets.values() if key in present
+        ),
+        "n_distinct_compositions_found": len(present),
+        "by_class": {},
+    }
+    for audit in audits:
+        key = probe_targets.get(audit.met_id)
+        if key is None:
+            continue
+        bucket = composition_probe["by_class"].setdefault(
+            audit.chemical_class, {"n": 0, "n_composition_decomposable_in_cache": 0}
+        )
+        bucket["n"] += 1
+        if key in present:
+            bucket["n_composition_decomposable_in_cache"] += 1
+
     # ------------------------------------------------------------------- report
-    unpriced = [a for a in audits if not (a.baseline_priceable or a.recovered_priceable)]
+    unpriced = [
+        a for a in audits if not (a.baseline_priceable or a.recovered_priceable)
+    ]
     baseline_unmatched = [a for a in audits if a.baseline_compound_id is None]
 
     def counter(records: list[MetaboliteAudit], field: str) -> dict[str, int]:
@@ -682,7 +925,9 @@ def main() -> None:
 
     report = {
         "built_at": datetime.now(UTC).isoformat(),
-        "gem_model_sha256": build.sha256_file(osp.join(GEM_DIR, "model", "yeast-GEM.xml")),
+        "gem_model_sha256": build.sha256_file(
+            osp.join(GEM_DIR, "model", "yeast-GEM.xml")
+        ),
         "n_metabolites": len(audits),
         "n_reactions": len(model.reactions),
         "n_distinct_chemicals": len(chemical_cache),
@@ -698,6 +943,22 @@ def main() -> None:
             "unmatched_by_class": counter(baseline_unmatched, "chemical_class"),
             "unmatched_annotation_key_profile": counter(
                 baseline_unmatched, "chemical_annotation_keys"
+            ),
+            # The shipped script accepts an accession match without checking that the
+            # matched compound has the metabolite's composition. This counts how often
+            # that acceptance prices a compound whose heavy-atom formula disagrees.
+            "n_priced_with_composition_mismatch": sum(
+                1
+                for a in audits
+                if a.baseline_priceable and not a.baseline_composition_matches
+            ),
+            "priced_with_composition_mismatch_by_class": counter(
+                [
+                    a
+                    for a in audits
+                    if a.baseline_priceable and not a.baseline_composition_matches
+                ],
+                "chemical_class",
             ),
         },
         "diagnosis_buckets_all_unpriced_at_baseline": counter(
@@ -717,7 +978,11 @@ def main() -> None:
             )
         },
         "coverage_by_step": [s.model_dump() for s in coverage_steps],
-        "recovered_by": counter([a for a in audits if a.recovered_priceable], "recovered_by"),
+        "cache_group_decomposition_by_mass": group_decomposition_by_mass(ccache),
+        "composition_probe_for_unpriced": composition_probe,
+        "recovered_by": counter(
+            [a for a in audits if a.recovered_priceable], "recovered_by"
+        ),
         "recovered_by_class": counter(
             [a for a in audits if a.recovered_priceable], "chemical_class"
         ),
@@ -726,6 +991,14 @@ def main() -> None:
             "n_distinct_names": len({a.name for a in unpriced}),
             "by_class": counter(unpriced, "chemical_class"),
             "by_diagnosis": counter(unpriced, "diagnosis"),
+            "by_final_blocker": counter(unpriced, "final_blocker"),
+            "by_final_blocker_and_class": {
+                blocker: counter(
+                    [a for a in unpriced if a.final_blocker == blocker],
+                    "chemical_class",
+                )
+                for blocker in sorted({a.final_blocker for a in unpriced})
+            },
             "n_placeholder_formula_ceiling": len(ceiling),
             "frac_of_remaining_that_is_ceiling": (
                 len(ceiling) / len(unpriced) if unpriced else 0.0
@@ -748,9 +1021,7 @@ def main() -> None:
             for step in ("R1", "R2", "R3")
         },
         "metabolites_unpriced_at_baseline": [
-            a.model_dump()
-            for a in audits
-            if not a.baseline_priceable
+            a.model_dump() for a in audits if not a.baseline_priceable
         ],
     }
 
@@ -772,9 +1043,11 @@ def main() -> None:
         "baseline_tier",
         "baseline_compound_id",
         "baseline_has_structure",
+        "baseline_composition_matches",
         "diagnosis",
         "recovered_by",
         "recovered_compound_id",
+        "final_blocker",
         "attempt_outcomes",
     ]
     with open(csv_path, "w", newline="") as handle:
@@ -801,14 +1074,18 @@ def main() -> None:
                     audit.baseline_tier or "",
                     audit.baseline_compound_id if audit.baseline_compound_id else "",
                     audit.baseline_has_structure,
+                    audit.baseline_composition_matches,
                     audit.diagnosis,
                     audit.recovered_by or "",
                     audit.recovered_compound_id if audit.recovered_compound_id else "",
+                    audit.final_blocker or "",
                     ";".join(f"{t.step}:{t.outcome}" for t in audit.attempts),
                 ]
             )
 
-    printable = {k: v for k, v in report.items() if k != "metabolites_unpriced_at_baseline"}
+    printable = {
+        k: v for k, v in report.items() if k != "metabolites_unpriced_at_baseline"
+    }
     print(json.dumps(printable, indent=2))
     print(f"wrote {json_path}")
     print(f"wrote {csv_path}")

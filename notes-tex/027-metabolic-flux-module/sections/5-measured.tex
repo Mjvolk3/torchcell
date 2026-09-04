@@ -1,0 +1,119 @@
+%% notes-tex/027-metabolic-flux-module/sections/5-measured.tex
+%% [[experiments.026-metabolism-flux.enzyme-constrained-thermodynamic-flux-layer]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/027-metabolic-flux-module/sections/5-measured.tex
+
+\section{What has been measured\secstatus{todo}}
+\label{sec:measured}
+
+\subsection{The 026 sweep, and why it decided nothing\secstatus{todo}}
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[026 arm results]{The 026 sweep on betaxanthin. The statistic is validation
+  Pearson scored as a \emph{maximum over epochs}, which is an upward-biased order
+  statistic, and the last column is the mean of the final five epochs, which is not.}
+  \label{tab:026}
+  %% SOURCE: experiments/026-metabolism-flux/results/flux_arms_summary.json
+  \begin{tabular}{@{}lrrrrr@{}}
+    \hline
+    Arm & Seeds & Peak mean & s.e.m. & Peak epoch & Last-5 mean \\
+    \hline
+    \texttt{flux\_anchored} & 10 & 0.1151 & 0.0095 & 17 & 0.0057 \\
+    \texttt{flux\_free} & 10 & 0.1020 & 0.0115 & 12 & 0.0212 \\
+    \texttt{flux\_off} & 10 & 0.0837 & 0.0112 & 10 & 0.0044 \\
+    \texttt{pooled} & 10 & 0.0416 & 0.0098 & 4 & $-0.0041$ \\
+    \texttt{flux\_nullspace} & 10 & 0.0381 & 0.0114 & 0 & 0.0000 \\
+    \hline
+  \end{tabular}
+\end{table}
+
+The ordering looks like the ladder the design predicted. It is not evidence, for three
+measured reasons.
+
+\textbf{No arm clears its own null.} A label-permutation null over 24 runs has peak mean
+0.0962, standard deviation 0.0441, and a 95th percentile of \textbf{0.1545}. No arm reaches
+that percentile. The smallest $p$ across all 22 configurations tested is 0.24, and the
+single highest peak anywhere in the sweep, 0.2110, belongs to a \emph{null} run.
+
+\textbf{The last-5 column is the honest one.} Every arm's peak sits far above its own
+end-of-training value, and three of five end negative. A maximum over 30 epochs of a
+statistic whose analytic null width at $n_{\mathrm{val}} \approx 340$ is 0.0546 inflates
+that width empirically to 0.0962, a factor of 1.8.
+
+\textbf{The split moved with the seed.} 026 re-rolled the train/validation partition per
+seed, so seed varied the nuisance and the signal together. Its paired arm gap has an
+across-seed standard deviation of 0.0303 with real labels and 0.0722 with permuted ones,
+both inflated by the partition moving underneath the contrast.
+
+\subsection{The defect that outranks all three\secstatus{todo}}
+
+Every betaxanthin run in this repository falls into one of two architecture families, and
+the family accounts for nearly all of the variance between runs.
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[The two families]{Measured validation Pearson by backbone. The best betaxanthin
+  result ever obtained is 0.43399, GilaHyper job 1344, config \texttt{gh\_metabolism\_002},
+  seed 42, peak at epoch 39 of 80.}
+  \label{tab:families}
+  %% SOURCE: experiments/019-simb-multimodal/conf/gh_metabolism_00{0,2}.yaml and the
+  %% 020 Optuna studies; see experiments/027-betaxanthin-metabolic/README.md.
+  \begin{tabular}{@{}p{0.12\textwidth}p{0.56\textwidth}l@{}}
+    \hline
+    Family & Configuration & Measured \\
+    \hline
+    weak & 2 graphs, learnable embeddings, MSE, hidden 32, 4 heads & 0.04 to 0.16 \\
+    strong & 9 graphs, \texttt{prot\_T5\_all}, no learnable embedding, CRPS, hidden 90,
+      9 heads & 0.32 to \textbf{0.43} \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\texttt{train\_flux.py} builds the \textbf{weak} family. So 026 compared a flux module
+against a CGT running roughly five times below its own demonstrated ceiling, and its
+\texttt{flux\_off} arm at 0.0837 is the correct control \emph{for that sweep} rather than a
+CGT baseline. Nothing in 026 tested whether the module helps a CGT that works, which is
+what the current run exists to do.
+
+\subsection{The baselines the module has to beat\secstatus{todo}}
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[Baselines]{Every measured comparator, with the statistic named. FCL is
+  Merzbacher's Flux Cone Learning, a three-class classifier rather than a regressor, scored
+  on its own 639-gene test split.}
+  \label{tab:baselines}
+  %% SOURCE: experiments/020-cachera-betaxanthin/results/merzbacher_comparison_figures.json
+  %% and merzbacher_head_to_head.json.
+  \begin{tabular}{@{}p{0.30\textwidth}p{0.40\textwidth}l@{}}
+    \hline
+    Comparator & Statistic & Value \\
+    \hline
+    CGT, strong backbone & max val Pearson, $n_{\mathrm{val}} = 340$ & 0.43399 \\
+    FCL \texttt{RandomForest\_Resampled} & gene-level accuracy (majority 0.674) & 0.700 \\
+    FCL & Matthews correlation & 0.232 \\
+    FCL & Pearson against the raw screen & 0.2435 \\
+    FCL & Spearman against the raw screen & 0.0391 \\
+    fully-connected / MLP baseline & \textbf{not measured; does not exist} & -- \\
+    \hline
+  \end{tabular}
+\end{table}
+
+There is no MLP baseline for betaxanthin anywhere in the repository. If one is wanted it
+must be built, and no number should be quoted for it until it is.
+
+\subsection{The noise floor, which sets the replicate count\secstatus{todo}}
+
+Four independent measurements of the across-seed standard deviation on this endpoint:
+0.0302 from hyperparameter-matched reruns, 0.0355 from ten fresh seeds of
+\texttt{flux\_off}, 0.0299 from ten seeds of \texttt{flux\_anchored}, and 0.0337 from a
+three-seed 019 arm. The analytic single-correlation width at $n_{\mathrm{val}} \approx 340$
+is 0.0546.
+
+Two consequences were computed rather than asserted. Selection inflation over 36 Optuna
+trials is 0.064, which puts the bias-corrected floor of the 0.4301 best at \textbf{0.3662}.
+And reaching an effective standard error of 0.010 needs \textbf{ten replicates per arm},
+which is what sets the current run's twelve.

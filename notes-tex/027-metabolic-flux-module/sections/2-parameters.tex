@@ -1,0 +1,126 @@
+%% notes-tex/027-metabolic-flux-module/sections/2-parameters.tex
+%% [[experiments.026-metabolism-flux.kinetic-and-thermodynamic-parameter-datasets]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/027-metabolic-flux-module/sections/2-parameters.tex
+
+\section{The three parameter tables\secstatus{todo}}
+\label{sec:parameters}
+
+\subsection{What was there before, and what is there now\secstatus{todo}}
+
+The module needs three tables and had almost none of them. Measured $k_{cat}$ covered 148
+of 3{,}728 catalytic units, 4.0 percent, with the other 96 percent running on a single flat
+default of 10.3\,s$^{-1}$. $K_M$ had no table at all: the parameter existed as an enum
+member and a protocol flag with nothing behind either. The thermodynamics came from a
+shipped file of point values with no covariance, usable only for this organism.
+
+Six kinetic predictors were mirrored into
+\texttt{\$DATA\_ROOT/models/kinetics/<name>/} with per-file \texttt{sha256}, retrieval
+commands and git commits, and all six now run over the enzyme-substrate pairs of yeast-GEM
+9.0.2, with protein sequences taken from the genome object rather than from the table each
+model bundles.
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[The built tables]{Every parameter table now built, with the exponentiation base
+  established by validating each predictor against its own authors' published output.
+  Coverage is of the GEM's 3{,}728 catalytic units.}
+  \label{tab:tables}
+  %% SOURCE: experiments/026-metabolism-flux/results/kinetics_<predictor>_<param>_summary.json
+  \begin{tabular}{@{}llrrrl@{}}
+    \hline
+    Predictor & Parameter & Rows & Units & Coverage & Median \\
+    \hline
+    DLKcat & $k_{cat}$ & 7{,}351 & 3{,}552 & 95.3\% & 4.012 s$^{-1}$ \\
+    UniKP & $k_{cat}$ & 7{,}351 & 3{,}552 & 95.3\% & 4.050 s$^{-1}$ \\
+    EITLEM & $k_{cat}$ & 7{,}456 & 3{,}552 & 95.3\% & 3.981 s$^{-1}$ \\
+    TurNuP & $k_{cat}$ & 5{,}143 & 2{,}056 & 55.2\% & 10.819 s$^{-1}$ \\
+    DeepEnzyme & $k_{cat}$ & 7{,}300 & 3{,}546 & 95.1\% & 4.167 s$^{-1}$ \\
+    \hline
+    UniKP & $K_M$ & 7{,}351 & 3{,}552 & 95.3\% & 0.0796 mM \\
+    EITLEM & $K_M$ & 7{,}456 & 3{,}552 & 95.3\% & 0.0793 mM \\
+    Boost\_KM & $K_M$ & 7{,}157 & 3{,}468 & 93.0\% & 0.1410 mM \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\textbf{Two of these models exponentiate base 2 and four base 10.} DLKcat and DeepEnzyme
+are $\log_2$; UniKP, EITLEM, TurNuP and Boost\_KM are $\log_{10}$. Reading either wrong
+yields turnover numbers that still look entirely credible, which is why each was validated
+against something its own authors published before its values were believed.
+
+\subsection{Which tables are actually wired in\secstatus{todo}}
+
+This distinction decides how any result from the module should be read, and it is easy to
+lose.
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[Wired against built]{What the layer consumes today. A table that is built but
+  not consumed contributes nothing to a measured result and must not be described as if it
+  did.}
+  \label{tab:wired}
+  %% SOURCE: torchcell/metabolism/flux_layer.py __init__ and build_flux_layer in
+  %% experiments/026-metabolism-flux/scripts/train_flux.py.
+  \begin{tabular}{@{}p{0.16\textwidth}p{0.30\textwidth}p{0.46\textwidth}@{}}
+    \hline
+    Table & Status & How it enters, or why it does not \\
+    \hline
+    $k_{cat}$ & \textbf{wired}, but from the Open Enzyme Database, not the predictors &
+      the capacity bound $|\nu_j| \le k_{cat,j} E_{g(j)}$. \texttt{resolve\_kcat\_table}
+      reads the OED mirror, so the run uses 4.0 percent measured values and a default for
+      the rest. The predicted tables are not yet plumbed to this call \\
+    $\Delta_f G'^{\circ}$ & \textbf{wired} in the anchored arm &
+      the standard term of $\Delta_r G_j$, hence the second-law hinge and the dissipation
+      bound \\
+    $K_M$ & \textbf{built, not wired} &
+      the saturation term is drawn as inactive in the module diagram and is inactive in the
+      code. $K_M$ contributes nothing to any result reported here \\
+    \hline
+  \end{tabular}
+\end{table}
+
+The consequence is worth stating plainly: the current runs test the module's
+\emph{structure and thermodynamics}, not its predicted kinetics. Wiring the predictor
+registry into \texttt{resolve\_kcat\_table} is the next change, and it is the one that
+turns the five kcat tables from an audit into an input.
+
+\subsection{Why five predictors and not one\secstatus{todo}}
+
+Re-keying the comparison from the enzyme-substrate pair to the \textbf{gene}, which is the
+unit the capacity bound reads, gives the number that decides how a predicted table should
+be used.
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[Per-gene disagreement]{Across-predictor spread per gene against the dynamic
+  range of the quantity itself, in decades, over genes every predictor covers.}
+  \label{tab:pergene}
+  %% SOURCE: experiments/026-metabolism-flux/results/per_gene_agreement_{k_cat,K_M}.json
+  \begin{tabular}{@{}lrrrr@{}}
+    \hline
+    Quantity & Genes & Median spread & Consensus p10--p90 & Ratio \\
+    \hline
+    $k_{cat}$ & 980 & \textbf{1.23} & 0.94 & \textbf{1.32} \\
+    $K_M$ & 1{,}150 & 0.70 & 1.34 & 0.52 \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\textbf{For $k_{cat}$ the disagreement between predictors exceeds the quantity being
+predicted.} The median gene moves 1.23 decades between the highest and lowest predictor, a
+factor of 17, and 67 percent of genes move by more than a full decade, against a
+10th-to-90th-percentile spread across genes of 0.94 decades. Choosing a different published
+predictor moves one gene's turnover number further than real enzymes differ from one
+another. Gene-level Spearman between $k_{cat}$ predictors runs 0.04 to 0.48.
+
+\textbf{For $K_M$ it does not.} The same construction gives 0.70 against 1.34, and
+Boost\_KM agrees with UniKP at a gene-level Spearman of 0.75, higher than any pair of
+$k_{cat}$ predictors reaches. Both are statements about agreement rather than accuracy,
+since almost none of these pairs has a measured value.
+
+That is why the registry in \texttt{torchcell/datasets/kinetics/} exists and why a config
+string selects the predictor: predictor choice is a hyperparameter with a measured effect
+size, not a settled detail.

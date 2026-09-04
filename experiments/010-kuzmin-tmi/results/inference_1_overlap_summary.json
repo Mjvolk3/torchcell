@@ -1,0 +1,35 @@
+{
+  "n_training_records": 376732,
+  "n_training_genes": 4352,
+  "n_query_doubles": 420,
+  "n_query_genes": 835,
+  "n_array_genes": 4263,
+  "n_inference_triples": 4370595,
+  "n_inference_genes": 526,
+  "inference_genes_seen_in_training": 449,
+  "inference_genes_that_are_query_genes": 116,
+  "inference_genes_that_are_array_genes": 438,
+  "inference_genes_query_and_array": 105,
+  "inference_genes_array_only": 333,
+  "inference_genes_query_only": 11,
+  "inference_genes_unseen": 77,
+  "query_doubles_representable_in_space": 22,
+  "frac_triples_with_query_double": 0.0005559883722925597,
+  "n_triples_with_query_double": 2430,
+  "frac_triples_all_three_genes_seen": 0.7167150010467682,
+  "pairs_seen_histogram": {
+    "0": 3153484,
+    "1": 816705,
+    "2": 319381,
+    "3": 81025
+  },
+  "genes_seen_histogram": {
+    "0": 346,
+    "1": 48413,
+    "2": 1189365,
+    "3": 3132471
+  },
+  "top_200_positive_distinct_genes": 65,
+  "top_200_positive_top_gene": "YER059W",
+  "top_200_positive_top_gene_count": 123
+}

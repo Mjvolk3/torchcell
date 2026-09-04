@@ -122,6 +122,31 @@ bxfx_preflight() {
   # EVERY CHECK BELOW HAS COST A REAL JOB, ON THIS CLUSTER OR THE LAST ONE.
   [[ -x "$DELTA_PY" ]] || {
     echo "ERROR: interpreter not found: $DELTA_PY" >&2; exit 1; }
+  # The genome's gffutils SQLite, checked as a FILE. The directory existing is not enough
+  # and this is not hypothetical: job 21797666 passed a `-d` check on data/sgd/genome and
+  # then lost every worker on three of nine array tasks to
+  # `FileNotFoundError: .../data/sgd/genome/data.db`, because the directory shipped without
+  # the database. A worker that hits this dies AFTER the whole import, so the cost is one
+  # full Lustre import per worker before anything reports.
+  for required in \
+    "$DATA_ROOT/data/sgd/genome/data.db" \
+    "$DATA_ROOT/data/go/go.obo"; do
+    [[ -f "$required" ]] || {
+      echo "ERROR: required file missing: $required" >&2
+      echo "       rsync it from the build host before resubmitting." >&2
+      exit 1
+    }
+  done
+  for required_dir in \
+    "$DATA_ROOT/data/scerevisiae/protT5_embedding" \
+    "$DATA_ROOT/data/string" \
+    "$DATA_ROOT/data/tflink"; do
+    [[ -d "$required_dir" ]] || {
+      echo "ERROR: required tree missing: $required_dir" >&2
+      exit 1
+    }
+  done
+
   [[ -d "$DATASET_DIR" ]] || {
     echo "ERROR: dataset tree missing: $DATASET_DIR" >&2
     echo "       DATA_ROOT in force is '$DATA_ROOT'. Resubmit with DELTA_DATA_ROOT=<root>;" >&2
@@ -158,18 +183,22 @@ bxfx_run_node() {
 
   echo "node workers: $n_local (ids $first_worker..$((first_worker + n_local - 1))) of $shard_count"
 
-  # Build each worker's queue ONCE, SEQUENTIALLY, before any GPU work. Sequential because
-  # each --create-only writes its own fresh SQLite file and a fresh file's DDL should not be
-  # raced -- each process spends >15 s importing torch before it would reach create_study,
-  # and a lost race there is a corrupt study rather than a retry. This is also the import
-  # gate: a shard count that does not divide the arm count exits here in seconds rather than
-  # inside the first cell of a 14 h allocation.
+  # Build every local worker's queue in ONE process, before any GPU work.
+  #
+  # This used to be a loop of eight `--create-only` calls, on the reasoning that a process
+  # "spends >15 s importing torch". MEASURED ON DELTA that import is roughly 50 MINUTES off
+  # Lustre, so the loop spent about 6.7 hours of a 20-hour allocation writing empty SQLite
+  # files and job 21797666 reached its first training step never. The timestamps are in its
+  # log: w64 04:03, w65 04:55, w66 05:45, w67 06:34, w68 07:16, w69 07:55.
+  #
+  # One process pays the import once. The DDL is still not raced: each study is a separate
+  # file, written sequentially inside the loop. This remains the import gate, so a shard
+  # count that does not divide the arm count still exits before any GPU work.
+  OPTUNA_WORKER_ID=$first_worker \
+    OPTUNA_STORAGE="sqlite:///$OPTUNA_DIR/optuna_bxfx_w${first_worker}.db" \
+    "$DELTA_PY" "$RUNNER" --create-batch "$first_worker" "$n_local" \
+    "sqlite:///$OPTUNA_DIR/optuna_bxfx_w{worker}.db" || exit 1
   local w
-  for ((w = first_worker; w < first_worker + n_local; w++)); do
-    OPTUNA_WORKER_ID=$w \
-      OPTUNA_STORAGE="sqlite:///$OPTUNA_DIR/optuna_bxfx_w${w}.db" \
-      "$DELTA_PY" "$RUNNER" --create-only || exit 1
-  done
 
   local i=0
   for ((w = first_worker; w < first_worker + n_local; w++)); do

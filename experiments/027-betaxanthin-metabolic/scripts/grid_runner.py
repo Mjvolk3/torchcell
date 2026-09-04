@@ -180,8 +180,45 @@ def enqueue_all(study: optuna.Study) -> int:
     return added
 
 
+def create_batch(first: int, count: int, storage_template: str) -> None:
+    """Create and fill every local worker's study in ONE process.
+
+    Why this exists, measured rather than assumed. The launcher used to call
+    ``--create-only`` once per worker, on the reasoning that a process "spends >15 s
+    importing torch before it would reach create_study". On Delta that import is off
+    Lustre and the measured cost is roughly **50 minutes**, so eight sequential calls
+    spent about 6.7 hours of a 20-hour allocation producing nothing but empty SQLite
+    files, and the array tasks reached their first training step never. The timestamps
+    are in the job log: w64 04:03, w65 04:55, w66 05:45, w67 06:34, w68 07:16, w69 07:55.
+
+    One process pays the import once. The DDL is still not raced, because each study is
+    a separate file written sequentially inside this loop.
+    """
+    global WORKER_ID, STORAGE, STUDY_NAME
+
+    for worker in range(first, first + count):
+        WORKER_ID = worker
+        STORAGE = storage_template.format(worker=worker)
+        STUDY_NAME = f"bxfx_grid_000_w{worker}"
+        if SHARD_COUNT and WORKER_ID >= SHARD_COUNT:
+            raise SystemExit(
+                f"worker {WORKER_ID} is outside GRID_SHARD_COUNT={SHARD_COUNT}."
+            )
+        added = enqueue_all(get_study())
+        print(
+            f"[w{WORKER_ID}] study {STUDY_NAME} at {STORAGE}: enqueued {added} cell(s)",
+            flush=True,
+        )
+
+
 def main() -> None:
     create_only = "--create-only" in sys.argv
+    if "--create-batch" in sys.argv:
+        index = sys.argv.index("--create-batch")
+        create_batch(
+            int(sys.argv[index + 1]), int(sys.argv[index + 2]), sys.argv[index + 3]
+        )
+        return
     study = get_study()
     added = enqueue_all(study)
     print(

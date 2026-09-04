@@ -1,0 +1,85 @@
+%% notes-tex/010-positive-panel/010-positive-panel.tex
+%% [[experiments.010-kuzmin-tmi.scripts.positive_panel_selection]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/010-positive-panel/010-positive-panel.tex
+%%
+%% Build:  make            -> 010-positive-panel.pdf   (draft: status chips)
+%%         make check      -> formatting / provenance / style gate
+%%         make plots      -> re-convert the matplotlib panel from ASSET_IMAGES_DIR
+%%
+%% Every number is produced by a committed script under
+%% experiments/010-kuzmin-tmi/scripts/ and read back from
+%% experiments/010-kuzmin-tmi/results/. The selection itself is
+%% positive_panel_selection.py; the retrieval and overlap numbers come from
+%% negative_interaction_retrieval.py, review_inference_1_top_triples.py and
+%% inference_1_training_overlap.py.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\emergencystretch=3.5em
+
+\title{\vspace{-1.5em}A Positive Trigenic Panel\\
+  {\large What the last panel taught, whether the model can pick positives at
+   all, and ten genes that test it}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+The previous 010 panel was selected from predictions that were invalid, by an
+objective with no diversity term, on genes some of which had no training
+evidence. This proposes a replacement drawn from \texttt{inference\_1}, the one
+run that survived both index defects, and it is designed against each of those
+three failures rather than around them.
+
+Positive interactions are worth picking, which was not previously established.
+Kuzmin 2018 defines a one-sided negative call, so the earlier retrieval
+measurement covered negatives only. Under the symmetric Kuzmin 2020 call,
+$\tau > +0.08$ with $p < 0.05$, the ensemble of three checkpoints reaches
+precision $0.100$ at $K = 100$ against a base rate of $0.526$ percent, an
+enrichment of $19.0$ times, where the additive null reaches $0.030$. Average
+precision is $0.0352$ against the null's $0.0110$. At $\tau > +0.20$ the ratio
+widens to $0.111$ against $0.0109$. On held-out data the predictions are also
+calibrated: a regression of actual on predicted has slope $0.877$, and of the 18
+test records predicted above $+0.20$ the mean actual $\tau$ is $+0.312$ with two
+thirds being real calls.
+
+Confidence no longer tracks absence of evidence. On the previous panel predicted
+interaction rose with the number of genes having no trigenic training record.
+Here the correlation runs the other way, Spearman $+0.267$ between prediction and
+the least-supported gene's record count.
+
+The design is two gene-disjoint complete five-gene blocks: 10 genes, 20 triples,
+20 doubles, and every gene in exactly 6 of the 20. Balance is a property of the
+shape rather than a penalty term, and a complete block is the cheapest closed
+design because $\tau$ needs all three doubles and all three singles of a triple
+measured beside it.
+
+One finding constrains what can be claimed. Across 6{,}934{,}927 complete
+five-gene blocks, the model's positive confidence sits in a single clique: the
+best block away from it has a median predicted $\tau$ of $0.029$, under half the
+training-label standard deviation of $0.063$, and within the leading block the
+six triples containing \texttt{YER059W} score $+0.590$ to $+0.662$ while the four
+without it score $+0.069$ to $+0.127$. The panel is therefore built as a
+contrast rather than as 20 equivalent wagers, and the contrast is what makes it
+informative either way.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-lessons}
+\input{sections/2-positives}
+\input{sections/3-design}
+\input{sections/4-panel}
+\input{sections/5-limits}
+
+\end{document}

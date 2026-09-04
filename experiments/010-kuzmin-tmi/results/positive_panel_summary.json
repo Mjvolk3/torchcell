@@ -1,0 +1,32 @@
+{
+  "block_size": 5,
+  "n_blocks": 2,
+  "panel_genes": [
+    "YDR423C",
+    "YER059W",
+    "YGL060W",
+    "YGR121C",
+    "YHR003C",
+    "YHR204W",
+    "YJR082C",
+    "YKR028W",
+    "YLR258W",
+    "YPL181W"
+  ],
+  "n_genes": 10,
+  "n_triples": 20,
+  "n_doubles": 20,
+  "n_strains_total": 51,
+  "triples_per_gene_min": 6,
+  "triples_per_gene_max": 6,
+  "worst_checkpoint_range": [
+    0.010833740234375,
+    0.66162109375
+  ],
+  "median_spread": 0.0544891357421875,
+  "all_three_checkpoints_positive": 20,
+  "min_trigenic_train_records": 288,
+  "min_smf_mean": 0.9708,
+  "max_smf_strain_spread": 0.0,
+  "gate_min_train_records": 200
+}

@@ -1,0 +1,88 @@
+\section{What the last panel taught\secstatus{todo}}
+
+Five things went wrong with the 12-gene panel. Each one is a gate in the
+selection that replaces it, applied before any triple is scored rather than
+checked afterward.
+
+\subsection{The predictions were invalid\secstatus{todo}}
+
+The panel was selected from \texttt{inference\_3}. Between training and that run
+the genome gene set went from 6{,}607 entries to 6{,}579, and the 28 absent
+entries are mitochondrial open reading frames that sort before every nuclear
+name, so every gene index shifted by exactly 28. Separately the candidate genes
+were never intersected with the model's gene space, and a name the index cannot
+resolve contributes no perturbation, so 266 of 432 stored panel combinations were
+scored as doubles. Rescored correctly the 20-triple build list spans $-0.134$ to
+$+0.011$ rather than the $0.409$ to $0.711$ it was ordered by.
+
+\texttt{inference\_1} escaped both. Its 526 genes all resolve inside the model's
+gene set with no alias resolution needed, so no triple collapsed, and a fresh
+3{,}000-triple sample re-scored through the validated path reproduces the stored
+predictions at Pearson $0.9999983$ under the 6{,}607-gene map. It is the only run
+of the three that can be used.
+
+\subsection{A hub gene took the panel over\secstatus{todo}}
+
+The objective maximized how many of the top $k$ predicted triples were contained
+in the panel, and its tiebreak was the raw count of top-$k$ triples containing a
+candidate gene, which rewards hubs directly. Nothing penalized concentration.
+Participation ran from 46 triples down to 16 across the 12 genes. One round
+earlier the same pathology collapsed \texttt{inference\_2} onto a single gene,
+and the response was to relax the fitness thresholds rather than to change the
+objective.
+
+\subsection{Confidence tracked absence of evidence\secstatus{todo}}
+
+Predicted interaction rose with the number of panel genes having no trigenic
+training record: mean $0.4531$ with none, $0.5300$ with one, $0.6676$ with two,
+Spearman $0.634$ at $p = 1.5\times10^{-5}$. Genes with zero records took ranks 1
+through 11 of the 39 targets. \texttt{YER079W} has no trigenic and no digenic
+record in this build at all, because the query enables only the two Kuzmin
+trigenic datasets.
+
+\subsection{Two genes could not have been built as named\secstatus{todo}}
+
+\texttt{YLR312C-B} and \texttt{SPH1} occupied separate wells on the same plate
+and are one locus: R64 records \texttt{YLR313C} with both as aliases. Twelve
+strain labels were eleven distinct loci. \texttt{YLR312C-B} is additionally an
+SGD merged open reading frame with no discrete protein product. Two further
+panel names, \texttt{YJL017W} and \texttt{YKL200C}, are stale systematic names
+whose current forms are \texttt{YJL016W} and \texttt{YKL201C}, and both scored
+wrong for that reason alone.
+
+\subsection{A fitness filter was defeated by its own aggregation\secstatus{todo}}
+
+\texttt{YJR060W}, CBF1, entered the panel despite a viability floor of $0.90$
+because single-mutant fitness was aggregated across strain backgrounds with
+\texttt{max()}. Its KanMX strain measures $0.923$ and its NatMX strain $0.590$;
+the mean, $0.757$, would have excluded it. The same aggregation let 8 of 66 panel
+doubles report a queried double-mutant fitness below $0.90$, and the one cross
+that failed to construct contains it.
+
+\subsection{The cost driver is $\tau$ closure, not construction\secstatus{todo}}
+
+A trigenic score consumes seven fitnesses,
+\begin{equation}
+  \tau_{abc} \;=\; f_{abc} - f_{ab}f_{c} - f_{ac}f_{b} - f_{bc}f_{a}
+             + 2 f_{a}f_{b}f_{c},
+\end{equation}
+so every triple needs all three of its doubles and all three of its singles
+measured beside it. A set cover over the previous 20 triples needs only 7
+doubles to build them, but closure needs 33, and the plate carried 65 strains.
+Building to the cover rather than to the closure yields 20 fitness values and no
+interaction at all. The same-batch rule follows: $\tau$ is a difference, so a
+shared day deviation cancels only when every order sits on the same plates, and
+a carried-forward single-mutant reference costs up to $1.46$ times the standard
+error.
+
+\subsection{The claim must be epistasis, not a ladder\secstatus{todo}}
+
+The previous round framed its claim as an ascending fitness ladder, wild type
+below single below double below triple. That is not reachable on a deletion panel
+scored on growth. None of the 12 singles measured above wild type, the
+genome-wide deletion ceiling is $1.1118$, only $2.7$ percent of singles are
+significantly above wild type, and in Kuzmin the fraction above wild type
+\emph{falls} with order, $23.0$ to $13.8$ to $6.9$ percent. The claim that
+remains available is positive epistasis: the triple grows better than the
+expectation built from its own singles and doubles, whether or not it beats wild
+type.

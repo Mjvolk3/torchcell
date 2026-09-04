@@ -1,0 +1,527 @@
+gene,resolves_to,status,in_gene_set,trigenic_train_records,passes,reasons
+YAL009W,YAL009W,current,True,0,False,only 0 trigenic training records
+YAL040C,YAL040C,current,True,319,True,
+YAL054C,YAL054C,current,True,341,True,
+YAL056W,YAL056W,current,True,4129,True,
+YAR015W,YAR015W,current,True,306,True,
+YAR018C,YAR018C,current,True,11,False,only 11 trigenic training records
+YAR035W,YAR035W,current,True,11,False,only 11 trigenic training records
+YBL008W,YBL008W,current,True,316,True,
+YBL039C,YBL039C,current,True,0,False,only 0 trigenic training records
+YBL047C,YBL047C,current,True,291,True,
+YBL054W,YBL054W,current,True,1084,True,
+YBL088C,YBL088C,current,True,300,True,
+YBR001C,YBR001C,current,True,1036,True,
+YBR023C,YBR023C,current,True,287,True,
+YBR028C,YBR028C,current,True,279,True,
+YBR085W,YBR085W,current,True,10,False,only 10 trigenic training records
+YBR092C,YBR092C,current,True,271,True,
+YBR093C,YBR093C,current,True,0,False,only 0 trigenic training records
+YBR112C,YBR112C,current,True,0,False,only 0 trigenic training records
+YBR132C,YBR132C,current,True,10,False,only 10 trigenic training records
+YBR182C,YBR182C,current,True,1035,True,
+YBR195C,YBR195C,current,True,289,True,
+YBR215W,YBR215W,current,True,320,True,
+YBR229C,YBR229C,current,True,760,True,
+YBR235W,YBR235W,current,True,10,False,only 10 trigenic training records
+YBR249C,YBR249C,current,True,10,False,only 10 trigenic training records
+YBR274W,YBR274W,current,True,10,False,only 10 trigenic training records
+YBR278W,YBR278W,current,True,4140,True,
+YBR281C,YBR281C,current,True,10,False,only 10 trigenic training records
+YBR291C,YBR291C,current,True,291,True,
+YBR297W,YBR297W,current,True,10,False,only 10 trigenic training records
+YCL009C,YCL009C,current,True,10,False,only 10 trigenic training records
+YCL016C,YCL016C,current,True,328,True,
+YCL029C,YCL029C,current,True,10,False,only 10 trigenic training records
+YCL050C,YCL050C,current,True,1138,True,
+YCL064C,YCL064C,current,True,10,False,only 10 trigenic training records
+YCR020W-B,YCR020W-B,current,True,0,False,only 0 trigenic training records
+YCR026C,YCR026C,current,True,1124,True,
+YCR033W,YCR033W,current,True,294,True,
+YCR034W,YCR034W,current,True,322,True,
+YCR036W,YCR036W,current,True,10,False,only 10 trigenic training records
+YCR037C,YCR037C,current,True,10,False,only 10 trigenic training records
+YCR065W,YCR065W,current,True,318,True,
+YCR066W,YCR066W,current,True,0,False,only 0 trigenic training records
+YCR073C,YCR073C,current,True,276,True,
+YCR075C,YCR075C,current,True,10,False,only 10 trigenic training records
+YCR083W,YCR083W,current,True,328,True,
+YCR086W,YCR086W,current,True,310,True,
+YCR091W,YCR091W,current,True,10,False,only 10 trigenic training records
+YCR095C,YCR095C,current,True,838,True,
+YCR098C,YCR098C,current,True,321,True,
+YCR105W,YCR105W,current,True,10,False,only 10 trigenic training records
+YCR107W,YCR107W,current,True,10,False,only 10 trigenic training records
+YDL022W,YDL022W,current,True,0,False,only 0 trigenic training records
+YDL024C,YDL024C,current,True,10,False,only 10 trigenic training records
+YDL025C,YDL025C,current,True,10,False,only 10 trigenic training records
+YDL036C,YDL036C,current,True,10,False,only 10 trigenic training records
+YDL048C,YDL048C,current,True,296,True,
+YDL052C,YDL052C,current,True,0,False,only 0 trigenic training records
+YDL056W,YDL056W,current,True,10,False,only 10 trigenic training records
+YDL066W,YDL066W,current,True,10,False,only 10 trigenic training records
+YDL076C,YDL076C,current,True,296,True,
+YDL078C,YDL078C,current,True,10,False,only 10 trigenic training records
+YDL079C,YDL079C,current,True,1063,True,
+YDL085W,YDL085W,current,True,10,False,only 10 trigenic training records
+YDL091C,YDL091C,current,True,803,True,
+YDL093W,YDL093W,current,True,10,False,only 10 trigenic training records
+YDL095W,YDL095W,current,True,315,True,
+YDL101C,YDL101C,current,True,0,False,only 0 trigenic training records
+YDL106C,YDL106C,current,True,293,True,
+YDL122W,YDL122W,current,True,0,False,only 0 trigenic training records
+YDL170W,YDL170W,current,True,506,True,
+YDL182W,YDL182W,current,True,0,False,only 0 trigenic training records
+YDL185W,YDL185W,current,True,0,False,only 0 trigenic training records
+YDL210W,YDL210W,current,True,0,False,only 0 trigenic training records
+YDL213C,YDL213C,current,True,490,True,
+YDL214C,YDL214C,current,True,0,False,only 0 trigenic training records
+YDL236W,YDL236W,current,True,0,False,only 0 trigenic training records
+YDR007W,YDR007W,current,True,315,True,
+YDR026C,YDR026C,current,True,10,False,only 10 trigenic training records
+YDR043C,YDR043C,current,True,1285,True,
+YDR072C,YDR072C,current,True,10,False,only 10 trigenic training records
+YDR096W,YDR096W,current,True,1031,True,
+YDR122W,YDR122W,current,True,1011,True,
+YDR130C,YDR130C,current,True,493,True,
+YDR206W,YDR206W,current,True,9,False,only 9 trigenic training records
+YDR213W,YDR213W,current,True,9,False,only 9 trigenic training records
+YDR253C,YDR253C,current,True,9,False,only 9 trigenic training records
+YDR259C,YDR259C,current,True,1041,True,
+YDR260C,YDR260C,current,True,273,True,
+YDR266C,YDR266C,current,True,9,False,only 9 trigenic training records
+YDR287W,YDR287W,current,True,9,False,only 9 trigenic training records
+YDR294C,YDR294C,current,True,557,True,
+YDR297W,YDR297W,current,True,9,False,only 9 trigenic training records
+YDR305C,YDR305C,current,True,9,False,only 9 trigenic training records
+YDR332W,YDR332W,current,True,9,False,only 9 trigenic training records
+YDR335W,YDR335W,current,True,289,True,
+YDR363W-A,YDR363W-A,current,True,303,True,
+YDR423C,YDR423C,current,True,1049,True,
+YDR451C,YDR451C,current,True,9,False,only 9 trigenic training records
+YDR466W,YDR466W,current,True,290,True,
+YDR507C,YDR507C,current,True,1100,True,
+YDR518W,YDR518W,current,True,0,False,only 0 trigenic training records
+YDR523C,YDR523C,current,True,0,False,only 0 trigenic training records
+YEL006W,YEL006W,current,True,1101,True,
+YEL009C,YEL009C,current,True,0,False,only 0 trigenic training records
+YEL012W,YEL012W,current,True,0,False,only 0 trigenic training records
+YEL013W,YEL013W,current,True,0,False,only 0 trigenic training records
+YEL016C,YEL016C,current,True,1114,True,
+YEL017C-A,YEL017C-A,current,True,0,False,only 0 trigenic training records
+YEL018W,YEL018W,current,True,0,False,only 0 trigenic training records
+YEL024W,YEL024W,current,True,0,False,only 0 trigenic training records
+YEL027W,YEL027W,current,True,0,False,only 0 trigenic training records
+YEL029C,YEL029C,current,True,0,False,only 0 trigenic training records
+YEL031W,YEL031W,current,True,0,False,only 0 trigenic training records
+YEL037C,YEL037C,current,True,0,False,only 0 trigenic training records
+YEL038W,YEL038W,current,True,0,False,only 0 trigenic training records
+YEL039C,YEL039C,current,True,1080,True,
+YEL041W,YEL041W,current,True,0,False,only 0 trigenic training records
+YEL042W,YEL042W,current,True,0,False,only 0 trigenic training records
+YEL047C,YEL047C,current,True,1102,True,
+YEL051W,YEL051W,current,True,0,False,only 0 trigenic training records
+YEL061C,YEL061C,current,True,0,False,only 0 trigenic training records
+YEL062W,YEL062W,current,True,0,False,only 0 trigenic training records
+YEL066W,YEL066W,current,True,0,False,only 0 trigenic training records
+YEL071W,YEL071W,current,True,0,False,only 0 trigenic training records
+YER005W,YER005W,current,True,0,False,only 0 trigenic training records
+YER010C,YER010C,current,True,0,False,only 0 trigenic training records
+YER016W,YER016W,current,True,0,False,only 0 trigenic training records
+YER019W,YER019W,current,True,0,False,only 0 trigenic training records
+YER024W,YER024W,current,True,0,False,only 0 trigenic training records
+YER037W,YER037W,current,True,0,False,only 0 trigenic training records
+YER040W,YER040W,current,True,0,False,only 0 trigenic training records
+YER042W,YER042W,current,True,285,True,
+YER053C,YER053C,current,True,292,True,
+YER056C,YER056C,current,True,290,True,
+YER059W,YER059W,current,True,1097,True,
+YER060W,YER060W,current,True,0,False,only 0 trigenic training records
+YER060W-A,YER060W-A,current,True,0,False,only 0 trigenic training records
+YER062C,YER062C,current,True,0,False,only 0 trigenic training records
+YER064C,YER064C,current,True,1110,True,
+YER065C,YER065C,current,True,0,False,only 0 trigenic training records
+YER073W,YER073W,current,True,0,False,only 0 trigenic training records
+YER081W,YER081W,current,True,0,False,only 0 trigenic training records
+YER088C,YER088C,current,True,1386,True,
+YER090W,YER090W,current,True,0,False,only 0 trigenic training records
+YER091C,YER091C,current,True,0,False,only 0 trigenic training records
+YER110C,YER110C,current,True,0,False,only 0 trigenic training records
+YER111C,YER111C,current,True,287,True,
+YER120W,YER120W,current,True,1385,True,
+YER123W,YER123W,current,True,302,True,
+YER129W,YER129W,current,True,1388,True,
+YER139C,YER139C,current,True,11,False,only 11 trigenic training records
+YER152C,YER152C,current,True,11,False,only 11 trigenic training records
+YER161C,YER161C,current,True,302,True,
+YER163C,YER163C,current,True,11,False,only 11 trigenic training records
+YER169W,YER169W,current,True,1021,True,
+YER170W,YER170W,current,True,301,True,
+YER174C,YER174C,current,True,11,False,only 11 trigenic training records
+YER175C,YER175C,current,True,11,False,only 11 trigenic training records
+YER183C,YER183C,current,True,11,False,only 11 trigenic training records
+YER184C,YER184C,current,True,313,True,
+YFL011W,YFL011W,current,True,102,False,only 102 trigenic training records
+YFL021W,YFL021W,current,True,277,True,
+YFL030W,YFL030W,current,True,11,False,only 11 trigenic training records
+YFL031W,YFL031W,current,True,314,True,
+YFL033C,YFL033C,current,True,11,False,only 11 trigenic training records
+YFL052W,YFL052W,current,True,11,False,only 11 trigenic training records
+YFL053W,YFL053W,current,True,11,False,only 11 trigenic training records
+YFL054C,YFL054C,current,True,11,False,only 11 trigenic training records
+YFL055W,YFL055W,current,True,11,False,only 11 trigenic training records
+YFR007W,YFR007W,current,True,11,False,only 11 trigenic training records
+YFR013W,YFR013W,current,True,1401,True,
+YFR014C,YFR014C,current,True,11,False,only 11 trigenic training records
+YFR015C,YFR015C,current,True,1445,True,
+YFR019W,YFR019W,current,True,11,False,only 11 trigenic training records
+YFR030W,YFR030W,current,True,11,False,only 11 trigenic training records
+YFR033C,YFR033C,current,True,11,False,only 11 trigenic training records
+YFR044C,YFR044C,current,True,11,False,only 11 trigenic training records
+YFR047C,YFR047C,current,True,11,False,only 11 trigenic training records
+YFR049W,YFR049W,current,True,11,False,only 11 trigenic training records
+YFR053C,YFR053C,current,True,11,False,only 11 trigenic training records
+YFR055W,YFR055W,current,True,11,False,only 11 trigenic training records
+YGL006W,YGL006W,current,True,10,False,only 10 trigenic training records
+YGL009C,YGL009C,current,True,10,False,only 10 trigenic training records
+YGL014W,YGL014W,current,True,290,True,
+YGL017W,YGL017W,current,True,10,False,only 10 trigenic training records
+YGL021W,YGL021W,current,True,1027,True,
+YGL027C,YGL027C,current,True,310,True,
+YGL028C,YGL028C,current,True,10,False,only 10 trigenic training records
+YGL035C,YGL035C,current,True,10,False,only 10 trigenic training records
+YGL037C,YGL037C,current,True,10,False,only 10 trigenic training records
+YGL059W,YGL059W,current,True,302,True,
+YGL060W,YGL060W,current,True,1321,True,
+YGL062W,YGL062W,current,True,10,False,only 10 trigenic training records
+YGL063W,YGL063W,current,True,0,False,only 0 trigenic training records
+YGL067W,YGL067W,current,True,10,False,only 10 trigenic training records
+YGL077C,YGL077C,current,True,316,True,
+YGL080W,YGL080W,current,True,10,False,only 10 trigenic training records
+YGL096W,YGL096W,current,True,1073,True,
+YGL101W,YGL101W,current,True,10,False,only 10 trigenic training records
+YGL121C,YGL121C,current,True,297,True,
+YGL125W,YGL125W,current,True,10,False,only 10 trigenic training records
+YGL133W,YGL133W,current,True,10,False,only 10 trigenic training records
+YGL148W,YGL148W,current,True,292,True,
+YGL156W,YGL156W,current,True,328,True,
+YGL158W,YGL158W,current,True,11,False,only 11 trigenic training records
+YGL166W,YGL166W,current,True,1040,True,
+YGL175C,YGL175C,current,True,805,True,
+YGL179C,YGL179C,current,True,1087,True,
+YGL196W,YGL196W,current,True,11,False,only 11 trigenic training records
+YGL197W,YGL197W,current,True,1082,True,
+YGL202W,YGL202W,current,True,11,False,only 11 trigenic training records
+YGL205W,YGL205W,current,True,11,False,only 11 trigenic training records
+YGL209W,YGL209W,current,True,11,False,only 11 trigenic training records
+YGL222C,YGL222C,current,True,11,False,only 11 trigenic training records
+YGL224C,YGL224C,current,True,11,False,only 11 trigenic training records
+YGL234W,YGL234W,current,True,11,False,only 11 trigenic training records
+YGL240W,YGL240W,current,True,0,False,only 0 trigenic training records
+YGL246C,YGL246C,current,True,0,False,only 0 trigenic training records
+YGL248W,YGL248W,current,True,11,False,only 11 trigenic training records
+YGL251C,YGL251C,current,True,11,False,only 11 trigenic training records
+YGL254W,YGL254W,current,True,11,False,only 11 trigenic training records
+YGL256W,YGL256W,current,True,11,False,only 11 trigenic training records
+YGR007W,YGR007W,current,True,499,True,
+YGR010W,YGR010W,current,True,10,False,only 10 trigenic training records
+YGR012W,YGR012W,current,True,10,False,only 10 trigenic training records
+YGR015C,YGR015C,current,True,293,True,
+YGR019W,YGR019W,current,True,10,False,only 10 trigenic training records
+YGR032W,YGR032W,current,True,10,False,only 10 trigenic training records
+YGR038W,YGR038W,current,True,10,False,only 10 trigenic training records
+YGR040W,YGR040W,current,True,10,False,only 10 trigenic training records
+YGR043C,YGR043C,current,True,281,True,
+YGR044C,YGR044C,current,True,10,False,only 10 trigenic training records
+YGR052W,YGR052W,current,True,10,False,only 10 trigenic training records
+YGR055W,YGR055W,current,True,284,True,
+YGR061C,YGR061C,current,True,10,False,only 10 trigenic training records
+YGR067C,YGR067C,current,True,10,False,only 10 trigenic training records
+YGR071C,YGR071C,current,True,3622,True,
+YGR072W,YGR072W,current,True,299,True,
+YGR087C,YGR087C,current,True,10,False,only 10 trigenic training records
+YGR088W,YGR088W,current,True,10,False,only 10 trigenic training records
+YGR096W,YGR096W,current,True,271,True,
+YGR106C,YGR106C,current,True,10,False,only 10 trigenic training records
+YGR108W,YGR108W,current,True,10,False,only 10 trigenic training records
+YGR110W,YGR110W,current,True,10,False,only 10 trigenic training records
+YGR121C,YGR121C,current,True,1413,True,
+YGR123C,YGR123C,current,True,10,False,only 10 trigenic training records
+YGR124W,YGR124W,current,True,10,False,only 10 trigenic training records
+YGR134W,YGR134W,current,True,278,True,
+YGR138C,YGR138C,current,True,1075,True,
+YGR143W,YGR143W,current,True,10,False,only 10 trigenic training records
+YGR144W,YGR144W,current,True,301,True,
+YGR154C,YGR154C,current,True,10,False,only 10 trigenic training records
+YGR170W,YGR170W,current,True,10,False,only 10 trigenic training records
+YGR177C,YGR177C,current,True,10,False,only 10 trigenic training records
+YGR178C,YGR178C,current,True,287,True,
+YGR184C,YGR184C,current,True,10,False,only 10 trigenic training records
+YGR189C,YGR189C,current,True,10,False,only 10 trigenic training records
+YGR193C,YGR193C,current,True,10,False,only 10 trigenic training records
+YGR194C,YGR194C,current,True,10,False,only 10 trigenic training records
+YGR202C,YGR202C,current,True,826,True,
+YGR205W,YGR205W,current,True,10,False,only 10 trigenic training records
+YGR208W,YGR208W,current,True,10,False,only 10 trigenic training records
+YGR209C,YGR209C,current,True,10,False,only 10 trigenic training records
+YGR227W,YGR227W,current,True,10,False,only 10 trigenic training records
+YGR234W,YGR234W,current,True,533,True,
+YGR243W,YGR243W,current,True,1093,True,
+YGR244C,YGR244C,current,True,10,False,only 10 trigenic training records
+YGR247W,YGR247W,current,True,10,False,only 10 trigenic training records
+YGR248W,YGR248W,current,True,1379,True,
+YGR254W,YGR254W,current,True,10,False,only 10 trigenic training records
+YGR256W,YGR256W,current,True,10,False,only 10 trigenic training records
+YGR260W,YGR260W,current,True,10,False,only 10 trigenic training records
+YGR262C,YGR262C,current,True,0,False,only 0 trigenic training records
+YGR279C,YGR279C,current,True,340,True,
+YGR282C,YGR282C,current,True,10,False,only 10 trigenic training records
+YGR286C,YGR286C,current,True,10,False,only 10 trigenic training records
+YGR287C,YGR287C,current,True,305,True,
+YGR288W,YGR288W,current,True,10,False,only 10 trigenic training records
+YGR289C,YGR289C,current,True,10,False,only 10 trigenic training records
+YGR292W,YGR292W,current,True,10,False,only 10 trigenic training records
+YHL002W,YHL002W,current,True,820,True,
+YHL003C,YHL003C,current,True,0,False,only 0 trigenic training records
+YHL010C,YHL010C,current,True,10,False,only 10 trigenic training records
+YHL012W,YHL012W,current,True,10,False,only 10 trigenic training records
+YHL016C,YHL016C,current,True,10,False,only 10 trigenic training records
+YHL029C,YHL029C,current,True,823,True,
+YHL032C,YHL032C,current,True,286,True,
+YHL034C,YHL034C,current,True,302,True,
+YHL036W,YHL036W,current,True,10,False,only 10 trigenic training records
+YHR001W-A,YHR001W-A,current,True,10,False,only 10 trigenic training records
+YHR003C,YHR003C,current,True,1356,True,
+YHR006W,YHR006W,current,True,287,True,
+YHR031C,YHR031C,current,True,284,True,
+YHR033W,YHR033W,current,True,10,False,only 10 trigenic training records
+YHR037W,YHR037W,current,True,10,False,only 10 trigenic training records
+YHR044C,YHR044C,current,True,10,False,only 10 trigenic training records
+YHR046C,YHR046C,current,True,10,False,only 10 trigenic training records
+YHR079C,YHR079C,current,True,292,True,
+YHR082C,YHR082C,current,True,761,True,
+YHR092C,YHR092C,current,True,10,False,only 10 trigenic training records
+YHR094C,YHR094C,current,True,1052,True,
+YHR096C,YHR096C,current,True,1064,True,
+YHR106W,YHR106W,current,True,10,False,only 10 trigenic training records
+YHR108W,YHR108W,current,True,1303,True,
+YHR109W,YHR109W,current,True,10,False,only 10 trigenic training records
+YHR123W,YHR123W,current,True,10,False,only 10 trigenic training records
+YHR154W,YHR154W,current,True,779,True,
+YHR162W,YHR162W,current,True,1093,True,
+YHR167W,YHR167W,current,True,760,True,
+YHR204W,YHR204W,current,True,288,True,
+YHR207C,YHR207C,current,True,10,False,only 10 trigenic training records
+YIL006W,YIL006W,current,True,1111,True,
+YIL009C-A,YIL009C-A,current,True,10,False,only 10 trigenic training records
+YIL009W,YIL009W,current,True,0,False,only 0 trigenic training records
+YIL023C,YIL023C,current,True,10,False,only 10 trigenic training records
+YIL035C,YIL035C,current,True,10,False,only 10 trigenic training records
+YIL036W,YIL036W,current,True,1123,True,
+YIL042C,YIL042C,current,True,10,False,only 10 trigenic training records
+YIL043C,YIL043C,current,True,297,True,
+YIL053W,YIL053W,current,True,10,False,only 10 trigenic training records
+YIL066C,YIL066C,current,True,10,False,only 10 trigenic training records
+YIL107C,YIL107C,current,True,10,False,only 10 trigenic training records
+YIL111W,YIL111W,current,True,1104,True,
+YIL119C,YIL119C,current,True,10,False,only 10 trigenic training records
+YIL124W,YIL124W,current,True,304,True,
+YIL125W,YIL125W,current,True,0,False,only 0 trigenic training records
+YIL130W,YIL130W,current,True,10,False,only 10 trigenic training records
+YIL131C,YIL131C,current,True,10,False,only 10 trigenic training records
+YIL145C,YIL145C,current,True,10,False,only 10 trigenic training records
+YIL146C,YIL146C,current,True,10,False,only 10 trigenic training records
+YIR013C,YIR013C,current,True,11,False,only 11 trigenic training records
+YIR017C,YIR017C,current,True,11,False,only 11 trigenic training records
+YIR026C,YIR026C,current,True,0,False,only 0 trigenic training records
+YJL068C,YJL068C,current,True,9,False,only 9 trigenic training records
+YJL089W,YJL089W,current,True,9,False,only 9 trigenic training records
+YJL095W,YJL095W,current,True,303,True,
+YJL110C,YJL110C,current,True,1063,True,
+YJL128C,YJL128C,current,True,283,True,
+YJL137C,YJL137C,current,True,1074,True,
+YJL155C,YJL155C,current,True,286,True,
+YJL168C,YJL168C,current,True,307,True,
+YJL187C,YJL187C,current,True,302,True,
+YJL212C,YJL212C,current,True,10,False,only 10 trigenic training records
+YJR010W,YJR010W,current,True,9,False,only 9 trigenic training records
+YJR048W,YJR048W,current,True,1090,True,
+YJR059W,YJR059W,current,True,304,True,
+YJR082C,YJR082C,current,True,796,True,
+YJR127C,YJR127C,current,True,1114,True,
+YJR149W,YJR149W,current,True,10,False,only 10 trigenic training records
+YJR152W,YJR152W,current,True,10,False,only 10 trigenic training records
+YJR153W,YJR153W,current,True,316,True,
+YKL010C,YKL010C,current,True,507,True,
+YKL046C,YKL046C,current,True,9,False,only 9 trigenic training records
+YKL062W,YKL062W,current,True,1343,True,
+YKL101W,YKL101W,current,True,797,True,
+YKL127W,YKL127W,current,True,289,True,
+YKL160W,YKL160W,current,True,313,True,
+YKL161C,YKL161C,current,True,1060,True,
+YKL166C,YKL166C,current,True,1085,True,
+YKL168C,YKL168C,current,True,1400,True,
+YKL185W,YKL185W,current,True,279,True,
+YKL216W,YKL216W,current,True,0,False,only 0 trigenic training records
+YKR023W,YKR023W,current,True,7,False,only 7 trigenic training records
+YKR028W,YKR028W,current,True,1323,True,
+YKR029C,YKR029C,current,True,1321,True,
+YKR034W,YKR034W,current,True,1061,True,
+YKR067W,YKR067W,current,True,7,False,only 7 trigenic training records
+YKR072C,YKR072C,current,True,294,True,
+YLL010C,YLL010C,current,True,11,False,only 11 trigenic training records
+YLL028W,YLL028W,current,True,11,False,only 11 trigenic training records
+YLL043W,YLL043W,current,True,323,True,
+YLL062C,YLL062C,current,True,1109,True,
+YLR011W,YLR011W,current,True,11,False,only 11 trigenic training records
+YLR013W,YLR013W,current,True,11,False,only 11 trigenic training records
+YLR014C,YLR014C,current,True,815,True,
+YLR017W,YLR017W,current,True,11,False,only 11 trigenic training records
+YLR021W,YLR021W,current,True,797,True,
+YLR024C,YLR024C,current,True,11,False,only 11 trigenic training records
+YLR032W,YLR032W,current,True,312,True,
+YLR047C,YLR047C,current,True,11,False,only 11 trigenic training records
+YLR102C,YLR102C,current,True,722,True,
+YLR113W,YLR113W,current,True,9,False,only 9 trigenic training records
+YLR143W,YLR143W,current,True,273,True,
+YLR146C,YLR146C,current,True,9,False,only 9 trigenic training records
+YLR174W,YLR174W,current,True,1086,True,
+YLR180W,YLR180W,current,True,9,False,only 9 trigenic training records
+YLR213C,YLR213C,current,True,9,False,only 9 trigenic training records
+YLR228C,YLR228C,current,True,9,False,only 9 trigenic training records
+YLR233C,YLR233C,current,True,0,False,only 0 trigenic training records
+YLR258W,YLR258W,current,True,1114,True,
+YLR260W,YLR260W,current,True,0,False,only 0 trigenic training records
+YLR284C,YLR284C,current,True,1037,True,
+YLR299W,YLR299W,current,True,528,True,
+YLR345W,YLR345W,current,True,9,False,only 9 trigenic training records
+YLR357W,YLR357W,current,True,0,False,only 0 trigenic training records
+YLR368W,YLR368W,current,True,510,True,
+YLR375W,YLR375W,current,True,311,True,
+YLR386W,YLR386W,current,True,301,True,
+YLR421C,YLR421C,current,True,9,False,only 9 trigenic training records
+YLR436C,YLR436C,current,True,302,True,
+YLR438W,YLR438W,current,True,9,False,only 9 trigenic training records
+YLR451W,YLR451W,current,True,9,False,only 9 trigenic training records
+YML007W,YML007W,current,True,1319,True,
+YML027W,YML027W,current,True,11,False,only 11 trigenic training records
+YML059C,YML059C,current,True,11,False,only 11 trigenic training records
+YML081W,YML081W,current,True,1104,True,
+YML100W,YML100W,current,True,1098,True,
+YMR008C,YMR008C,current,True,11,False,only 11 trigenic training records
+YMR016C,YMR016C,current,True,10,False,only 10 trigenic training records
+YMR019W,YMR019W,current,True,494,True,
+YMR022W,YMR022W,current,True,10,False,only 10 trigenic training records
+YMR031C,YMR031C,current,True,1099,True,
+YMR036C,YMR036C,current,True,761,True,
+YMR037C,YMR037C,current,True,1054,True,
+YMR048W,YMR048W,current,True,287,True,
+YMR080C,YMR080C,current,True,314,True,
+YMR105C,YMR105C,current,True,10,False,only 10 trigenic training records
+YMR106C,YMR106C,current,True,278,True,
+YMR136W,YMR136W,current,True,10,False,only 10 trigenic training records
+YMR139W,YMR139W,current,True,1063,True,
+YMR182C,YMR182C,current,True,1083,True,
+YMR186W,YMR186W,current,True,10,False,only 10 trigenic training records
+YMR238W,YMR238W,current,True,292,True,
+YMR280C,YMR280C,current,True,10,False,only 10 trigenic training records
+YMR284W,YMR284W,current,True,274,True,
+YMR300C,YMR300C,current,True,10,False,only 10 trigenic training records
+YNL020C,YNL020C,current,True,10,False,only 10 trigenic training records
+YNL065W,YNL065W,current,True,10,False,only 10 trigenic training records
+YNL066W,YNL066W,current,True,10,False,only 10 trigenic training records
+YNL068C,YNL068C,current,True,309,True,
+YNL106C,YNL106C,current,True,0,False,only 0 trigenic training records
+YNL107W,YNL107W,current,True,294,True,
+YNL154C,YNL154C,current,True,295,True,
+YNL199C,YNL199C,current,True,0,False,only 0 trigenic training records
+YNL202W,YNL202W,current,True,0,False,only 0 trigenic training records
+YNL206C,YNL206C,current,True,0,False,only 0 trigenic training records
+YNL215W,YNL215W,current,True,0,False,only 0 trigenic training records
+YNL227C,YNL227C,current,True,0,False,only 0 trigenic training records
+YNL229C,YNL229C,current,True,0,False,only 0 trigenic training records
+YNL236W,YNL236W,current,True,0,False,only 0 trigenic training records
+YNL241C,YNL241C,current,True,0,False,only 0 trigenic training records
+YNL248C,YNL248C,current,True,0,False,only 0 trigenic training records
+YNL250W,YNL250W,current,True,0,False,only 0 trigenic training records
+YNL323W,YNL323W,current,True,0,False,only 0 trigenic training records
+YNR004W,YNR004W,current,True,10,False,only 10 trigenic training records
+YNR019W,YNR019W,current,True,3972,True,
+YNR031C,YNR031C,current,True,10,False,only 10 trigenic training records
+YNR032W,YNR032W,current,True,303,True,
+YNR033W,YNR033W,current,True,10,False,only 10 trigenic training records
+YNR047W,YNR047W,current,True,10,False,only 10 trigenic training records
+YNR057C,YNR057C,current,True,10,False,only 10 trigenic training records
+YOL016C,YOL016C,current,True,9,False,only 9 trigenic training records
+YOL068C,YOL068C,current,True,9,False,only 9 trigenic training records
+YOL086C,YOL086C,current,True,276,True,
+YOL089C,YOL089C,current,True,11,False,only 11 trigenic training records
+YOL090W,YOL090W,current,True,808,True,
+YOL136C,YOL136C,current,True,301,True,
+YOR002W,YOR002W,current,True,810,True,
+YOR025W,YOR025W,current,True,303,True,
+YOR028C,YOR028C,current,True,1041,True,
+YOR038C,YOR038C,current,True,726,True,
+YOR061W,YOR061W,current,True,272,True,
+YOR113W,YOR113W,current,True,485,True,
+YOR144C,YOR144C,current,True,762,True,
+YOR156C,YOR156C,current,True,270,True,
+YOR162C,YOR162C,current,True,9,False,only 9 trigenic training records
+YOR171C,YOR171C,current,True,289,True,
+YOR172W,YOR172W,current,True,1090,True,
+YOR209C,YOR209C,current,True,9,False,only 9 trigenic training records
+YOR231W,YOR231W,current,True,9,False,only 9 trigenic training records
+YOR241W,YOR241W,current,True,0,False,only 0 trigenic training records
+YOR243C,YOR243C,current,True,10,False,only 10 trigenic training records
+YOR245C,YOR245C,current,True,291,True,
+YOR279C,YOR279C,current,True,293,True,
+YOR285W,YOR285W,current,True,9,False,only 9 trigenic training records
+YOR304W,YOR304W,current,True,293,True,
+YOR344C,YOR344C,current,True,298,True,
+YOR371C,YOR371C,current,True,4129,True,
+YOR377W,YOR377W,current,True,10,False,only 10 trigenic training records
+YPL026C,YPL026C,current,True,11,False,only 11 trigenic training records
+YPL038W,YPL038W,current,True,10,False,only 10 trigenic training records
+YPL046C,YPL046C,current,True,493,True,
+YPL087W,YPL087W,current,True,1050,True,
+YPL088W,YPL088W,current,True,10,False,only 10 trigenic training records
+YPL089C,YPL089C,current,True,1298,True,
+YPL140C,YPL140C,current,True,10,False,only 10 trigenic training records
+YPL181W,YPL181W,current,True,295,True,
+YPL214C,YPL214C,current,True,10,False,only 10 trigenic training records
+YPL227C,YPL227C,current,True,10,False,only 10 trigenic training records
+YPL230W,YPL230W,current,True,1083,True,
+YPL256C,YPL256C,current,True,1092,True,
+YPL273W,YPL273W,current,True,1108,True,
+YPL274W,YPL274W,current,True,1123,True,
+YPR015C,YPR015C,current,True,11,False,only 11 trigenic training records
+YPL023C,YPL023C,current,True,11,False,only 11 trigenic training records
+YPR006C,YPR006C,current,True,11,False,only 11 trigenic training records
+YPR008W,YPR008W,current,True,1040,True,
+YPR009W,YPR009W,current,True,11,False,only 11 trigenic training records
+YPR065W,YPR065W,current,True,810,True,
+YPL021W,YPL021W,current,True,11,False,only 11 trigenic training records
+YPL177C,YPL177C,current,True,1073,True,
+YOL093W,YOL093W,current,True,282,True,
+YOR123C,YOR123C,current,True,275,True,
+YOR058C,YOR058C,current,True,304,True,
+YPL144W,YPL144W,current,True,286,True,
+YPR156C,YPR156C,current,True,1076,True,
+YPR160W,YPR160W,current,True,485,True,
+YPR125W,YPR125W,current,True,11,False,only 11 trigenic training records
+YPR052C,YPR052C,current,True,11,False,only 11 trigenic training records
+YPR121W,YPR121W,current,True,11,False,only 11 trigenic training records
+YPR119W,YPR119W,current,True,295,True,
+YPR145W,YPR145W,current,True,11,False,only 11 trigenic training records
+YPR193C,YPR193C,current,True,551,True,
+YPR140W,YPR140W,current,True,312,True,
+YPR196W,YPR196W,current,True,11,False,only 11 trigenic training records
+YPR139C,YPR139C,current,True,0,False,only 0 trigenic training records
+YPR120C,YPR120C,current,True,313,True,
+YPR184W,YPR184W,current,True,11,False,only 11 trigenic training records
+YPR138C,YPR138C,current,True,1110,True,
+YPR060C,YPR060C,current,True,11,False,only 11 trigenic training records
+YPR074C,YPR074C,current,True,11,False,only 11 trigenic training records
+YPL061W,YPL061W,current,True,10,False,only 10 trigenic training records
+YPL212C,YPL212C,current,True,293,True,
+YPL139C,YPL139C,current,True,10,False,only 10 trigenic training records

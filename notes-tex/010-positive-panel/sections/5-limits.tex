@@ -1,0 +1,69 @@
+\section{Established, and not\secstatus{todo}}
+
+\subsection{Established\secstatus{todo}}
+
+The model retrieves published positive trigenic interactions well above base rate
+on the held-out split, and its margin over a model that cannot represent
+interaction is proportionally wider there than on negatives: average precision
+$0.0352$ against $0.0110$ at the Kuzmin 2020 call, and $0.111$ against $0.0109$
+at $\tau > +0.20$.
+
+Predictions of the size this panel rests on are calibrated on labeled data.
+Records predicted above $+0.20$ have mean actual $\tau$ of $+0.312$, the
+regression of actual on predicted has slope $0.877$, and the model emits the same
+range on the test split that it emits here.
+
+Confidence tracks the presence of training evidence rather than its absence,
+reversing the previous panel's relationship, and the leading gene's positive
+enrichment is visible in the labels at 3.0 times base rate.
+
+The design closes $\tau$ on 20 triples with 20 doubles and 51 strains against the
+previous 33 and 65, and holds every gene at 6 of 20 triples by construction.
+
+\subsection{Not established\secstatus{todo}}
+
+\textbf{Whether the ranking survives a disjoint split.} Every retrieval and
+calibration number here comes from a split that is random over records. The
+additive null falls from $0.400$ to $0.127 \pm 0.033$ once query doubles are made
+disjoint, and the transformer has not been refit there. Since only 22 of the 420
+query doubles are representable in the 526-gene space, this panel sits in that
+unmeasured regime almost entirely.
+
+\textbf{Whether tier A is an interaction claim or a gene claim.} That is the
+question the panel is built to answer, and it is open until it is measured.
+\texttt{YER059W} is enriched for strong interactions in both directions,
+$16.3$ percent above $+0.08$ and $14.1$ percent below $-0.08$, so a large
+measured effect of either sign is consistent with it being a high-variance gene
+rather than with the specific triples being right.
+
+\textbf{Whether the assay can report $\tau$ at all yet.} On the previous round
+singles reproduced Costanzo fitness at $r = 0.706$ but doubles did not
+($r = 0.255$), and measured digenic $\varepsilon$ against published
+$\varepsilon$ gave $r = -0.245$. The diagnosis was a normalization artifact: the
+denominator rests on a single wild-type colony, 8 of 12 singles scored above
+on-plate wild type, and all 13 $\varepsilon$ came out negative with
+$\mathrm{corr}(\varepsilon, f_a f_b) = -0.926$. That shift is undiagnosed, and no
+correction should be applied before it is.
+
+\textbf{The strain-count cost of this panel.} The between-plate standard
+deviation of $0.140$ that the current layout advice rests on was an artifact of
+one failed plate; clean plates agree to $0.028$, which inverts the advice from
+``plates are the only lever'' to ``the colony term dominates''. The design has
+not been re-planned since, and the record carries two incompatible figures for
+what packing more strains costs.
+
+\subsection{Next\secstatus{todo}}
+
+\begin{enumerate}
+  \item Re-run the layout design at the corrected between-plate standard
+    deviation before fixing the plate, and settle the strain-count cost.
+  \item Fix the wild-type normalization, since $\tau$ closure is worthless if
+    $\varepsilon$ is not scale-invariant.
+  \item Train the transformer on the query-pair-disjoint split. Every claim here
+    is conditional on a split whose leakage is quantified and whose replacement
+    has not been run.
+  \item Read the panel from the plating artifact each run rather than freezing a
+    gene set as a constant, which is how the previous basis silently went stale.
+  \item Record every cross attempt with a date and an outcome, including
+    failures.
+\end{enumerate}

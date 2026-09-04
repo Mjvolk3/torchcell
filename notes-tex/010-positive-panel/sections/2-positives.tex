@@ -1,0 +1,96 @@
+%% SOURCE: experiments/010-kuzmin-tmi/scripts/positive_interaction_retrieval.py -- values read from experiments/010-kuzmin-tmi/results/positive_interaction_retrieval.csv; calibration from review_inference_1_top_triples.py and inference_1_training_overlap.py
+\section{Whether the model can pick positives\secstatus{todo}}
+
+Nominating positive interactions had not been tested. The earlier retrieval
+measurement used the Kuzmin 2018 call, which is one-sided by construction:
+``we used an established interaction magnitude cut-off for digenic interactions
+$(p < 0.05, |\varepsilon| > 0.08)$ and trigenic interactions
+$(p < 0.05, \tau < -0.08)$'', with positives excluded because
+``We focused exclusively on the analysis of deleterious negative trigenic
+interactions.'' The symmetric form belongs to Kuzmin 2020 and the 2021 protocol,
+which do score positives, and it is what makes the question askable on the same
+records.
+
+\subsection{Positives are well represented in the labels\secstatus{todo}}
+
+Of the 376{,}732 records in this build, 20{,}426 have $\tau > +0.08$ and 1{,}773
+have $\tau > +0.20$, against a label standard deviation of $0.0633$ and a maximum
+of $1.128$. The model trains on them.
+
+\subsection{Retrieval, and the margin is wider than on negatives\secstatus{todo}}
+
+Precision at $K = 100$ on the held-out test split, 37{,}673 records.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+Model & P@100 & enrichment & average precision \\
+\midrule
+\multicolumn{4}{l}{\emph{Kuzmin 2020 call, $\tau > +0.08$ and $p < 0.05$, base rate 0.526\%}} \\
+B1 additive ridge & 0.030 & 5.7$\times$  & 0.0110 \\
+B5 nonlinear MLP  & 0.040 & 7.6$\times$  & 0.0166 \\
+CGT ensemble      & 0.100 & 19.0$\times$ & 0.0352 \\
+\midrule
+\multicolumn{4}{l}{\emph{magnitude only, $\tau > +0.20$, base rate 0.422\%}} \\
+B1 additive ridge & 0.040 & 9.5$\times$  & 0.0109 \\
+B5 nonlinear MLP  & 0.100 & 23.7$\times$ & 0.0377 \\
+CGT ensemble      & 0.210 & 49.8$\times$ & 0.1110 \\
+\bottomrule
+\end{tabular}
+\caption{Retrieving published positive trigenic interactions on the
+random-over-records test split. The transformer's average precision is
+$3.2$ times the additive null's at the published-style call and $10.2$ times at
+$\tau > +0.20$. On the negative side the same ratio was $1.9$.}
+\end{table}
+
+The margin over a model that cannot represent interaction is proportionally
+larger on positives than on negatives, which is the opposite of what the
+one-sided published call would suggest.
+
+\subsection{Large predictions are calibrated\secstatus{todo}}
+
+The previous panel's collapsed doubles scored near $0.71$, more than ten label
+standard deviations above the mean, and that inflation was the signature of the
+bug. A top prediction on \texttt{inference\_1} is $+0.690$, so the same check is
+owed here.
+
+Binning the held-out test predictions against actual $\tau$: the 18 records
+predicted above $+0.20$ have mean actual $\tau$ of $+0.312$ and 66.7 percent are
+real calls at $\tau > +0.08$; the 5 predicted above $+0.30$ have mean actual
+$\tau$ of $+0.802$ and all are real. A regression of actual on predicted has
+slope $0.877$ and intercept $-0.0018$. Test-split predictions themselves span
+$-0.576$ to $+0.631$, so a prediction near $+0.65$ is inside the range the model
+demonstrably emits on labeled data rather than outside it.
+
+\subsection{Confidence now tracks presence of evidence\secstatus{todo}}
+
+Over the 200 most positive \texttt{inference\_1} triples, the Spearman
+correlation between prediction and the least-supported gene's trigenic record
+count is $+0.267$ at $p = 1.3\times10^{-4}$, and between prediction and the mean
+record count $+0.279$. Thirty-one of the 200 contain a gene with no record, not
+the whole list. The direction is the reverse of the previous panel's.
+
+The panel genes back this at the label level. \texttt{YER059W} appears in 1{,}097
+training triples of which $16.3$ percent exceed $+0.08$, a $3.0$ times
+enrichment over the $5.4$ percent base rate. \texttt{YKR028W} reaches $14.7$
+percent. The model's preference is visible in the labels it was trained on.
+
+\subsection{What none of this covers\secstatus{todo}}
+
+Every number above comes from the split that is random over records, where a
+Kuzmin query double appears in training and test at once. On a query-pair
+disjoint split the additive null falls from $0.400$ to $0.127 \pm 0.033$ test
+Pearson and the nonlinear baseline drops below it. The transformer has never been
+refit there. Only 22 of the 420 query doubles have both members inside the
+526-gene space, so \texttt{inference\_1} is very nearly query-pair disjoint by
+construction and its nominations live in exactly the regime that has not been
+measured.
+
+The positive side of that split is underpowered rather than clearly collapsed.
+It holds 51 published positive calls in 37{,}680 records, a base rate of $0.135$
+percent, and the additive ridge retrieves 3 of them in its top 100. The
+enrichment ratio that produces, $22.2$ times, is not comparable to the random
+split's and rests on three records. Negative retrieval on the same split falls to
+$1.8$ times, which is close to chance, but the positive comparison cannot yet be
+called either way.

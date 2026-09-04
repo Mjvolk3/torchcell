@@ -1,0 +1,74 @@
+%% SOURCE: experiments/010-kuzmin-tmi/scripts/positive_panel_selection.py -- cost table read from experiments/010-kuzmin-tmi/results/positive_panel_summary.json; previous-panel column from notes/experiments.W019-echo-crispr-array.build-list.md
+\section{The design\secstatus{todo}}
+
+\subsection{Complete blocks\secstatus{todo}}
+
+A complete design on $k$ genes contributes $\binom{k}{3}$ triples using
+$\binom{k}{2}$ doubles, and every gene appears in exactly $\binom{k-1}{2}$ of
+them. Three consequences follow, and together they answer the previous panel's
+failures without a single penalty term.
+
+Balance is structural. At $k = 5$ every gene sits in 6 of the block's 10 triples,
+so no objective can produce a hub because the shape forbids one.
+
+Closure is cheapest. Twenty triples chosen freely from an 8-gene set pull in most
+of $\binom{8}{2} = 28$ doubles; two complete 5-blocks give 20 triples on exactly
+20 doubles. A single complete 6-block is cheaper still, 20 triples on 15 doubles,
+but it spans only 6 genes and offers no internal contrast.
+
+Two blocks are two experiments. A block that fails at the bench does not take the
+round with it, and a disjoint second block tests whether the ranking means
+anything away from the first.
+
+\subsection{The objective is the worst checkpoint\secstatus{todo}}
+
+Two training runs share only $0.04$ to $0.14$ of their top 100 on this space, so
+a mean across checkpoints can be carried by one optimistic run. Blocks are
+therefore ranked on the median of their ten triples' \emph{minimum} across the
+three checkpoints, which makes disagreement cost score rather than average out.
+The median is used rather than the block's own worst triple because the worst is
+set by whichever single triple the checkpoints disagree on most, which for the
+leading block is the one triple lacking its hub gene.
+
+\subsection{Gates applied before scoring\secstatus{todo}}
+
+Every gene must resolve through the shared reconciler to a current systematic
+name, that name must be in the model's 6{,}607-gene set, no two panel genes may
+resolve to the same locus, and the gene must carry at least 200 trigenic
+training records. The support floor is set where the previous panel's
+distribution cliff was, from 519 down to 10 down to 0. Single-mutant fitness is
+aggregated across strain backgrounds by mean, and the per-strain spread is
+reported rather than collapsed.
+
+A pair is treated as constructible exactly when some triple in the inference
+space contains it, which inherits the upstream guarantee: every
+\texttt{inference\_1} triple is a viable three-clique whose singles all exceed
+$0.9$ fitness and whose three doubles were all measured at $1.0$ or above.
+
+\subsection{Cost\secstatus{todo}}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrr}
+\toprule
+& this panel & previous panel \\
+\midrule
+genes                       & 10 & 11 \\
+triples                     & 20 & 20 \\
+doubles for $\tau$ closure  & 20 & 33 \\
+singles                     & 10 & 11 \\
+strains on the plate        & 51 & 65 \\
+triples per gene            & 6 for every gene & 46 down to 16 \\
+\bottomrule
+\end{tabular}
+\caption{The complete-block design closes $\tau$ on 20 triples with 13 fewer
+doubles and 14 fewer strains, and holds every gene at the same participation.}
+\end{table}
+
+Fifty-one strains at 384 wells is 7 replicates each with wild type on every
+plate. Colonies within a plate are pseudo-replicates, so replicate count is not
+the lever; on clean plates the between-plate standard deviation is $0.028$ and
+the colony term dominates. The strain-count cost of a larger panel has not been
+re-planned since that correction, and the two figures in the record disagree,
+$+27$ percent against under $10$ percent for a comparable panel growth. That is
+worth settling before the layout is fixed.

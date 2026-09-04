@@ -77,6 +77,11 @@ INFERENCE_DIR = osp.join(
 CHECKPOINTS = {"M01_lzs9pcj3": "0.4520", "M02_yv4r30bi": "0.4472", "M03_c7671wgj": "0.4619"}
 QUERY_PAIR_MIN_COUNT = 5
 HUB = "YER059W"
+# The other half of the hub's only query double. PCL6 and PCL7 are paralogs
+# from the whole genome duplication, both Pho85p cyclins of the Pho80p
+# subfamily, so the screen that produced every YER059W record is a
+# redundant-paralog double mutant.
+HUB_PARALOG = "YIL050W"
 PANEL = [
     "YDR423C", "YER059W", "YGL060W", "YGR121C", "YHR003C",
     "YHR204W", "YJR082C", "YKR028W", "YLR258W", "YPL181W",
@@ -217,6 +222,89 @@ def memorization(rows, tau, names, col, base, query) -> dict[str, object]:
     }
 
 
+def hub_provenance(rows, tau, names, col, screens: dict[str, int]) -> dict[str, object]:
+    """Is the hub's positive enrichment real, and how did it enter the selection?
+
+    Two questions that a leakage story alone does not settle. If one-screen genes
+    were generically enriched for positives, the hub's enrichment would be an
+    artifact of the statistic rather than a property of its screen. They are not:
+    their median enrichment is the lowest of any diversity band. So the screen
+    found real positive interactions, and what is open is whether they transfer
+    to a triple that restores the paralog the screen deleted.
+
+    The selection-list membership is read from the 006 expansion audit, which is
+    the file that decided the 601-gene input list.
+    """
+    base = float((tau > 0.08).mean())
+    recs = []
+    for c, g in enumerate(names):
+        m = (rows == c).any(axis=1)
+        if m.sum() < 200:
+            continue
+        recs.append(
+            {
+                "gene": g,
+                "screens": screens.get(g, 0),
+                "n_records": int(m.sum()),
+                "frac_pos": float((tau[m] > 0.08).mean()),
+            }
+        )
+    d = pd.DataFrame(recs)
+    d["enrichment"] = d["frac_pos"] / base
+    d = d.sort_values("enrichment", ascending=False).reset_index(drop=True)
+    rank = int(d.index[d["gene"] == HUB][0]) + 1
+
+    bands = []
+    for lo, hi, lab in [(1, 1, "1"), (2, 9, "2-9"), (10, 49, "10-49"), (50, 10**9, "50+")]:
+        s_ = d[(d["screens"] >= lo) & (d["screens"] <= hi)]
+        if len(s_) == 0:
+            continue
+        bands.append(
+            {
+                "screens": lab,
+                "n_genes": len(s_),
+                "median_enrichment": float(s_["enrichment"].median()),
+                "max_enrichment": float(s_["enrichment"].max()),
+            }
+        )
+    d.to_csv(osp.join(RESULTS_DIR, "screen_diversity_gene_enrichment.csv"), index=False)
+    pd.DataFrame(bands).to_csv(
+        osp.join(RESULTS_DIR, "screen_diversity_enrichment_bands.csv"), index=False
+    )
+
+    audit = pd.read_csv(
+        osp.join(
+            EXPERIMENT_ROOT,
+            "006-kuzmin-tmi/results/inference_preprocessing_expansion",
+            "expanded_genes_analysis.csv",
+        )
+    )
+    def membership(g: str) -> dict[str, object]:
+        r = audit[audit["gene"] == g]
+        if r.empty:
+            return {"gene": g, "in_audit": False}
+        r = r.iloc[0]
+        return {
+            "gene": g,
+            "in_audit": True,
+            "ohya_morphology": bool(r["in_ohya_morphology"]),
+            "kemmeren_responsive": bool(r["in_kemmeren_responsive"]),
+            "sameith_doubles": bool(r["in_sameith_doubles"]),
+            "expanded_metabolic": bool(r["in_expanded_metabolic"]),
+            "overlap_score": int(r["overlap_score"]),
+            "selected": bool(r["is_selected"]),
+            "selection_reason": str(r["selection_reason"]),
+        }
+
+    return {
+        "hub_enrichment_pos_0.08": float(d.loc[d["gene"] == HUB, "enrichment"].iloc[0]),
+        "hub_enrichment_rank": rank,
+        "n_genes_ranked": int(len(d)),
+        "enrichment_by_screen_band": bands,
+        "selection_membership": [membership(HUB), membership(HUB_PARALOG)],
+    }
+
+
 def main() -> None:
     os.makedirs(RESULTS_DIR, exist_ok=True)
     rows, tau, names, col, base, recurring, query = training_structure()
@@ -256,6 +344,8 @@ def main() -> None:
     tail["base_rate_one_screen"] = float(one.mean())
     tail["median_min_screens_whole_space"] = int(np.median(min_screens))
     mem.update(tail)
+    prov = hub_provenance(rows, tau, names, col, dict(zip(genes["gene"], genes["n_distinct_screens"])))
+    mem.update(prov)
     with open(osp.join(RESULTS_DIR, "screen_diversity_summary.json"), "w") as f:
         json.dump(
             {

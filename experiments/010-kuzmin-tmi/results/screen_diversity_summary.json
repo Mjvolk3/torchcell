@@ -15,6 +15,59 @@
   "n_above_0.16": 15,
   "base_rate_one_screen": 0.04456464165634198,
   "median_min_screens_whole_space": 10,
+  "hub_enrichment_pos_0.08": 3.009508588308768,
+  "hub_enrichment_rank": 49,
+  "n_genes_ranked": 1775,
+  "enrichment_by_screen_band": [
+    {
+      "screens": "1",
+      "n_genes": 88,
+      "median_enrichment": 0.5344631461299942,
+      "max_enrichment": 3.3774906871430277
+    },
+    {
+      "screens": "2-9",
+      "n_genes": 18,
+      "median_enrichment": 0.9659344852083771,
+      "max_enrichment": 3.1338959276055123
+    },
+    {
+      "screens": "10-49",
+      "n_genes": 498,
+      "median_enrichment": 0.7359550888494267,
+      "max_enrichment": 4.795718301756921
+    },
+    {
+      "screens": "50+",
+      "n_genes": 1171,
+      "median_enrichment": 0.7377499265641829,
+      "max_enrichment": 5.559598728892766
+    }
+  ],
+  "selection_membership": [
+    {
+      "gene": "YER059W",
+      "in_audit": true,
+      "ohya_morphology": true,
+      "kemmeren_responsive": true,
+      "sameith_doubles": false,
+      "expanded_metabolic": false,
+      "overlap_score": 2,
+      "selected": true,
+      "selection_reason": "score>=2"
+    },
+    {
+      "gene": "YIL050W",
+      "in_audit": true,
+      "ohya_morphology": true,
+      "kemmeren_responsive": false,
+      "sameith_doubles": false,
+      "expanded_metabolic": false,
+      "overlap_score": 1,
+      "selected": false,
+      "selection_reason": "excluded_low_overlap"
+    }
+  ],
   "min_distinct_screens_gate": 50,
   "panel_genes_failing_gate": [
     "YER059W",

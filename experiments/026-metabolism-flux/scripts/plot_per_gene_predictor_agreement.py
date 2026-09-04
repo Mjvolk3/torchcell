@@ -47,6 +47,7 @@ from torchcell.timestamp import timestamp
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
+    PLOT_PALETTE_FILL,
     apply_paper_style,
     mm_to_in,
     savefig_true_size_svg,
@@ -136,7 +137,7 @@ def main() -> None:
     }
 
     fig, axes = plt.subplots(
-        2, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(105)), dpi=300
+        2, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(108)), dpi=300
     )
 
     # --- a. the across-predictor spread for one gene ---------------------------
@@ -151,7 +152,7 @@ def main() -> None:
         fontsize=5,
         va="top",
     )
-    ax.set_xlabel(f"across-predictor spread of {symbol} (decades)")
+    ax.set_xlabel(f"across-predictor spread of {symbol} (orders of magnitude)")
     ax.set_ylabel("genes")
     box(ax)
     summary["spread_median_decades"] = float(np.median(spread))
@@ -203,10 +204,12 @@ def main() -> None:
             both = table[[left, right]].dropna()
             if len(both) >= 3:
                 grid[i, j] = both[left].corr(both[right], method="spearman")
-    # Sequential map built from the repo palette rather than a matplotlib default, so the
-    # panel stays inside the green-free scheme: blue (low) through sand to orange (high).
+    # The same white-to-orange ramp 020 uses for its Merzbacher comparison matrices
+    # (`CGT_CMAP` in plot_merzbacher_comparison.py), so agreement matrices across the
+    # betaxanthin work read alike rather than each inventing a scale.
     agreement_cmap = LinearSegmentedColormap.from_list(
-        "tc_agreement", [PLOT_PALETTE[4], PLOT_PALETTE[15], PLOT_PALETTE[0]]
+        "tc_orange",
+        ["#FFFFFF", PLOT_PALETTE_FILL[0], PLOT_PALETTE[0], PLOT_PALETTE[6]],
     )
     agreement_cmap.set_bad("#FFFFFF")
     image = ax.imshow(np.ma.masked_invalid(grid), cmap=agreement_cmap, vmin=0, vmax=1)
@@ -218,8 +221,10 @@ def main() -> None:
         for j in range(n):
             if np.isfinite(grid[i, j]):
                 ax.text(j, i, f"{grid[i, j]:.2f}", ha="center", va="center", fontsize=5,
-                        color="white" if grid[i, j] < 0.35 else "black")
-    bar = fig.colorbar(image, ax=ax, fraction=0.046, pad=0.03)
+                        color="white" if grid[i, j] > 0.80 else "black")
+    # A slim, short colorbar: the default steals width from the matrix and pushes the
+    # panel right, which is what left panel c cramped against panel d.
+    bar = fig.colorbar(image, ax=ax, fraction=0.030, pad=0.02, shrink=0.82)
     bar.set_label("gene-level Spearman", fontsize=6)
     bar.ax.tick_params(labelsize=5, width=0.5)
     bar.outline.set_linewidth(0.5)
@@ -237,15 +242,14 @@ def main() -> None:
     ax = axes[1, 1]
     wanted = CASSETTE + UPSTREAM
     labels, offsets = [], []
+    absent_rows: list[int] = []
     absent: list[str] = []
     for row, (orf, common) in enumerate(wanted):
         labels.append(common)
         offsets.append(row)
         if orf not in table.index:
             absent.append(common)
-            ax.text(0.5, row, "no reaction in yeast-GEM", fontsize=5, style="italic",
-                    color="#666666", va="center", ha="center",
-                    transform=ax.get_yaxis_transform())
+            absent_rows.append(row)
             continue
         for k, predictor in enumerate(predictors):
             value = table.loc[orf, predictor]
@@ -253,26 +257,52 @@ def main() -> None:
                 ax.scatter(value, row, s=9, color=PLOT_PALETTE[k % len(PLOT_PALETTE)],
                            edgecolors="black", linewidths=0.3, zorder=3,
                            label=DISPLAY.get(predictor, predictor) if row == 2 else None)
+
+    # The absent genes get ONE shaded band and ONE label, not a repeated sentence per row.
+    # Both heterologous members of the cassette are missing for the same reason, so saying
+    # it twice reads as two findings and collides with the tick labels.
+    if absent_rows:
+        ax.axhspan(
+            min(absent_rows) - 0.45, max(absent_rows) + 0.45,
+            color=PLOT_PALETTE[5], alpha=0.13, linewidth=0, zorder=0,
+        )
     ax.set_yticks(offsets)
     ax.set_yticklabels(labels)
     ax.invert_yaxis()
     ax.axhline(len(CASSETTE) - 0.5, color="black", linewidth=0.5, linestyle=":")
     ax.set_xlabel(f"log$_{{10}}$ {symbol}")
-    ax.set_ylabel("Btx cassette (top), tyrosine supply (bottom)")
+    ax.set_ylabel("cassette / tyrosine supply")
     left_limit, right_limit = ax.get_xlim()
-    ax.set_xlim(left_limit, right_limit + 0.42 * (right_limit - left_limit))
+    span = right_limit - left_limit
+    ax.set_xlim(left_limit, right_limit + 0.46 * span)
+    if absent_rows:
+        # Placed at the right, inside the space just opened for the legend, so it sits
+        # beside the shaded band rather than across the gene names.
+        ax.text(
+            0.985, (min(absent_rows) + max(absent_rows)) / 2,
+            "no reaction\nin yeast-GEM",
+            fontsize=4.8, style="italic", color="#555555", va="center", ha="right",
+            transform=ax.get_yaxis_transform(),
+        )
     handles, names = ax.get_legend_handles_labels()
     if handles:
-        ax.legend(handles, names, loc="center right", frameon=False, fontsize=5,
-                  handletextpad=0.2, borderpad=0.1, labelspacing=0.25)
+        ax.legend(handles, names, loc="lower right", frameon=False, fontsize=4.8,
+                  handletextpad=0.2, borderpad=0.1, labelspacing=0.22)
     box(ax)
     summary["cassette_genes_absent_from_all_predictors"] = absent
 
     for letter, ax in zip("abcd", axes.flatten()):
-        ax.text(-0.16, 1.06, letter, transform=ax.transAxes, fontsize=8,
+        ax.text(-0.20, 1.08, letter, transform=ax.transAxes, fontsize=8,
                 fontweight="bold", va="top")
 
-    fig.tight_layout()
+    fig.tight_layout(w_pad=2.4, h_pad=2.0)
+
+    # Reclaim the dead space to the left of panel c. Done after tight_layout because that
+    # is what created it: the matrix is centred in its cell against tick labels far wider
+    # than panel a's, so the axes drifts right of the column above it.
+    heat_ax = axes[1, 0]
+    pos = heat_ax.get_position()
+    heat_ax.set_position([pos.x0 - 0.055, pos.y0, pos.width + 0.030, pos.height])
     base = f"per_gene_agreement_{parameter}{stamp}"
     savefig_true_size_svg(fig, osp.join(OUT_DIR, f"{base}.svg"))
     fig.savefig(osp.join(OUT_DIR, f"{base}.png"), dpi=300)

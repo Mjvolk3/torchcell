@@ -148,11 +148,14 @@ def main() -> None:
     ax.text(
         float(np.median(spread)),
         ax.get_ylim()[1] * 0.94,
-        f"  median {np.median(spread):.2f}",
+        f"  median {np.median(spread):.2f}  ({10 ** np.median(spread):.0f}-fold)",
         fontsize=5,
         va="top",
     )
-    ax.set_xlabel(f"across-predictor spread of {symbol} (orders of magnitude)")
+    ax.set_xlabel(
+        f"across-predictor spread of {symbol},  "
+        r"$\log_{10}(\mathrm{max}/\mathrm{min})$"
+    )
     ax.set_ylabel("genes")
     box(ax)
     summary["spread_median_decades"] = float(np.median(spread))

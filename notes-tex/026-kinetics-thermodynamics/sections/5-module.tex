@@ -18,6 +18,42 @@ energies set the reaction potential whose sign the second-law penalty acts on, w
 what makes that penalty a physical statement rather than a regularizer. The $K_M$ table is
 built and not yet enabled, for the reason Section~\ref{sec:limits} gives.
 
+\subsection{Why these two tables, in two equations\secstatus{todo}}
+
+Each table earns its place by removing a specific failure the stoichiometry alone cannot.
+
+\paragraph{$k_{cat}$ is what lets a genotype change a flux.} The capacity bound is
+\begin{equation}
+  |\nu_j| \;\le\; k_{cat,j}\,E_{g(j)},
+  \qquad
+  E_{g(j)} = f\big(H_{\mathrm{pert}}\big),
+  \label{eq:capacity}
+\end{equation}
+with $E$ the enzyme abundance folded up from the gene representation. Without it the only
+limits on $\nu_j$ are yeast-GEM's own bounds, and those carry no capacity at all:
+\textbf{4{,}129 of 4{,}131 reactions sit at $\pm1000$ or $0$}, which encodes direction and
+on-off and nothing else. A gene deletion would then have no route to change the
+\emph{magnitude} of any flux. Equation~\eqref{eq:capacity} is the unit conversion from an
+amount of enzyme to a ceiling on rate, and it is the only term through which the genotype
+reaches the network's capacity.
+
+\paragraph{$\Delta_r G$ is what forbids loops without an integer variable.} The second-law
+constraint is
+\begin{equation}
+  \nu_j\,\Delta_r G_j \;\le\; 0,
+  \qquad
+  \Delta_r G_j = \Delta_r G'^{\circ}_j + RT\!\!\sum_{i \neq \mathrm{H}^+}\!\! S_{ij}\ln c_i,
+  \label{eq:secondlaw}
+\end{equation}
+where the tabulated formation energies supply the first term. Because $\Delta_r G$ is a
+difference of potentials it sums to zero around any cycle, so no cycle can run downhill at
+every step, and Equation~\eqref{eq:secondlaw} therefore forbids internal loops. That
+matters because capacity does not: requiring growth at 90 percent of optimum narrows 2{,}316
+reactions, 56.1 percent of the network, and leaves \textbf{427 reactions still free to take
+any value in $\pm1000$}, all of them internal loops. Only the thermodynamic term removes
+those, and it does so with no binary variable, which is what a loopless flux balance program
+needs one for.
+
 The heterologous cassette enters as a typed perturbation on the genome-scale model, which
 is what puts a betaxanthin pathway and a gene deletion inside the same object rather than
 in two parallel code paths.

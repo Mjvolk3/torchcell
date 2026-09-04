@@ -473,8 +473,8 @@ L 0 3.5
      </g>
     </g>
     <g id="text_8">
-     <!-- across-predictor spread of $K_M$ (orders of magnitude) -->
-     <g transform="translate(65.247292 142.431362)">
+     <!-- across-predictor spread of $K_M$,  $\log_{10}(\mathrm{max}/\mathrm{min})$ -->
+     <g transform="translate(71.967292 142.431362)">
       <text>
        <tspan x="0" y="-0.625" style="font-size: 6px; font-family: 'Arial'">a</tspan>
        <tspan x="3.336914" y="-0.625" style="font-size: 6px; font-family: 'Arial'">c</tspan>
@@ -504,29 +504,24 @@ L 0 3.5
        <tspan x="68.030273" y="-0.625" style="font-size: 6px; font-family: 'Arial'">f</tspan>
        <tspan x="69.697266" y="-0.625" style="font-size: 6px; font-family: 'Arial'"> </tspan>
        <tspan x="71.364258" y="-0.625" style="font-size: 6px; font-family: 'Arial'">K</tspan>
-       <tspan x="79.268072" y="-0.625" style="font-size: 6px; font-family: 'Arial'"> </tspan>
-       <tspan x="80.935064" y="-0.625" style="font-size: 6px; font-family: 'Arial'">(</tspan>
-       <tspan x="82.933111" y="-0.625" style="font-size: 6px; font-family: 'Arial'">o</tspan>
-       <tspan x="86.270025" y="-0.625" style="font-size: 6px; font-family: 'Arial'">r</tspan>
-       <tspan x="88.268072" y="-0.625" style="font-size: 6px; font-family: 'Arial'">d</tspan>
-       <tspan x="91.604986" y="-0.625" style="font-size: 6px; font-family: 'Arial'">e</tspan>
-       <tspan x="94.9419" y="-0.625" style="font-size: 6px; font-family: 'Arial'">r</tspan>
-       <tspan x="96.939947" y="-0.625" style="font-size: 6px; font-family: 'Arial'">s</tspan>
-       <tspan x="99.939947" y="-0.625" style="font-size: 6px; font-family: 'Arial'"> </tspan>
-       <tspan x="101.606939" y="-0.625" style="font-size: 6px; font-family: 'Arial'">o</tspan>
-       <tspan x="104.943853" y="-0.625" style="font-size: 6px; font-family: 'Arial'">f</tspan>
-       <tspan x="106.610845" y="-0.625" style="font-size: 6px; font-family: 'Arial'"> </tspan>
-       <tspan x="108.277838" y="-0.625" style="font-size: 6px; font-family: 'Arial'">m</tspan>
-       <tspan x="113.275884" y="-0.625" style="font-size: 6px; font-family: 'Arial'">a</tspan>
-       <tspan x="116.612798" y="-0.625" style="font-size: 6px; font-family: 'Arial'">g</tspan>
-       <tspan x="119.949713" y="-0.625" style="font-size: 6px; font-family: 'Arial'">n</tspan>
-       <tspan x="123.286627" y="-0.625" style="font-size: 6px; font-family: 'Arial'">i</tspan>
-       <tspan x="124.619634" y="-0.625" style="font-size: 6px; font-family: 'Arial'">t</tspan>
-       <tspan x="126.286627" y="-0.625" style="font-size: 6px; font-family: 'Arial'">u</tspan>
-       <tspan x="129.623541" y="-0.625" style="font-size: 6px; font-family: 'Arial'">d</tspan>
-       <tspan x="132.960455" y="-0.625" style="font-size: 6px; font-family: 'Arial'">e</tspan>
-       <tspan x="136.297369" y="-0.625" style="font-size: 6px; font-family: 'Arial'">)</tspan>
+       <tspan x="79.268072" y="-0.625" style="font-size: 6px; font-family: 'Arial'">,</tspan>
+       <tspan x="80.935064" y="-0.625" style="font-size: 6px; font-family: 'Arial'"> </tspan>
+       <tspan x="82.602056" y="-0.625" style="font-size: 6px; font-family: 'Arial'"> </tspan>
+       <tspan x="84.269048" y="-0.625" style="font-size: 6px; font-family: 'Arial'">l</tspan>
+       <tspan x="85.602056" y="-0.625" style="font-size: 6px; font-family: 'Arial'">o</tspan>
+       <tspan x="88.93897" y="-0.625" style="font-size: 6px; font-family: 'Arial'">g</tspan>
+       <tspan x="98.183817" y="-0.625" style="font-size: 6px; font-family: 'Arial'">(</tspan>
+       <tspan x="100.181864" y="-0.625" style="font-size: 6px; font-family: 'Arial'">m</tspan>
+       <tspan x="105.17991" y="-0.625" style="font-size: 6px; font-family: 'Arial'">a</tspan>
+       <tspan x="108.516824" y="-0.625" style="font-size: 6px; font-family: 'Arial'">x</tspan>
+       <tspan x="111.516824" y="-0.625" style="font-size: 6px; font-family: 'Arial'">/</tspan>
+       <tspan x="113.183817" y="-0.625" style="font-size: 6px; font-family: 'Arial'">m</tspan>
+       <tspan x="118.181864" y="-0.625" style="font-size: 6px; font-family: 'Arial'">i</tspan>
+       <tspan x="119.514871" y="-0.625" style="font-size: 6px; font-family: 'Arial'">n</tspan>
+       <tspan x="122.851785" y="-0.625" style="font-size: 6px; font-family: 'Arial'">)</tspan>
        <tspan x="75.470752" y="1.167125" style="font-size: 4.2px; font-family: 'Arial'">M</tspan>
+       <tspan x="92.380425" y="1.167125" style="font-size: 4.2px; font-family: 'Arial'">1</tspan>
+       <tspan x="94.716265" y="1.167125" style="font-size: 4.2px; font-family: 'Arial'">0</tspan>
       </text>
      </g>
     </g>
@@ -617,7 +612,7 @@ L 226.565837 15.051969
 " style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_15">
-    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="89.488843" y="25.021607" transform="rotate(-0 89.488843 25.021607)">  median 0.70</text>
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="89.488843" y="25.082545" transform="rotate(-0 89.488843 25.082545)">  median 0.70  (5-fold)</text>
    </g>
    <g id="text_16">
     <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start" x="5.361329" y="12.257242" transform="rotate(-0 5.361329 12.257242)">a</text>

@@ -219,17 +219,19 @@ def main() -> None:
 
     # Transport first and paler: at a single uniform pH every transport reaction is exactly
     # zero on our axis by construction, so it is a horizontal reference line rather than a
-    # cloud, and drawing it on top of the chemical points hides them.
+    # cloud, and drawing it on top of the chemical points hides them. SAME marker size for
+    # both: size would encode nothing here, and an unequal size reads as a weight the two
+    # series do not have.
     ax.scatter(
         [shipped[k] for k in moved_only],
         [ours[k] for k in moved_only],
-        s=2.0, color=PLOT_PALETTE[5], alpha=0.30, linewidths=0, zorder=2,
+        s=3.0, color=PLOT_PALETTE[5], alpha=0.30, linewidths=0, zorder=2,
         label=f"transport ({len(moved_only)}), zero by construction",
     )
     ax.scatter(
         [shipped[k] for k in chemical],
         [ours[k] for k in chemical],
-        s=3.5, color=PLOT_PALETTE[4], alpha=0.65, linewidths=0, zorder=3,
+        s=3.0, color=PLOT_PALETTE[4], alpha=0.65, linewidths=0, zorder=3,
         label=f"chemical ({len(chemical)})",
     )
     # 96 percent of the chemical points fall inside +/-200, so the old +/-450 window spent
@@ -251,10 +253,23 @@ def main() -> None:
     all_difference = np.abs(
         np.array([ours[k] for k in both]) - np.array([shipped[k] for k in both])
     )
+    # Correlation on the CHEMICAL subset only. Every transport reaction is exactly zero on
+    # our axis at uniform pH, so that subset has no variance in y: pooling it in would drag
+    # any correlation toward a number that describes the construction rather than the
+    # agreement. Reported alongside the median difference because a scatter comparing two
+    # methods should say how well they track, not only how far apart they sit.
+    shipped_chem = np.array([shipped[k] for k in chemical])
+    ours_chem = np.array([ours[k] for k in chemical])
+    pearson_chem = float(np.corrcoef(shipped_chem, ours_chem)[0, 1])
+    spearman_chem = float(
+        pd.Series(shipped_chem).corr(pd.Series(ours_chem), method="spearman")
+    )
     ax.text(0.035, 0.965,
-            f"chemical median |diff| {np.median(chemical_difference):.2f}"
+            f"chemical (n = {len(chemical)}):"
+            f"\n  Pearson r = {pearson_chem:.3f},  Spearman = {spearman_chem:.3f}"
+            f"\n  median |diff| {np.median(chemical_difference):.2f}"
             r" kJ mol$^{-1}$"
-            f"\n{outside} of {len(both)} outside this window",
+            f"\n{outside} of {len(both)} points outside this window",
             transform=ax.transAxes, fontsize=5, va="top", linespacing=1.5)
     ax.legend(loc="lower right", frameon=False, fontsize=5, markerscale=2.6,
               handletextpad=0.2, borderpad=0.1, labelspacing=0.3)
@@ -270,6 +285,8 @@ def main() -> None:
     summary["vs_shipped_median_abs_diff_chemical"] = float(
         np.median(chemical_difference)
     )
+    summary["vs_shipped_pearson_chemical"] = pearson_chem
+    summary["vs_shipped_spearman_chemical"] = spearman_chem
 
     # --- e + f. the two diagnostics that decide whether the table is usable ----
     # One figure, because the questions are the same question asked twice: is this table

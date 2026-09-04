@@ -50,6 +50,37 @@ The coverage cost is real and is stated rather than softened. Against the shippe
 uncertainty and organism-independence costs reaction coverage, because a reaction needs
 \emph{all} of its participants resolved before it has an energy at all.
 
+\textbf{The two tables are not nested, and that changes what to do with them.} Treating
+42.5 against 77.7 as a straight loss assumes the recomputation covers a subset of what the
+GEM ships, and it does not:
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[Coverage overlap]{Which of yeast-GEM's 4{,}131 reactions each table can price,
+  at uniform pH. The recomputation is not a subset of the shipped file.}
+  \label{tab:coverage-overlap}
+  %% SOURCE: model_rxnDeltaG.csv against reaction_drg_prime_single_condition.parquet.
+  \begin{tabular}{@{}lrr@{}}
+    \hline
+    Priced by & Reactions & Share \\
+    \hline
+    both & 1{,}391 & 33.7\% \\
+    \textbf{eQuilibrator only} & \textbf{364} & \textbf{8.8\%} \\
+    shipped only & 1{,}819 & 44.0\% \\
+    neither & 557 & 13.5\% \\
+    \hline
+    union & 3{,}574 & 86.5\% \\
+    \hline
+  \end{tabular}
+\end{table}
+
+So the recomputation \textbf{gains 364 reactions the shipped file leaves empty}, and the
+union covers 86.5 percent, nearly nine points above what the GEM ships alone. The 1{,}819
+it loses are the real cost, and the honest use of the two together is a merge that prefers
+the recomputed value where it exists, for its uncertainty, and falls back to the shipped
+point value elsewhere. That merge is not built.
+
 \subsection{The uncertainty, which is the point\secstatus{todo}}
 
 Figure~\ref{fig:thermo-uncertainty} shows the standard error on the reactions whose energy

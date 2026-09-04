@@ -36,6 +36,25 @@ folded to the reaction by a softmin over the subunits of a complex and a sum ove
 A reaction with no GPR keeps $c_j = 1$, since an unannotated reaction is one nobody assigned
 a gene to rather than one no gene catalyzes.
 
+\textbf{$\bar E$ is a constant, and saying so matters.} It is a nominal enzyme abundance,
+$10^{-3}$, not a learned output and not a measured proteome, so the ceiling reduces to
+$3.6\,k_{cat,j}\,c_j$ per catalytic unit once $k_{cat}$ is converted to $\mathrm{h}^{-1}$.
+$\bar E$ sets the \emph{scale} of the bound; everything genotype-dependent enters through
+$c_j$. Reading $\bar E$ as a per-gene enzyme level would overstate what the layer does:
+\textbf{no enzyme abundance is predicted anywhere in it.}
+
+The protein budget does not change that, because its $e_g$ runs the other way. It is the
+enzyme demand \emph{implied} by a flux, $e_g = \sum_{u \ni g} |\nu_{\rho(u)}| / k_{cat,u}$,
+which is then priced against a budget as
+$\big[\sum_g MW_g e_g / P_{\mathrm{avail}} - 1\big]_{+}$. So $k_{cat}$ appears twice and in
+opposite directions: it caps a flux in Equation~\eqref{eq:capacity}, and it converts a flux
+back into a protein cost here. Neither is a proteome measurement.
+
+This is the obvious place for one. The layer already has the hook, and a measured proteome
+exists in the same project: Zelezniak's 726 proteins across 97 kinase deletions. Replacing
+the constant with a predicted or measured $E_g$ is what would turn the capacity bound from
+a scale into a quantity.
+
 Without Equation~\eqref{eq:capacity} the only limits on $\nu_j$ are yeast-GEM's own bounds,
 and those carry no capacity at all: \textbf{4{,}129 of 4{,}131 reactions sit at $\pm1000$ or
 $0$}, which encodes direction and on-off and nothing else. A gene deletion would then have

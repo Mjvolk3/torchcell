@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH -p main
-#SBATCH --mem=200g
+#SBATCH --mem=110g
 #SBATCH -N 1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=16
 #SBATCH --gres=gpu:1
 #SBATCH --job-name=010-inf4-m00-s1
 #SBATCH --time=1-00:00:00

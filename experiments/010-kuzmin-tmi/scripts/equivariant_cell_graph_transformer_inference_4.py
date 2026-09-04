@@ -26,6 +26,8 @@ import logging
 import os
 import os.path as osp
 import sys
+import resource
+
 import numpy as np
 import pandas as pd
 import torch
@@ -42,6 +44,29 @@ import pyarrow.parquet as pq
 
 # Add the current script's directory to Python path for local imports
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
+
+# Torch's default Linux sharing strategy is `file_descriptor`, which sends every shared
+# tensor storage as its own open fd. num_workers x prefetch_factor PyG batches are in
+# flight at once, and that is what killed two long IGB runs. `file_system` passes
+# storages by name through /dev/shm instead. Module scope on purpose: the strategy is
+# process-global and must be set before any DataLoader is constructed.
+torch.multiprocessing.set_sharing_strategy("file_system")
+_NOFILE_SOFT, _NOFILE_HARD = resource.getrlimit(resource.RLIMIT_NOFILE)
+if _NOFILE_SOFT < _NOFILE_HARD:
+    resource.setrlimit(resource.RLIMIT_NOFILE, (_NOFILE_HARD, _NOFILE_HARD))
+
+
+def _worker_init(worker_id: int) -> None:
+    """Apply the fd-sharing policy inside a dataloader worker.
+
+    Setting it in the parent alone is not enough: the strategy is read in the process
+    that PICKLES a storage, which is the worker.
+    """
+    torch.multiprocessing.set_sharing_strategy("file_system")
+    soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+    if soft < hard:
+        resource.setrlimit(resource.RLIMIT_NOFILE, (hard, hard))
+
 
 # Key difference: Use Perturbation processor (not SubgraphRepresentation)
 from inference_dataset_1 import InferenceDataset
@@ -399,15 +424,28 @@ def main(cfg: DictConfig) -> None:
             batch_size = wandb.config.data_module["batch_size"]
 
         # Key difference: follow_batch for Perturbation processor
+        # num_workers=0 is what made this run CPU-bound. The GPU idled near 0 percent
+        # while the main process built one PyG object per record from a 4 kB JSON blob,
+        # at 3.9 s per batch of 2048, projecting to 5.7 h per shard. The work is
+        # embarrassingly parallel and the config already asks for workers; the script
+        # was ignoring it.
+        num_workers = int(wandb.config.data_module["num_workers"])
         loader = DataLoader(
             dataset,
             batch_size=batch_size,
             shuffle=False,
-            num_workers=0,  # Use 0 workers for better memory control
-            persistent_workers=False,
+            num_workers=num_workers,
+            persistent_workers=num_workers > 0,
+            prefetch_factor=(
+                int(wandb.config.data_module["prefetch_factor"])
+                if num_workers > 0
+                else None
+            ),
             pin_memory=False,
             follow_batch=["perturbation_indices"],  # Key for transformer
+            worker_init_fn=_worker_init,
         )
+        print(f"DataLoader: num_workers={num_workers}, batch_size={batch_size}")
 
         return loader
 

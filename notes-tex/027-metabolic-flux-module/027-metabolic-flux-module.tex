@@ -38,12 +38,20 @@ thermodynamic sign constraint. It is neither a Type~I nor a Type~II virtual inst
 those were defined: its output is a latent physical state rather than a measured phenotype,
 and the phenotypes are read off that state.
 
-Its distinguishing property is that three of its inputs are not learned. The turnover
-numbers, the Michaelis constants and the formation energies are tabulated, hash-pinned, and
-attributable to the weights or model version that produced them. That is what makes the
-layer a reconstruction of a metabolic network rather than a parameterization fitted to one
-organism, and it is why the parameter tables were built across five independent predictors
-instead of one.
+Its distinguishing property is that three of its inputs are meant to be tabulated rather
+than learned: turnover numbers, Michaelis constants and formation energies, each
+hash-pinned and attributable to the weights or model version that produced it. That is what
+would make the layer a reconstruction of a metabolic network rather than a parameterization
+fitted to one organism.
+
+\textbf{None of the three tables built in this work is yet consumed by any measured arm.}
+The predicted $k_{cat}$ tables are not plumbed into the capacity bound, which still resolves
+4.0 percent measured values from the Open Enzyme Database and defaults the rest; the
+recomputed formation energies are not plumbed into the potential, which still reads
+yeast-GEM's shipped file; and $K_M$ has no consumer at all. The module diagram draws those
+edges as solid and the code does not have them. What exists is an audit of what the inputs
+could be, built reproducibly enough to apply to another organism, and every result here
+should be read as testing the module's structure rather than its parameters.
 
 This document consolidates what was scattered across the 026 and 027 notes: the
 formulation as implemented, the three parameter tables and the sharp distinction between

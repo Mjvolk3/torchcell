@@ -117,3 +117,24 @@ is read from the tabulated formation energies, so the sign of every reaction is 
 measured chemistry rather than by whatever the optimizer finds convenient. That difference
 is the experiment: structural loop-freedom is a real constraint on its own, and the
 question is whether the chemistry adds anything to it.
+
+\subsection{Why enzyme constraints are not optional\secstatus{todo}}
+
+The strongest argument for the layer is a property of the model it wraps. yeast-GEM's
+\texttt{listOfParameters} holds \textbf{five distinct bound values}: $-1000$ on 1{,}667
+lower bounds, $0$ on 2{,}462 lower and 7 upper, $+1000$ on 4{,}123 upper, $-1$ on exactly
+one lower bound (D-glucose exchange), and $0.7$ on both bounds of the non-growth-associated
+maintenance reaction. There is no $\pm\infty$ anywhere.
+
+So \textbf{4{,}129 of 4{,}131 reactions carry bounds that encode direction and on-off and
+no capacity whatsoever.} The one fitted physiological constant is the maintenance flux; the
+glucose bound of $-1$ is an arbitrary normalization, and growth scales with it almost
+linearly, 0.0858\,h$^{-1}$ at $-1$ against 0.8877 at $-10$ and 1.7786 at $-20$. The whole
+medium is sixteen numbers.
+
+A network specified that loosely has an enormous feasible set, and the two things that
+narrow it are the two the layer supplies. Requiring growth at 90 percent of optimum
+narrows 2{,}316 reactions, 56.1 percent of the network, and improves median flux-variability
+width ninefold from 1.077 to 0.1176. \textbf{It does not touch the loops}: reactions with
+width above $10^3$ go from 428 to 427. That residue is what the thermodynamic term exists
+to remove, and it is why loop-freedom rather than capacity is the load-bearing constraint.

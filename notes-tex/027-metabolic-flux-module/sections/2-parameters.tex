@@ -9,7 +9,12 @@
 
 The module needs three tables and had almost none of them. Measured $k_{cat}$ covered 148
 of 3{,}728 catalytic units, 4.0 percent, with the other 96 percent running on a single flat
-default of 10.3\,s$^{-1}$. $K_M$ had no table at all: the parameter existed as an enum
+default of 10.3\,s$^{-1}$. A catalytic unit here is a \textbf{(reaction, AND-term) pair},
+not a distinct enzyme complex: \texttt{parse\_catalytic\_units} assigns an id inside the
+per-reaction loop, so one complex catalyzing five reactions counts five times. The
+deduplicated AND-term count is 1{,}065. Both numerator and denominator are counted the same
+way, so 4.0 percent is internally consistent, but the denominator has to be named precisely
+or the reader computes 148/1{,}065 and gets 13.9. $K_M$ had no table at all: the parameter existed as an enum
 member and a protocol flag with nothing behind either. The thermodynamics came from a
 shipped file of point values with no covariance, usable only for this organism.
 
@@ -71,9 +76,12 @@ lose.
       the capacity bound $|\nu_j| \le k_{cat,j} E_{g(j)}$. \texttt{resolve\_kcat\_table}
       reads the OED mirror, so the run uses 4.0 percent measured values and a default for
       the rest. The predicted tables are not yet plumbed to this call \\
-    $\Delta_f G'^{\circ}$ & \textbf{wired} in the anchored arm &
+    $\Delta_f G'^{\circ}$ & \textbf{wired}, but the GEM's shipped table, not the
+      eQuilibrator recomputation &
       the standard term of $\Delta_r G_j$, hence the second-law hinge and the dissipation
-      bound \\
+      bound. \texttt{load\_thermo\_table} reads
+      \texttt{data/databases/model\_metDeltaG.csv}; the recomputed parquet with its
+      covariance is read by nothing \\
     $K_M$ & \textbf{built, not wired} &
       the saturation term is drawn as inactive in the module diagram and is inactive in the
       code. $K_M$ contributes nothing to any result reported here \\
@@ -81,10 +89,18 @@ lose.
   \end{tabular}
 \end{table}
 
-The consequence is worth stating plainly: the current runs test the module's
-\emph{structure and thermodynamics}, not its predicted kinetics. Wiring the predictor
-registry into \texttt{resolve\_kcat\_table} is the next change, and it is the one that
-turns the five kcat tables from an audit into an input.
+\textbf{None of the three tables built in this work is consumed by any measured arm.} The
+$k_{cat}$ predictions are not plumbed to \texttt{resolve\_kcat\_table}, the recomputed
+formation energies are not plumbed to \texttt{load\_thermo\_table}, and $K_M$ has no
+consumer at all. Every arm reported here ran on the Open Enzyme Database's 4.0 percent
+measured $k_{cat}$ plus a default, and on yeast-GEM's shipped formation energies.
+
+That is the sharpest thing to carry out of this document, because the module diagram draws
+solid edges from the kcat and thermodynamic tables into the box and the potential, and those
+edges do not exist in the code. The tables are an audit of what the inputs \emph{could} be
+and a demonstration that they can be built reproducibly for any organism. They are not yet
+inputs. Wiring them is the next change, and until it happens no result should be described
+as testing predicted kinetics or recomputed thermodynamics.
 
 \subsection{Why five predictors and not one\secstatus{todo}}
 

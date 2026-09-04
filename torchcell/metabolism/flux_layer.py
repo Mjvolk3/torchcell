@@ -312,6 +312,7 @@ class FluxLayer(nn.Module):
     has_gpr: torch.Tensor
     gem_to_model: torch.Tensor
     model_to_gem: torch.Tensor
+    constitutive: torch.Tensor
     independent_rows: torch.Tensor
     thermo_exempt: torch.Tensor
     is_exchange: torch.Tensor
@@ -332,6 +333,7 @@ class FluxLayer(nn.Module):
         kcat_per_s: torch.Tensor | None = None,
         molecular_weight_kda: torch.Tensor | None = None,
         null_space: torch.Tensor | None = None,
+        constitutive_genes: list[str] | None = None,
     ) -> None:
         """Build the layer against one GEM.
 
@@ -348,6 +350,12 @@ class FluxLayer(nn.Module):
                 ``config.parameterization == 'nullspace'``. Built once by the caller with
                 :func:`~torchcell.metabolism.constraints.null_space_basis`, since it costs
                 a singular value decomposition of the whole stoichiometric matrix.
+            constitutive_genes: GEM gene ids that are always present at full availability.
+                Heterologous cassette genes belong here: they are not open reading frames of
+                the host, so they own no gene token, and the availability chain would
+                otherwise read their absence from the token universe as availability zero
+                and switch off the very pathway that was added. There is no learned gate on
+                them, because a knockout library cannot delete them.
         """
         super().__init__()
         self.config = config or FluxLayerConfig()
@@ -379,6 +387,21 @@ class FluxLayer(nn.Module):
         self.register_buffer("gem_to_model", gem_to_model)
         self.register_buffer("model_to_gem", model_to_gem)
         self.n_genes_mapped = int((gem_to_model >= 0).sum())
+
+        constitutive = torch.zeros(self.n_gem_genes, dtype=torch.bool)
+        named = set(constitutive_genes or [])
+        if named:
+            gene_pos = {g: i for i, g in enumerate(cu.gene_ids)}
+            unknown = sorted(named - set(gene_pos))
+            if unknown:
+                raise ValueError(
+                    f"constitutive_genes not present in the GEM: {unknown}. "
+                    "Apply the pathway to the model before building its tensors."
+                )
+            for g in named:
+                constitutive[gene_pos[g]] = True
+        self.register_buffer("constitutive", constitutive)
+        self.n_constitutive_genes = int(constitutive.sum())
 
         rows = (
             gem.independent_rows
@@ -532,12 +555,20 @@ class FluxLayer(nn.Module):
         Deleted genes are set to zero **hard**, from the perturbation. Everything else is
         a learned sigmoid gate, which is what leaves room for dosage, hypomorphic alleles
         and over-expression later without changing this signature.
+
+        Constitutive genes are pinned to one. A heterologous cassette gene has no gene
+        token, so the token-universe mask would otherwise zero it, and zeroing it switches
+        off the pathway it was added to provide in every sample.
         """
         valid = self.gem_to_model >= 0
         token_idx = self.gem_to_model.clamp(min=0)
         h_gem = h_genes[:, token_idx, :]  # [B, n_gem_genes, d]
         gamma = torch.sigmoid(self.availability(h_gem)).squeeze(-1)
         gamma = gamma * valid.unsqueeze(0)
+        if self.n_constitutive_genes:
+            gamma = torch.where(
+                self.constitutive.unsqueeze(0), torch.ones_like(gamma), gamma
+            )
 
         # Hard-zero the deleted genes that the GEM knows about.
         gem_of_pert = self.model_to_gem[perturbation_indices]
@@ -827,6 +858,7 @@ class FluxLayer(nn.Module):
             "n_catalytic_units": self.n_units,
             "n_gem_genes": self.n_gem_genes,
             "n_gem_genes_in_model_universe": self.n_genes_mapped,
+            "n_constitutive_genes": self.n_constitutive_genes,
             "n_reactions_with_gpr": int(self.has_gpr.sum()),
             "n_independent_balance_rows": int(self.independent_rows.numel()),
             "n_reactions_second_law_applied": int(

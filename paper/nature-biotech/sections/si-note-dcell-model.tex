@@ -82,22 +82,30 @@ runs, one value), so the DAG measured here is the one the baseline was trained o
 
 \begin{figure*}[t]
 \tcfig{figures/FigS-dcell-model.pdf}{\textbf{DCell as implemented in TorchCell.} (a)~The
-perturbation enters as data: the reference's (term, gene) annotation table is copied per
-strain and the rows of deleted genes are zeroed (red), so each strain is a rebuilt input
-rather than an operator on a shared encoding. Subsystems (yellow) mirror the GO DAG under the
-super-root \texttt{GO:ROOT} (orange); solid edges are \texttt{is\_child\_of}, dashed edges
-carry gene states into the subsystems that annotate them; subsystems run stratum by stratum
-from the deepest term to the root. Right: the subsystem of Eq.~\ref{eq:dcell-subsystem}, the
-root readout, the per-term auxiliary heads (purple), the loss of Eq.~\ref{eq:dcell-loss}, and
-the published uniform initialization in $[-0.001,0.001]$. (b)~Subsystems per stratum of the
-filtered DAG (stratum $0$ is \texttt{GO:ROOT}; stratum $1$ the three namespace roots); 1,527
-of the 2,655 subsystems are leaves. (c)~Genes per subsystem: direct annotations, which set
+filtered GO DAG that structures the model, drawn whole: 2,655 subsystems as points in 13
+strata (stratum $0$ is \texttt{GO:ROOT}, stratum $1$ the three namespace roots BP, MF, CC;
+the deepest terms at the bottom), colored by namespace, with the 3,208 hierarchy edges
+(\texttt{is\_child\_of}, child to parent) in gray; within a stratum, terms are ordered by the
+mean position of their parents. The perturbation enters as data: the bottom row is the
+gene-state vector $s$ over the 6,607 genes, present $=1$, and a strain with deleted set $p$
+has $s_i=0$ for $g_i\in p$; the loader copies the reference's table of 59,986 (term, gene)
+annotation rows per strain and zeros the rows of the deleted genes, so each strain is a
+rebuilt input rather than an operator on a shared encoding. One triple deletion is drawn,
+Q0140, YJL171C, YPR204W (three genes with the median eight direct annotations, chosen by
+rule): dashed red, the zeroed gene states entering the subsystems that annotate them (open
+circles); solid red, every hierarchy edge from those subsystems up to the root, the
+subsystems the zeroed rows reach. Subsystems run stratum by stratum from the deepest term to
+the root. Right: the gene-state rule, the subsystem of Eq.~\ref{eq:dcell-subsystem}, the root
+readout, the per-term auxiliary heads, and the loss of Eq.~\ref{eq:dcell-loss}; weights are
+initialized uniformly in $[-0.001,0.001]$ as published. (b)~Subsystems per stratum of the
+filtered DAG; 1,527 of the 2,655 subsystems are leaves. (c)~Genes per subsystem: direct annotations, which set
 the width $L_t$, and genes contained by the term or its descendants, the quantity the
 published model sized subsystems by; the median subsystem has 6 direct and 10 contained
 genes. (d)~Number of subsystems each of the 6,607 genes is annotated to; 675 genes are in the
-hierarchy through ND-evidence annotations to the namespace roots alone. Panels b--d are
-measured by \texttt{experiments/006-kuzmin-tmi/scripts/dcell\_model\_go\_stats.py}; the
-figure is composed by \texttt{dcell\_model\_compose\_figure.py}.}{fig:dcell-model}
+hierarchy through ND-evidence annotations to the namespace roots alone. The DAG in a and
+panels b--d are measured by
+\texttt{experiments/006-kuzmin-tmi/scripts/dcell\_model\_go\_stats.py}; the figure is
+composed by \texttt{dcell\_model\_compose\_figure.py}.}{fig:dcell-model}
 \end{figure*}
 
 \input{sections/tab-dcell-model-go-filter}

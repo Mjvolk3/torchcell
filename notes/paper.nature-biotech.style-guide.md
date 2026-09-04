@@ -111,6 +111,25 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
 
   The matplotlib panels need no conversion: `fontsize=6` is 6 real points, and
   `savefig_true_size_svg` plus the true-size `make plots` conversion preserve it.
+- **Composed SI figures: the "white cross" layout.** Every compose script (the
+  `*_compose_figure.py` / `compose_*_si_figures.py` scripts that write a `FigS-*.drawio`)
+  uses the same explicit constants: `COL_GAP = 12` units (3 mm) between columns,
+  `ROW_GAP = 22` units (5.5 mm) between rows, a `TOP_STRIP = 16` unit strip above every
+  row, and each panel letter placed in that strip at the panel's top-left
+  (`x = panel_x, y = row_top`). A letter therefore never sits over a panel's y-axis label
+  or a neighbor's title, and clear white gutters cross the figure both ways. Figures stay
+  `<= 709 x 669` units (+8 grace).
+- **Equations in draw.io figures are real LaTeX, typeset by MathJax.** Set `math="1"` on
+  the `mxGraphModel` and write the label as `$$...$$`; the headless PDF export honors it
+  (verified with draw.io 31.3.1, glyphs exported as vector paths). MathJax renders about
+  1.19x the cell's `fontSize` (measured 2026.09.03 by cap height against Arial), so a math
+  cell typed at `fontSize=7` prints at ~6 pt, matching the matplotlib panels, while
+  `drawio_font_band.py` reads it as 5.04 pt (on the ladder). Do not use `8.3` for math
+  cells; it prints at ~7.1 pt, over Nature's maximum. Worked example: panel a of
+  `FigS-dcell-model` (`experiments/006-kuzmin-tmi/scripts/dcell_model_compose_figure.py`).
+- **Bar charts with replicate points:** bar = mean, whisker = SD or SEM named in the
+  caption, replicates as open circles; when a group has one run, say so instead of drawing
+  a whisker.
 - **Axis-label style: sentence case, first word capitalized, proper nouns/initialisms
   keep their capitals.** Nature's spec gives the exemplar "All axes to be labelled with
   units in parentheses, e.g. Data (unit)" -- sentence case; unitless metrics omit the

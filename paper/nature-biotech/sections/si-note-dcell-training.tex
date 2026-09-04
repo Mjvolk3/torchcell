@@ -67,15 +67,21 @@ Fig.~\ref{fig:ggi}d; the dotted line is their mean. (b)~Training loss (every 10 
 steps) and validation loss (per epoch) of the same run on a log scale; dotted verticals mark
 the three evaluations. The learning rate was constant. (c)~GPU-hours from the start of
 training to the best validation epoch (left) and training samples per second (right) for
-DCell, DANGO (two runs on the same build) and CGT (three replicate runs); bars are the mean,
-points the runs (\supptab{tab:dcell-training-cost}). (d)~Samples per second at each stage of
-the DCell speed-up work on a four-GPU workstation (batch 256 per GPU unless labeled), from
-the progress-bar logs (elapsed time divided by steps completed, an upper bound on the
-steady-state step time); labels give seconds per optimizer step: 128~s for the first working
-implementation, 82~s after removing a duplicated forward pass, 23~s after caching the GO
-strata tensors, 20~s with bf16 mixed precision, 99--119~s for two reruns of the bf16
-configuration on later days, and 49--59~s with \texttt{torch.compile} (recompilation limit
-64) at batch 500--600, 40 versus 50 samples per second uncompiled. A rewrite that spreads a
+DCell, DANGO (two runs on the same build) and CGT (three replicate runs); bars are the mean
+over runs and open circles the individual runs; no whisker is drawn because DCell has one
+run (\supptab{tab:dcell-training-cost}). (d)~Samples per second at each numbered stage of
+the DCell speed-up work on a four-GPU workstation, from the progress-bar logs (elapsed time
+divided by steps completed, an upper bound on the steady-state step time); bar labels give
+seconds per optimizer step. Each stage label is the complete configuration of that run
+(batch 256 per GPU and 8 loader workers unless stated): stage 1, the first working
+implementation, which ran the forward pass twice per step, 128~s; stage 2, the duplicate
+forward removed, 82~s; stage 3, the GO strata tensors cached instead of rebuilt every step,
+23~s; stage 4, stage 3 in fp16 mixed precision, 23~s; stage 5, stage 3 in bf16 mixed
+precision, 20~s; stage 6, stage 5 rerun on a later day, 119~s; stage 7, stage 5 with 12
+loader workers, 99~s; stages 8 and 9, stage 5 with \texttt{torch.compile} (recompilation
+limit 64) at batch 500 and 600 per GPU, 49 and 59~s, 40 samples per second against 50
+uncompiled. Stages 6 and 7 show day-to-day variation on the shared machine as large as
+several of the optimizations. A rewrite that spreads a
 stratum's per-term calls over four CUDA streams (\texttt{dcell\_opt}), still one module call
 per term, ran at 13\% GPU utilization and 80--100~W of 300~W at 1~h~40~min per epoch, slower
 than the loop, and was not used. The cluster run's 72~s per step at global batch 2,400 sits

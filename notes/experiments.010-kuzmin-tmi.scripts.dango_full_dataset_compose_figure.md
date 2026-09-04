@@ -15,3 +15,7 @@ created: 1788477900338
 - f: per-STRING-channel weight of DANGO's meta-embedding attention, v9.1 (`014mprap`) vs v12.0 (`9jpfy547`), needs a forward hook on `torchcell.models.dango.Dango`.
 
 Layout: two columns of 88 mm panels, 180 x 145 mm total (709 x 571 draw.io units). Panel letters fontSize 11.1 bold lowercase; placeholder labels fontSize 8.3. Export with `"/Applications/draw.io.app/Contents/MacOS/draw.io" -x -f pdf --crop -o paper/nature-biotech/figures/FigS-dango-full-dataset.pdf notes/assets/drawio/FigS-dango-full-dataset.drawio` (exported page 181.0 x 146.4 mm; `check-figures.sh` and `drawio_font_band.py --check` pass).
+
+## 2026.09.03 - White-cross layout (layout only, no content change)
+
+Same convention as the other composed SI figures: `COL_GAP = 12` (3 mm), `ROW_GAP = 22` (5.5 mm), `TOP_STRIP = 16`, letters at `(panel_x, row_top)` in the strip above each row; the second column is at `half + COL_GAP` (358.5) and the placeholder boxes d-f fill their whole cell from the panel's left edge (previously inset by 14 units to make room for the letter). Figure 705 x 619 units = 179.0 x 157.2 mm; exported PDF 179.9 x 157.6 mm; `check-figures.sh` and `drawio_font_band.py --check` pass. Panel placement in `editing.pdf` is for the author to review.

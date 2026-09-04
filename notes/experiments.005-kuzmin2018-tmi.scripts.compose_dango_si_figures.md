@@ -26,3 +26,15 @@ exports to `paper/nature-biotech/figures/FigS-dango-reproduction.pdf` for the Su
 Image cells are placed at the exact size each SVG declares (100 draw.io units per inch), so the
 export is WYSIWYG. The script refuses to write a figure wider than 708 or taller than 669 units
 (180 x 170 mm). Rerun it after regenerating any panel; the `.drawio` is never edited by hand.
+
+## 2026.09.03 - White-cross layout (layout only, no content change)
+
+Author review asked for one explicit layout convention across the composed SI figures so no
+panel letter sits over a y-axis label or a neighbor's title: `COL_GAP = 12` (3 mm),
+`ROW_GAP = 22` (5.5 mm), `TOP_STRIP = 16`, letters at `(panel_x, row_top)` in the strip above
+each row. The schematic now starts at y = 16 under the strip, panels b and c sit one
+`COL_GAP` apart (second column at 358.5), and `FULL_WIDTH` is 705 (the schematic's readout
+column is 147 wide instead of 148 so the objective strip ends at the same edge). Figure
+705 x 630 units = 179.1 x 160.0 mm; exported PDF 179.6 x 160.2 mm; `check-figures.sh` and
+`drawio_font_band.py --check` pass. Panel placement in `editing.pdf` is for the author to
+review.

@@ -14,6 +14,11 @@ Panel letters are 8 pt bold lowercase (draw.io fontSize 11.1); placeholder label
 (fontSize 8.3). Rerun after regenerating any panel; the draw.io file is overwritten, never
 edited by hand.
 
+Layout convention shared by every composed SI figure (the "white cross"): COL_GAP = 12
+units (3 mm) between columns, ROW_GAP = 22 units (5.5 mm) between rows, a TOP_STRIP of 16
+units above every row, and each panel letter in that strip at the panel's top-left
+(x = panel_x, y = row_top), so no letter sits over an axis label or a neighbor's title.
+
 Run from the repo root:
     python experiments/010-kuzmin-tmi/scripts/dango_full_dataset_compose_figure.py
 """
@@ -31,9 +36,11 @@ ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
 DRAWIO_DIR = "notes/assets/drawio"
 FIG_NAME = "FigS-dango-full-dataset"
 
-FULL_WIDTH = 709  # 180 mm in draw.io units
+FULL_WIDTH = 709  # 180 mm in draw.io units (cap)
 MAX_HEIGHT = 669  # 170 mm
-GAP = 6
+COL_GAP = 12  # 3 mm between columns
+ROW_GAP = 22  # 5.5 mm between rows; the next row's TOP_STRIP is the lower part of it
+TOP_STRIP = 16  # the letter strip above every row
 LETTER_W, LETTER_H = 18, 14
 LETTER_STYLE = (
     "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;"
@@ -98,10 +105,11 @@ def placeholder_cell(cid: int, text: str, x: float, y: float, w: float, h: float
     )
 
 
-def letter_cell(cid: int, letter: str, x: float, y: float) -> str:
+def letter_cell(cid: int, letter: str, x: float, row_top: float) -> str:
+    """Panel letter in the TOP_STRIP above the panel, flush with the panel's left edge."""
     return (
         f'<mxCell id="{cid}" value="{letter}" style={quoteattr(LETTER_STYLE)} vertex="1" parent="1">'
-        f'<mxGeometry x="{x:.1f}" y="{y:.1f}" width="{LETTER_W}" height="{LETTER_H}" as="geometry"/></mxCell>'
+        f'<mxGeometry x="{x:.1f}" y="{row_top:.1f}" width="{LETTER_W}" height="{LETTER_H}" as="geometry"/></mxCell>'
     )
 
 
@@ -111,29 +119,33 @@ def main():
     conv = osp.join(P010, "dango_full_dataset_convergence.svg")
 
     half = svg_size(curves)[0]
-    col2 = FULL_WIDTH - half  # right column flush with the 180 mm edge
+    col2 = half + COL_GAP
+    row1_top = 0
+    y1 = row1_top + TOP_STRIP
     row1_h = max(svg_size(curves)[1], svg_size(best)[1])
-    y2 = row1_h + GAP
+    row2_top = y1 + row1_h + (ROW_GAP - TOP_STRIP)
+    y2 = row2_top + TOP_STRIP
     row2_h = svg_size(conv)[1]
-    y3 = y2 + row2_h + GAP
+    row3_top = y2 + row2_h + (ROW_GAP - TOP_STRIP)
+    y3 = row3_top + TOP_STRIP
     row3_h = row2_h
 
     cells, cid = [], 2
 
-    def add(cell_xml: str, letter: str, x: float, y: float):
+    def add(cell_xml: str, letter: str, x: float, row_top: float):
         nonlocal cid
         cells.append(cell_xml)
-        cells.append(letter_cell(cid + 1, letter, x - 2, y - 4))
+        cells.append(letter_cell(cid + 1, letter, x, row_top))
         cid += 2
 
-    add(image_cell(cid, curves, 0, 0), "a", 0, 0)
-    add(image_cell(cid, best, col2, 0), "b", col2, 0)
-    add(image_cell(cid, conv, 0, y2), "c", 0, y2)
-    add(placeholder_cell(cid, PLACEHOLDERS["d"], col2 + 14, y2 + 10, half - 14, row2_h - 10), "d", col2, y2)
-    add(placeholder_cell(cid, PLACEHOLDERS["e"], 14, y3 + 10, half - 14, row3_h - 10), "e", 0, y3)
-    add(placeholder_cell(cid, PLACEHOLDERS["f"], col2 + 14, y3 + 10, half - 14, row3_h - 10), "f", col2, y3)
+    add(image_cell(cid, curves, 0, y1), "a", 0, row1_top)
+    add(image_cell(cid, best, col2, y1), "b", col2, row1_top)
+    add(image_cell(cid, conv, 0, y2), "c", 0, row2_top)
+    add(placeholder_cell(cid, PLACEHOLDERS["d"], col2, y2, half, row2_h), "d", col2, row2_top)
+    add(placeholder_cell(cid, PLACEHOLDERS["e"], 0, y3, half, row3_h), "e", 0, row3_top)
+    add(placeholder_cell(cid, PLACEHOLDERS["f"], col2, y3, half, row3_h), "f", col2, row3_top)
 
-    extent_w = FULL_WIDTH
+    extent_w = col2 + max(svg_size(best)[0], half)
     extent_h = y3 + row3_h
     xml = (
         '<mxfile host="dango_full_dataset_compose_figure.py">'
@@ -146,7 +158,7 @@ def main():
     with open(out, "w", encoding="utf-8") as f:
         f.write(xml)
     print(f"wrote {out}: {extent_w:.0f} x {extent_h:.0f} units = {extent_w / 3.937:.1f} x {extent_h / 3.937:.1f} mm")
-    if extent_w > FULL_WIDTH + 2 or extent_h > MAX_HEIGHT + 8:
+    if extent_w > FULL_WIDTH + 8 or extent_h > MAX_HEIGHT + 8:
         raise SystemExit(f"{FIG_NAME} exceeds the Nature print box (709 x 669 units)")
 
 

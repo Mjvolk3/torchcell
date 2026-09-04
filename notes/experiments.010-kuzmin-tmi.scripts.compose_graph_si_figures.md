@@ -39,3 +39,28 @@ widths (e, third + f, wide) is right-aligned to column 2's right edge.
 `FigS-dango-string-versions` is no longer composed here; the DANGO release sweep belongs to the
 DANGO reproduction note. Both new figures pass `check-figures.sh` and
 `drawio_font_band.py --check` (only the 11.1 panel letters).
+
+## 2026.09.03 - White-cross layout, three-row figures
+
+Author feedback: panel b's letter hung over panel a's axis title, and panels c to e took too much
+room. The composer now lays every figure out on explicit white gutters (the "white cross") with
+the letters inside them:
+
+- `COL_GAP = 12` units (3 mm) between columns, `ROW_GAP = 22` units (5.5 mm) between rows,
+  `TOP_STRIP = 16` units above the first row, and each letter at `(panel_x, panel_y - LETTER_STRIP)`
+  with `LETTER_STRIP = 16`, so a letter is always 16 units above its own panel's top-left corner
+  and never over a neighbor's labels or the panel's own y-axis label.
+- Rows advance by the tallest panel in the row plus `ROW_GAP`; panels of one row share a height set
+  in `graph_statistics.py` (`F1_ROW1_H, F1_ROW2_H, F1_ROW3_H = 54, 44, 50` mm; `F2_ROW_H, F2_ROW3_H
+  = 52, 40` mm). Columns are placed left to right at their own widths, so a row of three
+  third-width panels (3 x 227.6 + 2 x 12 = 707 units) and a row of two halves (2 x 346.5 + 12 = 705)
+  both fill the 709-unit page.
+- `FigS-graph-attention-priors.drawio`: (a) sizes, (b) degree CCDF; (c) Jaccard, (d) containment,
+  (e) edge multiplicity at third width; (f) other components at full width; 707 x 643 units
+  (179.5 x 163.2 mm; export 179.9 x 163.7 mm).
+- `FigS-graph-attention-priors-2.drawio`: (a) shared pairs, (b) recurring hubs with SGD
+  descriptions; (c) regulatory vs TFLink, (d) STRING releases; (e) structure at full width;
+  705 x 627 units (179.0 x 159.2 mm; export 179.2 x 159.4 mm).
+
+The height gate is `MAX_HEIGHT + HEIGHT_GRACE` = 669 + 8 units; both figures pass it,
+`check-figures.sh`, and `drawio_font_band.py --check`.

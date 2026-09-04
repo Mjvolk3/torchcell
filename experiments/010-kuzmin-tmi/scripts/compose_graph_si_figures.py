@@ -9,16 +9,20 @@ placed at exact physical size and the figure is WYSIWYG when ``make -C paper/nat
 fig`` exports it to ``figures/<name>.pdf``.
 
 Figures written to notes/assets/drawio/:
-  FigS-graph-attention-priors.drawio     sizes, degree, Jaccard, containment, multiplicity,
-                                         structure; 180 mm x <=170 mm, three rows
-  FigS-graph-attention-priors-2.drawio   shared pairs, hubs, TF-graph overlap, STRING releases;
-                                         two rows
+  FigS-graph-attention-priors.drawio     row 1: sizes, degree (half + half); row 2: Jaccard,
+                                         containment, multiplicity (three thirds); row 3:
+                                         other components of the cell representation (full)
+  FigS-graph-attention-priors-2.drawio   row 1: shared pairs, hubs; row 2: TF-graph overlap,
+                                         STRING releases (half + half); row 3: structure (full)
 
-Layout rules: two columns whose left edges are the same in every row (column 2 starts at the
-half-panel width plus COL_GAP), panels of one row share a height so their axes align, and the
-third row's right edge is flush with column 2's right edge. Panel letters are 8 pt bold
-lowercase (draw.io fontSize 11.1, the ladder value). Rerun after regenerating any panel; the
-draw.io file is overwritten, never edited by hand.
+Layout rules (the "white cross"): every column is separated by COL_GAP and every row by
+ROW_GAP of clear white, and each panel letter sits in the gutter above-left of its panel, at
+(panel_x, panel_y - LETTER_STRIP), never over a neighbor's labels or over the panel's own
+y-axis label. The first row gets a TOP_STRIP of the same depth. Rows are placed one after
+another at equal gaps, so panels of one row must share a height (set in graph_statistics.py)
+for their axes to align. Panel letters are 8 pt bold lowercase (draw.io fontSize 11.1, the
+ladder value). Rerun after regenerating any panel; the draw.io file is overwritten, never
+edited by hand.
 
 Run from the repo root:
     python experiments/010-kuzmin-tmi/scripts/compose_graph_si_figures.py
@@ -36,10 +40,13 @@ load_dotenv()
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
 DRAWIO_DIR = "notes/assets/drawio"
 
-FULL_WIDTH = 709  # 180 mm in draw.io units
+FULL_WIDTH = 709  # 180 mm in draw.io units (100 per inch)
 MAX_HEIGHT = 669  # 170 mm
-COL_GAP = 8  # 2 mm between the two columns
-ROW_GAP = 6  # 1.5 mm between rows
+HEIGHT_GRACE = 8  # units of export rounding the size gate tolerates
+COL_GAP = 12  # 3 mm of white between columns
+ROW_GAP = 22  # 5.5 mm of white between rows; the next row's letters sit in it
+TOP_STRIP = 16  # 4 mm above the first row for its letters
+LETTER_STRIP = 16  # a letter's top edge sits this far above its panel's top edge
 LETTER_W, LETTER_H = 18, 14
 LETTER_STYLE = (
     "text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;"
@@ -78,11 +85,12 @@ def letter_cell(cid: int, letter: str, x: float, y: float) -> str:
 
 
 def write_figure(name: str, layout: list[tuple[str, str, float, float]]):
-    """layout: (letter, svg path, x, y) per panel; the letter sits at the panel's top-left."""
+    """layout: (letter, svg path, x, y) per panel; the letter sits LETTER_STRIP above the
+    panel's top-left corner, inside the white gutter."""
     cells, cid = [], 2
     for letter, path, x, y in layout:
         cells.append(image_cell(cid, path, x, y))
-        cells.append(letter_cell(cid + 1, letter, x - 2, y - 4))
+        cells.append(letter_cell(cid + 1, letter, x, y - LETTER_STRIP))
         cid += 2
     extent_w = max(x + svg_size(p)[0] for _, p, x, _ in layout)
     extent_h = max(y + svg_size(p)[1] for _, p, _, y in layout)
@@ -97,26 +105,20 @@ def write_figure(name: str, layout: list[tuple[str, str, float, float]]):
     with open(out, "w", encoding="utf-8") as f:
         f.write(xml)
     print(f"wrote {out}: {extent_w:.0f} x {extent_h:.0f} units = {extent_w / 3.937:.1f} x {extent_h / 3.937:.1f} mm")
-    if extent_w > FULL_WIDTH + 2 or extent_h > MAX_HEIGHT + 8:
+    if extent_w > FULL_WIDTH + 2 or extent_h > MAX_HEIGHT + HEIGHT_GRACE:
         raise SystemExit(f"{name} exceeds the Nature print box ({FULL_WIDTH} x {MAX_HEIGHT} units)")
 
 
 def rows(panel_rows: list[list[tuple[str, str]]]) -> list[tuple[str, str, float, float]]:
-    """Place rows of (letter, svg) pairs. The first panel of a row starts at x=0; the second
-    starts at column 2. A row whose panels do not fill the width is right-aligned to column
-    2's right edge when it has two panels of unequal width (the third row of figure 1)."""
-    half = svg_size(panel_rows[0][0][1])[0]
-    col2 = half + COL_GAP
-    right_edge = col2 + half
-    layout, y = [], 0.0
+    """Place rows of (letter, svg) pairs left to right with COL_GAP between panels and
+    ROW_GAP between rows, the first row TOP_STRIP below the top edge. Panels of one row are
+    expected to share a height; the row advances by the tallest."""
+    layout, y = [], float(TOP_STRIP)
     for r in panel_rows:
-        widths = [svg_size(p)[0] for _, p in r]
-        if len(r) == 2 and abs(widths[0] - widths[1]) > 1:
-            xs = [0.0, right_edge - widths[1]]
-        else:
-            xs = [0.0, col2][: len(r)]
-        for (letter, p), x in zip(r, xs):
+        x = 0.0
+        for letter, p in r:
             layout.append((letter, p, x, y))
+            x += svg_size(p)[0] + COL_GAP
         y += max(svg_size(p)[1] for _, p in r) + ROW_GAP
     return layout
 
@@ -128,8 +130,8 @@ def main():
         rows(
             [
                 [("a", p("graphs_sizes")), ("b", p("graphs_degree_ccdf"))],
-                [("c", p("graphs_jaccard")), ("d", p("graphs_containment"))],
-                [("e", p("graphs_edge_multiplicity")), ("f", p("graphs_structure"))],
+                [("c", p("graphs_jaccard")), ("d", p("graphs_containment")), ("e", p("graphs_edge_multiplicity"))],
+                [("f", p("graphs_components"))],
             ]
         ),
     )
@@ -139,6 +141,7 @@ def main():
             [
                 [("a", p("graphs_shared_pairs")), ("b", p("graphs_hubs"))],
                 [("c", p("graphs_tf_overlap")), ("d", p("graphs_string_releases"))],
+                [("e", p("graphs_structure"))],
             ]
         ),
     )

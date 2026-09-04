@@ -1,0 +1,9 @@
+tau_cut,criterion,n_triples,max_f_triple,n_above_wt,n_with_monotone_route,n_with_monotone_within_se_route
+0.08,called (P<0.05),12,1.0834,1,0,4
+0.08,magnitude only,152,1.0834,12,2,48
+0.12,called (P<0.05),7,0.9822,0,0,2
+0.12,magnitude only,96,1.0734,7,1,25
+0.16,called (P<0.05),3,0.8662,0,0,0
+0.16,magnitude only,69,1.0734,7,1,17
+0.2,called (P<0.05),3,0.8662,0,0,0
+0.2,magnitude only,58,1.0734,4,0,11

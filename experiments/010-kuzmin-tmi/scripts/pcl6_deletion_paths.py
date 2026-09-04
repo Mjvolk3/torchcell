@@ -96,6 +96,10 @@ COMMON = {"YER059W": "PCL6", "YIL050W": "PCL7"}
 
 # Kuzmin 2020 scores a positive interaction symmetrically at tau > +0.08 with p < 0.05.
 TAU_CUT, P_CUT = 0.08, 0.05
+# Baryshnikova 2010's stringent tier is sign-asymmetric and +0.16 is its positive arm.
+# This is the cut the rest of this document calls "strong".
+STRONG_CUT = 0.16
+TIER_CUTS = [0.08, 0.12, 0.16, 0.20]
 
 STEP_LABELS = ["WT\n(0$\\Delta$)", "1$\\Delta$", "2$\\Delta$", "3$\\Delta$"]
 Y_LABEL = "Fitness (relative to wild type)"
@@ -340,6 +344,37 @@ def summarize_triples(paths: pd.DataFrame) -> pd.DataFrame:
     return agg.reset_index().sort_values("f_triple", ascending=False)
 
 
+def tier_table(tri_summary: pd.DataFrame) -> pd.DataFrame:
+    """What each interaction tier costs in fitness.
+
+    Selecting on interaction and selecting on fitness pull against each other here, and
+    this is the table that shows by how much: for each tau cut, how many triples clear
+    it, the best endpoint among them, how many beat wild type, and how many have any
+    route that avoids a backwards move.
+    """
+    rows = []
+    for cut in TIER_CUTS:
+        for label, mask in (
+            ("called (P<0.05)", (tri_summary["tau"] > cut) & (tri_summary["tau_p_value"] < P_CUT)),
+            ("magnitude only", tri_summary["tau"] > cut),
+        ):
+            block = tri_summary[mask]
+            rows.append(
+                {
+                    "tau_cut": cut,
+                    "criterion": label,
+                    "n_triples": int(len(block)),
+                    "max_f_triple": float(block["f_triple"].max()) if len(block) else np.nan,
+                    "n_above_wt": int((block["f_triple"] > 1.0).sum()),
+                    "n_with_monotone_route": int((block["n_monotone"] > 0).sum()),
+                    "n_with_monotone_within_se_route": int(
+                        (block["n_monotone_within_se"] > 0).sum()
+                    ),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
 def _style(ax):
     ax.yaxis.set_major_locator(MultipleLocator(0.2))
     ax.yaxis.set_minor_locator(MultipleLocator(0.1))
@@ -472,13 +507,19 @@ def plot_all_paths(paths: pd.DataFrame, out_stem: str):
     plt.close(fig)
 
 
-def plot_path_panels(paths: pd.DataFrame, selected: pd.DataFrame, out_stem: str, ncols=3):
+def plot_path_panels(
+    paths: pd.DataFrame, selected: pd.DataFrame, out_stem: str, subtitle: str, ncols=3
+):
     set_plot_style()
     nrows = int(np.ceil(len(selected) / ncols))
+    # The header carries a two-line suptitle and the shared route legend, so it is a
+    # fixed band in mm rather than a fraction of a height that changes with nrows.
+    header_mm, panel_mm = 16.0, 52.0
+    total_mm = panel_mm * nrows + header_mm
     fig, axes = plt.subplots(
         nrows,
         ncols,
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(52.0 * nrows)),
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(total_mm)),
         squeeze=False,
         sharey=True,
     )
@@ -544,17 +585,12 @@ def plot_path_panels(paths: pd.DataFrame, selected: pd.DataFrame, out_stem: str,
             for i in range(6)
         ],
         title="Deletion order, 1$\\Delta$ → 2$\\Delta$",
-        loc="upper center", bbox_to_anchor=(0.5, 0.945), ncols=6, frameon=True,
-        fontsize=5, title_fontsize=5, handlelength=1.4, columnspacing=1.2,
-        borderpad=0.3, handletextpad=0.5,
+        loc="upper center", bbox_to_anchor=(0.5, 1 - 7.5 / total_mm), ncols=6,
+        frameon=True, fontsize=5, title_fontsize=5, handlelength=1.4,
+        columnspacing=1.2, borderpad=0.3, handletextpad=0.5,
     )
-    fig.suptitle(
-        f"Highest-fitness triples of the {q1.lower()}$\\Delta$ {q2.lower()}$\\Delta$ "
-        "screen, all six deletion orders, error bars 1 SE. Two of the six routes pass "
-        "through the paralog double, whose fitness is one value for the whole screen.",
-        fontsize=6, y=0.995,
-    )
-    fig.tight_layout(rect=(0, 0, 1, 0.915))
+    fig.suptitle(subtitle, fontsize=6, y=1 - 1.5 / total_mm)
+    fig.tight_layout(rect=(0, 0, 1, 1 - header_mm / total_mm))
     fig.savefig(f"{out_stem}.png", dpi=300)
     savefig_true_size_svg(fig, f"{out_stem}.svg")
     plt.close(fig)
@@ -641,15 +677,51 @@ def main():
         "best_triple": str(best["triple"]),
         "median_triple_fitness": float(tri_summary["f_triple"].median()),
         "median_valley_depth": float(deletions["valley_depth"].median()),
+        "tiers": tier_table(tri_summary).to_dict("records"),
     }
     with open(osp.join(RESULTS_DIR, "pcl6_deletion_paths_summary.json"), "w") as f:
         json.dump(summary, f, indent=2)
     print("\n" + json.dumps(summary, indent=2))
 
+    tiers = tier_table(tri_summary)
+    tiers.to_csv(osp.join(RESULTS_DIR, "pcl6_deletion_paths_tiers.csv"), index=False)
+    print("\n=== interaction tiers against the fitness goal ===")
+    print(tiers.to_string(index=False))
+
     plot_all_paths(deletions, osp.join(IMAGES_DIR, "pcl6_deletion_paths_all"))
-    selected = tri_summary.head(6)
+
+    # Ranked by endpoint fitness. Naming the ranking matters: these panels are the
+    # fittest strains in the screen, and most of them carry a weak or uncalled tau.
     plot_path_panels(
-        deletions, selected, osp.join(IMAGES_DIR, "pcl6_deletion_path_panels")
+        deletions,
+        tri_summary.head(6),
+        osp.join(IMAGES_DIR, "pcl6_deletion_path_panels"),
+        subtitle=(
+            f"Six fittest triples of the {COMMON[QUERY_1].lower()}$\\Delta$ "
+            f"{COMMON[QUERY_2].lower()}$\\Delta$ screen, RANKED BY ENDPOINT FITNESS, not "
+            "by interaction. All six deletion orders each, error bars 1 SE.\nTwo of the "
+            "six routes pass through the paralog double, whose fitness is one value for "
+            "the whole screen."
+        ),
+    )
+
+    # Ranked by interaction, at the strong cut the rest of the document uses.
+    strong = tri_summary[
+        (tri_summary["tau"] > STRONG_CUT) & (tri_summary["tau_p_value"] < P_CUT)
+    ].sort_values("tau", ascending=False)
+    plot_path_panels(
+        deletions,
+        strong,
+        osp.join(IMAGES_DIR, "pcl6_deletion_path_panels_strong"),
+        subtitle=(
+            f"Every triple in the screen clearing the strong positive tier, "
+            f"$\\tau > +{STRONG_CUT:.2f}$ with P < {P_CUT:.2f}, ranked by $\\tau$. "
+            f"{int((strong['f_triple'] > 1.0).sum())} of {len(strong)} reach wild type; "
+            f"{int((strong['n_monotone_within_se'] > 0).sum())} of {len(strong)} have a "
+            "route that avoids a backwards move within 1 SE.\n"
+            "All six deletion orders each, error bars 1 SE."
+        ),
+        ncols=max(len(strong), 1),
     )
     print(f"\nwrote figures to {IMAGES_DIR}")
 

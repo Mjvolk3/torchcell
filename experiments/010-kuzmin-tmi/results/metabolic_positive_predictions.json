@@ -1,0 +1,42 @@
+{
+  "n_genes_considered": 3169,
+  "n_genes_selected": 601,
+  "n_metabolic_flagged": 1316,
+  "n_metabolic_selected": 369,
+  "n_metabolic_realized": 324,
+  "n_realized_genes": 526,
+  "n_triples": 4370595,
+  "n_triples_with_any_metabolic": 4183482,
+  "n_triples_all_metabolic": 1183337,
+  "max_predicted_tau_overall": 0.6897786458333334,
+  "max_predicted_tau_any_metabolic": 0.6897786458333334,
+  "max_predicted_tau_all_metabolic": 0.0731048583984375,
+  "n_triples_screen_gated": 73789,
+  "max_predicted_tau_gated_any_metabolic": 0.2926432291666667,
+  "counts_above_cut": {
+    "0.08": {
+      "all": 209,
+      "any_metabolic": 172,
+      "all_three_metabolic": 0,
+      "gated_any_metabolic": 8
+    },
+    "0.12": {
+      "all": 74,
+      "any_metabolic": 59,
+      "all_three_metabolic": 0,
+      "gated_any_metabolic": 3
+    },
+    "0.16": {
+      "all": 39,
+      "any_metabolic": 32,
+      "all_three_metabolic": 0,
+      "gated_any_metabolic": 3
+    },
+    "0.2": {
+      "all": 29,
+      "any_metabolic": 23,
+      "all_three_metabolic": 0,
+      "gated_any_metabolic": 3
+    }
+  }
+}

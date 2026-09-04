@@ -85,6 +85,39 @@ This is the part that matters for panel design. Selecting on predicted trigenic
 interaction and selecting on fitness are close to independent in this screen, so a
 panel picked on interaction alone will mostly return sick strains.
 
+## 2026.09.04 - The strong tier and the fitness goal are disjoint
+
+The six-panel figure below is ranked by **endpoint fitness**, not by interaction,
+which is why a panel can carry a tau of +0.026 that clears no threshold. Naming
+the ranking matters, so the figure now says so and a second figure ranks by tau
+at the strong cut instead.
+
+Raising the cut does not reconcile the two objectives, it separates them further,
+and the crossover happens below the strong tier.
+
+| tau cut | Criterion | Triples | Best f | Above WT | With a route |
+|---|---|---|---|---|---|
+| +0.08 | called (P<0.05) | 12 | 1.0834 | 1 | 4 |
+| +0.08 | magnitude only | 152 | 1.0834 | 12 | 48 |
+| +0.12 | called (P<0.05) | 7 | 0.9822 | 0 | 2 |
+| +0.12 | magnitude only | 96 | 1.0734 | 7 | 25 |
+| +0.16 | called (P<0.05) | 3 | 0.8662 | 0 | 0 |
+| +0.16 | magnitude only | 69 | 1.0734 | 7 | 17 |
+| +0.20 | called (P<0.05) | 3 | 0.8662 | 0 | 0 |
+| +0.20 | magnitude only | 58 | 1.0734 | 4 | 11 |
+
+"With a route" counts triples having at least one of six orderings that never
+steps back by more than 1 SE.
+
+Every triple clearing the strong tier at tau > +0.16 with P < 0.05 finishes below
+wild type, and none has a route that avoids a backwards move even with 1 SE of
+slack. The three are `ubp15` at tau +0.357 finishing at 0.686, `pho80` at +0.324
+finishing at 0.285, and `rad57` at +0.201 finishing at 0.866. Dropping the
+significance requirement recovers fitness but abandons the call: 69 triples clear
++0.16 on magnitude alone and 7 of those beat wild type, none at P < 0.05.
+
+![](./assets/images/010-kuzmin-tmi/pcl6_deletion_path_panels_strong.svg)
+
 ### Figures
 
 ![](./assets/images/010-kuzmin-tmi/pcl6_deletion_paths_all.svg)

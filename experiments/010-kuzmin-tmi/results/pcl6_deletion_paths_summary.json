@@ -26,5 +26,79 @@
   "max_triple_fitness": 1.0834,
   "best_triple": "YER059W+YIL050W+YGL014W",
   "median_triple_fitness": 0.8807,
-  "median_valley_depth": 0.10441999999999996
+  "median_valley_depth": 0.10441999999999996,
+  "tiers": [
+    {
+      "tau_cut": 0.08,
+      "criterion": "called (P<0.05)",
+      "n_triples": 12,
+      "max_f_triple": 1.0834,
+      "n_above_wt": 1,
+      "n_with_monotone_route": 0,
+      "n_with_monotone_within_se_route": 4
+    },
+    {
+      "tau_cut": 0.08,
+      "criterion": "magnitude only",
+      "n_triples": 152,
+      "max_f_triple": 1.0834,
+      "n_above_wt": 12,
+      "n_with_monotone_route": 2,
+      "n_with_monotone_within_se_route": 48
+    },
+    {
+      "tau_cut": 0.12,
+      "criterion": "called (P<0.05)",
+      "n_triples": 7,
+      "max_f_triple": 0.9822,
+      "n_above_wt": 0,
+      "n_with_monotone_route": 0,
+      "n_with_monotone_within_se_route": 2
+    },
+    {
+      "tau_cut": 0.12,
+      "criterion": "magnitude only",
+      "n_triples": 96,
+      "max_f_triple": 1.0734,
+      "n_above_wt": 7,
+      "n_with_monotone_route": 1,
+      "n_with_monotone_within_se_route": 25
+    },
+    {
+      "tau_cut": 0.16,
+      "criterion": "called (P<0.05)",
+      "n_triples": 3,
+      "max_f_triple": 0.8662,
+      "n_above_wt": 0,
+      "n_with_monotone_route": 0,
+      "n_with_monotone_within_se_route": 0
+    },
+    {
+      "tau_cut": 0.16,
+      "criterion": "magnitude only",
+      "n_triples": 69,
+      "max_f_triple": 1.0734,
+      "n_above_wt": 7,
+      "n_with_monotone_route": 1,
+      "n_with_monotone_within_se_route": 17
+    },
+    {
+      "tau_cut": 0.2,
+      "criterion": "called (P<0.05)",
+      "n_triples": 3,
+      "max_f_triple": 0.8662,
+      "n_above_wt": 0,
+      "n_with_monotone_route": 0,
+      "n_with_monotone_within_se_route": 0
+    },
+    {
+      "tau_cut": 0.2,
+      "criterion": "magnitude only",
+      "n_triples": 58,
+      "max_f_triple": 1.0734,
+      "n_above_wt": 4,
+      "n_with_monotone_route": 0,
+      "n_with_monotone_within_se_route": 11
+    }
+  ]
 }

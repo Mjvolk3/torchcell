@@ -276,6 +276,19 @@ if [ ! -d "$DATA_ROOT/data/torchcell/experiments/019-simb-multimodal/fig3_core/p
   echo "       Set DELTA_DATA_ROOT at submit time; do not let the loader try to rebuild." >&2
   exit 1
 fi
+# THE CONFIG MUST EXIST BEFORE ANY GPU IS TOUCHED. Hydra resolves --config-name inside each
+# per-run python process, so a missing config surfaces as 64 separate late failures across 8
+# nodes rather than as one refused submit. That is exactly how grid 21796128 died: the shared
+# checkout was switched to another branch mid-flight and every run reported
+# "Cannot find primary config 'cgt_expr_v10_grid'" while the tasks sat in their stagger loop
+# looking alive. Checking the file here costs nothing and localizes the failure to the launch.
+STAGE_CONFIG_FILE="$PROJECT_ROOT/experiments/019-simb-multimodal/conf/$STAGE_CONFIG.yaml"
+if [ ! -f "$STAGE_CONFIG_FILE" ]; then
+  echo "FATAL: $STAGE_CONFIG_FILE is missing." >&2
+  echo "       PROJECT_ROOT is on branch $(git -C "$PROJECT_ROOT" rev-parse --abbrev-ref HEAD 2>&1)." >&2
+  echo "       Point V10_PROJECT_ROOT at a checkout this job OWNS, never a shared one." >&2
+  exit 1
+fi
 export PYTHONWARNINGS=ignore
 export PYTHONPATH="$PROJECT_ROOT"
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
@@ -289,12 +302,15 @@ export PYTHONUNBUFFERED=1
 cd "$PROJECT_ROOT" || exit 1
 
 # IMPORT PROVENANCE GATE. The Delta environment carries an EDITABLE install of torchcell,
-# and an editable install works through a meta-path finder, which Python consults BEFORE
-# anything on sys.path -- including PYTHONPATH. So if that finder ever points somewhere
-# other than PROJECT_ROOT, every run here silently trains a different checkout's source
-# while the log still prints this checkout's git hash: an unattributable result that looks
-# completely normal. It points at PROJECT_ROOT today; this asserts it rather than trusting
-# it, and turns a silent wrong-code run into an immediate failure before any GPU is spent.
+# which resolves through a meta-path finder rather than through sys.path. Measured
+# 2026-09-04 on the GilaHyper env: setuptools APPENDS `_EditableFinder` to `sys.meta_path`,
+# so it sits at index 4 BEHIND `PathFinder` at index 3, and `PathFinder` is what reads
+# PYTHONPATH. PYTHONPATH therefore wins, which is what makes PROJECT_ROOT effective. That
+# was measured on GilaHyper's env and NOT on Delta's, so this asserts the outcome rather
+# than assuming the mechanism carries over. A finder that pointed elsewhere would train a
+# different checkout's source while the log still printed this checkout's git hash: an
+# unattributable result that looks completely normal. The check costs one interpreter
+# startup and turns that into an immediate failure before any GPU is spent.
 RESOLVED="$("$ENV_PY" -c 'import torchcell, os; print(os.path.realpath(os.path.dirname(torchcell.__file__)))')"
 EXPECTED="$(cd "$PROJECT_ROOT" && pwd -P)/torchcell"
 if [[ "$RESOLVED" != "$EXPECTED" ]]; then

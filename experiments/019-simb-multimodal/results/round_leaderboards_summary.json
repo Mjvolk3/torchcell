@@ -234,26 +234,26 @@
   "expression_masked": {
     "by_project": {
       "torchcell_019_expr_v9": {
-        "n_runs": 16,
-        "best_roll_max": 0.23824749290943145,
-        "best_run_id": "hx8pxdic",
+        "n_runs": 54,
+        "best_roll_max": 0.24326536655426026,
+        "best_run_id": "d94cy5az",
         "n_train_supervised": 1244.0,
-        "epochs": 9900.0,
-        "runtime_h": 91.38361111111111
+        "epochs": 18276.0,
+        "runtime_h": 48.806993936745
       }
     },
     "n_projects": 1,
     "project": "torchcell_019_expr_v9",
     "metric": "val/expression/pearson_per_feature",
-    "n_runs": 16,
+    "n_runs": 54,
     "n_collapsed": 0,
-    "epochs_min": 22.0,
-    "epochs_max": 9900.0,
-    "best_roll_max": 0.23824749290943145,
-    "best_run_id": "hx8pxdic",
-    "best_run_epochs": 9900.0,
-    "best_epoch_at_roll_max": 9697.0,
-    "median_roll_max": 0.18874267637729644
+    "epochs_min": 3.0,
+    "epochs_max": 18276.0,
+    "best_roll_max": 0.24326536655426026,
+    "best_run_id": "d94cy5az",
+    "best_run_epochs": 18276.0,
+    "best_epoch_at_roll_max": 17352.0,
+    "median_roll_max": 0.17350129783153534
   },
   "expression_morphology_joint": {
     "by_project": {

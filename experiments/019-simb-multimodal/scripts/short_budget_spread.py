@@ -81,10 +81,14 @@ METRIC = "val/expression/pearson_per_feature"
 RESULTS = experiment_results_dir("019-simb-multimodal", __file__)
 LEADERBOARD = osp.join(RESULTS, "round_leaderboards.csv")
 
-# The budget grid. 2,800 is the cap a 2-day Delta job affords the SLOWEST arm at two runs
-# per card (64 epochs/h measured); 4,000 is what the reference arms afford; the rest bracket
-# them so the trend is visible rather than inferred from two points.
-BUDGETS = [1000, 1500, 2000, 2800, 4000, 6000, 9900]
+# The budget grid. 2,800 was the cap a 2-day Delta job was thought to afford the SLOWEST arm
+# at two runs per card, from an assumed 64 epochs/h; 4,000 was what the reference arms were
+# thought to afford. BOTH WERE WRONG. The timing run measured 33.6 epochs/h, at which 2,000
+# epochs needs 58.9 h against a 48 h wall, so the grid budget was cut to 700 and the round is
+# now scored at a budget below anything this script originally covered. 350 and 500 bracket
+# 700 from below so the trend near the real budget is measured rather than extrapolated off
+# the bottom of the old grid.
+BUDGETS = [350, 500, 700, 1000, 1500, 2000, 2800, 4000, 6000, 9900]
 
 # The config the eight replicates share. Asserted, not assumed -- if the leaderboard ever
 # admits a different run to this filter, the spread stops being a replicate spread and the
@@ -111,8 +115,20 @@ plt.rcParams.update({
 })
 
 
+# The longest runs in the project are no longer all independent. Two of them are RESUMES
+# that restart the epoch counter where a previous run stopped (one spans 10,000-12,229, the
+# other 12,230-18,276), and because a resume inherits the config it passes the config
+# assertion unnoticed. Admitting them would break the measurement twice over: they are not
+# independent draws, so the sd would no longer be a replicate spread, and they carry no
+# history below epoch 10,000 at all, so every truncated budget would be computed from a
+# prefix that does not exist. A resume is identified by where its curve STARTS, which is the
+# only thing that distinguishes it, and the leaderboard stores only the last epoch. So the
+# split happens after the curves are fetched rather than in the frame filter.
+RESUME_START_EPOCH = 100
+
+
 def replicate_runs(df: pd.DataFrame) -> pd.DataFrame:
-    """The eight identical-config expression runs, with the config asserted."""
+    """Long identical-config expression runs. Resumes are dropped later, by curve start."""
     e = df[df.strand.astype(str).str.contains("expr", case=False, na=False)]
     n = e[e.epochs >= 9000].copy()
     for col, want in REPLICATE_CONFIG.items():
@@ -148,6 +164,14 @@ def main() -> None:
         curves[rid] = h
         print(f"  {rid}: {len(h)} points, epochs {int(h.epoch.min())}-{int(h.epoch.max())}")
 
+    resumed = {r: c for r, c in curves.items() if c.epoch.min() > RESUME_START_EPOCH}
+    for rid, c in sorted(resumed.items()):
+        print(f"  DROPPED {rid}: resume, curve starts at epoch {int(c.epoch.min())}")
+        del curves[rid]
+    if not curves:
+        raise ValueError("every candidate was a resume; no independent replicates left")
+    print(f"{len(curves)} independent replicates ({len(resumed)} resumes dropped)")
+
     rows = []
     per_budget_scores: dict[int, list[float]] = {}
     for budget in BUDGETS:
@@ -178,7 +202,8 @@ def main() -> None:
         "generated_by": "experiments/019-simb-multimodal/scripts/short_budget_spread.py",
         "entity": ENTITY, "project": project, "metric": METRIC,
         "roll_window": ROLL_WINDOW, "history_samples": HISTORY_SAMPLES,
-        "run_ids": run_ids, "replicate_config": REPLICATE_CONFIG,
+        "run_ids": sorted(curves), "replicate_config": REPLICATE_CONFIG,
+        "resumes_dropped": {r: int(c.epoch.min()) for r, c in sorted(resumed.items())},
         "power": {"alpha": 0.05, "power": 0.80, "z_sum": round(Z_SUM, 4)},
         "by_budget": rows,
         "scores_by_budget": {str(k): v for k, v in per_budget_scores.items()},

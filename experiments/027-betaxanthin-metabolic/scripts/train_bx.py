@@ -148,6 +148,11 @@ STRONG_GRAPHS: list[str] = [
 ]
 STRONG_NODE_EMBEDDINGS: tuple[str, ...] = ("prot_T5_all",)
 
+# The model infers its input width by indexing the embedding dataset, so it needs the same
+# objects the dataset was opened with, not just their names. Built once and held here
+# because `build_dataset` owns the genome and graph they are constructed from.
+_NODE_EMBEDDINGS: dict[str, Any] = {}
+
 
 def build_dataset() -> "Neo4jCellDataset":
     """Open the pigment dataset with the nine-graph, prot_T5 backbone. Never rebuilds."""
@@ -161,6 +166,14 @@ def build_dataset() -> "Neo4jCellDataset":
         tflink_root=osp.join(DATA_ROOT, "data/tflink"),
         genome=genome,
     )
+    _NODE_EMBEDDINGS.update(
+        NodeEmbeddingBuilder.build(
+            embedding_names=list(STRONG_NODE_EMBEDDINGS),
+            data_root=DATA_ROOT,
+            genome=genome,
+            graph=graph,
+        )
+    )
     with open(QUERY_PATH) as handle:
         query = handle.read()
     return Neo4jCellDataset(
@@ -169,12 +182,7 @@ def build_dataset() -> "Neo4jCellDataset":
         gene_set=genome.gene_set,
         graphs=build_gene_multigraph(graph=graph, graph_names=STRONG_GRAPHS),
         incidence_graphs=None,
-        node_embeddings=NodeEmbeddingBuilder.build(
-            embedding_names=list(STRONG_NODE_EMBEDDINGS),
-            data_root=DATA_ROOT,
-            genome=genome,
-            graph=graph,
-        ),
+        node_embeddings=_NODE_EMBEDDINGS,
         converter=None,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=DeletionKeyedGenotypeAggregator,
@@ -554,7 +562,7 @@ def run_cell(
         # The model reads cell_graph["gene"].x only when it is TOLD it has precomputed
         # embeddings; without this it looks for a learnable table that is now disabled and
         # raises "No gene embeddings available".
-        node_embeddings={name: None for name in STRONG_NODE_EMBEDDINGS},
+        node_embeddings=_NODE_EMBEDDINGS,
         flux_layer=flux_layer,
     ).to(device)
 

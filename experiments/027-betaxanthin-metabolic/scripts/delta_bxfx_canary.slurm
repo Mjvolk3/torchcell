@@ -29,7 +29,7 @@
 # failed to open the output file.
 #
 #SBATCH --partition=gpuA40x4
-#SBATCH --account=bfjt-delta-gpu
+#SBATCH --account=bbub-delta-gpu
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8

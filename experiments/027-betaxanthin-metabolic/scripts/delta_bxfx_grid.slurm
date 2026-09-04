@@ -34,7 +34,7 @@
 # did run balanced.
 #
 #SBATCH --partition=gpuA40x4
-#SBATCH --account=bfjt-delta-gpu
+#SBATCH --account=bbub-delta-gpu
 #SBATCH --array=0-8
 #SBATCH --nodes=1
 #SBATCH --ntasks=1

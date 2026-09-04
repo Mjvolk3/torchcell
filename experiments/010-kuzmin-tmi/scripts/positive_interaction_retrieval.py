@@ -48,6 +48,10 @@ P_VALUE_MAX = N.P_VALUE_MAX
 CRITERIA: list[tuple[str, float, bool]] = [
     ("K2020 positive tau>+0.08 & p<0.05", 0.08, True),
     ("stringent positive tau>+0.12 & p<0.05", 0.12, True),
+    # Baryshnikova 2010's stringent tier is sign-asymmetric, and +0.16 is its
+    # positive arm. This is the "strong interaction" row.
+    ("strong positive tau>+0.16 & p<0.05", 0.16, True),
+    ("strong positive tau>+0.20 & p<0.05", 0.20, True),
     ("magnitude only tau>+0.08", 0.08, False),
     ("magnitude only tau>+0.20", 0.20, False),
 ]

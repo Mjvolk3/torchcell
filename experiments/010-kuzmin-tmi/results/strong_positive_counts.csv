@@ -1,0 +1,7 @@
+cut,n_by_ensemble_mean,n_by_worst_checkpoint,genes_by_worst_checkpoint
+0.08,209,39,23
+0.12,74,24,14
+0.16,39,15,10
+0.2,29,13,8
+0.3,18,11,7
+0.5,8,7,6

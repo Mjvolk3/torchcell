@@ -1,0 +1,23 @@
+{
+  "strong_cut": 0.16,
+  "n_strong_by_worst_checkpoint": 15,
+  "n_strong_by_ensemble_mean": 39,
+  "n_after_gene_gates": 13,
+  "genes_after_gates": [
+    "YBR001C",
+    "YBR028C",
+    "YER059W",
+    "YGL060W",
+    "YGR121C",
+    "YHR003C",
+    "YPL089C",
+    "YPL181W"
+  ],
+  "n_genes_after_gates": 8,
+  "top_gene": "YER059W",
+  "top_gene_count": 12,
+  "triples_without_top_gene": 1,
+  "n_doubles_for_tau_closure": 19,
+  "n_strains_total": 41,
+  "gate_min_train_records": 200
+}

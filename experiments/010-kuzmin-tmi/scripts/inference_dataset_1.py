@@ -58,7 +58,14 @@ class InferencePhenotype(FitnessPhenotype):
     # Override fitness fields to be optional
     fitness: Optional[float] = None
     fitness_std: Optional[float] = None
-    
+    # Phenotype.validate_label_fields checks label_name and label_statistic_name
+    # against type(self).__annotations__, which is the SUBCLASS's own field set and
+    # does not include inherited fields. FitnessPhenotype sets
+    # label_statistic_name = "fitness_se", so this subclass has to redeclare
+    # fitness_se or every construction raises. It was declared on the parent when the
+    # inference_1 LMDB was written and the check has since tightened.
+    fitness_se: Optional[float] = None
+
     @field_validator("fitness")
     def validate_fitness(cls, v):
         # Allow None values for inference
@@ -417,8 +424,17 @@ class InferenceDataset(Dataset):
             FitnessExperiment object ready for inference
         """
         if environment is None:
+            # Matches the environment the 010 training records carry: YEPD, solid,
+            # 30 C. `is_synthetic` became a required Media field after the inference_1
+            # LMDB was written, so this call raised a ValidationError until it was
+            # supplied; the already-built inference_1 LMDB is unaffected because it is
+            # read, not rebuilt. YEPD is yeast extract plus peptone plus dextrose, a
+            # complex medium, hence False. The 010 build's YEPD label is itself an
+            # approximation: SGA double and triple mutant fitness is read on a
+            # selection medium, not plain YEPD, and correcting that is a build-side
+            # change, not an inference-side one.
             environment = Environment(
-                media=Media(name="YPD", state="solid"),
+                media=Media(name="YEPD", state="solid", is_synthetic=False),
                 temperature=Temperature(value=30.0),
             )
 

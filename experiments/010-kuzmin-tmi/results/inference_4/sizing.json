@@ -1,0 +1,51 @@
+{
+  "n_genome": 6607,
+  "n_metabolic": 1161,
+  "n_tflink_regulators": 317,
+  "n_sgd_regulators": 476,
+  "n_regulators_union": 593,
+  "n_both": 25,
+  "n_candidates": 1729,
+  "n_roster": 934,
+  "min_smf": 0.9,
+  "min_screens": 50,
+  "throughput_triples_per_s_per_gpu": 1505.0,
+  "sizing": {
+    ">= 50 distinct screens": {
+      "classes": {
+        "RL": 191,
+        "ML": 542,
+        "RH": 67,
+        "MH": 119,
+        "BL": 10,
+        "BH": 5
+      },
+      "counts": {
+        "unconstrained": 135360884,
+        "composition only (1-2 metabolic, 1-2 regulator)": 80749743,
+        "support only (>=1 supported gene)": 67274593,
+        "composition AND support": 41877232,
+        "composition AND >=2 supported genes": 9531908,
+        "composition AND all 3 supported": 773381
+      }
+    },
+    "present in Kuzmin at all": {
+      "classes": {
+        "RH": 239,
+        "MH": 588,
+        "ML": 73,
+        "BH": 14,
+        "RL": 19,
+        "BL": 1
+      },
+      "counts": {
+        "unconstrained": 135360884,
+        "composition only (1-2 metabolic, 1-2 regulator)": 80749743,
+        "support only (>=1 supported gene)": 135231118,
+        "composition AND support": 80685941,
+        "composition AND >=2 supported genes": 78762215,
+        "composition AND all 3 supported": 59936898
+      }
+    }
+  }
+}

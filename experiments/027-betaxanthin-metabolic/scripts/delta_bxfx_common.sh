@@ -84,6 +84,19 @@ bxfx_env() {
   # Delta compute nodes have internet, so W&B is ONLINE. No offline/sync dance.
   export WANDB__SERVICE_WAIT=600
   export WANDB_PROJECT="${WANDB_PROJECT:-torchcell_027_bxfx}"
+  # Set explicitly. Unset, wandb falls back to whatever default entity the Delta env
+  # carries, and 026's runs landed under zhao-group; a split between two entities makes
+  # the arms unjoinable at analysis time.
+  export WANDB_ENTITY="${WANDB_ENTITY:-zhao-group}"
+  # Delta compute nodes DO reach the internet: the 2026-07-22 Optuna launch and the 020_v4
+  # grid both produced live run lists. An older comment in delta_pigment_transfer.slurm
+  # claims the opposite; it is stale, and WANDB__SERVICE_WAIT above bounds the damage if it
+  # ever becomes true again.
+  export WANDB_MODE="${WANDB_MODE:-online}"
+  # 8 processes at num_workers=0 on a 32-CPU allocation of a 64-core node each default to
+  # the node's core count, which oversubscribes by ~16x.
+  export OMP_NUM_THREADS="${OMP_NUM_THREADS:-4}"
+  export MKL_NUM_THREADS="${MKL_NUM_THREADS:-4}"
 
   EXP_DIR="$PROJECT_ROOT/experiments/027-betaxanthin-metabolic"
   OPTUNA_DIR="$EXP_DIR/optuna"

@@ -1,0 +1,58 @@
+{
+  "n_triples": 41877232,
+  "checkpoints": {
+    "lzs9pcj3": {
+      "name": "M01",
+      "val_pearson": 0.452,
+      "mean": 0.014235910959541798,
+      "sd": 0.0309605710208416,
+      "max": 2.224609375
+    },
+    "yv4r30bi": {
+      "name": "M02",
+      "val_pearson": 0.4472,
+      "mean": 0.00048440444516018033,
+      "sd": 0.02493125945329666,
+      "max": 2.6796875
+    },
+    "c7671wgj": {
+      "name": "M03",
+      "val_pearson": 0.4619,
+      "mean": 0.0002705139049794525,
+      "sd": 0.026171382516622543,
+      "max": 2.078125
+    }
+  },
+  "ensemble_mean_max": 2.3274738788604736,
+  "ensemble_mean_sd": 0.02148624323308468,
+  "label_sd": 0.06326,
+  "n_above_0.08_ensemble": 43663,
+  "n_above_0.16_ensemble": 4495,
+  "n_above_0.08_all_three": 2906,
+  "n_above_0.16_all_three": 432,
+  "n_outside_label_range": 51,
+  "top_ensemble_mean": 2.3274738788604736,
+  "top_triple": [
+    "YPL053C",
+    "YDR483W",
+    "YPL181W"
+  ],
+  "median_spread_of_top500": 0.31884562969207764,
+  "n_top500_all_three_positive": 476,
+  "n_top500_fully_supported": 54,
+  "support_distribution_of_top500": {
+    "2": 259,
+    "1": 187,
+    "3": 54
+  },
+  "support_distribution_of_space": {
+    "1": 32345324,
+    "2": 8758527,
+    "3": 773381
+  },
+  "n_distinct_genes_in_top500": 79,
+  "top_gene": "YPL181W",
+  "top_gene_share_of_head": 0.242,
+  "share_of_head_covered_by_top6_genes": 0.764,
+  "n_roster_genes": 934
+}
